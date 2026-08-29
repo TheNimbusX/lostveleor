@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Game.View
 {
@@ -107,14 +108,29 @@ namespace Game.View
 
         private void BuildLight()
         {
-            GameObject go = new GameObject("Свет");
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.15f, 0.18f, 0.27f);
+            RenderSettings.ambientEquatorColor = new Color(0.08f, 0.09f, 0.15f);
+            RenderSettings.ambientGroundColor = new Color(0.025f, 0.022f, 0.045f);
+
+            GameObject go = new GameObject("Свет: ключевой");
             go.transform.SetParent(transform, false);
             go.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
             Light light = go.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.intensity = 1.1f;
+            light.color = new Color(1.00f, 0.82f, 0.72f);
+            light.intensity = 1.28f;
             light.shadows = LightShadows.Soft;
+
+            GameObject rimObject = new GameObject("Свет: контровой");
+            rimObject.transform.SetParent(transform, false);
+            rimObject.transform.rotation = Quaternion.Euler(38f, 145f, 0f);
+            Light rim = rimObject.AddComponent<Light>();
+            rim.type = LightType.Directional;
+            rim.color = new Color(0.22f, 0.72f, 1.00f);
+            rim.intensity = 0.42f;
+            rim.shadows = LightShadows.None;
         }
     }
 }

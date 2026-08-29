@@ -37,6 +37,13 @@ namespace Game.Sim
         public readonly int[] NextAttackTick;
 
         /// <summary>
+        /// Цель уже начатого замаха и тик контакта. Урон не может происходить
+        /// в кадре старта анимации: иначе вспышка и смерть опережают клинок.
+        /// </summary>
+        public readonly int[] PendingAttackTarget;
+        public readonly int[] AttackImpactTick;
+
+        /// <summary>
         /// Радиус тела. Тела не проходят сквозь друг друга: без этого сорок
         /// врагов сливаются в одну точку и толпа перестаёт читаться как толпа.
         ///
@@ -115,6 +122,8 @@ namespace Game.Sim
             Side = new Faction[capacity];
             Alive = new bool[capacity];
             NextAttackTick = new int[capacity];
+            PendingAttackTarget = new int[capacity];
+            AttackImpactTick = new int[capacity];
             BodyRadius = new Fix64[capacity];
             PushWeight = new Fix64[capacity];
 
@@ -148,6 +157,8 @@ namespace Game.Sim
             Side[id] = side;
             Alive[id] = true;
             NextAttackTick[id] = 0;
+            PendingAttackTarget[id] = -1;
+            AttackImpactTick[id] = 0;
             BodyRadius[id] = DefaultBodyRadius;
             PushWeight[id] = Fix64.One;
 
@@ -225,6 +236,8 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, (int)Side[i]);
                 Hashing.Mix(ref hash, Alive[i] ? 1 : 0);
                 Hashing.Mix(ref hash, NextAttackTick[i]);
+                Hashing.Mix(ref hash, PendingAttackTarget[i]);
+                Hashing.Mix(ref hash, AttackImpactTick[i]);
                 Hashing.Mix(ref hash, BodyRadius[i]);
                 Hashing.Mix(ref hash, PushWeight[i]);
 

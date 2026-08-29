@@ -13,6 +13,7 @@ namespace Game.View
     {
         private static Shader _lit;
         private static Shader _characterToon;
+        private static Shader _arenaFloor;
 
         public static Material CreateLit(Color color)
         {
@@ -48,6 +49,20 @@ namespace Game.View
             m.SetColor("_OutlineColor", new Color(0.018f, 0.020f, 0.025f, 1f));
             m.SetFloat("_OutlineWidth", 0.006f);
             return m;
+        }
+
+        public static Material CreateArenaFloor(Color baseColor, Color accentColor)
+        {
+            if (_arenaFloor == null) _arenaFloor = Shader.Find("Razlom/Arena Floor");
+            if (_arenaFloor == null) return CreateLit(baseColor);
+
+            Material material = new Material(_arenaFloor) { name = "Разлом/Arena Floor" };
+            material.SetColor("_BaseColor", baseColor);
+            material.SetColor("_AccentColor", accentColor);
+            material.SetColor("_GridColor", new Color(0.025f, 0.032f, 0.065f, 1f));
+            material.SetFloat("_GridScale", 0.5f);
+            material.SetFloat("_GridWidth", 0.055f);
+            return material;
         }
 
         private static void SetColor(Material m, Color color)

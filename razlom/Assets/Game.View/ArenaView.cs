@@ -81,6 +81,9 @@ namespace Game.View
         private CharacterAnimatorView[] _animationViews;
         private float[] _deathUntil;
         private bool[] _deathStarted;
+        private float[] _deathStartedAt;
+        private Vector3[] _deathDirection;
+        private int[] _lastDamageSource;
         private int _generation = -1;
 
         /// <summary>
@@ -111,6 +114,10 @@ namespace Game.View
         private Vector3[] _hitRecoil;
         private float[] _hitPunch;
         private Vector3[] _baseScale;
+        private Renderer[][] _bodyRenderers;
+        private MaterialPropertyBlock[] _materialBlocks;
+        private float[] _hitFlash;
+        private static readonly int HitFlashId = Shader.PropertyToID("_HitFlash");
 
         [Header("Реакция на попадание")]
         [Tooltip("На сколько метров тело отбрасывает визуально при полном ударе.")]
@@ -149,9 +156,15 @@ namespace Game.View
             _animationViews = new CharacterAnimatorView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
+            _deathStartedAt = new float[capacity];
+            _deathDirection = new Vector3[capacity];
+            _lastDamageSource = new int[capacity];
             _hitRecoil = new Vector3[capacity];
             _hitPunch = new float[capacity];
             _baseScale = new Vector3[capacity];
+            _bodyRenderers = new Renderer[capacity][];
+            _materialBlocks = new MaterialPropertyBlock[capacity];
+            _hitFlash = new float[capacity];
 
             Transform woleRoot = new GameObject("Пул: Wole").transform;
             Transform orvillRoot = new GameObject("Пул: Orvill").transform;
@@ -249,6 +262,7 @@ namespace Game.View
             Vector3 recoil = direction * (RecoilDistance * strength);
             if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude) _hitRecoil[entityId] = recoil;
             if (strength > _hitPunch[entityId]) _hitPunch[entityId] = strength;
+            if (strength > _hitFlash[entityId]) _hitFlash[entityId] = strength;
         }
 
         /// <summary>
@@ -269,8 +283,14 @@ namespace Game.View
                 _animationViews[i] = null;
                 _deathUntil[i] = 0f;
                 _deathStarted[i] = false;
+                _deathStartedAt[i] = 0f;
+                _deathDirection[i] = Vector3.zero;
+                _lastDamageSource[i] = -1;
                 _hitRecoil[i] = Vector3.zero;
                 _hitPunch[i] = 0f;
+                _bodyRenderers[i] = null;
+                _materialBlocks[i] = null;
+                _hitFlash[i] = 0f;
             }
 
             for (int i = 0; i < _projectileViews.Length; i++)
@@ -334,8 +354,14 @@ namespace Game.View
                 _animationViews[i]?.ResetForSpawn();
                 _deathUntil[i] = 0f;
                 _deathStarted[i] = false;
+                _deathStartedAt[i] = 0f;
+                _deathDirection[i] = Vector3.zero;
+                _lastDamageSource[i] = -1;
                 _hitRecoil[i] = Vector3.zero;
                 _hitPunch[i] = 0f;
+                _bodyRenderers[i] = go.GetComponentsInChildren<Renderer>(true);
+                _materialBlocks[i] = new MaterialPropertyBlock();
+                _hitFlash[i] = 0f;
 
                 // Базовый масштаб запоминается ОДИН РАЗ при привязке: дальше
                 // его каждый кадр перезаписывает сплющивание, и прочитать
@@ -369,6 +395,16 @@ namespace Game.View
                 float decay = Mathf.Exp(-ReactionDecay * Time.deltaTime);
                 _hitRecoil[i] *= decay;
                 _hitPunch[i] *= decay;
+                _hitFlash[i] *= Mathf.Exp(-24f * Time.deltaTime);
+
+                Renderer[] bodyRenderers = _bodyRenderers[i];
+                MaterialPropertyBlock block = _materialBlocks[i];
+                if (bodyRenderers != null && block != null)
+                {
+                    block.SetFloat(HitFlashId, _hitFlash[i]);
+                    for (int r = 0; r < bodyRenderers.Length; r++)
+                        if (bodyRenderers[r] != null) bodyRenderers[r].SetPropertyBlock(block);
+                }
 
                 view.position = p + _hitRecoil[i];
                 if (_baseScale[i] != Vector3.zero)
@@ -403,6 +439,21 @@ namespace Game.View
                 {
                     bool showDeath = _deathStarted[i] && Time.unscaledTime < _deathUntil[i];
                     if (view.gameObject.activeSelf != showDeath) view.gameObject.SetActive(showDeath);
+                    if (showDeath)
+                    {
+                        float duration = _animationViews[i] != null
+                            ? _animationViews[i].DeathDuration
+                            : 1.5f;
+                        float t = Mathf.Clamp01((Time.time - _deathStartedAt[i]) / duration);
+                        float travel = 1f - (1f - t) * (1f - t);
+                        view.position += _deathDirection[i] * (0.58f * travel)
+                                         + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 0.44f);
+                        Vector3 fallAxis = Vector3.Cross(Vector3.up, _deathDirection[i]);
+                        if (fallAxis.sqrMagnitude < 0.001f) fallAxis = Vector3.forward;
+                        view.rotation = Quaternion.AngleAxis(86f * t, fallAxis.normalized) * view.rotation;
+                        float vanish = Mathf.InverseLerp(1f, 0.68f, t);
+                        view.localScale = _baseScale[i] * Mathf.Lerp(0.12f, 1.08f, vanish);
+                    }
                     continue;
                 }
 
@@ -426,6 +477,8 @@ namespace Game.View
                         AnimationOf(e.Source)?.PlayAbility(e.Amount);
                         break;
                     case SimEventType.Damage:
+                        if ((uint)e.Target < (uint)_lastDamageSource.Length)
+                            _lastDamageSource[e.Target] = e.Source;
                         AnimationOf(e.Target)?.PlayHit(e.Source ^ e.Target);
                         break;
                     case SimEventType.Death:
@@ -433,7 +486,24 @@ namespace Game.View
                         if (animation == null) break;
                         animation.PlayDeath();
                         _deathStarted[e.Target] = true;
+                        _deathStartedAt[e.Target] = Time.time;
                         _deathUntil[e.Target] = Time.unscaledTime + animation.DeathDuration;
+                        int source = _lastDamageSource[e.Target];
+                        if (_driver.Sim != null
+                            && (uint)source < (uint)_driver.Sim.Entities.Count)
+                        {
+                            FixVec2 from = _driver.Sim.Entities.Position[source];
+                            FixVec2 to = _driver.Sim.Entities.Position[e.Target];
+                            Vector3 away = new Vector3(to.X.ToFloat() - from.X.ToFloat(), 0f,
+                                                       to.Y.ToFloat() - from.Y.ToFloat());
+                            _deathDirection[e.Target] = away.sqrMagnitude > 0.001f
+                                ? away.normalized
+                                : Vector3.forward;
+                        }
+                        else
+                        {
+                            _deathDirection[e.Target] = Vector3.forward;
+                        }
                         break;
                 }
             }
@@ -514,7 +584,8 @@ namespace Game.View
                 return null;
             }
 
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+            Shader shader = Shader.Find("Razlom/Texture Toon")
+                            ?? Shader.Find("Universal Render Pipeline/Lit")
                             ?? Shader.Find("Universal Render Pipeline/Simple Lit")
                             ?? Shader.Find("Standard");
             if (shader == null)
@@ -532,6 +603,9 @@ namespace Game.View
             // силуэт, а силуэт здесь главный канал распознавания.
             if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.08f);
             if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
+            if (material.HasProperty("_ShadowColor"))
+                material.SetColor("_ShadowColor", new Color(0.36f, 0.20f, 0.32f, 1f));
+            if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.007f);
 
             Debug.Log($"[Разлом] {faction}: материал собран в игре из «{texturePath}», шейдер {shader.name}.");
             return material;
@@ -615,10 +689,39 @@ namespace Game.View
                 animator.applyRootMotion = false;
             }
 
+            if (faction == Faction.Wole)
+                EquipProp(go.transform, "PRP_Saber_0p92m", "Weapon_R");
+
             CharacterAnimatorView animation = go.GetComponent<CharacterAnimatorView>();
             if (animation == null) animation = go.AddComponent<CharacterAnimatorView>();
             animation.Configure(faction);
             return go;
+        }
+
+        private static void EquipProp(Transform root, string propName, string socketName)
+        {
+            Transform prop = FindChild(root, propName);
+            Transform socket = FindChild(root, socketName);
+            if (prop == null || socket == null)
+            {
+                Debug.LogWarning($"[Разлом] Не удалось экипировать {propName}: " +
+                                 $"prop={(prop != null)}, socket={(socket != null)}.");
+                return;
+            }
+
+            Vector3 importedScale = prop.localScale;
+            prop.SetParent(socket, false);
+            prop.localPosition = Vector3.zero;
+            prop.localRotation = Quaternion.identity;
+            prop.localScale = importedScale;
+        }
+
+        private static Transform FindChild(Transform root, string wantedName)
+        {
+            Transform[] all = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+                if (all[i].name == wantedName) return all[i];
+            return null;
         }
 
         private static GameObject CreateBody(PrimitiveType type, Material material, float scale)

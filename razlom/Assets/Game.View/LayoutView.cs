@@ -12,8 +12,8 @@ namespace Game.View
     [RequireComponent(typeof(TickDriver))]
     public sealed class LayoutView : MonoBehaviour
     {
-        public Color RoomColor = new Color(0.26f, 0.27f, 0.30f);
-        public Color EntranceColor = new Color(0.22f, 0.34f, 0.30f);
+        public Color RoomColor = new Color(0.10f, 0.11f, 0.16f);
+        public Color EntranceColor = new Color(0.12f, 0.19f, 0.20f);
         public float Thickness = 0.2f;
 
         [Tooltip("Зазор между плитами, чтобы стыки было видно.")]
@@ -46,8 +46,10 @@ namespace Game.View
             Transform root = new GameObject("Пул: плиты").transform;
             root.SetParent(transform, false);
 
-            _roomMaterial = ViewMaterials.CreateLit(RoomColor);
-            _entranceMaterial = ViewMaterials.CreateLit(EntranceColor);
+            _roomMaterial = ViewMaterials.CreateArenaFloor(RoomColor,
+                new Color(0.12f, 0.48f, 0.56f, 1f));
+            _entranceMaterial = ViewMaterials.CreateArenaFloor(EntranceColor,
+                new Color(1.00f, 0.34f, 0.23f, 1f));
 
             _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72);
             _tiles = new Transform[64];

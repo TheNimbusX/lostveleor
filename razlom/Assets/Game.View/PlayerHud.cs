@@ -40,6 +40,8 @@ namespace Game.View
         private static readonly Color SlotReady = new Color(0.20f, 0.78f, 0.85f, 0.92f);
         private static readonly Color SlotCooling = new Color(0.16f, 0.20f, 0.26f, 0.92f);
         private static readonly Color SlotEmpty = new Color(0.14f, 0.15f, 0.17f, 0.55f);
+        private static readonly Color Ink = new Color(0.07f, 0.025f, 0.065f, 0.96f);
+        private static readonly Color Coral = new Color(1.00f, 0.39f, 0.28f, 0.98f);
 
         private void Awake()
         {
@@ -70,6 +72,8 @@ namespace Game.View
             float x = Margin;
             float y = Screen.height - Margin - BarHeight;
 
+            GUI.Label(new Rect(x, y - 22f, BarWidth, 20f), "ПЕЛАГ", _label);
+            Frame(new Rect(x - 2f, y - 2f, BarWidth + 4f, BarHeight + 4f), Ink, 2f);
             Fill(new Rect(x, y, BarWidth, BarHeight), HealthBack);
 
             // Полоса меняет цвет на четверти: цифры читать некогда, а цвет
@@ -96,15 +100,17 @@ namespace Game.View
                     // Пустой слот рисуется всё равно: игрок должен видеть, что
                     // кнопок четыре и три из них он ещё не получил.
                     Fill(box, SlotEmpty);
+                    Frame(box, Ink, 2f);
                     GUI.Label(box, (slot + 1).ToString(), _slotLabel);
                     continue;
                 }
 
-                Fill(box, SlotBack);
-
                 int cooldown = build.CooldownTicks;
                 int readyAt = sim.AbilityReadyTick(slot);
                 int left = readyAt - sim.Tick;
+
+                Fill(box, SlotBack);
+                Frame(box, left <= 0 ? Coral : Ink, left <= 0 ? 3f : 2f);
 
                 if (left <= 0)
                 {
@@ -138,6 +144,14 @@ namespace Game.View
             GUI.color = color;
             GUI.DrawTexture(rect, _white);
             GUI.color = was;
+        }
+
+        private void Frame(Rect rect, Color color, float width)
+        {
+            Fill(new Rect(rect.x, rect.y, rect.width, width), color);
+            Fill(new Rect(rect.x, rect.yMax - width, rect.width, width), color);
+            Fill(new Rect(rect.x, rect.y, width, rect.height), color);
+            Fill(new Rect(rect.xMax - width, rect.y, width, rect.height), color);
         }
 
         private void EnsureStyles()

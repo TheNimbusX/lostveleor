@@ -17,6 +17,12 @@ namespace Game.Sim
         // заданы В ТИКАХ. Поэтому переход на 60 Гц — правка одной константы.
         public const int TicksPerSecond = 30;
 
+        /// <summary>
+        /// От начала замаха до контакта клинка: 4 тика = 133 мс.
+        /// Это достаточно для чтения намерения, но не ощущается задержкой ввода.
+        /// </summary>
+        public const int AttackWindupTicks = 4;
+
         // ---- баланс прототипа (потом уедет в таблицы) ----
 
         // Мёртвая зона приказа на движение — примерно радиус тела персонажа.
@@ -958,6 +964,18 @@ namespace Game.Sim
 
             for (int i = 0; i < Entities.Count; i++)
             {
+                int pendingTarget = Entities.PendingAttackTarget[i];
+                if (pendingTarget >= 0)
+                {
+                    if (Tick >= Entities.AttackImpactTick[i])
+                    {
+                        Entities.PendingAttackTarget[i] = -1;
+                        Entities.AttackImpactTick[i] = 0;
+                        if (CanLandAttack(i, pendingTarget)) ApplyAttack(i, pendingTarget);
+                    }
+                    continue;
+                }
+
                 if (!Entities.Alive[i]) continue;
                 if (Tick < Entities.NextAttackTick[i]) continue;
 
@@ -971,9 +989,22 @@ namespace Game.Sim
                 if (target < 0) continue;
 
                 _events.Add(SimEvent.Attack(i, target, Entities.Position[i]));
-                ApplyAttack(i, target);
+                Entities.PendingAttackTarget[i] = target;
+                Entities.AttackImpactTick[i] = Tick + AttackWindupTicks;
                 Entities.NextAttackTick[i] = Tick + Entities.AttackCooldown[i];
             }
+        }
+
+        private bool CanLandAttack(int source, int target)
+        {
+            if ((uint)source >= (uint)Entities.Count || (uint)target >= (uint)Entities.Count)
+                return false;
+            if (!Entities.Alive[source] || !Entities.Alive[target]) return false;
+            if (Entities.Side[source] == Entities.Side[target]) return false;
+
+            FixVec2 toTarget = Entities.Position[target] - Entities.Position[source];
+            if (toTarget.LengthSq > AttackRangeSq) return false;
+            return FixVec2.WithinArc(Entities.Facing[source], toTarget, AttackArcCos);
         }
 
         /// <summary>

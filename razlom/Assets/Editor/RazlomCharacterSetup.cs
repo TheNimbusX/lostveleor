@@ -109,7 +109,8 @@ public static class RazlomCharacterSetup
             }
         }
 
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+        Shader shader = Shader.Find("Razlom/Texture Toon")
+                        ?? Shader.Find("Universal Render Pipeline/Lit");
         if (shader == null)
         {
             Debug.LogError("[Разлом] Не найден шейдер URP/Lit. Проект точно на URP?");
@@ -144,6 +145,9 @@ public static class RazlomCharacterSetup
         // силуэт, а силуэт здесь главный канал распознавания.
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.08f);
         if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
+        if (material.HasProperty("_ShadowColor"))
+            material.SetColor("_ShadowColor", new Color(0.36f, 0.20f, 0.32f, 1f));
+        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.007f);
 
         EditorUtility.SetDirty(material);
         AssetDatabase.SaveAssets();

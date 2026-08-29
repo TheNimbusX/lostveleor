@@ -262,12 +262,18 @@ namespace Game.View
 
             SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, color,
                 0.42f, 0.35f, playerKill ? 2.4f : 1.8f, 0f, 0f, 0f);
-            SpawnBurst(at, color, playerKill ? 18 : 12, playerKill ? 6.2f : 4.7f, true);
+            if (playerKill)
+            {
+                SpawnFx(FxKind.Ring, _ringSprite, at + Vector3.up * 0.08f, Vector3.zero,
+                    new Color(0.13f, 0.025f, 0.10f, 0.88f),
+                    0.62f, 0.18f, 3.2f, 0f, 0f, 0f);
+            }
+            SpawnBurst(at, color, playerKill ? 24 : 12, playerKill ? 7.1f : 4.7f, true);
 
             // Добивание — кульминация цепочки, и по силе оно обязано стоять
             // ВЫШЕ крита: крит это хороший удар, убийство это конец истории.
             if (playerKill)
-                Accumulate(trauma: 0.62f, zoom: 1.00f, stopDuration: 0.085f, stopScale: 0.030f);
+                Accumulate(trauma: 0.68f, zoom: 1.08f, stopDuration: 0.095f, stopScale: 0.025f);
         }
 
         private void SpawnAbility(in SimEvent e)

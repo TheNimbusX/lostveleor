@@ -36,6 +36,19 @@ public static class RazlomAnimatorBuilder
     private const string Death = "Death";
 
     private const float MoveThreshold = 0.1f;
+    private const string BuildVersionKey = "Razlom.PelagAnimator.GameplayV2";
+
+    [InitializeOnLoadMethod]
+    private static void AutoBuildGameplayVersion()
+    {
+        EditorApplication.delayCall += () =>
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (SessionState.GetBool(BuildVersionKey, false)) return;
+            SessionState.SetBool(BuildVersionKey, true);
+            Build();
+        };
+    }
 
     [MenuItem("Разлом/Собрать контроллер пелага")]
     public static void Build()
@@ -124,6 +137,9 @@ public static class RazlomAnimatorBuilder
 
         AnimatorState state = root.AddState(stateName);
         state.motion = clip;
+        state.speed = stateName == "AttackA" ? 10f
+                    : stateName == "AttackB" ? 5f
+                    : 4.5f;
         Once(clip);
 
         AnimatorStateTransition enter = root.AddAnyStateTransition(state);
@@ -134,8 +150,8 @@ public static class RazlomAnimatorBuilder
 
         AnimatorStateTransition exit = state.AddTransition(back);
         exit.hasExitTime = true;
-        exit.exitTime = 0.85f;
-        exit.duration = 0.12f;
+        exit.exitTime = 0.92f;
+        exit.duration = 0.08f;
     }
 
     private static void Loop(AnimationClip clip) => SetLoop(clip, true);
@@ -147,20 +163,55 @@ public static class RazlomAnimatorBuilder
         var importer = AssetImporter.GetAtPath(path) as ModelImporter;
         if (importer == null) return;
 
-        ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
+        ModelImporterClipAnimation[] clips = importer.clipAnimations;
+        if (clips == null || clips.Length == 0) clips = importer.defaultClipAnimations;
         if (clips == null || clips.Length == 0) return;
 
         bool changed = false;
         for (int i = 0; i < clips.Length; i++)
         {
-            if (clips[i].loopTime == loop) continue;
-            clips[i].loopTime = loop;
-            changed = true;
+            if (clips[i].loopTime != loop)
+            {
+                clips[i].loopTime = loop;
+                changed = true;
+            }
+
+            if (ConfigureCombatWindow(path, clips[i])) changed = true;
         }
         if (!changed) return;
 
         importer.clipAnimations = clips;
         importer.SaveAndReimport();
+    }
+
+    private static bool ConfigureCombatWindow(string path, ModelImporterClipAnimation clip)
+    {
+        float first;
+        float last;
+        if (path.EndsWith("Pelag_AttackA.fbx"))
+        {
+            first = 31f;
+            last = 111f;
+        }
+        else if (path.EndsWith("Pelag_AttackB.fbx"))
+        {
+            first = 21f;
+            last = 61f;
+        }
+        else
+        {
+            return false;
+        }
+
+        bool changed = clip.firstFrame != first || clip.lastFrame != last
+                       || !clip.lockRootPositionXZ || !clip.lockRootHeightY;
+        clip.firstFrame = first;
+        clip.lastFrame = last;
+        clip.lockRootPositionXZ = true;
+        clip.lockRootHeightY = true;
+        clip.keepOriginalPositionXZ = true;
+        clip.keepOriginalPositionY = true;
+        return changed;
     }
 
     private static AnimationClip FindClip(string fileName)
