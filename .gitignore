@@ -1,0 +1,44 @@
+# Unity generated state
+/razlom/[Ll]ibrary/
+/razlom/[Tt]emp/
+/razlom/[Oo]bj/
+/razlom/[Ll]ogs/
+/razlom/[Uu]ser[Ss]ettings/
+/razlom/[Mm]emoryCaptures/
+/razlom/[Rr]ecordings/
+/razlom/.vs/
+/razlom/*.csproj
+/razlom/*.sln
+/razlom/*.user
+
+# Generated test/build output
+/artifacts/
+**/bin/
+**/obj/
+TestResults/
+
+# Local hidden workspace state
+/.*/
+!/.gitignore
+!/.gitattributes
+
+# Obsolete prototype/tool mirror. PROJECT-STATE.md declares razlom/ as the only live project.
+/code/
+
+# Generated delivery bundles; their source assets and generation scripts are versioned separately.
+/designed-images/deliverables/
+
+# Blender/Python transient files
+*.blend1
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# IDE and OS noise
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini

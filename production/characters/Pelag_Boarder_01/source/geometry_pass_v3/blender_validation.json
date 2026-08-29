@@ -1,0 +1,98 @@
+{
+  "character": "Pelag_Boarder_01",
+  "blender_version": "5.2.1 LTS",
+  "units": "1 Blender unit = 1 meter",
+  "skeleton_height_m": 1.78,
+  "visual_height_with_hair_m": 1.91,
+  "facing_in_blender": "-Y; FBX export converts to Unity +Z",
+  "root_world": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "hips_world": [
+    0.0,
+    0.0,
+    0.9800000190734863
+  ],
+  "triangle_count_total_including_props": 24364,
+  "vertex_count_total_including_props": 12384,
+  "production_mesh_objects": 6,
+  "skinned_mesh_objects": 3,
+  "rigid_equipment_mesh_objects": 3,
+  "materials_unique_on_production": 3,
+  "atlas_materials": [
+    "MAT_Pelag_BodyAtlas",
+    "MAT_Pelag_ClothAtlas",
+    "MAT_Pelag_EquipmentAtlas"
+  ],
+  "uv_missing": [],
+  "material_missing": [],
+  "unapplied_transforms": [],
+  "max_vertex_influences": 3,
+  "required_bones_missing": [],
+  "actions_in_main_file": 0,
+  "animation_prototype_actions": [
+    "Pelag_CombatIdle",
+    "Pelag_SaberLightAttack"
+  ],
+  "animation_fps": 30,
+  "animation_ranges": {
+    "Pelag_CombatIdle": [
+      0,
+      60
+    ],
+    "Pelag_SaberLightAttack": [
+      0,
+      30
+    ]
+  },
+  "saber_damage_frame": 14,
+  "control_rig": {
+    "ik_hands": [
+      "IK_Hand_L",
+      "IK_Hand_R"
+    ],
+    "ik_feet": [
+      "IK_Foot_L",
+      "IK_Foot_R"
+    ],
+    "pole_targets": [
+      "Pole_Elbow_L",
+      "Pole_Elbow_R",
+      "Pole_Knee_L",
+      "Pole_Knee_R"
+    ],
+    "foot_roll": [
+      "CTRL_FootRoll_L",
+      "CTRL_FootRoll_R"
+    ],
+    "hips": "CTRL_Hips",
+    "chain": "CTRL_Chain",
+    "ik_fk_switch": true
+  },
+  "hand_shape_keys": [
+    "Open",
+    "Grip",
+    "Fist"
+  ],
+  "chain": {
+    "physical_length_m": 2.2,
+    "stored_silhouette_m": 0.65,
+    "control_bones": 8,
+    "links": 25
+  },
+  "separate_props": [
+    "PRP_Saber_0p92m",
+    "PRP_SaberScabbard",
+    "PRP_Hook_0p22m",
+    "SKM_Pelag_Chain"
+  ],
+  "deformation_renders": [
+    "01_a_pose.png",
+    "02_squat.png",
+    "03_arms_up.png",
+    "04_lunge.png",
+    "05_wide_step.png"
+  ]
+}

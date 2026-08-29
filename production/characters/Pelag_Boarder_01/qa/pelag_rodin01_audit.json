@@ -1,0 +1,63 @@
+{
+  "blender_version": "5.2.1 LTS",
+  "source_file": "C:\\Users\\d.grab\\Desktop\\the-game\\designed-images\\deliverables\\razlom-character-production-pack-v1\\pelag_rodin01\\pelag-rodin1.blend",
+  "scene_units": {
+    "system": "METRIC",
+    "scale_length": 1.0
+  },
+  "mesh_count": 1,
+  "mesh_vertices": 499980,
+  "mesh_triangles": 1000000,
+  "meshes": [
+    {
+      "name": "model",
+      "vertices": 499980,
+      "triangles": 1000000,
+      "materials": [
+        "model"
+      ],
+      "parent": null,
+      "parent_type": "OBJECT",
+      "parent_bone": "",
+      "modifiers": [],
+      "shape_keys": [],
+      "max_influences": 0,
+      "bounds_min": [
+        -0.283786,
+        -0.132754,
+        0.0
+      ],
+      "bounds_max": [
+        0.28366,
+        0.132731,
+        1.0
+      ],
+      "dimensions": [
+        0.567446,
+        0.265485,
+        1.0
+      ],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "armatures": [],
+  "collections": {
+    "Collection": [
+      "model"
+    ]
+  }
+}

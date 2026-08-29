@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 300 200">
+  <title>Флаг Орвилла</title>
+  <desc>Чёрное поле и крупная замкнутая государственная печать Орвилла.</desc>
+  <rect width="300" height="200" fill="#111315"/>
+  <path d="M78 28h144l50 72-50 72H78l-50-72Z" fill="#E5DCC8"/>
+  <path d="M96 52h108l34 48-34 48H96l-34-48Z" fill="#26292C"/>
+  <path d="m150 66 34 34-34 34-34-34Z" fill="#A72F29"/>
+</svg>

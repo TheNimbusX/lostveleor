@@ -1,0 +1,1047 @@
+{
+  "blender_version": "5.2.1 LTS",
+  "source_file": "C:\\Users\\d.grab\\Desktop\\the-game\\production\\characters\\Pelag_Boarder_01\\qa\\pelag_rodin01_attackA_import.blend",
+  "scene_units": {
+    "system": "METRIC",
+    "scale_length": 1.0
+  },
+  "mesh_count": 1,
+  "mesh_vertices": 249980,
+  "mesh_triangles": 500000,
+  "meshes": [
+    {
+      "name": "model",
+      "vertices": 249980,
+      "triangles": 500000,
+      "materials": [
+        "model"
+      ],
+      "parent": "Armature",
+      "parent_type": "OBJECT",
+      "parent_bone": "",
+      "modifiers": [
+        "ARMATURE"
+      ],
+      "shape_keys": [],
+      "max_influences": 8,
+      "bounds_min": [
+        -0.600773,
+        -0.659677,
+        -0.000956
+      ],
+      "bounds_max": [
+        0.281562,
+        0.389378,
+        1.710372
+      ],
+      "dimensions": [
+        0.882335,
+        1.049054,
+        1.711328
+      ],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_euler": [
+        -1.570796,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        100.0,
+        100.0,
+        100.0
+      ]
+    }
+  ],
+  "armatures": [
+    {
+      "name": "Armature",
+      "bones": [
+        {
+          "name": "mixamorig:Hips",
+          "parent": null,
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.053505,
+            0.921368
+          ],
+          "tail": [
+            -0.000119,
+            0.053505,
+            1.035398
+          ]
+        },
+        {
+          "name": "mixamorig:Spine",
+          "parent": "mixamorig:Hips",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.046254,
+            1.030338
+          ],
+          "tail": [
+            -0.000119,
+            0.037794,
+            1.157469
+          ]
+        },
+        {
+          "name": "mixamorig:Spine1",
+          "parent": "mixamorig:Spine",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.037794,
+            1.157469
+          ],
+          "tail": [
+            -0.000119,
+            0.028125,
+            1.302762
+          ]
+        },
+        {
+          "name": "mixamorig:Spine2",
+          "parent": "mixamorig:Spine1",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.028125,
+            1.302762
+          ],
+          "tail": [
+            -0.000119,
+            0.017905,
+            1.456351
+          ]
+        },
+        {
+          "name": "mixamorig:Neck",
+          "parent": "mixamorig:Spine2",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.017248,
+            1.466216
+          ],
+          "tail": [
+            -0.000119,
+            0.017248,
+            1.558603
+          ]
+        },
+        {
+          "name": "mixamorig:Head",
+          "parent": "mixamorig:Neck",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.019636,
+            1.558572
+          ],
+          "tail": [
+            -0.000119,
+            0.019636,
+            1.85118
+          ]
+        },
+        {
+          "name": "mixamorig:HeadTop_End",
+          "parent": "mixamorig:Head",
+          "deform": true,
+          "head": [
+            -0.000119,
+            0.027198,
+            1.851082
+          ],
+          "tail": [
+            -0.000119,
+            0.027198,
+            2.14369
+          ]
+        },
+        {
+          "name": "mixamorig:LeftShoulder",
+          "parent": "mixamorig:Spine2",
+          "deform": true,
+          "head": [
+            0.056047,
+            0.017434,
+            1.440325
+          ],
+          "tail": [
+            0.167244,
+            0.017804,
+            1.389668
+          ]
+        },
+        {
+          "name": "mixamorig:LeftArm",
+          "parent": "mixamorig:LeftShoulder",
+          "deform": true,
+          "head": [
+            0.167244,
+            0.017804,
+            1.389668
+          ],
+          "tail": [
+            0.315434,
+            0.020037,
+            1.18823
+          ]
+        },
+        {
+          "name": "mixamorig:LeftForeArm",
+          "parent": "mixamorig:LeftArm",
+          "deform": true,
+          "head": [
+            0.315434,
+            0.020037,
+            1.18823
+          ],
+          "tail": [
+            0.455715,
+            -0.049963,
+            0.959354
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHand",
+          "parent": "mixamorig:LeftForeArm",
+          "deform": true,
+          "head": [
+            0.455715,
+            -0.049963,
+            0.959354
+          ],
+          "tail": [
+            0.503654,
+            -0.064543,
+            0.861
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandThumb1",
+          "parent": "mixamorig:LeftHand",
+          "deform": true,
+          "head": [
+            0.450831,
+            -0.082805,
+            0.92182
+          ],
+          "tail": [
+            0.449255,
+            -0.101595,
+            0.886441
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandThumb2",
+          "parent": "mixamorig:LeftHandThumb1",
+          "deform": true,
+          "head": [
+            0.446924,
+            -0.109078,
+            0.891792
+          ],
+          "tail": [
+            0.443745,
+            -0.127018,
+            0.857103
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandThumb3",
+          "parent": "mixamorig:LeftHandThumb2",
+          "deform": true,
+          "head": [
+            0.444263,
+            -0.125265,
+            0.856208
+          ],
+          "tail": [
+            0.445695,
+            -0.1401,
+            0.829735
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandThumb4",
+          "parent": "mixamorig:LeftHandThumb3",
+          "deform": true,
+          "head": [
+            0.447515,
+            -0.133374,
+            0.827111
+          ],
+          "tail": [
+            0.448947,
+            -0.148209,
+            0.800637
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandIndex1",
+          "parent": "mixamorig:LeftHand",
+          "deform": true,
+          "head": [
+            0.512307,
+            -0.118867,
+            0.841566
+          ],
+          "tail": [
+            0.515425,
+            -0.121002,
+            0.815839
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandIndex2",
+          "parent": "mixamorig:LeftHandIndex1",
+          "deform": true,
+          "head": [
+            0.515429,
+            -0.120943,
+            0.815835
+          ],
+          "tail": [
+            0.513662,
+            -0.122832,
+            0.789113
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandIndex3",
+          "parent": "mixamorig:LeftHandIndex2",
+          "deform": true,
+          "head": [
+            0.5136,
+            -0.123783,
+            0.789202
+          ],
+          "tail": [
+            0.519088,
+            -0.125273,
+            0.774157
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandIndex4",
+          "parent": "mixamorig:LeftHandIndex3",
+          "deform": true,
+          "head": [
+            0.519138,
+            -0.124377,
+            0.774113
+          ],
+          "tail": [
+            0.524626,
+            -0.125867,
+            0.759068
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandMiddle1",
+          "parent": "mixamorig:LeftHand",
+          "deform": true,
+          "head": [
+            0.511865,
+            -0.08322,
+            0.853201
+          ],
+          "tail": [
+            0.522255,
+            -0.086679,
+            0.820021
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandMiddle2",
+          "parent": "mixamorig:LeftHandMiddle1",
+          "deform": true,
+          "head": [
+            0.522384,
+            -0.084515,
+            0.819907
+          ],
+          "tail": [
+            0.518549,
+            -0.087108,
+            0.785231
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandMiddle3",
+          "parent": "mixamorig:LeftHandMiddle2",
+          "deform": true,
+          "head": [
+            0.518483,
+            -0.088083,
+            0.785325
+          ],
+          "tail": [
+            0.51361,
+            -0.090122,
+            0.756502
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandMiddle4",
+          "parent": "mixamorig:LeftHandMiddle3",
+          "deform": true,
+          "head": [
+            0.513532,
+            -0.091301,
+            0.756623
+          ],
+          "tail": [
+            0.508658,
+            -0.09334,
+            0.727801
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandRing1",
+          "parent": "mixamorig:LeftHand",
+          "deform": true,
+          "head": [
+            0.51748,
+            -0.045207,
+            0.849295
+          ],
+          "tail": [
+            0.518086,
+            -0.045034,
+            0.820034
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandRing2",
+          "parent": "mixamorig:LeftHandRing1",
+          "deform": true,
+          "head": [
+            0.518105,
+            -0.044286,
+            0.820048
+          ],
+          "tail": [
+            0.510689,
+            -0.043923,
+            0.793315
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandRing3",
+          "parent": "mixamorig:LeftHandRing2",
+          "deform": true,
+          "head": [
+            0.510674,
+            -0.04459,
+            0.793318
+          ],
+          "tail": [
+            0.507311,
+            -0.044364,
+            0.771553
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandRing4",
+          "parent": "mixamorig:LeftHandRing3",
+          "deform": true,
+          "head": [
+            0.507309,
+            -0.044445,
+            0.771553
+          ],
+          "tail": [
+            0.503946,
+            -0.044219,
+            0.749787
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandPinky1",
+          "parent": "mixamorig:LeftHand",
+          "deform": true,
+          "head": [
+            0.501003,
+            -0.016088,
+            0.873071
+          ],
+          "tail": [
+            0.504626,
+            -0.015783,
+            0.839995
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandPinky2",
+          "parent": "mixamorig:LeftHandPinky1",
+          "deform": true,
+          "head": [
+            0.504645,
+            -0.014913,
+            0.840017
+          ],
+          "tail": [
+            0.499218,
+            -0.014419,
+            0.808711
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandPinky3",
+          "parent": "mixamorig:LeftHandPinky2",
+          "deform": true,
+          "head": [
+            0.499204,
+            -0.015079,
+            0.80871
+          ],
+          "tail": [
+            0.49703,
+            -0.01478,
+            0.787634
+          ]
+        },
+        {
+          "name": "mixamorig:LeftHandPinky4",
+          "parent": "mixamorig:LeftHandPinky3",
+          "deform": true,
+          "head": [
+            0.497025,
+            -0.014991,
+            0.787633
+          ],
+          "tail": [
+            0.494852,
+            -0.014692,
+            0.766557
+          ]
+        },
+        {
+          "name": "mixamorig:RightShoulder",
+          "parent": "mixamorig:Spine2",
+          "deform": true,
+          "head": [
+            -0.056284,
+            0.017063,
+            1.440325
+          ],
+          "tail": [
+            -0.167482,
+            0.016693,
+            1.389668
+          ]
+        },
+        {
+          "name": "mixamorig:RightArm",
+          "parent": "mixamorig:RightShoulder",
+          "deform": true,
+          "head": [
+            -0.167482,
+            0.016693,
+            1.389668
+          ],
+          "tail": [
+            -0.315672,
+            0.019455,
+            1.18823
+          ]
+        },
+        {
+          "name": "mixamorig:RightForeArm",
+          "parent": "mixamorig:RightArm",
+          "deform": true,
+          "head": [
+            -0.315672,
+            0.019455,
+            1.18823
+          ],
+          "tail": [
+            -0.455952,
+            -0.049093,
+            0.959354
+          ]
+        },
+        {
+          "name": "mixamorig:RightHand",
+          "parent": "mixamorig:RightForeArm",
+          "deform": true,
+          "head": [
+            -0.455952,
+            -0.049093,
+            0.959354
+          ],
+          "tail": [
+            -0.50208,
+            -0.06231,
+            0.866218
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandThumb1",
+          "parent": "mixamorig:RightHand",
+          "deform": true,
+          "head": [
+            -0.451381,
+            -0.081414,
+            0.922918
+          ],
+          "tail": [
+            -0.449869,
+            -0.100283,
+            0.888664
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandThumb2",
+          "parent": "mixamorig:RightHandThumb1",
+          "deform": true,
+          "head": [
+            -0.447724,
+            -0.107271,
+            0.893769
+          ],
+          "tail": [
+            -0.443647,
+            -0.126572,
+            0.857419
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandThumb3",
+          "parent": "mixamorig:RightHandThumb2",
+          "deform": true,
+          "head": [
+            -0.444025,
+            -0.125273,
+            0.856719
+          ],
+          "tail": [
+            -0.445762,
+            -0.141112,
+            0.829525
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandThumb4",
+          "parent": "mixamorig:RightHandThumb3",
+          "deform": true,
+          "head": [
+            -0.447522,
+            -0.134486,
+            0.826781
+          ],
+          "tail": [
+            -0.449259,
+            -0.150324,
+            0.799587
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandIndex1",
+          "parent": "mixamorig:RightHand",
+          "deform": true,
+          "head": [
+            -0.504525,
+            -0.111552,
+            0.857925
+          ],
+          "tail": [
+            -0.513244,
+            -0.118558,
+            0.825072
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandIndex2",
+          "parent": "mixamorig:RightHandIndex1",
+          "deform": true,
+          "head": [
+            -0.513356,
+            -0.117434,
+            0.824882
+          ],
+          "tail": [
+            -0.514448,
+            -0.122982,
+            0.795606
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandIndex3",
+          "parent": "mixamorig:RightHandIndex2",
+          "deform": true,
+          "head": [
+            -0.514403,
+            -0.123414,
+            0.79569
+          ],
+          "tail": [
+            -0.5138,
+            -0.128006,
+            0.770615
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandIndex4",
+          "parent": "mixamorig:RightHandIndex3",
+          "deform": true,
+          "head": [
+            -0.513728,
+            -0.128693,
+            0.770752
+          ],
+          "tail": [
+            -0.513125,
+            -0.133285,
+            0.745678
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandMiddle1",
+          "parent": "mixamorig:RightHand",
+          "deform": true,
+          "head": [
+            -0.514448,
+            -0.082567,
+            0.854277
+          ],
+          "tail": [
+            -0.522987,
+            -0.085542,
+            0.818554
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandMiddle2",
+          "parent": "mixamorig:RightHandMiddle1",
+          "deform": true,
+          "head": [
+            -0.523042,
+            -0.084267,
+            0.818484
+          ],
+          "tail": [
+            -0.518139,
+            -0.086503,
+            0.784142
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandMiddle3",
+          "parent": "mixamorig:RightHandMiddle2",
+          "deform": true,
+          "head": [
+            -0.518096,
+            -0.087424,
+            0.78422
+          ],
+          "tail": [
+            -0.516505,
+            -0.089255,
+            0.757701
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandMiddle4",
+          "parent": "mixamorig:RightHandMiddle3",
+          "deform": true,
+          "head": [
+            -0.516489,
+            -0.089607,
+            0.757729
+          ],
+          "tail": [
+            -0.514897,
+            -0.091438,
+            0.73121
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandRing1",
+          "parent": "mixamorig:RightHand",
+          "deform": true,
+          "head": [
+            -0.511781,
+            -0.04578,
+            0.856756
+          ],
+          "tail": [
+            -0.520219,
+            -0.046559,
+            0.824695
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandRing2",
+          "parent": "mixamorig:RightHandRing1",
+          "deform": true,
+          "head": [
+            -0.52024,
+            -0.045221,
+            0.824695
+          ],
+          "tail": [
+            -0.511921,
+            -0.045603,
+            0.794894
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandRing3",
+          "parent": "mixamorig:RightHandRing2",
+          "deform": true,
+          "head": [
+            -0.511905,
+            -0.046554,
+            0.794926
+          ],
+          "tail": [
+            -0.508252,
+            -0.046908,
+            0.771896
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandRing4",
+          "parent": "mixamorig:RightHandRing3",
+          "deform": true,
+          "head": [
+            -0.508245,
+            -0.047294,
+            0.771906
+          ],
+          "tail": [
+            -0.504592,
+            -0.047648,
+            0.748876
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandPinky1",
+          "parent": "mixamorig:RightHand",
+          "deform": true,
+          "head": [
+            -0.502315,
+            -0.013523,
+            0.872594
+          ],
+          "tail": [
+            -0.503926,
+            -0.013827,
+            0.838737
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandPinky2",
+          "parent": "mixamorig:RightHandPinky1",
+          "deform": true,
+          "head": [
+            -0.503935,
+            -0.013296,
+            0.838737
+          ],
+          "tail": [
+            -0.49872,
+            -0.013457,
+            0.80904
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandPinky3",
+          "parent": "mixamorig:RightHandPinky2",
+          "deform": true,
+          "head": [
+            -0.498714,
+            -0.013852,
+            0.809045
+          ],
+          "tail": [
+            -0.496448,
+            -0.013993,
+            0.78747
+          ]
+        },
+        {
+          "name": "mixamorig:RightHandPinky4",
+          "parent": "mixamorig:RightHandPinky3",
+          "deform": true,
+          "head": [
+            -0.496446,
+            -0.01413,
+            0.787472
+          ],
+          "tail": [
+            -0.49418,
+            -0.014272,
+            0.765897
+          ]
+        },
+        {
+          "name": "mixamorig:LeftUpLeg",
+          "parent": "mixamorig:Hips",
+          "deform": true,
+          "head": [
+            0.093831,
+            0.03052,
+            0.860494
+          ],
+          "tail": [
+            0.202299,
+            0.016687,
+            0.49667
+          ]
+        },
+        {
+          "name": "mixamorig:LeftLeg",
+          "parent": "mixamorig:LeftUpLeg",
+          "deform": true,
+          "head": [
+            0.202299,
+            0.016687,
+            0.49667
+          ],
+          "tail": [
+            0.248491,
+            0.027524,
+            0.143255
+          ]
+        },
+        {
+          "name": "mixamorig:LeftFoot",
+          "parent": "mixamorig:LeftLeg",
+          "deform": true,
+          "head": [
+            0.248491,
+            0.027524,
+            0.143255
+          ],
+          "tail": [
+            0.265224,
+            -0.149121,
+            0.002817
+          ]
+        },
+        {
+          "name": "mixamorig:LeftToeBase",
+          "parent": "mixamorig:LeftFoot",
+          "deform": true,
+          "head": [
+            0.265224,
+            -0.14912,
+            0.002817
+          ],
+          "tail": [
+            0.272362,
+            -0.244683,
+            0.002012
+          ]
+        },
+        {
+          "name": "mixamorig:LeftToe_End",
+          "parent": "mixamorig:LeftToeBase",
+          "deform": true,
+          "head": [
+            0.272362,
+            -0.244683,
+            0.002012
+          ],
+          "tail": [
+            0.279499,
+            -0.340246,
+            0.001206
+          ]
+        },
+        {
+          "name": "mixamorig:RightUpLeg",
+          "parent": "mixamorig:Hips",
+          "deform": true,
+          "head": [
+            -0.094068,
+            0.014351,
+            0.860494
+          ],
+          "tail": [
+            -0.202537,
+            -0.008682,
+            0.49667
+          ]
+        },
+        {
+          "name": "mixamorig:RightLeg",
+          "parent": "mixamorig:RightUpLeg",
+          "deform": true,
+          "head": [
+            -0.202537,
+            -0.008682,
+            0.49667
+          ],
+          "tail": [
+            -0.248652,
+            0.028601,
+            0.143447
+          ]
+        },
+        {
+          "name": "mixamorig:RightFoot",
+          "parent": "mixamorig:RightLeg",
+          "deform": true,
+          "head": [
+            -0.248652,
+            0.028601,
+            0.143447
+          ],
+          "tail": [
+            -0.26548,
+            -0.146474,
+            0.002391
+          ]
+        },
+        {
+          "name": "mixamorig:RightToeBase",
+          "parent": "mixamorig:RightFoot",
+          "deform": true,
+          "head": [
+            -0.26548,
+            -0.146474,
+            0.002391
+          ],
+          "tail": [
+            -0.272678,
+            -0.241756,
+            0.001248
+          ]
+        },
+        {
+          "name": "mixamorig:RightToe_End",
+          "parent": "mixamorig:RightToeBase",
+          "deform": true,
+          "head": [
+            -0.272678,
+            -0.241756,
+            0.001248
+          ],
+          "tail": [
+            -0.279876,
+            -0.337038,
+            0.000105
+          ]
+        }
+      ]
+    }
+  ],
+  "collections": {
+    "Collection": [
+      "Armature",
+      "model"
+    ]
+  }
+}

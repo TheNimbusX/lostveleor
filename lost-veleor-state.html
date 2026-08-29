@@ -1,0 +1,1582 @@
+<title>Lost Veleor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#E9EAEC; --surface:#F4F5F6; --surface-2:#DFE1E4;
+    --ink:#15181B; --ink-2:#3D444B; --muted:#666E76;
+    --line:#CFD3D7; --line-strong:#B3B9C0;
+    --ember:#C74A18; --ember-soft:rgba(199,74,24,.10);
+    --coral:#D63A50; --coral-soft:rgba(214,58,80,.10);
+    --ok:#2A8C46; --ok-soft:rgba(42,140,70,.12);
+    --wip:#9A6410; --wip-soft:rgba(154,100,16,.12);
+    --stop:#94261F; --stop-soft:rgba(148,38,31,.12);
+    --shadow:0 1px 2px rgba(21,24,27,.06), 0 8px 24px rgba(21,24,27,.05);
+    --maxw:74ch;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#121417; --surface:#191C20; --surface-2:#22262B;
+      --ink:#E7E9EA; --ink-2:#BEC4C9; --muted:#8C949C;
+      --line:#282D33; --line-strong:#3A4149;
+      --ember:#F2793C; --ember-soft:rgba(242,121,60,.13);
+      --coral:#FF6A7C; --coral-soft:rgba(255,106,124,.13);
+      --ok:#4FC46F; --ok-soft:rgba(79,196,111,.14);
+      --wip:#D9A13C; --wip-soft:rgba(217,161,60,.14);
+      --stop:#E86A5E; --stop-soft:rgba(232,106,94,.14);
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#121417; --surface:#191C20; --surface-2:#22262B;
+    --ink:#E7E9EA; --ink-2:#BEC4C9; --muted:#8C949C;
+    --line:#282D33; --line-strong:#3A4149;
+    --ember:#F2793C; --ember-soft:rgba(242,121,60,.13);
+    --coral:#FF6A7C; --coral-soft:rgba(255,106,124,.13);
+    --ok:#4FC46F; --ok-soft:rgba(79,196,111,.14);
+    --wip:#D9A13C; --wip-soft:rgba(217,161,60,.14);
+    --stop:#E86A5E; --stop-soft:rgba(232,106,94,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Golos Text","Segoe UI",system-ui,sans-serif;
+    font-size:16.5px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--ember-soft);color:var(--ink)}
+
+  .wrap{display:grid;grid-template-columns:1fr;max-width:1260px;margin:0 auto;padding:0 20px 96px}
+  @media (min-width:1080px){.wrap{grid-template-columns:246px minmax(0,1fr);gap:56px;padding:0 32px 120px}}
+
+  nav.toc{display:none}
+  @media (min-width:1080px){
+    nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;padding:40px 0;border-right:1px solid var(--line);display:block}
+    nav.toc ol{list-style:none;margin:0;padding:0 18px 0 0;display:flex;flex-direction:column;gap:1px}
+    nav.toc a{display:flex;gap:9px;align-items:baseline;text-decoration:none;color:var(--muted);font-size:13px;line-height:1.3;padding:5px 8px;border-radius:4px;border-left:2px solid transparent;margin-left:-2px;transition:background .12s ease,color .12s ease}
+    nav.toc a:hover{color:var(--ink);background:var(--surface)}
+    nav.toc a.on{color:var(--ink);border-left-color:var(--ember);background:var(--surface)}
+    nav.toc .n{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:var(--line-strong);font-variant-numeric:tabular-nums}
+    nav.toc a.on .n{color:var(--ember)}
+    nav.toc .navhead{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--muted);padding:0 8px 12px}
+    nav.toc li.grp{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--line-strong);padding:14px 8px 4px}
+  }
+
+  main{padding-top:40px;min-width:0}
+
+  h1,h2,h3,.display{font-family:"Oswald","Golos Text",sans-serif;font-weight:500;text-wrap:balance}
+  h1{font-size:clamp(46px,8.5vw,88px);line-height:.95;margin:0;font-weight:600;text-transform:uppercase}
+  h2{font-size:clamp(25px,3.4vw,34px);line-height:1.1;margin:0;text-transform:uppercase}
+  h3{font-size:19px;line-height:1.25;margin:0;font-weight:500;letter-spacing:.01em}
+  p{margin:0;max-width:var(--maxw)}
+  a{color:var(--ember)}
+  strong{font-weight:600}
+  em{font-style:normal;color:var(--muted)}
+
+  .eyebrow{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:11.5px;color:var(--muted)}
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:var(--surface-2);padding:.12em .38em;border-radius:3px}
+
+  section{padding:52px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:20px;scroll-margin-top:24px}
+  section > .head{display:flex;flex-direction:column;gap:8px}
+  .lede{font-size:18px;color:var(--ink-2);max-width:66ch}
+
+  ul{margin:0;padding-left:1.15em;max-width:var(--maxw);display:flex;flex-direction:column;gap:7px}
+  li::marker{color:var(--line-strong)}
+  ol.plain{margin:0;padding-left:1.2em;max-width:var(--maxw);display:flex;flex-direction:column;gap:7px}
+
+  header.hero{padding:56px 0 44px;display:flex;flex-direction:column;gap:26px}
+  .hero .kicker{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .hero h1 .lost{display:block;color:var(--ember)}
+  .hero .sub{font-size:19px;color:var(--ink-2);max-width:62ch}
+
+  .tiles{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;grid-template-columns:repeat(2,1fr)}
+  @media (min-width:760px){.tiles{grid-template-columns:repeat(4,1fr)}}
+  .tile{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+  .tile .v{font-family:"Oswald",sans-serif;font-size:30px;line-height:1;font-weight:500;font-variant-numeric:tabular-nums}
+  .tile .k{font-size:12px;color:var(--muted);line-height:1.3}
+  .tile.accent .v{color:var(--ember)}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:3px;white-space:nowrap;border:1px solid transparent}
+  .chip.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+  .chip.wip{background:var(--wip-soft);color:var(--wip);border-color:var(--wip)}
+  .chip.no{background:var(--stop-soft);color:var(--stop);border-color:var(--stop)}
+  .chip.neutral{background:var(--surface-2);color:var(--muted);border-color:var(--line-strong)}
+  .chip.ember{background:var(--ember-soft);color:var(--ember);border-color:var(--ember)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 16px}
+  .legend span.i{display:inline-flex;gap:7px;align-items:center}
+
+  .callout{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:0 6px 6px 0;padding:20px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
+  .callout.quiet{border-left-color:var(--line-strong)}
+  .callout.coral{border-left-color:var(--coral)}
+  .callout .title{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:13px}
+
+  .cards{display:grid;gap:14px;grid-template-columns:1fr}
+  @media (min-width:720px){.cards.two{grid-template-columns:1fr 1fr}}
+  @media (min-width:920px){.cards.three{grid-template-columns:repeat(3,1fr)}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+  .card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .card p{font-size:15px;color:var(--ink-2)}
+  .card ul{font-size:15px;color:var(--ink-2)}
+  .card .skills{display:flex;flex-direction:column;gap:6px;font-size:14.5px;border-top:1px solid var(--line);padding-top:10px}
+  .card .skills b{font-family:"Oswald",sans-serif;font-weight:500;letter-spacing:.01em;color:var(--ink)}
+
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.09em;font-size:11.5px;color:var(--muted);font-weight:400;background:var(--surface-2);border-bottom:1px solid var(--line-strong);white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+  td.num{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.name{font-weight:600;white-space:nowrap}
+  .yes{color:var(--ok);font-weight:600}
+  .no-mark{color:var(--line-strong)}
+
+  .palette{display:flex;flex-wrap:wrap;gap:10px}
+  .sw{display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:6px 10px 6px 6px}
+  .sw i{width:20px;height:20px;border-radius:3px;display:block;border:1px solid rgba(0,0,0,.15)}
+  .sw .lb{font-size:12.5px;line-height:1.2}
+  .sw .hx{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted)}
+
+  /* chronology */
+  .timeline{display:flex;flex-direction:column;border-left:2px solid var(--line-strong);padding-left:0;margin-left:6px}
+  .ev{display:grid;grid-template-columns:74px 1fr;gap:16px;padding:0 0 20px 20px;position:relative}
+  .ev:last-child{padding-bottom:0}
+  .ev::before{content:"";position:absolute;left:-7px;top:7px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--line-strong)}
+  .ev.key::before{background:var(--ember);border-color:var(--ember)}
+  .ev .yr{font-family:"Oswald",sans-serif;font-size:17px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em;padding-top:1px}
+  .ev.key .yr{color:var(--ember)}
+  .ev .txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .ev .txt b{font-family:"Golos Text",sans-serif;font-weight:600;font-size:16px}
+  .ev .txt p{font-size:14.5px;color:var(--ink-2)}
+  @media (max-width:640px){.ev{grid-template-columns:1fr;gap:4px}}
+
+  .phases{display:flex;flex-direction:column;gap:10px}
+  .bar{display:flex;gap:2px;height:38px;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+  .seg{position:relative;display:flex;align-items:center;justify-content:center;font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:11px;background:var(--surface-2);color:var(--muted);overflow:hidden}
+  .seg.done{background:var(--ember);color:#fff}
+  .seg.here{background:var(--ember-soft);color:var(--ember);box-shadow:inset 0 0 0 1px var(--ember)}
+  .scale{display:flex;justify-content:space-between;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted)}
+
+  .steps{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .step{display:grid;grid-template-columns:44px 1fr;background:var(--surface);border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .idx{display:flex;align-items:flex-start;justify-content:center;padding:18px 0 0;font-family:"Oswald",sans-serif;font-size:20px;color:var(--line-strong);background:var(--surface-2);font-variant-numeric:tabular-nums}
+  .step.now .idx{color:var(--ember)}
+  .step .body{padding:16px 20px 18px;display:flex;flex-direction:column;gap:9px;min-width:0}
+  .step .top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+  .step h3{font-family:"Golos Text",sans-serif;font-weight:600;font-size:17px}
+  .step p{font-size:15px;color:var(--ink-2)}
+  .crit{font-size:13.5px;color:var(--muted);border-top:1px dashed var(--line-strong);padding-top:8px;display:flex;gap:8px}
+  .crit b{font-family:"Oswald",sans-serif;text-transform:uppercase;letter-spacing:.09em;font-size:11px;color:var(--muted);font-weight:400;padding-top:2px;white-space:nowrap}
+
+  .gates{display:flex;flex-direction:column;gap:8px}
+  .gate{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:11px 15px;flex-wrap:wrap}
+  .gate .g{font-family:"Oswald",sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;min-width:66px;color:var(--muted)}
+  .gate .t{flex:1;min-width:200px;font-size:15px}
+
+  footer{border-top:1px solid var(--line);margin-top:8px;padding-top:26px;display:flex;flex-direction:column;gap:8px;color:var(--muted);font-size:13.5px}
+  .filelist{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+
+  a:focus-visible,nav.toc a:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Разделы">
+    <div class="navhead">Lost Veleor v1.0</div>
+    <ol>
+      <li class="grp">Состояние</li>
+      <li><a href="#state"><span class="n">00</span><span>Где мы на самом деле</span></a></li>
+      <li><a href="#month"><span class="n">01</span><span>Месяц по плану</span></a></li>
+      <li><a href="#next"><span class="n">02</span><span>Что делать дальше</span></a></li>
+      <li class="grp">Игра</li>
+      <li><a href="#what"><span class="n">03</span><span>Что это за игра</span></a></li>
+      <li><a href="#world"><span class="n">04</span><span>Мир: 984 года</span></a></li>
+      <li><a href="#states"><span class="n">05</span><span>Два государства</span></a></li>
+      <li><a href="#peoples"><span class="n">06</span><span>Народы и герой</span></a></li>
+      <li><a href="#classes"><span class="n">07</span><span>Классы и матрица</span></a></li>
+      <li><a href="#acts"><span class="n">08</span><span>Три акта</span></a></li>
+      <li><a href="#camp"><span class="n">09</span><span>Лагерь</span></a></li>
+      <li class="grp">Механика</li>
+      <li><a href="#combat"><span class="n">10</span><span>Ядро боя</span></a></li>
+      <li><a href="#levels"><span class="n">11</span><span>Уровни и онбординг</span></a></li>
+      <li><a href="#loot"><span class="n">12</span><span>Лут и прогрессия</span></a></li>
+      <li><a href="#economy"><span class="n">13</span><span>Экономика и инвентарь</span></a></li>
+      <li><a href="#endgame"><span class="n">14</span><span>Эндгейм: Разломы</span></a></li>
+      <li><a href="#between"><span class="n">15</span><span>Между забегами</span></a></li>
+      <li><a href="#seasons"><span class="n">16</span><span>Сезоны и рейтинг</span></a></li>
+      <li><a href="#story"><span class="n">17</span><span>История и обучение</span></a></li>
+      <li><a href="#bestiary"><span class="n">18</span><span>Бестиарий и острова</span></a></li>
+      <li><a href="#ui"><span class="n">19</span><span>Интерфейс и звук</span></a></li>
+      <li><a href="#memory"><span class="n">20</span><span>Память мира</span></a></li>
+      <li><a href="#numbers"><span class="n">21</span><span>Числа баланса</span></a></li>
+      <li class="grp">Производство</li>
+      <li><a href="#art"><span class="n">22</span><span>Арт-направление</span></a></li>
+      <li><a href="#pipeline"><span class="n">23</span><span>Визуальный стандарт</span></a></li>
+      <li><a href="#delivered"><span class="n">24</span><span>Арт: что сдано</span></a></li>
+      <li><a href="#pelag"><span class="n">25</span><span>Пелаг в игре</span></a></li>
+      <li><a href="#benchmark"><span class="n">26</span><span>Эталон: Hell Clock</span></a></li>
+      <li><a href="#tech"><span class="n">27</span><span>Техника и код</span></a></li>
+      <li><a href="#risk"><span class="n">28</span><span>Риски и бизнес</span></a></li>
+      <li><a href="#open"><span class="n">29</span><span>Открытые вопросы</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="kicker">
+        <span class="eyebrow">Концепт-документ · версия 1.1 · 29 августа 2026</span>
+        <span class="chip neutral">Unity 6.5 · URP · C#</span>
+        <span class="chip ember">Соло + AI</span>
+      </div>
+      <h1><span class="lost">Lost</span>Veleor</h1>
+      <p class="sub">Изометрическая гриндилка о войне, которую нельзя закончить. Одна расколотая империя, восемьсот лет вражды за клочок островов, правитель, сидящий у власти восемьсот двадцать лет, — и герой, который дойдёт до него и обнаружит, что это ничего не изменило.</p>
+
+      <div class="tiles">
+        <div class="tile accent"><span class="v">4</span><span class="k">дня активной работы над проектом</span></div>
+        <div class="tile"><span class="v">168</span><span class="k">зелёных тестов в детерминированном ядре</span></div>
+        <div class="tile"><span class="v">32</span><span class="k">клипа анимации, из них 6 на 3D-персонаже</span></div>
+        <div class="tile"><span class="v">1</span><span class="k">production-персонаж живёт в забеге</span></div>
+      </div>
+
+      <div class="legend">
+        <span class="i"><span class="chip ok">Зафиксировано</span> менять только по прямому решению владельца</span>
+        <span class="i"><span class="chip ember">Рекомендация</span> предложено, не утверждено</span>
+        <span class="i"><span class="chip wip">Открыто</span> ждёт решения</span>
+        <span class="i"><span class="chip no">Риск</span> может сорвать проект</span>
+      </div>
+    </header>
+
+    <section id="state">
+      <div class="head">
+        <span class="eyebrow">00 · Честная оценка</span>
+        <h2>Где мы на самом деле</h2>
+      </div>
+      <div class="callout">
+        <div class="title">Вердикт владельца, 28 августа</div>
+        <p>«Играть пока невозможно. Это сырой концепт и не более».</p>
+        <p><strong>Это верная оценка, и документ с ней согласен.</strong> Собран технический вертикальный срез, а не игра. Разница принципиальная, и её нельзя замазывать зелёными тестами.</p>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Что действительно есть</h3><span class="chip ok">Готово</span></div>
+          <ul>
+            <li>Детерминированное ядро на <code>Fix64</code>: бой, статы, предметы, снаряжение, генерация уровня, петля забега, лагерь.</li>
+            <li>Персонаж бьёт, получает урон, умирает; лут падает и надевается; забег воспроизводится с сида побитово.</li>
+            <li><strong>Управление жанра на месте:</strong> движение по клику, приказ атаковать до смерти цели, расталкивание тел, круг под ногами, смена курсора над врагом, полоски здоровья, HUD с кулдаунами.</li>
+            <li><strong>Первый 3D-персонаж играется</strong> — модель, риг, шесть анимаций, материал (раздел 25).</li>
+            <li>Пять народов, пятнадцать пар «народ × класс», палитры и силуэтные листы.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Чего нет — и почему играть нельзя</h3><span class="chip no">Не сделано</span></div>
+          <ul>
+            <li><strong>Удар собран, но не выверен.</strong> Hit-stop, вспышка, искры, импульс камеры и звук теперь работают в связке — а вот длительности не сверены ни с чем, кроме собственного ощущения. Иерархия «обычный / крит / убийство» на слух ещё не разведена.</li>
+            <li><strong>Арена без границ.</strong> Синие квадраты по краям — картинка, а не стены: из боя можно просто уйти.</li>
+            <li><strong>Одна способность из четырёх.</strong> Панель пустая на три четверти — билда нет, значит нет и жанра.</li>
+            <li><strong>Контента на демонстрацию:</strong> пять модулей комнат и две базы предметов, зашитые в код.</li>
+            <li><strong>Картинка прототипная.</strong> Враги — technical-baseline геометрия, которую сам визуальный стандарт запрещает показывать как результат. У главного героя сетка получена схлопыванием миллиона треугольников и требует ретопологии.</li>
+            <li><strong>Нет сохранения.</strong> Выход из игры стирает лагерь.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="lede">Правильный вывод из этого не «всё плохо», а «фундамент кончился, начался следующий этап». Фундамент — самая скучная и самая невозвратная часть работы: детерминизм, статы и петля забега либо заложены правильно сейчас, либо переписываются через год. Они заложены. Дальше идёт работа, которую видно и слышно.</p>
+    </section>
+
+    <section id="month">
+      <div class="head">
+        <span class="eyebrow">01 · Позиция на роадмапе</span>
+        <h2>На каком мы месяце</h2>
+      </div>
+      <p class="lede">Ответ раздваивается, и обе половины важны.</p>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>По календарю</h3><span class="chip neutral">Дни</span></div>
+          <p>Работа идёт с 26 августа 2026. Сегодня четвёртый день. Ни один месяц из двадцати шести формально не прожит.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>По содержанию</h3><span class="chip wip">Месяц 2–3 из 26</span></div>
+          <p>Сделанное соответствует <strong>концу второго и входу в третий месяц</strong> — последней трети фазы «Фундамент». Такой темп даёт связка «соло + AI»: за три дня закрыт объём, на который в смете заложены месяцы.</p>
+        </div>
+      </div>
+      <div class="phases">
+        <div class="bar" role="img" aria-label="Фаза 1 из 5, Фундамент, пройдена примерно на две трети">
+          <div class="seg done" style="flex:2">Фундамент</div>
+          <div class="seg here" style="flex:1">Мы здесь</div>
+          <div class="seg" style="flex:6">Боёвка · 6 мес</div>
+          <div class="seg" style="flex:8">Контент · 8 мес</div>
+          <div class="seg" style="flex:4">Системы · 4</div>
+          <div class="seg" style="flex:5">Полировка · 5</div>
+        </div>
+        <div class="scale"><span>М0</span><span>М3</span><span>М9</span><span>М17</span><span>М21</span><span>М26 · релиз 1.0</span></div>
+      </div>
+      <div class="callout quiet">
+        <div class="title">Оговорка, без которой цифра врёт</div>
+        <p>Фаза «Фундамент» в плане заканчивается <em>играбельным</em> срезом, а у нас срез <em>технический</em>. Честная формулировка: <strong>по коду мы в конце третьего месяца, по ощущению от игры — в конце первого.</strong> Разрыв закрывается разделом 02, и он небольшой: неделя-две работы, почти вся в презентационном слое.</p>
+        <p>Второе: множитель занятости. Смета в 26 месяцев считана на 40 часов в неделю. При 20 часах срок удваивается — путь A превращается в 52 месяца. Это самая крупная неизвестная во всём плане, и её надо измерить на реальных двух неделях, а не оценить.</p>
+      </div>
+      <div class="callout coral">
+        <div class="title">Решение по Early Access — срок подошёл</div>
+        <p>Договорённость была: вернуться к вопросу на третьем месяце, когда появится срез. Срез появился. Путь A (сразу 1.0) — 26 месяцев до первого рубля; путь B (EA) — 15 месяцев до первых денег при примерно той же дате 1.0. <strong>Первые три месяца у обоих путей одинаковы, и они закончились — значит, откладывать решение больше нельзя бесплатно.</strong></p>
+      </div>
+    </section>
+
+    <section id="next">
+      <div class="head">
+        <span class="eyebrow">02 · План движения</span>
+        <h2>Что делать дальше</h2>
+      </div>
+      <p class="lede">Порядок не произвольный. Цель первых четырёх шагов одна: <strong>довести проект до состояния, в котором в него можно играть и хотеть сыграть ещё раз.</strong> Пока это не сделано, любая новая система, новый персонаж и новая строчка контента увеличивают то, что придётся переделывать.</p>
+
+      <div class="steps">
+        <div class="step now">
+          <div class="idx">1</div>
+          <div class="body">
+            <div class="top"><h3>Сесть и сыграть три забега подряд</h3><span class="chip ember">Сегодня · 1 час</span></div>
+            <p>До единой строчки нового кода. Запустить <code>razlom/</code>, пройти лагерь → Разлом → награда → лагерь трижды и записать десять строк: где скучно, где непонятно, где хочется ещё. Это единственный источник приоритетов, который не врёт.</p>
+            <div class="crit"><b>Критерий</b><span>Письменный ответ на вопрос «поймал ли я себя на том, что запустил ещё один забег вместо того, чтобы писать код».</span></div>
+          </div>
+        </div>
+
+        <div class="step now">
+          <div class="idx">2</div>
+          <div class="body">
+            <div class="top"><h3>Сделать удар приятным — Gate 4 на текущей графике</h3><span class="chip ember">Неделя 1 · в работе</span></div>
+            <p>Самая дешёвая работа с самым большим эффектом на играбельность. Ничего не моделировать. Собрать полную цепочку подтверждённого удара на существующих спрайтах: замах → дуга оружия → контакт → короткий hit-stop → вспышка цели → искры → слабый импульс камеры → нокбэк → цифра → звук. Плюс иерархия силы: обычный удар, крит, удар по герою и убийство обязаны отличаться на глаз и на слух.</p>
+            <p><strong>Половина шага сделана.</strong> Цепочка собрана и звучит: <code>CombatJuiceView</code>, <code>CombatCameraJuice</code>, <code>CombatAudio</code> с синтезированными на лету звуками, агрегация событий кадра в один импульс. Здесь же поймана и починена частая ошибка: горение тикало тридцать раз в секунду, каждый тик просил hit-stop, и игра вставала намертво — <em>урон по времени теперь отдельный вид события и на паузу не влияет</em>.</p>
+            <p>Осталось то, что нельзя сделать вслепую: <strong>сверить длительности с эталоном</strong> (раздел 26) и развести на глаз и на слух обычный удар, крит, удар по герою и убийство.</p>
+            <div class="crit"><b>Критерий</b><span>Человек со стороны смотрит 20 секунд без объяснений и сразу находит героя, различает обычный удар и крит, замечает момент убийства.</span></div>
+          </div>
+        </div>
+
+        <div class="step now">
+          <div class="idx">3</div>
+          <div class="body">
+            <div class="top"><h3>Три оставшиеся способности Печатника</h3><span class="chip ember">Неделя 1–2</span></div>
+            <p>«Печать пламени» доказала все механизмы дерева: стадии, узлы, канонический порядок применения. Печать оков, Строка и Слово пишутся по её образцу. Следом — привязка узлов к очкам уровня, иначе дерево некуда тратить.</p>
+            <div class="crit"><b>Критерий</b><span>Четыре слота панели заняты рабочими способностями; <code>DeterminismTests</code> и <code>AbilityTests</code> зелёные.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="idx">4</div>
+          <div class="body">
+            <div class="top"><h3>Gate 0 — один целевой кадр боя</h3><span class="chip wip">Неделя 2</span></div>
+            <p>Прежде чем тратить недели на production-модели, нарисовать <strong>один</strong> кадр: герой, три-четыре врага, арена, свет, VFX, цифры и HUD одновременно, в трёх версиях — цвет, grayscale, силуэт. Это эталон, с которым сверяется всё дальнейшее, и защита от сползания в тёмное фентези.</p>
+            <div class="crit"><b>Критерий</b><span>Кадр проходит формулу трёх референсов: камера Diablo, читаемость Brawl Stars, полировка Genshin. Провал по любому пункту — кадр не принят.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="idx">5</div>
+          <div class="body">
+            <div class="top"><h3>Сохранение и загрузка</h3><span class="chip wip">Неделя 3</span></div>
+            <p>Теперь есть что сохранять: лагерь, кошелёк, сумка, надетое, открытые услуги. JSON + номер версии + цепочка миграций + HMAC-подпись. В сейве хранится <strong>рецепт</strong> предмета, а не посчитанные статы — иначе любой ребаланс аффиксов потребует миграции.</p>
+            <div class="crit"><b>Критерий</b><span>Выход из игры и запуск заново не теряют ни одной вещи; старый сейв читается новой версией.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="idx">6</div>
+          <div class="body">
+            <div class="top"><h3>Летопись — вторая механика лагеря</h3><span class="chip wip">Неделя 4</span></div>
+            <p>Полигон сделан первым, как и планировалось. Летопись — следующая: сетка ячеек, заполняемая находками из Разлома, ячейка = абзац мира плюс небольшой постоянный бонус. Она переиспользует уже написанный лор и проверяется на живом человеке до того, как в неё вложится художник. Тематически это центр игры.</p>
+            <div class="crit"><b>Критерий</b><span>После забега есть причина зайти в лагерь, а не жать «повторить». Проверяется на себе.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="idx">7</div>
+          <div class="body">
+            <div class="top"><h3>Production-персонажи и Gates 1–5</h3><span class="chip neutral">Месяц 2</span></div>
+            <p>Только после Gate 0. Заменить technical-baseline на production-модели Pelag и Orvill по этапам визуального документа: lookdev → риг и деформации → локомоция и комбо → juice → интеграция в живой забег. Старый fallback не удалять, пока новый префаб не проверен в текущем забеге.</p>
+            <div class="crit"><b>Критерий</b><span>Gate 5: всё работает в текущем забеге, есть Windows-билд, capture 1080p/60 и <code>production/reports/VERTICAL_SLICE_HANDOFF.md</code> со статусами PASS / FAIL / BLOCKED / TEMPORARY.</span></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="idx">8</div>
+          <div class="body">
+            <div class="top"><h3>Открыть страницу в Steam</h3><span class="chip neutral">Месяц 3</span></div>
+            <p>Вишлисты копятся всё время, пока страница живёт, и это бесплатно. Порог для нормального запуска — 7 000. Но страница без движущейся картинки конвертирует плохо, поэтому открывать сразу после шага 7, с гифкой боя. Тогда же — решение по Early Access.</p>
+            <div class="crit"><b>Критерий</b><span>Страница опубликована, на ней капсула, гифка боя и три скриншота, прошедшие Gate 0.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Чего в ближайший месяц не делать</div>
+        <ul>
+          <li>Не ставить на конвейер остальные тринадцать пар «народ × класс». Пайплайн не доказан Gate 5.</li>
+          <li>Не рисовать красивый интерфейс дерева способностей. Списка чекбоксов достаточно, пока не доказано, что в игру интересно играть.</li>
+          <li>Не брать DOTS/ECS. Бюджет тика сейчас — четыре сотых процента.</li>
+          <li>Не добавлять систем, которых нет в плане: ни крафта, ни торговцев, ни сезонов, ни рейтингов.</li>
+          <li>Не трогать <code>code/</code> — папка устарела и разошлась с <code>razlom/</code>, её надо удалить.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="what">
+      <div class="head">
+        <span class="eyebrow">03 · Продукт</span>
+        <h2>Что это за игра</h2>
+      </div>
+      <p class="lede">Одной фразой: изометрическая ARPG-гриндилка в ярком мультяшном фентези, где бой ведётся почти сам, а всё удовольствие живёт в прогрессии.</p>
+      <p>Игрок выбирает народ, сторону и класс, проходит компактную кампанию из трёх актов и доходит до человека, развязавшего войну. Он его убивает. Война продолжается. С этого момента открываются Разломы — места, где война въелась в землю и не остановится никогда, и где игрок проведёт следующие семьдесят пять часов.</p>
+      <p>Визуально это «живой комикс»: яркие цвета, укрупнённые мягкие формы, плоские тени и чёрные обводки.</p>
+      <div class="tablewrap">
+        <table>
+          <tbody>
+            <tr><td class="name">Платформа</td><td>Steam / Windows, оффлайн. Unity 6 LTS + URP + C#</td></tr>
+            <tr><td class="name">Модель</td><td>Premium $10–20, без доната</td></tr>
+            <tr><td class="name">Кампания</td><td class="num">3 акта · 12–15 ч</td></tr>
+            <tr><td class="name">Максимальный уровень</td><td class="num">50</td></tr>
+            <tr><td class="name">Цель удержания</td><td class="num">100 часов</td></tr>
+            <tr><td class="name">Режим</td><td>Строго соло, одна сложность</td></tr>
+            <tr><td class="name">Производительность</td><td class="num">60 FPS · 40 врагов · интегрированная графика пятилетней давности</td></tr>
+            <tr><td class="name">Название</td><td>«Забытый Велеор». Зафиксировано. «Разлом» — имя эндгеймовой механики, не игры; папка <code>razlom/</code> остаётся кодовым именем</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="title">Главный принцип проекта</div>
+        <p>Всё, что не является решением игрока, перестаёт работать примерно через десять часов. Каждая система проверяется одним вопросом: <strong>какое решение здесь принимает игрок и что он теряет, выбрав иначе.</strong> Если ответа нет — система лишняя.</p>
+      </div>
+    </section>
+
+    <section id="world">
+      <div class="head">
+        <span class="eyebrow">04 · Сеттинг</span>
+        <h2>Мир: девятьсот восемьдесят четыре года</h2>
+      </div>
+      <div class="card">
+        <div class="top"><h3>Империя Велеор</h3><span class="chip ok">Зафиксировано</span></div>
+        <p>Орвилла и Вола не было. Был Велеор — одно государство на одном континенте, без пролива посередине. Технологий мало, магии много. Народы заняты своими делами: пелаги возят рыбу, неморы держат леса, арваты — скот, гелиды начинают вести летопись, потому что именно тогда появляется письменность. Цинеров ещё нет: на вулканическом востоке живут горные племена.</p>
+        <p><em>Зачем империя нужна: она объясняет разом родство двух стран, общие фамилии, общий язык на латинских корнях и то, откуда у Орвилла взялся готовый отлаженный аппарат. Он не построен — он унаследован.</em></p>
+      </div>
+
+      <h3>Хронология</h3>
+      <div class="timeline">
+        <div class="ev"><span class="yr">0–100</span><div class="txt"><b>Золотой век Велеора</b><p>Мир, единое государство, изобилие магии. Появляется письменность — и вместе с ней Коллегия Печатей, институт, где письмо доведено до того, что знаком можно связать не человека, а место.</p></div></div>
+        <div class="ev"><span class="yr">100–140</span><div class="txt"><b>Великая Надпись</b><p>Главный проект Коллегии: связать спящие вулканы знаком, чтобы земля стала безопасной навсегда. Статиус и Матус — оба из Коллегии, оба на этом проекте.</p></div></div>
+        <div class="ev"><span class="yr">145–153</span><div class="txt"><b>Предупреждения ложатся в архив</b><p>Надпись доходит до глубоких жерл. Кто-то пишет, что связать можно только то, что понимаешь. Записку подшивают.</p></div></div>
+        <div class="ev key"><span class="yr">154</span><div class="txt"><b>Раскол</b><p>Извержения спящих вулканов раскалывают континент на две части — по той самой линии, вдоль которой вели Надпись. Веранские острова решают остаться под Волом. Ходят легенды, что бедствие было спланировано. Кто теперь узнает.</p></div></div>
+        <div class="ev"><span class="yr">154–164</span><div class="txt"><b>Коллегия становится Цензоратом</b><p>Империя своими глазами увидела, что делает неучтённый знак. Письмо перестаёт быть ремеслом и становится государственным делом: лицензии, реестры, разрешения. Так появляется должность Цензора.</p></div></div>
+        <div class="ev key"><span class="yr">164</span><div class="txt"><b>Статиус приходит к власти в Орвилле</b><p>Человек из имперской верхушки получает страну через десять лет после катастрофы, которая эту страну и создала. Волом правит Матус — его давний товарищ по Коллегии, отношения хорошие.</p></div></div>
+        <div class="ev"><span class="yr">177</span><div class="txt"><b>Междоусобица на Веранских островах</b><p>Около пяти процентов островитян недовольны властью Вола и хотят под Орвилл. Начинаются внутренние войны.</p></div></div>
+        <div class="ev"><span class="yr">182</span><div class="txt"><b>Альтран</b><p>Правление Матуса заканчивается. Вол впервые выбирает человека из народа.</p></div></div>
+        <div class="ev key"><span class="yr">184</span><div class="txt"><b>Орвилл вводит войска</b><p>Междоусобица у соседа объявлена угрозой собственной безопасности. Расчёт — закончить за одну ночь.</p></div></div>
+        <div class="ev"><span class="yr">187</span><div class="txt"><b>Три года спустя</b><p>Народ Орвилла не понимает, почему война за острова всё ещё идёт.</p></div></div>
+        <div class="ev"><span class="yr">195</span><div class="txt"><b>Пропаганда</b><p>Ненависть к Волу и островам перестаёт возникать сама и начинает производиться.</p></div></div>
+        <div class="ev"><span class="yr">200</span><div class="txt"><b>Альтран уходит. Война — нет.</b><p>Первая смена власти, которая ничего не изменила. Дальше их будут десятки.</p></div></div>
+        <div class="ev"><span class="yr">200–984</span><div class="txt"><b>Восемь веков</b><p>В Воле правители сменяются. В Орвилле — нет. Технологии развиваются под войну: улучшенное письмо, боевые пауки военных учёных Орвилла, литейный бум. Из горных племён вулканического востока рождается новый народ — цинеры. Из жерл добывают лавидиум. Затем большие залежи лавидиума находят на Веранских островах — и конфликт обостряется заново.</p></div></div>
+        <div class="ev key"><span class="yr">984</span><div class="txt"><b>Сейчас</b><p>Восемьсот лет войны. Восемьсот двадцать лет правления Статиуса.</p></div></div>
+      </div>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>У войны две причины, и обе настоящие</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><strong>Заявленная:</strong> лавидиум. Стратегический металл, залежи на спорных островах, без него не куётся ни доспех, ни оружие. Это правда, это можно объяснить народу, и это работает восемьсот лет.</p>
+          <p><strong>Настоящая:</strong> Статиусу интересно. Для него восьмисотлетняя война — доска, за которой он сидит восемь веков. Именно поэтому острова так и не поделены: решение испортило бы партию.</p>
+          <p><em>Война с двумя причинами работает вдвое лучше войны с одной. У аппарата есть что говорить, а правду знают человек десять — и все они сидят с ним за той же доской.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Враг — это машина, а не народ</h3><span class="chip no">Железное правило</span></div>
+          <p>Орвилл и Вол родственны, у героя может быть родня по обе стороны фронта. Виноваты военный аппарат, его руководители и восемь веков накопленных последствий.</p>
+          <p>Каждый рядовой солдат Орвилла остаётся человеком — с именем, домом и письмом в кармане. Конструкция держится на трёх опорах: <strong>финал, где война продолжается без Статиуса; письма с убитых; и то, что рядовой враг никогда не подан чудовищем.</strong> Ни одну из трёх нельзя выбросить.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="title">Финал: игрок побеждает, и это не помогает</div>
+        <p>Герой доходит до Статиуса — Цензора, который ведает письмом, реестрами и разрешениями, а значит держит в руках и бумагу, и магию. И убивает его. Война продолжается: аппарат, который строили восемь веков, больше не нуждается в том, кто им управляет. Титры идут на фоне войны, лишившейся автора.</p>
+        <p><strong>Почему он жив 820 лет.</strong> Статиус знал, что записанное становится действительным, и вписал себя в реестр живых, откуда никогда себя не вычёркивал. Бессмертие не магическое, а канцелярское. <strong>Как его убить:</strong> обычный бой, но он поднимается снова и снова, пока игрок не уничтожит реестровую запись прямо в арене — механика босса и тема совпадают.</p>
+        <p><strong>И ключевая деталь: Цензор — это должность.</strong> Герой убивает того, кто её занимает; кресло остаётся, место занимает следующий по штатному расписанию.</p>
+      </div>
+
+      <div class="cards two">
+        <div class="card">
+          <h3>Как игрок это узнаёт</h3>
+          <p>Никаких кат-сцен с изложением истории. Игрок собирает её сам: по документам, приказам и летописям гелидов — единственного народа, который вёл непрерывную запись все восемьсот лет. Они и есть доказательство, что через века идёт одна и та же подпись одной руки.</p>
+          <p>Самая сильная нить — арифметическая. Раскол в 154, Статиус у власти в 164, и он был в имперской элите ещё до раскола. Игрок должен сложить это сам.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Аллегория</h3><span class="chip ok">Решено</span></div>
+          <p>Высказывание намеренное, но полностью скрытое: никаких узнаваемых привязок, флагов, лозунгов и отсылок к реальным людям или культурам. История остаётся, поверхность вымышленная.</p>
+          <p>Отсюда постоянное правило палитры: <strong>синий или голубой нельзя сочетать с жёлтым или золотым в одном дизайне.</strong> Кремовый, кость и неокрашенный лён жёлтым не считаются — держать их без золотого подтона.</p>
+          <p><em>Следствие для маркетинга: страница в Steam и трейлер продают стиль, бой и лут. Тема открывается внутри.</em></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="states">
+      <div class="head">
+        <span class="eyebrow">05 · География</span>
+        <h2>Два государства</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Орвилл · запад · аппарат</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Столица: <strong>Вилберг</strong>. Девиз: «Храбрость, защита, отечество!»</p>
+          <p>Достопримечательность: исполинские железные мосты, соединяющие горные цепи на юге. Безумно красивые и безумно дорогие.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Вол · восток · живая культура</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Столица: <strong>Воллхолл</strong>. Девиз: «Земля, хлеб, воля».</p>
+          <p>Достопримечательность: красные ягодные поля под столицей, растущие в три яруса.</p>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="title">Девизы — это контраст в одну строку</div>
+        <p>У Орвилла три понятия: храбрость, защита, отечество. У Вола три предмета: земля, хлеб, воля. Абстракция против того, что можно потрогать — весь конфликт машины и живой культуры умещается в шесть слов. И «воля» читается двояко: как свобода и как своеволие, за которое их и не любят в Вилберге.</p>
+      </div>
+      <p><strong>Мосты и ягодные поля — не декорация, а инструмент.</strong> Мосты Орвилла проходятся в третьем акте: игрок идёт убивать по тому, чем страна гордится, и видит, что железо здесь красивее людей. Ягодные поля — первое, что игрок видит в первом акте, и то, что должно быть сожжено к его концу.</p>
+      <div class="callout quiet">
+        <div class="title">Открыто · следующий блок мира</div>
+        <p>Влиятельные семьи. Локальные герои. Главные праздники и сезонные фестивали. Уникальные животные — мирные и агрессивные — свои на каждом континенте. <em>Военные мемориалы закрыты, см. раздел 20.</em></p>
+      </div>
+    </section>
+
+    <section id="peoples">
+      <div class="head">
+        <span class="eyebrow">06 · Персонаж</span>
+        <h2>Народы и происхождение героя</h2>
+      </div>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Магия редка и требует разрешения</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Заклинание в этом мире — знак, написанный на бумаге. Знаки дороги, требуют времени и материалов, и потому являются государственным ресурсом: аппарат Орвилла ведёт реестры и выдаёт лицензии на письмо. Поэтому армии по-прежнему ходят с топорами и луками, а маг — не бродячий чародей, а либо чиновник при печати, либо преступник.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Герой — дезертир</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Был в строю, увидел достаточно, ушёл. Вне закона для обеих армий — что заодно механически объясняет, почему на игрока нападают все подряд, включая своих. Герою-Печатнику незаконное письмо даёт конкретную статью, по которой его ищут.</p>
+        </div>
+      </div>
+
+      <p class="lede">Пять народов на корнях имперского языка, у каждого свой край и три доступных класса. Имя — эндоним; в интерфейсе игрок видит и привычное описательное имя.</p>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Гелиды · «горцы»</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>gelidus — ледяной.</em> Снежные хребты крайнего севера на обоих континентах. Немногочисленны, упрямы, говорят медленно. Ведут летопись с самого появления письменности — девятьсот восемьдесят четыре года непрерывной записи. Считают спешку формой глупости.</p>
+          <div class="skills">
+            <span><b>Летопись</b> — каждый убитый враг делает всех следующих врагов этого же типа чуть уязвимее. Копится весь забег, сбрасывается на выходе.</span>
+            <span><em>Многослойная шерсть, камень и глубокая синь, костяные застёжки, налобные ленты с вырезанным письмом.</em></span>
+            <span>Щитоносец · Печатник · Лучник</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Пелаги · «островитяне»</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>pelagus — открытое море.</em> Тот самый архипелаг. Вся их записанная история — война; никто из живых не помнит мира. Отсюда висельный юмор, суеверия и абсолютная практичность: у пелага нет ничего, что нельзя починить верёвкой.</p>
+          <div class="skills">
+            <span><b>Ничего нового</b> — смертельный удар не убивает: остаёшься с единицей здоровья и на две секунды неуязвим. Раз за Разлом, заряд возвращается после сотни убийств.</span>
+            <span><em>Латаная слоистая ткань, коралловый как фирменный цвет, канат, крюки, просоленная кожа.</em></span>
+            <span>Абордажник · Головорез · Лучник</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Неморы · «лесной народ»</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>nemus — священная роща.</em> Густые леса северо-запада Орвилла и лесные пятна Вола. Замкнуты, ритуальны, внимательны. Всю нынешнюю войну прячут и переводят людей через границу — обеих сторон, без разбора. За это их не любит ни одна армия.</p>
+          <div class="skills">
+            <span><b>Тропа</b> — каждое убийство оставляет метку. Наступая на свои метки, чуть лечишься и ускоряешься.</span>
+            <span><em>Слои зелени и коры, тканые ленты, рогатые уборы из ветвей и кости.</em></span>
+            <span>Печатник · Головорез · Лучник</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Арваты · «долинники»</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>arvum — пашня.</em> Центральные равнины обоих континентов. Самый многочисленный народ — и потому самый мобилизованный, сожжённый и оккупированный. Большинство солдат по обе стороны фронта — арваты. Тематическое сердце игры: один народ убивает сам себя, потому что живёт по обе стороны границы.</p>
+          <div class="skills">
+            <span><b>Нас много</b> — убийство в окружении четырёх и более врагов даёт стак стойкости; стаки снижают получаемый урон и спадают медленно.</span>
+            <span><em>Некрашеный лён, охра и ржавчина, простые геометрические полосы, широкие пояса.</em></span>
+            <span>Щитоносец · Абордажник · Головорез</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Цинеры · «пепельные»</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>cinis — пепел.</em> Вулканический восток Вола. Самый молодой народ: при империи их не существовало. Выросли из горных племён за восемь веков литейного бума — то есть буквально созданы войной. Металлурги, несущие тяжёлую вину: военную машину Орвилла построили на их ремесле. Каждый цинер знает, что оружие, которым жгут его край, отлито по его же рецепту.</p>
+          <div class="skills">
+            <span><b>Жар в горне</b> — убийства копят Жар, Жар разгоняет скорость атаки. На максимуме начинаешь гореть сам; можно слить Жар во вспышку и обнулить счётчик.</span>
+            <span><em>Закопчённая ткань с раскалённо-оранжевыми акцентами, металлические пластины, лицевые повязки от гари.</em></span>
+            <span>Щитоносец · Абордажник · Печатник</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Происхождение — линза, а не ветка сюжета</h3><span class="chip ember">Рекомендация</span></div>
+          <p>Создание персонажа: народ × сторона (Орвилл или Вол — повествовательный флаг, ноль влияния на баланс) × класс. Акты, боссы, события и финал одни и те же. Меняются стартовая сцена и хаб, вариант реплики у NPC, какие боссы для тебя личные, и один-два уникальных момента на акт. Процентов пятнадцать дополнительного текста, а не вторая кампания.</p>
+          <p><em>Дезертир из Орвилла всю игру убивает собственную армию и идёт казнить собственное командование. Дезертир из Вола — мститель, который в третьем акте приходит в страну, где живёт его родня. Одна кампания, разный вес.</em></p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="title">Письма с убитых</div>
+        <p>С солдат падают письма домой, собранные из шаблонов: имя, край, к кому обращено, о чём. Стоят почти ничего. Но регулярно будет выпадать письмо, адресованное в родной край игрока — и объяснять, что такое братоубийственная война, уже не придётся. Особенно жестоко у арватов: если игрок выбрал долинника, такие письма приходят постоянно, а не изредка.</p>
+      </div>
+      <p><em>Открыто: пятнадцать разрешённых пар — это пятнадцать маленьких историй. Немор-абордажник — лесной человек, научившийся абордажу: значит он уходил к морю, значит что-то случилось. Пятнадцать строчек флейвор-текста на экране создания персонажа дадут больше мира, чем страница лора.</em></p>
+    </section>
+
+    <section id="classes">
+      <div class="head">
+        <span class="eyebrow">07 · Классы</span>
+        <h2>Классы и матрица</h2>
+      </div>
+      <div class="callout quiet">
+        <div class="title">Рамка</div>
+        <p>Если война идёт восемьсот лет, любой человек в этом мире — чей-то ответ на неё. Классов ровно столько, сколько существует ответов: закрыть собой (Щитоносец), пойти убивать (Абордажник), писать и приказывать (Печатник), уйти и не подчиняться (Головорез), бить издалека, чтобы не видеть лица (Лучник). Механика от этого не меняется ни на грамм. Меняется то, что игрок про себя понимает, когда выбирает.</p>
+      </div>
+      <p>У каждого класса ровно четыре способности и своё дерево на каждую. Набор собран как мини-комплект: чем начать, чем управлять толпой, чем добить, чем выжить.</p>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Щитоносец</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>«Тот, кто закрывает собой».</em> Держит землю и наказывает толпу.</p>
+          <div class="skills">
+            <span><b>Таранный шаг</b> — рывок вперёд, отбрасывает всех на линии и коротко оглушает.</span>
+            <span><b>Стена</b> — упирает щит: огромное снижение урона спереди, снаряды отражаются.</span>
+            <span><b>Гул</b> — удар по щиту стягивает всех врагов вокруг к себе и замедляет.</span>
+            <span><b>Обвал</b> — размашистый удар сверху, урон растёт от числа задетых.</span>
+            <span><em>Петля: стянул Гулом → закрылся Стеной → обрушил Обвал. Силуэт: широкий прямоугольник, щит шире тела.</em></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Абордажник</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>«Тот, кто пошёл убивать».</em> Подвижная резня и добивание.</p>
+          <div class="skills">
+            <span><b>Крюк</b> — мелкого врага дёргает к себе, к крупному подтягивает себя.</span>
+            <span><b>Вихрь</b> — круговой мах саблей вокруг себя.</span>
+            <span><b>Скользящий шаг</b> — рывок сквозь врагов, оставляя разрез.</span>
+            <span><b>Расплата</b> — добивание раненой цели; если добил — кулдаун возвращается.</span>
+            <span><em>Возврат кулдауна превращает зачистку в цепочку: одна удачная волна — и ты десять секунд перелетаешь от трупа к трупу. Силуэт: узкий, наклонён вперёд, свисающая цепь с крюком.</em></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Печатник</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>«Тот, кто пишет».</em> Площадь и контроль. Пишет незаконно: лицензии выдаёт аппарат.</p>
+          <div class="skills">
+            <span><b>Печать пламени</b> — брошенный знак поджигает участок. <span class="chip ok">В коде</span></span>
+            <span><b>Печать оков</b> — положенный знак держит и замедляет всех, кто его пересёк.</span>
+            <span><b>Строка</b> — линия письма по земле, детонирует последовательно по всей длине.</span>
+            <span><b>Слово</b> — следующие три знака срабатывают вдвое сильнее.</span>
+            <span><em>Приказ и заклинание в этом мире — один жанр текста: бумага, которая заставляет мир подчиниться. Силуэт: конус подола, посох с бумажными лентами, парящие ромбы знаков.</em></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Головорез</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>«Тот, кто ушёл».</em> Партизан и диверсант. Перестал драться честно, потому что честно дерущиеся кончились.</p>
+          <div class="skills">
+            <span><b>Из тени</b> — уход в скрыт; следующий удар критует и вешает кровотечение.</span>
+            <span><b>Кровопуск</b> — накладывает и складывает кровотечение на цель.</span>
+            <span><b>Веер ножей</b> — бросок по конусу, разносит висящие кровотечения на соседей.</span>
+            <span><b>Затишье</b> — короткая невидимость, кулдауны тикают вдвое быстрее.</span>
+            <span><em>Накопил на одном, плеснул на толпу, толпа истекает. Силуэт: тонкий, низкая стойка, ножи веером на поясе.</em></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Лучник</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><em>«Тот, кто бьёт издалека».</em> Убивает, не подходя, — чтобы не видеть лица. В войне, где по ту сторону поля твоя родня, это отдельный вид ответа.</p>
+          <div class="skills">
+            <span><b>Пробойная стрела</b> — прошивает всех на линии.</span>
+            <span><b>Ливень</b> — навесной залп по области с задержкой падения.</span>
+            <span><b>Отход</b> — кувырок назад, оставляя за собой шипы.</span>
+            <span><b>Метка</b> — помеченная цель при смерти передаёт метку ближайшему врагу и усиливает следующий выстрел.</span>
+            <span><em>Силуэт: тонкий, дуга лука, веер стрел. Дуга лука обязана читаться за внешним контуром тела в каждом кадре каждой анимации — иначе силуэт схлопывается с Головорезом.</em></span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Почему призывателя нет</h3><span class="chip neutral">Отклонено</span></div>
+          <p>Класс с призывом — самый дорогой для соло-разработчика: своя ИИ и навигация у служителей, свои анимации, тяжёлый баланс, и главное — они едят тот же бюджет производительности, что и сорок врагов в кадре. Месяцы работы ради одного архетипа.</p>
+          <p>Лор сохраняется целиком: ремесло цинеров остаётся в мире, в боссах и в предметах. А Литейщик — идеальный кандидат на бесплатный шестой класс в крупном обновлении через год после релиза.</p>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Народ</th><th>Щитоносец</th><th>Абордажник</th><th>Печатник</th><th>Головорез</th><th>Лучник</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Гелиды · горцы</td><td class="yes">✓</td><td class="no-mark">—</td><td class="yes">✓</td><td class="no-mark">—</td><td class="yes">✓</td></tr>
+            <tr><td class="name">Пелаги · островитяне</td><td class="no-mark">—</td><td class="yes">✓</td><td class="no-mark">—</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td class="name">Неморы · лесной народ</td><td class="no-mark">—</td><td class="no-mark">—</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+            <tr><td class="name">Арваты · долинники</td><td class="yes">✓</td><td class="yes">✓</td><td class="no-mark">—</td><td class="yes">✓</td><td class="no-mark">—</td></tr>
+            <tr><td class="name">Цинеры · пепельные</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="no-mark">—</td><td class="no-mark">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Пятнадцать разрешённых пар из двадцати пяти. У каждого народа ровно три класса, у каждого класса ровно три народа — сетка идеально сбалансирована, ни один вариант не выглядит обделённым, и это втрое больше поводов начать сезонного персонажа заново. <strong>Класс задаёт силуэт и снаряжение, народ — палитру, материал и головной убор.</strong></p>
+
+      <div class="callout quiet">
+        <div class="title">Честно об объёме</div>
+        <p>Пять классов × четыре способности × дерево на 22 узла — это 440 узлов. Самый большой кусок работы во всём проекте, больше кампании.</p>
+        <p>Смягчает картину состав: на эталонном дереве вышло 55% чистых данных, 23% флагов и 23% настоящего кода. После вычета переиспользования («раскол снаряда» пишется один раз и работает и для знаков, и для стрел, и для ножей) остаётся реально 50–60 уникальных поведений на всю игру, а остальное — заполнение таблицы.</p>
+      </div>
+    </section>
+
+    <section id="acts">
+      <div class="head">
+        <span class="eyebrow">08 · Кампания</span>
+        <h2>Три акта</h2>
+      </div>
+      <p class="lede">Каждый акт — свой биом, свой сет брони и оружия, свой материал. Игрок видит прогресс не по цифрам, а по тому, из чего на нём надето: ткань, кожа, железо, лавидиум.</p>
+      <div class="cards three">
+        <div class="card">
+          <h3>Акт I · Леса и поля</h3>
+          <p>Начало в Воле: ягодные поля, леса неморов, пастбища арватов. Игрок видит страну до того, как по ней пройдёт армия, и после.</p>
+          <p><em>Снаряжение: тканевое к середине акта, кожаное к концу.</em></p>
+        </div>
+        <div class="card">
+          <h3>Акт II · Зимние горы и болота</h3>
+          <p>Северные хребты гелидов и низины. Начинает собираться первое железо — тяжелее, дороже, заметно меняет силуэт персонажа.</p>
+        </div>
+        <div class="card">
+          <h3>Акт III · Вулканы и Вилберг</h3>
+          <p>Вулканический восток, потом мосты, потом столица. Переход от железа к лавидиуму — металлу, из-за которого официально идёт война. Финал: Статиус.</p>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="title">Веранские острова — только эндгейм</div>
+        <p>Кампания на острова не заходит вообще. Восемьсот лет войны идут где-то там, о них говорят, из-за них всё происходит — но игрок видит их только после титров. Так место, вокруг которого крутится вся история, становится мифическим. И вход туда после финала работает как награда и как приговор одновременно: ты добрался до сердца войны ровно тогда, когда выяснилось, что закончить её нельзя.</p>
+      </div>
+      <p><strong>Награда за локацию и спрятанный лут.</strong> За прохождение каждой локации — заметная награда, а не просто выход к следующей. По локациям разбросан спрятанный лут в небольших количествах: достаточно, чтобы осматриваться, недостаточно, чтобы обшаривать каждый угол. <em>Соотношение важнее наличия: если спрятанного много, игрок начинает чистить локацию пылесосом и темп разваливается.</em></p>
+    </section>
+
+    <section id="camp">
+      <div class="head">
+        <span class="eyebrow">09 · Хаб</span>
+        <h2>Лагерь</h2>
+      </div>
+      <p class="lede">Хаб ровно один, и это не город, а лагерь. Идёт война: все, кто здесь оказался, оказались здесь не по своей воле. Он начинается как десяток палаток у брода и к третьему акту превращается в укреплённую заставу с частоколом, кузней под навесом и каменным погребом.</p>
+      <p><em>Почему не три города по акту: три хаба — тройная стоимость арта и тройная нагрузка на память игрока, а взамен ноль новой механики. Один растущий лагерь даёт то же ощущение продвижения через надстройку поверх уже построенного.</em></p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Акт</th><th>Кто приходит</th><th>Что приносит игроку</th></tr></thead>
+          <tbody>
+            <tr><td class="num">I</td><td class="name">Кузнец · арват</td><td>Ремонт, улучшение базовых предметов, первый доступ к перековке</td></tr>
+            <tr><td class="num">I</td><td class="name">Торговец · немор</td><td>Продажа мусора за золото, узкий ассортимент баз под текущий уровень</td></tr>
+            <tr><td class="num">II</td><td class="name">Летописец · гелид</td><td>Летопись — каталог находок. Открывает коллекционный слой</td></tr>
+            <tr><td class="num">II</td><td class="name">Склад</td><td>Общий сундук на вкладках. До этого игрок жил на слотах — и почувствовал разницу</td></tr>
+            <tr><td class="num">III</td><td class="name">Основатель · цинер</td><td>Лавидий: топовое снаряжение и всё, что связано с эндгеймом</td></tr>
+            <tr><td class="num">III</td><td class="name">Портал в Разлом</td><td>Вход в бесконечную часть игры</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Награда за акт — это новый глагол в лагере, а не строчка «+10% к урону».</strong> Побочно это решает обучение: шесть систем не сваливаются на голову в первый час, а приходят по одной, с лицом и именем. Услуги открываются по актам и никогда не закрываются обратно — отобранный глагол это откат прогресса.</p>
+      <div class="callout">
+        <div class="title">Правило лагеря</div>
+        <p><strong>В лагере принимаются решения, в Разломе они исполняются.</strong> Всё, что можно решить заранее, решается здесь: билд, перековка, заказ на забег. В бою игрок только реализует то, что уже выбрал. Это и есть разделение труда между двумя режимами — и причина, по которой лагерь обязан быть интересным сам по себе (раздел 15).</p>
+      </div>
+    </section>
+
+    <section id="combat">
+      <div class="head">
+        <span class="eyebrow">10 · Механика</span>
+        <h2>Ядро боя</h2>
+      </div>
+      <div class="callout">
+        <div class="title">Атака на правой кнопке, удержанием</div>
+        <p>Атака — правая кнопка мыши, работающая на удержание. Зажал: персонаж непрерывно бьёт ближайшую цель в направлении курсора. Отпустил: перестал. Движение — приказ идти в точку.</p>
+        <p><em>Почему удержание, а не клик на каждого: игрок убивает по сорок мобов за забег и делает это сто часов. Клик на каждого — не сложность, а травма кисти. Удержание сохраняет «игрок сам решает, когда бить», но убирает физическую цену. Побочный эффект: полуавтоматика возвращается через заднюю дверь — игрок держит кнопку, а решает по-прежнему только куда идти и когда жать четыре способности.</em></p>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Зоны агра и просторные локации</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Локации шире, чем в классической изометрии. У мобов есть зона агра: они не бросаются через всю карту, а реагируют, когда игрок подходит. Это даёт выбор — обойти группу или вступить в бой — и делает ширину локации осмысленной.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Четыре способности, дерево на каждую</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Способности не меняются. Глубина внутри каждой: своё дерево из 18–24 узлов, меняющих поведение, а не цифры. Три Печатника с одним и тем же скиллом играют по-разному.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Смерть — конец забега, а не наказание</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>В кампании — респ у костра без потерь. В Разломе смерть завершает забег: награды за пройденные этажи остаются, глубже в этот раз не пойдёшь.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Формулы защиты</h3><span class="chip ok">В коде</span></div>
+          <ul>
+            <li><strong>Броня — кривая PoE:</strong> <code>снижение = броня / (броня + 5 × урон удара)</code>. Та же броня почти целиком гасит рой мелких ударов и почти не мешает удару босса.</li>
+            <li><strong>Сопротивление — множитель с потолком 75%.</strong> Полный иммунитет собрать нельзя: иначе один билд выключает целый класс контента.</li>
+            <li>Формула статов: <code>final = (base + flat) × (1 + Σincreased) × Π(1 + more)</code>. Не менять.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout coral">
+        <div class="title">Чего мы добиваемся картинкой</div>
+        <p>Игра должна быть яркой, как её концепт-арт: красивые локации, максимально сочные эффекты и анимации, вылетающие цифры урона. <strong>Убийство моба само по себе должно быть удовольствием — до того, как игрок посмотрел, что с него упало.</strong></p>
+        <p>Это не украшательство, а часть системы удержания. В гриндилке игрок повторяет одно действие десятки тысяч раз; если само действие не приносит физического удовольствия, никакая экономика лута его не удержит. <em>Именно этого сейчас в проекте нет — см. раздел 00 и шаг 2.</em></p>
+      </div>
+    </section>
+
+    <section id="levels">
+      <div class="head">
+        <span class="eyebrow">11 · Прогрессия</span>
+        <h2>Уровни и онбординг</h2>
+      </div>
+      <div class="tiles">
+        <div class="tile"><span class="v">50</span><span class="k">максимальный уровень; дальше Созвездия и тиры</span></div>
+        <div class="tile accent"><span class="v">40 мин</span><span class="k">первые шесть уровней — весь онбординг</span></div>
+        <div class="tile"><span class="v">1</span><span class="k">кнопка на старте: движение и удар</span></div>
+        <div class="tile"><span class="v">4</span><span class="k">кнопки к шестому уровню, дальше только глубина</span></div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Уровень</th><th>Активных способностей</th><th>Что игрок осваивает</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td class="num">1</td><td>Движение, удержание атаки, первая способность</td></tr>
+            <tr><td class="num">2</td><td class="num">2</td><td>Связка из двух — появляется понятие ротации</td></tr>
+            <tr><td class="num">4</td><td class="num">3</td><td>Третья кнопка приходит с паузой: две успели стать привычкой</td></tr>
+            <tr><td class="num">6</td><td class="num">4</td><td>Полный набор. Дальше — таланты и предметы</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Почему пауза между 2 и 4.</strong> Новая кнопка выдаётся не когда игрок дорос по уровню, а когда предыдущая перестала требовать внимания. Если высыпать четыре сразу, игрок выберет одну удобную и остальные три не тронет — самая частая ошибка онбординга в жанре.</p>
+      <p><strong>После шестого — билд.</strong> Растёт не количество кнопок, а их глубина: таланты каждой кнопки и предметы, которые меняют механику, а не только цифры. Отсюда и реиграбельность: две сотни часов игрок нажимает те же четыре кнопки, но каждый раз они работают иначе.</p>
+    </section>
+
+    <section id="loot">
+      <div class="head">
+        <span class="eyebrow">12 · Лут</span>
+        <h2>Лут и прогрессия</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Аффиксы под капотом, казуальный интерфейс сверху</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Предмет = база + редкость + 3–4 аффикса с разбросом значений + уникальное свойство у легендарных. Игрок не обязан это читать: зелёная стрелка «лучше надетого», автосравнение при наведении, автразбор мусора, фильтр в три чекбокса.</p>
+          <p><em>Почему не проще: если предмет — это уровень и один-два стата, на каждом уровне существует ровно один лучший меч. Игрок его находит, и поиск закончен.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Уникалки меняют правила, а не цифры</h3><span class="chip ember">Рекомендация</span></div>
+          <p>Не «+15% урона», а «твоя способность теперь работает иначе»: раскалывается, отскакивает, бьёт по площади, тратит здоровье вместо маны. 30–40 штук на всю игру, но каждая порождает отдельный билд.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Направленный фарм</h3><span class="chip ember">Рекомендация</span></div>
+          <p>У каждого босса свой короткий список уникалок. Игрок формулирует цель: «мне нужен посох Пепельной Вдовы — я иду к Пепельной Вдове». Шанс низкий, но адрес известен.</p>
+          <p><em>Чистый рандом без адреса убивает гриндилку быстрее всего. Это разница между «я фармлю» и «я надеюсь».</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Перековка</h3><span class="chip ember">Рекомендация</span></div>
+          <p>Почти идеальный предмет с одним мусорным аффиксом можно перебить за ресурсы. Перековка не создаёт предметы, только доводит найденное — иначе фарм обесценивается.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="economy">
+      <div class="head">
+        <span class="eyebrow">13 · Экономика</span>
+        <h2>Экономика, инвентарь, персонажи</h2>
+      </div>
+      <div class="cards three">
+        <div class="card">
+          <h3>Золото — поток</h3>
+          <p>Тратится постоянно и мелко: ремонт, услуги, базы у торговца. Всегда есть, всегда уходит. Входит через торговца.</p>
+        </div>
+        <div class="card">
+          <h3>Осколки — из разбора</h3>
+          <p>Мусорный лут превращается в валюту перековки. Именно они делают неудачный дроп не пустым.</p>
+        </div>
+        <div class="card">
+          <h3>Лавидий — событие</h3>
+          <p>Редкий, появляется в третьем акте. Топовое снаряжение и эндгейм. Дозируется жёстко.</p>
+        </div>
+      </div>
+      <p><em>Почему три, а не одна: одна валюта склеивает три разных решения в одно. Разные ритмы поступления дают разные ощущения — золото фон, осколки переработка, лавидий событие. В Разломе не падает ни золото, ни осколки: у валют разные источники намеренно.</em></p>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Инвентарь слотами, без тетриса</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Никакой раскладки по клеткам. Слоты, автосортировка, автразбор по фильтру. Склад в лагере большой, на вкладках. Единственная метка — «беречь»: игрок помечает то, что оставляет, а не то, что выбрасывает, потому что помеченного всегда меньше.</p>
+          <p><em>Тетрис в рюкзаке — не решение, а налог на внимание.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Много персонажей, общее хозяйство</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Слотов под персонажей много. Склад и золото общие на аккаунт. Личное — надетое, таланты и Созвездия.</p>
+          <p><em>Вторая цель проекта — чтобы игрок начал вторым классом. Общий сундук делает найденную не тем классом уникалку причиной создать персонажа, а не поводом для сожаления.</em></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="endgame">
+      <div class="head">
+        <span class="eyebrow">14 · Эндгейм</span>
+        <h2>Разломы</h2>
+      </div>
+      <p class="lede">На Веранских островах, где восемьсот лет никто не побеждал, война въелась в само место и не остановилась. Туда можно войти, но её нельзя закончить. Это буквальное воплощение того, о чём говорит сеттинг: последствие, которое переживает своих авторов.</p>
+      <div class="callout">
+        <div class="title">Тиры — это слои эпох</div>
+        <p>Чем глубже, тем древнее война. На тире 20 ты дерёшься с солдатами нынешней войны. На тире 60 — с теми, кто носил доспехи, которых больше не существует. На тире 120 — с чем-то, что уже не помнит, за что воевало. На глубоких тирах игрок встречает имперский легион, до сих пор держащий рубеж государства, которого нет.</p>
+        <p>Каждый следующий тир добавляет модификатор из пула: враги взрываются при смерти, пол горит, у элиты щит от физического урона, лечение ослаблено. Тир 40 и 41 ощущаются по-разному, а не как одинаковые цифры.</p>
+        <p><em>Побочная выгода огромная: каждая полоса тиров — отдельный набор мобов через реколор и смену снаряжения, а не новые модели. И направленный фарм получает адрес прямо в лоре: «посох эпохи Медных Королей падает на тирах 60–80».</em></p>
+      </div>
+      <div class="cards three">
+        <div class="card"><h3>Вертикаль</h3><p>Глубина захода в Разлом. Основная метрика сезонного рейтинга.</p></div>
+        <div class="card"><h3>Горизонталь</h3><p>Направленная охота за уникалками. Ось «попробовать другую игру, не начиная заново».</p></div>
+        <div class="card"><h3>Глубина · Созвездия</h3><p>Уровни после максимума дают очки на доску с взаимоисключающими ветками. Респек стоит ресурсов.</p></div>
+      </div>
+      <p><em>Почему Созвездия, а не парагон: «+1 к силе» — это не решение, а уведомление. На доске созвездий уровень 400 превращается из счётчика в накопленную цепочку решений, и два персонажа 400-го уровня выглядят по-разному.</em></p>
+      <div class="callout">
+        <div class="title">Петля «ещё один забег»</div>
+        <p>Разлом длится 4–8 минут. В конце игрок выбирает одну награду из трёх: усилить текущий билд, взять ресурс на перековку или рискнуть ради шанса на уникалку. <strong>Момент решения в конце короткого цикла — то, что заставляет нажать «ещё раз».</strong> Высыпать лут на пол так не работает: это событие, которое с игроком произошло, а не которое он совершил.</p>
+        <p><em>В коде: три предложения роллятся из потока Loot, вид награды роллится первым, поэтому вся выдача остаётся функцией сида. Из забега в сумку уезжают только предметы — прибавки к статам и взятые узлы кончаются вместе с забегом.</em></p>
+      </div>
+    </section>
+
+    <section id="between">
+      <div class="head">
+        <span class="eyebrow">15 · Метаигра</span>
+        <h2>Что делать между забегами</h2>
+      </div>
+      <p class="lede">Забег длится 4–8 минут. Если лагерь — это меню, игрок нажмёт «повторить» и перестанет туда заходить, а вместе с лагерем из игры уйдут все жители, вся история и всё, что мы про этот мир написали.</p>
+      <p><strong>Как устроен ритм.</strong> Разлом — это исполнение: 4–8 минут, руки заняты, решений почти нет. Лагерь — это решение: 2–5 минут, руки свободны, решений много. Игрок, который выходит из Разлома, должен выходить с материалом, который в лагере во что-то превращается.</p>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>1 · Полигон</h3><span class="chip ok">Сделан</span></div>
+          <p>Манекен за палатками: настраиваемое здоровье и сопротивления, счётчик урона с разбивкой по источникам, рядом второй манекен, который бьёт в ответ.</p>
+          <p><em>Собирать билд вслепую невозможно: игрок надевает предмет и не знает, стало лучше или хуже. Полигон превращает лут из лотереи в эксперимент.</em></p>
+          <p>В коде: неподвижность и молчание манекена сделаны <strong>статами</strong>, а не флагом «манекен» — нулевая скорость движения это нулевой шаг, нулевая скорость атаки это потолок кулдауна. Отдельного режима в бою заводить не пришлось, значит и ломаться нечему.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>2 · Летопись</h3><span class="chip wip">Следующая</span></div>
+          <p>Гелид-летописец каталогизирует принесённое из Разлома: обломки доспехов исчезнувших эпох, клейма оружейников, имена с надгробий, чертежи машин. Сетка ячеек, которая заполняется. Ячейка = абзац мира плюс небольшой постоянный бонус.</p>
+          <p><em>Заполняемая коллекция — самая дешёвая в производстве и самая живучая механика удержания. У нас она вдобавок бесплатна по контенту: тиры и так разложены по эпохам.</em></p>
+          <p>И это тематически центральная механика, а не украшение: мир построен на «Орвилл считает, Вол помнит». <strong>Единственное действие в игре, которое действительно что-то меняет, — не убийство правителя, а вот это.</strong></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>3 · Верстак с износом</h3><span class="chip neutral">В плане</span></div>
+          <p>Перековка перебивает один аффикс за осколки. Но у предмета есть ресурс износа: 3–5 перековок, дальше он не принимает изменений. Число видно сразу.</p>
+          <p><em>Без ограничения перековка — кнопка «нажимай, пока не выпадет идеал», то есть не решение, а работа. С износом каждый заход к верстаку — вопрос: доводить этот меч или ждать лучшую базу. Побочно починка износа становится второй дыркой для лавидия.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>4 · Заказы жителей</h3><span class="chip neutral">В плане</span></div>
+          <p>Просьба = правило следующего забега, выбранное до входа: принести наплечник эпохи Медных Королей · спуститься на тир 60 без зелий · убить конкретный элитный тип, привязанный к личной истории жителя · дойти до конца, не убивая лишнего.</p>
+          <p><em>Ежедневка — обязанность, которая наказывает за пропуск. Заказ — выбор, который меняет правила ближайших восьми минут. Игра оффлайновая, наказывать за неявку некому.</em></p>
+        </div>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Что в лагерь не идёт</div>
+        <ul>
+          <li><strong>Строительство базы.</strong> Дорого по арту, решений почти не порождает: игрок один раз выбирает порядок построек и больше туда не возвращается.</li>
+          <li><strong>Фермерство, готовка, ремёсла-как-профессии.</strong> Это вторая игра. Соло-разработчик, который начал делать вторую игру внутри первой, не выпускает ни одной.</li>
+          <li><strong>Таймеры и «пока ты не играешь».</strong> В оффлайне ломаются переводом часов, а в премиальной игре за $15 читаются как мобильная механика.</li>
+          <li><strong>Мини-игры на ловкость.</strong> Игрок пришёл за боем; механика с другим управлением — переключение, а не отдых.</li>
+        </ul>
+        <p><strong>Общий фильтр:</strong> механика лагеря принимается, только если она переиспользует написанное, порождает решение с потерей и кормится тем, что принесено из Разлома. Все четыре принятые проходят все три условия; все отклонённые не проходят ни одного полностью.</p>
+      </div>
+      <p><strong>Экран итогов — отдельный режим, а не всплывашка над Разломом.</strong> Кнопка «повторить одним нажатием» обязана существовать, иначе лагерь становится принудительным коридором. Значит, лагерь конкурирует с ней за внимание и должен выигрывать честно: незакрытая ячейка Летописи, готовый к перековке предмет и невзятый заказ должны быть видны прямо на этом экране.</p>
+    </section>
+
+    <section id="seasons">
+      <div class="head">
+        <span class="eyebrow">16 · Долгая игра</span>
+        <h2>Сезоны и рейтинг</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Сезонный персонаж — отдельная сущность</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Раз в восемь недель стартует сезон. Игрок добровольно создаёт сезонного персонажа с нуля; в конце сезона тот со всем нажитым переезжает в вечный режим. <strong>Ничего не удаляется никогда.</strong></p>
+          <p><em>В премиальной оффлайн-игре за $15 удаление прогресса читается как «я заплатил, а у меня отобрали» — это волна отрицательных отзывов, которая обходится дороже любого удержания.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Рейтинг: защита дизайном, а не криптографией</h3><span class="chip ok">Зафиксировано</span></div>
+          <ul>
+            <li>Транспорт — Steam Leaderboards. Бесплатно, без своего сервера.</li>
+            <li>Соревнуемся в сидированных забегах: недельный сид один на всех, аномалия видна глазом.</li>
+            <li>Сейв подписывается HMAC от ключа, выведенного из SteamID.</li>
+            <li>Топ-100 присылает лог забега — проверяется только вершина таблицы.</li>
+            <li>Две ветки: Ладдер и Свободная игра.</li>
+          </ul>
+          <p><em>Отклонено: свой бекенд с серверной пересимуляцией — это второй продукт, 2–4 месяца работы и постоянная поддержка.</em></p>
+        </div>
+      </div>
+      <p><em>В коде основа под это уже есть: сиды забегов роллятся из одного потока сессии, поэтому воспроизводима вся цепочка забегов, а не каждый по отдельности.</em></p>
+    </section>
+
+    <section id="story">
+      <div class="head">
+        <span class="eyebrow">17 · Подача</span>
+        <h2>История и обучение</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Четыре канала, ни одного обязательного</h3><span class="chip ok">Зафиксировано</span></div>
+          <ul>
+            <li><strong>Находки</strong> — письма, приказы, накладные, обрывки летописи. Основной объём мира лежит здесь.</li>
+            <li><strong>Диалоги в лагере</strong> — жители говорят между забегами и меняют реплики по мере продвижения. Короткие сцены, не квестовые деревья.</li>
+            <li><strong>Катсцены на боссов</strong> — 15–25 секунд, чтобы босс был кем-то, а не мешком здоровья с именем.</li>
+            <li><strong>Одна катсцена на онбординге</strong> — короткая, в начале. Задача — погрузить, а не объяснить.</li>
+          </ul>
+          <p><em>Гриндилку перепроходят. Игрок, который на третьем персонаже вынужден снова смотреть то же самое, начинает ненавидеть текст.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Обучения нет. Учит сама игра</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Никаких тренировочных комнат, никаких «нажмите W чтобы идти». Новая кнопка выдаётся ровно перед врагом, который её требует, и одна короткая подсказка появляется на экране в момент выдачи. Дальше игрок разбирается сам, потому что ситуация подобрана так, что разобраться можно только одним способом.</p>
+          <p><em>Способности приходят на уровнях 1, 2, 4, 6 — готовый график обучения уже встроен в прогрессию. Отдельный туториал дублировал бы его и съел первые пятнадцать минут, то есть ровно то время, за которое игра должна понравиться.</em></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="bestiary">
+      <div class="head">
+        <span class="eyebrow">18 · Противники</span>
+        <h2>Бестиарий и Веранские острова сегодня</h2>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Акт</th><th>Кто противник</th><th>Что это говорит</th></tr></thead>
+          <tbody>
+            <tr><td class="num">I</td><td>Больше зверья и мародёров, солдаты редки</td><td>Мир ещё выглядит как мир: дикая земля, отчаявшиеся люди</td></tr>
+            <tr><td class="num">II</td><td>Примерно поровну</td><td>Аппарат появляется в кадре и начинает вытеснять всё остальное</td></tr>
+            <tr><td class="num">III</td><td>Почти только солдаты Орвилла и машины</td><td>Природы больше нет. Осталась только война</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><em>Это единственный способ высказать главную мысль сеттинга без единой реплики. Игрок не получает объяснения, что война съела страну, — он видит, что к третьему акту ему больше некого встретить, кроме неё.</em></p>
+      <div class="callout">
+        <div class="title">Веранские острова, 984 год</div>
+        <p>Там живые люди в вечных окопах. Пелаги, которые родились на линии и никогда не видели мира: для них восемьсот лет — не история, а бытовые условия. Не нежить, не призраки, не проклятие. Обычные люди, у которых есть распорядок дня, шутки, очередь за водой и позиция, которую надо держать.</p>
+        <p><em>Призрак — метафора, и она снимает вопрос. Живой человек, который вырос в окопе и не понимает вопроса «а зачем», — это сам вопрос. И он гораздо страшнее.</em> Механически: в Разломе есть с кем говорить, а ячейки Летописи и заказы жителей получают вторую сторону — тех, кто внутри.</p>
+      </div>
+    </section>
+
+    <section id="ui">
+      <div class="head">
+        <span class="eyebrow">19 · Подача боя</span>
+        <h2>Интерфейс и звук</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>HUD минимальный, центр экрана пустой</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Здоровье и ресурс — слева внизу, четыре способности — по нижней кромке, карта — справа вверху. Середина экрана не занята ничем и никогда.</p>
+          <p><em>Мы продаём читаемую толпу и мясистый удар. Всё, что накладывается поверх боя, — конкурент собственному главному аттракциону.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Звук: удар важнее музыки</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Приоритет первый — попадание: вес удара, отдельный хруст крита, звук добивания. Приоритет второй — звон редкости, узнаваемый из соседней комнаты. Музыка — из готовых паков.</p>
+          <p><em>Звук удара воспроизводится десятки тысяч раз за сессию, музыкальная тема — десятки. Ощущение «сочно бьёт» на девять десятых собирается ушами.</em></p>
+        </div>
+      </div>
+      <p><strong>Требование визуального стандарта:</strong> damage numbers идут через SDF-рендер с контролируемой обводкой, punch-scale на появлении, разными состояниями для обычного урона, крита, урона по герою, стихии и лечения, с агрегацией повторов и лимитом одновременно видимых чисел. Встроенный Arial как финальный шрифт вертикального среза не принимается.</p>
+    </section>
+
+    <section id="memory">
+      <div class="head">
+        <span class="eyebrow">20 · Память мира</span>
+        <h2>Памятники и праздники</h2>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Орвилл считает · число</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Исполинские железные стелы. На каждой — год и количество погибших за этот год. Имён нет. Стелы ставит государство, ряд тянется вдоль дорог и продолжает расти.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Вол помнит · имя</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Деревья и камни с именами, посаженные семьями. Никакого единого стандарта, никакого центра. Роща разрастается сама, за ней кто-то ухаживает.</p>
+        </div>
+      </div>
+      <p><em>Пара объясняет разницу двух государств за три секунды, без единой строчки текста, на объекте, мимо которого игрок проходит по дороге к следующему бою. Аппарат учитывает потери, культура помнит людей. Обе стороны хоронят одинаковое количество своих.</em></p>
+      <p><strong>Связь с Летописью:</strong> имена с волских камней — это заполняемые ячейки. Игрок буквально занимается тем, чего Орвилл не делает.</p>
+      <div class="callout quiet">
+        <div class="title">Праздники: сейчас в лоре, позже в игре</div>
+        <p>Главные праздники обоих государств и сезонные фестивали прописываются как часть мира — в находках, в репликах, в календаре летописца. Игровыми событиями становятся позже, привязкой к сезонам. <em>Праздник, придуманный под механику, всегда выглядит натянутым. Праздник, который восемь месяцев прожил в текстах, к моменту, когда мы делаем из него событие, уже настоящий.</em></p>
+      </div>
+    </section>
+
+    <section id="numbers">
+      <div class="head">
+        <span class="eyebrow">21 · Баланс</span>
+        <h2>Числа</h2>
+      </div>
+      <p class="lede">Стартовые ориентиры для прототипа, а не финальные значения. Их задача — задать ощущение темпа, от которого дальше пляшет настройка. Всё задано <strong>в тиках</strong>, поэтому переход с 30 на 60 Гц — правка одной константы.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Параметр</th><th>Значение</th><th>Что это даёт</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Длина забега в Разломе</td><td class="num">4–8 мин</td><td>Помещается в перерыв, не жалко бросить, легко сказать «ещё один»</td></tr>
+            <tr><td class="name">Обычный моб</td><td class="num">1–2 автоатаки</td><td>Толпа тает волной, а не выгрызается поштучно</td></tr>
+            <tr><td class="name">Элитный моб</td><td class="num">8–15 сек</td><td>Достаточно, чтобы прокрутить весь набор способностей один раз</td></tr>
+            <tr><td class="name">Босс</td><td class="num">60–120 сек</td><td>Успевает показать все фазы, но не превращается в марафон</td></tr>
+            <tr><td class="name">Плотность врагов</td><td class="num">25–40 на экран</td><td>Ощущение бойни; верхняя граница — цель для оптимизации</td></tr>
+            <tr><td class="name">Скорость автоатаки</td><td class="num">1.0–1.4 /сек</td><td>Базовая частота фидбека без участия игрока</td></tr>
+            <tr><td class="name">Кулдауны способностей</td><td class="num">4–12 сек</td><td>Игрок жмёт что-то раз в 2–3 секунды — руки заняты, но не устают</td></tr>
+            <tr><td class="name">Максимальный уровень</td><td class="num">50</td><td>Кампания доводит до 43–46: финал ощущается почти на пике</td></tr>
+            <tr><td class="name">Уникалка с целевого босса</td><td class="num">~1 за 40 мин</td><td>Достаточно редко, чтобы радовать; достаточно часто, чтобы не бросить</td></tr>
+            <tr><td class="name">Полный сет билда</td><td class="num">18–25 часов</td><td>Первый заход в эндгейм имеет обозримый финиш</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="title">Правило, которое лучше не нарушать</div>
+        <p>Игрок должен получать что-то заметное каждые <strong>60–90 секунд</strong> и что-то по-настоящему значимое каждые <strong>20–25 минут</strong>. Первый интервал держит внимание, второй — держит сессию. Если при настройке любой из них разъезжается, ломается не число, а ощущение игры.</p>
+      </div>
+    </section>
+
+    <section id="art">
+      <div class="head">
+        <span class="eyebrow">22 · Арт</span>
+        <h2>Арт-направление</h2>
+      </div>
+      <div class="callout">
+        <div class="title">Формула внешности — зафиксировано</div>
+        <p>Три референса, у каждого своя зона ответственности:</p>
+        <ul>
+          <li><strong>Diablo / Path of Exile</strong> — изометрическая камера, орды, билдостроение, лут и мясная ARPG-петля. Не мобильная аренка, не вид сбоку.</li>
+          <li><strong>Brawl Stars</strong> — крупные читаемые силуэты, мгновенно понятные атаки, яркий импакт, минимум визуального мусора. <em>Визуальный мусор — брак, а не мелочь.</em></li>
+          <li><strong>Genshin Impact</strong> — качество персонажей, плавность, цвет, освещение, материалы и дорогая полировка эффектов. Плоская векторная заливка без света и объёма формуле не соответствует.</li>
+        </ul>
+        <p><strong>Провал по любому из трёх пунктов — картинка не принимается.</strong> Типичный провал: мелкие фигурки, россыпь мелких пропов, ровная заливка без освещения; получается настолка, а не ARPG.</p>
+      </div>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Костюмный язык: культура против машины</h3><span class="chip ok">Зафиксировано</span></div>
+          <p><strong>Вол</strong> — вышивка, орнаментальные полосы, тёплый насыщенный цвет, живая одежда, лица открыты. <strong>Орвилл</strong> — жёсткая геометрическая геральдика, шевроны, чёрный + кремовый + один красный, безликие шлемы, не меньше четверти площади в светлом тоне.</p>
+          <p><strong>Нерушимое правило:</strong> своих от чужих видно по палитре, не глядя на детали. Это основной канал считывания угрозы в бою.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Законы силуэта</h3><span class="chip ember">Рекомендация</span></div>
+          <ul>
+            <li><strong>Тест заливкой чёрным.</strong> Мобы отличаются силуэтом, а не узором на нагруднике.</li>
+            <li><strong>Тест при 80–120 px</strong>, не на плакате. На плакате различимо всё; в игре останутся габарит, форма головного убора и силуэт оружия.</li>
+            <li><strong>Разброс по массе обязателен:</strong> мелкий роящийся враг по пояс герою и действительно крупный в полтора-два раза выше игрока.</li>
+            <li><strong>Четверть площади в светлом тоне</strong> у каждого врага — иначе тёмные силуэты утонут на тёмном полу.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><strong>Постоянные признаки классов:</strong> Щитоносец — щит шире тела · Абордажник — крупный висящий крюк на цепи · Печатник — толстый высокий посох и две-три длинные бумажные ленты (ромбы знаков — это VFX, в силуэт не входят) · Головорез — острый асимметричный капюшон и скрещённые ножны крупным X над плечами · Лучник — дуга лука и широкий веер стрел.</p>
+
+      <div class="palette">
+        <span class="sw"><i style="background:#20C9D2"></i><span class="lb">Гелиды<br><span class="hx">#20C9D2</span></span></span>
+        <span class="sw"><i style="background:#FF5A6E"></i><span class="lb">Пелаги<br><span class="hx">#FF5A6E</span></span></span>
+        <span class="sw"><i style="background:#35B85A"></i><span class="lb">Неморы<br><span class="hx">#35B85A</span></span></span>
+        <span class="sw"><i style="background:#A94F38"></i><span class="lb">Арваты<br><span class="hx">#A94F38</span></span></span>
+        <span class="sw"><i style="background:#E85A24"></i><span class="lb">Цинеры<br><span class="hx">#E85A24</span></span></span>
+        <span class="sw"><i style="background:#E5DCC8"></i><span class="lb">Орвилл<br><span class="hx">#E5DCC8 · #111315 · #A72F29</span></span></span>
+      </div>
+      <p><em>Фирменный цвет занимает 15–25% площади, на персонажа приходится 3–5 крупных цветовых масс. Палитра одинакова у всех классов народа намеренно: класс задаёт силуэт и реквизит, народ — палитру, материал и два-три крупных признака.</em></p>
+
+      <div class="callout coral">
+        <div class="title">Правка, которая ещё висит</div>
+        <p>Аллегория решена как скрытая, без узнаваемых привязок — но ранние концепты Вола нарисованы как подчёркнуто славянская народная одежда, и особенно это выдаёт <strong>венок из цветов</strong>: самый узнаваемый маркер из существующих.</p>
+        <p>Чинится дёшево, потому что структура верная и привязка держится на паре элементов: убрать венок (обруч, диадема, повязка с монетами, рогатый убор), разработать собственный орнаментальный алфавит вместо узнаваемой ромбовой сетки, сдвинуть палитру Вола в свою сторону от красно-зелёной. Геометрическая вышивка сама по себе безопасна — она есть в балтийской, балканской, анатолийской, скандинавской и андской традиции. Венок — нет. <strong>Проверить на листах v0.5 и закрыть явно.</strong></p>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Защита от сползания</div>
+        <p>Сползание в тёмное фентези происходит по чуть-чуть: приглушённый оттенок благороднее смотрится в отрыве, следующий берут темнее для сочетания, через три итерации получается Darkest Dungeon. Защита одна: держать эталонный лист и сверять каждую новую партию <strong>с ним</strong>, а не с предыдущей.</p>
+      </div>
+    </section>
+
+    <section id="pipeline">
+      <div class="head">
+        <span class="eyebrow">23 · Новое · 28 августа</span>
+        <h2>Визуальный стандарт и гейты</h2>
+      </div>
+      <p class="lede">Появился отдельный документ — <code>VISUAL-PRODUCTION-AGENT.md</code>, бриф агенту визуального production и Unity-интеграции. Он переводит арт-направление из «как это выглядит» в «как это производится и чем доказывается». До него арт проверялся вкусом; теперь у него есть гейты и критерии приёмки.</p>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Пайплайн персонажей</h3><span class="chip ok">Зафиксировано</span></div>
+          <p>Production 3D-модель, точно повторяющая утверждённый 2D-концепт, + hand-painted / cel материалы + toon shader + рисованные 2D/mesh VFX.</p>
+          <p><em>Это не переход к реалистичному 3D: концепт-арт остаётся источником истины, а 3D нужно ради плавности, 360° движения, корректной изометрии и масштабирования числа атак.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Бюджеты</h3><span class="chip ok">Зафиксировано</span></div>
+          <ul>
+            <li>Герой: 30–45k tris LOD0, до 3 материалов, до 90 костей, максимум 4 влияния на вершину.</li>
+            <li>Обычный моб: 12–22k tris LOD0, до 2 материалов, до 65 костей.</li>
+            <li>Герой на экране 100–160 px, враг 80–140 px при 1080p.</li>
+            <li>После прогрева боя — <code>0 B</code> аллокаций в кадр, никаких <code>Instantiate</code>, всё через пулы.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Цепочка обычного удара — десять слоёв</h3>
+      <p>Замах → дуга оружия → контакт-поза → короткий hit-stop → вспышка цели → искры → импульс камеры → нокбэк → цифра урона → звук контакта. При массовом AoE события одного кадра агрегируются в один импульс с ограниченным максимумом, а не в двадцать отдельных тряски. <strong>Иерархия силы обязательна:</strong> удар моба по мобу почти без реакции, удар героя короткий и ясный, удар по герою в тревожном цвете, крит заметный, убийство — кульминация, способность — самый высокий приоритет.</p>
+
+      <h3>Гейты производства</h3>
+      <div class="gates">
+        <div class="gate"><span class="g">Gate 0</span><span class="t">Целевой кадр боя: палитра, свет, размер, VFX и цифры одновременно; версии цвет / grayscale / силуэт</span><span class="chip no">Не начат</span></div>
+        <div class="gate"><span class="g">Gate 1</span><span class="t">Character lookdev: production-силуэт и пропорции двух персонажей, toon-материал на реальном игровом фоне</span><span class="chip no">Не начат</span></div>
+        <div class="gate"><span class="g">Gate 2</span><span class="t">Риг и деформации: обязательные позы, сокеты и пропы, нет критических пересечений</span><span class="chip wip">Частично · baseline</span></div>
+        <div class="gate"><span class="g">Gate 3</span><span class="t">Локомоция и бой: движение без скольжения стоп, трёхударное комбо, hit reaction, смерть</span><span class="chip wip">Клипы есть, полировки нет</span></div>
+        <div class="gate"><span class="g">Gate 4</span><span class="t">Combat juice: slash, impact, hit-stop, импульс камеры, цифра и звук синхронно с реальным <code>Damage</code></span><span class="chip no">Каркас есть, связки нет</span></div>
+        <div class="gate"><span class="g">Gate 5</span><span class="t">Интеграция среза: всё в текущем забеге, Windows-билд, capture 1080p/60, четыре QA</span><span class="chip no">Не начат</span></div>
+      </div>
+
+      <div class="callout coral">
+        <div class="title">Критическое предупреждение документа</div>
+        <p>Существующие 3D-модели — <strong>technical-art baseline</strong>. Они годятся для проверки масштаба, импорта, скелета, сокетов и пайплайна, но не являются финальным hero art. Нельзя выдавать текущую упрощённую геометрию за production-модель и нельзя считать «Unity validation passed» доказательством художественного качества.</p>
+      </div>
+
+      <div class="callout">
+        <div class="title">Субъективная финальная проверка</div>
+        <p>Показать человеку 20 секунд боя без объяснений. Успех, если он сразу находит героя, понимает направление атаки, различает обычный удар и крит, замечает момент убийства и хочет ударить следующего моба. <strong>Если технические проверки зелёные, а этой реакции нет — срез не готов.</strong></p>
+      </div>
+      <p><em>Архитектурный контракт остаётся жёстким: <code>Game.Sim</code> не меняется ради визуала, Animation Event не наносит урона и может только запускать presentation-cue, root motion не двигает игровую сущность, и после каждой интеграции <code>DeterminismTests</code> остаются зелёными.</em></p>
+    </section>
+
+    <section id="delivered">
+      <div class="head">
+        <span class="eyebrow">24 · Производство</span>
+        <h2>Арт: что сдано</h2>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Версия</th><th>Содержание</th><th>Статус</th></tr></thead>
+          <tbody>
+            <tr><td class="name">v0.4</td><td>Пять народов, пятнадцать пар, враги Орвилла с разбросом масс, силуэтные листы, листы в игровом масштабе 100 px, палитры</td><td><span class="chip ok">Принята</span></td></tr>
+            <tr><td class="name">v0.5</td><td>Пелаги разведены с гелидами по цвету (<code>#FF5A6E</code>); правило Лучника внесено в спецификацию анимации до начала работы</td><td><span class="chip wip">Ждёт приёмки</span></td></tr>
+            <tr><td class="name">pack v5</td><td>Полный production-пак на двух персонажей: turnaround, A-pose, костюм, снаряжение, головы, материалы, scale-тесты, позы, motion notes, <code>.blend</code>, FBX, Unity-валидация</td><td><span class="chip ok">Сдан</span></td></tr>
+            <tr><td class="name">pack v6</td><td>Полный набор анимаций: по 13 клипов на персонажа, 30 FPS Humanoid, контакт-события, контрольные листы, нулевые import warnings</td><td><span class="chip ok">Сдан и импортирован</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Pelag_Boarder_01</h3><span class="chip wip">Baseline</span></div>
+          <ul>
+            <li class="mono">24 484 tris · 12 406 vertices · 6 мешей</li>
+            <li>3 skinned renderer + 3 rigid prop, 3 общих атласных материала</li>
+            <li>Humanoid: <code>Avatar.isValid = true</code>, кисти <code>Open / Grip / Fist</code></li>
+            <li>13 клипов: relaxed idle, combat idle, run, комбо A/B, тяжёлый, бросок крюка, три hit, stun, knockback, смерть</li>
+            <li>Сабля <code>SaberSheath_L → Weapon_R</code>, крюк <code>HookBelt_R → Hook_L</code></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Orvill_ShieldInfantry_01</h3><span class="chip wip">Baseline</span></div>
+          <ul>
+            <li class="mono">20 804 tris · 10 554 vertices · 6 мешей</li>
+            <li>Отдельные наплечники, четыре секции юбки, внутренний хват щита и ремень предплечья</li>
+            <li>13 клипов: guard idle, walk, удар меча, удар щитом, два блока, guard break, hit, stun, knockback, две смерти</li>
+            <li>Не меньше четверти площади в кремовом тоне — иначе теряется на тёмном полу</li>
+          </ul>
+        </div>
+      </div>
+      <p>Начата работа над первым <strong>production</strong>-персонажем: <code>production/characters/Pelag_Boarder_01/</code> — задание оркестратору, детерминированные скрипты сборки на Blender 5.2 и первый численный аудит baseline. Правило работы: не перезаписывать пак v5, не удалять текущий Unity-fallback, собирать по одной проверенной стадии.</p>
+      <div class="callout quiet">
+        <div class="title">Пайплайн производства</div>
+        <p>Гибрид: Asset Store — мобы, окружение, модули локаций. Фрилансеры — герои и боссы, лицо игры. AI — концепты, иконки, текстуры. Свои руки в Blender — доводка и унификация.</p>
+        <p><strong>Два обязательных пункта:</strong> единый cel-шейдер поверх всего и приведение всех моделей к одному масштабу и стилю пропорций — иначе игра выглядит как ассет-флип, и это главный риск гибридного пайплайна. И Steam требует раскрытия AI-контента в карточке игры: скрывать нельзя, само по себе раскрытие продажам не вредит.</p>
+      </div>
+    </section>
+
+    <section id="pelag">
+      <div class="head">
+        <span class="eyebrow">25 · Новое · 29 августа</span>
+        <h2>Пелаг: первый 3D-персонаж в забеге</h2>
+      </div>
+      <p class="lede">До этого дня в кадре бегала заглушка. Теперь в Разломе бегает <strong>Пелаг</strong> — модель по утверждённому концепту, со скелетом, шестью анимациями и своей текстурой. Путь занял пять заходов, и три из них были провальными. Они описаны здесь честно, потому что дорога важнее результата: следующего персонажа делать по ней, а не по чистовику.</p>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Модель и скелет</h3><span class="chip ok">Готово</span></div>
+          <ul>
+            <li>Rodin-генерация по 2D-концепту: миллион треугольников, без скелета, ростом в единичный куб.</li>
+            <li class="mono">→ 35 000 tris · рост 1.8 м · один связный меш</li>
+            <li>Скиннинг сделал <strong>Mixamo</strong>. Три моих попытки привязать модель к скелету эталонного пелага дали юбку-штанину, порванный подол и юбку-колокол.</li>
+            <li>Крюк, сабля и ножны взяты из пака v5 — моделировать не пришлось. Четыре кости-сокета с теми именами, которых ждёт код смены снаряжения.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Анимации и материал</h3><span class="chip ok">Готово</span></div>
+          <ul>
+            <li>Шесть клипов Mixamo: стойка, бег, два комбо, круговой удар, получение урона.</li>
+            <li>Контроллер собирается <strong>кодом</strong>: стойка ↔ бег по скорости, удары входят из любого состояния.</li>
+            <li><code>Root motion</code> выключен намертво: клипы двигают персонажа сами, а положение решает тик — иначе картинка уедет от логики.</li>
+            <li>Масштаб в кадре ×1.4 по решению владельца.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <div class="title">Главный урок: риг гуманоида отдавать Mixamo</div>
+        <p>У всех трёх провальных попыток причина одна. Модель — <strong>цельный меш на 17 тысяч вершин</strong>, и любая разница весов внутри него тянет соседнюю геометрию: жёсткая граница рвёт ткань, мягкая размазывает её по ноге. Автоматика Blender эту задачу не решает ни в одном из трёх режимов, которые я перебрал. Mixamo решает её за десять минут и бесплатно.</p>
+        <p>Второй урок мельче, но дороже по времени: <strong>ширину юбки нельзя мерить по всем вершинам</strong>. Кисти висят ровно на уровне пояса, и первый замер дал полметра вместо двадцати двух сантиметров — снаряжение улетело в стороны на размах рук.</p>
+      </div>
+
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Почему «ничего не изменилось»</h3><span class="chip wip">Починено</span></div>
+          <p>Настройки импорта в Unity применяет <code>AssetPostprocessor</code>, а он срабатывает <strong>только в момент импорта</strong>. Модель, лежавшая в проекте до появления скрипта, так и осталась с прежними настройками: без скелета гуманоида и белая. Снаружи это выглядит как «сделал — не работает».</p>
+          <p>Теперь настройка проверяет себя сама при загрузке проекта — скелет, контроллер, материал с живой текстурой — и запускает полный проход, если что-то не сошлось.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Почему персонаж был белым</h3><span class="chip wip">Починено</span></div>
+          <p>Текстура, вшитая в FBX, живёт подчинённым ассетом и <strong>пересоздаётся при каждом переимпорте</strong>, теряя ссылку из материала. Поэтому картинка лежит в проекте отдельным файлом, а если материал всё же оказался пустым, отрисовка собирает материал прямо в игре.</p>
+          <p>Проверяется именно наличие текстуры, а не материала: <em>материал без текстуры выглядит точно так же, как его отсутствие</em> — белой фигурой.</p>
+        </div>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Что осталось и кто это должен делать</div>
+        <p><strong>Ретопология.</strong> Сетка получена схлопыванием миллиона треугольников: она рваная, и на ней плохо ложатся деформации. Это единственное, что реально поднимет качество модели, — и это не программистская работа.</p>
+        <p><strong>Снаряжение утоплено в юбке.</strong> Сокеты вынесены на замеренные 4.5 см, этого мало. Правится вручную в Blender за один заход, вместе с ретопологией.</p>
+      </div>
+    </section>
+
+    <section id="benchmark">
+      <div class="head">
+        <span class="eyebrow">26 · Ориентир</span>
+        <h2>Эталон исполнения: Hell Clock</h2>
+      </div>
+      <p class="lede">Владелец назвал <strong>Hell Clock</strong> (Rogue Snail, июль 2025, $19.99) эталоном исполнения. Формулировка 29 августа дословно: нравится жанр, как двигаются персонажи, их анимации, как выглядит боёвка и экшен — <em>«хочу сделать нечто очень похожее, но со своей историей, сеттингом, своими артами и персонажами, локациями, своей системой талантов, способностей, прокачки»</em>. Это первый живой ориентир проекта: не набор слов о качестве, а работающая игра, которую можно запустить и разобрать покадрово.</p>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Что берём</h3><span class="chip ok">Решено 29.08</span></div>
+          <ul>
+            <li><strong>Движение и анимации.</strong> Как персонаж стартует, тормозит, разворачивается, как переходит из шага в удар. Названо владельцем первым пунктом — и это ровно та часть, где уже сделаны разгон, торможение и расталкивание тел.</li>
+            <li><strong>Полировку и импакт.</strong> Вес удара, плотность и качество эффектов, ощущение «room-shattering» билда на поздних этапах. Планка исполнения для Gate 4.</li>
+            <li><strong>Структуру забега.</strong> Реликвии с постоянными эффектами на активные умения, риск/награда на предметах, три акта плюс эндгейм-восхождение, метапрогресс за отдельную валюту.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Что не берём</h3><span class="chip no">Не меняется</span></div>
+          <ul>
+            <li><strong>Палитру и общий тон.</strong> Рецензенты сравнивают Hell Clock с Darkest Dungeon — это стилизованное тёмное фентези. Наше направление, яркий cel-shading, остаётся без изменений.</li>
+            <li><strong>Сеттинг, историю, арт, персонажей и локации.</strong> Война Канудуса 1896 года и бразильский фольклор — их территория и часть их идентичности. У нас девятьсот восемьдесят четыре года своей.</li>
+            <li><strong>Систему талантов, способностей и прокачки.</strong> Названа владельцем отдельно. «Печать пламени» на 22 узла уже написана по своим правилам и остаётся образцом для трёх оставшихся деревьев.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout">
+        <div class="title">Почему разделение именно такое</div>
+        <p>Линия проходит между <em>ремеслом</em> и <em>идентичностью</em>. Как персонаж переносит вес с ноги на ногу, сколько кадров длится стоп на контакте, когда всплывает цифра — это ремесло, и заимствовать его у лучших в жанре не только можно, но и нужно: своего способа сделать удар весомым не существует. Сеттинг, арт, деревья прокачки — идентичность, то единственное, чего у Hell Clock не купить и не повторить.</p>
+        <p>Есть и рыночная причина ровно той же границы. Hell Clock доказывает, что тёмная ниша плотно занята и в ней придётся конкурировать исполнением с командой, у которой за спиной уже выпущенные игры. Яркий toon остаётся единственным, что отличает скриншот Lost Veleor в ленте Steam от трёх соседних.</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Система</th><th>Hell Clock</th><th>Lost Veleor</th><th>Вывод</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Длина забега</td><td>10–30 минут</td><td class="num">4–8 минут <span class="chip wip">цель</span></td><td>Наш вдвое-вчетверо короче — и это пока замысел: фактический Разлом проходится быстрее. Настраивается вместе с плотностью врагов.</td></tr>
+            <tr><td class="name">Давление</td><td>Тикающий таймер в интерфейсе</td><td>Нет ничего</td><td><strong>Открытый вопрос.</strong> У нас забег кончается только смертью или выходом; решения «какой бой пропустить» нет.</td></tr>
+            <tr><td class="name">Внутри забега</td><td>Реликвии и благословения, риск/награда на предметах</td><td>Выбор одной награды из трёх</td><td>Совпадает по смыслу. Их реликвии — ровно наш принцип «уникалка меняет правила, а не цифры».</td></tr>
+            <tr><td class="name">Между забегами</td><td>Статуи с постоянными бафами, дерево, реликварий</td><td>Лагерь: Полигон, Летопись, верстак, заказы</td><td>У нас метаигра богаче по замыслу и беднее по факту: сделана одна механика из четырёх.</td></tr>
+            <tr><td class="name">Структура</td><td>Три акта + эндгейм-восхождение</td><td>Три акта + Разломы</td><td>Совпадает один в один. Схема рабочая — это подтверждение, а не повод менять.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout quiet">
+        <div class="title">Коммерческая справка</div>
+        <p>На конец августа 2026 у Hell Clock <strong>1 826 отзывов, 83% положительных</strong> (из недавних 89%). По эмпирическому правилу Boxleiter (25–50 копий на отзыв) это порядка <strong>45–90 тысяч копий</strong> при цене $19.99. Точных цифр продаж нет, оценка грубая.</p>
+        <p>Практический вывод один и он важный: <strong>изометрическая ARPG-рогалик за $20 от небольшой команды попадает в «хороший» сценарий нашей же сметы</strong> — тот, где 30 000 копий дают около $240k. Жанр и цена работают. Спорной остаётся только видимость на полке, а её решает картинка.</p>
+      </div>
+    </section>
+
+    <section id="tech">
+      <div class="head">
+        <span class="eyebrow">27 · Техника</span>
+        <h2>Техника и код: что готово</h2>
+      </div>
+      <p class="lede">Unity-проект <code>razlom/</code> — единственный живой. Четыре сборки плюс редакторные скрипты, 84 файла C#, 168 тестов в 11 файлах.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Сборка</th><th>Что внутри</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Game.Sim</td><td><code>Core</code> — Fix64, FixVec2, Pcg32, EntityStore, SpatialHash, Simulation · <code>Stats</code> — StatSheet, CombatStats · <code>Items</code> — генерация, аффиксы, Equipment · <code>Abilities</code> — дерево, «Печать пламени», снаряды, статусы · <code>World</code> — модульная раскладка · <code>Run</code> — RiftRun, фазы забега · <code>Camp</code> — Camp, Inventory, ProvingGround, GameSession</td></tr>
+            <tr><td class="name">Game.Data</td><td>AffixAsset, ItemBaseAsset, ItemDataBuilder</td></tr>
+            <tr><td class="name">Game.View</td><td>Bootstrap, TickDriver, ArenaView, LayoutView, CameraFollow, RunHud, CampHud, PlayerHud, HealthBars, DamageNumbers, CharacterAnimatorView, SpriteCharacterVisual, CombatJuiceView, CombatCameraJuice, CombatAudio, CombatIndicators, ViewPool</td></tr>
+            <tr><td class="name">Game.Tests</td><td>168 тестов: детерминизм, забег, статы, лагерь, генерация предметов, способности, раскладка</td></tr>
+            <tr><td class="name">Editor</td><td>Валидатор анимаций, импорт персонажа, сборщик контроллера, самопроверяющаяся настройка пелага</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Что появилось за последние дни</h3>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Лагерь и вход в забег</h3><span class="chip ok">Новое</span></div>
+          <p>Игра перестала быть одним забегом. Три режима и переходы: лагерь → Разлом → экран итогов → лагерь или сразу новый Разлом. <code>GameSession</code> — игра целиком; забег пересоздаётся на каждый вход и есть единица жизни симуляции. Всё, что живёт дольше — сумка, кошелёк, надетое, — лежит в лагере и переезжает на нового персонажа само.</p>
+          <p>Управление в прототипе: <code>E</code> в Разлом, <code>T</code> Полигон, <code>V</code> разобрать мусор, <code>R</code> повторить, <code>C</code> в лагерь, <code>L</code> уйти с добычей.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Статы решают бой</h3><span class="chip ok">Новое</span></div>
+          <p>Боевых констант в коде боя больше нет вообще: он читает только производные значения листа статов. Броня и сопротивление огню работают, скорость атаки задана в атаках в секунду, пересчёт грязных листов — отдельная стадия в начале тика.</p>
+          <p>Перенос констант в базы статов не поменял ни одной цифры — на это стоит отдельный сторожевой тест. <em>Урон способностей от статов персонажа пока не зависит: это отдельное решение, и оно не принято.</em></p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Петля забега</h3><span class="chip ok">Новое</span></div>
+          <p><code>RiftRun</code> держит фазы <code>Idle → Clearing → ChoosingReward → Ended</code>. Решения игрока приходят через <code>InputFrame.Command</code>: отдельного API выбора награды нет намеренно — реплей обязан воспроизводить и нажатия на экране награды. Смерть проверяется раньше зачистки, иначе труп получал бы награду. На экране награды симуляция стоит.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Презентационный слой</h3><span class="chip ok">Собран</span></div>
+          <p><code>CombatJuiceView</code> и <code>CombatCameraJuice</code> — пулы искр, колец, дуг и осколков смерти, hit-stop и импульс камеры, читающие подтверждённые <code>SimEvent</code>. <code>CombatAudio</code> синтезирует шесть звуков боя прямо в коде — без единого файла и без ожидания звукорежиссёра.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Управление жанра</h3><span class="chip ok">Новое</span></div>
+          <p><strong>Приказ атаковать живёт, пока цель жива.</strong> Щёлкнул по врагу — персонаж сам подходит и бьёт до его смерти; щелчок по земле приказ отменяет. Требовать удержания кнопки значит превращать сто тысяч ударов за сессию в сто тысяч нажатий.</p>
+          <p>К цели персонаж подходит на три четверти дальности удара: вставший ровно на границе выпадает из неё от любого толчка и топчется.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Тела не сливаются в точку</h3><span class="chip ok">Новое</span></div>
+          <p>У каждой сущности радиус тела и вес. Пересекающиеся тела расходятся, шаг расталкивания ограничен сверху — иначе плотная толпа выстреливает крайними. Игрока толпа сдвигает вчетверо слабее: приказ игрока важнее физики.</p>
+          <p>Под ногами круг ровно по радиусу тела, над раненым врагом полоска здоровья, курсор над врагом меняется на боевой. Хитбокс перестал быть догадкой.</p>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Проверка</th><th>Результат</th></tr></thead>
+          <tbody>
+            <tr><td>Тесты (.NET 9, вне Unity)</td><td class="num">168 / 168 зелёные</td></tr>
+            <tr><td>Детерминизм</td><td class="num">9 сочетаний · 40 / 120 / 400 сущностей × 3 сида × 600 тиков, побитово</td></tr>
+            <tr><td>Бюджет тика при 40 сущностях</td><td class="num">24 мкс из 33 333 — 0.07 %</td></tr>
+            <tr><td>Надевание предмета</td><td class="num">Снятие возвращает лист побитово; порядок надевания не влияет</td></tr>
+            <tr><td>Запрещённое в Game.Sim</td><td class="num">float, double, UnityEngine, Dictionary, HashSet, LINQ — отсутствуют</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Три бага, найденных на живой игре</div>
+        <p><strong>Игра вставала, когда враг горел.</strong> Горение тикало тридцать раз в секунду, и каждый тик просил hit-stop, продлевая паузу быстрее, чем она истекала. Урон по времени стал отдельным видом события: он рисует цифру, но не трогает ни паузу, ни камеру.</p>
+        <p><strong>Со второго Разлома часть врагов была невидимой.</strong> Отрисовка сбрасывала привязку «сущность → объект», когда число сущностей <em>упало</em>. Признак работал для перезапуска забега, но не для входа в следующий Разлом: там врагов становится больше, сброса не происходит, и первые полтора десятка сущностей остаются привязаны к телам прошлого Разлома — а те уже спрятаны как трупы. Теперь в признак входит глубина забега. <em>Урок общий: «число уменьшилось» — это не признак смены содержимого, а частный случай, который однажды перестанет выполняться.</em></p>
+      </div>
+
+      <div class="callout quiet">
+        <div class="title">Два бага, пойманных тестами</div>
+        <p><code>Cos(x) = Sin(x + π/2)</code> давал <code>cos(0) = 0.999843</code> — ошибка полинома синуса на пике переносилась в ноль косинуса, а на этом стоит вся работа с направлениями. Синус и косинус разведены на раздельные полиномы.</p>
+        <p>Пространственная сетка не проверяла <code>Alive</code> при запросе — убитая в этом же тике цель оставалась выбираемой. В игре это выглядело бы как «персонаж иногда бьёт труп».</p>
+      </div>
+
+      <div class="callout">
+        <div class="title">Нерушимые правила кода</div>
+        <p>Нарушение любого ломает детерминизм. Это не стилистика.</p>
+        <ul>
+          <li><code>"noEngineReferences": true</code> в asmdef <code>Game.Sim</code> — не снимать никогда. Никакого <code>float</code> и <code>double</code> внутри, только <code>Fix64</code>. Ввод квантуется на захвате.</li>
+          <li>Обход сущностей всегда по возрастанию индекса; при равном расстоянии побеждает меньший индекс. Никаких <code>Dictionary</code>, <code>HashSet</code> и LINQ в горячем пути.</li>
+          <li>Узлы способностей применяются по возрастанию стабильного хеша id, модификаторы держатся в каноническом порядке: умножение в <code>Fix64</code> округляет и не ассоциативно.</li>
+          <li>Все длительности хранятся в тиках. Исключение — статы, которые видит игрок; перевод делает только <code>CombatStats</code>.</li>
+          <li>Новый поток случайности добавлять только в конец <code>RngStreams</code>. Представление никогда не пишет в симуляцию.</li>
+          <li>В сейве хранится рецепт предмета, а не посчитанные статы. Идентификаторы — стабильные строки, хешированные в int.</li>
+          <li>Никаких <code>Instantiate</code> в бою, только пулы. Лагерь не тикает и в хеш забега не входит.</li>
+        </ul>
+      </div>
+      <p><strong>Почему Unity 6 LTS.</strong> Ключевой аргумент для соло — Asset Store: пять народов, пять классов, сорок типов мобов и десяток боссов в одиночку не рисуются. Плюс cel-shading через Shader Graph, Burst и Jobs для толп, зрелые обёртки Steamworks. <em>Отклонено: Godot 4 — почти нет рынка ассетов, для соло без художника это решающе. Unreal 5 — тяжёлый рантайм и статтеры компиляции шейдеров против требования «летает везде».</em></p>
+      <p><strong>Мерить до того, как оптимизировать.</strong> В проекте уже был случай, когда «очевидно необходимая» оптимизация на целевой нагрузке дала ноль: пространственный хеш при 40 врагах не быстрее прямого перебора, выигрыш появляется только с 400.</p>
+    </section>
+
+    <section id="risk">
+      <div class="head">
+        <span class="eyebrow">28 · Контекст</span>
+        <h2>Риски и бизнес</h2>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Сценарий при $15</th><th>Копий</th><th>Чистыми</th><th>В месяц за 26 мес</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Провал</td><td class="num">2 000</td><td class="num">~$16k</td><td class="num">$615</td></tr>
+            <tr><td class="name">Скромный</td><td class="num">8 000</td><td class="num">~$64k</td><td class="num">$2 460</td></tr>
+            <tr><td class="name">Хороший</td><td class="num">30 000</td><td class="num">~$240k</td><td class="num">$9 230</td></tr>
+            <tr><td class="name">Отличный</td><td class="num">80 000</td><td class="num">~$640k</td><td class="num">$24 600</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Медианная инди-игра продаёт 500–2 000 копий за жизнь</strong>, и только 10–20% инди окупают типичные расходы соло-разработки. Медианный исход не окупает два года полного дня — это условие задачи, а не пессимизм. Порог вишлистов для нормального запуска — 7 000; демо на Next Fest остаётся крупнейшим бесплатным источником, и показывать в нём надо <strong>петлю забега</strong>, а не первые пятнадцать минут кампании.</p>
+      <div class="callout">
+        <div class="title">Три главных риска, в порядке вероятности</div>
+        <ol class="plain">
+          <li><strong>Проект остаётся техническим срезом.</strong> Самый вероятный сценарий и ровно то, что владелец назвал 28 августа. Лечится шагами 1–4 раздела 02: сначала ощущение удара, потом всё остальное.</li>
+          <li><strong>Арт сползает в серо-коричневое.</strong> Лечится эталонным листом и Gate 0 до начала production-моделирования. Отдельная опасность после Hell Clock: заимствовать вместе с ремеслом ещё и палитру.</li>
+          <li><strong>Множитель занятости.</strong> При 20 часах в неделю путь A превращается в 52 месяца. Измерить на реальных двух неделях, а не оценить.</li>
+        </ol>
+      </div>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Соло-разработка на длинной дистанции</h3><span class="chip no">Риск</span></div>
+          <p>Главная опасность не в сложности, а в выгорании без обратной связи. Смягчается тремя вещами: вертикальный срез в первые три месяца, публичный девлог с первого дня, и жёсткое правило — никаких новых систем, пока предыдущая не доиграна до конца.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Конкуренция в жанре</h3><span class="chip no">Риск</span></div>
+          <p>Ниша плотная, и в ней сильные бесплатные игроки. Наш ответ: яркий мультяшный стиль вместо мрачного тёмного фентези; бой на удержании для тех, кому тяжело за клавиатурой три часа; честная оффлайн-игра; и сюжет, который говорит что-то настоящее. <em>Отличия реальные — но их нужно доносить в трейлере и на странице магазина, иначе они не работают.</em></p>
+        </div>
+      </div>
+      <p><strong>Что повышает шансы, в порядке отдачи:</strong> страница в Steam за 12 месяцев до релиза (бесплатно, самое недооценённое решение) · демо на Next Fest · Early Access · держаться за яркий визуал · длинный хвост жанра, где большое время в игре даёт много отзывов и попадание в блок «похожие игры» у крупных ARPG.</p>
+    </section>
+
+    <section id="open">
+      <div class="head">
+        <span class="eyebrow">29 · Блокирует работу</span>
+        <h2>Открытые вопросы</h2>
+      </div>
+      <p class="lede">Эти вопросы нельзя решить за владельца. Пока на них нет ответа, в коде стоят заглушки, а трек «Баланс» не начинается.</p>
+      <div class="cards two">
+        <div class="card">
+          <div class="top"><h3>Early Access или сразу 1.0</h3><span class="chip wip">Срок подошёл</span></div>
+          <p>26 месяцев до первых денег против 15, при примерно одинаковой дате 1.0. Первые три месяца обоих путей пройдены — дальше пути расходятся.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Нужно ли давление в забеге</h3><span class="chip wip">Новый вопрос</span></div>
+          <p>У Hell Clock забег держит тикающий таймер: он заставляет решать, какой бой пропустить. У нас забег кончается только смертью или выходом. Аналог не обязан быть таймером — растущая опасность, тающий ресурс, счётчик тревоги. Решается на живой игре, а не за столом.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Чем ограничить арену</h3><span class="chip wip">Новый вопрос</span></div>
+          <p>Синие квадраты по краям — картинка, стен за ними нет, из боя можно уйти пешком. Вариантов три: честная геометрия стен, мягкий возврат к центру или замкнутая арена, которая открывается только после зачистки. Третий вариант заодно решает вопрос давления в забеге, поэтому решать их стоит вместе.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Сколько слотов снаряжения</h3><span class="chip no">Заглушка</span></div>
+          <p>Сейчас три: оружие, броня, украшение. Настоящий набор (шлем, нагрудник, две руки, кольца, пояс) — решение владельца. Менять дёшево, <code>EquipSlot</code> для этого и заведён.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Зависит ли урон способностей от статов</h3><span class="chip no">Не решено</span></div>
+          <p>Сейчас нет: способность считает урон из своего дерева и не смотрит на персонажа. От этой развилки зависит, будут ли предметы вообще нужны Печатнику.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Числа разбора и скупки</h3><span class="chip no">Заглушка</span></div>
+          <p>48 слотов сумки, 1/3/8 осколков по редкости. Настраивается одним заходом вместе с плотностью дропа, стоимостью перековки и ресурсом износа (стартовая гипотеза 3–5).</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Венок и славянская привязка</h3><span class="chip wip">Проверить</span></div>
+          <p>Правка из раздела 22. Проверить на листах v0.5, закрыть явно или внести в v0.6.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Сеты и материалы по актам</h3><span class="chip wip">Открыто</span></div>
+          <p>Сколько сетов на акт, где границы переходов, как ложится опыт на 50 уровней. Считается одним куском вместе с кривой уровней.</p>
+        </div>
+        <div class="card">
+          <div class="top"><h3>Второй слой мира</h3><span class="chip wip">Открыто</span></div>
+          <p>Влиятельные семьи, локальные герои, уникальные животные — свои на каждом континенте. Праздники как игровые события: какой сезон под какой праздник и что меняется в лагере.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Lost Veleor · концепт-документ v1.1. Живой документ, ссылка остаётся прежней. Мастер-документ передачи — <code>the-game/PROJECT-STATE.md</code>, ревизия 14; при расхождении прав файл на диске.</p>
+      <div class="filelist">
+        <span>the-game/PROJECT-STATE.md · состояние проекта, читать первым</span>
+        <span>the-game/AGENT-BRIEF.md · правила кода и задачи 0–5</span>
+        <span>the-game/VISUAL-PRODUCTION-AGENT.md · визуальный стандарт и гейты</span>
+        <span>the-game/razlom/ · единственный живой Unity-проект</span>
+        <span>the-game/designed-images/ · арт, паки v5 и v6</span>
+        <span>the-game/production/characters/ · production-персонажи, в работе</span>
+        <span>razlom/Assets/Resources/Characters/Pelag_Rodin01/ · первый 3D-персонаж в игре</span>
+      </div>
+      <p>Спутники: <a href="https://claude.ai/code/artifact/b1f7f55a-1091-4931-998d-c40646ca1d79">Ядро Разлома</a> — техническая архитектура · <a href="https://claude.ai/code/artifact/1abf7531-7b19-428a-aec0-49e896f61492">Печать пламени</a> — эталонное дерево на 22 узла · <a href="https://claude.ai/code/artifact/88044276-0b4e-48ac-b142-705ec90e71cd">Двадцать шесть месяцев</a> — сроки, смета, рынок.</p>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  if(!links.length) return;
+  var map = {};
+  links.forEach(function(a){
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if(el) map[id] = a;
+  });
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(l){ l.classList.remove('on'); });
+        var a = map[e.target.id];
+        if(a) a.classList.add('on');
+      }
+    });
+  }, { rootMargin: '-10% 0px -75% 0px', threshold: 0 });
+  Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+})();
+</script>

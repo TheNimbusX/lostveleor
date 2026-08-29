@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1536" height="1024" viewBox="0 0 300 200">
+  <title>Флаг Веранских островов</title>
+  <desc>Морское поле и симметричный канатный узел пелагов со знаком Вола в центре.</desc>
+  <rect width="300" height="200" fill="#176F75"/>
+  <path d="M52 100c0-42 42-60 72-30l26 26 26-26c30-30 72-12 72 30s-42 60-72 30l-26-26-26 26c-30 30-72 12-72-30Z" fill="none" stroke="#E9DDC8" stroke-width="20"/>
+  <path d="m150 78 22 22-22 22-22-22Z" fill="#A9472D"/>
+</svg>
