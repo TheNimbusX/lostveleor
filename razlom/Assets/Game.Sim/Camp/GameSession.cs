@@ -88,6 +88,9 @@ namespace Game.Sim
         public int RunNumber { get; private set; }
         public RunSummary LastRun { get; private set; }
 
+        /// <summary>Используется только автоматизированной съёмкой combat slice.</summary>
+        public bool WhirlwindShowcase { get; set; }
+
         public GameSession(ulong sessionSeed, Camp camp, ModuleSet modules, int[] itemBaseIds,
             int simCapacity = 512)
         {
@@ -205,6 +208,7 @@ namespace Game.Sim
 
             Run = new RiftRun(sim, _modules, Camp.Items, _itemBaseIds);
             Run.PlayerEquipment = Camp.Worn;
+            Run.WhirlwindShowcase = WhirlwindShowcase;
             Run.StartRun();
 
             Mode = GameMode.Rift;

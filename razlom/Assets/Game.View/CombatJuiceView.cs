@@ -14,6 +14,8 @@ namespace Game.View
     public sealed class CombatJuiceView : MonoBehaviour
     {
         private const int PoolSize = 160;
+        private const int TrailSamples = 18;
+        private const int TrailVerticesPerSample = 3;
 
         private enum FxKind : byte { Spark, Ring, Slash, DeathShard }
 
@@ -68,6 +70,21 @@ namespace Game.View
         private float _timeScaleBeforeStop = 1f;
         private uint _randomState = 0x9E3779B9u;
 
+        private Transform _bladeRoot;
+        private Transform _bladeTip;
+        private Mesh _trailMesh;
+        private MeshRenderer _trailRenderer;
+        private readonly Vector3[] _trailRoots = new Vector3[TrailSamples];
+        private readonly Vector3[] _trailTips = new Vector3[TrailSamples];
+        private readonly Vector3[] _trailVertices = new Vector3[TrailSamples * TrailVerticesPerSample];
+        private readonly Color[] _trailColors = new Color[TrailSamples * TrailVerticesPerSample];
+        private readonly int[] _trailTriangles = new int[(TrailSamples - 1) * 12];
+        private int _trailCount;
+        private float _trailDelay;
+        private float _trailActive;
+        private float _trailFade;
+        private float _whirlwindImpactWindow;
+
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
@@ -87,6 +104,7 @@ namespace Game.View
             _ringSprite = MakeRingSprite();
             _slashSprite = MakeSlashSprite();
             BuildPool();
+            BuildSwordTrail();
         }
 
         private void LateUpdate()
@@ -94,6 +112,7 @@ namespace Game.View
             UpdateHitStop();
             ConsumeEvents();
             AnimateFx();
+            AnimateSwordTrail();
         }
 
         private void OnDisable()
@@ -192,6 +211,7 @@ namespace Game.View
         {
             bool fromPlayer = e.Source == Simulation.PlayerId;
             bool playerHit = e.Target == Simulation.PlayerId;
+            bool whirlwindHit = fromPlayer && _whirlwindImpactWindow > 0f;
 
             // Иерархия силы: удар, в котором игрок не участвует, не реагирует
             // вообще. В кадре сорок врагов, и если каждый их чих будет
@@ -205,24 +225,34 @@ namespace Game.View
                     ? new Color(1f, 0.50f, 0.20f, 0.96f)
                     : new Color(1f, 0.20f, 0.24f, 0.86f);
 
-            SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, core,
-                0.24f, 0.22f, e.Flag ? 1.55f : 1.15f, 0f, 0f, 0f);
+            if (whirlwindHit)
+            {
+                SpawnFx(FxKind.Slash, _slashSprite, at, Vector3.zero,
+                    new Color(1f, 0.42f, 0.12f, 0.98f),
+                    0.19f, 0.62f, 1.45f, 0f, Random01() * 130f - 65f, 0f);
+            }
+            else
+            {
+                SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, core,
+                    0.24f, 0.22f, e.Flag ? 1.55f : 1.15f, 0f, 0f, 0f);
+            }
 
             // Искры — по бюджету кадра. Кольцо получают все задетые, искры
             // только первые: пул конечен, и вымыть его залпом нельзя.
             if (_burstBudget > 0)
             {
                 _burstBudget--;
-                SpawnBurst(at, core, e.Flag ? 12 : 7, e.Flag ? 4.8f : 3.5f, false);
+                SpawnBurst(at, core, whirlwindHit ? 5 : e.Flag ? 12 : 7,
+                    whirlwindHit ? 4.6f : e.Flag ? 4.8f : 3.5f, false);
             }
 
-            PushTarget(in e, e.Flag ? 1f : playerHit ? 0.8f : 0.55f);
+            PushTarget(in e, whirlwindHit ? 0.92f : e.Flag ? 1f : playerHit ? 0.8f : 0.55f);
 
             Accumulate(
-                trauma: e.Flag ? 0.52f : playerHit ? 0.33f : 0.25f,
-                zoom: e.Flag ? 0.75f : 0.35f,
-                stopDuration: e.Flag ? 0.070f : 0.038f,
-                stopScale: e.Flag ? 0.035f : 0.08f);
+                trauma: whirlwindHit ? 0.40f : e.Flag ? 0.52f : playerHit ? 0.33f : 0.25f,
+                zoom: whirlwindHit ? 0.56f : e.Flag ? 0.75f : 0.35f,
+                stopDuration: whirlwindHit ? 0.058f : e.Flag ? 0.070f : 0.038f,
+                stopScale: whirlwindHit ? 0.055f : e.Flag ? 0.035f : 0.08f);
         }
 
         /// <summary>
@@ -256,33 +286,176 @@ namespace Game.View
             Vector3 at = At(e.Position, 1.05f);
             int source = (uint)e.Target < (uint)_lastDamageSource.Length ? _lastDamageSource[e.Target] : -1;
             bool playerKill = source == Simulation.PlayerId;
+            bool whirlwindKill = playerKill && _whirlwindImpactWindow > 0f;
             Color color = playerKill
                 ? new Color(1f, 0.38f, 0.16f, 1f)
                 : new Color(0.85f, 0.20f, 0.24f, 0.92f);
 
-            SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, color,
-                0.42f, 0.35f, playerKill ? 2.4f : 1.8f, 0f, 0f, 0f);
-            if (playerKill)
+            if (whirlwindKill)
             {
-                SpawnFx(FxKind.Ring, _ringSprite, at + Vector3.up * 0.08f, Vector3.zero,
-                    new Color(0.13f, 0.025f, 0.10f, 0.88f),
-                    0.62f, 0.18f, 3.2f, 0f, 0f, 0f);
+                SpawnFx(FxKind.Slash, _slashSprite, at, Vector3.zero,
+                    new Color(1f, 0.30f, 0.08f, 1f),
+                    0.30f, 0.85f, 2.25f, 0f, Random01() * 120f - 60f, 0f);
+                SpawnBurst(at, color, 6, 5.8f, true);
             }
-            SpawnBurst(at, color, playerKill ? 24 : 12, playerKill ? 7.1f : 4.7f, true);
+            else
+            {
+                SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, color,
+                    0.42f, 0.35f, playerKill ? 2.4f : 1.8f, 0f, 0f, 0f);
+                SpawnBurst(at, color, playerKill ? 12 : 8, playerKill ? 6.2f : 4.7f, true);
+            }
 
             // Добивание — кульминация цепочки, и по силе оно обязано стоять
             // ВЫШЕ крита: крит это хороший удар, убийство это конец истории.
             if (playerKill)
-                Accumulate(trauma: 0.68f, zoom: 1.08f, stopDuration: 0.095f, stopScale: 0.025f);
+                Accumulate(
+                    trauma: whirlwindKill ? 0.58f : 0.68f,
+                    zoom: whirlwindKill ? 0.82f : 1.08f,
+                    stopDuration: whirlwindKill ? 0.072f : 0.095f,
+                    stopScale: whirlwindKill ? 0.04f : 0.025f);
         }
 
         private void SpawnAbility(in SimEvent e)
         {
             if (e.Source != Simulation.PlayerId) return;
             Vector3 at = At(e.Position, 0.12f);
-            SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero,
-                new Color(0.20f, 0.92f, 1f, 0.90f), 0.48f, 0.45f, 2.8f, 0f, 0f, 0f);
-            Accumulate(trauma: 0.24f, zoom: 0.35f, stopDuration: 0f, stopScale: 1f);
+            SpawnBurst(at, new Color(0.72f, 0.31f, 0.12f, 0.52f), 4, 1.8f, false);
+            StartWhirlwindTrail();
+        }
+
+        private void StartWhirlwindTrail()
+        {
+            if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
+            {
+                return;
+            }
+            _trailCount = 0;
+            _trailDelay = 0.12f;
+            _trailActive = 0.38f;
+            _trailFade = 0.16f;
+            _whirlwindImpactWindow = 0.62f;
+            if (_trailRenderer != null) _trailRenderer.enabled = false;
+        }
+
+        private void BuildSwordTrail()
+        {
+            GameObject go = new GameObject("Pelag Sword Trail");
+            go.transform.SetParent(transform, false);
+            MeshFilter filter = go.AddComponent<MeshFilter>();
+            _trailRenderer = go.AddComponent<MeshRenderer>();
+
+            _trailMesh = new Mesh { name = "Runtime Pelag Whirlwind Ribbon" };
+            _trailMesh.MarkDynamic();
+            filter.sharedMesh = _trailMesh;
+
+            Shader shader = Shader.Find("Razlom/SwordTrail");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+            _trailRenderer.sharedMaterial = new Material(shader) { name = "Runtime Pelag Whirlwind Trail" };
+            _trailRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _trailRenderer.receiveShadows = false;
+            _trailRenderer.sortingOrder = 100;
+            _trailRenderer.sharedMaterial.renderQueue = 3100;
+            _trailRenderer.enabled = false;
+        }
+
+        private void AnimateSwordTrail()
+        {
+            float dt = Time.deltaTime;
+            if (_whirlwindImpactWindow > 0f) _whirlwindImpactWindow -= dt;
+            if (_trailDelay > 0f)
+            {
+                _trailDelay -= dt;
+                return;
+            }
+
+            if (_trailActive > 0f && _bladeRoot != null && _bladeTip != null)
+            {
+                _trailActive -= dt;
+                AddTrailSample(_bladeRoot.position, _bladeTip.position);
+            }
+            else if (_trailFade > 0f)
+            {
+                _trailFade -= dt;
+            }
+            else
+            {
+                if (_trailRenderer != null) _trailRenderer.enabled = false;
+                return;
+            }
+
+            RebuildSwordTrail();
+        }
+
+        private void AddTrailSample(Vector3 root, Vector3 tip)
+        {
+            if (_trailCount > 0)
+            {
+                Vector3 lastMid = (_trailRoots[_trailCount - 1] + _trailTips[_trailCount - 1]) * 0.5f;
+                if (((root + tip) * 0.5f - lastMid).sqrMagnitude < 0.000025f) return;
+            }
+
+            if (_trailCount == TrailSamples)
+            {
+                for (int i = 1; i < TrailSamples; i++)
+                {
+                    _trailRoots[i - 1] = _trailRoots[i];
+                    _trailTips[i - 1] = _trailTips[i];
+                }
+                _trailCount--;
+            }
+
+            _trailRoots[_trailCount] = root;
+            _trailTips[_trailCount] = tip;
+            _trailCount++;
+        }
+
+        private void RebuildSwordTrail()
+        {
+            if (_trailCount < 2 || _trailMesh == null) return;
+
+            float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / 0.18f);
+            for (int i = 0; i < _trailCount; i++)
+            {
+                float along = _trailCount > 1 ? i / (float)(_trailCount - 1) : 1f;
+                float width = Mathf.Lerp(0.16f, 1f, Mathf.Sqrt(along));
+                Vector3 mid = (_trailRoots[i] + _trailTips[i]) * 0.5f;
+                Vector3 half = (_trailTips[i] - _trailRoots[i]) * (0.5f * width);
+                int vertex = i * TrailVerticesPerSample;
+                _trailVertices[vertex] = mid - half;
+                _trailVertices[vertex + 1] = mid;
+                _trailVertices[vertex + 2] = mid + half;
+
+                float alpha = Mathf.SmoothStep(0f, 1f, along) * fade;
+                _trailColors[vertex] = new Color(0.95f, 0.12f, 0.025f, alpha * 0.28f);
+                _trailColors[vertex + 1] = new Color(1f, 0.30f, 0.055f, alpha * 0.78f);
+                _trailColors[vertex + 2] = new Color(1f, 0.58f, 0.10f, alpha * 0.94f);
+            }
+
+            int triangle = 0;
+            for (int i = 0; i < _trailCount - 1; i++)
+            {
+                int a = i * TrailVerticesPerSample;
+                int b = a + TrailVerticesPerSample;
+                _trailTriangles[triangle++] = a;
+                _trailTriangles[triangle++] = b;
+                _trailTriangles[triangle++] = a + 1;
+                _trailTriangles[triangle++] = a + 1;
+                _trailTriangles[triangle++] = b;
+                _trailTriangles[triangle++] = b + 1;
+                _trailTriangles[triangle++] = a + 1;
+                _trailTriangles[triangle++] = b + 1;
+                _trailTriangles[triangle++] = a + 2;
+                _trailTriangles[triangle++] = a + 2;
+                _trailTriangles[triangle++] = b + 1;
+                _trailTriangles[triangle++] = b + 2;
+            }
+
+            _trailMesh.Clear(false);
+            _trailMesh.SetVertices(_trailVertices, 0, _trailCount * TrailVerticesPerSample);
+            _trailMesh.SetColors(_trailColors, 0, _trailCount * TrailVerticesPerSample);
+            _trailMesh.SetTriangles(_trailTriangles, 0, triangle, 0, true);
+            _trailMesh.RecalculateBounds();
+            _trailRenderer.enabled = true;
         }
 
         private void SpawnBurst(Vector3 at, Color color, int count, float speed, bool death)

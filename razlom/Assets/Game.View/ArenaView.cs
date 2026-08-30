@@ -23,33 +23,74 @@ namespace Game.View
         [Header("Вид")]
         public Color WoleColor = new Color(0.92f, 0.40f, 0.46f);
         public Color OrvillColor = new Color(0.55f, 0.57f, 0.62f);
-        public float WoleScale = 1.4f;
+        // Меш пелага приехал ростом 0.98 единицы (Tripo отдаёт модель в своём
+        // масштабе, а не в метрах). Художник задал рост 1.78 м, симуляция
+        // считает в метрах — отсюда множитель 1.78 / 0.98.
+        public float WoleScale = 1.82f;
         public float OrvillScale = 1.0f;
 
         [Header("Модели персонажей")]
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
-        public string WoleModel = "Characters/Pelag_Rodin01/Pelag_Rodin01";
+        public string WoleModel = "Characters/Pelag_v5/Runtime/Pelag_v5_MixamoRig";
 
+        // ПУСТО — значит рисованный спрайт, и это сознательный выбор, а не
+        // недоделка. Проверено съёмкой 29.08.2026: префаб
+        // Orvill_ShieldInfantry_01_Validated загружается, анимируется и слушается
+        // контроллера FullCombat, но его меш — блокаут для проверки рига: шар
+        // вместо головы, коробки вместо конечностей, плоскость вместо щита.
+        // Анимационный конвейер им доказан, а МОДЕЛИ ещё нет; ставить сюда
+        // блокаут значило бы выдать техническую заглушку за персонажа.
         [Tooltip("Орвилл пока на спрайтах: его production-модель ещё не собрана.")]
         public string OrvillModel = "";
 
+        // Игровая модель и клипы используют один Mixamo-скелет. Generic выбран
+        // намеренно: так ноги, кисти и пальцы проигрываются без ретаргета.
         [Tooltip("Контроллер анимаций в Resources. У сырой модели Animator приходит " +
                  "пустым, и без контроллера персонаж стоит столбом.")]
-        public string WoleController = "Characters/Pelag_Rodin01/Pelag_Rodin01";
+        public string WoleController = "Characters/Pelag_v5/Pelag_v5_FullCombat";
 
         public string OrvillController = "";
 
-        [Tooltip("Материал персонажа в Resources. Материал внутри FBX пересоздаётся " +
-                 "при каждом переимпорте, поэтому цвет берётся из отдельного ассета.")]
-        public string WoleMaterial = "Characters/Pelag_Rodin01/Pelag_Rodin01";
+        // Пусто: раскраска приехала внутри FBX отдельным материалом на каждую
+        // часть тела, и постпроцессор импорта уже перевёл их на тун-шейдер.
+        // Подстановка одного материала на всю модель стёрла бы это.
+        [Tooltip("Материал персонажа в Resources. Пусто — материал берётся из модели.")]
+        public string WoleMaterial = "";
 
         public string OrvillMaterial = "";
 
+        // Картинка ОТДЕЛЬНЫМ файлом рядом с моделью, а не вшитая в FBX.
+        //
+        // Проверено 29.08.2026: материалу, который импортёр кладёт внутрь
+        // префаба, ссылку на текстуру присвоить не удаётся — шейдер и цвет
+        // сохраняются, а текстура молча теряется при сериализации. Материал без
+        // текстуры выглядит ровно как её отсутствие: одноцветная фигура.
+        // Поэтому материал собирается в игре из этого файла.
         [Tooltip("Текстура персонажа в Resources. Запасной путь: если готового " +
                  "материала нет, он собирается прямо в игре из этой картинки.")]
-        public string WoleTexture = "Characters/Pelag_Rodin01/Pelag_Rodin01_BaseColor";
+        public string WoleTexture = "Characters/Pelag_v4/Pelag_v4_BaseColor";
 
         public string OrvillTexture = "";
+
+        [Header("Модульное снаряжение героя")]
+        [Tooltip("Отдельный prefab оружия. Он не связан с мешем тела и меняется через сокет.")]
+        public string WoleWeaponPrefab = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber";
+        public string WoleWeaponBaseColor = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber_BaseColor";
+        public string WoleWeaponNormal = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber_Normal";
+        public string WoleWeaponMetallic = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber_Metallic";
+        public string WoleWeaponSocket = "mixamorig:RightHand";
+        // Экспорт нормализован: pivot находится в центре рукояти, клинок идёт
+        // по локальной +Y сокета. Небольшой сдвиг ставит хват в центр ладони,
+        // а не в сустав запястья.
+        public Vector3 WoleWeaponLocalPosition = new Vector3(0f, 0.040f, 0f);
+        // Измерено по линии Pinky1 -> Index1 в rest pose Mixamo и переведено
+        // в локальные оси RightHand. Рукоять проходит поперёк ладони, клинок
+        // выходит со стороны большого/указательного пальца.
+        public Vector3 WoleWeaponLocalDirection = new Vector3(0.882f, 0.470f, 0.035f);
+        // Тело Pelag увеличено в 1.82 раза из-за масштаба исходного FBX, а
+        // новая сабля уже приходит в метрах. Компенсируем масштаб родителя:
+        // 0.55 * 1.82 ~= 1, поэтому клинок остаётся длиной около метра.
+        public float WoleWeaponLocalScale = 0.55f;
 
         [Tooltip("Доворот модели вокруг вертикали, градусы. Если персонаж бегает " +
                  "спиной вперёд — поставь 180. Зависит от того, куда смотрел " +
@@ -100,6 +141,9 @@ namespace Game.View
         // поэтому «привязанное» — всегда непрерывный префикс, флаги не нужны.
         private int _boundCount;
 
+        private Transform _playerBladeRoot;
+        private Transform _playerBladeTip;
+
         private bool _initialized;
 
         // ---- реакция на попадание ----
@@ -117,6 +161,9 @@ namespace Game.View
         private Renderer[][] _bodyRenderers;
         private MaterialPropertyBlock[] _materialBlocks;
         private float[] _hitFlash;
+        // Только presentation-offset: capture/demo может показать рывок или
+        // сопротивление цепи, не меняя детерминированную позицию в Sim.
+        private Vector3[] _presentationOffset;
         private static readonly int HitFlashId = Shader.PropertyToID("_HitFlash");
 
         [Header("Реакция на попадание")]
@@ -165,6 +212,7 @@ namespace Game.View
             _bodyRenderers = new Renderer[capacity][];
             _materialBlocks = new MaterialPropertyBlock[capacity];
             _hitFlash = new float[capacity];
+            _presentationOffset = new Vector3[capacity];
 
             Transform woleRoot = new GameObject("Пул: Wole").transform;
             Transform orvillRoot = new GameObject("Пул: Orvill").transform;
@@ -265,6 +313,51 @@ namespace Game.View
             if (strength > _hitFlash[entityId]) _hitFlash[entityId] = strength;
         }
 
+        /// <summary>Опорные точки фактически установленной сабли Pelag.</summary>
+        public bool TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip)
+        {
+            bladeRoot = _playerBladeRoot;
+            bladeTip = _playerBladeTip;
+            return bladeRoot != null && bladeTip != null;
+        }
+
+        /// <summary>Фактически привязанный объект сущности в presentation-слое.</summary>
+        public bool TryGetEntityView(int entityId, out Transform view)
+        {
+            view = null;
+            if (!_initialized || (uint)entityId >= (uint)_boundCount) return false;
+            view = _views[entityId];
+            return view != null;
+        }
+
+        /// <summary>
+        /// Визуальное смещение поверх позиции Sim. Никакого gameplay-состояния
+        /// этот метод не меняет; он нужен для рывка/натяжения в VFX QA.
+        /// </summary>
+        public void SetPresentationOffset(int entityId, Vector3 offset)
+        {
+            if (_presentationOffset == null || (uint)entityId >= (uint)_boundCount) return;
+            _presentationOffset[entityId] = offset;
+        }
+
+        public void ClearPresentationOffsets()
+        {
+            if (_presentationOffset == null) return;
+            for (int i = 0; i < _boundCount; i++) _presentationOffset[i] = Vector3.zero;
+        }
+
+        public void PlayPlayerAttackPresentation()
+        {
+            if (!_initialized || _boundCount <= Simulation.PlayerId) return;
+            _animationViews[Simulation.PlayerId]?.PlayAttack();
+        }
+
+        public void PlayPlayerAbilityPresentation(int slot)
+        {
+            if (!_initialized || _boundCount <= Simulation.PlayerId) return;
+            _animationViews[Simulation.PlayerId]?.PlayAbility(slot);
+        }
+
         /// <summary>
         /// Возвращает всё в пулы при перезапуске забега.
         ///
@@ -291,7 +384,12 @@ namespace Game.View
                 _bodyRenderers[i] = null;
                 _materialBlocks[i] = null;
                 _hitFlash[i] = 0f;
+                _presentationOffset[i] = Vector3.zero;
+
             }
+
+            _playerBladeRoot = null;
+            _playerBladeTip = null;
 
             for (int i = 0; i < _projectileViews.Length; i++)
             {
@@ -363,6 +461,12 @@ namespace Game.View
                 _materialBlocks[i] = new MaterialPropertyBlock();
                 _hitFlash[i] = 0f;
 
+                if (i == Simulation.PlayerId)
+                {
+                    _playerBladeRoot = FindChild(go.transform, "BladeRoot");
+                    _playerBladeTip = FindChild(go.transform, "BladeTip");
+                }
+
                 // Базовый масштаб запоминается ОДИН РАЗ при привязке: дальше
                 // его каждый кадр перезаписывает сплющивание, и прочитать
                 // «как было» уже неоткуда.
@@ -389,6 +493,7 @@ namespace Game.View
                 // держит корень сцены в начале координат ровно ради этого.
                 Vector3 p = _driver.GetRenderPosition(i);
                 p.y += _groundOffset[i];
+                p += _presentationOffset[i];
 
                 // Отдача и сплющивание затухают экспоненциально: удар должен
                 // читаться как толчок, а не как отъезд тела в сторону.
@@ -548,6 +653,14 @@ namespace Game.View
                 ? null
                 : Resources.Load<Material>(materialPath);
 
+            GameObject weaponPrefab = faction == Faction.Wole &&
+                                      !string.IsNullOrEmpty(WoleWeaponPrefab)
+                ? Resources.Load<GameObject>(WoleWeaponPrefab)
+                : null;
+            Material weaponMaterial = faction == Faction.Wole
+                ? BuildWeaponMaterial(WoleWeaponBaseColor, WoleWeaponNormal, WoleWeaponMetallic)
+                : null;
+
             // ЗАПАСНОЙ ПУТЬ, и он важнее, чем кажется. Материал внутри FBX
             // пересоздаётся при переимпорте и теряет текстуру, готовый .mat
             // может быть собран раньше, чем появилась картинка, — а персонаж
@@ -556,13 +669,41 @@ namespace Game.View
             // Проверяется именно ТЕКСТУРА, а не наличие материала: материал
             // без текстуры выглядит точно так же, как его отсутствие, —
             // белой фигурой, — и именно на этом мы уже один раз попались.
-            if (material == null || material.mainTexture == null)
+            if (material == null || !HasBaseTexture(material))
             {
                 Material runtime = BuildRuntimeMaterial(texturePath, faction);
                 if (runtime != null) material = runtime;
             }
 
-            return () => CreateCharacterBody(prefab, faction, scale, material, controller);
+            return () => CreateCharacterBody(prefab, faction, scale, material, controller,
+                weaponPrefab, WoleWeaponSocket,
+                WoleWeaponLocalPosition, WoleWeaponLocalDirection, WoleWeaponLocalScale,
+                weaponMaterial);
+        }
+
+        // Имя слота базовой текстуры зависит от шейдера: URP и наш тун-шейдер
+        // зовут его _BaseMap, встроенный конвейер — _MainTex. Свойство
+        // Material.mainTexture жёстко читает _MainTex, поэтому на URP-шейдере
+        // оно НЕ «возвращает null», а пишет ошибку в лог и возвращает null.
+        //
+        // Из-за этого проверка «есть ли у материала текстура» всегда говорила
+        // «нет»: готовый .mat отбрасывался, материал собирался заново каждый
+        // раз, а в консоль на каждого персонажа падала ошибка. Отсюда правило:
+        // слот выбирается по тому, что шейдер объявил, а не по удобному
+        // короткому свойству.
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+
+        private static bool HasBaseTexture(Material material)
+        {
+            if (material.HasProperty(BaseMapId) && material.GetTexture(BaseMapId) != null) return true;
+            return material.HasProperty(MainTexId) && material.GetTexture(MainTexId) != null;
+        }
+
+        private static void AssignBaseTexture(Material material, Texture texture)
+        {
+            if (material.HasProperty(BaseMapId)) material.SetTexture(BaseMapId, texture);
+            if (material.HasProperty(MainTexId)) material.SetTexture(MainTexId, texture);
         }
 
         /// <summary>
@@ -584,7 +725,13 @@ namespace Game.View
                 return null;
             }
 
-            Shader shader = Shader.Find("Razlom/Texture Toon")
+            // Pelag's 4K atlas already contains painted form and fine ink. A
+            // second two-band toon pass flattened that form and made the dense
+            // UV islands shimmer at gameplay distance. Lit restores the volume
+            // from the imported vertex normals, closer to the source 3D view.
+            Shader shader = (faction == Faction.Wole
+                                ? Shader.Find("Universal Render Pipeline/Lit")
+                                : Shader.Find("Razlom/Texture Toon"))
                             ?? Shader.Find("Universal Render Pipeline/Lit")
                             ?? Shader.Find("Universal Render Pipeline/Simple Lit")
                             ?? Shader.Find("Standard");
@@ -595,17 +742,17 @@ namespace Game.View
             }
 
             var material = new Material(shader) { name = "Runtime_" + faction };
-            material.SetTexture("_BaseMap", texture);
-            material.mainTexture = texture;
+            AssignBaseTexture(material, texture);
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.white);
 
             // Мультяшной фигуре блик по всей поверхности мешает: он забивает
             // силуэт, а силуэт здесь главный канал распознавания.
-            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.08f);
+            if (material.HasProperty("_Smoothness"))
+                material.SetFloat("_Smoothness", faction == Faction.Wole ? 0.22f : 0.08f);
             if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
             if (material.HasProperty("_ShadowColor"))
-                material.SetColor("_ShadowColor", new Color(0.36f, 0.20f, 0.32f, 1f));
-            if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.007f);
+                material.SetColor("_ShadowColor", ViewMaterials.ToonShadow);
+            if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.0035f);
 
             Debug.Log($"[Разлом] {faction}: материал собран в игре из «{texturePath}», шейдер {shader.name}.");
             return material;
@@ -616,7 +763,11 @@ namespace Game.View
             GameObject root = new GameObject(faction == Faction.Wole ? "Pelag Art" : "Orvill Art");
             // Рисованный силуэт должен читаться в игровом зуме, а не превращаться
             // в маленькое пятно между крупными тайлами арены.
-            float comicScale = faction == Faction.Wole ? 1.55f : 1.34f;
+            // Оба участника целевого среза происходят из одной 2.5D-серии.
+            // Масштаб выравнивает их видимую высоту примерно до 2.4 метра:
+            // текстуры имеют большие прозрачные поля, поэтому единица была бы
+            // заметно меньше настоящего тела в кадре.
+            float comicScale = faction == Faction.Wole ? 0.78f : 0.82f;
             root.transform.localScale = Vector3.one * (scale * comicScale);
 
             GameObject artwork = new GameObject("Artwork");
@@ -633,7 +784,10 @@ namespace Game.View
         }
 
         private static GameObject CreateCharacterBody(GameObject prefab, Faction faction, float scale,
-            Material fallbackMaterial, RuntimeAnimatorController controller)
+            Material fallbackMaterial, RuntimeAnimatorController controller,
+            GameObject weaponPrefab, string weaponSocket,
+            Vector3 weaponLocalPosition, Vector3 weaponLocalDirection, float weaponLocalScale,
+            Material weaponMaterial)
         {
             GameObject go = Instantiate(prefab);
             go.transform.localScale = Vector3.one * scale;
@@ -690,7 +844,12 @@ namespace Game.View
             }
 
             if (faction == Faction.Wole)
-                EquipProp(go.transform, "PRP_Saber_0p92m", "Weapon_R");
+            {
+                if (!MountRigidProp(go.transform, weaponPrefab, weaponSocket,
+                        weaponLocalPosition, weaponLocalDirection, weaponLocalScale, weaponMaterial))
+                    Debug.LogWarning($"[Разлом] Сабля не установлена: prefab={(weaponPrefab != null)}, " +
+                                     $"socket={weaponSocket}.");
+            }
 
             CharacterAnimatorView animation = go.GetComponent<CharacterAnimatorView>();
             if (animation == null) animation = go.AddComponent<CharacterAnimatorView>();
@@ -698,22 +857,57 @@ namespace Game.View
             return go;
         }
 
-        private static void EquipProp(Transform root, string propName, string socketName)
+        private static bool MountRigidProp(Transform character, GameObject weaponPrefab,
+            string socketName, Vector3 localPosition,
+            Vector3 localDirection, float localScale, Material materialOverride)
         {
-            Transform prop = FindChild(root, propName);
-            Transform socket = FindChild(root, socketName);
-            if (prop == null || socket == null)
+            if (weaponPrefab == null) return false;
+
+            Transform socket = FindChild(character, socketName);
+            if (socket == null) return false;
+
+            GameObject mounted = Instantiate(weaponPrefab, socket, false);
+            mounted.name = "Pelag_FantasySaber_Equipped";
+            mounted.transform.localPosition = localPosition;
+            mounted.transform.localRotation = localDirection.sqrMagnitude > 0.0001f
+                ? Quaternion.FromToRotation(Vector3.up, localDirection.normalized)
+                : Quaternion.identity;
+            mounted.transform.localScale = Vector3.one * localScale;
+            mounted.SetActive(true);
+
+            // Trail строится не вокруг персонажа, а по реальному клинку.
+            // Точки создаются в локальном пространстве самого длинного измерения
+            // меша, поэтому продолжают следовать за рукой и всеми костями клипа.
+            MeshFilter bladeMesh = mounted.GetComponentInChildren<MeshFilter>(true);
+            if (bladeMesh != null && bladeMesh.sharedMesh != null)
             {
-                Debug.LogWarning($"[Разлом] Не удалось экипировать {propName}: " +
-                                 $"prop={(prop != null)}, socket={(socket != null)}.");
-                return;
+                Bounds bounds = bladeMesh.sharedMesh.bounds;
+                // Нормализованный weapon asset всегда направлен по +Y, а pivot
+                // лежит в хвате. Начало trail ставим уже за гардой, а не в
+                // помеле/ладони; конец — чуть до кончика, чтобы не дрожал.
+                float length = bounds.size.y;
+
+                Transform bladeRoot = new GameObject("BladeRoot").transform;
+                bladeRoot.SetParent(bladeMesh.transform, false);
+                bladeRoot.localPosition = new Vector3(0f, bounds.min.y + length * 0.40f, 0f);
+
+                Transform bladeTip = new GameObject("BladeTip").transform;
+                bladeTip.SetParent(bladeMesh.transform, false);
+                bladeTip.localPosition = new Vector3(0f, bounds.min.y + length * 0.985f, 0f);
             }
 
-            Vector3 importedScale = prop.localScale;
-            prop.SetParent(socket, false);
-            prop.localPosition = Vector3.zero;
-            prop.localRotation = Quaternion.identity;
-            prop.localScale = importedScale;
+            if (materialOverride != null)
+            {
+                Renderer[] renderers = mounted.GetComponentsInChildren<Renderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Material[] materials = renderers[i].sharedMaterials;
+                    for (int m = 0; m < materials.Length; m++) materials[m] = materialOverride;
+                    renderers[i].sharedMaterials = materials;
+                }
+            }
+
+            return true;
         }
 
         private static Transform FindChild(Transform root, string wantedName)
@@ -722,6 +916,41 @@ namespace Game.View
             for (int i = 0; i < all.Length; i++)
                 if (all[i].name == wantedName) return all[i];
             return null;
+        }
+
+        private static Material BuildWeaponMaterial(string baseColorPath, string normalPath,
+            string metallicPath)
+        {
+            Texture2D baseColor = Resources.Load<Texture2D>(baseColorPath);
+            Texture2D normal = Resources.Load<Texture2D>(normalPath);
+            Texture2D metallic = Resources.Load<Texture2D>(metallicPath);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit")
+                            ?? Shader.Find("Universal Render Pipeline/Simple Lit");
+            if (shader == null)
+            {
+                Debug.LogWarning("[Разлом] Не найден URP/Lit — материал новой сабли не собран.");
+                return null;
+            }
+
+            var material = new Material(shader) { name = "Runtime_Pelag_FantasySaber" };
+            if (baseColor != null) AssignBaseTexture(material, baseColor);
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.white);
+            if (normal != null && material.HasProperty("_BumpMap"))
+            {
+                material.SetTexture("_BumpMap", normal);
+                material.SetFloat("_BumpScale", 1f);
+                material.EnableKeyword("_NORMALMAP");
+            }
+            if (metallic != null && material.HasProperty("_MetallicGlossMap"))
+            {
+                material.SetTexture("_MetallicGlossMap", metallic);
+                material.EnableKeyword("_METALLICSPECGLOSSMAP");
+            }
+            if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.72f);
+            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.38f);
+            if (baseColor == null)
+                Debug.LogWarning($"[Разлом] BaseColor новой сабли не найден: {baseColorPath}");
+            return material;
         }
 
         private static GameObject CreateBody(PrimitiveType type, Material material, float scale)

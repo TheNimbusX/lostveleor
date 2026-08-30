@@ -8,7 +8,7 @@ from PIL import Image, ImageFilter
 
 
 WORKSPACE = Path(r"C:\Users\d.grab\Desktop\the-game")
-PACK = WORKSPACE / "designed-images" / "deliverables" / "razlom-character-production-pack-v5"
+PACK = WORKSPACE / "ART/designed-images" / "deliverables" / "razlom-character-production-pack-v5"
 OUTPUT = WORKSPACE / "razlom" / "Assets" / "Resources" / "CharacterSprites"
 
 CANVAS = 1536

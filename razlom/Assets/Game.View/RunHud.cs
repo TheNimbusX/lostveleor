@@ -17,6 +17,10 @@ namespace Game.View
         private TickDriver _driver;
         private GUIStyle _title;
         private GUIStyle _line;
+        private Texture2D _white;
+
+        private static readonly Color Panel = new Color(0.035f, 0.04f, 0.065f, 0.90f);
+        private static readonly Color Coral = new Color(1.00f, 0.38f, 0.26f, 0.96f);
 
         private readonly GeneratedItem _itemBuffer = new GeneratedItem();
 
@@ -36,6 +40,12 @@ namespace Game.View
 
             EnsureStyles();
 
+            if (run.Phase == RunPhase.Clearing)
+            {
+                DrawCombatStatus(run);
+                return;
+            }
+
             GUILayout.BeginArea(new Rect(16, 16, 560, 400));
 
             GUILayout.Label($"Разлом {run.Depth}   зачищено {run.RiftsCleared}   " +
@@ -43,11 +53,6 @@ namespace Game.View
 
             switch (run.Phase)
             {
-                case RunPhase.Clearing:
-                    GUILayout.Label($"Врагов осталось: {run.Sim.CountAliveEnemies()}", _line);
-                    GUILayout.Label("ПКМ — идти,  1 — Печать пламени,  L — уйти с добычей", _line);
-                    break;
-
                 case RunPhase.ChoosingReward:
                     GUILayout.Label("РАЗЛОМ ЗАЧИЩЕН. Выбери одну награду:", _title);
                     for (int i = 0; i < RiftRun.RewardChoices; i++)
@@ -60,6 +65,24 @@ namespace Game.View
             }
 
             GUILayout.EndArea();
+        }
+
+        private void DrawCombatStatus(RiftRun run)
+        {
+            var panel = new Rect(18f, 18f, 238f, 58f);
+            Fill(panel, Panel);
+            Fill(new Rect(panel.x, panel.y, 4f, panel.height), Coral);
+            GUI.Label(new Rect(32f, 21f, 210f, 26f), $"РАЗЛОМ {run.Depth}", _title);
+            GUI.Label(new Rect(32f, 45f, 210f, 22f),
+                $"ЦЕЛЕЙ: {run.Sim.CountAliveEnemies()}", _line);
+        }
+
+        private void Fill(Rect rect, Color color)
+        {
+            Color previous = GUI.color;
+            GUI.color = color;
+            GUI.DrawTexture(rect, _white);
+            GUI.color = previous;
         }
 
         /// <summary>
@@ -97,6 +120,10 @@ namespace Game.View
         private void EnsureStyles()
         {
             if (_title != null) return;
+
+            _white = new Texture2D(1, 1);
+            _white.SetPixel(0, 0, Color.white);
+            _white.Apply();
 
             _title = new GUIStyle(GUI.skin.label) { fontSize = 18, fontStyle = FontStyle.Bold };
             _line = new GUIStyle(GUI.skin.label) { fontSize = 14 };

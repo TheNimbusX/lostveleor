@@ -1,0 +1,331 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.5/staging' branch; Version is '6000.5.10f1 (3bd4f66ad299) revision 3921142'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit Professional' Language: 'ru' Physical Memory: 16159 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-08-27T13:55:11Z
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-d.grab" at "2026-08-27T13:55:11.5303117Z"
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe
+-batchmode
+-nographics
+-noUpm
+-quit
+-projectPath
+C:\Users\d.grab\Desktop\the-game\code\unity-character-validation
+-executeMethod
+PelagAnimationValidator.Run
+-validationOutput
+C:\Users\d.grab\Desktop\the-game\code\_build_pelag_v2\pelag_animation_validation.json
+-logFile
+C:\Users\d.grab\Desktop\the-game\code\_build_pelag_v2\pelag_animation_validation.log
+Successfully changed project path to: C:\Users\d.grab\Desktop\the-game\code\unity-character-validation
+C:/Users/d.grab/Desktop/the-game/code/unity-character-validation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-remapper-allocator-initial-capacity=32768"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-main-allocator-mimalloc-enabled=0"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+Logging is directed to a specific file, skipping project log.Player connection [23560]  Target information:
+
+Player connection [23560]  * "[IP] 10.0.85.2 [Port] 55505 [Flags] 2 [Guid] 649466344 [EditorId] 649466344 [Version] 1048832 [Id] WindowsEditor(7,mitpc08) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [23560]  * "[IP] 172.27.80.1 [Port] 55505 [Flags] 2 [Guid] 649466344 [EditorId] 649466344 [Version] 1048832 [Id] WindowsEditor(7,mitpc08) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [23560]  * "[IP] 192.168.0.103 [Port] 55505 [Flags] 2 [Guid] 649466344 [EditorId] 649466344 [Version] 1048832 [Id] WindowsEditor(7,mitpc08) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [23560] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [23560] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Initialize engine version: 6000.5.10f1 (3bd4f66ad299)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/d.grab/Desktop/the-game/code/unity-character-validation/Assets
+Forcing GfxDevice: Null
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'
+Mono path[2] = 'C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56272
+CodeReloadManager initialized
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.002949 seconds.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Package Manager log level set to [2]
+[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] Unable to send message (not connected to server process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.3'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-d.grab"
+[Licensing::IpcConnector] LicenseClient-d.grab channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-d.grab-6000.5.10" at "2026-08-27T13:55:12.8866355Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 40048, path: "C:/Program Files/Unity/Hub/Editor/6000.5.10f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+  Session Id:              1739fa51e904449aad9d84a7c03d4918
+  Correlation Id:          520d8bcaeb61f90a965444e06f06a45e
+  External correlation Id: 1247030026951431353
+  Machine Id:              iKaajmvqqPQz5XYKH/fzwo0G1A4=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-d.grab-6000.5.10" (connect: 0.00s, validation: 0.00s, handshake: 0.01s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-d.grab-6000.5.10-notifications" at "2026-08-27T13:55:12.8960561Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 6872879174980-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 1.38s
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.551 seconds
+Domain Reload Profiling: 1145ms
+	BeginReloadAssembly (157ms)
+		CreateAndSetChildDomain (3ms)
+	RebuildCommonClasses (5ms)
+	RebuildNativeTypeToScriptingClass (20ms)
+	initialDomainReloadingComplete (78ms)
+	LoadAllAssembliesAndSetupDomain (333ms)
+		LoadAssemblies (150ms)
+		AnalyzeDomain (240ms)
+			TypeCache.Refresh (239ms)
+				TypeCache.ScanAssembly (223ms)
+	FinalizeReload (552ms)
+		SetupLoadedEditorAssemblies (0ms)
+			InitializePlatformSupportModulesInManaged (3ms)
+			BeforeProcessingInitializeOnLoad (107ms)
+			ProcessInitializeOnLoadAttributes (106ms)
+			ProcessInitializeOnLoadMethodAttributes (263ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+Starting: C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/d.grab/Desktop/the-game/code/unity-character-validation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 0s109ms
+*** Tundra build success (0.06 seconds), 0 items updated, 168 evaluated
+AssetDatabase: script compilation time: 0.506553s
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+[Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
+[Package Manager] Unable to send message (not connected to server process).
+[Package Manager] Cannot connect to Unity Package Manager local server
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.550 seconds
+Domain Reload Profiling: 1162ms
+	BeginReloadAssembly (426ms)
+		DisableScriptedObjects (85ms)
+		CreateAndSetChildDomain (164ms)
+	RebuildCommonClasses (9ms)
+	RebuildNativeTypeToScriptingClass (18ms)
+	initialDomainReloadingComplete (47ms)
+	LoadAllAssembliesAndSetupDomain (108ms)
+		LoadAssemblies (121ms)
+		AnalyzeDomain (10ms)
+			TypeCache.Refresh (6ms)
+			BuildScriptInfoCaches (3ms)
+	FinalizeReload (553ms)
+		SetupLoadedEditorAssemblies (0ms)
+			BeforeProcessingInitializeOnLoad (99ms)
+			ProcessInitializeOnLoadAttributes (91ms)
+			ProcessInitializeOnLoadMethodAttributes (84ms)
+			AfterProcessingInitializeOnLoad (10ms)
+		AwakeInstancesAfterBackupRestoration (31ms)
+Starting new worker id: 0 with log in C:/Users/d.grab/Desktop/the-game/code/unity-character-validation/Logs/AssetImportWorkerHW0.log
+
+Asset Pipeline Refresh (id=3102a178c4801994a823925de117ad03): Total: 1.865 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=671 ms
+		Asset DB Callback time: managed=24 ms, native=0 ms
+		Scripting: domain reloads=1, domain reload time=650 ms, compile time=509 ms, other=10 ms
+		Project Asset Count: scripts=27, non-scripts=9
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	ApplyChangesToAssetFolders: 0.150ms
+	Scan: 31.264ms
+	Collect global state as custom dependencies: 10.854ms
+	ProcessAssetsWithTransientArtifactChanges: 0.467ms
+	CategorizeAssets: 0.240ms
+	CompileScripts: 508.878ms
+	ImportOutOfDateAssets: 574.702ms (554.397ms without children)
+		UnloadImportedAssets: 0.136ms
+		ImportSchedulerStart: 20.158ms
+	PostProcessAllAssets: 24.605ms
+		MonoPostProcessAllAssets: 24.457ms
+			WindowAssetPostprocessingWatcher.OnPostprocessAllAssets 9.481ms
+			SyncVS.PostprocessSyncProject 1.920ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.131ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 0.969ms
+			ReferencedClipsPostProcessor.OnPostprocessAllAssets 0.322ms
+			TerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.199ms
+			RenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.172ms
+			AssetDatabaseCallbacks.OnPostprocessAllAssets 0.171ms
+	UnloadStreamsBegin: 1.859ms
+	Untracked: 704.696ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 5.071ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-unity-character-validation
+GetVirtualKey: Could not map char: z (122) to any virtual key
+GetVirtualKey: Could not map char: y (121) to any virtual key
+GetVirtualKey: Could not map char: x (120) to any virtual key
+GetVirtualKey: Could not map char: c (99) to any virtual key
+GetVirtualKey: Could not map char: v (118) to any virtual key
+GetVirtualKey: Could not map char: V (86) to any virtual key
+GetVirtualKey: Could not map char: d (100) to any virtual key
+GetVirtualKey: Could not map char: f (102) to any virtual key
+GetVirtualKey: Could not map char: f (102) to any virtual key
+GetVirtualKey: Could not map char: a (97) to any virtual key
+GetVirtualKey: Could not map char: d (100) to any virtual key
+GetVirtualKey: Could not map char: c (99) to any virtual key
+GetVirtualKey: Could not map char: r (114) to any virtual key
+GetVirtualKey: Could not map char: i (105) to any virtual key
+GetVirtualKey: Could not map char: l (108) to any virtual key
+GetVirtualKey: Could not map char: f (102) to any virtual key
+GetVirtualKey: Could not map char: k (107) to any virtual key
+GetVirtualKey: Could not map char: p (112) to any virtual key
+GetVirtualKey: Could not map char: p (112) to any virtual key
+GetVirtualKey: Could not map char: p (112) to any virtual key
+GetVirtualKey: Could not map char: c (99) to any virtual key
+GetVirtualKey: Could not map char: r (114) to any virtual key
+GetVirtualKey: Could not map char: P (80) to any virtual key
+GetVirtualKey: Could not map char: n (110) to any virtual key
+GetVirtualKey: Could not map char: n (110) to any virtual key
+GetVirtualKey: Could not map char: g (103) to any virtual key
+GetVirtualKey: Could not map char: f (102) to any virtual key
+GetVirtualKey: Could not map char: f (102) to any virtual key
+GetVirtualKey: Could not map char: a (97) to any virtual key
+GetVirtualKey: Could not map char: a (97) to any virtual key
+GetVirtualKey: Could not map char: n (110) to any virtual key
+GetVirtualKey: Could not map char: o (111) to any virtual key
+GetVirtualKey: Could not map char: s (115) to any virtual key
+GetVirtualKey: Could not map char: s (115) to any virtual key
+GetVirtualKey: Could not map char: b (98) to any virtual key
+GetVirtualKey: Could not map char: b (98) to any virtual key
+GetVirtualKey: Could not map char: c (99) to any virtual key
+GetVirtualKey: Could not map char: u (117) to any virtual key
+Unloading 4 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 23 unused Assets / (0.6 MB). Loaded Objects now: 798.
+Memory consumption went from 196.1 MB to 195.5 MB.
+Total: 5.798000 ms (FindLiveObjects: 0.072300 ms CreateObjectMapping: 0.012300 ms MarkObjects: 5.399500 ms  DeleteObjects: 0.308400 ms)
+
+Asset Pipeline Refresh (id=d918c68c931c55244b86bde6694698bb): Total: 0.020 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Importing 'GUID: dd11dc5001246cc4a82f7f9c93f267c6 - Path: Assets/Characters/Pelag_Boarder_01/Animations/Pelag_CombatIdle.fbx' with importer (FBXImporter)
+Keyframe reduction: Ratio: 10.167246%;
+Imported 'GUID: dd11dc5001246cc4a82f7f9c93f267c6' -> (Import Result ID: 'd91a4b1936e92645211a33443b204240') in 0.059 seconds [static dependencies only]. Details - ImportResultOutputID=1d54573f0e1753ab61d8eb338b9dd121 DependenciesID=e0c75c4b272c739bd8d6ab6e0ba92f23 StaticDependenciesID=92eba267e4492bafbdd6fa415aaaa4bc 
+Asset Pipeline Refresh (id=4e61f0ae43eb6e748b51d0807514d487): Total: 0.107 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Importing 'GUID: f70f92bbbfc088241acf4ca42235953a - Path: Assets/Characters/Pelag_Boarder_01/Animations/Pelag_SaberLightAttack.fbx' with importer (FBXImporter)
+Keyframe reduction: Ratio: 23.607037%;
+Imported 'GUID: f70f92bbbfc088241acf4ca42235953a' -> (Import Result ID: '4adfc04e0e991718b0b7e9cccb2f4914') in 0.050 seconds [static dependencies only]. Details - ImportResultOutputID=1e92a1ba9f482d1743233b7867fb9e6e DependenciesID=21e5190fd6a5e12b42a699026e846aef StaticDependenciesID=31ecd68590392105453d635964426a6a 
+Asset Pipeline Refresh (id=3fc9c136eee88bc4e8a5465f7bcd7a8f): Total: 0.068 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Asset Pipeline Refresh (id=dd1d400940e40254c81f0439f74b509c): Total: 0.012 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Importing 'GUID: 6be7aee724a254640a10c8e8ce4f6626 - Path: Assets/Characters/Pelag_Boarder_01/Pelag_Prototype.controller' with importer (NativeFormatImporter)
+Imported 'GUID: 6be7aee724a254640a10c8e8ce4f6626' -> (Import Result ID: '81b5833e38abe00c6e2204c5fdf6970a') in 0.001 seconds [static dependencies only]. Details - ImportResultOutputID=b581a0eb0d7da9883d371ad28968e7fd DependenciesID=bdcd8eeccdaaf8f8daa969cfa07d39c4 StaticDependenciesID=d6e536c5c4b52b577c34a8fbde0d423c 
+Asset Pipeline Refresh (id=69617bdd45dd00047a4e14280238d5fc): Total: 0.018 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Importing 'GUID: 6be7aee724a254640a10c8e8ce4f6626 - Path: Assets/Characters/Pelag_Boarder_01/Pelag_Prototype.controller' with importer (NativeFormatImporter)
+Imported 'GUID: 6be7aee724a254640a10c8e8ce4f6626' -> (Import Result ID: '7a134462f2b864425a0cb5f04df23194') in 0.001 seconds [static dependencies only]. Details - ImportResultOutputID=b581a0eb0d7da9883d371ad28968e7fd DependenciesID=b82c8a5996493c7155464dceed5e91da StaticDependenciesID=86ed4af504ff97b67c3797ad5a18e060 
+Asset Pipeline Refresh (id=ceb4a3faecf9d124c8e9d2d74d522f1c): Total: 0.011 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Importing 'GUID: 17b19984d127f7c47bb3561cb460dc0f - Path: Assets/Characters/Pelag_Boarder_01/Pelag_Boarder_01_Validated.prefab' with importer (PrefabImporter)
+Imported 'GUID: 17b19984d127f7c47bb3561cb460dc0f' -> (Import Result ID: 'c837254f621ed95279ef11557345b02e') in 0.005 seconds [static and dynamic dependencies]. Details - ImportResultOutputID=1ee99e9885698198d6f5cc9947f7b2f7 DependenciesID=3227e1577895502928246ef4f71c89fc StaticDependenciesID=ad7576a4e41710762096ed45af9ecec4 
+Asset Pipeline Refresh (id=f313bccb96a549a41baf304af52fb94e): Total: 0.022 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+PELAG_ANIMATION_VALIDATION=C:\Users\d.grab\Desktop\the-game\code\_build_pelag_v2\pelag_animation_validation.json
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+PelagAnimationValidator:Run () (at Assets/Editor/PelagAnimationValidator.cs:202)
+
+(Filename: Assets/Editor/PelagAnimationValidator.cs Line: 202)
+
+PELAG_ANIMATION_PASSED=True
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+PelagAnimationValidator:Run () (at Assets/Editor/PelagAnimationValidator.cs:203)
+
+(Filename: Assets/Editor/PelagAnimationValidator.cs Line: 203)
+
+Batchmode quit successfully invoked - shutting down!
+Curl error 42: Callback aborted
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-d.grab-6000.5.10-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-d.grab-6000.5.10 channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+CodeReloadManager destroyed
+Exiting batchmode successfully now!
+Exiting without the bug reporter. Application will terminate with return code 0

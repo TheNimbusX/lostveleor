@@ -113,7 +113,7 @@ namespace Game.Tests
             RemovePlayerFromFight(sim);
 
             int afterHit = sim.Entities.Health[enemy];
-            Run(sim, Idle, 10);
+            Run(sim, Idle, 9);
             int burning = sim.Entities.Health[enemy];
             Assert.That(burning, Is.LessThan(afterHit), "горение не тикает");
 
@@ -153,6 +153,37 @@ namespace Game.Tests
             for (int i = 0; i < sim.Projectiles.HighWater; i++)
                 if (sim.Projectiles.Alive[i]) n++;
             return n;
+        }
+
+        [Test]
+        public void Whirlwind_WaitsForContact_ThenHitsAllEnemiesInRadiusOnce()
+        {
+            var sim = new Simulation(Seed);
+            sim.SetupTestArena(0);
+            sim.SetAbility(Slot, AbilityDefinition.Whirlwind(), new AbilityNode[0], 0);
+
+            int east = PlaceEnemy(sim, 1, 0);
+            int west = PlaceEnemy(sim, -1, 0);
+            int north = PlaceEnemy(sim, 0, 2);
+            int outside = PlaceEnemy(sim, 4, 0);
+
+            sim.Step(Cast(Fix64.Zero, Fix64.Zero));
+            Assert.That(sim.Entities.Health[east], Is.EqualTo(1000),
+                "урон прошёл в Cast вместо фазы контакта");
+
+            Run(sim, Idle, 9);
+            Assert.That(sim.Entities.Health[east], Is.EqualTo(1000));
+
+            sim.Step(Idle);
+            Assert.That(sim.Entities.Health[east], Is.EqualTo(880));
+            Assert.That(sim.Entities.Health[west], Is.EqualTo(880));
+            Assert.That(sim.Entities.Health[north], Is.EqualTo(880));
+            Assert.That(sim.Entities.Health[outside], Is.EqualTo(1000));
+
+            int damageEvents = 0;
+            for (int i = 0; i < sim.Events.Count; i++)
+                if (sim.Events[i].Type == SimEventType.Damage) damageEvents++;
+            Assert.That(damageEvents, Is.EqualTo(3));
         }
 
         // ---- узел StatMod: «Жарче» ----

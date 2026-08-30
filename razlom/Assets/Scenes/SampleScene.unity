@@ -200,10 +200,10 @@ MonoBehaviour:
   RunSeed: 0
   EnemyCount: 40
   LogStateHash: 0
-  CameraAngles: {x: 30, y: 45, z: 0}
-  CameraSize: 10.5
+  CameraAngles: {x: 38, y: 45, z: 0}
+  CameraSize: 4.8
   CameraDistance: 60
-  Background: {r: 0.09, g: 0.1, b: 0.12, a: 1}
+  Background: {r: 0.42, g: 0.68, b: 0.78, a: 1}
   FloorMeters: 128
   FloorColor: {r: 0.3, g: 0.31, b: 0.33, a: 1}
 --- !u!4 &1166513494

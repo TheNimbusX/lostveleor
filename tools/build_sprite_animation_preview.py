@@ -7,7 +7,7 @@ import math
 
 ROOT = Path(r"C:\Users\d.grab\Desktop\the-game")
 SPRITES = ROOT / "razlom" / "Assets" / "Resources" / "CharacterSprites"
-OUTPUT = ROOT / "designed-images" / "deliverables" / "razlom-character-production-pack-v5" / "PREVIEW_exact_art_animation.gif"
+OUTPUT = ROOT / "ART/designed-images" / "deliverables" / "razlom-character-production-pack-v5" / "PREVIEW_exact_art_animation.gif"
 
 WIDTH, HEIGHT = 960, 540
 FPS = 12

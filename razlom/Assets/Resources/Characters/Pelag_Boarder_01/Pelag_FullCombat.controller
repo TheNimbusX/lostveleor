@@ -78,7 +78,7 @@ BlendTree:
     m_DirectBlendParameter: Blend
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -623603649343465320, guid: c1e1f2b732adc7445832c71abd78ed55, type: 3}
+    m_Motion: {fileID: -6877688311187899487, guid: a531e56e85bc4abcae31d293a6359f41, type: 3}
     m_Threshold: 1
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
@@ -427,7 +427,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: SaberHeavyAttack
-  m_Speed: 1
+  m_Speed: 1.25
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 7360034269617432740}
@@ -441,7 +441,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: -623603649343465320, guid: 59b907d0c199b554a9bb40fbf7d19245, type: 3}
+  m_Motion: {fileID: -623603649343465320, guid: 443dc6364047fce45a762dac1a1d9da0, type: 3}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 

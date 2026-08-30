@@ -50,7 +50,7 @@ namespace Game.View
         [Header("Размеры")]
         [Tooltip("Кольцо рисуется по НАСТОЯЩЕМУ радиусу тела из симуляции. " +
                  "Множитель только добавляет каёмку, чтобы обод не резался телом.")]
-        public float RingScale = 2.15f;
+        public float RingScale = 1.62f;
 
         [Tooltip("Сколько секунд цель считается подсвеченной после удара по ней.")]
         public float TargetHighlight = 0.35f;

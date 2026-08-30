@@ -28,6 +28,14 @@ namespace Game.View
             _zoomPunch = Mathf.Max(_zoomPunch, zoomPunch);
         }
 
+        /// <summary>Capture-only framing hook; normal gameplay never calls it.</summary>
+        public void SetBaseOrthographicSize(float size)
+        {
+            if (size <= 0f) return;
+            _restSize = size;
+            if (_camera != null) _camera.orthographicSize = size;
+        }
+
         private void LateUpdate()
         {
             transform.position -= _appliedOffset;

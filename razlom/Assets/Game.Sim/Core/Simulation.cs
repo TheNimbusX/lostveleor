@@ -142,6 +142,11 @@ namespace Game.Sim
         private readonly AbilityBuild[] _abilityBuilds = new AbilityBuild[AbilitySlots];
         private readonly int[] _abilityReadyTick = new int[AbilitySlots];
 
+        // Presentation starts at Cast, gameplay contact stays deterministic.
+        private const int WhirlwindContactDelayTicks = 10;
+        private int _whirlwindImpactTick = -1;
+        private int _whirlwindImpactSlot = -1;
+
         /// <summary>
         /// Общий буфер радиусных запросов. Выделен один раз: за забег таких
         /// запросов десятки тысяч, и ни один не должен стоить аллокации.
@@ -272,6 +277,8 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -301,6 +308,8 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
 
             var rng = new Pcg32(spawnSeed, 0x517CC1B727220A95UL);
 
@@ -325,6 +334,51 @@ namespace Game.Sim
                     _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
                 }
             }
+        }
+
+        /// <summary>
+        /// Детерминированная расстановка только для capture combat slice:
+        /// существующая карта Разлома, Pelag и ровно три Orvill вокруг него.
+        /// </summary>
+        public void SetupWhirlwindShowcase(LayoutMap map, int enemyHealth = 360)
+        {
+            ClearMoveOrder();
+            Entities.Clear();
+            Projectiles.Clear();
+            Statuses.Clear();
+            for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
+
+            FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
+            ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
+
+            Fix64 radius = Fix64.Ratio(17, 10);
+            Fix64 halfRadius = radius / Fix64.FromInt(2);
+            Fix64 triangleHeight = Fix64.Ratio(147, 100);
+            FixVec2[] offsets =
+            {
+                new FixVec2(radius, Fix64.Zero),
+                new FixVec2(-halfRadius, triangleHeight),
+                new FixVec2(-halfRadius, -triangleHeight),
+            };
+
+            for (int i = 0; i < offsets.Length; i++)
+            {
+                int id = Entities.Spawn(center + offsets[i], enemyHealth, Faction.Orvill);
+                ConfigureEnemy(id);
+
+                // В capture враги демонстрируют hit/death reaction, а не
+                // устраивают случайную драку поверх оцениваемого приёма.
+                Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
+                Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                Entities.RefreshStats(id);
+                Entities.NextAttackTick[id] = int.MaxValue;
+                Entities.Facing[id] = (-offsets[i]).Normalized();
+                _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
+            }
+
+            Grid.Rebuild(Entities);
         }
 
         /// <summary>
@@ -355,6 +409,11 @@ namespace Game.Sim
         /// </summary>
         private void ConfigureEnemy(int id)
         {
+            // Щит и широкий силуэт требуют больше воздуха, чем прежняя
+            // техническая капсула. Радиус не даёт строю схлопываться в одну
+            // нечитаемую стопку вокруг игрока.
+            Entities.BodyRadius[id] = Fix64.Ratio(62, 100);
+
             StatSheet sheet = Entities.Stats[id];
             sheet.SetBase(StatType.Damage, EnemyBaseDamage);
             sheet.SetBase(StatType.AttackSpeed, EnemyBaseAttackSpeed);
@@ -381,6 +440,8 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -616,6 +677,7 @@ namespace Game.Sim
             // Порядок стадий боя зафиксирован. Любой другой был бы столь же
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
+            ResolveWhirlwindImpact();
             UpdateProjectiles();
             ResolveAttacks(in input);
             TickBurning();
@@ -655,10 +717,47 @@ namespace Game.Sim
                 if (build == null) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
-                FlameSeal.Cast(this, PlayerId, slot, build, input.Aim);
+                if (build.DefinitionId == AbilityDefinition.WhirlwindId)
+                {
+                    _whirlwindImpactTick = Tick + WhirlwindContactDelayTicks;
+                    _whirlwindImpactSlot = slot;
+                }
+                else
+                {
+                    FlameSeal.Cast(this, PlayerId, slot, build, input.Aim);
+                }
 
                 _abilityReadyTick[slot] = Tick + build.CooldownTicks;
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
+            }
+        }
+
+        /// <summary>
+        /// Единственный момент нанесения урона «Вихрем». View получает обычные
+        /// Damage/Death events и уже от них показывает весь impact.
+        /// </summary>
+        private void ResolveWhirlwindImpact()
+        {
+            if (_whirlwindImpactTick < 0 || Tick < _whirlwindImpactTick) return;
+
+            int slot = _whirlwindImpactSlot;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
+
+            if (!Entities.Alive[PlayerId]) return;
+            AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
+            if (build == null || build.DefinitionId != AbilityDefinition.WhirlwindId) return;
+
+            int found = QueryRadiusIntoScratch(
+                Entities.Position[PlayerId], build.Get(AbilityStatType.Radius), PlayerId);
+            int damage = build.Get(AbilityStatType.Damage).ToInt();
+
+            for (int i = 0; i < found; i++)
+            {
+                int target = HitScratch[i];
+                if (!Entities.Alive[target]) continue;
+                if (Entities.Side[target] == Entities.Side[PlayerId]) continue;
+                ApplyAbilityDamage(PlayerId, target, damage, slot, DamageType.Physical);
             }
         }
 
@@ -1124,6 +1223,8 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, _abilityReadyTick[slot]);
                 _abilityBuilds[slot]?.HashInto(ref hash);
             }
+            Hashing.Mix(ref hash, _whirlwindImpactTick);
+            Hashing.Mix(ref hash, _whirlwindImpactSlot);
 
             Rng.HashInto(ref hash);
             return hash;

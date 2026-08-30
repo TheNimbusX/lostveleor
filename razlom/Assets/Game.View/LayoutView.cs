@@ -12,12 +12,18 @@ namespace Game.View
     [RequireComponent(typeof(TickDriver))]
     public sealed class LayoutView : MonoBehaviour
     {
-        public Color RoomColor = new Color(0.10f, 0.11f, 0.16f);
-        public Color EntranceColor = new Color(0.12f, 0.19f, 0.20f);
+        // Тёплый камень, а не тёмно-синяя плита. Пол занимает бо́льшую часть
+        // кадра, поэтому именно он, а не персонажи, решает, выглядит ли сцена
+        // яркой локацией первого акта или подземельем.
+        public Color RoomColor = new Color(0.72f, 0.66f, 0.53f);
+        public Color EntranceColor = new Color(0.66f, 0.68f, 0.55f);
         public float Thickness = 0.2f;
 
-        [Tooltip("Зазор между плитами, чтобы стыки было видно.")]
-        public float Gap = 0.15f;
+        // Зазор был отладочным: он показывал, что карта собралась из модулей.
+        // На картинке это читалось как сетка на полу — прямой запрет из брифа.
+        // Плиты теперь стыкуются, а границы комнат показывает сам пол.
+        [Tooltip("Зазор между плитами. 0 — плиты стыкуются без шва.")]
+        public float Gap = 0f;
 
         private TickDriver _driver;
         private ViewPool _pool;
@@ -47,9 +53,9 @@ namespace Game.View
             root.SetParent(transform, false);
 
             _roomMaterial = ViewMaterials.CreateArenaFloor(RoomColor,
-                new Color(0.12f, 0.48f, 0.56f, 1f));
+                new Color(0.44f, 0.58f, 0.34f, 1f));
             _entranceMaterial = ViewMaterials.CreateArenaFloor(EntranceColor,
-                new Color(1.00f, 0.34f, 0.23f, 1f));
+                new Color(0.38f, 0.62f, 0.40f, 1f));
 
             _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72);
             _tiles = new Transform[64];

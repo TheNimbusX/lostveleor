@@ -5,8 +5,8 @@ Shader "Razlom/Texture Toon"
         _BaseMap ("Base Map", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (1,1,1,1)
         _ShadowColor ("Shadow Color", Color) = (0.36,0.20,0.32,1)
-        _LightThreshold ("Light Threshold", Range(0,1)) = 0.48
-        _LightFeather ("Light Feather", Range(0.001,0.25)) = 0.055
+        _LightThreshold ("Light Threshold", Range(0,1)) = 0.30
+        _LightFeather ("Light Feather", Range(0.001,0.25)) = 0.09
         _RimColor ("Rim Color", Color) = (1,0.48,0.34,1)
         _RimPower ("Rim Power", Range(1,10)) = 4
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
@@ -89,7 +89,11 @@ Shader "Razlom/Texture Toon"
                 half band = smoothstep(_LightThreshold - _LightFeather,
                                        _LightThreshold + _LightFeather, shadeInput);
                 half3 litTone = lerp(_ShadowColor.rgb, mainLight.color, band);
-                half3 ambient = SampleSH(normal) * 0.22h;
+                // Заполнение берётся почти целиком. На 0.22 сцена могла быть
+                // сколь угодно светлой, а до персонажа доходила пятая часть —
+                // и неосвещённая половина фигуры уходила в цвет тени, теряя
+                // всю раскраску. Мультяшной картинке нужна цветная тень.
+                half3 ambient = SampleSH(normal) * 0.55h;
                 half3 viewDir = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
                 half rim = pow(saturate(1.0h - dot(normal, viewDir)), _RimPower) * band;
                 half3 color = texel.rgb * (litTone + ambient) + _RimColor.rgb * rim * 0.34h;

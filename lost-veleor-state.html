@@ -229,7 +229,7 @@
   <main>
     <header class="hero">
       <div class="kicker">
-        <span class="eyebrow">Концепт-документ · версия 1.1 · 29 августа 2026</span>
+        <span class="eyebrow">Концепт-документ · версия 1.2 · 30 августа 2026</span>
         <span class="chip neutral">Unity 6.5 · URP · C#</span>
         <span class="chip ember">Соло + AI</span>
       </div>
@@ -237,8 +237,8 @@
       <p class="sub">Изометрическая гриндилка о войне, которую нельзя закончить. Одна расколотая империя, восемьсот лет вражды за клочок островов, правитель, сидящий у власти восемьсот двадцать лет, — и герой, который дойдёт до него и обнаружит, что это ничего не изменило.</p>
 
       <div class="tiles">
-        <div class="tile accent"><span class="v">4</span><span class="k">дня активной работы над проектом</span></div>
-        <div class="tile"><span class="v">168</span><span class="k">зелёных тестов в детерминированном ядре</span></div>
+        <div class="tile accent"><span class="v">5</span><span class="k">дней активной работы над проектом</span></div>
+        <div class="tile"><span class="v">171</span><span class="k">зелёных тестов в детерминированном ядре</span></div>
         <div class="tile"><span class="v">32</span><span class="k">клипа анимации, из них 6 на 3D-персонаже</span></div>
         <div class="tile"><span class="v">1</span><span class="k">production-персонаж живёт в забеге</span></div>
       </div>
@@ -296,7 +296,7 @@
       <div class="cards two">
         <div class="card">
           <div class="top"><h3>По календарю</h3><span class="chip neutral">Дни</span></div>
-          <p>Работа идёт с 26 августа 2026. Сегодня четвёртый день. Ни один месяц из двадцати шести формально не прожит.</p>
+          <p>Работа идёт с 26 августа 2026. Сегодня пятый день. Ни один месяц из двадцати шести формально не прожит.</p>
         </div>
         <div class="card">
           <div class="top"><h3>По содержанию</h3><span class="chip wip">Месяц 2–3 из 26</span></div>
@@ -415,7 +415,7 @@
           <li>Не рисовать красивый интерфейс дерева способностей. Списка чекбоксов достаточно, пока не доказано, что в игру интересно играть.</li>
           <li>Не брать DOTS/ECS. Бюджет тика сейчас — четыре сотых процента.</li>
           <li>Не добавлять систем, которых нет в плане: ни крафта, ни торговцев, ни сезонов, ни рейтингов.</li>
-          <li>Не трогать <code>code/</code> — папка устарела и разошлась с <code>razlom/</code>, её надо удалить.</li>
+          <li>Не заводить второй документ. <code>PROJECT-STATE.md</code> — единственный MD в репозитории; всё новое дописывается в него.</li>
         </ul>
       </div>
     </section>
@@ -1370,7 +1370,7 @@
         <span class="eyebrow">27 · Техника</span>
         <h2>Техника и код: что готово</h2>
       </div>
-      <p class="lede">Unity-проект <code>razlom/</code> — единственный живой. Четыре сборки плюс редакторные скрипты, 84 файла C#, 168 тестов в 11 файлах.</p>
+      <p class="lede">Unity-проект <code>razlom/</code> — единственный живой. Четыре сборки плюс редакторные скрипты, 84 файла C#, 171 тест в 11 файлах.</p>
       <div class="tablewrap">
         <table>
           <thead><tr><th>Сборка</th><th>Что внутри</th></tr></thead>
@@ -1378,7 +1378,7 @@
             <tr><td class="name">Game.Sim</td><td><code>Core</code> — Fix64, FixVec2, Pcg32, EntityStore, SpatialHash, Simulation · <code>Stats</code> — StatSheet, CombatStats · <code>Items</code> — генерация, аффиксы, Equipment · <code>Abilities</code> — дерево, «Печать пламени», снаряды, статусы · <code>World</code> — модульная раскладка · <code>Run</code> — RiftRun, фазы забега · <code>Camp</code> — Camp, Inventory, ProvingGround, GameSession</td></tr>
             <tr><td class="name">Game.Data</td><td>AffixAsset, ItemBaseAsset, ItemDataBuilder</td></tr>
             <tr><td class="name">Game.View</td><td>Bootstrap, TickDriver, ArenaView, LayoutView, CameraFollow, RunHud, CampHud, PlayerHud, HealthBars, DamageNumbers, CharacterAnimatorView, SpriteCharacterVisual, CombatJuiceView, CombatCameraJuice, CombatAudio, CombatIndicators, ViewPool</td></tr>
-            <tr><td class="name">Game.Tests</td><td>168 тестов: детерминизм, забег, статы, лагерь, генерация предметов, способности, раскладка</td></tr>
+            <tr><td class="name">Game.Tests</td><td>171 тест: детерминизм, забег, статы, лагерь, генерация предметов, способности, раскладка</td></tr>
             <tr><td class="name">Editor</td><td>Валидатор анимаций, импорт персонажа, сборщик контроллера, самопроверяющаяся настройка пелага</td></tr>
           </tbody>
         </table>
@@ -1416,11 +1416,18 @@
         </div>
       </div>
 
+      <div class="callout quiet">
+        <div class="title">Уборка 30 августа</div>
+        <p><strong>Репозиторий приведён к трём папкам.</strong> <code>razlom/</code> — игра, <code>ART/</code> — весь арт и все 3D-модели одной папкой, <code>tools/</code> — офлайн-скрипты. Устаревшее зеркало прототипа и 8 ГБ скачанных генераторов 3D, от которых пайплайн отказался, удалены; 5 ГБ сгенерированного вывода проверок — тоже.</p>
+        <p><strong>Документ теперь один.</strong> Бриф кодовому агенту, визуальный стандарт и три арт-спеки влиты в <code>PROJECT-STATE.md</code> разделами 10–14, каждый с пометкой «живое» или «история». Мотив простой: четыре документа расходятся между собой на второй неделе, и потом не понять, какой из них правда.</p>
+        <p><em>Правило про ART/: Unity читает только <code>razlom/Assets/</code>, поэтому чистить <code>ART/</code> можно свободно — удаление оттуда не может сломать игру.</em></p>
+      </div>
+
       <div class="tablewrap">
         <table>
           <thead><tr><th>Проверка</th><th>Результат</th></tr></thead>
           <tbody>
-            <tr><td>Тесты (.NET 9, вне Unity)</td><td class="num">168 / 168 зелёные</td></tr>
+            <tr><td>Тесты (.NET 9, вне Unity)</td><td class="num">171 / 171 зелёные</td></tr>
             <tr><td>Детерминизм</td><td class="num">9 сочетаний · 40 / 120 / 400 сущностей × 3 сида × 600 тиков, побитово</td></tr>
             <tr><td>Бюджет тика при 40 сущностях</td><td class="num">24 мкс из 33 333 — 0.07 %</td></tr>
             <tr><td>Надевание предмета</td><td class="num">Снятие возвращает лист побитово; порядок надевания не влияет</td></tr>
@@ -1543,14 +1550,12 @@
     </section>
 
     <footer>
-      <p>Lost Veleor · концепт-документ v1.1. Живой документ, ссылка остаётся прежней. Мастер-документ передачи — <code>the-game/PROJECT-STATE.md</code>, ревизия 14; при расхождении прав файл на диске.</p>
+      <p>Lost Veleor · концепт-документ v1.2. Живой документ, ссылка остаётся прежней. Мастер-документ передачи — <code>the-game/PROJECT-STATE.md</code>, ревизия 15; при расхождении прав файл на диске.</p>
       <div class="filelist">
-        <span>the-game/PROJECT-STATE.md · состояние проекта, читать первым</span>
-        <span>the-game/AGENT-BRIEF.md · правила кода и задачи 0–5</span>
-        <span>the-game/VISUAL-PRODUCTION-AGENT.md · визуальный стандарт и гейты</span>
+        <span>the-game/PROJECT-STATE.md · единственный документ проекта, читать первым</span>
         <span>the-game/razlom/ · единственный живой Unity-проект</span>
-        <span>the-game/designed-images/ · арт, паки v5 и v6</span>
-        <span>the-game/production/characters/ · production-персонажи, в работе</span>
+        <span>the-game/ART/ · весь арт и все 3D-модели, одной папкой</span>
+        <span>the-game/tools/ · офлайн-скрипты вне Unity</span>
         <span>razlom/Assets/Resources/Characters/Pelag_Rodin01/ · первый 3D-персонаж в игре</span>
       </div>
       <p>Спутники: <a href="https://claude.ai/code/artifact/b1f7f55a-1091-4931-998d-c40646ca1d79">Ядро Разлома</a> — техническая архитектура · <a href="https://claude.ai/code/artifact/1abf7531-7b19-428a-aec0-49e896f61492">Печать пламени</a> — эталонное дерево на 22 узла · <a href="https://claude.ai/code/artifact/88044276-0b4e-48ac-b142-705ec90e71cd">Двадцать шесть месяцев</a> — сроки, смета, рынок.</p>

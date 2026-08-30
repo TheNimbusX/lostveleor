@@ -25,6 +25,9 @@ namespace Game.Sim
 
         public AbilityFlag Flags { get; private set; }
 
+        /// <summary>Stable Id исходного определения способности.</summary>
+        public int DefinitionId { get; private set; }
+
         /// <summary>Сколько раз пересобирался билд. Только для тестов и профилировки.</summary>
         public int RebuildCount { get; private set; }
 
@@ -60,6 +63,8 @@ namespace Game.Sim
         public void Rebuild(AbilityDefinition definition, AbilityNode[] nodes, int nodeCount)
         {
             Array.Sort(nodes, 0, nodeCount, NodeIdOrder.Instance);
+
+            DefinitionId = definition.Id;
 
             Span<Fix64> flat = stackalloc Fix64[StatCount];
             Span<Fix64> increased = stackalloc Fix64[StatCount];
@@ -114,6 +119,7 @@ namespace Game.Sim
 
         public void HashInto(ref ulong hash)
         {
+            Hashing.Mix(ref hash, DefinitionId);
             for (int i = 0; i < StatCount; i++) Hashing.Mix(ref hash, _stats[i]);
             Hashing.Mix(ref hash, (int)Flags);
 

@@ -1,0 +1,45 @@
+{
+  "source_polygons": 19636,
+  "module_polygons": {
+    "Head": 3033,
+    "Chest": 5359,
+    "Legs": 11244
+  },
+  "polygon_conservation": true,
+  "source_bounds": [
+    [
+      -0.2813716232776642,
+      -0.11582169681787491,
+      1.1902818641829072e-07
+    ],
+    [
+      0.2813720107078552,
+      0.11582190543413162,
+      0.9796750545501709
+    ]
+  ],
+  "union_bounds": [
+    [
+      -0.2813716232776642,
+      -0.11582169681787491,
+      1.1902818641829072e-07
+    ],
+    [
+      0.2813720107078552,
+      0.11582190543413162,
+      0.9796750545501709
+    ]
+  ],
+  "max_bounds_error": 0.0,
+  "armature": "Pelag_v4_Rig",
+  "bone_count": 41,
+  "required_bones_present": true,
+  "unresolved_vertex_groups": {},
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\designed-images\\deliverables\\razlom-character-production-pack-v1\\pelag-v4\\tripo_convert_83df5ca5-47fc-4105-abd6-c48bf3f9dd96.fbx",
+  "method": "dominant bone-weight ownership; no source polygon edited or duplicated",
+  "slots": [
+    "Head",
+    "Chest",
+    "Legs"
+  ]
+}

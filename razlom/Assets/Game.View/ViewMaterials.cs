@@ -11,6 +11,20 @@ namespace Game.View
     /// </summary>
     public static class ViewMaterials
     {
+        /// <summary>
+        /// Цвет теневой полосы тун-шейдера.
+        ///
+        /// Лежит ЗДЕСЬ, а не двумя копиями в импортёре и в сборке материала на
+        /// лету: разъехавшись, копии дают персонажа, который в игре одного
+        /// цвета, а после переимпорта другого, — и причину такого не находят.
+        ///
+        /// Тень тёплая и светлая намеренно. Прежний фиолетовый (0.36,0.20,0.32)
+        /// на неосвещённой стороне съедал всю раскраску: персонаж читался
+        /// сиреневым силуэтом, а не пелагом в кремовой рубахе. У мультяшной
+        /// картинки тень — это приглушённый свет, а не отсутствие света.
+        /// </summary>
+        public static readonly Color ToonShadow = new Color(0.80f, 0.72f, 0.76f, 1f);
+
         private static Shader _lit;
         private static Shader _characterToon;
         private static Shader _arenaFloor;
@@ -59,9 +73,11 @@ namespace Game.View
             Material material = new Material(_arenaFloor) { name = "Разлом/Arena Floor" };
             material.SetColor("_BaseColor", baseColor);
             material.SetColor("_AccentColor", accentColor);
-            material.SetColor("_GridColor", new Color(0.025f, 0.032f, 0.065f, 1f));
-            material.SetFloat("_GridScale", 0.5f);
-            material.SetFloat("_GridWidth", 0.055f);
+            // Сетка сведена к слабому шву между плитами камня: она даёт полу
+            // масштаб и фактуру, но перестаёт читаться как отладочный grid.
+            material.SetColor("_GridColor", new Color(0.60f, 0.54f, 0.43f, 1f));
+            material.SetFloat("_GridScale", 0.35f);
+            material.SetFloat("_GridWidth", 0.018f);
             return material;
         }
 

@@ -28,14 +28,14 @@ namespace Game.View
         [Tooltip("Тик горения. Приглушённый намеренно: их тридцать в секунду.")]
         public Color BurnColor = new Color(0.95f, 0.55f, 0.25f, 0.75f);
 
-        public float NormalSize = 0.17f;
-        public float CritSize = 0.25f;
+        public float NormalSize = 0.036f;
+        public float CritSize = 0.054f;
 
         [Tooltip("Урон по герою рисуется крупнее своего: это потеря, и она важнее.")]
-        public float PlayerHitSize = 0.23f;
+        public float PlayerHitSize = 0.052f;
 
         [Tooltip("Тик урона по времени — самый мелкий: он фон, а не событие.")]
-        public float BurnSize = 0.12f;
+        public float BurnSize = 0.029f;
 
         [Header("Агрегация")]
         [Tooltip("Сколько цифр разрешено видеть одновременно. Удар по площади " +
@@ -47,11 +47,11 @@ namespace Game.View
         public float MergeWindow = 0.28f;
 
         [Header("Полёт")]
-        public float Lifetime = 0.72f;
-        public float RiseSpeed = 1.9f;
-        public float SpawnHeight = 2.25f;
+        public float Lifetime = 0.62f;
+        public float RiseSpeed = 1.05f;
+        public float SpawnHeight = 1.48f;
         [Tooltip("Разброс по горизонтали, чтобы цифры по одной цели не слипались.")]
-        public float Jitter = 0.35f;
+        public float Jitter = 0.30f;
 
         private TickDriver _driver;
         private Transform _camera;
@@ -191,6 +191,15 @@ namespace Game.View
             // Позиция берётся из события, а не из текущей позиции цели: цель могла
             // умереть на этом же тике, и её объект уже спрятан.
             Vector3 at = new Vector3(e.Position.X.ToFloat(), SpawnHeight, e.Position.Y.ToFloat());
+            Simulation sim = _driver.Sim;
+            if (e.Source == Simulation.PlayerId && sim != null
+                && (uint)e.Source < (uint)sim.Entities.Count
+                && (uint)e.Target < (uint)sim.Entities.Count)
+            {
+                FixVec2 source = sim.Entities.Position[e.Source];
+                Vector3 away = new Vector3(at.x - source.X.ToFloat(), 0f, at.z - source.Y.ToFloat());
+                if (away.sqrMagnitude > 0.0001f) at += away.normalized * 0.24f;
+            }
             at += HorizontalJitter(e.Target, _driver.Sim.Tick);
 
             ref Slot s = ref _slots[slot];

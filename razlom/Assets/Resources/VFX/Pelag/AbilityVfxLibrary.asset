@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ee3f8d3ca0e5774f95e5f2913a0748c, type: 3}
+  m_Name: AbilityVfxLibrary
+  m_EditorClassIdentifier: Game.View::Game.View.AbilityVfxLibrary
+  Entries:
+  - Id: 0
+    Prefab: {fileID: 8241518021229777190, guid: b5336d77c11720f4181bbb716eb56c76, type: 3}
+    Prewarm: 3
+  - Id: 1
+    Prefab: {fileID: 2740850886773001575, guid: bf10798eb31547742842440d2f437ece, type: 3}
+    Prewarm: 6
+  - Id: 2
+    Prefab: {fileID: 9010336697391188160, guid: 6a48272ba2eee21489cf346ef88ad7a6, type: 3}
+    Prewarm: 3
+  - Id: 3
+    Prefab: {fileID: 6952277510555522471, guid: 2a160d7d7e07f094d91fee1e2fd3a71c, type: 3}
+    Prewarm: 10
+  - Id: 4
+    Prefab: {fileID: 5304420713959324870, guid: 86264bed5b2075c4cba5e00a9068c7a4, type: 3}
+    Prewarm: 3
+  - Id: 5
+    Prefab: {fileID: 7192612098705166121, guid: 95d1d8a9956e8224f985916d2138e3ba, type: 3}
+    Prewarm: 3
+  - Id: 6
+    Prefab: {fileID: 4110455153230141837, guid: 0ce25eeaed23e1e46ab2bcc0b072f0f1, type: 3}
+    Prewarm: 3
+  - Id: 7
+    Prefab: {fileID: 8019825718768196597, guid: 77d2a21f5f880484cbfd0c7681c41f1e, type: 3}
+    Prewarm: 3
+  - Id: 8
+    Prefab: {fileID: 308070263744267239, guid: 36be26bfdf8b9754581595b5bfa2a529, type: 3}
+    Prewarm: 3
+  - Id: 9
+    Prefab: {fileID: 4890412553800370933, guid: aa86852682be6d545bf6ff3e3cc80e65, type: 3}
+    Prewarm: 10
+  - Id: 10
+    Prefab: {fileID: 28017336565519967, guid: 1f4e111251392d248a8a9d8f0a61a901, type: 3}
+    Prewarm: 6
+  - Id: 11
+    Prefab: {fileID: 8130851364822988306, guid: 2ec9b2fbb0cae8e4a8e2a852b53042ba, type: 3}
+    Prewarm: 6
+  - Id: 12
+    Prefab: {fileID: 7180770111619172277, guid: de3f4fd6b73819b4dad66b578c052226, type: 3}
+    Prewarm: 12
+  - Id: 13
+    Prefab: {fileID: 6070468574356382084, guid: 06fcfb3dee907d2418b138a09ead5526, type: 3}
+    Prewarm: 12
+  - Id: 14
+    Prefab: {fileID: 7576153866645973956, guid: f907a0d155f191c40b8be4e7d0922e49, type: 3}
+    Prewarm: 3

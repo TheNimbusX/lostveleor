@@ -1,0 +1,47 @@
+{
+    "unityVersion": "6000.5.10f1",
+    "clips": [
+        {
+            "assetPath": "Assets/Characters/Pelag_Boarder_01/Animations/Pelag_CombatIdle.fbx",
+            "clipName": "Pelag_CombatIdle",
+            "length": 2.0,
+            "frameRate": 30.0,
+            "humanMotion": true,
+            "firstFrame": 0.0,
+            "lastFrame": 60.0,
+            "importWarnings": "",
+            "animationEvents": []
+        },
+        {
+            "assetPath": "Assets/Characters/Pelag_Boarder_01/Animations/Pelag_SaberLightAttack.fbx",
+            "clipName": "Pelag_SaberLightAttack",
+            "length": 1.0,
+            "frameRate": 30.0,
+            "humanMotion": true,
+            "firstFrame": 0.0,
+            "lastFrame": 30.0,
+            "importWarnings": "",
+            "animationEvents": [
+                "SaberDamage@0,467"
+            ]
+        }
+    ],
+    "controllerCreated": true,
+    "controllerPath": "Assets/Characters/Pelag_Boarder_01/Pelag_Prototype.controller",
+    "states": [
+        "CombatIdle",
+        "SaberLightAttack"
+    ],
+    "parameters": [
+        "Attack:Trigger"
+    ],
+    "prefabControllerAssigned": true,
+    "saberStateBehaviourAssigned": true,
+    "configuredPropCount": 2,
+    "equipmentMappings": [
+        "PRP_Saber_0p92m:SaberSheath_L->Weapon_R",
+        "PRP_Hook_0p22m:HookBelt_R->Hook_L"
+    ],
+    "errors": [],
+    "passed": true
+}

@@ -35,6 +35,15 @@ namespace Game.Sim
             return this;
         }
 
+        public static int WhirlwindId => StableId.Of("ability.whirlwind");
+
+        /// <summary>«Вихрь»: один физический круговой удар вокруг героя.</summary>
+        public static AbilityDefinition Whirlwind()
+            => new AbilityDefinition("ability.whirlwind")
+                .Set(AbilityStatType.Damage, 120)
+                .Set(AbilityStatType.Radius, Fix64.Ratio(23, 10))
+                .Set(AbilityStatType.CooldownTicks, 30);
+
         /// <summary>
         /// «Печать пламени»: бросок знака в точку, вспышка по площади, поджиг.
         /// Числа — заглушка баланса, но структура настоящая.

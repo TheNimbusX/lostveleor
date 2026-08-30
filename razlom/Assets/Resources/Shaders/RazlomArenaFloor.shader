@@ -5,8 +5,8 @@ Shader "Razlom/Arena Floor"
         _BaseColor ("Base Color", Color) = (0.10,0.11,0.16,1)
         _AccentColor ("Accent Color", Color) = (0.10,0.55,0.62,1)
         _GridColor ("Grid Color", Color) = (0.035,0.045,0.075,1)
-        _GridScale ("Grid Scale", Float) = 0.5
-        _GridWidth ("Grid Width", Range(0.01,0.25)) = 0.055
+        _GridScale ("Grid Scale", Float) = 0.25
+        _GridWidth ("Grid Width", Range(0.01,0.25)) = 0.035
     }
 
     SubShader
@@ -63,9 +63,11 @@ Shader "Razlom/Arena Floor"
                 float grid = 1.0 - smoothstep(_GridWidth, _GridWidth + aa.x + aa.y,
                                                0.5 - max(edge.x, edge.y));
 
-                float glyph = sin(input.positionWS.x * 0.43 + sin(input.positionWS.z * 0.17))
-                              * sin(input.positionWS.z * 0.39 - sin(input.positionWS.x * 0.13));
-                glyph = smoothstep(0.91, 0.99, abs(glyph)) * 0.16;
+                float2 localCell = frac(coord) - 0.5;
+                float cellHash = frac(sin(dot(floor(coord), float2(12.9898, 78.233))) * 43758.5453);
+                float runeRing = 1.0 - smoothstep(0.025, 0.055,
+                    abs(length(localCell) - 0.17));
+                float glyph = runeRing * step(0.86, cellHash) * 0.13;
 
                 half3 normal = normalize(input.normalWS);
                 Light light = GetMainLight(input.shadowCoord);

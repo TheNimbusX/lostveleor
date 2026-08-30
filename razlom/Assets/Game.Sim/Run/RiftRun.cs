@@ -37,6 +37,9 @@ namespace Game.Sim
         private readonly ItemDatabase _items;
         private readonly int[] _itemBaseIds;
 
+        /// <summary>Capture-only расстановка combat slice; false — обычный Разлом.</summary>
+        public bool WhirlwindShowcase { get; set; }
+
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
 
@@ -99,9 +102,12 @@ namespace Game.Sim
             _generator.Generate(_modules, layoutSeed, _map, BaseRooms + Depth);
 
             ulong spawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
-            _sim.SetupRift(_map, spawnSeed,
-                BaseEnemiesPerRoom + Depth / 2,
-                BaseEnemyHealth + BaseEnemyHealth * Depth / 4);
+            if (WhirlwindShowcase)
+                _sim.SetupWhirlwindShowcase(_map);
+            else
+                _sim.SetupRift(_map, spawnSeed,
+                    BaseEnemiesPerRoom + Depth / 2,
+                    BaseEnemyHealth + BaseEnemyHealth * Depth / 4);
 
             // Расстановка родила игрока заново, а рождение сбрасывает лист статов
             // целиком: индекс — это identity, и лист принадлежит слоту, а не

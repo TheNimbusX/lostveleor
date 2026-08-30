@@ -136,6 +136,10 @@ namespace Game.View
             // Игра начинается в ЛАГЕРЕ, а не в Разломе. Забег теперь то, во что
             // входят, а не то, что запускается вместо главного меню.
             Session = PrototypeContent.NewSession(seed);
+            // В редакторе combat slice должен запускаться тем же 1+3 стендом,
+            // который мы снимаем. Иначе владелец видит старый Полигон с двумя
+            // болванками и закономерно не может проверить текущую работу.
+            Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || Application.isEditor;
 
             // Буфер выделяется с запасом под самую большую из симуляций сессии.
             // Иначе сбой вылезал бы кадром позже и в другом месте — в интерполяции
@@ -244,7 +248,7 @@ namespace Game.View
 
                 LatchKeys(
                     leave: kb.lKey.wasPressedThisFrame,
-                    enter: kb.eKey.wasPressedThisFrame,
+                    enter: kb.eKey.wasPressedThisFrame || CaptureRig.AutoEnterRift,
                     repeat: kb.rKey.wasPressedThisFrame,
                     back: kb.cKey.wasPressedThisFrame,
                     ground: kb.tKey.wasPressedThisFrame,
@@ -266,7 +270,10 @@ namespace Game.View
 
             LatchKeys(
                 leave: Input.GetKeyDown(KeyCode.L),
-                enter: Input.GetKeyDown(KeyCode.E),
+                // На время combat-slice Play Mode сразу открывает тот же Rift
+                // 1+3, который проходит capture; старый Полигон здесь больше
+                // не должен маскироваться под проверку Вихря.
+                enter: Input.GetKeyDown(KeyCode.E) || CaptureRig.AutoEnterRift || Application.isEditor,
                 repeat: Input.GetKeyDown(KeyCode.R),
                 back: Input.GetKeyDown(KeyCode.C),
                 ground: Input.GetKeyDown(KeyCode.T),
@@ -274,6 +281,26 @@ namespace Game.View
 
             CaptureAim(Input.mousePosition, Input.GetMouseButton(1));
 #endif
+
+            if (CaptureRig.RunShowcase && Sim != null)
+            {
+                // Deterministic locomotion QA: long straight segments followed
+                // by hard 90-degree turns expose bad retargeting, foot sliding
+                // and facing pops much better than a hand-driven capture.
+                int phase = (Sim.Tick / 45) & 3;
+                switch (phase)
+                {
+                    case 0: _pending.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero); break;
+                    case 1: _pending.Aim = new FixVec2(Fix64.FromInt(5), Fix64.FromInt(5)); break;
+                    case 2: _pending.Aim = new FixVec2(Fix64.FromInt(-5), Fix64.FromInt(5)); break;
+                    default: _pending.Aim = new FixVec2(Fix64.FromInt(-5), Fix64.FromInt(-5)); break;
+                }
+                _pending.Flags = (byte)InputFlags.MoveOrder;
+                AttackHeld = false;
+            }
+
+            if (!choosing && CaptureRig.ShouldCastWhirlwind(Sim != null ? Sim.Tick : -1))
+                _abilityLatch |= 1;
         }
 
         /// <summary>
@@ -360,11 +387,9 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Ставит «Печать пламени» в первый слот с теми узлами, что отмечены.
-        ///
-        /// Список чекбоксов вместо нарисованного дерева — намеренно: рисовать
-        /// дерево до того, как доказано, что в игру интересно играть, значит
-        /// потратить недели на оформление того, что ещё может измениться.
+        /// Ставит законченный combat-slice «Вихря» в первый слот.
+        /// Дерево «Печати пламени» временно не участвует: сейчас проверяется
+        /// качество одного приёма, а не ширина набора способностей.
         /// </summary>
         private void ApplyAbilityBuild()
         {
@@ -378,7 +403,7 @@ namespace Game.View
 
             // Порядок в буфере значения не имеет: AbilityBuild сортирует узлы
             // по возрастанию Id сам, иначе порядок галочек влиял бы на урон.
-            sim.SetAbility(0, AbilityDefinition.FlameSeal(), _nodeBuffer, count);
+            sim.SetAbility(0, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
 
             _appliedHotter = NodeHotter;
             _appliedSplit = NodeSplit;

@@ -22,11 +22,15 @@ TestResults/
 !/.gitignore
 !/.gitattributes
 
-# Obsolete prototype/tool mirror. PROJECT-STATE.md declares razlom/ as the only live project.
+# Obsolete prototype/tool mirror plus downloaded 3D tooling. Deleted 30 Aug 2026;
+# the rule stays so a stray re-download never lands in history.
 /code/
 
 # Generated delivery bundles; their source assets and generation scripts are versioned separately.
-/designed-images/deliverables/
+/ART/designed-images/deliverables/
+
+# Контрольные рендеры и снимки проверок. Пересоздаются скриптами, чистятся вручную.
+/ART/renders/
 
 # Blender/Python transient files
 *.blend1
