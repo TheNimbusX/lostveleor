@@ -91,6 +91,9 @@ namespace Game.Sim
         /// <summary>Используется только автоматизированной съёмкой combat slice.</summary>
         public bool WhirlwindShowcase { get; set; }
 
+        public CombatFeelCaptureTier CombatFeelShowcase { get; set; }
+        public int CombatFeelEnemyCount { get; set; } = 1;
+
         public GameSession(ulong sessionSeed, Camp camp, ModuleSet modules, int[] itemBaseIds,
             int simCapacity = 512)
         {
@@ -209,6 +212,8 @@ namespace Game.Sim
             Run = new RiftRun(sim, _modules, Camp.Items, _itemBaseIds);
             Run.PlayerEquipment = Camp.Worn;
             Run.WhirlwindShowcase = WhirlwindShowcase;
+            Run.CombatFeelShowcase = CombatFeelShowcase;
+            Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
             Run.StartRun();
 
             Mode = GameMode.Rift;

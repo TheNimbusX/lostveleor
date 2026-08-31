@@ -40,6 +40,9 @@ namespace Game.Sim
         /// <summary>Capture-only расстановка combat slice; false — обычный Разлом.</summary>
         public bool WhirlwindShowcase { get; set; }
 
+        public CombatFeelCaptureTier CombatFeelShowcase { get; set; }
+        public int CombatFeelEnemyCount { get; set; } = 1;
+
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
 
@@ -102,7 +105,9 @@ namespace Game.Sim
             _generator.Generate(_modules, layoutSeed, _map, BaseRooms + Depth);
 
             ulong spawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
-            if (WhirlwindShowcase)
+            if (CombatFeelShowcase != CombatFeelCaptureTier.None)
+                _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
+            else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);
             else
                 _sim.SetupRift(_map, spawnSeed,

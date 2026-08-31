@@ -61,6 +61,9 @@ namespace Game.View
         private FxSlot[] _pool;
         private int _cursor;
         private int[] _lastDamageSource;
+        private int _pendingBasicTarget = -1;
+        private bool _pendingBasicHeavy;
+        private bool _nextBasicHeavy;
 
         private Sprite _sparkSprite;
         private Sprite _ringSprite;
@@ -100,10 +103,6 @@ namespace Game.View
             _lastDamageSource = new int[TickDriver.MaxSimCapacity];
             for (int i = 0; i < _lastDamageSource.Length; i++) _lastDamageSource[i] = -1;
 
-            _sparkSprite = MakeSparkSprite();
-            _ringSprite = MakeRingSprite();
-            _slashSprite = MakeSlashSprite();
-            BuildPool();
             BuildSwordTrail();
         }
 
@@ -111,7 +110,6 @@ namespace Game.View
         {
             UpdateHitStop();
             ConsumeEvents();
-            AnimateFx();
             AnimateSwordTrail();
         }
 
@@ -183,76 +181,43 @@ namespace Game.View
         private void SpawnAttack(in SimEvent e)
         {
             bool playerAttack = e.Source == Simulation.PlayerId;
-            bool attacksPlayer = e.Target == Simulation.PlayerId;
-            if (!playerAttack && !attacksPlayer) return;
+            if (!playerAttack) return;
 
-            Vector3 source = At(e.Position, 1.25f);
-            Vector3 target = source + Vector3.right;
-            Simulation sim = _driver.Sim;
-            if (sim != null && (uint)e.Target < (uint)sim.Entities.Count)
-            {
-                FixVec2 p = sim.Entities.Position[e.Target];
-                target = new Vector3(p.X.ToFloat(), 1.25f, p.Y.ToFloat());
-            }
-
-            Vector3 midpoint = Vector3.Lerp(source, target, 0.55f);
-            Vector3 screenA = _camera != null ? _camera.WorldToScreenPoint(source) : source;
-            Vector3 screenB = _camera != null ? _camera.WorldToScreenPoint(target) : target;
-            Vector3 screenDirection = screenB - screenA;
-            float angle = Mathf.Atan2(screenDirection.y, screenDirection.x) * Mathf.Rad2Deg;
-            Color color = playerAttack
-                ? new Color(1f, 0.78f, 0.28f, 0.92f)
-                : new Color(1f, 0.28f, 0.22f, 0.60f);
-            SpawnFx(FxKind.Slash, _slashSprite, midpoint, Vector3.zero, color,
-                0.16f, playerAttack ? 0.55f : 0.38f, playerAttack ? 1.10f : 0.76f, 0f, angle, 0f);
+            _pendingBasicTarget = e.Target;
+            _pendingBasicHeavy = _nextBasicHeavy;
+            _nextBasicHeavy = !_nextBasicHeavy;
+            StartBasicAttackTrail();
         }
 
         private void SpawnHit(in SimEvent e)
         {
             bool fromPlayer = e.Source == Simulation.PlayerId;
             bool playerHit = e.Target == Simulation.PlayerId;
-            bool whirlwindHit = fromPlayer && _whirlwindImpactWindow > 0f;
 
-            // Иерархия силы: удар, в котором игрок не участвует, не реагирует
-            // вообще. В кадре сорок врагов, и если каждый их чих будет
-            // вспыхивать, собственный удар игрока потеряется в этом шуме.
+            // Частицы контакта рождает PelagVfxController ровно один раз на
+            // подтверждённом Damage. Здесь остаются только физическая реакция,
+            // камера и hit-stop — они не засоряют силуэты.
             if (!fromPlayer && !playerHit) return;
 
-            Vector3 at = At(e.Position, 1.15f);
-            Color core = e.Flag
-                ? new Color(1f, 0.92f, 0.40f, 1f)
-                : fromPlayer
-                    ? new Color(1f, 0.50f, 0.20f, 0.96f)
-                    : new Color(1f, 0.20f, 0.24f, 0.86f);
+            bool basicContact = fromPlayer && e.Target == _pendingBasicTarget;
+            bool heavyBasicContact = basicContact && _pendingBasicHeavy;
+            if (basicContact) _pendingBasicTarget = -1;
 
-            if (whirlwindHit)
-            {
-                SpawnFx(FxKind.Slash, _slashSprite, at, Vector3.zero,
-                    new Color(1f, 0.42f, 0.12f, 0.98f),
-                    0.19f, 0.62f, 1.45f, 0f, Random01() * 130f - 65f, 0f);
-            }
-            else
-            {
-                SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, core,
-                    0.24f, 0.22f, e.Flag ? 1.55f : 1.15f, 0f, 0f, 0f);
-            }
-
-            // Искры — по бюджету кадра. Кольцо получают все задетые, искры
-            // только первые: пул конечен, и вымыть его залпом нельзя.
-            if (_burstBudget > 0)
-            {
-                _burstBudget--;
-                SpawnBurst(at, core, whirlwindHit ? 5 : e.Flag ? 12 : 7,
-                    whirlwindHit ? 4.6f : e.Flag ? 4.8f : 3.5f, false);
-            }
-
-            PushTarget(in e, whirlwindHit ? 0.92f : e.Flag ? 1f : playerHit ? 0.8f : 0.55f);
+            float push = e.Flag ? 1f
+                : playerHit ? 0.8f
+                : heavyBasicContact ? 0.82f
+                : basicContact ? 0.70f
+                : 0.62f;
+            PushTarget(in e, push);
 
             Accumulate(
-                trauma: whirlwindHit ? 0.40f : e.Flag ? 0.52f : playerHit ? 0.33f : 0.25f,
-                zoom: whirlwindHit ? 0.56f : e.Flag ? 0.75f : 0.35f,
-                stopDuration: whirlwindHit ? 0.058f : e.Flag ? 0.070f : 0.038f,
-                stopScale: whirlwindHit ? 0.055f : e.Flag ? 0.035f : 0.08f);
+                trauma: e.Flag ? 0.52f : playerHit ? 0.33f
+                    : heavyBasicContact ? 0.36f : basicContact ? 0.29f : 0.25f,
+                zoom: e.Flag ? 0.75f
+                    : heavyBasicContact ? 0.48f : basicContact ? 0.40f : 0.35f,
+                stopDuration: e.Flag ? 0.070f
+                    : heavyBasicContact ? 0.052f : basicContact ? 0.044f : 0.038f,
+                stopScale: e.Flag ? 0.035f : 0.08f);
         }
 
         /// <summary>
@@ -283,44 +248,24 @@ namespace Game.View
 
         private void SpawnDeath(in SimEvent e)
         {
-            Vector3 at = At(e.Position, 1.05f);
             int source = (uint)e.Target < (uint)_lastDamageSource.Length ? _lastDamageSource[e.Target] : -1;
             bool playerKill = source == Simulation.PlayerId;
-            bool whirlwindKill = playerKill && _whirlwindImpactWindow > 0f;
-            Color color = playerKill
-                ? new Color(1f, 0.38f, 0.16f, 1f)
-                : new Color(0.85f, 0.20f, 0.24f, 0.92f);
 
-            if (whirlwindKill)
-            {
-                SpawnFx(FxKind.Slash, _slashSprite, at, Vector3.zero,
-                    new Color(1f, 0.30f, 0.08f, 1f),
-                    0.30f, 0.85f, 2.25f, 0f, Random01() * 120f - 60f, 0f);
-                SpawnBurst(at, color, 6, 5.8f, true);
-            }
-            else
-            {
-                SpawnFx(FxKind.Ring, _ringSprite, at, Vector3.zero, color,
-                    0.42f, 0.35f, playerKill ? 2.4f : 1.8f, 0f, 0f, 0f);
-                SpawnBurst(at, color, playerKill ? 12 : 8, playerKill ? 6.2f : 4.7f, true);
-            }
-
-            // Добивание — кульминация цепочки, и по силе оно обязано стоять
-            // ВЫШЕ крита: крит это хороший удар, убийство это конец истории.
+            // Смерть усиливает контакт временем и камерой, но не добавляет
+            // второй слой частиц поверх уже показанного hit.
             if (playerKill)
                 Accumulate(
-                    trauma: whirlwindKill ? 0.58f : 0.68f,
-                    zoom: whirlwindKill ? 0.82f : 1.08f,
-                    stopDuration: whirlwindKill ? 0.072f : 0.095f,
-                    stopScale: whirlwindKill ? 0.04f : 0.025f);
+                    trauma: 0.68f,
+                    zoom: 1.08f,
+                    stopDuration: 0.085f,
+                    stopScale: 0.025f);
         }
 
         private void SpawnAbility(in SimEvent e)
         {
-            if (e.Source != Simulation.PlayerId) return;
-            Vector3 at = At(e.Position, 0.12f);
-            SpawnBurst(at, new Color(0.72f, 0.31f, 0.12f, 0.52f), 4, 1.8f, false);
-            StartWhirlwindTrail();
+            _pendingBasicTarget = -1;
+            // Способности временно не создают декоративных VFX. Их контакт всё
+            // равно подтверждается единым hit-эффектом через Damage.
         }
 
         private void StartWhirlwindTrail()
@@ -334,6 +279,20 @@ namespace Game.View
             _trailActive = 0.38f;
             _trailFade = 0.16f;
             _whirlwindImpactWindow = 0.62f;
+            if (_trailRenderer != null) _trailRenderer.enabled = false;
+        }
+
+        private void StartBasicAttackTrail()
+        {
+            if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
+                return;
+
+            // Contact is at 0.60 s. Sampling starts in acceleration, crosses
+            // the contact frame and then fades during follow-through.
+            _trailCount = 0;
+            _trailDelay = 0.40f;
+            _trailActive = 0.19f;
+            _trailFade = 0.09f;
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -388,6 +347,11 @@ namespace Game.View
 
         private void AddTrailSample(Vector3 root, Vector3 tip)
         {
+            // A full guard-to-tip swept surface reads as an opaque attack cone.
+            // The familiar MOBA/ARPG sword trail lives on the fast outer third
+            // of the blade, leaving Pelag's silhouette and contact target clear.
+            root = Vector3.Lerp(root, tip, 0.48f);
+
             if (_trailCount > 0)
             {
                 Vector3 lastMid = (_trailRoots[_trailCount - 1] + _trailTips[_trailCount - 1]) * 0.5f;
@@ -417,7 +381,7 @@ namespace Game.View
             for (int i = 0; i < _trailCount; i++)
             {
                 float along = _trailCount > 1 ? i / (float)(_trailCount - 1) : 1f;
-                float width = Mathf.Lerp(0.16f, 1f, Mathf.Sqrt(along));
+                float width = Mathf.Lerp(0.10f, 0.88f, Mathf.Sqrt(along));
                 Vector3 mid = (_trailRoots[i] + _trailTips[i]) * 0.5f;
                 Vector3 half = (_trailTips[i] - _trailRoots[i]) * (0.5f * width);
                 int vertex = i * TrailVerticesPerSample;
@@ -426,9 +390,9 @@ namespace Game.View
                 _trailVertices[vertex + 2] = mid + half;
 
                 float alpha = Mathf.SmoothStep(0f, 1f, along) * fade;
-                _trailColors[vertex] = new Color(0.95f, 0.12f, 0.025f, alpha * 0.28f);
-                _trailColors[vertex + 1] = new Color(1f, 0.30f, 0.055f, alpha * 0.78f);
-                _trailColors[vertex + 2] = new Color(1f, 0.58f, 0.10f, alpha * 0.94f);
+                _trailColors[vertex] = new Color(1f, 0.22f, 0.02f, alpha * 0.10f);
+                _trailColors[vertex + 1] = new Color(1f, 0.44f, 0.05f, alpha * 0.42f);
+                _trailColors[vertex + 2] = new Color(1f, 0.72f, 0.14f, alpha * 0.66f);
             }
 
             int triangle = 0;
@@ -480,8 +444,10 @@ namespace Game.View
             Color color, float lifetime, float startScale, float endScale,
             float spin, float angle, float gravity)
         {
+            if (_pool == null || _pool.Length == 0) return;
             int index = _cursor++ % _pool.Length;
             ref FxSlot slot = ref _pool[index];
+            if (slot.Transform == null || slot.Renderer == null) return;
             slot.Transform.gameObject.SetActive(true);
             slot.Transform.position = position;
             slot.Renderer.sprite = sprite;
@@ -501,11 +467,17 @@ namespace Game.View
 
         private void AnimateFx()
         {
+            if (_pool == null) return;
             float dt = Time.unscaledDeltaTime;
             for (int i = 0; i < _pool.Length; i++)
             {
                 ref FxSlot slot = ref _pool[i];
                 if (slot.Remaining <= 0f) continue;
+                if (slot.Transform == null || slot.Renderer == null)
+                {
+                    slot.Remaining = 0f;
+                    continue;
+                }
                 slot.Remaining -= dt;
                 if (slot.Remaining <= 0f)
                 {

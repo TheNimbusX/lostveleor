@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.View::Game.View.PelagVfxElement
   Id: 10
   DefaultLifetime: 0.23
+  DynamicLine: 0
 --- !u!96 &8523487712216626500
 TrailRenderer:
   serializedVersion: 4

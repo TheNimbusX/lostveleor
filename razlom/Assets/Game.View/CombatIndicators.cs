@@ -34,23 +34,24 @@ namespace Game.View
         [Tooltip("Свой. Бирюза народов Вола — тот же язык, что и в палитрах.")]
         public Color AllyColor = new Color(0.15f, 0.90f, 0.95f, 1.00f);
 
-        public Color EnemyColor = new Color(0.95f, 0.25f, 0.22f, 0.85f);
+        public Color EnemyColor = new Color(0.95f, 0.25f, 0.22f, 0.52f);
 
         [Tooltip("Цель, которую персонаж бьёт прямо сейчас.")]
-        public Color TargetColor = new Color(1.00f, 0.78f, 0.22f, 0.95f);
+        public Color TargetColor = new Color(1.00f, 0.12f, 0.08f, 0.95f);
 
         [Tooltip("Тело под курсором. Наведение обязано быть видно ДО удара.")]
-        public Color HoverColor = new Color(1.00f, 0.97f, 0.90f, 0.95f);
+        public Color HoverColor = new Color(1.00f, 0.16f, 0.11f, 0.95f);
 
         [Tooltip("Сектор автоатаки. Виден, пока зажата кнопка удара.")]
         public Color ArcColor = new Color(1.00f, 0.72f, 0.30f, 0.16f);
 
-        public Color OrderColor = new Color(0.55f, 0.90f, 1.00f, 0.70f);
+        [Tooltip("Короткий зелёный приказ движения — привычный язык Dota-подобных игр.")]
+        public Color OrderColor = new Color(0.34f, 1.00f, 0.46f, 0.95f);
 
         [Header("Размеры")]
         [Tooltip("Кольцо рисуется по НАСТОЯЩЕМУ радиусу тела из симуляции. " +
                  "Множитель только добавляет каёмку, чтобы обод не резался телом.")]
-        public float RingScale = 1.62f;
+        public float RingScale = 1.12f;
 
         [Tooltip("Сколько секунд цель считается подсвеченной после удара по ней.")]
         public float TargetHighlight = 0.35f;
@@ -58,15 +59,40 @@ namespace Game.View
         [Tooltip("Потолок колец. Больше в кадре и не нужно: дальние всё равно не читаются.")]
         public int MaxRings = 96;
 
+        [Tooltip("Длительность короткого импульса ПКМ. Диапазон удерживает метку быстрой, как в MOBA.")]
+        [Range(0.45f, 0.65f)]
+        public float MovePingDuration = 0.56f;
+
+        [Tooltip("Диаметр расходящихся колец метки приказа в мировых единицах.")]
+        [Range(0.65f, 1.35f)]
+        public float MovePingDiameter = 0.98f;
+
+        [Tooltip("Интервал повторного пинга, пока ПКМ удерживается над землёй.")]
+        [Range(0.30f, 0.65f)]
+        public float MovePingRepeatInterval = 0.42f;
+
         private TickDriver _driver;
+        private ArenaView _arena;
 
         private Transform _ringRoot;
         private SpriteRenderer[] _rings;
         private SpriteRenderer _arc;
-        private SpriteRenderer _order;
+        private LineRenderer _orderOuterRing;
+        private LineRenderer _orderInnerRing;
+        private LineRenderer[] _orderChevrons;
+        private LineRenderer _orderDiamond;
 
         private Sprite _ringSprite;
         private Sprite _arcSprite;
+        private Material _orderLineMaterial;
+
+        // Метка приказа — короткая реакция на сам клик, а не отображение
+        // долгоживущего приказа из симуляции. Поэтому здесь хранится только
+        // зафиксированная в момент нажатия точка и время визуального импульса.
+        private Vector3 _movePingPosition;
+        private float _movePingStartedAt = -99f;
+        private float _nextMovePingAt = float.PositiveInfinity;
+        private bool _movePingHeldLastFrame;
 
         // Кого игрок ударил последним и когда. Подсветка живёт доли секунды:
         // постоянная метка цели превратилась бы в прицел, а прицела в этой
@@ -82,6 +108,7 @@ namespace Game.View
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
+            _arena = GetComponent<ArenaView>();
         }
 
         private void Build()
@@ -90,7 +117,6 @@ namespace Game.View
 
             _ringSprite = MakeRingSprite(128, 0.66f);
             _arcSprite = MakeArcSprite(160, Simulation.AutoAttackArcCos.ToFloat());
-
             _ringRoot = new GameObject("Пул: опознаватели").transform;
             _ringRoot.SetParent(transform, false);
 
@@ -99,7 +125,7 @@ namespace Game.View
                 _rings[i] = MakeFlatSprite(_ringRoot, _ringSprite, "Кольцо " + i, -120);
 
             _arc = MakeFlatSprite(_ringRoot, _arcSprite, "Сектор удара", -140);
-            _order = MakeFlatSprite(_ringRoot, _ringSprite, "Метка приказа", -130);
+            BuildMoveOrderMarker();
 
             _attackCursor = MakeAttackCursor(32);
 
@@ -112,6 +138,7 @@ namespace Game.View
             Simulation sim = _driver.Sim;
             if (sim == null)
             {
+                _arena?.SetHoveredEntity(-1);
                 if (_ready) HideAll();
                 return;
             }
@@ -119,9 +146,10 @@ namespace Game.View
             if (!_ready) Build();
 
             TrackAttacks();
+            _arena?.SetHoveredEntity(_driver.HoveredEntity);
             DrawFootRings(sim);
             DrawAttackArc(sim);
-            DrawMoveOrder(sim);
+            DrawMoveOrder();
             UpdateCursor(sim);
         }
 
@@ -175,11 +203,13 @@ namespace Game.View
                     // Диаметр — из симуляции. Кольцо и есть тот самый «хитбокс»:
                     // тела расталкиваются ровно по этому радиусу, и нарисованное
                     // не может разъехаться с настоящим.
-                    float diameter = entities.BodyRadius[i].ToFloat() * RingScale;
+                    float diameter = entities.BodyRadius[i].ToFloat() * 2f * RingScale;
 
                     // Цель и наведённый крупнее: цвет читается хуже размера,
                     // когда на экране двадцать красных колец.
-                    if (isTarget || isHovered) diameter *= 1.22f;
+                    if (isTarget) diameter *= 1.10f;
+                    if (isHovered)
+                        diameter *= 1.15f + 0.035f * Mathf.Sin(Time.unscaledTime * 12f);
 
                     Place(ring.transform, _driver.GetRenderPosition(i), diameter);
                 }
@@ -220,29 +250,176 @@ namespace Game.View
                 : Quaternion.Euler(90f, 0f, 0f);
         }
 
-        private void DrawMoveOrder(Simulation sim)
+        private void DrawMoveOrder()
         {
-            // Запрос делается ДО проверки настройки: при коротком замыкании
-            // компилятор справедливо считает target неприсвоенным.
-            FixVec2 target;
-            bool hasOrder = sim.TryGetMoveOrder(out target);
-            bool show = ShowMoveOrder && hasOrder;
-            _order.enabled = show;
+            float now = Time.unscaledTime;
+            float repeatInterval = Mathf.Clamp(MovePingRepeatInterval, 0.30f, 0.65f);
+            bool moveHeld = _driver.MoveOrderHeld;
+            bool moveSeriesStarted = _driver.MoveOrderPressedThisFrame
+                                     || (moveHeld && !_movePingHeldLastFrame);
+
+            // Первый импульс появляется сразу на фронте ПКМ. При удержании
+            // повторяем его редко и фиксируем уже актуальную точку курсора:
+            // это читается как серия приказов, но не превращается в спам 60 раз/с.
+            if (moveSeriesStarted)
+            {
+                RestartMovePing(now);
+                _nextMovePingAt = now + repeatInterval;
+            }
+            else if (moveHeld && now >= _nextMovePingAt)
+            {
+                RestartMovePing(now);
+                _nextMovePingAt = now + repeatInterval;
+            }
+
+            // Отпускание ПКМ или наведение на врага разрывает серию. Новый
+            // наземный приказ снова начнётся немедленным фронтовым импульсом.
+            if (!moveHeld)
+                _nextMovePingAt = float.PositiveInfinity;
+            _movePingHeldLastFrame = moveHeld;
+
+            float duration = Mathf.Clamp(MovePingDuration, 0.45f, 0.65f);
+            float normalizedAge = (now - _movePingStartedAt) / duration;
+            bool show = ShowMoveOrder && normalizedAge >= 0f && normalizedAge < 1f;
+            SetMoveOrderVisible(show);
             if (!show) return;
 
-            _order.color = OrderColor;
+            float eased = 1f - Mathf.Pow(1f - normalizedAge, 3f);
+            float ringFade = 1f - Mathf.SmoothStep(0.34f, 1f, normalizedAge);
+            float chevronFade = 1f - Mathf.SmoothStep(0.48f, 1f, normalizedAge);
+            float diameter = Mathf.Max(0.01f, MovePingDiameter);
+            float baseRadius = diameter * 0.5f;
+            float y = 0.045f;
 
-            // Метка пульсирует: неподвижная точка на полу теряется среди тел.
-            float pulse = 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 9f);
-            Place(_order.transform, new Vector3(target.X.ToFloat(), 0f, target.Y.ToFloat()),
-                0.55f * pulse);
+            Color outer = OrderColor;
+            outer.a *= ringFade;
+            Color inner = Color.Lerp(Color.white, OrderColor, 0.52f);
+            inner.a = ringFade * 0.82f;
+            SetLineColor(_orderOuterRing, outer);
+            SetLineColor(_orderInnerRing, inner);
+            WriteCircle(_orderOuterRing, _movePingPosition, y,
+                baseRadius * Mathf.Lerp(0.55f, 1.05f, eased));
+            WriteCircle(_orderInnerRing, _movePingPosition, y + 0.002f,
+                baseRadius * Mathf.Lerp(0.72f, 0.26f, eased));
+
+            // Четыре отдельные V-стрелки сходятся в точку клика. Это остаётся
+            // читаемым под изометрической камерой и никогда не превращается в
+            // залитый прямоугольник из-за особенностей SpriteRenderer/URP.
+            float shrink = Mathf.SmoothStep(0f, 1f, eased);
+            float tipRadius = baseRadius * Mathf.Lerp(0.72f, 0.23f, shrink);
+            float tailRadius = tipRadius + baseRadius * Mathf.Lerp(0.32f, 0.25f, shrink);
+            float halfWidth = baseRadius * Mathf.Lerp(0.24f, 0.16f, shrink);
+            Color chevronColor = Color.Lerp(Color.white, OrderColor, eased);
+            chevronColor.a = chevronFade;
+            for (int i = 0; i < _orderChevrons.Length; i++)
+            {
+                float angle = i * Mathf.PI * 0.5f;
+                Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                Vector3 lateral = new Vector3(-direction.z, 0f, direction.x);
+                Vector3 tip = _movePingPosition + direction * tipRadius + Vector3.up * (y + 0.004f);
+                Vector3 tail = _movePingPosition + direction * tailRadius + Vector3.up * (y + 0.004f);
+                LineRenderer chevron = _orderChevrons[i];
+                SetLineColor(chevron, chevronColor);
+                chevron.SetPosition(0, tail + lateral * halfWidth);
+                chevron.SetPosition(1, tip);
+                chevron.SetPosition(2, tail - lateral * halfWidth);
+            }
+
+            Color diamondColor = Color.white;
+            diamondColor.a = chevronFade * (1f - normalizedAge * 0.55f);
+            SetLineColor(_orderDiamond, diamondColor);
+            float diamondRadius = baseRadius * Mathf.Lerp(0.12f, 0.07f, eased);
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = (45f + i * 90f) * Mathf.Deg2Rad;
+                _orderDiamond.SetPosition(i, new Vector3(
+                    _movePingPosition.x + Mathf.Cos(angle) * diamondRadius,
+                    y + 0.006f,
+                    _movePingPosition.z + Mathf.Sin(angle) * diamondRadius));
+            }
+        }
+
+        private void RestartMovePing(float now)
+        {
+            FixVec2 clicked = _driver.CursorWorld;
+            _movePingPosition = new Vector3(clicked.X.ToFloat(), 0f, clicked.Y.ToFloat());
+            _movePingStartedAt = now;
+        }
+
+        private void BuildMoveOrderMarker()
+        {
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
+            _orderLineMaterial = new Material(shader)
+            {
+                name = "Метка приказа: материал"
+            };
+
+            _orderOuterRing = MakeOrderLine("Метка приказа: внешнее кольцо", true, 48, 0.027f);
+            _orderInnerRing = MakeOrderLine("Метка приказа: внутреннее кольцо", true, 40, 0.018f);
+            _orderChevrons = new LineRenderer[4];
+            for (int i = 0; i < _orderChevrons.Length; i++)
+                _orderChevrons[i] = MakeOrderLine("Метка приказа: шеврон " + i, false, 3, 0.032f);
+            _orderDiamond = MakeOrderLine("Метка приказа: точка", true, 4, 0.020f);
+            SetMoveOrderVisible(false);
+        }
+
+        private LineRenderer MakeOrderLine(string objectName, bool loop, int points, float width)
+        {
+            var go = new GameObject(objectName);
+            go.transform.SetParent(_ringRoot, false);
+            LineRenderer line = go.AddComponent<LineRenderer>();
+            line.sharedMaterial = _orderLineMaterial;
+            line.useWorldSpace = true;
+            line.alignment = LineAlignment.View;
+            line.textureMode = LineTextureMode.Stretch;
+            line.loop = loop;
+            line.positionCount = points;
+            line.widthMultiplier = width;
+            line.numCornerVertices = 2;
+            line.numCapVertices = 2;
+            line.sortingOrder = 220;
+            line.enabled = false;
+            return line;
+        }
+
+        private static void WriteCircle(LineRenderer line, Vector3 center, float y, float radius)
+        {
+            int count = line.positionCount;
+            for (int i = 0; i < count; i++)
+            {
+                float angle = i * Mathf.PI * 2f / count;
+                line.SetPosition(i, new Vector3(
+                    center.x + Mathf.Cos(angle) * radius,
+                    y,
+                    center.z + Mathf.Sin(angle) * radius));
+            }
+        }
+
+        private static void SetLineColor(LineRenderer line, Color color)
+        {
+            line.startColor = color;
+            line.endColor = color;
+        }
+
+        private void SetMoveOrderVisible(bool visible)
+        {
+            if (_orderOuterRing != null) _orderOuterRing.enabled = visible;
+            if (_orderInnerRing != null) _orderInnerRing.enabled = visible;
+            if (_orderChevrons != null)
+                for (int i = 0; i < _orderChevrons.Length; i++)
+                    if (_orderChevrons[i] != null) _orderChevrons[i].enabled = visible;
+            if (_orderDiamond != null) _orderDiamond.enabled = visible;
         }
 
         private void HideAll()
         {
             for (int i = 0; i < _rings.Length; i++) _rings[i].enabled = false;
             _arc.enabled = false;
-            _order.enabled = false;
+            SetMoveOrderVisible(false);
+            _nextMovePingAt = float.PositiveInfinity;
+            _movePingHeldLastFrame = false;
+            _arena?.SetHoveredEntity(-1);
             SetAttackCursor(false);
         }
 
@@ -276,6 +453,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            _arena?.SetHoveredEntity(-1);
             SetAttackCursor(false);
         }
 

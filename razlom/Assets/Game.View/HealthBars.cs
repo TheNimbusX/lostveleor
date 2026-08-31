@@ -175,8 +175,12 @@ namespace Game.View
 
         private void HideFrom(int from)
         {
+            if (_bars == null) return;
             for (int i = from; i < _bars.Length; i++)
-                if (_bars[i].Root.gameObject.activeSelf) _bars[i].Root.gameObject.SetActive(false);
+            {
+                Transform root = _bars[i].Root;
+                if (root != null && root.gameObject.activeSelf) root.gameObject.SetActive(false);
+            }
         }
 
         private Bar MakeBar(Transform root, int index)

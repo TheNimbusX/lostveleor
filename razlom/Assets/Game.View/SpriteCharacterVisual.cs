@@ -187,6 +187,22 @@ namespace Game.View
         private void Update()
         {
             if (!Ready) return;
+            if (_idle == null || _idle.Length == 0 || _renderer == null || _ghostRenderer == null)
+            {
+                Ready = false;
+                return;
+            }
+
+            // Hot reload can restore an action reference without its frame
+            // data. Drop that stale action instead of indexing frame -1.
+            if (_action != null && (_action.Length == 0 || _actionFrameTime <= 0f))
+            {
+                _action = null;
+                _actionLocks = false;
+                _actionPriority = 0;
+                _actionEndsAt = 0f;
+            }
+
             _locomotionClock += Time.deltaTime;
 
             if (_action != null)
@@ -204,7 +220,7 @@ namespace Game.View
 
             if (_action == null)
             {
-                Sprite[] loop = _moving && _move.Length > 0 ? _move : _idle;
+                Sprite[] loop = _moving && _move != null && _move.Length > 0 ? _move : _idle;
                 // Две разные иллюстрации не должны мигать как flipbook. Более
                 // спокойный темп плюс короткий comic-smear воспринимаются плавно.
                 float fps = _moving ? 3.8f : 0.85f;

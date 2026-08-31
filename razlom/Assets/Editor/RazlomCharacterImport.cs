@@ -6,12 +6,13 @@ using UnityEngine;
 ///
 /// Модели и их анимации обязаны приезжать в проект одинаково настроенными.
 /// Делать это руками через инспектор нельзя: настройка живёт в .meta, .meta
-/// легко потерять при переносе, и тогда персонаж молча приходит Generic-ригом —
-/// а на Generic не работает ретаргет, то есть не работают вообще все анимации.
+/// легко потерять при переносе, и тогда модель и клипы приезжают с разными
+/// правилами скелета.
 ///
-/// Humanoid выбран не по вкусу: скелеты у моделей разные — у одной свой,
-/// у другой Mixamo, — а клипы записаны под разные скелеты. Ретаргет через
-/// Humanoid единственное, что позволяет им работать вместе.
+/// Pelag v5 намеренно использует Generic: runtime-меш и все рабочие клипы
+/// имеют один и тот же 65-костный Mixamo bind pose. Humanoid здесь не нужен
+/// для ретаргета и повторно интерпретировал колени/голеностопы, из-за чего ноги
+/// визуально выворачивались. Старые разнородные ассеты остаются Humanoid.
 /// </summary>
 public sealed class RazlomCharacterImport : AssetPostprocessor
 {
@@ -38,7 +39,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamoRuntime =>
         NormalPath.EndsWith("/Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx");
 
-    public override uint GetVersion() => 5;
+    public override uint GetVersion() => 6;
 
     private void OnPreprocessAnimation()
     {
@@ -114,14 +115,14 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         if (file == "Pelag_MX_SaberCombo")
         {
-            // Mixamo прислал комбо одним длинным тейком. Для управления из ARPG
-            // это три независимых окна: следующий удар обязан стартовать сразу,
-            // а не ждать пятисекундный ролик целиком.
+            // Mixamo прислал два удара и recovery одним длинным тейком.
+            // Frames 99–147 — возврат второго удара, а не третий finisher.
+            // B сохраняет этот хвост: если приказ атаки продолжается, следующий
+            // A перехватывает recovery; если нет — герой сам мягко встаёт.
             importer.clipAnimations = new[]
             {
                 Clip(source, "Pelag_MX_SaberAttackA", 1f, 50f, false),
-                Clip(source, "Pelag_MX_SaberAttackB", 50f, 99f, false),
-                Clip(source, "Pelag_MX_SaberFinisher", 99f, 147f, false)
+                Clip(source, "Pelag_MX_SaberAttackB", 50f, 147f, false)
             };
             return;
         }
@@ -340,9 +341,12 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         // смену шейдера со своими прежними значениями, поэтому правка значения
         // по умолчанию в .shader не доходит до уже импортированных моделей —
         // и выглядит это как «поменял, ничего не изменилось».
-        if (material.HasProperty("_LightThreshold")) material.SetFloat("_LightThreshold", 0.30f);
-        if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", 0.09f);
-        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.0035f);
+        if (material.HasProperty("_MidColor"))
+            material.SetColor("_MidColor", new Color(0.94f, 0.90f, 0.91f, 1f));
+        if (material.HasProperty("_MidThreshold")) material.SetFloat("_MidThreshold", 0.24f);
+        if (material.HasProperty("_LightThreshold")) material.SetFloat("_LightThreshold", 0.62f);
+        if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", 0.045f);
+        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 1.10f);
     }
 
     /// <summary>

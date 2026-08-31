@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ee3f8d3ca0e5774f95e5f2913a0748c, type: 3}
   m_Name: AbilityVfxLibrary
   m_EditorClassIdentifier: Game.View::Game.View.AbilityVfxLibrary
+  BuildVersion: 3
   Entries:
   - Id: 0
     Prefab: {fileID: 8241518021229777190, guid: b5336d77c11720f4181bbb716eb56c76, type: 3}
@@ -20,7 +21,7 @@ MonoBehaviour:
     Prefab: {fileID: 2740850886773001575, guid: bf10798eb31547742842440d2f437ece, type: 3}
     Prewarm: 6
   - Id: 2
-    Prefab: {fileID: 9010336697391188160, guid: 6a48272ba2eee21489cf346ef88ad7a6, type: 3}
+    Prefab: {fileID: 8984661576470563967, guid: 808bc1b00b8a2c243917a7aee539f8cb, type: 3}
     Prewarm: 3
   - Id: 3
     Prefab: {fileID: 6952277510555522471, guid: 2a160d7d7e07f094d91fee1e2fd3a71c, type: 3}

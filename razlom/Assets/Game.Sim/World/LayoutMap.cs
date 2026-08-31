@@ -195,6 +195,73 @@ namespace Game.Sim
             return new FixVec2(x, y);
         }
 
+        /// <summary>Находится ли мировая точка на полу хотя бы одного модуля.</summary>
+        public bool ContainsWorld(FixVec2 point)
+        {
+            for (int i = 0; i < _placedCount; i++)
+            {
+                PlacedModule p = _placed[i];
+                Fix64 minX = CellSize * p.OriginX;
+                Fix64 maxX = CellSize * (p.OriginX + p.Width);
+                Fix64 minY = CellSize * p.OriginY;
+                Fix64 maxY = CellSize * (p.OriginY + p.Height);
+                if (point.X >= minX && point.X <= maxX
+                    && point.Y >= minY && point.Y <= maxY)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Вмещается ли круг тела в объединение модулей. Восемь опорных точек
+        /// позволяют проходить через стыки комнат, но не срезать внешний угол.
+        /// </summary>
+        public bool IsWalkable(FixVec2 center, Fix64 radius)
+        {
+            if (_placedCount == 0) return true;
+            Fix64 diagonal = radius * Fix64.Ratio(7, 10);
+            return ContainsWorld(center)
+                   && ContainsWorld(center + new FixVec2(radius, Fix64.Zero))
+                   && ContainsWorld(center + new FixVec2(-radius, Fix64.Zero))
+                   && ContainsWorld(center + new FixVec2(Fix64.Zero, radius))
+                   && ContainsWorld(center + new FixVec2(Fix64.Zero, -radius))
+                   && ContainsWorld(center + new FixVec2(diagonal, diagonal))
+                   && ContainsWorld(center + new FixVec2(-diagonal, diagonal))
+                   && ContainsWorld(center + new FixVec2(diagonal, -diagonal))
+                   && ContainsWorld(center + new FixVec2(-diagonal, -diagonal));
+        }
+
+        /// <summary>Ближайшая гарантированно проходимая точка приказа.</summary>
+        public FixVec2 ClampToWalkable(FixVec2 point, Fix64 radius)
+        {
+            if (_placedCount == 0 || IsWalkable(point, radius)) return point;
+
+            FixVec2 best = CenterOf(0);
+            Fix64 bestDistance = Fix64.MaxValue;
+            for (int i = 0; i < _placedCount; i++)
+            {
+                PlacedModule p = _placed[i];
+                Fix64 minX = CellSize * p.OriginX + radius;
+                Fix64 maxX = CellSize * (p.OriginX + p.Width) - radius;
+                Fix64 minY = CellSize * p.OriginY + radius;
+                Fix64 maxY = CellSize * (p.OriginY + p.Height) - radius;
+                if (minX > maxX || minY > maxY) continue;
+
+                FixVec2 candidate = new FixVec2(
+                    Fix64.Clamp(point.X, minX, maxX),
+                    Fix64.Clamp(point.Y, minY, maxY));
+                if (!IsWalkable(candidate, radius)) continue;
+
+                Fix64 distance = FixVec2.DistanceSq(point, candidate);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = candidate;
+                }
+            }
+            return best;
+        }
+
         public ulong Hash()
         {
             ulong hash = Hashing.Offset;

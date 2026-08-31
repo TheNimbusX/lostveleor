@@ -18,6 +18,30 @@ namespace Game.EditorTools
     public static class RazlomCaptureBuild
     {
         private const string OutputFlag = "-razlom-build-out";
+        private const string RequestFile = "request-capture-build";
+
+        [InitializeOnLoadMethod]
+        // Capture requests are consumed after the editor domain reloads and
+        // from the editor update loop while the project stays open.
+        private static void BuildRequestedFromOpenEditor()
+        {
+            EditorApplication.update += PollBuildRequest;
+            EditorApplication.delayCall += PollBuildRequest;
+        }
+
+        private static void PollBuildRequest()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+
+            string request = Path.Combine(RepositoryRoot(), "artifacts", RequestFile);
+            if (!File.Exists(request)) return;
+
+            // Маркер снимается до старта: если сборка упадёт, следующий
+            // domain reload не зациклит тяжёлый BuildPipeline.
+            File.Delete(request);
+            EditorApplication.update -= PollBuildRequest;
+            BuildFromMenu();
+        }
 
         [MenuItem("Разлом/Собрать плеер для съёмки")]
         public static void BuildFromMenu()

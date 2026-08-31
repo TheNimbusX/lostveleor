@@ -47,6 +47,18 @@ def render_samples(asset, output_dir, count=12):
     os.makedirs(output_dir, exist_ok=True)
     for index, frame in enumerate(frames):
         scene.frame_set(frame)
+        # Follow the animated hips. Some source deliveries contain root
+        # translation; a fixed QA camera let the character run out of frame
+        # and hid the exact leg poses we need to judge.
+        hips = next(
+            (bone for bone in armature.pose.bones
+             if bone.name in ("mixamorig:Hips", "Hip", "Hips")),
+            None,
+        )
+        if hips is not None:
+            focus = armature.matrix_world @ hips.head
+            camera.location = focus + Vector((1.8, -3.6, 1.15))
+            look_at(camera, focus + Vector((0.0, 0.0, 0.12)))
         scene.render.filepath = os.path.join(output_dir, f"frame_{index:02d}_f{frame:04d}.png")
         bpy.ops.render.render(write_still=True)
     print(f"SHEET={os.path.basename(asset)}|range={start}-{end}|frames={frames}|out={output_dir}")

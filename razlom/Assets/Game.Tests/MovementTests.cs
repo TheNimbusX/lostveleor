@@ -46,7 +46,7 @@ namespace Game.Tests
             FixVec2 target = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
             InputFrame frame = Order(Fix64.FromInt(5), Fix64.Zero, InputFlags.MoveOrder);
 
-            // Скорость 6 м/с при 30 Гц — это 0.2 м за тик, пять метров за 25 тиков.
+            // Скорость 4.5 м/с при 30 Гц — это 0.15 м за тик до торможения.
             Run(sim, in frame, 40);
 
             FixVec2 pos = sim.Entities.Position[Simulation.PlayerId];
@@ -92,7 +92,28 @@ namespace Game.Tests
             Assert.That(pos.X.Raw, Is.EqualTo(start.X.Raw));
             Assert.That(pos.Y.Raw, Is.EqualTo(start.Y.Raw));
 
-            // Девяносто градусов при шаге 6° за тик — пятнадцать тиков, успели.
+            // Девяносто градусов при шаге 20° за тик — пяти тиков достаточно.
+            FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
+            Assert.That(facing.Y.ToDouble(), Is.EqualTo(1.0).Within(0.001));
+            Assert.That(facing.X.ToDouble(), Is.EqualTo(0.0).Within(0.001));
+        }
+
+        [Test]
+        public void SingleNearbyClick_FinishesTurnAfterButtonWasReleased()
+        {
+            var sim = SoloArena();
+            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
+
+            // В реальной игре MoveOrder приходит одним кадром. Старый тест
+            // держал флаг 30 тиков и скрывал баг: после отпускания приказ
+            // снимался внутри мёртвой зоны уже на первом шаге поворота.
+            InputFrame click = Order(Fix64.Zero, Fix64.Ratio(3, 10), InputFlags.MoveOrder);
+            sim.Step(in click);
+            InputFrame released = InputFrame.Empty;
+            Run(sim, in released, 8);
+
+            Assert.That(sim.Entities.Position[Simulation.PlayerId].X.Raw, Is.EqualTo(start.X.Raw));
+            Assert.That(sim.Entities.Position[Simulation.PlayerId].Y.Raw, Is.EqualTo(start.Y.Raw));
             FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
             Assert.That(facing.Y.ToDouble(), Is.EqualTo(1.0).Within(0.001));
             Assert.That(facing.X.ToDouble(), Is.EqualTo(0.0).Within(0.001));
@@ -186,6 +207,37 @@ namespace Game.Tests
             }
 
             Assert.That(checkedCount, Is.GreaterThan(0), "проверять оказалось нечего");
+        }
+
+        [Test]
+        public void MoveOrder_CannotCrossAClosedLayoutWall()
+        {
+            var room = new ModuleDefinition("module.test_room", 4, 4,
+                new ModuleConnector[0], weight: 0, isEntrance: true);
+            var map = new LayoutMap(new ModuleSet(new[] { room }), 2);
+            Assert.That(map.TryPlace(0, 0, 0, 0), Is.EqualTo(0));
+            Assert.That(map.TryPlace(0, 0, 8, 0, parent: -1), Is.EqualTo(1));
+
+            var sim = new Simulation(Seed);
+            sim.SetupRift(map, Seed, enemiesPerRoom: 0, enemyHealth: 100);
+
+            // Вторая комната сама по себе walkable, поэтому приказ не
+            // клампится к первой. Между комнатами остаётся закрытый разрыв:
+            // реальное перемещение обязано остановиться у наружной стены.
+            FixVec2 target = map.CenterOf(1);
+            InputFrame click = Order(target.X, target.Y, InputFlags.MoveOrder);
+            sim.Step(in click);
+            InputFrame released = InputFrame.Empty;
+            Run(sim, in released, 240);
+
+            FixVec2 position = sim.Entities.Position[Simulation.PlayerId];
+            Fix64 radius = sim.Entities.BodyRadius[Simulation.PlayerId];
+            Fix64 firstRoomMaxX = LayoutMap.CellSize * Fix64.FromInt(4) - radius;
+
+            Assert.That(map.IsWalkable(position, radius), Is.True,
+                "движение вывело физическое тело за walkable-контур");
+            Assert.That(position.X, Is.LessThanOrEqualTo(firstRoomMaxX),
+                "герой пересёк закрытую стену и попал во вторую комнату");
         }
 
         [Test]

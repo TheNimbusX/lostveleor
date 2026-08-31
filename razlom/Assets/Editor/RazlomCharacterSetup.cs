@@ -146,8 +146,13 @@ public static class RazlomCharacterSetup
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.08f);
         if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
         if (material.HasProperty("_ShadowColor"))
-            material.SetColor("_ShadowColor", new Color(0.36f, 0.20f, 0.32f, 1f));
-        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0.007f);
+            material.SetColor("_ShadowColor", Game.View.ViewMaterials.ToonShadow);
+        if (material.HasProperty("_MidColor"))
+            material.SetColor("_MidColor", new Color(0.94f, 0.90f, 0.91f, 1f));
+        if (material.HasProperty("_MidThreshold")) material.SetFloat("_MidThreshold", 0.24f);
+        if (material.HasProperty("_LightThreshold")) material.SetFloat("_LightThreshold", 0.62f);
+        if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", 0.045f);
+        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 1.10f);
 
         EditorUtility.SetDirty(material);
         AssetDatabase.SaveAssets();

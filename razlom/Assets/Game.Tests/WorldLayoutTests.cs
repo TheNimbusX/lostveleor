@@ -139,6 +139,22 @@ namespace Game.Tests
         }
 
         [Test]
+        public void WalkableArea_ContainsRoomsButRejectsOutside()
+        {
+            LayoutMap map = Generate(17UL, 8);
+            Fix64 radius = Fix64.Ratio(62, 100);
+
+            Assert.IsTrue(map.IsWalkable(map.CenterOf(0), radius));
+            Assert.IsFalse(map.IsWalkable(
+                new FixVec2(Fix64.FromInt(-50), Fix64.FromInt(-50)), radius));
+
+            FixVec2 clamped = map.ClampToWalkable(
+                new FixVec2(Fix64.FromInt(-50), Fix64.FromInt(-50)), radius);
+            Assert.IsTrue(map.IsWalkable(clamped, radius),
+                "приказ за стеной должен превратиться в достижимую точку внутри карты");
+        }
+
+        [Test]
         public void Generation_DoesNotTouchRunStreams()
         {
             // Сборка карты — чистая функция от сида, как и разворот предмета.

@@ -41,6 +41,20 @@ namespace Game.View
         public bool AttackHeld { get; private set; }
 
         /// <summary>
+        /// Одноразовый приказ по земле именно на фронте нажатия ПКМ.
+        /// Presentation использует его для короткого Dota-пинга; удержание
+        /// кнопки продолжает обновлять путь, но не перезапускает маркер 60 раз/с.
+        /// </summary>
+        public bool MoveOrderPressedThisFrame { get; private set; }
+
+        /// <summary>
+        /// ПКМ прямо сейчас удерживается над землёй, а не над врагом.
+        /// Это presentation-only состояние для редкого повтора метки приказа;
+        /// симуляция по-прежнему получает ввод только через InputFrame.
+        /// </summary>
+        public bool MoveOrderHeld { get; private set; }
+
+        /// <summary>
         /// Точка под курсором в мире, уже квантованная. Для подсветки того,
         /// на кого игрок навёл мышь.
         /// </summary>
@@ -112,9 +126,16 @@ namespace Game.View
         private InputFrame _pending = InputFrame.Empty;
         private byte _abilityLatch;
         private byte _commandLatch;
+        // Render frames can be shorter than the 30 Hz simulation tick. Keep the
+        // exact RMB edge (intent, aim and target) until one Step consumes it;
+        // otherwise a quick click can show presentation feedback yet never
+        // reach deterministic gameplay.
+        private bool _pointerPressLatched;
+        private InputFrame _pointerPressFrame = InputFrame.Empty;
 
         /// <summary>Поколение, под которое уже настроено представление.</summary>
         private int _shownGeneration = -1;
+        private int _movingCombatStartedTick = -1;
 
         // Камера кэшируется: Camera.main ищет объект по тегу, и делать это
         // каждый кадр незачем.
@@ -140,6 +161,10 @@ namespace Game.View
             // который мы снимаем. Иначе владелец видит старый Полигон с двумя
             // болванками и закономерно не может проверить текущую работу.
             Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || Application.isEditor;
+            Session.CombatFeelShowcase = CaptureRig.CombatFeelTier;
+            Session.CombatFeelEnemyCount = CaptureRig.HasEnemyOverride
+                ? CaptureRig.EnemyOverride
+                : 1;
 
             // Буфер выделяется с запасом под самую большую из симуляций сессии.
             // Иначе сбой вылезал бы кадром позже и в другом месте — в интерполяции
@@ -228,6 +253,8 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
+            MoveOrderPressedThisFrame = false;
+
             // На экране награды цифры означают ВЫБОР, а не способность.
             // Одни и те же клавиши: у игрока не должно быть двух рядов цифр,
             // а бой на этом экране всё равно стоит.
@@ -258,7 +285,8 @@ namespace Game.View
             Mouse mouse = Mouse.current;
             CaptureAim(
                 mouse != null ? mouse.position.ReadValue() : Vector2.zero,
-                mouse != null && mouse.rightButton.isPressed);
+                mouse != null && mouse.rightButton.isPressed,
+                mouse != null && mouse.rightButton.wasPressedThisFrame);
 #else
             bool[] legacyDigits =
             {
@@ -279,7 +307,7 @@ namespace Game.View
                 ground: Input.GetKeyDown(KeyCode.T),
                 salvage: Input.GetKeyDown(KeyCode.V));
 
-            CaptureAim(Input.mousePosition, Input.GetMouseButton(1));
+            CaptureAim(Input.mousePosition, Input.GetMouseButton(1), Input.GetMouseButtonDown(1));
 #endif
 
             if (CaptureRig.RunShowcase && Sim != null)
@@ -297,6 +325,87 @@ namespace Game.View
                 }
                 _pending.Flags = (byte)InputFlags.MoveOrder;
                 AttackHeld = false;
+            }
+
+            if (CaptureRig.LocomotionShowcase && Sim != null)
+            {
+                // Изолированный stop/turn QA: сначала короткий пробег, затем
+                // один-единственный близкий клик назад. После него кнопка уже
+                // отпущена — так проверяется, что приказ разворота живёт в Sim,
+                // а не поддерживается повторяющимся capture-вводом.
+                int tick = Sim.Tick;
+                FixVec2 player = Sim.Entities.Position[Simulation.PlayerId];
+                if (tick < 24)
+                {
+                    _pending.Aim = new FixVec2(Fix64.FromInt(4), Fix64.Zero);
+                    _pending.Flags = (byte)InputFlags.MoveOrder;
+                }
+                else if (tick == 46)
+                {
+                    _pending.Aim = player + new FixVec2(Fix64.Ratio(-3, 10), Fix64.Zero);
+                    _pending.Flags = (byte)InputFlags.MoveOrder;
+                }
+                else
+                {
+                    _pending.Flags = 0;
+                }
+                AttackHeld = false;
+            }
+
+            if (CaptureRig.IsCombatFeelShowcase && !CaptureRig.MovingCombatShowcase && Sim != null)
+            {
+                bool attack = !CaptureRig.GcWarmupActive;
+                _pending.Flags = attack ? (byte)InputFlags.Attack : (byte)0;
+                _pending.AttackTarget = -1;
+                AttackHeld = attack;
+            }
+
+            if (CaptureRig.MovingCombatShowcase && Sim != null)
+            {
+                _pending.Flags = 0;
+                _pending.AttackTarget = -1;
+                AttackHeld = false;
+
+                if (CaptureRig.GcWarmupActive)
+                {
+                    _movingCombatStartedTick = -1;
+                }
+                else
+                {
+                    if (_movingCombatStartedTick < 0)
+                        _movingCombatStartedTick = Sim.Tick;
+                    int elapsed = Sim.Tick - _movingCombatStartedTick;
+                    FixVec2 player = Sim.Entities.Position[Simulation.PlayerId];
+
+                    // Attack starts against the authored stand directly in
+                    // front of Pelag. Two ticks later a ground order takes
+                    // ownership of locomotion without erasing that committed
+                    // swing, making the 50%-speed hit-in-motion unambiguous.
+                    if (elapsed == 0 && Sim.Entities.Count > 1)
+                    {
+                        _pending.Aim = Sim.Entities.Position[1];
+                        _pending.Flags = (byte)InputFlags.Attack;
+                        _pending.AttackTarget = 1;
+                        AttackHeld = true;
+                    }
+                    else if (elapsed == 2)
+                    {
+                        _pending.Aim = player + new FixVec2(Fix64.Zero, Fix64.FromInt(1));
+                        _pending.Flags = (byte)InputFlags.MoveOrder;
+                        MoveOrderPressedThisFrame = true;
+                    }
+                    // Once the first strike has visibly recovered, move again
+                    // and cast the sole production ability in the same tick.
+                    // It must keep control, cancel an unseen pending basic, and
+                    // use the same half-speed action contract.
+                    else if (elapsed == 35)
+                    {
+                        _pending.Aim = player + new FixVec2(Fix64.Zero, Fix64.FromInt(-2));
+                        _pending.Flags = (byte)InputFlags.MoveOrder;
+                        MoveOrderPressedThisFrame = true;
+                        _abilityLatch |= 1;
+                    }
+                }
             }
 
             if (!choosing && CaptureRig.ShouldCastWhirlwind(Sim != null ? Sim.Tick : -1))
@@ -360,10 +469,8 @@ namespace Game.View
         /// арифметика живёт ЗДЕСЬ, а не в симуляции. Через границу проходит
         /// уже квантованная точка.
         /// </summary>
-        private void CaptureAim(Vector2 screenPosition, bool held)
+        private void CaptureAim(Vector2 screenPosition, bool held, bool pressedThisFrame)
         {
-            AttackHeld = held;
-            HoveredEntity = FindUnderCursor();
             byte flags = 0;
 
             if (_camera != null)
@@ -378,12 +485,37 @@ namespace Game.View
                 }
             }
 
-            // Одна кнопка на всё, как в жанре: пока ПКМ зажата, персонаж идёт
-            // к курсору и бьёт то, что оказалось перед ним. Отпустил — бить
-            // перестал, но ДОШЁЛ: приказ на движение живёт в симуляции и
-            // переживает отпущенную кнопку.
-            if (held) flags |= (byte)(InputFlags.MoveOrder | InputFlags.Attack);
+            // Наведение считается ПОСЛЕ обновления Aim. Раньше здесь читалась
+            // точка прошлого кадра, поэтому быстрый клик рядом с силуэтом мог
+            // назначить не того врага или превратиться в приказ по земле.
+            HoveredEntity = FindUnderCursor(screenPosition);
+            AttackHeld = held && HoveredEntity >= 0;
+            MoveOrderHeld = held && HoveredEntity < 0;
+            MoveOrderPressedThisFrame = pressedThisFrame && HoveredEntity < 0;
+
+            // Одна кнопка выражает два разных намерения. ПКМ по врагу назначает
+            // цель атаки, ПКМ по земле безусловно приказывает идти и тем самым
+            // отменяет бой. Смешанный MoveOrder|Attack заставлял автоатаку тут
+            // же перехватывать любой клик рядом с толпой и запирал героя.
+            if (held)
+                flags = HoveredEntity >= 0
+                    ? (byte)InputFlags.Attack
+                    : (byte)InputFlags.MoveOrder;
             _pending.Flags = flags;
+            _pending.AttackTarget = (flags & (byte)InputFlags.Attack) != 0
+                ? HoveredEntity
+                : -1;
+
+            if (pressedThisFrame)
+            {
+                _pointerPressFrame = InputFrame.Empty;
+                _pointerPressFrame.Aim = _pending.Aim;
+                _pointerPressFrame.Flags = HoveredEntity >= 0
+                    ? (byte)InputFlags.Attack
+                    : (byte)InputFlags.MoveOrder;
+                _pointerPressFrame.AttackTarget = HoveredEntity >= 0 ? HoveredEntity : -1;
+                _pointerPressLatched = true;
+            }
         }
 
         /// <summary>
@@ -415,16 +547,15 @@ namespace Game.View
         /// тела расталкиваются и рисуется кольцо. Наведение, столкновение
         /// и картинка обязаны считаться от одного числа.
         /// </summary>
-        private int FindUnderCursor()
+        private int FindUnderCursor(Vector2 screenPosition)
         {
             Simulation sim = Sim;
-            if (sim == null) return -1;
+            if (sim == null || _camera == null) return -1;
 
             EntityStore entities = sim.Entities;
-            FixVec2 cursor = _pending.Aim;
 
             int best = -1;
-            Fix64 bestDistSq = Fix64.MaxValue;
+            float bestScore = float.PositiveInfinity;
 
             for (int i = 0; i < entities.Count; i++)
             {
@@ -432,30 +563,64 @@ namespace Game.View
                 if (i == Simulation.PlayerId) continue;
                 if (entities.Side[i] == entities.Side[Simulation.PlayerId]) continue;
 
-                Fix64 radius = entities.BodyRadius[i];
-                Fix64 distSq = FixVec2.DistanceSq(cursor, entities.Position[i]);
-                if (distSq > radius * radius) continue;
+                // Наведение идёт по экранному объёму всей фигуры, а не по
+                // кругу на полу. Луч через торс изометрической модели попадает
+                // на землю позади неё — именно поэтому прежняя проверка
+                // пропускала голову, плечи и щит.
+                FixVec2 p = entities.Position[i];
+                Vector3 origin = new Vector3(p.X.ToFloat(), 0f, p.Y.ToFloat());
+                Vector3 feet = _camera.WorldToScreenPoint(origin + Vector3.up * 0.08f);
+                Vector3 head = _camera.WorldToScreenPoint(origin + Vector3.up * 2.35f);
+                Vector3 chest = _camera.WorldToScreenPoint(origin + Vector3.up * 1.15f);
+                if (feet.z <= 0f || head.z <= 0f) continue;
 
-                if (distSq < bestDistSq)
+                // Orvill со щитом шире физического body-radius. Ширина в
+                // пикселях выводится из камеры, поэтому одинаково работает
+                // при любом разрешении и orthographic size.
+                Vector3 side = _camera.WorldToScreenPoint(
+                    origin + Vector3.up * 1.15f + _camera.transform.right * 0.86f);
+                float radiusPixels = Mathf.Max(18f,
+                    Vector2.Distance(new Vector2(chest.x, chest.y), new Vector2(side.x, side.y)) + 5f);
+                float distSq = DistanceSqToSegment(screenPosition,
+                    new Vector2(feet.x, feet.y), new Vector2(head.x, head.y));
+                float radiusSq = radiusPixels * radiusPixels;
+                if (distSq > radiusSq) continue;
+
+                float score = distSq / radiusSq + feet.z * 0.000001f;
+                if (score < bestScore)
                 {
-                    bestDistSq = distSq;
+                    bestScore = score;
                     best = i;
                 }
             }
             return best;
         }
 
+        private static float DistanceSqToSegment(Vector2 point, Vector2 a, Vector2 b)
+        {
+            Vector2 ab = b - a;
+            float lengthSq = ab.sqrMagnitude;
+            if (lengthSq <= 0.0001f) return (point - a).sqrMagnitude;
+            float t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / lengthSq);
+            return (point - (a + ab * t)).sqrMagnitude;
+        }
+
         private InputFrame ConsumeInput()
         {
-            _pending.AbilityMask = _abilityLatch;
-            _pending.Command = _commandLatch;
+            InputFrame frame = _pending;
+            if (_pointerPressLatched)
+            {
+                frame.Aim = _pointerPressFrame.Aim;
+                frame.Flags = _pointerPressFrame.Flags;
+                frame.AttackTarget = _pointerPressFrame.AttackTarget;
+                _pointerPressLatched = false;
+            }
 
-            // Цель уезжает в симуляцию только вместе с приказом бить: водить
-            // курсором по врагам, не нажимая, не должно ничего назначать.
-            _pending.AttackTarget = AttackHeld ? HoveredEntity : -1;
+            frame.AbilityMask = _abilityLatch;
+            frame.Command = _commandLatch;
             _abilityLatch = 0;
             _commandLatch = 0;
-            return _pending;
+            return frame;
         }
 
         /// <summary>
@@ -470,6 +635,8 @@ namespace Game.View
         {
             if (_shownGeneration == Session.Generation) return;
             _shownGeneration = Session.Generation;
+            _pointerPressLatched = false;
+            _pointerPressFrame = InputFrame.Empty;
 
             Simulation sim = Sim;
             if (sim == null) return;
@@ -489,6 +656,12 @@ namespace Game.View
             if (Session.Mode == GameMode.Rift)
                 Debug.Log($"[Разлом] Забег {Session.RunNumber}, сид {Session.LastRunSeed}, " +
                           $"комнат {Run.Map.PlacedCount}");
+        }
+
+        private void OnDisable()
+        {
+            _pointerPressLatched = false;
+            _pointerPressFrame = InputFrame.Empty;
         }
 
         /// <summary>

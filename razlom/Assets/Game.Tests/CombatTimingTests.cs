@@ -53,5 +53,48 @@ namespace Game.Tests
             Assert.AreEqual(healthBefore, sim.Entities.Health[victim],
                 "ушедшая из дуги цель не должна получить отложенный удар");
         }
+
+        [TestCase(CombatFeelCaptureTier.Normal, false)]
+        [TestCase(CombatFeelCaptureTier.Critical, true)]
+        public void CombatFeelStand_UsesRealDamageEventAtRequestedTier(
+            CombatFeelCaptureTier tier, bool expectedCritical)
+        {
+            var sim = new Simulation(7003UL, 16);
+            var map = new LayoutMap(PrototypeContent.Modules(), 8);
+            sim.SetupCombatFeelShowcase(map, 1, tier);
+            var attack = new InputFrame { Flags = (byte)InputFlags.Attack };
+
+            int healthBefore = sim.Entities.Health[1];
+            for (int i = 0; i <= Simulation.AttackWindupTicks; i++)
+                sim.Step(in attack);
+
+            Assert.Less(sim.Entities.Health[1], healthBefore);
+            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
+                e.Type == SimEventType.Damage
+                && e.Source == Simulation.PlayerId
+                && e.Target == 1
+                && e.Flag == expectedCritical));
+        }
+
+        [Test]
+        public void CombatFeelStand_KillStillComesFromContactDamage()
+        {
+            var sim = new Simulation(7004UL, 16);
+            var map = new LayoutMap(PrototypeContent.Modules(), 8);
+            sim.SetupCombatFeelShowcase(map, 1, CombatFeelCaptureTier.Kill);
+            var attack = new InputFrame { Flags = (byte)InputFlags.Attack };
+
+            sim.Step(in attack);
+            Assert.IsTrue(sim.Entities.Alive[1], "замах не должен убивать цель");
+
+            for (int i = 0; i < Simulation.AttackWindupTicks; i++)
+                sim.Step(in attack);
+
+            Assert.IsFalse(sim.Entities.Alive[1]);
+            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
+                e.Type == SimEventType.Damage && e.Target == 1));
+            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
+                e.Type == SimEventType.Death && e.Target == 1));
+        }
     }
 }

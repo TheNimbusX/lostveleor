@@ -4,8 +4,8 @@ using Game.Sim;
 namespace Game.View
 {
     /// <summary>
-    /// Боевой HUD: здоровье слева внизу, четыре слота способностей по нижней
-    /// кромке.
+    /// Боевой HUD: здоровье слева внизу и только реально экипированные
+    /// способности по нижней кромке.
     ///
     /// СЕРЕДИНА ЭКРАНА НЕ ЗАНЯТА НИЧЕМ И НИКОГДА. Всё, что накладывается поверх
     /// боя, — конкурент главному аттракциону, поэтому HUD прижат к краям и
@@ -31,7 +31,15 @@ namespace Game.View
 
         private GUIStyle _label;
         private GUIStyle _slotLabel;
+        private GUIStyle _slotKey;
+        private GUIStyle _slotName;
+        private GUIStyle _cooldownLabel;
         private Texture2D _white;
+        private float _canvasWidth;
+        private float _canvasHeight;
+        private float _safeLeft;
+        private float _safeBottom;
+        private float _safeCenterX;
 
         private static readonly Color HealthBack = new Color(0.06f, 0.07f, 0.09f, 0.82f);
         private static readonly Color HealthFill = new Color(0.82f, 0.22f, 0.24f, 0.95f);
@@ -58,9 +66,24 @@ namespace Game.View
             if (sim.Entities.Count == 0) return;
 
             EnsureStyles();
-
-            DrawHealth(sim);
-            DrawAbilities(sim);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float scale = Mathf.Clamp(Screen.height / 1080f, 1f, 2f);
+            Rect safe = Screen.safeArea;
+            _canvasWidth = Screen.width / scale;
+            _canvasHeight = Screen.height / scale;
+            _safeLeft = safe.xMin / scale;
+            _safeBottom = (Screen.height - safe.yMax) / scale;
+            _safeCenterX = (safe.xMin + safe.width * 0.5f) / scale;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            try
+            {
+                DrawHealth(sim);
+                DrawAbilities(sim);
+            }
+            finally
+            {
+                GUI.matrix = previousMatrix;
+            }
         }
 
         private void DrawHealth(Simulation sim)
@@ -69,8 +92,8 @@ namespace Game.View
             int max = Mathf.Max(1, sim.Entities.MaxHealth[Simulation.PlayerId]);
             float fill = Mathf.Clamp01(health / (float)max);
 
-            float x = Margin;
-            float y = Screen.height - Margin - BarHeight;
+            float x = _safeLeft + Margin;
+            float y = _canvasHeight - _safeBottom - Margin - BarHeight;
 
             GUI.Label(new Rect(x, y - 22f, BarWidth, 20f), "ПЕЛАГ", _label);
             Frame(new Rect(x - 2f, y - 2f, BarWidth + 4f, BarHeight + 4f), Ink, 2f);
@@ -86,24 +109,23 @@ namespace Game.View
 
         private void DrawAbilities(Simulation sim)
         {
-            float total = Simulation.AbilitySlots * SlotSize + (Simulation.AbilitySlots - 1) * SlotGap;
-            float x = (Screen.width - total) * 0.5f;
-            float y = Screen.height - Margin - SlotSize;
+            int activeCount = 0;
+            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+                if (sim.GetAbility(slot) != null) activeCount++;
+            if (activeCount == 0) return;
+
+            float total = activeCount * SlotSize + (activeCount - 1) * SlotGap;
+            float x = _safeCenterX - total * 0.5f;
+            float y = _canvasHeight - _safeBottom - Margin - SlotSize;
+            int visualSlot = 0;
 
             for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
             {
-                var box = new Rect(x + slot * (SlotSize + SlotGap), y, SlotSize, SlotSize);
                 AbilityBuild build = sim.GetAbility(slot);
+                if (build == null) continue;
 
-                if (build == null)
-                {
-                    // Пустой слот рисуется всё равно: игрок должен видеть, что
-                    // кнопок четыре и три из них он ещё не получил.
-                    Fill(box, SlotEmpty);
-                    Frame(box, Ink, 2f);
-                    GUI.Label(box, (slot + 1).ToString(), _slotLabel);
-                    continue;
-                }
+                var box = new Rect(x + visualSlot * (SlotSize + SlotGap), y, SlotSize, SlotSize);
+                visualSlot++;
 
                 int cooldown = build.CooldownTicks;
                 int readyAt = sim.AbilityReadyTick(slot);
@@ -128,10 +150,22 @@ namespace Game.View
                         inner.width, inner.height * ready), SlotReady);
 
                     float seconds = left / (float)Simulation.TicksPerSecond;
-                    GUI.Label(box, seconds.ToString("0.0"), _slotLabel);
+                    Rect shadow = new Rect(box.x + 1f, box.y + 1f, box.width, box.height);
+                    GUI.Label(shadow, seconds.ToString("0.0"), _slotLabel);
+                    GUI.Label(box, seconds.ToString("0.0"), _cooldownLabel);
                 }
 
-                if (left <= 0) GUI.Label(box, (slot + 1).ToString(), _slotLabel);
+                string abilityName = build.DefinitionId == AbilityDefinition.WhirlwindId
+                    ? "ВИХРЬ"
+                    : "СПОСОБНОСТЬ";
+                GUI.Label(new Rect(box.x - 32f, box.y - 20f, box.width + 64f, 18f),
+                    abilityName, _slotName);
+
+                // Кнопка остаётся видимой и во время cooldown; число в центре
+                // теперь означает только время, а не внезапно сменившуюся клавишу.
+                Rect key = new Rect(box.x + 4f, box.y + 4f, 18f, 18f);
+                Fill(key, Ink);
+                GUI.Label(key, (slot + 1).ToString(), _slotKey);
             }
         }
 
@@ -180,6 +214,22 @@ namespace Game.View
                 alignment = TextAnchor.MiddleCenter,
             };
             _slotLabel.normal.textColor = new Color(0.06f, 0.08f, 0.10f);
+
+            _cooldownLabel = new GUIStyle(_slotLabel);
+            _cooldownLabel.normal.textColor = new Color(1f, 0.97f, 0.90f);
+
+            _slotKey = new GUIStyle(_slotLabel)
+            {
+                fontSize = 12,
+            };
+            _slotKey.normal.textColor = Color.white;
+
+            _slotName = new GUIStyle(_slotLabel)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter,
+            };
+            _slotName.normal.textColor = new Color(1f, 0.92f, 0.80f);
         }
     }
 }

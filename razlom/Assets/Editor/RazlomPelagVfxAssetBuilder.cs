@@ -15,8 +15,13 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
+    private const int LibraryVersion = 3;
     private const string AnchorPath =
         "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorChain.fbx";
+    private const string HovlPunchHitPath =
+        "Assets/Hovl Studio/RPG VFX Bundle/Prefabs/Magic buffs and hits/Punch Hit.prefab";
+    private const string HovlFlowerSlashPath =
+        "Assets/Hovl Studio/AOE Magic spells Vol.1/Prefabs/Flower slash.prefab";
     private static Mesh _chainLinkMesh;
 
     [InitializeOnLoadMethod]
@@ -25,7 +30,8 @@ public static class RazlomPelagVfxAssetBuilder
         EditorApplication.delayCall += () =>
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
-            if (AssetDatabase.LoadAssetAtPath<AbilityVfxLibrary>(LibraryPath) == null) Build();
+            AbilityVfxLibrary library = AssetDatabase.LoadAssetAtPath<AbilityVfxLibrary>(LibraryPath);
+            if (library == null || library.BuildVersion != LibraryVersion) Build();
         };
     }
 
@@ -52,6 +58,10 @@ public static class RazlomPelagVfxAssetBuilder
             new Color(0.11f, 0.14f, 0.15f, 0.94f), new Color(0.62f, 0.72f, 0.72f, 0.92f), 0.82f, 0.28f);
         Material impact = VfxMaterial("M_Impact", vfxShader,
             new Color(1.00f, 0.28f, 0.14f, 0.96f), new Color(1.00f, 0.97f, 0.84f, 1f), 1.42f, 0.62f);
+        Material whirlwind = VfxMaterial("M_WhirlwindBrush", vfxShader,
+            new Color(0.03f, 0.45f, 0.56f, 1.00f), new Color(0.18f, 0.90f, 0.90f, 1.00f), 1.15f, 0.38f);
+        Material whirlwindAccent = VfxMaterial("M_WhirlwindAccent", vfxShader,
+            new Color(0.78f, 0.05f, 0.22f, 0.92f), new Color(1.00f, 0.42f, 0.40f, 1.00f), 1.05f, 0.32f);
         Material dash = VfxMaterial("M_DashStreak", vfxShader,
             new Color(1.00f, 0.30f, 0.25f, 0.46f), new Color(1.00f, 0.86f, 0.72f, 0.86f), 0.95f, 0.36f);
         Material flash = VfxMaterial("M_TargetFlash", vfxShader,
@@ -64,10 +74,10 @@ public static class RazlomPelagVfxAssetBuilder
         GameObject[] prefabs = new GameObject[(int)PelagVfxId.Count];
         prefabs[(int)PelagVfxId.AutoAttackSlash] = SaveArc(PelagVfxId.AutoAttackSlash,
             "VFX_AutoAttack_Slash", slash, impact, 0.34f, 0.24f, false);
-        prefabs[(int)PelagVfxId.AutoAttackImpact] = SaveBurst(PelagVfxId.AutoAttackImpact,
-            "VFX_AutoAttack_Impact", impact, 5, 0.16f, 2.7f, 0.12f, 0.30f);
-        prefabs[(int)PelagVfxId.WhirlwindRing] = SaveRing(PelagVfxId.WhirlwindRing,
-            "VFX_Whirlwind_Ring", slash, impact, 1.55f, 0.34f, 0.58f);
+        prefabs[(int)PelagVfxId.AutoAttackImpact] = SaveHovlImpact(PelagVfxId.AutoAttackImpact,
+            "VFX_AutoAttack_Impact", impact);
+        prefabs[(int)PelagVfxId.WhirlwindRing] = SaveWhirlwindBrush(PelagVfxId.WhirlwindRing,
+            "VFX_Whirlwind_Brush", whirlwind, whirlwindAccent, 0.62f);
         prefabs[(int)PelagVfxId.WhirlwindHit] = SaveBurst(PelagVfxId.WhirlwindHit,
             "VFX_Whirlwind_Hit", impact, 5, 0.19f, 3.8f, 0.16f, 0.34f);
         prefabs[(int)PelagVfxId.AnchorLeapThrow] = SaveAnchor(PelagVfxId.AnchorLeapThrow,
@@ -96,7 +106,7 @@ public static class RazlomPelagVfxAssetBuilder
         CreateLibrary(prefabs);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[Pelag VFX] Созданы 15 pooled-prefabs, 7 материалов и AbilityVfxLibrary.");
+        Debug.Log("[Pelag VFX] Созданы 15 pooled-prefabs, 9 материалов и AbilityVfxLibrary v3.");
     }
 
     private static Material VfxMaterial(string name, Shader shader, Color edge, Color core,
@@ -186,6 +196,157 @@ public static class RazlomPelagVfxAssetBuilder
         core.positionCount = Count;
         for (int i = 0; i < Count; i++) core.SetPosition(i, line.GetPosition(i));
         return Save(root, name);
+    }
+
+    private static GameObject SaveWhirlwindBrush(PelagVfxId id, string name,
+        Material brush, Material accent, float lifetime)
+    {
+        GameObject root = RootObject(id, name, lifetime);
+
+        // Не gameplay-кольцо и не неоновый donut. Три незамкнутых мазка
+        // повторяют круговой путь клинка, но оставляют силуэт Пелага открытым.
+        AddBrushArc(root, brush, 1.48f, 18f, 238f, 0.27f, 0.07f, 24);
+        AddBrushArc(root, accent, 1.18f, 214f, 112f, 0.17f, 0.10f, 13);
+        AddBrushArc(root, brush, 0.88f, 326f, 78f, 0.11f, 0.14f, 10);
+        AddHovlWhirlwindAccents(root);
+        return Save(root, name);
+    }
+
+    private static GameObject SaveHovlImpact(PelagVfxId id, string name, Material fallbackMaterial)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlPunchHitPath);
+        if (source == null)
+        {
+            Debug.LogWarning($"[Pelag VFX] Hovl hit не найден: {HovlPunchHitPath}");
+            return SaveBurst(id, name, fallbackMaterial, 5, 0.16f, 2.7f, 0.12f, 0.30f);
+        }
+
+        GameObject root = RootObject(id, name, 0.30f);
+        GameObject imported = UnityEngine.Object.Instantiate(source, root.transform, false);
+        imported.name = "Hovl Punch Hit";
+        imported.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        imported.transform.localScale = Vector3.one * 0.46f;
+        SanitizeImportedVfx(imported);
+        return Save(root, name);
+    }
+
+    private static void AddHovlWhirlwindAccents(GameObject root)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlFlowerSlashPath);
+        if (source == null)
+        {
+            Debug.LogWarning($"[Pelag VFX] Hovl slash не найден: {HovlFlowerSlashPath}");
+            return;
+        }
+
+        GameObject imported = UnityEngine.Object.Instantiate(source, root.transform, false);
+        imported.name = "Hovl Flower Slash Accents";
+        imported.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        imported.transform.localScale = Vector3.one * 0.42f;
+        KeepNamedBranches(imported.transform, "PTrails", "EndSparks", "Flash");
+        SanitizeImportedVfx(imported);
+    }
+
+    private static void KeepNamedBranches(Transform root, params string[] branchNames)
+    {
+        Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+        var keep = new System.Collections.Generic.HashSet<Transform> { root };
+
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            bool namedBranch = false;
+            for (int nameIndex = 0; nameIndex < branchNames.Length; nameIndex++)
+            {
+                if (transforms[i].name != branchNames[nameIndex]) continue;
+                namedBranch = true;
+                break;
+            }
+            if (!namedBranch) continue;
+
+            Transform current = transforms[i];
+            while (current != null)
+            {
+                keep.Add(current);
+                if (current == root) break;
+                current = current.parent;
+            }
+
+            Transform[] descendants = transforms[i].GetComponentsInChildren<Transform>(true);
+            for (int descendant = 0; descendant < descendants.Length; descendant++)
+                keep.Add(descendants[descendant]);
+        }
+
+        for (int i = transforms.Length - 1; i >= 0; i--)
+        {
+            if (transforms[i] == root || keep.Contains(transforms[i])) continue;
+            if (transforms[i] != null) UnityEngine.Object.DestroyImmediate(transforms[i].gameObject);
+        }
+    }
+
+    private static void SanitizeImportedVfx(GameObject root)
+    {
+        Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < transforms.Length; i++)
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(transforms[i].gameObject);
+
+        MonoBehaviour[] behaviours = root.GetComponentsInChildren<MonoBehaviour>(true);
+        for (int i = 0; i < behaviours.Length; i++)
+        {
+            if (behaviours[i] != null) UnityEngine.Object.DestroyImmediate(behaviours[i]);
+        }
+
+        Light[] lights = root.GetComponentsInChildren<Light>(true);
+        for (int i = 0; i < lights.Length; i++) UnityEngine.Object.DestroyImmediate(lights[i]);
+
+        AudioSource[] audioSources = root.GetComponentsInChildren<AudioSource>(true);
+        for (int i = 0; i < audioSources.Length; i++)
+            UnityEngine.Object.DestroyImmediate(audioSources[i]);
+
+        ParticleSystem[] particles = root.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particles.Length; i++)
+        {
+            ParticleSystem.MainModule main = particles[i].main;
+            main.loop = false;
+            main.playOnAwake = false;
+
+            ParticleSystemRenderer renderer = particles[i].GetComponent<ParticleSystemRenderer>();
+            if (renderer == null) continue;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        }
+    }
+
+    private static void AddBrushArc(GameObject root, Material material, float radius,
+        float startDegrees, float sweepDegrees, float width, float height, int segments)
+    {
+        LineRenderer line = AddLine(root, material, width, false, false);
+        line.positionCount = segments;
+        line.widthCurve = new AnimationCurve(
+            new Keyframe(0f, 0.04f), new Keyframe(0.12f, 0.72f),
+            new Keyframe(0.36f, 1f), new Keyframe(0.82f, 0.58f),
+            new Keyframe(1f, 0.02f));
+        Gradient visibility = new Gradient();
+        visibility.SetKeys(
+            new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new[]
+            {
+                new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.96f, 0.12f),
+                new GradientAlphaKey(0.78f, 0.76f), new GradientAlphaKey(0f, 1f)
+            });
+        line.colorGradient = visibility;
+
+        for (int i = 0; i < segments; i++)
+        {
+            float t = i / (float)(segments - 1);
+            float angle = (startDegrees + sweepDegrees * t) * Mathf.Deg2Rad;
+            float brokenEdge = Mathf.Sin(t * Mathf.PI * 5f) * 0.025f;
+            float r = radius + brokenEdge;
+            line.SetPosition(i, new Vector3(Mathf.Cos(angle) * r,
+                height + Mathf.Sin(t * Mathf.PI) * 0.035f,
+                Mathf.Sin(angle) * r));
+        }
     }
 
     private static GameObject SaveDynamicLine(PelagVfxId id, string name, Material material,
@@ -311,7 +472,10 @@ public static class RazlomPelagVfxAssetBuilder
     private static LineRenderer AddLine(GameObject root, Material material, float width,
         bool worldSpace, bool loop)
     {
-        LineRenderer line = root.AddComponent<LineRenderer>();
+        int lineIndex = root.GetComponentsInChildren<LineRenderer>(true).Length;
+        GameObject lineObject = new GameObject(lineIndex == 0 ? "Line Edge" : $"Line Core {lineIndex:00}");
+        lineObject.transform.SetParent(root.transform, false);
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
         line.sharedMaterial = material;
         line.useWorldSpace = worldSpace;
         line.loop = loop;
@@ -432,6 +596,9 @@ public static class RazlomPelagVfxAssetBuilder
             library = ScriptableObject.CreateInstance<AbilityVfxLibrary>();
             AssetDatabase.CreateAsset(library, LibraryPath);
         }
+
+        library.name = Path.GetFileNameWithoutExtension(LibraryPath);
+        library.BuildVersion = LibraryVersion;
 
         library.Entries = new AbilityVfxLibrary.Entry[(int)PelagVfxId.Count];
         for (int i = 0; i < library.Entries.Length; i++)

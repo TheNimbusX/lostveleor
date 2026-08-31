@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using UnityEngine;
+using Unity.Profiling;
+using Game.Sim;
 
 namespace Game.View
 {
@@ -19,7 +21,9 @@ namespace Game.View
     /// строке есть -razlom-capture: обычный запуск игры ничего об этом коде
     /// не знает и не платит за него ни кадром.
     ///
-    /// Симуляции рига не касается вообще. Она читает время и пишет PNG.
+    /// Обычный capture симуляцию не меняет. Только изолированный animation/VFX
+    /// QA после готовности кадра ставит TickDriver на паузу, чтобы пустая волна
+    /// не сменила арену посреди проверяемого клипа.
     /// </summary>
     public sealed class CaptureRig : MonoBehaviour
     {
@@ -30,12 +34,17 @@ namespace Game.View
         private const string SeedFlag = "-capture-seed";
         private const string WhirlwindFlag = "-capture-whirlwind";
         private const string RunFlag = "-capture-run";
+        private const string LocomotionFlag = "-capture-locomotion";
+        private const string MovingCombatFlag = "-capture-moving-combat";
         private const string VideoFlag = "-capture-video";
         private const string VideoStartFlag = "-capture-video-start";
         private const string VideoDurationFlag = "-capture-video-duration";
         private const string VideoFpsFlag = "-capture-video-fps";
         private const string CameraSizeFlag = "-capture-camera-size";
         private const string SkillFlag = "-capture-skill";
+        private const string HitTierFlag = "-capture-hit-tier";
+        private const string CaptureWidthFlag = "-capture-width";
+        private const string CaptureHeightFlag = "-capture-height";
 
         /// <summary>
         /// Переопределения для <see cref="Bootstrap"/>. Считываются ДО загрузки
@@ -69,7 +78,15 @@ namespace Game.View
 
         public static bool RunShowcase { get; private set; }
 
+        public static bool LocomotionShowcase { get; private set; }
+
+        public static bool MovingCombatShowcase { get; private set; }
+
         public static PelagVfxShowcase VfxShowcase { get; private set; }
+
+        public static CombatFeelCaptureTier CombatFeelTier { get; private set; }
+        public static bool IsCombatFeelShowcase => CombatFeelTier != CombatFeelCaptureTier.None;
+        public static bool GcWarmupActive { get; private set; }
 
         public static bool IsVfxShowcase => VfxShowcase != PelagVfxShowcase.None || WhirlwindShowcase;
 
@@ -79,7 +96,10 @@ namespace Game.View
         /// <summary>Три capture-нажатия первого слота, привязанные к sim tick.</summary>
         public static bool ShouldCastWhirlwind(int simTick)
         {
-            if (!WhirlwindShowcase || simTick < 0) return false;
+            // Флаг Whirlwind также даёт locomotion-capture стабильную боевую
+            // расстановку. Во время RunShowcase способность не жмём: иначе
+            // она обрывает тот самый gait-cycle, который мы проверяем.
+            if (!WhirlwindShowcase || RunShowcase || LocomotionShowcase || simTick < 0) return false;
             if (_nextWhirlwindCast >= WhirlwindCastTicks.Length) return false;
             if (simTick < WhirlwindCastTicks[_nextWhirlwindCast]) return false;
             _nextWhirlwindCast++;
@@ -95,6 +115,12 @@ namespace Game.View
         private int _videoFrame;
         private int _timelineFrame;
         private float _cameraSize;
+        private int _captureWidth;
+        private int _captureHeight;
+        private ProfilerRecorder _gcRecorder;
+        private long _gcTotal;
+        private long _gcMax;
+        private int _gcSamples;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -107,7 +133,16 @@ namespace Game.View
 
             WhirlwindShowcase = Array.IndexOf(args, WhirlwindFlag) >= 0;
             RunShowcase = Array.IndexOf(args, RunFlag) >= 0;
+            LocomotionShowcase = Array.IndexOf(args, LocomotionFlag) >= 0;
+            MovingCombatShowcase = Array.IndexOf(args, MovingCombatFlag) >= 0;
             VfxShowcase = ParseShowcase(ReadValue(args, SkillFlag));
+            CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
+            if (MovingCombatShowcase && CombatFeelTier == CombatFeelCaptureTier.None)
+                CombatFeelTier = CombatFeelCaptureTier.Normal;
+            // Input polling starts before the capture coroutine reaches its
+            // explicit warmup. Gate combat immediately, otherwise an attack
+            // can begin during scene startup and contaminate frame zero.
+            GcWarmupActive = IsCombatFeelShowcase;
             _nextWhirlwindCast = 0;
 
             bool recordVideo = Array.IndexOf(args, VideoFlag) >= 0;
@@ -144,6 +179,8 @@ namespace Game.View
             rig._videoEnd = videoStart + videoDuration;
             rig._videoFps = videoFps;
             rig._cameraSize = ReadFloat(args, CameraSizeFlag, 0f);
+            rig._captureWidth = Mathf.Max(1, ReadInt(args, CaptureWidthFlag, 1920));
+            rig._captureHeight = Mathf.Max(1, ReadInt(args, CaptureHeightFlag, 1080));
         }
 
         private void Start()
@@ -154,6 +191,9 @@ namespace Game.View
                 Directory.CreateDirectory(Path.Combine(_outputDirectory, "video_frames"));
                 Time.captureFramerate = _videoFps;
             }
+            if (IsCombatFeelShowcase)
+                _gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory,
+                    "GC Allocated In Frame", 1);
             StartCoroutine(Run());
         }
 
@@ -164,13 +204,41 @@ namespace Game.View
             // уже привязаны — иначе расписание снимает заставку вместо боя.
             while (!CombatViewReady()) yield return null;
             ConfigureCaptureView();
-            PelagVfxController vfx = FindFirstObjectByType<PelagVfxController>();
+            PelagVfxController vfx = FindAnyObjectByType<PelagVfxController>();
             if (vfx != null && VfxShowcase != PelagVfxShowcase.None)
             {
                 // Дать толпе подойти в читаемую дистанцию; отсчёт видео ещё
-                // не начался, поэтому в ролик ожидание не попадает.
-                yield return new WaitForSecondsRealtime(1.25f);
+                // не начался, поэтому в ролик ожидание не попадает. Нулевой
+                // enemy override — специальный чистый animation QA: ждать в
+                // нём нельзя, иначе пустой Разлом успевает перелистнуть глубину
+                // и к первому кадру снова окружает Пелага новой толпой.
+                if (!HasEnemyOverride || EnemyOverride > 0)
+                    yield return new WaitForSecondsRealtime(1.25f);
+                else
+                {
+                    // Изолированный animation/VFX QA должен оставаться в той
+                    // же глубине Разлома. Без этого пустая волна мгновенно
+                    // завершается и следующий кадр снова заполняет арену.
+                    // Останавливаем только игровой тик уже собранного capture-
+                    // player; Animator и presentation продолжают жить в Update.
+                    TickDriver tickDriver = FindAnyObjectByType<TickDriver>();
+                    if (tickDriver != null) tickDriver.enabled = false;
+                    yield return null;
+                }
                 vfx.BeginShowcase(VfxShowcase);
+            }
+
+            if (IsCombatFeelShowcase)
+            {
+                GcWarmupActive = true;
+                for (int i = 0; i < 120; i++)
+                {
+                    yield return new WaitForEndOfFrame();
+                    SampleGc();
+                }
+                GcWarmupActive = false;
+                Debug.Log($"[capture-gc] samples={_gcSamples}, total={_gcTotal}, max={_gcMax}, " +
+                          $"average={(_gcSamples > 0 ? _gcTotal / _gcSamples : 0)} bytes/frame");
             }
             float combatStartedAt = Time.unscaledTime;
 
@@ -199,6 +267,7 @@ namespace Game.View
             }
 
             if (_recordVideo) Time.captureFramerate = 0;
+            if (_gcRecorder.Valid) _gcRecorder.Dispose();
             Application.Quit();
         }
 
@@ -214,24 +283,46 @@ namespace Game.View
                 if (juice != null) juice.SetBaseOrthographicSize(_cameraSize);
             }
 
-            ArenaView arena = FindFirstObjectByType<ArenaView>();
+            if (IsCombatFeelShowcase)
+            {
+                PlayerHud playerHud = FindAnyObjectByType<PlayerHud>();
+                RunHud runHud = FindAnyObjectByType<RunHud>();
+                CampHud campHud = FindAnyObjectByType<CampHud>();
+                if (playerHud != null) playerHud.enabled = false;
+                if (runHud != null) runHud.enabled = false;
+                if (campHud != null) campHud.enabled = false;
+            }
+
+            ArenaView arena = FindAnyObjectByType<ArenaView>();
             if (arena == null || !arena.TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip))
                 return;
 
             Renderer renderer = bladeRoot.GetComponentInParent<Renderer>();
+            Transform saber = bladeRoot;
+            while (saber != null && saber.name != "Pelag_FantasySaber_Equipped")
+                saber = saber.parent;
+            Vector3 cuttingEdge = saber != null
+                ? saber.TransformDirection(Vector3.right).normalized
+                : Vector3.zero;
+            Transform socket = saber != null ? saber.parent : null;
+            string socketBasis = socket == null
+                ? "socket=none"
+                : $"socketRight={socket.right}, socketUp={socket.up}, socketForward={socket.forward}";
             string rendererState = renderer == null
                 ? "renderer=none"
                 : $"renderer={renderer.name}, enabled={renderer.enabled}, active={renderer.gameObject.activeInHierarchy}, " +
                   $"boundsCenter={renderer.bounds.center}, boundsSize={renderer.bounds.size}, " +
                   $"shader={(renderer.sharedMaterial != null ? renderer.sharedMaterial.shader.name : "none")}";
             Debug.Log($"[capture-grip] root={bladeRoot.position}, tip={bladeTip.position}, " +
-                      $"length={Vector3.Distance(bladeRoot.position, bladeTip.position):0.000}, {rendererState}");
+                      $"length={Vector3.Distance(bladeRoot.position, bladeTip.position):0.000}, " +
+                      $"edge={cuttingEdge}, edgeDown={Vector3.Dot(cuttingEdge, Vector3.down):0.000}, " +
+                      $"{socketBasis}, {rendererState}");
         }
 
         private static bool CombatViewReady()
         {
-            ArenaView arena = FindFirstObjectByType<ArenaView>();
-            PelagVfxController vfx = FindFirstObjectByType<PelagVfxController>();
+            ArenaView arena = FindAnyObjectByType<ArenaView>();
+            PelagVfxController vfx = FindAnyObjectByType<PelagVfxController>();
             return arena != null && arena.TryGetPlayerBlade(out _, out _)
                    && vfx != null && vfx.PoolsReady;
         }
@@ -253,11 +344,26 @@ namespace Game.View
             }
         }
 
+        private static CombatFeelCaptureTier ParseHitTier(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return CombatFeelCaptureTier.None;
+            switch (raw.Trim().ToLowerInvariant())
+            {
+                case "normal": return CombatFeelCaptureTier.Normal;
+                case "crit":
+                case "critical": return CombatFeelCaptureTier.Critical;
+                case "kill": return CombatFeelCaptureTier.Kill;
+                default:
+                    Debug.LogWarning("[capture] Unknown combat-feel tier: " + raw);
+                    return CombatFeelCaptureTier.None;
+            }
+        }
+
         private void CaptureStill(int index, float mark)
         {
             string path = Path.Combine(_outputDirectory,
                 string.Format(CultureInfo.InvariantCulture, "shot_{0:00}_t{1:0.00}s.png", index, mark));
-            Texture2D frame = ScreenCapture.CaptureScreenshotAsTexture();
+            Texture2D frame = CaptureFrame();
             try
             {
                 File.WriteAllBytes(path, frame.EncodeToPNG());
@@ -273,7 +379,7 @@ namespace Game.View
         {
             string path = Path.Combine(_outputDirectory, "video_frames",
                 string.Format(CultureInfo.InvariantCulture, "frame_{0:0000}.jpg", _videoFrame++));
-            Texture2D frame = ScreenCapture.CaptureScreenshotAsTexture();
+            Texture2D frame = CaptureFrame();
             try
             {
                 File.WriteAllBytes(path, frame.EncodeToJPG(92));
@@ -282,6 +388,43 @@ namespace Game.View
             {
                 Destroy(frame);
             }
+        }
+
+        private Texture2D CaptureFrame()
+        {
+            Camera camera = Camera.main;
+            if (camera == null) return ScreenCapture.CaptureScreenshotAsTexture();
+
+            RenderTexture previousActive = RenderTexture.active;
+            RenderTexture previousTarget = camera.targetTexture;
+            RenderTexture target = RenderTexture.GetTemporary(
+                _captureWidth, _captureHeight, 24, RenderTextureFormat.ARGB32);
+            try
+            {
+                camera.targetTexture = target;
+                camera.Render();
+                RenderTexture.active = target;
+                var frame = new Texture2D(_captureWidth, _captureHeight,
+                    TextureFormat.RGB24, false);
+                frame.ReadPixels(new Rect(0f, 0f, _captureWidth, _captureHeight), 0, 0, false);
+                frame.Apply(false, false);
+                return frame;
+            }
+            finally
+            {
+                camera.targetTexture = previousTarget;
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
+        private void SampleGc()
+        {
+            if (!_gcRecorder.Valid || _gcRecorder.Count == 0) return;
+            long bytes = _gcRecorder.LastValue;
+            _gcTotal += bytes;
+            if (bytes > _gcMax) _gcMax = bytes;
+            _gcSamples++;
         }
 
         /// <summary>

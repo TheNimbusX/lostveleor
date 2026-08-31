@@ -58,6 +58,13 @@ namespace Game.View
         private Vector3 _motionStart;
         private Vector3 _motionEnd;
         private bool _captureMotion;
+        private bool _whirlwindFxPending;
+        private float _whirlwindFxDelay;
+        private int _pendingAutoattackTarget = -1;
+        private bool _showcaseAttackImpactPending;
+        private Vector3 _showcaseAttackTarget;
+        private float _attackMotionTime = -1f;
+        private Vector3 _attackMotionDirection;
 
         public bool PoolsReady { get; private set; }
         public bool ShowcaseRunning => _showcase != PelagVfxShowcase.None;
@@ -72,8 +79,11 @@ namespace Game.View
 
         private void LateUpdate()
         {
+            if (_driver == null || _arena == null) return;
             ConsumeSimEvents();
             UpdateShowcase();
+            UpdateWhirlwindFx();
+            UpdateAutoattackPresentation();
             UpdateAbilityMotion();
             UpdateActive(Time.deltaTime);
         }
@@ -110,7 +120,7 @@ namespace Game.View
 
         private void ConsumeSimEvents()
         {
-            if (!PoolsReady || _showcase != PelagVfxShowcase.None) return;
+            if (!PoolsReady || !_driver.enabled || _showcase != PelagVfxShowcase.None) return;
 
             IReadOnlyList<SimEvent> events = _driver.FrameEvents;
             for (int i = 0; i < events.Count; i++)
@@ -118,21 +128,12 @@ namespace Game.View
                 SimEvent e = events[i];
                 if (e.Source != Simulation.PlayerId) continue;
 
-                if (e.Type == SimEventType.Attack)
-                {
-                    Vector3 target = EntityPosition(e.Target, e.Position);
-                    PlayAutoattack(target, false);
-                }
-                else if (e.Type == SimEventType.AbilityCast)
-                {
-                    switch (e.Amount)
-                    {
-                        case 0: PlayWhirlwind(false); break;
-                        case 1: PlayAnchorLeap(false); break;
-                        case 2: PlayAnchorSweep(false); break;
-                        case 3: PlayChainStep(false); break;
-                    }
-                }
+                // В gameplay этот контроллер оставляет ровно один эффект:
+                // подтверждённый hit на цели. Attack уже один раз запускается
+                // ArenaView; прежний BeginAutoattack повторно дёргал Animator,
+                // перескакивал A/B-вариант и рассинхронизировал комбо.
+                if (e.Type == SimEventType.Damage)
+                    PlayAutoattackImpact(EntityPosition(e.Target, e.Position));
             }
         }
 
@@ -154,6 +155,9 @@ namespace Game.View
             _showcase = PelagVfxShowcase.None;
             _motionAbility = PelagVfxShowcase.None;
             _captureMotion = false;
+            _showcaseAttackImpactPending = false;
+            _pendingAutoattackTarget = -1;
+            _attackMotionTime = -1f;
         }
 
         private void UpdateShowcase()
@@ -169,6 +173,25 @@ namespace Game.View
                 else if (_showcaseStage == 3 && _showcaseTime >= 6.55f) StartRotationStage(PelagVfxShowcase.ChainStep);
                 else if (_showcaseStage == 4 && _showcaseTime >= 8.75f) StartRotationStage(PelagVfxShowcase.Autoattack);
                 else if (_showcaseStage == 5 && _showcaseTime >= 10.2f) StopShowcase();
+            }
+            else if (_showcase == PelagVfxShowcase.Autoattack)
+            {
+                // Полная удерживаемая серия для QA: одиночный красивый кадр
+                // не показывает, рвутся ли переходы A -> B -> finisher.
+                if (_showcaseStage == 0 && _showcaseTime >= 0.80f)
+                {
+                    _showcaseStage = 1;
+                    BeginAutoattack(FirstTargetPosition(), true, -1);
+                }
+                else if (_showcaseStage == 1 && _showcaseTime >= 1.60f)
+                {
+                    _showcaseStage = 2;
+                    BeginAutoattack(FirstTargetPosition(), true, -1);
+                }
+                else if (_showcaseTime >= 2.48f)
+                {
+                    StopShowcase();
+                }
             }
             else if (_showcaseTime >= ShowcaseDuration(_showcase))
             {
@@ -187,7 +210,7 @@ namespace Game.View
         {
             switch (ability)
             {
-                case PelagVfxShowcase.Autoattack: PlayAutoattack(FirstTargetPosition(), true); break;
+                case PelagVfxShowcase.Autoattack: BeginAutoattack(FirstTargetPosition(), true, -1); break;
                 case PelagVfxShowcase.Whirlwind: PlayWhirlwind(true); break;
                 case PelagVfxShowcase.AnchorLeap: PlayAnchorLeap(true); break;
                 case PelagVfxShowcase.AnchorSweep: PlayAnchorSweep(true); break;
@@ -199,7 +222,7 @@ namespace Game.View
         {
             switch (showcase)
             {
-                case PelagVfxShowcase.Autoattack: return 1.45f;
+                case PelagVfxShowcase.Autoattack: return 2.48f;
                 case PelagVfxShowcase.Whirlwind: return 1.85f;
                 case PelagVfxShowcase.AnchorLeap: return 2.15f;
                 case PelagVfxShowcase.AnchorSweep: return 2.15f;
@@ -208,29 +231,91 @@ namespace Game.View
             }
         }
 
-        private void PlayAutoattack(Vector3 target, bool showcase)
+        private void BeginAutoattack(Vector3 target, bool showcase, int targetEntity)
         {
             Vector3 player = PlayerPosition();
             Vector3 direction = FlatDirection(player, target);
-            Vector3 slashAt = Vector3.Lerp(player, target, 0.58f) + Vector3.up * 1.05f;
-            Quaternion facing = Quaternion.LookRotation(direction, Vector3.up);
 
             _arena.PlayPlayerAttackPresentation();
-            Spawn(PelagVfxId.AutoAttackSlash, slashAt, facing, 0.22f, 0.75f, 1.08f, Motion.Expand);
+            _attackMotionTime = 0f;
+            _attackMotionDirection = direction;
+            _pendingAutoattackTarget = showcase ? -1 : targetEntity;
+            _showcaseAttackImpactPending = showcase;
+            _showcaseAttackTarget = target;
+
+            // Этот путь существует только для отдельной VFX-витрины. В обычном
+            // бою старт атаки не создаёт ни пыли, ни заранее нарисованной дуги.
+        }
+
+        private void PlayAutoattackImpact(Vector3 target)
+        {
+            Vector3 player = PlayerPosition();
+            Vector3 direction = FlatDirection(player, target);
+            Quaternion facing = Quaternion.LookRotation(direction, Vector3.up);
+
+            // The actual blade ribbon carries the swing trajectory. Keep one
+            // contact shape here; generic sparks and material flash come from
+            // the same confirmed Damage event in the shared presentation.
             Spawn(PelagVfxId.AutoAttackImpact, target + Vector3.up * 0.95f, facing, 0.28f, 0.85f, 1.12f, Motion.Static);
-            Spawn(PelagVfxId.TargetFlash, target + Vector3.up * 0.92f, facing, 0.12f, 0.62f, 0.85f, Motion.Expand);
-            Spawn(PelagVfxId.DustSmall, player + direction * 0.22f + Vector3.up * 0.03f,
-                Quaternion.identity, 0.35f, 0.75f, 1.20f, Motion.Expand);
+        }
+
+        private void UpdateAutoattackPresentation()
+        {
+            if (_attackMotionTime < 0f) return;
+            _attackMotionTime += Time.deltaTime;
+
+            // Небольшая presentation-lunge связывает опорную ногу, клинок и
+            // цель. Симуляционную позицию и дальность атаки он не меняет.
+            float distance;
+            if (_attackMotionTime < 0.18f)
+                distance = Mathf.Lerp(0f, -0.04f, Smooth(_attackMotionTime / 0.18f));
+            else if (_attackMotionTime < 0.60f)
+                distance = Mathf.Lerp(-0.04f, 0.18f,
+                    Smooth((_attackMotionTime - 0.18f) / 0.42f));
+            else
+                distance = Mathf.Lerp(0.18f, 0f,
+                    Smooth((_attackMotionTime - 0.60f) / 0.22f));
+            _arena.SetPresentationOffset(Simulation.PlayerId,
+                _attackMotionDirection * distance);
+
+            if (_showcaseAttackImpactPending && _attackMotionTime >= 0.60f)
+            {
+                _showcaseAttackImpactPending = false;
+                PlayAutoattackImpact(_showcaseAttackTarget);
+            }
+
+            if (_attackMotionTime >= 0.82f)
+            {
+                _attackMotionTime = -1f;
+                _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
+            }
         }
 
         private void PlayWhirlwind(bool showcase)
         {
-            Vector3 player = PlayerPosition();
+            _attackMotionTime = -1f;
+            _showcaseAttackImpactPending = false;
+            _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
             _arena.PlayPlayerAbilityPresentation(0);
+            // Визуальный мазок рождается из движения клинка, а не лежит на
+            // земле до начала анимации. Небольшая задержка синхронизирует его
+            // с первым читаемым разгоном корпуса и сабли.
+            _whirlwindFxPending = true;
+            _whirlwindFxDelay = 0.14f;
+        }
+
+        private void UpdateWhirlwindFx()
+        {
+            if (!_whirlwindFxPending) return;
+            _whirlwindFxDelay -= Time.deltaTime;
+            if (_whirlwindFxDelay > 0f) return;
+
+            _whirlwindFxPending = false;
+            Vector3 player = PlayerPosition();
             Spawn(PelagVfxId.WhirlwindRing, player + Vector3.up * 0.08f, Quaternion.identity,
-                0.56f, 0.35f, 1.55f, Motion.Expand);
+                0.62f, 0.78f, 1.08f, Motion.Expand);
             Spawn(PelagVfxId.DustHeavy, player + Vector3.up * 0.04f, Quaternion.identity,
-                0.65f, 0.65f, 1.55f, Motion.Expand);
+                0.42f, 0.20f, 0.55f, Motion.Expand);
 
             FillTargets();
             for (int i = 0; i < _targetCount; i++)
@@ -487,10 +572,16 @@ namespace Game.View
 
         private void UpdateActive(float dt)
         {
+            if (_active == null) return;
             for (int i = 0; i < _active.Length; i++)
             {
                 ref ActiveFx fx = ref _active[i];
                 if (!fx.Active) continue;
+                if (fx.Object == null || fx.Element == null)
+                {
+                    fx = default;
+                    continue;
+                }
                 fx.Age += dt;
                 float t = Mathf.Clamp01(fx.Age / Mathf.Max(0.01f, fx.Duration));
 
@@ -526,10 +617,17 @@ namespace Game.View
 
         private void Release(int index)
         {
+            if (_active == null || (uint)index >= (uint)_active.Length) return;
             ref ActiveFx fx = ref _active[index];
             if (!fx.Active) return;
-            fx.Element.End();
-            _pools[(int)fx.Id].Pool.Release(fx.Object);
+            if (fx.Element != null) fx.Element.End();
+            int poolIndex = (int)fx.Id;
+            if (fx.Object != null && _pools != null
+                                  && (uint)poolIndex < (uint)_pools.Length
+                                  && _pools[poolIndex] != null)
+                _pools[poolIndex].Pool.Release(fx.Object);
+            else if (fx.Object != null)
+                fx.Object.SetActive(false);
             fx = default;
         }
 

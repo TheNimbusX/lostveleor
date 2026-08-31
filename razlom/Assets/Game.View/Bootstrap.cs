@@ -131,39 +131,49 @@ namespace Game.View
 
         private void BuildLight()
         {
-            // Заполняющий свет ЯРКИЙ. В мультяшной картинке неосвещённая
-            // сторона обязана оставаться цветной: там, где заполнение почти
-            // чёрное, тун-шейдер уводит всю теневую половину фигуры в грязь,
-            // и раскраска персонажа перестаёт работать.
+            // Ambient оставляет цвет в тени, но больше не заливает всю модель
+            // одинаковым бежевым. Форму задаёт заметный боковой тёплый ключ.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.55f, 0.70f, 0.82f);
-            RenderSettings.ambientEquatorColor = new Color(0.48f, 0.52f, 0.50f);
-            RenderSettings.ambientGroundColor = new Color(0.32f, 0.30f, 0.24f);
+            RenderSettings.ambientIntensity = 0.42f;
+            RenderSettings.ambientSkyColor = new Color(0.44f, 0.49f, 0.55f);
+            RenderSettings.ambientEquatorColor = new Color(0.31f, 0.33f, 0.36f);
+            RenderSettings.ambientGroundColor = new Color(0.17f, 0.16f, 0.16f);
 
             GameObject go = new GameObject("Свет: ключевой");
             go.transform.SetParent(transform, false);
-            // Наклон 38°, а не 50°: при крутом свете вертикальные поверхности —
-            // то есть почти весь персонаж — получают низкий ndl и проваливаются
-            // в теневую полосу. Пологий свет скользит по фигуре и лепит объём.
-            go.transform.rotation = Quaternion.Euler(38f, -35f, 0f);
+            // Азимут намеренно далеко от 45° камеры: тени уходят поперёк пола,
+            // поэтому освещение видно в изометрии, а не прячется за моделями.
+            go.transform.rotation = Quaternion.Euler(46f, -118f, 0f);
 
             Light light = go.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.color = new Color(1.00f, 0.95f, 0.86f);
-            light.intensity = 1.15f;
+            light.color = new Color(1.00f, 0.84f, 0.66f);
+            light.intensity = 2.15f;
             light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.82f;
+            light.shadowBias = 0.045f;
+            light.shadowNormalBias = 0.20f;
+            RenderSettings.sun = light;
 
             GameObject rimObject = new GameObject("Свет: контровой");
             rimObject.transform.SetParent(transform, false);
-            rimObject.transform.rotation = Quaternion.Euler(38f, 145f, 0f);
-            // Контровой приглушён и уведён из синевы. На 0.42 он работал как
-            // ночной фильтр: холодная плёнка ложилась на всё подряд и красила
-            // сцену в синий — ровно то, чего в этой игре быть не должно.
+            rimObject.transform.rotation = Quaternion.Euler(42f, 62f, 0f);
+            // Дополнительные Directional нужны только как лёгкая поддержка для
+            // URP/Lit-окружения. Персонажи формуются главным светом.
             Light rim = rimObject.AddComponent<Light>();
             rim.type = LightType.Directional;
-            rim.color = new Color(0.60f, 0.80f, 0.92f);
-            rim.intensity = 0.18f;
+            rim.color = new Color(0.56f, 0.72f, 1.00f);
+            rim.intensity = 0.26f;
             rim.shadows = LightShadows.None;
+
+            GameObject fillObject = new GameObject("Свет: заполняющий");
+            fillObject.transform.SetParent(transform, false);
+            fillObject.transform.rotation = Quaternion.Euler(58f, -18f, 0f);
+            Light fill = fillObject.AddComponent<Light>();
+            fill.type = LightType.Directional;
+            fill.color = new Color(0.92f, 0.86f, 0.78f);
+            fill.intensity = 0.14f;
+            fill.shadows = LightShadows.None;
         }
     }
 }

@@ -52,7 +52,7 @@ namespace Game.Tests
 
             // Побитово, а не «примерно»: шаг за тик участвует в позициях, а те —
             // в хеше состояния. Разойдись он в младшем разряде, реплеи бы поехали.
-            Assert.AreEqual(Fix64.Ratio(6, 30).Raw, e.MoveStep[Simulation.PlayerId].Raw,
+            Assert.AreEqual(Fix64.Ratio(9, 60).Raw, e.MoveStep[Simulation.PlayerId].Raw,
                 "шаг игрока за тик");
             Assert.AreEqual(Fix64.Ratio(35, 300).Raw, e.MoveStep[1].Raw, "шаг врага за тик");
 
@@ -357,6 +357,58 @@ namespace Game.Tests
             Assert.AreEqual(-1, sim.AttackTarget, "приказ идти отменяет приказ бить");
         }
 
+        [Test]
+        public void MoveOrder_PreservesCommittedSwingButEscapesThreeEnemies()
+        {
+            Simulation sim = Arena(54UL, 0);
+            Fix64 near = Fix64.Ratio(3, 4);
+            int front = sim.Entities.Spawn(
+                new FixVec2(near, Fix64.Zero), 5000, Faction.Orvill);
+            int left = sim.Entities.Spawn(
+                new FixVec2(-near, Fix64.Zero), 5000, Faction.Orvill);
+            int back = sim.Entities.Spawn(
+                new FixVec2(Fix64.Zero, near), 5000, Faction.Orvill);
+
+            int[] enemies = { front, left, back };
+            for (int i = 0; i < enemies.Length; i++)
+            {
+                int enemy = enemies[i];
+                sim.Entities.Stats[enemy].SetBase(StatType.Damage, Fix64.Zero);
+                sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                sim.Entities.RefreshStats(enemy);
+                sim.Entities.NextAttackTick[enemy] = int.MaxValue;
+            }
+
+            var attack = new InputFrame
+            {
+                Flags = (byte)InputFlags.Attack,
+                AttackTarget = front,
+            };
+            sim.Step(in attack);
+            Assert.AreEqual(front, sim.Entities.PendingAttackTarget[Simulation.PlayerId],
+                "контрольная атака должна войти в windup");
+
+            int healthBefore = sim.Entities.Health[front];
+            var escape = new InputFrame
+            {
+                Aim = new FixVec2(Fix64.Zero, Fix64.FromInt(-8)),
+                Flags = (byte)InputFlags.MoveOrder,
+            };
+            sim.Step(in escape);
+
+            Assert.AreEqual(front, sim.Entities.PendingAttackTarget[Simulation.PlayerId],
+                "явное движение не стирает уже начатый замах");
+            Assert.AreEqual(-1, sim.AttackTarget);
+
+            InputFrame released = InputFrame.Empty;
+            for (int t = 0; t < 36; t++) sim.Step(in released);
+
+            Assert.AreEqual(healthBefore, sim.Entities.Health[front],
+                "при выходе из дистанции committed-атака честно промахивается");
+            Assert.Less(sim.Entities.Position[Simulation.PlayerId].Y.ToFloat(), -2f,
+                "герой выходит из окружения по приказу игрока");
+        }
+
         // ---- вес движения ----
 
         [Test]
@@ -378,7 +430,7 @@ namespace Game.Tests
 
             Assert.Less(firstTick, cruise * 0.5f,
                 "с места тело не выпрыгивает на полную скорость: это и есть вес");
-            Assert.Greater(cruise, 0.15f,
+            Assert.That(cruise, Is.EqualTo(0.15f).Within(0.0001f),
                 "но за доли секунды доходит до полной — задержка не должна читаться");
         }
 

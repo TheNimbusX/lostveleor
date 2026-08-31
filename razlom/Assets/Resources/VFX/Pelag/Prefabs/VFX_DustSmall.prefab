@@ -48,6 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.View::Game.View.PelagVfxElement
   Id: 13
   DefaultLifetime: 0.38
+  DynamicLine: 0
 --- !u!198 &2852936476991987877
 ParticleSystem:
   m_ObjectHideFlags: 0

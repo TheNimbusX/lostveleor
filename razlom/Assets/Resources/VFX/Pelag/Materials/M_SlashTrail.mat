@@ -25,10 +25,10 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Intensity: 1.15
-    - _Softness: 0.42
+    - _Intensity: 1.35
+    - _Softness: 0.58
     m_Colors:
-    - _BaseColor: {r: 1, g: 0.24, b: 0.22, a: 0.78}
-    - _CoreColor: {r: 1, g: 0.91, b: 0.74, a: 1}
+    - _BaseColor: {r: 1, g: 0.2, b: 0.14, a: 0.94}
+    - _CoreColor: {r: 1, g: 0.95, b: 0.78, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

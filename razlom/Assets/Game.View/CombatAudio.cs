@@ -51,8 +51,9 @@ namespace Game.View
             PlayerHurt = 3,
             Cast = 4,
             Reward = 5,
+            Whoosh = 6,
 
-            Count = 6,
+            Count = 7,
         }
 
         private TickDriver _driver;
@@ -64,6 +65,7 @@ namespace Game.View
 
         private uint _random = 0x2545F491u;
         private GameMode _modeShown = GameMode.Camp;
+        private float _whooshDelay = -1f;
 
         private void Awake()
         {
@@ -83,6 +85,7 @@ namespace Game.View
             for (int i = 0; i < _playedThisFrame.Length; i++) _playedThisFrame[i] = 0;
 
             PlayModeChange();
+            UpdateWhoosh();
 
             if (_driver.Sim == null) return;
             ConsumeEvents();
@@ -113,6 +116,10 @@ namespace Game.View
 
                 switch (e.Type)
                 {
+                    case SimEventType.Attack:
+                        if (e.Source == Simulation.PlayerId) _whooshDelay = 0.40f;
+                        break;
+
                     case SimEventType.Damage:
                         PlayDamage(in e);
                         break;
@@ -129,6 +136,15 @@ namespace Game.View
                         break;
                 }
             }
+        }
+
+        private void UpdateWhoosh()
+        {
+            if (_whooshDelay < 0f) return;
+            _whooshDelay -= Time.deltaTime;
+            if (_whooshDelay > 0f) return;
+            _whooshDelay = -1f;
+            Play(Sound.Whoosh, HitVolume * 0.72f, 1f);
         }
 
         /// <summary>
@@ -212,6 +228,15 @@ namespace Game.View
             _clips[(int)Sound.PlayerHurt] = MakePlayerHurt();
             _clips[(int)Sound.Cast] = MakeCast();
             _clips[(int)Sound.Reward] = MakeReward();
+            _clips[(int)Sound.Whoosh] = MakeWhoosh();
+        }
+
+        private AudioClip MakeWhoosh()
+        {
+            float[] data = NewBuffer(0.16f);
+            AddNoise(data, 0.48f, 0.055f, 0.78f);
+            AddSweep(data, 680f, 190f, 0.22f, 0.075f);
+            return Finish("whoosh", data);
         }
 
         /// <summary>

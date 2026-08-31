@@ -2,6 +2,15 @@ using System.Collections.Generic;
 
 namespace Game.Sim
 {
+    /// <summary>Capture-only intensity tier for the deterministic combat-feel stand.</summary>
+    public enum CombatFeelCaptureTier : byte
+    {
+        None = 0,
+        Normal = 1,
+        Critical = 2,
+        Kill = 3,
+    }
+
     /// <summary>
     /// Ядро симуляции. Ничего не знает про Unity: сборка Game.Sim собрана
     /// с noEngineReferences, поэтому обращение к Time, Random или transform
@@ -18,10 +27,21 @@ namespace Game.Sim
         public const int TicksPerSecond = 30;
 
         /// <summary>
-        /// От начала замаха до контакта клинка: 4 тика = 133 мс.
-        /// Это достаточно для чтения намерения, но не ощущается задержкой ввода.
+        /// От начала замаха до контакта клинка: 18 тиков = 600 мс.
+        /// Это тайминг видимого контакта двух authored saber-ударов.
         /// </summary>
-        public const int AttackWindupTicks = 4;
+        // Контакт двух одобренных saber-сегментов приходится примерно на
+        // 0.55–0.72 с после старта (Blender-аудит правой кисти: frames 35/93).
+        // 18 тиков дают единый читаемый contact в 0.6 с: урон больше не
+        // возникает отдельно от ещё только начавшегося замаха.
+        public const int AttackWindupTicks = 18;
+
+        /// <summary>
+        /// Во время активного действия герой сохраняет управление, но идёт
+        /// вдвое медленнее. 24 тика = 0.8 с — длина presentation-фазы
+        /// основных способностей Pelag, а не их кулдаун.
+        /// </summary>
+        public const int AbilityMovePenaltyTicks = 24;
 
         // ---- баланс прототипа (потом уедет в таблицы) ----
 
@@ -36,11 +56,16 @@ namespace Game.Sim
         private static readonly Fix64 TurnInPlaceRadiusSq = TurnInPlaceRadius * TurnInPlaceRadius;
 
         // Скорость разворота ЗАДАНА В ТИКАХ, как и всё остальное: полный оборот
-        // за секунду, то есть 12° за тик на 30 Гц. Синус и косинус шага считаются
+        // за 0.6 секунды, то есть 20° за тик на 30 Гц. Старый полный оборот за
+        // секунду ощущался как задержка между приказом и ответом персонажа.
+        // Синус и косинус шага считаются
         // один раз при загрузке класса: в самом тике тригонометрии нет.
-        private static readonly Fix64 TurnStep = Fix64.TwoPi / TicksPerSecond;
-        private static readonly Fix64 TurnStepCos = Fix64.Cos(TurnStep);
-        private static readonly Fix64 TurnStepSin = Fix64.Sin(TurnStep);
+        private static readonly Fix64 PlayerTurnStep = Fix64.TwoPi / 18;
+        private static readonly Fix64 EnemyTurnStep = Fix64.TwoPi / TicksPerSecond;
+        private static readonly Fix64 PlayerTurnStepCos = Fix64.Cos(PlayerTurnStep);
+        private static readonly Fix64 PlayerTurnStepSin = Fix64.Sin(PlayerTurnStep);
+        private static readonly Fix64 EnemyTurnStepCos = Fix64.Cos(EnemyTurnStep);
+        private static readonly Fix64 EnemyTurnStepSin = Fix64.Sin(EnemyTurnStep);
         private static readonly Fix64 AttackRange  = Fix64.FromInt(2);
         private static readonly Fix64 AttackRangeSq = AttackRange * AttackRange;
 
@@ -51,6 +76,12 @@ namespace Game.Sim
         // персонаж выбирал бы ближайшего врага за спиной и не бил бы никого,
         // стоя лицом ко второму.
         private static readonly Fix64 AttackArcCos = Fix64.Ratio(1, 2);
+
+        // Цель можно выбрать в широком секторе 120°, но сам взмах начинается
+        // только когда корпус уже почти смотрит на неё. 0.8 = примерно ±37°.
+        // Раньше широкий сектор одновременно был и порогом старта: клип мог
+        // начаться боком, а затем Damage проверял уже другое направление.
+        private static readonly Fix64 AttackCommitCos = Fix64.Ratio(4, 5);
 
         /// <summary>
         /// На сколько подходить к цели по приказу атаки. Чуть ближе дальности
@@ -80,7 +111,10 @@ namespace Game.Sim
         private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, 36);
 
         // Скорость движения — в метрах в секунду; шаг за тик считает CombatStats.
-        private static readonly Fix64 PlayerBaseMoveSpeed = Fix64.FromInt(6);
+        // 6 м/с было быстрее естественной подачи текущего authored-run и
+        // неизбежно тащило опорную стопу по полу. 4.5 м/с оставляет игрока
+        // быстрее толпы, но совпадает с читаемым длинным беговым шагом.
+        private static readonly Fix64 PlayerBaseMoveSpeed = Fix64.Ratio(9, 2);
         private static readonly Fix64 EnemyBaseMoveSpeed  = Fix64.Ratio(35, 10);
 
         /// <summary>
@@ -89,21 +123,22 @@ namespace Game.Sim
         /// собственного хода, иначе толпа возит игрока по арене.
         /// </summary>
         /// <summary>
-        /// За сколько тиков тело набирает полную скорость и за столько же встаёт.
-        /// Пять тиков — примерно одна шестая секунды.
+        /// За сколько тиков тело набирает полную скорость. Торможение хранится
+        /// отдельно: четыре тика дают точке мягкий, но не скользкий подъезд.
         ///
         /// ЗАЧЕМ. Мгновенный разгон читается не как быстрота, а как отсутствие
         /// тела: фишка, переставленная по доске. Задержка в одну шестую секунды
-        /// на клик не чувствуется, а вес появляется.
+        /// на клик уже чувствовалась как вязкость. 100 мс сохраняют массу, но
+        /// возвращают непосредственный ответ на приказ.
         /// </summary>
-        private const int AccelerationTicks = 5;
+        private const int AccelerationTicks = 3;
 
         /// <summary>
         /// Подъезд к точке. Желаемая скорость у цели ограничивается так, чтобы
         /// встать без проскока: иначе персонаж пролетал бы точку приказа и
         /// возвращался, а это читается как непослушание.
         /// </summary>
-        private const int BrakeTicks = 6;
+        private const int BrakeTicks = 4;
 
         private static readonly Fix64 MaxSeparationStep = Fix64.Ratio(5, 100);
 
@@ -146,6 +181,7 @@ namespace Game.Sim
         private const int WhirlwindContactDelayTicks = 10;
         private int _whirlwindImpactTick = -1;
         private int _whirlwindImpactSlot = -1;
+        private int _abilityMovePenaltyUntilTick;
 
         /// <summary>
         /// Общий буфер радиусных запросов. Выделен один раз: за забег таких
@@ -162,6 +198,7 @@ namespace Game.Sim
         private readonly FixVec2[] _separationPush;
 
         private readonly List<SimEvent> _events = new List<SimEvent>(256);
+        private LayoutMap _layout;
 
         /// <summary>
         /// Только для теста эквивалентности: заставляет поиск целей идти наивным
@@ -182,6 +219,9 @@ namespace Game.Sim
         // способности; точка ходьбы запоминается здесь в момент приказа.
         private FixVec2 _moveOrder;
         private bool _hasMoveOrder;
+        // Явная точка на земле во время committed-удара задаёт направление
+        // ног и корпуса. Автоподход к цели, напротив, всегда смотрит на цель.
+        private bool _explicitMoveOrder;
 
         // ---- приказ атаковать ----
         //
@@ -272,6 +312,7 @@ namespace Game.Sim
         /// </summary>
         public void SetupTestArena(int enemyCount)
         {
+            _layout = null;
             ClearMoveOrder();
             Entities.Clear();
             Projectiles.Clear();
@@ -303,6 +344,7 @@ namespace Game.Sim
         /// </summary>
         public void SetupRift(LayoutMap map, ulong spawnSeed, int enemiesPerRoom, int enemyHealth)
         {
+            _layout = map;
             ClearMoveOrder();
             Entities.Clear();
             Projectiles.Clear();
@@ -342,6 +384,7 @@ namespace Game.Sim
         /// </summary>
         public void SetupWhirlwindShowcase(LayoutMap map, int enemyHealth = 360)
         {
+            _layout = map;
             ClearMoveOrder();
             Entities.Clear();
             Projectiles.Clear();
@@ -373,6 +416,62 @@ namespace Game.Sim
                 Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
                 Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
                 Entities.RefreshStats(id);
+                Entities.NextAttackTick[id] = int.MaxValue;
+                Entities.Facing[id] = (-offsets[i]).Normalized();
+                _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
+            }
+
+            Grid.Rebuild(Entities);
+        }
+
+        /// <summary>
+        /// Deterministic combat-feel stand. Damage still comes exclusively from
+        /// <see cref="ApplyAttack"/>; this method only authors capture fixtures.
+        /// </summary>
+        public void SetupCombatFeelShowcase(LayoutMap map, int enemyCount,
+            CombatFeelCaptureTier tier)
+        {
+            _layout = map;
+            ClearMoveOrder();
+            Entities.Clear();
+            Projectiles.Clear();
+            Statuses.Clear();
+            for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
+            _whirlwindImpactTick = -1;
+            _whirlwindImpactSlot = -1;
+
+            FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
+            ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
+
+            StatSheet player = Entities.Stats[PlayerId];
+            player.SetBase(StatType.CritChance,
+                tier == CombatFeelCaptureTier.Critical ? Fix64.One : Fix64.Zero);
+            Entities.RefreshStats(PlayerId);
+            Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId];
+            Entities.Facing[PlayerId] = new FixVec2(Fix64.One, Fix64.Zero);
+
+            int count = enemyCount < 1 ? 1 : enemyCount > 5 ? 5 : enemyCount;
+            FixVec2[] offsets =
+            {
+                new FixVec2(Fix64.Ratio(31, 20), Fix64.Zero),
+                new FixVec2(Fix64.Ratio(12, 5), Fix64.Ratio(13, 10)),
+                new FixVec2(Fix64.Ratio(12, 5), Fix64.Ratio(-13, 10)),
+                new FixVec2(Fix64.Ratio(1, 2), Fix64.Ratio(12, 5)),
+                new FixVec2(Fix64.Ratio(1, 2), Fix64.Ratio(-12, 5)),
+            };
+
+            for (int i = 0; i < count; i++)
+            {
+                int health = tier == CombatFeelCaptureTier.Kill && i == 0
+                    ? Entities.Damage[PlayerId] - 1
+                    : 1000;
+                int id = Entities.Spawn(center + offsets[i], health, Faction.Orvill);
+                ConfigureEnemy(id);
+                Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
+                Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                Entities.RefreshStats(id);
+                Entities.Health[id] = health;
+                Entities.MaxHealth[id] = health;
                 Entities.NextAttackTick[id] = int.MaxValue;
                 Entities.Facing[id] = (-offsets[i]).Normalized();
                 _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
@@ -591,7 +690,8 @@ namespace Game.Sim
                 // Потолок смещения за тик. Без него две глубоко вложенные
                 // сущности выстреливают друг из друга рывком, и это читается
                 // как телепорт, а не как расталкивание.
-                Entities.Position[i] += _separationPush[i].ClampLength(MaxSeparationStep);
+                FixVec2 push = _separationPush[i].ClampLength(MaxSeparationStep);
+                Entities.Position[i] = MoveInsideLayout(i, Entities.Position[i], push);
             }
         }
 
@@ -599,15 +699,17 @@ namespace Game.Sim
         {
             _hasMoveOrder = false;
             _moveOrder = FixVec2.Zero;
+            _explicitMoveOrder = false;
             _attackTarget = -1;
+            _abilityMovePenaltyUntilTick = 0;
         }
 
         /// <summary>
         /// Разбирает приказы игрока на этот тик.
         ///
-        /// Порядок важен: цель назначается раньше движения, потому что
-        /// приказ бить перекрывает приказ идти — персонаж идёт к цели, а не
-        /// туда, где был курсор в момент клика.
+        /// Порядок важен: явный приказ по земле отменяет автоповтор, но не
+        /// стирает уже начатый замах. Управление и committed-контакт могут
+        /// сосуществовать, пока проверка попадания остаётся честной.
         /// </summary>
         private void ReadOrders(in InputFrame input)
         {
@@ -629,7 +731,10 @@ namespace Game.Sim
             }
             else if (input.Has(InputFlags.MoveOrder))
             {
-                // Приказ идти по земле отменяет приказ бить: игрок передумал.
+                // Приказ идти по земле снимает долгоживущую автоцель, но уже
+                // начатый взмах не исчезает. Игрок получает locomotion в тот же
+                // тик, а контакт позже честно проверит дистанцию и сектор:
+                // можно ударить на ходу, а можно выйти из удара и промахнуться.
                 _attackTarget = -1;
             }
 
@@ -660,6 +765,10 @@ namespace Game.Sim
             // Приказы разбираются до движения: цель могла умереть на прошлом
             // тике, и идти к трупу персонаж не должен.
             ReadOrders(in input);
+
+            // Штраф движения начинается в кадр нажатия способности, хотя
+            // gameplay-каст разрешается ниже по фиксированному порядку стадий.
+            PrimeAbilityMovePenalty(in input);
 
             MovePlayer(input);
             MoveEnemies();
@@ -729,6 +838,29 @@ namespace Game.Sim
 
                 _abilityReadyTick[slot] = Tick + build.CooldownTicks;
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
+            }
+        }
+
+        private void PrimeAbilityMovePenalty(in InputFrame input)
+        {
+            if (!Entities.Alive[PlayerId]) return;
+
+            for (int slot = 0; slot < AbilitySlots; slot++)
+            {
+                if (!input.Ability(slot)) continue;
+                if (_abilityBuilds[slot] == null) continue;
+                if (Tick < _abilityReadyTick[slot]) continue;
+
+                int until = Tick + AbilityMovePenaltyTicks;
+                if (until > _abilityMovePenaltyUntilTick)
+                    _abilityMovePenaltyUntilTick = until;
+
+                // Способность имеет приоритет над незавершённой автоатакой.
+                // View в тот же кадр убирает upper-body swing; скрытого урона
+                // от уже не показываемого клинка оставаться не должно.
+                Entities.PendingAttackTarget[PlayerId] = -1;
+                Entities.AttackImpactTick[PlayerId] = 0;
+                return;
             }
         }
 
@@ -903,9 +1035,24 @@ namespace Game.Sim
             // что и раньше, просто теперь оно частный случай.
             if (input.Has(InputFlags.MoveOrder) && !AttackTargetValid)
             {
-                _moveOrder = input.Aim;
+                _moveOrder = _layout != null
+                    ? _layout.ClampToWalkable(input.Aim, Entities.BodyRadius[PlayerId])
+                    : input.Aim;
                 _hasMoveOrder = true;
+                _explicitMoveOrder = true;
             }
+
+            int committedTarget = Entities.PendingAttackTarget[PlayerId];
+            bool committedTargetValid = committedTarget > 0
+                                        && committedTarget < Entities.Count
+                                        && Entities.Alive[committedTarget]
+                                        && Entities.Side[committedTarget] != Entities.Side[PlayerId];
+
+            // В committed windup и во время способности управление остаётся,
+            // но максимальная скорость составляет 50%. Recovery/cooldown
+            // штрафа не дают: после контакта герой снова ускоряется полностью.
+            bool combatMovePenalty = committedTargetValid
+                                     || Tick < _abilityMovePenaltyUntilTick;
 
             // Есть цель — идём к ней, а не к точке клика. Останавливаемся,
             // не доходя вплотную: подойти впритык значит упереться телом
@@ -915,15 +1062,31 @@ namespace Game.Sim
                 _moveOrder = Entities.Position[_attackTarget];
                 _hasMoveOrder = FixVec2.DistanceSq(Entities.Position[PlayerId], _moveOrder)
                                 > AttackReachSq;
+                _explicitMoveOrder = false;
             }
 
             FixVec2 pos = Entities.Position[PlayerId];
             FixVec2 step = FixVec2.Zero;
             FixVec2 desiredFacing = FixVec2.Zero;
+            bool finishingTurnInPlace = false;
+
+            // Боевой доворот живёт независимо от locomotion-order. Раньше при
+            // входе в AttackReach _hasMoveOrder становился false, desiredFacing
+            // оставался нулём, и герой сохранял старое направление: отсюда
+            // удары мимо цели и необъяснимое молчание прямо рядом с ней.
+            int facingTarget = _hasMoveOrder && _explicitMoveOrder
+                ? -1
+                : committedTargetValid
+                    ? committedTarget
+                    : AttackTargetValid ? _attackTarget : -1;
+            if (facingTarget >= 0)
+                desiredFacing = Entities.Position[facingTarget] - pos;
 
             // Шаг за тик приходит из листа статов: скорость передвижения —
-            // такой же стат, как урон, и предмет вправе её менять.
-            Fix64 speed = Entities.MoveStep[PlayerId];
+            // такой же стат, как урон, и предмет вправе её менять. Активное
+            // действие меняет только текущий cap, но не сам стат.
+            Fix64 fullSpeed = Entities.MoveStep[PlayerId];
+            Fix64 speed = combatMovePenalty ? fullSpeed * Fix64.Half : fullSpeed;
 
             if (_hasMoveOrder)
             {
@@ -931,7 +1094,7 @@ namespace Game.Sim
                 Fix64 distSq = toTarget.LengthSq;
 
                 // Смотрим на указанную точку всегда, даже если не идём к ней.
-                desiredFacing = toTarget;
+                if (_explicitMoveOrder || facingTarget < 0) desiredFacing = toTarget;
 
                 if (distSq > TurnInPlaceRadiusSq)
                 {
@@ -946,24 +1109,50 @@ namespace Game.Sim
                 }
                 else
                 {
-                    // Дошёл. Приказ снимается здесь и только здесь: пока он есть,
-                    // персонаж идёт, и это единственное, что его двигает.
-                    _hasMoveOrder = false;
+                    // Внутри мёртвой зоны идти уже не надо, но приказ живёт до
+                    // завершения разворота. Раньше он снимался сразу, поэтому
+                    // модель успевала провернуться ровно на один тик и замирала.
+                    finishingTurnInPlace = true;
                 }
             }
 
             // Желаемая скорость достигается не сразу: разгон и торможение
             // и есть тот вес, из-за отсутствия которого движение читалось
             // как перестановка фишки.
-            FixVec2 velocity = Approach(Entities.Velocity[PlayerId], step, speed);
+            FixVec2 velocity = Approach(Entities.Velocity[PlayerId], step, fullSpeed)
+                .ClampLength(speed);
 
             Entities.Velocity[PlayerId] = velocity;
-            Entities.Position[PlayerId] = pos + velocity;
+            FixVec2 moved = MoveInsideLayout(PlayerId, pos, velocity);
+            Entities.Position[PlayerId] = moved;
+            if (moved.Equals(pos) && velocity.LengthSq.Raw != 0)
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
 
             // Без приказа персонаж не крутится: взгляд — это состояние, а не
             // отражение положения курсора. Иначе он бы дёргался от каждого
             // движения мыши по столу.
-            Entities.Facing[PlayerId] = TurnToward(Entities.Facing[PlayerId], desiredFacing);
+            FixVec2 facingBefore = Entities.Facing[PlayerId];
+            Entities.Facing[PlayerId] = TurnToward(facingBefore, desiredFacing,
+                PlayerTurnStepCos, PlayerTurnStepSin);
+
+            // На последнем тике TurnToward сам защёлкивается в target. Проверка
+            // тем же порогом позволяет снять приказ после этого тика, не вводя
+            // углы и float в детерминированную симуляцию.
+            if (finishingTurnInPlace && desiredFacing.LengthSq.Raw == 0)
+            {
+                _hasMoveOrder = false;
+                _explicitMoveOrder = false;
+            }
+            else if (finishingTurnInPlace && facingBefore.LengthSq.Raw != 0)
+            {
+                Fix64 remaining = FixVec2.Dot(
+                    facingBefore.Normalized(), desiredFacing.Normalized());
+                if (remaining >= PlayerTurnStepCos)
+                {
+                    _hasMoveOrder = false;
+                    _explicitMoveOrder = false;
+                }
+            }
         }
 
         /// <summary>
@@ -992,7 +1181,8 @@ namespace Game.Sim
         /// ошибки от перевода «вектор → угол → вектор» нет. Результат
         /// нормализуется каждый тик: без этого длина за сотни поворотов уползёт.
         /// </summary>
-        private static FixVec2 TurnToward(FixVec2 current, FixVec2 desired)
+        private static FixVec2 TurnToward(FixVec2 current, FixVec2 desired,
+            Fix64 stepCos, Fix64 stepSin)
         {
             if (desired.LengthSq.Raw == 0) return current;
 
@@ -1004,17 +1194,17 @@ namespace Game.Sim
             // Осталось меньше шага — доворачиваем сразу, иначе будет дрожание
             // вокруг цели с амплитудой в один шаг.
             Fix64 dot = FixVec2.Dot(from, target);
-            if (dot >= TurnStepCos) return target;
+            if (dot >= stepCos) return target;
 
             // Знак векторного произведения задаёт сторону поворота. При строго
             // противоположных векторах он равен нулю — тогда крутим влево,
             // и это решение одинаково на всех машинах, что и требуется.
             Fix64 cross = from.X * target.Y - from.Y * target.X;
-            Fix64 sin = cross.Raw >= 0 ? TurnStepSin : -TurnStepSin;
+            Fix64 sin = cross.Raw >= 0 ? stepSin : -stepSin;
 
             FixVec2 rotated = new FixVec2(
-                from.X * TurnStepCos - from.Y * sin,
-                from.X * sin + from.Y * TurnStepCos);
+                from.X * stepCos - from.Y * sin,
+                from.X * sin + from.Y * stepCos);
 
             return rotated.Normalized();
         }
@@ -1033,7 +1223,8 @@ namespace Game.Sim
 
                 // Разворот идёт и когда враг уже подошёл вплотную и стоит:
                 // добежав, он должен доворачиваться к цели, а не замирать боком.
-                Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer);
+                Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
+                    EnemyTurnStepCos, EnemyTurnStepSin);
 
                 Fix64 speed = Entities.MoveStep[i];
 
@@ -1045,8 +1236,35 @@ namespace Game.Sim
                     : toPlayer.Normalized() * speed;
 
                 Entities.Velocity[i] = Approach(Entities.Velocity[i], wanted, speed);
-                Entities.Position[i] += Entities.Velocity[i];
+                FixVec2 from = Entities.Position[i];
+                FixVec2 moved = MoveInsideLayout(i, from, Entities.Velocity[i]);
+                Entities.Position[i] = moved;
+                if (moved.Equals(from) && Entities.Velocity[i].LengthSq.Raw != 0)
+                    Entities.Velocity[i] = FixVec2.Zero;
             }
+        }
+
+        private FixVec2 MoveInsideLayout(int entity, FixVec2 from, FixVec2 delta)
+        {
+            if (_layout == null || delta.LengthSq.Raw == 0) return from + delta;
+
+            Fix64 radius = Entities.BodyRadius[entity];
+            FixVec2 full = from + delta;
+            if (_layout.IsWalkable(full, radius)) return full;
+
+            // Скользим вдоль стены вместо полной остановки на диагональном
+            // вводе. Сначала пробуется большая компонента, чтобы направление
+            // игрока сохранялось максимально близко к приказу.
+            bool xFirst = Fix64.Abs(delta.X) >= Fix64.Abs(delta.Y);
+            FixVec2 first = xFirst
+                ? from + new FixVec2(delta.X, Fix64.Zero)
+                : from + new FixVec2(Fix64.Zero, delta.Y);
+            if (_layout.IsWalkable(first, radius)) return first;
+
+            FixVec2 second = xFirst
+                ? from + new FixVec2(Fix64.Zero, delta.Y)
+                : from + new FixVec2(delta.X, Fix64.Zero);
+            return _layout.IsWalkable(second, radius) ? second : from;
         }
 
         /// <summary>
@@ -1078,6 +1296,11 @@ namespace Game.Sim
                 if (!Entities.Alive[i]) continue;
                 if (Tick < Entities.NextAttackTick[i]) continue;
 
+                // Одна активная способность — одно читаемое действие. Приказ
+                // атаки живёт и возобновится после action-window, но второй
+                // клип и второй контакт поверх способности не запускаются.
+                if (i == PlayerId && Tick < _abilityMovePenaltyUntilTick) continue;
+
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
                 // который решал бы за них, и решать за них должен ИИ.
                 if (i == PlayerId && !playerAttacks) continue;
@@ -1103,7 +1326,8 @@ namespace Game.Sim
 
             FixVec2 toTarget = Entities.Position[target] - Entities.Position[source];
             if (toTarget.LengthSq > AttackRangeSq) return false;
-            return FixVec2.WithinArc(Entities.Facing[source], toTarget, AttackArcCos);
+            Fix64 arc = source == PlayerId ? AttackCommitCos : AttackArcCos;
+            return FixVec2.WithinArc(Entities.Facing[source], toTarget, arc);
         }
 
         /// <summary>
@@ -1116,21 +1340,24 @@ namespace Game.Sim
         {
             FixVec2 toTarget = Entities.Position[_attackTarget] - Entities.Position[PlayerId];
             if (toTarget.LengthSq > AttackRangeSq) return -1;
-            if (!FixVec2.WithinArc(Entities.Facing[PlayerId], toTarget, AttackArcCos)) return -1;
+            if (!FixVec2.WithinArc(Entities.Facing[PlayerId], toTarget, AttackCommitCos)) return -1;
             return _attackTarget;
         }
 
         private int FindNearestEnemy(int from)
-            => DebugUseNaiveTargeting
-                ? NaiveFindNearestEnemy(from)
-                : Grid.FindNearestEnemy(Entities, from, AttackRange, AttackArcCos);
+        {
+            Fix64 arc = from == PlayerId ? AttackCommitCos : AttackArcCos;
+            return DebugUseNaiveTargeting
+                ? NaiveFindNearestEnemy(from, arc)
+                : Grid.FindNearestEnemy(Entities, from, AttackRange, arc);
+        }
 
         /// <summary>
         /// Эталонная реализация: прямой перебор всех сущностей.
         /// Используется только тестом эквивалентности — доказывает, что сетка
         /// даёт ровно тот же результат, включая разрыв ничьих по индексу.
         /// </summary>
-        private int NaiveFindNearestEnemy(int from)
+        private int NaiveFindNearestEnemy(int from, Fix64 arcCos)
         {
             int best = -1;
             Fix64 bestDistSq = Fix64.MaxValue;
@@ -1146,7 +1373,7 @@ namespace Game.Sim
                 FixVec2 toTarget = Entities.Position[i] - origin;
                 Fix64 distSq = toTarget.LengthSq;
                 if (distSq > AttackRangeSq) continue;
-                if (!FixVec2.WithinArc(facing, toTarget, AttackArcCos)) continue;
+                if (!FixVec2.WithinArc(facing, toTarget, arcCos)) continue;
                 if (distSq < bestDistSq || (distSq == bestDistSq && i < best))
                 {
                     bestDistSq = distSq;
@@ -1209,6 +1436,9 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _hasMoveOrder ? 1 : 0);
             Hashing.Mix(ref hash, _moveOrder.X);
             Hashing.Mix(ref hash, _moveOrder.Y);
+            Hashing.Mix(ref hash, _explicitMoveOrder ? 1 : 0);
+            Hashing.Mix(ref hash, _attackTarget);
+            Hashing.Mix(ref hash, _abilityMovePenaltyUntilTick);
 
             Entities.HashInto(ref hash);
 

@@ -49,6 +49,7 @@ namespace Game.View
             [Min(1)] public int Prewarm;
         }
 
+        [HideInInspector] public int BuildVersion;
         public Entry[] Entries;
     }
 }
