@@ -192,7 +192,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void ActiveWhirlwind_UsesHalfSpeedThenRestoresFullMovement()
+        public void ActiveWhirlwind_UsesThreeQuarterSpeedThenRestoresFullMovement()
         {
             Simulation sim = ArenaWithStationaryEnemy(
                 new FixVec2(Fix64.Ratio(6, 5), Fix64.Zero), out int enemy);
@@ -225,8 +225,8 @@ namespace Game.Tests
                     "активная фаза способности не должна вставлять стоп-тики в locomotion");
                 Assert.LessOrEqual(
                     sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
-                    (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Half).ToFloat() + 0.0001f,
-                    "способность сохраняет движение с продуктовым 50% penalty");
+                    (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
+                    "способность сохраняет динамичное движение на 75% скорости");
                 previousY = currentY;
                 if (sim.Entities.Health[enemy] < healthBefore) impactResolved = true;
             }

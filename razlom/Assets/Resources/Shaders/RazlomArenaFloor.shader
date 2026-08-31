@@ -44,6 +44,9 @@ Shader "Razlom/Arena Floor"
                 float _GridWidth;
             CBUFFER_END
 
+            float4 _RazlomHeroLightPosition;
+            half4 _RazlomHeroLightColor;
+
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -63,19 +66,30 @@ Shader "Razlom/Arena Floor"
                 float grid = 1.0 - smoothstep(_GridWidth, _GridWidth + aa.x + aa.y,
                                                0.5 - max(edge.x, edge.y));
 
-                float2 localCell = frac(coord) - 0.5;
-                float cellHash = frac(sin(dot(floor(coord), float2(12.9898, 78.233))) * 43758.5453);
-                float runeRing = 1.0 - smoothstep(0.025, 0.055,
-                    abs(length(localCell) - 0.17));
-                float glyph = runeRing * step(0.86, cellHash) * 0.13;
-
                 half3 normal = normalize(input.normalWS);
                 Light light = GetMainLight(input.shadowCoord);
                 half diffuse = saturate(dot(normal, light.direction));
                 half shade = lerp(0.58h, 1.0h,
                     smoothstep(0.28h, 0.62h, diffuse * light.shadowAttenuation));
-                half3 color = lerp(_BaseColor.rgb, _GridColor.rgb, grid * 0.74);
-                color = color * shade + _AccentColor.rgb * glyph;
+                float2 stoneCell = floor(input.positionWS.xz * 0.42);
+                half stoneVariation = frac(sin(dot(stoneCell,
+                    float2(12.9898, 78.233))) * 43758.5453);
+                half3 stoneColor = lerp(_BaseColor.rgb, _AccentColor.rgb,
+                    0.08h + stoneVariation * 0.10h);
+                half3 color = lerp(stoneColor, _GridColor.rgb, grid * 0.46h);
+                color = color * shade;
+
+                // Runtime combat pool: a restrained warm pool at rest and a
+                // brief HDR lift on confirmed contacts. It is explicit here
+                // because this stylised shader intentionally omits URP's full
+                // additional-light loop.
+                float heroDistance = distance(input.positionWS,
+                    _RazlomHeroLightPosition.xyz);
+                half heroAttenuation = saturate(1.0h -
+                    heroDistance / max(_RazlomHeroLightPosition.w, 0.001));
+                heroAttenuation *= heroAttenuation;
+                color += _RazlomHeroLightColor.rgb * heroAttenuation *
+                    lerp(0.28h, 0.38h, grid);
                 return half4(color, 1.0h);
             }
             ENDHLSL

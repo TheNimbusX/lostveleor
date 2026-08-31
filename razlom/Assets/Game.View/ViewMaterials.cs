@@ -75,9 +75,9 @@ namespace Game.View
             material.SetColor("_AccentColor", accentColor);
             // Сетка сведена к слабому шву между плитами камня: она даёт полу
             // масштаб и фактуру, но перестаёт читаться как отладочный grid.
-            material.SetColor("_GridColor", new Color(0.60f, 0.54f, 0.43f, 1f));
+            material.SetColor("_GridColor", new Color(0.46f, 0.44f, 0.36f, 1f));
             material.SetFloat("_GridScale", 0.35f);
-            material.SetFloat("_GridWidth", 0.018f);
+            material.SetFloat("_GridWidth", 0.011f);
             return material;
         }
 

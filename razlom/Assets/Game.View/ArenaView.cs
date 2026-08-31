@@ -130,8 +130,6 @@ namespace Game.View
         private float[] _deathUntil;
         private bool[] _deathStarted;
         private float[] _deathStartedAt;
-        private Vector3[] _deathDirection;
-        private int[] _lastDamageSource;
         private int _generation = -1;
 
         /// <summary>
@@ -155,7 +153,7 @@ namespace Game.View
 
         // ---- реакция на попадание ----
         //
-        // Отдача и сплющивание живут ЗДЕСЬ, а не в симуляции: положение
+        // Отдача живёт ЗДЕСЬ, а не в симуляции: положение
         // сущности решает тик, и трогать его ради картинки нельзя. Это
         // смещение поверх посчитанной позиции, и оно ни на что не влияет.
         //
@@ -163,36 +161,44 @@ namespace Game.View
         // замедляет время специально, и поза удара обязана замереть вместе
         // со всем остальным — в этом и весь смысл стопа.
         private Vector3[] _hitRecoil;
-        private float[] _hitPunch;
         private Vector3[] _baseScale;
         private Renderer[][] _bodyRenderers;
         private int[][] _bodyMaterialSlotCounts;
+        private SpriteRenderer[] _contactShadows;
+        private Color[] _contactShadowBaseColors;
         private MaterialPropertyBlock[] _materialBlocks;
         private float[] _hitFlash;
         private float[] _lastVelocityMagnitude;
         private bool[] _locomotionMoving;
         private Vector3[] _lastFacingWorld;
+        private Vector3[] _visualFacingWorld;
         private float[] _turnVisualUntil;
         private float[] _turnVisualDirection;
         // Только presentation-offset: capture/demo может показать рывок или
         // сопротивление цепи, не меняя детерминированную позицию в Sim.
         private Vector3[] _presentationOffset;
         private static readonly int HitFlashId = Shader.PropertyToID("_HitFlash");
+        private static readonly int DeathFadeId = Shader.PropertyToID("_DeathFade");
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static Sprite _contactShadowSprite;
+        private const string ContactShadowName = "Contact Shadow";
         private const float WoleSpriteScaleMultiplier = 0.78f;
         private const float OrvillSpriteScaleMultiplier = 0.82f;
+        private const float OrvillDeathAnimationDuration = 1.6f;
+        private const float OrvillDeathPoseHoldDuration = 0.18f;
+        private const float OrvillDeathFadeDuration = 0.42f;
+        private const float OrvillDeathPresentationDuration = OrvillDeathAnimationDuration
+                                                              + OrvillDeathPoseHoldDuration
+                                                              + OrvillDeathFadeDuration;
+        private const float OrvillTurnSharpness = 20f;
         private int _hoveredEntity = -1;
 
         [Header("Реакция на попадание")]
         [Tooltip("На сколько метров тело отбрасывает визуально при полном ударе.")]
         public float RecoilDistance = 0.30f;
 
-        [Tooltip("Насколько тело раздувается в момент попадания.")]
-        public float PunchScale = 0.16f;
-
-        [Tooltip("Во сколько раз в секунду затухают отдача и сплющивание.")]
+        [Tooltip("Во сколько раз в секунду затухает отдача.")]
         public float ReactionDecay = 11f;
 
         [Tooltip("Максимальная вспышка героя: сохраняет палитру при одновременных ударах толпы.")]
@@ -226,19 +232,19 @@ namespace Game.View
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
             _deathStartedAt = new float[capacity];
-            _deathDirection = new Vector3[capacity];
-            _lastDamageSource = new int[capacity];
             _hitRecoil = new Vector3[capacity];
-            _hitPunch = new float[capacity];
             _baseScale = new Vector3[capacity];
             _bodyRenderers = new Renderer[capacity][];
             _bodyMaterialSlotCounts = new int[capacity][];
+            _contactShadows = new SpriteRenderer[capacity];
+            _contactShadowBaseColors = new Color[capacity];
             _materialBlocks = new MaterialPropertyBlock[capacity];
             _hitFlash = new float[capacity];
             _presentationOffset = new Vector3[capacity];
             _lastVelocityMagnitude = new float[capacity];
             _locomotionMoving = new bool[capacity];
             _lastFacingWorld = new Vector3[capacity];
+            _visualFacingWorld = new Vector3[capacity];
             _turnVisualUntil = new float[capacity];
             _turnVisualDirection = new float[capacity];
 
@@ -333,15 +339,51 @@ namespace Game.View
 
             strength = Mathf.Clamp01(strength);
 
+            bool alive = _driver.Sim != null
+                         && (uint)entityId < (uint)_driver.Sim.Entities.Count
+                         && _driver.Sim.Entities.Alive[entityId];
+
             // Берётся МАКСИМУМ, а не сумма: двадцать попаданий по площади
             // в одном кадре — это один толчок, а не двадцать сложенных.
-            Vector3 recoil = direction * (RecoilDistance * strength);
-            if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude) _hitRecoil[entityId] = recoil;
-            if (strength > _hitPunch[entityId]) _hitPunch[entityId] = strength;
+            // Летальный Damage уже относится к DeathBack: труп не должен перед
+            // падением получать ещё один процедурный толчок. Вспышка контакта
+            // остаётся, чтобы последний удар не потерял визуальное подтверждение.
+            if (alive)
+            {
+                Vector3 recoil = direction * (RecoilDistance * strength);
+                if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude)
+                    _hitRecoil[entityId] = recoil;
+            }
+
             float flashStrength = entityId == Simulation.PlayerId
                 ? Mathf.Min(strength, PlayerHitFlashMax)
                 : strength;
             if (flashStrength > _hitFlash[entityId]) _hitFlash[entityId] = flashStrength;
+        }
+
+        /// <summary>
+        /// Летальный presentation-импульс. В отличие от обычной отдачи он не
+        /// затухает обратно к исходной точке: тело заканчивает death-анимацию
+        /// там, куда его действительно визуально вытолкнул последний удар.
+        /// Gameplay-позиция и столкновения Sim не меняются.
+        /// </summary>
+        public void ReactToDeath(int entityId, Vector3 direction, float strength)
+        {
+            if (!_initialized || (uint)entityId >= (uint)_boundCount) return;
+            if (_views[entityId] == null) return;
+
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.0001f) direction.Normalize();
+            else direction = _lastFacingWorld[entityId].sqrMagnitude > 0.0001f
+                ? _lastFacingWorld[entityId]
+                : Vector3.forward;
+
+            float distance = Mathf.Lerp(0.24f, 0.38f, Mathf.Clamp01(strength));
+            Vector3 deathOffset = direction * distance;
+            if (deathOffset.sqrMagnitude > _presentationOffset[entityId].sqrMagnitude)
+                _presentationOffset[entityId] = deathOffset;
+            _hitRecoil[entityId] = Vector3.zero;
+            _hitFlash[entityId] = Mathf.Max(_hitFlash[entityId], 0.92f);
         }
 
         /// <summary>Опорные точки фактически установленной сабли Pelag.</summary>
@@ -414,40 +456,7 @@ namespace Game.View
             }
 
             for (int i = 0; i < _boundCount; i++)
-            {
-                if (_views[i] == null) continue;
-                // Death squash и hit punch меняют root scale. В пул объект
-                // обязан вернуться в каноническом масштабе, иначе следующий
-                // Разлом примет предыдущий death-кадр за новую базу.
-                if (_baseScale[i] != Vector3.zero) _views[i].localScale = _baseScale[i];
-                // Managed ViewPool не переживает forced script reload, а ссылки
-                // на созданные Transform Unity успевает восстановить. Во время
-                // teardown объект достаточно спрятать: новый Awake соберёт пул.
-                if (_viewPools[i] != null) _viewPools[i].Release(_views[i].gameObject);
-                else _views[i].gameObject.SetActive(false);
-                _views[i] = null;
-                _viewPools[i] = null;
-                _animationViews[i] = null;
-                _deathUntil[i] = 0f;
-                _deathStarted[i] = false;
-                _deathStartedAt[i] = 0f;
-                _deathDirection[i] = Vector3.zero;
-                _lastDamageSource[i] = -1;
-                _hitRecoil[i] = Vector3.zero;
-                _hitPunch[i] = 0f;
-                _baseScale[i] = Vector3.zero;
-                _bodyRenderers[i] = null;
-                _bodyMaterialSlotCounts[i] = null;
-                _materialBlocks[i] = null;
-                _hitFlash[i] = 0f;
-                _lastVelocityMagnitude[i] = 0f;
-                _locomotionMoving[i] = false;
-                _lastFacingWorld[i] = Vector3.zero;
-                _turnVisualUntil[i] = 0f;
-                _turnVisualDirection[i] = 0f;
-                _presentationOffset[i] = Vector3.zero;
-
-            }
+                ReleaseEntityView(i);
 
             _playerBladeRoot = null;
             _playerBladeTip = null;
@@ -464,6 +473,51 @@ namespace Game.View
             _boundCount = 0;
             _generation = _driver.Generation;
             _depthShown = _driver.Run != null ? _driver.Run.Depth : -1;
+        }
+
+        private void ReleaseEntityView(int entityId)
+        {
+            Transform view = _views[entityId];
+            if (view != null)
+            {
+                // MPB живёт на Renderer дольше одной привязки. Сбрасываем fade
+                // до возврата, чтобы следующий владелец слота не появился уже
+                // растворённым даже на один render-кадр.
+                ResetRendererPresentation(entityId);
+                if (_baseScale[entityId] != Vector3.zero)
+                    view.localScale = _baseScale[entityId];
+
+                // Managed ViewPool не переживает forced script reload, а ссылки
+                // на созданные Transform Unity успевает восстановить. Во время
+                // teardown объект достаточно спрятать: новый Awake соберёт пул.
+                if (_viewPools[entityId] != null) _viewPools[entityId].Release(view.gameObject);
+                else view.gameObject.SetActive(false);
+            }
+
+            _views[entityId] = null;
+            _viewPools[entityId] = null;
+            _animationViews[entityId] = null;
+            _deathUntil[entityId] = 0f;
+            _deathStarted[entityId] = false;
+            _deathStartedAt[entityId] = 0f;
+            _hitRecoil[entityId] = Vector3.zero;
+            _baseScale[entityId] = Vector3.zero;
+            _bodyRenderers[entityId] = null;
+            _bodyMaterialSlotCounts[entityId] = null;
+            _contactShadows[entityId] = null;
+            _contactShadowBaseColors[entityId] = Color.clear;
+            _materialBlocks[entityId] = null;
+            _hitFlash[entityId] = 0f;
+            _lastVelocityMagnitude[entityId] = 0f;
+            _locomotionMoving[entityId] = false;
+            _lastFacingWorld[entityId] = Vector3.zero;
+            _visualFacingWorld[entityId] = Vector3.zero;
+            _turnVisualUntil[entityId] = 0f;
+            _turnVisualDirection[entityId] = 0f;
+            _presentationOffset[entityId] = Vector3.zero;
+            _groundOffset[entityId] = 0f;
+
+            if (_hoveredEntity == entityId) _hoveredEntity = -1;
         }
 
         /// <summary>
@@ -518,13 +572,15 @@ namespace Game.View
                 _deathUntil[i] = 0f;
                 _deathStarted[i] = false;
                 _deathStartedAt[i] = 0f;
-                _deathDirection[i] = Vector3.zero;
-                _lastDamageSource[i] = -1;
                 _hitRecoil[i] = Vector3.zero;
-                _hitPunch[i] = 0f;
-                _bodyRenderers[i] = go.GetComponentsInChildren<Renderer>(true);
+                _bodyRenderers[i] = CacheBodyRenderers(go, out SpriteRenderer contactShadow);
                 _bodyMaterialSlotCounts[i] = CacheMaterialSlotCounts(_bodyRenderers[i]);
+                _contactShadows[i] = contactShadow;
+                _contactShadowBaseColors[i] = contactShadow != null
+                    ? contactShadow.color
+                    : Color.clear;
                 _materialBlocks[i] = new MaterialPropertyBlock();
+                ResetRendererPresentation(i);
                 _hitFlash[i] = 0f;
                 _lastVelocityMagnitude[i] = 0f;
                 _locomotionMoving[i] = false;
@@ -532,6 +588,7 @@ namespace Game.View
                 _lastFacingWorld[i] = initialFacing.LengthSq.Raw == 0
                     ? Vector3.zero
                     : new Vector3(initialFacing.X.ToFloat(), 0f, initialFacing.Y.ToFloat()).normalized;
+                _visualFacingWorld[i] = _lastFacingWorld[i];
                 _turnVisualUntil[i] = 0f;
                 _turnVisualDirection[i] = 0f;
 
@@ -603,6 +660,116 @@ namespace Game.View
             return counts;
         }
 
+        private static Renderer[] CacheBodyRenderers(GameObject body,
+            out SpriteRenderer contactShadow)
+        {
+            Renderer[] all = body.GetComponentsInChildren<Renderer>(true);
+            contactShadow = null;
+            int bodyCount = 0;
+
+            for (int i = 0; i < all.Length; i++)
+            {
+                Renderer renderer = all[i];
+                if (IsContactShadow(renderer, out SpriteRenderer sprite))
+                {
+                    contactShadow = sprite;
+                    continue;
+                }
+
+                bodyCount++;
+            }
+
+            if (bodyCount == all.Length) return all;
+
+            var renderers = new Renderer[bodyCount];
+            int write = 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                Renderer renderer = all[i];
+                if (IsContactShadow(renderer, out _)) continue;
+                renderers[write++] = renderer;
+            }
+
+            return renderers;
+        }
+
+        private static bool IsContactShadow(Renderer renderer, out SpriteRenderer shadow)
+        {
+            shadow = renderer as SpriteRenderer;
+            return shadow != null && renderer.gameObject.name == ContactShadowName;
+        }
+
+        private void ResetRendererPresentation(int entityId)
+        {
+            Renderer[] renderers = _bodyRenderers[entityId];
+            MaterialPropertyBlock block = _materialBlocks[entityId];
+            ResetContactShadowPresentation(entityId);
+            if (renderers == null || block == null) return;
+
+            block.Clear();
+            block.SetFloat(HitFlashId, 0f);
+            block.SetFloat(DeathFadeId, 0f);
+            block.SetFloat(OutlineWidthId, 1.18f);
+            block.SetColor(OutlineColorId, new Color(0.025f, 0.13f, 0.17f, 1f));
+
+            bool usesSprites = _animationViews[entityId] != null
+                               && _animationViews[entityId].UsesSprites;
+            if (usesSprites)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    Renderer renderer = renderers[i];
+                    if (renderer != null)
+                        renderer.shadowCastingMode = ShadowCastingMode.Off;
+                }
+            }
+
+            ApplyRendererPropertyBlock(renderers, _bodyMaterialSlotCounts[entityId], block);
+        }
+
+        private void ResetContactShadowPresentation(int entityId)
+        {
+            SpriteRenderer shadow = _contactShadows[entityId];
+            if (shadow == null) return;
+            shadow.color = _contactShadowBaseColors[entityId];
+            shadow.shadowCastingMode = ShadowCastingMode.Off;
+        }
+
+        private void SetContactShadowFade(int entityId, float fade)
+        {
+            SpriteRenderer shadow = _contactShadows[entityId];
+            if (shadow == null) return;
+
+            Color color = _contactShadowBaseColors[entityId];
+            color.a *= 1f - Mathf.Clamp01(fade);
+            shadow.color = color;
+        }
+
+        private static void ApplyRendererPropertyBlock(Renderer[] renderers, int[] materialSlotCounts,
+            MaterialPropertyBlock block)
+        {
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer renderer = renderers[r];
+                if (renderer == null) continue;
+
+                // Renderer-level block может быть перекрыт block-ом отдельного
+                // material slot. Пишем значения в каждый submesh, чтобы весь
+                // силуэт реагировал одинаково.
+                int slotCount = materialSlotCounts != null && r < materialSlotCounts.Length
+                    ? materialSlotCounts[r]
+                    : 0;
+                if (slotCount == 0)
+                {
+                    renderer.SetPropertyBlock(block);
+                    continue;
+                }
+
+                for (int m = 0; m < slotCount; m++)
+                    renderer.SetPropertyBlock(block, m);
+            }
+        }
+
         private void SyncTransforms()
         {
             EntityStore entities = _driver.Sim.Entities;
@@ -610,7 +777,20 @@ namespace Game.View
             for (int i = 0; i < _boundCount; i++)
             {
                 Transform view = _views[i];
+                if (view == null) continue;
+
                 bool alive = entities.Alive[i];
+                bool orvill = entities.Side[i] == Faction.Orvill;
+                float deathElapsed = !alive && _deathStarted[i]
+                    ? Mathf.Max(0f, Time.time - _deathStartedAt[i])
+                    : 0f;
+                float deathFade = orvill && !alive
+                    ? Mathf.InverseLerp(
+                        OrvillDeathAnimationDuration + OrvillDeathPoseHoldDuration,
+                        OrvillDeathPresentationDuration,
+                        deathElapsed)
+                    : 0f;
+                if (deathFade > 0f) SetContactShadowFade(i, deathFade);
 
                 // Мировые координаты: симуляция считает в них же, и Bootstrap
                 // держит корень сцены в начале координат ровно ради этого.
@@ -642,11 +822,10 @@ namespace Game.View
                     : 0f;
                 float turnDirection = 0f;
 
-                // Отдача и сплющивание затухают экспоненциально: удар должен
+                // Отдача затухает экспоненциально: удар должен
                 // читаться как толчок, а не как отъезд тела в сторону.
                 float decay = Mathf.Exp(-ReactionDecay * Time.deltaTime);
                 _hitRecoil[i] *= decay;
-                _hitPunch[i] *= decay;
                 // Roughly 60 ms above the visible 0.1 threshold at 60 FPS.
                 _hitFlash[i] *= Mathf.Exp(-36f * Time.deltaTime);
 
@@ -656,48 +835,37 @@ namespace Game.View
                 if (bodyRenderers != null && block != null)
                 {
                     block.SetFloat(HitFlashId, _hitFlash[i]);
-                    bool hovered = i == _hoveredEntity;
-                    // Thick yellow inverted hull exaggerated every small spike
-                    // of the silhouette. Keep a compact red hostile contour:
-                    // it reads as one target without turning the shield/weapon
-                    // profile into a noisy glowing blob.
-                    block.SetFloat(OutlineWidthId, hovered ? 1.35f : 1.10f);
+                    block.SetFloat(DeathFadeId, deathFade);
+                    bool hovered = alive && i == _hoveredEntity;
+                    // Faction contours keep overlapping bodies separable on a
+                    // bright floor. Orvill gets a restrained red silhouette and
+                    // Pelag a blue-green one; only the hovered target becomes a
+                    // strong red contour. The width stays compact so armour
+                    // details do not turn into a dirty halo.
+                    bool hostile = entities.Side[i] == Faction.Orvill;
+                    block.SetFloat(OutlineWidthId, hovered ? 1.55f : hostile ? 1.24f : 1.18f);
                     block.SetColor(OutlineColorId, hovered
-                        ? new Color(1f, 0.12f, 0.08f, 1f)
-                        : new Color(0.09f, 0.025f, 0.075f, 1f));
-                    for (int r = 0; r < bodyRenderers.Length; r++)
-                    {
-                        Renderer bodyRenderer = bodyRenderers[r];
-                        if (bodyRenderer == null) continue;
+                        ? new Color(1f, 0.055f, 0.035f, 1f)
+                        : hostile
+                            ? new Color(0.52f, 0.035f, 0.055f, 1f)
+                            : new Color(0.025f, 0.13f, 0.17f, 1f));
 
-                        // Renderer-level block может быть перекрыт block-ом отдельного
-                        // material slot. Пишем hover/hit в каждый submesh, чтобы
-                        // выделялся весь силуэт, а не один материал меша.
-                        int slotCount = materialSlotCounts != null && r < materialSlotCounts.Length
-                            ? materialSlotCounts[r]
-                            : 0;
-                        if (slotCount == 0)
-                        {
-                            bodyRenderer.SetPropertyBlock(block);
-                            continue;
-                        }
-
-                        for (int m = 0; m < slotCount; m++)
-                            bodyRenderer.SetPropertyBlock(block, m);
-                    }
+                    ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
                 }
 
                 view.position = p + _hitRecoil[i];
                 if (_baseScale[i] != Vector3.zero)
-                    view.localScale = _baseScale[i] * (1f + _hitPunch[i] * PunchScale);
+                    view.localScale = _baseScale[i];
 
-                // Разворот берётся из симуляции как есть, без сглаживания:
-                // именно этот угол решает, куда уйдёт конус способности,
-                // и картинка не должна показывать другой.
+                // Gameplay-facing остаётся мгновенным и живёт в Sim. Только
+                // корень живого ORVILL мягко догоняет новый yaw: 30 Hz повороты
+                // больше не выглядят ступенчатыми, но атаки по-прежнему решаются
+                // по авторитетному направлению без presentation-задержки.
                 FixVec2 facing = entities.Facing[i];
                 if (facing.LengthSq.Raw != 0)
                 {
-                    Vector3 facingWorld = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat());
+                    Vector3 facingWorld = new Vector3(
+                        facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
                     CharacterAnimatorView animation = _animationViews[i];
                     if (animation != null && animation.UsesSprites)
                     {
@@ -722,12 +890,35 @@ namespace Game.View
                         if (moving) _turnVisualUntil[i] = 0f;
                         if (Time.time < _turnVisualUntil[i])
                             turnDirection = _turnVisualDirection[i];
-                        _lastFacingWorld[i] = facingWorld.normalized;
+                        _lastFacingWorld[i] = facingWorld;
+
+                        Vector3 visualFacing = facingWorld;
+                        if (orvill)
+                        {
+                            Vector3 previousVisual = _visualFacingWorld[i];
+                            if (!alive && previousVisual.sqrMagnitude > 0.5f)
+                            {
+                                // Смерть фиксирует ориентацию кадра контакта:
+                                // труп не доворачивается к уже сменившейся цели.
+                                visualFacing = previousVisual;
+                            }
+                            else if (previousVisual.sqrMagnitude > 0.5f)
+                            {
+                                float turnBlend = 1f - Mathf.Exp(-OrvillTurnSharpness * Time.deltaTime);
+                                visualFacing = Vector3.Slerp(
+                                    previousVisual, facingWorld, turnBlend).normalized;
+                            }
+                            _visualFacingWorld[i] = visualFacing;
+                        }
+                        else
+                        {
+                            _visualFacingWorld[i] = facingWorld;
+                        }
 
                         // Доворот на случай, если модель экспортировали лицом
                         // не туда: разворачивать сам меш дороже, чем повернуть
                         // корень одним числом.
-                        view.rotation = Quaternion.LookRotation(facingWorld, Vector3.up)
+                        view.rotation = Quaternion.LookRotation(visualFacing, Vector3.up)
                                         * Quaternion.Euler(0f, ModelYaw, 0f);
                     }
                 }
@@ -736,23 +927,14 @@ namespace Game.View
                 // считает сущность мёртвой; эта задержка существует только в View.
                 if (!alive)
                 {
-                    bool showDeath = _deathStarted[i] && Time.unscaledTime < _deathUntil[i];
-                    if (view.gameObject.activeSelf != showDeath) view.gameObject.SetActive(showDeath);
-                    if (showDeath)
+                    bool showDeath = _deathStarted[i] && Time.time < _deathUntil[i];
+                    if (!showDeath)
                     {
-                        float duration = _animationViews[i] != null
-                            ? _animationViews[i].DeathDuration
-                            : 1.5f;
-                        float t = Mathf.Clamp01((Time.time - _deathStartedAt[i]) / duration);
-                        float travel = 1f - (1f - t) * (1f - t);
-                        view.position += _deathDirection[i] * (0.58f * travel)
-                                         + Vector3.up * (Mathf.Sin(t * Mathf.PI) * 0.44f);
-                        Vector3 fallAxis = Vector3.Cross(Vector3.up, _deathDirection[i]);
-                        if (fallAxis.sqrMagnitude < 0.001f) fallAxis = Vector3.forward;
-                        view.rotation = Quaternion.AngleAxis(86f * t, fallAxis.normalized) * view.rotation;
-                        float vanish = Mathf.InverseLerp(1f, 0.68f, t);
-                        view.localScale = _baseScale[i] * Mathf.Lerp(0.12f, 1.08f, vanish);
+                        ReleaseEntityView(i);
+                        continue;
                     }
+
+                    if (!view.gameObject.activeSelf) view.gameObject.SetActive(true);
                     continue;
                 }
 
@@ -764,21 +946,31 @@ namespace Game.View
         private void SyncAnimationEvents()
         {
             var events = _driver.FrameEvents;
+            EntityStore entities = _driver.Sim.Entities;
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
                 switch (e.Type)
                 {
                     case SimEventType.Attack:
-                        AnimationOf(e.Source)?.PlayAttack();
+                        AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
                     case SimEventType.AbilityCast:
                         AnimationOf(e.Source)?.PlayAbility(e.Amount);
                         break;
                     case SimEventType.Damage:
-                        if ((uint)e.Target < (uint)_lastDamageSource.Length)
-                            _lastDamageSource[e.Target] = e.Source;
-                        AnimationOf(e.Target)?.PlayHit(e.Source ^ e.Target);
+                        // На летальном тике состояние Sim уже финальное. Не
+                        // запускаем Hit за несколько строк до DeathBack: иначе
+                        // Animator успевает показать неправильный recoil-кадр.
+                        if ((uint)e.Target < (uint)entities.Count && entities.Alive[e.Target])
+                            AnimationOf(e.Target)?.PlayHit(HitVariantFor(in e, entities));
+                        // A basic attack's contact pose is confirmed by the
+                        // same Damage event that drives hit VFX and hit-stop.
+                        // This keeps the authored blade pose and the actual
+                        // health change on one presentation boundary.
+                        if (e.Source == Simulation.PlayerId
+                            && e.DamageOrigin == DamageOrigin.BasicAttack)
+                            AnimationOf(e.Source)?.PlayAttackContact(e.ActionVariant);
                         break;
                     case SimEventType.Death:
                         CharacterAnimatorView animation = AnimationOf(e.Target);
@@ -786,23 +978,10 @@ namespace Game.View
                         animation.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
-                        _deathUntil[e.Target] = Time.unscaledTime + animation.DeathDuration;
-                        int source = _lastDamageSource[e.Target];
-                        if (_driver.Sim != null
-                            && (uint)source < (uint)_driver.Sim.Entities.Count)
-                        {
-                            FixVec2 from = _driver.Sim.Entities.Position[source];
-                            FixVec2 to = _driver.Sim.Entities.Position[e.Target];
-                            Vector3 away = new Vector3(to.X.ToFloat() - from.X.ToFloat(), 0f,
-                                                       to.Y.ToFloat() - from.Y.ToFloat());
-                            _deathDirection[e.Target] = away.sqrMagnitude > 0.001f
-                                ? away.normalized
-                                : Vector3.forward;
-                        }
-                        else
-                        {
-                            _deathDirection[e.Target] = Vector3.forward;
-                        }
+                        float presentationDuration = entities.Side[e.Target] == Faction.Orvill
+                            ? OrvillDeathPresentationDuration
+                            : animation.DeathDuration;
+                        _deathUntil[e.Target] = Time.time + presentationDuration;
                         break;
                 }
             }
@@ -810,6 +989,34 @@ namespace Game.View
 
         private CharacterAnimatorView AnimationOf(int entity)
             => entity >= 0 && entity < _boundCount ? _animationViews[entity] : null;
+
+        private static int HitVariantFor(in SimEvent hit, EntityStore entities)
+        {
+            int fallback = hit.Source ^ hit.Target;
+            if ((uint)hit.Source >= (uint)entities.Count
+                || (uint)hit.Target >= (uint)entities.Count)
+                return fallback;
+
+            FixVec2 facing = entities.Facing[hit.Target];
+            FixVec2 source = entities.Position[hit.Source];
+            FixVec2 target = entities.Position[hit.Target];
+            float toSourceX = source.X.ToFloat() - target.X.ToFloat();
+            float toSourceY = source.Y.ToFloat() - target.Y.ToFloat();
+            float facingX = facing.X.ToFloat();
+            float facingY = facing.Y.ToFloat();
+            if (facingX * facingX + facingY * facingY < 0.0001f
+                || toSourceX * toSourceX + toSourceY * toSourceY < 0.0001f)
+                return fallback;
+
+            // Positive 2D cross means the source is on the target's left.
+            // Directly front/back is geometrically ambiguous, so dot supplies
+            // a stable choice instead of flickering around a zero cross value.
+            float cross = facingX * toSourceY - facingY * toSourceX;
+            if (Mathf.Abs(cross) > 0.0001f) return cross > 0f ? 0 : 1;
+
+            float dot = facingX * toSourceX + facingY * toSourceY;
+            return dot >= 0f ? 0 : 1;
+        }
 
         /// <summary>
         /// Чем создавать тела этой стороны: моделью из Resources или спрайтом.
@@ -1093,7 +1300,7 @@ namespace Game.View
                 _contactShadowSprite.name = "Runtime Contact Shadow";
             }
 
-            GameObject shadow = new GameObject("Contact Shadow");
+            GameObject shadow = new GameObject(ContactShadowName);
             shadow.transform.SetParent(character, false);
             shadow.transform.localPosition = new Vector3(0f, 0.014f / rootScale, 0f);
             shadow.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);

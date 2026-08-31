@@ -189,6 +189,26 @@ namespace Game.Sim
             Generation++;
         }
 
+        /// <summary>
+        /// Немедленно вернуться в лагерь из системного меню. Активный забег
+        /// считается покинутым: незавершённые награды не переносятся, экран
+        /// итогов не создаётся. Это отдельное системное действие, а не команда
+        /// боевого тика, поэтому меню может выполнить его даже на паузе.
+        /// </summary>
+        public void ReturnToCamp()
+        {
+            if (Mode == GameMode.Camp)
+            {
+                LeaveProvingGround();
+                return;
+            }
+
+            Run = null;
+            Ground = null;
+            Mode = GameMode.Camp;
+            Generation++;
+        }
+
         // ---- Разлом ----
 
         /// <summary>
@@ -271,9 +291,7 @@ namespace Game.Sim
                     break;
 
                 case CampCommand.ReturnToCamp:
-                    Run = null;
-                    Mode = GameMode.Camp;
-                    Generation++;
+                    ReturnToCamp();
                     break;
             }
         }

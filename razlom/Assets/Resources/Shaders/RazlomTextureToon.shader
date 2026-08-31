@@ -14,6 +14,7 @@ Shader "Razlom/Texture Toon"
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
         _OutlineWidth ("Outline Pixels", Range(0,3)) = 1.10
         _HitFlash ("Hit Flash", Range(0,1)) = 0
+        _DeathFade ("Death Fade", Range(0,1)) = 0
     }
 
     SubShader
@@ -69,7 +70,21 @@ Shader "Razlom/Texture Toon"
                 half4 _OutlineColor;
                 half _OutlineWidth;
                 half _HitFlash;
+                half _DeathFade;
             CBUFFER_END
+
+            float4 _RazlomHeroLightPosition;
+            half4 _RazlomHeroLightColor;
+
+            half DeathDither(float2 pixelPosition)
+            {
+                // Stable interleaved gradient noise. Keeping this as an opaque
+                // clip preserves depth writes, sorting and SRP batching while
+                // still reading as a soft fade at gameplay distance.
+                float noise = frac(52.9829189 * frac(dot(
+                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
+                return 0.0001h + (half)noise * 0.9998h;
+            }
 
             Varyings Vert(Attributes input)
             {
@@ -86,6 +101,7 @@ Shader "Razlom/Texture Toon"
 
             half4 Frag(Varyings input) : SV_Target
             {
+                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
                 half4 texel = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 half3 normal = normalize(input.normalWS);
                 Light mainLight = GetMainLight(input.shadowCoord);
@@ -126,10 +142,25 @@ Shader "Razlom/Texture Toon"
                 half albedoLuma = dot(texel.rgb, half3(0.2126h, 0.7152h, 0.0722h));
                 half darkMask = 1.0h - smoothstep(0.035h, 0.24h, albedoLuma);
                 half facingLift = lerp(0.30h, 1.0h, midBand);
-                half3 darkLift = lerp(half3(0.036h, 0.031h, 0.028h),
-                                      half3(0.075h, 0.055h, 0.040h), lightBand);
+                half3 darkLift = lerp(half3(0.060h, 0.052h, 0.066h),
+                                      half3(0.125h, 0.078h, 0.048h), lightBand);
                 color += darkLift * darkMask * facingLift;
-                color += _RimColor.rgb * rim * (0.055h + 0.065h * lightBand);
+                color += _RimColor.rgb * rim * (0.095h + 0.105h * lightBand);
+
+                float3 heroVector = _RazlomHeroLightPosition.xyz - input.positionWS;
+                float heroDistance = max(length(heroVector), 0.001);
+                half3 heroDirection = heroVector / heroDistance;
+                half heroAttenuation = saturate(1.0h -
+                    heroDistance / max(_RazlomHeroLightPosition.w, 0.001));
+                heroAttenuation *= heroAttenuation;
+                half heroWrap = saturate(dot(normal, heroDirection) * 0.55h + 0.45h);
+                color += texel.rgb * _RazlomHeroLightColor.rgb * heroAttenuation *
+                    (0.20h + heroWrap * 0.42h);
+                // Near-black armour still needs to catch the combat flash.
+                // This small additive lobe is what separates overlapping
+                // silhouettes when the textured albedo itself is almost zero.
+                color += _RazlomHeroLightColor.rgb * heroAttenuation *
+                    (0.025h + heroWrap * 0.085h);
                 color = lerp(color, half3(1.0h, 0.88h, 0.58h), saturate(_HitFlash));
                 color = MixFog(color, input.fogFactor);
                 return half4(color, texel.a);
@@ -171,7 +202,15 @@ Shader "Razlom/Texture Toon"
                 half4 _OutlineColor;
                 half _OutlineWidth;
                 half _HitFlash;
+                half _DeathFade;
             CBUFFER_END
+
+            half DeathDither(float2 pixelPosition)
+            {
+                float noise = frac(52.9829189 * frac(dot(
+                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
+                return 0.0001h + (half)noise * 0.9998h;
+            }
 
             Varyings OutlineVert(Attributes input)
             {
@@ -191,11 +230,169 @@ Shader "Razlom/Texture Toon"
                 return output;
             }
 
-            half4 OutlineFrag(Varyings input) : SV_Target { return _OutlineColor; }
+            half4 OutlineFrag(Varyings input) : SV_Target
+            {
+                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                return _OutlineColor;
+            }
             ENDHLSL
         }
 
-        UsePass "Universal Render Pipeline/Lit/ShadowCaster"
-        UsePass "Universal Render Pipeline/Lit/DepthOnly"
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            Cull Back
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex ShadowVert
+            #pragma fragment ShadowFrag
+            #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseMap_ST;
+                half4 _BaseColor;
+                half4 _ShadowColor;
+                half4 _MidColor;
+                half _MidThreshold;
+                half _LightThreshold;
+                half _LightFeather;
+                half4 _RimColor;
+                half _RimPower;
+                half4 _OutlineColor;
+                half _OutlineWidth;
+                half _HitFlash;
+                half _DeathFade;
+            CBUFFER_END
+
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            half DeathDither(float2 pixelPosition)
+            {
+                float noise = frac(52.9829189 * frac(dot(
+                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
+                return 0.0001h + (half)noise * 0.9998h;
+            }
+
+            Varyings ShadowVert(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+                #else
+                    float3 lightDirectionWS = _LightDirection;
+                #endif
+
+                output.positionCS = TransformWorldToHClip(
+                    ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
+                output.positionCS = ApplyShadowClamping(output.positionCS);
+                return output;
+            }
+
+            half4 ShadowFrag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            Cull Back
+            ZWrite On
+            ColorMask R
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex DepthVert
+            #pragma fragment DepthFrag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseMap_ST;
+                half4 _BaseColor;
+                half4 _ShadowColor;
+                half4 _MidColor;
+                half _MidThreshold;
+                half _LightThreshold;
+                half _LightFeather;
+                half4 _RimColor;
+                half _RimPower;
+                half4 _OutlineColor;
+                half _OutlineWidth;
+                half _HitFlash;
+                half _DeathFade;
+            CBUFFER_END
+
+            half DeathDither(float2 pixelPosition)
+            {
+                float noise = frac(52.9829189 * frac(dot(
+                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
+                return 0.0001h + (half)noise * 0.9998h;
+            }
+
+            Varyings DepthVert(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            half DepthFrag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                return input.positionCS.z;
+            }
+            ENDHLSL
+        }
     }
 }

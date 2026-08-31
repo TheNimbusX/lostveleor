@@ -26,6 +26,8 @@ param(
     [string] $Skill = '',
     [ValidateSet('', 'normal', 'crit', 'kill')]
     [string] $HitTier = '',
+    [ValidateSet('', 'main', 'graphics', 'audio')]
+    [string] $PauseMenu = '',
     [double] $VideoStart = 0.4,
     [double] $VideoDuration = 3.9,
     [int]    $VideoFps = 60,
@@ -62,7 +64,10 @@ if ($NoRebuild) {
     } else {
         (Get-Item -LiteralPath $player).LastWriteTimeUtc
     }
-    $newest = Get-ChildItem (Join-Path $project 'Assets') -Recurse -File -Include *.cs,*.shader,*.unity,*.prefab,*.mat |
+    # Audio, animation controllers, FBX and their import metadata are runtime
+    # inputs just as much as C# and scenes. Watching every Assets file prevents
+    # a visually fresh but sonically stale capture player.
+    $newest = Get-ChildItem (Join-Path $project 'Assets') -Recurse -File |
               Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
     if ($newest -and $newest.LastWriteTimeUtc -gt $playerTime) {
         Write-Host "Исходники новее плеера ($($newest.Name)) — пересборка."
@@ -138,9 +143,22 @@ if ($needsBuild) {
     )
 
     if ($unityRun.ExitCode -ne 0) {
-        Write-Host '--- хвост лога сборки ---'
-        if (Test-Path $log) { Get-Content $log -Tail 60 -Encoding UTF8 }
-        throw "Сборка завершилась с кодом $($unityRun.ExitCode). Полный лог: $log"
+        # Unity 6 on Windows can return process code 1 after BuildPipeline has
+        # already completed successfully. Accept that narrow case only when
+        # this run's log contains both independent success markers and the
+        # expected player exists; every other non-zero result remains fatal.
+        $logText = if (Test-Path -LiteralPath $log) {
+            Get-Content -Raw -LiteralPath $log -Encoding UTF8
+        } else { '' }
+        $logSaysSuccess = $logText -match 'Build Finished, Result:\s*Success\.' -and
+                          $logText -match '\[build\].*Razlom\.exe'
+        if ($logSaysSuccess -and (Test-Path -LiteralPath $player)) {
+            Write-Warning "Unity вернул код $($unityRun.ExitCode), но BuildPipeline и player подтверждают успешную сборку."
+        } else {
+            Write-Host '--- хвост лога сборки ---'
+            if (Test-Path $log) { Get-Content $log -Tail 60 -Encoding UTF8 }
+            throw "Сборка завершилась с кодом $($unityRun.ExitCode). Полный лог: $log"
+        }
     }
     if (-not (Test-Path -LiteralPath $player)) { throw "Сборка прошла, но $player нет." }
 }
@@ -168,6 +186,7 @@ if ($Run) { $playerArgs += '-capture-run' }
 if ($MovingCombat) { $playerArgs += '-capture-moving-combat' }
 if ($Skill -ne '') { $playerArgs += @('-capture-skill', $Skill) }
 if ($HitTier -ne '') { $playerArgs += @('-capture-hit-tier', $HitTier) }
+if ($PauseMenu -ne '') { $playerArgs += @('-capture-pause-menu', $PauseMenu) }
 if ($CameraSize -gt 0) {
     $playerArgs += @(
         '-capture-camera-size', $CameraSize.ToString([Globalization.CultureInfo]::InvariantCulture)

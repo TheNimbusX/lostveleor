@@ -43,6 +43,7 @@ namespace Game.View
         private const string CameraSizeFlag = "-capture-camera-size";
         private const string SkillFlag = "-capture-skill";
         private const string HitTierFlag = "-capture-hit-tier";
+        private const string PauseMenuFlag = "-capture-pause-menu";
         private const string CaptureWidthFlag = "-capture-width";
         private const string CaptureHeightFlag = "-capture-height";
 
@@ -87,6 +88,10 @@ namespace Game.View
         public static CombatFeelCaptureTier CombatFeelTier { get; private set; }
         public static bool IsCombatFeelShowcase => CombatFeelTier != CombatFeelCaptureTier.None;
         public static bool GcWarmupActive { get; private set; }
+
+        /// <summary>Служебный запуск UI-QA: открыть системное меню после кадра.</summary>
+        public static bool PauseMenuCaptureRequested { get; private set; }
+        public static string PauseMenuCapturePage { get; private set; }
 
         public static bool IsVfxShowcase => VfxShowcase != PelagVfxShowcase.None || WhirlwindShowcase;
 
@@ -137,6 +142,8 @@ namespace Game.View
             MovingCombatShowcase = Array.IndexOf(args, MovingCombatFlag) >= 0;
             VfxShowcase = ParseShowcase(ReadValue(args, SkillFlag));
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
+            PauseMenuCaptureRequested = Array.IndexOf(args, PauseMenuFlag) >= 0;
+            PauseMenuCapturePage = ReadValue(args, PauseMenuFlag);
             if (MovingCombatShowcase && CombatFeelTier == CombatFeelCaptureTier.None)
                 CombatFeelTier = CombatFeelCaptureTier.Normal;
             // Input polling starts before the capture coroutine reaches its
@@ -392,6 +399,13 @@ namespace Game.View
 
         private Texture2D CaptureFrame()
         {
+            // Camera.Render не содержит IMGUI. Для QA системного меню нужен
+            // именно итоговый framebuffer после OnGUI, иначе лог подтвердит
+            // открытие экрана, а снимок покажет только арену под ним.
+            PauseMenu pauseMenu = FindAnyObjectByType<PauseMenu>();
+            if (pauseMenu != null && pauseMenu.IsOpen)
+                return ScreenCapture.CaptureScreenshotAsTexture();
+
             Camera camera = Camera.main;
             if (camera == null) return ScreenCapture.CaptureScreenshotAsTexture();
 

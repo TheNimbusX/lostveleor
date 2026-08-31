@@ -27,14 +27,14 @@ namespace Game.Sim
         public const int TicksPerSecond = 30;
 
         /// <summary>
-        /// От начала замаха до контакта клинка: 18 тиков = 600 мс.
+        /// От начала замаха до контакта клинка: 12 тиков = 400 мс.
         /// Это тайминг видимого контакта двух authored saber-ударов.
         /// </summary>
         // Контакт двух одобренных saber-сегментов приходится примерно на
         // 0.55–0.72 с после старта (Blender-аудит правой кисти: frames 35/93).
-        // 18 тиков дают единый читаемый contact в 0.6 с: урон больше не
-        // возникает отдельно от ещё только начавшегося замаха.
-        public const int AttackWindupTicks = 18;
+        // 12 тиков дают contact в 0.4 с: клинок остаётся читаемым, но базовый
+        // удар больше не тратит 75% всего цикла только на ожидание результата.
+        public const int AttackWindupTicks = 12;
 
         /// <summary>
         /// Во время активного действия герой сохраняет управление, но идёт
@@ -90,6 +90,13 @@ namespace Game.Sim
         /// </summary>
         private static readonly Fix64 AttackReach = AttackRange * Fix64.Ratio(75, 100);
         private static readonly Fix64 AttackReachSq = AttackReach * AttackReach;
+        private static readonly Fix64 AttackChainRadius = Fix64.Ratio(11, 4);
+        private static readonly Fix64 HeavyCleaveArcCos = Fix64.Zero;
+        private static readonly Fix64 HeavyPrimaryScale = Fix64.Ratio(5, 4);
+        private static readonly Fix64 HeavySecondaryScale = Fix64.Ratio(4, 5);
+        private static readonly Fix64 AbilityMoveScale = Fix64.Ratio(3, 4);
+        private const int HeavyCleaveTargets = 2;
+        private const int WhirlwindKillCooldownRefundTicks = 7;
 
         // ---- базы статов прототипа (потом уедут в таблицы народа и класса) ----
         //
@@ -230,6 +237,7 @@ namespace Game.Sim
         // пока тот не умрёт. Требовать удержания кнопки значит превращать
         // сотню тысяч ударов за сессию в сотню тысяч нажатий.
         private int _attackTarget = -1;
+        private int _nextPlayerAttackVariant;
 
         /// <summary>Куда идёт игрок. Для отрисовки метки приказа.</summary>
         public bool TryGetMoveOrder(out FixVec2 target)
@@ -702,6 +710,7 @@ namespace Game.Sim
             _explicitMoveOrder = false;
             _attackTarget = -1;
             _abilityMovePenaltyUntilTick = 0;
+            _nextPlayerAttackVariant = 0;
         }
 
         /// <summary>
@@ -860,6 +869,8 @@ namespace Game.Sim
                 // от уже не показываемого клинка оставаться не должно.
                 Entities.PendingAttackTarget[PlayerId] = -1;
                 Entities.AttackImpactTick[PlayerId] = 0;
+                Entities.PendingAttackVariant[PlayerId] = 0;
+                _nextPlayerAttackVariant = 0;
                 return;
             }
         }
@@ -974,7 +985,8 @@ namespace Game.Sim
             Entities.Health[target] -= amount;
             _events.Add(overTime
                 ? SimEvent.DamageOverTime(source, target, amount, Entities.Position[target], type)
-                : SimEvent.Damage(source, target, amount, false, Entities.Position[target], type));
+                : SimEvent.Damage(source, target, amount, false, Entities.Position[target], type,
+                    DamageOrigin.Ability, slot));
 
             if (Entities.Health[target] > 0) return;
             Kill(target, source, slot);
@@ -988,11 +1000,36 @@ namespace Game.Sim
         /// Статус снимается ПОСЛЕ эффектов: «Перекидывается» читает горение
         /// убитого, и снять его раньше значило бы сломать узел.
         /// </summary>
-        private void Kill(int target, int killer, int slot)
+        private void Kill(int target, int killer, int slot, bool basicAttackKill = false)
         {
+            bool killedOrderedTarget = killer == PlayerId && target == _attackTarget;
             Entities.Health[target] = 0;
             Entities.Alive[target] = false;
             _events.Add(SimEvent.Death(target, Entities.Position[target]));
+
+            if (basicAttackKill && killer == PlayerId)
+            {
+                // Сабельные убийства возвращают Вихрь небольшими порциями:
+                // быстрый клир пачки ускоряет следующий burst, но сам Вихрь
+                // не может зациклить собственный кулдаун.
+                for (int ability = 0; ability < AbilitySlots; ability++)
+                {
+                    AbilityBuild candidate = _abilityBuilds[ability];
+                    if (candidate == null || candidate.DefinitionId != AbilityDefinition.WhirlwindId)
+                        continue;
+                    int reduced = _abilityReadyTick[ability] - WhirlwindKillCooldownRefundTicks;
+                    _abilityReadyTick[ability] = reduced < Tick ? Tick : reduced;
+                }
+            }
+
+            if (killedOrderedTarget)
+            {
+                // Автопереход остаётся локальным внутри текущей пачки и только
+                // во фронтальной полусфере: приказ не превращается в автопилот,
+                // который сам пересекает комнату за игрока.
+                _attackTarget = Grid.FindNearestEnemy(Entities, PlayerId,
+                    AttackChainRadius, Fix64.Zero);
+            }
 
             AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
             if (build != null)
@@ -1086,7 +1123,11 @@ namespace Game.Sim
             // такой же стат, как урон, и предмет вправе её менять. Активное
             // действие меняет только текущий cap, но не сам стат.
             Fix64 fullSpeed = Entities.MoveStep[PlayerId];
-            Fix64 speed = combatMovePenalty ? fullSpeed * Fix64.Half : fullSpeed;
+            Fix64 speed = committedTargetValid
+                ? fullSpeed * Fix64.Half
+                : Tick < _abilityMovePenaltyUntilTick
+                    ? fullSpeed * AbilityMoveScale
+                    : fullSpeed;
 
             if (_hasMoveOrder)
             {
@@ -1286,9 +1327,17 @@ namespace Game.Sim
                 {
                     if (Tick >= Entities.AttackImpactTick[i])
                     {
+                        int variant = Entities.PendingAttackVariant[i];
                         Entities.PendingAttackTarget[i] = -1;
                         Entities.AttackImpactTick[i] = 0;
-                        if (CanLandAttack(i, pendingTarget)) ApplyAttack(i, pendingTarget);
+                        Entities.PendingAttackVariant[i] = 0;
+                        if (CanLandAttack(i, pendingTarget))
+                        {
+                            ApplyAttack(i, pendingTarget, variant,
+                                i == PlayerId && variant == 1 ? HeavyPrimaryScale : Fix64.One);
+                            if (i == PlayerId && variant == 1)
+                                ApplyHeavyCleave(pendingTarget);
+                        }
                     }
                     continue;
                 }
@@ -1310,10 +1359,32 @@ namespace Game.Sim
                     : FindNearestEnemy(i);
                 if (target < 0) continue;
 
-                _events.Add(SimEvent.Attack(i, target, Entities.Position[i]));
+                int attackVariant = i == PlayerId ? _nextPlayerAttackVariant : 0;
+                if (i == PlayerId) _nextPlayerAttackVariant ^= 1;
+                _events.Add(SimEvent.Attack(i, target, Entities.Position[i], attackVariant));
                 Entities.PendingAttackTarget[i] = target;
                 Entities.AttackImpactTick[i] = Tick + AttackWindupTicks;
+                Entities.PendingAttackVariant[i] = attackVariant;
                 Entities.NextAttackTick[i] = Tick + Entities.AttackCooldown[i];
+            }
+        }
+
+        private void ApplyHeavyCleave(int primaryTarget)
+        {
+            int found = Grid.QueryRadius(Entities, Entities.Position[PlayerId], AttackRange,
+                PlayerId, HitScratch);
+            int hit = 0;
+            for (int i = 0; i < found && hit < HeavyCleaveTargets; i++)
+            {
+                int target = HitScratch[i];
+                if (target == primaryTarget || !Entities.Alive[target]) continue;
+                if (Entities.Side[target] == Entities.Side[PlayerId]) continue;
+                FixVec2 toTarget = Entities.Position[target] - Entities.Position[PlayerId];
+                if (!FixVec2.WithinArc(Entities.Facing[PlayerId], toTarget, HeavyCleaveArcCos))
+                    continue;
+
+                ApplyAttack(PlayerId, target, 1, HeavySecondaryScale);
+                hit++;
             }
         }
 
@@ -1387,14 +1458,15 @@ namespace Game.Sim
         /// Автоатака. Все числа приходят из плоских массивов EntityStore, а те —
         /// из листа статов: другого источника боевых чисел в симуляции нет.
         /// </summary>
-        private void ApplyAttack(int source, int target)
+        private void ApplyAttack(int source, int target, int variant, Fix64 damageScale)
         {
             // Бросок на крит делается ВСЕГДА, даже при нулевом шансе: иначе
             // расход боевого потока случайности зависел бы от снаряжения,
             // и один и тот же сид перестал бы давать один и тот же забег.
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
 
-            int damage = Entities.Damage[source];
+            int damage = CombatStats.RoundToInt(
+                Fix64.FromInt(Entities.Damage[source]) * damageScale);
             if (crit)
                 damage = CombatStats.RoundToInt(Fix64.FromInt(damage) * Entities.CritMultiplier[source]);
 
@@ -1405,13 +1477,13 @@ namespace Game.Sim
 
             Entities.Health[target] -= damage;
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
-                DamageType.Physical));
+                DamageType.Physical, DamageOrigin.BasicAttack, variant));
 
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем
             // добили. «Перекидывается» иначе не сработал бы на добитом мечом.
             if (Entities.Health[target] <= 0)
-                Kill(target, source, BurnSlotOf(target));
+                Kill(target, source, BurnSlotOf(target), basicAttackKill: true);
         }
 
         /// <summary>
@@ -1438,6 +1510,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _moveOrder.Y);
             Hashing.Mix(ref hash, _explicitMoveOrder ? 1 : 0);
             Hashing.Mix(ref hash, _attackTarget);
+            Hashing.Mix(ref hash, _nextPlayerAttackVariant);
             Hashing.Mix(ref hash, _abilityMovePenaltyUntilTick);
 
             Entities.HashInto(ref hash);

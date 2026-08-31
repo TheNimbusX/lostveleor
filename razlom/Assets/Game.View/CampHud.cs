@@ -40,6 +40,7 @@ namespace Game.View
 
         private void OnGUI()
         {
+            if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
             if (session == null) return;
             if (session.Mode == GameMode.Rift) return;

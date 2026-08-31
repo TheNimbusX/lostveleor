@@ -102,6 +102,32 @@ namespace Game.View
         public float Alpha { get; private set; }
 
         /// <summary>
+        /// Системная пауза принадлежит оболочке игры, а не детерминированной
+        /// симуляции. Пока она активна, ввод не собирается и тики не копятся.
+        /// </summary>
+        public bool GameplayPaused { get; private set; }
+
+        public bool CanReturnToCamp
+            => Session != null && (Session.Mode != GameMode.Camp || Session.OnProvingGround);
+
+        /// <summary>
+        /// Ставит команду забега в тот же буфер, что и клавиатурный ввод.
+        /// HUD вызывает этот метод только после клика по карточке награды;
+        /// команда будет применена на ближайшей границе тика.
+        /// </summary>
+        public void QueueRunCommand(RunCommand command)
+        {
+            if (Session == null || Session.Mode != GameMode.Rift || Run == null) return;
+
+            bool validChoice = command >= RunCommand.ChooseReward1
+                               && command <= RunCommand.ChooseReward3;
+            if (command != RunCommand.Leave && (!validChoice || Run.Phase != RunPhase.ChoosingReward))
+                return;
+
+            _commandLatch = (byte)command;
+        }
+
+        /// <summary>
         /// События всех тиков, случившихся на этом кадре, в порядке возникновения.
         ///
         /// Sim.Events живёт ровно один тик — Step очищает список в начале шага,
@@ -187,6 +213,13 @@ namespace Game.View
                 return;
             }
 
+            if (GameplayPaused)
+            {
+                _frameEvents.Clear();
+                Alpha = 0f;
+                return;
+            }
+
             // Симуляция могла смениться между кадрами — например, игрока
             // отправили в Разлом кнопкой в интерфейсе лагеря.
             SyncGeneration();
@@ -241,6 +274,34 @@ namespace Game.View
             if (_accumulator < 0f) _accumulator = 0f;
 
             Alpha = Mathf.Clamp01(_accumulator / TickLength);
+        }
+
+        public void SetGameplayPaused(bool paused)
+        {
+            if (GameplayPaused == paused) return;
+            GameplayPaused = paused;
+
+            // Ни приказ, нажатый перед открытием меню, ни клавиша из самого
+            // меню не должны сработать после закрытия паузы.
+            _pending = InputFrame.Empty;
+            _pointerPressFrame = InputFrame.Empty;
+            _pointerPressLatched = false;
+            _abilityLatch = 0;
+            _commandLatch = 0;
+            _accumulator = 0f;
+            _frameEvents.Clear();
+            AttackHeld = false;
+            MoveOrderPressedThisFrame = false;
+            MoveOrderHeld = false;
+            HoveredEntity = -1;
+            Alpha = 0f;
+        }
+
+        /// <summary>Системное действие pause-меню, выполняемое вне боевого тика.</summary>
+        public void ReturnToCampFromMenu()
+        {
+            if (Session == null) return;
+            Session.ReturnToCamp();
         }
 
         /// <summary>

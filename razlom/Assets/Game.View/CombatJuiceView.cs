@@ -14,17 +14,22 @@ namespace Game.View
     public sealed class CombatJuiceView : MonoBehaviour
     {
         private const int PoolSize = 160;
-        private const int TrailSamples = 18;
+        private const int TrailSamples = 48;
         private const int TrailVerticesPerSample = 3;
+        private static readonly float AttackContactTime =
+            Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
 
-        private enum FxKind : byte { Spark, Ring, Slash, DeathShard }
+        private enum FxKind : byte { Spark, Slash, Contact, DeathShard, Dust, Afterglow }
 
         private struct FxSlot
         {
             public Transform Transform;
-            public SpriteRenderer Renderer;
+            public MeshFilter Filter;
+            public MeshRenderer Renderer;
+            public MaterialPropertyBlock Properties;
             public Vector3 Velocity;
             public Color Color;
+            public Vector2 SpriteSize;
             public float Remaining;
             public float Lifetime;
             public float StartScale;
@@ -63,11 +68,17 @@ namespace Game.View
         private int[] _lastDamageSource;
         private int _pendingBasicTarget = -1;
         private bool _pendingBasicHeavy;
-        private bool _nextBasicHeavy;
 
         private Sprite _sparkSprite;
-        private Sprite _ringSprite;
+        private Sprite _contactSprite;
         private Sprite _slashSprite;
+        private Sprite _dustSprite;
+        private Sprite _afterglowSprite;
+        private Material _combatFxMaterial;
+        private Mesh _fxQuadMesh;
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int RadialMaskId = Shader.PropertyToID("_RadialMask");
 
         private float _hitStopRemaining;
         private float _timeScaleBeforeStop = 1f;
@@ -81,12 +92,13 @@ namespace Game.View
         private readonly Vector3[] _trailTips = new Vector3[TrailSamples];
         private readonly Vector3[] _trailVertices = new Vector3[TrailSamples * TrailVerticesPerSample];
         private readonly Color[] _trailColors = new Color[TrailSamples * TrailVerticesPerSample];
+        private readonly Vector2[] _trailUvs = new Vector2[TrailSamples * TrailVerticesPerSample];
         private readonly int[] _trailTriangles = new int[(TrailSamples - 1) * 12];
         private int _trailCount;
         private float _trailDelay;
         private float _trailActive;
         private float _trailFade;
-        private float _whirlwindImpactWindow;
+        private bool _trailWhirlwind;
 
         private void Awake()
         {
@@ -103,6 +115,25 @@ namespace Game.View
             _lastDamageSource = new int[TickDriver.MaxSimCapacity];
             for (int i = 0; i < _lastDamageSource.Length; i++) _lastDamageSource[i] = -1;
 
+            // These pooled sprites are the compact contact layer: a brief
+            // contact flash and a capped burst for the first contacts in an
+            // AoE frame. They are intentionally built once at startup.
+            _sparkSprite = MakeSparkSprite();
+            _contactSprite = MakeContactSprite();
+            _slashSprite = MakeSlashSprite();
+            _dustSprite = MakeDustSprite();
+            _afterglowSprite = MakeAfterglowSprite();
+            Shader combatFxShader = Shader.Find("Razlom/CombatFx");
+            if (combatFxShader != null)
+            {
+                _combatFxMaterial = new Material(combatFxShader)
+                {
+                    name = "Runtime Combat FX Material",
+                    renderQueue = 4000
+                };
+            }
+            BuildFxMeshes();
+            BuildPool();
             BuildSwordTrail();
         }
 
@@ -110,6 +141,7 @@ namespace Game.View
         {
             UpdateHitStop();
             ConsumeEvents();
+            AnimateFx();
             AnimateSwordTrail();
         }
 
@@ -184,8 +216,7 @@ namespace Game.View
             if (!playerAttack) return;
 
             _pendingBasicTarget = e.Target;
-            _pendingBasicHeavy = _nextBasicHeavy;
-            _nextBasicHeavy = !_nextBasicHeavy;
+            _pendingBasicHeavy = e.Amount == 1;
             StartBasicAttackTrail();
         }
 
@@ -199,9 +230,38 @@ namespace Game.View
             // камера и hit-stop — они не засоряют силуэты.
             if (!fromPlayer && !playerHit) return;
 
-            bool basicContact = fromPlayer && e.Target == _pendingBasicTarget;
+            bool basicContact = fromPlayer
+                                && e.DamageOrigin == DamageOrigin.BasicAttack
+                                && e.Target == _pendingBasicTarget;
             bool heavyBasicContact = basicContact && _pendingBasicHeavy;
             if (basicContact) _pendingBasicTarget = -1;
+
+            // SpriteRenderer depth is evaluated against the 3D character
+            // meshes. Nudge the contact toward the camera so the authored
+            // flash sits on the hit silhouette instead of disappearing inside
+            // the shield when the target is viewed at an angle.
+            Vector3 at = ContactAt(e.Position, fromPlayer ? 0.78f : 0.86f);
+            Color core = e.Flag
+                ? new Color(1f, 0.92f, 0.40f, 1f)
+                : fromPlayer
+                    ? new Color(1f, 0.36f, 0.08f, 1f)
+                    : new Color(1f, 0.20f, 0.24f, 0.86f);
+
+            // A very short white-hot core is the readable "contact frame"; it
+            // is emitted only from confirmed player Damage, never from the
+            // attack windup.
+            if (fromPlayer && _contactSprite != null)
+                SpawnFx(FxKind.Contact, _contactSprite, at, Vector3.zero,
+                    e.Flag ? new Color(1f, 0.98f, 0.72f, 1f)
+                           : new Color(1f, 0.92f, 0.72f, 0.98f),
+                    e.Flag ? 0.16f : 0.13f, e.Flag ? 0.78f : 0.60f,
+                    e.Flag ? 0.070f : 0.060f, 0f, 0f, 0f);
+
+            if (_burstBudget > 0 && _sparkSprite != null)
+            {
+                _burstBudget--;
+                SpawnBurst(at, core, e.Flag ? 11 : 7, e.Flag ? 5.2f : 4.0f, false);
+            }
 
             float push = e.Flag ? 1f
                 : playerHit ? 0.8f
@@ -251,21 +311,84 @@ namespace Game.View
             int source = (uint)e.Target < (uint)_lastDamageSource.Length ? _lastDamageSource[e.Target] : -1;
             bool playerKill = source == Simulation.PlayerId;
 
-            // Смерть усиливает контакт временем и камерой, но не добавляет
-            // второй слой частиц поверх уже показанного hit.
+            Vector3 deathDirection = Vector3.zero;
+            Simulation sim = _driver.Sim;
+            if (sim != null
+                && (uint)source < (uint)sim.Entities.Count
+                && (uint)e.Target < (uint)sim.Entities.Count)
+            {
+                FixVec2 from = sim.Entities.Position[source];
+                FixVec2 to = sim.Entities.Position[e.Target];
+                deathDirection = new Vector3(to.X.ToFloat() - from.X.ToFloat(), 0f,
+                    to.Y.ToFloat() - from.Y.ToFloat());
+            }
+
+            // The hit already supplied the contact burst. Death adds only a
+            // shard burst, so the kill reads as a payoff rather than a second
+            // copy of the impact.
+            if (playerKill && _sparkSprite != null)
+                SpawnBurst(At(e.Position, 0.76f), new Color(1f, 0.38f, 0.16f, 1f),
+                    12, 5.8f, true);
+
             if (playerKill)
+            {
+                _arena?.ReactToDeath(e.Target, deathDirection, 1f);
+                SpawnKillAftermath(e.Position);
                 Accumulate(
                     trauma: 0.68f,
                     zoom: 1.08f,
-                    stopDuration: 0.085f,
+                    stopDuration: 0.095f,
                     stopScale: 0.025f);
+            }
+        }
+
+        private void SpawnKillAftermath(FixVec2 position)
+        {
+            if (_afterglowSprite != null)
+                SpawnFx(FxKind.Afterglow, _afterglowSprite, ContactAt(position, 0.58f),
+                    Vector3.up * 0.08f, new Color(1.55f, 0.42f, 0.075f, 0.62f),
+                    0.58f, 0.46f, 1.58f, 0f, 0f, 0f);
+
+            if (_dustSprite == null) return;
+            Vector3 center = At(position, 0.18f);
+            for (int i = 0; i < 6; i++)
+            {
+                float angle = Random01() * Mathf.PI * 2f;
+                Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+                Vector3 velocity = direction * Mathf.Lerp(0.28f, 0.72f, Random01())
+                    + Vector3.up * Mathf.Lerp(0.10f, 0.28f, Random01());
+                SpawnFx(FxKind.Dust, _dustSprite,
+                    center + direction * Mathf.Lerp(0.05f, 0.28f, Random01()), velocity,
+                    new Color(0.92f, 0.66f, 0.38f, Mathf.Lerp(0.28f, 0.40f, Random01())),
+                    Mathf.Lerp(0.42f, 0.62f, Random01()),
+                    Mathf.Lerp(0.26f, 0.40f, Random01()),
+                    Mathf.Lerp(0.72f, 1.02f, Random01()),
+                    Mathf.Lerp(-30f, 30f, Random01()), Random01() * 180f, 0.24f);
+            }
         }
 
         private void SpawnAbility(in SimEvent e)
         {
             _pendingBasicTarget = -1;
-            // Способности временно не создают декоративных VFX. Их контакт всё
-            // равно подтверждается единым hit-эффектом через Damage.
+            if (e.Source != Simulation.PlayerId) return;
+
+            Simulation sim = _driver.Sim;
+            if (sim == null || (uint)e.Amount >= Simulation.AbilitySlots) return;
+            AbilityBuild build = sim.GetAbility(e.Amount);
+            if (build != null && build.DefinitionId == AbilityDefinition.WhirlwindId)
+                StartWhirlwindTrail();
+        }
+
+        /// <summary>Запускает клинковую ленту в изолированной VFX-витрине.</summary>
+        public void PlayWhirlwindTrail()
+        {
+            StartWhirlwindTrail();
+        }
+
+        /// <summary>Запускает обычную ленту сабли в изолированной VFX-витрине.</summary>
+        public void PlayBasicAttackTrail()
+        {
+            StartBasicAttackTrail();
         }
 
         private void StartWhirlwindTrail()
@@ -275,10 +398,10 @@ namespace Game.View
                 return;
             }
             _trailCount = 0;
-            _trailDelay = 0.12f;
-            _trailActive = 0.38f;
+            _trailDelay = 0.05f;
+            _trailActive = 0.46f;
             _trailFade = 0.16f;
-            _whirlwindImpactWindow = 0.62f;
+            _trailWhirlwind = true;
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -287,12 +410,13 @@ namespace Game.View
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
                 return;
 
-            // Contact is at 0.60 s. Sampling starts in acceleration, crosses
-            // the contact frame and then fades during follow-through.
+            // Start the ribbon in the acceleration phase and carry it across
+            // the shared contact tick into follow-through.
             _trailCount = 0;
-            _trailDelay = 0.40f;
+            _trailDelay = Mathf.Max(0f, AttackContactTime - 0.16f);
             _trailActive = 0.19f;
             _trailFade = 0.09f;
+            _trailWhirlwind = false;
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -310,6 +434,8 @@ namespace Game.View
             Shader shader = Shader.Find("Razlom/SwordTrail");
             if (shader == null) shader = Shader.Find("Sprites/Default");
             _trailRenderer.sharedMaterial = new Material(shader) { name = "Runtime Pelag Whirlwind Trail" };
+            if (_trailRenderer.sharedMaterial.HasProperty("_Glow"))
+                _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.55f);
             _trailRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             _trailRenderer.receiveShadows = false;
             _trailRenderer.sortingOrder = 100;
@@ -320,7 +446,6 @@ namespace Game.View
         private void AnimateSwordTrail()
         {
             float dt = Time.deltaTime;
-            if (_whirlwindImpactWindow > 0f) _whirlwindImpactWindow -= dt;
             if (_trailDelay > 0f)
             {
                 _trailDelay -= dt;
@@ -347,10 +472,20 @@ namespace Game.View
 
         private void AddTrailSample(Vector3 root, Vector3 tip)
         {
-            // A full guard-to-tip swept surface reads as an opaque attack cone.
-            // The familiar MOBA/ARPG sword trail lives on the fast outer third
-            // of the blade, leaving Pelag's silhouette and contact target clear.
-            root = Vector3.Lerp(root, tip, 0.48f);
+            Vector3 blade = tip - root;
+            if (_trailWhirlwind)
+            {
+                // The authored Stone Slash owns the large contact silhouette.
+                // This mesh is only a soft connector from the real sabre, so it
+                // stays close to the blade and cannot read as an angular fan.
+                tip = root + blade * 1.34f;
+                root += blade * 0.34f;
+            }
+            else
+            {
+                // Basic attacks remain compact and leave the target readable.
+                root += blade * 0.48f;
+            }
 
             if (_trailCount > 0)
             {
@@ -377,11 +512,14 @@ namespace Game.View
         {
             if (_trailCount < 2 || _trailMesh == null) return;
 
-            float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / 0.18f);
+            float fadeDuration = _trailWhirlwind ? 0.16f : 0.09f;
+            float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / fadeDuration);
             for (int i = 0; i < _trailCount; i++)
             {
                 float along = _trailCount > 1 ? i / (float)(_trailCount - 1) : 1f;
-                float width = Mathf.Lerp(0.10f, 0.88f, Mathf.Sqrt(along));
+                float width = _trailWhirlwind
+                    ? Mathf.Lerp(0.06f, 0.30f, Mathf.Sqrt(along))
+                    : Mathf.Lerp(0.08f, 0.58f, Mathf.Sqrt(along));
                 Vector3 mid = (_trailRoots[i] + _trailTips[i]) * 0.5f;
                 Vector3 half = (_trailTips[i] - _trailRoots[i]) * (0.5f * width);
                 int vertex = i * TrailVerticesPerSample;
@@ -390,9 +528,21 @@ namespace Game.View
                 _trailVertices[vertex + 2] = mid + half;
 
                 float alpha = Mathf.SmoothStep(0f, 1f, along) * fade;
-                _trailColors[vertex] = new Color(1f, 0.22f, 0.02f, alpha * 0.10f);
-                _trailColors[vertex + 1] = new Color(1f, 0.44f, 0.05f, alpha * 0.42f);
-                _trailColors[vertex + 2] = new Color(1f, 0.72f, 0.14f, alpha * 0.66f);
+                if (_trailWhirlwind)
+                {
+                    _trailColors[vertex] = new Color(1.65f, 0.06f, 0.32f, alpha * 0.035f);
+                    _trailColors[vertex + 1] = new Color(0.18f, 1.45f, 1.65f, alpha * 0.14f);
+                    _trailColors[vertex + 2] = new Color(2.8f, 0.72f, 0.18f, alpha * 0.26f);
+                }
+                else
+                {
+                    _trailColors[vertex] = new Color(1.35f, 0.18f, 0.02f, alpha * 0.06f);
+                    _trailColors[vertex + 1] = new Color(2.1f, 0.48f, 0.05f, alpha * 0.30f);
+                    _trailColors[vertex + 2] = new Color(3.0f, 1.05f, 0.16f, alpha * 0.48f);
+                }
+                _trailUvs[vertex] = new Vector2(along, 0f);
+                _trailUvs[vertex + 1] = new Vector2(along, 0.5f);
+                _trailUvs[vertex + 2] = new Vector2(along, 1f);
             }
 
             int triangle = 0;
@@ -417,6 +567,7 @@ namespace Game.View
             _trailMesh.Clear(false);
             _trailMesh.SetVertices(_trailVertices, 0, _trailCount * TrailVerticesPerSample);
             _trailMesh.SetColors(_trailColors, 0, _trailCount * TrailVerticesPerSample);
+            _trailMesh.SetUVs(0, _trailUvs, 0, _trailCount * TrailVerticesPerSample);
             _trailMesh.SetTriangles(_trailTriangles, 0, triangle, 0, true);
             _trailMesh.RecalculateBounds();
             _trailRenderer.enabled = true;
@@ -434,7 +585,9 @@ namespace Game.View
                 Vector3 velocity = (right * Mathf.Cos(angle) + up * Mathf.Sin(angle)) * magnitude;
                 SpawnFx(death ? FxKind.DeathShard : FxKind.Spark, _sparkSprite, at, velocity,
                     color, Mathf.Lerp(0.24f, 0.46f, Random01()),
-                    death ? 0.20f : 0.12f, 0.015f,
+                    death ? Mathf.Lerp(0.20f, 0.34f, Random01())
+                          : Mathf.Lerp(0.16f, 0.27f, Random01()),
+                    death ? 0.015f : 0.025f,
                     Mathf.Lerp(-280f, 280f, Random01()), Random01() * 180f,
                     death ? 2.5f : 0.8f);
             }
@@ -450,8 +603,14 @@ namespace Game.View
             if (slot.Transform == null || slot.Renderer == null) return;
             slot.Transform.gameObject.SetActive(true);
             slot.Transform.position = position;
-            slot.Renderer.sprite = sprite;
-            slot.Renderer.color = color;
+            slot.Filter.sharedMesh = _fxQuadMesh;
+            slot.SpriteSize = sprite != null
+                ? new Vector2(sprite.bounds.size.x, sprite.bounds.size.y)
+                : Vector2.one;
+            slot.Properties.SetTexture(MainTexId, sprite == null ? Texture2D.whiteTexture : sprite.texture);
+            slot.Properties.SetColor(ColorId, color);
+            slot.Properties.SetFloat(RadialMaskId, kind == FxKind.Afterglow ? 1f : 0f);
+            slot.Renderer.SetPropertyBlock(slot.Properties);
             slot.Velocity = velocity;
             slot.Color = color;
             slot.Remaining = lifetime;
@@ -462,13 +621,17 @@ namespace Game.View
             slot.Angle = angle;
             slot.Gravity = gravity;
             slot.Kind = kind;
-            slot.Transform.localScale = Vector3.one * startScale;
+            slot.Transform.localScale = new Vector3(
+                startScale * slot.SpriteSize.x,
+                startScale * slot.SpriteSize.y,
+                1f);
         }
 
         private void AnimateFx()
         {
             if (_pool == null) return;
-            float dt = Time.unscaledDeltaTime;
+            float unscaledDt = Time.unscaledDeltaTime;
+            float scaledDt = Time.deltaTime;
             for (int i = 0; i < _pool.Length; i++)
             {
                 ref FxSlot slot = ref _pool[i];
@@ -478,6 +641,19 @@ namespace Game.View
                     slot.Remaining = 0f;
                     continue;
                 }
+
+                // Contact cores and slash sparks are allowed to bloom during
+                // hit-stop. The kill aftermath is different: if it also uses
+                // unscaled time, almost its whole life is spent while the
+                // world is frozen and the player never sees a residual trail
+                // after the body starts moving. Tie the death plume, shards
+                // and afterglow to combat time so they survive the impact hold
+                // and travel with the death animation.
+                float dt = slot.Kind == FxKind.Afterglow
+                           || slot.Kind == FxKind.Dust
+                           || slot.Kind == FxKind.DeathShard
+                    ? scaledDt
+                    : unscaledDt;
                 slot.Remaining -= dt;
                 if (slot.Remaining <= 0f)
                 {
@@ -490,28 +666,54 @@ namespace Game.View
                 slot.Transform.position += slot.Velocity * dt;
                 float eased = 1f - Mathf.Pow(1f - t, 3f);
                 float scale = Mathf.Lerp(slot.StartScale, slot.EndScale, eased);
-                slot.Transform.localScale = Vector3.one * scale;
+                slot.Transform.localScale = new Vector3(
+                    scale * slot.SpriteSize.x,
+                    scale * slot.SpriteSize.y,
+                    1f);
 
                 if (_camera != null)
                     slot.Transform.rotation = _camera.transform.rotation
                         * Quaternion.Euler(0f, 0f, slot.Angle + slot.Spin * t);
 
                 Color c = slot.Color;
-                float fadeStart = slot.Kind == FxKind.Slash ? 0.25f : 0.48f;
+                float fadeStart = slot.Kind == FxKind.Contact ? 0.16f
+                    : slot.Kind == FxKind.Slash ? 0.25f
+                    : slot.Kind == FxKind.Dust ? 0.08f
+                    : slot.Kind == FxKind.Afterglow ? 0.12f
+                    : 0.48f;
                 c.a *= 1f - Mathf.SmoothStep(fadeStart, 1f, t);
-                slot.Renderer.color = c;
+                slot.Properties.SetColor(ColorId, c);
+                slot.Renderer.SetPropertyBlock(slot.Properties);
             }
         }
 
         private void StartHitStop(float duration, float scale)
         {
+            if (_driver != null && _driver.GameplayPaused) return;
             if (_hitStopRemaining <= 0f) _timeScaleBeforeStop = Time.timeScale;
             _hitStopRemaining = Mathf.Max(_hitStopRemaining, duration);
             Time.timeScale = Mathf.Min(Time.timeScale, scale);
         }
 
+        /// <summary>
+        /// Завершает presentation-only hit-stop перед системной паузой и
+        /// возвращает нормальный масштаб времени, который она должна сохранить.
+        /// </summary>
+        public float CancelHitStopForPause()
+        {
+            float gameplayTimeScale = _hitStopRemaining > 0f
+                ? _timeScaleBeforeStop
+                : Time.timeScale;
+
+            _hitStopRemaining = 0f;
+            _timeScaleBeforeStop = gameplayTimeScale;
+            Time.timeScale = gameplayTimeScale;
+            return gameplayTimeScale;
+        }
+
         private void UpdateHitStop()
         {
+            if (_driver != null && _driver.GameplayPaused) return;
             if (_hitStopRemaining <= 0f) return;
             _hitStopRemaining -= Time.unscaledDeltaTime;
             if (_hitStopRemaining <= 0f)
@@ -530,15 +732,57 @@ namespace Game.View
             {
                 GameObject go = new GameObject($"Combat FX {i}");
                 go.transform.SetParent(root, false);
-                SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
+                MeshFilter filter = go.AddComponent<MeshFilter>();
+                filter.sharedMesh = _fxQuadMesh;
+                MeshRenderer renderer = go.AddComponent<MeshRenderer>();
+                if (_combatFxMaterial != null) renderer.sharedMaterial = _combatFxMaterial;
                 renderer.sortingOrder = 5000 + i % 4;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                renderer.allowOcclusionWhenDynamic = false;
                 go.SetActive(false);
-                _pool[i] = new FxSlot { Transform = go.transform, Renderer = renderer };
+                _pool[i] = new FxSlot
+                {
+                    Transform = go.transform,
+                    Filter = filter,
+                    Renderer = renderer,
+                    Properties = new MaterialPropertyBlock()
+                };
             }
+        }
+
+        private void BuildFxMeshes()
+        {
+            _fxQuadMesh = new Mesh { name = "Runtime Combat FX Quad" };
+            _fxQuadMesh.vertices = new[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3( 0.5f, -0.5f, 0f),
+                new Vector3( 0.5f,  0.5f, 0f),
+                new Vector3(-0.5f,  0.5f, 0f)
+            };
+            _fxQuadMesh.uv = new[]
+            {
+                new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(1f, 1f), new Vector2(0f, 1f)
+            };
+            _fxQuadMesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
+            _fxQuadMesh.RecalculateBounds();
+
         }
 
         private static Vector3 At(FixVec2 position, float height)
             => new Vector3(position.X.ToFloat(), height, position.Y.ToFloat());
+
+        private Vector3 ContactAt(FixVec2 position, float height)
+        {
+            Vector3 at = At(position, height);
+            // The character mesh writes depth while the FX is transparent.
+            // A view-space offset of roughly half a world unit keeps the
+            // contact in front of armour at every camera angle without
+            // changing its screen position in the orthographic view.
+            return _camera != null ? at - _camera.transform.forward * 0.45f : at;
+        }
 
         private float Random01()
         {
@@ -562,16 +806,24 @@ namespace Game.View
             return FinishSprite(texture, 64f);
         }
 
-        private static Sprite MakeRingSprite()
+        private static Sprite MakeContactSprite()
         {
-            Texture2D texture = NewTexture("Runtime Impact Ring", 128, 128);
+            Texture2D texture = NewTexture("Runtime Contact Flash", 128, 128);
             for (int y = 0; y < texture.height; y++)
             for (int x = 0; x < texture.width; x++)
             {
                 float nx = (x + 0.5f) / 64f - 1f;
                 float ny = (y + 0.5f) / 64f - 1f;
                 float radius = Mathf.Sqrt(nx * nx + ny * ny);
-                float alpha = 1f - Mathf.SmoothStep(0.055f, 0.14f, Mathf.Abs(radius - 0.67f));
+                float diamond = 1f - Mathf.SmoothStep(0.05f, 0.48f,
+                    Mathf.Abs(nx) + Mathf.Abs(ny));
+                float horizontal = (1f - Mathf.SmoothStep(0.035f, 0.13f, Mathf.Abs(ny)))
+                    * (1f - Mathf.SmoothStep(0.30f, 0.92f, Mathf.Abs(nx)));
+                float vertical = (1f - Mathf.SmoothStep(0.035f, 0.13f, Mathf.Abs(nx)))
+                    * (1f - Mathf.SmoothStep(0.30f, 0.92f, Mathf.Abs(ny)));
+                float edgeFade = 1f - Mathf.SmoothStep(0.72f, 1f, radius);
+                float alpha = Mathf.Clamp01(Mathf.Max(diamond, Mathf.Max(horizontal, vertical) * 0.78f))
+                    * edgeFade;
                 texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
             }
             return FinishSprite(texture, 96f);
@@ -593,6 +845,44 @@ namespace Game.View
                 texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
             }
             return FinishSprite(texture, 96f);
+        }
+
+        private static Sprite MakeDustSprite()
+        {
+            Texture2D texture = NewTexture("Runtime Soft Kill Dust", 64, 64);
+            for (int y = 0; y < texture.height; y++)
+            for (int x = 0; x < texture.width; x++)
+            {
+                float nx = (x + 0.5f) / 32f - 1f;
+                float ny = (y + 0.5f) / 32f - 1f;
+                float radius = Mathf.Sqrt(nx * nx + ny * ny);
+                float wobble = Mathf.Sin(nx * 9.1f + ny * 5.7f) * 0.045f
+                    + Mathf.Sin(nx * 4.3f - ny * 8.9f) * 0.035f;
+                float alpha = 1f - Mathf.SmoothStep(0.20f, 0.94f, radius + wobble);
+                alpha *= 1f - Mathf.SmoothStep(0.72f, 1f, Mathf.Abs(ny));
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha * 0.72f));
+            }
+            return FinishSprite(texture, 64f);
+        }
+
+        private static Sprite MakeAfterglowSprite()
+        {
+            Texture2D texture = NewTexture("Runtime Kill Afterglow", 96, 96);
+            for (int y = 0; y < texture.height; y++)
+            for (int x = 0; x < texture.width; x++)
+            {
+                float nx = (x + 0.5f) / 48f - 1f;
+                float ny = (y + 0.5f) / 48f - 1f;
+                float radius = Mathf.Sqrt(nx * nx + ny * ny);
+                float core = 1f - Mathf.SmoothStep(0.02f, 0.72f, radius);
+                float halo = 1f - Mathf.SmoothStep(0.22f, 0.82f, radius);
+                float alpha = Mathf.Clamp01(core * 0.72f + halo * 0.38f);
+                // CombatFx uses additive SrcAlpha blending. Premultiplying the
+                // radial falloff into RGB as well removes the faint square
+                // footprint of the billboard without weakening its hot core.
+                texture.SetPixel(x, y, new Color(alpha, alpha, alpha, alpha));
+            }
+            return FinishSprite(texture, 72f);
         }
 
         private static Texture2D NewTexture(string name, int width, int height)

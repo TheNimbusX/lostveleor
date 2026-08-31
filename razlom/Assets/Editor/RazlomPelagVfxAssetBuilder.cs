@@ -15,13 +15,13 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 3;
+    private const int LibraryVersion = 8;
     private const string AnchorPath =
         "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorChain.fbx";
-    private const string HovlPunchHitPath =
-        "Assets/Hovl Studio/RPG VFX Bundle/Prefabs/Magic buffs and hits/Punch Hit.prefab";
-    private const string HovlFlowerSlashPath =
-        "Assets/Hovl Studio/AOE Magic spells Vol.1/Prefabs/Flower slash.prefab";
+    private const string HovlKnifeHitPath =
+        "Assets/Hovl Studio/AOE Magic spells Vol.1/Prefabs/Knife hit.prefab";
+    private const string HovlStoneSlashPath =
+        "Assets/Hovl Studio/Magic effects pack/Prefabs/Slash effects/Stone slash.prefab";
     private static Mesh _chainLinkMesh;
 
     [InitializeOnLoadMethod]
@@ -74,10 +74,14 @@ public static class RazlomPelagVfxAssetBuilder
         GameObject[] prefabs = new GameObject[(int)PelagVfxId.Count];
         prefabs[(int)PelagVfxId.AutoAttackSlash] = SaveArc(PelagVfxId.AutoAttackSlash,
             "VFX_AutoAttack_Slash", slash, impact, 0.34f, 0.24f, false);
-        prefabs[(int)PelagVfxId.AutoAttackImpact] = SaveHovlImpact(PelagVfxId.AutoAttackImpact,
-            "VFX_AutoAttack_Impact", impact);
+        // Keep this slot as a small warm fallback for future authored attacks.
+        // The imported Knife Hit carried a blue sword/shockwave mesh that read
+        // as a second weapon inside the target; gameplay contact now uses the
+        // directional blade ribbon plus the compact CombatJuice burst.
+        prefabs[(int)PelagVfxId.AutoAttackImpact] = SaveBurst(PelagVfxId.AutoAttackImpact,
+            "VFX_AutoAttack_Impact", impact, 4, 0.14f, 3.2f, 0.11f, 0.24f);
         prefabs[(int)PelagVfxId.WhirlwindRing] = SaveWhirlwindBrush(PelagVfxId.WhirlwindRing,
-            "VFX_Whirlwind_Brush", whirlwind, whirlwindAccent, 0.62f);
+            "VFX_Whirlwind_Brush", 1.0f);
         prefabs[(int)PelagVfxId.WhirlwindHit] = SaveBurst(PelagVfxId.WhirlwindHit,
             "VFX_Whirlwind_Hit", impact, 5, 0.19f, 3.8f, 0.16f, 0.34f);
         prefabs[(int)PelagVfxId.AnchorLeapThrow] = SaveAnchor(PelagVfxId.AnchorLeapThrow,
@@ -106,7 +110,7 @@ public static class RazlomPelagVfxAssetBuilder
         CreateLibrary(prefabs);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log("[Pelag VFX] Созданы 15 pooled-prefabs, 9 материалов и AbilityVfxLibrary v3.");
+        Debug.Log($"[Pelag VFX] Созданы 15 pooled-prefabs, 13 материалов и AbilityVfxLibrary v{LibraryVersion}.");
     }
 
     private static Material VfxMaterial(string name, Shader shader, Color edge, Color core,
@@ -198,53 +202,158 @@ public static class RazlomPelagVfxAssetBuilder
         return Save(root, name);
     }
 
-    private static GameObject SaveWhirlwindBrush(PelagVfxId id, string name,
-        Material brush, Material accent, float lifetime)
+    private static GameObject SaveWhirlwindBrush(PelagVfxId id, string name, float lifetime)
     {
         GameObject root = RootObject(id, name, lifetime);
-
-        // Не gameplay-кольцо и не неоновый donut. Три незамкнутых мазка
-        // повторяют круговой путь клинка, но оставляют силуэт Пелага открытым.
-        AddBrushArc(root, brush, 1.48f, 18f, 238f, 0.27f, 0.07f, 24);
-        AddBrushArc(root, accent, 1.18f, 214f, 112f, 0.17f, 0.10f, 13);
-        AddBrushArc(root, brush, 0.88f, 326f, 78f, 0.11f, 0.14f, 10);
         AddHovlWhirlwindAccents(root);
         return Save(root, name);
     }
 
     private static GameObject SaveHovlImpact(PelagVfxId id, string name, Material fallbackMaterial)
     {
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlPunchHitPath);
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlKnifeHitPath);
         if (source == null)
         {
-            Debug.LogWarning($"[Pelag VFX] Hovl hit не найден: {HovlPunchHitPath}");
+            Debug.LogWarning($"[Pelag VFX] Hovl hit не найден: {HovlKnifeHitPath}");
             return SaveBurst(id, name, fallbackMaterial, 5, 0.16f, 2.7f, 0.12f, 0.30f);
         }
 
         GameObject root = RootObject(id, name, 0.30f);
         GameObject imported = UnityEngine.Object.Instantiate(source, root.transform, false);
-        imported.name = "Hovl Punch Hit";
+        imported.name = "Hovl Knife Hit";
         imported.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        imported.transform.localScale = Vector3.one * 0.46f;
+        imported.transform.localScale = Vector3.one * 0.40f;
+        // Keep the readable hit core and sparks, but remove the authored
+        // ground shockwave/smoke layers: a melee contact should stay on the
+        // target silhouette and never paint a second ring on the floor.
+        KeepNamedBranches(imported.transform, "Sparks", "SparksExpl");
         SanitizeImportedVfx(imported);
         return Save(root, name);
     }
 
     private static void AddHovlWhirlwindAccents(GameObject root)
     {
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlFlowerSlashPath);
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlStoneSlashPath);
         if (source == null)
         {
-            Debug.LogWarning($"[Pelag VFX] Hovl slash не найден: {HovlFlowerSlashPath}");
+            Debug.LogWarning($"[Pelag VFX] Hovl slash не найден: {HovlStoneSlashPath}");
             return;
         }
 
         GameObject imported = UnityEngine.Object.Instantiate(source, root.transform, false);
-        imported.name = "Hovl Flower Slash Accents";
+        imported.name = "Stone Slash";
         imported.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        imported.transform.localScale = Vector3.one * 0.42f;
-        KeepNamedBranches(imported.transform, "PTrails", "EndSparks", "Flash");
+        // The source prefab is authored as a hero-sized slash. The previous
+        // 0.42 scale reduced its readable crescent to a handful of sparks at
+        // gameplay zoom, leaving the procedural ribbon to carry the ability.
+        imported.transform.localScale = Vector3.one;
         SanitizeImportedVfx(imported);
+        ReplaceImportedParticleMaterials(imported);
+    }
+
+    private static void ReplaceImportedParticleMaterials(GameObject root)
+    {
+        // Hovl's legacy Particles/Alpha Blended shader is not included by the
+        // URP player build. Keep the imported textures and curves, but point
+        // this prefab's renderers at local player-compatible material copies.
+        Shader particleShader = Shader.Find("Hovl/Particles/Blend_CenterGlow")
+            ?? Shader.Find("Particles/Standard Unlit")
+            ?? Shader.Find("Razlom/CombatFx");
+        if (particleShader == null)
+        {
+            Debug.LogWarning("[Pelag VFX] Совместимый particle shader не найден.");
+            return;
+        }
+
+        ParticleSystemRenderer[] renderers = root.GetComponentsInChildren<ParticleSystemRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Material source = renderers[i].sharedMaterial;
+            if (source == null) continue;
+
+            string sourcePath = AssetDatabase.GetAssetPath(source);
+            if (!sourcePath.StartsWith("Assets/Hovl Studio/Magic effects pack/Materials/",
+                    StringComparison.OrdinalIgnoreCase)) continue;
+
+            Material compatible = LoadOrCreateImportedParticleMaterial(source, particleShader);
+            if (compatible != null) renderers[i].sharedMaterial = compatible;
+        }
+    }
+
+    private static Material LoadOrCreateImportedParticleMaterial(Material source, Shader shader)
+    {
+        string sourcePath = AssetDatabase.GetAssetPath(source);
+        string sourceName = Path.GetFileNameWithoutExtension(sourcePath);
+        string targetPath = MaterialFolder + "/M_StoneSlash_" + sourceName + ".mat";
+        Material target = AssetDatabase.LoadAssetAtPath<Material>(targetPath);
+        if (target == null)
+        {
+            target = new Material(shader) { name = "M_StoneSlash_" + sourceName };
+            AssetDatabase.CreateAsset(target, targetPath);
+        }
+        else
+        {
+            target.shader = shader;
+        }
+
+        Texture texture = source.HasProperty("_MainTex") ? source.GetTexture("_MainTex") : null;
+        if (texture != null)
+        {
+            if (target.HasProperty("_MainTex"))
+            {
+                target.SetTexture("_MainTex", texture);
+                target.SetTextureScale("_MainTex", source.GetTextureScale("_MainTex"));
+                target.SetTextureOffset("_MainTex", source.GetTextureOffset("_MainTex"));
+            }
+            if (target.HasProperty("_BaseMap")) target.SetTexture("_BaseMap", texture);
+        }
+
+        Color color = source.HasProperty("_Color") ? source.GetColor("_Color") : Color.white;
+        if (target.HasProperty("_Color")) target.SetColor("_Color", color);
+        if (target.HasProperty("_BaseColor")) target.SetColor("_BaseColor", color);
+        if (target.HasProperty("_Emission")) target.SetFloat("_Emission", 1.5f);
+        if (target.HasProperty("_Opacity")) target.SetFloat("_Opacity", 1f);
+        if (target.HasProperty("_Usecenterglow")) target.SetFloat("_Usecenterglow", 0f);
+        if (target.HasProperty("_Usealphacenterglow")) target.SetFloat("_Usealphacenterglow", 0f);
+        if (target.HasProperty("_CullMode")) target.SetFloat("_CullMode", 0f);
+
+        if (target.HasProperty("_Blend")) target.SetFloat("_Blend", 0f);
+        if (target.HasProperty("_SrcBlend")) target.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        if (target.HasProperty("_DstBlend")) target.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        if (target.HasProperty("_ZWrite")) target.SetFloat("_ZWrite", 0f);
+        if (target.HasProperty("_Cull")) target.SetFloat("_Cull", (float)CullMode.Off);
+        target.renderQueue = 3000;
+        target.EnableKeyword("_ALPHABLEND_ON");
+        EditorUtility.SetDirty(target);
+        return target;
+    }
+
+    private static void TuneStoneSlashPalette(GameObject root)
+    {
+        ParticleSystem[] particles = root.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particles.Length; i++)
+        {
+            ParticleSystem.MainModule main = particles[i].main;
+            if (particles[i].gameObject == root)
+            {
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(1.00f, 0.16f, 0.10f, 1.00f),
+                    new Color(1.00f, 0.95f, 0.76f, 1.00f));
+                main.startSizeMultiplier *= 1.05f;
+            }
+            else if (particles[i].gameObject.name == "Flash")
+            {
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(1.00f, 0.72f, 0.38f, 0.88f),
+                    new Color(1.00f, 0.98f, 0.84f, 1.00f));
+            }
+            else if (particles[i].gameObject.name == "Sparks")
+            {
+                main.startColor = new ParticleSystem.MinMaxGradient(
+                    new Color(1.00f, 0.24f, 0.13f, 1.00f),
+                    new Color(1.00f, 0.86f, 0.48f, 1.00f));
+            }
+        }
     }
 
     private static void KeepNamedBranches(Transform root, params string[] branchNames)

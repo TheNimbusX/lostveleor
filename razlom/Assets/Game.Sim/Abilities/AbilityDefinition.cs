@@ -42,7 +42,7 @@ namespace Game.Sim
             => new AbilityDefinition("ability.whirlwind")
                 .Set(AbilityStatType.Damage, 120)
                 .Set(AbilityStatType.Radius, Fix64.Ratio(23, 10))
-                .Set(AbilityStatType.CooldownTicks, 30);
+                .Set(AbilityStatType.CooldownTicks, 72);
 
         /// <summary>
         /// «Печать пламени»: бросок знака в точку, вспышка по площади, поджиг.

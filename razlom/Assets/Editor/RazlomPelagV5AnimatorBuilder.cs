@@ -276,10 +276,11 @@ public static class RazlomPelagV5AnimatorBuilder
             0.92f, 0.11f, 0.96f, 0.18f, true);
         UpperCombat(upper, empty, "Saber_B_v5", attackB, "AttackB",
             1.20f, 0.11f, 0.76f, 0.22f, true);
-        // 91 authored frames / 1.55 playback. Exit+fixed blend complete at
-        // ~0.80 s, exactly when Simulation releases the action window.
+        // 91 authored frames / 1.55 playback. Frame ~70 is already close to
+        // locomotion, so keep the readable 0.76 exit pose and give it a real
+        // six-to-eleven-frame recovery instead of snapping out in three frames.
         UpperCombat(upper, empty, "Whirlwind_v5", whirlwind, "HeavyAttack",
-            1.55f, 0.06f, 0.76f, 0.05f, true);
+            1.55f, 0.06f, 0.76f, 0.18f, true);
     }
 
     private static void BuildLowerBodyLayer(AnimatorController controller, AvatarMask mask,
@@ -307,7 +308,7 @@ public static class RazlomPelagV5AnimatorBuilder
         UpperCombat(lower, empty, "Lower_Saber_B_v5", attackB, "LowerAttackB",
             1.20f, 0.11f, 0.76f, 0.22f, true);
         UpperCombat(lower, empty, "Lower_Whirlwind_v5", whirlwind, "LowerHeavyAttack",
-            1.55f, 0.06f, 0.76f, 0.05f, true);
+            1.55f, 0.06f, 0.76f, 0.18f, true);
     }
 
     private static AnimatorState State(AnimatorStateMachine machine, string name,
@@ -332,12 +333,19 @@ public static class RazlomPelagV5AnimatorBuilder
         enter.hasExitTime = false;
         enter.duration = blend;
         enter.canTransitionToSelf = false;
+        enter.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
+        enter.orderedInterruption = false;
 
         AnimatorStateTransition exit = state.AddTransition(empty);
         exit.hasExitTime = true;
         exit.exitTime = exitTime;
         exit.duration = exitBlend;
         exit.hasFixedDuration = fixedExitDuration;
+        // A committed action from Sim must be able to cut through the soft
+        // recovery. Without interruption, Whirlwind kept the layer busy past
+        // the next basic-attack windup and the blade arrived after Damage.
+        exit.interruptionSource = TransitionInterruptionSource.SourceThenDestination;
+        exit.orderedInterruption = false;
     }
 
     private static void Transition(AnimatorState from, AnimatorState to, string parameter,

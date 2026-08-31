@@ -85,6 +85,22 @@ namespace Game.Tests
         }
 
         [Test]
+        public void PauseMenu_ReturnToCamp_AbandonsTheActiveRiftImmediately()
+        {
+            GameSession session = Session();
+            session.Step(Command(CampCommand.EnterRift));
+            int generationBefore = session.Generation;
+
+            session.ReturnToCamp();
+
+            Assert.AreEqual(GameMode.Camp, session.Mode);
+            Assert.IsNull(session.Run, "покинутый забег больше не должен тикать за меню");
+            Assert.IsNull(session.ActiveSim, "в лагере не остаётся скрытая боевая симуляция");
+            Assert.AreEqual(generationBefore + 1, session.Generation,
+                "представление обязано пересобраться под лагерь");
+        }
+
+        [Test]
         public void WithoutThePortal_TheRiftIsUnreachable()
         {
             // Первый акт: портала ещё нет, он открывается третьим.

@@ -42,6 +42,7 @@ namespace Game.Sim
         /// </summary>
         public readonly int[] PendingAttackTarget;
         public readonly int[] AttackImpactTick;
+        public readonly int[] PendingAttackVariant;
 
         /// <summary>
         /// Радиус тела. Тела не проходят сквозь друг друга: без этого сорок
@@ -124,6 +125,7 @@ namespace Game.Sim
             NextAttackTick = new int[capacity];
             PendingAttackTarget = new int[capacity];
             AttackImpactTick = new int[capacity];
+            PendingAttackVariant = new int[capacity];
             BodyRadius = new Fix64[capacity];
             PushWeight = new Fix64[capacity];
 
@@ -159,6 +161,7 @@ namespace Game.Sim
             NextAttackTick[id] = 0;
             PendingAttackTarget[id] = -1;
             AttackImpactTick[id] = 0;
+            PendingAttackVariant[id] = 0;
             BodyRadius[id] = DefaultBodyRadius;
             PushWeight[id] = Fix64.One;
 
@@ -238,6 +241,7 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, NextAttackTick[i]);
                 Hashing.Mix(ref hash, PendingAttackTarget[i]);
                 Hashing.Mix(ref hash, AttackImpactTick[i]);
+                Hashing.Mix(ref hash, PendingAttackVariant[i]);
                 Hashing.Mix(ref hash, BodyRadius[i]);
                 Hashing.Mix(ref hash, PushWeight[i]);
 

@@ -16,6 +16,9 @@ namespace Game.View
         private const string LibraryPath = "VFX/Pelag/AbilityVfxLibrary";
         private const int MaxActive = 72;
         private const int MaxTargets = 8;
+        private static readonly float AttackContactTime =
+            Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
+        private const float WhirlwindContactTime = 10f / Simulation.TicksPerSecond;
 
         private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine }
 
@@ -43,6 +46,7 @@ namespace Game.View
 
         private TickDriver _driver;
         private ArenaView _arena;
+        private CombatJuiceView _juice;
         private PoolRecord[] _pools;
         private ActiveFx[] _active;
         private int _activeCursor;
@@ -58,13 +62,16 @@ namespace Game.View
         private Vector3 _motionStart;
         private Vector3 _motionEnd;
         private bool _captureMotion;
-        private bool _whirlwindFxPending;
-        private float _whirlwindFxDelay;
-        private int _pendingAutoattackTarget = -1;
-        private bool _showcaseAttackImpactPending;
-        private Vector3 _showcaseAttackTarget;
         private float _attackMotionTime = -1f;
         private Vector3 _attackMotionDirection;
+        private bool _whirlwindContactPending;
+        private float _whirlwindContactDelay;
+        private Light _heroLight;
+        private float _combatLightPulse;
+        private static readonly int HeroLightPositionId =
+            Shader.PropertyToID("_RazlomHeroLightPosition");
+        private static readonly int HeroLightColorId =
+            Shader.PropertyToID("_RazlomHeroLightColor");
 
         public bool PoolsReady { get; private set; }
         public bool ShowcaseRunning => _showcase != PelagVfxShowcase.None;
@@ -73,8 +80,10 @@ namespace Game.View
         {
             _driver = GetComponent<TickDriver>();
             _arena = GetComponent<ArenaView>();
+            _juice = GetComponent<CombatJuiceView>();
             _active = new ActiveFx[MaxActive];
             BuildPools();
+            BuildHeroLight();
         }
 
         private void LateUpdate()
@@ -82,10 +91,11 @@ namespace Game.View
             if (_driver == null || _arena == null) return;
             ConsumeSimEvents();
             UpdateShowcase();
-            UpdateWhirlwindFx();
             UpdateAutoattackPresentation();
+            UpdateWhirlwindContact();
             UpdateAbilityMotion();
             UpdateActive(Time.deltaTime);
+            UpdateCombatLighting(Time.unscaledDeltaTime);
         }
 
         private void BuildPools()
@@ -118,6 +128,65 @@ namespace Game.View
             PoolsReady = true;
         }
 
+        private void BuildHeroLight()
+        {
+            GameObject go = new GameObject("Свет: Пелаг / боевой импульс");
+            go.transform.SetParent(transform, false);
+            _heroLight = go.AddComponent<Light>();
+            _heroLight.type = LightType.Point;
+            _heroLight.color = new Color(1f, 0.24f, 0.055f);
+            _heroLight.range = 4.2f;
+            _heroLight.intensity = 0.38f;
+            _heroLight.shadows = LightShadows.None;
+            _heroLight.renderMode = LightRenderMode.ForcePixel;
+        }
+
+        private void PulseCombatLight(float strength)
+        {
+            _combatLightPulse = Mathf.Max(_combatLightPulse, Mathf.Clamp01(strength));
+        }
+
+        private void UpdateCombatLighting(float dt)
+        {
+            if (_driver == null || _driver.Sim == null)
+            {
+                _combatLightPulse = 0f;
+                Shader.SetGlobalColor(HeroLightColorId, Color.black);
+                if (_heroLight != null) _heroLight.intensity = 0f;
+                return;
+            }
+
+            _combatLightPulse = Mathf.MoveTowards(_combatLightPulse, 0f, dt * 2.25f);
+            float peak = _combatLightPulse * _combatLightPulse;
+            Vector3 position = PlayerPosition() + Vector3.up * 0.82f;
+            float radius = Mathf.Lerp(4.2f, 6.1f, peak);
+            float shaderIntensity = Mathf.Lerp(0.15f, 2.85f, peak);
+            Color shaderColor = new Color(1.00f, 0.23f, 0.035f, 1f) * shaderIntensity;
+
+            Shader.SetGlobalVector(HeroLightPositionId,
+                new Vector4(position.x, position.y, position.z, radius));
+            Shader.SetGlobalColor(HeroLightColorId, shaderColor);
+
+            if (_heroLight == null) return;
+            _heroLight.transform.position = position;
+            _heroLight.range = radius;
+            _heroLight.intensity = Mathf.Lerp(0.38f, 4.4f, peak);
+            if (!_heroLight.enabled) _heroLight.enabled = true;
+        }
+
+        private void OnEnable()
+        {
+            if (_heroLight != null) _heroLight.enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            if (_heroLight != null) _heroLight.enabled = false;
+            _combatLightPulse = 0f;
+            Shader.SetGlobalVector(HeroLightPositionId, new Vector4(0f, -100f, 0f, 1f));
+            Shader.SetGlobalColor(HeroLightColorId, Color.black);
+        }
+
         private void ConsumeSimEvents()
         {
             if (!PoolsReady || !_driver.enabled || _showcase != PelagVfxShowcase.None) return;
@@ -128,13 +197,53 @@ namespace Game.View
                 SimEvent e = events[i];
                 if (e.Source != Simulation.PlayerId) continue;
 
-                // В gameplay этот контроллер оставляет ровно один эффект:
-                // подтверждённый hit на цели. Attack уже один раз запускается
-                // ArenaView; прежний BeginAutoattack повторно дёргал Animator,
-                // перескакивал A/B-вариант и рассинхронизировал комбо.
-                if (e.Type == SimEventType.Damage)
-                    PlayAutoattackImpact(EntityPosition(e.Target, e.Position));
+                if (e.Type == SimEventType.Attack)
+                {
+                    // Animator уже запускает ArenaView. Здесь начинается только
+                    // additive-выпад корпуса, поэтому A/B не дёргается дважды.
+                    BeginGameplayAttackMotion(e.Target);
+                }
+                else if (e.Type == SimEventType.AbilityCast
+                         && e.Amount == 0)
+                {
+                    ScheduleGameplayWhirlwind();
+                }
+                else if (e.Type == SimEventType.Damage
+                         && e.DamageOrigin == DamageOrigin.BasicAttack)
+                {
+                    // The old authored prefab contained a stale blue sword and
+                    // rendered it through the enemy's torso. Contact geometry
+                    // now belongs to CombatJuice; this layer only adds light.
+                    PulseCombatLight(0.62f);
+                }
+                else if (e.Type == SimEventType.Damage
+                          && e.DamageOrigin == DamageOrigin.Ability)
+                {
+                    // A very long render frame may contain the contact Damage
+                    // before the presentation timer gets its next Update. The
+                    // authoritative event wins and releases the slash now.
+                    if (_whirlwindContactPending) PlayWhirlwindContact();
+                    PulseCombatLight(0.92f);
+                }
             }
+        }
+
+        private void BeginGameplayAttackMotion(int targetEntity)
+        {
+            Vector3 player = PlayerPosition();
+            Vector3 target = EntityPosition(targetEntity, player + Vector3.forward);
+            _attackMotionDirection = FlatDirection(player, target);
+            _attackMotionTime = 0f;
+        }
+
+        private void ScheduleGameplayWhirlwind()
+        {
+            _attackMotionTime = -1f;
+            _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
+            _whirlwindContactPending = true;
+            _whirlwindContactDelay = WhirlwindContactTime;
+            // Anticipation is visible, but the HDR peak belongs to contact.
+            PulseCombatLight(0.28f);
         }
 
         public void BeginShowcase(PelagVfxShowcase showcase)
@@ -155,9 +264,8 @@ namespace Game.View
             _showcase = PelagVfxShowcase.None;
             _motionAbility = PelagVfxShowcase.None;
             _captureMotion = false;
-            _showcaseAttackImpactPending = false;
-            _pendingAutoattackTarget = -1;
             _attackMotionTime = -1f;
+            _whirlwindContactPending = false;
         }
 
         private void UpdateShowcase()
@@ -181,12 +289,12 @@ namespace Game.View
                 if (_showcaseStage == 0 && _showcaseTime >= 0.80f)
                 {
                     _showcaseStage = 1;
-                    BeginAutoattack(FirstTargetPosition(), true, -1);
+                    BeginAutoattack(FirstTargetPosition());
                 }
                 else if (_showcaseStage == 1 && _showcaseTime >= 1.60f)
                 {
                     _showcaseStage = 2;
-                    BeginAutoattack(FirstTargetPosition(), true, -1);
+                    BeginAutoattack(FirstTargetPosition());
                 }
                 else if (_showcaseTime >= 2.48f)
                 {
@@ -210,7 +318,7 @@ namespace Game.View
         {
             switch (ability)
             {
-                case PelagVfxShowcase.Autoattack: BeginAutoattack(FirstTargetPosition(), true, -1); break;
+                case PelagVfxShowcase.Autoattack: BeginAutoattack(FirstTargetPosition()); break;
                 case PelagVfxShowcase.Whirlwind: PlayWhirlwind(true); break;
                 case PelagVfxShowcase.AnchorLeap: PlayAnchorLeap(true); break;
                 case PelagVfxShowcase.AnchorSweep: PlayAnchorSweep(true); break;
@@ -231,32 +339,18 @@ namespace Game.View
             }
         }
 
-        private void BeginAutoattack(Vector3 target, bool showcase, int targetEntity)
+        private void BeginAutoattack(Vector3 target)
         {
             Vector3 player = PlayerPosition();
             Vector3 direction = FlatDirection(player, target);
 
             _arena.PlayPlayerAttackPresentation();
+            _juice?.PlayBasicAttackTrail();
             _attackMotionTime = 0f;
             _attackMotionDirection = direction;
-            _pendingAutoattackTarget = showcase ? -1 : targetEntity;
-            _showcaseAttackImpactPending = showcase;
-            _showcaseAttackTarget = target;
 
             // Этот путь существует только для отдельной VFX-витрины. В обычном
             // бою старт атаки не создаёт ни пыли, ни заранее нарисованной дуги.
-        }
-
-        private void PlayAutoattackImpact(Vector3 target)
-        {
-            Vector3 player = PlayerPosition();
-            Vector3 direction = FlatDirection(player, target);
-            Quaternion facing = Quaternion.LookRotation(direction, Vector3.up);
-
-            // The actual blade ribbon carries the swing trajectory. Keep one
-            // contact shape here; generic sparks and material flash come from
-            // the same confirmed Damage event in the shared presentation.
-            Spawn(PelagVfxId.AutoAttackImpact, target + Vector3.up * 0.95f, facing, 0.28f, 0.85f, 1.12f, Motion.Static);
         }
 
         private void UpdateAutoattackPresentation()
@@ -267,24 +361,18 @@ namespace Game.View
             // Небольшая presentation-lunge связывает опорную ногу, клинок и
             // цель. Симуляционную позицию и дальность атаки он не меняет.
             float distance;
-            if (_attackMotionTime < 0.18f)
-                distance = Mathf.Lerp(0f, -0.04f, Smooth(_attackMotionTime / 0.18f));
-            else if (_attackMotionTime < 0.60f)
-                distance = Mathf.Lerp(-0.04f, 0.18f,
-                    Smooth((_attackMotionTime - 0.18f) / 0.42f));
+            if (_attackMotionTime < 0.10f)
+                distance = Mathf.Lerp(0f, -0.035f, Smooth(_attackMotionTime / 0.10f));
+            else if (_attackMotionTime < AttackContactTime)
+                distance = Mathf.Lerp(-0.035f, 0.22f,
+                    Smooth((_attackMotionTime - 0.10f) / Mathf.Max(0.01f, AttackContactTime - 0.10f)));
             else
-                distance = Mathf.Lerp(0.18f, 0f,
-                    Smooth((_attackMotionTime - 0.60f) / 0.22f));
+                distance = Mathf.Lerp(0.22f, 0f,
+                    Smooth((_attackMotionTime - AttackContactTime) / 0.28f));
             _arena.SetPresentationOffset(Simulation.PlayerId,
                 _attackMotionDirection * distance);
 
-            if (_showcaseAttackImpactPending && _attackMotionTime >= 0.60f)
-            {
-                _showcaseAttackImpactPending = false;
-                PlayAutoattackImpact(_showcaseAttackTarget);
-            }
-
-            if (_attackMotionTime >= 0.82f)
+            if (_attackMotionTime >= 0.68f)
             {
                 _attackMotionTime = -1f;
                 _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
@@ -294,39 +382,52 @@ namespace Game.View
         private void PlayWhirlwind(bool showcase)
         {
             _attackMotionTime = -1f;
-            _showcaseAttackImpactPending = false;
             _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
             _arena.PlayPlayerAbilityPresentation(0);
-            // Визуальный мазок рождается из движения клинка, а не лежит на
-            // земле до начала анимации. Небольшая задержка синхронизирует его
-            // с первым читаемым разгоном корпуса и сабли.
-            _whirlwindFxPending = true;
-            _whirlwindFxDelay = 0.14f;
+            _juice?.PlayWhirlwindTrail();
+            _whirlwindContactPending = true;
+            _whirlwindContactDelay = WhirlwindContactTime;
+            PulseCombatLight(0.28f);
         }
 
-        private void UpdateWhirlwindFx()
+        private void UpdateWhirlwindContact()
         {
-            if (!_whirlwindFxPending) return;
-            _whirlwindFxDelay -= Time.deltaTime;
-            if (_whirlwindFxDelay > 0f) return;
+            if (!_whirlwindContactPending) return;
+            _whirlwindContactDelay -= Time.deltaTime;
+            if (_whirlwindContactDelay > 0f) return;
+            PlayWhirlwindContact();
+        }
 
-            _whirlwindFxPending = false;
+        private void PlayWhirlwindContact()
+        {
+            if (!_whirlwindContactPending) return;
+            _whirlwindContactPending = false;
+
             Vector3 player = PlayerPosition();
-            Spawn(PelagVfxId.WhirlwindRing, player + Vector3.up * 0.08f, Quaternion.identity,
-                0.62f, 0.78f, 1.08f, Motion.Expand);
-            Spawn(PelagVfxId.DustHeavy, player + Vector3.up * 0.04f, Quaternion.identity,
-                0.42f, 0.20f, 0.55f, Motion.Expand);
-
-            FillTargets();
-            for (int i = 0; i < _targetCount; i++)
+            Vector3 slashCenter = player + Vector3.up * 0.92f;
+            if (_arena.TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip))
             {
-                Vector3 target = EntityPosition(_targets[i], player);
-                Spawn(PelagVfxId.WhirlwindHit, target + Vector3.up * 0.9f, Quaternion.identity,
-                    0.30f, 0.72f, 1.12f, Motion.Expand);
-                if (i < 4)
-                    Spawn(PelagVfxId.TargetFlash, target + Vector3.up * 0.9f, Quaternion.identity,
-                        0.13f, 0.55f, 0.80f, Motion.Expand);
+                Vector3 bladeCenter = Vector3.Lerp(bladeRoot.position, bladeTip.position, 0.62f);
+                slashCenter = Vector3.Lerp(slashCenter, bladeCenter, 0.72f);
             }
+
+            Camera camera = Camera.main;
+            if (camera != null)
+            {
+                // Keep the crescent readable as a weapon stroke instead of a
+                // decal around Pelag's feet. A slight view-space offset also
+                // prevents the transparent particles from vanishing in armour.
+                slashCenter -= camera.transform.forward * 0.20f;
+            }
+
+            // Stone Slash's particle shapes are authored in world-up space.
+            // Camera-facing the root rotates their emission plane edge-on;
+            // keep the prefab's original orientation and only lift its origin.
+            Spawn(PelagVfxId.WhirlwindRing, slashCenter, Quaternion.identity,
+                0.92f, 0.94f, 1.10f, Motion.Expand);
+            Spawn(PelagVfxId.DustHeavy, player + Vector3.up * 0.055f,
+                Quaternion.identity, 0.46f, 0.34f, 0.72f, Motion.Expand);
+            PulseCombatLight(1f);
         }
 
         private void PlayAnchorLeap(bool showcase)

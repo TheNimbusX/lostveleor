@@ -13,15 +13,15 @@ namespace Game.View
     [RequireComponent(typeof(TickDriver))]
     public sealed class LayoutView : MonoBehaviour
     {
-        // Тёплый камень, а не тёмно-синяя плита. Пол занимает бо́льшую часть
-        // кадра, поэтому именно он, а не персонажи, решает, выглядит ли сцена
-        // яркой локацией первого акта или подземельем.
-        public Color RoomColor = new Color(0.72f, 0.66f, 0.53f);
-        public Color EntranceColor = new Color(0.66f, 0.68f, 0.55f);
+        // Пол занимает большую часть кадра, поэтому он задаёт дневную яркость
+        // всей локации. Тёплый светлый камень не превращает толпу в чёрное пятно;
+        // холодный цвет остаётся только в небольших акцентах и дальнем фоне.
+        public Color RoomColor = new Color(0.68f, 0.65f, 0.55f);
+        public Color EntranceColor = new Color(0.61f, 0.69f, 0.57f);
         public float Thickness = 0.2f;
 
         [Header("Граница уровня")]
-        public Color WallColor = new Color(0.34f, 0.40f, 0.39f, 1f);
+        public Color WallColor = new Color(0.38f, 0.43f, 0.40f, 1f);
         public float WallHeight = 0.62f;
         public float WallThickness = 0.24f;
 
@@ -64,9 +64,9 @@ namespace Game.View
             root.SetParent(transform, false);
 
             _roomMaterial = ViewMaterials.CreateArenaFloor(RoomColor,
-                new Color(0.44f, 0.58f, 0.34f, 1f));
+                new Color(0.47f, 0.60f, 0.42f, 1f));
             _entranceMaterial = ViewMaterials.CreateArenaFloor(EntranceColor,
-                new Color(0.38f, 0.62f, 0.40f, 1f));
+                new Color(0.40f, 0.64f, 0.48f, 1f));
 
             _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72);
             _tiles = new Transform[64];

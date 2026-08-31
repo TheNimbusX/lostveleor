@@ -23,7 +23,7 @@ namespace Game.View
     public sealed class CombatIndicators : MonoBehaviour
     {
         [Header("Что показывать")]
-        public bool ShowFootRings = true;
+        public bool ShowFootRings = false;
         public bool ShowAttackArc = true;
         public bool ShowMoveOrder = true;
 
