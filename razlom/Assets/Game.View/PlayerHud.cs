@@ -28,7 +28,12 @@ namespace Game.View
         private GUIStyle _cooldownLabel;
         private GUIStyle _mapLabel;
         private Texture2D _white;
-        private Texture2D _whirlwindIcon;
+        // Иконка на каждую способность, а не одна на Вихрь. Нарезаны с
+        // утверждённого листа `ART/.../PELAG/abilitys.png`; там же лежит
+        // разбор того, что каждая делает, — если понадобится перерезать,
+        // источник один и он в репозитории.
+        private Texture2D[] _abilityIcons;
+        private bool _abilityIconsLoaded;
         private Texture2D _mapArtwork;
         private float _canvasWidth;
         private float _canvasHeight;
@@ -154,11 +159,17 @@ namespace Game.View
                         inner.width, inner.height * ready), SlotReady);
                 }
 
-                if (build.DefinitionId == AbilityDefinition.WhirlwindId && _whirlwindIcon != null)
+                Texture2D icon = AbilityIcon(slot, build.DefinitionId);
+                if (icon != null)
                 {
                     Color previous = GUI.color;
+                    // Остывающая способность гасится и обесцвечивается: игрок
+                    // читает готовность по иконке боковым зрением, не считая
+                    // цифру. Полоса заполнения снизу говорит то же самое, но
+                    // медленнее — она про «сколько осталось», иконка про
+                    // «можно или нет».
                     GUI.color = left <= 0 ? Color.white : new Color(0.68f, 0.72f, 0.78f, 0.78f);
-                    GUI.DrawTexture(Inset(box, 6f), _whirlwindIcon, ScaleMode.ScaleToFit, true);
+                    GUI.DrawTexture(Inset(box, 6f), icon, ScaleMode.ScaleToFit, true);
                     GUI.color = previous;
                 }
 
@@ -188,6 +199,33 @@ namespace Game.View
         /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция на
         /// панели, и она уже один раз переехала.
         /// </summary>
+        /// <summary>
+        /// Иконка слота. Кэшируется по слоту, ищется по способности.
+        ///
+        /// Загрузка ленивая и одноразовая на слот: `Resources.Load` в OnGUI
+        /// звался бы шестьдесят раз в секунду на каждый слот.
+        /// </summary>
+        private Texture2D AbilityIcon(int slot, int definitionId)
+        {
+            if (_abilityIcons == null || (uint)slot >= (uint)_abilityIcons.Length) return null;
+            if (_abilityIcons[slot] != null) return _abilityIcons[slot];
+
+            string file = IconFile(definitionId);
+            if (file == null) return null;
+
+            _abilityIcons[slot] = Resources.Load<Texture2D>("UI/Abilities/" + file);
+            return _abilityIcons[slot];
+        }
+
+        private static string IconFile(int definitionId)
+        {
+            if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
+            if (definitionId == AbilityDefinition.AnchorLeapId) return "Icon_AnchorLeap";
+            if (definitionId == AbilityDefinition.AnchorSweepId) return "Icon_AnchorSweep";
+            if (definitionId == AbilityDefinition.ChainStepId) return "Icon_ChainStep";
+            return null;
+        }
+
         private static string AbilityName(int definitionId)
         {
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
@@ -288,8 +326,11 @@ namespace Game.View
                 _white.SetPixel(0, 0, Color.white);
                 _white.Apply();
             }
-            if (_whirlwindIcon == null)
-                _whirlwindIcon = Resources.Load<Texture2D>("UI/Whirlwind");
+            if (!_abilityIconsLoaded)
+            {
+                _abilityIconsLoaded = true;
+                _abilityIcons = new Texture2D[Simulation.AbilitySlots];
+            }
             if (_mapArtwork == null)
                 _mapArtwork = Resources.Load<Texture2D>("UI/MapHud");
             if (_label != null) return;

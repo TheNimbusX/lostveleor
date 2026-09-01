@@ -601,11 +601,14 @@ namespace Game.View
             // четверти: Вихрь режет вокруг себя, Бросок якоря вносит в толпу,
             // Подсечка собирает толпу к себе, Шаг по цепи выносит из окружения.
             //
-            // Порядок слотов — это порядок петли, а не алфавит: 1 вошёл,
-            // 2 собрал, 3 срезал, 4 вышел. Игрок учит кит, нажимая подряд.
-            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), _nodeBuffer, 0);
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), _nodeBuffer, 0);
-            sim.SetAbility(2, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
+            // ПОРЯДОК ВЗЯТ С УТВЕРЖДЁННОГО ЛИСТА `ART/.../PELAG/abilitys.png`,
+            // где способности пронумерованы 2–5 после автоатаки. Свой порядок
+            // был бы не хуже как петля, но расхождение между листом дизайна и
+            // игрой стоит дорого: художник, владелец и код обязаны называть
+            // третью кнопку одним и тем же именем.
+            sim.SetAbility(0, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
+            sim.SetAbility(1, AbilityDefinition.AnchorLeap(), _nodeBuffer, 0);
+            sim.SetAbility(2, AbilityDefinition.AnchorSweep(), _nodeBuffer, 0);
             sim.SetAbility(3, AbilityDefinition.ChainStep(), _nodeBuffer, 0);
 
             _appliedHotter = NodeHotter;
