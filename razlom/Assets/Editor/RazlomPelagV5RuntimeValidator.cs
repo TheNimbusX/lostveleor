@@ -106,7 +106,12 @@ public static class RazlomPelagV5RuntimeValidator
         public bool runtimeAvatarValid;
         public bool runtimeAvatarIsGeneric;
         public int skinnedMeshCount;
+        // Bones carrying vertex weights. Informational: Mixamo leaves the leaf
+        // bones unweighted, so this sits below the rig count and says nothing
+        // about whether clips will play.
         public int boneCount;
+        // Transforms named mixamorig:*. THIS is what Generic clips bind to.
+        public int rigBoneCount;
         public int triangleCount;
         // Height of the bind pose in the model's own units. WoleScale is
         // derived from it (1.78 / meshHeight), so a body that arrives at a
@@ -182,8 +187,18 @@ public static class RazlomPelagV5RuntimeValidator
         report.triangleCount = renderers.Sum(renderer => TriangleCount(renderer.sharedMesh));
         if (report.skinnedMeshCount != 1)
             errors.Add("Expected one skinned mesh, got " + report.skinnedMeshCount + ".");
-        if (report.boneCount != 65)
-            errors.Add("Expected the canonical 65-bone bind, got " + report.boneCount + ".");
+        // WHAT MATTERS IS THE HIERARCHY, NOT THE SKIN.
+        //
+        // Generic clips bind by transform path, so a clip plays as long as the
+        // 65 mixamorig transforms exist. renderer.bones only lists the ones
+        // carrying vertex weights, and Mixamo leaves the 13 leaf bones
+        // unweighted - ten finger tips plus HeadTop_End and the two Toe_End.
+        // The v6 body reports 52 there and animates perfectly; the old
+        // equality on that number called a healthy rig broken.
+        report.rigBoneCount = prefab.GetComponentsInChildren<Transform>(true)
+            .Count(bone => bone.name.StartsWith("mixamorig:"));
+        if (report.rigBoneCount != 65)
+            errors.Add("Expected 65 mixamorig transforms, got " + report.rigBoneCount + ".");
         if (report.triangleCount < 5000 || report.triangleCount > 80000)
             errors.Add("Runtime triangles out of range: " + report.triangleCount + ".");
 
