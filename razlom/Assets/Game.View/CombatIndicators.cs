@@ -42,6 +42,9 @@ namespace Game.View
         [Tooltip("Тело под курсором. Наведение обязано быть видно ДО удара.")]
         public Color HoverColor = new Color(1.00f, 0.16f, 0.11f, 0.95f);
 
+        /// <summary>Цвет кольца приземления: тёплый, как сама цепь.</summary>
+        public Color LandingColor = new Color(1.00f, 0.62f, 0.22f, 0.85f);
+
         [Tooltip("Сектор автоатаки. Виден, пока зажата кнопка удара.")]
         public Color ArcColor = new Color(1.00f, 0.72f, 0.30f, 0.16f);
 
@@ -81,6 +84,7 @@ namespace Game.View
         private LineRenderer _orderInnerRing;
         private LineRenderer[] _orderChevrons;
         private LineRenderer _orderDiamond;
+        private LineRenderer _landingRing;
 
         private Sprite _ringSprite;
         private Sprite _arcSprite;
@@ -150,6 +154,7 @@ namespace Game.View
             DrawFootRings(sim);
             DrawAttackArc(sim);
             DrawMoveOrder();
+            DrawLandingRing(sim);
             UpdateCursor(sim);
         }
 
@@ -248,6 +253,39 @@ namespace Game.View
             t.rotation = forward.sqrMagnitude > 0.0001f
                 ? Quaternion.LookRotation(forward, Vector3.up) * Quaternion.Euler(90f, 0f, 0f)
                 : Quaternion.Euler(90f, 0f, 0f);
+        }
+
+        /// <summary>
+        /// Куда игрока унесёт крюк.
+        ///
+        /// Бросок якоря швыряет через пол-арены, и без метки приземление
+        /// читается как «меня куда-то дёрнуло». Кольцо стоит на цели весь
+        /// полёт и гаснет вместе с ним — точка назначения берётся прямо из
+        /// состояния тела, поэтому она не может разойтись с тем, куда тело
+        /// на самом деле едет.
+        /// </summary>
+        private void DrawLandingRing(Simulation sim)
+        {
+            if (_landingRing == null) return;
+
+            EntityStore e = sim.Entities;
+            int player = Simulation.PlayerId;
+            bool flying = e.ForcedTicksLeft[player] > 0
+                          && e.ForcedKind[player] == (byte)ForcedMotionKind.Lunge;
+
+            if (!flying)
+            {
+                if (_landingRing.enabled) _landingRing.enabled = false;
+                return;
+            }
+
+            FixVec2 target = e.ForcedTarget[player];
+            Vector3 centre = new Vector3(target.X.ToFloat(), 0f, target.Y.ToFloat());
+
+            _landingRing.enabled = true;
+            _landingRing.startColor = LandingColor;
+            _landingRing.endColor = LandingColor;
+            WriteCircle(_landingRing, centre, 0.035f, e.BodyRadius[player].ToFloat() * 1.45f);
         }
 
         private void DrawMoveOrder()
@@ -361,6 +399,13 @@ namespace Game.View
             for (int i = 0; i < _orderChevrons.Length; i++)
                 _orderChevrons[i] = MakeOrderLine("Метка приказа: шеврон " + i, false, 3, 0.032f);
             _orderDiamond = MakeOrderLine("Метка приказа: точка", true, 4, 0.020f);
+
+            // Кольцо приземления. Отдельное от метки приказа намеренно: та
+            // живёт своей серией импульсов с повторами и затуханием, и
+            // вплетать в неё чужое состояние значило бы получить два хозяина
+            // у одного объекта.
+            _landingRing = MakeOrderLine("Кольцо приземления", true, 40, 0.045f);
+
             SetMoveOrderVisible(false);
         }
 

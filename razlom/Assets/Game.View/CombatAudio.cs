@@ -131,7 +131,18 @@ namespace Game.View
                             }
                             else
                             {
-                                Play(Sound.Cast, CastVolume, 0.95f, 0.04f);
+                                // Своих записей у трёх новых способностей пока
+                                // нет, и все они брали один и тот же Cast —
+                                // на слух кит выходил однокнопочным.
+                                //
+                                // Развести по высоте тона дешевле, чем ждать
+                                // звукорежиссёра, и слышно сразу: рывок звучит
+                                // выше и суше, тяжёлый волок — ниже и глуше,
+                                // цепочка садится посередине. Это не замена
+                                // настоящим звукам, но это уже три разных
+                                // события вместо одного.
+                                Play(Sound.Cast, CastVolume,
+                                    AbilityCastPitch(e.Amount), 0.04f);
                             }
                         }
                         break;
@@ -188,6 +199,26 @@ namespace Game.View
             if (sim == null || (uint)slot >= Simulation.AbilitySlots) return false;
             AbilityBuild build = sim.GetAbility(slot);
             return build != null && build.DefinitionId == AbilityDefinition.WhirlwindId;
+        }
+
+        /// <summary>
+        /// Высота общего звука каста под конкретную способность.
+        ///
+        /// Спрашивается по DefinitionId, а не по номеру слота: слот — это
+        /// позиция на панели, и она уже один раз переезжала.
+        /// </summary>
+        private float AbilityCastPitch(int slot)
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null || (uint)slot >= Simulation.AbilitySlots) return 0.95f;
+
+            AbilityBuild build = sim.GetAbility(slot);
+            if (build == null) return 0.95f;
+
+            if (build.DefinitionId == AbilityDefinition.AnchorLeapId) return 1.22f;
+            if (build.DefinitionId == AbilityDefinition.AnchorSweepId) return 0.74f;
+            if (build.DefinitionId == AbilityDefinition.ChainStepId) return 1.02f;
+            return 0.95f;
         }
 
         private void Play(Sound sound, float volume, float pitchCenter, float pitchSpread)
