@@ -10,12 +10,10 @@
     --line:#DAD2C4; --line-strong:#C2B8A6;
     --coral:#C43A50; --coral-soft:rgba(196,58,80,.10);
     --teal:#1F7A7A; --teal-soft:rgba(31,122,122,.10);
-    --iron:#3C4249;
     --ok:#2A7F4E; --ok-soft:rgba(42,127,78,.12);
     --warn:#9A6410; --warn-soft:rgba(154,100,16,.12);
     --stop:#94261F; --stop-soft:rgba(148,38,31,.12);
     --shadow:0 1px 2px rgba(32,36,42,.06), 0 8px 24px rgba(32,36,42,.06);
-    --maxw:70ch;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
@@ -24,7 +22,6 @@
       --line:#2C3238; --line-strong:#3E454D;
       --coral:#F2718A; --coral-soft:rgba(242,113,138,.13);
       --teal:#4FBDBD; --teal-soft:rgba(79,189,189,.13);
-      --iron:#A8AFB7;
       --ok:#5CC47E; --ok-soft:rgba(92,196,126,.14);
       --warn:#D9A13C; --warn-soft:rgba(217,161,60,.14);
       --stop:#E86A5E; --stop-soft:rgba(232,106,94,.14);
@@ -37,7 +34,6 @@
     --line:#2C3238; --line-strong:#3E454D;
     --coral:#F2718A; --coral-soft:rgba(242,113,138,.13);
     --teal:#4FBDBD; --teal-soft:rgba(79,189,189,.13);
-    --iron:#A8AFB7;
     --ok:#5CC47E; --ok-soft:rgba(92,196,126,.14);
     --warn:#D9A13C; --warn-soft:rgba(217,161,60,.14);
     --stop:#E86A5E; --stop-soft:rgba(232,106,94,.14);
@@ -45,19 +41,17 @@
   }
 
   *{box-sizing:border-box}
-  body{
-    background:var(--bg); color:var(--ink);
+  body{background:var(--bg); color:var(--ink);
     font-family:"Golos Text",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    font-size:16px; line-height:1.62; margin:0;
-    -webkit-font-smoothing:antialiased;
-  }
+    font-size:16px; line-height:1.62; margin:0; -webkit-font-smoothing:antialiased}
 
-  .wrap{display:grid; grid-template-columns:210px minmax(0,1fr); gap:52px;
-        max-width:1180px; margin:0 auto; padding:48px 28px 120px}
+  .wrap{display:grid; grid-template-columns:212px minmax(0,1fr); gap:52px;
+        max-width:1200px; margin:0 auto; padding:48px 28px 120px}
   @media (max-width:900px){ .wrap{grid-template-columns:1fr; gap:28px; padding:28px 18px 80px} }
 
-  nav.toc{position:sticky; top:28px; align-self:start; font-size:13px}
-  @media (max-width:900px){ nav.toc{position:static} }
+  nav.toc{position:sticky; top:28px; align-self:start; font-size:13px;
+          max-height:calc(100vh - 56px); overflow-y:auto}
+  @media (max-width:900px){ nav.toc{position:static; max-height:none} }
   nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px}
   nav.toc a{display:flex; gap:9px; align-items:baseline; text-decoration:none;
             color:var(--muted); padding:5px 8px; border-radius:5px; line-height:1.3}
@@ -68,16 +62,15 @@
   nav.toc .grp{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.1em;
                font-size:10.5px; color:var(--line-strong); padding:14px 8px 4px}
 
-  main{min-width:0; max-width:78ch}
+  main{min-width:0; max-width:80ch}
 
   header.top{margin-bottom:44px; padding-bottom:28px; border-bottom:2px solid var(--ink)}
   .eyebrow{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.16em;
            font-size:11px; color:var(--muted)}
   h1{font-family:"Oswald",sans-serif; font-weight:600; font-size:clamp(34px,6vw,54px);
-     line-height:1.02; margin:12px 0 14px; letter-spacing:-.005em; text-wrap:balance;
-     text-transform:uppercase}
+     line-height:1.02; margin:12px 0 14px; text-wrap:balance; text-transform:uppercase}
   h1 em{font-style:normal; color:var(--coral)}
-  .sub{font-size:17px; color:var(--ink-2); margin:0; max-width:60ch}
+  .sub{font-size:17px; color:var(--ink-2); margin:0; max-width:62ch}
 
   .facts{display:flex; flex-wrap:wrap; gap:10px; margin-top:24px}
   .fact{background:var(--surface); border:1px solid var(--line); border-radius:7px;
@@ -85,39 +78,30 @@
   .fact b{font-family:"JetBrains Mono",monospace; font-size:16px; font-weight:700; color:var(--coral)}
   .fact span{font-size:12px; color:var(--muted)}
 
-  section{margin-top:52px; scroll-margin-top:24px}
-  .head{display:flex; flex-direction:column; gap:3px; margin-bottom:16px}
-  h2{font-family:"Oswald",sans-serif; font-weight:500; font-size:27px; margin:0;
-     text-wrap:balance; letter-spacing:.005em}
-  h3{font-family:"Oswald",sans-serif; font-weight:500; font-size:18px; margin:26px 0 8px;
-     letter-spacing:.01em}
+  section{margin-top:54px; scroll-margin-top:24px}
+  .head{margin-bottom:16px}
+  h2{font-family:"Oswald",sans-serif; font-weight:500; font-size:27px; margin:3px 0 0; text-wrap:balance}
+  h3{font-family:"Oswald",sans-serif; font-weight:500; font-size:18px; margin:28px 0 8px}
   p{margin:0 0 14px}
   .lede{font-size:17px; color:var(--ink-2)}
-  strong{font-weight:700}
-  em{color:var(--ink-2)}
 
   code{font-family:"JetBrains Mono",monospace; font-size:.855em;
-       background:var(--surface-2); padding:1.5px 5px; border-radius:4px;
-       border:1px solid var(--line)}
-
+       background:var(--surface-2); padding:1.5px 5px; border-radius:4px; border:1px solid var(--line)}
   pre{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--teal);
       border-radius:0 7px 7px 0; padding:14px 16px; overflow-x:auto; margin:0 0 16px;
-      font-family:"JetBrains Mono",monospace; font-size:13px; line-height:1.65;
-      color:var(--ink); box-shadow:var(--shadow)}
+      font-family:"JetBrains Mono",monospace; font-size:13px; line-height:1.65; box-shadow:var(--shadow)}
   pre code{background:none; border:none; padding:0; font-size:inherit}
 
   .tablewrap{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line);
              border-radius:8px; background:var(--surface); box-shadow:var(--shadow)}
-  table{border-collapse:collapse; width:100%; font-size:14px; min-width:520px}
+  table{border-collapse:collapse; width:100%; font-size:14px; min-width:500px}
   th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--line); vertical-align:top}
   thead th{font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase;
            letter-spacing:.08em; font-size:11px; color:var(--muted);
            background:var(--surface-2); white-space:nowrap}
   tbody tr:last-child td{border-bottom:none}
-  td.num,th.num{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums;
-                white-space:nowrap}
+  td.num,th.num{font-family:"JetBrains Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap}
   td.name{font-family:"JetBrains Mono",monospace; font-size:13px; white-space:nowrap}
-  td.name b{color:var(--coral); font-weight:700}
 
   .chip{display:inline-block; font-family:"Oswald",sans-serif; text-transform:uppercase;
         letter-spacing:.07em; font-size:10px; padding:2.5px 7px; border-radius:4px;
@@ -135,23 +119,72 @@
   .note .title{font-family:"Oswald",sans-serif; font-weight:500; font-size:15px;
                text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px}
   .note p:last-child{margin-bottom:0}
+  .note pre{margin:10px 0}
 
   ol.steps{list-style:none; counter-reset:s; margin:0; padding:0;
-           display:flex; flex-direction:column; gap:20px}
+           display:flex; flex-direction:column; gap:22px}
   ol.steps>li{counter-increment:s; display:grid; grid-template-columns:34px minmax(0,1fr); gap:14px}
   ol.steps>li::before{content:counter(s); font-family:"Oswald",sans-serif; font-weight:600;
         font-size:15px; width:34px; height:34px; border-radius:50%;
         display:flex; align-items:center; justify-content:center;
         background:var(--coral); color:#FFF3F0}
   ol.steps>li>div>*:first-child{margin-top:0}
-  ol.steps h3{margin-top:2px}
+  ol.steps>li>div>*:last-child{margin-bottom:0}
 
   ul{margin:0 0 14px; padding-left:20px}
   li{margin-bottom:6px}
 
+  .clip{background:var(--surface); border:1px solid var(--line); border-radius:9px;
+        margin:0 0 18px; box-shadow:var(--shadow); overflow:hidden}
+  .clip>.ch{display:flex; flex-wrap:wrap; align-items:baseline; gap:10px;
+            padding:13px 17px; background:var(--surface-2); border-bottom:1px solid var(--line)}
+  .clip>.ch .cn{font-family:"JetBrains Mono",monospace; font-weight:700; font-size:14.5px; color:var(--coral)}
+  .clip>.ch .cl{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted);
+                font-variant-numeric:tabular-nums; margin-left:auto}
+  .clip>.cb{padding:15px 17px}
+  .clip>.cb>*:first-child{margin-top:0}
+  .clip>.cb>*:last-child{margin-bottom:0}
+  .clip .why{font-size:14.5px; color:var(--ink-2); margin-bottom:13px}
+
+  .beats{list-style:none; margin:0 0 13px; padding:0}
+  .beats li{display:grid; grid-template-columns:60px minmax(0,1fr); gap:12px; margin:0;
+            padding:6px 0; border-bottom:1px dashed var(--line); font-size:14.5px}
+  .beats li:last-child{border-bottom:none}
+  .beats .f{font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--muted);
+            font-variant-numeric:tabular-nums; padding-top:2px}
+  .beats li.key{background:var(--coral-soft); border-radius:5px; border-bottom-color:transparent}
+  .beats li.key .f{color:var(--coral); font-weight:700}
+  .beats li.key>span:last-child{font-weight:600}
+
+  .watch{font-size:14px; color:var(--ink-2); border-top:1px solid var(--line);
+         padding-top:11px}
+  .watch b{font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase;
+           letter-spacing:.05em; font-size:12px; color:var(--muted); display:block; margin-bottom:3px}
+
+  .cl-group{background:var(--surface); border:1px solid var(--line); border-radius:9px;
+            padding:15px 18px; margin:0 0 16px; box-shadow:var(--shadow)}
+  .cl-group>h3{margin:0 0 10px; font-size:16px}
+  .cl-group ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+  .cl-group li{margin:0}
+  .cl-group label{display:grid; grid-template-columns:20px minmax(0,1fr); gap:10px;
+                  align-items:start; padding:6px 8px; border-radius:6px; cursor:pointer;
+                  font-size:14.5px; line-height:1.5}
+  .cl-group label:hover{background:var(--surface-2)}
+  .cl-group input[type=checkbox]{width:16px; height:16px; margin:4px 0 0;
+                                 accent-color:var(--coral); cursor:pointer}
+  .cl-group input:focus-visible{outline:2px solid var(--coral); outline-offset:2px}
+  .cl-group input:checked + span{color:var(--muted); text-decoration:line-through;
+                                 text-decoration-color:var(--line-strong)}
+  .cl-bar{display:flex; align-items:center; gap:14px; margin:0 0 18px; flex-wrap:wrap}
+  .cl-reset{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.08em;
+            font-size:11px; background:none; border:1px solid var(--line); color:var(--muted);
+            padding:6px 12px; border-radius:6px; cursor:pointer}
+  .cl-reset:hover{color:var(--ink); border-color:var(--line-strong)}
+  .cl-count{font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--muted);
+            font-variant-numeric:tabular-nums}
+
   footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--line);
          font-size:13px; color:var(--muted)}
-  footer code{font-size:12px}
   a{color:var(--coral)}
 </style>
 
@@ -159,245 +192,676 @@
 
 <nav class="toc">
   <ol>
-    <li class="grp">Контракт</li>
+    <li class="grp">Начало</li>
+    <li><a href="#start"><span class="n">00</span><span>Первая сессия</span></a></li>
     <li><a href="#now"><span class="n">01</span><span>Что уже есть</span></a></li>
-    <li><a href="#ticks"><span class="n">02</span><span>Тайминги из кода</span></a></li>
-    <li class="grp">Пак</li>
-    <li><a href="#must"><span class="n">03</span><span>Без чего швы видны</span></a></li>
-    <li><a href="#links"><span class="n">04</span><span>Связки</span></a></li>
-    <li><a href="#life"><span class="n">05</span><span>Оживление</span></a></li>
+    <li><a href="#ticks"><span class="n">02</span><span>Правило 18-го кадра</span></a></li>
+    <li class="grp">Клипы</li>
+    <li><a href="#atk"><span class="n">03</span><span>Атаки</span></a></li>
+    <li><a href="#abil"><span class="n">04</span><span>Способности</span></a></li>
+    <li><a href="#move"><span class="n">05</span><span>Передвижение</span></a></li>
+    <li><a href="#react"><span class="n">06</span><span>Реакции и смерть</span></a></li>
+    <li><a href="#links"><span class="n">07</span><span>Связки</span></a></li>
+    <li><a href="#life"><span class="n">08</span><span>Оживление</span></a></li>
     <li class="grp">Работа</li>
-    <li><a href="#setup"><span class="n">06</span><span>Blender: старт</span></a></li>
-    <li><a href="#craft"><span class="n">07</span><span>Семь приёмов</span></a></li>
-    <li><a href="#export"><span class="n">08</span><span>Экспорт и импорт</span></a></li>
-    <li class="grp">Правила</li>
-    <li><a href="#breaks"><span class="n">09</span><span>Что ломает всё</span></a></li>
-    <li><a href="#handoff"><span class="n">10</span><span>Как сдавать</span></a></li>
+    <li><a href="#blender"><span class="n">09</span><span>Blender по шагам</span></a></li>
+    <li><a href="#craft"><span class="n">10</span><span>Семь приёмов</span></a></li>
+    <li><a href="#export"><span class="n">11</span><span>Экспорт и сборка</span></a></li>
+    <li class="grp">Проверка</li>
+    <li><a href="#check"><span class="n">12</span><span>Чеклист</span></a></li>
+    <li><a href="#breaks"><span class="n">13</span><span>Что ломает всё</span></a></li>
   </ol>
 </nav>
 
 <main>
 
 <header class="top">
-  <div class="eyebrow">Lost Veleor · производственный справочник · 1 сентября 2026</div>
+  <div class="eyebrow">Lost Veleor · производственный справочник · ревизия 2</div>
   <h1>Пак анимаций <em>Пелага</em></h1>
   <p class="sub">Абордажник на цепи. Он не подходит и бьёт — он стягивает: себя в толпу, толпу к себе, и скачет внутри неё. Всё ниже служит одному: чтобы это читалось в кадре.</p>
   <div class="facts">
-    <div class="fact"><b>19</b><span>клипов есть</span></div>
+    <div class="fact"><b>20</b><span>клипов в проекте</span></div>
     <div class="fact"><b>16</b><span>нужно добавить</span></div>
     <div class="fact"><b>30</b><span>тиков в секунде</span></div>
-    <div class="fact"><b>65</b><span>костей Mixamo</span></div>
+    <div class="fact"><b>18</b><span>кадр контакта</span></div>
   </div>
 </header>
+
+<section id="start">
+  <div class="head">
+    <div class="eyebrow">00 · С чего начать</div>
+    <h2>Первая сессия, часа на два</h2>
+  </div>
+  <p class="lede">Не с нового клипа. Сначала пройди круг целиком на одном существующем — чтобы конвейер «Blender → FBX → Unity → игра» заработал и ты увидел свою правку в кадре. Пока круг не замкнут, любая новая анимация делается вслепую.</p>
+
+  <ol class="steps">
+    <li><div>
+      <h3>Открыть Saber_A и пока ничего не менять</h3>
+      <p>Файл <code>Mixamo/Pelag_MX_SaberCombo.fbx</code>. В нём <strong>два</strong> клипа: кадры 1–25 это <code>SaberAttackA</code>, кадры 25–74 это <code>SaberAttackB</code>. Поставь сцену на 30 fps, прокрути и найди кадр, где сабля достаёт цель.</p>
+    </div></li>
+    <li><div>
+      <h3>Сдвинуть контакт на 18-й кадр</h3>
+      <p>Одна правка, ровно одна. Подвинь ключи так, чтобы контактная поза встала на кадр 18. Почему именно 18 — раздел 02, и это самое важное число во всём документе.</p>
+    </div></li>
+    <li><div>
+      <h3>Экспортировать поверх того же файла</h3>
+      <p>Настройки — раздел 11. Имя и путь те же, Unity переимпортирует сам.</p>
+    </div></li>
+    <li><div>
+      <h3>Пересобрать контроллер</h3>
+      <pre><code>Меню Unity → Разлом → Собрать Pelag v5 — Mixamo controller</code></pre>
+      <p><strong>Обязательный шаг.</strong> Контроллер собирается скриптом, а не руками.</p>
+    </div></li>
+    <li><div>
+      <h3>Запустить и ударить</h3>
+      <p>Если клинок встречает врага одновременно с тем, как тот дёргается, — круг замкнут. Дальше можно копать сколько угодно.</p>
+    </div></li>
+  </ol>
+
+  <div class="note teal">
+    <div class="title">Порядок дальше, если делать по одному клипу</div>
+    <p><strong>1.</strong> <code>Saber_A</code> и <code>Saber_B</code> — они играют чаще, чем всё остальное вместе взятое.<br>
+    <strong>2.</strong> <code>Hit</code> — сейчас он длится 2.3 секунды и съедает всё ощущение боя.<br>
+    <strong>3.</strong> <code>AnchorDraw</code> и <code>AnchorStow</code> — иначе якорей в кадре два.<br>
+    <strong>4.</strong> Два <code>Recovery</code> — самое заметное на глаз за наименьшие деньги.<br>
+    <strong>5.</strong> <code>SaberA_to_B</code> и <code>Ability_to_Run</code> — чинят щелчки.<br>
+    <strong>6.</strong> <code>CombatIdle</code> и паузы простоя — персонаж перестаёт быть манекеном.</p>
+  </div>
+</section>
 
 <section id="now">
   <div class="head">
     <div class="eyebrow">01 · Инвентарь</div>
     <h2>Что уже есть</h2>
   </div>
-  <p class="lede">Девятнадцать клипов в <code>razlom/Assets/Resources/Characters/Pelag_v5/Mixamo/</code>. Восемь из них сделаны в последнем заходе, остальные пришли из Mixamo.</p>
+  <p class="lede">Двадцать клипов в <code>razlom/Assets/Resources/Characters/Pelag_v5/Mixamo/</code>. Длины — реальные, вычитанные из настроек импорта, а не на глаз.</p>
 
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Клип</th><th>Роль</th><th>Состояние</th></tr></thead>
+      <thead><tr><th>Клип</th><th class="num">Кадров</th><th>Где играет</th><th>Состояние</th></tr></thead>
       <tbody>
-        <tr><td class="name">Pelag_MX_Idle</td><td>Стойка вне боя</td><td><span class="chip warn">просится вариация</span></td></tr>
-        <tr><td class="name">Pelag_MX_Run</td><td>Бег</td><td><span class="chip ok">рабочий</span></td></tr>
-        <tr><td class="name">Pelag_MX_RunStart</td><td>Разгон с места</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_RunStop</td><td>Торможение</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_StrafeLeft</td><td>Шаг боком влево</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_StrafeRight</td><td>Шаг боком вправо</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_StrafeBack</td><td>Шаг назад</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_TurnLeft</td><td>Разворот влево</td><td><span class="chip warn">не привязан к углу</span></td></tr>
-        <tr><td class="name">Pelag_MX_TurnRight</td><td>Разворот вправо</td><td><span class="chip warn">не привязан к углу</span></td></tr>
-        <tr><td class="name">Pelag_MX_InjuredRun</td><td>Бег на низком здоровье</td><td><span class="chip ok">рабочий</span></td></tr>
-        <tr><td class="name">Pelag_MX_SaberCombo</td><td>Автоатака A</td><td><span class="chip warn">контакт на 0.4 с</span></td></tr>
-        <tr><td class="name">Pelag_MX_DualCombo</td><td>Автоатака B</td><td><span class="chip warn">контакт на 0.4 с</span></td></tr>
-        <tr><td class="name">Pelag_MX_Whirlwind</td><td>Вихрь</td><td><span class="chip ok">рабочий</span></td></tr>
-        <tr><td class="name">Pelag_MX_AnchorLeap</td><td>Бросок якоря</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_AnchorSweep</td><td>Подсечка</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_ChainStep</td><td>Шаг по цепи</td><td><span class="chip ok">новый</span></td></tr>
-        <tr><td class="name">Pelag_MX_AnchorAttack</td><td>Старый общий клип якоря</td><td><span class="chip stop">больше не нужен</span></td></tr>
-        <tr><td class="name">Pelag_MX_Hit</td><td>Получение урона</td><td><span class="chip warn">один на всё</span></td></tr>
-        <tr><td class="name">Pelag_MX_Death</td><td>Смерть</td><td><span class="chip ok">рабочий</span></td></tr>
+        <tr><td class="name">SaberAttackA</td><td class="num">24</td><td>Saber_A_v5</td><td><span class="chip stop">контакт не на 18</span></td></tr>
+        <tr><td class="name">SaberAttackB</td><td class="num">49</td><td>Saber_B_v5</td><td><span class="chip stop">контакт не на 18</span></td></tr>
+        <tr><td class="name">Whirlwind</td><td class="num">91</td><td>Whirlwind_v5</td><td><span class="chip warn">втрое длиннее нужного</span></td></tr>
+        <tr><td class="name">AnchorAttack</td><td class="num">165</td><td>Anchor_v5</td><td><span class="chip stop">5.5 с на один удар</span></td></tr>
+        <tr><td class="name">AnchorLeap</td><td class="num">15</td><td>AnchorLeap_v5</td><td><span class="chip warn">нет броска якоря</span></td></tr>
+        <tr><td class="name">AnchorSweep</td><td class="num">15</td><td>AnchorSweep_v5</td><td><span class="chip warn">нет броска якоря</span></td></tr>
+        <tr><td class="name">ChainStep</td><td class="num">5</td><td>ChainStep_v5 · цикл</td><td><span class="chip ok">длина точная</span></td></tr>
+        <tr><td class="name">Idle</td><td class="num">500</td><td>Idle_v5 · цикл</td><td><span class="chip warn">16 секунд одной петли</span></td></tr>
+        <tr><td class="name">Run</td><td class="num">33</td><td>дерево «Pelag» · цикл</td><td><span class="chip ok">рабочий</span></td></tr>
+        <tr><td class="name">RunStart</td><td class="num">5</td><td>RunStart_v5</td><td><span class="chip warn">коротко для разгона</span></td></tr>
+        <tr><td class="name">RunStop</td><td class="num">5</td><td>RunStop_v5</td><td><span class="chip ok">совпадает с кодом</span></td></tr>
+        <tr><td class="name">StrafeLeft / Right</td><td class="num">16</td><td>дерево «Pelag» · цикл</td><td><span class="chip ok">рабочие</span></td></tr>
+        <tr><td class="name">StrafeBack</td><td class="num">16</td><td>дерево «Pelag» · цикл</td><td><span class="chip ok">рабочий</span></td></tr>
+        <tr><td class="name">TurnLeft</td><td class="num">33</td><td>TurnLeft_v5</td><td><span class="chip warn">не привязан к углу</span></td></tr>
+        <tr><td class="name">TurnRight</td><td class="num">36</td><td>TurnRight_v5</td><td><span class="chip warn">не привязан к углу</span></td></tr>
+        <tr><td class="name">Hit</td><td class="num">69</td><td>Hit_v5</td><td><span class="chip stop">2.3 с на попадание</span></td></tr>
+        <tr><td class="name">Death</td><td class="num">179</td><td>Death_v5</td><td><span class="chip ok">рабочий</span></td></tr>
+        <tr><td class="name">DualCombo</td><td class="num">75</td><td>—</td><td><span class="chip stop">не подключён</span></td></tr>
+        <tr><td class="name">InjuredRun</td><td class="num">37</td><td>—</td><td><span class="chip stop">не подключён</span></td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="note teal">
-    <div class="title">Триггеры в контроллере уже заведены</div>
-    <p>Код умеет дёргать больше, чем сейчас показано: <code>AttackA</code>, <code>AttackB</code>, <code>HeavyAttack</code>, <code>Hook</code>, <code>AnchorLeap</code>, <code>AnchorSweep</code>, <code>ChainStep</code>, <code>HitFront</code>, <code>Death</code>, плюс отдельная ветка для нижней части тела — <code>LowerAttackA</code>, <code>LowerAttackB</code>, <code>LowerHeavyAttack</code>.</p>
-    <p>Есть и параметры-числа: <code>MoveSpeed</code>, <code>MoveX</code>, <code>MoveY</code>, <code>TurnDirection</code>, <code>LocomotionPlaybackSpeed</code>, <code>AttackPlaybackSpeed</code>. <em>То есть под strafe и повороты по углу проводка уже есть — не хватает самих клипов.</em></p>
+  <div class="note">
+    <div class="title">Три вещи, которые видно прямо из таблицы</div>
+    <p><strong>Hit длится 2.3 секунды.</strong> Персонаж успевает получить несколько ударов за одно проигрывание реакции — отсюда ощущение ваты вместо боя. Это, пожалуй, самая дешёвая правка с самым большим эффектом во всём списке.</p>
+    <p><strong>AnchorAttack — 165 кадров</strong>, пять с половиной секунд. Тянется из старого набора и до сих пор висит на состоянии <code>Anchor_v5</code>.</p>
+    <p><strong>DualCombo и InjuredRun не подключены ни к чему.</strong> Файлы лежат, контроллер их не грузит. Либо вводить в дело, либо удалять — сейчас они просто вес в репозитории.</p>
   </div>
+
+  <div class="note teal">
+    <div class="title">Контроллер собирается скриптом</div>
+    <p><code>Assets/Editor/RazlomPelagV5AnimatorBuilder.cs</code>, меню <strong>Разлом → Собрать Pelag v5 — Mixamo controller</strong>. Ручные правки в окне Animator при следующей сборке затрутся.</p>
+    <p>Вывод: <strong>заменять</strong> существующие клипы можно свободно — путь и имя те же, сборка подхватит. А вот <strong>новый</strong> клип сам в контроллер не попадёт: его нужно вписать в этот скрипт (список загрузки начинается со строки 53). Пришли имена файлов — впишу.</p>
+  </div>
+
+  <p>В контроллере <strong>41 переход</strong>, из них <strong>23 мгновенных</strong>, без Exit Time. Именно они дают щелчки, ради которых нужны переходные клипы из раздела 07.</p>
 </section>
 
 <section id="ticks">
   <div class="head">
-    <div class="eyebrow">02 · Контракт</div>
-    <h2>Тайминги, которые задаёт код</h2>
+    <div class="eyebrow">02 · Главное правило</div>
+    <h2>Контакт всегда на 18-м кадре</h2>
   </div>
-  <p class="lede">Симуляция идёт <strong>30 тиков в секунду</strong>, и все игровые длительности заданы в тиках. Клип обязан уложиться в них, а не наоборот — иначе урон и картинка разъедутся.</p>
+  <p class="lede">Одно число, которое снимает почти все вопросы про тайминг атак. Если запомнить из документа что-то одно — пусть это будет оно.</p>
 
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Что</th><th class="num">Тиков</th><th class="num">Секунд</th><th>Смысл</th></tr></thead>
-      <tbody>
-        <tr><td>Замах автоатаки</td><td class="num">12</td><td class="num">0.400</td><td>от начала взмаха до урона</td></tr>
-        <tr><td>Цикл автоатаки</td><td class="num">24</td><td class="num">0.800</td><td>при базовой скорости 1.25/с</td></tr>
-        <tr><td>Контакт Вихря</td><td class="num">10</td><td class="num">0.333</td><td>от каста до урона по кругу</td></tr>
-        <tr><td>Полёт Броска якоря</td><td class="num">8</td><td class="num">0.267</td><td>тело едет по цепи</td></tr>
-        <tr><td>Рывок Подсечки</td><td class="num">10</td><td class="num">0.333</td><td>врагов волочит к игроку</td></tr>
-        <tr><td>Прыжок Шага по цепи</td><td class="num">5</td><td class="num">0.167</td><td>один прыжок, всего до 4</td></tr>
-        <tr><td>Замедление в способности</td><td class="num">24</td><td class="num">0.800</td><td>идёт вдвое медленнее</td></tr>
-        <tr><td>Разгон тела</td><td class="num">3</td><td class="num">0.100</td><td>до полной скорости</td></tr>
-        <tr><td>Торможение</td><td class="num">4</td><td class="num">0.133</td><td>до остановки</td></tr>
-      </tbody>
-    </table>
+  <p>Симуляция наносит урон через <strong>12 тиков</strong> после начала замаха, то есть через 0.4 секунды. Но клип в эти 0.4 секунды идёт не с обычной скоростью — <code>CharacterAnimatorView</code> гонит его по фазам:</p>
+
+  <pre><code>первые 0.12 с    скорость 0.76    замах, придержан
+далее до 0.40 с  скорость 1.82    разгон, рывок к цели
+после контакта   0.76, затем 1.24 оттяжка</code></pre>
+
+  <p>Сколько времени <em>самого клипа</em> проходит за эти 0.4 секунды:</p>
+
+  <pre><code>0.12 × 0.76  +  (0.40 − 0.12) × 1.82  =  0.601 с
+0.601 с × 30 кадров/с  =  18.0 кадра</code></pre>
+
+  <div class="note">
+    <div class="title">Отсюда следует</div>
+    <p>Контактная поза должна стоять <strong>на 18-м кадре</strong> — и это не зависит от длины клипа. Длинный, короткий, комбо, тяжёлый удар: контакт на 18-м.</p>
+    <p>А число, которое ждёт код, получается делением:</p>
+    <pre><code>ContactNormalized = 18 ÷ длина клипа в кадрах</code></pre>
+    <p>Клип на 30 кадров даёт 0.60. На 24 — 0.75. На 49 — 0.37.</p>
   </div>
 
   <div class="note stop">
-    <div class="title">Почему замах именно 12 и почему его нельзя просто уменьшить</div>
-    <p>Двенадцать тиков — это <strong>слепок анимации</strong>, а не решение баланса. <code>CharacterAnimatorView</code> разгоняет клип по фазам так, чтобы авторская поза контакта пришлась ровно на этот тик:</p>
-    <pre><code>0.12 с на скорости 0.76, дальше до контакта на 1.82
-0.12 × 0.76 + (0.40 − 0.12) × 1.82 = 0.601
-0.601 ÷ 1.633 с (клип 49 кадров) = 0.368  →  AttackAContactNormalized = 0.37</code></pre>
-    <p>Меняешь клип — меняется и это число. <strong>Пока оно не пересчитано, урон приходит, когда клинок ещё на полпути.</strong> Так уже ломали один раз: константу поменяли, клип нет.</p>
-    <p><em>Правильный порядок ровно такой: сначала клипы, потом фазовые скорости, и только потом константа замаха.</em></p>
+    <div class="title">Сейчас это не сходится — я проверил</div>
+    <p>В коде стоит <code>AttackAContactNormalized = 0.37</code>. Но 0.37 — это <strong>18 ÷ 49</strong>, значение для клипа длиной 49 кадров. А <code>SaberAttackA</code> сейчас длиной <strong>24 кадра</strong>, ему нужно 0.75.</p>
+    <p>Комментарий рядом с константой говорит про «клипы длиной 49 и 97 кадров» — таких клипов в проекте больше нет. Клипы перерезали, константы не пересчитали. Ровно та поломка, от которой предостерегает весь этот документ, уже случилась однажды.</p>
+    <p><strong>Насколько плохо:</strong> терпимо. Константа работает только в аварийной ветке — когда обычный показ атаки был проглочен переходом и позу надо восстановить принудительно. В обычном ударе фазы доводят клип сами. Это редкий кадр в неправильной позе, а не постоянный рассинхрон.</p>
+    <p><strong>Что предлагаю:</strong> сделать оба клипа по <strong>30 кадров с контактом на 18-м</strong>. Тогда обе константы становятся 0.60 и сводятся в одну. Скажи — заменю в коде, как только клипы будут готовы.</p>
+  </div>
+
+  <h3>Остальные тайминги</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Что</th><th class="num">Тиков</th><th class="num">Секунд</th><th class="num">Кадр</th></tr></thead>
+      <tbody>
+        <tr><td>Замах автоатаки до урона</td><td class="num">12</td><td class="num">0.400</td><td class="num">18 *</td></tr>
+        <tr><td>Полный цикл автоатаки</td><td class="num">24</td><td class="num">0.800</td><td class="num">—</td></tr>
+        <tr><td>Контакт Вихря</td><td class="num">10</td><td class="num">0.333</td><td class="num">10</td></tr>
+        <tr><td>Полёт Броска якоря</td><td class="num">8</td><td class="num">0.267</td><td class="num">8</td></tr>
+        <tr><td>Рывок Подсечки</td><td class="num">10</td><td class="num">0.333</td><td class="num">10</td></tr>
+        <tr><td>Один прыжок Шага по цепи</td><td class="num">5</td><td class="num">0.167</td><td class="num">5</td></tr>
+        <tr><td>Замедление внутри способности</td><td class="num">24</td><td class="num">0.800</td><td class="num">—</td></tr>
+        <tr><td>Разгон тела с места</td><td class="num">3</td><td class="num">0.100</td><td class="num">3</td></tr>
+        <tr><td>Торможение до остановки</td><td class="num">4</td><td class="num">0.133</td><td class="num">4</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><em>* Только у атак кадры не равны тикам — там работает фазовое ускорение. У способностей клип идёт с обычной скоростью, поэтому кадр равен тику.</em></p>
+</section>
+
+<section id="atk">
+  <div class="head">
+    <div class="eyebrow">03 · Клипы</div>
+    <h2>Атаки</h2>
+  </div>
+  <p class="lede">Самая частая анимация в игре. Игрок увидит её тысячи раз за забег, поэтому вложенное сюда окупается быстрее всего.</p>
+
+  <div class="note teal">
+    <div class="title">Как читать карточки</div>
+    <p>Кадры даны для <strong>рекомендованной</strong> длины, а не текущей. Строка, подсвеченная коралловым, — контакт: та поза, на которой в игре наносится урон. Остальные кадры можно двигать по вкусу, контакт двигать нельзя.</p>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Saber_A</span><span class="chip warn">переделать</span><span class="cl">24 → 30 кадров · контакт 18</span></div>
+    <div class="cb">
+      <p class="why">Рубящий сверху-справа. Первый удар связки — он должен читаться как «начал», поэтому здесь допустим внятный замах. Сабля в правой руке, левая держится за цепь на поясе.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Боевая стойка. Вес 60/40 на задней левой ноге, колени мягкие. Сабля у правого бедра, остриё вниз-назад. Левая рука на цепи у пояса.</span></li>
+        <li><span class="f">1–5</span><span>Замах. Корпус скручивается вправо на 12°, правое плечо уходит назад и вверх, сабля поднимается к правому уху. <strong>Голова уже смотрит на цель</strong> — это то, что отличает удар от размахивания.</span></li>
+        <li><span class="f">6</span><span>Крайняя точка. Всё тело сжато как пружина, вес полностью на задней ноге.</span></li>
+        <li><span class="f">7–17</span><span>Разгон. Порядок обязателен: сначала бедро, потом корпус, потом плечо, кисть последней. Вес переходит на переднюю ногу.</span></li>
+        <li class="key"><span class="f">18</span><span>КОНТАКТ. Сабля на уровне груди цели, рука почти прямая, но не в замке. Корпус развёрнут влево на 25°, левая рука отлетела назад для баланса. Это единственный кадр, который нельзя двигать.</span></li>
+        <li><span class="f">19</span><span>Точная копия 18-го. Задержка на кадр — то, что читается как «попал».</span></li>
+        <li><span class="f">20–26</span><span>Оттяжка. Сабля продолжает по дуге вниз-влево, кисть расслабляется, вес остаётся впереди.</span></li>
+        <li><span class="f">27–30</span><span>Конечная поза. <strong>Не стойка.</strong> Корпус остался развёрнут влево — это готовый вход в Saber_B.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Если удар выглядит вялым — дело почти всегда в кадрах 1–6, а не в оттяжке. Вес живёт в подготовке.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Saber_B</span><span class="chip warn">переделать</span><span class="cl">49 → 30 кадров · контакт 18</span></div>
+    <div class="cb">
+      <p class="why">Обратный, снизу-слева вверх-вправо, с коротким подшагом передней ногой. Второй удар связки — он должен читаться как «добавил», поэтому замах короче, а следом больше.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Конечная поза Saber_A: корпус развёрнут влево, сабля внизу слева. Стартовать надо отсюда, иначе связка щёлкнет.</span></li>
+        <li><span class="f">1–4</span><span>Короткий замах. Всего четыре кадра — корпус чуть довинчивается влево, сабля опускается ещё ниже. Замаха почти нет: инерция уже накоплена предыдущим ударом.</span></li>
+        <li><span class="f">5–8</span><span>Подшаг. Передняя нога делает полшага к цели, тело подаётся вперёд. Это единственная атака, где Пелаг сближается.</span></li>
+        <li><span class="f">9–17</span><span>Разгон снизу вверх по диагонали, тот же порядок: бедро, корпус, плечо, кисть.</span></li>
+        <li class="key"><span class="f">18</span><span>КОНТАКТ. Сабля на уровне плеча цели, лезвие идёт вверх-вправо. Корпус раскрыт вправо, обе ноги нагружены — это удар «на разрыв», а не колющий.</span></li>
+        <li><span class="f">19</span><span>Копия 18-го.</span></li>
+        <li><span class="f">20–24</span><span>Оттяжка. Сабля уходит через плечо вверх и назад, корпус довинчивается по инерции.</span></li>
+        <li><span class="f">25–30</span><span>Возврат. Здесь можно вернуться в стойку: после B связка либо кончается, либо повторяется с A.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Подшаг на кадрах 5–8 — вся разница между двумя ударами на месте и настоящей связкой. Не переусердствуй: полшага, а не выпад.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">HeavyAttack</span><span class="chip stop">нет клипа</span><span class="cl">36 кадров · контакт 18</span></div>
+    <div class="cb">
+      <p class="why">В контроллере <strong>есть параметры</strong> <code>HeavyAttack</code> и <code>LowerHeavyAttack</code>, но нет ни одного состояния, которое бы на них реагировало. Триггеры висят вхолостую. То же с параметром <code>Hook</code>.</p>
+      <p class="why">Это значит, что проводка под тяжёлый удар уже проложена — не хватает только клипа. Тяжёлый удар якорем сверху вниз: обеими руками, с шагом, с длинной оттяжкой.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка. Правая рука перехватывает цепь у якоря — обе руки на оружии.</span></li>
+        <li><span class="f">1–9</span><span>Долгий замах. Якорь заносится над головой и за спину, корпус откидывается назад, передняя нога разгружается. Здесь можно быть щедрым: тяжёлый удар обязан читаться заранее.</span></li>
+        <li><span class="f">10–17</span><span>Обвал. Всё тело складывается вперёд, якорь идёт по дуге сверху вниз.</span></li>
+        <li class="key"><span class="f">18</span><span>КОНТАКТ. Якорь на уровне земли перед персонажем, колени согнуты, спина почти горизонтальна.</span></li>
+        <li><span class="f">19–21</span><span>Задержка на три кадра, не на один. Тяжесть = время.</span></li>
+        <li><span class="f">22–36</span><span>Долгий подъём. Персонаж выпрямляется медленно, подтягивая якорь на цепи. Уязвимое окно, и это должно быть видно.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Контакт всё равно на 18-м. Тяжесть делается длиной замаха и оттяжки, а не сдвигом контакта.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">AnchorAttack</span><span class="chip stop">165 кадров</span><span class="cl">решить: резать или снять</span></div>
+    <div class="cb">
+      <p class="why">Пять с половиной секунд на один удар. Клип висит на состоянии <code>Anchor_v5</code> и тянется из старого набора, когда якорь был отдельной атакой, а не тремя способностями.</p>
+      <p>Два пути, оба нормальные:</p>
+      <ul>
+        <li><strong>Разрезать</strong> на тяжёлый удар (36 кадров, см. выше) и выбросить остальное. Внутри 165 кадров наверняка есть годная дуга — посмотри и возьми лучшие 36.</li>
+        <li><strong>Снять с состояния</strong> целиком: три способности якоря уже покрывают его роль. Тогда <code>Anchor_v5</code> убирается из сборщика, и файл удаляется.</li>
+      </ul>
+      <div class="watch"><b>Моя рекомендация</b>Разрезать. Тяжёлый удар всё равно нужен, а рисовать дугу якоря с нуля дороже, чем найти её в готовом клипе.</div>
+    </div>
   </div>
 </section>
 
-<section id="must">
+<section id="abil">
   <div class="head">
-    <div class="eyebrow">03 · Пак, часть первая</div>
-    <h2>Без чего видны швы</h2>
+    <div class="eyebrow">04 · Клипы</div>
+    <h2>Способности</h2>
   </div>
-  <p class="lede">Четыре клипа, каждый из которых закрывает разрыв, заметный в первую минуту игры.</p>
+  <p class="lede">Здесь кадр равен тику: клипы способностей идут с обычной скоростью, без фазового ускорения. Значит длины из раздела 02 переносятся в Blender один в один.</p>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">AnchorLeap</span><span class="chip warn">доработать</span><span class="cl">15 → 17 кадров</span></div>
+    <div class="cb">
+      <p class="why">Бросок якоря и рывок к цели по цепи. Сейчас клип есть, но в нём <strong>нет самого броска</strong> — якорь появляется ниоткуда. Полёт по коду длится ровно 8 тиков.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка. Якорь на поясе, на кости <code>mixamorig:Hips</code>.</span></li>
+        <li><span class="f">1–2</span><span>Срыв. Правая рука хватает якорь с пояса и выдёргивает. Два кадра, не больше — это должно быть резко.</span></li>
+        <li><span class="f">3–4</span><span>Замах через плечо назад, корпус скручивается.</span></li>
+        <li class="key"><span class="f">5</span><span>БРОСОК. Рука полностью выпрямлена вперёд, якорь покидает кисть. С этого кадра он в полёте, и здесь же начинается счёт восьми тиков.</span></li>
+        <li><span class="f">6–12</span><span>Полёт и подтяг. <strong>Восемь кадров — жёсткая длина</strong>, столько тело едет по цепи. Поза одна и почти неподвижная: корпус наклонён вперёд, обе руки на цепи, ноги волочатся сзади. Персонажа тянет, он не бежит.</span></li>
+        <li><span class="f">13–15</span><span>Приземление. Ноги выходят вперёд, колени гасят удар, корпус выпрямляется.</span></li>
+        <li><span class="f">16–17</span><span>Выход в боевую стойку. Якорь ещё не на поясе — он вернётся в AnchorStow.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Кадры 6–12 не должны быть анимированы почти никак. Пассивное тело на цепи выглядит правильнее, чем активно летящий герой: тянет цепь, а не он сам.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">AnchorSweep</span><span class="chip warn">доработать</span><span class="cl">15 → 17 кадров</span></div>
+    <div class="cb">
+      <p class="why">Круговая подсечка: якорь на длинной цепи обходит персонажа и стягивает всех в радиусе к нему. Рывок длится 10 тиков. То же замечание — броска сейчас нет.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка.</span></li>
+        <li><span class="f">1–2</span><span>Срыв якоря с пояса, как в Leap. Пусть эти два кадра будут одинаковыми в обоих клипах — узнаваемый жест.</span></li>
+        <li><span class="f">3–5</span><span>Раскрутка. Якорь идёт вбок и вниз, корпус скручивается в противоход, вес садится на обе ноги.</span></li>
+        <li class="key"><span class="f">6</span><span>ЗАПУСК. Якорь уходит по низкой дуге, цепь размотана. Отсюда десять тиков рывка.</span></li>
+        <li><span class="f">7–16</span><span>Стяг. <strong>Десять кадров.</strong> Персонаж откидывается назад и тянет цепь на себя обеими руками, как швартовый конец. Пятки упёрты, колени согнуты. Он не крутится — он <em>тянет</em>, и это принципиально: крутится якорь.</span></li>
+        <li><span class="f">17</span><span>Разгибание, выход в стойку.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Соблазн сделать вращение вокруг оси велик, но тогда способность станет вторым Вихрем. Разница между ними — в том, кто движется: в Вихре персонаж, в Подсечке якорь.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">ChainStep</span><span class="chip ok">длина верна</span><span class="cl">5 кадров · цикл ×4</span></div>
+    <div class="cb">
+      <p class="why">Прыжок по цепи от врага к врагу, до четырёх подряд. Пять кадров на прыжок — точное совпадение с кодом, длину не трогай. Клип <strong>зациклен</strong>: он проигрывается до четырёх раз без остановки, поэтому шов обязан сойтись идеально.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Отрыв. Ноги толкают, корпус уже развёрнут к следующей цели, правая рука вытянута вдоль цепи.</span></li>
+        <li><span class="f">1–2</span><span>Полёт. Тело вытянуто по линии цепи, ноги подобраны. Самая короткая фаза — два кадра.</span></li>
+        <li><span class="f">3</span><span>Касание. Ноги выходят вперёд, колени принимают вес.</span></li>
+        <li><span class="f">4</span><span>Сжатие и сразу новый толчок. <strong>Эта поза должна совпадать с нулевой</strong> — иначе на втором прыжке будет рывок.</span></li>
+      </ul>
+      <div class="watch"><b>Как проверять</b>Не один проход, а минимум четыре подряд — столько прыжков даёт способность. Один проход шва не показывает никогда.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Whirlwind</span><span class="chip warn">сократить</span><span class="cl">91 → 32 кадра · контакт 10</span></div>
+    <div class="cb">
+      <p class="why">Вращение с саблей вокруг оси. Урон по коду приходит через <strong>10 тиков</strong>, а показ длится 0.94 секунды — то есть 91 кадр здесь избыточен втрое.</p>
+      <ul class="beats">
+        <li><span class="f">0–3</span><span>Приседание и закрутка в противоход: корпус уходит вправо, чтобы вращение влево читалось как раскрутка, а не как поворот.</span></li>
+        <li><span class="f">4–9</span><span>Разгон вращения, сабля выходит на горизонталь.</span></li>
+        <li class="key"><span class="f">10</span><span>КОНТАКТ. Первый полный оборот завершён, сабля на уровне пояса, максимальный радиус. Урон по кругу приходит здесь.</span></li>
+        <li><span class="f">11–24</span><span>Второй оборот, чуть быстрее первого. Корпус наклонён от оси, юбка и цепь отстают по инерции.</span></li>
+        <li><span class="f">25–28</span><span>Замедление. Сабля опускается, вес возвращается под центр.</span></li>
+        <li><span class="f">29–32</span><span>Читаемая поза выхода. Код рассчитывает увидеть её примерно на трёх четвертях клипа и дальше 0.18 с смешивает в стойку.</span></li>
+      </ul>
+      <div class="watch"><b>На что смотреть</b>Два оборота, не три и не полтора. Полтора выглядят как оступился, три — как танец.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">AnchorDraw</span><span class="chip stop">новый</span><span class="cl">5 кадров</span></div>
+    <div class="cb">
+      <p class="why">Снять якорь с пояса. <strong>Самый нужный клип из всех новых.</strong> Якорь теперь висит на бедре постоянно — модель <code>Weapons/Pelag/AnchorChain/Pelag_AnchorGrip</code> на кости <code>mixamorig:Hips</code>. Без этого клипа при броске в кадре окажется второй якорь.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка, рука у пояса.</span></li>
+        <li><span class="f">1–2</span><span>Кисть смыкается на рукояти, предплечье напрягается.</span></li>
+        <li><span class="f">3–4</span><span>Срыв вверх и от бедра, локоть ведёт.</span></li>
+        <li><span class="f">5</span><span>Якорь в руке на уровне пояса. Это стартовая поза для Leap, Sweep и тяжёлого удара — сделай её одинаковой во всех трёх.</span></li>
+      </ul>
+      <div class="watch"><b>Пока клипа нет</b>Могу временно прятать поясной якорь кодом на время полёта. Выглядит как исчезновение, но лучше двух якорей в кадре. Скажи — включу.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">AnchorStow</span><span class="chip stop">новый</span><span class="cl">6 кадров</span></div>
+    <div class="cb">
+      <p class="why">Вернуть якорь на пояс. Обратный Draw, но на кадр длиннее: убирать оружие всегда медленнее, чем доставать.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Якорь в руке после способности.</span></li>
+        <li><span class="f">1–3</span><span>Рука подводит его к бедру, цепь подбирается второй рукой.</span></li>
+        <li><span class="f">4–5</span><span>Посадка на пояс, кисть разжимается.</span></li>
+        <li><span class="f">6</span><span>Боевая стойка. Совпадает с нулевым кадром Draw — круг замкнут.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="move">
+  <div class="head">
+    <div class="eyebrow">05 · Клипы</div>
+    <h2>Передвижение</h2>
+  </div>
+  <p class="lede">Бег, стрейфы и остановки живут в одном дереве смешивания по параметрам <code>MoveX</code> и <code>MoveY</code>. Все они зациклены, и все обязаны иметь <strong>одинаковую фазу шага</strong>: смешивание между клипами с разной фазой даёт скольжение ног.</p>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Run</span><span class="chip ok">рабочий</span><span class="cl">33 кадра · цикл</span></div>
+    <div class="cb">
+      <p class="why">Опорный клип всего дерева. Все остальные подгоняются под его фазу, а не наоборот.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Контакт левой пятки, правая нога сзади в воздухе.</span></li>
+        <li><span class="f">8</span><span>Нижняя точка: вес на левой, колено согнуто, корпус просел.</span></li>
+        <li><span class="f">16</span><span>Полная смена — контакт правой пятки. Зеркало нулевого кадра.</span></li>
+        <li><span class="f">24</span><span>Нижняя точка на правой.</span></li>
+        <li><span class="f">33</span><span>Возврат в нулевую позу. Шов.</span></li>
+      </ul>
+      <div class="watch"><b>Что стоило бы добавить</b>Якорь на поясе должен качаться в противофазе шагу. Сейчас он привязан к <code>Hips</code> и качается вместе с ними — это правильно, но пары кадров ручного отставания хватило бы, чтобы он ощущался тяжёлым.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">StrafeLeft · StrafeRight · StrafeBack</span><span class="chip ok">рабочие</span><span class="cl">16 кадров · цикл</span></div>
+    <div class="cb">
+      <p class="why">Шаг боком и назад с корпусом, развёрнутым к цели. В изометрии игрок часто отходит, не отворачиваясь, — эти три клипа и делают бой читаемым.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Контакт ведущей ноги. Корпус развёрнут к камере на 30°, сабля поднята.</span></li>
+        <li><span class="f">8</span><span>Приставной шаг, ноги сходятся. Вес не проваливается — стрейф ниже и ровнее бега.</span></li>
+        <li><span class="f">16</span><span>Возврат в нулевую позу.</span></li>
+      </ul>
+      <div class="watch"><b>Главное</b>Шестнадцать кадров против тридцати трёх у бега. Фазы всё равно должны совпадать: половина цикла бега — это как раз 16 кадров, и смена ног обязана происходить в тот же момент.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">RunStart</span><span class="chip warn">коротко</span><span class="cl">5 → 8 кадров</span></div>
+    <div class="cb">
+      <p class="why">Разгон с места. Код даёт на разгон 3 тика, но клип может быть длиннее — он смешивается в бег, а не блокирует его.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка. Вес по центру.</span></li>
+        <li><span class="f">1–2</span><span>Наклон вперёд до того, как двинулась нога. Тело падает, ноги догоняют — так выглядит настоящий старт.</span></li>
+        <li><span class="f">3–5</span><span>Первый толчок задней ногой, самый длинный шаг во всём клипе.</span></li>
+        <li><span class="f">6–8</span><span>Выход на фазу бега. <strong>Конечная поза обязана совпасть с нулевым кадром Run</strong>, иначе на старте будет рывок.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">RunStop</span><span class="chip ok">совпадает</span><span class="cl">5 кадров</span></div>
+    <div class="cb">
+      <p class="why">Торможение. Код даёт 4 тика — пять кадров попадают почти точно, длину лучше не трогать.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Фаза бега, нога впереди.</span></li>
+        <li><span class="f">1–2</span><span>Упор пяткой, корпус отклоняется назад — противоход движению.</span></li>
+        <li><span class="f">3–4</span><span>Приставка второй ноги, лёгкий присед.</span></li>
+        <li><span class="f">5</span><span>Стойка. Совпадает с нулевым кадром Idle.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">TurnLeft_90 · TurnRight_90</span><span class="chip stop">новые</span><span class="cl">8 кадров</span></div>
+    <div class="cb">
+      <p class="why">Текущие <code>TurnLeft</code> (33 кадра) и <code>TurnRight</code> (36) не привязаны к углу поворота, поэтому в изометрии персонаж дёргается на месте. Параметр <code>TurnDirection</code> в контроллере уже есть — не хватает клипов под конкретный угол.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Стойка.</span></li>
+        <li><span class="f">1–2</span><span>Голова поворачивается первой. Всегда первой.</span></li>
+        <li><span class="f">3–5</span><span>Переступ: одна нога уходит, вторая вращается на носке. Корпус догоняет голову.</span></li>
+        <li><span class="f">6–8</span><span>Приставка, возврат в стойку под новым углом.</span></li>
+      </ul>
+      <div class="watch"><b>Если делать полный набор</b>Отдельные клипы на 45°, 90° и 180°. Но начни с 90° — он покрывает большинство поворотов в изометрии, а 180° можно собрать из двух.</div>
+    </div>
+  </div>
+</section>
+
+<section id="react">
+  <div class="head">
+    <div class="eyebrow">06 · Клипы</div>
+    <h2>Реакции и смерть</h2>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Hit</span><span class="chip stop">срочно</span><span class="cl">69 → 12 кадров</span></div>
+    <div class="cb">
+      <p class="why">Сейчас реакция на попадание длится <strong>2.3 секунды</strong>. За это время персонаж успевает получить ещё несколько ударов, и ни один из них не будет виден — реакция всё ещё проигрывает первый. Отсюда ощущение, что удары не чувствуются.</p>
+      <p class="why">Двенадцать кадров — 0.4 секунды. Этого достаточно, чтобы прочитать попадание, и мало настолько, чтобы следующее тоже прочиталось.</p>
+      <ul class="beats">
+        <li><span class="f">0</span><span>Текущая поза (клип смешивается поверх, а не заменяет).</span></li>
+        <li><span class="f">1–2</span><span>Резкий толчок: корпус отшатывается от удара, голова запаздывает на кадр.</span></li>
+        <li><span class="f">3–4</span><span>Крайняя точка. Плечо ушло, вес на задней ноге, свободная рука дёрнулась.</span></li>
+        <li><span class="f">5–9</span><span>Возврат — вдвое медленнее ухода. Это и есть вес удара.</span></li>
+        <li><span class="f">10–12</span><span>Стойка.</span></li>
+      </ul>
+      <div class="watch"><b>Самая выгодная правка в списке</b>Одна обрезка, никакой новой анимации: возьми из существующих 69 кадров лучшие 12 и выброси остальное. Полчаса работы, а бой изменится сильнее, чем от всего остального вместе.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Hit_Heavy</span><span class="chip stop">новый</span><span class="cl">18 кадров</span></div>
+    <div class="cb">
+      <p class="why">Тяжёлое попадание — с шагом назад. Нужен, чтобы игрок отличал царапину от серьёзного удара, не глядя на полоску здоровья.</p>
+      <ul class="beats">
+        <li><span class="f">0–2</span><span>Удар. Корпус складывается, обе руки идут вперёд по инерции.</span></li>
+        <li><span class="f">3–7</span><span>Вынужденный шаг назад — нога выходит, чтобы не упасть.</span></li>
+        <li><span class="f">8–13</span><span>Восстановление равновесия. Корпус ещё согнут.</span></li>
+        <li><span class="f">14–18</span><span>Выпрямление в стойку.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Hit_Back</span><span class="chip stop">новый</span><span class="cl">12 кадров</span></div>
+    <div class="cb">
+      <p class="why">Удар со спины. В изометрии бьют со всех сторон, и одна реакция на любое направление читается как безразличие. Зеркалить нельзя — направление другое, а не сторона.</p>
+      <ul class="beats">
+        <li><span class="f">0–2</span><span>Толчок вперёд, спина выгибается, голова запрокидывается.</span></li>
+        <li><span class="f">3–5</span><span>Шаг вперёд по инерции.</span></li>
+        <li><span class="f">6–9</span><span>Разворот через плечо — рефлекс, персонаж ищет, кто ударил.</span></li>
+        <li><span class="f">10–12</span><span>Стойка, уже развёрнутая на 30–40°.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Death</span><span class="chip ok">рабочий</span><span class="cl">179 кадров</span></div>
+    <div class="cb">
+      <p class="why">Здесь длина не вредит: смерть смотрят один раз за забег, и торопить её незачем. Трогать не нужно.</p>
+      <ul class="beats">
+        <li><span class="f">0–10</span><span>Момент, когда ноги перестают держать.</span></li>
+        <li><span class="f">11–60</span><span>Падение. Самая важная часть — тело должно падать, а не ложиться.</span></li>
+        <li><span class="f">61–120</span><span>Удар о землю и затухание.</span></li>
+        <li><span class="f">121–179</span><span>Оседание. Последняя поза остаётся на экране.</span></li>
+      </ul>
+      <div class="watch"><b>Что стоило бы</b>Второй вариант смерти на 45 кадров — на сотом забеге одна и та же смерть запоминается наизусть.</div>
+    </div>
+  </div>
+</section>
+
+<section id="links">
+  <div class="head">
+    <div class="eyebrow">07 · Клипы</div>
+    <h2>Связки</h2>
+  </div>
+  <p class="lede">Пять коротких клипов, которые сшивают состояния. В контроллере 41 переход, 23 из них мгновенные — эти щелчки и лечатся здесь. Каждая связка стоит 4–5 кадров и заметна сильнее, чем любой новый большой клип.</p>
 
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Клип</th><th class="num">Кадров</th><th>Что делает и почему без него плохо</th></tr></thead>
+      <thead><tr><th>Клип</th><th class="num">Кадров</th><th>Из чего в что · что происходит</th></tr></thead>
       <tbody>
         <tr>
-          <td class="name"><b>AnchorDraw</b></td><td class="num">5</td>
-          <td>Снимает якорь с пояса. <strong>Обязателен:</strong> якорь теперь висит на бедре постоянно, и при броске в кадре окажется второй.</td>
+          <td class="name">SaberA_to_B</td><td class="num">4</td>
+          <td>Из конечной позы A в стартовую B. Корпус продолжает разворот влево, сабля опускается по дуге. <strong>Самая заметная связка:</strong> автоатака идёт непрерывно, и без неё каждый второй удар начинается рывком.</td>
         </tr>
         <tr>
-          <td class="name"><b>AnchorStow</b></td><td class="num">6</td>
-          <td>Вешает обратно. Без него якорь возвращается телепортом.</td>
+          <td class="name">Recovery_Attack</td><td class="num">4</td>
+          <td>Из конца комбо в стойку. Коротко намеренно: автоатака повторяется часто, длинная оттяжка съест темп.</td>
         </tr>
         <tr>
-          <td class="name"><b>Recovery_Ability</b></td><td class="num">5</td>
-          <td>Возврат в стойку после способности. Сейчас переход из позы удара в Idle мгновенный — тело щёлкает.</td>
+          <td class="name">Recovery_Ability</td><td class="num">5</td>
+          <td>Из конца способности в стойку. Тело выпрямляется, цепь подбирается. Сейчас переход из позы удара в Idle мгновенный — тело щёлкает.</td>
         </tr>
         <tr>
-          <td class="name"><b>Recovery_Attack</b></td><td class="num">4</td>
-          <td>То же после комбо, но короче: автоатака повторяется часто, и длинная оттяжка съест темп.</td>
+          <td class="name">Ability_to_Run</td><td class="num">5</td>
+          <td>Из способности сразу в бег, минуя стойку. Игрок почти всегда бежит после каста, так что разрыв виден именно здесь. Конечная поза = нулевой кадр Run.</td>
+        </tr>
+        <tr>
+          <td class="name">Run_to_Ability</td><td class="num">4</td>
+          <td>Вход в способность на бегу, без остановки. Стартовая поза берётся из середины цикла бега, а не из стойки.</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <div class="note">
-    <div class="title">Про якорь на поясе</div>
-    <p>Он подключён и висит на кости <code>mixamorig:Hips</code> — качается с корпусом, а не с рукой. Модель: <code>Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorGrip.fbx</code>.</p>
-    <p>Пока <code>AnchorDraw</code> нет, есть временный выход: прятать поясной якорь кодом на время полёта. Выглядит как исчезновение, но лучше двух якорей в кадре. <em>Скажи — включу.</em></p>
-  </div>
-</section>
-
-<section id="links">
-  <div class="head">
-    <div class="eyebrow">04 · Пак, часть вторая</div>
-    <h2>Связки</h2>
-  </div>
-  <p class="lede">Пять клипов, которые сшивают состояния между собой. В контроллере 41 переход, из них 23 срабатывают мгновенно по триггеру — именно они и щёлкают.</p>
-
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Клип</th><th class="num">Кадров</th><th>Что делает</th></tr></thead>
-      <tbody>
-        <tr><td class="name"><b>SaberA_to_B</b></td><td class="num">4</td><td>Комбо B стартует из позы конца A, а не из стойки. Самая заметная связка: автоатака идёт непрерывно.</td></tr>
-        <tr><td class="name"><b>Ability_to_Run</b></td><td class="num">5</td><td>Выход из способности в бег. Разрыв виден здесь лучше всего — игрок почти всегда бежит сразу после каста.</td></tr>
-        <tr><td class="name"><b>Run_to_Ability</b></td><td class="num">4</td><td>Вход в способность на бегу, без остановки.</td></tr>
-        <tr><td class="name"><b>TurnLeft_90</b></td><td class="num">8</td><td rowspan="2">Развороты под конкретный угол. Текущие <code>TurnLeft/Right</code> не завязаны на градусы, поэтому в изометрии персонаж дёргается на месте. Параметр <code>TurnDirection</code> в контроллере уже есть.</td></tr>
-        <tr><td class="name"><b>TurnRight_90</b></td><td class="num">8</td></tr>
-      </tbody>
-    </table>
+    <div class="title">Правило стыковки</div>
+    <p>У связки конечная поза одного клипа обязана <strong>точно</strong> совпадать со стартовой позой следующего. Не «примерно похоже» — покадрово. Проще всего так: открой оба клипа, скопируй нужный ключ из одного и вставь в другой, и уже от него анимируй.</p>
   </div>
 </section>
 
 <section id="life">
   <div class="head">
-    <div class="eyebrow">05 · Пак, часть третья</div>
+    <div class="eyebrow">08 · Клипы</div>
     <h2>Оживление</h2>
   </div>
-  <p class="lede">Семь клипов, без которых игра работает, но персонаж выглядит механизмом.</p>
+  <p class="lede">Без этого игра работает, но персонаж выглядит механизмом. Делать последними — но делать.</p>
 
-  <div class="tablewrap">
-    <table>
-      <thead><tr><th>Клип</th><th class="num">Кадров</th><th>Что делает</th></tr></thead>
-      <tbody>
-        <tr><td class="name"><b>CombatIdle</b></td><td class="num">40</td><td>Боевая стойка, зациклена: вес на задней ноге, якорь наготове. Отличает «жду боя» от «стою».</td></tr>
-        <tr><td class="name"><b>Idle_Break_A</b></td><td class="num">60</td><td>Поправил повязку. Раз в 8–12 секунд простоя.</td></tr>
-        <tr><td class="name"><b>Idle_Break_B</b></td><td class="num">70</td><td>Крутанул цепь на пальце. Характерный жест — он один говорит про персонажа больше, чем описание.</td></tr>
-        <tr><td class="name"><b>Hit_Heavy</b></td><td class="num">12</td><td>Тяжёлое попадание с отшатыванием. Сейчас <code>Hit</code> один на любой урон.</td></tr>
-        <tr><td class="name"><b>Hit_Back</b></td><td class="num">10</td><td>Удар со спины. В изометрии бьют со всех сторон, и одна реакция на все читается как безразличие.</td></tr>
-        <tr><td class="name"><b>Death_Alt</b></td><td class="num">45</td><td>Второй вариант смерти. Одна и та же смерть на сотом забеге запоминается наизусть.</td></tr>
-        <tr><td class="name"><b>Victory</b></td><td class="num">50</td><td>Зачистил комнату. Одна секунда, которая превращает конец боя в событие.</td></tr>
-      </tbody>
-    </table>
+  <div class="clip">
+    <div class="ch"><span class="cn">CombatIdle</span><span class="chip stop">новый</span><span class="cl">40 кадров · цикл</span></div>
+    <div class="cb">
+      <p class="why">Боевая стойка в отличие от бытовой. Параметр <code>Relaxed</code> в контроллере уже есть — он и должен переключать эти два состояния.</p>
+      <ul class="beats">
+        <li><span class="f">0–20</span><span>Вдох. Вес медленно переходит на переднюю ногу, сабля чуть поднимается, цепь покачивается.</span></li>
+        <li><span class="f">20–40</span><span>Выдох, возврат. Амплитуда маленькая: боевая стойка — это собранность, а не дыхательная гимнастика.</span></li>
+      </ul>
+      <div class="watch"><b>Отличие от Idle</b>Вес на задней ноге, корпус вполоборота, сабля поднята, взгляд по горизонту. Игрок должен понимать, что персонаж в бою, даже когда тот стоит.</div>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Idle_Break_A</span><span class="chip stop">новый</span><span class="cl">60 кадров</span></div>
+    <div class="cb">
+      <p class="why">Поправил повязку, повёл плечом. Играется раз в 8–12 секунд простоя, начинается и заканчивается ровно в позе Idle.</p>
+      <ul class="beats">
+        <li><span class="f">0–10</span><span>Из Idle. Первое движение — голова.</span></li>
+        <li><span class="f">11–35</span><span>Рука идёт к голове, поправляет, опускается.</span></li>
+        <li><span class="f">36–50</span><span>Плечи разводятся и оседают.</span></li>
+        <li><span class="f">51–60</span><span>Возврат в позу Idle. Точный, покадровый.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Idle_Break_B</span><span class="chip stop">новый</span><span class="cl">70 кадров</span></div>
+    <div class="cb">
+      <p class="why">Крутанул цепь на пальце и поймал якорь. Характерный жест — он один говорит про персонажа больше, чем абзац описания. Если из всего раздела делать что-то одно, делай этот.</p>
+      <ul class="beats">
+        <li><span class="f">0–8</span><span>Из Idle. Рука уходит к поясу.</span></li>
+        <li><span class="f">9–20</span><span>Якорь снимается — тот же жест, что в AnchorDraw.</span></li>
+        <li><span class="f">21–48</span><span>Два оборота цепи вокруг кисти. Якорь ведёт, рука за ним.</span></li>
+        <li><span class="f">49–58</span><span>Ловля. Ладонь смыкается, цепь замирает — короткая пауза здесь стоит всей анимации.</span></li>
+        <li><span class="f">59–70</span><span>Возврат якоря на пояс и в позу Idle.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Victory</span><span class="chip stop">новый</span><span class="cl">50 кадров</span></div>
+    <div class="cb">
+      <p class="why">Комната зачищена. Одна секунда, которая превращает конец боя в событие, а не в тишину.</p>
+      <ul class="beats">
+        <li><span class="f">0–8</span><span>Опускание сабли, плечи расслабляются.</span></li>
+        <li><span class="f">9–22</span><span>Стряхивающее движение клинком вбок.</span></li>
+        <li><span class="f">23–38</span><span>Взгляд по сторонам — проверяет, все ли.</span></li>
+        <li><span class="f">39–50</span><span>Выход в расслабленный Idle.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clip">
+    <div class="ch"><span class="cn">Death_Alt</span><span class="chip stop">новый</span><span class="cl">45 кадров</span></div>
+    <div class="cb">
+      <p class="why">Второй вариант смерти, короче основного: падение вперёд на колени вместо падения назад. Выбирается случайно.</p>
+      <ul class="beats">
+        <li><span class="f">0–6</span><span>Складывается пополам.</span></li>
+        <li><span class="f">7–20</span><span>Колени бьются о землю.</span></li>
+        <li><span class="f">21–45</span><span>Заваливается лицом вперёд, сабля выпадает.</span></li>
+      </ul>
+    </div>
   </div>
 </section>
 
-<section id="setup">
+<section id="blender">
   <div class="head">
-    <div class="eyebrow">06 · Работа</div>
-    <h2>Blender: с чего начать</h2>
+    <div class="eyebrow">09 · Работа</div>
+    <h2>Blender по шагам</h2>
   </div>
 
   <ol class="steps">
     <li><div>
       <h3>Импорт</h3>
       <pre><code>File → Import → FBX (.fbx)
-Справа в панели импорта:
+В панели импорта справа:
   Armature → Automatic Bone Orientation → СНЯТЬ галку</code></pre>
-      <p>Без снятой галки Blender перестроит ориентации костей по-своему, и на экспорте обратно риг не совпадёт с тем, что ждёт Unity.</p>
+      <p>Без снятой галки Blender перестроит ориентации костей по-своему, и на экспорте риг не совпадёт с тем, что ждёт Unity.</p>
     </div></li>
 
     <li><div>
       <h3>Частота кадров — до всего остального</h3>
-      <pre><code>Output Properties (иконка принтера справа)
-  Frame Rate → 30</code></pre>
+      <pre><code>Output Properties (иконка принтера) → Frame Rate → 30</code></pre>
       <div class="note stop">
-        <div class="title">На этом уже спотыкались</div>
-        <p>Клипы Mixamo приходят в <strong>60 fps</strong>. Если не переключить сцену на 30 до правок, все длительности уедут ровно вдвое, и обнаружится это уже в игре.</p>
+        <div class="title">На этом спотыкаются все</div>
+        <p>Клипы Mixamo приходят в <strong>60 fps</strong>. Если не переключить сцену на 30 <em>до</em> правок, все длительности уедут ровно вдвое, а обнаружится это уже в игре. Правило 18-го кадра тоже посчитано для 30 fps — при 60 контакт был бы на 36-м.</p>
       </div>
     </div></li>
 
     <li><div>
       <h3>Найти анимацию</h3>
-      <pre><code>Сменить область на Animation (вкладки сверху)
+      <pre><code>Вкладка Animation вверху
   Dope Sheet → режим Action Editor
   Экшен уже подцеплен к арматуре</code></pre>
-      <p>Внизу видна шкала кадров, слева — список костей. Работать удобнее, выделив всю арматуру в Pose Mode клавишей <code>A</code>.</p>
+      <p>Работать удобнее, выделив всю арматуру в Pose Mode клавишей <code>A</code>: тогда операции над ключами применяются ко всем костям сразу.</p>
     </div></li>
 
     <li><div>
-      <h3>Понять, где контакт</h3>
-      <p>Прокрути клип и найди кадр, на котором клинок или якорь достигает цели. Запиши его номер — он понадобится и при правке, и при сдаче.</p>
-      <p><em>Для существующих комбо это кадр, дающий нормализованные 0.37 и 0.225 — то есть примерно 18-й из 49 у SaberCombo.</em></p>
+      <h3>Найти и отметить контакт</h3>
+      <p>Прокрути клип, найди кадр, где клинок или якорь достигает цели, и <strong>запиши его номер</strong>. Дальше вся работа сводится к тому, чтобы этот кадр стал 18-м.</p>
+    </div></li>
+
+    <li><div>
+      <h3>Поставить курсор на контакт</h3>
+      <pre><code>Встать на контактный кадр
+  Pivot Point → 2D Cursor  (в шапке Dope Sheet)</code></pre>
+      <p>Иначе масштабирование ключей поедет от начала клипа и утащит контакт вместе с собой. Это ровно тот шаг, который забывают и потом не понимают, почему всё разъехалось.</p>
+    </div></li>
+
+    <li><div>
+      <h3>Править, экспортировать, пересобирать</h3>
+      <p>Приёмы — в разделе 10, настройки экспорта — в 11. После каждого экспорта в Unity: <strong>Разлом → Собрать Pelag v5 — Mixamo controller</strong>.</p>
     </div></li>
   </ol>
 </section>
 
 <section id="craft">
   <div class="head">
-    <div class="eyebrow">07 · Ремесло</div>
+    <div class="eyebrow">10 · Ремесло</div>
     <h2>Семь приёмов</h2>
   </div>
   <p class="lede">Порядок не случаен: первые три чинят большинство клипов Mixamo, остальные добавляют то, чего в них не было изначально.</p>
 
   <h3>1. Срезать провисание</h3>
-  <p>У клипов Mixamo длинные вход и выход — они сделаны для витрины, а не для боя.</p>
+  <p>У Mixamo длинные вход и выход — они сделаны для витрины, а не для боя.</p>
   <pre><code>Pose Mode → A (выделить все кости)
 В Dope Sheet выделить лишние ключи в начале
 X → Delete Keyframes
@@ -405,9 +869,10 @@ X → Delete Keyframes
 
   <h3>2. Сжать до контакта, растянуть после</h3>
   <p>Это то, что делает удар весомым: быстрый разгон и медленная оттяжка.</p>
-  <pre><code>Выделить ключи ДО контакта  → S → 0.6 → Enter
-Выделить ключи ПОСЛЕ        → S → 1.3 → Enter</code></pre>
-  <p><em>Курсор при масштабировании работает как точка опоры — поставь его на контактный кадр, иначе поедет весь клип.</em></p>
+  <pre><code>Курсор стоит на контактном кадре, Pivot = 2D Cursor
+
+Выделить ключи ДО контакта   → S → 0.6 → Enter
+Выделить ключи ПОСЛЕ         → S → 1.3 → Enter</code></pre>
 
   <h3>3. Интерполяция</h3>
   <p>По умолчанию Bezier смазывает удар в кисель.</p>
@@ -415,7 +880,7 @@ X → Delete Keyframes
 Ключи у контакта  → T → Linear</code></pre>
 
   <h3>4. Добавить замах</h3>
-  <p>Вес удара живёт в кадрах <strong>до</strong> контакта, а не после. Если клип бьёт без подготовки, его не спасёт никакая оттяжка.</p>
+  <p>Вес удара живёт в кадрах <strong>до</strong> контакта. Если клип бьёт без подготовки, его не спасёт никакая оттяжка.</p>
   <pre><code>Встать за 3 кадра до начала движения
 Повернуть Spine и Chest на 8–12° ПРОТИВ направления удара
 I → Rotation</code></pre>
@@ -426,26 +891,26 @@ I → Rotation</code></pre>
 Встать на +1 кадр → Ctrl+V</code></pre>
 
   <h3>6. Замкнуть цикл</h3>
-  <p>Для <code>Idle</code>, <code>CombatIdle</code>, <code>ChainStep</code> и всех strafe.</p>
+  <p>Для <code>Idle</code>, <code>CombatIdle</code>, <code>ChainStep</code>, <code>Run</code> и всех стрейфов.</p>
   <pre><code>Скопировать первый ключ в последний кадр
-Шов должен сойтись ТОЧНО — иначе на стыке будет рывок</code></pre>
-  <p>Проверять зацикливание надо проигрыванием минимум трёх повторов подряд: один проход шва не показывает.</p>
+Шов должен сойтись ТОЧНО</code></pre>
+  <p>Проверять минимум тремя повторами подряд, а для <code>ChainStep</code> — четырьмя: столько прыжков даёт способность. Один проход шва не показывает никогда.</p>
 
   <h3>7. Развести верх и низ</h3>
-  <p>В контроллере есть отдельные триггеры <code>LowerAttackA</code>, <code>LowerAttackB</code>, <code>LowerHeavyAttack</code> — то есть нижняя часть тела может жить своей жизнью.</p>
-  <p>Практический смысл: <strong>ноги продолжают бег, пока руки бьют.</strong> Для этого клип удара делается так, чтобы ключи ниже пояса в нём отсутствовали — тогда их подставит слой локомоции.</p>
+  <p>В контроллере есть отдельные состояния для нижней части тела — <code>Lower_Saber_A_v5</code>, <code>Lower_Saber_B_v5</code>, <code>Lower_Whirlwind_v5</code> — и маски <code>Pelag_v5_UpperBody.mask</code> и <code>Pelag_v5_LowerBodyCombat.mask</code>.</p>
+  <p>Практический смысл: <strong>ноги продолжают бег, пока руки бьют.</strong> Для этого в клипе удара ключи ниже пояса должны отсутствовать — тогда их подставит слой локомоции. Не «стоять на месте», а именно не иметь ключей.</p>
 </section>
 
 <section id="export">
   <div class="head">
-    <div class="eyebrow">08 · Передача</div>
-    <h2>Экспорт и импорт</h2>
+    <div class="eyebrow">11 · Передача</div>
+    <h2>Экспорт и сборка</h2>
   </div>
 
   <h3>Из Blender</h3>
   <pre><code>File → Export → FBX (.fbx)
 
-Include → Limit to: Selected Objects (арматура + меш)
+Include → Limit to: Selected Objects  (арматура + меш)
 Armature → Add Leaf Bones → СНЯТЬ
 Bake Animation → включить
   Simplify → 0
@@ -459,75 +924,147 @@ Transform → Apply Scalings: FBX All</code></pre>
   <p>Выдели FBX → вкладка <strong>Animation</strong> в инспекторе.</p>
   <div class="tablewrap">
     <table>
-      <thead><tr><th>Поле</th><th>Значение</th><th>Зачем</th></tr></thead>
+      <thead><tr><th>Поле</th><th>Значение</th><th>Состояние</th></tr></thead>
       <tbody>
-        <tr><td>Root Transform Position (Y)</td><td class="name">Bake Into Pose</td><td>иначе клип потащит персонажа вверх</td></tr>
-        <tr><td>Root Transform Position (XZ)</td><td class="name">Bake Into Pose</td><td>положение решает симуляция, не клип</td></tr>
-        <tr><td>Root Transform Rotation</td><td class="name">Bake Into Pose</td><td>поворот тоже за симуляцией</td></tr>
-        <tr><td>Loop Time</td><td class="name">по клипу</td><td>вкл. для Idle, strafe, ChainStep</td></tr>
+        <tr><td>Root Transform Rotation</td><td class="name">Bake Into Pose</td><td><span class="chip ok">уже стоит везде</span></td></tr>
+        <tr><td>Root Transform Position (Y)</td><td class="name">Bake Into Pose</td><td><span class="chip ok">уже стоит везде</span></td></tr>
+        <tr><td>Root Transform Position (XZ)</td><td class="name">Bake Into Pose</td><td><span class="chip ok">уже стоит везде</span></td></tr>
+        <tr><td>Loop Time</td><td class="name">по клипу</td><td>вкл. у Idle, Run, стрейфов, ChainStep</td></tr>
         <tr><td>Start / End</td><td class="name">кадры</td><td>дешёвая обрезка без Blender</td></tr>
       </tbody>
     </table>
   </div>
-  <p><em>Start/End — самый быстрый способ поправить тайминг: обрезал начало, контакт уехал раньше. Годится для проб; для чистового результата всё же Blender, потому что обрезка не добавит замаха, которого в клипе нет.</em></p>
+  <p>Все три галки Bake Into Pose <strong>уже включены на всех двадцати клипах</strong> — я проверил файлы импорта. Задача здесь не поставить их, а не сбить: после переэкспорта Unity иногда сбрасывает настройки клипа, и это стоит проверять.</p>
+
+  <h3>Пересборка контроллера</h3>
+  <pre><code>Меню Unity → Разлом → Собрать Pelag v5 — Mixamo controller</code></pre>
+  <p>Заменил клип — пересобери. Добавил новый файл — его нужно вписать в <code>Assets/Editor/RazlomPelagV5AnimatorBuilder.cs</code>, иначе сборка его не увидит.</p>
+
+  <h3>Проверка проекта</h3>
+  <pre><code>cd C:\Users\d.grab\Desktop\the-game
+.\run-tests.ps1</code></pre>
+  <p>Должно быть <strong>203 / 203</strong> и «Game.View и Editor: собираются». Анимации тестов не ломают, но если покраснело — задето что-то ещё.</p>
+</section>
+
+<section id="check">
+  <div class="head">
+    <div class="eyebrow">12 · Проверка</div>
+    <h2>Чеклист</h2>
+  </div>
+  <p class="lede">Прогоняй по нему каждый готовый клип, прежде чем считать его сделанным. Галки сохраняются в браузере — можно закрыть вкладку и вернуться.</p>
+
+  <div class="cl-bar">
+    <button class="cl-reset" type="button" id="clReset">Сбросить все</button>
+    <span class="cl-count" id="clCount"></span>
+  </div>
+
+  <div class="cl-group">
+    <h3>В Blender, до экспорта</h3>
+    <ul>
+      <li><label><input type="checkbox" data-ck="b1"><span>Сцена стоит на <strong>30 fps</strong>, а не 60.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b2"><span>Контакт у атакующего клипа — <strong>ровно на 18-м кадре</strong>.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b3"><span>Контактный ключ продублирован на следующий кадр (задержка).</span></label></li>
+      <li><label><input type="checkbox" data-ck="b4"><span>Есть замах: за 3 кадра до движения корпус повёрнут против удара.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b5"><span>Кадры до контакта сжаты, после — растянуты.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b6"><span>Интерполяция: Bezier везде, Linear у контакта.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b7"><span>Ни одна кость <code>mixamorig:*</code> не переименована.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b8"><span><code>mixamorig:Hips</code> не смещён по X и Z ни в одном кадре.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b9"><span>У зацикленного клипа последний кадр совпадает с первым покадрово.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b10"><span>Цикл прокручен подряд минимум трижды (ChainStep — четырежды).</span></label></li>
+      <li><label><input type="checkbox" data-ck="b11"><span>У связки конечная поза совпала со стартовой позой следующего клипа.</span></label></li>
+      <li><label><input type="checkbox" data-ck="b12"><span>Длина совпадает с той, что указана в карточке клипа.</span></label></li>
+    </ul>
+  </div>
+
+  <div class="cl-group">
+    <h3>При экспорте</h3>
+    <ul>
+      <li><label><input type="checkbox" data-ck="e1"><span>Выделены <strong>и арматура, и меш</strong>, Limit to Selected Objects.</span></label></li>
+      <li><label><input type="checkbox" data-ck="e2"><span>Add Leaf Bones снят.</span></label></li>
+      <li><label><input type="checkbox" data-ck="e3"><span>Bake Animation включён, Simplify = 0.</span></label></li>
+      <li><label><input type="checkbox" data-ck="e4"><span>Apply Scalings = FBX All.</span></label></li>
+      <li><label><input type="checkbox" data-ck="e5"><span>Путь и имя файла те же, что были (для замены существующего).</span></label></li>
+    </ul>
+  </div>
+
+  <div class="cl-group">
+    <h3>В Unity, после импорта</h3>
+    <ul>
+      <li><label><input type="checkbox" data-ck="u1"><span>Три галки <strong>Bake Into Pose</strong> на месте (Rotation, Position Y, Position XZ).</span></label></li>
+      <li><label><input type="checkbox" data-ck="u2"><span>Loop Time стоит там, где клип зациклен, и снят там, где нет.</span></label></li>
+      <li><label><input type="checkbox" data-ck="u3"><span>В консоли нет предупреждений ретаргета по этому файлу.</span></label></li>
+      <li><label><input type="checkbox" data-ck="u4"><span>Контроллер пересобран через меню Разлом.</span></label></li>
+      <li><label><input type="checkbox" data-ck="u5"><span>Новый клип вписан в <code>RazlomPelagV5AnimatorBuilder.cs</code> (если это новый файл).</span></label></li>
+    </ul>
+  </div>
+
+  <div class="cl-group">
+    <h3>В игре — глазами</h3>
+    <ul>
+      <li><label><input type="checkbox" data-ck="g1"><span>Клинок встречает врага <strong>одновременно</strong> с тем, как тот дёргается.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g2"><span>Между клипами нет щелчка — тело не телепортируется в новую позу.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g3"><span>Ноги не скользят по полу на бегу и в стрейфах.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g4"><span>Якоря в кадре ровно один: либо на поясе, либо в руке.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g5"><span>Персонаж не уезжает с места сам по себе во время клипа.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g6"><span>Повторить удар пять раз подряд — связка выглядит непрерывной.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g7"><span>Получить три удара подряд — видны все три реакции, а не одна.</span></label></li>
+      <li><label><input type="checkbox" data-ck="g8"><span>Способность прямо из бега — вход и выход без остановки.</span></label></li>
+    </ul>
+  </div>
+
+  <div class="cl-group">
+    <h3>Перед тем как отдать мне</h3>
+    <ul>
+      <li><label><input type="checkbox" data-ck="h1"><span>Записана <strong>длина клипа в кадрах</strong>.</span></label></li>
+      <li><label><input type="checkbox" data-ck="h2"><span>Записан <strong>кадр контакта</strong> (для атак — должен быть 18).</span></label></li>
+      <li><label><input type="checkbox" data-ck="h3"><span><code>run-tests.ps1</code> даёт 203 / 203.</span></label></li>
+      <li><label><input type="checkbox" data-ck="h4"><span>В <code>git status</code> нет лишнего: только .fbx и .meta нужных клипов.</span></label></li>
+    </ul>
+  </div>
+
+  <div class="note teal">
+    <div class="title">Почему два последних числа обязательны</div>
+    <p>Из длины клипа считается <code>ContactNormalized = 18 ÷ длина</code>. Без неё я не могу обновить константу, а без обновлённой константы аварийная ветка восстановит позу не в том месте. Ровно это и разъехалось в прошлый раз.</p>
+  </div>
 </section>
 
 <section id="breaks">
   <div class="head">
-    <div class="eyebrow">09 · Границы</div>
+    <div class="eyebrow">13 · Границы</div>
     <h2>Что ломает всё</h2>
   </div>
 
   <div class="note stop">
     <div class="title">Не переименовывать кости</div>
-    <p>Риг — Mixamo, префикс <code>mixamorig:</code>, 65 костей. Ретаргет держится на именах: переименовал одну — клип молча перестанет двигать эту часть тела.</p>
+    <p>Риг — Mixamo, префикс <code>mixamorig:</code>, 65 костей. Ретаргет держится на именах: переименовал одну — клип молча перестанет двигать эту часть тела. Не ошибка в консоли, а именно тишина.</p>
   </div>
 
   <div class="note stop">
     <div class="title">Не двигать Hips по XZ</div>
     <p>Положение персонажа решает симуляция. Клип, который везёт тело сам, разъедет картинку с логикой: урон придёт туда, где персонаж по мнению кода, а не туда, где он на экране.</p>
-    <p>Правило поддерживается настройкой импорта <strong>Bake Into Pose</strong> — но полагаться только на неё не стоит, потому что она снимается одним кликом.</p>
+    <p>Настройка <strong>Bake Into Pose</strong> это подстраховывает, но она снимается одним кликом — не полагайся только на неё.</p>
   </div>
 
   <div class="note stop">
-    <div class="title">Не менять длительности, не сказав</div>
-    <p>Каждая цифра из раздела 02 живёт в коде. Клип короче или длиннее заявленного — и способность либо обрывается, либо тянет паузу после того, как гейплей уже кончился.</p>
+    <div class="title">Не менять длительности молча</div>
+    <p>Каждая цифра из раздела 02 живёт в коде. Клип короче или длиннее заявленного — и способность либо обрывается на середине, либо тянет паузу после того, как геймплей уже кончился.</p>
+    <p>Менять можно. Нельзя — не сказав.</p>
   </div>
 
   <div class="note">
     <div class="title">Сокеты, к которым цепляется снаряжение</div>
-    <p><code>mixamorig:RightHand</code> — сабля. <code>mixamorig:Hips</code> — якорь на поясе. Отдельных костей-сокетов у этого рига нет, пропсы садятся прямо на кости; их положение настраивается в инспекторе <code>ArenaView</code> ползунками, а не в Blender.</p>
-  </div>
-</section>
-
-<section id="handoff">
-  <div class="head">
-    <div class="eyebrow">10 · Приёмка</div>
-    <h2>Как сдавать</h2>
+    <p><code>mixamorig:RightHand</code> — сабля. <code>mixamorig:Hips</code> — якорь на поясе. Отдельных костей-сокетов у рига нет, пропсы садятся прямо на кости, а их точное положение настраивается ползунками в инспекторе <code>ArenaView</code> — не в Blender.</p>
   </div>
 
-  <p><strong>Файлы</strong> — в <code>razlom/Assets/Resources/Characters/Pelag_v5/Mixamo/</code>, имена по образцу <code>Pelag_MX_AnchorDraw.fbx</code>.</p>
-
-  <p><strong>С каждым клипом — два числа:</strong> длина в кадрах и кадр контакта. Без них я не могу пересчитать фазовые скорости, а без пересчёта удар разъедется с уроном.</p>
-
-  <p><strong>Проверка перед сдачей.</strong> В корне проекта:</p>
-  <pre><code>cd C:\Users\d.grab\Desktop\the-game
-.\run-tests.ps1</code></pre>
-  <p>Должно быть <strong>203/203 зелёных</strong> и «Game.View и Editor: собираются». Покраснело — задето что-то, чего задевать не следовало.</p>
-
-  <div class="note teal">
-    <div class="title">Порядок, если делать по одному</div>
-    <p><strong>1.</strong> <code>AnchorDraw</code> и <code>AnchorStow</code> — иначе якорей в кадре два.<br>
-    <strong>2.</strong> Два <code>Recovery</code> — самое заметное на глаз за наименьшие деньги.<br>
-    <strong>3.</strong> <code>SaberA_to_B</code> и <code>Ability_to_Run</code> — связки, которые чинят «щелчки».<br>
-    <strong>4.</strong> <code>CombatIdle</code> и два <code>Idle_Break</code> — персонаж перестаёт быть манекеном.<br>
-    <strong>5.</strong> Всё остальное.</p>
+  <div class="note">
+    <div class="title">Мёртвые триггеры</div>
+    <p><code>HeavyAttack</code>, <code>LowerHeavyAttack</code> и <code>Hook</code> объявлены в контроллере, но ни одно состояние на них не реагирует. Это не поломка — это проложенная проводка под клипы, которых пока нет.</p>
   </div>
 </section>
 
 <footer>
-  <p>Lost Veleor · пак анимаций Пелага, версия 1. Мастер-документ проекта — <code>the-game/PROJECT-STATE.md</code>; при расхождении прав файл на диске.</p>
-  <p>Ветка <code>Denis</code> · риг <code>Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx</code> · контроллер <code>Pelag_v5_FullCombat.controller</code></p>
+  <p>Lost Veleor · пак анимаций Пелага, ревизия 2. Все длины клипов и настройки импорта в этом документе вычитаны из файлов проекта на 1 сентября 2026, а не по памяти.</p>
+  <p>Мастер-документ — <code>the-game/PROJECT-STATE.md</code>; при расхождении прав файл на диске. Ветка <code>Denis</code> · риг <code>Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx</code> · контроллер <code>Pelag_v5_FullCombat.controller</code></p>
 </footer>
 
 </main>
@@ -536,22 +1073,62 @@ Transform → Apply Scalings: FBX All</code></pre>
 <script>
 (function(){
   var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
-  if(!links.length) return;
   var map = {};
   links.forEach(function(a){
-    var id = a.getAttribute('href').slice(1);
-    var el = document.getElementById(id);
-    if(el) map[id] = a;
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if(el) map[el.id] = a;
   });
-  var obs = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){
-        links.forEach(function(l){ l.classList.remove('on'); });
-        var a = map[e.target.id];
-        if(a) a.classList.add('on');
-      }
+  if(window.IntersectionObserver && Object.keys(map).length){
+    var obs = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('on'); });
+          if(map[e.target.id]) map[e.target.id].classList.add('on');
+        }
+      });
+    }, { rootMargin: '-8% 0px -78% 0px', threshold: 0 });
+    Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+  }
+})();
+
+(function(){
+  var KEY = 'pelag-anim-checklist-v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('[data-ck]'));
+  var count = document.getElementById('clCount');
+  var reset = document.getElementById('clReset');
+  if(!boxes.length) return;
+
+  function load(){
+    try{
+      var raw = window.localStorage.getItem(KEY);
+      return raw ? JSON.parse(raw) : {};
+    }catch(e){ return {}; }
+  }
+  function save(state){
+    try{ window.localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function render(){
+    var done = boxes.filter(function(b){ return b.checked; }).length;
+    if(count) count.textContent = done + ' из ' + boxes.length;
+  }
+
+  var state = load();
+  boxes.forEach(function(b){
+    if(state[b.getAttribute('data-ck')]) b.checked = true;
+    b.addEventListener('change', function(){
+      var s = load();
+      s[b.getAttribute('data-ck')] = b.checked;
+      save(s);
+      render();
     });
-  }, { rootMargin: '-8% 0px -78% 0px', threshold: 0 });
-  Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+  });
+  if(reset){
+    reset.addEventListener('click', function(){
+      boxes.forEach(function(b){ b.checked = false; });
+      save({});
+      render();
+    });
+  }
+  render();
 })();
 </script>
