@@ -15,7 +15,7 @@ public static class RazlomPelagV5RuntimeValidator
 {
     private const int ExpectedMixamoImporterCount = 19;
     private const string RuntimePath =
-        "Assets/Resources/Characters/Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx";
+        "Assets/Resources/Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig.fbx";
     private const string MixamoFolder =
         "Assets/Resources/Characters/Pelag_v5/Mixamo";
     private const string ControllerPath =
@@ -155,7 +155,7 @@ public static class RazlomPelagV5RuntimeValidator
     private static void ValidateRuntimeModel(Report report, List<string> errors)
     {
         GameObject prefab = Resources.Load<GameObject>(
-            "Characters/Pelag_v5/Runtime/Pelag_v5_MixamoRig");
+            "Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig");
         report.runtimeModelLoaded = prefab != null;
         if (prefab == null)
         {

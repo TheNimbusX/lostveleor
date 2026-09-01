@@ -59,3 +59,8 @@ TestResults/
 *.suo
 Thumbs.db
 Desktop.ini
+
+# Working files for character generation (Tripo/Mixamo intermediates).
+# The editable .blend and source art live in ART/; everything here is scratch
+# and must never reach a teammate as a multi-megabyte download.
+/characters/

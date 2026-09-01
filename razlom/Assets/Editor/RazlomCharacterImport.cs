@@ -37,9 +37,9 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamo => NormalPath.Contains("/Pelag_v5/Mixamo/");
 
     private bool IsPelagMixamoRuntime =>
-        NormalPath.EndsWith("/Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx");
+        NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
 
-    public override uint GetVersion() => 7;
+    public override uint GetVersion() => 8;
 
     private void OnPreprocessAnimation()
     {
