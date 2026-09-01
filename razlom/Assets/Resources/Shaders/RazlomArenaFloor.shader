@@ -67,7 +67,21 @@ Shader "Razlom/Arena Floor"
                                                0.5 - max(edge.x, edge.y));
 
                 half3 normal = normalize(input.normalWS);
-                Light light = GetMainLight(input.shadowCoord);
+
+                // ТЕНЬ СЧИТАЕТСЯ ВО ФРАГМЕНТЕ, А НЕ В ВЕРШИНЕ.
+                //
+                // Здесь стояло GetMainLight(input.shadowCoord) с координатой,
+                // посчитанной в вершинном шейдере. Для персонажа это работает:
+                // у него плотный меш, и между вершинами интерполировать нечего.
+                //
+                // Плита пола — это Cube из ВОСЬМИ вершин, растянутый на всю
+                // комнату. Координата тени интерполировалась между четырьмя
+                // углами через двадцать метров и не попадала ни во что; тень
+                // на полу просто не появлялась. В лагере тени были, потому что
+                // там геометрия авторская и на обычном URP/Lit, — оттого и
+                // выглядело как «в сцене есть, в игре нет».
+                float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+                Light light = GetMainLight(shadowCoord);
                 half diffuse = saturate(dot(normal, light.direction));
                 half lit = smoothstep(0.28h, 0.62h, diffuse * light.shadowAttenuation);
                 half shade = lerp(0.62h, 1.0h, lit);
