@@ -134,11 +134,22 @@ Shader "Razlom/Texture Toon"
                 // уходит в сине-фиолетовое. Разница в ЦВЕТЕ, а не в темноте:
                 // тень остаётся светлой, но другого тона — оттого картинка
                 // читается насыщенной, не теряя деталь в чёрном.
-                half3 shadowTone = lerp(half3(0.30h, 0.35h, 0.50h),
-                                        _ShadowColor.rgb, 0.24h);
+                // СИНЕВУ ДАЁТ СВЕТ, А НЕ ШЕЙДЕР.
+                //
+                // Здесь стояло (0.30, 0.35, 0.50), и это была ошибка сложения:
+                // холодный оттенок задавался ОДНОВРЕМЕННО тут, в амбиенте, в
+                // filll-свете сцены, в градиенте окружения и в Split Toning.
+                // Пять источников одного и того же тона перемножились, и кадр
+                // ушёл в бирюзу целиком.
+                //
+                // Правило: тон принадлежит освещению. Шейдер только честно
+                // показывает то, что дали свет и окружение, и добавляет от
+                // себя лишь чуть-чуть — иначе он спорит со сценой.
+                half3 shadowTone = lerp(half3(0.38h, 0.39h, 0.43h),
+                                        _ShadowColor.rgb, 0.16h);
                 // Полутон — переход, и он тоже слегка холодный: тёплым он
                 // склеивался бы со светлой стороной в одно пятно.
-                half3 midTone = lerp(half3(0.70h, 0.72h, 0.78h),
+                half3 midTone = lerp(half3(0.74h, 0.73h, 0.72h),
                                      _MidColor.rgb, 0.30h);
                 half3 lightTone = keyTint * 1.22h;
                 half3 tone = lerp(shadowTone, midTone, midBand);
@@ -158,9 +169,13 @@ Shader "Razlom/Texture Toon"
                 // теневой стороне: на светлой он смешался бы с ключом и съел
                 // тёплый акцент.
                 half3 ambient = max(SampleSH(normal), half3(0, 0, 0));
-                half3 skyFill = lerp(half3(0.62h, 0.74h, 1.0h), half3(1.0h, 1.0h, 1.0h),
-                                     lightBand);
-                half ambientAmount = lerp(0.34h, 0.12h, lightBand);
+                // ЦВЕТ АМБИЕНТА УЖЕ ЛЕЖИТ В SampleSH.
+                //
+                // Он берётся из градиента Environment Lighting, то есть из
+                // неба, которое настроено в сцене. Домножать его ещё на свой
+                // голубой множитель — ровно та двойная порция, из-за которой
+                // всё посинело. Осталась только СИЛА вклада, без цвета.
+                half ambientAmount = lerp(0.26h, 0.10h, lightBand);
 
                 half3 viewDir = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
 
@@ -171,7 +186,7 @@ Shader "Razlom/Texture Toon"
                 half rim = pow(rimRaw, _RimPower + 2.0h);
                 rim *= 0.25h + 0.75h * lightBand;
 
-                half3 color = texel.rgb * (tone + ambient * skyFill * ambientAmount);
+                half3 color = texel.rgb * (tone + ambient * ambientAmount);
 
                 // The Orvill atlas intentionally contains near-black cloth and
                 // armour. A small light-side visibility floor keeps those forms
