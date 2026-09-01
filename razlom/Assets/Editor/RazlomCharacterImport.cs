@@ -39,7 +39,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamoRuntime =>
         NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
 
-    public override uint GetVersion() => 8;
+    public override uint GetVersion() => 9;
 
     private void OnPreprocessAnimation()
     {
@@ -223,6 +223,21 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
                 importer.importNormals = ModelImporterNormals.Import;
                 importer.importTangents = ModelImporterTangents.CalculateMikk;
                 importer.materialImportMode = ModelImporterMaterialImportMode.None;
+
+                // ТЕЛО ПРИВОДИТСЯ К ЕДИНИЦАМ КЛИПОВ, А НЕ К МЕТРАМ.
+                //
+                // Clips bind bone positions, not just rotations, so the body has
+                // to share the skeleton scale the clips were authored on. That
+                // scale is v5's: a bind pose 0.978 units tall, which WoleScale
+                // 1.82 turns into the 1.78 m the artist specified.
+                //
+                // v6 comes out of Blender normalised to metres - 1.8 units - so
+                // it needs 0.978 / 1.8. Left alone it would not merely look
+                // wrong, it would pull the skeleton apart under animation.
+                //
+                // Меняешь тело — прогони «Разлом → Проверить Pelag v6 runtime»
+                // и подгони этот множитель так, чтобы meshHeight стал 0.978.
+                importer.globalScale = 0.5433f;
             }
             return;
         }
