@@ -15,9 +15,36 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 8;
+    private const int LibraryVersion = 9;
+
+    // ЛЕТИТ ГОЛОВА ЯКОРЯ, А НЕ ВЕСЬ МОТОК.
+    //
+    // До 1 сентября здесь стоял Pelag_AnchorChain.fbx — исходная генерация
+    // целиком: якорь, свёрнутая спиралью цепь и рукоять с лентами, сплавленные
+    // в один шелл на 22 824 треугольника. В полёте это читалось не как
+    // брошенный якорь, а как летящий клубок; и стоило столько же, сколько
+    // весь вражеский солдат.
+    //
+    // Голова вырезана из того же исходника по высоте (разделение по несвязным
+    // кускам даёт ровно один объект — модель сплавлена) и упрощена до 2600
+    // треугольников. Начало координат — в точке, где от неё уходит цепь,
+    // чтобы код не искал её заново.
     private const string AnchorPath =
-        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorChain.fbx";
+        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorHead.fbx";
+
+    /// <summary>
+    /// Рукоять с лентами: то, что остаётся в руке, когда якорь брошен.
+    /// ПОКА НЕ ПОДКЛЮЧЕНА — вырезана и лежит, ждёт своей анимации.
+    /// </summary>
+    private const string AnchorGripPath =
+        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorGrip.fbx";
+
+    /// <summary>
+    /// Одно звено для процедурной цепи PelagChainLinkStrip.
+    /// ПОКА НЕ ПОДКЛЮЧЕНО — цепь всё ещё рисуется линией, а не звеньями.
+    /// </summary>
+    private const string ChainLinkPath =
+        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_ChainLink.fbx";
     private const string HovlKnifeHitPath =
         "Assets/Hovl Studio/AOE Magic spells Vol.1/Prefabs/Knife hit.prefab";
     private const string HovlStoneSlashPath =

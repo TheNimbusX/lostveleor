@@ -203,9 +203,16 @@ namespace Game.View
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
                 }
-                else if (e.Type == SimEventType.AbilityCast && IsWhirlwindSlot(e.Amount))
+                else if (e.Type == SimEventType.AbilityCast)
                 {
-                    ScheduleGameplayWhirlwind();
+                    // ДО 1 СЕНТЯБРЯ ЗДЕСЬ ЖИЛ ТОЛЬКО ВИХРЬ.
+                    //
+                    // Presentation трёх остальных способностей была написана
+                    // целиком — prefab'ы, цепь, полёт якоря, — но вызывалась
+                    // только из showcase-режима. В бою они кастовались молча
+                    // и невидимо: логика двигала тела, а на экране не было
+                    // ни якоря, ни цепи.
+                    PlayGameplayAbility(e.Amount);
                 }
                 else if (e.Type == SimEventType.Damage
                          && e.DamageOrigin == DamageOrigin.BasicAttack)
@@ -469,10 +476,63 @@ namespace Game.View
             PulseCombatLight(1f);
         }
 
+        /// <summary>
+        /// Показ способности по НАСТОЯЩЕМУ касту, а не по витрине.
+        ///
+        /// Отличие от showcase одно, но существенное: цель берётся из
+        /// симуляции, а не выдумывается на три с половиной метра вперёд.
+        /// Якорь обязан прилететь туда, куда действительно уехало тело, —
+        /// иначе цепь показывает одно, а игрок оказывается в другом.
+        /// </summary>
+        private void PlayGameplayAbility(int slot)
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null || slot < 0 || slot >= Simulation.AbilitySlots) return;
+
+            AbilityBuild build = sim.GetAbility(slot);
+            if (build == null) return;
+
+            int id = build.DefinitionId;
+            if (id == AbilityDefinition.WhirlwindId)
+            {
+                ScheduleGameplayWhirlwind();
+            }
+            else if (id == AbilityDefinition.AnchorLeapId)
+            {
+                PlayAnchorLeapTo(ForcedTargetWorld(sim), false);
+            }
+            else if (id == AbilityDefinition.AnchorSweepId)
+            {
+                PlayAnchorSweep(false);
+            }
+            else if (id == AbilityDefinition.ChainStepId)
+            {
+                PlayChainStep(false);
+            }
+        }
+
+        /// <summary>Куда симуляция реально тащит игрока, в мировых координатах.</summary>
+        private Vector3 ForcedTargetWorld(Simulation sim)
+        {
+            EntityStore e = sim.Entities;
+            int player = Simulation.PlayerId;
+            if (e.ForcedTicksLeft[player] <= 0) return PlayerPosition();
+
+            FixVec2 t = e.ForcedTarget[player];
+            return new Vector3(t.X.ToFloat(), 0f, t.Y.ToFloat());
+        }
+
         private void PlayAnchorLeap(bool showcase)
         {
+            // Витрина целится сама: настоящей цели в этом режиме нет.
+            PlayAnchorLeapTo(
+                PlayerPosition() + CameraPlaneDirection(new Vector3(1f, 0f, 0.25f)) * 3.8f,
+                showcase);
+        }
+
+        private void PlayAnchorLeapTo(Vector3 target, bool showcase)
+        {
             Vector3 player = PlayerPosition();
-            Vector3 target = player + CameraPlaneDirection(new Vector3(1f, 0f, 0.25f)) * 3.8f;
             StartMotion(PelagVfxShowcase.AnchorLeap, player, target, showcase);
             _arena.PlayPlayerAbilityPresentation(1);
 
