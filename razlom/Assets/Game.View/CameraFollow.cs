@@ -23,24 +23,36 @@ namespace Game.View
 
         private Vector3 _offset;
         private bool _ready;
+        private bool _initialized;
         private int _generation = -1;
+
+        /// <summary>Явно связывает авторскую камеру с runtime-драйвером.</summary>
+        public void Initialize(TickDriver driver, Transform target)
+        {
+            Driver = driver;
+            Target = target;
+            _offset = Target != null ? Target.position : Vector3.zero;
+            _generation = -1;
+            _ready = false;
+            _initialized = Driver != null && Target != null;
+            enabled = _initialized;
+        }
 
         private void Start()
         {
-            if (Target == null || Driver == null)
+            if (!_initialized && Target != null && Driver != null)
+                Initialize(Driver, Target);
+
+            if (!_initialized)
             {
                 enabled = false;
                 return;
             }
-
-            // Смещение запоминается от стартового положения камеры: угол
-            // и дальность задал Bootstrap, и трогать их здесь незачем.
-            _offset = Target.position;
         }
 
         private void LateUpdate()
         {
-            if (Driver.Sim == null) return;
+            if (!_initialized) return;
 
             // Сменилась симуляция — игрок стоит в другом месте карты, и наезд
             // из прошлой точки был бы полётом через полкарты.
@@ -48,6 +60,16 @@ namespace Game.View
             {
                 _generation = Driver.Generation;
                 _ready = false;
+            }
+
+            if (Driver.Sim == null)
+            {
+                // Лагерь авторский и стоит в мировом нуле. После выхода из
+                // Разлома камера обязана вернуться к сохранённой сценой точке,
+                // иначе она продолжила бы смотреть на последнюю комнату забега.
+                Target.position = _offset;
+                _ready = false;
+                return;
             }
 
             Vector3 player = Driver.GetRenderPosition(Simulation.PlayerId);

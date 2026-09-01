@@ -1,0 +1,76 @@
+<!--
+  Сборка Game.View и редакторных скриптов ВНЕ Unity.
+
+  Зачем: тесты покрывают только Game.Sim, а представление — самый объёмный и
+  самый правимый слой. Без этой обвязки единственный способ узнать об опечатке
+  в ArenaView — открыть редактор и подождать. Здесь на это уходят секунды, и
+  проверка работает, когда Unity занят.
+
+  Обвязка уже существовала и была утрачена 30 августа вместе с папкой code/.
+  Восстановлена 1 сентября; живёт в репозитории, чтобы не потеряться снова.
+
+  ВАЖНО: это проверка КОМПИЛЯЦИИ, а не тест. Она ловит опечатки, несуществующие
+  поля и разъехавшиеся сигнатуры — но ничего не говорит о том, правильно ли
+  выглядит игра.
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>ViewCheck</AssemblyName>
+    <RootNamespace>ViewCheck</RootNamespace>
+    <NoWarn>CS0649;CS0414;CS0169;CS8032</NoWarn>
+    <!-- Ссылки на DLL редактора: путь один и тот же у всех, кто ставил Unity
+         через Hub. Версия вынесена, чтобы обновление редактора чинилось
+         правкой одной строки. -->
+    <UnityRoot>C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Data</UnityRoot>
+    <RazlomAssets>..\..\razlom\Assets</RazlomAssets>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Симуляция идёт в исходниках: Game.View ссылается на её типы, а
+         собранной DLL вне Unity не существует. -->
+    <Compile Include="$(RazlomAssets)\Game.Sim\**\*.cs" />
+    <Compile Include="$(RazlomAssets)\Game.Data\**\*.cs" />
+    <Compile Include="$(RazlomAssets)\Game.View\**\*.cs" />
+    <Compile Include="$(RazlomAssets)\Editor\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="UnityEngine">
+      <HintPath>$(UnityRoot)\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEditor">
+      <HintPath>$(UnityRoot)\Managed\UnityEditor.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Модульные сборки движка: UnityEngine.dll — только фасад. -->
+    <Reference Include="@(UnityModules)" />
+  </ItemGroup>
+
+  <Target Name="CollectUnityModules" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <UnityModuleDll Include="$(UnityRoot)\Managed\UnityEngine\*.dll" />
+      <UnityModuleDll Include="$(UnityRoot)\UnityExtensions\Unity\**\*.dll" />
+      <!-- URP и прочие пакеты живут не в установке редактора, а в проекте:
+           Unity компилирует их в Library/ScriptAssemblies. Оттуда и берём —
+           так проверка использует ровно ту версию URP, что стоит в проекте,
+           а не ту, что случайно оказалась в редакторе.
+
+           Следствие: папку Library удалили или проект ни разу не открывали —
+           этих DLL нет, и сборка честно падает на отсутствующих ссылках.
+           Лечится одним открытием редактора. -->
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.RenderPipelines.*.dll" />
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.*.dll" />
+      <Reference Include="%(UnityModuleDll.Filename)">
+        <HintPath>%(UnityModuleDll.FullPath)</HintPath>
+        <Private>false</Private>
+      </Reference>
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -42,8 +42,16 @@ namespace Game.View
 
         // Simulation owns the contact tick. Derive presentation timings from
         // that value so an animation cannot silently drift from Damage.
-        private static readonly float AttackContactTime =
+        //
+        // ЗАМАХ РАЗНЫЙ У ГЕРОЯ И У ВРАГА, поэтому и контакт разный. Общая
+        // константа здесь означала бы, что анимация врага бьёт на 0.2 с, а урон
+        // приходит на 0.4 — то есть клинок проходит сквозь цель за две десятых
+        // до того, как что-то произойдёт. Ровно та рассинхронизация, ради
+        // устранения которой замах и разносили с контактом.
+        private static readonly float PlayerAttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
+        private static readonly float EnemyAttackContactTime =
+            Simulation.EnemyAttackWindupTicks / (float)Simulation.TicksPerSecond;
         private const float AttackAnticipationEnd = 0.12f;
         private const float AttackContactEndOffset = 0.10f;
         private const float AttackRecoveryEndOffset = 0.32f;
@@ -76,18 +84,24 @@ namespace Game.View
         // 1.93 m/s at 1x versus Orvill's deterministic 3.5 m/s full speed.
         private const float OrvillLocomotionBasePlaybackSpeed = 1.81f;
         private const float OrvillLocomotionMinPlaybackSpeed = 0.42f;
+        // Клипы Орвилла подгоняются под ЕГО контакт, а не под геройский.
         private static readonly float OrvillSwordPlaybackSpeed =
-            OrvillSwordAuthoredContactTime / AttackContactTime;
+            OrvillSwordAuthoredContactTime / EnemyAttackContactTime;
         private static readonly float OrvillSwordPresentationDuration =
             OrvillSwordAuthoredDuration / OrvillSwordPlaybackSpeed;
         private static readonly float OrvillShieldPlaybackSpeed =
-            OrvillShieldAuthoredContactTime / AttackContactTime;
+            OrvillShieldAuthoredContactTime / EnemyAttackContactTime;
         private static readonly float OrvillShieldPresentationDuration =
             OrvillShieldAuthoredDuration / OrvillShieldPlaybackSpeed;
 
         private Animator _animator;
         private SpriteCharacterVisual _spriteVisual;
         private Faction _faction;
+
+        /// <summary>Контакт той стороны, которую показывает этот вид.</summary>
+        private float AttackContactTime => _faction == Faction.Wole
+            ? PlayerAttackContactTime
+            : EnemyAttackContactTime;
         private int _attackVariant;
         private int _orvillAttackCount;
         private float _actionProtectedUntil;

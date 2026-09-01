@@ -223,9 +223,25 @@ Shader "Razlom/Texture Toon"
                 // the dense hair/clothes outline crawl with camera distance.
                 float3 normalVS = TransformWorldToViewDir(normalWS, true);
                 float2 direction = normalVS.xy;
-                float directionLength = max(length(direction), 0.0001);
+                float directionLength = length(direction);
+
+                // СИЛУЭТ, А НЕ КАРТА РЁБЕР.
+                //
+                // Раньше направление здесь нормализовалось безусловно, и каждая
+                // вершина уезжала на полную ширину — включая те, чья нормаль
+                // смотрит прямо в камеру. У брони таких вершин большинство:
+                // плоскость наплечника, пластина юбки, пряжка. Оболочка рвалась
+                // на каждом жёстком ребре, и сквозь разрыв проступал контур
+                // ВНУТРИ фигуры. Отсюда «много лишних линий» вместо силуэта.
+                //
+                // Силуэт — это ровно те места, где нормаль перпендикулярна
+                // взгляду, то есть где длина её экранной проекции близка к
+                // единице. Ей и надо мерить толщину. Степень добавляет порог:
+                // полутон гасится, край остаётся.
+                float silhouette = directionLength * directionLength * directionLength;
                 float2 pixelSize = 2.0 / _ScreenParams.xy;
-                output.positionCS.xy += (direction / directionLength) * pixelSize *
+                output.positionCS.xy += (direction / max(directionLength, 0.0001)) *
+                                        silhouette * pixelSize *
                                         _OutlineWidth * output.positionCS.w;
                 return output;
             }

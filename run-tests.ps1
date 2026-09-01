@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
@@ -27,4 +27,28 @@ if (-not (Test-Path -LiteralPath $resultFile)) {
 }
 
 Write-Host "Test XML: $resultFile"
+
+# ---------------------------------------------------------------------------
+# Сборка представления вне Unity.
+#
+# Тесты покрывают только Game.Sim, а правится чаще всего Game.View. Без этого
+# шага опечатка в ArenaView живёт до следующего открытия редактора — и находит
+# её обычно владелец, а не автор правки. Здесь она находится за секунды.
+#
+# Проверка КОМПИЛЯЦИИ, не поведения: она ничего не говорит о том, как игра
+# выглядит. Но неверный код до картинки и не доходит.
+# ---------------------------------------------------------------------------
+$viewCheck = Join-Path $repoRoot 'tools\viewcheck\viewcheck.csproj'
+if (Test-Path -LiteralPath $viewCheck) {
+    Write-Host ''
+    Write-Host 'Сборка Game.View и Editor вне Unity...'
+    dotnet build $viewCheck --nologo -v q
+    if ($LASTEXITCODE -ne 0) {
+        throw "Game.View/Editor не собираются (код $LASTEXITCODE)."
+    }
+    Write-Host 'Game.View и Editor: собираются.'
+}
+else {
+    Write-Warning "Обвязки viewcheck нет: $viewCheck. Представление не проверено."
+}
 

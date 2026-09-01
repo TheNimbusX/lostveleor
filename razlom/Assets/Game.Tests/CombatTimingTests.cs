@@ -17,7 +17,59 @@ namespace Game.Tests
         public void BasicAttack_ContactWindowIsFastEnoughForGrindCombat()
         {
             Assert.AreEqual(12, Simulation.AttackWindupTicks,
-                "базовый клинок обязан подтверждать контакт около 0.4 с, а не на 0.6 с");
+                "замах героя — слепок анимации: клип удара разогнан так, чтобы " +
+                "авторская поза контакта пришлась ровно на 12/30 с. Менять " +
+                "цифру можно только вместе с клипами и фазовыми скоростями " +
+                "в CharacterAnimatorView, иначе урон опережает клинок");
+        }
+
+        /// <summary>
+        /// Замах врага — телеграф, а не вес удара. Он обязан оставаться заметно
+        /// длиннее геройского, иначе игроку нечего читать и не на что успевать.
+        /// Тест сторожит именно РАЗНИЦУ: уравняют константы — покраснеет.
+        /// </summary>
+        [Test]
+        public void EnemyWindup_StaysLongerThanTheHeroSoItReadsAsATelegraph()
+        {
+            Assert.AreEqual(12, Simulation.EnemyAttackWindupTicks,
+                "телеграф врага держится на 0.4 с");
+            Assert.GreaterOrEqual(Simulation.EnemyAttackWindupTicks,
+                Simulation.AttackWindupTicks,
+                "враг не имеет права заносить удар быстрее героя: его замах — " +
+                "это окно на реакцию, и оно не может быть короче геройского");
+        }
+
+        /// <summary>Каждая сторона бьёт по своему замаху, а не по чужому.</summary>
+        [Test]
+        public void EnemyAttack_LandsOnTheEnemyWindup_NotTheHeroOne()
+        {
+            var sim = new Simulation(7101UL, 16);
+            sim.SetupTestArena(0);
+            int enemy = sim.Entities.Spawn(
+                new FixVec2(Fix64.One, Fix64.Zero), 4000, Faction.Orvill);
+            sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(enemy);
+
+            InputFrame idle = InputFrame.Empty;
+
+            // Ловим тик, на котором враг занёс удар, и меряем расстояние до
+            // контакта. Именно эта величина и есть его замах; шагать до самого
+            // контакта не нужно — попадание проверяют другие тесты, а здесь
+            // важно, что окно взято из ЕГО константы, а не из геройской.
+            int windup = -1;
+            for (int i = 0; i < 180 && windup < 0; i++)
+            {
+                // Тик снимается ДО шага: замах назначается внутри Step от
+                // текущего тика, а Tick к его концу уже уходит вперёд.
+                int tickAtSwing = sim.Tick;
+                int before = sim.Entities.AttackImpactTick[enemy];
+                sim.Step(in idle);
+                int after = sim.Entities.AttackImpactTick[enemy];
+                if (after > before) windup = after - tickAtSwing;
+            }
+
+            Assert.AreEqual(Simulation.EnemyAttackWindupTicks, windup,
+                "враг обязан заносить удар по своей константе, а не по геройской");
         }
 
         [Test]

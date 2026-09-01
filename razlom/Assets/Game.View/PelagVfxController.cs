@@ -387,7 +387,18 @@ namespace Game.View
             _juice?.PlayWhirlwindTrail();
             _whirlwindContactPending = true;
             _whirlwindContactDelay = WhirlwindContactTime;
-            PulseCombatLight(0.28f);
+
+            // ПОДГОТОВКА ЧЕРЕЗ КОНТРАСТ, А НЕ ЧЕРЕЗ ЯРКОСТЬ.
+            //
+            // Пик читается как пик только на фоне тихого замаха. Раньше замах
+            // светил 0.28 при контакте 1.0 — разница меньше четырёх крат, и удар
+            // выходил ровным. Теперь замах почти не светит, и вспышка контакта
+            // бьёт на порядок.
+            //
+            // Именно занизить, а не погасить: PulseCombatLight берёт максимум и
+            // клампит в 0..1, поэтому отрицательное значение было бы молчаливым
+            // ничем, а не провалом света.
+            PulseCombatLight(0.08f);
         }
 
         private void UpdateWhirlwindContact()
@@ -420,13 +431,18 @@ namespace Game.View
                 slashCenter -= camera.transform.forward * 0.20f;
             }
 
-            // Stone Slash's particle shapes are authored in world-up space.
-            // Camera-facing the root rotates their emission plane edge-on;
-            // keep the prefab's original orientation and only lift its origin.
+            // ОДИН СЛЕШ, А НЕ ТРИ ЭФФЕКТА ПОВЕРХ ДРУГ ДРУГА.
+            //
+            // Раньше в один и тот же момент выходили след клинка, кольцо-слеш и
+            // тяжёлая пыль под ногами. Три полупрозрачных элемента в одной точке
+            // не складываются в удар: они гасят друг друга и вместе читаются как
+            // подсветка зоны, а не как взмах. Остаётся один — кольцо-слеш; он
+            // единственный имеет форму оружия, а не форму круга под ногами.
+            //
+            // Размер поднят, время жизни укорочено: удар это короткая вспышка
+            // формы, а не медленно расходящийся ореол.
             Spawn(PelagVfxId.WhirlwindRing, slashCenter, Quaternion.identity,
-                0.92f, 0.94f, 1.10f, Motion.Expand);
-            Spawn(PelagVfxId.DustHeavy, player + Vector3.up * 0.055f,
-                Quaternion.identity, 0.46f, 0.34f, 0.72f, Motion.Expand);
+                1.28f, 0.58f, 1.32f, Motion.Expand);
             PulseCombatLight(1f);
         }
 

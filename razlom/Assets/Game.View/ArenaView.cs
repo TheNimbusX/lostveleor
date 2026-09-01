@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using Game.Sim;
 
@@ -33,11 +33,18 @@ namespace Game.View
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
         public string WoleModel = "Characters/Pelag_v5/Runtime/Pelag_v5_MixamoRig";
 
-        // Production-меш перенесён на проверенный 45-костный боевой риг. Меч и
-        // щит в исходной генерации были частью одного меша, поэтому в экспортном
-        // FBX они жёстко привязаны к Weapon_R/Shield_L и не гнутся на ударах.
+        // v3 — модель по утверждённому концепту: чёрное с золотом, красный ромб,
+        // длинный плащ. Пришла ростом 0.98 м на риге AccuRig и приведена под
+        // движок: рост выставлен в 1.88 ровно, как у v2, кости переименованы под
+        // Humanoid, добавлены сокеты Weapon_R и Shield_L.
+        //
+        // РУКИ У НЕЁ ПУСТЫЕ, и это осознанно: в v2 меч и щит были частью одного
+        // меша и не снимались. Пока на сокеты ничего не надето, моб ходит
+        // безоружным — это видно сразу и чинится навеской пропсов, а не правкой
+        // модели. Откат на прежнюю: вернуть сюда Orvill_v2/Orvill_v2_CombatRig
+        // и OrvillTexture на Orvill_v2_BaseColor.
         [Tooltip("Анимируемая 3D-модель Орвилла в Resources.")]
-        public string OrvillModel = "Characters/Orvill_v2/Orvill_v2_CombatRig";
+        public string OrvillModel = "Characters/Orvill_v3/Orvill_v3_CombatRig";
 
         // Игровая модель и клипы используют один Mixamo-скелет. Generic выбран
         // намеренно: так ноги, кисти и пальцы проигрываются без ретаргета.
@@ -67,7 +74,7 @@ namespace Game.View
                  "материала нет, он собирается прямо в игре из этой картинки.")]
         public string WoleTexture = "Characters/Pelag_v4/Pelag_v4_BaseColor";
 
-        public string OrvillTexture = "Characters/Orvill_v2/Orvill_v2_BaseColor";
+        public string OrvillTexture = "Characters/Orvill_v3/Orvill_v3_BaseColor";
 
         [Header("Модульное снаряжение героя")]
         [Tooltip("Отдельный prefab оружия. Он не связан с мешем тела и меняется через сокет.")]
@@ -161,6 +168,8 @@ namespace Game.View
         // замедляет время специально, и поза удара обязана замереть вместе
         // со всем остальным — в этом и весь смысл стопа.
         private Vector3[] _hitRecoil;
+        private Vector3[] _deathLaunch;
+        private Vector3[] _deathSpinAxis;
         private Vector3[] _baseScale;
         private Renderer[][] _bodyRenderers;
         private int[][] _bodyMaterialSlotCounts;
@@ -185,9 +194,29 @@ namespace Game.View
         private const string ContactShadowName = "Contact Shadow";
         private const float WoleSpriteScaleMultiplier = 0.78f;
         private const float OrvillSpriteScaleMultiplier = 0.82f;
-        private const float OrvillDeathAnimationDuration = 1.6f;
-        private const float OrvillDeathPoseHoldDuration = 0.18f;
-        private const float OrvillDeathFadeDuration = 0.42f;
+        // СМЕРТЬ РЯДОВОГО МОБА — ЭТО ВЫБРОС, А НЕ ПАДЕНИЕ.
+        //
+        // Раньше здесь стояло 1.6 + 0.18 + 0.42 = 2.2 секунды: полноценная
+        // анимация умирания, потом пауза на позе, потом растворение. Для
+        // одного врага это красиво; для гриндилки, где за забег их сотни, это
+        // мешок, который валится две секунды и всё это время занимает экран.
+        // Никакие искры поверх такого не спасают — они кончаются, а мешок ещё
+        // падает.
+        //
+        // 0.16 + 0.30 = меньше половины секунды. Тело выбрасывает, крутит и
+        // растворяет; к моменту, когда игрок довёл прицел до следующего врага,
+        // предыдущего уже нет. Именно это читается как «разлетелся».
+        private const float OrvillDeathAnimationDuration = 0.16f;
+        private const float OrvillDeathPoseHoldDuration = 0f;
+        private const float OrvillDeathFadeDuration = 0.30f;
+
+        // Выброс тела: горизонтальная скорость от удара плюс подброс вверх.
+        // Через тело проходит парабола, а не прямая — прямая читается как
+        // скольжение по льду.
+        private const float DeathLaunchSpeed = 4.6f;
+        private const float DeathLaunchLift = 3.1f;
+        private const float DeathGravity = 11.5f;
+        private const float DeathSpinSpeed = 520f;
         private const float OrvillDeathPresentationDuration = OrvillDeathAnimationDuration
                                                               + OrvillDeathPoseHoldDuration
                                                               + OrvillDeathFadeDuration;
@@ -233,6 +262,8 @@ namespace Game.View
             _deathStarted = new bool[capacity];
             _deathStartedAt = new float[capacity];
             _hitRecoil = new Vector3[capacity];
+            _deathLaunch = new Vector3[capacity];
+            _deathSpinAxis = new Vector3[capacity];
             _baseScale = new Vector3[capacity];
             _bodyRenderers = new Renderer[capacity][];
             _bodyMaterialSlotCounts = new int[capacity][];
@@ -343,12 +374,21 @@ namespace Game.View
                          && (uint)entityId < (uint)_driver.Sim.Entities.Count
                          && _driver.Sim.Entities.Alive[entityId];
 
+            // ИГРОКА ОТДАЧА НЕ ДВИГАЕТ НИКОГДА.
+            //
+            // Толчок читается как подтверждение удара только у того, кем игрок
+            // не управляет. Своё тело он ведёт сам, и камера привязана к нему:
+            // сдвиг на треть метра уезжает вместе со всем экраном и читается не
+            // как «мне попали», а как «у меня отобрали управление». Получение
+            // урона игрок узнаёт по вспышке, полоске здоровья и звуку — по всему,
+            // что не трогает позицию.
+            //
             // Берётся МАКСИМУМ, а не сумма: двадцать попаданий по площади
             // в одном кадре — это один толчок, а не двадцать сложенных.
             // Летальный Damage уже относится к DeathBack: труп не должен перед
             // падением получать ещё один процедурный толчок. Вспышка контакта
             // остаётся, чтобы последний удар не потерял визуальное подтверждение.
-            if (alive)
+            if (alive && entityId != Simulation.PlayerId)
             {
                 Vector3 recoil = direction * (RecoilDistance * strength);
                 if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude)
@@ -378,10 +418,23 @@ namespace Game.View
                 ? _lastFacingWorld[entityId]
                 : Vector3.forward;
 
-            float distance = Mathf.Lerp(0.24f, 0.38f, Mathf.Clamp01(strength));
-            Vector3 deathOffset = direction * distance;
-            if (deathOffset.sqrMagnitude > _presentationOffset[entityId].sqrMagnitude)
-                _presentationOffset[entityId] = deathOffset;
+            // Смерть должна отбрасывать, а не покачивать. 0.24–0.38 м — это
+            // меньше ширины самого тела: труп оседал на месте, и убийство
+            // терялось среди обычных попаданий. Полметра-метр уже читаются как
+            // «улетел», и именно это отличает убийство от очередного удара.
+            // Не смещение, а СКОРОСТЬ: дальше её интегрирует SyncTransforms,
+            // и тело идёт по параболе, а не переставляется в новую точку.
+            _deathLaunch[entityId] =
+                direction * (DeathLaunchSpeed * Mathf.Lerp(0.75f, 1.25f, strength))
+                + Vector3.up * DeathLaunchLift;
+
+            // Ось вращения поперёк удара: тело кувыркается через голову в ту
+            // сторону, куда его отправили, а не крутится волчком на месте.
+            _deathSpinAxis[entityId] = Vector3.Cross(Vector3.up, direction).normalized;
+            if (_deathSpinAxis[entityId].sqrMagnitude < 0.5f)
+                _deathSpinAxis[entityId] = Vector3.right;
+
+            _presentationOffset[entityId] = Vector3.zero;
             _hitRecoil[entityId] = Vector3.zero;
             _hitFlash[entityId] = Mathf.Max(_hitFlash[entityId], 0.92f);
         }
@@ -516,6 +569,10 @@ namespace Game.View
             _turnVisualDirection[entityId] = 0f;
             _presentationOffset[entityId] = Vector3.zero;
             _groundOffset[entityId] = 0f;
+            // Слот переиспользуется под нового врага: остаточный выброс от
+            // прошлого покойника отправил бы живого в полёт при первой смерти.
+            _deathLaunch[entityId] = Vector3.zero;
+            _deathSpinAxis[entityId] = Vector3.zero;
 
             if (_hoveredEntity == entityId) _hoveredEntity = -1;
         }
@@ -573,6 +630,8 @@ namespace Game.View
                 _deathStarted[i] = false;
                 _deathStartedAt[i] = 0f;
                 _hitRecoil[i] = Vector3.zero;
+                _deathLaunch[i] = Vector3.zero;
+                _deathSpinAxis[i] = Vector3.zero;
                 _bodyRenderers[i] = CacheBodyRenderers(go, out SpriteRenderer contactShadow);
                 _bodyMaterialSlotCounts[i] = CacheMaterialSlotCounts(_bodyRenderers[i]);
                 _contactShadows[i] = contactShadow;
@@ -853,9 +912,40 @@ namespace Game.View
                     ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
                 }
 
+                // Парабола выброса. Считается от времени смерти, а не
+                // накапливается по кадрам: накопление разъезжается при просадке
+                // кадров и при hit-stop, а тут важно, чтобы тело и растворение
+                // шли по одним часам.
+                bool inDeathFlight = !alive && orvill && _deathStarted[i]
+                                     && _deathLaunch[i].sqrMagnitude > 0.0001f;
+                if (inDeathFlight)
+                {
+                    float t = deathElapsed;
+                    Vector3 flight = _deathLaunch[i] * t;
+                    flight.y -= 0.5f * DeathGravity * t * t;
+                    // Под землю не проваливаемся: тело гаснет в воздухе или
+                    // у самой земли, но никогда не уходит сквозь пол.
+                    if (flight.y < 0f) flight.y = 0f;
+                    p += flight;
+                }
+
                 view.position = p + _hitRecoil[i];
                 if (_baseScale[i] != Vector3.zero)
                     view.localScale = _baseScale[i];
+
+                if (inDeathFlight)
+                {
+                    // Кувырок через голову в сторону удара. Клип умирания при
+                    // такой длительности всё равно не успевает прочитаться —
+                    // силуэт в полёте несёт всю информацию сам.
+                    view.rotation = Quaternion.AngleAxis(
+                        DeathSpinSpeed * deathElapsed, _deathSpinAxis[i])
+                        * Quaternion.LookRotation(
+                            _lastFacingWorld[i].sqrMagnitude > 0.0001f
+                                ? _lastFacingWorld[i]
+                                : Vector3.forward, Vector3.up);
+                    continue;
+                }
 
                 // Gameplay-facing остаётся мгновенным и живёт в Sim. Только
                 // корень живого ORVILL мягко догоняет новый yaw: 30 Hz повороты

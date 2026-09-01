@@ -13,7 +13,11 @@ namespace Game.View
     [DefaultExecutionOrder(1000)]
     public sealed class CombatJuiceView : MonoBehaviour
     {
-        private const int PoolSize = 160;
+        // Одно убийство стоит 37 слотов: 22 осколка, 14 пылинок и послесвечение.
+        // Вихрь кладёт пятерых разом — это 185, и при старом пуле в 160 часть
+        // эффектов молча не появлялась бы ровно в тот момент, ради которого всё
+        // и делалось. Слоты выделяются один раз при старте и живут весь забег.
+        private const int PoolSize = 320;
         private const int TrailSamples = 48;
         private const int TrailVerticesPerSample = 3;
         private static readonly float AttackContactTime =
@@ -328,17 +332,29 @@ namespace Game.View
             // copy of the impact.
             if (playerKill && _sparkSprite != null)
                 SpawnBurst(At(e.Position, 0.76f), new Color(1f, 0.38f, 0.16f, 1f),
-                    12, 5.8f, true);
+                    22, 8.4f, true);
 
             if (playerKill)
             {
                 _arena?.ReactToDeath(e.Target, deathDirection, 1f);
                 SpawnKillAftermath(e.Position);
+
+                // УБИЙСТВО ОБЯЗАНО ЗАМЕТНО ОТЛИЧАТЬСЯ ОТ КРИТА, ИНАЧЕ ОНО
+                // ТЕРЯЕТСЯ В ПОТОКЕ ПОПАДАНИЙ.
+                //
+                // Раньше пауза убийства была 0.095 с против 0.070 у крита —
+                // разница в треть, которую глаз не отделяет. За сессию игрок
+                // убивает десятки тысяч мобов, и если смерть звучит как
+                // очередной удар, то главное событие боя не награждается ничем.
+                //
+                // 0.15 с — это вдвое дольше крита, и это уже читается как
+                // «оно кончилось». Дальше растить нельзя: пауза на каждом
+                // убийстве превращает зачистку толпы в череду заиканий.
                 Accumulate(
-                    trauma: 0.68f,
-                    zoom: 1.08f,
-                    stopDuration: 0.095f,
-                    stopScale: 0.025f);
+                    trauma: 0.85f,
+                    zoom: 1.25f,
+                    stopDuration: 0.15f,
+                    stopScale: 0.02f);
             }
         }
 
@@ -350,20 +366,28 @@ namespace Game.View
                     0.58f, 0.46f, 1.58f, 0f, 0f, 0f);
 
             if (_dustSprite == null) return;
+
+            // ПЫЛЬ — ЭТО СЛЕД СОБЫТИЯ, А НЕ УКРАШЕНИЕ.
+            //
+            // Шесть облачков, расходящихся на треть метра, гасли раньше, чем
+            // глаз успевал их прочитать: смерть заканчивалась в тот же кадр,
+            // в котором началась. Четырнадцать, вдвое быстрее и вдвое дальше,
+            // держат место убийства заметным ещё почти секунду — это и есть
+            // то послевкусие, которого не хватало.
             Vector3 center = At(position, 0.18f);
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 14; i++)
             {
                 float angle = Random01() * Mathf.PI * 2f;
                 Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                Vector3 velocity = direction * Mathf.Lerp(0.28f, 0.72f, Random01())
-                    + Vector3.up * Mathf.Lerp(0.10f, 0.28f, Random01());
+                Vector3 velocity = direction * Mathf.Lerp(0.65f, 1.55f, Random01())
+                    + Vector3.up * Mathf.Lerp(0.18f, 0.52f, Random01());
                 SpawnFx(FxKind.Dust, _dustSprite,
-                    center + direction * Mathf.Lerp(0.05f, 0.28f, Random01()), velocity,
-                    new Color(0.92f, 0.66f, 0.38f, Mathf.Lerp(0.28f, 0.40f, Random01())),
-                    Mathf.Lerp(0.42f, 0.62f, Random01()),
-                    Mathf.Lerp(0.26f, 0.40f, Random01()),
-                    Mathf.Lerp(0.72f, 1.02f, Random01()),
-                    Mathf.Lerp(-30f, 30f, Random01()), Random01() * 180f, 0.24f);
+                    center + direction * Mathf.Lerp(0.05f, 0.34f, Random01()), velocity,
+                    new Color(0.92f, 0.66f, 0.38f, Mathf.Lerp(0.34f, 0.52f, Random01())),
+                    Mathf.Lerp(0.52f, 0.86f, Random01()),
+                    Mathf.Lerp(0.34f, 0.62f, Random01()),
+                    Mathf.Lerp(0.86f, 1.35f, Random01()),
+                    Mathf.Lerp(-55f, 55f, Random01()), Random01() * 180f, 0.34f);
             }
         }
 
