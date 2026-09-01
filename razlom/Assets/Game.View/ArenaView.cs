@@ -106,6 +106,32 @@ namespace Game.View
         // 0.55 * 1.82 ~= 1, поэтому клинок остаётся длиной около метра.
         public float WoleWeaponLocalScale = 0.55f;
 
+        // ЯКОРЬ НА ПОЯСЕ. До 1 сентября его на персонаже не было вовсе: голова
+        // якоря существовала только внутри VFX-префабов, поэтому в момент каста
+        // он материализовался из воздуха и так же исчезал. Вырезанная рукоять
+        // со свёрнутой цепью лежала в проекте, но нигде не создавалась.
+        //
+        // Всё вынесено в инспектор намеренно: положение пропса на поясе — это
+        // то, что подбирают глазом за один заход, а не считают. Правится
+        // ползунками на живом персонаже, без перекомпиляции.
+        [Header("Якорь на поясе")]
+        [Tooltip("Рукоять с намотанной цепью. Пусто — якоря на теле не будет.")]
+        public string WoleAnchorPrefab = "Weapons/Pelag/AnchorChain/Pelag_AnchorGrip";
+
+        public string WoleAnchorBaseColor = "Weapons/Pelag/AnchorChain/Pelag_AnchorChain_BaseColor";
+
+        [Tooltip("Кость, к которой крепится. Таз — якорь висит на поясе и " +
+                 "качается вместе с корпусом, а не с рукой.")]
+        public string WoleAnchorSocket = "mixamorig:Hips";
+
+        [Tooltip("Смещение от кости таза: влево, вверх, назад. Стартовые числа " +
+                 "прикидочные — доводить в Play Mode.")]
+        public Vector3 WoleAnchorLocalPosition = new Vector3(0.13f, -0.02f, -0.09f);
+
+        public Vector3 WoleAnchorLocalDirection = new Vector3(0f, -1f, 0f);
+        public float WoleAnchorLocalRoll = 0f;
+        public float WoleAnchorLocalScale = 0.55f;
+
         [Tooltip("Доворот модели вокруг вертикали, градусы. Если персонаж бегает " +
                  "спиной вперёд — поставь 180. Зависит от того, куда смотрел " +
                  "оригинал при экспорте, и одинаково для всех клипов.")]
@@ -1233,11 +1259,35 @@ namespace Game.View
                 if (runtime != null) material = runtime;
             }
 
-            return () => CreateCharacterBody(prefab, faction, scale, material, controller,
-                weaponPrefab, WoleWeaponSocket,
-                WoleWeaponLocalPosition, WoleWeaponLocalDirection, WoleWeaponLocalRoll,
-                WoleWeaponLocalScale,
-                weaponMaterial);
+            GameObject anchorPrefab = faction == Faction.Wole
+                ? Resources.Load<GameObject>(WoleAnchorPrefab)
+                : null;
+            Material anchorMaterial = anchorPrefab != null
+                ? BuildRuntimeMaterial(WoleAnchorBaseColor, faction)
+                : null;
+
+            return () =>
+            {
+                GameObject body = CreateCharacterBody(prefab, faction, scale, material, controller,
+                    weaponPrefab, WoleWeaponSocket,
+                    WoleWeaponLocalPosition, WoleWeaponLocalDirection, WoleWeaponLocalRoll,
+                    WoleWeaponLocalScale,
+                    weaponMaterial);
+
+                // Якорь вешается ВТОРЫМ пропсом на ту же механику, что и сабля.
+                // Отдельного кода крепления нет и не надо: MountRigidProp уже
+                // умеет искать кость и сажать на неё меш.
+                if (body != null && anchorPrefab != null
+                    && !MountRigidProp(body.transform, anchorPrefab, WoleAnchorSocket,
+                        WoleAnchorLocalPosition, WoleAnchorLocalDirection,
+                        WoleAnchorLocalRoll, WoleAnchorLocalScale, anchorMaterial))
+                {
+                    Debug.LogWarning($"[Разлом] Якорь не сел на «{WoleAnchorSocket}»: " +
+                                     "кости с таким именем в риге нет.");
+                }
+
+                return body;
+            };
         }
 
         // Имя слота базовой текстуры зависит от шейдера: URP и наш тун-шейдер
@@ -1481,7 +1531,7 @@ namespace Game.View
             if (socket == null) return false;
 
             GameObject mounted = Instantiate(weaponPrefab, socket, false);
-            mounted.name = "Pelag_FantasySaber_Equipped";
+            mounted.name = weaponPrefab.name + "_Equipped";
             mounted.transform.localPosition = localPosition;
             Quaternion aim = localDirection.sqrMagnitude > 0.0001f
                 ? Quaternion.FromToRotation(Vector3.up, localDirection.normalized)
