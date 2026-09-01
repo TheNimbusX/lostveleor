@@ -23,6 +23,12 @@ namespace Game.View
         [Range(0f, 1f)] public float WhirlwindVolume = 0.60f;
         [Range(0f, 1f)] public float CastVolume = 0.50f;
         [Range(0f, 1f)] public float RewardVolume = 0.60f;
+        [Range(0f, 1f)] public float AbilityVolume = 0.58f;
+        [Range(0f, 1f)] public float FootstepVolume = 0.30f;
+
+        [Header("Шаги")]
+        [Tooltip("Сколько метров проходит герой между шагами.")]
+        [Min(0.4f)] public float FootstepDistance = 1.35f;
 
         [Header("Density")]
         [Tooltip("AoE contacts in one frame are mixed into one readable impact.")]
@@ -38,7 +44,19 @@ namespace Game.View
             Whirlwind = 4,
             Cast = 5,
             Reward = 6,
-            Count = 7,
+            AnchorSweep = 7,
+            ChainStep = 8,
+
+            /// <summary>
+            /// Шаг. Три части подряд, а не случайная из трёх.
+            ///
+            /// Владелец сдал их как ОДИН трёхкомпонентный звук ходьбы: части
+            /// продолжают друг друга, и случайный выбор превратил бы связную
+            /// поступь в дробь из одинаковых щелчков.
+            /// </summary>
+            Footstep = 9,
+
+            Count = 10,
         }
 
         private TickDriver _driver;
@@ -51,6 +69,16 @@ namespace Game.View
         private GameMode _modeShown = GameMode.Camp;
         private float _whooshDelay = -1f;
         private int _whooshAttackVariant;
+
+        // ---- шаги ----
+        //
+        // Считаются по ПРОЙДЕННОМУ ПУТИ, а не по таймеру. Таймер отвязан от
+        // скорости: замедленный герой продолжал бы частить, ускоренный —
+        // скользить беззвучно. Путь даёт постоянную длину шага при любой
+        // скорости, и это ровно то, что слышно как походка.
+        private Vector2 _stepAnchor;
+        private bool _stepAnchorSet;
+        private int _stepPart;
 
         private void Awake()
         {
@@ -71,7 +99,11 @@ namespace Game.View
 
             PlayModeChange();
             UpdateWhoosh();
-            if (_driver.Sim != null) ConsumeEvents();
+            if (_driver.Sim != null)
+            {
+                ConsumeEvents();
+                UpdateFootsteps();
+            }
         }
 
         private void PlayModeChange()
@@ -131,23 +163,89 @@ namespace Game.View
                             }
                             else
                             {
-                                // Своих записей у трёх новых способностей пока
-                                // нет, и все они брали один и тот же Cast —
-                                // на слух кит выходил однокнопочным.
-                                //
-                                // Развести по высоте тона дешевле, чем ждать
-                                // звукорежиссёра, и слышно сразу: рывок звучит
-                                // выше и суше, тяжёлый волок — ниже и глуше,
-                                // цепочка садится посередине. Это не замена
-                                // настоящим звукам, но это уже три разных
-                                // события вместо одного.
-                                Play(Sound.Cast, CastVolume,
-                                    AbilityCastPitch(e.Amount), 0.04f);
+                                // У Подсечки и Шага по цепи теперь свои записи.
+                                // У Броска якоря записи нет — он берёт общий
+                                // Cast, поднятый по тону: рывок должен звучать
+                                // суше и выше волока, иначе две способности на
+                                // одной цепи сливаются на слух.
+                                Sound sound = AbilitySound(e.Amount);
+                                Play(sound,
+                                    sound == Sound.Cast ? CastVolume : AbilityVolume,
+                                    sound == Sound.Cast ? AbilityCastPitch(e.Amount) : 0.98f,
+                                    0.03f);
                             }
                         }
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Трёхкомпонентная поступь: pt1 → pt2 → pt3 → pt1.
+        ///
+        /// Части идут ПОДРЯД, а не случайно. Владелец сдал их как один звук
+        /// ходьбы, где части продолжают друг друга; случайный выбор из трёх
+        /// превратил бы связную поступь в дробь.
+        /// </summary>
+        private void UpdateFootsteps()
+        {
+            Simulation sim = _driver.Sim;
+            GameSession session = _driver.Session;
+            EntityStore e = sim.Entities;
+            int player = Simulation.PlayerId;
+
+            bool walking = session != null
+                           && session.Mode == GameMode.Rift
+                           && e.Alive[player]
+                           && e.Velocity[player].LengthSq.Raw != 0
+                           && e.ForcedTicksLeft[player] <= 0;
+
+            if (!walking)
+            {
+                // Якорь сбрасывается на остановке, чтобы первый шаг после
+                // паузы звучал сразу, а не через полтора метра.
+                _stepAnchorSet = false;
+                return;
+            }
+
+            Vector2 here = new Vector2(
+                e.Position[player].X.ToFloat(), e.Position[player].Y.ToFloat());
+
+            if (!_stepAnchorSet)
+            {
+                _stepAnchor = here;
+                _stepAnchorSet = true;
+                return;
+            }
+
+            float step = Mathf.Max(0.4f, FootstepDistance);
+            if ((here - _stepAnchor).sqrMagnitude < step * step) return;
+
+            _stepAnchor = here;
+            PlayFootstepPart();
+        }
+
+        private void PlayFootstepPart()
+        {
+            AudioClip[] parts = _variants[(int)Sound.Footstep];
+            if (parts == null || parts.Length == 0) return;
+
+            AudioClip clip = parts[_stepPart % parts.Length];
+            _stepPart++;
+            if (clip == null) return;
+
+            // Шаг играется мимо общего Play: тот выбирает вариант случайно,
+            // а здесь порядок и есть содержание звука. Голос берётся из того же
+            // кольца — иначе шаги заняли бы собственный источник и перестали
+            // вытесняться в общей давке.
+            if (_voices == null || _voices.Length == 0) return;
+            AudioSource voice = _voices[_voiceCursor];
+            _voiceCursor = (_voiceCursor + 1) % _voices.Length;
+            if (voice == null) return;
+            voice.clip = clip;
+            voice.volume = Master * FootstepVolume;
+            voice.pitch = 0.99f + (Random01() - 0.5f) * 0.04f;
+            voice.Play();
         }
 
         private void UpdateWhoosh()
@@ -207,6 +305,25 @@ namespace Game.View
         /// Спрашивается по DefinitionId, а не по номеру слота: слот — это
         /// позиция на панели, и она уже один раз переезжала.
         /// </summary>
+        /// <summary>
+        /// Своя запись способности или общий каст, если записи нет.
+        ///
+        /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция
+        /// на панели, и она уже дважды переезжала.
+        /// </summary>
+        private Sound AbilitySound(int slot)
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null || (uint)slot >= Simulation.AbilitySlots) return Sound.Cast;
+
+            AbilityBuild build = sim.GetAbility(slot);
+            if (build == null) return Sound.Cast;
+
+            if (build.DefinitionId == AbilityDefinition.AnchorSweepId) return Sound.AnchorSweep;
+            if (build.DefinitionId == AbilityDefinition.ChainStepId) return Sound.ChainStep;
+            return Sound.Cast;
+        }
+
         private float AbilityCastPitch(int slot)
         {
             Simulation sim = _driver != null ? _driver.Sim : null;
@@ -284,6 +401,15 @@ namespace Game.View
                 Debug.LogWarning("[CombatAudio] Missing Resources/Audio/Combat/whirlwind_pelag_pcm.", this);
             _variants[(int)Sound.Cast] = Resources.LoadAll<AudioClip>("Audio/Combat/Cast");
             _variants[(int)Sound.Reward] = Resources.LoadAll<AudioClip>("Audio/Combat/Reward");
+            _variants[(int)Sound.AnchorSweep] = Resources.LoadAll<AudioClip>("Audio/Combat/AnchorSweep");
+            _variants[(int)Sound.ChainStep] = Resources.LoadAll<AudioClip>("Audio/Combat/ChainStep");
+
+            // Шаги сортируются по имени: LoadAll порядок не гарантирует, а
+            // здесь он и есть смысл — pt1, pt2, pt3 идут подряд.
+            AudioClip[] steps = Resources.LoadAll<AudioClip>("Audio/Combat/Footstep");
+            if (steps != null && steps.Length > 1)
+                System.Array.Sort(steps, (a, b) => string.CompareOrdinal(a.name, b.name));
+            _variants[(int)Sound.Footstep] = steps;
         }
 
         // Audio presentation must not touch UnityEngine.Random: keeping a private
