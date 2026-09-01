@@ -184,7 +184,18 @@ namespace Game.View
                 }
 
                 GUI.Label(new Rect(box.x + 4f, box.y + 4f, 20f, 20f), (slot + 1).ToString(), _slotKey);
-                GUI.Label(new Rect(box.x - 24f, box.yMax + 4f, box.width + 48f, 18f),
+                // ПОДПИСЬ НЕ ШИРЕ СВОЕГО СЛОТА.
+                //
+                // Была `box.width + 48`: подпись вылезала на 24 пикселя в обе
+                // стороны при зазоре между слотами в 10, и четыре названия
+                // слипались в «ВИХРЬБРОСОК ЯКОРЯПОДСЕЧКАШАГ ПО ЦЕПИ». Запас
+                // имел смысл, пока подписанным был один слот из четырёх.
+                //
+                // Половина зазора с каждой стороны — предел, за которым
+                // соседи начинают соприкасаться.
+                float nameWidth = box.width + SlotGap;
+                GUI.Label(new Rect(box.center.x - nameWidth * 0.5f, box.yMax + 4f,
+                        nameWidth, 18f),
                     AbilityName(build.DefinitionId), _slotName);
             }
         }

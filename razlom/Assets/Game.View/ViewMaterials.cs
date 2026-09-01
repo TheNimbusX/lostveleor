@@ -75,9 +75,17 @@ namespace Game.View
             material.SetColor("_AccentColor", accentColor);
             // Сетка сведена к слабому шву между плитами камня: она даёт полу
             // масштаб и фактуру, но перестаёт читаться как отладочный grid.
-            material.SetColor("_GridColor", new Color(0.46f, 0.44f, 0.36f, 1f));
-            material.SetFloat("_GridScale", 0.35f);
-            material.SetFloat("_GridWidth", 0.011f);
+            material.SetColor("_GridColor", new Color(0.34f, 0.31f, 0.26f, 1f));
+
+            // РАЗМЕР ПЛИТЫ. 0.35 давало плиту почти в ТРИ МЕТРА — шире самого
+            // персонажа, и на записи 1 сентября пол читался как разлинованная
+            // пустота с ромбами во весь экран.
+            //
+            // 0.62 даёт плиту около полутора метров: примерно шаг человека,
+            // и именно поэтому она сообщает масштаб. Шейдер поверх кладёт
+            // подплитку вчетверо чаще и зерно — деталь на трёх частотах.
+            material.SetFloat("_GridScale", 0.62f);
+            material.SetFloat("_GridWidth", 0.014f);
             return material;
         }
 

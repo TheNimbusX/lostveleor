@@ -71,12 +71,49 @@ Shader "Razlom/Arena Floor"
                 half diffuse = saturate(dot(normal, light.direction));
                 half shade = lerp(0.58h, 1.0h,
                     smoothstep(0.28h, 0.62h, diffuse * light.shadowAttenuation));
+
+                // ПОЛ ОБЯЗАН НЕСТИ ДЕТАЛЬ, ИНАЧЕ ОН СЪЕДАЕТ КАДР.
+                //
+                // Разбор записи игры 1 сентября: пол занимает четыре пятых
+                // экрана и не содержит ничего — ровная заливка с редкой
+                // сеткой. На таком фоне теряется всё: и персонаж, и якорь, и
+                // эффекты, которые я до этого полировал. Плотность фона —
+                // не украшение, а условие, при котором видно передний план.
+                //
+                // Три слоя, каждый на своей частоте. Ни один не является
+                // текстурой: рисовать пол художником пока некому, а
+                // процедурная деталь стоит нескольких строк.
+
+                // 1. Крупная плита: свой тон у каждой. Разброс поднят с
+                // прежних 8–18% до заметного — иначе вариации попросту нет.
                 float2 stoneCell = floor(input.positionWS.xz * 0.42);
                 half stoneVariation = frac(sin(dot(stoneCell,
                     float2(12.9898, 78.233))) * 43758.5453);
                 half3 stoneColor = lerp(_BaseColor.rgb, _AccentColor.rgb,
-                    0.08h + stoneVariation * 0.10h);
+                    0.05h + stoneVariation * 0.26h);
+
+                // 2. Мелкая плитка вчетверо чаще крупной: она и даёт масштаб.
+                // Без неё игрок не понимает, насколько велика арена.
+                float2 subCoord = input.positionWS.xz * (_GridScale * 4.0);
+                float2 subEdge = abs(frac(subCoord) - 0.5);
+                float2 subAA = max(fwidth(subCoord), 0.001);
+                float subGrid = 1.0 - smoothstep(_GridWidth * 0.6,
+                    _GridWidth * 0.6 + subAA.x + subAA.y,
+                    0.5 - max(subEdge.x, subEdge.y));
+
+                float2 subCell = floor(subCoord);
+                half subVariation = frac(sin(dot(subCell,
+                    float2(39.3468, 11.1357))) * 24634.6345);
+                stoneColor *= lerp(0.93h, 1.07h, subVariation);
+
+                // 3. Зерно на частоте пикселя: снимает пластиковую гладкость
+                // ровной заливки. Слабое намеренно — это шум камня, а не грязь.
+                half grain = frac(sin(dot(floor(input.positionWS.xz * 26.0),
+                    float2(63.7264, 21.4432))) * 17324.1234);
+                stoneColor *= lerp(0.965h, 1.035h, grain);
+
                 half3 color = lerp(stoneColor, _GridColor.rgb, grid * 0.46h);
+                color = lerp(color, _GridColor.rgb, subGrid * 0.17h);
                 color = color * shade;
 
                 // Runtime combat pool: a restrained warm pool at rest and a
