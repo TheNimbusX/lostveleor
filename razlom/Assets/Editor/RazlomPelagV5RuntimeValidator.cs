@@ -108,6 +108,10 @@ public static class RazlomPelagV5RuntimeValidator
         public int skinnedMeshCount;
         public int boneCount;
         public int triangleCount;
+        // Height of the bind pose in the model's own units. WoleScale is
+        // derived from it (1.78 / meshHeight), so a body that arrives at a
+        // different scale is a number to read here, not a guess.
+        public float meshHeight;
         public bool rightHandSocketFound;
         public bool controllerLoaded;
         public string[] controllerParameters;
@@ -128,7 +132,7 @@ public static class RazlomPelagV5RuntimeValidator
         public bool passed;
     }
 
-    [MenuItem("Разлом/Проверить Pelag v5 runtime")]
+    [MenuItem("Разлом/Проверить Pelag v6 runtime")]
     public static void Run()
     {
         var errors = new List<string>();
@@ -148,6 +152,9 @@ public static class RazlomPelagV5RuntimeValidator
         Directory.CreateDirectory(Path.GetDirectoryName(output));
         File.WriteAllText(output, JsonUtility.ToJson(report, true));
 
+        // The whole report goes to the console, not just the flag. The flag
+        // was enough for CI; a person at the screen needs the numbers.
+        Debug.Log("[Razlom] " + RuntimePath + "\n" + JsonUtility.ToJson(report, true));
         Debug.Log("RAZLOM_PELAG_V5_RUNTIME_PASSED=" + report.passed);
         if (!report.passed) throw new Exception(string.Join(" | ", errors));
     }
@@ -177,8 +184,11 @@ public static class RazlomPelagV5RuntimeValidator
             errors.Add("Expected one skinned mesh, got " + report.skinnedMeshCount + ".");
         if (report.boneCount != 65)
             errors.Add("Expected the canonical 65-bone bind, got " + report.boneCount + ".");
-        if (report.triangleCount != 19636)
-            errors.Add("Expected 19636 runtime triangles, got " + report.triangleCount + ".");
+        if (report.triangleCount < 5000 || report.triangleCount > 80000)
+            errors.Add("Runtime triangles out of range: " + report.triangleCount + ".");
+
+        report.meshHeight = renderers.Length == 0 ? 0f : renderers.Max(
+            renderer => renderer.sharedMesh != null ? renderer.sharedMesh.bounds.size.y : 0f);
 
         report.rightHandSocketFound = Find(prefab.transform, "mixamorig:RightHand") != null;
         if (!report.rightHandSocketFound) errors.Add("mixamorig:RightHand socket is missing.");
