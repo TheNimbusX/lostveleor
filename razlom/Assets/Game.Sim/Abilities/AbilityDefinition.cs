@@ -44,6 +44,48 @@ namespace Game.Sim
                 .Set(AbilityStatType.Radius, Fix64.Ratio(23, 10))
                 .Set(AbilityStatType.CooldownTicks, 72);
 
+        public static int AnchorLeapId => StableId.Of("ability.anchor_leap");
+        public static int AnchorSweepId => StableId.Of("ability.anchor_sweep");
+        public static int ChainStepId => StableId.Of("ability.chain_step");
+
+        /// <summary>
+        /// «Бросок якоря»: швыряет якорь в точку и подтягивает туда себя.
+        ///
+        /// Урона нет вовсе, и это не заглушка. Это единственный способ
+        /// мгновенно сменить позицию во всей игре — отдельной кнопки рывка
+        /// не будет, решено 1 сентября. Добавить сюда урон значило бы сделать
+        /// перемещение бесплатным приложением к атаке, а оно и есть смысл.
+        /// </summary>
+        public static AbilityDefinition AnchorLeap()
+            => new AbilityDefinition("ability.anchor_leap")
+                .Set(AbilityStatType.Damage, 0)
+                .Set(AbilityStatType.Radius, AnchorKit.LeapRange)
+                .Set(AbilityStatType.CooldownTicks, 54);          // 1.8 с
+
+        /// <summary>
+        /// «Подсечка»: якорь уходит за спины врагов, рывок волочит их к игроку.
+        ///
+        /// Урон низкий намеренно: ценность способности в том, что разбросанная
+        /// толпа становится одной кучей под Вихрь, а не в самом уроне.
+        /// </summary>
+        public static AbilityDefinition AnchorSweep()
+            => new AbilityDefinition("ability.anchor_sweep")
+                .Set(AbilityStatType.Damage, 35)
+                .Set(AbilityStatType.Radius, AnchorKit.SweepRadius)
+                .Set(AbilityStatType.CooldownTicks, 108);         // 3.6 с
+
+        /// <summary>
+        /// «Шаг по цепи»: серия прыжков от врага к врагу с ударом на каждом.
+        ///
+        /// Урон на прыжок средний, но прыжков до четырёх — это выход из
+        /// окружения, который по дороге собирает добивания.
+        /// </summary>
+        public static AbilityDefinition ChainStep()
+            => new AbilityDefinition("ability.chain_step")
+                .Set(AbilityStatType.Damage, 85)
+                .Set(AbilityStatType.Radius, AnchorKit.ChainRange)
+                .Set(AbilityStatType.CooldownTicks, 126);         // 4.2 с
+
         /// <summary>
         /// «Печать пламени»: бросок знака в точку, вспышка по площади, поджиг.
         /// Числа — заглушка баланса, но структура настоящая.

@@ -596,7 +596,17 @@ namespace Game.View
 
             // Порядок в буфере значения не имеет: AbilityBuild сортирует узлы
             // по возрастанию Id сам, иначе порядок галочек влиял бы на урон.
-            sim.SetAbility(0, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
+            //
+            // ВСЕ ЧЕТЫРЕ СЛОТА КИТА ПЕЛАГА. Панель перестала быть пустой на три
+            // четверти: Вихрь режет вокруг себя, Бросок якоря вносит в толпу,
+            // Подсечка собирает толпу к себе, Шаг по цепи выносит из окружения.
+            //
+            // Порядок слотов — это порядок петли, а не алфавит: 1 вошёл,
+            // 2 собрал, 3 срезал, 4 вышел. Игрок учит кит, нажимая подряд.
+            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), _nodeBuffer, 0);
+            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), _nodeBuffer, 0);
+            sim.SetAbility(2, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
+            sim.SetAbility(3, AbilityDefinition.ChainStep(), _nodeBuffer, 0);
 
             _appliedHotter = NodeHotter;
             _appliedSplit = NodeSplit;

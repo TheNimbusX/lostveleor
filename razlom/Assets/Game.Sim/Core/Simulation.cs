@@ -229,6 +229,13 @@ namespace Game.Sim
         private int _whirlwindImpactSlot = -1;
         private int _abilityMovePenaltyUntilTick;
 
+        // Состояние «Шага по цепи» между прыжками. Живёт в симуляции, а не в
+        // способности: способность кончилась в момент каста, а цепочка идёт
+        // ещё двадцать тиков. Входит в хеш — иначе реплей разъедется.
+        private int _chainHopsLeft;
+        private int _chainTarget = -1;
+        private int _chainSlot = -1;
+
         /// <summary>
         /// Общий буфер радиусных запросов. Выделен один раз: за забег таких
         /// запросов десятки тысяч, и ни один не должен стоить аллокации.
@@ -367,6 +374,9 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -399,6 +409,9 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             var rng = new Pcg32(spawnSeed, 0x517CC1B727220A95UL);
 
@@ -439,6 +452,9 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
@@ -486,6 +502,9 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
@@ -588,6 +607,9 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -818,6 +840,11 @@ namespace Game.Sim
             // gameplay-каст разрешается ниже по фиксированному порядку стадий.
             PrimeAbilityMovePenalty(in input);
 
+            // Принудительное перемещение решается ДО собственного движения:
+            // тело, которое тащат, своим шагом не идёт, и порядок здесь — это
+            // и есть правило приоритета, а не деталь реализации.
+            ResolveForcedMotion();
+
             MovePlayer(input);
             MoveEnemies();
 
@@ -835,6 +862,7 @@ namespace Game.Sim
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
             ResolveWhirlwindImpact();
+            ContinueChainStep();
             UpdateProjectiles();
             ResolveAttacks(in input);
             TickBurning();
@@ -879,6 +907,18 @@ namespace Game.Sim
                     _whirlwindImpactTick = Tick + WhirlwindContactDelayTicks;
                     _whirlwindImpactSlot = slot;
                 }
+                else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
+                {
+                    AnchorKit.CastLeap(this, input.Aim);
+                }
+                else if (build.DefinitionId == AbilityDefinition.AnchorSweepId)
+                {
+                    CastAnchorSweep(slot, build);
+                }
+                else if (build.DefinitionId == AbilityDefinition.ChainStepId)
+                {
+                    BeginChainStep(slot);
+                }
                 else
                 {
                     FlameSeal.Cast(this, PlayerId, slot, build, input.Aim);
@@ -918,6 +958,108 @@ namespace Game.Sim
         /// Единственный момент нанесения урона «Вихрем». View получает обычные
         /// Damage/Death events и уже от них показывает весь impact.
         /// </summary>
+        /// <summary>
+        /// ПОДСЕЧКА. Волочит и бьёт тем же тиком.
+        ///
+        /// Урон сразу, а не по приезде: цель, которую тащат, уже поймана, и
+        /// ждать конца волока значило бы, что убитый по дороге враг не
+        /// получает урона от способности, которая его и убила.
+        /// </summary>
+        private void CastAnchorSweep(int slot, AbilityBuild build)
+        {
+            int dragged = AnchorKit.CastSweep(this, HitScratch);
+            if (dragged <= 0) return;
+
+            int damage = build.Get(AbilityStatType.Damage).ToInt();
+            for (int i = 0; i < Entities.Count; i++)
+            {
+                if (Entities.ForcedTicksLeft[i] <= 0) continue;
+                if (Entities.ForcedKind[i] != (byte)ForcedMotionKind.Dragged) continue;
+                if (!Entities.Alive[i]) continue;
+                if (Entities.Side[i] == Entities.Side[PlayerId]) continue;
+                ApplyAbilityDamage(PlayerId, i, damage, slot, DamageType.Physical);
+            }
+        }
+
+        /// <summary>
+        /// ШАГ ПО ЦЕПИ, первый прыжок. Остальные назначает ContinueChainStep
+        /// по мере прибытия.
+        /// </summary>
+        private void BeginChainStep(int slot)
+        {
+            int target = AnchorKit.PickChainTarget(this, HitScratch, -1);
+            if (target < 0) return;
+
+            _chainSlot = slot;
+            _chainHopsLeft = AnchorKit.ChainMaxHops;
+            _chainTarget = target;
+            ForcedMotion.Begin(Entities, PlayerId,
+                AnchorKit.ChainLandingSpot(Entities, target),
+                AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
+        }
+
+        /// <summary>
+        /// Долетел — ударил — выбрал следующего.
+        ///
+        /// Цепочка НЕ считается вперёд намеренно: к третьему прыжку заранее
+        /// выбранные цели оказываются трупами, убитыми предыдущими прыжками
+        /// той же способности. Каждый следующий выбирается из живых.
+        /// </summary>
+        private void ContinueChainStep()
+        {
+            if (_chainHopsLeft <= 0) return;
+            if (ForcedMotion.IsActive(Entities, PlayerId)) return;
+
+            if (!Entities.Alive[PlayerId])
+            {
+                _chainHopsLeft = 0;
+                return;
+            }
+
+            AbilityBuild build = _chainSlot >= 0 && _chainSlot < AbilitySlots
+                ? _abilityBuilds[_chainSlot]
+                : null;
+            if (build == null)
+            {
+                _chainHopsLeft = 0;
+                return;
+            }
+
+            if (_chainTarget >= 0 && _chainTarget < Entities.Count
+                && Entities.Alive[_chainTarget]
+                && Entities.Side[_chainTarget] != Entities.Side[PlayerId])
+            {
+                ApplyAbilityDamage(PlayerId, _chainTarget,
+                    build.Get(AbilityStatType.Damage).ToInt(), _chainSlot,
+                    DamageType.Physical);
+            }
+
+            _chainHopsLeft--;
+            if (_chainHopsLeft <= 0)
+            {
+                _chainTarget = -1;
+                _chainSlot = -1;
+                return;
+            }
+
+            int next = AnchorKit.PickChainTarget(this, HitScratch, _chainTarget);
+            if (next < 0)
+            {
+                // Больше некого — цепочка кончается тихо. Оставшиеся прыжки
+                // не переносятся: способность про перемещение между целями,
+                // а не про число ударов.
+                _chainHopsLeft = 0;
+                _chainTarget = -1;
+                _chainSlot = -1;
+                return;
+            }
+
+            _chainTarget = next;
+            ForcedMotion.Begin(Entities, PlayerId,
+                AnchorKit.ChainLandingSpot(Entities, next),
+                AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
+        }
+
         private void ResolveWhirlwindImpact()
         {
             if (_whirlwindImpactTick < 0 || Tick < _whirlwindImpactTick) return;
@@ -925,6 +1067,9 @@ namespace Game.Sim
             int slot = _whirlwindImpactSlot;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _chainHopsLeft = 0;
+            _chainTarget = -1;
+            _chainSlot = -1;
 
             if (!Entities.Alive[PlayerId]) return;
             AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
@@ -1103,6 +1248,15 @@ namespace Game.Sim
             if (!Entities.Alive[PlayerId])
             {
                 ClearMoveOrder();
+                return;
+            }
+
+            // Рывок сильнее приказа: пока якорь тащит игрока, своим шагом он
+            // не идёт. Приказ при этом НЕ отменяется — долетев, персонаж
+            // продолжит туда, куда его послали до рывка.
+            if (ForcedMotion.IsActive(Entities, PlayerId))
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
                 return;
             }
 
@@ -1297,6 +1451,13 @@ namespace Game.Sim
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i]) continue;
+
+                // Волочимый враг не идёт своим ходом. Иначе он приезжал бы
+                // вдвое быстрее задуманного — тяга плюс собственный шаг к
+                // игроку складывались бы, и Подсечка била бы сильнее, чем
+                // написано на листе.
+                if (ForcedMotion.IsActive(Entities, i)) continue;
+
                 if (!playerAlive) { Entities.Velocity[i] = FixVec2.Zero; continue; }
 
                 FixVec2 toPlayer = playerPos - Entities.Position[i];
@@ -1321,6 +1482,49 @@ namespace Game.Sim
                 Entities.Position[i] = moved;
                 if (moved.Equals(from) && Entities.Velocity[i].LengthSq.Raw != 0)
                     Entities.Velocity[i] = FixVec2.Zero;
+            }
+        }
+
+        /// <summary>
+        /// Двигает всех, кого тащат: якорь, подсечка, шаг по цепи.
+        ///
+        /// Скорость не хранится — она пересчитывается каждый тик из остатка
+        /// пути и остатка тиков. Так тело приезжает ровно за назначенное
+        /// число тиков даже если по дороге его прижало к стене: следующий тик
+        /// просто получит больший шаг. Хранимая скорость в такой ситуации
+        /// давала бы недолёт, и способность с гарантированной дальностью
+        /// иногда не доносила бы до цели.
+        /// </summary>
+        private void ResolveForcedMotion()
+        {
+            for (int i = 0; i < Entities.Count; i++)
+            {
+                int left = Entities.ForcedTicksLeft[i];
+                if (left <= 0) continue;
+
+                if (!Entities.Alive[i])
+                {
+                    ForcedMotion.Clear(Entities, i);
+                    continue;
+                }
+
+                FixVec2 from = Entities.Position[i];
+                FixVec2 delta = Entities.ForcedTarget[i] - from;
+
+                // Делим остаток пути на остаток тиков. Целочисленное деление
+                // Fix64 округляет вниз, поэтому на последнем тике шаг берётся
+                // целиком — иначе тело вечно не доезжало бы последние миллиметры.
+                FixVec2 step = left <= 1 ? delta : delta / Fix64.FromInt(left);
+
+                Entities.Position[i] = MoveInsideLayout(i, from, step);
+
+                // Скорость обнуляется намеренно: тело едет не своим ходом, и
+                // представление обязано видеть это как перемещение чужой волей,
+                // а не как бег. Иначе у волочимого врага играла бы анимация бега.
+                Entities.Velocity[i] = FixVec2.Zero;
+
+                Entities.ForcedTicksLeft[i] = left - 1;
+                if (Entities.ForcedTicksLeft[i] <= 0) ForcedMotion.Clear(Entities, i);
             }
         }
 
@@ -1567,6 +1771,13 @@ namespace Game.Sim
             }
             Hashing.Mix(ref hash, _whirlwindImpactTick);
             Hashing.Mix(ref hash, _whirlwindImpactSlot);
+
+            // Цепочка прыжков переживает несколько тиков и решает, кого бить
+            // следующим. Не попади она в хеш — реплей, начатый посреди цепочки,
+            // сошёлся бы по позициям и разошёлся по целям.
+            Hashing.Mix(ref hash, _chainHopsLeft);
+            Hashing.Mix(ref hash, _chainTarget);
+            Hashing.Mix(ref hash, _chainSlot);
 
             Rng.HashInto(ref hash);
             return hash;

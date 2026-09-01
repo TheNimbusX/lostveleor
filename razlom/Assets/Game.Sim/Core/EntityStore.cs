@@ -62,6 +62,22 @@ namespace Game.Sim
         /// </summary>
         public readonly Fix64[] PushWeight;
 
+        // ---- принудительное перемещение ----
+        //
+        // Состояние ТЕЛА, а не способности: способность кончилась в момент
+        // каста, а тело ещё едет. Живёт рядом с позицией и входит в хеш —
+        // иначе реплей разъедется на первом же крюке. Подробности и правила
+        // в ForcedMotion.
+
+        /// <summary>Куда тащат тело. Осмысленно только при ForcedTicksLeft > 0.</summary>
+        public readonly FixVec2[] ForcedTarget;
+
+        /// <summary>Сколько тиков осталось тащить. Ноль — тело свободно.</summary>
+        public readonly int[] ForcedTicksLeft;
+
+        /// <summary>ForcedMotionKind. Байт, потому что хранится на каждую сущность.</summary>
+        public readonly byte[] ForcedKind;
+
         // ---- статы ----
 
         /// <summary>
@@ -128,6 +144,9 @@ namespace Game.Sim
             PendingAttackVariant = new int[capacity];
             BodyRadius = new Fix64[capacity];
             PushWeight = new Fix64[capacity];
+            ForcedTarget = new FixVec2[capacity];
+            ForcedTicksLeft = new int[capacity];
+            ForcedKind = new byte[capacity];
 
             Stats = new StatSheet[capacity];
             for (int i = 0; i < capacity; i++) Stats[i] = new StatSheet(8);
@@ -164,6 +183,9 @@ namespace Game.Sim
             PendingAttackVariant[id] = 0;
             BodyRadius[id] = DefaultBodyRadius;
             PushWeight[id] = Fix64.One;
+            ForcedTarget[id] = FixVec2.Zero;
+            ForcedTicksLeft[id] = 0;
+            ForcedKind[id] = 0;
 
             StatSheet sheet = Stats[id];
             sheet.ClearModifiers();
@@ -244,6 +266,10 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, PendingAttackVariant[i]);
                 Hashing.Mix(ref hash, BodyRadius[i]);
                 Hashing.Mix(ref hash, PushWeight[i]);
+                Hashing.Mix(ref hash, ForcedTarget[i].X);
+                Hashing.Mix(ref hash, ForcedTarget[i].Y);
+                Hashing.Mix(ref hash, ForcedTicksLeft[i]);
+                Hashing.Mix(ref hash, (int)ForcedKind[i]);
 
                 // Лист статов — такая же часть состояния, как позиция. Не попади
                 // он в хеш, расхождение в снаряжении жило бы незамеченным до тех

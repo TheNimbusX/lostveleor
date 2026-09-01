@@ -203,8 +203,7 @@ namespace Game.View
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
                 }
-                else if (e.Type == SimEventType.AbilityCast
-                         && e.Amount == 0)
+                else if (e.Type == SimEventType.AbilityCast && IsWhirlwindSlot(e.Amount))
                 {
                     ScheduleGameplayWhirlwind();
                 }
@@ -234,6 +233,22 @@ namespace Game.View
             Vector3 target = EntityPosition(targetEntity, player + Vector3.forward);
             _attackMotionDirection = FlatDirection(player, target);
             _attackMotionTime = 0f;
+        }
+
+        /// <summary>
+        /// Стоит ли в этом слоте Вихрь.
+        ///
+        /// Спрашивается у симуляции, а не сравнивается с числом. Раньше здесь
+        /// стояло `e.Amount == 0`, и это молча сломалось в тот день, когда кит
+        /// Пелага занял все четыре слота и Вихрь переехал из нулевого в третий.
+        /// Слот — это позиция на панели, а не имя способности.
+        /// </summary>
+        private bool IsWhirlwindSlot(int slot)
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null || slot < 0 || slot >= Simulation.AbilitySlots) return false;
+            AbilityBuild build = sim.GetAbility(slot);
+            return build != null && build.DefinitionId == AbilityDefinition.WhirlwindId;
         }
 
         private void ScheduleGameplayWhirlwind()
