@@ -31,7 +31,7 @@ namespace Game.View
 
         [Header("Модели персонажей")]
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
-        public string WoleModel = "Characters/Pelag_v5/Runtime/Pelag_v5_MixamoRig";
+        public string WoleModel = "Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig";
 
         // v3 — модель по утверждённому концепту: чёрное с золотом, красный ромб,
         // длинный плащ. Пришла ростом 0.98 м на риге AccuRig и приведена под
@@ -72,7 +72,7 @@ namespace Game.View
         // Поэтому материал собирается в игре из этого файла.
         [Tooltip("Текстура персонажа в Resources. Запасной путь: если готового " +
                  "материала нет, он собирается прямо в игре из этой картинки.")]
-        public string WoleTexture = "Characters/Pelag_v4/Pelag_v4_BaseColor";
+        public string WoleTexture = "Characters/Pelag_v6/Pelag_v6_BaseColor";
 
         public string OrvillTexture = "Characters/Orvill_v3/Orvill_v3_BaseColor";
 
