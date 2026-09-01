@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "generator": "Blender 5.2 Pelag VFX deterministic pipeline",
+  "source": "razlom/Assets/Resources/VFX/Pelag/Source~/Pelag_VFX_Flipbooks.blend",
+  "fps": 30,
+  "acceptance": {
+    "transparent_background": true,
+    "no_text_or_watermark": true,
+    "atlas_gutter_policy": "geometry remains inside an 18-pixel cell-safe margin",
+    "bright_alpha_zero_from_frame": 5,
+    "ground_trace_exception": "GroundCrack may persist through frame 15; cream core is absent from frame 5 onward"
+  },
+  "assets": [
+    {
+      "path": "razlom/Assets/Resources/VFX/Pelag/Textures/Pelag_FX_AnchorSpin_4x4.png",
+      "sha256": "856bb9676eb087591b442198e4a9ab3ff21f18bec0cd92721112b34ba1857389",
+      "width": 2048,
+      "height": 2048,
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "layout": "row-major, frame 0 at top-left",
+      "authored_frames": 5,
+      "role": "spinning anchor blur",
+      "background": "transparent",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "runtime_display_m": [
+        3.0,
+        3.0
+      ],
+      "collision_envelope": null,
+      "bright_frames": 5,
+      "bright_lifetime_seconds": 0.16666666666666666,
+      "persistent_exception": false
+    },
+    {
+      "path": "razlom/Assets/Resources/VFX/Pelag/Textures/Pelag_FX_ImpactBurst_4x4.png",
+      "sha256": "3af3d73f4776379c06b6f87779af06f4fb9d5581dcf95fe5edc1eb360a9ccf4b",
+      "width": 2048,
+      "height": 2048,
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "layout": "row-major, frame 0 at top-left",
+      "authored_frames": 5,
+      "role": "ground impact dust and sparks",
+      "background": "transparent",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "runtime_display_m": [
+        3.0,
+        3.0
+      ],
+      "collision_envelope": null,
+      "bright_frames": 5,
+      "bright_lifetime_seconds": 0.16666666666666666,
+      "persistent_exception": false
+    },
+    {
+      "path": "razlom/Assets/Resources/VFX/Pelag/Textures/Pelag_FX_GroundCrack_4x4.png",
+      "sha256": "edd5d2b90010edbabef3cb6ac37118959bca8ce44e3d10db8aaebb725d2c4dc9",
+      "width": 2048,
+      "height": 2048,
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "layout": "row-major, frame 0 at top-left",
+      "authored_frames": 16,
+      "role": "persistent non-emissive ground trace",
+      "background": "transparent",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "runtime_display_m": [
+        3.0,
+        3.0
+      ],
+      "collision_envelope": null,
+      "bright_frames": 5,
+      "bright_lifetime_seconds": 0.16666666666666666,
+      "persistent_exception": true
+    },
+    {
+      "path": "razlom/Assets/Resources/VFX/Pelag/Textures/Pelag_FX_DashSmear_4x4.png",
+      "sha256": "8306558be9ffe23a27e109dd1c8467f47d9261ad3bf6e9411e7eda9c7f19ca85",
+      "width": 2048,
+      "height": 2048,
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "layout": "row-major, frame 0 at top-left",
+      "authored_frames": 5,
+      "role": "body dash smear",
+      "background": "transparent",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "runtime_display_m": [
+        3.0,
+        3.0
+      ],
+      "collision_envelope": null,
+      "bright_frames": 5,
+      "bright_lifetime_seconds": 0.16666666666666666,
+      "persistent_exception": false
+    },
+    {
+      "path": "razlom/Assets/Resources/VFX/Pelag/Textures/Pelag_FX_ChainGlint_4x4.png",
+      "sha256": "3905d0e85af6e0d4703383791acba544349be158562ebaad7767b57af3acd8de",
+      "width": 2048,
+      "height": 2048,
+      "grid": [
+        4,
+        4
+      ],
+      "cell": [
+        512,
+        512
+      ],
+      "layout": "row-major, frame 0 at top-left",
+      "authored_frames": 5,
+      "role": "localized chain-tension glint",
+      "background": "transparent",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "runtime_display_m": [
+        3.0,
+        3.0
+      ],
+      "collision_envelope": null,
+      "bright_frames": 5,
+      "bright_lifetime_seconds": 0.16666666666666666,
+      "persistent_exception": false
+    }
+  ]
+}

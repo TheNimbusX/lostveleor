@@ -11,6 +11,8 @@ namespace Game.View
     public sealed class CharacterAnimatorView : MonoBehaviour
     {
         private static readonly int MoveSpeed = Animator.StringToHash("MoveSpeed");
+        private static readonly int MoveX = Animator.StringToHash("MoveX");
+        private static readonly int MoveY = Animator.StringToHash("MoveY");
         private static readonly int TurnDirection = Animator.StringToHash("TurnDirection");
         private static readonly int Relaxed = Animator.StringToHash("Relaxed");
         private static readonly int Stunned = Animator.StringToHash("Stunned");
@@ -26,6 +28,12 @@ namespace Game.View
             Animator.StringToHash("LowerBody Combat.Lower_Saber_A_v5");
         private static readonly int LowerBodyAttackBState =
             Animator.StringToHash("LowerBody Combat.Lower_Saber_B_v5");
+        private static readonly int AnchorLeapTrigger = Animator.StringToHash("AnchorLeap");
+        private static readonly int AnchorSweepTrigger = Animator.StringToHash("AnchorSweep");
+        private static readonly int ChainStepTrigger = Animator.StringToHash("ChainStep");
+        private static readonly int AnchorLeapState = Animator.StringToHash("Base Layer.AnchorLeap_v5");
+        private static readonly int AnchorSweepState = Animator.StringToHash("Base Layer.AnchorSweep_v5");
+        private static readonly int ChainStepState = Animator.StringToHash("Base Layer.ChainStep_v5");
         private static readonly int OrvillSwordAttack = Animator.StringToHash("SwordAttack");
         private static readonly int OrvillShieldBash = Animator.StringToHash("ShieldBash");
         private static readonly int OrvillHighBlock = Animator.StringToHash("HighBlock");
@@ -71,6 +79,8 @@ namespace Game.View
         // presentation alive through that blend so it cannot drop to idle a
         // second time underneath the upper-body recovery.
         private const float WhirlwindPresentationDuration = 0.94f;
+        private const float AnchorAbilityPresentationDuration = 0.56f;
+        private const float ChainStepPresentationDuration = 0.21f;
 
         // Imported Orvill clips have authored contact poses on frames 17 and
         // 20. Per-clip playback keeps either pose on the deterministic 12/30 s
@@ -113,6 +123,7 @@ namespace Game.View
         private float _attackPresentationUntil;
         private bool _abilityPresentationActive;
         private float _abilityPresentationUntil;
+        private bool _abilityUsesLowerBodyLayer;
         private int _upperBodyLayer = -1;
         private int _lowerBodyLayer = -1;
         private bool _locomotionMoving;
@@ -154,6 +165,7 @@ namespace Game.View
             _lastHitAt = -10f;
             _abilityPresentationActive = false;
             _abilityPresentationUntil = 0f;
+            _abilityUsesLowerBodyLayer = false;
             _attackPresentationActive = false;
             _attackPresentationUntil = 0f;
             _attackContactHoldUntil = 0f;
@@ -176,6 +188,8 @@ namespace Game.View
             if (_faction == Faction.Wole)
             {
                 _animator.SetFloat(TurnDirection, 0f);
+                _animator.SetFloat(MoveX, 0f);
+                _animator.SetFloat(MoveY, 1f);
                 _animator.SetFloat(LocomotionPlaybackSpeed, 1f);
                 _animator.SetFloat(AttackPlaybackSpeed, 1f);
                 if (_lowerBodyLayer >= 0) _animator.SetLayerWeight(_lowerBodyLayer, 0f);
@@ -216,7 +230,8 @@ namespace Game.View
                 // Warp ends at the timed contact recovery, before the authored
                 // follow-through ends. Using it as the leg-layer lifetime made
                 // the end of combo B teleport to idle in roughly 55 ms.
-                bool actionActive = _attackPresentationActive || _abilityPresentationActive;
+                bool actionActive = _attackPresentationActive
+                                    || (_abilityPresentationActive && _abilityUsesLowerBodyLayer);
                 float target = actionActive && !_locomotionMoving ? 1f : 0f;
                 float weight = Mathf.MoveTowards(
                     _animator.GetLayerWeight(_lowerBodyLayer), target,
@@ -251,7 +266,8 @@ namespace Game.View
                 StopAttackWarp();
         }
 
-        public void SetLocomotion(bool moving, float turnDirection, float normalizedSpeed)
+        public void SetLocomotion(bool moving, float turnDirection, float normalizedSpeed,
+            float localMoveX, float localMoveY)
         {
             if (_spriteVisual != null)
             {
@@ -276,6 +292,13 @@ namespace Game.View
                 // stopping still snaps MoveSpeed to zero above.
                 float playback = moving ? Mathf.Clamp(normalizedSpeed, 0.42f, 1f) : 1f;
                 _animator.SetFloat(LocomotionPlaybackSpeed, playback, 0.045f, Time.deltaTime);
+                Vector2 localDirection = new Vector2(localMoveX, localMoveY);
+                if (!moving || localDirection.sqrMagnitude < 0.0001f)
+                    localDirection = Vector2.up;
+                else
+                    localDirection.Normalize();
+                _animator.SetFloat(MoveX, localDirection.x, 0.045f, Time.deltaTime);
+                _animator.SetFloat(MoveY, localDirection.y, 0.045f, Time.deltaTime);
                 _animator.SetFloat(TurnDirection,
                     moving ? 0f : Mathf.Clamp(turnDirection, -1f, 1f));
             }
@@ -306,13 +329,12 @@ namespace Game.View
             {
                 _abilityPresentationActive = false;
                 _abilityPresentationUntil = 0f;
+                _abilityUsesLowerBodyLayer = false;
                 // A newly committed basic attack is allowed to replace the
                 // Whirlwind recovery immediately. Leaving the ability triggers
                 // queued made AnyState wait behind the old exit transition,
                 // while Sim had already started the next windup.
-                _animator.ResetTrigger("Hook");
-                _animator.ResetTrigger("HeavyAttack");
-                _animator.ResetTrigger("LowerHeavyAttack");
+                ResetAbilityTriggers();
                 // В исходной delivery два настоящих удара; frames 99–147 —
                 // recovery второго, а не третий finisher. Проигрываем честную
                 // связку A/B и оставляем recovery внутри B.
@@ -368,8 +390,42 @@ namespace Game.View
             }
         }
 
+        /// <summary>
+        /// Совместимый вход для старой витрины, где Pelag abilities были
+        /// жёстко разложены по слотам 0..3. Игровой путь обязан использовать
+        /// <see cref="PlayAbilityDefinition"/>: слот — это позиция кнопки, а
+        /// не идентификатор самой способности.
+        /// </summary>
         public void PlayAbility(int slot)
         {
+            int definitionId;
+            switch (slot)
+            {
+                case 0: definitionId = AbilityDefinition.WhirlwindId; break;
+                case 1: definitionId = AbilityDefinition.AnchorLeapId; break;
+                case 2: definitionId = AbilityDefinition.AnchorSweepId; break;
+                case 3: definitionId = AbilityDefinition.ChainStepId; break;
+                default: return;
+            }
+
+            PlayAbilityDefinition(definitionId);
+        }
+
+        /// <summary>
+        /// Показывает Pelag-приём по стабильному DefinitionId.
+        ///
+        /// DefinitionId приходит из того же AbilityBuild, который породил
+        /// SimEvent. Это не даёт перестановке кнопок случайно включить другой
+        /// клип и не превращает неизвестную способность в Whirlwind.
+        /// </summary>
+        public void PlayAbilityDefinition(int definitionId)
+        {
+            bool whirlwind = definitionId == AbilityDefinition.WhirlwindId;
+            bool anchorLeap = definitionId == AbilityDefinition.AnchorLeapId;
+            bool anchorSweep = definitionId == AbilityDefinition.AnchorSweepId;
+            bool chainStep = definitionId == AbilityDefinition.ChainStepId;
+            if (!whirlwind && !anchorLeap && !anchorSweep && !chainStep) return;
+
             if (_spriteVisual != null)
             {
                 if (!IsDead) _spriteVisual.PlayAbility();
@@ -382,19 +438,71 @@ namespace Game.View
                 _attackPresentationActive = false;
                 _attackPresentationUntil = 0f;
                 CancelUpperBodyAttack(0.04f);
-                _animator.ResetTrigger("Hook");
-                _animator.ResetTrigger("HeavyAttack");
-                _animator.ResetTrigger("LowerHeavyAttack");
-                _animator.SetTrigger(slot == 1 ? "Hook" : "HeavyAttack");
-                if (slot != 1) _animator.SetTrigger("LowerHeavyAttack");
+                ResetAbilityTriggers();
+
+                int stateHash;
+                int triggerHash;
+                float duration;
+                if (anchorLeap)
+                {
+                    stateHash = AnchorLeapState;
+                    triggerHash = AnchorLeapTrigger;
+                    duration = AnchorAbilityPresentationDuration;
+                    _abilityUsesLowerBodyLayer = false;
+                }
+                else if (anchorSweep)
+                {
+                    stateHash = AnchorSweepState;
+                    triggerHash = AnchorSweepTrigger;
+                    duration = AnchorAbilityPresentationDuration;
+                    _abilityUsesLowerBodyLayer = false;
+                }
+                else if (chainStep)
+                {
+                    stateHash = ChainStepState;
+                    triggerHash = ChainStepTrigger;
+                    duration = ChainStepPresentationDuration;
+                    _abilityUsesLowerBodyLayer = false;
+                }
+                else
+                {
+                    // Whirlwind is the layered lower-body path.
+                    stateHash = 0;
+                    triggerHash = 0;
+                    duration = WhirlwindPresentationDuration;
+                    _abilityUsesLowerBodyLayer = true;
+                    _animator.SetTrigger("HeavyAttack");
+                    _animator.SetTrigger("LowerHeavyAttack");
+                }
+
+                if (stateHash != 0 && !EnterCommittedAbilityState(stateHash, 0.025f))
+                    _animator.SetTrigger(triggerHash);
                 _abilityPresentationActive = true;
                 // Gameplay may resolve before the authored follow-through.
                 // Presentation stays protected through the controller's soft
                 // return to Empty; a new committed action can still replace it.
-                float duration = slot == 1 ? 0.72f : WhirlwindPresentationDuration;
                 _abilityPresentationUntil = Time.time + duration;
                 _actionProtectedUntil = _abilityPresentationUntil;
             }
+        }
+
+        /// <summary>
+        /// Restarts exactly one ChainStep hop after Simulation has both resolved
+        /// the preceding contact and scheduled another five-tick Lunge.
+        /// </summary>
+        public void PlayChainStepRepeat()
+        {
+            if (_spriteVisual != null || _animator == null || IsDead
+                || _faction != Faction.Wole) return;
+
+            CancelUpperBodyAttack(0.015f);
+            ResetAbilityTriggers();
+            if (!EnterCommittedAbilityState(ChainStepState, 0.012f))
+                _animator.SetTrigger(ChainStepTrigger);
+            _abilityUsesLowerBodyLayer = false;
+            _abilityPresentationActive = true;
+            _abilityPresentationUntil = Time.time + ChainStepPresentationDuration;
+            _actionProtectedUntil = _abilityPresentationUntil;
         }
 
         /// <summary>
@@ -477,9 +585,8 @@ namespace Game.View
             {
                 _abilityPresentationActive = false;
                 _abilityPresentationUntil = 0f;
-                _animator.ResetTrigger("HeavyAttack");
-                _animator.ResetTrigger("LowerHeavyAttack");
-                _animator.ResetTrigger("Hook");
+                _abilityUsesLowerBodyLayer = false;
+                ResetAbilityTriggers();
                 ForceAttackContactState(_upperBodyLayer, upperState, contactPhase);
                 if (!_locomotionMoving)
                 {
@@ -582,6 +689,25 @@ namespace Game.View
             // ownership to an interruptible transition graph.
             _animator.CrossFadeInFixedTime(stateHash, 0.045f, layer, 0f);
             return true;
+        }
+
+        private bool EnterCommittedAbilityState(int stateHash, float blend)
+        {
+            if (_animator == null || !_animator.HasState(0, stateHash))
+                return false;
+            _animator.CrossFadeInFixedTime(stateHash, Mathf.Max(0f, blend), 0, 0f);
+            return true;
+        }
+
+        private void ResetAbilityTriggers()
+        {
+            if (_animator == null) return;
+            _animator.ResetTrigger("Hook");
+            _animator.ResetTrigger("HeavyAttack");
+            _animator.ResetTrigger("LowerHeavyAttack");
+            _animator.ResetTrigger(AnchorLeapTrigger);
+            _animator.ResetTrigger(AnchorSweepTrigger);
+            _animator.ResetTrigger(ChainStepTrigger);
         }
 
         private void ForceAttackContactState(int layer, int stateHash, float normalizedTime)

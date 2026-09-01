@@ -39,7 +39,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamoRuntime =>
         NormalPath.EndsWith("/Pelag_v5/Runtime/Pelag_v5_MixamoRig.fbx");
 
-    public override uint GetVersion() => 6;
+    public override uint GetVersion() => 7;
 
     private void OnPreprocessAnimation()
     {
@@ -115,14 +115,13 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         if (file == "Pelag_MX_SaberCombo")
         {
-            // Mixamo прислал два удара и recovery одним длинным тейком.
-            // Frames 99–147 — возврат второго удара, а не третий finisher.
-            // B сохраняет этот хвост: если приказ атаки продолжается, следующий
-            // A перехватывает recovery; если нет — герой сам мягко встаёт.
+            // Два удара и recovery остаются одним тейком, но delivery теперь
+            // пересобран в 30 fps. Граница 25 принадлежит обеим половинам:
+            // поза стыка совпадает, а B сохраняет весь мягкий recovery до 74.
             importer.clipAnimations = new[]
             {
-                Clip(source, "Pelag_MX_SaberAttackA", 1f, 50f, false),
-                Clip(source, "Pelag_MX_SaberAttackB", 50f, 147f, false)
+                Clip(source, "Pelag_MX_SaberAttackA", 1f, 25f, false),
+                Clip(source, "Pelag_MX_SaberAttackB", 25f, 74f, false)
             };
             return;
         }
@@ -141,8 +140,29 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             case "Pelag_MX_Hit": name = "Pelag_MX_Hit"; last = Mathf.Min(last, 70f); break;
             case "Pelag_MX_Death": name = "Pelag_MX_Death"; last = Mathf.Min(last, 180f); break;
             case "Pelag_MX_Whirlwind": name = "Pelag_MX_Whirlwind"; last = Mathf.Min(last, 92f); break;
-            case "Pelag_MX_DualCombo": name = "Pelag_MX_DualCombo"; break;
+            case "Pelag_MX_DualCombo":
+                // The Blender FBX round-trip reports this take as 2-77 even
+                // though the authored delivery is 1-76. Pin the importer to
+                // the authored range so the first contact remains frame 7
+                // (six simulation ticks into the 75-tick clip).
+                name = "Pelag_MX_DualCombo"; first = 1f; last = 76f; break;
             case "Pelag_MX_AnchorAttack": name = "Pelag_MX_AnchorAttack"; break;
+            case "Pelag_MX_AnchorLeap":
+                name = "Pelag_MX_AnchorLeap"; first = 1f; last = 16f; break;
+            case "Pelag_MX_AnchorSweep":
+                name = "Pelag_MX_AnchorSweep"; first = 1f; last = 16f; break;
+            case "Pelag_MX_ChainStep":
+                name = "Pelag_MX_ChainStep"; first = 1f; last = 6f; loop = true; break;
+            case "Pelag_MX_RunStart":
+                name = "Pelag_MX_RunStart"; first = 1f; last = 6f; break;
+            case "Pelag_MX_RunStop":
+                name = "Pelag_MX_RunStop"; first = 1f; last = 6f; break;
+            case "Pelag_MX_StrafeLeft":
+                name = "Pelag_MX_StrafeLeft"; first = 1f; last = 17f; loop = true; break;
+            case "Pelag_MX_StrafeRight":
+                name = "Pelag_MX_StrafeRight"; first = 1f; last = 17f; loop = true; break;
+            case "Pelag_MX_StrafeBack":
+                name = "Pelag_MX_StrafeBack"; first = 1f; last = 17f; loop = true; break;
             default: name = file; break;
         }
 

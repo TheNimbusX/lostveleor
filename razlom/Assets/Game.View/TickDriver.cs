@@ -12,6 +12,29 @@ using UnityEngine.InputSystem;
 namespace Game.View
 {
     /// <summary>
+    /// Снимок presentation-relevant состояния источника в момент, когда
+    /// симуляция породила событие.  FrameEvents переживает несколько тиков
+    /// одного render-кадра, поэтому читать это состояние позднее напрямую из
+    /// Simulation нельзя: там уже будет состояние последнего тика.
+    /// </summary>
+    public readonly struct FrameEventContext
+    {
+        public readonly SimEvent Event;
+        public readonly int SimulationTick;
+        public readonly int SourceForcedTicksLeft;
+        public readonly byte SourceForcedKind;
+
+        public FrameEventContext(SimEvent @event, int simulationTick,
+            int sourceForcedTicksLeft, byte sourceForcedKind)
+        {
+            Event = @event;
+            SimulationTick = simulationTick;
+            SourceForcedTicksLeft = sourceForcedTicksLeft;
+            SourceForcedKind = sourceForcedKind;
+        }
+    }
+
+    /// <summary>
     /// Мост между Unity и симуляцией. Единственное место, где встречаются
     /// Time.deltaTime и Fix64.
     ///
@@ -137,7 +160,15 @@ namespace Game.View
         /// </summary>
         public IReadOnlyList<SimEvent> FrameEvents => _frameEvents;
 
+        /// <summary>
+        /// Те же события с коротким снимком состояния источника на их
+        /// авторитетном тике. Индексы совпадают с <see cref="FrameEvents"/>.
+        /// </summary>
+        public IReadOnlyList<FrameEventContext> FrameEventContexts => _frameEventContexts;
+
         private readonly List<SimEvent> _frameEvents = new List<SimEvent>(256);
+        private readonly List<FrameEventContext> _frameEventContexts =
+            new List<FrameEventContext>(256);
 
         /// <summary>
         /// Под какую самую большую симуляцию рассчитан буфер интерполяции.
@@ -216,6 +247,7 @@ namespace Game.View
             if (GameplayPaused)
             {
                 _frameEvents.Clear();
+                _frameEventContexts.Clear();
                 Alpha = 0f;
                 return;
             }
@@ -236,6 +268,7 @@ namespace Game.View
             CaptureInput();
 
             _frameEvents.Clear();
+            _frameEventContexts.Clear();
             _accumulator += Time.deltaTime;
 
             int steps = 0;
@@ -290,6 +323,7 @@ namespace Game.View
             _commandLatch = 0;
             _accumulator = 0f;
             _frameEvents.Clear();
+            _frameEventContexts.Clear();
             AttackHeld = false;
             MoveOrderPressedThisFrame = false;
             MoveOrderHeld = false;
@@ -772,12 +806,23 @@ namespace Game.View
 
         private void PlayEvents(IReadOnlyList<SimEvent> events)
         {
+            Simulation sim = Sim;
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
 
                 // Копия в буфер кадра: список симуляции переживёт только этот тик.
                 _frameEvents.Add(e);
+
+                int sourceForcedTicksLeft = 0;
+                byte sourceForcedKind = (byte)ForcedMotionKind.None;
+                if (e.Source >= 0 && e.Source < sim.Entities.Count)
+                {
+                    sourceForcedTicksLeft = sim.Entities.ForcedTicksLeft[e.Source];
+                    sourceForcedKind = sim.Entities.ForcedKind[e.Source];
+                }
+                _frameEventContexts.Add(new FrameEventContext(e, sim.Tick,
+                    sourceForcedTicksLeft, sourceForcedKind));
 
                 switch (e.Type)
                 {
@@ -799,7 +844,6 @@ namespace Game.View
                 }
             }
 
-            Simulation sim = Sim;
             if (LogStateHash && sim != null && sim.Tick % Simulation.TicksPerSecond == 0)
                 Debug.Log($"[Разлом] тик {sim.Tick} хеш {sim.StateHash():X16}");
         }

@@ -9,6 +9,8 @@ namespace Game.View
     [DisallowMultipleComponent]
     public sealed class PelagVfxElement : MonoBehaviour
     {
+        private const string ChainGlintName = "Chain Glint Flipbook";
+
         public PelagVfxId Id;
         [Min(0.05f)] public float DefaultLifetime = 0.35f;
         public bool DynamicLine;
@@ -17,6 +19,7 @@ namespace Game.View
         private TrailRenderer[] _trails;
         private ParticleSystem[] _particles;
         private PelagChainLinkStrip _chainLinks;
+        private Transform _chainGlint;
         private Vector3 _initialScale;
 
         public LineRenderer PrimaryLine => _lines != null && _lines.Length > 0 ? _lines[0] : null;
@@ -27,6 +30,7 @@ namespace Game.View
             _trails = GetComponentsInChildren<TrailRenderer>(true);
             _particles = GetComponentsInChildren<ParticleSystem>(true);
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
+            _chainGlint = transform.Find(ChainGlintName);
             _initialScale = transform.localScale;
         }
 
@@ -62,6 +66,7 @@ namespace Game.View
             line.positionCount = 2;
             line.SetPosition(0, a);
             line.SetPosition(1, b);
+            PlaceChainGlint(Vector3.Lerp(a, b, 0.5f), a, b);
         }
 
         public void SetLine(Vector3 a, Vector3 bend, Vector3 b)
@@ -73,6 +78,15 @@ namespace Game.View
             line.SetPosition(1, bend);
             line.SetPosition(2, b);
             _chainLinks?.SetChain(a, bend, b);
+            PlaceChainGlint(bend, a, b);
+        }
+
+        private void PlaceChainGlint(Vector3 position, Vector3 a, Vector3 b)
+        {
+            if (_chainGlint == null) return;
+            _chainGlint.position = position;
+            float scale = Mathf.Clamp(Vector3.Distance(a, b) / 2.5f, 0.65f, 1.25f);
+            _chainGlint.localScale = Vector3.one * scale;
         }
 
         public void End()

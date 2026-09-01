@@ -15,7 +15,26 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 9;
+    private const int LibraryVersion = 11;
+    private const int FlipbookTiles = 4;
+    private const int FlipbookFrames = FlipbookTiles * FlipbookTiles;
+    private const int ChainLinkCount = 24;
+    private const int EffectTriangleBudget = 5000;
+    private const int RuntimeGeometryAllowance = 64;
+    private const float FlipbookFramesPerSecond = 30f;
+    private const float FlipbookLifetime = FlipbookFrames / FlipbookFramesPerSecond;
+    private const string AutoBuildSessionKey = "Razlom.PelagVfx.AutoBuild.v1";
+
+    private const string AnchorSpinTexturePath =
+        Root + "/Textures/Pelag_FX_AnchorSpin_4x4.png";
+    private const string ImpactBurstTexturePath =
+        Root + "/Textures/Pelag_FX_ImpactBurst_4x4.png";
+    private const string GroundCrackTexturePath =
+        Root + "/Textures/Pelag_FX_GroundCrack_4x4.png";
+    private const string DashSmearTexturePath =
+        Root + "/Textures/Pelag_FX_DashSmear_4x4.png";
+    private const string ChainGlintTexturePath =
+        Root + "/Textures/Pelag_FX_ChainGlint_4x4.png";
 
     // ЛЕТИТ ГОЛОВА ЯКОРЯ, А НЕ ВЕСЬ МОТОК.
     //
@@ -40,8 +59,8 @@ public static class RazlomPelagVfxAssetBuilder
         "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorGrip.fbx";
 
     /// <summary>
-    /// Одно звено для процедурной цепи PelagChainLinkStrip.
-    /// ПОКА НЕ ПОДКЛЮЧЕНО — цепь всё ещё рисуется линией, а не звеньями.
+    /// Одно оптимизированное звено для PelagChainLinkStrip (96 треугольников).
+    /// Двадцать четыре звена вместе с головой якоря остаются ниже 5k tris.
     /// </summary>
     private const string ChainLinkPath =
         "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_ChainLink.fbx";
@@ -57,8 +76,13 @@ public static class RazlomPelagVfxAssetBuilder
         EditorApplication.delayCall += () =>
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (SessionState.GetBool(AutoBuildSessionKey, false)) return;
             AbilityVfxLibrary library = AssetDatabase.LoadAssetAtPath<AbilityVfxLibrary>(LibraryPath);
-            if (library == null || library.BuildVersion != LibraryVersion) Build();
+            if (library == null || library.BuildVersion != LibraryVersion)
+            {
+                SessionState.SetBool(AutoBuildSessionKey, true);
+                Build();
+            }
         };
     }
 
@@ -71,9 +95,12 @@ public static class RazlomPelagVfxAssetBuilder
         EnsureFolder(Root, "Materials");
         EnsureFolder(Root, "Geometry");
 
+        if (!EnsureFlipbookTextures()) return;
+
         Shader vfxShader = Shader.Find("Razlom/Pelag VFX");
         Shader dustShader = Shader.Find("Razlom/Pelag Dust");
-        if (vfxShader == null || dustShader == null)
+        Shader flipbookShader = Shader.Find("Razlom/Pelag Flipbook");
+        if (vfxShader == null || dustShader == null || flipbookShader == null)
         {
             Debug.LogWarning("[Pelag VFX] Шейдеры ещё импортируются; сборка перенесена.");
             return;
@@ -81,8 +108,20 @@ public static class RazlomPelagVfxAssetBuilder
 
         Material slash = VfxMaterial("M_SlashTrail", vfxShader,
             new Color(1.00f, 0.20f, 0.14f, 0.94f), new Color(1.00f, 0.95f, 0.78f, 1f), 1.35f, 0.58f);
+        // ЛИНИЯ ЦЕПИ, А НЕ ТРЕЙЛ ЯКОРЯ.
+        //
+        // Объявление вернулось 1 сентября: предыдущий заход убирал с брошенного
+        // якоря обычный TrailRenderer в пользу вращающегося flipbook-смаза — и
+        // заодно снёс этот материал, оставив два вызова на него. Проект перестал
+        // компилироваться: `error CS0103: имя 'anchor' не существует`.
+        //
+        // Материал нужен не трейлу. Им красится LineRenderer НАТЯНУТОЙ ЦЕПИ в
+        // AnchorLeapChain и AnchorSweepPull, и ассет `M_AnchorTrail.mat` всё это
+        // время лежал на диске. Имя осталось историческим; переименовывать его
+        // сейчас значит потерять ссылки в трёх prefab'ах ради косметики.
         Material anchor = VfxMaterial("M_AnchorTrail", vfxShader,
-            new Color(0.11f, 0.14f, 0.15f, 0.94f), new Color(0.62f, 0.72f, 0.72f, 0.92f), 0.82f, 0.28f);
+            new Color(0.11f, 0.14f, 0.15f, 0.94f), new Color(0.62f, 0.72f, 0.72f, 0.92f),
+            0.82f, 0.28f);
         Material impact = VfxMaterial("M_Impact", vfxShader,
             new Color(1.00f, 0.28f, 0.14f, 0.96f), new Color(1.00f, 0.97f, 0.84f, 1f), 1.42f, 0.62f);
         Material whirlwind = VfxMaterial("M_WhirlwindBrush", vfxShader,
@@ -95,8 +134,19 @@ public static class RazlomPelagVfxAssetBuilder
             new Color(1.00f, 0.64f, 0.40f, 0.68f), new Color(1.00f, 0.97f, 0.88f, 0.95f), 1.08f, 0.66f);
         Material dust = DustMaterial("M_DustStylized", dustShader,
             new Color(0.72f, 0.56f, 0.38f, 0.46f));
+        Material anchorSpin = FlipbookMaterial("M_Flipbook_AnchorSpin", flipbookShader,
+            AnchorSpinTexturePath, Color.white, 1.00f);
+        Material impactBurst = FlipbookMaterial("M_Flipbook_ImpactBurst", flipbookShader,
+            ImpactBurstTexturePath, Color.white, 1.12f);
+        Material groundCrack = FlipbookMaterial("M_Flipbook_GroundCrack", flipbookShader,
+            GroundCrackTexturePath, Color.white, 0.92f);
+        Material dashSmear = FlipbookMaterial("M_Flipbook_DashSmear", flipbookShader,
+            DashSmearTexturePath, Color.white, 1.00f);
+        Material chainGlint = FlipbookMaterial("M_Flipbook_ChainGlint", flipbookShader,
+            ChainGlintTexturePath, Color.white, 1.08f);
         Material metal = AnchorMetalMaterial();
-        _chainLinkMesh = CreateChainLinkMesh();
+        _chainLinkMesh = LoadChainLinkMesh();
+        if (_chainLinkMesh == null || !ValidateGeometryBudget()) return;
 
         GameObject[] prefabs = new GameObject[(int)PelagVfxId.Count];
         prefabs[(int)PelagVfxId.AutoAttackSlash] = SaveArc(PelagVfxId.AutoAttackSlash,
@@ -106,29 +156,34 @@ public static class RazlomPelagVfxAssetBuilder
         // as a second weapon inside the target; gameplay contact now uses the
         // directional blade ribbon plus the compact CombatJuice burst.
         prefabs[(int)PelagVfxId.AutoAttackImpact] = SaveBurst(PelagVfxId.AutoAttackImpact,
-            "VFX_AutoAttack_Impact", impact, 4, 0.14f, 3.2f, 0.11f, 0.24f);
+            "VFX_AutoAttack_Impact", impact, 4, 0.14f, 3.2f, 0.11f, 0.24f,
+            impactBurst, 0.90f);
         prefabs[(int)PelagVfxId.WhirlwindRing] = SaveWhirlwindBrush(PelagVfxId.WhirlwindRing,
             "VFX_Whirlwind_Brush", 1.0f);
         prefabs[(int)PelagVfxId.WhirlwindHit] = SaveBurst(PelagVfxId.WhirlwindHit,
-            "VFX_Whirlwind_Hit", impact, 5, 0.19f, 3.8f, 0.16f, 0.34f);
+            "VFX_Whirlwind_Hit", impact, 5, 0.16f, 3.8f, 0.16f, 0.34f,
+            impactBurst, 1.10f);
         prefabs[(int)PelagVfxId.AnchorLeapThrow] = SaveAnchor(PelagVfxId.AnchorLeapThrow,
-            "VFX_AnchorLeap_Throw", anchor, metal, 0.60f);
+            "VFX_AnchorLeap_Throw", metal, anchorSpin, 0.60f);
         prefabs[(int)PelagVfxId.AnchorLeapChain] = SaveDynamicLine(PelagVfxId.AnchorLeapChain,
-            "VFX_AnchorLeap_Chain", anchor, metal, 0.045f, 0.90f, true);
+            "VFX_AnchorLeap_Chain", anchor, metal, chainGlint, 0.045f, 0.90f, true);
         prefabs[(int)PelagVfxId.AnchorLeapLand] = SaveBurst(PelagVfxId.AnchorLeapLand,
-            "VFX_AnchorLeap_Land", dust, 6, 0.34f, 2.2f, 0.24f, 0.58f);
+            "VFX_AnchorLeap_Land", dust, 6, 0.34f, 2.2f, 0.24f, FlipbookLifetime,
+            impactBurst, 1.30f, groundCrack, 2.20f);
         prefabs[(int)PelagVfxId.AnchorSweepThrow] = SaveAnchor(PelagVfxId.AnchorSweepThrow,
-            "VFX_AnchorSweep_Throw", anchor, metal, 0.66f);
+            "VFX_AnchorSweep_Throw", metal, anchorSpin, 0.66f);
         prefabs[(int)PelagVfxId.AnchorSweepPull] = SaveDynamicLine(PelagVfxId.AnchorSweepPull,
-            "VFX_AnchorSweep_Pull", anchor, metal, 0.055f, 1.18f, true);
+            "VFX_AnchorSweep_Pull", anchor, metal, chainGlint, 0.055f, 1.18f, true);
         prefabs[(int)PelagVfxId.AnchorSweepEnemyPull] = SaveDynamicLine(PelagVfxId.AnchorSweepEnemyPull,
-            "VFX_AnchorSweep_EnemyPull", dash, metal, 0.12f, 0.44f, false);
+            "VFX_AnchorSweep_EnemyPull", dash, metal, null, 0.12f, 0.44f, false);
         prefabs[(int)PelagVfxId.ChainStepDash] = SaveTrail(PelagVfxId.ChainStepDash,
-            "VFX_ChainStep_Dash", dash, 0.20f, 0.23f);
+            "VFX_ChainStep_Dash", dashSmear, 0.23f);
         prefabs[(int)PelagVfxId.ChainStepHit] = SaveBurst(PelagVfxId.ChainStepHit,
-            "VFX_ChainStep_Hit", impact, 4, 0.15f, 3.0f, 0.13f, 0.28f);
+            "VFX_ChainStep_Hit", impact, 4, 0.15f, 3.0f, 0.13f, 0.28f,
+            impactBurst, 0.92f);
         prefabs[(int)PelagVfxId.TargetFlash] = SaveBurst(PelagVfxId.TargetFlash,
-            "VFX_TargetFlash", flash, 1, 0.11f, 0.02f, 0.48f, 0.15f);
+            "VFX_TargetFlash", flash, 1, 0.11f, 0.02f, 0.48f, 0.15f,
+            impactBurst, 0.62f);
         prefabs[(int)PelagVfxId.DustSmall] = SaveBurst(PelagVfxId.DustSmall,
             "VFX_DustSmall", dust, 3, 0.28f, 1.5f, 0.19f, 0.38f);
         prefabs[(int)PelagVfxId.DustHeavy] = SaveBurst(PelagVfxId.DustHeavy,
@@ -137,7 +192,7 @@ public static class RazlomPelagVfxAssetBuilder
         CreateLibrary(prefabs);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        Debug.Log($"[Pelag VFX] Созданы 15 pooled-prefabs, 13 материалов и AbilityVfxLibrary v{LibraryVersion}.");
+        Debug.Log($"[Pelag VFX] Созданы 15 pooled-prefabs, 18 материалов и AbilityVfxLibrary v{LibraryVersion}.");
     }
 
     private static Material VfxMaterial(string name, Shader shader, Color edge, Color core,
@@ -162,6 +217,61 @@ public static class RazlomPelagVfxAssetBuilder
         material.SetColor("_BaseColor", color);
         EditorUtility.SetDirty(material);
         return material;
+    }
+
+    private static Material FlipbookMaterial(string name, Shader shader, string texturePath,
+        Color tint, float emission)
+    {
+        string path = MaterialFolder + "/" + name + ".mat";
+        Material material = LoadOrCreateMaterial(path, shader);
+        Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+        material.name = name;
+        material.SetTexture("_BaseMap", texture);
+        material.SetColor("_BaseColor", tint);
+        material.SetFloat("_Emission", emission);
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    private static bool EnsureFlipbookTextures()
+    {
+        string[] paths =
+        {
+            AnchorSpinTexturePath,
+            ImpactBurstTexturePath,
+            GroundCrackTexturePath,
+            DashSmearTexturePath,
+            ChainGlintTexturePath
+        };
+
+        bool ready = true;
+        for (int i = 0; i < paths.Length; i++)
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(paths[i]) as TextureImporter;
+            if (importer == null)
+            {
+                AssetDatabase.ImportAsset(paths[i], ImportAssetOptions.ForceSynchronousImport);
+                importer = AssetImporter.GetAtPath(paths[i]) as TextureImporter;
+            }
+
+            if (importer == null)
+            {
+                Debug.LogWarning("[Pelag VFX] Flipbook ещё не импортирован: " + paths[i]);
+                ready = false;
+                continue;
+            }
+
+            if (RazlomPelagVfxTexturePolicy.Apply(importer)) importer.SaveAndReimport();
+
+            Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(paths[i]);
+            if (texture == null || texture.width != 2048 || texture.height != 2048)
+            {
+                string dimensions = texture == null ? "null" : $"{texture.width}x{texture.height}";
+                Debug.LogError($"[Pelag VFX] Ожидался RGBA atlas 2048x2048, получен {dimensions}: {paths[i]}");
+                ready = false;
+            }
+        }
+        return ready;
     }
 
     private static Material AnchorMetalMaterial()
@@ -486,34 +596,34 @@ public static class RazlomPelagVfxAssetBuilder
     }
 
     private static GameObject SaveDynamicLine(PelagVfxId id, string name, Material material,
-        Material metalMaterial, float width, float lifetime, bool physicalChain)
+        Material metalMaterial, Material glintMaterial, float width, float lifetime, bool physicalChain)
     {
         GameObject root = RootObject(id, name, lifetime);
         root.GetComponent<PelagVfxElement>().DynamicLine = true;
         AddLine(root, material, width, true, false).positionCount = 0;
-        if (physicalChain) AddChainLinks(root, metalMaterial);
+        if (physicalChain)
+        {
+            AddChainLinks(root, metalMaterial);
+            AddFlipbook(root, "Chain Glint Flipbook", glintMaterial, 0.70f,
+                false, Vector3.zero, 4);
+        }
         return Save(root, name);
     }
 
-    private static GameObject SaveTrail(PelagVfxId id, string name, Material material,
-        float width, float lifetime)
+    private static GameObject SaveTrail(PelagVfxId id, string name, Material flipbookMaterial,
+        float lifetime)
     {
         GameObject root = RootObject(id, name, lifetime);
-        TrailRenderer trail = root.AddComponent<TrailRenderer>();
-        trail.sharedMaterial = material;
-        trail.time = lifetime;
-        trail.minVertexDistance = 0.025f;
-        trail.widthCurve = new AnimationCurve(new Keyframe(0f, width), new Keyframe(1f, 0f));
-        trail.colorGradient = Gradient(new Color(1f, 0.91f, 0.78f, 0.82f),
-            new Color(1f, 0.28f, 0.23f, 0f));
-        trail.shadowCastingMode = ShadowCastingMode.Off;
-        trail.receiveShadows = false;
-        trail.emitting = false;
+        // The old continuously-emitting TrailRenderer stayed bright for the
+        // entire hop. The authored sheet carries the leader and broken ghosts,
+        // then reaches a fully transparent frame at exactly 5 / 30 seconds.
+        AddFlipbook(root, "Dash Smear Flipbook", flipbookMaterial, 1.25f,
+            false, Vector3.zero, 3);
         return Save(root, name);
     }
 
-    private static GameObject SaveAnchor(PelagVfxId id, string name, Material trailMaterial,
-        Material metalMaterial, float lifetime)
+    private static GameObject SaveAnchor(PelagVfxId id, string name,
+        Material metalMaterial, Material spinMaterial, float lifetime)
     {
         GameObject root = RootObject(id, name, lifetime);
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(AnchorPath);
@@ -538,21 +648,18 @@ public static class RazlomPelagVfxAssetBuilder
             Debug.LogWarning("[Pelag VFX] Anchor FBX ещё не импортирован: " + AnchorPath);
         }
 
-        TrailRenderer trail = root.AddComponent<TrailRenderer>();
-        trail.sharedMaterial = trailMaterial;
-        trail.time = 0.16f;
-        trail.minVertexDistance = 0.03f;
-        trail.widthCurve = new AnimationCurve(new Keyframe(0f, 0.10f), new Keyframe(1f, 0f));
-        trail.colorGradient = Gradient(new Color(0.70f, 0.77f, 0.77f, 0.70f),
-            new Color(0.10f, 0.13f, 0.14f, 0f));
-        trail.shadowCastingMode = ShadowCastingMode.Off;
-        trail.receiveShadows = false;
-        trail.emitting = false;
+        // Авторский флипбук уже содержит вращающийся смаз и ghost-дуги.
+        // Непрерывный TrailRenderer поверх него превращает полёт в обычный
+        // трейл и держит яркий след дольше короткого окна удара.
+        AddFlipbook(root, "Anchor Spin Flipbook", spinMaterial, 1.15f,
+            false, Vector3.zero, 2);
         return Save(root, name);
     }
 
     private static GameObject SaveBurst(PelagVfxId id, string name, Material material,
-        int count, float lifetime, float speed, float size, float rootLifetime)
+        int count, float lifetime, float speed, float size, float rootLifetime,
+        Material impactFlipbook = null, float impactSize = 1f,
+        Material groundFlipbook = null, float groundSize = 1f)
     {
         GameObject root = RootObject(id, name, rootLifetime);
         ParticleSystem ps = root.AddComponent<ParticleSystem>();
@@ -593,7 +700,70 @@ public static class RazlomPelagVfxAssetBuilder
         renderer.alignment = ParticleSystemRenderSpace.View;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
+
+        if (impactFlipbook != null)
+            AddFlipbook(root, "Impact Burst Flipbook", impactFlipbook, impactSize,
+                false, Vector3.zero, 5);
+        if (groundFlipbook != null)
+            AddFlipbook(root, "Ground Crack Flipbook", groundFlipbook, groundSize,
+                true, new Vector3(0f, 0.015f, 0f), -2);
         return Save(root, name);
+    }
+
+    private static ParticleSystem AddFlipbook(GameObject root, string name, Material material,
+        float size, bool horizontal, Vector3 localPosition, int sortingOrder)
+    {
+        if (material == null) return null;
+
+        GameObject host = new GameObject(name);
+        host.transform.SetParent(root.transform, false);
+        host.transform.localPosition = localPosition;
+
+        ParticleSystem particles = host.AddComponent<ParticleSystem>();
+        ParticleSystem.MainModule main = particles.main;
+        main.loop = false;
+        main.playOnAwake = false;
+        main.duration = FlipbookLifetime;
+        main.startLifetime = FlipbookLifetime;
+        main.startSpeed = 0f;
+        main.startSize = size;
+        main.startColor = Color.white;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+        main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+        main.maxParticles = 1;
+
+        ParticleSystem.EmissionModule emission = particles.emission;
+        emission.enabled = true;
+        emission.rateOverTime = 0f;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
+
+        ParticleSystem.ShapeModule shape = particles.shape;
+        shape.enabled = false;
+
+        ParticleSystem.TextureSheetAnimationModule sheet = particles.textureSheetAnimation;
+        sheet.enabled = true;
+        sheet.mode = ParticleSystemAnimationMode.Grid;
+        sheet.animation = ParticleSystemAnimationType.WholeSheet;
+        sheet.numTilesX = FlipbookTiles;
+        sheet.numTilesY = FlipbookTiles;
+        sheet.cycleCount = 1;
+        sheet.startFrame = new ParticleSystem.MinMaxCurve(0f);
+        sheet.frameOverTime = new ParticleSystem.MinMaxCurve(1f,
+            AnimationCurve.Linear(0f, 0f, 1f, 1f));
+
+        ParticleSystemRenderer renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.renderMode = horizontal
+            ? ParticleSystemRenderMode.HorizontalBillboard
+            : ParticleSystemRenderMode.Billboard;
+        renderer.alignment = ParticleSystemRenderSpace.View;
+        renderer.sortingOrder = sortingOrder;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.lightProbeUsage = LightProbeUsage.Off;
+        renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        renderer.enableGPUInstancing = true;
+        return particles;
     }
 
     private static GameObject RootObject(PelagVfxId id, string name, float lifetime)
@@ -638,16 +808,15 @@ public static class RazlomPelagVfxAssetBuilder
 
     private static void AddChainLinks(GameObject root, Material material)
     {
-        const int Count = 28;
         GameObject host = new GameObject("Physical Chain Links");
         host.transform.SetParent(root.transform, false);
         PelagChainLinkStrip strip = host.AddComponent<PelagChainLinkStrip>();
-        strip.Links = new Transform[Count];
-        for (int i = 0; i < Count; i++)
+        strip.Links = new Transform[ChainLinkCount];
+        for (int i = 0; i < ChainLinkCount; i++)
         {
             GameObject link = new GameObject($"Link_{i:00}");
             link.transform.SetParent(host.transform, false);
-            link.transform.localScale = Vector3.one * 0.92f;
+            link.transform.localScale = Vector3.one * 0.62f;
             MeshFilter filter = link.AddComponent<MeshFilter>();
             filter.sharedMesh = _chainLinkMesh;
             MeshRenderer renderer = link.AddComponent<MeshRenderer>();
@@ -658,62 +827,75 @@ public static class RazlomPelagVfxAssetBuilder
         }
     }
 
-    private static Mesh CreateChainLinkMesh()
+    private static Mesh LoadChainLinkMesh()
     {
-        const string path = Root + "/Geometry/Pelag_ChainLink.asset";
-        Mesh existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-        if (existing != null) return existing;
-
-        const int RingSegments = 14;
-        const int TubeSegments = 6;
-        const float MajorX = 0.070f;
-        const float MajorY = 0.045f;
-        const float Tube = 0.012f;
-        var vertices = new Vector3[RingSegments * TubeSegments];
-        var normals = new Vector3[vertices.Length];
-        var uv = new Vector2[vertices.Length];
-        var triangles = new int[RingSegments * TubeSegments * 6];
-
-        for (int r = 0; r < RingSegments; r++)
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(ChainLinkPath);
+        if (source == null)
         {
-            float a = r * Mathf.PI * 2f / RingSegments;
-            Vector3 radial = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
-            Vector3 center = new Vector3(radial.x * MajorX, radial.y * MajorY, 0f);
-            for (int t = 0; t < TubeSegments; t++)
-            {
-                float b = t * Mathf.PI * 2f / TubeSegments;
-                Vector3 normal = (radial * Mathf.Cos(b) + Vector3.forward * Mathf.Sin(b)).normalized;
-                int index = r * TubeSegments + t;
-                vertices[index] = center + normal * Tube;
-                normals[index] = normal;
-                uv[index] = new Vector2(r / (float)RingSegments, t / (float)TubeSegments);
-            }
+            Debug.LogError("[Pelag VFX] Оптимизированное звено не импортировано: " + ChainLinkPath);
+            return null;
         }
 
-        int triangle = 0;
-        for (int r = 0; r < RingSegments; r++)
+        MeshFilter[] filters = source.GetComponentsInChildren<MeshFilter>(true);
+        Mesh best = null;
+        long bestIndices = -1;
+        for (int i = 0; i < filters.Length; i++)
         {
-            int nextR = (r + 1) % RingSegments;
-            for (int t = 0; t < TubeSegments; t++)
-            {
-                int nextT = (t + 1) % TubeSegments;
-                int a = r * TubeSegments + t;
-                int b = nextR * TubeSegments + t;
-                int c = nextR * TubeSegments + nextT;
-                int d = r * TubeSegments + nextT;
-                triangles[triangle++] = a; triangles[triangle++] = b; triangles[triangle++] = c;
-                triangles[triangle++] = a; triangles[triangle++] = c; triangles[triangle++] = d;
-            }
+            Mesh mesh = filters[i].sharedMesh;
+            if (mesh == null) continue;
+            long indices = IndexCount(mesh);
+            if (indices <= bestIndices) continue;
+            best = mesh;
+            bestIndices = indices;
         }
 
-        Mesh mesh = new Mesh { name = "Pelag_ChainLink" };
-        mesh.vertices = vertices;
-        mesh.normals = normals;
-        mesh.uv = uv;
-        mesh.triangles = triangles;
-        mesh.RecalculateBounds();
-        AssetDatabase.CreateAsset(mesh, path);
-        return mesh;
+        if (best == null)
+            Debug.LogError("[Pelag VFX] В FBX звена нет MeshFilter: " + ChainLinkPath);
+        return best;
+    }
+
+    private static bool ValidateGeometryBudget()
+    {
+        GameObject anchor = AssetDatabase.LoadAssetAtPath<GameObject>(AnchorPath);
+        if (anchor == null)
+        {
+            Debug.LogError("[Pelag VFX] Голова якоря не импортирована: " + AnchorPath);
+            return false;
+        }
+
+        long anchorTriangles = TriangleCount(anchor);
+        long linkTriangles = IndexCount(_chainLinkMesh) / 3L;
+        long combined = anchorTriangles + linkTriangles * ChainLinkCount + RuntimeGeometryAllowance;
+        if (combined > EffectTriangleBudget)
+        {
+            Debug.LogError($"[Pelag VFX] Геометрия якоря и цепи превышает бюджет: " +
+                           $"{combined} > {EffectTriangleBudget} tris " +
+                           $"(anchor {anchorTriangles}, links {linkTriangles} x {ChainLinkCount}, " +
+                           $"runtime allowance {RuntimeGeometryAllowance}).");
+            return false;
+        }
+
+        Debug.Log($"[Pelag VFX] Геометрия в бюджете: {combined}/{EffectTriangleBudget} tris " +
+                  $"(anchor {anchorTriangles}, links {linkTriangles} x {ChainLinkCount}).");
+        return true;
+    }
+
+    private static long TriangleCount(GameObject root)
+    {
+        long indices = 0;
+        MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
+        for (int i = 0; i < filters.Length; i++) indices += IndexCount(filters[i].sharedMesh);
+        SkinnedMeshRenderer[] skinned = root.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        for (int i = 0; i < skinned.Length; i++) indices += IndexCount(skinned[i].sharedMesh);
+        return indices / 3L;
+    }
+
+    private static long IndexCount(Mesh mesh)
+    {
+        if (mesh == null) return 0;
+        long count = 0;
+        for (int i = 0; i < mesh.subMeshCount; i++) count += (long)mesh.GetIndexCount(i);
+        return count;
     }
 
     private static GameObject Save(GameObject root, string name)
@@ -769,5 +951,67 @@ public static class RazlomPelagVfxAssetBuilder
     {
         string path = parent + "/" + child;
         if (!AssetDatabase.IsValidFolder(path)) AssetDatabase.CreateFolder(parent, child);
+    }
+}
+
+/// <summary>
+/// Deterministic import policy for authored Pelag flipbooks. Keeping this next
+/// to the prefab recipe means a newly regenerated atlas cannot silently become
+/// a Sprite, gain mip bleed between cells, or switch away from straight alpha.
+/// </summary>
+internal static class RazlomPelagVfxTexturePolicy
+{
+    private const string Prefix = "Assets/Resources/VFX/Pelag/Textures/Pelag_FX_";
+    private const string Suffix = "_4x4.png";
+
+    public static bool Applies(string path)
+    {
+        return !string.IsNullOrEmpty(path)
+               && path.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase)
+               && path.EndsWith(Suffix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool Apply(TextureImporter importer)
+    {
+        bool changed = false;
+        Set(ref changed, importer.textureType != TextureImporterType.Default,
+            () => importer.textureType = TextureImporterType.Default);
+        Set(ref changed, importer.textureShape != TextureImporterShape.Texture2D,
+            () => importer.textureShape = TextureImporterShape.Texture2D);
+        Set(ref changed, !importer.sRGBTexture, () => importer.sRGBTexture = true);
+        Set(ref changed, importer.alphaSource != TextureImporterAlphaSource.FromInput,
+            () => importer.alphaSource = TextureImporterAlphaSource.FromInput);
+        Set(ref changed, !importer.alphaIsTransparency, () => importer.alphaIsTransparency = true);
+        Set(ref changed, importer.mipmapEnabled, () => importer.mipmapEnabled = false);
+        Set(ref changed, importer.streamingMipmaps, () => importer.streamingMipmaps = false);
+        Set(ref changed, importer.wrapMode != TextureWrapMode.Clamp,
+            () => importer.wrapMode = TextureWrapMode.Clamp);
+        Set(ref changed, importer.filterMode != FilterMode.Bilinear,
+            () => importer.filterMode = FilterMode.Bilinear);
+        Set(ref changed, importer.anisoLevel != 0, () => importer.anisoLevel = 0);
+        Set(ref changed, importer.npotScale != TextureImporterNPOTScale.None,
+            () => importer.npotScale = TextureImporterNPOTScale.None);
+        Set(ref changed, importer.maxTextureSize != 2048, () => importer.maxTextureSize = 2048);
+        Set(ref changed, importer.textureCompression != TextureImporterCompression.CompressedHQ,
+            () => importer.textureCompression = TextureImporterCompression.CompressedHQ);
+        Set(ref changed, importer.crunchedCompression, () => importer.crunchedCompression = false);
+        Set(ref changed, importer.isReadable, () => importer.isReadable = false);
+        return changed;
+    }
+
+    private static void Set(ref bool changed, bool condition, Action apply)
+    {
+        if (!condition) return;
+        apply();
+        changed = true;
+    }
+}
+
+internal sealed class RazlomPelagVfxTextureImport : AssetPostprocessor
+{
+    private void OnPreprocessTexture()
+    {
+        if (!RazlomPelagVfxTexturePolicy.Applies(assetPath)) return;
+        RazlomPelagVfxTexturePolicy.Apply((TextureImporter)assetImporter);
     }
 }

@@ -1,4 +1,4 @@
-# Unity generated state
+﻿# Unity generated state
 /razlom/[Ll]ibrary/
 /razlom/[Tt]emp/
 /razlom/[Oo]bj/
@@ -32,7 +32,7 @@ TestResults/
 # Local source packages are already imported into the live Unity project.
 /ART/packs/
 
-# Контрольные рендеры и снимки проверок. Пересоздаются скриптами, чистятся вручную.
+# РљРѕРЅС‚СЂРѕР»СЊРЅС‹Рµ СЂРµРЅРґРµСЂС‹ Рё СЃРЅРёРјРєРё РїСЂРѕРІРµСЂРѕРє. РџРµСЂРµСЃРѕР·РґР°СЋС‚СЃСЏ СЃРєСЂРёРїС‚Р°РјРё, С‡РёСЃС‚СЏС‚СЃСЏ РІСЂСѓС‡РЅСѓСЋ.
 /ART/renders/
 
 # Blender/Python transient files
@@ -40,6 +40,16 @@ TestResults/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Аварийная папка Unity: редактор кладёт сюда копию сцены после падения.
+# Восстанавливать из неё можно, версионировать — нет: это снимок аварии,
+# а не состояние проекта.
+/razlom/Assets/_Recovery/
+/razlom/Assets/_Recovery.meta
+
+# Промежуточные выгрузки из Tripo/AccuRig: игрой не используются, живут на диске.
+**/character-only.fbx
+**/character-only.json
 
 # IDE and OS noise
 .vs/

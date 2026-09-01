@@ -23,6 +23,9 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string LowerBodyLayerName = "LowerBody Combat";
     private const string AttackPlaybackSpeed = "AttackPlaybackSpeed";
     private const string LocomotionPlaybackSpeed = "LocomotionPlaybackSpeed";
+    private const string MoveX = "MoveX";
+    private const string MoveY = "MoveY";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v1";
 
     [InitializeOnLoadMethod]
     private static void AutoBuild()
@@ -31,6 +34,11 @@ public static class RazlomPelagV5AnimatorBuilder
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
             if (!AssetDatabase.IsValidFolder(Folder)) return;
+            // Build force-imports the source FBXs. Without a per-editor-session
+            // guard that import schedules another domain reload and another
+            // Build, leaving the editor in an endless Importing loop.
+            if (SessionState.GetBool(AutoBuildSessionKey, false)) return;
+            SessionState.SetBool(AutoBuildSessionKey, true);
             Build();
         };
     }
@@ -38,26 +46,55 @@ public static class RazlomPelagV5AnimatorBuilder
     [MenuItem("Разлом/Собрать Pelag v5 — Mixamo controller")]
     public static void Build()
     {
-        // The combo's clip split is authored by RazlomCharacterImport. Force
-        // that recipe through the importer before reading sub-clips; otherwise
-        // a stale Library can silently keep the old 50–99 cut and rebuild a
-        // controller whose second strike snaps before its authored recovery.
-        AssetDatabase.ImportAsset(Folder + "/Pelag_MX_SaberCombo.fbx",
-            ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+        // Clip ranges/loop flags are authored by RazlomCharacterImport. Force
+        // the generated deliveries through that recipe before reading them;
+        // otherwise a stale Library can silently retain the old 60 fps cuts.
+        ForceImport(
+            "Pelag_MX_Idle.fbx",
+            "Pelag_MX_Run.fbx",
+            "Pelag_MX_TurnLeft.fbx",
+            "Pelag_MX_TurnRight.fbx",
+            "Pelag_MX_InjuredRun.fbx",
+            "Pelag_MX_Hit.fbx",
+            "Pelag_MX_Death.fbx",
+            "Pelag_MX_Whirlwind.fbx",
+            "Pelag_MX_AnchorAttack.fbx",
+            "Pelag_MX_SaberCombo.fbx",
+            "Pelag_MX_DualCombo.fbx",
+            "Pelag_MX_AnchorLeap.fbx",
+            "Pelag_MX_AnchorSweep.fbx",
+            "Pelag_MX_ChainStep.fbx",
+            "Pelag_MX_RunStart.fbx",
+            "Pelag_MX_RunStop.fbx",
+            "Pelag_MX_StrafeLeft.fbx",
+            "Pelag_MX_StrafeRight.fbx",
+            "Pelag_MX_StrafeBack.fbx");
 
         AnimationClip idle = Load("Pelag_MX_Idle.fbx", "Pelag_MX_Idle");
         AnimationClip run = Load("Pelag_MX_Run.fbx", "Pelag_MX_Run");
+        AnimationClip runStart = Load("Pelag_MX_RunStart.fbx", "Pelag_MX_RunStart");
+        AnimationClip runStop = Load("Pelag_MX_RunStop.fbx", "Pelag_MX_RunStop");
+        AnimationClip strafeLeft = Load("Pelag_MX_StrafeLeft.fbx", "Pelag_MX_StrafeLeft");
+        AnimationClip strafeRight = Load("Pelag_MX_StrafeRight.fbx", "Pelag_MX_StrafeRight");
+        AnimationClip strafeBack = Load("Pelag_MX_StrafeBack.fbx", "Pelag_MX_StrafeBack");
         AnimationClip turnLeft = Load("Pelag_MX_TurnLeft.fbx", "Pelag_MX_TurnLeft");
         AnimationClip turnRight = Load("Pelag_MX_TurnRight.fbx", "Pelag_MX_TurnRight");
         AnimationClip attackA = Load("Pelag_MX_SaberCombo.fbx", "Pelag_MX_SaberAttackA");
         AnimationClip attackB = Load("Pelag_MX_SaberCombo.fbx", "Pelag_MX_SaberAttackB");
         AnimationClip whirlwind = Load("Pelag_MX_Whirlwind.fbx", "Pelag_MX_Whirlwind");
         AnimationClip anchor = Load("Pelag_MX_AnchorAttack.fbx", "Pelag_MX_AnchorAttack");
+        AnimationClip anchorLeap = Load("Pelag_MX_AnchorLeap.fbx", "Pelag_MX_AnchorLeap");
+        AnimationClip anchorSweep = Load("Pelag_MX_AnchorSweep.fbx", "Pelag_MX_AnchorSweep");
+        AnimationClip chainStep = Load("Pelag_MX_ChainStep.fbx", "Pelag_MX_ChainStep");
         AnimationClip hit = Load("Pelag_MX_Hit.fbx", "Pelag_MX_Hit");
         AnimationClip death = Load("Pelag_MX_Death.fbx", "Pelag_MX_Death");
 
         AnimationClip[] required =
-            { idle, run, turnLeft, turnRight, attackA, attackB, whirlwind, anchor, hit, death };
+        {
+            idle, run, runStart, runStop, strafeLeft, strafeRight, strafeBack,
+            turnLeft, turnRight, attackA, attackB, whirlwind, anchor,
+            anchorLeap, anchorSweep, chainStep, hit, death
+        };
         if (required.Any(clip => clip == null))
         {
             Debug.LogError("[Разлом] Pelag v5 controller не собран: не все Mixamo-клипы импортированы.");
@@ -83,6 +120,8 @@ public static class RazlomPelagV5AnimatorBuilder
         Directory.CreateDirectory(Path.GetDirectoryName(Output));
         AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(Output);
         AddParameter(controller, "MoveSpeed", AnimatorControllerParameterType.Float);
+        AddParameter(controller, MoveX, AnimatorControllerParameterType.Float);
+        AddParameter(controller, MoveY, AnimatorControllerParameterType.Float);
         AddParameter(controller, "TurnDirection", AnimatorControllerParameterType.Float);
         AddParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool);
         AddParameter(controller, "Stunned", AnimatorControllerParameterType.Bool);
@@ -95,6 +134,9 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "LowerHeavyAttack", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "HeavyAttack", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "Hook", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "AnchorLeap", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "AnchorSweep", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "ChainStep", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "HitFront", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "Death", AnimatorControllerParameterType.Trigger);
 
@@ -110,33 +152,34 @@ public static class RazlomPelagV5AnimatorBuilder
         // 0.68x — компромисс после экранного замера: оставляет тяжёлый шаг,
         // но сокращает остаточное скольжение стопы против 0.60x, не возвращая
         // прежнюю нервную дробь на 0.76x.
-        AnimatorState runState = State(machine, "Run_v5", run, 0.68f);
+        BlendTree directionalLocomotion = BuildDirectionalLocomotion(
+            controller, run, strafeLeft, strafeRight, strafeBack);
+        AnimatorState runState = State(machine, "Run_v5", directionalLocomotion, 0.68f);
         // During a committed attack/ability Simulation deliberately caps the
         // body at 50% movement speed. Retiming only Run_v5 to the same ratio
         // keeps the planted foot attached to the ground while the upper-body
         // action retains its authored timing.
         runState.speedParameterActive = true;
         runState.speedParameter = LocomotionPlaybackSpeed;
+        AnimatorState runStartState = State(machine, "RunStart_v5", runStart, 1f);
+        AnimatorState runStopState = State(machine, "RunStop_v5", runStop, 1f);
         AnimatorState turnLeftState = State(machine, "TurnLeft_v5", turnLeft, 1f);
         AnimatorState turnRightState = State(machine, "TurnRight_v5", turnRight, 1f);
         machine.defaultState = idleState;
 
-        Transition(idleState, runState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.10f);
-        // MoveSpeed itself drops on the real stop, while this fixed blend keeps
-        // the supporting leg settling instead of snapping into the idle pose.
-        Transition(runState, idleState, "MoveSpeed", AnimatorConditionMode.Less, 0.1f, 0.14f);
+        Transition(idleState, runStartState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.035f);
+        TimedTransition(runStartState, runState, 1f, 0.025f);
+        Transition(runState, runStopState, "MoveSpeed", AnimatorConditionMode.Less, 0.1f, 0.025f);
+        TimedTransition(runStopState, idleState, 1f, 0.035f);
+        Transition(runStopState, runStartState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.025f);
         Transition(idleState, turnLeftState, "TurnDirection", AnimatorConditionMode.Less, -0.1f, 0.06f);
         Transition(idleState, turnRightState, "TurnDirection", AnimatorConditionMode.Greater, 0.1f, 0.06f);
-        Transition(runState, turnLeftState, "TurnDirection", AnimatorConditionMode.Less, -0.1f, 0.08f,
-            "MoveSpeed", AnimatorConditionMode.Less, 0.1f);
-        Transition(runState, turnRightState, "TurnDirection", AnimatorConditionMode.Greater, 0.1f, 0.08f,
-            "MoveSpeed", AnimatorConditionMode.Less, 0.1f);
         Transition(turnLeftState, idleState, "TurnDirection", AnimatorConditionMode.Greater, -0.1f, 0.12f,
             "MoveSpeed", AnimatorConditionMode.Less, 0.1f);
         Transition(turnRightState, idleState, "TurnDirection", AnimatorConditionMode.Less, 0.1f, 0.12f,
             "MoveSpeed", AnimatorConditionMode.Less, 0.1f);
-        Transition(turnLeftState, runState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.08f);
-        Transition(turnRightState, runState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.08f);
+        Transition(turnLeftState, runStartState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.05f);
+        Transition(turnRightState, runStartState, "MoveSpeed", AnimatorConditionMode.Greater, 0.1f, 0.05f);
         Transition(turnLeftState, turnRightState, "TurnDirection", AnimatorConditionMode.Greater, 0.1f, 0.08f);
         Transition(turnRightState, turnLeftState, "TurnDirection", AnimatorConditionMode.Less, -0.1f, 0.08f);
 
@@ -145,6 +188,12 @@ public static class RazlomPelagV5AnimatorBuilder
         // authoritative for the legs instead of sliding an in-place cast.
         Combat(machine, idleState, runState, "Anchor_v5", anchor, "Hook",
             2.65f, 0.04f, 0.88f, 0.10f);
+        Combat(machine, idleState, runState, "AnchorLeap_v5", anchorLeap, "AnchorLeap",
+            1f, 0.025f, 0.98f, 0.05f);
+        Combat(machine, idleState, runState, "AnchorSweep_v5", anchorSweep, "AnchorSweep",
+            1f, 0.025f, 0.98f, 0.05f);
+        Combat(machine, idleState, runState, "ChainStep_v5", chainStep, "ChainStep",
+            1f, 0.015f, 0.98f, 0.025f);
         Combat(machine, idleState, runState, "Hit_v5", hit, "HitFront",
             2.45f, 0.02f, 0.90f, 0.08f);
 
@@ -165,6 +214,50 @@ public static class RazlomPelagV5AnimatorBuilder
 
     private static void AddParameter(AnimatorController controller, string name,
         AnimatorControllerParameterType type) => controller.AddParameter(name, type);
+
+    private static void ForceImport(params string[] files)
+    {
+        for (int i = 0; i < files.Length; i++)
+        {
+            string path = Folder + "/" + files[i];
+            // File.Exists resolves against the process working directory,
+            // which is not guaranteed to be the Unity project root (notably
+            // in batch/editor launches). AssetDatabase still needs the
+            // project-relative path, so use an absolute path only for the
+            // presence check.
+            string absolutePath = Path.Combine(
+                Directory.GetParent(Application.dataPath).FullName,
+                path.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(absolutePath))
+            {
+                Debug.LogWarning("[Разлом] Pelag clip отсутствует, импорт пропущен: " + path);
+                continue;
+            }
+            AssetDatabase.ImportAsset(path,
+                ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+        }
+    }
+
+    private static BlendTree BuildDirectionalLocomotion(AnimatorController controller,
+        AnimationClip run, AnimationClip strafeLeft, AnimationClip strafeRight,
+        AnimationClip strafeBack)
+    {
+        var tree = new BlendTree
+        {
+            name = "Pelag Directional Locomotion",
+            blendType = BlendTreeType.FreeformDirectional2D,
+            blendParameter = MoveX,
+            blendParameterY = MoveY,
+            useAutomaticThresholds = false,
+            hideFlags = HideFlags.HideInHierarchy
+        };
+        AssetDatabase.AddObjectToAsset(tree, controller);
+        tree.AddChild(run, new Vector2(0f, 1f));
+        tree.AddChild(strafeLeft, new Vector2(-1f, 0f));
+        tree.AddChild(strafeRight, new Vector2(1f, 0f));
+        tree.AddChild(strafeBack, new Vector2(0f, -1f));
+        return tree;
+    }
 
     private static AvatarMask BuildUpperBodyMask(params AnimationClip[] clips)
     {
@@ -312,10 +405,10 @@ public static class RazlomPelagV5AnimatorBuilder
     }
 
     private static AnimatorState State(AnimatorStateMachine machine, string name,
-        AnimationClip clip, float speed)
+        Motion motion, float speed)
     {
         AnimatorState state = machine.AddState(name);
-        state.motion = clip;
+        state.motion = motion;
         state.speed = speed;
         return state;
     }
@@ -354,6 +447,16 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimatorStateTransition transition = from.AddTransition(to);
         transition.AddCondition(mode, threshold, parameter);
         transition.hasExitTime = false;
+        transition.duration = duration;
+    }
+
+    private static void TimedTransition(AnimatorState from, AnimatorState to,
+        float exitTime, float duration)
+    {
+        AnimatorStateTransition transition = from.AddTransition(to);
+        transition.hasExitTime = true;
+        transition.exitTime = exitTime;
+        transition.hasFixedDuration = true;
         transition.duration = duration;
     }
 

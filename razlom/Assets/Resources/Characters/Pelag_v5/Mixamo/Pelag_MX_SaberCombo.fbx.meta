@@ -36,7 +36,7 @@ ModelImporter:
       takeName: Scene
       internalID: -623603649343465320
       firstFrame: 1
-      lastFrame: 50
+      lastFrame: 25
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -64,8 +64,8 @@ ModelImporter:
       name: Pelag_MX_SaberAttackB
       takeName: Scene
       internalID: -1609281748187839663
-      firstFrame: 50
-      lastFrame: 147
+      firstFrame: 25
+      lastFrame: 74
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

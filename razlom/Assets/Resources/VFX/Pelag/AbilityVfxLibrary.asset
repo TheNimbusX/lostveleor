@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ee3f8d3ca0e5774f95e5f2913a0748c, type: 3}
   m_Name: AbilityVfxLibrary
   m_EditorClassIdentifier: Game.View::Game.View.AbilityVfxLibrary
-  BuildVersion: 9
+  BuildVersion: 10
   Entries:
   - Id: 0
     Prefab: {fileID: 8241518021229777190, guid: b5336d77c11720f4181bbb716eb56c76, type: 3}

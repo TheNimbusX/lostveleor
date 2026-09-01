@@ -16,6 +16,8 @@ namespace Game.View
         private const string LibraryPath = "VFX/Pelag/AbilityVfxLibrary";
         private const int MaxActive = 72;
         private const int MaxTargets = 8;
+        private const float BrightVfxLifetime = 5f / 30f;
+        private const float FlipbookLifetime = 16f / 30f;
         private static readonly float AttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
         private const float WhirlwindContactTime = 10f / Simulation.TicksPerSecond;
@@ -228,7 +230,11 @@ namespace Game.View
                     // A very long render frame may contain the contact Damage
                     // before the presentation timer gets its next Update. The
                     // authoritative event wins and releases the slash now.
-                    if (_whirlwindContactPending) PlayWhirlwindContact();
+                    // ActionVariant is the ability slot. Only the Whirlwind
+                    // contact may consume this pending ring; a later anchor
+                    // hit must never flush a stale ring from another cast.
+                    if (_whirlwindContactPending && IsWhirlwindSlot(e.ActionVariant))
+                        PlayWhirlwindContact();
                     PulseCombatLight(0.92f);
                 }
             }
@@ -469,10 +475,9 @@ namespace Game.View
             // должна кончиться раньше, чем игрок успеет её рассмотреть, иначе
             // она читается не как удар, а как подсветка зоны.
             //
-            // 0.20 с — округление их цифры вверх с запасом на то, что наш
-            // слеш крупнее и ему нужен лишний кадр на раскрытие.
+            // Пять кадров симуляции — жёсткая верхняя граница яркого слоя.
             Spawn(PelagVfxId.WhirlwindRing, slashCenter, Quaternion.identity,
-                1.28f, 0.20f, 1.32f, Motion.Expand);
+                BrightVfxLifetime, 0.20f, 1.32f, Motion.Expand);
             PulseCombatLight(1f);
         }
 
@@ -499,15 +504,15 @@ namespace Game.View
             }
             else if (id == AbilityDefinition.AnchorLeapId)
             {
-                PlayAnchorLeapTo(ForcedTargetWorld(sim), false);
+                PlayAnchorLeapTo(ForcedTargetWorld(sim), false, slot);
             }
             else if (id == AbilityDefinition.AnchorSweepId)
             {
-                PlayAnchorSweep(false);
+                PlayAnchorSweep(false, slot);
             }
             else if (id == AbilityDefinition.ChainStepId)
             {
-                PlayChainStep(false);
+                PlayChainStep(false, slot);
             }
         }
 
@@ -527,39 +532,39 @@ namespace Game.View
             // Витрина целится сама: настоящей цели в этом режиме нет.
             PlayAnchorLeapTo(
                 PlayerPosition() + CameraPlaneDirection(new Vector3(1f, 0f, 0.25f)) * 3.8f,
-                showcase);
+                showcase, 1);
         }
 
-        private void PlayAnchorLeapTo(Vector3 target, bool showcase)
+        private void PlayAnchorLeapTo(Vector3 target, bool showcase, int slot)
         {
             Vector3 player = PlayerPosition();
             StartMotion(PelagVfxShowcase.AnchorLeap, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(1);
+            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorLeapId);
 
             int projectile = SpawnMoving(PelagVfxId.AnchorLeapThrow, player + Vector3.up * 1.15f,
                 target + Vector3.up * 0.18f, 0.48f, 0.65f, Motion.Projectile);
             SpawnFollowingChain(PelagVfxId.AnchorLeapChain, projectile, 0.86f);
         }
 
-        private void PlayAnchorSweep(bool showcase)
+        private void PlayAnchorSweep(bool showcase, int slot = 2)
         {
             Vector3 player = PlayerPosition();
             Vector3 group = AverageTargetPosition(player + CameraPlaneDirection(Vector3.forward) * 3f);
             Vector3 target = group + FlatDirection(player, group) * 1.25f;
             StartMotion(PelagVfxShowcase.AnchorSweep, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(1);
+            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorSweepId);
 
             int projectile = SpawnMoving(PelagVfxId.AnchorSweepThrow, player + Vector3.up * 1.20f,
                 target + Vector3.up * 0.16f, 0.52f, 0.85f, Motion.Projectile);
             SpawnFollowingChain(PelagVfxId.AnchorSweepPull, projectile, 1.12f);
         }
 
-        private void PlayChainStep(bool showcase)
+        private void PlayChainStep(bool showcase, int slot = 3)
         {
             Vector3 player = PlayerPosition();
             Vector3 target = FirstTargetPosition();
             StartMotion(PelagVfxShowcase.ChainStep, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(1);
+            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.ChainStepId);
         }
 
         private void StartMotion(PelagVfxShowcase ability, Vector3 start, Vector3 end, bool showcase)
@@ -590,7 +595,7 @@ namespace Game.View
             if (_motionTime >= 0.46f && _motionTime - Time.deltaTime < 0.46f)
             {
                 Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.04f,
-                    Quaternion.identity, 0.50f, 0.45f, 1.35f, Motion.Expand);
+                    Quaternion.identity, FlipbookLifetime, 0.45f, 1.35f, Motion.Expand);
             }
 
             if (_captureMotion)
@@ -612,6 +617,8 @@ namespace Game.View
             if (_motionTime >= 0.52f && _motionTime - Time.deltaTime < 0.52f)
             {
                 Vector3 player = BasePlayerPosition();
+                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.04f,
+                    Quaternion.identity, FlipbookLifetime, 0.40f, 1.20f, Motion.Expand);
                 for (int i = 0; i < _targetCount; i++)
                 {
                     Vector3 enemy = BaseEntityPosition(_targets[i], player);

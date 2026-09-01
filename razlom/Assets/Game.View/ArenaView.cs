@@ -495,6 +495,18 @@ namespace Game.View
         }
 
         /// <summary>
+        /// Игровой presentation по стабильному определению способности.
+        /// Слот сохраняется в API для трассировки вызывающего каста, но выбор
+        /// клипа никогда не делается по его номеру: пользователь может
+        /// переставить способности в панели как угодно.
+        /// </summary>
+        public void PlayPlayerAbilityPresentation(int slot, int definitionId)
+        {
+            if (!_initialized || _boundCount <= Simulation.PlayerId) return;
+            _animationViews[Simulation.PlayerId]?.PlayAbilityDefinition(definitionId);
+        }
+
+        /// <summary>
         /// Возвращает всё в пулы при перезапуске забега.
         ///
         /// У новой симуляции индексы сущностей начинаются заново, поэтому
@@ -893,6 +905,8 @@ namespace Game.View
                     ? Mathf.Clamp01(velocityMagnitude / fullStep)
                     : 0f;
                 float turnDirection = 0f;
+                float localMoveX = 0f;
+                float localMoveY = moving ? 1f : 0f;
 
                 // Отдача затухает экспоненциально: удар должен
                 // читаться как толчок, а не как отъезд тела в сторону.
@@ -969,6 +983,14 @@ namespace Game.View
                 {
                     Vector3 facingWorld = new Vector3(
                         facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
+                    if (moving && velocityMagnitude > 0.0001f)
+                    {
+                        Vector3 velocityWorld = new Vector3(
+                            velocity.X.ToFloat(), 0f, velocity.Y.ToFloat()) / velocityMagnitude;
+                        Vector3 rightWorld = Vector3.Cross(Vector3.up, facingWorld);
+                        localMoveX = Vector3.Dot(velocityWorld, rightWorld);
+                        localMoveY = Vector3.Dot(velocityWorld, facingWorld);
+                    }
                     CharacterAnimatorView animation = _animationViews[i];
                     if (animation != null && animation.UsesSprites)
                     {
@@ -1042,13 +1064,15 @@ namespace Game.View
                 }
 
                 if (!view.gameObject.activeSelf) view.gameObject.SetActive(true);
-                _animationViews[i]?.SetLocomotion(moving, turnDirection, normalizedMoveSpeed);
+                _animationViews[i]?.SetLocomotion(
+                    moving, turnDirection, normalizedMoveSpeed, localMoveX, localMoveY);
             }
         }
 
         private void SyncAnimationEvents()
         {
             var events = _driver.FrameEvents;
+            var eventContexts = _driver.FrameEventContexts;
             EntityStore entities = _driver.Sim.Entities;
             for (int i = 0; i < events.Count; i++)
             {
@@ -1059,7 +1083,12 @@ namespace Game.View
                         AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
                     case SimEventType.AbilityCast:
-                        AnimationOf(e.Source)?.PlayAbility(e.Amount);
+                        if ((uint)e.Amount < Simulation.AbilitySlots)
+                        {
+                            AbilityBuild build = _driver.Sim.GetAbility(e.Amount);
+                            if (build != null)
+                                AnimationOf(e.Source)?.PlayAbilityDefinition(build.DefinitionId);
+                        }
                         break;
                     case SimEventType.Damage:
                         // На летальном тике состояние Sim уже финальное. Не
@@ -1074,6 +1103,23 @@ namespace Game.View
                         if (e.Source == Simulation.PlayerId
                             && e.DamageOrigin == DamageOrigin.BasicAttack)
                             AnimationOf(e.Source)?.PlayAttackContact(e.ActionVariant);
+                        // ChainStep's five-tick clip is one hop, not the whole
+                        // chain. Simulation has already scheduled the next
+                        // Lunge by the time this contact event reaches View;
+                        // restart only when that authoritative next hop exists,
+                        // so the final hit cannot create a phantom fifth jump.
+                        FrameEventContext context = i < eventContexts.Count
+                            ? eventContexts[i]
+                            : default;
+                        if (e.Source == Simulation.PlayerId
+                            && e.DamageOrigin == DamageOrigin.Ability
+                            && IsAbilityDefinition(e.ActionVariant, AbilityDefinition.ChainStepId)
+                            && context.Event.Type == e.Type
+                            && context.Event.Source == e.Source
+                            && context.Event.Target == e.Target
+                            && context.SourceForcedTicksLeft > 0
+                            && context.SourceForcedKind == (byte)ForcedMotionKind.Lunge)
+                            AnimationOf(e.Source)?.PlayChainStepRepeat();
                         break;
                     case SimEventType.Death:
                         CharacterAnimatorView animation = AnimationOf(e.Target);
@@ -1092,6 +1138,14 @@ namespace Game.View
 
         private CharacterAnimatorView AnimationOf(int entity)
             => entity >= 0 && entity < _boundCount ? _animationViews[entity] : null;
+
+        private bool IsAbilityDefinition(int slot, int definitionId)
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null || (uint)slot >= Simulation.AbilitySlots) return false;
+            AbilityBuild build = sim.GetAbility(slot);
+            return build != null && build.DefinitionId == definitionId;
+        }
 
         private static int HitVariantFor(in SimEvent hit, EntityStore entities)
         {
