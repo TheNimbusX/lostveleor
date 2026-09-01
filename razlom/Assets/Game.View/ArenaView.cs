@@ -170,6 +170,9 @@ namespace Game.View
         private Vector3[] _hitRecoil;
         private Vector3[] _deathLaunch;
         private Vector3[] _deathSpinAxis;
+
+        /// <summary>Кого уже тащили в прошлом кадре — чтобы клип запускался один раз.</summary>
+        private bool[] _wasDragged;
         private Vector3[] _baseScale;
         private Renderer[][] _bodyRenderers;
         private int[][] _bodyMaterialSlotCounts;
@@ -264,6 +267,7 @@ namespace Game.View
             _hitRecoil = new Vector3[capacity];
             _deathLaunch = new Vector3[capacity];
             _deathSpinAxis = new Vector3[capacity];
+            _wasDragged = new bool[capacity];
             _baseScale = new Vector3[capacity];
             _bodyRenderers = new Renderer[capacity][];
             _bodyMaterialSlotCounts = new int[capacity][];
@@ -840,6 +844,15 @@ namespace Game.View
 
                 bool alive = entities.Alive[i];
                 bool orvill = entities.Side[i] == Faction.Orvill;
+
+                // Начало волока — один раз на попадание в тягу, а не каждый
+                // кадр: триггер, дёрнутый десять раз подряд, перезапускает
+                // клип с нуля и тело дёргается на месте вместо одной реакции.
+                bool dragged = alive
+                               && entities.ForcedTicksLeft[i] > 0
+                               && entities.ForcedKind[i] == (byte)ForcedMotionKind.Dragged;
+                if (dragged && !_wasDragged[i]) _animationViews[i]?.PlayDragged();
+                _wasDragged[i] = dragged;
                 float deathElapsed = !alive && _deathStarted[i]
                     ? Mathf.Max(0f, Time.time - _deathStartedAt[i])
                     : 0f;

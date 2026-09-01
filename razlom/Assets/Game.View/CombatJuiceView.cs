@@ -23,7 +23,26 @@ namespace Game.View
         private static readonly float AttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
 
-        private enum FxKind : byte { Spark, Slash, Contact, DeathShard, Dust, Afterglow }
+        private enum FxKind : byte { Spark, Slash, Contact, DeathShard, Dust, Afterglow, GroundMark }
+
+        // СЛЕД НА ЗЕМЛЕ — ТО, ЧТО ОСТАЁТСЯ, КОГДА ЭФФЕКТЫ КОНЧИЛИСЬ.
+        //
+        // Разбор Hades 2 покадрово дал две цифры, и обе неожиданные.
+        // Первая: их вспышка живёт около 170 мс — десять кадров при 60 fps, —
+        // то есть эффекты там КОРОЧЕ наших, а не длиннее. Вторая: пол под боем
+        // покрыт пятнами крови, которые не гаснут. Ощущение «здесь было
+        // побоище» держится не частицами, а следами.
+        //
+        // Отсюда правило: эффект короткий и яркий, след долгий и тусклый.
+        // Раньше у нас было наоборот — длинный полупрозрачный эффект и чистый
+        // пол, и поэтому убийство ничего после себя не оставляло.
+        // Девять секунд — это ПОТОЛОК, а не гарантия. Пул кольцевой и общий со
+        // всеми эффектами, поэтому долгий след вытесняется новыми частицами
+        // раньше срока: при плотном бое отметины держатся примерно восемь
+        // последних убийств. Для «здесь было побоище» этого достаточно, и
+        // отдельный пул под следы заводить рано — но если однажды понадобится
+        // честная стойкость, дело именно в этом, а не в цифре ниже.
+        private const float GroundMarkLifetime = 9f;
 
         private struct FxSlot
         {
@@ -365,6 +384,28 @@ namespace Game.View
                     Vector3.up * 0.08f, new Color(1.55f, 0.42f, 0.075f, 0.62f),
                     0.58f, 0.46f, 1.58f, 0f, 0f, 0f);
 
+            // Отметина под ногами убитого. Кладётся ПЕРВОЙ, чтобы пыль и
+            // осколки летели поверх неё, а не наоборот.
+            if (_dustSprite != null)
+            {
+                Vector3 mark = At(position, 0.02f);
+                for (int i = 0; i < 3; i++)
+                {
+                    // Три пятна вразброс вместо одного круга: круглая клякса
+                    // под каждым трупом читается как декаль из тайла, а
+                    // несимметричное пятно — как след.
+                    float angle = Random01() * Mathf.PI * 2f;
+                    Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle))
+                                     * Mathf.Lerp(0.05f, 0.42f, Random01());
+                    SpawnFx(FxKind.GroundMark, _dustSprite, mark + offset, Vector3.zero,
+                        new Color(0.20f, 0.045f, 0.055f, Mathf.Lerp(0.42f, 0.66f, Random01())),
+                        GroundMarkLifetime,
+                        Mathf.Lerp(0.42f, 0.78f, Random01()),
+                        Mathf.Lerp(0.52f, 0.92f, Random01()),
+                        0f, Random01() * 360f, 0f);
+                }
+            }
+
             if (_dustSprite == null) return;
 
             // ПЫЛЬ — ЭТО СЛЕД СОБЫТИЯ, А НЕ УКРАШЕНИЕ.
@@ -676,6 +717,7 @@ namespace Game.View
                 float dt = slot.Kind == FxKind.Afterglow
                            || slot.Kind == FxKind.Dust
                            || slot.Kind == FxKind.DeathShard
+                           || slot.Kind == FxKind.GroundMark
                     ? scaledDt
                     : unscaledDt;
                 slot.Remaining -= dt;
@@ -695,15 +737,28 @@ namespace Game.View
                     scale * slot.SpriteSize.y,
                     1f);
 
-                if (_camera != null)
+                if (slot.Kind == FxKind.GroundMark)
+                {
+                    // След ЛЕЖИТ НА ПОЛУ и в камеру не поворачивается: это
+                    // пятно на земле, а не частица. Билборд здесь превратил бы
+                    // его в парящий над полом прямоугольник.
+                    slot.Transform.rotation = Quaternion.Euler(90f, slot.Angle, 0f);
+                }
+                else if (_camera != null)
+                {
                     slot.Transform.rotation = _camera.transform.rotation
                         * Quaternion.Euler(0f, 0f, slot.Angle + slot.Spin * t);
+                }
 
                 Color c = slot.Color;
                 float fadeStart = slot.Kind == FxKind.Contact ? 0.16f
                     : slot.Kind == FxKind.Slash ? 0.25f
                     : slot.Kind == FxKind.Dust ? 0.08f
                     : slot.Kind == FxKind.Afterglow ? 0.12f
+                    // След держится почти всю жизнь и уходит только в конце:
+                    // пятно, тающее с первой секунды, читается как эффект,
+                    // а не как отметина.
+                    : slot.Kind == FxKind.GroundMark ? 0.82f
                     : 0.48f;
                 c.a *= 1f - Mathf.SmoothStep(fadeStart, 1f, t);
                 slot.Properties.SetColor(ColorId, c);

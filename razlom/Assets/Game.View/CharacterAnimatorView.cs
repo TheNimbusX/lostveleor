@@ -397,6 +397,27 @@ namespace Game.View
             }
         }
 
+        /// <summary>
+        /// Тело потащило цепью. Играет knockback-клип, который в контроллере
+        /// уже есть.
+        ///
+        /// Без него волочимый враг едет по земле в позе покоя: собственная
+        /// скорость у него обнулена намеренно (иначе играл бы бег), и Idle
+        /// оказывается единственным, что остаётся. Скользящая стойка читается
+        /// как баг физики, а не как «его тащат».
+        ///
+        /// Игрока это не касается: его собственный рывок — не потеря контроля,
+        /// и подменять ему анимацию на knockback значило бы сообщать обратное.
+        /// </summary>
+        public void PlayDragged()
+        {
+            if (_spriteVisual != null || _animator == null || IsDead) return;
+            if (_faction == Faction.Wole) return;
+
+            CancelUpperBodyAttack(0.03f);
+            _animator.SetTrigger(OrvillKnockback);
+        }
+
         public void PlayHit(int variant)
         {
             if (_spriteVisual != null)

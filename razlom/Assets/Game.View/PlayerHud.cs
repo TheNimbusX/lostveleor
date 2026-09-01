@@ -174,8 +174,27 @@ namespace Game.View
 
                 GUI.Label(new Rect(box.x + 4f, box.y + 4f, 20f, 20f), (slot + 1).ToString(), _slotKey);
                 GUI.Label(new Rect(box.x - 24f, box.yMax + 4f, box.width + 48f, 18f),
-                    build.DefinitionId == AbilityDefinition.WhirlwindId ? "ВИХРЬ" : "СПОСОБНОСТЬ", _slotName);
+                    AbilityName(build.DefinitionId), _slotName);
             }
+        }
+
+        /// <summary>
+        /// Имя способности под слотом.
+        ///
+        /// Иконка пока одна — у Вихря; у остальных трёх слот был бы пустым
+        /// квадратом с цифрой, и игрок не знал бы, что нажимает. Подпись стоит
+        /// ничего и снимает вопрос до появления иконок.
+        ///
+        /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция на
+        /// панели, и она уже один раз переехала.
+        /// </summary>
+        private static string AbilityName(int definitionId)
+        {
+            if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
+            if (definitionId == AbilityDefinition.AnchorLeapId) return "БРОСОК ЯКОРЯ";
+            if (definitionId == AbilityDefinition.AnchorSweepId) return "ПОДСЕЧКА";
+            if (definitionId == AbilityDefinition.ChainStepId) return "ШАГ ПО ЦЕПИ";
+            return "СПОСОБНОСТЬ";
         }
 
         private void DrawMinimap(RiftRun run, Simulation sim)
