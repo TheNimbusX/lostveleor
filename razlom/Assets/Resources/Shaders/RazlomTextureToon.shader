@@ -4,12 +4,12 @@ Shader "Razlom/Texture Toon"
     {
         _BaseMap ("Base Map", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (1,1,1,1)
-        _ShadowColor ("Shadow Color", Color) = (0.80,0.72,0.76,1)
+        _ShadowColor ("Shadow Color", Color) = (0.58,0.66,0.88,1)
         _MidColor ("Mid Color", Color) = (0.94,0.90,0.91,1)
         _MidThreshold ("Mid Threshold", Range(0,1)) = 0.24
         _LightThreshold ("Light Threshold", Range(0,1)) = 0.62
         _LightFeather ("Light Feather", Range(0.001,0.25)) = 0.045
-        _RimColor ("Rim Color", Color) = (1,0.48,0.34,1)
+        _RimColor ("Rim Color", Color) = (1,0.86,0.66,1)
         _RimPower ("Rim Power", Range(1,10)) = 4
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
         _OutlineWidth ("Outline Pixels", Range(0,3)) = 1.10
@@ -117,13 +117,30 @@ Shader "Razlom/Texture Toon"
                 half maxKeyChannel = max(max(mainLight.color.r, mainLight.color.g),
                                          max(mainLight.color.b, 0.001h));
                 half3 keyTint = mainLight.color / maxKeyChannel;
-                keyTint = lerp(half3(1.0h, 0.98h, 0.95h), keyTint, 0.42h);
+                // Цвет ключа теперь доходит до светлой стороны почти целиком.
+                // Приглушать его на 58% значило гасить единственный тёплый
+                // акцент в кадре и делать свет бесцветным.
+                keyTint = lerp(half3(1.0h, 0.98h, 0.95h), keyTint, 0.78h);
 
-                half3 shadowTone = lerp(half3(0.34h, 0.35h, 0.39h),
+                // РАЗДЕЛЕНИЕ ПО ТОНУ, А НЕ ПО ЯРКОСТИ.
+                //
+                // Здесь стояло (0.34, 0.35, 0.39) — нейтрально-серая тень при
+                // тёплом ключе и тёплом филле. Все три источника в сцене
+                // тёплые, поэтому свет и тень отличались только яркостью, и
+                // кадр читался как выцветшая бежевая заливка. Это и есть то,
+                // что на записи 1 сентября выглядело мёртвым.
+                //
+                // У эталона (Genshin) свет тёплый, а тень отчётливо холодная и
+                // уходит в сине-фиолетовое. Разница в ЦВЕТЕ, а не в темноте:
+                // тень остаётся светлой, но другого тона — оттого картинка
+                // читается насыщенной, не теряя деталь в чёрном.
+                half3 shadowTone = lerp(half3(0.30h, 0.35h, 0.50h),
                                         _ShadowColor.rgb, 0.24h);
-                half3 midTone = lerp(half3(0.74h, 0.72h, 0.70h),
+                // Полутон — переход, и он тоже слегка холодный: тёплым он
+                // склеивался бы со светлой стороной в одно пятно.
+                half3 midTone = lerp(half3(0.70h, 0.72h, 0.78h),
                                      _MidColor.rgb, 0.30h);
-                half3 lightTone = keyTint * 1.20h;
+                half3 lightTone = keyTint * 1.22h;
                 half3 tone = lerp(shadowTone, midTone, midBand);
                 tone = lerp(tone, lightTone, lightBand);
 
@@ -131,10 +148,30 @@ Shader "Razlom/Texture Toon"
                 // information and add only a restrained environment fill;
                 // multiplying it by a dark two-band light was the source of
                 // the dirty, crushed look at gameplay distance.
+                // АМБИЕНТ — ЭТО ТО, ЧЕМ ЗАПОЛНЕНА ТЕНЬ.
+                //
+                // Было 0.08: вклад почти нулевой, и тень держалась только на
+                // умножении альбедо. В эталоне тень заполнена холодным светом
+                // неба, и именно он не даёт ей провалиться в грязь.
+                //
+                // Вклад поднят и подкрашен в холодное, причём СИЛЬНЕЕ на
+                // теневой стороне: на светлой он смешался бы с ключом и съел
+                // тёплый акцент.
                 half3 ambient = max(SampleSH(normal), half3(0, 0, 0));
+                half3 skyFill = lerp(half3(0.62h, 0.74h, 1.0h), half3(1.0h, 1.0h, 1.0h),
+                                     lightBand);
+                half ambientAmount = lerp(0.34h, 0.12h, lightBand);
+
                 half3 viewDir = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
-                half rim = pow(saturate(1.0h - dot(normal, viewDir)), _RimPower);
-                half3 color = texel.rgb * (tone + ambient * 0.08h);
+
+                // Кромка сужена: pow по _RimPower давал широкий ореол по всему
+                // силуэту. У эталона кромка тонкая и живёт на СВЕТЛОЙ стороне —
+                // она подчёркивает форму, а не обводит фигуру целиком.
+                half rimRaw = saturate(1.0h - dot(normal, viewDir));
+                half rim = pow(rimRaw, _RimPower + 2.0h);
+                rim *= 0.25h + 0.75h * lightBand;
+
+                half3 color = texel.rgb * (tone + ambient * skyFill * ambientAmount);
 
                 // The Orvill atlas intentionally contains near-black cloth and
                 // armour. A small light-side visibility floor keeps those forms

@@ -69,8 +69,17 @@ Shader "Razlom/Arena Floor"
                 half3 normal = normalize(input.normalWS);
                 Light light = GetMainLight(input.shadowCoord);
                 half diffuse = saturate(dot(normal, light.direction));
-                half shade = lerp(0.58h, 1.0h,
-                    smoothstep(0.28h, 0.62h, diffuse * light.shadowAttenuation));
+                half lit = smoothstep(0.28h, 0.62h, diffuse * light.shadowAttenuation);
+                half shade = lerp(0.62h, 1.0h, lit);
+
+                // ПОЛ ЖИВЁТ ПО ТОМУ ЖЕ ПРАВИЛУ, ЧТО И ПЕРСОНАЖ.
+                //
+                // Иначе персонаж стоит в холодной тени на тёплом полу и
+                // выглядит вырезанным из другой картинки. Тень пола уходит в
+                // синеву, освещённая часть — в тёплое; разница по тону, а не
+                // по яркости, поэтому пол не проваливается в грязь.
+                half3 shadeTint = lerp(half3(0.66h, 0.76h, 1.02h),
+                                       half3(1.06h, 1.00h, 0.92h), lit);
 
                 // ПОЛ ОБЯЗАН НЕСТИ ДЕТАЛЬ, ИНАЧЕ ОН СЪЕДАЕТ КАДР.
                 //
@@ -114,7 +123,7 @@ Shader "Razlom/Arena Floor"
 
                 half3 color = lerp(stoneColor, _GridColor.rgb, grid * 0.46h);
                 color = lerp(color, _GridColor.rgb, subGrid * 0.17h);
-                color = color * shade;
+                color = color * shade * shadeTint;
 
                 // Runtime combat pool: a restrained warm pool at rest and a
                 // brief HDR lift on confirmed contacts. It is explicit here
