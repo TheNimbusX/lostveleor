@@ -152,7 +152,7 @@ public static class RazlomCharacterSetup
         if (material.HasProperty("_MidThreshold")) material.SetFloat("_MidThreshold", 0.24f);
         if (material.HasProperty("_LightThreshold")) material.SetFloat("_LightThreshold", 0.62f);
         if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", 0.045f);
-        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 1.10f);
+        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0f);
 
         EditorUtility.SetDirty(material);
         AssetDatabase.SaveAssets();

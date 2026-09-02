@@ -106,7 +106,7 @@ Material:
     - _Metallic: 0
     - _MidThreshold: 0.24
     - _OcclusionStrength: 1
-    - _OutlineWidth: 1.1
+    - _OutlineWidth: 0
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1

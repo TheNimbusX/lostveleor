@@ -92,28 +92,19 @@ namespace Game.View
         public string WoleWeaponNormal = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber_Normal";
         public string WoleWeaponMetallic = "Weapons/Pelag/FantasySaber/Pelag_FantasySaber_Metallic";
         public string WoleWeaponSocket = "mixamorig:RightHand";
-        // Экспорт нормализован: pivot находится в центре рукояти, клинок идёт
-        // по локальной +Y сокета. RightHand начинается в суставе запястья.
-        // Значение 0.076 ставило центр рукояти на
-        // линию оснований пальцев, поэтому гарда визуально висела снаружи
-        // кулака. Сдвиг к 0.045 кладёт рукоять в середину сжатой ладони.
-        public Vector3 WoleWeaponLocalPosition = new Vector3(0f, 0.045f, -0.002f);
-        // Измерено по линии Pinky1 -> Index1 в rest pose Mixamo и переведено
-        // в локальные оси RightHand. Рукоять проходит поперёк ладони, клинок
-        // выходит со стороны большого/указательного пальца.
-        // Продольная ось развёрнута: +Y оружейного asset теперь выводит
-        // остриё вверх от кулака, а не в пол при рукояти наверху.
-        // Геометрия сабли идёт вдоль локальной +Y. Этот вектор даёт почти
-        // горизонтальный клинок с лёгким наклоном острия К ПОЛУ; прежний
-        // отрицательный Y после преобразования сокета поднимал острие к лицу.
-        public Vector3 WoleWeaponLocalDirection = new Vector3(-0.982f, 0.180f, -0.020f);
-        // Direction задаёт только линию оружия. Roll отдельно переворачивает
-        // поперечник вокруг клинка, чтобы режущая сторона смотрела вниз.
-        public float WoleWeaponLocalRoll = 180f;
-        // Тело Pelag увеличено в 1.82 раза из-за масштаба исходного FBX, а
-        // новая сабля уже приходит в метрах. Компенсируем масштаб родителя:
-        // 0.55 * 1.82 ~= 1, поэтому клинок остаётся длиной около метра.
-        public float WoleWeaponLocalScale = 0.55f;
+        // ВСЕ ТРИ ЧИСЛА СНЯТЫ С ЖИВОГО ПЕРСОНАЖА в Play Mode на теле v6 и
+        // перенесены из инспектора как есть. Тело сменилось — руки другой
+        // длины, и прежние значения, подобранные под v5, промахивались.
+        //
+        // Правится так же: запусти игру, найди в иерархии
+        // Pelag_FantasySaber_Equipped, потаскай гизмо, перепиши сюда.
+        public Vector3 WoleWeaponLocalPosition = new Vector3(-0.019f, 0.08f, 0.019f);
+        public Vector3 WoleWeaponLocalRotation = new Vector3(4.778f, -0.701f, 77.315f);
+        // Масштаб НЕРАВНОМЕРНЫЙ — так получилось при подгонке гизмо на
+        // повёрнутом объекте. Клинок слегка сплющен поперёк; на изометрии это
+        // не читается. Если понадобится ровный — 0.5 по всем осям.
+        public Vector3 WoleWeaponLocalScale =
+            new Vector3(0.5722176f, 0.4797959f, 0.4378099f);
 
         // ЯКОРЬ НА ПОЯСЕ. До 1 сентября его на персонаже не было вовсе: голова
         // якоря существовала только внутри VFX-префабов, поэтому в момент каста
@@ -133,13 +124,15 @@ namespace Game.View
                  "качается вместе с корпусом, а не с рукой.")]
         public string WoleAnchorSocket = "mixamorig:Hips";
 
-        [Tooltip("Смещение от кости таза: влево, вверх, назад. Стартовые числа " +
-                 "прикидочные — доводить в Play Mode.")]
-        public Vector3 WoleAnchorLocalPosition = new Vector3(0.13f, -0.02f, -0.09f);
-
-        public Vector3 WoleAnchorLocalDirection = new Vector3(0f, -1f, 0f);
-        public float WoleAnchorLocalRoll = 0f;
-        public float WoleAnchorLocalScale = 0.55f;
+        // Тоже снято с тела v6 в Play Mode. Инспектор показывал углы
+        // (-30.773, -355.468, 393.829) — здесь они приведены в привычный
+        // диапазон, поворот от этого не меняется: -355.468 это те же 4.532,
+        // а 393.829 — те же 33.829.
+        [Tooltip("Смещение от кости таза. Правится в Play Mode на объекте " +
+                 "Pelag_AnchorGrip_Equipped, потом переписывается сюда.")]
+        public Vector3 WoleAnchorLocalPosition = new Vector3(-0.114f, -0.0545f, -0.0722f);
+        public Vector3 WoleAnchorLocalRotation = new Vector3(-30.773f, 4.532f, 33.829f);
+        public Vector3 WoleAnchorLocalScale = new Vector3(0.55f, 0.55f, 0.55f);
 
         [Tooltip("Доворот модели вокруг вертикали, градусы. Если персонаж бегает " +
                  "спиной вперёд — поставь 180. Зависит от того, куда смотрел " +
@@ -819,8 +812,8 @@ namespace Game.View
             block.Clear();
             block.SetFloat(HitFlashId, 0f);
             block.SetFloat(DeathFadeId, 0f);
-            block.SetFloat(OutlineWidthId, 1.18f);
-            block.SetColor(OutlineColorId, new Color(0.025f, 0.13f, 0.17f, 1f));
+            block.SetFloat(OutlineWidthId, 0f);
+            block.SetColor(OutlineColorId, Color.clear);
 
             bool usesSprites = _animationViews[entityId] != null
                                && _animationViews[entityId].UsesSprites;
@@ -958,18 +951,17 @@ namespace Game.View
                     block.SetFloat(HitFlashId, _hitFlash[i]);
                     block.SetFloat(DeathFadeId, deathFade);
                     bool hovered = alive && i == _hoveredEntity;
-                    // Faction contours keep overlapping bodies separable on a
-                    // bright floor. Orvill gets a restrained red silhouette and
-                    // Pelag a blue-green one; only the hovered target becomes a
-                    // strong red contour. The width stays compact so armour
-                    // details do not turn into a dirty halo.
+                    // Only enemies receive a contour. Keeping friendly units at
+                    // exactly zero avoids bringing back the permanent dark hull;
+                    // hovering an enemy strengthens its existing red silhouette.
                     bool hostile = entities.Side[i] == Faction.Orvill;
-                    block.SetFloat(OutlineWidthId, hovered ? 1.55f : hostile ? 1.24f : 1.18f);
-                    block.SetColor(OutlineColorId, hovered
+                    bool hoveredHostile = hovered && hostile;
+                    block.SetFloat(OutlineWidthId, hoveredHostile ? 1.55f : hostile ? 1.24f : 0f);
+                    block.SetColor(OutlineColorId, hoveredHostile
                         ? new Color(1f, 0.055f, 0.035f, 1f)
                         : hostile
                             ? new Color(0.52f, 0.035f, 0.055f, 1f)
-                            : new Color(0.025f, 0.13f, 0.17f, 1f));
+                            : Color.clear);
 
                     ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
                 }
@@ -1279,8 +1271,7 @@ namespace Game.View
             {
                 GameObject body = CreateCharacterBody(prefab, faction, scale, material, controller,
                     weaponPrefab, WoleWeaponSocket,
-                    WoleWeaponLocalPosition, WoleWeaponLocalDirection, WoleWeaponLocalRoll,
-                    WoleWeaponLocalScale,
+                    WoleWeaponLocalPosition, WoleWeaponLocalRotation, WoleWeaponLocalScale,
                     weaponMaterial);
 
                 // Якорь вешается ВТОРЫМ пропсом на ту же механику, что и сабля.
@@ -1288,8 +1279,8 @@ namespace Game.View
                 // умеет искать кость и сажать на неё меш.
                 if (body != null && anchorPrefab != null
                     && !MountRigidProp(body.transform, anchorPrefab, WoleAnchorSocket,
-                        WoleAnchorLocalPosition, WoleAnchorLocalDirection,
-                        WoleAnchorLocalRoll, WoleAnchorLocalScale, anchorMaterial))
+                        WoleAnchorLocalPosition, WoleAnchorLocalRotation,
+                        WoleAnchorLocalScale, anchorMaterial))
                 {
                     Debug.LogWarning($"[Разлом] Якорь не сел на «{WoleAnchorSocket}»: " +
                                      "кости с таким именем в риге нет.");
@@ -1373,7 +1364,7 @@ namespace Game.View
             if (material.HasProperty("_MidThreshold")) material.SetFloat("_MidThreshold", 0.24f);
             if (material.HasProperty("_LightThreshold")) material.SetFloat("_LightThreshold", 0.62f);
             if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", 0.045f);
-            if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 1.10f);
+            if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0f);
 
             Debug.Log($"[Разлом] {faction}: материал собран в игре из «{texturePath}», шейдер {shader.name}.");
             return material;
@@ -1407,8 +1398,7 @@ namespace Game.View
         private static GameObject CreateCharacterBody(GameObject prefab, Faction faction, float scale,
             Material fallbackMaterial, RuntimeAnimatorController controller,
             GameObject weaponPrefab, string weaponSocket,
-            Vector3 weaponLocalPosition, Vector3 weaponLocalDirection, float weaponLocalRoll,
-            float weaponLocalScale,
+            Vector3 weaponLocalPosition, Vector3 weaponLocalEuler, Vector3 weaponLocalScale,
             Material weaponMaterial)
         {
             GameObject go = Instantiate(prefab);
@@ -1468,7 +1458,7 @@ namespace Game.View
             if (faction == Faction.Wole)
             {
                 if (!MountRigidProp(go.transform, weaponPrefab, weaponSocket,
-                        weaponLocalPosition, weaponLocalDirection, weaponLocalRoll,
+                        weaponLocalPosition, weaponLocalEuler,
                         weaponLocalScale, weaponMaterial))
                     Debug.LogWarning($"[Разлом] Сабля не установлена: prefab={(weaponPrefab != null)}, " +
                                      $"socket={weaponSocket}.");
@@ -1530,9 +1520,25 @@ namespace Game.View
             renderer.receiveShadows = false;
         }
 
+        /// <summary>
+        /// Сажает пропс на кость.
+        ///
+        /// ПОВОРОТ ЗАДАЁТСЯ УГЛАМИ ЭЙЛЕРА, теми же, что видно в инспекторе.
+        ///
+        /// Раньше здесь были «направление плюс крен»: вектор вдоль клинка и
+        /// доворот вокруг него. Схема стройная, но подбирают-то положение
+        /// мышкой в Play Mode, а инспектор показывает эйлеровы углы — и каждый
+        /// снятый результат приходилось переводить обратно в вектор с креном.
+        /// Перевод неочевидный, делается вручную и ровно там появляются ошибки.
+        ///
+        /// Теперь что снял в инспекторе, то и вписал.
+        ///
+        /// Масштаб тоже вектор: подгонка тасканием гизмо на повёрнутом объекте
+        /// даёт неравномерные числа, и их надо уметь сохранить как есть.
+        /// </summary>
         private static bool MountRigidProp(Transform character, GameObject weaponPrefab,
             string socketName, Vector3 localPosition,
-            Vector3 localDirection, float localRoll, float localScale, Material materialOverride)
+            Vector3 localEuler, Vector3 localScale, Material materialOverride)
         {
             if (weaponPrefab == null) return false;
 
@@ -1542,11 +1548,8 @@ namespace Game.View
             GameObject mounted = Instantiate(weaponPrefab, socket, false);
             mounted.name = weaponPrefab.name + "_Equipped";
             mounted.transform.localPosition = localPosition;
-            Quaternion aim = localDirection.sqrMagnitude > 0.0001f
-                ? Quaternion.FromToRotation(Vector3.up, localDirection.normalized)
-                : Quaternion.identity;
-            mounted.transform.localRotation = aim * Quaternion.AngleAxis(localRoll, Vector3.up);
-            mounted.transform.localScale = Vector3.one * localScale;
+            mounted.transform.localRotation = Quaternion.Euler(localEuler);
+            mounted.transform.localScale = localScale;
             mounted.SetActive(true);
 
             // Trail строится не вокруг персонажа, а по реальному клинку.

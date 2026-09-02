@@ -12,7 +12,7 @@ Shader "Razlom/Texture Toon"
         _RimColor ("Rim Color", Color) = (1,0.86,0.66,1)
         _RimPower ("Rim Power", Range(1,10)) = 4
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
-        _OutlineWidth ("Outline Pixels", Range(0,3)) = 1.10
+        _OutlineWidth ("Outline Pixels", Range(0,3)) = 0
         _HitFlash ("Hit Flash", Range(0,1)) = 0
         _DeathFade ("Death Fade", Range(0,1)) = 0
     }
@@ -271,25 +271,12 @@ Shader "Razlom/Texture Toon"
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.positionCS = TransformWorldToHClip(positionWS);
 
-                // Constant screen-space thickness. World-space extrusion made
-                // the dense hair/clothes outline crawl with camera distance.
+                // Expand only the screen-space silhouette. Width zero is the
+                // normal character state; gameplay enables this pass through
+                // a MaterialPropertyBlock only for hostile targets.
                 float3 normalVS = TransformWorldToViewDir(normalWS, true);
                 float2 direction = normalVS.xy;
                 float directionLength = length(direction);
-
-                // СИЛУЭТ, А НЕ КАРТА РЁБЕР.
-                //
-                // Раньше направление здесь нормализовалось безусловно, и каждая
-                // вершина уезжала на полную ширину — включая те, чья нормаль
-                // смотрит прямо в камеру. У брони таких вершин большинство:
-                // плоскость наплечника, пластина юбки, пряжка. Оболочка рвалась
-                // на каждом жёстком ребре, и сквозь разрыв проступал контур
-                // ВНУТРИ фигуры. Отсюда «много лишних линий» вместо силуэта.
-                //
-                // Силуэт — это ровно те места, где нормаль перпендикулярна
-                // взгляду, то есть где длина её экранной проекции близка к
-                // единице. Ей и надо мерить толщину. Степень добавляет порог:
-                // полутон гасится, край остаётся.
                 float silhouette = directionLength * directionLength * directionLength;
                 float2 pixelSize = 2.0 / _ScreenParams.xy;
                 output.positionCS.xy += (direction / max(directionLength, 0.0001)) *
@@ -300,6 +287,10 @@ Shader "Razlom/Texture Toon"
 
             half4 OutlineFrag(Varyings input) : SV_Target
             {
+                // With no extrusion the back-face shell can still leak through
+                // hard edges. Discard it completely instead of drawing a dark
+                // zero-width contour on ordinary characters.
+                clip(_OutlineWidth - 0.001h);
                 clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
                 return _OutlineColor;
             }
