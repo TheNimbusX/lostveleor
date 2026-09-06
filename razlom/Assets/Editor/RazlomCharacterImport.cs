@@ -18,9 +18,6 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 {
     private const string CharactersFolder = "/Resources/Characters/";
     private const string ArtCharactersFolder = "/Art/Characters/";
-    private const string PelagV4Model =
-        "Assets/Resources/Characters/Pelag_v4/Pelag_v4.fbx";
-
     private string NormalPath => assetPath.Replace('\\', '/');
 
     private bool IsCharacter =>
@@ -31,8 +28,6 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         NormalPath.Contains("/Animations/") || NormalPath.Contains("/Mixamo/");
 
     private bool IsWhirlwind => NormalPath.EndsWith("/Pelag_v4/Animations/Pelag_Whirlwind.fbx");
-
-    private bool IsTripoRun => NormalPath.EndsWith("/Pelag_v5/Animations/Pelag_Run_Tripo.fbx");
 
     private bool IsPelagMixamo => NormalPath.Contains("/Pelag_v5/Mixamo/");
 
@@ -48,45 +43,10 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         NormalPath.Contains(CharactersFolder)
         && System.IO.Path.GetFileNameWithoutExtension(NormalPath).Contains('@');
 
-    public override uint GetVersion() => 12;
+    public override uint GetVersion() => 13;
 
     private void OnPreprocessAnimation()
     {
-        if (IsTripoRun)
-        {
-            var runImporter = (ModelImporter)assetImporter;
-            ModelImporterClipAnimation[] runClips = runImporter.defaultClipAnimations;
-            if (runClips != null && runClips.Length > 0)
-            {
-                ModelImporterClipAnimation run = runClips[0];
-                for (int i = 0; i < runClips.Length; i++)
-                {
-                    string take = runClips[i].takeName ?? string.Empty;
-                    if (take.Contains("preset:biped:run"))
-                    {
-                        run = runClips[i];
-                        break;
-                    }
-                }
-
-                // Always rebuild this entry from the FBX defaults. Replacing an
-                // FBX while retaining its GUID also retains the old .meta clip;
-                // ours still pointed at the obsolete Blender take "Scene" and
-                // therefore sampled a frozen pose from the real Tripo file.
-                run.name = "Pelag_Run_Tripo";
-                run.loopTime = true;
-                run.loopPose = true;
-                run.lockRootRotation = true;
-                run.keepOriginalOrientation = true;
-                run.lockRootPositionXZ = true;
-                run.keepOriginalPositionXZ = true;
-                run.lockRootHeightY = true;
-                run.keepOriginalPositionY = true;
-                runImporter.clipAnimations = new[] { run };
-            }
-            return;
-        }
-
         if (IsPelagMixamo)
         {
             ConfigurePelagMixamoClips((ModelImporter)assetImporter);
@@ -343,37 +303,6 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
                 // и подгони этот множитель так, чтобы meshHeight стал 0.978.
                 importer.globalScale = 0.5433f;
             }
-            return;
-        }
-
-        // Tripo export contains the correct Pelag hierarchy, but its bind pose is
-        // taken from frame 1 of the run. Letting Unity build a fresh Humanoid
-        // avatar from that pose produces a bad automatic map (RightHand was
-        // mapped to R_ForearmTwist01) and the run arrives twisted. The playable
-        // mesh is Pelag v4, so the animation must be retargeted through that
-        // exact, already validated avatar.
-        if (IsTripoRun)
-        {
-            Avatar pelagAvatar = AssetDatabase.LoadAssetAtPath<Avatar>(PelagV4Model);
-            if (pelagAvatar == null)
-            {
-                Debug.LogError($"[Разлом] Не найден Avatar Pelag v4 для Tripo-run: {PelagV4Model}");
-                return;
-            }
-
-            importer.animationType = ModelImporterAnimationType.Human;
-            importer.avatarSetup = ModelImporterAvatarSetup.CopyFromOther;
-            importer.sourceAvatar = pelagAvatar;
-            importer.importAnimation = true;
-            importer.importNormals = ModelImporterNormals.None;
-            importer.importTangents = ModelImporterTangents.None;
-            importer.materialImportMode = ModelImporterMaterialImportMode.None;
-            importer.globalScale = 1f;
-            importer.useFileScale = true;
-            importer.importBlendShapes = false;
-            importer.importCameras = false;
-            importer.importLights = false;
-            importer.isReadable = false;
             return;
         }
 

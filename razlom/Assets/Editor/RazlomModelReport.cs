@@ -78,35 +78,10 @@ namespace Game.EditorTools
             if (Application.isBatchMode) EditorApplication.Exit(clips.Length == 1 ? 0 : 2);
         }
 
-        public static void ReportTripoRunClip()
-        {
-            const string path = "Assets/Resources/Characters/Pelag_v5/Animations/Pelag_Run_Tripo.fbx";
-            AnimationClip[] clips = AssetDatabase.LoadAllAssetsAtPath(path)
-                .OfType<AnimationClip>()
-                .Where(clip => !clip.name.StartsWith("__"))
-                .ToArray();
-            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
-            ModelImporterClipAnimation[] defaults = importer?.defaultClipAnimations;
-            ModelImporterClipAnimation[] configured = importer?.clipAnimations;
-            Debug.Log($"[tripo-run] defaults={defaults?.Length ?? 0}, configured={configured?.Length ?? 0}, " +
-                      $"rig={importer?.animationType}, avatarSetup={importer?.avatarSetup}, " +
-                      $"sourceAvatar={importer?.sourceAvatar}");
-            if (defaults != null)
-                foreach (ModelImporterClipAnimation take in defaults)
-                    Debug.Log($"[tripo-run] default name={take.name}, take={take.takeName}, " +
-                              $"frames={take.firstFrame:0.##}-{take.lastFrame:0.##}");
-            foreach (AnimationClip clip in clips)
-            {
-                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(clip, out string clipGuid, out long localId);
-                EditorCurveBinding[] curves = AnimationUtility.GetCurveBindings(clip);
-                Debug.Log($"[tripo-run] clip={clip.name}, length={clip.length:0.000}, " +
-                          $"fps={clip.frameRate:0.0}, human={clip.isHumanMotion}, empty={clip.empty}, " +
-                          $"curves={curves.Length}, guid={clipGuid}, localId={localId}");
-                foreach (EditorCurveBinding curve in curves.Take(12))
-                    Debug.Log($"[tripo-run] curve path={curve.path}, property={curve.propertyName}");
-            }
-            if (Application.isBatchMode) EditorApplication.Exit(clips.Length == 1 ? 0 : 2);
-        }
+        // ReportTripoRunClip удалён вместе с Pelag_Run_Tripo.fbx 6 сентября.
+        // Клип приезжал Humanoid'ом и потому не вставал на Generic-контроллер
+        // Пелага; в игре он не использовался ни разу, а диагностика по нему
+        // оставалась и ссылалась на файл, которого больше нет.
 
         /// <summary>
         /// Humanoid по умолчанию выносит поворот Hips в root motion. Для Вихря
