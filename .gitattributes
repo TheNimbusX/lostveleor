@@ -12,6 +12,16 @@
 *.mp3 filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
 
+# Reference footage and generated animation. Both are heavy and neither is ever
+# read as a diff: the videos are captures of other games, and the .anim files are
+# rebuilt from source clips by RazlomPelagV5AnimatorBuilder on every domain
+# reload. Left in plain git they would put ~130 MB of undiffable payload into
+# history permanently.
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.anim filter=lfs diff=lfs merge=lfs -text
+
 # Unity YAML assets should stay mergeable text.
 *.meta text eol=lf
 *.unity text eol=lf

@@ -180,9 +180,26 @@ namespace Game.View
         private const float TickLength = 1f / Simulation.TicksPerSecond;
         private float _accumulator;
 
+        [Tooltip("Стенд для съёмки способностей: ровно три неподвижных врага " +
+                 "вокруг игрока, без урона и без атак. Обычной игре не нужен.")]
+        public bool ShowcaseStandInEditor;
+
+        [Tooltip("Пишет в консоль каждый скачок тела больше трёх обычных шагов " +
+                 "за тик. Нужен, когда «оно телепортируется», а глазом причину " +
+                 "не поймать.")]
+        public bool WatchTeleports;
+
         private InputFrame _pending = InputFrame.Empty;
         private byte _abilityLatch;
+        private InputFrame _abilityPressFrame;
+        private bool _abilityPressLatched;
+        private int _sweepAimSlot = -1;
+        public bool AimingSweep => _sweepAimSlot >= 0 && !GameplayPaused && Sim != null
+            && Sim.Entities.Alive[Simulation.PlayerId];
         private byte _commandLatch;
+        // Читается каждый кадр, поэтому живёт полем, а не литералом массива в
+        // CaptureInput: шестьдесят выбросов в секунду на ровном месте.
+        private readonly bool[] _slotPressed = new bool[Simulation.AbilitySlots];
         // Render frames can be shorter than the 30 Hz simulation tick. Keep the
         // exact RMB edge (intent, aim and target) until one Step consumes it;
         // otherwise a quick click can show presentation feedback yet never
@@ -203,21 +220,35 @@ namespace Game.View
         private readonly AbilityNode[] _nodeBuffer = new AbilityNode[3];
         private bool _appliedHotter, _appliedSplit, _appliedSpreads;
 
-        // Позиции на предыдущем тике — нужны, чтобы интерполировать отрисовку.
+        // Позиции и направления на предыдущем тике — нужны, чтобы
+        // интерполировать отрисовку. Поворот идёт из того же тика, что и
+        // позиция, и обязан интерполироваться вместе с ней.
         private FixVec2[] _prevPositions = new FixVec2[0];
+        private FixVec2[] _prevFacings = new FixVec2[0];
 
         private void Awake()
         {
+            gameObject.AddComponent<PelagSweepAimView>();
             ulong seed = RunSeed != 0 ? RunSeed : (ulong)System.DateTime.UtcNow.Ticks;
             RunSeed = seed;
 
             // Игра начинается в ЛАГЕРЕ, а не в Разломе. Забег теперь то, во что
             // входят, а не то, что запускается вместо главного меню.
             Session = PrototypeContent.NewSession(seed);
-            // В редакторе combat slice должен запускаться тем же 1+3 стендом,
-            // который мы снимаем. Иначе владелец видит старый Полигон с двумя
-            // болванками и закономерно не может проверить текущую работу.
-            Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || Application.isEditor;
+            // ВИТРИНА БОЛЬШЕ НЕ ВКЛЮЧАЕТСЯ САМА В PLAY MODE.
+            //
+            // Здесь стояло `|| Application.isEditor`. Это была подпорка под
+            // съёмку combat slice: Play Mode ставил тот же стенд 1+3, который
+            // снимала камера. Подпорка пережила задачу и стала ложью про игру —
+            // при каждом Play вокруг игрока вставали РОВНО ТРИ врага с нулевым
+            // уроном, нулевой скоростью и `NextAttackTick = int.MaxValue`, то
+            // есть манекены, которые физически не могут ни подойти, ни ударить.
+            // Владелец так и описал: «три челика стоят как манекены и не бьют».
+            //
+            // Теперь Play Mode играет НАСТОЯЩИЙ забег. Стенд остался доступен
+            // галкой в инспекторе — он нужен для съёмки способностей.
+            Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || ShowcaseStandInEditor;
+            WatchTeleports |= CaptureRig.WatchTeleports;
             Session.CombatFeelShowcase = CaptureRig.CombatFeelTier;
             Session.CombatFeelEnemyCount = CaptureRig.HasEnemyOverride
                 ? CaptureRig.EnemyOverride
@@ -227,6 +258,7 @@ namespace Game.View
             // Иначе сбой вылезал бы кадром позже и в другом месте — в интерполяции
             // отрисовки, к настоящей причине отношения не имеющей.
             _prevPositions = new FixVec2[MaxSimCapacity];
+            _prevFacings = new FixVec2[MaxSimCapacity];
 
             Debug.Log($"[Разлом] Лагерь. Сид сессии {seed}. E — войти в Разлом, T — Полигон.");
         }
@@ -285,8 +317,19 @@ namespace Game.View
 
                 Session.Step(in frame);
 
+                // Explicit capture-only lethal contact verifies the real death event,
+                // equipment ownership and effect cleanup in the middle of a cast.
+                if (CaptureRig.DeathDuringSkill && CaptureRig.LiveSkill && Sim != null
+                    && _liveSkillStartedTick >= 0 && Sim.Tick - _liveSkillStartedTick == 24
+                    && Sim.Entities.Alive[Simulation.PlayerId])
+                    Sim.ApplyAbilityDamage(1, Simulation.PlayerId, 100000, 0, DamageType.Physical);
+
                 if (_shownGeneration != Session.Generation) SyncGeneration();
-                else if (Sim != null && Sim.Tick != tickBefore) PlayEvents(Sim.Events);
+                else if (Sim != null && Sim.Tick != tickBefore)
+                {
+                    PlayEvents(Sim.Events);
+                    if (WatchTeleports) ReportTeleports(tickBefore);
+                }
 
                 // Новый Разлом — интерполировать не от чего: старые позиции
                 // относятся к другой локации, и кадр показал бы, как все
@@ -299,7 +342,15 @@ namespace Game.View
 
             // Если кадр просел настолько, что накопилось больше MaxTicksPerFrame шагов,
             // излишек отбрасывается: лучше замедлить время, чем словить спираль смерти.
-            if (steps >= MaxTicksPerFrame) _accumulator = 0f;
+            //
+            // Но отбрасывается ТОЛЬКО лишние целые тики, а не дробный остаток.
+            // Раньше здесь стоял ноль, и после каждой просадки Alpha падала в
+            // ноль вместе с ним: тело, уже доехавшее до середины между тиками,
+            // отскакивало на начало. Замер поймал это на кадре в 333 мс —
+            // тридцать тел прыгнули разом. Просадка и так стоит рывка, добавлять
+            // к ней второй незачем.
+            if (steps >= MaxTicksPerFrame)
+                _accumulator = Mathf.Repeat(_accumulator, TickLength);
 
             // Смена симуляции посреди кадра обнуляет накопитель, а цикл после
             // этого успевает вычесть из него длину тика. Отрицательный
@@ -320,6 +371,7 @@ namespace Game.View
             _pointerPressFrame = InputFrame.Empty;
             _pointerPressLatched = false;
             _abilityLatch = 0;
+            _abilityPressLatched = false;
             _commandLatch = 0;
             _accumulator = 0f;
             _frameEvents.Clear();
@@ -343,30 +395,41 @@ namespace Game.View
         /// Ни одно float-значение не должно пересечь границу симуляции.
         ///
         /// Обе ветки читают ОДНО И ТО ЖЕ: точку под курсором, правую кнопку
-        /// мыши и четыре цифры. Какая система ввода включена в настройках
-        /// проекта — вопрос сборки, и на поведение симуляции влиять не должен.
+        /// мыши и четыре клавиши того ряда, который выбран в настройках. Какая
+        /// система ввода включена в настройках проекта — вопрос сборки, и на
+        /// поведение симуляции влиять не должен.
         /// </summary>
         private void CaptureInput()
         {
             MoveOrderPressedThisFrame = false;
 
-            // На экране награды цифры означают ВЫБОР, а не способность.
-            // Одни и те же клавиши: у игрока не должно быть двух рядов цифр,
+            // На экране награды тот же ряд означает ВЫБОР, а не способность.
+            // Одни и те же клавиши: у игрока не должно быть двух рядов кнопок,
             // а бой на этом экране всё равно стоит.
             bool choosing = Session.Mode == GameMode.Rift
                             && Run != null && Run.Phase == RunPhase.ChoosingReward;
+            bool letters = GameUserSettings.AbilityRowUsesLetters;
 
 #if ENABLE_INPUT_SYSTEM
             Keyboard kb = Keyboard.current;
             if (kb != null)
             {
-                bool[] digits =
+                if (letters)
                 {
-                    kb.digit1Key.wasPressedThisFrame, kb.digit2Key.wasPressedThisFrame,
-                    kb.digit3Key.wasPressedThisFrame, kb.digit4Key.wasPressedThisFrame,
-                };
+                    _slotPressed[0] = kb.qKey.wasPressedThisFrame;
+                    _slotPressed[1] = kb.wKey.wasPressedThisFrame;
+                    _slotPressed[2] = kb.eKey.wasPressedThisFrame;
+                    _slotPressed[3] = kb.rKey.wasPressedThisFrame;
+                }
+                else
+                {
+                    _slotPressed[0] = kb.digit1Key.wasPressedThisFrame;
+                    _slotPressed[1] = kb.digit2Key.wasPressedThisFrame;
+                    _slotPressed[2] = kb.digit3Key.wasPressedThisFrame;
+                    _slotPressed[3] = kb.digit4Key.wasPressedThisFrame;
+                }
 
-                LatchDigits(digits, choosing);
+                LatchSlots(_slotPressed, choosing);
 
                 LatchKeys(
                     leave: kb.lKey.wasPressedThisFrame,
@@ -383,13 +446,22 @@ namespace Game.View
                 mouse != null && mouse.rightButton.isPressed,
                 mouse != null && mouse.rightButton.wasPressedThisFrame);
 #else
-            bool[] legacyDigits =
+            if (letters)
             {
-                Input.GetKeyDown(KeyCode.Alpha1), Input.GetKeyDown(KeyCode.Alpha2),
-                Input.GetKeyDown(KeyCode.Alpha3), Input.GetKeyDown(KeyCode.Alpha4),
-            };
+                _slotPressed[0] = Input.GetKeyDown(KeyCode.Q);
+                _slotPressed[1] = Input.GetKeyDown(KeyCode.W);
+                _slotPressed[2] = Input.GetKeyDown(KeyCode.E);
+                _slotPressed[3] = Input.GetKeyDown(KeyCode.R);
+            }
+            else
+            {
+                _slotPressed[0] = Input.GetKeyDown(KeyCode.Alpha1);
+                _slotPressed[1] = Input.GetKeyDown(KeyCode.Alpha2);
+                _slotPressed[2] = Input.GetKeyDown(KeyCode.Alpha3);
+                _slotPressed[3] = Input.GetKeyDown(KeyCode.Alpha4);
+            }
 
-            LatchDigits(legacyDigits, choosing);
+            LatchSlots(_slotPressed, choosing);
 
             LatchKeys(
                 leave: Input.GetKeyDown(KeyCode.L),
@@ -440,6 +512,22 @@ namespace Game.View
                     _pending.Aim = player + new FixVec2(Fix64.Ratio(-3, 10), Fix64.Zero);
                     _pending.Flags = (byte)InputFlags.MoveOrder;
                 }
+                else if (tick == 80 || tick == 110 || tick == 140 || tick == 170)
+                {
+                    // Alternating short clicks: left/right 90 and 180 degrees,
+                    // all inside the turn-in-place radius, through real orders.
+                    FixVec2 direction = tick == 80 ? new FixVec2(Fix64.Zero, Fix64.One)
+                        : tick == 110 ? new FixVec2(Fix64.One, Fix64.Zero)
+                        : tick == 140 ? new FixVec2(-Fix64.One, Fix64.Zero)
+                        : new FixVec2(Fix64.One, Fix64.Zero);
+                    _pending.Aim = player + direction * Fix64.Ratio(3, 10);
+                    _pending.Flags = (byte)InputFlags.MoveOrder;
+                }
+                else if (tick >= 200 && tick < 225)
+                {
+                    _pending.Aim = player + new FixVec2(Fix64.Zero, Fix64.FromInt(3));
+                    _pending.Flags = (byte)InputFlags.MoveOrder;
+                }
                 else
                 {
                     _pending.Flags = 0;
@@ -447,7 +535,7 @@ namespace Game.View
                 AttackHeld = false;
             }
 
-            if (CaptureRig.IsCombatFeelShowcase && !CaptureRig.MovingCombatShowcase && Sim != null)
+            if (CaptureRig.IsCombatFeelShowcase && !CaptureRig.MovingCombatShowcase && !CaptureRig.LiveSkill && Sim != null)
             {
                 bool attack = !CaptureRig.GcWarmupActive;
                 _pending.Flags = attack ? (byte)InputFlags.Attack : (byte)0;
@@ -473,7 +561,8 @@ namespace Game.View
                     FixVec2 player = Sim.Entities.Position[Simulation.PlayerId];
 
                     // Attack starts against the authored stand directly in
-                    // front of Pelag. Two ticks later a ground order takes
+                    // front of Pelag. A configurable delay also tests releasing
+                    // planted feet after contact. Then a ground order takes
                     // ownership of locomotion without erasing that committed
                     // swing, making the 50%-speed hit-in-motion unambiguous.
                     if (elapsed == 0 && Sim.Entities.Count > 1)
@@ -483,7 +572,7 @@ namespace Game.View
                         _pending.AttackTarget = 1;
                         AttackHeld = true;
                     }
-                    else if (elapsed == 2)
+                    else if (elapsed == CaptureRig.MovingCombatDelay)
                     {
                         _pending.Aim = player + new FixVec2(Fix64.Zero, Fix64.FromInt(1));
                         _pending.Flags = (byte)InputFlags.MoveOrder;
@@ -500,12 +589,107 @@ namespace Game.View
                         MoveOrderPressedThisFrame = true;
                         _abilityLatch |= 1;
                     }
+                    else if (elapsed >= 60 && Sim.Entities.Count > 1)
+                    {
+                        // Exercise Whirlwind recovery directly into a real
+                        // target order and the next authoritative basic stroke.
+                        _pending.Aim = Sim.Entities.Position[1];
+                        _pending.Flags = (byte)InputFlags.Attack;
+                        _pending.AttackTarget = 1;
+                        AttackHeld = true;
+                    }
                 }
             }
 
             if (!choosing && CaptureRig.ShouldCastWhirlwind(Sim != null ? Sim.Tick : -1))
                 _abilityLatch |= 1;
+            if (CaptureRig.SweepAimCapture && Sim != null) UpdateSweepAimCapture();
+            else if (CaptureRig.LiveSkill && Sim != null)
+            {
+                _pending.Flags = 0;
+                _pending.AttackTarget = -1;
+                AttackHeld = false;
+                if (CaptureRig.GcWarmupActive) { _liveSkillStartedTick = -1; _liveSkillCastStage = 0; }
+                else
+                {
+                    if (_liveSkillStartedTick < 0) _liveSkillStartedTick = Sim.Tick;
+                    int elapsed = Sim.Tick - _liveSkillStartedTick;
+                    bool sequence = CaptureRig.VfxShowcase == PelagVfxShowcase.Rotation;
+                    if (CaptureRig.RunShowcase && elapsed < (sequence ? 132 : 48))
+                    {
+                        _pending.Flags = (byte)InputFlags.MoveOrder;
+                        _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
+                            + (CaptureRig.TurnDuringSkill && elapsed % 48 >= 26
+                                ? new FixVec2(Fix64.FromInt(-2), Fix64.FromInt(3))
+                                : new FixVec2(Fix64.FromInt(3), Fix64.One));
+                    }
+                    int castAt = sequence ? 18 + _liveSkillCastStage * 31 : 18;
+                    if (_liveSkillCastStage < (sequence ? 4 : 1) && elapsed >= castAt)
+                    {
+                        int definition = sequence
+                            ? (_liveSkillCastStage == 0 ? AbilityDefinition.AnchorLeapId
+                                : _liveSkillCastStage == 1 ? AbilityDefinition.AnchorSweepId
+                                : _liveSkillCastStage == 2 ? AbilityDefinition.WhirlwindId : AbilityDefinition.ChainStepId)
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorLeap ? AbilityDefinition.AnchorLeapId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep ? AbilityDefinition.AnchorSweepId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.ChainStep ? AbilityDefinition.ChainStepId
+                            : AbilityDefinition.WhirlwindId;
+                        for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+                            if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
+                        _liveSkillCastStage++;
+                        // Прицел каста не заменяет ранее отданный приказ движения.
+                        _pending.Flags = 0;
+                        Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right * 3f;
+                        _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
+                            + new FixVec2(Fix64.FromDouble(cast.x), Fix64.FromDouble(cast.z));
+                    }
+                    if (elapsed >= (sequence ? 132 : 48) && Sim.Entities.Count > 1)
+                    {
+                        _pending.Aim = Sim.Entities.Position[1];
+                        _pending.Flags = (byte)InputFlags.Attack;
+                        _pending.AttackTarget = 1;
+                        AttackHeld = true;
+                    }
+                }
+            }
+            // При 60+ FPS между нажатием и тиком Sim есть новые кадры ввода.
+            // Сохраняем прицел вместе с кнопкой, иначе движение заменяет цель броска.
+            if (_abilityLatch != 0 && !_abilityPressLatched)
+            {
+                _abilityPressFrame = _pending;
+                _abilityPressLatched = true;
+            }
         }
+        private void ResolveSweepAim(bool confirm, bool cancel)
+        {
+            if (_sweepAimSlot < 0) return;
+            if (cancel) _sweepAimSlot = -1;
+            else if (confirm) { _abilityLatch |= (byte)(1 << _sweepAimSlot); _sweepAimSlot = -1; }
+        }
+
+        private void UpdateSweepAimCapture()
+        {
+            _pending.Flags = 0; _pending.AttackTarget = -1; AttackHeld = false;
+            if (CaptureRig.GcWarmupActive) { _liveSkillStartedTick = -1; _aimCaptureLastTick = -1; return; }
+            if (_liveSkillStartedTick < 0) _liveSkillStartedTick = Sim.Tick;
+            int elapsed = Sim.Tick - _liveSkillStartedTick;
+            _pending.Aim = Sim.Entities.Position[Simulation.PlayerId] + new FixVec2(Fix64.FromInt(5), Fix64.Zero);
+            if (_aimCaptureLastTick == elapsed) return;
+            _aimCaptureLastTick = elapsed;
+            if (elapsed == 6 || elapsed == 40)
+            {
+                System.Array.Clear(_slotPressed, 0, _slotPressed.Length);
+                _slotPressed[2] = true;
+                LatchSlots(_slotPressed, false);
+                _slotPressed[2] = false;
+            }
+            if (elapsed == 35) ResolveSweepAim(false, true);
+            if (elapsed == 65) ResolveSweepAim(true, false);
+        }
+
+        private int _liveSkillStartedTick = -1;
+        private int _liveSkillCastStage;
+        private int _aimCaptureLastTick = -1;
 
         /// <summary>
         /// Одна и та же клавиша означает разное в разных режимах — ровно как
@@ -522,7 +706,16 @@ namespace Game.View
                     break;
 
                 case GameMode.Camp:
-                    if (enter) _commandLatch = (byte)CampCommand.EnterRift;
+                    // На Полигоне E — это способность из ряда QWER, а не выход
+                    // в Разлом: Полигон и существует ради проверки способностей,
+                    // и молча съедать треть ряда он не должен. Сойти с него
+                    // по-прежнему T, и после этого E работает как раньше.
+                    //
+                    // На цифровом ряду пересечения нет вообще, и уступка тоже
+                    // не нужна: там E остаётся входом в Разлом даже с Полигона.
+                    if (enter && !(Session.OnProvingGround
+                                   && GameUserSettings.AbilityRowUsesLetters))
+                        _commandLatch = (byte)CampCommand.EnterRift;
                     if (ground) _commandLatch = (byte)CampCommand.ToggleProvingGround;
                     if (salvage) _commandLatch = (byte)CampCommand.SalvageJunk;
                     break;
@@ -538,9 +731,16 @@ namespace Game.View
         /// Нажатия копятся между тиками, чтобы короткий тап не потерялся.
         /// Куда именно они копятся — в способности или в выбор награды —
         /// решает фаза забега.
+        ///
+        /// Ряд QWER делит две клавиши с командами режимов: E — вход в Разлом,
+        /// R — повтор забега. Способность латчится только там, где ей есть куда
+        /// прийти: в Разломе и на Полигоне. В пустом лагере и на экране итогов
+        /// шагать нечему, и клавиша целиком принадлежит команде режима.
         /// </summary>
-        private void LatchDigits(bool[] pressed, bool choosing)
+        private void LatchSlots(bool[] pressed, bool choosing)
         {
+            bool abilitiesLive = Session.Mode == GameMode.Rift || Session.OnProvingGround;
+
             for (int i = 0; i < pressed.Length; i++)
             {
                 if (!pressed[i]) continue;
@@ -550,9 +750,13 @@ namespace Game.View
                     if (i < RiftRun.RewardChoices)
                         _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
                 }
-                else
+                else if (abilitiesLive)
                 {
-                    _abilityLatch |= (byte)(1 << i);
+                    if (Sim?.GetAbility(i)?.DefinitionId == AbilityDefinition.AnchorSweepId)
+                    {
+                        if (Sim.Tick >= Sim.AbilityReadyTick(i)) _sweepAimSlot = _sweepAimSlot == i ? -1 : i;
+                    }
+                    else { _sweepAimSlot = -1; _abilityLatch |= (byte)(1 << i); }
                 }
             }
         }
@@ -583,6 +787,24 @@ namespace Game.View
             // Наведение считается ПОСЛЕ обновления Aim. Раньше здесь читалась
             // точка прошлого кадра, поэтому быстрый клик рядом с силуэтом мог
             // назначить не того врага или превратиться в приказ по земле.
+            if (_sweepAimSlot >= 0)
+            {
+                bool valid = Sim != null && Sim.Entities.Alive[Simulation.PlayerId]
+                    && Sim.GetAbility(_sweepAimSlot)?.DefinitionId == AbilityDefinition.AnchorSweepId;
+#if ENABLE_INPUT_SYSTEM
+                bool confirm = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+                bool cancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+#else
+                bool confirm = Input.GetMouseButtonDown(0);
+                bool cancel = Input.GetKeyDown(KeyCode.Escape);
+#endif
+                ResolveSweepAim(confirm, !valid || cancel || pressedThisFrame);
+                _pointerPressLatched = false;
+                _pending.Flags = 0;
+                _pending.AttackTarget = -1;
+                AttackHeld = MoveOrderHeld = MoveOrderPressedThisFrame = false;
+                return;
+            }
             HoveredEntity = FindUnderCursor(screenPosition);
             AttackHeld = held && HoveredEntity >= 0;
             MoveOrderHeld = held && HoveredEntity < 0;
@@ -724,6 +946,13 @@ namespace Game.View
                 _pointerPressLatched = false;
             }
 
+            if (_abilityPressLatched && _abilityLatch != 0)
+            {
+                frame.Aim = _abilityPressFrame.Aim;
+                frame.Flags = _abilityPressFrame.Flags;
+                frame.AttackTarget = _abilityPressFrame.AttackTarget;
+            }
+            _abilityPressLatched = false;
             frame.AbilityMask = _abilityLatch;
             frame.Command = _commandLatch;
             _abilityLatch = 0;
@@ -785,13 +1014,53 @@ namespace Game.View
             return Fix64.Ratio(q, Steps);
         }
 
+        /// <summary>
+        /// Ловит скачки тела за один тик.
+        ///
+        /// «Оно телепортируется» — это наблюдение, а не диагноз: прыгать может
+        /// и симуляция, и интерполяция отрисовки. Здесь сравнивается ровно то,
+        /// что решил тик, с тем, что было тиком раньше. Если сторож молчит, а
+        /// глаз прыжок видит — виновата отрисовка, и искать надо в ArenaView.
+        ///
+        /// Порог — три обычных шага. Меньше даёт ложные срабатывания на
+        /// расталкивании, больше пропускает настоящий скачок.
+        /// </summary>
+        private void ReportTeleports(int tickBefore)
+        {
+            Simulation sim = Sim;
+            if (sim == null) return;
+
+            EntityStore entities = sim.Entities;
+            for (int i = 0; i < entities.Count && i < _prevPositions.Length; i++)
+            {
+                if (!entities.Alive[i]) continue;
+
+                FixVec2 delta = entities.Position[i] - _prevPositions[i];
+                float moved = Mathf.Sqrt(
+                    delta.X.ToFloat() * delta.X.ToFloat()
+                    + delta.Y.ToFloat() * delta.Y.ToFloat());
+                float step = entities.MoveStep[i].ToFloat();
+                float limit = Mathf.Max(step * 3f, 0.35f);
+                if (moved <= limit) continue;
+
+                Debug.LogWarning($"[Разлом][скачок] тик {tickBefore}→{sim.Tick}, "
+                                 + $"сущность {i} ({entities.Side[i]}): {moved:0.00} м "
+                                 + $"при шаге {step:0.000} м, "
+                                 + $"тяга={entities.ForcedTicksLeft[i]} "
+                                 + $"вид={entities.ForcedKind[i]}");
+            }
+        }
+
         private void SavePreviousPositions()
         {
             Simulation sim = Sim;
             if (sim == null) return;
 
             for (int i = 0; i < sim.Entities.Count; i++)
+            {
                 _prevPositions[i] = sim.Entities.Position[i];
+                _prevFacings[i] = sim.Entities.Facing[i];
+            }
         }
 
         /// <summary>Позиция для отрисовки: между прошлым и текущим тиком.</summary>
@@ -802,6 +1071,34 @@ namespace Game.View
             float x = Mathf.Lerp(prev.X.ToFloat(), curr.X.ToFloat(), Alpha);
             float z = Mathf.Lerp(prev.Y.ToFloat(), curr.Y.ToFloat(), Alpha);
             return new Vector3(x, 0f, z);
+        }
+
+        /// <summary>
+        /// Направление для отрисовки: между прошлым и текущим тиком, ровно как
+        /// позиция.
+        ///
+        /// Источник у поворота тот же самый — тик на 30 Гц, — и без этой
+        /// интерполяции тело ехало плавно, а разворачивалось ступенями по
+        /// двадцать градусов. При 120 кадрах это четыре одинаковых кадра и
+        /// прыжок на пятом, и заметно это именно на том персонаже, на которого
+        /// игрок смотрит.
+        ///
+        /// Это НЕ сглаживание и НЕ задержка: возвращается точка между двумя
+        /// авторитетными значениями, как и у позиции. Симуляция по-прежнему
+        /// решает бой по мгновенному `Entities.Facing`.
+        /// </summary>
+        public Vector3 GetRenderFacing(int entityId)
+        {
+            FixVec2 curr = Sim.Entities.Facing[entityId];
+            Vector3 current = new Vector3(curr.X.ToFloat(), 0f, curr.Y.ToFloat());
+            if (current.sqrMagnitude < 0.000001f) return Vector3.zero;
+            current.Normalize();
+
+            FixVec2 prev = _prevFacings[entityId];
+            Vector3 previous = new Vector3(prev.X.ToFloat(), 0f, prev.Y.ToFloat());
+            if (previous.sqrMagnitude < 0.000001f) return current;
+
+            return Vector3.Slerp(previous.normalized, current, Alpha).normalized;
         }
 
         private void PlayEvents(IReadOnlyList<SimEvent> events)

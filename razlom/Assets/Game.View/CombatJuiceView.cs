@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -89,6 +89,7 @@ namespace Game.View
         private FxSlot[] _pool;
         private int _cursor;
         private int[] _lastDamageSource;
+        private bool[] _lastDamageWasSlash;
         private int _pendingBasicTarget = -1;
         private bool _pendingBasicHeavy;
 
@@ -113,6 +114,7 @@ namespace Game.View
         private MeshRenderer _trailRenderer;
         private readonly Vector3[] _trailRoots = new Vector3[TrailSamples];
         private readonly Vector3[] _trailTips = new Vector3[TrailSamples];
+        private readonly float[] _trailTimes = new float[TrailSamples];
         private readonly Vector3[] _trailVertices = new Vector3[TrailSamples * TrailVerticesPerSample];
         private readonly Color[] _trailColors = new Color[TrailSamples * TrailVerticesPerSample];
         private readonly Vector2[] _trailUvs = new Vector2[TrailSamples * TrailVerticesPerSample];
@@ -136,6 +138,7 @@ namespace Game.View
             // Ёмкость берётся по самой большой симуляции сессии: в лагере
             // симуляции нет вовсе, а на Полигоне и в Разломе они разного размера.
             _lastDamageSource = new int[TickDriver.MaxSimCapacity];
+            _lastDamageWasSlash = new bool[TickDriver.MaxSimCapacity];
             for (int i = 0; i < _lastDamageSource.Length; i++) _lastDamageSource[i] = -1;
 
             // These pooled sprites are the compact contact layer: a brief
@@ -193,7 +196,10 @@ namespace Game.View
                         break;
                     case SimEventType.Damage:
                         if ((uint)e.Target < (uint)_lastDamageSource.Length)
+                            {
                             _lastDamageSource[e.Target] = e.Source;
+                            _lastDamageWasSlash[e.Target] = IsSlashContact(in e);
+                        }
                         SpawnHit(e);
                         break;
 
@@ -205,9 +211,13 @@ namespace Game.View
                         // Поэтому здесь — ничего. Кто горит, видно по цифрам
                         // и по самому знаку; удар остаётся ударом.
                         if ((uint)e.Target < (uint)_lastDamageSource.Length)
+                            {
                             _lastDamageSource[e.Target] = e.Source;
+                            _lastDamageWasSlash[e.Target] = IsSlashContact(in e);
+                        }
                         break;
                     case SimEventType.Death:
+                        if (e.Target == Simulation.PlayerId) StopSwordTrail();
                         SpawnDeath(e);
                         break;
                     case SimEventType.AbilityCast:
@@ -257,6 +267,9 @@ namespace Game.View
                                 && e.DamageOrigin == DamageOrigin.BasicAttack
                                 && e.Target == _pendingBasicTarget;
             bool heavyBasicContact = basicContact && _pendingBasicHeavy;
+            bool whirlwindContact = fromPlayer && e.DamageOrigin == DamageOrigin.Ability
+                && (uint)e.ActionVariant < Simulation.AbilitySlots
+                && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.WhirlwindId;
             if (basicContact) _pendingBasicTarget = -1;
 
             // SpriteRenderer depth is evaluated against the 3D character
@@ -264,10 +277,19 @@ namespace Game.View
             // flash sits on the hit silhouette instead of disappearing inside
             // the shield when the target is viewed at an angle.
             Vector3 at = ContactAt(e.Position, fromPlayer ? 0.78f : 0.86f);
+            if (basicContact && _bladeRoot != null && _bladeTip != null)
+            {
+                Vector3 edge = _bladeTip.position - _bladeRoot.position;
+                Vector3 target = new Vector3(e.Position.X.ToFloat(), 0.95f, e.Position.Y.ToFloat());
+                float along = Mathf.Clamp(Vector3.Dot(target - _bladeRoot.position, edge)
+                    / Mathf.Max(0.0001f, edge.sqrMagnitude), 0.45f, 1f);
+                at = _bladeRoot.position + edge * along;
+                if (_camera != null) at -= _camera.transform.forward * 0.10f;
+            }
             Color core = e.Flag
                 ? new Color(1f, 0.92f, 0.40f, 1f)
                 : fromPlayer
-                    ? new Color(1f, 0.36f, 0.08f, 1f)
+                    ? (basicContact ? new Color(1f, 0.78f, 0.42f, 1f) : new Color(1f, 0.36f, 0.08f, 1f))
                     : new Color(1f, 0.20f, 0.24f, 0.86f);
 
             // A very short white-hot core is the readable "contact frame"; it
@@ -277,28 +299,49 @@ namespace Game.View
                 SpawnFx(FxKind.Contact, _contactSprite, at, Vector3.zero,
                     e.Flag ? new Color(1f, 0.98f, 0.72f, 1f)
                            : new Color(1f, 0.92f, 0.72f, 0.98f),
-                    e.Flag ? 0.16f : 0.13f, e.Flag ? 0.78f : 0.60f,
+                    basicContact ? (e.Flag ? 0.12f : 0.085f) : (e.Flag ? 0.16f : 0.13f),
+                    basicContact ? (e.Flag ? 0.65f : 0.42f) : (e.Flag ? 0.78f : 0.60f),
                     e.Flag ? 0.070f : 0.060f, 0f, 0f, 0f);
 
             if (_burstBudget > 0 && _sparkSprite != null)
             {
                 _burstBudget--;
-                SpawnBurst(at, core, e.Flag ? 11 : 7, e.Flag ? 5.2f : 4.0f, false);
+                SpawnBurst(at, core, basicContact ? (e.Flag ? 8 : 4) : (e.Flag ? 11 : 7),
+                    basicContact ? (e.Flag ? 4.4f : 2.8f) : (e.Flag ? 5.2f : 4.0f), false, basicContact);
             }
 
             float push = e.Flag ? 1f
+                : whirlwindContact ? 1.05f
                 : playerHit ? 0.8f
                 : heavyBasicContact ? 0.82f
                 : basicContact ? 0.70f
                 : 0.62f;
             PushTarget(in e, push);
 
+            // ВХОДЯЩИЙ УДАР НЕ ОСТАНАВЛИВАЕТ ВРЕМЯ.
+            //
+            // Это тот же случай, что уже разобран выше для горения, только
+            // приходит он не от тика урона, а от толпы. Стоп длится 0.038 с и
+            // продлевается через Mathf.Max на каждом новом попадании; при
+            // двух десятках врагов удары приходят чаще, чем раз в 38 мс, и
+            // timeScale ПОСТОЯННО висит на 0.08.
+            //
+            // Замер трассы поймал это в чистом виде: alpha росла по 0.04 за
+            // кадр четыре кадра подряд, потом сразу на 0.50. Игрок читает это
+            // как «моб пробежал, замер, оказался в другом месте» — то есть как
+            // телепорт, хотя тело в симуляции всё это время шло ровно.
+            //
+            // Тряска, зум и толчок от чужого удара остаются: hit-stop — это
+            // подтверждение ТВОЕГО удара, а не наказание за чужой.
+            bool stopsTime = (!playerHit || e.Flag) && !IsSlashContact(in e);
             Accumulate(
-                trauma: e.Flag ? 0.52f : playerHit ? 0.33f
+                trauma: e.Flag ? 0.52f : whirlwindContact ? 0.42f : playerHit ? 0.33f
                     : heavyBasicContact ? 0.36f : basicContact ? 0.29f : 0.25f,
-                zoom: e.Flag ? 0.75f
+                zoom: e.Flag ? 0.75f : whirlwindContact ? 0.55f
                     : heavyBasicContact ? 0.48f : basicContact ? 0.40f : 0.35f,
-                stopDuration: e.Flag ? 0.070f
+                stopDuration: !stopsTime ? 0f
+                    : e.Flag ? 0.070f
+                    : whirlwindContact ? 0.060f
                     : heavyBasicContact ? 0.052f : basicContact ? 0.044f : 0.038f,
                 stopScale: e.Flag ? 0.035f : 0.08f);
         }
@@ -329,6 +372,11 @@ namespace Game.View
             _arena.ReactToHit(e.Target, direction, strength);
         }
 
+        private bool IsSlashContact(in SimEvent e)
+            => e.Source == Simulation.PlayerId && e.DamageOrigin == DamageOrigin.Ability
+                && (uint)e.ActionVariant < Simulation.AbilitySlots
+                && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.ChainStepId;
+
         private void SpawnDeath(in SimEvent e)
         {
             int source = (uint)e.Target < (uint)_lastDamageSource.Length ? _lastDamageSource[e.Target] : -1;
@@ -358,21 +406,14 @@ namespace Game.View
                 _arena?.ReactToDeath(e.Target, deathDirection, 1f);
                 SpawnKillAftermath(e.Position);
 
-                // УБИЙСТВО ОБЯЗАНО ЗАМЕТНО ОТЛИЧАТЬСЯ ОТ КРИТА, ИНАЧЕ ОНО
-                // ТЕРЯЕТСЯ В ПОТОКЕ ПОПАДАНИЙ.
-                //
-                // Раньше пауза убийства была 0.095 с против 0.070 у крита —
-                // разница в треть, которую глаз не отделяет. За сессию игрок
-                // убивает десятки тысяч мобов, и если смерть звучит как
-                // очередной удар, то главное событие боя не награждается ничем.
-                //
-                // 0.15 с — это вдвое дольше крита, и это уже читается как
-                // «оно кончилось». Дальше растить нельзя: пауза на каждом
-                // убийстве превращает зачистку толпы в череду заиканий.
+                // Rapid slash kills keep their recoil, flash and sound without
+                // stopping the next hop. Attribute to the lethal hit, not the
+                // currently active skill (which may already have finished).
+                bool slashKill = _lastDamageWasSlash[e.Target];
                 Accumulate(
                     trauma: 0.85f,
                     zoom: 1.25f,
-                    stopDuration: 0.15f,
+                    stopDuration: slashKill ? 0f : 0.15f,
                     stopScale: 0.02f);
             }
         }
@@ -442,6 +483,14 @@ namespace Game.View
             AbilityBuild build = sim.GetAbility(e.Amount);
             if (build != null && build.DefinitionId == AbilityDefinition.WhirlwindId)
                 StartWhirlwindTrail();
+            else StopSwordTrail();
+        }
+
+        private void StopSwordTrail()
+        {
+            _trailDelay = _trailActive = _trailFade = 0f;
+            _trailCount = 0;
+            if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
         /// <summary>Запускает клинковую ленту в изолированной VFX-витрине.</summary>
@@ -456,6 +505,14 @@ namespace Game.View
             StartBasicAttackTrail();
         }
 
+        public void PlayChainSlashTrail()
+        {
+            StartBasicAttackTrail();
+            _trailDelay = 0.04f;
+            _trailActive = PelagAbilityTiming.ChainHop - 0.02f;
+            _trailFade = 0.07f;
+        }
+
         private void StartWhirlwindTrail()
         {
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
@@ -463,10 +520,12 @@ namespace Game.View
                 return;
             }
             _trailCount = 0;
-            _trailDelay = 0.05f;
-            _trailActive = 0.46f;
-            _trailFade = 0.16f;
+            _trailDelay = CharacterAnimatorView.WhirlwindTrailStart;
+            _trailActive = CharacterAnimatorView.WhirlwindTrailEnd - CharacterAnimatorView.WhirlwindTrailStart;
+            _trailFade = 0.10f;
             _trailWhirlwind = true;
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Brush", .85f);
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.05f);
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -478,10 +537,12 @@ namespace Game.View
             // Start the ribbon in the acceleration phase and carry it across
             // the shared contact tick into follow-through.
             _trailCount = 0;
-            _trailDelay = Mathf.Max(0f, AttackContactTime - 0.16f);
-            _trailActive = 0.19f;
-            _trailFade = 0.09f;
+            _trailDelay = Mathf.Max(0f, AttackContactTime - 0.12f);
+            _trailActive = 0.17f;
+            _trailFade = 0.065f;
             _trailWhirlwind = false;
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Brush", 0f);
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Glow", 0.9f);
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -540,36 +601,55 @@ namespace Game.View
             Vector3 blade = tip - root;
             if (_trailWhirlwind)
             {
-                // The authored Stone Slash owns the large contact silhouette.
-                // This mesh is only a soft connector from the real sabre, so it
-                // stays close to the blade and cannot read as an angular fan.
-                tip = root + blade * 1.34f;
-                root += blade * 0.34f;
+                tip = root + blade * 1.08f;
+                root += blade * 0.26f;
             }
             else
             {
                 // Basic attacks remain compact and leave the target readable.
-                root += blade * 0.48f;
+                root += blade * 0.22f;
             }
 
             if (_trailCount > 0)
             {
                 Vector3 lastMid = (_trailRoots[_trailCount - 1] + _trailTips[_trailCount - 1]) * 0.5f;
                 if (((root + tip) * 0.5f - lastMid).sqrMagnitude < 0.000025f) return;
+                {
+                    Vector3 oldRoot = _trailRoots[_trailCount - 1];
+                    Vector3 oldBlade = _trailTips[_trailCount - 1] - oldRoot;
+                    Vector3 newBlade = tip - root;
+                    float oldTime = _trailTimes[_trailCount - 1];
+                    // Subdivide the swept arc, not a straight chord through the
+                    // target. This removes the triangular fan at low FPS.
+                    int steps = Mathf.Clamp(Mathf.CeilToInt(Vector3.Angle(oldBlade, newBlade) / 7f), 1, 8);
+                    for (int s = 1; s < steps; s++)
+                    {
+                        float t = s / (float)steps;
+                        Vector3 r = Vector3.Lerp(oldRoot, root, t);
+                        AppendTrailSample(r, r + Vector3.Slerp(oldBlade, newBlade, t),
+                            Mathf.Lerp(oldTime, Time.time, t));
+                    }
+                }
             }
+            AppendTrailSample(root, tip, Time.time);
+        }
 
+        private void AppendTrailSample(Vector3 root, Vector3 tip, float time)
+        {
             if (_trailCount == TrailSamples)
             {
                 for (int i = 1; i < TrailSamples; i++)
                 {
                     _trailRoots[i - 1] = _trailRoots[i];
                     _trailTips[i - 1] = _trailTips[i];
+                    _trailTimes[i - 1] = _trailTimes[i];
                 }
                 _trailCount--;
             }
 
             _trailRoots[_trailCount] = root;
             _trailTips[_trailCount] = tip;
+            _trailTimes[_trailCount] = time;
             _trailCount++;
         }
 
@@ -577,14 +657,14 @@ namespace Game.View
         {
             if (_trailCount < 2 || _trailMesh == null) return;
 
-            float fadeDuration = _trailWhirlwind ? 0.16f : 0.09f;
+            float fadeDuration = _trailWhirlwind ? 0.10f : 0.09f;
             float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / fadeDuration);
             for (int i = 0; i < _trailCount; i++)
             {
                 float along = _trailCount > 1 ? i / (float)(_trailCount - 1) : 1f;
                 float width = _trailWhirlwind
-                    ? Mathf.Lerp(0.06f, 0.30f, Mathf.Sqrt(along))
-                    : Mathf.Lerp(0.08f, 0.58f, Mathf.Sqrt(along));
+                    ? Mathf.Lerp(0.08f, 0.84f, Mathf.Sqrt(along))
+                    : Mathf.Lerp(0.04f, 0.76f, Mathf.Sqrt(along));
                 Vector3 mid = (_trailRoots[i] + _trailTips[i]) * 0.5f;
                 Vector3 half = (_trailTips[i] - _trailRoots[i]) * (0.5f * width);
                 int vertex = i * TrailVerticesPerSample;
@@ -593,17 +673,19 @@ namespace Game.View
                 _trailVertices[vertex + 2] = mid + half;
 
                 float alpha = Mathf.SmoothStep(0f, 1f, along) * fade;
+                alpha *= 1f - Mathf.SmoothStep(0f, 1f,
+                    Mathf.Clamp01((Time.time - _trailTimes[i]) / (_trailWhirlwind ? 0.12f : 0.085f)));
                 if (_trailWhirlwind)
                 {
-                    _trailColors[vertex] = new Color(1.65f, 0.06f, 0.32f, alpha * 0.035f);
-                    _trailColors[vertex + 1] = new Color(0.18f, 1.45f, 1.65f, alpha * 0.14f);
-                    _trailColors[vertex + 2] = new Color(2.8f, 0.72f, 0.18f, alpha * 0.26f);
+                    _trailColors[vertex] = new Color(0.8f, 0.38f, 0.12f, alpha * 0.02f);
+                    _trailColors[vertex + 1] = new Color(1.35f, 1.12f, 0.75f, alpha * 0.34f);
+                    _trailColors[vertex + 2] = new Color(2.0f, 1.85f, 1.50f, alpha * 0.76f);
                 }
                 else
                 {
-                    _trailColors[vertex] = new Color(1.35f, 0.18f, 0.02f, alpha * 0.06f);
-                    _trailColors[vertex + 1] = new Color(2.1f, 0.48f, 0.05f, alpha * 0.30f);
-                    _trailColors[vertex + 2] = new Color(3.0f, 1.05f, 0.16f, alpha * 0.48f);
+                    _trailColors[vertex] = new Color(0.8f, 0.52f, 0.25f, alpha * 0.03f);
+                    _trailColors[vertex + 1] = new Color(1.5f, 1.28f, 0.9f, alpha * 0.36f);
+                    _trailColors[vertex + 2] = new Color(2.2f, 2.05f, 1.65f, alpha * 0.70f);
                 }
                 _trailUvs[vertex] = new Vector2(along, 0f);
                 _trailUvs[vertex + 1] = new Vector2(along, 0.5f);
@@ -638,7 +720,7 @@ namespace Game.View
             _trailRenderer.enabled = true;
         }
 
-        private void SpawnBurst(Vector3 at, Color color, int count, float speed, bool death)
+        private void SpawnBurst(Vector3 at, Color color, int count, float speed, bool death, bool compact = false)
         {
             Camera cam = _camera;
             Vector3 right = cam != null ? cam.transform.right : Vector3.right;
@@ -649,9 +731,9 @@ namespace Game.View
                 float magnitude = speed * Mathf.Lerp(0.45f, 1f, Random01());
                 Vector3 velocity = (right * Mathf.Cos(angle) + up * Mathf.Sin(angle)) * magnitude;
                 SpawnFx(death ? FxKind.DeathShard : FxKind.Spark, _sparkSprite, at, velocity,
-                    color, Mathf.Lerp(0.24f, 0.46f, Random01()),
+                    color, compact ? Mathf.Lerp(0.09f, 0.17f, Random01()) : Mathf.Lerp(0.24f, 0.46f, Random01()),
                     death ? Mathf.Lerp(0.20f, 0.34f, Random01())
-                          : Mathf.Lerp(0.16f, 0.27f, Random01()),
+                          : compact ? Mathf.Lerp(0.10f, 0.18f, Random01()) : Mathf.Lerp(0.16f, 0.27f, Random01()),
                     death ? 0.015f : 0.025f,
                     Mathf.Lerp(-280f, 280f, Random01()), Random01() * 180f,
                     death ? 2.5f : 0.8f);

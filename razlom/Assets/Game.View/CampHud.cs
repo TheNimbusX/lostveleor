@@ -133,7 +133,15 @@ namespace Game.View
             DrawBag(camp);
 
             GUILayout.Space(6);
-            GUILayout.Label("E — в Разлом,  T — Полигон,  V — разобрать мусор", _title);
+            // На Полигоне в раскладке QWER клавиша E занята способностью, и
+            // подсказка обязана это говорить: иначе игрок жмёт E, видит Вихрь
+            // и считает вход сломанным. На цифровом ряду говорить нечего.
+            bool letters = GameUserSettings.AbilityRowUsesLetters;
+            GUILayout.Label(session.OnProvingGround && letters
+                ? "Q W E R — способности,  T — сойти с Полигона,  V — разобрать мусор"
+                : session.OnProvingGround
+                    ? "1 2 3 4 — способности,  E — в Разлом,  T — сойти с Полигона"
+                    : "E — в Разлом,  T — Полигон,  V — разобрать мусор", _title);
 
             GUILayout.EndArea();
         }

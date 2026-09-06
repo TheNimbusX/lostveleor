@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
 
@@ -15,14 +15,14 @@ namespace Game.View
     {
         private const string LibraryPath = "VFX/Pelag/AbilityVfxLibrary";
         private const int MaxActive = 72;
-        private const int MaxTargets = 8;
+        private const int MaxTargets = AnchorKit.SweepMaxTargets;
         private const float BrightVfxLifetime = 5f / 30f;
         private const float FlipbookLifetime = 16f / 30f;
         private static readonly float AttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
-        private const float WhirlwindContactTime = 10f / Simulation.TicksPerSecond;
+        private const float WhirlwindContactTime = CharacterAnimatorView.WhirlwindContactTime;
 
-        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine }
+        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain }
 
         private sealed class PoolRecord
         {
@@ -61,8 +61,10 @@ namespace Game.View
         private int _showcaseStage;
         private PelagVfxShowcase _motionAbility;
         private float _motionTime;
+        private float _motionStartedAt;
         private Vector3 _motionStart;
         private Vector3 _motionEnd;
+        private Vector3 _chainRouteOrigin;
         private bool _captureMotion;
         private float _attackMotionTime = -1f;
         private Vector3 _attackMotionDirection;
@@ -76,6 +78,17 @@ namespace Game.View
             Shader.PropertyToID("_RazlomHeroLightColor");
 
         public bool PoolsReady { get; private set; }
+        public int VisibleFlyingAnchors
+        {
+            get
+            {
+                int count = 0;
+                if (_active != null)
+                    foreach (var fx in _active)
+                        if (fx.Active && fx.Motion == Motion.AnchorFlight && fx.Object.activeInHierarchy) count++;
+                return count;
+            }
+        }
         public bool ShowcaseRunning => _showcase != PelagVfxShowcase.None;
 
         private void Awake()
@@ -197,10 +210,19 @@ namespace Game.View
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
+                if (e.Type == SimEventType.Death && e.Target == Simulation.PlayerId)
+                {
+                    CancelActiveAnchorMotionForReplacement();
+                    _whirlwindContactPending = false;
+                    for (int effect = 0; effect < _active.Length; effect++) Release(effect);
+                    continue;
+                }
                 if (e.Source != Simulation.PlayerId) continue;
 
                 if (e.Type == SimEventType.Attack)
                 {
+                    CancelActiveAnchorMotionForReplacement();
+                    _whirlwindContactPending = false;
                     // Animator уже запускает ArenaView. Здесь начинается только
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
@@ -235,7 +257,30 @@ namespace Game.View
                     // hit must never flush a stale ring from another cast.
                     if (_whirlwindContactPending && IsWhirlwindSlot(e.ActionVariant))
                         PlayWhirlwindContact();
-                    PulseCombatLight(0.92f);
+                    AbilityBuild ability = (uint)e.ActionVariant < Simulation.AbilitySlots
+                        ? _driver.Sim.GetAbility(e.ActionVariant) : null;
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.AnchorSweepId)
+                        PlaySweepTargetPull(e.Target);
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
+                    {
+                        Vector3 victim = EntityPosition(e.Target, PlayerPosition());
+                        Vector3 impact = victim + FlatDirection(victim, PlayerPosition()) * 0.28f + Vector3.up * 0.8f;
+                        Spawn(PelagVfxId.WhirlwindHit, impact, Quaternion.identity,
+                            0.36f, 0.8f, 1.05f, Motion.Expand);
+                    }
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
+                    {
+                        Spawn(PelagVfxId.ChainStepHit, EntityPosition(e.Target, PlayerPosition()) + Vector3.up * 0.75f,
+                            Quaternion.LookRotation(_motionEnd - _motionStart + Vector3.up * 0.001f), 0.32f, 0.75f, 1.1f, Motion.Expand);
+                        var context = i < _driver.FrameEventContexts.Count ? _driver.FrameEventContexts[i] : default;
+                        if (context.SourceForcedTicksLeft > 0
+                            && _driver.Sim.Entities.ForcedTicksLeft[Simulation.PlayerId] > 0)
+                        {
+                            _chainRouteOrigin = EntityPosition(e.Target, PlayerPosition()) + Vector3.up * 0.9f;
+                            BeginChainHop(PlayerPosition(), ForcedTargetWorld(_driver.Sim));
+                        }
+                    }
+                    PulseCombatLight(IsWhirlwindSlot(e.ActionVariant) ? 0.30f : 0.46f);
                 }
             }
         }
@@ -266,12 +311,13 @@ namespace Game.View
 
         private void ScheduleGameplayWhirlwind()
         {
+            CancelActiveAnchorMotionForReplacement();
             _attackMotionTime = -1f;
             _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
             _whirlwindContactPending = true;
             _whirlwindContactDelay = WhirlwindContactTime;
             // Anticipation is visible, but the HDR peak belongs to contact.
-            PulseCombatLight(0.28f);
+            PulseCombatLight(0.06f);
         }
 
         public void BeginShowcase(PelagVfxShowcase showcase)
@@ -288,6 +334,11 @@ namespace Game.View
 
         public void StopShowcase()
         {
+            // Showcase can be interrupted while the anchor is still traveling
+            // (including when a new showcase replaces the current one). The
+            // equipment state is presentation-only and must never survive that
+            // interruption into the next pooled/reset view.
+            _arena?.EndPlayerAnchorUse();
             _arena?.ClearPresentationOffsets();
             _showcase = PelagVfxShowcase.None;
             _motionAbility = PelagVfxShowcase.None;
@@ -369,6 +420,7 @@ namespace Game.View
 
         private void BeginAutoattack(Vector3 target)
         {
+            CancelActiveAnchorMotionForReplacement();
             Vector3 player = PlayerPosition();
             Vector3 direction = FlatDirection(player, target);
 
@@ -386,16 +438,33 @@ namespace Game.View
             if (_attackMotionTime < 0f) return;
             _attackMotionTime += Time.deltaTime;
 
-            // Небольшая presentation-lunge связывает опорную ногу, клинок и
-            // цель. Симуляционную позицию и дальность атаки он не меняет.
+            // Presentation-lunge: только намёк на перенос веса. Симуляционную
+            // позицию и дальность атаки он не меняет.
+            //
+            // БОЛЬШЕ ЭТИХ ЧИСЕЛ БРАТЬ НЕЛЬЗЯ — ПОЕДУТ НОГИ. Клипы удара
+            // проиграны покадрово на риге, стопы переведены в игровые метры:
+            //
+            //   Saber A, окно выпада (кадры 2–17): правая стопа проходит
+            //   6 см — она стоит. Прежний выпад тащил тело на +25.5 см,
+            //   то есть опорная нога проезжала по полу четверть метра за
+            //   0.3 с. Это и было «скольжение ног во время атаки».
+            //
+            //   Saber B, то же окно: обе стопы проходят по ~0.66 м — в клипе
+            //   уже есть авторский подшаг, и выпад просто добавлялся сверху.
+            //
+            // Потолок — собственный ход опорной стопы, 6 см. Ниже 4 см перенос
+            // веса перестаёт читаться, выше 8 см начинает ехать A.
+            const float PullBack = -0.02f;
+            const float LungeForward = 0.06f;
+
             float distance;
             if (_attackMotionTime < 0.10f)
-                distance = Mathf.Lerp(0f, -0.035f, Smooth(_attackMotionTime / 0.10f));
+                distance = Mathf.Lerp(0f, PullBack, Smooth(_attackMotionTime / 0.10f));
             else if (_attackMotionTime < AttackContactTime)
-                distance = Mathf.Lerp(-0.035f, 0.22f,
+                distance = Mathf.Lerp(PullBack, LungeForward,
                     Smooth((_attackMotionTime - 0.10f) / Mathf.Max(0.01f, AttackContactTime - 0.10f)));
             else
-                distance = Mathf.Lerp(0.22f, 0f,
+                distance = Mathf.Lerp(LungeForward, 0f,
                     Smooth((_attackMotionTime - AttackContactTime) / 0.28f));
             _arena.SetPresentationOffset(Simulation.PlayerId,
                 _attackMotionDirection * distance);
@@ -409,6 +478,7 @@ namespace Game.View
 
         private void PlayWhirlwind(bool showcase)
         {
+            CancelActiveAnchorMotionForReplacement();
             _attackMotionTime = -1f;
             _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
             _arena.PlayPlayerAbilityPresentation(0);
@@ -442,45 +512,22 @@ namespace Game.View
             if (!_whirlwindContactPending) return;
             _whirlwindContactPending = false;
 
-            Vector3 player = PlayerPosition();
-            Vector3 slashCenter = player + Vector3.up * 0.92f;
+            // The outer crescent expands from Pelag, at the blade's height.
+            // Its particles fade themselves before the pooled object is released.
+            Vector3 center = PlayerPosition() + Vector3.up * 0.90f;
+            float yaw = 0f;
             if (_arena.TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip))
             {
-                Vector3 bladeCenter = Vector3.Lerp(bladeRoot.position, bladeTip.position, 0.62f);
-                slashCenter = Vector3.Lerp(slashCenter, bladeCenter, 0.72f);
+                Vector3 blade = bladeTip.position - bladeRoot.position;
+                yaw = Mathf.Atan2(blade.x, blade.z) * Mathf.Rad2Deg;
             }
-
-            Camera camera = Camera.main;
-            if (camera != null)
-            {
-                // Keep the crescent readable as a weapon stroke instead of a
-                // decal around Pelag's feet. A slight view-space offset also
-                // prevents the transparent particles from vanishing in armour.
-                slashCenter -= camera.transform.forward * 0.20f;
-            }
-
-            // ОДИН СЛЕШ, А НЕ ТРИ ЭФФЕКТА ПОВЕРХ ДРУГ ДРУГА.
-            //
-            // Раньше в один и тот же момент выходили след клинка, кольцо-слеш и
-            // тяжёлая пыль под ногами. Три полупрозрачных элемента в одной точке
-            // не складываются в удар: они гасят друг друга и вместе читаются как
-            // подсветка зоны, а не как взмах. Остаётся один — кольцо-слеш; он
-            // единственный имеет форму оружия, а не форму круга под ногами.
-            //
-            // ДЛИТЕЛЬНОСТЬ ИЗМЕРЕНА ПО HADES 2, А НЕ ПОДОБРАНА.
-            //
-            // Покадровый разбор их записи: большая вспышка способности целиком
-            // исчезает за десять кадров при 60 fps — 167 мс. Их эффекты КОРОЧЕ
-            // наших, а не длиннее, и в этом половина ощущения удара: вспышка
-            // должна кончиться раньше, чем игрок успеет её рассмотреть, иначе
-            // она читается не как удар, а как подсветка зоны.
-            //
-            // Пять кадров симуляции — жёсткая верхняя граница яркого слоя.
-            Spawn(PelagVfxId.WhirlwindRing, slashCenter, Quaternion.identity,
-                BrightVfxLifetime, 0.20f, 1.32f, Motion.Expand);
-            PulseCombatLight(1f);
+            int brush = Spawn(PelagVfxId.WhirlwindRing, center, Quaternion.Euler(0f, yaw, 0f),
+                0.36f, 0.90f, 1.10f, Motion.Whirlwind);
+            if (brush >= 0) _active[brush].End = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
+            Spawn(PelagVfxId.DustHeavy, PlayerPosition() + Vector3.up * 0.04f,
+                Quaternion.identity, 0.36f, 0.8f, 1.35f, Motion.Expand);
+            PulseCombatLight(0.55f);
         }
-
         /// <summary>
         /// Показ способности по НАСТОЯЩЕМУ касту, а не по витрине.
         ///
@@ -504,7 +551,10 @@ namespace Game.View
             }
             else if (id == AbilityDefinition.AnchorLeapId)
             {
-                PlayAnchorLeapTo(ForcedTargetWorld(sim), false, slot);
+                FixVec2 aimed = sim.LeapAim;
+                Vector3 point = new Vector3(aimed.X.ToFloat(), 0f, aimed.Y.ToFloat());
+                Vector3 origin = PlayerPosition();
+                PlayAnchorLeapTo(origin + Vector3.ClampMagnitude(point - origin, AnchorKit.LeapRange.ToFloat()), false, slot);
             }
             else if (id == AbilityDefinition.AnchorSweepId)
             {
@@ -539,48 +589,138 @@ namespace Game.View
         {
             Vector3 player = PlayerPosition();
             StartMotion(PelagVfxShowcase.AnchorLeap, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorLeapId);
-
-            int projectile = SpawnMoving(PelagVfxId.AnchorLeapThrow, player + Vector3.up * 1.15f,
-                target + Vector3.up * 0.18f, 0.48f, 0.65f, Motion.Projectile);
-            SpawnFollowingChain(PelagVfxId.AnchorLeapChain, projectile, 0.86f);
+            if (showcase) _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorLeapId);
+            LaunchAnchor(PelagVfxId.AnchorLeapThrow, PelagVfxId.AnchorLeapChain,
+                target + Vector3.up * 0.20f, PelagAbilityTiming.LeapRecovery);
         }
 
         private void PlayAnchorSweep(bool showcase, int slot = 2)
         {
             Vector3 player = PlayerPosition();
-            Vector3 group = AverageTargetPosition(player + CameraPlaneDirection(Vector3.forward) * 3f);
-            Vector3 target = group + FlatDirection(player, group) * 1.25f;
+            FillTargets();
+            FixVec2 aim = _driver.Sim.SweepDirection;
+            Vector3 direction = showcase ? CameraPlaneDirection(Vector3.forward) : new Vector3(aim.X.ToFloat(), 0f, aim.Y.ToFloat());
+            Vector3 target = player + direction * AnchorKit.SweepRadius.ToFloat();
             StartMotion(PelagVfxShowcase.AnchorSweep, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorSweepId);
+            if (showcase) _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorSweepId);
+            LaunchAnchor(PelagVfxId.AnchorSweepThrow, PelagVfxId.AnchorSweepPull,
+                target + Vector3.up * 0.5f, PelagAbilityTiming.SweepRecovery);
+        }
 
-            int projectile = SpawnMoving(PelagVfxId.AnchorSweepThrow, player + Vector3.up * 1.20f,
-                target + Vector3.up * 0.16f, 0.52f, 0.85f, Motion.Projectile);
-            SpawnFollowingChain(PelagVfxId.AnchorSweepPull, projectile, 1.12f);
+        private void PlaySweepTargetPull(int entity)
+        {
+            Vector3 enemy = EntityPosition(entity, PlayerPosition());
+            Spawn(PelagVfxId.WhirlwindHit, enemy + Vector3.up * 0.7f, Quaternion.identity,
+                0.25f, 0.4f, 0.65f, Motion.Expand);
+            Spawn(PelagVfxId.DustSmall, enemy + Vector3.up * 0.05f, Quaternion.identity,
+                0.35f, 0.6f, 0.9f, Motion.Expand);
         }
 
         private void PlayChainStep(bool showcase, int slot = 3)
         {
             Vector3 player = PlayerPosition();
-            Vector3 target = FirstTargetPosition();
+            Vector3 target = showcase ? FirstTargetPosition() : ForcedTargetWorld(_driver.Sim);
             StartMotion(PelagVfxShowcase.ChainStep, player, target, showcase);
-            _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.ChainStepId);
+            _chainRouteOrigin = ChainHandPosition();
+            if (showcase) _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.ChainStepId);
+            BeginChainHop(player, target);
         }
 
+        private void BeginChainHop(Vector3 from, Vector3 to)
+        {
+            for (int i = 0; i < _active.Length; i++)
+                if (_active[i].Id == PelagVfxId.AnchorLeapThrow) Release(i);
+            _arena.SetPlayerAbilityFacing(to - from);
+            _motionStart = from;
+            _motionEnd = to;
+            _motionTime = 0f;
+            _motionStartedAt = Time.time;
+            _motionAbility = PelagVfxShowcase.ChainStep;
+            _juice?.PlayChainSlashTrail();
+            SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.75f,
+                to + Vector3.up * 0.75f, PelagAbilityTiming.ChainHop, 0f, Motion.Dash);
+        }
+
+        private Vector3 ChainHandPosition()
+        {
+            Vector3 hand = _arena.PlayerChainHandPosition;
+            return hand != Vector3.zero ? hand : PlayerPosition() + Vector3.up;
+        }
+
+        private readonly Vector3[] _sweepRope = new Vector3[65];
+
+        private Vector3 SweepRopePoint(float t, float age)
+        {
+            Vector3 hand = ChainHandPosition();
+            Vector3 direction = FlatDirection(_motionStart, _motionEnd);
+            float extend = Smooth((age - PelagAbilityTiming.AnchorDraw)
+                / (PelagAbilityTiming.SweepWindup - PelagAbilityTiming.AnchorDraw));
+            float haul = Smooth((age - PelagAbilityTiming.SweepWindup) / PelagAbilityTiming.SweepTravel);
+            float finish = Smooth((age - PelagAbilityTiming.SweepWindup - PelagAbilityTiming.SweepTravel) / 0.14f);
+            float radius = Mathf.Lerp(AnchorKit.SweepRadius.ToFloat(), AnchorKit.SweepGatherDistance.ToFloat(), haul);
+            float path = t * extend;
+            Vector3 side = Vector3.Cross(Vector3.up, direction);
+            // A single C1-continuous curve: no straight/arc junctions. The
+            // moving bend trails the head, then loses slack under tension.
+            Vector3 tip = _motionStart + Quaternion.AngleAxis(AnchorKit.SweepAngleDegrees * 0.5f,
+                Vector3.up) * direction * radius + Vector3.up * 0.65f;
+            Vector3 controlA = hand + (direction * 0.46f - side * 0.56f) * radius;
+            Vector3 controlB = _motionStart + (direction * 1.16f - side * 0.42f) * radius
+                + Vector3.up * 0.65f;
+            float u = 1f - path;
+            Vector3 point = u * u * u * hand + 3f * u * u * path * controlA
+                + 3f * u * path * path * controlB + path * path * path * tip;
+            float slack = Mathf.Sin(path * Mathf.PI) * (1f - haul);
+            point += Vector3.up * slack * (0.24f + 0.12f * Mathf.Sin(age * 12f - path * 4f));
+            point += side * slack * 0.13f * Mathf.Sin(age * 15f - path * 5f);
+            return Vector3.Lerp(point, Vector3.Lerp(hand, _arena.PlayerAnchorHeadPosition, t), finish);
+        }
+
+        private void LaunchAnchor(PelagVfxId head, PelagVfxId chain, Vector3 target, float duration)
+        {
+            int projectile = SpawnMoving(head, _arena.PlayerAnchorHeadPosition, target, duration, 0.50f, Motion.AnchorFlight);
+            SpawnFollowingChain(chain, projectile, duration);
+        }
         private void StartMotion(PelagVfxShowcase ability, Vector3 start, Vector3 end, bool showcase)
         {
+            // A new cast may arrive before the previous anchor motion's timer
+            // reaches FinishMotion. Release the old grip before replacing the
+            // motion so one equipment state cannot leak across casts.
+            CancelActiveAnchorMotionForReplacement();
             _motionAbility = ability;
             _motionTime = 0f;
+            _motionStartedAt = Time.time;
             _motionStart = start;
             _motionEnd = end;
             _captureMotion = showcase;
+            _arena.SetPlayerAbilityFacing(end - start);
+            if (ability != PelagVfxShowcase.ChainStep) _arena.BeginPlayerAnchorUse(ability == PelagVfxShowcase.AnchorLeap);
             FillTargets();
+        }
+
+        private void CancelActiveAnchorMotionForReplacement()
+        {
+            if (!IsAnchorMotion(_motionAbility)) return;
+            for (int i = 0; i < _active.Length; i++)
+            {
+                PelagVfxId id = _active[i].Id;
+                if (id == PelagVfxId.AnchorLeapThrow || id == PelagVfxId.AnchorSweepThrow
+                    || id == PelagVfxId.AnchorLeapChain || id == PelagVfxId.AnchorSweepPull
+                    || id == PelagVfxId.AnchorSweepEnemyPull || id == PelagVfxId.ChainStepDash)
+                    Release(i);
+            }
+            _arena?.EndPlayerAnchorUse();
+            _arena?.ClearPresentationOffsets();
+            _motionAbility = PelagVfxShowcase.None;
+            _motionTime = 0f;
+            _captureMotion = false;
         }
 
         private void UpdateAbilityMotion()
         {
             if (_motionAbility == PelagVfxShowcase.None) return;
-            _motionTime += Time.deltaTime;
+            // Оружие и оборудование используют часы одного кадра, включая кадр каста.
+            _motionTime = Time.time - _motionStartedAt;
 
             switch (_motionAbility)
             {
@@ -592,114 +732,71 @@ namespace Game.View
 
         private void UpdateAnchorLeap()
         {
-            if (_motionTime >= 0.46f && _motionTime - Time.deltaTime < 0.46f)
-            {
-                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.04f,
-                    Quaternion.identity, FlipbookLifetime, 0.45f, 1.35f, Motion.Expand);
-            }
-
+            float travel = PelagAbilityTiming.LeapArrival;
             if (_captureMotion)
+                _arena.SetPresentationOffset(Simulation.PlayerId,
+                    (_motionEnd - _motionStart) * Smooth((_motionTime - PelagAbilityTiming.LeapWindup) / PelagAbilityTiming.LeapTravel));
+            if (_motionTime >= PelagAbilityTiming.LeapWindup && _motionTime - Time.deltaTime < PelagAbilityTiming.LeapWindup)
             {
-                Vector3 full = _motionEnd - _motionStart;
-                float amount;
-                if (_motionTime < 0.42f) amount = 0f; // якорь сначала реально улетает
-                else if (_motionTime < 0.68f) amount = Smooth((_motionTime - 0.42f) / 0.26f);
-                else if (_motionTime < 1.28f) amount = 1f;
-                else amount = 1f - Smooth((_motionTime - 1.28f) / 0.36f);
-                _arena.SetPresentationOffset(Simulation.PlayerId, full * Mathf.Clamp01(amount));
+                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.06f,
+                    Quaternion.LookRotation(FlatDirection(_motionEnd, _motionStart), Vector3.up),
+                    0.42f, 0.52f, 0.72f, Motion.Expand);
+                PulseCombatLight(0.9f);
             }
-
-            if (_motionTime >= 1.66f) FinishMotion();
+            if (_motionTime >= travel && _motionTime - Time.deltaTime < travel)
+                Spawn(PelagVfxId.DustHeavy, PlayerPosition() + Vector3.up * 0.04f,
+                    Quaternion.identity, 0.45f, 0.7f, 1.1f, Motion.Expand);
+            if (_motionTime >= PelagAbilityTiming.LeapRecovery) FinishMotion();
         }
 
         private void UpdateAnchorSweep()
         {
-            if (_motionTime >= 0.52f && _motionTime - Time.deltaTime < 0.52f)
+            if (!_captureMotion && _motionTime < PelagAbilityTiming.SweepWindup)
+            {
+                Vector3 delta = BasePlayerPosition() - _motionStart;
+                _motionStart += delta;
+                _motionEnd += delta;
+            }
+            if (_captureMotion)
             {
                 Vector3 player = BasePlayerPosition();
-                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.04f,
-                    Quaternion.identity, FlipbookLifetime, 0.40f, 1.20f, Motion.Expand);
+                if (_motionTime >= PelagAbilityTiming.SweepWindup
+                    && _motionTime - Time.deltaTime < PelagAbilityTiming.SweepWindup)
+                    for (int i = 0; i < _targetCount; i++) PlaySweepTargetPull(_targets[i]);
+                float pull = Smooth((_motionTime - PelagAbilityTiming.SweepWindup) / PelagAbilityTiming.SweepTravel);
                 for (int i = 0; i < _targetCount; i++)
                 {
                     Vector3 enemy = BaseEntityPosition(_targets[i], player);
-                    SpawnLine(PelagVfxId.AnchorSweepEnemyPull, enemy + Vector3.up * 0.45f,
-                        Vector3.Lerp(enemy, player, 0.62f) + Vector3.up * 0.35f, 0.42f);
-                    Spawn(PelagVfxId.DustSmall, enemy + Vector3.up * 0.03f, Quaternion.identity,
-                        0.34f, 0.58f, 1.0f, Motion.Expand);
+                    Vector3 end = player + FlatDirection(player, enemy) * AnchorKit.SweepGatherDistance.ToFloat();
+                    _arena.SetPresentationOffset(_targets[i], (end - enemy) * pull);
                 }
             }
-
-            if (_captureMotion && _motionTime >= 0.52f)
-            {
-                Vector3 player = BasePlayerPosition();
-                float pull = _motionTime < 0.88f
-                    ? Smooth((_motionTime - 0.52f) / 0.36f)
-                    : 1f - Smooth((_motionTime - 1.25f) / 0.38f);
-                pull = Mathf.Clamp01(pull);
-                for (int i = 0; i < _targetCount; i++)
-                {
-                    Vector3 enemy = BaseEntityPosition(_targets[i], player);
-                    float resistance = (i % 4) == 3 ? 0.18f : 0.62f;
-                    _arena.SetPresentationOffset(_targets[i], (player - enemy) * resistance * pull);
-                }
-            }
-
-            if (_motionTime >= 1.68f) FinishMotion();
+            if (_motionTime >= PelagAbilityTiming.SweepRecovery) FinishMotion();
         }
 
         private void UpdateChainStep()
         {
-            if (_targetCount == 0)
-            {
-                FinishMotion();
-                return;
-            }
-
-            const float first = 0.18f;
-            const float hop = 0.34f;
-            int hopIndex = Mathf.FloorToInt((_motionTime - first) / hop);
-            if (_motionTime >= first && hopIndex >= 0 && hopIndex < Mathf.Min(4, _targetCount))
-            {
-                float local = (_motionTime - first - hopIndex * hop) / hop;
-                Vector3 from = hopIndex == 0 ? _motionStart : BaseEntityPosition(_targets[hopIndex - 1], _motionStart);
-                Vector3 to = BaseEntityPosition(_targets[hopIndex], _motionStart);
-
-                if (local < Time.deltaTime / hop)
-                {
-                    SpawnLine(PelagVfxId.AnchorLeapChain, from + Vector3.up * 1.1f,
-                        to + Vector3.up * 0.8f, 0.24f);
-                    SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.8f,
-                        to + Vector3.up * 0.8f, hop * 0.82f, 0f, Motion.Dash);
-                }
-
-                if (_captureMotion)
-                    _arena.SetPresentationOffset(Simulation.PlayerId,
-                        Vector3.Lerp(from, to, Smooth(local)) - BasePlayerPosition());
-
-                if (local >= 0.72f && local - Time.deltaTime / hop < 0.72f)
-                    Spawn(PelagVfxId.ChainStepHit, to + Vector3.up * 0.9f,
-                        Quaternion.identity, 0.25f, 0.65f, 1.05f, Motion.Expand);
-            }
-
-            float end = first + hop * Mathf.Min(4, _targetCount);
-            if (_motionTime >= end)
-            {
-                if (_captureMotion)
-                {
-                    float recover = Smooth((_motionTime - end) / 0.38f);
-                    Vector3 last = BaseEntityPosition(_targets[Mathf.Min(3, _targetCount - 1)], _motionStart);
-                    _arena.SetPresentationOffset(Simulation.PlayerId,
-                        Vector3.Lerp(last - BasePlayerPosition(), Vector3.zero, recover));
-                }
-                if (_motionTime >= end + 0.42f) FinishMotion();
-            }
+            if (_captureMotion)
+                _arena.SetPresentationOffset(Simulation.PlayerId,
+                    Vector3.Lerp(_motionStart, _motionEnd, Smooth(_motionTime / PelagAbilityTiming.ChainHop))
+                    - BasePlayerPosition());
+            if (_motionTime >= PelagAbilityTiming.ChainHop + 0.08f) FinishMotion();
         }
-
         private void FinishMotion()
         {
-            _arena.ClearPresentationOffsets();
+            PelagVfxShowcase finishedMotion = _motionAbility;
+            if (IsAnchorMotion(finishedMotion))
+                _arena?.EndPlayerAnchorUse();
+            _arena?.ClearPresentationOffsets();
             _motionAbility = PelagVfxShowcase.None;
             _captureMotion = false;
+        }
+
+        private static bool IsAnchorMotion(PelagVfxShowcase ability)
+        {
+            return ability == PelagVfxShowcase.AnchorLeap
+                   || ability == PelagVfxShowcase.AnchorSweep
+                   || ability == PelagVfxShowcase.ChainStep;
         }
 
         private int Spawn(PelagVfxId id, Vector3 position, Quaternion rotation, float duration,
@@ -794,6 +891,73 @@ namespace Game.View
 
                 switch (fx.Motion)
                 {
+                    case Motion.AnchorFlight:
+                        fx.Age = _motionTime;
+                        float returnAt = fx.Duration - .06f;
+                        bool released = fx.Age >= PelagAbilityTiming.AnchorDraw;
+                        fx.Object.SetActive(released && fx.Age < returnAt);
+                        if (!released) { fx.Start = _arena.PlayerAnchorHeadPosition; break; }
+                        if (fx.Id == PelagVfxId.AnchorSweepThrow)
+                        {
+                            fx.Object.transform.position = SweepRopePoint(1f, fx.Age);
+                            fx.Object.transform.rotation = Quaternion.LookRotation(FlatDirection(_motionStart, fx.End), Vector3.up)
+                                * Quaternion.Euler(0f, 0f, -25f + 100f * Smooth((fx.Age - PelagAbilityTiming.AnchorDraw)
+                                    / (PelagAbilityTiming.SweepWindup - PelagAbilityTiming.AnchorDraw)));
+                            break;
+                        }
+                        float outward = PelagAbilityTiming.LeapWindup;
+                        float retract = PelagAbilityTiming.LeapArrival;
+                        float flight = Smooth((fx.Age - PelagAbilityTiming.AnchorDraw)
+                            / (outward - PelagAbilityTiming.AnchorDraw));
+                        Vector3 anchorPosition = Vector3.Lerp(fx.Start, fx.End, flight)
+                            + Vector3.up * (Mathf.Sin(flight * Mathf.PI) * fx.ArcHeight);
+                        anchorPosition = Vector3.Lerp(anchorPosition, _arena.PlayerAnchorHeadPosition,
+                            Smooth((fx.Age - retract) / (returnAt - retract)));
+                        fx.Object.transform.rotation = Quaternion.LookRotation(FlatDirection(fx.Start, fx.End), Vector3.up)
+                            * Quaternion.Euler(0f, 0f, Mathf.Lerp(-45f, 20f, flight));
+                        fx.Object.transform.position = anchorPosition;
+                        break;
+                    case Motion.EnemyPull:
+                        Vector3 enemy = EntityPosition(fx.FollowIndex, fx.End) + Vector3.up * 0.65f;
+                        Vector3 hand = ChainHandPosition();
+                        float pullPhase = Smooth((fx.Age - PelagAbilityTiming.SweepWindup) / 0.16f);
+                        Vector3 sideways = Vector3.Cross(Vector3.up, FlatDirection(hand, enemy));
+                        float reach = Vector3.Distance(hand, enemy);
+                        Vector3 belly = (hand + enemy) * 0.5f
+                            + sideways * (Mathf.Min(2.4f, reach * 0.65f) * (1f - pullPhase))
+                            + Vector3.up * Mathf.Lerp(0.85f, -0.20f, pullPhase);
+                        float extend = Smooth(fx.Age / PelagAbilityTiming.SweepWindup);
+                        float withdraw = Smooth((fx.Age - PelagAbilityTiming.SweepWindup - PelagAbilityTiming.SweepTravel) / 0.08f);
+                        fx.Element.SetLineProgress(hand, belly, enemy, extend * (1f - withdraw));
+                        break;
+                    case Motion.HopChain:
+                        Vector3 hopHand = ChainHandPosition();
+                        // Hold the route between departure and destination through
+                        // the slash, then wind it back into the left hand.
+                        Vector3 tail = Vector3.Lerp(fx.Start, hopHand, Smooth((fx.Age - PelagAbilityTiming.ChainHop) / 0.12f));
+                        Vector3 hopBend = (tail + fx.End) * 0.5f
+                            + Vector3.Cross(Vector3.up, FlatDirection(tail, fx.End)) * (0.65f * (1f - Smooth(t)))
+                            + Vector3.up * 0.32f;
+                        Vector3 chainEnd = Vector3.Lerp(fx.End, hopHand,
+                            Smooth((fx.Age - PelagAbilityTiming.ChainHop - 0.05f) / 0.07f));
+                        fx.Element.SetLineProgress(tail, hopBend, chainEnd, Smooth(fx.Age / 0.035f));
+                        break;
+                    case Motion.Whirlwind:
+                        fx.Object.transform.position = PlayerPosition() + Vector3.up * 0.90f;
+                        fx.Object.transform.localScale = Vector3.one * Mathf.Lerp(fx.StartScale, fx.EndScale, Smooth(t));
+                        if (_arena.TryGetPlayerBlade(out Transform bladeBase, out Transform bladeEnd))
+                        {
+                            Vector3 direction = Vector3.ProjectOnPlane(bladeEnd.position - bladeBase.position, Vector3.up).normalized;
+                            if (direction.sqrMagnitude > .01f)
+                            {
+                                float turn = Vector3.SignedAngle(fx.End, direction, Vector3.up);
+                                fx.Object.transform.Rotate(Vector3.up, turn, Space.World);
+                                fx.End = direction;
+                            }
+                        }
+                        fx.Element.AnimateBrush(fx.Age);
+                        fx.Element.SetOpacity(1f - Smooth((t - 0.32f) / 0.68f));
+                        break;
                     case Motion.Expand:
                         float pulse = Mathf.Sin(t * Mathf.PI) * 0.08f;
                         fx.Object.transform.localScale = Vector3.one *
@@ -809,12 +973,31 @@ namespace Game.View
                         fx.Object.transform.position = Vector3.Lerp(fx.Start, fx.End, Smooth(t));
                         break;
                     case Motion.Chain:
-                        Vector3 from = PlayerPosition() + Vector3.up * 1.05f;
+                        fx.Age = _motionTime;
+                        if (fx.Age < PelagAbilityTiming.AnchorDraw)
+                        { fx.Element.SetLineProgress(ChainHandPosition(), ChainHandPosition(), ChainHandPosition(), 0f); break; }
+                        if (fx.Id == PelagVfxId.AnchorSweepPull)
+                        {
+                            for (int point = 0; point < _sweepRope.Length; point++)
+                                _sweepRope[point] = SweepRopePoint(point / (float)(_sweepRope.Length - 1), fx.Age);
+                            fx.Element.SetCurvePoints(_sweepRope);
+                            break;
+                        }
+                        Vector3 from = ChainHandPosition();
                         Vector3 to = fx.End;
                         if ((uint)fx.FollowIndex < (uint)_active.Length && _active[fx.FollowIndex].Active)
                             to = _active[fx.FollowIndex].Object.transform.position;
-                        Vector3 bend = Vector3.Lerp(from, to, 0.5f) + Vector3.down * (0.22f * (1f - t));
-                        fx.Element.SetLine(from, bend, to);
+                        // Throw phase extends link by link, then holds under
+                        // tension before a short retract. AnchorLeap is
+                        // snappy; AnchorSweep stays taut longer while the
+                        // pull resolves across the group.
+                        float progress = 1f;
+                        Vector3 tip = Vector3.Lerp(from, to, progress);
+                        float slack = 1f - Smooth(fx.Age / 0.24f);
+                        Vector3 bend = Vector3.Lerp(from, tip, 0.5f)
+                            + Vector3.Cross(Vector3.up, FlatDirection(from, to)) * slack * 1.2f
+                            + Vector3.up * Mathf.Lerp(-0.20f, 0.6f, slack);
+                        fx.Element.SetLineProgress(from, bend, to, progress);
                         break;
                 }
 

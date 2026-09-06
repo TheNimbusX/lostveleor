@@ -69,6 +69,13 @@ namespace Game.EditorTools
             // Controller is generated from imported FBXs. Rebuild it explicitly
             // in batch mode as delayCall order is not a reliable build contract.
             global::RazlomPelagV5AnimatorBuilder.Build();
+            // То же и по мобам: их контроллер тоже собирается из клипов, и без
+            // этой строки съёмка показывала контроллер, собранный до того, как
+            // приехали новые клипы, — то есть врала про то, что в игре.
+            global::RazlomMobAnimatorBuilder.Build();
+            // Профиль вида тоже генерируемый: без этой строки съёмка
+            // показывала цвет и зерно, собранные в прошлый раз.
+            global::RazlomSceneAuthoring.BuildLookProfile();
             global::RazlomPelagVfxAssetBuilder.Build();
 
             string[] scenes = EditorBuildSettings.scenes

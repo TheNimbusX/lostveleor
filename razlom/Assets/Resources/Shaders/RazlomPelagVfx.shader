@@ -1,10 +1,11 @@
-Shader "Razlom/Pelag VFX"
+﻿Shader "Razlom/Pelag VFX"
 {
     Properties
     {
         _BaseColor ("Edge", Color) = (1,0.30,0.22,0.8)
         _CoreColor ("Core", Color) = (1,0.93,0.78,1)
         _Intensity ("Intensity", Range(0.5,2)) = 1
+        _Brush ("Brush striation", Range(0,1)) = 0
         _Softness ("Core Width", Range(0.05,0.95)) = 0.45
     }
 
@@ -42,6 +43,7 @@ Shader "Razlom/Pelag VFX"
                 float4 _CoreColor;
                 float _Intensity;
                 float _Softness;
+                float _Brush;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
@@ -58,9 +60,15 @@ Shader "Razlom/Pelag VFX"
                 float across = abs(input.uv.y * 2.0 - 1.0);
                 float core = 1.0 - smoothstep(0.0, max(0.05, _Softness), across);
                 float cap = smoothstep(0.0, 0.06, input.uv.x) * smoothstep(0.0, 0.08, 1.0 - input.uv.x);
+                // Long tapered pigment bands: variation follows the stroke,
+                // rather than adding noisy particles over the silhouette.
+                float fiber = sin(input.uv.y * 49.0 + sin(input.uv.x * 11.0) * 2.2);
+                float broad = sin(input.uv.x * 19.0 + input.uv.y * 7.0);
+                float edge = 1.0 - smoothstep(0.72 + broad * 0.09, 1.0, across);
+                float pigment = lerp(1.0, (0.78 + 0.22 * fiber) * edge, _Brush);
                 half4 color = lerp(_BaseColor, _CoreColor, core);
-                color.rgb *= _Intensity;
-                color.a *= input.color.a * cap * (1.0 - across * 0.35);
+                color.rgb *= _Intensity * lerp(1.0, 0.90 + 0.10 * fiber, _Brush);
+                color.a *= input.color.a * cap * pigment * (1.0 - across * 0.35);
                 return color;
             }
             ENDHLSL

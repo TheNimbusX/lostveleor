@@ -20,18 +20,38 @@ param(
     [string] $OutDir  = '',
     [switch] $Whirlwind,
     [switch] $Run,
+    [switch] $Locomotion,
+    [switch] $Equipment,
     [switch] $MovingCombat,
+    [ValidateRange(1,24)] [int] $MovingCombatDelay = 2,
     [switch] $Video,
+    [double] $Perf = 0,
+    [int]    $PerfWarmup = 240,
+    [switch] $PerfNoHud,
+    [switch] $WatchTeleports,
+    [ValidateSet('', 'low', 'medium', 'high')]
+    [string] $Quality = '',
+    [ValidateSet(0, 60, 120, 144, 240, -1)]
+    [int]    $FrameCap = 0,
     [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-sweep', 'chain-step', 'rotation')]
     [string] $Skill = '',
+    [switch] $LiveSkill,
+    [ValidateRange(-180,180)] [int] $CastYaw = 0,
+    [switch] $TurnDuringSkill,
+    [switch] $Realtime,
+    [switch] $ActiveEnemies,
+    [switch] $AimSweep,
+    [switch] $DeathDuringSkill,
+    [ValidateSet('', 'idle', 'combat-idle', 'death')] [string] $Pose = '',
     [ValidateSet('', 'normal', 'crit', 'kill')]
     [string] $HitTier = '',
-    [ValidateSet('', 'main', 'graphics', 'audio')]
+    [ValidateSet('', 'main', 'graphics', 'controls', 'audio')]
     [string] $PauseMenu = '',
     [double] $VideoStart = 0.4,
     [double] $VideoDuration = 3.9,
     [int]    $VideoFps = 60,
     [double] $CameraSize = 0,
+    [double] $CameraYaw = 0,
     [switch] $Rebuild,
     [switch] $NoRebuild
 )
@@ -134,7 +154,7 @@ if ($needsBuild) {
     # Через Start-Process -Wait, а не через «&»: Unity.exe — GUI-приложение,
     # оболочка не ждёт его и отдаёт код выхода от постороннего процесса.
     # Первая сборка теневого проекта импортирует ассеты с нуля и идёт долго.
-    $unityRun = Start-Process -FilePath $unity -Wait -PassThru -ArgumentList @(
+    $unityRun = Start-Process -FilePath $unity -WindowStyle Hidden -Wait -PassThru -ArgumentList @(
         '-batchmode', '-nographics', '-quit'
         '-projectPath', $shadow
         '-executeMethod', 'Game.EditorTools.RazlomCaptureBuild.Build'
@@ -181,12 +201,35 @@ $playerArgs = @(
     '-capture-width',   $Width
     '-capture-height',  $Height
 )
+if ($Perf -gt 0) {
+    $playerArgs += @(
+        '-capture-perf', $Perf.ToString([Globalization.CultureInfo]::InvariantCulture)
+        '-capture-perf-warmup', $PerfWarmup
+    )
+    if ($PerfNoHud) { $playerArgs += '-capture-perf-nohud' }
+}
+if ($Quality -ne '') { $playerArgs += @('-capture-quality', $Quality) }
+if ($WatchTeleports) { $playerArgs += '-capture-watch-teleports' }
+if ($PSBoundParameters.ContainsKey('FrameCap')) {
+    $playerArgs += @('-capture-frame-cap', $FrameCap)
+}
 if ($Whirlwind) { $playerArgs += '-capture-whirlwind' }
 if ($Run) { $playerArgs += '-capture-run' }
-if ($MovingCombat) { $playerArgs += '-capture-moving-combat' }
+if ($Equipment) { $playerArgs += '-capture-equipment' }
+if ($Locomotion) { $playerArgs += '-capture-locomotion' }
+if ($MovingCombat) { $playerArgs += '-capture-moving-combat'; $playerArgs += '-capture-moving-combat-delay'; $playerArgs += [string]$MovingCombatDelay }
 if ($Skill -ne '') { $playerArgs += @('-capture-skill', $Skill) }
+if ($LiveSkill) { $playerArgs += '-capture-live-skill' }
+if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
+if ($TurnDuringSkill) { $playerArgs += '-capture-turn-during-skill' }
+if ($Realtime) { $playerArgs += '-capture-real-time' }
+if ($ActiveEnemies) { $playerArgs += '-capture-active-enemies' }
+if ($AimSweep) { $playerArgs += '-capture-sweep-aim' }
+if ($DeathDuringSkill) { $playerArgs += '-capture-death-during-skill' }
+if ($Pose -ne '') { $playerArgs += @('-capture-pose', $Pose) }
 if ($HitTier -ne '') { $playerArgs += @('-capture-hit-tier', $HitTier) }
 if ($PauseMenu -ne '') { $playerArgs += @('-capture-pause-menu', $PauseMenu) }
+if ($CameraYaw -ne 0) { $playerArgs += '-capture-camera-yaw'; $playerArgs += $CameraYaw.ToString([Globalization.CultureInfo]::InvariantCulture) }
 if ($CameraSize -gt 0) {
     $playerArgs += @(
         '-capture-camera-size', $CameraSize.ToString([Globalization.CultureInfo]::InvariantCulture)
@@ -200,7 +243,7 @@ if ($Video) {
         '-capture-video-fps', $VideoFps
     )
 }
-$process = Start-Process -FilePath $player -PassThru -ArgumentList $playerArgs
+$process = Start-Process -FilePath $player -WindowStyle Hidden -PassThru -ArgumentList $playerArgs
 
 # Запас поверх последнего кадра: если рига не дошла до Application.Quit,
 # висящий плеер должен быть убит, а не ждать человека.
@@ -214,18 +257,24 @@ if (-not $process.WaitForExit($deadline * 1000)) {
 }
 
 $shots = Get-ChildItem $OutDir -Filter *.png -ErrorAction SilentlyContinue
-if (-not $shots) {
+# Прогон замера кадров не пишет вовсе — он и запускается ради чисел, а не
+# ради картинки. Требовать от него PNG значило бы падать на успешном замере.
+if (-not $shots -and $Perf -le 0) {
     Write-Host '--- хвост лога плеера ---'
     if (Test-Path $playerLog) { Get-Content $playerLog -Tail 40 -Encoding UTF8 }
     throw "Кадры не записались. Лог: $playerLog"
 }
 
-$shots | ForEach-Object { Write-Host ("  {0}  {1:N0} КБ" -f $_.Name, ($_.Length / 1KB)) }
+if ($shots) {
+    $shots | ForEach-Object { Write-Host ("  {0}  {1:N0} КБ" -f $_.Name, ($_.Length / 1KB)) }
+}
 
 if ($Video) {
     $frames = Join-Path $OutDir 'video_frames\frame_%04d.jpg'
     $movieName = if ($MovingCombat) {
         'pelag_moving_combat_1080p60.mp4'
+    } elseif ($Run -or $Locomotion) {
+        'pelag_locomotion.mp4'
     } elseif ($HitTier -ne '') {
         "pelag_basic_${HitTier}_1080p60.mp4"
     } elseif ($Skill -ne '') {
@@ -249,6 +298,30 @@ if ($Video) {
     }
     Write-Host ("  {0}  {1:N1} МБ" -f (Split-Path -Leaf $movie), ((Get-Item $movie).Length / 1MB))
 }
+if ($Perf -gt 0) {
+    # Плеер печатает одну строку JSON в свой лог. Разбираем её здесь, чтобы
+    # два прогона можно было сравнить не открывая лог.
+    $perfLine = Select-String -Path $playerLog -Pattern '^\[perf\] ' -Encoding UTF8 |
+                Select-Object -Last 1
+    if (-not $perfLine) { throw "Плеер не напечатал строку [perf]. Лог: $playerLog" }
+
+    $perfData = $perfLine.Line.Substring(7) | ConvertFrom-Json
+    $perfFile = Join-Path $OutDir 'perf.json'
+    $perfLine.Line.Substring(7) | Out-File -LiteralPath $perfFile -Encoding utf8
+    Write-Host ''
+    Write-Host ("  кадров {0} · врагов {1} (от {2} до {3}) · {4} · качество {5} · потолок {6}" -f `
+        $perfData.frames, $perfData.enemies_avg, $perfData.enemies_min, $perfData.enemies_max,
+        $perfData.screen, $perfData.quality, $perfData.frame_cap)
+    Write-Host ("  время кадра, мс:  среднее {0}  p50 {1}  p95 {2}  p99 {3}  макс {4}" -f `
+        $perfData.ms_avg, $perfData.ms_p50, $perfData.ms_p95, $perfData.ms_p99, $perfData.ms_max)
+    Write-Host ("  FPS:              среднее {0}  по p95 {1}" -f $perfData.fps_avg, $perfData.fps_p95)
+    Write-Host ("  GC на кадр:       среднее {0} Б  максимум {1} Б" -f `
+        $perfData.gc_bytes_avg, $perfData.gc_bytes_max)
+    Write-Host ("  вызовы отрисовки: draw {0}  SetPass {1}  батчей {2}  треугольников {3}" -f `
+        $perfData.draw_calls, $perfData.setpass, $perfData.batches, $perfData.triangles)
+    Write-Host "  $perfFile"
+}
+
 Write-Host "Готово: $OutDir"
 
 # Явный ноль: последним в скрипте отработал robocopy, а он возвращает 1 на

@@ -16,11 +16,8 @@ namespace Game.Tests
         [Test]
         public void BasicAttack_ContactWindowIsFastEnoughForGrindCombat()
         {
-            Assert.AreEqual(12, Simulation.AttackWindupTicks,
-                "замах героя — слепок анимации: клип удара разогнан так, чтобы " +
-                "авторская поза контакта пришлась ровно на 12/30 с. Менять " +
-                "цифру можно только вместе с клипами и фазовыми скоростями " +
-                "в CharacterAnimatorView, иначе урон опережает клинок");
+            Assert.AreEqual(9, Simulation.AttackWindupTicks,
+                "геройский контакт 0.3 с согласован с производными A/B");
         }
 
         /// <summary>
@@ -70,6 +67,51 @@ namespace Game.Tests
 
             Assert.AreEqual(Simulation.EnemyAttackWindupTicks, windup,
                 "враг обязан заносить удар по своей константе, а не по геройской");
+        }
+
+        [Test]
+        public void EnemyAttack_RecoversFromWrongFacingAndStillLands()
+        {
+            var sim = new Simulation(7102UL, 8);
+            sim.SetupTestArena(0);
+            int enemy = sim.Entities.Spawn(
+                new FixVec2(Fix64.Ratio(9, 5), Fix64.Zero), 4000, Faction.Orvill);
+
+            // Враг появляется в радиусе удара, но смотрит боком.
+            // Раньше поиск цели требовал фронтальный сектор и такой моб мог
+            // навсегда остаться без замаха после расталкивания.
+            sim.Entities.Facing[enemy] = new FixVec2(Fix64.Zero, Fix64.One);
+            sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.Stats[enemy].SetBase(StatType.Damage, Fix64.FromInt(7));
+            sim.Entities.RefreshStats(enemy);
+
+            InputFrame idle = InputFrame.Empty;
+            int attackTick = -1;
+            for (int i = 0; i < 40; i++)
+            {
+                int before = sim.Entities.AttackImpactTick[enemy];
+                int tick = sim.Tick;
+                sim.Step(in idle);
+                int after = sim.Entities.AttackImpactTick[enemy];
+                if (after > before)
+                {
+                    attackTick = tick;
+                    break;
+                }
+            }
+
+            Assert.That(attackTick, Is.GreaterThanOrEqualTo(0),
+                "моб обязан начать замах после доворота к игроку");
+            Assert.That(attackTick, Is.LessThan(25),
+                "расширенный сектор не должен превращать доворот в долгий простой");
+
+            int playerBefore = sim.Entities.Health[Simulation.PlayerId];
+            int impactTick = sim.Entities.AttackImpactTick[enemy];
+            while (sim.Tick <= impactTick + 1)
+                sim.Step(in idle);
+
+            Assert.Less(sim.Entities.Health[Simulation.PlayerId], playerBefore,
+                "контакт врага должен реально уменьшить здоровье игрока");
         }
 
         [Test]
@@ -133,6 +175,7 @@ namespace Game.Tests
 
             int first = -1;
             int second = -1;
+            int firstTick = -1, secondTick = -1;
             for (int tick = 0; tick < 60 && second < 0; tick++)
             {
                 sim.Step(in held);
@@ -140,11 +183,12 @@ namespace Game.Tests
                 {
                     SimEvent e = sim.Events[i];
                     if (e.Type != SimEventType.Attack || e.Source != Simulation.PlayerId) continue;
-                    if (first < 0) first = e.Amount;
-                    else { second = e.Amount; break; }
+                    if (first < 0) { first = e.Amount; firstTick = sim.Tick; }
+                    else { second = e.Amount; secondTick = sim.Tick; break; }
                 }
             }
 
+            Assert.AreEqual(20, secondTick - firstTick, "базовая серия повторяется через 20 тиков");
             Assert.AreEqual(0, first, "серия должна начинаться быстрым A");
             Assert.AreEqual(1, second, "второй такт серии обязан быть тяжёлым B");
         }

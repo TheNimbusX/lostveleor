@@ -13,8 +13,61 @@ Shader "Razlom/Texture Toon"
         _RimPower ("Rim Power", Range(1,10)) = 4
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
         _OutlineWidth ("Outline Pixels", Range(0,3)) = 0
+        // ГЛУБИННЫЙ ОТСТУП ОБВОДКИ — ЭТО НЕ ТОНКАЯ НАСТРОЙКА, А ЕЁ СМЫСЛ.
+        //
+        // Обводка рисуется вывернутой оболочкой: Cull Front поверх уже
+        // записанной глубины тела. На ОДНОЙ замкнутой поверхности это даёт
+        // ровно силуэт. Но у мобов меш собран из кусков, которые входят друг
+        // в друга — шерсть в торс, рога в череп, лапы в юбку, — и раздутая
+        // оболочка внутреннего куска вылезает сквозь наружный. Каждый такой
+        // выход и есть «обводка захватывает внутренние детали»: это не швы
+        // нормалей (их уже лечит сшитая нормаль в тангенсе), а честная
+        // геометрия, торчащая на доли миллиметра.
+        //
+        // Отступ уводит оболочку ОТ КАМЕРЫ. Внутренний прорыв опережает
+        // поверхность тела на считанные миллиметры и после отступа не проходит
+        // ZTest. Настоящему силуэту это безразлично: за ним нет тела вообще,
+        // отодвигать его не обо что.
+        //
+        // ОТСТУП В МЕТРАХ, А НЕ В ЕДИНИЦАХ ГЛУБИНЫ. Камера тут ортографическая,
+        // и сдвиг clip-space z пересчитался бы в мировые метры через всю
+        // дальность отсечения — то есть в единицы, а не в сантиметры, и
+        // обводку срезало бы целиком. Сдвиг в мировом пространстве одинаково
+        // честен и для орто, и для перспективы.
+        //
+        // Настоящему силуэту отступ ничем не грозит: за ним фон, а не тело.
+        // Опасен только перебор у самых ступней, где сзади уже пол.
+        // Слишком большой отступ уводит оболочку за тело и при ZTest LEqual
+        // съедает весь контур. Оставляем её в глубине только на доли миллиметра.
+        _OutlineDepthBias ("Отступ обводки вглубь, м", Range(0,0.3)) = 0.0
+        _GroundGlowBand ("Высота контактного свечения", Range(0.02,0.6)) = 0.16
+        _GroundGlowFeather ("Мягкость контактного свечения", Range(0.005,0.3)) = 0.06
         _HitFlash ("Hit Flash", Range(0,1)) = 0
         _DeathFade ("Death Fade", Range(0,1)) = 0
+
+        [Header(Dissolve)]
+        _DissolveEdgeColor ("Цвет кромки растворения", Color) = (1,0.42,0.12,1)
+        _DissolveEdgeGlow ("Яркость кромки", Range(0,8)) = 2.6
+        _DissolveEdgeWidth ("Ширина кромки", Range(0.01,0.5)) = 0.14
+        _DissolveScale ("Частота шума", Range(2,40)) = 13
+        _DissolveVoronoi ("Облака (0) или Вороной (1)", Range(0,1)) = 1
+        // СВИП ПО ВЫСОТЕ ВЫКЛЮЧЕН, И ЭТО НЕ ЗАБЫТАЯ НАСТРОЙКА.
+        //
+        // Он стоял на 0.35 — тело уходило снизу вверх, «как зола». На экране
+        // это читалось не золой, а провалом сквозь пол: ноги пропадают, торс
+        // ещё цел, контактная тень всё это время лежит на земле целиком. Мозг
+        // достраивает единственное знакомое объяснение — моб тонет в полу.
+        //
+        // Без свипа тело осыпается равномерно по объёму, и никакого «вниз» в
+        // кадре не появляется. Ручка оставлена — это Cutoff Height из графа, —
+        // но по умолчанию она молчит.
+        _DissolveHeightBias ("Подмес свипа по высоте", Range(0,1)) = 0
+        // Читается только когда свип выше нуля. Объектные координаты низа и
+        // верха тела: у наших персонажей начало координат в ступнях, а меш
+        // ростом 0.978 юнита (см. globalScale в RazlomCharacterImport) —
+        // отсюда 0..1. Меш с центром в тазу потребует (-0.5, 0.5), иначе
+        // половина тела получит одинаковую высоту и уйдёт не свипом, а разом.
+        _DissolveHeightRange ("Низ и верх тела (объектные Y)", Vector) = (0,1,0,0)
     }
 
     SubShader
@@ -27,8 +80,20 @@ Shader "Razlom/Texture Toon"
             Tags { "LightMode"="UniversalForward" }
             Cull Back
             ZWrite On
+            Stencil
+            {
+                Ref 1
+                Comp Always
+                Pass Replace
+            }
 
             HLSLPROGRAM
+            // 3.5 = полноценный ps_4_0. По умолчанию Unity берёт 2.5, то есть
+            // ps_4_0_level_9_3: там нет динамических ветвлений и стоит потолок
+            // по инструкциям, а растворение внутри крутит 27 итераций Вороного
+            // и выходит из них по _DeathFade. Тот же потолок в трёх проходах
+            // ниже — они стояли на target 2.0.
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
@@ -37,6 +102,7 @@ Shader "Razlom/Texture Toon"
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "RazlomDissolve.hlsl"
 
             struct Attributes
             {
@@ -53,38 +119,14 @@ Shader "Razlom/Texture Toon"
                 float2 uv : TEXCOORD2;
                 float4 shadowCoord : TEXCOORD3;
                 half fogFactor : TEXCOORD4;
+                float3 positionOS : TEXCOORD5;
             };
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                half4 _BaseColor;
-                half4 _ShadowColor;
-                half4 _MidColor;
-                half _MidThreshold;
-                half _LightThreshold;
-                half _LightFeather;
-                half4 _RimColor;
-                half _RimPower;
-                half4 _OutlineColor;
-                half _OutlineWidth;
-                half _HitFlash;
-                half _DeathFade;
-            CBUFFER_END
 
             float4 _RazlomHeroLightPosition;
             half4 _RazlomHeroLightColor;
-
-            half DeathDither(float2 pixelPosition)
-            {
-                // Stable interleaved gradient noise. Keeping this as an opaque
-                // clip preserves depth writes, sorting and SRP batching while
-                // still reading as a soft fade at gameplay distance.
-                float noise = frac(52.9829189 * frac(dot(
-                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
-                return 0.0001h + (half)noise * 0.9998h;
-            }
 
             Varyings Vert(Attributes input)
             {
@@ -96,12 +138,13 @@ Shader "Razlom/Texture Toon"
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.shadowCoord = GetShadowCoord(position);
                 output.fogFactor = ComputeFogFactor(position.positionCS.z);
+                output.positionOS = input.positionOS.xyz;
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                half dissolveFront = RazlomDissolveFront(input.positionOS);
                 half4 texel = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 half3 normal = normalize(input.normalWS);
                 Light mainLight = GetMainLight(input.shadowCoord);
@@ -214,8 +257,150 @@ Shader "Razlom/Texture Toon"
                 color += _RazlomHeroLightColor.rgb * heroAttenuation *
                     (0.025h + heroWrap * 0.085h);
                 color = lerp(color, half3(1.0h, 0.88h, 0.58h), saturate(_HitFlash));
+
+                // Угли кладутся ПОСЛЕ вспышки попадания и до тумана. После —
+                // потому что вспышка это lerp в белое: положи кромку раньше, и
+                // добивающий удар её съест ровно в тот кадр, когда начинается
+                // растворение. До тумана — потому что дальние трупы должны
+                // тухнуть вместе со сценой, а не гореть сквозь дымку.
+                color += RazlomDissolveEmber() * dissolveFront;
+
                 color = MixFog(color, input.fogFactor);
                 return half4(color, texel.a);
+            }
+            ENDHLSL
+        }
+
+        // КОНТАКТНОЕ СВЕЧЕНИЕ ВРАГА — три мягкие оболочки у основания.
+        // Раздутая оболочка на всей высоте тела выглядела как неоновый halo;
+        // RazlomGlowFrag отсекает верхнюю часть меша по GroundGlowBand.
+        //
+        // ПОРЯДОК В ФАЙЛЕ ЕСТЬ ПОРЯДОК ОТРИСОВКИ. Unity рисует подряд ВСЕ
+        // проходы, у которых LightMode совпал с запрошенным тегом, сверху вниз.
+        // Широкая и слабая обязана лечь первой, плотная — последней, иначе
+        // затухание перевернётся и ореол получит жёсткую внешнюю кромку.
+        // По той же причине настоящая обводка стоит после всех трёх: она
+        // рисует плотное ядро контура поверх собранного свечения.
+        //
+        // Почему их три, а не одна широкая: одна даёт полосу постоянной
+        // плотности, то есть рамку. Затухание берётся только из наложения.
+        Pass
+        {
+            Name "GlowShellWide"
+            Tags { "LightMode"="UniversalForward" }
+            Cull Front
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 1
+                Comp NotEqual
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex Vert
+            #pragma fragment Frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
+            #include "RazlomGlowShell.hlsl"
+
+            GlowVaryings Vert(GlowAttributes input) { return RazlomGlowVert(input, 3.2, 0.72); }
+            half4 Frag(GlowVaryings input) : SV_Target { return RazlomGlowFrag(input, 0.040h); }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "GlowShellMid"
+            Tags { "LightMode"="SRPDefaultUnlit" }
+            Cull Front
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 1
+                Comp NotEqual
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex Vert
+            #pragma fragment Frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
+            #include "RazlomGlowShell.hlsl"
+
+            GlowVaryings Vert(GlowAttributes input) { return RazlomGlowVert(input, 1.8, 0.72); }
+            half4 Frag(GlowVaryings input) : SV_Target { return RazlomGlowFrag(input, 0.070h); }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "GlowShellNear"
+            Tags { "LightMode"="SRPDefaultUnlit" }
+            Cull Front
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref 1
+                Comp NotEqual
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex Vert
+            #pragma fragment Frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
+            #include "RazlomGlowShell.hlsl"
+
+            GlowVaryings Vert(GlowAttributes input) { return RazlomGlowVert(input, 1.0, 0.72); }
+            half4 Frag(GlowVaryings input) : SV_Target { return RazlomGlowFrag(input, 0.12h); }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "UnitOutlineMask"
+            Tags { "LightMode"="UnitOutlineMask" }
+            Cull Back
+            ZTest LEqual
+            ZWrite Off
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex MaskVert
+            #pragma fragment MaskFrag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
+            struct Attributes { float4 positionOS : POSITION; };
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 positionOS : TEXCOORD0;
+            };
+            Varyings MaskVert(Attributes input)
+            {
+                Varyings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionOS = input.positionOS.xyz;
+                return output;
+            }
+            half4 MaskFrag(Varyings input) : SV_Target
+            {
+                clip(_OutlineWidth - 0.001h);
+                RazlomDissolveFront(input.positionOS);
+                // Premultiplied RGB сохраняет цвет на сглаженном краю MSAA.
+                half width = saturate(_OutlineWidth / 3.0h);
+                return half4(_OutlineColor.rgb * width, width);
             }
             ENDHLSL
         }
@@ -223,52 +408,75 @@ Shader "Razlom/Texture Toon"
         Pass
         {
             Name "InkOutline"
-            Tags { "LightMode"="SRPDefaultUnlit" }
+            Tags { "LightMode"="InkOutline" }
             Cull Front
-            ZWrite On
+            // The feature runs after opaque bodies. Keep the silhouette
+            // depth tested against the body, but never let its expanded
+            // shell become the scene depth for subsequent effects.
+            ZWrite Off
+            Stencil
+            {
+                Ref 1
+                Comp NotEqual
+                Pass Keep
+            }
 
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex OutlineVert
             #pragma fragment OutlineFrag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
+                // Сюда импорт кладёт нормаль, сшитую по положению вершины.
+                // См. RazlomCharacterImport.OnPostprocessMesh.
+                float4 tangentOS : TANGENT;
             };
 
-            struct Varyings { float4 positionCS : SV_POSITION; };
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                half4 _BaseColor;
-                half4 _ShadowColor;
-                half4 _MidColor;
-                half _MidThreshold;
-                half _LightThreshold;
-                half _LightFeather;
-                half4 _RimColor;
-                half _RimPower;
-                half4 _OutlineColor;
-                half _OutlineWidth;
-                half _HitFlash;
-                half _DeathFade;
-            CBUFFER_END
-
-            half DeathDither(float2 pixelPosition)
+            struct Varyings
             {
-                float noise = frac(52.9829189 * frac(dot(
-                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
-                return 0.0001h + (half)noise * 0.9998h;
-            }
+                float4 positionCS : SV_POSITION;
+                // Не раздутая оболочка, а исходная вершина: маска обязана
+                // совпасть с той, что считает основной проход, иначе обводка
+                // растворялась бы на пару пикселей позже тела.
+                float3 positionOS : TEXCOORD0;
+            };
 
             Varyings OutlineVert(Attributes input)
             {
                 Varyings output;
+                output.positionOS = input.positionOS.xyz;
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+
+                // РАСТЯГИВАЕМ ПО СШИТОЙ НОРМАЛИ, А НЕ ПО ОБЫЧНОЙ. На жёстких
+                // рёбрах и швах развёртки обычные нормали расходятся, оболочка
+                // разрывается, и обводка проступает внутри силуэта. Сшитая
+                // нормаль лежит в тангенсах; если её там нет — например у
+                // модели, импортированной мимо нашего постпроцессора, — честно
+                // падаем на обычную, и хуже, чем было, не станет.
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+
+                // Оболочка раздувается ТОЛЬКО ПО ЭКРАНУ (ниже), глубину вершины
+                // проход не трогает — значит задние грани лежат там же, где и
+                // были. У замкнутого меша они всегда за передними, и наружу
+                // выходит ровно силуэт. У мобов же меш собран из кусков, которые
+                // входят друг в друга: задняя грань лапы оказывается ближе
+                // камеры, чем передняя грань юбки, проходит ZTest и рисует
+                // контур ПОСРЕДИ тела. Это и есть «обводка захватывает
+                // внутренние детали»; сшитая нормаль лечила другую болезнь —
+                // разрывы на швах — и против этой бессильна.
+                //
+                // Отодвигаем вершину от камеры на _OutlineDepthBias метров.
+                // Внутренний прорыв опережает закрывающую поверхность на
+                // считанные сантиметры и после отступа проигрывает ей ZTest.
+                float3 toCameraWS = GetWorldSpaceNormalizeViewDir(positionWS);
+                positionWS -= toCameraWS * _OutlineDepthBias;
+
                 output.positionCS = TransformWorldToHClip(positionWS);
 
                 // Expand only the screen-space silhouette. Width zero is the
@@ -277,11 +485,12 @@ Shader "Razlom/Texture Toon"
                 float3 normalVS = TransformWorldToViewDir(normalWS, true);
                 float2 direction = normalVS.xy;
                 float directionLength = length(direction);
-                float silhouette = directionLength * directionLength * directionLength;
+                float silhouette = saturate(directionLength);
                 float2 pixelSize = 2.0 / _ScreenParams.xy;
                 output.positionCS.xy += (direction / max(directionLength, 0.0001)) *
                                         silhouette * pixelSize *
-                                        _OutlineWidth * output.positionCS.w;
+                                        _OutlineWidth * 1.6 * output.positionCS.w;
+
                 return output;
             }
 
@@ -291,8 +500,12 @@ Shader "Razlom/Texture Toon"
                 // hard edges. Discard it completely instead of drawing a dark
                 // zero-width contour on ordinary characters.
                 clip(_OutlineWidth - 0.001h);
-                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
-                return _OutlineColor;
+                half front = RazlomDissolveFront(input.positionOS);
+                // Обводка на фронте уходит в угли. Оставь её тёмной — и
+                // свечение основного прохода получит по контуру чёрную рамку
+                // шириной в пиксель, ровно там, где оно должно быть ярче всего.
+                return half4(lerp(_OutlineColor.rgb, RazlomDissolveEmber(), front),
+                             _OutlineColor.a);
             }
             ENDHLSL
         }
@@ -307,13 +520,14 @@ Shader "Razlom/Texture Toon"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
             #pragma vertex ShadowVert
             #pragma fragment ShadowFrag
             #pragma multi_compile_instancing
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+            #include "RazlomDissolve.hlsl"
 
             struct Attributes
             {
@@ -325,40 +539,19 @@ Shader "Razlom/Texture Toon"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                float3 positionOS : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                half4 _BaseColor;
-                half4 _ShadowColor;
-                half4 _MidColor;
-                half _MidThreshold;
-                half _LightThreshold;
-                half _LightFeather;
-                half4 _RimColor;
-                half _RimPower;
-                half4 _OutlineColor;
-                half _OutlineWidth;
-                half _HitFlash;
-                half _DeathFade;
-            CBUFFER_END
-
             float3 _LightDirection;
             float3 _LightPosition;
-
-            half DeathDither(float2 pixelPosition)
-            {
-                float noise = frac(52.9829189 * frac(dot(
-                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
-                return 0.0001h + (half)noise * 0.9998h;
-            }
 
             Varyings ShadowVert(Attributes input)
             {
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
+                output.positionOS = input.positionOS.xyz;
 
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
@@ -377,7 +570,10 @@ Shader "Razlom/Texture Toon"
             half4 ShadowFrag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                // Свечение кромки тени не нужно, а вот clip внутри — нужен:
+                // без него растворяющееся тело продолжает отбрасывать целую
+                // тень, и на земле остаётся силуэт того, чего уже нет.
+                RazlomDissolveFront(input.positionOS);
                 return 0;
             }
             ENDHLSL
@@ -392,11 +588,12 @@ Shader "Razlom/Texture Toon"
             ColorMask R
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
             #pragma vertex DepthVert
             #pragma fragment DepthFrag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "RazlomDissolve.hlsl"
 
             struct Attributes
             {
@@ -407,32 +604,10 @@ Shader "Razlom/Texture Toon"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                float3 positionOS : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
-
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                half4 _BaseColor;
-                half4 _ShadowColor;
-                half4 _MidColor;
-                half _MidThreshold;
-                half _LightThreshold;
-                half _LightFeather;
-                half4 _RimColor;
-                half _RimPower;
-                half4 _OutlineColor;
-                half _OutlineWidth;
-                half _HitFlash;
-                half _DeathFade;
-            CBUFFER_END
-
-            half DeathDither(float2 pixelPosition)
-            {
-                float noise = frac(52.9829189 * frac(dot(
-                    floor(pixelPosition), float2(0.06711056, 0.00583715))));
-                return 0.0001h + (half)noise * 0.9998h;
-            }
 
             Varyings DepthVert(Attributes input)
             {
@@ -441,6 +616,7 @@ Shader "Razlom/Texture Toon"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.positionOS = input.positionOS.xyz;
                 return output;
             }
 
@@ -448,7 +624,10 @@ Shader "Razlom/Texture Toon"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                clip((1.0h - _DeathFade) - DeathDither(input.positionCS.xy));
+                // Как и в ShadowCaster: нужен только clip. Глубина обязана
+                // совпадать с цветовым проходом до пикселя, иначе SSAO и
+                // depth-эффекты видят тело там, где его уже выкусили.
+                RazlomDissolveFront(input.positionOS);
                 return input.positionCS.z;
             }
             ENDHLSL

@@ -21,7 +21,8 @@ namespace Game.Sim
         /// <summary>Потолок собранных наград за забег.</summary>
         private const int MaxTakenRewards = 64;
 
-        private const int BaseEnemiesPerRoom = 2;
+        // Текущий состав прототипа — 3 Хранителя и 6 Корнеползов.
+        // Рост здоровья Хранителя с глубиной пока сохранён отдельно от роя.
         private const int BaseEnemyHealth = 100;
         private const int BaseRooms = 6;
 
@@ -110,8 +111,7 @@ namespace Game.Sim
             else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);
             else
-                _sim.SetupRift(_map, spawnSeed,
-                    BaseEnemiesPerRoom + Depth / 2,
+                _sim.SetupForestEncounter(_map, spawnSeed,
                     BaseEnemyHealth + BaseEnemyHealth * Depth / 4);
 
             // Расстановка родила игрока заново, а рождение сбрасывает лист статов

@@ -140,7 +140,7 @@ public static class RazlomSceneAuthoring
         camera.orthographic = true;
         camera.orthographicSize = 4.8f;
         camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.backgroundColor = new Color(0.46f, 0.70f, 0.80f, 1f);
+        camera.backgroundColor = new Color(0.055f, 0.075f, 0.065f, 1f);
         camera.allowHDR = true;
         camera.nearClipPlane = 0.1f;
         camera.farClipPlane = 180f;
@@ -164,20 +164,20 @@ public static class RazlomSceneAuthoring
 
         RenderSettings.ambientMode = AmbientMode.Trilight;
         RenderSettings.ambientIntensity = 0.74f;
-        RenderSettings.ambientSkyColor = new Color(0.68f, 0.79f, 0.86f);
-        RenderSettings.ambientEquatorColor = new Color(0.48f, 0.55f, 0.59f);
-        RenderSettings.ambientGroundColor = new Color(0.28f, 0.27f, 0.25f);
+        RenderSettings.ambientSkyColor = new Color(0.17f, 0.283f, 0.50f);
+        RenderSettings.ambientEquatorColor = new Color(0.243f, 0.269f, 0.327f);
+        RenderSettings.ambientGroundColor = new Color(0.118f, 0.096f, 0.068f);
         RenderSettings.reflectionIntensity = 0.82f;
 
         Light key = NewDirectional(lighting.transform, "Key Light", new Vector3(46f, -118f, 0f),
-            new Color(1.00f, 0.92f, 0.78f), 1.72f, true);
-        key.shadowStrength = 0.58f;
+            new Color(1.00f, 0.92f, 0.78f), 2.00f, true);
+        key.shadowStrength = 0.85f;
         key.shadowBias = 0.045f;
         key.shadowNormalBias = 0.20f;
         RenderSettings.sun = key;
 
         NewDirectional(lighting.transform, "Rim Light", new Vector3(42f, 62f, 0f),
-            new Color(0.52f, 0.78f, 1.00f), 0.42f, false);
+            new Color(0.52f, 0.78f, 1.00f), 0.55f, false);
         NewDirectional(lighting.transform, "Fill Light", new Vector3(58f, -18f, 0f),
             new Color(1.00f, 0.82f, 0.62f), 0.24f, false);
     }
@@ -204,6 +204,22 @@ public static class RazlomSceneAuthoring
         volume.sharedProfile = profile;
     }
 
+    /// <summary>
+    /// Пересобирает ТОЛЬКО профиль вида, не трогая сцену.
+    ///
+    /// Отдельной командой, потому что вся остальная авторская сборка сцены —
+    /// разрушительная: она пересоздаёт блокаут вместе с лагерем, светом и
+    /// камерой, которые владелец настраивал руками. Цвет и зерно менять из-под
+    /// неё нельзя, а менять их надо часто.
+    /// </summary>
+    [MenuItem("Разлом/Собрать вид боя")]
+    public static void BuildLookProfile()
+    {
+        CreateOrUpdateLookProfile();
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Разлом] Вид боя пересобран: " + LookProfilePath);
+    }
+
     private static VolumeProfile CreateOrUpdateLookProfile()
     {
         VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(LookProfilePath);
@@ -219,25 +235,55 @@ public static class RazlomSceneAuthoring
         Bloom bloom = GetOrAddVolumeComponent<Bloom>(profile);
         bloom.active = true;
         bloom.threshold.Override(1.05f);
-        bloom.intensity.Override(0.36f);
-        bloom.scatter.Override(0.54f);
+        bloom.intensity.Override(0.42f);
+        bloom.scatter.Override(0.72f);
         bloom.highQualityFiltering.Override(true);
 
         Tonemapping tonemapping = GetOrAddVolumeComponent<Tonemapping>(profile);
         tonemapping.active = true;
         tonemapping.mode.Override(TonemappingMode.Neutral);
 
+        // ЯРКАЯ ГАММА. Насыщенность поднята с 16 до 32: заявленный вид —
+        // сочный, а не выцветший. Контраст с 8 до 16 работает на ту же цель и
+        // заодно на глубину теней; экспозиция чуть ниже, потому что более
+        // контрастная картинка при прежней быстрее уходит в пересвет.
         ColorAdjustments color = GetOrAddVolumeComponent<ColorAdjustments>(profile);
         color.active = true;
-        color.postExposure.Override(0.30f);
-        color.contrast.Override(8f);
-        color.saturation.Override(16f);
+        color.postExposure.Override(0.04f);
+        color.contrast.Override(26f);
+        color.saturation.Override(46f);
         color.colorFilter.Override(new Color(1.00f, 0.99f, 0.96f, 1f));
+
+        // ГЛУБОКИЕ ТЕНИ. Контраст один тянет вниз всю картинку целиком, а нужно
+        // опустить ТОЛЬКО тень, не трогая света: иначе яркая гамма из пункта
+        // выше и глубокая тень отсюда работают друг против друга.
+        //
+        // Тень уводится вниз и в холод — синева в тени против тёплого света —
+        // это то же разделение по тону, что уже сделано в шейдере персонажей.
+        ShadowsMidtonesHighlights levels =
+            GetOrAddVolumeComponent<ShadowsMidtonesHighlights>(profile);
+        levels.active = true;
+        levels.shadows.Override(new Vector4(0.86f, 0.90f, 1.06f, -0.12f));
+        levels.midtones.Override(new Vector4(1f, 1f, 1f, 0f));
+        levels.highlights.Override(new Vector4(1.02f, 1.00f, 0.97f, 0.02f));
+        levels.shadowsStart.Override(0f);
+        levels.shadowsEnd.Override(0.32f);
+        levels.highlightsStart.Override(0.58f);
+        levels.highlightsEnd.Override(1f);
+
+        // ЗЕРНО ВЫКЛЮЧЕНО ПО ЖИВОМУ ПРОСМОТРУ. Компонент остаётся в профиле
+        // выключенным: включить обратно — это `active = true`, а выбросить его
+        // совсем значило бы потерять подобранные цифры.
+        FilmGrain grain = GetOrAddVolumeComponent<FilmGrain>(profile);
+        grain.active = false;
+        grain.type.Override(FilmGrainLookup.Medium1);
+        grain.intensity.Override(0.28f);
+        grain.response.Override(0.75f);
 
         Vignette vignette = GetOrAddVolumeComponent<Vignette>(profile);
         vignette.active = true;
         vignette.color.Override(new Color(0.12f, 0.25f, 0.32f, 1f));
-        vignette.intensity.Override(0.075f);
+        vignette.intensity.Override(0.20f);
         vignette.smoothness.Override(0.58f);
 
         EditorUtility.SetDirty(profile);

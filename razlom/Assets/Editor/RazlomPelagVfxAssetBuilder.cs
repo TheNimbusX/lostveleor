@@ -15,15 +15,16 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 11;
+    private const int LibraryVersion = 25;
     private const int FlipbookTiles = 4;
     private const int FlipbookFrames = FlipbookTiles * FlipbookTiles;
-    private const int ChainLinkCount = 24;
-    private const int EffectTriangleBudget = 5000;
+    private const int ChainLinkCount = 96;
+    // One continuous lasso needs links on both the outgoing side and the far arc.
+    private const int EffectTriangleBudget = 14000;
     private const int RuntimeGeometryAllowance = 64;
     private const float FlipbookFramesPerSecond = 30f;
     private const float FlipbookLifetime = FlipbookFrames / FlipbookFramesPerSecond;
-    private const string AutoBuildSessionKey = "Razlom.PelagVfx.AutoBuild.v1";
+    private static string AutoBuildSessionKey => "Razlom.PelagVfx.AutoBuild.v" + LibraryVersion;
 
     private const string AnchorSpinTexturePath =
         Root + "/Textures/Pelag_FX_AnchorSpin_4x4.png";
@@ -175,9 +176,9 @@ public static class RazlomPelagVfxAssetBuilder
         prefabs[(int)PelagVfxId.AnchorSweepPull] = SaveDynamicLine(PelagVfxId.AnchorSweepPull,
             "VFX_AnchorSweep_Pull", anchor, metal, chainGlint, 0.055f, 1.18f, true);
         prefabs[(int)PelagVfxId.AnchorSweepEnemyPull] = SaveDynamicLine(PelagVfxId.AnchorSweepEnemyPull,
-            "VFX_AnchorSweep_EnemyPull", dash, metal, null, 0.12f, 0.44f, false);
+            "VFX_AnchorSweep_EnemyPull", anchor, metal, null, 0.035f, 0.64f, true);
         prefabs[(int)PelagVfxId.ChainStepDash] = SaveTrail(PelagVfxId.ChainStepDash,
-            "VFX_ChainStep_Dash", dashSmear, 0.23f);
+            "VFX_ChainStep_Dash", slash, 0.23f);
         prefabs[(int)PelagVfxId.ChainStepHit] = SaveBurst(PelagVfxId.ChainStepHit,
             "VFX_ChainStep_Hit", impact, 4, 0.15f, 3.0f, 0.13f, 0.28f,
             impactBurst, 0.92f);
@@ -281,9 +282,10 @@ public static class RazlomPelagVfxAssetBuilder
         if (shader == null) shader = Shader.Find("Universal Render Pipeline/Simple Lit");
         Material material = LoadOrCreateMaterial(path, shader);
         material.name = "M_AnchorMetal";
+        material.enableInstancing = true;
         if (material.HasProperty("_BaseColor"))
-            material.SetColor("_BaseColor", new Color(0.16f, 0.19f, 0.20f, 1f));
-        if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.68f);
+            material.SetColor("_BaseColor", new Color(0.45f, 0.42f, 0.36f, 1f));
+        if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.08f);
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.42f);
         EditorUtility.SetDirty(material);
         return material;
@@ -343,6 +345,20 @@ public static class RazlomPelagVfxAssetBuilder
     {
         GameObject root = RootObject(id, name, lifetime);
         AddHovlWhirlwindAccents(root);
+        // Horizontal authored strokes share one palette; omit the detached
+        // upright charge projectile that fought the circular silhouette.
+        Shader shader = Shader.Find("Razlom/Pelag VFX");
+        Material edge = VfxMaterial("M_Whirlwind_CopperStroke", shader,
+            new Color(.78f, .38f, .14f, .72f), new Color(1f, .78f, .48f, .92f), .95f, .35f);
+        Material core = VfxMaterial("M_Whirlwind_SteelCore", shader,
+            new Color(.95f, .80f, .58f, .8f), new Color(1f, .94f, .79f, 1f), 1.15f, .55f);
+        edge.SetFloat("_Brush", 0.85f);
+        EditorUtility.SetDirty(edge);
+        AddBrushArc(root, edge, 2.12f, -30f, 205f, 0.36f, -0.1f, 64);
+        AddBrushArc(root, edge, 1.72f, 38f, 118f, 0.23f, 0.16f, 48);
+        AddBrushArc(root, edge, 2.25f, 188f, 72f, 0.16f, -0.22f, 36);
+        AddBrushArc(root, core, 2.14f, -22f, 186f, 0.052f, -0.08f, 64);
+        AddBrushArc(root, edge, 1.88f, 195f, 82f, 0.12f, 0.08f, 36);
         return Save(root, name);
     }
 
@@ -370,22 +386,85 @@ public static class RazlomPelagVfxAssetBuilder
 
     private static void AddHovlWhirlwindAccents(GameObject root)
     {
-        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(HovlStoneSlashPath);
+        const string path = "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/AoE slash blue.prefab";
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         if (source == null)
         {
-            Debug.LogWarning($"[Pelag VFX] Hovl slash не найден: {HovlStoneSlashPath}");
+            Debug.LogWarning($"[Pelag VFX] Hovl slash не найден: {path}");
             return;
         }
 
         GameObject imported = UnityEngine.Object.Instantiate(source, root.transform, false);
-        imported.name = "Stone Slash";
+        imported.name = "Saber Cyclone";
         imported.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-        // The source prefab is authored as a hero-sized slash. The previous
-        // 0.42 scale reduced its readable crescent to a handful of sparks at
-        // gameplay zoom, leaving the procedural ribbon to carry the ability.
+        // Keep the authored crescent meshes and textures; remove the halo and
+        // lens flares so the effect reads as steel cutting through the air.
         imported.transform.localScale = Vector3.one;
+        KeepNamedBranches(imported.transform, "Slash", "Sparks");
         SanitizeImportedVfx(imported);
         ReplaceImportedParticleMaterials(imported);
+        TuneWhirlwind(imported);
+    }
+
+    private static void TuneWhirlwind(GameObject root)
+    {
+        foreach (ParticleSystem ps in root.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            if (ps.gameObject == root)
+            {
+                var rootEmission = ps.emission;
+                rootEmission.enabled = false;
+                continue;
+            }
+            bool sparks = ps.name == "Sparks";
+            var main = ps.main;
+            main.startDelay = 0f;
+            main.startLifetime = sparks ? 0.28f : 0.30f;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            main.startColor = Color.white;
+            main.startSize = sparks ? 0.085f : 4.8f;
+            main.startSpeed = sparks ? 0.9f : 0f;
+            main.startRotation = 0f;
+            main.startRotation3D = false;
+            main.maxParticles = sparks ? 8 : 4;
+            var color = ps.colorOverLifetime;
+            color.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] {
+                new GradientColorKey(new Color(1.08f, .80f, .52f), 0f),
+                new GradientColorKey(new Color(.72f, .38f, .17f), 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(0.88f, 0.10f),
+                    new GradientAlphaKey(0.64f, 0.45f), new GradientAlphaKey(0f, 1f) });
+            color.color = gradient;
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            emission.rateOverDistance = 0f;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)(sparks ? 6 : 1)) });
+            var renderer = ps.GetComponent<ParticleSystemRenderer>();
+            if (renderer == null || renderer.sharedMaterial == null) continue;
+            if (!sparks)
+            {
+                var shape = ps.shape; shape.enabled = false;
+                var velocity = ps.velocityOverLifetime; velocity.enabled = false;
+                var force = ps.forceOverLifetime; force.enabled = false;
+                var noise = ps.noise; noise.enabled = false;
+                var rotation = ps.rotationOverLifetime; rotation.enabled = false;
+                var size = ps.sizeOverLifetime; size.enabled = false;
+                renderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+                renderer.alignment = ParticleSystemRenderSpace.Local;
+            }
+            Material source = renderer.sharedMaterial;
+            string path = MaterialFolder + "/M_Whirlwind_" + source.name + ".mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null) { material = new Material(source); AssetDatabase.CreateAsset(material, path); }
+            else material.CopyPropertiesFromMaterial(source);
+            if (material.HasProperty("_Color")) material.SetColor("_Color", Color.white);
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.white);
+            if (material.HasProperty("_Emission")) material.SetFloat("_Emission", 0.9f);
+            renderer.sharedMaterial = material;
+            EditorUtility.SetDirty(material);
+        }
     }
 
     private static void ReplaceImportedParticleMaterials(GameObject root)
@@ -409,7 +488,7 @@ public static class RazlomPelagVfxAssetBuilder
             if (source == null) continue;
 
             string sourcePath = AssetDatabase.GetAssetPath(source);
-            if (!sourcePath.StartsWith("Assets/Hovl Studio/Magic effects pack/Materials/",
+            if (!sourcePath.StartsWith("Assets/Hovl Studio/",
                     StringComparison.OrdinalIgnoreCase)) continue;
 
             Material compatible = LoadOrCreateImportedParticleMaterial(source, particleShader);
@@ -529,6 +608,52 @@ public static class RazlomPelagVfxAssetBuilder
         }
     }
 
+    private static void AddAuthoredAccent(GameObject root, string path, float scale, float lifetime,
+        bool ground, params string[] branches)
+    {
+        GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (source == null) { Debug.LogWarning("[Pelag VFX] Missing accent: " + path); return; }
+        GameObject accent = UnityEngine.Object.Instantiate(source, root.transform, false);
+        accent.name = "Pelag " + source.name;
+        accent.transform.localScale = Vector3.one * scale;
+        accent.transform.localPosition = Vector3.zero;
+        if (branches.Length > 0) KeepNamedBranches(accent.transform, branches);
+        SanitizeImportedVfx(accent);
+        ReplaceImportedParticleMaterials(accent);
+        foreach (ParticleSystem ps in accent.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.loop = false; main.playOnAwake = false; main.startDelay = 0f;
+            if (ps.name.Contains("ShockWave") || ps.name.Contains("Glow"))
+            { var hide = ps.emission; hide.enabled = false; continue; }
+            if (ps.name.Contains("Slash"))
+            {
+                main.startSpeed = 0f;
+                var velocity = ps.velocityOverLifetime; velocity.enabled = false;
+                var force = ps.forceOverLifetime; force.enabled = false;
+            }
+            main.duration = lifetime; main.startLifetimeMultiplier = lifetime;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            main.maxParticles = Mathf.Min(24, Mathf.Max(4, main.maxParticles));
+            bool debris = ground && (ps.name.Contains("Smoke") || ps.name.Contains("Stones") || ps.name.Contains("Crater"));
+            if (ps.name.Contains("Smoke")) main.startSizeMultiplier *= 0.55f;
+            main.startColor = debris ? new Color(0.72f, 0.52f, 0.27f, 0.7f) : new Color(1.35f, 0.87f, 0.55f, 1f);
+            var color = ps.colorOverLifetime; color.enabled = true;
+            var fade = new Gradient();
+            fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f),
+                new GradientColorKey(debris ? Color.white : new Color(1f, 0.32f, 0.14f), 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.7f, 0.35f), new GradientAlphaKey(0f, 1f) });
+            color.color = fade;
+            var emission = ps.emission;
+            if (emission.enabled)
+            {
+                emission.rateOverTime = 0f; emission.rateOverDistance = 0f;
+                emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)(ps.name.Contains("Smoke") ? 3 : debris ? 6 : ps.name.Contains("Sparks") ? 10 : 1)) });
+            }
+        }
+    }
+
     private static void SanitizeImportedVfx(GameObject root)
     {
         Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
@@ -614,11 +739,15 @@ public static class RazlomPelagVfxAssetBuilder
         float lifetime)
     {
         GameObject root = RootObject(id, name, lifetime);
-        // The old continuously-emitting TrailRenderer stayed bright for the
-        // entire hop. The authored sheet carries the leader and broken ghosts,
-        // then reaches a fully transparent frame at exactly 5 / 30 seconds.
-        AddFlipbook(root, "Dash Smear Flipbook", flipbookMaterial, 1.25f,
-            false, Vector3.zero, 3);
+        var trail = root.AddComponent<TrailRenderer>();
+        trail.sharedMaterial = flipbookMaterial;
+        trail.time = 0.13f;
+        trail.widthCurve = AnimationCurve.Linear(0f, 0.48f, 1f, 0f);
+        trail.startColor = new Color(1.5f, 0.95f, 0.55f, 0.85f);
+        trail.endColor = new Color(0.8f, 0.35f, 0.12f, 0f);
+        trail.minVertexDistance = 0.03f;
+        trail.shadowCastingMode = ShadowCastingMode.Off;
+        trail.receiveShadows = false;
         return Save(root, name);
     }
 
@@ -632,9 +761,18 @@ public static class RazlomPelagVfxAssetBuilder
             GameObject anchor = (GameObject)PrefabUtility.InstantiatePrefab(source);
             anchor.name = "Physical Anchor";
             anchor.transform.SetParent(root.transform, false);
-            anchor.transform.localScale = Vector3.one * 0.46f;
+            anchor.transform.localScale = Vector3.one;
             anchor.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
             Renderer[] renderers = anchor.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length > 0)
+            {
+                Bounds bounds = renderers[0].bounds;
+                foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                float size = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
+                float scale = 0.62f / Mathf.Max(0.001f, size);
+                anchor.transform.localScale = Vector3.one * scale;
+                anchor.transform.localPosition = -bounds.center * scale;
+            }
             for (int i = 0; i < renderers.Length; i++)
             {
                 Material[] materials = renderers[i].sharedMaterials;
@@ -648,11 +786,16 @@ public static class RazlomPelagVfxAssetBuilder
             Debug.LogWarning("[Pelag VFX] Anchor FBX ещё не импортирован: " + AnchorPath);
         }
 
-        // Авторский флипбук уже содержит вращающийся смаз и ghost-дуги.
-        // Непрерывный TrailRenderer поверх него превращает полёт в обычный
-        // трейл и держит яркий след дольше короткого окна удара.
-        AddFlipbook(root, "Anchor Spin Flipbook", spinMaterial, 1.15f,
-            false, Vector3.zero, 2);
+        // The physical head and chain carry the silhouette. A thin steel
+        // wake follows the real projectile instead of a second painted anchor.
+        var trail = root.AddComponent<TrailRenderer>();
+        trail.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/M_AnchorTrail.mat");
+        trail.time = 0.07f;
+        trail.startWidth = 0.06f;
+        trail.endWidth = 0f;
+        trail.minVertexDistance = 0.04f;
+        trail.shadowCastingMode = ShadowCastingMode.Off;
+        trail.receiveShadows = false;
         return Save(root, name);
     }
 
@@ -701,6 +844,30 @@ public static class RazlomPelagVfxAssetBuilder
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
 
+        if (id == PelagVfxId.AnchorLeapLand)
+        {
+            // Удар выбивает направленные сколы вместо одинаковых светящихся точек.
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 38f;
+            shape.rotation = new Vector3(-22f, 0f, 0f);
+            shape.randomDirectionAmount = .15f;
+            main.gravityModifier = 1.8f;
+            main.startSize3D = true;
+            main.startSizeX = new ParticleSystem.MinMaxCurve(.07f,.12f);
+            main.startSizeY = new ParticleSystem.MinMaxCurve(.035f,.065f);
+            main.startSizeZ = new ParticleSystem.MinMaxCurve(.16f,.24f);
+            renderer.renderMode = ParticleSystemRenderMode.Mesh;
+            renderer.mesh = ImpactChipMesh();
+            renderer.alignment = ParticleSystemRenderSpace.Velocity;
+            AddAuthoredAccent(root, "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab",
+                0.48f, 0.32f, true, "Stones", "Flash");
+        }
+        if (id == PelagVfxId.ChainStepHit || id == PelagVfxId.WhirlwindHit)
+            AddAuthoredAccent(root, "Assets/Hovl Studio/RPG VFX Bundle/Prefabs/Magic buffs and hits/Punch Hit.prefab",
+                0.55f, 0.24f, false);
+        if (id == PelagVfxId.ChainStepHit)
+            AddAuthoredAccent(root, "Assets/Hovl Studio/Magic effects pack/Prefabs/Slash effects/Charge slash red.prefab",
+                0.45f, 0.22f, false, "Slash", "Slash2", "Sparks");
         if (impactFlipbook != null)
             AddFlipbook(root, "Impact Burst Flipbook", impactFlipbook, impactSize,
                 false, Vector3.zero, 5);
@@ -708,6 +875,20 @@ public static class RazlomPelagVfxAssetBuilder
             AddFlipbook(root, "Ground Crack Flipbook", groundFlipbook, groundSize,
                 true, new Vector3(0f, 0.015f, 0f), -2);
         return Save(root, name);
+    }
+
+    private static Mesh ImpactChipMesh()
+    {
+        string path = Root + "/Pelag_ImpactChip.asset";
+        Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh,path); }
+        mesh.Clear(); mesh.name = "Pelag Impact Chip";
+        mesh.vertices = new[] { new Vector3(-.5f,0,-.3f), new Vector3(.5f,0,-.5f),
+            new Vector3(.22f,0,.5f), new Vector3(-.25f,0,.35f), new Vector3(0,.5f,0) };
+        mesh.triangles = new[] { 0,4,1, 1,4,2, 2,4,3, 3,4,0, 0,1,2, 0,2,3 };
+        mesh.uv = new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up, new Vector2(.5f,.5f) };
+        mesh.RecalculateNormals(); mesh.RecalculateBounds(); EditorUtility.SetDirty(mesh);
+        return mesh;
     }
 
     private static ParticleSystem AddFlipbook(GameObject root, string name, Material material,
@@ -816,7 +997,7 @@ public static class RazlomPelagVfxAssetBuilder
         {
             GameObject link = new GameObject($"Link_{i:00}");
             link.transform.SetParent(host.transform, false);
-            link.transform.localScale = Vector3.one * 0.62f;
+            link.transform.localScale = Vector3.one;
             MeshFilter filter = link.AddComponent<MeshFilter>();
             filter.sharedMesh = _chainLinkMesh;
             MeshRenderer renderer = link.AddComponent<MeshRenderer>();
@@ -851,7 +1032,25 @@ public static class RazlomPelagVfxAssetBuilder
 
         if (best == null)
             Debug.LogError("[Pelag VFX] В FBX звена нет MeshFilter: " + ChainLinkPath);
-        return best;
+        if (best == null) return null;
+        Mesh normalized = UnityEngine.Object.Instantiate(best);
+        normalized.name = "Pelag_ChainLink_Centered";
+        Vector3 size = best.bounds.size;
+        Vector3 axis = size.x > size.y && size.x > size.z ? Vector3.right
+            : size.y > size.z ? Vector3.up : Vector3.forward;
+        Quaternion rotation = Quaternion.FromToRotation(axis, Vector3.forward);
+        float scale = 0.16f / Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+        Vector3[] vertices = normalized.vertices;
+        for (int i = 0; i < vertices.Length; i++) vertices[i] = rotation * (vertices[i] - best.bounds.center) * scale;
+        normalized.vertices = vertices;
+        normalized.RecalculateNormals();
+        normalized.RecalculateBounds();
+        const string path = Root + "/Geometry/Pelag_ChainLink_Centered.asset";
+        Mesh saved = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (saved == null) { AssetDatabase.CreateAsset(normalized, path); saved = normalized; }
+        else { EditorUtility.CopySerialized(normalized, saved); UnityEngine.Object.DestroyImmediate(normalized); }
+        EditorUtility.SetDirty(saved);
+        return saved;
     }
 
     private static bool ValidateGeometryBudget()

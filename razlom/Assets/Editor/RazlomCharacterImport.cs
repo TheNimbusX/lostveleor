@@ -39,7 +39,16 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamoRuntime =>
         NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
 
-    public override uint GetVersion() => 9;
+    /// <summary>
+    /// Клип моба: «Resources/Characters/&lt;Моб&gt;/&lt;Моб&gt;@&lt;Роль&gt;.fbx».
+    /// Конвенция самой Unity «модель@клип» и родной формат выгрузки Mixamo —
+    /// по ней же раскладывает клипы по ролям RazlomMobAnimatorBuilder.
+    /// </summary>
+    private bool IsMobClip =>
+        NormalPath.Contains(CharactersFolder)
+        && System.IO.Path.GetFileNameWithoutExtension(NormalPath).Contains('@');
+
+    public override uint GetVersion() => 12;
 
     private void OnPreprocessAnimation()
     {
@@ -84,6 +93,12 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             return;
         }
 
+        if (IsMobClip)
+        {
+            ConfigureMobClip((ModelImporter)assetImporter);
+            return;
+        }
+
         if (!IsWhirlwind) return;
 
         var importer = (ModelImporter)assetImporter;
@@ -105,6 +120,85 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         importer.clipAnimations = clips;
     }
 
+    /// <summary>
+    /// Клипы мобов. Всё, кроме цикла бега, оставляет проезд корня в позе;
+    /// БЕГ — НЕТ, и вот почему.
+    ///
+    /// ЭТО ПОЧИНКА «МОБЫ ХОДЯТ РЫВКАМИ И ТЕЛЕПОРТИРУЮТСЯ». В .meta бега
+    /// Лесного стража стояла галка Bake Into Pose на Root Transform Position
+    /// (XZ). Она означает ровно одно: проезд остаётся ВНУТРИ позы, то есть
+    /// тело едет само, поверх шага от симуляции. Замер клипа в Blender:
+    ///
+    ///     Forest_Guardian@Run — 27 кадров цикла, таз проезжает 1.037
+    ///     единицы исходника по прямой (путь 1.039 — это не раскачка);
+    ///     ×2.4 (ArenaView.OrvillScale) = 2.49 м за цикл.
+    ///
+    /// Цикл идёт 0.867 с при скорости 1.22 (CharacterAnimatorView) — 0.71 с.
+    /// Значит картинка ехала вдвое быстрее сущности три четверти секунды, а
+    /// на стыке цикла прыгала на 2.49 м назад одним кадром. Контактная тень
+    /// висит на корне и никуда не уезжала: на видео владельца видно, как тело
+    /// отрывается от собственной тени и возвращается к ней.
+    ///
+    /// applyRootMotion в ArenaView выключён навсегда — там же и записано, что
+    /// «клип, двигающий персонажа сам, увёл бы картинку от симуляции». Снятый
+    /// с позы проезд просто выбрасывается, и тело остаётся ровно там, куда его
+    /// поставил тик.
+    ///
+    /// СМЕРТЬ СНИМАЕТСЯ ПО ТОЙ ЖЕ ПРИЧИНЕ, но эффект там мелкий. Замер:
+    /// Forest_Guardian@Mutant Dying везёт таз на 0.461 единицы (1.1 м), и труп
+    /// съезжает с собственной тени. Показ смерти длится 0.46 с при скорости
+    /// 0.67 — это около восьмой части клипа, — да ещё поверх идёт парабола
+    /// выброса из ArenaView, так что глазами разница почти не видна. Снято
+    /// всё равно: тело не должно ездить само, а выброс уже написан кодом, и
+    /// авторский проезд просто добавлялся к нему вторым слагаемым.
+    ///
+    /// ОСТАЛЬНЫМ КЛИПАМ ПРОЕЗД НУЖЕН. Замер тех же файлов: у стойки, реакций
+    /// и обоих ударов чистый проезд НУЛЕВОЙ, но путь таза у удара — 1.116
+    /// единицы. Это выпад вперёд и возврат, то есть вес удара. Снимешь его —
+    /// и моб будет бить, не сходя с места. Правило поэтому не «снимать всегда»,
+    /// а «снимать там, где клип везёт тело ТУДА, КУДА ЕГО НЕ ЗВАЛ ТИК».
+    ///
+    /// Y и поворот запекаются везде: вертикальная раскачка — часть походки,
+    /// а разворот тела решает Facing из симуляции.
+    /// </summary>
+    private void ConfigureMobClip(ModelImporter importer)
+    {
+        // Пересобираем из defaults, а не правим .meta: подменённый FBX с тем
+        // же GUID сохраняет старую запись клипа, и диапазон кадров начинает
+        // указывать в никуда. На этом уже обожглись с Pelag_Run_Tripo.
+        ModelImporterClipAnimation[] defaults = importer.defaultClipAnimations;
+        if (defaults == null || defaults.Length == 0) return;
+
+        string file = System.IO.Path.GetFileNameWithoutExtension(NormalPath);
+        ModelImporterClipAnimation clip = defaults[0];
+
+        // Имя клипа — суффикс после «@». Роли раскладываются по имени ФАЙЛА,
+        // так что имя внутри файла ни на что не влияет, кроме читаемости
+        // окна Animator; «mixamo.com» там не говорит ничего.
+        clip.name = file.Substring(file.IndexOf('@') + 1);
+
+        // В исходнике Корнеполза три маха. Оставляем первый: кисть проходит
+        // перед телом на кадре 17, то есть через 9 кадров после начала 8.
+        // Второй файл зеркальный; это та же Царапина с другой руки.
+        if (file == "Forest_RootSwarm@AttackA" || file == "Forest_RootSwarm@AttackB")
+        {
+            clip.firstFrame = 8f;
+            clip.lastFrame = 24f;
+        }
+
+        bool loop = RazlomMobAnimatorBuilder.IsLoopingClipFile(file);
+        clip.loopTime = loop;
+
+        clip.lockRootPositionXZ = !RazlomMobAnimatorBuilder.IsRootTravelClipFile(file);
+        clip.keepOriginalPositionXZ = true;
+        clip.lockRootHeightY = true;
+        clip.keepOriginalPositionY = true;
+        clip.lockRootRotation = true;
+        clip.keepOriginalOrientation = true;
+
+        importer.clipAnimations = new[] { clip };
+    }
+
     private void ConfigurePelagMixamoClips(ModelImporter importer)
     {
         ModelImporterClipAnimation[] defaults = importer.defaultClipAnimations;
@@ -118,6 +212,16 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             // Два удара и recovery остаются одним тейком, но delivery теперь
             // пересобран в 30 fps. Граница 25 принадлежит обеим половинам:
             // поза стыка совпадает, а B сохраняет весь мягкий recovery до 74.
+            //
+            // ГРАНИЦУ 25 НЕ ДВИГАТЬ. 2 сентября её пробовали сдвинуть на 31,
+            // чтобы выбросить кадры 25–30: там сабля делает полный оборот
+            // вокруг персонажа за пять кадров, остриё идёт до 1.19 м за кадр
+            // (36 м/с), и при 30 fps это ближе к телепорту, чем к росчерку.
+            // Стало хуже: связка A→B держится именно на том, что последний
+            // кадр A и первый кадр B — один и тот же кадр исходника. Сдвиг
+            // разорвал стык, и вместо быстрого росчерка получился обрыв позы,
+            // который видно куда сильнее. Прокрут — это плата за непрерывность,
+            // и убирать его можно только перерисовкой клипов, а не нарезкой.
             importer.clipAnimations = new[]
             {
                 Clip(source, "Pelag_MX_SaberAttackA", 1f, 25f, false),
@@ -300,6 +404,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             importer.importNormals = ModelImporterNormals.None;
             importer.importTangents = ModelImporterTangents.None;
             importer.materialImportMode = ModelImporterMaterialImportMode.None;
+            LockRoot(importer);
         }
         else
         {
@@ -311,6 +416,124 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         Debug.Log($"[Разлом] Импорт настроен ({(IsAnimationOnly ? "анимация" : "персонаж")}): {assetPath}");
     }
+
+    /// <summary>
+    /// Прибивает корень клипа на месте.
+    ///
+    /// Mixamo выгружает анимации со снятой галкой «In Place», и клип тащит
+    /// персонажа за собой. В нашей игре положение тела решает тик симуляции:
+    /// клип, двигающий персонажа сам, уводит картинку от симуляции — моб
+    /// убегает по анимации и возвращается рывком, когда цикл замыкается.
+    ///
+    /// `ArenaView` на всякий случай ещё и гасит `applyRootMotion`, но это
+    /// защита рантайма. Правильное место — импорт: тогда клип честно лежит
+    /// на месте, кто бы его ни проигрывал, включая объект, брошенный в сцену
+    /// руками для проверки.
+    ///
+    /// Те же шесть флагов стоят у клипов Пелага — см. `Clip()` выше.
+    /// </summary>
+    private static void LockRoot(ModelImporter importer)
+    {
+        ModelImporterClipAnimation[] clips = importer.defaultClipAnimations;
+        if (clips == null || clips.Length == 0) return;
+
+        for (int i = 0; i < clips.Length; i++)
+        {
+            clips[i].lockRootRotation = true;
+            clips[i].keepOriginalOrientation = true;
+            clips[i].lockRootPositionXZ = true;
+            clips[i].keepOriginalPositionXZ = true;
+            clips[i].lockRootHeightY = true;
+            clips[i].keepOriginalPositionY = true;
+        }
+
+        importer.clipAnimations = clips;
+    }
+
+    /// <summary>
+    /// Применяет то же самое к уже импортированным клипам.
+    ///
+    /// Нужно отдельной командой, потому что постпроцессор специально не трогает
+    /// настроенный ассет — иначе он затирал бы ручные правки в инспекторе. Для
+    /// клипов, приехавших до этой правки, обойти охрану можно только так.
+    /// </summary>
+    [MenuItem("Разлом/Клипы мобов — прибить корень на месте")]
+    public static void LockRootOnExistingClips()
+    {
+        string[] guids = AssetDatabase.FindAssets("t:Model",
+            new[] { "Assets/Resources/Characters" });
+        int fixedCount = 0;
+
+        foreach (string guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            // Клипы Пелага уже прибиты своим рецептом, второй раз не трогаем.
+            if (path.Contains("/Pelag_v5/")) continue;
+            if (!System.IO.Path.GetFileNameWithoutExtension(path).Contains('@')) continue;
+
+            var importer = AssetImporter.GetAtPath(path) as ModelImporter;
+            if (importer == null) continue;
+
+            LockRoot(importer);
+            importer.SaveAndReimport();
+            fixedCount++;
+            Debug.Log($"[Разлом] Корень прибит: {System.IO.Path.GetFileName(path)}");
+        }
+
+        Debug.Log($"[Разлом] Клипов приведено к in-place: {fixedCount}");
+    }
+
+    /// <summary>
+    /// Кладёт в тангенсы нормаль, усреднённую ПО ПОЛОЖЕНИЮ вершины.
+    ///
+    /// Обводка рисуется вывернутой оболочкой: меш растягивается вдоль нормали
+    /// и рисуется задними гранями. На стыках, где нормали разъехались — жёсткие
+    /// рёбра, швы развёртки, кромки листвы, — оболочка расходится, и красное
+    /// лезет ВНУТРЬ силуэта. Именно это владелец и увидел на Лесном страже:
+    /// «много лишних мелких моментов выделяет, а не только силуэт».
+    ///
+    /// Чинится не сглаживанием нормалей модели — это поменяло бы саму заливку, —
+    /// а второй нормалью, сшитой по положению. Тангенсы для этого свободны:
+    /// `RazlomTextureToon` не читает ни их, ни карту нормалей, проверено поиском.
+    /// Обводочный проход берёт направление отсюда, освещение — из обычной
+    /// нормали, и заливка не меняется ни на пиксель.
+    /// </summary>
+    private void OnPostprocessMesh(Mesh mesh)
+    {
+        if (!IsCharacter || IsAnimationOnly) return;
+
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        if (vertices.Length == 0 || normals.Length != vertices.Length) return;
+
+        var sums = new System.Collections.Generic.Dictionary<Vector3, Vector3>(vertices.Length);
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 key = Quantize(vertices[i]);
+            sums.TryGetValue(key, out Vector3 sum);
+            sums[key] = sum + normals[i];
+        }
+
+        var tangents = new Vector4[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 smooth = sums[Quantize(vertices[i])];
+            // Вырожденный случай — противоположные нормали в одной точке гасят
+            // друг друга. Тогда честнее оставить исходную, чем нулевой вектор.
+            smooth = smooth.sqrMagnitude > 1e-8f ? smooth.normalized : normals[i];
+            tangents[i] = new Vector4(smooth.x, smooth.y, smooth.z, 1f);
+        }
+
+        mesh.tangents = tangents;
+    }
+
+    /// <summary>
+    /// Округление координаты до сотых долей миллиметра: вершины шва совпадают
+    /// по положению не побитово, а с точностью экспорта.
+    /// </summary>
+    private static Vector3 Quantize(Vector3 value) => new Vector3(
+        Mathf.Round(value.x * 10000f), Mathf.Round(value.y * 10000f),
+        Mathf.Round(value.z * 10000f));
 
     private void OnPreprocessTexture()
     {

@@ -61,6 +61,14 @@ namespace Game.View
 
         private void OnGUI()
         {
+            // ТОЛЬКО ОТРИСОВКА. Unity зовёт OnGUI по нескольку раз за кадр —
+            // на Layout, на каждое событие мыши и клавиатуры и на Repaint, — а
+            // в этой панели нет ни одного интерактивного элемента: полоса
+            // здоровья и слоты только рисуются. Замер показал, чего стоит
+            // разница: с HUD кадр 3.19 мс и 3625 Б мусора, без него 2.49 мс и
+            // 394 Б. Всё, кроме Repaint, здесь было чистой платой ни за что.
+            if (Event.current.type != EventType.Repaint) return;
+
             if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
             if (session == null || session.Mode != GameMode.Rift) return;
@@ -183,7 +191,7 @@ namespace Game.View
                     GUI.Label(box, seconds.ToString("0.0"), _cooldownLabel);
                 }
 
-                GUI.Label(new Rect(box.x + 4f, box.y + 4f, 20f, 20f), (slot + 1).ToString(), _slotKey);
+                GUI.Label(new Rect(box.x + 4f, box.y + 4f, 20f, 20f), SlotKey(slot), _slotKey);
                 // ПОДПИСЬ НЕ ШИРЕ СВОЕГО СЛОТА.
                 //
                 // Была `box.width + 48`: подпись вылезала на 24 пикселя в обе
@@ -201,10 +209,31 @@ namespace Game.View
         }
 
         /// <summary>
+        /// Клавиша слота в углу иконки. Какой ряд — решает игрок в настройках,
+        /// и панель обязана показывать именно его: подпись, врущая про кнопку,
+        /// хуже отсутствующей.
+        ///
+        /// Разбор ЗДЕСЬ идёт по номеру слота, а не по видимой позиции: пустые
+        /// слоты панель пропускает, а клавиша у слота своя.
+        /// </summary>
+        private static string SlotKey(int slot)
+        {
+            bool letters = GameUserSettings.AbilityRowUsesLetters;
+            switch (slot)
+            {
+                case 0: return letters ? "Q" : "1";
+                case 1: return letters ? "W" : "2";
+                case 2: return letters ? "E" : "3";
+                case 3: return letters ? "R" : "4";
+                default: return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// Имя способности под слотом.
         ///
         /// Иконка пока одна — у Вихря; у остальных трёх слот был бы пустым
-        /// квадратом с цифрой, и игрок не знал бы, что нажимает. Подпись стоит
+        /// квадратом с буквой, и игрок не знал бы, что нажимает. Подпись стоит
         /// ничего и снимает вопрос до появления иконок.
         ///
         /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция на
@@ -241,8 +270,8 @@ namespace Game.View
         {
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "БРОСОК ЯКОРЯ";
-            if (definitionId == AbilityDefinition.AnchorSweepId) return "ПОДСЕЧКА";
-            if (definitionId == AbilityDefinition.ChainStepId) return "ШАГ ПО ЦЕПИ";
+            if (definitionId == AbilityDefinition.AnchorSweepId) return "МАССОВЫЙ ХУК";
+            if (definitionId == AbilityDefinition.ChainStepId) return "ШКВАЛ САБЛИ";
             return "СПОСОБНОСТЬ";
         }
 

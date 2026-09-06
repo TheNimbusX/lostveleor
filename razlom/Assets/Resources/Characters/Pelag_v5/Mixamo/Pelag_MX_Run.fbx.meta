@@ -33,8 +33,8 @@ ModelImporter:
     clipAnimations:
     - serializedVersion: 16
       name: Pelag_MX_Run
-      takeName: Armature|Scene
-      internalID: 1235213234022721315
+      takeName: Scene
+      internalID: -623603649343465320
       firstFrame: 0
       lastFrame: 33
       wrapMode: 0

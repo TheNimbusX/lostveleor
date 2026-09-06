@@ -20,6 +20,7 @@ namespace Game.View
         [Range(0f, 1f)] public float MetalVolume = 0.34f;
         [Range(0f, 1f)] public float BodyVolume = 0.52f;
         [Range(0f, 1f)] public float KillVolume = 0.56f;
+        [Range(0f, 1f)] public float DissolveVolume = 0.44f;
         [Range(0f, 1f)] public float WhirlwindVolume = 0.60f;
         [Range(0f, 1f)] public float CastVolume = 0.50f;
         [Range(0f, 1f)] public float RewardVolume = 0.60f;
@@ -56,8 +57,49 @@ namespace Game.View
             /// </summary>
             Footstep = 9,
 
-            Count = 10,
+            /// <summary>
+            /// Осыпание трупа. Отдельный звук от Kill, а не замена ему: Kill —
+            /// это удар, который убил, а этот — то, как тело перестаёт быть.
+            /// Они и звучат в разное время, см. DissolveDelay.
+            /// </summary>
+            Dissolve = 10,
+
+            Count = 11,
         }
+
+        /// <summary>
+        /// Когда осыпание вступает после смерти.
+        ///
+        /// ЧИСЛО НЕ ПОДОБРАНО, А ВЗЯТО ИЗ ПОКАЗА. Порядок в ArenaView такой:
+        /// падение (OrvillDeathAnimationDuration = 0.73) → лежит
+        /// (OrvillDeathPoseHoldDuration = 0.14) → растворение
+        /// (OrvillDeathFadeDuration = 0.50). Сумма первых двух и есть момент,
+        /// когда _DeathFade трогается с нуля, — здесь и вступает звук.
+        ///
+        /// Сам клип обрезан ровно под 0.50 с растворения: владелец просил,
+        /// чтобы звук совпадал со временем осыпания, а не догорал после него.
+        ///
+        /// ЗАВИСИТ ОТ ArenaView. Меняешь окно растворения — правь здесь и
+        /// перережь dissolve_sand_00.ogg под новую длину.
+        /// </summary>
+        private const float DissolveDelay = ArenaView.OrvillDeathDissolveStartDelay;
+
+        // The visual dissolve window is fixed by ArenaView. Imported clips may
+        // contain a small encoder tail, so the dissolve voice is rate-matched
+        // to the same 0.50 s window instead of audibly outliving the body.
+        private const float DissolveDuration = 0.50f;
+
+        /// <summary>
+        /// Отложенные осыпания: время, когда каждое должно прозвучать.
+        ///
+        /// ПОЧЕМУ НЕ PlayDelayed. Он занимает голос из пула с момента вызова,
+        /// а ждать теперь почти секунду: голос простаивал бы всю смерть и его
+        /// успел бы отобрать следующий удар — звук пропал бы молча. Здесь
+        /// голос берётся в тот момент, когда пора играть.
+        /// </summary>
+        private readonly float[] _dissolveDue = new float[16];
+        private int _dissolveDueCount;
+        private float _anchorImpactAt = -1f, _anchorLandAt = -1f;
 
         private TickDriver _driver;
         private AudioSource[] _voices;
@@ -101,9 +143,26 @@ namespace Game.View
             UpdateWhoosh();
             if (_driver.Sim != null)
             {
-                ConsumeEvents();
+            ConsumeEvents();
+            if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
+            {
+                _anchorImpactAt = -1f;
+                Play(Sound.HitMetal, MetalVolume * .85f, .78f, .02f);
+                Play(Sound.HitBody, BodyVolume * .55f, .82f, .02f);
+            }
+            if (_anchorLandAt >= 0f && Time.time >= _anchorLandAt)
+            {
+                _anchorLandAt = -1f;
+                PlayFootstepPart();
+            }
                 UpdateFootsteps();
             }
+
+            // ПОСЛЕ ConsumeEvents. Смерть этого кадра ставится в очередь на
+            // без малого секунду вперёд, так что раньше следующего кадра
+            // сработать всё равно не может, — а вот вчерашние очереди должны
+            // успеть прозвучать до того, как кадр закончится.
+            FlushDissolves();
         }
 
         private void PlayModeChange()
@@ -111,6 +170,13 @@ namespace Game.View
             GameSession session = _driver.Session;
             if (session == null || session.Mode == _modeShown) return;
             _modeShown = session.Mode;
+
+            // Смена режима обрывает бой на середине. Осыпание, поставленное в
+            // очередь за долю секунды до выхода из Разлома, прозвучало бы уже
+            // в лагере — над пустой поляной, без тела.
+            _dissolveDueCount = 0;
+            _anchorImpactAt = _anchorLandAt = -1f;
+
             if (_modeShown == GameMode.Summary)
                 Play(Sound.Reward, RewardVolume, 0.96f, 0.03f);
         }
@@ -140,13 +206,25 @@ namespace Game.View
                         break;
 
                     case SimEventType.Death:
+                        if (e.Target == Simulation.PlayerId) _anchorImpactAt = _anchorLandAt = -1f;
                         if (e.Target != Simulation.PlayerId)
+                        {
                             Play(Sound.Kill, KillVolume, 0.90f, 0.05f);
+                            QueueDissolve(_driver.Sim.Entities.Kind[e.Target]);
+                        }
                         break;
 
                     case SimEventType.AbilityCast:
                         if (e.Source == Simulation.PlayerId)
                         {
+                            _anchorImpactAt = _anchorLandAt = -1f;
+                            _whooshDelay = -1f;
+                            if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
+                            {
+                                // Даже промах имеет контакт с землёй; попадания во врагов звучат по Damage.
+                                _anchorImpactAt = Time.time + PelagAbilityTiming.LeapWindup;
+                                _anchorLandAt = Time.time + PelagAbilityTiming.LeapArrival;
+                            }
                             if (IsWhirlwindSlot(e.Amount))
                             {
                                 // Whirlwind cancels a primed basic attack in
@@ -338,7 +416,38 @@ namespace Game.View
             return 0.95f;
         }
 
-        private void Play(Sound sound, float volume, float pitchCenter, float pitchSpread)
+        private void QueueDissolve(EnemyKind kind)
+        {
+            // Переполнение — не ошибка, а решение: если за одну секунду умерло
+            // больше шестнадцати, шестнадцатый шелест всё равно неразличим.
+            if (_dissolveDueCount >= _dissolveDue.Length) return;
+            _dissolveDue[_dissolveDueCount++] = Time.time + ArenaView.DeathDissolveStartDelay(kind);
+        }
+
+        private void FlushDissolves()
+        {
+            float now = Time.time;
+            int write = 0;
+            for (int i = 0; i < _dissolveDueCount; i++)
+            {
+                if (_dissolveDue[i] > now)
+                {
+                    _dissolveDue[write++] = _dissolveDue[i];
+                    continue;
+                }
+
+                // Pitch здесь намеренно фиксирован. Этот голос подгоняется к
+                // ровно 0.50 с визуального dissolve; случайный разброс pitch
+                // снова менял бы его длину до 0.46..0.55 с и возвращал
+                // рассинхрон. Вариативность толпы даёт crowding микса.
+                Play(Sound.Dissolve, DissolveVolume, 1.00f, 0f,
+                    playbackDuration: DissolveDuration);
+            }
+            _dissolveDueCount = write;
+        }
+
+        private void Play(Sound sound, float volume, float pitchCenter, float pitchSpread,
+            float delay = 0f, float playbackDuration = 0f)
         {
             int soundIndex = (int)sound;
             AudioClip[] clips = _variants[soundIndex];
@@ -354,9 +463,16 @@ namespace Game.View
             voice.clip = clips[variant];
             voice.volume = Mathf.Clamp01(volume * crowding * Master
                                          * GameUserSettings.EffectsVolume);
-            voice.pitch = Mathf.Clamp(pitchCenter + (Random01() - 0.5f) * pitchSpread * 2f,
-                0.70f, 1.18f);
-            voice.Play();
+            float pitch = pitchCenter + (Random01() - 0.5f) * pitchSpread * 2f;
+            if (playbackDuration > 0.001f && voice.clip.length > 0.001f)
+                pitch *= voice.clip.length / playbackDuration;
+            voice.pitch = Mathf.Clamp(pitch, 0.70f, 1.18f);
+            // PlayDelayed, а не корутина: задержка отсчитывается по звуковым
+            // часам, и осыпание не съезжает от растворения на просадке кадров.
+            // Голос при этом занят с этой секунды — то есть отложенный звук
+            // нельзя перебить, не остановив его же.
+            if (delay > 0f) voice.PlayDelayed(delay);
+            else voice.Play();
         }
 
         private int PickVariant(int soundIndex, int count)
@@ -393,6 +509,7 @@ namespace Game.View
             _variants[(int)Sound.HitMetal] = Resources.LoadAll<AudioClip>("Audio/Combat/HitMetal");
             _variants[(int)Sound.HitBody] = Resources.LoadAll<AudioClip>("Audio/Combat/HitBody");
             _variants[(int)Sound.Kill] = Resources.LoadAll<AudioClip>("Audio/Combat/Kill");
+            _variants[(int)Sound.Dissolve] = Resources.LoadAll<AudioClip>("Audio/Combat/Dissolve");
             AudioClip whirlwind = Resources.Load<AudioClip>("Audio/Combat/whirlwind_pelag_pcm");
             _variants[(int)Sound.Whirlwind] = whirlwind != null
                 ? new[] { whirlwind }

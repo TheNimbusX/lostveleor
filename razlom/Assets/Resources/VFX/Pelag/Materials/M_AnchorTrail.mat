@@ -25,6 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _Brush: 0
     - _Intensity: 0.82
     - _Softness: 0.28
     m_Colors:

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 using Game.Sim;
 
@@ -19,6 +19,7 @@ namespace Game.View
         [Tooltip("Сколько объектов создать заранее. 0 — по вместимости EntityStore.")]
         public int PrewarmWole = 8;
         public int PrewarmOrvill = 64;
+        public int PrewarmRootSwarm = 6;
 
         [Header("Вид")]
         public Color WoleColor = new Color(0.92f, 0.40f, 0.46f);
@@ -36,24 +37,48 @@ namespace Game.View
         // придётся каждую. На v6 это уже случилось: тело пришло ростом 1.8, я
         // компенсировал здесь, и сабля выросла в полсотни раз.
         public float WoleScale = 1.82f;
-        public float OrvillScale = 1.0f;
+
+        // ЗАМЕРЕНО, А НЕ ПОДОБРАНО. Меш Лесного стража приходит высотой 0.98
+        // единицы — ровно как тело Пелага, — а стояло здесь 1.0, и моб выходил
+        // ростом в метр против геройских 1.78.
+        //
+        // 2.0 давало 1.96 м — на десятую выше героя. По просьбе владельца ещё
+        // +20 %: 2.4 это 2.35 м, страж заметно возвышается над Пелагом.
+        // Меняешь модель — дели желаемый рост в метрах на высоту меша, а не
+        // крути на глаз.
+        //
+        // ВНИМАНИЕ: радиус тела в симуляции остался 0.62 м и с масштабом не
+        // связан. Чем крупнее модель, тем сильнее толпа налезает друг на друга
+        // в кадре. Лечится либо радиусом в Sim (правка ядра, с тестами), либо
+        // масштабом обратно — это решение владельца, а не автора правки.
+        public float OrvillScale = 2.4f;
+
+        [Header("Корнеполз")]
+        // Bind pose измерена в FBX: 0.661713 м. Бестиарий задаёт рост 1.05 м.
+        public float RootSwarmScale = 1.05f / 0.661713f;
+        // Основной FBX без костей; выгрузка Idle содержит то же тело с ригом.
+        public string RootSwarmModel = "Characters/Forest_RootSwarm/Forest_RootSwarm@Idle";
+        public string RootSwarmController = "Characters/Forest_RootSwarm/Forest_RootSwarm_Combat";
+        public string RootSwarmMaterial = "Characters/Forest_RootSwarm/Forest_RootSwarm_Material";
+        public string RootSwarmTexture = "Characters/Forest_RootSwarm/Forest_RootSwarm_BaseColor";
 
         [Header("Модели персонажей")]
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
         public string WoleModel = "Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig";
 
-        // v3 — модель по утверждённому концепту: чёрное с золотом, красный ромб,
-        // длинный плащ. Пришла ростом 0.98 м на риге AccuRig и приведена под
-        // движок: рост выставлен в 1.88 ровно, как у v2, кости переименованы под
-        // Humanoid, добавлены сокеты Weapon_R и Shield_L.
+        // ПЕРВЫЙ МОБ ПАКА — Лесной страж, 3 сентября. Орвилл снят: модель
+        // получилась кривой, и держать её ради истории смысла нет.
         //
-        // РУКИ У НЕЁ ПУСТЫЕ, и это осознанно: в v2 меч и щит были частью одного
-        // меша и не снимались. Пока на сокеты ничего не надето, моб ходит
-        // безоружным — это видно сразу и чинится навеской пропсов, а не правкой
-        // модели. Откат на прежнюю: вернуть сюда Orvill_v2/Orvill_v2_CombatRig
-        // и OrvillTexture на Orvill_v2_BaseColor.
-        [Tooltip("Анимируемая 3D-модель Орвилла в Resources.")]
-        public string OrvillModel = "Characters/Orvill_v3/Orvill_v3_CombatRig";
+        // Страж приехал конвейером Tripo → Mixamo → Unity: тело Humanoid на
+        // стандартном 65-костном скелете Mixamo, клипы лежат рядом файлами
+        // «Forest_Guardian@<Роль>.fbx», контроллер собирает
+        // RazlomMobAnimatorBuilder из того, что нашлось.
+        //
+        // ВАЖНО ПРО ФРАКЦИЮ: `Faction.Orvill` — это сторона в симуляции, а не
+        // этот конкретный персонаж. Она остаётся; сменилось только тело,
+        // которое ею рисуется. Поля ниже поэтому и зовутся Orvill*.
+        [Tooltip("Анимируемая 3D-модель моба в Resources.")]
+        public string OrvillModel = "Characters/Forest_Guardian/Forest_Guardian";
 
         // Игровая модель и клипы используют один Mixamo-скелет. Generic выбран
         // намеренно: так ноги, кисти и пальцы проигрываются без ретаргета.
@@ -61,8 +86,10 @@ namespace Game.View
                  "пустым, и без контроллера персонаж стоит столбом.")]
         public string WoleController = "Characters/Pelag_v5/Pelag_v5_FullCombat";
 
+        // Собирается скриптом, как и у Пелага: меню «Разлом → Собрать
+        // контроллеры мобов». Руками его править бесполезно — пересоберётся.
         public string OrvillController =
-            "Characters/Orvill_ShieldInfantry_01/Orvill_FullCombat";
+            "Characters/Forest_Guardian/Forest_Guardian_Combat";
 
         // Пусто: раскраска приехала внутри FBX отдельным материалом на каждую
         // часть тела, и постпроцессор импорта уже перевёл их на тун-шейдер.
@@ -70,7 +97,18 @@ namespace Game.View
         [Tooltip("Материал персонажа в Resources. Пусто — материал берётся из модели.")]
         public string WoleMaterial = "";
 
-        public string OrvillMaterial = "";
+        // МАТЕРИАЛ МОБА — АССЕТ, А НЕ СБОРКА В КОДЕ.
+        //
+        // Пусто здесь означало «собери материал на лету из текстуры», и это
+        // было удобно ровно до тех пор, пока у шейдера не появились ручки
+        // растворения. Собранный в коде материал нельзя ни выделить, ни
+        // покрутить: владелец открывал .shader и закономерно не находил в нём
+        // ни одного слайдера — свойства живут на материале, а материала не
+        // существовало до старта игры.
+        //
+        // Теперь игра берёт готовый ассет. Что покрутил в инспекторе — то и
+        // будет в бою. Вернуть прежнее поведение: поставить сюда пустую строку.
+        public string OrvillMaterial = "Characters/Forest_Guardian/Forest_Guardian_Material";
 
         // Картинка ОТДЕЛЬНЫМ файлом рядом с моделью, а не вшитая в FBX.
         //
@@ -83,7 +121,7 @@ namespace Game.View
                  "материала нет, он собирается прямо в игре из этой картинки.")]
         public string WoleTexture = "Characters/Pelag_v6/Pelag_v6_BaseColor";
 
-        public string OrvillTexture = "Characters/Orvill_v3/Orvill_v3_BaseColor";
+        public string OrvillTexture = "Characters/Forest_Guardian/Forest_Guardian_BaseColor";
 
         [Header("Модульное снаряжение героя")]
         [Tooltip("Отдельный prefab оружия. Он не связан с мешем тела и меняется через сокет.")]
@@ -104,6 +142,16 @@ namespace Game.View
         // повёрнутом объекте. Клинок слегка сплющен поперёк; на изометрии это
         // не читается. Если понадобится ровный — 0.5 по всем осям.
         public Vector3 WoleWeaponLocalScale =
+            new Vector3(0.5722176f, 0.4797959f, 0.4378099f);
+
+        [Tooltip("Кость, на которой сабля лежит в бытовом idle. Ножен в ассете нет, " +
+                 "поэтому это голый клинок за кушаком.")]
+        public string WoleWeaponStoredSocket = "mixamorig:Hips";
+        public Vector3 WoleWeaponStoredLocalPosition =
+            new Vector3(-0.12f, 0.015f, 0.065f);
+        public Vector3 WoleWeaponStoredLocalRotation =
+            new Vector3(0.435f, 89.205f, 237.383f);
+        public Vector3 WoleWeaponStoredLocalScale =
             new Vector3(0.5722176f, 0.4797959f, 0.4378099f);
 
         // ЯКОРЬ НА ПОЯСЕ. До 1 сентября его на персонаже не было вовсе: голова
@@ -130,9 +178,18 @@ namespace Game.View
         // а 393.829 — те же 33.829.
         [Tooltip("Смещение от кости таза. Правится в Play Mode на объекте " +
                  "Pelag_AnchorGrip_Equipped, потом переписывается сюда.")]
-        public Vector3 WoleAnchorLocalPosition = new Vector3(-0.114f, -0.0545f, -0.0722f);
+        public Vector3 WoleAnchorLocalPosition = new Vector3(0.114f, -0.0545f, -0.0722f);
         public Vector3 WoleAnchorLocalRotation = new Vector3(-30.773f, 4.532f, 33.829f);
         public Vector3 WoleAnchorLocalScale = new Vector3(0.55f, 0.55f, 0.55f);
+
+        [Tooltip("Кость левой руки для короткого anchor-use окна. Грип один и тот же " +
+                 "объект: он перепривязывается сюда и затем возвращается на пояс.")]
+        public string WoleAnchorEquippedSocket = "mixamorig:LeftHand";
+        public Vector3 WoleAnchorEquippedLocalPosition =
+            new Vector3(0.012f, 0.035f, -0.012f);
+        public Vector3 WoleAnchorEquippedLocalRotation =
+            new Vector3(270.02f, 0f, 0f);
+        public Vector3 WoleAnchorEquippedLocalScale = new Vector3(0.55f, 0.55f, 0.55f);
 
         [Tooltip("Доворот модели вокруг вертикали, градусы. Если персонаж бегает " +
                  "спиной вперёд — поставь 180. Зависит от того, куда смотрел " +
@@ -149,6 +206,7 @@ namespace Game.View
 
         private ViewPool _wolePool;
         private ViewPool _orvillPool;
+        private ViewPool _rootSwarmPool;
         private ViewPool _projectilePool;
 
         // Снаряд → его объект. Слоты снарядов переиспользуются, поэтому объект
@@ -162,6 +220,8 @@ namespace Game.View
         private ViewPool[] _viewPools;
         private float[] _groundOffset;
         private CharacterAnimatorView[] _animationViews;
+        private Vector3 _playerAbilityFacing;
+        private PelagEquipmentView[] _equipmentViews;
         private float[] _deathUntil;
         private bool[] _deathStarted;
         private float[] _deathStartedAt;
@@ -196,8 +256,6 @@ namespace Game.View
         // замедляет время специально, и поза удара обязана замереть вместе
         // со всем остальным — в этом и весь смысл стопа.
         private Vector3[] _hitRecoil;
-        private Vector3[] _deathLaunch;
-        private Vector3[] _deathSpinAxis;
 
         /// <summary>Кого уже тащили в прошлом кадре — чтобы клип запускался один раз.</summary>
         private bool[] _wasDragged;
@@ -210,10 +268,25 @@ namespace Game.View
         private float[] _hitFlash;
         private float[] _lastVelocityMagnitude;
         private bool[] _locomotionMoving;
+        private Vector3 _previousPlayerPosition;
+        private bool _hasPreviousPlayerPosition;
         private Vector3[] _lastFacingWorld;
         private Vector3[] _visualFacingWorld;
+
+        // Куда тело поставили в прошлом кадре. Нужно только сторожу скачков:
+        // симуляция уже проверена и не прыгает, значит рывок — здесь, и его
+        // надо поймать с разбором на слагаемые, а не на глаз.
+        private Vector3[] _lastRenderPosition;
+        private bool[] _hasLastRenderPosition;
         private float[] _turnVisualUntil;
         private float[] _turnVisualDirection;
+        private const float CombatThreatDistance = 6.5f;
+        private const float CombatGraceSeconds = 3f;
+        private const float AnchorFallbackSeconds = 2.4f;
+        private float _playerCombatUntil;
+        private float _playerAnchorFallbackUntil;
+        private bool _playerCombatReady;
+        private bool _anchorSaberSuppressed;
         // Только presentation-offset: capture/demo может показать рывок или
         // сопротивление цепи, не меняя детерминированную позицию в Sim.
         private Vector3[] _presentationOffset;
@@ -221,33 +294,76 @@ namespace Game.View
         private static readonly int DeathFadeId = Shader.PropertyToID("_DeathFade");
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
+        // КОНТУР ВРАГА. Ширина задана в пикселях экрана, а не в метрах: на
+        // ортокамере метр — это фиксированное число пикселей, но кромка должна
+        // остаться одинаковой и при зуме удара, и при смене разрешения.
+        //
+        // Цвета лежат за единицей намеренно. Порог Bloom в CombatLook — 1.05,
+        // и наружный ореол вокруг силуэта рисует именно блум; опусти эти числа
+        // под порог, и вместо свечения останется плоская цветная рамка.
+        //
+        // ЗА ПОРОГ ВЫХОДИТ ТОЛЬКО КРАСНЫЙ. Первый заход поднял и зелёный —
+        // 1.35 при пороге 1.05, — и светиться начали оба канала сразу.
+        // Tonemapping здесь Neutral: он давит вырвавшийся красный сильнее,
+        // чем зелёный, тот догоняет, и тёплое свечение выходит жёлтым.
+        // Держим G и B под порогом — тогда ореол остаётся красно-оранжевым.
+        // Контур должен отделять силуэт, а не становиться главным объектом
+        // кадра. Раньше три shell-прохода на ширине 1.6/2.0 px давали
+        // горячую HDR-рамку и слипались между соседними мобами. Теперь
+        // обычный враг получает спокойный тёплый акцент, а hover лишь слегка
+        // усиливает его для выбора цели.
+        private const float HeroOutlineWidth = 1.15f;
+        private const float HostileOutlineWidth = 1.25f;
+        private const float HoveredOutlineWidth = 1.65f;
+        private static readonly Color HeroOutlineColor = new Color(0.024f, 0.012f, 0.008f, 1f);
+        // CombatLook поднимает насыщенность на 46: приглушённый исходник
+        // после цветокоррекции становится охристо-оранжевым, как в концепте.
+        private static readonly Color HostileOutlineColor = new Color(0.70f, 0.46f, 0.30f, 1f);
+        private static readonly Color HoveredOutlineColor = new Color(0.90f, 0.62f, 0.38f, 1f);
         private static Sprite _contactShadowSprite;
         private const string ContactShadowName = "Contact Shadow";
         private const float WoleSpriteScaleMultiplier = 0.78f;
         private const float OrvillSpriteScaleMultiplier = 0.82f;
-        // СМЕРТЬ РЯДОВОГО МОБА — ЭТО ВЫБРОС, А НЕ ПАДЕНИЕ.
+        // СМЕРТЬ МОБА: УПАЛ — ПОЛЕЖАЛ — ОСЫПАЛСЯ. Порядок задан владельцем и
+        // ровно в таком порядке эти три числа и стоят.
         //
-        // Раньше здесь стояло 1.6 + 0.18 + 0.42 = 2.2 секунды: полноценная
-        // анимация умирания, потом пауза на позе, потом растворение. Для
-        // одного врага это красиво; для гриндилки, где за забег их сотни, это
-        // мешок, который валится две секунды и всё это время занимает экран.
-        // Никакие искры поверх такого не спасают — они кончаются, а мешок ещё
-        // падает.
+        // ЧИСЛА ВЗЯТЫ ИЗ ЗАМЕРА КЛИПА, А НЕ НА ГЛАЗ. Forest_Guardian@Mutant
+        // Dying прогнан покадрово в Blender по высоте таза:
         //
-        // 0.16 + 0.30 = меньше половины секунды. Тело выбрасывает, крутит и
-        // растворяет; к моменту, когда игрок довёл прицел до следующего врага,
-        // предыдущего уже нет. Именно это читается как «разлетелся».
-        private const float OrvillDeathAnimationDuration = 0.16f;
-        private const float OrvillDeathPoseHoldDuration = 0f;
-        private const float OrvillDeathFadeDuration = 0.30f;
+        //     кадры  1–9   таз на 0.430 — существо просто СТОИТ (0.27 с);
+        //     кадры  9–24  оседание, таз 0.430 → 0.388;
+        //     кадры 24–42  собственно падение, 0.388 → 0.091;
+        //     кадры 42–73  таз 0.090, голова 0.130 — мёртвая заморозка (1.0 с).
+        //
+        // Отсюда и показ: начинаем клип с 24-го кадра (см. OrvillDeathClipStart
+        // в CharacterAnimatorView) и держим 22 кадра до приземления — это
+        // 0.73 с при 30 fps. Ни стоячего вступления, ни замороженного хвоста в
+        // кадре нет: обе эти части и создавали «застыл в непонятной позе».
+        //
+        // Прежние 0.16 + 0.30 не позволяли увидеть падение в принципе: за
+        // 0.16 с клип на скорости 0.67 доходил до девятого кадра, где тело ещё
+        // стоит. Всё «падение» в кадре делал выброс, которого больше нет.
+        private const float OrvillDeathAnimationDuration = 0.73f;
 
-        // Выброс тела: горизонтальная скорость от удара плюс подброс вверх.
-        // Через тело проходит парабола, а не прямая — прямая читается как
-        // скольжение по льду.
-        private const float DeathLaunchSpeed = 4.6f;
-        private const float DeathLaunchLift = 3.1f;
-        private const float DeathGravity = 11.5f;
-        private const float DeathSpinSpeed = 520f;
+        /// <summary>Доля секунды на приземлившейся позе, прежде чем осыпаться.</summary>
+        private const float OrvillDeathPoseHoldDuration = 0.14f;
+
+        /// <summary>
+        /// Растворение. ДЛИНА СВЯЗАНА СО ЗВУКОМ: осыпание в CombatAudio длится
+        /// столько же и стартует ровно в начале этого окна. Меняешь здесь —
+        /// перережь клип и поправь CombatAudio.DissolveDelay.
+        /// </summary>
+        private const float OrvillDeathFadeDuration = 0.50f;
+
+        // Единая точка синхронизации View и CombatAudio. Звук осыпания
+        // стартует в тот же момент, когда DeathFade становится больше нуля.
+        public const float OrvillDeathDissolveStartDelay =
+            OrvillDeathAnimationDuration + OrvillDeathPoseHoldDuration;
+
+        public static float DeathDissolveStartDelay(EnemyKind kind)
+            => (kind == EnemyKind.ForestRootSwarm ? 50f / 30f / 2f : OrvillDeathAnimationDuration)
+               + OrvillDeathPoseHoldDuration;
+
         private const float OrvillDeathPresentationDuration = OrvillDeathAnimationDuration
                                                               + OrvillDeathPoseHoldDuration
                                                               + OrvillDeathFadeDuration;
@@ -289,12 +405,11 @@ namespace Game.View
             _viewPools = new ViewPool[capacity];
             _groundOffset = new float[capacity];
             _animationViews = new CharacterAnimatorView[capacity];
+            _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
             _deathStartedAt = new float[capacity];
             _hitRecoil = new Vector3[capacity];
-            _deathLaunch = new Vector3[capacity];
-            _deathSpinAxis = new Vector3[capacity];
             _wasDragged = new bool[capacity];
             _baseScale = new Vector3[capacity];
             _bodyRenderers = new Renderer[capacity][];
@@ -308,13 +423,17 @@ namespace Game.View
             _locomotionMoving = new bool[capacity];
             _lastFacingWorld = new Vector3[capacity];
             _visualFacingWorld = new Vector3[capacity];
+            _lastRenderPosition = new Vector3[capacity];
+            _hasLastRenderPosition = new bool[capacity];
             _turnVisualUntil = new float[capacity];
             _turnVisualDirection = new float[capacity];
 
             Transform woleRoot = new GameObject("Пул: Wole").transform;
             Transform orvillRoot = new GameObject("Пул: Orvill").transform;
+            Transform swarmRoot = new GameObject("Пул: Forest_RootSwarm").transform;
             woleRoot.SetParent(transform, false);
             orvillRoot.SetParent(transform, false);
+            swarmRoot.SetParent(transform, false);
 
             // Путь 3D-модели или рисованный спрайт — решается тем, лежит ли
             // модель по указанному пути. Спрайт остаётся запасным вариантом
@@ -328,6 +447,10 @@ namespace Game.View
                 BodyFactory(OrvillModel, OrvillController, OrvillMaterial, OrvillTexture,
                     Faction.Orvill, OrvillScale),
                 PrewarmOrvill > 0 ? PrewarmOrvill : capacity);
+            _rootSwarmPool = new ViewPool(swarmRoot,
+                BodyFactory(RootSwarmModel, RootSwarmController, RootSwarmMaterial, RootSwarmTexture,
+                    Faction.Orvill, RootSwarmScale),
+                PrewarmRootSwarm > 0 ? PrewarmRootSwarm : capacity);
 
             Transform projectileRoot = new GameObject("Пул: снаряды").transform;
             projectileRoot.SetParent(transform, false);
@@ -342,16 +465,37 @@ namespace Game.View
             BindNewEntities();
         }
 
+        /// <summary>
+        /// Догревает пулы по нескольку объектов за кадр.
+        ///
+        /// Прогрев остаётся прогревом — он просто перестал занимать треть
+        /// секунды одним куском. Четыре за кадр это около 20 мс на шестьдесят
+        /// объектов, размазанных по шестнадцати кадрам.
+        /// </summary>
+        private void StepPrewarm()
+        {
+            const int PerFrame = 4;
+            if (_orvillPool != null && _orvillPool.NeedsPrewarm) _orvillPool.PrewarmStep(PerFrame);
+            else if (_rootSwarmPool != null && _rootSwarmPool.NeedsPrewarm) _rootSwarmPool.PrewarmStep(PerFrame);
+            else if (_wolePool != null && _wolePool.NeedsPrewarm) _wolePool.PrewarmStep(PerFrame);
+            else if (_projectilePool != null && _projectilePool.NeedsPrewarm)
+                _projectilePool.PrewarmStep(PerFrame);
+        }
+
         private void LateUpdate()
         {
             // LateUpdate, а не Update: к этому моменту TickDriver уже сделал все
             // шаги кадра и выставил Alpha, по которой интерполируется отрисовка.
+            StepPrewarm();
+
             Simulation sim = _driver.Sim;
             if (sim == null)
             {
                 // Вышли в лагерь: рисовать нечего, и всё занятое надо вернуть,
                 // иначе в лагере остались бы стоять враги прошлого Разлома.
                 if (_initialized && _boundCount > 0) ReleaseEverything();
+                _playerCombatUntil = 0f;
+                _playerAnchorFallbackUntil = 0f;
                 return;
             }
 
@@ -378,6 +522,7 @@ namespace Game.View
 
             BindNewEntities();
             SyncAnimationEvents();
+            UpdatePlayerEquipmentIntent();
             SyncTransforms();
             SyncProjectiles();
         }
@@ -450,22 +595,14 @@ namespace Game.View
                 ? _lastFacingWorld[entityId]
                 : Vector3.forward;
 
-            // Смерть должна отбрасывать, а не покачивать. 0.24–0.38 м — это
-            // меньше ширины самого тела: труп оседал на месте, и убийство
-            // терялось среди обычных попаданий. Полметра-метр уже читаются как
-            // «улетел», и именно это отличает убийство от очередного удара.
-            // Не смещение, а СКОРОСТЬ: дальше её интегрирует SyncTransforms,
-            // и тело идёт по параболе, а не переставляется в новую точку.
-            _deathLaunch[entityId] =
-                direction * (DeathLaunchSpeed * Mathf.Lerp(0.75f, 1.25f, strength))
-                + Vector3.up * DeathLaunchLift;
-
-            // Ось вращения поперёк удара: тело кувыркается через голову в ту
-            // сторону, куда его отправили, а не крутится волчком на месте.
-            _deathSpinAxis[entityId] = Vector3.Cross(Vector3.up, direction).normalized;
-            if (_deathSpinAxis[entityId].sqrMagnitude < 0.5f)
-                _deathSpinAxis[entityId] = Vector3.right;
-
+            // ВЫБРОС И КУВЫРОК УБРАНЫ. Они добавляли убийству вес, пока показ
+            // смерти шёл 0.46 с и падения в кадре не было вовсе. Теперь падение
+            // играется целиком, и вес несёт оно; полёт поверх него читался как
+            // «завис в воздухе и растворился непонятно где».
+            //
+            // Направление всё ещё считается: по нему разворачивается вспышка, и
+            // оно же остаётся точкой расширения, если выброс когда-нибудь
+            // вернут — но уже как короткий толчок ДО падения, а не вместо него.
             _presentationOffset[entityId] = Vector3.zero;
             _hitRecoil[entityId] = Vector3.zero;
             _hitFlash[entityId] = Mathf.Max(_hitFlash[entityId], 0.92f);
@@ -510,16 +647,77 @@ namespace Game.View
             for (int i = 0; i < _boundCount; i++) _presentationOffset[i] = Vector3.zero;
         }
 
+        /// <summary>
+        /// Presentation-only combat intent. This never changes Simulation: it
+        /// only selects Pelag's idle state and the matching saber mount.
+        /// Explicit action callers use this method to make the hand pose and
+        /// equipment respond in the same render frame as the action request.
+        /// </summary>
+        public void SetPlayerCombatReady(bool ready)
+        {
+            ApplyPlayerCombatReady(ready, force: true);
+        }
+
+        public void BeginPlayerAnchorUse(bool leap = false)
+        {
+            _playerAnchorFallbackUntil = Time.unscaledTime + AnchorFallbackSeconds;
+            _anchorSaberSuppressed = true;
+            ApplyPlayerCombatReady(false, force: true);
+            if (_equipmentViews != null && Simulation.PlayerId < _boundCount)
+                _equipmentViews[Simulation.PlayerId]?.BeginAnchorUse(leap);
+        }
+
+        public void EndPlayerAnchorUse()
+        {
+            _playerAnchorFallbackUntil = 0f;
+            if (_equipmentViews != null && Simulation.PlayerId < _boundCount)
+                _equipmentViews[Simulation.PlayerId]?.EndAnchorUse();
+            // EndAnchorUse uses the current intent. Re-apply it in case the
+            // player became quiet while the anchor motion was in flight.
+            ApplyPlayerCombatReady(_playerCombatReady, force: true);
+        }
+
+        public void SetPlayerAbilityFacing(Vector3 direction)
+        {
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) _playerAbilityFacing = direction.normalized;
+        }
+
+        public Vector3 PlayerChainHandPosition
+        {
+            get
+            {
+                Transform hand = _equipmentViews != null && Simulation.PlayerId < _boundCount
+                    ? _equipmentViews[Simulation.PlayerId]?.ChainHand : null;
+                return hand != null ? hand.position : Vector3.zero;
+            }
+        }
+
+        public Vector3 PlayerAnchorHeadPosition => _equipmentViews != null && Simulation.PlayerId < _boundCount
+            && _equipmentViews[Simulation.PlayerId] != null ? _equipmentViews[Simulation.PlayerId].AnchorHeadPosition
+            : PlayerChainHandPosition;
+
         public void PlayPlayerAttackPresentation()
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
+            MarkPlayerCombatActivity();
             _animationViews[Simulation.PlayerId]?.PlayAttack();
         }
 
         public void PlayPlayerAbilityPresentation(int slot)
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
-            _animationViews[Simulation.PlayerId]?.PlayAbility(slot);
+            AbilityBuild build = _driver != null && _driver.Sim != null
+                && (uint)slot < Simulation.AbilitySlots
+                ? _driver.Sim.GetAbility(slot)
+                : null;
+            if (build != null)
+                PlayPlayerAbilityPresentation(slot, build.DefinitionId);
+            else
+            {
+                MarkPlayerCombatActivity();
+                _animationViews[Simulation.PlayerId]?.PlayAbility(slot);
+            }
         }
 
         /// <summary>
@@ -531,7 +729,89 @@ namespace Game.View
         public void PlayPlayerAbilityPresentation(int slot, int definitionId)
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
+            if (definitionId == AbilityDefinition.AnchorLeapId
+                || definitionId == AbilityDefinition.AnchorSweepId)
+                BeginPlayerAnchorUse(definitionId == AbilityDefinition.AnchorLeapId);
+            else { _anchorSaberSuppressed = false; EndPlayerAnchorUse(); MarkPlayerCombatActivity(); }
             _animationViews[Simulation.PlayerId]?.PlayAbilityDefinition(definitionId);
+        }
+
+        private void MarkPlayerCombatActivity()
+        {
+            _playerCombatUntil = Mathf.Max(_playerCombatUntil,
+                Time.unscaledTime + CombatGraceSeconds);
+            if (!_anchorSaberSuppressed) ApplyPlayerCombatReady(true, force: true);
+        }
+
+        private void ApplyPlayerCombatReady(bool ready, bool force)
+        {
+            _playerCombatReady = ready;
+            if (!_initialized || _animationViews == null || _boundCount <= Simulation.PlayerId)
+                return;
+
+            CharacterAnimatorView animation = _animationViews[Simulation.PlayerId];
+            PelagEquipmentView equipment = _equipmentViews != null
+                ? _equipmentViews[Simulation.PlayerId]
+                : null;
+            if (!force && animation != null && animation.CombatReady == ready
+                && (equipment == null || equipment.CombatReady == ready))
+                return;
+
+            animation?.SetCombatReady(ready);
+            equipment?.SetCombatReady(ready);
+        }
+
+        private void UpdatePlayerEquipmentIntent()
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            EntityStore entities = sim != null ? sim.Entities : null;
+            if (entities == null || entities.Count <= Simulation.PlayerId
+                || !entities.Alive[Simulation.PlayerId])
+            {
+                _playerCombatUntil = 0f;
+                // Death/teardown must clear the anchor even when its fallback
+                // timer was already consumed or was never started.
+                EndPlayerAnchorUse();
+                ApplyPlayerCombatReady(false, force: true);
+                return;
+            }
+
+            if (_playerAnchorFallbackUntil > 0f
+                && Time.unscaledTime >= _playerAnchorFallbackUntil)
+                EndPlayerAnchorUse();
+
+            bool threatened = (_driver != null && _driver.AttackHeld)
+                              || HasPlayerCombatThreat(sim, entities);
+            bool ready = CaptureRig.EquipmentShowcase ? CaptureRig.EquipmentReady
+                : !_anchorSaberSuppressed && (threatened || Time.unscaledTime < _playerCombatUntil);
+            ApplyPlayerCombatReady(ready, force: false);
+        }
+
+        private static bool HasPlayerCombatThreat(Simulation sim, EntityStore entities)
+        {
+            int player = Simulation.PlayerId;
+            int target = sim.AttackTarget;
+            if (target > player && target < entities.Count
+                && entities.Alive[target]
+                && entities.Side[target] != entities.Side[player])
+                return true;
+
+            FixVec2 playerPosition = entities.Position[player];
+            const float threatDistanceSq = CombatThreatDistance * CombatThreatDistance;
+            for (int i = 0; i < entities.Count; i++)
+            {
+                if (i == player || !entities.Alive[i]) continue;
+                if (entities.Side[i] == entities.Side[player]) continue;
+
+                if (entities.PendingAttackTarget[i] == player)
+                    return true;
+
+                FixVec2 delta = entities.Position[i] - playerPosition;
+                float distanceSq = delta.X.ToFloat() * delta.X.ToFloat()
+                                   + delta.Y.ToFloat() * delta.Y.ToFloat();
+                if (distanceSq <= threatDistanceSq) return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -549,6 +829,9 @@ namespace Game.View
                 _hoveredEntity = -1;
                 _playerBladeRoot = null;
                 _playerBladeTip = null;
+                _playerCombatUntil = 0f;
+                _playerAnchorFallbackUntil = 0f;
+                _playerCombatReady = false;
                 return;
             }
 
@@ -558,6 +841,9 @@ namespace Game.View
             _playerBladeRoot = null;
             _playerBladeTip = null;
             _hoveredEntity = -1;
+            _playerCombatUntil = 0f;
+            _playerAnchorFallbackUntil = 0f;
+            _playerCombatReady = false;
 
             for (int i = 0; _projectileViews != null && i < _projectileViews.Length; i++)
             {
@@ -584,6 +870,12 @@ namespace Game.View
                 if (_baseScale[entityId] != Vector3.zero)
                     view.localScale = _baseScale[entityId];
 
+                // Props are parented to animated bones and survive pooling.
+                // Always return them to their authored resting mounts before the
+                // body becomes available to another entity.
+                if (_equipmentViews != null && (uint)entityId < (uint)_equipmentViews.Length)
+                    _equipmentViews[entityId]?.ResetForSpawn();
+
                 // Managed ViewPool не переживает forced script reload, а ссылки
                 // на созданные Transform Unity успевает восстановить. Во время
                 // teardown объект достаточно спрятать: новый Awake соберёт пул.
@@ -594,6 +886,8 @@ namespace Game.View
             _views[entityId] = null;
             _viewPools[entityId] = null;
             _animationViews[entityId] = null;
+            if (_equipmentViews != null && (uint)entityId < (uint)_equipmentViews.Length)
+                _equipmentViews[entityId] = null;
             _deathUntil[entityId] = 0f;
             _deathStarted[entityId] = false;
             _deathStartedAt[entityId] = 0f;
@@ -607,16 +901,14 @@ namespace Game.View
             _hitFlash[entityId] = 0f;
             _lastVelocityMagnitude[entityId] = 0f;
             _locomotionMoving[entityId] = false;
+            if (entityId == Simulation.PlayerId) _hasPreviousPlayerPosition = false;
             _lastFacingWorld[entityId] = Vector3.zero;
+            _hasLastRenderPosition[entityId] = false;
             _visualFacingWorld[entityId] = Vector3.zero;
             _turnVisualUntil[entityId] = 0f;
             _turnVisualDirection[entityId] = 0f;
             _presentationOffset[entityId] = Vector3.zero;
             _groundOffset[entityId] = 0f;
-            // Слот переиспользуется под нового врага: остаточный выброс от
-            // прошлого покойника отправил бы живого в полёт при первой смерти.
-            _deathLaunch[entityId] = Vector3.zero;
-            _deathSpinAxis[entityId] = Vector3.zero;
 
             if (_hoveredEntity == entityId) _hoveredEntity = -1;
         }
@@ -661,21 +953,22 @@ namespace Game.View
 
             for (int i = _boundCount; i < entities.Count; i++)
             {
-                ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool : _orvillPool;
+                ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
+                    : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
                 GameObject go = pool.Acquire();
-                go.name = $"{entities.Side[i]} #{i}";
+                go.name = entities.Kind[i] == EnemyKind.None
+                    ? $"{entities.Side[i]} #{i}" : $"{entities.Kind[i]} #{i}";
                 _views[i] = go.transform;
                 _viewPools[i] = pool;
                 _animationViews[i] = go.GetComponent<CharacterAnimatorView>();
+                _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
+                _equipmentViews[i] = go.GetComponent<PelagEquipmentView>();
                 _animationViews[i]?.ResetForSpawn();
-                if (i == Simulation.PlayerId)
-                    AlignSaberCuttingEdgeToGround(go.transform);
+                _equipmentViews[i]?.ResetForSpawn();
                 _deathUntil[i] = 0f;
                 _deathStarted[i] = false;
                 _deathStartedAt[i] = 0f;
                 _hitRecoil[i] = Vector3.zero;
-                _deathLaunch[i] = Vector3.zero;
-                _deathSpinAxis[i] = Vector3.zero;
                 _bodyRenderers[i] = CacheBodyRenderers(go, out SpriteRenderer contactShadow);
                 _bodyMaterialSlotCounts[i] = CacheMaterialSlotCounts(_bodyRenderers[i]);
                 _contactShadows[i] = contactShadow;
@@ -687,6 +980,7 @@ namespace Game.View
                 _hitFlash[i] = 0f;
                 _lastVelocityMagnitude[i] = 0f;
                 _locomotionMoving[i] = false;
+                if (i == Simulation.PlayerId) _hasPreviousPlayerPosition = false;
                 FixVec2 initialFacing = entities.Facing[i];
                 _lastFacingWorld[i] = initialFacing.LengthSq.Raw == 0
                     ? Vector3.zero
@@ -699,12 +993,16 @@ namespace Game.View
                 {
                     _playerBladeRoot = FindChild(go.transform, "BladeRoot");
                     _playerBladeTip = FindChild(go.transform, "BladeTip");
+                    // A pooled body may have been created while the previous
+                    // player intent was active. Re-apply the current state once
+                    // the new component references are cached.
+                    ApplyPlayerCombatReady(_playerCombatReady, force: true);
                 }
 
                 // Сначала сбрасываем пульный объект в масштаб из конфига, и только
                 // потом снимаем базу: иначе остаток последнего hit/death-кадра
                 // станет «нормальным» размером врага в следующем Разломе.
-                go.transform.localScale = ExpectedBaseScale(entities.Side[i], _animationViews[i]);
+                go.transform.localScale = ExpectedBaseScale(entities.Side[i], entities.Kind[i], _animationViews[i]);
                 _baseScale[i] = go.transform.localScale;
 
                 _groundOffset[i] = _animationViews[i] != null
@@ -715,9 +1013,10 @@ namespace Game.View
             _boundCount = entities.Count;
         }
 
-        private Vector3 ExpectedBaseScale(Faction faction, CharacterAnimatorView animation)
+        private Vector3 ExpectedBaseScale(Faction faction, EnemyKind kind, CharacterAnimatorView animation)
         {
-            float scale = faction == Faction.Wole ? WoleScale : OrvillScale;
+            float scale = faction == Faction.Wole ? WoleScale
+                : kind == EnemyKind.ForestRootSwarm ? RootSwarmScale : OrvillScale;
             if (animation != null && animation.UsesSprites)
                 scale *= SpriteScaleMultiplier(faction);
             return Vector3.one * scale;
@@ -838,6 +1137,68 @@ namespace Game.View
             shadow.shadowCastingMode = ShadowCastingMode.Off;
         }
 
+        /// <summary>
+        /// Ловит скачок НАРИСОВАННОГО тела между кадрами и разбирает его на
+        /// слагаемые.
+        ///
+        /// Сторож в TickDriver уже показал, что симуляция не прыгает ни разу.
+        /// Значит рывок рождается здесь, между позицией из тика и тем, что
+        /// реально попало в transform: интерполяция, отдача, смещения подачи.
+        /// Печатаем все три, иначе опять придётся гадать.
+        /// </summary>
+        private void ReportRenderJump(int entityId, Vector3 drawn, Vector3 interpolated,
+            float velocityMagnitude)
+        {
+            if (_hasLastRenderPosition[entityId])
+            {
+                float jumped = Vector3.Distance(drawn, _lastRenderPosition[entityId]);
+                // За кадр тело не может проехать больше тика движения. Порог с
+                // запасом втрое, плюс пол-метра на мелкие кадры и отдачу.
+                float limit = Mathf.Max(velocityMagnitude * 3f, 0.5f);
+                if (jumped > limit)
+                {
+                    Debug.LogWarning($"[Разлом][рывок кадра] сущность {entityId}: "
+                                     + $"{jumped:0.00} м за кадр при скорости {velocityMagnitude:0.000} м/тик, "
+                                     + $"alpha={_driver.Alpha:0.00}, dt={Time.deltaTime * 1000f:0.0} мс, "
+                                     + $"интерполяция={interpolated}, отдача={_hitRecoil[entityId]}, "
+                                     + $"подача={_presentationOffset[entityId]}");
+                }
+            }
+
+            _lastRenderPosition[entityId] = drawn;
+            _hasLastRenderPosition[entityId] = true;
+        }
+
+        /// <summary>
+        /// Полная построчная выписка по одному мобу: что решил тик, что попало
+        /// в transform и что в этот момент делает Animator.
+        ///
+        /// Догадки кончились. Владелец описал симптом как «анимация проходит,
+        /// заканчивается, и он начинает бежать с другого места» — такую вещь
+        /// нельзя опознать ни по позиции, ни по кадрам отдельно. Нужны обе
+        /// колонки рядом плюс состояние и его нормализованное время.
+        /// </summary>
+        private void TraceMob(int entityId, Vector3 drawn, EntityStore entities)
+        {
+            CharacterAnimatorView animation = _animationViews[entityId];
+            Animator animator = animation != null ? animation.Animator : null;
+
+            string state = "нет";
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(0);
+                state = $"хеш={info.shortNameHash} t={info.normalizedTime:0.00} "
+                        + $"скорость={animator.speed:0.00} "
+                        + $"MoveSpeed={animator.GetFloat("MoveSpeed"):0.00} "
+                        + $"переход={animator.IsInTransition(0)}";
+            }
+
+            FixVec2 sim = entities.Position[entityId];
+            Debug.Log($"[Разлом][моб] тик={_driver.Sim.Tick} alpha={_driver.Alpha:0.00} "
+                      + $"sim=({sim.X.ToFloat():0.00},{sim.Y.ToFloat():0.00}) "
+                      + $"кадр=({drawn.x:0.00},{drawn.z:0.00}) {state}");
+        }
+
         private void SetContactShadowFade(int entityId, float fade)
         {
             SpriteRenderer shadow = _contactShadows[entityId];
@@ -898,8 +1259,8 @@ namespace Game.View
                     : 0f;
                 float deathFade = orvill && !alive
                     ? Mathf.InverseLerp(
-                        OrvillDeathAnimationDuration + OrvillDeathPoseHoldDuration,
-                        OrvillDeathPresentationDuration,
+                        DeathDissolveStartDelay(entities.Kind[i]),
+                        DeathDissolveStartDelay(entities.Kind[i]) + OrvillDeathFadeDuration,
                         deathElapsed)
                     : 0f;
                 if (deathFade > 0f) SetContactShadowFade(i, deathFade);
@@ -914,25 +1275,57 @@ namespace Game.View
                 // а остановка — происходить до последнего микрошажка торможения.
                 // Проверка только velocity != 0 держала Run ещё несколько
                 // кадров после того, как тело визуально уже приехало.
+                //
+                // РЕШЕНИЕ ОБ ОСТАНОВКЕ ОДНОРАЗОВОЕ, И ЭТО ГЛАВНОЕ ЗДЕСЬ.
+                // Раньше ветка «не идём — значит пошли» стояла ПЕРЕД проверкой
+                // торможения и снимала защёлку на первом же кадре: тело гасило
+                // скорость четыре тика, и на каждом из них Run срывался в
+                // RunStop и тут же возвращался обратно. Четыре рывка за 130 мс
+                // в конце КАЖДОГО приказа — это и есть та самая дрожь.
+                // Обратно в бег — только когда тело действительно поехало:
+                // скорость выросла или снова выше порога торможения.
                 FixVec2 velocity = entities.Velocity[i];
                 float velocityMagnitude = Mathf.Sqrt(
                     velocity.X.ToFloat() * velocity.X.ToFloat()
                     + velocity.Y.ToFloat() * velocity.Y.ToFloat());
                 float fullStep = entities.MoveStep[i].ToFloat();
+                float worldSpeed = velocityMagnitude * Simulation.TicksPerSecond;
+                if (i == Simulation.PlayerId)
+                {
+                    Vector3 playerPosition = _driver.GetRenderPosition(i);
+                    if (_hasPreviousPlayerPosition && Time.deltaTime > 0.000001f)
+                        worldSpeed = Vector3.Distance(playerPosition, _previousPlayerPosition) / Time.deltaTime;
+                    else worldSpeed = 0f;
+                    _previousPlayerPosition = playerPosition;
+                    _hasPreviousPlayerPosition = true;
+                }
+                float brakeThreshold = fullStep * 0.38f;
                 bool moving = _locomotionMoving[i];
                 if (velocityMagnitude <= 0.0001f)
                     moving = false;
-                else if (!moving)
-                    moving = true;
-                else if (velocityMagnitude < _lastVelocityMagnitude[i]
-                         && velocityMagnitude <= fullStep * 0.38f)
-                    moving = false;
+                else if (moving)
+                {
+                    if (velocityMagnitude < _lastVelocityMagnitude[i]
+                        && velocityMagnitude <= brakeThreshold)
+                        moving = false;
+                }
+                else
+                {
+                    moving = velocityMagnitude > brakeThreshold
+                             || velocityMagnitude > _lastVelocityMagnitude[i];
+                }
                 _lastVelocityMagnitude[i] = velocityMagnitude;
+                // The hero now blends directly out of the current run pose.
+                // Keep that pose advancing until the rendered body stops.
+                if (i == Simulation.PlayerId) moving = worldSpeed > 0.02f;
                 _locomotionMoving[i] = moving;
                 float normalizedMoveSpeed = fullStep > 0.0001f
-                    ? Mathf.Clamp01(velocityMagnitude / fullStep)
+                    ? Mathf.Clamp(velocityMagnitude / fullStep, 0f,
+                        entities.Kind[i] == EnemyKind.ForestRootSwarm
+                            ? Simulation.RootSwarmRushSpeed.ToFloat() / Simulation.RootSwarmMoveSpeed.ToFloat() : 1f)
                     : 0f;
                 float turnDirection = 0f;
+                float turnDelta = 0f;
                 float localMoveX = 0f;
                 float localMoveY = moving ? 1f : 0f;
 
@@ -951,55 +1344,48 @@ namespace Game.View
                     block.SetFloat(HitFlashId, _hitFlash[i]);
                     block.SetFloat(DeathFadeId, deathFade);
                     bool hovered = alive && i == _hoveredEntity;
-                    // Only enemies receive a contour. Keeping friendly units at
-                    // exactly zero avoids bringing back the permanent dark hull;
-                    // hovering an enemy strengthens its existing red silhouette.
+                    // Цвет отделяет врага от фона постоянно. Маска видимого
+                    // силуэта даёт ровную кромку без внутренних швов меша;
+                    // ширина задана в пикселях при 1080p, независимо от роста.
                     bool hostile = entities.Side[i] == Faction.Orvill;
                     bool hoveredHostile = hovered && hostile;
-                    block.SetFloat(OutlineWidthId, hoveredHostile ? 1.55f : hostile ? 1.24f : 0f);
-                    block.SetColor(OutlineColorId, hoveredHostile
-                        ? new Color(1f, 0.055f, 0.035f, 1f)
-                        : hostile
-                            ? new Color(0.52f, 0.035f, 0.055f, 1f)
-                            : Color.clear);
+                    // Свечение гаснет вместе с телом: иначе над осыпающимся
+                    // трупом ещё полсекунды висит контур живого врага.
+                    float outlineFade = Mathf.Clamp01(1f - deathFade);
+                    block.SetFloat(OutlineWidthId,
+                        (hostile ? (hoveredHostile ? HoveredOutlineWidth : HostileOutlineWidth)
+                            : HeroOutlineWidth) * outlineFade);
+                    block.SetColor(OutlineColorId, hostile
+                        ? (hoveredHostile ? HoveredOutlineColor : HostileOutlineColor)
+                        : HeroOutlineColor);
 
                     ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
                 }
 
-                // Парабола выброса. Считается от времени смерти, а не
-                // накапливается по кадрам: накопление разъезжается при просадке
-                // кадров и при hit-stop, а тут важно, чтобы тело и растворение
-                // шли по одним часам.
-                bool inDeathFlight = !alive && orvill && _deathStarted[i]
-                                     && _deathLaunch[i].sqrMagnitude > 0.0001f;
-                if (inDeathFlight)
-                {
-                    float t = deathElapsed;
-                    Vector3 flight = _deathLaunch[i] * t;
-                    flight.y -= 0.5f * DeathGravity * t * t;
-                    // Под землю не проваливаемся: тело гаснет в воздухе или
-                    // у самой земли, но никогда не уходит сквозь пол.
-                    if (flight.y < 0f) flight.y = 0f;
-                    p += flight;
-                }
-
+                // ВЫБРОСА БОЛЬШЕ НЕТ, И ЭТО НЕ ПОТЕРЯ. Здесь тело улетало по
+                // параболе и кувыркалось через голову, а показ
+                // смерти длился 0.46 с — то есть клип умирания успевал дойти
+                // всего до девятого кадра из семидесяти трёх, где существо ещё
+                // СТОИТ. Владелец описал это точно: «застывает в позе смерти в
+                // воздухе и растворяется в непонятной позиции». Так и было:
+                // в кадре не было падения вообще, только полёт и стоячая поза.
+                //
+                // Теперь тело падает там, где стояло, доигрывает падение и
+                // только потом осыпается — см. OrvillDeathAnimationDuration.
                 view.position = p + _hitRecoil[i];
                 if (_baseScale[i] != Vector3.zero)
                     view.localScale = _baseScale[i];
 
-                if (inDeathFlight)
+                if (_driver.WatchTeleports)
                 {
-                    // Кувырок через голову в сторону удара. Клип умирания при
-                    // такой длительности всё равно не успевает прочитаться —
-                    // силуэт в полёте несёт всю информацию сам.
-                    view.rotation = Quaternion.AngleAxis(
-                        DeathSpinSpeed * deathElapsed, _deathSpinAxis[i])
-                        * Quaternion.LookRotation(
-                            _lastFacingWorld[i].sqrMagnitude > 0.0001f
-                                ? _lastFacingWorld[i]
-                                : Vector3.forward, Vector3.up);
-                    continue;
+                    ReportRenderJump(i, view.position, p, velocityMagnitude);
+                    if (i == 1) TraceMob(i, view.position, entities);
                 }
+
+                // Труп поворот больше не трогает: он падает в ту сторону, куда
+                // смотрел, и остаток кадров этим занимается общая ветка ниже.
+                // Кувырка через голову тут стояло 240° за показ — вместе с
+                // выбросом он и подменял собой падение.
 
                 // Gameplay-facing остаётся мгновенным и живёт в Sim. Только
                 // корень живого ORVILL мягко догоняет новый yaw: 30 Hz повороты
@@ -1008,8 +1394,14 @@ namespace Game.View
                 FixVec2 facing = entities.Facing[i];
                 if (facing.LengthSq.Raw != 0)
                 {
-                    Vector3 facingWorld = new Vector3(
-                        facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
+                    // Направление берётся ИНТЕРПОЛИРОВАННЫМ, из того же места,
+                    // что и позиция. Мгновенный facing остаётся боевой правдой
+                    // и живёт в Sim; на экране 30 Гц поворота без этого читались
+                    // ступенями — при 120 кадрах особенно.
+                    Vector3 facingWorld = _driver.GetRenderFacing(i);
+                    if (facingWorld.sqrMagnitude < 0.0001f)
+                        facingWorld = new Vector3(
+                            facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
                     if (moving && velocityMagnitude > 0.0001f)
                     {
                         Vector3 velocityWorld = new Vector3(
@@ -1027,6 +1419,8 @@ namespace Game.View
                     else
                     {
                         Vector3 previousFacing = _lastFacingWorld[i];
+                        if (previousFacing.sqrMagnitude > 0.5f)
+                            turnDelta = Vector3.SignedAngle(previousFacing, facingWorld, Vector3.up);
                         if (!moving && previousFacing.sqrMagnitude > 0.5f)
                         {
                             float delta = Vector3.SignedAngle(previousFacing, facingWorld, Vector3.up);
@@ -1064,7 +1458,23 @@ namespace Game.View
                         }
                         else
                         {
-                            _visualFacingWorld[i] = facingWorld;
+                            CharacterAnimatorView presentation = _animationViews[i];
+                            Vector3 previousVisual = _visualFacingWorld[i];
+                            if (i == Simulation.PlayerId && presentation != null && presentation.AnchorAbilityActive
+                                && _playerAbilityFacing.sqrMagnitude > 0.5f)
+                                visualFacing = Vector3.Slerp(previousVisual,
+                                    Vector3.Slerp(facingWorld, _playerAbilityFacing, presentation.AnchorFacingWeight),
+                                    1f - Mathf.Exp(-28f * Time.deltaTime)).normalized;
+                            if (presentation != null && presentation.WhirlwindActive
+                                && previousVisual.sqrMagnitude > 0.5f)
+                            {
+                                // Preserve the spin axis while input changes.
+                                // The final step turns back toward locomotion.
+                                float recover = Mathf.InverseLerp(0.53f, 0.80f, presentation.WhirlwindElapsed);
+                                visualFacing = Vector3.Slerp(previousVisual, facingWorld,
+                                    1f - Mathf.Exp(-25f * recover * Time.deltaTime)).normalized;
+                            }
+                            _visualFacingWorld[i] = visualFacing;
                         }
 
                         // Доворот на случай, если модель экспортировали лицом
@@ -1072,6 +1482,14 @@ namespace Game.View
                         // корень одним числом.
                         view.rotation = Quaternion.LookRotation(visualFacing, Vector3.up)
                                         * Quaternion.Euler(0f, ModelYaw, 0f);
+                        if (i == Simulation.PlayerId && moving && velocityMagnitude > .0001f)
+                        {
+                            // Хук смотрит в прицел независимо от движения. Цикл ног выбирается
+                            // относительно показанного тела, иначе боковой бег становится скольжением.
+                            Vector3 travel = new Vector3(velocity.X.ToFloat(), 0f, velocity.Y.ToFloat()) / velocityMagnitude;
+                            localMoveX = Vector3.Dot(travel, Vector3.Cross(Vector3.up, visualFacing));
+                            localMoveY = Vector3.Dot(travel, visualFacing);
+                        }
                     }
                 }
 
@@ -1092,7 +1510,7 @@ namespace Game.View
 
                 if (!view.gameObject.activeSelf) view.gameObject.SetActive(true);
                 _animationViews[i]?.SetLocomotion(
-                    moving, turnDirection, normalizedMoveSpeed, localMoveX, localMoveY);
+                    moving, turnDirection, normalizedMoveSpeed, localMoveX, localMoveY, worldSpeed, turnDelta);
             }
         }
 
@@ -1104,9 +1522,21 @@ namespace Game.View
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
+                // Combat intent is presentation-only. Refresh the grace window
+                // from authoritative events so a hostile swing remains visible
+                // even after PendingAttackTarget is cleared on its impact tick.
+                if ((e.Type == SimEventType.Attack &&
+                     (e.Source == Simulation.PlayerId || e.Target == Simulation.PlayerId))
+                    || (e.Type == SimEventType.AbilityCast && e.Source == Simulation.PlayerId)
+                    || ((e.Type == SimEventType.Damage || e.Type == SimEventType.DamageOverTime)
+                        && (e.Source == Simulation.PlayerId || e.Target == Simulation.PlayerId)))
+                    MarkPlayerCombatActivity();
+
                 switch (e.Type)
                 {
                     case SimEventType.Attack:
+                        if (e.Source == Simulation.PlayerId)
+                        { _anchorSaberSuppressed = false; MarkPlayerCombatActivity(); }
                         AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
                     case SimEventType.AbilityCast:
@@ -1114,7 +1544,12 @@ namespace Game.View
                         {
                             AbilityBuild build = _driver.Sim.GetAbility(e.Amount);
                             if (build != null)
-                                AnimationOf(e.Source)?.PlayAbilityDefinition(build.DefinitionId);
+                            {
+                                if (e.Source == Simulation.PlayerId)
+                                    PlayPlayerAbilityPresentation(e.Amount, build.DefinitionId);
+                                else
+                                    AnimationOf(e.Source)?.PlayAbilityDefinition(build.DefinitionId);
+                            }
                         }
                         break;
                     case SimEventType.Damage:
@@ -1149,13 +1584,19 @@ namespace Game.View
                             AnimationOf(e.Source)?.PlayChainStepRepeat();
                         break;
                     case SimEventType.Death:
+                        if (e.Target == Simulation.PlayerId)
+                        {
+                            _playerCombatUntil = 0f;
+                            ApplyPlayerCombatReady(false, force: true);
+                            EndPlayerAnchorUse();
+                        }
                         CharacterAnimatorView animation = AnimationOf(e.Target);
                         if (animation == null) break;
                         animation.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
-                            ? OrvillDeathPresentationDuration
+                            ? DeathDissolveStartDelay(entities.Kind[e.Target]) + OrvillDeathFadeDuration
                             : animation.DeathDuration;
                         _deathUntil[e.Target] = Time.time + presentationDuration;
                         break;
@@ -1254,7 +1695,11 @@ namespace Game.View
             // Проверяется именно ТЕКСТУРА, а не наличие материала: материал
             // без текстуры выглядит точно так же, как его отсутствие, —
             // белой фигурой, — и именно на этом мы уже один раз попались.
-            if (material == null || !HasBaseTexture(material))
+            // Вражеский материал из FBX может быть обычным URP/Lit и тогда
+            // MaterialPropertyBlock с _OutlineWidth не имеет UnitOutlineMask-pass.
+            // Для Orvill гарантированно собираем материал на нашем toon
+            // shader, сохраняя исходную текстуру.
+            if (faction == Faction.Orvill || material == null || !HasBaseTexture(material))
             {
                 Material runtime = BuildRuntimeMaterial(texturePath, faction);
                 if (runtime != null) material = runtime;
@@ -1269,22 +1714,10 @@ namespace Game.View
 
             return () =>
             {
-                GameObject body = CreateCharacterBody(prefab, faction, scale, material, controller,
-                    weaponPrefab, WoleWeaponSocket,
-                    WoleWeaponLocalPosition, WoleWeaponLocalRotation, WoleWeaponLocalScale,
-                    weaponMaterial);
-
-                // Якорь вешается ВТОРЫМ пропсом на ту же механику, что и сабля.
-                // Отдельного кода крепления нет и не надо: MountRigidProp уже
-                // умеет искать кость и сажать на неё меш.
-                if (body != null && anchorPrefab != null
-                    && !MountRigidProp(body.transform, anchorPrefab, WoleAnchorSocket,
-                        WoleAnchorLocalPosition, WoleAnchorLocalRotation,
-                        WoleAnchorLocalScale, anchorMaterial))
-                {
-                    Debug.LogWarning($"[Разлом] Якорь не сел на «{WoleAnchorSocket}»: " +
-                                     "кости с таким именем в риге нет.");
-                }
+                GameObject body = CreateCharacterBody(prefab, faction, scale, material, controller);
+                if (body != null && faction == Faction.Wole)
+                    ConfigurePelagEquipment(body, weaponPrefab, weaponMaterial,
+                        anchorPrefab, anchorMaterial);
 
                 return body;
             };
@@ -1396,13 +1829,14 @@ namespace Game.View
         }
 
         private static GameObject CreateCharacterBody(GameObject prefab, Faction faction, float scale,
-            Material fallbackMaterial, RuntimeAnimatorController controller,
-            GameObject weaponPrefab, string weaponSocket,
-            Vector3 weaponLocalPosition, Vector3 weaponLocalEuler, Vector3 weaponLocalScale,
-            Material weaponMaterial)
+            Material fallbackMaterial, RuntimeAnimatorController controller)
         {
             GameObject go = Instantiate(prefab);
             go.transform.localScale = Vector3.one * scale;
+            // Сохраняем существующий слой врагов для настроек камер. Обводка
+            // выбирает юнитов по проходу UnitOutlineMask и ширине в материале.
+            if (faction == Faction.Orvill)
+                SetLayerRecursively(go, LayerMask.NameToLayer("EnemyOutline"));
             foreach (Collider collider in go.GetComponentsInChildren<Collider>(true))
                 Destroy(collider);
 
@@ -1455,15 +1889,6 @@ namespace Game.View
                 animator.applyRootMotion = false;
             }
 
-            if (faction == Faction.Wole)
-            {
-                if (!MountRigidProp(go.transform, weaponPrefab, weaponSocket,
-                        weaponLocalPosition, weaponLocalEuler,
-                        weaponLocalScale, weaponMaterial))
-                    Debug.LogWarning($"[Разлом] Сабля не установлена: prefab={(weaponPrefab != null)}, " +
-                                     $"socket={weaponSocket}.");
-            }
-
             // Даже при мягкой directional-тени маленькая изометрическая модель
             // выглядела подвешенной над светлым полом. Небольшая контактная
             // тень возвращает ногам опору и делает направление света заметным,
@@ -1473,7 +1898,110 @@ namespace Game.View
             CharacterAnimatorView animation = go.GetComponent<CharacterAnimatorView>();
             if (animation == null) animation = go.AddComponent<CharacterAnimatorView>();
             animation.Configure(faction);
+            if (faction == Faction.Wole && controller != null)
+                go.AddComponent<PelagFootPlantView>();
             return go;
+        }
+
+        private static void SetLayerRecursively(GameObject root, int layer)
+        {
+            if (root == null || layer < 0) return;
+            root.layer = layer;
+            for (int i = 0; i < root.transform.childCount; i++)
+                SetLayerRecursively(root.transform.GetChild(i).gameObject, layer);
+        }
+
+        private void ConfigurePelagEquipment(GameObject body, GameObject saberPrefab,
+            Material saberMaterial, GameObject anchorPrefab, Material anchorMaterial)
+        {
+            if (body == null) return;
+
+            Transform root = body.transform;
+            Transform saberStoredSocket = FindChild(root, WoleWeaponStoredSocket);
+            Transform saberEquippedSocket = FindChild(root, WoleWeaponSocket);
+            Transform anchorStoredSocket = FindChild(root, WoleAnchorSocket);
+            Transform anchorEquippedSocket = FindChild(root, WoleAnchorEquippedSocket);
+            // Older scenes serialized both weapons on the same hip. Keep the
+            // authored height/depth but put the anchor opposite the saber.
+            Vector3 anchorBeltPosition = WoleAnchorLocalPosition;
+            if (anchorStoredSocket == saberStoredSocket)
+                anchorBeltPosition.x = -Mathf.Sign(WoleWeaponStoredLocalPosition.x)
+                    * Mathf.Max(0.114f, Mathf.Abs(anchorBeltPosition.x));
+
+            if (saberPrefab != null && saberStoredSocket == null)
+                Debug.LogWarning($"[Разлом] Сабля не может быть убрана: кость «{WoleWeaponStoredSocket}» не найдена.");
+            if (saberPrefab != null && saberEquippedSocket == null)
+                Debug.LogWarning($"[Разлом] Сабля не может быть взята: кость «{WoleWeaponSocket}» не найдена.");
+            if (anchorPrefab != null && anchorStoredSocket == null)
+                Debug.LogWarning($"[Разлом] Якорь не сел на пояс: кость «{WoleAnchorSocket}» не найдена.");
+            if (anchorPrefab != null && anchorEquippedSocket == null)
+                Debug.LogWarning($"[Разлом] Якорь не может перейти в левую руку: кость «{WoleAnchorEquippedSocket}» не найдена.");
+
+            Transform saber = InstantiateEquipmentProp(root, saberPrefab,
+                "Pelag_FantasySaber_Equipped", saberMaterial, addBladeMarkers: true);
+            Transform anchor = InstantiateEquipmentProp(root, anchorPrefab,
+                "Pelag_AnchorGrip_Equipped", anchorMaterial, addBladeMarkers: false);
+
+            PelagEquipmentView equipment = body.GetComponent<PelagEquipmentView>();
+            if (equipment == null) equipment = body.AddComponent<PelagEquipmentView>();
+            equipment.Configure(saber,
+                new PelagEquipmentView.MountPoint(saberStoredSocket,
+                    WoleWeaponStoredLocalPosition, WoleWeaponStoredLocalRotation,
+                    WoleWeaponStoredLocalScale),
+                new PelagEquipmentView.MountPoint(saberEquippedSocket,
+                    WoleWeaponLocalPosition, WoleWeaponLocalRotation,
+                    WoleWeaponLocalScale),
+                anchor,
+                new PelagEquipmentView.MountPoint(anchorStoredSocket,
+                    anchorBeltPosition, WoleAnchorLocalRotation,
+                    WoleAnchorLocalScale),
+                new PelagEquipmentView.MountPoint(anchorEquippedSocket,
+                    WoleAnchorEquippedLocalPosition, WoleAnchorEquippedLocalRotation,
+                    WoleAnchorEquippedLocalScale));
+        }
+
+        private static Transform InstantiateEquipmentProp(Transform body, GameObject prefab,
+            string objectName, Material materialOverride, bool addBladeMarkers)
+        {
+            if (prefab == null) return null;
+
+            GameObject mounted = Instantiate(prefab, body, false);
+            mounted.name = objectName;
+            mounted.SetActive(true);
+            ApplyMaterialOverride(mounted, materialOverride);
+
+            if (addBladeMarkers)
+                AddBladeMarkers(mounted);
+
+            return mounted.transform;
+        }
+
+        private static void ApplyMaterialOverride(GameObject mounted, Material materialOverride)
+        {
+            if (mounted == null || materialOverride == null) return;
+            Renderer[] renderers = mounted.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Material[] materials = renderers[i].sharedMaterials;
+                for (int m = 0; m < materials.Length; m++) materials[m] = materialOverride;
+                renderers[i].sharedMaterials = materials;
+            }
+        }
+
+        private static void AddBladeMarkers(GameObject mounted)
+        {
+            MeshFilter bladeMesh = mounted.GetComponentInChildren<MeshFilter>(true);
+            if (bladeMesh == null || bladeMesh.sharedMesh == null) return;
+
+            Bounds bounds = bladeMesh.sharedMesh.bounds;
+            float length = bounds.size.y;
+            Transform bladeRoot = new GameObject("BladeRoot").transform;
+            bladeRoot.SetParent(bladeMesh.transform, false);
+            bladeRoot.localPosition = new Vector3(0f, bounds.min.y + length * 0.40f, 0f);
+
+            Transform bladeTip = new GameObject("BladeTip").transform;
+            bladeTip.SetParent(bladeMesh.transform, false);
+            bladeTip.localPosition = new Vector3(0f, bounds.min.y + length * 0.985f, 0f);
         }
 
         private static void CreateContactShadow(Transform character, Faction faction, float rootScale)
@@ -1520,72 +2048,6 @@ namespace Game.View
             renderer.receiveShadows = false;
         }
 
-        /// <summary>
-        /// Сажает пропс на кость.
-        ///
-        /// ПОВОРОТ ЗАДАЁТСЯ УГЛАМИ ЭЙЛЕРА, теми же, что видно в инспекторе.
-        ///
-        /// Раньше здесь были «направление плюс крен»: вектор вдоль клинка и
-        /// доворот вокруг него. Схема стройная, но подбирают-то положение
-        /// мышкой в Play Mode, а инспектор показывает эйлеровы углы — и каждый
-        /// снятый результат приходилось переводить обратно в вектор с креном.
-        /// Перевод неочевидный, делается вручную и ровно там появляются ошибки.
-        ///
-        /// Теперь что снял в инспекторе, то и вписал.
-        ///
-        /// Масштаб тоже вектор: подгонка тасканием гизмо на повёрнутом объекте
-        /// даёт неравномерные числа, и их надо уметь сохранить как есть.
-        /// </summary>
-        private static bool MountRigidProp(Transform character, GameObject weaponPrefab,
-            string socketName, Vector3 localPosition,
-            Vector3 localEuler, Vector3 localScale, Material materialOverride)
-        {
-            if (weaponPrefab == null) return false;
-
-            Transform socket = FindChild(character, socketName);
-            if (socket == null) return false;
-
-            GameObject mounted = Instantiate(weaponPrefab, socket, false);
-            mounted.name = weaponPrefab.name + "_Equipped";
-            mounted.transform.localPosition = localPosition;
-            mounted.transform.localRotation = Quaternion.Euler(localEuler);
-            mounted.transform.localScale = localScale;
-            mounted.SetActive(true);
-
-            // Trail строится не вокруг персонажа, а по реальному клинку.
-            // Точки создаются в локальном пространстве самого длинного измерения
-            // меша, поэтому продолжают следовать за рукой и всеми костями клипа.
-            MeshFilter bladeMesh = mounted.GetComponentInChildren<MeshFilter>(true);
-            if (bladeMesh != null && bladeMesh.sharedMesh != null)
-            {
-                Bounds bounds = bladeMesh.sharedMesh.bounds;
-                // Нормализованный weapon asset всегда направлен по +Y, а pivot
-                // лежит в хвате. Начало trail ставим уже за гардой, а не в
-                // помеле/ладони; конец — чуть до кончика, чтобы не дрожал.
-                float length = bounds.size.y;
-
-                Transform bladeRoot = new GameObject("BladeRoot").transform;
-                bladeRoot.SetParent(bladeMesh.transform, false);
-                bladeRoot.localPosition = new Vector3(0f, bounds.min.y + length * 0.40f, 0f);
-
-                Transform bladeTip = new GameObject("BladeTip").transform;
-                bladeTip.SetParent(bladeMesh.transform, false);
-                bladeTip.localPosition = new Vector3(0f, bounds.min.y + length * 0.985f, 0f);
-            }
-
-            if (materialOverride != null)
-            {
-                Renderer[] renderers = mounted.GetComponentsInChildren<Renderer>(true);
-                for (int i = 0; i < renderers.Length; i++)
-                {
-                    Material[] materials = renderers[i].sharedMaterials;
-                    for (int m = 0; m < materials.Length; m++) materials[m] = materialOverride;
-                    renderers[i].sharedMaterials = materials;
-                }
-            }
-
-            return true;
-        }
 
         private static Transform FindChild(Transform root, string wantedName)
         {
@@ -1672,3 +2134,5 @@ namespace Game.View
             => side == Faction.Wole ? woleScale : orvillScale * 0.5f;
     }
 }
+
+

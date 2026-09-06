@@ -38,14 +38,14 @@ namespace Game.Tests
         // ---- сторож ----
 
         [Test]
-        public void MovingCombatNumbersIntoStats_ChangedNothing()
+        public void BaseCombatStats_MatchCurrentTuning()
         {
             Simulation sim = Arena();
             EntityStore e = sim.Entities;
 
             Assert.AreEqual(34, e.Damage[Simulation.PlayerId], "урон игрока");
             Assert.AreEqual(7, e.Damage[1], "урон врага");
-            Assert.AreEqual(24, e.AttackCooldown[Simulation.PlayerId], "кулдаун игрока в тиках");
+            Assert.AreEqual(20, e.AttackCooldown[Simulation.PlayerId], "кулдаун игрока в тиках");
             Assert.AreEqual(36, e.AttackCooldown[1], "кулдаун врага в тиках");
             Assert.AreEqual(1000, e.MaxHealth[Simulation.PlayerId], "здоровье игрока");
             Assert.AreEqual(100, e.MaxHealth[1], "здоровье врага");
@@ -54,7 +54,9 @@ namespace Game.Tests
             // в хеше состояния. Разойдись он в младшем разряде, реплеи бы поехали.
             Assert.AreEqual(Fix64.Ratio(9, 60).Raw, e.MoveStep[Simulation.PlayerId].Raw,
                 "шаг игрока за тик");
-            Assert.AreEqual(Fix64.Ratio(35, 300).Raw, e.MoveStep[1].Raw, "шаг врага за тик");
+            // 31/300 — это 3.1 м/с на 30 тиках. Было 35/300: владелец попросил
+            // замедлить толпу, см. Simulation.EnemyBaseMoveSpeed.
+            Assert.AreEqual(Fix64.Ratio(31, 300).Raw, e.MoveStep[1].Raw, "шаг врага за тик");
 
             Assert.AreEqual(Fix64.Ratio(15, 100).Raw, e.CritChance[Simulation.PlayerId].Raw, "шанс крита");
             Assert.AreEqual(Fix64.FromInt(2).Raw, e.CritMultiplier[Simulation.PlayerId].Raw,
@@ -91,8 +93,8 @@ namespace Game.Tests
                 ModifierSource.Equipment, 0));
             sim.RefreshPlayerStats(false);
 
-            // 1.25 * 1.25 = 1.5625 удара в секунду, 30 / 1.5625 = 19.2 тика.
-            Assert.AreEqual(19, sim.Entities.AttackCooldown[Simulation.PlayerId]);
+            // 1.5 * 1.25 = 1.875 удара в секунду, 30 / 1.875 = 16 тиков.
+            Assert.AreEqual(16, sim.Entities.AttackCooldown[Simulation.PlayerId]);
         }
 
         // ---- снаряжение ----

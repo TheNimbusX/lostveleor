@@ -33,8 +33,34 @@ namespace Game.View
             int capacity = Mathf.Max(1, prewarm);
             _items = new GameObject[capacity];
             _freeStack = new int[capacity];
+            _prewarmTarget = capacity;
 
-            for (int i = 0; i < capacity; i++) Grow();
+            // Один объект создаётся сразу — чтобы первый же Acquire не расширял
+            // пул, — остальные догоняются по кадру в PrewarmStep.
+            Grow();
+        }
+
+        private readonly int _prewarmTarget;
+
+        /// <summary>Прогрев ещё не закончен?</summary>
+        public bool NeedsPrewarm => _created < _prewarmTarget;
+
+        /// <summary>
+        /// Досоздаёт до <paramref name="perCall"/> объектов и возвращает,
+        /// осталось ли что-то.
+        ///
+        /// ЗАЧЕМ ПО КАДРАМ. Прогрев шестидесяти четырёх скиннед-мешей с
+        /// Animator и материалом занимал ТРЕТЬ СЕКУНДЫ в одном кадре. Замер
+        /// поймал ровно это: `dt=333 мс`, и все тридцать тел на экране прыгали
+        /// на полметра разом — симуляция за этот кадр честно отсчитала
+        /// несколько тиков. Игрок читает это как «мобы телепортируются».
+        ///
+        /// Пул по-прежнему готов заранее, просто не за один вдох.
+        /// </summary>
+        public bool PrewarmStep(int perCall)
+        {
+            for (int i = 0; i < perCall && _created < _prewarmTarget; i++) Grow();
+            return NeedsPrewarm;
         }
 
         private int Grow()

@@ -20,6 +20,13 @@ public static class RazlomPelagV5RuntimeValidator
         "Assets/Resources/Characters/Pelag_v5/Mixamo";
     private const string ControllerPath =
         "Assets/Resources/Characters/Pelag_v5/Pelag_v5_FullCombat.controller";
+    private const string BaseLayerName = "Base Layer";
+    private const string LegacyIdleStateName = "Idle_v5";
+    private const string RelaxedIdleStateName = "RelaxedIdle_v5";
+    private const string CombatIdleStateName = "CombatIdle_v5";
+    private const string RelaxedParameterName = "Relaxed";
+    private const float RelaxedIdleStateSpeed = 0.88f;
+    private const float CombatIdleStateSpeed = 1.00f;
 
     // Keep this list explicit. A loose folder count can pass while a required
     // delivery is missing and an unrelated FBX happens to take its place.
@@ -92,6 +99,8 @@ public static class RazlomPelagV5RuntimeValidator
             1f, 17f, true, 0.49f, 0.58f),
         new ClipContract("Pelag_MX_SaberCombo.fbx", "Pelag_MX_SaberAttackA",
             1f, 25f, false, 0.74f, 0.86f),
+        // Граница 25 общая с клипом A и держит стык связки — двигать нельзя,
+        // история попытки в RazlomCharacterImport.
         new ClipContract("Pelag_MX_SaberCombo.fbx", "Pelag_MX_SaberAttackB",
             25f, 74f, false, 1.55f, 1.70f),
         new ClipContract("Pelag_MX_DualCombo.fbx", "Pelag_MX_DualCombo",
@@ -128,6 +137,11 @@ public static class RazlomPelagV5RuntimeValidator
         public string[] requiredMixamoFiles;
         public string[] missingMixamoFiles;
         public string[] authoredClipChecks;
+        // Насколько клинок расходится с тиком урона у каждой атаки. Не ошибка:
+        // с нынешней нарезкой свести их можно только замедлением, а оно уже
+        // пробовалось и откатывалось. Число печатается, чтобы промах был
+        // виден и не забывался до перерезки клипов.
+        public string[] contactSyncNotes;
         public int baseColorWidth;
         public int baseColorHeight;
         public bool toonShaderFound;
@@ -227,7 +241,7 @@ public static class RazlomPelagV5RuntimeValidator
         RequireParameter(controller, "MoveX", AnimatorControllerParameterType.Float, errors);
         RequireParameter(controller, "MoveY", AnimatorControllerParameterType.Float, errors);
         RequireParameter(controller, "TurnDirection", AnimatorControllerParameterType.Float, errors);
-        RequireParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool, errors);
+        RequireParameter(controller, RelaxedParameterName, AnimatorControllerParameterType.Bool, errors);
         RequireParameter(controller, "Stunned", AnimatorControllerParameterType.Bool, errors);
         RequireParameter(controller, "LocomotionPlaybackSpeed", AnimatorControllerParameterType.Float, errors);
         RequireParameter(controller, "AttackPlaybackSpeed", AnimatorControllerParameterType.Float, errors);
@@ -275,18 +289,20 @@ public static class RazlomPelagV5RuntimeValidator
         // saber/whirlwind states intentionally live on masked layers, so they
         // must be checked by their layer-qualified path rather than assumed to
         // be children of Base Layer.
-        RequireState(states, "Base Layer", "Idle_v5", true, errors);
-        RequireState(states, "Base Layer", "Run_v5", true, errors);
-        RequireState(states, "Base Layer", "RunStart_v5", true, errors);
-        RequireState(states, "Base Layer", "RunStop_v5", true, errors);
-        RequireState(states, "Base Layer", "TurnLeft_v5", true, errors);
-        RequireState(states, "Base Layer", "TurnRight_v5", true, errors);
-        RequireState(states, "Base Layer", "Anchor_v5", true, errors);
-        RequireState(states, "Base Layer", "AnchorLeap_v5", true, errors);
-        RequireState(states, "Base Layer", "AnchorSweep_v5", true, errors);
-        RequireState(states, "Base Layer", "ChainStep_v5", true, errors);
-        RequireState(states, "Base Layer", "Hit_v5", true, errors);
-        RequireState(states, "Base Layer", "Death_v5", true, errors);
+        RequireState(states, BaseLayerName, LegacyIdleStateName, true, errors);
+        RequireState(states, BaseLayerName, RelaxedIdleStateName, true, errors);
+        RequireState(states, BaseLayerName, CombatIdleStateName, true, errors);
+        RequireState(states, BaseLayerName, "Run_v5", true, errors);
+        RequireState(states, BaseLayerName, "RunStart_v5", true, errors);
+        RequireState(states, BaseLayerName, "RunStop_v5", true, errors);
+        RequireState(states, BaseLayerName, "TurnLeft_v5", true, errors);
+        RequireState(states, BaseLayerName, "TurnRight_v5", true, errors);
+        RequireState(states, BaseLayerName, "Anchor_v5", true, errors);
+        RequireState(states, BaseLayerName, "AnchorLeap_v5", true, errors);
+        RequireState(states, BaseLayerName, "AnchorSweep_v5", true, errors);
+        RequireState(states, BaseLayerName, "ChainStep_v5", true, errors);
+        RequireState(states, BaseLayerName, "Hit_v5", true, errors);
+        RequireState(states, BaseLayerName, "Death_v5", true, errors);
         RequireState(states, "UpperBody Combat", "UpperBody_Empty", false, errors);
         RequireState(states, "UpperBody Combat", "Saber_A_v5", true, errors);
         RequireState(states, "UpperBody Combat", "Saber_B_v5", true, errors);
@@ -296,27 +312,39 @@ public static class RazlomPelagV5RuntimeValidator
         RequireState(states, "LowerBody Combat", "Lower_Saber_B_v5", true, errors);
         RequireState(states, "LowerBody Combat", "Lower_Whirlwind_v5", true, errors);
 
+        ValidateIdleContract(controller, states, errors);
+
         AnimatorState run = FindState(states, "Base Layer", "Run_v5");
         if (run != null)
         {
-            if (Mathf.Abs(run.speed - 0.68f) > 0.001f)
-                errors.Add("Run_v5 speed must be 0.68, got " + run.speed + ".");
+            if (Mathf.Abs(run.speed - 0.96f) > 0.001f)
+                errors.Add("Run_v5 speed must be 0.96, got " + run.speed + ".");
             if (!run.speedParameterActive || run.speedParameter != "LocomotionPlaybackSpeed")
                 errors.Add("Run_v5 must use LocomotionPlaybackSpeed.");
             if (!(run.motion is BlendTree))
                 errors.Add("Run_v5 must use the directional locomotion blend tree.");
         }
 
+        // Перекрывающий слой с маской и включённым Write Defaults пишет позу
+        // покоя рига поверх всего, что попало в маску. У «UpperBody Combat»
+        // вес 1 и рантайм его не опускает — с Write Defaults это означало
+        // замершие руки в беге и прыжок из позы покоя в середину удара.
+        RequireWriteDefaultsOff(states, "UpperBody Combat", errors);
+        RequireWriteDefaultsOff(states, "LowerBody Combat", errors);
+        RequireDrivenLayerWeight(controller, "UpperBody Combat", errors);
+        RequireDrivenLayerWeight(controller, "LowerBody Combat", errors);
+
+        // Derived strokes share a 0.3 s contact and a complete 0.64 s recovery.
+        var syncNotes = new List<string>();
         AnimatorState saberA = FindState(states, "UpperBody Combat", "Saber_A_v5");
         AnimatorState saberB = FindState(states, "UpperBody Combat", "Saber_B_v5");
-        if (saberA != null && Mathf.Abs(saberA.speed - 0.92f) > 0.001f)
-            errors.Add("Saber_A_v5 speed must be 0.92, got " + saberA.speed + ".");
-        if (saberB != null && Mathf.Abs(saberB.speed - 1.20f) > 0.001f)
-            errors.Add("Saber_B_v5 speed must be 1.20, got " + saberB.speed + ".");
+        CheckAttackState(saberA, "Saber_A_v5", 1f, 18f, errors, syncNotes);
+        CheckAttackState(saberB, "Saber_B_v5", 1f, 18f, errors, syncNotes);
+        report.contactSyncNotes = syncNotes.ToArray();
         if (saberB != null && saberB.motion is AnimationClip saberBClip)
         {
-            if (saberBClip.length < 1.55f)
-                errors.Add("Saber_B_v5 must include authored recovery through frame 74.");
+            if (Mathf.Abs(saberBClip.length - Game.View.CharacterAnimatorView.BasicAttackClipDuration) > 0.002f)
+                errors.Add("Saber_B_v5 must contain the complete retimed 0.64-second stroke.");
         }
 
         AnimatorState whirlwind = FindState(states, "UpperBody Combat", "Whirlwind_v5");
@@ -529,6 +557,266 @@ public static class RazlomPelagV5RuntimeValidator
                 return pair.Value;
         }
         return null;
+    }
+
+    // Validate the shared contact of the derived clips at their normal speed.
+    private static void CheckAttackState(AnimatorState state, string stateName,
+        float expectedSpeed, float contactFrame, List<string> errors, List<string> notes)
+    {
+        if (state == null) return;
+
+        if (Mathf.Abs(state.speed - expectedSpeed) > 0.005f)
+            errors.Add(stateName + " speed must be " + expectedSpeed.ToString("F2")
+                       + ", got " + state.speed + ".");
+
+        if (!(state.motion is AnimationClip clip)) return;
+        int frames = Mathf.RoundToInt(clip.length * clip.frameRate);
+        if (contactFrame >= frames)
+        {
+            errors.Add(stateName + ": контакт назначен на кадр " + contactFrame
+                       + ", а в клипе " + frames + " кадров — клип перерезали, "
+                       + "а число контакта не пересчитали.");
+            return;
+        }
+
+        float frameAtDamage = (Game.Sim.Simulation.AttackWindupTicks / (float)Game.Sim.Simulation.TicksPerSecond) * clip.frameRate * state.speed;
+        float missFrames = frameAtDamage - contactFrame;
+        if (Mathf.Abs(missFrames) > 0.01f)
+            errors.Add(stateName + ": derived contact is not synchronized with simulation damage.");
+        if (Mathf.Abs(clip.length - Game.View.CharacterAnimatorView.BasicAttackClipDuration) > 0.002f)
+            errors.Add(stateName + ": expected complete 0.64 s stroke.");
+        notes.Add(stateName + ": contact at " + (contactFrame / clip.frameRate).ToString("F3")
+            + " s; timing error " + (missFrames / clip.frameRate).ToString("F4") + " s.");
+    }
+
+    /// <summary>
+    /// Перекрывающий слой с маской обязан стартовать с нулевым весом: им
+    /// управляет CharacterAnimatorView.
+    ///
+    /// При весе 1 пустое состояние такого слоя не отдаёт кости базовому слою.
+    /// Замер на живом контроллере: правая кисть в idle (0.179, 0.467, 0.036),
+    /// во время удара (-0.210, 0.580, 0.140), в пустом состоянии при весе 1 —
+    /// (-0.208, 0.579, 0.139), то есть поза удара, а при весе 0 — (0.177,
+    /// 0.458, 0.040), то есть idle. Отпускает только вес. Ровно так Пелаг
+    /// замирал с вытянутой саблей после последнего удара.
+    /// </summary>
+    private static void RequireDrivenLayerWeight(AnimatorController controller,
+        string layerName, List<string> errors)
+    {
+        AnimatorControllerLayer[] layers = controller.layers;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (!string.Equals(layers[i].name, layerName, StringComparison.Ordinal)) continue;
+            if (layers[i].defaultWeight > 0.001f)
+                errors.Add("Слой «" + layerName + "» обязан стартовать с весом 0: вес "
+                           + "ведёт CharacterAnimatorView, а вес 1 замораживает кости "
+                           + "маски в последней записанной позе. Сейчас "
+                           + layers[i].defaultWeight.ToString("F2") + ".");
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Пустое состояние перекрывающего слоя с Write Defaults пишет позу покоя
+    /// рига на все кости маски. Режимы внутри слоя смешивать тоже нельзя,
+    /// поэтому проверяется весь слой целиком.
+    /// </summary>
+    private static void RequireWriteDefaultsOff(Dictionary<string, AnimatorState> states,
+        string layerName, List<string> errors)
+    {
+        string prefix = layerName + ".";
+        foreach (KeyValuePair<string, AnimatorState> pair in states)
+        {
+            if (!pair.Key.StartsWith(prefix, StringComparison.Ordinal)) continue;
+            if (!pair.Value.writeDefaultValues) continue;
+            errors.Add("Write Defaults обязан быть выключен на " + pair.Key
+                       + ": слой перекрывающий и с маской.");
+        }
+    }
+
+    private static void ValidateIdleContract(AnimatorController controller,
+        Dictionary<string, AnimatorState> states, List<string> errors)
+    {
+        AnimatorState legacy = FindState(states, BaseLayerName, LegacyIdleStateName);
+        AnimatorState relaxed = FindState(states, BaseLayerName, RelaxedIdleStateName);
+        AnimatorState combat = FindState(states, BaseLayerName, CombatIdleStateName);
+
+        RequireCompatibleIdleMotion(legacy, LegacyIdleStateName, errors);
+        RequireCompatibleIdleMotion(relaxed, RelaxedIdleStateName, errors);
+        RequireCompatibleIdleMotion(combat, CombatIdleStateName, errors);
+
+        if (legacy != null && relaxed != null && legacy.motion != relaxed.motion)
+            errors.Add(LegacyIdleStateName + " and " + RelaxedIdleStateName
+                       + " must use the same Pelag_MX_Idle clip.");
+        if (legacy != null && combat != null && legacy.motion != combat.motion)
+            errors.Add(LegacyIdleStateName + " and " + CombatIdleStateName
+                       + " must use the same Pelag_MX_Idle clip.");
+
+        if (relaxed != null && Mathf.Abs(relaxed.speed - RelaxedIdleStateSpeed) > 0.005f)
+            errors.Add(RelaxedIdleStateName + " speed must be "
+                       + RelaxedIdleStateSpeed.ToString("F2") + ", got " + relaxed.speed + ".");
+        if (combat != null && Mathf.Abs(combat.speed - CombatIdleStateSpeed) > 0.005f)
+            errors.Add(CombatIdleStateName + " speed must be "
+                       + CombatIdleStateSpeed.ToString("F2") + ", got " + combat.speed + ".");
+
+        AnimatorControllerParameter relaxedParameter = controller.parameters
+            .FirstOrDefault(parameter => string.Equals(parameter.name,
+                RelaxedParameterName, StringComparison.Ordinal));
+        if (relaxedParameter != null && !relaxedParameter.defaultBool)
+            errors.Add("Controller parameter " + RelaxedParameterName
+                       + " must default to true for the relaxed spawn posture.");
+
+        AnimatorStateMachine baseMachine = null;
+        AnimatorControllerLayer[] layers = controller.layers;
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if (!string.Equals(layers[i].name, BaseLayerName, StringComparison.Ordinal)) continue;
+            baseMachine = layers[i].stateMachine;
+            break;
+        }
+        if (baseMachine == null || baseMachine.defaultState == null
+            || !string.Equals(baseMachine.defaultState.name, RelaxedIdleStateName,
+                StringComparison.Ordinal))
+        {
+            errors.Add("Base Layer default state must be " + RelaxedIdleStateName + ".");
+        }
+
+        RequireTransition(states, BaseLayerName, RelaxedIdleStateName,
+            CombatIdleStateName, RelaxedParameterName, AnimatorConditionMode.IfNot,
+            requireNoExitTime: true, errors: errors);
+        RequireTransition(states, BaseLayerName, CombatIdleStateName,
+            RelaxedIdleStateName, RelaxedParameterName, AnimatorConditionMode.If,
+            requireNoExitTime: true, errors: errors);
+        // The legacy state can still be entered by older callers. It must hand
+        // control to the same mode-specific states instead of trapping the
+        // character in a third idle variant.
+        RequireTransition(states, BaseLayerName, LegacyIdleStateName,
+            RelaxedIdleStateName, RelaxedParameterName, AnimatorConditionMode.If,
+            requireNoExitTime: true, errors: errors);
+        RequireTransition(states, BaseLayerName, LegacyIdleStateName,
+            CombatIdleStateName, RelaxedParameterName, AnimatorConditionMode.IfNot,
+            requireNoExitTime: true, errors: errors);
+
+        // Locomotion and full-body actions must never fall back to the legacy
+        // idle or choose a mode at random. Their exits carry the same Relaxed
+        // branch as the idle switch, so a presentation-only combat toggle is
+        // honoured even when it changes during a stop/recovery.
+        RequireModeExit(states, "RunStop_v5", RelaxedIdleStateName, true,
+            requireMoveLess: false, requireExitTime: true, errors: errors);
+        RequireModeExit(states, "RunStop_v5", CombatIdleStateName, false,
+            requireMoveLess: false, requireExitTime: true, errors: errors);
+        RequireModeExit(states, "TurnLeft_v5", RelaxedIdleStateName, true,
+            requireMoveLess: true, requireExitTime: false, errors: errors);
+        RequireModeExit(states, "TurnLeft_v5", CombatIdleStateName, false,
+            requireMoveLess: true, requireExitTime: false, errors: errors);
+        RequireModeExit(states, "TurnRight_v5", RelaxedIdleStateName, true,
+            requireMoveLess: true, requireExitTime: false, errors: errors);
+        RequireModeExit(states, "TurnRight_v5", CombatIdleStateName, false,
+            requireMoveLess: true, requireExitTime: false, errors: errors);
+
+        string[] fullBodyActions = { "Anchor_v5", "AnchorLeap_v5", "AnchorSweep_v5",
+            "ChainStep_v5", "Hit_v5" };
+        for (int i = 0; i < fullBodyActions.Length; i++)
+        {
+            RequireModeExit(states, fullBodyActions[i], RelaxedIdleStateName, true,
+                requireMoveLess: true, requireExitTime: true, errors: errors);
+            RequireModeExit(states, fullBodyActions[i], CombatIdleStateName, false,
+                requireMoveLess: true, requireExitTime: true, errors: errors);
+        }
+    }
+
+    private static void RequireCompatibleIdleMotion(AnimatorState state, string stateName,
+        List<string> errors)
+    {
+        if (state == null || !(state.motion is AnimationClip clip)) return;
+
+        string path = AssetDatabase.GetAssetPath(clip);
+        if (!string.Equals(clip.name, "Pelag_MX_Idle", StringComparison.Ordinal)
+            || !string.Equals(path, MixamoFolder + "/Pelag_MX_Idle.fbx",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(stateName + " must use the compatible Generic clip "
+                       + MixamoFolder + "/Pelag_MX_Idle.fbx/Pelag_MX_Idle.");
+        }
+    }
+
+    private static void RequireTransition(Dictionary<string, AnimatorState> states,
+        string layerName, string fromName, string toName, string parameter,
+        AnimatorConditionMode mode, bool requireNoExitTime, List<string> errors)
+    {
+        AnimatorState source = FindState(states, layerName, fromName);
+        if (source == null) return;
+
+        AnimatorStateTransition[] transitions = source.transitions;
+        for (int i = 0; i < transitions.Length; i++)
+        {
+            AnimatorStateTransition transition = transitions[i];
+            if (transition == null || transition.destinationState == null
+                || !string.Equals(transition.destinationState.name, toName,
+                    StringComparison.Ordinal))
+                continue;
+            if (requireNoExitTime && transition.hasExitTime) continue;
+
+            AnimatorCondition[] conditions = transition.conditions;
+            for (int c = 0; c < conditions.Length; c++)
+            {
+                AnimatorCondition condition = conditions[c];
+                if (string.Equals(condition.parameter, parameter, StringComparison.Ordinal)
+                    && condition.mode == mode)
+                    return;
+            }
+        }
+
+        string modeText = mode == AnimatorConditionMode.IfNot ? "false" : "true";
+        errors.Add("Missing mode transition: " + layerName + "." + fromName + " -> "
+                   + toName + " when " + parameter + " is " + modeText + ".");
+    }
+
+    private static void RequireModeExit(Dictionary<string, AnimatorState> states,
+        string fromName, string toName, bool relaxed, bool requireMoveLess,
+        bool requireExitTime, List<string> errors)
+    {
+        AnimatorState source = FindState(states, BaseLayerName, fromName);
+        if (source == null) return;
+
+        AnimatorStateTransition[] transitions = source.transitions;
+        for (int i = 0; i < transitions.Length; i++)
+        {
+            AnimatorStateTransition transition = transitions[i];
+            if (transition == null || transition.destinationState == null
+                || !string.Equals(transition.destinationState.name, toName,
+                    StringComparison.Ordinal)
+                || transition.hasExitTime != requireExitTime)
+                continue;
+
+            bool modeFound = false;
+            bool moveFound = !requireMoveLess;
+            AnimatorCondition[] conditions = transition.conditions;
+            for (int c = 0; c < conditions.Length; c++)
+            {
+                AnimatorCondition condition = conditions[c];
+                if (string.Equals(condition.parameter, RelaxedParameterName,
+                        StringComparison.Ordinal)
+                    && condition.mode == (relaxed ? AnimatorConditionMode.If
+                        : AnimatorConditionMode.IfNot))
+                    modeFound = true;
+                if (requireMoveLess
+                    && string.Equals(condition.parameter, "MoveSpeed",
+                        StringComparison.Ordinal)
+                    && condition.mode == AnimatorConditionMode.Less
+                    && condition.threshold < 0.1001f)
+                    moveFound = true;
+            }
+
+            if (modeFound && moveFound) return;
+        }
+
+        string modeText = relaxed ? "true" : "false";
+        string moveText = requireMoveLess ? " and MoveSpeed < 0.1" : string.Empty;
+        string timingText = requireExitTime ? " with exit time" : " without exit time";
+        errors.Add("Missing mode-aware exit: " + BaseLayerName + "." + fromName + " -> "
+                   + toName + " when " + RelaxedParameterName + " is " + modeText
+                   + moveText + timingText + ".");
     }
 
     private static void RequireState(Dictionary<string, AnimatorState> states,

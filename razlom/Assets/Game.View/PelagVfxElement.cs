@@ -16,17 +16,44 @@ namespace Game.View
         public bool DynamicLine;
 
         private LineRenderer[] _lines;
+        private Gradient[] _lineGradients;
+        private GradientColorKey[][] _lineColors;
+        private GradientAlphaKey[][] _lineAlphas;
+        private float[][] _lineBaseAlphas;
+        private Vector3[][] _brushPoints;
         private TrailRenderer[] _trails;
         private ParticleSystem[] _particles;
         private PelagChainLinkStrip _chainLinks;
         private Transform _chainGlint;
         private Vector3 _initialScale;
+        private readonly Vector3[] _chainPoints = new Vector3[33];
+        private Vector3 _bendOffset, _bendVelocity;
+        private bool _chainInitialized;
 
         public LineRenderer PrimaryLine => _lines != null && _lines.Length > 0 ? _lines[0] : null;
 
         private void Awake()
         {
             _lines = GetComponentsInChildren<LineRenderer>(true);
+            _lineGradients = new Gradient[_lines.Length];
+            _lineColors = new GradientColorKey[_lines.Length][];
+            _lineAlphas = new GradientAlphaKey[_lines.Length][];
+            _lineBaseAlphas = new float[_lines.Length][];
+            if (Id == PelagVfxId.WhirlwindRing) _brushPoints = new Vector3[_lines.Length][];
+            for (int i = 0; i < _lines.Length; i++)
+            {
+                _lineGradients[i] = _lines[i].colorGradient;
+                _lineColors[i] = _lineGradients[i].colorKeys;
+                _lineAlphas[i] = _lineGradients[i].alphaKeys;
+                _lineBaseAlphas[i] = new float[_lineAlphas[i].Length];
+                if (_brushPoints != null)
+                {
+                    _brushPoints[i] = new Vector3[_lines[i].positionCount];
+                    _lines[i].GetPositions(_brushPoints[i]);
+                }
+                for (int k = 0; k < _lineAlphas[i].Length; k++)
+                    _lineBaseAlphas[i][k] = _lineAlphas[i][k].alpha;
+            }
             _trails = GetComponentsInChildren<TrailRenderer>(true);
             _particles = GetComponentsInChildren<ParticleSystem>(true);
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
@@ -36,6 +63,9 @@ namespace Game.View
 
         public void Begin(Vector3 position, Quaternion rotation)
         {
+            _chainInitialized = false;
+            _bendVelocity = Vector3.zero;
+            SetOpacity(1f);
             transform.SetPositionAndRotation(position, rotation);
             transform.localScale = _initialScale;
 
@@ -53,10 +83,42 @@ namespace Game.View
 
             for (int i = 0; i < _particles.Length; i++)
             {
-                _particles[i].Clear(true);
-                _particles[i].Play(true);
+                _particles[i].Clear(false);
+                _particles[i].Play(false);
             }
             _chainLinks?.SetVisible(DynamicLine);
+        }
+
+        public void SetOpacity(float opacity)
+        {
+            if (_lines == null) return;
+            for (int i = 0; i < _lines.Length; i++)
+            {
+                for (int k = 0; k < _lineAlphas[i].Length; k++)
+                    _lineAlphas[i][k].alpha = _lineBaseAlphas[i][k] * Mathf.Clamp01(opacity);
+                _lineGradients[i].SetKeys(_lineColors[i], _lineAlphas[i]);
+                _lines[i].colorGradient = _lineGradients[i];
+            }
+        }
+
+        public void AnimateBrush(float age)
+        {
+            if (_brushPoints == null) return;
+            for (int i = 0; i < _lines.Length; i++)
+            {
+                Vector3[] points = _brushPoints[i];
+                if (points.Length < 2) continue;
+                // Мазки расходятся с небольшой задержкой, оставляя просветы вокруг героя.
+                float delay = (i % 3) * .022f;
+                float reveal = Mathf.SmoothStep(0, 1, Mathf.Clamp01((age - delay) / .085f));
+                float erase = Mathf.SmoothStep(0, 1, Mathf.Clamp01((age - delay - .10f) / .22f));
+                for (int p = 0; p < points.Length; p++)
+                {
+                    float u = Mathf.Lerp(erase, Mathf.Max(erase,reveal), p / (float)(points.Length-1)) * (points.Length-1);
+                    int index = Mathf.Min(points.Length-2,Mathf.FloorToInt(u));
+                    _lines[i].SetPosition(p,Vector3.Lerp(points[index],points[index+1],u-index));
+                }
+            }
         }
 
         public void SetLine(Vector3 a, Vector3 b)
@@ -71,14 +133,49 @@ namespace Game.View
 
         public void SetLine(Vector3 a, Vector3 bend, Vector3 b)
         {
+            SetLineProgress(a, bend, b, 1f);
+        }
+
+        public void SetLineProgress(Vector3 a, Vector3 bend, Vector3 b, float progress)
+        {
             LineRenderer line = PrimaryLine;
             if (line == null) return;
-            line.positionCount = 3;
-            line.SetPosition(0, a);
-            line.SetPosition(1, bend);
-            line.SetPosition(2, b);
-            _chainLinks?.SetChain(a, bend, b);
-            PlaceChainGlint(bend, a, b);
+            progress = Mathf.Clamp01(progress);
+            Vector3 midpoint = (a + b) * 0.5f;
+            Vector3 wantedOffset = bend - midpoint;
+            if (!_chainInitialized) { _bendOffset = wantedOffset; _chainInitialized = true; }
+            // Damped spring on slack relative to the endpoints. Endpoint motion
+            // remains exact; the belly of the chain lags and settles under tension.
+            float dt = Mathf.Min(Time.deltaTime, 0.05f);
+            int steps = Mathf.Max(1, Mathf.CeilToInt(dt / (1f / 120f)));
+            float step = dt / steps;
+            for (int s = 0; s < steps; s++)
+            {
+                _bendVelocity += ((wantedOffset - _bendOffset) * 520f - _bendVelocity * 32f) * step;
+                _bendOffset += _bendVelocity * step;
+            }
+            bend = midpoint + _bendOffset;
+            for (int i = 0; i < _chainPoints.Length; i++)
+                _chainPoints[i] = Quadratic(a, bend, b, progress * i / (_chainPoints.Length - 1));
+            line.positionCount = _chainPoints.Length;
+            line.SetPositions(_chainPoints);
+            _chainLinks?.SetPoints(_chainPoints);
+            PlaceChainGlint(_chainPoints[_chainPoints.Length / 2], a, _chainPoints[_chainPoints.Length - 1]);
+        }
+
+        private static Vector3 Quadratic(Vector3 a, Vector3 bend, Vector3 b, float t)
+        {
+            float u = 1f - t;
+            return u * u * a + 2f * u * t * bend + t * t * b;
+        }
+
+        public void SetCurvePoints(Vector3[] points)
+        {
+            if (PrimaryLine == null) return;
+            PrimaryLine.positionCount = points.Length;
+            PrimaryLine.SetPositions(points);
+            _chainLinks?.SetPoints(points);
+            if (_chainGlint != null) _chainGlint.gameObject.SetActive(false);
         }
 
         private void PlaceChainGlint(Vector3 position, Vector3 a, Vector3 b)
@@ -105,7 +202,7 @@ namespace Game.View
 
             for (int i = 0; i < _particles.Length; i++)
             {
-                _particles[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                _particles[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
             _chainLinks?.SetVisible(false);
         }

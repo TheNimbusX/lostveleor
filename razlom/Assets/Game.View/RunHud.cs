@@ -36,6 +36,14 @@ namespace Game.View
 
             RiftRun run = _driver.Run;
             if (run == null) return;
+
+            // Боевая строка — чистая отрисовка, и на не-Repaint события её
+            // гонять незачем (см. PlayerHud). Экран награды пропускать нельзя:
+            // там живые GUI.Button, и без Layout и событий мыши карточки
+            // перестанут нажиматься.
+            if (run.Phase != RunPhase.ChoosingReward
+                && Event.current.type != EventType.Repaint) return;
+
             EnsureStyles();
 
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -100,7 +108,8 @@ namespace Game.View
             }
 
             GUI.Label(new Rect(panel.x + 28f, panel.yMax - 35f, panel.width - 56f, 22f),
-                "1–3  выбрать награду     L  уйти с добычей", _subtitle);
+                (GameUserSettings.AbilityRowUsesLetters ? "Q W E" : "1 2 3")
+                + "  выбрать награду     L  уйти с добычей", _subtitle);
         }
 
         private void DrawOfferCard(Rect card, int index, in RewardOffer offer, RiftRun run)

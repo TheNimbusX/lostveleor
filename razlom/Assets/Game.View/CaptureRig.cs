@@ -34,6 +34,7 @@ namespace Game.View
         private const string SeedFlag = "-capture-seed";
         private const string WhirlwindFlag = "-capture-whirlwind";
         private const string RunFlag = "-capture-run";
+        private const string EquipmentFlag = "-capture-equipment";
         private const string LocomotionFlag = "-capture-locomotion";
         private const string MovingCombatFlag = "-capture-moving-combat";
         private const string VideoFlag = "-capture-video";
@@ -46,6 +47,12 @@ namespace Game.View
         private const string PauseMenuFlag = "-capture-pause-menu";
         private const string CaptureWidthFlag = "-capture-width";
         private const string CaptureHeightFlag = "-capture-height";
+        private const string PerfFlag = "-capture-perf";
+        private const string PerfWarmupFlag = "-capture-perf-warmup";
+        private const string PerfNoHudFlag = "-capture-perf-nohud";
+        private const string QualityFlag = "-capture-quality";
+        private const string FrameCapFlag = "-capture-frame-cap";
+        private const string WatchTeleportsFlag = "-capture-watch-teleports";
 
         /// <summary>
         /// Переопределения для <see cref="Bootstrap"/>. Считываются ДО загрузки
@@ -76,18 +83,41 @@ namespace Game.View
         public static bool AutoEnterRift { get; private set; }
 
         public static bool WhirlwindShowcase { get; private set; }
+        public static string PoseShowcase { get; private set; }
 
         public static bool RunShowcase { get; private set; }
+
+        public static bool EquipmentShowcase { get; private set; }
+        public static float EquipmentStartedAt { get; private set; } = float.PositiveInfinity;
+        public static bool EquipmentReady
+        {
+            get
+            {
+                float t = Time.time - EquipmentStartedAt;
+                return (t >= 0.2f && t < 1.3f) || (t >= 2.5f && t < 2.7f)
+                    || (t >= 2.85f && t < 4f) || (t >= 5.4f && t < 6.6f);
+            }
+        }
 
         public static bool LocomotionShowcase { get; private set; }
 
         public static bool MovingCombatShowcase { get; private set; }
+        public static int MovingCombatDelay { get; private set; } = 2;
 
         public static PelagVfxShowcase VfxShowcase { get; private set; }
+        public static bool LiveSkill { get; private set; }
+        public static int CastYaw { get; private set; }
+        public static bool TurnDuringSkill { get; private set; }
+        public static bool ActiveEnemies { get; private set; }
+        public static bool SweepAimCapture { get; private set; }
+        public static bool DeathDuringSkill { get; private set; }
 
         public static CombatFeelCaptureTier CombatFeelTier { get; private set; }
         public static bool IsCombatFeelShowcase => CombatFeelTier != CombatFeelCaptureTier.None;
         public static bool GcWarmupActive { get; private set; }
+
+        /// <summary>Съёмка просит TickDriver жаловаться на скачки тел.</summary>
+        public static bool WatchTeleports { get; private set; }
 
         /// <summary>Служебный запуск UI-QA: открыть системное меню после кадра.</summary>
         public static bool PauseMenuCaptureRequested { get; private set; }
@@ -97,6 +127,7 @@ namespace Game.View
 
         private static readonly int[] WhirlwindCastTicks = { 18, 54, 90 };
         private static int _nextWhirlwindCast;
+        private static int _whirlwindStartedTick = -1;
 
         /// <summary>Три capture-нажатия первого слота, привязанные к sim tick.</summary>
         public static bool ShouldCastWhirlwind(int simTick)
@@ -105,8 +136,10 @@ namespace Game.View
             // расстановку. Во время RunShowcase способность не жмём: иначе
             // она обрывает тот самый gait-cycle, который мы проверяем.
             if (!WhirlwindShowcase || RunShowcase || LocomotionShowcase || simTick < 0) return false;
+            if (GcWarmupActive) { _whirlwindStartedTick = -1; return false; }
+            if (_whirlwindStartedTick < 0) _whirlwindStartedTick = simTick;
             if (_nextWhirlwindCast >= WhirlwindCastTicks.Length) return false;
-            if (simTick < WhirlwindCastTicks[_nextWhirlwindCast]) return false;
+            if (simTick - _whirlwindStartedTick < WhirlwindCastTicks[_nextWhirlwindCast]) return false;
             _nextWhirlwindCast++;
             return true;
         }
@@ -120,12 +153,18 @@ namespace Game.View
         private int _videoFrame;
         private int _timelineFrame;
         private float _cameraSize;
+        private float _cameraYaw;
         private int _captureWidth;
         private int _captureHeight;
         private ProfilerRecorder _gcRecorder;
         private long _gcTotal;
         private long _gcMax;
         private int _gcSamples;
+        private float _perfSeconds;
+        private int _perfWarmupFrames;
+        private bool _perfNoHud;
+        private bool _hasFrameCapOverride;
+        private bool IsPerfRun => _perfSeconds > 0f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Install()
@@ -137,20 +176,31 @@ namespace Game.View
             float[] marks = ParseMarks(ReadValue(args, TimesFlag));
 
             WhirlwindShowcase = Array.IndexOf(args, WhirlwindFlag) >= 0;
+            PoseShowcase = ReadValue(args, "-capture-pose");
             RunShowcase = Array.IndexOf(args, RunFlag) >= 0;
+            WatchTeleports = Array.IndexOf(args, WatchTeleportsFlag) >= 0;
+            EquipmentShowcase = Array.IndexOf(args, EquipmentFlag) >= 0;
             LocomotionShowcase = Array.IndexOf(args, LocomotionFlag) >= 0;
             MovingCombatShowcase = Array.IndexOf(args, MovingCombatFlag) >= 0;
+            MovingCombatDelay = Mathf.Clamp(ReadInt(args, "-capture-moving-combat-delay", 2), 1, 24);
             VfxShowcase = ParseShowcase(ReadValue(args, SkillFlag));
+            LiveSkill = Array.IndexOf(args, "-capture-live-skill") >= 0;
+            CastYaw = ReadInt(args, "-capture-cast-yaw", 0);
+            TurnDuringSkill = Array.IndexOf(args, "-capture-turn-during-skill") >= 0;
+            ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
+            SweepAimCapture = Array.IndexOf(args, "-capture-sweep-aim") >= 0;
+            DeathDuringSkill = Array.IndexOf(args, "-capture-death-during-skill") >= 0;
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
             PauseMenuCaptureRequested = Array.IndexOf(args, PauseMenuFlag) >= 0;
             PauseMenuCapturePage = ReadValue(args, PauseMenuFlag);
-            if (MovingCombatShowcase && CombatFeelTier == CombatFeelCaptureTier.None)
+            if ((MovingCombatShowcase || LiveSkill) && CombatFeelTier == CombatFeelCaptureTier.None)
                 CombatFeelTier = CombatFeelCaptureTier.Normal;
             // Input polling starts before the capture coroutine reaches its
             // explicit warmup. Gate combat immediately, otherwise an attack
             // can begin during scene startup and contaminate frame zero.
-            GcWarmupActive = IsCombatFeelShowcase;
+            GcWarmupActive = IsCombatFeelShowcase || WhirlwindShowcase;
             _nextWhirlwindCast = 0;
+            _whirlwindStartedTick = -1;
 
             bool recordVideo = Array.IndexOf(args, VideoFlag) >= 0;
             float videoStart = ReadFloat(args, VideoStartFlag, 0.4f);
@@ -186,18 +236,51 @@ namespace Game.View
             rig._videoEnd = videoStart + videoDuration;
             rig._videoFps = videoFps;
             rig._cameraSize = ReadFloat(args, CameraSizeFlag, 0f);
+            rig._cameraYaw = ReadFloat(args, "-capture-camera-yaw", 0f);
             rig._captureWidth = Mathf.Max(1, ReadInt(args, CaptureWidthFlag, 1920));
             rig._captureHeight = Mathf.Max(1, ReadInt(args, CaptureHeightFlag, 1080));
+            rig._perfSeconds = Mathf.Max(0f, ReadFloat(args, PerfFlag, 0f));
+            rig._perfWarmupFrames = Mathf.Max(0, ReadInt(args, PerfWarmupFlag, 240));
+            rig._perfNoHud = Array.IndexOf(args, PerfNoHudFlag) >= 0;
+
+            // Пресет качества задаётся ДО загрузки сцены и через тот же путь,
+            // что и выбор игрока: замер должен мерить настройку из меню, а не
+            // отдельную ветку кода, живущую только в съёмке.
+            string quality = ReadValue(args, QualityFlag);
+            if (!string.IsNullOrEmpty(quality))
+            {
+                if (string.Equals(quality, "low", StringComparison.OrdinalIgnoreCase))
+                    GameUserSettings.OverrideQuality(GameUserSettings.QualityLevel.Low);
+                else if (string.Equals(quality, "medium", StringComparison.OrdinalIgnoreCase))
+                    GameUserSettings.OverrideQuality(GameUserSettings.QualityLevel.Medium);
+                else if (string.Equals(quality, "high", StringComparison.OrdinalIgnoreCase))
+                    GameUserSettings.OverrideQuality(GameUserSettings.QualityLevel.High);
+            }
+
+            // Замер С потолком: проверяется не «движок принял число», а держит
+            // ли игра этот потолок ровно. Без флага замер снимает потолок сам.
+            rig._hasFrameCapOverride = Array.IndexOf(args, FrameCapFlag) >= 0;
+            if (rig._hasFrameCapOverride)
+                GameUserSettings.OverrideFrameCap(ReadInt(args, FrameCapFlag, 60));
         }
 
         private void Start()
         {
             Directory.CreateDirectory(_outputDirectory);
+            if (IsCombatFeelShowcase || WhirlwindShowcase || VfxShowcase != PelagVfxShowcase.None)
+                gameObject.AddComponent<PelagAttackCapture>().Initialize(_outputDirectory);
+            if (RunShowcase || LocomotionShowcase || WhirlwindShowcase || MovingCombatShowcase || VfxShowcase != PelagVfxShowcase.None)
+                gameObject.AddComponent<PelagLocomotionCapture>().Initialize(_outputDirectory);
             if (_recordVideo)
             {
                 Directory.CreateDirectory(Path.Combine(_outputDirectory, "video_frames"));
                 Time.captureFramerate = _videoFps;
             }
+            else if (WhirlwindShowcase || MovingCombatShowcase || VfxShowcase != PelagVfxShowcase.None || !string.IsNullOrEmpty(PoseShowcase))
+                Time.captureFramerate = 60;
+            // Финальная проверка идёт с настоящим dt; фиксированный шаг оставлен для разбора поз.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-real-time") >= 0)
+                Time.captureFramerate = 0;
             if (IsCombatFeelShowcase)
                 _gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory,
                     "GC Allocated In Frame", 1);
@@ -210,9 +293,35 @@ namespace Game.View
             // машинах. Отсчёт начинается только когда Rift и реальная сабля
             // уже привязаны — иначе расписание снимает заставку вместо боя.
             while (!CombatViewReady()) yield return null;
+            if (ActiveEnemies && IsCombatFeelShowcase)
+            {
+                TickDriver driver = FindAnyObjectByType<TickDriver>();
+                driver.Sim.SetupCombatFeelShowcase(driver.Run.Map, EnemyOverride, CombatFeelTier, true);
+                Debug.Log("[capture-combat] Живых врагов: " + (driver.Sim.Entities.Count - 1));
+                yield return null;
+            }
             ConfigureCaptureView();
+
+            if (!string.IsNullOrEmpty(PoseShowcase))
+            {
+                TickDriver driver = FindAnyObjectByType<TickDriver>();
+                if (driver != null) driver.enabled = false;
+                ArenaView arena = FindAnyObjectByType<ArenaView>();
+                arena.SetPlayerCombatReady(PoseShowcase != "idle");
+                yield return null;
+                if (PoseShowcase == "death" && arena.TryGetEntityView(Simulation.PlayerId, out Transform body))
+                    body.GetComponent<CharacterAnimatorView>().PlayDeath();
+            }
+
+            if (IsPerfRun)
+            {
+                yield return MeasurePerformance();
+                Application.Quit();
+                yield break;
+            }
+
             PelagVfxController vfx = FindAnyObjectByType<PelagVfxController>();
-            if (vfx != null && VfxShowcase != PelagVfxShowcase.None)
+            if (vfx != null && VfxShowcase != PelagVfxShowcase.None && !LiveSkill)
             {
                 // Дать толпе подойти в читаемую дистанцию; отсчёт видео ещё
                 // не начался, поэтому в ролик ожидание не попадает. Нулевой
@@ -235,7 +344,7 @@ namespace Game.View
                 vfx.BeginShowcase(VfxShowcase);
             }
 
-            if (IsCombatFeelShowcase)
+            if (IsCombatFeelShowcase || WhirlwindShowcase)
             {
                 GcWarmupActive = true;
                 for (int i = 0; i < 120; i++)
@@ -247,7 +356,15 @@ namespace Game.View
                 Debug.Log($"[capture-gc] samples={_gcSamples}, total={_gcTotal}, max={_gcMax}, " +
                           $"average={(_gcSamples > 0 ? _gcTotal / _gcSamples : 0)} bytes/frame");
             }
-            float combatStartedAt = Time.unscaledTime;
+            if (EquipmentShowcase)
+            {
+                EquipmentStartedAt = Time.time;
+                gameObject.AddComponent<PelagEquipmentCapture>().Initialize(_outputDirectory);
+            }
+            // Fixed-step animation captures use the animation clock. PNG IO
+            // must not advance the screenshot schedule past the next pose.
+            bool animationClock = !_recordVideo && Time.captureFramerate > 0;
+            float combatStartedAt = animationClock ? Time.time : Time.unscaledTime;
 
             int mark = 0;
             float lastMark = _marks.Length > 0 ? _marks[_marks.Length - 1] : 0f;
@@ -255,14 +372,14 @@ namespace Game.View
 
             while ((_recordVideo
                         ? _timelineFrame / (float)_videoFps
-                        : Time.unscaledTime - combatStartedAt) < finish
+                        : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt) < finish
                    || mark < _marks.Length)
             {
                 yield return new WaitForEndOfFrame();
 
                 float now = _recordVideo
                     ? _timelineFrame++ / (float)_videoFps
-                    : Time.unscaledTime - combatStartedAt;
+                    : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt;
                 if (_recordVideo && now >= _videoStart && now < _videoEnd)
                     CaptureVideoFrame();
 
@@ -278,8 +395,189 @@ namespace Game.View
             Application.Quit();
         }
 
+        /// <summary>
+        /// Замер кадра на фиксированном сиде и фиксированном числе врагов.
+        ///
+        /// Существует по той же причине, что и съёмка кадров: «стало быстрее» —
+        /// это утверждение, которое либо подтверждается двумя одинаковыми
+        /// прогонами, либо не значит ничего. Правило проекта прямое: не
+        /// оптимизируй без замера.
+        ///
+        /// Меряется ВРЕМЯ КАДРА, а не FPS: среднее FPS прячет ровно то, что
+        /// портит ощущение — редкие длинные кадры. Отсюда перцентили и максимум.
+        /// </summary>
+        private IEnumerator MeasurePerformance()
+        {
+            // Замер идёт без потолка: любой cap измерял бы сам себя. Но если
+            // потолок задан явно, мы как раз его и проверяем — тогда не трогаем.
+            Time.captureFramerate = 0;
+            if (!_hasFrameCapOverride)
+            {
+                Application.targetFrameRate = -1;
+                QualitySettings.vSyncCount = 0;
+            }
+
+            // Второй прогон с выключенным HUD нужен, чтобы РАЗДЕЛИТЬ мусор
+            // кадра: IMGUI выделяет память на каждый Label, и без этой пары
+            // цифр нельзя сказать, чей это мусор — боя или интерфейса.
+            if (_perfNoHud)
+            {
+                PlayerHud playerHud = FindAnyObjectByType<PlayerHud>();
+                RunHud runHud = FindAnyObjectByType<RunHud>();
+                CampHud campHud = FindAnyObjectByType<CampHud>();
+                if (playerHud != null) playerHud.enabled = false;
+                if (runHud != null) runHud.enabled = false;
+                if (campHud != null) campHud.enabled = false;
+            }
+
+            // Не `using`: C# запрещает yield return внутри try/finally, а
+            // `using` разворачивается именно в него. Освобождаем руками ниже.
+            ProfilerRecorder gc = ProfilerRecorder.StartNew(
+                ProfilerCategory.Memory, "GC Allocated In Frame", 1);
+            // Имена счётчиков отрисовки в URP разошлись между версиями Unity:
+            // «Batches Count» в этой сборке не существует и молча отдаёт ноль.
+            // Берём первое имя, которое реально нашлось.
+            ProfilerRecorder drawCalls = StartFirstValid(ProfilerCategory.Render,
+                "Draw Calls Count", "Total Draw Calls Count");
+            ProfilerRecorder setPass = StartFirstValid(ProfilerCategory.Render,
+                "SetPass Calls Count");
+            ProfilerRecorder batches = StartFirstValid(ProfilerCategory.Render,
+                "Total Batches Count", "Batches Count", "Dynamic Batched Draw Calls Count");
+            ProfilerRecorder triangles = StartFirstValid(ProfilerCategory.Render,
+                "Triangles Count");
+
+            // Прогрев: первые кадры платят за компиляцию шейдеров, загрузку
+            // атласов и первый рост пулов. Считать их — значит мерить загрузку.
+            for (int i = 0; i < _perfWarmupFrames; i++) yield return new WaitForEndOfFrame();
+
+            var frames = new List<float>(4096);
+            long gcTotal = 0;
+            long gcMax = 0;
+            long drawSum = 0, setPassSum = 0, batchSum = 0, triangleSum = 0;
+            int samples = 0;
+            // Врагов считаем КАЖДЫЙ кадр, а не один раз в конце: за окно замера
+            // толпа успевает поредеть, и число «на выходе» соврало бы про то,
+            // при какой нагрузке получены миллисекунды.
+            TickDriver driver = FindAnyObjectByType<TickDriver>();
+            int enemyMin = int.MaxValue, enemyMax = 0;
+            long enemySum = 0;
+            float started = Time.realtimeSinceStartup;
+
+            while (Time.realtimeSinceStartup - started < _perfSeconds)
+            {
+                yield return new WaitForEndOfFrame();
+
+                Simulation live = driver != null ? driver.Sim : null;
+                int alive = live != null ? live.CountAliveEnemies() : 0;
+                if (alive < enemyMin) enemyMin = alive;
+                if (alive > enemyMax) enemyMax = alive;
+                enemySum += alive;
+
+                frames.Add(Time.unscaledDeltaTime * 1000f);
+                if (gc.Valid)
+                {
+                    long value = gc.LastValue;
+                    gcTotal += value;
+                    if (value > gcMax) gcMax = value;
+                }
+                if (drawCalls.Valid) drawSum += drawCalls.LastValue;
+                if (setPass.Valid) setPassSum += setPass.LastValue;
+                if (batches.Valid) batchSum += batches.LastValue;
+                if (triangles.Valid) triangleSum += triangles.LastValue;
+                samples++;
+            }
+
+            long gcAverage = samples > 0 ? gcTotal / samples : 0;
+            long drawAverage = samples > 0 ? drawSum / samples : 0;
+            long setPassAverage = samples > 0 ? setPassSum / samples : 0;
+            long batchAverage = samples > 0 ? batchSum / samples : 0;
+            long triangleAverage = samples > 0 ? triangleSum / samples : 0;
+            if (gc.Valid) gc.Dispose();
+            if (drawCalls.Valid) drawCalls.Dispose();
+            if (setPass.Valid) setPass.Dispose();
+            if (batches.Valid) batches.Dispose();
+            if (triangles.Valid) triangles.Dispose();
+
+            if (samples == 0)
+            {
+                Debug.Log("[perf] {\"error\":\"no samples\"}");
+                yield break;
+            }
+
+            frames.Sort();
+            float average = 0f;
+            for (int i = 0; i < frames.Count; i++) average += frames[i];
+            average /= frames.Count;
+
+            UnityEngine.Rendering.RenderPipelineAsset pipeline =
+                UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
+
+            // Одна строка JSON: её разбирает capture.ps1, и её же можно
+            // сравнить глазами между двумя прогонами без всякого инструмента.
+            Debug.Log("[perf] {"
+                      + $"\"frames\":{samples},"
+                      + $"\"enemies_avg\":{enemySum / samples},"
+                      + $"\"enemies_min\":{(enemyMin == int.MaxValue ? 0 : enemyMin)},"
+                      + $"\"enemies_max\":{enemyMax},"
+                      + $"\"screen\":\"{Screen.width}x{Screen.height}\","
+                      + $"\"quality\":\"{GameUserSettings.Quality}\","
+                      + $"\"frame_cap\":{GameUserSettings.FrameCap},"
+                      + $"\"pipeline\":\"{(pipeline != null ? pipeline.name : "builtin")}\","
+                      + $"\"ms_avg\":{average.ToString("0.000", CultureInfo.InvariantCulture)},"
+                      + $"\"ms_p50\":{Percentile(frames, 0.50f).ToString("0.000", CultureInfo.InvariantCulture)},"
+                      + $"\"ms_p95\":{Percentile(frames, 0.95f).ToString("0.000", CultureInfo.InvariantCulture)},"
+                      + $"\"ms_p99\":{Percentile(frames, 0.99f).ToString("0.000", CultureInfo.InvariantCulture)},"
+                      + $"\"ms_max\":{frames[frames.Count - 1].ToString("0.000", CultureInfo.InvariantCulture)},"
+                      + $"\"fps_avg\":{(1000f / average).ToString("0.0", CultureInfo.InvariantCulture)},"
+                      + $"\"fps_p95\":{(1000f / Percentile(frames, 0.95f)).ToString("0.0", CultureInfo.InvariantCulture)},"
+                      + $"\"gc_bytes_avg\":{gcAverage},"
+                      + $"\"gc_bytes_max\":{gcMax},"
+                      + $"\"draw_calls\":{drawAverage},"
+                      + $"\"setpass\":{setPassAverage},"
+                      + $"\"batches\":{batchAverage},"
+                      + $"\"triangles\":{triangleAverage}"
+                      + "}");
+        }
+
+        /// <summary>Первый счётчик из списка, который в этой сборке существует.</summary>
+        private static ProfilerRecorder StartFirstValid(ProfilerCategory category,
+            params string[] names)
+        {
+            for (int i = 0; i < names.Length; i++)
+            {
+                ProfilerRecorder recorder = ProfilerRecorder.StartNew(category, names[i], 1);
+                if (recorder.Valid) return recorder;
+                recorder.Dispose();
+            }
+            return default;
+        }
+
+        /// <summary>Перцентиль по уже отсортированному списку.</summary>
+        private static float Percentile(List<float> sorted, float fraction)
+        {
+            if (sorted.Count == 0) return 0f;
+            int index = Mathf.Clamp(
+                Mathf.RoundToInt(fraction * (sorted.Count - 1)), 0, sorted.Count - 1);
+            return sorted[index];
+        }
+
         private void ConfigureCaptureView()
         {
+            if (Mathf.Abs(_cameraYaw) > 0.01f && Camera.main != null)
+            {
+                var orbitArena = FindAnyObjectByType<ArenaView>();
+                if (orbitArena != null && orbitArena.TryGetEntityView(Simulation.PlayerId, out Transform body))
+                {
+                    var follow = FindAnyObjectByType<CameraFollow>();
+                    if (follow != null) follow.enabled = false;
+                    var cameraJuice = Camera.main.GetComponent<CombatCameraJuice>();
+                    if (cameraJuice != null) cameraJuice.enabled = false;
+                    Vector3 pivot = body.position + Vector3.up * 0.8f;
+                    Quaternion orbit = Quaternion.AngleAxis(_cameraYaw, Vector3.up);
+                    Camera.main.transform.position = pivot + orbit * (Camera.main.transform.position - pivot);
+                    Camera.main.transform.rotation = orbit * Camera.main.transform.rotation;
+                }
+            }
             if (_cameraSize > 0f && Camera.main != null && Camera.main.orthographic)
             {
                 Camera.main.orthographicSize = _cameraSize;

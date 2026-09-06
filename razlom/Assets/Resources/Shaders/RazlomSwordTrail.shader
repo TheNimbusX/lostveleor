@@ -3,6 +3,7 @@ Shader "Razlom/SwordTrail"
     Properties
     {
         _Glow ("HDR Glow", Range(0,4)) = 1.55
+        _Brush ("Brush breakup", Range(0,1)) = 0
     }
 
     SubShader
@@ -36,6 +37,7 @@ Shader "Razlom/SwordTrail"
 
             CBUFFER_START(UnityPerMaterial)
                 half _Glow;
+                half _Brush;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -56,6 +58,9 @@ Shader "Razlom/SwordTrail"
                 half bladeCore = lerp(0.74h, 1.34h,
                     smoothstep(0.30h, 0.84h, input.uv.y));
                 half alpha = saturate(input.color.a * historyFade * strokeShape);
+                half bristles = .68h + .32h * sin(input.uv.y * 57.0h + sin(input.uv.x * 12.0h) * 1.8h);
+                half pigment = smoothstep(.08h, .42h, bristles + input.uv.x * .25h);
+                alpha *= lerp(1.0h, pigment, _Brush);
                 half3 warmGlow = input.color.rgb * (_Glow * bladeCore);
                 return half4(warmGlow, alpha);
             }

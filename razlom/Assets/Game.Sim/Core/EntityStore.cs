@@ -31,6 +31,7 @@ namespace Game.Sim
         public readonly int[] Health;
         public readonly int[] MaxHealth;
         public readonly Faction[] Side;
+        public readonly EnemyKind[] Kind;
         public readonly bool[] Alive;
 
         /// <summary>Тик, когда сущность сможет атаковать снова.</summary>
@@ -126,7 +127,11 @@ namespace Game.Sim
         public static readonly Fix64 DefaultBodyRadius = Fix64.Ratio(45, 100);
 
         /// <summary>Потолок радиуса. По нему считается радиус запроса при расталкивании.</summary>
-        public static readonly Fix64 MaxBodyRadius = Fix64.Ratio(80, 100);
+        // Потолок радиуса. Им меряется РАДИУС ПОИСКА при расталкивании
+        // (`BodyRadius[i] + MaxBodyRadius`), поэтому он обязан быть не меньше
+        // самого толстого тела в игре — иначе часть пересечений не найдётся, и
+        // тела разойдутся рывком позже, когда наконец попадут в выборку.
+        public static readonly Fix64 MaxBodyRadius = Fix64.Ratio(90, 100);
 
         public EntityStore(int capacity)
         {
@@ -137,6 +142,7 @@ namespace Game.Sim
             Health = new int[capacity];
             MaxHealth = new int[capacity];
             Side = new Faction[capacity];
+            Kind = new EnemyKind[capacity];
             Alive = new bool[capacity];
             NextAttackTick = new int[capacity];
             PendingAttackTarget = new int[capacity];
@@ -176,6 +182,7 @@ namespace Game.Sim
             Velocity[id] = FixVec2.Zero;
             Facing[id] = FacingDefault;
             Side[id] = side;
+            Kind[id] = EnemyKind.None;
             Alive[id] = true;
             NextAttackTick[id] = 0;
             PendingAttackTarget[id] = -1;
@@ -259,6 +266,7 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, Health[i]);
                 Hashing.Mix(ref hash, MaxHealth[i]);
                 Hashing.Mix(ref hash, (int)Side[i]);
+                Hashing.Mix(ref hash, (int)Kind[i]);
                 Hashing.Mix(ref hash, Alive[i] ? 1 : 0);
                 Hashing.Mix(ref hash, NextAttackTick[i]);
                 Hashing.Mix(ref hash, PendingAttackTarget[i]);

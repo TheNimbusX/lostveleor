@@ -1,4 +1,4 @@
-namespace Game.Sim
+﻿namespace Game.Sim
 {
     /// <summary>
     /// Три способности Пелага на якоре и цепи.
@@ -24,18 +24,23 @@ namespace Game.Sim
         public static readonly Fix64 LeapRange = Fix64.FromInt(7);
 
         /// <summary>
-        /// Сколько тиков летит игрок. Восемь — чуть больше четверти секунды.
-        ///
-        /// Меньше — читается как телепорт и теряется на экране; больше —
-        /// игрок успевает почувствовать, что не управляет телом. Это тот
-        /// случай, когда обе границы находятся руками, а не расчётом.
+        /// Подтягивание длится 0.5 секунды: читаемый бросок без затянутого зависания.
         /// </summary>
-        public const int LeapTicks = 8;
+        public const int LeapTicks = 15;
+        public const int LeapWindupTicks = 9;
 
         // ---- Подсечка ----
 
         public static readonly Fix64 SweepRadius = Fix64.Ratio(65, 10);
-        public const int SweepTicks = 10;
+        public const int SweepTicks = 9;
+        public const int SweepCastDelayTicks = 13;
+        public const float SweepAngleDegrees = 45f;
+
+        public static bool InSweepCone(FixVec2 delta, FixVec2 facing)
+        {
+            Fix64 dot = FixVec2.Dot(delta, facing);
+            return dot.Raw >= 0 && dot * dot >= delta.LengthSq * Fix64.Ratio(853554, 1000000);
+        }
 
         /// <summary>
         /// Куда именно волочит. НЕ в самого игрока, а на это расстояние перед
@@ -74,6 +79,7 @@ namespace Game.Sim
             FixVec2 direction = delta / distance;
             Fix64 reach = distance > LeapRange ? LeapRange : distance;
             FixVec2 target = from + direction * reach;
+            e.Facing[Simulation.PlayerId] = direction;
 
             ForcedMotion.Begin(e, Simulation.PlayerId, target, LeapTicks,
                 ForcedMotionKind.Lunge);
@@ -109,6 +115,7 @@ namespace Game.Sim
                 // берётся от игрока к цели, то есть каждый приезжает со своей
                 // стороны и они не сходятся в одну точку.
                 FixVec2 delta = e.Position[id] - centre;
+                if (!InSweepCone(delta, sim.SweepDirection)) continue;
                 Fix64 distance = delta.Length;
                 FixVec2 direction = distance.Raw == 0
                     ? e.Facing[player]
@@ -116,7 +123,7 @@ namespace Game.Sim
 
                 FixVec2 target = centre + direction * SweepGatherDistance;
                 if (ForcedMotion.Begin(e, id, target, SweepTicks, ForcedMotionKind.Dragged))
-                    dragged++;
+                    scratch[dragged++] = id;
             }
 
             return dragged;
@@ -132,7 +139,8 @@ namespace Game.Sim
         ///
         /// Возвращает выбранную цель или -1, если рядом никого.
         /// </summary>
-        public static int PickChainTarget(Simulation sim, int[] scratch, int previous)
+        public static int PickChainTarget(Simulation sim, int[] scratch, int previous,
+            int[] visited = null, int visitedCount = 0)
         {
             EntityStore e = sim.Entities;
             int player = Simulation.PlayerId;
@@ -146,6 +154,10 @@ namespace Game.Sim
             {
                 int id = scratch[k];
                 if (id == previous) continue;
+                bool alreadyHit = false;
+                for (int v = 0; v < visitedCount; v++)
+                    if (visited[v] == id) { alreadyHit = true; break; }
+                if (alreadyHit) continue;
                 if (!e.Alive[id]) continue;
                 if (e.Side[id] == e.Side[player]) continue;
 

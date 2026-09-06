@@ -24,6 +24,7 @@ namespace Game.View
 
         [Tooltip("На сколько метров полоска висит над центром тела.")]
         public float Height3D = 2.15f;
+        public float RootSwarmHeight3D = 1.25f;
 
         public Color BackColor = new Color(0.05f, 0.05f, 0.07f, 0.80f);
         public Color FillColor = new Color(0.86f, 0.24f, 0.22f, 0.95f);
@@ -153,7 +154,9 @@ namespace Game.View
                 bar.Root.gameObject.SetActive(true);
 
                 Vector3 at = _driver.GetRenderPosition(i);
-                bar.Root.position = new Vector3(at.x, at.y + Height3D, at.z);
+                float height = entities.Kind[i] == EnemyKind.ForestRootSwarm
+                    ? RootSwarmHeight3D : Height3D;
+                bar.Root.position = new Vector3(at.x, at.y + height, at.z);
                 if (_camera != null) bar.Root.rotation = _camera.rotation;
 
                 Color back = BackColor;

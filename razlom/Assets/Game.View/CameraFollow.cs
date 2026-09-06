@@ -21,6 +21,11 @@ namespace Game.View
         [Tooltip("Метров в секунду на метр отставания. Больше — жёстче привязка.")]
         public float Smoothing = 8f;
 
+        [Tooltip("Сдвиг центра боевого кадра в плоскости камеры: X — вправо, Y — вверх. Нужен, чтобы герой оставался ниже центра и впереди оставалось место для толпы.")]
+        // Отрицательный Y поднимает героя в кадре и оставляет больше места
+        // для движения вниз по арене.
+        public Vector2 ScreenOffset = new Vector2(0f, -1.05f);
+
         private Vector3 _offset;
         private bool _ready;
         private bool _initialized;
@@ -73,18 +78,24 @@ namespace Game.View
             }
 
             Vector3 player = Driver.GetRenderPosition(Simulation.PlayerId);
+            // Смещаем именно кадр, а не симуляционного игрока: так впереди
+            // остаётся место для врагов, а лагерь и ввод не получают скрытого
+            // мирового сдвига.
+            Vector3 framing = transform.right * ScreenOffset.x + transform.up * ScreenOffset.y;
 
             if (!_ready)
             {
                 // Первый кадр — встаём сразу, без наезда из начала координат.
-                Target.position = _offset + player;
+                Target.position = _offset + player + framing;
                 _ready = true;
                 return;
             }
 
-            Vector3 wanted = _offset + player;
+            Vector3 wanted = _offset + player + framing;
             Target.position = Vector3.Lerp(Target.position, wanted,
                 1f - Mathf.Exp(-Smoothing * Time.deltaTime));
         }
     }
 }
+
+

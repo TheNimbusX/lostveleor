@@ -23,7 +23,20 @@ namespace Game.View
         private const float DisplayConfirmationSeconds = 15f;
         private const string CaptureFlag = "-capture-pause-menu";
 
-        private enum Page : byte { Main, Graphics, Audio, ConfirmCamp, ConfirmDisplay }
+        private enum Page : byte { Main, Graphics, Controls, Audio, ConfirmCamp, ConfirmDisplay }
+
+        private static readonly GameUserSettings.QualityLevel[] QualityLevels =
+        {
+            GameUserSettings.QualityLevel.Low,
+            GameUserSettings.QualityLevel.Medium,
+            GameUserSettings.QualityLevel.High,
+        };
+
+        private static readonly GameUserSettings.AbilityLayout[] AbilityLayouts =
+        {
+            GameUserSettings.AbilityLayout.Qwer,
+            GameUserSettings.AbilityLayout.Digits,
+        };
 
         private static readonly FullScreenMode[] DisplayModes =
         {
@@ -108,6 +121,8 @@ namespace Game.View
             {
                 if (string.Equals(rawPage, "graphics", StringComparison.OrdinalIgnoreCase))
                     page = Page.Graphics;
+                else if (string.Equals(rawPage, "controls", StringComparison.OrdinalIgnoreCase))
+                    page = Page.Controls;
                 else if (string.Equals(rawPage, "audio", StringComparison.OrdinalIgnoreCase))
                     page = Page.Audio;
             }
@@ -288,7 +303,10 @@ namespace Game.View
 
         private void DrawSettings()
         {
-            var panel = new Rect(550f, 145f, 820f, 790f);
+            // Панель подросла вместе с содержимым: во вкладке экрана теперь
+            // четыре строки вместо двух, и кнопка «Применить» со строкой
+            // состояния обязана помещаться под ними, а не уезжать за край.
+            var panel = new Rect(550f, 118f, 820f, 850f);
             DrawPanel(panel);
             GUI.Label(new Rect(panel.x + 48f, panel.y + 38f, 510f, 56f), "НАСТРОЙКИ", _title);
             if (GUI.Button(new Rect(panel.xMax - 174f, panel.y + 42f, 124f, 48f), "НАЗАД", _button))
@@ -297,16 +315,83 @@ namespace Game.View
                 _page = Page.Main;
             }
 
-            var graphicsTab = new Rect(panel.x + 48f, panel.y + 116f, 344f, 54f);
-            var audioTab = new Rect(panel.x + 408f, panel.y + 116f, 344f, 54f);
-            if (GUI.Button(graphicsTab, "ГРАФИКА", _page == Page.Graphics ? _activeTab : _tab))
+            // Три вкладки вместо двух: 224 в ширину при зазоре 16 ровно
+            // укладываются в те же 724 полезных пикселя панели.
+            const float tabWidth = 224f;
+            const float tabGap = 16f;
+            float tabX = panel.x + 48f;
+            float tabY = panel.y + 116f;
+            if (GUI.Button(new Rect(tabX, tabY, tabWidth, 54f), "ГРАФИКА",
+                    _page == Page.Graphics ? _activeTab : _tab))
                 _page = Page.Graphics;
-            if (GUI.Button(audioTab, "ЗВУК", _page == Page.Audio ? _activeTab : _tab))
+            tabX += tabWidth + tabGap;
+            if (GUI.Button(new Rect(tabX, tabY, tabWidth, 54f), "УПРАВЛЕНИЕ",
+                    _page == Page.Controls ? _activeTab : _tab))
+                _page = Page.Controls;
+            tabX += tabWidth + tabGap;
+            if (GUI.Button(new Rect(tabX, tabY, tabWidth, 54f), "ЗВУК",
+                    _page == Page.Audio ? _activeTab : _tab))
                 _page = Page.Audio;
 
             if (_page == Page.Graphics) DrawGraphics(panel);
+            else if (_page == Page.Controls) DrawControls(panel);
             else DrawAudio(panel);
         }
+
+        /// <summary>
+        /// Ряд способностей и напоминание об остальных клавишах.
+        ///
+        /// Полного ремапа здесь нет намеренно: это отдельный экран с
+        /// конфликтами, дефолтами и сбросом, а спор ровно один — QWER против
+        /// цифр. Остальные клавиши перечислены как справка, не как поля ввода.
+        /// </summary>
+        private void DrawControls(Rect panel)
+        {
+            bool letters = GameUserSettings.AbilityRowUsesLetters;
+            float x = panel.x + 64f;
+            float y = panel.y + 226f;
+            DrawSectionTitle(x, y, "СПОСОБНОСТИ");
+            y += 64f;
+
+            GUI.Label(new Rect(x, y, 260f, 38f), "Ряд клавиш", _label);
+            int layoutIndex = Array.IndexOf(AbilityLayouts, GameUserSettings.Abilities);
+            if (layoutIndex < 0) layoutIndex = 0;
+            layoutIndex = DrawChoice(new Rect(x + 282f, y - 4f, 410f, 50f),
+                AbilityLayoutName(AbilityLayouts[layoutIndex]), layoutIndex,
+                AbilityLayouts.Length);
+            GameUserSettings.SetAbilityLayout(AbilityLayouts[layoutIndex]);
+            y += 76f;
+
+            // Две строки — потолок: ниже начинается список клавиш, и он обязан
+            // уместиться в панель целиком. Длинное объяснение уводило «Паузу»
+            // за нижнюю кромку.
+            GUI.Label(new Rect(x, y, 690f, 60f),
+                letters
+                    ? "Рука не сходит с позиции WASD. На Полигоне E кастует способность — "
+                      + "чтобы уйти в Разлом, сойди с него на T."
+                    : "Классический ряд ARPG. Ни одна клавиша не спорит с командами лагеря.",
+                _subtitle);
+            y += 78f;
+
+            DrawSectionTitle(x, y, "ОСТАЛЬНОЕ");
+            y += 60f;
+            DrawKeyRow(x, ref y, "Идти · атаковать", "Правая кнопка мыши");
+            DrawKeyRow(x, ref y, "Выбрать награду", letters ? "Q · W · E" : "1 · 2 · 3");
+            DrawKeyRow(x, ref y, "Уйти из Разлома с добычей", "L");
+            DrawKeyRow(x, ref y, "В Разлом · Полигон · разобрать мусор", "E · T · V");
+            DrawKeyRow(x, ref y, "Повторить забег · вернуться в лагерь", "R · C");
+            DrawKeyRow(x, ref y, "Пауза", "ESC");
+        }
+
+        private void DrawKeyRow(float x, ref float y, string action, string keys)
+        {
+            GUI.Label(new Rect(x, y, 430f, 34f), action, _label);
+            GUI.Label(new Rect(x + 430f, y, 262f, 34f), keys, _value);
+            y += 40f;
+        }
+
+        private static string AbilityLayoutName(GameUserSettings.AbilityLayout layout)
+            => layout == GameUserSettings.AbilityLayout.Digits ? "1  2  3  4" : "Q  W  E  R";
 
         private void DrawGraphics(Rect panel)
         {
@@ -338,14 +423,37 @@ namespace Game.View
                     ResolutionName(_resolutions[_resolutionIndex]), _resolutionIndex,
                     _resolutions.Length);
             }
-            y += 110f;
+            y += 86f;
 
-            GUI.Label(new Rect(x, y, 690f, 52f),
-                _displayMode == FullScreenMode.FullScreenWindow
-                    ? "Без рамок использует нативное разрешение текущего монитора."
-                    : "Новое разрешение можно безопасно проверить перед сохранением.",
+            GUI.Label(new Rect(x, y, 260f, 38f), "Качество", _label);
+            int qualityIndex = Array.IndexOf(QualityLevels, GameUserSettings.Quality);
+            if (qualityIndex < 0) qualityIndex = QualityLevels.Length - 1;
+            qualityIndex = DrawChoice(new Rect(x + 282f, y - 4f, 410f, 50f),
+                GameUserSettings.QualityName(QualityLevels[qualityIndex]),
+                qualityIndex, QualityLevels.Length);
+            GameUserSettings.SetQuality(QualityLevels[qualityIndex]);
+            y += 86f;
+
+            GUI.Label(new Rect(x, y, 260f, 38f), "Частота кадров", _label);
+            int capIndex = Array.IndexOf(GameUserSettings.FrameCaps, GameUserSettings.FrameCap);
+            if (capIndex < 0) capIndex = 0;
+            capIndex = DrawChoice(new Rect(x + 282f, y - 4f, 410f, 50f),
+                GameUserSettings.FrameCapName(GameUserSettings.FrameCaps[capIndex]),
+                capIndex, GameUserSettings.FrameCaps.Length);
+            GameUserSettings.SetFrameCap(GameUserSettings.FrameCaps[capIndex]);
+            y += 78f;
+
+            GUI.Label(new Rect(x, y, 690f, 70f),
+                GameUserSettings.Quality == GameUserSettings.QualityLevel.Low
+                    ? "Низкое рисует кадр в три четверти разрешения и снимает "
+                      + "сглаживание — картинка мягче, кадров заметно больше."
+                    : GameUserSettings.FrameCap == 0
+                        ? "Кадры идут в такт монитору: разрывов нет, шаг ровный. "
+                          + "Самый плавный вариант, если видеокарта успевает."
+                        : "Разрешение и режим экрана применяются кнопкой ниже "
+                          + "и их можно безопасно проверить перед сохранением.",
                 _subtitle);
-            y += 92f;
+            y += 84f;
             if (GUI.Button(new Rect(x, y, 320f, 62f), "ПРИМЕНИТЬ", _button))
             {
                 Vector2Int resolution = _resolutions[_resolutionIndex];

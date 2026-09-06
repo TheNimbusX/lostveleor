@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Game.Sim
 {
@@ -26,41 +26,10 @@ namespace Game.Sim
         // заданы В ТИКАХ. Поэтому переход на 60 Гц — правка одной константы.
         public const int TicksPerSecond = 30;
 
-        /// <summary>
-        /// От начала замаха до контакта у ГЕРОЯ: 6 тиков = 200 мс.
-        /// </summary>
-        // ЗАМАХ ГЕРОЯ И ЗАМАХ ВРАГА — РАЗНЫЕ ЗАДАЧИ, И ОДНОЙ КОНСТАНТОЙ ИХ
-        // РЕШАТЬ НЕЛЬЗЯ.
-        //
-        // У героя замах — это вес удара. У врага замах — это телеграф, окно,
-        // в которое игрок обязан успеть среагировать. Первому нужно быть
-        // коротким, второму — читаемым, и раньше обоим доставалось 12 тиков.
-        //
-        // Цена общей цифры считается так: базовая скорость атаки героя 30/24,
-        // то есть цикл удара 24 тика. Замах в 12 тиков — ровно половина цикла,
-        // и всё это время скорость передвижения срезана вдвое. Половину
-        // боевого времени герой ходил вполсилы — в гриндилке, где бьют
-        // непрерывно, это налог на подвижность, и берётся он с той самой
-        // динамики, ради которой замах и вводили.
-        //
-        // ПОПЫТКА СОКРАТИТЬ ДО 6 ТИКОВ ОТКАЧЕНА 1 СЕНТЯБРЯ, И ВОТ ПОЧЕМУ.
-        //
-        // Двенадцать тиков здесь — не выбор баланса, а СЛЕПОК АНИМАЦИИ.
-        // `CharacterAnimatorView` разгоняет клип удара по фазам так, чтобы
-        // авторская поза контакта пришлась ровно на этот тик:
-        // 0.12×0.76 + (0.40−0.12)×1.82 = 0.601, что при клипе в 49 кадров даёт
-        // нормализованные 0.368 — те самые `AttackAContactNormalized = 0.37`.
-        //
-        // Стоит поменять здесь цифру, и равенство рушится: при 6 тиках
-        // получается 0.237, то есть 0.146 нормализованных вместо 0.37 —
-        // урон приходит, когда клинок ещё на полпути. Это видно сразу и
-        // выглядит хуже любого «налога на подвижность».
-        //
-        // Сокращать замах МОЖНО и стоит, но не отсюда: сначала перезаписать
-        // клипы удара под новый контакт, потом заново вывести фазовые скорости
-        // в `CharacterAnimatorView`, и только потом трогать эту константу.
-        // Три шага в таком порядке, иначе картинка разъезжается с уроном.
-        public const int AttackWindupTicks = 12;
+        // Геройский контакт и темп ускорены вместе с клипами A/B.
+        // Вражеский телеграф остаётся отдельным окном на реакцию.
+        public const int AttackWindupTicks = 9;
+        public const int PlayerBaseAttackCycleTicks = 20;
 
         /// <summary>
         /// От начала замаха до контакта у ВРАГА: 12 тиков = 400 мс.
@@ -72,8 +41,21 @@ namespace Game.Sim
         public const int EnemyAttackWindupTicks = 12;
 
         /// <summary>Замах той сущности, которая бьёт.</summary>
-        private static int WindupTicksFor(int entityId)
-            => entityId == PlayerId ? AttackWindupTicks : EnemyAttackWindupTicks;
+        public const int RootSwarmHealth = 30;
+        public const int RootSwarmAttackWindupTicks = 9;
+        public const int RootSwarmAttackCooldownTicks = 24;
+        public static readonly Fix64 RootSwarmMoveSpeed = Fix64.Ratio(34, 10);
+        public static readonly Fix64 RootSwarmRushSpeed = Fix64.FromInt(5);
+        private static readonly Fix64 RootSwarmAttackRange = Fix64.Ratio(14, 10);
+
+        private int WindupTicksFor(int entityId)
+            => entityId == PlayerId ? AttackWindupTicks
+                : Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
+                    ? RootSwarmAttackWindupTicks : EnemyAttackWindupTicks;
+
+        private Fix64 AttackRangeFor(int entityId)
+            => Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
+                ? RootSwarmAttackRange : AttackRange;
 
         /// <summary>
         /// Во время активного действия герой сохраняет управление, но идёт
@@ -122,6 +104,13 @@ namespace Game.Sim
         // начаться боком, а затем Damage проверял уже другое направление.
         private static readonly Fix64 AttackCommitCos = Fix64.Ratio(4, 5);
 
+        // У моба сектор мягче, чем у игрока: его корпус доворачивается с
+        // ограниченной скоростью, а уже начатый замах не должен превращаться
+        // в пустой жест из-за пары кадров расталкивания. ±120° достаточно,
+        // чтобы надёжно принять контакт во время доворота, но всё ещё не
+        // превращает удар в полноценный круг вокруг тела.
+        private static readonly Fix64 EnemyAttackArcCos = Fix64.Ratio(-1, 2);
+
         /// <summary>
         /// На сколько подходить к цели по приказу атаки. Чуть ближе дальности
         /// удара: встать ровно на границе значит выпадать из неё от любого
@@ -152,8 +141,8 @@ namespace Game.Sim
         // Скорость атаки — В АТАКАХ В СЕКУНДУ: только в этих единицах «+20%»
         // на предмете значит то, что игрок прочитает. В тики её переводит
         // CombatStats.AttackCooldownTicks, и делает это в единственном месте.
-        // 30/24 — это прежние 24 тика игрока, 30/36 — прежние 36 у врага.
-        private static readonly Fix64 PlayerBaseAttackSpeed = Fix64.Ratio(TicksPerSecond, 24);
+        // Базовый цикл героя — 20 тиков, врага — 36.
+        private static readonly Fix64 PlayerBaseAttackSpeed = Fix64.Ratio(TicksPerSecond, PlayerBaseAttackCycleTicks);
         private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, 36);
 
         // Скорость движения — в метрах в секунду; шаг за тик считает CombatStats.
@@ -161,7 +150,19 @@ namespace Game.Sim
         // неизбежно тащило опорную стопу по полу. 4.5 м/с оставляет игрока
         // быстрее толпы, но совпадает с читаемым длинным беговым шагом.
         private static readonly Fix64 PlayerBaseMoveSpeed = Fix64.Ratio(9, 2);
-        private static readonly Fix64 EnemyBaseMoveSpeed  = Fix64.Ratio(35, 10);
+
+        /// <summary>
+        /// Скорость хода врага. Было 3.5, стало 3.1 — на 11.4% медленнее по
+        /// просьбе владельца: толпа шла слишком бойко и налетала на игрока
+        /// раньше, чем её успевали прочитать.
+        ///
+        /// ПУБЛИЧНАЯ НЕ СЛУЧАЙНО. Темп ног в CharacterAnimatorView считается из
+        /// этого числа: клип бега «едет» свои метры в секунду, и во сколько раз
+        /// его крутить, зависит от того, с какой скоростью едет тело. Пока
+        /// число было приватным, оно жило в представлении копией — и копия
+        /// разъехалась с оригиналом ровно тогда, когда оригинал поменяли.
+        /// </summary>
+        public static readonly Fix64 EnemyBaseMoveSpeed = Fix64.Ratio(31, 10);
 
         /// <summary>
         /// Насколько далеко тело может быть отодвинуто чужими телами за один тик.
@@ -187,6 +188,26 @@ namespace Game.Sim
         private const int BrakeTicks = 4;
 
         private static readonly Fix64 MaxSeparationStep = Fix64.Ratio(5, 100);
+
+        /// <summary>
+        /// Доля скорости на обход занятого места. Две трети: обходящий заметно
+        /// медленнее набегающего, иначе кольцо крутится каруселью.
+        /// </summary>
+        private static readonly Fix64 CircleAroundScale = Fix64.Ratio(2, 3);
+
+        /// <summary>
+        /// Где начинается подъезд к дистанции удара. Полтора радиуса удара:
+        /// полоса торможения шириной в полрадиуса — это заметно больше
+        /// MaxSeparationStep, значит выпихнутое расталкиванием тело всегда
+        /// оказывается внутри полосы, а не за ней.
+        /// </summary>
+        private static readonly Fix64 ApproachBrakeRange = AttackRange * Fix64.Ratio(3, 2);
+        private static readonly Fix64 ApproachBrakeRangeSq =
+            ApproachBrakeRange * ApproachBrakeRange;
+
+        /// <summary>Доли бокового и лобового хода при обходе занятого места.</summary>
+        private static readonly Fix64 ArcSideShare = Fix64.Ratio(8, 10);
+        private static readonly Fix64 ArcForwardShare = Fix64.Ratio(55, 100);
 
         /// <summary>
         /// Вес игрока при расталкивании. Он тяжелее толпы вчетверо с лишним:
@@ -224,9 +245,17 @@ namespace Game.Sim
         private readonly int[] _abilityReadyTick = new int[AbilitySlots];
 
         // Presentation starts at Cast, gameplay contact stays deterministic.
-        private const int WhirlwindContactDelayTicks = 10;
+        public const int WhirlwindContactDelayTicks = 10;
         private int _whirlwindImpactTick = -1;
         private int _whirlwindImpactSlot = -1;
+        private int _sweepImpactTick = -1;
+        private int _sweepImpactSlot = -1;
+        private int _sweepBraceUntilTick;
+        private FixVec2 _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+        public FixVec2 SweepDirection => _sweepDirection;
+        private int _leapLaunchTick = -1;
+        private FixVec2 _leapAim;
+        public FixVec2 LeapAim => _leapAim;
         private int _abilityMovePenaltyUntilTick;
 
         // Состояние «Шага по цепи» между прыжками. Живёт в симуляции, а не в
@@ -234,7 +263,10 @@ namespace Game.Sim
         // ещё двадцать тиков. Входит в хеш — иначе реплей разъедется.
         private int _chainHopsLeft;
         private int _chainTarget = -1;
+        public int ChainTargetId => _chainHopsLeft > 0 ? _chainTarget : -1;
         private int _chainSlot = -1;
+        private readonly int[] _chainVisited = new int[AnchorKit.ChainMaxHops];
+        private int _chainVisitedCount;
 
         /// <summary>
         /// Общий буфер радиусных запросов. Выделен один раз: за забег таких
@@ -248,6 +280,11 @@ namespace Game.Sim
         /// расхождение, которое ищут неделю.
         /// </summary>
         private readonly int[] _separationScratch;
+
+        // Свой буфер, а не общий с расталкиванием: обе выборки живут в одном
+        // тике, и делить один массив между ними значит однажды поймать баг,
+        // который воспроизводится раз в сто забегов.
+        private readonly int[] _crowdScratch;
         private readonly FixVec2[] _separationPush;
 
         private readonly List<SimEvent> _events = new List<SimEvent>(256);
@@ -322,6 +359,7 @@ namespace Game.Sim
             Statuses = new StatusStore(capacity);
             HitScratch = new int[capacity];
             _separationScratch = new int[capacity];
+            _crowdScratch = new int[capacity];
             _separationPush = new FixVec2[capacity];
 
             Tick = 0;
@@ -374,6 +412,11 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            _sweepBraceUntilTick = 0;
+            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
             _chainHopsLeft = 0;
             _chainTarget = -1;
             _chainSlot = -1;
@@ -399,7 +442,18 @@ namespace Game.Sim
         ///
         /// Игрок встаёт в модуль-вход, враги — во все остальные.
         /// </summary>
-        public void SetupRift(LayoutMap map, ulong spawnSeed, int enemiesPerRoom, int enemyHealth)
+        /// <summary>
+        /// Расстановка обычного Разлома.
+        ///
+        /// <paramref name="enemyBudget"/> — потолок на ВЕСЬ забег, а не на
+        /// комнату; ноль означает «потолка нет». Врагов он не размазывает
+        /// тоньше, а просто обрывает расстановку: первые комнаты набиваются
+        /// как обычно, дальние остаются пустыми. Для теста это и нужно — все
+        /// живые тела идут к игроку с первой же комнаты, потому что своего
+        /// радиуса агро у врага нет.
+        /// </summary>
+        public void SetupRift(LayoutMap map, ulong spawnSeed, int enemiesPerRoom, int enemyHealth,
+            int enemyBudget = 0)
         {
             _layout = map;
             ClearMoveOrder();
@@ -409,6 +463,11 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            _sweepBraceUntilTick = 0;
+            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
             _chainHopsLeft = 0;
             _chainTarget = -1;
             _chainSlot = -1;
@@ -420,12 +479,15 @@ namespace Game.Sim
             FixVec2 start = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(start, PlayerBaseHealth, Faction.Wole));
 
+            int spawned = 0;
             for (int placement = 1; placement < map.PlacedCount; placement++)
             {
                 FixVec2 center = map.CenterOf(placement);
 
                 for (int e = 0; e < enemiesPerRoom; e++)
                 {
+                    if (enemyBudget > 0 && spawned >= enemyBudget) return;
+
                     // Разброс внутри комнаты, чтобы враги не стояли стопкой.
                     Fix64 dx = rng.NextFix(Fix64.FromInt(-2), Fix64.FromInt(2));
                     Fix64 dy = rng.NextFix(Fix64.FromInt(-2), Fix64.FromInt(2));
@@ -434,14 +496,35 @@ namespace Game.Sim
                         enemyHealth, Faction.Orvill);
                     ConfigureEnemy(id);
                     _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
+                    spawned++;
                 }
             }
         }
 
         /// <summary>
-        /// Детерминированная расстановка только для capture combat slice:
-        /// существующая карта Разлома, Pelag и ровно три Orvill вокруг него.
+        /// Текущая тестовая пачка Разлома: три Хранителя и шесть Корнеползов.
         /// </summary>
+        public void SetupForestEncounter(LayoutMap map, ulong spawnSeed, int guardianHealth)
+        {
+            SetupRift(map, spawnSeed, 3, guardianHealth, enemyBudget: 3);
+
+            // Весь рой приходит из одной комнаты плотной волной. Шаг сетки
+            // больше диаметра тела, чтобы первый тик не разбрасывал пачку.
+            int placement = map.PlacedCount > 2 ? 2 : map.PlacedCount - 1;
+            FixVec2 center = placement >= 0 ? map.CenterOf(placement) : FixVec2.Zero;
+            for (int i = 0; i < 6; i++)
+            {
+                FixVec2 offset = new FixVec2(Fix64.Ratio((i % 3 - 1) * 11, 10),
+                    Fix64.Ratio((i / 3 * 2 - 1) * 11, 20));
+                int id = Entities.Spawn(center + offset, RootSwarmHealth, Faction.Orvill);
+                ConfigureEnemy(id, EnemyKind.ForestRootSwarm);
+                Entities.Facing[id] = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
+                _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
+            }
+            Grid.Rebuild(Entities);
+        }
+
+        /// <summary>Стенд Вихря: Pelag и три неподвижные мишени.</summary>
         public void SetupWhirlwindShowcase(LayoutMap map, int enemyHealth = 360)
         {
             _layout = map;
@@ -452,6 +535,11 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            _sweepBraceUntilTick = 0;
+            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
             _chainHopsLeft = 0;
             _chainTarget = -1;
             _chainSlot = -1;
@@ -492,7 +580,7 @@ namespace Game.Sim
         /// <see cref="ApplyAttack"/>; this method only authors capture fixtures.
         /// </summary>
         public void SetupCombatFeelShowcase(LayoutMap map, int enemyCount,
-            CombatFeelCaptureTier tier)
+            CombatFeelCaptureTier tier, bool activeEnemies = false)
         {
             _layout = map;
             ClearMoveOrder();
@@ -502,6 +590,11 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            _sweepBraceUntilTick = 0;
+            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
             _chainHopsLeft = 0;
             _chainTarget = -1;
             _chainSlot = -1;
@@ -516,7 +609,8 @@ namespace Game.Sim
             Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId];
             Entities.Facing[PlayerId] = new FixVec2(Fix64.One, Fix64.Zero);
 
-            int count = enemyCount < 1 ? 1 : enemyCount > 5 ? 5 : enemyCount;
+            int limit = activeEnemies ? 30 : 5;
+            int count = enemyCount < 1 ? 1 : enemyCount > limit ? limit : enemyCount;
             FixVec2[] offsets =
             {
                 new FixVec2(Fix64.Ratio(31, 20), Fix64.Zero),
@@ -531,15 +625,28 @@ namespace Game.Sim
                 int health = tier == CombatFeelCaptureTier.Kill && i == 0
                     ? Entities.Damage[PlayerId] - 1
                     : 1000;
-                int id = Entities.Spawn(center + offsets[i], health, Faction.Orvill);
+                FixVec2 offset = offsets[i % offsets.Length];
+                if (activeEnemies)
+                {
+                    // Только QA: три кольца живой толпы, чтобы проверка не сводилась к пяти манекенам.
+                    int ring = i / 10;
+                    double angle = (i % 10) * System.Math.PI * .2 + ring * .18;
+                    double radius = 2.6 + ring * 1.65;
+                    offset = new FixVec2(Fix64.FromDouble(System.Math.Cos(angle) * radius),
+                        Fix64.FromDouble(System.Math.Sin(angle) * radius));
+                }
+                int id = Entities.Spawn(center + offset, health, Faction.Orvill);
                 ConfigureEnemy(id);
-                Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
-                Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                if (!activeEnemies)
+                {
+                    Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
+                    Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                }
                 Entities.RefreshStats(id);
                 Entities.Health[id] = health;
                 Entities.MaxHealth[id] = health;
-                Entities.NextAttackTick[id] = int.MaxValue;
-                Entities.Facing[id] = (-offsets[i]).Normalized();
+                Entities.NextAttackTick[id] = activeEnemies ? Tick + 90 : int.MaxValue;
+                Entities.Facing[id] = (-offset).Normalized();
                 _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
             }
 
@@ -572,18 +679,30 @@ namespace Game.Sim
         /// Базовые статы рядового врага. Здоровье приходит из Spawn: им тир
         /// Разлома и масштабирует сложность.
         /// </summary>
-        private void ConfigureEnemy(int id)
+        private void ConfigureEnemy(int id, EnemyKind kind = EnemyKind.ForestGuardian)
         {
+            Entities.Kind[id] = kind;
+            bool swarm = kind == EnemyKind.ForestRootSwarm;
             // Щит и широкий силуэт требуют больше воздуха, чем прежняя
             // техническая капсула. Радиус не даёт строю схлопываться в одну
             // нечитаемую стопку вокруг игрока.
-            Entities.BodyRadius[id] = Fix64.Ratio(62, 100);
+            // РАДИУС ТЕЛА ПОДНЯТ ПОД РАЗМЕР МОДЕЛИ. Стояло 0.62 при старом
+            // мобе ростом метр. Лесной страж — 2.35 м, и на прежнем радиусе
+            // толпа слипалась в кучу: тела расходились на 1.24 м при ширине
+            // силуэта под два метра, и игрока под ними просто не было видно.
+            //
+            // 0.85 даёт 1.7 м между центрами. Больше брать нельзя без проверки
+            // коридоров: этот же радиус проходит через LayoutMap.IsWalkable, и
+            // слишком толстое тело перестанет пролезать в связки комнат.
+            Entities.BodyRadius[id] = swarm ? Fix64.Ratio(45, 100) : Fix64.Ratio(85, 100);
+            Entities.PushWeight[id] = swarm ? Fix64.FromInt(2) : Fix64.One;
 
             StatSheet sheet = Entities.Stats[id];
-            sheet.SetBase(StatType.Damage, EnemyBaseDamage);
-            sheet.SetBase(StatType.AttackSpeed, EnemyBaseAttackSpeed);
-            sheet.SetBase(StatType.MoveSpeed, EnemyBaseMoveSpeed);
-            sheet.SetBase(StatType.CritChance, BaseCritChance);
+            sheet.SetBase(StatType.Damage, swarm ? Fix64.FromInt(4) : EnemyBaseDamage);
+            sheet.SetBase(StatType.AttackSpeed, swarm
+                ? Fix64.Ratio(TicksPerSecond, RootSwarmAttackCooldownTicks) : EnemyBaseAttackSpeed);
+            sheet.SetBase(StatType.MoveSpeed, swarm ? RootSwarmMoveSpeed : EnemyBaseMoveSpeed);
+            sheet.SetBase(StatType.CritChance, swarm ? Fix64.Zero : BaseCritChance);
             sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
 
             Entities.RefreshStats(id);
@@ -607,6 +726,11 @@ namespace Game.Sim
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            _sweepBraceUntilTick = 0;
+            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
             _chainHopsLeft = 0;
             _chainTarget = -1;
             _chainSlot = -1;
@@ -862,6 +986,12 @@ namespace Game.Sim
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
             ResolveWhirlwindImpact();
+            ResolveSweepImpact();
+            if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
+            {
+                _leapLaunchTick = -1;
+                if (Entities.Alive[PlayerId]) AnchorKit.CastLeap(this, _leapAim);
+            }
             ContinueChainStep();
             UpdateProjectiles();
             ResolveAttacks(in input);
@@ -902,6 +1032,17 @@ namespace Game.Sim
                 if (build == null) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
+                // A newly committed action replaces the old presentation and
+                // its unlanded contacts. Do not launch an old anchor midway
+                // through the next ability's animation.
+                _leapLaunchTick = -1;
+                _sweepImpactTick = _sweepImpactSlot = -1;
+                _sweepBraceUntilTick = Tick;
+                _whirlwindImpactTick = _whirlwindImpactSlot = -1;
+                _chainHopsLeft = 0;
+                _chainVisitedCount = 0;
+                ForcedMotion.Clear(Entities, PlayerId);
+
                 if (build.DefinitionId == AbilityDefinition.WhirlwindId)
                 {
                     _whirlwindImpactTick = Tick + WhirlwindContactDelayTicks;
@@ -909,11 +1050,16 @@ namespace Game.Sim
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
                 {
-                    AnchorKit.CastLeap(this, input.Aim);
+                    _leapAim = input.Aim;
+                    _leapLaunchTick = Tick + AnchorKit.LeapWindupTicks;
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorSweepId)
                 {
-                    CastAnchorSweep(slot, build);
+                    FixVec2 aimDirection = input.Aim - Entities.Position[PlayerId];
+                    _sweepDirection = aimDirection.Length.Raw > 0 ? aimDirection / aimDirection.Length : Entities.Facing[PlayerId];
+                    _sweepImpactTick = Tick + AnchorKit.SweepCastDelayTicks;
+                    _sweepImpactSlot = slot;
+                    _sweepBraceUntilTick = Tick + AnchorKit.SweepCastDelayTicks + AnchorKit.SweepTicks;
                 }
                 else if (build.DefinitionId == AbilityDefinition.ChainStepId)
                 {
@@ -939,7 +1085,8 @@ namespace Game.Sim
                 if (_abilityBuilds[slot] == null) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
-                int until = Tick + AbilityMovePenaltyTicks;
+                int until = _abilityBuilds[slot].DefinitionId == AbilityDefinition.AnchorSweepId
+                    ? Tick : Tick + AbilityMovePenaltyTicks;
                 if (until > _abilityMovePenaltyUntilTick)
                     _abilityMovePenaltyUntilTick = until;
 
@@ -965,14 +1112,26 @@ namespace Game.Sim
         /// ждать конца волока значило бы, что убитый по дороге враг не
         /// получает урона от способности, которая его и убила.
         /// </summary>
+        private void ResolveSweepImpact()
+        {
+            if (_sweepImpactTick < 0 || Tick < _sweepImpactTick) return;
+            int slot = _sweepImpactSlot;
+            _sweepImpactTick = _sweepImpactSlot = -1;
+            if (!Entities.Alive[PlayerId]) return;
+            AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
+            if (build == null || build.DefinitionId != AbilityDefinition.AnchorSweepId) return;
+            CastAnchorSweep(slot, build);
+        }
+
         private void CastAnchorSweep(int slot, AbilityBuild build)
         {
             int dragged = AnchorKit.CastSweep(this, HitScratch);
             if (dragged <= 0) return;
 
             int damage = build.Get(AbilityStatType.Damage).ToInt();
-            for (int i = 0; i < Entities.Count; i++)
+            for (int k = 0; k < dragged; k++)
             {
+                int i = HitScratch[k];
                 if (Entities.ForcedTicksLeft[i] <= 0) continue;
                 if (Entities.ForcedKind[i] != (byte)ForcedMotionKind.Dragged) continue;
                 if (!Entities.Alive[i]) continue;
@@ -993,6 +1152,8 @@ namespace Game.Sim
             _chainSlot = slot;
             _chainHopsLeft = AnchorKit.ChainMaxHops;
             _chainTarget = target;
+            _chainVisitedCount = 1;
+            _chainVisited[0] = target;
             ForcedMotion.Begin(Entities, PlayerId,
                 AnchorKit.ChainLandingSpot(Entities, target),
                 AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
@@ -1042,7 +1203,7 @@ namespace Game.Sim
                 return;
             }
 
-            int next = AnchorKit.PickChainTarget(this, HitScratch, _chainTarget);
+            int next = AnchorKit.PickChainTarget(this, HitScratch, _chainTarget, _chainVisited, _chainVisitedCount);
             if (next < 0)
             {
                 // Больше некого — цепочка кончается тихо. Оставшиеся прыжки
@@ -1055,6 +1216,7 @@ namespace Game.Sim
             }
 
             _chainTarget = next;
+            _chainVisited[_chainVisitedCount++] = next;
             ForcedMotion.Begin(Entities, PlayerId,
                 AnchorKit.ChainLandingSpot(Entities, next),
                 AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
@@ -1272,6 +1434,14 @@ namespace Game.Sim
                 _explicitMoveOrder = true;
             }
 
+            // Only the anchor leap needs a stationary launch. The mass hook
+            // preserves locomotion while its upper body performs the throw.
+            if (_leapLaunchTick >= 0)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
             int committedTarget = Entities.PendingAttackTarget[PlayerId];
             bool committedTargetValid = committedTarget > 0
                                         && committedTarget < Entities.Count
@@ -1443,6 +1613,47 @@ namespace Game.Sim
             return rotated.Normalized();
         }
 
+        /// <summary>
+        /// Стоит ли прямо по курсу к игроку союзник, который уже ближе.
+        ///
+        /// Считается по той же сетке, что и всё остальное, и в том же порядке —
+        /// значит детерминировано. Сектор узкий: заслон засчитывается только
+        /// когда сосед действительно на пути, а не сбоку, иначе враги вставали
+        /// бы, едва оказавшись рядом друг с другом.
+        /// </summary>
+        private bool BlockedByCloserAlly(int self, FixVec2 playerPos, FixVec2 toPlayer,
+            out FixVec2 blockerDirection)
+        {
+            blockerDirection = FixVec2.Zero;
+            Fix64 myDistSq = toPlayer.LengthSq;
+            Fix64 reach = Entities.BodyRadius[self] + EntityStore.MaxBodyRadius;
+            int found = Grid.QueryRadius(Entities, Entities.Position[self], reach, self,
+                _crowdScratch);
+
+            for (int k = 0; k < found; k++)
+            {
+                int other = _crowdScratch[k];
+                if (!Entities.Alive[other]) continue;
+                if (other == PlayerId) continue;
+                if (Entities.Side[other] != Entities.Side[self]) continue;
+
+                // Ближе к игроку — значит он занял место, за которое мы боремся.
+                if ((playerPos - Entities.Position[other]).LengthSq >= myDistSq) continue;
+
+                FixVec2 toOther = Entities.Position[other] - Entities.Position[self];
+                Fix64 touching = Entities.BodyRadius[self] + Entities.BodyRadius[other];
+                if (toOther.LengthSq > touching * touching) continue;
+
+                // Тот же сектор, что и у удара: сосед на пути, а не сбоку.
+                if (!FixVec2.WithinArc(toPlayer, toOther, AttackArcCos)) continue;
+
+                blockerDirection = toOther;
+                return true;
+            }
+
+            return false;
+        }
+
         private void MoveEnemies()
         {
             FixVec2 playerPos = Entities.Position[PlayerId];
@@ -1468,13 +1679,83 @@ namespace Game.Sim
                     EnemyTurnStepCos, EnemyTurnStepSin);
 
                 Fix64 speed = Entities.MoveStep[i];
+                bool swarm = Entities.Kind[i] == EnemyKind.ForestRootSwarm;
+                Fix64 attackRange = AttackRangeFor(i);
+                if (swarm && toPlayer.LengthSq <= Fix64.FromInt(4))
+                    speed = speed * RootSwarmRushSpeed / RootSwarmMoveSpeed;
 
                 // Подошёл на дистанцию удара — гасим ход, но не мгновенно:
                 // враг, встающий как вкопанный, выдаёт отсутствие тела ровно
                 // так же, как и игрок.
-                FixVec2 wanted = toPlayer.LengthSq <= AttackRangeSq
-                    ? FixVec2.Zero
-                    : toPlayer.Normalized() * speed;
+                //
+                // ВТОРОЕ УСЛОВИЕ ОСТАНОВКИ: впереди стоит свой.
+                //
+                // Без него каждый враг идёт в ЦЕНТР игрока и тормозит только в
+                // двух метрах от него. В круг такого радиуса помещается семь
+                // тел, а идут туда все тридцать: расталкивание выпихивает
+                // лишних наружу, они разворачиваются и идут снова. На экране
+                // это читается как «прошли пару шагов — телепорт назад», и
+                // именно это владелец и снял на видео.
+                //
+                // Правило простое и детерминированное: если прямо по курсу
+                // вплотную стоит союзник, который УЖЕ ближе к игроку, — встаём
+                // за ним. Толпа сама собирается в кольцо и перестаёт бурлить.
+                FixVec2 wanted;
+                if (toPlayer.LengthSq <= attackRange * attackRange)
+                {
+                    wanted = FixVec2.Zero;
+                }
+                else if (!swarm && toPlayer.LengthSq <= ApproachBrakeRangeSq)
+                {
+                    // ПОДЪЕЗД, А НЕ РЫВОК. Здесь стояла та же ветка, что и для
+                    // дальнего хода: шаг на полной скорости.
+                    //
+                    // Отсюда и «дрыгаются». У стоящего вплотную моба скорость
+                    // ноль, но расталкивание отодвигает его на пять сантиметров
+                    // за тик — и он мгновенно оказывается за границей удара.
+                    // Полный ход возвращал его внутрь за пару тиков, там он
+                    // снова тормозил в ноль, сосед снова выпихивал. Кольцо у
+                    // игрока кипело: разгон, торможение, толчок, разгон.
+                    //
+                    // Теперь у самой границы желаемая скорость падает до нуля
+                    // линейно. Выпихнутый на сантиметр возвращается сантиметром,
+                    // а не разбегом: колебание гаснет само, вместо того чтобы
+                    // подпитывать себя.
+                    Fix64 distance = Fix64.Sqrt(toPlayer.LengthSq);
+                    Fix64 slack = ApproachBrakeRange - AttackRange;
+                    Fix64 ramp = (distance - AttackRange) / slack;
+                    wanted = toPlayer.Normalized() * (speed * ramp);
+                }
+                else if (BlockedByCloserAlly(i, playerPos, toPlayer, out FixVec2 blocker))
+                {
+                    // ОБХОДИМ, А НЕ ВСТАЁМ В ОЧЕРЕДЬ. Останавливаться за спиной
+                    // соседа — значит выстроить колонну к игроку, и владелец
+                    // так и сказал: «стоят в очереди, чтобы меня ударить».
+                    //
+                    // Вместо этого шаг вбок вдоль кольца. Сторона выбирается по
+                    // знаку векторного произведения — та, куда ближе обходить, —
+                    // и это чистая арифметика, одинаковая на всех машинах.
+                    FixVec2 side = new FixVec2(-toPlayer.Y, toPlayer.X).Normalized();
+                    Fix64 cross = toPlayer.X * blocker.Y - toPlayer.Y * blocker.X;
+                    if (cross.Raw > 0) side = new FixVec2(-side.X, -side.Y);
+
+                    // ОБХОД ПО ДУГЕ, А НЕ СТРОГО ВБОК. Чистый боковой шаг — это
+                    // поворот желаемой скорости ровно на 90°, а проверка «занято
+                    // ли место» переключается туда-обратно от тика к тику, пока
+                    // толпа шевелится. Каждое переключение разворачивало ход на
+                    // прямой угол, и Approach отрабатывал его три тика — те же
+                    // рывки, только по другой причине, чем у границы удара.
+                    //
+                    // Подмешанный ход к игроку уменьшает скачок с 90° примерно
+                    // до 55°, и остаток съедает разгон. Кольцо по-прежнему
+                    // собирается — вбок тянет сильнее, — но перестаёт трястись.
+                    FixVec2 arc = side * ArcSideShare + toPlayer.Normalized() * ArcForwardShare;
+                    wanted = arc.Normalized() * (speed * CircleAroundScale);
+                }
+                else
+                {
+                    wanted = toPlayer.Normalized() * speed;
+                }
 
                 Entities.Velocity[i] = Approach(Entities.Velocity[i], wanted, speed);
                 FixVec2 from = Entities.Position[i];
@@ -1591,7 +1872,8 @@ namespace Game.Sim
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
                 // клип и второй контакт поверх способности не запускаются.
-                if (i == PlayerId && Tick < _abilityMovePenaltyUntilTick) continue;
+                if (i == PlayerId && (Tick < _abilityMovePenaltyUntilTick || Tick < _sweepBraceUntilTick
+                    || _leapLaunchTick >= 0 || Entities.ForcedTicksLeft[i] > 0)) continue;
 
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
                 // который решал бы за них, и решать за них должен ИИ.
@@ -1639,8 +1921,13 @@ namespace Game.Sim
             if (Entities.Side[source] == Entities.Side[target]) return false;
 
             FixVec2 toTarget = Entities.Position[target] - Entities.Position[source];
-            if (toTarget.LengthSq > AttackRangeSq) return false;
-            Fix64 arc = source == PlayerId ? AttackCommitCos : AttackArcCos;
+            Fix64 range = AttackRangeFor(source);
+            if (toTarget.LengthSq > range * range) return false;
+            // У врага доворот — телеграф, а не дополнительный случайный
+            // бросок. Разрешаем мягкий сектор ±120°: уже показанный замах
+            // переживает небольшую ошибку ориентации, но удар не становится
+            // круговым. Игрок сохраняет строгий фронтальный commit.
+            Fix64 arc = source == PlayerId ? AttackCommitCos : EnemyAttackArcCos;
             return FixVec2.WithinArc(Entities.Facing[source], toTarget, arc);
         }
 
@@ -1660,10 +1947,15 @@ namespace Game.Sim
 
         private int FindNearestEnemy(int from)
         {
-            Fix64 arc = from == PlayerId ? AttackCommitCos : AttackArcCos;
+            // Враг выбирает цель в расширенном секторе ±120°. Полное снятие
+            // ограничения делало бы удар через спину; узкий сектор, напротив,
+            // возвращал исходный баг: после расталкивания моб стоял боком,
+            // не создавал замах и выглядел зависшим. Расширенный сектор даёт
+            // время на доворот, а CanLandAttack использует то же правило.
+            Fix64 arc = from == PlayerId ? AttackCommitCos : EnemyAttackArcCos;
             return DebugUseNaiveTargeting
                 ? NaiveFindNearestEnemy(from, arc)
-                : Grid.FindNearestEnemy(Entities, from, AttackRange, arc);
+                : Grid.FindNearestEnemy(Entities, from, AttackRangeFor(from), arc);
         }
 
         /// <summary>
@@ -1678,6 +1970,7 @@ namespace Game.Sim
             FixVec2 origin = Entities.Position[from];
             FixVec2 facing = Entities.Facing[from];
             Faction mySide = Entities.Side[from];
+            Fix64 range = AttackRangeFor(from);
 
             for (int i = 0; i < Entities.Count; i++)
             {
@@ -1686,7 +1979,7 @@ namespace Game.Sim
 
                 FixVec2 toTarget = Entities.Position[i] - origin;
                 Fix64 distSq = toTarget.LengthSq;
-                if (distSq > AttackRangeSq) continue;
+                if (distSq > range * range) continue;
                 if (!FixVec2.WithinArc(facing, toTarget, arcCos)) continue;
                 if (distSq < bestDistSq || (distSq == bestDistSq && i < best))
                 {
@@ -1771,6 +2064,14 @@ namespace Game.Sim
             }
             Hashing.Mix(ref hash, _whirlwindImpactTick);
             Hashing.Mix(ref hash, _whirlwindImpactSlot);
+            Hashing.Mix(ref hash, _sweepImpactTick);
+            Hashing.Mix(ref hash, _sweepImpactSlot);
+            Hashing.Mix(ref hash, _sweepBraceUntilTick);
+            Hashing.Mix(ref hash, _sweepDirection.X.Raw);
+            Hashing.Mix(ref hash, _sweepDirection.Y.Raw);
+            Hashing.Mix(ref hash, _leapLaunchTick);
+            Hashing.Mix(ref hash, _leapAim.X.Raw);
+            Hashing.Mix(ref hash, _leapAim.Y.Raw);
 
             // Цепочка прыжков переживает несколько тиков и решает, кого бить
             // следующим. Не попади она в хеш — реплей, начатый посреди цепочки,
@@ -1778,6 +2079,10 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _chainHopsLeft);
             Hashing.Mix(ref hash, _chainTarget);
             Hashing.Mix(ref hash, _chainSlot);
+            // Completed chains cannot affect another cast; only active visits are state.
+            int visitedCount = _chainHopsLeft > 0 ? _chainVisitedCount : 0;
+            Hashing.Mix(ref hash, visitedCount);
+            for (int v = 0; v < visitedCount; v++) Hashing.Mix(ref hash, _chainVisited[v]);
 
             Rng.HashInto(ref hash);
             return hash;
