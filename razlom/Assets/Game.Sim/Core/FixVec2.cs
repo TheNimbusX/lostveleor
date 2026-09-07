@@ -6,6 +6,7 @@ namespace Game.Sim
     /// Двумерный вектор на Fix64. Изометрия плоская, третья координата симуляции не нужна:
     /// высота — забота отрисовки.
     /// </summary>
+    [Serializable]
     public readonly struct FixVec2 : IEquatable<FixVec2>
     {
         public readonly Fix64 X;

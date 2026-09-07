@@ -182,7 +182,7 @@ public static class RazlomFoliageSetup
     [MenuItem(ZoneMenu, priority = 31)]
     private static void CreateZone()
     {
-        FoliageWindZone existing = Object.FindFirstObjectByType<FoliageWindZone>();
+        FoliageWindZone existing = Object.FindAnyObjectByType<FoliageWindZone>();
         if (existing != null)
         {
             Selection.activeGameObject = existing.gameObject;

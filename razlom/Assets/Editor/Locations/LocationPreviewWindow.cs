@@ -162,7 +162,7 @@ namespace Game.LocationEditor
             }
             if (Application.isPlaying && GUILayout.Button("Взять сид текущего забега"))
             {
-                var driver = FindFirstObjectByType<TickDriver>();
+                var driver = FindAnyObjectByType<TickDriver>();
                 if (driver?.Run != null)
                 {
                     _seed = driver.Session.LastRunSeed.ToString();

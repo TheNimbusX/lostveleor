@@ -54,8 +54,7 @@ public static class RazlomLightingReport
 
         // ---- источники света ----
         sb.AppendLine("\n-- Источники света --");
-        Light[] lights = Object.FindObjectsByType<Light>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Light[] lights = Object.FindObjectsByType<Light>(FindObjectsInactive.Include);
         if (lights.Length == 0) sb.AppendLine("  НИ ОДНОГО");
         foreach (Light light in lights)
         {
@@ -67,8 +66,7 @@ public static class RazlomLightingReport
 
         // ---- камеры ----
         sb.AppendLine("\n-- Камеры --");
-        Camera[] cameras = Object.FindObjectsByType<Camera>(
-            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Camera[] cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include);
         foreach (Camera camera in cameras)
         {
             var data = camera.GetComponent<UniversalAdditionalCameraData>();
@@ -81,8 +79,7 @@ public static class RazlomLightingReport
 
         // ---- кто отбрасывает и принимает ----
         sb.AppendLine("\n-- Рендереры (первые 12 видимых) --");
-        Renderer[] renderers = Object.FindObjectsByType<Renderer>(
-            FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude);
         int shown = 0;
         int casting = 0;
         int receiving = 0;

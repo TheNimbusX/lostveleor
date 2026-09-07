@@ -10,6 +10,7 @@ namespace Game.Sim
     /// ПРАВИЛО: внутри Game.Sim никогда не использовать float и double.
     /// FromDouble и ToDouble существуют только для редактора, тестов и отрисовки.
     /// </summary>
+    [Serializable]
     public readonly struct Fix64 : IEquatable<Fix64>, IComparable<Fix64>
     {
         public const int FractionalBits = 32;

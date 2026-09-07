@@ -235,7 +235,7 @@ public sealed class RazlomDissolveStand : EditorWindow
 
         // Масштаб берётся из игры по той же причине, что и длительность:
         // на теле другого размера тот же шум читается другой крупностью.
-        ArenaView arena = FindFirstObjectByType<ArenaView>();
+        ArenaView arena = FindAnyObjectByType<ArenaView>();
         float scale = arena != null ? arena.OrvillScale : 2.4f;
         _stand.transform.localScale = Vector3.one * scale;
 
