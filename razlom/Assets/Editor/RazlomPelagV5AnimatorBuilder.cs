@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v15.AnchorClips";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v17.TurnBoneLengths";
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
     private const float IdleTransitionDuration = 0.15f;
@@ -97,20 +97,10 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimationClip whirlwind = Load("Pelag_MX_Whirlwind.fbx", "Pelag_MX_Whirlwind");
         whirlwind = RazlomPelagWhirlwindClip.Build(whirlwind);
         AnimationClip anchor = Load("Pelag_MX_AnchorAttack.fbx", "Pelag_MX_AnchorAttack");
-        AnimationClip anchorLeap = Load("Pelag_MX_AnchorLeap.fbx", "Pelag_MX_AnchorLeap");
-        AnimationClip anchorSweep = Load("Pelag_MX_AnchorSweep.fbx", "Pelag_MX_AnchorSweep");
-        AnimationClip chainStep = Load("Pelag_MX_ChainStep.fbx", "Pelag_MX_ChainStep");
-        anchorLeap = RazlomPelagAnchorClips.Build(idle, true);
-        anchorSweep = RazlomPelagAnchorClips.Build(idle, false);
-        chainStep = RazlomPelagWhirlwindClip.BuildTimed(attackA, "Pelag_ChainStep_Timed",
-            Game.View.PelagAbilityTiming.ChainHop + 0.07f,
-            new AnimationCurve(new Keyframe(0f, 0.12f),
-                new Keyframe(Game.View.PelagAbilityTiming.ChainHop, 0.30f),
-                new Keyframe(Game.View.PelagAbilityTiming.ChainHop + 0.07f, attackA.length)), 0.45f);
-        AnimationClip chainStepB = RazlomPelagWhirlwindClip.BuildTimed(attackB, "Pelag_ChainStep_B_Timed",
-            Game.View.PelagAbilityTiming.ChainHop + 0.07f,
-            new AnimationCurve(new Keyframe(0f, 0.12f), new Keyframe(Game.View.PelagAbilityTiming.ChainHop, 0.30f),
-                new Keyframe(Game.View.PelagAbilityTiming.ChainHop + 0.07f, attackB.length)), 0.45f);
+        AnimationClip anchorLeap = RazlomPelagAuthoredClips.Build("Pelag_AN_AnchorLeap", false);
+        AnimationClip anchorSweep = RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneLoop", true);
+        AnimationClip chainStep = RazlomPelagAuthoredClips.Build("Pelag_AN_Squall", false);
+        AnimationClip chainStepB = chainStep;
         AnimationClip hit = Load("Pelag_MX_Hit.fbx", "Pelag_MX_Hit");
         AnimationClip death = Load("Pelag_MX_Death.fbx", "Pelag_MX_Death");
 
@@ -179,7 +169,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimatorState relaxedIdleState = State(
             machine, "RelaxedIdle_v5", idle, RelaxedIdleStateSpeed);
         AnimatorState combatIdleState = State(
-            machine, "CombatIdle_v5", idle, CombatIdleStateSpeed);
+            machine, "CombatIdle_v5", RazlomPelagAuthoredClips.Build("Pelag_AN_CombatIdle", true), 1f);
         // CharacterAnimatorView sets cadence from measured clip ground speed.
         // An extra state multiplier would invalidate that calibration.
         BlendTree directionalLocomotion = BuildDirectionalLocomotion(
@@ -257,9 +247,14 @@ public static class RazlomPelagV5AnimatorBuilder
         // authoritative for the legs instead of sliding an in-place cast.
         Combat(machine, relaxedIdleState, combatIdleState, runState, "Anchor_v5", anchor, "Hook",
             2.65f, 0.04f, 0.88f, 0.10f);
+        foreach (string phase in new[] { "Start", "Loop" })
+        {
+            var state = machine.AddState("Cyclone" + phase);
+            state.motion = RazlomPelagAuthoredClips.Build("Pelag_AN_Cyclone" + phase, phase == "Loop");
+        }
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
+            RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "AnchorLeap_v5", anchorLeap, "AnchorLeap",
-            1f, 0.06f, 0.86f, 0.10f);
-        Combat(machine, relaxedIdleState, combatIdleState, runState, "AnchorSweep_v5", anchorSweep, "AnchorSweep",
             1f, 0.06f, 0.86f, 0.10f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_v5", chainStep, "ChainStep",
             1f, 0.025f, 0.98f, 0.07f);
@@ -481,6 +476,9 @@ public static class RazlomPelagV5AnimatorBuilder
         // и задумано: слой не пишет ничего, верх тела берётся с Base Layer, а
         // выходной переход честно смешивает конец удара с локомоцией.
         AnimatorState empty = State(upper, "UpperBody_Empty", null, 1f);
+        State(upper, "SaberDraw", RazlomPelagAuthoredClips.Build("Pelag_AN_SaberDraw"), 1f);
+        State(upper, "SaberStow", RazlomPelagAuthoredClips.Build("Pelag_AN_SaberStow"), 1f);
+        AddCycloneStates(upper);
         empty.writeDefaultValues = false;
         upper.defaultState = empty;
 
@@ -514,6 +512,7 @@ public static class RazlomPelagV5AnimatorBuilder
         // покоя не пролезала постоянно, но во время подъёма/спуска веса она
         // подмешивалась к ногам и давала ватную оттяжку после удара.
         AnimatorState empty = State(lower, "LowerBody_Empty", null, 1f);
+        AddCycloneStates(lower);
         empty.writeDefaultValues = false;
         lower.defaultState = empty;
 
@@ -523,6 +522,17 @@ public static class RazlomPelagV5AnimatorBuilder
             SaberBStateSpeed, 0.11f, 0.76f, 0.22f, true, addExitTransition: false);
         UpperCombat(lower, empty, "Lower_Whirlwind_v5", whirlwind, "LowerHeavyAttack",
             1f, 0.08f, 1f, 0.18f, true, addExitTransition: false);
+    }
+
+    private static void AddCycloneStates(AnimatorStateMachine machine)
+    {
+        foreach (string phase in new[] { "Start", "Loop", "End" })
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+                "Assets/Resources/Characters/Pelag_v5/Pelag_AN_Cyclone" + phase + ".anim");
+            var state = State(machine, "Cyclone" + phase, clip, 1f);
+            state.writeDefaultValues = false;
+        }
     }
 
     private static AnimatorState State(AnimatorStateMachine machine, string name,

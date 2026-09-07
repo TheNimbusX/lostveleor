@@ -143,6 +143,7 @@ namespace Game.View
             UpdateWhoosh();
             if (_driver.Sim != null)
             {
+            UpdateCycloneSound();
             ConsumeEvents();
             if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
             {
@@ -163,6 +164,31 @@ namespace Game.View
             // сработать всё равно не может, — а вот вчерашние очереди должны
             // успеть прозвучать до того, как кадр закончится.
             FlushDissolves();
+        }
+
+        private bool _cycloneSoundActive;
+        private int _cycloneSoundTurn = -1;
+        private void UpdateCycloneSound()
+        {
+            var sim = _driver.Sim;
+            bool active = sim != null && sim.CycloneActive;
+            if (active)
+            {
+                int turn = (sim.CycloneTravel / Fix64.TwoPi).ToInt();
+                if (!_cycloneSoundActive || turn != _cycloneSoundTurn)
+                {
+                    float charge = Mathf.Clamp01(sim.CycloneElapsedTicks / 60f);
+                    Play(Sound.Whoosh, WhooshVolume * .65f, Mathf.Lerp(1.03f, .72f, charge), .015f);
+                    Play(Sound.HitMetal, MetalVolume * .16f, .78f, .015f);
+                    _cycloneSoundTurn = turn;
+                }
+            }
+            else if (_cycloneSoundActive)
+            {
+                Play(Sound.HitMetal, MetalVolume * .22f, 1.14f, .01f);
+                _cycloneSoundTurn = -1;
+            }
+            _cycloneSoundActive = active;
         }
 
         private void PlayModeChange()
@@ -397,7 +423,7 @@ namespace Game.View
             AbilityBuild build = sim.GetAbility(slot);
             if (build == null) return Sound.Cast;
 
-            if (build.DefinitionId == AbilityDefinition.AnchorSweepId) return Sound.AnchorSweep;
+            if (build.DefinitionId == AbilityDefinition.ChainCycloneId) return Sound.AnchorSweep;
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return Sound.ChainStep;
             return Sound.Cast;
         }
@@ -411,7 +437,7 @@ namespace Game.View
             if (build == null) return 0.95f;
 
             if (build.DefinitionId == AbilityDefinition.AnchorLeapId) return 1.22f;
-            if (build.DefinitionId == AbilityDefinition.AnchorSweepId) return 0.74f;
+            if (build.DefinitionId == AbilityDefinition.ChainCycloneId) return 0.74f;
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return 1.02f;
             return 0.95f;
         }

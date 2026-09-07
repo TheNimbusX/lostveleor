@@ -26,6 +26,8 @@ namespace Game.Sim
         /// перестал и просто идёт.
         /// </summary>
         Attack = 1 << 1,
+        // Intermediate interaction waypoint, not a mouse turn-in-place command.
+        NavigationWaypoint = 1 << 2,
     }
 
     /// <summary>
@@ -46,6 +48,12 @@ namespace Game.Sim
 
         /// <summary>Биты 0..3 — нажатие способностей 1..4 в этом тике.</summary>
         public byte AbilityMask;
+
+        /// <summary>Удерживаемые способности; отпускание не теряется между тиками.</summary>
+        public byte AbilityHoldMask;
+
+        /// <summary>Подтверждённая цель способности, -1 или 0 означает отсутствие.</summary>
+        public int AbilityTarget;
 
         /// <summary>Битовое поле InputFlags.</summary>
         public byte Flags;
@@ -82,6 +90,7 @@ namespace Game.Sim
             Flags = 0,
             Command = 0,
             AttackTarget = -1,
+            AbilityTarget = -1,
         };
 
         /// <summary>
@@ -96,6 +105,8 @@ namespace Game.Sim
             Hashing.Mix(ref hash, Aim.X);
             Hashing.Mix(ref hash, Aim.Y);
             Hashing.Mix(ref hash, (int)AbilityMask);
+            Hashing.Mix(ref hash, (int)AbilityHoldMask);
+            Hashing.Mix(ref hash, AbilityTarget);
             Hashing.Mix(ref hash, (int)Flags);
             Hashing.Mix(ref hash, (int)Command);
             Hashing.Mix(ref hash, AttackTarget);

@@ -19,6 +19,8 @@ param(
     [int]    $Height  = 1080,
     [string] $OutDir  = '',
     [switch] $Whirlwind,
+    [switch] $Camp,
+    [switch] $CampCollision,
     [switch] $Run,
     [switch] $Locomotion,
     [switch] $Equipment,
@@ -33,10 +35,13 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-sweep', 'chain-step', 'rotation')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation')]
     [string] $Skill = '',
     [switch] $LiveSkill,
     [ValidateRange(-180,180)] [int] $CastYaw = 0,
+    [ValidateRange(0.5,7)] [double] $CastDistance = 3,
+    [ValidateRange(1,60)] [int] $HoldTicks = 60,
+    [switch] $Hud,
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
@@ -221,6 +226,11 @@ if ($MovingCombat) { $playerArgs += '-capture-moving-combat'; $playerArgs += '-c
 if ($Skill -ne '') { $playerArgs += @('-capture-skill', $Skill) }
 if ($LiveSkill) { $playerArgs += '-capture-live-skill' }
 if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
+$playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization.CultureInfo]::InvariantCulture))
+$playerArgs += @('-capture-hold-ticks', $HoldTicks)
+if ($Hud) { $playerArgs += '-capture-hud' }
+if ($Camp) { $playerArgs += '-capture-camp' }
+if ($CampCollision) { $playerArgs += '-capture-camp-collision' }
 if ($TurnDuringSkill) { $playerArgs += '-capture-turn-during-skill' }
 if ($Realtime) { $playerArgs += '-capture-real-time' }
 if ($ActiveEnemies) { $playerArgs += '-capture-active-enemies' }

@@ -1,4 +1,4 @@
-﻿using Game.Sim;
+using Game.Sim;
 using NUnit.Framework;
 
 namespace Game.Tests
@@ -105,7 +105,7 @@ namespace Game.Tests
             var sim = new Simulation(Seed, 32);
             sim.SetupTestArena(0);
             sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
+            sim.SetAbility(1, AbilityDefinition.ChainCyclone(), new AbilityNode[0], 0);
             FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
             FixVec2 aim = start + new FixVec2(Fix64.FromInt(5), Fix64.Zero);
             sim.Step(Cast(0, aim));
@@ -115,108 +115,20 @@ namespace Game.Tests
             Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[Simulation.PlayerId]);
         }
 
-        [Test]
-        public void AnchorSweep_UsesCommittedConeAndDoesNotDamageUnrelatedDraggedEnemies()
-        {
-            Simulation sim = Arena(out int inside, new FixVec2(Fix64.FromInt(5), Fix64.One), Fix64.One);
-            int outside = sim.Entities.Spawn(new FixVec2(Fix64.FromInt(3), Fix64.FromInt(3)), 9000, Faction.Orvill);
-            int behind = sim.Entities.Spawn(new FixVec2(Fix64.FromInt(-4), Fix64.Zero), 9000, Faction.Orvill);
-            foreach (int id in new[] { outside, behind })
-            {
-                sim.Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
-                sim.Entities.RefreshStats(id);
-                sim.Entities.NextAttackTick[id] = int.MaxValue;
-            }
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(6), Fix64.Zero)));
-            ForcedMotion.Begin(sim.Entities, behind, sim.Entities.Position[behind], 60, ForcedMotionKind.Dragged);
-            var movedCursor = InputFrame.Empty;
-            movedCursor.Aim = new FixVec2(Fix64.FromInt(-6), Fix64.Zero);
-            for (int i = 0; i < AnchorKit.SweepCastDelayTicks; i++) sim.Step(movedCursor);
-            Assert.Less(sim.Entities.Health[inside], 9000);
-            Assert.AreEqual(9000, sim.Entities.Health[outside]);
-            Assert.AreEqual(9000, sim.Entities.Health[behind]);
-            Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[outside]);
-        }
 
-        [Test]
-        public void AnchorSweep_CatchesSeveralTargetsOnlyAfterTheThrow()
-        {
-            Simulation sim = Arena(out int first,
-                new FixVec2(Fix64.FromInt(5), Fix64.Zero), Fix64.One);
-            int second = sim.Entities.Spawn(new FixVec2(Fix64.FromInt(4), Fix64.One), 9000, Faction.Orvill);
-            sim.Entities.Stats[second].SetBase(StatType.MoveSpeed, Fix64.Zero);
-            sim.Entities.RefreshStats(second);
-            sim.Entities.NextAttackTick[second] = int.MaxValue;
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-            for (int i = 1; i < AnchorKit.SweepCastDelayTicks; i++) sim.Step(InputFrame.Empty);
-            Assert.AreEqual(9000, sim.Entities.Health[first]);
-            Assert.AreEqual(9000, sim.Entities.Health[second]);
-            Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[first]);
-            sim.Step(InputFrame.Empty);
-            Assert.Less(sim.Entities.Health[first], 9000);
-            Assert.Less(sim.Entities.Health[second], 9000);
-            Assert.Greater(sim.Entities.ForcedTicksLeft[first], 0);
-            Assert.AreEqual(sim.Entities.ForcedTicksLeft[first], sim.Entities.ForcedTicksLeft[second]);
-        }
 
-        [Test]
-        public void AnchorSweep_PreservesMovementDuringThrowAndHaul()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            var move = InputFrame.Empty;
-            move.Flags = (byte)InputFlags.MoveOrder;
-            move.Aim = start + new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-            sim.Step(move);
-            for (int i = 2; i < AnchorKit.SweepCastDelayTicks + AnchorKit.SweepTicks; i++) sim.Step(InputFrame.Empty);
-            Assert.Greater((sim.Entities.Position[Simulation.PlayerId] - start).Length.ToFloat(), 1f,
-                "hook must not stop the buffered movement during throw and haul");
-            for (int i = 0; i < 10; i++) sim.Step(InputFrame.Empty);
-            Assert.Greater((sim.Entities.Position[Simulation.PlayerId] - start).Length.ToFloat(), 0.2f);
-        }
 
-        [Test]
-        public void AnchorSweep_DragsAnOrdinaryEnemyTowardThePlayer()
-        {
-            Simulation sim = Arena(out int enemy,
-                new FixVec2(Fix64.FromInt(5), Fix64.Zero), Fix64.One);
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
 
-            Fix64 before = Distance(sim, Simulation.PlayerId, enemy);
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-            for (int i = 0; i < AnchorKit.SweepCastDelayTicks + AnchorKit.SweepTicks + 2; i++) sim.Step(InputFrame.Empty);
-            Fix64 after = Distance(sim, Simulation.PlayerId, enemy);
 
-            Assert.Less(after.ToFloat(), before.ToFloat() - 2f,
-                "обычного врага подсечка обязана заметно подтащить");
-        }
+
+
 
         /// <summary>
         /// «Обычных тянет, тяжёлых нет» — это лист способностей, а не пожелание.
         /// Сопротивление берётся из того же PushWeight, что и расталкивание:
         /// враг, которого не сдвинуть плечом, не сдвигается и цепью.
         /// </summary>
-        [Test]
-        public void AnchorSweep_LeavesHeavyEnemiesWhereTheyStand()
-        {
-            Fix64 heavy = ForcedMotion.ResistThreshold + Fix64.One;
-            Simulation sim = Arena(out int enemy,
-                new FixVec2(Fix64.FromInt(5), Fix64.Zero), heavy);
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
 
-            FixVec2 before = sim.Entities.Position[enemy];
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-            for (int i = 0; i < AnchorKit.SweepCastDelayTicks + AnchorKit.SweepTicks + 2; i++) sim.Step(InputFrame.Empty);
-
-            Fix64 moved = (sim.Entities.Position[enemy] - before).Length;
-            Assert.Less(moved.ToFloat(), 0.6f,
-                "тяжёлого цепь стронуть не должна: допускается только расталкивание");
-        }
 
         /// <summary>
         /// Волочимый враг не идёт своим ходом. Иначе тяга и собственный шаг
@@ -231,12 +143,8 @@ namespace Game.Tests
             int enemy = sim.Entities.Spawn(
                 new FixVec2(Fix64.FromInt(5), Fix64.Zero), 9000, Faction.Orvill);
             sim.Entities.NextAttackTick[enemy] = int.MaxValue;
-            sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
-
-            sim.Step(Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-
-            for (int i = 0; i < AnchorKit.SweepCastDelayTicks; i++) sim.Step(InputFrame.Empty);
-
+            ForcedMotion.Begin(sim.Entities, enemy, FixVec2.Zero, 30, ForcedMotionKind.Dragged);
+            sim.Step(InputFrame.Empty);
             Assert.Greater(sim.Entities.ForcedTicksLeft[enemy], 0, "враг должен быть в тяге");
             Assert.AreEqual(0, sim.Entities.Velocity[enemy].LengthSq.Raw,
                 "у волочимого тела собственной скорости быть не может");
@@ -262,7 +170,9 @@ namespace Game.Tests
             }
 
             FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            sim.Step(Cast(3, FixVec2.Zero));
+            var selected = Cast(3, FixVec2.Zero);
+            selected.AbilityTarget = 1;
+            sim.Step(selected);
             for (int i = 0; i < AnchorKit.ChainTicksPerHop * AnchorKit.ChainMaxHops + 8; i++)
                 sim.Step(InputFrame.Empty);
 
@@ -288,7 +198,9 @@ namespace Game.Tests
             sim.SetAbility(3, AbilityDefinition.ChainStep(), new AbilityNode[0], 0);
 
             FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            sim.Step(Cast(3, FixVec2.Zero));
+            var selected = Cast(3, FixVec2.Zero);
+            selected.AbilityTarget = 1;
+            sim.Step(selected);
             for (int i = 0; i < 20; i++) sim.Step(InputFrame.Empty);
 
             Assert.AreEqual(0f,
@@ -311,7 +223,7 @@ namespace Game.Tests
                 var sim = new Simulation(Seed, 64);
                 sim.SetupTestArena(12);
                 sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-                sim.SetAbility(1, AbilityDefinition.AnchorSweep(), new AbilityNode[0], 0);
+                sim.SetAbility(1, AbilityDefinition.ChainCyclone(), new AbilityNode[0], 0);
                 sim.SetAbility(3, AbilityDefinition.ChainStep(), new AbilityNode[0], 0);
 
                 for (int tick = 0; tick < 240; tick++)

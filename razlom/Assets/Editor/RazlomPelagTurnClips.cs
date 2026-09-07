@@ -19,9 +19,12 @@ public static class RazlomPelagTurnClips
             var bones = sample.GetComponentsInChildren<Transform>()
                 .Where(t => t.name.StartsWith("mixamorig:")).ToArray();
             Transform hips = bones.First(t => t.name == "mixamorig:Hips");
+
             const int probes = 240, frames = 60;
             var angle = new float[probes + 1];
             source.SampleAnimation(sample, 0f);
+            var containers = sample.GetComponentsInChildren<Transform>().Where(t => t != sample.transform && !t.name.StartsWith("mixamorig:") && hips.IsChildOf(t)).ToArray();
+            var containerScales = containers.Select(t => t.localScale).ToArray();
             float initialYaw = hips.localEulerAngles.y;
             float previousYaw = initialYaw;
             float accumulated = 0f;
@@ -52,6 +55,7 @@ public static class RazlomPelagTurnClips
                 hips.localPosition = undoYaw * hips.localPosition;
                 for (int b = 0; b < bones.Length; b++)
                 {
+                    // Позиции сохраняются вместе с масштабом Armature ниже.
                     Vector3 pos = bones[b].localPosition;
                     Quaternion rot = bones[b].localRotation;
                     if (frame == 0) { firstPositions[b] = pos; firstRotations[b] = rot; }
@@ -71,6 +75,11 @@ public static class RazlomPelagTurnClips
             clip.ClearCurves();
             clip.name = name;
             clip.frameRate = 60;
+            for (int c = 0; c < containers.Length; c++)
+                for (int axis = 0; axis < 3; axis++)
+                    AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(
+                        AnimationUtility.CalculateTransformPath(containers[c], sample.transform), typeof(Transform),
+                        "m_LocalScale." + "xyz"[axis]), AnimationCurve.Constant(0, .3f, containerScales[c][axis]));
             string[] properties = { "m_LocalPosition.x", "m_LocalPosition.y", "m_LocalPosition.z",
                 "m_LocalRotation.x", "m_LocalRotation.y", "m_LocalRotation.z", "m_LocalRotation.w" };
             for (int b = 0; b < bones.Length; b++)

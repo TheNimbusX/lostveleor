@@ -6,6 +6,8 @@
         Weapon = 0,
         Armor = 1,
         Jewellery = 2,
+        Talisman = 3,
+        Artifact = 4,
     }
 
     /// <summary>

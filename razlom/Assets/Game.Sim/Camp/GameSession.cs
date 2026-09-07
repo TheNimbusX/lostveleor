@@ -70,6 +70,7 @@ namespace Game.Sim
         public ProvingGround Ground { get; private set; }
 
         public bool OnProvingGround => Ground != null;
+        public Simulation CampSim { get; private set; }
 
         /// <summary>
         /// Что сейчас рисовать. Меняется вместе с Generation — представление
@@ -78,7 +79,7 @@ namespace Game.Sim
         /// </summary>
         public Simulation ActiveSim
             => Mode == GameMode.Camp
-                ? (Ground != null ? Ground.Sim : null)
+                ? (Ground != null ? Ground.Sim : CampSim)
                 : (Run != null ? Run.Sim : null);
 
         /// <summary>Растёт при каждой смене активной симуляции.</summary>
@@ -107,6 +108,24 @@ namespace Game.Sim
             _runSeeds = new Pcg32(sessionSeed, 0x853C49E6748FEA9BUL);
 
             Mode = GameMode.Camp;
+            CampSim = new Simulation(sessionSeed, simCapacity);
+            CampSim.SetupCamp(FixVec2.Zero, null);
+            BindCampEquipment();
+        }
+
+        public void ConfigureCampWorld(FixVec2 spawn, CampWalkMap map)
+        {
+            CampSim.SetupCamp(spawn, map);
+            BindCampEquipment();
+            Generation++;
+        }
+
+        private void BindCampEquipment()
+        {
+            CampSim.ResetCampActivity();
+            Camp.Worn.Bind(CampSim.Entities.Stats[Simulation.PlayerId]);
+            CampSim.RefreshPlayerStats(true);
+            CampSim.StopPlayerMovement();
         }
 
         /// <summary>
@@ -146,6 +165,7 @@ namespace Game.Sim
             }
 
             if (Ground != null) Ground.Step(in input);
+            else CampSim.Step(in input);
         }
 
         /// <summary>
@@ -186,6 +206,7 @@ namespace Game.Sim
             if (Ground == null) return;
 
             Ground = null;
+            BindCampEquipment();
             Generation++;
         }
 
@@ -206,6 +227,7 @@ namespace Game.Sim
             Run = null;
             Ground = null;
             Mode = GameMode.Camp;
+            BindCampEquipment();
             Generation++;
         }
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -104,8 +104,6 @@ namespace Game.View
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int RadialMaskId = Shader.PropertyToID("_RadialMask");
 
-        private float _hitStopRemaining;
-        private float _timeScaleBeforeStop = 1f;
         private uint _randomState = 0x9E3779B9u;
 
         private Transform _bladeRoot;
@@ -165,16 +163,9 @@ namespace Game.View
 
         private void LateUpdate()
         {
-            UpdateHitStop();
             ConsumeEvents();
             AnimateFx();
             AnimateSwordTrail();
-        }
-
-        private void OnDisable()
-        {
-            if (_hitStopRemaining > 0f) Time.timeScale = _timeScaleBeforeStop;
-            _hitStopRemaining = 0f;
         }
 
         private void ConsumeEvents()
@@ -227,7 +218,7 @@ namespace Game.View
             }
 
             // Один стоп и один импульс на кадр, по самому сильному событию.
-            if (_frameStopDuration > 0f) StartHitStop(_frameStopDuration, _frameStopScale);
+            // Контакт подчёркивается локальной реакцией и камерой: время боя не останавливается.
             if (_frameTrauma > 0f) _cameraJuice?.AddImpulse(_frameTrauma, _frameZoom);
         }
 
@@ -848,41 +839,8 @@ namespace Game.View
             }
         }
 
-        private void StartHitStop(float duration, float scale)
-        {
-            if (_driver != null && _driver.GameplayPaused) return;
-            if (_hitStopRemaining <= 0f) _timeScaleBeforeStop = Time.timeScale;
-            _hitStopRemaining = Mathf.Max(_hitStopRemaining, duration);
-            Time.timeScale = Mathf.Min(Time.timeScale, scale);
-        }
-
-        /// <summary>
-        /// Завершает presentation-only hit-stop перед системной паузой и
-        /// возвращает нормальный масштаб времени, который она должна сохранить.
-        /// </summary>
-        public float CancelHitStopForPause()
-        {
-            float gameplayTimeScale = _hitStopRemaining > 0f
-                ? _timeScaleBeforeStop
-                : Time.timeScale;
-
-            _hitStopRemaining = 0f;
-            _timeScaleBeforeStop = gameplayTimeScale;
-            Time.timeScale = gameplayTimeScale;
-            return gameplayTimeScale;
-        }
-
-        private void UpdateHitStop()
-        {
-            if (_driver != null && _driver.GameplayPaused) return;
-            if (_hitStopRemaining <= 0f) return;
-            _hitStopRemaining -= Time.unscaledDeltaTime;
-            if (_hitStopRemaining <= 0f)
-            {
-                Time.timeScale = _timeScaleBeforeStop;
-                _hitStopRemaining = 0f;
-            }
-        }
+        /// <summary>Бой больше не меняет глобальное время; системная пауза сохраняет текущую скорость.</summary>
+        public float CancelHitStopForPause() => Time.timeScale;
 
         private void BuildPool()
         {

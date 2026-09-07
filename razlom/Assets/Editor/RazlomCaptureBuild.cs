@@ -66,6 +66,7 @@ namespace Game.EditorTools
 
         private static void Build(string outputDirectory)
         {
+            CampModelImport.Prepare();
             // Controller is generated from imported FBXs. Rebuild it explicitly
             // in batch mode as delayCall order is not a reliable build contract.
             global::RazlomPelagV5AnimatorBuilder.Build();

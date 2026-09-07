@@ -1,4 +1,4 @@
-﻿namespace Game.Sim
+namespace Game.Sim
 {
     /// <summary>
     /// Три способности Пелага на якоре и цепи.
@@ -28,28 +28,6 @@
         /// </summary>
         public const int LeapTicks = 15;
         public const int LeapWindupTicks = 9;
-
-        // ---- Подсечка ----
-
-        public static readonly Fix64 SweepRadius = Fix64.Ratio(65, 10);
-        public const int SweepTicks = 9;
-        public const int SweepCastDelayTicks = 13;
-        public const float SweepAngleDegrees = 45f;
-
-        public static bool InSweepCone(FixVec2 delta, FixVec2 facing)
-        {
-            Fix64 dot = FixVec2.Dot(delta, facing);
-            return dot.Raw >= 0 && dot * dot >= delta.LengthSq * Fix64.Ratio(853554, 1000000);
-        }
-
-        /// <summary>
-        /// Куда именно волочит. НЕ в самого игрока, а на это расстояние перед
-        /// ним: втащить толпу внутрь собственного тела значит устроить давку,
-        /// из которой расталкивание будет выпутываться полсекунды.
-        /// </summary>
-        public static readonly Fix64 SweepGatherDistance = Fix64.Ratio(13, 10);
-
-        public const int SweepMaxTargets = 10;
 
         // ---- Шаг по цепи ----
 
@@ -96,97 +74,48 @@
         /// Возвращает, скольких утащило. Ноль — законный результат: вокруг
         /// были только тяжёлые, и это игрок обязан увидеть.
         /// </summary>
-        public static int CastSweep(Simulation sim, int[] scratch)
-        {
-            EntityStore e = sim.Entities;
-            int player = Simulation.PlayerId;
-            FixVec2 centre = e.Position[player];
-
-            int found = sim.Grid.QueryRadius(e, centre, SweepRadius, player, scratch);
-            int dragged = 0;
-
-            for (int k = 0; k < found && dragged < SweepMaxTargets; k++)
-            {
-                int id = scratch[k];
-                if (!e.Alive[id]) continue;
-                if (e.Side[id] == e.Side[player]) continue;
-
-                // Сбор в кольцо перед игроком, а не в его тело: направление
-                // берётся от игрока к цели, то есть каждый приезжает со своей
-                // стороны и они не сходятся в одну точку.
-                FixVec2 delta = e.Position[id] - centre;
-                if (!InSweepCone(delta, sim.SweepDirection)) continue;
-                Fix64 distance = delta.Length;
-                FixVec2 direction = distance.Raw == 0
-                    ? e.Facing[player]
-                    : delta / distance;
-
-                FixVec2 target = centre + direction * SweepGatherDistance;
-                if (ForcedMotion.Begin(e, id, target, SweepTicks, ForcedMotionKind.Dragged))
-                    scratch[dragged++] = id;
-            }
-
-            return dragged;
-        }
-
-        /// <summary>
-        /// ШАГ ПО ЦЕПИ. Серия прыжков от врага к врагу.
-        ///
-        /// Здесь считается только ПЕРВЫЙ прыжок: остальные назначаются по мере
-        /// прибытия, в <see cref="Simulation"/>. Причина в том, что цепочка,
-        /// посчитанная вперёд, к третьему прыжку упирается в трупы — цели
-        /// умирают по дороге от ударов той же способности.
-        ///
-        /// Возвращает выбранную цель или -1, если рядом никого.
-        /// </summary>
-        public static int PickChainTarget(Simulation sim, int[] scratch, int previous,
+        public static int PickChainTarget(Simulation sim, int[] scratch, Fix64 radius,
             int[] visited = null, int visitedCount = 0)
         {
             EntityStore e = sim.Entities;
             int player = Simulation.PlayerId;
             FixVec2 from = e.Position[player];
 
-            int found = sim.Grid.QueryRadius(e, from, ChainRange, player, scratch);
-
-            int best = -1;
-            Fix64 bestDistanceSq = Fix64.Zero;
-            for (int k = 0; k < found; k++)
+            int count = 0;
+            for (int pass = 0; pass < 2; pass++)
             {
-                int id = scratch[k];
-                if (id == previous) continue;
-                bool alreadyHit = false;
-                for (int v = 0; v < visitedCount; v++)
-                    if (visited[v] == id) { alreadyHit = true; break; }
-                if (alreadyHit) continue;
-                if (!e.Alive[id]) continue;
-                if (e.Side[id] == e.Side[player]) continue;
-
-                Fix64 distanceSq = (e.Position[id] - from).LengthSq;
-
-                // Ближайший, при равенстве — меньший индекс. Обход идёт по
-                // возрастанию, поэтому строгое сравнение уже даёт меньший.
-                if (best < 0 || distanceSq < bestDistanceSq)
+                count = 0;
+                for (int id = 1; id < e.Count; id++)
                 {
-                    best = id;
-                    bestDistanceSq = distanceSq;
+                    if (!e.Alive[id] || e.Side[id] == e.Side[player]) continue;
+                    if ((e.Position[id] - from).LengthSq > radius * radius) continue;
+                    bool seen = false;
+                    for (int v = 0; v < visitedCount; v++) if (visited[v] == id) seen = true;
+                    if (pass == 0 && seen) continue;
+                    scratch[count++] = id;
                 }
+                if (count > 0) return scratch[sim.Rng.AbilityTargets.NextInt(0, count)];
             }
-
-            return best;
+            return -1;
         }
 
         /// <summary>Точка, куда встать при прыжке к цели: рядом, а не внутрь.</summary>
-        public static FixVec2 ChainLandingSpot(EntityStore e, int target)
+        public static FixVec2 ChainLandingSpot(EntityStore e, int target, bool crossTarget = false)
         {
             FixVec2 from = e.Position[Simulation.PlayerId];
             FixVec2 to = e.Position[target];
             FixVec2 delta = to - from;
             Fix64 distance = delta.Length;
-            if (distance.Raw == 0) return to;
+            if (distance.Raw == 0)
+            {
+                FixVec2 facing = e.Facing[Simulation.PlayerId];
+                if (facing.LengthSq.Raw == 0) facing = new FixVec2(Fix64.One, Fix64.Zero);
+                return to + facing * ChainStandoff;
+            }
 
             FixVec2 direction = delta / distance;
             Fix64 stop = distance > ChainStandoff ? distance - ChainStandoff : Fix64.Zero;
-            return from + direction * stop;
+            return crossTarget ? to + direction * ChainStandoff : from + direction * stop;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Game.View
 {
@@ -117,7 +117,7 @@ namespace Game.View
             _anchorLeap = leap;
             _drawPhase = 0f;
             Mount(_saber, _saberStored);
-            Mount(_anchor, _anchorStored);
+            ApplyAnchor();
         }
 
         public void EndAnchorUse()
@@ -139,7 +139,7 @@ namespace Game.View
             {
                 _drawPhase = 0f;
                 Mount(_saber, _saberStored);
-                AnimateAnchor();
+                PlaceAnchorHead();
                 return;
             }
             // Принятый Sim удар важнее бытового жеста. Клинок уже в ладони
@@ -160,6 +160,23 @@ namespace Game.View
             if (_drawPhase <= 0f || _drawPhase >= 1f)
             {
                 ApplySaber();
+                return;
+            }
+            if (_presentation != null && _presentation.PlayEquipmentGesture(_drawPhase, _combatReady))
+            {
+                // Короткая коррекция только у рукояти: весь жест уже создан в Blender.
+                float contact = 1f - Smooth(Mathf.Abs(_drawPhase - GripPhase) / .18f);
+                Vector3 position = _saberStored.Socket.TransformPoint(_saberStored.LocalPosition);
+                Quaternion rotation = _saberStored.Socket.rotation * Quaternion.Euler(_saberStored.LocalEuler)
+                    * Quaternion.Inverse(Quaternion.Euler(_saberEquipped.LocalEuler));
+                Vector3 authoredGripTarget = position - rotation * Vector3.Scale(_hand.lossyScale, _saberEquipped.LocalPosition);
+                SolveArm(authoredGripTarget, contact);
+                _hand.rotation = Quaternion.Slerp(_hand.rotation, rotation, contact);
+                GripError = Vector3.Distance(_hand.position, authoredGripTarget) * contact;
+                Vector3 before = _saber.position;
+                bool wasHeld = SaberInHand;
+                ApplySaber();
+                if (wasHeld != SaberInHand) TransferDistance = Vector3.Distance(before, _saber.position);
                 return;
             }
             float reach = Smooth(_drawPhase / GripPhase);
@@ -345,11 +362,15 @@ namespace Game.View
         private void PlaceAnchorHead()
         {
             if (_anchorHead == null || _anchor == null) return;
+            // До отпускания крюк остаётся в авторской руке. После handoff
+            // единственную летящую голову рисует pooled-представление.
             float age = Time.time - _anchorStartedAt;
-            float duration = _anchorLeap ? PelagAbilityTiming.LeapRecovery : PelagAbilityTiming.SweepRecovery;
-            float take = _anchorInHand ? Smooth((age - .12f) / .08f)
-                * (1f - Smooth((age - duration + .16f) / .10f)) : 0f;
-            _anchorHead.position = _anchor.position + Vector3.Lerp(Vector3.down * .23f, transform.forward * .17f, take);
+            bool heldWindup = _anchorInHand && _anchorLeap && age < PelagAbilityTiming.AnchorDraw;
+            _anchorHead.gameObject.SetActive(!_anchorInHand || heldWindup);
+            _anchorHead.position = _anchorInHand
+                ? _leftHand.position + transform.forward * .12f - Vector3.up * .12f
+                : _anchor.position + Vector3.down * .12f
+                    - transform.right * .13f - transform.forward * .08f;
             _anchorHead.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
         }
 

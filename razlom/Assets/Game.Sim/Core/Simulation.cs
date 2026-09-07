@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Game.Sim
 {
@@ -19,7 +19,7 @@ namespace Game.Sim
     /// Один вызов Tick — ровно один шаг фиксированной длительности.
     /// Представление читает Events и Entities и интерполирует между тиками.
     /// </summary>
-    public sealed class Simulation
+    public sealed partial class Simulation
     {
         // ---- параметры тика ----
         // Длина тика нигде в логике не используется: все скорости и задержки
@@ -73,7 +73,7 @@ namespace Game.Sim
         // Заодно это и порог прибытия: «дойти до точки» значит встать в неё
         // телом, а не совместить с ней математический центр. Радиус мал
         // настолько, что недоход глазом не читается — метр читался бы.
-        private static readonly Fix64 TurnInPlaceRadius = Fix64.Ratio(1, 2);
+        public static readonly Fix64 TurnInPlaceRadius = Fix64.Ratio(1, 2);
         private static readonly Fix64 TurnInPlaceRadiusSq = TurnInPlaceRadius * TurnInPlaceRadius;
 
         // Скорость разворота ЗАДАНА В ТИКАХ, как и всё остальное: полный оборот
@@ -149,7 +149,7 @@ namespace Game.Sim
         // 6 м/с было быстрее естественной подачи текущего authored-run и
         // неизбежно тащило опорную стопу по полу. 4.5 м/с оставляет игрока
         // быстрее толпы, но совпадает с читаемым длинным беговым шагом.
-        private static readonly Fix64 PlayerBaseMoveSpeed = Fix64.Ratio(9, 2);
+        public static readonly Fix64 PlayerBaseMoveSpeed = Fix64.Ratio(9, 2);
 
         /// <summary>
         /// Скорость хода врага. Было 3.5, стало 3.1 — на 11.4% медленнее по
@@ -248,11 +248,7 @@ namespace Game.Sim
         public const int WhirlwindContactDelayTicks = 10;
         private int _whirlwindImpactTick = -1;
         private int _whirlwindImpactSlot = -1;
-        private int _sweepImpactTick = -1;
-        private int _sweepImpactSlot = -1;
-        private int _sweepBraceUntilTick;
-        private FixVec2 _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-        public FixVec2 SweepDirection => _sweepDirection;
+
         private int _leapLaunchTick = -1;
         private FixVec2 _leapAim;
         public FixVec2 LeapAim => _leapAim;
@@ -289,6 +285,25 @@ namespace Game.Sim
 
         private readonly List<SimEvent> _events = new List<SimEvent>(256);
         private LayoutMap _layout;
+        private bool _navigationWaypoint;
+        private CampWalkMap _campWalkMap;
+
+        public void SetupCamp(FixVec2 spawn, CampWalkMap map)
+        {
+            SetupTestArena(0);
+            _campWalkMap = map;
+            Entities.Position[PlayerId] = spawn;
+        }
+
+        public void StopPlayerMovement()
+        {
+            _navigationWaypoint = false;
+            ClearMoveOrder();
+            Entities.Velocity[PlayerId] = FixVec2.Zero;
+        }
+
+        public void ResetCampActivity()
+            => SetupCamp(Entities.Position[PlayerId], _campWalkMap);
 
         /// <summary>
         /// Только для теста эквивалентности: заставляет поиск целей идти наивным
@@ -346,6 +361,8 @@ namespace Game.Sim
         {
             Rng = new RngStreams(runSeed);
             Entities = new EntityStore(capacity);
+            _cycloneHitTurn = new int[capacity];
+            _cycloneTickPositions = new FixVec2[capacity];
 
             // Ячейка равна дальности автоатаки: запрос тогда задевает ровно 3×3 ячейки.
             // Сетка покрывает 128×128 метров — с запасом на комнату Разлома.
@@ -404,22 +421,14 @@ namespace Game.Sim
         /// </summary>
         public void SetupTestArena(int enemyCount)
         {
+            _campWalkMap = null;
             _layout = null;
             ClearMoveOrder();
             Entities.Clear();
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
-            _whirlwindImpactTick = -1;
-            _whirlwindImpactSlot = -1;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            _sweepBraceUntilTick = 0;
-            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            ResetAbilityState();
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -461,16 +470,7 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
-            _whirlwindImpactTick = -1;
-            _whirlwindImpactSlot = -1;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            _sweepBraceUntilTick = 0;
-            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            ResetAbilityState();
 
             var rng = new Pcg32(spawnSeed, 0x517CC1B727220A95UL);
 
@@ -533,16 +533,7 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
-            _whirlwindImpactTick = -1;
-            _whirlwindImpactSlot = -1;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            _sweepBraceUntilTick = 0;
-            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            ResetAbilityState();
 
             FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
@@ -580,7 +571,7 @@ namespace Game.Sim
         /// <see cref="ApplyAttack"/>; this method only authors capture fixtures.
         /// </summary>
         public void SetupCombatFeelShowcase(LayoutMap map, int enemyCount,
-            CombatFeelCaptureTier tier, bool activeEnemies = false)
+            CombatFeelCaptureTier tier, bool activeEnemies = false, bool endurance = false)
         {
             _layout = map;
             ClearMoveOrder();
@@ -588,16 +579,7 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
-            _whirlwindImpactTick = -1;
-            _whirlwindImpactSlot = -1;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            _sweepBraceUntilTick = 0;
-            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            ResetAbilityState();
 
             FixVec2 center = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(center, PlayerBaseHealth, Faction.Wole));
@@ -607,9 +589,10 @@ namespace Game.Sim
                 tier == CombatFeelCaptureTier.Critical ? Fix64.One : Fix64.Zero);
             Entities.RefreshStats(PlayerId);
             Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId];
+            if (endurance) Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId] = 1000000;
             Entities.Facing[PlayerId] = new FixVec2(Fix64.One, Fix64.Zero);
 
-            int limit = activeEnemies ? 30 : 5;
+            int limit = activeEnemies ? Entities.Capacity - 1 : 5;
             int count = enemyCount < 1 ? 1 : enemyCount > limit ? limit : enemyCount;
             FixVec2[] offsets =
             {
@@ -628,13 +611,13 @@ namespace Game.Sim
                 FixVec2 offset = offsets[i % offsets.Length];
                 if (activeEnemies)
                 {
-                    // Только QA: три кольца живой толпы, чтобы проверка не сводилась к пяти манекенам.
+                    // QA сохраняет фиксированную арифметику и поддерживает полную толпу.
                     int ring = i / 10;
-                    double angle = (i % 10) * System.Math.PI * .2 + ring * .18;
-                    double radius = 2.6 + ring * 1.65;
-                    offset = new FixVec2(Fix64.FromDouble(System.Math.Cos(angle) * radius),
-                        Fix64.FromDouble(System.Math.Sin(angle) * radius));
+                    Fix64 angle = Fix64.TwoPi * Fix64.Ratio(i % 10, 10) + Fix64.Ratio(ring * 18, 100);
+                    Fix64 radius = Fix64.Ratio(26, 10) + Fix64.Ratio(ring * 85, 100);
+                    offset = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle)) * radius;
                 }
+                if (endurance) health = 1000000;
                 int id = Entities.Spawn(center + offset, health, Faction.Orvill);
                 ConfigureEnemy(id);
                 if (!activeEnemies)
@@ -724,16 +707,7 @@ namespace Game.Sim
             Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
-            _whirlwindImpactTick = -1;
-            _whirlwindImpactSlot = -1;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            _sweepBraceUntilTick = 0;
-            _sweepDirection = new FixVec2(Fix64.One, Fix64.Zero);
-            _leapLaunchTick = -1;
-            _leapAim = FixVec2.Zero;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            ResetAbilityState();
 
             ConfigurePlayer(Entities.Spawn(FixVec2.Zero, PlayerBaseHealth, Faction.Wole));
 
@@ -888,8 +862,21 @@ namespace Game.Sim
             }
         }
 
+        private void ResetAbilityState()
+        {
+            StopCyclone();
+            _whirlwindImpactTick = _whirlwindImpactSlot = -1;
+            _leapLaunchTick = -1;
+            _leapAim = FixVec2.Zero;
+            _chainHopsLeft = _chainVisitedCount = 0;
+            _chainTarget = _chainSlot = -1;
+            System.Array.Clear(_chainVisited, 0, _chainVisited.Length);
+            _abilityMovePenaltyUntilTick = 0;
+        }
+
         private void ClearMoveOrder()
         {
+            _navigationWaypoint = false;
             _hasMoveOrder = false;
             _moveOrder = FixVec2.Zero;
             _explicitMoveOrder = false;
@@ -948,6 +935,7 @@ namespace Game.Sim
         public void Step(in InputFrame input)
         {
             _events.Clear();
+            for (int i = 0; i < Entities.Count; i++) _cycloneTickPositions[i] = Entities.Position[i];
 
             // Пересчёт грязных листов статов — первой стадией и ровно один раз
             // за тик. У StatSheet пересчёт по грязному флагу, и точка, в которой
@@ -986,7 +974,7 @@ namespace Game.Sim
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
             ResolveWhirlwindImpact();
-            ResolveSweepImpact();
+            UpdateCyclone(in input);
             if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
             {
                 _leapLaunchTick = -1;
@@ -1032,12 +1020,12 @@ namespace Game.Sim
                 if (build == null) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
+                if (build.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
+                StopCyclone();
                 // A newly committed action replaces the old presentation and
                 // its unlanded contacts. Do not launch an old anchor midway
                 // through the next ability's animation.
                 _leapLaunchTick = -1;
-                _sweepImpactTick = _sweepImpactSlot = -1;
-                _sweepBraceUntilTick = Tick;
                 _whirlwindImpactTick = _whirlwindImpactSlot = -1;
                 _chainHopsLeft = 0;
                 _chainVisitedCount = 0;
@@ -1053,17 +1041,13 @@ namespace Game.Sim
                     _leapAim = input.Aim;
                     _leapLaunchTick = Tick + AnchorKit.LeapWindupTicks;
                 }
-                else if (build.DefinitionId == AbilityDefinition.AnchorSweepId)
+                else if (build.DefinitionId == AbilityDefinition.ChainCycloneId)
                 {
-                    FixVec2 aimDirection = input.Aim - Entities.Position[PlayerId];
-                    _sweepDirection = aimDirection.Length.Raw > 0 ? aimDirection / aimDirection.Length : Entities.Facing[PlayerId];
-                    _sweepImpactTick = Tick + AnchorKit.SweepCastDelayTicks;
-                    _sweepImpactSlot = slot;
-                    _sweepBraceUntilTick = Tick + AnchorKit.SweepCastDelayTicks + AnchorKit.SweepTicks;
+                    BeginCyclone(slot, input.Aim);
                 }
                 else if (build.DefinitionId == AbilityDefinition.ChainStepId)
                 {
-                    BeginChainStep(slot);
+                    BeginChainStep(slot, input.AbilityTarget);
                 }
                 else
                 {
@@ -1083,9 +1067,10 @@ namespace Game.Sim
             {
                 if (!input.Ability(slot)) continue;
                 if (_abilityBuilds[slot] == null) continue;
+                if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, _abilityBuilds[slot])) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
-                int until = _abilityBuilds[slot].DefinitionId == AbilityDefinition.AnchorSweepId
+                int until = (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainCycloneId)
                     ? Tick : Tick + AbilityMovePenaltyTicks;
                 if (until > _abilityMovePenaltyUntilTick)
                     _abilityMovePenaltyUntilTick = until;
@@ -1112,41 +1097,8 @@ namespace Game.Sim
         /// ждать конца волока значило бы, что убитый по дороге враг не
         /// получает урона от способности, которая его и убила.
         /// </summary>
-        private void ResolveSweepImpact()
+        private void BeginChainStep(int slot, int target)
         {
-            if (_sweepImpactTick < 0 || Tick < _sweepImpactTick) return;
-            int slot = _sweepImpactSlot;
-            _sweepImpactTick = _sweepImpactSlot = -1;
-            if (!Entities.Alive[PlayerId]) return;
-            AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
-            if (build == null || build.DefinitionId != AbilityDefinition.AnchorSweepId) return;
-            CastAnchorSweep(slot, build);
-        }
-
-        private void CastAnchorSweep(int slot, AbilityBuild build)
-        {
-            int dragged = AnchorKit.CastSweep(this, HitScratch);
-            if (dragged <= 0) return;
-
-            int damage = build.Get(AbilityStatType.Damage).ToInt();
-            for (int k = 0; k < dragged; k++)
-            {
-                int i = HitScratch[k];
-                if (Entities.ForcedTicksLeft[i] <= 0) continue;
-                if (Entities.ForcedKind[i] != (byte)ForcedMotionKind.Dragged) continue;
-                if (!Entities.Alive[i]) continue;
-                if (Entities.Side[i] == Entities.Side[PlayerId]) continue;
-                ApplyAbilityDamage(PlayerId, i, damage, slot, DamageType.Physical);
-            }
-        }
-
-        /// <summary>
-        /// ШАГ ПО ЦЕПИ, первый прыжок. Остальные назначает ContinueChainStep
-        /// по мере прибытия.
-        /// </summary>
-        private void BeginChainStep(int slot)
-        {
-            int target = AnchorKit.PickChainTarget(this, HitScratch, -1);
             if (target < 0) return;
 
             _chainSlot = slot;
@@ -1188,7 +1140,8 @@ namespace Game.Sim
 
             if (_chainTarget >= 0 && _chainTarget < Entities.Count
                 && Entities.Alive[_chainTarget]
-                && Entities.Side[_chainTarget] != Entities.Side[PlayerId])
+                && Entities.Side[_chainTarget] != Entities.Side[PlayerId]
+                && ChainContactReachable(_chainTarget))
             {
                 ApplyAbilityDamage(PlayerId, _chainTarget,
                     build.Get(AbilityStatType.Damage).ToInt(), _chainSlot,
@@ -1203,7 +1156,7 @@ namespace Game.Sim
                 return;
             }
 
-            int next = AnchorKit.PickChainTarget(this, HitScratch, _chainTarget, _chainVisited, _chainVisitedCount);
+            int next = AnchorKit.PickChainTarget(this, HitScratch, build.Get(AbilityStatType.Radius), _chainVisited, _chainVisitedCount);
             if (next < 0)
             {
                 // Больше некого — цепочка кончается тихо. Оставшиеся прыжки
@@ -1215,10 +1168,11 @@ namespace Game.Sim
                 return;
             }
 
+            bool repeatTarget = next == _chainTarget;
             _chainTarget = next;
             _chainVisited[_chainVisitedCount++] = next;
             ForcedMotion.Begin(Entities, PlayerId,
-                AnchorKit.ChainLandingSpot(Entities, next),
+                AnchorKit.ChainLandingSpot(Entities, next, repeatTarget),
                 AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
         }
 
@@ -1351,6 +1305,7 @@ namespace Game.Sim
             bool killedOrderedTarget = killer == PlayerId && target == _attackTarget;
             Entities.Health[target] = 0;
             Entities.Alive[target] = false;
+            if (target == PlayerId) ResetAbilityState();
             _events.Add(SimEvent.Death(target, Entities.Position[target]));
 
             if (basicAttackKill && killer == PlayerId)
@@ -1432,6 +1387,7 @@ namespace Game.Sim
                     : input.Aim;
                 _hasMoveOrder = true;
                 _explicitMoveOrder = true;
+                _navigationWaypoint = input.Has(InputFlags.NavigationWaypoint);
             }
 
             // Only the anchor leap needs a stationary launch. The mass hook
@@ -1491,6 +1447,7 @@ namespace Game.Sim
                 : Tick < _abilityMovePenaltyUntilTick
                     ? fullSpeed * AbilityMoveScale
                     : fullSpeed;
+            if (TryCycloneMoveScale(in input, out Fix64 cycloneMoveScale)) speed = fullSpeed * cycloneMoveScale;
 
             if (_hasMoveOrder)
             {
@@ -1500,16 +1457,16 @@ namespace Game.Sim
                 // Смотрим на указанную точку всегда, даже если не идём к ней.
                 if (_explicitMoveOrder || facingTarget < 0) desiredFacing = toTarget;
 
-                if (distSq > TurnInPlaceRadiusSq)
+                Fix64 arrivalSq = _navigationWaypoint ? Fix64.Ratio(1,10000) : TurnInPlaceRadiusSq;
+                if (distSq > arrivalSq)
                 {
                     Fix64 distance = Fix64.Sqrt(distSq);
 
                     // У цели скорость ограничивается остатком пути: так тело
                     // подъезжает и встаёт, а не пролетает точку по инерции.
-                    Fix64 approach = distance / BrakeTicks;
-                    Fix64 wanted = approach < speed ? approach : speed;
-
-                    step = toTarget / distance * wanted;
+                    step = _navigationWaypoint
+                        ? toTarget.Normalized() * Fix64.Min(speed, distance / Fix64.FromInt(4))
+                        : PlayerTravelStep(toTarget, speed);
                 }
                 else
                 {
@@ -1536,8 +1493,7 @@ namespace Game.Sim
             // отражение положения курсора. Иначе он бы дёргался от каждого
             // движения мыши по столу.
             FixVec2 facingBefore = Entities.Facing[PlayerId];
-            Entities.Facing[PlayerId] = TurnToward(facingBefore, desiredFacing,
-                PlayerTurnStepCos, PlayerTurnStepSin);
+            Entities.Facing[PlayerId] = PlayerFacingStep(facingBefore, desiredFacing);
 
             // На последнем тике TurnToward сам защёлкивается в target. Проверка
             // тем же порогом позволяет снять приказ после этого тика, не вводя
@@ -1566,7 +1522,7 @@ namespace Game.Sim
         /// быстрый персонаж разгонялся бы столько же тиков, сколько медленный,
         /// и предмет на скорость передвижения менял бы заодно и отзывчивость.
         /// </summary>
-        private static FixVec2 Approach(FixVec2 current, FixVec2 wanted, Fix64 fullSpeed)
+        public static FixVec2 Approach(FixVec2 current, FixVec2 wanted, Fix64 fullSpeed)
         {
             Fix64 maxChange = fullSpeed / AccelerationTicks;
 
@@ -1585,6 +1541,17 @@ namespace Game.Sim
         /// ошибки от перевода «вектор → угол → вектор» нет. Результат
         /// нормализуется каждый тик: без этого длина за сотни поворотов уползёт.
         /// </summary>
+        public static FixVec2 PlayerTravelStep(FixVec2 toTarget, Fix64 speed)
+        {
+            if (toTarget.LengthSq <= TurnInPlaceRadiusSq) return FixVec2.Zero;
+            Fix64 distance = Fix64.Sqrt(toTarget.LengthSq);
+            Fix64 approach = distance / BrakeTicks;
+            return toTarget / distance * (approach < speed ? approach : speed);
+        }
+
+        public static FixVec2 PlayerFacingStep(FixVec2 current, FixVec2 desired)
+            => TurnToward(current, desired, PlayerTurnStepCos, PlayerTurnStepSin);
+
         private static FixVec2 TurnToward(FixVec2 current, FixVec2 desired,
             Fix64 stepCos, Fix64 stepSin)
         {
@@ -1797,7 +1764,12 @@ namespace Game.Sim
                 // целиком — иначе тело вечно не доезжало бы последние миллиметры.
                 FixVec2 step = left <= 1 ? delta : delta / Fix64.FromInt(left);
 
-                Entities.Position[i] = MoveInsideLayout(i, from, step);
+                // Большой шаг рывка не должен перескочить узкую стену между концами.
+                int substeps = System.Math.Max(1, (step.Length / (LayoutMap.CellSize / Fix64.FromInt(8))).ToInt() + 1);
+                FixVec2 piece = step / Fix64.FromInt(substeps);
+                for (int s = 0; s < substeps; s++)
+                    from = MoveInsideLayout(i, from, piece);
+                Entities.Position[i] = from;
 
                 // Скорость обнуляется намеренно: тело едет не своим ходом, и
                 // представление обязано видеть это как перемещение чужой волей,
@@ -1811,11 +1783,11 @@ namespace Game.Sim
 
         private FixVec2 MoveInsideLayout(int entity, FixVec2 from, FixVec2 delta)
         {
-            if (_layout == null || delta.LengthSq.Raw == 0) return from + delta;
+            if ((_layout == null && _campWalkMap == null) || delta.LengthSq.Raw == 0) return from + delta;
 
             Fix64 radius = Entities.BodyRadius[entity];
             FixVec2 full = from + delta;
-            if (_layout.IsWalkable(full, radius)) return full;
+            if (CanTravel(from, full, radius)) return full;
 
             // Скользим вдоль стены вместо полной остановки на диагональном
             // вводе. Сначала пробуется большая компонента, чтобы направление
@@ -1824,12 +1796,29 @@ namespace Game.Sim
             FixVec2 first = xFirst
                 ? from + new FixVec2(delta.X, Fix64.Zero)
                 : from + new FixVec2(Fix64.Zero, delta.Y);
-            if (_layout.IsWalkable(first, radius)) return first;
+            if (CanTravel(from, first, radius)) return first;
 
             FixVec2 second = xFirst
                 ? from + new FixVec2(Fix64.Zero, delta.Y)
                 : from + new FixVec2(delta.X, Fix64.Zero);
-            return _layout.IsWalkable(second, radius) ? second : from;
+            return CanTravel(from, second, radius) ? second : from;
+        }
+
+        private bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
+            => _campWalkMap != null ? _campWalkMap.CanTravel(from, to) : _layout.IsWalkable(to, radius);
+
+        private bool ChainContactReachable(int target)
+        {
+            FixVec2 from = Entities.Position[PlayerId];
+            FixVec2 delta = Entities.Position[target] - from;
+            Fix64 reach = AnchorKit.ChainStandoff + Entities.BodyRadius[target] + Entities.BodyRadius[PlayerId];
+            if (delta.LengthSq > reach * reach) return false;
+            if (_campWalkMap != null) return _campWalkMap.CanTravel(from, Entities.Position[target]);
+            if (_layout == null) return true;
+            int steps = System.Math.Max(1, (delta.Length / (LayoutMap.CellSize / Fix64.FromInt(8))).ToInt() + 1);
+            for (int i = 1; i <= steps; i++)
+                if (!_layout.IsWalkable(from + delta * Fix64.Ratio(i, steps), Fix64.Zero)) return false;
+            return true;
         }
 
         /// <summary>
@@ -1872,7 +1861,7 @@ namespace Game.Sim
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
                 // клип и второй контакт поверх способности не запускаются.
-                if (i == PlayerId && (Tick < _abilityMovePenaltyUntilTick || Tick < _sweepBraceUntilTick
+                if (i == PlayerId && (CycloneActive || Tick < _abilityMovePenaltyUntilTick
                     || _leapLaunchTick >= 0 || Entities.ForcedTicksLeft[i] > 0)) continue;
 
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
@@ -2038,6 +2027,7 @@ namespace Game.Sim
         {
             ulong hash = Hashing.Offset;
             Hashing.Mix(ref hash, Tick);
+            HashCyclone(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.
@@ -2045,6 +2035,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _moveOrder.X);
             Hashing.Mix(ref hash, _moveOrder.Y);
             Hashing.Mix(ref hash, _explicitMoveOrder ? 1 : 0);
+            Hashing.Mix(ref hash, _navigationWaypoint ? 1 : 0);
             Hashing.Mix(ref hash, _attackTarget);
             Hashing.Mix(ref hash, _nextPlayerAttackVariant);
             Hashing.Mix(ref hash, _abilityMovePenaltyUntilTick);
@@ -2064,11 +2055,6 @@ namespace Game.Sim
             }
             Hashing.Mix(ref hash, _whirlwindImpactTick);
             Hashing.Mix(ref hash, _whirlwindImpactSlot);
-            Hashing.Mix(ref hash, _sweepImpactTick);
-            Hashing.Mix(ref hash, _sweepImpactSlot);
-            Hashing.Mix(ref hash, _sweepBraceUntilTick);
-            Hashing.Mix(ref hash, _sweepDirection.X.Raw);
-            Hashing.Mix(ref hash, _sweepDirection.Y.Raw);
             Hashing.Mix(ref hash, _leapLaunchTick);
             Hashing.Mix(ref hash, _leapAim.X.Raw);
             Hashing.Mix(ref hash, _leapAim.Y.Raw);

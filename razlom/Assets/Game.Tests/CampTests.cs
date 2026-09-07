@@ -61,6 +61,96 @@ namespace Game.Tests
 
         // ---- приёмка ----
 
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        public void Camp_AbilityMatchesStandaloneCombatForSameInput(int slot)
+        {
+            var session=Session();var camp=session.ActiveSim;
+            var combat=new Simulation(Seed,512);combat.SetupTestArena(0);
+            var definitions=new[]{AbilityDefinition.Whirlwind(),AbilityDefinition.AnchorLeap(),AbilityDefinition.ChainCyclone(),AbilityDefinition.ChainStep()};
+            foreach(var sim in new[]{camp,combat})
+            {
+                sim.SetAbility(slot,definitions[slot],new AbilityNode[0],0);
+                int enemy=sim.Entities.Spawn(new FixVec2(Fix64.FromInt(2),Fix64.Zero),10000,Faction.Orvill);
+                sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed,Fix64.Zero);
+                sim.Entities.RefreshStats(enemy);sim.Entities.NextAttackTick[enemy]=int.MaxValue;
+            }
+            for(int tick=0;tick<90;tick++)
+            {
+                var input=InputFrame.Empty;
+                input.Aim=new FixVec2(Fix64.FromInt(3),Fix64.Zero);
+                input.AbilityMask=tick==0?(byte)(1<<slot):(byte)0;
+                input.AbilityHoldMask=tick<30?(byte)(1<<slot):(byte)0;
+                input.AbilityTarget=1;
+                session.Step(input);combat.Step(input);
+                Assert.AreEqual(combat.StateHash(),camp.StateHash(),"slot="+slot+" tick="+tick);
+            }
+            Assert.Greater(camp.AbilityReadyTick(slot),0);
+        }
+
+        [Test]
+        public void Camp_UsesCombatSimulationForMovementAndAbilities()
+        {
+            var session = Session();
+            var sim = session.ActiveSim;
+            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
+            var input = InputFrame.Empty;
+            input.AbilityMask = 1;
+            input.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
+            session.Step(input);
+            for (int i = 0; i < 60; i++) session.Step(InputFrame.Empty);
+            Assert.Greater(sim.Entities.Position[0].X.ToFloat(), 4f);
+            Assert.Greater(sim.AbilityReadyTick(0), 0);
+            Assert.AreEqual(GameMode.Camp, session.Mode);
+            Assert.IsNull(session.Run);
+        }
+
+        [Test]
+        public void Camp_CollisionBlocksWalkingAndLeapAcrossThinWall()
+        {
+            const int size = 80;
+            var cells = new bool[size * size];
+            for (int y = 0; y < size; y++) for (int x = 0; x < size; x++)
+                cells[y * size + x] = x != 32;
+            var map = new CampWalkMap(new FixVec2(Fix64.FromInt(-2),Fix64.FromInt(-2)), Fix64.Ratio(1,8), size, size, cells);
+            var session = Session();
+            session.ConfigureCampWorld(FixVec2.Zero, map);
+            var sim = session.ActiveSim;
+            var move = InputFrame.Empty;
+            move.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
+            move.Flags = (byte)InputFlags.MoveOrder;
+            for (int i=0;i<90;i++) session.Step(move);
+            Assert.IsTrue(sim.Entities.Position[0].X < Fix64.FromInt(2));
+            sim.SetAbility(0,AbilityDefinition.AnchorLeap(),new AbilityNode[0],0);
+            move.Flags = 0; move.AbilityMask = 1;
+            session.Step(move);
+            for(int i=0;i<60;i++) session.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.Entities.Position[0].X < Fix64.FromInt(2));
+            Assert.IsTrue(map.Contains(sim.Entities.Position[0]));
+        }
+
+        [Test]
+        public void Camp_EquipmentRebindsAfterEveryModeTransition()
+        {
+            var session=Session();
+            var campSim=session.ActiveSim;
+            for(int i=0;i<3;i++)
+            {
+                session.EnterProvingGround(); session.LeaveProvingGround();
+                Assert.AreSame(campSim,session.ActiveSim);
+                session.EnterRift(); session.ReturnToCamp();
+                Assert.AreSame(campSim,session.ActiveSim);
+            }
+            var sword=Sword(41);
+            var before=campSim.Entities.Stats[0].Get(StatType.Damage);
+            session.Camp.Worn.Equip(sword,out _);
+            session.Step(InputFrame.Empty);
+            Assert.IsTrue(campSim.Entities.Stats[0].Get(StatType.Damage) > before);
+            Assert.AreEqual(1,campSim.Entities.Count);
+        }
+
         [Test]
         public void Session_StartsInCamp()
         {
@@ -68,7 +158,9 @@ namespace Game.Tests
 
             Assert.AreEqual(GameMode.Camp, session.Mode);
             Assert.IsNull(session.Run, "в лагере забега нет");
-            Assert.IsNull(session.ActiveSim, "и рисовать в лагере пока нечего");
+            Assert.AreSame(session.CampSim, session.ActiveSim);
+            Assert.AreEqual(1, session.ActiveSim.Entities.Count);
+            Assert.IsTrue(session.ActiveSim.Entities.Alive[Simulation.PlayerId]);
         }
 
         [Test]
@@ -95,7 +187,8 @@ namespace Game.Tests
 
             Assert.AreEqual(GameMode.Camp, session.Mode);
             Assert.IsNull(session.Run, "покинутый забег больше не должен тикать за меню");
-            Assert.IsNull(session.ActiveSim, "в лагере не остаётся скрытая боевая симуляция");
+            Assert.AreSame(session.CampSim, session.ActiveSim);
+            Assert.AreEqual(1, session.ActiveSim.Entities.Count);
             Assert.AreEqual(generationBefore + 1, session.Generation,
                 "представление обязано пересобраться под лагерь");
         }

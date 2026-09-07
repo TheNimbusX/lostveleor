@@ -54,6 +54,8 @@ namespace Game.View
             public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
             {
                 var resources = frameData.Get<UniversalResourceData>();
+                // Внешняя RenderTexture портрета может быть back buffer без дескриптора графа.
+                if (resources.isActiveTargetBackBuffer) return;
                 var camera = frameData.Get<UniversalCameraData>();
                 var rendering = frameData.Get<UniversalRenderingData>();
                 var lights = frameData.Get<UniversalLightData>();

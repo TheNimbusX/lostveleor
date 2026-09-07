@@ -167,6 +167,11 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         ModelImporterClipAnimation source = defaults[0];
         string file = System.IO.Path.GetFileNameWithoutExtension(NormalPath);
 
+        if (file.StartsWith("Pelag_AN_"))
+        {
+            importer.clipAnimations = new[] { Clip(source, file, source.firstFrame, source.lastFrame, file.EndsWith("Loop")) };
+            return;
+        }
         if (file == "Pelag_MX_SaberCombo")
         {
             // Два удара и recovery остаются одним тейком, но delivery теперь

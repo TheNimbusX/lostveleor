@@ -21,13 +21,13 @@ MonoBehaviour:
     m_Value: 1.05
   intensity:
     m_OverrideState: 1
-    m_Value: 0.42
+    m_Value: 0.22
   scatter:
     m_OverrideState: 1
-    m_Value: 0.72
+    m_Value: 0.55
   clamp:
     m_OverrideState: 1
-    m_Value: 65472
+    m_Value: 6
   tint:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -65,10 +65,10 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 0.04
+    m_Value: 0.4
   contrast:
     m_OverrideState: 1
-    m_Value: 26
+    m_Value: 11
   colorFilter:
     m_OverrideState: 1
     m_Value: {r: 1, g: 0.99, b: 0.96, a: 1}
@@ -77,7 +77,7 @@ MonoBehaviour:
     m_Value: 0
   saturation:
     m_OverrideState: 1
-    m_Value: 46
+    m_Value: 4
 --- !u!114 &-3575740529257605696
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -90,7 +90,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 899c54efeace73346a0a16faa3afe726, type: 3}
   m_Name: Vignette
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Vignette
-  active: 1
+  active: 0
   color:
     m_OverrideState: 1
     m_Value: {r: 0.12, g: 0.25, b: 0.32, a: 1}
@@ -163,7 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70afe9e12c7a7ed47911bb608a23a8ff, type: 3}
   m_Name: SplitToning
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.SplitToning
-  active: 1
+  active: 0
   shadows:
     m_OverrideState: 0
     m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
@@ -228,13 +228,13 @@ MonoBehaviour:
   active: 1
   shadows:
     m_OverrideState: 1
-    m_Value: {x: 0.86, y: 0.9, z: 1.06, w: -0.12}
+    m_Value: {x: 0.91049165, y: 0.9757431, z: 1, w: -0.05498822}
   midtones:
     m_OverrideState: 1
-    m_Value: {x: 1, y: 1, z: 1, w: 0}
+    m_Value: {x: 1, y: 0.99212164, z: 0.949114, w: 0.0033302275}
   highlights:
     m_OverrideState: 1
-    m_Value: {x: 1.02, y: 1, z: 0.97, w: 0.02}
+    m_Value: {x: 1, y: 0.97906715, z: 0.9262212, w: 0.02}
   shadowsStart:
     m_OverrideState: 1
     m_Value: 0

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
 
@@ -11,11 +11,11 @@ namespace Game.View
     /// </summary>
     [RequireComponent(typeof(TickDriver), typeof(ArenaView))]
     [DefaultExecutionOrder(1010)]
-    public sealed class PelagVfxController : MonoBehaviour
+    public sealed partial class PelagVfxController : MonoBehaviour
     {
         private const string LibraryPath = "VFX/Pelag/AbilityVfxLibrary";
         private const int MaxActive = 72;
-        private const int MaxTargets = AnchorKit.SweepMaxTargets;
+        private const int MaxTargets = 128;
         private const float BrightVfxLifetime = 5f / 30f;
         private const float FlipbookLifetime = 16f / 30f;
         private static readonly float AttackContactTime =
@@ -110,6 +110,7 @@ namespace Game.View
             UpdateWhirlwindContact();
             UpdateAbilityMotion();
             UpdateActive(Time.deltaTime);
+            UpdateCyclonePresentation();
             UpdateCombatLighting(Time.unscaledDeltaTime);
         }
 
@@ -196,6 +197,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            ReleaseCyclone();
             if (_heroLight != null) _heroLight.enabled = false;
             _combatLightPulse = 0f;
             Shader.SetGlobalVector(HeroLightPositionId, new Vector4(0f, -100f, 0f, 1f));
@@ -259,7 +261,7 @@ namespace Game.View
                         PlayWhirlwindContact();
                     AbilityBuild ability = (uint)e.ActionVariant < Simulation.AbilitySlots
                         ? _driver.Sim.GetAbility(e.ActionVariant) : null;
-                    if (ability != null && ability.DefinitionId == AbilityDefinition.AnchorSweepId)
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.ChainCycloneId)
                         PlaySweepTargetPull(e.Target);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
                     {
@@ -270,8 +272,12 @@ namespace Game.View
                     }
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
                     {
+                        _squallContacts++;
+                        bool finisher = _squallContacts == AnchorKit.ChainMaxHops;
                         Spawn(PelagVfxId.ChainStepHit, EntityPosition(e.Target, PlayerPosition()) + Vector3.up * 0.75f,
-                            Quaternion.LookRotation(_motionEnd - _motionStart + Vector3.up * 0.001f), 0.32f, 0.75f, 1.1f, Motion.Expand);
+                            Quaternion.LookRotation(_motionEnd - _motionStart + Vector3.up * 0.001f)
+                                * Quaternion.Euler(0, 0, finisher ? -35f : 25f),
+                            finisher ? .3f : .22f, finisher ? 1.05f : .75f, finisher ? 1.55f : 1.1f, Motion.Expand);
                         var context = i < _driver.FrameEventContexts.Count ? _driver.FrameEventContexts[i] : default;
                         if (context.SourceForcedTicksLeft > 0
                             && _driver.Sim.Entities.ForcedTicksLeft[Simulation.PlayerId] > 0)
@@ -334,6 +340,7 @@ namespace Game.View
 
         public void StopShowcase()
         {
+            ReleaseCyclone();
             // Showcase can be interrupted while the anchor is still traveling
             // (including when a new showcase replaces the current one). The
             // equipment state is presentation-only and must never survive that
@@ -556,9 +563,9 @@ namespace Game.View
                 Vector3 origin = PlayerPosition();
                 PlayAnchorLeapTo(origin + Vector3.ClampMagnitude(point - origin, AnchorKit.LeapRange.ToFloat()), false, slot);
             }
-            else if (id == AbilityDefinition.AnchorSweepId)
+            else if (id == AbilityDefinition.ChainCycloneId)
             {
-                PlayAnchorSweep(false, slot);
+                CancelActiveAnchorMotionForReplacement();
             }
             else if (id == AbilityDefinition.ChainStepId)
             {
@@ -596,15 +603,7 @@ namespace Game.View
 
         private void PlayAnchorSweep(bool showcase, int slot = 2)
         {
-            Vector3 player = PlayerPosition();
-            FillTargets();
-            FixVec2 aim = _driver.Sim.SweepDirection;
-            Vector3 direction = showcase ? CameraPlaneDirection(Vector3.forward) : new Vector3(aim.X.ToFloat(), 0f, aim.Y.ToFloat());
-            Vector3 target = player + direction * AnchorKit.SweepRadius.ToFloat();
-            StartMotion(PelagVfxShowcase.AnchorSweep, player, target, showcase);
-            if (showcase) _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.AnchorSweepId);
-            LaunchAnchor(PelagVfxId.AnchorSweepThrow, PelagVfxId.AnchorSweepPull,
-                target + Vector3.up * 0.5f, PelagAbilityTiming.SweepRecovery);
+            // Циклон демонстрируется реальным удержанием в TickDriver.
         }
 
         private void PlaySweepTargetPull(int entity)
@@ -618,6 +617,7 @@ namespace Game.View
 
         private void PlayChainStep(bool showcase, int slot = 3)
         {
+            _squallContacts = 0;
             Vector3 player = PlayerPosition();
             Vector3 target = showcase ? FirstTargetPosition() : ForcedTargetWorld(_driver.Sim);
             StartMotion(PelagVfxShowcase.ChainStep, player, target, showcase);
@@ -637,43 +637,17 @@ namespace Game.View
             _motionStartedAt = Time.time;
             _motionAbility = PelagVfxShowcase.ChainStep;
             _juice?.PlayChainSlashTrail();
+            Spawn(PelagVfxId.ChainStepHit, from + Vector3.up * 0.85f,
+                Quaternion.LookRotation(FlatDirection(from, to)), 0.18f, 0.45f, 0.85f, Motion.Expand);
             SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.75f,
                 to + Vector3.up * 0.75f, PelagAbilityTiming.ChainHop, 0f, Motion.Dash);
         }
+        private int _squallContacts;
 
         private Vector3 ChainHandPosition()
         {
             Vector3 hand = _arena.PlayerChainHandPosition;
             return hand != Vector3.zero ? hand : PlayerPosition() + Vector3.up;
-        }
-
-        private readonly Vector3[] _sweepRope = new Vector3[65];
-
-        private Vector3 SweepRopePoint(float t, float age)
-        {
-            Vector3 hand = ChainHandPosition();
-            Vector3 direction = FlatDirection(_motionStart, _motionEnd);
-            float extend = Smooth((age - PelagAbilityTiming.AnchorDraw)
-                / (PelagAbilityTiming.SweepWindup - PelagAbilityTiming.AnchorDraw));
-            float haul = Smooth((age - PelagAbilityTiming.SweepWindup) / PelagAbilityTiming.SweepTravel);
-            float finish = Smooth((age - PelagAbilityTiming.SweepWindup - PelagAbilityTiming.SweepTravel) / 0.14f);
-            float radius = Mathf.Lerp(AnchorKit.SweepRadius.ToFloat(), AnchorKit.SweepGatherDistance.ToFloat(), haul);
-            float path = t * extend;
-            Vector3 side = Vector3.Cross(Vector3.up, direction);
-            // A single C1-continuous curve: no straight/arc junctions. The
-            // moving bend trails the head, then loses slack under tension.
-            Vector3 tip = _motionStart + Quaternion.AngleAxis(AnchorKit.SweepAngleDegrees * 0.5f,
-                Vector3.up) * direction * radius + Vector3.up * 0.65f;
-            Vector3 controlA = hand + (direction * 0.46f - side * 0.56f) * radius;
-            Vector3 controlB = _motionStart + (direction * 1.16f - side * 0.42f) * radius
-                + Vector3.up * 0.65f;
-            float u = 1f - path;
-            Vector3 point = u * u * u * hand + 3f * u * u * path * controlA
-                + 3f * u * path * path * controlB + path * path * path * tip;
-            float slack = Mathf.Sin(path * Mathf.PI) * (1f - haul);
-            point += Vector3.up * slack * (0.24f + 0.12f * Mathf.Sin(age * 12f - path * 4f));
-            point += side * slack * 0.13f * Mathf.Sin(age * 15f - path * 5f);
-            return Vector3.Lerp(point, Vector3.Lerp(hand, _arena.PlayerAnchorHeadPosition, t), finish);
         }
 
         private void LaunchAnchor(PelagVfxId head, PelagVfxId chain, Vector3 target, float duration)
@@ -704,9 +678,9 @@ namespace Game.View
             for (int i = 0; i < _active.Length; i++)
             {
                 PelagVfxId id = _active[i].Id;
-                if (id == PelagVfxId.AnchorLeapThrow || id == PelagVfxId.AnchorSweepThrow
-                    || id == PelagVfxId.AnchorLeapChain || id == PelagVfxId.AnchorSweepPull
-                    || id == PelagVfxId.AnchorSweepEnemyPull || id == PelagVfxId.ChainStepDash)
+                if (id == PelagVfxId.AnchorLeapThrow || id == PelagVfxId.CycloneHook
+                    || id == PelagVfxId.AnchorLeapChain || id == PelagVfxId.CycloneChain
+                    || id == PelagVfxId.CycloneWake || id == PelagVfxId.ChainStepDash)
                     Release(i);
             }
             _arena?.EndPlayerAnchorUse();
@@ -725,7 +699,7 @@ namespace Game.View
             switch (_motionAbility)
             {
                 case PelagVfxShowcase.AnchorLeap: UpdateAnchorLeap(); break;
-                case PelagVfxShowcase.AnchorSweep: UpdateAnchorSweep(); break;
+                case PelagVfxShowcase.AnchorSweep: break;
                 case PelagVfxShowcase.ChainStep: UpdateChainStep(); break;
             }
         }
@@ -733,9 +707,12 @@ namespace Game.View
         private void UpdateAnchorLeap()
         {
             float travel = PelagAbilityTiming.LeapArrival;
+            float phase = Mathf.Clamp01((_motionTime - PelagAbilityTiming.LeapWindup) / PelagAbilityTiming.LeapTravel);
+            float height = Mathf.Sin(phase * Mathf.PI) * 1.5f * Mathf.Clamp01(Vector3.Distance(_motionStart, _motionEnd) / 7f);
+            if (!_captureMotion) _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.up * height);
             if (_captureMotion)
                 _arena.SetPresentationOffset(Simulation.PlayerId,
-                    (_motionEnd - _motionStart) * Smooth((_motionTime - PelagAbilityTiming.LeapWindup) / PelagAbilityTiming.LeapTravel));
+                    (_motionEnd - _motionStart) * Smooth(phase) + Vector3.up * height);
             if (_motionTime >= PelagAbilityTiming.LeapWindup && _motionTime - Time.deltaTime < PelagAbilityTiming.LeapWindup)
             {
                 Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.06f,
@@ -744,34 +721,10 @@ namespace Game.View
                 PulseCombatLight(0.9f);
             }
             if (_motionTime >= travel && _motionTime - Time.deltaTime < travel)
-                Spawn(PelagVfxId.DustHeavy, PlayerPosition() + Vector3.up * 0.04f,
-                    Quaternion.identity, 0.45f, 0.7f, 1.1f, Motion.Expand);
+                Spawn(PelagVfxId.AnchorLeapLand, PlayerPosition() + Vector3.up * 0.04f,
+                    Quaternion.LookRotation(FlatDirection(_motionStart, _motionEnd)),
+                    0.48f, 0.8f, 1.25f, Motion.Expand);
             if (_motionTime >= PelagAbilityTiming.LeapRecovery) FinishMotion();
-        }
-
-        private void UpdateAnchorSweep()
-        {
-            if (!_captureMotion && _motionTime < PelagAbilityTiming.SweepWindup)
-            {
-                Vector3 delta = BasePlayerPosition() - _motionStart;
-                _motionStart += delta;
-                _motionEnd += delta;
-            }
-            if (_captureMotion)
-            {
-                Vector3 player = BasePlayerPosition();
-                if (_motionTime >= PelagAbilityTiming.SweepWindup
-                    && _motionTime - Time.deltaTime < PelagAbilityTiming.SweepWindup)
-                    for (int i = 0; i < _targetCount; i++) PlaySweepTargetPull(_targets[i]);
-                float pull = Smooth((_motionTime - PelagAbilityTiming.SweepWindup) / PelagAbilityTiming.SweepTravel);
-                for (int i = 0; i < _targetCount; i++)
-                {
-                    Vector3 enemy = BaseEntityPosition(_targets[i], player);
-                    Vector3 end = player + FlatDirection(player, enemy) * AnchorKit.SweepGatherDistance.ToFloat();
-                    _arena.SetPresentationOffset(_targets[i], (end - enemy) * pull);
-                }
-            }
-            if (_motionTime >= PelagAbilityTiming.SweepRecovery) FinishMotion();
         }
 
         private void UpdateChainStep()
@@ -796,7 +749,7 @@ namespace Game.View
         {
             return ability == PelagVfxShowcase.AnchorLeap
                    || ability == PelagVfxShowcase.AnchorSweep
-                   || ability == PelagVfxShowcase.ChainStep;
+;
         }
 
         private int Spawn(PelagVfxId id, Vector3 position, Quaternion rotation, float duration,
@@ -897,14 +850,6 @@ namespace Game.View
                         bool released = fx.Age >= PelagAbilityTiming.AnchorDraw;
                         fx.Object.SetActive(released && fx.Age < returnAt);
                         if (!released) { fx.Start = _arena.PlayerAnchorHeadPosition; break; }
-                        if (fx.Id == PelagVfxId.AnchorSweepThrow)
-                        {
-                            fx.Object.transform.position = SweepRopePoint(1f, fx.Age);
-                            fx.Object.transform.rotation = Quaternion.LookRotation(FlatDirection(_motionStart, fx.End), Vector3.up)
-                                * Quaternion.Euler(0f, 0f, -25f + 100f * Smooth((fx.Age - PelagAbilityTiming.AnchorDraw)
-                                    / (PelagAbilityTiming.SweepWindup - PelagAbilityTiming.AnchorDraw)));
-                            break;
-                        }
                         float outward = PelagAbilityTiming.LeapWindup;
                         float retract = PelagAbilityTiming.LeapArrival;
                         float flight = Smooth((fx.Age - PelagAbilityTiming.AnchorDraw)
@@ -962,6 +907,11 @@ namespace Game.View
                         float pulse = Mathf.Sin(t * Mathf.PI) * 0.08f;
                         fx.Object.transform.localScale = Vector3.one *
                             (Mathf.Lerp(fx.StartScale, fx.EndScale, Smooth(t)) + pulse);
+                        if (fx.Id == PelagVfxId.ChainStepHit)
+                        {
+                            fx.Element.AnimateBrush(fx.Age * 1.5f);
+                            fx.Element.SetOpacity(1f - Smooth((t - .25f) / .75f));
+                        }
                         break;
                     case Motion.Projectile:
                         Vector3 projectile = Vector3.Lerp(fx.Start, fx.End, Smooth(t));
@@ -976,13 +926,6 @@ namespace Game.View
                         fx.Age = _motionTime;
                         if (fx.Age < PelagAbilityTiming.AnchorDraw)
                         { fx.Element.SetLineProgress(ChainHandPosition(), ChainHandPosition(), ChainHandPosition(), 0f); break; }
-                        if (fx.Id == PelagVfxId.AnchorSweepPull)
-                        {
-                            for (int point = 0; point < _sweepRope.Length; point++)
-                                _sweepRope[point] = SweepRopePoint(point / (float)(_sweepRope.Length - 1), fx.Age);
-                            fx.Element.SetCurvePoints(_sweepRope);
-                            break;
-                        }
                         Vector3 from = ChainHandPosition();
                         Vector3 to = fx.End;
                         if ((uint)fx.FollowIndex < (uint)_active.Length && _active[fx.FollowIndex].Active)

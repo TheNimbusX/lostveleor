@@ -14,9 +14,11 @@ namespace Game.Sim
         Weapon = 0,
         Armor = 1,
         Jewellery = 2,
+        Talisman = 3,
+        Artifact = 4,
 
         /// <summary>Не слот. Размер массива.</summary>
-        Count = 3,
+        Count = 5,
     }
 
     /// <summary>
@@ -74,6 +76,8 @@ namespace Game.Sim
             {
                 case ItemCategory.Weapon: return EquipSlot.Weapon;
                 case ItemCategory.Armor: return EquipSlot.Armor;
+                case ItemCategory.Talisman: return EquipSlot.Talisman;
+                case ItemCategory.Artifact: return EquipSlot.Artifact;
                 default: return EquipSlot.Jewellery;
             }
         }

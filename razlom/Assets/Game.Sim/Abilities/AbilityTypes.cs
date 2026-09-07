@@ -38,7 +38,14 @@ namespace Game.Sim
         /// <summary>Урон горения за тик как доля от урона попадания.</summary>
         BurnDamagePercent = 5,
 
-        Count = 6,
+        MinimumRadius = 6,
+        DurationTicks = 7,
+        StartTurnsPerSecond = 8,
+        EndTurnsPerSecond = 9,
+        StartMoveMultiplier = 10,
+        EndMoveMultiplier = 11,
+        WeaponRadius = 12,
+        Count = 13,
     }
 
     /// <summary>

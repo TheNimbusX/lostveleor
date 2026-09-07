@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ee3f8d3ca0e5774f95e5f2913a0748c, type: 3}
   m_Name: AbilityVfxLibrary
   m_EditorClassIdentifier: Game.View::Game.View.AbilityVfxLibrary
-  BuildVersion: 25
+  BuildVersion: 29
   Entries:
   - Id: 0
     Prefab: {fileID: 8241518021229777190, guid: b5336d77c11720f4181bbb716eb56c76, type: 3}
@@ -36,13 +36,13 @@ MonoBehaviour:
     Prefab: {fileID: 4110455153230141837, guid: 0ce25eeaed23e1e46ab2bcc0b072f0f1, type: 3}
     Prewarm: 3
   - Id: 7
-    Prefab: {fileID: 8019825718768196597, guid: 77d2a21f5f880484cbfd0c7681c41f1e, type: 3}
+    Prefab: {fileID: 2389300162312349249, guid: 54bd6dac80ebe194ea7092d6ad009aa6, type: 3}
     Prewarm: 3
   - Id: 8
-    Prefab: {fileID: 308070263744267239, guid: 36be26bfdf8b9754581595b5bfa2a529, type: 3}
+    Prefab: {fileID: 5810662119855547226, guid: 4e65f0f99348a49438869e9a1f323604, type: 3}
     Prewarm: 3
   - Id: 9
-    Prefab: {fileID: 4890412553800370933, guid: aa86852682be6d545bf6ff3e3cc80e65, type: 3}
+    Prefab: {fileID: 8640320201525394451, guid: b2216a43d5bfeee42bc42906f0c9e3d4, type: 3}
     Prewarm: 10
   - Id: 10
     Prefab: {fileID: 28017336565519967, guid: 1f4e111251392d248a8a9d8f0a61a901, type: 3}

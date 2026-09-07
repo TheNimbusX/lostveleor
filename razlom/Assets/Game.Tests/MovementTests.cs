@@ -15,6 +15,28 @@ namespace Game.Tests
     {
         private const ulong Seed = 0xA11CE5UL;
 
+        [Test]
+        public void SharedCampMovement_MatchesRiftAccelerationBrakingAndTurns()
+        {
+            var sim = SoloArena();
+            var position = sim.Entities.Position[Simulation.PlayerId];
+            var facing = sim.Entities.Facing[Simulation.PlayerId];
+            var velocity = FixVec2.Zero;
+            var fullStep = sim.Entities.MoveStep[Simulation.PlayerId];
+            for (int tick = 0; tick < 180; tick++)
+            {
+                var frame = tick < 55 ? Order(5, 0) : tick < 110 ? Order(-3, 4) : Order(0, -2);
+                var delta = frame.Aim - position;
+                velocity = Simulation.Approach(velocity, Simulation.PlayerTravelStep(delta, fullStep), fullStep).ClampLength(fullStep);
+                position += velocity;
+                facing = Simulation.PlayerFacingStep(facing, delta);
+                sim.Step(in frame);
+                Assert.That(position, Is.EqualTo(sim.Entities.Position[Simulation.PlayerId]), $"position tick {tick}");
+                Assert.That(velocity, Is.EqualTo(sim.Entities.Velocity[Simulation.PlayerId]), $"velocity tick {tick}");
+                Assert.That(facing, Is.EqualTo(sim.Entities.Facing[Simulation.PlayerId]), $"facing tick {tick}");
+            }
+        }
+
         /// <summary>Арена без врагов: проверяем движение, а не бой.</summary>
         private static Simulation SoloArena()
         {

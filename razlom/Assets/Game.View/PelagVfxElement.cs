@@ -1,3 +1,4 @@
+using UnityEngine.VFX;
 using UnityEngine;
 
 namespace Game.View
@@ -23,11 +24,13 @@ namespace Game.View
         private Vector3[][] _brushPoints;
         private TrailRenderer[] _trails;
         private ParticleSystem[] _particles;
+        private VisualEffect[] _graphs;
         private PelagChainLinkStrip _chainLinks;
         private Transform _chainGlint;
         private Vector3 _initialScale;
         private readonly Vector3[] _chainPoints = new Vector3[33];
         private Vector3 _bendOffset, _bendVelocity;
+        private readonly Vector3[] _chainVelocity = new Vector3[33];
         private bool _chainInitialized;
 
         public LineRenderer PrimaryLine => _lines != null && _lines.Length > 0 ? _lines[0] : null;
@@ -39,7 +42,8 @@ namespace Game.View
             _lineColors = new GradientColorKey[_lines.Length][];
             _lineAlphas = new GradientAlphaKey[_lines.Length][];
             _lineBaseAlphas = new float[_lines.Length][];
-            if (Id == PelagVfxId.WhirlwindRing) _brushPoints = new Vector3[_lines.Length][];
+            if (Id == PelagVfxId.WhirlwindRing || Id == PelagVfxId.ChainStepHit)
+                _brushPoints = new Vector3[_lines.Length][];
             for (int i = 0; i < _lines.Length; i++)
             {
                 _lineGradients[i] = _lines[i].colorGradient;
@@ -56,6 +60,7 @@ namespace Game.View
             }
             _trails = GetComponentsInChildren<TrailRenderer>(true);
             _particles = GetComponentsInChildren<ParticleSystem>(true);
+            _graphs = GetComponentsInChildren<VisualEffect>(true);
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
             _chainGlint = transform.Find(ChainGlintName);
             _initialScale = transform.localScale;
@@ -68,11 +73,12 @@ namespace Game.View
             SetOpacity(1f);
             transform.SetPositionAndRotation(position, rotation);
             transform.localScale = _initialScale;
+            foreach (var graph in _graphs) { graph.Reinit(); graph.Play(); }
 
             for (int i = 0; i < _lines.Length; i++)
             {
                 if (DynamicLine) _lines[i].positionCount = 0;
-                _lines[i].enabled = true;
+                _lines[i].enabled = !DynamicLine || _chainLinks == null;
             }
 
             for (int i = 0; i < _trails.Length; i++)
@@ -141,22 +147,28 @@ namespace Game.View
             LineRenderer line = PrimaryLine;
             if (line == null) return;
             progress = Mathf.Clamp01(progress);
-            Vector3 midpoint = (a + b) * 0.5f;
-            Vector3 wantedOffset = bend - midpoint;
-            if (!_chainInitialized) { _bendOffset = wantedOffset; _chainInitialized = true; }
-            // Damped spring on slack relative to the endpoints. Endpoint motion
-            // remains exact; the belly of the chain lags and settles under tension.
+            // Узлы запаздывают отдельно, а не как один жёсткий изогнутый прут.
+            // Ограничение отклонения сохраняет совпадение с игровой траекторией.
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
             int steps = Mathf.Max(1, Mathf.CeilToInt(dt / (1f / 120f)));
             float step = dt / steps;
-            for (int s = 0; s < steps; s++)
-            {
-                _bendVelocity += ((wantedOffset - _bendOffset) * 520f - _bendVelocity * 32f) * step;
-                _bendOffset += _bendVelocity * step;
-            }
-            bend = midpoint + _bendOffset;
             for (int i = 0; i < _chainPoints.Length; i++)
-                _chainPoints[i] = Quadratic(a, bend, b, progress * i / (_chainPoints.Length - 1));
+            {
+                float t = progress * i / (_chainPoints.Length - 1);
+                Vector3 wanted = Quadratic(a, bend, b, t);
+                bool endpoint = i == 0 || i == _chainPoints.Length - 1;
+                if (!_chainInitialized || endpoint)
+                { _chainPoints[i] = wanted; _chainVelocity[i] = Vector3.zero; continue; }
+                float belly = Mathf.Sin(t * Mathf.PI);
+                for (int s = 0; s < steps; s++)
+                {
+                    _chainVelocity[i] += ((wanted - _chainPoints[i]) * 1300f
+                        - _chainVelocity[i] * 48f + Vector3.down * (2f * belly)) * step;
+                    _chainPoints[i] += _chainVelocity[i] * step;
+                }
+                _chainPoints[i] = wanted + Vector3.ClampMagnitude(_chainPoints[i] - wanted, .15f * belly);
+            }
+            _chainInitialized = true;
             line.positionCount = _chainPoints.Length;
             line.SetPositions(_chainPoints);
             _chainLinks?.SetPoints(_chainPoints);
@@ -188,6 +200,7 @@ namespace Game.View
 
         public void End()
         {
+            foreach (var graph in _graphs) { graph.Stop(); graph.Reinit(); graph.Stop(); }
             for (int i = 0; i < _lines.Length; i++)
             {
                 if (DynamicLine) _lines[i].positionCount = 0;

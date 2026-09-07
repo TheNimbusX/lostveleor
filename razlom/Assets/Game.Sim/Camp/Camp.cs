@@ -92,14 +92,28 @@ namespace Game.Sim
         /// </summary>
         public bool EquipFromBag(int bagSlot)
         {
+            if ((uint)bagSlot >= Bag.Capacity) return false;
             ItemInstance item = Bag.At(bagSlot);
             if (item.IsEmpty) return false;
 
             ItemInstance replaced;
             if (!Worn.Equip(in item, out replaced)) return false;
 
-            Bag.Remove(bagSlot);
-            if (!replaced.IsEmpty) Bag.Add(in replaced);
+            Bag.Put(bagSlot, replaced, !replaced.IsEmpty);
+            return true;
+        }
+
+        public bool UnequipToSlot(EquipSlot slot, int bagSlot)
+        {
+            if ((uint)slot >= (uint)EquipSlot.Count || (uint)bagSlot >= Bag.Capacity || !Worn.IsWorn(slot)) return false;
+            ItemInstance other = Bag.At(bagSlot);
+            if (!other.IsEmpty)
+            {
+                int index = Items.IndexOfBase(other.BaseId);
+                if (index < 0 || Equipment.SlotOf(Items.GetBase(index).Category) != slot) return false;
+                return EquipFromBag(bagSlot);
+            }
+            Bag.Put(bagSlot, Worn.Unequip(slot), true);
             return true;
         }
 

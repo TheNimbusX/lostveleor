@@ -45,7 +45,21 @@ namespace Game.Sim
                 .Set(AbilityStatType.CooldownTicks, 72);
 
         public static int AnchorLeapId => StableId.Of("ability.anchor_leap");
-        public static int AnchorSweepId => StableId.Of("ability.anchor_sweep");
+        public static int ChainCycloneId => StableId.Of("ability.chain_cyclone");
+
+        /// <summary>Крюк и цепь вращаются при удержании, без перемещения врагов.</summary>
+        public static AbilityDefinition ChainCyclone()
+            => new AbilityDefinition("ability.chain_cyclone")
+                .Set(AbilityStatType.Damage, 35)
+                .Set(AbilityStatType.Radius, 4)
+                .Set(AbilityStatType.MinimumRadius, 2)
+                .Set(AbilityStatType.DurationTicks, 60)
+                .Set(AbilityStatType.StartTurnsPerSecond, 2)
+                .Set(AbilityStatType.EndTurnsPerSecond, 1)
+                .Set(AbilityStatType.StartMoveMultiplier, Fix64.Ratio(7, 10))
+                .Set(AbilityStatType.EndMoveMultiplier, Fix64.Ratio(4, 10))
+                .Set(AbilityStatType.WeaponRadius, Fix64.Ratio(15, 100))
+                .Set(AbilityStatType.CooldownTicks, 108);
         public static int ChainStepId => StableId.Of("ability.chain_step");
 
         /// <summary>
@@ -68,12 +82,6 @@ namespace Game.Sim
         /// Урон низкий намеренно: ценность способности в том, что разбросанная
         /// толпа становится одной кучей под Вихрь, а не в самом уроне.
         /// </summary>
-        public static AbilityDefinition AnchorSweep()
-            => new AbilityDefinition("ability.anchor_sweep")
-                .Set(AbilityStatType.Damage, 35)
-                .Set(AbilityStatType.Radius, AnchorKit.SweepRadius)
-                .Set(AbilityStatType.CooldownTicks, 108);         // 3.6 с
-
         /// <summary>
         /// «Шаг по цепи»: серия прыжков от врага к врагу с ударом на каждом.
         ///

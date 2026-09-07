@@ -71,11 +71,11 @@ namespace Game.View
 
             if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
-            if (session == null || session.Mode != GameMode.Rift) return;
+            if (session == null || session.Mode == GameMode.Summary || CampPlayerView.Instance?.InventoryOpen == true) return;
 
             Simulation sim = _driver.Sim;
             RiftRun run = _driver.Run;
-            if (sim == null || run == null || sim.Entities.Count == 0) return;
+            if (sim == null || sim.Entities.Count == 0) return;
 
             EnsureStyles();
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -89,7 +89,7 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
-                DrawMinimap(run, sim);
+                if (session.Mode == GameMode.Rift && run != null) DrawMinimap(run, sim);
                 DrawHealth(sim);
                 DrawAbilities(sim);
             }
@@ -115,7 +115,7 @@ namespace Game.View
                 _canvasWidth - _safeRight - Margin - groupWidth);
             groupX = Mathf.Clamp(groupX, _safeLeft + Margin, groupMaxX);
             float x = groupX;
-            float y = _canvasHeight - _safeBottom - Margin - BarHeight;
+            float y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - BarHeight;
             Rect panel = new Rect(x - 10f, y - 28f, BarWidth + 20f, BarHeight + 38f);
 
             Fill(panel, HealthBack);
@@ -142,8 +142,7 @@ namespace Game.View
                 _canvasWidth - _safeRight - Margin - groupWidth);
             groupX = Mathf.Clamp(groupX, _safeLeft + Margin, groupMaxX);
             float x = groupX + BarWidth + 34f;
-            float y = _canvasHeight - _safeBottom - Margin - SlotSize;
-            GUI.Label(new Rect(x, y - 25f, total, 20f), "СПОСОБНОСТИ", _slotName);
+            float y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - SlotSize;
 
             int visualSlot = 0;
             for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
@@ -181,9 +180,25 @@ namespace Game.View
                     GUI.color = previous;
                 }
 
+                bool channel = build.DefinitionId == AbilityDefinition.ChainCycloneId;
+                if (channel)
+                {
+                    GUI.Label(new Rect(box.center.x - 70f, box.y - 23f, 140f, 20f),
+                        sim.CycloneActive ? "ОТПУСТИ — ЗАВЕРШИТЬ" : "УДЕРЖИВАЙ " + SlotKey(slot), _slotName);
+                    if (sim.CycloneActive)
+                    {
+                        Rect progress = new Rect(box.x, box.yMax - 5f, box.width, 5f);
+                        Fill(progress, Ink);
+                        float duration = Mathf.Max(1f, build.Get(AbilityStatType.DurationTicks).ToFloat());
+                        progress.width *= 1f - Mathf.Clamp01(sim.CycloneElapsedTicks / duration);
+                        Fill(progress, new Color(1f, 0.95f, 0.83f));
+                        Frame(box, Color.white, 2f);
+                    }
+                }
+
                 // Рисуем время поверх иллюстрации, чтобы яркий арт не прятал
                 // самый важный боевой сигнал.
-                if (left > 0)
+                if (left > 0 && !(channel && sim.CycloneActive))
                 {
                     float seconds = left / (float)Simulation.TicksPerSecond;
                     GUI.Label(new Rect(box.x + 1f, box.y + 1f, box.width, box.height),
@@ -261,8 +276,8 @@ namespace Game.View
         {
             if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "Icon_AnchorLeap";
-            if (definitionId == AbilityDefinition.AnchorSweepId) return "Icon_AnchorSweep";
-            if (definitionId == AbilityDefinition.ChainStepId) return "Icon_ChainStep";
+            if (definitionId == AbilityDefinition.ChainCycloneId) return "Icon_ChainCyclone";
+            if (definitionId == AbilityDefinition.ChainStepId) return "Icon_Squall";
             return null;
         }
 
@@ -270,8 +285,8 @@ namespace Game.View
         {
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "БРОСОК ЯКОРЯ";
-            if (definitionId == AbilityDefinition.AnchorSweepId) return "МАССОВЫЙ ХУК";
-            if (definitionId == AbilityDefinition.ChainStepId) return "ШКВАЛ САБЛИ";
+            if (definitionId == AbilityDefinition.ChainCycloneId) return "CHAIN CYCLONE";
+            if (definitionId == AbilityDefinition.ChainStepId) return "ШКВАЛ";
             return "СПОСОБНОСТЬ";
         }
 

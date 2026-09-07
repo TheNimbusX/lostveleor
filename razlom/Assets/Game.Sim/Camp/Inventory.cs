@@ -57,6 +57,19 @@ namespace Game.Sim
         }
 
         public ItemInstance At(int slot) => _slots[slot];
+        internal void Put(int slot, ItemInstance item, bool keep = false)
+        {
+            _slots[slot] = item;
+            _keep[slot] = !item.IsEmpty && keep;
+        }
+
+        public bool Swap(int from, int to)
+        {
+            if ((uint)from >= Capacity || (uint)to >= Capacity) return false;
+            ItemInstance item = _slots[from]; bool keep = _keep[from];
+            Put(from, _slots[to], _keep[to]); Put(to, item, keep);
+            return true;
+        }
         public bool IsKept(int slot) => _keep[slot];
         public bool IsEmpty(int slot) => _slots[slot].IsEmpty;
 

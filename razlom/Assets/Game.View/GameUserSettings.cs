@@ -204,7 +204,7 @@ namespace Game.View
                 case QualityLevel.Medium:
                     pipeline.renderScale = 1f;
                     pipeline.msaaSampleCount = 2;
-                    pipeline.shadowDistance = 30f;
+                    pipeline.shadowDistance = 100f;
                     pipeline.mainLightShadowmapResolution = 2048;
                     break;
 
@@ -213,7 +213,7 @@ namespace Game.View
                     // числа повторены, чтобы возврат с низкого их восстановил.
                     pipeline.renderScale = 1f;
                     pipeline.msaaSampleCount = 4;
-                    pipeline.shadowDistance = 35f;
+                    pipeline.shadowDistance = 150f;
                     pipeline.mainLightShadowmapResolution = 4096;
                     break;
             }

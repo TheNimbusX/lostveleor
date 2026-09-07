@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Camp_Ground
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 4c0d9f8f7de841aeaf783d23db501c3d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -17,8 +17,7 @@ Material:
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
+  stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 
@@ -26,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: d62365d4fe45af941b90db79d903e9f0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -93,19 +92,34 @@ Material:
     - _ClearCoatSmoothness: 0
     - _Cull: 2
     - _Cutoff: 0.5
+    - _DeathFade: 0
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
+    - _DissolveEdgeGlow: 2.6
+    - _DissolveEdgeWidth: 0.14
+    - _DissolveHeightBias: 0
+    - _DissolveScale: 13
+    - _DissolveVoronoi: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _GroundGlowBand: 0.118
+    - _GroundGlowFeather: 0.071
+    - _HitFlash: 0
+    - _LightFeather: 0.16
+    - _LightThreshold: 0.011
     - _Metallic: 0
+    - _MidThreshold: 0.141
     - _OcclusionStrength: 1
+    - _OutlineDepthBias: 0
+    - _OutlineWidth: 0
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _RimPower: 4
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -118,7 +132,13 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.25, g: 0.38, b: 0.24, a: 1}
     - _Color: {r: 0.24999997, g: 0.37999994, b: 0.23999995, a: 1}
+    - _DissolveEdgeColor: {r: 1, g: 0.41999996, b: 0.11999995, a: 1}
+    - _DissolveHeightRange: {r: 0, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MidColor: {r: 0.94, g: 0.9, b: 0.91, a: 1}
+    - _OutlineColor: {r: 0.8396226, g: 0.7168476, b: 0.8107344, a: 1}
+    - _RimColor: {r: 1, g: 0.86, b: 0.65999997, a: 1}
+    - _ShadowColor: {r: 0.58, g: 0.65999997, b: 0.88, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

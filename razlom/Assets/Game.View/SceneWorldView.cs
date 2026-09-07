@@ -15,6 +15,7 @@ namespace Game.View
         [SerializeField] private GameObject _provingGroundRoot;
 
         private TickDriver _driver;
+        public GameObject CampRoot => _campRoot;
         private GameMode _shownMode = (GameMode)byte.MaxValue;
         private bool _shownGround;
 

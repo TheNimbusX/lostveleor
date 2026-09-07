@@ -70,6 +70,9 @@ namespace Game.Sim
         {
             StableId.Of("base.rusty_sword"),
             StableId.Of("base.leather_jacket"),
+            StableId.Of("base.copper_ring"),
+            StableId.Of("base.woodland_talisman"),
+            StableId.Of("base.memory_shard"),
         };
 
         public static ItemDatabase Items()
@@ -81,11 +84,18 @@ namespace Game.Sim
 
                 new ItemBaseDefinition(StableId.Of("base.leather_jacket"), ItemCategory.Armor,
                     StatType.Armor, ModifierOp.Flat, Fix64.FromInt(8)),
+                new ItemBaseDefinition(StableId.Of("base.copper_ring"), ItemCategory.Jewellery,
+                    StatType.MaxHealth, ModifierOp.Flat, Fix64.FromInt(12)),
+                new ItemBaseDefinition(StableId.Of("base.woodland_talisman"), ItemCategory.Talisman,
+                    StatType.FireResist, ModifierOp.Flat, Fix64.Ratio(8, 100)),
+                new ItemBaseDefinition(StableId.Of("base.memory_shard"), ItemCategory.Artifact,
+                    StatType.Damage, ModifierOp.Flat, Fix64.FromInt(3)),
             };
 
             byte weapon = AffixDefinition.Mask(ItemCategory.Weapon);
             byte armor = AffixDefinition.Mask(ItemCategory.Armor);
-            byte both = AffixDefinition.Mask(ItemCategory.Weapon, ItemCategory.Armor);
+            byte both = AffixDefinition.Mask(ItemCategory.Weapon, ItemCategory.Armor,
+                ItemCategory.Jewellery, ItemCategory.Talisman, ItemCategory.Artifact);
 
             var affixes = new[]
             {

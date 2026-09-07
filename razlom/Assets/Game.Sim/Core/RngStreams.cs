@@ -25,6 +25,7 @@ namespace Game.Sim
         public Pcg32 Ai;       // 6 — решения ИИ
 
         public readonly ulong MasterSeed;
+        public Pcg32 AbilityTargets;
 
         public RngStreams(ulong masterSeed)
         {
@@ -35,6 +36,7 @@ namespace Game.Sim
             Loot   = new Pcg32(masterSeed, 4);
             Affix  = new Pcg32(masterSeed, 5);
             Ai     = new Pcg32(masterSeed, 6);
+            AbilityTargets = new Pcg32(masterSeed, 7);
         }
 
         /// <summary>Состояния всех потоков — часть хеша состояния симуляции.</summary>
@@ -46,6 +48,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, Loot.State);
             Hashing.Mix(ref hash, Affix.State);
             Hashing.Mix(ref hash, Ai.State);
+            Hashing.Mix(ref hash, AbilityTargets.State);
         }
     }
 

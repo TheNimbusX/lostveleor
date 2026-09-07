@@ -98,6 +98,9 @@ Shader "Razlom/Texture Toon"
             #pragma fragment Frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            // SSAO
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -148,56 +151,73 @@ Shader "Razlom/Texture Toon"
                 half4 texel = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
                 half3 normal = normalize(input.normalWS);
                 Light mainLight = GetMainLight(input.shadowCoord);
-                half ndl = saturate(dot(normal, mainLight.direction));
-                half shadeInput = ndl * mainLight.shadowAttenuation * mainLight.distanceAttenuation;
-                half midBand = smoothstep(_MidThreshold - _LightFeather,
-                                          _MidThreshold + _LightFeather, shadeInput);
-                half lightBand = smoothstep(_LightThreshold - _LightFeather,
-                                            _LightThreshold + _LightFeather, shadeInput);
-                // One authoritative warm key. In URP 17/Forward+ the main
-                // directional is stable, while depending on additional-light
-                // loops for the character look makes variants/platforms drift.
-                half maxKeyChannel = max(max(mainLight.color.r, mainLight.color.g),
-                                         max(mainLight.color.b, 0.001h));
-                half3 keyTint = mainLight.color / maxKeyChannel;
-                // Цвет ключа теперь доходит до светлой стороны почти целиком.
-                // Приглушать его на 58% значило гасить единственный тёплый
-                // акцент в кадре и делать свет бесцветным.
-                keyTint = lerp(half3(1.0h, 0.98h, 0.95h), keyTint, 0.78h);
 
-                // РАЗДЕЛЕНИЕ ПО ТОНУ, А НЕ ПО ЯРКОСТИ.
-                //
-                // Здесь стояло (0.34, 0.35, 0.39) — нейтрально-серая тень при
-                // тёплом ключе и тёплом филле. Все три источника в сцене
-                // тёплые, поэтому свет и тень отличались только яркостью, и
-                // кадр читался как выцветшая бежевая заливка. Это и есть то,
-                // что на записи 1 сентября выглядело мёртвым.
-                //
-                // У эталона (Genshin) свет тёплый, а тень отчётливо холодная и
-                // уходит в сине-фиолетовое. Разница в ЦВЕТЕ, а не в темноте:
-                // тень остаётся светлой, но другого тона — оттого картинка
-                // читается насыщенной, не теряя деталь в чёрном.
-                // СИНЕВУ ДАЁТ СВЕТ, А НЕ ШЕЙДЕР.
-                //
-                // Здесь стояло (0.30, 0.35, 0.50), и это была ошибка сложения:
-                // холодный оттенок задавался ОДНОВРЕМЕННО тут, в амбиенте, в
-                // filll-свете сцены, в градиенте окружения и в Split Toning.
-                // Пять источников одного и того же тона перемножились, и кадр
-                // ушёл в бирюзу целиком.
-                //
-                // Правило: тон принадлежит освещению. Шейдер только честно
-                // показывает то, что дали свет и окружение, и добавляет от
-                // себя лишь чуть-чуть — иначе он спорит со сценой.
-                half3 shadowTone = lerp(half3(0.38h, 0.39h, 0.43h),
-                                        _ShadowColor.rgb, 0.16h);
-                // Полутон — переход, и он тоже слегка холодный: тёплым он
-                // склеивался бы со светлой стороной в одно пятно.
-                half3 midTone = lerp(half3(0.74h, 0.73h, 0.72h),
-                                     _MidColor.rgb, 0.30h);
+
+                half ndl = saturate(dot(normal, mainLight.direction));
+
+                half directLight =
+                    ndl * mainLight.distanceAttenuation;
+
+                half shadowAttenuation =
+                    saturate(mainLight.shadowAttenuation);
+
+                half shadeInput = directLight;
+
+                half midBand = smoothstep(
+                    _MidThreshold - _LightFeather,
+                    _MidThreshold + _LightFeather,
+                    shadeInput
+                );
+
+                half lightBand = smoothstep(
+                    _LightThreshold - _LightFeather,
+                    _LightThreshold + _LightFeather,
+                    shadeInput
+                );
+
+                half maxKeyChannel = max(
+                    max(mainLight.color.r, mainLight.color.g),
+                    max(mainLight.color.b, 0.001h)
+                );
+
+                half3 keyTint = mainLight.color / maxKeyChannel;
+
+                keyTint = lerp(
+                    half3(1.0h, 0.98h, 0.95h),
+                    keyTint,
+                    0.78h
+                );
+
+                half3 shadowTone = lerp(
+                    half3(0.38h, 0.39h, 0.43h),
+                    _ShadowColor.rgb,
+                    0.16h
+                );
+
+                half3 midTone = lerp(
+                    half3(0.74h, 0.73h, 0.72h),
+                    _MidColor.rgb,
+                    0.30h
+                );
+
                 half3 lightTone = keyTint * 1.22h;
+
                 half3 tone = lerp(shadowTone, midTone, midBand);
                 tone = lerp(tone, lightTone, lightBand);
 
+                // REALTIME CAST SHADOW
+                /*
+                half castShadow =
+                    smoothstep(0.15h, 0.90h, shadowAttenuation);
+
+                half shadowFloor = 0.12h;
+
+                tone = lerp(
+                    shadowTone,
+                    tone,
+                    lerp(shadowFloor, 1.0h, castShadow)
+                );
+                */
                 // The atlas already carries hand-painted form. Keep that
                 // information and add only a restrained environment fill;
                 // multiplying it by a dark two-band light was the source of
@@ -211,14 +231,44 @@ Shader "Razlom/Texture Toon"
                 // Вклад поднят и подкрашен в холодное, причём СИЛЬНЕЕ на
                 // теневой стороне: на светлой он смешался бы с ключом и съел
                 // тёплый акцент.
-                half3 ambient = max(SampleSH(normal), half3(0, 0, 0));
-                // ЦВЕТ АМБИЕНТА УЖЕ ЛЕЖИТ В SampleSH.
-                //
-                // Он берётся из градиента Environment Lighting, то есть из
-                // неба, которое настроено в сцене. Домножать его ещё на свой
-                // голубой множитель — ровно та двойная порция, из-за которой
-                // всё посинело. Осталась только СИЛА вклада, без цвета.
-                half ambientAmount = lerp(0.26h, 0.10h, lightBand);
+                // ============================================================
+                // SCREEN SPACE AMBIENT OCCLUSION
+                // ============================================================
+
+                // Экранные UV текущего пикселя.
+                float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
+
+                // Unity SSAO.
+                // 1 = открытая поверхность
+                // 0 = сильная окклюзия / контакт
+                half ssao = SampleAmbientOcclusion(screenUV);
+
+                // Не делаем AO чёрным.
+                // Даже при сильной окклюзии сохраняем 45% ambient.
+                // Для painterly ARPG это гораздо чище.
+                half painterlyAO = lerp(
+                    0.45h,
+                    1.0h,
+                    ssao
+                );
+
+                // Обычный environment/sky ambient.
+                half3 ambient = max(
+                    SampleSH(normal),
+                    half3(0, 0, 0)
+                );
+
+                // AO режет именно окружающий заполняющий свет,
+                // а не превращает весь материал в чёрное пятно.
+                ambient *= painterlyAO;
+
+                // На теневой стороне ambient сильнее,
+                // на освещённой слабее.
+                half ambientAmount = lerp(
+                    0.26h,
+                    0.10h,
+                    lightBand
+                );
 
                 half3 viewDir = SafeNormalize(GetWorldSpaceViewDir(input.positionWS));
 
@@ -230,6 +280,21 @@ Shader "Razlom/Texture Toon"
                 rim *= 0.25h + 0.75h * lightBand;
 
                 half3 color = texel.rgb * (tone + ambient * ambientAmount);
+
+                // Дополнительный мягкий contact AO.
+                // Не делает щели чёрными, только "сажает" объекты в сцену.
+                half contactAO = lerp(
+                    0.70h,
+                    1.0h,
+                    ssao
+                );
+
+                color *= contactAO;
+                // Final stylized realtime cast shadow.
+                // Не даём ambient полностью вымывать тень от объектов.
+                // URP Shadow Strength уже ослабляет shadowAttenuation,
+                // поэтому вытаскиваем из него более выразительную painterly-маску.
+                
 
                 // The Orvill atlas intentionally contains near-black cloth and
                 // armour. A small light-side visibility floor keeps those forms
@@ -264,6 +329,16 @@ Shader "Razlom/Texture Toon"
                 // растворение. До тумана — потому что дальние трупы должны
                 // тухнуть вместе со сценой, а не гореть сквозь дымку.
                 color += RazlomDissolveEmber() * dissolveFront;
+                // ===== FINAL CAST SHADOW =====
+
+                half castShadowMask =
+                        saturate(1.0h - mainLight.shadowAttenuation);
+
+                    color *= lerp(
+                        1.0h,
+                        0.50h,
+                        castShadowMask
+                    );
 
                 color = MixFog(color, input.fogFactor);
                 return half4(color, texel.a);

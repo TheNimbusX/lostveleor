@@ -15,7 +15,7 @@ public static class RazlomPelagVfxAssetBuilder
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 25;
+    private const int LibraryVersion = 29;
     private const int FlipbookTiles = 4;
     private const int FlipbookFrames = FlipbookTiles * FlipbookTiles;
     private const int ChainLinkCount = 96;
@@ -108,7 +108,7 @@ public static class RazlomPelagVfxAssetBuilder
         }
 
         Material slash = VfxMaterial("M_SlashTrail", vfxShader,
-            new Color(1.00f, 0.20f, 0.14f, 0.94f), new Color(1.00f, 0.95f, 0.78f, 1f), 1.35f, 0.58f);
+            new Color(0.22f, 0.23f, 0.25f, 0.94f), new Color(1.00f, 0.97f, 0.88f, 1f), 1.35f, 0.58f);
         // ЛИНИЯ ЦЕПИ, А НЕ ТРЕЙЛ ЯКОРЯ.
         //
         // Объявление вернулось 1 сентября: предыдущий заход убирал с брошенного
@@ -117,7 +117,7 @@ public static class RazlomPelagVfxAssetBuilder
         // компилироваться: `error CS0103: имя 'anchor' не существует`.
         //
         // Материал нужен не трейлу. Им красится LineRenderer НАТЯНУТОЙ ЦЕПИ в
-        // AnchorLeapChain и AnchorSweepPull, и ассет `M_AnchorTrail.mat` всё это
+        // AnchorLeapChain и CycloneChain, и ассет `M_AnchorTrail.mat` всё это
         // время лежал на диске. Имя осталось историческим; переименовывать его
         // сейчас значит потерять ссылки в трёх prefab'ах ради косметики.
         Material anchor = VfxMaterial("M_AnchorTrail", vfxShader,
@@ -169,19 +169,17 @@ public static class RazlomPelagVfxAssetBuilder
         prefabs[(int)PelagVfxId.AnchorLeapChain] = SaveDynamicLine(PelagVfxId.AnchorLeapChain,
             "VFX_AnchorLeap_Chain", anchor, metal, chainGlint, 0.045f, 0.90f, true);
         prefabs[(int)PelagVfxId.AnchorLeapLand] = SaveBurst(PelagVfxId.AnchorLeapLand,
-            "VFX_AnchorLeap_Land", dust, 6, 0.34f, 2.2f, 0.24f, FlipbookLifetime,
-            impactBurst, 1.30f, groundCrack, 2.20f);
-        prefabs[(int)PelagVfxId.AnchorSweepThrow] = SaveAnchor(PelagVfxId.AnchorSweepThrow,
-            "VFX_AnchorSweep_Throw", metal, anchorSpin, 0.66f);
-        prefabs[(int)PelagVfxId.AnchorSweepPull] = SaveDynamicLine(PelagVfxId.AnchorSweepPull,
-            "VFX_AnchorSweep_Pull", anchor, metal, chainGlint, 0.055f, 1.18f, true);
-        prefabs[(int)PelagVfxId.AnchorSweepEnemyPull] = SaveDynamicLine(PelagVfxId.AnchorSweepEnemyPull,
-            "VFX_AnchorSweep_EnemyPull", anchor, metal, null, 0.035f, 0.64f, true);
+            "VFX_AnchorLeap_Land", dust, 18, 0.40f, 3.8f, 0.28f, FlipbookLifetime);
+        prefabs[(int)PelagVfxId.CycloneHook] = SaveAnchor(PelagVfxId.CycloneHook,
+            "VFX_Cyclone_Hook", metal, anchorSpin, 2.30f);
+        prefabs[(int)PelagVfxId.CycloneChain] = SaveDynamicLine(PelagVfxId.CycloneChain,
+            "VFX_Cyclone_Chain", anchor, metal, null, 0.018f, 2.30f, true);
+        prefabs[(int)PelagVfxId.CycloneWake] = SaveTrail(PelagVfxId.CycloneWake,
+            "VFX_Cyclone_Wake", slash, 2.30f);
         prefabs[(int)PelagVfxId.ChainStepDash] = SaveTrail(PelagVfxId.ChainStepDash,
             "VFX_ChainStep_Dash", slash, 0.23f);
-        prefabs[(int)PelagVfxId.ChainStepHit] = SaveBurst(PelagVfxId.ChainStepHit,
-            "VFX_ChainStep_Hit", impact, 4, 0.15f, 3.0f, 0.13f, 0.28f,
-            impactBurst, 0.92f);
+        prefabs[(int)PelagVfxId.ChainStepHit] = SaveArc(PelagVfxId.ChainStepHit,
+            "VFX_ChainStep_Hit", slash, slash, .35f, .22f, false);
         prefabs[(int)PelagVfxId.TargetFlash] = SaveBurst(PelagVfxId.TargetFlash,
             "VFX_TargetFlash", flash, 1, 0.11f, 0.02f, 0.48f, 0.15f,
             impactBurst, 0.62f);
@@ -309,17 +307,21 @@ public static class RazlomPelagVfxAssetBuilder
     {
         GameObject root = RootObject(id, name, lifetime);
         LineRenderer line = AddLine(root, material, width, false, loop);
-        Vector3[] points =
+        // Непрерывная дуга сохраняет острый кончик без углов из пяти отрезков.
+        Vector3[] points = new Vector3[33];
+        for (int i = 0; i < points.Length; i++)
         {
-            new Vector3(-0.82f, -0.18f, 0f), new Vector3(-0.45f, 0.12f, 0f),
-            new Vector3(0f, 0.26f, 0f), new Vector3(0.45f, 0.12f, 0f),
-            new Vector3(0.82f, -0.18f, 0f)
-        };
+            float u = i / (float)(points.Length - 1);
+            points[i] = new Vector3(Mathf.Lerp(-.92f, .92f, u),
+                -.18f + .48f * Mathf.Sin(u * Mathf.PI), 0f);
+        }
         line.positionCount = points.Length;
         line.SetPositions(points);
         LineRenderer core = AddLine(root, coreMaterial, width * 0.30f, false, loop);
         core.positionCount = points.Length;
         core.SetPositions(points);
+        if (id == PelagVfxId.ChainStepHit)
+            AddMetalSparks(root, coreMaterial, 7, .16f, 3.8f);
         return Save(root, name);
     }
 
@@ -349,9 +351,9 @@ public static class RazlomPelagVfxAssetBuilder
         // upright charge projectile that fought the circular silhouette.
         Shader shader = Shader.Find("Razlom/Pelag VFX");
         Material edge = VfxMaterial("M_Whirlwind_CopperStroke", shader,
-            new Color(.78f, .38f, .14f, .72f), new Color(1f, .78f, .48f, .92f), .95f, .35f);
+            new Color(1f, .47f, .12f, .82f), new Color(1.4f, .88f, .38f, .96f), 1.25f, .35f);
         Material core = VfxMaterial("M_Whirlwind_SteelCore", shader,
-            new Color(.95f, .80f, .58f, .8f), new Color(1f, .94f, .79f, 1f), 1.15f, .55f);
+            new Color(1f, .88f, .64f, .9f), new Color(1.5f, 1.32f, .95f, 1f), 1.4f, .55f);
         edge.SetFloat("_Brush", 0.85f);
         EditorUtility.SetDirty(edge);
         AddBrushArc(root, edge, 2.12f, -30f, 205f, 0.36f, -0.1f, 64);
@@ -359,7 +361,37 @@ public static class RazlomPelagVfxAssetBuilder
         AddBrushArc(root, edge, 2.25f, 188f, 72f, 0.16f, -0.22f, 36);
         AddBrushArc(root, core, 2.14f, -22f, 186f, 0.052f, -0.08f, 64);
         AddBrushArc(root, edge, 1.88f, 195f, 82f, 0.12f, 0.08f, 36);
+        AddMetalSparks(root, core, 14, .26f, 5.2f);
         return Save(root, name);
+    }
+
+    private static void AddMetalSparks(GameObject root, Material material, int count, float lifetime, float speed)
+    {
+        // Крупные короткие штрихи читаются на изометрии и не скрывают корпус.
+        var host = new GameObject("Metal flecks");
+        host.transform.SetParent(root.transform, false);
+        var particles = host.AddComponent<ParticleSystem>();
+        var main = particles.main;
+        main.loop = false; main.playOnAwake = false; main.duration = lifetime;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * .55f, lifetime);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(speed * .55f, speed);
+        main.startSize = new ParticleSystem.MinMaxCurve(.065f, .12f);
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.maxParticles = count;
+        var emission = particles.emission;
+        emission.rateOverTime = 0;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(.015f, (short)count) });
+        var shape = particles.shape;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.rotation = new Vector3(90f, 0f, 0f); shape.radius = .35f;
+        var color = particles.colorOverLifetime; color.enabled = true;
+        color.color = Gradient(new Color(1f, .97f, .8f, 1f), new Color(1f, .55f, .2f, 0f));
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0, 1, 1, 0));
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.sharedMaterial = material; renderer.renderMode = ParticleSystemRenderMode.Stretch;
+        renderer.lengthScale = 2.8f; renderer.velocityScale = .035f;
+        renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
     }
 
     private static GameObject SaveHovlImpact(PelagVfxId id, string name, Material fallbackMaterial)
@@ -743,8 +775,8 @@ public static class RazlomPelagVfxAssetBuilder
         trail.sharedMaterial = flipbookMaterial;
         trail.time = 0.13f;
         trail.widthCurve = AnimationCurve.Linear(0f, 0.48f, 1f, 0f);
-        trail.startColor = new Color(1.5f, 0.95f, 0.55f, 0.85f);
-        trail.endColor = new Color(0.8f, 0.35f, 0.12f, 0f);
+        trail.startColor = new Color(1f, 0.97f, 0.88f, 1f);
+        trail.endColor = new Color(0.7f, 0.7f, 0.72f, 0f);
         trail.minVertexDistance = 0.03f;
         trail.shadowCastingMode = ShadowCastingMode.Off;
         trail.receiveShadows = false;
@@ -860,14 +892,11 @@ public static class RazlomPelagVfxAssetBuilder
             renderer.mesh = ImpactChipMesh();
             renderer.alignment = ParticleSystemRenderSpace.Velocity;
             AddAuthoredAccent(root, "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab",
-                0.48f, 0.32f, true, "Stones", "Flash");
+                0.48f, 0.32f, true, "Stones");
         }
-        if (id == PelagVfxId.ChainStepHit || id == PelagVfxId.WhirlwindHit)
+        if (id == PelagVfxId.WhirlwindHit)
             AddAuthoredAccent(root, "Assets/Hovl Studio/RPG VFX Bundle/Prefabs/Magic buffs and hits/Punch Hit.prefab",
                 0.55f, 0.24f, false);
-        if (id == PelagVfxId.ChainStepHit)
-            AddAuthoredAccent(root, "Assets/Hovl Studio/Magic effects pack/Prefabs/Slash effects/Charge slash red.prefab",
-                0.45f, 0.22f, false, "Slash", "Slash2", "Sparks");
         if (impactFlipbook != null)
             AddFlipbook(root, "Impact Burst Flipbook", impactFlipbook, impactSize,
                 false, Vector3.zero, 5);
@@ -1099,6 +1128,16 @@ public static class RazlomPelagVfxAssetBuilder
 
     private static GameObject Save(GameObject root, string name)
     {
+        if (name.Contains("Whirlwind") || name.Contains("AnchorLeap_Land"))
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.VFX.VisualEffectAsset>("Assets/Resources/VFX/Pelag/Graphs/Pelag_CoralImpact.vfx");
+            if (asset != null)
+            {
+                var accents = new GameObject("Coral ink sparks VFX Graph");
+                accents.transform.SetParent(root.transform, false);
+                accents.AddComponent<UnityEngine.VFX.VisualEffect>().visualEffectAsset = asset;
+            }
+        }
         string path = PrefabFolder + "/" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
         UnityEngine.Object.DestroyImmediate(root);
@@ -1136,7 +1175,7 @@ public static class RazlomPelagVfxAssetBuilder
         switch (id)
         {
             case PelagVfxId.WhirlwindHit: return 10;
-            case PelagVfxId.AnchorSweepEnemyPull: return 10;
+            case PelagVfxId.CycloneWake: return 10;
             case PelagVfxId.TargetFlash: return 12;
             case PelagVfxId.DustSmall: return 12;
             case PelagVfxId.AutoAttackImpact:

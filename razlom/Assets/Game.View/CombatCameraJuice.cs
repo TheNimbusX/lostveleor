@@ -33,6 +33,7 @@ namespace Game.View
         {
             if (size <= 0f) return;
             _restSize = size;
+            _restRotation = transform.rotation;
             if (_camera != null) _camera.orthographicSize = size;
         }
 

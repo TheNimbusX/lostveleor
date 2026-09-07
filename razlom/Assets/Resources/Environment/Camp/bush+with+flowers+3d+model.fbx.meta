@@ -3,7 +3,12 @@ guid: 71ecddfebfaaf0e429a43323d2efde18
 ModelImporter:
   serializedVersion: 24501
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001
+    second: {fileID: 2100000, guid: 101fc476c0dbea84e9eeea8ef452fd4c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -31,7 +36,7 @@ ModelImporter:
     extraExposedTransformPaths: []
     extraUserProperties: []
     clipAnimations: []
-    isReadable: 0
+    isReadable: 1
   meshes:
     lODScreenPercentages: []
     globalScale: 1

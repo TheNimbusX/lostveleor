@@ -730,7 +730,7 @@ namespace Game.View
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
             if (definitionId == AbilityDefinition.AnchorLeapId
-                || definitionId == AbilityDefinition.AnchorSweepId)
+                || definitionId == AbilityDefinition.ChainCycloneId)
                 BeginPlayerAnchorUse(definitionId == AbilityDefinition.AnchorLeapId);
             else { _anchorSaberSuppressed = false; EndPlayerAnchorUse(); MarkPlayerCombatActivity(); }
             _animationViews[Simulation.PlayerId]?.PlayAbilityDefinition(definitionId);
@@ -783,6 +783,7 @@ namespace Game.View
             bool threatened = (_driver != null && _driver.AttackHeld)
                               || HasPlayerCombatThreat(sim, entities);
             bool ready = CaptureRig.EquipmentShowcase ? CaptureRig.EquipmentReady
+                : !string.IsNullOrEmpty(CaptureRig.PoseShowcase) ? CaptureRig.PoseShowcase == "combat-idle"
                 : !_anchorSaberSuppressed && (threatened || Time.unscaledTime < _playerCombatUntil);
             ApplyPlayerCombatReady(ready, force: false);
         }
@@ -1650,6 +1651,12 @@ namespace Game.View
         /// Resources.Load идёт по диску, и звать его сорок раз подряд —
         /// это заметная пауза ровно в момент входа в Разлом.
         /// </summary>
+        public GameObject CreateCampPlayer()
+        {
+            return BodyFactory(WoleModel, WoleController, WoleMaterial, WoleTexture,
+                Faction.Wole, WoleScale)();
+        }
+
         private System.Func<GameObject> BodyFactory(string modelPath, string controllerPath,
             string materialPath, string texturePath, Faction faction, float scale)
         {

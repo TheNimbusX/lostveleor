@@ -44,6 +44,7 @@ namespace Game.View
             GameSession session = _driver.Session;
             if (session == null) return;
             if (session.Mode == GameMode.Rift) return;
+            if (session.Mode == GameMode.Camp && !session.OnProvingGround && CampPlayerView.Instance != null) return;
 
             EnsureStyles();
 

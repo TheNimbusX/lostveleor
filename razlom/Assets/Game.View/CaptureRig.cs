@@ -107,6 +107,10 @@ namespace Game.View
         public static PelagVfxShowcase VfxShowcase { get; private set; }
         public static bool LiveSkill { get; private set; }
         public static int CastYaw { get; private set; }
+        public static float CastDistance { get; private set; } = 3f;
+        public static int HoldTicks { get; private set; } = 60;
+        private static bool _showHud;
+        public static bool PerformanceCapture { get; private set; }
         public static bool TurnDuringSkill { get; private set; }
         public static bool ActiveEnemies { get; private set; }
         public static bool SweepAimCapture { get; private set; }
@@ -185,7 +189,11 @@ namespace Game.View
             MovingCombatDelay = Mathf.Clamp(ReadInt(args, "-capture-moving-combat-delay", 2), 1, 24);
             VfxShowcase = ParseShowcase(ReadValue(args, SkillFlag));
             LiveSkill = Array.IndexOf(args, "-capture-live-skill") >= 0;
+            PerformanceCapture = ReadFloat(args, PerfFlag, 0f) > 0f;
             CastYaw = ReadInt(args, "-capture-cast-yaw", 0);
+            CastDistance = Mathf.Clamp(ReadFloat(args, "-capture-cast-distance", 3f), .5f, 7f);
+            HoldTicks = Mathf.Clamp(ReadInt(args, "-capture-hold-ticks", 60), 1, 60);
+            _showHud = Array.IndexOf(args, "-capture-hud") >= 0;
             TurnDuringSkill = Array.IndexOf(args, "-capture-turn-during-skill") >= 0;
             ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
             SweepAimCapture = Array.IndexOf(args, "-capture-sweep-aim") >= 0;
@@ -221,7 +229,7 @@ namespace Game.View
                 SeedOverride = seedValue;
             }
 
-            AutoEnterRift = true;
+            AutoEnterRift = Array.IndexOf(args, "-capture-camp") < 0;
 
             // Объект переживает загрузку сцены: расписание отсчитывается от
             // старта процесса, а не от того, какая сцена сейчас открыта.
@@ -292,15 +300,26 @@ namespace Game.View
             // Splash и первая загрузка FBX занимают разное время на разных
             // машинах. Отсчёт начинается только когда Rift и реальная сабля
             // уже привязаны — иначе расписание снимает заставку вместо боя.
-            while (!CombatViewReady()) yield return null;
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp") >= 0)
+            {
+                while (CampPlayerView.Instance == null || CampPlayerView.Instance.Body == null) yield return null;
+                gameObject.AddComponent<CampWalkCapture>();
+            }
+            else while (!CombatViewReady()) yield return null;
             if (ActiveEnemies && IsCombatFeelShowcase)
             {
                 TickDriver driver = FindAnyObjectByType<TickDriver>();
-                driver.Sim.SetupCombatFeelShowcase(driver.Run.Map, EnemyOverride, CombatFeelTier, true);
+                driver.Sim.SetupCombatFeelShowcase(driver.Run.Map, EnemyOverride, CombatFeelTier, true, IsPerfRun);
                 Debug.Log("[capture-combat] Живых врагов: " + (driver.Sim.Entities.Count - 1));
                 yield return null;
             }
             ConfigureCaptureView();
+
+            if (EquipmentShowcase)
+            {
+                TickDriver driver = FindAnyObjectByType<TickDriver>();
+                if (driver != null) driver.enabled = false;
+            }
 
             if (!string.IsNullOrEmpty(PoseShowcase))
             {
@@ -448,9 +467,11 @@ namespace Game.View
 
             // Прогрев: первые кадры платят за компиляцию шейдеров, загрузку
             // атласов и первый рост пулов. Считать их — значит мерить загрузку.
-            for (int i = 0; i < _perfWarmupFrames; i++) yield return new WaitForEndOfFrame();
+            var endOfFrame = new WaitForEndOfFrame();
+            var frames = new List<float>(65536);
+            for (int i = 0; i < _perfWarmupFrames; i++) yield return endOfFrame;
+            GcWarmupActive = false;
 
-            var frames = new List<float>(4096);
             long gcTotal = 0;
             long gcMax = 0;
             long drawSum = 0, setPassSum = 0, batchSum = 0, triangleSum = 0;
@@ -465,7 +486,7 @@ namespace Game.View
 
             while (Time.realtimeSinceStartup - started < _perfSeconds)
             {
-                yield return new WaitForEndOfFrame();
+                yield return endOfFrame;
 
                 Simulation live = driver != null ? driver.Sim : null;
                 int alive = live != null ? live.CountAliveEnemies() : 0;
@@ -588,7 +609,7 @@ namespace Game.View
                 if (juice != null) juice.SetBaseOrthographicSize(_cameraSize);
             }
 
-            if (IsCombatFeelShowcase)
+            if (IsCombatFeelShowcase && !IsPerfRun && !_showHud)
             {
                 PlayerHud playerHud = FindAnyObjectByType<PlayerHud>();
                 RunHud runHud = FindAnyObjectByType<RunHud>();
@@ -640,7 +661,9 @@ namespace Game.View
                 case "autoattack": return PelagVfxShowcase.Autoattack;
                 case "whirlwind": return PelagVfxShowcase.Whirlwind;
                 case "anchor-leap": return PelagVfxShowcase.AnchorLeap;
+                case "chain-cyclone":
                 case "anchor-sweep": return PelagVfxShowcase.AnchorSweep;
+                case "squall":
                 case "chain-step": return PelagVfxShowcase.ChainStep;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
@@ -701,7 +724,7 @@ namespace Game.View
             // именно итоговый framebuffer после OnGUI, иначе лог подтвердит
             // открытие экрана, а снимок покажет только арену под ним.
             PauseMenu pauseMenu = FindAnyObjectByType<PauseMenu>();
-            if (pauseMenu != null && pauseMenu.IsOpen)
+            if (_showHud || (pauseMenu != null && pauseMenu.IsOpen))
                 return ScreenCapture.CaptureScreenshotAsTexture();
 
             Camera camera = Camera.main;
