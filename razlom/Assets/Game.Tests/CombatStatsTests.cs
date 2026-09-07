@@ -627,6 +627,8 @@ namespace Game.Tests
             int Lost(bool armored)
             {
                 Simulation sim = Arena(21UL, 8);
+                for (int i = 1; i < sim.Entities.Count; i++)
+                    sim.Entities.Aggro[i] = true;
                 if (armored)
                 {
                     sim.Entities.Stats[Simulation.PlayerId].Add(StatModifier.Flat(StatType.Armor,

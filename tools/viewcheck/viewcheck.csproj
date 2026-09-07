@@ -67,6 +67,7 @@
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.RenderPipelines.*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\UnityEngine.UI.dll" />
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity*.TestRunner.dll" />
       <Reference Include="%(UnityModuleDll.Filename)">
         <HintPath>%(UnityModuleDll.FullPath)</HintPath>
         <Private>false</Private>

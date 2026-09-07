@@ -577,6 +577,8 @@ namespace Game.Sim
                 Entities.Facing[id] = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
                 _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
             }
+            for (int i = 1; i < Entities.Count; i++)
+                Entities.Aggro[i] = true;
             Grid.Rebuild(Entities);
         }
 

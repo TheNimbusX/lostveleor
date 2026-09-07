@@ -1,8 +1,12 @@
 using System;
 using Game.Sim;
+#if UNITY_5_3_OR_NEWER
 using Game.Data;
+#endif
 using NUnit.Framework;
+#if UNITY_5_3_OR_NEWER
 using UnityEngine;
+#endif
 
 namespace Game.Tests
 {
@@ -89,6 +93,7 @@ namespace Game.Tests
             Assert.Throws<ArgumentException>(() => location.ValidateCapacity(32));
         }
 
+#if UNITY_5_3_OR_NEWER
         [Test]
         public void ModuleAuthoring_RejectsConnectorsThatDoNotFaceOutward()
         {
@@ -102,5 +107,6 @@ namespace Game.Tests
             }
             finally { UnityEngine.Object.DestroyImmediate(module); }
         }
+#endif
     }
 }

@@ -94,6 +94,7 @@ namespace Game.LocationEditor
 
         public void Dispose()
         {
+            if (View != null) View.Release();
             if (Root != null) Object.DestroyImmediate(Root);
             Root = null;
             View = null;

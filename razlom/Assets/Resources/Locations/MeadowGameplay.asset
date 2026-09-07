@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3aaefb50e044149f5faa63efec8c43, type: 3}
+  m_Name: MeadowGameplay
+  m_EditorClassIdentifier: Game.Data::Game.Data.LocationProfileAsset
+  DisplayName: "\u041B\u0443\u0433\u043E\u0432\u0430\u044F \u043E\u043A\u0440\u0430\u0438\u043D\u0430"
+  StableKey: location.meadow
+  MaxModules: 64
+  Modules:
+  - {fileID: 11400000, guid: 54a3a68d650f2874aaf2c9bf977d426d, type: 2}
+  - {fileID: 11400000, guid: a43a5ffbe8d8ef94db87dfc7ef02a80c, type: 2}
+  - {fileID: 11400000, guid: c87f6fbff8ab4e74f9c755cbdcccfa3d, type: 2}
+  - {fileID: 11400000, guid: 2da810ac79df7bc46ba9a952c93c1dce, type: 2}
+  - {fileID: 11400000, guid: 5a191f690cd26674488e8cf02d0573f4, type: 2}
+  - {fileID: 11400000, guid: 6dc4c014d01323542af1ea2080d2520b, type: 2}
+  Levels:
+  - Rooms: 11
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 1
+    MaxEnemies: 3
+    EnemyHealth: 125
+  - Rooms: 12
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 1
+    MaxEnemies: 4
+    EnemyHealth: 150
+  - Rooms: 13
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 2
+    MaxEnemies: 4
+    EnemyHealth: 175
+  - Rooms: 14
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 2
+    MaxEnemies: 5
+    EnemyHealth: 200
+  - Rooms: 15
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 2
+    MaxEnemies: 5
+    EnemyHealth: 225
+  - Rooms: 16
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 3
+    MaxEnemies: 6
+    EnemyHealth: 250
+  - Rooms: 17
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 3
+    MaxEnemies: 6
+    EnemyHealth: 275
+  - Rooms: 18
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 3
+    MaxEnemies: 7
+    EnemyHealth: 300
+  - Rooms: 19
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 4
+    MaxEnemies: 7
+    EnemyHealth: 325
+  - Rooms: 20
+    Exits: 1
+    Loops: 1
+    RewardBranches: 2
+    MinEnemies: 4
+    MaxEnemies: 8
+    EnemyHealth: 350

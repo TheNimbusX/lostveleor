@@ -79,7 +79,6 @@ namespace Game.LocationEditor
                     theme.Style.DecorVariants[i].Prefab = Resources.Load<GameObject>(theme.Style.DecorVariants[i].ResourcePath);
                 AssetDatabase.CreateAsset(theme, ThemePath);
             }
-            AssetDatabase.SaveAssets();
             return theme;
         }
 

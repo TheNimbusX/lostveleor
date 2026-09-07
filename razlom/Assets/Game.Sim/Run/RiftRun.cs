@@ -113,6 +113,8 @@ namespace Game.Sim
                 _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
             else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);
+            else if (_location == null)
+                _sim.SetupForestEncounter(_map, SpawnSeed, LevelSettings.EnemyHealth);
             else
                 LevelSettings.Spawn(_sim, _map, SpawnSeed);
 

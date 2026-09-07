@@ -50,6 +50,8 @@ namespace Game.Tests
                 for (int i = 1; i < run.Sim.Entities.Count; i++)
                     run.Sim.Entities.Alive[i] = false;
                 run.Step(InputFrame.Empty);
+                run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+                run.Step(InputFrame.Empty);
                 run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
                 AssertPack(run);
                 run.StartRun();
