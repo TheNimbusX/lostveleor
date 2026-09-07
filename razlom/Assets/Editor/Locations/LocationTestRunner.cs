@@ -22,6 +22,13 @@ namespace Game.LocationEditor
             _nextCheck = EditorApplication.timeSinceStartup + 1;
             if (_api != null || EditorApplication.isCompiling || EditorApplication.isUpdating ||
                 EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(RequestPath)) return;
+            if (File.ReadAllText(RequestPath).Trim() != "ready")
+            {
+                File.WriteAllText(RequestPath, "ready");
+                _nextCheck = EditorApplication.timeSinceStartup + 2;
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                return;
+            }
             File.Delete(RequestPath);
             MeadowLocationAssets.EnsureCreated();
             RunAll();

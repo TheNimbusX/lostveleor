@@ -44,8 +44,8 @@ namespace Game.View
     /// Пол Разлома: по плоской плите на каждый модуль, декоративный разброс
     /// (кусты/камни/трава) поверх и сгущённый декор по границе вместо стен.
     ///
-    /// Отладочная отрисовка, а не оформление. Её задача — показать, что карта
-    /// собралась и связна; настоящие стены и пол придут с художником.
+    /// Один рендерер для забега и редакторского предпросмотра.
+    /// Оформление задаёт LocationTheme, проходимость задаёт только LayoutMap.
     /// </summary>
     public sealed class LayoutView : MonoBehaviour
     {
@@ -91,7 +91,11 @@ namespace Game.View
             return root.transform;
         }
 
-        private void OnDestroy() => DisposeVisuals();
+        // Editor previews explicitly release resources: a non-ExecuteAlways
+        // MonoBehaviour is not guaranteed an OnDestroy callback in EditMode.
+        public void Release() => DisposeVisuals();
+
+        private void OnDestroy() => Release();
 
         private void DisposeVisuals()
         {
@@ -118,10 +122,8 @@ namespace Game.View
             else DestroyImmediate(value);
         }
 
-        // Обе текстуры пола — из Ultimate Nature Starter (InnerverseInteractive),
-        // перенесены в Resources/Terrain: LayoutView создаётся Bootstrap-ом
-        // через AddComponent, а не лежит в сцене — перетащить ссылку
-        // в инспектор просто некуда.
+        // Запасные текстуры для прототипов без назначенных ссылок в профиле.
+        // Основной профиль использует прямые ссылки на эти же ассеты UNS.
         private const string RoomFloorTextureResourcePath = "Terrain/UNS_Terrain_Grass";
         private const string PathFloorTextureResourcePath = "Terrain/UNS_Terrain_Dirt";
 
@@ -378,11 +380,9 @@ namespace Game.View
         // ---- декор внутри комнат ----
 
         /// <summary>
-        /// Разбрасывает декор по одному размещённому модулю. Сид берётся из
-        /// самой расстановки (индекс модуля, поворот, координаты origin) —
-        /// у одной и той же карты Разлома декор всегда один и тот же, но
-        /// поток свой, локальный для LayoutView: Simulation.Rng не тратится
-        /// ни на один бросок.
+        /// Разбрасывает декор по одному размещённому модулю. Локальный сид
+        /// зависит от сида карты и индекса размещения. Повторная сборка
+        /// воспроизводит декор, не расходуя ни одного броска Simulation.Rng.
         /// </summary>
         private void PlaceModuleDecor(LayoutMap map, PlacedModule placed, int placement, float cell)
         {

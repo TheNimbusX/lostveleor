@@ -37,26 +37,36 @@ namespace Game.LocationTests
         }
 
         [Test]
-        public void DefaultAuthoredAssets_PreservePrototypeMapsAndSpawns()
+        public void AuthoredAssets_AgreeWithRuntimeMapsAndSpawns()
         {
             var authored = _theme.Gameplay.ToDefinition();
-            Assert.That(authored.LevelCount, Is.EqualTo(10));
-            var original = PrototypeContent.Modules();
             for (ulong seed = 1; seed <= 12; seed++)
-                for (int level = 1; level <= 10; level++)
+            {
+                var run = new RiftRun(new Simulation(seed, 512), authored.Modules,
+                    PrototypeContent.Items(), PrototypeContent.ItemBaseIds(), location: authored);
+                run.StartRun();
+                for (int level = 1; level <= authored.LevelCount; level++)
                 {
                     var seeds = RiftLevelSeeds.ForLevel(seed, level);
-                    var oldMap = new LayoutMap(original);
-                    new LayoutGenerator().Generate(original, seeds.Layout, oldMap, 10 + level);
-                    var newMap = new LayoutMap(authored.Modules);
+                    var newMap = new LayoutMap(authored.Modules, authored.MaxModules);
                     authored.GetLevel(level).Generate(new LayoutGenerator(), authored.Modules, newMap, seeds.Layout);
-                    Assert.That(newMap.Hash(), Is.EqualTo(oldMap.Hash()), $"seed {seed}, level {level}");
-                    var expected = new Simulation(seed, 512);
-                    expected.SetupRift(oldMap, seeds.Spawns, 1 + level / 3, 3 + level / 2, 100 + 100 * level / 4);
+                    Assert.That(newMap.Hash(), Is.EqualTo(run.Map.Hash()), $"seed {seed}, level {level}");
                     var actual = new Simulation(seed, 512);
                     authored.GetLevel(level).Spawn(actual, newMap, seeds.Spawns);
-                    Assert.That(actual.StateHash(), Is.EqualTo(expected.StateHash()));
+                    Assert.That(actual.Entities.Count, Is.EqualTo(run.Sim.Entities.Count));
+                    for (int i = 0; i < actual.Entities.Count; i++)
+                    {
+                        Assert.That(actual.Entities.Position[i], Is.EqualTo(run.Sim.Entities.Position[i]));
+                        if (i != Simulation.PlayerId)
+                            Assert.That(actual.Entities.Health[i], Is.EqualTo(run.Sim.Entities.Health[i]));
+                    }
+                    for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                    run.Step(InputFrame.Empty);
+                    run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+                    run.Step(InputFrame.Empty);
+                    run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
                 }
+            }
         }
 
         [Test]
