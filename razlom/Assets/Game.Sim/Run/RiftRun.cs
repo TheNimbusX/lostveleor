@@ -21,10 +21,7 @@ namespace Game.Sim
         /// <summary>Потолок собранных наград за забег.</summary>
         private const int MaxTakenRewards = 64;
 
-        // Текущий состав прототипа — 3 Хранителя и 6 Корнеползов.
-        // Рост здоровья Хранителя с глубиной пока сохранён отдельно от роя.
-        private const int BaseEnemyHealth = 100;
-        private const int BaseRooms = 6;
+        private readonly LocationDefinition _location;
 
         private readonly Simulation _sim;
         private readonly ModuleSet _modules;
@@ -46,6 +43,9 @@ namespace Game.Sim
 
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
+        public ulong LayoutSeed { get; private set; }
+        public ulong SpawnSeed { get; private set; }
+        public RiftLevelSettings LevelSettings { get; private set; }
 
         /// <summary>Справочник предметов: нужен, чтобы развернуть предложенный рецепт в числа.</summary>
         public ItemDatabase Items => _items;
@@ -72,13 +72,15 @@ namespace Game.Sim
         public RewardOffer GetOffer(int index) => _offers[index];
 
         public RiftRun(Simulation sim, ModuleSet modules, ItemDatabase items, int[] itemBaseIds,
-            int maxModules = 64)
+            int maxModules = 64, LocationDefinition location = null)
         {
             _sim = sim;
-            _modules = modules;
+            _location = location;
+            _location?.ValidateCapacity(sim.Entities.Capacity);
+            _modules = location?.Modules ?? modules;
             _items = items;
             _itemBaseIds = itemBaseIds;
-            _map = new LayoutMap(modules, maxModules);
+            _map = new LayoutMap(_modules, location?.MaxModules ?? maxModules);
 
             Phase = RunPhase.Idle;
         }
@@ -102,17 +104,17 @@ namespace Game.Sim
         {
             Depth++;
 
-            ulong layoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
-            _generator.Generate(_modules, layoutSeed, _map, BaseRooms + Depth);
+            LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
+            LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
+            LevelSettings.Generate(_generator, _modules, _map, LayoutSeed);
 
-            ulong spawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
+            SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             if (CombatFeelShowcase != CombatFeelCaptureTier.None)
                 _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
             else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);
             else
-                _sim.SetupForestEncounter(_map, spawnSeed,
-                    BaseEnemyHealth + BaseEnemyHealth * Depth / 4);
+                LevelSettings.Spawn(_sim, _map, SpawnSeed);
 
             // Расстановка родила игрока заново, а рождение сбрасывает лист статов
             // целиком: индекс — это identity, и лист принадлежит слоту, а не
@@ -137,6 +139,10 @@ namespace Game.Sim
             {
                 case RunPhase.Clearing:
                     StepClearing(in input, command);
+                    break;
+
+                case RunPhase.SeekingExit:
+                    StepSeekingExit(in input, command);
                     break;
 
                 case RunPhase.ChoosingReward:
@@ -167,6 +173,33 @@ namespace Game.Sim
             if (_sim.CountAliveEnemies() == 0)
             {
                 RiftsCleared++;
+                Phase = RunPhase.SeekingExit;
+            }
+        }
+
+        /// <summary>
+        /// Враги мертвы, симуляция продолжает шагать: игрок сам доходит до
+        /// помеченного выхода. Награда роллится только по приходу — так же,
+        /// как раньше роллилась сразу по зачистке.
+        /// </summary>
+        private void StepSeekingExit(in InputFrame input, RunCommand command)
+        {
+            if (command == RunCommand.Leave)
+            {
+                End(RunOutcome.Left);
+                return;
+            }
+
+            _sim.Step(in input);
+
+            if (!_sim.Entities.Alive[Simulation.PlayerId])
+            {
+                End(RunOutcome.Died);
+                return;
+            }
+
+            if (_sim.PlayerReachedExit(_map))
+            {
                 RollOffers();
                 Phase = RunPhase.ChoosingReward;
             }

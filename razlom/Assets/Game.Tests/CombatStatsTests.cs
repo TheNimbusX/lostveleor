@@ -717,6 +717,12 @@ namespace Game.Tests
 
             InputFrame idle = InputFrame.Empty;
             run.Step(in idle);
+
+            // Враги мертвы, но экран награды теперь приходит только у выхода —
+            // телепортируем игрока к нему, как делает RiftRunTests.
+            sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+            run.Step(in idle);
+
             Assert.AreEqual(RunPhase.ChoosingReward, run.Phase);
 
             var pick = new InputFrame { Command = (byte)RunCommand.ChooseReward1 };

@@ -48,6 +48,7 @@ namespace Game.View
         [Header("Сессия")]
         [Tooltip("0 — сгенерировать сид из текущего времени при старте.")]
         public ulong RunSeed = 0;
+        public Game.Data.LocationProfileAsset Location;
 
         [Tooltip("Не используется в режиме забега — Разлом расставляет врагов по комнатам сам.")]
         public int EnemyCount = 40;
@@ -236,7 +237,8 @@ namespace Game.View
 
             // Игра начинается в ЛАГЕРЕ, а не в Разломе. Забег теперь то, во что
             // входят, а не то, что запускается вместо главного меню.
-            Session = CampSaveStore.Load(seed);
+            var location = Location != null ? Location.ToDefinition() : null;
+            Session = CampSaveStore.Load(seed, location);
             gameObject.AddComponent<CampSaveStore>();
             // ВИТРИНА БОЛЬШЕ НЕ ВКЛЮЧАЕТСЯ САМА В PLAY MODE.
             //

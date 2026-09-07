@@ -44,6 +44,10 @@ namespace Game.Tests
             EntityStore entities = session.Run.Sim.Entities;
             for (int i = 0; i < entities.Count; i++)
                 if (entities.Side[i] != Faction.Wole) entities.Alive[i] = false;
+            session.Step(Idle);
+            entities.Position[Simulation.PlayerId] = session.Run.Map.CenterOf(session.Run.Map.GetExit(0));
+            session.Step(Idle);
+            Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
         }
 
         /// <summary>Проходит забег до конца: зачищает Разлом, берёт награду, уходит с добычей.</summary>

@@ -7,6 +7,14 @@ Shader "Razlom/Arena Floor"
         _GridColor ("Grid Color", Color) = (0.035,0.045,0.075,1)
         _GridScale ("Grid Scale", Float) = 0.25
         _GridWidth ("Grid Width", Range(0.01,0.25)) = 0.035
+
+        // Фото-текстура поверх процедурного тона. По умолчанию серая (0.5) —
+        // при силе 2.0 это математически то же самое "чистый цвет" поведение,
+        // что было до неё, так что материалы без текстуры не темнеют и не
+        // меняются местами.
+        _BaseMap ("Base Texture (optional)", 2D) = "grey" {}
+        _BaseMapScale ("Base Texture Tiling", Float) = 0.3
+        _BaseMapStrength ("Base Texture Strength", Range(0,4)) = 2.0
     }
 
     SubShader
@@ -42,7 +50,12 @@ Shader "Razlom/Arena Floor"
                 half4 _GridColor;
                 float _GridScale;
                 float _GridWidth;
+                float _BaseMapScale;
+                half _BaseMapStrength;
             CBUFFER_END
+
+            TEXTURE2D(_BaseMap);
+            SAMPLER(sampler_BaseMap);
 
             float4 _RazlomHeroLightPosition;
             half4 _RazlomHeroLightColor;
@@ -114,8 +127,16 @@ Shader "Razlom/Arena Floor"
                 float2 stoneCell = floor(input.positionWS.xz * 0.42);
                 half stoneVariation = frac(sin(dot(stoneCell,
                     float2(12.9898, 78.233))) * 43758.5453);
-                half3 stoneColor = lerp(_BaseColor.rgb, _AccentColor.rgb,
+                half3 tint = lerp(_BaseColor.rgb, _AccentColor.rgb,
                     0.05h + stoneVariation * 0.26h);
+
+                // Фото-текстура тайлится по мировым XZ независимо от плит —
+                // её задача дать настоящую фактуру (грязь/трава), а не ещё
+                // одну сетку. Без назначенной текстуры _BaseMap — дефолтный
+                // серый (0.5), и при силе 2.0 это ровно старое поведение.
+                half3 baseTex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap,
+                    input.positionWS.xz * _BaseMapScale).rgb;
+                half3 stoneColor = tint * baseTex * _BaseMapStrength;
 
                 // 2. Мелкая плитка вчетверо чаще крупной: она и даёт масштаб.
                 // Без неё игрок не понимает, насколько велика арена.

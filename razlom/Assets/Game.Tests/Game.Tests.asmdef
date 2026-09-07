@@ -3,10 +3,11 @@
     "rootNamespace": "Game.Tests",
     "references": [
         "Game.Sim",
+        "Game.Data",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
-    "includePlatforms": [],
+    "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,

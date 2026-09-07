@@ -18,6 +18,8 @@ namespace Game.View
         [Header("Забег")]
         [Tooltip("0 — сгенерировать сид из текущего времени.")]
         public ulong RunSeed = 0;
+        [Tooltip("Профиль первой локации. Пусто — Resources/Locations/Meadow.")]
+        public LocationTheme Location;
         public int EnemyCount = 40;
         public bool LogStateHash = false;
 
@@ -63,6 +65,8 @@ namespace Game.View
             Driver.RunSeed = CaptureRig.HasSeedOverride ? CaptureRig.SeedOverride : RunSeed;
             Driver.EnemyCount = CaptureRig.HasEnemyOverride ? CaptureRig.EnemyOverride : EnemyCount;
             Driver.LogStateHash = LogStateHash;
+            var location = Location != null ? Location : Resources.Load<LocationTheme>("Locations/Meadow");
+            Driver.Location = location != null ? location.Gameplay : null;
 
             sim.AddComponent<ArenaView>();
             // Лента сабли — часть самой атаки, поэтому она нужна и в обычном
@@ -75,7 +79,7 @@ namespace Game.View
             sim.AddComponent<PelagVfxController>();
             if (CombatSound) sim.AddComponent<CombatAudio>();
             sim.AddComponent<PauseMenu>();
-            sim.AddComponent<LayoutView>();
+            sim.AddComponent<LayoutView>().Profile = location;
             if (!CaptureRig.IsVfxShowcase)
             {
                 sim.AddComponent<CombatIndicators>();

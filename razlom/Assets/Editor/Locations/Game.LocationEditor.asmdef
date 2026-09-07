@@ -1,0 +1,7 @@
+{
+    "name": "Game.LocationEditor",
+    "rootNamespace": "Game.LocationEditor",
+    "references": ["Game.Sim", "Game.Data", "Game.View", "UnityEditor.TestRunner", "UnityEngine.TestRunner"],
+    "includePlatforms": ["Editor"],
+    "autoReferenced": true
+}

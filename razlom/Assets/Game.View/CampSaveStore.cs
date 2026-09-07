@@ -9,7 +9,7 @@ namespace Game.View
         static bool _disabled; static bool _recovered; ulong _hash; bool _hasHash; TickDriver _driver;
         static string PathName=>Path.Combine(Application.persistentDataPath,"camp-v1.sav");
         static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0;
-        public static GameSession Load(ulong seed)
+        public static GameSession Load(ulong seed, LocationDefinition location = null)
         {
             _disabled=Capture || CaptureRig.AutoEnterRift;_recovered=false;Camp camp=null;
             if(!_disabled)
@@ -21,7 +21,9 @@ namespace Game.View
                 {try{camp=CampSaveCodec.Decode(File.ReadAllBytes(PathName+".bak"),PrototypeContent.Items());_recovered=true;Debug.Log("[camp-save] Восстановлено из резервной копии");}catch(Exception e){_disabled=true;Debug.LogWarning("[camp-save] Резервная копия: "+e.Message);}}
                 if(camp==null&&File.Exists(PathName))_disabled=true;
             }
-            return new GameSession(seed,camp??PrototypeContent.NewCamp(),PrototypeContent.Modules(),PrototypeContent.ItemBaseIds());
+            var modules = location?.Modules ?? PrototypeContent.Modules();
+            return new GameSession(seed, camp??PrototypeContent.NewCamp(), modules,
+                PrototypeContent.ItemBaseIds(), location: location);
         }
         void Start(){_driver=GetComponent<TickDriver>();}
         void LateUpdate(){Save();}

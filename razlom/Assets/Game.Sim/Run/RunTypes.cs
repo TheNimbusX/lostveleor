@@ -29,6 +29,9 @@ namespace Game.Sim
 
         /// <summary>Забег окончен.</summary>
         Ended = 3,
+
+        /// <summary>Враги зачищены, игрок идёт к выходу из Разлома.</summary>
+        SeekingExit = 4,
     }
 
     /// <summary>Чем закончился забег.</summary>

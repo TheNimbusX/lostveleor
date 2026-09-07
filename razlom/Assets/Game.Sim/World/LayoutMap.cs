@@ -70,6 +70,10 @@ namespace Game.Sim
 
         private readonly OpenConnector[] _open;
         private int _openCount;
+        private readonly int[] _exits;
+        private int _exitCount;
+        private readonly int[] _rewardBranches;
+        private int _rewardBranchCount;
 
         public int PlacedCount => _placedCount;
         public int OpenCount => _openCount;
@@ -78,6 +82,12 @@ namespace Game.Sim
         public OpenConnector GetOpen(int index) => _open[index];
         public ModuleSet Modules => _modules;
 
+        public int ExitCount => _exitCount;
+        public int GetExit(int index) => _exits[index];
+
+        public int RewardBranchCount => _rewardBranchCount;
+        public int GetRewardBranch(int index) => _rewardBranches[index];
+
         public LayoutMap(ModuleSet modules, int maxModules = 64)
         {
             _modules = modules;
@@ -85,12 +95,16 @@ namespace Game.Sim
 
             // Точек стыковки заведомо больше, чем модулей: с запасом.
             _open = new OpenConnector[maxModules * 8];
+            _exits = new int[8];
+            _rewardBranches = new int[8];
         }
 
         public void Clear()
         {
             _placedCount = 0;
             _openCount = 0;
+            _exitCount = 0;
+            _rewardBranchCount = 0;
         }
 
         /// <summary>Помещается ли модуль так, чтобы не задеть уже стоящие.</summary>
@@ -147,6 +161,59 @@ namespace Game.Sim
             _openCount--;
         }
 
+        
+        /// <summary>Помечает модуль выходом. Решение о том, какой — снаружи.</summary>
+        public void AddExit(int placement)
+        {
+            if (_exitCount >= _exits.Length) return;
+            _exits[_exitCount++] = placement;
+        }
+
+        public bool IsExit(int placement)
+        {
+            for (int i = 0; i < _exitCount; i++)
+                if (_exits[i] == placement) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Помечает модуль необязательным ответвлением с наградой (сундук,
+        /// элитный моб — решает вызывающий). В отличие от выхода, посещение
+        /// необязательно: это тупик не на пути к выходу, а дальше не идущий.
+        /// </summary>
+        public void AddRewardBranch(int placement)
+        {
+            if (_rewardBranchCount >= _rewardBranches.Length) return;
+            _rewardBranches[_rewardBranchCount++] = placement;
+        }
+
+        public bool IsRewardBranch(int placement)
+        {
+            for (int i = 0; i < _rewardBranchCount; i++)
+                if (_rewardBranches[i] == placement) return true;
+            return false;
+        }
+
+        /// <summary>Есть ли пристыкованные к этому модулю. Лист — это тупик.</summary>
+        public bool HasChild(int placement)
+        {
+            for (int i = 0; i < _placedCount; i++)
+                if (_placed[i].Parent == placement) return true;
+            return false;
+        }
+
+        /// <summary>Сколько шагов по дереву от входа.</summary>
+        public int DepthOf(int placement)
+        {
+            int steps = 0;
+            while (placement > 0 && _placed[placement].Parent >= 0)
+            {
+                placement = _placed[placement].Parent;
+                steps++;
+            }
+            return steps;
+        }
+
         /// <summary>
         /// Проверка связности: до всех ли модулей можно дойти от входа.
         ///
@@ -199,17 +266,20 @@ namespace Game.Sim
         public bool ContainsWorld(FixVec2 point)
         {
             for (int i = 0; i < _placedCount; i++)
-            {
-                PlacedModule p = _placed[i];
-                Fix64 minX = CellSize * p.OriginX;
-                Fix64 maxX = CellSize * (p.OriginX + p.Width);
-                Fix64 minY = CellSize * p.OriginY;
-                Fix64 maxY = CellSize * (p.OriginY + p.Height);
-                if (point.X >= minX && point.X <= maxX
-                    && point.Y >= minY && point.Y <= maxY)
-                    return true;
-            }
+                if (ContainsWorld(i, point)) return true;
             return false;
+        }
+
+        /// <summary>Находится ли мировая точка в AABB конкретного размещённого модуля.</summary>
+        public bool ContainsWorld(int placement, FixVec2 point)
+        {
+            PlacedModule p = _placed[placement];
+            Fix64 minX = CellSize * p.OriginX;
+            Fix64 maxX = CellSize * (p.OriginX + p.Width);
+            Fix64 minY = CellSize * p.OriginY;
+            Fix64 maxY = CellSize * (p.OriginY + p.Height);
+            return point.X >= minX && point.X <= maxX
+                   && point.Y >= minY && point.Y <= maxY;
         }
 
         /// <summary>
@@ -275,6 +345,11 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, _placed[i].OriginY);
                 Hashing.Mix(ref hash, _placed[i].Parent);
             }
+            Hashing.Mix(ref hash, _exitCount);
+            for (int i = 0; i < _exitCount; i++) Hashing.Mix(ref hash, _exits[i]);
+
+            Hashing.Mix(ref hash, _rewardBranchCount);
+            for (int i = 0; i < _rewardBranchCount; i++) Hashing.Mix(ref hash, _rewardBranches[i]);
 
             return hash;
         }

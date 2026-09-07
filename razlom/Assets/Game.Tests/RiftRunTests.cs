@@ -87,6 +87,22 @@ namespace Game.Tests
                 if (entities.Side[i] != Faction.Wole) entities.Alive[i] = false;
         }
 
+        /// <summary>
+        /// Зачищает Разлом и доводит игрока до экрана награды.
+        ///
+        /// Между смертью последнего врага и наградой встал SeekingExit: игрок
+        /// обязан дойти до выхода. Тест телепортирует его туда напрямую —
+        /// сама ходьба проверяется движковыми тестами, а не петлёй забега.
+        /// </summary>
+        private static void ClearRiftAndReachExit(RiftRun run)
+        {
+            KillAllEnemies(run);
+            run.Step(Idle);
+
+            run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+            run.Step(Idle);
+        }
+
         private static InputFrame Command(RunCommand command)
             => new InputFrame { Aim = FixVec2.Zero, AbilityMask = 0, Flags = 0, Command = (byte)command };
 
@@ -104,8 +120,7 @@ namespace Game.Tests
             Assert.That(run.Map.PlacedCount, Is.GreaterThan(1), "Разлом не собрался");
             Assert.That(run.Sim.CountAliveEnemies(), Is.GreaterThan(0), "врагов не расставили");
 
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
 
             Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
             Assert.That(run.RiftsCleared, Is.EqualTo(1));
@@ -116,8 +131,7 @@ namespace Game.Tests
         {
             RiftRun run = NewRun();
 
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
             Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
 
             run.Step(Command(RunCommand.ChooseReward2));
@@ -138,8 +152,7 @@ namespace Game.Tests
                 Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing), $"Разлом {rift}");
                 Assert.That(run.Depth, Is.EqualTo(rift));
 
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
 
                 Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward), $"Разлом {rift} не зачёлся");
                 run.Step(Command(RunCommand.ChooseReward1));
@@ -156,8 +169,7 @@ namespace Game.Tests
 
             for (int rift = 0; rift < 5; rift++)
             {
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
 
                 for (int i = 0; i < RiftRun.RewardChoices; i++)
                 {
@@ -176,8 +188,7 @@ namespace Game.Tests
         {
             RiftRun run = NewRun();
 
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
             run.Step(Command(RunCommand.ChooseReward1));
             Assert.That(run.TakenRewardCount, Is.EqualTo(1));
 
@@ -213,8 +224,7 @@ namespace Game.Tests
         {
             RiftRun run = NewRun();
 
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
             run.Step(Command(RunCommand.ChooseReward1));
 
             run.Step(Command(RunCommand.Leave));
@@ -229,8 +239,7 @@ namespace Game.Tests
         {
             RiftRun run = NewRun();
 
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
             Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
 
             run.Step(Command(RunCommand.Leave));
@@ -256,8 +265,7 @@ namespace Game.Tests
             // Пока игрок читает награды, бой стоит: иначе он терял бы здоровье
             // за чтение, и экран награды стал бы наказанием.
             RiftRun run = NewRun();
-            KillAllEnemies(run);
-            run.Step(Idle);
+            ClearRiftAndReachExit(run);
 
             int tickBefore = run.Sim.Tick;
             for (int i = 0; i < 30; i++) run.Step(Idle);
@@ -306,8 +314,7 @@ namespace Game.Tests
                         Command = 0
                     });
 
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
                 run.Step(Command(choices[i]));
             }
 
@@ -322,8 +329,7 @@ namespace Game.Tests
             // Проходим несколько Разломов, пока не наберём прибавку к стату.
             for (int i = 0; i < 12; i++)
             {
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
                 run.Step(Command(RunCommand.ChooseReward1));
             }
 
@@ -349,8 +355,7 @@ namespace Game.Tests
 
             for (int i = 0; i < 12; i++)
             {
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
 
                 for (int o = 0; o < RiftRun.RewardChoices; o++)
                 {
@@ -373,8 +378,7 @@ namespace Game.Tests
 
             for (int i = 0; i < 6; i++)
             {
-                KillAllEnemies(run);
-                run.Step(Idle);
+                ClearRiftAndReachExit(run);
                 run.Step(Command(RunCommand.ChooseReward1));
             }
 
