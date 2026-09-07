@@ -137,6 +137,23 @@ namespace Game.Sim
         private const int HeavyCleaveTargets = 2;
         private const int WhirlwindKillCooldownRefundTicks = 7;
 
+        // ---- ИИ врага: обнаружение ----
+        //
+        // Раньше враг бежал к игроку с первого тика существования, по прямой,
+        // независимо от расстояния — весь Разлом срывался с места одним кадром,
+        // едва игрок появлялся на карте. Теперь погоня начинается только после
+        // обнаружения: игрок должен подойти на EnemyDetectRange, а сама реакция
+        // ещё и не мгновенна — см. UpdateAggro.
+        private static readonly Fix64 EnemyDetectRange = Fix64.FromInt(7);
+        private static readonly Fix64 EnemyDetectRangeSq = EnemyDetectRange * EnemyDetectRange;
+
+        // Случайная пауза между входом в радиус обнаружения и стартом погони.
+        // Не ноль: враги в одной комнате, замеченные игроком одновременно, не
+        // должны срываться с места одним и тем же тиком — это читается строем
+        // роботов, а не толпой существ. 5–15 тиков — это 0.17–0.5 секунды на 30 Гц.
+        private const int EnemyNoticeMinTicks = 5;
+        private const int EnemyNoticeMaxTicks = 15;
+
         // ---- базы статов прототипа (потом уедут в таблицы народа и класса) ----
         //
         // Числа те же, что были боевыми константами до подключения статов.
@@ -145,6 +162,16 @@ namespace Game.Sim
         // надетый предмет меняет удар так же, как узел дерева или пассивка.
         private const int PlayerBaseHealth = 1000;
         private const int EnemyBaseHealth  = 100;
+
+        // Щит и широкий силуэт требуют больше воздуха, чем прежняя техническая
+        // капсула. Названо константой: расстановка в SetupRift отступает от
+        // стен на этот же радиус, а не только ConfigureEnemy.
+        private static readonly Fix64 EnemyBodyRadius = Fix64.Ratio(62, 100);
+
+        // Отступ от стен модуля сверх тела врага при случайной расстановке.
+        // Без него силуэт мог бы встать вплотную к границе и наполовину
+        // уйти за неё зрительно, даже пройдя ClampToWalkable.
+        private static readonly Fix64 EnemySpawnWallMargin = Fix64.One;
 
         private static readonly Fix64 PlayerBaseDamage = Fix64.FromInt(34);
         private static readonly Fix64 EnemyBaseDamage  = Fix64.FromInt(7);
@@ -397,9 +424,12 @@ namespace Game.Sim
         /// расстановку можно повторить, зная только сид, не таща с собой
         /// состояние забега.
         ///
-        /// Игрок встаёт в модуль-вход, враги — во все остальные.
+        /// Игрок встаёт в модуль-вход, враги — во все остальные. Число врагов
+        /// в каждой комнате — свой бросок в диапазоне [min, max]: комнаты
+        /// одной карты не должны быть заселены поровну.
         /// </summary>
-        public void SetupRift(LayoutMap map, ulong spawnSeed, int enemiesPerRoom, int enemyHealth)
+        public void SetupRift(LayoutMap map, ulong spawnSeed, int minEnemiesPerRoom, int maxEnemiesPerRoom,
+            int enemyHealth)
         {
             _layout = map;
             ClearMoveOrder();
@@ -422,20 +452,43 @@ namespace Game.Sim
 
             for (int placement = 1; placement < map.PlacedCount; placement++)
             {
-                FixVec2 center = map.CenterOf(placement);
+                int enemyCount = rng.NextInt(minEnemiesPerRoom, maxEnemiesPerRoom + 1);
 
-                for (int e = 0; e < enemiesPerRoom; e++)
+                for (int e = 0; e < enemyCount; e++)
                 {
-                    // Разброс внутри комнаты, чтобы враги не стояли стопкой.
-                    Fix64 dx = rng.NextFix(Fix64.FromInt(-2), Fix64.FromInt(2));
-                    Fix64 dy = rng.NextFix(Fix64.FromInt(-2), Fix64.FromInt(2));
+                    FixVec2 spot = RandomSpotInModule(map, placement, EnemyBodyRadius, ref rng);
 
-                    int id = Entities.Spawn(new FixVec2(center.X + dx, center.Y + dy),
-                        enemyHealth, Faction.Orvill);
+                    int id = Entities.Spawn(spot, enemyHealth, Faction.Orvill);
                     ConfigureEnemy(id);
                     _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
                 }
             }
+        }
+
+        /// <summary>
+        /// Случайная точка внутри модуля, отступив от его стен на радиус тела
+        /// плюс запас. Слишком узкий модуль (отступ съедает всю площадь)
+        /// откатывается на центр — так спавн не ломается на тесных комнатах.
+        ///
+        /// ClampToWalkable — подстраховка, а не основной механизм: угол
+        /// модуля мог оказаться вне проходимой зоны, если сосед пристыкован
+        /// не во всю грань, и точку нужно вернуть на пол гарантированно.
+        /// </summary>
+        private static FixVec2 RandomSpotInModule(LayoutMap map, int placement, Fix64 radius, ref Pcg32 rng)
+        {
+            PlacedModule module = map.GetPlaced(placement);
+            Fix64 margin = radius + EnemySpawnWallMargin;
+
+            Fix64 minX = LayoutMap.CellSize * module.OriginX + margin;
+            Fix64 maxX = LayoutMap.CellSize * (module.OriginX + module.Width) - margin;
+            Fix64 minY = LayoutMap.CellSize * module.OriginY + margin;
+            Fix64 maxY = LayoutMap.CellSize * (module.OriginY + module.Height) - margin;
+
+            FixVec2 point = minX > maxX || minY > maxY
+                ? map.CenterOf(placement)
+                : new FixVec2(rng.NextFix(minX, maxX), rng.NextFix(minY, maxY));
+
+            return map.ClampToWalkable(point, radius);
         }
 
         /// <summary>
@@ -574,10 +627,9 @@ namespace Game.Sim
         /// </summary>
         private void ConfigureEnemy(int id)
         {
-            // Щит и широкий силуэт требуют больше воздуха, чем прежняя
-            // техническая капсула. Радиус не даёт строю схлопываться в одну
-            // нечитаемую стопку вокруг игрока.
-            Entities.BodyRadius[id] = Fix64.Ratio(62, 100);
+            // Радиус не даёт строю схлопываться в одну нечитаемую стопку
+            // вокруг игрока.
+            Entities.BodyRadius[id] = EnemyBodyRadius;
 
             StatSheet sheet = Entities.Stats[id];
             sheet.SetBase(StatType.Damage, EnemyBaseDamage);
@@ -818,6 +870,23 @@ namespace Game.Sim
             for (int i = 0; i < Entities.Count; i++)
                 if (Entities.Alive[i] && Entities.Side[i] != Faction.Wole) alive++;
             return alive;
+        }
+
+        /// <summary>
+        /// Стоит ли игрок в модуле-выходе. Условие конца SeekingExit.
+        ///
+        /// Карта без выходов (ExitCount == 0) считается пройденной сразу —
+        /// это старые карты и тесты, собранные до появления понятия «выход».
+        /// </summary>
+        public bool PlayerReachedExit(LayoutMap map)
+        {
+            if (map.ExitCount == 0) return true;
+            if (!Entities.Alive[PlayerId]) return false;
+
+            FixVec2 position = Entities.Position[PlayerId];
+            for (int i = 0; i < map.ExitCount; i++)
+                if (map.ContainsWorld(map.GetExit(i), position)) return true;
+            return false;
         }
 
         /// <summary>Ровно один шаг симуляции.</summary>
@@ -1462,10 +1531,21 @@ namespace Game.Sim
 
                 FixVec2 toPlayer = playerPos - Entities.Position[i];
 
-                // Разворот идёт и когда враг уже подошёл вплотную и стоит:
-                // добежав, он должен доворачиваться к цели, а не замирать боком.
+                // Разворот идёт ВСЕГДА, даже до того как враг решил погнаться:
+                // тело следит взглядом за игроком, а погоня — отдельное,
+                // не мгновенное решение (см. UpdateAggro). Разворот идёт и
+                // когда враг уже подошёл вплотную и стоит: добежав, он должен
+                // доворачиваться к цели, а не замирать боком.
                 Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
                     EnemyTurnStepCos, EnemyTurnStepSin);
+
+                if (!UpdateAggro(i, toPlayer))
+                {
+                    // Ещё не заметил — стоит на месте, а не бежит вслепую
+                    // через весь Разлом с той секунды, как игрок вошёл.
+                    Entities.Velocity[i] = FixVec2.Zero;
+                    continue;
+                }
 
                 Fix64 speed = Entities.MoveStep[i];
 
@@ -1483,6 +1563,35 @@ namespace Game.Sim
                 if (moved.Equals(from) && Entities.Velocity[i].LengthSq.Raw != 0)
                     Entities.Velocity[i] = FixVec2.Zero;
             }
+        }
+
+        /// <summary>
+        /// Решает, гонится ли враг за игроком уже сейчас. Агро одноразовое и
+        /// необратимое: заметив, враг не «забывает» игрока, даже если тот
+        /// выйдет за радиус обнаружения — так же ведёт себя большинство ARPG,
+        /// и это проще объяснить игроку, чем скрытый таймер забывания.
+        ///
+        /// Пока не агрится — таймер обнаружения живёт только внутри радиуса:
+        /// вышел, не успев среагировать, — обнаружение сбрасывается, а не
+        /// тикает в фоне, иначе погоня стартовала бы необъяснимо поздно.
+        /// </summary>
+        private bool UpdateAggro(int i, FixVec2 toPlayer)
+        {
+            if (Entities.Aggro[i]) return true;
+
+            if (toPlayer.LengthSq > EnemyDetectRangeSq)
+            {
+                Entities.NoticeTick[i] = -1;
+                return false;
+            }
+
+            if (Entities.NoticeTick[i] < 0)
+                Entities.NoticeTick[i] = Tick + Rng.Ai.NextInt(EnemyNoticeMinTicks, EnemyNoticeMaxTicks + 1);
+
+            if (Tick < Entities.NoticeTick[i]) return false;
+
+            Entities.Aggro[i] = true;
+            return true;
         }
 
         /// <summary>

@@ -78,6 +78,17 @@ namespace Game.Sim
         /// <summary>ForcedMotionKind. Байт, потому что хранится на каждую сущность.</summary>
         public readonly byte[] ForcedKind;
 
+        // ---- ИИ ----
+
+        /// <summary>Заметил ли враг игрока. Одноразовое и необратимое — см. Simulation.UpdateAggro.</summary>
+        public readonly bool[] Aggro;
+
+        /// <summary>
+        /// Тик, на котором сработает обнаружение, или −1, если игрок сейчас
+        /// вне радиуса. Задержка реакции — не мгновенное агро.
+        /// </summary>
+        public readonly int[] NoticeTick;
+
         // ---- статы ----
 
         /// <summary>
@@ -148,6 +159,9 @@ namespace Game.Sim
             ForcedTicksLeft = new int[capacity];
             ForcedKind = new byte[capacity];
 
+            Aggro = new bool[capacity];
+            NoticeTick = new int[capacity];
+
             Stats = new StatSheet[capacity];
             for (int i = 0; i < capacity; i++) Stats[i] = new StatSheet(8);
 
@@ -186,6 +200,12 @@ namespace Game.Sim
             ForcedTarget[id] = FixVec2.Zero;
             ForcedTicksLeft[id] = 0;
             ForcedKind[id] = 0;
+
+            Aggro[id] = false;
+
+            // −1, а не 0: ноль — валидный номер тика, и на тике 0 враг
+            // агрился бы мгновенно, ни разу не бросив кубик задержки.
+            NoticeTick[id] = -1;
 
             StatSheet sheet = Stats[id];
             sheet.ClearModifiers();
@@ -270,6 +290,8 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, ForcedTarget[i].Y);
                 Hashing.Mix(ref hash, ForcedTicksLeft[i]);
                 Hashing.Mix(ref hash, (int)ForcedKind[i]);
+                Hashing.Mix(ref hash, Aggro[i] ? 1 : 0);
+                Hashing.Mix(ref hash, NoticeTick[i]);
 
                 // Лист статов — такая же часть состояния, как позиция. Не попади
                 // он в хеш, расхождение в снаряжении жило бы незамеченным до тех

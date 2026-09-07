@@ -65,7 +65,15 @@ namespace Game.View
             return m;
         }
 
-        public static Material CreateArenaFloor(Color baseColor, Color accentColor)
+        /// <summary>
+        /// baseTexture необязательна: без неё шейдер ведёт себя ровно так же,
+        /// как до её появления (_BaseMap по умолчанию серый, сила 2.0 —
+        /// вместе это математический ноль эффекта). С текстурой (например,
+        /// dirt01 из Fantasy Forest Environment) поверх трёх процедурных
+        /// слоёв детали ложится настоящая фактура, а не ещё один узор.
+        /// </summary>
+        public static Material CreateArenaFloor(Color baseColor, Color accentColor,
+            Texture2D baseTexture = null, float textureTiling = 0.3f, float textureStrength = 2f)
         {
             if (_arenaFloor == null) _arenaFloor = Shader.Find("Razlom/Arena Floor");
             if (_arenaFloor == null) return CreateLit(baseColor);
@@ -86,6 +94,14 @@ namespace Game.View
             // подплитку вчетверо чаще и зерно — деталь на трёх частотах.
             material.SetFloat("_GridScale", 0.62f);
             material.SetFloat("_GridWidth", 0.014f);
+
+            if (baseTexture != null)
+            {
+                material.SetTexture("_BaseMap", baseTexture);
+                material.SetFloat("_BaseMapScale", textureTiling);
+                material.SetFloat("_BaseMapStrength", textureStrength);
+            }
+
             return material;
         }
 

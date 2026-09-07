@@ -1,5 +1,4 @@
 * text=auto
-
 # Binary art and DCC sources belong in Git LFS.
 *.blend filter=lfs diff=lfs merge=lfs -text
 *.fbx filter=lfs diff=lfs merge=lfs -text
@@ -11,7 +10,6 @@
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.mp3 filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
-
 # Unity YAML assets should stay mergeable text.
 *.meta text eol=lf
 *.unity text eol=lf
@@ -21,4 +19,8 @@
 *.controller text eol=lf
 *.anim text eol=lf
 *.asmdef text eol=lf
-
+*.hdr filter=lfs diff=lfs merge=lfs -text
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+*.tif filter=lfs diff=lfs merge=lfs -text
+*.tga filter=lfs diff=lfs merge=lfs -text
+*.exr filter=lfs diff=lfs merge=lfs -text

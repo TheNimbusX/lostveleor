@@ -3,6 +3,7 @@
     "rootNamespace": "Game.View",
     "references": [
         "Game.Sim",
+        "Game.Data",
         "Unity.InputSystem",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime"

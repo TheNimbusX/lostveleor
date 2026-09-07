@@ -219,7 +219,7 @@ namespace Game.Tests
             Assert.That(map.TryPlace(0, 0, 8, 0, parent: -1), Is.EqualTo(1));
 
             var sim = new Simulation(Seed);
-            sim.SetupRift(map, Seed, enemiesPerRoom: 0, enemyHealth: 100);
+            sim.SetupRift(map, Seed, minEnemiesPerRoom: 0, maxEnemiesPerRoom: 0, enemyHealth: 100);
 
             // Вторая комната сама по себе walkable, поэтому приказ не
             // клампится к первой. Между комнатами остаётся закрытый разрыв:

@@ -50,6 +50,8 @@ namespace Game.View
             {
                 if (run.Phase == RunPhase.Clearing)
                     DrawCombatStatus(run, safeLeft);
+                else if (run.Phase == RunPhase.SeekingExit)
+                    DrawSeekingExit(safeLeft);
                 else if (run.Phase == RunPhase.ChoosingReward)
                     DrawRewardChoice(run, canvasWidth, canvasHeight, safeLeft, safeRight);
             }
@@ -68,6 +70,17 @@ namespace Game.View
                 "РАЗЛОМ  " + run.Depth, _title);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 205f, 20f),
                 "ЦЕЛЕЙ: " + run.Sim.CountAliveEnemies(), _subtitle);
+        }
+
+        private void DrawSeekingExit(float safeLeft)
+        {
+            Rect panel = new Rect(safeLeft + 18f, 18f, 260f, 62f);
+            Fill(panel, Panel);
+            Fill(new Rect(panel.x, panel.y, 4f, panel.height), Gold);
+            GUI.Label(new Rect(panel.x + 16f, panel.y + 6f, 235f, 26f),
+                "РАЗЛОМ ЗАЧИЩЕН", _title);
+            GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 235f, 20f),
+                "Найди проход дальше", _subtitle);
         }
 
         private void DrawRewardChoice(RiftRun run, float canvasWidth, float canvasHeight,

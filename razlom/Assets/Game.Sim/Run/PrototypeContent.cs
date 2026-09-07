@@ -16,9 +16,6 @@ namespace Game.Sim
             var entrance = new ModuleDefinition("module.entrance", 5, 5, new[]
             {
                 new ModuleConnector(2, 4, Direction.North),
-                new ModuleConnector(4, 2, Direction.East),
-                new ModuleConnector(2, 0, Direction.South),
-                new ModuleConnector(0, 2, Direction.West),
             }, weight: 0, isEntrance: true);
 
             var hall = new ModuleDefinition("module.hall", 7, 6, new[]
@@ -49,8 +46,13 @@ namespace Game.Sim
                 new ModuleConnector(3, 1, Direction.East),
             }, weight: 70);
 
-            return new ModuleSet(new[] { entrance, hall, corridor, junction, chamber });
-        }
+            var corner = new ModuleDefinition("module.corner", 3, 3, new[]
+            {
+                new ModuleConnector(1, 2, Direction.North),
+                new ModuleConnector(2, 1, Direction.East),
+            }, weight: 110);
+
+            return new ModuleSet(new[] { entrance, hall, corridor, junction, chamber, corner });        }
 
         /// <summary>
         /// Лагерь прототипа.

@@ -48,6 +48,7 @@ namespace Game.View
         [Header("Сессия")]
         [Tooltip("0 — сгенерировать сид из текущего времени при старте.")]
         public ulong RunSeed = 0;
+        public Game.Data.LocationProfileAsset Location;
 
         [Tooltip("Не используется в режиме забега — Разлом расставляет врагов по комнатам сам.")]
         public int EnemyCount = 40;
@@ -213,11 +214,15 @@ namespace Game.View
 
             // Игра начинается в ЛАГЕРЕ, а не в Разломе. Забег теперь то, во что
             // входят, а не то, что запускается вместо главного меню.
-            Session = PrototypeContent.NewSession(seed);
-            // В редакторе combat slice должен запускаться тем же 1+3 стендом,
-            // который мы снимаем. Иначе владелец видит старый Полигон с двумя
-            // болванками и закономерно не может проверить текущую работу.
-            Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase || Application.isEditor;
+            var location = Location != null ? Location.ToDefinition() : null;
+            Session = location == null ? PrototypeContent.NewSession(seed)
+                : new GameSession(seed, PrototypeContent.NewCamp(), location.Modules,
+                    PrototypeContent.ItemBaseIds(), location: location);
+            // 1+3 стенд включается только явным флагом -whirlwind для съёмки.
+            // Обычный плейтест в редакторе идёт через настоящий Разлом —
+            // иначе спавн, планировку и выходы было бы не проверить, не
+            // собирая билд.
+            Session.WhirlwindShowcase = CaptureRig.WhirlwindShowcase;
             Session.CombatFeelShowcase = CaptureRig.CombatFeelTier;
             Session.CombatFeelEnemyCount = CaptureRig.HasEnemyOverride
                 ? CaptureRig.EnemyOverride

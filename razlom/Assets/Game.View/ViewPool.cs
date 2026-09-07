@@ -25,8 +25,9 @@ namespace Game.View
 
         public int Created => _created;
 
-        public ViewPool(Transform parent, System.Func<GameObject> factory, int prewarm)
+        public ViewPool(Transform parent, System.Func<GameObject> factory, int prewarm, bool reportOverflow = true)
         {
+            _overflowReported = !reportOverflow;
             _parent = parent;
             _factory = factory;
 

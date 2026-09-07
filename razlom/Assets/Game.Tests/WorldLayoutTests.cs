@@ -232,6 +232,148 @@ namespace Game.Tests
             Assert.That(Connected(map), Is.False);
         }
 
+        // ---- выходы ----
+
+        [Test]
+        public void EveryMap_HasAtLeastOneExit()
+        {
+            for (ulong seed = 1; seed <= 300; seed++)
+            {
+                LayoutMap map = Generate(seed);
+                Assert.That(map.ExitCount, Is.GreaterThanOrEqualTo(1), $"сид {seed}: выхода нет");
+            }
+        }
+
+        [Test]
+        public void ChosenExit_IsADeadEnd_NotTheEntrance()
+        {
+            for (ulong seed = 1; seed <= 300; seed++)
+            {
+                LayoutMap map = Generate(seed);
+
+                for (int i = 0; i < map.ExitCount; i++)
+                {
+                    int exit = map.GetExit(i);
+                    Assert.That(exit, Is.Not.EqualTo(0), $"сид {seed}: выход совпал со входом");
+                    Assert.That(map.HasChild(exit), Is.False, $"сид {seed}: выход — не тупик");
+                }
+            }
+        }
+
+        [Test]
+        public void PlayerReachedExit_OnlyTrueAtTheExitModule()
+        {
+            LayoutMap map = Generate(55UL);
+            var sim = new Simulation(1UL, 64);
+            sim.SetupRift(map, spawnSeed: 1UL, minEnemiesPerRoom: 0, maxEnemiesPerRoom: 0, enemyHealth: 100);
+
+            Assert.That(sim.PlayerReachedExit(map), Is.False, "игрок ещё во входе, а не у выхода");
+
+            sim.Entities.Position[Simulation.PlayerId] = map.CenterOf(map.GetExit(0));
+            Assert.That(sim.PlayerReachedExit(map), Is.True);
+        }
+
+        [Test]
+        public void PlayerReachedExit_IsAlwaysTrue_WhenMapHasNoExits()
+        {
+            // Обратная совместимость: карты и тесты без понятия «выход»
+            // не должны запирать игрока на экране зачистки навсегда.
+            var map = new LayoutMap(BuildModules(), MaxModules);
+            int entrance = map.Modules.FindEntrance();
+            map.TryPlace(entrance, 0, 0, 0);
+
+            var sim = new Simulation(1UL, 64);
+            sim.SetupRift(map, spawnSeed: 1UL, minEnemiesPerRoom: 0, maxEnemiesPerRoom: 0, enemyHealth: 100);
+
+            Assert.That(map.ExitCount, Is.EqualTo(0));
+            Assert.That(sim.PlayerReachedExit(map), Is.True);
+        }
+
+        // ---- петли ----
+
+        [Test]
+        public void CloseLoops_SometimesAddsABridgeModule()
+        {
+            // Петля — не гарантия на каждом сиде (геометрия может просто не
+            // сойтись), поэтому проверяется не «всегда», а «хоть где-то из ста»:
+            // это и доказывает, что проход не мёртвый код, и не завязывается
+            // на удачу одного конкретного сида.
+            bool foundBridge = false;
+
+            for (ulong seed = 1; seed <= 100 && !foundBridge; seed++)
+            {
+                var withLoops = new LayoutMap(BuildModules(), MaxModules);
+                new LayoutGenerator().Generate(withLoops.Modules, seed, withLoops, 12,
+                    exitCount: 1, maxLoops: 1, rewardBranchCount: 0);
+
+                var withoutLoops = new LayoutMap(BuildModules(), MaxModules);
+                new LayoutGenerator().Generate(withoutLoops.Modules, seed, withoutLoops, 12,
+                    exitCount: 1, maxLoops: 0, rewardBranchCount: 0);
+
+                // До CloseLoops планировка идентична (проход не влияет на рост
+                // дерева), поэтому лишний модуль — это ровно и только мостик.
+                if (withLoops.PlacedCount > withoutLoops.PlacedCount) foundBridge = true;
+            }
+
+            Assert.That(foundBridge, Is.True, "ни на одном из 100 сидов петля не закрылась");
+        }
+
+        [Test]
+        public void MapsWithLoops_StayConnectedAndOverlapFree()
+        {
+            for (ulong seed = 1; seed <= 300; seed++)
+            {
+                var map = new LayoutMap(BuildModules(), MaxModules);
+                new LayoutGenerator().Generate(map.Modules, seed, map, 12,
+                    exitCount: 1, maxLoops: 2, rewardBranchCount: 0);
+
+                Assert.That(Connected(map), Is.True, $"сид {seed}: мостик разорвал связность");
+
+                for (int a = 0; a < map.PlacedCount; a++)
+                {
+                    PlacedModule pa = map.GetPlaced(a);
+                    for (int b = a + 1; b < map.PlacedCount; b++)
+                    {
+                        PlacedModule pb = map.GetPlaced(b);
+                        Assert.That(pa.Overlaps(pb.OriginX, pb.OriginY, pb.Width, pb.Height), Is.False,
+                            $"сид {seed}: мостик {a}/{b} налез на соседа");
+                    }
+                }
+            }
+        }
+
+        // ---- необязательные ответвления с наградой ----
+
+        [Test]
+        public void RewardBranches_AreDeadEndsDistinctFromExitAndEntrance()
+        {
+            for (ulong seed = 1; seed <= 300; seed++)
+            {
+                LayoutMap map = Generate(seed);
+
+                for (int i = 0; i < map.RewardBranchCount; i++)
+                {
+                    int branch = map.GetRewardBranch(i);
+                    Assert.That(branch, Is.Not.EqualTo(0), $"сид {seed}: награда попала во вход");
+                    Assert.That(map.IsExit(branch), Is.False, $"сид {seed}: награда совпала с выходом");
+                    Assert.That(map.HasChild(branch), Is.False, $"сид {seed}: награда — не тупик");
+                }
+            }
+        }
+
+        [Test]
+        public void RewardBranches_NeverExceedRequestedCount()
+        {
+            for (ulong seed = 1; seed <= 300; seed++)
+            {
+                var map = new LayoutMap(BuildModules(), MaxModules);
+                new LayoutGenerator().Generate(map.Modules, seed, map, 12,
+                    exitCount: 1, maxLoops: 1, rewardBranchCount: 3);
+
+                Assert.That(map.RewardBranchCount, Is.LessThanOrEqualTo(3), $"сид {seed}");
+            }
+        }
+
         // ---- повороты ----
 
         [Test]

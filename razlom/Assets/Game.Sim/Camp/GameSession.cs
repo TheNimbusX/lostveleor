@@ -55,6 +55,7 @@ namespace Game.Sim
     public sealed class GameSession
     {
         private readonly ModuleSet _modules;
+        private readonly LocationDefinition _location;
         private readonly int[] _itemBaseIds;
         private readonly int _simCapacity;
 
@@ -95,10 +96,12 @@ namespace Game.Sim
         public int CombatFeelEnemyCount { get; set; } = 1;
 
         public GameSession(ulong sessionSeed, Camp camp, ModuleSet modules, int[] itemBaseIds,
-            int simCapacity = 512)
+            int simCapacity = 512, LocationDefinition location = null)
         {
             Camp = camp;
-            _modules = modules;
+            _location = location;
+            _location?.ValidateCapacity(simCapacity);
+            _modules = location?.Modules ?? modules;
             _itemBaseIds = itemBaseIds;
             _simCapacity = simCapacity;
 
@@ -229,7 +232,7 @@ namespace Game.Sim
             // Reapply, и снаряжению к этому моменту нужен лист.
             Camp.Worn.Bind(sim.Entities.Stats[Simulation.PlayerId]);
 
-            Run = new RiftRun(sim, _modules, Camp.Items, _itemBaseIds);
+            Run = new RiftRun(sim, _modules, Camp.Items, _itemBaseIds, location: _location);
             Run.PlayerEquipment = Camp.Worn;
             Run.WhirlwindShowcase = WhirlwindShowcase;
             Run.CombatFeelShowcase = CombatFeelShowcase;
