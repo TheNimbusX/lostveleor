@@ -62,6 +62,7 @@ namespace Game.View
 
             GUILayout.Label(summary.Outcome == RunOutcome.Died
                 ? "СМЕРТЬ. Глубже в этот раз не пойдёшь — но добытое осталось."
+                : summary.Outcome == RunOutcome.Completed ? "ПОБЕДА. Локация пройдена!"
                 : "ВЫХОД. Ушёл с добычей.", _title);
 
             GUILayout.Label($"Разломов зачищено: {summary.RiftsCleared}   " +

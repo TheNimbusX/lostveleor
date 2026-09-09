@@ -269,7 +269,7 @@ namespace Game.Tests
 
             Assert.That(sim.PlayerReachedExit(map), Is.False, "игрок ещё во входе, а не у выхода");
 
-            sim.Entities.Position[Simulation.PlayerId] = map.CenterOf(map.GetExit(0));
+            sim.Entities.Position[Simulation.PlayerId] = map.ExitPoint(0);
             Assert.That(sim.PlayerReachedExit(map), Is.True);
         }
 

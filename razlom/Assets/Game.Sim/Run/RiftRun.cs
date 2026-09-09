@@ -31,6 +31,26 @@ namespace Game.Sim
         private readonly RewardOffer[] _offers = new RewardOffer[RewardChoices];
         private readonly RewardOffer[] _taken = new RewardOffer[MaxTakenRewards];
         private int _takenCount;
+        private readonly int[] _enemyBranch;
+        private readonly bool[] _branchClaimed = new bool[8];
+        public int BranchesClaimed { get; private set; }
+        public bool IsBranchClaimed(int branch) => _branchClaimed[branch];
+
+        public int CountRequiredEnemies()
+        {
+            int count = 0;
+            for (int i = 0; i < _sim.Entities.Count; i++)
+                if (_sim.Entities.Alive[i] && _sim.Entities.Side[i] != Faction.Wole && _enemyBranch[i] < 0) count++;
+            return count;
+        }
+
+        public int BranchGuardsAlive(int branch)
+        {
+            int count = 0;
+            for (int i = 0; i < _sim.Entities.Count; i++)
+                if (_sim.Entities.Alive[i] && _enemyBranch[i] == branch) count++;
+            return count;
+        }
 
         private readonly ItemDatabase _items;
         private readonly int[] _itemBaseIds;
@@ -46,6 +66,7 @@ namespace Game.Sim
         public ulong LayoutSeed { get; private set; }
         public ulong SpawnSeed { get; private set; }
         public RiftLevelSettings LevelSettings { get; private set; }
+        public EncounterPlan Encounters { get; private set; }
 
         /// <summary>Справочник предметов: нужен, чтобы развернуть предложенный рецепт в числа.</summary>
         public ItemDatabase Items => _items;
@@ -65,6 +86,10 @@ namespace Game.Sim
 
         /// <summary>Глубина: номер Разлома в этом забеге, с единицы.</summary>
         public int Depth { get; private set; }
+        public int TotalLevels => _location != null && _location.CompleteAtEnd ? _location.LevelCount : 0;
+        public bool IsFinalLevel => TotalLevels > 0 && Depth == TotalLevels;
+        public int BossId => Encounters?.BossId ?? -1;
+        public bool BossEnraged { get; private set; }
 
         public int RiftsCleared { get; private set; }
         public int TakenRewardCount => _takenCount;
@@ -75,6 +100,7 @@ namespace Game.Sim
             int maxModules = 64, LocationDefinition location = null)
         {
             _sim = sim;
+            _enemyBranch = new int[sim.Entities.Capacity];
             _location = location;
             _location?.ValidateCapacity(sim.Entities.Capacity);
             _modules = location?.Modules ?? modules;
@@ -96,6 +122,53 @@ namespace Game.Sim
             EnterNextRift();
         }
 
+        /// <summary>Fresh test run: allocate skipped level seeds, without kills or rewards.</summary>
+        public void StartTestAtLevel(int level, bool nearBoss)
+        {
+            if (Phase != RunPhase.Idle || _location == null || level < 1 || level > _location.LevelCount)
+                throw new System.ArgumentException("Testing requires a fresh run and an authored level.");
+            if (nearBoss && !_location.GetLevel(level).Boss)
+                throw new System.ArgumentException("This level has no boss.");
+            for (int i = 1; i < level; i++)
+            {
+                LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
+                LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
+            }
+            Depth = level - 1;
+            EnterNextRift();
+            if (nearBoss) PlaceNearBoss();
+        }
+
+        private void PlaceNearBoss()
+        {
+            if (BossId < 0 || _map.Routes == null) throw new System.InvalidOperationException("Boss did not spawn.");
+            var entities = _sim.Entities;
+            var boss = entities.Position[BossId];
+            var best = Fix64.MaxValue;
+            var point = _map.EntryPoint;
+            for (int c = 0; c < _map.Routes.CellCount; c++)
+            {
+                if (_map.Routes.GetCell(c).Module != Encounters.Get(Encounters.ForEntity(BossId)).Module) continue;
+                var candidate = _map.Routes.GetCell(c).Center;
+                var distance = FixVec2.DistanceSq(candidate, boss);
+                if (distance < Fix64.FromInt(16) || distance >= best ||
+                    !_map.IsWalkable(candidate, entities.BodyRadius[Simulation.PlayerId])) continue;
+                bool free = true;
+                for (int i = 1; i < entities.Count; i++)
+                {
+                    var clearance = entities.BodyRadius[i] + entities.BodyRadius[Simulation.PlayerId] + Fix64.One;
+                    if (entities.Alive[i] && FixVec2.DistanceSq(candidate, entities.Position[i]) < clearance * clearance)
+                    { free = false; break; }
+                }
+                if (free) { point = candidate; best = distance; }
+            }
+            if (best == Fix64.MaxValue) throw new System.InvalidOperationException("No free approach to the boss.");
+            entities.Position[Simulation.PlayerId] = point;
+            entities.Facing[Simulation.PlayerId] = (boss - point).Normalized();
+            _sim.StopPlayerMovement();
+            _sim.Grid.Rebuild(entities);
+        }
+
         /// <summary>
         /// Вход в следующий Разлом. Тир растёт с глубиной: комнат больше,
         /// врагов больше, здоровья у них больше.
@@ -103,12 +176,14 @@ namespace Game.Sim
         private void EnterNextRift()
         {
             Depth++;
+            BossEnraged = false;
 
             LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
             LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
             LevelSettings.Generate(_generator, _modules, _map, LayoutSeed);
 
             SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
+            Encounters = null;
             if (CombatFeelShowcase != CombatFeelCaptureTier.None)
                 _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
             else if (WhirlwindShowcase)
@@ -116,7 +191,24 @@ namespace Game.Sim
             else if (_location == null)
                 _sim.SetupForestEncounter(_map, SpawnSeed, LevelSettings.EnemyHealth);
             else
-                LevelSettings.Spawn(_sim, _map, SpawnSeed);
+                Encounters = LevelSettings.Spawn(_sim, _map, SpawnSeed);
+
+            System.Array.Clear(_branchClaimed, 0, _branchClaimed.Length);
+            BranchesClaimed = 0;
+            for (int i = 0; i < _sim.Entities.Count; i++)
+            {
+                _enemyBranch[i] = -1;
+                if (_sim.Entities.Side[i] == Faction.Wole) continue;
+                if (Encounters != null)
+                {
+                    int encounter = Encounters.ForEntity(i);
+                    if (encounter >= 0) _enemyBranch[i] = Encounters.Get(encounter).Branch;
+                    continue;
+                }
+                for (int b = 0; b < _map.RewardBranchCount; b++)
+                    if (_map.ContainsWorld(_map.GetRewardBranch(b), _sim.Entities.Position[i]))
+                    { _enemyBranch[i] = b; break; }
+            }
 
             // Расстановка родила игрока заново, а рождение сбрасывает лист статов
             // целиком: индекс — это identity, и лист принадлежит слоту, а не
@@ -161,6 +253,13 @@ namespace Game.Sim
                 return;
             }
 
+            if (BossId >= 0 && !BossEnraged && _sim.Entities.Alive[BossId]
+                && _sim.Entities.Health[BossId] <= _sim.Entities.MaxHealth[BossId] / 2)
+            {
+                BossEnraged = true;
+                _sim.Entities.Stats[BossId].SetBase(StatType.Damage, _sim.Entities.Damage[BossId] * Fix64.Ratio(13, 10));
+                _sim.Entities.RefreshStats(BossId);
+            }
             _sim.Step(in input);
 
             // Смерть проверяется ПЕРВОЙ. Если игрок и последний враг погибли
@@ -172,7 +271,8 @@ namespace Game.Sim
                 return;
             }
 
-            if (_sim.CountAliveEnemies() == 0)
+            CollectBranchRewards();
+            if (CountRequiredEnemies() == 0)
             {
                 RiftsCleared++;
                 Phase = RunPhase.SeekingExit;
@@ -200,10 +300,30 @@ namespace Game.Sim
                 return;
             }
 
+            CollectBranchRewards();
             if (_sim.PlayerReachedExit(_map))
             {
                 RollOffers();
                 Phase = RunPhase.ChoosingReward;
+            }
+        }
+
+        private void CollectBranchRewards()
+        {
+            if (_takenCount >= MaxTakenRewards || _itemBaseIds.Length == 0) return;
+            var player = _sim.Entities.Position[Simulation.PlayerId];
+            for (int b = 0; b < _map.RewardBranchCount && _takenCount < MaxTakenRewards; b++)
+            {
+                if (_branchClaimed[b] || BranchGuardsAlive(b) != 0) continue;
+                int placement = _map.GetRewardBranch(b);
+                if (FixVec2.DistanceSq(player, _map.CenterOf(placement)) > Fix64.Ratio(9, 4)) continue;
+                // Bonus drops never shift the normal reward or affix streams.
+                var rng = new Pcg32(LayoutSeed ^ unchecked((ulong)(placement + 1) * 0x9E3779B97F4A7C15UL), 0x4252414E4348UL);
+                int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
+                ItemInstance item = ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5));
+                _taken[_takenCount++] = RewardOffer.OfItem(in item);
+                _branchClaimed[b] = true;
+                BranchesClaimed++;
             }
         }
 
@@ -222,6 +342,11 @@ namespace Game.Sim
 
             if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = _offers[choice];
 
+            if (IsFinalLevel)
+            {
+                End(RunOutcome.Completed);
+                return;
+            }
             EnterNextRift();
         }
 
@@ -318,6 +443,10 @@ namespace Game.Sim
             Hashing.Mix(ref hash, (int)Outcome);
             Hashing.Mix(ref hash, Depth);
             Hashing.Mix(ref hash, RiftsCleared);
+            if (TotalLevels > 0) Hashing.Mix(ref hash, TotalLevels);
+            if (BossEnraged) Hashing.Mix(ref hash, 0x424F5353);
+            for (int b = 0; b < _map.RewardBranchCount; b++) Hashing.Mix(ref hash, _branchClaimed[b] ? 1 : 0);
+            for (int i = 0; i < _sim.Entities.Count; i++) Hashing.Mix(ref hash, _enemyBranch[i]);
 
             Hashing.Mix(ref hash, _takenCount);
             for (int i = 0; i < _takenCount; i++) _taken[i].HashInto(ref hash);
@@ -331,6 +460,7 @@ namespace Game.Sim
             PlayerEquipment?.HashInto(ref hash);
 
             Hashing.Mix(ref hash, _map.Hash());
+            Encounters?.HashInto(ref hash);
             Hashing.Mix(ref hash, _sim.StateHash());
             return hash;
         }

@@ -722,7 +722,7 @@ namespace Game.Tests
 
             // Враги мертвы, но экран награды теперь приходит только у выхода —
             // телепортируем игрока к нему, как делает RiftRunTests.
-            sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+            sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
             run.Step(in idle);
 
             Assert.AreEqual(RunPhase.ChoosingReward, run.Phase);

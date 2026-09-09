@@ -13,6 +13,20 @@ namespace Game.View
         public Color EntranceColor = new Color(0.61f, 0.69f, 0.57f);
         public float Thickness = 0.2f;
         public Color ExitColor = new Color(0.72f, 0.58f, 0.30f);
+        [Header("Окружение лугов")]
+        public bool NaturalGround = true;
+        public GameObject PortalPrefab;
+        public GameObject CachePrefab;
+        [Range(0, 30)] public float ForestBandWidth = 16;
+        [Range(4, 12)] public float ForestSpacing = 6;
+        public Color SunColor = new Color(1f, 0.92f, 0.8f);
+        [Range(0.1f, 3)] public float SunIntensity = 1.25f;
+        public Vector3 SunAngles = new Vector3(52, -35, 0);
+        public Color SkyColor = new Color(0.62f, 0.7f, 0.63f);
+        public Color AmbientColor = new Color(0.4f, 0.46f, 0.36f);
+        public Color FogColor = new Color(0.55f, 0.63f, 0.54f);
+        [Min(20)] public float FogStart = 45;
+        [Min(30)] public float FogEnd = 100;
 
         // Зазор был отладочным: он показывал, что карта собралась из модулей.
         // На картинке это читалось как сетка на полу — прямой запрет из брифа.
@@ -96,18 +110,16 @@ namespace Game.View
         public float GroundFillSize = 240f;
         public float GroundFillDepthOffset = 0.03f;
 
-        [Header("Тропа у входа и выхода")]
-        // Раньше игрок появлялся в центре модуля-заглушки, а выход был просто
-        // соседней комнатой — ничего не читалось как «снаружи». Тропа тянется
-        // от входа и от каждого выхода в сторону, где меньше всего соседей:
-        // это не обязательно геометрически точное «туда, откуда пришли», но
-        // всегда наружу, к границе, а не внутрь уже застроенной карты.
-        [Tooltip("Сколько плит идёт от модуля наружу.")]
-        public int PathTrailSteps = 4;
+        [Header("Маршрут по локации")]
+        [Range(0.8f, 2f)] public float RouteWidth = 1.6f;
+        [Tooltip("Дополнительный зазор между краем тропы и габаритами декора.")]
+        public float RouteClearance = 0.35f;
+        [Tooltip("Свободное от декора место вокруг точки появления, метры.")]
+        public float EntryClearance = 3f;
+        // Retained for serialized profiles from before walkable route trails.
+        [HideInInspector] public int PathTrailSteps = 4;
 
-        [Tooltip("Случайный боковой разброс плит тропы, доля клетки.")]
-        [Range(0f, 1f)]
-        public float PathTrailJitter = 0.4f;
+        [HideInInspector] public float PathTrailJitter = 0.4f;
 
         [Header("Цвета заглушек декора")]
         public Color BushPlaceholderColor = new Color(0.30f, 0.45f, 0.24f);
@@ -125,7 +137,11 @@ namespace Game.View
 
         public void Validate()
         {
-            if (Thickness <= 0 || Gap < 0 || Gap >= Game.Sim.LayoutMap.CellSize.ToFloat()
+            if (ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
+                || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3)
+                throw new ArgumentException("Проверьте ширину леса, шаг деревьев, свет и дальность тумана.");
+            if (RouteWidth < 0.8f || RouteWidth > 2f || RouteClearance < 0 || EntryClearance < 0
+                || Thickness <= 0 || Gap < 0 || Gap >= Game.Sim.LayoutMap.CellSize.ToFloat()
                 || FloorTextureTiling <= 0 || FloorTextureStrength < 0
                 || DecorPerCell < 0 || DecorPerCell > 1 || DecorEdgeMargin < 0 || DecorConnectorMargin < 0
                 || BoundaryDecorChance < 0 || BoundaryDecorChance > 1 || BoundaryDecorOutset < 0

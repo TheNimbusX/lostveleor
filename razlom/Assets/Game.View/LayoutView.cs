@@ -47,11 +47,14 @@ namespace Game.View
     /// Один рендерер для забега и редакторского предпросмотра.
     /// Оформление задаёт LocationTheme, проходимость задаёт только LayoutMap.
     /// </summary>
-    public sealed class LayoutView : MonoBehaviour
+    public sealed partial class LayoutView : MonoBehaviour
     {
         public LocationTheme Profile;
         private LayoutStyle _style = new LayoutStyle();
         private ulong _layoutSeed;
+        private LayoutMap _shownMap;
+        private EncounterPlan _shownEncounters;
+        private float[] _decorRadii;
         private readonly List<GameObject> _ownedRoots = new List<GameObject>();
         private readonly List<Material> _ownedMaterials = new List<Material>();
 
@@ -61,7 +64,8 @@ namespace Game.View
         {
             get
             {
-                int count = (_pool?.Created ?? 0) + (_pathTrailPool?.Created ?? 0);
+                int count = (_pool?.Created ?? 0) + (_pathTrailPool?.Created ?? 0)
+                    + (_portalPool?.Created ?? 0) + (_cachePool?.Created ?? 0);
                 if (_decorPools != null)
                     foreach (var pool in _decorPools) count += pool.Created;
                 return count;
@@ -78,8 +82,12 @@ namespace Game.View
         }
 
         public void Show(LayoutMap map, ulong layoutSeed)
+            => Show(map, layoutSeed, map == _shownMap ? _shownEncounters : null);
+
+        public void Show(LayoutMap map, ulong layoutSeed, EncounterPlan encounters)
         {
             _layoutSeed = layoutSeed;
+            _shownEncounters = encounters;
             Rebuild(map);
         }
 
@@ -99,6 +107,7 @@ namespace Game.View
 
         private void DisposeVisuals()
         {
+            DisposeMeadow();
             foreach (var root in _ownedRoots)
                 if (root != null) { root.SetActive(false); DestroyOwned(root); }
             _ownedRoots.Clear();
@@ -113,6 +122,9 @@ namespace Game.View
             _generation = _depthShown = -1;
             _initialized = false;
             _occupiedCells.Clear();
+            _shownMap = null;
+            _shownEncounters = null;
+            _decorRadii = null;
         }
 
         private static void DestroyOwned(Object value)
@@ -186,6 +198,17 @@ namespace Game.View
                 new Color(0.40f, 0.64f, 0.48f, 1f), _style.PathFloorTexture, _style.FloorTextureTiling, _style.FloorTextureStrength);
             _exitMaterial = ViewMaterials.CreateArenaFloor(_style.ExitColor,
                 new Color(0.62f, 0.45f, 0.22f, 1f), _style.PathFloorTexture, _style.FloorTextureTiling, _style.FloorTextureStrength);
+            if (_style.NaturalGround)
+            {
+                DestroyOwned(_roomMaterial); DestroyOwned(_entranceMaterial); DestroyOwned(_exitMaterial);
+                _roomMaterial = ViewMaterials.CreateMeadowGround(_style.RoomColor * 1.4f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 0);
+                _entranceMaterial = ViewMaterials.CreateMeadowGround(_style.EntranceColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
+                _exitMaterial = ViewMaterials.CreateMeadowGround(_style.ExitColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
+                _entranceMaterial.SetColor("_GrassTint", _style.RoomColor * 1.4f);
+                _exitMaterial.SetColor("_GrassTint", _style.RoomColor * 1.4f);
+                _entranceMaterial.SetFloat("_Rounded", 1);
+                _exitMaterial.SetFloat("_Rounded", 1);
+            }
 
             _ownedMaterials.Add(_roomMaterial);
             _ownedMaterials.Add(_entranceMaterial);
@@ -193,11 +216,9 @@ namespace Game.View
             _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72, Application.isPlaying);
             _tiles = new Transform[64];
 
-            // Тропа у входа/выхода — тот же грунтовый материал, что уже красит
-            // сами модули входа и выхода: одна текстура, только плитки мельче
-            // и ведут наружу.
+            // Narrow ground strips follow the walkable route and share its lifecycle.
             Transform pathRoot = CreateRoot("Пул: тропа");
-            _pathTrailPool = new ViewPool(pathRoot, () => CreateTile(_entranceMaterial), 24, Application.isPlaying);
+            _pathTrailPool = new ViewPool(pathRoot, () => CreateTile(_entranceMaterial), 256, false);
             _pathTrail = new Transform[32];
 
             // Одна большая плашка на весь Разлом, а не пул: она не появляется
@@ -233,12 +254,27 @@ namespace Game.View
             Transform decorRoot = CreateRoot("Пул: декор");
 
             _decorPools = new ViewPool[_style.DecorVariants.Length];
+            _decorRadii = new float[_style.DecorVariants.Length];
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 DecorVariant variant = _style.DecorVariants[i];
                 Material placeholderMaterial = variant.Prefab == null ? PlaceholderMaterial(variant.Kind) : null;
                 if (placeholderMaterial != null) _ownedMaterials.Add(placeholderMaterial);
                 _decorPools[i] = new ViewPool(decorRoot, () => CreateDecorInstance(variant, placeholderMaterial), 48, Application.isPlaying);
+                // Measure the pooled model once, including off-centre meshes and foliage.
+                var sample = _decorPools[i].Acquire();
+                sample.transform.localScale = variant.Prefab != null ? Vector3.one : PlaceholderBaseScale(variant.Kind);
+                sample.transform.rotation = Quaternion.identity;
+                float radius = 0;
+                foreach (var renderer in sample.GetComponentsInChildren<Renderer>(true))
+                {
+                    var bounds = renderer.bounds;
+                    var offset = bounds.center - sample.transform.position;
+                    radius = Mathf.Max(radius, new Vector2(Mathf.Abs(offset.x) + bounds.extents.x,
+                        Mathf.Abs(offset.z) + bounds.extents.z).magnitude);
+                }
+                _decorRadii[i] = radius * variant.ScaleRange.y;
+                _decorPools[i].Release(sample);
             }
 
             _decor = new Transform[256];
@@ -258,6 +294,7 @@ namespace Game.View
 
         private void LateUpdate()
         {
+            UpdateMeadow();
             if (!Application.isPlaying || _driver == null) return;
             if (_driver.Run == null || _driver.Sim == null)
             {
@@ -276,7 +313,7 @@ namespace Game.View
             // остался бы от предыдущего.
             if (_generation == _driver.Generation && _depthShown == _driver.Run.Depth) return;
 
-            Show(_driver.Run.Map, _driver.Run.LayoutSeed);
+            Show(_driver.Run.Map, _driver.Run.LayoutSeed, _driver.Run.Encounters);
             _generation = _driver.Generation;
             _depthShown = _driver.Run.Depth;
         }
@@ -287,6 +324,8 @@ namespace Game.View
         /// </summary>
         private void Rebuild(LayoutMap map)
         {
+            ClearMeadow();
+            _shownMap = map;
             for (int i = 0; _tiles != null && i < _tileCount; i++)
             {
                 if (_tiles[i] == null) continue;
@@ -342,10 +381,7 @@ namespace Game.View
                 PlacedModule placed = map.GetPlaced(i);
 
                 Transform tile = _pool.Acquire().transform;
-                tile.GetComponent<MeshRenderer>().sharedMaterial =
-                    i == 0 ? _entranceMaterial
-                    : map.IsExit(i) ? _exitMaterial
-                    : _roomMaterial;
+                tile.GetComponent<MeshRenderer>().sharedMaterial = _roomMaterial;
 
                 float width = placed.Width * cell - _style.Gap;
                 float height = placed.Height * cell - _style.Gap;
@@ -367,14 +403,8 @@ namespace Game.View
 
             ScatterBoundaryDecor(cell);
 
-            // Отдельным проходом, а не внутри цикла выше: вход — это placement
-            // 0, самый первый, и на тот момент _occupiedCells ещё не знает про
-            // остальную карту — «самая открытая сторона» посчиталась бы неверно.
-            for (int i = 0; i < map.PlacedCount; i++)
-            {
-                if (i != 0 && !map.IsExit(i)) continue;
-                AddPathTrail(map.GetPlaced(i), i, cell);
-            }
+            BuildRouteTrails(map);
+            BuildMeadow(map, cell);
         }
 
         // ---- декор внутри комнат ----
@@ -420,7 +450,9 @@ namespace Game.View
                     float z = Mathf.Lerp(minZ, maxZ, (float)rng.NextDouble());
                     if (TooCloseToConnector(x, z)) continue;
 
-                    SpawnDecor(PickVariantIndex(rng, totalWeight), x, z, rng);
+                    int variant = PickVariantIndex(rng, totalWeight);
+                    if (BlocksRoute(variant, x, z)) continue;
+                    SpawnDecor(variant, x, z, rng);
                     break;
                 }
             }
@@ -496,6 +528,26 @@ namespace Game.View
             _decor[_decorCount] = instance;
             _decorVariant[_decorCount] = variantIndex;
             _decorCount++;
+        }
+
+        private bool BlocksRoute(int variant, float x, float z)
+        {
+            var map = _shownMap;
+            if (map?.Routes == null) return false;
+            var point = new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z));
+            float radius = _decorRadii[variant];
+            if (_shownEncounters != null)
+            {
+                float clearance = _shownEncounters.FormationRadius.ToFloat() + 1f + radius;
+                for (int e = 0; e < _shownEncounters.Count; e++)
+                    if (FixVec2.DistanceSq(point, _shownEncounters.Get(e).Center).ToFloat() < clearance * clearance) return true;
+            }
+            float entry = _style.EntryClearance + radius;
+            if (FixVec2.DistanceSq(point, map.EntryPoint).ToFloat() < entry * entry) return true;
+            for (int b = 0; b < map.RewardBranchCount; b++)
+                if (FixVec2.DistanceSq(point, map.CenterOf(map.GetRewardBranch(b))).ToFloat()
+                    < (1.5f + radius) * (1.5f + radius)) return true;
+            return map.Routes.NearRoad(point, Fix64.FromDouble(_style.RouteWidth * 0.5f + _style.RouteClearance + radius));
         }
 
         private static Vector3 PlaceholderBaseScale(DecorKind kind)
@@ -607,7 +659,7 @@ namespace Game.View
             float posZ = edgeZ + dirZ * _style.BoundaryDecorOutset + (float)(rng.NextDouble() - 0.5) * _style.BoundaryDecorJitter;
 
             int variantIndex = PickBoundaryVariantIndex(rng, totalWeight);
-            if (variantIndex < 0) return;
+            if (variantIndex < 0 || BlocksRoute(variantIndex, posX, posZ)) return;
 
             SpawnDecor(variantIndex, posX, posZ, rng);
         }
@@ -626,86 +678,52 @@ namespace Game.View
             return -1;
         }
 
-        // ---- тропа у входа и выхода ----
-
-        /// <summary>
-        /// Ведёт дорожку из мелких плит наружу от модуля — туда, где больше
-        /// всего свободных соседей: не обязательно геометрически точное «туда,
-        /// откуда пришли» (это потребовало бы разбирать, какой коннектор
-        /// реально использован для стыковки с родителем), но всегда прочь от
-        /// уже застроенной карты, а этого достаточно, чтобы читалось как
-        /// тропа наружу.
-        /// </summary>
-        private void AddPathTrail(PlacedModule placed, int placement, float cell)
+        // The visible trail is the same cell path used to choose the exit.
+        private void BuildRouteTrails(LayoutMap map)
         {
-            int bestDx = 0, bestDz = 0, bestCount = 0;
-            CheckEdge(placed, 0, 1, ref bestDx, ref bestDz, ref bestCount);
-            CheckEdge(placed, 0, -1, ref bestDx, ref bestDz, ref bestCount);
-            CheckEdge(placed, 1, 0, ref bestDx, ref bestDz, ref bestCount);
-            CheckEdge(placed, -1, 0, ref bestDx, ref bestDz, ref bestCount);
-
-            // Со всех сторон плотно застроено — тропу вести некуда, и это
-            // нормально: не у каждой комнаты есть свободный край.
-            if (bestCount == 0) return;
-
-            System.Random rng = DecorRandom(placement);
-
-            float edgeX = bestDx != 0
-                ? (bestDx > 0 ? placed.OriginX + placed.Width : placed.OriginX) * cell
-                : (placed.OriginX + placed.Width * 0.5f) * cell;
-            float edgeZ = bestDz != 0
-                ? (bestDz > 0 ? placed.OriginY + placed.Height : placed.OriginY) * cell
-                : (placed.OriginY + placed.Height * 0.5f) * cell;
-
-            int steps = _style.PathTrailSteps;
-            for (int step = 0; step < steps; step++)
+            if (map.Routes == null) return;
+            for (int i = 0; i < map.Routes.CellCount; i++)
             {
-                float t = step + 0.5f;
-                float px = edgeX + bestDx * cell * t + (float)(rng.NextDouble() - 0.5) * cell * _style.PathTrailJitter;
-                float pz = edgeZ + bestDz * cell * t + (float)(rng.NextDouble() - 0.5) * cell * _style.PathTrailJitter;
-
-                // Плиты мельчают к концу тропы — она тает в траве/декоре
-                // границы, а не обрывается ровным краем.
-                float size = Mathf.Lerp(cell * 0.85f, cell * 0.35f,
-                    steps <= 1 ? 0f : step / (float)(steps - 1));
-
-                if (_pathTrailCount >= _pathTrail.Length)
-                    System.Array.Resize(ref _pathTrail, _pathTrail.Length * 2);
-
-                Transform tile = _pathTrailPool.Acquire().transform;
-                tile.localScale = new Vector3(size, _style.Thickness, size);
-                tile.position = new Vector3(px, -_style.Thickness * 0.5f - 0.01f, pz);
-                tile.rotation = Quaternion.identity;
-
-                _pathTrail[_pathTrailCount++] = tile;
+                if (!map.Routes.IsRoadCell(i)) continue;
+                var a = map.Routes.GetCell(i).Center;
+                int parent = map.Routes.ParentCell(i);
+                var b = parent < 0 ? a : map.Routes.GetCell(parent).Center;
+                AddRouteTile(a, b, _style.RouteWidth, _entranceMaterial, "Тропа");
+            }
+            AddRouteTile(map.EntryPoint, map.EntryPoint, 1.8f, _entranceMaterial, "Вход");
+            for (int e = 0; e < map.ExitCount; e++)
+                AddRouteTile(map.ExitPoint(e), map.ExitPoint(e), LayoutRoutes.ExitRadius.ToFloat() * 2,
+                    _exitMaterial, "Выход");
+            for (int b = 0; b < map.RewardBranchCount; b++)
+            {
+                var center = map.CenterOf(map.GetRewardBranch(b));
+                int cell = map.Routes.CellAt(center);
+                if (cell >= 0)
+                {
+                    var end = map.Routes.GetCell(cell).Center;
+                    var bend = new FixVec2(center.X, end.Y);
+                    AddRouteTile(end, bend, _style.RouteWidth, _entranceMaterial, "Тропа");
+                    AddRouteTile(bend, center, _style.RouteWidth, _entranceMaterial, "Тропа");
+                }
+                AddRouteTile(center, center, 1.5f, _exitMaterial, "Тайник");
             }
         }
 
-        /// <summary>Считает, сколько клеток вдоль этой грани модуля не заняты соседом.</summary>
-        private void CheckEdge(PlacedModule placed, int dx, int dz, ref int bestDx, ref int bestDz, ref int bestCount)
+        private void AddRouteTile(FixVec2 from, FixVec2 to, float width, Material material, string label)
         {
-            int count = 0;
-            if (dx != 0)
-            {
-                int x = dx > 0 ? placed.OriginX + placed.Width : placed.OriginX - 1;
-                for (int y = placed.OriginY; y < placed.OriginY + placed.Height; y++)
-                    if (!_occupiedCells.Contains(CellKey(x, y))) count++;
-            }
-            else
-            {
-                int y = dz > 0 ? placed.OriginY + placed.Height : placed.OriginY - 1;
-                for (int x = placed.OriginX; x < placed.OriginX + placed.Width; x++)
-                    if (!_occupiedCells.Contains(CellKey(x, y))) count++;
-            }
-
-            if (count > bestCount)
-            {
-                bestCount = count;
-                bestDx = dx;
-                bestDz = dz;
-            }
+            if (_pathTrailCount >= _pathTrail.Length)
+                System.Array.Resize(ref _pathTrail, _pathTrail.Length * 2);
+            var a = new Vector3(from.X.ToFloat(), 0, from.Y.ToFloat());
+            var b = new Vector3(to.X.ToFloat(), 0, to.Y.ToFloat());
+            Transform tile = _pathTrailPool.Acquire().transform;
+            tile.name = label;
+            tile.GetComponent<MeshRenderer>().sharedMaterial = material;
+            // Cardinal segments only. The half-width caps remain inside their floor cells.
+            tile.localScale = new Vector3(width + Mathf.Abs(a.x - b.x), 0.02f, width + Mathf.Abs(a.z - b.z));
+            tile.position = (a + b) * 0.5f + Vector3.up * (label == "Тропа" ? 0.005f : 0.02f);
+            tile.rotation = Quaternion.identity;
+            _pathTrail[_pathTrailCount++] = tile;
         }
-
         private static long CellKey(int x, int y)
             => ((long)x << 32) ^ (uint)y;
 

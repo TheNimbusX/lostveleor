@@ -1,10 +1,10 @@
 ﻿<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Game.Tests.csproj" />
   <Project Path="Game.Sim.csproj" />
   <Project Path="Game.View.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Game.LocationEditor.csproj" />
-  <Project Path="Game.Data.csproj" />
   <Project Path="Game.LocationTests.csproj" />
+  <Project Path="Game.Data.csproj" />
 </Solution>

@@ -56,6 +56,8 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
+                if (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit)
+                    DrawRouteLandmarks(run, scale);
                 if (run.Phase == RunPhase.Clearing)
                     DrawCombatStatus(run, safeLeft);
                 else if (run.Phase == RunPhase.SeekingExit)
@@ -71,13 +73,35 @@ namespace Game.View
 
         private void DrawCombatStatus(RiftRun run, float safeLeft)
         {
-            Rect panel = new Rect(safeLeft + 18f, 18f, 230f, 62f);
+            Rect panel = new Rect(safeLeft + 18f, 18f, 300f, 88f);
             Fill(panel, Panel);
             Fill(new Rect(panel.x, panel.y, 4f, panel.height), Coral);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 6f, 205f, 26f),
-                "РАЗЛОМ  " + run.Depth, _title);
-            GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 205f, 20f),
-                "ЦЕЛЕЙ: " + run.Sim.CountAliveEnemies(), _subtitle);
+                "РАЗЛОМ  " + run.Depth + (run.TotalLevels > 0 ? "/" + run.TotalLevels : ""), _title);
+            int fights = 0, cleared = 0;
+            if (run.Encounters != null)
+                for (int e = 0; e < run.Encounters.Count; e++)
+                {
+                    if (run.Encounters.Get(e).Role == EncounterRole.RewardBranch) continue;
+                    fights++;
+                    if (run.Encounters.Alive(e, run.Sim.Entities) == 0) cleared++;
+                }
+            GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 280f, 20f),
+                fights > 0 ? $"ВСТРЕЧИ: {cleared}/{fights} · ЦЕЛЕЙ: {run.CountRequiredEnemies()}"
+                    : "ЦЕЛЕЙ: " + run.CountRequiredEnemies(), _subtitle);
+            GUI.Label(new Rect(panel.x + 16f, panel.y + 60f, 280f, 22f),
+                $"Тайники: {run.BranchesClaimed}/{run.Map.RewardBranchCount} · необязательно", _subtitle);
+            if (run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId])
+            {
+                int id = run.BossId;
+                var bar = new Rect(panel.x, panel.yMax + 8, 360, 50);
+                Fill(bar, Panel);
+                GUI.Label(new Rect(bar.x + 8, bar.y + 3, 344, 24),
+                    run.BossEnraged ? "ХРАНИТЕЛЬ ЛУГОВ · ЯРОСТЬ" : "ХРАНИТЕЛЬ ЛУГОВ · БОСС", _subtitle);
+                Fill(new Rect(bar.x + 8, bar.y + 30, 344, 10), Ink);
+                Fill(new Rect(bar.x + 8, bar.y + 30,
+                    344f * run.Sim.Entities.Health[id] / run.Sim.Entities.MaxHealth[id], 10), Coral);
+            }
         }
 
         private void DrawSeekingExit(float safeLeft)
@@ -86,9 +110,40 @@ namespace Game.View
             Fill(panel, Panel);
             Fill(new Rect(panel.x, panel.y, 4f, panel.height), Gold);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 6f, 235f, 26f),
-                "РАЗЛОМ ЗАЧИЩЕН", _title);
+                "ПУТЬ ОТКРЫТ", _title);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 235f, 20f),
-                "Найди проход дальше", _subtitle);
+                "Следуй по тропе к выходу", _subtitle);
+        }
+
+        private void DrawRouteLandmarks(RiftRun run, float scale)
+        {
+            var camera = Camera.main;
+            if (camera == null || run.Map.Routes == null) return;
+            DrawLandmark(run.Map.EntryPoint, "ВХОД", camera, scale);
+            if (run.Encounters != null)
+                for (int i = 1; i < run.Sim.Entities.Count; i++)
+                    if (run.Encounters.IsElite(i) && run.Sim.Entities.Alive[i])
+                        DrawLandmark(run.Sim.Entities.Position[i], i == run.BossId ? "ХРАНИТЕЛЬ ЛУГОВ" : "УСИЛЕННЫЙ ХРАНИТЕЛЬ", camera, scale, 3.2f);
+            for (int e = 0; e < run.Map.ExitCount; e++)
+                DrawLandmark(run.Map.ExitPoint(e), run.Phase == RunPhase.SeekingExit
+                    ? "ВЫХОД · подойди" : "ВЫХОД · победи цели", camera, scale);
+            for (int b = 0; b < run.Map.RewardBranchCount; b++)
+            {
+                string label = run.IsBranchClaimed(b) ? "ТАЙНИК · собран"
+                    : run.BranchGuardsAlive(b) > 0 ? $"ТАЙНИК · охрана {run.BranchGuardsAlive(b)}"
+                    : "ТАЙНИК · подойди за предметом";
+                DrawLandmark(run.Map.CenterOf(run.Map.GetRewardBranch(b)), label, camera, scale);
+            }
+        }
+
+        private void DrawLandmark(FixVec2 point, string text, Camera camera, float scale, float height = 0.6f)
+        {
+            var projected = camera.WorldToScreenPoint(new Vector3(point.X.ToFloat(), height, point.Y.ToFloat()));
+            if (projected.z <= 0 || projected.x < 0 || projected.x > Screen.width ||
+                projected.y < 0 || projected.y > Screen.height) return;
+            var box = new Rect(projected.x / scale - 110, (Screen.height - projected.y) / scale - 26, 220, 24);
+            Fill(box, Panel);
+            GUI.Label(new Rect(box.x + 6, box.y + 2, box.width - 12, 20), text, _subtitle);
         }
 
         private void DrawRewardChoice(RiftRun run, float canvasWidth, float canvasHeight,
@@ -105,7 +160,9 @@ namespace Game.View
             GUI.Label(new Rect(panel.x + 28f, panel.y + 20f, panel.width - 56f, 30f),
                 "РАЗЛОМ ЗАЧИЩЕН", _title);
             GUI.Label(new Rect(panel.x + 28f, panel.y + 51f, panel.width - 56f, 22f),
-                "Выбери награду и продолжи путь", _subtitle);
+                run.IsFinalLevel ? "Локация пройдена — выбери последнюю награду и перейди к итогам"
+                    : "Выбери награду — дальше разлом " + (run.Depth + 1)
+                        + (run.TotalLevels > 0 ? "/" + run.TotalLevels : ""), _subtitle);
 
             float gap = 12f;
             float cardsTop = panel.y + 88f;

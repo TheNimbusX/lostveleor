@@ -510,8 +510,9 @@ namespace Game.Sim
 
             // Вход — всегда нулевое размещение: генератор ставит его первым,
             // и ручная расстановка обязана следовать тому же правилу.
-            FixVec2 start = map.PlacedCount > 0 ? map.CenterOf(0) : FixVec2.Zero;
+            FixVec2 start = map.PlacedCount > 0 ? map.EntryPoint : FixVec2.Zero;
             ConfigurePlayer(Entities.Spawn(start, PlayerBaseHealth, Faction.Wole));
+            if (map.Routes != null) Entities.Facing[PlayerId] = map.Routes.EntryFacing;
 
             int spawned = 0;
             for (int placement = 1; placement < map.PlacedCount; placement++)
@@ -522,6 +523,7 @@ namespace Game.Sim
                 {
                     if (enemyBudget > 0 && spawned >= enemyBudget) return;
                     FixVec2 spot = RandomSpotInModule(map, placement, EnemyBodyRadius, ref rng);
+                    if (map.Routes != null && !map.Routes.TrySafeSpawn(placement, spot, out spot)) continue;
 
                     int id = Entities.Spawn(spot, enemyHealth, Faction.Orvill);
                     ConfigureEnemy(id);
@@ -572,13 +574,15 @@ namespace Game.Sim
             {
                 FixVec2 offset = new FixVec2(Fix64.Ratio((i % 3 - 1) * 11, 10),
                     Fix64.Ratio((i / 3 * 2 - 1) * 11, 20));
-                int id = Entities.Spawn(center + offset, RootSwarmHealth, Faction.Orvill);
+                FixVec2 spot = map.ClampToWalkable(center + offset, EnemyBodyRadius);
+                if (map.Routes != null && !map.Routes.TrySafeSpawn(placement, spot, out spot)) continue;
+                int id = Entities.Spawn(spot, RootSwarmHealth, Faction.Orvill);
                 ConfigureEnemy(id, EnemyKind.ForestRootSwarm);
                 Entities.Facing[id] = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
                 _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
             }
             for (int i = 1; i < Entities.Count; i++)
-                Entities.Aggro[i] = true;
+                Entities.Aggro[i] = map.Routes == null;
             Grid.Rebuild(Entities);
         }
 
@@ -990,7 +994,7 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Стоит ли игрок в модуле-выходе. Условие конца SeekingExit.
+        /// Дошёл ли игрок до конца тропы. Ручные карты без маршрутов используют модуль-выход.
         ///
         /// Карта без выходов (ExitCount == 0) считается пройденной сразу —
         /// это старые карты и тесты, собранные до появления понятия «выход».
@@ -1002,7 +1006,9 @@ namespace Game.Sim
 
             FixVec2 position = Entities.Position[PlayerId];
             for (int i = 0; i < map.ExitCount; i++)
-                if (map.ContainsWorld(map.GetExit(i), position)) return true;
+                if (map.Routes != null
+                    ? FixVec2.DistanceSq(position, map.ExitPoint(i)) <= LayoutRoutes.ExitRadius * LayoutRoutes.ExitRadius
+                    : map.ContainsWorld(map.GetExit(i), position)) return true;
             return false;
         }
 
@@ -1353,6 +1359,7 @@ namespace Game.Sim
             bool overTime)
         {
             if (!Entities.Alive[target] || amount <= 0) return;
+            if (target == PlayerId && PlayerInvulnerable) return;
 
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
@@ -1777,6 +1784,8 @@ namespace Game.Sim
                     Fix64 distance = Fix64.Sqrt(toPlayer.LengthSq);
                     Fix64 slack = ApproachBrakeRange - AttackRange;
                     Fix64 ramp = (distance - AttackRange) / slack;
+                    // A solo enemy must cross the range boundary, not approach it asymptotically.
+                    if (ramp < Fix64.Ratio(1, 10)) ramp = Fix64.Ratio(1, 10);
                     wanted = toPlayer.Normalized() * (speed * ramp);
                 }
                 else if (BlockedByCloserAlly(i, playerPos, toPlayer, out FixVec2 blocker))
@@ -2104,6 +2113,8 @@ namespace Game.Sim
             // расход боевого потока случайности зависел бы от снаряжения,
             // и один и тот же сид перестал бы давать один и тот же забег.
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
+            // Keep the normal critical roll even when developer immunity absorbs the hit.
+            if (target == PlayerId && PlayerInvulnerable) return;
 
             int damage = CombatStats.RoundToInt(
                 Fix64.FromInt(Entities.Damage[source]) * damageScale);
@@ -2138,9 +2149,12 @@ namespace Game.Sim
         /// Хеш полного состояния. Используется только тестом на детерминизм
         /// и валидацией реплеев — в игровой логике не участвует.
         /// </summary>
+        internal bool PlayerInvulnerable { get; set; }
+
         public ulong StateHash()
         {
             ulong hash = Hashing.Offset;
+            if (PlayerInvulnerable) Hashing.Mix(ref hash, 0x474F44);
             Hashing.Mix(ref hash, Tick);
             HashCyclone(ref hash);
 

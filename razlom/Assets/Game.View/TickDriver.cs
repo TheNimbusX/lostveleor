@@ -43,7 +43,7 @@ namespace Game.View
     /// на границе тика. Анимация не решает, когда наносится урон — урон наносится
     /// на тике, анимация лишь показывает это.
     /// </summary>
-    public sealed class TickDriver : MonoBehaviour
+    public sealed partial class TickDriver : MonoBehaviour
     {
         [Header("Сессия")]
         [Tooltip("0 — сгенерировать сид из текущего времени при старте.")]
@@ -270,6 +270,9 @@ namespace Game.View
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RestoreDeveloperThemeIfNeeded();
+#endif
             // Если Awake не доработал, компонент выключается, а не сыплет
             // одинаковой ошибкой каждый кадр. Тысяча одинаковых строк в консоли
             // прячет первую — ту единственную, в которой написана причина.

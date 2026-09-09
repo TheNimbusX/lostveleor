@@ -11,6 +11,42 @@ namespace Game.LocationEditor
     {
         public const string ThemePath = "Assets/Resources/Locations/Meadow.asset";
         public const string GameplayPath = "Assets/Resources/Locations/MeadowGameplay.asset";
+        public const string EncounterPath = "Assets/Resources/Locations/MeadowEncounters.asset";
+        [MenuItem("Разлом/Локации/Подключить оформление Meadow", priority = 22)]
+        public static void ConfigureMeadowArt()
+        {
+            var theme = EnsureCreated();
+            Undo.RecordObject(theme, "Оформление лугов");
+            if (theme.Style.PortalPrefab == null)
+                theme.Style.PortalPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/RPG Tiny Fantasy Forest PBR/Prefab/BuildingUtilityDeco/Portal01.prefab");
+            if (theme.Style.CachePrefab == null)
+                theme.Style.CachePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx");
+            theme.Style.Validate();
+            EditorUtility.SetDirty(theme); AssetDatabase.SaveAssetIfDirty(theme);
+        }
+
+        // Explicit migration for the existing Meadow profile, also callable from batch mode.
+        [MenuItem("Разлом/Локации/Подключить боевые встречи Meadow", priority = 21)]
+        public static void ConfigureEncounters()
+        {
+            var theme = EnsureCreated();
+            var encounters = EnsureEncounters();
+            if (theme.Gameplay.Encounters != null) return;
+            Undo.RecordObject(theme.Gameplay, "Подключить боевые встречи");
+            theme.Gameplay.Encounters = encounters;
+            theme.Gameplay.ToDefinition();
+            EditorUtility.SetDirty(theme.Gameplay);
+            AssetDatabase.SaveAssetIfDirty(theme.Gameplay);
+        }
+
+        private static EncounterProfileAsset EnsureEncounters()
+        {
+            var encounters = AssetDatabase.LoadAssetAtPath<EncounterProfileAsset>(EncounterPath);
+            if (encounters != null) return encounters;
+            encounters = ScriptableObject.CreateInstance<EncounterProfileAsset>();
+            AssetDatabase.CreateAsset(encounters, EncounterPath);
+            return encounters;
+        }
 
         [MenuItem("Разлом/Локации/Создать профили первой локации", priority = 20)]
         public static void CreateAndSelect()
@@ -55,6 +91,9 @@ namespace Game.LocationEditor
                     modules[i] = asset;
                 }
                 gameplay = ScriptableObject.CreateInstance<LocationProfileAsset>();
+                gameplay.Encounters = EnsureEncounters();
+                gameplay.CompleteAtEnd = true;
+                gameplay.PlayerHealth = 150;
                 gameplay.Modules = modules;
                 gameplay.Levels = new LevelSettingsAsset[10];
                 for (int i = 0; i < gameplay.Levels.Length; i++)
@@ -62,7 +101,8 @@ namespace Game.LocationEditor
                     var s = RiftLevelSettings.Prototype(i + 1);
                     gameplay.Levels[i] = new LevelSettingsAsset { Rooms = s.TargetModules, Exits = s.ExitCount,
                         Loops = s.MaxLoops, RewardBranches = s.RewardBranches,
-                        MinEnemies = s.MinEnemies, MaxEnemies = s.MaxEnemies, EnemyHealth = s.EnemyHealth };
+                        MinEnemies = s.MinEnemies, MaxEnemies = s.MaxEnemies, EnemyHealth = 60 + i * 5,
+                        Boss = i == gameplay.Levels.Length - 1 };
                 }
                 gameplay.ToDefinition();
                 AssetDatabase.CreateAsset(gameplay, GameplayPath);

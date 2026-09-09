@@ -62,7 +62,7 @@ namespace Game.LocationTests
                     }
                     for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
                     run.Step(InputFrame.Empty);
-                    run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+                    run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
                     run.Step(InputFrame.Empty);
                     run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
                 }
@@ -161,7 +161,8 @@ namespace Game.LocationTests
             bool dirty = active.isDirty;
             int previewScenes = EditorSceneManager.previewSceneCount;
             _preview.Generate(_theme, 11, 3);
-            var owned = _preview.Root.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials).Distinct().ToArray();
+            var owned = _preview.Root.GetComponentsInChildren<Renderer>(true).SelectMany(r => r.sharedMaterials)
+                .Where(m => !AssetDatabase.Contains(m)).Distinct().ToArray();
             Assert.That(EditorSceneManager.IsPreviewScene(_preview.Root.scene), Is.True);
             Assert.That(SceneManager.GetActiveScene(), Is.EqualTo(active));
             Assert.That(active.rootCount, Is.EqualTo(roots));
@@ -169,6 +170,124 @@ namespace Game.LocationTests
             _preview.Dispose();
             Assert.That(EditorSceneManager.previewSceneCount, Is.EqualTo(previewScenes));
             Assert.That(owned.All(m => m == null), Is.True, "Generated materials leaked");
+        }
+
+        [Test]
+        public void VisibleRoad_StaysOnFloor_AndDecorBoundsLeaveClearance()
+        {
+            _theme.Style.DecorPerCell = 0.5f;
+            _theme.Style.BoundaryDecorChance = 1;
+            _preview.Generate(_theme, 42, 1);
+            var map = _preview.Map;
+            int trail = 0;
+            foreach (var renderer in _preview.Root.GetComponentsInChildren<Renderer>())
+            {
+                var bounds = renderer.bounds;
+                if (renderer.name == "Тропа" || renderer.name == "Вход" || renderer.name == "Выход" || renderer.name == "Тайник")
+                {
+                    trail++;
+                    foreach (float x in new[] { bounds.min.x, bounds.max.x })
+                        foreach (float z in new[] { bounds.min.z, bounds.max.z })
+                            Assert.That(map.ContainsWorld(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z))), Is.True,
+                                $"{renderer.name} extends beyond the walkable floor");
+                }
+                else if (renderer.name.StartsWith("Декор:"))
+                {
+                    // Placeholders have centred bounds. This circle encloses every yaw of the model.
+                    var point = new FixVec2(Fix64.FromDouble(bounds.center.x), Fix64.FromDouble(bounds.center.z));
+                    float radius = Mathf.Max(bounds.extents.x, bounds.extents.z);
+                    Assert.That(map.Routes.NearRoad(point,
+                        Fix64.FromDouble(_theme.Style.RouteWidth * 0.5f + radius)), Is.False);
+                }
+            }
+            Assert.That(trail, Is.GreaterThan(10));
+        }
+
+        [Test]
+        public void EncounterProfile_IsConnected_GrowsAndCompilesAnIndependentSnapshot()
+        {
+            var authored = _theme.Gameplay.Encounters;
+            Assert.That(authored, Is.Not.Null);
+            var copy = Object.Instantiate(authored);
+            try
+            {
+                var first = copy.ToDefinition(1);
+                var last = copy.ToDefinition(10);
+                Assert.That(last.MainCount, Is.GreaterThan(first.MainCount));
+                Assert.That(last.CountBonus, Is.GreaterThan(first.CountBonus));
+                Assert.That(last.DamagePercent, Is.GreaterThan(first.DamagePercent));
+                var rng = new Pcg32(1, 1);
+                int before = first.Pick(EncounterRole.Introduction, ref rng).GetGroup(0).Max;
+                copy.Introduction[0].Groups[0].Max = 7;
+                Assert.That(first.Pick(EncounterRole.Introduction, ref rng).GetGroup(0).Max, Is.EqualTo(before));
+                copy.ExitGuard[0].Groups[0].Elite = false;
+                Assert.Throws<ArgumentException>(() => copy.ToDefinition(1));
+            }
+            finally { Object.DestroyImmediate(copy); }
+        }
+
+        [Test]
+        public void EncounterClearings_AreFreeOfDecor_AndSurviveRebuild()
+        {
+            _theme.Style.DecorPerCell = 0.8f;
+            _preview.Generate(_theme, 42, 1);
+            Assert.That(_preview.Encounters, Is.Not.Null);
+            foreach (var renderer in _preview.Root.GetComponentsInChildren<Renderer>())
+            {
+                if (!renderer.name.StartsWith("Декор:")) continue;
+                var point = renderer.bounds.center;
+                float radius = Mathf.Max(renderer.bounds.extents.x, renderer.bounds.extents.z);
+                for (int e = 0; e < _preview.Encounters.Count; e++)
+                {
+                    var center = _preview.Encounters.Get(e).Center;
+                    float distance = Vector2.Distance(new Vector2(point.x, point.z), new Vector2(center.X.ToFloat(), center.Y.ToFloat()));
+                    Assert.That(distance, Is.GreaterThanOrEqualTo(_preview.Encounters.FormationRadius.ToFloat() + radius));
+                }
+            }
+            string[] before = VisualSnapshot(_preview.Root);
+            _preview.View.Show(_preview.Map, _preview.Seeds.Layout);
+            CollectionAssert.AreEqual(before, VisualSnapshot(_preview.Root));
+            _preview.Clear();
+            Assert.That(_preview.Encounters, Is.Null);
+            Assert.That(_preview.Root.GetComponentsInChildren<Renderer>(), Is.Empty);
+        }
+
+        [Test]
+        public void MeadowLandmarks_UseRealModels_AndReleaseGeneratedMeshes()
+        {
+            Assert.That(_theme.Style.PortalPrefab, Is.Not.Null);
+            Assert.That(_theme.Style.CachePrefab, Is.Not.Null);
+            _preview.Generate(_theme, 42, 1);
+            var meshes = _preview.Root.GetComponentsInChildren<MeshFilter>(true).Select(f => f.sharedMesh)
+                .Where(m => m != null && (m.name == "Контур занятого пола" || m.name == "Свечение ориентира")).Distinct().ToArray();
+            Assert.That(meshes.Length, Is.EqualTo(2));
+            Assert.That(meshes.All(m => m.vertexCount > 0), Is.True);
+            var floor = Shader.Find("Razlom/Meadow Ground");
+            Assert.That(floor, Is.Not.Null);
+            Assert.That(ShaderUtil.ShaderHasError(floor), Is.False);
+            Assert.That(_preview.Root.GetComponentsInChildren<Renderer>().Any(r => r.sharedMaterial.shader == floor), Is.True);
+            _preview.Dispose();
+            Assert.That(meshes.All(m => m == null), Is.True);
+        }
+
+        [Test]
+        public void MeadowLighting_RestoresTheSceneAfterLeaving()
+        {
+            bool fog = RenderSettings.fog;
+            Color ambient = RenderSettings.ambientSkyColor;
+            var mode = RenderSettings.ambientMode;
+            var state = new MeadowLighting();
+            try
+            {
+                state.Apply(_theme.Style);
+                Assert.That(RenderSettings.fog, Is.True);
+                Assert.That(RenderSettings.ambientSkyColor, Is.EqualTo(_theme.Style.SkyColor));
+                state.Restore();
+                Assert.That(RenderSettings.fog, Is.EqualTo(fog));
+                Assert.That(RenderSettings.ambientSkyColor, Is.EqualTo(ambient));
+                Assert.That(RenderSettings.ambientMode, Is.EqualTo(mode));
+            }
+            finally { state.Restore(); }
         }
 
         [Test]

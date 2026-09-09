@@ -79,6 +79,9 @@ namespace Game.View
             sim.AddComponent<PelagVfxController>();
             if (CombatSound) sim.AddComponent<CombatAudio>();
             sim.AddComponent<PauseMenu>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            sim.AddComponent<DeveloperMenu>();
+#endif
             sim.AddComponent<LayoutView>().Profile = location;
             if (!CaptureRig.IsVfxShowcase)
             {

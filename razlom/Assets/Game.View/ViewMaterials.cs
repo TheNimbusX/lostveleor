@@ -116,6 +116,20 @@ namespace Game.View
             return material;
         }
 
+        public static Material CreateMeadowGround(Color tint, Texture2D grass, Texture2D dirt, float tiling, float earth)
+        {
+            var shader = Shader.Find("Razlom/Meadow Ground");
+            if (shader == null) return CreateLit(tint);
+            var material = new Material(shader) { name = "Разлом/Луговой грунт" };
+            material.SetColor("_BaseColor", tint);
+            material.SetColor("_GrassTint", tint);
+            if (grass != null) material.SetTexture("_BaseMap", grass);
+            if (dirt != null) material.SetTexture("_DirtMap", dirt);
+            material.SetFloat("_Tiling", tiling);
+            material.SetFloat("_Earth", earth);
+            return material;
+        }
+
         private static void SetColor(Material m, Color color)
         {
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", color);

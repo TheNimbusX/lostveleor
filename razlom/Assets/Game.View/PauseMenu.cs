@@ -138,6 +138,9 @@ namespace Game.View
 
         private void Update()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (DeveloperMenu.BlocksPause) return;
+#endif
             if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount) return;
             if (_displayPreviewActive && Time.unscaledTime >= _displayConfirmationDeadline)
                 CancelDisplayPreview("Изменения экрана отменены: время подтверждения истекло.");

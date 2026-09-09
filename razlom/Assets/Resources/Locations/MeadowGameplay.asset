@@ -15,6 +15,8 @@ MonoBehaviour:
   DisplayName: "\u041B\u0443\u0433\u043E\u0432\u0430\u044F \u043E\u043A\u0440\u0430\u0438\u043D\u0430"
   StableKey: location.meadow
   MaxModules: 64
+  PlayerHealth: 150
+  CompleteAtEnd: 1
   Modules:
   - {fileID: 11400000, guid: 54a3a68d650f2874aaf2c9bf977d426d, type: 2}
   - {fileID: 11400000, guid: a43a5ffbe8d8ef94db87dfc7ef02a80c, type: 2}
@@ -22,6 +24,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2da810ac79df7bc46ba9a952c93c1dce, type: 2}
   - {fileID: 11400000, guid: 5a191f690cd26674488e8cf02d0573f4, type: 2}
   - {fileID: 11400000, guid: 6dc4c014d01323542af1ea2080d2520b, type: 2}
+  Encounters: {fileID: 11400000, guid: 4484a3c29af7a2e48a67c9c076db81cd, type: 2}
   Levels:
   - Rooms: 11
     Exits: 1
@@ -29,67 +32,69 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 1
     MaxEnemies: 3
-    EnemyHealth: 125
+    EnemyHealth: 60
   - Rooms: 12
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 1
     MaxEnemies: 4
-    EnemyHealth: 150
+    EnemyHealth: 65
   - Rooms: 13
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 4
-    EnemyHealth: 175
+    EnemyHealth: 70
   - Rooms: 14
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 5
-    EnemyHealth: 200
+    EnemyHealth: 75
   - Rooms: 15
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 5
-    EnemyHealth: 225
+    EnemyHealth: 80
   - Rooms: 16
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 6
-    EnemyHealth: 250
+    EnemyHealth: 85
   - Rooms: 17
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 6
-    EnemyHealth: 275
+    EnemyHealth: 90
   - Rooms: 18
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 7
-    EnemyHealth: 300
+    EnemyHealth: 95
   - Rooms: 19
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 4
     MaxEnemies: 7
-    EnemyHealth: 325
+    EnemyHealth: 100
   - Rooms: 20
     Exits: 1
     Loops: 1
     RewardBranches: 2
     MinEnemies: 4
     MaxEnemies: 8
-    EnemyHealth: 350
+    EnemyHealth: 105
+    Boss: 1
+

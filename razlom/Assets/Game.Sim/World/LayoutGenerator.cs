@@ -29,7 +29,6 @@ namespace Game.Sim
         private readonly int[] _candidateOriginY = new int[MaxCandidates];
         private readonly int[] _candidateWeight = new int[MaxCandidates];
         private readonly int[] _leafIndex = new int[64];
-        private readonly int[] _leafDepth = new int[64];
 
         /// <summary>
         /// Какие размещения — мостики, закрывшие петлю (см. CloseLoops).
@@ -105,8 +104,11 @@ namespace Game.Sim
             }
 
             CloseLoops(modules, into, ref rng, maxLoops);
+            into.BuildRoutes();
             ChooseExits(into, ref rng, exitCount);
+            into.Routes?.MarkMainRoutes(into);
             ChooseRewardBranches(into, ref rng, rewardBranchCount);
+            into.Routes?.MarkBranchRoutes(into);
             return into.PlacedCount;
         }
 
@@ -117,6 +119,44 @@ namespace Game.Sim
         /// От этого порядка зависит, какой вариант достанется какому броску,
         /// и он обязан быть одним и тем же всегда.
         /// </summary>
+        public void GenerateBossArena(ModuleSet modules, ulong seed, LayoutMap map)
+        {
+            map.Clear();
+            var rng = new Pcg32(seed, LayoutSequence);
+            int entrance = modules.FindEntrance();
+            if (entrance < 0 || map.TryPlace(entrance, rng.NextInt(0, 4), 0, 0) < 0)
+                throw new System.ArgumentException("Boss arena requires an entrance.");
+            Direction forward = map.GetOpen(0).Facing;
+            for (int step = 0; step < 3; step++)
+            {
+                bool placed = false;
+                for (int o = 0; o < map.OpenCount && !placed; o++)
+                {
+                    var open = map.GetOpen(o);
+                    if (open.Placement != step || open.Facing != forward) continue;
+                    int count = CollectCandidates(modules, map, open), best = -1, score = -1;
+                    for (int c = 0; c < count; c++)
+                    {
+                        var module = modules.Get(_candidateModule[c]);
+                        int value = module.Width * module.Height;
+                        if (step != 1 && module.Id == StableId.Of("module.corridor")) value += 100000;
+                        if (value > score) { score = value; best = c; }
+                    }
+                    if (best < 0) continue;
+                    map.CloseOpen(o);
+                    int index = map.TryPlace(_candidateModule[best], _candidateQuarters[best],
+                        _candidateOriginX[best], _candidateOriginY[best], step);
+                    if (index < 0) throw new System.InvalidOperationException("Boss arena placement failed.");
+                    CloseFacing(map, open);
+                    placed = true;
+                }
+                if (!placed) throw new System.ArgumentException("Modules cannot form an approach and boss arena.");
+            }
+            map.BuildRoutes();
+            map.AddExit(3);
+            map.Routes.MarkMainRoutes(map);
+        }
+
         private int CollectCandidates(ModuleSet modules, LayoutMap map, in OpenConnector open)
         {
             Directions.Step(open.Facing, out int dx, out int dy);
@@ -310,7 +350,7 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Выходы — тупики в дальней половине дерева. Рядом со входом выход
+        /// Выходы — самые дальние тупики по длине пути по полу. Рядом со входом выход
         /// обессмыслил бы локацию: игрок ушёл бы, не увидев её.
         ///
         /// Вызывается ПОСЛЕ сборки и ПОСЛЕ CloseLoops, поэтому на саму
@@ -320,42 +360,32 @@ namespace Game.Sim
         private void ChooseExits(LayoutMap map, ref Pcg32 rng, int wanted)
         {
             if (wanted <= 0 || map.PlacedCount <= 1) return;
-
             int leaves = 0;
-            int deepest = 0;
-
             for (int i = 1; i < map.PlacedCount && leaves < _leafIndex.Length; i++)
             {
-                if (map.HasChild(i)) continue;
-                if (i < _isBridge.Length && _isBridge[i]) continue;
-
-                int depth = map.DepthOf(i);
-                _leafIndex[leaves] = i;
-                _leafDepth[leaves] = depth;
-                if (depth > deepest) deepest = depth;
-                leaves++;
+                if (map.HasChild(i) || (i < _isBridge.Length && _isBridge[i])) continue;
+                if (map.Routes.DistanceToModule(i) < 0) continue;
+                _leafIndex[leaves++] = i;
             }
-
-            if (leaves == 0) return;
-
-            // Отбор дальних. Компактим на месте: eligible всегда не больше i,
-            // поэтому запись не затирает то, что ещё не прочитано.
-            int threshold = deepest / 2 + 1;
-            int eligible = 0;
-            for (int i = 0; i < leaves; i++)
-                if (_leafDepth[i] >= threshold) _leafIndex[eligible++] = _leafIndex[i];
-
-            // Дерево вышло плоским — берём любые тупики, лишь бы выход был.
-            if (eligible == 0) eligible = leaves;
-
-            int take = wanted < eligible ? wanted : eligible;
+            // Farthest first on the walkable grid, not on the generation tree.
+            // RNG only resolves equal-distance candidates.
+            int take = System.Math.Min(wanted, leaves);
             for (int i = 0; i < take; i++)
             {
-                int j = i + rng.NextInt(0, eligible - i);
-                int swap = _leafIndex[i];
-                _leafIndex[i] = _leafIndex[j];
-                _leafIndex[j] = swap;
-
+                int bestDistance = -1, ties = 0;
+                for (int j = i; j < leaves; j++)
+                {
+                    int distance = map.Routes.DistanceToModule(_leafIndex[j]);
+                    if (distance > bestDistance) { bestDistance = distance; ties = 1; }
+                    else if (distance == bestDistance) ties++;
+                }
+                int tie = rng.NextInt(0, ties);
+                for (int j = i; j < leaves; j++)
+                {
+                    if (map.Routes.DistanceToModule(_leafIndex[j]) != bestDistance || tie-- != 0) continue;
+                    int swap = _leafIndex[i]; _leafIndex[i] = _leafIndex[j]; _leafIndex[j] = swap;
+                    break;
+                }
                 map.AddExit(_leafIndex[i]);
             }
         }
@@ -378,6 +408,7 @@ namespace Game.Sim
                 if (map.HasChild(i)) continue;
                 if (i < _isBridge.Length && _isBridge[i]) continue;
                 if (map.IsExit(i)) continue;
+                if (map.Routes != null && map.Routes.IsMainModule(i)) continue;
 
                 _leafIndex[leaves++] = i;
             }

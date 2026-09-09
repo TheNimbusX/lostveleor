@@ -99,7 +99,7 @@ namespace Game.Tests
             KillAllEnemies(run);
             run.Step(Idle);
 
-            run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetExit(0));
+            run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
             run.Step(Idle);
         }
 

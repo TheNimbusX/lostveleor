@@ -14,7 +14,31 @@ namespace Game.LocationEditor
         {
             EditorGUILayout.HelpBox("Изменение набора модулей, stableKey, размеров, коннекторов и весов меняет карты на прежних сидах. Параметры уровней влияют на генерацию и спавн. Сохраните профиль вместе с реплеями.", MessageType.Warning);
             DrawDefaultInspector();
+            var location = (LocationProfileAsset)target;
+            if (location.Encounters != null)
+            {
+                EditorGUILayout.HelpBox("Состав и количество врагов задаёт профиль встреч. Min/Max Enemies уровней не используются; Enemy Health задаёт базовое здоровье Хранителя.", MessageType.Info);
+                if (GUILayout.Button("Настроить боевые встречи")) Selection.activeObject = location.Encounters;
+            }
             try { ((LocationProfileAsset)target).ToDefinition(); }
+            catch (ArgumentException e) { EditorGUILayout.HelpBox(e.Message, MessageType.Error); }
+        }
+    }
+
+    [CustomEditor(typeof(EncounterProfileAsset))]
+    public sealed class EncounterProfileInspector : Editor
+    {
+        private int _level = 1;
+        public override void OnInspectorGUI()
+        {
+            EditorGUILayout.HelpBox("Introduction — первый бой; Main Path — варианты дозоров по тропе; Reward Branch — охрана тайников; Exit Guard — усиленный Хранитель у выхода. Вес выбирает вариант группы. Изменения меняют спавн на прежних сидах, но не карту.", MessageType.Info);
+            DrawDefaultInspector();
+            _level = EditorGUILayout.IntSlider("Проверить уровень", _level, 1, 10);
+            try
+            {
+                var settings = ((EncounterProfileAsset)target).ToDefinition(_level);
+                EditorGUILayout.HelpBox($"Уровень {_level}: до {settings.MainCount} дозоров, +{settings.CountBonus} врагов в растущих группах, урон {settings.DamagePercent}% от базового. Если подходящих комнат меньше, встреч будет меньше.", MessageType.None);
+            }
             catch (ArgumentException e) { EditorGUILayout.HelpBox(e.Message, MessageType.Error); }
         }
     }
@@ -57,7 +81,9 @@ namespace Game.LocationEditor
                 for (int i = 0; i < fields.Length; i++)
                 {
                     position.y += EditorGUIUtility.singleLineHeight + 3;
-                    EditorGUI.PropertyField(position, property.FindPropertyRelative(fields[i]), new GUIContent(labels[i]));
+                    bool encounters = (property.serializedObject.targetObject as LocationProfileAsset)?.Encounters != null;
+                    using (new EditorGUI.DisabledScope(encounters && (i == 4 || i == 5)))
+                        EditorGUI.PropertyField(position, property.FindPropertyRelative(fields[i]), new GUIContent(labels[i]));
                 }
                 EditorGUI.indentLevel--;
             }

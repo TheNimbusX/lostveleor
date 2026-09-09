@@ -36,9 +36,14 @@ namespace Game.LocationEditor
             var map = new LayoutMap(location.Modules, location.MaxModules);
             settings.Generate(new LayoutGenerator(), location.Modules, map, seeds.Layout);
             var sim = new Simulation(runSeed, 512);
-            settings.Spawn(sim, map, seeds.Spawns);
+            var encounters = settings.Spawn(sim, map, seeds.Spawns);
 
             if (_renderer == null) InitializeRenderer();
+            _renderer.camera.backgroundColor = theme.Style.SkyColor;
+            _renderer.ambientColor = theme.Style.AmbientColor;
+            _renderer.lights[0].color = theme.Style.SunColor;
+            _renderer.lights[0].intensity = theme.Style.SunIntensity;
+            _renderer.lights[0].transform.rotation = Quaternion.Euler(theme.Style.SunAngles);
             string json = JsonUtility.ToJson(theme.Style);
             if (_theme != theme || _styleJson != json)
             {
@@ -46,13 +51,16 @@ namespace Game.LocationEditor
                 _theme = theme;
                 _styleJson = json;
             }
-            View.Show(map, seeds.Layout);
+            View.Show(map, seeds.Layout, encounters);
+            Encounters = encounters;
             Map = map;
             Sim = sim;
             Seeds = seeds;
             Settings = settings;
             Bounds = CalculateBounds(map);
         }
+
+        public EncounterPlan Encounters { get; private set; }
 
         private void InitializeRenderer()
         {
@@ -88,6 +96,7 @@ namespace Game.LocationEditor
         public void Clear()
         {
             View?.Show(null, 0);
+            Encounters = null;
             Map = null;
             Sim = null;
         }
@@ -100,6 +109,7 @@ namespace Game.LocationEditor
             View = null;
             _renderer?.Cleanup();
             _renderer = null;
+            Encounters = null;
             _theme = null;
             _styleJson = null;
             Map = null;

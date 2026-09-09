@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efe94afe3e914984ea0365e0f91fb8c5, type: 3}
+  m_Name: MeadowEncounters
+  m_EditorClassIdentifier: Game.Data::Game.Data.EncounterProfileAsset
+  MainCount: 3
+  MaxMainCount: 6
+  AddMainEveryLevels: 2
+  FormationRadius: 5
+  AddEnemyEveryLevels: 3
+  MaxExtraEnemies: 3
+  DamagePerLevelPercent: 8
+  Introduction:
+  - StableKey: encounter.meadow.intro
+    Weight: 100
+    Groups:
+    - Kind: 1
+      Min: 1
+      Max: 1
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+  MainPath:
+  - StableKey: encounter.meadow.guardians
+    MaxLevel: 3
+    Weight: 100
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 3
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+  - StableKey: encounter.meadow.swarm
+    MaxLevel: 3
+    Weight: 100
+    Groups:
+    - Kind: 2
+      Min: 4
+      Max: 5
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.mixed
+    MaxLevel: 3
+    Weight: 100
+    Groups:
+    - Kind: 1
+      Min: 1
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 2
+      Max: 3
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.elite_patrol
+    Weight: 100
+    MinLevel: 4
+    MaxLevel: 6
+    Groups:
+    - Kind: 1
+      Min: 1
+      Max: 1
+      HealthPercent: 160
+      DamagePercent: 240
+      Elite: 1
+      GrowWithDepth: 0
+    - Kind: 1
+      Min: 1
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 3
+      Max: 4
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.veteran_patrol
+    Weight: 100
+    MinLevel: 7
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 160
+      DamagePercent: 240
+      Elite: 1
+      GrowWithDepth: 0
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 4
+      Max: 5
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+  RewardBranch:
+  - StableKey: encounter.meadow.cache
+    Weight: 100
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 2
+      Max: 3
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+  ExitGuard:
+  - StableKey: encounter.meadow.exit
+    Weight: 100
+    Groups:
+    - Kind: 1
+      Min: 1
+      Max: 1
+      HealthPercent: 240
+      DamagePercent: 260
+      Elite: 1
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 2
+      Max: 3
+      HealthPercent: 30
+      DamagePercent: 150
+      Elite: 0
+      GrowWithDepth: 1
+

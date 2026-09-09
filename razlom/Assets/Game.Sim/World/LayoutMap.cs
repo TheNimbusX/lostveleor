@@ -74,6 +74,10 @@ namespace Game.Sim
         private int _exitCount;
         private readonly int[] _rewardBranches;
         private int _rewardBranchCount;
+        public LayoutRoutes Routes { get; private set; }
+        public FixVec2 EntryPoint => Routes != null ? Routes.EntryPoint : CenterOf(0);
+        public FixVec2 ExitPoint(int exit) => Routes != null ? Routes.Endpoint(GetExit(exit)) : CenterOf(GetExit(exit));
+        internal void BuildRoutes() => Routes = _placedCount > 0 ? new LayoutRoutes(this) : null;
 
         public int PlacedCount => _placedCount;
         public int OpenCount => _openCount;
@@ -105,6 +109,7 @@ namespace Game.Sim
             _openCount = 0;
             _exitCount = 0;
             _rewardBranchCount = 0;
+            Routes = null;
         }
 
         /// <summary>Помещается ли модуль так, чтобы не задеть уже стоящие.</summary>
@@ -137,6 +142,7 @@ namespace Game.Sim
             module.RotatedSize(quarters, out int w, out int h);
 
             int placement = _placedCount++;
+            Routes = null;
             _placed[placement] = new PlacedModule(moduleIndex, quarters, originX, originY, w, h, parent);
 
             // Точки стыковки нового модуля становятся открытыми — кроме тех,
