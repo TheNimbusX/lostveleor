@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Собирает плеер и снимает из него кадры игры.
 
@@ -18,15 +18,20 @@ param(
     [int]    $Width   = 1920,
     [int]    $Height  = 1080,
     [string] $OutDir  = '',
+    [ValidatePattern('^[a-zA-Z0-9-]+$')] [string] $WorkspaceName = 'capture',
     [switch] $Whirlwind,
     [switch] $Camp,
     [switch] $CampCollision,
+    [switch] $CampAmbience,
+    [switch] $CampAmbienceStill,
+    [switch] $CampKeyLight,
     [switch] $Run,
     [switch] $Locomotion,
     [switch] $Equipment,
     [switch] $MovingCombat,
     [ValidateRange(1,24)] [int] $MovingCombatDelay = 2,
     [switch] $Video,
+    [switch] $SilentVideo,
     [double] $Perf = 0,
     [int]    $PerfWarmup = 240,
     [switch] $PerfNoHud,
@@ -45,6 +50,7 @@ param(
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
+    [ValidateSet('', 'root-swarm', 'mixed')] [string] $Encounter = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,
     [ValidateSet('', 'idle', 'combat-idle', 'death')] [string] $Pose = '',
@@ -62,10 +68,13 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($CampAmbienceStill) { $CampAmbience = $true }
+if ($CampAmbience) { $Camp = $true }
+if ($Video -and $Realtime) { throw 'Для Video со звуком требуется фиксированная частота кадров: уберите Realtime.' }
 $root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $project = Join-Path $root 'razlom'
 $unity   = 'C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe'
-$build   = Join-Path $root 'artifacts\capture-build'
+$build   = Join-Path $root ('artifacts\' + $WorkspaceName + '-build')
 $player  = Join-Path $build 'Razlom.exe'
 
 if (-not (Test-Path -LiteralPath $unity)) { throw "Unity не найден: $unity" }
@@ -106,7 +115,7 @@ if ($needsBuild) {
     # редактор ради снимка неправильно — там открытая работа. Поэтому сборка
     # идёт из теневой копии: Assets/Packages/ProjectSettings зеркалятся
     # robocopy, своя Library у копии остаётся и переживает запуски.
-    $shadow = Join-Path $root 'artifacts\capture-project'
+    $shadow = Join-Path $root ('artifacts\' + $WorkspaceName + '-project')
     Write-Host 'Синхронизация теневого проекта...'
     foreach ($folder in 'Assets', 'Packages', 'ProjectSettings') {
         # /MIR — зеркало: удалённый в оригинале файл исчезает и в копии,
@@ -153,7 +162,7 @@ if ($needsBuild) {
     # офлайн-резолва, а граф зависимостей Unity пересоберёт сам в shadow.
 
     Write-Host 'Сборка плеера...'
-    $log = Join-Path $root 'artifacts\capture-build.log'
+    $log = Join-Path $root ('artifacts\' + $WorkspaceName + '-build.log')
     New-Item -ItemType Directory -Path (Split-Path $log) -Force | Out-Null
 
     # Через Start-Process -Wait, а не через «&»: Unity.exe — GUI-приложение,
@@ -206,6 +215,7 @@ $playerArgs = @(
     '-capture-width',   $Width
     '-capture-height',  $Height
 )
+if ($SilentVideo) { $playerArgs += '-capture-silent-video' }
 if ($Perf -gt 0) {
     $playerArgs += @(
         '-capture-perf', $Perf.ToString([Globalization.CultureInfo]::InvariantCulture)
@@ -231,9 +241,13 @@ $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
 if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampCollision) { $playerArgs += '-capture-camp-collision' }
+if ($CampAmbience) { $playerArgs += '-capture-camp-ambience' }
+if ($CampAmbienceStill) { $playerArgs += '-capture-camp-ambience-still' }
+if ($CampKeyLight) { $playerArgs += '-capture-ground-key' }
 if ($TurnDuringSkill) { $playerArgs += '-capture-turn-during-skill' }
 if ($Realtime) { $playerArgs += '-capture-real-time' }
 if ($ActiveEnemies) { $playerArgs += '-capture-active-enemies' }
+if ($Encounter -ne '') { $playerArgs += @('-capture-encounter', $Encounter) }
 if ($AimSweep) { $playerArgs += '-capture-sweep-aim' }
 if ($DeathDuringSkill) { $playerArgs += '-capture-death-during-skill' }
 if ($Pose -ne '') { $playerArgs += @('-capture-pose', $Pose) }
@@ -281,7 +295,9 @@ if ($shots) {
 
 if ($Video) {
     $frames = Join-Path $OutDir 'video_frames\frame_%04d.jpg'
-    $movieName = if ($MovingCombat) {
+    $movieName = if ($CampAmbience) {
+        "camp_ambience_${Height}p${VideoFps}.mp4"
+    } elseif ($MovingCombat) {
         'pelag_moving_combat_1080p60.mp4'
     } elseif ($Run -or $Locomotion) {
         'pelag_locomotion.mp4'
@@ -302,7 +318,15 @@ if ($Video) {
     }
 
     $ffmpeg = python -c "import sys; sys.path.insert(0, r'$tools'); import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())"
-    & $ffmpeg -y -framerate $VideoFps -i $frames -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -movflags +faststart $movie
+    $audioTrack = Join-Path $OutDir 'game-audio.wav'
+    if (-not $SilentVideo -and -not (Test-Path -LiteralPath $audioTrack)) {
+        throw 'Плеер не записал game-audio.wav. Пересоберите плеер с поддержкой аудиосъёмки.'
+    }
+    if ($SilentVideo) {
+        & $ffmpeg -y -framerate $VideoFps -i $frames -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -an -movflags +faststart $movie
+    } else {
+        & $ffmpeg -y -framerate $VideoFps -i $frames -i $audioTrack -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k -shortest -movflags +faststart $movie
+    }
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $movie)) {
         throw "Не удалось собрать MP4: $movie"
     }

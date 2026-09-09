@@ -1,0 +1,215 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6217328535dc2ae48ba581d07c949e97, type: 3}
+  m_Name: CombatAudio
+  m_EditorClassIdentifier: Game.View::Game.View.CombatAudioProfile
+  Gain: 0.8
+  Sounds:
+  - Sound: 0
+    Clips:
+    - {fileID: 8300000, guid: 7ab59c5b2de83b64ea8212e1d4ed2129, type: 3}
+    - {fileID: 8300000, guid: ff55ed3769744bb4da2de47b6b105921, type: 3}
+    - {fileID: 8300000, guid: b77a42a8776ece64796804c2e28a4caf, type: 3}
+    - {fileID: 8300000, guid: 5c3ea7b8c04a8a342a146695cd8aa5a3, type: 3}
+    - {fileID: 8300000, guid: 36bf4266e788e954e9909d7083d5cbdb, type: 3}
+    - {fileID: 8300000, guid: 2d4df126e905f32458604eda3498b712, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 1
+    Clips:
+    - {fileID: 8300000, guid: 10d20e4fb38009f44b7abc1fa83cdddc, type: 3}
+    - {fileID: 8300000, guid: e761888e6d99c1e4d80c732c5c928221, type: 3}
+    - {fileID: 8300000, guid: 22b0245e37af894478d28120741838a3, type: 3}
+    - {fileID: 8300000, guid: d95a9ce5c12f01240b0a36ac5428628d, type: 3}
+    - {fileID: 8300000, guid: c73be8bee2b4f1c498b52a5942c1f90d, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 65
+    MaxPerFrame: 1
+  - Sound: 2
+    Clips:
+    - {fileID: 8300000, guid: 1e7fc8a6052bd3245b0cecb1418b60aa, type: 3}
+    - {fileID: 8300000, guid: 8c894235c91452743b9765c046e71909, type: 3}
+    - {fileID: 8300000, guid: c901da8cdf4541d4eaea5c0d84962361, type: 3}
+    - {fileID: 8300000, guid: 8ec0aca8e218b6d4cb61a9db294d1981, type: 3}
+    - {fileID: 8300000, guid: c9fb4779f5b5c444d997f77dadfe01bd, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 70
+    MaxPerFrame: 1
+  - Sound: 3
+    Clips:
+    - {fileID: 8300000, guid: 21f3d522c1cdaef439a2223eb5787487, type: 3}
+    - {fileID: 8300000, guid: 66f44c0f83343ed45b9b4bcf60a54257, type: 3}
+    - {fileID: 8300000, guid: e2bca28a587f95c469f6968cc0ce72e1, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 80
+    MaxPerFrame: 1
+  - Sound: 4
+    Clips:
+    - {fileID: 8300000, guid: 8fd5bf86d0ea4d7dbbf1992c71b2b823, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 5
+    Clips:
+    - {fileID: 8300000, guid: 286d92465b2394f429726379fff5dccd, type: 3}
+    - {fileID: 8300000, guid: e59bb9ce1c939484b88cd7b78f2dc479, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 6
+    Clips:
+    - {fileID: 8300000, guid: 8d10624a6b1ec3647a237f3eee096b3e, type: 3}
+    - {fileID: 8300000, guid: 8ee73a982f598704f863133b8e27d175, type: 3}
+    - {fileID: 8300000, guid: dc6c80ce02b081646a1954b737c9dea9, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 7
+    Clips:
+    - {fileID: 8300000, guid: 9eb94191c77afde4d8a83dc86670c22a, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 8
+    Clips:
+    - {fileID: 8300000, guid: 889280c505c097340bc24880decbe363, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 9
+    Clips:
+    - {fileID: 8300000, guid: 9519dfeb9a7ddea4ea5fb147afb3c877, type: 3}
+    - {fileID: 8300000, guid: e1f4969a6590ef541ae92d7f9c7be062, type: 3}
+    - {fileID: 8300000, guid: b0ec383a5491cf3499d878f50a6871aa, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 10
+    MaxPerFrame: 1
+  - Sound: 10
+    Clips:
+    - {fileID: 8300000, guid: f12f4f34af8f4cf438b298a8f64e27f7, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 10
+    MaxPerFrame: 1
+  - Sound: 11
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 12
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 70
+    MaxPerFrame: 1
+  - Sound: 13
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 80
+    MaxPerFrame: 1
+  - Sound: 14
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 15
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 10
+    MaxPerFrame: 1
+  - Sound: 16
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 100
+    MaxPerFrame: 1
+  - Sound: 17
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 100
+    MaxPerFrame: 1
+  - Sound: 18
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 19
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 20
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 21
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 22
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1
+  - Sound: 23
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 40
+    MaxPerFrame: 1

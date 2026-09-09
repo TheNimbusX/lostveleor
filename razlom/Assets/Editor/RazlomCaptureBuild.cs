@@ -10,10 +10,8 @@ namespace Game.EditorTools
     /// <summary>
     /// Точка входа для пакетной сборки плеера, из которого снимаются кадры.
     ///
-    /// Снимок делается из СОБРАННОЙ игры, а не из окна редактора. Причина
-    /// простая: Game-вью в редакторе показывает не то, что увидит игрок —
-    /// другое разрешение, гизмо, свой набор качества. Сравнивать «до и после»
-    /// по таким картинкам нельзя.
+    /// Повторяемая съёмка собранной игры сохраняет авторскую сцену и профиль
+    /// изображения; различия камеры и качества сверяются с живым редактором.
     /// </summary>
     public static class RazlomCaptureBuild
     {
@@ -74,10 +72,12 @@ namespace Game.EditorTools
             // этой строки съёмка показывала контроллер, собранный до того, как
             // приехали новые клипы, — то есть врала про то, что в игре.
             global::RazlomMobAnimatorBuilder.Build();
-            // Профиль вида тоже генерируемый: без этой строки съёмка
-            // показывала цвет и зерно, собранные в прошлый раз.
-            global::RazlomSceneAuthoring.BuildLookProfile();
-            global::RazlomPelagVfxAssetBuilder.Build();
+            global::CombatPresentationSetup.EnsureProfiles();
+            // Съёмка должна сохранять авторскую цветокоррекцию. Повторная
+            // генерация заменяла настройки Inspector значениями из шаблона.
+            if (AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Settings/CombatLook.asset") == null)
+                global::RazlomSceneAuthoring.BuildLookProfile();
+            global::RazlomPelagVfxAssetBuilder.BuildAnchorLeapOnly();
 
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)

@@ -323,10 +323,10 @@ namespace Game.View
 
                 Session.Step(in frame);
 
-                // Explicit capture-only lethal contact verifies the real death event,
-                // equipment ownership and effect cleanup in the middle of a cast.
+                // Отсчёт от самого каста: старт сценария включает ожидание,
+                // и смерть через 24 тика от него проверяла только ранний замах.
                 if (CaptureRig.DeathDuringSkill && CaptureRig.LiveSkill && Sim != null
-                    && _liveSkillStartedTick >= 0 && Sim.Tick - _liveSkillStartedTick == 24
+                    && _liveSkillCastTick >= 0 && Sim.Tick - _liveSkillCastTick == 24
                     && Sim.Entities.Alive[Simulation.PlayerId])
                     Sim.ApplyAbilityDamage(1, Simulation.PlayerId, 100000, 0, DamageType.Physical);
 
@@ -675,6 +675,8 @@ namespace Game.View
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
                         _pending.AbilityTarget = Sim.Entities.Count > 1 ? 1 : -1;
                         _liveSkillCastStage++;
+                        _liveSkillCastTick = Sim.Tick;
+                        Debug.Log($"[capture-live-cast] ability={definition} tick={Sim.Tick} stage={_liveSkillCastStage}");
                         // Прицел каста не заменяет ранее отданный приказ движения.
                         _pending.Flags = 0;
                         Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right * CaptureRig.CastDistance;
@@ -701,13 +703,44 @@ namespace Game.View
         private void ResolveTargetAim(bool confirm, bool cancel)
         {
             if (_targetAimSlot < 0) return;
-            if (cancel) _targetAimSlot = -1;
-            else if (confirm && Sim.ValidAbilityTarget(HoveredEntity, Sim.GetAbility(_targetAimSlot)))
+            if (cancel) { _targetAimSlot = -1; return; }
+            if (!confirm) return;
+
+            // ДВА РОДА ПРИЦЕЛИВАНИЯ.
+            //
+            // Шаг по цепи выбирает ВРАГА: без цели прыгать не к кому, поэтому
+            // подтверждение требует наведения на живого противника.
+            //
+            // Бросок якоря выбирает ТОЧКУ. Это перемещение, и притягиваться к
+            // пустому месту — законный и основной сценарий: уйти из окружения,
+            // перескочить пропасть, занять позицию. Требовать здесь врага
+            // значило бы запретить способности её главное применение.
+            if (GroundTargetedSlot(_targetAimSlot))
+            {
+                // Точка уже лежит в _pending.Aim — это позиция курсора на полу.
+                // Дальность обрезает сама симуляция по AnchorKit.LeapRange.
+                _abilityLatch |= (byte)(1 << _targetAimSlot);
+                _targetAimSlot = -1;
+                return;
+            }
+
+            if (Sim.ValidAbilityTarget(HoveredEntity, Sim.GetAbility(_targetAimSlot)))
             {
                 _pending.AbilityTarget = HoveredEntity;
                 _abilityLatch |= (byte)(1 << _targetAimSlot);
                 _targetAimSlot = -1;
             }
+        }
+
+        /// <summary>Слот целится в точку на полу, а не во врага.</summary>
+        public bool GroundTargetedSlot(int slot) =>
+            Sim?.GetAbility(slot)?.DefinitionId == AbilityDefinition.AnchorLeapId;
+
+        /// <summary>Слот вообще требует выбора цели перед применением.</summary>
+        private bool TargetedSlot(int slot)
+        {
+            int? id = Sim?.GetAbility(slot)?.DefinitionId;
+            return id == AbilityDefinition.ChainStepId || id == AbilityDefinition.AnchorLeapId;
         }
 
         private void UpdateSweepAimCapture()
@@ -731,6 +764,7 @@ namespace Game.View
         }
 
         private int _liveSkillStartedTick = -1;
+        private int _liveSkillCastTick = -1;
         private int _liveSkillCastStage;
         private int _aimCaptureLastTick = -1;
 
@@ -797,8 +831,10 @@ namespace Game.View
                 }
                 else if (abilitiesLive)
                 {
-                    if (Sim?.GetAbility(i)?.DefinitionId == AbilityDefinition.ChainStepId)
+                    if (TargetedSlot(i))
                     {
+                        // Повторное нажатие той же клавиши снимает прицел —
+                        // это и есть отмена без обращения к другой кнопке.
                         if (Sim.Tick >= Sim.AbilityReadyTick(i)) _targetAimSlot = _targetAimSlot == i ? -1 : i;
                     }
                     else { _targetAimSlot = -1; _abilityLatch |= (byte)(1 << i); }
@@ -845,8 +881,12 @@ namespace Game.View
             HoveredEntity = FindUnderCursor(screenPosition);
             if (_targetAimSlot >= 0)
             {
+                // Прицел держится, пока слот вообще требует выбора цели.
+                // Проверка на конкретный Шаг по цепи отменяла прицел Броска
+                // якоря в том же кадре, в котором он включался, и вторая
+                // способность переставала срабатывать вовсе.
                 bool valid = Sim != null && Sim.Entities.Alive[Simulation.PlayerId]
-                    && Sim.GetAbility(_targetAimSlot)?.DefinitionId == AbilityDefinition.ChainStepId;
+                    && TargetedSlot(_targetAimSlot);
 #if ENABLE_INPUT_SYSTEM
                 bool confirm = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
                 bool cancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
@@ -1142,6 +1182,25 @@ namespace Game.View
         }
 
         /// <summary>Позиция для отрисовки: между прошлым и текущим тиком.</summary>
+        /// <summary>
+        /// Скорость тела ИЗ СИМУЛЯЦИИ, метров в секунду.
+        ///
+        /// Нужна камере для компенсации отставания. Считать её разностью
+        /// экранных позиций за кадр нельзя: в редакторе длительность кадра
+        /// скачет, оценка шумит, и этот шум уходит прямо в положение камеры —
+        /// герой начинает мелко дрожать в кадре, а мир вокруг него «плыть».
+        ///
+        /// Здесь значение точное и от частоты кадров не зависит вовсе.
+        /// </summary>
+        public Vector3 GetSimVelocity(int entityId)
+        {
+            if (Sim == null || (uint)entityId >= (uint)Sim.Entities.Count) return Vector3.zero;
+            FixVec2 velocity = Sim.Entities.Velocity[entityId];
+            // Скорость в симуляции задана за тик, а камере нужна за секунду.
+            return new Vector3(velocity.X.ToFloat(), 0f, velocity.Y.ToFloat())
+                   * Simulation.TicksPerSecond;
+        }
+
         public Vector3 GetRenderPosition(int entityId)
         {
             FixVec2 prev = _prevPositions[entityId];

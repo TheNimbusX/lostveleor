@@ -92,33 +92,6 @@ namespace Game.View
         private const float OrvillShieldAuthoredDuration = 42f / 30f;
         private const float OrvillHitPresentationDuration = 0.57f;
 
-        /// <summary>
-        /// С какого места запускается клип умирания, в долях его длины.
-        ///
-        /// НЕ С НАЧАЛА, И ЭТО ГЛАВНОЕ. Mixamo-клип из 73 кадров начинается с
-        /// девяти кадров, где существо просто стоит (замер по высоте таза в
-        /// Blender: 0.430 без изменений до 9-го кадра), и заканчивается
-        /// тридцатью кадрами замороженной позы. Между ними — оседание и само
-        /// падение, а падение начинается на 24-м кадре.
-        ///
-        /// Показ смерти короткий, поэтому вступление съедало его целиком: тело
-        /// успевало «умереть» ещё стоя. 24/73 сдвигает старт ровно на первый
-        /// кадр падения; хвост отсекает не клип, а ArenaView своим таймером.
-        ///
-        /// ЗАВИСИТ ОТ КЛИПА. Заменишь Mutant Dying — перемеряй, а не подгоняй.
-        /// </summary>
-        private const float OrvillDeathClipStart = 24f / 73f;
-
-        /// <summary>
-        /// Переход в смерть. 0.025 с хватало, пока клип стартовал с первого
-        /// кадра — там поза почти совпадала со стойкой. Со старта на падении
-        /// поза уже наклонена, и такой переход читается как подмена кадра.
-        /// </summary>
-        private const float OrvillDeathBlend = 0.09f;
-        // DeathBack has no authored exit. Keep a runtime guard here as well:
-        // a future imported clip must not loop back into its standing first
-        // frame while ArenaView is still presenting the corpse.
-        private const float OrvillDeathHoldNormalizedTime = 0.72f;
         // GuardWalk covers about 0.387 m over a 0.20 s planted-foot phase:
         // 1.93 m/s at 1x versus Orvill's deterministic 3.5 m/s full speed.
         /// <summary>
@@ -199,27 +172,53 @@ namespace Game.View
         private bool _abilityPresentationActive;
         private bool _sweepLocomotion;
         private bool _leapLocomotion;
+
+        /// <summary>
+        /// Сохраняем контакт и первые 0.10 с амортизации. Если маршрут уже
+        /// движет героя, дальше посадка перетекает в первый шаг: ожидание
+        /// последнего хвоста клипа держало бегущее тело в позе приземления.
+        /// </summary>
+        private const float LeapRunBlend = 0.18f;
+        private const float LeapRunHandoff = PelagAbilityTiming.LeapRecovery - PelagAbilityTiming.LeapArrival - 0.10f;
         private float _abilityPresentationUntil;
         private bool _abilityUsesLowerBodyLayer;
+        private int _abilityDefinitionId;
+        private bool _cycloneReleasing;
         private int _upperBodyLayer = -1;
+        private int _saberStanceLayer = -1;
+        private int _saberFootworkLayer = -1;
+        private PelagEquipmentView _stanceEquipment;
         private int _lowerBodyLayer = -1;
         private bool _combatReady;
         private bool _locomotionMoving;
         private float _orvillLocomotionPlaybackSpeed = 1f;
         private float _orvillHitPresentationUntil;
 
-        public float DeathDuration => _faction == Faction.Wole ? 1.55f : 1.65f;
+        private EnemyContactPose _contactPose;
+        public float DeathDuration => _faction == Faction.Wole ? 1.55f : EnemyPresentationProfile.Death(_enemyKind).TotalSeconds;
+        public void PlayContactPose(Vector3 direction, float strength)
+        { if (!IsDead) _contactPose?.Hit(direction, strength, _enemyKind); }
         public bool IsDead { get; private set; }
         public bool UsesSprites => _spriteVisual != null;
         public bool CombatReady => _combatReady;
         public bool BasicAttackActive => _faction == Faction.Wole && _attackPresentationActive && !IsDead;
-        public bool WhirlwindActive => _faction == Faction.Wole && _abilityPresentationActive && _abilityUsesLowerBodyLayer && !IsDead;
+        public bool WhirlwindActive => _faction == Faction.Wole && _abilityPresentationActive
+            && _abilityDefinitionId == AbilityDefinition.WhirlwindId && !IsDead;
+        private bool CyclonePresentationActive => _abilityPresentationActive
+            && _abilityDefinitionId == AbilityDefinition.ChainCycloneId && !IsDead;
+        private bool MaskedAbilityActive => WhirlwindActive || CyclonePresentationActive;
+        private float MaskedAbilityWeight => WhirlwindActive ? WhirlwindWeight
+            : !_cycloneReleasing ? 1f : Mathf.SmoothStep(0f, 1f,
+                Mathf.Clamp01((_abilityPresentationUntil - Time.time) / 0.16f));
         public bool AnchorAbilityActive => _faction == Faction.Wole && _abilityPresentationActive && !_abilityUsesLowerBodyLayer && !IsDead;
+        public bool LeapFacingRecovery => _leapLocomotion && !IsDead
+            && Time.time < _abilityPresentationUntil + 0.12f;
         public float AnchorFacingWeight => (_sweepLocomotion || _leapLocomotion)
-            ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((_abilityPresentationUntil - Time.time) / .20f)) : 1f;
+            ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((_abilityPresentationUntil - Time.time)
+                / (_leapLocomotion ? LeapRunHandoff : .20f))) : 1f;
         public float WhirlwindElapsed => WhirlwindActive ? WhirlwindClipDuration - (_abilityPresentationUntil - Time.time) : 0f;
         private float WhirlwindWeight => 1f - Mathf.SmoothStep(0f, 1f,
-            Mathf.InverseLerp(WhirlwindRecoveryStart - 0.08f, WhirlwindClipDuration - 0.06f, WhirlwindElapsed));
+            Mathf.InverseLerp(WhirlwindRecoveryStart, WhirlwindClipDuration, WhirlwindElapsed));
         public bool LocomotionMoving => _locomotionMoving;
         public bool HasCommittedAction => IsDead || _attackPresentationActive || _abilityPresentationActive;
         public float TurnAngularSpeed { get; private set; }
@@ -253,7 +252,15 @@ namespace Game.View
             else
             {
                 _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                if (faction == Faction.Orvill)
+                {
+                    _contactPose = GetComponent<EnemyContactPose>() ?? gameObject.AddComponent<EnemyContactPose>();
+                    _contactPose.Initialize();
+                }
                 _upperBodyLayer = _animator.GetLayerIndex(UpperBodyLayerName);
+                _saberStanceLayer = _animator.GetLayerIndex("Saber Stance");
+                _saberFootworkLayer = _animator.GetLayerIndex("Saber Footwork");
+                _stanceEquipment = GetComponent<PelagEquipmentView>();
                 _lowerBodyLayer = _animator.GetLayerIndex(LowerBodyLayerName);
             }
         }
@@ -267,6 +274,7 @@ namespace Game.View
         public void ResetForSpawn(int presentationId)
         {
             IsDead = false;
+            _contactPose?.Clear();
             _attackVariant = 0;
             _orvillAttackCount = 0;
             _actionProtectedUntil = 0f;
@@ -275,8 +283,10 @@ namespace Game.View
             _abilityPresentationUntil = 0f;
             _abilityUsesLowerBodyLayer = false;
             _cycloneWasActive = false;
+            _cycloneReleasing = false;
+            _abilityDefinitionId = 0;
+            _chainPresentationVariant = 0;
             _cyclonePhase = -1;
-            _equipmentGestureUntil = 0f;
             _attackPresentationActive = false;
             _attackPresentationUntil = 0f;
             _combatReady = false;
@@ -326,18 +336,36 @@ namespace Game.View
         private TickDriver _cycloneDriver;
         private bool _cycloneWasActive;
         private int _cyclonePhase = -1;
-        private float _equipmentGestureUntil;
 
         public bool PlayEquipmentGesture(float phase, bool drawing)
         {
             if (_animator == null || _upperBodyLayer < 0 || IsDead || HasCommittedAction) return false;
             int state = Animator.StringToHash(drawing ? "UpperBody Combat.SaberDraw" : "UpperBody Combat.SaberStow");
             if (!_animator.HasState(_upperBodyLayer, state)) return false;
-            _equipmentGestureUntil = Time.time + .05f;
-            _animator.SetLayerWeight(_upperBodyLayer, 1f);
-            _animator.Play(state, _upperBodyLayer, drawing ? phase : 1f - phase);
+            // Вход и выход жеста смешиваются с текущей позой корпуса, иначе
+            // первый ключ мгновенно переносит кисть с правого бока на левый.
+            float weight = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(phase / .20f))
+                * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((1f - phase) / .20f));
+            _animator.SetLayerWeight(_upperBodyLayer, weight);
+            _animator.Play(state, _upperBodyLayer, phase);
+            UpdateStanceFootwork(phase);
             _animator.Update(0f);
             return true;
+        }
+
+        private void UpdateStanceFootwork(float phase)
+        {
+            if (_saberFootworkLayer < 0) return;
+            bool stepping = !IsDead && !HasCommittedAction && !_locomotionMoving
+                && phase > .55f && phase < 1f;
+            _animator.SetLayerWeight(_saberFootworkLayer, stepping ? 1f : 0f);
+            if (stepping)
+            {
+                // The final planted pose is also the idle's first frame.
+                // Start its breathing cycle only after both steps land.
+                _animator.Play("Saber Stance.SaberIdle", _saberStanceLayer, 0f);
+                _animator.Play("Saber Footwork.StanceSteps", _saberFootworkLayer, (phase - .55f) / .45f);
+            }
         }
 
         private void UpdateCycloneAnimation()
@@ -348,6 +376,8 @@ namespace Game.View
             bool active = sim != null && sim.CycloneActive;
             if (active)
             {
+                _abilityDefinitionId = AbilityDefinition.ChainCycloneId;
+                _cycloneReleasing = false;
                 _attackPresentationActive = false;
                 _abilityUsesLowerBodyLayer = true;
                 _abilityPresentationActive = true;
@@ -375,7 +405,12 @@ namespace Game.View
                 if (sim != null)
                     foreach (var ev in _cycloneDriver.FrameEvents)
                         if (ev.Type == SimEventType.AbilityCast && ev.Source == Simulation.PlayerId) replaced = true;
-                if (!replaced) PlayCycloneLayers("CycloneEnd", 0f, true);
+                if (!replaced)
+                {
+                    _cycloneReleasing = true;
+                    _abilityPresentationUntil = Time.time + 0.30f;
+                    PlayCycloneLayers("CycloneEnd", 0f, true);
+                }
                 _cyclonePhase = -1;
             }
             _cycloneWasActive = active;
@@ -431,9 +466,9 @@ namespace Game.View
                 // Comparing it with shortNameHash made this terminal-pose guard
                 // permanently false even while DeathBack was playing.
                 if (death.fullPathHash == OrvillDeathState
-                    && death.normalizedTime >= (IsRootSwarm ? 50f / 66f : OrvillDeathHoldNormalizedTime))
+                    && death.normalizedTime >= EnemyPresentationProfile.Death(_enemyKind).RestNormalized)
                     _animator.Play(OrvillDeathState, 0,
-                        IsRootSwarm ? 50f / 66f : OrvillDeathHoldNormalizedTime);
+                        EnemyPresentationProfile.Death(_enemyKind).RestNormalized);
             }
             if (_faction == Faction.Orvill
                 && (attackPresentationEnded || orvillHitPresentationEnded))
@@ -456,14 +491,27 @@ namespace Game.View
             //
             // Вход за 80 мс сохраняет исходную стойку, выход весом за
             // UpperBodyReleaseSeconds возвращает управление базовому слою.
+            if (_saberStanceLayer >= 0)
+            {
+                if (_stanceEquipment == null) _stanceEquipment = GetComponent<PelagEquipmentView>();
+                float phase = _stanceEquipment != null ? _stanceEquipment.DrawPhase : 0f;
+                // Полная стойка включает таз и ноги. При старте/остановке
+                // движения плавно передаём их локомоции; удар имеет приоритет.
+                float stanceWeight = IsDead || HasCommittedAction || _locomotionMoving ? 0f
+                    : Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((phase - .55f) / .45f));
+                if (!IsDead && !HasCommittedAction)
+                    stanceWeight = Mathf.MoveTowards(_animator.GetLayerWeight(_saberStanceLayer),
+                        stanceWeight, Time.deltaTime / .15f);
+                _animator.SetLayerWeight(_saberStanceLayer, stanceWeight);
+                UpdateStanceFootwork(phase);
+            }
             if (_faction == Faction.Wole && _upperBodyLayer >= 0)
             {
                 bool upperActive = _attackPresentationActive
-                                   || (_abilityPresentationActive && _abilityUsesLowerBodyLayer)
-                                   || Time.time < _equipmentGestureUntil;
+                                   || (_abilityPresentationActive && _abilityUsesLowerBodyLayer);
                 float current = _animator.GetLayerWeight(_upperBodyLayer);
-                float weight = WhirlwindActive
-                    ? Mathf.MoveTowards(current, WhirlwindWeight, Time.deltaTime / 0.08f)
+                float weight = MaskedAbilityActive
+                    ? Mathf.MoveTowards(current, MaskedAbilityWeight, Time.deltaTime / 0.08f)
                     : upperActive
                     ? Mathf.MoveTowards(current, 1f, Time.deltaTime / 0.08f)
                     : Mathf.MoveTowards(current, 0f, Time.deltaTime / UpperBodyReleaseSeconds);
@@ -481,11 +529,11 @@ namespace Game.View
                                     || (_abilityPresentationActive && _abilityUsesLowerBodyLayer);
                 // A spin needs hips and legs even while travelling. Release
                 // both masks together only after the final pivot lands.
-                float target = WhirlwindActive ? WhirlwindWeight
+                float target = MaskedAbilityActive ? MaskedAbilityWeight
                     : actionActive && !_locomotionMoving ? 1f : 0f;
                 float weight = Mathf.MoveTowards(
                     _animator.GetLayerWeight(_lowerBodyLayer), target,
-                    Time.deltaTime / (WhirlwindActive ? 0.08f : 0.16f));
+                    Time.deltaTime / (MaskedAbilityActive ? 0.08f : 0.16f));
                 _animator.SetLayerWeight(_lowerBodyLayer, weight);
             }
 
@@ -507,12 +555,12 @@ namespace Game.View
             }
             if (_animator == null || IsDead) return;
             if (_abilityPresentationActive && _leapLocomotion && moving
-                && _abilityPresentationUntil - Time.time <= .20f && _faction == Faction.Wole)
+                && _abilityPresentationUntil - Time.time <= LeapRunHandoff && _faction == Faction.Wole)
             {
                 int run = Animator.StringToHash("Base Layer.Run_v5");
                 var current = _animator.IsInTransition(0) ? _animator.GetNextAnimatorStateInfo(0)
                     : _animator.GetCurrentAnimatorStateInfo(0);
-                if (current.fullPathHash != run) _animator.CrossFadeInFixedTime(run, .10f, 0);
+                if (current.fullPathHash != run) _animator.CrossFadeInFixedTime(run, LeapRunBlend, 0);
             }
             if (_abilityPresentationActive && _sweepLocomotion && _faction == Faction.Wole)
             {
@@ -740,6 +788,9 @@ namespace Game.View
             bool anchorSweep = definitionId == AbilityDefinition.ChainCycloneId;
             bool chainStep = definitionId == AbilityDefinition.ChainStepId;
             if (!whirlwind && !anchorLeap && !anchorSweep && !chainStep) return;
+            _abilityDefinitionId = definitionId;
+            _cycloneReleasing = false;
+            if (chainStep) _chainPresentationVariant = 0;
             if (_faction == Faction.Wole && !IsDead && (whirlwind || chainStep)) SetCombatReady(true);
 
             if (_spriteVisual != null)
@@ -895,21 +946,9 @@ namespace Game.View
             // state here would visibly interrupt run/turn/attack/ability.
             if (_faction == Faction.Wole) return;
 
-            // В толпе полный hit-клип на каждый Damage перебивал собственные
-            // атаки по нескольку раз в секунду. Для частых лёгких попаданий
-            // достаточно уже существующих flash/recoil/hit-stop слоёв.
-            //
-            // Порог опущен с 0.34 до 0.18 вслед за длиной самой реакции: клип
-            // теперь идёт около 0.44 с вместо секунды, и прежний порог съедал
-            // каждое второе попадание. Съеденная реакция читается не как
-            // «реакции нет», а как «реакция запоздала» — она приходит на
-            // следующий удар. Именно это владелец и увидел.
-            //
-            // СОБСТВЕННАЯ АТАКА МОБА БОЛЬШЕ НЕ ГЛУШИТ РЕАКЦИЮ. Здесь стояла
-            // проверка `_actionProtectedUntil`, и она съедала всё попадание,
-            // пришедшее в замах: мобу прилетало, он спокойно доигрывал свой
-            // удар, а дёргался через секунду — на следующем. Получить по морде
-            // в замахе — это ровно тот момент, когда реакция и нужна.
+            // Замах продолжится в Sim: полный Hit не должен скрыть телеграф.
+            // Аддитивный наклон корпуса и вспышка уже подтвердили попадание.
+            if (Time.time < _actionProtectedUntil) return;
             if (Time.time - _lastHitAt < 0.18f) return;
             _lastHitAt = Time.time;
             CancelUpperBodyAttack(0.03f);
@@ -979,6 +1018,7 @@ namespace Game.View
         {
             if (IsDead) return;
             IsDead = true;
+            _contactPose?.Clear();
             if (_spriteVisual != null)
             {
                 _spriteVisual.PlayDeath();
@@ -1001,8 +1041,12 @@ namespace Game.View
                 ResetOrvillActionTriggers();
                 _animator.speed = 1f;
                 if (_animator.HasState(0, OrvillDeathState))
+                {
+                    var death = EnemyPresentationProfile.Death(_enemyKind);
+                    // fixedTimeOffset измеряется в СЕКУНДАХ клипа, не в нормали.
                     _animator.CrossFadeInFixedTime(OrvillDeathState,
-                        OrvillDeathBlend, 0, IsRootSwarm ? 0f : OrvillDeathClipStart);
+                        death.BlendSeconds, 0, death.StartNormalized * death.ClipSeconds);
+                }
                 else
                     _animator.SetTrigger(OrvillDeath);
                 return;

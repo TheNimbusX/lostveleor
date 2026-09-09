@@ -167,6 +167,11 @@ namespace Game.View
         private bool PlantAttack()
         {
             if (_presentation == null || _presentation.IsDead || _lowerLayer < 0) return false;
+            // Постановка стоп НЕ распространяется на прыжок.
+            //
+            // Пробовали 8 сентября: она решает IK ног и двигает таз под позу
+            // базовой атаки, а на замахе броска это выворачивало ноги. Скольжение
+            // стоп чинится в другом месте — переносом шага таза в сам клип.
             if (_presentation.HasCommittedAction && !_presentation.BasicAttackActive)
             {
                 _attackPlantWeight = 0f;

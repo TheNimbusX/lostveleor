@@ -9,13 +9,27 @@ using UnityEngine.Rendering;
 /// Собирает редактируемые prefab/material assets Pelag без ручного YAML.
 /// Рецепт — источник истины: любой prefab можно удалить и пересобрать меню.
 /// </summary>
-public static class RazlomPelagVfxAssetBuilder
+public static partial class RazlomPelagVfxAssetBuilder
 {
     private const string Root = "Assets/Resources/VFX/Pelag";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string LibraryPath = Root + "/AbilityVfxLibrary.asset";
-    private const int LibraryVersion = 29;
+    // 30: рисованные листы вместо процедурных заглушек, у удара якоря
+    // появились вспышка, кольцевая волна, пыль и искры.
+    // 31: пыль раздаётся тремя экземплярами с разбросом — одна плоская
+    // картинка читалась наклейкой.
+    // 32: два удара разведены по природе. Втыкание якоря — вспышка, волна,
+    // искры. Посадка героя — пыль. Четыре листа на одном событии сливались
+    // в пятно.
+    // 33: след на рисованной полосе у якоря. За героем ленты нет — вместо
+    // неё клубы воздуха вдоль траектории.
+    // 35: масштаб и яркость по референсу. Эффекты перекрывают фигуру героя,
+    // ядро пересвечено. Прежние доли метра читались как искорки.
+    // 36: росчерки за якорем и героем идут светящимся проходом
+    // (Razlom/Pelag Glow, Blend SrcAlpha One). Обычная краска ярче фона
+    // стать не может, поэтому следы оставались плоскими при любом размере.
+    private const int LibraryVersion = 48;
     private const int FlipbookTiles = 4;
     private const int FlipbookFrames = FlipbookTiles * FlipbookTiles;
     private const int ChainLinkCount = 96;
@@ -28,12 +42,45 @@ public static class RazlomPelagVfxAssetBuilder
 
     private const string AnchorSpinTexturePath =
         Root + "/Textures/Pelag_FX_AnchorSpin_4x4.png";
+    // РИСОВАННЫЕ ЛИСТЫ ВМЕСТО ПРОЦЕДУРНЫХ ЗАГЛУШЕК.
+    //
+    // Прежние Pelag_FX_ImpactBurst/GroundCrack/DashSmear были сгенерированы
+    // кодом: плоские овалы с треугольными лучами, из 16 кадров занято 6.
+    // Именно они и делали эффекты «глупыми». Новые листы приходят из ART/vfx
+    // через «Разлом → VFX → Импортировать флипбуки».
     private const string ImpactBurstTexturePath =
-        Root + "/Textures/Pelag_FX_ImpactBurst_4x4.png";
+        Root + "/Textures/Pelag_FX_flash_4x4.png";
     private const string GroundCrackTexturePath =
-        Root + "/Textures/Pelag_FX_GroundCrack_4x4.png";
+        Root + "/Textures/Pelag_FX_shockwave_4x4.png";
     private const string DashSmearTexturePath =
-        Root + "/Textures/Pelag_FX_DashSmear_4x4.png";
+        Root + "/Textures/Pelag_FX_smear_4x4.png";
+    private const string DustTexturePath =
+        Root + "/Textures/Pelag_FX_dus_8x8.png";
+    private const string SparksTexturePath =
+        Root + "/Textures/Pelag_FX_sparks_4x4.png";
+
+    // ПОЛОСЫ СЛЕДА — ЦЕЛЬНЫЕ КАРТИНКИ, НЕ ФЛИПБУКИ.
+    //
+    // Флипбук не умеет тянуться вдоль траектории: у него фиксированная форма
+    // на квадрате. След строит TrailRenderer по пройденным точкам и натягивает
+    // на ленту одну картинку, поэтому здесь нет ни сетки, ни кадров.
+    private const string TrailAnchorTexturePath =
+        Root + "/Textures/Pelag_FX_trail_anchor.png";
+    private const string TrailHeroTexturePath =
+        Root + "/Textures/Pelag_FX_trail_hero.png";
+
+    /// <summary>Пыль: 8×8 = 64 кадра, оседает дольше всех.</summary>
+    private const int DustTiles = 8;
+    private const float DustLifetime = 0.62f;
+
+    /// <summary>Вспышка контакта — самое короткое, что есть в способности.</summary>
+    private const float FlashLifetime = 0.26f;
+
+    /// <summary>Кольцевая волна расходится дольше вспышки, но короче пыли.</summary>
+    private const float ShockwaveLifetime = 0.42f;
+
+    /// <summary>Искры гаснут вслед за вспышкой.</summary>
+    private const float SparksLifetime = 0.34f;
     private const string ChainGlintTexturePath =
         Root + "/Textures/Pelag_FX_ChainGlint_4x4.png";
 
@@ -82,7 +129,8 @@ public static class RazlomPelagVfxAssetBuilder
             if (library == null || library.BuildVersion != LibraryVersion)
             {
                 SessionState.SetBool(AutoBuildSessionKey, true);
-                Build();
+                if(library != null && library.BuildVersion >= 36) BuildAnchorLeapOnly();
+                else Build();
             }
         };
     }
@@ -137,14 +185,38 @@ public static class RazlomPelagVfxAssetBuilder
             new Color(0.72f, 0.56f, 0.38f, 0.46f));
         Material anchorSpin = FlipbookMaterial("M_Flipbook_AnchorSpin", flipbookShader,
             AnchorSpinTexturePath, Color.white, 1.00f);
+        // ЯДРО ПОЧТИ БЕЛОЕ — ЭТО ГЛАВНОЕ В РЕФЕРЕНСЕ.
+        //
+        // Свечение 1.12 давало вежливую тёплую подсветку. Контраст между
+        // пересвеченным ядром и насыщенным окружением — то, чем «сочные»
+        // эффекты отличаются от аккуратных.
         Material impactBurst = FlipbookMaterial("M_Flipbook_ImpactBurst", flipbookShader,
-            ImpactBurstTexturePath, Color.white, 1.12f);
+            ImpactBurstTexturePath, Color.white, 2.40f);
         Material groundCrack = FlipbookMaterial("M_Flipbook_GroundCrack", flipbookShader,
-            GroundCrackTexturePath, Color.white, 0.92f);
+            GroundCrackTexturePath, Color.white, 1.35f);
         Material dashSmear = FlipbookMaterial("M_Flipbook_DashSmear", flipbookShader,
             DashSmearTexturePath, Color.white, 1.00f);
         Material chainGlint = FlipbookMaterial("M_Flipbook_ChainGlint", flipbookShader,
             ChainGlintTexturePath, Color.white, 1.08f);
+        Material dustSheet = FlipbookMaterial("M_Flipbook_Dust", flipbookShader,
+            DustTexturePath, Color.white, 0.90f);
+        Material sparks = FlipbookMaterial("M_Flipbook_Sparks", flipbookShader,
+            SparksTexturePath, Color.white, 2.10f);
+        // Тинт с альфой ниже единицы: полосы приехали почти непрозрачными
+        // (в теле альфа 250 сплошной лентой), и на всю ширину такая лента
+        // читается как плотный предмет, а не как воздух.
+        // Росчерки идут светящимся проходом, а не краской: только так белое
+        // ядро оказывается ярче фона.
+        Shader glowShader = Shader.Find("Razlom/Pelag Glow");
+        if (glowShader == null)
+        {
+            Debug.LogError("[Pelag VFX] Не найден шейдер Razlom/Pelag Glow");
+            return;
+        }
+        Material trailAnchor = FlipbookMaterial("M_TrailAnchor", glowShader,
+            TrailAnchorTexturePath, new Color(1f, 0.94f, 0.82f, 1f), 2.6f);
+        Material trailHero = FlipbookMaterial("M_TrailHero", glowShader,
+            TrailHeroTexturePath, new Color(1f, 0.92f, 0.76f, 1f), 2.2f);
         Material metal = AnchorMetalMaterial();
         _chainLinkMesh = LoadChainLinkMesh();
         if (_chainLinkMesh == null || !ValidateGeometryBudget()) return;
@@ -168,8 +240,22 @@ public static class RazlomPelagVfxAssetBuilder
             "VFX_AnchorLeap_Throw", metal, anchorSpin, 0.60f);
         prefabs[(int)PelagVfxId.AnchorLeapChain] = SaveDynamicLine(PelagVfxId.AnchorLeapChain,
             "VFX_AnchorLeap_Chain", anchor, metal, chainGlint, 0.045f, 0.90f, true);
+        // Втыкание якоря и посадка героя — один и тот же эффект, разного
+        // размера. Это самый важный кадр способности: момент, когда она
+        // становится необратимой. До сих пор он состоял из одной пыли и
+        // не имел ни вспышки, ни волны.
+        //
+        // Корень живёт дольше самого долгого слоя, иначе пыль обрежется на
+        // полпути вместе с объектом.
+        // ВТЫКАНИЕ ЯКОРЯ: металл о камень. Вспышка, кольцевая волна, искры.
+        // Пыли здесь нет намеренно — она принадлежит посадке героя, и если
+        // отдать её обоим ударам, оба превращаются в одно пыльное пятно.
         prefabs[(int)PelagVfxId.AnchorLeapLand] = SaveBurst(PelagVfxId.AnchorLeapLand,
-            "VFX_AnchorLeap_Land", dust, 18, 0.40f, 3.8f, 0.28f, FlipbookLifetime);
+            "VFX_AnchorLeap_Land", dust, 10, 0.30f, 3.2f, 0.20f, ShockwaveLifetime + 0.10f,
+            impactBurst, 1.35f,
+            groundCrack, 2.00f,
+            null, 0f,
+            sparks, 1.20f);
         prefabs[(int)PelagVfxId.CycloneHook] = SaveAnchor(PelagVfxId.CycloneHook,
             "VFX_Cyclone_Hook", metal, anchorSpin, 2.30f);
         prefabs[(int)PelagVfxId.CycloneChain] = SaveDynamicLine(PelagVfxId.CycloneChain,
@@ -185,9 +271,16 @@ public static class RazlomPelagVfxAssetBuilder
             impactBurst, 0.62f);
         prefabs[(int)PelagVfxId.DustSmall] = SaveBurst(PelagVfxId.DustSmall,
             "VFX_DustSmall", dust, 3, 0.28f, 1.5f, 0.19f, 0.38f);
+        // ПОСАДКА ГЕРОЯ: ноги о землю, и это чистая пыль. Рисованный лист
+        // живёт здесь, а не на втыкании якоря.
         prefabs[(int)PelagVfxId.DustHeavy] = SaveBurst(PelagVfxId.DustHeavy,
-            "VFX_DustHeavy", dust, 6, 0.42f, 2.2f, 0.27f, 0.66f);
+            "VFX_DustHeavy", dust, 6, 0.42f, 2.2f, 0.27f, DustLifetime + 0.12f,
+            null, 0f,
+            groundCrack, 1.10f,
+            dustSheet, 1.70f,
+            null, 0f);
 
+        BuildAnchorLeapEffects(prefabs);
         CreateLibrary(prefabs);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -223,7 +316,7 @@ public static class RazlomPelagVfxAssetBuilder
     {
         string path = MaterialFolder + "/" + name + ".mat";
         Material material = LoadOrCreateMaterial(path, shader);
-        Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+        Texture2D texture = string.IsNullOrEmpty(texturePath) ? Texture2D.whiteTexture : AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
         material.name = name;
         material.SetTexture("_BaseMap", texture);
         material.SetColor("_BaseColor", tint);
@@ -240,6 +333,10 @@ public static class RazlomPelagVfxAssetBuilder
             ImpactBurstTexturePath,
             GroundCrackTexturePath,
             DashSmearTexturePath,
+            DustTexturePath,
+            SparksTexturePath,
+            TrailAnchorTexturePath,
+            TrailHeroTexturePath,
             ChainGlintTexturePath
         };
 
@@ -262,11 +359,21 @@ public static class RazlomPelagVfxAssetBuilder
 
             if (RazlomPelagVfxTexturePolicy.Apply(importer)) importer.SaveAndReimport();
 
+            // КВАДРАТ ТРЕБУЕТСЯ ТОЛЬКО ОТ ЛИСТОВ С СЕТКОЙ.
+            //
+            // Полоса следа — цельная картинка 2048x512, и жёсткая проверка на
+            // квадрат уронила бы сборку целиком, а вместе с ней все эффекты.
+            // Такое уже случалось, когда листы 4x4 приезжали как 1024.
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(paths[i]);
-            if (texture == null || texture.width != 2048 || texture.height != 2048)
+            bool grid = System.Text.RegularExpressions.Regex.IsMatch(paths[i], @"_\d+x\d+\.png$");
+            bool bad = texture == null
+                       || texture.width != 2048
+                       || (grid && texture.height != texture.width);
+            if (bad)
             {
                 string dimensions = texture == null ? "null" : $"{texture.width}x{texture.height}";
-                Debug.LogError($"[Pelag VFX] Ожидался RGBA atlas 2048x2048, получен {dimensions}: {paths[i]}");
+                string expected = grid ? "квадратный atlas 2048x2048" : "полосу шириной 2048";
+                Debug.LogError($"[Pelag VFX] Ожидалась {expected}, получено {dimensions}: {paths[i]}");
                 ready = false;
             }
         }
@@ -821,10 +928,20 @@ public static class RazlomPelagVfxAssetBuilder
         // The physical head and chain carry the silhouette. A thin steel
         // wake follows the real projectile instead of a second painted anchor.
         var trail = root.AddComponent<TrailRenderer>();
-        trail.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/M_AnchorTrail.mat");
-        trail.time = 0.07f;
-        trail.startWidth = 0.06f;
+        // След на рисованной полосе вместо однотонного градиента.
+        //
+        // Прежние 6 сантиметров и 0.07 секунды делали его практически
+        // невидимым: якорь пролетает пять метров, а лента жила меньше кадра
+        // пути. Теперь она держится всю фазу полёта.
+        Material strip = AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/M_TrailAnchor.mat");
+        trail.sharedMaterial = strip != null
+            ? strip
+            : AssetDatabase.LoadAssetAtPath<Material>(Root + "/Materials/M_AnchorTrail.mat");
+        trail.time = 0.30f;
+        trail.startWidth = 0.55f;
         trail.endWidth = 0f;
+        trail.textureMode = LineTextureMode.Stretch;
+        trail.alignment = LineAlignment.View;
         trail.minVertexDistance = 0.04f;
         trail.shadowCastingMode = ShadowCastingMode.Off;
         trail.receiveShadows = false;
@@ -834,7 +951,9 @@ public static class RazlomPelagVfxAssetBuilder
     private static GameObject SaveBurst(PelagVfxId id, string name, Material material,
         int count, float lifetime, float speed, float size, float rootLifetime,
         Material impactFlipbook = null, float impactSize = 1f,
-        Material groundFlipbook = null, float groundSize = 1f)
+        Material groundFlipbook = null, float groundSize = 1f,
+        Material dustFlipbook = null, float dustSize = 1f,
+        Material sparkFlipbook = null, float sparkSize = 1f)
     {
         GameObject root = RootObject(id, name, rootLifetime);
         ParticleSystem ps = root.AddComponent<ParticleSystem>();
@@ -897,12 +1016,27 @@ public static class RazlomPelagVfxAssetBuilder
         if (id == PelagVfxId.WhirlwindHit)
             AddAuthoredAccent(root, "Assets/Hovl Studio/RPG VFX Bundle/Prefabs/Magic buffs and hits/Punch Hit.prefab",
                 0.55f, 0.24f, false);
-        if (impactFlipbook != null)
-            AddFlipbook(root, "Impact Burst Flipbook", impactFlipbook, impactSize,
-                false, Vector3.zero, 5);
+        // ПОРЯДОК ВАЖЕН, И ОН ЖЕ ЗАДАЁТ ЧИТАЕМОСТЬ.
+        //
+        // Снизу вверх: кольцевая волна лежит на земле, поверх неё пыль, затем
+        // вспышка контакта, искры последними. Каждый слой живёт своё время —
+        // вспышка гаснет первой, пыль оседает последней. Одинаковая
+        // длительность превращала бы удар в одно ровное пятно.
         if (groundFlipbook != null)
-            AddFlipbook(root, "Ground Crack Flipbook", groundFlipbook, groundSize,
-                true, new Vector3(0f, 0.015f, 0f), -2);
+            AddFlipbook(root, "Ground Shockwave Flipbook", groundFlipbook, groundSize,
+                true, new Vector3(0f, 0.015f, 0f), -2, FlipbookTiles, ShockwaveLifetime);
+        // Пыль — четыре экземпляра с разбросом и расхождением наружу: один
+        // силуэт читается наклейкой, несколько разъезжающихся дают объём.
+        if (dustFlipbook != null)
+            AddFlipbook(root, "Dust Flipbook", dustFlipbook, dustSize,
+                false, new Vector3(0f, 0.10f, 0f), 3, DustTiles, DustLifetime,
+                4, 0.30f, 0.26f, 1.1f);
+        if (impactFlipbook != null)
+            AddFlipbook(root, "Impact Flash Flipbook", impactFlipbook, impactSize,
+                false, Vector3.zero, 5, FlipbookTiles, FlashLifetime);
+        if (sparkFlipbook != null)
+            AddFlipbook(root, "Impact Sparks Flipbook", sparkFlipbook, sparkSize,
+                false, new Vector3(0f, 0.06f, 0f), 6, FlipbookTiles, SparksLifetime);
         return Save(root, name);
     }
 
@@ -920,8 +1054,21 @@ public static class RazlomPelagVfxAssetBuilder
         return mesh;
     }
 
+    /// <summary>
+    /// Кладёт флипбук на частицу.
+    ///
+    /// СЕТКА И ДЛИТЕЛЬНОСТЬ ЗАДАЮТСЯ СНАРУЖИ.
+    ///
+    /// Раньше и то и другое было константой 4×4 при 30 кадрах в секунду, то
+    /// есть ровно 0.533 с на любой эффект. Рисованные листы приходят с разной
+    /// сеткой — пыль 8×8, остальное 4×4, — а длительность у вспышки и у
+    /// оседающей пыли отличается в разы. Один срок на всех означал бы, что
+    /// удар тянется как дым, а дым обрывается как удар.
+    /// </summary>
     private static ParticleSystem AddFlipbook(GameObject root, string name, Material material,
-        float size, bool horizontal, Vector3 localPosition, int sortingOrder)
+        float size, bool horizontal, Vector3 localPosition, int sortingOrder,
+        int tiles = FlipbookTiles, float lifetime = FlipbookLifetime,
+        int count = 1, float spread = 0f, float sizeJitter = 0f, float outwardSpeed = 0f)
     {
         if (material == null) return null;
 
@@ -933,29 +1080,57 @@ public static class RazlomPelagVfxAssetBuilder
         ParticleSystem.MainModule main = particles.main;
         main.loop = false;
         main.playOnAwake = false;
-        main.duration = FlipbookLifetime;
-        main.startLifetime = FlipbookLifetime;
-        main.startSpeed = 0f;
-        main.startSize = size;
+        main.duration = lifetime;
+        main.startLifetime = lifetime;
+
+        // РАСХОЖДЕНИЕ НАРУЖУ ЛЕЧИТ ПЛОСКОСТЬ ЛУЧШЕ, ЧЕМ ЛИШНИЕ ЭКЗЕМПЛЯРЫ.
+        //
+        // Три неподвижные картинки со случайным поворотом всё равно читаются
+        // как стопка наклеек: они не меняют положение друг относительно друга.
+        // Стоит им поехать от точки удара — и глаз достраивает объём сам,
+        // потому что видит параллакс между слоями.
+        main.startSpeed = outwardSpeed > 0f
+            ? new ParticleSystem.MinMaxCurve(outwardSpeed * 0.55f, outwardSpeed)
+            : new ParticleSystem.MinMaxCurve(0f);
+        // ОДНА КАРТИНКА ЧИТАЕТСЯ КАК ПЛОСКАЯ.
+        //
+        // Пока флипбук выдавался ровно одной частицей без разброса, пыль
+        // выглядела наклейкой: один силуэт, один размер, один угол. Несколько
+        // экземпляров с разным поворотом, размером и смещением дают объём, не
+        // требуя ни новых текстур, ни лишних кадров.
+        main.startSize = sizeJitter > 0f
+            ? new ParticleSystem.MinMaxCurve(size * (1f - sizeJitter), size * (1f + sizeJitter))
+            : new ParticleSystem.MinMaxCurve(size);
+        main.startRotation = count > 1
+            ? new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f)
+            : new ParticleSystem.MinMaxCurve(0f);
         main.startColor = Color.white;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;
         main.scalingMode = ParticleSystemScalingMode.Hierarchy;
-        main.maxParticles = 1;
+        main.maxParticles = Mathf.Max(1, count);
 
         ParticleSystem.EmissionModule emission = particles.emission;
         emission.enabled = true;
         emission.rateOverTime = 0f;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
+        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)Mathf.Max(1, count)) });
 
         ParticleSystem.ShapeModule shape = particles.shape;
-        shape.enabled = false;
+        if (spread > 0f)
+        {
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = spread;
+            shape.radiusThickness = 1f;
+            shape.randomDirectionAmount = 0f;
+        }
+        else shape.enabled = false;
 
         ParticleSystem.TextureSheetAnimationModule sheet = particles.textureSheetAnimation;
         sheet.enabled = true;
         sheet.mode = ParticleSystemAnimationMode.Grid;
         sheet.animation = ParticleSystemAnimationType.WholeSheet;
-        sheet.numTilesX = FlipbookTiles;
-        sheet.numTilesY = FlipbookTiles;
+        sheet.numTilesX = tiles;
+        sheet.numTilesY = tiles;
         sheet.cycleCount = 1;
         sheet.startFrame = new ParticleSystem.MinMaxCurve(0f);
         sheet.frameOverTime = new ParticleSystem.MinMaxCurve(1f,
@@ -1202,11 +1377,19 @@ internal static class RazlomPelagVfxTexturePolicy
     private const string Prefix = "Assets/Resources/VFX/Pelag/Textures/Pelag_FX_";
     private const string Suffix = "_4x4.png";
 
+    /// <summary>
+    /// Политика распространяется на любой лист, а не только на 4×4.
+    ///
+    /// Суффикс был прибит к «_4x4.png», и пыль 8×8 проходила мимо: ей не
+    /// выставлялись ни alphaIsTransparency, ни npotScale, ни размер атласа.
+    /// Сетка у листов разная по существу, привязываться к одной нельзя.
+    /// </summary>
     public static bool Applies(string path)
     {
         return !string.IsNullOrEmpty(path)
                && path.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase)
-               && path.EndsWith(Suffix, StringComparison.OrdinalIgnoreCase);
+               && System.Text.RegularExpressions.Regex.IsMatch(
+                   path, @"_\d+x\d+\.png$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     public static bool Apply(TextureImporter importer)

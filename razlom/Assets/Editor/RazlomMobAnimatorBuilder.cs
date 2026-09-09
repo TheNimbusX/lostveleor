@@ -130,6 +130,66 @@ public static class RazlomMobAnimatorBuilder
         foreach (string mob in Mobs) BuildMob(mob, silentWhenEmpty);
     }
 
+    /// <summary>
+    /// Убирает старый контроллер перед пересборкой.
+    ///
+    /// СУЩЕСТВУЕТ ИЗ-ЗА РЕАЛЬНОГО ОТКАЗА: AssetDatabase.DeleteAsset на этих
+    /// контроллерах возвращал false («Failed to delete …»), после чего
+    /// CreateAnimatorControllerAtPath кидал исключение и обрывал ВСЮ сборку
+    /// плеера — а вместе с ней и съёмку кадров. Блокировки файла при этом не
+    /// было: тот же файл спокойно переименовывался с диска.
+    ///
+    /// Поэтому отказ базы — не приговор: файл убирается мимо неё, и база
+    /// узнаёт об этом из Refresh.
+    ///
+    /// А если не поддался и он — пересборка ПРОПУСКАЕТСЯ, а не падает.
+    /// Замер показал, чем именно занят файл: редактор держит его сам, пока идёт
+    /// импорт (отказ приходит как UnauthorizedAccessException, хотя ни атрибута
+    /// «только чтение», ни второго процесса нет). Это состояние временное — на
+    /// следующем импорте всё пройдёт. Старый контроллер при этом рабочий, и
+    /// собранный плеер со слегка устаревшей анимацией куда полезнее, чем
+    /// оборванная сборка: раньше этот отказ убивал ВЕСЬ билд и съёмку кадров.
+    ///
+    /// Возвращает false, если контроллер остался на месте.
+    /// </summary>
+    private static bool RemoveExistingController(string assetPath)
+    {
+        if (AssetDatabase.DeleteAsset(assetPath)) return true;
+
+        Debug.LogWarning($"[Разлом] База не смогла удалить {assetPath} — убираю файл напрямую.");
+
+        string absolute = Path.Combine(
+            Path.GetDirectoryName(Application.dataPath) ?? string.Empty, assetPath);
+        try
+        {
+            if (File.Exists(absolute))
+            {
+                // Атрибут «только чтение» даёт тот же UnauthorizedAccessException,
+                // что и занятый файл, и стоит копейки — снимаем на всякий случай.
+                File.SetAttributes(absolute, FileAttributes.Normal);
+                File.Delete(absolute);
+            }
+            // .meta остаётся сиротой и Unity удалит его сам, но тогда контроллер
+            // получит новый GUID. На него никто не ссылается по GUID: мобы берут
+            // контроллер через Resources по пути — иначе его вообще нельзя было
+            // бы пересобирать, ведь пересборка меняет GUID и так.
+            if (File.Exists(absolute + ".meta")) File.Delete(absolute + ".meta");
+        }
+        catch (Exception error) when (
+            error is IOException || error is UnauthorizedAccessException)
+        {
+            // UnauthorizedAccessException НЕ наследник IOException — ловить надо
+            // оба, иначе исключение уходит наверх и роняет сборку.
+            Debug.LogWarning(
+                $"[Разлом] {assetPath} занят — пересборку пропускаю, остаётся прежний "
+                + $"контроллер. Повторится на следующем импорте. ({error.GetType().Name})");
+            return false;
+        }
+
+        AssetDatabase.Refresh();
+        return true;
+    }
+
     private static void BuildMob(string mob, bool silentWhenEmpty)
     {
         string folder = CharactersFolder + "/" + mob;
@@ -157,8 +217,9 @@ public static class RazlomMobAnimatorBuilder
         }
 
         string output = folder + "/" + mob + "_Combat.controller";
-        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(output) != null)
-            AssetDatabase.DeleteAsset(output);
+        if (AssetDatabase.LoadAssetAtPath<AnimatorController>(output) != null
+            && !RemoveExistingController(output))
+            return;
 
         AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(output);
         controller.AddParameter(MoveSpeed, AnimatorControllerParameterType.Float);

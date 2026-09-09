@@ -8,6 +8,10 @@ namespace Game.View
     {
         IEnumerator Start()
         {
+            // Для оценки тихого окружения камера и герой остаются на месте.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-ambience") >= 0) yield break;
+            // Витрина сама ведёт героя: проверка клика и поход к палатке мешали съёмке способности.
+            if (CaptureRig.IsVfxShowcase && !CaptureRig.LiveSkill) yield break;
             if (CaptureRig.LiveSkill)
             {
                 var liveDriver=FindAnyObjectByType<TickDriver>();
@@ -18,6 +22,8 @@ namespace Game.View
                 yield return new WaitForSeconds(11);
                 for(int slot=0;slot<4;slot++)
                 {
+                    if(CaptureRig.VfxShowcase==PelagVfxShowcase.AnchorLeap
+                        && sim.GetAbility(slot)?.DefinitionId!=AbilityDefinition.AnchorLeapId) continue;
                     Debug.Log("[camp-abilities] slot="+slot+" ready="+sim.AbilityReadyTick(slot)+" mode="+liveDriver.Session.Mode);
                     if(sim.AbilityReadyTick(slot)<=0)Debug.LogError("[camp-abilities] Missing cast "+slot);
                 }

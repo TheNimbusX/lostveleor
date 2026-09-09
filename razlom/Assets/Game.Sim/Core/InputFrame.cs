@@ -28,6 +28,11 @@ namespace Game.Sim
         Attack = 1 << 1,
         // Intermediate interaction waypoint, not a mouse turn-in-place command.
         NavigationWaypoint = 1 << 2,
+        /// <summary>
+        /// Угол маршрута, который надо ПРОЙТИ, а не встать в нём: полная
+        /// скорость, без порога прибытия и без подъезда с торможением.
+        /// </summary>
+        NavigationTransit = 1 << 3,
     }
 
     /// <summary>

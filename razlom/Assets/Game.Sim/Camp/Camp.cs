@@ -159,6 +159,73 @@ namespace Game.Sim
             return gold;
         }
 
+        /// <summary>
+        /// Наценка торговца.
+        ///
+        /// БОЛЬШЕ ЕДИНИЦЫ ОБЯЗАТЕЛЬНО. Продажа отдаёт PriceOf, покупка берёт
+        /// PriceOf * наценку. Сравняй их — и появится бесконечное золото:
+        /// купил и тут же продал без потерь. Это не баланс, это дыра.
+        /// </summary>
+        public const int TraderMarkup = 3;
+
+        /// <summary>
+        /// Ассортимент торговца: по одной базе каждой категории.
+        ///
+        /// СКЛАДА НЕТ, товар не кончается. Это осознанно: «узкий ассортимент
+        /// баз» из диздока — это лавка с постоянным товаром, а не редкие
+        /// находки. Заодно ассортимент не нужно хранить в сейве и мигрировать
+        /// его формат: он выводится из содержимого и акта.
+        /// </summary>
+        public int TraderStockCount => Has(CampService.Trader) ? Items.BaseCount : 0;
+
+        /// <summary>
+        /// Товар на прилавке. Обычная редкость: торговец продаёт основу, из
+        /// которой игрок собирает своё, а не готовые сильные вещи.
+        /// </summary>
+        public ItemInstance TraderStock(int index)
+        {
+            if (index < 0 || index >= TraderStockCount) return default;
+            ItemBaseDefinition definition = Items.GetBase(index);
+            // Уровень товара привязан к акту: лавка растёт вместе с игроком,
+            // но не обгоняет добычу из Разлома.
+            short level = (short)(Act * 3);
+            // Сид нулевой: у обычной редкости аффиксов нет, и случайность тут
+            // только запутала бы — товар обязан выглядеть одинаково всегда.
+            return new ItemInstance(definition.Id, level, ItemRarity.Normal, 0UL);
+        }
+
+        /// <summary>Сколько золота просит торговец за товар.</summary>
+        public int BuyPriceOf(in ItemInstance item) => PriceOf(in item) * TraderMarkup;
+
+        /// <summary>
+        /// Покупает товар с прилавка. Возвращает потраченное золото или ноль,
+        /// если сделка не состоялась.
+        ///
+        /// Место в сумке проверяется ДО списания золота: полная сумка не
+        /// должна съедать деньги без товара.
+        /// </summary>
+        public int BuyFromTrader(int stockIndex)
+        {
+            if (!Has(CampService.Trader)) return 0;
+
+            ItemInstance item = TraderStock(stockIndex);
+            if (item.IsEmpty) return 0;
+            if (Bag.IsFull) return 0;
+
+            int price = BuyPriceOf(in item);
+            if (!Spend(CurrencyType.Gold, price)) return 0;
+
+            if (Bag.Add(in item) < 0)
+            {
+                // Сумка отказала уже после списания. После проверки выше такого
+                // быть не должно, но молча съесть золото игрока хуже лишней ветки.
+                Earn(CurrencyType.Gold, price);
+                return 0;
+            }
+
+            return price;
+        }
+
         /// <summary>Цена скупки. Заглушка: важно только, что редкость и уровень влияют.</summary>
         public static int PriceOf(in ItemInstance item)
         {

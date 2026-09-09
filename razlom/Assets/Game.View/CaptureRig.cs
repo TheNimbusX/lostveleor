@@ -94,8 +94,8 @@ namespace Game.View
             get
             {
                 float t = Time.time - EquipmentStartedAt;
-                return (t >= 0.2f && t < 1.3f) || (t >= 2.5f && t < 2.7f)
-                    || (t >= 2.85f && t < 4f) || (t >= 5.4f && t < 6.6f);
+                return (t >= 0.2f && t < 2.2f) || (t >= 4.2f && t < 4.55f)
+                    || (t >= 4.75f && t < 7f) || (t >= 8.8f && t < 10.8f);
             }
         }
 
@@ -113,6 +113,7 @@ namespace Game.View
         public static bool PerformanceCapture { get; private set; }
         public static bool TurnDuringSkill { get; private set; }
         public static bool ActiveEnemies { get; private set; }
+        private static string _combatEncounter;
         public static bool SweepAimCapture { get; private set; }
         public static bool DeathDuringSkill { get; private set; }
 
@@ -155,6 +156,7 @@ namespace Game.View
         private float _videoEnd;
         private int _videoFps;
         private int _videoFrame;
+        private CombatAudioCapture _audioCapture;
         private int _timelineFrame;
         private float _cameraSize;
         private float _cameraYaw;
@@ -196,6 +198,7 @@ namespace Game.View
             _showHud = Array.IndexOf(args, "-capture-hud") >= 0;
             TurnDuringSkill = Array.IndexOf(args, "-capture-turn-during-skill") >= 0;
             ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
+            _combatEncounter = ReadValue(args, "-capture-encounter");
             SweepAimCapture = Array.IndexOf(args, "-capture-sweep-aim") >= 0;
             DeathDuringSkill = Array.IndexOf(args, "-capture-death-during-skill") >= 0;
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
@@ -295,8 +298,12 @@ namespace Game.View
             StartCoroutine(Run());
         }
 
+        private void OnDestroy() { _audioCapture?.Dispose(); _audioCapture = null; }
+
         private IEnumerator Run()
         {
+            if (!IsPerfRun && IsCombatFeelShowcase)
+                gameObject.AddComponent<CombatPresentationCapture>().Initialize(_outputDirectory);
             // Splash и первая загрузка FBX занимают разное время на разных
             // машинах. Отсчёт начинается только когда Rift и реальная сабля
             // уже привязаны — иначе расписание снимает заставку вместо боя.
@@ -313,9 +320,15 @@ namespace Game.View
                 Debug.Log("[capture-combat] Живых врагов: " + (driver.Sim.Entities.Count - 1));
                 yield return null;
             }
+            if (!string.IsNullOrEmpty(_combatEncounter) && IsCombatFeelShowcase)
+            {
+                CombatCaptureEncounter.Configure(FindAnyObjectByType<TickDriver>(), _combatEncounter,
+                    EnemyOverride, CombatFeelTier, ActiveEnemies);
+                yield return null;
+            }
             ConfigureCaptureView();
 
-            if (EquipmentShowcase)
+            if (EquipmentShowcase && !RunShowcase && !MovingCombatShowcase)
             {
                 TickDriver driver = FindAnyObjectByType<TickDriver>();
                 if (driver != null) driver.enabled = false;
@@ -385,6 +398,8 @@ namespace Game.View
             bool animationClock = !_recordVideo && Time.captureFramerate > 0;
             float combatStartedAt = animationClock ? Time.time : Time.unscaledTime;
 
+            if (_recordVideo && Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-silent-video") < 0)
+                _audioCapture = new CombatAudioCapture(_outputDirectory);
             int mark = 0;
             float lastMark = _marks.Length > 0 ? _marks[_marks.Length - 1] : 0f;
             float finish = Mathf.Max(lastMark, _recordVideo ? _videoEnd : 0f);
@@ -399,8 +414,9 @@ namespace Game.View
                 float now = _recordVideo
                     ? _timelineFrame++ / (float)_videoFps
                     : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt;
-                if (_recordVideo && now >= _videoStart && now < _videoEnd)
-                    CaptureVideoFrame();
+                bool videoFrame = _recordVideo && now >= _videoStart && now < _videoEnd;
+                _audioCapture?.Frame(videoFrame);
+                if (videoFrame) CaptureVideoFrame();
 
                 while (mark < _marks.Length && now >= _marks[mark])
                 {
@@ -409,6 +425,8 @@ namespace Game.View
                 }
             }
 
+            _audioCapture?.Dispose();
+            _audioCapture = null;
             if (_recordVideo) Time.captureFramerate = 0;
             if (_gcRecorder.Valid) _gcRecorder.Dispose();
             Application.Quit();
@@ -594,9 +612,19 @@ namespace Game.View
                     var cameraJuice = Camera.main.GetComponent<CombatCameraJuice>();
                     if (cameraJuice != null) cameraJuice.enabled = false;
                     Vector3 pivot = body.position + Vector3.up * 0.8f;
+                    var driver = FindAnyObjectByType<TickDriver>();
+                    if (driver != null && driver.Sim != null)
+                    {
+                        // Тело уже создано, но его первый LateUpdate ещё мог
+                        // не перенести prefab из нуля к позиции симуляции.
+                        var position = driver.Sim.Entities.Position[Simulation.PlayerId];
+                        pivot = new Vector3(position.X.ToFloat(), 0.8f, position.Y.ToFloat());
+                    }
                     Quaternion orbit = Quaternion.AngleAxis(_cameraYaw, Vector3.up);
                     Camera.main.transform.position = pivot + orbit * (Camera.main.transform.position - pivot);
-                    Camera.main.transform.rotation = orbit * Camera.main.transform.rotation;
+                    // После отключения follow его прежняя точка взгляда может
+                    // отставать от героя. Орбита всегда смотрит в новый центр.
+                    Camera.main.transform.LookAt(pivot, Vector3.up);
                 }
             }
             if (_cameraSize > 0f && Camera.main != null && Camera.main.orthographic)
@@ -687,8 +715,44 @@ namespace Game.View
             }
         }
 
+        private static bool _linesDumped;
+
+        /// <summary>
+        /// Разовый список включённых линий и следов в сцене.
+        ///
+        /// На всех съёмках в углу кадра висит тонкая линия, которой владелец не
+        /// видит в редакторе. Искать её перебором кода бесполезно: быстрее
+        /// спросить сцену, кто вообще сейчас рисует линию и откуда докуда.
+        /// </summary>
+        private static void DumpSceneLines()
+        {
+            if (_linesDumped) return;
+            _linesDumped = true;
+            foreach (var line in FindObjectsByType<LineRenderer>(FindObjectsSortMode.None))
+            {
+                if (!line.enabled || line.positionCount == 0) continue;
+                Debug.Log($"[capture-lines] LineRenderer «{line.name}» путь=«{FullPath(line.transform)}» " +
+                          $"точек={line.positionCount} мир={line.useWorldSpace} " +
+                          $"от={line.GetPosition(0)} до={line.GetPosition(line.positionCount - 1)}");
+            }
+            foreach (var trail in FindObjectsByType<TrailRenderer>(FindObjectsSortMode.None))
+            {
+                if (!trail.enabled) continue;
+                Debug.Log($"[capture-lines] TrailRenderer «{trail.name}» путь=«{FullPath(trail.transform)}» " +
+                          $"emitting={trail.emitting} позиция={trail.transform.position}");
+            }
+        }
+
+        private static string FullPath(Transform t)
+        {
+            string path = t.name;
+            while (t.parent != null) { t = t.parent; path = t.name + "/" + path; }
+            return path;
+        }
+
         private void CaptureStill(int index, float mark)
         {
+            DumpSceneLines();
             string path = Path.Combine(_outputDirectory,
                 string.Format(CultureInfo.InvariantCulture, "shot_{0:00}_t{1:0.00}s.png", index, mark));
             Texture2D frame = CaptureFrame();

@@ -123,9 +123,9 @@ Material:
     - _GroundGlowFeather: 0.06
     - _HitFlash: 0
     - _LightFeather: 0.045
-    - _LightThreshold: 0.62
+    - _LightThreshold: 0
     - _Metallic: 0
-    - _MidThreshold: 0.24
+    - _MidThreshold: 0
     - _OcclusionStrength: 1
     - _OutlineDepthBias: 0
     - _OutlineWidth: 0
@@ -151,7 +151,7 @@ Material:
     - _MidColor: {r: 0.94, g: 0.9, b: 0.91, a: 1}
     - _OutlineColor: {r: 0.089999996, g: 0.025, b: 0.07499998, a: 1}
     - _RimColor: {r: 1, g: 0.86, b: 0.65999997, a: 1}
-    - _ShadowColor: {r: 0.58, g: 0.65999997, b: 0.88, a: 1}
+    - _ShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

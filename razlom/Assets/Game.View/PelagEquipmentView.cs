@@ -38,13 +38,18 @@ namespace Game.View
         private bool _configured;
         private Transform _leftHand, _leftForearm, _leftUpperArm;
         private Transform _anchorHead;
+        private Transform _storedAnchorHead;
+        private Renderer[] _storedAnchorRenderers;
+        private PelagVfxController _vfx;
+        private bool _storedAnchorVisible;
         private float _anchorStartedAt;
         private bool _anchorLeap;
-        public Vector3 AnchorHeadPosition => _anchorHead != null ? _anchorHead.position : ChainHand.position;
+        public Vector3 AnchorHeadPosition => !_anchorInHand && _storedAnchorHead != null
+            ? _storedAnchorHead.position : _anchorHead != null ? _anchorHead.position : ChainHand.position;
         private CharacterAnimatorView _presentation;
         private Transform _upperArm, _forearm, _hand, _chest;
         // Одна обратимая шкала: 0 — пояс, 1 — боевая стойка.
-        private const float GripPhase = 0.35f;
+        private const float GripPhase = 19f / 45f;
         private float _drawPhase;
         public float DrawPhase => _drawPhase;
         public float GripError { get; private set; }
@@ -52,7 +57,9 @@ namespace Game.View
 
         public bool CombatReady => _combatReady;
         public bool AnchorInHand => _anchorInHand;
-        public bool AnchorHeadVisible => _anchorHead != null && _anchorHead.gameObject.activeInHierarchy;
+        public bool AnchorHeadVisible => (_storedAnchorVisible && _storedAnchorHead != null
+            && _storedAnchorHead.gameObject.activeInHierarchy)
+            || (_anchorHead != null && _anchorHead.gameObject.activeInHierarchy);
         public bool Configured => _configured;
         public Transform ChainHand => _anchorEquipped.Socket;
         public bool SaberInHand => _saber != null
@@ -70,6 +77,7 @@ namespace Game.View
             _anchorStored = anchorStored;
             _anchorEquipped = anchorEquipped;
             _presentation = GetComponent<CharacterAnimatorView>();
+            _vfx = FindFirstObjectByType<PelagVfxController>();
             _hand = saberEquipped.Socket;
             _forearm = _hand != null ? _hand.parent : null;
             _upperArm = _forearm != null ? _forearm.parent : null;
@@ -78,11 +86,36 @@ namespace Game.View
             _leftHand = anchorEquipped.Socket;
             _leftForearm = _leftHand != null ? _leftHand.parent : null;
             _leftUpperArm = _leftForearm != null ? _leftForearm.parent : null;
-            // The legacy grip prefab includes a complete anchor mesh. Keep
-            // its socket transform, but render only the matching held/VFX head.
-            if (_anchor != null)
-                foreach (Renderer renderer in _anchor.GetComponentsInChildren<Renderer>(true))
-                    renderer.enabled = false;
+            // The owner fitted the grip and stored head independently under Hips.
+            if (_anchor != null && _anchorStored.Socket != null)
+            {
+                var source = Resources.Load<GameObject>("Weapons/Pelag/AnchorChain/Pelag_AnchorHead");
+                var gripRenderer = _anchor.GetComponentInChildren<Renderer>(true);
+                _storedAnchorHead = _anchorStored.Socket.Find("Stored anchor head")
+                    ?? _anchor.Find("Stored anchor head");
+                if (source != null && _storedAnchorHead == null)
+                {
+                    var head = Instantiate(source, _anchorStored.Socket, false);
+                    head.name = "Stored anchor head";
+                    _storedAnchorHead = head.transform;
+                }
+                if (_storedAnchorHead != null)
+                {
+                    _storedAnchorHead.SetParent(_anchorStored.Socket, false);
+                    _storedAnchorHead.localPosition = new Vector3(.09f, -.083f, .002f);
+                    _storedAnchorHead.localRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+                    _storedAnchorHead.localScale = Vector3.one * .43085f;
+                    if (gripRenderer != null)
+                        foreach (var renderer in _storedAnchorHead.GetComponentsInChildren<Renderer>())
+                            renderer.sharedMaterial = gripRenderer.sharedMaterial;
+                }
+                var gripRenderers = _anchor.GetComponentsInChildren<Renderer>(true);
+                var headRenderers = _storedAnchorHead != null
+                    ? _storedAnchorHead.GetComponentsInChildren<Renderer>(true) : System.Array.Empty<Renderer>();
+                _storedAnchorRenderers = new Renderer[gripRenderers.Length + headRenderers.Length];
+                System.Array.Copy(gripRenderers, 0, _storedAnchorRenderers, 0, gripRenderers.Length);
+                System.Array.Copy(headRenderers, 0, _storedAnchorRenderers, gripRenderers.Length, headRenderers.Length);
+            }
             CreateHeldAnchorHead();
             _configured = true;
             ResetForSpawn();
@@ -146,14 +179,14 @@ namespace Game.View
             // на первом кадре замаха; IK не переписывает позу способности.
             if (_presentation != null && _presentation.HasCommittedAction)
             {
-                _drawPhase = _combatReady ? 1f : 0f;
+                _drawPhase = 1f;
                 ApplySaber();
                 return;
             }
 
             float previousPhase = _drawPhase;
             _drawPhase = Mathf.MoveTowards(_drawPhase, _combatReady ? 1f : 0f,
-                Time.deltaTime / (_combatReady ? 0.62f : 0.70f));
+                Time.deltaTime / 1.5f);
             // Даже длинный кадр обязан показать точку захвата до смены сокета.
             if ((previousPhase < GripPhase && _drawPhase > GripPhase)
                 || (previousPhase > GripPhase && _drawPhase < GripPhase)) _drawPhase = GripPhase;
@@ -164,13 +197,23 @@ namespace Game.View
             }
             if (_presentation != null && _presentation.PlayEquipmentGesture(_drawPhase, _combatReady))
             {
-                // Короткая коррекция только у рукояти: весь жест уже создан в Blender.
+                // Авторский жест не переписываем; согласуем только контакт с поясом.
+                if (CaptureRig.EquipmentShowcase && _drawPhase == GripPhase)
+                {
+                    Vector3 fitPosition = _saberStored.Socket.InverseTransformPoint(_hand.TransformPoint(_saberEquipped.LocalPosition));
+                    Quaternion fitRotation = Quaternion.Inverse(_saberStored.Socket.rotation) * _hand.rotation
+                        * Quaternion.Euler(_saberEquipped.LocalEuler);
+                    Debug.Log($"[equipment-source-grip] position={fitPosition.ToString("F6")} rotation={fitRotation.eulerAngles.ToString("F6")}");
+                }
                 float contact = 1f - Smooth(Mathf.Abs(_drawPhase - GripPhase) / .18f);
                 Vector3 position = _saberStored.Socket.TransformPoint(_saberStored.LocalPosition);
                 Quaternion rotation = _saberStored.Socket.rotation * Quaternion.Euler(_saberStored.LocalEuler)
                     * Quaternion.Inverse(Quaternion.Euler(_saberEquipped.LocalEuler));
                 Vector3 authoredGripTarget = position - rotation * Vector3.Scale(_hand.lossyScale, _saberEquipped.LocalPosition);
-                SolveArm(authoredGripTarget, contact);
+                // Вес решателя управлял только локтем, а кисть даже при нуле
+                // веса притягивалась к поясу. Подмешиваем саму цель: вдали
+                // от захвата рука теперь следует записанной траектории клипа.
+                SolveArm(Vector3.Lerp(_hand.position, authoredGripTarget, contact), contact);
                 _hand.rotation = Quaternion.Slerp(_hand.rotation, rotation, contact);
                 GripError = Vector3.Distance(_hand.position, authoredGripTarget) * contact;
                 Vector3 before = _saber.position;
@@ -254,7 +297,7 @@ namespace Game.View
             target = shoulder + direction * distance;
             // Постоянный локальный полюс не даёт локтю переворачиваться при
             // пересечении рукой средней линии тела или развороте героя.
-            Vector3 bend = Vector3.ProjectOnPlane(transform.right - transform.forward * 0.35f, direction).normalized;
+            Vector3 bend = Vector3.ProjectOnPlane(transform.right + transform.forward * 3f, direction).normalized;
             Vector3 authoredBend = Vector3.ProjectOnPlane(elbow - shoulder, direction).normalized;
             bend = Vector3.Slerp(authoredBend, bend, weight).normalized;
             float along = (upper * upper - lower * lower + distance * distance) / (2f * distance);
@@ -284,7 +327,8 @@ namespace Game.View
                 float scale = 0.56f / Mathf.Max(0.001f, size);
                 model.transform.localScale = Vector3.one * scale;
                 model.transform.localPosition = -bounds.center * scale;
-                var metal = Resources.Load<Material>("VFX/Pelag/Materials/M_AnchorMetal");
+                var gripRenderer = _anchor.GetComponentInChildren<Renderer>(true);
+                var metal = gripRenderer != null ? gripRenderer.sharedMaterial : null;
                 if (metal != null) foreach (var renderer in renderers) renderer.sharedMaterial = metal;
             }
             _anchorHead = root.transform;
@@ -366,11 +410,15 @@ namespace Game.View
             // единственную летящую голову рисует pooled-представление.
             float age = Time.time - _anchorStartedAt;
             bool heldWindup = _anchorInHand && _anchorLeap && age < PelagAbilityTiming.AnchorDraw;
-            _anchorHead.gameObject.SetActive(!_anchorInHand || heldWindup);
-            _anchorHead.position = _anchorInHand
-                ? _leftHand.position + transform.forward * .12f - Vector3.up * .12f
-                : _anchor.position + Vector3.down * .12f
-                    - transform.right * .13f - transform.forward * .08f;
+            _anchorHead.gameObject.SetActive(heldWindup);
+            // Recovery can release the hands before the returning projectile
+            // finishes. Restore the belt assembly only after that visible head
+            // disappears, keeping one anchor throughout the handoff.
+            _storedAnchorVisible = !_anchorInHand && (_vfx == null || _vfx.VisibleFlyingAnchors == 0);
+            foreach (Renderer renderer in _storedAnchorRenderers)
+                renderer.enabled = _storedAnchorVisible;
+            if (!_anchorInHand) return;
+            _anchorHead.position = _leftHand.position + transform.forward * .12f - Vector3.up * .12f;
             _anchorHead.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
         }
 
@@ -393,7 +441,8 @@ namespace Game.View
                 shoulder + direction * distance - forearm.position) * forearm.rotation;
         }
 
-        private void ApplySaber() => Mount(_saber, _drawPhase >= GripPhase && !_anchorInHand
+        private void ApplySaber() => Mount(_saber,
+            (_drawPhase > GripPhase || (_drawPhase == GripPhase && _combatReady)) && !_anchorInHand
             ? _saberEquipped : _saberStored);
 
         private void ApplyAnchor()

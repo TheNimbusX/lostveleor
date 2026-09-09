@@ -222,6 +222,16 @@ namespace Game.View
             if (_frameTrauma > 0f) _cameraJuice?.AddImpulse(_frameTrauma, _frameZoom);
         }
 
+        /// <summary>
+        /// Толчок камеры от способности, без остановки времени.
+        ///
+        /// Камера — половина ощущения удара, и до сих пор способности её не
+        /// трогали вовсе: импульс приходил только от попаданий обычной атаки.
+        /// Остановку времени сюда намеренно не пускаем: для Броска якоря она
+        /// не нужна, а глобальный timeScale в проекте однажды уже наделал бед.
+        /// </summary>
+        public void PunchCamera(float trauma, float zoom) => Accumulate(trauma, zoom, 0f, 1f);
+
         /// <summary>Копит самый сильный толчок кадра, а не складывает все.</summary>
         private void Accumulate(float trauma, float zoom, float stopDuration, float stopScale)
         {

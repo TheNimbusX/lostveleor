@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v17.TurnBoneLengths";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v22.StanceSteps";
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
     private const float IdleTransitionDuration = 0.15f;
@@ -59,6 +59,8 @@ public static class RazlomPelagV5AnimatorBuilder
         // the generated deliveries through that recipe before reading them;
         // otherwise a stale Library can silently retain the old 60 fps cuts.
         ForceImport(
+            "Pelag_MX_WithdrawingSword.fbx",
+            "Pelag_MX_KnifeIdle.fbx",
             "Pelag_MX_Idle.fbx",
             "Pelag_MX_Run.fbx",
             "Pelag_MX_TurnLeft.fbx",
@@ -97,7 +99,9 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimationClip whirlwind = Load("Pelag_MX_Whirlwind.fbx", "Pelag_MX_Whirlwind");
         whirlwind = RazlomPelagWhirlwindClip.Build(whirlwind);
         AnimationClip anchor = Load("Pelag_MX_AnchorAttack.fbx", "Pelag_MX_AnchorAttack");
-        AnimationClip anchorLeap = RazlomPelagAuthoredClips.Build("Pelag_AN_AnchorLeap", false);
+        // Бросок якоря собирается из трёх покупных Mixamo-клипов, а не из
+        // Blender-поз: у них общий с игровым ригом bind pose, переносить нечего.
+        AnimationClip anchorLeap = RazlomPelagLeapClips.Build();
         AnimationClip anchorSweep = RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneLoop", true);
         AnimationClip chainStep = RazlomPelagAuthoredClips.Build("Pelag_AN_Squall", false);
         AnimationClip chainStepB = chainStep;
@@ -169,7 +173,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimatorState relaxedIdleState = State(
             machine, "RelaxedIdle_v5", idle, RelaxedIdleStateSpeed);
         AnimatorState combatIdleState = State(
-            machine, "CombatIdle_v5", RazlomPelagAuthoredClips.Build("Pelag_AN_CombatIdle", true), 1f);
+            machine, "CombatIdle_v5", idle, RelaxedIdleStateSpeed);
         // CharacterAnimatorView sets cadence from measured clip ground speed.
         // An extra state multiplier would invalidate that calibration.
         BlendTree directionalLocomotion = BuildDirectionalLocomotion(
@@ -200,10 +204,8 @@ public static class RazlomPelagV5AnimatorBuilder
         ConfigureIdleTransitions(combatIdleState, runState, turnLeftState,
             turnRightState, 0.08f, 0.06f);
 
-        Transition(relaxedIdleState, combatIdleState, "Relaxed", AnimatorConditionMode.IfNot,
-            0f, IdleTransitionDuration);
-        Transition(combatIdleState, relaxedIdleState, "Relaxed", AnimatorConditionMode.If,
-            0f, IdleTransitionDuration);
+        // Смена оружия не перезапускает цикл ног и не меняет опору стоп.
+        // Боевой верх накладывается отдельной маской ниже слоёв действий.
         // Idle_v5 is retained as a compatibility entry point for older callers;
         // it immediately resolves to the requested mode when forced directly.
         Transition(idleState, relaxedIdleState, "Relaxed", AnimatorConditionMode.If,
@@ -254,8 +256,14 @@ public static class RazlomPelagV5AnimatorBuilder
         }
         Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
             RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
+        // exitTime 0.98 и мягкий выход 0.16.
+        //
+        // 0.86 гасило состояние прямо на приседе, 0.94 — на подъёме из него, и
+        // конец посадки всё равно обрывался. Теперь клип доигрывается почти
+        // целиком, а переход в стойку размазан достаточно, чтобы не читаться
+        // как срез.
         Combat(machine, relaxedIdleState, combatIdleState, runState, "AnchorLeap_v5", anchorLeap, "AnchorLeap",
-            1f, 0.06f, 0.86f, 0.10f);
+            1f, 0.06f, 0.98f, 0.16f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_v5", chainStep, "ChainStep",
             1f, 0.025f, 0.98f, 0.07f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_B_v5", chainStepB, "ChainStepB",
@@ -270,6 +278,26 @@ public static class RazlomPelagV5AnimatorBuilder
         deathEnter.duration = 0.03f;
         deathEnter.canTransitionToSelf = false;
 
+        controller.AddLayer("Saber Stance");
+        var stanceLayers = controller.layers;
+        var stance = stanceLayers[stanceLayers.Length - 1];
+        // The supplied idle includes its foot placement and hip posture.
+        // Runtime disables this full-body layer while moving or attacking.
+        stance.avatarMask = null;
+        stance.defaultWeight = 0f;
+        stance.blendingMode = AnimatorLayerBlendingMode.Override;
+        var knifeIdle = RazlomPelagStanceClips.Build(
+            Load("Pelag_MX_KnifeIdle.fbx", "Pelag_MX_KnifeIdle"), idle, out var stanceSteps);
+        stance.stateMachine.defaultState = State(stance.stateMachine, "SaberIdle",
+            knifeIdle, 1f);
+        controller.layers = stanceLayers;
+        controller.AddLayer("Saber Footwork");
+        var footworkLayers = controller.layers;
+        var footwork = footworkLayers[footworkLayers.Length - 1];
+        footwork.avatarMask = lowerBodyMask;
+        footwork.defaultWeight = 0f;
+        footwork.stateMachine.defaultState = State(footwork.stateMachine, "StanceSteps", stanceSteps, 1f);
+        controller.layers = footworkLayers;
         BuildUpperBodyLayer(controller, upperBodyMask, attackA, attackB, whirlwind);
         BuildLowerBodyLayer(controller, lowerBodyMask, attackA, attackB, whirlwind);
 
@@ -476,8 +504,13 @@ public static class RazlomPelagV5AnimatorBuilder
         // и задумано: слой не пишет ничего, верх тела берётся с Base Layer, а
         // выходной переход честно смешивает конец удара с локомоцией.
         AnimatorState empty = State(upper, "UpperBody_Empty", null, 1f);
-        State(upper, "SaberDraw", RazlomPelagAuthoredClips.Build("Pelag_AN_SaberDraw"), 1f);
-        State(upper, "SaberStow", RazlomPelagAuthoredClips.Build("Pelag_AN_SaberStow"), 1f);
+        var draw = Load("Pelag_MX_WithdrawingSword.fbx", "Pelag_MX_WithdrawingSword");
+        if (draw == null || draw.length < 1f)
+            throw new InvalidOperationException("Withdrawing Sword: полный тейк не импортирован");
+        State(upper, "SaberDraw", draw, 1f);
+        // Одна обратимая траектория сохраняет позу при отмене доставания.
+        // Время обоих состояний задаёт PelagEquipmentView, включая обратный ход.
+        State(upper, "SaberStow", draw, 1f);
         AddCycloneStates(upper);
         empty.writeDefaultValues = false;
         upper.defaultState = empty;

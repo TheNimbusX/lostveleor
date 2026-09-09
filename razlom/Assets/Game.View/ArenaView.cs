@@ -148,9 +148,9 @@ namespace Game.View
                  "поэтому это голый клинок за кушаком.")]
         public string WoleWeaponStoredSocket = "mixamorig:Hips";
         public Vector3 WoleWeaponStoredLocalPosition =
-            new Vector3(-0.12f, 0.015f, 0.065f);
+            new Vector3(-0.098f, 0.075f, 0.035f);
         public Vector3 WoleWeaponStoredLocalRotation =
-            new Vector3(0.435f, 89.205f, 237.383f);
+            new Vector3(0f, 90f, 219.431f);
         public Vector3 WoleWeaponStoredLocalScale =
             new Vector3(0.5722176f, 0.4797959f, 0.4378099f);
 
@@ -172,14 +172,11 @@ namespace Game.View
                  "качается вместе с корпусом, а не с рукой.")]
         public string WoleAnchorSocket = "mixamorig:Hips";
 
-        // Тоже снято с тела v6 в Play Mode. Инспектор показывал углы
-        // (-30.773, -355.468, 393.829) — здесь они приведены в привычный
-        // диапазон, поворот от этого не меняется: -355.468 это те же 4.532,
-        // а 393.829 — те же 33.829.
+        // Положение, вручную выставленное владельцем в Inspector.
         [Tooltip("Смещение от кости таза. Правится в Play Mode на объекте " +
                  "Pelag_AnchorGrip_Equipped, потом переписывается сюда.")]
-        public Vector3 WoleAnchorLocalPosition = new Vector3(0.114f, -0.0545f, -0.0722f);
-        public Vector3 WoleAnchorLocalRotation = new Vector3(-30.773f, 4.532f, 33.829f);
+        public Vector3 WoleAnchorLocalPosition = new Vector3(0.102f, -0.033f, -0.081f);
+        public Vector3 WoleAnchorLocalRotation = new Vector3(-56.122f, 0f, 90f);
         public Vector3 WoleAnchorLocalScale = new Vector3(0.55f, 0.55f, 0.55f);
 
         [Tooltip("Кость левой руки для короткого anchor-use окна. Грип один и тот же " +
@@ -290,7 +287,10 @@ namespace Game.View
         // Только presentation-offset: capture/demo может показать рывок или
         // сопротивление цепи, не меняя детерминированную позицию в Sim.
         private Vector3[] _presentationOffset;
+        private Vector3[] _deathOffset;
         private static readonly int HitFlashId = Shader.PropertyToID("_HitFlash");
+        private static readonly int DissolveEdgeGlowId = Shader.PropertyToID("_DissolveEdgeGlow");
+        private static readonly int DissolveEdgeColorId = Shader.PropertyToID("_DissolveEdgeColor");
         private static readonly int DeathFadeId = Shader.PropertyToID("_DeathFade");
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
@@ -343,30 +343,9 @@ namespace Game.View
         // Прежние 0.16 + 0.30 не позволяли увидеть падение в принципе: за
         // 0.16 с клип на скорости 0.67 доходил до девятого кадра, где тело ещё
         // стоит. Всё «падение» в кадре делал выброс, которого больше нет.
-        private const float OrvillDeathAnimationDuration = 0.73f;
-
-        /// <summary>Доля секунды на приземлившейся позе, прежде чем осыпаться.</summary>
-        private const float OrvillDeathPoseHoldDuration = 0.14f;
-
-        /// <summary>
-        /// Растворение. ДЛИНА СВЯЗАНА СО ЗВУКОМ: осыпание в CombatAudio длится
-        /// столько же и стартует ровно в начале этого окна. Меняешь здесь —
-        /// перережь клип и поправь CombatAudio.DissolveDelay.
-        /// </summary>
-        private const float OrvillDeathFadeDuration = 0.50f;
-
-        // Единая точка синхронизации View и CombatAudio. Звук осыпания
-        // стартует в тот же момент, когда DeathFade становится больше нуля.
-        public const float OrvillDeathDissolveStartDelay =
-            OrvillDeathAnimationDuration + OrvillDeathPoseHoldDuration;
-
         public static float DeathDissolveStartDelay(EnemyKind kind)
-            => (kind == EnemyKind.ForestRootSwarm ? 50f / 30f / 2f : OrvillDeathAnimationDuration)
-               + OrvillDeathPoseHoldDuration;
+            => EnemyPresentationProfile.Death(kind).DissolveAt;
 
-        private const float OrvillDeathPresentationDuration = OrvillDeathAnimationDuration
-                                                              + OrvillDeathPoseHoldDuration
-                                                              + OrvillDeathFadeDuration;
         private const float OrvillTurnSharpness = 20f;
         private int _hoveredEntity = -1;
 
@@ -419,6 +398,7 @@ namespace Game.View
             _materialBlocks = new MaterialPropertyBlock[capacity];
             _hitFlash = new float[capacity];
             _presentationOffset = new Vector3[capacity];
+            _deathOffset = new Vector3[capacity];
             _lastVelocityMagnitude = new float[capacity];
             _locomotionMoving = new bool[capacity];
             _lastFacingWorld = new Vector3[capacity];
@@ -567,6 +547,7 @@ namespace Game.View
             // остаётся, чтобы последний удар не потерял визуальное подтверждение.
             if (alive && entityId != Simulation.PlayerId)
             {
+                AnimationOf(entityId)?.PlayContactPose(direction, strength);
                 Vector3 recoil = direction * (RecoilDistance * strength);
                 if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude)
                     _hitRecoil[entityId] = recoil;
@@ -595,16 +576,10 @@ namespace Game.View
                 ? _lastFacingWorld[entityId]
                 : Vector3.forward;
 
-            // ВЫБРОС И КУВЫРОК УБРАНЫ. Они добавляли убийству вес, пока показ
-            // смерти шёл 0.46 с и падения в кадре не было вовсе. Теперь падение
-            // играется целиком, и вес несёт оно; полёт поверх него читался как
-            // «завис в воздухе и растворился непонятно где».
-            //
-            // Направление всё ещё считается: по нему разворачивается вспышка, и
-            // оно же остаётся точкой расширения, если выброс когда-нибудь
-            // вернут — но уже как короткий толчок ДО падения, а не вместо него.
-            _presentationOffset[entityId] = Vector3.zero;
-            _hitRecoil[entityId] = Vector3.zero;
+            // Небольшое смещение до падения, без полёта и возврата трупа назад.
+            var death = EnemyPresentationProfile.Death(_driver.Sim.Entities.Kind[entityId]);
+            _deathOffset[entityId] = direction * death.RecoilMeters * Mathf.Clamp01(strength);
+            _hitRecoil[entityId] = -_deathOffset[entityId];
             _hitFlash[entityId] = Mathf.Max(_hitFlash[entityId], 0.92f);
         }
 
@@ -892,6 +867,7 @@ namespace Game.View
             _deathUntil[entityId] = 0f;
             _deathStarted[entityId] = false;
             _deathStartedAt[entityId] = 0f;
+            _deathOffset[entityId] = Vector3.zero;
             _hitRecoil[entityId] = Vector3.zero;
             _baseScale[entityId] = Vector3.zero;
             _bodyRenderers[entityId] = null;
@@ -969,6 +945,7 @@ namespace Game.View
                 _deathUntil[i] = 0f;
                 _deathStarted[i] = false;
                 _deathStartedAt[i] = 0f;
+                _deathOffset[i] = Vector3.zero;
                 _hitRecoil[i] = Vector3.zero;
                 _bodyRenderers[i] = CacheBodyRenderers(go, out SpriteRenderer contactShadow);
                 _bodyMaterialSlotCounts[i] = CacheMaterialSlotCounts(_bodyRenderers[i]);
@@ -1261,7 +1238,7 @@ namespace Game.View
                 float deathFade = orvill && !alive
                     ? Mathf.InverseLerp(
                         DeathDissolveStartDelay(entities.Kind[i]),
-                        DeathDissolveStartDelay(entities.Kind[i]) + OrvillDeathFadeDuration,
+                        EnemyPresentationProfile.Death(entities.Kind[i]).TotalSeconds,
                         deathElapsed)
                     : 0f;
                 if (deathFade > 0f) SetContactShadowFade(i, deathFade);
@@ -1270,7 +1247,7 @@ namespace Game.View
                 // держит корень сцены в начале координат ровно ради этого.
                 Vector3 p = _driver.GetRenderPosition(i);
                 p.y += _groundOffset[i];
-                p += _presentationOffset[i];
+                p += _presentationOffset[i] + _deathOffset[i];
 
                 // Старт locomotion должен отвечать на первый ненулевой тик,
                 // а остановка — происходить до последнего микрошажка торможения.
@@ -1344,6 +1321,12 @@ namespace Game.View
                 {
                     block.SetFloat(HitFlashId, _hitFlash[i]);
                     block.SetFloat(DeathFadeId, deathFade);
+                    if (orvill)
+                    {
+                        var death = EnemyPresentationProfile.Death(entities.Kind[i]);
+                        block.SetFloat(DissolveEdgeGlowId, death.EdgeGlow);
+                        block.SetColor(DissolveEdgeColorId, death.EdgeColor);
+                    }
                     bool hovered = alive && i == _hoveredEntity;
                     // Цвет отделяет врага от фона постоянно. Маска видимого
                     // силуэта даёт ровную кромку без внутренних швов меша;
@@ -1352,7 +1335,7 @@ namespace Game.View
                     bool hoveredHostile = hovered && hostile;
                     // Свечение гаснет вместе с телом: иначе над осыпающимся
                     // трупом ещё полсекунды висит контур живого врага.
-                    float outlineFade = Mathf.Clamp01(1f - deathFade);
+                    float outlineFade = alive ? 1f : 1f - Mathf.Clamp01(deathElapsed / 0.12f);
                     block.SetFloat(OutlineWidthId,
                         (hostile ? (hoveredHostile ? HoveredOutlineWidth : HostileOutlineWidth)
                             : HeroOutlineWidth) * outlineFade);
@@ -1461,7 +1444,8 @@ namespace Game.View
                         {
                             CharacterAnimatorView presentation = _animationViews[i];
                             Vector3 previousVisual = _visualFacingWorld[i];
-                            if (i == Simulation.PlayerId && presentation != null && presentation.AnchorAbilityActive
+                            if (i == Simulation.PlayerId && presentation != null
+                                && (presentation.AnchorAbilityActive || presentation.LeapFacingRecovery)
                                 && _playerAbilityFacing.sqrMagnitude > 0.5f)
                                 visualFacing = Vector3.Slerp(previousVisual,
                                     Vector3.Slerp(facingWorld, _playerAbilityFacing, presentation.AnchorFacingWeight),
@@ -1597,7 +1581,7 @@ namespace Game.View
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
-                            ? DeathDissolveStartDelay(entities.Kind[e.Target]) + OrvillDeathFadeDuration
+                            ? EnemyPresentationProfile.Death(entities.Kind[e.Target]).TotalSeconds
                             : animation.DeathDuration;
                         _deathUntil[e.Target] = Time.time + presentationDuration;
                         break;

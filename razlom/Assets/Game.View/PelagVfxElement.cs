@@ -30,10 +30,50 @@ namespace Game.View
         private Vector3 _initialScale;
         private readonly Vector3[] _chainPoints = new Vector3[33];
         private Vector3 _bendOffset, _bendVelocity;
-        private readonly Vector3[] _chainVelocity = new Vector3[33];
+        private readonly Vector3[] _chainPrevious = new Vector3[33];
         private bool _chainInitialized;
 
+        /// <summary>Ускорение свободного падения, м/с². Настоящее.</summary>
+        private const float ChainGravity = 9.81f;
+
+        /// <summary>
+        /// Сколько звеньев цепи длиннее прямой между концами.
+        ///
+        /// Без запаса верёвка всегда натянута в струну и выглядит палкой. 6%
+        /// хватает на заметный провис в покое и на хлыст при броске, но не
+        /// настолько, чтобы цепь путалась под ногами.
+        /// </summary>
+        private const float ChainSlack = 1.06f;
+
+        /// <summary>Гашение скорости звена за кадр. Ниже — вязкая, выше — дребезжит.</summary>
+        private const float ChainDamping = 0.94f;
+
+        /// <summary>Проходов выравнивания длин за кадр. Меньше — цепь тянется.</summary>
+        private const int ChainRelaxations = 12;
+
+        /// <summary>Предел провиса ниже нижнего конца, м. Страховка от ухода под землю.</summary>
+        private const float ChainMaxSag = 0.9f;
+
         public LineRenderer PrimaryLine => _lines != null && _lines.Length > 0 ? _lines[0] : null;
+
+        private Transform _spinner;
+
+        /// <summary>
+        /// Сам якорь внутри эффекта — то, что можно крутить.
+        ///
+        /// Крен полёта раньше вешали на корень, а на корне же висит след. След
+        /// наматывался на вращение и рисовал спираль. Теперь корень летит
+        /// прямо, а кренится только модель: след остаётся прямым, якорь
+        /// по-прежнему доворачивается в полёте.
+        /// </summary>
+        public Transform Spinner
+        {
+            get
+            {
+                if (_spinner == null) _spinner = transform.Find("Physical Anchor");
+                return _spinner;
+            }
+        }
 
         private void Awake()
         {
@@ -95,6 +135,12 @@ namespace Game.View
             _chainLinks?.SetVisible(DynamicLine);
         }
 
+        public void SetTrailEmission(bool emitting)
+        {
+            if(_trails == null) return;
+            foreach(var trail in _trails) trail.emitting=emitting;
+        }
+
         public void SetOpacity(float opacity)
         {
             if (_lines == null) return;
@@ -147,28 +193,63 @@ namespace Game.View
             LineRenderer line = PrimaryLine;
             if (line == null) return;
             progress = Mathf.Clamp01(progress);
-            // Узлы запаздывают отдельно, а не как один жёсткий изогнутый прут.
-            // Ограничение отклонения сохраняет совпадение с игровой траекторией.
-            float dt = Mathf.Min(Time.deltaTime, 0.05f);
-            int steps = Mathf.Max(1, Mathf.CeilToInt(dt / (1f / 120f)));
-            float step = dt / steps;
-            for (int i = 0; i < _chainPoints.Length; i++)
+            int count = _chainPoints.Length;
+
+            // ЦЕПЬ — ВЕРЁВКА, А НЕ КРИВАЯ.
+            //
+            // Прежняя модель тянула каждое звено к точке кривой Безье с
+            // жёсткостью 1300 и вдобавок обрезала отклонение 15 сантиметрами.
+            // Провиснуть или хлестнуть цепь при этом физически не могла и
+            // выглядела гнутой проволокой.
+            //
+            // Теперь это Верле: звенья свободно падают, а форму держит только
+            // ограничение длины между соседями. Концы прибиты к руке и якорю.
+            // Провис в покое, отставание при броске и натяжение при рывке
+            // получаются сами, без отдельных правил на каждый случай.
+            Vector3 tip = Quadratic(a, bend, b, progress);
+
+            if (!_chainInitialized)
             {
-                float t = progress * i / (_chainPoints.Length - 1);
-                Vector3 wanted = Quadratic(a, bend, b, t);
-                bool endpoint = i == 0 || i == _chainPoints.Length - 1;
-                if (!_chainInitialized || endpoint)
-                { _chainPoints[i] = wanted; _chainVelocity[i] = Vector3.zero; continue; }
-                float belly = Mathf.Sin(t * Mathf.PI);
-                for (int s = 0; s < steps; s++)
+                for (int i = 0; i < count; i++)
                 {
-                    _chainVelocity[i] += ((wanted - _chainPoints[i]) * 1300f
-                        - _chainVelocity[i] * 48f + Vector3.down * (2f * belly)) * step;
-                    _chainPoints[i] += _chainVelocity[i] * step;
+                    _chainPoints[i] = Quadratic(a, bend, b, progress * i / (count - 1));
+                    _chainPrevious[i] = _chainPoints[i];
                 }
-                _chainPoints[i] = wanted + Vector3.ClampMagnitude(_chainPoints[i] - wanted, .15f * belly);
+                _chainInitialized = true;
             }
-            _chainInitialized = true;
+
+            float dt = Mathf.Min(Time.deltaTime, 1f / 30f);
+            float segment = Vector3.Distance(a, tip) / (count - 1) * ChainSlack;
+            float floor = Mathf.Min(a.y, tip.y) - ChainMaxSag;
+
+            for (int i = 1; i < count - 1; i++)
+            {
+                Vector3 current = _chainPoints[i];
+                Vector3 velocity = (current - _chainPrevious[i]) * ChainDamping;
+                _chainPrevious[i] = current;
+                _chainPoints[i] = current + velocity + Vector3.down * (ChainGravity * dt * dt);
+            }
+
+            // Ограничение длины решается итеративно: одним проходом цепь
+            // остаётся растянутой, потому что правка одного звена ломает соседа.
+            for (int pass = 0; pass < ChainRelaxations; pass++)
+            {
+                _chainPoints[0] = a;
+                _chainPoints[count - 1] = tip;
+                for (int i = 0; i < count - 1; i++)
+                {
+                    Vector3 delta = _chainPoints[i + 1] - _chainPoints[i];
+                    float length = delta.magnitude;
+                    if (length < 1e-6f) continue;
+                    Vector3 shift = delta * ((length - segment) / length * 0.5f);
+                    if (i > 0) _chainPoints[i] += shift;
+                    if (i + 1 < count - 1) _chainPoints[i + 1] -= shift;
+                }
+            }
+            _chainPoints[0] = a;
+            _chainPoints[count - 1] = tip;
+            for (int i = 1; i < count - 1; i++)
+                if (_chainPoints[i].y < floor) _chainPoints[i].y = floor;
             line.positionCount = _chainPoints.Length;
             line.SetPositions(_chainPoints);
             _chainLinks?.SetPoints(_chainPoints);

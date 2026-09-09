@@ -23,12 +23,12 @@ namespace Game.View
         CampWalkMap _walkMap;
         public float GroundHeight => _height;
         NavMeshPath _path;
-        readonly Vector3[] _corners = new Vector3[128];
-        int _cornerCount, _corner;
+        CampRoute _routing;
         CampInventoryView _inventory;
         NavMeshDataInstance _navigation; bool _approach;
         Bounds _tentBounds; Vector3 _start;
         Transform _exit; bool _approachExit;
+        Vector2 _pressPointer;
         GameObject _scenePelagPreview; bool _scenePelagPreviewWasActive;
         GameObject _navigationGround;
 
@@ -78,6 +78,7 @@ namespace Game.View
             }
             var map = new CampWalkMap(Flat(origin), Fix64.Ratio(1,8), width,height,cells);
             _walkMap = map;
+            _routing = new CampRoute(map);
             // Pick a valid snapshot cell, avoiding a spawn inside a rounded boundary cell.
             if (!map.Contains(Flat(_start)))
                 for(int z=0;z<height;z++) for(int x=0;x<width;x++)
@@ -90,13 +91,72 @@ namespace Game.View
             Debug.Log($"[camp] spawn={_start} sharedCombat=True tent={Tent} cells={width*height}");
         }
 
+        /// <summary>
+        /// Меш числится в LODGroup уровнем ДАЛЬШЕ нулевого.
+        ///
+        /// LODGroup выключает Renderer, но не сам объект, поэтому
+        /// GetComponentsInChildren&lt;MeshFilter&gt; возвращает все четыре уровня ели.
+        /// Раньше коллайдер вешался на каждый, и в NavMesh уходило объединение
+        /// LOD0..LOD3. Дальние уровни — огрублённые силуэты, они ШИРЕ того, что
+        /// игрок видит на экране, и перекрывали проходы там, где визуально
+        /// пусто. Это и есть «невидимые препятствия» в лагере.
+        ///
+        /// Навигацию строит только LOD0: он совпадает с картинкой вблизи.
+        /// </summary>
+        static bool IsDistantLod(MeshFilter mesh)
+        {
+            LODGroup group = mesh.GetComponentInParent<LODGroup>();
+            if (group == null) return false;
+            LOD[] levels = group.GetLODs();
+            if (levels.Length == 0) return false;
+
+            Renderer own = mesh.GetComponent<Renderer>();
+            if (own == null) return false;
+
+            foreach (Renderer renderer in levels[0].renderers)
+                if (renderer == own) return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Пойдёт ли этот меш в навигацию лагеря.
+        ///
+        /// Отбор живёт в одном месте, потому что им пользуется ещё и редакторный
+        /// инструмент, разрешающий чтение мешей. Разъехавшись, они дали бы
+        /// худший из возможных результатов: чтение включено не тем мешам, а
+        /// навигация в сборке всё равно другая.
+        /// </summary>
+        public static bool UsedByNavigation(MeshFilter mesh)
+            => mesh.sharedMesh != null
+               && mesh.GetComponent<Collider>() == null
+               && mesh.GetComponentInParent<CampGroundStudy>() == null
+               && !IsDistantLod(mesh);
+
         void BuildNavigation(Transform root)
         {
             // Добавляем недостающие коллизии только runtime: сохранённые трансформы не затрагиваются.
+            var unreadable = new List<string>();
             foreach (MeshFilter mesh in root.GetComponentsInChildren<MeshFilter>())
             {
-                if (mesh.sharedMesh == null || mesh.GetComponent<Collider>() != null) continue;
+                if (!UsedByNavigation(mesh)) continue;
+
+                // Нечитаемый меш строит коллайдер в редакторе и НЕ строит в
+                // плеере: данные выгружены из памяти после загрузки на карту.
+                // Молча это пропустить нельзя — навигация в сборке отличалась
+                // бы от того, что видно в Play mode.
+                if (!mesh.sharedMesh.isReadable) unreadable.Add(mesh.sharedMesh.name);
+
                 var collider = mesh.gameObject.AddComponent<MeshCollider>(); collider.sharedMesh = mesh.sharedMesh;
+            }
+            if (unreadable.Count > 0)
+            {
+                // Одна строка вместо два десятка одинаковых предупреждений от
+                // самой Unity, и сразу с тем, что нажать.
+                unreadable.Sort();
+                Debug.LogWarning($"[camp] Навигация собрана из {unreadable.Count} нечитаемых мешей "
+                    + "— в собранной игре их не будет. Меню «Разлом → Лагерь → "
+                    + $"Разрешить чтение мешей навигации». Список: {string.Join(", ", unreadable)}");
             }
 
             // В текущем blockout якорь Пелага лежит чуть за краем единственного
@@ -157,21 +217,38 @@ namespace Game.View
         {
             if (!Active) { _inventory?.Close(); return; }
             if (_driver.GameplayPaused || InventoryOpen) { Stop(); return; }
-            bool interact; bool click; Vector2 pointer;
+            bool interact; bool click; bool held; Vector2 pointer;
 #if ENABLE_INPUT_SYSTEM
             interact = Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame;
             // Здесь выбирается только интерактивный объект. Приказ движения
             // поступает из TickDriver вместе с удержанием и короткими тапами.
             click = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
+            held = Mouse.current != null && Mouse.current.rightButton.isPressed;
             pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
 #else
             interact = Input.GetKeyDown(KeyCode.I);
-            click = Input.GetMouseButtonDown(1); pointer = Input.mousePosition;
+            click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
+            pointer = Input.mousePosition;
 #endif
             if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
             if (interact && NearExit()) { Stop(); _driver.Session.EnterRift(); return; }
             if (click && Camera.main != null && !CampInventoryView.PointerOverUI())
                 HandleWorldPress(pointer);
+
+            // РУЛЕНИЕ УДЕРЖАНИЕМ ОТМЕНЯЕТ МАРШРУТ — но признаком удержания
+            // служит СДВИГ КУРСОРА, а не время.
+            //
+            // Раньше маршрут снимался, если кнопку держали дольше 0.2 с. Это
+            // ошибка: обычный клик легко держится дольше, и маршрут умирал сразу
+            // после построения — герой шёл напрямую и упирался в препятствие.
+            // Отсюда же и «не всегда»: успеет игрок отпустить кнопку или нет,
+            // от препятствия не зависит.
+            //
+            // Тащат мышь — значит правда рулят; кликнули и держат, не двигая, —
+            // это всё ещё клик.
+            const float dragPixels = 40f;
+            if (held && !click && (pointer - _pressPointer).sqrMagnitude > dragPixels * dragPixels)
+                CancelRoute();
             if (_approach && NearTent()) { _approach = false; Stop(); _inventory.Open(); }
             if (_approachExit && NearExit()) { _approachExit = false; Stop(); _driver.Session.EnterRift(); }
         }
@@ -180,48 +257,95 @@ namespace Game.View
             {
                 if (_driver.PointerOverPlayer(pointer))
                 {
-                    _approach = _approachExit = false;
+                    CancelRoute();
                     return;
                 }
                 Ray ray = Camera.main.ScreenPointToRay(pointer);
-                if (Physics.Raycast(ray, out var hit, 300f))
-                {
-                    _approach = Tent != null && hit.transform.IsChildOf(Tent);
-                    _approachExit = _exit != null && Vector3.Distance(hit.point, _exit.position) < 1.5f;
-                    if (_approach) ApproachTent();
-                }
-                else { _approach = false; _approachExit = false; }
+                if (!Physics.Raycast(ray, out var hit, 300f)) { CancelRoute(); return; }
+
+                _approach = Tent != null && hit.transform.IsChildOf(Tent);
+                _approachExit = _exit != null && Vector3.Distance(hit.point, _exit.position) < 1.5f;
+                _pressPointer = pointer;
+
+                // В палатку идём к её краю, в остальных случаях — ровно туда,
+                // куда ткнули. Непроходимую точку разберёт сам поиск: он
+                // приводит цель к ближайшей достижимой клетке.
+                RouteTo(_approach ? _tentBounds.ClosestPoint(Position) : hit.point);
             }
+
+        /// <summary>
+        /// Прокладывает маршрут по карте проходимости.
+        ///
+        /// СУЩЕСТВУЕТ, ЧТОБЫ ГЕРОЙ ОБХОДИЛ, А НЕ УПИРАЛСЯ. Приказ движения сам
+        /// по себе задаёт лишь НАПРАВЛЕНИЕ: боевой мотор везёт тело по прямой,
+        /// и первый же камень между героем и точкой клика останавливает его
+        /// намертво. Поиск пути тут был, но им пользовался только подход к
+        /// палатке — обычный ПКМ шёл мимо него.
+        ///
+        /// Само следование живёт в <see cref="CampRoute"/>, в симуляции: там
+        /// его можно прогнать тестом вокруг настоящей стены, а здесь — только
+        /// запустить игру и посмотреть глазами.
+        /// </summary>
+        bool RouteTo(Vector3 target)
+        {
+            if (_routing == null || _walkMap == null)
+            {
+                Debug.LogWarning("[camp-route] карты проходимости нет — иду напрямую.");
+                return false;
+            }
+
+            FixVec2 from = Flat(Position), to = Flat(target);
+            bool routed = _routing.To(from, to);
+
+            // ЗАМЕР, А НЕ ОТЛАДОЧНЫЙ МУСОР. Маршрут строится на карте, которую
+            // видно только в игре, и «не обходит» может значить четыре разные
+            // вещи: клик не дошёл, герой вне карты, цель вне карты, поиск не
+            // связал их. Одна строка разделяет все четыре.
+            Debug.Log($"[camp-route] откуда {Position.x:0.00},{Position.z:0.00}"
+                + $" → {target.x:0.00},{target.z:0.00}"
+                + $" | герой в карте={_walkMap.Contains(from)}"
+                + $" цель в карте={_walkMap.Contains(to)}"
+                + $" прямая={_walkMap.CanTravel(from, to)}"
+                + $" углов={_routing.CornerCount} маршрут={routed}");
+
+            return routed;
+        }
+
+        void CancelRoute()
+        {
+            _routing?.Cancel();
+            _approach = _approachExit = false;
+        }
         static FixVec2 Flat(Vector3 p) => new FixVec2(Fix64.FromRaw((long)(p.x * Fix64.One.Raw)), Fix64.FromRaw((long)(p.z * Fix64.One.Raw)));
         Vector3 World(FixVec2 p) => new Vector3(p.X.ToFloat(), _height, p.Y.ToFloat());
 
         public void PrepareInput(ref InputFrame input)
         {
             if (!Active) return;
-            if (input.AbilityMask != 0 || input.Has(InputFlags.Attack)) _approach = _approachExit = false;
-            if (!_approach || _corner >= _cornerCount) return;
-            while (_corner < _cornerCount - 1 && Vector3.Distance(Position,_corners[_corner]) < .045f) _corner++;
-            input.Aim = Flat(_corners[_corner]);
-            input.Flags = (byte)(InputFlags.MoveOrder | InputFlags.NavigationWaypoint);
+            if (input.AbilityMask != 0 || input.Has(InputFlags.Attack)) CancelRoute();
+
+            // Маршрут снимает перетаскивание мыши, и решается это в Update,
+            // где виден курсор.
+            if (_routing == null) return;
+            if (!_routing.Advance(Flat(Position), out FixVec2 aim, out bool final)) return;
+
+            input.Aim = aim;
+            input.Flags = CampRoute.FlagsFor(final);
             input.AttackTarget = -1;
         }
         void Stop()
         {
-            _approach = _approachExit = false;
+            CancelRoute();
             if (Active) _driver.Session.CampSim.StopPlayerMovement();
         }
         public bool ApproachTent()
         {
             if (Tent == null) return false;
+            _approach = true;
             Vector3 target = _tentBounds.ClosestPoint(Position);
-            if (_walkMap == null) return false;
-            var route = _walkMap.FindPath(Flat(Position), Flat(target));
-            _cornerCount = Mathf.Min(route.Length,_corners.Length);
-            for(int i=0;i<_cornerCount;i++)_corners[i]=World(route[i]);
-            _corner = 1;
-            _approach = _cornerCount > 1;
-            Debug.Log($"[camp-path] corners={_cornerCount} from={Position} target={target} end={(_cornerCount>0?_corners[_cornerCount-1]:Position)}");
-            return _approach;
+            bool routed = RouteTo(target);
+            Debug.Log($"[camp-path] corners={_routing?.CornerCount} from={Position} target={target}");
+            return routed;
         }
         bool NearTent() { Vector3 d = _tentBounds.ClosestPoint(Position) - Position; d.y = 0; return Tent != null && d.sqrMagnitude < 2.25f; }
         bool NearExit() => _exit != null && Vector3.Distance(Position,_exit.position) < 1.7f;

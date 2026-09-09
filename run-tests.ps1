@@ -28,6 +28,9 @@ if (-not (Test-Path -LiteralPath $resultFile)) {
 
 Write-Host "Test XML: $resultFile"
 
+dotnet test (Join-Path $repoRoot 'tools\Combat.Presentation.Tests\Combat.Presentation.Tests.csproj') --nologo --configuration Release
+if ($LASTEXITCODE -ne 0) { throw 'Проверки приоритетов боевого аудио не прошли.' }
+
 # ---------------------------------------------------------------------------
 # Сборка представления вне Unity.
 #
@@ -51,4 +54,3 @@ if (Test-Path -LiteralPath $viewCheck) {
 else {
     Write-Warning "Обвязки viewcheck нет: $viewCheck. Представление не проверено."
 }
-

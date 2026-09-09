@@ -99,6 +99,7 @@ namespace Game.View
             _active = new ActiveFx[MaxActive];
             BuildPools();
             BuildHeroLight();
+            HeroTrail();
         }
 
         private void LateUpdate()
@@ -139,6 +140,9 @@ namespace Game.View
                 {
                     Pool = new ViewPool(parent, () => Instantiate(prefab), Mathf.Max(1, entry.Prewarm))
                 };
+                // Блики перекрываются уже в первом броске; ViewPool сам создаёт только один экземпляр.
+                if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding)
+                    _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 
             PoolsReady = true;
@@ -197,6 +201,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            StopLeapMotionVfx();
             ReleaseCyclone();
             if (_heroLight != null) _heroLight.enabled = false;
             _combatLightPulse = 0f;
@@ -586,10 +591,15 @@ namespace Game.View
 
         private void PlayAnchorLeap(bool showcase)
         {
-            // Витрина целится сама: настоящей цели в этом режиме нет.
-            PlayAnchorLeapTo(
-                PlayerPosition() + CameraPlaneDirection(new Vector3(1f, 0f, 0.25f)) * 3.8f,
-                showcase, 1);
+            // Capture должен проверять запрошенную дальность, а не всегда 3.8 м.
+            Vector3 direction = CameraPlaneDirection(new Vector3(1f, 0f, .25f));
+            float range = 3.8f;
+            if (CaptureRig.IsVfxShowcase)
+            {
+                direction = Quaternion.Euler(0,CaptureRig.CastYaw,0) * direction;
+                range = CaptureRig.CastDistance;
+            }
+            PlayAnchorLeapTo(PlayerPosition() + direction * range,showcase,1);
         }
 
         private void PlayAnchorLeapTo(Vector3 target, bool showcase, int slot)
@@ -667,6 +677,10 @@ namespace Game.View
             _motionStart = start;
             _motionEnd = end;
             _captureMotion = showcase;
+            _leapWakePuffs = 0;
+            _leapFlightStrokes = 0;
+            _leapReleased = false;
+            _leapLanded = false;
             _arena.SetPlayerAbilityFacing(end - start);
             if (ability != PelagVfxShowcase.ChainStep) _arena.BeginPlayerAnchorUse(ability == PelagVfxShowcase.AnchorLeap);
             FillTargets();
@@ -675,6 +689,7 @@ namespace Game.View
         private void CancelActiveAnchorMotionForReplacement()
         {
             if (!IsAnchorMotion(_motionAbility)) return;
+            StopLeapMotionVfx();
             for (int i = 0; i < _active.Length; i++)
             {
                 PelagVfxId id = _active[i].Id;
@@ -704,29 +719,146 @@ namespace Game.View
             }
         }
 
-        private void UpdateAnchorLeap()
+        /// <summary>Сколько клубов уже сброшено за текущий полёт.</summary>
+        private int _leapWakePuffs;
+
+        /// <summary>Сколько бликов цепи уже показано за текущую тягу.</summary>
+        private int _leapFlightStrokes;
+        private bool _leapReleased, _leapLanded;
+
+        /// <summary>Три пакета полос воздуха за один рывок.</summary>
+        private const int LeapFlightStrokeCount = 3;
+
+        private TrailRenderer _heroTrail;
+        private TrailRenderer[] _leapSideTrails;
+        private PelagLeapPressureWave[] _leapBowWaves;
+
+        /// <summary>Лента за героем на время тяги, светящимся проходом.</summary>
+        private TrailRenderer HeroTrail()
         {
-            float travel = PelagAbilityTiming.LeapArrival;
-            float phase = Mathf.Clamp01((_motionTime - PelagAbilityTiming.LeapWindup) / PelagAbilityTiming.LeapTravel);
-            float height = Mathf.Sin(phase * Mathf.PI) * 1.5f * Mathf.Clamp01(Vector3.Distance(_motionStart, _motionEnd) / 7f);
-            if (!_captureMotion) _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.up * height);
-            if (_captureMotion)
-                _arena.SetPresentationOffset(Simulation.PlayerId,
-                    (_motionEnd - _motionStart) * Smooth(phase) + Vector3.up * height);
-            if (_motionTime >= PelagAbilityTiming.LeapWindup && _motionTime - Time.deltaTime < PelagAbilityTiming.LeapWindup)
+            if (_heroTrail != null) return _heroTrail;
+            var go = new GameObject("Pelag Leap Trail");
+            go.transform.SetParent(transform, false);
+            _heroTrail = go.AddComponent<TrailRenderer>();
+            _heroTrail.sharedMaterial =
+                Resources.Load<Material>("VFX/Pelag/Materials/M_LeapStroke");
+            _heroTrail.time = 0.24f;
+            _heroTrail.widthCurve = new AnimationCurve(new Keyframe(0,0f), new Keyframe(.20f,1f), new Keyframe(1,0f));
+            _heroTrail.widthMultiplier = 1.15f;
+            
+            _heroTrail.startColor = Color.white;
+            _heroTrail.endColor = new Color(1f,1f,1f,0f);
+            _heroTrail.textureMode = LineTextureMode.Stretch;
+            _heroTrail.alignment = LineAlignment.View;
+            _heroTrail.minVertexDistance = 0.015f;
+            _heroTrail.numCapVertices = 2;
+            _heroTrail.numCornerVertices = 4;
+            _heroTrail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _heroTrail.receiveShadows = false;
+            _heroTrail.emitting = false;
+            _leapSideTrails = new TrailRenderer[2];
+            for(int i=0;i<2;i++)
             {
-                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * 0.06f,
-                    Quaternion.LookRotation(FlatDirection(_motionEnd, _motionStart), Vector3.up),
-                    0.42f, 0.52f, 0.72f, Motion.Expand);
-                PulseCombatLight(0.9f);
+                var side=new GameObject("Leap side stroke "+i); side.transform.SetParent(transform,false);
+                var line=side.AddComponent<TrailRenderer>();
+                line.sharedMaterial=_heroTrail.sharedMaterial;
+                line.time=.18f+i*.035f; line.startWidth=.24f; line.endWidth=0;
+                line.startColor=new Color(1,1,1,.9f); line.endColor=new Color(1,1,1,0);
+                line.minVertexDistance=.015f; line.numCornerVertices=6; line.textureMode=LineTextureMode.Stretch;
+                line.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
+                line.receiveShadows=false; line.emitting=false;
+                _leapSideTrails[i]=line;
             }
-            if (_motionTime >= travel && _motionTime - Time.deltaTime < travel)
-                Spawn(PelagVfxId.AnchorLeapLand, PlayerPosition() + Vector3.up * 0.04f,
-                    Quaternion.LookRotation(FlatDirection(_motionStart, _motionEnd)),
-                    0.48f, 0.8f, 1.25f, Motion.Expand);
-            if (_motionTime >= PelagAbilityTiming.LeapRecovery) FinishMotion();
+            _leapBowWaves=new PelagLeapPressureWave[2];
+            var pressureMaterial=Resources.Load<Material>("VFX/Pelag/Materials/M_LeapPressure");
+            for(int i=0;i<2;i++)
+            {
+                var bow=new GameObject("Leap pressure shell "+i); bow.transform.SetParent(transform,false);
+                var wave=bow.AddComponent<PelagLeapPressureWave>();
+                wave.Initialize(pressureMaterial);_leapBowWaves[i]=wave;
+            }
+            return _heroTrail;
         }
 
+        private void UpdateAnchorLeap()
+        {
+            float phase = Mathf.Clamp01((_motionTime - PelagAbilityTiming.LeapWindup) / PelagAbilityTiming.LeapTravel);
+            float distance = Vector3.Distance(_motionStart, _motionEnd);
+            float height = Mathf.Sin(phase * Mathf.PI) * .45f * Mathf.Clamp01(distance / 7f);
+            if (!_captureMotion)
+                _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.up * height);
+            else
+                _arena.SetPresentationOffset(Simulation.PlayerId,
+                    (_motionEnd - _motionStart) * Smooth(phase) + Vector3.up * height);
+
+            // Широкий росчерк и две разнесённые кромки показывают скорость всего корпуса.
+            TrailRenderer trail = HeroTrail();
+            bool pulling = _motionTime >= PelagAbilityTiming.LeapWindup
+                           && _motionTime < PelagAbilityTiming.LeapArrival;
+            trail.transform.position = PlayerPosition() + Vector3.up * .65f;
+            if (pulling && !trail.emitting) trail.Clear();
+            trail.emitting = pulling;
+            Vector3 leapDirection=FlatDirection(_motionStart,_motionEnd);
+            Vector3 sideDirection=Vector3.Cross(Vector3.up,leapDirection);
+            for(int i=0;i<_leapSideTrails.Length;i++)
+            {
+                var side=_leapSideTrails[i];
+                side.transform.position=PlayerPosition()+Vector3.up*(i==0?.3f:1.05f)
+                    +sideDirection*(i==0?-.42f:.42f)-leapDirection*.12f;
+                if(pulling&&!side.emitting) side.Clear();
+                side.emitting=pulling;
+            }
+
+            for(int layer=0;layer<_leapBowWaves.Length;layer++)
+                _leapBowWaves[layer].Present(PlayerPosition()+Vector3.up*.95f+leapDirection*.8f,
+                    leapDirection,_motionTime-PelagAbilityTiming.LeapWindup,layer,pulling);
+
+            if (_motionTime >= PelagAbilityTiming.LeapRelease && !_leapReleased)
+            {
+                Spawn(PelagVfxId.TargetFlash, _arena.PlayerAnchorHeadPosition,
+                    Quaternion.LookRotation(FlatDirection(_motionStart, _motionEnd), Vector3.up),
+                    .09f, .16f, .23f, Motion.Expand);
+                _leapReleased = true;
+            }
+
+            if (_motionTime >= PelagAbilityTiming.LeapWindup && _leapWakePuffs == 0)
+            {
+                // Втыкание металла и отрыв ног — отдельные короткие импульсы.
+                Spawn(PelagVfxId.AnchorLeapLand, _motionEnd + Vector3.up * .07f,
+                    Quaternion.LookRotation(FlatDirection(_motionEnd, _motionStart), Vector3.up),
+                    .62f, 1f, 1f, Motion.Expand);
+                Spawn(PelagVfxId.DustSmall, _motionStart + Vector3.up * .06f,
+                    Quaternion.identity, .24f, .55f, .75f, Motion.Expand);
+                PulseCombatLight(.55f);
+                _juice?.PunchCamera(.24f, .06f);
+                _leapWakePuffs = 1;
+            }
+            // Пакеты острых следов остаются позади героя на каждой трети рывка.
+            if (pulling && _leapFlightStrokes < LeapFlightStrokeCount)
+            {
+                float flown = (_motionTime - PelagAbilityTiming.LeapWindup)
+                              / PelagAbilityTiming.LeapTravel;
+                if (flown >= (_leapFlightStrokes + 1f) / (LeapFlightStrokeCount + 1f))
+                {
+                    Vector3 hero = PlayerPosition() + Vector3.up * .78f;
+                    Spawn(PelagVfxId.AnchorLeapFlight, hero - leapDirection * .25f,
+                        Quaternion.LookRotation(FlatDirection(_motionStart, _motionEnd), Vector3.up),
+                        .30f, 1f, 1f, Motion.Static);
+                    _leapFlightStrokes++;
+                }
+            }
+
+            if (_motionTime >= PelagAbilityTiming.LeapArrival && !_leapLanded)
+            {
+                // Пыль расходится от ног; повторный взрыв скрывал момент посадки.
+                Spawn(PelagVfxId.AnchorLeapLanding, PlayerPosition() + Vector3.up * .06f,
+                    Quaternion.LookRotation(FlatDirection(_motionStart, _motionEnd)),
+                    .72f, 1f, 1f, Motion.Expand);
+                _juice?.PunchCamera(.32f, .06f);
+                _leapLanded = true;
+            }
+            if (_motionTime >= PelagAbilityTiming.LeapRecovery) FinishMotion();
+        }
         private void UpdateChainStep()
         {
             if (_captureMotion)
@@ -735,8 +867,22 @@ namespace Game.View
                     - BasePlayerPosition());
             if (_motionTime >= PelagAbilityTiming.ChainHop + 0.08f) FinishMotion();
         }
+        private void StopLeapMotionVfx()
+        {
+            // Прерывание не доходит до конца анимации: дуги нужно погасить сразу.
+            if(_heroTrail!=null) { _heroTrail.emitting=false;_heroTrail.Clear(); }
+            if(_leapSideTrails!=null)
+                foreach(var trail in _leapSideTrails) { trail.emitting=false;trail.Clear(); }
+            if(_leapBowWaves!=null)
+                foreach(var bow in _leapBowWaves) bow.Hide();
+        }
+
         private void FinishMotion()
         {
+            _leapWakePuffs = 0;
+            _leapFlightStrokes = 0;
+            StopLeapMotionVfx();
+
             PelagVfxShowcase finishedMotion = _motionAbility;
             if (IsAnchorMotion(finishedMotion))
                 _arena?.EndPlayerAnchorUse();
@@ -847,19 +993,32 @@ namespace Game.View
                     case Motion.AnchorFlight:
                         fx.Age = _motionTime;
                         float returnAt = fx.Duration - .06f;
-                        bool released = fx.Age >= PelagAbilityTiming.AnchorDraw;
+                        // Якорь улетает в тот же момент, в который рука его
+                        // отпускает в клипе. Раньше здесь стоял AnchorDraw —
+                        // момент ДОСТАВАНИЯ якоря, и снаряд уходил за четверть
+                        // секунды до броска: замах ещё шёл, а якорь уже почти
+                        // долетел.
+                        bool released = fx.Age >= PelagAbilityTiming.LeapRelease;
                         fx.Object.SetActive(released && fx.Age < returnAt);
                         if (!released) { fx.Start = _arena.PlayerAnchorHeadPosition; break; }
                         float outward = PelagAbilityTiming.LeapWindup;
+                        // Возврат цепи не рисует второй бросок в обратную сторону.
+                        fx.Element?.SetTrailEmission(fx.Age < outward);
                         float retract = PelagAbilityTiming.LeapArrival;
-                        float flight = Smooth((fx.Age - PelagAbilityTiming.AnchorDraw)
-                            / (outward - PelagAbilityTiming.AnchorDraw));
+                        float flight = Smooth((fx.Age - PelagAbilityTiming.LeapRelease)
+                            / (outward - PelagAbilityTiming.LeapRelease));
                         Vector3 anchorPosition = Vector3.Lerp(fx.Start, fx.End, flight)
                             + Vector3.up * (Mathf.Sin(flight * Mathf.PI) * fx.ArcHeight);
                         anchorPosition = Vector3.Lerp(anchorPosition, _arena.PlayerAnchorHeadPosition,
                             Smooth((fx.Age - retract) / (returnAt - retract)));
-                        fx.Object.transform.rotation = Quaternion.LookRotation(FlatDirection(fx.Start, fx.End), Vector3.up)
-                            * Quaternion.Euler(0f, 0f, Mathf.Lerp(-45f, 20f, flight));
+                        // Корень летит прямо, кренится только модель якоря.
+                        // След висит на корне: пока крен был на нём, след
+                        // наматывался на вращение и рисовал спираль.
+                        fx.Object.transform.rotation =
+                            Quaternion.LookRotation(FlatDirection(fx.Start, fx.End), Vector3.up);
+                        Transform spinner = fx.Element != null ? fx.Element.Spinner : null;
+                        if (spinner != null)
+                            spinner.localRotation = Quaternion.Euler(0f, 0f, Mathf.Lerp(-45f, 20f, flight));
                         fx.Object.transform.position = anchorPosition;
                         break;
                     case Motion.EnemyPull:

@@ -2,7 +2,7 @@
 import bpy, math
 from pathlib import Path
 from mathutils import Vector, Matrix, Quaternion
-root=Path(r'C:\Users\d.grab\Desktop\the-game')
+root=Path('C:/Users/d.grab/Desktop/the-game')
 rig=bpy.data.objects['Armature']; rig.animation_data_create()
 scene=bpy.context.scene; scene.render.fps=30
 out=root/'razlom/Assets/Resources/Characters/Pelag_v5/Mixamo'
@@ -34,10 +34,12 @@ actions={
 'Pelag_AN_CycloneEnd':[(1,brace),(4,dict(brace,left=(.12,-.22,1.17),right=(-.07,-.23,1.10),twist=12)),(7,dict(neutral,left=(.23,.02,.99))),(10,neutral)],
 'Pelag_AN_AnchorLeap':[(1,neutral),(4,dict(brace,left=(.19,.04,1.55),twist=22)),(7,dict(brace,left=(.10,-.43,1.44),lean=12)),(10,dict(flight,lfoot=(.19,.10,.14),rfoot=(-.19,.11,.15))),(14,flight),(19,dict(flight,lfoot=(.18,.28,.53),rfoot=(-.18,.30,.35))),(23,dict(flight,lfoot=(.20,-.16,.20),rfoot=(-.20,-.10,.23),lean=5)),(25,land),(30,brace),(35,neutral)],
 'Pelag_AN_Squall':[(1,brace),(2,dash),(4,dict(dash,twist=-22,right=(-.08,-.43,1.32))),(6,dict(brace,twist=25,right=(.24,-.28,1.19))),(8,brace)]}
-combat=dict(brace,left=(.30,-.10,1.10),right=(-.30,-.32,1.15),lean=2,twist=-8,crouch=.045,rightroll=-90)
+combat=dict(neutral,left=(.30,-.10,1.05),right=(-.34,-.26,1.05),lean=0,twist=-3,rightroll=70)
 # Клинок сначала выходит из кушака вперёд, затем кисть раскрывает низкую защиту.
-draw=[(1,neutral),(5,dict(neutral,right=(.14,-.13,1.02),twist=12)),(8,dict(neutral,right=(.20,-.08,.97),twist=16)),(12,dict(brace,right=(.12,-.34,1.12),twist=8,rightroll=-25)),(17,dict(combat,right=(-.20,-.37,1.20))),(22,combat)]
-actions['Pelag_AN_CombatIdle']=[(1,combat),(20,dict(combat,lean=1,right=(-.26,-.28,1.21))),(40,dict(combat,lean=3)),(61,combat)]
+draw=[(1,neutral),(4,dict(neutral,right=(-.12,-.34,1.00),twist=4)),(8,dict(neutral,right=(.20,-.26,.97),twist=8)),(12,dict(neutral,right=(.10,-.43,1.04),twist=5,rightroll=15)),(17,dict(combat,right=(-.23,-.39,1.07),rightroll=55)),(22,combat)]
+actions['Pelag_AN_CombatIdle']=[(1,combat),(20,dict(combat,right=(-.335,-.265,1.055))),(40,dict(combat,right=(-.34,-.26,1.048))),(61,combat)]
+draw=[(frame,dict(spec,rightpole=(-1,-1.2,-.3))) for frame,spec in draw]
+actions['Pelag_AN_CombatIdle']=[(frame,dict(spec,rightpole=(-1,-1.2,-.3))) for frame,spec in actions['Pelag_AN_CombatIdle']]
 actions['Pelag_AN_SaberDraw']=draw
 actions['Pelag_AN_SaberStow']=[(23-f,p) for f,p in reversed(draw)]
 def pose(frame,spec):
@@ -48,7 +50,7 @@ def pose(frame,spec):
  rotate('Hips',Quaternion(Vector((0,0,1)),math.radians(spec.get('hiptwist',0))))
  rotate('Spine',Quaternion(Vector((1,0,0)),math.radians(spec.get('lean',0))))
  rotate('Spine2',Quaternion(Vector((0,0,1)),math.radians(spec.get('twist',0))))
- for side,hand,pole in [('Left',spec['left'],(1,.5,-.3)),('Right',spec['right'],(-1,.5,-.3))]:
+ for side,hand,pole in [('Left',spec['left'],(1,.5,-.3)),('Right',spec['right'],spec.get('rightpole',(-1,.5,-.3)))]:
   limb(side+'Arm',side+'ForeArm',side+'Hand',hand,pole)
   # Пронация предплечья сохраняет положение кисти, разворачивая хват клинка.
   roll=spec.get(side.lower()+'roll',0)
@@ -59,11 +61,17 @@ def pose(frame,spec):
   for digit in ['Index','Middle','Ring','Pinky']:
    for joint in range(1,4):
     b=bone(side+'Hand'+digit+str(joint)); b.rotation_quaternion=Quaternion(Vector((1,0,0)),math.radians(35 if joint==1 else 55))
+ if 'rightpole' in spec:
+  # Большой палец замыкает хват поверх указательного, не торчит вдоль рукояти.
+  hand_matrix=rig.matrix_world@bone('RightHand').matrix
+  for joint,target in [(1,(.025,.08,.028)),(2,(.009,.112,.048)),(3,(-.014,.115,.045))]:
+   name='RightHandThumb'+str(joint); child='RightHandThumb'+str(joint+1)
+   rotate(name,(world(child)-world(name)).rotation_difference(hand_matrix@Vector(target)-world(name)))
  for b in rig.pose.bones:
   b.keyframe_insert('rotation_quaternion',frame=frame,group=b.name); b.keyframe_insert('location',frame=frame,group=b.name)
 def export(name,animated=True):
  bpy.ops.object.select_all(action='DESELECT'); rig.select_set(True); bpy.context.view_layer.objects.active=rig
- bpy.ops.export_scene.fbx(filepath=str(out/(name+'.fbx')),use_selection=True,object_types={'ARMATURE'},add_leaf_bones=False,bake_anim=animated,bake_anim_use_all_actions=False,bake_anim_use_nla_strips=animated,bake_anim_simplify_factor=0,axis_forward='-Z',axis_up='Y')
+ bpy.ops.export_scene.fbx(filepath=(out/(name+'.fbx')).as_posix(),use_selection=True,object_types={'ARMATURE'},add_leaf_bones=False,bake_anim=animated,bake_anim_use_all_actions=False,bake_anim_use_nla_strips=animated,bake_anim_simplify_factor=0,axis_forward='-Z',axis_up='Y')
 for name,keys in actions.items():
  old=bpy.data.actions.get(name)
  if old: bpy.data.actions.remove(old)

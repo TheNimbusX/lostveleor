@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17738d3464922c146bd119499a86b7bf, type: 3}
+  m_Name: EnemyPresentation
+  m_EditorClassIdentifier: Game.View::Game.View.EnemyPresentationProfile
+  Guardian:
+    ClipSeconds: 2.4333334
+    StartNormalized: 0.32876712
+    RestNormalized: 0.72
+    StateSpeed: 1
+    BlendSeconds: 0.09
+    RestSeconds: 0.18
+    DissolveSeconds: 0.38
+    RecoilMeters: 0.12
+    EdgeGlow: 0.1
+    EdgeColor: {r: 0.38, g: 0.29, b: 0.15, a: 1}
+  RootSwarm:
+    ClipSeconds: 2.2
+    StartNormalized: 0
+    RestNormalized: 0.75757575
+    StateSpeed: 2
+    BlendSeconds: 0.055
+    RestSeconds: 0.1
+    DissolveSeconds: 0.28
+    RecoilMeters: 0.07
+    EdgeGlow: 0.06
+    EdgeColor: {r: 0.27, g: 0.32, b: 0.13, a: 1}

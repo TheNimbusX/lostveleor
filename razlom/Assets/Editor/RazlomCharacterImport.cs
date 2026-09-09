@@ -17,6 +17,7 @@ using UnityEngine;
 public sealed class RazlomCharacterImport : AssetPostprocessor
 {
     private const string CharactersFolder = "/Resources/Characters/";
+    private const string NpcFolder = "/Resources/Characters/NPC/";
     private const string ArtCharactersFolder = "/Art/Characters/";
     private string NormalPath => assetPath.Replace('\\', '/');
 
@@ -43,13 +44,36 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         NormalPath.Contains(CharactersFolder)
         && System.IO.Path.GetFileNameWithoutExtension(NormalPath).Contains('@');
 
-    public override uint GetVersion() => 13;
+    /// <summary>
+    /// Клип мирного NPC: «Resources/Characters/NPC/&lt;имя&gt;/&lt;имя&gt;@&lt;занятие&gt;.fbx».
+    ///
+    /// ПРОВЕРЯЕТСЯ РАНЬШЕ МОБА, потому что путь NPC подходит и под условие моба
+    /// тоже. Разбор мобов зацикливает только «Idle» и «Run» — у торговца клип
+    /// называется «Talking», и он принудительно ставился ОДНОРАЗОВЫМ при каждом
+    /// импорте. Со стороны это выглядело как «анимация не работает»: тело
+    /// доигрывало такт и замирало, а любая правка Loop Time в инспекторе
+    /// откатывалась следующим же импортом.
+    /// </summary>
+    private bool IsNpcClip =>
+        NormalPath.Contains(NpcFolder)
+        && System.IO.Path.GetFileNameWithoutExtension(NormalPath).Contains('@');
+
+    // Версия постпроцессора. Растёт при каждой смене правил разбора: без этого
+    // Unity не переимпортирует уже разобранные модели, и новое правило не
+    // применяется к тому, что уже лежит в проекте.
+    public override uint GetVersion() => 16;
 
     private void OnPreprocessAnimation()
     {
         if (IsPelagMixamo)
         {
             ConfigurePelagMixamoClips((ModelImporter)assetImporter);
+            return;
+        }
+
+        if (IsNpcClip)
+        {
+            ConfigureNpcClip((ModelImporter)assetImporter);
             return;
         }
 
@@ -121,6 +145,43 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     /// Y и поворот запекаются везде: вертикальная раскачка — часть походки,
     /// а разворот тела решает Facing из симуляции.
     /// </summary>
+    /// <summary>
+    /// Клип мирного NPC. Одно занятие, которое крутится вечно.
+    ///
+    /// ЗАЦИКЛЕН ВСЕГДА, и это не удобство, а определение: у жителя лагеря нет
+    /// ролей «удар» и «смерть», у него есть то, чем он занят весь день. Роль по
+    /// имени файла здесь не разбирается — разбирать нечего.
+    ///
+    /// ПРОЕЗД КОРНЯ СНИМАЕТСЯ ЦЕЛИКОМ. Торговец стоит у своего прилавка, и
+    /// клип, везущий тело, за десяток циклов увёл бы его от прилавка совсем —
+    /// в отличие от моба, тик его никуда не двигает и вернуть на место некому.
+    /// </summary>
+    private void ConfigureNpcClip(ModelImporter importer)
+    {
+        ModelImporterClipAnimation[] defaults = importer.defaultClipAnimations;
+        if (defaults == null || defaults.Length == 0) return;
+
+        string file = System.IO.Path.GetFileNameWithoutExtension(NormalPath);
+
+        ModelImporterClipAnimation clip = defaults[0];
+
+        // Имя клипа — суффикс после «@»: «mixamo.com» в окне Animator не
+        // говорит ничего.
+        clip.name = file.Substring(file.IndexOf('@') + 1);
+
+        clip.loopTime = true;
+        clip.loopPose = true;
+
+        clip.lockRootPositionXZ = true;
+        clip.keepOriginalPositionXZ = true;
+        clip.lockRootHeightY = true;
+        clip.keepOriginalPositionY = true;
+        clip.lockRootRotation = true;
+        clip.keepOriginalOrientation = true;
+
+        importer.clipAnimations = new[] { clip };
+    }
+
     private void ConfigureMobClip(ModelImporter importer)
     {
         // Пересобираем из defaults, а не правим .meta: подменённый FBX с тем
@@ -167,8 +228,42 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         ModelImporterClipAnimation source = defaults[0];
         string file = System.IO.Path.GetFileNameWithoutExtension(NormalPath);
 
+        if (file == "Pelag_MX_WithdrawingSword" || file == "Pelag_MX_KnifeIdle")
+        {
+            // В доставке есть также двухкадровый служебный тейк.
+            // Выбираем полный жест, сохраняя его исходные границы и темп.
+            foreach (var take in defaults)
+                if (take.lastFrame - take.firstFrame > source.lastFrame - source.firstFrame) source = take;
+            if (source.lastFrame - source.firstFrame < 2f)
+                importer.clipAnimations = new ModelImporterClipAnimation[0];
+            else importer.clipAnimations = new[] { Clip(source, file, source.firstFrame, source.lastFrame, file == "Pelag_MX_KnifeIdle") };
+            return;
+        }
         if (file.StartsWith("Pelag_AN_"))
         {
+            // ВЫРОЖДЕННЫЙ ДИАПАЗОН НЕ НАВЯЗЫВАТЬ.
+            //
+            // Для впервые добавленного FBX defaultClipAnimations отдаёт 0..1:
+            // такты ещё не разобраны, а animationType сменён в OnPreprocessModel
+            // этого же прохода. Записав такой диапазон, мы обрезаем клип до
+            // одного кадра — и на следующем импорте Unity возвращает уже нашу
+            // же обрезку как «дефолт». Петля самоподдерживается, и купленный
+            // клип навсегда остаётся одной позой: персонаж летит в T-позе.
+            //
+            // Выход — стереть переопределение. Пустой clipAnimations заставляет
+            // Unity импортировать такт целиком, уже после препроцесса, когда
+            // такты разобраны. На следующем импорте диапазон приезжает
+            // настоящим, и ветка ниже отрабатывает как обычно.
+            //
+            // Именно СТЕРЕТЬ, а не выйти: clipAnimations живёт в .meta, и
+            // простой выход оставил бы прежнюю обрезку в силе. Имя клипа в этот
+            // проход не наше, но сборщики ищут клип в ассете, а не по имени.
+            if (source.lastFrame - source.firstFrame < 2f)
+            {
+                importer.clipAnimations = new ModelImporterClipAnimation[0];
+                return;
+            }
+
             importer.clipAnimations = new[] { Clip(source, file, source.firstFrame, source.lastFrame, file.EndsWith("Loop")) };
             return;
         }

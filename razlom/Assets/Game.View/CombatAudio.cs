@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
+using Sound = Game.View.CombatSound;
 
 namespace Game.View
 {
@@ -36,74 +37,20 @@ namespace Game.View
         [Min(1)] public int MaxPerKindPerFrame = 1;
         [Min(4)] public int Voices = 14;
 
-        private enum Sound : byte
-        {
-            Whoosh = 0,
-            HitMetal = 1,
-            HitBody = 2,
-            Kill = 3,
-            Whirlwind = 4,
-            Cast = 5,
-            Reward = 6,
-            AnchorSweep = 7,
-            ChainStep = 8,
-
-            /// <summary>
-            /// Шаг. Три части подряд, а не случайная из трёх.
-            ///
-            /// Владелец сдал их как ОДИН трёхкомпонентный звук ходьбы: части
-            /// продолжают друг друга, и случайный выбор превратил бы связную
-            /// поступь в дробь из одинаковых щелчков.
-            /// </summary>
-            Footstep = 9,
-
-            /// <summary>
-            /// Осыпание трупа. Отдельный звук от Kill, а не замена ему: Kill —
-            /// это удар, который убил, а этот — то, как тело перестаёт быть.
-            /// Они и звучат в разное время, см. DissolveDelay.
-            /// </summary>
-            Dissolve = 10,
-
-            Count = 11,
-        }
-
-        /// <summary>
-        /// Когда осыпание вступает после смерти.
-        ///
-        /// ЧИСЛО НЕ ПОДОБРАНО, А ВЗЯТО ИЗ ПОКАЗА. Порядок в ArenaView такой:
-        /// падение (OrvillDeathAnimationDuration = 0.73) → лежит
-        /// (OrvillDeathPoseHoldDuration = 0.14) → растворение
-        /// (OrvillDeathFadeDuration = 0.50). Сумма первых двух и есть момент,
-        /// когда _DeathFade трогается с нуля, — здесь и вступает звук.
-        ///
-        /// Сам клип обрезан ровно под 0.50 с растворения: владелец просил,
-        /// чтобы звук совпадал со временем осыпания, а не догорал после него.
-        ///
-        /// ЗАВИСИТ ОТ ArenaView. Меняешь окно растворения — правь здесь и
-        /// перережь dissolve_sand_00.ogg под новую длину.
-        /// </summary>
-        private const float DissolveDelay = ArenaView.OrvillDeathDissolveStartDelay;
-
-        // The visual dissolve window is fixed by ArenaView. Imported clips may
-        // contain a small encoder tail, so the dissolve voice is rate-matched
-        // to the same 0.50 s window instead of audibly outliving the body.
-        private const float DissolveDuration = 0.50f;
-
-        /// <summary>
-        /// Отложенные осыпания: время, когда каждое должно прозвучать.
-        ///
-        /// ПОЧЕМУ НЕ PlayDelayed. Он занимает голос из пула с момента вызова,
-        /// а ждать теперь почти секунду: голос простаивал бы всю смерть и его
-        /// успел бы отобрать следующий удар — звук пропал бы молча. Здесь
-        /// голос берётся в тот момент, когда пора играть.
-        /// </summary>
-        private readonly float[] _dissolveDue = new float[16];
-        private int _dissolveDueCount;
+        public CombatAudioProfile Profile;
+        private struct DelayedCue { public float Due; public Sound Sound; }
+        private readonly DelayedCue[] _deathCues = new DelayedCue[64];
+        private int _deathCueCount;
         private float _anchorImpactAt = -1f, _anchorLandAt = -1f;
+        private CombatVoiceBudget _voiceBudget;
+        private float _whirlwindEndAt = -1f;
+        private bool _chainSoundActive;
+        private int _generationShown = -1;
+        private readonly CombatSoundEntry[] _entries = new CombatSoundEntry[(int)Sound.Count];
 
         private TickDriver _driver;
         private AudioSource[] _voices;
-        private int _voiceCursor;
+        private Sound[] _voiceSounds;
         private readonly AudioClip[][] _variants = new AudioClip[(int)Sound.Count][];
         private readonly int[] _lastVariant = new int[(int)Sound.Count];
         private readonly int[] _playedThisFrame = new int[(int)Sound.Count];
@@ -130,6 +77,7 @@ namespace Game.View
 
         private void Start()
         {
+            if (Profile == null) Profile = Resources.Load<CombatAudioProfile>("Combat/CombatAudio");
             LoadClips();
             BuildVoices();
         }
@@ -164,6 +112,18 @@ namespace Game.View
             // сработать всё равно не может, — а вот вчерашние очереди должны
             // успеть прозвучать до того, как кадр закончится.
             FlushDissolves();
+            if (_whirlwindEndAt >= 0f && Time.time >= _whirlwindEndAt)
+            {
+                _whirlwindEndAt = -1f;
+                Play(Sound.WhirlwindEnd, AbilityVolume * .5f, 1f, .01f);
+            }
+            bool chain = _driver.Sim != null && _driver.Sim.ChainTargetId >= 0;
+            if (_chainSoundActive && !chain)
+            {
+                StopKind(Sound.ChainStep);
+                Play(Sound.ChainStepEnd, AbilityVolume * .5f, 1f, .01f);
+            }
+            _chainSoundActive = chain;
         }
 
         private bool _cycloneSoundActive;
@@ -178,14 +138,16 @@ namespace Game.View
                 if (!_cycloneSoundActive || turn != _cycloneSoundTurn)
                 {
                     float charge = Mathf.Clamp01(sim.CycloneElapsedTicks / 60f);
-                    Play(Sound.Whoosh, WhooshVolume * .65f, Mathf.Lerp(1.03f, .72f, charge), .015f);
+                    Play(Sound.CycloneTurn, WhooshVolume * .65f, Mathf.Lerp(1.03f, .72f, charge), .015f);
                     Play(Sound.HitMetal, MetalVolume * .16f, .78f, .015f);
                     _cycloneSoundTurn = turn;
                 }
             }
             else if (_cycloneSoundActive)
             {
-                Play(Sound.HitMetal, MetalVolume * .22f, 1.14f, .01f);
+                StopKind(Sound.AnchorSweep);
+                StopKind(Sound.CycloneTurn);
+                Play(Sound.CycloneRelease, AbilityVolume * .5f, 1f, .01f);
                 _cycloneSoundTurn = -1;
             }
             _cycloneSoundActive = active;
@@ -194,13 +156,21 @@ namespace Game.View
         private void PlayModeChange()
         {
             GameSession session = _driver.Session;
-            if (session == null || session.Mode == _modeShown) return;
+            if (session == null || (session.Mode == _modeShown && session.Generation == _generationShown)) return;
+            _generationShown = session.Generation;
             _modeShown = session.Mode;
 
             // Смена режима обрывает бой на середине. Осыпание, поставленное в
             // очередь за долю секунды до выхода из Разлома, прозвучало бы уже
             // в лагере — над пустой поляной, без тела.
-            _dissolveDueCount = 0;
+            _deathCueCount = 0;
+            _whirlwindEndAt = -1f;
+            _chainSoundActive = false;
+            _whooshDelay = -1f;
+            _stepAnchorSet = false;
+            _cycloneSoundActive = false;
+            for (int i = 0; i < _voices.Length; i++) _voices[i].Stop();
+            _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
 
             if (_modeShown == GameMode.Summary)
@@ -225,6 +195,7 @@ namespace Game.View
                                 (e.ActionVariant == 1 ? 0.50f : 0.55f);
                             _whooshAttackVariant = e.ActionVariant;
                         }
+                        else Play(Sound.EnemyWarning, 0.6f, 1f, 0f);
                         break;
 
                     case SimEventType.Damage:
@@ -235,8 +206,10 @@ namespace Game.View
                         if (e.Target == Simulation.PlayerId) _anchorImpactAt = _anchorLandAt = -1f;
                         if (e.Target != Simulation.PlayerId)
                         {
-                            Play(Sound.Kill, KillVolume, 0.90f, 0.05f);
-                            QueueDissolve(_driver.Sim.Entities.Kind[e.Target]);
+                            var kind = _driver.Sim.Entities.Kind[e.Target];
+                            Play(kind == EnemyKind.ForestRootSwarm ? Sound.RootSwarmKill : Sound.Kill,
+                                KillVolume, 0.96f, 0.025f);
+                            QueueDeathSounds(kind);
                         }
                         break;
 
@@ -244,6 +217,8 @@ namespace Game.View
                         if (e.Source == Simulation.PlayerId)
                         {
                             _anchorImpactAt = _anchorLandAt = -1f;
+                            _whirlwindEndAt = -1f;
+                            StopKind(Sound.Whirlwind);
                             _whooshDelay = -1f;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
                             {
@@ -264,6 +239,7 @@ namespace Game.View
                                 // on every cast instead of randomising two cues
                                 // whose peaks land on different combat phases.
                                 Play(Sound.Whirlwind, WhirlwindVolume, 0.96f, 0.015f);
+                                _whirlwindEndAt = Time.time + CharacterAnimatorView.WhirlwindClipDuration;
                             }
                             else
                             {
@@ -338,29 +314,22 @@ namespace Game.View
             _stepPart++;
             if (clip == null) return;
 
-            // Шаг играется мимо общего Play: тот выбирает вариант случайно,
-            // а здесь порядок и есть содержание звука. Голос берётся из того же
-            // кольца — иначе шаги заняли бы собственный источник и перестали
-            // вытесняться в общей давке.
-            if (_voices == null || _voices.Length == 0) return;
-            AudioSource voice = _voices[_voiceCursor];
-            _voiceCursor = (_voiceCursor + 1) % _voices.Length;
-            if (voice == null) return;
-            voice.clip = clip;
-            voice.volume = Master * FootstepVolume;
-            voice.pitch = 0.99f + (Random01() - 0.5f) * 0.04f;
-            voice.Play();
+            Play(Sound.Footstep, FootstepVolume, 1f, 0.02f, fixedVariant: (_stepPart - 1) % parts.Length);
         }
 
         private void UpdateWhoosh()
         {
             if (_whooshDelay < 0f) return;
+            var sim = _driver.Sim;
+            if (sim == null || !sim.Entities.Alive[Simulation.PlayerId]
+                || sim.Entities.AttackImpactTick[Simulation.PlayerId] <= sim.Tick)
+            { _whooshDelay = -1f; return; }
             _whooshDelay -= Time.deltaTime;
             if (_whooshDelay > 0f) return;
 
             _whooshDelay = -1f;
             bool heavy = _whooshAttackVariant == 1;
-            Play(Sound.Whoosh, WhooshVolume * (heavy ? 1.12f : 1f),
+            Play(heavy ? Sound.WhooshHeavy : Sound.Whoosh, WhooshVolume * (heavy ? 1.12f : 1f),
                 heavy ? 0.92f : 1.03f, 0.045f);
         }
 
@@ -368,13 +337,18 @@ namespace Game.View
         {
             // Player damage keeps its visual flash/recoil but intentionally has
             // no one-shot until a dedicated, approved hurt cue exists.
-            if (e.Target == Simulation.PlayerId) return;
+            if (e.Target == Simulation.PlayerId)
+            { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); return; }
 
             if (e.Source != Simulation.PlayerId) return;
 
+            Sound bodySound = _driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestRootSwarm
+                ? Sound.RootSwarmHit : Sound.HitBody;
             bool ability = e.DamageOrigin == DamageOrigin.Ability;
             bool whirlwind = ability && IsWhirlwindSlot(e.ActionVariant);
             bool heavy = e.Flag || e.ActionVariant == 1 || ability;
+            if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.ChainStepId)
+                Play(Sound.ChainStepHop, AbilityVolume * .65f, 1f, .025f);
 
             // Blade definition and body weight are separate layers. The AoE cap
             // turns a whole Whirlwind contact into one large, clean event.
@@ -384,13 +358,13 @@ namespace Game.View
                 // weight; full-strength metal+body masked the sweep and could
                 // sum into a clipped wall together with a same-frame kill.
                 Play(Sound.HitMetal, MetalVolume * 0.70f, 0.96f, 0.025f);
-                Play(Sound.HitBody, BodyVolume * 0.65f, 0.88f, 0.025f);
+                Play(bodySound, BodyVolume * 0.65f, 0.88f, 0.025f);
             }
             else
             {
                 Play(Sound.HitMetal, MetalVolume * (heavy ? 1.24f : 1f),
                     heavy ? 0.92f : 1.02f, 0.05f);
-                Play(Sound.HitBody, BodyVolume * (heavy ? 1.22f : 1f),
+                Play(bodySound, BodyVolume * (heavy ? 1.22f : 1f),
                     ability ? 0.76f : (heavy ? 0.86f : 0.94f), 0.045f);
             }
         }
@@ -442,63 +416,83 @@ namespace Game.View
             return 0.95f;
         }
 
-        private void QueueDissolve(EnemyKind kind)
+        private void QueueDeathSounds(EnemyKind kind)
         {
-            // Переполнение — не ошибка, а решение: если за одну секунду умерло
-            // больше шестнадцати, шестнадцатый шелест всё равно неразличим.
-            if (_dissolveDueCount >= _dissolveDue.Length) return;
-            _dissolveDue[_dissolveDueCount++] = Time.time + ArenaView.DeathDissolveStartDelay(kind);
+            var timing = EnemyPresentationProfile.Death(kind);
+            bool swarm = kind == EnemyKind.ForestRootSwarm;
+            Queue(swarm ? Sound.RootSwarmFall : Sound.GuardianFall, timing.FallSeconds);
+            Queue(swarm ? Sound.RootSwarmDissolve : Sound.Dissolve, timing.DissolveAt);
+        }
+
+        private void Queue(Sound sound, float delay)
+        {
+            if (_deathCueCount >= _deathCues.Length) return;
+            _deathCues[_deathCueCount++] = new DelayedCue { Sound = sound, Due = Time.time + delay };
         }
 
         private void FlushDissolves()
         {
-            float now = Time.time;
             int write = 0;
-            for (int i = 0; i < _dissolveDueCount; i++)
+            for (int i = 0; i < _deathCueCount; i++)
             {
-                if (_dissolveDue[i] > now)
-                {
-                    _dissolveDue[write++] = _dissolveDue[i];
-                    continue;
-                }
-
-                // Pitch здесь намеренно фиксирован. Этот голос подгоняется к
-                // ровно 0.50 с визуального dissolve; случайный разброс pitch
-                // снова менял бы его длину до 0.46..0.55 с и возвращал
-                // рассинхрон. Вариативность толпы даёт crowding микса.
-                Play(Sound.Dissolve, DissolveVolume, 1.00f, 0f,
-                    playbackDuration: DissolveDuration);
+                var cue = _deathCues[i];
+                if (cue.Due > Time.time) { _deathCues[write++] = cue; continue; }
+                bool dissolve = cue.Sound == Sound.Dissolve || cue.Sound == Sound.RootSwarmDissolve;
+                Play(cue.Sound, dissolve ? DissolveVolume : BodyVolume * 0.7f, 1f, 0f);
             }
-            _dissolveDueCount = write;
+            _deathCueCount = write;
         }
 
-        private void Play(Sound sound, float volume, float pitchCenter, float pitchSpread,
-            float delay = 0f, float playbackDuration = 0f)
+        private int Play(Sound sound, float volume, float pitchCenter, float pitchSpread,
+            float delay = 0f, int fixedVariant = -1)
         {
-            int soundIndex = (int)sound;
-            AudioClip[] clips = _variants[soundIndex];
-            if (clips == null || clips.Length == 0) return;
-            if (_playedThisFrame[soundIndex] >= MaxPerKindPerFrame) return;
-
-            float crowding = 1f / (1f + _playedThisFrame[soundIndex]);
-            _playedThisFrame[soundIndex]++;
-
-            int variant = PickVariant(soundIndex, clips.Length);
-            AudioSource voice = _voices[_voiceCursor];
-            _voiceCursor = (_voiceCursor + 1) % _voices.Length;
-            voice.clip = clips[variant];
-            voice.volume = Mathf.Clamp01(volume * crowding * Master
-                                         * GameUserSettings.EffectsVolume);
-            float pitch = pitchCenter + (Random01() - 0.5f) * pitchSpread * 2f;
-            if (playbackDuration > 0.001f && voice.clip.length > 0.001f)
-                pitch *= voice.clip.length / playbackDuration;
-            voice.pitch = Mathf.Clamp(pitch, 0.70f, 1.18f);
-            // PlayDelayed, а не корутина: задержка отсчитывается по звуковым
-            // часам, и осыпание не съезжает от растворения на просадке кадров.
-            // Голос при этом занят с этой секунды — то есть отложенный звук
-            // нельзя перебить, не остановив его же.
+            int index = (int)sound;
+            AudioClip[] clips = _variants[index];
+            if (clips == null || clips.Length == 0) return -1;
+            var entry = _entries[index];
+            if (_playedThisFrame[index] >= (entry != null ? entry.MaxPerFrame : MaxPerKindPerFrame)) return -1;
+            int variant = fixedVariant >= 0 ? fixedVariant % clips.Length : PickVariant(index, clips.Length);
+            AudioClip clip = clips[variant];
+            if (clip == null) return -1;
+            float spread = entry != null ? entry.PitchVariation : pitchSpread;
+            float pitch = Mathf.Clamp(pitchCenter * (entry != null ? entry.Pitch : 1f)
+                + (Random01() - 0.5f) * spread * 2f, 0.5f, 2f);
+            int priority = entry != null ? entry.Priority : CombatAudioProfile.DefaultPriority(sound);
+            int slot = _voiceBudget.Acquire(AudioSettings.dspTime, delay + clip.length / pitch, priority);
+            if (slot < 0) return -1;
+            _playedThisFrame[index]++;
+            AudioSource voice = _voices[slot];
+            voice.Stop();
+            _voiceSounds[slot] = sound;
+            voice.clip = clip;
+            voice.volume = Mathf.Clamp01(volume * Master * GameUserSettings.EffectsVolume
+                * (Profile != null ? Profile.Gain : 0.8f) * (entry != null ? entry.Gain : 1f));
+            voice.pitch = pitch;
+            voice.priority = 256 - Mathf.Clamp(priority * 2, 0, 256);
             if (delay > 0f) voice.PlayDelayed(delay);
             else voice.Play();
+            if (CombatAudioCapture.Recording)
+                Debug.Log($"[capture-cue] {sound} clip={clip.name} load={clip.loadState} volume={voice.volume} playing={voice.isPlaying} dsp={AudioSettings.dspTime}");
+            return slot;
+        }
+
+        private void OnDisable()
+        {
+            _deathCueCount = 0;
+            _whooshDelay = _whirlwindEndAt = _anchorImpactAt = _anchorLandAt = -1f;
+            _chainSoundActive = _cycloneSoundActive = false;
+            if (_voices != null) foreach (var voice in _voices) if (voice != null) voice.Stop();
+            _voiceBudget?.Clear();
+        }
+
+        private void StopKind(Sound sound)
+        {
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                if (_voiceSounds[i] != sound) continue;
+                _voices[i].Stop();
+                _voiceBudget.Release(i);
+            }
         }
 
         private int PickVariant(int soundIndex, int count)
@@ -515,6 +509,8 @@ namespace Game.View
             Transform root = new GameObject("Combat audio voices").transform;
             root.SetParent(transform, false);
             _voices = new AudioSource[Mathf.Max(4, Voices)];
+            _voiceBudget = new CombatVoiceBudget(_voices.Length);
+            _voiceSounds = new Sound[_voices.Length];
 
             for (int i = 0; i < _voices.Length; i++)
             {
@@ -553,6 +549,18 @@ namespace Game.View
             if (steps != null && steps.Length > 1)
                 System.Array.Sort(steps, (a, b) => string.CompareOrdinal(a.name, b.name));
             _variants[(int)Sound.Footstep] = steps;
+            // До получения новых записей используем прежние банки как временную основу.
+            _variants[(int)Sound.WhooshHeavy] = _variants[(int)Sound.Whoosh];
+            _variants[(int)Sound.CycloneTurn] = _variants[(int)Sound.Whoosh];
+            _variants[(int)Sound.RootSwarmHit] = _variants[(int)Sound.HitBody];
+            _variants[(int)Sound.RootSwarmKill] = _variants[(int)Sound.Kill];
+            _variants[(int)Sound.RootSwarmDissolve] = _variants[(int)Sound.Dissolve];
+            for (int i = 0; i < _entries.Length; i++)
+            {
+                _entries[i] = Profile != null ? Profile.Find((Sound)i) : null;
+                if (_entries[i]?.Clips != null && _entries[i].Clips.Length > 0)
+                    _variants[i] = _entries[i].Clips;
+            }
         }
 
         // Audio presentation must not touch UnityEngine.Random: keeping a private

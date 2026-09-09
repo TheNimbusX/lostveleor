@@ -318,6 +318,21 @@ namespace Game.Sim
         private readonly List<SimEvent> _events = new List<SimEvent>(256);
         private LayoutMap _layout;
         private bool _navigationWaypoint;
+
+        /// <summary>
+        /// Точку надо ПРОЙТИ НАСКВОЗЬ, а не встать в ней.
+        ///
+        /// Третий режим появился не от любви к режимам, а потому что двух не
+        /// хватало ни одному промежуточному углу маршрута. Обычный приказ имеет
+        /// мёртвую зону в полметра: цель ближе неё считается достигнутой, и на
+        /// углу тело просто вставало в тридцати сантиметрах от него. Режим
+        /// прибытия мёртвой зоны не имеет, но режет скорость до четверти
+        /// остатка пути — тело подползало к каждому повороту.
+        ///
+        /// Транзит — это ни то, ни другое: полная скорость и никакого порога
+        /// прибытия. Тормозить перед углом незачем, за ним дорога продолжается.
+        /// </summary>
+        private bool _navigationTransit;
         private CampWalkMap _campWalkMap;
 
         public void SetupCamp(FixVec2 spawn, CampWalkMap map)
@@ -330,6 +345,7 @@ namespace Game.Sim
         public void StopPlayerMovement()
         {
             _navigationWaypoint = false;
+            _navigationTransit = false;
             ClearMoveOrder();
             Entities.Velocity[PlayerId] = FixVec2.Zero;
         }
@@ -935,6 +951,7 @@ namespace Game.Sim
         private void ClearMoveOrder()
         {
             _navigationWaypoint = false;
+            _navigationTransit = false;
             _hasMoveOrder = false;
             _moveOrder = FixVec2.Zero;
             _explicitMoveOrder = false;
@@ -1463,6 +1480,7 @@ namespace Game.Sim
                 _hasMoveOrder = true;
                 _explicitMoveOrder = true;
                 _navigationWaypoint = input.Has(InputFlags.NavigationWaypoint);
+                _navigationTransit = input.Has(InputFlags.NavigationTransit);
             }
 
             // Only the anchor leap needs a stationary launch. The mass hook
@@ -1532,16 +1550,36 @@ namespace Game.Sim
                 // Смотрим на указанную точку всегда, даже если не идём к ней.
                 if (_explicitMoveOrder || facingTarget < 0) desiredFacing = toTarget;
 
-                Fix64 arrivalSq = _navigationWaypoint ? Fix64.Ratio(1,10000) : TurnInPlaceRadiusSq;
+                // Мёртвая зона разворота на месте — свойство КЛИКА МЫШЬЮ, а не
+                // движения вообще. Путевая точка приходит не от курсора, и
+                // порога у неё нет: угол маршрута может лежать в десяти
+                // сантиметрах, и его всё равно надо пройти.
+                bool navigating = _navigationWaypoint || _navigationTransit;
+                // ПОРОГ ПРИБЫТИЯ — 10 СМ, А НЕ САНТИМЕТР.
+                //
+                // С сантиметром подъезд не заканчивался вовремя: шаг равен
+                // четверти остатка пути, то есть с каждым тиком остаток лишь
+                // умножается на 3/4 и до сантиметра ползёт десяток тиков. Всё
+                // это время тело числится идущим, и ходьба в конце вырождалась
+                // в еле заметное подползание вместо остановки.
+                Fix64 arrivalSq = navigating ? Fix64.Ratio(1,100) : TurnInPlaceRadiusSq;
                 if (distSq > arrivalSq)
                 {
                     Fix64 distance = Fix64.Sqrt(distSq);
 
-                    // У цели скорость ограничивается остатком пути: так тело
-                    // подъезжает и встаёт, а не пролетает точку по инерции.
-                    step = _navigationWaypoint
-                        ? toTarget.Normalized() * Fix64.Min(speed, distance / Fix64.FromInt(4))
-                        : PlayerTravelStep(toTarget, speed);
+                    step = _navigationTransit
+                        // Транзитный угол проходится насквозь на полной
+                        // скорости: за ним дорога продолжается, и тормозить
+                        // перед ним не перед чем.
+                        ? toTarget / distance * speed
+                        : _navigationWaypoint
+                            // У ЦЕЛИ скорость ограничивается остатком пути: так
+                            // тело подъезжает и встаёт, а не пролетает точку по
+                            // инерции. Ограничение ровно остатком, а не его
+                            // четвертью: четверть не доводит до цели никогда,
+                            // а мягкость даёт разгон в Approach ниже.
+                            ? toTarget / distance * Fix64.Min(speed, distance)
+                            : PlayerTravelStep(toTarget, speed);
                 }
                 else
                 {
@@ -2151,6 +2189,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _moveOrder.Y);
             Hashing.Mix(ref hash, _explicitMoveOrder ? 1 : 0);
             Hashing.Mix(ref hash, _navigationWaypoint ? 1 : 0);
+            Hashing.Mix(ref hash, _navigationTransit ? 1 : 0);
             Hashing.Mix(ref hash, _attackTarget);
             Hashing.Mix(ref hash, _nextPlayerAttackVariant);
             Hashing.Mix(ref hash, _abilityMovePenaltyUntilTick);

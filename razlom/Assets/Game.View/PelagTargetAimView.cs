@@ -11,6 +11,14 @@ namespace Game.View
         private Texture2D _cursor;
         private bool _aiming;
         private GUIStyle _hint;
+
+        /// <summary>
+        /// Радиус кольца прицела по земле, м.
+        ///
+        /// Примерно с фигуру героя: игрок должен понимать, что притянется
+        /// «сюда», а не «в эту точку с точностью до сантиметра».
+        /// </summary>
+        private const float GroundAimRadius = 0.55f;
         private void OnDisable() { if (_aiming) Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); _aiming = false; }
         private void OnGUI()
         {
@@ -59,6 +67,32 @@ namespace Game.View
                 Cursor.SetCursor(aiming ? _cursor : null, aiming ? new Vector2(20, 20) : Vector2.zero, CursorMode.Auto);
             }
             var sim = _driver.Sim;
+
+            // ПРИЦЕЛ В ТОЧКУ: у Броска якоря нет цели-врага.
+            //
+            // Кольцо ставится там, куда игрок реально попадёт, а не под
+            // курсором: дальность обрезает симуляция, и показывать надо
+            // обрезанную точку. Иначе игрок целится за 12 метров, прилетает
+            // на 7 и считает это багом.
+            if (aiming && sim != null && _driver.GroundTargetedSlot(_driver.AbilityTargetAimSlot))
+            {
+                Vector3 origin = new Vector3(
+                    sim.Entities.Position[Simulation.PlayerId].X.ToFloat(), 0f,
+                    sim.Entities.Position[Simulation.PlayerId].Y.ToFloat());
+                Vector3 wanted = new Vector3(_driver.CursorWorld.X.ToFloat(), 0f,
+                    _driver.CursorWorld.Y.ToFloat());
+                Vector3 landing = origin + Vector3.ClampMagnitude(wanted - origin,
+                    AnchorKit.LeapRange.ToFloat());
+                _line.enabled = true;
+                for (int i = 0; i < 48; i++)
+                {
+                    float a = i * 2f * Mathf.PI / 48;
+                    _line.SetPosition(i, new Vector3(landing.x + Mathf.Cos(a) * GroundAimRadius,
+                        0.07f, landing.z + Mathf.Sin(a) * GroundAimRadius));
+                }
+                return;
+            }
+
             int target = _driver.HoveredEntity;
             bool valid = _driver.AimingAbilityTarget && sim != null && target > 0
                 && sim.ValidAbilityTarget(target, sim.GetAbility(_driver.AbilityTargetAimSlot));
