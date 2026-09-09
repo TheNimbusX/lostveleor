@@ -72,7 +72,6 @@ namespace Game.View
             if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
             if (session == null || session.Mode == GameMode.Summary || CampPlayerView.Instance?.InventoryOpen == true) return;
-            if (session.Mode == GameMode.Camp && !session.OnProvingGround) return;
 
             Simulation sim = _driver.Sim;
             RiftRun run = _driver.Run;
