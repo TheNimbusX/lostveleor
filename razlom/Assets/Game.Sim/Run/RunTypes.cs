@@ -44,6 +44,8 @@ namespace Game.Sim
 
         /// <summary>Ушёл сам, с добычей.</summary>
         Left = 2,
+        /// <summary>Все уровни локации пройдены, финальная награда выбрана.</summary>
+        Completed = 3,
     }
 
     /// <summary>Что предлагается в награду.</summary>

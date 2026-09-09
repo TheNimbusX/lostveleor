@@ -28,6 +28,7 @@ namespace Game.View
 
         public Color BackColor = new Color(0.05f, 0.05f, 0.07f, 0.80f);
         public Color FillColor = new Color(0.86f, 0.24f, 0.22f, 0.95f);
+        public Color EliteColor = new Color(1f, 0.72f, 0.15f, 1f);
 
         [Tooltip("Цель, которую бьют прямо сейчас, отмечается ярче.")]
         public Color FocusColor = new Color(1.00f, 0.62f, 0.18f, 0.98f);
@@ -137,7 +138,9 @@ namespace Game.View
                 if ((uint)i >= (uint)_hitAt.Length) continue;
 
                 float age = now - _hitAt[i];
-                if (age > ShowFor) continue;
+                bool elite = _driver.Run?.Encounters?.IsElite(i) == true;
+                bool nearbyElite = elite && FixVec2.DistanceSq(entities.Position[i], entities.Position[Simulation.PlayerId]) < Fix64.FromInt(256);
+                if (age > ShowFor && !nearbyElite) continue;
 
                 int max = entities.MaxHealth[i];
                 if (max <= 0) continue;
@@ -146,12 +149,13 @@ namespace Game.View
 
                 // Полная полоска не показывается: если по врагу попали, но он
                 // ещё цел, полоска всё равно нужна — она и говорит, что цел.
-                float alpha = age > ShowFor - FadeFor
+                float alpha = !nearbyElite && age > ShowFor - FadeFor
                     ? Mathf.InverseLerp(ShowFor, ShowFor - FadeFor, age)
                     : 1f;
 
                 Bar bar = _bars[used++];
                 bar.Root.gameObject.SetActive(true);
+                bar.Root.localScale = elite ? new Vector3(1.4f, 1.2f, 1f) : Vector3.one;
 
                 Vector3 at = _driver.GetRenderPosition(i);
                 float height = entities.Kind[i] == EnemyKind.ForestRootSwarm
@@ -163,7 +167,7 @@ namespace Game.View
                 back.a *= alpha;
                 bar.BackRenderer.color = back;
 
-                Color front = i == _focus ? FocusColor : FillColor;
+                Color front = elite ? EliteColor : i == _focus ? FocusColor : FillColor;
                 front.a *= alpha;
                 bar.FillRenderer.color = front;
 

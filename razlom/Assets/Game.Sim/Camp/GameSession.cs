@@ -89,6 +89,16 @@ namespace Game.Sim
         public ulong LastRunSeed { get; private set; }
         public int RunNumber { get; private set; }
         public RunSummary LastRun { get; private set; }
+        public bool IsDeveloperRun { get; private set; }
+        public bool DeveloperInvulnerable => IsDeveloperRun && Run != null && Run.Sim.PlayerInvulnerable;
+
+        public void SetDeveloperInvulnerable(bool value)
+        {
+            if (Mode != GameMode.Rift || Run == null)
+                throw new System.InvalidOperationException("Сначала войди в разлом.");
+            if (value) IsDeveloperRun = true;
+            Run.Sim.PlayerInvulnerable = value;
+        }
 
         /// <summary>Используется только автоматизированной съёмкой combat slice.</summary>
         public bool WhirlwindShowcase { get; set; }
@@ -228,6 +238,7 @@ namespace Game.Sim
             }
 
             Run = null;
+            IsDeveloperRun = false;
             Ground = null;
             Mode = GameMode.Camp;
             BindCampEquipment();
@@ -245,8 +256,24 @@ namespace Game.Sim
             LeaveProvingGround();
 
             ulong seed = LayoutGenerator.RollSeed(ref _runSeeds);
+            BeginRift(_location, seed, 1, false, false);
+        }
+
+        public void StartDeveloperRift(LocationDefinition location, int level, bool nearBoss, ulong seed)
+        {
+            if (location == null || level < 1 || level > location.LevelCount || (nearBoss && !location.GetLevel(level).Boss))
+                throw new System.ArgumentException("Choose a valid authored level (with a boss for a boss jump).");
+            location.ValidateCapacity(_simCapacity);
+            LeaveProvingGround();
+            BeginRift(location, seed, level, nearBoss, true);
+        }
+
+        private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer)
+        {
+            bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
             RunNumber++;
+            IsDeveloperRun = developer;
 
             var sim = new Simulation(seed, _simCapacity);
 
@@ -254,12 +281,14 @@ namespace Game.Sim
             // Reapply, и снаряжению к этому моменту нужен лист.
             Camp.Worn.Bind(sim.Entities.Stats[Simulation.PlayerId]);
 
-            Run = new RiftRun(sim, _modules, Camp.Items, _itemBaseIds, location: _location);
+            Run = new RiftRun(sim, location?.Modules ?? _modules, Camp.Items, _itemBaseIds, location: location);
             Run.PlayerEquipment = Camp.Worn;
-            Run.WhirlwindShowcase = WhirlwindShowcase;
-            Run.CombatFeelShowcase = CombatFeelShowcase;
+            Run.WhirlwindShowcase = !developer && WhirlwindShowcase;
+            Run.CombatFeelShowcase = developer ? CombatFeelCaptureTier.None : CombatFeelShowcase;
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
-            Run.StartRun();
+            if (developer) Run.StartTestAtLevel(level, nearBoss);
+            else Run.StartRun();
+            sim.PlayerInvulnerable = invulnerable;
 
             Mode = GameMode.Rift;
             Generation++;
@@ -283,7 +312,7 @@ namespace Game.Sim
             int kept = 0;
             int lost = 0;
 
-            for (int i = 0; i < Run.TakenRewardCount; i++)
+            for (int i = 0; !IsDeveloperRun && i < Run.TakenRewardCount; i++)
             {
                 RewardOffer offer = Run.GetTaken(i);
                 if (offer.Kind != RewardKind.Item) continue;
@@ -338,6 +367,7 @@ namespace Game.Sim
             ulong hash = Hashing.Offset;
             Hashing.Mix(ref hash, (int)Mode);
             Hashing.Mix(ref hash, RunNumber);
+            if (IsDeveloperRun) Hashing.Mix(ref hash, 0x444556);
             Hashing.Mix(ref hash, LastRunSeed);
             LastRun.HashInto(ref hash);
 

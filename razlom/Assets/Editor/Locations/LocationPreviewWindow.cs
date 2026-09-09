@@ -159,6 +159,8 @@ namespace Game.LocationEditor
                     if (GUILayout.Button("Оформление")) Selection.activeObject = _profile;
                     if (GUILayout.Button("Генерация / уровни")) Selection.activeObject = _profile.Gameplay;
                 }
+                if (_profile?.Gameplay?.Encounters != null && GUILayout.Button("Боевые встречи"))
+                    Selection.activeObject = _profile.Gameplay.Encounters;
             }
             if (Application.isPlaying && GUILayout.Button("Взять сид текущего забега"))
             {
@@ -177,7 +179,7 @@ namespace Game.LocationEditor
             _connectors = EditorGUILayout.ToggleLeft("Стыковки и реальные проходы", _connectors);
             _spawns = EditorGUILayout.ToggleLeft("Игрок и враги при входе", _spawns);
             _labels = EditorGUILayout.ToggleLeft("Номера модулей и выходы", _labels);
-            EditorGUILayout.HelpBox("Зелёный — вход; охра — выход; голубой — проход; оранжевый — свободный коннектор; красный — враги.", MessageType.None);
+            EditorGUILayout.HelpBox("Зелёный — вход; охра — выход; голубой — проход; оранжевый — свободный коннектор. Красный — Хранитель, розовый — Корнеполз, золотой — усиленный враг.", MessageType.None);
             if (_preview.Map != null) DrawStatistics();
             EditorGUILayout.Space(8);
             EditorGUILayout.HelpBox("Свет в окне — нейтральный для проверки материалов. Финальное освещение настраивается в сцене. Фон, тропы и декор сами по себе не добавляют проходимость.", MessageType.None);
@@ -189,8 +191,32 @@ namespace Game.LocationEditor
             var map = _preview.Map;
             EditorGUILayout.LabelField("Собранная карта", EditorStyles.boldLabel);
             EditorGUILayout.LabelField($"Модулей: {map.PlacedCount} · выходов: {map.ExitCount}");
+            if (map.Routes != null)
+            {
+                float distance = map.Routes.ExitDistanceCells * LayoutMap.CellSize.ToFloat();
+                EditorGUILayout.LabelField($"До выхода по тропе: {distance:0} м · тайников: {map.RewardBranchCount}");
+                if (distance < 40)
+                    EditorGUILayout.HelpBox("Короткий маршрут: увеличьте число модулей или проверьте коннекторы.", MessageType.Warning);
+            }
             EditorGUILayout.LabelField($"Врагов: {_preview.Sim.Entities.Count - 1} · декора: {_preview.View.DecorCount}");
             EditorGUILayout.LabelField($"Объектов в пулах: {_preview.View.PooledCount}");
+            if (_preview.Encounters != null)
+            {
+                int main = 0;
+                for (int e = 0; e < _preview.Encounters.Count; e++)
+                {
+                    var encounter = _preview.Encounters.Get(e);
+                    if (encounter.Role == EncounterRole.MainPath) main++;
+                    int guardians = 0, swarm = 0;
+                    for (int i = encounter.FirstEntity; i < encounter.FirstEntity + encounter.EnemyCount; i++)
+                        if (_preview.Sim.Entities.Kind[i] == EnemyKind.ForestRootSwarm) swarm++; else guardians++;
+                    EditorGUILayout.LabelField($"#{encounter.Module} {EncounterTitle(encounter.Role)}: Х {guardians}, К {swarm}", EditorStyles.miniLabel);
+                }
+                if (main < _preview.Settings.Encounters.MainCount)
+                    EditorGUILayout.HelpBox("На основном пути мало подходящих комнат для всех дозоров. Можно увеличить число модулей.", MessageType.Info);
+                if (_preview.Encounters.OmittedEnemies > 0)
+                    EditorGUILayout.HelpBox($"Не поместилось врагов: {_preview.Encounters.OmittedEnemies}. Увеличьте площадку или уменьшите группы.", MessageType.Warning);
+            }
             EditorGUILayout.SelectableLabel($"Layout seed: {_preview.Seeds.Layout}\nSpawn seed: {_preview.Seeds.Spawns}\nMap hash: {map.Hash():X16}", EditorStyles.miniLabel, GUILayout.Height(48));
             if (map.PlacedCount < _preview.Settings.TargetModules)
                 EditorGUILayout.HelpBox("Генератор исчерпал подходящие стыковки раньше заданного числа модулей. Проверьте формы и коннекторы.", MessageType.Warning);
@@ -210,6 +236,16 @@ namespace Game.LocationEditor
                     if (GUILayout.Button("Править " + asset.name)) Selection.activeObject = asset;
                     break;
                 }
+        }
+
+        private static string EncounterTitle(EncounterRole role)
+            => role == EncounterRole.Introduction ? "Первый бой" : role == EncounterRole.MainPath ? "Дозор"
+                : role == EncounterRole.RewardBranch ? "Охрана тайника" : "Страж выхода";
+
+        private void LabelPoint(FixVec2 point, string label, Rect area)
+        {
+            var screen = Project(ToWorld(point), area);
+            GUI.Label(new Rect(screen.x - 25, screen.y - 18, 100, 20), label, EditorStyles.whiteMiniLabel);
         }
 
         private Vector2 Project(Vector3 point, Rect area)
@@ -240,7 +276,7 @@ namespace Game.LocationEditor
                 Vector2 center = Project(ToWorld(map.CenterOf(i)), area);
                 if (_labels)
                     GUI.Label(new Rect(center.x - 28, center.y - 12, 100, 20),
-                        i == 0 ? "ВХОД" : map.IsExit(i) ? $"#{i} ВЫХОД" : $"#{i}", EditorStyles.whiteMiniLabel);
+                        $"#{i}", EditorStyles.whiteMiniLabel);
                 if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
                     Vector2.Distance(Event.current.mousePosition, center) < 25)
                 { _selectedModule = i; Event.current.Use(); Repaint(); }
@@ -258,14 +294,48 @@ namespace Game.LocationEditor
                 }
             }
             if (_connectors) DrawActualPassages(area, cell);
+            if (_labels && map.Routes != null)
+            {
+                Handles.color = new Color(1, 0.8f, 0.25f);
+                for (int i = 0; i < map.Routes.CellCount; i++)
+                {
+                    int parent = map.Routes.ParentCell(i);
+                    if (!map.Routes.IsRoadCell(i) || parent < 0) continue;
+                    Handles.DrawAAPolyLine(2, Project(ToWorld(map.Routes.GetCell(i).Center), area),
+                        Project(ToWorld(map.Routes.GetCell(parent).Center), area));
+                }
+                LabelPoint(map.EntryPoint, "ВХОД", area);
+                for (int e = 0; e < map.ExitCount; e++) LabelPoint(map.ExitPoint(e), "ВЫХОД", area);
+                for (int b = 0; b < map.RewardBranchCount; b++)
+                    LabelPoint(map.CenterOf(map.GetRewardBranch(b)), "ТАЙНИК", area);
+            }
             if (_spawns)
             {
+                if (_preview.Encounters != null)
+                    for (int e = 0; e < _preview.Encounters.Count; e++)
+                    {
+                        var encounter = _preview.Encounters.Get(e);
+                        var center = ToWorld(encounter.Center);
+                        Handles.color = encounter.Role == EncounterRole.RewardBranch ? Color.cyan : new Color(1, 0.45f, 0.3f);
+                        var outline = new Vector3[25];
+                        for (int n = 0; n < outline.Length; n++)
+                        {
+                            float angle = n * Mathf.PI * 2 / (outline.Length - 1);
+                            outline[n] = Project(center + new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle))
+                                * _preview.Encounters.FormationRadius.ToFloat(), area);
+                        }
+                        Handles.DrawAAPolyLine(2, outline);
+                        if (_labels) LabelPoint(encounter.Center, EncounterTitle(encounter.Role), area);
+                    }
                 var entities = _preview.Sim.Entities;
                 for (int i = 0; i < entities.Count; i++)
                 {
                     Vector2 point = Project(ToWorld(entities.Position[i]), area);
-                    Color color = i == Simulation.PlayerId ? Color.green : new Color(1, 0.3f, 0.25f);
-                    EditorGUI.DrawRect(new Rect(point.x - 2.5f, point.y - 2.5f, 5, 5), color);
+                    bool elite = _preview.Encounters?.IsElite(i) == true;
+                    Color color = i == Simulation.PlayerId ? Color.green : elite ? Color.yellow
+                        : entities.Kind[i] == EnemyKind.ForestRootSwarm ? new Color(1, 0.45f, 0.75f) : new Color(1, 0.3f, 0.25f);
+                    float size = elite ? 8 : 5;
+                    EditorGUI.DrawRect(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), color);
                 }
             }
             Handles.color = old;

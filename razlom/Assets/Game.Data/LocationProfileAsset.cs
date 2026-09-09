@@ -15,9 +15,10 @@ namespace Game.Data
         [Min(0)] public int MinEnemies;
         [Min(0)] public int MaxEnemies;
         [Min(1)] public int EnemyHealth;
+        public bool Boss;
 
-        public RiftLevelSettings ToDefinition()
-            => new RiftLevelSettings(Rooms, Exits, Loops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth);
+        public RiftLevelSettings ToDefinition(EncounterSettings encounters = null, int playerHealth = 1000, int entryClearance = 14)
+            => new RiftLevelSettings(Rooms, Exits, Loops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth, encounters, Boss, playerHealth, entryClearance);
     }
 
     [CreateAssetMenu(fileName = "Location", menuName = "Разлом/Локации/Игровой профиль")]
@@ -25,9 +26,17 @@ namespace Game.Data
     {
         public string DisplayName = "Луговая окраина";
         public string StableKey = "location.meadow";
+        [Min(1), Tooltip("Базовое здоровье героя до снаряжения и наград.")]
+        public int PlayerHealth = 1000;
+        [Range(9, 30), Tooltip("Радиус без врагов вокруг входа, метры.")]
+        public int EntryClearance = 14;
         [Range(2, 64)] public int MaxModules = 64;
         public ModuleAsset[] Modules = Array.Empty<ModuleAsset>();
-        [Tooltip("Element 0 = level 1. Above this list the last configuration repeats; boss progression is not implemented here.")]
+        [Tooltip("Профиль групп вдоль тропы. Пусто — прежний случайный спавн по всем комнатам.")]
+        public EncounterProfileAsset Encounters;
+        [Tooltip("Завершать забег после последней награды. Выключено — бесконечный режим.")]
+        public bool CompleteAtEnd;
+        [Tooltip("Element 0 = level 1. Boss requires an encounter profile and one exit.")]
         public LevelSettingsAsset[] Levels = new LevelSettingsAsset[10];
 
         public LocationDefinition ToDefinition()
@@ -53,10 +62,10 @@ namespace Game.Data
             var levels = new RiftLevelSettings[Levels.Length];
             for (int i = 0; i < levels.Length; i++)
             {
-                try { levels[i] = Levels[i].ToDefinition(); }
+                try { levels[i] = Levels[i].ToDefinition(Encounters != null ? Encounters.ToDefinition(i + 1) : null, PlayerHealth, EntryClearance); }
                 catch (ArgumentException e) { throw new ArgumentException("Level " + (i + 1) + ": " + e.Message); }
             }
-            var result = new LocationDefinition(StableId.Of(StableKey), new ModuleSet(modules), levels, MaxModules);
+            var result = new LocationDefinition(StableId.Of(StableKey), new ModuleSet(modules), levels, MaxModules, CompleteAtEnd);
             result.ValidateCapacity(512);
             return result;
         }
