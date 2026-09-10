@@ -29,6 +29,7 @@ namespace Game.View
             public ViewPool Pool;
         }
 
+
         private struct ActiveFx
         {
             public bool Active;
@@ -72,6 +73,10 @@ namespace Game.View
         private float _whirlwindContactDelay;
         private Light _heroLight;
         private float _combatLightPulse;
+        private Transform _footstepBody;
+        private PelagFootPlantView _footstepView;
+        private CampGroundStudy _footstepCampGround;
+        private LayoutView _footstepLayout;
         private static readonly int HeroLightPositionId =
             Shader.PropertyToID("_RazlomHeroLightPosition");
         private static readonly int HeroLightColorId =
@@ -100,6 +105,7 @@ namespace Game.View
             BuildPools();
             BuildHeroLight();
             HeroTrail();
+            _footstepCampGround = FindAnyObjectByType<CampGroundStudy>(FindObjectsInactive.Include);
         }
 
         private void LateUpdate()
@@ -110,9 +116,44 @@ namespace Game.View
             UpdateAutoattackPresentation();
             UpdateWhirlwindContact();
             UpdateAbilityMotion();
+            UpdateFootstepDust();
             UpdateActive(Time.deltaTime);
             UpdateCyclonePresentation();
             UpdateCombatLighting(Time.unscaledDeltaTime);
+        }
+
+        private void UpdateFootstepDust()
+        {
+            if (!PoolsReady || Time.deltaTime <= 0f
+                || !_arena.TryGetEntityView(Simulation.PlayerId, out Transform body)) return;
+            if (_footstepBody != body)
+            {
+                _footstepBody = body;
+                _footstepView = body.GetComponentInChildren<PelagFootPlantView>();
+            }
+            if (_footstepView == null) return;
+            for (int side = 0; side < 2; side++)
+            {
+                if (!_footstepView.TryGetStepContact(side == 0, out Vector3 position)) continue;
+                if (_footstepLayout == null) _footstepLayout = GetComponent<LayoutView>();
+                bool camp = _driver.Session != null && _driver.Session.Mode == GameMode.Camp;
+                bool dusty = camp
+                    ? !_driver.Session.OnProvingGround && _footstepCampGround != null && _footstepCampGround.IsDustyPath(position)
+                    : _footstepLayout != null && _footstepLayout.IsDustyPath(position);
+                if (CaptureRig.HasEnemyOverride)
+                    Debug.Log($"[footstep-surface] side={side} time={Time.time:F3} dust={dusty} position={position}");
+                if (!dusty || !TryAcquire(PelagVfxId.FootstepDust, out GameObject go, out PelagVfxElement element)) continue;
+                int index = ReserveActive();
+                element.Begin(position, Quaternion.identity);
+                if (CaptureRig.HasEnemyOverride)
+                    Debug.Log($"[footstep-vfx] side={side} time={Time.time:F3} position={position}");
+                _active[index] = new ActiveFx
+                {
+                    Active = true, Id = PelagVfxId.FootstepDust, Object = go, Element = element,
+                    Duration = Mathf.Max(0.05f, element.DefaultLifetime),
+                    Start = position, End = position, Motion = Motion.Static, FollowIndex = -1
+                };
+            }
         }
 
         private void BuildPools()
@@ -141,7 +182,10 @@ namespace Game.View
                     Pool = new ViewPool(parent, () => Instantiate(prefab), Mathf.Max(1, entry.Prewarm))
                 };
                 // Блики перекрываются уже в первом броске; ViewPool сам создаёт только один экземпляр.
-                if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding)
+                if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding
+                    || entry.Id == PelagVfxId.FootstepDust || entry.Id == PelagVfxId.WhirlwindHit
+                    || entry.Id == PelagVfxId.ChainStepDash || entry.Id == PelagVfxId.ChainStepHit
+                    || entry.Id == PelagVfxId.ChainStepFinish)
                     _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 
@@ -234,6 +278,16 @@ namespace Game.View
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
                 }
+                else if (e.Type == SimEventType.ChainStepHop)
+                {
+                    if (e.Amount > 0)
+                    {
+                        _squallHop = e.ActionVariant;
+                        _squallFinalHop = e.Amount == 1;
+                        BeginChainHop(new Vector3(e.Position.X.ToFloat(), 0f, e.Position.Y.ToFloat()),
+                            EntityPosition(e.Target, PlayerPosition()));
+                    }
+                }
                 else if (e.Type == SimEventType.AbilityCast)
                 {
                     // ДО 1 СЕНТЯБРЯ ЗДЕСЬ ЖИЛ ТОЛЬКО ВИХРЬ.
@@ -248,9 +302,7 @@ namespace Game.View
                 else if (e.Type == SimEventType.Damage
                          && e.DamageOrigin == DamageOrigin.BasicAttack)
                 {
-                    // The old authored prefab contained a stale blue sword and
-                    // rendered it through the enemy's torso. Contact geometry
-                    // now belongs to CombatJuice; this layer only adds light.
+                    PlayBasicAttackImpact(e.Target, e.Position, e.Flag);
                     PulseCombatLight(0.62f);
                 }
                 else if (e.Type == SimEventType.Damage
@@ -269,31 +321,78 @@ namespace Game.View
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainCycloneId)
                         PlaySweepTargetPull(e.Target);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
-                    {
-                        Vector3 victim = EntityPosition(e.Target, PlayerPosition());
-                        Vector3 impact = victim + FlatDirection(victim, PlayerPosition()) * 0.28f + Vector3.up * 0.8f;
-                        Spawn(PelagVfxId.WhirlwindHit, impact, Quaternion.identity,
-                            0.36f, 0.8f, 1.05f, Motion.Expand);
-                    }
+                        PlayWhirlwindImpact(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
                     {
-                        _squallContacts++;
-                        bool finisher = _squallContacts == AnchorKit.ChainMaxHops;
-                        Spawn(PelagVfxId.ChainStepHit, EntityPosition(e.Target, PlayerPosition()) + Vector3.up * 0.75f,
-                            Quaternion.LookRotation(_motionEnd - _motionStart + Vector3.up * 0.001f)
-                                * Quaternion.Euler(0, 0, finisher ? -35f : 25f),
-                            finisher ? .3f : .22f, finisher ? 1.05f : .75f, finisher ? 1.55f : 1.1f, Motion.Expand);
-                        var context = i < _driver.FrameEventContexts.Count ? _driver.FrameEventContexts[i] : default;
-                        if (context.SourceForcedTicksLeft > 0
-                            && _driver.Sim.Entities.ForcedTicksLeft[Simulation.PlayerId] > 0)
-                        {
-                            _chainRouteOrigin = EntityPosition(e.Target, PlayerPosition()) + Vector3.up * 0.9f;
-                            BeginChainHop(PlayerPosition(), ForcedTargetWorld(_driver.Sim));
-                        }
+                        PlaySquallImpact(e.Target, e.Position, _squallFinalHop);
                     }
                     PulseCombatLight(IsWhirlwindSlot(e.ActionVariant) ? 0.30f : 0.46f);
                 }
             }
+        }
+
+        private void PlayWhirlwindImpact(int targetEntity, FixVec2 fallback)
+        {
+            if (!TryAcquire(PelagVfxId.WhirlwindHit, out GameObject go, out PelagVfxElement element)) return;
+            Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * 0.85f;
+            Camera camera = Camera.main;
+            if (camera != null) position += (camera.transform.position - position).normalized * 0.45f;
+            int index = ReserveActive();
+            element.Begin(position, Quaternion.identity);
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.WhirlwindHit, Object = go, Element = element,
+                Duration = Mathf.Max(0.05f, element.DefaultLifetime),
+                Start = position, End = position, Motion = Motion.Static, FollowIndex = -1
+            };
+            if (CaptureRig.HasEnemyOverride)
+                Debug.Log($"[whirlwind-hit] target={targetEntity} scale={go.transform.localScale.x} lifetime={element.DefaultLifetime}");
+        }
+
+        private void PlaySquallImpact(int targetEntity, FixVec2 fallback, bool finisher)
+        {
+            PelagVfxId id = finisher ? PelagVfxId.ChainStepFinish : PelagVfxId.ChainStepHit;
+            if (!TryAcquire(id, out GameObject go, out PelagVfxElement element)) return;
+            Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * .85f;
+            Camera camera = Camera.main;
+            if (camera != null) position += (camera.transform.position - position).normalized * .45f;
+            // Плоскость меша уже ориентирует ParticleSystemRenderer. Здесь чередуем замахи A/B.
+            float roll = (_squallHop % 2 == 0 ? 25f : -25f) + UnityEngine.Random.Range(-15f, 15f);
+            element.Begin(position, Quaternion.Euler(0f, 0f, roll));
+            int index = ReserveActive();
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = id, Object = go, Element = element,
+                Duration = element.DefaultLifetime, Start = position, End = position,
+                Motion = Motion.Static, FollowIndex = -1
+            };
+            if (CaptureRig.HasEnemyOverride)
+                Debug.Log($"[squall-impact] hop={_squallHop} id={id} target={targetEntity} scale={go.transform.localScale} lifetime={element.DefaultLifetime}");
+        }
+
+        private void PlayBasicAttackImpact(int targetEntity, FixVec2 fallback, bool critical)
+        {
+            PelagVfxId id = critical ? PelagVfxId.AutoAttackCriticalImpact : PelagVfxId.AutoAttackImpact;
+            if (!TryAcquire(id, out GameObject go, out PelagVfxElement element))
+            {
+                // Пока отдельный крит не назначен, сохраняем обычное подтверждение попадания.
+                if (!critical) return;
+                id = PelagVfxId.AutoAttackImpact;
+                if (!TryAcquire(id, out go, out element)) return;
+            }
+            Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * 0.85f;
+            Camera camera = Camera.main;
+            // Выносим вспышку перед поверхностью тела, чтобы она не скрывалась внутри модели.
+            if (camera != null) position += (camera.transform.position - position).normalized * 0.45f;
+            int index = ReserveActive();
+            // Begin восстанавливает авторский масштаб; общий Spawn перезаписывает его.
+            element.Begin(position, Quaternion.identity);
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = id, Object = go, Element = element,
+                Duration = Mathf.Max(0.05f, element.DefaultLifetime),
+                Start = position, End = position, Motion = Motion.Static, FollowIndex = -1
+            };
         }
 
         private void BeginGameplayAttackMotion(int targetEntity)
@@ -533,11 +632,32 @@ namespace Game.View
                 Vector3 blade = bladeTip.position - bladeRoot.position;
                 yaw = Mathf.Atan2(blade.x, blade.z) * Mathf.Rad2Deg;
             }
-            int brush = Spawn(PelagVfxId.WhirlwindRing, center, Quaternion.Euler(0f, yaw, 0f),
-                0.36f, 0.90f, 1.10f, Motion.Whirlwind);
-            if (brush >= 0) _active[brush].End = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
-            Spawn(PelagVfxId.DustHeavy, PlayerPosition() + Vector3.up * 0.04f,
-                Quaternion.identity, 0.36f, 0.8f, 1.35f, Motion.Expand);
+            if (TryAcquire(PelagVfxId.WhirlwindRing, out GameObject go, out PelagVfxElement element))
+            {
+                bool authored = element.AuthoredRadius > 0f;
+                float radius = 2.3f;
+                if (_driver.Sim != null)
+                    for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+                    {
+                        AbilityBuild ability = _driver.Sim.GetAbility(slot);
+                        if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
+                        { radius = ability.Get(AbilityStatType.Radius).ToFloat(); break; }
+                    }
+                float scale = authored ? radius / element.AuthoredRadius : 0.9f;
+                int brush = ReserveActive();
+                element.Begin(center, Quaternion.Euler(authored ? 90f : 0f, yaw, 0f));
+                go.transform.localScale = Vector3.one * scale;
+                _active[brush] = new ActiveFx
+                {
+                    Active = true, Id = PelagVfxId.WhirlwindRing, Object = go, Element = element,
+                    Duration = authored ? element.DefaultLifetime : 0.36f,
+                    StartScale = scale, EndScale = authored ? scale : 1.1f,
+                    Start = center, End = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward,
+                    Motion = Motion.Whirlwind, FollowIndex = -1
+                };
+                if (CaptureRig.HasEnemyOverride)
+                    Debug.Log($"[whirlwind-authored] authored={authored} radius={radius} scale={scale}");
+            }
             PulseCombatLight(0.55f);
         }
         /// <summary>
@@ -619,7 +739,7 @@ namespace Game.View
         private void PlaySweepTargetPull(int entity)
         {
             Vector3 enemy = EntityPosition(entity, PlayerPosition());
-            Spawn(PelagVfxId.WhirlwindHit, enemy + Vector3.up * 0.7f, Quaternion.identity,
+            Spawn(PelagVfxId.CyclonePullImpact, enemy + Vector3.up * 0.7f, Quaternion.identity,
                 0.25f, 0.4f, 0.65f, Motion.Expand);
             Spawn(PelagVfxId.DustSmall, enemy + Vector3.up * 0.05f, Quaternion.identity,
                 0.35f, 0.6f, 0.9f, Motion.Expand);
@@ -627,11 +747,13 @@ namespace Game.View
 
         private void PlayChainStep(bool showcase, int slot = 3)
         {
-            _squallContacts = 0;
+            _squallHop = 0;
+            _squallFinalHop = false;
             Vector3 player = PlayerPosition();
             Vector3 target = showcase ? FirstTargetPosition() : ForcedTargetWorld(_driver.Sim);
             StartMotion(PelagVfxShowcase.ChainStep, player, target, showcase);
             _chainRouteOrigin = ChainHandPosition();
+            if (!showcase) return;
             if (showcase) _arena.PlayPlayerAbilityPresentation(slot, AbilityDefinition.ChainStepId);
             BeginChainHop(player, target);
         }
@@ -647,12 +769,20 @@ namespace Game.View
             _motionStartedAt = Time.time;
             _motionAbility = PelagVfxShowcase.ChainStep;
             _juice?.PlayChainSlashTrail();
-            Spawn(PelagVfxId.ChainStepHit, from + Vector3.up * 0.85f,
-                Quaternion.LookRotation(FlatDirection(from, to)), 0.18f, 0.45f, 0.85f, Motion.Expand);
-            SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.75f,
+            if (CaptureRig.HasEnemyOverride)
+                Debug.Log($"[squall-hop] index={_squallHop} final={_squallFinalHop} from={from} to={to}");
+            int dash = SpawnMoving(PelagVfxId.ChainStepDash, from + Vector3.up * 0.75f,
                 to + Vector3.up * 0.75f, PelagAbilityTiming.ChainHop, 0f, Motion.Dash);
+            Camera camera = Camera.main;
+            if (dash >= 0 && camera != null)
+            {
+                Vector3 direction = camera.WorldToScreenPoint(to) - camera.WorldToScreenPoint(from);
+                float roll = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                _active[dash].Object.transform.rotation = camera.transform.rotation * Quaternion.Euler(0, 0, roll);
+            }
         }
-        private int _squallContacts;
+        private int _squallHop;
+        private bool _squallFinalHop;
 
         private Vector3 ChainHandPosition()
         {
@@ -688,7 +818,7 @@ namespace Game.View
 
         private void CancelActiveAnchorMotionForReplacement()
         {
-            if (!IsAnchorMotion(_motionAbility)) return;
+            if (!IsAnchorMotion(_motionAbility) && _motionAbility != PelagVfxShowcase.ChainStep) return;
             StopLeapMotionVfx();
             for (int i = 0; i < _active.Length; i++)
             {
@@ -698,7 +828,7 @@ namespace Game.View
                     || id == PelagVfxId.CycloneWake || id == PelagVfxId.ChainStepDash)
                     Release(i);
             }
-            _arena?.EndPlayerAnchorUse();
+            if (IsAnchorMotion(_motionAbility)) _arena?.EndPlayerAnchorUse();
             _arena?.ClearPresentationOffsets();
             _motionAbility = PelagVfxShowcase.None;
             _motionTime = 0f;
@@ -986,6 +1116,9 @@ namespace Game.View
                     continue;
                 }
                 fx.Age += dt;
+                if (CaptureRig.HasEnemyOverride && fx.Id == PelagVfxId.FootstepDust
+                    && fx.Age >= 0.1f && fx.Age - dt < 0.1f)
+                    Debug.Log($"[footstep-particles] count={fx.Object.GetComponent<ParticleSystem>().particleCount}");
                 float t = Mathf.Clamp01(fx.Age / Mathf.Max(0.01f, fx.Duration));
 
                 switch (fx.Motion)
@@ -1079,7 +1212,7 @@ namespace Game.View
                         fx.Object.transform.Rotate(Vector3.right, 900f * dt, Space.Self);
                         break;
                     case Motion.Dash:
-                        fx.Object.transform.position = Vector3.Lerp(fx.Start, fx.End, Smooth(t));
+                        fx.Object.transform.position = PlayerPosition() + Vector3.up * .75f;
                         break;
                     case Motion.Chain:
                         fx.Age = _motionTime;

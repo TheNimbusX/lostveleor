@@ -21,6 +21,10 @@ namespace Game.View
         DustHeavy,
         AnchorLeapLanding,
         AnchorLeapFlight,
+        AutoAttackCriticalImpact,
+        FootstepDust,
+        CyclonePullImpact,
+        ChainStepFinish,
         Count
     }
 

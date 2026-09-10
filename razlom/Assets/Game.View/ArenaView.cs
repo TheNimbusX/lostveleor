@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Rendering;
 using Game.Sim;
 
@@ -1502,7 +1502,6 @@ namespace Game.View
         private void SyncAnimationEvents()
         {
             var events = _driver.FrameEvents;
-            var eventContexts = _driver.FrameEventContexts;
             EntityStore entities = _driver.Sim.Entities;
             for (int i = 0; i < events.Count; i++)
             {
@@ -1537,6 +1536,12 @@ namespace Game.View
                             }
                         }
                         break;
+                    case SimEventType.ChainStepHop:
+                        if (e.Amount > 0)
+                            AnimationOf(e.Source)?.PlayChainStepHop(e.ActionVariant, e.Amount);
+                        else
+                            AnimationOf(e.Source)?.FinishChainStep();
+                        break;
                     case SimEventType.Damage:
                         // На летальном тике состояние Sim уже финальное. Не
                         // запускаем Hit за несколько строк до DeathBack: иначе
@@ -1550,23 +1555,6 @@ namespace Game.View
                         if (e.Source == Simulation.PlayerId
                             && e.DamageOrigin == DamageOrigin.BasicAttack)
                             AnimationOf(e.Source)?.PlayAttackContact(e.ActionVariant);
-                        // ChainStep's five-tick clip is one hop, not the whole
-                        // chain. Simulation has already scheduled the next
-                        // Lunge by the time this contact event reaches View;
-                        // restart only when that authoritative next hop exists,
-                        // so the final hit cannot create a phantom fifth jump.
-                        FrameEventContext context = i < eventContexts.Count
-                            ? eventContexts[i]
-                            : default;
-                        if (e.Source == Simulation.PlayerId
-                            && e.DamageOrigin == DamageOrigin.Ability
-                            && IsAbilityDefinition(e.ActionVariant, AbilityDefinition.ChainStepId)
-                            && context.Event.Type == e.Type
-                            && context.Event.Source == e.Source
-                            && context.Event.Target == e.Target
-                            && context.SourceForcedTicksLeft > 0
-                            && context.SourceForcedKind == (byte)ForcedMotionKind.Lunge)
-                            AnimationOf(e.Source)?.PlayChainStepRepeat();
                         break;
                     case SimEventType.Death:
                         if (e.Target == Simulation.PlayerId)

@@ -20,6 +20,10 @@ namespace Game.Sim
         /// и удар — разные события, и путать их нельзя.
         /// </summary>
         DamageOverTime = 7,
+
+        /// <summary>Начало перехода Шквала; Amount — оставшиеся переходы,
+        /// ActionVariant — индекс перехода. Amount=0 завершает цепочку.</summary>
+        ChainStepHop = 8,
     }
 
     /// <summary>
@@ -91,6 +95,10 @@ namespace Game.Sim
 
         public static SimEvent Cast(int source, int abilityIndex, FixVec2 at)
             => new SimEvent(SimEventType.AbilityCast, source, -1, abilityIndex, false, at);
+
+        public static SimEvent ChainHop(int source, int target, int remaining, int index, FixVec2 at)
+            => new SimEvent(SimEventType.ChainStepHop, source, target, remaining, index == 0, at,
+                DamageType.Physical, DamageOrigin.Ability, index);
 
         public static SimEvent Spawn(int target, FixVec2 at)
             => new SimEvent(SimEventType.Spawn, -1, target, 0, false, at);

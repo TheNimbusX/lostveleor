@@ -14,6 +14,8 @@ namespace Game.View
             public Transform Hip, Knee, Ankle, Toe;
             public Vector3 Plant;
             public bool Planted;
+            public int ContactFrame = -1;
+            public float LastContactTime = -1f;
         }
 
         private Animator _animator;
@@ -22,6 +24,14 @@ namespace Game.View
         private bool _wasTurning;
         private bool _wasWhirlwind;
         private Leg _left, _right;
+
+        public bool TryGetStepContact(bool left, out Vector3 position)
+        {
+            Leg leg = left ? _left : _right;
+            position = leg != null ? leg.Plant : default;
+            position.y = transform.position.y + 0.025f;
+            return leg != null && leg.ContactFrame == Time.frameCount;
+        }
         private int _lowerLayer;
         private float _attackPlantWeight;
         private Vector3 _attackLeft, _attackRight;
@@ -110,8 +120,8 @@ namespace Game.View
                 return;
             }
             if (_wasTurning) { Release(); _wasTurning = false; }
-            Plant(_left, scale, fade);
-            Plant(_right, scale, fade);
+            Plant(_left, scale, fade, true);
+            Plant(_right, scale, fade, true);
         }
 
         private void AnimateIdle()
@@ -254,7 +264,7 @@ namespace Game.View
             Solve(leg, target, transform.forward + transform.right * (side * 0.22f), _attackPlantWeight);
         }
 
-        private void Plant(Leg leg, float scale, float fade)
+        private void Plant(Leg leg, float scale, float fade, bool footstep = false)
         {
             Vector3 toe = leg.Toe.position;
             float height = (toe.y - transform.position.y) / scale;
@@ -268,6 +278,13 @@ namespace Game.View
                 if (height > 0.04f) return;
                 leg.Plant = toe;
                 leg.Planted = true;
+                if (footstep && fade > 0.5f && _presentation != null
+                    && _presentation.LocomotionMoving && !_presentation.IsDead
+                    && Time.time - leg.LastContactTime >= 0.16f)
+                {
+                    leg.ContactFrame = Time.frameCount;
+                    leg.LastContactTime = Time.time;
+                }
             }
 
             Vector3 correction = leg.Plant - toe;

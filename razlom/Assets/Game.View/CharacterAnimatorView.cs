@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Game.Sim;
 
 namespace Game.View
@@ -78,7 +78,7 @@ namespace Game.View
         public const float WhirlwindTrailStart = 0.12f;
         public const float WhirlwindTrailEnd = 0.49f;
         private const float WhirlwindRecoveryStart = 0.60f;
-        private const float ChainStepPresentationDuration = PelagAbilityTiming.ChainHop + 0.07f;
+        private const float ChainStepPresentationDuration = 8f / 30f;
         private const float AnchorLeapPlaybackSpeed = 1f;
         private const float AnchorSweepPlaybackSpeed = 1f;
         private const float ChainStepPlaybackSpeed = 1f;
@@ -336,6 +336,8 @@ namespace Game.View
         private TickDriver _cycloneDriver;
         private bool _cycloneWasActive;
         private int _cyclonePhase = -1;
+        private int _cycloneAnimationTick;
+        private float _cycloneAnimationTravel, _cycloneAnimationStep;
 
         public bool PlayEquipmentGesture(float phase, bool drawing)
         {
@@ -384,6 +386,20 @@ namespace Game.View
                 _abilityPresentationUntil = Time.time + 0.3f;
                 _actionProtectedUntil = _abilityPresentationUntil;
                 _sweepLocomotion = _leapLocomotion = false;
+                if (_cyclonePhase < 0)
+                {
+                    _cycloneAnimationTick = sim.Tick;
+                    _cycloneAnimationTravel = sim.CycloneTravel.ToFloat();
+                    _cycloneAnimationStep = 0f;
+                }
+                else if (_cycloneAnimationTick != sim.Tick)
+                {
+                    float travel = sim.CycloneTravel.ToFloat();
+                    _cycloneAnimationStep = (travel - _cycloneAnimationTravel)
+                        / Mathf.Max(1, sim.Tick - _cycloneAnimationTick);
+                    _cycloneAnimationTick = sim.Tick;
+                    _cycloneAnimationTravel = travel;
+                }
                 int phase = sim.CycloneElapsedTicks < 6 ? 0 : 1;
                 if (phase != _cyclonePhase)
                 {
@@ -396,7 +412,11 @@ namespace Game.View
                     _cyclonePhase = phase;
                 }
                 if (phase == 1)
-                    PlayCycloneLayers("CycloneLoop", Mathf.Repeat(sim.CycloneTravel.ToFloat() / (2f * Mathf.PI), 1f), false);
+                {
+                    // Поза и якорь используют одну интерполяцию между тиками, без ступенек на 30 Гц.
+                    float travel = _cycloneAnimationTravel - _cycloneAnimationStep * (1f - _cycloneDriver.Alpha);
+                    PlayCycloneLayers("CycloneLoop", Mathf.Repeat(travel / (2f * Mathf.PI), 1f), false);
+                }
             }
             else if (_cycloneWasActive)
             {
@@ -422,7 +442,7 @@ namespace Game.View
             {
                 int layer = i == 0 ? _upperBodyLayer : _lowerBodyLayer;
                 if (layer < 0) continue;
-                if (blend) _animator.CrossFadeInFixedTime(state, .06f, layer, phase);
+                if (blend) _animator.CrossFadeInFixedTime(state, state == "CycloneEnd" ? .10f : .06f, layer, phase);
                 else _animator.Play(state, layer, phase);
             }
         }
@@ -527,9 +547,9 @@ namespace Game.View
                 // the end of combo B teleport to idle in roughly 55 ms.
                 bool actionActive = _attackPresentationActive
                                     || (_abilityPresentationActive && _abilityUsesLowerBodyLayer);
-                // A spin needs hips and legs even while travelling. Release
-                // both masks together only after the final pivot lands.
-                float target = MaskedAbilityActive ? MaskedAbilityWeight
+                // Вихрь сохраняет полный разворот; Циклон при движении оставляет ногам бег.
+                float target = CyclonePresentationActive && _locomotionMoving ? 0f
+                    : MaskedAbilityActive ? MaskedAbilityWeight
                     : actionActive && !_locomotionMoving ? 1f : 0f;
                 float weight = Mathf.MoveTowards(
                     _animator.GetLayerWeight(_lowerBodyLayer), target,
@@ -790,7 +810,7 @@ namespace Game.View
             if (!whirlwind && !anchorLeap && !anchorSweep && !chainStep) return;
             _abilityDefinitionId = definitionId;
             _cycloneReleasing = false;
-            if (chainStep) _chainPresentationVariant = 0;
+            if (chainStep) { _chainPresentationVariant = 0; _chainFinishing = false; }
             if (_faction == Faction.Wole && !IsDead && (whirlwind || chainStep)) SetCombatReady(true);
 
             if (_spriteVisual != null)
@@ -879,29 +899,42 @@ namespace Game.View
             else _animator.SetTrigger(fallback);
         }
 
-        /// <summary>
-        /// Restarts exactly one ChainStep hop after Simulation has both resolved
-        /// the preceding contact and scheduled another five-tick Lunge.
-        /// </summary>
         private int _chainPresentationVariant;
+        private bool _chainFinishing;
 
-        public void PlayChainStepRepeat()
+        public void PlayChainStepHop(int index, int remaining)
         {
-            if (IsDead || _faction != Faction.Wole) return;
+            if (IsDead || _faction != Faction.Wole || _animator == null) return;
             SetCombatReady(true);
+            _abilityDefinitionId = AbilityDefinition.ChainStepId;
             _sweepLocomotion = _leapLocomotion = false;
-            if (_spriteVisual != null || _animator == null) return;
+            _chainPresentationVariant = index & 1;
+            _chainFinishing = remaining == 1;
+            string state = _chainFinishing ? "ChainStep_Finish_v5"
+                : index == 0 ? "ChainStep_v5"
+                : _chainPresentationVariant == 0 ? "ChainStep_A_v5" : "ChainStep_B_v5";
+            EnterChainState(state, _chainFinishing ? 14f / 30f : ChainStepPresentationDuration);
+        }
 
+        public void FinishChainStep()
+        {
+            if (IsDead || _animator == null || _abilityDefinitionId != AbilityDefinition.ChainStepId
+                || !_abilityPresentationActive || _chainFinishing) return;
+            // Если цели закончились раньше, доигрываем выход текущего удара.
+            // Количество переходов и причина отсутствия урона здесь не важны.
+            EnterChainState(_chainPresentationVariant == 0
+                ? "ChainStep_RecoverA_v5" : "ChainStep_RecoverB_v5", 8f / 30f);
+        }
+
+        private void EnterChainState(string state, float duration)
+        {
             CancelUpperBodyAttack(0.015f);
             ResetAbilityTriggers();
             SetAbilityPlaybackSpeed(ChainStepPlaybackSpeed);
-            _chainPresentationVariant ^= 1;
-            int nextState = _chainPresentationVariant == 0 ? ChainStepState : Animator.StringToHash("Base Layer.ChainStep_B_v5");
-            if (!EnterCommittedAbilityState(nextState, 0.035f))
-                _animator.SetTrigger(ChainStepTrigger);
+            EnterCommittedAbilityState(Animator.StringToHash("Base Layer." + state), 0.02f);
             _abilityUsesLowerBodyLayer = false;
             _abilityPresentationActive = true;
-            _abilityPresentationUntil = Time.time + ChainStepPresentationDuration;
+            _abilityPresentationUntil = Time.time + duration;
             _actionProtectedUntil = _abilityPresentationUntil;
         }
 

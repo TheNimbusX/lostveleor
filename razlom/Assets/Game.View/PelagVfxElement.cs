@@ -15,6 +15,7 @@ namespace Game.View
         public PelagVfxId Id;
         [Min(0.05f)] public float DefaultLifetime = 0.35f;
         public bool DynamicLine;
+        [Min(0f)] public float AuthoredRadius;
 
         private LineRenderer[] _lines;
         private Gradient[] _lineGradients;
@@ -129,7 +130,9 @@ namespace Game.View
 
             for (int i = 0; i < _particles.Length; i++)
             {
-                _particles[i].Clear(false);
+                // Acquiring an active prefab can already trigger Play On Awake.
+                // Clear alone erases its burst without rewinding playback time.
+                _particles[i].Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
                 _particles[i].Play(false);
             }
             _chainLinks?.SetVisible(DynamicLine);

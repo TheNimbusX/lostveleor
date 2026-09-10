@@ -33,8 +33,8 @@ ModelImporter:
     clipAnimations:
     - serializedVersion: 16
       name: Pelag_AN_CycloneEnd
-      takeName: Pelag_AN_CycloneEnd
-      internalID: -2977078838396182921
+      takeName: AN_Pelag_Cyclone_End
+      internalID: -1585728561656464054
       firstFrame: 0
       lastFrame: 9
       wrapMode: 0

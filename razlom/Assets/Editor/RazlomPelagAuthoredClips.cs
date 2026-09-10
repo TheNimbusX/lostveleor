@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>Перенос запечённых Blender-поз на точные пути и bind pose игрового Generic-рига.</summary>
 public static class RazlomPelagAuthoredClips
 {
-    public static AnimationClip Build(string name, bool loop = false)
+    public static AnimationClip Build(string name, bool loop = false, string bindReference = "Pelag_AN_Bind")
     {
         string sourcePath = "Assets/Resources/Characters/Pelag_v5/Mixamo/" + name + ".fbx";
         var sourceClip = AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<AnimationClip>()
@@ -18,7 +18,7 @@ public static class RazlomPelagAuthoredClips
             throw new System.InvalidOperationException("Missing authored Pelag clip: " + name);
         var source = Object.Instantiate(sourceModel);
         var target = Object.Instantiate(targetModel);
-        var bindModel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Pelag_v5/Mixamo/Pelag_AN_Bind.fbx");
+        var bindModel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Characters/Pelag_v5/Mixamo/" + bindReference + ".fbx");
         if (bindModel == null) throw new System.InvalidOperationException("Missing Blender bind reference");
         source.hideFlags = target.hideFlags = HideFlags.HideAndDontSave;
         try

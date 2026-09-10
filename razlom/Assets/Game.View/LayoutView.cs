@@ -724,6 +724,26 @@ namespace Game.View
             tile.rotation = Quaternion.identity;
             _pathTrail[_pathTrailCount++] = tile;
         }
+
+        public bool IsDustyPath(Vector3 position)
+        {
+            if (!isActiveAndEnabled || _shownMap == null) return false;
+            for (int i = 0; i < _pathTrailCount; i++)
+            {
+                Transform tile = _pathTrail[i];
+                if (tile == null || !tile.gameObject.activeInHierarchy) continue;
+                Vector3 size = tile.lossyScale;
+                Vector3 offset = position - tile.position;
+                // Match the rounded meadow road, with an inset for its grass blend.
+                float radius = _style.NaturalGround ? Mathf.Min(size.x, size.z) * 0.35f : 0f;
+                float x = Mathf.Abs(offset.x) - (size.x * 0.5f - radius);
+                float z = Mathf.Abs(offset.z) - (size.z * 0.5f - radius);
+                float distance = new Vector2(Mathf.Max(x, 0f), Mathf.Max(z, 0f)).magnitude
+                    + Mathf.Min(Mathf.Max(x, z), 0f) - radius;
+                if (distance <= (_style.NaturalGround ? -0.35f : -0.05f)) return true;
+            }
+            return false;
+        }
         private static long CellKey(int x, int y)
             => ((long)x << 32) ^ (uint)y;
 

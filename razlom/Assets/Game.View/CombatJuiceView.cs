@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -20,6 +20,8 @@ namespace Game.View
         private const int PoolSize = 320;
         private const int TrailSamples = 48;
         private const int TrailVerticesPerSample = 3;
+        private const int TrailSubdivisions = 6;
+        private const int TrailRenderSamples = (TrailSamples - 1) * TrailSubdivisions + 1;
         private static readonly float AttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
 
@@ -113,10 +115,10 @@ namespace Game.View
         private readonly Vector3[] _trailRoots = new Vector3[TrailSamples];
         private readonly Vector3[] _trailTips = new Vector3[TrailSamples];
         private readonly float[] _trailTimes = new float[TrailSamples];
-        private readonly Vector3[] _trailVertices = new Vector3[TrailSamples * TrailVerticesPerSample];
-        private readonly Color[] _trailColors = new Color[TrailSamples * TrailVerticesPerSample];
-        private readonly Vector2[] _trailUvs = new Vector2[TrailSamples * TrailVerticesPerSample];
-        private readonly int[] _trailTriangles = new int[(TrailSamples - 1) * 12];
+        private readonly Vector3[] _trailVertices = new Vector3[TrailRenderSamples * TrailVerticesPerSample];
+        private readonly Color[] _trailColors = new Color[TrailRenderSamples * TrailVerticesPerSample];
+        private readonly Vector2[] _trailUvs = new Vector2[TrailRenderSamples * TrailVerticesPerSample];
+        private readonly int[] _trailTriangles = new int[(TrailRenderSamples - 1) * 12];
         private int _trailCount;
         private float _trailDelay;
         private float _trailActive;
@@ -613,24 +615,8 @@ namespace Game.View
 
             if (_trailCount > 0)
             {
-                Vector3 lastMid = (_trailRoots[_trailCount - 1] + _trailTips[_trailCount - 1]) * 0.5f;
-                if (((root + tip) * 0.5f - lastMid).sqrMagnitude < 0.000025f) return;
-                {
-                    Vector3 oldRoot = _trailRoots[_trailCount - 1];
-                    Vector3 oldBlade = _trailTips[_trailCount - 1] - oldRoot;
-                    Vector3 newBlade = tip - root;
-                    float oldTime = _trailTimes[_trailCount - 1];
-                    // Subdivide the swept arc, not a straight chord through the
-                    // target. This removes the triangular fan at low FPS.
-                    int steps = Mathf.Clamp(Mathf.CeilToInt(Vector3.Angle(oldBlade, newBlade) / 7f), 1, 8);
-                    for (int s = 1; s < steps; s++)
-                    {
-                        float t = s / (float)steps;
-                        Vector3 r = Vector3.Lerp(oldRoot, root, t);
-                        AppendTrailSample(r, r + Vector3.Slerp(oldBlade, newBlade, t),
-                            Mathf.Lerp(oldTime, Time.time, t));
-                    }
-                }
+                if ((root - _trailRoots[_trailCount - 1]).sqrMagnitude < 0.000025f
+                    && (tip - _trailTips[_trailCount - 1]).sqrMagnitude < 0.000025f) return;
             }
             AppendTrailSample(root, tip, Time.time);
         }
@@ -660,41 +646,35 @@ namespace Game.View
 
             float fadeDuration = _trailWhirlwind ? 0.10f : 0.09f;
             float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / fadeDuration);
-            for (int i = 0; i < _trailCount; i++)
+            int renderCount = (_trailCount - 1) * TrailSubdivisions + 1;
+            float lifetime = _trailWhirlwind ? 0.12f : 0.085f;
+            for (int i = 0; i < renderCount; i++)
             {
-                float along = _trailCount > 1 ? i / (float)(_trailCount - 1) : 1f;
-                float width = _trailWhirlwind
-                    ? Mathf.Lerp(0.08f, 0.84f, Mathf.Sqrt(along))
-                    : Mathf.Lerp(0.04f, 0.76f, Mathf.Sqrt(along));
-                Vector3 mid = (_trailRoots[i] + _trailTips[i]) * 0.5f;
-                Vector3 half = (_trailTips[i] - _trailRoots[i]) * (0.5f * width);
+                int segment = Mathf.Min(i / TrailSubdivisions, _trailCount - 2);
+                float t = (i - segment * TrailSubdivisions) / (float)TrailSubdivisions;
+                float sampleTime = Mathf.Lerp(_trailTimes[segment], _trailTimes[segment + 1], t);
+                float along = Mathf.Clamp01(1f - (Time.time - sampleTime) / lifetime);
+                float width = Mathf.Lerp(0.02f, _trailWhirlwind ? 0.68f : 0.56f, Mathf.Sqrt(along));
+                Vector3 root = InterpolateTrailPoint(_trailRoots, segment, t);
+                Vector3 tip = InterpolateTrailPoint(_trailTips, segment, t);
+                Vector3 mid = Vector3.Lerp(root, tip, 0.62f);
+                Vector3 half = (tip - root) * (0.5f * width);
                 int vertex = i * TrailVerticesPerSample;
                 _trailVertices[vertex] = mid - half;
                 _trailVertices[vertex + 1] = mid;
                 _trailVertices[vertex + 2] = mid + half;
 
                 float alpha = Mathf.SmoothStep(0f, 1f, along) * fade;
-                alpha *= 1f - Mathf.SmoothStep(0f, 1f,
-                    Mathf.Clamp01((Time.time - _trailTimes[i]) / (_trailWhirlwind ? 0.12f : 0.085f)));
-                if (_trailWhirlwind)
-                {
-                    _trailColors[vertex] = new Color(0.8f, 0.38f, 0.12f, alpha * 0.02f);
-                    _trailColors[vertex + 1] = new Color(1.35f, 1.12f, 0.75f, alpha * 0.34f);
-                    _trailColors[vertex + 2] = new Color(2.0f, 1.85f, 1.50f, alpha * 0.76f);
-                }
-                else
-                {
-                    _trailColors[vertex] = new Color(0.8f, 0.52f, 0.25f, alpha * 0.03f);
-                    _trailColors[vertex + 1] = new Color(1.5f, 1.28f, 0.9f, alpha * 0.36f);
-                    _trailColors[vertex + 2] = new Color(2.2f, 2.05f, 1.65f, alpha * 0.70f);
-                }
+                _trailColors[vertex] = new Color(0.60f, 0.035f, 0.12f, alpha * 0.03f);
+                _trailColors[vertex + 1] = new Color(0.957f, 0.282f, 0.341f, alpha * 0.48f);
+                _trailColors[vertex + 2] = new Color(1.30f, 0.54f, 0.52f, alpha * 0.78f);
                 _trailUvs[vertex] = new Vector2(along, 0f);
                 _trailUvs[vertex + 1] = new Vector2(along, 0.5f);
                 _trailUvs[vertex + 2] = new Vector2(along, 1f);
             }
 
             int triangle = 0;
-            for (int i = 0; i < _trailCount - 1; i++)
+            for (int i = 0; i < renderCount - 1; i++)
             {
                 int a = i * TrailVerticesPerSample;
                 int b = a + TrailVerticesPerSample;
@@ -713,12 +693,29 @@ namespace Game.View
             }
 
             _trailMesh.Clear(false);
-            _trailMesh.SetVertices(_trailVertices, 0, _trailCount * TrailVerticesPerSample);
-            _trailMesh.SetColors(_trailColors, 0, _trailCount * TrailVerticesPerSample);
-            _trailMesh.SetUVs(0, _trailUvs, 0, _trailCount * TrailVerticesPerSample);
+            _trailMesh.SetVertices(_trailVertices, 0, renderCount * TrailVerticesPerSample);
+            _trailMesh.SetColors(_trailColors, 0, renderCount * TrailVerticesPerSample);
+            _trailMesh.SetUVs(0, _trailUvs, 0, renderCount * TrailVerticesPerSample);
             _trailMesh.SetTriangles(_trailTriangles, 0, triangle, 0, true);
             _trailMesh.RecalculateBounds();
             _trailRenderer.enabled = true;
+        }
+
+        private Vector3 InterpolateTrailPoint(Vector3[] points, int segment, float t)
+        {
+            Vector3 p1 = points[segment];
+            Vector3 p2 = points[segment + 1];
+            Vector3 p0 = segment > 0 ? points[segment - 1] : p1 * 2f - p2;
+            Vector3 p3 = segment + 2 < _trailCount ? points[segment + 2] : p2 * 2f - p1;
+            // Общая касательная убирает излом между кадрами; ограничение длины
+            // не даёт кривой выбросить петлю при резкой смене направления сабли.
+            float chord = Vector3.Distance(p1, p2);
+            Vector3 m1 = Vector3.ClampMagnitude((p2 - p0) * 0.5f, chord);
+            Vector3 m2 = Vector3.ClampMagnitude((p3 - p1) * 0.5f, chord);
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return (2f * t3 - 3f * t2 + 1f) * p1 + (t3 - 2f * t2 + t) * m1
+                + (-2f * t3 + 3f * t2) * p2 + (t3 - t2) * m2;
         }
 
         private void SpawnBurst(Vector3 at, Color color, int count, float speed, bool death, bool compact = false)

@@ -35,6 +35,55 @@ namespace Game.Tests
         }
 
         [Test]
+        public void SquallAnnouncesEachHopAndOneCompletion()
+        {
+            var sim = Arena();
+            int target = Enemy(sim, 2);
+            var cast = InputFrame.Empty;
+            cast.AbilityMask = 8;
+            cast.AbilityTarget = target;
+            var remaining = new System.Collections.Generic.List<int>();
+            var indices = new System.Collections.Generic.List<int>();
+            for (int tick = 0; tick < 35; tick++)
+            {
+                sim.Step(tick == 0 ? cast : InputFrame.Empty);
+                foreach (var ev in sim.Events)
+                    if (ev.Type == SimEventType.ChainStepHop)
+                    {
+                        remaining.Add(ev.Amount);
+                        indices.Add(ev.ActionVariant);
+                    }
+            }
+            CollectionAssert.AreEqual(new[] { 4, 3, 2, 1, 0 }, remaining);
+            CollectionAssert.AreEqual(new[] { 0, 1, 2, 3, 3 }, indices);
+        }
+
+        [Test]
+        public void SquallContinuesAnimationWhenTargetDiesBeforeContact()
+        {
+            var sim = Arena();
+            int target = Enemy(sim, 2);
+            int next = Enemy(sim, 3, 1);
+            var cast = InputFrame.Empty;
+            cast.AbilityMask = 8;
+            cast.AbilityTarget = target;
+            sim.Step(cast);
+            sim.Entities.Alive[target] = false;
+            bool continued = false;
+            for (int tick = 0; tick < AnchorKit.ChainTicksPerHop + 2; tick++)
+            {
+                sim.Step(InputFrame.Empty);
+                foreach (var ev in sim.Events)
+                    if (ev.Type == SimEventType.ChainStepHop && ev.Amount == 3)
+                    {
+                        Assert.AreEqual(next, ev.Target);
+                        continued = true;
+                    }
+            }
+            Assert.IsTrue(continued, "Следующая анимация не должна зависеть от попадания по мёртвой цели.");
+        }
+
+        [Test]
         public void RadiusGrowsRotationSlowsAndStopsAtMaximum()
         {
             var sim = Arena();

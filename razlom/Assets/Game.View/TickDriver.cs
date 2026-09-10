@@ -326,12 +326,17 @@ namespace Game.View
 
                 Session.Step(in frame);
 
-                // Отсчёт от самого каста: старт сценария включает ожидание,
-                // и смерть через 24 тика от него проверяла только ранний замах.
+                // У короткого Шквала смерть должна попасть внутрь серии;
+                // 24 тика оставляем длинным якорным способностям.
+                int captureDeathDelay = CaptureRig.VfxShowcase == PelagVfxShowcase.ChainStep ? 8 : 24;
                 if (CaptureRig.DeathDuringSkill && CaptureRig.LiveSkill && Sim != null
-                    && _liveSkillCastTick >= 0 && Sim.Tick - _liveSkillCastTick == 24
+                    && _liveSkillCastTick >= 0 && Sim.Tick - _liveSkillCastTick == captureDeathDelay
                     && Sim.Entities.Alive[Simulation.PlayerId])
+                {
+                    Session.SetDeveloperInvulnerable(false);
                     Sim.ApplyAbilityDamage(1, Simulation.PlayerId, 100000, 0, DamageType.Physical);
+                    Debug.Log($"[capture-skill-interrupt] tick={Sim.Tick} alive={Sim.Entities.Alive[Simulation.PlayerId]}");
+                }
 
                 if (_shownGeneration != Session.Generation) SyncGeneration();
                 else if (Sim != null && Sim.Tick != tickBefore)

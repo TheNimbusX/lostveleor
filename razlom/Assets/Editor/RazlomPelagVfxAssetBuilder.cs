@@ -1331,10 +1331,20 @@ public static partial class RazlomPelagVfxAssetBuilder
         library.name = Path.GetFileNameWithoutExtension(LibraryPath);
         library.BuildVersion = LibraryVersion;
 
+        AbilityVfxLibrary.Entry[] previousEntries = library.Entries;
         library.Entries = new AbilityVfxLibrary.Entry[(int)PelagVfxId.Count];
         for (int i = 0; i < library.Entries.Length; i++)
         {
             PelagVfxId id = (PelagVfxId)i;
+            // Keep the artist-authored common effects when rebuilding ability VFX.
+            if (previousEntries != null && (id == PelagVfxId.AutoAttackImpact
+                || id == PelagVfxId.AutoAttackCriticalImpact || id == PelagVfxId.FootstepDust
+                || id == PelagVfxId.WhirlwindRing || id == PelagVfxId.WhirlwindHit
+                || id == PelagVfxId.CyclonePullImpact))
+            {
+                int previous = System.Array.FindIndex(previousEntries, entry => entry.Id == id && entry.Prefab != null);
+                if (previous >= 0) { library.Entries[i] = previousEntries[previous]; continue; }
+            }
             library.Entries[i] = new AbilityVfxLibrary.Entry
             {
                 Id = id,

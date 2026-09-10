@@ -1154,6 +1154,8 @@ namespace Game.Sim
 
                 _abilityReadyTick[slot] = Tick + build.CooldownTicks;
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
+                if (build.DefinitionId == AbilityDefinition.ChainStepId && _chainHopsLeft > 0)
+                    EmitChainHop();
             }
         }
 
@@ -1249,6 +1251,7 @@ namespace Game.Sim
             _chainHopsLeft--;
             if (_chainHopsLeft <= 0)
             {
+                EmitChainHop();
                 _chainTarget = -1;
                 _chainSlot = -1;
                 return;
@@ -1261,6 +1264,7 @@ namespace Game.Sim
                 // не переносятся: способность про перемещение между целями,
                 // а не про число ударов.
                 _chainHopsLeft = 0;
+                EmitChainHop();
                 _chainTarget = -1;
                 _chainSlot = -1;
                 return;
@@ -1272,6 +1276,15 @@ namespace Game.Sim
             ForcedMotion.Begin(Entities, PlayerId,
                 AnchorKit.ChainLandingSpot(Entities, next, repeatTarget),
                 AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
+            EmitChainHop();
+        }
+
+        private void EmitChainHop()
+        {
+            // Старт движения существует даже при смерти цели до контакта.
+            // Анимация не должна зависеть от наличия события урона.
+            _events.Add(SimEvent.ChainHop(PlayerId, _chainTarget, _chainHopsLeft,
+                _chainVisitedCount - 1, Entities.Position[PlayerId]));
         }
 
         private void ResolveWhirlwindImpact()

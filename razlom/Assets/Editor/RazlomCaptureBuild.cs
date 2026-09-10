@@ -78,6 +78,9 @@ namespace Game.EditorTools
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Settings/CombatLook.asset") == null)
                 global::RazlomSceneAuthoring.BuildLookProfile();
             global::RazlomPelagVfxAssetBuilder.BuildAnchorLeapOnly();
+            global::CommonFootstepVfxSetup.Install();
+            global::PelagWhirlwindVfxSetup.Install();
+            global::PelagSquallVfxSetup.Install();
 
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)

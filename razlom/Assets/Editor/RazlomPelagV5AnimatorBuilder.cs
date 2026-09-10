@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v22.StanceSteps";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v24.CycloneMocap";
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
     private const float IdleTransitionDuration = 0.15f;
@@ -50,6 +50,11 @@ public static class RazlomPelagV5AnimatorBuilder
             SessionState.SetBool(AutoBuildSessionKey, true);
             Build();
         };
+    }
+
+    private static AnimationClip SquallClip(string suffix)
+    {
+        return RazlomPelagAuthoredClips.Build("Pelag_AN_Squall" + suffix, false, "Pelag_AN_SquallBind");
     }
 
     [MenuItem("Разлом/Собрать Pelag v5 — Mixamo controller")]
@@ -102,9 +107,13 @@ public static class RazlomPelagV5AnimatorBuilder
         // Бросок якоря собирается из трёх покупных Mixamo-клипов, а не из
         // Blender-поз: у них общий с игровым ригом bind pose, переносить нечего.
         AnimationClip anchorLeap = RazlomPelagLeapClips.Build();
-        AnimationClip anchorSweep = RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneLoop", true);
-        AnimationClip chainStep = RazlomPelagAuthoredClips.Build("Pelag_AN_Squall", false);
-        AnimationClip chainStepB = chainStep;
+        AnimationClip anchorSweep = RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneLoop", true, "Pelag_AN_CycloneBind");
+        AnimationClip chainStep = SquallClip("Start");
+        AnimationClip chainStepA = SquallClip("A");
+        AnimationClip chainStepB = SquallClip("B");
+        AnimationClip chainFinish = SquallClip("Finish");
+        AnimationClip chainRecoverA = SquallClip("RecoverA");
+        AnimationClip chainRecoverB = SquallClip("RecoverB");
         AnimationClip hit = Load("Pelag_MX_Hit.fbx", "Pelag_MX_Hit");
         AnimationClip death = Load("Pelag_MX_Death.fbx", "Pelag_MX_Death");
 
@@ -157,6 +166,10 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "Hook", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "AnchorLeap", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "ChainStepB", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "ChainStepA", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "ChainStepFinish", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "ChainStepRecoverA", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "ChainStepRecoverB", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "AnchorSweep", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "ChainStep", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "HitFront", AnimatorControllerParameterType.Trigger);
@@ -252,10 +265,10 @@ public static class RazlomPelagV5AnimatorBuilder
         foreach (string phase in new[] { "Start", "Loop" })
         {
             var state = machine.AddState("Cyclone" + phase);
-            state.motion = RazlomPelagAuthoredClips.Build("Pelag_AN_Cyclone" + phase, phase == "Loop");
+            state.motion = RazlomPelagAuthoredClips.Build("Pelag_AN_Cyclone" + phase, phase == "Loop", "Pelag_AN_CycloneBind");
         }
         Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
-            RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
+            RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd", false, "Pelag_AN_CycloneBind"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
         // exitTime 0.98 и мягкий выход 0.16.
         //
         // 0.86 гасило состояние прямо на приседе, 0.94 — на подъёме из него, и
@@ -268,6 +281,14 @@ public static class RazlomPelagV5AnimatorBuilder
             1f, 0.025f, 0.98f, 0.07f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_B_v5", chainStepB, "ChainStepB",
             1f, 0.035f, 0.98f, 0.07f);
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_A_v5", chainStepA, "ChainStepA",
+            1f, 0.025f, 0.98f, 0.08f);
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_Finish_v5", chainFinish, "ChainStepFinish",
+            1f, 0.025f, 0.98f, 0.10f);
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_RecoverA_v5", chainRecoverA, "ChainStepRecoverA",
+            1f, 0.02f, 0.98f, 0.10f);
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "ChainStep_RecoverB_v5", chainRecoverB, "ChainStepRecoverB",
+            1f, 0.02f, 0.98f, 0.10f);
         Combat(machine, relaxedIdleState, combatIdleState, runState, "Hit_v5", hit, "HitFront",
             2.45f, 0.02f, 0.90f, 0.08f);
 
@@ -694,7 +715,7 @@ public static class RazlomPelagV5AnimatorBuilder
     {
         AnimatorState state = State(machine, stateName, clip, speed);
         if (trigger == "Hook" || trigger == "AnchorLeap" || trigger == "AnchorSweep"
-            || trigger == "ChainStep")
+            || trigger.StartsWith("ChainStep", StringComparison.Ordinal))
         {
             // Presentation drives cast tempo per ability while Sim remains the
             // sole authority for contact and movement.
