@@ -184,6 +184,37 @@ namespace Game.Tests
         }
 
         /// <summary>
+        /// «Отошёл — ударил»: враг за спиной в радиусе удара, кнопка зажата.
+        ///
+        /// После шага назад корпус смотрит по направлению отхода, и курсор
+        /// часто там же. Поиск цели только в лобовом секторе никогда не
+        /// находил врага позади, и зажатая ЛКМ молчала, хотя стоя на той же
+        /// точке лицом к врагу герой бил. Доворот обязан найти его с любой
+        /// стороны.
+        /// </summary>
+        [Test]
+        public void HeldAttackTurnsToEnemyBehind()
+        {
+            Simulation sim = ArenaWithDummy(
+                new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
+
+            // Корпус и курсор смотрят ОТ врага — ровно поза после отхода.
+            sim.Entities.Facing[Simulation.PlayerId] = new FixVec2(Fix64.FromInt(-1), Fix64.Zero);
+            var attack = new InputFrame
+            {
+                Flags = (byte)InputFlags.Attack,
+                AttackTarget = -1,
+                Aim = new FixVec2(Fix64.FromInt(-5), Fix64.Zero),
+            };
+
+            int before = sim.Entities.Health[enemy];
+            for (int i = 0; i < 60; i++) sim.Step(in attack);
+
+            Assert.Less(sim.Entities.Health[enemy], before,
+                "враг в двух метрах за спиной: зажатая атака обязана развернуть героя и достать");
+        }
+
+        /// <summary>
         /// Бить некого — взмах всё равно есть.
         ///
         /// Пустой взмах отвечает на нажатие и тратит такт атаки, но никого не
