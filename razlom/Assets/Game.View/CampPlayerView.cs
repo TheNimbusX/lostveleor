@@ -217,9 +217,10 @@ namespace Game.View
         {
             if (!Active) { _inventory?.Close(); return; }
             if (_driver.GameplayPaused || InventoryOpen) { Stop(); return; }
-            bool interact; bool click; bool held; Vector2 pointer;
+            bool interact; bool click; bool held; bool switchBranch; Vector2 pointer;
 #if ENABLE_INPUT_SYSTEM
             interact = Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame;
+            switchBranch = Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
             // Здесь выбирается только интерактивный объект. Приказ движения
             // поступает из TickDriver вместе с удержанием и короткими тапами.
             click = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
@@ -227,9 +228,11 @@ namespace Game.View
             pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
 #else
             interact = Input.GetKeyDown(KeyCode.I);
+            switchBranch = Input.GetKeyDown(KeyCode.B);
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
+            if (switchBranch) SwitchBranch();
             if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
             if (interact && NearExit()) { Stop(); _driver.Session.EnterRift(); return; }
             if (click && Camera.main != null && !CampInventoryView.PointerOverUI())
@@ -349,10 +352,44 @@ namespace Game.View
         }
         bool NearTent() { Vector3 d = _tentBounds.ClosestPoint(Position) - Position; d.y = 0; return Tent != null && d.sqrMagnitude < 2.25f; }
         bool NearExit() => _exit != null && Vector3.Distance(Position,_exit.position) < 1.7f;
+        /// <summary>
+        /// Меняет боевую ветку Пелага.
+        ///
+        /// ВРЕМЕННЫЙ ВХОД — КЛАВИША, А НЕ ЭКРАН. Выбор ветки принадлежит
+        /// лагерю и должен когда-нибудь стоять в экране снаряжения рядом с
+        /// талантами. Но экран снаряжения — собранный кодом интерфейс, и
+        /// врезать в него кнопку значит трогать художественную часть, которая
+        /// сейчас в работе. Клавиша даёт решение игроку сегодня и не мешает
+        /// сделать нормальный экран завтра.
+        /// </summary>
+        void SwitchBranch()
+        {
+            if (_driver.Session?.Camp == null) return;
+
+            Camp camp = _driver.Session.Camp;
+            camp.SelectBranch(camp.Branch == CombatBranch.Sabre
+                ? CombatBranch.Anchor
+                : CombatBranch.Sabre);
+
+            // Набор сам по себе применяется на входе в забег. Без этого игрок
+            // увидел бы новые кнопки только со следующего Разлома.
+            _driver.RefreshAbilityBuild();
+        }
+
+        string BranchName()
+        {
+            Camp camp = _driver.Session?.Camp;
+            if (camp == null) return "—";
+            return camp.Branch == CombatBranch.Sabre ? "сабля" : "якорь";
+        }
+
         void OnGUI()
         {
             if (!Active || InventoryOpen || _driver.GameplayPaused) return;
-            GUI.Box(new Rect(Screen.width / 2 - 260, Screen.height - 150, 520, 34), NearTent() ? "Палатка · I — снаряжение" : NearExit() ? "I — отправиться в забег" : "ПКМ — идти · T — Полигон");
+            GUI.Box(new Rect(Screen.width / 2 - 260, Screen.height - 150, 520, 34),
+                NearTent() ? "Палатка · I — снаряжение"
+                : NearExit() ? "I — отправиться в забег"
+                : $"ПКМ — идти · T — Полигон · B — ветка: {BranchName()}");
         }
         void OnDestroy()
         {

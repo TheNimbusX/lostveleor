@@ -90,6 +90,11 @@ namespace Game.View
                 sim.AddComponent<PlayerHud>();
                 sim.AddComponent<RunHud>();
                 sim.AddComponent<CampHud>();
+
+                // Главное меню добавляется ПОСЛЕДНИМ и держит игру на паузе до
+                // PLAY. Под съёмкой оно выключает себя само: capture.ps1 кнопок
+                // не нажимает и записал бы заставку вместо игры.
+                sim.AddComponent<MainMenuView>();
             }
 
             sim.SetActive(true);

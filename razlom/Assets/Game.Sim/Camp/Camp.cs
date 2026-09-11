@@ -30,6 +30,30 @@ namespace Game.Sim
         public int Act { get; private set; }
         public CampService Services { get; private set; }
 
+        /// <summary>
+        /// Боевая ветка Пелага: сабля или якорь.
+        ///
+        /// ЖИВЁТ В ЛАГЕРЕ, ПОТОМУ ЧТО ЭТО РЕШЕНИЕ. Правило лагеря — здесь
+        /// принимают решения, в Разломе их исполняют, — и выбор ветки ему
+        /// отвечает буквально: он меняет все четыре кнопки и то, о чём игрок
+        /// думает в бою. Держать его в представлении значило бы позволить
+        /// съёмке, тестам и живому запуску разойтись в том, чем игрок бьёт.
+        ///
+        /// Переключается свободно и бесплатно. Диздок оставляет правила смены
+        /// «отдельно», а свободная смена — единственный вариант, который ничего
+        /// не отнимает у игрока, пока эти правила не написаны: запрет,
+        /// поставленный наугад, потом придётся снимать, а снятый — нет.
+        /// </summary>
+        public CombatBranch Branch { get; private set; }
+
+        /// <summary>Меняет ветку. Возвращает false, если она уже выбрана.</summary>
+        public bool SelectBranch(CombatBranch branch)
+        {
+            if (Branch == branch) return false;
+            Branch = branch;
+            return true;
+        }
+
         public Camp(ItemDatabase items, int act = 1, int bagSlots = DefaultBagSlots)
         {
             Items = items;
@@ -244,6 +268,7 @@ namespace Game.Sim
         {
             Hashing.Mix(ref hash, Act);
             Hashing.Mix(ref hash, (int)Services);
+            Hashing.Mix(ref hash, (int)Branch);
             for (int i = 0; i < _wallet.Length; i++) Hashing.Mix(ref hash, _wallet[i]);
 
             Bag.HashInto(ref hash);

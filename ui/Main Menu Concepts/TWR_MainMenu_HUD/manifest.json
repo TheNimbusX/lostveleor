@@ -1,0 +1,336 @@
+{
+  "project": "THE WAR REMAINS",
+  "pack_version": "1.0",
+  "reference_canvas_px": [
+    1672,
+    941
+  ],
+  "note": "Positions use top-left origin. Background and original logo stay separate and unchanged.",
+  "elements": [
+    {
+      "id": "play",
+      "file": "PNG/Buttons/btn_play_normal.png",
+      "rect_px": [
+        661,
+        484,
+        400,
+        125
+      ],
+      "center_normalized": [
+        0.5149521531100478,
+        0.5807651434643996
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "settings",
+      "file": "PNG/Buttons/btn_settings_normal.png",
+      "rect_px": [
+        1481,
+        840,
+        84,
+        84
+      ],
+      "center_normalized": [
+        0.9108851674641149,
+        0.9373007438894793
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "exit",
+      "file": "PNG/Buttons/btn_exit_normal.png",
+      "rect_px": [
+        1573,
+        840,
+        84,
+        84
+      ],
+      "center_normalized": [
+        0.9659090909090909,
+        0.9373007438894793
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ],
+  "composite_note": "Do not put isolated icon/text layers on top of the already assembled Buttons sprites.",
+  "state_suffixes": [
+    "normal",
+    "hover",
+    "pressed",
+    "disabled"
+  ],
+  "assets": [
+    {
+      "file": "PNG/Buttons/btn_play_reference_native.png",
+      "width": 400,
+      "height": 125,
+      "role": "Exact approved button crop; native resolution"
+    },
+    {
+      "file": "PNG/Labels/label_play_gold.png",
+      "width": 336,
+      "height": 168,
+      "role": "PLAY lettering from approved menu"
+    },
+    {
+      "file": "PNG/Labels/label_play_white.png",
+      "width": 336,
+      "height": 168,
+      "role": "Tintable PLAY lettering"
+    },
+    {
+      "file": "PNG/Icons/icon_play_gold.png",
+      "width": 192,
+      "height": 192,
+      "role": "Isolated play symbol"
+    },
+    {
+      "file": "PNG/Icons/icon_play_white.png",
+      "width": 192,
+      "height": 192,
+      "role": "Tintable play symbol"
+    },
+    {
+      "file": "PNG/Icons/icon_settings_gold.png",
+      "width": 192,
+      "height": 192,
+      "role": "Isolated settings symbol"
+    },
+    {
+      "file": "PNG/Icons/icon_settings_white.png",
+      "width": 192,
+      "height": 192,
+      "role": "Tintable settings symbol"
+    },
+    {
+      "file": "PNG/Icons/icon_exit_gold.png",
+      "width": 192,
+      "height": 192,
+      "role": "Isolated exit symbol"
+    },
+    {
+      "file": "PNG/Icons/icon_exit_white.png",
+      "width": 192,
+      "height": 192,
+      "role": "Tintable exit symbol"
+    },
+    {
+      "file": "PNG/Components/focus_primary.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Optional focus glow; layer behind primary button"
+    },
+    {
+      "file": "PNG/Components/focus_diamond.png",
+      "width": 256,
+      "height": 256,
+      "role": "Optional keyboard/controller focus outline"
+    },
+    {
+      "file": "PNG/Components/primary_plate_normal.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Primary button without icon or label",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Components/primary_fill_normal.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Painted terracotta interior only",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Components/primary_frame_normal.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Gold ornate frame only",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Buttons/btn_play_normal.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Ready assembled PLAY button",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Components/diamond_plate_normal.png",
+      "width": 256,
+      "height": 256,
+      "role": "Shared square canvas / diamond button background",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_normal.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled settings button",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_normal.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled exit button",
+      "state": "normal"
+    },
+    {
+      "file": "PNG/Components/primary_plate_hover.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Primary button without icon or label",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Components/primary_fill_hover.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Painted terracotta interior only",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Components/primary_frame_hover.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Gold ornate frame only",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Buttons/btn_play_hover.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Ready assembled PLAY button",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Components/diamond_plate_hover.png",
+      "width": 256,
+      "height": 256,
+      "role": "Shared square canvas / diamond button background",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_hover.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled settings button",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_hover.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled exit button",
+      "state": "hover"
+    },
+    {
+      "file": "PNG/Components/primary_plate_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Primary button without icon or label",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Components/primary_fill_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Painted terracotta interior only",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Components/primary_frame_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Gold ornate frame only",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Buttons/btn_play_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Ready assembled PLAY button",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Components/diamond_plate_pressed.png",
+      "width": 256,
+      "height": 256,
+      "role": "Shared square canvas / diamond button background",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_pressed.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled settings button",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_pressed.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled exit button",
+      "state": "pressed"
+    },
+    {
+      "file": "PNG/Components/primary_plate_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Primary button without icon or label",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Components/primary_fill_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Painted terracotta interior only",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Components/primary_frame_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Gold ornate frame only",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Buttons/btn_play_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "role": "Ready assembled PLAY button",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Components/diamond_plate_disabled.png",
+      "width": 256,
+      "height": 256,
+      "role": "Shared square canvas / diamond button background",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_disabled.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled settings button",
+      "state": "disabled"
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_disabled.png",
+      "width": 256,
+      "height": 256,
+      "role": "Ready assembled exit button",
+      "state": "disabled"
+    }
+  ]
+}

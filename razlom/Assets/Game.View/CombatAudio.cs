@@ -93,6 +93,7 @@ namespace Game.View
             {
             UpdateCycloneSound();
             ConsumeEvents();
+            UpdateCleaveSound();
             if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
             {
                 _anchorImpactAt = -1f;
@@ -124,6 +125,21 @@ namespace Game.View
                 Play(Sound.ChainStepEnd, AbilityVolume * .5f, 1f, .01f);
             }
             _chainSoundActive = chain;
+        }
+
+        private int _cleaveSoundCast = -1;
+        private bool _cleaveSoundPlayed;
+        private void UpdateCleaveSound()
+        {
+            var sim = _driver.Sim;
+            if (sim == null || !sim.CleaveActive) { _cleaveSoundCast = -1; return; }
+            if (_cleaveSoundCast != sim.CleaveStartTick)
+            { _cleaveSoundCast = sim.CleaveStartTick; _cleaveSoundPlayed = false; }
+            if (!_cleaveSoundPlayed && sim.Tick - 1 + _driver.Alpha >= sim.CleaveSwingStartTick)
+            {
+                _cleaveSoundPlayed = true;
+                Play(Sound.WhooshHeavy, WhooshVolume, .92f, .02f);
+            }
         }
 
         private bool _cycloneSoundActive;
@@ -220,6 +236,8 @@ namespace Game.View
                             _whirlwindEndAt = -1f;
                             StopKind(Sound.Whirlwind);
                             _whooshDelay = -1f;
+                            _cleaveSoundCast = -1;
+                            if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.CleaveId) break;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
                             {
                                 // Даже промах имеет контакт с землёй; попадания во врагов звучат по Damage.
@@ -345,6 +363,8 @@ namespace Game.View
             Sound bodySound = _driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestRootSwarm
                 ? Sound.RootSwarmHit : Sound.HitBody;
             bool ability = e.DamageOrigin == DamageOrigin.Ability;
+            if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId
+                && e.DamageKind != DamageType.Physical) return;
             bool whirlwind = ability && IsWhirlwindSlot(e.ActionVariant);
             bool heavy = e.Flag || e.ActionVariant == 1 || ability;
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.ChainStepId)

@@ -14,6 +14,7 @@ namespace Game.Sim
 
         /// <summary>Тело само уходит в точку. Бросок якоря, Шаг по цепи.</summary>
         Lunge = 2,
+        Roll = 3,
     }
 
     /// <summary>

@@ -22,11 +22,13 @@ namespace Game.View
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
         private const float WhirlwindContactTime = CharacterAnimatorView.WhirlwindContactTime;
 
-        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain }
+        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain, Roll, Cleave }
 
         private sealed class PoolRecord
         {
             public ViewPool Pool;
+            public Quaternion AuthoredRotation;
+
         }
 
 
@@ -43,6 +45,8 @@ namespace Game.View
             public float ArcHeight;
             public Vector3 Start;
             public Vector3 End;
+
+            public bool JustSpawned;
             public Motion Motion;
             public int FollowIndex;
         }
@@ -70,6 +74,10 @@ namespace Game.View
         private float _attackMotionTime = -1f;
         private Vector3 _attackMotionDirection;
         private bool _whirlwindContactPending;
+        private int _cleaveVfxCast = -1;
+        private bool _cleaveSlashPlayed;
+        private bool _cleaveGroundPlayed;
+        [SerializeField, Range(.25f, 2f)] private float _cleaveSlashScale = 1f;
         private float _whirlwindContactDelay;
         private Light _heroLight;
         private float _combatLightPulse;
@@ -115,6 +123,8 @@ namespace Game.View
             UpdateShowcase();
             UpdateAutoattackPresentation();
             UpdateWhirlwindContact();
+            UpdateCleaveSlash();
+
             UpdateAbilityMotion();
             UpdateFootstepDust();
             UpdateActive(Time.deltaTime);
@@ -179,13 +189,16 @@ namespace Game.View
                 parent.SetParent(root, false);
                 _pools[id] = new PoolRecord
                 {
+                    AuthoredRotation = prefab.transform.localRotation,
                     Pool = new ViewPool(parent, () => Instantiate(prefab), Mathf.Max(1, entry.Prewarm))
                 };
                 // Блики перекрываются уже в первом броске; ViewPool сам создаёт только один экземпляр.
                 if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding
                     || entry.Id == PelagVfxId.FootstepDust || entry.Id == PelagVfxId.WhirlwindHit
                     || entry.Id == PelagVfxId.ChainStepDash || entry.Id == PelagVfxId.ChainStepHit
-                    || entry.Id == PelagVfxId.ChainStepFinish)
+                    || entry.Id == PelagVfxId.ChainStepFinish
+                    || entry.Id == PelagVfxId.CleaveHit || entry.Id == PelagVfxId.CleaveSlash
+                    || entry.Id == PelagVfxId.CleaveGround)
                     _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 
@@ -245,6 +258,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            StopCleaveSlash();
             StopLeapMotionVfx();
             ReleaseCyclone();
             if (_heroLight != null) _heroLight.enabled = false;
@@ -263,14 +277,20 @@ namespace Game.View
                 SimEvent e = events[i];
                 if (e.Type == SimEventType.Death && e.Target == Simulation.PlayerId)
                 {
+                    StopCleaveSlash();
                     CancelActiveAnchorMotionForReplacement();
                     _whirlwindContactPending = false;
                     for (int effect = 0; effect < _active.Length; effect++) Release(effect);
                     continue;
                 }
                 if (e.Source != Simulation.PlayerId) continue;
+                if (e.Type == SimEventType.AbilityCast) StopCleaveSlash();
 
-                if (e.Type == SimEventType.Attack)
+                if (e.Type == SimEventType.Evaded)
+                {
+                    PlayEvade();
+                }
+                else if (e.Type == SimEventType.Attack)
                 {
                     CancelActiveAnchorMotionForReplacement();
                     _whirlwindContactPending = false;
@@ -322,13 +342,107 @@ namespace Game.View
                         PlaySweepTargetPull(e.Target);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
                         PlayWhirlwindImpact(e.Target, e.Position);
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId && e.DamageKind == DamageType.Physical)
+                        PlayCleaveImpact(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
                     {
                         PlaySquallImpact(e.Target, e.Position, _squallFinalHop);
                     }
-                    PulseCombatLight(IsWhirlwindSlot(e.ActionVariant) ? 0.30f : 0.46f);
+                    if (ability == null || ability.DefinitionId != AbilityDefinition.CleaveId)
+                        PulseCombatLight(IsWhirlwindSlot(e.ActionVariant) ? 0.30f : 0.46f);
                 }
             }
+        }
+
+        private float _lastEvadeAt = -100f;
+
+        private void PlayEvade()
+        {
+            if (Time.time - _lastEvadeAt < .2f) return;
+            var sim = _driver.Sim;
+            if (sim == null || !sim.Entities.Alive[Simulation.PlayerId]) return;
+            _lastEvadeAt = Time.time;
+            Camera camera = Camera.main;
+            Quaternion rotation = camera != null ? camera.transform.rotation : Quaternion.identity;
+            // Короткий воздушный росчерк не запускает hit-reaction, движение или новую атаку.
+            Spawn(PelagVfxId.Evade, PlayerPosition() + Vector3.up * .9f,
+                rotation * Quaternion.Euler(0f, 0f, -25f), .2f, .65f, .65f, Motion.Static);
+        }
+
+        [SerializeField, Range(.2f, 5f)] private float _cleaveImpactScale = 3f;
+
+        private void StopCleaveSlash()
+        {
+            _cleaveVfxCast = -1;
+            _cleaveSlashPlayed = false;
+            _cleaveGroundPlayed = false;
+            if (_active == null) return;
+            for (int i = 0; i < _active.Length; i++)
+                if (_active[i].Active && _active[i].Id == PelagVfxId.CleaveSlash) Release(i);
+        }
+
+        private void UpdateCleaveSlash()
+        {
+            if (_cleaveVfxCast < 0) return;
+            Simulation sim = _driver.Sim;
+            if (sim == null || !sim.CleaveActive || sim.CleaveStartTick != _cleaveVfxCast)
+            { StopCleaveSlash(); return; }
+            float tick = sim.Tick - 1 + _driver.Alpha;
+            if (!_cleaveGroundPlayed && tick >= sim.CleaveContactTick)
+            {
+                _cleaveGroundPlayed = true;
+                FixVec2 facingAtContact = sim.Entities.Facing[Simulation.PlayerId];
+                Vector3 forward = new Vector3(facingAtContact.X.ToFloat(), 0f, facingAtContact.Y.ToFloat());
+                Vector3 ground = PlayerPosition() + forward * 1.4f + Vector3.up * .025f;
+                Spawn(PelagVfxId.CleaveGround, ground, Quaternion.identity, 1.2f, .65f, .65f, Motion.Static);
+                if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-ground-contact] tick={tick:F2} position={ground}");
+            }
+            if (_cleaveSlashPlayed || tick < sim.CleaveSwingStartTick) return;
+            _cleaveSlashPlayed = true;
+            if (!TryAcquire(PelagVfxId.CleaveSlash, out GameObject go, out PelagVfxElement element)) return;
+            FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
+            Vector3 direction = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
+            Vector3 at = PlayerPosition() + Vector3.up * 1.5f;
+            // Полукруг пака лежит в XY: нормаль вдоль правой стороны героя
+            // помещает рассечение в вертикальную плоскость реального взмаха.
+            Quaternion rotation = Quaternion.LookRotation(Vector3.Cross(Vector3.up, direction), Vector3.up)
+                * Quaternion.Euler(0f, 0f, -35f);
+            element.Begin(at, rotation);
+            go.transform.localScale = new Vector3(2.05f, 2.05f, 1.15f) * _cleaveSlashScale;
+            int index = ReserveActive();
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.CleaveSlash, Object = go, Element = element,
+                Duration = .25f, Start = at, End = direction, JustSpawned = true,
+                Motion = Motion.Cleave, FollowIndex = -1
+            };
+            if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-heavy-slash] tick={tick:F2} position={at} scale={go.transform.localScale}");
+        }
+
+        private void PlayCleaveImpact(int targetEntity, FixVec2 fallback)
+        {
+            if (!TryAcquire(PelagVfxId.CleaveHit, out GameObject go, out PelagVfxElement element)) return;
+            Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * .9f;
+            if (_arena.TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip))
+            {
+                Vector3 blade = bladeTip.position - bladeRoot.position;
+                float t = blade.sqrMagnitude > .0001f
+                    ? Mathf.Clamp01(Vector3.Dot(position - bladeRoot.position, blade) / blade.sqrMagnitude) : 0f;
+                position = bladeRoot.position + blade * t;
+            }
+            // The pack's view-aligned mesh must sit in front of the target surface.
+            Camera camera = Camera.main;
+            if (camera != null) position += (camera.transform.position - position).normalized * .35f;
+            int index = ReserveActive();
+            element.Begin(position, _pools[(int)PelagVfxId.CleaveHit].AuthoredRotation);
+            // Контакт одного тяжёлого удара должен перекрывать корпус цели, а не теряться у ног.
+            go.transform.localScale *= _cleaveImpactScale;
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.CleaveHit, Object = go, Element = element,
+                Duration = .32f, Start = position, End = position,
+                Motion = Motion.Static, FollowIndex = -1
+            };
         }
 
         private void PlayWhirlwindImpact(int targetEntity, FixVec2 fallback)
@@ -398,9 +512,25 @@ namespace Game.View
         private void BeginGameplayAttackMotion(int targetEntity)
         {
             Vector3 player = PlayerPosition();
-            Vector3 target = EntityPosition(targetEntity, player + Vector3.forward);
+
+            // У пустого взмаха цели нет (targetEntity < 0), и запасной вариант
+            // «метр по мировому Z» увёл бы выпад корпуса куда попало. Тело
+            // должно подаваться туда, куда смотрит герой, — он уже развёрнут
+            // на курсор симуляцией.
+            Vector3 fallback = player + PlayerFacing();
+            Vector3 target = EntityPosition(targetEntity, fallback);
             _attackMotionDirection = FlatDirection(player, target);
             _attackMotionTime = 0f;
+        }
+
+        /// <summary>Плоское направление взгляда героя из симуляции.</summary>
+        private Vector3 PlayerFacing()
+        {
+            Simulation sim = _driver != null ? _driver.Sim : null;
+            if (sim == null) return Vector3.forward;
+            FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
+            var flat = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat());
+            return flat.sqrMagnitude > 0.0001f ? flat.normalized : Vector3.forward;
         }
 
         /// <summary>
@@ -677,6 +807,32 @@ namespace Game.View
             if (build == null) return;
 
             int id = build.DefinitionId;
+            if (id == AbilityDefinition.CleaveId)
+            {
+                CancelActiveAnchorMotionForReplacement();
+                _whirlwindContactPending = false;
+                _cleaveVfxCast = sim.CleaveStartTick;
+                _cleaveSlashPlayed = false;
+                _cleaveGroundPlayed = false;
+                return;
+            }
+            if (id == AbilityDefinition.DashId)
+            {
+                CancelActiveAnchorMotionForReplacement();
+                Vector3 from = PlayerPosition() + Vector3.up * .35f;
+                Vector3 to = ForcedTargetWorld(sim) + Vector3.up * .35f;
+                float duration = build.Get(AbilityStatType.DurationTicks).ToInt() / (float)Simulation.TicksPerSecond;
+                int roll = SpawnMoving(PelagVfxId.RollDash, from, to, duration, 0f, Motion.Roll);
+                Camera camera = Camera.main;
+                if (roll >= 0 && camera != null)
+                {
+                    Vector3 direction = camera.WorldToScreenPoint(to) - camera.WorldToScreenPoint(from);
+                    _active[roll].Object.transform.rotation = camera.transform.rotation
+                        * Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+                    _active[roll].Object.transform.localScale *= .7f;
+                }
+                return;
+            }
             if (id == AbilityDefinition.WhirlwindId)
             {
                 ScheduleGameplayWhirlwind();
@@ -1115,7 +1271,8 @@ namespace Game.View
                     fx = default;
                     continue;
                 }
-                fx.Age += dt;
+                if (fx.JustSpawned) fx.JustSpawned = false;
+                else fx.Age += dt;
                 if (CaptureRig.HasEnemyOverride && fx.Id == PelagVfxId.FootstepDust
                     && fx.Age >= 0.1f && fx.Age - dt < 0.1f)
                     Debug.Log($"[footstep-particles] count={fx.Object.GetComponent<ParticleSystem>().particleCount}");
@@ -1123,6 +1280,13 @@ namespace Game.View
 
                 switch (fx.Motion)
                 {
+                    case Motion.Cleave:
+                        // Центр остаётся у героя; меняется только угол рассечения.
+                        // Эффект не летит к цели и не растягивается за её движением.
+                        float sweep = Smooth(Mathf.Clamp01(fx.Age / .16f));
+                        fx.Object.transform.rotation = Quaternion.LookRotation(Vector3.Cross(Vector3.up, fx.End), Vector3.up)
+                            * Quaternion.Euler(0f, 0f, Mathf.Lerp(-35f, 40f, sweep));
+                        break;
                     case Motion.AnchorFlight:
                         fx.Age = _motionTime;
                         float returnAt = fx.Duration - .06f;
@@ -1213,6 +1377,12 @@ namespace Game.View
                         break;
                     case Motion.Dash:
                         fx.Object.transform.position = PlayerPosition() + Vector3.up * .75f;
+                        break;
+                    case Motion.Roll:
+                        var rollSim = _driver != null ? _driver.Sim : null;
+                        if (rollSim == null || rollSim.Entities.ForcedKind[Simulation.PlayerId] != (byte)ForcedMotionKind.Roll)
+                        { Release(i); continue; }
+                        fx.Object.transform.position = PlayerPosition() + Vector3.up * .35f;
                         break;
                     case Motion.Chain:
                         fx.Age = _motionTime;

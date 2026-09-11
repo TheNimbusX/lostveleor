@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -10,7 +10,7 @@ namespace Game.View
     /// тайминги симуляции здесь никогда не рассчитываются.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
-    [DefaultExecutionOrder(1000)]
+    [DefaultExecutionOrder(1006)]
     public sealed class CombatJuiceView : MonoBehaviour
     {
         // Одно убийство стоит 37 слотов: 22 осколка, 14 пылинок и послесвечение.
@@ -124,6 +124,11 @@ namespace Game.View
         private float _trailActive;
         private float _trailFade;
         private bool _trailWhirlwind;
+        private bool _trailCleave;
+        private int _cleaveTrailCast = -1;
+        private Vector3 _cleaveTrailPlayer;
+        [SerializeField, Range(.08f, .12f)] private float _cleaveTrailLifetime = .12f;
+        [SerializeField, Range(.2f, 1f)] private float _cleaveTrailWidth = 1f;
 
         private void Awake()
         {
@@ -266,6 +271,19 @@ namespace Game.View
             // камера и hit-stop — они не засоряют силуэты.
             if (!fromPlayer && !playerHit) return;
 
+            // Cleave contact uses the authored Cartoon FX prefab in PelagVfxController.
+            if (fromPlayer && e.DamageOrigin == DamageOrigin.Ability
+                && (uint)e.ActionVariant < Simulation.AbilitySlots
+                && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId)
+            {
+                if (e.DamageKind != DamageType.Physical) return;
+                PushTarget(in e, 1f, true);
+                _arena?.ConfirmCleaveContact();
+                // Импульс накапливается до отправки в камеру в этом же ConsumeEvents.
+                Accumulate(.24f, .18f, 0f, 1f);
+                return;
+            }
+
             bool basicContact = fromPlayer
                                 && e.DamageOrigin == DamageOrigin.BasicAttack
                                 && e.Target == _pendingBasicTarget;
@@ -356,7 +374,7 @@ namespace Game.View
         /// Положение сущности по-прежнему решает тик, и трогать его отсюда
         /// нельзя ни при каких условиях.
         /// </summary>
-        private void PushTarget(in SimEvent e, float strength)
+        private void PushTarget(in SimEvent e, float strength, bool heavy = false)
         {
             if (_arena == null) return;
 
@@ -372,7 +390,7 @@ namespace Game.View
                                         to.Y.ToFloat() - from.Y.ToFloat());
             }
 
-            _arena.ReactToHit(e.Target, direction, strength);
+            _arena.ReactToHit(e.Target, direction, strength, heavy);
         }
 
         private bool IsSlashContact(in SimEvent e)
@@ -486,11 +504,24 @@ namespace Game.View
             AbilityBuild build = sim.GetAbility(e.Amount);
             if (build != null && build.DefinitionId == AbilityDefinition.WhirlwindId)
                 StartWhirlwindTrail();
+            else if (build != null && build.DefinitionId == AbilityDefinition.CleaveId)
+            {
+                StopSwordTrail();
+                if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip)) return;
+                _trailCleave = true;
+                _trailWhirlwind = false;
+                _cleaveTrailCast = sim.CleaveStartTick;
+                _cleaveTrailPlayer = _driver.GetRenderPosition(Simulation.PlayerId);
+                _trailRenderer.sharedMaterial.SetFloat("_Brush", 0f);
+                _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.8f);
+            }
             else StopSwordTrail();
         }
 
         private void StopSwordTrail()
         {
+            _trailCleave = false;
+            _cleaveTrailCast = -1;
             _trailDelay = _trailActive = _trailFade = 0f;
             _trailCount = 0;
             if (_trailRenderer != null) _trailRenderer.enabled = false;
@@ -518,6 +549,7 @@ namespace Game.View
 
         private void StartWhirlwindTrail()
         {
+            _trailCleave = false;
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
             {
                 return;
@@ -534,6 +566,7 @@ namespace Game.View
 
         private void StartBasicAttackTrail()
         {
+            _trailCleave = false;
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
                 return;
 
@@ -572,8 +605,31 @@ namespace Game.View
             _trailRenderer.enabled = false;
         }
 
+        private void OnDisable() => StopSwordTrail();
+
         private void AnimateSwordTrail()
         {
+            if (_trailCleave)
+            {
+                var sim = _driver.Sim;
+                if (sim == null) { StopSwordTrail(); return; }
+                Vector3 player = _driver.GetRenderPosition(Simulation.PlayerId);
+                if (!sim.CleaveActive || sim.CleaveStartTick != _cleaveTrailCast
+                    || _bladeRoot == null || !_bladeRoot.gameObject.activeInHierarchy
+                    || (player - _cleaveTrailPlayer).sqrMagnitude > 1f)
+                { StopSwordTrail(); return; }
+                _cleaveTrailPlayer = player;
+                float tick = sim.Tick - 1 + _driver.Alpha;
+                // The blade keeps moving after the damage window closes.
+                float followThroughEnd = Mathf.Lerp(sim.CleaveContactTick, sim.CleaveEndTick, .48f);
+                bool sampling = tick >= sim.CleaveSwingStartTick && tick < followThroughEnd;
+                _trailActive = sampling ? 1f : 0f;
+                _trailFade = _cleaveTrailLifetime;
+                if (sampling && _bladeRoot != null && _bladeTip != null)
+                    AddTrailSample(_bladeRoot.position, _bladeTip.position);
+                RebuildSwordTrail();
+                return;
+            }
             float dt = Time.deltaTime;
             if (_trailDelay > 0f)
             {
@@ -607,7 +663,7 @@ namespace Game.View
                 tip = root + blade * 1.08f;
                 root += blade * 0.26f;
             }
-            else
+            else if (!_trailCleave)
             {
                 // Basic attacks remain compact and leave the target readable.
                 root += blade * 0.22f;
@@ -647,17 +703,17 @@ namespace Game.View
             float fadeDuration = _trailWhirlwind ? 0.10f : 0.09f;
             float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / fadeDuration);
             int renderCount = (_trailCount - 1) * TrailSubdivisions + 1;
-            float lifetime = _trailWhirlwind ? 0.12f : 0.085f;
+            float lifetime = _trailCleave ? _cleaveTrailLifetime : _trailWhirlwind ? 0.12f : 0.085f;
             for (int i = 0; i < renderCount; i++)
             {
                 int segment = Mathf.Min(i / TrailSubdivisions, _trailCount - 2);
                 float t = (i - segment * TrailSubdivisions) / (float)TrailSubdivisions;
                 float sampleTime = Mathf.Lerp(_trailTimes[segment], _trailTimes[segment + 1], t);
                 float along = Mathf.Clamp01(1f - (Time.time - sampleTime) / lifetime);
-                float width = Mathf.Lerp(0.02f, _trailWhirlwind ? 0.68f : 0.56f, Mathf.Sqrt(along));
+                float width = Mathf.Lerp(0.02f, _trailCleave ? _cleaveTrailWidth : _trailWhirlwind ? 0.68f : 0.56f, Mathf.Sqrt(along));
                 Vector3 root = InterpolateTrailPoint(_trailRoots, segment, t);
                 Vector3 tip = InterpolateTrailPoint(_trailTips, segment, t);
-                Vector3 mid = Vector3.Lerp(root, tip, 0.62f);
+                Vector3 mid = Vector3.Lerp(root, tip, _trailCleave ? .5f : .62f);
                 Vector3 half = (tip - root) * (0.5f * width);
                 int vertex = i * TrailVerticesPerSample;
                 _trailVertices[vertex] = mid - half;
@@ -668,6 +724,14 @@ namespace Game.View
                 _trailColors[vertex] = new Color(0.60f, 0.035f, 0.12f, alpha * 0.03f);
                 _trailColors[vertex + 1] = new Color(0.957f, 0.282f, 0.341f, alpha * 0.48f);
                 _trailColors[vertex + 2] = new Color(1.30f, 0.54f, 0.52f, alpha * 0.78f);
+                if (_trailCleave)
+                {
+                    _trailColors[vertex] = new Color(1f, .24f, .27f, alpha * .65f);
+                    _trailColors[vertex + 1] = new Color(1.25f, 1.10f, .83f, alpha);
+                    _trailColors[vertex + 2] = new Color(1f, .24f, .27f, alpha * .65f);
+                    for (int c = 0; c < 3; c++)
+                        _trailVertices[vertex + c] = _trailRenderer.transform.InverseTransformPoint(_trailVertices[vertex + c]);
+                }
                 _trailUvs[vertex] = new Vector2(along, 0f);
                 _trailUvs[vertex + 1] = new Vector2(along, 0.5f);
                 _trailUvs[vertex + 2] = new Vector2(along, 1f);

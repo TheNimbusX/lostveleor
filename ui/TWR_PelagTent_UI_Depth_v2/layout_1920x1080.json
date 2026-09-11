@@ -1,0 +1,63 @@
+{
+  "reference_resolution": [
+    1920,
+    1080
+  ],
+  "panels": {
+    "equipment": {
+      "xy": [
+        748,
+        133
+      ],
+      "size": [
+        420,
+        786
+      ]
+    },
+    "inventory": {
+      "xy": [
+        1184,
+        133
+      ],
+      "size": [
+        694,
+        786
+      ]
+    },
+    "character_info": {
+      "xy": [
+        28,
+        852
+      ],
+      "size": [
+        748,
+        188
+      ]
+    }
+  },
+  "inventory_grid": {
+    "columns": 8,
+    "rows": 6,
+    "origin_px": [
+      1222,
+      244
+    ],
+    "cell_px": [
+      70,
+      70
+    ],
+    "pitch_px": [
+      77,
+      75
+    ]
+  },
+  "equipment_slots": [
+    "weapon",
+    "armor",
+    "talisman",
+    "ring",
+    "artifact"
+  ],
+  "text_and_character": "Preview only. Render text and character separately in the game.",
+  "new_gameplay_features_added": false
+}

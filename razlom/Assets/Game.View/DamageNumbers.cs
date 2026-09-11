@@ -24,6 +24,7 @@ namespace Game.View
         public Color CritColor = new Color(1.00f, 0.72f, 0.20f);
         public Color PlayerHitColor = new Color(1.00f, 0.28f, 0.30f);
         public Color FireColor = new Color(1.00f, 0.47f, 0.16f);
+        public Color EvadeColor = new Color(.72f, .94f, 1f);
 
         [Tooltip("Тик горения. Приглушённый намеренно: их тридцать в секунду.")]
         public Color BurnColor = new Color(0.95f, 0.55f, 0.25f, 0.75f);
@@ -78,6 +79,7 @@ namespace Game.View
 
             /// <summary>Тик урона по времени: самый мелкий и тихий.</summary>
             public bool OverTime;
+            public bool Evaded;
         }
 
         private Slot[] _slots;
@@ -91,6 +93,7 @@ namespace Game.View
         private int[] _slotOfTarget;
         private int[] _targetOfSlot;
         private int _visible;
+        private float _lastEvadeShownAt = -100f;
 
         private void Awake()
         {
@@ -145,6 +148,14 @@ namespace Game.View
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
+                if (e.Type == SimEventType.Evaded && e.Source == Simulation.PlayerId)
+                {
+                    // Несколько промахов толпы в одном кадре дают один читаемый отклик.
+                    if (Time.time - _lastEvadeShownAt < .2f) continue;
+                    _lastEvadeShownAt = Time.time;
+                    Spawn(e);
+                    continue;
+                }
                 if (e.Type != SimEventType.Damage && e.Type != SimEventType.DamageOverTime) continue;
 
                 Spawn(e);
@@ -211,7 +222,8 @@ namespace Game.View
             s.Crit = crit;
             s.PlayerHit = playerHit;
             s.OverTime = overTime;
-            s.BaseColor = ColorFor(in e, crit, playerHit, overTime);
+            s.Evaded = e.Type == SimEventType.Evaded;
+            s.BaseColor = s.Evaded ? EvadeColor : ColorFor(in e, crit, playerHit, overTime);
             WriteValue(ref s);
 
             s.Shadow.color = new Color(0.025f, 0.03f, 0.055f, 0.95f);
@@ -258,14 +270,14 @@ namespace Game.View
             // ОПОЗНАВАТЕЛЬ. Свой урон — просто число, урон по герою — число
             // с минусом. Это первое, что читается, и читается оно даже боковым
             // зрением, когда на цвет смотреть некогда.
-            string value = s.PlayerHit
+            string value = s.Evaded ? "УКЛОНЕНИЕ" : s.PlayerHit
                 ? "−" + s.Value.ToString()
                 : s.Crit ? s.Value.ToString() + "!" : s.Value.ToString();
 
             s.Text.text = value;
             s.Shadow.text = value;
 
-            s.Size = s.PlayerHit ? PlayerHitSize
+            s.Size = s.Evaded ? NormalSize * .8f : s.PlayerHit ? PlayerHitSize
                 : s.Crit ? CritSize
                 : s.OverTime ? BurnSize
                 : NormalSize;

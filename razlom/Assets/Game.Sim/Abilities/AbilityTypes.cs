@@ -45,7 +45,31 @@ namespace Game.Sim
         StartMoveMultiplier = 10,
         EndMoveMultiplier = 11,
         WeaponRadius = 12,
-        Count = 13,
+        Width = 13,
+        StunTicks = 14,
+        WindupTicks = 15,
+
+        /// <summary>На сколько метров отбрасывает. «За борт!».</summary>
+        KnockbackDistance = 16,
+
+        /// <summary>Сколько тиков открыто окно следующего нажатия комбо. «Крушение».</summary>
+        ComboWindowTicks = 17,
+
+        /// <summary>
+        /// Полуширина дуги удара, заданная ПОРОГОМ КОСИНУСА, а не углом.
+        ///
+        /// Тригонометрии в симуляции нет и не будет: угол пришлось бы считать
+        /// через Atan2, а это источник расхождения на фиксированной точке.
+        /// Скалярное произведение направления удара и направления на цель
+        /// сравнивается с этим порогом напрямую — 0 даёт полукруг, 1/2 —
+        /// сектор в 120 градусов, 9/10 — узкий клин.
+        /// </summary>
+        ArcCosine = 18,
+
+        SwingLeadTicks = 19,
+        ContactWindowTicks = 20,
+        TurnRadiansPerTick = 21,
+        Count = 22,
     }
 
     /// <summary>

@@ -66,22 +66,37 @@ namespace Game.Sim
         /// пределом даёт бросок на максимум в ту же сторону. Отменять было бы
         /// честнее формально и хуже на практике — игрок целится примерно.
         /// </summary>
-        public static void CastLeap(Simulation sim, FixVec2 aim)
+        public static int CastBoarding(Simulation sim, FixVec2 aim, int enemy)
         {
             EntityStore e = sim.Entities;
-            FixVec2 from = e.Position[Simulation.PlayerId];
-            FixVec2 delta = aim - from;
+            int player = Simulation.PlayerId;
+            FixVec2 from = e.Position[player];
+
+            bool hooked = (uint)enemy < (uint)e.Count
+                          && e.Alive[enemy]
+                          && e.Side[enemy] != e.Side[player];
+
+            FixVec2 destination = hooked ? e.Position[enemy] : aim;
+            FixVec2 delta = destination - from;
 
             Fix64 distance = delta.Length;
-            if (distance.Raw == 0) return;
+            if (distance.Raw == 0) return 0;
 
             FixVec2 direction = delta / distance;
-            Fix64 reach = distance > LeapRange ? LeapRange : distance;
-            FixVec2 target = from + direction * reach;
-            e.Facing[Simulation.PlayerId] = direction;
 
-            ForcedMotion.Begin(e, Simulation.PlayerId, target, LeapTicks,
-                ForcedMotionKind.Lunge);
+            // К ВРАГУ ПОДЪЕЗЖАЕМ ВПЛОТНУЮ, НО НЕ В НЕГО. Тем же отступом, что
+            // и Шквал: иначе тела расталкиваются уже после прибытия и кулак
+            // бьёт в пустоту, из которой цель только что выдавило.
+            Fix64 reach = hooked && distance > ChainStandoff
+                ? distance - ChainStandoff
+                : distance;
+            if (reach > LeapRange) reach = LeapRange;
+
+            FixVec2 target = from + direction * reach;
+            e.Facing[player] = direction;
+
+            ForcedMotion.Begin(e, player, target, LeapTicks, ForcedMotionKind.Lunge);
+            return LeapTicks;
         }
 
         /// <summary>

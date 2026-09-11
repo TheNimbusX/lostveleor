@@ -1,0 +1,883 @@
+{
+  "pack": "TWR Pelag Tent UI Depth v2",
+  "assets": [
+    {
+      "file": "PNG/Components/ornament_diamond_painted.png",
+      "width": 72,
+      "height": 90,
+      "mode": "RGBA",
+      "kind": "ornament",
+      "note": ""
+    },
+    {
+      "file": "PNG/Panels/panel_equipment_filled.png",
+      "width": 420,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_equipment_frame.png",
+      "width": 420,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_equipment_surface.png",
+      "width": 420,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_equipment_shadow.png",
+      "width": 420,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_inventory_filled.png",
+      "width": 694,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_inventory_frame.png",
+      "width": 694,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_inventory_surface.png",
+      "width": 694,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_inventory_shadow.png",
+      "width": 694,
+      "height": 786,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_character_info_filled.png",
+      "width": 748,
+      "height": 188,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_character_info_frame.png",
+      "width": 748,
+      "height": 188,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_character_info_surface.png",
+      "width": 748,
+      "height": 188,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_character_info_shadow.png",
+      "width": 748,
+      "height": 188,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_tooltip_filled.png",
+      "width": 470,
+      "height": 292,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_tooltip_frame.png",
+      "width": 470,
+      "height": 292,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_tooltip_surface.png",
+      "width": 470,
+      "height": 292,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_tooltip_shadow.png",
+      "width": 470,
+      "height": 292,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_dialog_filled.png",
+      "width": 660,
+      "height": 366,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_dialog_frame.png",
+      "width": 660,
+      "height": 366,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_dialog_surface.png",
+      "width": 660,
+      "height": 366,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_dialog_shadow.png",
+      "width": 660,
+      "height": 366,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_small_card_filled.png",
+      "width": 368,
+      "height": 176,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_small_card_frame.png",
+      "width": 368,
+      "height": 176,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_small_card_surface.png",
+      "width": 368,
+      "height": 176,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_small_card_shadow.png",
+      "width": 368,
+      "height": 176,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Painted rim; outer alpha; place shadow underneath. Text is separate."
+    },
+    {
+      "file": "PNG/Panels/panel_9slice_filled.png",
+      "width": 288,
+      "height": 256,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Border suggestion only; not tested in Unity.",
+      "suggested_border_LBRT_px": [
+        69,
+        69,
+        69,
+        69
+      ]
+    },
+    {
+      "file": "PNG/Panels/panel_9slice_frame.png",
+      "width": 288,
+      "height": 256,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Border suggestion only; not tested in Unity.",
+      "suggested_border_LBRT_px": [
+        69,
+        69,
+        69,
+        69
+      ]
+    },
+    {
+      "file": "PNG/Panels/panel_9slice_surface.png",
+      "width": 288,
+      "height": 256,
+      "mode": "RGBA",
+      "kind": "panel",
+      "note": "Border suggestion only; not tested in Unity.",
+      "suggested_border_LBRT_px": [
+        69,
+        69,
+        69,
+        69
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_normal.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_common.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_rare.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_epic.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_unique.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_selected.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_hover.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_pressed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Slots/slot_disabled.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "slot",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        20,
+        20,
+        20,
+        20
+      ]
+    },
+    {
+      "file": "PNG/Buttons/button_primary_normal.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": "Reused from the approved main-menu kit. No text baked in."
+    },
+    {
+      "file": "PNG/Buttons/button_secondary_normal.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/diamond_button_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button_base",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_primary_hover.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": "Reused from the approved main-menu kit. No text baked in."
+    },
+    {
+      "file": "PNG/Buttons/button_secondary_hover.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/diamond_button_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button_base",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_primary_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": "Reused from the approved main-menu kit. No text baked in."
+    },
+    {
+      "file": "PNG/Buttons/button_secondary_pressed.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/diamond_button_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button_base",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_primary_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": "Reused from the approved main-menu kit. No text baked in."
+    },
+    {
+      "file": "PNG/Buttons/button_secondary_disabled.png",
+      "width": 1024,
+      "height": 320,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/diamond_button_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button_base",
+      "note": ""
+    },
+    {
+      "file": "PNG/Icons/icon_weapon_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_armor_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_talisman_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_ring_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_artifact_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_back_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_bag_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_camp_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_check_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_close_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_coin_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_compare_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_exit_embossed.png",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_lock_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_search_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_settings_embossed.png",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_shard_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Icons/icon_sort_embossed.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "icon",
+      "note": "Empty-slot/function glyph. Not a finished item illustration."
+    },
+    {
+      "file": "PNG/Buttons/button_back_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_back_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_back_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_back_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_bag_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_bag_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_bag_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_bag_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_close_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_close_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_close_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_close_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_compare_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_compare_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_compare_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_compare_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_settings_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_settings_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_settings_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_settings_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_sort_normal.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_sort_hover.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_sort_pressed.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Buttons/button_sort_disabled.png",
+      "width": 240,
+      "height": 240,
+      "mode": "RGBA",
+      "kind": "button",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/divider_painted_gold.png",
+      "width": 768,
+      "height": 32,
+      "mode": "RGBA",
+      "kind": "separator",
+      "note": ""
+    },
+    {
+      "file": "PNG/Components/progress_track.png",
+      "width": 640,
+      "height": 32,
+      "mode": "RGBA",
+      "kind": "progress",
+      "note": "",
+      "suggested_border_LBRT_px": [
+        14,
+        10,
+        14,
+        10
+      ]
+    },
+    {
+      "file": "PNG/Components/progress_fill.png",
+      "width": 640,
+      "height": 32,
+      "mode": "RGBA",
+      "kind": "progress",
+      "note": ""
+    },
+    {
+      "file": "PNG/ItemArt/item_weapon_reference.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "item_reference",
+      "note": "Extracted from your inventory art; native source under 80 px. Preview-quality, not a fresh 128px painting."
+    },
+    {
+      "file": "PNG/ItemArt/item_armor_reference.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "item_reference",
+      "note": "Extracted from your inventory art; native source under 80 px. Preview-quality, not a fresh 128px painting."
+    },
+    {
+      "file": "PNG/ItemArt/item_ring_reference.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "item_reference",
+      "note": "Extracted from your inventory art; native source under 80 px. Preview-quality, not a fresh 128px painting."
+    },
+    {
+      "file": "PNG/ItemArt/item_talisman_reference.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "item_reference",
+      "note": "Extracted from your inventory art; native source under 80 px. Preview-quality, not a fresh 128px painting."
+    },
+    {
+      "file": "PNG/ItemArt/item_artifact_reference.png",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA",
+      "kind": "item_reference",
+      "note": "Extracted from your inventory art; native source under 80 px. Preview-quality, not a fresh 128px painting."
+    },
+    {
+      "file": "PNG/Components/layout_panels_only_1920x1080.png",
+      "width": 1920,
+      "height": 1080,
+      "mode": "RGBA",
+      "kind": "reference_layout",
+      "note": "Optional panel layout with no text; separate sprites are preferred for assembly."
+    }
+  ]
+}

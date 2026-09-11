@@ -1,0 +1,632 @@
+Mono path[0] = 'C:/Users/d.grab/Desktop/the-game/artifacts/capture-build/Razlom_Data/Managed'
+Mono config path = 'C:/Users/d.grab/Desktop/the-game/artifacts/capture-build/MonoBleedingEdge/etc'
+Starting managed debugger on port 56376
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=0.0.0.0:56376
+CodeReloadManager initialized
+Found 4 interfaces on host : 0) 192.168.222.14 1) 10.0.85.2 2) 172.27.80.1 3) 192.168.0.103
+Player connection [71368]  Target information:
+
+Player connection [71368]  * "[IP] 192.168.222.14 [Port] 55000 [Flags] 2 [Guid] 3969851376 [EditorId] 776390415 [Version] 1048832 [Id] WindowsPlayer(2,mitpc08) [Debug] 1 [PackageName] WindowsPlayer [ProjectName] razlom" 
+
+Player connection [71368]  * "[IP] 10.0.85.2 [Port] 55000 [Flags] 2 [Guid] 3969851376 [EditorId] 776390415 [Version] 1048832 [Id] WindowsPlayer(2,mitpc08) [Debug] 1 [PackageName] WindowsPlayer [ProjectName] razlom" 
+
+Player connection [71368]  * "[IP] 172.27.80.1 [Port] 55000 [Flags] 2 [Guid] 3969851376 [EditorId] 776390415 [Version] 1048832 [Id] WindowsPlayer(2,mitpc08) [Debug] 1 [PackageName] WindowsPlayer [ProjectName] razlom" 
+
+Player connection [71368]  * "[IP] 192.168.0.103 [Port] 55000 [Flags] 2 [Guid] 3969851376 [EditorId] 776390415 [Version] 1048832 [Id] WindowsPlayer(2,mitpc08) [Debug] 1 [PackageName] WindowsPlayer [ProjectName] razlom" 
+
+Player connection [71368] Started UDP target info broadcast (1) on [225.0.0.222:54997].
+
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.5.10f1 (3bd4f66ad299)
+[Subsystems] Discovering subsystems at path C:/Users/d.grab/Desktop/the-game/artifacts/capture-build/Razlom_Data/UnitySubsystems
+[D3D12 Device Filter] Vendor Name: NVIDIA
+[D3D12 Device Filter] Device Name: NVIDIA GeForce RTX 3060
+[D3D12 Device Filter] Driver Version: 32.0.15.6094
+[D3D12 Device Filter] Feature Level: 12.2
+[D3D12 Device Filter] Graphics Memory: 12115 MB
+[D3D12 Device Filter] Processor Count: 20
+[D3D12 Device Filter] Device Type: Discrete
+GfxDevice: creating device client; kGfxThreadingModeSplitJobs
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 3060 (ID=0x2504)
+    Vendor:          NVIDIA
+    VRAM:            12115 MB
+    App VRAM Budget: 11347 MB
+    Driver:          32.0.15.6094
+Begin MonoManager ReloadAssembly
+- Finished resetting the current domain, in  0.054 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+<RI> Initializing input.
+Using Windows.Gaming.Input
+<RI> Input initialized.
+UnloadTime: 4.412100 ms
+[Разлом] Потолок кадров: Синхронизация → vSyncCount=1, targetFrameRate=-1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.GameUserSettings:ApplyFrameCap () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/GameUserSettings.cs:173)
+Game.View.GameUserSettings:Load () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/GameUserSettings.cs:118)
+Game.View.GameUserSettings:RuntimeLoad () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/GameUserSettings.cs:109)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Лагерь. Сид сессии 20260829. E — войти в Разлом, T — Полигон.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.TickDriver:Awake () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/TickDriver.cs:268)
+UnityEngine.GameObject:SetActive (bool)
+Game.View.Bootstrap:Awake () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/Bootstrap.cs:95)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[SHADOW DEBUG] AWAKE: Distance=150 | Asset=PC_RPAsset | Frame=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+ShadowDistanceDebug:Print (string) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:57)
+ShadowDistanceDebug:Awake () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:12)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[SHADOW DEBUG] ON ENABLE: Distance=150 | Asset=PC_RPAsset | Frame=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+ShadowDistanceDebug:Print (string) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:57)
+ShadowDistanceDebug:OnEnable () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[camp] spawn=(0.00, 0.10, -2.88) sharedCombat=True tent=camping+tent+3d+model (UnityEngine.Transform) cells=187345
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CampPlayerView:Start () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CampPlayerView.cs:91)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[SHADOW DEBUG] START: Distance=150 | Asset=PC_RPAsset | Frame=1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+ShadowDistanceDebug:Print (string) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:57)
+ShadowDistanceDebug:Start () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ShadowDistanceDebug.cs:22)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Wole: модель Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig, контроллер найден
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1667)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:422)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Wole: материал собран в игре из «Characters/Pelag_v6/Pelag_v6_BaseColor», шейдер Razlom/Texture Toon.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BuildRuntimeMaterial (string,Game.Sim.Faction) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1794)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1696)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:422)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Wole: материал собран в игре из «Weapons/Pelag/AnchorChain/Pelag_AnchorChain_BaseColor», шейдер Razlom/Texture Toon.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BuildRuntimeMaterial (string,Game.Sim.Faction) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1794)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1703)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:422)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Orvill: модель Characters/Forest_Guardian/Forest_Guardian, контроллер найден
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1667)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:426)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Orvill: материал собран в игре из «Characters/Forest_Guardian/Forest_Guardian_BaseColor», шейдер Razlom/Texture Toon.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BuildRuntimeMaterial (string,Game.Sim.Faction) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1794)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1696)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:426)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Orvill: модель Characters/Forest_RootSwarm/Forest_RootSwarm@Idle, контроллер найден
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1667)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:430)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Orvill: материал собран в игре из «Characters/Forest_RootSwarm/Forest_RootSwarm_BaseColor», шейдер Razlom/Texture Toon.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.ArenaView:BuildRuntimeMaterial (string,Game.Sim.Faction) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1794)
+Game.View.ArenaView:BodyFactory (string,string,string,string,Game.Sim.Faction,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:1696)
+Game.View.ArenaView:Initialize () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:430)
+Game.View.ArenaView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ArenaView.cs:482)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Забег 1, сид 2854734777613887386, комнат 11
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.TickDriver:SyncGeneration () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/TickDriver.cs:1158)
+Game.View.TickDriver:Update () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/TickDriver.cs:341)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-grip] root=(-0.07, 0.90, -2.70), tip=(-0.49, 0.37, -2.76), length=0,678, edge=(0.78, -0.62, -0.04), edgeDown=0,619, socketRight=(0.03, 0.09, -1.00), socketUp=(-0.02, 1.00, 0.09), socketForward=(1.00, 0.02, 0.03), renderer=Pelag_FantasySaber_Equipped, enabled=True, active=True, boundsCenter=(-0.12, 0.80, -2.72), boundsSize=(0.92, 1.07, 0.22), shader=Universal Render Pipeline/Lit
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:ConfigureCaptureView () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:677)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:329)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:383)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:PlaceModuleDecor (Game.Sim.LayoutMap,Game.Sim.PlacedModule,int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:455)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:401)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:PlaceModuleDecor (Game.Sim.LayoutMap,Game.Sim.PlacedModule,int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:455)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:401)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:PlaceModuleDecor (Game.Sim.LayoutMap,Game.Sim.PlacedModule,int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:455)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:401)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:PlaceModuleDecor (Game.Sim.LayoutMap,Game.Sim.PlacedModule,int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:455)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:401)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:TryScatterBoundaryEdge (int,int,int,int,single,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:664)
+Game.View.LayoutView:ScatterBoundaryDecor (single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:634)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:404)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:TryScatterBoundaryEdge (int,int,int,int,single,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:664)
+Game.View.LayoutView:ScatterBoundaryDecor (single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:634)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:404)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:TryScatterBoundaryEdge (int,int,int,int,single,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:664)
+Game.View.LayoutView:ScatterBoundaryDecor (single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:633)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:404)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[Разлом] Пул исчерпан на 1 объектах — увеличь прогрев.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:LogWarning (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:216)
+Game.View.ViewPool:Acquire () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/ViewPool.cs:97)
+Game.View.LayoutView:SpawnDecor (int,single,single,System.Random) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:518)
+Game.View.LayoutView:TryScatterBoundaryEdge (int,int,int,int,single,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:664)
+Game.View.LayoutView:ScatterBoundaryDecor (single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:633)
+Game.View.LayoutView:Rebuild (Game.Sim.LayoutMap) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:404)
+Game.View.LayoutView:Show (Game.Sim.LayoutMap,ulong,Game.Sim.EncounterPlan) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:91)
+Game.View.LayoutView:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/LayoutView.cs:316)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 216)
+
+[capture-gc] samples=120, total=8490568, max=5423519, average=70754 bytes/frame
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:395)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-audio] listener=0,4542773 paused=False effects=0,2109145 sources=14
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudioCapture:.ctor (string) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudioCapture.cs:28)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:409)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-audio-frame] available=0 requested=1600 dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudioCapture:Frame (bool) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudioCapture.cs:60)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:425)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-audio-frame] available=0 requested=1600 dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudioCapture:Frame (bool) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudioCapture.cs:60)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:425)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-audio-frame] available=0 requested=1600 dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudioCapture:Frame (bool) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudioCapture.cs:60)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:425)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-live-cast] ability=1506644217 tick=77 stage=1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.TickDriver:CaptureInput () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/TickDriver.cs:713)
+Game.View.TickDriver:Update () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/TickDriver.cs:308)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[cleave-heavy-slash] tick=86,00 position=(5.00, 1.50, 5.00) scale=(2.05, 2.05, 1.15)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.PelagVfxController:UpdateCleaveSlash () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/PelagVfxController.cs:419)
+Game.View.PelagVfxController:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/PelagVfxController.cs:126)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-cue] WhooshHeavy clip=sword_whoosh_01 load=Loaded volume=0,2304 playing=True dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudio:Play (Game.View.CombatSound,single,single,single,single,int) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:495)
+Game.View.CombatAudio:UpdateCleaveSound () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:141)
+Game.View.CombatAudio:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:96)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[cleave-ground-contact] tick=89,00 position=(6.40, 0.03, 5.00)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.PelagVfxController:UpdateCleaveSlash () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/PelagVfxController.cs:398)
+Game.View.PelagVfxController:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/PelagVfxController.cs:126)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-cue] HitMetal clip=sword_hit_10 load=Loaded volume=0,2428416 playing=True dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudio:Play (Game.View.CombatSound,single,single,single,single,int) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:495)
+Game.View.CombatAudio:PlayDamage (Game.Sim.SimEvent&) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:385)
+Game.View.CombatAudio:ConsumeEvents () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:218)
+Game.View.CombatAudio:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:95)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-cue] HitBody clip=body_hit_03 load=Loaded volume=0,3654144 playing=True dsp=8,384
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudio:Play (Game.View.CombatSound,single,single,single,single,int) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:495)
+Game.View.CombatAudio:PlayDamage (Game.Sim.SimEvent&) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:387)
+Game.View.CombatAudio:ConsumeEvents () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:218)
+Game.View.CombatAudio:LateUpdate () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudio.cs:95)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-lines] TrailRenderer «Pelag Leap Trail» путь=«Bootstrap/Симуляция/Pelag Leap Trail» emitting=False позиция=(0.00, 0.00, 0.00)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:DumpSceneLines () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:750)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:764)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-lines] TrailRenderer «Leap side stroke 0» путь=«Bootstrap/Симуляция/Leap side stroke 0» emitting=False позиция=(0.00, 0.00, 0.00)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:DumpSceneLines () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:750)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:764)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-lines] TrailRenderer «Leap side stroke 1» путь=«Bootstrap/Симуляция/Leap side stroke 1» emitting=False позиция=(0.00, 0.00, 0.00)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:DumpSceneLines () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:750)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:764)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture] ART/PELAG/animation/cleave/qa-untargeted-pack\shot_00_t1.04s.png  1920x1080
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:771)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture] ART/PELAG/animation/cleave/qa-untargeted-pack\shot_01_t1.12s.png  1920x1080
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:771)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture] ART/PELAG/animation/cleave/qa-untargeted-pack\shot_02_t1.30s.png  1920x1080
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CaptureRig:CaptureStill (int,single) (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:771)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:430)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[capture-audio] samples=232000 channels=2 rate=48000 peak=0.0000 rms=0.0000 clipped=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace () (at C:/build/output/unity/unity/Runtime/Export/Scripting/StackTrace.cs:35)
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[]) (at C:/build/output/unity/unity/Runtime/Export/Logging/DebugLogHandler.cs:9)
+UnityEngine.Logger:Log (UnityEngine.LogType,object) (at C:/build/output/unity/unity/Runtime/Export/Logging/Logger.cs:60)
+UnityEngine.Debug:Log (object) (at C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs:123)
+Game.View.CombatAudioCapture:Dispose () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CombatAudioCapture.cs:99)
+Game.View.CaptureRig/<Run>d__176:MoveNext () (at C:/Users/d.grab/Desktop/the-game/artifacts/capture-project/Assets/Game.View/CaptureRig.cs:435)
+UnityEngine.SetupCoroutine:InvokeMoveNext (System.Collections.IEnumerator,intptr) (at C:/build/output/unity/unity/Runtime/Export/Scripting/Coroutines.cs:17)
+
+(Filename: C:/build/output/unity/unity/Runtime/Export/Debug/Debug.bindings.cs Line: 123)
+
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+CodeReloadManager destroyed
+PlayerConnection::Cleanup##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1789074596585,"processId":67216,"allocatedMemory":604009,"memoryLabels":[{"Default":16000},{"Thread":10176},{"Manager":540183},{"Shader":8},{"GfxDevice":2448},{"GfxThread":7680},{"Animation":677120},{"Serialization":2456},{"Input":2440},{"ScriptingNativeRuntime":15168},{"BaseObject":15232},{"String":517},{"PoolAlloc":240},{"CodeReload":440},{"CloudService":144},{"WebRequest":3917},{"VR":1928},{"Video":144},{"NativeArray":372},{"Subsystems":96},{"Gui":340},{"CoreBusinessMetrics":128}]}

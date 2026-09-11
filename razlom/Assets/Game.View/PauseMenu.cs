@@ -136,11 +136,23 @@ namespace Game.View
             Open(page);
         }
 
+        /// <summary>
+        /// Открыть настройки из главного меню.
+        ///
+        /// Отдельный вход, потому что меню — не пауза: игра ещё не началась, и
+        /// Escape там ничего не приостанавливает. Страница графики выбрана
+        /// первой намеренно: до запуска игрок настраивает экран, а не звук.
+        /// </summary>
+        public void OpenSettings() => Open(Page.Graphics);
+
         private void Update()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (DeveloperMenu.BlocksPause) return;
 #endif
+            // Escape в главном меню не открывает паузу: паузить нечего, а
+            // закрытие этой паузы сняло бы паузу самого меню.
+            if (MainMenuView.IsOpen && !_open) return;
             if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount) return;
             if (_displayPreviewActive && Time.unscaledTime >= _displayConfirmationDeadline)
                 CancelDisplayPreview("Изменения экрана отменены: время подтверждения истекло.");
@@ -149,11 +161,14 @@ namespace Game.View
             if (!_open) Open(Page.Main);
             else if (_displayPreviewActive)
                 CancelDisplayPreview("Изменения экрана отменены.");
-            else if (_page != Page.Main)
+            else if (_page != Page.Main && !MainMenuView.IsOpen)
             {
                 SaveAudioIfNeeded();
                 _page = Page.Main;
             }
+            // Из главного меню открыты только настройки, и Escape закрывает их
+            // сразу. Промежуточная страница паузы предлагала бы «продолжить» и
+            // «вернуться в лагерь» игре, которая ещё не началась.
             else Close();
         }
 
@@ -198,10 +213,19 @@ namespace Game.View
             SaveAudioIfNeeded();
             _open = false;
             _page = Page.Main;
-            Time.timeScale = _previousTimeScale > 0f ? _previousTimeScale : 1f;
-            Cursor.lockState = _previousCursorLock;
-            Cursor.visible = _previousCursorVisible;
-            _driver.SetGameplayPaused(false);
+
+            // Под настройками может лежать не игра, а главное меню — тогда
+            // закрывать надо в него, а не в бой. Иначе выход из настроек
+            // запускал бы забег за спиной у игрока.
+            bool toMainMenu = MainMenuView.IsOpen;
+            Time.timeScale = toMainMenu ? 0f
+                : _previousTimeScale > 0f ? _previousTimeScale : 1f;
+            if (!toMainMenu)
+            {
+                Cursor.lockState = _previousCursorLock;
+                Cursor.visible = _previousCursorVisible;
+            }
+            _driver.SetGameplayPaused(toMainMenu);
         }
 
         private void OnDisable()
@@ -313,10 +337,14 @@ namespace Game.View
             var panel = new Rect(550f, 118f, 820f, 850f);
             DrawPanel(panel);
             GUI.Label(new Rect(panel.x + 48f, panel.y + 38f, 510f, 56f), "НАСТРОЙКИ", _title);
+            // «Назад» ведёт туда, откуда пришли: из паузы — на её главную
+            // страницу, из главного меню — обратно в меню. Страница паузы над
+            // незапущенной игрой предлагала бы продолжить несуществующий забег.
             if (GUI.Button(new Rect(panel.xMax - 174f, panel.y + 42f, 124f, 48f), "НАЗАД", _button))
             {
                 SaveAudioIfNeeded();
-                _page = Page.Main;
+                if (MainMenuView.IsOpen) Close();
+                else _page = Page.Main;
             }
 
             // Три вкладки вместо двух: 224 в ширину при зазоре 16 ровно

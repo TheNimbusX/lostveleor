@@ -40,9 +40,11 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave')]
     [string] $Skill = '',
     [switch] $LiveSkill,
+    [switch] $NoVfx,
+    [switch] $CleaveMiss,
     [ValidateRange(-180,180)] [int] $CastYaw = 0,
     [ValidateRange(0.5,7)] [double] $CastDistance = 3,
     [ValidateRange(1,60)] [int] $HoldTicks = 60,
@@ -235,6 +237,8 @@ if ($Locomotion) { $playerArgs += '-capture-locomotion' }
 if ($MovingCombat) { $playerArgs += '-capture-moving-combat'; $playerArgs += '-capture-moving-combat-delay'; $playerArgs += [string]$MovingCombatDelay }
 if ($Skill -ne '') { $playerArgs += @('-capture-skill', $Skill) }
 if ($LiveSkill) { $playerArgs += '-capture-live-skill' }
+if ($NoVfx) { $playerArgs += '-capture-no-vfx' }
+if ($CleaveMiss) { $playerArgs += '-capture-cleave-miss' }
 if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
 $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization.CultureInfo]::InvariantCulture))
 $playerArgs += @('-capture-hold-ticks', $HoldTicks)

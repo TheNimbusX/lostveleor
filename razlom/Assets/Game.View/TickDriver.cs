@@ -458,6 +458,14 @@ namespace Game.View
                     if (kb.digit4Key.isPressed) _pending.AbilityHoldMask |= 8;
                 }
 
+                // ПЯТЫЙ СЛОТ — общий кувырок, и клавиша у него ОДНА В ОБОИХ
+                // РЯДАХ. Ряд способностей — это настройка вкуса, 1234 против
+                // QWER; кувырок в него не входит вовсе, он живёт под большим
+                // пальцем, как деш в любом экшене. Поэтому Space стоит после
+                // развилки, а не дважды внутри неё.
+                _slotPressed[4] = kb.spaceKey.wasPressedThisFrame;
+                if (kb.spaceKey.isPressed) _pending.AbilityHoldMask |= 16;
+
                 LatchSlots(_slotPressed, choosing);
 
                 LatchKeys(
@@ -472,8 +480,9 @@ namespace Game.View
             Mouse mouse = Mouse.current;
             CaptureAim(
                 mouse != null ? mouse.position.ReadValue() : Vector2.zero,
-                mouse != null && mouse.rightButton.isPressed,
-                mouse != null && mouse.rightButton.wasPressedThisFrame);
+                moveHeld: mouse != null && mouse.rightButton.isPressed,
+                movePressed: mouse != null && mouse.rightButton.wasPressedThisFrame,
+                attackHeld: mouse != null && mouse.leftButton.isPressed);
 #else
             if (letters)
             {
@@ -498,6 +507,11 @@ namespace Game.View
                 if (Input.GetKey(KeyCode.Alpha4)) _pending.AbilityHoldMask |= 8;
             }
 
+            // Кувырок вне ряда: одна клавиша при обоих раскладах. См.
+            // комментарий в ветке ENABLE_INPUT_SYSTEM.
+            _slotPressed[4] = Input.GetKeyDown(KeyCode.Space);
+            if (Input.GetKey(KeyCode.Space)) _pending.AbilityHoldMask |= 16;
+
             LatchSlots(_slotPressed, choosing);
 
             LatchKeys(
@@ -511,7 +525,10 @@ namespace Game.View
                 ground: Input.GetKeyDown(KeyCode.T),
                 salvage: Input.GetKeyDown(KeyCode.V));
 
-            CaptureAim(Input.mousePosition, Input.GetMouseButton(1), Input.GetMouseButtonDown(1));
+            CaptureAim(Input.mousePosition,
+                moveHeld: Input.GetMouseButton(1),
+                movePressed: Input.GetMouseButtonDown(1),
+                attackHeld: Input.GetMouseButton(0));
 #endif
 
             if (CaptureRig.RunShowcase && Sim != null)
@@ -651,6 +668,19 @@ namespace Game.View
                 {
                     if (_liveSkillStartedTick < 0) _liveSkillStartedTick = Sim.Tick;
                     int elapsed = Sim.Tick - _liveSkillStartedTick;
+                    if (CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave && Sim.Entities.Count > 1)
+                    {
+                        Vector3 direction = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right;
+                        var facing = new FixVec2(Fix64.FromDouble(direction.x), Fix64.FromDouble(direction.z));
+                        if (elapsed < 18)
+                        {
+                            Sim.Entities.Facing[Simulation.PlayerId] = facing;
+                            Sim.Entities.Position[1] = Sim.Entities.Position[Simulation.PlayerId]
+                                + facing * Fix64.FromDouble(CaptureRig.CastDistance);
+                        }
+                        if (elapsed == 26 && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-cleave-miss") >= 0)
+                            Sim.Entities.Position[1] = Sim.Entities.Position[Simulation.PlayerId] + facing * Fix64.FromInt(8);
+                    }
                     bool sequence = CaptureRig.VfxShowcase == PelagVfxShowcase.Rotation;
                     if (CaptureRig.PerformanceCapture && !sequence && elapsed >= 180)
                     {
@@ -673,11 +703,12 @@ namespace Game.View
                     {
                         int definition = sequence
                             ? (_liveSkillCastStage == 0 ? AbilityDefinition.AnchorLeapId
-                                : _liveSkillCastStage == 1 ? AbilityDefinition.ChainCycloneId
+                                : _liveSkillCastStage == 1 ? AbilityDefinition.AnchorSlamId
                                 : _liveSkillCastStage == 2 ? AbilityDefinition.WhirlwindId : AbilityDefinition.ChainStepId)
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorLeap ? AbilityDefinition.AnchorLeapId
-                            : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep ? AbilityDefinition.ChainCycloneId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep ? AbilityDefinition.AnchorSlamId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.ChainStep ? AbilityDefinition.ChainStepId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave ? AbilityDefinition.CleaveId
                             : AbilityDefinition.WhirlwindId;
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
@@ -845,7 +876,11 @@ namespace Game.View
                         // это и есть отмена без обращения к другой кнопке.
                         if (Sim.Tick >= Sim.AbilityReadyTick(i)) _targetAimSlot = _targetAimSlot == i ? -1 : i;
                     }
-                    else { _targetAimSlot = -1; _abilityLatch |= (byte)(1 << i); }
+                    else
+                    {
+                        _targetAimSlot = -1;
+                        _abilityLatch |= (byte)(1 << i);
+                    }
                 }
             }
         }
@@ -856,18 +891,37 @@ namespace Game.View
         /// Луч, плоскость и Vector3 — это Unity, и именно поэтому вся эта
         /// арифметика живёт ЗДЕСЬ, а не в симуляции. Через границу проходит
         /// уже квантованная точка.
+        ///
+        /// ДВЕ КНОПКИ — ДВА НАМЕРЕНИЯ, И НИ ОДНО НЕ ЗАВИСИТ ОТ ТОГО, ЧТО ПОД
+        /// КУРСОРОМ. ПКМ (<paramref name="moveHeld"/>) ведёт, ЛКМ
+        /// (<paramref name="attackHeld"/>) бьёт. Раньше кнопка была одна, и
+        /// намерение приходилось угадывать по силуэту под указателем: клик
+        /// рядом с толпой означал атаку, чуть в сторону — движение, и игрок
+        /// платил за промах мышью сменой действия.
         /// </summary>
-        internal void CaptureAim(Vector2 screenPosition, bool held, bool pressedThisFrame)
+        internal void CaptureAim(Vector2 screenPosition, bool moveHeld, bool movePressed,
+            bool attackHeld)
         {
             byte flags = 0;
             if (_camera == null) _camera = Camera.main;
+            // Курсор на собственном силуэте гасит ПРИКАЗ ИДТИ, но не удар.
+            //
+            // Правило появилось, чтобы ПКМ по своей же модели не отправляла
+            // героя шагать за собственную спину. Пока кнопка была одна, гасить
+            // приходилось весь кадр. Теперь это стоило бы атаки: в ближнем бою
+            // курсор оказывается на герое постоянно, и кнопка молча пропускала
+            // бы взмахи ровно там, где по ней и колотят.
+            //
+            // Направление удара при этом не берётся из-под курсора: оно уже
+            // есть в Aim прошлого кадра, а симуляция доворачивает корпус сама.
             if (_targetAimSlot < 0 && PointerOverPlayer(screenPosition))
             {
-                _pending.Flags = 0;
-                _pending.AttackTarget = -1;
                 _pointerPressLatched = false;
-                AttackHeld = MoveOrderHeld = MoveOrderPressedThisFrame = false;
+                MoveOrderHeld = MoveOrderPressedThisFrame = false;
                 HoveredEntity = -1;
+                AttackHeld = attackHeld;
+                _pending.Flags = attackHeld ? (byte)InputFlags.Attack : (byte)0;
+                _pending.AttackTarget = -1;
                 return;
             }
 
@@ -902,7 +956,7 @@ namespace Game.View
                 bool confirm = Input.GetMouseButtonDown(0);
                 bool cancel = Input.GetKeyDown(KeyCode.Escape);
 #endif
-                ResolveTargetAim(confirm, !valid || cancel || pressedThisFrame);
+                ResolveTargetAim(confirm, !valid || cancel || movePressed);
                 _pointerPressLatched = false;
                 _pending.Flags = 0;
                 _pending.AttackTarget = -1;
@@ -910,31 +964,34 @@ namespace Game.View
                 return;
             }
             HoveredEntity = FindUnderCursor(screenPosition);
-            AttackHeld = held && HoveredEntity >= 0;
-            MoveOrderHeld = held && HoveredEntity < 0;
-            MoveOrderPressedThisFrame = pressedThisFrame && HoveredEntity < 0;
+            AttackHeld = attackHeld;
+            MoveOrderHeld = moveHeld;
+            MoveOrderPressedThisFrame = movePressed;
 
-            // Одна кнопка выражает два разных намерения. ПКМ по врагу назначает
-            // цель атаки, ПКМ по земле безусловно приказывает идти и тем самым
-            // отменяет бой. Смешанный MoveOrder|Attack заставлял автоатаку тут
-            // же перехватывать любой клик рядом с толпой и запирал героя.
-            if (held)
-                flags = HoveredEntity >= 0
-                    ? (byte)InputFlags.Attack
-                    : (byte)InputFlags.MoveOrder;
+            // Флаги собираются независимо и могут стоять оба сразу: отходить,
+            // продолжая махать, — обычное поведение, а не исключение.
+            //
+            // ЦЕЛЬ ПОД КУРСОРОМ — УТОЧНЕНИЕ, А НЕ УСЛОВИЕ АТАКИ. Курсор на
+            // силуэте означает «бей вот этого»; курсор по пустому месту
+            // означает «бей того, кто передо мной», и цель выбирает симуляция
+            // тем же поиском ближайшего в лобовом секторе. Пустота больше не
+            // отменяет удар — раньше отменяла, потому что кнопка была общая и
+            // иначе любой промах мышью превращался бы в бег в толпу.
+            if (moveHeld) flags |= (byte)InputFlags.MoveOrder;
+            if (attackHeld) flags |= (byte)InputFlags.Attack;
+
             _pending.Flags = flags;
-            _pending.AttackTarget = (flags & (byte)InputFlags.Attack) != 0
-                ? HoveredEntity
-                : -1;
+            _pending.AttackTarget = attackHeld && HoveredEntity >= 0 ? HoveredEntity : -1;
 
-            if (pressedThisFrame)
+            if (movePressed)
             {
+                // Защёлка держит ИМЕННО ЭТОТ кадр целиком, включая зажатую
+                // атаку: ConsumeInput подменяет флаги целиком, и собранный
+                // только из приказа идти кадр стирал бы удар за тот же тик.
                 _pointerPressFrame = InputFrame.Empty;
                 _pointerPressFrame.Aim = _pending.Aim;
-                _pointerPressFrame.Flags = HoveredEntity >= 0
-                    ? (byte)InputFlags.Attack
-                    : (byte)InputFlags.MoveOrder;
-                _pointerPressFrame.AttackTarget = HoveredEntity >= 0 ? HoveredEntity : -1;
+                _pointerPressFrame.Flags = flags;
+                _pointerPressFrame.AttackTarget = _pending.AttackTarget;
                 _pointerPressLatched = true;
             }
         }
@@ -944,6 +1001,16 @@ namespace Game.View
         /// Дерево «Печати пламени» временно не участвует: сейчас проверяется
         /// качество одного приёма, а не ширина набора способностей.
         /// </summary>
+        /// <summary>
+        /// Перечитывает набор способностей из лагеря.
+        ///
+        /// Нужен смене ветки: сам по себе набор применяется при смене
+        /// симуляции, то есть на входе в забег, и без этого вызова игрок
+        /// увидел бы новые кнопки только со следующего Разлома — а решение
+        /// принято уже сейчас.
+        /// </summary>
+        public void RefreshAbilityBuild() => ApplyAbilityBuild();
+
         private void ApplyAbilityBuild()
         {
             Simulation sim = Sim;
@@ -957,19 +1024,17 @@ namespace Game.View
             // Порядок в буфере значения не имеет: AbilityBuild сортирует узлы
             // по возрастанию Id сам, иначе порядок галочек влиял бы на урон.
             //
-            // ВСЕ ЧЕТЫРЕ СЛОТА КИТА ПЕЛАГА. Панель перестала быть пустой на три
-            // четверти: Вихрь режет вокруг себя, Бросок якоря вносит в толпу,
-            // Подсечка собирает толпу к себе, Шаг по цепи выносит из окружения.
+            // ЧТО ЛЕЖИТ В СЛОТАХ, РЕШАЕТ ВЕТКА, А НЕ ЭТОТ ФАЙЛ. Раньше здесь
+            // стоял жёсткий список, и он был смесью обеих веток сразу: Вихрь
+            // саблей рядом с Ударом якорем. Набор — это правило игры, и живёт
+            // оно в симуляции (PelagKit), иначе съёмка, тесты и живой запуск
+            // разошлись бы в том, чем игрок вообще бьёт.
             //
-            // ПОРЯДОК ВЗЯТ С УТВЕРЖДЁННОГО ЛИСТА `ART/.../PELAG/abilitys.png`,
-            // где способности пронумерованы 2–5 после автоатаки. Свой порядок
-            // был бы не хуже как петля, но расхождение между листом дизайна и
-            // игрой стоит дорого: художник, владелец и код обязаны называть
-            // третью кнопку одним и тем же именем.
-            sim.SetAbility(0, AbilityDefinition.Whirlwind(), _nodeBuffer, 0);
-            sim.SetAbility(1, AbilityDefinition.AnchorLeap(), _nodeBuffer, 0);
-            sim.SetAbility(2, AbilityDefinition.ChainCyclone(), _nodeBuffer, 0);
-            sim.SetAbility(3, AbilityDefinition.ChainStep(), _nodeBuffer, 0);
+            // Ветку выбирают в лагере; вне лагеря берётся сабельная как
+            // стартовая — ею игрок знакомится с боем в начале Акта 1.
+            CombatBranch branch = Session?.Camp != null ? Session.Camp.Branch : CombatBranch.Sabre;
+            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+                sim.SetAbility(slot, PelagKit.Definition(branch, slot), _nodeBuffer, 0);
 
             _appliedHotter = NodeHotter;
             _appliedSplit = NodeSplit;
@@ -1239,6 +1304,8 @@ namespace Game.View
             Vector3 current = new Vector3(curr.X.ToFloat(), 0f, curr.Y.ToFloat());
             if (current.sqrMagnitude < 0.000001f) return Vector3.zero;
             current.Normalize();
+
+            if (Sim.Entities.ForcedKind[entityId] == (byte)ForcedMotionKind.Roll) return current;
 
             FixVec2 prev = _prevFacings[entityId];
             Vector3 previous = new Vector3(prev.X.ToFloat(), 0f, prev.Y.ToFloat());

@@ -606,7 +606,7 @@ public static partial class RazlomPelagVfxAssetBuilder
         }
     }
 
-    private static void ReplaceImportedParticleMaterials(GameObject root)
+    internal static void ReplaceImportedParticleMaterials(GameObject root)
     {
         // Hovl's legacy Particles/Alpha Blended shader is not included by the
         // URP player build. Keep the imported textures and curves, but point
@@ -747,7 +747,7 @@ public static partial class RazlomPelagVfxAssetBuilder
         }
     }
 
-    private static void AddAuthoredAccent(GameObject root, string path, float scale, float lifetime,
+    internal static void AddAuthoredAccent(GameObject root, string path, float scale, float lifetime,
         bool ground, params string[] branches)
     {
         GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -793,7 +793,7 @@ public static partial class RazlomPelagVfxAssetBuilder
         }
     }
 
-    private static void SanitizeImportedVfx(GameObject root)
+    internal static void SanitizeImportedVfx(GameObject root)
     {
         Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
         for (int i = 0; i < transforms.Length; i++)
@@ -1340,7 +1340,8 @@ public static partial class RazlomPelagVfxAssetBuilder
             if (previousEntries != null && (id == PelagVfxId.AutoAttackImpact
                 || id == PelagVfxId.AutoAttackCriticalImpact || id == PelagVfxId.FootstepDust
                 || id == PelagVfxId.WhirlwindRing || id == PelagVfxId.WhirlwindHit
-                || id == PelagVfxId.CyclonePullImpact))
+                || id == PelagVfxId.CyclonePullImpact || id == PelagVfxId.RollDash || id == PelagVfxId.Evade
+                || id == PelagVfxId.CleaveHit || id == PelagVfxId.CleaveSlash))
             {
                 int previous = System.Array.FindIndex(previousEntries, entry => entry.Id == id && entry.Prefab != null);
                 if (previous >= 0) { library.Entries[i] = previousEntries[previous]; continue; }

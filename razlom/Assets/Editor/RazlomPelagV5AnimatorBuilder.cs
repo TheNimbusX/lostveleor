@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v24.CycloneMocap";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v28.GreatSwordTimeline";
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
     private const float IdleTransitionDuration = 0.15f;
@@ -152,6 +152,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, MoveY, AnimatorControllerParameterType.Float);
         AddParameter(controller, "TurnDirection", AnimatorControllerParameterType.Float);
         AddParameter(controller, "TurnPhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, "CleavePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool, defaultBool: true);
         AddParameter(controller, "Stunned", AnimatorControllerParameterType.Bool);
         AddParameter(controller, LocomotionPlaybackSpeed, AnimatorControllerParameterType.Float);
@@ -172,6 +173,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "ChainStepRecoverB", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "AnchorSweep", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "ChainStep", AnimatorControllerParameterType.Trigger);
+        AddParameter(controller, "Roll", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "HitFront", AnimatorControllerParameterType.Trigger);
         AddParameter(controller, "Death", AnimatorControllerParameterType.Trigger);
 
@@ -267,6 +269,10 @@ public static class RazlomPelagV5AnimatorBuilder
             var state = machine.AddState("Cyclone" + phase);
             state.motion = RazlomPelagAuthoredClips.Build("Pelag_AN_Cyclone" + phase, phase == "Loop", "Pelag_AN_CycloneBind");
         }
+        Combat(machine, relaxedIdleState, combatIdleState, runState, "Roll_v5",
+            RazlomPelagAuthoredClips.Build("Pelag_AN_Roll", false, "Pelag_AN_RollBind", 1.8f),
+            "Roll", 1f, .04f, .98f, .12f);
+        RazlomPelagAuthoredClips.Build("Pelag_AN_Cleave", false, "Pelag_AN_CleaveBind");
         Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
             RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd", false, "Pelag_AN_CycloneBind"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
         // exitTime 0.98 и мягкий выход 0.16.
@@ -533,6 +539,7 @@ public static class RazlomPelagV5AnimatorBuilder
         // Время обоих состояний задаёт PelagEquipmentView, включая обратный ход.
         State(upper, "SaberStow", draw, 1f);
         AddCycloneStates(upper);
+        AddCleaveState(upper);
         empty.writeDefaultValues = false;
         upper.defaultState = empty;
 
@@ -567,6 +574,7 @@ public static class RazlomPelagV5AnimatorBuilder
         // подмешивалась к ногам и давала ватную оттяжку после удара.
         AnimatorState empty = State(lower, "LowerBody_Empty", null, 1f);
         AddCycloneStates(lower);
+        AddCleaveState(lower);
         empty.writeDefaultValues = false;
         lower.defaultState = empty;
 
@@ -576,6 +584,15 @@ public static class RazlomPelagV5AnimatorBuilder
             SaberBStateSpeed, 0.11f, 0.76f, 0.22f, true, addExitTransition: false);
         UpperCombat(lower, empty, "Lower_Whirlwind_v5", whirlwind, "LowerHeavyAttack",
             1f, 0.08f, 1f, 0.18f, true, addExitTransition: false);
+    }
+
+    private static void AddCleaveState(AnimatorStateMachine machine)
+    {
+        var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Resources/Characters/Pelag_v5/Pelag_AN_Cleave.anim");
+        var state = State(machine, "Cleave", clip, 1f);
+        state.writeDefaultValues = false;
+        state.timeParameterActive = true;
+        state.timeParameter = "CleavePhase";
     }
 
     private static void AddCycloneStates(AnimatorStateMachine machine)
@@ -714,7 +731,7 @@ public static class RazlomPelagV5AnimatorBuilder
         string trigger, float speed, float blend, float exitTime, float exitBlend)
     {
         AnimatorState state = State(machine, stateName, clip, speed);
-        if (trigger == "Hook" || trigger == "AnchorLeap" || trigger == "AnchorSweep"
+        if (trigger == "Hook" || trigger == "AnchorLeap" || trigger == "AnchorSweep" || trigger == "Roll"
             || trigger.StartsWith("ChainStep", StringComparison.Ordinal))
         {
             // Presentation drives cast tempo per ability while Sim remains the

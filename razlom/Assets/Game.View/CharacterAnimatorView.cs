@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Game.Sim;
 
 namespace Game.View
@@ -193,11 +193,30 @@ namespace Game.View
         private bool _locomotionMoving;
         private float _orvillLocomotionPlaybackSpeed = 1f;
         private float _orvillHitPresentationUntil;
+        [SerializeField, Range(.0f, .08f)] private float _cleaveHitStop = .045f;
+        private float _cleaveHitTick = -1f;
+
+        private bool _cleaveContactConfirmed;
 
         private EnemyContactPose _contactPose;
         public float DeathDuration => _faction == Faction.Wole ? 1.55f : EnemyPresentationProfile.Death(_enemyKind).TotalSeconds;
-        public void PlayContactPose(Vector3 direction, float strength)
-        { if (!IsDead) _contactPose?.Hit(direction, strength, _enemyKind); }
+        public void PlayContactPose(Vector3 direction, float strength, bool heavy = false)
+        { if (!IsDead) _contactPose?.Hit(direction, strength, _enemyKind, heavy); }
+
+        public bool CleaveActive => _abilityPresentationActive && _abilityDefinitionId == AbilityDefinition.CleaveId;
+
+        public void ConfirmCleaveContact()
+        {
+            if (IsDead || _animator == null || !_abilityPresentationActive
+                || _abilityDefinitionId != AbilityDefinition.CleaveId || _cleaveContactConfirmed) return;
+            _cleaveContactConfirmed = true;
+            // Задерживается только поза рубящего героя; симуляция и управление продолжаются.
+
+            _cleaveHitTick = _cycloneDriver.Sim.Tick - 1;
+
+            _actionProtectedUntil = Mathf.Max(_actionProtectedUntil, _abilityPresentationUntil);
+            // Only the Cleave time parameter is held; other animator speed modifiers are untouched.
+        }
         public bool IsDead { get; private set; }
         public bool UsesSprites => _spriteVisual != null;
         public bool CombatReady => _combatReady;
@@ -220,6 +239,7 @@ namespace Game.View
         private float WhirlwindWeight => 1f - Mathf.SmoothStep(0f, 1f,
             Mathf.InverseLerp(WhirlwindRecoveryStart, WhirlwindClipDuration, WhirlwindElapsed));
         public bool LocomotionMoving => _locomotionMoving;
+        public bool RollActive => _abilityPresentationActive && _abilityDefinitionId == AbilityDefinition.DashId && !IsDead;
         public bool HasCommittedAction => IsDead || _attackPresentationActive || _abilityPresentationActive;
         public float TurnAngularSpeed { get; private set; }
         private float _turnTravel;
@@ -285,6 +305,7 @@ namespace Game.View
             _cycloneWasActive = false;
             _cycloneReleasing = false;
             _abilityDefinitionId = 0;
+            _cleaveContactConfirmed = false;
             _chainPresentationVariant = 0;
             _cyclonePhase = -1;
             _attackPresentationActive = false;
@@ -447,10 +468,44 @@ namespace Game.View
             }
         }
 
+        private void UpdateCleaveAnimation()
+        {
+            if (!_abilityPresentationActive || _abilityDefinitionId != AbilityDefinition.CleaveId) return;
+            var sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
+            if (sim == null || !sim.CleaveActive || IsDead)
+            {
+                _cleaveHitTick = -1f;
+                _abilityPresentationActive = false;
+                _actionProtectedUntil = 0f;
+                ReleaseUpperBodyToLocomotion(.12f);
+                return;
+            }
+            float tick = sim.Tick - 1 + _cycloneDriver.Alpha;
+            if (_cleaveContactConfirmed && _cleaveHitTick >= 0f)
+            {
+                float holdTicks = _cleaveHitStop * Simulation.TicksPerSecond;
+                if (tick < _cleaveHitTick + holdTicks) tick = _cleaveHitTick;
+                else tick = Mathf.Lerp(_cleaveHitTick, sim.CleaveEndTick,
+                    Mathf.InverseLerp(_cleaveHitTick + holdTicks, sim.CleaveEndTick, tick));
+            }
+            float clipTime = tick <= sim.CleaveContactTick
+                ? .4f * Mathf.InverseLerp(sim.CleaveStartTick, sim.CleaveContactTick, tick)
+                : Mathf.Lerp(.4f, .9f, Mathf.InverseLerp(sim.CleaveContactTick, sim.CleaveEndTick, tick));
+            _animator.SetFloat("CleavePhase", clipTime / .9f);
+        }
+
         private void Update()
         {
+            UpdateCleaveAnimation();
             UpdateCycloneAnimation();
-            if (_abilityPresentationActive && Time.time >= _abilityPresentationUntil)
+            if (RollActive && _cycloneDriver != null && _cycloneDriver.Sim != null
+                && _cycloneDriver.Sim.Entities.ForcedKind[Simulation.PlayerId] != (byte)ForcedMotionKind.Roll)
+            {
+                _abilityPresentationActive = false;
+                _actionProtectedUntil = 0f;
+                _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", .08f, 0);
+            }
+            if (_abilityPresentationActive && _abilityDefinitionId != AbilityDefinition.CleaveId && Time.time >= _abilityPresentationUntil)
             {
                 if (_abilityUsesLowerBodyLayer) ReleaseUpperBodyToLocomotion(0.12f);
                 _abilityPresentationActive = false;
@@ -694,7 +749,7 @@ namespace Game.View
             }
         }
 
-        public void PlayAttack(int authoritativeVariant = -1)
+        public void PlayAttack(int authoritativeVariant = -1, float elapsed = 0f)
         {
             int variant = authoritativeVariant >= 0 ? authoritativeVariant : _attackVariant;
             _attackVariant = variant + 1;
@@ -736,18 +791,19 @@ namespace Game.View
                 // the production controller uses deterministic direct entry.
                 int upperState = secondStrike ? UpperBodyAttackBState : UpperBodyAttackAState;
                 int lowerState = secondStrike ? LowerBodyAttackBState : LowerBodyAttackAState;
-                bool upperEntered = EnterCommittedAttackState(_upperBodyLayer, upperState);
-                bool lowerEntered = EnterCommittedAttackState(_lowerBodyLayer, lowerState);
+                bool upperEntered = EnterCommittedAttackState(_upperBodyLayer, upperState, elapsed);
+                bool lowerEntered = EnterCommittedAttackState(_lowerBodyLayer, lowerState, elapsed);
                 // Первый удар входит весом за 80 мс; в связке вес уже равен
                 // единице. Пустой слой не должен одним кадром подменять стойку.
                 if (!upperEntered) _animator.SetTrigger(trigger);
                 if (!lowerEntered) _animator.SetTrigger(lowerTrigger);
                 StartAttackWarp();
+                _attackWarpStartedAt -= elapsed;
                 _attackPresentationActive = true;
-                _attackPresentationUntil = Time.time + BasicAttackPresentationDuration;
+                _attackPresentationUntil = Time.time + BasicAttackPresentationDuration - elapsed;
                 // Слабые входящие попадания всё ещё получают recoil/flash в
                 // ArenaView, но не имеют права ломать читаемую фазу клинка.
-                _actionProtectedUntil = Time.time + BasicAttackClipDuration;
+                _actionProtectedUntil = Time.time + BasicAttackClipDuration - elapsed;
             }
             else
             {
@@ -803,6 +859,88 @@ namespace Game.View
         /// </summary>
         public void PlayAbilityDefinition(int definitionId)
         {
+            if (definitionId == AbilityDefinition.CleaveId)
+            {
+                if (IsDead || _animator == null) return;
+                GetComponent<PelagFootPlantView>()?.BeginCleave();
+                StopAttackWarp();
+                CancelUpperBodyAttack(.02f);
+                ResetAbilityTriggers();
+                _cyclonePhase = -1;
+                _cycloneReleasing = false;
+                _sweepLocomotion = _leapLocomotion = false;
+                _attackPresentationActive = false;
+                _abilityDefinitionId = definitionId;
+                _abilityPresentationActive = true;
+                _abilityUsesLowerBodyLayer = true;
+                if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
+                var sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
+                float windup = .4f;
+                if (sim != null)
+                    for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+                    {
+                        var build = sim.GetAbility(slot);
+                        if (build != null && build.DefinitionId == definitionId)
+                            windup = Mathf.Max(1, build.Get(AbilityStatType.WindupTicks).ToInt()) / (float)Simulation.TicksPerSecond;
+                    }
+                _abilityPresentationUntil = Time.time + .9f * windup / .4f;
+                _actionProtectedUntil = _abilityPresentationUntil;
+                SetCombatReady(true);
+                _cleaveContactConfirmed = false;
+                _cleaveHitTick = -1f;
+
+                _animator.SetFloat("CleavePhase", 0f);
+                _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", .04f, 0);
+                if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
+                if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
+                if (_upperBodyLayer >= 0) _animator.CrossFadeInFixedTime("Cleave", .035f, _upperBodyLayer);
+                if (_lowerBodyLayer >= 0) _animator.CrossFadeInFixedTime("Cleave", .035f, _lowerBodyLayer);
+                return;
+            }
+            if (definitionId == AbilityDefinition.DashId)
+            {
+                if (IsDead || _animator == null) return;
+                StopAttackWarp();
+                CancelUpperBodyAttack(.02f);
+                ResetAbilityTriggers();
+                _cyclonePhase = -1;
+                _cycloneReleasing = false;
+                _sweepLocomotion = _leapLocomotion = false;
+                _attackPresentationActive = false;
+                _abilityDefinitionId = definitionId;
+                _abilityPresentationActive = true;
+                _abilityUsesLowerBodyLayer = false;
+                if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
+                var sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
+                float duration = sim != null ? Mathf.Max(2, sim.Entities.ForcedTicksLeft[Simulation.PlayerId])
+                    / (float)Simulation.TicksPerSecond : 10f / Simulation.TicksPerSecond;
+                _abilityPresentationUntil = Time.time + duration;
+                _actionProtectedUntil = _abilityPresentationUntil;
+                // Кувырок пишет всё тело: оставшийся слой удара иначе удерживает руки и ноги.
+                if (_upperBodyLayer >= 0) _animator.SetLayerWeight(_upperBodyLayer, 0f);
+                if (_lowerBodyLayer >= 0) _animator.SetLayerWeight(_lowerBodyLayer, 0f);
+                if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
+                if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
+                SetAbilityPlaybackSpeed(.6f / duration);
+                EnterCommittedAbilityState(Animator.StringToHash("Base Layer.Roll_v5"), .035f);
+                return;
+            }
+            if (definitionId == AbilityDefinition.AnchorSlamId)
+            {
+                if (IsDead || _animator == null) return;
+                // До нового авторского клипа убираем прежний мах и вращение из окна удара.
+                StopAttackWarp();
+                CancelUpperBodyAttack(.04f);
+                ResetAbilityTriggers();
+                _attackPresentationActive = false;
+                _abilityDefinitionId = definitionId;
+                _abilityPresentationActive = true;
+                _abilityUsesLowerBodyLayer = false;
+                _abilityPresentationUntil = Time.time + .9f;
+                _actionProtectedUntil = _abilityPresentationUntil;
+                _animator.CrossFadeInFixedTime("CombatIdle_v5", .06f, 0);
+                return;
+            }
             bool whirlwind = definitionId == AbilityDefinition.WhirlwindId;
             bool anchorLeap = definitionId == AbilityDefinition.AnchorLeapId;
             bool anchorSweep = definitionId == AbilityDefinition.ChainCycloneId;
@@ -958,6 +1096,19 @@ namespace Game.View
 
             CancelUpperBodyAttack(0.03f);
             _animator.SetTrigger(OrvillKnockback);
+        }
+
+        public void PlayStun()
+        {
+            if (IsDead || _faction == Faction.Wole) return;
+            // Оглушение в Sim отменило контакт: старый телеграф больше не должен доигрывать.
+            _actionProtectedUntil = 0f;
+            _attackPresentationActive = false;
+            _attackPresentationUntil = 0f;
+            _lastHitAt = -1f;
+            if (_animator != null && IsRootSwarm && _animator.HasState(0, OrvillLocomotionState))
+                _animator.CrossFadeInFixedTime(OrvillLocomotionState, .05f, 0);
+            else PlayHit(0);
         }
 
         public void PlayHit(int variant)
@@ -1126,7 +1277,7 @@ namespace Game.View
                 _animator.SetFloat(AttackPlaybackSpeed, 1f);
         }
 
-        private bool EnterCommittedAttackState(int layer, int stateHash)
+        private bool EnterCommittedAttackState(int layer, int stateHash, float elapsed = 0f)
         {
             if (_animator == null || layer < 0 || !_animator.HasState(layer, stateHash))
                 return false;
@@ -1135,7 +1286,7 @@ namespace Game.View
             // ownership to an interruptible transition graph.
             // Attack приходит после оценки Animator в LateUpdate. Компенсируем
             // этот кадр при входе, чтобы позже не перематывать клип на Damage.
-            _animator.CrossFadeInFixedTime(stateHash, 0.10f, layer, Mathf.Min(Time.deltaTime, 1f / 30f));
+            _animator.CrossFadeInFixedTime(stateHash, 0.10f, layer, elapsed + Mathf.Min(Time.deltaTime, 1f / 30f));
             return true;
         }
 
@@ -1207,6 +1358,8 @@ namespace Game.View
         private void CancelUpperBodyAttack(float blend)
         {
             if (_animator == null) return;
+            _cleaveHitTick = -1f;
+            _cleaveContactConfirmed = false;
             StopAttackWarp();
             if (_faction != Faction.Wole) return;
             _attackPresentationActive = false;
@@ -1260,6 +1413,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            _cleaveHitTick = -1f;
             _abilityPresentationActive = false;
             _abilityPresentationUntil = 0f;
             _attackPresentationActive = false;

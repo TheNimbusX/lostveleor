@@ -6,7 +6,7 @@ using UnityEngine;
 /// <summary>Перенос запечённых Blender-поз на точные пути и bind pose игрового Generic-рига.</summary>
 public static class RazlomPelagAuthoredClips
 {
-    public static AnimationClip Build(string name, bool loop = false, string bindReference = "Pelag_AN_Bind")
+    public static AnimationClip Build(string name, bool loop = false, string bindReference = "Pelag_AN_Bind", float maxHipOffsetBodyLengths = .4f)
     {
         string sourcePath = "Assets/Resources/Characters/Pelag_v5/Mixamo/" + name + ".fbx";
         var sourceClip = AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<AnimationClip>()
@@ -59,7 +59,7 @@ public static class RazlomPelagAuthoredClips
                 targetHips.position = targetHipRest + alignment * (sourceBones["mixamorig:Hips"].position - bindHips.position) * hipScale;
                 // Посадка опускает таз на 16 см при длине корпуса около 53 см.
                 // Запас до 40% допускает присед, но ловит ошибку единиц FBX.
-                if ((targetHips.position - targetHipRest).magnitude > .4f * (bindHips.position - bindBones["mixamorig:Head"].position).magnitude * hipScale)
+                if ((targetHips.position - targetHipRest).magnitude > maxHipOffsetBodyLengths * (bindHips.position - bindBones["mixamorig:Head"].position).magnitude * hipScale)
                     throw new System.InvalidOperationException("Pelag hip offset exceeds authored crouch envelope: " + name);
                 for (int c = 0; c < 3; c++) hipPosition[c].AddKey(time, targetHips.localPosition[c]);
                 foreach (var bone in targetBones)

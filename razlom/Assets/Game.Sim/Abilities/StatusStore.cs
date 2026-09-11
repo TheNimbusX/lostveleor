@@ -1,7 +1,7 @@
 namespace Game.Sim
 {
     /// <summary>
-    /// Наложенные состояния, по одному массиву на сущность. Пока только горение.
+    /// Наложенные состояния, по одному массиву на сущность. Горение и оглушение.
     ///
     /// Отдельно от EntityStore намеренно: статусов со временем станет много,
     /// а хеш состояния сущности не должен разрастаться каждым новым эффектом.
@@ -9,6 +9,7 @@ namespace Game.Sim
     public sealed class StatusStore
     {
         public readonly int Capacity;
+        public readonly int[] StunUntilTick;
 
         /// <summary>Сколько тиков ещё горит. Ноль — не горит.</summary>
         public readonly int[] BurnTicksLeft;
@@ -25,6 +26,7 @@ namespace Game.Sim
         public StatusStore(int capacity)
         {
             Capacity = capacity;
+            StunUntilTick = new int[capacity];
             BurnTicksLeft = new int[capacity];
             BurnDamage = new Fix64[capacity];
             BurnSource = new int[capacity];
@@ -32,6 +34,12 @@ namespace Game.Sim
         }
 
         public bool IsBurning(int entity) => BurnTicksLeft[entity] > 0;
+        public bool IsStunned(int entity, int tick) => tick < StunUntilTick[entity];
+
+        public void ApplyStun(int entity, int untilTick)
+        {
+            if (untilTick > StunUntilTick[entity]) StunUntilTick[entity] = untilTick;
+        }
 
         /// <summary>
         /// Поджиг не складывается, а обновляется по силе: более слабый поджиг
@@ -60,6 +68,7 @@ namespace Game.Sim
 
         public void Clear()
         {
+            System.Array.Clear(StunUntilTick, 0, Capacity);
             for (int i = 0; i < Capacity; i++) ClearBurn(i);
         }
 
@@ -67,6 +76,7 @@ namespace Game.Sim
         {
             for (int i = 0; i < count; i++)
             {
+                Hashing.Mix(ref hash, StunUntilTick[i]);
                 Hashing.Mix(ref hash, BurnTicksLeft[i]);
                 if (BurnTicksLeft[i] == 0) continue;
 

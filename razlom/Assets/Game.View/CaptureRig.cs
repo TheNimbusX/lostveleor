@@ -62,6 +62,16 @@ namespace Game.View
         /// ради снимка нельзя: сохранённый .unity — это состояние проекта,
         /// а не параметр запуска.
         /// </summary>
+        /// <summary>
+        /// Запуск идёт под съёмку: процесс получил -razlom-capture.
+        ///
+        /// Один признак вместо перебора десятка showcase-флагов. Нужен тем, кто
+        /// обязан вести себя иначе в съёмке целиком, а не в конкретном её
+        /// режиме: главное меню, например, ждёт нажатия PLAY, а съёмка не
+        /// нажимает кнопок и молча записала бы заставку вместо игры.
+        /// </summary>
+        public static bool Installed { get; private set; }
+
         public static bool HasEnemyOverride { get; private set; }
 
         public static int EnemyOverride { get; private set; }
@@ -177,6 +187,7 @@ namespace Game.View
         {
             string[] args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, EnableFlag) < 0) return;
+            Installed = true;
 
             string output = ReadValue(args, OutputFlag) ?? "capture";
             float[] marks = ParseMarks(ReadValue(args, TimesFlag));
@@ -327,6 +338,13 @@ namespace Game.View
                 yield return null;
             }
             ConfigureCaptureView();
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-no-vfx") >= 0)
+            {
+                var effects = FindAnyObjectByType<PelagVfxController>();
+                if (effects != null) effects.enabled = false;
+                var juice = FindAnyObjectByType<CombatJuiceView>();
+                if (juice != null) juice.enabled = false;
+            }
 
             if (EquipmentShowcase && !RunShowcase && !MovingCombatShowcase)
             {
@@ -690,9 +708,11 @@ namespace Game.View
                 case "whirlwind": return PelagVfxShowcase.Whirlwind;
                 case "anchor-leap": return PelagVfxShowcase.AnchorLeap;
                 case "chain-cyclone":
+                case "anchor-slam":
                 case "anchor-sweep": return PelagVfxShowcase.AnchorSweep;
                 case "squall":
                 case "chain-step": return PelagVfxShowcase.ChainStep;
+                case "cleave": return PelagVfxShowcase.Cleave;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
                     Debug.LogWarning("[capture] Неизвестный VFX showcase: " + raw);

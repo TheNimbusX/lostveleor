@@ -1,0 +1,357 @@
+{
+  "png_count": 39,
+  "files": [
+    {
+      "file": "PNG/Buttons/btn_exit_disabled.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_hover.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_normal.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_exit_pressed.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_play_disabled.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_play_hover.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_play_normal.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_play_pressed.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_play_reference_native.png",
+      "size": [
+        400,
+        125
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_disabled.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_hover.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_normal.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Buttons/btn_settings_pressed.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/diamond_plate_disabled.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/diamond_plate_hover.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/diamond_plate_normal.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/diamond_plate_pressed.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/focus_diamond.png",
+      "size": [
+        256,
+        256
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/focus_primary.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_fill_disabled.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_fill_hover.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_fill_normal.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_fill_pressed.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_frame_disabled.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_frame_hover.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_frame_normal.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_frame_pressed.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_plate_disabled.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_plate_hover.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_plate_normal.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Components/primary_plate_pressed.png",
+      "size": [
+        1024,
+        320
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_exit_gold.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_exit_white.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_play_gold.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_play_white.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_settings_gold.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Icons/icon_settings_white.png",
+      "size": [
+        192,
+        192
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Labels/label_play_gold.png",
+      "size": [
+        336,
+        168
+      ],
+      "rgba": true,
+      "transparent_background": true
+    },
+    {
+      "file": "PNG/Labels/label_play_white.png",
+      "size": [
+        336,
+        168
+      ],
+      "rgba": true,
+      "transparent_background": true
+    }
+  ],
+  "unity_editor_test": "not_run"
+}

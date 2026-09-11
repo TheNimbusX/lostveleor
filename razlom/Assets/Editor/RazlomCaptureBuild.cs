@@ -81,6 +81,9 @@ namespace Game.EditorTools
             global::CommonFootstepVfxSetup.Install();
             global::PelagWhirlwindVfxSetup.Install();
             global::PelagSquallVfxSetup.Install();
+            global::PelagRollVfxSetup.Install();
+            global::PelagEvadeVfxSetup.Install();
+            global::PelagCleaveVfxSetup.Install();
 
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)

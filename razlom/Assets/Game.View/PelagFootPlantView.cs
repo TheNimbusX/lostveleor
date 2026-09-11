@@ -43,6 +43,13 @@ namespace Game.View
         private Transform _spine;
         private Transform _chest, _head;
         private float _idleWeight;
+        private Transform[] _cleaveBones;
+        private Quaternion[] _cleaveEntryRotations;
+        private Vector3 _cleaveEntryHips, _cleaveEntryRoot;
+        private Vector3 _cleaveLeftFrom, _cleaveRightFrom, _cleaveLeftTo, _cleaveRightTo;
+        private Quaternion _cleaveLeftFromRotation, _cleaveRightFromRotation;
+        private Quaternion _cleaveLeftToRotation, _cleaveRightToRotation;
+        private bool _cleaveSnapshot, _cleaveLeftFirst;
         private static readonly int AttackA = Animator.StringToHash("LowerBody Combat.Lower_Saber_A_v5");
         private static readonly int AttackB = Animator.StringToHash("LowerBody Combat.Lower_Saber_B_v5");
         private static readonly int Run = Animator.StringToHash("Base Layer.Run_v5");
@@ -65,7 +72,89 @@ namespace Game.View
                 if (bone.name == "mixamorig:Head") _head = bone;
             }
             _lowerLayer = _animator != null ? _animator.GetLayerIndex("LowerBody Combat") : -1;
+            var bones = new System.Collections.Generic.List<Transform>();
+            foreach (Transform bone in GetComponentsInChildren<Transform>())
+                if (bone.name.StartsWith("mixamorig:")) bones.Add(bone);
+            _cleaveBones = bones.ToArray();
+            _cleaveEntryRotations = new Quaternion[_cleaveBones.Length];
             enabled = _animator != null && _left != null && _right != null;
+        }
+
+        public void BeginCleave()
+        {
+            if (!enabled || _hips == null) return;
+            // Снимок ДО сброса слоёв хранит реальную стойку, включая незаконченный поворот.
+            for (int i = 0; i < _cleaveBones.Length; i++)
+                _cleaveEntryRotations[i] = _cleaveBones[i].localRotation;
+            _cleaveEntryHips = _hips.localPosition;
+            _cleaveEntryRoot = transform.position;
+            _cleaveLeftFrom = _left.Toe.position;
+            _cleaveRightFrom = _right.Toe.position;
+            _cleaveLeftFromRotation = _left.Ankle.rotation;
+            _cleaveRightFromRotation = _right.Ankle.rotation;
+            float scale = transform.lossyScale.y / 1.82f;
+            _cleaveLeftTo = transform.position + (transform.right * -.22f + transform.forward * .24f) * scale;
+            _cleaveRightTo = transform.position + (transform.right * .22f - transform.forward * .12f) * scale;
+            _cleaveLeftTo.y = _cleaveRightTo.y = transform.position.y + .012f;
+            _cleaveLeftToRotation = FootFacing(_left, -8f);
+            _cleaveRightToRotation = FootFacing(_right, 8f);
+            _cleaveLeftFirst = (_cleaveLeftTo - _cleaveLeftFrom).sqrMagnitude >= (_cleaveRightTo - _cleaveRightFrom).sqrMagnitude;
+            _cleaveSnapshot = true;
+            _attackPlantWeight = 0f;
+        }
+
+        private Quaternion FootFacing(Leg leg, float angle)
+        {
+            Vector3 from = Vector3.ProjectOnPlane(leg.Toe.position - leg.Ankle.position, Vector3.up);
+            Vector3 to = Quaternion.AngleAxis(angle, Vector3.up) * transform.forward;
+            return Quaternion.FromToRotation(from, to) * leg.Ankle.rotation;
+        }
+
+        private bool PlantCleave()
+        {
+            if (!_cleaveSnapshot) return false;
+            if (_presentation == null || !_presentation.CleaveActive || _presentation.IsDead
+                || (transform.position - _cleaveEntryRoot).sqrMagnitude > 1f)
+            { _cleaveSnapshot = false; return false; }
+            float time = _animator.GetFloat("CleavePhase") * .9f;
+            float entry = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(time / .20f));
+            if (entry < 1f)
+            {
+                for (int i = 0; i < _cleaveBones.Length; i++)
+                    _cleaveBones[i].localRotation = Quaternion.Slerp(_cleaveEntryRotations[i], _cleaveBones[i].localRotation, entry);
+                _hips.localPosition = Vector3.Lerp(_cleaveEntryHips, _hips.localPosition, entry);
+            }
+            // Два последовательных шага: опора не меняет точку, пока другая стопа в воздухе.
+            float first = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.01f, .15f, time));
+            float second = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.15f, .29f, time));
+            float leftStep = _cleaveLeftFirst ? first : second;
+            float rightStep = _cleaveLeftFirst ? second : first;
+            Vector3 left = CleaveStep(_cleaveLeftFrom, _cleaveLeftTo, leftStep);
+            Vector3 right = CleaveStep(_cleaveRightFrom, _cleaveRightTo, rightStep);
+            Quaternion spineRotation = _spine != null ? _spine.rotation : Quaternion.identity;
+            float yaw = Vector3.SignedAngle(transform.forward, Vector3.ProjectOnPlane(_hips.forward, Vector3.up), Vector3.up);
+            _hips.rotation = Quaternion.AngleAxis((Mathf.Clamp(yaw, -25f, 25f) - yaw) * entry, Vector3.up) * _hips.rotation;
+            if (_spine != null) _spine.rotation = spineRotation;
+            Vector3 correction = (left + right - _left.Toe.position - _right.Toe.position) * .5f;
+            _hips.position += Vector3.ClampMagnitude(correction, .65f * transform.lossyScale.y / 1.82f);
+            PoseCleaveLeg(_left, left, Quaternion.Slerp(_cleaveLeftFromRotation, _cleaveLeftToRotation, leftStep), -1f, entry);
+            PoseCleaveLeg(_right, right, Quaternion.Slerp(_cleaveRightFromRotation, _cleaveRightToRotation, rightStep), 1f, entry);
+            return true;
+        }
+
+        private Vector3 CleaveStep(Vector3 from, Vector3 to, float t)
+        {
+            float scale = transform.lossyScale.y / 1.82f;
+            Vector3 position = Vector3.Lerp(from, to, t);
+            position.y += Mathf.Sin(t * Mathf.PI) * .09f * scale * Mathf.Clamp01(Vector3.Distance(from, to) / (.06f * scale));
+            return position;
+        }
+
+        private void PoseCleaveLeg(Leg leg, Vector3 toe, Quaternion rotation, float side, float entry)
+        {
+            leg.Ankle.rotation = rotation;
+            Solve(leg, leg.Ankle.position + toe - leg.Toe.position,
+                transform.forward + transform.right * (side * .22f), entry);
         }
 
         private void OnEnable() => Release();
@@ -73,6 +162,7 @@ namespace Game.View
 
         private void LateUpdate()
         {
+            if (PlantCleave()) return;
             AnimateIdle();
             // Якорные позы и опоры теперь записаны в клипы; бег хука остаётся бегом.
             if (PlantWhirlwind()) return;
@@ -230,7 +320,7 @@ namespace Game.View
                 _stepRotationTo = Quaternion.FromToRotation(toeDirection, wantedDirection) * swing.Ankle.rotation;
             }
             float phase = Mathf.Clamp01(attackInfo.normalizedTime);
-            float step = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.03f, 0.39f, phase));
+            float step = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.03f, .39f, phase));
             Vector3 stepPosition = Vector3.Lerp(_stepFrom, _stepTo, step);
             float travel = Vector3.Distance(_stepFrom, _stepTo);
             float lift = Mathf.Sin(step * Mathf.PI) * 0.065f * scale * Mathf.Clamp01(travel / (0.06f * scale));
@@ -345,6 +435,7 @@ namespace Game.View
 
         private void Release()
         {
+            _cleaveSnapshot = false;
             _attackPlantWeight = 0f;
             _attackState = 0;
             _wasTurning = false;

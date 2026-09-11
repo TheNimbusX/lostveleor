@@ -54,8 +54,9 @@ namespace Game.Sim
                     ? RootSwarmAttackWindupTicks : EnemyAttackWindupTicks;
 
         private Fix64 AttackRangeFor(int entityId)
-            => Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
-                ? RootSwarmAttackRange : AttackRange;
+            => entityId == PlayerId ? PlayerAttackRange
+                : Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
+                    ? RootSwarmAttackRange : AttackRange;
 
         /// <summary>
         /// Во время активного действия герой сохраняет управление, но идёт
@@ -90,6 +91,19 @@ namespace Game.Sim
         private static readonly Fix64 AttackRange  = Fix64.FromInt(2);
         private static readonly Fix64 AttackRangeSq = AttackRange * AttackRange;
 
+        /// <summary>
+        /// Дальность автоатаки ГЕРОЯ. Шире, чем у мобов, по решению владельца
+        /// от 11 сентября: сабля должна доставать чуть раньше, чем игрок
+        /// упирается в тело.
+        ///
+        /// ОТДЕЛЬНАЯ КОНСТАНТА, А НЕ ПОДНЯТЫЙ AttackRange. Одно число обслуживало
+        /// и героя, и мобов, поэтому «шире игроку» молча удлиняло бы и удар
+        /// врага. У врага дальность — часть телеграфа, на который игрок
+        /// реагирует, и трогать её без отдельного решения нельзя.
+        /// </summary>
+        private static readonly Fix64 PlayerAttackRange = Fix64.Ratio(5, 2);
+        private static readonly Fix64 PlayerAttackRangeSq = PlayerAttackRange * PlayerAttackRange;
+
         // Бить можно только вперёд. Косинус половины сектора: 0.5 — это 60°
         // в каждую сторону, фронтальный сектор в 120°.
         //
@@ -112,11 +126,24 @@ namespace Game.Sim
         private static readonly Fix64 EnemyAttackArcCos = Fix64.Ratio(-1, 2);
 
         /// <summary>
+        /// Круг целиком: годится любое направление. Только для поворота.
+        ///
+        /// ЧУТЬ НИЖЕ МИНУС ЕДИНИЦЫ, И ЭТО НЕ ОПЕЧАТКА. Ровно на -1 проверка
+        /// сектора сравнивает dot² с |вектор до цели|², и для цели строго за
+        /// спиной эти числа обязаны совпасть. В фиксированной точке они и
+        /// совпадают лишь примерно: нормализованный взгляд бывает чуть длиннее
+        /// единицы, dot² выходит на пару младших разрядов больше, и сравнение
+        /// переворачивается. Цель ровно за спиной переставала находиться —
+        /// именно тот случай, ради которого круг здесь и нужен.
+        /// </summary>
+        private static readonly Fix64 FullCircleCos = Fix64.Ratio(-101, 100);
+
+        /// <summary>
         /// На сколько подходить к цели по приказу атаки. Чуть ближе дальности
         /// удара: встать ровно на границе значит выпадать из неё от любого
         /// толчка и начинать шагать туда-обратно.
         /// </summary>
-        private static readonly Fix64 AttackReach = AttackRange * Fix64.Ratio(75, 100);
+        private static readonly Fix64 AttackReach = PlayerAttackRange * Fix64.Ratio(75, 100);
         private static readonly Fix64 AttackReachSq = AttackReach * AttackReach;
         private static readonly Fix64 AttackChainRadius = Fix64.Ratio(11, 4);
         private static readonly Fix64 HeavyCleaveArcCos = Fix64.Zero;
@@ -255,13 +282,25 @@ namespace Game.Sim
         /// Бой читает поля напрямую; эти свойства существуют затем, чтобы
         /// нарисованный на полу сектор не разъехался с настоящим.
         /// </summary>
-        public static Fix64 AutoAttackRange => AttackRange;
+        public static Fix64 AutoAttackRange => PlayerAttackRange;
         public static Fix64 AutoAttackArcCos => AttackArcCos;
 
         public const int PlayerId = 0;
 
         /// <summary>Сколько способностей на панели. Ровно четыре, см. архитектуру.</summary>
-        public const int AbilitySlots = 4;
+        /// <summary>
+        /// Сколько активных кнопок способностей у героя.
+        ///
+        /// ПЯТЬ, А НЕ ЧЕТЫРЕ, из-за якорной ветки: у неё четыре основные
+        /// способности плюс отдельный базовый рывок, который не открывается
+        /// талантом и не заменяет ни одну из четырёх. У сабельной ветки пятый
+        /// слот пуст — её мобильность встроена в Выпад, и выдавать ей рывок
+        /// «за компанию» значило бы стереть разницу между ветками.
+        ///
+        /// Пустой слот — это null в _abilityBuilds, а не способность-пустышка:
+        /// пустышка попала бы в интерфейс, в звук и в кулдауны.
+        /// </summary>
+        public const int AbilitySlots = 5;
 
         public readonly EntityStore Entities;
         public readonly RngStreams Rng;
@@ -284,6 +323,17 @@ namespace Game.Sim
         private int _leapLaunchTick = -1;
         private FixVec2 _leapAim;
         public FixVec2 LeapAim => _leapAim;
+
+        /// <summary>
+        /// Кого цепляет Абордаж. -1 — цели нет, и тогда это бросок в точку.
+        ///
+        /// Способность выбрана врагом, но остаётся рабочей и без него: кнопка,
+        /// молча не срабатывающая, когда игрок промахнулся курсором мимо тела,
+        /// читается как поломка ввода.
+        /// </summary>
+        private int _leapTarget = -1;
+        private int _leapPunchTick = -1;
+        private int _leapSlot = -1;
         private int _abilityMovePenaltyUntilTick;
 
         // Состояние «Шага по цепи» между прыжками. Живёт в симуляции, а не в
@@ -409,10 +459,14 @@ namespace Game.Sim
         {
             Rng = new RngStreams(runSeed);
             Entities = new EntityStore(capacity);
+            _cleavePreviousPositions = new FixVec2[capacity];
             _cycloneHitTurn = new int[capacity];
             _cycloneTickPositions = new FixVec2[capacity];
 
-            // Ячейка равна дальности автоатаки: запрос тогда задевает ровно 3×3 ячейки.
+            // Ячейка равна дальности удара МОБА: обычный запрос задевает 3×3
+            // ячейки. Запросы игрока шире (PlayerAttackRange = 2.5), и это
+            // корректно: охват ячеек считается от фактического радиуса, поэтому
+            // такой запрос просто обходит 5×5. Цена — обход, а не правильность.
             // Сетка покрывает 128×128 метров — с запасом на комнату Разлома.
             Grid = new SpatialHash(
                 origin: new FixVec2(Fix64.FromInt(-64), Fix64.FromInt(-64)),
@@ -438,6 +492,15 @@ namespace Game.Sim
         /// </summary>
         public void SetAbility(int slot, AbilityDefinition definition, AbilityNode[] nodes, int nodeCount)
         {
+            // Пустой слот действительно пуст. Ветка, у которой способностей
+            // меньше, чем кнопок, — это норма, а не ошибка вызывающего.
+            if (definition == null)
+            {
+                _abilityBuilds[slot] = null;
+                _abilityReadyTick[slot] = 0;
+                return;
+            }
+
             AbilityBuild build = _abilityBuilds[slot];
             if (build == null)
             {
@@ -841,6 +904,7 @@ namespace Game.Sim
             Entities.Alive[id] = true;
             Entities.Health[id] = Entities.MaxHealth[id];
             Statuses.ClearBurn(id);
+            Statuses.StunUntilTick[id] = 0;
         }
 
         /// <summary>
@@ -943,9 +1007,11 @@ namespace Game.Sim
         private void ResetAbilityState()
         {
             StopCyclone();
+            StopAnchorSlam();
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
             _leapLaunchTick = -1;
             _leapAim = FixVec2.Zero;
+            _leapTarget = _leapPunchTick = _leapSlot = -1;
             _chainHopsLeft = _chainVisitedCount = 0;
             _chainTarget = _chainSlot = -1;
             System.Array.Clear(_chainVisited, 0, _chainVisited.Length);
@@ -954,6 +1020,7 @@ namespace Game.Sim
 
         private void ClearMoveOrder()
         {
+            StopCleave();
             _navigationWaypoint = false;
             _navigationTransit = false;
             _hasMoveOrder = false;
@@ -970,12 +1037,25 @@ namespace Game.Sim
         /// Порядок важен: явный приказ по земле отменяет автоповтор, но не
         /// стирает уже начатый замах. Управление и committed-контакт могут
         /// сосуществовать, пока проверка попадания остаётся честной.
+        ///
+        /// ДВИЖЕНИЕ И АТАКА — РАЗНЫЕ КНОПКИ, ЗНАЧИТ РАЗНЫЕ ВЕТКИ. Пока обе
+        /// команды приходили с одной ПКМ, они не могли встретиться в одном
+        /// тике, и здесь стояла развилка if/else. Теперь ПКМ ведёт, а ЛКМ
+        /// бьёт, и зажать их вместе — обычное дело: игрок отходит, продолжая
+        /// махать. Развилка молча съедала бы приказ идти.
         /// </summary>
         private void ReadOrders(in InputFrame input)
         {
-            bool attackPressed = input.Has(InputFlags.Attack);
+            // ПРИКАЗ ИДТИ ЧИТАЕТСЯ ПЕРВЫМ И СИЛЬНЕЕ АВТОЦЕЛИ. Защёлкнутая цель
+            // ниже по коду подменяет точку движения собой (герой идёт к телу,
+            // а не к курсору), поэтому оставить её живой значит проигнорировать
+            // ПКМ. Игрок, который держит ЛКМ и уводит героя, получает ровно то,
+            // что просил: шаг туда, куда указал, и удар по тому, кто оказался
+            // перед носом.
+            bool moveOrdered = input.Has(InputFlags.MoveOrder);
+            if (moveOrdered) _attackTarget = -1;
 
-            if (attackPressed && input.HasAttackTarget)
+            if (!moveOrdered && input.Has(InputFlags.Attack) && input.HasAttackTarget)
             {
                 int target = input.AttackTarget;
 
@@ -988,14 +1068,6 @@ namespace Game.Sim
                 {
                     _attackTarget = target;
                 }
-            }
-            else if (input.Has(InputFlags.MoveOrder))
-            {
-                // Приказ идти по земле снимает долгоживущую автоцель, но уже
-                // начатый взмах не исчезает. Игрок получает locomotion в тот же
-                // тик, а контакт позже честно проверит дистанцию и сектор:
-                // можно ударить на ходу, а можно выйти из удара и промахнуться.
-                _attackTarget = -1;
             }
 
             if (!AttackTargetValid) _attackTarget = -1;
@@ -1073,11 +1145,20 @@ namespace Game.Sim
             ResolveAbilityCasts(in input);
             ResolveWhirlwindImpact();
             UpdateCyclone(in input);
+            UpdateAnchorSlam();
+            UpdateWreck();
+            UpdateCleave();
+            UpdateFlask();
             if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
             {
                 _leapLaunchTick = -1;
-                if (Entities.Alive[PlayerId]) AnchorKit.CastLeap(this, _leapAim);
+                if (Entities.Alive[PlayerId])
+                {
+                    int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget);
+                    _leapPunchTick = Tick + ticks;
+                }
             }
+            ResolveBoardingPunch();
             ContinueChainStep();
             UpdateProjectiles();
             ResolveAttacks(in input);
@@ -1116,10 +1197,26 @@ namespace Game.Sim
 
                 AbilityBuild build = _abilityBuilds[slot];
                 if (build == null) continue;
+
+                // ПРОДОЛЖЕНИЕ КОМБО ПРОВЕРЯЕТСЯ ДО КУЛДАУНА. Второй и третий
+                // удары Крушения — то же самое нажатие той же кнопки, но это
+                // не новый каст: кулдаун ещё идёт, и обычная проверка отменяла
+                // бы серию на втором ударе всегда.
+                if (build.DefinitionId == AbilityDefinition.WreckId
+                    && _wreckSlot == slot && WreckComboOpen)
+                {
+                    AdvanceWreck(input.Aim);
+                    continue;
+                }
+
                 if (Tick < _abilityReadyTick[slot]) continue;
 
                 if (build.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
                 StopCyclone();
+                StopAnchorSlam();
+                StopWreck();
+                StopCleave();
+                StopFlask();
                 // A newly committed action replaces the old presentation and
                 // its unlanded contacts. Do not launch an old anchor midway
                 // through the next ability's animation.
@@ -1137,7 +1234,16 @@ namespace Game.Sim
                 else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
                 {
                     _leapAim = input.Aim;
+                    _leapTarget = ValidAbilityTarget(input.AbilityTarget, build)
+                        ? input.AbilityTarget
+                        : -1;
+                    _leapSlot = slot;
+                    _leapPunchTick = -1;
                     _leapLaunchTick = Tick + AnchorKit.LeapWindupTicks;
+                }
+                else if (build.DefinitionId == AbilityDefinition.AnchorSlamId)
+                {
+                    BeginAnchorSlam(slot, input.Aim);
                 }
                 else if (build.DefinitionId == AbilityDefinition.ChainCycloneId)
                 {
@@ -1146,6 +1252,26 @@ namespace Game.Sim
                 else if (build.DefinitionId == AbilityDefinition.ChainStepId)
                 {
                     BeginChainStep(slot, input.AbilityTarget);
+                }
+                else if (build.DefinitionId == AbilityDefinition.WreckId)
+                {
+                    BeginWreck(slot, input.Aim);
+                }
+                else if (build.DefinitionId == AbilityDefinition.CleaveId)
+                {
+                    BeginCleave(slot);
+                }
+                else if (build.DefinitionId == AbilityDefinition.BlazeId)
+                {
+                    CastBlaze(slot);
+                }
+                else if (build.DefinitionId == AbilityDefinition.FireFlaskId)
+                {
+                    BeginFlask(slot, input.Aim);
+                }
+                else if (build.DefinitionId == AbilityDefinition.DashId)
+                {
+                    CastDash(slot, input.Aim);
                 }
                 else
                 {
@@ -1390,6 +1516,7 @@ namespace Game.Sim
         {
             if (!Entities.Alive[target] || amount <= 0) return;
             if (target == PlayerId && PlayerInvulnerable) return;
+            if (BlazeEvades(target, overTime)) return;
 
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
@@ -1400,7 +1527,14 @@ namespace Game.Sim
                 : SimEvent.Damage(source, target, amount, false, Entities.Position[target], type,
                     DamageOrigin.Ability, slot));
 
-            if (Entities.Health[target] > 0) return;
+            if (Entities.Health[target] > 0)
+            {
+                // Добавка огнём идёт ПОСЛЕ основного урона и только по живому:
+                // добивать уже мёртвого вторым ударом значило бы порождать
+                // лишние события смерти.
+                if (!overTime) ApplyBlazeBonus(source, target, slot);
+                return;
+            }
             Kill(target, source, slot);
         }
 
@@ -1460,6 +1594,7 @@ namespace Game.Sim
             }
 
             Statuses.ClearBurn(target);
+            Statuses.StunUntilTick[target] = 0;
         }
 
         /// <summary>
@@ -1480,6 +1615,19 @@ namespace Game.Sim
                 return;
             }
 
+            if (AnchorSlamActive)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                Entities.Facing[PlayerId] = PlayerFacingStep(Entities.Facing[PlayerId], _slamDirection);
+                return;
+            }
+
+            if (CleaveActive)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
             // Рывок сильнее приказа: пока якорь тащит игрока, своим шагом он
             // не идёт. Приказ при этом НЕ отменяется — долетев, персонаж
             // продолжит туда, куда его послали до рывка.
@@ -1492,7 +1640,12 @@ namespace Game.Sim
             // Новый приказ перебивает старый. При удержании кнопки он приходит
             // каждый тик и точка едет за курсором — это то же самое поведение,
             // что и раньше, просто теперь оно частный случай.
-            if (input.Has(InputFlags.MoveOrder) && !AttackTargetValid)
+            //
+            // Проверки !AttackTargetValid здесь больше нет: ReadOrders снимает
+            // автоцель в тот же тик, в котором пришёл явный приказ идти, и
+            // условие стало не защитой, а вторым местом, где то же правило
+            // записано другими словами.
+            if (input.Has(InputFlags.MoveOrder))
             {
                 _moveOrder = _layout != null
                     ? _layout.ClampToWalkable(input.Aim, Entities.BodyRadius[PlayerId])
@@ -1543,13 +1696,60 @@ namespace Game.Sim
             // входе в AttackReach _hasMoveOrder становился false, desiredFacing
             // оставался нулём, и герой сохранял старое направление: отсюда
             // удары мимо цели и необъяснимое молчание прямо рядом с ней.
-            int facingTarget = _hasMoveOrder && _explicitMoveOrder
-                ? -1
-                : committedTargetValid
-                    ? committedTarget
-                    : AttackTargetValid ? _attackTarget : -1;
+            bool attacking = input.Has(InputFlags.Attack);
+
+            // К кому разворачиваться, пока кнопка зажата, а цель курсором не
+            // назначена.
+            //
+            // КРУГ ЦЕЛИКОМ, А НЕ ЛОБОВОЙ СЕКТОР. Это ПОВОРОТ, а не удар, и
+            // сектор ему только мешал: отошёл от врага, нажал бить — враг
+            // остался за спиной, в сектор не попадал, корпус не разворачивался,
+            // и кнопка молчала до тех пор, пока не встанешь к нему лицом
+            // вручную. Стоя на месте всё работало, и разница выглядела
+            // необъяснимой.
+            //
+            // Старое правило «за спину не бьём» при этом цело: удар по-прежнему
+            // начинается только в лобовом секторе и проверяется на контакте.
+            // Здесь герой лишь поворачивается к тому, кто рядом, — 20° за тик,
+            // то есть полный разворот занимает девять тиков, ровно один замах.
+            int swingTarget = attacking && !committedTargetValid && !AttackTargetValid
+                ? FindTurnTarget()
+                : -1;
+
+            // ПОКА КНОПКА ЗАЖАТА, БОЕВОЙ ДОВОРОТ СИЛЬНЕЕ ПРИКАЗА ИДТИ.
+            //
+            // Приказ идти забирал направление корпуса себе целиком, и на бегу
+            // с зажатой ЛКМ удар почти никогда не проходил: тело смотрит туда,
+            // куда бежишь, окно старта взмаха узкое, и пробегающий мимо враг
+            // успевал выйти из него за пару тиков. Игрок при этом видел, что
+            // кнопка нажата, и не понимал, почему герой молчит.
+            //
+            // Бежать это не мешает: приказ движения не трогается, меняется
+            // только то, куда развёрнут корпус. Отпустил кнопку — снова
+            // смотришь, куда бежишь.
+            int facingTarget = committedTargetValid
+                ? committedTarget
+                : AttackTargetValid
+                    ? _attackTarget
+                    : swingTarget;
+            if (!attacking && _hasMoveOrder && _explicitMoveOrder) facingTarget = -1;
+
             if (facingTarget >= 0)
                 desiredFacing = Entities.Position[facingTarget] - pos;
+
+            // ЗАЖАТАЯ АТАКА САМА РАЗВОРАЧИВАЕТ ГЕРОЯ НА КУРСОР.
+            //
+            // Без этого удержание ЛКМ по пустому месту не делало НИЧЕГО:
+            // цели нет, приказа идти нет, значит desiredFacing оставался нулём,
+            // герой стоял как стоял, а выбор цели идёт в узком секторе ±37° от
+            // корпуса. Враг в полушаге сбоку — и кнопка молчит, хотя игрок её
+            // держит. Пока команда была одна, это не всплывало: ПКМ по земле
+            // всегда задавала и направление тоже.
+            //
+            // Курсор здесь — именно направление удара, а не точка назначения:
+            // шага он не вызывает, потому что _hasMoveOrder не трогается.
+            else if (!_hasMoveOrder && attacking)
+                desiredFacing = input.Aim - pos;
 
             // Шаг за тик приходит из листа статов: скорость передвижения —
             // такой же стат, как урон, и предмет вправе её менять. Активное
@@ -1567,8 +1767,14 @@ namespace Game.Sim
                 FixVec2 toTarget = _moveOrder - pos;
                 Fix64 distSq = toTarget.LengthSq;
 
-                // Смотрим на указанную точку всегда, даже если не идём к ней.
-                if (_explicitMoveOrder || facingTarget < 0) desiredFacing = toTarget;
+                // Смотрим на указанную точку, если корпус не занят боем.
+                //
+                // Здесь стояло `_explicitMoveOrder || facingTarget < 0`, и это
+                // перетирало боевой доворот, выбранный выше: на бегу с зажатой
+                // атакой герой снова разворачивался по направлению движения, и
+                // цель уходила из окна старта взмаха. Приоритет боя над
+                // направлением бега решается ОДИН РАЗ, в facingTarget.
+                if (facingTarget < 0) desiredFacing = toTarget;
 
                 // Мёртвая зона разворота на месте — свойство КЛИКА МЫШЬЮ, а не
                 // движения вообще. Путевая точка приходит не от курсора, и
@@ -1762,6 +1968,9 @@ namespace Game.Sim
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i]) continue;
+
+                if (Statuses.IsStunned(i, Tick))
+                { Entities.Velocity[i] = FixVec2.Zero; continue; }
 
                 // Волочимый враг не идёт своим ходом. Иначе он приезжал бы
                 // вдвое быстрее задуманного — тяга плюс собственный шаг к
@@ -2010,6 +2219,7 @@ namespace Game.Sim
 
             for (int i = 0; i < Entities.Count; i++)
             {
+                if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
                 if (pendingTarget >= 0)
                 {
@@ -2036,7 +2246,7 @@ namespace Game.Sim
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
                 // клип и второй контакт поверх способности не запускаются.
-                if (i == PlayerId && (CycloneActive || Tick < _abilityMovePenaltyUntilTick
+                if (i == PlayerId && (AnchorSlamActive || CycloneActive || CleaveActive || Tick < _abilityMovePenaltyUntilTick
                     || _leapLaunchTick >= 0 || Entities.ForcedTicksLeft[i] > 0)) continue;
 
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
@@ -2046,21 +2256,34 @@ namespace Game.Sim
                 int target = i == PlayerId && AttackTargetValid
                     ? ChosenTarget()
                     : FindNearestEnemy(i);
-                if (target < 0) continue;
+
+                // ЗАЖАТАЯ КНОПКА ОБЯЗАНА ДАВАТЬ ВЗМАХ, ДАЖЕ ЕСЛИ БИТЬ НЕКОГО.
+                //
+                // Пустой взмах — это ответ на нажатие, а не удар: он тратит
+                // такт атаки и играет клип, но никого не назначает целью и
+                // потому никому не наносит урона. Молчащая кнопка читается как
+                // залипание ввода, и владелец назвал это первым, что мешает.
+                //
+                // ВРАГА ЭТО НЕ КАСАЕТСЯ: у моба нет игрока, который держит
+                // кнопку, и махать в пустоту ему незачем.
+                bool emptySwing = target < 0;
+                if (emptySwing && (i != PlayerId || !input.Has(InputFlags.Attack))) continue;
 
                 int attackVariant = i == PlayerId ? _nextPlayerAttackVariant : 0;
                 if (i == PlayerId) _nextPlayerAttackVariant ^= 1;
                 _events.Add(SimEvent.Attack(i, target, Entities.Position[i], attackVariant));
+                Entities.NextAttackTick[i] = Tick + Entities.AttackCooldown[i];
+                if (emptySwing) continue;
+
                 Entities.PendingAttackTarget[i] = target;
                 Entities.AttackImpactTick[i] = Tick + WindupTicksFor(i);
                 Entities.PendingAttackVariant[i] = attackVariant;
-                Entities.NextAttackTick[i] = Tick + Entities.AttackCooldown[i];
             }
         }
 
         private void ApplyHeavyCleave(int primaryTarget)
         {
-            int found = Grid.QueryRadius(Entities, Entities.Position[PlayerId], AttackRange,
+            int found = Grid.QueryRadius(Entities, Entities.Position[PlayerId], PlayerAttackRange,
                 PlayerId, HitScratch);
             int hit = 0;
             for (int i = 0; i < found && hit < HeavyCleaveTargets; i++)
@@ -2104,10 +2327,22 @@ namespace Game.Sim
         private int ChosenTarget()
         {
             FixVec2 toTarget = Entities.Position[_attackTarget] - Entities.Position[PlayerId];
-            if (toTarget.LengthSq > AttackRangeSq) return -1;
+            if (toTarget.LengthSq > PlayerAttackRangeSq) return -1;
             if (!FixVec2.WithinArc(Entities.Facing[PlayerId], toTarget, AttackCommitCos)) return -1;
             return _attackTarget;
         }
+
+        /// <summary>
+        /// Ближайший враг в дальности удара, БЕЗ ограничения по сектору.
+        ///
+        /// Нужен только развороту корпуса под зажатой кнопкой атаки: искать
+        /// цель для поворота в лобовом секторе — значит требовать, чтобы игрок
+        /// сам довернулся раньше героя. Сам удар этой функцией не пользуется.
+        /// </summary>
+        private int FindTurnTarget()
+            => DebugUseNaiveTargeting
+                ? NaiveFindNearestEnemy(PlayerId, FullCircleCos)
+                : Grid.FindNearestEnemy(Entities, PlayerId, PlayerAttackRange, FullCircleCos);
 
         private int FindNearestEnemy(int from)
         {
@@ -2116,7 +2351,16 @@ namespace Game.Sim
             // возвращал исходный баг: после расталкивания моб стоял боком,
             // не создавал замах и выглядел зависшим. Расширенный сектор даёт
             // время на доворот, а CanLandAttack использует то же правило.
-            Fix64 arc = from == PlayerId ? AttackCommitCos : EnemyAttackArcCos;
+            //
+            // У ИГРОКА ВЫБОР ИДЁТ В ШИРОКОМ СЕКТОРЕ 120°, А НЕ В УЗКОМ ОКНЕ
+            // СТАРТА ВЗМАХА. Здесь стоял AttackCommitCos — порог, при котором
+            // корпус уже почти смотрит на цель. Как условие ВЫБОРА он означал
+            // «бей только то, на что и так смотришь»: на бегу мимо толпы враг
+            // проскакивал через это окно за пару тиков, и зажатая кнопка почти
+            // не срабатывала. Доворот у героя 20° за тик при замахе в 9 тиков,
+            // то есть цель на 60° он успевает добрать с запасом — и уже к
+            // контакту CanLandAttack видит её во фронтальном секторе.
+            Fix64 arc = from == PlayerId ? AttackArcCos : EnemyAttackArcCos;
             return DebugUseNaiveTargeting
                 ? NaiveFindNearestEnemy(from, arc)
                 : Grid.FindNearestEnemy(Entities, from, AttackRangeFor(from), arc);
@@ -2166,6 +2410,7 @@ namespace Game.Sim
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
             // Keep the normal critical roll even when developer immunity absorbs the hit.
             if (target == PlayerId && PlayerInvulnerable) return;
+            if (BlazeEvades(target, overTime: false)) return;
 
             int damage = CombatStats.RoundToInt(
                 Fix64.FromInt(Entities.Damage[source]) * damageScale);
@@ -2180,6 +2425,10 @@ namespace Game.Sim
             Entities.Health[target] -= damage;
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
                 DamageType.Physical, DamageOrigin.BasicAttack, variant));
+
+            // Горящая сабля добавляет огонь и к автоатаке: диздок говорит
+            // «усиление относится ко всем атакам, а не только к автоатаке».
+            if (Entities.Health[target] > 0) ApplyBlazeBonus(source, target, -1);
 
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем
@@ -2208,6 +2457,11 @@ namespace Game.Sim
             if (PlayerInvulnerable) Hashing.Mix(ref hash, 0x474F44);
             Hashing.Mix(ref hash, Tick);
             HashCyclone(ref hash);
+            HashAnchorSlam(ref hash);
+            HashWreck(ref hash);
+            HashCleave(ref hash);
+            HashBlaze(ref hash);
+            HashFlask(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.

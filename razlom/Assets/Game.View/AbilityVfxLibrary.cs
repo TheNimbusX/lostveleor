@@ -25,6 +25,11 @@ namespace Game.View
         FootstepDust,
         CyclonePullImpact,
         ChainStepFinish,
+        RollDash,
+        Evade,
+        CleaveHit,
+        CleaveSlash,
+        CleaveGround,
         Count
     }
 
@@ -36,7 +41,8 @@ namespace Game.View
         AnchorLeap,
         AnchorSweep,
         ChainStep,
-        Rotation
+        Rotation,
+        Cleave
     }
 
     /// <summary>

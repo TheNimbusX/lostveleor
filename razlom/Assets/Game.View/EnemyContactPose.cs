@@ -12,6 +12,7 @@ namespace Game.View
         private float _started = -10f, _strength;
         private Vector3 _axis;
         private EnemyKind _kind;
+        private bool _heavy;
 
         public void Initialize()
         {
@@ -24,10 +25,12 @@ namespace Game.View
             }
         }
 
-        public void Hit(Vector3 direction, float strength, EnemyKind kind)
+        public void Hit(Vector3 direction, float strength, EnemyKind kind, bool heavy = false)
         {
             if (_chest == null) return;
+            if (_heavy && !heavy && Time.time - _started < .16f) return;
             _kind = kind;
+            _heavy = heavy;
             // Новое попадание заменяет импульс; частые удары не складывают наклон.
             _strength = Mathf.Clamp01(strength);
             _started = Time.time;
@@ -40,11 +43,11 @@ namespace Game.View
         private void LateUpdate()
         {
             if (_chest == null) return;
-            float duration = _kind == EnemyKind.ForestRootSwarm ? 0.18f : 0.14f;
+            float duration = _heavy ? .24f : _kind == EnemyKind.ForestRootSwarm ? 0.18f : 0.14f;
             float t = (Time.time - _started) / duration;
             if (t < 0f || t >= 1f) return;
             float envelope = Mathf.Sin(Mathf.PI * Mathf.Sqrt(t)) * (1f - t);
-            float angle = (_kind == EnemyKind.ForestRootSwarm ? 18f : 7f) * _strength * envelope;
+            float angle = (_heavy ? 18f : _kind == EnemyKind.ForestRootSwarm ? 18f : 7f) * _strength * envelope;
             _authored = _chest.localRotation;
             Vector3 localAxis = _chest.parent != null
                 ? _chest.parent.InverseTransformDirection(_axis) : _axis;

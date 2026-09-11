@@ -24,6 +24,20 @@ namespace Game.Sim
         /// <summary>Начало перехода Шквала; Amount — оставшиеся переходы,
         /// ActionVariant — индекс перехода. Amount=0 завершает цепочку.</summary>
         ChainStepHop = 8,
+        AnchorSlamImpact = 9,
+        Stun = 10,
+
+        /// <summary>Удар Крушения. Amount — номер этапа 0..2, Flag — завершающий.</summary>
+        WreckStage = 11,
+
+        /// <summary>Сабля вспыхнула. Amount — на сколько тиков.</summary>
+        BlazeBegin = 12,
+
+        /// <summary>Удар прошёл мимо: сработало уклонение.</summary>
+        Evaded = 13,
+
+        /// <summary>Бутылка разбилась. Amount — слот, Position — где.</summary>
+        FlaskBurst = 14,
     }
 
     /// <summary>

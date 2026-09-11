@@ -44,7 +44,8 @@ namespace Game.View
                 {
                     int phase = Mathf.FloorToInt((8 - (until - Time.time)) * 2);
                     Vector3 moveTarget = origin + Quaternion.Euler(0, phase * 70, 0) * Vector3.forward * 2;
-                    driver.CaptureAim(Camera.main.WorldToScreenPoint(moveTarget), true, true);
+                    driver.CaptureAim(Camera.main.WorldToScreenPoint(moveTarget),
+                        moveHeld: true, movePressed: true, attackHeld: false);
                     minimumHeight = Mathf.Min(minimumHeight, mesh.bounds.size.y);
                     if (mesh.bounds.size.y < .8f)
                         Debug.LogError($"[camp-collision] Collapsed body height={mesh.bounds.size.y}");
@@ -61,7 +62,7 @@ namespace Game.View
             Vector3 beforeSelfClick = camp.Position;
             Vector3 selfPointer = Camera.main.WorldToScreenPoint(camp.Position + Vector3.up);
             camp.HandleWorldPress(selfPointer);
-            driver.CaptureAim(selfPointer, true, true);
+            driver.CaptureAim(selfPointer, moveHeld: true, movePressed: true, attackHeld: false);
             if (CaptureRig.LiveSkill)
             {
                 var liveDriver=FindAnyObjectByType<TickDriver>();

@@ -515,7 +515,9 @@ namespace Game.View
         /// звать это с ненормированным вектором — обычная ошибка, а цена ей
         /// улетевший через полкарты спрайт.
         /// </summary>
-        public void ReactToHit(int entityId, Vector3 direction, float strength)
+        public void ConfirmCleaveContact() => AnimationOf(Simulation.PlayerId)?.ConfirmCleaveContact();
+
+        public void ReactToHit(int entityId, Vector3 direction, float strength, bool heavy = false)
         {
             if (!_initialized) return;
             if ((uint)entityId >= (uint)_boundCount) return;
@@ -547,7 +549,7 @@ namespace Game.View
             // остаётся, чтобы последний удар не потерял визуальное подтверждение.
             if (alive && entityId != Simulation.PlayerId)
             {
-                AnimationOf(entityId)?.PlayContactPose(direction, strength);
+                AnimationOf(entityId)?.PlayContactPose(direction, strength, heavy);
                 Vector3 recoil = direction * (RecoilDistance * strength);
                 if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude)
                     _hitRecoil[entityId] = recoil;
@@ -1444,6 +1446,7 @@ namespace Game.View
                         {
                             CharacterAnimatorView presentation = _animationViews[i];
                             Vector3 previousVisual = _visualFacingWorld[i];
+                            if (presentation != null && presentation.RollActive) visualFacing = facingWorld;
                             if (i == Simulation.PlayerId && presentation != null
                                 && (presentation.AnchorAbilityActive || presentation.LeapFacingRecovery)
                                 && _playerAbilityFacing.sqrMagnitude > 0.5f)
@@ -1465,6 +1468,13 @@ namespace Game.View
                         // Доворот на случай, если модель экспортировали лицом
                         // не туда: разворачивать сам меш дороже, чем повернуть
                         // корень одним числом.
+                        // На старте кувырка разворот должен завершиться сразу, даже на 180°.
+                        // Интерполяция прошлого взгляда и остаточная фиксация якоря здесь не подходят.
+                        if (i == Simulation.PlayerId && entities.ForcedKind[i] == (byte)ForcedMotionKind.Roll)
+                        {
+                            visualFacing = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
+                            _visualFacingWorld[i] = _lastFacingWorld[i] = visualFacing;
+                        }
                         view.rotation = Quaternion.LookRotation(visualFacing, Vector3.up)
                                         * Quaternion.Euler(0f, ModelYaw, 0f);
                         if (i == Simulation.PlayerId && moving && velocityMagnitude > .0001f)
@@ -1518,6 +1528,9 @@ namespace Game.View
 
                 switch (e.Type)
                 {
+                    case SimEventType.Stun:
+                        AnimationOf(e.Target)?.PlayStun();
+                        break;
                     case SimEventType.Attack:
                         if (e.Source == Simulation.PlayerId)
                         { _anchorSaberSuppressed = false; MarkPlayerCombatActivity(); }

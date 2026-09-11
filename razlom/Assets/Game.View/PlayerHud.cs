@@ -33,6 +33,7 @@ namespace Game.View
         // разбор того, что каждая делает, — если понадобится перерезать,
         // источник один и он в репозитории.
         private Texture2D[] _abilityIcons;
+        private int[] _abilityIconIds;
         private bool _abilityIconsLoaded;
         private Texture2D _mapArtwork;
         private float _canvasWidth;
@@ -99,22 +100,65 @@ namespace Game.View
             }
         }
 
+        /// <summary>Слот общего кувырка — он же последний. Живёт вне ряда.</summary>
+        private const int DashSlot = Simulation.AbilitySlots - 1;
+
+        /// <summary>Плитка кувырка меньше боевых: это не пятая способность.</summary>
+        private const float DashSlotScale = 0.7f;
+
+        /// <summary>Отрыв плитки кувырка от ряда — заметно больше обычного зазора.</summary>
+        private const float DashGap = 26f;
+
+        /// <summary>Расстояние от полосы здоровья до первой плитки.</summary>
+        private const float BarToRowGap = 34f;
+
+        /// <summary>
+        /// Геометрия нижней панели.
+        ///
+        /// СЧИТАЕТСЯ В ОДНОМ МЕСТЕ ДЛЯ ДВУХ РИСОВАТЕЛЕЙ. Полоса здоровья и ряд
+        /// способностей центруются как одна группа, поэтому обе половины
+        /// обязаны получить одну и ту же ширину. Раньше формула стояла дважды,
+        /// и любая правка ряда молча уводила полосу здоровья вбок.
+        /// </summary>
+        private struct BottomBar
+        {
+            public float GroupX, RowX, DashX, DashSize, Y;
+            public int RowCount;
+            public bool HasDash;
+        }
+
+        private BottomBar MeasureBottomBar(Simulation sim)
+        {
+            BottomBar bar = default;
+            for (int slot = 0; slot < DashSlot; slot++)
+                if (sim.GetAbility(slot) != null) bar.RowCount++;
+            bar.HasDash = sim.GetAbility(DashSlot) != null;
+            bar.DashSize = Mathf.Round(SlotSize * DashSlotScale);
+
+            float row = bar.RowCount > 0
+                ? bar.RowCount * SlotSize + (bar.RowCount - 1) * SlotGap
+                : 0f;
+            float dash = bar.HasDash ? DashGap + bar.DashSize : 0f;
+            float abilities = row + dash;
+            float groupWidth = BarWidth + (abilities > 0f ? BarToRowGap + abilities : 0f);
+
+            float groupMaxX = Mathf.Max(_safeLeft + Margin,
+                _canvasWidth - _safeRight - Margin - groupWidth);
+            bar.GroupX = Mathf.Clamp(_canvasWidth * 0.5f - groupWidth * 0.5f,
+                _safeLeft + Margin, groupMaxX);
+            bar.RowX = bar.GroupX + BarWidth + BarToRowGap;
+            bar.DashX = bar.RowX + row + DashGap;
+            bar.Y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - SlotSize;
+            return bar;
+        }
+
         private void DrawHealth(Simulation sim)
         {
             int health = Mathf.Max(0, sim.Entities.Health[Simulation.PlayerId]);
             int max = Mathf.Max(1, sim.Entities.MaxHealth[Simulation.PlayerId]);
             float fill = Mathf.Clamp01(health / (float)max);
 
-            int activeCount = 0;
-            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
-                if (sim.GetAbility(slot) != null) activeCount++;
-            float total = activeCount > 0 ? activeCount * SlotSize + (activeCount - 1) * SlotGap : 0f;
-            float groupWidth = BarWidth + (activeCount > 0 ? 34f + total : 0f);
-            float groupX = _canvasWidth * 0.5f - groupWidth * 0.5f;
-            float groupMaxX = Mathf.Max(_safeLeft + Margin,
-                _canvasWidth - _safeRight - Margin - groupWidth);
-            groupX = Mathf.Clamp(groupX, _safeLeft + Margin, groupMaxX);
-            float x = groupX;
+            float x = MeasureBottomBar(sim).GroupX;
             float y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - BarHeight;
             Rect panel = new Rect(x - 10f, y - 28f, BarWidth + 20f, BarHeight + 38f);
 
@@ -130,97 +174,113 @@ namespace Game.View
 
         private void DrawAbilities(Simulation sim)
         {
-            int activeCount = 0;
-            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
-                if (sim.GetAbility(slot) != null) activeCount++;
-            if (activeCount == 0) return;
-
-            float total = activeCount * SlotSize + (activeCount - 1) * SlotGap;
-            float groupWidth = BarWidth + 34f + total;
-            float groupX = _canvasWidth * 0.5f - groupWidth * 0.5f;
-            float groupMaxX = Mathf.Max(_safeLeft + Margin,
-                _canvasWidth - _safeRight - Margin - groupWidth);
-            groupX = Mathf.Clamp(groupX, _safeLeft + Margin, groupMaxX);
-            float x = groupX + BarWidth + 34f;
-            float y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - SlotSize;
+            BottomBar bar = MeasureBottomBar(sim);
+            if (bar.RowCount == 0 && !bar.HasDash) return;
 
             int visualSlot = 0;
-            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+            for (int slot = 0; slot < DashSlot; slot++)
             {
                 AbilityBuild build = sim.GetAbility(slot);
                 if (build == null) continue;
 
-                Rect box = new Rect(x + visualSlot * (SlotSize + SlotGap), y, SlotSize, SlotSize);
+                Rect box = new Rect(bar.RowX + visualSlot * (SlotSize + SlotGap), bar.Y,
+                    SlotSize, SlotSize);
                 visualSlot++;
-                int left = sim.AbilityReadyTick(slot) - sim.Tick;
-                Fill(box, SlotBack);
-                Frame(box, left <= 0 ? Gold : Ink, 1f);
-
-                if (left <= 0) Fill(Inset(box, 3f), SlotReady);
-                else
-                {
-                    Fill(Inset(box, 3f), SlotCooling);
-                    float ready = 1f - Mathf.Clamp01(left / (float)Mathf.Max(1, build.CooldownTicks));
-                    Rect inner = Inset(box, 3f);
-                    Fill(new Rect(inner.x, inner.yMax - inner.height * ready,
-                        inner.width, inner.height * ready), SlotReady);
-                }
-
-                Texture2D icon = AbilityIcon(slot, build.DefinitionId);
-                if (icon != null)
-                {
-                    Color previous = GUI.color;
-                    // Остывающая способность гасится и обесцвечивается: игрок
-                    // читает готовность по иконке боковым зрением, не считая
-                    // цифру. Полоса заполнения снизу говорит то же самое, но
-                    // медленнее — она про «сколько осталось», иконка про
-                    // «можно или нет».
-                    GUI.color = left <= 0 ? Color.white : new Color(0.68f, 0.72f, 0.78f, 0.78f);
-                    GUI.DrawTexture(Inset(box, 6f), icon, ScaleMode.ScaleToFit, true);
-                    GUI.color = previous;
-                }
-
-                bool channel = build.DefinitionId == AbilityDefinition.ChainCycloneId;
-                if (channel)
-                {
-                    GUI.Label(new Rect(box.center.x - 70f, box.y - 23f, 140f, 20f),
-                        sim.CycloneActive ? "ОТПУСТИ — ЗАВЕРШИТЬ" : "УДЕРЖИВАЙ " + SlotKey(slot), _slotName);
-                    if (sim.CycloneActive)
-                    {
-                        Rect progress = new Rect(box.x, box.yMax - 5f, box.width, 5f);
-                        Fill(progress, Ink);
-                        float duration = Mathf.Max(1f, build.Get(AbilityStatType.DurationTicks).ToFloat());
-                        progress.width *= 1f - Mathf.Clamp01(sim.CycloneElapsedTicks / duration);
-                        Fill(progress, new Color(1f, 0.95f, 0.83f));
-                        Frame(box, Color.white, 2f);
-                    }
-                }
-
-                // Рисуем время поверх иллюстрации, чтобы яркий арт не прятал
-                // самый важный боевой сигнал.
-                if (left > 0 && !(channel && sim.CycloneActive))
-                {
-                    float seconds = left / (float)Simulation.TicksPerSecond;
-                    GUI.Label(new Rect(box.x + 1f, box.y + 1f, box.width, box.height),
-                        seconds.ToString("0.0"), _slotLabel);
-                    GUI.Label(box, seconds.ToString("0.0"), _cooldownLabel);
-                }
-
-                GUI.Label(new Rect(box.x + 4f, box.y + 4f, 20f, 20f), SlotKey(slot), _slotKey);
-                // ПОДПИСЬ НЕ ШИРЕ СВОЕГО СЛОТА.
-                //
-                // Была `box.width + 48`: подпись вылезала на 24 пикселя в обе
-                // стороны при зазоре между слотами в 10, и четыре названия
-                // слипались в «ВИХРЬБРОСОК ЯКОРЯПОДСЕЧКАШАГ ПО ЦЕПИ». Запас
-                // имел смысл, пока подписанным был один слот из четырёх.
-                //
-                // Половина зазора с каждой стороны — предел, за которым
-                // соседи начинают соприкасаться.
-                float nameWidth = box.width + SlotGap;
-                GUI.Label(new Rect(box.center.x - nameWidth * 0.5f, box.yMax + 4f,
-                        nameWidth, 18f),
-                    AbilityName(build.DefinitionId), _slotName);
+                DrawSlot(sim, slot, build, box);
             }
+
+            if (bar.HasDash)
+            {
+                // Плитка кувырка ниже ростом и стоит на общей нижней линии:
+                // ряд способностей остаётся ровным, а меньший размер сам
+                // говорит, что это не пятая способность, а отдельная кнопка.
+                Rect box = new Rect(bar.DashX, bar.Y + (SlotSize - bar.DashSize),
+                    bar.DashSize, bar.DashSize);
+                DrawSlot(sim, DashSlot, sim.GetAbility(DashSlot), box);
+            }
+        }
+
+        /// <summary>
+        /// Одна плитка: рамка, заливка готовности, иконка, кулдаун, клавиша и
+        /// подпись. Размер берётся из <paramref name="box"/> — кувырок рисуется
+        /// тем же кодом, только меньшей плиткой, и любая правка вида
+        /// применяется к обоим сразу.
+        /// </summary>
+        private void DrawSlot(Simulation sim, int slot, AbilityBuild build, Rect box)
+        {
+            if (build == null) return;
+            int left = sim.AbilityReadyTick(slot) - sim.Tick;
+            Fill(box, SlotBack);
+            Frame(box, left <= 0 ? Gold : Ink, 1f);
+
+            if (left <= 0) Fill(Inset(box, 3f), SlotReady);
+            else
+            {
+                Fill(Inset(box, 3f), SlotCooling);
+                float ready = 1f - Mathf.Clamp01(left / (float)Mathf.Max(1, build.CooldownTicks));
+                Rect inner = Inset(box, 3f);
+                Fill(new Rect(inner.x, inner.yMax - inner.height * ready,
+                    inner.width, inner.height * ready), SlotReady);
+            }
+
+            Texture2D icon = AbilityIcon(slot, build.DefinitionId);
+            if (icon != null)
+            {
+                Color previous = GUI.color;
+                // Остывающая способность гасится и обесцвечивается: игрок
+                // читает готовность по иконке боковым зрением, не считая
+                // цифру. Полоса заполнения снизу говорит то же самое, но
+                // медленнее — она про «сколько осталось», иконка про
+                // «можно или нет».
+                GUI.color = left <= 0 ? Color.white : new Color(0.68f, 0.72f, 0.78f, 0.78f);
+                GUI.DrawTexture(Inset(box, 6f), icon, ScaleMode.ScaleToFit, true);
+                GUI.color = previous;
+            }
+
+            bool channel = build.DefinitionId == AbilityDefinition.ChainCycloneId;
+            if (channel)
+            {
+                GUI.Label(new Rect(box.center.x - 70f, box.y - 23f, 140f, 20f),
+                    sim.CycloneActive ? "ОТПУСТИ — ЗАВЕРШИТЬ" : "УДЕРЖИВАЙ " + SlotKey(slot), _slotName);
+                if (sim.CycloneActive)
+                {
+                    Rect progress = new Rect(box.x, box.yMax - 5f, box.width, 5f);
+                    Fill(progress, Ink);
+                    float duration = Mathf.Max(1f, build.Get(AbilityStatType.DurationTicks).ToFloat());
+                    progress.width *= 1f - Mathf.Clamp01(sim.CycloneElapsedTicks / duration);
+                    Fill(progress, new Color(1f, 0.95f, 0.83f));
+                    Frame(box, Color.white, 2f);
+                }
+            }
+
+            // Рисуем время поверх иллюстрации, чтобы яркий арт не прятал
+            // самый важный боевой сигнал.
+            if (left > 0 && !(channel && sim.CycloneActive))
+            {
+                float seconds = left / (float)Simulation.TicksPerSecond;
+                GUI.Label(new Rect(box.x + 1f, box.y + 1f, box.width, box.height),
+                    seconds.ToString("0.0"), _slotLabel);
+                GUI.Label(box, seconds.ToString("0.0"), _cooldownLabel);
+            }
+
+            // Ширина ярлыка считается от самой надписи: у кувырка это SPACE, а
+            // не один символ, и жёсткие 20 пикселей обрезали бы её до «SP».
+            string key = SlotKey(slot);
+            GUI.Label(new Rect(box.x + 4f, box.y + 4f, Mathf.Max(20f, key.Length * 9f), 20f),
+                key, _slotKey);
+            // ПОДПИСЬ НЕ ШИРЕ СВОЕГО СЛОТА.
+            //
+            // Была `box.width + 48`: подпись вылезала на 24 пикселя в обе
+            // стороны при зазоре между слотами в 10, и четыре названия
+            // слипались в «ВИХРЬБРОСОК ЯКОРЯПОДСЕЧКАШАГ ПО ЦЕПИ». Запас
+            // имел смысл, пока подписанным был один слот из четырёх.
+            //
+            // Половина зазора с каждой стороны — предел, за которым
+            // соседи начинают соприкасаться.
+            float nameWidth = box.width + SlotGap;
+            GUI.Label(new Rect(box.center.x - nameWidth * 0.5f, box.yMax + 4f,
+                    nameWidth, 18f),
+                AbilityName(build.DefinitionId), _slotName);
         }
 
         /// <summary>
@@ -240,6 +300,9 @@ namespace Game.View
                 case 1: return letters ? "W" : "2";
                 case 2: return letters ? "E" : "3";
                 case 3: return letters ? "R" : "4";
+                // Кувырок не входит в ряд, поэтому и настройка ряда его не
+                // касается: Space одинаков при обоих раскладах.
+                case DashSlot: return "SPACE";
                 default: return string.Empty;
             }
         }
@@ -263,30 +326,45 @@ namespace Game.View
         private Texture2D AbilityIcon(int slot, int definitionId)
         {
             if (_abilityIcons == null || (uint)slot >= (uint)_abilityIcons.Length) return null;
-            if (_abilityIcons[slot] != null) return _abilityIcons[slot];
+
+            // КЛЮЧ — СЛОТ ПЛЮС СПОСОБНОСТЬ, А НЕ ОДИН СЛОТ. Кэш по номеру
+            // слота живёт всю сессию, а содержимое слота меняется: смена ветки
+            // в лагере кладёт в первую кнопку Удар якорем, и плитка продолжала
+            // бы показывать Вихрь. Лишней загрузки нет — идентификатор совпадает
+            // на всех кадрах, пока набор не сменили.
+            if (_abilityIcons[slot] != null && _abilityIconIds[slot] == definitionId)
+                return _abilityIcons[slot];
 
             string file = IconFile(definitionId);
             if (file == null) return null;
 
             _abilityIcons[slot] = Resources.Load<Texture2D>("UI/Abilities/" + file);
+            _abilityIconIds[slot] = definitionId;
             return _abilityIcons[slot];
         }
 
         private static string IconFile(int definitionId)
         {
+            if (definitionId == AbilityDefinition.CleaveId) return "Icon_Cleave";
+            if (definitionId == AbilityDefinition.DashId) return "Icon_Dash";
             if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "Icon_AnchorLeap";
             if (definitionId == AbilityDefinition.ChainCycloneId) return "Icon_ChainCyclone";
             if (definitionId == AbilityDefinition.ChainStepId) return "Icon_Squall";
+            if (definitionId == AbilityDefinition.BlazeId) return "Icon_Blaze";
             return null;
         }
 
         private static string AbilityName(int definitionId)
         {
+            if (definitionId == AbilityDefinition.CleaveId) return "РАССЕКАЮЩИЙ УДАР";
+            if (definitionId == AbilityDefinition.DashId) return "КУВЫРОК";
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "БРОСОК ЯКОРЯ";
             if (definitionId == AbilityDefinition.ChainCycloneId) return "CHAIN CYCLONE";
+            if (definitionId == AbilityDefinition.AnchorSlamId) return "УДАР ЯКОРЕМ";
             if (definitionId == AbilityDefinition.ChainStepId) return "ШКВАЛ";
+            if (definitionId == AbilityDefinition.BlazeId) return "ЛАДНО СМАЗАЛ";
             return "СПОСОБНОСТЬ";
         }
 
@@ -385,6 +463,7 @@ namespace Game.View
             {
                 _abilityIconsLoaded = true;
                 _abilityIcons = new Texture2D[Simulation.AbilitySlots];
+                _abilityIconIds = new int[Simulation.AbilitySlots];
             }
             if (_mapArtwork == null)
                 _mapArtwork = Resources.Load<Texture2D>("UI/MapHud");
