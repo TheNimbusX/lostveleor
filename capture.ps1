@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Собирает плеер и снимает из него кадры игры.
 
@@ -21,6 +21,7 @@ param(
     [ValidatePattern('^[a-zA-Z0-9-]+$')] [string] $WorkspaceName = 'capture',
     [switch] $Whirlwind,
     [switch] $Camp,
+    [switch] $MainMenu,
     [switch] $CampCollision,
     [switch] $CampAmbience,
     [switch] $CampAmbienceStill,
@@ -244,6 +245,7 @@ $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization
 $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
 if ($Camp) { $playerArgs += '-capture-camp' }
+if ($MainMenu) { $playerArgs += '-capture-main-menu' }
 if ($CampCollision) { $playerArgs += '-capture-camp-collision' }
 if ($CampAmbience) { $playerArgs += '-capture-camp-ambience' }
 if ($CampAmbienceStill) { $playerArgs += '-capture-camp-ambience-still' }

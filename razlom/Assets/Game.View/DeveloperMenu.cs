@@ -96,6 +96,9 @@ namespace Game.View
         {
             if (!_open)
             {
+                // Подсказка не рисуется поверх главного меню: там нет забега,
+                // к которому относилось бы меню разработчика.
+                if (MainMenuView.IsOpen) return;
                 GUI.Label(new Rect(18, Screen.height - 32, 330, 24),
                     _driver.Session?.DeveloperInvulnerable == true ? "БЕССМЕРТИЕ · F8 — разработчик"
                     : _driver.Session?.IsDeveloperRun == true ? "ТЕСТОВЫЙ ЗАБЕГ · F8 — разработчик" : "F8 — меню разработчика");

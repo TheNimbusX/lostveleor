@@ -72,6 +72,13 @@ namespace Game.View
         /// </summary>
         public static bool Installed { get; private set; }
 
+        /// <summary>
+        /// Съёмка главного меню: под -capture-main-menu меню не выключается, а
+        /// само нажимает PLAY через три секунды и пишет в лог состояние камер.
+        /// Нужна, чтобы увидеть переход меню → игра в настоящем плеере.
+        /// </summary>
+        public static bool MainMenuCapture { get; private set; }
+
         public static bool HasEnemyOverride { get; private set; }
 
         public static int EnemyOverride { get; private set; }
@@ -214,6 +221,7 @@ namespace Game.View
             DeathDuringSkill = Array.IndexOf(args, "-capture-death-during-skill") >= 0;
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
             PauseMenuCaptureRequested = Array.IndexOf(args, PauseMenuFlag) >= 0;
+            MainMenuCapture = Array.IndexOf(args, "-capture-main-menu") >= 0;
             PauseMenuCapturePage = ReadValue(args, PauseMenuFlag);
             if ((MovingCombatShowcase || LiveSkill) && CombatFeelTier == CombatFeelCaptureTier.None)
                 CombatFeelTier = CombatFeelCaptureTier.Normal;

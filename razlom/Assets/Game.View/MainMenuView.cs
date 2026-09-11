@@ -1,39 +1,36 @@
 using UnityEngine;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 namespace Game.View
 {
     /// <summary>
-    /// Главное меню: утверждённая картинка, три кнопки из HUD-пака и тема.
+    /// Главное меню: пауза до PLAY, три кнопки из HUD-пака и тема.
     ///
-    /// ВРЕМЕННОЕ РЕШЕНИЕ ДО ДЕМКИ, И ЭТО НЕ ОТГОВОРКА, А УСТРОЙСТВО. Фон здесь —
-    /// одно изображение, потому что видео и параллакс решено делать после демо.
-    /// Всё, что появится потом, заменяет РОВНО фон: разметка кнопок берётся из
-    /// manifest.json пака в долях исходного холста, поэтому она переживёт смену
-    /// подложки на видео или на слои без единой правки чисел.
-    ///
-    /// Рисуется на IMGUI, как PauseMenu и весь остальной HUD: заводить ради
-    /// трёх кнопок Canvas и префабы значило бы завести вторую систему UI в
-    /// проекте, где первая уже работает.
+    /// Сама сцена — параллакс из слоёв — живёт в <see cref="MainMenuScene"/>
+    /// на спрайтах и своей камере. Здесь остаётся то, что IMGUI делает хорошо:
+    /// неподвижные кнопки, которым округление до пикселя как раз нужно.
+    /// Разметка кнопок — из manifest.json пака, в долях холста 1672×941.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(-300)]
     public sealed class MainMenuView : MonoBehaviour
     {
-        /// <summary>Холст, в котором заданы координаты пака. См. manifest.json.</summary>
-        private const float CanvasWidth = 1672f;
-        private const float CanvasHeight = 941f;
-
+        private const float CanvasWidth = MainMenuScene.CanvasWidth;
+        private const float CanvasHeight = MainMenuScene.CanvasHeight;
         private const float MusicFadeSeconds = 0.6f;
+        /// <summary>Сглаживание курсора, 1/с: сцена догоняет мышь, а не прилипает к ней.</summary>
+        private const float PointerSmoothing = 4f;
 
         /// <summary>
         /// Открыто ли меню. Статика нужна PauseMenu: настройки из меню
-        /// открываются поверх него, и закрытие настроек обязано вернуть паузу,
-        /// а не запустить игру за спиной у игрока.
+        /// открываются поверх него, и их закрытие обязано вернуть паузу, а не
+        /// запустить игру за спиной у игрока.
         /// </summary>
         public static bool IsOpen { get; private set; }
 
-        // Разметка из manifest.json: центр в долях холста и размер в пикселях
-        // холста. Доли, а не пиксели, потому что подложка ещё сменится.
         private static readonly Vector2 PlayCenter = new Vector2(0.5149522f, 0.5807651f);
         private static readonly Vector2 PlaySize = new Vector2(400f, 125f);
         private static readonly Vector2 SettingsCenter = new Vector2(0.9108852f, 0.9373007f);
@@ -43,18 +40,20 @@ namespace Game.View
         private TickDriver _driver;
         private PauseMenu _pause;
         private AudioSource _music;
-
-        private Texture2D _background;
+        private MainMenuScene _scene;
+        private Texture2D _flatBackground;
         private Texture2D[] _play;
         private Texture2D[] _settings;
         private Texture2D[] _exit;
         private Texture2D _focus;
 
+        private Vector2 _pointer;
+
         private int _hovered = -1;
         private int _pressed = -1;
         private bool _started;
+        private bool _released;
         private float _musicFade = -1f;
-
         private CursorLockMode _previousCursorLock;
         private bool _previousCursorVisible;
 
@@ -62,7 +61,7 @@ namespace Game.View
         {
             // Съёмка не нажимает кнопок: с открытым меню capture.ps1 записал бы
             // заставку вместо игры. Поэтому под -razlom-capture меню не живёт.
-            if (CaptureRig.Installed)
+            if (CaptureRig.Installed && !CaptureRig.MainMenuCapture)
             {
                 enabled = false;
                 return;
@@ -72,7 +71,11 @@ namespace Game.View
             _pause = GetComponent<PauseMenu>();
             GameUserSettings.Load();
 
-            _background = Load("UI/MainMenu/MainMenu_Background");
+            // Плоская картинка — запасной путь, если слои не доехали: меню не
+            // должно превращаться в пустой экран из-за одного файла.
+            _scene = MainMenuScene.TryCreate();
+            if (_scene == null) _flatBackground = Load("UI/MainMenu/MainMenu_Background");
+
             _play = LoadStates("play");
             _settings = LoadStates("settings");
             _exit = LoadStates("exit");
@@ -91,14 +94,20 @@ namespace Game.View
             }
         }
 
+        /// <summary>
+        /// После перекомпиляции во время Play ссылка на сцену меню теряется —
+        /// это обычное поле, Unity его не переносит, — а сами объекты сцены
+        /// остаются. Без этой уборки их камера рисовала бы голубым поверх игры
+        /// до конца сессии.
+        /// </summary>
+        private void OnEnable()
+        {
+            if (_scene == null) MainMenuScene.DestroyLeftovers();
+        }
+
         private void Start()
         {
             if (!enabled) return;
-            Open();
-        }
-
-        private void Open()
-        {
             IsOpen = true;
             _previousCursorLock = Cursor.lockState;
             _previousCursorVisible = Cursor.visible;
@@ -107,6 +116,12 @@ namespace Game.View
             Time.timeScale = 0f;
             if (_driver != null) _driver.SetGameplayPaused(true);
             if (_music != null) _music.Play();
+
+            // Игровую камеру меню НЕ трогает. Раньше ей обнуляли маску, чтобы
+            // лагерь не рисовался под сценой впустую, и возвращали её после
+            // PLAY. Возврат стоял после снятия паузы, и если что-то между ними
+            // падало, игра шла вслепую: HUD есть, мира нет, голубой экран.
+            // Экономия на экране меню копеечная, а камера меню и так кроет кадр.
         }
 
         private void StartGame()
@@ -114,29 +129,67 @@ namespace Game.View
             if (_started) return;
             _started = true;
             IsOpen = false;
+
+            // Сцена гаснет ПЕРВОЙ: что бы ни случилось дальше, камера меню не
+            // останется рисовать поверх игры.
+            _scene?.Hide();
+
             Time.timeScale = 1f;
-            if (_driver != null) _driver.SetGameplayPaused(false);
             Cursor.lockState = _previousCursorLock;
             Cursor.visible = _previousCursorVisible;
             _musicFade = MusicFadeSeconds;
+            if (_driver != null) _driver.SetGameplayPaused(false);
         }
 
         private void Update()
         {
-            // Настройки открываются ПОВЕРХ меню, и их закрытие снимает паузу —
-            // оно не знает, что под ним не игра, а заставка. Пока меню открыто,
-            // пауза восстанавливается здесь.
-            if (IsOpen && !_started && (_pause == null || !_pause.IsOpen))
+            // Всё время меню — нескалированное: на этом экране timeScale равен
+            // нулю, и обычная дельта остановила бы и сцену, и затухание темы.
+            float dt = Time.unscaledDeltaTime;
+
+            // Съёмка меню: стенд кнопок не нажимает, поэтому PLAY — сам.
+            if (CaptureRig.MainMenuCapture && IsOpen && !_started && Time.unscaledTime >= 3f) StartGame();
+
+            // Состояние камер после PLAY — в лог, в редакторе и под съёмкой.
+            // Появилось из-за голубого экрана после PLAY, который по коду не
+            // объяснялся: нужно видеть, какая камера что рисует на самом деле.
+            if (_started && _diagnosticFrames <= 120 && (CaptureRig.MainMenuCapture || Application.isEditor))
             {
-                if (Time.timeScale != 0f) Time.timeScale = 0f;
-                if (_driver != null) _driver.SetGameplayPaused(true);
+                _diagnosticFrames++;
+                if (_diagnosticFrames == 2 || _diagnosticFrames == 30 || _diagnosticFrames == 120)
+                    LogCameras(_diagnosticFrames);
+            }
+
+            if (IsOpen && !_started)
+            {
+                // Настройки открываются ПОВЕРХ меню, и их закрытие снимает
+                // паузу. Пока меню открыто, пауза восстанавливается здесь.
+                if (_pause == null || !_pause.IsOpen)
+                {
+                    if (Time.timeScale != 0f) Time.timeScale = 0f;
+                    if (_driver != null) _driver.SetGameplayPaused(true);
+                    _pointer = Vector2.Lerp(_pointer, ReadPointer(), 1f - Mathf.Exp(-PointerSmoothing * dt));
+                }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                // Просмотр тёмной версии замка, пока не решено, когда её
+                // показывать. В релизной сборке клавиши нет.
+                if (_scene != null && VersionKeyPressed()) _scene.SetDark(!_scene.Dark);
+#endif
+                _scene?.Tick(_pointer, dt, Time.unscaledTime);
+            }
+
+            // Сцена уходит в первом же кадре игры: сразу после PLAY игровая
+            // камера снова рисует мир.
+            if (_started && _scene != null)
+            {
+                _scene.Dispose();
+                _scene = null;
             }
 
             if (_musicFade > 0f && _music != null)
             {
-                // Нескалированное время: на экране меню timeScale равен нулю, и
-                // обычная дельта остановила бы затухание навсегда.
-                _musicFade -= Time.unscaledDeltaTime;
+                _musicFade -= dt;
                 _music.volume = GameUserSettings.MusicGain * Mathf.Clamp01(_musicFade / MusicFadeSeconds);
                 if (_musicFade <= 0f)
                 {
@@ -146,52 +199,60 @@ namespace Game.View
             }
             else if (IsOpen && _music != null && !_started)
             {
-                // Ползунок музыки в настройках слышен сразу, а не со следующего
-                // запуска: меню — единственное место, где эту громкость и
-                // проверяют на слух.
+                // Ползунок музыки в настройках слышен сразу: меню — единственное
+                // место, где эту громкость и проверяют на слух.
                 _music.volume = GameUserSettings.MusicGain;
             }
+
+            if (_started && !_released && _musicFade < 0f) ReleaseArt();
+        }
+
+        /// <summary>
+        /// Курсор в долях экрана от −1 до 1, ось Y вниз. Читается из ввода
+        /// напрямую, а не из событий IMGUI: те приходят рывками, по событию.
+        /// </summary>
+        private static Vector2 ReadPointer()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Mouse.current == null) return Vector2.zero;
+            Vector2 mouse = Mouse.current.position.ReadValue();
+#else
+            Vector2 mouse = Input.mousePosition;
+#endif
+            float x = mouse.x / Mathf.Max(1f, Screen.width) * 2f - 1f;
+            float y = 1f - mouse.y / Mathf.Max(1f, Screen.height) * 2f;
+            return new Vector2(Mathf.Clamp(x, -1f, 1f), Mathf.Clamp(y, -1f, 1f));
         }
 
         private void OnGUI()
         {
             if (!IsOpen || _started) return;
 
-            // Настройки открываются ПОВЕРХ меню и рисуются с той же глубиной
-            // -1000. При равной глубине порядок решает очерёдность вызова
-            // OnGUI — то есть случайность: панель настроек уходила под
-            // подложку, и кнопка выглядела сломанной. Пока настройки открыты,
-            // меню осознанно уступает им слой.
-            bool settingsOpen = _pause != null && _pause.IsOpen;
-            GUI.depth = settingsOpen ? -900 : -1000;
-
-            // Подложка кроет экран целиком. Лишнее уходит за края, а не
-            // растягивается: искажать утверждённую картинку нельзя.
-            float scale = Mathf.Max(Screen.width / CanvasWidth, Screen.height / CanvasHeight);
-            float width = CanvasWidth * scale;
-            float height = CanvasHeight * scale;
-            var canvas = new Rect(
-                (Screen.width - width) * 0.5f,
-                (Screen.height - height) * 0.5f,
-                width, height);
-
-            if (_background != null) GUI.DrawTexture(canvas, _background, ScaleMode.StretchToFill);
-            else Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(0.05f, 0.06f, 0.08f, 1f));
-
-            // Под открытыми настройками меню — только подложка. Кнопки под
-            // затемнением ловили бы наведение и клики сквозь чужой экран.
-            if (settingsOpen)
+            // Под открытыми настройками только сцена: кнопки под затемнением
+            // ловили бы наведение и клики сквозь чужой экран.
+            if (_pause != null && _pause.IsOpen)
             {
                 _hovered = -1;
                 _pressed = -1;
                 return;
             }
+            GUI.depth = -1000;
+
+            // Холст кроет экран целиком — так же камера сцены кадрирует слои,
+            // поэтому кнопки совпадают с артом.
+            float scale = Mathf.Max(Screen.width / CanvasWidth, Screen.height / CanvasHeight);
+            float width = CanvasWidth * scale;
+            float height = CanvasHeight * scale;
+            var canvas = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+
+            if (_scene == null && _flatBackground != null && Event.current.type == EventType.Repaint)
+                GUI.DrawTexture(canvas, _flatBackground, ScaleMode.StretchToFill);
 
             Rect play = Place(canvas, scale, PlayCenter, PlaySize);
             Rect settings = Place(canvas, scale, SettingsCenter, DiamondSize);
             Rect exit = Place(canvas, scale, ExitCenter, DiamondSize);
 
-            Vector2 pointer = new Vector2(Event.current.mousePosition.x, Event.current.mousePosition.y);
+            Vector2 pointer = Event.current.mousePosition;
             _hovered = play.Contains(pointer) ? 0
                 : settings.Contains(pointer) ? 1
                 : exit.Contains(pointer) ? 2 : -1;
@@ -261,6 +322,21 @@ namespace Game.View
                 w, h);
         }
 
+        private void ReleaseArt()
+        {
+            _released = true;
+            Unload(_flatBackground);
+            Unload(_focus);
+            foreach (Texture2D[] states in new[] { _play, _settings, _exit })
+                if (states != null)
+                    foreach (Texture2D state in states) Unload(state);
+        }
+
+        private static void Unload(Texture2D texture)
+        {
+            if (texture != null) Resources.UnloadAsset(texture);
+        }
+
         private static Texture2D[] LoadStates(string id) => new[]
         {
             Load($"UI/MainMenu/btn_{id}_normal"),
@@ -275,17 +351,42 @@ namespace Game.View
             return texture;
         }
 
-        private static void Fill(Rect rect, Color color)
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static bool VersionKeyPressed()
         {
-            Color previous = GUI.color;
-            GUI.color = color;
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = previous;
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && Keyboard.current.f2Key.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.F2);
+#endif
+        }
+#endif
+
+        private int _diagnosticFrames;
+
+        private void LogCameras(int frame)
+        {
+            var log = new System.Text.StringBuilder();
+            log.Append($"[main-menu] +{frame} кадров после PLAY: timeScale={Time.timeScale} ")
+               .Append($"paused={(_driver != null && _driver.GameplayPaused)} ")
+               .Append($"mode={_driver?.Session?.Mode} main={(Camera.main != null ? Camera.main.name : "null")}");
+            foreach (Camera camera in FindObjectsByType<Camera>(FindObjectsInactive.Include))
+            {
+                Transform tr = camera.transform;
+                log.Append($"\n  «{camera.name}» enabled={camera.enabled} active={camera.gameObject.activeInHierarchy} ")
+                   .Append($"depth={camera.depth} mask=0x{camera.cullingMask:X} clear={camera.clearFlags} ")
+                   .Append($"bg={camera.backgroundColor} pos={tr.position} rot={tr.eulerAngles} ")
+                   .Append($"ortho={camera.orthographic}/{camera.orthographicSize} near={camera.nearClipPlane} far={camera.farClipPlane} ")
+                   .Append($"rt={(camera.targetTexture != null ? camera.targetTexture.name : "-")}");
+            }
+            Debug.Log(log.ToString());
         }
 
         private void OnDestroy()
         {
             if (IsOpen) IsOpen = false;
+            _scene?.Dispose();
+            _scene = null;
         }
     }
 }

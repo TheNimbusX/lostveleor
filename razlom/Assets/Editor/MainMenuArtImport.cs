@@ -20,6 +20,11 @@ public sealed class MainMenuArtImport : AssetPostprocessor
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.maxTextureSize = 2048;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
-        importer.alphaIsTransparency = true;
+
+        // Маски анимации — это веса, а не цвет. В sRGB гамма исказила бы их:
+        // половина силы колыхания превратилась бы примерно в пятую часть.
+        bool mask = assetPath.EndsWith("_Mask.png");
+        importer.sRGBTexture = !mask;
+        importer.alphaIsTransparency = !mask;
     }
 }
