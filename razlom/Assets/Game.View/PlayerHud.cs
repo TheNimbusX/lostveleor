@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using Game.Sim;
 
@@ -12,6 +13,12 @@ namespace Game.View
         public float BarHeight = 24f;
         public float Margin = 18f;
 
+        [Header("Портрет, лавидий и опыт")]
+        public float PortraitSize = 64f;
+        public float PortraitGap = 10f;
+        public float LavidiumBarHeight = 12f;
+        public float ExperienceBarHeight = 6f;
+
         [Header("Слоты способностей")]
         public float SlotSize = 64f;
         public float SlotGap = 10f;
@@ -22,6 +29,8 @@ namespace Game.View
 
         private TickDriver _driver;
         private GUIStyle _label;
+        private GUIStyle _smallLabel;
+        private GUIStyle _levelLabel;
         private GUIStyle _slotLabel;
         private GUIStyle _slotKey;
         private GUIStyle _slotName;
@@ -42,9 +51,20 @@ namespace Game.View
         private float _safeRight;
         private float _safeBottom;
 
+        private bool _portraitBaking;
+        private float _nextPortraitTry;
+        private int _shownLevel;
+        private float _levelFlashUntil;
+
         private static readonly Color HealthBack = new Color(0.16f, 0.09f, 0.07f, 0.90f);
         private static readonly Color HealthFill = new Color(0.86f, 0.23f, 0.19f, 0.98f);
         private static readonly Color HealthLow = new Color(1.00f, 0.47f, 0.16f, 0.98f);
+        // Лавидий янтарный, а не синий: рядом золото HUD, а синий с золотом по
+        // правилу палитры в одном дизайне не сочетаются.
+        private static readonly Color LavidiumBack = new Color(0.20f, 0.11f, 0.05f, 1f);
+        private static readonly Color LavidiumFill = new Color(1.00f, 0.63f, 0.14f, 0.98f);
+        private static readonly Color ExperienceBack = new Color(0.12f, 0.08f, 0.06f, 1f);
+        private static readonly Color ExperienceFill = new Color(0.96f, 0.88f, 0.66f, 0.95f);
         private static readonly Color SlotBack = new Color(0.13f, 0.075f, 0.06f, 0.92f);
         private static readonly Color SlotReady = new Color(0.97f, 0.58f, 0.28f, 0.58f);
         private static readonly Color SlotCooling = new Color(0.10f, 0.065f, 0.07f, 0.68f);
@@ -58,6 +78,26 @@ namespace Game.View
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
+        }
+
+        /// <summary>
+        /// Снимок портрета — вне OnGUI: студии нужны два обычных кадра, а
+        /// сцена может ещё не иметь ArenaView в первые кадры запуска.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (HeroPortrait.Texture != null || _portraitBaking || Time.unscaledTime < _nextPortraitTry) return;
+            _nextPortraitTry = Time.unscaledTime + 2f;
+            ArenaView arena = FindAnyObjectByType<ArenaView>();
+            if (arena == null) return;
+            _portraitBaking = true;
+            StartCoroutine(BakePortrait(arena));
+        }
+
+        private IEnumerator BakePortrait(ArenaView arena)
+        {
+            yield return HeroPortrait.Bake(arena);
+            _portraitBaking = false;
         }
 
         private void OnGUI()
@@ -91,7 +131,7 @@ namespace Game.View
             try
             {
                 if (session.Mode == GameMode.Rift && run != null) DrawMinimap(run, sim);
-                DrawHealth(sim);
+                DrawHero(sim, session.Camp);
                 DrawAbilities(sim);
             }
             finally
@@ -115,17 +155,20 @@ namespace Game.View
         /// <summary>
         /// Геометрия нижней панели.
         ///
-        /// СЧИТАЕТСЯ В ОДНОМ МЕСТЕ ДЛЯ ДВУХ РИСОВАТЕЛЕЙ. Полоса здоровья и ряд
+        /// СЧИТАЕТСЯ В ОДНОМ МЕСТЕ ДЛЯ ДВУХ РИСОВАТЕЛЕЙ. Блок героя и ряд
         /// способностей центруются как одна группа, поэтому обе половины
         /// обязаны получить одну и ту же ширину. Раньше формула стояла дважды,
-        /// и любая правка ряда молча уводила полосу здоровья вбок.
+        /// и любая правка ряда молча уводила полосу здоровья вбок. Портрет
+        /// входит в ширину здесь же и только здесь.
         /// </summary>
         private struct BottomBar
         {
-            public float GroupX, RowX, DashX, DashSize, Y;
+            public float GroupX, ColumnX, RowX, DashX, DashSize, Y, Bottom;
             public int RowCount;
             public bool HasDash;
         }
+
+        private float HeroWidth => PortraitSize + PortraitGap + BarWidth;
 
         private BottomBar MeasureBottomBar(Simulation sim)
         {
@@ -140,36 +183,88 @@ namespace Game.View
                 : 0f;
             float dash = bar.HasDash ? DashGap + bar.DashSize : 0f;
             float abilities = row + dash;
-            float groupWidth = BarWidth + (abilities > 0f ? BarToRowGap + abilities : 0f);
+            float groupWidth = HeroWidth + (abilities > 0f ? BarToRowGap + abilities : 0f);
 
             float groupMaxX = Mathf.Max(_safeLeft + Margin,
                 _canvasWidth - _safeRight - Margin - groupWidth);
             bar.GroupX = Mathf.Clamp(_canvasWidth * 0.5f - groupWidth * 0.5f,
                 _safeLeft + Margin, groupMaxX);
-            bar.RowX = bar.GroupX + BarWidth + BarToRowGap;
+            bar.ColumnX = bar.GroupX + PortraitSize + PortraitGap;
+            bar.RowX = bar.GroupX + HeroWidth + BarToRowGap;
             bar.DashX = bar.RowX + row + DashGap;
-            bar.Y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - SlotSize;
+            bar.Bottom = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f);
+            bar.Y = bar.Bottom - SlotSize;
             return bar;
         }
 
-        private void DrawHealth(Simulation sim)
+        /// <summary>
+        /// Блок героя: портрет с уровнем и колонка полос — жизнь, лавидий, опыт.
+        /// Низ колонки стоит на той же линии, что низ ряда способностей.
+        /// </summary>
+        private void DrawHero(Simulation sim, Camp camp)
         {
+            BottomBar bar = MeasureBottomBar(sim);
+            float x = bar.ColumnX;
+            float experienceY = bar.Bottom - ExperienceBarHeight;
+            float lavidiumY = experienceY - 4f - LavidiumBarHeight;
+            float healthY = lavidiumY - 4f - BarHeight;
+            float portraitY = bar.Bottom - PortraitSize;
+            float top = Mathf.Min(healthY - 24f, portraitY);
+
+            Rect panel = new Rect(bar.GroupX - 10f, top - 6f, HeroWidth + 20f, bar.Bottom - top + 14f);
+            Fill(panel, HealthBack);
+            Frame(panel, Ink, 1f);
+
+            int level = camp != null ? camp.Level : 1;
+            if (_shownLevel == 0) _shownLevel = level;
+            if (level > _shownLevel)
+            {
+                // Новый уровень подсвечивает портрет на секунду: очко таланта
+                // ждёт в палатке, и игрок должен узнать о нём, не открывая её.
+                _shownLevel = level;
+                _levelFlashUntil = Time.unscaledTime + 1.2f;
+            }
+            bool flash = Time.unscaledTime < _levelFlashUntil;
+
+            Rect portrait = new Rect(bar.GroupX, portraitY, PortraitSize, PortraitSize);
+            Fill(portrait, SlotBack);
+            Texture2D face = HeroPortrait.Texture;
+            if (face != null) GUI.DrawTexture(Inset(portrait, 2f), face, ScaleMode.ScaleAndCrop, true);
+            Frame(portrait, flash ? Color.white : Gold, flash ? 2f : 1f);
+            Rect badge = new Rect(portrait.xMax - 22f, portrait.yMax - 17f, 24f, 17f);
+            Fill(badge, Ink);
+            Frame(badge, Gold, 1f);
+            GUI.Label(badge, level.ToString(), _levelLabel);
+
+            GUI.Label(new Rect(x, healthY - 23f, BarWidth, 20f), "ПЕЛАГ  /  УР. " + level, _label);
+
             int health = Mathf.Max(0, sim.Entities.Health[Simulation.PlayerId]);
             int max = Mathf.Max(1, sim.Entities.MaxHealth[Simulation.PlayerId]);
             float fill = Mathf.Clamp01(health / (float)max);
-
-            float x = MeasureBottomBar(sim).GroupX;
-            float y = _canvasHeight - _safeBottom - Mathf.Max(Margin, 42f) - BarHeight;
-            Rect panel = new Rect(x - 10f, y - 28f, BarWidth + 20f, BarHeight + 38f);
-
-            Fill(panel, HealthBack);
-            Frame(panel, Ink, 1f);
-            GUI.Label(new Rect(x, y - 25f, BarWidth, 20f), "ПЕЛАГ  /  ЖИЗНЬ", _label);
-            Fill(new Rect(x, y, BarWidth, BarHeight), new Color(0.25f, 0.13f, 0.10f, 1f));
+            Fill(new Rect(x, healthY, BarWidth, BarHeight), new Color(0.25f, 0.13f, 0.10f, 1f));
             Color fillColor = fill <= 0.25f ? HealthLow : HealthFill;
-            Fill(new Rect(x + 3f, y + 3f, (BarWidth - 6f) * fill, BarHeight - 6f), fillColor);
-            GUI.Label(new Rect(x + 8f, y + 1f, BarWidth - 16f, BarHeight - 2f),
+            Fill(new Rect(x + 3f, healthY + 3f, (BarWidth - 6f) * fill, BarHeight - 6f), fillColor);
+            GUI.Label(new Rect(x + 8f, healthY + 1f, BarWidth - 16f, BarHeight - 2f),
                 health + " / " + max, _label);
+
+            int maxLavidium = sim.Entities.MaxLavidium[Simulation.PlayerId];
+            if (maxLavidium > 0)
+            {
+                // Целые единицы, как их и тратит каст: дробная часть
+                // восстановления игроку ничего не говорит.
+                int lavidium = Mathf.FloorToInt(sim.Entities.Lavidium[Simulation.PlayerId].ToFloat());
+                float lavidiumFill = Mathf.Clamp01(lavidium / (float)maxLavidium);
+                Fill(new Rect(x, lavidiumY, BarWidth, LavidiumBarHeight), LavidiumBack);
+                Fill(new Rect(x + 2f, lavidiumY + 2f, (BarWidth - 4f) * lavidiumFill, LavidiumBarHeight - 4f), LavidiumFill);
+                GUI.Label(new Rect(x + 6f, lavidiumY - 1f, BarWidth - 12f, LavidiumBarHeight + 2f),
+                    "ЛАВИДИЙ  " + lavidium + " / " + maxLavidium, _smallLabel);
+            }
+
+            float experience = camp != null
+                ? Mathf.Clamp01(camp.Experience / (float)Mathf.Max(1, camp.ExperienceToNextLevel))
+                : 0f;
+            Fill(new Rect(x, experienceY, BarWidth, ExperienceBarHeight), ExperienceBack);
+            Fill(new Rect(x, experienceY, BarWidth * experience, ExperienceBarHeight), ExperienceFill);
         }
 
         private void DrawAbilities(Simulation sim)
@@ -210,17 +305,24 @@ namespace Game.View
         {
             if (build == null) return;
             int left = sim.AbilityReadyTick(slot) - sim.Tick;
+            // Нехватка лавидия гасит плитку так же, как кулдаун: нажатие всё
+            // равно ничего не сделает, и готовой она выглядеть не должна.
+            bool affordable = sim.Entities.Lavidium[Simulation.PlayerId].ToFloat() >= Simulation.LavidiumCostOf(build);
+            bool ready = left <= 0 && affordable;
             Fill(box, SlotBack);
-            Frame(box, left <= 0 ? Gold : Ink, 1f);
+            Frame(box, ready ? Gold : Ink, 1f);
 
-            if (left <= 0) Fill(Inset(box, 3f), SlotReady);
+            if (ready) Fill(Inset(box, 3f), SlotReady);
             else
             {
                 Fill(Inset(box, 3f), SlotCooling);
-                float ready = 1f - Mathf.Clamp01(left / (float)Mathf.Max(1, build.CooldownTicks));
-                Rect inner = Inset(box, 3f);
-                Fill(new Rect(inner.x, inner.yMax - inner.height * ready,
-                    inner.width, inner.height * ready), SlotReady);
+                if (left > 0)
+                {
+                    float progress = 1f - Mathf.Clamp01(left / (float)Mathf.Max(1, build.CooldownTicks));
+                    Rect inner = Inset(box, 3f);
+                    Fill(new Rect(inner.x, inner.yMax - inner.height * progress,
+                        inner.width, inner.height * progress), SlotReady);
+                }
             }
 
             Texture2D icon = AbilityIcon(slot, build.DefinitionId);
@@ -232,7 +334,7 @@ namespace Game.View
                 // цифру. Полоса заполнения снизу говорит то же самое, но
                 // медленнее — она про «сколько осталось», иконка про
                 // «можно или нет».
-                GUI.color = left <= 0 ? Color.white : new Color(0.68f, 0.72f, 0.78f, 0.78f);
+                GUI.color = ready ? Color.white : new Color(0.68f, 0.72f, 0.78f, 0.78f);
                 GUI.DrawTexture(Inset(box, 6f), icon, ScaleMode.ScaleToFit, true);
                 GUI.color = previous;
             }
@@ -244,11 +346,11 @@ namespace Game.View
                     sim.CycloneActive ? "ОТПУСТИ — ЗАВЕРШИТЬ" : "УДЕРЖИВАЙ " + SlotKey(slot), _slotName);
                 if (sim.CycloneActive)
                 {
-                    Rect progress = new Rect(box.x, box.yMax - 5f, box.width, 5f);
-                    Fill(progress, Ink);
+                    Rect bar = new Rect(box.x, box.yMax - 5f, box.width, 5f);
+                    Fill(bar, Ink);
                     float duration = Mathf.Max(1f, build.Get(AbilityStatType.DurationTicks).ToFloat());
-                    progress.width *= 1f - Mathf.Clamp01(sim.CycloneElapsedTicks / duration);
-                    Fill(progress, new Color(1f, 0.95f, 0.83f));
+                    bar.width *= 1f - Mathf.Clamp01(sim.CycloneElapsedTicks / duration);
+                    Fill(bar, new Color(1f, 0.95f, 0.83f));
                     Frame(box, Color.white, 2f);
                 }
             }
@@ -261,6 +363,13 @@ namespace Game.View
                 GUI.Label(new Rect(box.x + 1f, box.y + 1f, box.width, box.height),
                     seconds.ToString("0.0"), _slotLabel);
                 GUI.Label(box, seconds.ToString("0.0"), _cooldownLabel);
+            }
+            else if (!affordable)
+            {
+                // Кулдаун прошёл, а ресурса нет — показываем, сколько стоит.
+                string cost = Simulation.LavidiumCostOf(build).ToString();
+                GUI.Label(new Rect(box.x + 1f, box.y + 1f, box.width, box.height), cost, _slotLabel);
+                GUI.Label(box, cost, _cooldownLabel);
             }
 
             // Ширина ярлыка считается от самой надписи: у кувырка это SPACE, а
@@ -308,16 +417,6 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Имя способности под слотом.
-        ///
-        /// Иконка пока одна — у Вихря; у остальных трёх слот был бы пустым
-        /// квадратом с буквой, и игрок не знал бы, что нажимает. Подпись стоит
-        /// ничего и снимает вопрос до появления иконок.
-        ///
-        /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция на
-        /// панели, и она уже один раз переехала.
-        /// </summary>
-        /// <summary>
         /// Иконка слота. Кэшируется по слоту, ищется по способности.
         ///
         /// Загрузка ленивая и одноразовая на слот: `Resources.Load` в OnGUI
@@ -355,6 +454,12 @@ namespace Game.View
             return null;
         }
 
+        /// <summary>
+        /// Имя способности под слотом.
+        ///
+        /// Разбор по DefinitionId, а не по номеру слота: слот — это позиция на
+        /// панели, и она уже один раз переехала.
+        /// </summary>
         private static string AbilityName(int definitionId)
         {
             if (definitionId == AbilityDefinition.CleaveId) return "РАССЕКАЮЩИЙ УДАР";
@@ -474,6 +579,10 @@ namespace Game.View
                 fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft,
             };
             _label.normal.textColor = new Color(1f, 0.96f, 0.92f);
+            _smallLabel = new GUIStyle(_label) { fontSize = 10 };
+            _smallLabel.normal.textColor = new Color(0.16f, 0.07f, 0.03f);
+            _levelLabel = new GUIStyle(_label) { fontSize = 12, alignment = TextAnchor.MiddleCenter };
+            _levelLabel.normal.textColor = Gold;
             _slotLabel = new GUIStyle(_label) { fontSize = 15, alignment = TextAnchor.MiddleCenter };
             _slotLabel.normal.textColor = new Color(0.06f, 0.08f, 0.10f);
             _cooldownLabel = new GUIStyle(_slotLabel);

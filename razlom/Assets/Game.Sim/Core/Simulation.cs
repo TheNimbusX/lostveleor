@@ -343,7 +343,8 @@ namespace Game.Sim
         private int _chainTarget = -1;
         public int ChainTargetId => _chainHopsLeft > 0 ? _chainTarget : -1;
         private int _chainSlot = -1;
-        private readonly int[] _chainVisited = new int[AnchorKit.ChainMaxHops];
+        // +1 под талант «Пять прыжков».
+        private readonly int[] _chainVisited = new int[AnchorKit.ChainMaxHops + 1];
         private int _chainVisitedCount;
 
         /// <summary>
@@ -499,6 +500,8 @@ namespace Game.Sim
         /// </summary>
         public void SetAbility(int slot, AbilityDefinition definition, AbilityNode[] nodes, int nodeCount)
         {
+            // Буферы талантов на каждую сущность — при сборке, а не в бою.
+            EnsureTalentBuffers();
             // Пустой слот действительно пуст. Ветка, у которой способностей
             // меньше, чем кнопок, — это норма, а не ошибка вызывающего.
             if (definition == null)
@@ -1172,12 +1175,14 @@ namespace Game.Sim
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
             UpdateBlaze();
-            ResolveWhirlwindImpact();
+            ResolveWhirlwindImpact(in input);
+            UpdateWhirlwindChannel(in input);
             UpdateCyclone(in input);
             UpdateAnchorSlam();
             UpdateWreck();
             UpdateCleave();
             UpdateFlask();
+            UpdateBlazeTrail();
             if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
             {
                 _leapLaunchTick = -1;
@@ -1192,6 +1197,7 @@ namespace Game.Sim
             UpdateProjectiles();
             ResolveAttacks(in input);
             TickBurning();
+            TickIgnite();
 
             Tick++;
         }
@@ -1252,6 +1258,7 @@ namespace Game.Sim
                 StopCleave();
                 StopFlask();
                 CancelBlazeGesture();
+                StopWhirlwindChannel();
                 // A newly committed action replaces the old presentation and
                 // its unlanded contacts. Do not launch an old anchor midway
                 // through the next ability's animation.
@@ -1366,7 +1373,9 @@ namespace Game.Sim
             if (target < 0) return;
 
             _chainSlot = slot;
-            _chainHopsLeft = AnchorKit.ChainMaxHops;
+            // Талант «Пять прыжков» добавляет один; буфер посещённых рассчитан на него.
+            _chainHopsLeft = BuildHas(slot, AbilityFlag.SquallFiveHops, AbilityDefinition.ChainStepId)
+                ? AnchorKit.ChainMaxHops + 1 : AnchorKit.ChainMaxHops;
             _chainTarget = target;
             _chainVisitedCount = 1;
             _chainVisited[0] = target;
@@ -1407,9 +1416,10 @@ namespace Game.Sim
                 && Entities.Side[_chainTarget] != Entities.Side[PlayerId]
                 && ChainContactReachable(_chainTarget))
             {
-                ApplyAbilityDamage(PlayerId, _chainTarget,
-                    build.Get(AbilityStatType.Damage).ToInt(), _chainSlot,
-                    DamageType.Physical);
+                int damage = build.Get(AbilityStatType.Damage).ToInt();
+                // «Добивающий прыжок»: последний прыжок серии бьёт вдвое.
+                if (_chainHopsLeft == 1 && build.Has(AbilityFlag.SquallFinisher)) damage *= 2;
+                ApplyAbilityDamage(PlayerId, _chainTarget, damage, _chainSlot, DamageType.Physical);
             }
 
             _chainHopsLeft--;
@@ -1451,7 +1461,7 @@ namespace Game.Sim
                 _chainVisitedCount - 1, Entities.Position[PlayerId]));
         }
 
-        private void ResolveWhirlwindImpact()
+        private void ResolveWhirlwindImpact(in InputFrame input)
         {
             if (_whirlwindImpactTick < 0 || Tick < _whirlwindImpactTick) return;
 
@@ -1466,17 +1476,10 @@ namespace Game.Sim
             AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
             if (build == null || build.DefinitionId != AbilityDefinition.WhirlwindId) return;
 
-            int found = QueryRadiusIntoScratch(
-                Entities.Position[PlayerId], build.Get(AbilityStatType.Radius), PlayerId);
-            int damage = build.Get(AbilityStatType.Damage).ToInt();
-
-            for (int i = 0; i < found; i++)
-            {
-                int target = HitScratch[i];
-                if (!Entities.Alive[target]) continue;
-                if (Entities.Side[target] == Entities.Side[PlayerId]) continue;
-                ApplyAbilityDamage(PlayerId, target, damage, slot, DamageType.Physical);
-            }
+            // Урон, «Толпа разгоняет» и «Возврат лавидия» — в одном обороте;
+            // удержание начинается, только если кнопку ещё держат к контакту.
+            WhirlwindPulse(slot, firstContact: true);
+            BeginWhirlwindChannel(slot, in input);
         }
 
         /// <summary>
@@ -1553,9 +1556,10 @@ namespace Game.Sim
             bool overTime)
         {
             if (!Entities.Alive[target] || amount <= 0) return;
-            if (target == PlayerId && PlayerInvulnerable) return;
+            if (target == PlayerId && PlayerImmune) return;
             if (BlazeEvades(target, overTime)) return;
 
+            int power = amount;
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
 
@@ -1567,9 +1571,10 @@ namespace Game.Sim
 
             if (Entities.Health[target] > 0)
             {
-                // Огненная добавка «Ладно смазал» сюда НЕ приходит: по решению
-                // владельца от 12 сентября усиление достаётся только обычным
-                // атакам. Урон способности остаётся своим собственным числом.
+                // Огненная добавка «Ладно смазал» к способностям приходит только
+                // с финальным талантом ветки. Без него урон способности остаётся
+                // своим числом — решение владельца от 12 сентября.
+                if (!overTime && source == PlayerId) ApplyBlazeAbilityBonus(source, target, power, slot);
                 return;
             }
             Kill(target, source, slot);
@@ -1591,6 +1596,7 @@ namespace Game.Sim
             if (target == PlayerId) ResetAbilityState();
             _events.Add(SimEvent.Death(target, Entities.Position[target]));
             GrantKillXp(target, killer);
+            TalentOnKill(target, killer, slot);
 
             if (basicAttackKill && killer == PlayerId)
             {
@@ -1660,7 +1666,8 @@ namespace Game.Sim
                 return;
             }
 
-            if (CleaveActive)
+            // С талантом «На ходу» Рассекающий удар героя не останавливает.
+            if (CleaveActive && !CleaveMovable)
             {
                 Entities.Velocity[PlayerId] = FixVec2.Zero;
                 return;
@@ -2192,6 +2199,8 @@ namespace Game.Sim
                 for (int s = 0; s < substeps; s++)
                     from = MoveInsideLayout(i, from, piece);
                 Entities.Position[i] = from;
+                // Кувырок под огнём с талантом «Огненный след» оставляет след по пути.
+                if (i == PlayerId) DropBlazeTrail(i);
 
                 // Скорость обнуляется намеренно: тело едет не своим ходом, и
                 // представление обязано видеть это как перемещение чужой волей,
@@ -2451,7 +2460,7 @@ namespace Game.Sim
             // и один и тот же сид перестал бы давать один и тот же забег.
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
             // Keep the normal critical roll even when developer immunity absorbs the hit.
-            if (target == PlayerId && PlayerInvulnerable) return;
+            if (target == PlayerId && PlayerImmune) return;
             if (BlazeEvades(target, overTime: false)) return;
 
             int damage = CombatStats.RoundToInt(
@@ -2473,6 +2482,7 @@ namespace Game.Sim
             // владельца от 12 сентября. Доля берётся от силы удара до брони:
             // огонь едет на взмахе, а гасит его сопротивление огню.
             if (Entities.Health[target] > 0) ApplyBlazeBonus(source, target, power);
+            if (Entities.Health[target] > 0) ApplyBlazeIgnite(source, target, power);
 
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем
@@ -2507,6 +2517,8 @@ namespace Game.Sim
             HashBlaze(ref hash);
             HashFlask(ref hash);
             HashProgression(ref hash);
+            HashTalents(ref hash);
+            HashCleaveFan(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.

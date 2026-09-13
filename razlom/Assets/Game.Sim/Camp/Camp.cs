@@ -336,10 +336,18 @@ namespace Game.Sim
         }
 
         /// <summary>Только редактор и dev-сборка: поднять уровень без гринда, чтобы проверить таланты.</summary>
-        public void DeveloperGrantLevel()
+        public void DeveloperGrantLevel() => DeveloperSetLevel(Level + 1);
+
+        /// <summary>
+        /// Только редактор и dev-сборка: поставить уровень вручную. Если взятых
+        /// талантов больше, чем очков на новом уровне, таланты сбрасываются —
+        /// иначе герой нёс бы очки, которых у него нет.
+        /// </summary>
+        public void DeveloperSetLevel(int level)
         {
+            Level = level < 1 ? 1 : level;
             Experience = 0;
-            Level++;
+            if (SpentTalentPoints > TalentPoints) ResetTalents();
         }
 
         /// <summary>Восстановление из сохранения. Корректность чисел проверяет CampSaveCodec.</summary>

@@ -63,34 +63,50 @@ namespace Game.Sim
             AbilityBuild build = _abilityBuilds[_cleaveSlot];
             if (build == null || build.DefinitionId != AbilityDefinition.CleaveId || !Entities.Alive[PlayerId]
                 || Statuses.IsStunned(PlayerId, Tick) || Tick >= _cleaveEndTick
-                || (Entities.Position[PlayerId] - _cleaveOrigin).LengthSq > Fix64.One)
+                || (!build.Has(AbilityFlag.CleaveOnTheMove)
+                    && (Entities.Position[PlayerId] - _cleaveOrigin).LengthSq > Fix64.One))
             { StopCleave(); return; }
             if (!_cleaveHit && Tick >= _cleaveImpactTick && Tick < CleaveWindowEndTick)
             {
+                // Талант «Тройной веер» бьёт тремя направлениями: центр и ±35°.
+                // Каждое направление находит своё тело, одно тело дважды не бьётся.
+                int directions = build.Has(AbilityFlag.CleaveFan) ? 3 : 1;
+                if (Tick == _cleaveImpactTick)
+                {
+                    _cleaveFanMask = 0;
+                    for (int i = 0; i < _cleaveFanTargets.Length; i++) _cleaveFanTargets[i] = -1;
+                }
                 FixVec2 from = Entities.Position[PlayerId];
-                FixVec2 end = from + _cleaveDirection * build.Get(AbilityStatType.Radius);
-                int best = -1;
-                Fix64 bestDistance = Fix64.Zero;
-                for (int target = 1; target < Entities.Count; target++)
+                for (int d = 0; d < directions; d++)
                 {
-                    if (!Entities.Alive[target] || Entities.Side[target] == Entities.Side[PlayerId]) continue;
-                    FixVec2 now = Entities.Position[target];
-                    FixVec2 previous = target < _cleavePreviousCount ? _cleavePreviousPositions[target] : now;
-                    Fix64 radius = Entities.BodyRadius[target] + build.Get(AbilityStatType.Width);
-                    // Выбираем тело в объёме клинка на контакте, а не цель при нажатии.
-                    if (!CleaveSegmentsNear(previous, now, from, end, radius) || !CleaveLineClear(now)) continue;
-                    Fix64 distance = (now - from).LengthSq;
-                    if (best >= 0 && distance >= bestDistance) continue;
-                    best = target;
-                    bestDistance = distance;
+                    if ((_cleaveFanMask & (1 << d)) != 0) continue;
+                    FixVec2 end = from + CleaveFanDirection(d) * build.Get(AbilityStatType.Radius);
+                    int best = -1;
+                    Fix64 bestDistance = Fix64.Zero;
+                    for (int target = 1; target < Entities.Count; target++)
+                    {
+                        if (!Entities.Alive[target] || Entities.Side[target] == Entities.Side[PlayerId]) continue;
+                        if (target == _cleaveFanTargets[0] || target == _cleaveFanTargets[1] || target == _cleaveFanTargets[2]) continue;
+                        FixVec2 now = Entities.Position[target];
+                        FixVec2 previous = target < _cleavePreviousCount ? _cleavePreviousPositions[target] : now;
+                        Fix64 radius = Entities.BodyRadius[target] + build.Get(AbilityStatType.Width);
+                        // Выбираем тело в объёме клинка на контакте, а не цель при нажатии.
+                        if (!CleaveSegmentsNear(previous, now, from, end, radius) || !CleaveLineClear(now)) continue;
+                        Fix64 distance = (now - from).LengthSq;
+                        if (best >= 0 && distance >= bestDistance) continue;
+                        best = target;
+                        bestDistance = distance;
+                    }
+                    if (best < 0) continue;
+
+                    _cleaveFanMask |= 1 << d;
+                    _cleaveFanTargets[d] = best;
+                    if (d == 0 || _cleaveTarget < 0) _cleaveTarget = best;
+                    int damage = build.Get(AbilityStatType.Damage).ToInt();
+                    if (build.Has(AbilityFlag.CleaveBigGame) && IsElite(best)) damage = damage * 140 / 100;
+                    ApplyAbilityDamage(PlayerId, best, damage, _cleaveSlot, DamageType.Physical);
                 }
-                if (best >= 0)
-                {
-                    _cleaveTarget = best;
-                    _cleaveHit = true;
-                    ApplyAbilityDamage(PlayerId, best,
-                        build.Get(AbilityStatType.Damage).ToInt(), _cleaveSlot, DamageType.Physical);
-                }
+                _cleaveHit = _cleaveFanMask == (1 << directions) - 1;
             }
             _cleavePreviousCount = Entities.Count;
             System.Array.Copy(Entities.Position, _cleavePreviousPositions, Entities.Count);
@@ -231,6 +247,7 @@ namespace Game.Sim
 
             _events.Add(new SimEvent(SimEventType.Evaded, PlayerId, -1, 0, false,
                 Entities.Position[PlayerId]));
+            BlazeEvadeRefund();
             return true;
         }
 

@@ -34,6 +34,7 @@ namespace Game.Sim
             Entities.RefreshStats(boss);
             _events.Add(SimEvent.Spawn(boss, center));
             var elite = new bool[Entities.Capacity]; elite[boss] = true;
+            _eliteMask = elite;
             var sites = new List<EncounterPlacement> { new EncounterPlacement(EncounterRole.ExitGuard,
                 module, -1, pack.Id, center, boss, 1) };
             Grid.Rebuild(Entities);
@@ -126,6 +127,7 @@ namespace Game.Sim
                     first, Entities.Count - first));
             }
             Grid.Rebuild(Entities);
+            _eliteMask = elite;
             return new EncounterPlan(placed, elite, settings.FormationRadius, omitted);
         }
 

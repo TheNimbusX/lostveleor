@@ -331,7 +331,9 @@ namespace Game.View
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp") >= 0)
             {
                 while (CampPlayerView.Instance == null || CampPlayerView.Instance.Body == null) yield return null;
-                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-sound") >= 0)
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-look") >= 0)
+                    gameObject.AddComponent<CampLookCapture>().Initialize(_outputDirectory);
+                else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-sound") >= 0)
                     gameObject.AddComponent<CampSoundCapture>().Initialize(_outputDirectory);
                 else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-review") >= 0)
                     gameObject.AddComponent<CampReviewCapture>().Initialize(_outputDirectory);

@@ -8,6 +8,8 @@ namespace Game.View
     /// необязательный старый корень оставлен для совместимости прежних сцен.
     /// </summary>
     [DisallowMultipleComponent]
+    // Выход из лагеря возвращает общий свет до того, как LayoutView настроит следующий Разлом.
+    [DefaultExecutionOrder(-100)]
     public sealed class SceneWorldView : MonoBehaviour
     {
         [SerializeField] private GameObject _campRoot;

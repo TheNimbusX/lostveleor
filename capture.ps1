@@ -24,6 +24,7 @@ param(
     [switch] $CampIntegration,
     [switch] $CampReview,
     [switch] $CampSound,
+    [ValidateSet('', 'Original', 'Clean', 'Painterly', 'Film', 'Aces')] [string] $CampLook = '',
     [switch] $CampMagic,
     [switch] $CampFinish,
     [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison')] [string] $CampDetail = '',
@@ -82,6 +83,7 @@ if ($CampAmbience) { $Camp = $true }
 if ($CampIntegration) { $Camp = $true }
 if ($CampReview) { $Camp = $true }
 if ($CampSound) { $Camp = $true }
+if ($CampLook -ne '') { $Camp = $true }
 if ($CampMagic) { $Camp = $true }
 if ($CampFinish) { $Camp = $true; $CampAmbience = $true }
 if ($CampDetail -ne '') { $CampFinish = $true; $Camp = $true; $CampAmbience = $true }
@@ -260,6 +262,7 @@ if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
 if ($CampReview) { $playerArgs += '-capture-camp-review' }
 if ($CampSound) { $playerArgs += '-capture-camp-sound' }
+if ($CampLook -ne '') { $playerArgs += @('-capture-camp-look', $CampLook) }
 if ($CampMagic) { $playerArgs += '-capture-camp-magic' }
 if ($CampFinish) { $playerArgs += '-capture-camp-finish' }
 if ($CampDetail -ne '') { $playerArgs += @('-capture-camp-detail', $CampDetail) }
@@ -319,7 +322,9 @@ if ($shots) {
 
 if ($Video) {
     $frames = Join-Path $OutDir 'video_frames\frame_%04d.jpg'
-    $movieName = if ($CampAmbience) {
+    $movieName = if ($CampLook -ne '') {
+        "camp_look_${CampLook}_${Height}p${VideoFps}.mp4"
+    } elseif ($CampAmbience) {
         "camp_ambience_${Height}p${VideoFps}.mp4"
     } elseif ($MovingCombat) {
         'pelag_moving_combat_1080p60.mp4'

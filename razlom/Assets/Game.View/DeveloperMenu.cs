@@ -17,6 +17,7 @@ namespace Game.View
         private TickDriver _driver;
         private LocationTheme[] _locations;
         private int _selected, _level = 1, _request;
+        private int _heroLevel = 1;
         private string _seed = "42", _error;
         private bool _open;
         private Vector2 _scroll;
@@ -61,6 +62,18 @@ namespace Game.View
             try
             {
                 if (request == 4) _driver.Session.SetDeveloperInvulnerable(!_driver.Session.DeveloperInvulnerable);
+                else if (request == 5) _driver.Session.Camp.DeveloperGrantLevel();
+                else if (request == 7)
+                {
+                    // Уровень ниже потраченных очков сбрасывает таланты — пересобираем билд.
+                    _driver.Session.Camp.DeveloperSetLevel(_heroLevel);
+                    _driver.RefreshAbilityBuild();
+                }
+                else if (request == 6)
+                {
+                    _driver.Session.Camp.ResetTalents();
+                    _driver.RefreshAbilityBuild();
+                }
                 else if (request == 3) _driver.ReturnToCampFromMenu();
                 else
                 {
@@ -141,6 +154,20 @@ namespace Game.View
             if (!canToggle) GUILayout.Label("Для бессмертия сначала войди в любой разлом.", _wrapped);
             else GUILayout.Label("Бессмертие помечает текущий забег тестовым: добыча не переносится в сумку.", _wrapped);
             if (GUILayout.Button("Вернуться в лагерь", GUILayout.Height(32))) _request = 3;
+            GUILayout.Space(8);
+            var camp = _driver.Session.Camp;
+            GUILayout.Label("Прокачка: уровень " + camp.Level + " · свободных очков " + camp.AvailableTalentPoints, _wrapped);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("−", GUILayout.Width(50))) _heroLevel = Mathf.Max(1, _heroLevel - 1);
+            GUILayout.Label("Уровень героя: " + _heroLevel);
+            if (GUILayout.Button("+", GUILayout.Width(50))) _heroLevel++;
+            if (GUILayout.Button("+10", GUILayout.Width(60))) _heroLevel += 10;
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Поставить уровень " + _heroLevel, GUILayout.Height(32))) _request = 7;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("+1 уровень", GUILayout.Height(32))) _request = 5;
+            if (GUILayout.Button("Сбросить все таланты", GUILayout.Height(32))) _request = 6;
+            GUILayout.EndHorizontal();
             if (_driver.Session?.IsDeveloperRun == true)
                 GUILayout.Label("Загружен тест: уровень " + _driver.Run.Depth + ". Закрой меню, чтобы начать бой.");
             if (!string.IsNullOrEmpty(_error)) GUILayout.Label("Ошибка: " + _error, _wrapped);

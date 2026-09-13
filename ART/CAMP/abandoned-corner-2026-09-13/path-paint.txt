@@ -1,0 +1,2 @@
+changedPixels=1066
+The existing path mask is preserved outside the narrow new trail.

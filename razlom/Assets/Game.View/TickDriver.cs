@@ -219,7 +219,9 @@ namespace Game.View
         private static readonly Plane GroundPlane = new Plane(Vector3.up, Vector3.zero);
 
         // Буфер узлов выделен один раз: пересборка билда не должна мусорить.
-        private readonly AbilityNode[] _nodeBuffer = new AbilityNode[3];
+        // Пять талантов на способность плюс запас: буфер общий на слот, и узлы
+        // сверх длины AppendNodes молча отбросил бы.
+        private readonly AbilityNode[] _nodeBuffer = new AbilityNode[8];
         private bool _appliedHotter, _appliedSplit, _appliedSpreads;
 
         // Позиции и направления на предыдущем тике — нужны, чтобы
@@ -1065,8 +1067,20 @@ namespace Game.View
             // Ветку выбирают в лагере; вне лагеря берётся сабельная как
             // стартовая — ею игрок знакомится с боем в начале Акта 1.
             CombatBranch branch = Session?.Camp != null ? Session.Camp.Branch : CombatBranch.Sabre;
+            Camp camp = Session?.Camp;
             for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
-                sim.SetAbility(slot, PelagKit.Definition(branch, slot), _nodeBuffer, 0);
+            {
+                // Таланты — узлы СВОЕЙ способности, поэтому считаются на слот.
+                // Отладочные узлы Печати выше в сборку не передаются, как и
+                // раньше: их буфер переиспользуется под таланты.
+                int nodes = 0;
+                if (camp != null && branch == CombatBranch.Sabre && slot < SabreTalents.LineCount)
+                {
+                    var line = (SabreTalentLine)slot;
+                    nodes = SabreTalents.AppendNodes(line, camp.SabreTalentRank(line), _nodeBuffer, 0);
+                }
+                sim.SetAbility(slot, PelagKit.Definition(branch, slot), _nodeBuffer, nodes);
+            }
 
             _appliedHotter = NodeHotter;
             _appliedSplit = NodeSplit;

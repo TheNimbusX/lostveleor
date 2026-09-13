@@ -22,9 +22,9 @@ namespace Game.View
         static readonly string[] Names = { "Оружие", "Броня", "Кольцо", "Талисман", "Артефакт" };
         public void Initialize(TickDriver driver) { _driver = driver; }
         public static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); _root.SetActive(true); if(_portraitStage!=null)_portraitStage.SetActive(true); _openedFrame = Time.frameCount; Refresh(); }
+        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; Refresh(); }
         public static int ClosedFrame { get; private set; } = -1;
-        public void Close() { if (IsOpen) { _root.SetActive(false); if(_portraitStage!=null)_portraitStage.SetActive(false); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
+        public void Close() { if (IsOpen) { _root.SetActive(false); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
         void Update()
         {
             if (!IsOpen || _openedFrame == Time.frameCount) return;
@@ -50,6 +50,19 @@ namespace Game.View
         Camera _portraitCamera;
         readonly System.Collections.Generic.List<Material> _portraitMaterials=new System.Collections.Generic.List<Material>();
         static readonly Color Ink=new Color(.055f,.063f,.055f,.68f), Bronze=new Color(.52f,.40f,.23f), Ivory=new Color(.95f,.86f,.67f);
+
+        // ---- вкладки ----
+        //
+        // Страницы — отдельные контейнеры на одной доске: шапка, кошелёк и
+        // крестик общие, а переключение не пересобирает интерфейс. Живой
+        // портрет рендерится только на странице снаряжения — на талантах его
+        // не видно, и камера молчит.
+        const int EquipmentTab=0, TalentsTab=1;
+        int _tab=EquipmentTab;
+        RectTransform _equipmentPage, _talentsPage;
+        Image _equipmentTab, _talentsTab;
+        static readonly Color TabActive=new Color(.46f,.18f,.08f,.98f), TabIdle=new Color(.18f,.08f,.05f,.9f);
+
         void Build()
         {
             _font=Resources.Load<Font>("UI/Fonts/CormorantSC-Regular") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
@@ -76,51 +89,80 @@ namespace Game.View
             var atlas=Resources.Load<Texture2D>("UI/Inventory/ItemIcons");
             if(atlas!=null)for(int i=0;i<6;i++)
                 _icons[i]=Sprite.Create(atlas,new Rect((i%3)*atlas.width/3f,(1-i/3)*atlas.height/2f,atlas.width/3f,atlas.height/2f),new Vector2(.5f,.5f),100);
-            Title(_board,"СНАРЯЖЕНИЕ",570,50,470,45,34,TextAnchor.MiddleCenter);
             Label(_board,"ЛЕСНОЙ ЛАГЕРЬ",65,58,290,35,18);
+            _equipmentTab=Button(_board,"СНАРЯЖЕНИЕ",505,44,320,54,()=>SetTab(EquipmentTab)).GetComponent<Image>();
+            _talentsTab=Button(_board,"ТАЛАНТЫ",845,44,320,54,()=>SetTab(TalentsTab)).GetComponent<Image>();
             _wallet=Label(_board,"",1210,54,335,45,23);
             Button(_board,"×",1570,38,64,64,Close);
-            Title(_board,"ПЕЛАГ",198,170,380,48,40);
-            Label(_board,"Снаряжение странника",200,216,370,30,20);
+            _equipmentPage=Page("Equipment page");
+            _talentsPage=Page("Talents page");
+
+            var page=_equipmentPage;
+            Title(page,"ПЕЛАГ",198,170,380,48,40);
+            Label(page,"Снаряжение странника",200,216,370,30,20);
             CreatePortrait();
             float[] xs={98,98,526,98,526};float[] ys={302,465,310,622,523};
             for(int i=0;i<5;i++)
             {
-                var frame=Slot(_board,"Equipment "+Names[i],xs[i],ys[i],102,102,true);
+                var frame=Slot(page,"Equipment "+Names[i],xs[i],ys[i],102,102,true);
                 _wornIcons[i]=Icon(frame,_icons[i],10,10,82,82);
-                _worn[i]=Title(_board,Names[i],xs[i]-12,ys[i]+104,130,30,23,TextAnchor.MiddleCenter);
+                _worn[i]=Title(page,Names[i],xs[i]-12,ys[i]+104,130,30,23,TextAnchor.MiddleCenter);
                 _wornCells[i]=AddCell(frame,i,true);
             }
             var statNames=new[]{"Атака","Броня","Здоровье","Скорость"};
-            for(int i=0;i<4;i++){Label(_board,statNames[i],96+i*135,807,128,27,18);_stats[i]=Title(_board,"",96+i*135,833,128,31,25);}
-            _itemArt=Icon(_board,null,712,195,254,213);
-            _itemTitle=Title(_board,"Выберите предмет",713,413,255,76,32);
-            _itemKind=Label(_board,"",715,493,250,32,18);
-            var viewport=Box(_board,"Item comparison",713,535,254,124,Color.clear);
+            for(int i=0;i<4;i++){Label(page,statNames[i],96+i*135,807,128,27,18);_stats[i]=Title(page,"",96+i*135,833,128,31,25);}
+            _itemArt=Icon(page,null,712,195,254,213);
+            _itemTitle=Title(page,"Выберите предмет",713,413,255,76,32);
+            _itemKind=Label(page,"",715,493,250,32,18);
+            var viewport=Box(page,"Item comparison",713,535,254,124,Color.clear);
             viewport.gameObject.AddComponent<RectMask2D>();
             _details=Label(viewport,"",0,0,247,280,19);
             var scroll=viewport.gameObject.AddComponent<ScrollRect>();scroll.viewport=viewport;scroll.content=_details.rectTransform;scroll.horizontal=false;scroll.scrollSensitivity=22;
-            _equip=Button(_board,"НАДЕТЬ",710,680,257,49,EquipSelected);
-            _unequip=Button(_board,"СНЯТЬ",710,739,257,44,UnequipSelected);
-            Title(_board,"СУМКА",1068,172,280,47,38);
-            _count=Label(_board,"",1465,182,115,30,22);_count.alignment=TextAnchor.MiddleRight;
+            _equip=Button(page,"НАДЕТЬ",710,680,257,49,EquipSelected);
+            _unequip=Button(page,"СНЯТЬ",710,739,257,44,UnequipSelected);
+            Title(page,"СУМКА",1068,172,280,47,38);
+            _count=Label(page,"",1465,182,115,30,22);_count.alignment=TextAnchor.MiddleRight;
             for(int f=-1;f<5;f++)
             {
                 int filter=f;
-                var tab=Button(_board,f<0?"ВСЕ":"",1069+(f+1)*88,225,84,43,()=>{_filter=filter;Refresh();});
+                var tab=Button(page,f<0?"ВСЕ":"",1069+(f+1)*88,225,84,43,()=>{_filter=filter;Refresh();});
                 if(f>=0)Icon(tab.transform,_icons[f],23,3,38,38);
             }
             for(int i=0;i<48;i++)
             {
-                var frame=Slot(_board,"Bag "+i,1067+(i%8)*67,282+(i/8)*75,64,72,false);
+                var frame=Slot(page,"Bag "+i,1067+(i%8)*67,282+(i/8)*75,64,72,false);
                 _bagIcons[i]=Icon(frame,null,3,5,58,58);
                 _bag[i]=Label(frame,"",3,52,57,17,12);_bag[i].alignment=TextAnchor.LowerRight;
                 _bagCells[i]=AddCell(frame,i,false);
             }
-            Label(_board,"Двойной клик — надеть  ·  Перетащите предмет",1080,751,510,30,18);
-            _feedback=Label(_board,"",714,846,882,40,19);
+            Label(page,"Двойной клик — надеть  ·  Перетащите предмет",1080,751,510,30,18);
+            _feedback=Label(page,"",714,846,882,40,19);
+
+            BuildTalents(_talentsPage);
             Label(_board,"I / Esc — закрыть",70,890,400,30,17);
+            SetTab(_tab);
         }
+
+        RectTransform Page(string name)
+        {
+            var page=Box(_board,name,0,0,Width,Height,Color.clear);
+            page.GetComponent<Image>().raycastTarget=false;
+            return page;
+        }
+
+        void SetTab(int tab)
+        {
+            _tab=tab;
+            _equipmentPage.gameObject.SetActive(tab==EquipmentTab);
+            _talentsPage.gameObject.SetActive(tab==TalentsTab);
+            _equipmentTab.color=tab==EquipmentTab?TabActive:TabIdle;
+            _talentsTab.color=tab==TalentsTab?TabActive:TabIdle;
+            SyncPortraitStage();
+            Refresh();
+        }
+
+        void SyncPortraitStage(){if(_portraitStage!=null)_portraitStage.SetActive(IsOpen&&_tab==EquipmentTab);}
+
         void EquipSelected(){_feedback.text="";if(!_selectedWorn&&!_driver.Session.Camp.EquipFromBag(_selection))_feedback.text="Не удалось надеть предмет.";Refresh();}
         void UnequipSelected()
         {
@@ -145,36 +187,11 @@ namespace Game.View
         void CreatePortrait()
         {
             var arena=FindAnyObjectByType<ArenaView>();if(arena==null)return;
-            _portraitStage=new GameObject("Inventory portrait studio");
-            _portraitStage.transform.position=new Vector3(1000,1000,1000);
-            var model=arena.CreateCampPlayer();model.name="Inventory Pelag";model.transform.SetParent(_portraitStage.transform,false);
-            model.transform.localPosition=Vector3.zero;model.transform.localRotation=Quaternion.Euler(0,-12,0);
-            foreach(var behavior in model.GetComponentsInChildren<MonoBehaviour>())behavior.enabled=false;
-            foreach(var child in model.GetComponentsInChildren<Transform>(true))if(child.name=="Pelag_AnchorGrip_Equipped")child.gameObject.SetActive(false);
-            foreach(var t in model.GetComponentsInChildren<Transform>(true))t.gameObject.layer=31;
-            var animator=model.GetComponentInChildren<Animator>();if(animator!=null){animator.updateMode=AnimatorUpdateMode.UnscaledTime;animator.cullingMode=AnimatorCullingMode.AlwaysAnimate;}
-            var shader=Resources.Load<Shader>("Shaders/InventoryPortrait");
-            foreach(var renderer in model.GetComponentsInChildren<Renderer>())
-            {
-                var materials=renderer.sharedMaterials;
-                for(int i=0;i<materials.Length;i++)
-                {
-                    var source=materials[i];if(source==null||shader==null)continue;
-                    Texture texture=source.HasProperty("_BaseMap")?source.GetTexture("_BaseMap"):source.mainTexture;
-                    var material=new Material(shader);material.SetTexture("_BaseMap",texture);material.SetColor("_BaseColor",new Color(1.35f,1.35f,1.35f,1));
-                    materials[i]=material;_portraitMaterials.Add(material);
-                }
-                renderer.sharedMaterials=materials;
-            }
-            var cameraObject=new GameObject("Inventory portrait camera",typeof(Camera));cameraObject.transform.SetParent(_portraitStage.transform,false);
-            _portraitCamera=cameraObject.GetComponent<Camera>();_portraitCamera.orthographic=true;_portraitCamera.orthographicSize=1.02f;
-            cameraObject.transform.localPosition=new Vector3(0,.91f,4);cameraObject.transform.localRotation=Quaternion.Euler(0,180,0);
-            _portraitCamera.clearFlags=CameraClearFlags.SolidColor;_portraitCamera.backgroundColor=Color.clear;_portraitCamera.cullingMask=1<<31;
-            _portraitCamera.nearClipPlane=.1f;_portraitCamera.farClipPlane=10;_portraitCamera.allowHDR=false;
-            _portraitTexture=new RenderTexture(640,900,24,RenderTextureFormat.ARGB32);_portraitTexture.Create();_portraitCamera.targetTexture=_portraitTexture;
-            var portrait=Box(_board,"Pelag portrait",202,237,326,528,Color.clear);
-            var portraitImage=new GameObject("Portrait image",typeof(RectTransform),typeof(RawImage)); var portraitRect=(RectTransform)portraitImage.transform; portraitRect.SetParent(portrait,false); portraitRect.anchorMin=Vector2.zero; portraitRect.anchorMax=Vector2.one; portraitRect.offsetMin=portraitRect.offsetMax=Vector2.zero; var raw=portraitImage.GetComponent<RawImage>();raw.texture=_portraitTexture;raw.raycastTarget=false;
+            _portraitTexture=new RenderTexture(640,900,24,RenderTextureFormat.ARGB32);_portraitTexture.Create();
             // Position far outside all gameplay cameras; no scene lighting or authored camera is changed.
+            _portraitStage=PortraitStudio.Create(arena,"Inventory portrait studio",new Vector3(1000,1000,1000),new Vector3(0,.91f,4),1.02f,_portraitTexture,_portraitMaterials,out _portraitCamera);
+            var portrait=Box(_equipmentPage,"Pelag portrait",202,237,326,528,Color.clear);
+            var portraitImage=new GameObject("Portrait image",typeof(RectTransform),typeof(RawImage)); var portraitRect=(RectTransform)portraitImage.transform; portraitRect.SetParent(portrait,false); portraitRect.anchorMin=Vector2.zero; portraitRect.anchorMax=Vector2.one; portraitRect.offsetMin=portraitRect.offsetMax=Vector2.zero; var raw=portraitImage.GetComponent<RawImage>();raw.texture=_portraitTexture;raw.raycastTarget=false;
         }
         CampInventoryCell AddCell(RectTransform rect,int index,bool worn)
         { var cell=rect.gameObject.AddComponent<CampInventoryCell>(); cell.Owner=this;cell.Index=index;cell.Worn=worn; return cell; }
@@ -207,7 +224,10 @@ namespace Game.View
         public void Refresh()
         {
             if(_root==null)return;
-            var camp=_driver.Session.Camp;int count=0;
+            var camp=_driver.Session.Camp;
+            _wallet.text="● "+camp.Money(CurrencyType.Gold)+"    ◆ "+camp.Money(CurrencyType.Shards)+"    ◈ "+camp.Money(CurrencyType.Lavidium);
+            if(_tab==TalentsTab){RefreshTalents(camp);return;}
+            int count=0;
             for(int i=0;i<48;i++)
             {
                 var item=camp.Bag.At(i);if(!item.IsEmpty)count++;
@@ -215,16 +235,15 @@ namespace Game.View
                 _bagIcons[i].sprite=ItemSprite(i,false);_bagIcons[i].enabled=!item.IsEmpty&&visible;
                 _bag[i].text=!item.IsEmpty&&visible?item.ItemLevel.ToString():"";
                 _bagCells[i].Selectable=visible||item.IsEmpty;
-                _bagCells[i].GetComponentInChildren<InventoryFrame>().SetSelected(!_selectedWorn&&i==_selection);
+                _bagCells[i].GetComponentInChildren<InventoryFrame>(true).SetSelected(!_selectedWorn&&i==_selection);
             }
             for(int i=0;i<5;i++)
             {
                 _wornIcons[i].sprite=ItemSprite(i,true)??_icons[i];
                 _wornIcons[i].color=camp.Worn.IsWorn((EquipSlot)i)?Color.white:new Color(.6f,.56f,.44f,.18f);
-                _wornCells[i].GetComponentInChildren<InventoryFrame>().SetSelected(_selectedWorn&&i==_selection);
+                _wornCells[i].GetComponentInChildren<InventoryFrame>(true).SetSelected(_selectedWorn&&i==_selection);
             }
             _count.text=count+" / 48";
-            _wallet.text="● "+camp.Money(CurrencyType.Gold)+"    ◆ "+camp.Money(CurrencyType.Shards)+"    ◈ "+camp.Money(CurrencyType.Lavidium);
             var stats=_driver.Session.CampSim.Entities.Stats[0];
             _stats[0].text=stats.Get(StatType.Damage).ToString();_stats[1].text=stats.Get(StatType.Armor).ToString();_stats[2].text=stats.Get(StatType.MaxHealth).ToString();_stats[3].text=stats.Get(StatType.MoveSpeed).ToString();
             var chosen=_selectedWorn?camp.Worn.Worn((EquipSlot)_selection):camp.Bag.At(_selection);
@@ -255,6 +274,101 @@ namespace Game.View
             _details.rectTransform.sizeDelta=new Vector2(247,Mathf.Max(124,_details.preferredHeight));
             _details.rectTransform.anchoredPosition=Vector2.zero;
         }
+
+        // ---- страница талантов ----
+        //
+        // Четыре направления сабельной ветки колонками, по пять талантов в
+        // каждой. Брать можно только следующий по порядку, поэтому ячейка
+        // бывает в трёх состояниях: изучен, доступен сейчас, закрыт.
+        const int Talents=SabreTalents.TalentsPerLine, Lines=SabreTalents.LineCount;
+        readonly UnityEngine.UI.Button[] _talentCells=new UnityEngine.UI.Button[Lines*Talents];
+        readonly Text[] _talentNames=new Text[Lines*Talents];
+        readonly Image[] _talentLinks=new Image[Lines*(Talents-1)];
+        Text _talentLevel,_talentExperience,_talentPoints,_talentTitle,_talentLineName,_talentDescription,_talentState;
+        RectTransform _talentExperienceFill;
+        UnityEngine.UI.Button _talentLearn;
+        SabreTalentLine _talentLine;
+        int _talentIndex;
+        static readonly Color TalentTaken=new Color(.62f,.36f,.12f,.98f), TalentOpen=new Color(.36f,.14f,.06f,.98f), TalentLocked=new Color(.10f,.08f,.07f,.9f),
+            LinkTaken=new Color(.86f,.62f,.30f), LinkLocked=new Color(.25f,.20f,.14f,.8f);
+        const float ExperienceBarWidth=420;
+
+        void BuildTalents(RectTransform page)
+        {
+            Title(page,"ТАЛАНТЫ САБЛИ",98,150,600,48,38);
+            _talentLevel=Title(page,"",98,204,190,36,28);
+            var track=Box(page,"Experience track",300,218,ExperienceBarWidth,14,new Color(.12f,.08f,.06f,1));
+            _talentExperienceFill=Box(track,"Experience fill",0,0,0,14,new Color(.96f,.88f,.66f,.95f));
+            _talentExperience=Label(page,"",735,209,300,30,18);
+            _talentPoints=Title(page,"",98,246,700,32,22);
+            for(int line=0;line<Lines;line++)
+            {
+                float x=98+line*240;
+                var lineId=(SabreTalentLine)line;
+                Icon(page,FullSprite(Resources.Load<Texture2D>("UI/Abilities/"+SabreTalentTexts.IconFile(lineId))),x,300,64,64);
+                Title(page,SabreTalentTexts.LineName(lineId),x+74,306,150,56,22,TextAnchor.MiddleLeft);
+                for(int index=0;index<Talents;index++)
+                {
+                    float y=385+index*88;
+                    int l=line,i=index;
+                    if(index<Talents-1)_talentLinks[line*(Talents-1)+index]=Box(page,"Talent link",x+30,y+64,4,24,LinkLocked).GetComponent<Image>();
+                    _talentCells[line*Talents+index]=Button(page,(index+1).ToString(),x,y,64,64,()=>SelectTalent((SabreTalentLine)l,i));
+                    _talentNames[line*Talents+index]=Label(page,SabreTalentTexts.Name(lineId,index),x+74,y+4,150,58,18);
+                }
+            }
+            Slot(page,"Talent details",1050,290,540,480,true);
+            _talentTitle=Title(page,"",1080,312,480,50,32);
+            _talentLineName=Label(page,"",1082,364,480,30,19);
+            _talentDescription=Label(page,"",1082,414,476,200,22);
+            _talentState=Label(page,"",1082,626,476,56,19);
+            _talentLearn=Button(page,"ИЗУЧИТЬ",1080,694,480,52,LearnTalent);
+            Label(page,"Таланты открываются по порядку  ·  одно очко за каждый уровень",98,850,800,30,18);
+        }
+
+        void SelectTalent(SabreTalentLine line,int index){_talentLine=line;_talentIndex=index;Refresh();}
+
+        void LearnTalent()
+        {
+            var camp=_driver.Session.Camp;
+            if(_talentIndex!=camp.SabreTalentRank(_talentLine)||!camp.TakeSabreTalent(_talentLine))return;
+            // Способности пересобираются сразу: таланты меняют их узлы, и
+            // вышедший из палатки игрок обязан бить уже новым билдом.
+            _driver.RefreshAbilityBuild();
+            Refresh();
+        }
+
+        void RefreshTalents(Camp camp)
+        {
+            _talentLevel.text="Уровень "+camp.Level;
+            float experience=Mathf.Clamp01(camp.Experience/(float)Mathf.Max(1,camp.ExperienceToNextLevel));
+            _talentExperienceFill.sizeDelta=new Vector2(ExperienceBarWidth*experience,14);
+            _talentExperience.text="Опыт  "+camp.Experience+" / "+camp.ExperienceToNextLevel;
+            _talentPoints.text="Свободных очков: "+camp.AvailableTalentPoints;
+            for(int line=0;line<Lines;line++)
+            {
+                int rank=camp.SabreTalentRank((SabreTalentLine)line);
+                for(int index=0;index<Talents;index++)
+                {
+                    bool taken=index<rank, open=index==rank&&camp.AvailableTalentPoints>0;
+                    var cell=_talentCells[line*Talents+index];
+                    ((Image)cell.targetGraphic).color=taken?TalentTaken:open?TalentOpen:TalentLocked;
+                    cell.GetComponentInChildren<InventoryFrame>(true).SetSelected((int)_talentLine==line&&_talentIndex==index);
+                    _talentNames[line*Talents+index].color=taken||open?Ivory:new Color(.62f,.56f,.46f,.8f);
+                    if(index<Talents-1)_talentLinks[line*(Talents-1)+index].color=index+1<rank?LinkTaken:LinkLocked;
+                }
+            }
+            int selectedRank=camp.SabreTalentRank(_talentLine);
+            _talentTitle.text=SabreTalentTexts.Name(_talentLine,_talentIndex);
+            _talentLineName.text=SabreTalentTexts.LineName(_talentLine)+"   ·   талант "+(_talentIndex+1)+" из "+Talents;
+            _talentDescription.text=SabreTalentTexts.Description(_talentLine,_talentIndex);
+            bool learnable=_talentIndex==selectedRank&&camp.AvailableTalentPoints>0;
+            _talentState.text=_talentIndex<selectedRank?"Изучен."
+                :_talentIndex>selectedRank?"Сначала изучите «"+SabreTalentTexts.Name(_talentLine,selectedRank)+"»."
+                :camp.AvailableTalentPoints>0?"Можно изучить. Свободных очков: "+camp.AvailableTalentPoints+"."
+                :"Нужно очко таланта — оно даётся за новый уровень.";
+            _talentLearn.interactable=learnable;
+        }
+
         RectTransform Box(Transform parent,string name,float x,float y,float w,float h,Color color)
         {
             var go=new GameObject(name,typeof(RectTransform),typeof(Image));var r=(RectTransform)go.transform;r.SetParent(parent,false);r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);go.GetComponent<Image>().color=color;return r;

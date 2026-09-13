@@ -99,6 +99,39 @@ namespace Game.Sim
 
         /// <summary>Знак делится на три снаряда. Узел «Раскол».</summary>
         Split = 1 << 0,
+
+        // ---- таланты сабельной ветки, решение владельца от 13 сентября ----
+
+        /// <summary>Вихрь: +10% урона за каждого задетого, до +50%.</summary>
+        WhirlwindCrowd = 1 << 1,
+        /// <summary>Вихрь: +3 лавидия за задетого, до 15 за каст.</summary>
+        WhirlwindRefund = 1 << 2,
+        /// <summary>Вихрь: удержание до 2 с за 15 лавидия в секунду.</summary>
+        WhirlwindChannel = 1 << 3,
+        /// <summary>Рассекающий удар: можно бить на ходу.</summary>
+        CleaveOnTheMove = 1 << 4,
+        /// <summary>Рассекающий удар: +40% урона по элитам и боссам.</summary>
+        CleaveBigGame = 1 << 5,
+        /// <summary>Рассекающий удар: убийство возвращает стоимость.</summary>
+        CleaveKillRefund = 1 << 6,
+        /// <summary>Рассекающий удар: три направления перед героем.</summary>
+        CleaveFan = 1 << 7,
+        /// <summary>«Ладно смазал»: кувырок под огнём оставляет огненный след.</summary>
+        BlazeTrail = 1 << 8,
+        /// <summary>«Ладно смазал»: уклонение возвращает 5 лавидия.</summary>
+        BlazeEvadeRefund = 1 << 9,
+        /// <summary>«Ладно смазал»: обычные атаки поджигают.</summary>
+        BlazeIgnite = 1 << 10,
+        /// <summary>«Ладно смазал»: огненная добавка и на способности.</summary>
+        BlazeAbilities = 1 << 11,
+        /// <summary>Шквал: убийство во время серии −0,5 с перезарядки.</summary>
+        SquallKillCooldown = 1 << 12,
+        /// <summary>Шквал: неуязвимость во время прыжков.</summary>
+        SquallInvulnerable = 1 << 13,
+        /// <summary>Шквал: последний прыжок ×2 урона.</summary>
+        SquallFinisher = 1 << 14,
+        /// <summary>Шквал: пять прыжков вместо четырёх.</summary>
+        SquallFiveHops = 1 << 15,
     }
 
     /// <summary>

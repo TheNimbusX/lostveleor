@@ -38,6 +38,9 @@ namespace Game.Sim
 
         /// <summary>Бутылка разбилась. Amount — слот, Position — где.</summary>
         FlaskBurst = 14,
+
+        /// <summary>Кувырок под огнём оставил кусок следа. Amount — сколько тиков горит, Position — где.</summary>
+        BlazeTrail = 15,
     }
 
     /// <summary>

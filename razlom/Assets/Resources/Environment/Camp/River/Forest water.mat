@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _Normal01:
-        m_Texture: {fileID: 2800000, guid: 9802f250d9820114bbd87670cbae7482, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0816264fbd2d3304cb340c9709026d57, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal02:
@@ -48,7 +48,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Depth: 1.4
-    - _FlowSpeed: 1.8
+    - _FlowSpeed: 2
     - _FoamAmount: 0.035
     - _FoamCutoff: 0.93
     - _FoamScale: 0.4
@@ -64,14 +64,14 @@ Material:
     - _WF_MaskScale: 0.03
     - _WF_Speed: 0.5
     m_Colors:
-    - _DeepWaterColor: {r: 0.11, g: 0.32, b: 0.34, a: 1}
-    - _FoamColor: {r: 0.55, g: 0.73, b: 0.63, a: 1}
+    - _DeepWaterColor: {r: 0.122152, g: 0.39890313, b: 0.4245283, a: 1}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _Normal01Speed: {r: 0.0075599994, g: 0, b: 0, a: 0}
     - _Normal02Speed: {r: 0.0050399997, g: 0.00168, b: 0, a: 0}
     - _NormalSpeed01: {r: 0, g: -0.05, b: 0, a: 0}
     - _NormalSpeed02: {r: 0, g: 0.1, b: 0, a: 0}
     - _NormalSpeed02_1: {r: 0, g: -0.08, b: 0, a: 0}
-    - _ShallowWaterColor: {r: 0.29, g: 0.48, b: 0.37, a: 1}
+    - _ShallowWaterColor: {r: 0.27006942, g: 0.4811321, b: 0.35801223, a: 1}
     - _UV4Normal01: {r: 2, g: 4, b: 0, a: 0}
     - _UV4Normal02: {r: 1, g: 2, b: 0, a: 0}
     - _Vector2: {r: 0, g: -0.25, b: 0, a: 0}
