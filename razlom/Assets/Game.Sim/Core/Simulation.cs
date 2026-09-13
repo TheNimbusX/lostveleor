@@ -400,6 +400,13 @@ namespace Game.Sim
             Entities.Velocity[PlayerId] = FixVec2.Zero;
         }
 
+        public int SpawnCampDummy(CampDummyDefinition definition)
+        {
+            int id = Entities.Spawn(definition.Position, definition.Health, Faction.Orvill);
+            ConfigureDummy(id, definition.Armor, definition.FireResist);
+            return id;
+        }
+
         public void ResetCampActivity()
             => SetupCamp(Entities.Position[PlayerId], _campWalkMap);
 
@@ -1006,6 +1013,9 @@ namespace Game.Sim
 
         private void ResetAbilityState()
         {
+            CancelBlazeGesture();
+            _blazeUntilTick = 0;
+            _blazeSlot = -1;
             StopCyclone();
             StopAnchorSlam();
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
@@ -1143,6 +1153,7 @@ namespace Game.Sim
             // Порядок стадий боя зафиксирован. Любой другой был бы столь же
             // корректен, но менять его нельзя: он входит в поведение и хеш.
             ResolveAbilityCasts(in input);
+            UpdateBlaze();
             ResolveWhirlwindImpact();
             UpdateCyclone(in input);
             UpdateAnchorSlam();
@@ -1217,6 +1228,7 @@ namespace Game.Sim
                 StopWreck();
                 StopCleave();
                 StopFlask();
+                CancelBlazeGesture();
                 // A newly committed action replaces the old presentation and
                 // its unlanded contacts. Do not launch an old anchor midway
                 // through the next ability's animation.
@@ -1293,6 +1305,7 @@ namespace Game.Sim
             {
                 if (!input.Ability(slot)) continue;
                 if (_abilityBuilds[slot] == null) continue;
+                if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.BlazeId) continue;
                 if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, _abilityBuilds[slot])) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
 
@@ -1529,10 +1542,9 @@ namespace Game.Sim
 
             if (Entities.Health[target] > 0)
             {
-                // Добавка огнём идёт ПОСЛЕ основного урона и только по живому:
-                // добивать уже мёртвого вторым ударом значило бы порождать
-                // лишние события смерти.
-                if (!overTime) ApplyBlazeBonus(source, target, slot);
+                // Огненная добавка «Ладно смазал» сюда НЕ приходит: по решению
+                // владельца от 12 сентября усиление достаётся только обычным
+                // атакам. Урон способности остаётся своим собственным числом.
                 return;
             }
             Kill(target, source, slot);
@@ -2246,7 +2258,7 @@ namespace Game.Sim
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
                 // клип и второй контакт поверх способности не запускаются.
-                if (i == PlayerId && (AnchorSlamActive || CycloneActive || CleaveActive || Tick < _abilityMovePenaltyUntilTick
+                if (i == PlayerId && (AnchorSlamActive || CycloneActive || CleaveActive || BlazeCasting || Tick < _abilityMovePenaltyUntilTick
                     || _leapLaunchTick >= 0 || Entities.ForcedTicksLeft[i] > 0)) continue;
 
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
@@ -2268,6 +2280,10 @@ namespace Game.Sim
                 // кнопку, и махать в пустоту ему незачем.
                 bool emptySwing = target < 0;
                 if (emptySwing && (i != PlayerId || !input.Has(InputFlags.Attack))) continue;
+                // Подход и доворот к живой цели — ещё подготовка атаки.
+                // Пустой взмах здесь тратил первый кулдаун после отхода,
+                // хотя к контакту герой уже успевал повернуться к врагу.
+                if (emptySwing && (AttackTargetValid || FindTurnTarget() >= 0)) continue;
 
                 int attackVariant = i == PlayerId ? _nextPlayerAttackVariant : 0;
                 if (i == PlayerId) _nextPlayerAttackVariant ^= 1;
@@ -2420,15 +2436,17 @@ namespace Game.Sim
             // Броня гасит удар ПОСЛЕ крита: крит увеличивает сам удар, а кривая
             // брони зависит от его размера — значит и считать её надо от того,
             // что реально прилетело.
+            int power = damage;
             damage = CombatStats.MitigateByArmor(damage, Entities.Armor[target]);
 
             Entities.Health[target] -= damage;
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
                 DamageType.Physical, DamageOrigin.BasicAttack, variant));
 
-            // Горящая сабля добавляет огонь и к автоатаке: диздок говорит
-            // «усиление относится ко всем атакам, а не только к автоатаке».
-            if (Entities.Health[target] > 0) ApplyBlazeBonus(source, target, -1);
+            // Горящая сабля добавляет огонь ТОЛЬКО к обычным атакам — решение
+            // владельца от 12 сентября. Доля берётся от силы удара до брони:
+            // огонь едет на взмахе, а гасит его сопротивление огню.
+            if (Entities.Health[target] > 0) ApplyBlazeBonus(source, target, power);
 
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем

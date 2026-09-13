@@ -29,6 +29,11 @@ TestResults/
 # Generated delivery bundles; their source assets and generation scripts are versioned separately.
 /ART/designed-images/deliverables/
 
+# Local delivery archive and its duplicate extracted assets.
+/zip-arts.zip
+/zip-arts/
+/arcadia-effector/.snap/
+
 # Local source packages are already imported into the live Unity project.
 /ART/packs/
 

@@ -78,6 +78,13 @@ namespace Game.View
 
         private void Awake()
         {
+            if (Id == PelagVfxId.BlazeIgnite)
+            {
+                // Поджиг остаётся на клинке; общий свет баффа ведёт PelagBlazeView.
+                foreach (var behaviour in GetComponentsInChildren<MonoBehaviour>(true))
+                    if (behaviour != this) behaviour.enabled = false;
+                foreach (var light in GetComponentsInChildren<Light>(true)) light.enabled = false;
+            }
             _lines = GetComponentsInChildren<LineRenderer>(true);
             _lineGradients = new Gradient[_lines.Length];
             _lineColors = new GradientColorKey[_lines.Length][];

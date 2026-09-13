@@ -43,6 +43,7 @@ Shader "Razlom/Texture Toon"
         _GroundGlowBand ("Высота контактного свечения", Range(0.02,0.6)) = 0.16
         _GroundGlowFeather ("Мягкость контактного свечения", Range(0.005,0.3)) = 0.06
         _HitFlash ("Hit Flash", Range(0,1)) = 0
+        _BlazeGlow ("Жёлтое свечение усиления", Range(0,1)) = 0
         _DeathFade ("Death Fade", Range(0,1)) = 0
 
         [Header(Dissolve)]
@@ -321,6 +322,7 @@ Shader "Razlom/Texture Toon"
                 // silhouettes when the textured albedo itself is almost zero.
                 color += _RazlomHeroLightColor.rgb * heroAttenuation *
                     (0.025h + heroWrap * 0.085h);
+                color += half3(1.0h, 0.78h, 0.08h) * _BlazeGlow * (0.16h + rimRaw * rimRaw * 0.65h);
                 color = lerp(color, half3(1.0h, 0.88h, 0.58h), saturate(_HitFlash));
 
                 // Угли кладутся ПОСЛЕ вспышки попадания и до тумана. После —

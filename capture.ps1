@@ -21,6 +21,10 @@ param(
     [ValidatePattern('^[a-zA-Z0-9-]+$')] [string] $WorkspaceName = 'capture',
     [switch] $Whirlwind,
     [switch] $Camp,
+    [switch] $CampIntegration,
+    [switch] $CampMagic,
+    [switch] $CampFinish,
+    [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison')] [string] $CampDetail = '',
     [switch] $MainMenu,
     [switch] $CampCollision,
     [switch] $CampAmbience,
@@ -41,7 +45,7 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze')]
     [string] $Skill = '',
     [switch] $LiveSkill,
     [switch] $NoVfx,
@@ -73,6 +77,10 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($CampAmbienceStill) { $CampAmbience = $true }
 if ($CampAmbience) { $Camp = $true }
+if ($CampIntegration) { $Camp = $true }
+if ($CampMagic) { $Camp = $true }
+if ($CampFinish) { $Camp = $true; $CampAmbience = $true }
+if ($CampDetail -ne '') { $CampFinish = $true; $Camp = $true; $CampAmbience = $true }
 if ($Video -and $Realtime) { throw 'Для Video со звуком требуется фиксированная частота кадров: уберите Realtime.' }
 $root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $project = Join-Path $root 'razlom'
@@ -245,6 +253,10 @@ $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization
 $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
 if ($Camp) { $playerArgs += '-capture-camp' }
+if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
+if ($CampMagic) { $playerArgs += '-capture-camp-magic' }
+if ($CampFinish) { $playerArgs += '-capture-camp-finish' }
+if ($CampDetail -ne '') { $playerArgs += @('-capture-camp-detail', $CampDetail) }
 if ($MainMenu) { $playerArgs += '-capture-main-menu' }
 if ($CampCollision) { $playerArgs += '-capture-camp-collision' }
 if ($CampAmbience) { $playerArgs += '-capture-camp-ambience' }

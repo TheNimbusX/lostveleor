@@ -220,6 +220,61 @@ namespace Game.Tests
         /// Пустой взмах отвечает на нажатие и тратит такт атаки, но никого не
         /// назначает целью: молчащая кнопка читается как залипший ввод.
         /// </summary>
+        [TestCase(false)]
+        [TestCase(true)]
+        public void FirstSwingAfterRetreat_HitsWithoutWastingACooldown(bool explicitTarget)
+        {
+            Simulation sim = ArenaWithDummy(
+                new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
+            sim.Entities.Facing[Simulation.PlayerId] = new FixVec2(-Fix64.One, Fix64.Zero);
+            var attack = InputFrame.Empty;
+            attack.Flags = (byte)InputFlags.Attack;
+            attack.AttackTarget = explicitTarget ? enemy : -1;
+            attack.Aim = new FixVec2(Fix64.FromInt(-5), Fix64.Zero);
+            int health = sim.Entities.Health[enemy];
+            int swings = 0;
+            int deadline = sim.Entities.AttackCooldown[Simulation.PlayerId];
+            while (sim.Tick < deadline && sim.Entities.Health[enemy] == health)
+            {
+                // Клик по силуэту отпускаем сразу: цель должна пережить доворот.
+                InputFrame frame = explicitTarget && sim.Tick > 0 ? InputFrame.Empty : attack;
+                sim.Step(in frame);
+                foreach (SimEvent ev in sim.Events)
+                {
+                    if (ev.Type != SimEventType.Attack || ev.Source != Simulation.PlayerId) continue;
+                    Assert.AreEqual(enemy, ev.Target, "первый взмах не должен записываться в пустоту при довороте");
+                    swings++;
+                }
+            }
+            Assert.AreEqual(1, swings);
+            Assert.Less(sim.Entities.Health[enemy], health,
+                "первая тычка должна попасть раньше, чем истёк бы кулдаун пустого взмаха");
+        }
+
+        [Test]
+        public void TargetedApproach_DoesNotSpendFirstSwingOutsideReach()
+        {
+            Simulation sim = ArenaWithDummy(
+                new FixVec2(Fix64.FromInt(4), Fix64.Zero), out int enemy);
+            var attack = InputFrame.Empty;
+            attack.Flags = (byte)InputFlags.Attack;
+            attack.AttackTarget = enemy;
+            int health = sim.Entities.Health[enemy];
+            int swings = 0;
+            for (int tick = 0; tick < 90 && sim.Entities.Health[enemy] == health; tick++)
+            {
+                sim.Step(in attack);
+                foreach (SimEvent ev in sim.Events)
+                    if (ev.Type == SimEventType.Attack && ev.Source == Simulation.PlayerId)
+                    {
+                        Assert.AreEqual(enemy, ev.Target, "подход к назначенной цели не является ударом в пустоту");
+                        swings++;
+                    }
+            }
+            Assert.AreEqual(1, swings);
+            Assert.Less(sim.Entities.Health[enemy], health);
+        }
+
         [Test]
         public void HeldAttackSwingsWithNothingInRange()
         {

@@ -228,7 +228,8 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         ModelImporterClipAnimation source = defaults[0];
         string file = System.IO.Path.GetFileNameWithoutExtension(NormalPath);
 
-        if (file == "Pelag_MX_WithdrawingSword" || file == "Pelag_MX_KnifeIdle")
+        if (file == "Pelag_MX_WithdrawingSword" || file == "Pelag_MX_KnifeIdle"
+            || file == "Pelag_MX_Blaze" || file == "Pelag_MX_Bartending" || file == "Pelag_MX_DrawingGun")
         {
             // В доставке есть также двухкадровый служебный тейк.
             // Выбираем полный жест, сохраняя его исходные границы и темп.

@@ -596,6 +596,8 @@ namespace Game.View
         /// <summary>Фактически привязанный объект сущности в presentation-слое.</summary>
         public bool TryGetEntityView(int entityId, out Transform view)
         {
+            var dummy = CampTrainingView.Find(entityId);
+            if (dummy != null) { view = dummy.transform; return true; }
             view = null;
             if (!_initialized || (uint)entityId >= (uint)_boundCount) return false;
             view = _views[entityId];
@@ -932,6 +934,8 @@ namespace Game.View
 
             for (int i = _boundCount; i < entities.Count; i++)
             {
+                // Авторский манекен уже стоит в сцене: пул боевых врагов им не владеет.
+                if (CampTrainingView.Find(i) != null) continue;
                 ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
                     : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
                 GameObject go = pool.Acquire();
@@ -1936,6 +1940,7 @@ namespace Game.View
 
             PelagEquipmentView equipment = body.GetComponent<PelagEquipmentView>();
             if (equipment == null) equipment = body.AddComponent<PelagEquipmentView>();
+            if (body.GetComponent<PelagBlazeView>() == null) body.AddComponent<PelagBlazeView>();
             equipment.Configure(saber,
                 new PelagEquipmentView.MountPoint(saberStoredSocket,
                     WoleWeaponStoredLocalPosition, WoleWeaponStoredLocalRotation,

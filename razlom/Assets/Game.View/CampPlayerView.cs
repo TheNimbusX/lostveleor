@@ -17,6 +17,9 @@ namespace Game.View
         internal Transform Body => _arena != null && _arena.TryGetEntityView(Simulation.PlayerId, out var body) ? body : null;
         public bool Active => _driver != null && _driver.Session != null && _driver.Session.Mode == GameMode.Camp && !_driver.Session.OnProvingGround;
         public bool InventoryOpen => _inventory != null && _inventory.IsOpen;
+        public bool EntranceOpen => _entrance != null && _entrance.IsOpen;
+        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampRiftEntrance.ClosedFrame == Time.frameCount;
+        internal CampWalkMap WalkMap => _walkMap;
         public Transform Tent { get; private set; }
         TickDriver _driver; ArenaView _arena;
         float _height;
@@ -27,7 +30,7 @@ namespace Game.View
         CampInventoryView _inventory;
         NavMeshDataInstance _navigation; bool _approach;
         Bounds _tentBounds; Vector3 _start;
-        Transform _exit; bool _approachExit;
+        CampRiftEntrance _entrance;
         Vector2 _pressPointer;
         GameObject _scenePelagPreview; bool _scenePelagPreviewWasActive;
         GameObject _navigationGround;
@@ -44,7 +47,7 @@ namespace Game.View
                 string n = t.name.Replace(" ", "").ToLowerInvariant();
                 if (n == "tent-player") Tent = t;
                 if (t.name == "Anchor - Player") _start = t.position;
-                if (t.name == "Anchor - Rift Portal") _exit = t;
+
             }
             // Старый контейнер палатки сохраняет имя Tent - Player; импорт лежит под ним.
             if (Tent != null)
@@ -56,6 +59,7 @@ namespace Game.View
                 { if (first) { _tentBounds = r.bounds; first = false; } else _tentBounds.Encapsulate(r.bounds); }
                 if (first) _tentBounds = new Bounds(Tent.position, Vector3.one * 2);
             }
+            _entrance = root.GetComponentInChildren<CampRiftEntrance>();
             BuildNavigation(root);
             _arena = FindAnyObjectByType<ArenaView>();
             if (NavMesh.SamplePosition(_start, out var spawn, 10f, NavMesh.AllAreas)) _start = spawn.position;
@@ -85,6 +89,7 @@ namespace Game.View
                 { var candidate=origin+new Vector3((x+.5f)*cell,0,(z+.5f)*cell);
                   if(cells[z*width+x] && Vector3.Distance(candidate,_start)<.3f) _start=candidate; }
             _driver.Session.ConfigureCampWorld(Flat(_start),map);
+            root.GetComponent<CampTrainingView>()?.Initialize(_driver);
             _scenePelagPreview = GameObject.Find("Pelag_MX_Idle");
             if(_scenePelagPreview != null) { _scenePelagPreviewWasActive=_scenePelagPreview.activeSelf; _scenePelagPreview.SetActive(false); }
             _inventory = gameObject.AddComponent<CampInventoryView>(); _inventory.Initialize(_driver);
@@ -131,10 +136,19 @@ namespace Game.View
             => mesh.sharedMesh != null
                && mesh.GetComponent<Collider>() == null
                && mesh.GetComponentInParent<CampGroundStudy>() == null
+               // Плоскость огня поворачивается к камере и не является физической стеной.
+               && mesh.GetComponentInParent<CampFlameProView>() == null
+               // Мишень — боевое тело. Её собственный меш не должен закрывать луч проверки удара.
+               && mesh.GetComponentInParent<CampDummyView>() == null
+               && mesh.GetComponentInParent<CampMagicDecoration>() == null
+               && mesh.GetComponentInParent<CampRiver>() == null
+               && mesh.GetComponentInParent<CampSceneryDecoration>() == null
+               && mesh.sharedMesh.name != "Объём луча арки"
                && !IsDistantLod(mesh);
 
         void BuildNavigation(Transform root)
         {
+            if (_entrance != null) _entrance.BuildNavigationBarrier();
             // Добавляем недостающие коллизии только runtime: сохранённые трансформы не затрагиваются.
             var unreadable = new List<string>();
             foreach (MeshFilter mesh in root.GetComponentsInChildren<MeshFilter>())
@@ -168,6 +182,12 @@ namespace Game.View
             bool foundBounds = false;
             foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
             {
+                if (renderer.GetComponentInParent<CampFlameProView>() != null) continue;
+                if (renderer.GetComponentInParent<CampMagicDecoration>() != null) continue;
+                if (renderer.GetComponentInParent<CampRiver>() != null || renderer.GetComponentInParent<CampSceneryDecoration>() != null) continue;
+                // Unity возвращает editor-only объект «пустого» компонента: ?. его не отсекает.
+                var mesh = renderer.GetComponent<MeshFilter>();
+                if (mesh != null && mesh.sharedMesh != null && mesh.sharedMesh.name == "Объём луча арки") continue;
                 Bounds bounds = renderer.bounds;
                 if (!foundBounds)
                 {
@@ -202,8 +222,12 @@ namespace Game.View
                 Mathf.Max(maxZ - minZ, 4f));
             Physics.SyncTransforms();
             var sources = new List<NavMeshBuildSource>();
+            var markups = new List<NavMeshBuildMarkup>();
+            foreach (var dummy in root.GetComponentsInChildren<CampDummyView>(true))
+                markups.Add(new NavMeshBuildMarkup { root = dummy.transform, ignoreFromBuild = true });
             NavMeshBuilder.CollectSources(root, ~0, NavMeshCollectGeometry.PhysicsColliders, 0,
-                new List<NavMeshBuildMarkup>(), sources);
+                markups, sources);
+            foreach(var river in root.GetComponentsInChildren<CampRiver>())river.AddNavigationSources(sources);
             var settings = NavMesh.GetSettingsByIndex(0);
             settings.agentRadius = .3f; settings.agentHeight = 1.7f; settings.agentClimb = .25f;
             var data = NavMeshBuilder.BuildNavMeshData(settings, sources,
@@ -216,7 +240,9 @@ namespace Game.View
         void Update()
         {
             if (!Active) { _inventory?.Close(); return; }
-            if (_driver.GameplayPaused || InventoryOpen) { Stop(); return; }
+            if (!_driver.GameplayPaused && !InventoryOpen) _entrance?.Check(_driver, World(_driver.Session.CampSim.Entities.Position[0]));
+            if (_driver.GameplayPaused || InputBlocked) { Stop(); return; }
+            if (CampIntegrationCapture.IsRunning) return;
             bool interact; bool click; bool held; bool switchBranch; Vector2 pointer;
 #if ENABLE_INPUT_SYSTEM
             interact = Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame;
@@ -234,8 +260,8 @@ namespace Game.View
 #endif
             if (switchBranch) SwitchBranch();
             if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
-            if (interact && NearExit()) { Stop(); _driver.Session.EnterRift(); return; }
-            if (click && Camera.main != null && !CampInventoryView.PointerOverUI())
+
+            if (click && Camera.main != null && !CampInventoryView.PointerOverUI() && !CampTrainingView.PointerOverPanel(pointer))
                 HandleWorldPress(pointer);
 
             // РУЛЕНИЕ УДЕРЖАНИЕМ ОТМЕНЯЕТ МАРШРУТ — но признаком удержания
@@ -253,7 +279,7 @@ namespace Game.View
             if (held && !click && (pointer - _pressPointer).sqrMagnitude > dragPixels * dragPixels)
                 CancelRoute();
             if (_approach && NearTent()) { _approach = false; Stop(); _inventory.Open(); }
-            if (_approachExit && NearExit()) { _approachExit = false; Stop(); _driver.Session.EnterRift(); }
+
         }
 
         internal void HandleWorldPress(Vector2 pointer)
@@ -267,7 +293,7 @@ namespace Game.View
                 if (!Physics.Raycast(ray, out var hit, 300f)) { CancelRoute(); return; }
 
                 _approach = Tent != null && hit.transform.IsChildOf(Tent);
-                _approachExit = _exit != null && Vector3.Distance(hit.point, _exit.position) < 1.5f;
+
                 _pressPointer = pointer;
 
                 // В палатку идём к её краю, в остальных случаях — ровно туда,
@@ -289,7 +315,7 @@ namespace Game.View
         /// его можно прогнать тестом вокруг настоящей стены, а здесь — только
         /// запустить игру и посмотреть глазами.
         /// </summary>
-        bool RouteTo(Vector3 target)
+        internal bool RouteTo(Vector3 target)
         {
             if (_routing == null || _walkMap == null)
             {
@@ -317,7 +343,7 @@ namespace Game.View
         void CancelRoute()
         {
             _routing?.Cancel();
-            _approach = _approachExit = false;
+            _approach = false;
         }
         static FixVec2 Flat(Vector3 p) => new FixVec2(Fix64.FromRaw((long)(p.x * Fix64.One.Raw)), Fix64.FromRaw((long)(p.z * Fix64.One.Raw)));
         Vector3 World(FixVec2 p) => new Vector3(p.X.ToFloat(), _height, p.Y.ToFloat());
@@ -351,7 +377,7 @@ namespace Game.View
             return routed;
         }
         bool NearTent() { Vector3 d = _tentBounds.ClosestPoint(Position) - Position; d.y = 0; return Tent != null && d.sqrMagnitude < 2.25f; }
-        bool NearExit() => _exit != null && Vector3.Distance(Position,_exit.position) < 1.7f;
+
         /// <summary>
         /// Меняет боевую ветку Пелага.
         ///
@@ -385,11 +411,10 @@ namespace Game.View
 
         void OnGUI()
         {
-            if (!Active || InventoryOpen || _driver.GameplayPaused) return;
+            if (!Active || InputBlocked || _driver.GameplayPaused) return;
             GUI.Box(new Rect(Screen.width / 2 - 260, Screen.height - 150, 520, 34),
                 NearTent() ? "Палатка · I — снаряжение"
-                : NearExit() ? "I — отправиться в забег"
-                : $"ПКМ — идти · T — Полигон · B — ветка: {BranchName()}");
+                : $"ПКМ — идти · B — ветка: {BranchName()}");
         }
         void OnDestroy()
         {

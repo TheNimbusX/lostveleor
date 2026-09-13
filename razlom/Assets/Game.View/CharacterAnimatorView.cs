@@ -74,6 +74,9 @@ namespace Game.View
         private static readonly float AttackAContactNormalized = PlayerAttackContactTime / BasicAttackClipDuration;
         private static readonly float AttackBContactNormalized = AttackAContactNormalized;
         public const float WhirlwindClipDuration = 0.8f;
+
+        /// <summary>Длина жеста поджига сабли. Короче исходного клипа: это не приём, а замах перед боем.</summary>
+        public const float BlazeCastDuration = Simulation.BlazeGestureTicks / (float)Simulation.TicksPerSecond;
         public const float WhirlwindContactTime = Simulation.WhirlwindContactDelayTicks / (float)Simulation.TicksPerSecond;
         public const float WhirlwindTrailStart = 0.12f;
         public const float WhirlwindTrailEnd = 0.49f;
@@ -494,8 +497,25 @@ namespace Game.View
             _animator.SetFloat("CleavePhase", clipTime / .9f);
         }
 
+        private void UpdateBlazeAnimation()
+        {
+            if (!_abilityPresentationActive || _abilityDefinitionId != AbilityDefinition.BlazeId || _animator == null) return;
+            if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
+            var sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
+            if (sim == null || !sim.BlazeCasting || IsDead)
+            {
+                _abilityPresentationActive = false;
+                _actionProtectedUntil = 0f;
+                ReleaseUpperBodyToLocomotion(.12f);
+                return;
+            }
+            float elapsed = sim.Tick - 1 + _cycloneDriver.Alpha - sim.BlazeStartTick;
+            _animator.SetFloat("BlazePhase", Mathf.Clamp01(elapsed / Simulation.BlazeGestureTicks));
+        }
+
         private void Update()
         {
+            UpdateBlazeAnimation();
             UpdateCleaveAnimation();
             UpdateCycloneAnimation();
             if (RollActive && _cycloneDriver != null && _cycloneDriver.Sim != null
@@ -505,7 +525,8 @@ namespace Game.View
                 _actionProtectedUntil = 0f;
                 _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", .08f, 0);
             }
-            if (_abilityPresentationActive && _abilityDefinitionId != AbilityDefinition.CleaveId && Time.time >= _abilityPresentationUntil)
+            if (_abilityPresentationActive && _abilityDefinitionId != AbilityDefinition.CleaveId
+                && _abilityDefinitionId != AbilityDefinition.BlazeId && Time.time >= _abilityPresentationUntil)
             {
                 if (_abilityUsesLowerBodyLayer) ReleaseUpperBodyToLocomotion(0.12f);
                 _abilityPresentationActive = false;
@@ -939,6 +960,33 @@ namespace Game.View
                 _abilityPresentationUntil = Time.time + .9f;
                 _actionProtectedUntil = _abilityPresentationUntil;
                 _animator.CrossFadeInFixedTime("CombatIdle_v5", .06f, 0);
+                return;
+            }
+            if (definitionId == AbilityDefinition.BlazeId)
+            {
+                if (IsDead || _animator == null) return;
+                // Поджиг идёт верхом тела, а стоящему герою достаётся и низ:
+                // симуляция на время каста никого не останавливает, и отнимать
+                // у игрока бег ради жеста было бы обманом. Нижний слой сам
+                // уступает локомоции, пока герой движется.
+                StopAttackWarp();
+                CancelUpperBodyAttack(.02f);
+                ResetAbilityTriggers();
+                _cyclonePhase = -1;
+                _cycloneReleasing = false;
+                _sweepLocomotion = _leapLocomotion = false;
+                _attackPresentationActive = false;
+                _abilityDefinitionId = definitionId;
+                _abilityPresentationActive = true;
+                _abilityUsesLowerBodyLayer = true;
+                _abilityPresentationUntil = Time.time + BlazeCastDuration;
+                _actionProtectedUntil = _abilityPresentationUntil;
+                SetCombatReady(true);
+                _animator.SetFloat("BlazePhase", 0f);
+                if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
+                if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
+                if (_upperBodyLayer >= 0) _animator.CrossFadeInFixedTime("Blaze", .05f, _upperBodyLayer);
+                if (_lowerBodyLayer >= 0) _animator.CrossFadeInFixedTime("Blaze", .05f, _lowerBodyLayer);
                 return;
             }
             bool whirlwind = definitionId == AbilityDefinition.WhirlwindId;

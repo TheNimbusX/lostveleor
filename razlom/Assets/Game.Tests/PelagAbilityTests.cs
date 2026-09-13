@@ -224,13 +224,21 @@ namespace Game.Tests
             Assert.AreEqual(10000, Health(sim, target));
         }
 
+        /// <summary>
+        /// Под усилением способность остаётся ЧИСТО ФИЗИЧЕСКОЙ.
+        ///
+        /// Решение владельца от 12 сентября: огонь достаётся только обычным
+        /// атакам. Проверка стоит на Рассекающем ударе, потому что именно он
+        /// раньше получал вторую, огненную половину удара.
+        /// </summary>
         [Test]
-        public void CleaveBlazeAddsOneExistingFireBonus()
+        public void CleaveUnderBlazeStaysPhysicalOnly()
         {
             var sim = Arena(AbilityDefinition.Cleave());
             sim.SetAbility(1, AbilityDefinition.Blaze(), new AbilityNode[0], 0);
             int target = Enemy(sim, 15);
             sim.Step(Press(1, 15));
+            Idle(sim, Simulation.BlazeIgnitionDelayTicks);
             sim.Step(Press(0, 15, 0, target));
             int physical = 0, fire = 0;
             for (int i = 0; i < 30; i++)
@@ -240,8 +248,8 @@ namespace Game.Tests
                     if (e.Type == SimEventType.Damage && e.Source == 0)
                     { if (e.DamageKind == DamageType.Fire) fire++; else physical++; }
             }
-            Assert.AreEqual(1, physical);
-            Assert.AreEqual(1, fire);
+            Assert.AreEqual(1, physical, "удар способности пропал");
+            Assert.AreEqual(0, fire, "способность получила огонь, хотя не должна");
         }
 
         [Test]
@@ -291,6 +299,8 @@ namespace Game.Tests
         {
             var sim = Arena(AbilityDefinition.Blaze());
             sim.Step(Press(0, 20));
+            Assert.IsFalse(sim.BlazeActive, "усиление началось до поливания");
+            Idle(sim, Simulation.BlazeIgnitionDelayTicks);
             Assert.IsTrue(sim.BlazeActive, "усиление не включилось");
 
             // Каст занял тик, поэтому дожить усиление должно ещё 88 тиков:
@@ -304,11 +314,14 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Добавка огнём относится ко ВСЕМ атакам. Проверяется на способности,
-        /// а не на автоатаке: именно это отличает диздок от «усиления автоатаки».
+        /// Способности усиление НЕ трогает — решение владельца от 12 сентября.
+        ///
+        /// Раньше огонь добавлялся ко всему, и это ровно та половина правила,
+        /// которую владелец отменил; проверка стоит здесь, чтобы возврат старого
+        /// поведения был виден сразу.
         /// </summary>
         [Test]
-        public void BlazeAddsFireDamageToAbilities()
+        public void BlazeDoesNotStrengthenAbilities()
         {
             int plain;
             {
@@ -324,28 +337,89 @@ namespace Game.Tests
             int burned = Enemy(lit, 15);
 
             lit.Step(Press(1, 20));
+            Idle(lit, Simulation.BlazeIgnitionDelayTicks);
             lit.Step(Press(0, 20));
             Idle(lit, 16);
 
-            Assert.Greater(10000 - Health(lit, burned), plain,
-                "под усилением урон не вырос");
+            Assert.AreEqual(plain, 10000 - Health(lit, burned),
+                "под усилением урон способности изменился");
         }
 
-        /// <summary>Урон по времени уклонением не гасится и добавку не получает.</summary>
+        /// <summary>
+        /// Обычная атака под усилением получает ПЯТУЮ ЧАСТЬ своей силы огнём.
+        ///
+        /// Броня и сопротивление огню у цели обнулены, крит выключен: иначе
+        /// проверялась бы не доля, а кривая брони и бросок случайности.
+        /// </summary>
+        [Test]
+        public void BlazeAddsAFifthOfAttackPowerToBasicAttacks()
+        {
+            var sim = Arena(AbilityDefinition.Blaze());
+            int victim = Enemy(sim, 15);
+            sim.Entities.Stats[0].SetBase(StatType.Damage, Fix64.FromInt(100));
+            sim.Entities.Stats[0].SetBase(StatType.CritChance, Fix64.Zero);
+            sim.Entities.RefreshStats(0);
+            sim.Entities.Stats[victim].SetBase(StatType.Armor, Fix64.Zero);
+            sim.Entities.Stats[victim].SetBase(StatType.FireResist, Fix64.Zero);
+            sim.Entities.RefreshStats(victim);
+
+            sim.Step(Press(0, 15));
+            Idle(sim, Simulation.BlazeIgnitionDelayTicks);
+            Assert.IsTrue(sim.BlazeActive, "усиление не включилось");
+
+            var swing = new InputFrame
+            {
+                Flags = (byte)InputFlags.Attack,
+                AttackTarget = victim,
+                Aim = new FixVec2(Fix64.Ratio(15, 10), Fix64.Zero),
+            };
+            int physical = 0, fire = 0;
+            for (int i = 0; i < 40; i++)
+            {
+                sim.Step(in swing);
+                foreach (var e in sim.Events)
+                    if (e.Type == SimEventType.Damage && e.Source == 0)
+                    { if (e.DamageKind == DamageType.Fire) fire += e.Amount; else physical += e.Amount; }
+            }
+
+            Assert.Greater(physical, 0, "обычная атака не прошла");
+            Assert.That(fire * 5, Is.EqualTo(physical).Within(4),
+                "огонь должен быть пятой частью силы удара");
+        }
+
+        /// <summary>Добавка — один удар, а не поджиг: урона по времени за ней нет.</summary>
         [Test]
         public void BlazeBonusIsASingleExtraHitNotABurn()
         {
-            var sim = Arena(AbilityDefinition.Whirlwind());
-            sim.SetAbility(1, AbilityDefinition.Blaze(), new AbilityNode[0], 0);
+            var sim = Arena(AbilityDefinition.Blaze());
             int victim = Enemy(sim, 15);
 
-            sim.Step(Press(1, 20));
-            sim.Step(Press(0, 20));
-            Idle(sim, 16);
-            int afterHit = Health(sim, victim);
+            sim.Step(Press(0, 15));
+            var swing = new InputFrame
+            {
+                Flags = (byte)InputFlags.Attack,
+                AttackTarget = victim,
+                Aim = new FixVec2(Fix64.Ratio(15, 10), Fix64.Zero),
+            };
+            // Считаются СОБЫТИЯ, а не здоровье: отпущенная кнопка не
+            // останавливает бой, герой продолжает бить защёлкнутую цель, и
+            // замер здоровья ловил бы следующий удар, а не горение.
+            int physical = 0, fire = 0, overTime = 0;
+            for (int i = 0; i < 70; i++)
+            {
+                sim.Step(in swing);
+                foreach (var e in sim.Events)
+                {
+                    if (e.Source != 0) continue;
+                    if (e.Type == SimEventType.DamageOverTime) overTime++;
+                    else if (e.Type == SimEventType.Damage)
+                    { if (e.DamageKind == DamageType.Fire) fire++; else physical++; }
+                }
+            }
 
-            Idle(sim, 60);
-            Assert.AreEqual(afterHit, Health(sim, victim), "цель продолжила гореть — это не поджиг");
+            Assert.Greater(physical, 0, "обычная атака не прошла");
+            Assert.AreEqual(physical, fire, "на каждый удар должен приходиться один огненный");
+            Assert.AreEqual(0, overTime, "усиление подожгло цель — это не поджиг");
         }
 
         // ---- Взрывная смесь ----

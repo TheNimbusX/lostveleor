@@ -79,7 +79,7 @@ namespace Game.Sim
             // Рывок собственного тела весом не ограничен: игрок тянет сам
             // себя, и «слишком тяжёлый, чтобы прыгнуть» было бы абсурдом.
             if (kind == ForcedMotionKind.Dragged
-                && entities.PushWeight[id] > ResistThreshold)
+                && (entities.PushWeight[id] == Fix64.Zero || entities.PushWeight[id] > ResistThreshold))
                 return false;
 
             if (ticks < MinTicks) ticks = MinTicks;

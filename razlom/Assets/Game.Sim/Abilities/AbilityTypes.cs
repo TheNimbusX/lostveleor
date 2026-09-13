@@ -69,7 +69,17 @@ namespace Game.Sim
         SwingLeadTicks = 19,
         ContactWindowTicks = 20,
         TurnRadiansPerTick = 21,
-        Count = 22,
+
+        /// <summary>
+        /// Добавка к попаданию как ДОЛЯ ОТ СИЛЫ УДАРА. «Ладно смазал».
+        ///
+        /// Отдельный стат, а не Damage: тот задаёт урон самой способности
+        /// плоским числом, а здесь усиление чужого удара, и оно обязано расти
+        /// вместе с оружием.
+        /// </summary>
+        BonusDamagePercent = 22,
+
+        Count = 23,
     }
 
     /// <summary>

@@ -8,13 +8,16 @@ namespace Game.View
     [AddComponentMenu("Разлом/Лагерь/Ветер и огненный свет")]
     public sealed class CampAmbience : MonoBehaviour
     {
+        [Tooltip("Предпросмотр в Scene: ветер и свет видны без запуска игры.")]
+        public bool PreviewInScene = true;
         [Header("Лёгкий ветер")]
         [Tooltip("Множитель качания листьев и цветов. Ноль — штиль.")]
         [Range(0f, 2f)] public float BreezeStrength = .8f;
         [Range(0f, 360f)] public float BreezeDirection = 38f;
+        [Range(0f, 2f)] public float FlagStrength = 1f;
         [Header("Мерцание вокруг исходной яркости")]
-        [Range(0f, .3f)] public float FireVariation = .12f;
-        [Range(0f, .2f)] public float LampVariation = .065f;
+        [Range(0f, .65f)] public float FireVariation = .42f;
+        [Range(0f, .55f)] public float LampVariation = .32f;
 
         static readonly int BreezeId = Shader.PropertyToID("_CampBreeze");
         static readonly int PreviousTimeId = Shader.PropertyToID("_CampBreezePreviousTime");
@@ -32,9 +35,11 @@ namespace Game.View
         void OnEnable()
         {
             var fire = transform.Find("Campfire");
+            CampFlameProView.Install(fire);
             var lights = new List<LightState>();
             foreach (var source in GetComponentsInChildren<Light>(true))
             {
+                if(source.GetComponentInParent<CampMagicCircle>()!=null)continue;
                 if ((source.type != LightType.Point && source.type != LightType.Spot) ||
                     source.bakingOutput.lightmapBakeType == LightmapBakeType.Baked) continue;
                 bool isFire = fire != null && source.transform.IsChildOf(fire);
@@ -57,12 +62,19 @@ namespace Game.View
 
         void LateUpdate() => Apply();
 
-        void Apply()
+        void Apply()=>ApplyAt(Time.time);
+        public void PreviewAt(float time)
         {
-            float now = Time.time;
+            if(Application.isPlaying)return;
+            if(_lights==null)OnEnable();
+            _captureStill=false;ApplyAt(time);
+        }
+        void ApplyAt(float now)
+        {
             float direction = BreezeDirection * Mathf.Deg2Rad;
             Shader.SetGlobalVector(BreezeId, new Vector4(Mathf.Cos(direction), Mathf.Sin(direction), _captureStill ? 0 : BreezeStrength, now));
             Shader.SetGlobalFloat(PreviousTimeId, _previousTime);
+            Shader.SetGlobalFloat("_CampFlagStrength",FlagStrength);
             _previousTime = now;
             if (_lights == null) return;
             for (int i = 0; i < _lights.Length; i++)
@@ -74,7 +86,8 @@ namespace Game.View
                 // Непериодические плавные огибающие не дают резких вспышек и одинакового пульса.
                 float breathing = (Mathf.PerlinNoise(t * .91f, state.Phase) - .5f) * 2f;
                 float flicker = (Mathf.PerlinNoise(t * 3.1f + 37f, state.Phase + 13f) - .5f) * 2f;
-                float modulation = Mathf.Clamp(breathing * .76f + flicker * .24f, -1f, 1f);
+                float pulse = Mathf.Sin(t * 3.3f + state.Phase) * .58f + Mathf.Sin(t * 5.71f + state.Phase * 1.7f) * .22f;
+                float modulation = Mathf.Clamp(pulse + breathing * .4f + flicker * .18f, -1f, 1f);
                 float amount = _captureStill ? 0 : state.Fire ? FireVariation : LampVariation;
                 state.Source.intensity = state.Intensity * (1f + modulation * amount);
                 state.Minimum = Mathf.Min(state.Minimum, state.Source.intensity);
@@ -82,7 +95,8 @@ namespace Game.View
             }
         }
 
-        void OnDisable()
+        void OnDisable()=>StopPreview();
+        public void StopPreview()
         {
             Shader.SetGlobalVector(BreezeId, Vector4.zero);
             if (_lights == null) return;

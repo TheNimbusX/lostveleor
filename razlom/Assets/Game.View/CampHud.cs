@@ -79,7 +79,7 @@ namespace Game.View
             // встанут сюда же вместе со своими механиками.
             GUILayout.Label("В лагере ждёт:", _title);
             if (session.NewItemsToTry > 0)
-                GUILayout.Label($"  · новых вещей проверить на Полигоне: {session.NewItemsToTry}", _line);
+                GUILayout.Label($"  · новых вещей проверить на манекенах: {session.NewItemsToTry}", _line);
             if (session.JunkToSalvage > 0)
                 GUILayout.Label($"  · мусора под разбор: {session.JunkToSalvage}", _line);
             if (session.NewItemsToTry == 0 && session.JunkToSalvage == 0)

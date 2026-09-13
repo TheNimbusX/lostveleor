@@ -297,6 +297,8 @@ namespace Game.View
         private void Start()
         {
             Directory.CreateDirectory(_outputDirectory);
+            if (VfxShowcase == PelagVfxShowcase.Blaze)
+                gameObject.AddComponent<PelagBlazeCapture>().Initialize(_outputDirectory);
             if (IsCombatFeelShowcase || WhirlwindShowcase || VfxShowcase != PelagVfxShowcase.None)
                 gameObject.AddComponent<PelagAttackCapture>().Initialize(_outputDirectory);
             if (RunShowcase || LocomotionShowcase || WhirlwindShowcase || MovingCombatShowcase || VfxShowcase != PelagVfxShowcase.None)
@@ -329,7 +331,11 @@ namespace Game.View
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp") >= 0)
             {
                 while (CampPlayerView.Instance == null || CampPlayerView.Instance.Body == null) yield return null;
-                gameObject.AddComponent<CampWalkCapture>();
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-integration") >= 0)
+                    gameObject.AddComponent<CampIntegrationCapture>().Initialize(_outputDirectory);
+                else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-magic") >= 0)
+                    gameObject.AddComponent<CampMagicCapture>();
+                else gameObject.AddComponent<CampWalkCapture>();
             }
             else while (!CombatViewReady()) yield return null;
             if (ActiveEnemies && IsCombatFeelShowcase)
@@ -721,6 +727,7 @@ namespace Game.View
                 case "squall":
                 case "chain-step": return PelagVfxShowcase.ChainStep;
                 case "cleave": return PelagVfxShowcase.Cleave;
+                case "blaze": return PelagVfxShowcase.Blaze;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
                     Debug.LogWarning("[capture] Неизвестный VFX showcase: " + raw);

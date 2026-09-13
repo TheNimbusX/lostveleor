@@ -26,7 +26,8 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v28.GreatSwordTimeline";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v29.BlazePour";
+    private static AnimationClip _blazeClip;
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
     private const float IdleTransitionDuration = 0.15f;
@@ -60,6 +61,7 @@ public static class RazlomPelagV5AnimatorBuilder
     [MenuItem("Разлом/Собрать Pelag v5 — Mixamo controller")]
     public static void Build()
     {
+        _blazeClip = null;
         // Clip ranges/loop flags are authored by RazlomCharacterImport. Force
         // the generated deliveries through that recipe before reading them;
         // otherwise a stale Library can silently retain the old 60 fps cuts.
@@ -74,6 +76,9 @@ public static class RazlomPelagV5AnimatorBuilder
             "Pelag_MX_Hit.fbx",
             "Pelag_MX_Death.fbx",
             "Pelag_MX_Whirlwind.fbx",
+            "Pelag_MX_Blaze.fbx",
+            "Pelag_MX_Bartending.fbx",
+            "Pelag_MX_DrawingGun.fbx",
             "Pelag_MX_AnchorAttack.fbx",
             "Pelag_MX_SaberCombo.fbx",
             "Pelag_MX_DualCombo.fbx",
@@ -153,6 +158,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "TurnDirection", AnimatorControllerParameterType.Float);
         AddParameter(controller, "TurnPhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "CleavePhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, "BlazePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool, defaultBool: true);
         AddParameter(controller, "Stunned", AnimatorControllerParameterType.Bool);
         AddParameter(controller, LocomotionPlaybackSpeed, AnimatorControllerParameterType.Float);
@@ -540,6 +546,7 @@ public static class RazlomPelagV5AnimatorBuilder
         State(upper, "SaberStow", draw, 1f);
         AddCycloneStates(upper);
         AddCleaveState(upper);
+        AddBlazeState(upper);
         empty.writeDefaultValues = false;
         upper.defaultState = empty;
 
@@ -575,6 +582,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimatorState empty = State(lower, "LowerBody_Empty", null, 1f);
         AddCycloneStates(lower);
         AddCleaveState(lower);
+        AddBlazeState(lower);
         empty.writeDefaultValues = false;
         lower.defaultState = empty;
 
@@ -593,6 +601,27 @@ public static class RazlomPelagV5AnimatorBuilder
         state.writeDefaultValues = false;
         state.timeParameterActive = true;
         state.timeParameter = "CleavePhase";
+    }
+
+    /// <summary>
+    /// Жест поджига сабли, «Ладно смазал».
+    ///
+    /// Скорость подобрана так, чтобы клип укладывался ровно в отведённое
+    /// показу время: усиление длится три секунды, и длинный каст съедал бы
+    /// заметную часть того окна, ради которого способность нажимают.
+    /// </summary>
+    private static void AddBlazeState(AnimatorStateMachine machine)
+    {
+        var clip = _blazeClip ?? (_blazeClip = RazlomPelagBlazeClip.Build(
+            AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Resources/Characters/Pelag_v5/Pelag_KnifeIdle_Grounded.anim"),
+            Load("Pelag_MX_DrawingGun.fbx", "Pelag_MX_DrawingGun"),
+            Load("Pelag_MX_Bartending.fbx", "Pelag_MX_Bartending")));
+        if (clip == null) return;
+        var state = State(machine, "Blaze", clip,
+            clip.length / Game.View.CharacterAnimatorView.BlazeCastDuration);
+        state.writeDefaultValues = false;
+        state.timeParameter = "BlazePhase";
+        state.timeParameterActive = true;
     }
 
     private static void AddCycloneStates(AnimatorStateMachine machine)

@@ -147,6 +147,7 @@ namespace Game.View
 
         private void Update()
         {
+            if (CampPlayerView.Instance?.EntranceOpen == true || CampRiftEntrance.ClosedFrame == Time.frameCount) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (DeveloperMenu.BlocksPause) return;
 #endif
@@ -399,18 +400,17 @@ namespace Game.View
             // за нижнюю кромку.
             GUI.Label(new Rect(x, y, 690f, 60f),
                 letters
-                    ? "Рука не сходит с позиции WASD. На Полигоне E кастует способность — "
-                      + "чтобы уйти в Разлом, сойди с него на T."
+                    ? "Рука не сходит с позиции WASD. Способности работают и на манекенах в лагере."
                     : "Классический ряд ARPG. Ни одна клавиша не спорит с командами лагеря.",
                 _subtitle);
             y += 78f;
 
             DrawSectionTitle(x, y, "ОСТАЛЬНОЕ");
             y += 60f;
-            DrawKeyRow(x, ref y, "Идти · атаковать", "Правая кнопка мыши");
+            DrawKeyRow(x, ref y, "Идти · атаковать", "ПКМ · ЛКМ");
             DrawKeyRow(x, ref y, "Выбрать награду", letters ? "Q · W · E" : "1 · 2 · 3");
             DrawKeyRow(x, ref y, "Уйти из Разлома с добычей", "L");
-            DrawKeyRow(x, ref y, "В Разлом · Полигон · разобрать мусор", "E · T · V");
+            DrawKeyRow(x, ref y, "Войти в забег", "Зайти в арку");
             DrawKeyRow(x, ref y, "Повторить забег · вернуться в лагерь", "R · C");
             DrawKeyRow(x, ref y, "Пауза", "ESC");
         }

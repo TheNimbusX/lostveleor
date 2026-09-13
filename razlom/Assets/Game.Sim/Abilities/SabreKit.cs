@@ -155,6 +155,15 @@ namespace Game.Sim
 
         private int _blazeUntilTick;
         private int _blazeSlot = -1;
+        private int _blazeStartTick = -1;
+        private int _blazeIgniteTick = -1;
+        private int _blazeEndTick = -1;
+        public const int BlazeIgnitionDelayTicks = 36;
+        public const int BlazeGestureTicks = 60;
+        public int BlazeStartTick => _blazeStartTick;
+        public int BlazeIgniteTick => _blazeIgniteTick;
+        public int BlazeEndTick => _blazeEndTick;
+        public bool BlazeCasting => Entities.Alive[PlayerId] && _blazeStartTick >= 0 && Tick < _blazeEndTick;
 
         /// <summary>Горит ли сабля прямо сейчас. Показу — рисовать пламя.</summary>
         public bool BlazeActive => Entities.Alive[PlayerId] && Tick < _blazeUntilTick;
@@ -171,9 +180,34 @@ namespace Game.Sim
         {
             AbilityBuild build = _abilityBuilds[slot];
             _blazeSlot = slot;
-            _blazeUntilTick = Tick + build.Get(AbilityStatType.DurationTicks).ToInt();
+            _blazeStartTick = Tick;
+            _blazeIgniteTick = Tick + BlazeIgnitionDelayTicks;
+            _blazeEndTick = Tick + BlazeGestureTicks;
+            // Руки заняты бутылкой: прежний незавершённый взмах не попадает сквозь жест.
+            Entities.PendingAttackTarget[PlayerId] = -1;
+            Entities.AttackImpactTick[PlayerId] = 0;
+            Entities.PendingAttackVariant[PlayerId] = 0;
+        }
+
+        private void CancelBlazeGesture()
+        {
+            _blazeStartTick = _blazeIgniteTick = _blazeEndTick = -1;
+        }
+
+        private void UpdateBlaze()
+        {
+            if (_blazeStartTick < 0 || _blazeIgniteTick < 0) return;
+            if (!Entities.Alive[PlayerId] || Statuses.IsStunned(PlayerId, Tick))
+            { CancelBlazeGesture(); return; }
+            if (Tick != _blazeIgniteTick) return;
+            var build = _blazeSlot >= 0 ? _abilityBuilds[_blazeSlot] : null;
+            if (build == null || build.DefinitionId != AbilityDefinition.BlazeId)
+            { CancelBlazeGesture(); return; }
+            // Три секунды начинаются у огня, а не у нажатия кнопки.
+            int duration = build.Get(AbilityStatType.DurationTicks).ToInt();
+            _blazeUntilTick = Tick + duration;
             _events.Add(new SimEvent(SimEventType.BlazeBegin, PlayerId, -1,
-                _blazeUntilTick - Tick, false, Entities.Position[PlayerId]));
+                duration, false, Entities.Position[PlayerId]));
         }
 
         /// <summary>
@@ -200,31 +234,35 @@ namespace Game.Sim
             return true;
         }
 
-        /// <summary>Половина. Число из диздока, а не подобранное.</summary>
-        private static readonly Fix64 BlazeEvasion = Fix64.Ratio(1, 2);
+        /// <summary>Пятая часть. Число владельца от 12 сентября, раньше стояла половина.</summary>
+        private static readonly Fix64 BlazeEvasion = Fix64.Ratio(1, 5);
 
         /// <summary>
-        /// Добавка огнём ко ВСЕМУ, чем бьёт игрок, пока горит сабля.
+        /// Добавка огнём к ОБЫЧНЫМ атакам, пока горит сабля.
         ///
-        /// Диздок: «усиление относится ко всем атакам, а не только к
-        /// автоатаке», и «дополнительный огненный урон сам по себе не означает
-        /// наложение отдельного периодического горения». Поэтому здесь ровно
-        /// один добавочный удар огнём и никакого поджига.
+        /// Решение владельца от 12 сентября: усиление трогает только автоатаку,
+        /// способности оно не усиливает. Поэтому вызов остался ровно один — в
+        /// ApplyAttack, а из пути урона способностей убран. Иначе усиление
+        /// складывалось бы с уже усиленными числами способностей дважды.
         ///
-        /// Считается отдельным ударом, а не прибавкой к числу, потому что тип
-        /// урона другой: физическую часть гасит броня, огненную —
-        /// сопротивление огню. Сложить их в одно число значило бы пропустить
-        /// одну из двух защит.
+        /// Считается ДОЛЕЙ ОТ СИЛЫ УДАРА, а не плоским числом: плоская прибавка
+        /// решала бы всё в первом акте и не значила бы ничего к третьему.
+        ///
+        /// Приходит сила удара ДО брони и ПОСЛЕ крита: огонь едет на самом
+        /// взмахе. Гасит его сопротивление огню, а не броня — поэтому это
+        /// отдельный удар, а не прибавка к числу; иначе одна из двух защит
+        /// оказалась бы пропущена.
         /// </summary>
-        private void ApplyBlazeBonus(int source, int target, int slot)
+        private void ApplyBlazeBonus(int source, int target, int attackPower)
         {
             if (source != PlayerId || !BlazeActive || _blazeSlot < 0) return;
-            if (!Entities.Alive[target]) return;
+            if (!Entities.Alive[target] || attackPower <= 0) return;
 
             AbilityBuild build = _abilityBuilds[_blazeSlot];
             if (build == null || build.DefinitionId != AbilityDefinition.BlazeId) return;
 
-            int bonus = build.Get(AbilityStatType.Damage).ToInt();
+            int bonus = CombatStats.RoundToInt(Fix64.FromInt(attackPower)
+                * build.Get(AbilityStatType.BonusDamagePercent));
             if (bonus <= 0) return;
 
             bonus = CombatStats.Mitigate(bonus, DamageType.Fire,
@@ -233,15 +271,18 @@ namespace Game.Sim
 
             Entities.Health[target] -= bonus;
             _events.Add(SimEvent.Damage(PlayerId, target, bonus, false,
-                Entities.Position[target], DamageType.Fire, DamageOrigin.Ability, slot));
+                Entities.Position[target], DamageType.Fire, DamageOrigin.Ability, _blazeSlot));
 
-            if (Entities.Health[target] <= 0) Kill(target, PlayerId, slot);
+            if (Entities.Health[target] <= 0) Kill(target, PlayerId, _blazeSlot);
         }
 
         private void HashBlaze(ref ulong hash)
         {
             Hashing.Mix(ref hash, _blazeUntilTick);
             Hashing.Mix(ref hash, _blazeSlot);
+            Hashing.Mix(ref hash, _blazeStartTick);
+            Hashing.Mix(ref hash, _blazeIgniteTick);
+            Hashing.Mix(ref hash, _blazeEndTick);
         }
     }
 }

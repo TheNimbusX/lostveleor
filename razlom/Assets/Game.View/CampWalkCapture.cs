@@ -34,6 +34,17 @@ namespace Game.View
             var driver = FindAnyObjectByType<TickDriver>();
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-collision") >= 0)
             {
+                var flame = FindAnyObjectByType<CampFlameProView>();
+                if (flame == null) Debug.LogError("[camp-collision] Flame Pro missing: navigation regression was not exercised.");
+                else
+                {
+                    var flameMesh = flame.GetComponent<MeshFilter>();
+                    int colliders = flame.GetComponentsInChildren<Collider>(true).Length;
+                    bool excluded = !CampPlayerView.UsedByNavigation(flameMesh);
+                    Debug.Log($"[camp-collision] flameExcluded={excluded} flameColliders={colliders}");
+                    if (!excluded || colliders != 0)
+                        Debug.LogError("[camp-collision] Visual flame became a physical navigation obstacle.");
+                }
                 var mesh = camp.Body.GetComponentInChildren<SkinnedMeshRenderer>();
                 var animator = camp.Body.GetComponentInChildren<Animator>();
                 Vector3 origin = camp.Position;

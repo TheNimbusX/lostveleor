@@ -11,6 +11,35 @@ namespace Game.View
         public bool[] OriginalEnabled;
         private Texture2D _footstepSurfaceMap;
         private Vector4 _footstepSurfaceBounds;
+        private Texture2D _paintedPaths;
+        static readonly int PaintedPaths = Shader.PropertyToID("_CampPaintedPaths");
+        static readonly int PaintedBounds = Shader.PropertyToID("_CampPaintedPathBounds");
+        static readonly int PathFoliage = Shader.PropertyToID("_CampPathFoliage");
+
+        public void RefreshPathSurface()
+        {
+            _footstepSurfaceMap = null;
+            _paintedPaths = Resources.Load<Texture2D>("Environment/Camp/ground/Study/CampPaintedPaths");
+            foreach (var renderer in GetComponentsInChildren<MeshRenderer>(true))
+            {
+                Material material = renderer.sharedMaterial;
+                if (material != null && material.HasProperty("_IsSurface") && material.GetFloat("_IsSurface") > .5f)
+                {
+                    _footstepSurfaceMap = material.GetTexture("_SurfaceMap") as Texture2D;
+                    _footstepSurfaceBounds = material.GetVector("_SurfaceBounds");
+                }
+                // Свойство ставится на renderer: копии травы сохраняют собственные позиции,
+                // а деревья и кусты с тем же ветровым шейдером не попадают под кисть.
+                if (_paintedPaths != null && (renderer.name.StartsWith("Grass") || renderer.name.StartsWith("Meadow petals") || renderer.name.StartsWith("Flower centres")))
+                {
+                    var block = new MaterialPropertyBlock();
+                    renderer.GetPropertyBlock(block);
+                    block.SetFloat(PathFoliage, 1);
+                    renderer.SetPropertyBlock(block);
+                }
+            }
+            if (isActiveAndEnabled) UpdateArea();
+        }
 
         public bool IsDustyPath(Vector3 position)
         {
@@ -46,6 +75,7 @@ namespace Game.View
         void OnDisable()
         {
             Shader.SetGlobalVector(Area, Vector4.zero);
+            Shader.SetGlobalVector(PaintedBounds, Vector4.zero);
             Shader.SetGlobalFloat("_CampShadowDiagnostic",0);
             if(AuthoredSurfaces!=null && OriginalEnabled!=null)
                 for(int i=0;i<AuthoredSurfaces.Length && i<OriginalEnabled.Length;i++)
@@ -54,6 +84,7 @@ namespace Game.View
         }
         public void Refresh()
         {
+            RefreshPathSurface();
             UpdateArea();
             if(AuthoredSurfaces!=null) foreach(var renderer in AuthoredSurfaces) if(renderer!=null)renderer.enabled=false;
             foreach(var renderer in GetComponentsInChildren<Renderer>(true)) renderer.enabled=true;
@@ -62,6 +93,8 @@ namespace Game.View
         {
             Vector3 p = transform.position;
             Shader.SetGlobalVector(Area, new Vector4(p.x, p.z, Radius, 1));
+            Shader.SetGlobalTexture(PaintedPaths, _paintedPaths != null ? _paintedPaths : Texture2D.blackTexture);
+            Shader.SetGlobalVector(PaintedBounds, _paintedPaths != null ? _footstepSurfaceBounds : Vector4.zero);
         }
     }
 }

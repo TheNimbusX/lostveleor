@@ -84,6 +84,8 @@ namespace Game.EditorTools
             global::PelagRollVfxSetup.Install();
             global::PelagEvadeVfxSetup.Install();
             global::PelagCleaveVfxSetup.Install();
+            global::PelagBlazeVfxSetup.Install();
+            global::CampFlameProSetup.Install();
 
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)

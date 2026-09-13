@@ -138,9 +138,12 @@ namespace Game.View
                 if ((uint)i >= (uint)_hitAt.Length) continue;
 
                 float age = now - _hitAt[i];
+                var dummy = CampTrainingView.Find(i);
+                bool nearbyDummy = dummy != null && CampPlayerView.Instance != null
+                    && CampTrainingView.IsNear(dummy, CampPlayerView.Instance.Position);
                 bool elite = _driver.Run?.Encounters?.IsElite(i) == true;
                 bool nearbyElite = elite && FixVec2.DistanceSq(entities.Position[i], entities.Position[Simulation.PlayerId]) < Fix64.FromInt(256);
-                if (age > ShowFor && !nearbyElite) continue;
+                if (age > ShowFor && !nearbyElite && !nearbyDummy) continue;
 
                 int max = entities.MaxHealth[i];
                 if (max <= 0) continue;
@@ -149,7 +152,7 @@ namespace Game.View
 
                 // Полная полоска не показывается: если по врагу попали, но он
                 // ещё цел, полоска всё равно нужна — она и говорит, что цел.
-                float alpha = !nearbyElite && age > ShowFor - FadeFor
+                float alpha = !nearbyElite && !nearbyDummy && age > ShowFor - FadeFor
                     ? Mathf.InverseLerp(ShowFor, ShowFor - FadeFor, age)
                     : 1f;
 
@@ -161,6 +164,7 @@ namespace Game.View
                 float height = entities.Kind[i] == EnemyKind.ForestRootSwarm
                     ? RootSwarmHeight3D : Height3D;
                 bar.Root.position = new Vector3(at.x, at.y + height, at.z);
+                if (dummy != null) bar.Root.position = dummy.BarPosition;
                 if (_camera != null) bar.Root.rotation = _camera.rotation;
 
                 Color back = BackColor;

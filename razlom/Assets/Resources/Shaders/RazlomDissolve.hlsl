@@ -44,6 +44,7 @@ CBUFFER_START(UnityPerMaterial)
     half _OutlineWidth;
     half _OutlineDepthBias;
     half _HitFlash;
+    half _BlazeGlow;
     half _DeathFade;
     half4 _DissolveEdgeColor;
     half _DissolveEdgeGlow;

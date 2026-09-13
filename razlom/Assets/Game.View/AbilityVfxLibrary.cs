@@ -30,6 +30,9 @@ namespace Game.View
         CleaveHit,
         CleaveSlash,
         CleaveGround,
+        BlazeIgnite,
+        BlazeBlade,
+        BlazeHit,
         Count
     }
 
@@ -42,7 +45,8 @@ namespace Game.View
         AnchorSweep,
         ChainStep,
         Rotation,
-        Cleave
+        Cleave,
+        Blaze
     }
 
     /// <summary>

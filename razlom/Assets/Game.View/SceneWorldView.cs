@@ -4,9 +4,8 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// Переключает авторские пространства сцены. Лагерь и Полигон не строятся
-    /// из сида, поэтому их геометрия принадлежит .unity; компонент лишь выбирает,
-    /// какой корень должен быть виден при текущем состоянии сессии.
+    /// Переключает лагерь и забег. Манекены входят в авторскую сцену лагеря;
+    /// необязательный старый корень оставлен для совместимости прежних сцен.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SceneWorldView : MonoBehaviour
@@ -28,11 +27,11 @@ namespace Game.View
 
         public bool ValidateContract(bool logErrors)
         {
-            if (_campRoot != null && _provingGroundRoot != null && _campRoot != _provingGroundRoot)
+            if (_campRoot != null && _campRoot != _provingGroundRoot)
                 return true;
 
             if (logErrors)
-                Debug.LogError("[Разлом] SceneWorldView: назначь разные CampRoot и ProvingGroundRoot.", this);
+                Debug.LogError("[Разлом] SceneWorldView: назначь CampRoot.", this);
             return false;
         }
 
@@ -55,7 +54,7 @@ namespace Game.View
             // Summary оставляет за интерфейсом последний Разлом; авторские
             // корни там выключены, чтобы не проступить сквозь поле боя.
             _campRoot.SetActive(session.Mode == GameMode.Camp && !onGround);
-            _provingGroundRoot.SetActive(onGround);
+            if (_provingGroundRoot != null) _provingGroundRoot.SetActive(onGround);
         }
     }
 }

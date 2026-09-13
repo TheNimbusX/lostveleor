@@ -72,6 +72,7 @@ namespace Game.Sim
 
         public bool OnProvingGround => Ground != null;
         public Simulation CampSim { get; private set; }
+        public CampTraining Training { get; private set; }
 
         /// <summary>
         /// Что сейчас рисовать. Меняется вместе с Generation — представление
@@ -133,12 +134,23 @@ namespace Game.Sim
             Generation++;
         }
 
+        public void ConfigureCampTraining(CampDummyDefinition[] definitions)
+        {
+            if (definitions == null || definitions.Length >= _simCapacity)
+                throw new System.ArgumentException("Число мишеней превышает вместимость лагеря.");
+            Ground = null;
+            Training = new CampTraining(definitions);
+            BindCampEquipment();
+            Generation++;
+        }
+
         private void BindCampEquipment()
         {
             CampSim.ResetCampActivity();
             Camp.Worn.Bind(CampSim.Entities.Stats[Simulation.PlayerId]);
             CampSim.RefreshPlayerStats(true);
             CampSim.StopPlayerMovement();
+            Training?.Populate(CampSim);
         }
 
         /// <summary>
@@ -178,7 +190,11 @@ namespace Game.Sim
             }
 
             if (Ground != null) Ground.Step(in input);
-            else CampSim.Step(in input);
+            else
+            {
+                CampSim.Step(in input);
+                Training?.AfterStep(CampSim);
+            }
         }
 
         /// <summary>
@@ -188,6 +204,8 @@ namespace Game.Sim
         /// </summary>
         public void EnterProvingGround(int dummyHealth = 100000)
         {
+            // В авторском лагере тренировка уже находится рядом с игроком.
+            if (Training != null) return;
             if (!Camp.Has(CampService.ProvingGround)) return;
 
             Ground = new ProvingGround();

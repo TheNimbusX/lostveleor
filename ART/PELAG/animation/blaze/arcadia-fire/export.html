@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><title>Pelag Blade Fire export</title>
+<style>body{background:#202020;color:#eee;font:18px sans-serif}canvas{max-height:70vh;border:1px solid #666}</style>
+<button id="export">Export Blade Fire for Pelag</button><pre id="status"></pre><div id="images"></div>
+<script src="/js/core/utils.js"></script><script src="/js/core/track.js"></script>
+<script src="/js/core/curve.js"></script><script src="/js/core/path.js"></script>
+<script src="/js/core/sprites.js"></script><script src="/js/core/model.js"></script>
+<script src="/js/core/sim.js"></script><script src="/js/core/engine.js"></script>
+<script src="/js/core/atlas.js"></script>
+<script>
+document.querySelector('#export').onclick=async()=>{
+ const status=document.querySelector('#status'); status.textContent='Rendering...';
+ const file=await (await fetch('/api/effect?f=Blade%20Fire.json')).json();
+ const doc=await new Promise(resolve=>AFX.Model.loadEffectFile(file,resolve));
+ async function save(name,canvas){
+  document.querySelector('#images').append(canvas);
+  const r=await (await fetch('/api/snap',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,data:canvas.toDataURL('image/png')})})).json();
+  status.textContent+='\n'+JSON.stringify(r);
+ }
+ await save('Pelag_Arcadia_BladeFire_Atlas',AFX.Atlas.build(doc).canvas);
+ await save('Pelag_Arcadia_Smoke',AFX.Sprites.getBase(AFX.Sprites.sig({kind:'shape',id:'smoke',p:{}})));
+ await save('Pelag_Arcadia_Soft',AFX.Sprites.getBase(AFX.Sprites.sig({kind:'shape',id:'soft',p:{}})));
+ status.textContent+='\nDone';
+};
+</script>

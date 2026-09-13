@@ -4,6 +4,7 @@ Shader "Game/Camp Breeze Lit"
 {
     Properties
     {
+        [HideInInspector] _CampPathFoliage("Camp path foliage", Float) = 0
         // Specular vs Metallic workflow
         _WorkflowMode("WorkflowMode", Float) = 1.0
 
@@ -112,7 +113,7 @@ Shader "Game/Camp Breeze Lit"
             AlphaToMask[_AlphaToMask]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages
@@ -207,7 +208,7 @@ Shader "Game/Camp Breeze Lit"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages
@@ -348,7 +349,7 @@ Shader "Game/Camp Breeze Lit"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages
@@ -392,7 +393,7 @@ Shader "Game/Camp Breeze Lit"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages
@@ -442,7 +443,7 @@ Shader "Game/Camp Breeze Lit"
             Cull Off
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages
@@ -483,7 +484,7 @@ Shader "Game/Camp Breeze Lit"
             Cull[_Cull]
 
             HLSLPROGRAM
-            #pragma target 2.0
+            #pragma target 3.5
 
             // -------------------------------------
             // Shader Stages

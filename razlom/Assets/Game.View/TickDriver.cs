@@ -284,7 +284,7 @@ namespace Game.View
                 return;
             }
 
-            if (GameplayPaused || CampPlayerView.Instance?.InventoryOpen == true)
+            if (GameplayPaused || CampPlayerView.Instance?.InputBlocked == true)
             {
                 _frameEvents.Clear();
                 _frameEventContexts.Clear();
@@ -305,7 +305,8 @@ namespace Game.View
             if (NodeHotter != _appliedHotter || NodeSplit != _appliedSplit || NodeSpreads != _appliedSpreads)
                 ApplyAbilityBuild();
 
-            CaptureInput();
+            if (!CampIntegrationCapture.IsRunning) CaptureInput();
+            CampIntegrationCapture.CaptureInput();
 
             _frameEvents.Clear();
             _frameEventContexts.Clear();
@@ -318,6 +319,7 @@ namespace Game.View
 
                 InputFrame frame = ConsumeInput();
                 CampPlayerView.Instance?.PrepareInput(ref frame);
+                CampIntegrationCapture.PrepareInput(ref frame);
 
                 // Шагает СЕССИЯ, а не забег и тем более не симуляция: что
                 // именно шагает, решает режим. В лагере не идёт даже время боя.
@@ -482,7 +484,8 @@ namespace Game.View
                 mouse != null ? mouse.position.ReadValue() : Vector2.zero,
                 moveHeld: mouse != null && mouse.rightButton.isPressed,
                 movePressed: mouse != null && mouse.rightButton.wasPressedThisFrame,
-                attackHeld: mouse != null && mouse.leftButton.isPressed);
+                attackHeld: mouse != null && mouse.leftButton.isPressed,
+                attackPressed: mouse != null && mouse.leftButton.wasPressedThisFrame);
 #else
             if (letters)
             {
@@ -528,7 +531,8 @@ namespace Game.View
             CaptureAim(Input.mousePosition,
                 moveHeld: Input.GetMouseButton(1),
                 movePressed: Input.GetMouseButtonDown(1),
-                attackHeld: Input.GetMouseButton(0));
+                attackHeld: Input.GetMouseButton(0),
+                attackPressed: Input.GetMouseButtonDown(0));
 #endif
 
             if (CaptureRig.RunShowcase && Sim != null)
@@ -668,6 +672,18 @@ namespace Game.View
                 {
                     if (_liveSkillStartedTick < 0) _liveSkillStartedTick = Sim.Tick;
                     int elapsed = Sim.Tick - _liveSkillStartedTick;
+                    if (CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && elapsed == 0)
+                    {
+                        // Точка старого стенда занята порталом: поливание снимаем рядом.
+                        var before = Sim.Entities.Position[Simulation.PlayerId];
+                        Sim.Entities.Position[Simulation.PlayerId] = new FixVec2(Fix64.FromInt(4), Fix64.FromInt(4));
+                        var follow = FindAnyObjectByType<CameraFollow>();
+                        if (Camera.main != null && follow != null && !follow.enabled)
+                            Camera.main.transform.position += new Vector3(4-before.X.ToFloat(),0,4-before.Y.ToFloat());
+                        if (Sim.Entities.Count > 1) Sim.Entities.Position[1] = CaptureRig.EnemyOverride == 0
+                            ? new FixVec2(Fix64.FromInt(30),Fix64.FromInt(30))
+                            : new FixVec2(Fix64.FromInt(6), Fix64.FromInt(4));
+                    }
                     if (CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave && Sim.Entities.Count > 1)
                     {
                         Vector3 direction = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right;
@@ -709,6 +725,7 @@ namespace Game.View
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep ? AbilityDefinition.AnchorSlamId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.ChainStep ? AbilityDefinition.ChainStepId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave ? AbilityDefinition.CleaveId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze ? AbilityDefinition.BlazeId
                             : AbilityDefinition.WhirlwindId;
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
@@ -722,7 +739,8 @@ namespace Game.View
                         _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
                             + new FixVec2(Fix64.FromDouble(cast.x), Fix64.FromDouble(cast.z));
                     }
-                    if (elapsed >= (sequence ? 282 : 90) && Sim.Entities.Count > 1)
+                    if (elapsed >= (sequence ? 282 : 90) && Sim.Entities.Count > 1
+                        && !(CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && CaptureRig.EnemyOverride == 0))
                     {
                         _pending.Aim = Sim.Entities.Position[1];
                         _pending.Flags = (byte)InputFlags.Attack;
@@ -822,7 +840,7 @@ namespace Game.View
                     break;
 
                 case GameMode.Camp:
-                    if (CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) break;
+                    if (CampPlayerView.Instance != null && CampPlayerView.Instance.InputBlocked) break;
                     // На Полигоне E — это способность из ряда QWER, а не выход
                     // в Разлом: Полигон и существует ради проверки способностей,
                     // и молча съедать треть ряда он не должен. Сойти с него
@@ -833,7 +851,7 @@ namespace Game.View
                     if (enter && (CaptureRig.AutoEnterRift || CampPlayerView.Instance == null) && !(Session.OnProvingGround
                                    && GameUserSettings.AbilityRowUsesLetters))
                         _commandLatch = (byte)CampCommand.EnterRift;
-                    if (ground) _commandLatch = (byte)CampCommand.ToggleProvingGround;
+                    if (ground && CampPlayerView.Instance == null) _commandLatch = (byte)CampCommand.ToggleProvingGround;
                     if (salvage) _commandLatch = (byte)CampCommand.SalvageJunk;
                     break;
 
@@ -857,7 +875,7 @@ namespace Game.View
         private void LatchSlots(bool[] pressed, bool choosing)
         {
             bool abilitiesLive = Session.Mode != GameMode.Summary && Sim != null
-                && CampPlayerView.Instance?.InventoryOpen != true;
+                && CampPlayerView.Instance?.InputBlocked != true;
 
             for (int i = 0; i < pressed.Length; i++)
             {
@@ -900,8 +918,13 @@ namespace Game.View
         /// платил за промах мышью сменой действия.
         /// </summary>
         internal void CaptureAim(Vector2 screenPosition, bool moveHeld, bool movePressed,
-            bool attackHeld)
+            bool attackHeld, bool attackPressed = false)
         {
+            if (CampTrainingView.PointerOverPanel(screenPosition))
+            {
+                ClearCapturedInput();
+                return;
+            }
             byte flags = 0;
             if (_camera == null) _camera = Camera.main;
             // Курсор на собственном силуэте гасит ПРИКАЗ ИДТИ, но не удар.
@@ -916,12 +939,22 @@ namespace Game.View
             // есть в Aim прошлого кадра, а симуляция доворачивает корпус сама.
             if (_targetAimSlot < 0 && PointerOverPlayer(screenPosition))
             {
-                _pointerPressLatched = false;
+                // Перенос курсора на героя не стирает короткую ЛКМ до тика.
+                if (_pointerPressLatched)
+                {
+                    _pointerPressFrame.Flags &= unchecked((byte)~(byte)InputFlags.MoveOrder);
+                    _pointerPressLatched = _pointerPressFrame.Has(InputFlags.Attack);
+                }
                 MoveOrderHeld = MoveOrderPressedThisFrame = false;
                 HoveredEntity = -1;
                 AttackHeld = attackHeld;
                 _pending.Flags = attackHeld ? (byte)InputFlags.Attack : (byte)0;
                 _pending.AttackTarget = -1;
+                if (attackPressed)
+                {
+                    _pointerPressFrame = _pending;
+                    _pointerPressLatched = true;
+                }
                 return;
             }
 
@@ -983,11 +1016,10 @@ namespace Game.View
             _pending.Flags = flags;
             _pending.AttackTarget = attackHeld && HoveredEntity >= 0 ? HoveredEntity : -1;
 
-            if (movePressed)
+            if (movePressed || attackPressed)
             {
-                // Защёлка держит ИМЕННО ЭТОТ кадр целиком, включая зажатую
-                // атаку: ConsumeInput подменяет флаги целиком, и собранный
-                // только из приказа идти кадр стирал бы удар за тот же тик.
+                // Обе кнопки сохраняют кадр нажатия до тика симуляции:
+                // короткая ЛКМ иначе исчезала при отпускании между тиками.
                 _pointerPressFrame = InputFrame.Empty;
                 _pointerPressFrame.Aim = _pending.Aim;
                 _pointerPressFrame.Flags = flags;
@@ -1081,6 +1113,14 @@ namespace Game.View
                 if (!entities.Alive[i]) continue;
                 if (i == Simulation.PlayerId) continue;
                 if (entities.Side[i] == entities.Side[Simulation.PlayerId]) continue;
+
+                var dummy = CampTrainingView.Find(i);
+                if (dummy != null)
+                {
+                    if (dummy.VisualBounds.IntersectRay(_camera.ScreenPointToRay(screenPosition), out float distance)
+                        && distance < bestScore) { best = i; bestScore = distance; }
+                    continue;
+                }
 
                 // Наведение идёт по экранному объёму всей фигуры, а не по
                 // кругу на полу. Луч через торс изометрической модели попадает

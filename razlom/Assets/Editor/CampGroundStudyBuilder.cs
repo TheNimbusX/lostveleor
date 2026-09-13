@@ -55,6 +55,14 @@ public static class CampGroundStudyBuilder
     [MenuItem("Разлом/Лагерь/Участок земли у костра")]
     public static void Install()
     {
+        // После перехода на кисть маска — авторские данные. Старый генератор
+        // не должен молча заменить их разметкой DirtPatch и удалить копии травы.
+        if (AssetDatabase.LoadAssetAtPath<CampPathPaintData>(CampPathPainter.DataPath) != null)
+        {
+            if (!Application.isBatchMode) CampPathPainter.Open();
+            Debug.Log("[ground-study] Земля редактируется кистью: Разлом/Лагерь/Рисовать дорожки. Пересборка не требуется.");
+            return;
+        }
         var world = Object.FindAnyObjectByType<SceneWorldView>();
         if (world == null || world.CampRoot == null) throw new InvalidOperationException("Open the authored camp scene first.");
         var camp = world.CampRoot.transform;

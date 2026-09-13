@@ -22,7 +22,7 @@ namespace Game.View
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
         private const float WhirlwindContactTime = CharacterAnimatorView.WhirlwindContactTime;
 
-        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain, Roll, Cleave }
+        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain, Roll, Cleave, Blade }
 
         private sealed class PoolRecord
         {
@@ -290,6 +290,13 @@ namespace Game.View
                 {
                     PlayEvade();
                 }
+                else if (e.Type == SimEventType.BlazeBegin)
+                {
+                    // Amount — сколько тиков гореть. Огонь заводится от события
+                    // симуляции, а не от анимации каста: усиление переживает
+                    // бег, кувырок и любую следующую способность.
+                    PlayBlaze(e.Amount);
+                }
                 else if (e.Type == SimEventType.Attack)
                 {
                     CancelActiveAnchorMotionForReplacement();
@@ -342,6 +349,11 @@ namespace Game.View
                         PlaySweepTargetPull(e.Target);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
                         PlayWhirlwindImpact(e.Target, e.Position);
+                    // Огненная добавка «Ладно смазал» приходит отдельным ударом
+                    // с типом Fire — по нему и рисуется вспышка на цели.
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.BlazeId
+                        && e.DamageKind == DamageType.Fire)
+                        PlayBlazeHit(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId && e.DamageKind == DamageType.Physical)
                         PlayCleaveImpact(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
@@ -379,6 +391,47 @@ namespace Game.View
             if (_active == null) return;
             for (int i = 0; i < _active.Length; i++)
                 if (_active[i].Active && _active[i].Id == PelagVfxId.CleaveSlash) Release(i);
+        }
+
+        /// <summary>
+        /// Поджиг сабли и пламя на клинке на всё время усиления.
+        ///
+        /// Пламя живёт ОТДЕЛЬНЫМ эффектом со своим сроком, а не привязкой к
+        /// анимации каста: усиление длится три секунды, в которые герой бежит,
+        /// бьёт и кувыркается, и огонь обязан пережить любое из этих действий.
+        /// </summary>
+        private void PlayBlaze(int ticks)
+        {
+            Vector3 at = BladePoint(out Quaternion along);
+            Spawn(PelagVfxId.BlazeIgnite, at, along, .22f, .12f, .12f, Motion.Static);
+            // Длинное пламя ведёт PelagBlazeView по трём точкам клинка.
+        }
+
+        private void PlayBlazeHit(int targetEntity, FixVec2 fallback)
+        {
+            Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * .9f;
+            Spawn(PelagVfxId.BlazeHit, position, Quaternion.identity, .4f, .8f, .8f, Motion.Static);
+        }
+
+        /// <summary>
+        /// Точка на клинке и его направление; без сабли — уровень рук героя.
+        ///
+        /// Берётся не остриё, а середина: пламя у кончика читается как факел,
+        /// а не как намазанное по лезвию.
+        /// </summary>
+        private Vector3 BladePoint(out Quaternion along)
+        {
+            if (_arena != null && _arena.TryGetPlayerBlade(out Transform root, out Transform tip))
+            {
+                Vector3 blade = tip.position - root.position;
+                if (blade.sqrMagnitude > .0001f)
+                {
+                    along = Quaternion.LookRotation(blade.normalized, Vector3.up);
+                    return Vector3.Lerp(root.position, tip.position, .55f);
+                }
+            }
+            along = Quaternion.identity;
+            return PlayerPosition() + Vector3.up * 1.1f;
         }
 
         private void UpdateCleaveSlash()
@@ -1280,6 +1333,11 @@ namespace Game.View
 
                 switch (fx.Motion)
                 {
+                    case Motion.Blade:
+                        // Пламя едет на клинке: сабля всё это время машет, и
+                        // неподвижный огонь отстал бы от собственного оружия.
+                        fx.Object.transform.SetPositionAndRotation(BladePoint(out Quaternion blade), blade);
+                        break;
                     case Motion.Cleave:
                         // Центр остаётся у героя; меняется только угол рассечения.
                         // Эффект не летит к цели и не растягивается за её движением.

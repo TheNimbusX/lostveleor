@@ -8,7 +8,11 @@ namespace Game.View
     {
         static bool _disabled; static bool _recovered; ulong _hash; bool _hasHash; TickDriver _driver;
         static string PathName=>Path.Combine(Application.persistentDataPath,"camp-v1.sav");
-        static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0;
+        static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0
+#if UNITY_EDITOR
+            || UnityEditor.SessionState.GetBool("CampIntegrationPlayCheck",false)
+#endif
+            ;
         public static GameSession Load(ulong seed, LocationDefinition location = null)
         {
             _disabled=Capture || CaptureRig.AutoEnterRift;_recovered=false;Camp camp=null;
