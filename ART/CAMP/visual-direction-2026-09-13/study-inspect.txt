@@ -1,0 +1,44 @@
+scene=Assets/Scenes/Studies/CampAtmospheric.unity dirty=False play=True
+ambient=Trilight sky=RGBA(0.370, 0.500, 0.600, 1.000) equator=RGBA(0.240, 0.350, 0.390, 1.000) ground=RGBA(0.115, 0.160, 0.170, 1.000)
+light=Fire Light (3) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=6,898512 rotation=(0.00, 23.83, 0.00) shadows=None strength=1
+light=Rim Light type=Directional rgb=RGBA(0.530, 0.720, 0.880, 1.000) intensity=0,12 rotation=(42.00, 62.00, 0.00) shadows=None strength=1
+light=Fire Light (3) type=Point rgb=RGBA(1.000, 0.320, 0.080, 1.000) intensity=10,60304 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (1) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=5,002284 rotation=(0.00, 23.83, 0.00) shadows=None strength=1
+light=Fire Light (2) type=Point rgb=RGBA(1.000, 0.320, 0.080, 1.000) intensity=10,34087 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Blaze warm light type=Point rgb=RGBA(1.000, 0.480, 0.070, 1.000) intensity=0 rotation=(0.00, 150.00, 0.00) shadows=None strength=1
+light=Алхимическое зелье type=Point rgb=RGBA(0.480, 1.000, 0.090, 1.000) intensity=1,073545 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Огонь чаши type=Point rgb=RGBA(1.000, 0.420, 0.090, 1.000) intensity=1,281873 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Свет: Пелаг / боевой импульс type=Point rgb=RGBA(1.000, 0.240, 0.055, 1.000) intensity=0,38 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light type=Point rgb=RGBA(1.000, 0.320, 0.080, 1.000) intensity=8,952002 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (5) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=6,27576 rotation=(0.00, 23.83, 0.00) shadows=None strength=1
+light=Золотые руны type=Point rgb=RGBA(1.000, 0.690, 0.210, 1.000) intensity=0,274252 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (4) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=7,021681 rotation=(0.00, 23.83, 0.00) shadows=None strength=1
+light=Fill Light type=Directional rgb=RGBA(0.480, 0.690, 0.780, 1.000) intensity=0,055 rotation=(45.00, 240.00, 0.00) shadows=None strength=1
+light=Fire Light (1) type=Point rgb=RGBA(1.000, 0.320, 0.080, 1.000) intensity=7,843259 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (2) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=7,200065 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (1) type=Point rgb=RGBA(1.000, 0.320, 0.080, 1.000) intensity=7,545266 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=7,200065 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (1) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=7,200065 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Fire Light (2) type=Point rgb=RGBA(1.000, 0.331, 0.078, 1.000) intensity=4,96018 rotation=(0.00, 23.83, 0.00) shadows=None strength=1
+light=Холод кристалла type=Point rgb=RGBA(0.140, 0.650, 1.000, 1.000) intensity=1,131915 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+light=Key Light type=Directional rgb=RGBA(1.000, 0.890, 0.720, 1.000) intensity=1,65 rotation=(38.00, 355.85, 0.00) shadows=Soft strength=0,93
+light=Сердце круга type=Point rgb=RGBA(0.180, 1.000, 0.850, 1.000) intensity=2,176921 rotation=(0.00, 0.00, 0.00) shadows=None strength=1
+volume=Global Volume profile=Assets/Scenes/Studies/CampAtmosphericLook.asset weight=1
+camera=Gameplay Camera position=(-12.57, 44.87, -29.36) rotation=(48.00, 25.65, 0.00) size=6,2
+camp child=Campfire position=(-0.17, 0.00, -0.28)
+camp child=Tent - Player position=(-9.49, 0.00, 6.15)
+camp child=Tent-Cicella position=(-1.47, 0.02, 6.17)
+camp child=Tent - Trader position=(8.82, 0.00, -3.82)
+camp child=Smith Shelter position=(6.72, 0.00, 10.18)
+camp child=Magic Circle position=(-8.06, 0.00, -5.02)
+camp child=Start The Run position=(3.79, 0.00, 12.37)
+camp child=Poligon position=(-12.00, 0.00, -1.97)
+camp child=Ground position=(-2.67, 0.00, 1.44)
+camp child=Anchor - Player position=(4.86, 0.00, 6.59)
+camp child=Anchor - Smith position=(4.86, 0.00, 6.59)
+camp child=Anchor - Trader position=(4.51, 0.00, -6.26)
+camp child=Anchor - Rift Portal position=(4.72, 0.00, 14.18)
+camp child=Ground Study - Campfire position=(-0.17, 0.03, -0.28)
+camp child=Река — нижняя граница лагеря position=(-9.29, 0.00, -17.77)
+camp child=Детали лагеря — гравий у оград position=(0.00, 0.00, 0.00)
+camp child=Кузница — древнее основание position=(0.00, 0.00, 0.00)

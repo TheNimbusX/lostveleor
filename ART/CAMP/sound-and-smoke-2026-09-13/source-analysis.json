@@ -1,0 +1,38 @@
+[
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Camp\\ES_Birds, Songbird, Blackbird, Other Distant Birds, Deciduous Forest, Summer, Evening - Epidemic Sound.mp3",
+    "seconds": 134.892,
+    "peak_db": -6.64,
+    "rms_db": -31.57
+  },
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Camp\\ES_Fire, Crackle, Campfire, Close, Moderate Size - Epidemic Sound.mp3",
+    "seconds": 177.04,
+    "peak_db": 0.22,
+    "rms_db": -35.59
+  },
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Camp\\ES_Liquid & Mud, Bubbles, Witch's Cauldron, Bubbling, Fizzing - Epidemic Sound.mp3",
+    "seconds": 180.337,
+    "peak_db": -5.33,
+    "rms_db": -30.51
+  },
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Camp\\ES_Tools, Hand, Hammer, Anvil, Impact, Blacksmith, Indoors, Mid Ranged 03 - Epidemic Sound.mp3",
+    "seconds": 15.351,
+    "peak_db": 0.21,
+    "rms_db": -33.04
+  },
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Camp\\ES_Water, Movement, Small River, Continuous, Calm, Happy, Steady Stream 01 Schoeps (MS) - Epidemic Sound.mp3",
+    "seconds": 131.532,
+    "peak_db": -16.64,
+    "rms_db": -32.47
+  },
+  {
+    "file": "razlom\\Assets\\Resources\\Audio\\Music\\camp_main_theme.wav",
+    "seconds": 116.689,
+    "peak_db": 2.86,
+    "rms_db": -11.34
+  }
+]

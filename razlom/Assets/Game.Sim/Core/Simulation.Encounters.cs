@@ -28,6 +28,7 @@ namespace Game.Sim
                 { guardian = pack.GetGroup(g); break; }
             int boss = Entities.Spawn(center, health * 6, Faction.Orvill);
             ConfigureEnemy(boss, EnemyKind.ForestGuardian);
+            Entities.XpReward[boss] = Progression.BossKillXp;
             Entities.Stats[boss].SetBase(StatType.Damage,
                 Entities.Damage[boss] * Fix64.Ratio(guardian.DamagePercent * settings.DamagePercent * 5, 40000));
             Entities.RefreshStats(boss);
@@ -117,6 +118,7 @@ namespace Game.Sim
                             sheet.SetBase(StatType.Damage, damage);
                             Entities.RefreshStats(id);
                             elite[id] = group.Elite;
+                            if (group.Elite) Entities.XpReward[id] = Progression.EliteKillXp;
                             _events.Add(SimEvent.Spawn(id, spot));
                         }
                     }

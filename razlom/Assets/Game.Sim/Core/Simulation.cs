@@ -801,10 +801,19 @@ namespace Game.Sim
             sheet.SetBase(StatType.MoveSpeed, PlayerBaseMoveSpeed);
             sheet.SetBase(StatType.CritChance, BaseCritChance);
             sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
+            sheet.SetBase(StatType.MaxLavidium, PlayerBaseLavidium);
+            sheet.SetBase(StatType.LavidiumRegen, PlayerBaseLavidiumRegen);
 
             Entities.RefreshStats(id);
             Entities.Health[id] = Entities.MaxHealth[id];
+            Entities.Lavidium[id] = Fix64.FromInt(Entities.MaxLavidium[id]);
         }
+
+        /// <summary>Пул лавидия героя. Решение владельца от 13 сентября.</summary>
+        private static readonly Fix64 PlayerBaseLavidium = Fix64.FromInt(100);
+
+        /// <summary>Восстановление лавидия героя, ед/с. Решение владельца от 13 сентября.</summary>
+        private static readonly Fix64 PlayerBaseLavidiumRegen = Fix64.FromInt(3);
 
         /// <summary>
         /// Базовые статы рядового врага. Здоровье приходит из Spawn: им тир
@@ -925,7 +934,11 @@ namespace Game.Sim
         public void RefreshPlayerStats(bool heal)
         {
             Entities.RefreshStats(PlayerId);
-            if (heal) Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId];
+            if (!heal) return;
+            Entities.Health[PlayerId] = Entities.MaxHealth[PlayerId];
+            // В Разлом входят и с полным лавидием: пустой пул на старте забега
+            // наказывал бы за касты, сделанные ещё в лагере.
+            Entities.Lavidium[PlayerId] = Fix64.FromInt(Entities.MaxLavidium[PlayerId]);
         }
 
         /// <summary>
@@ -1124,6 +1137,11 @@ namespace Game.Sim
             // от того, кто первым до кого дотянулся.
             RefreshDirtyStats();
 
+            // Восстановление лавидия — сразу после статов и до кастов: способность,
+            // на которую ресурса хватило ровно к этому тику, обязана сработать
+            // на нём, а не на следующем.
+            RegenerateLavidium();
+
             // Приказы разбираются до движения: цель могла умереть на прошлом
             // тике, и идти к трупу персонаж не должен.
             ReadOrders(in input);
@@ -1222,6 +1240,11 @@ namespace Game.Sim
 
                 if (Tick < _abilityReadyTick[slot]) continue;
 
+                // Не хватает лавидия — каста нет вовсе: ни кулдауна, ни остановки
+                // текущих действий, ни события. Нажатие без ресурса не должно
+                // отменять Вихрь, который уже крутится.
+                if (!CanAffordAbility(build)) continue;
+
                 if (build.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
                 StopCyclone();
                 StopAnchorSlam();
@@ -1291,6 +1314,7 @@ namespace Game.Sim
                 }
 
                 _abilityReadyTick[slot] = Tick + build.CooldownTicks;
+                SpendLavidium(build);
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
                 if (build.DefinitionId == AbilityDefinition.ChainStepId && _chainHopsLeft > 0)
                     EmitChainHop();
@@ -1308,6 +1332,7 @@ namespace Game.Sim
                 if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.BlazeId) continue;
                 if (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, _abilityBuilds[slot])) continue;
                 if (Tick < _abilityReadyTick[slot]) continue;
+                if (!CanAffordAbility(_abilityBuilds[slot])) continue;
 
                 int until = (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainCycloneId)
                     ? Tick : Tick + AbilityMovePenaltyTicks;
@@ -1565,6 +1590,7 @@ namespace Game.Sim
             Entities.Alive[target] = false;
             if (target == PlayerId) ResetAbilityState();
             _events.Add(SimEvent.Death(target, Entities.Position[target]));
+            GrantKillXp(target, killer);
 
             if (basicAttackKill && killer == PlayerId)
             {
@@ -2480,6 +2506,7 @@ namespace Game.Sim
             HashCleave(ref hash);
             HashBlaze(ref hash);
             HashFlask(ref hash);
+            HashProgression(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.

@@ -1,0 +1,274 @@
+origin=(-39, -20) width=534 height=446 cell=.125 cyan=connected orange=disconnected
+RIVER APPROACH localX=12 requested=(5.10, 0.09, -18.13) connected=(1.31, 0.09, -13.31) distance=6,130782
+RIVER APPROACH localX=19 requested=(14.93, 0.09, -16.31) connected=(6.56, 0.09, -7.81) distance=11,92001
+COLLIDER Campfire/fonar (2) bounds=Center: (2.55, 1.90, -0.16), Extents: (0.99, 1.88, 0.97) enabled=True
+COLLIDER Campfire/wooden+bench+3d+model bounds=Center: (1.51, 0.28, -1.46), Extents: (0.72, 0.28, 0.80) enabled=True
+COLLIDER Campfire/wooden+bench+3d+model (1) bounds=Center: (1.43, 0.28, 0.84), Extents: (0.69, 0.28, 0.82) enabled=True
+COLLIDER Campfire/mossy+stone+blocks+3d+model (1) bounds=Center: (0.29, 0.13, 3.93), Extents: (0.24, 0.16, 0.30) enabled=True
+COLLIDER Campfire/mossy+stone+blocks+3d+model (2) bounds=Center: (3.74, 0.27, -8.46), Extents: (0.61, 0.34, 0.40) enabled=True
+COLLIDER Campfire/stone+fire+pit+3d+model bounds=Center: (-0.23, 0.31, -0.46), Extents: (0.99, 0.31, 0.98) enabled=True
+COLLIDER Campfire/wooden+crate+3d+model (3) bounds=Center: (0.30, 0.33, 2.79), Extents: (0.53, 0.31, 0.53) enabled=True
+COLLIDER Tent - Player/fonar bounds=Center: (-0.41, 1.90, 8.84), Extents: (0.81, 1.88, 0.78) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model bounds=Center: (-10.00, 0.36, 11.18), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (1) bounds=Center: (-9.38, 0.36, 10.42), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (2) bounds=Center: (-10.20, 0.43, 9.67), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (3) bounds=Center: (-10.29, 0.36, 9.10), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (4) bounds=Center: (-10.13, 0.36, 8.40), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (5) bounds=Center: (-8.72, 0.36, 10.83), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (6) bounds=Center: (-8.34, 0.36, 11.58), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (11) bounds=Center: (-8.42, 0.36, 12.22), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (7) bounds=Center: (-7.87, 0.36, 11.14), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (8) bounds=Center: (-9.60, 0.36, 7.71), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (9) bounds=Center: (-10.30, 0.36, 7.21), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (17) bounds=Center: (-10.60, 0.36, 5.55), Extents: (0.89, 0.36, 0.72) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (12) bounds=Center: (-11.05, 0.36, 7.84), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (10) bounds=Center: (-9.42, 0.36, 6.78), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/medieval+banner+3d+model bounds=Center: (-2.73, 1.44, 7.96), Extents: (0.80, 1.44, 0.16) enabled=True
+COLLIDER Tent - Player/medieval+banner+3d+model (1) bounds=Center: (-10.27, 1.80, 7.18), Extents: (1.01, 1.80, 0.24) enabled=True
+COLLIDER Tent - Player/camping+tent+3d+model bounds=Center: (-7.11, 1.82, 8.05), Extents: (3.38, 1.82, 3.16) enabled=True
+COLLIDER Tent - Player/decorative+rug+3d+model bounds=Center: (-5.92, 0.12, 6.81), Extents: (1.27, 0.08, 1.80) enabled=True
+COLLIDER Tent - Player/wooden+bucket+3d+model bounds=Center: (-4.55, 0.17, 6.31), Extents: (0.21, 0.17, 0.21) enabled=True
+COLLIDER Tent - Player/wooden+bucket+3d+model (2) bounds=Center: (-8.05, 0.79, 5.03), Extents: (0.21, 0.17, 0.21) enabled=True
+COLLIDER Tent - Player/stylized+tree+3d+model bounds=Center: (-11.39, 6.56, 13.23), Extents: (6.99, 6.56, 6.68) enabled=True
+COLLIDER Tent - Player/stylized+tree+3d+model (1) bounds=Center: (-4.22, 4.82, 15.49), Extents: (5.35, 4.82, 5.54) enabled=True
+COLLIDER Tent - Player/hanging+lantern+3d+model bounds=Center: (-8.22, 2.47, 7.19), Extents: (1.14, 0.80, 0.42) enabled=True
+COLLIDER Tent - Player/wooden+fence+3d+model bounds=Center: (-9.90, 0.53, 3.75), Extents: (1.12, 0.53, 1.12) enabled=True
+COLLIDER Tent - Player/wooden+fence+3d+model (1) bounds=Center: (-11.42, 0.53, 5.32), Extents: (1.12, 0.53, 1.12) enabled=True
+COLLIDER Tent - Player/wooden+fence+3d+model (2) bounds=Center: (-11.99, 0.53, 7.15), Extents: (0.48, 0.53, 1.40) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model bounds=Center: (-3.27, 0.36, 7.38), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (1) bounds=Center: (-3.93, 0.36, 7.19), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (18) bounds=Center: (-6.07, 0.65, 12.13), Extents: (1.44, 0.65, 1.04) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (19) bounds=Center: (-3.66, 0.65, 13.18), Extents: (1.44, 0.65, 1.04) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (2) bounds=Center: (-4.28, 0.55, 7.90), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (4) bounds=Center: (-4.74, 0.36, 8.98), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (5) bounds=Center: (-3.41, 0.36, 6.32), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (3) bounds=Center: (-4.98, 0.36, 10.15), Extents: (0.88, 0.36, 0.95) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model bounds=Center: (-8.03, 0.35, 5.12), Extents: (0.43, 0.28, 0.43) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (3) bounds=Center: (-3.68, 0.28, 10.83), Extents: (0.38, 0.28, 0.39) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (5) bounds=Center: (-2.06, 1.05, 10.94), Extents: (0.38, 0.28, 0.39) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (1) bounds=Center: (-8.24, 0.47, 5.90), Extents: (0.62, 0.40, 0.62) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (4) bounds=Center: (-2.85, 0.40, 10.29), Extents: (0.55, 0.40, 0.56) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (6) bounds=Center: (-2.03, 0.40, 11.01), Extents: (0.55, 0.40, 0.56) enabled=True
+COLLIDER Tent - Player/wooden+crate+3d+model (2) bounds=Center: (-11.16, 0.46, 6.59), Extents: (0.77, 0.46, 0.77) enabled=True
+COLLIDER Tent - Player/wooden+bucket+3d+model (1) bounds=Center: (-4.43, 0.17, 5.83), Extents: (0.19, 0.17, 0.19) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model (1) bounds=Center: (-9.41, 0.26, 6.20), Extents: (0.56, 0.26, 0.54) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model (4) bounds=Center: (-3.58, 0.28, 5.96), Extents: (0.56, 0.26, 0.54) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model (2) bounds=Center: (-2.66, 0.26, 4.71), Extents: (0.52, 0.29, 0.45) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model (5) bounds=Center: (-3.00, 0.29, 5.02), Extents: (0.52, 0.29, 0.45) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model (3) bounds=Center: (-4.06, 0.25, 6.38), Extents: (0.57, 0.29, 0.53) enabled=True
+COLLIDER Tent - Player/flowering+plant+3d+model bounds=Center: (-10.08, 0.26, 6.41), Extents: (0.53, 0.26, 0.48) enabled=True
+COLLIDER Tent - Player/wooden+fence+3d+model (3) bounds=Center: (-0.75, 0.53, 6.81), Extents: (1.01, 0.53, 1.21) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (13) bounds=Center: (-2.24, 0.36, 5.42), Extents: (0.84, 0.36, 0.64) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (20) bounds=Center: (2.96, 0.36, 17.74), Extents: (0.84, 0.36, 0.64) enabled=True
+COLLIDER Tent - Player/bush+with+flowers+3d+model (14) bounds=Center: (-2.73, 0.36, 5.66), Extents: (0.89, 0.36, 0.71) enabled=True
+COLLIDER Tent - Player/wooden+bench+3d+model bounds=Center: (-3.70, 0.28, 4.98), Extents: (0.67, 0.28, 0.83) enabled=True
+COLLIDER Tent - Player/tree+stump+3d+model bounds=Center: (-9.80, 0.33, 5.02), Extents: (0.85, 0.33, 0.85) enabled=True
+COLLIDER Tent - Player/tree+stump+3d+model (1) bounds=Center: (-0.46, 0.49, 16.30), Extents: (1.28, 0.49, 1.28) enabled=True
+COLLIDER Tent-Cicella/bush+with+flowers+3d+model (5) bounds=Center: (-13.53, 0.67, 7.75), Extents: (1.76, 0.67, 1.70) enabled=True
+COLLIDER Tent-Cicella/bush+with+flowers+3d+model (7) bounds=Center: (-17.53, 0.49, 7.31), Extents: (1.28, 0.49, 1.24) enabled=True
+COLLIDER Tent-Cicella/bush+with+flowers+3d+model (6) bounds=Center: (-18.94, 0.67, 9.30), Extents: (1.76, 0.67, 1.70) enabled=True
+COLLIDER Tent-Cicella/wooden+crate+3d+model (7) bounds=Center: (-15.77, 0.46, 7.22), Extents: (0.77, 0.46, 0.77) enabled=True
+COLLIDER Tent-Cicella/wooden+crate+3d+model (8) bounds=Center: (-14.59, 0.31, 6.82), Extents: (0.42, 0.31, 0.42) enabled=True
+COLLIDER Tent-Cicella/tattered+camp+tent+3d+model bounds=Center: (-15.30, 1.82, 10.31), Extents: (3.05, 1.82, 2.77) enabled=True
+COLLIDER Tent - Trader/wooden+cart+3d+model bounds=Center: (9.05, 0.60, -8.20), Extents: (0.98, 0.60, 0.80) enabled=True
+COLLIDER Tent - Trader/wooden+bench+3d+model (2) bounds=Center: (3.87, 0.25, -3.77), Extents: (0.71, 0.25, 0.70) enabled=True
+COLLIDER Tent - Trader/wooden+crate+3d+model (1) bounds=Center: (4.05, 0.37, -3.07), Extents: (0.64, 0.37, 0.64) enabled=True
+COLLIDER Tent - Trader/UNS_Spruce_02 (2) bounds=Center: (10.56, 1.96, -7.19), Extents: (0.08, 2.14, 0.08) enabled=True
+COLLIDER Tent - Trader/UNS_Spruce_02 (2)/UNS_Spruce_02_LOD0 bounds=Center: (10.60, 2.01, -7.21), Extents: (1.50, 2.08, 1.53) enabled=True
+COLLIDER Tent - Trader/UNS_Spruce_02 (1) bounds=Center: (5.98, 1.96, -1.90), Extents: (0.08, 2.14, 0.08) enabled=True
+COLLIDER Tent - Trader/UNS_Spruce_02 (1)/UNS_Spruce_02_LOD0 bounds=Center: (6.03, 2.01, -1.91), Extents: (1.50, 2.08, 1.53) enabled=True
+COLLIDER Tent - Trader/UNS_Bush_LOD0 (1) bounds=Center: (5.11, 0.47, -9.26), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Tent - Trader/UNS_Bush_LOD0 (2) bounds=Center: (4.63, 0.47, -2.05), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Tent - Trader/wooden+barrel+3d+model bounds=Center: (6.52, 0.47, -8.64), Extents: (0.46, 0.47, 0.47) enabled=True
+COLLIDER Tent - Trader/wooden+barrel+3d+model (1) bounds=Center: (-12.65, 0.46, 10.87), Extents: (0.37, 0.38, 0.39) enabled=True
+COLLIDER Tent - Trader/flowering+plant+3d+model (2) bounds=Center: (3.55, 0.58, -5.52), Extents: (0.51, 0.29, 0.42) enabled=True
+COLLIDER Tent - Trader/bush+with+flowers+3d+model bounds=Center: (2.64, 0.36, -5.18), Extents: (0.95, 0.37, 0.89) enabled=True
+COLLIDER Tent - Trader/bush+with+flowers+3d+model (1) bounds=Center: (2.02, 0.36, -4.25), Extents: (0.72, 0.36, 0.89) enabled=True
+COLLIDER Tent - Trader/bush+with+flowers+3d+model (2) bounds=Center: (1.50, 0.36, -3.17), Extents: (0.66, 0.36, 0.86) enabled=True
+COLLIDER Tent - Trader/wooden+fence+3d+model (3) bounds=Center: (3.27, 0.53, -1.94), Extents: (1.01, 0.53, 1.21) enabled=True
+COLLIDER Tent - Trader/wooden+fence+3d+model (4) bounds=Center: (7.28, 0.53, -9.46), Extents: (1.36, 0.53, 0.70) enabled=True
+COLLIDER Tent - Trader/medieval+market+stall+3d+model bounds=Center: (7.20, 2.28, -5.24), Extents: (3.38, 2.27, 3.61) enabled=True
+COLLIDER Smith Shelter/bush+with+flowers+3d+model (22) bounds=Center: (10.11, 0.17, 10.69), Extents: (0.41, 0.17, 0.44) enabled=True
+COLLIDER Smith Shelter/wooden+barrel+3d+model (2) bounds=Center: (10.23, 0.52, 2.08), Extents: (0.44, 0.45, 0.46) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model (4) bounds=Center: (3.24, 0.53, 9.79), Extents: (0.53, 0.53, 1.40) enabled=True
+COLLIDER Smith Shelter/tree+stump+3d+model (2) bounds=Center: (10.41, 0.31, 11.03), Extents: (0.81, 0.31, 0.80) enabled=True
+COLLIDER Smith Shelter/wood+log+pile+3d+model bounds=Center: (7.95, 0.50, 2.91), Extents: (0.80, 0.50, 0.88) enabled=True
+COLLIDER Smith Shelter/wood+log+pile+3d+model (1) bounds=Center: (8.83, 0.69, 1.60), Extents: (0.80, 0.50, 0.88) enabled=True
+COLLIDER Smith Shelter/wood+log+pile+3d+model (2) bounds=Center: (9.33, 0.59, 2.84), Extents: (0.80, 0.50, 0.88) enabled=True
+COLLIDER Smith Shelter/fonar (1) bounds=Center: (5.41, 1.63, 3.26), Extents: (1.03, 2.07, 1.02) enabled=True
+COLLIDER Smith Shelter/wooden+bucket+3d+model (3) bounds=Center: (5.87, 0.72, 7.69), Extents: (0.19, 0.17, 0.19) enabled=True
+COLLIDER Smith Shelter/wooden+bench+3d+model (1) bounds=Center: (5.29, 0.31, 7.51), Extents: (0.85, 0.28, 0.51) enabled=True
+COLLIDER Smith Shelter/medieval+blacksmith+forge+3d+model bounds=Center: (7.84, 2.76, 6.48), Extents: (2.32, 2.52, 3.35) enabled=True
+COLLIDER Smith Shelter/wooden+crate+3d+model (7) bounds=Center: (10.52, 0.33, 4.30), Extents: (0.45, 0.33, 0.44) enabled=True
+COLLIDER Smith Shelter/wooden+crate+3d+model (11) bounds=Center: (10.33, 0.33, 5.06), Extents: (0.45, 0.33, 0.44) enabled=True
+COLLIDER Smith Shelter/wooden+crate+3d+model (8) bounds=Center: (8.25, 0.59, 6.53), Extents: (0.87, 0.59, 0.86) enabled=True
+COLLIDER Smith Shelter/wooden+crate+3d+model (9) bounds=Center: (7.92, 0.59, 7.61), Extents: (0.87, 0.59, 0.86) enabled=True
+COLLIDER Smith Shelter/wooden+crate+3d+model (10) bounds=Center: (7.84, 0.59, 8.20), Extents: (0.87, 0.59, 0.86) enabled=True
+COLLIDER Smith Shelter/anvil+3d+model bounds=Center: (5.58, 0.57, 6.01), Extents: (0.50, 0.44, 0.58) enabled=True
+COLLIDER Smith Shelter/anvil+3d+model (1) bounds=Center: (8.39, 0.78, 4.86), Extents: (0.89, 0.78, 1.03) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model bounds=Center: (5.22, 0.53, 8.24), Extents: (1.35, 0.53, 0.74) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model (2) bounds=Center: (7.29, 0.64, 9.06), Extents: (1.40, 0.65, 0.70) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model (1) bounds=Center: (6.59, 0.53, 3.59), Extents: (1.38, 0.53, 0.64) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model (3) bounds=Center: (9.75, 0.53, 0.23), Extents: (0.43, 0.53, 1.40) enabled=True
+COLLIDER Smith Shelter/wooden+fence+3d+model (5) bounds=Center: (9.19, 0.53, -2.74), Extents: (0.43, 0.53, 1.40) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (11) bounds=Center: (-3.84, 0.53, -3.28), Extents: (1.41, 0.53, 0.42) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (12) bounds=Center: (-7.90, 0.53, -5.24), Extents: (0.94, 0.53, 1.25) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (19) bounds=Center: (-9.31, 0.53, -7.49), Extents: (0.81, 0.53, 1.32) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (13) bounds=Center: (2.14, 0.53, -12.14), Extents: (0.57, 0.53, 1.39) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (14) bounds=Center: (1.52, 0.53, -14.26), Extents: (0.57, 0.53, 1.39) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (15) bounds=Center: (-9.81, 0.53, -12.80), Extents: (1.35, 0.53, 0.73) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (16) bounds=Center: (-7.79, 0.53, -13.68), Extents: (1.36, 0.53, 0.70) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (17) bounds=Center: (-5.71, 0.44, -14.38), Extents: (1.39, 0.53, 0.58) enabled=True
+COLLIDER Magic Circle/wooden+fence+3d+model (18) bounds=Center: (-3.63, 0.44, -15.07), Extents: (1.38, 0.53, 0.61) enabled=True
+COLLIDER Magic Circle/stone+altar+3d+model bounds=Center: (-0.53, 1.35, -14.64), Extents: (2.02, 1.35, 2.06) enabled=True
+COLLIDER Magic Circle/alchemy+cauldron+3d+model bounds=Center: (-9.25, 1.42, -10.81), Extents: (1.82, 1.42, 1.97) enabled=True
+COLLIDER Magic Circle/rock+platform+3d+model bounds=Center: (-3.79, 0.30, -9.91), Extents: (2.67, 0.56, 2.67) enabled=True
+COLLIDER Magic Circle/fantasy+temple+altar+3d+model bounds=Center: (-5.18, 1.47, -4.94), Extents: (1.99, 1.47, 1.73) enabled=True
+COLLIDER Magic Circle/ice+crystal+altar+3d+model bounds=Center: (1.60, 1.61, -8.98), Extents: (2.31, 1.51, 2.38) enabled=True
+COLLIDER Start The Run/bush+with+flowers+3d+model (16) bounds=Center: (3.05, 0.29, 13.90), Extents: (0.73, 0.29, 0.77) enabled=True
+COLLIDER Start The Run/wooden+fence+3d+model (5) bounds=Center: (6.96, 0.53, 10.88), Extents: (0.45, 0.53, 1.40) enabled=True
+COLLIDER Start The Run/wooden+fence+3d+model (6) bounds=Center: (1.20, 0.53, 15.83), Extents: (1.40, 0.53, 0.51) enabled=True
+COLLIDER Start The Run/wooden+barrel+3d+model (1) bounds=Center: (1.63, 0.57, 15.18), Extents: (0.45, 0.46, 0.46) enabled=True
+COLLIDER Start The Run/wooden+crate+3d+model (5) bounds=Center: (2.69, 0.40, 15.58), Extents: (0.40, 0.31, 0.39) enabled=True
+COLLIDER Start The Run/wooden+crate+3d+model (4) bounds=Center: (6.07, 0.41, 11.34), Extents: (0.53, 0.31, 0.53) enabled=True
+COLLIDER Start The Run/UNS_Bush_LOD0 (3) bounds=Center: (5.26, 0.34, 11.89), Extents: (0.66, 0.45, 0.67) enabled=True
+COLLIDER Start The Run/medieval+banner+3d+model (2) bounds=Center: (2.22, 1.76, 16.01), Extents: (0.63, 1.16, 0.39) enabled=True
+COLLIDER Start The Run/wooden+archway+3d+model bounds=Center: (4.73, 2.53, 13.77), Extents: (3.12, 2.51, 2.80) enabled=True
+COLLIDER Start The Run/wooden+archway+3d+model/Граница лагеря за аркой bounds=Center: (5.54, 1.32, 14.76), Extents: (1.26, 1.96, 1.08) enabled=True
+COLLIDER Poligon/weapon+rack+3d+model bounds=Center: (-12.58, 0.92, 0.14), Extents: (0.99, 0.93, 0.90) enabled=True
+COLLIDER Poligon/fonar (3) bounds=Center: (-8.40, 1.73, -4.43), Extents: (1.02, 1.88, 1.02) enabled=True
+COLLIDER Poligon/wooden+crate+3d+model (4) bounds=Center: (-9.41, 0.42, 1.10), Extents: (0.53, 0.31, 0.53) enabled=True
+COLLIDER Poligon/wooden+crate+3d+model (5) bounds=Center: (-8.38, 0.41, 1.38), Extents: (0.53, 0.31, 0.53) enabled=True
+COLLIDER Poligon/wooden+crate+3d+model (6) bounds=Center: (-10.37, 0.41, -8.93), Extents: (0.53, 0.31, 0.53) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (4) bounds=Center: (-11.79, 0.53, 1.07), Extents: (1.40, 0.53, 0.31) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (6) bounds=Center: (-13.45, 0.53, 0.26), Extents: (0.92, 0.53, 1.27) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (7) bounds=Center: (-14.08, 0.53, -1.79), Extents: (0.20, 0.53, 1.39) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (8) bounds=Center: (-13.42, 0.53, -3.76), Extents: (1.03, 0.53, 1.19) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (9) bounds=Center: (-11.64, 0.53, -4.61), Extents: (1.40, 0.53, 0.23) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (10) bounds=Center: (-9.39, 0.53, -4.53), Extents: (1.40, 0.53, 0.23) enabled=True
+COLLIDER Poligon/wooden+fence+3d+model (5) bounds=Center: (-9.79, 0.53, 1.74), Extents: (1.21, 0.53, 1.00) enabled=True
+COLLIDER Poligon/UNS_Spruce_01_LOD0 (2) bounds=Center: (-6.36, 2.22, -3.02), Extents: (1.44, 2.27, 1.47) enabled=True
+COLLIDER Ground/Ground_Base bounds=Center: (-4.92, 0.00, 0.88), Extents: (24.00, 0.00, 24.00) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (19) bounds=Center: (1.33, 0.02, 7.20), Extents: (2.44, 0.00, 2.44) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (25) bounds=Center: (2.51, 0.02, 10.11), Extents: (2.32, 0.00, 2.32) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (29) bounds=Center: (-4.08, 0.02, 2.38), Extents: (2.07, 0.00, 2.12) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (28) bounds=Center: (0.33, 0.02, 6.01), Extents: (1.77, 0.00, 1.86) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (16) bounds=Center: (-1.08, 0.02, 3.99), Extents: (2.44, 0.00, 2.44) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (36) bounds=Center: (0.12, 0.02, 6.29), Extents: (2.79, 0.00, 2.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (25) bounds=Center: (-1.34, 0.02, 2.81), Extents: (2.86, 0.00, 3.21) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (27) bounds=Center: (1.00, 0.02, 0.55), Extents: (2.44, 0.00, 2.44) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (26) bounds=Center: (0.34, 0.02, 5.09), Extents: (1.44, 0.00, 1.51) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (17) bounds=Center: (0.12, 0.02, 6.29), Extents: (2.79, 0.00, 2.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (18) bounds=Center: (2.02, 0.02, 8.88), Extents: (2.44, 0.00, 2.44) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (20) bounds=Center: (0.95, 0.02, 7.38), Extents: (2.25, 0.00, 2.25) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (21) bounds=Center: (2.36, 0.02, 9.03), Extents: (2.16, 0.00, 2.16) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (23) bounds=Center: (-0.73, 0.02, 4.39), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (22) bounds=Center: (2.55, 0.02, 10.21), Extents: (1.65, 0.00, 1.65) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (10) bounds=Center: (-5.76, 0.02, 2.84), Extents: (2.12, 0.00, 2.12) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (34) bounds=Center: (-5.76, 0.02, 3.90), Extents: (1.68, 0.00, 1.76) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (32) bounds=Center: (-4.53, 0.02, 3.14), Extents: (2.12, 0.00, 2.12) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (33) bounds=Center: (-2.74, 0.02, 3.15), Extents: (1.40, 0.00, 1.55) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (8) bounds=Center: (-4.52, 0.02, 3.12), Extents: (2.78, 0.00, 2.78) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (9) bounds=Center: (-6.42, 0.02, 3.61), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (11) bounds=Center: (-6.94, 0.02, 5.57), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (12) bounds=Center: (-6.62, 0.02, 4.15), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (35) bounds=Center: (-7.78, 0.02, 7.71), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (13) bounds=Center: (-7.26, 0.02, 7.67), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (14) bounds=Center: (-5.50, 0.02, 7.23), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (15) bounds=Center: (-5.15, 0.02, 6.37), Extents: (2.63, 0.00, 2.63) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (4) bounds=Center: (-1.39, 0.02, 0.82), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (24) bounds=Center: (4.52, 0.02, -6.54), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (86) bounds=Center: (3.67, 0.02, -3.58), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (47) bounds=Center: (4.02, 0.02, -6.38), Extents: (2.07, 0.00, 2.20) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (48) bounds=Center: (3.01, 0.02, -6.29), Extents: (2.07, 0.00, 2.20) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (49) bounds=Center: (1.69, 0.02, -6.35), Extents: (1.53, 0.00, 1.85) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (50) bounds=Center: (0.09, 0.02, -3.65), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (54) bounds=Center: (0.69, 0.02, -4.80), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (58) bounds=Center: (0.60, 0.02, -5.76), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (59) bounds=Center: (1.19, 0.02, -5.37), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (60) bounds=Center: (1.65, 0.02, -5.90), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (61) bounds=Center: (5.19, 0.02, -4.53), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (62) bounds=Center: (5.41, 0.02, -3.77), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (63) bounds=Center: (5.99, 0.02, -3.13), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (64) bounds=Center: (6.57, 0.02, -2.86), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (65) bounds=Center: (5.70, 0.02, -7.28), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (66) bounds=Center: (5.05, 0.02, -7.41), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (67) bounds=Center: (5.94, 0.02, -8.01), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (68) bounds=Center: (6.31, 0.02, -8.17), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (69) bounds=Center: (6.85, 0.02, -8.41), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (70) bounds=Center: (7.59, 0.02, -8.41), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (71) bounds=Center: (8.29, 0.02, -7.90), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (72) bounds=Center: (8.87, 0.02, -7.41), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (73) bounds=Center: (9.73, 0.02, -6.65), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (74) bounds=Center: (5.13, 0.02, -9.29), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (75) bounds=Center: (4.92, 0.02, -8.70), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (76) bounds=Center: (6.18, 0.02, -8.97), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (77) bounds=Center: (4.76, 0.02, -4.57), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (78) bounds=Center: (3.93, 0.02, -3.74), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (79) bounds=Center: (3.59, 0.02, -3.50), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (80) bounds=Center: (5.53, 0.02, -3.36), Extents: (1.63, 0.00, 1.79) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (81) bounds=Center: (0.81, 0.02, -5.09), Extents: (3.86, 0.00, 3.58) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (51) bounds=Center: (0.93, 0.02, -3.92), Extents: (1.09, 0.00, 2.19) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (52) bounds=Center: (-0.97, 0.02, -2.86), Extents: (2.11, 0.00, 1.99) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (53) bounds=Center: (-0.01, 0.02, -3.89), Extents: (2.13, 0.00, 2.23) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (55) bounds=Center: (-0.46, 0.02, -4.88), Extents: (2.07, 0.00, 2.20) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (56) bounds=Center: (-0.99, 0.02, -4.08), Extents: (1.26, 0.00, 1.35) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (57) bounds=Center: (2.39, 0.02, -6.94), Extents: (2.07, 0.00, 2.20) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (30) bounds=Center: (0.04, 0.02, 2.18), Extents: (1.47, 0.00, 1.46) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire bounds=Center: (-1.07, 0.02, -0.59), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (1) bounds=Center: (0.09, 0.02, 0.80), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (2) bounds=Center: (0.69, 0.02, -0.81), Extents: (2.39, 0.00, 2.39) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (3) bounds=Center: (0.18, 0.02, -2.91), Extents: (2.03, 0.00, 2.03) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (37) bounds=Center: (1.80, 0.02, -1.40), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (39) bounds=Center: (1.54, 0.02, -1.68), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (40) bounds=Center: (1.17, 0.02, -2.16), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (41) bounds=Center: (0.80, 0.02, -2.33), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (82) bounds=Center: (0.37, 0.02, -2.65), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (83) bounds=Center: (0.88, 0.02, -2.90), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (84) bounds=Center: (1.06, 0.02, -2.95), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (85) bounds=Center: (0.92, 0.02, -3.03), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (42) bounds=Center: (1.18, 0.02, -2.38), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (43) bounds=Center: (1.55, 0.02, -1.89), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (44) bounds=Center: (1.76, 0.02, 0.44), Extents: (0.77, 0.00, 0.74) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (45) bounds=Center: (0.79, 0.02, 1.36), Extents: (0.71, 0.00, 0.66) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (46) bounds=Center: (1.14, 0.02, 1.06), Extents: (0.81, 0.00, 0.80) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (38) bounds=Center: (1.21, 0.02, -1.68), Extents: (1.54, 0.00, 1.54) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (5) bounds=Center: (-1.82, 0.02, 1.41), Extents: (1.98, 0.00, 1.88) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (31) bounds=Center: (-3.37, 0.02, 1.85), Extents: (1.94, 0.00, 1.97) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (6) bounds=Center: (-2.31, 0.02, 1.37), Extents: (2.05, 0.00, 2.04) enabled=True
+COLLIDER Ground/roads/DirtPatch_Campfire (7) bounds=Center: (-3.02, 0.02, 2.03), Extents: (1.85, 0.00, 2.10) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (2) bounds=Center: (1.35, 0.47, 18.62), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (3) bounds=Center: (0.55, 0.47, 17.67), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (4) bounds=Center: (10.01, 0.47, 15.51), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (7) bounds=Center: (14.98, 0.47, 2.50), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (8) bounds=Center: (14.74, 0.47, 1.10), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (9) bounds=Center: (14.44, 0.47, -0.23), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (10) bounds=Center: (10.31, 0.47, -1.21), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (5) bounds=Center: (7.88, 0.47, 17.30), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (6) bounds=Center: (13.17, 0.47, 13.30), Extents: (0.93, 0.64, 0.95) enabled=True
+COLLIDER Ground/Frame/stylized+tree+3d+model (2) bounds=Center: (14.36, 6.56, -11.47), Extents: (8.41, 6.56, 8.31) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (17) bounds=Center: (8.99, 2.38, -18.21), Extents: (1.71, 0.67, 1.99) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (18) bounds=Center: (7.36, 1.57, -19.11), Extents: (0.89, 0.48, 1.54) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (23) bounds=Center: (7.50, 2.21, -20.47), Extents: (1.04, 0.53, 1.07) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (3) bounds=Center: (9.32, 0.87, -14.45), Extents: (1.71, 1.16, 1.73) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (6) bounds=Center: (7.86, 0.55, -15.34), Extents: (1.09, 0.74, 1.10) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (7) bounds=Center: (7.32, 2.44, -19.00), Extents: (1.09, 0.74, 1.10) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (4) bounds=Center: (10.53, 0.87, -12.40), Extents: (1.71, 1.16, 1.73) enabled=True
+COLLIDER Ground/Frame/UNS_Bush_LOD0 (5) bounds=Center: (12.01, 0.87, -16.02), Extents: (1.71, 1.16, 1.73) enabled=True
+COLLIDER Ground/Frame/bush+with+flowers+3d+model (21) bounds=Center: (14.57, 0.65, 2.48), Extents: (1.18, 0.65, 1.53) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (2) bounds=Center: (-20.46, 0.13, -1.29), Extents: (1.93, 0.98, 1.91) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (8) bounds=Center: (-21.47, 0.78, -3.59), Extents: (1.48, 0.98, 2.05) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (9) bounds=Center: (-22.86, 0.73, -0.43), Extents: (0.86, 0.95, 1.80) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (3) bounds=Center: (-19.48, 0.94, -6.47), Extents: (1.48, 0.98, 2.05) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (10) bounds=Center: (-24.30, 0.03, 0.97), Extents: (1.48, 0.98, 2.05) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (24) bounds=Center: (4.32, 0.41, 18.67), Extents: (0.79, 0.42, 0.84) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (25) bounds=Center: (2.40, 0.41, 18.81), Extents: (0.79, 0.42, 0.84) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (11) bounds=Center: (-21.68, 0.71, 2.07), Extents: (2.08, 0.92, 1.47) enabled=True
+COLLIDER Ground/Frame/mossy+stone+blocks+3d+model (4) bounds=Center: (-19.34, 2.58, -6.39), Extents: (0.71, 0.81, 1.50) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01_LOD0 (1) bounds=Center: (-16.58, 3.00, -8.75), Extents: (2.71, 4.27, 2.76) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01 (2) bounds=Center: (-25.29, 6.00, 3.31), Extents: (0.23, 6.25, 0.23) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01 (2)/UNS_Spruce_01_LOD0 bounds=Center: (-25.51, 6.08, 3.31), Extents: (3.95, 6.23, 4.03) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01 bounds=Center: (-20.03, 6.00, 14.15), Extents: (0.23, 6.25, 0.23) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01/UNS_Spruce_01_LOD0 bounds=Center: (-19.06, 6.08, 13.81), Extents: (3.95, 6.23, 4.03) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01 (1) bounds=Center: (-22.38, 6.00, 9.09), Extents: (0.23, 6.25, 0.23) enabled=True
+COLLIDER Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 bounds=Center: (-24.36, 6.08, 10.85), Extents: (3.95, 6.23, 4.03) enabled=True

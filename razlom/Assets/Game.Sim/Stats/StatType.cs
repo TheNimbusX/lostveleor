@@ -19,7 +19,16 @@ namespace Game.Sim
         Armor = 6,
         FireResist = 7,
 
+        /// <summary>
+        /// Пул лавидия — боевого ресурса способностей. Решение владельца от
+        /// 13 сентября: у Пелага базово 100.
+        /// </summary>
+        MaxLavidium = 8,
+
+        /// <summary>Восстановление лавидия в секунду. Базово 3.</summary>
+        LavidiumRegen = 9,
+
         /// <summary>Не стат. Размер массива значений.</summary>
-        Count = 8,
+        Count = 10,
     }
 }

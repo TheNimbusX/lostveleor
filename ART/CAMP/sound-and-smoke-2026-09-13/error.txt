@@ -1,0 +1,6 @@
+System.InvalidOperationException: This cannot be used during play mode.
+  at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.SaveSceneInternal_Injected(UnityEngine.SceneManagement.Scene&,UnityEngine.Bindings.ManagedSpanWrapper&,bool)
+  at UnityEditor.SceneManagement.EditorSceneManager.SaveSceneInternal (UnityEngine.SceneManagement.Scene scene, System.String dstScenePath, System.Boolean saveAsCopy) [0x0002b] in <886e347bbf034f119b276a61ef97646f>:0 
+  at UnityEditor.SceneManagement.EditorSceneManager.SaveScene (UnityEngine.SceneManagement.Scene scene, System.String dstScenePath, System.Boolean saveAsCopy) [0x00017] in <886e347bbf034f119b276a61ef97646f>:0 
+  at CampSoundAndSmokeAuthoring.Install () [0x00016] in C:\Users\d.grab\Desktop\the-game\razlom\Assets\Editor\CampSoundAndSmokeAuthoring.cs:56 
+  at CampSoundAndSmokeAuthoring.Poll () [0x000ce] in C:\Users\d.grab\Desktop\the-game\razlom\Assets\Editor\CampSoundAndSmokeAuthoring.cs:39 

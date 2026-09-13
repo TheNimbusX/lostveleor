@@ -1,0 +1,2 @@
+chimney=(8.83, 5.31, 4.89) top=5,272851 rate=5 lifetime=2.5..3.4 max=32
+Layers=6

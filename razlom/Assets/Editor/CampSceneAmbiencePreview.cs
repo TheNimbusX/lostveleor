@@ -18,7 +18,7 @@ public static class CampSceneAmbiencePreview
         EditorSceneManager.sceneClosing+=(scene,removing)=>Stop();
         EditorApplication.quitting+=Stop;
     }
-    public static void Stop(){if(_active!=null && !Application.isPlaying)_active.StopPreview();_active=null;}
+    public static void Stop(){if(_active!=null && !Application.isPlaying){_active.StopPreview();foreach(var smoke in _active.GetComponentsInChildren<CampChimneySmoke>())smoke.StopPreview();}_active=null;}
     static void Update()
     {
         if(Application.isBatchMode || EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)return;
@@ -28,6 +28,7 @@ public static class CampSceneAmbiencePreview
         if(!_active.PreviewInScene || !_active.isActiveAndEnabled){Stop();return;}
         _active.PreviewAt((float)now);
         foreach(var biome in _active.GetComponentsInChildren<CampMicrobiome>())biome.Preview(1f/30);
+        foreach(var smoke in _active.GetComponentsInChildren<CampChimneySmoke>())smoke.Preview(1f/30);
         SceneView.RepaintAll();
     }
 }

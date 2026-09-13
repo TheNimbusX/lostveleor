@@ -195,6 +195,11 @@ namespace Game.Sim
                 CampSim.Step(in input);
                 Training?.AfterStep(CampSim);
             }
+
+            // Опыт уходит в лагерь каждый тик: уровень живёт в Camp и потому
+            // переживает и уход с Полигона, и пересборку лагерной симуляции.
+            Simulation stepped = Ground != null ? Ground.Sim : CampSim;
+            Camp.GainExperience(stepped.TakePendingXp());
         }
 
         /// <summary>
@@ -315,6 +320,13 @@ namespace Game.Sim
         private void StepRift(in InputFrame input)
         {
             Run.Step(in input);
+
+            // Опыт забега уходит в лагерь сразу, а не на экране итогов: смерть
+            // не должна отнимать уровень. Разработческий забег опыта не даёт —
+            // по тому же правилу, по которому его добыча не переезжает в сумку.
+            int xp = Run.Sim.TakePendingXp();
+            if (!IsDeveloperRun) Camp.GainExperience(xp);
+
             if (Run.Phase == RunPhase.Ended) FinishRun();
         }
 

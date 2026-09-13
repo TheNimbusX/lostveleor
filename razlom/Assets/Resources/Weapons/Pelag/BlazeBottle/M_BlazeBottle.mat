@@ -45,6 +45,7 @@ Material:
     - _OutlineDepthBias: 0
     - _OutlineWidth: 0
     - _RimPower: 4
+    - _WhiteClothLift: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _DissolveEdgeColor: {r: 1, g: 0.41999996, b: 0.11999995, a: 1}

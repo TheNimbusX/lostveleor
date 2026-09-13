@@ -38,7 +38,8 @@ namespace Game.Sim
             for (int slot = 0; slot < AbilitySlots; slot++)
             {
                 var candidate = _abilityBuilds[slot];
-                if (!input.Ability(slot) || candidate == null || Tick < _abilityReadyTick[slot]) continue;
+                if (!input.Ability(slot) || candidate == null || Tick < _abilityReadyTick[slot]
+                    || !CanAffordAbility(candidate)) continue;
                 if (candidate.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, candidate)) continue;
                 build = candidate.DefinitionId == AbilityDefinition.ChainCycloneId
                     && (input.AbilityHoldMask & (1 << slot)) != 0 ? candidate : null;

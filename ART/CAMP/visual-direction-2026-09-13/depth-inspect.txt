@@ -1,0 +1,563 @@
+smith pos=(6.72, 0.00, 10.18) rot=(0.00, 84.13, 0.00) scale=(1.60, 1.50, 1.60)
+renderer=Authored World/CampRoot/Campfire/fonar (2)
+ pos=(2.55, 0.02, -0.16) rot=(270.00, 242.80, 0.00) scale=(3.84, 3.84, 3.84) bounds=Center: (2.55, 1.90, -0.16), Extents: (0.99, 1.88, 0.97) tris=1867681 prefab=Assets/Resources/Environment/Camp/fonar.fbx mesh=Assets/Resources/Environment/Camp/fonar.fbx
+ material=Assets/Resources/Environment/Camp/fonar.fbm/tripo_mat_2c42547a.mat
+renderer=Authored World/CampRoot/Campfire/wooden+bench+3d+model
+ pos=(1.51, 0.00, -1.46) rot=(0.00, 39.21, 0.00) scale=(1.65, 1.55, 1.65) bounds=Center: (1.51, 0.28, -1.46), Extents: (0.72, 0.28, 0.80) tris=3000 prefab=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+renderer=Authored World/CampRoot/Campfire/wooden+bench+3d+model (1)
+ pos=(1.43, 0.00, 0.84) rot=(0.00, 144.48, 0.00) scale=(1.65, 1.55, 1.65) bounds=Center: (1.43, 0.28, 0.84), Extents: (0.69, 0.28, 0.82) tris=3000 prefab=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+renderer=Authored World/CampRoot/Campfire/stone+fire+pit+3d+model
+ pos=(-0.23, 0.00, -0.46) rot=(0.00, 0.00, 0.00) scale=(2.02, 1.89, 2.02) bounds=Center: (-0.23, 0.31, -0.46), Extents: (0.99, 0.31, 0.98) tris=3492 prefab=Assets/Resources/Environment/Camp/stone+fire+pit+3d+model.fbx mesh=Assets/Resources/Environment/Camp/stone+fire+pit+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/tripo_node_08aab305-46e6-4666-a29a-728bf866a021_material.001.mat
+renderer=Authored World/CampRoot/Campfire/Campfire_VFX/Arcadia Flame Pro
+ pos=(-0.27, 1.89, -0.50) rot=(0.00, 25.65, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-0.27, 1.89, -0.50), Extents: (1.87, 2.52, 0.90) tris=2 prefab= mesh=Assets/Resources/Environment/Camp/River/Campfire flame.asset
+ material=Assets/Resources/Environment/Camp/FlamePro/M_FlamePro.mat
+renderer=Authored World/CampRoot/Tent - Player/fonar
+ pos=(-0.41, 0.02, 8.84) rot=(270.00, 84.61, 0.00) scale=(3.84, 3.84, 3.84) bounds=Center: (-0.41, 1.90, 8.84), Extents: (0.81, 1.88, 0.78) tris=1867681 prefab=Assets/Resources/Environment/Camp/fonar.fbx mesh=Assets/Resources/Environment/Camp/fonar.fbx
+ material=Assets/Resources/Environment/Camp/fonar.fbm/tripo_mat_2c42547a.mat
+renderer=Authored World/CampRoot/Tent - Player/medieval+banner+3d+model
+ pos=(-2.73, 0.00, 7.96) rot=(0.00, 179.66, 0.00) scale=(3.13, 2.93, 3.13) bounds=Center: (-2.73, 1.44, 7.96), Extents: (1.03, 1.66, 0.40) tris=2693 prefab=Assets/Resources/Environment/Camp/medieval+banner+3d+model.fbx mesh=Assets/Resources/Environment/Camp/River/Flag 0.asset
+ material=Assets/Resources/Environment/Camp/River/Flag 0.mat
+renderer=Authored World/CampRoot/Tent - Player/decorative+rug+3d+model
+ pos=(-5.92, 0.04, 6.81) rot=(0.00, 79.01, 0.00) scale=(3.36, 3.15, 3.36) bounds=Center: (-5.92, 0.12, 6.81), Extents: (1.27, 0.08, 1.80) tris=972 prefab=Assets/Resources/Environment/Camp/decorative+rug+3d+model.fbx mesh=Assets/Resources/Environment/Camp/decorative+rug+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/decorative+rug+3d+model.fbx
+renderer=Authored World/CampRoot/Tent - Player/stylized+tree+3d+model (1)
+ pos=(-4.22, 0.00, 15.49) rot=(0.00, 105.51, 0.00) scale=(10.51, 9.85, 10.51) bounds=Center: (-4.22, 4.82, 15.49), Extents: (5.58, 4.99, 5.76) tris=9458 prefab=Assets/Resources/Environment/Camp/stylized+tree+3d+model.fbx mesh=Assets/Resources/Environment/Camp/Ambience/7a0d946e426dc0e42ac0d01fe4b52a63_-3300545636770703031.asset
+ material=Assets/Resources/Environment/Camp/Ambience/7a0d946e426dc0e42ac0d01fe4b52a63_-6669190509188180842.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model
+ pos=(-3.27, 0.00, 7.38) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-3.27, 0.36, 7.38), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (1)
+ pos=(-3.93, 0.00, 7.19) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-3.93, 0.36, 7.19), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (18)
+ pos=(-6.07, 0.00, 12.13) rot=(0.00, 182.65, 0.00) scale=(2.86, 2.68, 2.86) bounds=Center: (-6.07, 0.65, 12.13), Extents: (1.44, 0.65, 1.04) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (19)
+ pos=(-3.66, 0.00, 13.18) rot=(0.00, 182.65, 0.00) scale=(2.86, 2.68, 2.86) bounds=Center: (-3.66, 0.65, 13.18), Extents: (1.44, 0.65, 1.04) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (2)
+ pos=(-4.28, 0.19, 7.90) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-4.28, 0.55, 7.90), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (4)
+ pos=(-4.74, 0.00, 8.98) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-4.74, 0.36, 8.98), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (5)
+ pos=(-3.41, 0.00, 6.32) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-3.41, 0.36, 6.32), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (3)
+ pos=(-4.98, 0.00, 10.15) rot=(0.00, 236.73, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-4.98, 0.36, 10.15), Extents: (0.88, 0.36, 0.95) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/wooden+fence+3d+model (3)
+ pos=(-0.75, 0.00, 6.81) rot=(0.00, 308.25, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (-0.75, 0.53, 6.81), Extents: (1.01, 0.53, 1.21) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (13)
+ pos=(-2.24, 0.00, 5.42) rot=(0.00, 172.81, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-2.24, 0.36, 5.42), Extents: (0.84, 0.36, 0.64) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (20)
+ pos=(2.96, 0.00, 17.74) rot=(0.00, 172.81, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (2.96, 0.36, 17.74), Extents: (0.84, 0.36, 0.64) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/bush+with+flowers+3d+model (14)
+ pos=(-2.73, 0.00, 5.66) rot=(0.00, 193.46, 0.00) scale=(1.60, 1.50, 1.60) bounds=Center: (-2.73, 0.36, 5.66), Extents: (0.89, 0.36, 0.71) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Tent - Player/wooden+bench+3d+model
+ pos=(-3.70, 0.00, 4.98) rot=(0.00, 326.77, 0.00) scale=(1.65, 1.55, 1.65) bounds=Center: (-3.70, 0.28, 4.98), Extents: (0.67, 0.28, 0.83) tris=3000 prefab=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+renderer=Authored World/CampRoot/Tent - Player/tree+stump+3d+model (1)
+ pos=(-0.46, 0.00, 16.30) rot=(0.00, 95.16, 0.00) scale=(2.41, 2.26, 2.41) bounds=Center: (-0.46, 0.49, 16.30), Extents: (1.28, 0.49, 1.28) tris=4665 prefab=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx mesh=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx
+renderer=Authored World/CampRoot/Tent - Trader/UNS_Spruce_02 (1)/UNS_Spruce_02_LOD0
+ pos=(5.98, 0.00, -1.90) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (6.03, 2.01, -1.91), Extents: (1.58, 2.16, 1.61) tris=5114 prefab=Assets/Resources/Decor/UNS_Spruce_02.prefab mesh=Assets/Resources/Environment/Camp/Ambience/9813ed0b3eddc834a8202f421870eeb2_7584869621105587987.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Tent - Trader/UNS_Spruce_02 (1)/UNS_Spruce_02_LOD1
+ pos=(5.98, 0.00, -1.90) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (6.03, 2.01, -1.91), Extents: (1.58, 2.16, 1.61) tris=3225 prefab=Assets/Resources/Decor/UNS_Spruce_02.prefab mesh=Assets/Resources/Environment/Camp/Ambience/9813ed0b3eddc834a8202f421870eeb2_1983091028472701391.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Tent - Trader/UNS_Spruce_02 (1)/UNS_Spruce_02_LOD2
+ pos=(5.98, 0.00, -1.90) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (6.03, 2.01, -1.91), Extents: (1.58, 2.16, 1.61) tris=2078 prefab=Assets/Resources/Decor/UNS_Spruce_02.prefab mesh=Assets/Resources/Environment/Camp/Ambience/9813ed0b3eddc834a8202f421870eeb2_-3548344128078573343.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Tent - Trader/UNS_Spruce_02 (1)/UNS_Spruce_02_LOD3
+ pos=(5.98, 0.00, -1.90) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (6.03, 2.00, -1.91), Extents: (1.58, 2.17, 1.61) tris=1383 prefab=Assets/Resources/Decor/UNS_Spruce_02.prefab mesh=Assets/Resources/Environment/Camp/Ambience/9813ed0b3eddc834a8202f421870eeb2_-1704981595348452500.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Tent - Trader/UNS_Bush_LOD0 (2)
+ pos=(4.65, 0.00, -2.05) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (4.63, 0.47, -2.05), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Tent - Trader/wooden+fence+3d+model (3)
+ pos=(3.27, 0.00, -1.94) rot=(0.00, 307.98, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (3.27, 0.53, -1.94), Extents: (1.01, 0.53, 1.21) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/bush+with+flowers+3d+model (22)
+ pos=(10.11, 0.00, 10.69) rot=(0.00, 235.68, 0.00) scale=(0.74, 0.69, 0.74) bounds=Center: (10.11, 0.17, 10.69), Extents: (0.41, 0.17, 0.44) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Smith Shelter/wooden+barrel+3d+model (2)
+ pos=(10.23, 0.07, 2.08) rot=(0.00, 0.00, 0.00) scale=(0.91, 0.91, 0.91) bounds=Center: (10.23, 0.52, 2.08), Extents: (0.44, 0.45, 0.46) tris=3693 prefab=Assets/Resources/Environment/Camp/wooden+barrel+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+barrel+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+barrel+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model (4)
+ pos=(3.24, 0.00, 9.79) rot=(0.00, 284.57, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (3.24, 0.53, 9.79), Extents: (0.53, 0.53, 1.40) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/tree+stump+3d+model (2)
+ pos=(10.41, 0.00, 11.03) rot=(0.00, 95.16, 0.00) scale=(1.51, 1.42, 1.51) bounds=Center: (10.41, 0.31, 11.03), Extents: (0.81, 0.31, 0.80) tris=4665 prefab=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx mesh=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wood+log+pile+3d+model
+ pos=(7.95, 0.00, 2.91) rot=(0.00, 157.57, 0.00) scale=(1.43, 1.43, 1.43) bounds=Center: (7.95, 0.50, 2.91), Extents: (0.80, 0.50, 0.88) tris=5385 prefab=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wood+log+pile+3d+model (1)
+ pos=(8.83, 0.19, 1.60) rot=(0.00, 157.57, 0.00) scale=(1.43, 1.43, 1.43) bounds=Center: (8.83, 0.69, 1.60), Extents: (0.80, 0.50, 0.88) tris=5385 prefab=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wood+log+pile+3d+model (2)
+ pos=(9.33, 0.09, 2.84) rot=(0.00, 157.57, 0.00) scale=(1.43, 1.43, 1.43) bounds=Center: (9.33, 0.59, 2.84), Extents: (0.80, 0.50, 0.88) tris=5385 prefab=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/fonar (1)
+ pos=(5.41, -0.44, 3.26) rot=(270.00, 309.59, 0.00) scale=(3.84, 3.84, 4.24) bounds=Center: (5.41, 1.63, 3.26), Extents: (1.03, 2.07, 1.02) tris=1867681 prefab=Assets/Resources/Environment/Camp/fonar.fbx mesh=Assets/Resources/Environment/Camp/fonar.fbx
+ material=Assets/Resources/Environment/Camp/fonar.fbm/tripo_mat_2c42547a.mat
+renderer=Authored World/CampRoot/Smith Shelter/wooden+bucket+3d+model (3)
+ pos=(5.87, 0.55, 7.69) rot=(0.00, 343.64, 0.00) scale=(0.38, 0.35, 0.38) bounds=Center: (5.87, 0.72, 7.69), Extents: (0.19, 0.17, 0.19) tris=1912 prefab=Assets/Resources/Environment/Camp/wooden+bucket+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+bucket+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+bucket+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+bench+3d+model (1)
+ pos=(5.29, 0.03, 7.51) rot=(0.00, 252.18, 0.00) scale=(1.65, 1.55, 1.65) bounds=Center: (5.29, 0.31, 7.51), Extents: (0.85, 0.28, 0.51) tris=3000 prefab=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/medieval+blacksmith+forge+3d+model
+ pos=(7.84, 0.00, 6.48) rot=(0.00, 252.50, 0.00) scale=(6.09, 6.09, 6.09) bounds=Center: (7.84, 2.52, 6.48), Extents: (2.32, 2.52, 3.35) tris=5030 prefab=Assets/Resources/Environment/Camp/medieval+blacksmith+forge+3d+model.fbx mesh=Assets/Resources/Environment/Camp/medieval+blacksmith+forge+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/medieval+blacksmith+forge+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+crate+3d+model (7)
+ pos=(10.52, 0.00, 4.30) rot=(0.00, 96.26, 0.00) scale=(0.83, 0.78, 0.83) bounds=Center: (10.52, 0.33, 4.30), Extents: (0.45, 0.33, 0.44) tris=1505 prefab=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+crate+3d+model (11)
+ pos=(10.33, 0.00, 5.06) rot=(0.00, 96.26, 0.00) scale=(0.83, 0.78, 0.83) bounds=Center: (10.33, 0.33, 5.06), Extents: (0.45, 0.33, 0.44) tris=1505 prefab=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+crate+3d+model (8)
+ pos=(8.25, 0.00, 6.53) rot=(0.00, 77.33, 0.00) scale=(1.49, 1.40, 1.49) bounds=Center: (8.25, 0.59, 6.53), Extents: (0.87, 0.59, 0.86) tris=1505 prefab=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+crate+3d+model (9)
+ pos=(7.92, 0.00, 7.61) rot=(0.00, 77.33, 0.00) scale=(1.49, 1.40, 1.49) bounds=Center: (7.92, 0.59, 7.61), Extents: (0.87, 0.59, 0.86) tris=1505 prefab=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+crate+3d+model (10)
+ pos=(7.84, 0.00, 8.20) rot=(0.00, 77.33, 0.00) scale=(1.49, 1.40, 1.49) bounds=Center: (7.84, 0.59, 8.20), Extents: (0.87, 0.59, 0.86) tris=1505 prefab=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/anvil+3d+model
+ pos=(5.58, 0.13, 6.01) rot=(0.00, 163.84, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (5.58, 0.57, 6.01), Extents: (0.50, 0.44, 0.58) tris=8721 prefab=Assets/Resources/Environment/Camp/anvil+3d+model.fbx mesh=Assets/Resources/Environment/Camp/anvil+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/anvil+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/anvil+3d+model (1)
+ pos=(8.39, 0.00, 4.86) rot=(0.00, 162.94, 0.00) scale=(1.75, 1.75, 1.75) bounds=Center: (8.39, 0.78, 4.86), Extents: (0.89, 0.78, 1.03) tris=8721 prefab=Assets/Resources/Environment/Camp/anvil+3d+model.fbx mesh=Assets/Resources/Environment/Camp/anvil+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/anvil+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model
+ pos=(5.22, 0.00, 8.24) rot=(0.00, 156.02, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (5.22, 0.53, 8.24), Extents: (1.35, 0.53, 0.74) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model (2)
+ pos=(7.29, -0.01, 9.06) rot=(0.00, 159.02, 0.00) scale=(2.90, 3.26, 3.08) bounds=Center: (7.29, 0.64, 9.06), Extents: (1.40, 0.65, 0.70) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model (1)
+ pos=(6.59, 0.00, 3.59) rot=(0.00, 160.63, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (6.59, 0.53, 3.59), Extents: (1.38, 0.53, 0.64) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model (3)
+ pos=(9.75, 0.00, 0.23) rot=(0.00, 100.21, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (9.75, 0.53, 0.23), Extents: (0.43, 0.53, 1.40) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Smith Shelter/wooden+fence+3d+model (5)
+ pos=(9.19, 0.00, -2.74) rot=(0.00, 100.21, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (9.19, 0.53, -2.74), Extents: (0.43, 0.53, 1.40) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Start The Run/bush+with+flowers+3d+model (16)
+ pos=(3.05, 0.00, 13.90) rot=(0.00, 232.60, 0.00) scale=(1.29, 1.21, 1.29) bounds=Center: (3.05, 0.29, 13.90), Extents: (0.73, 0.29, 0.77) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Start The Run/wooden+fence+3d+model (5)
+ pos=(6.96, 0.00, 10.88) rot=(0.00, 259.23, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (6.96, 0.53, 10.88), Extents: (0.45, 0.53, 1.40) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Start The Run/wooden+fence+3d+model (6)
+ pos=(1.20, 0.00, 15.83) rot=(0.00, 346.53, 0.00) scale=(2.84, 2.67, 2.84) bounds=Center: (1.20, 0.53, 15.83), Extents: (1.40, 0.53, 0.51) tris=1486 prefab=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx
+renderer=Authored World/CampRoot/Start The Run/UNS_Bush_LOD0 (3)
+ pos=(5.27, 0.00, 11.89) rot=(0.00, 0.00, 0.00) scale=(0.63, 0.59, 0.63) bounds=Center: (5.26, 0.34, 11.89), Extents: (0.68, 0.47, 0.69) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Start The Run/medieval+banner+3d+model (2)
+ pos=(2.22, 0.61, 16.01) rot=(0.00, 205.05, 0.00) scale=(2.52, 2.36, 2.52) bounds=Center: (2.22, 1.76, 16.01), Extents: (0.89, 1.34, 0.64) tris=2693 prefab=Assets/Resources/Environment/Camp/medieval+banner+3d+model.fbx mesh=Assets/Resources/Environment/Camp/River/Flag 2.asset
+ material=Assets/Resources/Environment/Camp/River/Flag 2.mat
+renderer=Authored World/CampRoot/Start The Run/wooden+archway+3d+model
+ pos=(4.73, 0.01, 13.77) rot=(0.00, 39.38, 0.00) scale=(6.53, 6.53, 6.53) bounds=Center: (4.73, 2.53, 13.77), Extents: (3.12, 2.51, 2.80) tris=9868 prefab=Assets/Resources/Environment/Camp/wooden+archway+3d+model.fbx mesh=Assets/Resources/Environment/Camp/wooden+archway+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/wooden+archway+3d+model.fbm/tripo_6bbdec6b_e30c_47e9_8ce5_ca77ae66db45.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (19)
+ pos=(1.33, 0.02, 7.20) rot=(90.00, 285.06, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (1.33, 0.02, 7.20), Extents: (2.44, 0.00, 2.44) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (25)
+ pos=(2.51, 0.02, 10.11) rot=(90.00, 259.49, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (2.51, 0.02, 10.11), Extents: (2.32, 0.00, 2.32) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (29)
+ pos=(-4.08, 0.02, 2.38) rot=(90.00, 319.45, 0.00) scale=(2.49, 3.46, 3.74) bounds=Center: (-4.08, 0.02, 2.38), Extents: (2.07, 0.00, 2.12) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (28)
+ pos=(0.33, 0.02, 6.01) rot=(90.00, 283.52, 0.00) scale=(3.12, 2.89, 3.32) bounds=Center: (0.33, 0.02, 6.01), Extents: (1.77, 0.00, 1.86) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (16)
+ pos=(-1.08, 0.02, 3.99) rot=(90.00, 285.06, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-1.08, 0.02, 3.99), Extents: (2.44, 0.00, 2.44) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (36)
+ pos=(0.12, 0.02, 6.29) rot=(90.00, 306.34, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (0.12, 0.02, 6.29), Extents: (2.79, 0.00, 2.79) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (25)
+ pos=(-1.34, 0.02, 2.81) rot=(90.00, 285.06, 0.00) scale=(5.45, 4.45, 3.74) bounds=Center: (-1.34, 0.02, 2.81), Extents: (2.86, 0.00, 3.21) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (27)
+ pos=(1.00, 0.02, 0.55) rot=(90.00, 285.06, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (1.00, 0.02, 0.55), Extents: (2.44, 0.00, 2.44) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (26)
+ pos=(0.34, 0.02, 5.09) rot=(90.00, 270.47, 0.00) scale=(2.99, 2.85, 3.74) bounds=Center: (0.34, 0.02, 5.09), Extents: (1.44, 0.00, 1.51) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (17)
+ pos=(0.12, 0.02, 6.29) rot=(90.00, 306.34, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (0.12, 0.02, 6.29), Extents: (2.79, 0.00, 2.79) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (18)
+ pos=(2.02, 0.02, 8.88) rot=(90.00, 285.06, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (2.02, 0.02, 8.88), Extents: (2.44, 0.00, 2.44) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (20)
+ pos=(0.95, 0.02, 7.38) rot=(90.00, 278.00, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (0.95, 0.02, 7.38), Extents: (2.25, 0.00, 2.25) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (21)
+ pos=(2.36, 0.02, 9.03) rot=(90.00, 264.99, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (2.36, 0.02, 9.03), Extents: (2.16, 0.00, 2.16) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (23)
+ pos=(-0.73, 0.02, 4.39) rot=(90.00, 282.94, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-0.73, 0.02, 4.39), Extents: (2.39, 0.00, 2.39) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (22)
+ pos=(2.55, 0.02, 10.21) rot=(90.00, 276.00, 0.00) scale=(3.01, 3.01, 2.82) bounds=Center: (2.55, 0.02, 10.21), Extents: (1.65, 0.00, 1.65) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (34)
+ pos=(-5.76, 0.02, 3.90) rot=(90.00, 199.53, 0.00) scale=(2.56, 2.82, 3.74) bounds=Center: (-5.76, 0.02, 3.90), Extents: (1.68, 0.00, 1.76) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (32)
+ pos=(-4.53, 0.02, 3.14) rot=(90.00, 183.73, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-4.53, 0.02, 3.14), Extents: (2.12, 0.00, 2.12) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (33)
+ pos=(-2.74, 0.02, 3.15) rot=(90.00, 183.73, 0.00) scale=(2.61, 2.94, 3.74) bounds=Center: (-2.74, 0.02, 3.15), Extents: (1.40, 0.00, 1.55) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (8)
+ pos=(-4.52, 0.02, 3.12) rot=(90.00, 305.74, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-4.52, 0.02, 3.12), Extents: (2.78, 0.00, 2.78) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (14)
+ pos=(-5.50, 0.02, 7.23) rot=(90.00, 245.75, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-5.50, 0.02, 7.23), Extents: (2.63, 0.00, 2.63) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (15)
+ pos=(-5.15, 0.02, 6.37) rot=(90.00, 245.75, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-5.15, 0.02, 6.37), Extents: (2.63, 0.00, 2.63) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (4)
+ pos=(-1.39, 0.02, 0.82) rot=(90.00, 282.92, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-1.39, 0.02, 0.82), Extents: (2.39, 0.00, 2.39) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (63)
+ pos=(5.99, 0.02, -3.13) rot=(90.00, 33.89, 0.00) scale=(1.88, 3.06, 3.74) bounds=Center: (5.99, 0.02, -3.13), Extents: (1.63, 0.00, 1.79) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (64)
+ pos=(6.57, 0.02, -2.86) rot=(90.00, 33.89, 0.00) scale=(1.88, 3.06, 3.74) bounds=Center: (6.57, 0.02, -2.86), Extents: (1.63, 0.00, 1.79) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (80)
+ pos=(5.53, 0.02, -3.36) rot=(90.00, 33.89, 0.00) scale=(1.88, 3.06, 3.74) bounds=Center: (5.53, 0.02, -3.36), Extents: (1.63, 0.00, 1.79) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (30)
+ pos=(0.04, 0.02, 2.18) rot=(90.00, 282.92, 0.00) scale=(2.42, 2.47, 3.74) bounds=Center: (0.04, 0.02, 2.18), Extents: (1.47, 0.00, 1.46) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire
+ pos=(-1.07, 0.02, -0.59) rot=(90.00, 282.92, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (-1.07, 0.02, -0.59), Extents: (2.39, 0.00, 2.39) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (1)
+ pos=(0.09, 0.02, 0.80) rot=(90.00, 282.92, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (0.09, 0.02, 0.80), Extents: (2.39, 0.00, 2.39) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (2)
+ pos=(0.69, 0.02, -0.81) rot=(90.00, 282.92, 0.00) scale=(3.98, 3.98, 3.74) bounds=Center: (0.69, 0.02, -0.81), Extents: (2.39, 0.00, 2.39) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (44)
+ pos=(1.76, 0.02, 0.44) rot=(90.00, 245.66, 0.00) scale=(1.09, 1.21, 3.74) bounds=Center: (1.76, 0.02, 0.44), Extents: (0.77, 0.00, 0.74) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (46)
+ pos=(1.14, 0.02, 1.06) rot=(90.00, 232.73, 0.00) scale=(1.09, 1.21, 3.74) bounds=Center: (1.14, 0.02, 1.06), Extents: (0.81, 0.00, 0.80) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (38)
+ pos=(1.21, 0.02, -1.68) rot=(90.00, 282.92, 0.00) scale=(2.58, 2.57, 3.74) bounds=Center: (1.21, 0.02, -1.68), Extents: (1.54, 0.00, 1.54) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (5)
+ pos=(-1.82, 0.02, 1.41) rot=(90.00, 255.93, 0.00) scale=(3.03, 3.33, 3.74) bounds=Center: (-1.82, 0.02, 1.41), Extents: (1.98, 0.00, 1.88) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (31)
+ pos=(-3.37, 0.02, 1.85) rot=(90.00, 316.98, 0.00) scale=(2.16, 3.36, 3.74) bounds=Center: (-3.37, 0.02, 1.85), Extents: (1.94, 0.00, 1.97) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (6)
+ pos=(-2.31, 0.02, 1.37) rot=(90.00, 246.95, 0.00) scale=(3.11, 3.14, 3.74) bounds=Center: (-2.31, 0.02, 1.37), Extents: (2.05, 0.00, 2.04) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/roads/DirtPatch_Campfire (7)
+ pos=(-3.02, 0.02, 2.03) rot=(90.00, 193.40, 0.00) scale=(2.95, 3.61, 3.74) bounds=Center: (-3.02, 0.02, 2.03), Extents: (1.85, 0.00, 2.10) tris=2 prefab= mesh=Library/unity default resources
+ material=Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (2)
+ pos=(1.37, 0.00, 18.61) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (1.35, 0.47, 18.62), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (3)
+ pos=(0.57, 0.00, 17.67) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (0.55, 0.47, 17.67), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (4)
+ pos=(10.02, 0.00, 15.51) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (10.01, 0.47, 15.51), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (7)
+ pos=(15.00, 0.00, 2.50) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (14.98, 0.47, 2.50), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (8)
+ pos=(14.76, 0.00, 1.09) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (14.74, 0.47, 1.10), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (9)
+ pos=(14.45, 0.00, -0.24) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (14.44, 0.47, -0.23), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (10)
+ pos=(10.33, 0.00, -1.21) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (10.31, 0.47, -1.21), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (5)
+ pos=(7.89, 0.00, 17.30) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (7.88, 0.47, 17.30), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Bush_LOD0 (6)
+ pos=(13.19, 0.00, 13.30) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.83, 0.89) bounds=Center: (13.17, 0.47, 13.30), Extents: (0.96, 0.66, 0.97) tris=560 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/c1d6b7954ca8dfe48885597ce4ef6e20_7538923576742910218.asset
+ material=Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/bush+with+flowers+3d+model (21)
+ pos=(14.57, 0.00, 2.48) rot=(0.00, 261.06, 0.00) scale=(2.86, 2.68, 2.86) bounds=Center: (14.57, 0.65, 2.48), Extents: (1.18, 0.65, 1.53) tris=1926 prefab=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bush+with+flowers+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat
+renderer=Authored World/CampRoot/Ground/Frame/mossy+stone+blocks+3d+model (24)
+ pos=(4.33, 0.00, 18.66) rot=(0.45, 58.28, 1.11) scale=(1.33, 1.52, 2.29) bounds=Center: (4.32, 0.41, 18.67), Extents: (0.79, 0.42, 0.84) tris=1880 prefab=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model_material.mat
+renderer=Authored World/CampRoot/Ground/Frame/mossy+stone+blocks+3d+model (25)
+ pos=(2.41, 0.00, 18.80) rot=(0.45, 58.28, 1.11) scale=(1.33, 1.52, 2.29) bounds=Center: (2.40, 0.41, 18.81), Extents: (0.79, 0.42, 0.84) tris=1880 prefab=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model.fbx mesh=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model.fbx
+ material=Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model_material.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (1)
+ pos=(5.67, 0.00, 21.23) rot=(0.00, 0.00, 0.00) scale=(0.55, 0.55, 0.55) bounds=Center: (5.55, 3.34, 21.23), Extents: (2.29, 3.54, 2.34) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (3)
+ pos=(2.97, 0.00, 21.62) rot=(0.00, 0.00, 0.00) scale=(0.77, 0.77, 0.77) bounds=Center: (2.80, 4.68, 21.62), Extents: (3.21, 4.97, 3.27) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (4)
+ pos=(10.54, 0.00, 14.79) rot=(0.00, 0.00, 0.00) scale=(0.61, 0.61, 0.61) bounds=Center: (10.41, 3.73, 14.79), Extents: (2.56, 3.96, 2.61) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (5)
+ pos=(13.66, 0.00, 16.88) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (13.44, 6.08, 16.88), Extents: (4.17, 6.45, 4.25) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (6)
+ pos=(14.79, 0.00, 11.76) rot=(0.00, 0.00, 0.00) scale=(0.76, 0.76, 0.76) bounds=Center: (14.62, 4.63, 11.76), Extents: (3.17, 4.91, 3.24) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (7)
+ pos=(15.52, 0.00, 8.46) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (15.30, 6.08, 8.46), Extents: (4.17, 6.45, 4.25) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (8)
+ pos=(15.80, 0.00, 5.20) rot=(0.00, 0.00, 0.00) scale=(0.89, 0.89, 0.89) bounds=Center: (15.61, 5.39, 5.20), Extents: (3.69, 5.71, 3.76) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground/Frame/UNS_Spruce_01 (1)/UNS_Spruce_01_LOD0 (9)
+ pos=(15.92, 0.00, 0.80) rot=(0.00, 0.00, 0.00) scale=(0.80, 0.80, 0.80) bounds=Center: (15.75, 4.85, 0.80), Extents: (3.32, 5.14, 3.39) tris=9730 prefab= mesh=Assets/Resources/Environment/Camp/Ambience/af68f6de6ee33a841b3b0572f41ddcad_-7840320563928006911.asset
+ material=Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat
+ material=Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Continuous ground
+ pos=(0.95, 0.03, 1.20) rot=(0.00, 0.00, 0.00) scale=(1.30, 1.00, 1.30) bounds=Center: (-5.23, 0.10, 7.26), Extents: (31.20, 0.08, 26.65) tris=31553 prefab= mesh=Assets/Resources/Environment/Camp/River/Camp surface — речной вырез.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/CampSurface.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 0
+ pos=(-0.23, 0.03, -0.35) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (0.26, 0.27, -0.61), Extents: (11.32, 0.30, 11.43) tris=64004 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 0.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 0.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 1
+ pos=(-0.17, 0.03, -0.28) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (0.13, 0.24, -0.27), Extents: (11.35, 0.27, 11.51) tris=64770 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 1.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 1.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 2
+ pos=(-0.17, 0.03, -0.28) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (0.20, 0.24, -0.43), Extents: (11.28, 0.28, 11.30) tris=30828 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 2.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 2.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 2 (1)
+ pos=(5.39, 0.03, 14.17) rot=(0.00, 96.12, 0.00) scale=(0.51, 0.51, 0.51) bounds=Center: (5.29, 0.14, 13.99), Extents: (6.29, 0.14, 6.28) tris=30828 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 2.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 2.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 2 (2)
+ pos=(6.18, 0.03, 14.36) rot=(0.00, 96.12, 0.00) scale=(0.51, 0.51, 0.51) bounds=Center: (6.08, 0.14, 14.18), Extents: (6.29, 0.14, 6.28) tris=30828 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 2.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 2.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Grass 2 (3)
+ pos=(11.14, 0.03, 10.28) rot=(0.00, 271.61, 0.00) scale=(0.51, 0.51, 0.51) bounds=Center: (11.22, 0.14, 10.47), Extents: (5.87, 0.14, 5.86) tris=30828 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Grass 2.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Grass 2.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Trail stones
+ pos=(-0.17, 0.03, -0.28) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (-2.08, 0.05, 1.21), Extents: (5.39, 0.03, 8.63) tris=2058 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Trail stones.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Trail stones.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Meadow petals
+ pos=(-0.17, 0.03, -0.28) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (0.23, 0.38, -0.58), Extents: (11.26, 0.20, 11.12) tris=12744 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Meadow petals.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Meadow petals.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Meadow petals (1)
+ pos=(4.39, 0.03, 14.55) rot=(0.00, 65.12, 0.00) scale=(0.55, 0.55, 0.55) bounds=Center: (4.33, 0.22, 14.28), Extents: (8.14, 0.11, 8.18) tris=12744 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Meadow petals.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Meadow petals.mat
+renderer=Authored World/CampRoot/Ground Study - Campfire/Flower centres
+ pos=(-0.17, 0.03, -0.28) rot=(0.00, 0.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (0.23, 0.38, -0.59), Extents: (11.22, 0.20, 11.07) tris=10360 prefab= mesh=Assets/Resources/Environment/Camp/ground/Study/Flower centres.asset
+ material=Assets/Resources/Environment/Camp/ground/Study/Flower centres.mat
+renderer=Authored World/CampRoot/Река — нижняя граница лагеря/Русло — сохранённые меши/Ближний берег
+ pos=(-9.29, 0.00, -17.77) rot=(0.00, 35.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (-3.00, -0.10, 5.39), Extents: (42.10, 0.26, 38.66) tris=1296 prefab= mesh=Assets/Resources/Environment/Camp/River/Ближний берег.asset
+ material=Assets/Resources/Environment/Camp/River/River bank.mat
+renderer=Authored World/CampRoot/Река — нижняя граница лагеря/Русло — сохранённые меши/Дно реки
+ pos=(-9.29, 0.00, -17.77) rot=(0.00, 35.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (-2.79, -0.70, 3.65), Extents: (43.67, 0.00, 40.24) tris=324 prefab= mesh=Assets/Resources/Environment/Camp/River/Дно реки.asset
+ material=Assets/Resources/Environment/Camp/River/River bed.mat
+renderer=Authored World/CampRoot/Река — нижняя граница лагеря/Русло — сохранённые меши/Лесная вода
+ pos=(-9.29, 0.00, -17.77) rot=(0.00, 35.00, 0.00) scale=(1.00, 1.00, 1.00) bounds=Center: (-2.74, -0.30, 3.61), Extents: (43.74, 0.00, 40.29) tris=324 prefab= mesh=Assets/Resources/Environment/Camp/River/Лесная вода.asset
+ material=Assets/Resources/Environment/Camp/River/Forest water.mat
+MATERIAL Assets/Resources/Environment/Camp/fonar.fbm/tripo_mat_2c42547a.mat shader=Razlom/Texture Toon
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _OutlineWidth=0
+  _ShadowColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/wooden+bench+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Materials/tripo_node_08aab305-46e6-4666-a29a-728bf866a021_material.001.mat shader=Razlom/Texture Toon
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _OutlineWidth=0
+  _ShadowColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/FlamePro/M_FlamePro.mat shader=Razlom/Camp Flame Pro
+MATERIAL Assets/Resources/Environment/Camp/River/Flag 0.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/decorative+rug+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Ambience/7a0d946e426dc0e42ac0d01fe4b52a63_-6669190509188180842.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Materials/Foliage/tripo_node_2c941f75-4dee-455c-a8a9-928349c898cf_material.001.mat shader=Razlom/Texture Toon
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _OutlineWidth=0
+  _ShadowColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/wooden+fence+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/tree+stump+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Ambience/9c0a1cda53d749f40a30a84ed1657377_2100000.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.365, 0.443, 0.118, 1.000)
+  _Color=RGBA(0.365, 0.443, 0.118, 1.000)
+  _Smoothness=0,208
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Ambience/b725cacc7387b1f4e991c4bdfcd832c8_2100000.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,12
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/Ambience/143c45bbb5ae694479b1566df4a4f9a2_2100000.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.545, 0.616, 0.247, 1.000)
+  _Color=RGBA(0.545, 0.616, 0.247, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/wooden+barrel+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/wood+log+pile+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/wooden+bucket+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/medieval+blacksmith+forge+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/wooden+crate+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/anvil+3d+model.fbx shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/River/Flag 2.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Color=RGBA(1.000, 1.000, 1.000, 1.000)
+  _Smoothness=0,5
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/wooden+archway+3d+model.fbm/tripo_6bbdec6b_e30c_47e9_8ce5_ca77ae66db45.mat shader=Razlom/Texture Toon
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _OutlineWidth=0
+  _ShadowColor=RGBA(0.632, 0.632, 0.632, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/ground/M_Ground_Dirt.mat shader=Game/Camp Ground
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/bricks/mossy+stone+blocks+3d+model_material.mat shader=Razlom/Texture Toon
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+  _OutlineWidth=0
+  _ShadowColor=RGBA(0.580, 0.660, 0.880, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/CampSurface.mat shader=Game/Camp Ground
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Grass 0.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.250, 0.360, 0.110, 1.000)
+  _Color=RGBA(0.250, 0.360, 0.110, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Grass 1.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.340, 0.440, 0.140, 1.000)
+  _Color=RGBA(0.340, 0.440, 0.140, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Grass 2.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.440, 0.520, 0.200, 1.000)
+  _Color=RGBA(0.440, 0.520, 0.200, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Trail stones.mat shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(0.520, 0.490, 0.380, 1.000)
+  _Color=RGBA(0.520, 0.490, 0.380, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Meadow petals.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.850, 0.820, 0.650, 1.000)
+  _Color=RGBA(0.850, 0.820, 0.650, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/ground/Study/Flower centres.mat shader=Game/Camp Breeze Lit
+  _BaseColor=RGBA(0.910, 0.650, 0.100, 1.000)
+  _Color=RGBA(0.910, 0.650, 0.100, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/River/River bank.mat shader=Game/Camp Ground
+  _BaseColor=RGBA(1.000, 1.000, 1.000, 1.000)
+MATERIAL Assets/Resources/Environment/Camp/River/River bed.mat shader=Universal Render Pipeline/Lit
+  _BaseColor=RGBA(0.320, 0.390, 0.320, 1.000)
+  _Color=RGBA(0.320, 0.390, 0.320, 1.000)
+  _Smoothness=0
+  _Metallic=0
+  _BumpScale=1
+MATERIAL Assets/Resources/Environment/Camp/River/Forest water.mat shader=Game/Camp Forest Water

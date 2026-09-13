@@ -79,7 +79,13 @@ namespace Game.Sim
         /// </summary>
         BonusDamagePercent = 22,
 
-        Count = 23,
+        /// <summary>
+        /// Сколько лавидия стоит каст. Не хватает — способность не срабатывает
+        /// и кулдаун не тратится. Ноль — бесплатно (кувырок).
+        /// </summary>
+        LavidiumCost = 23,
+
+        Count = 24,
     }
 
     /// <summary>

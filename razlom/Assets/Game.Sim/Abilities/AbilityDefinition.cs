@@ -42,6 +42,7 @@ namespace Game.Sim
             => new AbilityDefinition("ability.whirlwind")
                 .Set(AbilityStatType.Damage, 120)
                 .Set(AbilityStatType.Radius, Fix64.Ratio(23, 10))
+                .Set(AbilityStatType.LavidiumCost, 30)
                 .Set(AbilityStatType.CooldownTicks, 72);
 
         public static int AnchorLeapId => StableId.Of("ability.anchor_leap");
@@ -112,6 +113,7 @@ namespace Game.Sim
             => new AbilityDefinition("ability.chain_step")
                 .Set(AbilityStatType.Damage, 85)
                 .Set(AbilityStatType.Radius, AnchorKit.ChainRange)
+                .Set(AbilityStatType.LavidiumCost, 40)
                 .Set(AbilityStatType.CooldownTicks, 126);         // 4.2 с
 
         public static int DashId => StableId.Of("ability.dash");
@@ -162,6 +164,7 @@ namespace Game.Sim
         public static AbilityDefinition Cleave()
             => new AbilityDefinition("ability.cleaving_strike")
                 .Set(AbilityStatType.Damage, 260)
+                .Set(AbilityStatType.LavidiumCost, 15)
                 .Set(AbilityStatType.Radius, Fix64.Ratio(15, 10))
                 .Set(AbilityStatType.Width, Fix64.Ratio(15, 100))
                 .Set(AbilityStatType.ArcCosine, Fix64.Ratio(7071, 10000))
@@ -185,6 +188,7 @@ namespace Game.Sim
         public static AbilityDefinition Blaze()
             => new AbilityDefinition("ability.blaze_oil")
                 .Set(AbilityStatType.BonusDamagePercent, Fix64.Ratio(1, 5))
+                .Set(AbilityStatType.LavidiumCost, 10)
                 .Set(AbilityStatType.DurationTicks, 90)            // 3 с
                 .Set(AbilityStatType.CooldownTicks, 360);          // 12 с
 

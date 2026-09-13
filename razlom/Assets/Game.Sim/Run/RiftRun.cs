@@ -410,7 +410,10 @@ namespace Game.Sim
         {
             // Прибавка к одному из статов персонажа. Слой Increased: он
             // затухает с ростом, поэтому его можно раздавать щедро.
-            var stat = (StatType)_sim.Rng.Loot.NextInt(0, (int)StatType.Count);
+            // Разыгрываются только боевые статы до сопротивления огню. Лавидий
+            // добавлен в лист позже, и NextInt по всему списку молча начал бы
+            // выдавать его прибавки и заодно сдвинул бы исход каждого сида.
+            var stat = (StatType)_sim.Rng.Loot.NextInt(0, (int)StatType.FireResist + 1);
             int percent = 5 + _sim.Rng.Loot.NextInt(0, 16);
 
             return RewardOffer.OfStat(stat, ModifierOp.Increased, Fix64.Ratio(percent, 100));

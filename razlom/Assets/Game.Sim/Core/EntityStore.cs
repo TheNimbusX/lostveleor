@@ -90,6 +90,32 @@ namespace Game.Sim
         /// </summary>
         public readonly int[] NoticeTick;
 
+        // ---- лавидий и опыт ----
+
+        /// <summary>
+        /// Текущий лавидий — боевой ресурс способностей.
+        ///
+        /// Дробный, а не целый: восстановление 3 ед/с на 30 тиках — это
+        /// десятая доля за тик, и целое число его бы просто не накопило.
+        /// Каст сравнивает с целой стоимостью, поэтому игрок видит и тратит
+        /// целые единицы. Не путать с валютой лагеря CurrencyType.Lavidium.
+        /// </summary>
+        public readonly Fix64[] Lavidium;
+
+        /// <summary>Потолок лавидия, уже целым числом. Выведен из StatType.MaxLavidium.</summary>
+        public readonly int[] MaxLavidium;
+
+        /// <summary>Восстановление лавидия за тик. Выведено из StatType.LavidiumRegen.</summary>
+        public readonly Fix64[] LavidiumRegenPerTick;
+
+        /// <summary>
+        /// Опыт, который достаётся игроку за убийство этой сущности.
+        ///
+        /// Хранится на теле, а не выводится в момент смерти: элиту и босса
+        /// знает только расстановка, а в Kill об этом уже ничего не известно.
+        /// </summary>
+        public readonly int[] XpReward;
+
         // ---- статы ----
 
         /// <summary>
@@ -168,6 +194,11 @@ namespace Game.Sim
             Aggro = new bool[capacity];
             NoticeTick = new int[capacity];
 
+            Lavidium = new Fix64[capacity];
+            MaxLavidium = new int[capacity];
+            LavidiumRegenPerTick = new Fix64[capacity];
+            XpReward = new int[capacity];
+
             Stats = new StatSheet[capacity];
             for (int i = 0; i < capacity; i++) Stats[i] = new StatSheet(8);
 
@@ -214,6 +245,10 @@ namespace Game.Sim
             // агрился бы мгновенно, ни разу не бросив кубик задержки.
             NoticeTick[id] = -1;
 
+            // Опыт даёт любой не-союзник. Элиту и босса повышает расстановка:
+            // знать тир врага хранилищу незачем.
+            XpReward[id] = side == Faction.Wole ? 0 : Progression.NormalKillXp;
+
             StatSheet sheet = Stats[id];
             sheet.ClearModifiers();
             sheet.SetBase(StatType.MaxHealth, Fix64.FromInt(health));
@@ -231,8 +266,14 @@ namespace Game.Sim
             sheet.SetBase(StatType.Armor, Fix64.Zero);
             sheet.SetBase(StatType.FireResist, Fix64.Zero);
 
+            // Лавидия по умолчанию нет ни у кого: ресурс получает тот, кто
+            // тратит способности, а это ставит конфигурация героя.
+            sheet.SetBase(StatType.MaxLavidium, Fix64.Zero);
+            sheet.SetBase(StatType.LavidiumRegen, Fix64.Zero);
+
             RefreshStats(id);
             Health[id] = MaxHealth[id];
+            Lavidium[id] = Fix64.FromInt(MaxLavidium[id]);
             return id;
         }
 
@@ -265,6 +306,16 @@ namespace Game.Sim
             // не растёт само: надетая посреди боя вещь не должна работать зельем,
             // а снятая — отнимать больше, чем давала.
             if (Health[id] > maxHealth) Health[id] = maxHealth;
+
+            int maxLavidium = CombatStats.RoundToInt(sheet.Get(StatType.MaxLavidium));
+            if (maxLavidium < 0) maxLavidium = 0;
+            MaxLavidium[id] = maxLavidium;
+            LavidiumRegenPerTick[id] = sheet.Get(StatType.LavidiumRegen)
+                / Fix64.FromInt(Simulation.TicksPerSecond);
+
+            // Лавидий подрезается тем же правилом, что и здоровье.
+            Fix64 cap = Fix64.FromInt(maxLavidium);
+            if (Lavidium[id] > cap) Lavidium[id] = cap;
         }
 
         public void Clear()
@@ -300,6 +351,10 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, (int)ForcedKind[i]);
                 Hashing.Mix(ref hash, Aggro[i] ? 1 : 0);
                 Hashing.Mix(ref hash, NoticeTick[i]);
+                Hashing.Mix(ref hash, Lavidium[i]);
+                Hashing.Mix(ref hash, MaxLavidium[i]);
+                Hashing.Mix(ref hash, LavidiumRegenPerTick[i]);
+                Hashing.Mix(ref hash, XpReward[i]);
 
                 // Лист статов — такая же часть состояния, как позиция. Не попади
                 // он в хеш, расхождение в снаряжении жило бы незамеченным до тех

@@ -22,6 +22,8 @@ param(
     [switch] $Whirlwind,
     [switch] $Camp,
     [switch] $CampIntegration,
+    [switch] $CampReview,
+    [switch] $CampSound,
     [switch] $CampMagic,
     [switch] $CampFinish,
     [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison')] [string] $CampDetail = '',
@@ -78,6 +80,8 @@ $ErrorActionPreference = 'Stop'
 if ($CampAmbienceStill) { $CampAmbience = $true }
 if ($CampAmbience) { $Camp = $true }
 if ($CampIntegration) { $Camp = $true }
+if ($CampReview) { $Camp = $true }
+if ($CampSound) { $Camp = $true }
 if ($CampMagic) { $Camp = $true }
 if ($CampFinish) { $Camp = $true; $CampAmbience = $true }
 if ($CampDetail -ne '') { $CampFinish = $true; $Camp = $true; $CampAmbience = $true }
@@ -254,6 +258,8 @@ $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
 if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
+if ($CampReview) { $playerArgs += '-capture-camp-review' }
+if ($CampSound) { $playerArgs += '-capture-camp-sound' }
 if ($CampMagic) { $playerArgs += '-capture-camp-magic' }
 if ($CampFinish) { $playerArgs += '-capture-camp-finish' }
 if ($CampDetail -ne '') { $playerArgs += @('-capture-camp-detail', $CampDetail) }

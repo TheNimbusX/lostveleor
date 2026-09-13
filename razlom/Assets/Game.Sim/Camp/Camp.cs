@@ -264,6 +264,92 @@ namespace Game.Sim
             return byRarity + item.ItemLevel;
         }
 
+        // ---- прокачка ----
+
+        private readonly int[] _sabreTalentRanks = new int[SabreTalents.LineCount];
+
+        /// <summary>
+        /// Уровень героя. Живёт в лагере, а не в забеге: смерть отнимает
+        /// добытое в Разломе, но не уровень и не взятые таланты.
+        /// </summary>
+        public int Level { get; private set; } = 1;
+
+        /// <summary>Опыт внутри текущего уровня: от нуля до ExperienceToNextLevel.</summary>
+        public int Experience { get; private set; }
+
+        public int ExperienceToNextLevel => Progression.XpToNextLevel(Level);
+
+        /// <summary>
+        /// Добавляет опыт и поднимает уровень столько раз, сколько набралось:
+        /// босс на низком уровне может дать сразу несколько. Возвращает число
+        /// новых уровней.
+        /// </summary>
+        public int GainExperience(int xp)
+        {
+            if (xp <= 0) return 0;
+            int gained = 0;
+            Experience += xp;
+            while (Experience >= Progression.XpToNextLevel(Level))
+            {
+                Experience -= Progression.XpToNextLevel(Level);
+                Level++;
+                gained++;
+            }
+            return gained;
+        }
+
+        public int TalentPoints => Progression.TalentPointsAtLevel(Level);
+
+        public int SpentTalentPoints
+        {
+            get
+            {
+                int spent = 0;
+                for (int i = 0; i < _sabreTalentRanks.Length; i++) spent += _sabreTalentRanks[i];
+                return spent;
+            }
+        }
+
+        public int AvailableTalentPoints => TalentPoints - SpentTalentPoints;
+
+        /// <summary>Сколько талантов взято в направлении, 0..5. Взятые идут строго по порядку.</summary>
+        public int SabreTalentRank(SabreTalentLine line) => _sabreTalentRanks[(int)line];
+
+        /// <summary>Можно ли взять следующий талант направления.</summary>
+        public bool CanTakeSabreTalent(SabreTalentLine line)
+            => (uint)line < (uint)SabreTalents.LineCount
+               && _sabreTalentRanks[(int)line] < SabreTalents.TalentsPerLine
+               && AvailableTalentPoints > 0;
+
+        /// <summary>Берёт следующий по порядку талант направления. False — нет очков или всё взято.</summary>
+        public bool TakeSabreTalent(SabreTalentLine line)
+        {
+            if (!CanTakeSabreTalent(line)) return false;
+            _sabreTalentRanks[(int)line]++;
+            return true;
+        }
+
+        /// <summary>Сбрасывает таланты, очки возвращаются. Пока только для разработчика.</summary>
+        public void ResetTalents()
+        {
+            for (int i = 0; i < _sabreTalentRanks.Length; i++) _sabreTalentRanks[i] = 0;
+        }
+
+        /// <summary>Только редактор и dev-сборка: поднять уровень без гринда, чтобы проверить таланты.</summary>
+        public void DeveloperGrantLevel()
+        {
+            Experience = 0;
+            Level++;
+        }
+
+        /// <summary>Восстановление из сохранения. Корректность чисел проверяет CampSaveCodec.</summary>
+        internal void RestoreProgression(int level, int experience, int[] sabreRanks)
+        {
+            Level = level;
+            Experience = experience;
+            for (int i = 0; i < _sabreTalentRanks.Length; i++) _sabreTalentRanks[i] = sabreRanks[i];
+        }
+
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, Act);
@@ -273,6 +359,10 @@ namespace Game.Sim
 
             Bag.HashInto(ref hash);
             Worn.HashInto(ref hash);
+
+            Hashing.Mix(ref hash, Level);
+            Hashing.Mix(ref hash, Experience);
+            for (int i = 0; i < _sabreTalentRanks.Length; i++) Hashing.Mix(ref hash, _sabreTalentRanks[i]);
         }
     }
 }

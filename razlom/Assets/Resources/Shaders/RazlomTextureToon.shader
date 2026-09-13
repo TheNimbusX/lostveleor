@@ -13,6 +13,7 @@ Shader "Razlom/Texture Toon"
         _RimPower ("Rim Power", Range(1,10)) = 4
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
         _OutlineWidth ("Outline Pixels", Range(0,3)) = 0
+        _WhiteClothLift ("White cloth light retention", Range(0,1)) = 0
         // ГЛУБИННЫЙ ОТСТУП ОБВОДКИ — ЭТО НЕ ТОНКАЯ НАСТРОЙКА, А ЕЁ СМЫСЛ.
         //
         // Обводка рисуется вывернутой оболочкой: Cull Front поверх уже
@@ -205,6 +206,16 @@ Shader "Razlom/Texture Toon"
 
                 half3 tone = lerp(shadowTone, midTone, midBand);
                 tone = lerp(tone, lightTone, lightBand);
+
+                // Светлая малонасыщенная ткань сохраняет белизну и плавный объём в тени.
+                // Параметр включён только у тела Пелага; кожа, ремни и красный пояс отсекаются маской.
+                half brightest = max(texel.r, max(texel.g, texel.b));
+                half darkest = min(texel.r, min(texel.g, texel.b));
+                half clothMask = smoothstep(0.25h, 0.58h, darkest) *
+                    (1.0h - smoothstep(0.12h, 0.32h, (brightest - darkest) / max(brightest, 0.001h)));
+                half3 clothTone = lerp(half3(0.82h, 0.88h, 0.97h),
+                    half3(1.25h, 1.23h, 1.18h), smoothstep(0.0h, 0.85h, shadeInput));
+                tone = lerp(tone, clothTone, clothMask * _WhiteClothLift);
 
                 // REALTIME CAST SHADOW
                 /*

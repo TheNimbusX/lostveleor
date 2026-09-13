@@ -312,7 +312,7 @@ namespace Game.View
         // горячую HDR-рамку и слипались между соседними мобами. Теперь
         // обычный враг получает спокойный тёплый акцент, а hover лишь слегка
         // усиливает его для выбора цели.
-        private const float HeroOutlineWidth = 1.15f;
+        private const float HeroOutlineWidth = 0f;
         private const float HostileOutlineWidth = 1.25f;
         private const float HoveredOutlineWidth = 1.65f;
         private static readonly Color HeroOutlineColor = new Color(0.024f, 0.012f, 0.008f, 1f);
@@ -1695,10 +1695,22 @@ namespace Game.View
             // MaterialPropertyBlock с _OutlineWidth не имеет UnitOutlineMask-pass.
             // Для Orvill гарантированно собираем материал на нашем toon
             // shader, сохраняя исходную текстуру.
+            bool ownsMaterial = false;
             if (faction == Faction.Orvill || material == null || !HasBaseTexture(material))
             {
                 Material runtime = BuildRuntimeMaterial(texturePath, faction);
-                if (runtime != null) material = runtime;
+                if (runtime != null) { material = runtime; ownsMaterial = true; }
+            }
+
+            if (faction == Faction.Wole && material != null)
+            {
+                // Цвет ткани принадлежит телу героя; общий материал оружия и материалы врагов не меняются.
+                if (!ownsMaterial) material = new Material(material);
+                material.name = "Runtime_Pelag_Cloth";
+                if (material.HasProperty("_WhiteClothLift")) material.SetFloat("_WhiteClothLift", .72f);
+                if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", .14f);
+                if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", new Color(1.04f, 1.04f, 1.04f, 1f));
+                if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0f);
             }
 
             GameObject anchorPrefab = faction == Faction.Wole
