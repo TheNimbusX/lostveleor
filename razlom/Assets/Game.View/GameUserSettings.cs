@@ -204,19 +204,17 @@ namespace Game.View
                 case QualityLevel.Medium:
                     pipeline.renderScale = 1f;
                     pipeline.msaaSampleCount = 2;
-                    pipeline.shadowDistance = 30f;
-                    pipeline.mainLightShadowmapResolution = 1024;
+                    pipeline.shadowDistance = 100f;
+                    pipeline.mainLightShadowmapResolution = 2048;
                     break;
 
                 default:
                     // Высокое — ровно то, что настроено в ассете руками. Здесь
                     // числа повторены, чтобы возврат с низкого их восстановил.
-                    // Тени 15 сентября урезаны ради FPS: камера ортографическая и
-                    // видит около 12 м, а карта 4096 на 150 м рисовала почти весь лагерь.
                     pipeline.renderScale = 1f;
                     pipeline.msaaSampleCount = 4;
-                    pipeline.shadowDistance = 40f;
-                    pipeline.mainLightShadowmapResolution = 2048;
+                    pipeline.shadowDistance = 150f;
+                    pipeline.mainLightShadowmapResolution = 4096;
                     break;
             }
         }
