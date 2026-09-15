@@ -57,6 +57,9 @@ namespace Game.View
                 // Внешняя RenderTexture портрета может быть back buffer без дескриптора графа.
                 if (resources.isActiveTargetBackBuffer) return;
                 var camera = frameData.Get<UniversalCameraData>();
+                // Контур нужен только в игровом кадре: камера фона миникарты,
+                // студия портрета и окно сцены платили бы полноэкранный проход зря.
+                if (camera.cameraType != CameraType.Game || camera.camera.targetTexture != null) return;
                 var rendering = frameData.Get<UniversalRenderingData>();
                 var lights = frameData.Get<UniversalLightData>();
 

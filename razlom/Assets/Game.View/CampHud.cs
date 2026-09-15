@@ -61,12 +61,15 @@ namespace Game.View
             GUILayout.BeginArea(new Rect(16, 16, 620, 320));
 
             GUILayout.Label(summary.Outcome == RunOutcome.Died
-                ? "СМЕРТЬ. Глубже в этот раз не пойдёшь — но добытое осталось."
+                ? "СМЕРТЬ. Всё найденное в забеге осталось в Разломе."
                 : summary.Outcome == RunOutcome.Completed ? "ПОБЕДА. Локация пройдена!"
                 : "ВЫХОД. Ушёл с добычей.", _title);
 
             GUILayout.Label($"Разломов зачищено: {summary.RiftsCleared}   " +
-                            $"глубина: {summary.Depth}   предметов: {summary.ItemsKept}", _line);
+                            $"глубина: {summary.Depth}   предметов: {summary.ItemsKept}   золота: {summary.GoldKept}", _line);
+
+            if (summary.ItemsLeftBehind > 0 || summary.GoldLeftBehind > 0)
+                GUILayout.Label($"Потеряно со смертью: предметов {summary.ItemsLeftBehind}, золота {summary.GoldLeftBehind}", _line);
 
             if (summary.ItemsLost > 0)
                 GUILayout.Label($"Не влезло в сумку и потеряно: {summary.ItemsLost}", _line);
@@ -237,8 +240,8 @@ namespace Game.View
         {
             if (_title != null) return;
 
-            _title = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold };
-            _line = new GUIStyle(GUI.skin.label) { fontSize = 13 };
+            _title = new GUIStyle(GameTypography.Label) { fontSize = 16, fontStyle = FontStyle.Bold };
+            _line = new GUIStyle(GameTypography.Label) { fontSize = 13 };
 
             _title.normal.textColor = Color.white;
             _line.normal.textColor = new Color(0.88f, 0.88f, 0.85f);

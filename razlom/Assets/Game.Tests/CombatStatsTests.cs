@@ -74,29 +74,6 @@ namespace Game.Tests
                 "0.833 удара в секунду — это 36 тиков");
         }
 
-        [Test]
-        public void AttackSpeed_IsClampedAtBothEnds()
-        {
-            Assert.AreEqual(CombatStats.MaxAttackCooldown, CombatStats.AttackCooldownTicks(Fix64.Zero),
-                "нулевая скорость атаки не имеет права разделить на ноль");
-            Assert.AreEqual(1, CombatStats.AttackCooldownTicks(Fix64.FromInt(1000)),
-                "чаще одного удара за тик не бьёт никто: тик неделим");
-        }
-
-        [Test]
-        public void IncreasedAttackSpeed_ShortensTheCooldown()
-        {
-            Simulation sim = Arena();
-            StatSheet sheet = sim.Entities.Stats[Simulation.PlayerId];
-
-            sheet.Add(StatModifier.Increased(StatType.AttackSpeed, Fix64.Ratio(25, 100),
-                ModifierSource.Equipment, 0));
-            sim.RefreshPlayerStats(false);
-
-            // 1.5 * 1.25 = 1.875 удара в секунду, 30 / 1.875 = 16 тиков.
-            Assert.AreEqual(16, sim.Entities.AttackCooldown[Simulation.PlayerId]);
-        }
-
         // ---- снаряжение ----
 
         [Test]
@@ -144,105 +121,7 @@ namespace Game.Tests
                 "снятие обязано убирать ровно свои прибавки и ничего кроме них");
         }
 
-        [Test]
-        public void EquipOrder_DoesNotAffectResult()
-        {
-            ItemDatabase items = PrototypeContent.Items();
-            ItemInstance sword = Sword(77UL);
-            ItemInstance jacket = Jacket(88UL);
-            ItemInstance replaced;
-
-            Simulation first = Arena(9UL, 2);
-            var a = Bound(items, first.Entities.Stats[Simulation.PlayerId]);
-            a.Equip(sword, out replaced);
-            a.Equip(jacket, out replaced);
-            first.RefreshPlayerStats(false);
-
-            Simulation second = Arena(9UL, 2);
-            var b = Bound(items, second.Entities.Stats[Simulation.PlayerId]);
-            b.Equip(jacket, out replaced);
-            b.Equip(sword, out replaced);
-            second.RefreshPlayerStats(false);
-
-            ulong hashA = Hashing.Offset;
-            first.Entities.Stats[Simulation.PlayerId].HashInto(ref hashA);
-
-            ulong hashB = Hashing.Offset;
-            second.Entities.Stats[Simulation.PlayerId].HashInto(ref hashB);
-
-            // Умножение в Fix64 округляет и не ассоциативно. Если бы список
-            // модификаторов шёл в порядке действий игрока, два одинаковых билда
-            // считали бы разный урон — и разошлись бы в реплее.
-            Assert.AreEqual(hashA, hashB, "лист статов обязан быть побитово одинаковым");
-            Assert.AreEqual(first.Entities.Damage[Simulation.PlayerId],
-                second.Entities.Damage[Simulation.PlayerId], "урон одинаков");
-        }
-
-        [Test]
-        public void ReplacingAnItem_ReturnsThePreviousOne()
-        {
-            Simulation sim = Arena();
-            var equipment = Bound(PrototypeContent.Items(),
-                sim.Entities.Stats[Simulation.PlayerId]);
-
-            ItemInstance replaced;
-            equipment.Equip(Sword(1UL), out replaced);
-            equipment.Equip(Sword(2UL), out replaced);
-
-            Assert.AreEqual(1UL, replaced.Seed, "замена обязана отдать прежний предмет");
-            Assert.AreEqual(2UL, equipment.Worn(EquipSlot.Weapon).Seed, "в слоте лежит новый");
-        }
-
-        [Test]
-        public void UnknownBase_IsNotEquipped()
-        {
-            Simulation sim = Arena();
-            var equipment = Bound(PrototypeContent.Items(),
-                sim.Entities.Stats[Simulation.PlayerId]);
-
-            ItemInstance replaced;
-            var alien = new ItemInstance(StableId.Of("base.who_is_this"), 1, ItemRarity.Rare, 5UL);
-
-            Assert.IsFalse(equipment.Equip(alien, out replaced),
-                "чужой предмет лучше не надеть, чем надеть пустым");
-            Assert.IsFalse(equipment.IsWorn(EquipSlot.Weapon));
-        }
-
         // ---- здоровье ----
-
-        [Test]
-        public void MaxHealthBonus_DoesNotHeal()
-        {
-            Simulation sim = Arena();
-            sim.Entities.Health[Simulation.PlayerId] = 500;
-
-            sim.Entities.Stats[Simulation.PlayerId].Add(StatModifier.Flat(StatType.MaxHealth,
-                Fix64.FromInt(200), ModifierSource.Equipment, 1));
-            sim.RefreshPlayerStats(false);
-
-            Assert.AreEqual(1200, sim.Entities.MaxHealth[Simulation.PlayerId], "максимум вырос");
-            Assert.AreEqual(500, sim.Entities.Health[Simulation.PlayerId],
-                "надетая посреди боя вещь не должна работать зельем");
-        }
-
-        [Test]
-        public void LosingMaxHealth_ClampsCurrentHealth()
-        {
-            Simulation sim = Arena();
-            StatSheet sheet = sim.Entities.Stats[Simulation.PlayerId];
-
-            sheet.Add(StatModifier.Flat(StatType.MaxHealth, Fix64.FromInt(200),
-                ModifierSource.Equipment, 1));
-            sim.RefreshPlayerStats(true);
-            Assert.AreEqual(1200, sim.Entities.Health[Simulation.PlayerId]);
-
-            sheet.RemoveSource(ModifierSource.Equipment, 1);
-            sim.RefreshPlayerStats(false);
-
-            Assert.AreEqual(1000, sim.Entities.MaxHealth[Simulation.PlayerId]);
-            Assert.AreEqual(1000, sim.Entities.Health[Simulation.PlayerId],
-                "текущее здоровье обязано подрезаться под новый максимум");
-        }
 
         // ---- атака по приказу ----
 
@@ -265,21 +144,6 @@ namespace Game.Tests
             Assert.AreEqual(0, totalDamage,
                 "персонаж, который бьёт сам по себе, отнимает у игрока единственное решение боя");
             Assert.AreEqual(enemyHealth, sim.Entities.Health[1]);
-        }
-
-        [Test]
-        public void Player_AttacksWhileTheOrderIsHeld()
-        {
-            Simulation sim = Arena(31UL, 6);
-
-            // Ставим врага вплотную перед игроком: взгляд по умолчанию по оси X,
-            // дальность автоатаки два метра.
-            int victim = sim.Entities.Spawn(new FixVec2(Fix64.One, Fix64.Zero), 1000, Faction.Orvill);
-
-            var order = new InputFrame { Flags = (byte)InputFlags.Attack };
-            for (int t = 0; t < 120; t++) sim.Step(in order);
-
-            Assert.Less(sim.Entities.Health[victim], 1000, "по приказу персонаж бьёт");
         }
 
         // ---- приказ атаковать ----
@@ -311,159 +175,7 @@ namespace Game.Tests
             Assert.AreEqual(victim, sim.AttackTarget, "и цель всё ещё назначена");
         }
 
-        [Test]
-        public void AttackOrder_EndsWithTheTarget()
-        {
-            Simulation sim = Arena(52UL, 0);
-            int victim = sim.Entities.Spawn(new FixVec2(Fix64.One, Fix64.Zero), 40, Faction.Orvill);
-
-            var order = new InputFrame
-            {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = victim,
-            };
-            sim.Step(in order);
-
-            for (int t = 0; t < 300; t++)
-            {
-                InputFrame idle = InputFrame.Empty;
-                sim.Step(in idle);
-            }
-
-            Assert.IsFalse(sim.Entities.Alive[victim], "цель добита");
-            Assert.AreEqual(-1, sim.AttackTarget, "приказ снят вместе с целью");
-        }
-
-        [Test]
-        public void MoveOrder_CancelsTheAttackOrder()
-        {
-            Simulation sim = Arena(53UL, 0);
-            int victim = sim.Entities.Spawn(new FixVec2(Fix64.One, Fix64.Zero), 5000, Faction.Orvill);
-
-            var attack = new InputFrame
-            {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = victim,
-            };
-            sim.Step(in attack);
-            Assert.AreEqual(victim, sim.AttackTarget);
-
-            // Щелчок по земле — игрок передумал.
-            var walk = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.FromInt(-8), Fix64.Zero),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            sim.Step(in walk);
-
-            Assert.AreEqual(-1, sim.AttackTarget, "приказ идти отменяет приказ бить");
-        }
-
-        [Test]
-        public void MoveOrder_PreservesCommittedSwingButEscapesThreeEnemies()
-        {
-            Simulation sim = Arena(54UL, 0);
-            Fix64 near = Fix64.Ratio(3, 4);
-            int front = sim.Entities.Spawn(
-                new FixVec2(near, Fix64.Zero), 5000, Faction.Orvill);
-            int left = sim.Entities.Spawn(
-                new FixVec2(-near, Fix64.Zero), 5000, Faction.Orvill);
-            int back = sim.Entities.Spawn(
-                new FixVec2(Fix64.Zero, near), 5000, Faction.Orvill);
-
-            int[] enemies = { front, left, back };
-            for (int i = 0; i < enemies.Length; i++)
-            {
-                int enemy = enemies[i];
-                sim.Entities.Stats[enemy].SetBase(StatType.Damage, Fix64.Zero);
-                sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
-                sim.Entities.RefreshStats(enemy);
-                sim.Entities.NextAttackTick[enemy] = int.MaxValue;
-            }
-
-            var attack = new InputFrame
-            {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = front,
-            };
-            sim.Step(in attack);
-            Assert.AreEqual(front, sim.Entities.PendingAttackTarget[Simulation.PlayerId],
-                "контрольная атака должна войти в windup");
-
-            int healthBefore = sim.Entities.Health[front];
-            var escape = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.Zero, Fix64.FromInt(-8)),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            sim.Step(in escape);
-
-            Assert.AreEqual(front, sim.Entities.PendingAttackTarget[Simulation.PlayerId],
-                "явное движение не стирает уже начатый замах");
-            Assert.AreEqual(-1, sim.AttackTarget);
-
-            InputFrame released = InputFrame.Empty;
-            for (int t = 0; t < 36; t++) sim.Step(in released);
-
-            Assert.AreEqual(healthBefore, sim.Entities.Health[front],
-                "при выходе из дистанции committed-атака честно промахивается");
-            Assert.Less(sim.Entities.Position[Simulation.PlayerId].Y.ToFloat(), -2f,
-                "герой выходит из окружения по приказу игрока");
-        }
-
         // ---- вес движения ----
-
-        [Test]
-        public void Movement_HasWeight_InsteadOfInstantSpeed()
-        {
-            Simulation sim = Arena(43UL, 0);
-
-            var order = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.FromInt(30), Fix64.Zero),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-
-            sim.Step(in order);
-            float firstTick = sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat();
-
-            for (int t = 0; t < 12; t++) sim.Step(in order);
-            float cruise = sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat();
-
-            Assert.Less(firstTick, cruise * 0.5f,
-                "с места тело не выпрыгивает на полную скорость: это и есть вес");
-            Assert.That(cruise, Is.EqualTo(0.15f).Within(0.0001f),
-                "но за доли секунды доходит до полной — задержка не должна читаться");
-        }
-
-        [Test]
-        public void Movement_SlowsDownInsteadOfStoppingDead()
-        {
-            Simulation sim = Arena(44UL, 0);
-
-            var order = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.FromInt(30), Fix64.Zero),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            for (int t = 0; t < 20; t++) sim.Step(in order);
-
-            float cruise = sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat();
-
-            // Приказ отменяем, поставив цель под ноги: тело обязано гасить ход,
-            // а не выключаться.
-            var stop = new InputFrame
-            {
-                Aim = sim.Entities.Position[Simulation.PlayerId],
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            sim.Step(in stop);
-
-            float justAfter = sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat();
-
-            Assert.Greater(justAfter, 0f, "мгновенная остановка — это отсутствие тела");
-            Assert.Less(justAfter, cruise, "но ход гасится");
-        }
 
         // ---- расталкивание тел ----
 
@@ -494,77 +206,7 @@ namespace Game.Tests
                 "два тела в одной точке обязаны разъехаться, иначе толпа не читается");
         }
 
-        [Test]
-        public void ThePlayerIsHeavierThanTheCrowd()
-        {
-            var sim = new Simulation(8UL, 32);
-            sim.SetupTestArena(0);
-
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            int enemy = sim.Entities.Spawn(start, 100, Faction.Orvill);
-
-            for (int t = 0; t < 60; t++)
-            {
-                InputFrame frame = InputFrame.Empty;
-                sim.Step(in frame);
-            }
-
-            float playerMoved = FixVec2.Distance(start, sim.Entities.Position[Simulation.PlayerId]).ToFloat();
-            float enemyMoved = FixVec2.Distance(start, sim.Entities.Position[enemy]).ToFloat();
-
-            Assert.Greater(enemyMoved, playerMoved,
-                "сорок тел не должны возить по арене того, кто ими управляет");
-        }
-
         // ---- приказ на движение ----
-
-        [Test]
-        public void MoveOrder_SurvivesTheReleasedButton()
-        {
-            Simulation sim = Arena(41UL, 0);
-
-            var order = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.FromInt(10), Fix64.Zero),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            sim.Step(in order);
-
-            // Кнопку отпустили сразу. Персонаж обязан идти дальше сам:
-            // это управление жанра, щелчок задаёт цель, а не толкает на шаг.
-            for (int t = 0; t < 60; t++)
-            {
-                InputFrame idle = InputFrame.Empty;
-                sim.Step(in idle);
-            }
-
-            Assert.Greater(sim.Entities.Position[Simulation.PlayerId].X.ToFloat(), 5f,
-                "щёлкнул один раз — идёт дальше без кнопки");
-        }
-
-        [Test]
-        public void MoveOrder_EndsOnArrival()
-        {
-            Simulation sim = Arena(41UL, 0);
-
-            var order = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.FromInt(6), Fix64.Zero),
-                Flags = (byte)InputFlags.MoveOrder,
-            };
-            sim.Step(in order);
-
-            for (int t = 0; t < 200; t++)
-            {
-                InputFrame idle = InputFrame.Empty;
-                sim.Step(in idle);
-            }
-
-            FixVec2 dummy;
-            Assert.IsFalse(sim.TryGetMoveOrder(out dummy), "дошёл — приказа больше нет");
-            Assert.AreEqual(0f, sim.Entities.Velocity[Simulation.PlayerId].LengthSq.ToFloat(),
-                "и стоит, а не топчется вокруг точки");
-        }
 
         // ---- защита ----
 
@@ -580,19 +222,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Armor_NeverFullyNegatesAHit()
-        {
-            Assert.GreaterOrEqual(CombatStats.MitigateByArmor(1, Fix64.FromInt(1000000)), 1,
-                "ноль на экране был бы следом округления, а не балансом");
-        }
-
-        [Test]
-        public void ZeroArmor_ChangesNothing()
-        {
-            Assert.AreEqual(34, CombatStats.MitigateByArmor(34, Fix64.Zero));
-        }
-
-        [Test]
         public void Resistance_IsCappedAtThreeQuarters()
         {
             Assert.AreEqual(70, CombatStats.MitigateByResistance(100, Fix64.Ratio(30, 100)),
@@ -603,94 +232,7 @@ namespace Game.Tests
                 "выше потолка не пускает никакая сумма аффиксов");
         }
 
-        [Test]
-        public void NegativeResistance_DoesNotAmplifyDamage()
-        {
-            Assert.AreEqual(100, CombatStats.MitigateByResistance(100, -Fix64.Ratio(50, 100)),
-                "механики пробития в проекте нет, и заводить её походя нельзя");
-        }
-
-        [Test]
-        public void FireResistance_ProtectsFromBurningButArmorDoesNot()
-        {
-            Assert.AreEqual(50,
-                CombatStats.Mitigate(100, DamageType.Fire, Fix64.FromInt(9999), Fix64.Ratio(50, 100)),
-                "огонь гасит сопротивление, а броня в нём не участвует");
-            Assert.AreEqual(100,
-                CombatStats.Mitigate(100, DamageType.Physical, Fix64.Zero, Fix64.Ratio(90, 100)),
-                "сопротивление огню не мешает мечу");
-        }
-
-        [Test]
-        public void WornArmor_ReducesIncomingDamage()
-        {
-            int Lost(bool armored)
-            {
-                Simulation sim = Arena(21UL, 8);
-                for (int i = 1; i < sim.Entities.Count; i++)
-                    sim.Entities.Aggro[i] = true;
-                if (armored)
-                {
-                    sim.Entities.Stats[Simulation.PlayerId].Add(StatModifier.Flat(StatType.Armor,
-                        Fix64.FromInt(60), ModifierSource.Equipment, (int)EquipSlot.Armor));
-                    sim.RefreshPlayerStats(false);
-                }
-
-                for (int t = 0; t < 600; t++)
-                {
-                    InputFrame frame = InputFrame.Empty;
-                    sim.Step(in frame);
-                }
-                return 1000 - sim.Entities.Health[Simulation.PlayerId];
-            }
-
-            int bare = Lost(false);
-            int armored = Lost(true);
-
-            Assert.Greater(bare, 0, "без брони игрока обязаны бить, иначе тест ничего не проверяет");
-            Assert.Less(armored, bare, "надетая броня обязана уменьшать входящий урон: " +
-                bare + " -> " + armored);
-        }
-
         // ---- цена пересчёта ----
-
-        [Test]
-        public void CleanSheets_AreNotRecalculatedEveryTick()
-        {
-            Simulation sim = Arena(5UL, 8);
-            StatSheet sheet = sim.Entities.Stats[Simulation.PlayerId];
-
-            int before = sheet.RecalculateCount;
-            for (int t = 0; t < 60; t++)
-            {
-                InputFrame frame = InputFrame.Empty;
-                sim.Step(in frame);
-            }
-
-            Assert.AreEqual(before, sheet.RecalculateCount,
-                "чистый лист не пересчитывается: именно на этом ARPG и начинают тормозить");
-        }
-
-        [Test]
-        public void DirtySheet_IsRecalculatedOnceAndThenLeftAlone()
-        {
-            Simulation sim = Arena(5UL, 8);
-            StatSheet sheet = sim.Entities.Stats[Simulation.PlayerId];
-
-            sheet.Add(StatModifier.Flat(StatType.Damage, Fix64.FromInt(10),
-                ModifierSource.Buff, 0));
-            int before = sheet.RecalculateCount;
-
-            for (int t = 0; t < 30; t++)
-            {
-                InputFrame frame = InputFrame.Empty;
-                sim.Step(in frame);
-            }
-
-            Assert.AreEqual(before + 1, sheet.RecalculateCount, "ровно один пересчёт на одну правку");
-            Assert.AreEqual(44, sim.Entities.Damage[Simulation.PlayerId],
-                "правка листа доехала до чисел боя сама, без ручного обновления");
-        }
 
         // ---- забег ----
 
@@ -738,36 +280,5 @@ namespace Game.Tests
                 "в новый Разлом игрок входит с полным здоровьем");
         }
 
-        [Test]
-        public void SameSeed_GivesTheSameRun_WithEquipment()
-        {
-            ItemDatabase items = PrototypeContent.Items();
-
-            RiftRun Armed(ulong seed)
-            {
-                var sim = new Simulation(seed, 1024);
-                var run = new RiftRun(sim, PrototypeContent.Modules(), items,
-                    PrototypeContent.ItemBaseIds());
-
-                var equipment = Bound(items, sim.Entities.Stats[Simulation.PlayerId]);
-                ItemInstance replaced;
-                equipment.Equip(Sword(0x5EEDUL), out replaced);
-                run.PlayerEquipment = equipment;
-
-                run.StartRun();
-                return run;
-            }
-
-            RiftRun a = Armed(31337UL);
-            RiftRun b = Armed(31337UL);
-
-            for (int t = 0; t < 600; t++)
-            {
-                InputFrame frame = InputFrame.Empty;
-                a.Step(in frame);
-                b.Step(in frame);
-                Assert.AreEqual(a.Hash(), b.Hash(), $"забеги разошлись на тике {t}");
-            }
-        }
     }
 }

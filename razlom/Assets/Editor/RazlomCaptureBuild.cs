@@ -73,6 +73,7 @@ namespace Game.EditorTools
             // приехали новые клипы, — то есть врала про то, что в игре.
             global::RazlomMobAnimatorBuilder.Build();
             global::CombatPresentationSetup.EnsureProfiles();
+            global::PelagAudioImport.Install();
             // Съёмка должна сохранять авторскую цветокоррекцию. Повторная
             // генерация заменяла настройки Inspector значениями из шаблона.
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Settings/CombatLook.asset") == null)

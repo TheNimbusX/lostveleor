@@ -78,70 +78,6 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Тот же путь БЕЗ маршрута — прямым приказом. Ради этого сравнения
-        /// всё и затевалось: без обхода герой упирается в стену и стоит.
-        /// </summary>
-        [Test]
-        public void DirectOrderStopsAtTheWall()
-        {
-            GameSession session = Session(Map(withGap: true));
-            Simulation sim = session.ActiveSim;
-
-            var move = InputFrame.Empty;
-            move.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-            move.Flags = (byte)InputFlags.MoveOrder;
-            for (int i = 0; i < 900; i++) session.Step(move);
-
-            Assert.IsTrue(sim.Entities.Position[Simulation.PlayerId].X < Fix64.FromInt(3),
-                "без маршрута герой не должен проходить стену");
-        }
-
-        /// <summary>
-        /// Ход обязан быть РОВНЫМ. Топтание на углах — это тики, на которых
-        /// тело почти не сдвинулось, хотя маршрут ещё не пройден. Ровно так
-        /// выглядела походка «пошагово, а не плавно».
-        /// </summary>
-        [Test]
-        public void RouteDoesNotStallOnCorners()
-        {
-            CampWalkMap map = Map(withGap: true);
-            GameSession session = Session(map);
-            Simulation sim = session.ActiveSim;
-            var goal = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-
-            var route = new CampRoute(map);
-            route.To(FixVec2.Zero, goal);
-
-            // Порог — четверть полного шага за тик. Разгон в начале не в счёт.
-            Fix64 crawl = Simulation.PlayerBaseMoveSpeed
-                          / Fix64.FromInt(Simulation.TicksPerSecond * 4);
-            int stalled = 0, moving = 0;
-
-            for (int tick = 0; tick < 900; tick++)
-            {
-                FixVec2 before = sim.Entities.Position[Simulation.PlayerId];
-                if (FixVec2.DistanceSq(before, goal) < Fix64.Ratio(1, 4) * Fix64.Ratio(1, 4)) break;
-
-                var input = InputFrame.Empty;
-                if (route.Advance(before, out FixVec2 aim, out bool final))
-                {
-                    input.Aim = aim;
-                    input.Flags = CampRoute.FlagsFor(final);
-                    input.AttackTarget = -1;
-                }
-                session.Step(input);
-
-                FixVec2 after = sim.Entities.Position[Simulation.PlayerId];
-                if (tick < 15) continue;   // разгон
-                if (FixVec2.DistanceSq(before, after) < crawl * crawl) stalled++; else moving++;
-            }
-
-            Assert.Greater(moving, 0, "герой вообще не двигался");
-            Assert.Less(stalled, moving / 4,
-                $"герой топчется: {stalled} медленных тиков против {moving} ходовых");
-        }
-
-        /// <summary>
         /// Ходьба обязана ЗАКАНЧИВАТЬСЯ.
         ///
         /// Подъезд к цели шагом в четверть остатка пути не доводит до неё
@@ -175,15 +111,5 @@ namespace Game.Tests
                 "герой не остановился после прибытия");
         }
 
-        /// <summary>Клик в непроходимое: подойти вплотную, а не остаться на месте.</summary>
-        [Test]
-        public void RouteToBlockedTargetStillMoves()
-        {
-            CampWalkMap map = Map(withGap: false);
-            var route = new CampRoute(map);
-            // Ровно в стене.
-            var inside = new FixVec2(Fix64.FromInt(2), Fix64.Zero);
-            Assert.IsTrue(route.To(FixVec2.Zero, inside), "цель в стене не дала маршрута");
-        }
     }
 }

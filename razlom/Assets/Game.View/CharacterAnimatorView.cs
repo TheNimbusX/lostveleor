@@ -29,10 +29,8 @@ namespace Game.View
         private static readonly int LowerBodyAttackBState =
             Animator.StringToHash("LowerBody Combat.Lower_Saber_B_v5");
         private static readonly int AnchorLeapTrigger = Animator.StringToHash("AnchorLeap");
-        private static readonly int AnchorSweepTrigger = Animator.StringToHash("AnchorSweep");
         private static readonly int ChainStepTrigger = Animator.StringToHash("ChainStep");
         private static readonly int AnchorLeapState = Animator.StringToHash("Base Layer.AnchorLeap_v5");
-        private static readonly int AnchorSweepState = Animator.StringToHash("Base Layer.AnchorSweep_v5");
         private static readonly int ChainStepState = Animator.StringToHash("Base Layer.ChainStep_v5");
         private static readonly int PelagDeathState = Animator.StringToHash("Base Layer.Death_v5");
         private static readonly int OrvillSwordAttack = Animator.StringToHash("SwordAttack");
@@ -173,7 +171,6 @@ namespace Game.View
         private bool _attackPresentationActive;
         private float _attackPresentationUntil;
         private bool _abilityPresentationActive;
-        private bool _sweepLocomotion;
         private bool _leapLocomotion;
 
         /// <summary>
@@ -186,7 +183,6 @@ namespace Game.View
         private float _abilityPresentationUntil;
         private bool _abilityUsesLowerBodyLayer;
         private int _abilityDefinitionId;
-        private bool _cycloneReleasing;
         private int _upperBodyLayer = -1;
         private int _saberStanceLayer = -1;
         private int _saberFootworkLayer = -1;
@@ -226,16 +222,12 @@ namespace Game.View
         public bool BasicAttackActive => _faction == Faction.Wole && _attackPresentationActive && !IsDead;
         public bool WhirlwindActive => _faction == Faction.Wole && _abilityPresentationActive
             && _abilityDefinitionId == AbilityDefinition.WhirlwindId && !IsDead;
-        private bool CyclonePresentationActive => _abilityPresentationActive
-            && _abilityDefinitionId == AbilityDefinition.ChainCycloneId && !IsDead;
-        private bool MaskedAbilityActive => WhirlwindActive || CyclonePresentationActive;
-        private float MaskedAbilityWeight => WhirlwindActive ? WhirlwindWeight
-            : !_cycloneReleasing ? 1f : Mathf.SmoothStep(0f, 1f,
-                Mathf.Clamp01((_abilityPresentationUntil - Time.time) / 0.16f));
+        private bool MaskedAbilityActive => WhirlwindActive;
+        private float MaskedAbilityWeight => WhirlwindWeight;
         public bool AnchorAbilityActive => _faction == Faction.Wole && _abilityPresentationActive && !_abilityUsesLowerBodyLayer && !IsDead;
         public bool LeapFacingRecovery => _leapLocomotion && !IsDead
             && Time.time < _abilityPresentationUntil + 0.12f;
-        public float AnchorFacingWeight => (_sweepLocomotion || _leapLocomotion)
+        public float AnchorFacingWeight => _leapLocomotion
             ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((_abilityPresentationUntil - Time.time)
                 / (_leapLocomotion ? LeapRunHandoff : .20f))) : 1f;
         public float WhirlwindElapsed => WhirlwindActive ? WhirlwindClipDuration - (_abilityPresentationUntil - Time.time) : 0f;
@@ -305,12 +297,9 @@ namespace Game.View
             _abilityPresentationActive = false;
             _abilityPresentationUntil = 0f;
             _abilityUsesLowerBodyLayer = false;
-            _cycloneWasActive = false;
-            _cycloneReleasing = false;
             _abilityDefinitionId = 0;
             _cleaveContactConfirmed = false;
             _chainPresentationVariant = 0;
-            _cyclonePhase = -1;
             _attackPresentationActive = false;
             _attackPresentationUntil = 0f;
             _combatReady = false;
@@ -358,10 +347,6 @@ namespace Game.View
         }
 
         private TickDriver _cycloneDriver;
-        private bool _cycloneWasActive;
-        private int _cyclonePhase = -1;
-        private int _cycloneAnimationTick;
-        private float _cycloneAnimationTravel, _cycloneAnimationStep;
 
         public bool PlayEquipmentGesture(float phase, bool drawing)
         {
@@ -391,83 +376,6 @@ namespace Game.View
                 // Start its breathing cycle only after both steps land.
                 _animator.Play("Saber Stance.SaberIdle", _saberStanceLayer, 0f);
                 _animator.Play("Saber Footwork.StanceSteps", _saberFootworkLayer, (phase - .55f) / .45f);
-            }
-        }
-
-        private void UpdateCycloneAnimation()
-        {
-            if (_faction != Faction.Wole || _animator == null || IsDead) return;
-            if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
-            Simulation sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
-            bool active = sim != null && sim.CycloneActive;
-            if (active)
-            {
-                _abilityDefinitionId = AbilityDefinition.ChainCycloneId;
-                _cycloneReleasing = false;
-                _attackPresentationActive = false;
-                _abilityUsesLowerBodyLayer = true;
-                _abilityPresentationActive = true;
-                _abilityPresentationUntil = Time.time + 0.3f;
-                _actionProtectedUntil = _abilityPresentationUntil;
-                _sweepLocomotion = _leapLocomotion = false;
-                if (_cyclonePhase < 0)
-                {
-                    _cycloneAnimationTick = sim.Tick;
-                    _cycloneAnimationTravel = sim.CycloneTravel.ToFloat();
-                    _cycloneAnimationStep = 0f;
-                }
-                else if (_cycloneAnimationTick != sim.Tick)
-                {
-                    float travel = sim.CycloneTravel.ToFloat();
-                    _cycloneAnimationStep = (travel - _cycloneAnimationTravel)
-                        / Mathf.Max(1, sim.Tick - _cycloneAnimationTick);
-                    _cycloneAnimationTick = sim.Tick;
-                    _cycloneAnimationTravel = travel;
-                }
-                int phase = sim.CycloneElapsedTicks < 6 ? 0 : 1;
-                if (phase != _cyclonePhase)
-                {
-                    if (_cyclonePhase < 0)
-                    {
-                        CancelUpperBodyAttack(0.04f);
-                        _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", 0.08f, 0);
-                    }
-                    PlayCycloneLayers(phase == 0 ? "CycloneStart" : "CycloneLoop", 0f, true);
-                    _cyclonePhase = phase;
-                }
-                if (phase == 1)
-                {
-                    // Поза и якорь используют одну интерполяцию между тиками, без ступенек на 30 Гц.
-                    float travel = _cycloneAnimationTravel - _cycloneAnimationStep * (1f - _cycloneDriver.Alpha);
-                    PlayCycloneLayers("CycloneLoop", Mathf.Repeat(travel / (2f * Mathf.PI), 1f), false);
-                }
-            }
-            else if (_cycloneWasActive)
-            {
-                // Новый подтверждённый каст уже выбрал своё состояние и не ждёт возврата цепи.
-                bool replaced = false;
-                if (sim != null)
-                    foreach (var ev in _cycloneDriver.FrameEvents)
-                        if (ev.Type == SimEventType.AbilityCast && ev.Source == Simulation.PlayerId) replaced = true;
-                if (!replaced)
-                {
-                    _cycloneReleasing = true;
-                    _abilityPresentationUntil = Time.time + 0.30f;
-                    PlayCycloneLayers("CycloneEnd", 0f, true);
-                }
-                _cyclonePhase = -1;
-            }
-            _cycloneWasActive = active;
-        }
-
-        private void PlayCycloneLayers(string state, float phase, bool blend)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                int layer = i == 0 ? _upperBodyLayer : _lowerBodyLayer;
-                if (layer < 0) continue;
-                if (blend) _animator.CrossFadeInFixedTime(state, state == "CycloneEnd" ? .10f : .06f, layer, phase);
-                else _animator.Play(state, layer, phase);
             }
         }
 
@@ -517,7 +425,7 @@ namespace Game.View
         {
             UpdateBlazeAnimation();
             UpdateCleaveAnimation();
-            UpdateCycloneAnimation();
+            if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
             if (RollActive && _cycloneDriver != null && _cycloneDriver.Sim != null
                 && _cycloneDriver.Sim.Entities.ForcedKind[Simulation.PlayerId] != (byte)ForcedMotionKind.Roll)
             {
@@ -623,9 +531,8 @@ namespace Game.View
                 // the end of combo B teleport to idle in roughly 55 ms.
                 bool actionActive = _attackPresentationActive
                                     || (_abilityPresentationActive && _abilityUsesLowerBodyLayer);
-                // Вихрь сохраняет полный разворот; Циклон при движении оставляет ногам бег.
-                float target = CyclonePresentationActive && _locomotionMoving ? 0f
-                    : MaskedAbilityActive ? MaskedAbilityWeight
+                // Вихрь сохраняет полный разворот.
+                float target = MaskedAbilityActive ? MaskedAbilityWeight
                     : actionActive && !_locomotionMoving ? 1f : 0f;
                 float weight = Mathf.MoveTowards(
                     _animator.GetLayerWeight(_lowerBodyLayer), target,
@@ -657,15 +564,6 @@ namespace Game.View
                 var current = _animator.IsInTransition(0) ? _animator.GetNextAnimatorStateInfo(0)
                     : _animator.GetCurrentAnimatorStateInfo(0);
                 if (current.fullPathHash != run) _animator.CrossFadeInFixedTime(run, LeapRunBlend, 0);
-            }
-            if (_abilityPresentationActive && _sweepLocomotion && _faction == Faction.Wole)
-            {
-                int desired = moving ? Animator.StringToHash("Base Layer.Run_v5") : AnchorSweepState;
-                var current = _animator.IsInTransition(0) ? _animator.GetNextAnimatorStateInfo(0)
-                    : _animator.GetCurrentAnimatorStateInfo(0);
-                if (current.fullPathHash != desired)
-                    _animator.CrossFadeInFixedTime(desired, 0.12f, 0,
-                        moving ? 0f : Mathf.Max(0f, PelagAbilityTiming.SweepRecovery - (_abilityPresentationUntil - Time.time)));
             }
             _locomotionMoving = moving;
             // Начало шага слегка сглажено, остановка — нет. Симуляция уже
@@ -863,7 +761,6 @@ namespace Game.View
             {
                 case 0: definitionId = AbilityDefinition.WhirlwindId; break;
                 case 1: definitionId = AbilityDefinition.AnchorLeapId; break;
-                case 2: definitionId = AbilityDefinition.ChainCycloneId; break;
                 case 3: definitionId = AbilityDefinition.ChainStepId; break;
                 default: return;
             }
@@ -887,9 +784,7 @@ namespace Game.View
                 StopAttackWarp();
                 CancelUpperBodyAttack(.02f);
                 ResetAbilityTriggers();
-                _cyclonePhase = -1;
-                _cycloneReleasing = false;
-                _sweepLocomotion = _leapLocomotion = false;
+                _leapLocomotion = false;
                 _attackPresentationActive = false;
                 _abilityDefinitionId = definitionId;
                 _abilityPresentationActive = true;
@@ -924,9 +819,7 @@ namespace Game.View
                 StopAttackWarp();
                 CancelUpperBodyAttack(.02f);
                 ResetAbilityTriggers();
-                _cyclonePhase = -1;
-                _cycloneReleasing = false;
-                _sweepLocomotion = _leapLocomotion = false;
+                _leapLocomotion = false;
                 _attackPresentationActive = false;
                 _abilityDefinitionId = definitionId;
                 _abilityPresentationActive = true;
@@ -972,9 +865,7 @@ namespace Game.View
                 StopAttackWarp();
                 CancelUpperBodyAttack(.02f);
                 ResetAbilityTriggers();
-                _cyclonePhase = -1;
-                _cycloneReleasing = false;
-                _sweepLocomotion = _leapLocomotion = false;
+                _leapLocomotion = false;
                 _attackPresentationActive = false;
                 _abilityDefinitionId = definitionId;
                 _abilityPresentationActive = true;
@@ -991,11 +882,9 @@ namespace Game.View
             }
             bool whirlwind = definitionId == AbilityDefinition.WhirlwindId;
             bool anchorLeap = definitionId == AbilityDefinition.AnchorLeapId;
-            bool anchorSweep = definitionId == AbilityDefinition.ChainCycloneId;
             bool chainStep = definitionId == AbilityDefinition.ChainStepId;
-            if (!whirlwind && !anchorLeap && !anchorSweep && !chainStep) return;
+            if (!whirlwind && !anchorLeap && !chainStep) return;
             _abilityDefinitionId = definitionId;
-            _cycloneReleasing = false;
             if (chainStep) { _chainPresentationVariant = 0; _chainFinishing = false; }
             if (_faction == Faction.Wole && !IsDead && (whirlwind || chainStep)) SetCombatReady(true);
 
@@ -1005,12 +894,6 @@ namespace Game.View
                 return;
             }
             if (_animator == null || IsDead) return;
-            if (anchorSweep)
-            {
-                _cyclonePhase = -1;
-                UpdateCycloneAnimation();
-                return;
-            }
             StopAttackWarp();
             if (_faction == Faction.Wole)
             {
@@ -1035,14 +918,6 @@ namespace Game.View
                     _abilityUsesLowerBodyLayer = false;
                     abilitySpeed = AnchorLeapPlaybackSpeed;
                 }
-                else if (anchorSweep)
-                {
-                    stateHash = _locomotionMoving ? Animator.StringToHash("Base Layer.Run_v5") : AnchorSweepState;
-                    triggerHash = AnchorSweepTrigger;
-                    duration = PelagAbilityTiming.SweepRecovery;
-                    _abilityUsesLowerBodyLayer = false;
-                    abilitySpeed = AnchorSweepPlaybackSpeed;
-                }
                 else if (chainStep)
                 {
                     _chainPresentationVariant = 0;
@@ -1063,7 +938,6 @@ namespace Game.View
                     EnterWhirlwindLayer(_lowerBodyLayer, "LowerBody Combat.Lower_Whirlwind_v5", "LowerHeavyAttack");
                 }
 
-                _sweepLocomotion = anchorSweep;
                 _leapLocomotion = anchorLeap;
                 SetAbilityPlaybackSpeed(abilitySpeed);
                 if (stateHash != 0 && !EnterCommittedAbilityState(stateHash, chainStep ? 0.025f : 0.06f))
@@ -1093,7 +967,7 @@ namespace Game.View
             if (IsDead || _faction != Faction.Wole || _animator == null) return;
             SetCombatReady(true);
             _abilityDefinitionId = AbilityDefinition.ChainStepId;
-            _sweepLocomotion = _leapLocomotion = false;
+            _leapLocomotion = false;
             _chainPresentationVariant = index & 1;
             _chainFinishing = remaining == 1;
             string state = _chainFinishing ? "ChainStep_Finish_v5"
@@ -1353,7 +1227,6 @@ namespace Game.View
             _animator.ResetTrigger("HeavyAttack");
             _animator.ResetTrigger("LowerHeavyAttack");
             _animator.ResetTrigger(AnchorLeapTrigger);
-            _animator.ResetTrigger(AnchorSweepTrigger);
             _animator.ResetTrigger(ChainStepTrigger);
         }
 

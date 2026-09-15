@@ -63,11 +63,11 @@ MonoBehaviour:
     MaxPerFrame: 1
   - Sound: 4
     Clips:
-    - {fileID: 8300000, guid: 8fd5bf86d0ea4d7dbbf1992c71b2b823, type: 3}
-    Gain: 1
+    - {fileID: 8300000, guid: bb1e1c09b34adc54ca3a21302c4120c0, type: 3}
+    Gain: 1.3
     Pitch: 1
-    PitchVariation: 0.025
-    Priority: 40
+    PitchVariation: 0
+    Priority: 65
     MaxPerFrame: 1
   - Sound: 5
     Clips:
@@ -213,3 +213,56 @@ MonoBehaviour:
     PitchVariation: 0.025
     Priority: 40
     MaxPerFrame: 1
+  - Sound: 24
+    Clips:
+    - {fileID: 8300000, guid: 4f90853fab22a794284e8116a8b20fd0, type: 3}
+    - {fileID: 8300000, guid: 6396872d07d402a49b18d6a6fc460530, type: 3}
+    - {fileID: 8300000, guid: 73ae5f01396befe45811ecc5fe3ca494, type: 3}
+    - {fileID: 8300000, guid: d907b9ba019726a4ebb621d1554514d8, type: 3}
+    - {fileID: 8300000, guid: 1be3894884e779e4ca0ac3fce2f97dae, type: 3}
+    Gain: 1.35
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 55
+    MaxPerFrame: 1
+  - Sound: 25
+    Clips:
+    - {fileID: 8300000, guid: bcb06937293a36c4d878daea103b6211, type: 3}
+    Gain: 1.3
+    Pitch: 1
+    PitchVariation: 0.01
+    Priority: 65
+    MaxPerFrame: 1
+  - Sound: 26
+    Clips:
+    - {fileID: 8300000, guid: d938b471a9ef2d648927dcbf749fb556, type: 3}
+    Gain: 1.55
+    Pitch: 1
+    PitchVariation: 0.015
+    Priority: 60
+    MaxPerFrame: 1
+  - Sound: 27
+    Clips:
+    - {fileID: 8300000, guid: 09cb3b0bf12db8e4c971703ec696daba, type: 3}
+    Gain: 1.3
+    Pitch: 1
+    PitchVariation: 0
+    Priority: 55
+    MaxPerFrame: 1
+  - Sound: 28
+    Clips:
+    - {fileID: 8300000, guid: 28d7a6b2eeb6b9d429e4a584575d1d71, type: 3}
+    Gain: 0.8
+    Pitch: 1
+    PitchVariation: 0
+    Priority: 60
+    MaxPerFrame: 1
+  - Sound: 29
+    Clips:
+    - {fileID: 8300000, guid: 6ca4f33eedafade4991c4875684f85e0, type: 3}
+    Gain: 1.2
+    Pitch: 1
+    PitchVariation: 0.02
+    Priority: 85
+    MaxPerFrame: 1
+  PelagAudioRevision: 1

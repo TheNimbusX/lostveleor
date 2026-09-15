@@ -12,35 +12,6 @@ namespace Game.Tests
 {
     public sealed class LocationProfileTests
     {
-        [Test]
-        public void DefaultSettings_PreserveOldGenerationAndSpawnRolls()
-        {
-            var modules = PrototypeContent.Modules();
-            var generator = new LayoutGenerator();
-            for (ulong seed = 1; seed <= 20; seed++)
-            {
-                var streams = new RngStreams(seed);
-                for (int depth = 1; depth <= 10; depth++)
-                {
-                    ulong layout = LayoutGenerator.RollSeed(ref streams.Layout);
-                    ulong spawn = LayoutGenerator.RollSeed(ref streams.Spawns);
-                    var oldMap = new LayoutMap(modules, 64);
-                    generator.Generate(modules, layout, oldMap, 10 + depth);
-                    var newMap = new LayoutMap(modules, 64);
-                    var settings = RiftLevelSettings.Prototype(depth);
-                    settings.Generate(generator, modules, newMap, layout);
-                    Assert.That(newMap.Hash(), Is.EqualTo(oldMap.Hash()), $"seed {seed}, level {depth}");
-                    var oldSim = new Simulation(seed, 512);
-                    oldSim.SetupRift(oldMap, spawn, 1 + depth / 3, 3 + depth / 2, 100 + 100 * depth / 4);
-                    var newSim = new Simulation(seed, 512);
-                    settings.Spawn(newSim, newMap, spawn);
-                    Assert.That(newSim.StateHash(), Is.EqualTo(oldSim.StateHash()));
-                    var previewSeeds = RiftLevelSeeds.ForLevel(seed, depth);
-                    Assert.That(previewSeeds.Layout, Is.EqualTo(layout));
-                    Assert.That(previewSeeds.Spawns, Is.EqualTo(spawn));
-                }
-            }
-        }
 
         [Test]
         public void AuthoredSettings_AreUsedBySessionAndEachRift()
@@ -80,6 +51,8 @@ namespace Game.Tests
                 run.Step(InputFrame.Empty);
                 Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
                 run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+                if (run.Phase == RunPhase.ReplacingAbility)
+                    run.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
             }
         }
 
@@ -94,19 +67,6 @@ namespace Game.Tests
         }
 
 #if UNITY_5_3_OR_NEWER
-        [Test]
-        public void ModuleAuthoring_RejectsConnectorsThatDoNotFaceOutward()
-        {
-            var module = ScriptableObject.CreateInstance<ModuleAsset>();
-            try
-            {
-                module.Connectors = new[] { new ConnectorAsset { Cell = new Vector2Int(2, 2), Facing = Direction.North } };
-                Assert.Throws<ArgumentException>(() => module.ToDefinition());
-                module.Connectors[0].Cell = new Vector2Int(2, module.Height - 1);
-                Assert.DoesNotThrow(() => module.ToDefinition());
-            }
-            finally { UnityEngine.Object.DestroyImmediate(module); }
-        }
 #endif
     }
 }

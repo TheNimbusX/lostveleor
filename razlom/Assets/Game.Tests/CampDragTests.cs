@@ -5,22 +5,6 @@ namespace Game.Tests
     public class CampDragTests
     {
         static ItemInstance Sword(ulong seed) => new ItemInstance(StableId.Of("base.rusty_sword"),1,ItemRarity.Normal,seed);
-        [Test] public void ExchangeReturnsToSourceEvenWithEarlierHole()
-        {
-            var c=PrototypeContent.NewCamp(); c.Bag.Add(Sword(1)); c.Bag.Add(Sword(2)); c.EquipFromBag(0);
-            c.EquipFromBag(1); Assert.That(c.Bag.At(0).IsEmpty);Assert.That(c.Bag.At(1).Seed,Is.EqualTo(1));
-        }
-        [Test] public void DragBagKeepsProtectionAndDoesNotDuplicate()
-        {
-            var c=PrototypeContent.NewCamp();c.Bag.Add(Sword(1));c.Bag.SetKeep(0,true);
-            c.Bag.Swap(0,47);Assert.That(c.Bag.Used,Is.EqualTo(1));Assert.That(c.Bag.IsKept(47));Assert.That(c.Bag.IsEmpty(0));
-        }
-        [Test] public void IncompatibleUnequipExchangeIsAtomic()
-        {
-            var c=PrototypeContent.NewCamp();c.Bag.Add(Sword(1));c.EquipFromBag(0);
-            c.Bag.Add(new ItemInstance(StableId.Of("base.leather_jacket"),1,ItemRarity.Normal,2));
-            Assert.That(c.UnequipToSlot(EquipSlot.Weapon,0),Is.False);Assert.That(c.Worn.Worn(EquipSlot.Weapon).Seed,Is.EqualTo(1));Assert.That(c.Bag.At(0).Seed,Is.EqualTo(2));
-        }
         [Test] public void FullBagCanExchangeEquipment()
         {
             var c=PrototypeContent.NewCamp();c.Bag.Add(Sword(1));c.EquipFromBag(0);

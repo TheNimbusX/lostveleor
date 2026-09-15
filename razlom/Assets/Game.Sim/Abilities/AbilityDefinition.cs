@@ -46,13 +46,13 @@ namespace Game.Sim
                 .Set(AbilityStatType.CooldownTicks, 72);
 
         public static int AnchorLeapId => StableId.Of("ability.anchor_leap");
-        public static int ChainCycloneId => StableId.Of("ability.chain_cyclone");
         public static int AnchorSlamId => StableId.Of("ability.anchor_slam");
 
         /// <summary>Удар якорем через плечо по узкой полосе перед героем.</summary>
         public static AbilityDefinition AnchorSlam()
             => new AbilityDefinition("ability.anchor_slam")
                 .Set(AbilityStatType.Damage, 100)
+                .Set(AbilityStatType.LavidiumCost, 20)
                 .Set(AbilityStatType.Radius, Fix64.Ratio(9, 2))
                 .Set(AbilityStatType.Width, Fix64.Ratio(6, 5))
                 .Set(AbilityStatType.StunTicks, 15)
@@ -60,19 +60,6 @@ namespace Game.Sim
                 .Set(AbilityStatType.DurationTicks, 27)
                 .Set(AbilityStatType.CooldownTicks, 108);
 
-        /// <summary>Крюк и цепь вращаются при удержании, без перемещения врагов.</summary>
-        public static AbilityDefinition ChainCyclone()
-            => new AbilityDefinition("ability.chain_cyclone")
-                .Set(AbilityStatType.Damage, 35)
-                .Set(AbilityStatType.Radius, 4)
-                .Set(AbilityStatType.MinimumRadius, 2)
-                .Set(AbilityStatType.DurationTicks, 60)
-                .Set(AbilityStatType.StartTurnsPerSecond, 2)
-                .Set(AbilityStatType.EndTurnsPerSecond, 1)
-                .Set(AbilityStatType.StartMoveMultiplier, Fix64.Ratio(7, 10))
-                .Set(AbilityStatType.EndMoveMultiplier, Fix64.Ratio(4, 10))
-                .Set(AbilityStatType.WeaponRadius, Fix64.Ratio(15, 100))
-                .Set(AbilityStatType.CooldownTicks, 108);
         public static int ChainStepId => StableId.Of("ability.chain_step");
 
         /// <summary>
@@ -94,6 +81,7 @@ namespace Game.Sim
         public static AbilityDefinition AnchorLeap()
             => new AbilityDefinition("ability.anchor_leap")
                 .Set(AbilityStatType.Damage, 75)
+                .Set(AbilityStatType.LavidiumCost, 15)
                 .Set(AbilityStatType.Radius, AnchorKit.LeapRange)
                 .Set(AbilityStatType.CooldownTicks, 54);          // 1.8 с
 
@@ -211,6 +199,7 @@ namespace Game.Sim
         public static AbilityDefinition FireFlask()
             => new AbilityDefinition("ability.fire_flask")
                 .Set(AbilityStatType.Damage, 70)                   // взрыв
+                .Set(AbilityStatType.LavidiumCost, 30)
                 .Set(AbilityStatType.Radius, 7)                    // дальность броска
                 .Set(AbilityStatType.Width, Fix64.Ratio(5, 2))     // диаметр лужи
                 .Set(AbilityStatType.ProjectileSpeed, Fix64.Ratio(14, Simulation.TicksPerSecond))
@@ -237,6 +226,8 @@ namespace Game.Sim
         public static AbilityDefinition Wreck()
             => new AbilityDefinition("ability.wreck")
                 .Set(AbilityStatType.Damage, 70)                   // первый и второй удар
+                // Цена за всё комбо: списывается на первом нажатии, продолжения бесплатны.
+                .Set(AbilityStatType.LavidiumCost, 25)
                 .Set(AbilityStatType.Radius, Fix64.Ratio(28, 10))
                 .Set(AbilityStatType.ArcCosine, Fix64.Ratio(3, 10))
                 .Set(AbilityStatType.WindupTicks, 6)
@@ -244,34 +235,5 @@ namespace Game.Sim
                 .Set(AbilityStatType.ComboWindowTicks, 24)
                 .Set(AbilityStatType.StunTicks, 9)                 // только завершающий удар
                 .Set(AbilityStatType.CooldownTicks, 96);
-
-        /// <summary>
-        /// «Печать пламени»: бросок знака в точку, вспышка по площади, поджиг.
-        /// Числа — заглушка баланса, но структура настоящая.
-        /// </summary>
-        public static AbilityDefinition FlameSeal()
-            => new AbilityDefinition("ability.flame_seal")
-                .Set(AbilityStatType.Damage, 60)
-                .Set(AbilityStatType.Radius, 3)
-                .Set(AbilityStatType.CooldownTicks, 90)             // 3 секунды при 30 Гц
-                .Set(AbilityStatType.ProjectileSpeed, Fix64.Ratio(12, Simulation.TicksPerSecond))
-                .Set(AbilityStatType.BurnTicks, 60)                 // 2 секунды
-                .Set(AbilityStatType.BurnDamagePercent, Fix64.Ratio(4, 100));
-
-        // ---- узлы дерева «Печати пламени», по одному каждого типа ----
-
-        /// <summary>StatMod: +20% урона огнём. Кода ноль.</summary>
-        public static AbilityNode NodeHotter()
-            => AbilityNode.StatMod("node.flame_seal.hotter",
-                AbilityStatType.Damage, ModifierOp.Increased, Fix64.Ratio(20, 100));
-
-        /// <summary>Flag: знак делится на три снаряда, урон каждого −45%.</summary>
-        public static AbilityNode NodeSplit()
-            => AbilityNode.Flag("node.flame_seal.split", AbilityFlag.Split);
-
-        /// <summary>EffectInsert: горящий враг при смерти поджигает ближайшего в радиусе 3 м.</summary>
-        public static AbilityNode NodeSpreads()
-            => AbilityNode.EffectInsert("node.flame_seal.spreads",
-                AbilityEffect.SpreadBurn, AbilityStage.OnKill);
     }
 }

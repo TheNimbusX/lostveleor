@@ -9,7 +9,8 @@ namespace Game.View
         AnchorSweep, ChainStep, Footstep, Dissolve,
         GuardianFall, RootSwarmHit, RootSwarmKill, RootSwarmFall, RootSwarmDissolve,
         EnemyWarning, PlayerHurt, CycloneRelease,
-        WhooshHeavy, CycloneTurn, WhirlwindEnd, ChainStepHop, ChainStepEnd, Count
+        WhooshHeavy, CycloneTurn, WhirlwindEnd, ChainStepHop, ChainStepEnd,
+        PelagAttack, Cleave, Dash, BlazePrepare, BlazeFire, Finisher, Count
     }
 
     [Serializable]
@@ -29,6 +30,7 @@ namespace Game.View
     {
         [Range(0f, 1f)] public float Gain = 0.8f;
         public CombatSoundEntry[] Sounds = Array.Empty<CombatSoundEntry>();
+        [HideInInspector] public int PelagAudioRevision;
 
         public CombatSoundEntry Find(CombatSound sound)
         {

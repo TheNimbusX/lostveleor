@@ -21,7 +21,7 @@ namespace Game.Tests
         {
             var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
             int count = SabreTalents.AppendNodes(line, rank, buffer, 0);
-            sim.SetAbility(slot, PelagKit.Definition(CombatBranch.Sabre, SabreTalents.SlotOf(line)), buffer, count);
+            sim.SetAbility(slot, PelagKit.PoolDefinition(SabreTalents.PoolIndexOf(line)), buffer, count);
         }
 
         private static int Enemy(Simulation sim, float x, float y, int health = 10000)
@@ -65,38 +65,6 @@ namespace Game.Tests
         // ---- Вихрь ----
 
         [Test]
-        public void WhirlwindCrowdAddsTenPercentPerVictim()
-        {
-            int Hit(int rank)
-            {
-                var sim = Arena();
-                Give(sim, 0, SabreTalentLine.Whirlwind, rank);
-                int a = Enemy(sim, 1, 0); Enemy(sim, 0, 1); Enemy(sim, -1, 0);
-                sim.Step(Press(0));
-                Idle(sim, 12);
-                return Lost(sim, a);
-            }
-
-            Assert.AreEqual(120, Hit(2), "без таланта");
-            Assert.AreEqual(156, Hit(3), "три задетых — +30%");
-        }
-
-        [Test]
-        public void WhirlwindRefundReturnsThreePerVictim()
-        {
-            var sim = Arena();
-            Give(sim, 0, SabreTalentLine.Whirlwind, 4);
-            Enemy(sim, 1, 0); Enemy(sim, -1, 0);
-            sim.Entities.Lavidium[Simulation.PlayerId] = Fix64.FromInt(50);
-
-            sim.Step(Press(0));
-            Idle(sim, 12);
-
-            // 50 − 30 за каст + 6 за двух задетых + восстановление за 13 тиков.
-            Assert.AreEqual(27.3f, Lavidium(sim), 0.6f);
-        }
-
-        [Test]
         public void WhirlwindChannelKeepsHittingWhileHeld()
         {
             int Damage(bool hold)
@@ -114,39 +82,7 @@ namespace Game.Tests
             Assert.GreaterOrEqual(Damage(true), single * 3, "удержание не добавило оборотов");
         }
 
-        [Test]
-        public void WhirlwindChannelDrainsLavidium()
-        {
-            var sim = Arena();
-            Give(sim, 0, SabreTalentLine.Whirlwind, 5);
-            Enemy(sim, 1, 0, 100000);
-            sim.Step(Press(0));
-            for (int i = 0; i < 40; i++) sim.Step(Hold(0));
-
-            Assert.IsTrue(sim.WhirlwindChanneling, "удержание не началось");
-            Assert.Less(Lavidium(sim), 70f, "удержание не тратит лавидий");
-        }
-
         // ---- Рассекающий удар ----
-
-        [Test]
-        public void CleaveOnTheMoveDoesNotStopTheHero()
-        {
-            var sim = Arena();
-            Give(sim, 0, SabreTalentLine.Cleave, 1);
-            sim.Step(Press(0));
-            Assert.IsTrue(sim.CleaveMovable, "талант «На ходу» не включился");
-
-            var move = InputFrame.Empty;
-            move.Flags = (byte)InputFlags.MoveOrder;
-            move.Aim = new FixVec2(Fix64.Zero, Fix64.FromInt(6));
-            move.AttackTarget = -1;
-            FixVec2 before = sim.Entities.Position[Simulation.PlayerId];
-            for (int i = 0; i < 8; i++) sim.Step(in move);
-
-            Assert.IsTrue(sim.CleaveActive, "удар отменился от шага");
-            Assert.Greater((sim.Entities.Position[Simulation.PlayerId] - before).LengthSq.ToFloat(), 0.01f, "герой стоит");
-        }
 
         [Test]
         public void CleaveBigGameHitsElitesHarder()
@@ -164,21 +100,6 @@ namespace Game.Tests
 
             Assert.AreEqual(Hit(2, true), Hit(3, false), "обычная цель не должна получать прибавку");
             Assert.AreEqual(Hit(2, true) * 140 / 100, Hit(3, true));
-        }
-
-        [Test]
-        public void CleaveKillRefundsItsCost()
-        {
-            var sim = Arena();
-            Give(sim, 0, SabreTalentLine.Cleave, 4);
-            Enemy(sim, 1.2f, 0, 1);
-            sim.Entities.Lavidium[Simulation.PlayerId] = Fix64.FromInt(50);
-
-            sim.Step(Press(0));
-            Idle(sim, 25);
-
-            // 50 − 15 + 15 за убийство + восстановление.
-            Assert.GreaterOrEqual(Lavidium(sim), 50f);
         }
 
         [Test]

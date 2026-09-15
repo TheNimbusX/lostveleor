@@ -24,6 +24,7 @@ namespace Game.Sim
         private FixVec2 _cleaveOrigin;
 
         public bool CleaveActive => _cleaveSlot >= 0;
+        public FixVec2 CleaveDirection => _cleaveDirection;
         public int CleaveContactTick => _cleaveImpactTick;
         public int CleaveStartTick => _cleaveStartTick;
         public int CleaveEndTick => _cleaveEndTick;

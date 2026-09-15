@@ -30,30 +30,6 @@ namespace Game.Sim
         public int Act { get; private set; }
         public CampService Services { get; private set; }
 
-        /// <summary>
-        /// Боевая ветка Пелага: сабля или якорь.
-        ///
-        /// ЖИВЁТ В ЛАГЕРЕ, ПОТОМУ ЧТО ЭТО РЕШЕНИЕ. Правило лагеря — здесь
-        /// принимают решения, в Разломе их исполняют, — и выбор ветки ему
-        /// отвечает буквально: он меняет все четыре кнопки и то, о чём игрок
-        /// думает в бою. Держать его в представлении значило бы позволить
-        /// съёмке, тестам и живому запуску разойтись в том, чем игрок бьёт.
-        ///
-        /// Переключается свободно и бесплатно. Диздок оставляет правила смены
-        /// «отдельно», а свободная смена — единственный вариант, который ничего
-        /// не отнимает у игрока, пока эти правила не написаны: запрет,
-        /// поставленный наугад, потом придётся снимать, а снятый — нет.
-        /// </summary>
-        public CombatBranch Branch { get; private set; }
-
-        /// <summary>Меняет ветку. Возвращает false, если она уже выбрана.</summary>
-        public bool SelectBranch(CombatBranch branch)
-        {
-            if (Branch == branch) return false;
-            Branch = branch;
-            return true;
-        }
-
         public Camp(ItemDatabase items, int act = 1, int bagSlots = DefaultBagSlots)
         {
             Items = items;
@@ -266,11 +242,10 @@ namespace Game.Sim
 
         // ---- прокачка ----
 
-        private readonly int[] _sabreTalentRanks = new int[SabreTalents.LineCount];
-
         /// <summary>
         /// Уровень героя. Живёт в лагере, а не в забеге: смерть отнимает
-        /// добытое в Разломе, но не уровень и не взятые таланты.
+        /// добытое в Разломе, но не уровень. Уровень даёт базовые статы
+        /// (Simulation.SetPlayerLevel); таланты с 15 сентября живут в забеге.
         /// </summary>
         public int Level { get; private set; } = 1;
 
@@ -298,71 +273,30 @@ namespace Game.Sim
             return gained;
         }
 
-        public int TalentPoints => Progression.TalentPointsAtLevel(Level);
-
-        public int SpentTalentPoints
-        {
-            get
-            {
-                int spent = 0;
-                for (int i = 0; i < _sabreTalentRanks.Length; i++) spent += _sabreTalentRanks[i];
-                return spent;
-            }
-        }
-
-        public int AvailableTalentPoints => TalentPoints - SpentTalentPoints;
-
-        /// <summary>Сколько талантов взято в направлении, 0..5. Взятые идут строго по порядку.</summary>
-        public int SabreTalentRank(SabreTalentLine line) => _sabreTalentRanks[(int)line];
-
-        /// <summary>Можно ли взять следующий талант направления.</summary>
-        public bool CanTakeSabreTalent(SabreTalentLine line)
-            => (uint)line < (uint)SabreTalents.LineCount
-               && _sabreTalentRanks[(int)line] < SabreTalents.TalentsPerLine
-               && AvailableTalentPoints > 0;
-
-        /// <summary>Берёт следующий по порядку талант направления. False — нет очков или всё взято.</summary>
-        public bool TakeSabreTalent(SabreTalentLine line)
-        {
-            if (!CanTakeSabreTalent(line)) return false;
-            _sabreTalentRanks[(int)line]++;
-            return true;
-        }
-
-        /// <summary>Сбрасывает таланты, очки возвращаются. Пока только для разработчика.</summary>
-        public void ResetTalents()
-        {
-            for (int i = 0; i < _sabreTalentRanks.Length; i++) _sabreTalentRanks[i] = 0;
-        }
-
-        /// <summary>Только редактор и dev-сборка: поднять уровень без гринда, чтобы проверить таланты.</summary>
+        /// <summary>
+        /// Только редактор и dev-сборка: поднять уровень без гринда. Статы
+        /// симуляций обновляет GameSession.SyncPlayerLevel.
+        /// </summary>
         public void DeveloperGrantLevel() => DeveloperSetLevel(Level + 1);
 
-        /// <summary>
-        /// Только редактор и dev-сборка: поставить уровень вручную. Если взятых
-        /// талантов больше, чем очков на новом уровне, таланты сбрасываются —
-        /// иначе герой нёс бы очки, которых у него нет.
-        /// </summary>
+        /// <summary>Только редактор и dev-сборка: поставить уровень вручную.</summary>
         public void DeveloperSetLevel(int level)
         {
             Level = level < 1 ? 1 : level;
             Experience = 0;
-            if (SpentTalentPoints > TalentPoints) ResetTalents();
         }
 
         /// <summary>Восстановление из сохранения. Корректность чисел проверяет CampSaveCodec.</summary>
-        internal void RestoreProgression(int level, int experience, int[] sabreRanks)
+        internal void RestoreProgression(int level, int experience)
         {
             Level = level;
             Experience = experience;
-            for (int i = 0; i < _sabreTalentRanks.Length; i++) _sabreTalentRanks[i] = sabreRanks[i];
         }
 
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, Act);
             Hashing.Mix(ref hash, (int)Services);
-            Hashing.Mix(ref hash, (int)Branch);
             for (int i = 0; i < _wallet.Length; i++) Hashing.Mix(ref hash, _wallet[i]);
 
             Bag.HashInto(ref hash);
@@ -370,7 +304,6 @@ namespace Game.Sim
 
             Hashing.Mix(ref hash, Level);
             Hashing.Mix(ref hash, Experience);
-            for (int i = 0; i < _sabreTalentRanks.Length; i++) Hashing.Mix(ref hash, _sabreTalentRanks[i]);
         }
     }
 }

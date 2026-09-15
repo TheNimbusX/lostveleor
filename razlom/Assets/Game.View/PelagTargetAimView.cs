@@ -12,24 +12,19 @@ namespace Game.View
         private bool _aiming;
         private GUIStyle _hint;
 
-        /// <summary>
-        /// Радиус кольца прицела по земле, м.
-        ///
-        /// Примерно с фигуру героя: игрок должен понимать, что притянется
-        /// «сюда», а не «в эту точку с точностью до сантиметра».
-        /// </summary>
-        private const float GroundAimRadius = 0.55f;
         private void OnDisable() { if (_aiming) Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); _aiming = false; }
         private void OnGUI()
         {
             if (!_aiming) return;
-            if (_hint == null) _hint = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold };
+            if (_hint == null) _hint = new GUIStyle(GameTypography.Label) { fontSize = 15, fontStyle = FontStyle.Bold };
             var point = Event.current.mousePosition;
+            bool ground = _driver != null && _driver.GroundTargetedSlot(_driver.AbilityTargetAimSlot);
+            string text = (ground ? "Выбери точку" : "Выбери врага") + "\nЛКМ — применить · ПКМ / Esc — отмена";
             Color previousColor = GUI.color;
             GUI.color = Color.black;
-            GUI.Label(new Rect(point.x + 24, point.y + 20, 290, 52), "ВЫБЕРИ ВРАГА\nЛКМ — рывок · ПКМ / Esc — отмена", _hint);
+            GUI.Label(new Rect(point.x + 24, point.y + 20, 290, 52), text, _hint);
             GUI.color = new Color(1f, 0.97f, 0.88f);
-            GUI.Label(new Rect(point.x + 23, point.y + 19, 290, 52), "ВЫБЕРИ ВРАГА\nЛКМ — рывок · ПКМ / Esc — отмена", _hint);
+            GUI.Label(new Rect(point.x + 23, point.y + 19, 290, 52), text, _hint);
             GUI.color = previousColor;
         }
         private void Start()
@@ -67,6 +62,7 @@ namespace Game.View
                 Cursor.SetCursor(aiming ? _cursor : null, aiming ? new Vector2(20, 20) : Vector2.zero, CursorMode.Auto);
             }
             var sim = _driver.Sim;
+            float groundHeight = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.GroundHeight : 0f;
 
             // ПРИЦЕЛ В ТОЧКУ: у Броска якоря нет цели-врага.
             //
@@ -83,12 +79,13 @@ namespace Game.View
                     _driver.CursorWorld.Y.ToFloat());
                 Vector3 landing = origin + Vector3.ClampMagnitude(wanted - origin,
                     AnchorKit.LeapRange.ToFloat());
+                float landingRadius = sim.Entities.BodyRadius[Simulation.PlayerId].ToFloat();
                 _line.enabled = true;
                 for (int i = 0; i < 48; i++)
                 {
                     float a = i * 2f * Mathf.PI / 48;
-                    _line.SetPosition(i, new Vector3(landing.x + Mathf.Cos(a) * GroundAimRadius,
-                        0.07f, landing.z + Mathf.Sin(a) * GroundAimRadius));
+                    _line.SetPosition(i, new Vector3(landing.x + Mathf.Cos(a) * landingRadius,
+                        groundHeight + .07f, landing.z + Mathf.Sin(a) * landingRadius));
                 }
                 return;
             }
@@ -104,7 +101,7 @@ namespace Game.View
             {
                 float angle = i * 2f * Mathf.PI / 48;
                 _line.SetPosition(i, new Vector3(p.X.ToFloat() + Mathf.Cos(angle) * radius,
-                    0.07f, p.Y.ToFloat() + Mathf.Sin(angle) * radius));
+                    groundHeight + .07f, p.Y.ToFloat() + Mathf.Sin(angle) * radius));
             }
         }
         private void OnDestroy() { OnDisable(); if (_material != null) Destroy(_material); if (_cursor != null) Destroy(_cursor); }

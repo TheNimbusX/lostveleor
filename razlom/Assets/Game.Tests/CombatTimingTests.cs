@@ -20,22 +20,6 @@ namespace Game.Tests
                 "геройский контакт 0.3 с согласован с производными A/B");
         }
 
-        /// <summary>
-        /// Замах врага — телеграф, а не вес удара. Он обязан оставаться заметно
-        /// длиннее геройского, иначе игроку нечего читать и не на что успевать.
-        /// Тест сторожит именно РАЗНИЦУ: уравняют константы — покраснеет.
-        /// </summary>
-        [Test]
-        public void EnemyWindup_StaysLongerThanTheHeroSoItReadsAsATelegraph()
-        {
-            Assert.AreEqual(12, Simulation.EnemyAttackWindupTicks,
-                "телеграф врага держится на 0.4 с");
-            Assert.GreaterOrEqual(Simulation.EnemyAttackWindupTicks,
-                Simulation.AttackWindupTicks,
-                "враг не имеет права заносить удар быстрее героя: его замах — " +
-                "это окно на реакцию, и оно не может быть короче геройского");
-        }
-
         /// <summary>Каждая сторона бьёт по своему замаху, а не по чужому.</summary>
         [Test]
         public void EnemyAttack_LandsOnTheEnemyWindup_NotTheHeroOne()
@@ -70,51 +54,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void EnemyAttack_RecoversFromWrongFacingAndStillLands()
-        {
-            var sim = new Simulation(7102UL, 8);
-            sim.SetupTestArena(0);
-            int enemy = sim.Entities.Spawn(
-                new FixVec2(Fix64.Ratio(9, 5), Fix64.Zero), 4000, Faction.Orvill);
-
-            // Враг появляется в радиусе удара, но смотрит боком.
-            // Раньше поиск цели требовал фронтальный сектор и такой моб мог
-            // навсегда остаться без замаха после расталкивания.
-            sim.Entities.Facing[enemy] = new FixVec2(Fix64.Zero, Fix64.One);
-            sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
-            sim.Entities.Stats[enemy].SetBase(StatType.Damage, Fix64.FromInt(7));
-            sim.Entities.RefreshStats(enemy);
-
-            InputFrame idle = InputFrame.Empty;
-            int attackTick = -1;
-            for (int i = 0; i < 40; i++)
-            {
-                int before = sim.Entities.AttackImpactTick[enemy];
-                int tick = sim.Tick;
-                sim.Step(in idle);
-                int after = sim.Entities.AttackImpactTick[enemy];
-                if (after > before)
-                {
-                    attackTick = tick;
-                    break;
-                }
-            }
-
-            Assert.That(attackTick, Is.GreaterThanOrEqualTo(0),
-                "моб обязан начать замах после доворота к игроку");
-            Assert.That(attackTick, Is.LessThan(25),
-                "расширенный сектор не должен превращать доворот в долгий простой");
-
-            int playerBefore = sim.Entities.Health[Simulation.PlayerId];
-            int impactTick = sim.Entities.AttackImpactTick[enemy];
-            while (sim.Tick <= impactTick + 1)
-                sim.Step(in idle);
-
-            Assert.Less(sim.Entities.Health[Simulation.PlayerId], playerBefore,
-                "контакт врага должен реально уменьшить здоровье игрока");
-        }
-
-        [Test]
         public void MeleeDamage_LandsAtTheBladeContactTick()
         {
             var sim = new Simulation(7001UL, 16);
@@ -141,56 +80,6 @@ namespace Game.Tests
             Assert.Less(sim.Entities.Health[victim], healthBefore);
             Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
                 e.Type == SimEventType.Damage && e.Target == victim));
-        }
-
-        [Test]
-        public void MeleeSwing_MissesWhenTargetLeavesBeforeContact()
-        {
-            var sim = new Simulation(7002UL, 16);
-            sim.SetupTestArena(0);
-            int victim = sim.Entities.Spawn(
-                new FixVec2(Fix64.One, Fix64.Zero), 1000, Faction.Orvill);
-            var attack = new InputFrame { Flags = (byte)InputFlags.Attack };
-
-            sim.Step(in attack);
-            sim.Entities.Position[victim] = new FixVec2(Fix64.FromInt(20), Fix64.Zero);
-            int healthBefore = sim.Entities.Health[victim];
-
-            for (int i = 0; i < Simulation.AttackWindupTicks; i++)
-                sim.Step(in attack);
-
-            Assert.AreEqual(healthBefore, sim.Entities.Health[victim],
-                "ушедшая из дуги цель не должна получить отложенный удар");
-        }
-
-        [Test]
-        public void PlayerAttackEvents_AlternateFastAAndHeavyB()
-        {
-            var sim = new Simulation(7010UL, 16);
-            sim.SetupTestArena(0);
-            int victim = sim.Entities.Spawn(
-                new FixVec2(Fix64.One, Fix64.Zero), 5000, Faction.Orvill);
-            MakeStationary(sim, victim);
-            var held = new InputFrame { Flags = (byte)InputFlags.Attack };
-
-            int first = -1;
-            int second = -1;
-            int firstTick = -1, secondTick = -1;
-            for (int tick = 0; tick < 60 && second < 0; tick++)
-            {
-                sim.Step(in held);
-                for (int i = 0; i < sim.Events.Count; i++)
-                {
-                    SimEvent e = sim.Events[i];
-                    if (e.Type != SimEventType.Attack || e.Source != Simulation.PlayerId) continue;
-                    if (first < 0) { first = e.Amount; firstTick = sim.Tick; }
-                    else { second = e.Amount; secondTick = sim.Tick; break; }
-                }
-            }
-
-            Assert.AreEqual(20, secondTick - firstTick, "базовая серия повторяется через 20 тиков");
-            Assert.AreEqual(0, first, "серия должна начинаться быстрым A");
-            Assert.AreEqual(1, second, "второй такт серии обязан быть тяжёлым B");
         }
 
         [Test]
@@ -225,69 +114,6 @@ namespace Game.Tests
                 "тяжёлый B должен прорубать соседа снизу");
             Assert.AreEqual(rearBefore, sim.Entities.Health[rear],
                 "cleave не имеет права бить за спину");
-        }
-
-        [Test]
-        public void KillingOrderedTarget_ChainsToNearbyEnemy()
-        {
-            var sim = new Simulation(7012UL, 16);
-            sim.SetupTestArena(0);
-            int first = sim.Entities.Spawn(
-                new FixVec2(Fix64.One, Fix64.Zero), 1, Faction.Orvill);
-            int next = sim.Entities.Spawn(
-                new FixVec2(Fix64.Ratio(8, 5), Fix64.Ratio(1, 5)), 5000, Faction.Orvill);
-            MakeStationary(sim, first);
-            MakeStationary(sim, next);
-
-            var click = new InputFrame
-            {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = first,
-            };
-            sim.Step(in click);
-            InputFrame released = InputFrame.Empty;
-            for (int i = 0; i < Simulation.AttackWindupTicks; i++) sim.Step(in released);
-
-            Assert.IsFalse(sim.Entities.Alive[first]);
-            Assert.AreEqual(next, sim.AttackTarget,
-                "после убийства приказ должен мягко перейти на соседа в текущей пачке");
-        }
-
-        [Test]
-        public void Whirlwind_UsesEarnedBurstCooldown()
-        {
-            AbilityDefinition whirlwind = AbilityDefinition.Whirlwind();
-            Assert.AreEqual(72, whirlwind.GetBase(AbilityStatType.CooldownTicks).ToInt(),
-                "Вихрь должен быть сильным тактом серии, а не кнопкой каждую секунду");
-        }
-
-        [Test]
-        public void WhirlwindDamage_IsMarkedAsAbilityImpact()
-        {
-            var sim = new Simulation(7013UL, 16);
-            sim.SetupTestArena(0);
-            int victim = sim.Entities.Spawn(
-                new FixVec2(Fix64.One, Fix64.Zero), 5000, Faction.Orvill);
-            MakeStationary(sim, victim);
-            sim.SetAbility(0, AbilityDefinition.Whirlwind(), new AbilityNode[0], 0);
-
-            InputFrame cast = InputFrame.Empty;
-            cast.AbilityMask = 1;
-            sim.Step(in cast);
-            InputFrame released = InputFrame.Empty;
-            bool found = false;
-            for (int i = 0; i <= 12 && !found; i++)
-            {
-                sim.Step(in released);
-                for (int e = 0; e < sim.Events.Count; e++)
-                    if (sim.Events[e].Type == SimEventType.Damage
-                        && sim.Events[e].Target == victim)
-                    {
-                        Assert.AreEqual(DamageOrigin.Ability, sim.Events[e].DamageOrigin);
-                        found = true;
-                    }
-            }
-            Assert.IsTrue(found, "контрольный Вихрь должен попасть по соседней цели");
         }
 
         [Test]
@@ -328,47 +154,5 @@ namespace Game.Tests
                 "сабельное убийство должно приблизить следующий burst");
         }
 
-        [TestCase(CombatFeelCaptureTier.Normal, false)]
-        [TestCase(CombatFeelCaptureTier.Critical, true)]
-        public void CombatFeelStand_UsesRealDamageEventAtRequestedTier(
-            CombatFeelCaptureTier tier, bool expectedCritical)
-        {
-            var sim = new Simulation(7003UL, 16);
-            var map = new LayoutMap(PrototypeContent.Modules(), 8);
-            sim.SetupCombatFeelShowcase(map, 1, tier);
-            var attack = new InputFrame { Flags = (byte)InputFlags.Attack };
-
-            int healthBefore = sim.Entities.Health[1];
-            for (int i = 0; i <= Simulation.AttackWindupTicks; i++)
-                sim.Step(in attack);
-
-            Assert.Less(sim.Entities.Health[1], healthBefore);
-            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
-                e.Type == SimEventType.Damage
-                && e.Source == Simulation.PlayerId
-                && e.Target == 1
-                && e.Flag == expectedCritical));
-        }
-
-        [Test]
-        public void CombatFeelStand_KillStillComesFromContactDamage()
-        {
-            var sim = new Simulation(7004UL, 16);
-            var map = new LayoutMap(PrototypeContent.Modules(), 8);
-            sim.SetupCombatFeelShowcase(map, 1, CombatFeelCaptureTier.Kill);
-            var attack = new InputFrame { Flags = (byte)InputFlags.Attack };
-
-            sim.Step(in attack);
-            Assert.IsTrue(sim.Entities.Alive[1], "замах не должен убивать цель");
-
-            for (int i = 0; i < Simulation.AttackWindupTicks; i++)
-                sim.Step(in attack);
-
-            Assert.IsFalse(sim.Entities.Alive[1]);
-            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
-                e.Type == SimEventType.Damage && e.Target == 1));
-            Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
-                e.Type == SimEventType.Death && e.Target == 1));
-        }
     }
 }

@@ -6,8 +6,8 @@ using Sound = Game.View.CombatSound;
 namespace Game.View
 {
     /// <summary>
-    /// Presentation-only combat mix built from imported CC0 one-shots.
-    /// It consumes confirmed simulation events and never decides damage itself.
+    /// Сведение подтверждённых событий боя из записей владельца и прежних банков.
+    /// Звук следует за симуляцией и не определяет урон.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(1100)]
@@ -58,6 +58,10 @@ namespace Game.View
         private GameMode _modeShown = GameMode.Camp;
         private float _whooshDelay = -1f;
         private int _whooshAttackVariant;
+        private float[] _voiceGains, _fadeLeft;
+        private bool _paused, _blazePreparing, _blazeBurning;
+        private double _pausedAt;
+        private float _finisherReadyAt;
 
         // ---- шаги ----
         //
@@ -85,15 +89,25 @@ namespace Game.View
         private void LateUpdate()
         {
             if (_voices == null) return;
+            bool paused = _driver.GameplayPaused || Time.timeScale == 0f;
+            if (paused != _paused)
+            {
+                _paused = paused;
+                if (paused) _pausedAt = AudioSettings.dspTime;
+                else _voiceBudget.Shift(AudioSettings.dspTime - _pausedAt);
+                foreach (var voice in _voices) { if (paused) voice.Pause(); else voice.UnPause(); }
+            }
+            UpdateVoiceMix();
+            if (paused) return;
             for (int i = 0; i < _playedThisFrame.Length; i++) _playedThisFrame[i] = 0;
 
             PlayModeChange();
             UpdateWhoosh();
             if (_driver.Sim != null)
             {
-            UpdateCycloneSound();
             ConsumeEvents();
             UpdateCleaveSound();
+            UpdateBlazeSound();
             if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
             {
                 _anchorImpactAt = -1f;
@@ -135,38 +149,13 @@ namespace Game.View
             if (sim == null || !sim.CleaveActive) { _cleaveSoundCast = -1; return; }
             if (_cleaveSoundCast != sim.CleaveStartTick)
             { _cleaveSoundCast = sim.CleaveStartTick; _cleaveSoundPlayed = false; }
-            if (!_cleaveSoundPlayed && sim.Tick - 1 + _driver.Alpha >= sim.CleaveSwingStartTick)
+            // Пик новой записи находится через 0,25 с после начала; совмещаем с контактом.
+            if (!_cleaveSoundPlayed && sim.Tick - 1 + _driver.Alpha >= Mathf.Max(sim.CleaveStartTick,
+                sim.CleaveContactTick - .25f * Simulation.TicksPerSecond))
             {
                 _cleaveSoundPlayed = true;
-                Play(Sound.WhooshHeavy, WhooshVolume, .92f, .02f);
+                Play(Sound.Cleave, AbilityVolume, 1f, .01f);
             }
-        }
-
-        private bool _cycloneSoundActive;
-        private int _cycloneSoundTurn = -1;
-        private void UpdateCycloneSound()
-        {
-            var sim = _driver.Sim;
-            bool active = sim != null && sim.CycloneActive;
-            if (active)
-            {
-                int turn = (sim.CycloneTravel / Fix64.TwoPi).ToInt();
-                if (!_cycloneSoundActive || turn != _cycloneSoundTurn)
-                {
-                    float charge = Mathf.Clamp01(sim.CycloneElapsedTicks / 60f);
-                    Play(Sound.CycloneTurn, WhooshVolume * .65f, Mathf.Lerp(1.03f, .72f, charge), .015f);
-                    Play(Sound.HitMetal, MetalVolume * .16f, .78f, .015f);
-                    _cycloneSoundTurn = turn;
-                }
-            }
-            else if (_cycloneSoundActive)
-            {
-                StopKind(Sound.AnchorSweep);
-                StopKind(Sound.CycloneTurn);
-                Play(Sound.CycloneRelease, AbilityVolume * .5f, 1f, .01f);
-                _cycloneSoundTurn = -1;
-            }
-            _cycloneSoundActive = active;
         }
 
         private void PlayModeChange()
@@ -184,7 +173,8 @@ namespace Game.View
             _chainSoundActive = false;
             _whooshDelay = -1f;
             _stepAnchorSet = false;
-            _cycloneSoundActive = false;
+            _blazePreparing = _blazeBurning = false;
+            _finisherReadyAt = 0f;
             for (int i = 0; i < _voices.Length; i++) _voices[i].Stop();
             _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
@@ -223,8 +213,12 @@ namespace Game.View
                         if (e.Target != Simulation.PlayerId)
                         {
                             var kind = _driver.Sim.Entities.Kind[e.Target];
-                            Play(kind == EnemyKind.ForestRootSwarm ? Sound.RootSwarmKill : Sound.Kill,
-                                KillVolume, 0.96f, 0.025f);
+                            // Один акцент на группу смертей, без трёх полных слоёв поверх него.
+                            if (Time.time >= _finisherReadyAt)
+                            {
+                                Play(Sound.Finisher, KillVolume, 1f, .02f);
+                                _finisherReadyAt = Time.time + .10f;
+                            }
                             QueueDeathSounds(kind);
                         }
                         break;
@@ -236,6 +230,9 @@ namespace Game.View
                             _whirlwindEndAt = -1f;
                             StopKind(Sound.Whirlwind);
                             _whooshDelay = -1f;
+                            FadeKind(Sound.PelagAttack);
+                            FadeKind(Sound.Cleave);
+                            FadeKind(Sound.BlazePrepare);
                             _cleaveSoundCast = -1;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.CleaveId) break;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
@@ -251,12 +248,9 @@ namespace Game.View
                                 // the old swing lands acoustically inside the
                                 // ability and makes the next combo feel late.
                                 _whooshDelay = -1f;
-                                // Curated sweep peak is at ~0.30 s and the
-                                // deterministic Whirlwind contact is at 0.333 s.
-                                // A fixed identity keeps that signature aligned
-                                // on every cast instead of randomising two cues
-                                // whose peaks land on different combat phases.
-                                Play(Sound.Whirlwind, WhirlwindVolume, 0.96f, 0.015f);
+                                // Пик записи 0,21 с совмещается с контактом Вихря.
+                                Play(Sound.Whirlwind, WhirlwindVolume, 1f, 0f,
+                                    Mathf.Max(0f, Simulation.WhirlwindContactDelayTicks / (float)Simulation.TicksPerSecond - .21f));
                                 _whirlwindEndAt = Time.time + CharacterAnimatorView.WhirlwindClipDuration;
                             }
                             else
@@ -272,6 +266,15 @@ namespace Game.View
                                     sound == Sound.Cast ? AbilityCastPitch(e.Amount) : 0.98f,
                                     0.03f);
                             }
+                        }
+                        break;
+                    case SimEventType.BlazeBegin:
+                        if (e.Source == Simulation.PlayerId)
+                        {
+                            FadeKind(Sound.BlazePrepare);
+                            StopKind(Sound.BlazeFire);
+                            Play(Sound.BlazeFire, AbilityVolume, 1f, 0f);
+                            _blazeBurning = true;
                         }
                         break;
                 }
@@ -347,8 +350,8 @@ namespace Game.View
 
             _whooshDelay = -1f;
             bool heavy = _whooshAttackVariant == 1;
-            Play(heavy ? Sound.WhooshHeavy : Sound.Whoosh, WhooshVolume * (heavy ? 1.12f : 1f),
-                heavy ? 0.92f : 1.03f, 0.045f);
+            Play(Sound.PelagAttack, WhooshVolume * (heavy ? 1.10f : 1f),
+                heavy ? .96f : 1.03f, .025f);
         }
 
         private void PlayDamage(in SimEvent e)
@@ -359,6 +362,9 @@ namespace Game.View
             { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); return; }
 
             if (e.Source != Simulation.PlayerId) return;
+
+            // Подтверждённая смерть в этом кадре получает один финальный контакт.
+            if (!_driver.Sim.Entities.Alive[e.Target]) return;
 
             Sound bodySound = _driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestRootSwarm
                 ? Sound.RootSwarmHit : Sound.HitBody;
@@ -417,8 +423,10 @@ namespace Game.View
             AbilityBuild build = sim.GetAbility(slot);
             if (build == null) return Sound.Cast;
 
-            if (build.DefinitionId == AbilityDefinition.ChainCycloneId) return Sound.AnchorSweep;
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return Sound.ChainStep;
+            if (build.DefinitionId == AbilityDefinition.DashId) return Sound.Dash;
+            if (build.DefinitionId == AbilityDefinition.BlazeId)
+            { _blazePreparing = true; return Sound.BlazePrepare; }
             return Sound.Cast;
         }
 
@@ -431,7 +439,6 @@ namespace Game.View
             if (build == null) return 0.95f;
 
             if (build.DefinitionId == AbilityDefinition.AnchorLeapId) return 1.22f;
-            if (build.DefinitionId == AbilityDefinition.ChainCycloneId) return 0.74f;
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return 1.02f;
             return 0.95f;
         }
@@ -484,9 +491,11 @@ namespace Game.View
             AudioSource voice = _voices[slot];
             voice.Stop();
             _voiceSounds[slot] = sound;
+            _fadeLeft[slot] = -1f;
             voice.clip = clip;
-            voice.volume = Mathf.Clamp01(volume * Master * GameUserSettings.EffectsVolume
+            _voiceGains[slot] = Mathf.Clamp01(volume * Master
                 * (Profile != null ? Profile.Gain : 0.8f) * (entry != null ? entry.Gain : 1f));
+            voice.volume = _voiceGains[slot] * GameUserSettings.EffectsVolume;
             voice.pitch = pitch;
             voice.priority = 256 - Mathf.Clamp(priority * 2, 0, 256);
             if (delay > 0f) voice.PlayDelayed(delay);
@@ -500,7 +509,8 @@ namespace Game.View
         {
             _deathCueCount = 0;
             _whooshDelay = _whirlwindEndAt = _anchorImpactAt = _anchorLandAt = -1f;
-            _chainSoundActive = _cycloneSoundActive = false;
+            _chainSoundActive = false;
+            _blazePreparing = _blazeBurning = _paused = false;
             if (_voices != null) foreach (var voice in _voices) if (voice != null) voice.Stop();
             _voiceBudget?.Clear();
         }
@@ -512,6 +522,42 @@ namespace Game.View
                 if (_voiceSounds[i] != sound) continue;
                 _voices[i].Stop();
                 _voiceBudget.Release(i);
+            }
+        }
+
+        private void FadeKind(Sound sound)
+        {
+            for (int i = 0; i < _voices.Length; i++)
+                if (_voiceSounds[i] == sound && _voices[i].isPlaying && _fadeLeft[i] < 0f)
+                    _fadeLeft[i] = .10f;
+        }
+
+        private void UpdateBlazeSound()
+        {
+            var sim = _driver.Sim;
+            if (_blazePreparing && !sim.BlazeCasting)
+            { FadeKind(Sound.BlazePrepare); _blazePreparing = false; }
+            if (_blazeBurning && !sim.BlazeActive)
+            { FadeKind(Sound.BlazeFire); _blazeBurning = false; }
+            if (!sim.Entities.Alive[Simulation.PlayerId])
+            {
+                FadeKind(Sound.PelagAttack); FadeKind(Sound.Cleave); FadeKind(Sound.Whirlwind); FadeKind(Sound.Dash);
+                _whooshDelay = _whirlwindEndAt = -1f;
+            }
+        }
+
+        private void UpdateVoiceMix()
+        {
+            for (int i = 0; i < _voices.Length; i++)
+            {
+                float fade = 1f;
+                if (_fadeLeft[i] >= 0f)
+                {
+                    if (!_paused) _fadeLeft[i] -= Time.deltaTime;
+                    fade = Mathf.Clamp01(_fadeLeft[i] / .10f);
+                    if (fade <= 0f) { _voices[i].Stop(); _voiceBudget.Release(i); _fadeLeft[i] = -1f; }
+                }
+                _voices[i].volume = _voiceGains[i] * GameUserSettings.EffectsVolume * fade;
             }
         }
 
@@ -531,6 +577,9 @@ namespace Game.View
             _voices = new AudioSource[Mathf.Max(4, Voices)];
             _voiceBudget = new CombatVoiceBudget(_voices.Length);
             _voiceSounds = new Sound[_voices.Length];
+            _voiceGains = new float[_voices.Length];
+            _fadeLeft = new float[_voices.Length];
+            for (int i = 0; i < _fadeLeft.Length; i++) _fadeLeft[i] = -1f;
 
             for (int i = 0; i < _voices.Length; i++)
             {

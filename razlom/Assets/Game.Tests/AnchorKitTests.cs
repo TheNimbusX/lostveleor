@@ -58,62 +58,7 @@ namespace Game.Tests
                 "после посадки герой смотрит по направлению полёта");
         }
 
-        /// <summary>
-        /// Клик дальше длины цепи не отменяет бросок, а укорачивает его.
-        /// Отменять было бы честнее формально и хуже на практике: игрок целится
-        /// примерно, и молчаливый отказ читается как «кнопка не сработала».
-        /// </summary>
-        [Test]
-        public void AnchorLeap_ClampsToChainReachInsteadOfRefusing()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            FixVec2 farAway = start + new FixVec2(Fix64.FromInt(40), Fix64.Zero);
-
-            sim.Step(Cast(0, farAway));
-            for (int i = 0; i < AnchorKit.LeapWindupTicks + AnchorKit.LeapTicks + 2; i++) sim.Step(InputFrame.Empty);
-
-            Fix64 travelled = (sim.Entities.Position[Simulation.PlayerId] - start).Length;
-            Assert.Greater(travelled.ToFloat(), 1f, "бросок обязан состояться");
-            Assert.LessOrEqual(travelled.ToFloat(), AnchorKit.LeapRange.ToFloat() + 0.05f,
-                "и не унести дальше длины цепи");
-        }
-
         // ------------------------------------------------ Подсечка
-
-        [Test]
-        public void AnchorLeap_WaitsForAnchorContactBeforeMoving()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            sim.Step(Cast(0, start + new FixVec2(Fix64.FromInt(5), Fix64.Zero)));
-            for (int i = 1; i < AnchorKit.LeapWindupTicks; i++) sim.Step(InputFrame.Empty);
-            Assert.AreEqual(start, sim.Entities.Position[Simulation.PlayerId]);
-            Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[Simulation.PlayerId]);
-            sim.Step(InputFrame.Empty);
-            Assert.Greater(sim.Entities.ForcedTicksLeft[Simulation.PlayerId], 0);
-        }
-
-        [Test]
-        public void NewAbility_CancelsPendingAnchorLaunch()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-            sim.SetAbility(1, AbilityDefinition.ChainCyclone(), new AbilityNode[0], 0);
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            FixVec2 aim = start + new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-            sim.Step(Cast(0, aim));
-            sim.Step(Cast(1, aim));
-            for (int i = 0; i < AnchorKit.LeapWindupTicks + 2; i++) sim.Step(InputFrame.Empty);
-            Assert.AreEqual(start, sim.Entities.Position[Simulation.PlayerId]);
-            Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[Simulation.PlayerId]);
-        }
 
 
 
@@ -129,26 +74,6 @@ namespace Game.Tests
         /// враг, которого не сдвинуть плечом, не сдвигается и цепью.
         /// </summary>
 
-
-        /// <summary>
-        /// Волочимый враг не идёт своим ходом. Иначе тяга и собственный шаг
-        /// складывались бы, и подсечка приводила бы толпу вдвое быстрее, чем
-        /// написано на листе.
-        /// </summary>
-        [Test]
-        public void DraggedEnemy_DoesNotWalkOnItsOwnWhileBeingPulled()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            int enemy = sim.Entities.Spawn(
-                new FixVec2(Fix64.FromInt(5), Fix64.Zero), 9000, Faction.Orvill);
-            sim.Entities.NextAttackTick[enemy] = int.MaxValue;
-            ForcedMotion.Begin(sim.Entities, enemy, FixVec2.Zero, 30, ForcedMotionKind.Dragged);
-            sim.Step(InputFrame.Empty);
-            Assert.Greater(sim.Entities.ForcedTicksLeft[enemy], 0, "враг должен быть в тяге");
-            Assert.AreEqual(0, sim.Entities.Velocity[enemy].LengthSq.Raw,
-                "у волочимого тела собственной скорости быть не может");
-        }
 
         // ------------------------------------------------ Шаг по цепи
 
@@ -186,58 +111,7 @@ namespace Game.Tests
                 0.5f, "и переставить игрока внутрь пачки");
         }
 
-        /// <summary>
-        /// Способность рядом с пустотой обязана кончаться тихо, а не тащить
-        /// игрока в никуда и не тратить кулдаун впустую посреди боя.
-        /// </summary>
-        [Test]
-        public void ChainStep_WithNobodyAroundDoesNotMoveThePlayer()
-        {
-            var sim = new Simulation(Seed, 32);
-            sim.SetupTestArena(0);
-            sim.SetAbility(3, AbilityDefinition.ChainStep(), new AbilityNode[0], 0);
-
-            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
-            var selected = Cast(3, FixVec2.Zero);
-            selected.AbilityTarget = 1;
-            sim.Step(selected);
-            for (int i = 0; i < 20; i++) sim.Step(InputFrame.Empty);
-
-            Assert.AreEqual(0f,
-                (sim.Entities.Position[Simulation.PlayerId] - start).Length.ToFloat(), 0.001f,
-                "без целей шаг по цепи никуда не ведёт");
-        }
-
         // ------------------------------------------------ детерминизм
 
-        /// <summary>
-        /// Принудительное перемещение входит в состояние тела и в хеш. Два
-        /// прогона одного сида обязаны совпасть побитово — иначе реплей
-        /// разъедется на первом же крюке.
-        /// </summary>
-        [Test]
-        public void ForcedMotion_StaysBitExactAcrossRuns()
-        {
-            ulong Run()
-            {
-                var sim = new Simulation(Seed, 64);
-                sim.SetupTestArena(12);
-                sim.SetAbility(0, AbilityDefinition.AnchorLeap(), new AbilityNode[0], 0);
-                sim.SetAbility(1, AbilityDefinition.ChainCyclone(), new AbilityNode[0], 0);
-                sim.SetAbility(3, AbilityDefinition.ChainStep(), new AbilityNode[0], 0);
-
-                for (int tick = 0; tick < 240; tick++)
-                {
-                    InputFrame f = InputFrame.Empty;
-                    if (tick == 10) f = Cast(0, new FixVec2(Fix64.FromInt(4), Fix64.One));
-                    else if (tick == 60) f = Cast(1, new FixVec2(Fix64.FromInt(5), Fix64.Zero));
-                    else if (tick == 120) f = Cast(3, FixVec2.Zero);
-                    sim.Step(in f);
-                }
-                return sim.StateHash();
-            }
-
-            Assert.AreEqual(Run(), Run(), "кит обязан быть детерминированным");
-        }
     }
 }

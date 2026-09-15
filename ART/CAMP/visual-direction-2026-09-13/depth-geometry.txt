@@ -1,3 +1,0 @@
-Added triangles=10136
-Decorative colliders=0
-Root=Кузница — древнее основание

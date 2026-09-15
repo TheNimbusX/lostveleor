@@ -48,7 +48,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Depth: 1.4
-    - _FlowSpeed: 2
+    - _FlowSpeed: 1.8
     - _FoamAmount: 0.035
     - _FoamCutoff: 0.93
     - _FoamScale: 0.4

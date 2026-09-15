@@ -9,5 +9,6 @@
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
     <Compile Include="../../razlom/Assets/Game.View/CombatVoiceBudget.cs" Link="CombatVoiceBudget.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
   </ItemGroup>
 </Project>

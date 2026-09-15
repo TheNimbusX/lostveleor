@@ -41,8 +41,10 @@ namespace Game.View
             // гонять незачем (см. PlayerHud). Экран награды пропускать нельзя:
             // там живые GUI.Button, и без Layout и событий мыши карточки
             // перестанут нажиматься.
-            if (run.Phase != RunPhase.ChoosingReward
-                && Event.current.type != EventType.Repaint) return;
+            // Мини-меню над добычей — тоже живые кнопки, и события мыши ему нужны.
+            int menuDrop = DropMenuTarget(run);
+            if (run.Phase != RunPhase.ChoosingReward && run.Phase != RunPhase.ReplacingAbility
+                && menuDrop < 0 && Event.current.type != EventType.Repaint) return;
 
             EnsureStyles();
 
@@ -56,19 +58,132 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
+                bool menuShown = false;
                 if (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit)
+                {
                     DrawRouteLandmarks(run, scale);
+                    DrawDrops(run, scale);
+                    menuShown = DrawDropMenu(run, menuDrop, scale);
+                }
+                if (Event.current.type == EventType.Repaint) _menuShown = menuShown;
                 if (run.Phase == RunPhase.Clearing)
                     DrawCombatStatus(run, safeLeft);
                 else if (run.Phase == RunPhase.SeekingExit)
                     DrawSeekingExit(safeLeft);
                 else if (run.Phase == RunPhase.ChoosingReward)
                     DrawRewardChoice(run, canvasWidth, canvasHeight, safeLeft, safeRight);
+                else if (run.Phase == RunPhase.ReplacingAbility)
+                    DrawReplaceChoice(run, canvasWidth, canvasHeight, safeLeft, safeRight);
             }
             finally
             {
                 GUI.matrix = previousMatrix;
             }
+        }
+
+        // ---- добыча с элит ----
+
+        private bool _menuShown, _menuReplacing;
+        private int _menuDrop = -1;
+        private Rect _menuScreenRect;
+        private GUIStyle _menuButton, _menuCaption;
+
+        /// <summary>
+        /// Курсор над мини-меню добычи. TickDriver проверяет это до шага симуляции,
+        /// чтобы клик по кнопке меню не стал ударом или приказом идти.
+        /// </summary>
+        public bool PointerOverDropMenu(Vector2 screenPosition)
+            => _menuShown && _menuScreenRect.Contains(new Vector2(screenPosition.x, Screen.height - screenPosition.y));
+
+        /// <summary>Меню нужно только при полной панели: иначе способность поднимается сама.</summary>
+        private static int DropMenuTarget(RiftRun run)
+            => (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit) && run.Loadout.IsFull
+                ? run.NearestAbilityDrop(RiftRun.DropMenuRadius)
+                : -1;
+
+        private void DrawDrops(RiftRun run, float scale)
+        {
+            var camera = Camera.main;
+            if (camera == null) return;
+            for (int d = 0; d < run.DropCount; d++)
+            {
+                RunDrop drop = run.GetDrop(d);
+                if (drop.Claimed) continue;
+                AbilityDefinition definition = drop.Offer.Kind == RewardKind.Ability
+                    ? PelagKit.PoolDefinition(drop.Offer.PoolIndex) : null;
+                DrawLandmark(drop.Position, definition != null
+                    ? "СПОСОБНОСТЬ · " + PlayerHud.AbilityName(definition.Id)
+                    : "ПРЕДМЕТ · подойди", camera, scale, 0.9f);
+            }
+        }
+
+        /// <summary>
+        /// Мини-меню над способностью при полной панели. Бой не останавливается.
+        /// Первый уровень — разобрать или заменить; «Заменить» раскрывает слоты.
+        /// Передумал или отошёл — меню закрывается, способность лежит дальше:
+        /// команда уходит в симуляцию только по выбору слота или разбору.
+        /// </summary>
+        private bool DrawDropMenu(RiftRun run, int index, float scale)
+        {
+            if (index != _menuDrop)
+            {
+                _menuDrop = index;
+                _menuReplacing = false;
+            }
+            var camera = Camera.main;
+            if (index < 0 || camera == null) return false;
+
+            RunDrop drop = run.GetDrop(index);
+            AbilityDefinition incoming = PelagKit.PoolDefinition(drop.Offer.PoolIndex);
+            if (incoming == null) return false;
+            Vector3 projected = camera.WorldToScreenPoint(
+                new Vector3(drop.Position.X.ToFloat(), 1.6f, drop.Position.Y.ToFloat()));
+            if (projected.z <= 0) return false;
+            float cx = projected.x / scale;
+            float cy = (Screen.height - projected.y) / scale;
+
+            Rect panel = _menuReplacing
+                ? new Rect(cx - 180f, cy - 150f, 360f, 132f)
+                : new Rect(cx - 140f, cy - 96f, 280f, 84f);
+            _menuScreenRect = new Rect(panel.x * scale, panel.y * scale, panel.width * scale, panel.height * scale);
+            Fill(panel, Panel);
+            Frame(panel, Ink, 1f);
+            Fill(new Rect(panel.x, panel.y, panel.width, 4f), Coral);
+            GUI.Label(new Rect(panel.x + 10f, panel.y + 8f, panel.width - 20f, 20f),
+                "ПАНЕЛЬ ПОЛНА · " + PlayerHud.AbilityName(incoming.Id), _eyebrow);
+
+            if (!_menuReplacing)
+            {
+                float width = (panel.width - 30f) * 0.5f;
+                if (GUI.Button(new Rect(panel.x + 10f, panel.y + 34f, width, 40f),
+                        "РАЗОБРАТЬ +" + run.SalvageGold, _menuButton))
+                    _driver.QueueRunCommand(RunCommand.PickupSalvage);
+                if (GUI.Button(new Rect(panel.x + 20f + width, panel.y + 34f, width, 40f), "ЗАМЕНИТЬ…", _menuButton))
+                    _menuReplacing = true;
+                return true;
+            }
+
+            const float gap = 6f;
+            float tile = (panel.width - 20f - gap * (RunLoadout.Slots - 1)) / RunLoadout.Slots;
+            for (int slot = 0; slot < RunLoadout.Slots; slot++)
+            {
+                Rect box = new Rect(panel.x + 10f + slot * (tile + gap), panel.y + 32f, tile, 64f);
+                if (GUI.Button(box, GUIContent.none, _menuButton))
+                {
+                    _driver.QueueRunCommand((RunCommand)((int)RunCommand.PickupReplaceSlot1 + slot));
+                    _menuReplacing = false;
+                }
+                AbilityDefinition current = run.Loadout.DefinitionAt(slot);
+                Texture2D icon = current != null ? Icon(current.Id) : null;
+                if (icon != null)
+                    GUI.DrawTexture(new Rect(box.center.x - 16f, box.y + 4f, 32f, 32f), icon, ScaleMode.ScaleToFit);
+                int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
+                GUI.Label(new Rect(box.x + 2f, box.y + 40f, box.width - 4f, 20f),
+                    (slot + 1) + (rank > 0 ? " · −" + rank + " тал." : ""), _menuCaption);
+            }
+            if (GUI.Button(new Rect(panel.x + 10f, panel.y + 102f, panel.width - 20f, 24f), "НАЗАД", _menuButton))
+                _menuReplacing = false;
+            return true;
         }
 
         private void DrawCombatStatus(RiftRun run, float safeLeft)
@@ -90,7 +205,7 @@ namespace Game.View
                 fights > 0 ? $"ВСТРЕЧИ: {cleared}/{fights} · ЦЕЛЕЙ: {run.CountRequiredEnemies()}"
                     : "ЦЕЛЕЙ: " + run.CountRequiredEnemies(), _subtitle);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 60f, 280f, 22f),
-                $"Тайники: {run.BranchesClaimed}/{run.Map.RewardBranchCount} · необязательно", _subtitle);
+                $"Тайники: {run.BranchesClaimed}/{run.Map.RewardBranchCount} · золото забега: {run.Gold}", _subtitle);
             if (run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId])
             {
                 int id = run.BossId;
@@ -182,10 +297,103 @@ namespace Game.View
                 + "  выбрать награду     L  уйти с добычей", _subtitle);
         }
 
+        /// <summary>
+        /// Новая способность при полной панели: четыре слота на замену и разбор.
+        /// Таланты заменённой способности пропадают — это написано прямо на плитке.
+        /// </summary>
+        private void DrawReplaceChoice(RiftRun run, float canvasWidth, float canvasHeight,
+            float safeLeft, float safeRight)
+        {
+            float panelWidth = Mathf.Min(920f, canvasWidth - safeLeft - safeRight - 32f);
+            float panelHeight = Mathf.Min(330f, canvasHeight - 34f);
+            Rect panel = new Rect((canvasWidth - panelWidth) * 0.5f, (canvasHeight - panelHeight) * 0.5f,
+                panelWidth, panelHeight);
+            Fill(panel, Panel);
+            Frame(panel, Ink, 1f);
+            Fill(new Rect(panel.x, panel.y, panel.width, 5f), Coral);
+
+            AbilityDefinition pending = PelagKit.PoolDefinition(run.PendingAbility);
+            GUI.Label(new Rect(panel.x + 28f, panel.y + 20f, panel.width - 56f, 30f),
+                "НОВАЯ СПОСОБНОСТЬ: " + (pending != null ? PlayerHud.AbilityName(pending.Id) : "—"), _title);
+            GUI.Label(new Rect(panel.x + 28f, panel.y + 51f, panel.width - 56f, 22f),
+                "Панель полна. Замени одну из четырёх — её таланты пропадут — или разбери новую на золото.", _subtitle);
+
+            float gap = 12f;
+            float top = panel.y + 88f;
+            const float tileHeight = 120f;
+            float tileWidth = (panel.width - 56f - gap * (RunLoadout.Slots - 1)) / RunLoadout.Slots;
+            for (int slot = 0; slot < RunLoadout.Slots; slot++)
+            {
+                Rect tile = new Rect(panel.x + 28f + slot * (tileWidth + gap), top, tileWidth, tileHeight);
+                if (GUI.Button(tile, GUIContent.none, _cardButton))
+                    _driver.QueueRunCommand((RunCommand)((int)RunCommand.ReplaceSlot1 + slot));
+                Frame(tile, Coral, 1f);
+                AbilityDefinition current = run.Loadout.DefinitionAt(slot);
+                Texture2D icon = current != null ? Icon(current.Id) : null;
+                if (icon != null) GUI.DrawTexture(new Rect(tile.x + 12f, tile.y + 12f, 48f, 48f), icon, ScaleMode.ScaleToFit);
+                GUI.Label(new Rect(tile.x + 12f, tile.y + 66f, tile.width - 24f, 22f),
+                    (slot + 1) + ". " + (current != null ? PlayerHud.AbilityName(current.Id) : "ПУСТО"), _eyebrow);
+                int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
+                GUI.Label(new Rect(tile.x + 12f, tile.y + 90f, tile.width - 24f, 20f),
+                    rank > 0 ? "талантов " + rank + " — пропадут" : "талантов нет", _subtitle);
+            }
+
+            Rect salvage = new Rect(panel.x + 28f, top + tileHeight + 16f, panel.width - 56f, 40f);
+            if (GUI.Button(salvage, GUIContent.none, _cardButton))
+                _driver.QueueRunCommand(RunCommand.SalvageAbility);
+            Fill(salvage, Gold);
+            GUI.Label(salvage, "РАЗОБРАТЬ НА " + run.SalvageGold + " ЗОЛОТА", _cardButton);
+
+            GUI.Label(new Rect(panel.x + 28f, panel.yMax - 35f, panel.width - 56f, 22f),
+                (GameUserSettings.AbilityRowUsesLetters ? "Q W E R" : "1 2 3 4")
+                + "  заменить слот     L  уйти с добычей", _subtitle);
+        }
+
+        private readonly System.Collections.Generic.Dictionary<int, Texture2D> _icons =
+            new System.Collections.Generic.Dictionary<int, Texture2D>();
+
+        private Texture2D Icon(int definitionId)
+        {
+            if (_icons.TryGetValue(definitionId, out Texture2D texture)) return texture;
+            string file = PlayerHud.IconFile(definitionId);
+            texture = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
+            _icons[definitionId] = texture;
+            return texture;
+        }
+
+        private void DrawAbilityCard(Rect card, in RewardOffer offer, RiftRun run)
+        {
+            AbilityDefinition definition = PelagKit.PoolDefinition(offer.PoolIndex);
+            if (definition == null) return;
+            Texture2D icon = Icon(definition.Id);
+            if (icon != null) GUI.DrawTexture(new Rect(card.x + 16f, card.y + 60f, 64f, 64f), icon, ScaleMode.ScaleToFit);
+            GUI.Label(new Rect(card.x + 92f, card.y + 64f, card.width - 108f, 56f), PlayerHud.AbilityName(definition.Id), _title);
+            GUI.Label(new Rect(card.x + 16f, card.y + 134f, card.width - 32f, 20f),
+                "ЛАВИДИЙ " + definition.GetBase(AbilityStatType.LavidiumCost).ToInt(), _eyebrow);
+            string text = PlayerHud.AbilityDescription(definition.Id);
+            if (run.Loadout.IsFull)
+                text += "\n\nПанель полна: придётся заменить способность или разобрать эту на " + run.SalvageGold + " золота.";
+            GUI.Label(new Rect(card.x + 16f, card.y + 160f, card.width - 32f, card.height - 174f), text, _body);
+        }
+
+        private void DrawTalentCard(Rect card, in RewardOffer offer)
+        {
+            if (!SabreTalents.TryLineOf(offer.PoolIndex, out SabreTalentLine line)) return;
+            AbilityDefinition definition = PelagKit.PoolDefinition(offer.PoolIndex);
+            Texture2D icon = definition != null ? Icon(definition.Id) : null;
+            if (icon != null) GUI.DrawTexture(new Rect(card.x + 16f, card.y + 60f, 48f, 48f), icon, ScaleMode.ScaleToFit);
+            GUI.Label(new Rect(card.x + 76f, card.y + 60f, card.width - 92f, 22f),
+                SabreTalentTexts.LineName(line).ToUpperInvariant(), _eyebrow);
+            GUI.Label(new Rect(card.x + 76f, card.y + 82f, card.width - 92f, 30f),
+                SabreTalentTexts.Name(line, offer.TalentIndex), _title);
+            GUI.Label(new Rect(card.x + 16f, card.y + 124f, card.width - 32f, card.height - 138f),
+                SabreTalentTexts.Description(line, offer.TalentIndex), _body);
+        }
+
         private void DrawOfferCard(Rect card, int index, in RewardOffer offer, RiftRun run)
         {
             Color accent = offer.Kind == RewardKind.Item ? Gold
-                : offer.Kind == RewardKind.StatBoost ? Cyan : Coral;
+                : offer.Kind == RewardKind.StatBoost || offer.Kind == RewardKind.Talent ? Cyan : Coral;
             Fill(card, Card);
             Frame(card, accent, 1f);
             Fill(new Rect(card.x, card.y, card.width, 4f), accent);
@@ -195,16 +403,21 @@ namespace Game.View
             GUI.Label(badge, (index + 1).ToString(), _cardButton);
 
             string kind = offer.Kind == RewardKind.Item ? "ПРЕДМЕТ"
+                : offer.Kind == RewardKind.Ability ? "СПОСОБНОСТЬ"
+                : offer.Kind == RewardKind.Talent ? "ТАЛАНТ " + (offer.TalentIndex + 1) + " ИЗ " + SabreTalents.TalentsPerLine
                 : offer.Kind == RewardKind.StatBoost ? "СТАТ"
                 : "УЗЕЛ СПОСОБНОСТИ";
             GUI.Label(new Rect(card.x + 58f, card.y + 15f, card.width - 72f, 18f), kind, _eyebrow);
 
-            if (offer.Kind == RewardKind.AbilityNode)
+            if (offer.Kind == RewardKind.Ability)
             {
-                GUI.Label(new Rect(card.x + 16f, card.y + 72f, card.width - 32f, 42f),
-                    NodeTitle(offer.Node), _title);
-                GUI.Label(new Rect(card.x + 16f, card.y + 124f, card.width - 32f, card.height - 138f),
-                    NodeDescription(offer.Node), _body);
+                DrawAbilityCard(card, offer, run);
+                return;
+            }
+
+            if (offer.Kind == RewardKind.Talent)
+            {
+                DrawTalentCard(card, offer);
                 return;
             }
 
@@ -268,15 +481,6 @@ namespace Game.View
             }
         }
 
-        private static string NodeTitle(AbilityNode node)
-            => node.Kind == NodeKind.Flag ? "РАЗДЕЛЁННЫЙ ЗНАК"
-                : node.Kind == NodeKind.EffectInsert ? "РАСПРОСТРАНЕНИЕ ОГНЯ" : "ГОРЯЧАЯ ПЕЧАТЬ";
-
-        private static string NodeDescription(AbilityNode node)
-            => node.Kind == NodeKind.Flag ? "Печать выпускает три снаряда. Урон каждого снижен на 45%."
-                : node.Kind == NodeKind.EffectInsert ? "Горящий враг при смерти поджигает ближайшего противника."
-                : "Увеличивает урон Печати пламени на 20%.";
-
         private void Fill(Rect rect, Color color)
         {
             Color previous = GUI.color;
@@ -303,7 +507,7 @@ namespace Game.View
             }
             if (_title != null) return;
 
-            _title = new GUIStyle(GUI.skin.label)
+            _title = new GUIStyle(GameTypography.Label)
             {
                 fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft,
             };
@@ -314,7 +518,7 @@ namespace Game.View
             _body.normal.textColor = new Color(0.25f, 0.16f, 0.11f);
             _eyebrow = new GUIStyle(_subtitle) { fontSize = 11, fontStyle = FontStyle.Bold };
             _eyebrow.normal.textColor = new Color(0.56f, 0.27f, 0.12f);
-            _cardButton = new GUIStyle(GUI.skin.button)
+            _cardButton = new GUIStyle(GameTypography.Button)
             {
                 fontSize = 16, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
             };
@@ -322,6 +526,18 @@ namespace Game.View
             _cardButton.hover.background = MakeTexture(CardHover);
             _cardButton.active.background = MakeTexture(new Color(0.18f, 0.20f, 0.27f, 1f));
             _cardButton.normal.textColor = Color.white;
+
+            _menuButton = new GUIStyle(GameTypography.Button)
+            {
+                fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, wordWrap = true,
+            };
+            _menuButton.normal.background = MakeTexture(new Color(0.30f, 0.16f, 0.10f, 0.96f));
+            _menuButton.hover.background = MakeTexture(Coral);
+            _menuButton.active.background = MakeTexture(Ink);
+            _menuButton.normal.textColor = _menuButton.hover.textColor = _menuButton.active.textColor
+                = new Color(1f, 0.95f, 0.85f);
+            _menuCaption = new GUIStyle(_eyebrow) { alignment = TextAnchor.MiddleCenter };
+            _menuCaption.normal.textColor = new Color(1f, 0.95f, 0.85f);
         }
 
         private static Texture2D MakeTexture(Color color)

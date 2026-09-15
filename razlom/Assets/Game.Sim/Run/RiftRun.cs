@@ -4,10 +4,10 @@ namespace Game.Sim
     /// Петля забега: вход в Разлом → зачистка → смерть или выход →
     /// выбор одной награды из трёх → следующий Разлом глубже.
     ///
-    /// СМЕРТЬ ЗАВЕРШАЕТ ЗАБЕГ. Награды за пройденное остаются, глубже в этот
-    /// раз не пойдёшь. Это не наказание, а то, что делает решение «идти дальше
-    /// или уйти с добычей» настоящим решением: без риска потерять следующий
-    /// уровень выбор был бы всегда «идти дальше».
+    /// СМЕРТЬ ЗАВЕРШАЕТ ЗАБЕГ И ОТНИМАЕТ НАЙДЕННОЕ: вещи и золото доезжают до
+    /// лагеря только при выходе (GameSession.FinishRun), способности и таланты
+    /// живут в забеге всегда. Так решение «идти дальше или уйти с добычей»
+    /// становится настоящим решением.
     ///
     /// Всё, что решает игрок, приходит в InputFrame.Command. Отдельного API
     /// для выбора награды нет намеренно: реплей обязан воспроизводить забег
@@ -96,11 +96,54 @@ namespace Game.Sim
         public RewardOffer GetTaken(int index) => _taken[index];
         public RewardOffer GetOffer(int index) => _offers[index];
 
+        /// <summary>Способности и таланты этого забега. Смерть или выход забирают их вместе с забегом.</summary>
+        public RunLoadout Loadout { get; } = new RunLoadout();
+
+        /// <summary>Ставит набор забега в симуляцию. Зовётся после любой смены набора.</summary>
+        public void ApplyLoadout() => Loadout.ApplyTo(_sim);
+
+        /// <summary>Золото, найденное в забеге. Доезжает до лагеря только при выходе или прохождении.</summary>
+        public int Gold { get; private set; }
+
+        /// <summary>Способность, ждущая замены при полной панели; −1 — не ждёт.</summary>
+        public int PendingAbility { get; private set; } = -1;
+
+        /// <summary>Разбор способности: 15 + 5 за уровень Разлома. Решение владельца от 15 сентября.</summary>
+        public const int SalvageBaseGold = 15;
+        public const int SalvageGoldPerDepth = 5;
+        public int SalvageGold => SalvageBaseGold + SalvageGoldPerDepth * Depth;
+
+        // Веса карточек из пропорций владельца: способность / вещь / талант.
+        private const int AbilityWeight = 35, ItemWeight = 30, TalentWeight = 35;
+        private const int FullAbilityWeight = 15, FullTalentWeight = 55;
+
+        // ---- добыча с элит ----
+
+        /// <summary>Сколько предметов может лежать на одной арене.</summary>
+        public const int MaxDrops = 16;
+
+        /// <summary>С элиты падает вещь в 65% случаев, способность — в 35%. Решение владельца от 15 сентября.</summary>
+        public const int EliteItemChance = 65;
+
+        /// <summary>Подбор вещи и способности при свободном слоте — как у тайника.</summary>
+        public static readonly Fix64 PickupRadius = Fix64.Ratio(3, 2);
+
+        /// <summary>Мини-меню над способностью при полной панели живёт в этом радиусе.</summary>
+        public static readonly Fix64 DropMenuRadius = Fix64.Ratio(5, 2);
+
+        private readonly RunDrop[] _drops = new RunDrop[MaxDrops];
+        private int _dropCount;
+        private readonly bool[] _eliteDropped;
+
+        public int DropCount => _dropCount;
+        public RunDrop GetDrop(int index) => _drops[index];
+
         public RiftRun(Simulation sim, ModuleSet modules, ItemDatabase items, int[] itemBaseIds,
             int maxModules = 64, LocationDefinition location = null)
         {
             _sim = sim;
             _enemyBranch = new int[sim.Entities.Capacity];
+            _eliteDropped = new bool[sim.Entities.Capacity];
             _location = location;
             _location?.ValidateCapacity(sim.Entities.Capacity);
             _modules = location?.Modules ?? modules;
@@ -118,6 +161,9 @@ namespace Game.Sim
             RiftsCleared = 0;
             _takenCount = 0;
             Outcome = RunOutcome.None;
+            Gold = 0;
+            PendingAbility = -1;
+            Loadout.ResetToStarter();
 
             EnterNextRift();
         }
@@ -177,6 +223,9 @@ namespace Game.Sim
         {
             Depth++;
             BossEnraged = false;
+            // Не подобранное на прошлой арене осталось там.
+            _dropCount = 0;
+            System.Array.Clear(_eliteDropped, 0, _eliteDropped.Length);
 
             LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
             LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
@@ -217,6 +266,9 @@ namespace Game.Sim
             PlayerEquipment?.Reapply();
             ApplyStatRewards(_sim.Entities.Stats[Simulation.PlayerId]);
             _sim.RefreshPlayerStats(heal: true);
+            // Способности тоже вешаются заново: набор принадлежит забегу,
+            // и каждый новый Разлом обязан начинаться с ним.
+            ApplyLoadout();
 
             Phase = RunPhase.Clearing;
         }
@@ -241,6 +293,10 @@ namespace Game.Sim
 
                 case RunPhase.ChoosingReward:
                     StepChoosing(command);
+                    break;
+
+                case RunPhase.ReplacingAbility:
+                    StepReplacing(command);
                     break;
             }
         }
@@ -272,6 +328,7 @@ namespace Game.Sim
             }
 
             CollectBranchRewards();
+            UpdateDrops(command);
             if (CountRequiredEnemies() == 0)
             {
                 RiftsCleared++;
@@ -301,6 +358,7 @@ namespace Game.Sim
             }
 
             CollectBranchRewards();
+            UpdateDrops(command);
             if (_sim.PlayerReachedExit(_map))
             {
                 RollOffers();
@@ -327,6 +385,141 @@ namespace Game.Sim
             }
         }
 
+        /// <summary>Дропы с только что погибших элит, подбор рядом стоящих и команда мини-меню.</summary>
+        private void UpdateDrops(RunCommand command)
+        {
+            SpawnEliteDrops();
+            CollectDrops();
+            HandleDropCommand(command);
+        }
+
+        /// <summary>
+        /// Каждая погибшая элита роняет ровно один предмет, босс — ничего (у него
+        /// будет своя награда). Ролл идёт отдельным потоком от сида расстановки и
+        /// номера сущности: общие потоки Loot и Affix не сдвигаются от того, в
+        /// каком порядке игрок убивал.
+        /// </summary>
+        private void SpawnEliteDrops()
+        {
+            if (Encounters == null) return;
+            EntityStore entities = _sim.Entities;
+            for (int i = 1; i < entities.Count; i++)
+            {
+                if (entities.Alive[i] || _eliteDropped[i] || i == BossId || !Encounters.IsElite(i)) continue;
+                _eliteDropped[i] = true;
+                if (_dropCount >= MaxDrops) continue;
+
+                var rng = new Pcg32(LayoutSeed ^ unchecked((ulong)(i + 1) * 0x9E3779B97F4A7C15UL), 0x454C495445UL);
+                if (TryRollEliteDrop(ref rng, out RewardOffer offer))
+                    _drops[_dropCount++] = new RunDrop(entities.Position[i], offer);
+            }
+        }
+
+        private bool TryRollEliteDrop(ref Pcg32 rng, out RewardOffer offer)
+        {
+            bool wantsItem = rng.NextInt(0, 100) < EliteItemChance;
+            int candidates = 0;
+            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                if (IsDropAbilityCandidate(pool)) candidates++;
+
+            if ((!wantsItem || _itemBaseIds.Length == 0) && candidates > 0)
+            {
+                int pick = rng.NextInt(0, candidates);
+                for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                    if (IsDropAbilityCandidate(pool) && pick-- == 0)
+                    {
+                        offer = RewardOffer.OfAbility(pool);
+                        return true;
+                    }
+            }
+
+            if (_itemBaseIds.Length == 0)
+            {
+                offer = default;
+                return false;
+            }
+
+            int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
+            ItemInstance item = ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5));
+            offer = RewardOffer.OfItem(in item);
+            return true;
+        }
+
+        /// <summary>Способности нет в наборе и её не лежит на арене.</summary>
+        private bool IsDropAbilityCandidate(int pool)
+        {
+            if (Loadout.Owns(pool)) return false;
+            for (int d = 0; d < _dropCount; d++)
+                if (!_drops[d].Claimed && _drops[d].Offer.Kind == RewardKind.Ability && _drops[d].Offer.PoolIndex == pool)
+                    return false;
+            return true;
+        }
+
+        /// <summary>Вещь и способность при свободном слоте поднимаются сами, когда герой рядом.</summary>
+        private void CollectDrops()
+        {
+            FixVec2 player = _sim.Entities.Position[Simulation.PlayerId];
+            Fix64 limit = PickupRadius * PickupRadius;
+            for (int d = 0; d < _dropCount; d++)
+            {
+                if (_drops[d].Claimed || FixVec2.DistanceSq(player, _drops[d].Position) > limit) continue;
+                if (_drops[d].Offer.Kind == RewardKind.Ability)
+                {
+                    // Полная панель — ждём решения в мини-меню, предмет лежит.
+                    if (!Loadout.Add(_drops[d].Offer.PoolIndex)) continue;
+                    ApplyLoadout();
+                }
+                ClaimDrop(d);
+            }
+        }
+
+        /// <summary>
+        /// Выбор в мини-меню. Действует на ближайшую лежащую способность в радиусе
+        /// меню; если её нет — игрок отошёл или передумал — команда ничего не делает.
+        /// </summary>
+        private void HandleDropCommand(RunCommand command)
+        {
+            bool salvage = command == RunCommand.PickupSalvage;
+            int slot = (int)command - (int)RunCommand.PickupReplaceSlot1;
+            if (!salvage && (slot < 0 || slot >= RunLoadout.Slots)) return;
+
+            int d = NearestAbilityDrop(DropMenuRadius);
+            if (d < 0) return;
+
+            if (salvage) Gold += SalvageGold;
+            else
+            {
+                if (!Loadout.Put(slot, _drops[d].Offer.PoolIndex)) return;
+                ApplyLoadout();
+            }
+            ClaimDrop(d);
+        }
+
+        private void ClaimDrop(int index)
+        {
+            _drops[index].Claimed = true;
+            if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = _drops[index].Offer;
+        }
+
+        /// <summary>Ближайшая неподобранная способность в радиусе от героя или −1.</summary>
+        public int NearestAbilityDrop(Fix64 radius)
+        {
+            FixVec2 player = _sim.Entities.Position[Simulation.PlayerId];
+            int best = -1;
+            Fix64 bestDistance = radius * radius;
+            for (int d = 0; d < _dropCount; d++)
+            {
+                if (_drops[d].Claimed || _drops[d].Offer.Kind != RewardKind.Ability) continue;
+                Fix64 distance = FixVec2.DistanceSq(player, _drops[d].Position);
+                if (best < 0 ? distance <= bestDistance : distance < bestDistance)
+                {
+                    best = d;
+                    bestDistance = distance;
+                }
+            }
+            return best;
+        }
+
         private void StepChoosing(RunCommand command)
         {
             if (command == RunCommand.Leave)
@@ -340,8 +533,50 @@ namespace Game.Sim
             int choice = (int)command - (int)RunCommand.ChooseReward1;
             if (choice < 0 || choice >= RewardChoices) return;
 
-            if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = _offers[choice];
+            RewardOffer offer = _offers[choice];
+            if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = offer;
 
+            if (offer.Kind == RewardKind.Talent)
+                Loadout.TakeTalent(offer.PoolIndex);
+            else if (offer.Kind == RewardKind.Ability && !Loadout.Add(offer.PoolIndex))
+            {
+                // Панель полна — решение за игроком: заменить или разобрать.
+                PendingAbility = offer.PoolIndex;
+                Phase = RunPhase.ReplacingAbility;
+                return;
+            }
+
+            FinishChoice();
+        }
+
+        /// <summary>
+        /// Новая способность при полной панели. Бой по-прежнему стоит.
+        /// Уход отсюда оставляет способность несобранной — забег кончается.
+        /// </summary>
+        private void StepReplacing(RunCommand command)
+        {
+            if (command == RunCommand.Leave)
+            {
+                End(RunOutcome.Left);
+                return;
+            }
+
+            if (command == RunCommand.SalvageAbility)
+                Gold += SalvageGold;
+            else
+            {
+                int slot = (int)command - (int)RunCommand.ReplaceSlot1;
+                if (slot < 0 || slot >= RunLoadout.Slots) return;
+                Loadout.Put(slot, PendingAbility);
+            }
+
+            PendingAbility = -1;
+            FinishChoice();
+        }
+
+        /// <summary>Награда взята: следующий Разлом или итог локации. Набор ставится в EnterNextRift.</summary>
+        private void FinishChoice()
+        {
             if (IsFinalLevel)
             {
                 End(RunOutcome.Completed);
@@ -370,40 +605,81 @@ namespace Game.Sim
         private void RollOffers()
         {
             for (int i = 0; i < RewardChoices; i++)
-                _offers[i] = RollOffer();
+                _offers[i] = RollOffer(i);
         }
 
-        private RewardOffer RollOffer()
+        /// <summary>
+        /// Одна карточка по весам владельца от 15 сентября: способность 35,
+        /// вещь 30, талант 35; при полной панели 15 / 30 / 55. Вид, у которого
+        /// сейчас нет кандидата, выпадает из суммы, и остальные делят его долю.
+        /// </summary>
+        private RewardOffer RollOffer(int filled)
         {
-            int kindRoll = _sim.Rng.Loot.NextInt(0, 100);
-            short itemLevel = (short)(Depth * 5);
+            bool full = Loadout.IsFull;
+            int ability = CountAbilityCandidates(filled) > 0 ? (full ? FullAbilityWeight : AbilityWeight) : 0;
+            int item = _itemBaseIds.Length > 0 ? ItemWeight : 0;
+            int talent = CountTalentCandidates(filled) > 0 ? (full ? FullTalentWeight : TalentWeight) : 0;
+            int total = ability + item + talent;
+            if (total == 0) return RollStatOffer();
 
-            // Узел дерева выпадает реже предмета: их в игре конечное число,
-            // а предметы бесконечны.
-            if (kindRoll < 20) return RollNodeOffer();
-            if (kindRoll < 60) return RollStatOffer();
+            int roll = _sim.Rng.Loot.NextInt(0, total);
+            if (roll < ability) return RollAbilityOffer(filled);
+            if (roll < ability + item) return RollItemOffer();
+            return RollTalentOffer(filled);
+        }
 
-            int baseIndex = _itemBaseIds.Length == 0
-                ? -1
-                : _sim.Rng.Loot.NextInt(0, _itemBaseIds.Length);
-
-            if (baseIndex < 0) return RollStatOffer();
-
-            ItemInstance item = ItemDrop.Roll(ref _sim.Rng.Affix, _itemBaseIds[baseIndex], itemLevel);
+        private RewardOffer RollItemOffer()
+        {
+            int baseIndex = _sim.Rng.Loot.NextInt(0, _itemBaseIds.Length);
+            ItemInstance item = ItemDrop.Roll(ref _sim.Rng.Affix, _itemBaseIds[baseIndex], (short)(Depth * 5));
             return RewardOffer.OfItem(in item);
         }
 
-        private RewardOffer RollNodeOffer()
+        private bool OfferedOnPanel(int filled, RewardKind kind, int poolIndex)
         {
-            // Узлы «Печати пламени» — единственная реализованная способность.
-            // Когда способностей станет двадцать, здесь появится выбор дерева,
-            // а структура награды не поменяется.
-            int which = _sim.Rng.Loot.NextInt(0, 3);
-            AbilityNode node = which == 0 ? AbilityDefinition.NodeHotter()
-                : which == 1 ? AbilityDefinition.NodeSplit()
-                : AbilityDefinition.NodeSpreads();
+            for (int i = 0; i < filled; i++)
+                if (_offers[i].Kind == kind && _offers[i].PoolIndex == poolIndex) return true;
+            return false;
+        }
 
-            return RewardOffer.OfNode(in node);
+        private bool IsAbilityCandidate(int pool, int filled)
+            => !Loadout.Owns(pool) && !OfferedOnPanel(filled, RewardKind.Ability, pool);
+
+        private bool IsTalentCandidate(int pool, int filled)
+            => Loadout.CanTakeTalent(pool) && !OfferedOnPanel(filled, RewardKind.Talent, pool);
+
+        private int CountAbilityCandidates(int filled)
+        {
+            int count = 0;
+            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                if (IsAbilityCandidate(pool, filled)) count++;
+            return count;
+        }
+
+        private int CountTalentCandidates(int filled)
+        {
+            int count = 0;
+            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                if (IsTalentCandidate(pool, filled)) count++;
+            return count;
+        }
+
+        private RewardOffer RollAbilityOffer(int filled)
+        {
+            int pick = _sim.Rng.Loot.NextInt(0, CountAbilityCandidates(filled));
+            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                if (IsAbilityCandidate(pool, filled) && pick-- == 0) return RewardOffer.OfAbility(pool);
+            return RollItemOffer();
+        }
+
+        /// <summary>Конкретный следующий талант случайной имеющейся способности.</summary>
+        private RewardOffer RollTalentOffer(int filled)
+        {
+            int pick = _sim.Rng.Loot.NextInt(0, CountTalentCandidates(filled));
+            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
+                if (IsTalentCandidate(pool, filled) && pick-- == 0)
+                    return RewardOffer.OfTalent(pool, Loadout.TalentRank(pool));
+            return RollItemOffer();
         }
 
         private RewardOffer RollStatOffer()
@@ -451,6 +727,11 @@ namespace Game.Sim
             for (int b = 0; b < _map.RewardBranchCount; b++) Hashing.Mix(ref hash, _branchClaimed[b] ? 1 : 0);
             for (int i = 0; i < _sim.Entities.Count; i++) Hashing.Mix(ref hash, _enemyBranch[i]);
 
+            Loadout.HashInto(ref hash);
+            Hashing.Mix(ref hash, Gold);
+            Hashing.Mix(ref hash, PendingAbility);
+            Hashing.Mix(ref hash, _dropCount);
+            for (int d = 0; d < _dropCount; d++) _drops[d].HashInto(ref hash);
             Hashing.Mix(ref hash, _takenCount);
             for (int i = 0; i < _takenCount; i++) _taken[i].HashInto(ref hash);
 

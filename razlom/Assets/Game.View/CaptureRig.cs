@@ -71,6 +71,7 @@ namespace Game.View
         /// нажимает кнопок и молча записала бы заставку вместо игры.
         /// </summary>
         public static bool Installed { get; private set; }
+        public static int HudTooltipSlot { get; private set; } = -1;
 
         /// <summary>
         /// Съёмка главного меню: под -capture-main-menu меню не выключается, а
@@ -195,6 +196,9 @@ namespace Game.View
             string[] args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, EnableFlag) < 0) return;
             Installed = true;
+            if (int.TryParse(ReadValue(args, "-capture-hud-tooltip"), out int tooltipSlot)
+                && tooltipSlot >= 0 && tooltipSlot < Simulation.AbilitySlots)
+                HudTooltipSlot = tooltipSlot;
 
             string output = ReadValue(args, OutputFlag) ?? "capture";
             float[] marks = ParseMarks(ReadValue(args, TimesFlag));
@@ -441,6 +445,19 @@ namespace Game.View
             int mark = 0;
             float lastMark = _marks.Length > 0 ? _marks[_marks.Length - 1] : 0f;
             float finish = Mathf.Max(lastMark, _recordVideo ? _videoEnd : 0f);
+
+            if (_showHud)
+            {
+                // Настройки игрока могут переопределить параметры запуска окна;
+                // для IMGUI нужен framebuffer именно запрошенного размера.
+                Screen.SetResolution(_captureWidth, _captureHeight, FullScreenMode.Windowed);
+                yield return null;
+                // Нативная консоль перекрывает HUD на снимке; сами ошибки
+                // остаются в player.log и проверяются отдельно от вида интерфейса.
+                Debug.ClearDeveloperConsole();
+                Debug.developerConsoleVisible = false;
+                Debug.Log("[capture-hud] Developer console overlay hidden for UI review; diagnostics remain in player.log.");
+            }
 
             while ((_recordVideo
                         ? _timelineFrame / (float)_videoFps
@@ -734,6 +751,7 @@ namespace Game.View
                 case "chain-step": return PelagVfxShowcase.ChainStep;
                 case "cleave": return PelagVfxShowcase.Cleave;
                 case "blaze": return PelagVfxShowcase.Blaze;
+                case "dash": return PelagVfxShowcase.Dash;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
                     Debug.LogWarning("[capture] Неизвестный VFX showcase: " + raw);

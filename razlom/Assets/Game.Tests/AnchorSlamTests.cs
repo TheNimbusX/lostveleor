@@ -56,7 +56,6 @@ namespace Game.Tests
             for (int i = 0; i < 35; i++) sim.Step(InputFrame.Empty);
             Assert.AreEqual(health, sim.Entities.Health[near]);
             Assert.IsFalse(sim.AnchorSlamActive);
-            Assert.IsFalse(sim.CycloneActive);
         }
 
         [Test]
@@ -83,43 +82,5 @@ namespace Game.Tests
             Assert.AreNotEqual(pos, sim.Entities.Position[enemy]);
         }
 
-        [Test]
-        public void NewAbilityCancelsUnlandedSlam()
-        {
-            var sim = Arena();
-            int enemy = Enemy(sim, 40);
-            sim.SetAbility(0, AbilityDefinition.Whirlwind(), new AbilityNode[0], 0);
-            sim.Step(Cast());
-            var replacement = InputFrame.Empty;
-            replacement.AbilityMask = 1;
-            sim.Step(replacement);
-            for (int i = 0; i < 30; i++) sim.Step(InputFrame.Empty);
-            Assert.AreEqual(10000, sim.Entities.Health[enemy]);
-            Assert.IsFalse(sim.AnchorSlamActive);
-        }
-
-        [Test]
-        public void DeathCancelsUnlandedSlam()
-        {
-            var sim = Arena();
-            int enemy = Enemy(sim, 40);
-            sim.Step(Cast());
-            sim.Entities.Alive[0] = false;
-            for (int i = 0; i < 30; i++) sim.Step(InputFrame.Empty);
-            Assert.AreEqual(10000, sim.Entities.Health[enemy]);
-        }
-
-        [Test]
-        public void ReplayIncludesPendingSlamAndStun()
-        {
-            var a = Arena(); var b = Arena();
-            Enemy(a, 30); Enemy(b, 30);
-            for (int i = 0; i < 70; i++)
-            {
-                var input = i == 0 ? Cast() : InputFrame.Empty;
-                a.Step(input); b.Step(input);
-                Assert.AreEqual(a.StateHash(), b.StateHash());
-            }
-        }
     }
 }

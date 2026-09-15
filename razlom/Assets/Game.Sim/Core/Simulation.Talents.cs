@@ -38,6 +38,13 @@ namespace Game.Sim
             return build != null && build.DefinitionId == definitionId && build.Has(flag);
         }
 
+        /// <summary>Проверка цели до прерывания текущего действия и расхода кулдауна.</summary>
+        public bool ValidAbilityTarget(int target, AbilityBuild build)
+            => build != null && target > 0 && target < Entities.Count && Entities.Alive[target]
+                && Entities.Side[target] != Entities.Side[PlayerId]
+                && (Entities.Position[target] - Entities.Position[PlayerId]).LengthSq
+                    <= build.Get(AbilityStatType.Radius) * build.Get(AbilityStatType.Radius);
+
         /// <summary>Возврат лавидия игроку, не выше потолка.</summary>
         private void RefundLavidium(int amount)
         {
@@ -320,8 +327,61 @@ namespace Game.Sim
             }
         }
 
+        // ---- якорные таланты ----
+
+        /// <summary>«Тяжёлый кулак»: оглушение 0,5 с.</summary>
+        private const int BoardingStunTicks = TicksPerSecond / 2;
+
+        /// <summary>«Рука на эфес»: −1 с перезарядки остальных способностей.</summary>
+        private const int BoardingHiltTicks = TicksPerSecond;
+
+        /// <summary>«На абордаж!»: кулак достаёт врагов в 2 м от точки прибытия.</summary>
+        private static readonly Fix64 BoardingSweepRadius = Fix64.FromInt(2);
+
+        /// <summary>Когда снова накопится второй заряд Абордажа.</summary>
+        private int _boardingSpareReadyTick;
+
+        private void BoardingAfterHit(AbilityBuild build, int target)
+        {
+            if (build.Has(AbilityFlag.BoardingStun) && Entities.Alive[target])
+                StunByTalent(target, BoardingStunTicks);
+        }
+
+        private void StunByTalent(int target, int ticks)
+        {
+            Statuses.ApplyStun(target, Tick + ticks);
+            Entities.Velocity[target] = FixVec2.Zero;
+            Entities.PendingAttackTarget[target] = -1;
+            Entities.AttackImpactTick[target] = 0;
+            Entities.PendingAttackVariant[target] = 0;
+            _events.Add(new SimEvent(SimEventType.Stun, PlayerId, target, ticks, false, Entities.Position[target]));
+        }
+
+        private void ShortenOtherCooldowns(int exceptSlot, int ticks)
+        {
+            for (int slot = 0; slot < AbilitySlots; slot++)
+            {
+                if (slot == exceptSlot || _abilityBuilds[slot] == null) continue;
+                int reduced = _abilityReadyTick[slot] - ticks;
+                _abilityReadyTick[slot] = reduced < Tick ? Tick : reduced;
+            }
+        }
+
+        /// <summary>
+        /// «Два заряда»: если запасной заряд накоплен, кнопка возвращается сразу
+        /// после прыжка, а сам заряд копится полной перезарядкой.
+        /// </summary>
+        private void AnchorTalentAfterCast(int slot, AbilityBuild build)
+        {
+            if (build.DefinitionId != AbilityDefinition.AnchorLeapId || !build.Has(AbilityFlag.BoardingTwoCharges)) return;
+            if (Tick < _boardingSpareReadyTick) return;
+            _abilityReadyTick[slot] = Tick + AnchorKit.LeapWindupTicks + AnchorKit.LeapTicks;
+            _boardingSpareReadyTick = Tick + build.CooldownTicks;
+        }
+
         private void HashTalents(ref ulong hash)
         {
+            Hashing.Mix(ref hash, _boardingSpareReadyTick);
             Hashing.Mix(ref hash, _whirlChannelSlot);
             Hashing.Mix(ref hash, _whirlChannelEndTick);
             Hashing.Mix(ref hash, _whirlChannelNextPulse);

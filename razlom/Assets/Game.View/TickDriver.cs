@@ -101,16 +101,6 @@ namespace Game.View
         /// </summary>
         public int Generation => Session != null ? Session.Generation : 0;
 
-        [Header("Дерево «Печати пламени» — способность 1")]
-        [Tooltip("StatMod: +20% урона огнём.")]
-        public bool NodeHotter = false;
-
-        [Tooltip("Flag: знак делится на три снаряда, урон каждого −45%.")]
-        public bool NodeSplit = false;
-
-        [Tooltip("EffectInsert: горящий враг при смерти поджигает ближайшего.")]
-        public bool NodeSpreads = false;
-
         [Header("Отладка")]
         public bool LogStateHash = false;
         public int MaxTicksPerFrame = 5;
@@ -143,9 +133,14 @@ namespace Game.View
         {
             if (Session == null || Session.Mode != GameMode.Rift || Run == null) return;
 
-            bool validChoice = command >= RunCommand.ChooseReward1
-                               && command <= RunCommand.ChooseReward3;
-            if (command != RunCommand.Leave && (!validChoice || Run.Phase != RunPhase.ChoosingReward))
+            bool validChoice = Run.Phase == RunPhase.ChoosingReward
+                               && command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3;
+            bool validReplace = Run.Phase == RunPhase.ReplacingAbility
+                                && command >= RunCommand.ReplaceSlot1 && command <= RunCommand.SalvageAbility;
+            // Мини-меню добычи работает посреди боя и по пути к выходу.
+            bool validPickup = (Run.Phase == RunPhase.Clearing || Run.Phase == RunPhase.SeekingExit)
+                               && command >= RunCommand.PickupReplaceSlot1 && command <= RunCommand.PickupSalvage;
+            if (command != RunCommand.Leave && !validChoice && !validReplace && !validPickup)
                 return;
 
             _commandLatch = (byte)command;
@@ -190,6 +185,10 @@ namespace Game.View
                  "не поймать.")]
         public bool WatchTeleports;
 
+        private PlayerHud _hud;
+        private int _hudMouseSlot = -1;
+        private bool _hudMouseGesture;
+        private readonly bool[] _hudSlotPressed = new bool[Simulation.AbilitySlots];
         private InputFrame _pending = InputFrame.Empty;
         private byte _abilityLatch;
         private InputFrame _abilityPressFrame;
@@ -222,7 +221,12 @@ namespace Game.View
         // Пять талантов на способность плюс запас: буфер общий на слот, и узлы
         // сверх длины AppendNodes молча отбросил бы.
         private readonly AbilityNode[] _nodeBuffer = new AbilityNode[8];
-        private bool _appliedHotter, _appliedSplit, _appliedSpreads;
+        private int _appliedTalents;
+        private RunHud _runHud;
+        private RunLoadout _appliedLoadout;
+        private int _appliedLoadoutVersion, _appliedLoadoutApplications;
+        private readonly RunLoadout _fallbackLoadout = new RunLoadout();
+        private bool _captureLoadoutPrepared;
 
         // Позиции и направления на предыдущем тике — нужны, чтобы
         // интерполировать отрисовку. Поворот идёт из того же тика, что и
@@ -302,9 +306,13 @@ namespace Game.View
             // при первом обращении, а не в Awake: порядок вызовов не гарантирован.
             if (_camera == null) _camera = Camera.main;
 
-            // Узлы можно щёлкать прямо во время игры: пересборка билда стоит
-            // копейки и случается только когда чекбокс реально поменялся.
-            if (NodeHotter != _appliedHotter || NodeSplit != _appliedSplit || NodeSpreads != _appliedSpreads)
+            // Набор и отладочные таланты можно менять прямо во время игры:
+            // пересборка стоит копейки и случается только когда что-то поменялось.
+            // Applications ловит новый Разлом: RiftRun ставит набор сам, без
+            // отладочных узлов, и их надо наложить заново.
+            RunLoadout loadout = CurrentLoadout();
+            if (DeveloperTalents.Version != _appliedTalents || loadout != _appliedLoadout
+                || loadout.Version != _appliedLoadoutVersion || loadout.Applications != _appliedLoadoutApplications)
                 ApplyAbilityBuild();
 
             if (!CampIntegrationCapture.IsRunning) CaptureInput();
@@ -431,7 +439,8 @@ namespace Game.View
             // Одни и те же клавиши: у игрока не должно быть двух рядов кнопок,
             // а бой на этом экране всё равно стоит.
             bool choosing = Session.Mode == GameMode.Rift
-                            && Run != null && Run.Phase == RunPhase.ChoosingReward;
+                            && Run != null && (Run.Phase == RunPhase.ChoosingReward
+                                               || Run.Phase == RunPhase.ReplacingAbility);
             bool letters = GameUserSettings.AbilityRowUsesLetters;
             _pending.AbilityHoldMask = 0;
 
@@ -728,6 +737,7 @@ namespace Game.View
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.ChainStep ? AbilityDefinition.ChainStepId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave ? AbilityDefinition.CleaveId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze ? AbilityDefinition.BlazeId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Dash ? AbilityDefinition.DashId
                             : AbilityDefinition.WhirlwindId;
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
@@ -753,6 +763,7 @@ namespace Game.View
             }
             // При 60+ FPS между нажатием и тиком Sim есть новые кадры ввода.
             // Сохраняем прицел вместе с кнопкой, иначе движение заменяет цель броска.
+            if (HudReviewCapture.Enabled) HudReviewCapture.FrameInput(this);
             if (_abilityLatch != 0 && !_abilityPressLatched)
             {
                 _abilityPressFrame = _pending;
@@ -885,11 +896,25 @@ namespace Game.View
 
                 if (choosing)
                 {
-                    if (i < RiftRun.RewardChoices)
+                    // На панели замены тот же ряд выбирает, какой слот отдать.
+                    if (Run.Phase == RunPhase.ReplacingAbility)
+                    {
+                        if (i < RunLoadout.Slots)
+                            _commandLatch = (byte)((int)RunCommand.ReplaceSlot1 + i);
+                    }
+                    else if (i < RiftRun.RewardChoices)
                         _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
                 }
                 else if (abilitiesLive)
                 {
+                    AbilityBuild build = Sim.GetAbility(i);
+                    if (build == null) continue;
+                    var availability = HudAbilityAvailability.Evaluate(Sim.Entities.Alive[Simulation.PlayerId],
+                        build.DefinitionId == AbilityDefinition.WreckId && Sim.WreckComboOpen,
+                        Sim.AbilityReadyTick(i) - Sim.Tick, Sim.Entities.Lavidium[Simulation.PlayerId].ToInt(), Simulation.LavidiumCostOf(build));
+                    if (_hud == null) _hud = GetComponent<PlayerHud>();
+                    _hud?.NotifyAbilityPress(i, availability);
+                    if (!availability.Ready) continue;
                     if (TargetedSlot(i))
                     {
                         // Повторное нажатие той же клавиши снимает прицел —
@@ -919,9 +944,63 @@ namespace Game.View
         /// рядом с толпой означал атаку, чуть в сторону — движение, и игрок
         /// платил за промах мышью сменой действия.
         /// </summary>
+        private void ActivateHudSlot(int slot)
+        {
+            if (slot < 0 || slot >= Simulation.AbilitySlots || GameplayPaused || Sim == null ||
+                Session == null || Session.Mode == GameMode.Summary ||
+                (Run != null && Session.Mode == GameMode.Rift && (Run.Phase == RunPhase.ChoosingReward
+                                                                  || Run.Phase == RunPhase.ReplacingAbility)) ||
+                CampPlayerView.Instance?.InputBlocked == true) return;
+            AbilityBuild build = Sim.GetAbility(slot);
+            if (build == null) return;
+            // Aim остаётся последней точкой в мире, а не проекцией кнопки на землю.
+            if ((_pending.Aim - Sim.Entities.Position[Simulation.PlayerId]).LengthSq < Fix64.Ratio(1, 100))
+                _pending.Aim = Sim.Entities.Position[Simulation.PlayerId] + Sim.Entities.Facing[Simulation.PlayerId];
+            _hudSlotPressed[slot] = true;
+            LatchSlots(_hudSlotPressed, false);
+            _hudSlotPressed[slot] = false;
+        }
+
+        internal bool PointerOverHud(Vector2 pointer)
+        {
+            if (_hud == null) _hud = GetComponent<PlayerHud>();
+            return _hud != null && _hud.HitTest(pointer, out _);
+        }
+
         internal void CaptureAim(Vector2 screenPosition, bool moveHeld, bool movePressed,
             bool attackHeld, bool attackPressed = false)
         {
+            if (_hud == null) _hud = GetComponent<PlayerHud>();
+            int hudSlot = -1;
+            bool overHud = _hud != null && _hud.HitTest(screenPosition, out hudSlot);
+            if (!attackHeld) { _hudMouseSlot = -1; _hudMouseGesture = false; }
+            if (overHud || _hudMouseGesture)
+            {
+                if (movePressed && _targetAimSlot >= 0) ResolveTargetAim(false, true);
+                if (attackPressed)
+                {
+                    _hudMouseGesture = true;
+                    _hudMouseSlot = hudSlot;
+                    ActivateHudSlot(hudSlot);
+                }
+                if (attackHeld && _hudMouseSlot >= 0)
+                    _pending.AbilityHoldMask |= (byte)(1 << _hudMouseSlot);
+                // Клик по интерфейсу не должен одновременно ударить или приказать идти в мир.
+                _pending.Flags = 0; _pending.AttackTarget = -1;
+                _pointerPressLatched = false;
+                AttackHeld = MoveOrderHeld = MoveOrderPressedThisFrame = false;
+                return;
+            }
+            if (_runHud == null) _runHud = GetComponent<RunHud>();
+            if (_runHud != null && _runHud.PointerOverDropMenu(screenPosition))
+            {
+                // Клик по мини-меню добычи не должен ударить или отправить героя в мир.
+                // Команда меню уже защёлкнута отдельно и доживёт до тика.
+                _pending.Flags = 0; _pending.AttackTarget = -1;
+                _pointerPressLatched = false;
+                AttackHeld = MoveOrderHeld = MoveOrderPressedThisFrame = false;
+                return;
+            }
             if (CampTrainingView.PointerOverPanel(screenPosition))
             {
                 ClearCapturedInput();
@@ -1036,55 +1115,53 @@ namespace Game.View
         /// качество одного приёма, а не ширина набора способностей.
         /// </summary>
         /// <summary>
-        /// Перечитывает набор способностей из лагеря.
-        ///
-        /// Нужен смене ветки: сам по себе набор применяется при смене
-        /// симуляции, то есть на входе в забег, и без этого вызова игрок
-        /// увидел бы новые кнопки только со следующего Разлома — а решение
-        /// принято уже сейчас.
+        /// Перечитывает набор способностей: правка в меню разработчика, взятая
+        /// карточка, отладочные таланты. Update и так ловит смену версии; прямой
+        /// вызов нужен, чтобы кнопки поменялись в тот же кадр.
         /// </summary>
         public void RefreshAbilityBuild() => ApplyAbilityBuild();
+
+        private RunLoadout CurrentLoadout() => Session?.ActiveLoadout ?? _fallbackLoadout;
 
         private void ApplyAbilityBuild()
         {
             Simulation sim = Sim;
             if (sim == null) return;
 
-            int count = 0;
-            if (NodeHotter) _nodeBuffer[count++] = AbilityDefinition.NodeHotter();
-            if (NodeSplit) _nodeBuffer[count++] = AbilityDefinition.NodeSplit();
-            if (NodeSpreads) _nodeBuffer[count++] = AbilityDefinition.NodeSpreads();
-
             // Порядок в буфере значения не имеет: AbilityBuild сортирует узлы
             // по возрастанию Id сам, иначе порядок галочек влиял бы на урон.
             //
-            // ЧТО ЛЕЖИТ В СЛОТАХ, РЕШАЕТ ВЕТКА, А НЕ ЭТОТ ФАЙЛ. Раньше здесь
-            // стоял жёсткий список, и он был смесью обеих веток сразу: Вихрь
-            // саблей рядом с Ударом якорем. Набор — это правило игры, и живёт
-            // оно в симуляции (PelagKit), иначе съёмка, тесты и живой запуск
-            // разошлись бы в том, чем игрок вообще бьёт.
+            // ЧТО ЛЕЖИТ В СЛОТАХ, РЕШАЕТ НАБОР, А НЕ ЭТОТ ФАЙЛ. Набор — правило
+            // игры и живёт в симуляции (RunLoadout): в Разломе — набор забега,
+            // в лагере — лагерный. Отсюда на него только накладываются
+            // отладочные таланты из меню разработчика.
             //
-            // Ветку выбирают в лагере; вне лагеря берётся сабельная как
-            // стартовая — ею игрок знакомится с боем в начале Акта 1.
-            CombatBranch branch = Session?.Camp != null ? Session.Camp.Branch : CombatBranch.Sabre;
-            Camp camp = Session?.Camp;
-            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+            // Съёмки написаны под прежний полный сабельный набор: клавиши 1–4
+            // в лагере и в забеге. Им набор выдаётся целиком, игроку — нет.
+            if (CaptureRig.Installed && Session != null && !_captureLoadoutPrepared)
             {
-                // Таланты — узлы СВОЕЙ способности, поэтому считаются на слот.
-                // Отладочные узлы Печати выше в сборку не передаются, как и
-                // раньше: их буфер переиспользуется под таланты.
-                int nodes = 0;
-                if (camp != null && branch == CombatBranch.Sabre && slot < SabreTalents.LineCount)
-                {
-                    var line = (SabreTalentLine)slot;
-                    nodes = SabreTalents.AppendNodes(line, camp.SabreTalentRank(line), _nodeBuffer, 0);
-                }
-                sim.SetAbility(slot, PelagKit.Definition(branch, slot), _nodeBuffer, nodes);
+                _captureLoadoutPrepared = true;
+                for (int slot = 0; slot < RunLoadout.Slots; slot++) Session.CampLoadout.Put(slot, slot);
+                Session.CarryCampLoadoutIntoRift = true;
             }
+            RunLoadout loadout = CurrentLoadout();
+            for (int slot = 0; slot < RunLoadout.Slots; slot++)
+            {
+                // Таланты — узлы СВОЕЙ способности, поэтому считаются на слот:
+                // сначала взятые в забеге, потом включённые в меню разработчика
+                // (кроме уже взятых — узел дважды удвоил бы прибавку).
+                int nodes = loadout.AppendTalentNodes(slot, _nodeBuffer, 0);
+                int pool = loadout.PoolIndexAt(slot);
+                if (SabreTalents.TryLineOf(pool, out SabreTalentLine line))
+                    nodes = DeveloperTalents.AppendNodes(line, loadout.TalentRank(pool), _nodeBuffer, nodes);
+                sim.SetAbility(slot, loadout.DefinitionAt(slot), _nodeBuffer, nodes);
+            }
+            sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), _nodeBuffer, 0);
 
-            _appliedHotter = NodeHotter;
-            _appliedSplit = NodeSplit;
-            _appliedSpreads = NodeSpreads;
+            _appliedTalents = DeveloperTalents.Version;
+            _appliedLoadout = loadout;
+            _appliedLoadoutVersion = loadout.Version;
+            _appliedLoadoutApplications = loadout.Applications;
         }
 
         /// <summary>
@@ -1217,6 +1294,7 @@ namespace Game.View
         {
             if (_shownGeneration == Session.Generation) return;
             _shownGeneration = Session.Generation;
+            _hudMouseSlot = -1; _hudMouseGesture = false;
             _pointerPressLatched = false;
             _pointerPressFrame = InputFrame.Empty;
 

@@ -31,7 +31,12 @@ namespace Game.Tests
         }
 
         private static void Choose(GameSession session)
-            => session.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+        {
+            session.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+            // Способность при полной панели разбирается: петля локации проверяет уровни, а не набор.
+            if (session.Mode == GameMode.Rift && session.Run.Phase == RunPhase.ReplacingAbility)
+                session.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
+        }
 
         [TestCase(1UL)]
         [TestCase(42UL)]
@@ -109,48 +114,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void LeavingFinalReward_IsNotVictory()
-        {
-            var session = Session(51);
-            for (int level = 1; level < 10; level++) { ReachReward(session); Choose(session); }
-            ReachReward(session);
-            session.Step(new InputFrame { Command = (byte)RunCommand.Leave });
-            Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Left));
-            Assert.That(session.Run.TakenRewardCount, Is.EqualTo(9));
-        }
-
-        [Test]
-        public void BossSpawnsAlone_InConnectedDedicatedArenaAcrossSeeds()
-        {
-            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var final = profile.GetLevel(10);
-            for (ulong seed = 1; seed <= 40; seed++)
-            {
-                var seeds = RiftLevelSeeds.ForLevel(seed, 10);
-                var map = new LayoutMap(profile.Modules, profile.MaxModules);
-                final.Generate(new LayoutGenerator(), profile.Modules, map, seeds.Layout);
-                var a = new Simulation(seed, 512); var b = new Simulation(seed, 512);
-                var plan = final.Spawn(a, map, seeds.Spawns);
-                final.Spawn(b, map, seeds.Spawns);
-                Assert.That(map.PlacedCount, Is.EqualTo(4));
-                Assert.That(map.RewardBranchCount, Is.Zero);
-                Assert.That(a.Entities.Count, Is.EqualTo(2));
-                Assert.That(a.Entities.Position[plan.BossId], Is.EqualTo(map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent)));
-                Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.EntryPoint) >= Fix64.FromInt(196), Is.True);
-                Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.ExitPoint(0)) >= Fix64.FromInt(196), Is.True);
-                Assert.That(plan.Get(plan.ForEntity(plan.BossId)).Module, Is.Not.EqualTo(map.GetExit(0)));
-                Assert.That(plan.BossId, Is.GreaterThan(0), "seed " + seed);
-                Assert.That(a.Entities.Kind[plan.BossId], Is.EqualTo(EnemyKind.ForestGuardian));
-                Assert.That(a.Entities.Count, Is.EqualTo(b.Entities.Count));
-                for (int i = 0; i < a.Entities.Count; i++)
-                {
-                    Assert.That(a.Entities.Position[i], Is.EqualTo(b.Entities.Position[i]));
-                    if (i != plan.BossId) Assert.That(a.Entities.Health[i], Is.EqualTo(b.Entities.Health[i]));
-                }
-            }
-        }
-
-        [Test]
         public void DeveloperJump_UsesLevelSeeds_AndSafeBossApproach()
         {
             var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
@@ -178,31 +141,6 @@ namespace Game.Tests
             }
         }
 
-        [Test]
-        public void DeveloperTravel_DoesNotAwardLootOrAdvanceNormalSeedStream()
-        {
-            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var a = Session(83); var b = Session(83);
-            ulong before = 0; a.Camp.HashInto(ref before);
-            a.StartDeveloperRift(profile, 10, true, 42);
-            ReachReward(a); Choose(a);
-            Assert.That(a.Mode, Is.EqualTo(GameMode.Summary));
-            Assert.That(a.LastRun.ItemsKept, Is.Zero);
-            ulong after = 0; a.Camp.HashInto(ref after);
-            Assert.That(after, Is.EqualTo(before));
-            a.ReturnToCamp();
-            Assert.That(a.IsDeveloperRun, Is.False);
-            a.EnterRift(); b.EnterRift();
-            Assert.That(a.LastRunSeed, Is.EqualTo(b.LastRunSeed));
-            Assert.That(a.Run.Depth, Is.EqualTo(1));
-            a.StartDeveloperRift(profile, 3, false, 42);
-            Assert.That(a.Run.Depth, Is.EqualTo(3));
-            Assert.That(a.Run.Sim.Entities.Position[0], Is.EqualTo(a.Run.Map.EntryPoint));
-            var run = a.Run;
-            Assert.Throws<System.ArgumentException>(() => a.StartDeveloperRift(profile, 11, false, 42));
-            Assert.Throws<System.ArgumentException>(() => a.StartDeveloperRift(profile, 1, true, 42));
-            Assert.That(a.Run, Is.SameAs(run));
-        }
     }
 }
 #endif

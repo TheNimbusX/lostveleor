@@ -48,7 +48,7 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze', 'dash')]
     [string] $Skill = '',
     [switch] $LiveSkill,
     [switch] $NoVfx,
@@ -57,6 +57,8 @@ param(
     [ValidateRange(0.5,7)] [double] $CastDistance = 3,
     [ValidateRange(1,60)] [int] $HoldTicks = 60,
     [switch] $Hud,
+    [switch] $HudReview,
+    [ValidateRange(-1,4)] [int] $HudTooltip = -1,
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
@@ -233,6 +235,7 @@ $playerArgs = @(
     '-capture-height',  $Height
 )
 if ($SilentVideo) { $playerArgs += '-capture-silent-video' }
+if ($HudReview) { $playerArgs += '-capture-hud-review'; $playerArgs += '-capture-hud' }
 if ($Perf -gt 0) {
     $playerArgs += @(
         '-capture-perf', $Perf.ToString([Globalization.CultureInfo]::InvariantCulture)
@@ -258,6 +261,7 @@ if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
 $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization.CultureInfo]::InvariantCulture))
 $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
+if ($HudTooltip -ge 0) { $playerArgs += '-capture-hud'; $playerArgs += @('-capture-hud-tooltip', $HudTooltip.ToString()) }
 if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
 if ($CampReview) { $playerArgs += '-capture-camp-review' }

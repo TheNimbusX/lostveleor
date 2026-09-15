@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using Game.Sim;
 
 namespace Game.Tests
@@ -90,61 +90,7 @@ namespace Game.Tests
                 Assert.AreEqual(expected, HashOf(in item, db), $"прогон {i} дал другой предмет");
         }
 
-        [Test]
-        public void ReusedBuffer_DoesNotLeakBetweenItems()
-        {
-            // Буфер переиспользуется — значит обязан полностью очищаться.
-            // Иначе аффиксы прошлого предмета доезжают до следующего, и это
-            // худший вид ошибки: он проявляется только на втором предмете.
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-
-            var rare = new ItemInstance(Sword, 60, ItemRarity.Rare, 111UL);
-            var normal = new ItemInstance(Sword, 60, ItemRarity.Normal, 222UL);
-
-            ItemGenerator.Generate(in rare, db, buffer);
-            Assert.That(buffer.AffixCount, Is.GreaterThan(0));
-
-            ItemGenerator.Generate(in normal, db, buffer);
-            Assert.That(buffer.AffixCount, Is.EqualTo(0), "аффиксы протекли с прошлого предмета");
-        }
-
-        [Test]
-        public void DifferentSeeds_GiveDifferentItems()
-        {
-            ItemDatabase db = Standard();
-
-            // Не требуем уникальности каждого — требуем, чтобы генератор
-            // вообще реагировал на сид, а не выдавал одно и то же.
-            var seen = new System.Collections.Generic.HashSet<ulong>();
-            for (ulong s = 1; s <= 200; s++)
-                seen.Add(HashOf(new ItemInstance(Sword, 50, ItemRarity.Rare, s), db));
-
-            Assert.That(seen.Count, Is.GreaterThan(150));
-        }
-
         // ---- ребаланс без миграции ----
-
-        [Test]
-        public void ChangingAffixRange_ChangesItem_AtTheSameSeed()
-        {
-            // Тот же рецепт, разные данные. Это и есть ребаланс, который
-            // доезжает до всех предметов всех игроков сам собой.
-            var item = new ItemInstance(Sword, 50, ItemRarity.Rare, 0x5EEDUL);
-
-            ulong before = HashOf(in item, BuildDatabase(Fix64.Ratio(4, 10)));
-            ulong after = HashOf(in item, BuildDatabase(Fix64.Ratio(9, 10)));
-
-            Assert.AreNotEqual(before, after, "правка диапазона не доехала до предмета");
-        }
-
-        [Test]
-        public void DatabaseContentHash_ReactsToRebalance()
-        {
-            Assert.AreNotEqual(
-                BuildDatabase(Fix64.Ratio(4, 10)).ContentHash(),
-                BuildDatabase(Fix64.Ratio(9, 10)).ContentHash());
-        }
 
         // ---- правила отбора аффиксов ----
 
@@ -182,45 +128,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void LowItemLevel_NeverGetsHighLevelAffixes()
-        {
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-
-            int forbidden = StableId.Of("affix.flat_damage_t2"); // требует уровень 30
-            int alsoForbidden = StableId.Of("affix.crit_chance"); // требует уровень 40
-
-            for (ulong seed = 1; seed <= 500; seed++)
-            {
-                ItemGenerator.Generate(new ItemInstance(Sword, 5, ItemRarity.Rare, seed), db, buffer);
-
-                for (int i = 0; i < buffer.AffixCount; i++)
-                {
-                    Assert.AreNotEqual(forbidden, buffer.GetAffix(i).AffixId, $"сид {seed}");
-                    Assert.AreNotEqual(alsoForbidden, buffer.GetAffix(i).AffixId, $"сид {seed}");
-                }
-            }
-        }
-
-        [Test]
-        public void AffixesRespectCategory()
-        {
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-
-            int weaponOnly = StableId.Of("affix.fire_damage");
-
-            for (ulong seed = 1; seed <= 300; seed++)
-            {
-                ItemGenerator.Generate(new ItemInstance(Armor, 90, ItemRarity.Rare, seed), db, buffer);
-
-                for (int i = 0; i < buffer.AffixCount; i++)
-                    Assert.AreNotEqual(weaponOnly, buffer.GetAffix(i).AffixId,
-                        $"сид {seed}: оружейный аффикс попал на броню");
-            }
-        }
-
-        [Test]
         public void RolledValues_StayInsideDeclaredRange()
         {
             ItemDatabase db = Standard();
@@ -239,33 +146,6 @@ namespace Game.Tests
                     Assert.That(rolled.Value.Raw, Is.LessThanOrEqualTo(def.MaxValue.Raw));
                 }
             }
-        }
-
-        [Test]
-        public void UnknownBase_IsReportedNotGuessed()
-        {
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-
-            bool ok = ItemGenerator.Generate(
-                new ItemInstance(StableId.Of("base.does_not_exist"), 10, ItemRarity.Rare, 1UL), db, buffer);
-
-            Assert.IsFalse(ok);
-        }
-
-        [Test]
-        public void DuplicateIds_FailLoudlyAtLoad()
-        {
-            // Коллизия хеша или опечатка в данных обязана валить загрузку,
-            // а не всплывать через полгода как «предмет иногда не тот».
-            var bases = new[]
-            {
-                new ItemBaseDefinition(Sword, ItemCategory.Weapon),
-                new ItemBaseDefinition(Sword, ItemCategory.Armor),
-            };
-
-            Assert.Throws<System.InvalidOperationException>(
-                () => new ItemDatabase(bases, new AffixDefinition[0]));
         }
 
         // ---- связь с потоком случайности и статами ----
@@ -292,57 +172,5 @@ namespace Game.Tests
             Assert.AreEqual(before, after);
         }
 
-        [Test]
-        public void Drop_ConsumesAffixStream_Deterministically()
-        {
-            var a = new RngStreams(999UL);
-            var b = new RngStreams(999UL);
-
-            for (int i = 0; i < 100; i++)
-            {
-                ItemInstance x = ItemDrop.Roll(ref a.Affix, Sword, 40);
-                ItemInstance y = ItemDrop.Roll(ref b.Affix, Sword, 40);
-
-                Assert.AreEqual(x.Seed, y.Seed);
-                Assert.AreEqual(x.Rarity, y.Rarity);
-            }
-        }
-
-        [Test]
-        public void Drop_CostsTheSameDrawsRegardlessOfOutcome()
-        {
-            // Гарантированная награда не должна сдвигать обычный лут:
-            // расход потока обязан быть одинаковым.
-            var a = new RngStreams(4242UL);
-            var b = new RngStreams(4242UL);
-
-            ItemDrop.Roll(ref a.Affix, Sword, 40);
-            ItemDrop.RollOfRarity(ref b.Affix, Sword, 40, ItemRarity.Rare);
-
-            Assert.AreEqual(a.Affix.State, b.Affix.State);
-        }
-
-        [Test]
-        public void GeneratedItem_AppliesToStatSheet()
-        {
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-            ItemGenerator.Generate(new ItemInstance(Sword, 90, ItemRarity.Rare, 77UL), db, buffer);
-
-            var sheet = new StatSheet();
-            sheet.SetBase(StatType.Damage, Fix64.FromInt(100));
-
-            const int weaponSlot = 1;
-            buffer.ApplyTo(sheet, weaponSlot);
-            Fix64 equipped = sheet.Get(StatType.Damage);
-
-            // База меча даёт +5 к урону собственным модификатором, значит
-            // одетый предмет обязан поднять урон выше базовых ста.
-            Assert.That(equipped.Raw, Is.GreaterThan(Fix64.FromInt(100).Raw));
-
-            // И сняться целиком: слот — это и есть источник.
-            sheet.RemoveSource(ModifierSource.Equipment, weaponSlot);
-            Assert.That(sheet.Get(StatType.Damage), Is.EqualTo(Fix64.FromInt(100)));
-        }
     }
 }

@@ -4,6 +4,25 @@ using NUnit.Framework;
 public sealed class CombatVoiceBudgetTests
 {
     [Test]
+    public void PausedCueKeepsItsRemainingReservationAfterDspAdvances()
+    {
+        var pool = new CombatVoiceBudget(1);
+        pool.Acquire(10, 2, 80);
+        pool.Shift(5);
+        Assert.That(pool.Acquire(16, .2, 10), Is.EqualTo(-1));
+        Assert.That(pool.Acquire(17, .2, 10), Is.Zero);
+    }
+
+    [Test]
+    public void PauseDoesNotReserveAReleasedVoice()
+    {
+        var pool = new CombatVoiceBudget(1);
+        pool.Release(pool.Acquire(10, 2, 80));
+        pool.Shift(20);
+        Assert.That(pool.Acquire(11, .2, 10), Is.Zero);
+    }
+
+    [Test]
     public void FootstepsCannotInterruptWarningOrDelayedImpact()
     {
         var pool = new CombatVoiceBudget(2);

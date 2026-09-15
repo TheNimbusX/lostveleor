@@ -45,17 +45,22 @@ namespace Game.Sim
             // Контакт существует и при промахе: будущий VFX не зависит от наличия жертвы.
             _events.Add(new SimEvent(SimEventType.AnchorSlamImpact, PlayerId, -1, _slamSlot,
                 false, _slamOrigin + _slamDirection * length));
-            // Пересечение тела с прямоугольником сохраняет одинаковую ширину по всей длине.
+            // Талант «Три направления» добавляет две полосы под ±30°. Цель, задетая
+            // несколькими полосами, получает удар один раз.
+            int lanes = build.Has(AbilityFlag.AnchorSlamThreeWays) ? 3 : 1;
+            bool stunnedBonus = build.Has(AbilityFlag.AnchorSlamStunnedBonus);
+            int damage = build.Get(AbilityStatType.Damage).ToInt();
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i] || Entities.Side[i] == Entities.Side[PlayerId]) continue;
-                FixVec2 delta = Entities.Position[i] - _slamOrigin;
-                Fix64 along = FixVec2.Dot(delta, _slamDirection);
-                Fix64 across = Fix64.Abs(delta.X * _slamDirection.Y - delta.Y * _slamDirection.X);
-                Fix64 dx = along - Fix64.Clamp(along, Fix64.Zero, length);
-                Fix64 dy = across > halfWidth ? across - halfWidth : Fix64.Zero;
-                if (dx * dx + dy * dy > Entities.BodyRadius[i] * Entities.BodyRadius[i]) continue;
-                ApplyAbilityDamage(PlayerId, i, build.Get(AbilityStatType.Damage).ToInt(), _slamSlot, DamageType.Physical);
+                bool inside = false;
+                for (int lane = 0; lane < lanes && !inside; lane++)
+                    inside = InsideSlamLane(i, SlamLaneDirection(lane), length, halfWidth);
+                if (!inside) continue;
+                // «Добить оглушённого» смотрит на стан ДО удара: собственный стан
+                // этого же удара бонуса не даёт.
+                int hit = stunnedBonus && Statuses.IsStunned(i, Tick) ? damage * 150 / 100 : damage;
+                ApplyAbilityDamage(PlayerId, i, hit, _slamSlot, DamageType.Physical);
                 if (!Entities.Alive[i] || stunTicks <= 0) continue;
                 Statuses.ApplyStun(i, Tick + stunTicks);
                 Entities.Velocity[i] = FixVec2.Zero;
@@ -64,6 +69,29 @@ namespace Game.Sim
                 Entities.PendingAttackVariant[i] = 0;
                 _events.Add(new SimEvent(SimEventType.Stun, PlayerId, i, stunTicks, false, Entities.Position[i]));
             }
+        }
+
+        private static readonly Fix64 SlamSideCos = Fix64.Ratio(8660, 10000);   // cos 30°
+        private static readonly Fix64 SlamSideSin = Fix64.Ratio(1, 2);          // sin 30°
+
+        /// <summary>Полоса удара: 0 — прямо, 1 и 2 — ±30° от направления удара.</summary>
+        private FixVec2 SlamLaneDirection(int lane)
+        {
+            FixVec2 v = _slamDirection;
+            if (lane == 0) return v;
+            Fix64 s = lane == 1 ? SlamSideSin : Fix64.Zero - SlamSideSin;
+            return new FixVec2(v.X * SlamSideCos - v.Y * s, v.X * s + v.Y * SlamSideCos);
+        }
+
+        /// <summary>Пересечение тела с прямоугольником сохраняет одинаковую ширину по всей длине.</summary>
+        private bool InsideSlamLane(int entity, FixVec2 direction, Fix64 length, Fix64 halfWidth)
+        {
+            FixVec2 delta = Entities.Position[entity] - _slamOrigin;
+            Fix64 along = FixVec2.Dot(delta, direction);
+            Fix64 across = Fix64.Abs(delta.X * direction.Y - delta.Y * direction.X);
+            Fix64 dx = along - Fix64.Clamp(along, Fix64.Zero, length);
+            Fix64 dy = across > halfWidth ? across - halfWidth : Fix64.Zero;
+            return dx * dx + dy * dy <= Entities.BodyRadius[entity] * Entities.BodyRadius[entity];
         }
 
         private void HashAnchorSlam(ref ulong hash)

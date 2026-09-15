@@ -128,7 +128,6 @@ namespace Game.View
             UpdateAbilityMotion();
             UpdateFootstepDust();
             UpdateActive(Time.deltaTime);
-            UpdateCyclonePresentation();
             UpdateCombatLighting(Time.unscaledDeltaTime);
         }
 
@@ -260,7 +259,6 @@ namespace Game.View
         {
             StopCleaveSlash();
             StopLeapMotionVfx();
-            ReleaseCyclone();
             if (_heroLight != null) _heroLight.enabled = false;
             _combatLightPulse = 0f;
             Shader.SetGlobalVector(HeroLightPositionId, new Vector4(0f, -100f, 0f, 1f));
@@ -345,8 +343,6 @@ namespace Game.View
                         PlayWhirlwindContact();
                     AbilityBuild ability = (uint)e.ActionVariant < Simulation.AbilitySlots
                         ? _driver.Sim.GetAbility(e.ActionVariant) : null;
-                    if (ability != null && ability.DefinitionId == AbilityDefinition.ChainCycloneId)
-                        PlaySweepTargetPull(e.Target);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
                         PlayWhirlwindImpact(e.Target, e.Position);
                     // Огненная добавка «Ладно смазал» приходит отдельным ударом
@@ -627,7 +623,6 @@ namespace Game.View
 
         public void StopShowcase()
         {
-            ReleaseCyclone();
             // Showcase can be interrupted while the anchor is still traveling
             // (including when a new showcase replaces the current one). The
             // equipment state is presentation-only and must never survive that
@@ -897,10 +892,6 @@ namespace Game.View
                 Vector3 origin = PlayerPosition();
                 PlayAnchorLeapTo(origin + Vector3.ClampMagnitude(point - origin, AnchorKit.LeapRange.ToFloat()), false, slot);
             }
-            else if (id == AbilityDefinition.ChainCycloneId)
-            {
-                CancelActiveAnchorMotionForReplacement();
-            }
             else if (id == AbilityDefinition.ChainStepId)
             {
                 PlayChainStep(false, slot);
@@ -943,15 +934,6 @@ namespace Game.View
         private void PlayAnchorSweep(bool showcase, int slot = 2)
         {
             // Циклон демонстрируется реальным удержанием в TickDriver.
-        }
-
-        private void PlaySweepTargetPull(int entity)
-        {
-            Vector3 enemy = EntityPosition(entity, PlayerPosition());
-            Spawn(PelagVfxId.CyclonePullImpact, enemy + Vector3.up * 0.7f, Quaternion.identity,
-                0.25f, 0.4f, 0.65f, Motion.Expand);
-            Spawn(PelagVfxId.DustSmall, enemy + Vector3.up * 0.05f, Quaternion.identity,
-                0.35f, 0.6f, 0.9f, Motion.Expand);
         }
 
         private void PlayChainStep(bool showcase, int slot = 3)

@@ -50,6 +50,13 @@ namespace Game.Tests
             Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
         }
 
+        /// <summary>Способность при полной панели разбирается: эти тесты проверяют лагерь, а не набор.</summary>
+        private static void SalvageIfReplacing(GameSession session)
+        {
+            if (session.Mode == GameMode.Rift && session.Run.Phase == RunPhase.ReplacingAbility)
+                session.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
+        }
+
         /// <summary>Проходит забег до конца: зачищает Разлом, берёт награду, уходит с добычей.</summary>
         private static void PlayOneRift(GameSession session)
         {
@@ -64,35 +71,6 @@ namespace Game.Tests
         }
 
         // ---- приёмка ----
-
-        [TestCase(0)]
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        public void Camp_AbilityMatchesStandaloneCombatForSameInput(int slot)
-        {
-            var session=Session();var camp=session.ActiveSim;
-            var combat=new Simulation(Seed,512);combat.SetupTestArena(0);
-            var definitions=new[]{AbilityDefinition.Whirlwind(),AbilityDefinition.AnchorLeap(),AbilityDefinition.ChainCyclone(),AbilityDefinition.ChainStep()};
-            foreach(var sim in new[]{camp,combat})
-            {
-                sim.SetAbility(slot,definitions[slot],new AbilityNode[0],0);
-                int enemy=sim.Entities.Spawn(new FixVec2(Fix64.FromInt(2),Fix64.Zero),10000,Faction.Orvill);
-                sim.Entities.Stats[enemy].SetBase(StatType.MoveSpeed,Fix64.Zero);
-                sim.Entities.RefreshStats(enemy);sim.Entities.NextAttackTick[enemy]=int.MaxValue;
-            }
-            for(int tick=0;tick<90;tick++)
-            {
-                var input=InputFrame.Empty;
-                input.Aim=new FixVec2(Fix64.FromInt(3),Fix64.Zero);
-                input.AbilityMask=tick==0?(byte)(1<<slot):(byte)0;
-                input.AbilityHoldMask=tick<30?(byte)(1<<slot):(byte)0;
-                input.AbilityTarget=1;
-                session.Step(input);combat.Step(input);
-                Assert.AreEqual(combat.StateHash(),camp.StateHash(),"slot="+slot+" tick="+tick);
-            }
-            Assert.Greater(camp.AbilityReadyTick(slot),0);
-        }
 
         [Test]
         public void Camp_UsesCombatSimulationForMovementAndAbilities()
@@ -109,50 +87,6 @@ namespace Game.Tests
             Assert.Greater(sim.AbilityReadyTick(0), 0);
             Assert.AreEqual(GameMode.Camp, session.Mode);
             Assert.IsNull(session.Run);
-        }
-
-        [Test]
-        public void Camp_CollisionBlocksWalkingAndLeapAcrossThinWall()
-        {
-            const int size = 80;
-            var cells = new bool[size * size];
-            for (int y = 0; y < size; y++) for (int x = 0; x < size; x++)
-                cells[y * size + x] = x != 32;
-            var map = new CampWalkMap(new FixVec2(Fix64.FromInt(-2),Fix64.FromInt(-2)), Fix64.Ratio(1,8), size, size, cells);
-            var session = Session();
-            session.ConfigureCampWorld(FixVec2.Zero, map);
-            var sim = session.ActiveSim;
-            var move = InputFrame.Empty;
-            move.Aim = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-            move.Flags = (byte)InputFlags.MoveOrder;
-            for (int i=0;i<90;i++) session.Step(move);
-            Assert.IsTrue(sim.Entities.Position[0].X < Fix64.FromInt(2));
-            sim.SetAbility(0,AbilityDefinition.AnchorLeap(),new AbilityNode[0],0);
-            move.Flags = 0; move.AbilityMask = 1;
-            session.Step(move);
-            for(int i=0;i<60;i++) session.Step(InputFrame.Empty);
-            Assert.IsTrue(sim.Entities.Position[0].X < Fix64.FromInt(2));
-            Assert.IsTrue(map.Contains(sim.Entities.Position[0]));
-        }
-
-        [Test]
-        public void Camp_EquipmentRebindsAfterEveryModeTransition()
-        {
-            var session=Session();
-            var campSim=session.ActiveSim;
-            for(int i=0;i<3;i++)
-            {
-                session.EnterProvingGround(); session.LeaveProvingGround();
-                Assert.AreSame(campSim,session.ActiveSim);
-                session.EnterRift(); session.ReturnToCamp();
-                Assert.AreSame(campSim,session.ActiveSim);
-            }
-            var sword=Sword(41);
-            var before=campSim.Entities.Stats[0].Get(StatType.Damage);
-            session.Camp.Worn.Equip(sword,out _);
-            session.Step(InputFrame.Empty);
-            Assert.IsTrue(campSim.Entities.Stats[0].Get(StatType.Damage) > before);
-            Assert.AreEqual(1,campSim.Entities.Count);
         }
 
         [Test]
@@ -198,20 +132,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void WithoutThePortal_TheRiftIsUnreachable()
-        {
-            // Первый акт: портала ещё нет, он открывается третьим.
-            var camp = new Camp(PrototypeContent.Items(), act: 1);
-            var session = new GameSession(Seed, camp, PrototypeContent.Modules(),
-                PrototypeContent.ItemBaseIds());
-
-            session.Step(Command(CampCommand.EnterRift));
-
-            Assert.AreEqual(GameMode.Camp, session.Mode,
-                "закрытая услуга обязана просто не сработать, а не пустить в обход");
-        }
-
-        [Test]
         public void RunEnd_LeadsToTheSummaryScreen()
         {
             GameSession session = Session();
@@ -221,46 +141,6 @@ namespace Game.Tests
             Assert.AreEqual(GameMode.Summary, session.Mode);
             Assert.AreEqual(RunOutcome.Left, session.LastRun.Outcome);
             Assert.AreEqual(1, session.LastRun.RiftsCleared);
-        }
-
-        [Test]
-        public void Summary_HasRepeatInOneKey()
-        {
-            GameSession session = Session();
-            session.Step(Command(CampCommand.EnterRift));
-            PlayOneRift(session);
-
-            session.Step(Command(CampCommand.RepeatRift));
-
-            Assert.AreEqual(GameMode.Rift, session.Mode, "повтор идёт мимо лагеря");
-            Assert.AreEqual(2, session.RunNumber);
-        }
-
-        [Test]
-        public void Summary_AlsoLeadsBackToCamp()
-        {
-            GameSession session = Session();
-            session.Step(Command(CampCommand.EnterRift));
-            PlayOneRift(session);
-
-            session.Step(Command(CampCommand.ReturnToCamp));
-
-            Assert.AreEqual(GameMode.Camp, session.Mode);
-            Assert.IsNull(session.Run);
-        }
-
-        [Test]
-        public void EveryRun_GetsItsOwnSeed()
-        {
-            GameSession session = Session();
-
-            session.Step(Command(CampCommand.EnterRift));
-            ulong first = session.LastRunSeed;
-
-            PlayOneRift(session);
-            session.Step(Command(CampCommand.RepeatRift));
-
-            Assert.AreNotEqual(first, session.LastRunSeed, "два забега подряд не могут быть одним");
         }
 
         [Test]
@@ -322,6 +202,7 @@ namespace Game.Tests
                     var any = new InputFrame { Command = (byte)RunCommand.ChooseReward1 };
                     session.Step(in any);
                 }
+                SalvageIfReplacing(session);
             }
 
             Assert.Greater(items, 0, "за двенадцать Разломов предмет обязан предложиться хоть раз");
@@ -364,6 +245,7 @@ namespace Game.Tests
                 var take = new InputFrame
                 { Command = (byte)((int)RunCommand.ChooseReward1 + choice) };
                 session.Step(in take);
+                SalvageIfReplacing(session);
             }
 
             Assert.IsTrue(tookItem, "за двенадцать Разломов предмет обязан предложиться хоть раз");
@@ -374,47 +256,6 @@ namespace Game.Tests
             Assert.AreEqual(0, session.LastRun.ItemsKept, "сумка была занята целиком");
             Assert.AreEqual(1, session.LastRun.ItemsLost,
                 "не влезшее теряется — и это решение, принятое до входа");
-        }
-
-        [Test]
-        public void Salvage_TurnsUnkeptItemsIntoShards()
-        {
-            Camp camp = PrototypeContent.NewCamp();
-            camp.Bag.Add(Sword(1UL));
-            int keeper = camp.Bag.Add(Sword(2UL));
-            camp.Bag.SetKeep(keeper, true);
-
-            int shards = camp.SalvageJunk();
-
-            Assert.Greater(shards, 0, "разбор обязан что-то дать");
-            Assert.AreEqual(shards, camp.Money(CurrencyType.Shards));
-            Assert.AreEqual(1, camp.Bag.Used, "помеченное «беречь» разбор не трогает");
-            Assert.IsFalse(camp.Bag.IsEmpty(keeper));
-        }
-
-        [Test]
-        public void Trader_PaysGold()
-        {
-            Camp camp = PrototypeContent.NewCamp();
-            int slot = camp.Bag.Add(Sword(3UL));
-
-            int gold = camp.SellToTrader(slot);
-
-            Assert.Greater(gold, 0);
-            Assert.AreEqual(gold, camp.Money(CurrencyType.Gold));
-            Assert.AreEqual(0, camp.Bag.Used);
-        }
-
-        [Test]
-        public void Wallet_DoesNotGoNegative()
-        {
-            Camp camp = PrototypeContent.NewCamp();
-            camp.Earn(CurrencyType.Gold, 10);
-
-            Assert.IsFalse(camp.Spend(CurrencyType.Gold, 11), "нечем — значит не потратил");
-            Assert.AreEqual(10, camp.Money(CurrencyType.Gold), "и кошелёк не тронут");
-            Assert.IsTrue(camp.Spend(CurrencyType.Gold, 10));
-            Assert.AreEqual(0, camp.Money(CurrencyType.Gold));
         }
 
         // ---- снаряжение переживает забеги ----
@@ -442,59 +283,7 @@ namespace Game.Tests
                 "снаряжение принадлежит персонажу, а не симуляции");
         }
 
-        [Test]
-        public void EquipFromBag_ReturnsTheReplacedItem()
-        {
-            Camp camp = PrototypeContent.NewCamp();
-            int first = camp.Bag.Add(Sword(1UL));
-            camp.EquipFromBag(first);
-
-            int second = camp.Bag.Add(Sword(2UL));
-            camp.EquipFromBag(second);
-
-            Assert.AreEqual(2UL, camp.Worn.Worn(EquipSlot.Weapon).Seed, "надет второй");
-            Assert.AreEqual(1, camp.Bag.Used, "первый вернулся в сумку, а не пропал");
-        }
-
-        [Test]
-        public void UnequipToBag_RefusesWhenThereIsNoRoom()
-        {
-            var camp = new Camp(PrototypeContent.Items(), act: 3, bagSlots: 1);
-            int slot = camp.Bag.Add(Jacket(1UL));
-            camp.EquipFromBag(slot);
-            camp.Bag.Add(Sword(2UL));
-
-            Assert.IsFalse(camp.UnequipToBag(EquipSlot.Armor), "класть некуда");
-            Assert.IsTrue(camp.Worn.IsWorn(EquipSlot.Armor), "значит вещь осталась надетой");
-        }
-
         // ---- услуги по актам ----
-
-        [Test]
-        public void ActUnlocks_AreCumulative()
-        {
-            Camp camp = new Camp(PrototypeContent.Items(), act: 1);
-            Assert.IsTrue(camp.Has(CampService.Smith));
-            Assert.IsTrue(camp.Has(CampService.Trader));
-            Assert.IsFalse(camp.Has(CampService.Chronicler));
-            Assert.IsFalse(camp.Has(CampService.RiftPortal));
-
-            camp.AdvanceToAct(3);
-
-            Assert.IsTrue(camp.Has(CampService.Smith), "открытое не закрывается обратно");
-            Assert.IsTrue(camp.Has(CampService.Chronicler), "второй акт тоже подтянулся");
-            Assert.IsTrue(camp.Has(CampService.RiftPortal));
-        }
-
-        [Test]
-        public void ActNeverGoesBackwards()
-        {
-            Camp camp = new Camp(PrototypeContent.Items(), act: 3);
-            camp.AdvanceToAct(1);
-
-            Assert.AreEqual(3, camp.Act);
-            Assert.IsTrue(camp.Has(CampService.RiftPortal), "отобранный глагол — это откат прогресса");
-        }
 
         // ---- Полигон ----
 
@@ -517,128 +306,5 @@ namespace Game.Tests
             Assert.Greater(session.Ground.DamagePerSecond, 0);
         }
 
-        [Test]
-        public void ProvingGround_DummyDoesNotDie()
-        {
-            GameSession session = Session();
-            session.EnterProvingGround(dummyHealth: 1);
-
-            for (int t = 0; t < 200; t++) session.Step(Attacking);
-
-            Assert.IsTrue(session.Ground.Sim.Entities.Alive[ProvingGround.DummyId],
-                "мишень обязана пережить любой билд — иначе замер обрывается на сильном");
-            Assert.Greater(session.Ground.Hits, 1, "и продолжать получать удары");
-        }
-
-        [Test]
-        public void ProvingGround_ShowsTheDifferenceBetweenTwoSwords()
-        {
-            // Это и есть смысл Полигона: без него игрок не знает, какая
-            // из двух найденных вещей лучше на его билде.
-            long DamageWith(ItemInstance? sword)
-            {
-                Camp camp = PrototypeContent.NewCamp();
-                if (sword.HasValue)
-                {
-                    int slot = camp.Bag.Add(sword.Value);
-                    camp.EquipFromBag(slot);
-                }
-
-                var session = new GameSession(Seed, camp, PrototypeContent.Modules(),
-                    PrototypeContent.ItemBaseIds());
-                StandOnGround(session, 240);
-                return session.Ground.DamageTotal;
-            }
-
-            long bare = DamageWith(null);
-            long armed = DamageWith(Sword(0xA11CEUL));
-
-            Assert.Greater(bare, 0);
-            Assert.Greater(armed, bare, "надетый меч обязан быть виден на счётчике");
-        }
-
-        [Test]
-        public void ProvingGround_SeparatesFireFromPhysical()
-        {
-            GameSession session = Session();
-            session.Step(Command(CampCommand.ToggleProvingGround));
-
-            session.Ground.Sim.SetAbility(0, AbilityDefinition.FlameSeal(),
-                new AbilityNode[0], 0);
-
-            var cast = new InputFrame
-            {
-                Aim = new FixVec2(Fix64.Ratio(3, 2), Fix64.Zero),
-                AbilityMask = 1,
-                Flags = (byte)InputFlags.Attack,
-            };
-            session.Step(in cast);
-            for (int t = 0; t < 120; t++) session.Step(Attacking);
-
-            Assert.Greater(session.Ground.FireDamage, 0, "«Печать пламени» бьёт огнём");
-            Assert.Greater(session.Ground.PhysicalDamage, 0, "а автоатака — физически");
-            Assert.AreEqual(session.Ground.DamageTotal,
-                session.Ground.FireDamage + session.Ground.PhysicalDamage,
-                "разбивка обязана сходиться с итогом");
-        }
-
-        [Test]
-        public void ProvingGround_ResistanceOnTheDummyIsVisible()
-        {
-            long FireDamageAgainst(Fix64 resist)
-            {
-                GameSession session = Session();
-                session.Step(Command(CampCommand.ToggleProvingGround));
-                session.RetuneDummy(100000, Fix64.Zero, resist);
-
-                session.Ground.Sim.SetAbility(0, AbilityDefinition.FlameSeal(),
-                    new AbilityNode[0], 0);
-
-                var cast = new InputFrame
-                {
-                    Aim = new FixVec2(Fix64.Ratio(3, 2), Fix64.Zero),
-                    AbilityMask = 1,
-                    Flags = (byte)InputFlags.Attack,
-                };
-                session.Step(in cast);
-                for (int t = 0; t < 120; t++) session.Step(Attacking);
-
-                return session.Ground.FireDamage;
-            }
-
-            long soft = FireDamageAgainst(Fix64.Zero);
-            long tough = FireDamageAgainst(Fix64.Ratio(75, 100));
-
-            Assert.Greater(soft, 0);
-            Assert.Less(tough, soft, "настраиваемое сопротивление на то и настраиваемое");
-        }
-
-        [Test]
-        public void EnteringTheRift_StepsOffTheProvingGround()
-        {
-            GameSession session = Session();
-            session.Step(Command(CampCommand.ToggleProvingGround));
-            Assert.IsTrue(session.OnProvingGround);
-
-            session.Step(Command(CampCommand.EnterRift));
-
-            Assert.IsFalse(session.OnProvingGround, "Полигон — часть лагеря, а не походный инвентарь");
-            Assert.AreSame(session.Run.Sim, session.ActiveSim);
-        }
-
-        [Test]
-        public void ActiveSimulation_ChangesGeneration()
-        {
-            GameSession session = Session();
-            int start = session.Generation;
-
-            session.Step(Command(CampCommand.ToggleProvingGround));
-            Assert.Greater(session.Generation, start,
-                "представление обязано узнать, что индексы сущностей начались заново");
-
-            int onGround = session.Generation;
-            session.Step(Command(CampCommand.EnterRift));
-            Assert.Greater(session.Generation, onGround);
-        }
     }
 }

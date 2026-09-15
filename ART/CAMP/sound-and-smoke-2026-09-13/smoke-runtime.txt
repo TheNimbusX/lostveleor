@@ -1,1 +1,0 @@
-particles=13 world=(8.83, 5.31, 4.89) material=Chimney smoke

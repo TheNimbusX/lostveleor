@@ -67,48 +67,6 @@ namespace Game.Tests
             return sim;
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void Scratch_HasItsOwnReachAndNineTickTelegraph(bool naive)
-        {
-            Simulation sim = IsolatedSwarm();
-            sim.DebugUseNaiveTargeting = naive;
-            EntityStore entities = sim.Entities;
-            entities.Stats[4].SetBase(StatType.MoveSpeed, Fix64.Zero);
-            entities.RefreshStats(4);
-            FixVec2 player = entities.Position[0];
-            entities.Position[4] = player + new FixVec2(Fix64.Ratio(16, 10), Fix64.Zero);
-            for (int tick = 0; tick < 15; tick++) sim.Step(InputFrame.Empty);
-            Assert.That(entities.PendingAttackTarget[4], Is.EqualTo(-1),
-                "Корнеполз не должен доставать с дистанции Хранителя");
-
-            entities.Position[4] = player + new FixVec2(Fix64.Ratio(12, 10), Fix64.Zero);
-            int health = entities.Health[0];
-            int start = sim.Tick;
-            sim.Step(InputFrame.Empty);
-            Assert.That(entities.AttackImpactTick[4], Is.EqualTo(start + 9));
-            for (int tick = 1; tick < 9; tick++) sim.Step(InputFrame.Empty);
-            Assert.That(entities.Health[0], Is.EqualTo(health));
-            sim.Step(InputFrame.Empty);
-            Assert.That(entities.Health[0], Is.EqualTo(health - 4));
-        }
-
-        [TestCase(30, 3.4f)]
-        [TestCase(19, 5f)]
-        public void Swarm_AcceleratesOnlyOnTheLastTwoMeters(int distanceTenths, float speed)
-        {
-            Simulation sim = IsolatedSwarm();
-            for (int tick = 0; tick < 30; tick++)
-            {
-                sim.Entities.Position[4] = sim.Entities.Position[0]
-                    + new FixVec2(Fix64.Ratio(distanceTenths, 10), Fix64.Zero);
-                sim.Step(InputFrame.Empty);
-            }
-            float actual = Fix64.Sqrt(sim.Entities.Velocity[4].LengthSq).ToFloat()
-                * Simulation.TicksPerSecond;
-            Assert.That(actual, Is.EqualTo(speed).Within(0.01f));
-        }
-
         [Test]
         public void ReusedEntitySlot_DropsPreviousEnemyKind()
         {

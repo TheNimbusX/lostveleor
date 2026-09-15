@@ -32,6 +32,9 @@ namespace Game.Sim
         TreeNode = 1,
         Buff = 2,
         RacePassive = 3,
+
+        /// <summary>Прибавки уровня героя. Вешает Simulation.SetPlayerLevel.</summary>
+        Level = 4,
     }
 
     /// <summary>

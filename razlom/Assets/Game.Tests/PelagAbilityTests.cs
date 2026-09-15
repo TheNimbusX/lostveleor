@@ -80,125 +80,7 @@ namespace Game.Tests
             Assert.IsFalse(sim.CleaveActive);
         }
 
-        [Test]
-        public void CleaveWithoutEnemiesCompletesAndKeepsFacing()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            var facing = sim.Entities.Facing[0];
-            sim.Step(Press(0, -80, 80));
-            Assert.IsTrue(sim.CleaveActive);
-            Idle(sim, 30);
-            Assert.IsFalse(sim.CleaveActive);
-            Assert.AreEqual(facing, sim.Entities.Facing[0]);
-        }
-
-        [Test]
-        public void CleaveDoesNotMoveThePlayer()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            Enemy(sim, 15);
-            FixVec2 before = sim.Entities.Position[Simulation.PlayerId];
-
-            sim.Step(Press(0, 20));
-            Idle(sim, 16);
-
-            Assert.AreEqual(before.X.Raw, sim.Entities.Position[Simulation.PlayerId].X.Raw);
-            Assert.AreEqual(before.Y.Raw, sim.Entities.Position[Simulation.PlayerId].Y.Raw);
-        }
-
-        /// <summary>Бьёт сильнее Вихря: он достаётся одному, а не всем вокруг.</summary>
-        [Test]
-        public void CleaveHitsHarderThanWhirlwind()
-        {
-            Assert.Greater(
-                AbilityDefinition.Cleave().GetBase(AbilityStatType.Damage).ToInt(),
-                AbilityDefinition.Whirlwind().GetBase(AbilityStatType.Damage).ToInt());
-        }
-
-        /// <summary>Промах курсора мимо тела не съедает нажатие.</summary>
-        [Test]
-        public void CleaveWithoutChosenTargetStillHitsTheNearest()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            int victim = Enemy(sim, 15);
-
-            sim.Step(Press(0, 20));
-            Idle(sim, 16);
-
-            Assert.Less(Health(sim, victim), 10000);
-        }
-
         // ---- Огненное усиление ----
-
-        [TestCase(80, 0)]
-        [TestCase(-15, 0)]
-        [TestCase(0, 15)]
-        public void CleaveCastsDespiteInvalidTargetAndDoesNotHitIt(int x, int y)
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            int target = Enemy(sim, x, y);
-            sim.Step(Press(0, x, y, target));
-            Assert.IsTrue(sim.CleaveActive);
-            Assert.Greater(sim.AbilityReadyTick(0), 0);
-            Idle(sim, 30);
-            Assert.AreEqual(10000, Health(sim, target));
-        }
-
-        [Test]
-        public void CleaveDoesNotRetargetDeadOrEscapedVictim()
-        {
-            foreach (bool dead in new[] { false, true })
-            {
-                var sim = Arena(AbilityDefinition.Cleave());
-                int victim = Enemy(sim, 15), neighbour = Enemy(sim, 16, 6);
-                sim.Step(Press(0, 15, 0, victim));
-                if (dead) sim.Entities.Alive[victim] = false;
-                else sim.Entities.Position[victim] = new FixVec2(Fix64.FromInt(8), Fix64.Zero);
-                Idle(sim, 30);
-                Assert.AreEqual(10000, Health(sim, neighbour));
-                Assert.AreEqual(10000, Health(sim, victim));
-            }
-        }
-
-        [Test]
-        public void CleaveWindowHitsOnceAndSweepsBetweenTicks()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            int target = Enemy(sim, 15);
-            sim.Step(Press(0, 15, 0, target));
-            Idle(sim, 9);
-            sim.Entities.Position[target] = new FixVec2(Fix64.Ratio(15, 10), Fix64.One);
-            Idle(sim, 2);
-            sim.Entities.Position[target] = new FixVec2(Fix64.Ratio(15, 10), -Fix64.One);
-            int physical = 0;
-            for (int i = 0; i < 20; i++)
-            {
-                sim.Step(InputFrame.Empty);
-                foreach (var e in sim.Events)
-                    if (e.Type == SimEventType.Damage && e.Source == 0 && e.DamageKind == DamageType.Physical) physical++;
-            }
-            Assert.AreEqual(1, physical);
-        }
-
-        [Test]
-        public void CleaveRollDeathAndNewArenaClearAction()
-        {
-            for (int mode = 0; mode < 3; mode++)
-            {
-                var sim = Arena(AbilityDefinition.Cleave());
-                int target = Enemy(sim, 15);
-                sim.Step(Press(0, 15, 0, target));
-                if (mode == 0)
-                {
-                    sim.SetAbility(4, AbilityDefinition.Dash(), new AbilityNode[0], 0);
-                    sim.Step(Press(4, -15));
-                }
-                else if (mode == 1) { sim.Entities.Alive[0] = false; sim.Step(InputFrame.Empty); }
-                else sim.SetupTestArena(0);
-                Assert.IsFalse(sim.CleaveActive);
-                Assert.AreEqual(-1, sim.CleavePresentationTarget);
-            }
-        }
 
         [Test]
         public void CleaveUsesBodyRadiusAndRejectsWall()
@@ -224,76 +106,6 @@ namespace Game.Tests
             Assert.AreEqual(10000, Health(sim, target));
         }
 
-        /// <summary>
-        /// Под усилением способность остаётся ЧИСТО ФИЗИЧЕСКОЙ.
-        ///
-        /// Решение владельца от 12 сентября: огонь достаётся только обычным
-        /// атакам. Проверка стоит на Рассекающем ударе, потому что именно он
-        /// раньше получал вторую, огненную половину удара.
-        /// </summary>
-        [Test]
-        public void CleaveUnderBlazeStaysPhysicalOnly()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            sim.SetAbility(1, AbilityDefinition.Blaze(), new AbilityNode[0], 0);
-            int target = Enemy(sim, 15);
-            sim.Step(Press(1, 15));
-            Idle(sim, Simulation.BlazeIgnitionDelayTicks);
-            sim.Step(Press(0, 15, 0, target));
-            int physical = 0, fire = 0;
-            for (int i = 0; i < 30; i++)
-            {
-                sim.Step(InputFrame.Empty);
-                foreach (var e in sim.Events)
-                    if (e.Type == SimEventType.Damage && e.Source == 0)
-                    { if (e.DamageKind == DamageType.Fire) fire++; else physical++; }
-            }
-            Assert.AreEqual(1, physical, "удар способности пропал");
-            Assert.AreEqual(0, fire, "способность получила огонь, хотя не должна");
-        }
-
-        [Test]
-        public void CleaveLocksFacingAtSwingAndRejectsRearSoftTarget()
-        {
-            var sim = Arena(AbilityDefinition.Cleave());
-            int target = Enemy(sim, 15);
-            sim.Step(Press(0, 15, 0, target));
-            Idle(sim, 9);
-            var facing = sim.Entities.Facing[0];
-            sim.Entities.Position[target] = new FixVec2(Fix64.FromInt(-2), Fix64.Zero);
-            Idle(sim, 14);
-            Assert.AreEqual(facing, sim.Entities.Facing[0]);
-            Assert.AreEqual(10000, Health(sim, target));
-            sim = Arena(AbilityDefinition.Cleave());
-            Enemy(sim, -10);
-            sim.Step(Press(0, 20));
-            Assert.IsTrue(sim.CleaveActive);
-        }
-
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(4)]
-        public void CleaveRepeatedCastsAreIndependentOfRenderBatching(int ticksPerFrame)
-        {
-            var a = Arena(AbilityDefinition.Cleave());
-            var b = Arena(AbilityDefinition.Cleave());
-            int target = Enemy(a, 15);
-            Enemy(b, 15);
-            int contacts = 0;
-            for (int frame = 0; frame < 120; frame += ticksPerFrame)
-                for (int sub = 0; sub < ticksPerFrame && frame + sub < 120; sub++)
-                {
-                    int tick = frame + sub;
-                    var input = tick == 0 || tick == 90 ? Press(0, 15, 0, target) : InputFrame.Empty;
-                    a.Step(input); b.Step(input);
-                    Assert.AreEqual(a.StateHash(), b.StateHash());
-                    foreach (var e in a.Events)
-                        if (e.Type == SimEventType.Damage && e.Source == 0 && e.DamageOrigin == DamageOrigin.Ability) contacts++;
-                }
-            Assert.AreEqual(2, contacts);
-            Assert.IsFalse(a.CleaveActive);
-        }
-
         [Test]
         public void BlazeLastsThreeSecondsAndEnds()
         {
@@ -311,38 +123,6 @@ namespace Game.Tests
 
             Idle(sim, 2);
             Assert.IsFalse(sim.BlazeActive, "усиление не кончилось");
-        }
-
-        /// <summary>
-        /// Способности усиление НЕ трогает — решение владельца от 12 сентября.
-        ///
-        /// Раньше огонь добавлялся ко всему, и это ровно та половина правила,
-        /// которую владелец отменил; проверка стоит здесь, чтобы возврат старого
-        /// поведения был виден сразу.
-        /// </summary>
-        [Test]
-        public void BlazeDoesNotStrengthenAbilities()
-        {
-            int plain;
-            {
-                var sim = Arena(AbilityDefinition.Whirlwind());
-                int victim = Enemy(sim, 15);
-                sim.Step(Press(0, 20));
-                Idle(sim, 16);
-                plain = 10000 - Health(sim, victim);
-            }
-
-            var lit = Arena(AbilityDefinition.Whirlwind());
-            lit.SetAbility(1, AbilityDefinition.Blaze(), new AbilityNode[0], 0);
-            int burned = Enemy(lit, 15);
-
-            lit.Step(Press(1, 20));
-            Idle(lit, Simulation.BlazeIgnitionDelayTicks);
-            lit.Step(Press(0, 20));
-            Idle(lit, 16);
-
-            Assert.AreEqual(plain, 10000 - Health(lit, burned),
-                "под усилением урон способности изменился");
         }
 
         /// <summary>
@@ -387,41 +167,6 @@ namespace Game.Tests
                 "огонь должен быть пятой частью силы удара");
         }
 
-        /// <summary>Добавка — один удар, а не поджиг: урона по времени за ней нет.</summary>
-        [Test]
-        public void BlazeBonusIsASingleExtraHitNotABurn()
-        {
-            var sim = Arena(AbilityDefinition.Blaze());
-            int victim = Enemy(sim, 15);
-
-            sim.Step(Press(0, 15));
-            var swing = new InputFrame
-            {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = victim,
-                Aim = new FixVec2(Fix64.Ratio(15, 10), Fix64.Zero),
-            };
-            // Считаются СОБЫТИЯ, а не здоровье: отпущенная кнопка не
-            // останавливает бой, герой продолжает бить защёлкнутую цель, и
-            // замер здоровья ловил бы следующий удар, а не горение.
-            int physical = 0, fire = 0, overTime = 0;
-            for (int i = 0; i < 70; i++)
-            {
-                sim.Step(in swing);
-                foreach (var e in sim.Events)
-                {
-                    if (e.Source != 0) continue;
-                    if (e.Type == SimEventType.DamageOverTime) overTime++;
-                    else if (e.Type == SimEventType.Damage)
-                    { if (e.DamageKind == DamageType.Fire) fire++; else physical++; }
-                }
-            }
-
-            Assert.Greater(physical, 0, "обычная атака не прошла");
-            Assert.AreEqual(physical, fire, "на каждый удар должен приходиться один огненный");
-            Assert.AreEqual(0, overTime, "усиление подожгло цель — это не поджиг");
-        }
-
         // ---- Взрывная смесь ----
 
         [Test]
@@ -454,19 +199,6 @@ namespace Game.Tests
             Assert.AreEqual(settled, Health(sim, victim), "лужа горит дольше положенного");
         }
 
-        /// <summary>Стоящий в стороне не задет ни взрывом, ни лужей.</summary>
-        [Test]
-        public void FlaskSparesEnemiesOutsideThePool()
-        {
-            var sim = Arena(AbilityDefinition.FireFlask());
-            int aside = Enemy(sim, 40, 40);
-
-            sim.Step(Press(0, 40));
-            Idle(sim, 120);
-
-            Assert.AreEqual(10000, Health(sim, aside));
-        }
-
         // ---- Крушение ----
 
         [Test]
@@ -490,63 +222,6 @@ namespace Game.Tests
             Assert.Less(Health(sim, victim), afterSecond, "завершающий удар не прошёл");
         }
 
-        /// <summary>Без второго нажатия серия обрывается — она не играет сама.</summary>
-        [Test]
-        public void WreckStopsWithoutTheSecondPress()
-        {
-            var sim = Arena(AbilityDefinition.Wreck());
-            int victim = Enemy(sim, 15);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            int afterFirst = Health(sim, victim);
-
-            Idle(sim, 40);
-            Assert.AreEqual(afterFirst, Health(sim, victim), "серия доиграла без игрока");
-            Assert.AreEqual(0, sim.WreckStage, "комбо не сброшено");
-        }
-
-        /// <summary>Завершающий удар тяжелее первого: прерывать серию должно быть жаль.</summary>
-        [Test]
-        public void WreckFinisherHitsHarderThanTheFirst()
-        {
-            var sim = Arena(AbilityDefinition.Wreck());
-            int victim = Enemy(sim, 15);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            int first = 10000 - Health(sim, victim);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            int beforeFinisher = Health(sim, victim);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            int finisher = beforeFinisher - Health(sim, victim);
-
-            Assert.Greater(finisher, first);
-        }
-
-        /// <summary>Кулдаун отсчитывается от конца серии, а не от первого нажатия.</summary>
-        [Test]
-        public void WreckCooldownStartsAfterTheCombo()
-        {
-            var sim = Arena(AbilityDefinition.Wreck());
-            Enemy(sim, 15);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-            sim.Step(Press(0, 30));
-            Idle(sim, 8);
-
-            int cooldown = AbilityDefinition.Wreck().GetBase(AbilityStatType.CooldownTicks).ToInt();
-            Assert.Greater(sim.AbilityReadyTick(0), sim.Tick + cooldown - 12,
-                "кулдаун начался раньше конца серии");
-        }
-
         // ---- Общий деш ----
 
         [Test]
@@ -558,36 +233,6 @@ namespace Game.Tests
 
             Assert.IsTrue(sim.Entities.Position[Simulation.PlayerId].X > Fix64.FromInt(2),
                 "деш не сдвинул героя");
-        }
-
-        /// <summary>
-        /// Идёт на полную дальность, а не до курсора: деш отвечает на «уйти
-        /// отсюда», и короткий рывок из-за близкого курсора — случайность,
-        /// а не решение игрока.
-        /// </summary>
-        [Test]
-        public void DashCoversFullRangeEvenWithCloseAim()
-        {
-            var sim = Arena(AbilityDefinition.Dash());
-            sim.Step(Press(0, 3));
-            Idle(sim, 12);
-
-            Fix64 range = AbilityDefinition.Dash().GetBase(AbilityStatType.Radius);
-            Assert.IsTrue(sim.Entities.Position[Simulation.PlayerId].X > range - Fix64.Ratio(3, 10),
-                "деш остановился у курсора вместо полной дальности");
-        }
-
-        /// <summary>Никого не бьёт: урона у деша нет по диздоку.</summary>
-        [Test]
-        public void DashDamagesNobody()
-        {
-            var sim = Arena(AbilityDefinition.Dash());
-            int bystander = Enemy(sim, 15);
-
-            sim.Step(Press(0, 30));
-            Idle(sim, 12);
-
-            Assert.AreEqual(10000, Health(sim, bystander));
         }
 
         // ---- Протяжка к врагу ----

@@ -51,22 +51,18 @@ namespace Game.View
         readonly System.Collections.Generic.List<Material> _portraitMaterials=new System.Collections.Generic.List<Material>();
         static readonly Color Ink=new Color(.055f,.063f,.055f,.68f), Bronze=new Color(.52f,.40f,.23f), Ivory=new Color(.95f,.86f,.67f);
 
-        // ---- вкладки ----
+        // ---- страница ----
         //
-        // Страницы — отдельные контейнеры на одной доске: шапка, кошелёк и
-        // крестик общие, а переключение не пересобирает интерфейс. Живой
-        // портрет рендерится только на странице снаряжения — на талантах его
-        // не видно, и камера молчит.
-        const int EquipmentTab=0, TalentsTab=1;
-        int _tab=EquipmentTab;
-        RectTransform _equipmentPage, _talentsPage;
-        Image _equipmentTab, _talentsTab;
-        static readonly Color TabActive=new Color(.46f,.18f,.08f,.98f), TabIdle=new Color(.18f,.08f,.05f,.9f);
+        // Вкладка «Таланты» убрана 15 сентября: с разворота в роглайк таланты
+        // берутся в забеге, а для отладки визуала включаются в F8. Её место на
+        // доске займёт атлас артефактов. Снаряжение остаётся отдельным
+        // контейнером, чтобы атлас встал рядом без пересборки доски.
+        RectTransform _equipmentPage;
 
         void Build()
         {
-            _font=Resources.Load<Font>("UI/Fonts/CormorantSC-Regular") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            _heading=Resources.Load<Font>("UI/Fonts/CormorantSC-Bold") ?? _font;
+            _font=GameTypography.Regular;
+            _heading=GameTypography.Semibold;
             _root=new GameObject("Camp Inventory",typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));
             var canvas=_root.GetComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.sortingOrder=100;
             var scaler=_root.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -90,12 +86,10 @@ namespace Game.View
             if(atlas!=null)for(int i=0;i<6;i++)
                 _icons[i]=Sprite.Create(atlas,new Rect((i%3)*atlas.width/3f,(1-i/3)*atlas.height/2f,atlas.width/3f,atlas.height/2f),new Vector2(.5f,.5f),100);
             Label(_board,"ЛЕСНОЙ ЛАГЕРЬ",65,58,290,35,18);
-            _equipmentTab=Button(_board,"СНАРЯЖЕНИЕ",505,44,320,54,()=>SetTab(EquipmentTab)).GetComponent<Image>();
-            _talentsTab=Button(_board,"ТАЛАНТЫ",845,44,320,54,()=>SetTab(TalentsTab)).GetComponent<Image>();
+            Title(_board,"СНАРЯЖЕНИЕ",505,46,660,50,34,TextAnchor.MiddleCenter);
             _wallet=Label(_board,"",1210,54,335,45,23);
             Button(_board,"×",1570,38,64,64,Close);
             _equipmentPage=Page("Equipment page");
-            _talentsPage=Page("Talents page");
 
             var page=_equipmentPage;
             Title(page,"ПЕЛАГ",198,170,380,48,40);
@@ -138,9 +132,9 @@ namespace Game.View
             Label(page,"Двойной клик — надеть  ·  Перетащите предмет",1080,751,510,30,18);
             _feedback=Label(page,"",714,846,882,40,19);
 
-            BuildTalents(_talentsPage);
             Label(_board,"I / Esc — закрыть",70,890,400,30,17);
-            SetTab(_tab);
+            SyncPortraitStage();
+            Refresh();
         }
 
         RectTransform Page(string name)
@@ -150,18 +144,7 @@ namespace Game.View
             return page;
         }
 
-        void SetTab(int tab)
-        {
-            _tab=tab;
-            _equipmentPage.gameObject.SetActive(tab==EquipmentTab);
-            _talentsPage.gameObject.SetActive(tab==TalentsTab);
-            _equipmentTab.color=tab==EquipmentTab?TabActive:TabIdle;
-            _talentsTab.color=tab==TalentsTab?TabActive:TabIdle;
-            SyncPortraitStage();
-            Refresh();
-        }
-
-        void SyncPortraitStage(){if(_portraitStage!=null)_portraitStage.SetActive(IsOpen&&_tab==EquipmentTab);}
+        void SyncPortraitStage(){if(_portraitStage!=null)_portraitStage.SetActive(IsOpen);}
 
         void EquipSelected(){_feedback.text="";if(!_selectedWorn&&!_driver.Session.Camp.EquipFromBag(_selection))_feedback.text="Не удалось надеть предмет.";Refresh();}
         void UnequipSelected()
@@ -226,7 +209,6 @@ namespace Game.View
             if(_root==null)return;
             var camp=_driver.Session.Camp;
             _wallet.text="● "+camp.Money(CurrencyType.Gold)+"    ◆ "+camp.Money(CurrencyType.Shards)+"    ◈ "+camp.Money(CurrencyType.Lavidium);
-            if(_tab==TalentsTab){RefreshTalents(camp);return;}
             int count=0;
             for(int i=0;i<48;i++)
             {
@@ -273,100 +255,6 @@ namespace Game.View
             }
             _details.rectTransform.sizeDelta=new Vector2(247,Mathf.Max(124,_details.preferredHeight));
             _details.rectTransform.anchoredPosition=Vector2.zero;
-        }
-
-        // ---- страница талантов ----
-        //
-        // Четыре направления сабельной ветки колонками, по пять талантов в
-        // каждой. Брать можно только следующий по порядку, поэтому ячейка
-        // бывает в трёх состояниях: изучен, доступен сейчас, закрыт.
-        const int Talents=SabreTalents.TalentsPerLine, Lines=SabreTalents.LineCount;
-        readonly UnityEngine.UI.Button[] _talentCells=new UnityEngine.UI.Button[Lines*Talents];
-        readonly Text[] _talentNames=new Text[Lines*Talents];
-        readonly Image[] _talentLinks=new Image[Lines*(Talents-1)];
-        Text _talentLevel,_talentExperience,_talentPoints,_talentTitle,_talentLineName,_talentDescription,_talentState;
-        RectTransform _talentExperienceFill;
-        UnityEngine.UI.Button _talentLearn;
-        SabreTalentLine _talentLine;
-        int _talentIndex;
-        static readonly Color TalentTaken=new Color(.62f,.36f,.12f,.98f), TalentOpen=new Color(.36f,.14f,.06f,.98f), TalentLocked=new Color(.10f,.08f,.07f,.9f),
-            LinkTaken=new Color(.86f,.62f,.30f), LinkLocked=new Color(.25f,.20f,.14f,.8f);
-        const float ExperienceBarWidth=420;
-
-        void BuildTalents(RectTransform page)
-        {
-            Title(page,"ТАЛАНТЫ САБЛИ",98,150,600,48,38);
-            _talentLevel=Title(page,"",98,204,190,36,28);
-            var track=Box(page,"Experience track",300,218,ExperienceBarWidth,14,new Color(.12f,.08f,.06f,1));
-            _talentExperienceFill=Box(track,"Experience fill",0,0,0,14,new Color(.96f,.88f,.66f,.95f));
-            _talentExperience=Label(page,"",735,209,300,30,18);
-            _talentPoints=Title(page,"",98,246,700,32,22);
-            for(int line=0;line<Lines;line++)
-            {
-                float x=98+line*240;
-                var lineId=(SabreTalentLine)line;
-                Icon(page,FullSprite(Resources.Load<Texture2D>("UI/Abilities/"+SabreTalentTexts.IconFile(lineId))),x,300,64,64);
-                Title(page,SabreTalentTexts.LineName(lineId),x+74,306,150,56,22,TextAnchor.MiddleLeft);
-                for(int index=0;index<Talents;index++)
-                {
-                    float y=385+index*88;
-                    int l=line,i=index;
-                    if(index<Talents-1)_talentLinks[line*(Talents-1)+index]=Box(page,"Talent link",x+30,y+64,4,24,LinkLocked).GetComponent<Image>();
-                    _talentCells[line*Talents+index]=Button(page,(index+1).ToString(),x,y,64,64,()=>SelectTalent((SabreTalentLine)l,i));
-                    _talentNames[line*Talents+index]=Label(page,SabreTalentTexts.Name(lineId,index),x+74,y+4,150,58,18);
-                }
-            }
-            Slot(page,"Talent details",1050,290,540,480,true);
-            _talentTitle=Title(page,"",1080,312,480,50,32);
-            _talentLineName=Label(page,"",1082,364,480,30,19);
-            _talentDescription=Label(page,"",1082,414,476,200,22);
-            _talentState=Label(page,"",1082,626,476,56,19);
-            _talentLearn=Button(page,"ИЗУЧИТЬ",1080,694,480,52,LearnTalent);
-            Label(page,"Таланты открываются по порядку  ·  одно очко за каждый уровень",98,850,800,30,18);
-        }
-
-        void SelectTalent(SabreTalentLine line,int index){_talentLine=line;_talentIndex=index;Refresh();}
-
-        void LearnTalent()
-        {
-            var camp=_driver.Session.Camp;
-            if(_talentIndex!=camp.SabreTalentRank(_talentLine)||!camp.TakeSabreTalent(_talentLine))return;
-            // Способности пересобираются сразу: таланты меняют их узлы, и
-            // вышедший из палатки игрок обязан бить уже новым билдом.
-            _driver.RefreshAbilityBuild();
-            Refresh();
-        }
-
-        void RefreshTalents(Camp camp)
-        {
-            _talentLevel.text="Уровень "+camp.Level;
-            float experience=Mathf.Clamp01(camp.Experience/(float)Mathf.Max(1,camp.ExperienceToNextLevel));
-            _talentExperienceFill.sizeDelta=new Vector2(ExperienceBarWidth*experience,14);
-            _talentExperience.text="Опыт  "+camp.Experience+" / "+camp.ExperienceToNextLevel;
-            _talentPoints.text="Свободных очков: "+camp.AvailableTalentPoints;
-            for(int line=0;line<Lines;line++)
-            {
-                int rank=camp.SabreTalentRank((SabreTalentLine)line);
-                for(int index=0;index<Talents;index++)
-                {
-                    bool taken=index<rank, open=index==rank&&camp.AvailableTalentPoints>0;
-                    var cell=_talentCells[line*Talents+index];
-                    ((Image)cell.targetGraphic).color=taken?TalentTaken:open?TalentOpen:TalentLocked;
-                    cell.GetComponentInChildren<InventoryFrame>(true).SetSelected((int)_talentLine==line&&_talentIndex==index);
-                    _talentNames[line*Talents+index].color=taken||open?Ivory:new Color(.62f,.56f,.46f,.8f);
-                    if(index<Talents-1)_talentLinks[line*(Talents-1)+index].color=index+1<rank?LinkTaken:LinkLocked;
-                }
-            }
-            int selectedRank=camp.SabreTalentRank(_talentLine);
-            _talentTitle.text=SabreTalentTexts.Name(_talentLine,_talentIndex);
-            _talentLineName.text=SabreTalentTexts.LineName(_talentLine)+"   ·   талант "+(_talentIndex+1)+" из "+Talents;
-            _talentDescription.text=SabreTalentTexts.Description(_talentLine,_talentIndex);
-            bool learnable=_talentIndex==selectedRank&&camp.AvailableTalentPoints>0;
-            _talentState.text=_talentIndex<selectedRank?"Изучен."
-                :_talentIndex>selectedRank?"Сначала изучите «"+SabreTalentTexts.Name(_talentLine,selectedRank)+"»."
-                :camp.AvailableTalentPoints>0?"Можно изучить. Свободных очков: "+camp.AvailableTalentPoints+"."
-                :"Нужно очко таланта — оно даётся за новый уровень.";
-            _talentLearn.interactable=learnable;
         }
 
         RectTransform Box(Transform parent,string name,float x,float y,float w,float h,Color color)

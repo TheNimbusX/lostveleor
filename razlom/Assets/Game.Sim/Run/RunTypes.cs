@@ -13,6 +13,24 @@ namespace Game.Sim
 
         /// <summary>Уйти из Разлома по своей воле. Награды за пройденное остаются.</summary>
         Leave = 4,
+
+        /// <summary>Панель полна: новая способность встаёт в слот 1–4, прежняя уходит с талантами.</summary>
+        ReplaceSlot1 = 5,
+        ReplaceSlot2 = 6,
+        ReplaceSlot3 = 7,
+        ReplaceSlot4 = 8,
+
+        /// <summary>Панель полна: новая способность разбирается на золото забега.</summary>
+        SalvageAbility = 9,
+
+        /// <summary>Мини-меню над способностью с элиты: заменить ею слот 1–4. Бой при этом идёт.</summary>
+        PickupReplaceSlot1 = 10,
+        PickupReplaceSlot2 = 11,
+        PickupReplaceSlot3 = 12,
+        PickupReplaceSlot4 = 13,
+
+        /// <summary>Мини-меню над способностью с элиты: разобрать её на золото забега.</summary>
+        PickupSalvage = 14,
     }
 
     /// <summary>Фаза забега. Одна за раз, переходы только по правилам RiftRun.</summary>
@@ -32,6 +50,9 @@ namespace Game.Sim
 
         /// <summary>Враги зачищены, игрок идёт к выходу из Разлома.</summary>
         SeekingExit = 4,
+
+        /// <summary>Взята способность при полной панели: заменить одну из четырёх или разобрать на золото.</summary>
+        ReplacingAbility = 5,
     }
 
     /// <summary>Чем закончился забег.</summary>
@@ -54,11 +75,17 @@ namespace Game.Sim
         /// <summary>Предмет. Рецепт разворачивается через ItemGenerator.</summary>
         Item = 0,
 
-        /// <summary>Узел дерева способности.</summary>
+        /// <summary>Узел удалённой «Печати пламени». Не выпадает; значение хранится ради реплеев.</summary>
         AbilityNode = 1,
 
-        /// <summary>Прибавка к стату персонажа.</summary>
+        /// <summary>Прибавка к стату персонажа. С 15 сентября не выпадает, значение хранится ради реплеев.</summary>
         StatBoost = 2,
+
+        /// <summary>Способность из пула Пелага, которой у игрока нет.</summary>
+        Ability = 3,
+
+        /// <summary>Следующий по порядку талант имеющейся способности.</summary>
+        Talent = 4,
     }
 
     /// <summary>
@@ -74,33 +101,40 @@ namespace Game.Sim
         /// <summary>Заполнено при Kind == Item.</summary>
         public readonly ItemInstance Item;
 
-        /// <summary>Заполнено при Kind == AbilityNode.</summary>
-        public readonly AbilityNode Node;
-
         /// <summary>Заполнено при Kind == StatBoost.</summary>
         public readonly StatType Stat;
         public readonly ModifierOp Op;
         public readonly Fix64 Value;
 
-        private RewardOffer(RewardKind kind, ItemInstance item, AbilityNode node,
-            StatType stat, ModifierOp op, Fix64 value)
+        /// <summary>Индекс способности в пуле Пелага. Заполнено при Kind == Ability и Talent.</summary>
+        public readonly int PoolIndex;
+
+        /// <summary>Номер предлагаемого таланта, с нуля. Заполнено при Kind == Talent.</summary>
+        public readonly int TalentIndex;
+
+        private RewardOffer(RewardKind kind, ItemInstance item,
+            StatType stat, ModifierOp op, Fix64 value, int poolIndex = -1, int talentIndex = -1)
         {
             Kind = kind;
             Item = item;
-            Node = node;
             Stat = stat;
             Op = op;
             Value = value;
+            PoolIndex = poolIndex;
+            TalentIndex = talentIndex;
         }
 
         public static RewardOffer OfItem(in ItemInstance item)
-            => new RewardOffer(RewardKind.Item, item, default, default, default, Fix64.Zero);
-
-        public static RewardOffer OfNode(in AbilityNode node)
-            => new RewardOffer(RewardKind.AbilityNode, default, node, default, default, Fix64.Zero);
+            => new RewardOffer(RewardKind.Item, item, default, default, Fix64.Zero);
 
         public static RewardOffer OfStat(StatType stat, ModifierOp op, Fix64 value)
-            => new RewardOffer(RewardKind.StatBoost, default, default, stat, op, value);
+            => new RewardOffer(RewardKind.StatBoost, default, stat, op, value);
+
+        public static RewardOffer OfAbility(int poolIndex)
+            => new RewardOffer(RewardKind.Ability, default, default, default, Fix64.Zero, poolIndex);
+
+        public static RewardOffer OfTalent(int poolIndex, int talentIndex)
+            => new RewardOffer(RewardKind.Talent, default, default, default, Fix64.Zero, poolIndex, talentIndex);
 
         public void HashInto(ref ulong hash)
         {
@@ -111,13 +145,17 @@ namespace Game.Sim
                 case RewardKind.Item:
                     Item.HashInto(ref hash);
                     break;
-                case RewardKind.AbilityNode:
-                    Hashing.Mix(ref hash, Node.Id);
-                    break;
                 case RewardKind.StatBoost:
                     Hashing.Mix(ref hash, (int)Stat);
                     Hashing.Mix(ref hash, (int)Op);
                     Hashing.Mix(ref hash, Value);
+                    break;
+                case RewardKind.Ability:
+                    Hashing.Mix(ref hash, PoolIndex);
+                    break;
+                case RewardKind.Talent:
+                    Hashing.Mix(ref hash, PoolIndex);
+                    Hashing.Mix(ref hash, TalentIndex);
                     break;
             }
         }

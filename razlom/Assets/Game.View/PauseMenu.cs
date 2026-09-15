@@ -696,18 +696,18 @@ namespace Game.View
             _sliderTrackTexture = MakeTexture(new Color(0.13f, 0.16f, 0.19f, 1f));
             _sliderThumbTexture = MakeTexture(Coral);
 
-            _title = new GUIStyle(GUI.skin.label)
+            _title = new GUIStyle(GameTypography.Label)
             {
                 fontSize = 42, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft,
             };
             _title.normal.textColor = Text;
-            _subtitle = new GUIStyle(GUI.skin.label)
+            _subtitle = new GUIStyle(GameTypography.Label)
             {
                 fontSize = 18, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft,
                 wordWrap = true,
             };
             _subtitle.normal.textColor = Muted;
-            _label = new GUIStyle(GUI.skin.label) { fontSize = 22, alignment = TextAnchor.MiddleLeft };
+            _label = new GUIStyle(GameTypography.Label) { fontSize = 22, alignment = TextAnchor.MiddleLeft };
             _label.normal.textColor = Text;
             _value = new GUIStyle(_label)
             {
@@ -738,7 +738,7 @@ namespace Game.View
 
         private static GUIStyle MakeButtonStyle(Texture2D normal, Texture2D hover, Color text)
         {
-            var style = new GUIStyle(GUI.skin.button)
+            var style = new GUIStyle(GameTypography.Button)
             {
                 fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
                 padding = new RectOffset(16, 16, 8, 8),

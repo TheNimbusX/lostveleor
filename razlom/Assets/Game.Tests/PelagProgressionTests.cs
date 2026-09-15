@@ -6,15 +6,16 @@ using NUnit.Framework;
 namespace Game.Tests
 {
     /// <summary>
-    /// Основа постоянной прокачки: лавидий, опыт, уровень и очки талантов.
+    /// Основа постоянной прокачки: лавидий, опыт и уровень, дающий статы.
     ///
-    /// Числа ресурса и стоимостей — решение владельца от 13 сентября, поэтому
-    /// проверяются точно. Награды за убийство и кривая уровня — заглушки
-    /// баланса, и тесты держат только их правила, а не конкретные значения
-    /// там, где правило важнее числа.
+    /// Числа ресурса, стоимостей и прибавок за уровень — решения владельца
+    /// (13 и 15 сентября), поэтому проверяются точно. Награды за убийство и
+    /// кривая уровня — заглушки баланса, и тесты держат только их правила.
     /// </summary>
     public class PelagProgressionTests
     {
+        private const int Player = Simulation.PlayerId;
+
         private static Simulation Arena(AbilityDefinition definition, int slot = 0)
         {
             var sim = new Simulation(1234, 128);
@@ -48,31 +49,16 @@ namespace Game.Tests
             for (int i = 0; i < ticks; i++) sim.Step(InputFrame.Empty);
         }
 
-        private static float Lavidium(Simulation sim) => sim.Entities.Lavidium[Simulation.PlayerId].ToFloat();
+        private static float Lavidium(Simulation sim) => sim.Entities.Lavidium[Player].ToFloat();
 
         // ---- лавидий ----
 
         [Test]
-        public void HeroStartsWithAFullHundredLavidium()
+        public void HeroStartsWithAFullPoolOfTwoHundred()
         {
             var sim = Arena(AbilityDefinition.Whirlwind());
-            Assert.AreEqual(100, sim.Entities.MaxLavidium[Simulation.PlayerId]);
-            Assert.AreEqual(100f, Lavidium(sim), 0.001f);
-        }
-
-        [Test]
-        public void SabreCostsMatchTheOwnerSheet()
-        {
-            var sim = new Simulation(1234, 128);
-            sim.SetupTestArena(0);
-            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
-                sim.SetAbility(slot, PelagKit.Definition(CombatBranch.Sabre, slot), new AbilityNode[0], 0);
-
-            Assert.AreEqual(30, Simulation.LavidiumCostOf(sim.GetAbility(0)), "Вихрь");
-            Assert.AreEqual(15, Simulation.LavidiumCostOf(sim.GetAbility(1)), "Рассекающий удар");
-            Assert.AreEqual(10, Simulation.LavidiumCostOf(sim.GetAbility(2)), "«Ладно смазал»");
-            Assert.AreEqual(40, Simulation.LavidiumCostOf(sim.GetAbility(3)), "Шквал");
-            Assert.AreEqual(0, Simulation.LavidiumCostOf(sim.GetAbility(4)), "кувырок бесплатный");
+            Assert.AreEqual(200, sim.Entities.MaxLavidium[Player]);
+            Assert.AreEqual(200f, Lavidium(sim), 0.001f);
         }
 
         [Test]
@@ -80,7 +66,7 @@ namespace Game.Tests
         {
             var sim = Arena(AbilityDefinition.Whirlwind());
             sim.Step(Press(0));
-            Assert.AreEqual(70f, Lavidium(sim), 0.001f);
+            Assert.AreEqual(170f, Lavidium(sim), 0.001f);
         }
 
         /// <summary>
@@ -92,7 +78,7 @@ namespace Game.Tests
         public void UnaffordableCastDoesNothing()
         {
             var sim = Arena(AbilityDefinition.Whirlwind());
-            sim.Entities.Lavidium[Simulation.PlayerId] = Fix64.FromInt(29);
+            sim.Entities.Lavidium[Player] = Fix64.FromInt(29);
 
             sim.Step(Press(0));
 
@@ -102,35 +88,7 @@ namespace Game.Tests
             Assert.GreaterOrEqual(Lavidium(sim), 29f, "лавидий ушёл, хотя каста не было");
         }
 
-        [Test]
-        public void RegeneratesThreePerSecondUpToTheCap()
-        {
-            var sim = Arena(AbilityDefinition.Whirlwind());
-            sim.Entities.Lavidium[Simulation.PlayerId] = Fix64.Zero;
-
-            Idle(sim, Simulation.TicksPerSecond);
-            Assert.AreEqual(3f, Lavidium(sim), 0.01f);
-
-            Idle(sim, Simulation.TicksPerSecond * 60);
-            Assert.AreEqual(100f, Lavidium(sim), 0.001f, "восстановление перелило потолок");
-        }
-
         // ---- опыт ----
-
-        [Test]
-        public void KillingAnEnemyGivesPendingExperience()
-        {
-            var sim = Arena(AbilityDefinition.Whirlwind());
-            int victim = Enemy(sim, 15, 1);
-
-            sim.Step(Press(0));
-            Idle(sim, 20);
-
-            Assert.IsFalse(sim.Entities.Alive[victim], "Вихрь не убил цель");
-            Assert.AreEqual(Progression.NormalKillXp, sim.PendingXp);
-            Assert.AreEqual(Progression.NormalKillXp, sim.TakePendingXp());
-            Assert.AreEqual(0, sim.PendingXp, "забранный опыт не обнулился");
-        }
 
         [Test]
         public void ExperienceCurveLevelsUpAndCarriesTheRest()
@@ -152,107 +110,77 @@ namespace Game.Tests
             Assert.AreEqual(10, camp.Experience);
         }
 
+        // ---- статы уровня ----
+
+        /// <summary>Решение владельца: +30 жизни, +5 урона, +10 лавидия за уровень.</summary>
         [Test]
-        public void OneGainCanRaiseSeveralLevels()
+        public void EachLevelAddsHealthDamageAndLavidium()
         {
-            var camp = PrototypeContent.NewCamp();
-            Assert.AreEqual(2, camp.GainExperience(250));
-            Assert.AreEqual(3, camp.Level);
-            Assert.AreEqual(0, camp.Experience);
+            var sim = Arena(AbilityDefinition.Whirlwind());
+            int health = sim.Entities.MaxHealth[Player];
+            int damage = sim.Entities.Damage[Player];
+            int lavidium = sim.Entities.MaxLavidium[Player];
+
+            sim.SetPlayerLevel(3);
+
+            Assert.AreEqual(health + 60, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(damage + 10, sim.Entities.Damage[Player]);
+            Assert.AreEqual(lavidium + 20, sim.Entities.MaxLavidium[Player]);
         }
 
-        // ---- очки талантов ----
-
         [Test]
-        public void EachLevelGivesOneTalentPoint()
+        public void SessionGivesTheCampLevelToTheCampAndTheRift()
         {
-            var camp = PrototypeContent.NewCamp();
-            Assert.AreEqual(1, camp.AvailableTalentPoints);
+            var camp = new Camp(PrototypeContent.Items(), act: 3);
+            camp.DeveloperSetLevel(3);
+            var session = new GameSession(7, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
 
-            Assert.IsTrue(camp.TakeSabreTalent(SabreTalentLine.Whirlwind));
-            Assert.AreEqual(0, camp.AvailableTalentPoints);
-            Assert.IsFalse(camp.TakeSabreTalent(SabreTalentLine.Cleave), "талант без очка");
+            Assert.AreEqual(220, session.CampSim.Entities.MaxLavidium[Player], "лагерь без прибавок уровня");
 
             camp.GainExperience(camp.ExperienceToNextLevel);
-            Assert.IsTrue(camp.TakeSabreTalent(SabreTalentLine.Whirlwind));
-            Assert.AreEqual(2, camp.SabreTalentRank(SabreTalentLine.Whirlwind));
-        }
+            session.SyncPlayerLevel();
+            Assert.AreEqual(230, session.CampSim.Entities.MaxLavidium[Player], "повышение не дошло до лагеря");
 
-        [Test]
-        public void LineStopsAfterFiveTalents()
-        {
-            var camp = PrototypeContent.NewCamp();
-            for (int i = 0; i < 10; i++) camp.DeveloperGrantLevel();
-
-            for (int i = 0; i < SabreTalents.TalentsPerLine; i++)
-                Assert.IsTrue(camp.TakeSabreTalent(SabreTalentLine.Squall), $"талант {i + 1}");
-            Assert.IsFalse(camp.TakeSabreTalent(SabreTalentLine.Squall), "шестой талант в направлении");
-            Assert.AreEqual(SabreTalents.TalentsPerLine, camp.SabreTalentRank(SabreTalentLine.Squall));
-        }
-
-        [Test]
-        public void ResetReturnsAllPoints()
-        {
-            var camp = PrototypeContent.NewCamp();
-            camp.DeveloperGrantLevel();
-            camp.TakeSabreTalent(SabreTalentLine.Blaze);
-            camp.TakeSabreTalent(SabreTalentLine.Cleave);
-
-            camp.ResetTalents();
-
-            Assert.AreEqual(camp.TalentPoints, camp.AvailableTalentPoints);
-            Assert.AreEqual(0, camp.SabreTalentRank(SabreTalentLine.Blaze));
+            session.EnterRift();
+            Assert.AreEqual(4, session.Run.Sim.PlayerLevel);
+            Assert.AreEqual(230, session.Run.Sim.Entities.MaxLavidium[Player], "Разлом без прибавок уровня");
         }
 
         // ---- сохранение ----
 
+        /// <summary>
+        /// Сохранение версии 2 несло ранги постоянных талантов. Они больше не
+        /// существуют: уровень и опыт переезжают, ранги отбрасываются.
+        /// </summary>
         [Test]
-        public void SaveKeepsLevelExperienceAndTalents()
+        public void VersionTwoSaveKeepsLevelAndDropsTalents()
         {
             var camp = PrototypeContent.NewCamp();
             camp.GainExperience(275);
-            camp.TakeSabreTalent(SabreTalentLine.Whirlwind);
-            camp.TakeSabreTalent(SabreTalentLine.Squall);
+            camp.Earn(CurrencyType.Gold, 12);
 
-            var restored = CampSaveCodec.Decode(CampSaveCodec.Encode(camp), PrototypeContent.Items());
+            var restored = CampSaveCodec.Decode(EncodeLegacy(camp, 2, new[] { 2, 0, 1, 0 }), PrototypeContent.Items());
 
-            ulong a = 0, b = 0;
-            camp.HashInto(ref a);
-            restored.HashInto(ref b);
-            Assert.AreEqual(a, b);
             Assert.AreEqual(camp.Level, restored.Level);
             Assert.AreEqual(camp.Experience, restored.Experience);
-            Assert.AreEqual(1, restored.SabreTalentRank(SabreTalentLine.Squall));
+            Assert.AreEqual(12, restored.Money(CurrencyType.Gold));
         }
 
-        /// <summary>
-        /// Старое сохранение без прокачки обязано открываться: игрок, у которого
-        /// оно лежит, получает героя первого уровня, а не отказ.
-        /// </summary>
-        [Test]
-        public void VersionOneSaveOpensAsFirstLevel()
-        {
-            var camp = PrototypeContent.NewCamp();
-            camp.Earn(CurrencyType.Gold, 77);
-
-            var restored = CampSaveCodec.Decode(EncodeVersionOne(camp), PrototypeContent.Items());
-
-            Assert.AreEqual(1, restored.Level);
-            Assert.AreEqual(0, restored.Experience);
-            Assert.AreEqual(77, restored.Money(CurrencyType.Gold));
-            Assert.AreEqual(1, restored.AvailableTalentPoints);
-        }
-
-        /// <summary>Прежний формат байт в байт: тот, что писал лагерь до прокачки.</summary>
-        private static byte[] EncodeVersionOne(Camp camp)
+        /// <summary>Прежние форматы байт в байт: версия 1 без прокачки, версия 2 с рангами талантов.</summary>
+        private static byte[] EncodeLegacy(Camp camp, int version, int[] ranks)
         {
             using (var stream = new MemoryStream())
             using (var w = new BinaryWriter(stream))
             {
-                w.Write(0x43575254); w.Write(1); w.Write(camp.Act); w.Write(camp.Bag.Capacity);
+                w.Write(0x43575254); w.Write(version); w.Write(camp.Act); w.Write(camp.Bag.Capacity);
                 for (int i = 0; i < (int)CurrencyType.Count; i++) w.Write(camp.Money((CurrencyType)i));
                 for (int i = 0; i < camp.Bag.Capacity; i++) { WriteItem(w, camp.Bag.At(i)); w.Write(camp.Bag.IsKept(i)); }
                 for (int i = 0; i < (int)EquipSlot.Count; i++) WriteItem(w, camp.Worn.Worn((EquipSlot)i));
+                if (version >= 2)
+                {
+                    w.Write(camp.Level); w.Write(camp.Experience);
+                    foreach (int rank in ranks) w.Write(rank);
+                }
                 w.Flush();
                 byte[] payload = stream.ToArray();
                 uint h = 2166136261;

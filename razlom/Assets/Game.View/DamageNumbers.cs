@@ -434,7 +434,7 @@ namespace Game.View
         private static Font LoadBuiltinFont()
         {
             Font font = null;
-            try { font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); } catch { }
+            try { font = GameTypography.Semibold; } catch { }
             if (font == null)
             {
                 try { font = Resources.GetBuiltinResource<Font>("Arial.ttf"); } catch { }

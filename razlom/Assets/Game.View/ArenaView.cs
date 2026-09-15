@@ -193,23 +193,11 @@ namespace Game.View
                  "оригинал при экспорте, и одинаково для всех клипов.")]
         public float ModelYaw = 0f;
 
-        [Header("Снаряды")]
-        public int PrewarmProjectiles = 16;
-        public Color ProjectileColor = new Color(1.00f, 0.55f, 0.10f);
-        public float ProjectileScale = 0.45f;
-        public float ProjectileHeight = 0.8f;
-
         private TickDriver _driver;
 
         private ViewPool _wolePool;
         private ViewPool _orvillPool;
         private ViewPool _rootSwarmPool;
-        private ViewPool _projectilePool;
-
-        // Снаряд → его объект. Слоты снарядов переиспользуются, поэтому объект
-        // берётся из пула при рождении и возвращается при смерти, а не висит
-        // за индексом навсегда, как у сущностей.
-        private Transform[] _projectileViews;
 
         // Индекс сущности → её объект. Массив, а не словарь: индексы плотные,
         // а искать по ним надо каждый кадр.
@@ -432,16 +420,6 @@ namespace Game.View
                     Faction.Orvill, RootSwarmScale),
                 PrewarmRootSwarm > 0 ? PrewarmRootSwarm : capacity);
 
-            Transform projectileRoot = new GameObject("Пул: снаряды").transform;
-            projectileRoot.SetParent(transform, false);
-
-            Material projectileMat = ViewMaterials.CreateLit(ProjectileColor);
-            _projectilePool = new ViewPool(projectileRoot,
-                () => CreateBody(PrimitiveType.Sphere, projectileMat, ProjectileScale),
-                PrewarmProjectiles);
-
-            _projectileViews = new Transform[capacity];
-
             BindNewEntities();
         }
 
@@ -458,8 +436,6 @@ namespace Game.View
             if (_orvillPool != null && _orvillPool.NeedsPrewarm) _orvillPool.PrewarmStep(PerFrame);
             else if (_rootSwarmPool != null && _rootSwarmPool.NeedsPrewarm) _rootSwarmPool.PrewarmStep(PerFrame);
             else if (_wolePool != null && _wolePool.NeedsPrewarm) _wolePool.PrewarmStep(PerFrame);
-            else if (_projectilePool != null && _projectilePool.NeedsPrewarm)
-                _projectilePool.PrewarmStep(PerFrame);
         }
 
         private void LateUpdate()
@@ -504,7 +480,6 @@ namespace Game.View
             SyncAnimationEvents();
             UpdatePlayerEquipmentIntent();
             SyncTransforms();
-            SyncProjectiles();
         }
 
         /// <summary>
@@ -708,9 +683,8 @@ namespace Game.View
         public void PlayPlayerAbilityPresentation(int slot, int definitionId)
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
-            if (definitionId == AbilityDefinition.AnchorLeapId
-                || definitionId == AbilityDefinition.ChainCycloneId)
-                BeginPlayerAnchorUse(definitionId == AbilityDefinition.AnchorLeapId);
+            if (definitionId == AbilityDefinition.AnchorLeapId)
+                BeginPlayerAnchorUse(true);
             else { _anchorSaberSuppressed = false; EndPlayerAnchorUse(); MarkPlayerCombatActivity(); }
             _animationViews[Simulation.PlayerId]?.PlayAbilityDefinition(definitionId);
         }
@@ -825,14 +799,6 @@ namespace Game.View
             _playerAnchorFallbackUntil = 0f;
             _playerCombatReady = false;
 
-            for (int i = 0; _projectileViews != null && i < _projectileViews.Length; i++)
-            {
-                if (_projectileViews[i] == null) continue;
-                if (_projectilePool != null) _projectilePool.Release(_projectileViews[i].gameObject);
-                else _projectileViews[i].gameObject.SetActive(false);
-                _projectileViews[i] = null;
-            }
-
             _boundCount = 0;
             _generation = _driver.Generation;
             _depthShown = _driver.Run != null ? _driver.Run.Depth : -1;
@@ -892,35 +858,6 @@ namespace Game.View
             _groundOffset[entityId] = 0f;
 
             if (_hoveredEntity == entityId) _hoveredEntity = -1;
-        }
-
-        /// <summary>
-        /// Снаряды рисуются без интерполяции между тиками, в отличие от тел.
-        /// Они летят быстро и живут секунду: сглаживание тут не читается,
-        /// а лишний массив прошлых позиций стоил бы памяти на каждый слот.
-        /// </summary>
-        private void SyncProjectiles()
-        {
-            ProjectileStore projectiles = _driver.Sim.Projectiles;
-
-            for (int i = 0; i < projectiles.HighWater; i++)
-            {
-                if (projectiles.Alive[i])
-                {
-                    if (_projectileViews[i] == null)
-                        _projectileViews[i] = _projectilePool.Acquire().transform;
-
-                    _projectileViews[i].position = new Vector3(
-                        projectiles.Position[i].X.ToFloat(),
-                        ProjectileHeight,
-                        projectiles.Position[i].Y.ToFloat());
-                }
-                else if (_projectileViews[i] != null)
-                {
-                    _projectilePool.Release(_projectileViews[i].gameObject);
-                    _projectileViews[i] = null;
-                }
-            }
         }
 
         /// <summary>

@@ -20,6 +20,7 @@ namespace Game.View
         public bool EntranceOpen => _entrance != null && _entrance.IsOpen;
         public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampRiftEntrance.ClosedFrame == Time.frameCount;
         internal CampWalkMap WalkMap => _walkMap;
+        internal Bounds MapBounds { get; private set; }
         public Transform Tent { get; private set; }
         TickDriver _driver; ArenaView _arena;
         float _height;
@@ -68,6 +69,7 @@ namespace Game.View
             if (triangulation.vertices.Length == 0) { Debug.LogError("[camp] No walkable surface."); enabled = false; return; }
             var bounds = new Bounds(_start, Vector3.zero);
             foreach (var vertex in triangulation.vertices) bounds.Encapsulate(vertex);
+            MapBounds = bounds;
             const float cell = .125f;
             Vector3 origin = new Vector3(Mathf.Floor(bounds.min.x), _height, Mathf.Floor(bounds.min.z));
             int width = Mathf.CeilToInt((bounds.max.x-origin.x)/cell)+1;
@@ -243,10 +245,9 @@ namespace Game.View
             if (!_driver.GameplayPaused && !InventoryOpen) _entrance?.Check(_driver, World(_driver.Session.CampSim.Entities.Position[0]));
             if (_driver.GameplayPaused || InputBlocked) { Stop(); return; }
             if (CampIntegrationCapture.IsRunning) return;
-            bool interact; bool click; bool held; bool switchBranch; Vector2 pointer;
+            bool interact; bool click; bool held; Vector2 pointer;
 #if ENABLE_INPUT_SYSTEM
             interact = Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame;
-            switchBranch = Keyboard.current != null && Keyboard.current.bKey.wasPressedThisFrame;
             // Здесь выбирается только интерактивный объект. Приказ движения
             // поступает из TickDriver вместе с удержанием и короткими тапами.
             click = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
@@ -254,12 +255,12 @@ namespace Game.View
             pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
 #else
             interact = Input.GetKeyDown(KeyCode.I);
-            switchBranch = Input.GetKeyDown(KeyCode.B);
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
-            if (switchBranch) SwitchBranch();
             if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
+
+            if (_driver.PointerOverHud(pointer)) { click = false; held = false; }
 
             if (click && Camera.main != null && !CampInventoryView.PointerOverUI() && !CampTrainingView.PointerOverPanel(pointer))
                 HandleWorldPress(pointer);
@@ -378,44 +379,6 @@ namespace Game.View
         }
         bool NearTent() { Vector3 d = _tentBounds.ClosestPoint(Position) - Position; d.y = 0; return Tent != null && d.sqrMagnitude < 2.25f; }
 
-        /// <summary>
-        /// Меняет боевую ветку Пелага.
-        ///
-        /// ВРЕМЕННЫЙ ВХОД — КЛАВИША, А НЕ ЭКРАН. Выбор ветки принадлежит
-        /// лагерю и должен когда-нибудь стоять в экране снаряжения рядом с
-        /// талантами. Но экран снаряжения — собранный кодом интерфейс, и
-        /// врезать в него кнопку значит трогать художественную часть, которая
-        /// сейчас в работе. Клавиша даёт решение игроку сегодня и не мешает
-        /// сделать нормальный экран завтра.
-        /// </summary>
-        void SwitchBranch()
-        {
-            if (_driver.Session?.Camp == null) return;
-
-            Camp camp = _driver.Session.Camp;
-            camp.SelectBranch(camp.Branch == CombatBranch.Sabre
-                ? CombatBranch.Anchor
-                : CombatBranch.Sabre);
-
-            // Набор сам по себе применяется на входе в забег. Без этого игрок
-            // увидел бы новые кнопки только со следующего Разлома.
-            _driver.RefreshAbilityBuild();
-        }
-
-        string BranchName()
-        {
-            Camp camp = _driver.Session?.Camp;
-            if (camp == null) return "—";
-            return camp.Branch == CombatBranch.Sabre ? "сабля" : "якорь";
-        }
-
-        void OnGUI()
-        {
-            if (!Active || InputBlocked || _driver.GameplayPaused) return;
-            GUI.Box(new Rect(Screen.width / 2 - 260, Screen.height - 150, 520, 34),
-                NearTent() ? "Палатка · I — снаряжение"
-                : $"ПКМ — идти · B — ветка: {BranchName()}");
-        }
         void OnDestroy()
         {
             if (_navigation.valid) _navigation.Remove();

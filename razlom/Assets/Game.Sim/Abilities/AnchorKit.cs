@@ -67,6 +67,10 @@ namespace Game.Sim
         /// честнее формально и хуже на практике — игрок целится примерно.
         /// </summary>
         public static int CastBoarding(Simulation sim, FixVec2 aim, int enemy)
+            => CastBoarding(sim, aim, enemy, LeapRange);
+
+        /// <summary>То же с дальностью из сборки: талант «Длинная цепь» удлиняет цепь.</summary>
+        public static int CastBoarding(Simulation sim, FixVec2 aim, int enemy, Fix64 range)
         {
             EntityStore e = sim.Entities;
             int player = Simulation.PlayerId;
@@ -90,7 +94,7 @@ namespace Game.Sim
             Fix64 reach = hooked && distance > ChainStandoff
                 ? distance - ChainStandoff
                 : distance;
-            if (reach > LeapRange) reach = LeapRange;
+            if (reach > range) reach = range;
 
             FixVec2 target = from + direction * reach;
             e.Facing[player] = direction;

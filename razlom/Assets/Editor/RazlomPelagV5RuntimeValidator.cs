@@ -834,16 +834,8 @@ public static class RazlomPelagV5RuntimeValidator
 
     private static void ValidateLookdevAndWeapon(Report report, List<string> errors)
     {
-        Texture2D baseColor = Resources.Load<Texture2D>(
-            "Characters/Pelag_v4/Pelag_v4_BaseColor");
-        if (baseColor == null) errors.Add("Pelag BaseColor is missing.");
-        else
-        {
-            report.baseColorWidth = baseColor.width;
-            report.baseColorHeight = baseColor.height;
-            if (baseColor.width != 4096 || baseColor.height != 4096)
-                errors.Add($"Expected 4096x4096 BaseColor, got {baseColor.width}x{baseColor.height}.");
-        }
+        // Проверка BaseColor Pelag_v4 снята 15 сентября вместе с папкой v4:
+        // живой герой — v6, и его текстуры проверяются импортом модели.
 
         report.toonShaderFound = Shader.Find("Razlom/Texture Toon") != null;
         if (!report.toonShaderFound) errors.Add("Razlom/Texture Toon shader is missing.");

@@ -21,7 +21,7 @@ namespace Game.Sim
         /// способности длиннее, чем живёт лужа, и упереться в предел можно
         /// только зарядами из талантов, которых ещё нет.
         /// </summary>
-        private const int MaxFirePools = 4;
+        private const int MaxFirePools = 8;
 
         private readonly FixVec2[] _poolAt = new FixVec2[MaxFirePools];
         private readonly int[] _poolUntilTick = new int[MaxFirePools];
@@ -30,6 +30,7 @@ namespace Game.Sim
         private readonly Fix64[] _poolRadius = new Fix64[MaxFirePools];
         private readonly int[] _poolDamage = new int[MaxFirePools];
         private readonly int[] _poolPeriod = new int[MaxFirePools];
+        private readonly bool[] _poolFuel = new bool[MaxFirePools];
 
         private int _flaskSlot = -1;
         private int _flaskLandTick = -1;
@@ -63,8 +64,37 @@ namespace Game.Sim
                 _poolPeriod[i] = 0;
                 _poolRadius[i] = Fix64.Zero;
                 _poolAt[i] = FixVec2.Zero;
+                _poolFuel[i] = false;
             }
         }
+
+        /// <summary>«Горючее»: стоит ли враг в горящей луже, взятой с этим талантом.</summary>
+        private bool InFuelledPool(int target)
+        {
+            for (int i = 0; i < MaxFirePools; i++)
+            {
+                if (!_poolFuel[i] || Tick >= _poolUntilTick[i]) continue;
+                Fix64 limit = _poolRadius[i] + Entities.BodyRadius[target];
+                if ((Entities.Position[target] - _poolAt[i]).LengthSq <= limit * limit) return true;
+            }
+            return false;
+        }
+
+        private bool PointInFirePool(FixVec2 point)
+        {
+            for (int i = 0; i < MaxFirePools; i++)
+                if (Tick < _poolUntilTick[i] && (point - _poolAt[i]).LengthSq <= _poolRadius[i] * _poolRadius[i])
+                    return true;
+            return false;
+        }
+
+        // «Огненное кольцо»: три малые лужи на 90°, 210° и 330° вокруг взрыва.
+        private static readonly FixVec2[] RingDirections =
+        {
+            new FixVec2(Fix64.Zero, Fix64.One),
+            new FixVec2(Fix64.Ratio(-8660, 10000), Fix64.Ratio(-1, 2)),
+            new FixVec2(Fix64.Ratio(8660, 10000), Fix64.Ratio(-1, 2)),
+        };
 
         /// <summary>
         /// Бросок. Точка за пределом дальности не отменяет бросок, а укорачивает
@@ -119,6 +149,8 @@ namespace Game.Sim
             int slot = _flaskSlot;
             Fix64 radius = build.Get(AbilityStatType.Width) / Fix64.FromInt(2);
             int blast = build.Get(AbilityStatType.Damage).ToInt();
+            // «Подлить масла»: бутылка, упавшая в горящую лужу, взрывается вдвое сильнее.
+            if (build.Has(AbilityFlag.FlaskOil) && PointInFirePool(_flaskTarget)) blast *= 2;
 
             _events.Add(new SimEvent(SimEventType.FlaskBurst, PlayerId, -1, slot,
                 false, _flaskTarget, DamageType.Fire));
@@ -138,6 +170,10 @@ namespace Game.Sim
             }
 
             LightFirePool(slot, _flaskTarget, radius, build);
+            if (build.Has(AbilityFlag.FlaskRing))
+                for (int k = 0; k < RingDirections.Length; k++)
+                    LightFirePool(slot, _flaskTarget + RingDirections[k] * (radius * Fix64.Ratio(6, 5)),
+                        radius / Fix64.FromInt(2), build);
             StopFlask();
         }
 
@@ -167,6 +203,7 @@ namespace Game.Sim
             _poolPeriod[index] = period;
             _poolSlot[index] = slot;
             _poolDamage[index] = build.Get(AbilityStatType.BurnDamagePercent).ToInt();
+            _poolFuel[index] = build.Has(AbilityFlag.FlaskFuel);
         }
 
         private void UpdateFirePools()
@@ -208,6 +245,7 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, _poolDamage[i]);
                 Hashing.Mix(ref hash, _poolAt[i].X);
                 Hashing.Mix(ref hash, _poolAt[i].Y);
+                Hashing.Mix(ref hash, _poolFuel[i] ? 1 : 0);
             }
         }
     }

@@ -68,7 +68,7 @@ namespace Game.View
                 var entities = _driver.Sim.Entities;
                 GUI.Label(new Rect(p.x - 100, Screen.height - p.y - 30, 200, 25),
                     $"{dummy.Label} · {entities.Health[dummy.EntityId]:N0} / {entities.MaxHealth[dummy.EntityId]:N0}",
-                    new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 });
+                    new GUIStyle(GameTypography.Label) { alignment = TextAnchor.MiddleCenter, fontSize = 12 });
             }
             if (!nearby) return;
             var training = _driver.Session.Training;

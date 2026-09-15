@@ -46,7 +46,8 @@ namespace Game.View
         ChainStep,
         Rotation,
         Cleave,
-        Blaze
+        Blaze,
+        Dash
     }
 
     /// <summary>

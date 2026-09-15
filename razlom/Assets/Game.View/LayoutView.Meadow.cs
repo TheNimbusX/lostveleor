@@ -10,7 +10,8 @@ namespace Game.View
         private readonly List<Mesh> _meadowMeshes = new List<Mesh>();
         private readonly List<Transform> _portals = new List<Transform>();
         private readonly List<Transform> _caches = new List<Transform>();
-        private ViewPool _portalPool, _cachePool;
+        private readonly List<Transform> _dropMarks = new List<Transform>();
+        private ViewPool _portalPool, _cachePool, _dropPool;
         private Mesh _bankMesh, _ringMesh;
         private GameObject _banks;
         private Material _glowMaterial;
@@ -22,7 +23,8 @@ namespace Game.View
         {
             foreach (var portal in _portals) _portalPool?.Release(portal.gameObject);
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
-            _portals.Clear(); _caches.Clear();
+            foreach (var mark in _dropMarks) _dropPool?.Release(mark.gameObject);
+            _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
             if (_banks != null) _banks.SetActive(false);
             _meadowLighting.Restore();
         }
@@ -32,7 +34,7 @@ namespace Game.View
             foreach (var mesh in _meadowMeshes) DestroyOwned(mesh);
             _meadowMeshes.Clear();
             _bankMesh = _ringMesh = null; _banks = null;
-            _portalPool = _cachePool = null;
+            _portalPool = _cachePool = _dropPool = null;
         }
 
         private void InitializeMeadow()
@@ -46,6 +48,7 @@ namespace Game.View
             _ringMesh = MakeRing(); _meadowMeshes.Add(_ringMesh);
             _portalPool = new ViewPool(root, () => MakeLandmark(true), 9, false);
             _cachePool = new ViewPool(root, () => MakeLandmark(false), 8, false);
+            _dropPool = new ViewPool(root, () => MakeLandmark(false), 4, false);
             _banks = new GameObject("Земляной край");
             _banks.transform.SetParent(CreateRoot("Граница лугов"), false);
             _bankMesh = new Mesh { name = "Контур занятого пола" };
@@ -107,6 +110,33 @@ namespace Game.View
             for (int i = 1; i < _portals.Count; i++)
                 SetGlow(_portals[i], run.Phase == RunPhase.SeekingExit ? new Color(.22f, .95f, .65f) : new Color(.8f, .42f, .1f));
             for (int b = 0; b < _caches.Count; b++) _caches[b].gameObject.SetActive(!run.IsBranchClaimed(b));
+            UpdateDropMarks(run);
+        }
+
+        /// <summary>
+        /// Добыча с элит: уменьшенный схрон с кольцом на месте смерти, пока предмет
+        /// не подобран. Способность подсвечена красным, вещь — золотым. Это
+        /// временная метка до арта владельца.
+        /// </summary>
+        private void UpdateDropMarks(RiftRun run)
+        {
+            while (_dropPool != null && _dropMarks.Count < run.DropCount)
+            {
+                var mark = _dropPool.Acquire().transform;
+                mark.name = "Добыча с элиты";
+                mark.localScale = Vector3.one * .6f;
+                _dropMarks.Add(mark);
+            }
+            for (int d = 0; d < _dropMarks.Count; d++)
+            {
+                bool visible = d < run.DropCount && !run.GetDrop(d).Claimed;
+                _dropMarks[d].gameObject.SetActive(visible);
+                if (!visible) continue;
+                RunDrop drop = run.GetDrop(d);
+                _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), .03f, drop.Position.Y.ToFloat());
+                SetGlow(_dropMarks[d], drop.Offer.Kind == RewardKind.Ability
+                    ? new Color(.95f, .35f, .2f) : new Color(1f, .78f, .3f));
+            }
         }
         private void SetGlow(Transform root, Color color)
         {

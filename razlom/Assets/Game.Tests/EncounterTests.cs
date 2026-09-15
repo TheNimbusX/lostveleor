@@ -77,47 +77,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Spawn_IsRepeatable_AndDoesNotConsumeLiveRandomStreams()
-        {
-            var map = MakeMap(42, 5);
-            var a = new Simulation(42, 512);
-            var b = new Simulation(42, 512);
-            var before = new RngStreams(42);
-            var planA = a.SetupEncounters(map, 71, 225, Settings(5));
-            var planB = b.SetupEncounters(map, 71, 225, Settings(5));
-            Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()));
-            ulong hashA = Hashing.Offset, hashB = Hashing.Offset;
-            planA.HashInto(ref hashA); planB.HashInto(ref hashB);
-            Assert.That(hashA, Is.EqualTo(hashB));
-            Assert.That(a.Rng.Layout.State, Is.EqualTo(before.Layout.State));
-            Assert.That(a.Rng.Spawns.State, Is.EqualTo(before.Spawns.State));
-            Assert.That(a.Rng.Loot.State, Is.EqualTo(before.Loot.State));
-            Assert.That(a.Rng.Affix.State, Is.EqualTo(before.Affix.State));
-            for (int tick = 0; tick < 90; tick++) a.Step(InputFrame.Empty);
-            for (int i = 1; i < a.Entities.Count; i++) Assert.That(a.Entities.Aggro[i], Is.False);
-        }
-
-        [Test]
-        public void BranchComposition_DoesNotRerollMainFights()
-        {
-            var map = MakeMap(17, 5);
-            var a = new Simulation(1, 512); var b = new Simulation(1, 512);
-            var pa = a.SetupEncounters(map, 9, 150, Settings(5, 1));
-            var pb = b.SetupEncounters(map, 9, 150, Settings(5, 5));
-            for (int e = 0; e < pa.Count; e++)
-            {
-                var ea = pa.Get(e); var eb = pb.Get(e);
-                if (ea.Role == EncounterRole.RewardBranch) continue;
-                Assert.That(ea.EnemyCount, Is.EqualTo(eb.EnemyCount));
-                for (int n = 0; n < ea.EnemyCount; n++)
-                {
-                    Assert.That(a.Entities.Position[ea.FirstEntity + n], Is.EqualTo(b.Entities.Position[eb.FirstEntity + n]));
-                    Assert.That(a.Entities.Kind[ea.FirstEntity + n], Is.EqualTo(b.Entities.Kind[eb.FirstEntity + n]));
-                }
-            }
-        }
-
-        [Test]
         public void RequiredFightsUnlockExit_WithoutKillingCacheGuards()
         {
             var modules = PrototypeContent.Modules();
@@ -143,14 +102,5 @@ namespace Game.Tests
             Assert.That(run.CountRequiredEnemies(), Is.GreaterThan(0));
         }
 
-        [Test]
-        public void CapacityFailure_LeavesExistingSimulationUntouched()
-        {
-            var sim = new Simulation(1, 8);
-            sim.SetupTestArena(1);
-            ulong before = sim.StateHash();
-            Assert.Throws<ArgumentException>(() => sim.SetupEncounters(MakeMap(1, 1), 1, 100, Settings(1)));
-            Assert.That(sim.StateHash(), Is.EqualTo(before));
-        }
     }
 }

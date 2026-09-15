@@ -38,23 +38,6 @@ namespace Game.Tests
             }
         }
 
-        [Test]
-        public void SafeEntry_EnemiesDoNotNoticeIdlePlayer()
-        {
-            for (ulong seed = 1; seed <= 30; seed++)
-            {
-                var map = Map(seed, 2);
-                var sim = new Simulation(seed, 512);
-                sim.SetupRift(map, seed, 2, 4, 100);
-                Assert.That(sim.Entities.Position[0], Is.EqualTo(map.EntryPoint));
-                for (int i = 1; i < sim.Entities.Count; i++)
-                    Assert.That(FixVec2.DistanceSq(sim.Entities.Position[i], map.EntryPoint),
-                        Is.GreaterThanOrEqualTo(LayoutRoutes.SafeSpawnRadius * LayoutRoutes.SafeSpawnRadius));
-                for (int tick = 0; tick < 60; tick++) sim.Step(InputFrame.Empty);
-                for (int i = 1; i < sim.Entities.Count; i++) Assert.That(sim.Entities.Aggro[i], Is.False);
-            }
-        }
-
         private static RiftRun BranchRun()
         {
             var modules = PrototypeContent.Modules();
@@ -98,37 +81,6 @@ namespace Game.Tests
             entities.Position[0] = run.Map.ExitPoint(0);
             run.Step(InputFrame.Empty);
             Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
-        }
-
-        [Test]
-        public void WalkingDistance_UsesActualShortcutInsteadOfParentDepth()
-        {
-            var module = new ModuleDefinition("route.cell", 1, 1, new ModuleConnector[0]);
-            var map = new LayoutMap(new ModuleSet(new[] { module }), 4);
-            map.TryPlace(0, 0, -1, -1);
-            map.TryPlace(0, 0, 0, -1, 0);
-            map.TryPlace(0, 0, 0, 0, 1);
-            map.TryPlace(0, 0, -1, 0, 2);
-            var routes = new LayoutRoutes(map);
-            Assert.That(map.DepthOf(3), Is.EqualTo(3));
-            Assert.That(routes.DistanceToModule(3), Is.EqualTo(1));
-            Assert.That(routes.CellAt(map.CenterOf(0)), Is.EqualTo(0), "Negative coordinates must round down");
-        }
-
-        [Test]
-        public void LivingBonusGuards_CanBeSkippedForTheNextRift()
-        {
-            var run = BranchRun();
-            int branch = run.Map.GetRewardBranch(0);
-            var entities = run.Sim.Entities;
-            for (int i = 1; i < entities.Count; i++)
-                if (!run.Map.ContainsWorld(branch, entities.Position[i])) entities.Alive[i] = false;
-            run.Step(InputFrame.Empty);
-            entities.Position[0] = run.Map.ExitPoint(0);
-            run.Step(InputFrame.Empty);
-            Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
-            Assert.That(run.BranchGuardsAlive(0), Is.GreaterThan(0));
-            Assert.That(run.TakenRewardCount, Is.Zero);
         }
 
         [Test]

@@ -60,6 +60,7 @@ namespace Game.View
             _decoration=DecorationRoot.gameObject;
             _started=Time.unscaledTime;_heartRest=Heart.localPosition;_heartRotation=Heart.localRotation;
             _camera=Camera.main;_block=new MaterialPropertyBlock();_surfaces=GetComponentsInChildren<Renderer>();
+            CacheMagicSurfaces();
             _lights.Clear();_lightIntensities.Clear();_flames.Clear();
             foreach(var light in DecorationRoot.GetComponentsInChildren<Light>()) {_lights.Add(light);_lightIntensities.Add(light.intensity);}
             if(FlameBillboards!=null)foreach(var flame in FlameBillboards)if(flame!=null)_flames.Add(flame);
@@ -155,6 +156,26 @@ namespace Game.View
             _buildParent=null;
         }
 
+        // Поверхности школы магии отбираются один раз: имя шейдера каждого
+        // рендерера каждый кадр стоило строки на сотню камней.
+        Renderer[] _magicLit=new Renderer[0], _magicConduits=new Renderer[0];
+        float _appliedGlow=float.NaN, _appliedFlow=float.NaN, _appliedAtmosphere=float.NaN;
+        static readonly int FlowSpeedId=Shader.PropertyToID("_FlowSpeed");
+
+        void CacheMagicSurfaces()
+        {
+            var lit=new List<Renderer>();var conduits=new List<Renderer>();
+            foreach(var surface in _surfaces)
+            {
+                if(surface==null || surface.sharedMaterial==null)continue;
+                string shader=surface.sharedMaterial.shader.name;
+                if(shader=="Game/Camp Magic Lit")lit.Add(surface);
+                else if(shader=="Game/Camp Magic Conduit")conduits.Add(surface);
+            }
+            _magicLit=lit.ToArray();_magicConduits=conduits.ToArray();
+            _appliedGlow=_appliedFlow=_appliedAtmosphere=float.NaN;
+        }
+
         void LateUpdate(){if(_animationInitialized)Apply();}
         void Apply()
         {
@@ -174,16 +195,25 @@ namespace Game.View
             }
             for(int i=0;i<_lights.Count;i++)if(_lights[i]!=null)
                 _lights[i].intensity=_lightIntensities[i]*GlowStrength*(.92f+.06f*Mathf.Sin(time*(i==0?3.3f:.9f)+i*1.7f)+.02f*Mathf.Sin(time*5.4f+i));
-            for(int i=0;i<_particles.Count;i++)if(_particles[i]!=null)
-            {var emission=_particles[i].emission;emission.rateOverTimeMultiplier=_particleRates[i]*Atmosphere;}
-            foreach(var surface in _surfaces)
+            // Частицы и поверхности меняются только при смене ручек: их значения
+            // не анимируются, а запись в них каждый кадр была чистой тратой.
+            if(Atmosphere!=_appliedAtmosphere)
             {
-                if(surface==null || surface.sharedMaterial==null)continue;
-                string shader=surface.sharedMaterial.shader.name;
-                if(shader!="Game/Camp Magic Lit" && shader!="Game/Camp Magic Conduit")continue;
-                surface.GetPropertyBlock(_block);
-                if(shader=="Game/Camp Magic Lit")_block.SetFloat(Strength,GlowStrength);else _block.SetFloat("_FlowSpeed",FlowSpeed);
-                surface.SetPropertyBlock(_block);
+                for(int i=0;i<_particles.Count;i++)if(_particles[i]!=null)
+                {var emission=_particles[i].emission;emission.rateOverTimeMultiplier=_particleRates[i]*Atmosphere;}
+                _appliedAtmosphere=Atmosphere;
+            }
+            if(GlowStrength!=_appliedGlow)
+            {
+                foreach(var surface in _magicLit)if(surface!=null)
+                {surface.GetPropertyBlock(_block);_block.SetFloat(Strength,GlowStrength);surface.SetPropertyBlock(_block);}
+                _appliedGlow=GlowStrength;
+            }
+            if(FlowSpeed!=_appliedFlow)
+            {
+                foreach(var surface in _magicConduits)if(surface!=null)
+                {surface.GetPropertyBlock(_block);_block.SetFloat(FlowSpeedId,FlowSpeed);surface.SetPropertyBlock(_block);}
+                _appliedFlow=FlowSpeed;
             }
         }
 

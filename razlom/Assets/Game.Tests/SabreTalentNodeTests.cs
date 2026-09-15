@@ -15,7 +15,7 @@ namespace Game.Tests
             sim.SetupTestArena(0);
             var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
             int count = SabreTalents.AppendNodes(line, rank, buffer, 0);
-            sim.SetAbility(0, PelagKit.Definition(CombatBranch.Sabre, SabreTalents.SlotOf(line)), buffer, count);
+            sim.SetAbility(0, PelagKit.PoolDefinition(SabreTalents.PoolIndexOf(line)), buffer, count);
             return sim.GetAbility(0);
         }
 
@@ -29,50 +29,34 @@ namespace Game.Tests
         }
 
         [Test]
-        public void WhirlwindMoreOftenCutsAQuarterOfTheCooldown()
-        {
-            Assert.AreEqual(72, Build(SabreTalentLine.Whirlwind, 1).CooldownTicks, "второй талант ещё не взят");
-            Assert.AreEqual(54, Build(SabreTalentLine.Whirlwind, 2).CooldownTicks);
-        }
-
-        [Test]
-        public void CleaveLongBladeReachesHalfFarther()
-        {
-            Assert.AreEqual(1.5f, Stat(Build(SabreTalentLine.Cleave, 1), AbilityStatType.Radius), 0.001f);
-            Assert.AreEqual(2.25f, Stat(Build(SabreTalentLine.Cleave, 2), AbilityStatType.Radius), 0.001f);
-        }
-
-        [Test]
-        public void BlazeBurnsFiveSecondsInsteadOfThree()
-        {
-            Assert.AreEqual(3 * Simulation.TicksPerSecond,
-                Build(SabreTalentLine.Blaze, 1).Get(AbilityStatType.DurationTicks).ToInt());
-            Assert.AreEqual(5 * Simulation.TicksPerSecond,
-                Build(SabreTalentLine.Blaze, 2).Get(AbilityStatType.DurationTicks).ToInt());
-        }
-
-        [Test]
         public void SquallCheaperCostsTwentyEight()
         {
             Assert.AreEqual(40, Simulation.LavidiumCostOf(Build(SabreTalentLine.Squall, 1)));
             Assert.AreEqual(28, Simulation.LavidiumCostOf(Build(SabreTalentLine.Squall, 2)));
         }
 
+        /// <summary>
+        /// Одиночный узел меню разработчика — тот же, что стоит на его месте
+        /// в ранговой цепочке: отладка визуала обязана включать ровно игровой талант.
+        /// </summary>
         [Test]
-        public void NoTalentsMeansNoNodes()
+        public void SingleTalentNodeMatchesItsPlaceInTheLine()
         {
-            var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
+            var ranked = new AbilityNode[SabreTalents.TalentsPerLine];
+            var single = new AbilityNode[1];
             for (int line = 0; line < SabreTalents.LineCount; line++)
-                Assert.AreEqual(0, SabreTalents.AppendNodes((SabreTalentLine)line, 0, buffer, 0));
+            {
+                var id = (SabreTalentLine)line;
+                Assert.AreEqual(SabreTalents.TalentsPerLine,
+                    SabreTalents.AppendNodes(id, SabreTalents.TalentsPerLine, ranked, 0));
+                for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                {
+                    Assert.AreEqual(1, SabreTalents.AppendNode(id, index, single, 0), $"{id} {index + 1}");
+                    Assert.AreEqual(ranked[index].Id, single[0].Id, $"{id} {index + 1}");
+                }
+            }
+            Assert.AreEqual(0, SabreTalents.AppendNode(SabreTalentLine.Whirlwind, SabreTalents.TalentsPerLine, single, 0));
         }
 
-        /// <summary>Ранг выше пяти не даёт узлов сверх ветки и не выходит за буфер.</summary>
-        [Test]
-        public void RankAboveFiveIsClamped()
-        {
-            var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
-            int full = SabreTalents.AppendNodes(SabreTalentLine.Whirlwind, SabreTalents.TalentsPerLine, buffer, 0);
-            Assert.AreEqual(full, SabreTalents.AppendNodes(SabreTalentLine.Whirlwind, 99, buffer, 0));
-        }
     }
 }

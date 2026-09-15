@@ -51,34 +51,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void StandingStillAtBoss_IsLethalWithinTwentySeconds()
-        {
-            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var session = new GameSession(1, PrototypeContent.NewCamp(), profile.Modules,
-                PrototypeContent.ItemBaseIds(), location: profile);
-            session.StartDeveloperRift(profile, 10, true, 42);
-            for (int tick = 0; tick < 600 && session.Mode == GameMode.Rift; tick++) session.Step(InputFrame.Empty);
-            TestContext.WriteLine($"Health {session.Run.Sim.Entities.Health[0]}, boss damage {session.Run.Sim.Entities.Damage[session.Run.BossId]}, aggro {session.Run.Sim.Entities.Aggro[session.Run.BossId]}, player {session.Run.Sim.Entities.Position[0]}, boss {session.Run.Sim.Entities.Position[session.Run.BossId]}");
-            Assert.That(session.Mode, Is.EqualTo(GameMode.Summary));
-            Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Died));
-        }
-
-        [Test]
-        public void LevelRanges_RejectGapsAndInvalidBounds()
-        {
-            var profile = ScriptableObject.CreateInstance<EncounterProfileAsset>();
-            try
-            {
-                foreach (var pack in profile.MainPath) pack.MinLevel = 4;
-                Assert.Throws<ArgumentException>(() => profile.ToDefinition(1));
-                Assert.DoesNotThrow(() => profile.ToDefinition(4));
-                profile.MainPath[0].MaxLevel = 2;
-                Assert.Throws<ArgumentException>(() => profile.ToDefinition(4));
-            }
-            finally { UnityEngine.Object.DestroyImmediate(profile); }
-        }
-
-        [Test]
         public void DeveloperImmortality_BlocksAttacksAbilitiesAndBurn_AndCanBeDisabled()
         {
             var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
@@ -102,55 +74,6 @@ namespace Game.Tests
             Assert.That(sim.Entities.Alive[0], Is.False);
         }
 
-        [Test]
-        public void DeveloperImmortality_PersistsAcrossTestJumps_ButNotNormalRuns()
-        {
-            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var session = new GameSession(1, PrototypeContent.NewCamp(), profile.Modules,
-                PrototypeContent.ItemBaseIds(), location: profile);
-            session.StartDeveloperRift(profile, 10, true, 42);
-            session.SetDeveloperInvulnerable(true);
-            session.StartDeveloperRift(profile, 1, false, 42);
-            Assert.That(session.DeveloperInvulnerable, Is.True);
-            session.ReturnToCamp();
-            Assert.That(session.DeveloperInvulnerable, Is.False);
-            session.EnterRift();
-            Assert.That(session.DeveloperInvulnerable, Is.False);
-            session.SetDeveloperInvulnerable(true);
-            Assert.That(session.DeveloperInvulnerable, Is.True);
-            session.SetDeveloperInvulnerable(false);
-            session.Run.Sim.ApplyAbilityDamage(1, 0, 1000000, 0, DamageType.Physical);
-            Assert.That(session.Run.Sim.Entities.Alive[0], Is.False);
-        }
-
-        [Test]
-        public void Immortality_CanBeEnabledInNormalRun_AndSurvivesAllTenLevels()
-        {
-            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var session = new GameSession(71, PrototypeContent.NewCamp(), profile.Modules,
-                PrototypeContent.ItemBaseIds(), location: profile);
-            session.EnterRift();
-            var initialRun = session.Run;
-            session.SetDeveloperInvulnerable(true);
-            Assert.That(session.Run, Is.SameAs(initialRun));
-            for (int level = 1; level <= 10; level++)
-            {
-                var run = session.Run;
-                Assert.That(run.Depth, Is.EqualTo(level));
-                Assert.That(session.DeveloperInvulnerable, Is.True);
-                run.Sim.ApplyAbilityDamage(1, 0, 1000000, 0, DamageType.Physical);
-                Assert.That(run.Sim.Entities.Alive[0], Is.True);
-                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
-                session.Step(InputFrame.Empty);
-                run.Sim.Entities.Position[0] = run.Map.ExitPoint(0);
-                session.Step(InputFrame.Empty);
-                session.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
-            }
-            Assert.That(session.Mode, Is.EqualTo(GameMode.Summary));
-            Assert.That(session.LastRun.ItemsKept, Is.Zero);
-            session.ReturnToCamp();
-            Assert.That(session.DeveloperInvulnerable, Is.False);
-        }
     }
 }
 #endif

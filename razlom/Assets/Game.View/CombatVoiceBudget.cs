@@ -40,5 +40,12 @@ namespace Game.View
         }
 
         public void Release(int slot) => _until[slot] = 0;
+
+        // DSP продолжает идти в паузе; защищаем оставшуюся жизнь приостановленных голосов.
+        public void Shift(double seconds)
+        {
+            for (int i = 0; i < _until.Length; i++)
+                if (_until[i] > 0) _until[i] += seconds;
+        }
     }
 }

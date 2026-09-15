@@ -305,7 +305,6 @@ namespace Game.Sim
         public readonly EntityStore Entities;
         public readonly RngStreams Rng;
         public readonly SpatialHash Grid;
-        public readonly ProjectileStore Projectiles;
         public readonly StatusStore Statuses;
 
         /// <summary>
@@ -468,8 +467,6 @@ namespace Game.Sim
             Rng = new RngStreams(runSeed);
             Entities = new EntityStore(capacity);
             _cleavePreviousPositions = new FixVec2[capacity];
-            _cycloneHitTurn = new int[capacity];
-            _cycloneTickPositions = new FixVec2[capacity];
 
             // Ячейка равна дальности удара МОБА: обычный запрос задевает 3×3
             // ячейки. Запросы игрока шире (PlayerAttackRange = 2.5), и это
@@ -482,7 +479,6 @@ namespace Game.Sim
                 cellsX: 64, cellsY: 64,
                 capacity: capacity);
 
-            Projectiles = new ProjectileStore(capacity);
             Statuses = new StatusStore(capacity);
             HitScratch = new int[capacity];
             _separationScratch = new int[capacity];
@@ -546,7 +542,6 @@ namespace Game.Sim
             _layout = null;
             ClearMoveOrder();
             Entities.Clear();
-            Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -590,7 +585,6 @@ namespace Game.Sim
             _layout = map;
             ClearMoveOrder();
             Entities.Clear();
-            Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -681,7 +675,6 @@ namespace Game.Sim
             _layout = map;
             ClearMoveOrder();
             Entities.Clear();
-            Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -727,7 +720,6 @@ namespace Game.Sim
             _layout = map;
             ClearMoveOrder();
             Entities.Clear();
-            Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -806,14 +798,16 @@ namespace Game.Sim
             sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
             sheet.SetBase(StatType.MaxLavidium, PlayerBaseLavidium);
             sheet.SetBase(StatType.LavidiumRegen, PlayerBaseLavidiumRegen);
+            // Spawn стёр модификаторы — прибавки уровня вешаются заново.
+            ApplyLevelModifiers(sheet);
 
             Entities.RefreshStats(id);
             Entities.Health[id] = Entities.MaxHealth[id];
             Entities.Lavidium[id] = Fix64.FromInt(Entities.MaxLavidium[id]);
         }
 
-        /// <summary>Пул лавидия героя. Решение владельца от 13 сентября.</summary>
-        private static readonly Fix64 PlayerBaseLavidium = Fix64.FromInt(100);
+        /// <summary>Пул лавидия героя. Решение владельца от 15 сентября: 200 вместо 100.</summary>
+        private static readonly Fix64 PlayerBaseLavidium = Fix64.FromInt(200);
 
         /// <summary>Восстановление лавидия героя, ед/с. Решение владельца от 13 сентября.</summary>
         private static readonly Fix64 PlayerBaseLavidiumRegen = Fix64.FromInt(3);
@@ -864,7 +858,6 @@ namespace Game.Sim
         {
             ClearMoveOrder();
             Entities.Clear();
-            Projectiles.Clear();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -1032,7 +1025,6 @@ namespace Game.Sim
             CancelBlazeGesture();
             _blazeUntilTick = 0;
             _blazeSlot = -1;
-            StopCyclone();
             StopAnchorSlam();
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
             _leapLaunchTick = -1;
@@ -1131,7 +1123,6 @@ namespace Game.Sim
         public void Step(in InputFrame input)
         {
             _events.Clear();
-            for (int i = 0; i < Entities.Count; i++) _cycloneTickPositions[i] = Entities.Position[i];
 
             // Пересчёт грязных листов статов — первой стадией и ровно один раз
             // за тик. У StatSheet пересчёт по грязному флагу, и точка, в которой
@@ -1177,7 +1168,6 @@ namespace Game.Sim
             UpdateBlaze();
             ResolveWhirlwindImpact(in input);
             UpdateWhirlwindChannel(in input);
-            UpdateCyclone(in input);
             UpdateAnchorSlam();
             UpdateWreck();
             UpdateCleave();
@@ -1188,13 +1178,14 @@ namespace Game.Sim
                 _leapLaunchTick = -1;
                 if (Entities.Alive[PlayerId])
                 {
-                    int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget);
+                    AbilityBuild leap = (uint)_leapSlot < (uint)AbilitySlots ? _abilityBuilds[_leapSlot] : null;
+                    Fix64 range = leap != null ? leap.Get(AbilityStatType.Radius) : AnchorKit.LeapRange;
+                    int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget, range);
                     _leapPunchTick = Tick + ticks;
                 }
             }
             ResolveBoardingPunch();
             ContinueChainStep();
-            UpdateProjectiles();
             ResolveAttacks(in input);
             TickBurning();
             TickIgnite();
@@ -1252,7 +1243,6 @@ namespace Game.Sim
                 if (!CanAffordAbility(build)) continue;
 
                 if (build.DefinitionId == AbilityDefinition.ChainStepId && !ValidAbilityTarget(input.AbilityTarget, build)) continue;
-                StopCyclone();
                 StopAnchorSlam();
                 StopWreck();
                 StopCleave();
@@ -1287,10 +1277,6 @@ namespace Game.Sim
                 {
                     BeginAnchorSlam(slot, input.Aim);
                 }
-                else if (build.DefinitionId == AbilityDefinition.ChainCycloneId)
-                {
-                    BeginCyclone(slot, input.Aim);
-                }
                 else if (build.DefinitionId == AbilityDefinition.ChainStepId)
                 {
                     BeginChainStep(slot, input.AbilityTarget);
@@ -1315,12 +1301,9 @@ namespace Game.Sim
                 {
                     CastDash(slot, input.Aim);
                 }
-                else
-                {
-                    FlameSeal.Cast(this, PlayerId, slot, build, input.Aim);
-                }
 
                 _abilityReadyTick[slot] = Tick + build.CooldownTicks;
+                AnchorTalentAfterCast(slot, build);
                 SpendLavidium(build);
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
                 if (build.DefinitionId == AbilityDefinition.ChainStepId && _chainHopsLeft > 0)
@@ -1341,8 +1324,7 @@ namespace Game.Sim
                 if (Tick < _abilityReadyTick[slot]) continue;
                 if (!CanAffordAbility(_abilityBuilds[slot])) continue;
 
-                int until = (_abilityBuilds[slot].DefinitionId == AbilityDefinition.ChainCycloneId)
-                    ? Tick : Tick + AbilityMovePenaltyTicks;
+                int until = Tick + AbilityMovePenaltyTicks;
                 if (until > _abilityMovePenaltyUntilTick)
                     _abilityMovePenaltyUntilTick = until;
 
@@ -1482,36 +1464,6 @@ namespace Game.Sim
             BeginWhirlwindChannel(slot, in input);
         }
 
-        /// <summary>
-        /// Полёт снарядов и стадия ПРИ ПОПАДАНИИ.
-        ///
-        /// Обход по возрастанию индекса, как и везде: от порядка попаданий
-        /// зависит, кто умрёт первым при равном здоровье.
-        /// </summary>
-        private void UpdateProjectiles()
-        {
-            for (int i = 0; i < Projectiles.HighWater; i++)
-            {
-                if (!Projectiles.Alive[i]) continue;
-
-                FixVec2 toTarget = Projectiles.Target[i] - Projectiles.Position[i];
-                FixVec2 step = Projectiles.Velocity[i];
-
-                bool arrived = toTarget.LengthSq <= step.LengthSq;
-                Projectiles.Position[i] = arrived ? Projectiles.Target[i] : Projectiles.Position[i] + step;
-
-                Projectiles.TicksLeft[i]--;
-
-                // Снаряд, не долетевший за отведённое время, всё равно срабатывает:
-                // тихо исчезнувший снаряд игрок читает как проглоченный ввод.
-                if (!arrived && Projectiles.TicksLeft[i] > 0) continue;
-
-                AbilityBuild build = _abilityBuilds[Projectiles.Slot[i]];
-                if (build != null) FlameSeal.OnHit(this, i, build);
-
-                Projectiles.Despawn(i);
-            }
-        }
 
         /// <summary>
         /// Горение. Тикает ПОСЛЕ автоатак, чтобы урон за тик считался один раз
@@ -1559,6 +1511,8 @@ namespace Game.Sim
             if (target == PlayerId && PlayerImmune) return;
             if (BlazeEvades(target, overTime)) return;
 
+            // «Горючее»: враг в луже Взрывной смеси получает от Пелага +20%.
+            if (source == PlayerId && InFuelledPool(target)) amount = amount * 120 / 100;
             int power = amount;
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
@@ -1620,21 +1574,6 @@ namespace Game.Sim
                 // который сам пересекает комнату за игрока.
                 _attackTarget = Grid.FindNearestEnemy(Entities, PlayerId,
                     AttackChainRadius, Fix64.Zero);
-            }
-
-            AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
-            if (build != null)
-            {
-                int count = build.EffectCount(AbilityStage.OnKill);
-                for (int e = 0; e < count; e++)
-                {
-                    switch (build.GetEffect(AbilityStage.OnKill, e))
-                    {
-                        case AbilityEffect.SpreadBurn:
-                            FlameSeal.SpreadBurn(this, target, killer, slot);
-                            break;
-                    }
-                }
             }
 
             Statuses.ClearBurn(target);
@@ -1805,7 +1744,6 @@ namespace Game.Sim
                 : Tick < _abilityMovePenaltyUntilTick
                     ? fullSpeed * AbilityMoveScale
                     : fullSpeed;
-            if (TryCycloneMoveScale(in input, out Fix64 cycloneMoveScale)) speed = fullSpeed * cycloneMoveScale;
 
             if (_hasMoveOrder)
             {
@@ -2293,7 +2231,7 @@ namespace Game.Sim
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
                 // клип и второй контакт поверх способности не запускаются.
-                if (i == PlayerId && (AnchorSlamActive || CycloneActive || CleaveActive || BlazeCasting || Tick < _abilityMovePenaltyUntilTick
+                if (i == PlayerId && (AnchorSlamActive || CleaveActive || BlazeCasting || Tick < _abilityMovePenaltyUntilTick
                     || _leapLaunchTick >= 0 || Entities.ForcedTicksLeft[i] > 0)) continue;
 
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
@@ -2467,6 +2405,7 @@ namespace Game.Sim
                 Fix64.FromInt(Entities.Damage[source]) * damageScale);
             if (crit)
                 damage = CombatStats.RoundToInt(Fix64.FromInt(damage) * Entities.CritMultiplier[source]);
+            if (source == PlayerId && InFuelledPool(target)) damage = damage * 120 / 100;
 
             // Броня гасит удар ПОСЛЕ крита: крит увеличивает сам удар, а кривая
             // брони зависит от его размера — значит и считать её надо от того,
@@ -2510,7 +2449,6 @@ namespace Game.Sim
             ulong hash = Hashing.Offset;
             if (PlayerInvulnerable) Hashing.Mix(ref hash, 0x474F44);
             Hashing.Mix(ref hash, Tick);
-            HashCyclone(ref hash);
             HashAnchorSlam(ref hash);
             HashWreck(ref hash);
             HashCleave(ref hash);
@@ -2534,10 +2472,9 @@ namespace Game.Sim
 
             Entities.HashInto(ref hash);
 
-            // Снаряды, статусы и кулдауны — такая же часть состояния, как позиции.
+            // Статусы и кулдауны — такая же часть состояния, как позиции.
             // Не попади они в хеш, тест детерминизма перестал бы их проверять,
             // и расхождение в способностях жило бы незамеченным.
-            Projectiles.HashInto(ref hash);
             Statuses.HashInto(ref hash, Entities.Count);
 
             for (int slot = 0; slot < AbilitySlots; slot++)

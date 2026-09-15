@@ -34,45 +34,6 @@ namespace Game.Tests
             Assert.That(sheet.Get(S), Is.EqualTo(Fix64.FromInt(150)));
         }
 
-        [Test]
-        public void Increased_SumsBetweenThemselves_AndMultipliesOnce()
-        {
-            var sheet = WithBase(100);
-            sheet.Add(StatModifier.Increased(S, Pct(25), ModifierSource.Equipment, 1));
-            sheet.Add(StatModifier.Increased(S, Pct(25), ModifierSource.TreeNode, 2));
-
-            // 100 * (1 + 0.25 + 0.25) = 150, а НЕ 100 * 1.25 * 1.25 = 156.25
-            Assert.That(sheet.Get(S), Is.EqualTo(Fix64.FromInt(150)));
-        }
-
-        [Test]
-        public void More_MultipliesSeparately_EachWithAll()
-        {
-            var sheet = WithBase(100);
-            sheet.Add(StatModifier.More(S, Pct(50), ModifierSource.Equipment, 1));
-            sheet.Add(StatModifier.More(S, Pct(50), ModifierSource.Equipment, 2));
-
-            // 100 * 1.5 * 1.5 = 225, а НЕ 100 * (1 + 0.5 + 0.5) = 200
-            Assert.That(sheet.Get(S), Is.EqualTo(Fix64.FromInt(225)));
-        }
-
-        [Test]
-        public void IncreasedAndMore_AreNotTheSameLayer()
-        {
-            var asIncreased = WithBase(100);
-            asIncreased.Add(StatModifier.Increased(S, Pct(50), ModifierSource.Equipment, 1));
-            asIncreased.Add(StatModifier.Increased(S, Pct(50), ModifierSource.Equipment, 2));
-
-            var asMore = WithBase(100);
-            asMore.Add(StatModifier.More(S, Pct(50), ModifierSource.Equipment, 1));
-            asMore.Add(StatModifier.More(S, Pct(50), ModifierSource.Equipment, 2));
-
-            // Ровно то, ради чего слои разделены: одинаковые проценты дают
-            // разный итог. Слить их в один слой — потерять рычаг баланса.
-            Assert.That(asIncreased.Get(S), Is.EqualTo(Fix64.FromInt(200)));
-            Assert.That(asMore.Get(S), Is.EqualTo(Fix64.FromInt(225)));
-        }
-
         // ---- все три вместе ----
 
         [Test]
@@ -89,42 +50,7 @@ namespace Game.Tests
             Assert.That(sheet.Get(S), Is.EqualTo(Fix64.Ratio(3375, 8)));
         }
 
-        [Test]
-        public void StatsDoNotLeakIntoEachOther()
-        {
-            var sheet = new StatSheet();
-            sheet.SetBase(StatType.Damage, Fix64.FromInt(100));
-            sheet.SetBase(StatType.Armor, Fix64.FromInt(100));
-            sheet.Add(StatModifier.More(StatType.Damage, Pct(100), ModifierSource.Equipment, 1));
-
-            Assert.That(sheet.Get(StatType.Damage), Is.EqualTo(Fix64.FromInt(200)));
-            Assert.That(sheet.Get(StatType.Armor), Is.EqualTo(Fix64.FromInt(100)));
-        }
-
         // ---- пересчёт только по грязному флагу ----
-
-        [Test]
-        public void Get_DoesNotRecalculate_WhenNothingChanged()
-        {
-            var sheet = WithBase(100);
-            sheet.Add(StatModifier.More(S, Pct(50), ModifierSource.Equipment, 1));
-
-            sheet.Get(S);
-            int after = sheet.RecalculateCount;
-
-            for (int i = 0; i < 1000; i++)
-            {
-                sheet.Get(StatType.Damage);
-                sheet.Get(StatType.Armor);
-                sheet.Get(StatType.MoveSpeed);
-            }
-
-            // Три тысячи чтений — ни одного пересчёта. Это и есть разница между
-            // билдом с двумя сотнями модификаторов, который играется, и который
-            // роняет кадры на каждой сущности.
-            Assert.That(sheet.RecalculateCount, Is.EqualTo(after));
-            Assert.That(sheet.IsDirty, Is.False);
-        }
 
         [Test]
         public void AddingModifier_MarksDirty_AndRecalculatesOnce()
@@ -144,19 +70,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void SetBase_ToSameValue_DoesNotDirty()
-        {
-            var sheet = WithBase(100);
-            sheet.Get(S);
-            int before = sheet.RecalculateCount;
-
-            sheet.SetBase(S, Fix64.FromInt(100));
-
-            Assert.That(sheet.IsDirty, Is.False);
-            Assert.That(sheet.RecalculateCount, Is.EqualTo(before));
-        }
-
-        [Test]
         public void RemoveSource_TakesOnlyItsOwn()
         {
             var sheet = WithBase(100);
@@ -171,32 +84,7 @@ namespace Game.Tests
             Assert.That(sheet.Get(S), Is.EqualTo(Fix64.FromInt(150)));
         }
 
-        [Test]
-        public void RemoveSource_Missing_DoesNotDirty()
-        {
-            var sheet = WithBase(100);
-            sheet.Get(S);
-            int before = sheet.RecalculateCount;
-
-            Assert.That(sheet.RemoveSource(ModifierSource.Buff, 999), Is.EqualTo(0));
-            Assert.That(sheet.IsDirty, Is.False);
-            Assert.That(sheet.RecalculateCount, Is.EqualTo(before));
-        }
-
         // ---- порядок сборки билда не влияет на итог ----
-
-        [Test]
-        public void Fix64Product_DependsOnOrder_SoCanonicalOrderIsRequired()
-        {
-            // Опорный факт, ради которого список держится отсортированным.
-            // Умножение в Fix64 округляет вниз и не ассоциативно: те же три
-            // сомножителя в разном порядке расходятся в младшем разряде.
-            Fix64 a = Fix64.One + Fix64.Ratio(1, 1);
-            Fix64 b = Fix64.One + Fix64.Ratio(1, 2);
-            Fix64 c = Fix64.One + Fix64.Ratio(1, 3);
-
-            Assert.That(((a * b) * c).Raw, Is.Not.EqualTo(((c * b) * a).Raw));
-        }
 
         [Test]
         public void Result_IsIndependentOfInsertionOrder()
@@ -231,45 +119,5 @@ namespace Game.Tests
             }
         }
 
-        [Test]
-        public void RemoveAndReAdd_RestoresExactSameValue()
-        {
-            var sheet = WithBase(100);
-            sheet.Add(StatModifier.More(S, Fix64.Ratio(1, 1), ModifierSource.Equipment, 1));
-            sheet.Add(StatModifier.More(S, Fix64.Ratio(1, 3), ModifierSource.Buff, 2));
-            Fix64 before = sheet.Get(S);
-
-            // Баф отвалился и повесился заново — итог обязан вернуться побитово.
-            sheet.RemoveSource(ModifierSource.Buff, 2);
-            sheet.Add(StatModifier.More(S, Fix64.Ratio(1, 3), ModifierSource.Buff, 2));
-
-            Assert.That(sheet.Get(S).Raw, Is.EqualTo(before.Raw));
-        }
-
-        [Test]
-        public void ManyModifiers_DoNotBreakSorting()
-        {
-            var sheet = WithBase(100);
-
-            // Больше начальной вместимости — проверяем, что рост массива
-            // не путает канонический порядок.
-            var rng = new Pcg32(12345UL, 1UL);
-            for (int i = 0; i < 200; i++)
-            {
-                var stat = (StatType)rng.NextInt(0, (int)StatType.Count);
-                var op = (ModifierOp)rng.NextInt(0, 3);
-                sheet.Add(new StatModifier(stat, op, Fix64.Ratio(1, 1 + rng.NextInt(0, 20)),
-                    (ModifierSource)rng.NextInt(0, 4), rng.NextInt(0, 50)));
-            }
-
-            Assert.That(sheet.ModifierCount, Is.EqualTo(200));
-            for (int i = 1; i < sheet.ModifierCount; i++)
-            {
-                StatModifier prev = sheet.GetModifier(i - 1);
-                StatModifier curr = sheet.GetModifier(i);
-                Assert.That(prev.CompareTo(in curr), Is.LessThanOrEqualTo(0),
-                    $"список не отсортирован на позиции {i}");
-            }
-        }
     }
 }

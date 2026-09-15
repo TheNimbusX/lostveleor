@@ -86,8 +86,28 @@ namespace Game.Sim
                 }
             }
 
+            bool landed = false;
             if (victim >= 0)
+            {
                 ApplyAbilityDamage(PlayerId, victim, damage, _leapSlot, DamageType.Physical);
+                BoardingAfterHit(build, victim);
+                landed = true;
+            }
+
+            // «На абордаж!»: кулак достаёт всех врагов вокруг точки прибытия.
+            if (build.Has(AbilityFlag.BoardingSweep))
+                for (int i = 1; i < Entities.Count; i++)
+                {
+                    if (i == victim || !Entities.Alive[i] || Entities.Side[i] == Entities.Side[PlayerId]) continue;
+                    Fix64 reach = BoardingSweepRadius + Entities.BodyRadius[i];
+                    if ((Entities.Position[i] - at).LengthSq > reach * reach) continue;
+                    ApplyAbilityDamage(PlayerId, i, damage, _leapSlot, DamageType.Physical);
+                    BoardingAfterHit(build, i);
+                    landed = true;
+                }
+
+            if (landed && build.Has(AbilityFlag.BoardingHilt))
+                ShortenOtherCooldowns(_leapSlot, BoardingHiltTicks);
         }
 
         /// <summary>
@@ -130,11 +150,19 @@ namespace Game.Sim
 
         /// <summary>Сколько ударов комбо уже нанесено: 0..3.</summary>
         public int WreckStage => _wreckStage;
+        public FixVec2 WreckDirection => _wreckDirection;
 
         /// <summary>Открыто ли окно следующего нажатия. Показу — подсветить кнопку.</summary>
         public bool WreckComboOpen
-            => _wreckSlot >= 0 && _wreckStage > 0 && _wreckStage < WreckStages
+            => _wreckSlot >= 0 && _wreckStage > 0 && _wreckStage < WreckStageCount(_abilityBuilds[_wreckSlot])
                && Tick <= _wreckWindowEndTick;
+
+        /// <summary>С талантом «Четвёртый удар» серия длиннее на один удар.</summary>
+        private static int WreckStageCount(AbilityBuild build)
+            => build != null && build.Has(AbilityFlag.WreckFourthStrike) ? WreckStages + 1 : WreckStages;
+
+        /// <summary>Четвёртый удар бьёт по земле вокруг героя, а не дугой.</summary>
+        private static readonly Fix64 WreckGroundArc = Fix64.Ratio(-101, 100);
 
         /// <summary>Три удара: справа, обратный слева, тяжёлый перед собой.</summary>
         public const int WreckStages = 3;
@@ -201,26 +229,33 @@ namespace Game.Sim
             if (_wreckImpactTick < 0 || Tick < _wreckImpactTick) return;
             _wreckImpactTick = -1;
 
-            bool finisher = _wreckStage == WreckStages - 1;
+            int stages = WreckStageCount(build);
+            bool heavy = _wreckStage == WreckStages - 1;
+            bool ground = _wreckStage == WreckStages;
+            bool last = _wreckStage == stages - 1;
             int damage = build.Get(AbilityStatType.Damage).ToInt();
 
-            // ЗАВЕРШАЮЩИЙ УДАР ТЯЖЕЛЕЕ ВДВОЕ. Ровный урон по этапам означал бы,
+            // ТРЕТИЙ УДАР ТЯЖЕЛЕЕ ВДВОЕ. Ровный урон по этапам означал бы,
             // что прерывать серию никогда не жалко, и третьего нажатия просто
-            // не существовало бы как решения.
-            if (finisher) damage *= 2;
+            // не существовало бы как решения. Четвёртый удар таланта — втрое.
+            if (heavy) damage *= 2;
+            if (ground) damage *= 3;
 
             Fix64 radius = build.Get(AbilityStatType.Radius);
-            Fix64 arc = build.Get(AbilityStatType.ArcCosine);
-            int stunTicks = finisher ? build.Get(AbilityStatType.StunTicks).ToInt() : 0;
+            Fix64 arc = ground ? WreckGroundArc : build.Get(AbilityStatType.ArcCosine);
+            int stunTicks = heavy ? build.Get(AbilityStatType.StunTicks).ToInt()
+                : ground ? TicksPerSecond : 0;
+            bool bigGame = build.Has(AbilityFlag.WreckBigGame);
 
             _events.Add(new SimEvent(SimEventType.WreckStage, PlayerId, -1, _wreckStage,
-                finisher, Entities.Position[PlayerId]));
+                last, Entities.Position[PlayerId]));
 
             int count = CollectArc(Entities.Position[PlayerId], _wreckDirection, radius, arc, _arcScratch);
             for (int c = 0; c < count; c++)
             {
                 int id = _arcScratch[c];
-                ApplyAbilityDamage(PlayerId, id, damage, _wreckSlot, DamageType.Physical);
+                int hit = bigGame && IsElite(id) ? damage * 140 / 100 : damage;
+                ApplyAbilityDamage(PlayerId, id, hit, _wreckSlot, DamageType.Physical);
                 if (!Entities.Alive[id] || stunTicks <= 0) continue;
 
                 Statuses.ApplyStun(id, Tick + stunTicks);
@@ -232,8 +267,11 @@ namespace Game.Sim
                     Entities.Position[id]));
             }
 
+            // «Серия окупается»: возврат за завершающий удар, сколько бы ударов в серии ни было.
+            if (last && build.Has(AbilityFlag.WreckRefund)) RefundLavidium(15);
+
             _wreckStage++;
-            if (_wreckStage >= WreckStages) { EndWreckCombo(build); return; }
+            if (_wreckStage >= stages) { EndWreckCombo(build); return; }
 
             _wreckWindowEndTick = Tick + build.Get(AbilityStatType.ComboWindowTicks).ToInt();
         }

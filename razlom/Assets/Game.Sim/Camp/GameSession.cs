@@ -3,11 +3,9 @@ namespace Game.Sim
     /// <summary>
     /// Итоги забега — то, что показывает экран выхода.
     ///
-    /// В сумку уезжают ТОЛЬКО предметы. Прибавки к статам и узлы, взятые
-    /// в награду, живут внутри забега и с ним же кончаются: постоянная
-    /// прогрессия — это Созвездия и дерево способностей, и дублировать их
-    /// наградами Разлома значило бы завести вторую шкалу силы, которую потом
-    /// нечем балансировать.
+    /// В лагерь уезжают ТОЛЬКО предметы и золото, и только при выходе или
+    /// прохождении: способности и таланты живут внутри забега, а смерть
+    /// отнимает всё найденное (решение владельца от 15 сентября).
     /// </summary>
     public readonly struct RunSummary
     {
@@ -21,13 +19,26 @@ namespace Game.Sim
         /// <summary>Сколько не влезло. Ненулевое значение — это повод зайти в лагерь.</summary>
         public readonly int ItemsLost;
 
-        public RunSummary(RunOutcome outcome, int depth, int riftsCleared, int itemsKept, int itemsLost)
+        /// <summary>Золото забега, доехавшее до кошелька.</summary>
+        public readonly int GoldKept;
+
+        /// <summary>Сколько предметов осталось в Разломе после смерти.</summary>
+        public readonly int ItemsLeftBehind;
+
+        /// <summary>Сколько золота осталось в Разломе после смерти.</summary>
+        public readonly int GoldLeftBehind;
+
+        public RunSummary(RunOutcome outcome, int depth, int riftsCleared, int itemsKept, int itemsLost,
+            int goldKept = 0, int itemsLeftBehind = 0, int goldLeftBehind = 0)
         {
             Outcome = outcome;
             Depth = depth;
             RiftsCleared = riftsCleared;
             ItemsKept = itemsKept;
             ItemsLost = itemsLost;
+            GoldKept = goldKept;
+            ItemsLeftBehind = itemsLeftBehind;
+            GoldLeftBehind = goldLeftBehind;
         }
 
         public void HashInto(ref ulong hash)
@@ -37,6 +48,9 @@ namespace Game.Sim
             Hashing.Mix(ref hash, RiftsCleared);
             Hashing.Mix(ref hash, ItemsKept);
             Hashing.Mix(ref hash, ItemsLost);
+            Hashing.Mix(ref hash, GoldKept);
+            Hashing.Mix(ref hash, ItemsLeftBehind);
+            Hashing.Mix(ref hash, GoldLeftBehind);
         }
     }
 
@@ -73,6 +87,28 @@ namespace Game.Sim
         public bool OnProvingGround => Ground != null;
         public Simulation CampSim { get; private set; }
         public CampTraining Training { get; private set; }
+
+        /// <summary>
+        /// Набор способностей в лагере и на Полигоне: автоатака и Вихрь. Меню
+        /// разработчика и съёмки меняют его для проверки. Не сохраняется —
+        /// способности живут в забеге, а лагерный набор только инструмент.
+        /// </summary>
+        public RunLoadout CampLoadout { get; } = new RunLoadout();
+
+        /// <summary>Набор, который сейчас в руках у героя: забега или лагеря.</summary>
+        public RunLoadout ActiveLoadout => Mode == GameMode.Rift && Run != null ? Run.Loadout : CampLoadout;
+
+        /// <summary>
+        /// Только съёмки: забег начинается с лагерным набором вместо стартового.
+        /// Тестовые забеги из меню разработчика берут его всегда.
+        /// </summary>
+        public bool CarryCampLoadoutIntoRift { get; set; }
+
+        /// <summary>Правка забега из меню разработчика делает его тестовым: добыча не переносится, опыт не идёт.</summary>
+        public void MarkDeveloperRun()
+        {
+            if (Run != null) IsDeveloperRun = true;
+        }
 
         /// <summary>
         /// Что сейчас рисовать. Меняется вместе с Generation — представление
@@ -123,6 +159,7 @@ namespace Game.Sim
 
             Mode = GameMode.Camp;
             CampSim = new Simulation(sessionSeed, simCapacity);
+            CampSim.SetPlayerLevel(Camp.Level);
             CampSim.SetupCamp(FixVec2.Zero, null);
             BindCampEquipment();
         }
@@ -199,7 +236,19 @@ namespace Game.Sim
             // Опыт уходит в лагерь каждый тик: уровень живёт в Camp и потому
             // переживает и уход с Полигона, и пересборку лагерной симуляции.
             Simulation stepped = Ground != null ? Ground.Sim : CampSim;
-            Camp.GainExperience(stepped.TakePendingXp());
+            if (Camp.GainExperience(stepped.TakePendingXp()) > 0) SyncPlayerLevel();
+        }
+
+        /// <summary>
+        /// Раздаёт уровень лагеря всем живым симуляциям. Зовётся при повышении
+        /// посреди боя и после ручной смены уровня разработчиком: статы героя
+        /// обязаны вырасти сразу, а не со следующей расстановки.
+        /// </summary>
+        public void SyncPlayerLevel()
+        {
+            CampSim.SetPlayerLevel(Camp.Level);
+            Ground?.Sim.SetPlayerLevel(Camp.Level);
+            Run?.Sim.SetPlayerLevel(Camp.Level);
         }
 
         /// <summary>
@@ -214,6 +263,7 @@ namespace Game.Sim
             if (!Camp.Has(CampService.ProvingGround)) return;
 
             Ground = new ProvingGround();
+            Ground.Sim.SetPlayerLevel(Camp.Level);
             Ground.Setup(dummyHealth, Fix64.Zero, Fix64.Zero);
             Camp.Worn.Bind(Ground.Sim.Entities.Stats[Simulation.PlayerId]);
             Ground.Sim.RefreshPlayerStats(true);
@@ -299,6 +349,8 @@ namespace Game.Sim
             IsDeveloperRun = developer;
 
             var sim = new Simulation(seed, _simCapacity);
+            // Уровень ДО расстановки: ConfigurePlayer вешает его прибавки.
+            sim.SetPlayerLevel(Camp.Level);
 
             // Привязка ДО StartRun: расстановка первого Разлома уже позовёт
             // Reapply, и снаряжению к этому моменту нужен лист.
@@ -312,6 +364,11 @@ namespace Game.Sim
             if (developer) Run.StartTestAtLevel(level, nearBoss);
             else Run.StartRun();
             sim.PlayerInvulnerable = invulnerable;
+            if (developer || CarryCampLoadoutIntoRift)
+            {
+                Run.Loadout.CopyFrom(CampLoadout);
+                Run.ApplyLoadout();
+            }
 
             Mode = GameMode.Rift;
             Generation++;
@@ -325,33 +382,40 @@ namespace Game.Sim
             // не должна отнимать уровень. Разработческий забег опыта не даёт —
             // по тому же правилу, по которому его добыча не переезжает в сумку.
             int xp = Run.Sim.TakePendingXp();
-            if (!IsDeveloperRun) Camp.GainExperience(xp);
+            if (!IsDeveloperRun && Camp.GainExperience(xp) > 0) SyncPlayerLevel();
 
             if (Run.Phase == RunPhase.Ended) FinishRun();
         }
 
         /// <summary>
-        /// Забег кончился — добытое переезжает в сумку.
+        /// Забег кончился — найденное переезжает в лагерь.
         ///
-        /// Смерть добытого не отнимает: без этого выбор «идти глубже или уйти»
-        /// превратился бы в «уйти сразу», а он и есть главное решение Разлома.
+        /// СМЕРТЬ ОТНИМАЕТ ВСЁ. Решение владельца от 15 сентября: вещи и золото
+        /// доезжают до лагеря только при выходе или прохождении, поэтому выбор
+        /// «идти глубже или уйти с добычей» и есть главное решение Разлома.
+        /// Уровень и опыт смерть не трогает — они уходят в лагерь сразу.
         /// Не влезшее в сумку теряется — и это тоже решение, принятое до входа.
         /// </summary>
         private void FinishRun()
         {
-            int kept = 0;
-            int lost = 0;
+            bool keeps = !IsDeveloperRun && Run.Outcome != RunOutcome.Died;
+            int kept = 0, lost = 0, behind = 0;
 
             for (int i = 0; !IsDeveloperRun && i < Run.TakenRewardCount; i++)
             {
                 RewardOffer offer = Run.GetTaken(i);
                 if (offer.Kind != RewardKind.Item) continue;
 
-                if (Camp.Bag.Add(offer.Item) >= 0) kept++;
+                if (!keeps) behind++;
+                else if (Camp.Bag.Add(offer.Item) >= 0) kept++;
                 else lost++;
             }
 
-            LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost);
+            int gold = IsDeveloperRun ? 0 : Run.Gold;
+            if (keeps) Camp.Earn(CurrencyType.Gold, gold);
+
+            LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost,
+                keeps ? gold : 0, behind, keeps ? 0 : gold);
             Mode = GameMode.Summary;
         }
 

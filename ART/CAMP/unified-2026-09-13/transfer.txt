@@ -1,4 +1,0 @@
-material slots=169
-foliage meshes=9
-authored transforms changed excluding raised forge=0
-main=Assets/Scenes/SampleScene.unity

@@ -208,13 +208,33 @@ namespace Game.View
                 renderer.receiveShadows = false;
             }
         }
+        Vector2 _hoverPointer = new Vector2(-1e6f, -1e6f);
+        int _nextHoverRaycastFrame;
+        bool _hoverHit, _outlineShown;
+
+        /// <summary>
+        /// Луч на 300 м против всех коллайдеров лагеря — не каждый кадр, а при
+        /// движении курсора и раз в шесть кадров (камера идёт за героем, и мир под
+        /// неподвижным курсором всё равно меняется). Контур переключается только
+        /// при смене состояния.
+        /// </summary>
         internal bool UpdateOutlineHover(Vector2 pointer)
         {
-            bool hover = !IsOpen && Camera.main != null && CampPlayerView.Instance != null && CampPlayerView.Instance.Active
-                && !CampPlayerView.Instance.InputBlocked
-                && Physics.Raycast(Camera.main.ScreenPointToRay(pointer),out var hit,300f)
-                && hit.collider != _barrier && hit.transform.IsChildOf(transform);
-            foreach (var renderer in _outlineRenderers) if (renderer != null) renderer.enabled = hover;
+            bool eligible = !IsOpen && Camera.main != null && CampPlayerView.Instance != null
+                && CampPlayerView.Instance.Active && !CampPlayerView.Instance.InputBlocked;
+            if (eligible && ((pointer - _hoverPointer).sqrMagnitude > .25f || Time.frameCount >= _nextHoverRaycastFrame))
+            {
+                _hoverHit = Physics.Raycast(Camera.main.ScreenPointToRay(pointer), out var hit, 300f)
+                    && hit.collider != _barrier && hit.transform.IsChildOf(transform);
+                _hoverPointer = pointer;
+                _nextHoverRaycastFrame = Time.frameCount + 6;
+            }
+            bool hover = eligible && _hoverHit;
+            if (hover != _outlineShown)
+            {
+                foreach (var renderer in _outlineRenderers) if (renderer != null) renderer.enabled = hover;
+                _outlineShown = hover;
+            }
             return hover;
         }
         void OnGUI()
@@ -226,7 +246,7 @@ namespace Game.View
             var rect = new Rect((Screen.width - 480) / 2f, (Screen.height - 200) / 2f, 480, 200);
             GUI.Box(rect, "");
             GUI.Label(new Rect(rect.x + 24, rect.y + 30, 432, 64), "Вы хотите отправиться в забег?",
-                new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 22, wordWrap = true });
+                new GUIStyle(GameTypography.Label) { alignment = TextAnchor.MiddleCenter, fontSize = 22, wordWrap = true });
             if (GUI.Button(new Rect(rect.x + 28, rect.y + 121, 202, 44), "Остаться в лагере")) Respond(false);
             if (GUI.Button(new Rect(rect.x + 250, rect.y + 121, 202, 44), "Отправиться")) Respond(true);
             GUI.depth = depth;

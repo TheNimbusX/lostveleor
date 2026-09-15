@@ -1,0 +1,6 @@
+Generator: built-in image_gen, background-extraction edit.
+Source: ART/HUD/PelagPortrait.png
+Output: ART/HUD/PelagPortraitCutout.png
+Runtime: razlom/Assets/Resources/UI/HUD/PelagPortraitCutout.png
+
+Edit the supplied portrait ONLY to remove the beige background. Preserve the exact same Pelag character, face, eyes, hairstyle, red headband, cream shirt, pose, crop and original illustration style. Output a clean RGBA transparent-background cutout of this exact bust. Hair spikes and red ribbon silhouette must remain crisp. No border, no frame, no glow, no cast shadow outside the body. Keep the original square canvas and the original placement/scale; do not add extra margin. Fully opaque character, fully transparent exterior. Do not redesign or change his facial features.

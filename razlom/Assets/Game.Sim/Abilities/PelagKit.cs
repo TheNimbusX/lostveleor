@@ -1,104 +1,78 @@
 namespace Game.Sim
 {
     /// <summary>
-    /// Боевая ветка Пелага.
+    /// Пул способностей Пелага.
     ///
-    /// Не два набора кнопок, а два ответа на разные вопросы. Сабля спрашивает
-    /// «как выбрать позицию и провести серию, пока враги не ответили»; якорь —
-    /// «как расставить врагов так, чтобы один тяжёлый удар решил схватку».
-    /// Поэтому ветка и есть решение, а не настройка: она меняет то, о чём
-    /// игрок думает в бою.
-    /// </summary>
-    public enum CombatBranch : byte
-    {
-        Sabre = 0,
-        Anchor = 1,
-    }
-
-    /// <summary>
-    /// Набор способностей Пелага по веткам.
+    /// С разворота в роглайк (15 сентября) сабельной и якорной веток нет:
+    /// забег начинается с автоатаки и Вихря, а остальное находится по пути
+    /// из общего пула. Что лежит в слотах, хранит RunLoadout.
     ///
-    /// ТАБЛИЦА ЖИВЁТ В СИМУЛЯЦИИ, А НЕ В ПРЕДСТАВЛЕНИИ. Раньше четыре слота
-    /// прописывались прямо в TickDriver, и набор был смесью обеих веток:
-    /// Вихрь с саблей рядом с Ударом якорем. Пока набор один, это неважно, но
-    /// с появлением выбора ветки «что лежит в слоте» становится правилом игры,
-    /// а правила игры представлению не принадлежат — иначе съёмка, тесты и
-    /// живой запуск начнут расходиться в том, чем игрок вообще бьёт.
+    /// ПУЛ ЖИВЁТ В СИМУЛЯЦИИ, А НЕ В ПРЕДСТАВЛЕНИИ: «чем игрок бьёт» — правило
+    /// игры, и съёмка, тесты и живой запуск обязаны видеть одно и то же.
     ///
-    /// ПОРЯДОК СЛОТОВ — С УТВЕРЖДЁННОГО ЛИСТА ДИЗАЙНА. Художник, владелец и
-    /// код обязаны называть третью кнопку одним и тем же именем.
+    /// ПОРЯДОК ПУЛА ТОЛЬКО ДОПИСЫВАЕТСЯ. Индекс в пуле хранится в состоянии
+    /// забега и участвует в роллах карточек: перестановка поменяет исход
+    /// каждого сохранённого сида. Первые четыре — бывшая сабля, в порядке
+    /// утверждённого листа; следующие четыре — бывший якорь.
     /// </summary>
     public static class PelagKit
     {
+        /// <summary>Основных слотов — четыре. Пятый слот симуляции — общий кувырок.</summary>
+        public const int MainSlots = Simulation.AbilitySlots - 1;
+
         /// <summary>
-        /// Способность ветки в слоте.
-        ///
-        /// ПЯТЫЙ СЛОТ У ОБЕИХ ВЕТОК ОДИНАКОВ — это общий деш. Он не
-        /// принадлежит ветке и вообще не принадлежит Пелагу: диздок называет
-        /// его базовым инструментом передвижения, общим для всех героев.
-        /// Поэтому он и стоит здесь дважды, а не как исключение одной ветки.
-        ///
-        /// Он же единственный, кто живёт вне ряда способностей: клавиша у него
-        /// Space, а не цифра. Слот остаётся пятым, потому что механика деша —
-        /// обычная способность с кулдауном; отдельная кнопка это решение
-        /// представления, а не второй вид сущности в симуляции.
-        ///
-        /// Возвращает null для слота вне диапазона: вызывающий по этому
-        /// признаку оставляет слот пустым, а не падает.
+        /// Слот кувырка. Он не принадлежит Пелагу: диздок называет его базовым
+        /// инструментом передвижения, общим для всех героев, и в забеге он есть всегда.
         /// </summary>
-        public static AbilityDefinition Definition(CombatBranch branch, int slot)
+        public const int DashSlot = Simulation.AbilitySlots - 1;
+
+        public const int PoolSize = 8;
+
+        /// <summary>Вихрь — с него начинается каждый забег.</summary>
+        public const int StarterPoolIndex = 0;
+
+        /// <summary>Способность пула по индексу. null — индекс вне пула.</summary>
+        public static AbilityDefinition PoolDefinition(int index)
         {
-            if ((uint)slot >= (uint)Simulation.AbilitySlots) return null;
-
-            if (branch == CombatBranch.Sabre)
+            switch (index)
             {
-                switch (slot)
-                {
-                    case 0: return AbilityDefinition.Whirlwind();
-                    case 1: return AbilityDefinition.Cleave();
-                    case 2: return AbilityDefinition.Blaze();
-                    // «Шквал» — это и есть Шаг по цепи: четыре рывка между
-                    // врагами с ударом на каждом. Механика уже написана и
-                    // анимирована, менять её ради названия было бы разрушением
-                    // работы, а не приведением к диздоку.
-                    case 3: return AbilityDefinition.ChainStep();
-                    default: return AbilityDefinition.Dash();
-                }
-            }
-
-            switch (slot)
-            {
-                case 0: return AbilityDefinition.AnchorSlam();
-                case 1: return AbilityDefinition.Wreck();
-                // «Протяжка к врагу», она же Абордаж — переделанный Бросок
-                // якоря: та же тяга себя цепью, но к выбранному врагу, а не в
-                // пустую точку. Стабильный идентификатор сохранён намеренно:
-                // на него завязаны анимация, звук и VFX в десятке файлов
-                // представления.
-                case 2: return AbilityDefinition.AnchorLeap();
-                case 3: return AbilityDefinition.FireFlask();
-                default: return AbilityDefinition.Dash();
+                case 0: return AbilityDefinition.Whirlwind();
+                case 1: return AbilityDefinition.Cleave();
+                case 2: return AbilityDefinition.Blaze();
+                // «Шквал» — это и есть Шаг по цепи: механика уже написана и
+                // анимирована, идентификатор сохранён.
+                case 3: return AbilityDefinition.ChainStep();
+                case 4: return AbilityDefinition.AnchorSlam();
+                case 5: return AbilityDefinition.Wreck();
+                // Абордаж — переделанный Бросок якоря, стабильный идентификатор
+                // сохранён: на него завязаны анимация, звук и VFX.
+                case 6: return AbilityDefinition.AnchorLeap();
+                case 7: return AbilityDefinition.FireFlask();
+                default: return null;
             }
         }
 
-        /// <summary>
-        /// Сколько активных слотов открыто на этом уровне.
-        ///
-        /// Лестница из диздока: 1 → первый, 2 → второй, 4 → третий, 6 →
-        /// четвёртый. После четвёртого новые кнопки не добавляются никогда —
-        /// дальше растут таланты, снаряжение, школы и артефакты.
-        ///
-        /// ФУНКЦИЯ ЕСТЬ, А УРОВНЯ АККАУНТА В ИГРЕ ПОКА НЕТ. Правило записано
-        /// здесь и покрыто тестом, чтобы не потеряться до появления левелинга;
-        /// до тех пор вызывающий открывает все четыре слота осознанно, а не по
-        /// недосмотру.
-        /// </summary>
-        public static int UnlockedSlots(int accountLevel)
+        /// <summary>Индекс способности в пуле по её идентификатору. −1 — вне пула.</summary>
+        public static int PoolIndexOf(int definitionId)
         {
-            if (accountLevel >= 6) return 4;
-            if (accountLevel >= 4) return 3;
-            if (accountLevel >= 2) return 2;
-            return 1;
+            for (int i = 0; i < PoolSize; i++)
+                if (PoolId(i) == definitionId) return i;
+            return -1;
+        }
+
+        private static int PoolId(int index)
+        {
+            switch (index)
+            {
+                case 0: return AbilityDefinition.WhirlwindId;
+                case 1: return AbilityDefinition.CleaveId;
+                case 2: return AbilityDefinition.BlazeId;
+                case 3: return AbilityDefinition.ChainStepId;
+                case 4: return AbilityDefinition.AnchorSlamId;
+                case 5: return AbilityDefinition.WreckId;
+                case 6: return AbilityDefinition.AnchorLeapId;
+                default: return AbilityDefinition.FireFlaskId;
+            }
         }
     }
 }
