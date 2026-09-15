@@ -19,7 +19,7 @@ namespace Game.Sim
             if (maxModules < 2 || maxModules > 64) throw new ArgumentOutOfRangeException(nameof(maxModules));
             for (int i = 0; i < levels.Length; i++)
             {
-                if (levels[i].TargetModules < 2 || levels[i].TargetModules + levels[i].MaxLoops > maxModules)
+                if (levels[i].TargetModules < 2 || (levels[i].NaturalGlade ? GladeLayout.RequiredModules(levels[i].TargetModules, levels[i].Boss) : levels[i].TargetModules + levels[i].MaxLoops) > maxModules)
                     throw new ArgumentException("Reserve module capacity for loop bridges.");
             }
             Id = id;

@@ -52,6 +52,7 @@ namespace Game.Sim
                 for (int y = p.OriginY; y < p.OriginY + p.Height; y++)
                     for (int x = p.OriginX; x < p.OriginX + p.Width; x++)
                     {
+                        if (map.Outline != null && !map.IsWalkable(new Cell(x, y, m).Center, Fix64.Ratio(9, 10))) continue;
                         _indices.Add(Key(x, y), cells.Count);
                         cells.Add(new Cell(x, y, m));
                     }

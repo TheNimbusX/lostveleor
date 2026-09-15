@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -107,6 +107,15 @@ namespace Game.View
 
         private void DisposeVisuals()
         {
+            DisposeOutline();
+            DestroyOwned(_trailMask);
+            _trailMask = null;
+            DestroyOwned(_clearingMask);
+            _clearingMask = null;
+            DestroyOwned(_wearMask);
+            _wearMask = null;
+            ClearSolids();
+            _solidPools = null;
             DisposeMeadow();
             foreach (var root in _ownedRoots)
                 if (root != null) { root.SetActive(false); DestroyOwned(root); }
@@ -201,9 +210,9 @@ namespace Game.View
             if (_style.NaturalGround)
             {
                 DestroyOwned(_roomMaterial); DestroyOwned(_entranceMaterial); DestroyOwned(_exitMaterial);
-                _roomMaterial = ViewMaterials.CreateMeadowGround(_style.RoomColor * 1.4f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 0);
-                _entranceMaterial = ViewMaterials.CreateMeadowGround(_style.EntranceColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
-                _exitMaterial = ViewMaterials.CreateMeadowGround(_style.ExitColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
+                _roomMaterial = CreateLocationGround(_style.RoomColor * 1.4f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 0);
+                _entranceMaterial = CreateLocationGround(_style.EntranceColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
+                _exitMaterial = CreateLocationGround(_style.ExitColor * 1.6f, _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 1);
                 _entranceMaterial.SetColor("_GrassTint", _style.RoomColor * 1.4f);
                 _exitMaterial.SetColor("_GrassTint", _style.RoomColor * 1.4f);
                 _entranceMaterial.SetFloat("_Rounded", 1);
@@ -324,6 +333,7 @@ namespace Game.View
         /// </summary>
         private void Rebuild(LayoutMap map)
         {
+            ClearSolids();
             ClearMeadow();
             _shownMap = map;
             for (int i = 0; _tiles != null && i < _tileCount; i++)
@@ -376,6 +386,7 @@ namespace Game.View
 
             float cell = LayoutMap.CellSize.ToFloat();
 
+            if (_style.NaturalGround) BuildNaturalTrail(map);
             for (int i = 0; i < map.PlacedCount; i++)
             {
                 PlacedModule placed = map.GetPlaced(i);
@@ -383,28 +394,30 @@ namespace Game.View
                 Transform tile = _pool.Acquire().transform;
                 tile.GetComponent<MeshRenderer>().sharedMaterial = _roomMaterial;
 
-                float width = placed.Width * cell - _style.Gap;
-                float height = placed.Height * cell - _style.Gap;
+                float width = placed.Width * cell - (map.Outline != null ? 0 : _style.Gap);
+                float height = placed.Height * cell - (map.Outline != null ? 0 : _style.Gap);
 
                 tile.localScale = new Vector3(width, _style.Thickness, height);
 
                 FixVec2 center = map.CenterOf(i);
                 tile.position = new Vector3(center.X.ToFloat(), -_style.Thickness * 0.5f, center.Y.ToFloat());
                 tile.rotation = Quaternion.identity;
+                ApplyOutline(map, i, tile);
 
                 _tiles[_tileCount++] = tile;
 
                 for (int x = placed.OriginX; x < placed.OriginX + placed.Width; x++)
                     for (int y = placed.OriginY; y < placed.OriginY + placed.Height; y++)
-                        _occupiedCells.Add(CellKey(x, y));
+                        if (map.Outline == null) _occupiedCells.Add(CellKey(x, y));
 
                 PlaceModuleDecor(map, placed, i, cell);
             }
 
-            ScatterBoundaryDecor(cell);
+            ScatterBoundaryDecor(map.Outline != null ? .5f : cell);
 
             BuildRouteTrails(map);
             BuildMeadow(map, cell);
+            BuildSolids(map);
         }
 
         // ---- декор внутри комнат ----
@@ -449,8 +462,11 @@ namespace Game.View
                     float x = Mathf.Lerp(minX, maxX, (float)rng.NextDouble());
                     float z = Mathf.Lerp(minZ, maxZ, (float)rng.NextDouble());
                     if (TooCloseToConnector(x, z)) continue;
+                    if (map.Outline != null && !map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.One)) continue;
 
                     int variant = PickVariantIndex(rng, totalWeight);
+                    // Large props inside the playable area must have a Sim footprint.
+                    if (_style.DecorVariants[variant].Kind == DecorKind.Rock || _style.DecorVariants[variant].Kind == DecorKind.Tree) continue;
                     if (BlocksRoute(variant, x, z)) continue;
                     SpawnDecor(variant, x, z, rng);
                     break;
@@ -536,13 +552,20 @@ namespace Game.View
             if (map?.Routes == null) return false;
             var point = new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z));
             float radius = _decorRadii[variant];
-            if (_shownEncounters != null)
+            if (_style.NaturalGround && NearNaturalTrail(x, z, radius + _style.RouteClearance)) return true;
+            if (_shownEncounters != null && _style.DecorVariants[variant].Kind != DecorKind.GrassTuft)
             {
                 float clearance = _shownEncounters.FormationRadius.ToFloat() + 1f + radius;
                 for (int e = 0; e < _shownEncounters.Count; e++)
                     if (FixVec2.DistanceSq(point, _shownEncounters.Get(e).Center).ToFloat() < clearance * clearance) return true;
             }
             float entry = _style.EntryClearance + radius;
+            for (int o = 0; o < map.ObstacleCount; o++)
+            {
+                var obstacle = map.GetObstacle(o);
+                float gap = obstacle.Radius.ToFloat() + radius;
+                if (FixVec2.DistanceSq(point, obstacle.Center).ToFloat() < gap * gap) return true;
+            }
             if (FixVec2.DistanceSq(point, map.EntryPoint).ToFloat() < entry * entry) return true;
             for (int b = 0; b < map.RewardBranchCount; b++)
                 if (FixVec2.DistanceSq(point, map.CenterOf(map.GetRewardBranch(b))).ToFloat()
@@ -571,6 +594,20 @@ namespace Game.View
                 GameObject prefabInstance = Instantiate(variant.Prefab);
                 prefabInstance.name = "Декор: " + variant.Prefab.name;
                 RemoveColliders(prefabInstance);
+                if (variant.Kind == DecorKind.Rock || variant.Kind == DecorKind.Tree)
+                {
+                    var renderers = prefabInstance.GetComponentsInChildren<Renderer>();
+                    if (renderers.Length > 0)
+                    {
+                        Bounds bounds = renderers[0].bounds;
+                        foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                        var collider = prefabInstance.AddComponent<CapsuleCollider>();
+                        collider.radius = variant.Kind == DecorKind.Tree ? bounds.size.y * .09f
+                            : new Vector2(bounds.extents.x, bounds.extents.z).magnitude;
+                        collider.height = Mathf.Max(collider.radius * 2, bounds.size.y * (variant.Kind == DecorKind.Tree ? .5f : 1));
+                        collider.center = Vector3.up * collider.height * .5f;
+                    }
+                }
                 return prefabInstance;
             }
 
@@ -647,7 +684,7 @@ namespace Game.View
 
             System.Random rng = DecorRandom(unchecked(
                 x * 486187739 + y * 290797 + neighborX * 65497 + neighborY * 37), 1);
-            if (rng.NextDouble() >= _style.BoundaryDecorChance) return;
+            if (rng.NextDouble() >= _style.BoundaryDecorChance * (cell / 2)) return;
 
             float dirX = neighborX - x;
             float dirZ = neighborY - y;
@@ -659,6 +696,18 @@ namespace Game.View
             float posZ = edgeZ + dirZ * _style.BoundaryDecorOutset + (float)(rng.NextDouble() - 0.5) * _style.BoundaryDecorJitter;
 
             int variantIndex = PickBoundaryVariantIndex(rng, totalWeight);
+            if (variantIndex < 0) return;
+            float extra = Mathf.Max(0, _decorRadii[variantIndex] + .5f - _style.BoundaryDecorOutset);
+            posX += dirX * extra; posZ += dirZ * extra;
+            // Keep boundary meshes outside every module, including concave corners.
+            if (_shownMap.Outline != null && TouchesOutlinedFloor(posX, posZ, _decorRadii[variantIndex])) return;
+            for (int m = 0; _shownMap.Outline == null && m < _shownMap.PlacedCount; m++)
+            {
+                var p = _shownMap.GetPlaced(m);
+                float dx = posX - Mathf.Clamp(posX, p.OriginX * cell, (p.OriginX + p.Width) * cell);
+                float dz = posZ - Mathf.Clamp(posZ, p.OriginY * cell, (p.OriginY + p.Height) * cell);
+                if (dx * dx + dz * dz < _decorRadii[variantIndex] * _decorRadii[variantIndex]) return;
+            }
             if (variantIndex < 0 || BlocksRoute(variantIndex, posX, posZ)) return;
 
             SpawnDecor(variantIndex, posX, posZ, rng);
@@ -682,7 +731,7 @@ namespace Game.View
         private void BuildRouteTrails(LayoutMap map)
         {
             if (map.Routes == null) return;
-            for (int i = 0; i < map.Routes.CellCount; i++)
+            for (int i = 0; !_style.NaturalGround && i < map.Routes.CellCount; i++)
             {
                 if (!map.Routes.IsRoadCell(i)) continue;
                 var a = map.Routes.GetCell(i).Center;
@@ -728,6 +777,12 @@ namespace Game.View
         public bool IsDustyPath(Vector3 position)
         {
             if (!isActiveAndEnabled || _shownMap == null) return false;
+            if (_style.NaturalGround && _trailMask != null)
+            {
+                float u = (position.x - _trailBounds.x) / _trailBounds.z;
+                float v = (position.z - _trailBounds.y) / _trailBounds.w;
+                return u >= 0 && u <= 1 && v >= 0 && v <= 1 && _trailMask.GetPixelBilinear(u, v).r > .6f;
+            }
             for (int i = 0; i < _pathTrailCount; i++)
             {
                 Transform tile = _pathTrail[i];

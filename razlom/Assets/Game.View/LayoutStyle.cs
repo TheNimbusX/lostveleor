@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace Game.View
@@ -15,8 +15,14 @@ namespace Game.View
         public Color ExitColor = new Color(0.72f, 0.58f, 0.30f);
         [Header("Окружение лугов")]
         public bool NaturalGround = true;
+        [Tooltip("Материал лагерной поверхности; маска дорог создаётся заново для каждого разлома.")]
+        public Material CampSurfaceMaterial;
+        public bool ForestClearings;
+        [Range(.5f, 1.2f)] public float ClearingSize = 1f;
         public GameObject PortalPrefab;
         public GameObject CachePrefab;
+        public GameObject[] ObstacleRocks = Array.Empty<GameObject>();
+        public GameObject ObstacleTree;
         [Range(0, 30)] public float ForestBandWidth = 16;
         [Range(4, 12)] public float ForestSpacing = 6;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
@@ -109,6 +115,7 @@ namespace Game.View
                  "декора на границе не проглядывала пустота.")]
         public float GroundFillSize = 240f;
         public float GroundFillDepthOffset = 0.03f;
+        [Range(0, 6)] public int PondCount = 3;
 
         [Header("Маршрут по локации")]
         [Range(0.8f, 2f)] public float RouteWidth = 1.6f;
@@ -131,12 +138,15 @@ namespace Game.View
         public LayoutStyle Copy()
         {
             var copy = (LayoutStyle)MemberwiseClone();
+            copy.ObstacleRocks = ObstacleRocks == null ? Array.Empty<GameObject>() : (GameObject[])ObstacleRocks.Clone();
             copy.DecorVariants = DecorVariants == null ? Array.Empty<DecorVariant>() : (DecorVariant[])DecorVariants.Clone();
             return copy;
         }
 
         public void Validate()
         {
+            if (ClearingSize < .5f || ClearingSize > 1.2f)
+                throw new ArgumentException("Размер полян должен быть от 0.5 до 1.2.");
             if (ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
                 || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3)
                 throw new ArgumentException("Проверьте ширину леса, шаг деревьев, свет и дальность тумана.");

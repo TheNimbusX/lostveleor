@@ -17,8 +17,8 @@ namespace Game.Data
         [Min(1)] public int EnemyHealth;
         public bool Boss;
 
-        public RiftLevelSettings ToDefinition(EncounterSettings encounters = null, int playerHealth = 1000, int entryClearance = 14)
-            => new RiftLevelSettings(Rooms, Exits, Loops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth, encounters, Boss, playerHealth, entryClearance);
+        public RiftLevelSettings ToDefinition(EncounterSettings encounters = null, int playerHealth = 1000, int entryClearance = 14, bool solidEnvironment = false, bool naturalGlade = false)
+            => new RiftLevelSettings(Rooms, Exits, Loops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth, encounters, Boss, playerHealth, entryClearance, solidEnvironment, naturalGlade);
     }
 
     [CreateAssetMenu(fileName = "Location", menuName = "Разлом/Локации/Игровой профиль")]
@@ -30,6 +30,7 @@ namespace Game.Data
         public int PlayerHealth = 1000;
         [Range(9, 30), Tooltip("Радиус без врагов вокруг входа, метры.")]
         public int EntryClearance = 14;
+        public bool SolidEnvironment, NaturalGlade;
         [Range(2, 64)] public int MaxModules = 64;
         public ModuleAsset[] Modules = Array.Empty<ModuleAsset>();
         [Tooltip("Профиль групп вдоль тропы. Пусто — прежний случайный спавн по всем комнатам.")]
@@ -62,7 +63,7 @@ namespace Game.Data
             var levels = new RiftLevelSettings[Levels.Length];
             for (int i = 0; i < levels.Length; i++)
             {
-                try { levels[i] = Levels[i].ToDefinition(Encounters != null ? Encounters.ToDefinition(i + 1) : null, PlayerHealth, EntryClearance); }
+                try { levels[i] = Levels[i].ToDefinition(Encounters != null ? Encounters.ToDefinition(i + 1) : null, PlayerHealth, EntryClearance, SolidEnvironment, NaturalGlade); }
                 catch (ArgumentException e) { throw new ArgumentException("Level " + (i + 1) + ": " + e.Message); }
             }
             var result = new LocationDefinition(StableId.Of(StableKey), new ModuleSet(modules), levels, MaxModules, CompleteAtEnd);

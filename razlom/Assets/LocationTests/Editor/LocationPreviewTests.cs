@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using Game.Data;
@@ -33,6 +33,7 @@ namespace Game.LocationTests
         public void TearDown()
         {
             _preview.Dispose();
+            if (_theme.Gameplay != null && !AssetDatabase.Contains(_theme.Gameplay)) Object.DestroyImmediate(_theme.Gameplay);
             Object.DestroyImmediate(_theme);
         }
 
@@ -80,7 +81,11 @@ namespace Game.LocationTests
             Assert.That(_preview.View.PooledCount, Is.EqualTo(created));
             CollectionAssert.AreEqual(initial, VisualSnapshot(_preview.Root));
             Assert.That(_preview.Root.GetComponentsInChildren<TickDriver>(true), Is.Empty);
-            Assert.That(_preview.Root.GetComponentsInChildren<Collider>(true), Is.Empty);
+            var colliders = _preview.Root.GetComponentsInChildren<Collider>();
+            Assert.That(colliders.Length, Is.EqualTo(_preview.Map.ObstacleCount));
+            foreach (var collider in colliders)
+                Assert.That(_preview.Map.IsWalkable(new FixVec2(Fix64.FromDouble(collider.transform.position.x),
+                    Fix64.FromDouble(collider.transform.position.z)), Fix64.Zero), Is.False);
             _preview.Clear();
             Assert.That(_preview.View.TileCount, Is.Zero);
             Assert.That(_preview.View.DecorCount, Is.Zero);
@@ -175,6 +180,10 @@ namespace Game.LocationTests
         [Test]
         public void VisibleRoad_StaysOnFloor_AndDecorBoundsLeaveClearance()
         {
+            _theme.Style.NaturalGround = false;
+            _theme.Gameplay = Object.Instantiate(_theme.Gameplay);
+            _theme.Gameplay.NaturalGlade = false;
+            _theme.Gameplay.SolidEnvironment = false;
             _theme.Style.DecorPerCell = 0.5f;
             _theme.Style.BoundaryDecorChance = 1;
             _preview.Generate(_theme, 42, 1);
@@ -262,12 +271,24 @@ namespace Game.LocationTests
                 .Where(m => m != null && (m.name == "Контур занятого пола" || m.name == "Свечение ориентира")).Distinct().ToArray();
             Assert.That(meshes.Length, Is.EqualTo(2));
             Assert.That(meshes.All(m => m.vertexCount > 0), Is.True);
-            var floor = Shader.Find("Razlom/Meadow Ground");
+            var source = _theme.Style.CampSurfaceMaterial;
+            var floor = source != null ? source.shader : Shader.Find("Razlom/Meadow Ground");
             Assert.That(floor, Is.Not.Null);
             Assert.That(ShaderUtil.ShaderHasError(floor), Is.False);
             Assert.That(_preview.Root.GetComponentsInChildren<Renderer>().Any(r => r.sharedMaterial.shader == floor), Is.True);
+            Texture generatedSurface = null;
+            if (source != null)
+            {
+                var material = _preview.Root.GetComponentsInChildren<Renderer>()
+                    .First(r => r.sharedMaterial.shader == floor).sharedMaterial;
+                Assert.That(material, Is.Not.SameAs(source));
+                generatedSurface = material.GetTexture("_SurfaceMap");
+                Assert.That(generatedSurface, Is.Not.Null);
+                Assert.That(generatedSurface, Is.Not.SameAs(source.GetTexture("_SurfaceMap")));
+            }
             _preview.Dispose();
             Assert.That(meshes.All(m => m == null), Is.True);
+            Assert.That(generatedSurface == null, Is.True, "Маска разлома освобождается вместе с View");
         }
 
         [Test]

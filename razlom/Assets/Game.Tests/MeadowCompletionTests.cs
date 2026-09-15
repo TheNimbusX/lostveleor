@@ -132,7 +132,8 @@ namespace Game.Tests
                 var a = new Simulation(seed, 512); var b = new Simulation(seed, 512);
                 var plan = final.Spawn(a, map, seeds.Spawns);
                 final.Spawn(b, map, seeds.Spawns);
-                Assert.That(map.PlacedCount, Is.EqualTo(4));
+                Assert.That(map.GladeCount, Is.EqualTo(1));
+                Assert.That(map.Outline, Is.Not.Null);
                 Assert.That(map.RewardBranchCount, Is.Zero);
                 Assert.That(a.Entities.Count, Is.EqualTo(2));
                 Assert.That(a.Entities.Position[plan.BossId], Is.EqualTo(map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent)));

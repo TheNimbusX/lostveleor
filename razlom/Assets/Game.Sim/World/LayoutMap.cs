@@ -74,7 +74,21 @@ namespace Game.Sim
         private int _exitCount;
         private readonly int[] _rewardBranches;
         private int _rewardBranchCount;
+        private LayoutObstacle[] _obstacles = System.Array.Empty<LayoutObstacle>();
+        public int ObstacleCount => _obstacles.Length;
+        public LayoutObstacle GetObstacle(int index) => _obstacles[index];
+        internal void BuildObstacles(ulong seed) => _obstacles = LayoutObstacle.Generate(this, seed);
         public LayoutRoutes Routes { get; private set; }
+        public NaturalOutline Outline { get; private set; }
+        private GladeRegion[] _glades = System.Array.Empty<GladeRegion>();
+        public int GladeCount => _glades.Length;
+        public GladeRegion GetGlade(int index) => _glades[index];
+        internal void SetGlades(GladeRegion[] regions) => _glades = regions;
+        private LayoutObstacle[] _water = System.Array.Empty<LayoutObstacle>();
+        public int WaterCount => _water.Length;
+        public LayoutObstacle GetWater(int index) => _water[index];
+        internal void SetWater(LayoutObstacle[] water) => _water = water;
+        internal void SetNaturalOutline(System.Func<FixVec2, bool> inside) => Outline = new NaturalOutline(this, inside);
         public FixVec2 EntryPoint => Routes != null ? Routes.EntryPoint : CenterOf(0);
         public FixVec2 ExitPoint(int exit) => Routes != null ? Routes.Endpoint(GetExit(exit)) : CenterOf(GetExit(exit));
         internal void BuildRoutes() => Routes = _placedCount > 0 ? new LayoutRoutes(this) : null;
@@ -105,6 +119,10 @@ namespace Game.Sim
 
         public void Clear()
         {
+            Outline = null;
+            _glades = System.Array.Empty<GladeRegion>();
+            _water = System.Array.Empty<LayoutObstacle>();
+            _obstacles = System.Array.Empty<LayoutObstacle>();
             _placedCount = 0;
             _openCount = 0;
             _exitCount = 0;
@@ -271,6 +289,7 @@ namespace Game.Sim
         /// <summary>Находится ли мировая точка на полу хотя бы одного модуля.</summary>
         public bool ContainsWorld(FixVec2 point)
         {
+            if (Outline != null) return Outline.Contains(point);
             for (int i = 0; i < _placedCount; i++)
                 if (ContainsWorld(i, point)) return true;
             return false;
@@ -279,6 +298,7 @@ namespace Game.Sim
         /// <summary>Находится ли мировая точка в AABB конкретного размещённого модуля.</summary>
         public bool ContainsWorld(int placement, FixVec2 point)
         {
+            if (Outline != null && !Outline.Contains(point)) return false;
             PlacedModule p = _placed[placement];
             Fix64 minX = CellSize * p.OriginX;
             Fix64 maxX = CellSize * (p.OriginX + p.Width);
@@ -295,6 +315,11 @@ namespace Game.Sim
         public bool IsWalkable(FixVec2 center, Fix64 radius)
         {
             if (_placedCount == 0) return true;
+            foreach (var obstacle in _obstacles)
+            {
+                var sum = radius + obstacle.Radius;
+                if (FixVec2.DistanceSq(center, obstacle.Center) < sum * sum) return false;
+            }
             Fix64 diagonal = radius * Fix64.Ratio(7, 10);
             return ContainsWorld(center)
                    && ContainsWorld(center + new FixVec2(radius, Fix64.Zero))
@@ -326,6 +351,14 @@ namespace Game.Sim
                 FixVec2 candidate = new FixVec2(
                     Fix64.Clamp(point.X, minX, maxX),
                     Fix64.Clamp(point.Y, minY, maxY));
+                foreach (var obstacle in _obstacles)
+                {
+                    var delta = candidate - obstacle.Center;
+                    var clearance = obstacle.Radius + radius + Fix64.Ratio(1, 100);
+                    if (delta.LengthSq < clearance * clearance)
+                        candidate = obstacle.Center + (delta.LengthSq == Fix64.Zero
+                            ? new FixVec2(Fix64.One, Fix64.Zero) : delta.Normalized()) * clearance;
+                }
                 if (!IsWalkable(candidate, radius)) continue;
 
                 Fix64 distance = FixVec2.DistanceSq(point, candidate);
@@ -335,12 +368,41 @@ namespace Game.Sim
                     best = candidate;
                 }
             }
+            if (Outline != null && Routes != null)
+                for (int i = 0; i < Routes.CellCount; i++)
+                {
+                    var candidate = Routes.GetCell(i).Center;
+                    var distance = FixVec2.DistanceSq(point, candidate);
+                    if (distance < bestDistance && IsWalkable(candidate, radius)) { best = candidate; bestDistance = distance; }
+                }
             return best;
+        }
+
+        public bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
+        {
+            if (!IsWalkable(to, radius)) return false;
+            var delta = to - from;
+            if (Outline != null)
+            {
+                int steps = 1 + (int)(delta.Length.Raw / NaturalOutline.Step.Raw);
+                for (int i = 1; i < steps; i++)
+                    if (!IsWalkable(from + delta * Fix64.Ratio(i, steps), radius)) return false;
+            }
+            foreach (var obstacle in _obstacles)
+            {
+                var offset = obstacle.Center - from;
+                var t = delta.LengthSq == Fix64.Zero ? Fix64.Zero
+                    : Fix64.Clamp((offset.X * delta.X + offset.Y * delta.Y) / delta.LengthSq, Fix64.Zero, Fix64.One);
+                var clearance = obstacle.Radius + radius;
+                if (FixVec2.DistanceSq(from + delta * t, obstacle.Center) < clearance * clearance) return false;
+            }
+            return true;
         }
 
         public ulong Hash()
         {
             ulong hash = Hashing.Offset;
+            Outline?.MixHash(ref hash);
             Hashing.Mix(ref hash, _placedCount);
 
             for (int i = 0; i < _placedCount; i++)
@@ -356,6 +418,11 @@ namespace Game.Sim
 
             Hashing.Mix(ref hash, _rewardBranchCount);
             for (int i = 0; i < _rewardBranchCount; i++) Hashing.Mix(ref hash, _rewardBranches[i]);
+            foreach (var obstacle in _obstacles)
+            {
+                Hashing.Mix(ref hash, obstacle.Center.X); Hashing.Mix(ref hash, obstacle.Center.Y);
+                Hashing.Mix(ref hash, obstacle.Radius); Hashing.Mix(ref hash, obstacle.VisualKind);
+            }
 
             return hash;
         }
