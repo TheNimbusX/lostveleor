@@ -11,9 +11,10 @@ namespace Game.Sim
         public readonly bool Boss;
         public readonly int PlayerHealth;
         public readonly int EntryClearance;
+        public readonly bool SolidEnvironment, NaturalGlade;
 
         public RiftLevelSettings(int targetModules, int exitCount, int maxLoops, int rewardBranches,
-            int minEnemies, int maxEnemies, int enemyHealth, EncounterSettings encounters = null, bool boss = false, int playerHealth = 1000, int entryClearance = 9)
+            int minEnemies, int maxEnemies, int enemyHealth, EncounterSettings encounters = null, bool boss = false, int playerHealth = 1000, int entryClearance = 9, bool solidEnvironment = false, bool naturalGlade = false)
         {
             if (targetModules < 2 || targetModules > 64 || exitCount < 1 || exitCount > 8 ||
                 maxLoops < 0 || maxLoops > 8 || rewardBranches < 0 || rewardBranches > 8 ||
@@ -33,6 +34,7 @@ namespace Game.Sim
             PlayerHealth = playerHealth;
             if (entryClearance < 9 || entryClearance > 30) throw new ArgumentOutOfRangeException(nameof(entryClearance));
             EntryClearance = entryClearance;
+            SolidEnvironment = solidEnvironment; NaturalGlade = naturalGlade;
         }
 
         // The existing prototype balance, without any additional RNG calls.
@@ -42,8 +44,10 @@ namespace Game.Sim
 
         public void Generate(LayoutGenerator generator, ModuleSet modules, LayoutMap map, ulong layoutSeed)
         {
-            if (Boss) generator.GenerateBossArena(modules, layoutSeed, map);
+            if (NaturalGlade) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss);
+            else if (Boss) generator.GenerateBossArena(modules, layoutSeed, map);
             else generator.Generate(modules, layoutSeed, map, TargetModules, ExitCount, MaxLoops, RewardBranches);
+            if (SolidEnvironment && !Boss) map.BuildObstacles(layoutSeed);
         }
 
         public EncounterPlan Spawn(Simulation sim, LayoutMap map, ulong spawnSeed)

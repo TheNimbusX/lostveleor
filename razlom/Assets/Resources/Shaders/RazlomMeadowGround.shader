@@ -7,6 +7,10 @@ Shader "Razlom/Meadow Ground"
         _Rounded ("Blend trail edges", Float) = 0
         _BaseMap ("Grass", 2D) = "white" {}
         _DirtMap ("Earth", 2D) = "grey" {}
+        _TrailMask ("Smooth trail mask", 2D) = "black" {}
+        _ClearingMask ("Forest clearings", 2D) = "black" {}
+        _WearMask ("Local ground wear", 2D) = "black" {}
+        _TrailBounds ("Trail world bounds", Vector) = (0,0,1,1)
         _Tiling ("World tiling", Float) = 0.35
         _Earth ("Earth coverage", Range(0,1)) = 0
     }
@@ -26,9 +30,13 @@ Shader "Razlom/Meadow Ground"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_DirtMap); SAMPLER(sampler_DirtMap);
+            TEXTURE2D(_TrailMask); SAMPLER(sampler_TrailMask);
+            TEXTURE2D(_ClearingMask); SAMPLER(sampler_ClearingMask);
+            TEXTURE2D(_WearMask); SAMPLER(sampler_WearMask);
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
                 half4 _GrassTint;
+                float4 _TrailBounds;
                 float _Tiling, _Earth, _Rounded;
             CBUFFER_END
             float4 _RazlomHeroLightPosition;
@@ -54,18 +62,33 @@ Shader "Razlom/Meadow Ground"
                 float2 p=i.world.xz;
                 float broad=Noise(p*.11), detail=Noise(p*1.8);
                 half3 grass=SAMPLE_TEXTURE2D(_BaseMap,sampler_BaseMap,p*_Tiling).rgb;
-                // UNS terrain colours are intentionally flat; reduce saturation and add continuous tonal variation.
+                // Retain the authored foliage colours and add continuous tonal variation.
                 half luminance=dot(grass,half3(.22,.7,.08));
-                grass=lerp(luminance.xxx,grass,.52)*half3(1.12,1.03,.9);
+                grass=lerp(luminance.xxx,grass,.85);
                 half3 earth=SAMPLE_TEXTURE2D(_DirtMap,sampler_DirtMap,p*_Tiling).rgb;
+                // Muted, cooler soil rather than bright yellow sand.
+                half earthLight=dot(earth,half3(.3,.59,.11));
+                earth=lerp(earthLight.xxx,earth,.45)*half3(.71,.75,.78);
                 float patches=smoothstep(.53,.78,broad+.13*Noise(p*.38));
                 float roundRadius=min(i.size.x,i.size.y)*.35;
                 float2 q=abs(i.local)-(i.size*.5-roundRadius);
                 float edgeDistance=length(max(q,0))+min(max(q.x,q.y),0)-roundRadius;
                 float edge=smoothstep(.02,.3,-edgeDistance+(detail-.5)*.16);
                 float coverage=lerp(_Earth,_Earth*edge,_Rounded);
-                half3 albedo=lerp(grass*_GrassTint.rgb,earth*_BaseColor.rgb,saturate(patches*.42+coverage));
-                albedo*=lerp(.8,1.22,broad)*lerp(.94,1.06,detail);
+                float2 trailUV=(p-_TrailBounds.xy)/_TrailBounds.zw;
+                float mask=SAMPLE_TEXTURE2D(_TrailMask,sampler_TrailMask,trailUV).r;
+                mask*=step(0,trailUV.x)*step(trailUV.x,1)*step(0,trailUV.y)*step(trailUV.y,1);
+                float trail=smoothstep(.04,.9,mask+(Noise(p*2.7)-.5)*.10);
+                float clearing=SAMPLE_TEXTURE2D(_ClearingMask,sampler_ClearingMask,trailUV).r;
+                clearing*=step(0,trailUV.x)*step(trailUV.x,1)*step(0,trailUV.y)*step(trailUV.y,1);
+                float clearingBlend=smoothstep(.02,.65,clearing);
+                // Clearings stay grassy; wear follows traffic instead of filling the whole silhouette.
+                float wear=SAMPLE_TEXTURE2D(_WearMask,sampler_WearMask,trailUV).r;
+                wear*=step(0,trailUV.x)*step(trailUV.x,1)*step(0,trailUV.y)*step(trailUV.y,1);
+                coverage=max(coverage*.48,trail*lerp(.57,.32,clearingBlend));
+                coverage=max(coverage,wear*lerp(.38,.56,detail));
+                half3 albedo=lerp(grass*_GrassTint.rgb,earth*_BaseColor.rgb,saturate(patches*.035+coverage));
+                albedo*=lerp(.93,1.07,broad)*lerp(.96,1.04,detail);
                 Light light=GetMainLight(TransformWorldToShadowCoord(i.world));
                 half3 normal=normalize(i.normal);
                 half3 illumination=max(SampleSH(normal),half3(.2,.23,.19))+

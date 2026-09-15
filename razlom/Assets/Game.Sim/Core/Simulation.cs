@@ -605,8 +605,10 @@ namespace Game.Sim
                 for (int e = 0; e < enemyCount; e++)
                 {
                     if (enemyBudget > 0 && spawned >= enemyBudget) return;
-                    FixVec2 spot = RandomSpotInModule(map, placement, EnemyBodyRadius, ref rng);
+                    var spawnRadius = map.ObstacleCount > 0 ? Fix64.Ratio(85, 100) : EnemyBodyRadius;
+                    FixVec2 spot = RandomSpotInModule(map, placement, spawnRadius, ref rng);
                     if (map.Routes != null && !map.Routes.TrySafeSpawn(placement, spot, out spot)) continue;
+                    if (!map.IsWalkable(spot, Fix64.Ratio(85, 100))) continue;
 
                     int id = Entities.Spawn(spot, enemyHealth, Faction.Orvill);
                     ConfigureEnemy(id);
@@ -659,6 +661,7 @@ namespace Game.Sim
                     Fix64.Ratio((i / 3 * 2 - 1) * 11, 20));
                 FixVec2 spot = map.ClampToWalkable(center + offset, EnemyBodyRadius);
                 if (map.Routes != null && !map.Routes.TrySafeSpawn(placement, spot, out spot)) continue;
+                    if (!map.IsWalkable(spot, Fix64.Ratio(85, 100))) continue;
                 int id = Entities.Spawn(spot, RootSwarmHealth, Faction.Orvill);
                 ConfigureEnemy(id, EnemyKind.ForestRootSwarm);
                 Entities.Facing[id] = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
@@ -2174,7 +2177,7 @@ namespace Game.Sim
         }
 
         private bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
-            => _campWalkMap != null ? _campWalkMap.CanTravel(from, to) : _layout.IsWalkable(to, radius);
+            => _campWalkMap != null ? _campWalkMap.CanTravel(from, to) : _layout.CanTravel(from, to, radius);
 
         private bool ChainContactReachable(int target)
         {

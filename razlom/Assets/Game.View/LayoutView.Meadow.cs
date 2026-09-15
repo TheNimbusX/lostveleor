@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
 
@@ -12,7 +12,11 @@ namespace Game.View
         private readonly List<Transform> _caches = new List<Transform>();
         private readonly List<Transform> _dropMarks = new List<Transform>();
         private ViewPool _portalPool, _cachePool, _dropPool;
-        private Mesh _bankMesh, _ringMesh;
+        private Mesh _bankMesh, _ringMesh, _backgroundMesh;
+        private Vector2 _reliefOffset;
+        private readonly List<Vector4> _ponds = new List<Vector4>();
+        private Mesh _waterMesh;
+        private GameObject _water;
         private GameObject _banks;
         private Material _glowMaterial;
         private MaterialPropertyBlock _landmarkBlock;
@@ -26,6 +30,7 @@ namespace Game.View
             foreach (var mark in _dropMarks) _dropPool?.Release(mark.gameObject);
             _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
             if (_banks != null) _banks.SetActive(false);
+            if (_water != null) _water.SetActive(false);
             _meadowLighting.Restore();
         }
         private void DisposeMeadow()
@@ -33,7 +38,9 @@ namespace Game.View
             ClearMeadow();
             foreach (var mesh in _meadowMeshes) DestroyOwned(mesh);
             _meadowMeshes.Clear();
-            _bankMesh = _ringMesh = null; _banks = null;
+            DestroyOwned(_campSurfaceMap); _campSurfaceMap = null; _campSurfacePixels = null;
+            _bankMesh = _ringMesh = _backgroundMesh = null; _banks = null;
+            _waterMesh = null; _water = null; _ponds.Clear();
             _portalPool = _cachePool = _dropPool = null;
         }
 
@@ -54,22 +61,35 @@ namespace Game.View
             _bankMesh = new Mesh { name = "Контур занятого пола" };
             _meadowMeshes.Add(_bankMesh);
             _banks.AddComponent<MeshFilter>().sharedMesh = _bankMesh;
-            var material = ViewMaterials.CreateMeadowGround(new Color(.72f, .8f, .67f),
-                _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, .6f);
+            var material = CreateLocationGround(new Color(.65f, .76f, .64f),
+                _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, .035f);
             _ownedMaterials.Add(material);
             _banks.AddComponent<MeshRenderer>().sharedMaterial = material;
-            var background = ViewMaterials.CreateMeadowGround(new Color(.65f, .76f, .64f),
+            var background = CreateLocationGround(new Color(.65f, .76f, .64f),
                 _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, 0);
             _ownedMaterials.Add(background);
             _groundFill.GetComponent<MeshRenderer>().sharedMaterial = background;
+            _backgroundMesh = new Mesh { name = "Мягкий рельеф фона" };
+            _meadowMeshes.Add(_backgroundMesh);
+            _groundFill.GetComponent<MeshFilter>().sharedMesh = _backgroundMesh;
+            _water = new GameObject("Лесные пруды");
+            _water.transform.SetParent(_banks.transform.parent, false);
+            _waterMesh = new Mesh { name = "Вода прудов" }; _meadowMeshes.Add(_waterMesh);
+            _water.AddComponent<MeshFilter>().sharedMesh = _waterMesh;
+            var waterMaterial = new Material(Shader.Find("Razlom/Forest Water"));
+            _ownedMaterials.Add(waterMaterial);
+            _water.AddComponent<MeshRenderer>().sharedMaterial = waterMaterial;
         }
 
         private void BuildMeadow(LayoutMap map, float cell)
         {
             if (map.PlacedCount == 0) return;
             if (_portalPool == null) InitializeMeadow();
-            BuildBanks(cell);
+            ChoosePonds(map);
+            BuildBanks(map.Outline != null ? .5f : cell);
             ScatterForest(map, cell);
+            BuildPondWater();
+            ScatterForestDetails(map);
             if (map.Routes != null)
             {
                 AddPortal(map.EntryPoint, map.Routes.EntryFacing, false);
@@ -89,6 +109,7 @@ namespace Game.View
                 }
             }
             if (Application.isPlaying && _driver != null) _meadowLighting.Apply(_style);
+            ApplyCampSurface();
             UpdateMeadow();
         }
 
@@ -219,13 +240,17 @@ namespace Game.View
                     if (_occupiedCells.Contains(CellKey(x + dx, y + dy))) continue;
                     Vector3 normal = new Vector3(dx, 0, dy), along = new Vector3(dy, 0, -dx);
                     var center = new Vector3((x + .5f) * cell, 0, (y + .5f) * cell) + normal * cell * .5f;
+                    if (NearPond(center.x, center.z, .4f)) continue;
                     int start = vertices.Count;
                     for (int s = 0; s < 5; s++)
                     {
-                        float outward = s * .4f + .02f;
-                        float height = Mathf.Sin(s / 4f * Mathf.PI) * .28f - .035f;
-                        vertices.Add(center - along * cell * .5f + normal * outward + Vector3.up * height);
-                        vertices.Add(center + along * cell * .5f + normal * outward + Vector3.up * height);
+                        float outward = s * .3f + .02f;
+                        var a = center - along * cell * .5f + normal * outward;
+                        var b = center + along * cell * .5f + normal * outward;
+                        // Пятна плавно уходят под фон, поэтому край не образует сплошную ограду.
+                        a.y = BankHeight(a.x, a.z, s / 4f);
+                        b.y = BankHeight(b.x, b.z, s / 4f);
+                        vertices.Add(a); vertices.Add(b);
                         if (s == 4) continue;
                         int v = start + s * 2;
                         triangles.Add(v); triangles.Add(v+2); triangles.Add(v+1);
@@ -236,6 +261,53 @@ namespace Game.View
             _bankMesh.Clear(); _bankMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             _bankMesh.SetVertices(vertices); _bankMesh.SetTriangles(triangles, 0); _bankMesh.RecalculateNormals(); _bankMesh.RecalculateBounds();
             _banks.SetActive(true);
+        }
+
+        private static float BankHeight(float x, float z, float across)
+        {
+            float patch = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.47f, .66f,
+                Mathf.PerlinNoise(x * .095f + 137, z * .095f + 281)));
+            float height = Mathf.Lerp(.09f, .22f, Mathf.PerlinNoise(x * .23f, z * .23f));
+            return Mathf.Sin(across * Mathf.PI) * height * patch - .045f;
+        }
+
+        private enum GladeCharacter { Sunny, Rocky, Waterside }
+
+        private static int WatersideGlade(LayoutMap map)
+        {
+            int chosen = Mathf.Max(0, map.GladeCount - 1);
+            float nearest = float.MaxValue;
+            for (int g = 0; g < map.GladeCount; g++)
+                for (int w = 0; w < map.WaterCount; w++)
+                {
+                    var delta = map.GetGlade(g).Center - map.GetWater(w).Center;
+                    float dx = delta.X.ToFloat(), dz = delta.Y.ToFloat();
+                    float distance = dx * dx + dz * dz;
+                    if (distance < nearest) { nearest = distance; chosen = g; }
+                }
+            return chosen;
+        }
+
+        private static GladeCharacter CharacterOf(LayoutMap map, int index)
+        {
+            if (map.GladeCount < 3) return GladeCharacter.Rocky;
+            int water = WatersideGlade(map);
+            if (index == water) return GladeCharacter.Waterside;
+            // После исключения берега чередуем открытые и каменистые поляны.
+            return (index < water ? index : index - 1) % 2 == 0 ? GladeCharacter.Sunny : GladeCharacter.Rocky;
+        }
+
+        private static int NearestGlade(LayoutMap map, float x, float z)
+        {
+            int nearest = 0; float distance = float.MaxValue;
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+                var center = map.GetGlade(g).Center;
+                float dx = x - center.X.ToFloat(), dz = z - center.Y.ToFloat();
+                float candidate = dx * dx + dz * dz;
+                if (candidate < distance) { nearest = g; distance = candidate; }
+            }
+            return nearest;
         }
 
         private void ScatterForest(LayoutMap map, float cell)
@@ -251,16 +323,34 @@ namespace Game.View
                 var p=map.GetPlaced(m); minX=Mathf.Min(minX,p.OriginX*cell); maxX=Mathf.Max(maxX,(p.OriginX+p.Width)*cell);
                 minZ=Mathf.Min(minZ,p.OriginY*cell); maxZ=Mathf.Max(maxZ,(p.OriginY+p.Height)*cell);
             }
-            _groundFill.transform.position = new Vector3((minX+maxX)*.5f, -_style.Thickness*.5f-_style.GroundFillDepthOffset, (minZ+maxZ)*.5f);
-            _groundFill.transform.localScale = new Vector3(Mathf.Max(_style.GroundFillSize,maxX-minX+80),_style.Thickness,Mathf.Max(_style.GroundFillSize,maxZ-minZ+80));
+            BuildBackgroundRelief(map, minX, maxX, minZ, maxZ);
             if (trees.Count==0 || _style.ForestBandWidth<=0) return;
             int created=0;
+            var groveRng = DecorRandom(0, 193);
+            float groveX = (float)groveRng.NextDouble() * 1000, groveZ = (float)groveRng.NextDouble() * 1000;
+            float treeWeight = 0;
+            foreach (int tree in trees) treeWeight += _style.DecorVariants[tree].Weight;
             for (float x=minX-_style.ForestBandWidth;x<maxX+_style.ForestBandWidth;x+=_style.ForestSpacing)
                 for (float z=minZ-_style.ForestBandWidth;z<maxZ+_style.ForestBandWidth;z+=_style.ForestSpacing)
                 {
                     var rng=DecorRandom(unchecked((int)(x*73)+(int)(z*997)),91);
-                    float px=x+(float)(rng.NextDouble()-.5)*3, pz=z+(float)(rng.NextDouble()-.5)*3;
-                    int variant=trees[rng.Next(trees.Count)];
+                    // Two spatial scales produce small copses, larger groves and persistent open gaps.
+                    float grove = Mathf.PerlinNoise(x * .055f + groveX, z * .055f + groveZ) * .7f
+                        + Mathf.PerlinNoise(x * .12f + groveZ, z * .12f + groveX) * .3f;
+                    if (grove < .43f || rng.NextDouble() > Mathf.Lerp(.25f, .95f, Mathf.InverseLerp(.43f, .65f, grove))) continue;
+                    float px=x+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
+                    float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
+                    if (NearPond(px, pz, 3)) continue;
+                    if (map.GladeCount > 0)
+                    {
+                        var character = CharacterOf(map, NearestGlade(map, px, pz));
+                        // Светлая опушка получает просветы в кронах, без дополнительных источников света.
+                        float density = character == GladeCharacter.Sunny ? .28f : character == GladeCharacter.Rocky ? .65f : .9f;
+                        if (rng.NextDouble() > density) continue;
+                    }
+                    float pick = (float)rng.NextDouble() * treeWeight;
+                    int variant = trees[trees.Count - 1];
+                    foreach (int tree in trees) { pick -= _style.DecorVariants[tree].Weight; if (pick <= 0) { variant = tree; break; } }
                     float nearest=float.MaxValue;
                     for (int m=0;m<map.PlacedCount;m++)
                     {
@@ -269,11 +359,265 @@ namespace Game.View
                         float dz=Mathf.Max(0,Mathf.Max(p.OriginY*cell-pz,pz-(p.OriginY+p.Height)*cell));
                         nearest=Mathf.Min(nearest,Mathf.Sqrt(dx*dx+dz*dz));
                     }
+                    if (map.Outline != null)
+                    {
+                        nearest = float.MaxValue;
+                        for (int c = 0; c < map.Routes.CellCount; c++)
+                        {
+                            var point = map.Routes.GetCell(c).Center;
+                            nearest = Mathf.Min(nearest, Vector2.Distance(new Vector2(px, pz), new Vector2(point.X.ToFloat(), point.Y.ToFloat())) - 1.5f);
+                        }
+                        if (TouchesOutlinedFloor(px, pz, _decorRadii[variant] * 1.45f)) continue;
+                    }
                     if (nearest<_decorRadii[variant]*1.45f+2 || nearest>_style.ForestBandWidth) continue;
                     SpawnDecor(variant,px,pz,rng);
                     _decor[_decorCount-1].localScale*=1.45f;
+                    var treePosition = _decor[_decorCount-1].position;
+                    treePosition.y = BackgroundHeight(map, px, pz) - .08f;
+                    _decor[_decorCount-1].position = treePosition;
                     if (++created>=240) return;
                 }
+        }
+
+        private float BackgroundHeight(LayoutMap map, float x, float z)
+        {
+            float distance = float.MaxValue;
+            // Keep the entire module footprint and a shoulder around it flat, including all paths.
+            for (int m = 0; m < map.PlacedCount; m++)
+            {
+                var room = map.GetPlaced(m);
+                float cell = LayoutMap.CellSize.ToFloat();
+                float dx = Mathf.Max(0, Mathf.Max(room.OriginX * cell - x, x - (room.OriginX + room.Width) * cell));
+                float dz = Mathf.Max(0, Mathf.Max(room.OriginY * cell - z, z - (room.OriginY + room.Height) * cell));
+                distance = Mathf.Min(distance, Mathf.Sqrt(dx * dx + dz * dz));
+            }
+            float fade = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(3, 13, distance));
+            float broad = Mathf.PerlinNoise(x * .035f + _reliefOffset.x, z * .035f + _reliefOffset.y);
+            float detail = Mathf.PerlinNoise(x * .09f + _reliefOffset.y, z * .09f + _reliefOffset.x);
+            float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
+            foreach (var pond in _ponds)
+            {
+                float r = PondRadius(pond, x, z);
+                if (r < 1.3f) height = Mathf.Min(height, Mathf.Lerp(-.65f, height, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, 1.3f, r))));
+            }
+            return height;
+        }
+
+        private static float PondRadius(Vector4 pond, float x, float z)
+        {
+            float dx = (x - pond.x) / pond.z, dz = (z - pond.y) / pond.w;
+            float angle = Mathf.Atan2(dz, dx);
+            return Mathf.Sqrt(dx * dx + dz * dz) / (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
+        }
+
+        private bool NearPond(float x, float z, float margin)
+        {
+            foreach (var pond in _ponds)
+                if (PondRadius(pond, x, z) < 1.3f + margin / Mathf.Min(pond.z, pond.w)) return true;
+            return false;
+        }
+
+        private void ChoosePonds(LayoutMap map)
+        {
+            _ponds.Clear();
+            for (int i = 0; i < map.WaterCount; i++)
+            {
+                var water = map.GetWater(i);
+                _ponds.Add(new Vector4(water.Center.X.ToFloat(), water.Center.Y.ToFloat(),
+                    water.Radius.ToFloat(), water.Radius.ToFloat()));
+            }
+            if (map.Outline == null || map.GladeCount == 0) return;
+            var rng = DecorRandom(0, 397);
+            for (int attempt = 0; attempt < 96 && _ponds.Count < map.WaterCount + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
+            {
+                var glade = map.GetGlade(map.GladeCount >= 3 ? WatersideGlade(map) : attempt % map.GladeCount);
+                float rx = 4 + (float)rng.NextDouble() * 2, rz = 3.5f + (float)rng.NextDouble() * 2;
+                float radius = Mathf.Max(rx, rz) * 1.4f + 3;
+                float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                float x = glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + radius + 2);
+                float z = glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + radius + 2);
+                if (NearPond(x, z, radius)) continue;
+                bool clear = true;
+                for (int m = 0; m < map.PlacedCount; m++)
+                {
+                    var room = map.GetPlaced(m); float cell = LayoutMap.CellSize.ToFloat();
+                    float dx = Mathf.Max(0, Mathf.Max(room.OriginX * cell - x, x - (room.OriginX + room.Width) * cell));
+                    float dz = Mathf.Max(0, Mathf.Max(room.OriginY * cell - z, z - (room.OriginY + room.Height) * cell));
+                    if (dx * dx + dz * dz < radius * radius) { clear = false; break; }
+                }
+                if (clear) _ponds.Add(new Vector4(x, z, rx, rz));
+            }
+        }
+
+        private void BuildPondWater()
+        {
+            var vertices = new List<Vector3>(); var uv = new List<Vector2>(); var indices = new List<int>();
+            foreach (var pond in _ponds)
+            {
+                int start = vertices.Count;
+                vertices.Add(new Vector3(pond.x, -.12f, pond.y)); uv.Add(Vector2.zero);
+                for (int i = 0; i <= 64; i++)
+                {
+                    float angle = i * Mathf.PI / 32;
+                    float radius = .85f * (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
+                    vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, -.12f,
+                        pond.y + Mathf.Sin(angle) * pond.w * radius));
+                    uv.Add(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
+                    if (i == 64) continue;
+                    indices.Add(start); indices.Add(start + i + 2); indices.Add(start + i + 1);
+                }
+            }
+            _waterMesh.Clear(); _waterMesh.SetVertices(vertices); _waterMesh.SetUVs(0, uv);
+            _waterMesh.SetTriangles(indices, 0); _waterMesh.RecalculateNormals(); _waterMesh.RecalculateBounds();
+            _water.SetActive(_ponds.Count > 0);
+        }
+
+        private void ScatterForestDetails(LayoutMap map)
+        {
+            if (map.Outline == null || _style.ForestBandWidth <= 0
+                || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) return;
+            var rocks = new List<int>(); var bushes = new List<int>(); var grass = new List<int>();
+            int log = -1, stump = -1;
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+            {
+                var variant = _style.DecorVariants[i];
+                if (variant.Weight <= 0 || variant.Prefab == null) continue;
+                if (variant.Prefab.name == "MeadowFallenLog") log = i;
+                else if (variant.Prefab.name == "CreatingStump") stump = i;
+                else if (variant.Kind == DecorKind.Rock) rocks.Add(i);
+                else if (variant.Kind == DecorKind.Bush) bushes.Add(i);
+                else if (variant.Kind == DecorKind.GrassTuft) grass.Add(i);
+            }
+            // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
+            for (int group = 0; group < map.GladeCount * 3; group++)
+            {
+                var glade = map.GetGlade(group / 3); var rng = DecorRandom(group, 449);
+                var character = CharacterOf(map, group / 3);
+                int anchor = character == GladeCharacter.Sunny ? PickDetail(group % 3 == 0 ? bushes : grass, rng)
+                    : character == GladeCharacter.Rocky ? PickDetail(rocks, rng)
+                    : group % 3 == 0 && log >= 0 ? log
+                    : group % 3 == 1 && stump >= 0 ? stump : PickDetail(bushes, rng);
+                if (anchor < 0) continue;
+                for (int attempt = 0; attempt < 32; attempt++)
+                {
+                    float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                    float shoulder = _decorRadii[anchor] + 1 + (float)rng.NextDouble() * 3;
+                    var center = new Vector2(glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                    if (!TryForestDetail(map, anchor, center, rng)) continue;
+                    DressDetail(map, center, _decorRadii[anchor], bushes, grass, rng);
+                    if (character == GladeCharacter.Rocky)
+                    {
+                        for (int rock = 0; rock < 2; rock++)
+                        {
+                            int follower = PickDetail(rocks, rng);
+                            if (follower < 0) break;
+                            var point = center + DetailOffset(rng, _decorRadii[anchor] + _decorRadii[follower] + .3f);
+                            if (TryForestDetail(map, follower, point, rng))
+                                DressDetail(map, point, _decorRadii[follower], bushes, grass, rng);
+                        }
+                    }
+                    break;
+                }
+            }
+            // Короткие заросшие участки берега чередуются с открытой водой.
+            for (int pondIndex = 0; pondIndex < _ponds.Count; pondIndex++)
+            {
+                var pond = _ponds[pondIndex]; var rng = DecorRandom(pondIndex, 457);
+                float start = (float)rng.NextDouble() * Mathf.PI * 2;
+                for (int item = 0; item < 9; item++)
+                {
+                    int variant = PickDetail(item % 3 == 0 ? bushes : grass, rng);
+                    if (variant < 0) continue;
+                    float angle = start + item * .16f;
+                    float margin = _decorRadii[variant] + .35f;
+                    var point = new Vector2(pond.x + Mathf.Cos(angle) * (pond.z * 1.4f + margin),
+                        pond.y + Mathf.Sin(angle) * (pond.w * 1.4f + margin));
+                    TryForestDetail(map, variant, point, rng);
+                }
+            }
+        }
+
+        private int PickDetail(List<int> variants, System.Random rng)
+        {
+            if (variants.Count == 0) return -1;
+            float weight = 0;
+            foreach (int index in variants) weight += _style.DecorVariants[index].Weight;
+            float pick = (float)rng.NextDouble() * weight;
+            foreach (int index in variants)
+            {
+                pick -= _style.DecorVariants[index].Weight;
+                if (pick <= 0) return index;
+            }
+            return variants[variants.Count - 1];
+        }
+
+        private static Vector2 DetailOffset(System.Random rng, float distance)
+        {
+            float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+            return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+        }
+
+        private void DressDetail(LayoutMap map, Vector2 center, float radius, List<int> bushes,
+            List<int> grass, System.Random rng)
+        {
+            int count = rng.Next(5, 9);
+            for (int item = 0; item < count; item++)
+            {
+                int variant = PickDetail(item < 2 ? bushes : grass, rng);
+                if (variant < 0) continue;
+                var point = center + DetailOffset(rng, radius + _decorRadii[variant] + .15f + (float)rng.NextDouble() * .6f);
+                TryForestDetail(map, variant, point, rng);
+            }
+        }
+
+        private bool TryForestDetail(LayoutMap map, int variant, Vector2 point, System.Random rng)
+        {
+            float radius = _decorRadii[variant];
+            if (TouchesOutlinedFloor(point.x, point.y, radius + .2f)
+                || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)) return false;
+            // Учитываем уже расставленный лес и соседние группы, а не только текущую композицию.
+            for (int i = 0; i < _decorCount; i++)
+            {
+                var other = _decor[i];
+                int otherVariant = _decorVariant[i];
+                float maxScale = Mathf.Max(.01f, _style.DecorVariants[otherVariant].ScaleRange.y);
+                float otherRadius = _decorRadii[otherVariant] * other.localScale.x / maxScale;
+                float gap = radius + otherRadius;
+                var delta = point - new Vector2(other.position.x, other.position.z);
+                if (delta.sqrMagnitude < gap * gap) return false;
+            }
+            SpawnDecor(variant, point.x, point.y, rng);
+            _decor[_decorCount - 1].position = new Vector3(point.x,
+                BackgroundHeight(map, point.x, point.y) - .035f, point.y);
+            return true;
+        }
+
+        private void BuildBackgroundRelief(LayoutMap map, float minX, float maxX, float minZ, float maxZ)
+        {
+            var rng = DecorRandom(0, 271);
+            _reliefOffset = new Vector2((float)rng.NextDouble() * 1000, (float)rng.NextDouble() * 1000);
+            float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 80);
+            float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 80);
+            float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
+            int columns = Mathf.CeilToInt(width / 2), rows = Mathf.CeilToInt(depth / 2);
+            var vertices = new Vector3[(columns + 1) * (rows + 1)];
+            var triangles = new int[columns * rows * 6];
+            for (int z = 0; z <= rows; z++)
+                for (int x = 0; x <= columns; x++)
+                {
+                    float px = originX + x * width / columns, pz = originZ + z * depth / rows;
+                    int v = z * (columns + 1) + x;
+                    vertices[v] = new Vector3(px, BackgroundHeight(map, px, pz), pz);
+                    if (x == columns || z == rows) continue;
+                    int t = (z * columns + x) * 6;
+                    triangles[t] = v; triangles[t + 1] = v + columns + 1; triangles[t + 2] = v + 1;
+                    triangles[t + 3] = v + 1; triangles[t + 4] = v + columns + 1; triangles[t + 5] = v + columns + 2;
+                }
+            _backgroundMesh.Clear(); _backgroundMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            _backgroundMesh.vertices = vertices; _backgroundMesh.triangles = triangles;
+            _backgroundMesh.RecalculateNormals(); _backgroundMesh.RecalculateBounds();
+            _groundFill.transform.position = Vector3.zero; _groundFill.transform.localScale = Vector3.one;
         }
     }
 }

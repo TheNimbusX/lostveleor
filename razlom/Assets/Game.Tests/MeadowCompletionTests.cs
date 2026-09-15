@@ -114,6 +114,49 @@ namespace Game.Tests
         }
 
         [Test]
+        public void LeavingFinalReward_IsNotVictory()
+        {
+            var session = Session(51);
+            for (int level = 1; level < 10; level++) { ReachReward(session); Choose(session); }
+            ReachReward(session);
+            session.Step(new InputFrame { Command = (byte)RunCommand.Leave });
+            Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Left));
+            Assert.That(session.Run.TakenRewardCount, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void BossSpawnsAlone_InConnectedDedicatedArenaAcrossSeeds()
+        {
+            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
+            var final = profile.GetLevel(10);
+            for (ulong seed = 1; seed <= 40; seed++)
+            {
+                var seeds = RiftLevelSeeds.ForLevel(seed, 10);
+                var map = new LayoutMap(profile.Modules, profile.MaxModules);
+                final.Generate(new LayoutGenerator(), profile.Modules, map, seeds.Layout);
+                var a = new Simulation(seed, 512); var b = new Simulation(seed, 512);
+                var plan = final.Spawn(a, map, seeds.Spawns);
+                final.Spawn(b, map, seeds.Spawns);
+                Assert.That(map.GladeCount, Is.EqualTo(1));
+                Assert.That(map.Outline, Is.Not.Null);
+                Assert.That(map.RewardBranchCount, Is.Zero);
+                Assert.That(a.Entities.Count, Is.EqualTo(2));
+                Assert.That(a.Entities.Position[plan.BossId], Is.EqualTo(map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent)));
+                Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.EntryPoint) >= Fix64.FromInt(196), Is.True);
+                Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.ExitPoint(0)) >= Fix64.FromInt(196), Is.True);
+                Assert.That(plan.Get(plan.ForEntity(plan.BossId)).Module, Is.Not.EqualTo(map.GetExit(0)));
+                Assert.That(plan.BossId, Is.GreaterThan(0), "seed " + seed);
+                Assert.That(a.Entities.Kind[plan.BossId], Is.EqualTo(EnemyKind.ForestGuardian));
+                Assert.That(a.Entities.Count, Is.EqualTo(b.Entities.Count));
+                for (int i = 0; i < a.Entities.Count; i++)
+                {
+                    Assert.That(a.Entities.Position[i], Is.EqualTo(b.Entities.Position[i]));
+                    if (i != plan.BossId) Assert.That(a.Entities.Health[i], Is.EqualTo(b.Entities.Health[i]));
+                }
+            }
+        }
+
+        [Test]
         public void DeveloperJump_UsesLevelSeeds_AndSafeBossApproach()
         {
             var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();

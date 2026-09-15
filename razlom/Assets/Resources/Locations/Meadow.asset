@@ -14,13 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.View::Game.View.LocationTheme
   Gameplay: {fileID: 11400000, guid: 2bc3cb33a8f093841862979e79dbc670, type: 2}
   Style:
-    RoomColor: {r: 0.68, g: 0.65, b: 0.55, a: 1}
-    EntranceColor: {r: 0.61, g: 0.69, b: 0.57, a: 1}
+    RoomColor: {r: 0.63, g: 0.68, b: 0.58, a: 1}
+    EntranceColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     Thickness: 0.2
-    ExitColor: {r: 0.72, g: 0.58, b: 0.3, a: 1}
+    ExitColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     NaturalGround: 1
+    CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
+    ForestClearings: 1
+    ClearingSize: 1
     PortalPrefab: {fileID: 4129559968169376948, guid: fdc3fcdb18e51cf44b134308461bc877, type: 3}
     CachePrefab: {fileID: 919132149155446097, guid: fa5e5d5bcd87bf94b8e40a39307c162a, type: 3}
+    ObstacleRocks:
+    - {fileID: 8185754515995656638, guid: e33a3fdde14e68e469eb2f910c3eaf07, type: 3}
+    - {fileID: 364524707233572452, guid: 3a69d808eddb86841b8dedbe307e6617, type: 3}
+    - {fileID: 7888119987887787530, guid: ee733cae68be627448ad0a8a279b33e7, type: 3}
+    - {fileID: 368974323021591884, guid: 119f78f4bcf14714bada91454ec72cdc, type: 3}
+    - {fileID: 6119621999588281189, guid: 21afede453649224b81533ed33fc6c93, type: 3}
+    - {fileID: 7211320218792841495, guid: 575b3258f2d357240b8893773676ab9c, type: 3}
+    ObstacleTree: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
     ForestBandWidth: 16
     ForestSpacing: 6
     SunColor: {r: 1, g: 0.92, b: 0.8, a: 1}
@@ -32,74 +43,111 @@ MonoBehaviour:
     FogStart: 45
     FogEnd: 100
     Gap: 0
-    RoomFloorTexture: {fileID: 2800000, guid: 51487f115253bea4099917c031e9fc72, type: 3}
-    PathFloorTexture: {fileID: 2800000, guid: ddee476c014d3ca43ad80e7c46dacd8c, type: 3}
-    FloorTextureTiling: 0.3
+    RoomFloorTexture: {fileID: 2800000, guid: 673fa1cf4f8118e4f84d56625c49d69a, type: 3}
+    PathFloorTexture: {fileID: 2800000, guid: 16276ea00e776b148b2705e4a002fb27, type: 3}
+    FloorTextureTiling: 0.22
     FloorTextureStrength: 2
     DecorVariants:
-    - Kind: 0
-      Prefab: {fileID: 8021261736545423652, guid: 3f8eda438d8aeab4d9223c5b53f5ef62, type: 3}
-      ResourcePath: Decor/UNS_Bush
+    - Kind: 1
+      Prefab: {fileID: 364524707233572452, guid: 3a69d808eddb86841b8dedbe307e6617, type: 3}
+      ResourcePath: 
+      Weight: 0.5
+      ScaleRange: {x: 0.9, y: 1.5}
+      UseAsBoundary: 1
+    - Kind: 1
+      Prefab: {fileID: 7888119987887787530, guid: ee733cae68be627448ad0a8a279b33e7, type: 3}
+      ResourcePath: 
+      Weight: 0.5
+      ScaleRange: {x: 0.9, y: 1.5}
+      UseAsBoundary: 1
+    - Kind: 1
+      Prefab: {fileID: 368974323021591884, guid: 119f78f4bcf14714bada91454ec72cdc, type: 3}
+      ResourcePath: 
+      Weight: 0.5
+      ScaleRange: {x: 0.9, y: 1.5}
+      UseAsBoundary: 1
+    - Kind: 1
+      Prefab: {fileID: 6119621999588281189, guid: 21afede453649224b81533ed33fc6c93, type: 3}
+      ResourcePath: 
+      Weight: 0.5
+      ScaleRange: {x: 0.9, y: 1.5}
+      UseAsBoundary: 1
+    - Kind: 1
+      Prefab: {fileID: 7211320218792841495, guid: 575b3258f2d357240b8893773676ab9c, type: 3}
+      ResourcePath: 
+      Weight: 0.5
+      ScaleRange: {x: 0.9, y: 1.5}
+      UseAsBoundary: 1
+    - Kind: 3
+      Prefab: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
+      ResourcePath: 
       Weight: 3
-      ScaleRange: {x: 0.85, y: 1.25}
+      ScaleRange: {x: 0.8, y: 1.15}
+      UseAsBoundary: 1
+    - Kind: 3
+      Prefab: {fileID: 5128721360619952106, guid: fa37129ec0d37a84cb72f5978cc65c50, type: 3}
+      ResourcePath: 
+      Weight: 1
+      ScaleRange: {x: 0.8, y: 1.15}
+      UseAsBoundary: 1
+    - Kind: 3
+      Prefab: {fileID: 621789606015015681, guid: c37c166983a87ac4aae76792e404c798, type: 3}
+      ResourcePath: 
+      Weight: 1
+      ScaleRange: {x: 0.85, y: 1.2}
       UseAsBoundary: 1
     - Kind: 1
-      Prefab: {fileID: 4485714884639539626, guid: 9503c1c726bcf56458f5766baf8bb524, type: 3}
-      ResourcePath: Decor/UNS_Standard_Rock_01
-      Weight: 1.2
-      ScaleRange: {x: 0.7, y: 1.3}
+      Prefab: {fileID: 8185754515995656638, guid: e33a3fdde14e68e469eb2f910c3eaf07, type: 3}
+      ResourcePath: 
+      Weight: 0.7
+      ScaleRange: {x: 0.8, y: 1.25}
       UseAsBoundary: 1
     - Kind: 1
-      Prefab: {fileID: 5903104756239672761, guid: e67d3e2fdb18d364f943d685c09cb266, type: 3}
-      ResourcePath: Decor/UNS_Standard_Rock_02
-      Weight: 1.2
-      ScaleRange: {x: 0.7, y: 1.3}
+      Prefab: {fileID: 6271217076783660737, guid: 668fd2d8aa5b7764c9243992b54b34d2, type: 3}
+      ResourcePath: 
+      Weight: 0.3
+      ScaleRange: {x: 0.8, y: 1.2}
       UseAsBoundary: 1
     - Kind: 1
-      Prefab: {fileID: 6977529444600223557, guid: 05a887701af30614f819e1db804d10a1, type: 3}
-      ResourcePath: Decor/UNS_Standard_Rock_03
-      Weight: 1.2
-      ScaleRange: {x: 0.7, y: 1.3}
+      Prefab: {fileID: 8560912994208372604, guid: dfc8da7d1810cef48b6e32f03799834f, type: 3}
+      ResourcePath: 
+      Weight: 0.3
+      ScaleRange: {x: 0.85, y: 1.15}
       UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 3663980519387192599, guid: 20fad3f1d6cf65941bfcaaaab93a4d09, type: 3}
-      ResourcePath: Decor/UNS_Standard_Rock_04
-      Weight: 1.2
-      ScaleRange: {x: 0.7, y: 1.3}
-      UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 2680348003693962445, guid: 76f72119263e837459dd528ba521ea53, type: 3}
-      ResourcePath: Decor/UNS_Standard_Rock_05
-      Weight: 1.2
-      ScaleRange: {x: 0.7, y: 1.3}
+    - Kind: 0
+      Prefab: {fileID: 4580614978613539074, guid: 4f40e52c41098114390cd2a154e76a30, type: 3}
+      ResourcePath: 
+      Weight: 2
+      ScaleRange: {x: 0.7, y: 1.15}
       UseAsBoundary: 1
     - Kind: 2
-      Prefab: {fileID: 1997442676426876155, guid: 4db940c31d61ac149801c850fc645d68, type: 3}
-      ResourcePath: Decor/UNS_Grass
+      Prefab: {fileID: 7688479030350949615, guid: 553c5ce4e81e98548ade74682098b93d, type: 3}
+      ResourcePath: 
       Weight: 4
-      ScaleRange: {x: 0.8, y: 1.3}
+      ScaleRange: {x: 0.85, y: 1.3}
       UseAsBoundary: 0
-    - Kind: 3
-      Prefab: {fileID: 4025988222033845712, guid: 1f9036ec905b920479091aca9ba81305, type: 3}
-      ResourcePath: Decor/UNS_Spruce_01
-      Weight: 1.5
-      ScaleRange: {x: 0.35, y: 0.55}
-      UseAsBoundary: 1
-    - Kind: 3
-      Prefab: {fileID: 3731095390187986728, guid: 04054a3651be51d4193414f850cf6bde, type: 3}
-      ResourcePath: Decor/UNS_Spruce_02
-      Weight: 1.5
-      ScaleRange: {x: 0.35, y: 0.55}
-      UseAsBoundary: 1
-    DecorPerCell: 0.12
+    - Kind: 2
+      Prefab: {fileID: 1995611805426753422, guid: 08bc783fd8ebe2840a0f2de37634c1ca, type: 3}
+      ResourcePath: 
+      Weight: 4
+      ScaleRange: {x: 0.85, y: 1.3}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 7691961497381048090, guid: b1e6ce881b6ca814493c6d4a0a95eecb, type: 3}
+      ResourcePath: 
+      Weight: 4
+      ScaleRange: {x: 0.85, y: 1.3}
+      UseAsBoundary: 0
+    DecorPerCell: 0.45
     DecorEdgeMargin: 0.7
     DecorConnectorMargin: 1.6
-    BoundaryDecorChance: 0.55
+    BoundaryDecorChance: 0.36
     BoundaryDecorOutset: 0.6
-    BoundaryDecorJitter: 0.9
+    BoundaryDecorJitter: 0.6
     GroundFillSize: 240
     GroundFillDepthOffset: 0.03
-    RouteWidth: 1.6
+    PondCount: 3
+    RouteWidth: 2
     RouteClearance: 0.35
     EntryClearance: 3
     PathTrailSteps: 4
