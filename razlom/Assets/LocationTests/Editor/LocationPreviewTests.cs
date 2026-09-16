@@ -38,6 +38,77 @@ namespace Game.LocationTests
         }
 
         [Test]
+        public void CurvedTrails_StayWalkable_AndUseReproducibleBends()
+        {
+            var modules = PrototypeContent.Modules();
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                var map = new LayoutMap(modules, 64);
+                GladeLayout.Generate(modules, map, seed, 16);
+                for (int c = 0; c < map.Routes.CellCount; c++)
+                {
+                    if (!map.Routes.IsRoadCell(c)) continue;
+                    int parent = map.Routes.ParentCell(c);
+                    if (parent < 0) continue;
+                    var a = map.Routes.GetCell(parent).Center; var b = map.Routes.GetCell(c).Center;
+                    var path = new[] { new Vector2(a.X.ToFloat(), a.Y.ToFloat()), new Vector2(b.X.ToFloat(), b.Y.ToFloat()) };
+                    var curve = MeadowTrailPath.Curve(map, path, .5f, 2.8f, new System.Random(c));
+                    CollectionAssert.AreEqual(curve, MeadowTrailPath.Curve(map, path, .5f, 2.8f, new System.Random(c)));
+                    for (int i = 1; i < curve.Count; i++)
+                        Assert.That(MeadowTrailPath.IsClear(map, curve[i - 1], curve[i], .5f), Is.True);
+                }
+            }
+        }
+
+        [Test]
+        public void PointerCoordinates_ReachDistantGlades_WithoutClippingToOldArena()
+        {
+            var quantize = typeof(TickDriver).GetMethod("QuantizePosition",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(quantize, Is.Not.Null);
+            foreach (float coordinate in new[] { -256.125f, -96.25f, -64f, 0f, 64f, 96.25f, 256.125f })
+                Assert.That((Fix64)quantize.Invoke(null, new object[] { coordinate }),
+                    Is.EqualTo(Fix64.FromDouble(coordinate)), $"Координата клика {coordinate}");
+
+            var authored = _theme.Gameplay.ToDefinition();
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                var map = new LayoutMap(authored.Modules, authored.MaxModules);
+                authored.GetLevel(1).Generate(new LayoutGenerator(), authored.Modules, map,
+                    RiftLevelSeeds.ForLevel(seed, 1).Layout);
+                var target = map.ExitPoint(0);
+                var aim = new FixVec2(
+                    (Fix64)quantize.Invoke(null, new object[] { target.X.ToFloat() }),
+                    (Fix64)quantize.Invoke(null, new object[] { target.Y.ToFloat() }));
+                Assert.That(aim, Is.EqualTo(target), $"Сид {seed}: клик у дальнего выхода");
+                bool crossed = false;
+                for (int c = 0; c < map.Routes.CellCount && !crossed; c++)
+                {
+                    int parent = map.Routes.ParentCell(c);
+                    if (parent < 0 || !map.Routes.IsRoadCell(c)) continue;
+                    var from = map.Routes.GetCell(parent).Center;
+                    var to = map.Routes.GetCell(c).Center;
+                    var limit = Fix64.FromInt(64);
+                    if (Fix64.Max(Fix64.Abs(from.X), Fix64.Abs(from.Y)) >= limit
+                        || Fix64.Max(Fix64.Abs(to.X), Fix64.Abs(to.Y)) <= limit) continue;
+                    var sim = new Simulation(seed, 32);
+                    sim.SetupRift(map, seed, 0, 1);
+                    sim.Entities.Position[Simulation.PlayerId] = from;
+                    var input = InputFrame.Empty;
+                    input.Flags = (byte)InputFlags.MoveOrder;
+                    input.Aim = new FixVec2(
+                        (Fix64)quantize.Invoke(null, new object[] { to.X.ToFloat() }),
+                        (Fix64)quantize.Invoke(null, new object[] { to.Y.ToFloat() }));
+                    for (int tick = 0; tick < 120; tick++) sim.Step(input);
+                    Assert.That(FixVec2.Distance(sim.Entities.Position[Simulation.PlayerId], to),
+                        Is.LessThan(Fix64.Half), $"Сид {seed}: герой не пересёк старую границу");
+                    crossed = true;
+                }
+                Assert.That(crossed, Is.True, $"Сид {seed}: проверен переход через 64 метра");
+            }
+        }
+
+        [Test]
         public void AuthoredAssets_AgreeWithRuntimeMapsAndSpawns()
         {
             var authored = _theme.Gameplay.ToDefinition();
@@ -48,6 +119,7 @@ namespace Game.LocationTests
                 run.StartRun();
                 for (int level = 1; level <= authored.LevelCount; level++)
                 {
+                    Assert.That(run.Depth, Is.EqualTo(level), "Забег перешёл на проверяемый уровень");
                     var seeds = RiftLevelSeeds.ForLevel(seed, level);
                     var newMap = new LayoutMap(authored.Modules, authored.MaxModules);
                     authored.GetLevel(level).Generate(new LayoutGenerator(), authored.Modules, newMap, seeds.Layout);
@@ -66,6 +138,8 @@ namespace Game.LocationTests
                     run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
                     run.Step(InputFrame.Empty);
                     run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+                    if (run.Phase == RunPhase.ReplacingAbility)
+                        run.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
                 }
             }
         }
@@ -175,6 +249,28 @@ namespace Game.LocationTests
             _preview.Dispose();
             Assert.That(EditorSceneManager.previewSceneCount, Is.EqualTo(previewScenes));
             Assert.That(owned.All(m => m == null), Is.True, "Generated materials leaked");
+        }
+
+        [TestCase(1UL)]
+        [TestCase(42UL)]
+        [TestCase(999UL)]
+        public void NaturalBoundary_DecorFootprintsStayOutsidePlayableFloor(ulong seed)
+        {
+            _theme.Style.DecorPerCell = 0;
+            _theme.Style.ForestBandWidth = 0;
+            _preview.Generate(_theme, seed, 1);
+            int checkedObjects = 0;
+            foreach (var renderer in _preview.Root.GetComponentsInChildren<Renderer>())
+            {
+                if (!renderer.name.StartsWith("Декор:")) continue;
+                var bounds = renderer.bounds;
+                for (float z = bounds.min.z; z <= bounds.max.z; z += .2f)
+                    for (float x = bounds.min.x; x <= bounds.max.x; x += .2f)
+                        Assert.That(_preview.Map.Outline.Contains(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z))),
+                            Is.False, $"Граница {renderer.name}: центр={bounds.center}, размер={bounds.size}, точка=({x}, {z}), scale={renderer.transform.localScale}");
+                checkedObjects++;
+            }
+            Assert.That(checkedObjects, Is.GreaterThan(20));
         }
 
         [Test]
@@ -320,14 +416,15 @@ namespace Game.LocationTests
             Assert.That(EditorSceneManager.previewSceneCount, Is.EqualTo(scenes));
         }
 
-        [Test]
-        public void MeadowArt_RendersAndRetainsItsSharedAssetMaterials()
+        [TestCase(1)]
+        [TestCase(10)]
+        public void MeadowArt_RendersAndRetainsItsSharedAssetMaterials(int level)
         {
             var authored = AssetDatabase.LoadAssetAtPath<LocationTheme>(MeadowLocationAssets.ThemePath);
             Assert.That(authored.Style.RoomFloorTexture, Is.Not.Null);
             Assert.That(authored.Style.PathFloorTexture, Is.Not.Null);
             Assert.That(authored.Style.DecorVariants.All(v => v.Prefab != null), Is.True);
-            _preview.Generate(authored, 42, 1);
+            _preview.Generate(authored, 42, level);
             var texture = _preview.Render(new Rect(0, 0, 1100, 800), _preview.Bounds.center,
                 new Vector2(-25, 65), _preview.Bounds.extents.magnitude, true);
             Assert.That(texture, Is.Not.Null);
@@ -342,7 +439,7 @@ namespace Game.LocationTests
                 readable.Apply();
                 Assert.That(readable.GetPixels32().Distinct().Take(100).Count(), Is.EqualTo(100), "Preview image is blank");
                 Directory.CreateDirectory("Logs");
-                File.WriteAllBytes("Logs/LocationPreview.png", readable.EncodeToPNG());
+                File.WriteAllBytes(level == 1 ? "Logs/LocationPreview.png" : "Logs/BossLocationPreview.png", readable.EncodeToPNG());
             }
             finally
             {

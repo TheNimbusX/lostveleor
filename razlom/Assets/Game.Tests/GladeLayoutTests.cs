@@ -37,6 +37,15 @@ namespace Game.Tests
                 GladeLayout.Generate(modules, a, seed, seed % 2 == 0 ? 16 : 24);
                 GladeLayout.Generate(modules, b, seed, seed % 2 == 0 ? 16 : 24);
                 Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+                Assert.That(a.RiverCount, Is.GreaterThan(0));
+                for (int r = 0; r < a.RiverCount; r++)
+                {
+                    var river = a.GetRiver(r);
+                    var approach = river.Along * (river.HalfWidth + Fix64.One);
+                    Assert.That(a.CanTravel(river.Center - approach, river.Center + approach,
+                        Fix64.Ratio(85, 100)), Is.True, $"Bridge blocked, seed {seed}");
+                    Assert.That(a.IsWalkable(river.Point(Fix64.FromInt(4)), Fix64.Half), Is.False);
+                }
                 ponds += a.WaterCount;
                 for (int w = 0; w < a.WaterCount; w++)
                 {
@@ -63,6 +72,10 @@ namespace Game.Tests
                 {
                     Assert.That(a.Routes.DistanceFromEntry(c), Is.GreaterThanOrEqualTo(0), $"seed {seed}, cell {c}");
                     Assert.That(a.IsWalkable(a.Routes.GetCell(c).Center, Fix64.Ratio(85, 100)), Is.True);
+                    int parent = a.Routes.ParentCell(c);
+                    if (parent >= 0)
+                        Assert.That(a.CanTravel(a.Routes.GetCell(parent).Center, a.Routes.GetCell(c).Center,
+                            Fix64.Ratio(85, 100)), Is.True, $"Blocked route: seed {seed}, cell {c}, parent {parent}");
                 }
                 for (int m = 0; m < a.PlacedCount; m++)
                     Assert.That(a.Routes.DistanceToModule(m), Is.GreaterThanOrEqualTo(0));

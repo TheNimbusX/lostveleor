@@ -27,6 +27,12 @@ namespace Game.View
                 {
                     if (!map.Outline.ContainsCell(x, y)) continue;
                     _occupiedCells.Add(CellKey(x, y));
+                    // Настил заменяет травяной пол; проходимая клетка остаётся в карте.
+                    var point = new FixVec2(Fix64.Ratio(2 * x + 1, 4), Fix64.Ratio(2 * y + 1, 4));
+                    bool underBridge = false;
+                    for (int r = 0; r < map.RiverCount; r++)
+                        if (map.GetRiver(r).ContainsWater(point, Fix64.Zero)) { underBridge = true; break; }
+                    if (underBridge) continue;
                     float lx = (x - p.OriginX * 4) / (float)(p.Width * 4) - .5f;
                     float lz = (y - p.OriginY * 4) / (float)(p.Height * 4) - .5f;
                     float dx = 1f / (p.Width * 4), dz = 1f / (p.Height * 4);

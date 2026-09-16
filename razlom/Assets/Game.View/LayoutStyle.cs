@@ -103,6 +103,8 @@ namespace Game.View
         [Tooltip("Вероятность декора на каждом открытом крае клетки.")]
         [Range(0f, 1f)]
         public float BoundaryDecorChance = 0.55f;
+        [Tooltip("Шаг кустарника вдоль непроходимого контура, метры.")]
+        [Range(1.2f, 3f)] public float BoundarySpacing = 1.6f;
 
         [Tooltip("Насколько декор выступает наружу от края клетки, метры.")]
         public float BoundaryDecorOutset = 0.6f;
@@ -121,6 +123,8 @@ namespace Game.View
         [Range(0.8f, 2f)] public float RouteWidth = 1.6f;
         [Tooltip("Дополнительный зазор между краем тропы и габаритами декора.")]
         public float RouteClearance = 0.35f;
+        [Tooltip("Максимальное отклонение тропы; каждый изгиб проверяется по проходимости.")]
+        [Range(0, 4)] public float TrailBend = 2.8f;
         [Tooltip("Свободное от декора место вокруг точки появления, метры.")]
         public float EntryClearance = 3f;
         // Retained for serialized profiles from before walkable route trails.

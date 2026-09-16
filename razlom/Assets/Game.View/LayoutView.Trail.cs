@@ -64,7 +64,11 @@ namespace Game.View
                         previous = current; current = following;
                     }
                     float width = main ? 1 : .7f;
-                    PaintSimplifiedTrail(map, MeadowTrailPath.Simplify(map, path, Mathf.Min(.8f, _style.RouteWidth * .4f)), width);
+                    float clearance = Mathf.Min(.8f, _style.RouteWidth * .4f);
+                    var curved = MeadowTrailPath.Curve(map, MeadowTrailPath.Simplify(map, path, clearance),
+                        clearance, _style.TrailBend, DecorRandom(i, 733 + next));
+                    for (int p = 1; p < curved.Count; p++)
+                        PaintTrailCurve(map, curved[p - 1], (curved[p - 1] + curved[p]) * .5f, curved[p], width);
                 }
             }
             PaintTrailDisc(map, TrailPoint(map.EntryPoint), .9f);

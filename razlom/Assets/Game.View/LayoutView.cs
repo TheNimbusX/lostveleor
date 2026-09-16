@@ -654,6 +654,11 @@ namespace Game.View
         /// </summary>
         private void ScatterBoundaryDecor(float cell)
         {
+            if (_style.NaturalGround && _shownMap.Outline != null)
+            {
+                ScatterOutlinedBoundary(cell);
+                return;
+            }
             float totalWeight = 0f;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
                 if (_style.DecorVariants[i].UseAsBoundary) totalWeight += Mathf.Max(0f, _style.DecorVariants[i].Weight);

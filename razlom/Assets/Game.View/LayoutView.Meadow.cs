@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
 
@@ -25,12 +25,14 @@ namespace Game.View
 
         private void ClearMeadow()
         {
+            ClearRivers();
             foreach (var portal in _portals) _portalPool?.Release(portal.gameObject);
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
             foreach (var mark in _dropMarks) _dropPool?.Release(mark.gameObject);
             _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
             if (_banks != null) _banks.SetActive(false);
             if (_water != null) _water.SetActive(false);
+            if (_shore != null) _shore.SetActive(false);
             _meadowLighting.Restore();
         }
         private void DisposeMeadow()
@@ -41,6 +43,9 @@ namespace Game.View
             DestroyOwned(_campSurfaceMap); _campSurfaceMap = null; _campSurfacePixels = null;
             _bankMesh = _ringMesh = _backgroundMesh = null; _banks = null;
             _waterMesh = null; _water = null; _ponds.Clear();
+            _shoreMesh = null; _shore = null;
+            _riverMesh = _riverBankMesh = _bridgeMesh = null;
+            _riverObject = _riverBanks = null; _bridgePool = null;
             _portalPool = _cachePool = _dropPool = null;
         }
 
@@ -89,6 +94,8 @@ namespace Game.View
             BuildBanks(map.Outline != null ? .5f : cell);
             ScatterForest(map, cell);
             BuildPondWater();
+            BuildRivers(map);
+            BuildReadableShores();
             ScatterForestDetails(map);
             if (map.Routes != null)
             {
@@ -337,7 +344,7 @@ namespace Game.View
                     // Two spatial scales produce small copses, larger groves and persistent open gaps.
                     float grove = Mathf.PerlinNoise(x * .055f + groveX, z * .055f + groveZ) * .7f
                         + Mathf.PerlinNoise(x * .12f + groveZ, z * .12f + groveX) * .3f;
-                    if (grove < .43f || rng.NextDouble() > Mathf.Lerp(.25f, .95f, Mathf.InverseLerp(.43f, .65f, grove))) continue;
+                    if (grove < .32f || rng.NextDouble() > Mathf.Lerp(.5f, .98f, Mathf.InverseLerp(.32f, .65f, grove))) continue;
                     float px=x+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     if (NearPond(px, pz, 3)) continue;
@@ -345,7 +352,7 @@ namespace Game.View
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
                         // Светлая опушка получает просветы в кронах, без дополнительных источников света.
-                        float density = character == GladeCharacter.Sunny ? .28f : character == GladeCharacter.Rocky ? .65f : .9f;
+                        float density = character == GladeCharacter.Sunny ? .68f : character == GladeCharacter.Rocky ? .85f : .98f;
                         if (rng.NextDouble() > density) continue;
                     }
                     float pick = (float)rng.NextDouble() * treeWeight;
@@ -369,13 +376,13 @@ namespace Game.View
                         }
                         if (TouchesOutlinedFloor(px, pz, _decorRadii[variant] * 1.45f)) continue;
                     }
-                    if (nearest<_decorRadii[variant]*1.45f+2 || nearest>_style.ForestBandWidth) continue;
+                    if (nearest<_decorRadii[variant]*1.45f+.5f || nearest>_style.ForestBandWidth) continue;
                     SpawnDecor(variant,px,pz,rng);
                     _decor[_decorCount-1].localScale*=1.45f;
                     var treePosition = _decor[_decorCount-1].position;
                     treePosition.y = BackgroundHeight(map, px, pz) - .08f;
                     _decor[_decorCount-1].position = treePosition;
-                    if (++created>=240) return;
+                    if (++created>=420) return;
                 }
         }
 
@@ -395,6 +402,12 @@ namespace Game.View
             float broad = Mathf.PerlinNoise(x * .035f + _reliefOffset.x, z * .035f + _reliefOffset.y);
             float detail = Mathf.PerlinNoise(x * .09f + _reliefOffset.y, z * .09f + _reliefOffset.x);
             float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
+            for (int r = 0; r < map.RiverCount; r++)
+            {
+                var river = map.GetRiver(r);
+                var point = new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z));
+                if (river.ContainsWater(point, Fix64.One)) height = Mathf.Min(height, -.55f);
+            }
             foreach (var pond in _ponds)
             {
                 float r = PondRadius(pond, x, z);
@@ -412,6 +425,7 @@ namespace Game.View
 
         private bool NearPond(float x, float z, float margin)
         {
+            if (NearRiver(x, z, margin)) return true;
             foreach (var pond in _ponds)
                 if (PondRadius(pond, x, z) < 1.3f + margin / Mathf.Min(pond.z, pond.w)) return true;
             return false;
@@ -426,9 +440,17 @@ namespace Game.View
                 _ponds.Add(new Vector4(water.Center.X.ToFloat(), water.Center.Y.ToFloat(),
                     water.Radius.ToFloat(), water.Radius.ToFloat()));
             }
+            for (int r = 0; r < map.RiverCount; r++)
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    var river = map.GetRiver(r);
+                    var point = river.Point((river.HalfLength - Fix64.FromInt(2)) * side);
+                    _ponds.Add(new Vector4(point.X.ToFloat(), point.Y.ToFloat(), 4.6f, 4.6f));
+                }
             if (map.Outline == null || map.GladeCount == 0) return;
+            int existingPonds = _ponds.Count;
             var rng = DecorRandom(0, 397);
-            for (int attempt = 0; attempt < 96 && _ponds.Count < map.WaterCount + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
+            for (int attempt = 0; attempt < 96 && _ponds.Count < existingPonds + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
             {
                 var glade = map.GetGlade(map.GladeCount >= 3 ? WatersideGlade(map) : attempt % map.GladeCount);
                 float rx = 4 + (float)rng.NextDouble() * 2, rz = 3.5f + (float)rng.NextDouble() * 2;
@@ -489,10 +511,10 @@ namespace Game.View
                 else if (variant.Kind == DecorKind.GrassTuft) grass.Add(i);
             }
             // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
-            for (int group = 0; group < map.GladeCount * 3; group++)
+            for (int group = 0; group < map.GladeCount * 5; group++)
             {
-                var glade = map.GetGlade(group / 3); var rng = DecorRandom(group, 449);
-                var character = CharacterOf(map, group / 3);
+                var glade = map.GetGlade(group / 5); var rng = DecorRandom(group, 449);
+                var character = CharacterOf(map, group / 5);
                 int anchor = character == GladeCharacter.Sunny ? PickDetail(group % 3 == 0 ? bushes : grass, rng)
                     : character == GladeCharacter.Rocky ? PickDetail(rocks, rng)
                     : group % 3 == 0 && log >= 0 ? log

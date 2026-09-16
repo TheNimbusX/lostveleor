@@ -32,8 +32,8 @@ MonoBehaviour:
     - {fileID: 6119621999588281189, guid: 21afede453649224b81533ed33fc6c93, type: 3}
     - {fileID: 7211320218792841495, guid: 575b3258f2d357240b8893773676ab9c, type: 3}
     ObstacleTree: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
-    ForestBandWidth: 16
-    ForestSpacing: 6
+    ForestBandWidth: 22
+    ForestSpacing: 4.5
     SunColor: {r: 1, g: 0.92, b: 0.8, a: 1}
     SunIntensity: 1.25
     SunAngles: {x: 52, y: -35, z: 0}
@@ -146,7 +146,7 @@ MonoBehaviour:
     BoundaryDecorJitter: 0.6
     GroundFillSize: 240
     GroundFillDepthOffset: 0.03
-    PondCount: 3
+    PondCount: 5
     RouteWidth: 2
     RouteClearance: 0.35
     EntryClearance: 3

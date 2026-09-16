@@ -49,6 +49,7 @@ MonoBehaviour:
   Id: 4
   DefaultLifetime: 0.6
   DynamicLine: 0
+  AuthoredRadius: 0
 --- !u!96 &8052486431826096681
 TrailRenderer:
   serializedVersion: 4
