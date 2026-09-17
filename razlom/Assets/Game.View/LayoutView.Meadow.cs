@@ -454,7 +454,7 @@ namespace Game.View
             for (int attempt = 0; attempt < 96 && _ponds.Count < existingPonds + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
             {
                 var glade = map.GetGlade(map.GladeCount >= 3 ? WatersideGlade(map) : attempt % map.GladeCount);
-                float rx = 4 + (float)rng.NextDouble() * 2, rz = 3.5f + (float)rng.NextDouble() * 2;
+                float rx = 5.5f + (float)rng.NextDouble() * 3, rz = 4.8f + (float)rng.NextDouble() * 3;
                 float radius = Mathf.Max(rx, rz) * 1.4f + 3;
                 float angle = (float)rng.NextDouble() * Mathf.PI * 2;
                 float x = glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + radius + 2);

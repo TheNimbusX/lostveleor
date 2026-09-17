@@ -117,6 +117,7 @@ namespace Game.View
             ClearSolids();
             _solidPools = null;
             DisposeMeadow();
+            DisposeFog();
             foreach (var root in _ownedRoots)
                 if (root != null) { root.SetActive(false); DestroyOwned(root); }
             _ownedRoots.Clear();
@@ -288,6 +289,7 @@ namespace Game.View
 
             _decor = new Transform[256];
             _decorVariant = new int[256];
+            _decorRevealed = new bool[256];
         }
 
         private Material PlaceholderMaterial(DecorKind kind)
@@ -313,6 +315,8 @@ namespace Game.View
             }
 
             if (!_initialized) Initialize();
+
+            if (_style.FogOfWar) UpdateFog(_driver.Sim.Entities.Position[Simulation.PlayerId]);
 
             // Карта меняется только при входе в новый Разлом, поэтому плиты
             // перекладываются не каждый кадр.
@@ -371,6 +375,10 @@ namespace Game.View
                 _generation = -1;
                 _depthShown = -1;
                 if (_groundFill != null) _groundFill.SetActive(false);
+                ClearFogPlane();
+                _fogActive = false;
+                _tileRevealed = System.Array.Empty<bool>();
+                _decorRevealed = System.Array.Empty<bool>();
                 return;
             }
 
@@ -418,6 +426,8 @@ namespace Game.View
             BuildRouteTrails(map);
             BuildMeadow(map, cell);
             BuildSolids(map);
+
+            ResetFog(map);
         }
 
         // ---- декор внутри комнат ----
@@ -444,6 +454,10 @@ namespace Game.View
             CollectConnectorPoints(map, placed, cell);
 
             System.Random rng = DecorRandom(placement);
+            // Собственное пятно шума на модуль: кучки подлеска и просветы
+            // вместо ровного случайного разброса — тот же приём, что и в
+            // ScatterForest для внешнего пояса леса, но в масштабе комнаты.
+            float clumpX = (float)rng.NextDouble() * 1000, clumpZ = (float)rng.NextDouble() * 1000;
 
             int cellsInModule = placed.Width * placed.Height;
             float expected = cellsInModule * _style.DecorPerCell;
@@ -454,13 +468,15 @@ namespace Game.View
             // Отбраковка точки рядом с коннектором — попытка, а не гарантия:
             // на тесном модуле честнее пропустить один куст, чем закрутиться
             // в бесконечном переборе точек, которых физически может не быть.
-            const int MaxAttemptsPerItem = 6;
+            const int MaxAttemptsPerItem = 10;
             for (int i = 0; i < count; i++)
             {
                 for (int attempt = 0; attempt < MaxAttemptsPerItem; attempt++)
                 {
                     float x = Mathf.Lerp(minX, maxX, (float)rng.NextDouble());
                     float z = Mathf.Lerp(minZ, maxZ, (float)rng.NextDouble());
+                    float clump = Mathf.PerlinNoise(x * .21f + clumpX, z * .21f + clumpZ);
+                    if (rng.NextDouble() > Mathf.Lerp(.3f, 1f, Mathf.SmoothStep(0f, 1f, clump))) continue;
                     if (TooCloseToConnector(x, z)) continue;
                     if (map.Outline != null && !map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.One)) continue;
 
@@ -544,6 +560,8 @@ namespace Game.View
             _decor[_decorCount] = instance;
             _decorVariant[_decorCount] = variantIndex;
             _decorCount++;
+            // Итоговая видимость выставляется в SyncFogVisibility в конце Rebuild.
+            instance.gameObject.SetActive(true);
         }
 
         private bool BlocksRoute(int variant, float x, float z)

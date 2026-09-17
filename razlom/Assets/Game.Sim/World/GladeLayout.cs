@@ -155,7 +155,8 @@ namespace Game.Sim
                 int wanted = boss ? 3 : 2;
                 for (int attempt = 0, placed = 0; attempt < 200 && placed < wanted; attempt++)
                 {
-                    var radius = waterRng.NextFix(Fix64.Ratio(16, 10), Fix64.Ratio(26, 10));
+                    // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее.
+                    var radius = waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
                     var point = region.Center + new FixVec2(
                         waterRng.NextFix(-region.Radii.X, region.Radii.X) * Fix64.Ratio(7, 10),
                         waterRng.NextFix(-region.Radii.Y, region.Radii.Y) * Fix64.Ratio(7, 10));

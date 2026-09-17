@@ -18,6 +18,7 @@ namespace Game.View
         CampWalkMap _campMap;
         LayoutMap _riftMap;
         int _riftDepth = -1;
+        LayoutView _layoutView;
         Rect _world, _view;
         Transform _fire;
         readonly List<(Transform anchor, string name, int symbol)> _landmarks = new List<(Transform, string, int)>();
@@ -125,26 +126,30 @@ namespace Game.View
                 }
                 SetTerrain(pixels, resolution);
                 _backdrop.Request(_world, 0f);
+                _layoutView = Object.FindAnyObjectByType<LayoutView>();
             }
             _caption = "Разлом · " + run.Depth;
             var heroWorld = sim.Entities.Position[Simulation.PlayerId];
             _hero = new Vector2(heroWorld.X.ToFloat(), heroWorld.Y.ToFloat());
             DrawBase(panel, chrome, label);
+            DrawFog(panel);
             for (int exit = 0; exit < map.ExitCount; exit++)
             {
                 var point = map.ExitPoint(exit);
+                if (!Revealed(point.X.ToFloat(), point.Y.ToFloat())) continue;
                 Landmark(panel, point.X.ToFloat(), point.Y.ToFloat(), "Выход", 4, Rim, chrome);
             }
             for (int branch = 0; branch < map.RewardBranchCount; branch++)
             {
                 if (run.IsBranchClaimed(branch)) continue;
                 var point = map.CenterOf(map.GetRewardBranch(branch));
+                if (!Revealed(point.X.ToFloat(), point.Y.ToFloat())) continue;
                 Landmark(panel, point.X.ToFloat(), point.Y.ToFloat(), "Награда", 5, new Color(1f, .75f, .36f), chrome);
             }
             for (int d = 0; d < run.DropCount; d++)
             {
                 RunDrop drop = run.GetDrop(d);
-                if (drop.Claimed) continue;
+                if (drop.Claimed || !Revealed(drop.Position.X.ToFloat(), drop.Position.Y.ToFloat())) continue;
                 Landmark(panel, drop.Position.X.ToFloat(), drop.Position.Y.ToFloat(),
                     drop.Offer.Kind == RewardKind.Ability ? "Способность" : "Предмет", 5, new Color(1f, .58f, .30f), chrome);
             }
@@ -153,8 +158,9 @@ namespace Game.View
             {
                 if (!entities.Alive[i]) continue;
                 var world = entities.Position[i];
-                Vector2 point = Project(panel, world.X.ToFloat(), world.Y.ToFloat());
                 if (i == Simulation.PlayerId) continue;
+                if (!Revealed(world.X.ToFloat(), world.Y.ToFloat())) continue;
+                Vector2 point = Project(panel, world.X.ToFloat(), world.Y.ToFloat());
                 if (i == run.BossId)
                     Landmark(panel, world.X.ToFloat(), world.Y.ToFloat(), "Босс", 6, new Color(1f, .35f, .27f), chrome);
                 else if (InsideMap(panel, point))
@@ -226,6 +232,23 @@ namespace Game.View
             }
             else Graphics.Blit(source, _detail, new Vector2(uv.width, uv.height), new Vector2(uv.x, uv.y));
             RenderTexture.active = previous;
+        }
+
+        bool Revealed(float x, float z) => _layoutView == null || _layoutView.IsRevealed(x, z);
+
+        // Рисует ту же маску тумана, что и 3D-сцена: круг вокруг игрока растёт
+        // плавно, без нарезки по комнатам, и совпадает с тем, что видно в игре.
+        void DrawFog(Rect panel)
+        {
+            if (_layoutView == null) return;
+            Texture2D mask = _layoutView.FogMask;
+            if (mask == null) return;
+            float size = _layoutView.FogWorldSize;
+            if (size <= 0f) return;
+            Vector2 origin = _layoutView.FogOrigin;
+            Rect uv = new Rect((_view.x - origin.x) / size, (_view.y - origin.y) / size,
+                _view.width / size, _view.height / size);
+            GUI.DrawTextureWithTexCoords(panel, mask, uv);
         }
 
         void Landmark(Rect panel, float x, float z, string name, int symbol, Color color, HudChrome chrome)
