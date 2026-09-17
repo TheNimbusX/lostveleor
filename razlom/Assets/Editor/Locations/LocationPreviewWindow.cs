@@ -150,6 +150,8 @@ namespace Game.LocationEditor
             }
             if (_stale && _preview.Map != null)
                 EditorGUILayout.HelpBox("Настройки могли измениться. Нажмите «Пересобрать».", MessageType.Info);
+            if (_profile != null && _profile.Style.UseCampLighting)
+                EditorGUILayout.HelpBox("В игре включён свет лагеря. Здесь — технический предпросмотр геометрии и декора; постобработку проверяйте в Play Mode.", MessageType.Info);
             if (!string.IsNullOrEmpty(_error)) EditorGUILayout.HelpBox(_error, MessageType.Error);
 
             using (new EditorGUI.DisabledScope(_profile == null))

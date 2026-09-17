@@ -390,6 +390,7 @@ namespace Game.LocationTests
         [Test]
         public void MeadowLighting_RestoresTheSceneAfterLeaving()
         {
+            _theme.Style.UseCampLighting = false;
             bool fog = RenderSettings.fog;
             Color ambient = RenderSettings.ambientSkyColor;
             var mode = RenderSettings.ambientMode;
@@ -405,6 +406,64 @@ namespace Game.LocationTests
                 Assert.That(RenderSettings.ambientMode, Is.EqualTo(mode));
             }
             finally { state.Restore(); }
+        }
+
+        [TestCase(CampLookStyle.Original)]
+        [TestCase(CampLookStyle.Clean)]
+        public void CampLighting_IsSharedWithoutEnablingCamp_AndRestoresOnExit(CampLookStyle style)
+        {
+            var world = Object.FindAnyObjectByType<SceneWorldView>();
+            bool ownWorld = world == null;
+            if (ownWorld) world = new GameObject("Стенд света").AddComponent<SceneWorldView>();
+            var previousCamp = world.CampRoot;
+            var camp = new GameObject("Тестовый лагерь"); camp.SetActive(false);
+            var sun = new GameObject("Тестовое солнце").AddComponent<Light>();
+            var fill = new GameObject("Тестовое заполнение").AddComponent<Light>();
+            var original = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+            var clean = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+            var lighting = new MeadowLighting();
+            var serialized = new SerializedObject(world);
+            try
+            {
+                serialized.FindProperty("_campRoot").objectReferenceValue = camp;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                var look = camp.AddComponent<CampLookController>();
+                look.Sun = sun; look.Fill = fill; look.Volume = camp.AddComponent<UnityEngine.Rendering.Volume>();
+                look.Original = original; look.Clean = clean; look.Style = style;
+                look.Volume.sharedProfile = original; look.Volume.priority = 17;
+                sun.color = Color.white; sun.shadowStrength = .7f; fill.intensity = .3f;
+                bool fog = RenderSettings.fog; Color sky = RenderSettings.ambientSkyColor;
+                _theme.Style.UseCampLighting = true;
+                for (int cycle = 0; cycle < 2; cycle++)
+                {
+                    lighting.Apply(_theme.Style);
+                    Assert.That(camp.activeSelf, Is.False);
+                    Assert.That(RenderSettings.fog, Is.EqualTo(fog));
+                    Assert.That(RenderSettings.ambientSkyColor, Is.EqualTo(sky));
+                    Assert.That(sun.color, Is.EqualTo(style == CampLookStyle.Original ? Color.white : look.SunColor));
+                    Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : look.FillIntensity));
+                    var volumes = Resources.FindObjectsOfTypeAll<UnityEngine.Rendering.Volume>()
+                        .Where(v => v.isActiveAndEnabled && v.name == "Освещение разлома — профиль лагеря").ToArray();
+                    Assert.That(volumes.Length, Is.EqualTo(1));
+                    Assert.That(volumes[0].sharedProfile, Is.SameAs(look.SelectedProfile));
+                    Assert.That(volumes[0].priority, Is.EqualTo(17));
+                    lighting.Restore();
+                    Assert.That(volumes[0].gameObject.activeSelf, Is.False);
+                    Assert.That(sun.color, Is.EqualTo(Color.white));
+                    Assert.That(sun.shadowStrength, Is.EqualTo(.7f));
+                    Assert.That(fill.intensity, Is.EqualTo(.3f));
+                }
+                Assert.That(look.Volume.sharedProfile, Is.SameAs(original));
+            }
+            finally
+            {
+                lighting.Dispose();
+                serialized.FindProperty("_campRoot").objectReferenceValue = previousCamp;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                Object.DestroyImmediate(camp); Object.DestroyImmediate(sun.gameObject); Object.DestroyImmediate(fill.gameObject);
+                Object.DestroyImmediate(original); Object.DestroyImmediate(clean);
+                if (ownWorld) Object.DestroyImmediate(world.gameObject);
+            }
         }
 
         [Test]

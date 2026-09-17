@@ -25,6 +25,9 @@ namespace Game.View
         public GameObject ObstacleTree;
         [Range(0, 30)] public float ForestBandWidth = 16;
         [Range(4, 12)] public float ForestSpacing = 6;
+        [InspectorName("Освещение как в лагере")]
+        [Tooltip("Использовать свет сцены и выбранную постобработку CampLookController. Цвета солнца и тумана ниже применяются при выключенном переключателе.")]
+        public bool UseCampLighting;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
         [Range(0.1f, 3)] public float SunIntensity = 1.25f;
         public Vector3 SunAngles = new Vector3(52, -35, 0);

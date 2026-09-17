@@ -31,6 +31,14 @@ namespace Game.View
         CampLookStyle _applied;
         bool _captured;
         public bool HasCaptured => _captured;
+        public VolumeProfile SelectedProfile => Style switch
+        {
+            CampLookStyle.Original => Original,
+            CampLookStyle.Painterly => Painterly,
+            CampLookStyle.Film => Film,
+            CampLookStyle.Aces => Aces,
+            _ => Clean
+        };
 
         void Capture()
         {
@@ -58,14 +66,7 @@ namespace Game.View
 
         void Apply()
         {
-            VolumeProfile profile = Style switch
-            {
-                CampLookStyle.Original => Original,
-                CampLookStyle.Painterly => Painterly,
-                CampLookStyle.Film => Film,
-                CampLookStyle.Aces => Aces,
-                _ => Clean
-            };
+            VolumeProfile profile = SelectedProfile;
             if (profile == null) return;
             bool original = Style == CampLookStyle.Original;
             Sun.color = original ? _sunColor : SunColor;

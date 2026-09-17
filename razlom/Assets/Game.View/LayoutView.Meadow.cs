@@ -38,6 +38,7 @@ namespace Game.View
         private void DisposeMeadow()
         {
             ClearMeadow();
+            _meadowLighting.Dispose();
             foreach (var mesh in _meadowMeshes) DestroyOwned(mesh);
             _meadowMeshes.Clear();
             DestroyOwned(_campSurfaceMap); _campSurfaceMap = null; _campSurfacePixels = null;
@@ -499,17 +500,22 @@ namespace Game.View
             if (map.Outline == null || _style.ForestBandWidth <= 0
                 || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) return;
             var rocks = new List<int>(); var bushes = new List<int>(); var grass = new List<int>();
-            int log = -1, stump = -1;
+            int log = -1, stump = -1, bridge = -1, treehouse = -1;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 var variant = _style.DecorVariants[i];
-                if (variant.Weight <= 0 || variant.Prefab == null) continue;
+                if (variant.Prefab == null) continue;
+                // Мост и домик расставляются явно ниже, а не через взвешенный пул.
+                if (variant.Prefab.name == "CreatingBridge") { bridge = i; continue; }
+                if (variant.Prefab.name == "MeadowTreehouse") { treehouse = i; continue; }
+                if (variant.Weight <= 0) continue;
                 if (variant.Prefab.name == "MeadowFallenLog") log = i;
                 else if (variant.Prefab.name == "CreatingStump") stump = i;
                 else if (variant.Kind == DecorKind.Rock) rocks.Add(i);
                 else if (variant.Kind == DecorKind.Bush) bushes.Add(i);
                 else if (variant.Kind == DecorKind.GrassTuft) grass.Add(i);
             }
+            if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
             // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
             for (int group = 0; group < map.GladeCount * 5; group++)
             {
@@ -556,6 +562,41 @@ namespace Game.View
                     var point = new Vector2(pond.x + Mathf.Cos(angle) * (pond.z * 1.4f + margin),
                         pond.y + Mathf.Sin(angle) * (pond.w * 1.4f + margin));
                     TryForestDetail(map, variant, point, rng);
+                }
+                // Небольшой мостик-настил у берега части прудов, не пересекающий воду.
+                if (bridge >= 0 && rng.NextDouble() < .45)
+                {
+                    float angle = start + 3.3f;
+                    float margin = _decorRadii[bridge] + .3f;
+                    var point = new Vector2(pond.x + Mathf.Cos(angle) * (pond.z * 1.4f + margin),
+                        pond.y + Mathf.Sin(angle) * (pond.w * 1.4f + margin));
+                    if (TryForestDetail(map, bridge, point, rng))
+                        _decor[_decorCount - 1].rotation = Quaternion.LookRotation(
+                            new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)), Vector3.up);
+                }
+            }
+        }
+
+        // Разовый ориентир: не более одного домика на карту, только на светлой поляне,
+        // подальше от воды и маршрутов. DecorRandom — визуальный поток, RNG симуляции не трогает.
+        private void PlaceTreehouseLandmark(LayoutMap map, int treehouse)
+        {
+            if (map.GladeCount == 0) return;
+            var rng = DecorRandom(0, 733);
+            int start = rng.Next(map.GladeCount);
+            for (int offset = 0; offset < map.GladeCount; offset++)
+            {
+                int index = (start + offset) % map.GladeCount;
+                if (map.GladeCount >= 3 && CharacterOf(map, index) != GladeCharacter.Sunny) continue;
+                var glade = map.GetGlade(index);
+                for (int attempt = 0; attempt < 24; attempt++)
+                {
+                    float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                    float spread = (float)rng.NextDouble() * .35f;
+                    var point = new Vector2(
+                        glade.Center.X.ToFloat() + Mathf.Cos(angle) * glade.Radii.X.ToFloat() * spread,
+                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * glade.Radii.Y.ToFloat() * spread);
+                    if (TryForestDetail(map, treehouse, point, rng)) return;
                 }
             }
         }
