@@ -78,6 +78,8 @@ namespace Game.Sim
                 {
                     Directions.Step((Direction)d, out int dx, out int dy);
                     if (!_indices.TryGetValue(Key(c.X + dx, c.Y + dy), out int next) || _distance[next] >= 0) continue;
+                    // Берег может пересечь ребро между двумя свободными центрами клеток.
+                    if (map.Outline != null && !map.CanTravel(c.Center, _cells[next].Center, Fix64.Ratio(9, 10))) continue;
                     _distance[next] = _distance[current] + 1;
                     _parent[next] = current;
                     queue[tail++] = next;

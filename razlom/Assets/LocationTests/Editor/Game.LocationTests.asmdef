@@ -1,6 +1,6 @@
 {
     "name": "Game.LocationTests",
-    "references": ["Game.Sim", "Game.Data", "Game.View", "Game.LocationEditor", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+    "references": ["Game.Sim", "Game.Data", "Game.View", "Game.LocationEditor", "UnityEngine.TestRunner", "UnityEditor.TestRunner", "Unity.RenderPipelines.Core.Runtime"],
     "includePlatforms": ["Editor"],
     "overrideReferences": true,
     "precompiledReferences": ["nunit.framework.dll"],

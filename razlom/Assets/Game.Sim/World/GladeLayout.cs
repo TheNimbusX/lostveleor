@@ -141,14 +141,22 @@ namespace Game.Sim
             int exit = Place(entrance, middle, (count - 1) * (height + eh) + height, boss ? arena : previous);
             links.Add((previousCenter, map.CenterOf(exit), Fix64.Ratio(22, 10)));
             // Water is a hole in the actual floor, so movement, navigation and rendering agree.
+            var rivers = new List<LayoutRiver>();
+            var riverRng = new Pcg32(seed, 0x5249564552UL);
+            var acrossRiver = Rotate(new FixVec2(Fix64.One, Fix64.Zero), turn);
+            for (int g = 1; g < count; g += 2)
+                rivers.Add(new LayoutRiver((regions[g - 1].Center + regions[g].Center) / Fix64.FromInt(2),
+                    acrossRiver, riverRng.NextFix(Fix64.One, Fix64.FromInt(3))));
+            map.SetRivers(rivers.ToArray());
             var water = new List<LayoutObstacle>();
             var waterRng = new Pcg32(seed, 0x5741544552UL);
             foreach (var region in regions)
             {
-                int wanted = boss ? 2 : 1;
-                for (int attempt = 0, placed = 0; attempt < 120 && placed < wanted; attempt++)
+                int wanted = boss ? 3 : 2;
+                for (int attempt = 0, placed = 0; attempt < 200 && placed < wanted; attempt++)
                 {
-                    var radius = waterRng.NextFix(Fix64.FromInt(2), Fix64.FromInt(3));
+                    // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее.
+                    var radius = waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
                     var point = region.Center + new FixVec2(
                         waterRng.NextFix(-region.Radii.X, region.Radii.X) * Fix64.Ratio(7, 10),
                         waterRng.NextFix(-region.Radii.Y, region.Radii.Y) * Fix64.Ratio(7, 10));
@@ -163,6 +171,8 @@ namespace Game.Sim
                     }
                     foreach (var link in links)
                         if (Corridor(point, link.A, link.B, radius + link.Radius + Fix64.FromInt(2))) clear = false;
+                    foreach (var river in rivers)
+                        if (river.ContainsWater(point, radius + Fix64.FromInt(3))) clear = false;
                     foreach (var other in water)
                         if (FixVec2.Distance(point, other.Center) < radius + other.Radius + Fix64.FromInt(4)) clear = false;
                     if (!clear) continue;
@@ -171,6 +181,7 @@ namespace Game.Sim
             }
             Func<FixVec2, bool> contour = point =>
             {
+                foreach (var river in rivers) if (river.Blocks(point)) return false;
                 foreach (var pond in water)
                     if (FixVec2.DistanceSq(point, pond.Center) <= pond.Radius * pond.Radius) return false;
                 for (int i = 0; i < regions.Length; i++)

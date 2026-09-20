@@ -176,6 +176,32 @@ namespace Game.LocationEditor
             EditorUtility.SetDirty(theme); EditorUtility.SetDirty(theme.Gameplay); AssetDatabase.SaveAssets();
         }
 
+        [MenuItem("Разлом/Локации/Добавить мост, забор, траву и домик из Creating", priority = 26)]
+        public static void AddCreatingExtras()
+        {
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingFence"
+                || v.Prefab.name == "CreatingBridge" || v.Prefab.name == "CreatingGrass"
+                || v.Prefab.name == "MeadowTreehouse"));
+            var fence = PrepareImported("CreatingFence", "wooden_fence", 1f, false);
+            var bridge = PrepareImported("CreatingBridge", "wooden bridge", 2.2f, true);
+            var grass = Prepare("CreatingGrass", "Assets/Art/Meadow/Creating/grass/grass.glb", .3f, false);
+            var treehouse = Prepare("MeadowTreehouse",
+                "Assets/Art/Meadow/Creating/treehouse/storybook+treehouse+3d+model.glb", 6.5f, false);
+            variants.Add(Variant(fence, DecorKind.Rock, .5f, true, .85f, 1.15f));
+            // Мост и домик расставляются явно в LayoutView.Meadow (пруды / одна светлая поляна);
+            // нулевой вес не даёт им попасть во взвешенные общие и граничные пулы.
+            variants.Add(Variant(bridge, DecorKind.Rock, 0f, false, .9f, 1.1f));
+            variants.Add(Variant(grass, DecorKind.GrassTuft, 3f, false, .8f, 1.3f));
+            variants.Add(Variant(treehouse, DecorKind.Rock, 0f, false, .95f, 1.05f));
+            theme.Style.DecorVariants = variants.ToArray();
+            theme.Style.Validate();
+            EditorUtility.SetDirty(theme);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Добавлены забор, мост, трава и домик на дереве из Creating.");
+        }
+
         private static GameObject PrepareImported(string name, string category, float size, bool footprint)
         {
             string folder = "Assets/Art/Meadow/Creating/" + category;

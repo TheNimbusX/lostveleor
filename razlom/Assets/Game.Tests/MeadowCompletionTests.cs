@@ -1,4 +1,4 @@
-#if UNITY_5_3_OR_NEWER
+﻿#if UNITY_5_3_OR_NEWER
 using Game.Data;
 using Game.Sim;
 using NUnit.Framework;
@@ -119,9 +119,12 @@ namespace Game.Tests
             var session = Session(51);
             for (int level = 1; level < 10; level++) { ReachReward(session); Choose(session); }
             ReachReward(session);
+            int rewardsBeforeLeaving = session.Run.TakenRewardCount;
             session.Step(new InputFrame { Command = (byte)RunCommand.Leave });
             Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Left));
-            Assert.That(session.Run.TakenRewardCount, Is.EqualTo(9));
+            Assert.That(session.LastRun.RiftsCleared, Is.EqualTo(10), "Босс убит, но финальная награда не принята");
+            // Добыча элитных врагов тоже учитывается, но выход не выдаёт финальную награду.
+            Assert.That(session.Run.TakenRewardCount, Is.EqualTo(rewardsBeforeLeaving));
         }
 
         [Test]

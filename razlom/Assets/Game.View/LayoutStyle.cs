@@ -25,6 +25,9 @@ namespace Game.View
         public GameObject ObstacleTree;
         [Range(0, 30)] public float ForestBandWidth = 16;
         [Range(4, 12)] public float ForestSpacing = 6;
+        [InspectorName("Освещение как в лагере")]
+        [Tooltip("Использовать свет сцены и выбранную постобработку CampLookController. Цвета солнца и тумана ниже применяются при выключенном переключателе.")]
+        public bool UseCampLighting;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
         [Range(0.1f, 3)] public float SunIntensity = 1.25f;
         public Vector3 SunAngles = new Vector3(52, -35, 0);
@@ -94,6 +97,10 @@ namespace Game.View
                  "Без зазора куст мог бы встать прямо в проходе между комнатами.")]
         public float DecorConnectorMargin = 1.6f;
 
+        [Header("Туман войны")]
+        [Tooltip("Комната скрыта (пол и декор), пока игрок не зайдёт в неё; открытая комната остаётся видимой.")]
+        public bool FogOfWar = true;
+
         [Header("Граница локации")]
         // Стен-заглушек больше нет: IsWalkable в Game.Sim и так не пускает
         // игрока дальше занятых клеток — рисовать это ещё и кубом было
@@ -103,6 +110,8 @@ namespace Game.View
         [Tooltip("Вероятность декора на каждом открытом крае клетки.")]
         [Range(0f, 1f)]
         public float BoundaryDecorChance = 0.55f;
+        [Tooltip("Шаг кустарника вдоль непроходимого контура, метры.")]
+        [Range(1.2f, 3f)] public float BoundarySpacing = 1.6f;
 
         [Tooltip("Насколько декор выступает наружу от края клетки, метры.")]
         public float BoundaryDecorOutset = 0.6f;
@@ -121,6 +130,8 @@ namespace Game.View
         [Range(0.8f, 2f)] public float RouteWidth = 1.6f;
         [Tooltip("Дополнительный зазор между краем тропы и габаритами декора.")]
         public float RouteClearance = 0.35f;
+        [Tooltip("Максимальное отклонение тропы; каждый изгиб проверяется по проходимости.")]
+        [Range(0, 4)] public float TrailBend = 2.8f;
         [Tooltip("Свободное от декора место вокруг точки появления, метры.")]
         public float EntryClearance = 3f;
         // Retained for serialized profiles from before walkable route trails.

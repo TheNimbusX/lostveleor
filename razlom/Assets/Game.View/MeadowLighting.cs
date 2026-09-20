@@ -15,9 +15,14 @@ namespace Game.View
         private Camera _camera;
         private CameraClearFlags _clearFlags;
         private Quaternion _rotation;
+        private Volume _campVolume;
+        private Light _fill;
+        private float _fillIntensity, _shadowStrength;
+        private bool _usingCamp;
         public void Apply(LayoutStyle style)
         {
             if (_active) return;
+            if (style.UseCampLighting && ApplyCamp()) return;
             _active = true;
             _fog = RenderSettings.fog; _fogMode = RenderSettings.fogMode;
             _fogColor = RenderSettings.fogColor; _start = RenderSettings.fogStartDistance; _end = RenderSettings.fogEndDistance;
@@ -49,12 +54,61 @@ namespace Game.View
         {
             if (!_active) return;
             _active = false;
+            if (_usingCamp)
+            {
+                _usingCamp = false;
+                if (_campVolume != null) _campVolume.gameObject.SetActive(false);
+                if (_sun != null) { _sun.color = _sunColor; _sun.shadowStrength = _shadowStrength; }
+                if (_fill != null) _fill.intensity = _fillIntensity;
+                return;
+            }
             RenderSettings.fog = _fog; RenderSettings.fogMode = _fogMode; RenderSettings.fogColor = _fogColor;
             RenderSettings.fogStartDistance = _start; RenderSettings.fogEndDistance = _end;
             RenderSettings.ambientMode = _ambientMode; RenderSettings.ambientIntensity = _ambientIntensity;
             RenderSettings.ambientSkyColor = _sky; RenderSettings.ambientEquatorColor = _equator; RenderSettings.ambientGroundColor = _ground;
             if (_sun != null) { _sun.color = _sunColor; _sun.intensity = _sunIntensity; _sun.transform.rotation = _rotation; }
             if (_camera != null) { _camera.backgroundColor = _background; _camera.clearFlags = _clearFlags; }
+        }
+
+        private bool ApplyCamp()
+        {
+            var world = Object.FindAnyObjectByType<SceneWorldView>();
+            var look = world != null && world.CampRoot != null
+                ? world.CampRoot.GetComponentInChildren<CampLookController>(true) : null;
+            if (look == null || look.Sun == null || look.Fill == null || look.Volume == null || look.SelectedProfile == null)
+                return false;
+            _sun = look.Sun; _fill = look.Fill;
+            _sunColor = _sun.color; _shadowStrength = _sun.shadowStrength; _fillIntensity = _fill.intensity;
+            if (look.Style != CampLookStyle.Original)
+            {
+                _sun.color = look.SunColor; _sun.shadowStrength = look.ShadowStrength;
+                _fill.intensity = look.FillIntensity;
+            }
+            // Объекты лагеря остаются выключенными; переиспользуется только его профиль Volume.
+            if (_campVolume == null)
+            {
+                var root = new GameObject("Освещение разлома — профиль лагеря") { hideFlags = HideFlags.DontSave };
+                _campVolume = root.AddComponent<Volume>();
+            }
+            _campVolume.gameObject.layer = look.Volume.gameObject.layer;
+            _campVolume.isGlobal = true;
+            _campVolume.priority = look.Volume.priority;
+            _campVolume.weight = look.Volume.weight;
+            _campVolume.sharedProfile = look.SelectedProfile;
+            _campVolume.gameObject.SetActive(true);
+            _active = _usingCamp = true;
+            if (Application.isPlaying)
+                Debug.Log($"[rift-light] camp={look.Style} profile={look.SelectedProfile.name} sun={_sun.intensity} fill={_fill.intensity}");
+            return true;
+        }
+
+        public void Dispose()
+        {
+            Restore();
+            if (_campVolume == null) return;
+            if (Application.isPlaying) Object.Destroy(_campVolume.gameObject);
+            else Object.DestroyImmediate(_campVolume.gameObject);
+            _campVolume = null;
         }
     }
 }

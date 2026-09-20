@@ -1374,15 +1374,16 @@ namespace Game.View
 
         /// <summary>
         /// КВАНТОВАНИЕ МИРОВОЙ КООРДИНАТЫ — та самая граница симуляции.
-        /// Шаг 1/1024, границы — размер арены. Ни одно float-значение
+        /// Шаг 1/1024. Границы определяет карта, а не размер старой арены.
+        /// Ни одно float-значение
         /// не пересекает эту черту неокруглённым.
         /// </summary>
         private static Fix64 QuantizePosition(float value)
         {
             const int Steps = 1024;
-            const float Limit = 64f; // половина стороны арены, см. SpatialHash
-            int q = Mathf.RoundToInt(Mathf.Clamp(value, -Limit, Limit) * Steps);
-            return Fix64.Ratio(q, Steps);
+            if (float.IsNaN(value) || float.IsInfinity(value)) return Fix64.Zero;
+            return Fix64.FromDouble(System.Math.Round((double)value * Steps,
+                System.MidpointRounding.ToEven) / Steps);
         }
 
         /// <summary>

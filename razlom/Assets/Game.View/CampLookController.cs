@@ -82,6 +82,17 @@ namespace Game.View
         CampLookStyle _applied;
         bool _captured;
         public bool HasCaptured => _captured;
+        // MeadowLighting reads the active camp grade while the camp root is disabled.
+        // Keep this selection in one place so the rift gets the same Golden Evening fallback.
+        public VolumeProfile SelectedProfile => Style switch
+        {
+            CampLookStyle.Original => Original,
+            CampLookStyle.Painterly => Painterly,
+            CampLookStyle.Film => Film,
+            CampLookStyle.Aces => Aces,
+            CampLookStyle.GoldenEvening => GoldenEvening != null ? GoldenEvening : RuntimeEvening(),
+            _ => Clean
+        };
 
         void Capture()
         {

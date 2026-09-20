@@ -85,6 +85,10 @@ namespace Game.Sim
         public GladeRegion GetGlade(int index) => _glades[index];
         internal void SetGlades(GladeRegion[] regions) => _glades = regions;
         private LayoutObstacle[] _water = System.Array.Empty<LayoutObstacle>();
+        private LayoutRiver[] _rivers = System.Array.Empty<LayoutRiver>();
+        public int RiverCount => _rivers.Length;
+        public LayoutRiver GetRiver(int index) => _rivers[index];
+        internal void SetRivers(LayoutRiver[] rivers) => _rivers = rivers;
         public int WaterCount => _water.Length;
         public LayoutObstacle GetWater(int index) => _water[index];
         internal void SetWater(LayoutObstacle[] water) => _water = water;
@@ -120,6 +124,7 @@ namespace Game.Sim
         public void Clear()
         {
             Outline = null;
+            _rivers = System.Array.Empty<LayoutRiver>();
             _glades = System.Array.Empty<GladeRegion>();
             _water = System.Array.Empty<LayoutObstacle>();
             _obstacles = System.Array.Empty<LayoutObstacle>();
@@ -403,6 +408,7 @@ namespace Game.Sim
         {
             ulong hash = Hashing.Offset;
             Outline?.MixHash(ref hash);
+            foreach (var river in _rivers) river.MixHash(ref hash);
             Hashing.Mix(ref hash, _placedCount);
 
             for (int i = 0; i < _placedCount; i++)

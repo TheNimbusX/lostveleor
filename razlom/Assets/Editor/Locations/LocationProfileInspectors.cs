@@ -15,6 +15,8 @@ namespace Game.LocationEditor
             EditorGUILayout.HelpBox("Изменение набора модулей, stableKey, размеров, коннекторов и весов меняет карты на прежних сидах. Параметры уровней влияют на генерацию и спавн. Сохраните профиль вместе с реплеями.", MessageType.Warning);
             DrawDefaultInspector();
             var location = (LocationProfileAsset)target;
+            if (location.NaturalGlade)
+                EditorGUILayout.HelpBox("Для лесных полян Rooms задаёт размер схемы: до 13 — 3 поляны, 14–17 — 4, от 18 — 5. Выход один, веток к тайникам две; Exits, Loops и Reward Branches здесь не управляют схемой. Форма полян, русла и игровые пруды пока настраиваются в GladeLayout.cs.", MessageType.Info);
             if (location.Encounters != null)
             {
                 EditorGUILayout.HelpBox("Состав и количество врагов задаёт профиль встреч. Min/Max Enemies уровней не используются; Enemy Health задаёт базовое здоровье Хранителя.", MessageType.Info);
