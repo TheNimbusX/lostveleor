@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using Game.View;
 using UnityEditor;
@@ -29,12 +29,12 @@ public static partial class RazlomPelagVfxAssetBuilder
     // 36: росчерки за якорем и героем идут светящимся проходом
     // (Razlom/Pelag Glow, Blend SrcAlpha One). Обычная краска ярче фона
     // стать не может, поэтому следы оставались плоскими при любом размере.
-    private const int LibraryVersion = 48;
+    private const int LibraryVersion = 49;
     private const int FlipbookTiles = 4;
     private const int FlipbookFrames = FlipbookTiles * FlipbookTiles;
     private const int ChainLinkCount = 96;
     // One continuous lasso needs links on both the outgoing side and the far arc.
-    private const int EffectTriangleBudget = 14000;
+    private const int EffectTriangleBudget = 42000;
     private const int RuntimeGeometryAllowance = 64;
     private const float FlipbookFramesPerSecond = 30f;
     private const float FlipbookLifetime = FlipbookFrames / FlipbookFramesPerSecond;
@@ -107,11 +107,11 @@ public static partial class RazlomPelagVfxAssetBuilder
         "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorGrip.fbx";
 
     /// <summary>
-    /// Одно оптимизированное звено для PelagChainLinkStrip (96 треугольников).
-    /// Двадцать четыре звена вместе с головой якоря остаются ниже 5k tris.
+    /// Овальное звено с UV и сглаженной сталью (384 треугольника).
+    /// Полная цепь одного героя вместе с головой — менее 42k tris.
     /// </summary>
     private const string ChainLinkPath =
-        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_ChainLink.fbx";
+        "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_ChainLink_Painted.fbx";
     private const string HovlKnifeHitPath =
         "Assets/Hovl Studio/AOE Magic spells Vol.1/Prefabs/Knife hit.prefab";
     private const string HovlStoneSlashPath =
@@ -282,6 +282,7 @@ public static partial class RazlomPelagVfxAssetBuilder
 
         BuildAnchorLeapEffects(prefabs);
         CreateLibrary(prefabs);
+        PelagAnchorSlamContactSetup.Install();
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log($"[Pelag VFX] Созданы 15 pooled-prefabs, 18 материалов и AbilityVfxLibrary v{LibraryVersion}.");
@@ -389,7 +390,11 @@ public static partial class RazlomPelagVfxAssetBuilder
         material.name = "M_AnchorMetal";
         material.enableInstancing = true;
         if (material.HasProperty("_BaseColor"))
-            material.SetColor("_BaseColor", new Color(0.45f, 0.42f, 0.36f, 1f));
+            material.SetColor("_BaseColor", Color.white);
+        // Сохраняем рисованную сталь исходного оружия и его UV, включая летящую голову.
+        if (material.HasProperty("_BaseMap"))
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(
+                "Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorChain_BaseColor.jpg"));
         if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0.08f);
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.42f);
         EditorUtility.SetDirty(material);
@@ -908,7 +913,7 @@ public static partial class RazlomPelagVfxAssetBuilder
                 Bounds bounds = renderers[0].bounds;
                 foreach (Renderer renderer in renderers) bounds.Encapsulate(renderer.bounds);
                 float size = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
-                float scale = 0.62f / Mathf.Max(0.001f, size);
+                float scale = 0.94f / Mathf.Max(0.001f, size);
                 anchor.transform.localScale = Vector3.one * scale;
                 anchor.transform.localPosition = -bounds.center * scale;
             }
@@ -1243,7 +1248,7 @@ public static partial class RazlomPelagVfxAssetBuilder
         Vector3 axis = size.x > size.y && size.x > size.z ? Vector3.right
             : size.y > size.z ? Vector3.up : Vector3.forward;
         Quaternion rotation = Quaternion.FromToRotation(axis, Vector3.forward);
-        float scale = 0.16f / Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+        float scale = 0.17f / Mathf.Max(size.x, Mathf.Max(size.y, size.z));
         Vector3[] vertices = normalized.vertices;
         for (int i = 0; i < vertices.Length; i++) vertices[i] = rotation * (vertices[i] - best.bounds.center) * scale;
         normalized.vertices = vertices;

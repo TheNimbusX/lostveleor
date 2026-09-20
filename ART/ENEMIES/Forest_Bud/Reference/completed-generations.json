@@ -1,0 +1,85 @@
+{
+  "items": [
+    {
+      "id": "85a433a5-f2ee-425e-a197-beee6c258f56",
+      "type": "image",
+      "status": "completed",
+      "model": "gpt_image_2_5",
+      "params": {
+        "prompt": "One production-ready top-down ground danger telegraph texture for a stylized painterly 3D fantasy roguelike. Perfect orthographic overhead view, isolated on TRUE transparent alpha, square 1024. A thin but emphatic circular red-coral warning ring, radius 420px, 5 softly tapered organic petal accents smoothly woven along the ring, bright vermilion inner rim and dark carmine outer edging, hand-painted crisp organic shapes with a restrained warm orange highlight, slightly irregular natural botanical surface detail. Readable at 80 screen pixels. Center fully transparent and clear for character visibility. Outside fully transparent. Ring at exactly constant overall outer radius in every direction; botanical variation stays within ring width. No text, numbers, runes, crosshair, UI panels, skull, frame, perspective, 3D object, floor, large star points, excessive bloom or smoke. This indicates a fruit mortar will land from a crimson flower monster. Premium cohesive painted game VFX, restrained high quality, juicy saturated red. Keep outermost edge inset 10 percent from canvas border.",
+        "aspect_ratio": "1:1",
+        "medias": [],
+        "width": 1024,
+        "height": 1024,
+        "quality": "medium",
+        "resolution": "1k",
+        "model": "flare",
+        "remove_bg": false,
+        "reference_elements": [],
+        "background": "transparent"
+      },
+      "results": {
+        "rawUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260919_122218_85a433a5-f2ee-425e-a197-beee6c258f56.png",
+        "minUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260919_122218_85a433a5-f2ee-425e-a197-beee6c258f56_min.webp"
+      },
+      "createdAt": 1789820538.013372
+    },
+    {
+      "id": "534b1fe5-91f4-4d0f-819c-6047efd52fa9",
+      "type": "video",
+      "status": "completed",
+      "model": "kling3_0",
+      "params": {
+        "prompt": "Silent animation reference for this exact stylized squat quadrupedal fantasy forest creature. Locked 3/4 camera, plain neutral studio backdrop, fixed feet on a ground plane, no camera movement, same body proportions and crimson bud on its back. One coherent attack cycle: brief alive idle; body settles into a deep supported crouch as paws splay and elbows flex, weight remains on grounded feet; fleshy crimson petal bud swells, layered rounded petals unfurl elastically with delayed tips, revealing a closed golden seed cup; creature gives a strong upward body push from its paws and five golden seed fruits sequentially pop upward from its back in a fan at short regular intervals, five small distinct recoil pulses through spine and bud; petals spring softly and settle while the body returns to idle. Keep the creature grounded, no jumping or flying. The flower petals have thickness and flex like living succulent plant tissue, not mechanical flat panels. Body rocks with weight and paw support. Preserve cream stone-bark armour, olive green leaves, crimson petals with cream rims and diamond ornament, black eyes, short sturdy legs. No muzzle flames, no smoke, no magic beams, no sound, no text. All fruits exit above the cup, never through its body.",
+        "aspect_ratio": "1:1",
+        "duration": 5,
+        "medias": [
+          {
+            "role": "start_image",
+            "data": {
+              "id": "6fbecbb3-1ef5-4d5f-8ef2-8b762fafd14a",
+              "type": "image_job",
+              "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260916_230311_6fbecbb3-1ef5-4d5f-8ef2-8b762fafd14a.png"
+            }
+          }
+        ],
+        "width": 720,
+        "height": 720,
+        "multi_shots": false,
+        "multi_prompt": [],
+        "sound": "off",
+        "cfg_scale": 0.5,
+        "mode": "std",
+        "kling_elements": [],
+        "kling_element_ids": [],
+        "multi_shot_mode": "custom",
+        "reference_elements": [],
+        "enhance_prompt": false
+      },
+      "results": {
+        "rawUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260919_122221_534b1fe5-91f4-4d0f-819c-6047efd52fa9.mp4",
+        "thumbnailUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260916_230311_6fbecbb3-1ef5-4d5f-8ef2-8b762fafd14a.png"
+      },
+      "createdAt": 1789820541.855909
+    }
+  ],
+  "jobs": [
+    {
+      "index": 0,
+      "job_id": "85a433a5-f2ee-425e-a197-beee6c258f56",
+      "status": "completed",
+      "type": "image",
+      "model": "gpt_image_2_5",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260919_122218_85a433a5-f2ee-425e-a197-beee6c258f56.png"
+    },
+    {
+      "index": 1,
+      "job_id": "534b1fe5-91f4-4d0f-819c-6047efd52fa9",
+      "status": "completed",
+      "type": "video",
+      "model": "kling3_0",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260919_122221_534b1fe5-91f4-4d0f-819c-6047efd52fa9.mp4"
+    }
+  ],
+  "all_found": true
+}

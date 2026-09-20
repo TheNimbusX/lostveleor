@@ -128,6 +128,12 @@ namespace Game.Sim
                 new AffixDefinition(StableId.Of("affix.fire_resist"), StableId.Of("group.fire_resist"),
                     StatType.FireResist, ModifierOp.Flat, Fix64.Ratio(5, 100), Fix64.Ratio(30, 100),
                     5, 80, both),
+                new AffixDefinition(StableId.Of("affix.ability_speed"), StableId.Of("group.ability_speed"),
+                    StatType.AbilitySpeed, ModifierOp.Flat, Fix64.Ratio(15, 100), Fix64.Ratio(25, 100), 1, 70, both),
+                new AffixDefinition(StableId.Of("affix.cooldown_recovery"), StableId.Of("group.cooldown_recovery"),
+                    StatType.CooldownRecovery, ModifierOp.Flat, Fix64.Ratio(20, 100), Fix64.Ratio(35, 100), 1, 70, both),
+                new AffixDefinition(StableId.Of("affix.lavidium_regen"), StableId.Of("group.lavidium_regen"),
+                    StatType.LavidiumRegen, ModifierOp.Flat, Fix64.One, Fix64.FromInt(3), 1, 70, both),
             };
 
             return new ItemDatabase(bases, affixes);

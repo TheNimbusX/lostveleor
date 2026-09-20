@@ -197,11 +197,11 @@ namespace Game.View
                             // Whoosh leads the shared contact tick; keeping the
                             // lead relative to Simulation avoids drift when the
                             // attack windup is tuned.
-                            _whooshDelay = AttackContactTime *
+                            _whooshDelay = (_driver.Sim.PlayerAttackWindupTicks / (float)Simulation.TicksPerSecond) *
                                 (e.ActionVariant == 1 ? 0.50f : 0.55f);
                             _whooshAttackVariant = e.ActionVariant;
                         }
-                        else Play(Sound.EnemyWarning, 0.6f, 1f, 0f);
+                        else if (_driver.Sim.Entities.Kind[e.Source] != EnemyKind.ForestBud) Play(Sound.EnemyWarning, 0.6f, 1f, 0f);
                         break;
 
                     case SimEventType.Damage:
@@ -213,6 +213,7 @@ namespace Game.View
                         if (e.Target != Simulation.PlayerId)
                         {
                             var kind = _driver.Sim.Entities.Kind[e.Target];
+                            if (kind == EnemyKind.ForestBud) break;
                             // Один акцент на группу смертей, без трёх полных слоёв поверх него.
                             if (Time.time >= _finisherReadyAt)
                             {
@@ -224,6 +225,7 @@ namespace Game.View
                         break;
 
                     case SimEventType.AbilityCast:
+                    case SimEventType.ActionStageStarted:
                         if (e.Source == Simulation.PlayerId)
                         {
                             _anchorImpactAt = _anchorLandAt = -1f;
@@ -239,7 +241,7 @@ namespace Game.View
                             {
                                 // Даже промах имеет контакт с землёй; попадания во врагов звучат по Damage.
                                 _anchorImpactAt = Time.time + PelagAbilityTiming.LeapWindup;
-                                _anchorLandAt = Time.time + PelagAbilityTiming.LeapArrival;
+                                _anchorLandAt = Time.time + (_driver.Sim.PlayerAction.ContactTick - _driver.Sim.Tick + 1) / (float)Simulation.TicksPerSecond;
                             }
                             if (IsWhirlwindSlot(e.Amount))
                             {
@@ -250,7 +252,7 @@ namespace Game.View
                                 _whooshDelay = -1f;
                                 // Пик записи 0,21 с совмещается с контактом Вихря.
                                 Play(Sound.Whirlwind, WhirlwindVolume, 1f, 0f,
-                                    Mathf.Max(0f, Simulation.WhirlwindContactDelayTicks / (float)Simulation.TicksPerSecond - .21f));
+                                    Mathf.Max(0f, (_driver.Sim.PlayerAction.ContactTick - _driver.Sim.PlayerAction.StartTick) / (float)Simulation.TicksPerSecond - .21f));
                                 _whirlwindEndAt = Time.time + CharacterAnimatorView.WhirlwindClipDuration;
                             }
                             else
@@ -276,6 +278,10 @@ namespace Game.View
                             Play(Sound.BlazeFire, AbilityVolume, 1f, 0f);
                             _blazeBurning = true;
                         }
+                        break;
+                    case SimEventType.BackblastBurst:
+                    case SimEventType.FlaskBurst:
+                        if (e.Source == Simulation.PlayerId) Play(Sound.BlazeFire, AbilityVolume * .75f, 1.1f, 0f);
                         break;
                 }
             }
@@ -362,6 +368,7 @@ namespace Game.View
             { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); return; }
 
             if (e.Source != Simulation.PlayerId) return;
+            if (_driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestBud) return;
 
             // Подтверждённая смерть в этом кадре получает один финальный контакт.
             if (!_driver.Sim.Entities.Alive[e.Target]) return;
@@ -424,7 +431,8 @@ namespace Game.View
             if (build == null) return Sound.Cast;
 
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return Sound.ChainStep;
-            if (build.DefinitionId == AbilityDefinition.DashId) return Sound.Dash;
+            if (build.DefinitionId == AbilityDefinition.DashId || build.DefinitionId == AbilityDefinition.SkewerId
+                || build.DefinitionId == AbilityDefinition.BackblastId) return Sound.Dash;
             if (build.DefinitionId == AbilityDefinition.BlazeId)
             { _blazePreparing = true; return Sound.BlazePrepare; }
             return Sound.Cast;

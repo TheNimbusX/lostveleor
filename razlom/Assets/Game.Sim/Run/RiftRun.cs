@@ -60,6 +60,7 @@ namespace Game.Sim
 
         public CombatFeelCaptureTier CombatFeelShowcase { get; set; }
         public int CombatFeelEnemyCount { get; set; } = 1;
+        public int ForestBudShowcaseCount { get; set; }
 
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
@@ -233,7 +234,9 @@ namespace Game.Sim
 
             SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             Encounters = null;
-            if (CombatFeelShowcase != CombatFeelCaptureTier.None)
+            if (ForestBudShowcaseCount > 0)
+                Encounters = _sim.SetupForestBudEncounter(_map, SpawnSeed, ForestBudShowcaseCount);
+            else if (CombatFeelShowcase != CombatFeelCaptureTier.None)
                 _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
             else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);

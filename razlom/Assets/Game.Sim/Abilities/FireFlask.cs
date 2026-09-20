@@ -34,11 +34,14 @@ namespace Game.Sim
 
         private int _flaskSlot = -1;
         private int _flaskLandTick = -1;
+        private int _flaskReleaseTick = -1;
         private FixVec2 _flaskTarget;
 
         /// <summary>Летит ли бутылка прямо сейчас. Показу — рисовать её дугу.</summary>
         public bool FlaskInFlight => _flaskSlot >= 0;
         public FixVec2 FlaskTarget => _flaskTarget;
+        public int FlaskReleaseTick => _flaskReleaseTick;
+        public int FlaskLandTick => _flaskLandTick;
 
         /// <summary>Горит ли лужа в этой ячейке. Нужно показу и тестам.</summary>
         public bool FirePoolActive(int index)
@@ -49,7 +52,7 @@ namespace Game.Sim
 
         private void StopFlask()
         {
-            _flaskSlot = _flaskLandTick = -1;
+            _flaskSlot = _flaskLandTick = _flaskReleaseTick = -1;
             _flaskTarget = FixVec2.Zero;
         }
 
@@ -131,7 +134,8 @@ namespace Game.Sim
 
             Fix64 speed = build.Get(AbilityStatType.ProjectileSpeed);
             int flight = speed.Raw > 0 ? (reach / speed).ToInt() : 1;
-            _flaskLandTick = Tick + (flight < 1 ? 1 : flight);
+            _flaskReleaseTick = Tick + AbilityExecutionTicks(6);
+            _flaskLandTick = _flaskReleaseTick + (flight < 1 ? 1 : flight);
         }
 
         private void UpdateFlask()
@@ -235,6 +239,7 @@ namespace Game.Sim
         {
             Hashing.Mix(ref hash, _flaskSlot);
             Hashing.Mix(ref hash, _flaskLandTick);
+            Hashing.Mix(ref hash, _flaskReleaseTick);
             Hashing.Mix(ref hash, _flaskTarget.X);
             Hashing.Mix(ref hash, _flaskTarget.Y);
 

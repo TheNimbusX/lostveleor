@@ -157,7 +157,10 @@ namespace Game.View
                 float width = (panel.width - 30f) * 0.5f;
                 if (GUI.Button(new Rect(panel.x + 10f, panel.y + 34f, width, 40f),
                         "РАЗОБРАТЬ +" + run.SalvageGold, _menuButton))
+                {
+                    GameSound.Play("salvage", .8f);
                     _driver.QueueRunCommand(RunCommand.PickupSalvage);
+                }
                 if (GUI.Button(new Rect(panel.x + 20f + width, panel.y + 34f, width, 40f), "ЗАМЕНИТЬ…", _menuButton))
                     _menuReplacing = true;
                 return true;
@@ -340,7 +343,10 @@ namespace Game.View
 
             Rect salvage = new Rect(panel.x + 28f, top + tileHeight + 16f, panel.width - 56f, 40f);
             if (GUI.Button(salvage, GUIContent.none, _cardButton))
+            {
+                GameSound.Play("salvage", .8f);
                 _driver.QueueRunCommand(RunCommand.SalvageAbility);
+            }
             Fill(salvage, Gold);
             GUI.Label(salvage, "РАЗОБРАТЬ НА " + run.SalvageGold + " ЗОЛОТА", _cardButton);
 
@@ -456,7 +462,8 @@ namespace Game.View
             {
                 RolledAffix affix = item.GetAffix(i);
                 if (text.Length > 0) text += "\n";
-                text += StatTitle(affix.Stat) + "  " + ValueText(affix.Op, affix.Value);
+                bool percentage = affix.Stat == StatType.AbilitySpeed || affix.Stat == StatType.CooldownRecovery;
+                text += StatTitle(affix.Stat) + "  " + ValueText(percentage ? ModifierOp.Increased : affix.Op, affix.Value);
             }
             return text.Length == 0 ? "Без дополнительных свойств" : text;
         }
@@ -472,6 +479,9 @@ namespace Game.View
                 case StatType.MaxHealth: return "МАКС. ЗДОРОВЬЕ";
                 case StatType.Damage: return "УРОН";
                 case StatType.AttackSpeed: return "СКОРОСТЬ АТАКИ";
+                case StatType.AbilitySpeed: return "СКОРОСТЬ ИСПОЛНЕНИЯ";
+                case StatType.CooldownRecovery: return "ВОССТАНОВЛЕНИЕ НАВЫКОВ";
+                case StatType.LavidiumRegen: return "ЛАВИДИЙ В СЕКУНДУ";
                 case StatType.MoveSpeed: return "СКОРОСТЬ ДВИЖЕНИЯ";
                 case StatType.CritChance: return "ШАНС КРИТА";
                 case StatType.CritMultiplier: return "МНОЖИТЕЛЬ КРИТА";

@@ -1,0 +1,34 @@
+{
+  "AnchorSlam": {
+    "frames": 28,
+    "contact": 16
+  },
+  "WreckA": {
+    "frames": 16,
+    "contact": 7
+  },
+  "WreckB": {
+    "frames": 16,
+    "contact": 7
+  },
+  "WreckFinish": {
+    "frames": 19,
+    "contact": 7
+  },
+  "FireFlask": {
+    "frames": 19,
+    "contact": 7
+  },
+  "Skewer": {
+    "frames": 10,
+    "contact": 10
+  },
+  "Backblast": {
+    "frames": 9,
+    "contact": 3
+  },
+  "AnchorLeap": {
+    "frames": 46,
+    "contact": 33
+  }
+}

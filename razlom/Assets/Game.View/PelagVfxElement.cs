@@ -8,7 +8,7 @@ namespace Game.View
     /// Instantiate или создания материалов: всё находится один раз на прогреве.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class PelagVfxElement : MonoBehaviour
+    public sealed partial class PelagVfxElement : MonoBehaviour
     {
         private const string ChainGlintName = "Chain Glint Flipbook";
 
@@ -112,10 +112,12 @@ namespace Game.View
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
             _chainGlint = transform.Find(ChainGlintName);
             _initialScale = transform.localScale;
+            PreparePaidChain();
         }
 
         public void Begin(Vector3 position, Quaternion rotation)
         {
+            _paidChain.Clear(); _paidAccumulator = 0f;
             _chainInitialized = false;
             _bendVelocity = Vector3.zero;
             SetOpacity(1f);
@@ -132,7 +134,7 @@ namespace Game.View
             for (int i = 0; i < _trails.Length; i++)
             {
                 _trails[i].Clear();
-                _trails[i].emitting = true;
+                _trails[i].emitting = !CaptureRig.NoVfx;
             }
 
             for (int i = 0; i < _particles.Length; i++)
@@ -148,8 +150,12 @@ namespace Game.View
         public void SetTrailEmission(bool emitting)
         {
             if(_trails == null) return;
-            foreach(var trail in _trails) trail.emitting=emitting;
+            foreach(var trail in _trails) trail.emitting=emitting && !CaptureRig.NoVfx;
         }
+
+        // Pivot исходной головы находится у проушины, а корень эффекта — в центре меша.
+        public Vector3 AnchorRingPosition => Spinner != null
+            ? Spinner.position + Spinner.up * .035f : transform.position;
 
         public void SetOpacity(float opacity)
         {
@@ -291,6 +297,7 @@ namespace Game.View
 
         public void End()
         {
+            _paidChain.Clear(); _paidAccumulator = 0f;
             foreach (var graph in _graphs) { graph.Stop(); graph.Reinit(); graph.Stop(); }
             for (int i = 0; i < _lines.Length; i++)
             {

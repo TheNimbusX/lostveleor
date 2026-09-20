@@ -67,6 +67,9 @@
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.RenderPipelines.*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\UnityEngine.UI.dll" />
+      <!-- TextMeshPro входит в пакет uGUI и собирается в проект так же. -->
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.TextMeshPro.dll" />
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity*.TestRunner.dll" />
       <Reference Include="%(UnityModuleDll.Filename)">
         <HintPath>%(UnityModuleDll.FullPath)</HintPath>

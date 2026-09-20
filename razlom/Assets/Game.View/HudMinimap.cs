@@ -26,7 +26,21 @@ namespace Game.View
         float _hoverDistance;
         Vector2 _hero;
         public Vector2 Pointer;
-        const float Zoom = 1.819f;
+
+        /// <summary>
+        /// Только карта и метки, без собственной рамки и подписи: их рисует
+        /// префаб боевого HUD, чтобы оформление правилось в Unity.
+        /// </summary>
+        public bool Bare;
+        public string Caption => _caption;
+        /// <summary>Картинка карты для RawImage префаба в режиме <see cref="Bare"/>.</summary>
+        public Texture MapTexture => _detail != null ? _detail : (Texture)_terrain;
+        /// <summary>Приближение содержимого; в Canvas-HUD задаётся полем префаба.</summary>
+        public float Zoom = 1.819f;
+        /// <summary>Подложка меток (синий круг с кантом) из UI-пака; без неё — прежние метки.</summary>
+        public Texture2D MarkerRing;
+        /// <summary>Стрелка героя из UI-пака; без неё — прежняя процедурная.</summary>
+        public Texture2D PlayerArrow;
         static readonly Color Rim = new Color(1f, .95f, .81f, 1f);
         static readonly Color Ground = new Color(.36f, .37f, .20f, .82f);
         static readonly Color Path = new Color(.64f, .57f, .38f, .88f);
@@ -182,6 +196,8 @@ namespace Game.View
                 _captionLabel.normal.textColor = Rim;
             }
             UpdateView();
+            // Картинку и её обрезку под рамку показывает RawImage под маской префаба.
+            if (Bare) return;
             chrome.Shape(new Rect(panel.x, panel.y + 2f, panel.width, panel.height), new Color(.13f, .13f, .08f, .25f), 24f);
             if (_detail != null)
                 GUI.DrawTexture(panel, _detail, ScaleMode.StretchToFill, true, 0f, Color.white, 0f, panel.width * .125f);
@@ -232,6 +248,28 @@ namespace Game.View
         {
             Vector2 point = Project(panel, x, z);
             bool nearby = InsideMap(panel, point);
+            if (MarkerRing != null)
+            {
+                if (!nearby)
+                {
+                    Vector2 away = point - panel.center;
+                    float reach = panel.width * .5f - 17f;
+                    point = panel.center + away * (reach / Mathf.Max(Mathf.Abs(away.x), Mathf.Abs(away.y)));
+                }
+                // Как в концепте v3: знак места в синем круге; за краем карты — круг меньше.
+                float ring = nearby ? 26f : 17f;
+                Rect disc = new Rect(point.x - ring * .5f, point.y - ring * .5f, ring, ring);
+                if (disc.Contains(Pointer))
+                {
+                    _hoverName = name;
+                    _hoverDistance = Vector2.Distance(_hero, new Vector2(x, z));
+                    disc = new Rect(disc.x - 2f, disc.y - 2f, disc.width + 4f, disc.height + 4f);
+                }
+                GUI.DrawTexture(disc, MarkerRing, ScaleMode.ScaleToFit, true);
+                float inset = disc.width * .2f;
+                HudSymbols.Map(new Rect(disc.x + inset, disc.y + inset, disc.width - inset * 2f, disc.height - inset * 2f), symbol);
+                return;
+            }
             if (!nearby)
             {
                 Vector2 direction = point - panel.center;
@@ -282,6 +320,18 @@ namespace Game.View
 
         void DrawPlayer(Vector2 point, float angle)
         {
+            if (PlayerArrow != null)
+            {
+                // RotateAroundPivot берёт точку без учёта масштаба GUI.matrix, и
+                // при уменьшенном HUD стрелка уезжала с места героя. Поворот
+                // собирается в тех же единицах, в которых рисуется.
+                Matrix4x4 was = GUI.matrix;
+                GUI.matrix = was * Matrix4x4.TRS(point, Quaternion.Euler(0f, 0f, angle), Vector3.one)
+                    * Matrix4x4.TRS(-point, Quaternion.identity, Vector3.one);
+                GUI.DrawTexture(new Rect(point.x - 12f, point.y - 12f, 24f, 24f), PlayerArrow, ScaleMode.ScaleToFit, true);
+                GUI.matrix = was;
+                return;
+            }
             _chrome.Shape(new Rect(point.x - 8f, point.y - 8f, 16f, 16f), new Color(.20f, .24f, .15f, .4f), 8f);
             if (_player == null)
             {

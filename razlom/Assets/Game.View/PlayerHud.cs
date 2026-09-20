@@ -50,7 +50,7 @@ namespace Game.View
         private string _feedbackText;
         private HudAbilityBlock _feedbackBlock;
         private GUIStyle _feedbackLabel;
-        private struct TooltipValue { public int Icon; public string Caption, Value; }
+        internal struct TooltipValue { public int Icon; public string Caption, Value; }
         private readonly TooltipValue[] _tooltipValues = new TooltipValue[8];
         private int _tooltipValueCount;
         private Camera _rangeCamera;
@@ -113,6 +113,56 @@ namespace Game.View
             _dashArt = Resources.Load<Texture2D>("UI/HUD/DashSilhouette");
             _healthPotion = Resources.Load<Texture2D>("UI/HUD/PotionHealth");
             _lavidiumPotion = Resources.Load<Texture2D>("UI/HUD/PotionLavidium");
+            // Префаб собирает Разлом/UI/Собрать боевой HUD и дальше правится
+            // руками. Нет префаба — остаётся прежний IMGUI, игра не ломается.
+            var prefab = Resources.Load<GameObject>("UI/Prefabs/CombatHud");
+            if (prefab != null)
+            {
+                _view = Instantiate(prefab, transform).GetComponentInChildren<CombatHudView>(true);
+                if (_view != null) _view.gameObject.SetActive(false);
+            }
+        }
+
+        private CombatHudView _view;
+
+        private void RefreshView()
+        {
+            if (_view == null) return;
+            GameSession session = _driver.Session;
+            Simulation sim = _driver.Sim;
+            bool visible = !_driver.GameplayPaused && session != null && session.Mode != GameMode.Summary
+                && CampPlayerView.Instance?.InventoryOpen != true && sim != null && sim.Entities.Count > 0;
+            if (_view.gameObject.activeSelf != visible) _view.gameObject.SetActive(visible);
+            if (visible) _view.Refresh(sim, session.Camp, _driver);
+        }
+
+        /// <summary>
+        /// При HUD на Canvas IMGUI остаётся только у содержимого карты (её
+        /// фон — RenderTexture с шейдером) и у радиуса способности в мире.
+        /// </summary>
+        private void DrawCanvasCompanions(Simulation sim, GameSession session, RiftRun run, Vector2 screenPointer)
+        {
+            // Метки карты масштабируются вместе с Canvas, а не с экраном.
+            float mapScale = Mathf.Max(.01f, _view.CanvasScale * _view.MinimapMarkerScale);
+            Rect area = _view.MinimapScreenRect;
+            GUI.matrix = Matrix4x4.Scale(new Vector3(mapScale, mapScale, 1f));
+            _minimap.Bare = true;
+            _minimap.Zoom = Mathf.Max(1f, _view.MinimapZoom);
+            _minimap.MarkerRing = _view.MinimapMarkerRing;
+            _minimap.PlayerArrow = _view.MinimapPlayerArrow;
+            _minimap.Pointer = screenPointer / mapScale;
+            Rect panel = new Rect(area.x / mapScale, area.y / mapScale, area.width / mapScale, area.height / mapScale);
+            if (session.Mode == GameMode.Rift && run != null) _minimap.DrawRift(panel, run, sim, _chrome, _mapLabel);
+            else if (CampPlayerView.Instance != null && CampPlayerView.Instance.Active)
+                _minimap.DrawCamp(panel, CampPlayerView.Instance, _chrome, _mapLabel);
+            _view.SetMinimapTexture(_minimap.MapTexture);
+            _view.SetMinimapCaption(_minimap.Caption);
+            MinimapBottom = _view.MinimapBottom;
+
+            _tooltipSlot = _view.HoverSlot;
+            int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AimingAbilityTarget ? _driver.AbilityTargetAimSlot : -1;
+            AbilityBuild reach = reachSlot >= 0 ? sim.GetAbility(reachSlot) : null;
+            if (reach != null) DrawAbilityReach(sim, reach);
         }
 
         /// <summary>
@@ -121,6 +171,7 @@ namespace Game.View
         /// </summary>
         private void LateUpdate()
         {
+            RefreshView();
             if (_portraitArt != null || HeroPortrait.Texture != null || _portraitBaking || Time.unscaledTime < _nextPortraitTry) return;
             _nextPortraitTry = Time.unscaledTime + 2f;
             ArenaView arena = FindAnyObjectByType<ArenaView>();
@@ -165,11 +216,14 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
+                if (_view != null) { DrawCanvasCompanions(sim, session, run, screenPointer); return; }
                 float mapScale = scale * .85f;
                 GUI.matrix = Matrix4x4.Scale(new Vector3(mapScale, mapScale, 1f));
                 _minimap.Pointer = screenPointer / mapScale;
                 Rect mapPanel = new Rect(safe.xMax / mapScale - Margin - MinimapWidth,
                     (Screen.height - safe.yMax) / mapScale + Margin, MinimapWidth, MinimapHeight);
+                // Подпись карты стоит на 4 px ниже и высотой 23 (HudMinimap.DrawBase).
+                MinimapBottom = (mapPanel.yMax + 27f) * mapScale;
                 if (session.Mode == GameMode.Rift && run != null) _minimap.DrawRift(mapPanel, run, sim, _chrome, _mapLabel);
                 else if (CampPlayerView.Instance != null && CampPlayerView.Instance.Active)
                     _minimap.DrawCamp(mapPanel, CampPlayerView.Instance, _chrome, _mapLabel);
@@ -204,6 +258,7 @@ namespace Game.View
                 _driver.Session.Mode == GameMode.Summary || CampPlayerView.Instance?.InventoryOpen == true) return false;
             Simulation sim = _driver.Sim;
             if (sim == null || sim.Entities.Count == 0) return false;
+            if (_view != null) return _view.HitTest(screenPosition, sim, out slot);
             float baseScale = Mathf.Min(Mathf.Clamp(Screen.height / 1080f, 1f, 2f), Screen.safeArea.width / 940f);
             float scale = baseScale * .9f;
             Rect safe = Screen.safeArea;
@@ -449,7 +504,7 @@ namespace Game.View
             }
             if (availability.Block == HudAbilityBlock.Cooldown)
             {
-                float remaining = Mathf.Clamp01(left / (float)Mathf.Max(1, build.CooldownTicks));
+                float remaining = Mathf.Clamp01(left / (float)Mathf.Max(1, sim.AbilityCooldownTicks(build)));
                 GUI.BeginGroup(new Rect(inner.x, inner.y, inner.width, inner.height * remaining));
                 _chrome.Shape(new Rect(0f, 0f, inner.width, inner.height), new Color(.14f, .13f, .10f, .66f), inner.width * .125f);
                 GUI.EndGroup();
@@ -487,7 +542,7 @@ namespace Game.View
             GUI.Label(keyTab, key, _slotKey);
         }
 
-        private static HudAbilityAvailability Availability(Simulation sim, int slot, AbilityBuild build)
+        internal static HudAbilityAvailability Availability(Simulation sim, int slot, AbilityBuild build)
             => HudAbilityAvailability.Evaluate(sim.Entities.Alive[Simulation.PlayerId],
                 build.DefinitionId == AbilityDefinition.WreckId && sim.WreckComboOpen,
                 sim.AbilityReadyTick(slot)-sim.Tick,sim.Entities.Lavidium[Simulation.PlayerId].ToInt(),Simulation.LavidiumCostOf(build));
@@ -498,12 +553,17 @@ namespace Game.View
             _pressUntil[slot] = Time.unscaledTime + .16f;
             _feedbackSlot = slot; _feedbackBlock = state.Block; _feedbackUntil = Time.unscaledTime + 1.25f;
             _feedbackText = AvailabilityText(state);
+            // Одна воронка на оба HUD: отказ слышен и со старым IMGUI, и с новым на Canvas.
+            if (state.Block == HudAbilityBlock.Resource) GameSound.Play("mana_empty", .8f);
+            else if (state.Block != HudAbilityBlock.None) GameSound.Play("ability_denied", .7f);
+            _view?.NotifyAbilityPress(slot, state);
         }
-        internal HudAbilityBlock LastFeedbackBlock => _feedbackBlock;
+        internal HudAbilityBlock LastFeedbackBlock => _view != null ? _view.LastFeedbackBlock : _feedbackBlock;
         internal string ReviewAssets => "portrait="+(_portraitCutout!=null?_portraitCutout.name+" "+_portraitCutout.width+"x"+_portraitCutout.height:"NULL")
             +"; name-font="+(_heroName!=null?_heroName.font.name:"pending");
         internal Vector2 ReviewAbilityPoint(int slot)
         {
+            if (_view != null) return _view.SlotCenter(slot);
             HitTest(Vector2.zero,out _);
             BottomBar bar=MeasureBottomBar(_driver.Sim);
             float scale=Mathf.Min(Mathf.Clamp(Screen.height/1080f,1f,2f),Screen.safeArea.width/940f)*.9f;
@@ -513,7 +573,7 @@ namespace Game.View
             return new Vector2(point.x*scale,Screen.height-point.y*scale);
         }
 
-        private static string AvailabilityText(HudAbilityAvailability state)
+        internal static string AvailabilityText(HudAbilityAvailability state)
         {
             if (state.Block == HudAbilityBlock.Cooldown) return "Перезарядка · " + (state.RemainingTicks/(float)Simulation.TicksPerSecond).ToString("0.0") + " с";
             if (state.Block == HudAbilityBlock.Resource) return "Не хватает лавидия: " + state.MissingResource;
@@ -538,17 +598,22 @@ namespace Game.View
             _chrome.Shape(panel, new Color(.69f, .62f, .47f, .65f), 7f, .7f);
         }
 
-        private void AddTooltipValue(int icon, string caption, string value)
-        {
-            if (_tooltipValueCount < _tooltipValues.Length)
-                _tooltipValues[_tooltipValueCount++] = new TooltipValue { Icon = icon, Caption = caption, Value = value };
-        }
-
         private void BuildTooltipValues(AbilityBuild build)
+            => _tooltipValueCount = CollectTooltipValues(build, _tooltipValues, _driver.Sim);
+
+        /// <summary>
+        /// Параметры подсказки по сборке способности — общие для IMGUI и Canvas.
+        /// Icon: 0 здоровье, 1 лавидий, 2 время, 3 урон, 4 дальность, 5 радиус.
+        /// </summary>
+        internal static int CollectTooltipValues(AbilityBuild build, TooltipValue[] into, Simulation sim = null)
         {
-            _tooltipValueCount = 0;
+            int count = 0;
+            void AddTooltipValue(int icon, string caption, string value)
+            {
+                if (count < into.Length) into[count++] = new TooltipValue { Icon = icon, Caption = caption, Value = value };
+            }
             AddTooltipValue(1, "Лавидий", Simulation.LavidiumCostOf(build).ToString());
-            AddTooltipValue(2, "Перезарядка", (build.CooldownTicks / (float)Simulation.TicksPerSecond).ToString("0.#") + " с");
+            AddTooltipValue(2, "Перезарядка", ((sim != null ? sim.AbilityCooldownTicks(build) : build.CooldownTicks) / (float)Simulation.TicksPerSecond).ToString("0.#") + " с");
             int id = build.DefinitionId;
             int damage = build.Get(AbilityStatType.Damage).ToInt();
             if (damage > 0)
@@ -564,10 +629,13 @@ namespace Game.View
             else AddTooltipValue(4, "Применение", "На себя");
             if (id == AbilityDefinition.FireFlaskId)
                 AddTooltipValue(5, "Радиус взрыва", (build.Get(AbilityStatType.Width).ToFloat() * .5f).ToString("0.#") + " м");
-            else if (id == AbilityDefinition.AnchorSlamId)
+            else if (id == AbilityDefinition.BackblastId)
+                AddTooltipValue(5, "Радиус взрыва", build.Get(AbilityStatType.Width).ToFloat().ToString("0.#") + " м");
+            else if (id == AbilityDefinition.AnchorSlamId || id == AbilityDefinition.SkewerId)
                 AddTooltipValue(5, "Ширина удара", build.Get(AbilityStatType.Width).ToFloat().ToString("0.#") + " м");
             if (id == AbilityDefinition.BlazeId || id == AbilityDefinition.FireFlaskId)
                 AddTooltipValue(2, "Длительность", (build.Get(AbilityStatType.DurationTicks).ToFloat() / Simulation.TicksPerSecond).ToString("0.#") + " с");
+            return count;
         }
 
         private void DrawAbilityTooltip(Simulation sim)
@@ -693,6 +761,13 @@ namespace Game.View
                 ReachLine(center, center + RingOffset(angle - half) * radius);
                 ReachLine(center, center + RingOffset(angle + half) * radius);
             }
+            else if (id == AbilityDefinition.SkewerId)
+                ReachCapsule(center, forward, radius, build.Get(AbilityStatType.Width).ToFloat() * .5f);
+            else if (id == AbilityDefinition.BackblastId)
+            {
+                ReachArrow(center, center - forward * radius);
+                ReachArc(center, build.Get(AbilityStatType.Width).ToFloat(), 0f, Mathf.PI * 2f);
+            }
             else if (id == AbilityDefinition.DashId)
                 ReachArrow(center, center + forward * radius);
             else if (id == AbilityDefinition.AnchorLeapId)
@@ -759,8 +834,13 @@ namespace Game.View
         {
             _rangePreview.Line(from,to);
         }
+        /// <summary>Низ миникарты вместе с подписью, в пикселях экрана. Панели справа сверху встают ниже.</summary>
+        internal static float MinimapBottom { get; private set; }
+
         internal static string AbilityDescription(int id)
         {
+            if (id == AbilityDefinition.SkewerId) return "Выпад к курсору сквозь врагов. Каждый получает урон один раз. Прерывает текущую атаку.";
+            if (id == AbilityDefinition.BackblastId) return "Бутылка взрывается под ногами, Пелаг отскакивает от курсора. Прерывает текущую атаку.";
             if (id == AbilityDefinition.WhirlwindId) return "Круговой удар саблей поражает врагов вокруг Пелага.";
             if (id == AbilityDefinition.CleaveId) return "Мощный удар саблей перед собой.";
             if (id == AbilityDefinition.BlazeId) return "Поджигает саблю и повышает уклонение. Можно применять на бегу.";
@@ -781,20 +861,12 @@ namespace Game.View
         /// Разбор ЗДЕСЬ идёт по номеру слота, а не по видимой позиции: пустые
         /// слоты панель пропускает, а клавиша у слота своя.
         /// </summary>
-        private static string SlotKey(int slot)
+        internal static string SlotKey(int slot)
         {
-            bool letters = GameUserSettings.AbilityRowUsesLetters;
-            switch (slot)
-            {
-                case 0: return letters ? "Q" : "1";
-                case 1: return letters ? "W" : "2";
-                case 2: return letters ? "E" : "3";
-                case 3: return letters ? "R" : "4";
-                // Кувырок не входит в ряд, поэтому и настройка ряда его не
-                // касается: Space одинаков при обоих раскладах.
-                case DashSlot: return "SPACE";
-                default: return string.Empty;
-            }
+            // Подпись из назначений игрока: своя клавиша видна сразу, без перезапуска.
+            if (slot < 0 || slot > (int)GameAction.Dash) return string.Empty;
+            string label = GameKeyBindings.Label((GameAction)slot);
+            return slot == DashSlot ? label.ToUpperInvariant() : label;
         }
 
         /// <summary>
@@ -825,6 +897,11 @@ namespace Game.View
 
         internal static string IconFile(int definitionId)
         {
+            if (definitionId == AbilityDefinition.SkewerId) return "Icon_Skewer";
+            if (definitionId == AbilityDefinition.BackblastId) return "Icon_Backblast";
+            if (definitionId == AbilityDefinition.AnchorSlamId) return "Icon_AnchorSweep";
+            if (definitionId == AbilityDefinition.WreckId) return "Icon_Wreck";
+            if (definitionId == AbilityDefinition.FireFlaskId) return "Icon_FireFlask";
             if (definitionId == AbilityDefinition.CleaveId) return "Icon_Cleave";
             if (definitionId == AbilityDefinition.DashId) return "Icon_Dash";
             if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
@@ -842,6 +919,8 @@ namespace Game.View
         /// </summary>
         internal static string AbilityName(int definitionId)
         {
+            if (definitionId == AbilityDefinition.SkewerId) return "НА ВЫЛЕТ";
+            if (definitionId == AbilityDefinition.BackblastId) return "ОТБОЙ";
             if (definitionId == AbilityDefinition.CleaveId) return "РАССЕКАЮЩИЙ УДАР";
             if (definitionId == AbilityDefinition.DashId) return "КУВЫРОК";
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
@@ -880,7 +959,11 @@ namespace Game.View
             _minimap.Dispose();
             if (_white != null) Destroy(_white);
         }
-        private void OnDisable() => _rangePreview?.Hide();
+        private void OnDisable()
+        {
+            _rangePreview?.Hide();
+            if (_view != null) _view.gameObject.SetActive(false);
+        }
 
         private void EnsureStyles()
         {

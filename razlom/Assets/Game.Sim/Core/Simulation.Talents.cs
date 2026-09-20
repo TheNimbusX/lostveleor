@@ -375,8 +375,8 @@ namespace Game.Sim
         {
             if (build.DefinitionId != AbilityDefinition.AnchorLeapId || !build.Has(AbilityFlag.BoardingTwoCharges)) return;
             if (Tick < _boardingSpareReadyTick) return;
-            _abilityReadyTick[slot] = Tick + AnchorKit.LeapWindupTicks + AnchorKit.LeapTicks;
-            _boardingSpareReadyTick = Tick + build.CooldownTicks;
+            _abilityReadyTick[slot] = Tick + AbilityExecutionTicks(AnchorKit.LeapWindupTicks) + AnchorKit.LeapTicks;
+            _boardingSpareReadyTick = Tick + AbilityCooldownTicks(build);
         }
 
         private void HashTalents(ref ulong hash)

@@ -232,6 +232,7 @@ namespace Game.Sim
             int byRarity;
             switch (item.Rarity)
             {
+                case ItemRarity.Unique: byRarity = 60; break;
                 case ItemRarity.Rare: byRarity = 25; break;
                 case ItemRarity.Magic: byRarity = 9; break;
                 default: byRarity = 3; break;

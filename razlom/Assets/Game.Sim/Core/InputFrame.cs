@@ -33,6 +33,7 @@ namespace Game.Sim
         /// скорость, без порога прибытия и без подъезда с торможением.
         /// </summary>
         NavigationTransit = 1 << 3,
+        DirectMovement = 1 << 4,
     }
 
     /// <summary>
@@ -50,6 +51,7 @@ namespace Game.Sim
         /// а как до неё дойти — забота симуляции. Это и есть управление жанра.
         /// </summary>
         public FixVec2 Aim;
+        public FixVec2 MoveDirection;
 
         /// <summary>Биты 0..3 — нажатие способностей 1..4 в этом тике.</summary>
         public byte AbilityMask;
@@ -109,6 +111,8 @@ namespace Game.Sim
         {
             Hashing.Mix(ref hash, Aim.X);
             Hashing.Mix(ref hash, Aim.Y);
+            Hashing.Mix(ref hash, MoveDirection.X);
+            Hashing.Mix(ref hash, MoveDirection.Y);
             Hashing.Mix(ref hash, (int)AbilityMask);
             Hashing.Mix(ref hash, (int)AbilityHoldMask);
             Hashing.Mix(ref hash, AbilityTarget);

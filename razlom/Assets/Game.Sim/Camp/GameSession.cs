@@ -341,7 +341,18 @@ namespace Game.Sim
             BeginRift(location, seed, level, nearBoss, true);
         }
 
-        private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer)
+        /// <summary>Изолированный боевой тест: штатные управление и урон, без переносимой добычи.</summary>
+        public void StartForestBudTest(LocationDefinition location, ulong seed, int count = 1)
+        {
+            if (count < 1 || count > 40 || count >= _simCapacity)
+                throw new System.ArgumentOutOfRangeException(nameof(count));
+            location?.ValidateCapacity(_simCapacity);
+            LeaveProvingGround();
+            BeginRift(location, seed, 1, false, true, count);
+        }
+
+        private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer,
+            int forestBudCount = 0)
         {
             bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
@@ -361,7 +372,8 @@ namespace Game.Sim
             Run.WhirlwindShowcase = !developer && WhirlwindShowcase;
             Run.CombatFeelShowcase = developer ? CombatFeelCaptureTier.None : CombatFeelShowcase;
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
-            if (developer) Run.StartTestAtLevel(level, nearBoss);
+            Run.ForestBudShowcaseCount = forestBudCount;
+            if (developer && location != null) Run.StartTestAtLevel(level, nearBoss);
             else Run.StartRun();
             sim.PlayerInvulnerable = invulnerable;
             if (developer || CarryCampLoadoutIntoRift)

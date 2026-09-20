@@ -65,13 +65,20 @@ namespace Game.EditorTools
         private static void Build(string outputDirectory)
         {
             CampModelImport.Prepare();
+            // Боевой HUD на Canvas. Зеркало несёт префаб из живого проекта со
+            // всеми ручными правками; собирается он здесь, только если его нет.
+            CombatHudBuilder.EnsureBuilt(false);
+            PauseMenuBuilder.EnsureBuilt(false);
+            CampTentBuilder.EnsureBuilt(false);
             // Controller is generated from imported FBXs. Rebuild it explicitly
             // in batch mode as delayCall order is not a reliable build contract.
             global::RazlomPelagV5AnimatorBuilder.Build();
+            global::PelagTempoValidation.Validate();
             // То же и по мобам: их контроллер тоже собирается из клипов, и без
             // этой строки съёмка показывала контроллер, собранный до того, как
             // приехали новые клипы, — то есть врала про то, что в игре.
             global::RazlomMobAnimatorBuilder.Build();
+            global::ForestBudCombatBuilder.Build();
             global::CombatPresentationSetup.EnsureProfiles();
             global::PelagAudioImport.Install();
             // Съёмка должна сохранять авторскую цветокоррекцию. Повторная
@@ -79,6 +86,8 @@ namespace Game.EditorTools
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>("Assets/Settings/CombatLook.asset") == null)
                 global::RazlomSceneAuthoring.BuildLookProfile();
             global::RazlomPelagVfxAssetBuilder.BuildAnchorLeapOnly();
+            global::PelagAnchorSlamContactSetup.Install();
+            global::PelagAnchorSlamContactSetup.Validate();
             global::CommonFootstepVfxSetup.Install();
             global::PelagWhirlwindVfxSetup.Install();
             global::PelagSquallVfxSetup.Install();
@@ -86,6 +95,8 @@ namespace Game.EditorTools
             global::PelagEvadeVfxSetup.Install();
             global::PelagCleaveVfxSetup.Install();
             global::PelagBlazeVfxSetup.Install();
+            global::PelagOrdnanceVfxSetup.Install();
+            global::PelagOrdnanceVfxSetup.ValidateProductionAssets();
             global::CampFlameProSetup.Install();
 
             string[] scenes = EditorBuildSettings.scenes

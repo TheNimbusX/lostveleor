@@ -1,0 +1,44 @@
+{
+  "assets": [
+    {
+      "id": "forest-bud-landing-mark",
+      "source": "Reference/ForestBud_LandingMark_Higgsfield.png",
+      "runtime": "razlom/Assets/Resources/Characters/Forest_Bud/VFX/ForestBud_LandingMark.png",
+      "role": "ground-warning",
+      "provider": "Higgsfield",
+      "model": "gpt_image_2_5",
+      "job_id": "85a433a5-f2ee-425e-a197-beee6c258f56",
+      "canvas": [
+        1024,
+        1024
+      ],
+      "background": "true RGBA alpha",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "display_size_meters": 1.6,
+      "gameplay_radius_meters": 0.8,
+      "body_shape": "Sim fixed circle, hero-body overlap",
+      "trim": "preserve source; remap sample coordinates within shader circle",
+      "acceptance": {
+        "raster_review": "real alpha; no baked checkerboard, no lettering; red organic ring",
+        "runtime_review": "pending final gameplay capture"
+      }
+    },
+    {
+      "id": "forest-bud-attack-reference",
+      "source": "Reference/ForestBud_Attack_Reference_Higgsfield.mp4",
+      "role": "concept-only motion reference",
+      "provider": "Higgsfield",
+      "model": "kling3_0",
+      "job_id": "534b1fe5-91f4-4d0f-819c-6047efd52fa9",
+      "duration_seconds": 5,
+      "audio": false,
+      "acceptance": {
+        "use": "supported crouch, spine push, elastic bloom and return",
+        "exclude": "reference simultaneous volley; game uses launch offsets .8/1.0/1.2/1.4/1.6 seconds"
+      }
+    }
+  ]
+}

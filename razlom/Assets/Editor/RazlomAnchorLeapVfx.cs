@@ -17,6 +17,12 @@ public static partial class RazlomPelagVfxAssetBuilder
         foreach(var entry in oldEntries)
             if((int)entry.Id<prefabs.Length) prefabs[(int)entry.Id]=entry.Prefab;
         if(prefabs[(int)PelagVfxId.AnchorLeapThrow]==null) { Build(); return; }
+        _chainLinkMesh = LoadChainLinkMesh();
+        Material metal = AnchorMetalMaterial();
+        prefabs[(int)PelagVfxId.AnchorLeapThrow] = SaveAnchor(PelagVfxId.AnchorLeapThrow,
+            "VFX_AnchorLeap_Throw", metal, null, 1.5f);
+        prefabs[(int)PelagVfxId.AnchorLeapChain] = SaveDynamicLine(PelagVfxId.AnchorLeapChain,
+            "VFX_AnchorLeap_Chain", metal, metal, null, .035f, 1.5f, true);
         BuildAnchorLeapEffects(prefabs);
         CreateLibrary(prefabs);
         // Ручные размеры пулов других способностей сохраняются вместе с их prefab.
@@ -91,9 +97,9 @@ public static partial class RazlomPelagVfxAssetBuilder
             foreach(var trail in editable.GetComponentsInChildren<TrailRenderer>(true))
             {
                 trail.sharedMaterial=stroke;
-                trail.time=.27f; trail.startWidth=.95f; trail.endWidth=.04f;
+                trail.time=.10f; trail.startWidth=.22f; trail.endWidth=.015f;
                 trail.widthCurve=new AnimationCurve(new Keyframe(0,0f),new Keyframe(.18f,1f),new Keyframe(1,0));
-                trail.widthMultiplier=.95f;
+                trail.widthMultiplier=.22f;
                 trail.startColor=Color.white; trail.endColor=new Color(1,1,1,0);
                 trail.minVertexDistance=.015f; trail.numCapVertices=0;trail.numCornerVertices=4;
             }

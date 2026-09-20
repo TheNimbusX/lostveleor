@@ -19,8 +19,10 @@ namespace Game.View
         private int _selected, _level = 1, _request;
         private int _heroLevel = 1;
         private int _loadoutSlot, _loadoutStep;
+        private int _tempoPreset = 2;
         private string _seed = "42", _error;
         private bool _open;
+        private float _previousTimeScale = 1;
         private Vector2 _scroll;
         private GUIStyle _wrapped;
         public static bool CapturesEscape { get; private set; }
@@ -44,6 +46,7 @@ namespace Game.View
 
         private void Update()
         {
+            if (CaptureRig.ForestBudShowcase) return;
             if (_driver.Session == null) return;
 #if ENABLE_INPUT_SYSTEM
             bool toggle = Keyboard.current != null && Keyboard.current.f8Key.wasPressedThisFrame;
@@ -56,13 +59,29 @@ namespace Game.View
             else if (toggle && !_driver.GameplayPaused && CampPlayerView.Instance?.InventoryOpen != true)
             {
                 LoadLocations(); _open = true; CapturesEscape = true;
+                _previousTimeScale = _driver.GetComponent<CombatJuiceView>()?.CancelHitStopForPause() ?? Time.timeScale;
                 _driver.SetGameplayPaused(true);
+                Time.timeScale = 0;
             }
             if (_request == 0) return;
             int request = _request; _request = 0;
             try
             {
-                if (request == 4) _driver.Session.SetDeveloperInvulnerable(!_driver.Session.DeveloperInvulnerable);
+                if (request == 13)
+                {
+                    var loadout = _driver.Session.ActiveLoadout;
+                    var skills = new int[Game.Sim.RunLoadout.Slots];
+                    for (int i = 0; i < skills.Length; i++) skills[i] = loadout.PoolIndexAt(i);
+                    _driver.StartTempoTest(skills, _tempoPreset);
+                    Close();
+                }
+                else if (request == 12)
+                {
+                    if (!ulong.TryParse(_seed, out ulong budSeed)) throw new ArgumentException("Сид должен быть целым неотрицательным числом.");
+                    _driver.StartForestBudTest(_locations[_selected], budSeed);
+                    Close();
+                }
+                else if (request == 4) _driver.Session.SetDeveloperInvulnerable(!_driver.Session.DeveloperInvulnerable);
                 else if (request == 5 || request == 7)
                 {
                     if (request == 5) _driver.Session.Camp.DeveloperGrantLevel();
@@ -117,6 +136,7 @@ namespace Game.View
             _open = false; CapturesEscape = false; _closedFrame = Time.frameCount;
             _request = 0;
             _driver.SetGameplayPaused(false);
+            Time.timeScale = _previousTimeScale > 0 ? _previousTimeScale : 1;
         }
 
         private void OnDisable() => Close();
@@ -160,6 +180,8 @@ namespace Game.View
                 _seed = GUILayout.TextField(_seed, 20);
                 if (GUILayout.Button("Перейти на выбранный уровень", GUILayout.Height(36))) _request = 1;
                 if (GUILayout.Button("К боссу · свежий бой", GUILayout.Height(42))) _request = 2;
+                if (GUILayout.Button("Лесной бутон · тестовый бой / повтор", GUILayout.Height(42))) _request = 12;
+                GUILayout.Label("Один дальнобой. Уклоняйся от красных меток, атакуй обычными способностями. F8 — повтор или выход в лагерь.", _wrapped);
             }
             else GUILayout.Label("Профили локаций не найдены.");
             bool canToggle = _driver.Session.Mode == Game.Sim.GameMode.Rift;
@@ -183,6 +205,16 @@ namespace Game.View
             if (GUILayout.Button("+1 уровень", GUILayout.Height(32))) _request = 5;
             GUILayout.Space(8);
             DrawLoadout();
+            GUILayout.Space(8);
+            GUILayout.Label("Пелаг · темп боя");
+            _tempoPreset = GUILayout.SelectionGrid(_tempoPreset, new[] { "Базовая", "Средняя", "Быстрая" }, 3);
+            bool tempoReady = true;
+            for (int i = 0; i < Game.Sim.RunLoadout.Slots; i++)
+                if (_driver.Session.ActiveLoadout.PoolIndexAt(i) < 0) tempoReady = false;
+            GUI.enabled = tempoReady;
+            if (GUILayout.Button("Повторить бой с текущими навыками", GUILayout.Height(36))) _request = 13;
+            GUI.enabled = true;
+            GUILayout.Label("Четыре навыка выше, лесной бутон и четыре ближника. Настоящие расходы и КД; прогресс лагеря не меняется.", _wrapped);
             GUILayout.Space(8);
             DrawTalentToggles();
             if (_driver.Session?.IsDeveloperRun == true)

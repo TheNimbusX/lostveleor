@@ -35,6 +35,7 @@ namespace Game.Sim
             {
                 case ItemRarity.Magic: count = 1 + (roll % 2); break;   // 1..2
                 case ItemRarity.Rare: count = 3 + (roll % 2); break;    // 3..4
+                case ItemRarity.Unique: count = 4 + (roll % 2); break;  // 4..5, в пределах MaxAffixes
                 default: count = 0; break;                              // Normal
             }
         }

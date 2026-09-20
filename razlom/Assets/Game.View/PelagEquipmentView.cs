@@ -40,11 +40,46 @@ namespace Game.View
         private Transform _anchorHead;
         private Transform _storedAnchorHead;
         private Renderer[] _storedAnchorRenderers;
+        private Renderer[] _slamHeadRenderers;
         private PelagVfxController _vfx;
         private bool _storedAnchorVisible;
         private float _anchorStartedAt;
         private bool _anchorLeap;
-        public Vector3 AnchorHeadPosition => !_anchorInHand && _storedAnchorHead != null
+        private bool _slamOwned;
+        public Transform SlamHead => _storedAnchorHead;
+        public Vector3 ChainGripPosition => _leftHand.TransformPoint(new Vector3(0f, .045f, .012f));
+        public Vector3 ChainSupportPosition => _hand.TransformPoint(new Vector3(0f, .045f, .012f));
+        public Vector3 SlamBeltPosition => _anchorStored.Socket.TransformPoint(new Vector3(.09f, -.083f, .002f));
+        public Quaternion SlamBeltRotation => _anchorStored.Socket.rotation * Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+        private Material _anchorMetal;
+        public Material AnchorMaterial => _anchorMetal != null ? _anchorMetal
+            : (_anchorMetal = Resources.Load<Material>("VFX/Pelag/Materials/M_AnchorMetal"));
+
+        public void ReleaseSlamHands()
+        {
+            // Голова ещё возвращается к поясу, руки уже могут исполнять следующий навык.
+            _anchorInHand = false; _drawPhase = 1f; ApplySaber();
+        }
+        public void SetSlamOwnership(bool active)
+        {
+            _slamOwned = active;
+            if (active)
+            {
+                BeginAnchorUse();
+                Mount(_saber, _saberStored);
+                _anchorHead.gameObject.SetActive(false);
+                foreach (var r in _storedAnchorRenderers) r.enabled = false;
+                foreach (var r in _slamHeadRenderers) r.enabled = true;
+            }
+            else
+            {
+                _storedAnchorHead.localPosition = new Vector3(.09f, -.083f, .002f);
+                _storedAnchorHead.localRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+                EndAnchorUse();
+                PlaceAnchorHead();
+            }
+        }
+        public Vector3 AnchorHeadPosition => (_slamOwned || !_anchorInHand) && _storedAnchorHead != null
             ? _storedAnchorHead.position : _anchorHead != null ? _anchorHead.position : ChainHand.position;
         private CharacterAnimatorView _presentation;
         private Transform _upperArm, _forearm, _hand, _chest;
@@ -57,7 +92,7 @@ namespace Game.View
 
         public bool CombatReady => _combatReady;
         public bool AnchorInHand => _anchorInHand;
-        public bool AnchorHeadVisible => (_storedAnchorVisible && _storedAnchorHead != null
+        public bool AnchorHeadVisible => ((_slamOwned || _storedAnchorVisible) && _storedAnchorHead != null
             && _storedAnchorHead.gameObject.activeInHierarchy)
             || (_anchorHead != null && _anchorHead.gameObject.activeInHierarchy);
         public bool Configured => _configured;
@@ -104,14 +139,12 @@ namespace Game.View
                     _storedAnchorHead.SetParent(_anchorStored.Socket, false);
                     _storedAnchorHead.localPosition = new Vector3(.09f, -.083f, .002f);
                     _storedAnchorHead.localRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
-                    _storedAnchorHead.localScale = Vector3.one * .43085f;
-                    if (gripRenderer != null)
-                        foreach (var renderer in _storedAnchorHead.GetComponentsInChildren<Renderer>())
-                            renderer.sharedMaterial = gripRenderer.sharedMaterial;
+                    FitAnchorHead(_storedAnchorHead);
                 }
                 var gripRenderers = _anchor.GetComponentsInChildren<Renderer>(true);
                 var headRenderers = _storedAnchorHead != null
                     ? _storedAnchorHead.GetComponentsInChildren<Renderer>(true) : System.Array.Empty<Renderer>();
+                _slamHeadRenderers = headRenderers;
                 _storedAnchorRenderers = new Renderer[gripRenderers.Length + headRenderers.Length];
                 System.Array.Copy(gripRenderers, 0, _storedAnchorRenderers, 0, gripRenderers.Length);
                 System.Array.Copy(headRenderers, 0, _storedAnchorRenderers, gripRenderers.Length, headRenderers.Length);
@@ -128,6 +161,8 @@ namespace Game.View
         /// </summary>
         public void ResetForSpawn()
         {
+            GetComponent<PelagAnchorSlamView>()?.Release(true);
+            if (_slamOwned) SetSlamOwnership(false);
             _presentation = GetComponent<CharacterAnimatorView>();
             _drawPhase = 0f;
             _combatReady = false;
@@ -155,7 +190,7 @@ namespace Game.View
 
         public void EndAnchorUse()
         {
-            if (!_anchorInHand) return;
+            if (_slamOwned || !_anchorInHand) return;
             _anchorInHand = false;
             ApplyAnchor();
         }
@@ -324,21 +359,62 @@ namespace Game.View
                 Bounds bounds = renderers[0].bounds;
                 foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
                 float size = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
-                float scale = 0.56f / Mathf.Max(0.001f, size);
+                float scale = 0.94f / Mathf.Max(0.001f, size);
                 model.transform.localScale = Vector3.one * scale;
                 model.transform.localPosition = -bounds.center * scale;
-                var gripRenderer = _anchor.GetComponentInChildren<Renderer>(true);
-                var metal = gripRenderer != null ? gripRenderer.sharedMaterial : null;
-                if (metal != null) foreach (var renderer in renderers) renderer.sharedMaterial = metal;
+                ApplyAnchorMaterial(renderers);
             }
             _anchorHead = root.transform;
             _anchorHead.SetParent(transform, true);
+        }
+
+        private void FitAnchorHead(Transform head)
+        {
+            head.localScale = Vector3.one;
+            var renderers = head.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0) return;
+            // Renderer.bounds у выключенного pooled-оружия ещё хранит старый масштаб.
+            // Геометрия в локальных координатах даёт одинаковый размер при каждом появлении.
+            Bounds bounds = default;
+            bool first = true;
+            foreach (var filter in head.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null) continue;
+                var b = filter.sharedMesh.bounds;
+                for (int c = 0; c < 8; c++)
+                {
+                    Vector3 corner = b.center + Vector3.Scale(b.extents,
+                        new Vector3((c & 1) == 0 ? -1 : 1, (c & 2) == 0 ? -1 : 1, (c & 4) == 0 ? -1 : 1));
+                    Vector3 point = head.InverseTransformPoint(filter.transform.TransformPoint(corner));
+                    if (first) { bounds = new Bounds(point, Vector3.zero); first = false; }
+                    else bounds.Encapsulate(point);
+                }
+            }
+            // До первого Animator.Update импортный Hips ещё имеет служебный FBX scale .01.
+            // Производные клипы нормализуют его, поэтому размер задаётся относительно тела.
+            float parentScale = transform.lossyScale.x;
+            head.localScale = Vector3.one * (.94f / Mathf.Max(.001f,
+                Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z)) * parentScale));
+            ApplyAnchorMaterial(renderers);
+        }
+
+        private void ApplyAnchorMaterial(Renderer[] renderers)
+        {
+            var metal = AnchorMaterial;
+            foreach (var renderer in renderers)
+            {
+                var materials = renderer.sharedMaterials;
+                for (int i = 0; i < materials.Length; i++) materials[i] = metal;
+                renderer.sharedMaterials = materials;
+            }
         }
 
         private void AnimateAnchor()
         {
             if (_leftHand == null || _leftUpperArm == null) return;
             float age = Time.time - _anchorStartedAt;
+            if (_anchorLeap && _presentation != null && _presentation.AuthoredLeapTime >= 0f)
+                age = _presentation.AuthoredLeapTime;
             float duration = _anchorLeap ? PelagAbilityTiming.LeapRecovery : PelagAbilityTiming.SweepRecovery;
             float pullStart = _anchorLeap ? PelagAbilityTiming.LeapWindup : PelagAbilityTiming.SweepWindup;
             float pullEnd = _anchorLeap ? PelagAbilityTiming.LeapArrival : pullStart + PelagAbilityTiming.SweepTravel;
@@ -405,10 +481,13 @@ namespace Game.View
 
         private void PlaceAnchorHead()
         {
+            if (_slamOwned) return;
             if (_anchorHead == null || _anchor == null) return;
             // До отпускания крюк остаётся в авторской руке. После handoff
             // единственную летящую голову рисует pooled-представление.
             float age = Time.time - _anchorStartedAt;
+            if (_anchorLeap && _presentation != null && _presentation.AuthoredLeapTime >= 0f)
+                age = _presentation.AuthoredLeapTime;
             bool heldWindup = _anchorInHand && _anchorLeap && age < PelagAbilityTiming.AnchorDraw;
             _anchorHead.gameObject.SetActive(heldWindup);
             // Recovery can release the hands before the returning projectile

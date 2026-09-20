@@ -26,7 +26,7 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v29.BlazePour";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v33.SourceSlam";
     private static AnimationClip _blazeClip;
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
@@ -109,9 +109,8 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimationClip whirlwind = Load("Pelag_MX_Whirlwind.fbx", "Pelag_MX_Whirlwind");
         whirlwind = RazlomPelagWhirlwindClip.Build(whirlwind);
         AnimationClip anchor = Load("Pelag_MX_AnchorAttack.fbx", "Pelag_MX_AnchorAttack");
-        // Бросок якоря собирается из трёх покупных Mixamo-клипов, а не из
-        // Blender-поз: у них общий с игровым ригом bind pose, переносить нечего.
-        AnimationClip anchorLeap = RazlomPelagLeapClips.Build();
+        // Постановка на текущем риге: бросок, тяга корпуса и контакт кулаком.
+        AnimationClip anchorLeap = RazlomPelagAuthoredClips.Build("Pelag_AN_AnchorLeap", false, "Pelag_AN_AnchorLeapBind", .95f);
         AnimationClip anchorSweep = RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneLoop", true, "Pelag_AN_CycloneBind");
         AnimationClip chainStep = SquallClip("Start");
         AnimationClip chainStepA = SquallClip("A");
@@ -159,6 +158,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "TurnPhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "CleavePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "BlazePhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, "AnchorSlamPhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool, defaultBool: true);
         AddParameter(controller, "Stunned", AnimatorControllerParameterType.Bool);
         AddParameter(controller, LocomotionPlaybackSpeed, AnimatorControllerParameterType.Float);
@@ -184,6 +184,26 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "Death", AnimatorControllerParameterType.Trigger);
 
         AnimatorStateMachine machine = controller.layers[0].stateMachine;
+        AddParameter(controller, "TempoPhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, "LeapPhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, "WhirlwindPhase", AnimatorControllerParameterType.Float);
+        foreach (string name in new[] { "Skewer", "Backblast", "FireFlask", "WreckA", "WreckB", "WreckFinish" })
+        {
+            var clip = RazlomPelagAuthoredClips.Build("Pelag_AN_" + name, false, "Pelag_AN_MobilityBind", .95f);
+            if (clip == null) continue;
+            var state = State(machine, name + "_v5", clip, 1f);
+            state.writeDefaultValues = false;
+            state.timeParameterActive = true;
+            state.timeParameter = "TempoPhase";
+        }
+        var slamClip = RazlomPelagAuthoredClips.Build("Pelag_AN_AnchorSlam", false, "Pelag_AN_AnchorSlamBind", .95f);
+        if (slamClip != null)
+        {
+            var slam = State(machine, "AnchorSlam_v5", slamClip, 1f);
+            slam.writeDefaultValues = false;
+            slam.timeParameterActive = true;
+            slam.timeParameter = "AnchorSlamPhase";
+        }
         // Keep the legacy state for callers that still address Base Layer.Idle_v5.
         // The two mode-specific states deliberately share this compatible
         // Generic Mixamo clip; equipment is what changes between the modes.
@@ -333,6 +353,14 @@ public static class RazlomPelagV5AnimatorBuilder
         controller.layers = footworkLayers;
         BuildUpperBodyLayer(controller, upperBodyMask, attackA, attackB, whirlwind);
         BuildLowerBodyLayer(controller, lowerBodyMask, attackA, attackB, whirlwind);
+        controller.AddLayer("Recovery Footwork");
+        var recoveryLayers = controller.layers;
+        var recovery = recoveryLayers[recoveryLayers.Length-1];
+        recovery.avatarMask = lowerBodyMask; recovery.defaultWeight = 0;
+        var recoveryRun = State(recovery.stateMachine,"RecoveryRun",directionalLocomotion,1f);
+        recoveryRun.speedParameterActive = true; recoveryRun.speedParameter = LocomotionPlaybackSpeed;
+        recovery.stateMachine.defaultState = recoveryRun;
+        controller.layers = recoveryLayers;
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
@@ -679,6 +707,8 @@ public static class RazlomPelagV5AnimatorBuilder
         state.writeDefaultValues = false;
         state.speedParameterActive = true;
         state.speedParameter = AttackPlaybackSpeed;
+        if (stateName.Contains("Whirlwind"))
+        { state.timeParameterActive = true; state.timeParameter = "WhirlwindPhase"; }
 
         AnimatorStateTransition enter = machine.AddAnyStateTransition(state);
         enter.AddCondition(AnimatorConditionMode.If, 0f, trigger);
@@ -768,6 +798,8 @@ public static class RazlomPelagV5AnimatorBuilder
             state.speedParameterActive = true;
             state.speedParameter = AbilityPlaybackSpeed;
         }
+        if (stateName == "AnchorLeap_v5")
+        { state.timeParameterActive = true; state.timeParameter = "LeapPhase"; }
         AnimatorStateTransition enter = machine.AddAnyStateTransition(state);
         enter.AddCondition(AnimatorConditionMode.If, 0f, trigger);
         enter.hasExitTime = false;

@@ -1,0 +1,123 @@
+{
+  "revision": "2026-09-19-combat-production",
+  "source_scene": "ART/ENEMIES/Forest_Bud/ForestBudRanged_Production.blend",
+  "original_scene": "ART/ENEMIES/Forest_Bud/SourceOriginal/ForestBudRanged.blend",
+  "build_recipe": "ART/ENEMIES/Forest_Bud/build_forest_bud.py",
+  "rig": "Generic quadruped, in-place root, IK authoring baked to deform bones",
+  "triangles": 27266,
+  "mesh_objects": 8,
+  "bones_in_blend": 48,
+  "deform_bones": 40,
+  "fps": 30,
+  "spawn_sockets": [
+    "Spawn_Fruit_01",
+    "Spawn_Fruit_02",
+    "Spawn_Fruit_03",
+    "Spawn_Fruit_04",
+    "Spawn_Fruit_05"
+  ],
+  "loaded_fruit_meshes": [
+    "SM_LoadedFruit_01",
+    "SM_LoadedFruit_02",
+    "SM_LoadedFruit_03",
+    "SM_LoadedFruit_04",
+    "SM_LoadedFruit_05"
+  ],
+  "walk_root_equivalent_speed_mps": 0.9040178571428571,
+  "clips": {
+    "Death": {
+      "frames": [
+        1,
+        37
+      ],
+      "duration_seconds": 1.2,
+      "loop": false,
+      "root_motion": false
+    },
+    "Idle": {
+      "frames": [
+        1,
+        91
+      ],
+      "duration_seconds": 3.0,
+      "loop": true,
+      "root_motion": false
+    },
+    "Ranged_Attack": {
+      "frames": [
+        1,
+        67
+      ],
+      "duration_seconds": 2.2,
+      "loop": false,
+      "root_motion": false
+    },
+    "Walk": {
+      "frames": [
+        1,
+        33
+      ],
+      "duration_seconds": 1.0666666666666667,
+      "loop": true,
+      "root_motion": false
+    }
+  },
+  "attack_shot_times_seconds": [
+    0.8,
+    1,
+    1.2,
+    1.4,
+    1.6
+  ],
+  "projectile": "ProjectileFruit.fbx, sealed skin and green crown, pivot at mass center",
+  "projectile_triangles": 568,
+  "export": {
+    "format": "FBX 7400",
+    "axis_forward": "-Z",
+    "axis_up": "Y",
+    "scale": 1,
+    "deform_only": true,
+    "sampling_step_frames": 1,
+    "simplify": 0
+  },
+  "textures": "Existing 2K source textures preserved and packed into production Blender scene. Petal UVs exclude painted green patches.",
+  "model_job_original": "3abba23e-4077-4830-b7de-55e34a343130",
+  "notes": [
+    "Back opening rebuilt with skinned manifold surface; generated micro-flaps removed.",
+    "Petals rebuilt as thick watertight curved surfaces, three bend bones and smooth weights per petal.",
+    "Foot weights repaired; all clips sampled frame by frame against ground.",
+    "Fruit visual visibility is controlled by View from Sim shot events, not by bone scale.",
+    "Game.Sim owns aim, 0.2 second firing intervals, 2 second flight and impacts."
+  ],
+  "validation": {
+    "fbx_roundtrip_pass": true,
+    "max_roundtrip_bone_position_error_m": 7.77149487251892e-07,
+    "max_ground_penetration_m": 6.794588898628717e-06
+  },
+  "runtime_polish": {
+    "projectile_scale": 1.85,
+    "shader": "Razlom/Forest Fruit",
+    "trail": "pooled volumetric sap drops",
+    "telegraph": "Analytic scarlet field; fixed .8m boundary; growing five-petal charge; raised petals; overlapping internal rims masked. Original raster retained as reference only.",
+    "attack_range_m": 10,
+    "preferred_range_m": 8.5,
+    "editor_menu": "Разлом/Тест Forest Bud",
+    "sim_tests": "182/182",
+    "captures": [
+      "artifacts/forest-bud-polish/",
+      "artifacts/forest-bud-polish-dodge/",
+      "artifacts/forest-bud-impact-final/",
+      "artifacts/forest-bud-impact-repeat120/"
+    ],
+    "impact": {
+      "trigger": "SimEventType.ForestFruitImpact; FrameEventContext.SimulationTick - 1",
+      "pool": 192,
+      "life_seconds": 0.72,
+      "ground_splash_seconds": 0.38,
+      "geometry": "6 closed curved rind pieces, 12 pulp drops, 5 seeds, 7 brief sap jets; one dynamic batched mesh per impact",
+      "flight": "subtle terminal swelling and illuminated rind fissures; no changes to trajectory or damage",
+      "sound": "unchanged",
+      "validation": "artifacts/forest-bud-impact-final/validation.json"
+    }
+  }
+}

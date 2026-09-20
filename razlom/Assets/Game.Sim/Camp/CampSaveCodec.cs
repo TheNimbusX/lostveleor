@@ -57,7 +57,7 @@ namespace Game.Sim
         }
         static void Write(BinaryWriter w,ItemInstance i){w.Write(i.BaseId);w.Write(i.ItemLevel);w.Write((byte)i.Rarity);w.Write(i.Seed);}
         static ItemInstance Read(BinaryReader r,ItemDatabase db)
-        {var i=new ItemInstance(r.ReadInt32(),r.ReadInt16(),(ItemRarity)r.ReadByte(),r.ReadUInt64());if(!i.IsEmpty&&(db.IndexOfBase(i.BaseId)<0||i.ItemLevel<1||(int)i.Rarity>2))throw new InvalidDataException("Некорректный предмет");return i;}
+        {var i=new ItemInstance(r.ReadInt32(),r.ReadInt16(),(ItemRarity)r.ReadByte(),r.ReadUInt64());if(!i.IsEmpty&&(db.IndexOfBase(i.BaseId)<0||i.ItemLevel<1||(int)i.Rarity>(int)ItemRarity.Unique))throw new InvalidDataException("Некорректный предмет");return i;}
         static uint Checksum(byte[] bytes,int count){uint h=2166136261;for(int i=0;i<count;i++){h^=bytes[i];h=unchecked(h*16777619);}return h;}
     }
 }

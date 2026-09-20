@@ -124,6 +124,9 @@ namespace Game.View
 
         public static PelagVfxShowcase VfxShowcase { get; private set; }
         public static bool LiveSkill { get; private set; }
+        public static bool NoVfx { get; private set; }
+        public static int TempoPreset { get; private set; } = -1;
+        public static string SlamCase { get; private set; } = "";
         public static int CastYaw { get; private set; }
         public static float CastDistance { get; private set; } = 3f;
         public static int HoldTicks { get; private set; } = 60;
@@ -132,6 +135,8 @@ namespace Game.View
         public static bool TurnDuringSkill { get; private set; }
         public static bool ActiveEnemies { get; private set; }
         private static string _combatEncounter;
+        public static string ForestBudCase { get; private set; }
+        public static bool ForestBudShowcase => _combatEncounter == "forest-bud";
         public static bool SweepAimCapture { get; private set; }
         public static bool DeathDuringSkill { get; private set; }
 
@@ -213,6 +218,9 @@ namespace Game.View
             MovingCombatDelay = Mathf.Clamp(ReadInt(args, "-capture-moving-combat-delay", 2), 1, 24);
             VfxShowcase = ParseShowcase(ReadValue(args, SkillFlag));
             LiveSkill = Array.IndexOf(args, "-capture-live-skill") >= 0;
+            NoVfx = Array.IndexOf(args, "-capture-no-vfx") >= 0;
+            TempoPreset = ReadInt(args, "-capture-tempo", -1);
+            SlamCase = ReadValue(args, "-capture-slam-case") ?? "";
             PerformanceCapture = ReadFloat(args, PerfFlag, 0f) > 0f;
             CastYaw = ReadInt(args, "-capture-cast-yaw", 0);
             CastDistance = Mathf.Clamp(ReadFloat(args, "-capture-cast-distance", 3f), .5f, 7f);
@@ -221,6 +229,7 @@ namespace Game.View
             TurnDuringSkill = Array.IndexOf(args, "-capture-turn-during-skill") >= 0;
             ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
             _combatEncounter = ReadValue(args, "-capture-encounter");
+            ForestBudCase = ReadValue(args, "-capture-forest-bud-case");
             SweepAimCapture = Array.IndexOf(args, "-capture-sweep-aim") >= 0;
             DeathDuringSkill = Array.IndexOf(args, "-capture-death-during-skill") >= 0;
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
@@ -232,7 +241,7 @@ namespace Game.View
             // Input polling starts before the capture coroutine reaches its
             // explicit warmup. Gate combat immediately, otherwise an attack
             // can begin during scene startup and contaminate frame zero.
-            GcWarmupActive = IsCombatFeelShowcase || WhirlwindShowcase;
+            GcWarmupActive = IsCombatFeelShowcase || WhirlwindShowcase || TempoPreset >= 0;
             _nextWhirlwindCast = 0;
             _whirlwindStartedTick = -1;
 
@@ -301,11 +310,12 @@ namespace Game.View
         private void Start()
         {
             Directory.CreateDirectory(_outputDirectory);
+            if (ForestBudShowcase) gameObject.AddComponent<ForestBudCaptureProbe>();
             if (VfxShowcase == PelagVfxShowcase.Blaze)
                 gameObject.AddComponent<PelagBlazeCapture>().Initialize(_outputDirectory);
-            if (IsCombatFeelShowcase || WhirlwindShowcase || VfxShowcase != PelagVfxShowcase.None)
+            if (IsCombatFeelShowcase || WhirlwindShowcase || VfxShowcase != PelagVfxShowcase.None || TempoPreset >= 0)
                 gameObject.AddComponent<PelagAttackCapture>().Initialize(_outputDirectory);
-            if (RunShowcase || LocomotionShowcase || WhirlwindShowcase || MovingCombatShowcase || VfxShowcase != PelagVfxShowcase.None)
+            if (RunShowcase || LocomotionShowcase || WhirlwindShowcase || MovingCombatShowcase || VfxShowcase != PelagVfxShowcase.None || TempoPreset >= 0)
                 gameObject.AddComponent<PelagLocomotionCapture>().Initialize(_outputDirectory);
             if (_recordVideo)
             {
@@ -345,6 +355,8 @@ namespace Game.View
                     gameObject.AddComponent<CampIntegrationCapture>().Initialize(_outputDirectory);
                 else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-magic") >= 0)
                     gameObject.AddComponent<CampMagicCapture>();
+                else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-blocked") >= 0)
+                    gameObject.AddComponent<CampBlockedReport>().Initialize(_outputDirectory);
                 else gameObject.AddComponent<CampWalkCapture>();
             }
             else while (!CombatViewReady()) yield return null;
@@ -355,17 +367,30 @@ namespace Game.View
                 Debug.Log("[capture-combat] Живых врагов: " + (driver.Sim.Entities.Count - 1));
                 yield return null;
             }
-            if (!string.IsNullOrEmpty(_combatEncounter) && IsCombatFeelShowcase)
+            if (!string.IsNullOrEmpty(_combatEncounter) && (IsCombatFeelShowcase || ForestBudShowcase))
             {
                 CombatCaptureEncounter.Configure(FindAnyObjectByType<TickDriver>(), _combatEncounter,
                     EnemyOverride, CombatFeelTier, ActiveEnemies);
                 yield return null;
             }
+            if (ForestBudShowcase)
+            {
+                // Отдельный тестовый забег даёт свежее поколение привязок и не меняет сохранение.
+                var driver = FindAnyObjectByType<TickDriver>();
+                driver.StartForestBudTest(driver.GetComponent<LayoutView>().Profile, SeedOverride,
+                    Mathf.Clamp(EnemyOverride, 1, 8));
+                yield return null;
+            }
+            if (TempoPreset >= 0)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                driver.StartTempoTest(new[] { 0, 1, 8, 9 }, TempoPreset);
+                yield return null;
+            }
             ConfigureCaptureView();
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-no-vfx") >= 0)
             {
-                var effects = FindAnyObjectByType<PelagVfxController>();
-                if (effects != null) effects.enabled = false;
+                // Контроллер также ведёт физическую голову Абордажа: скрываем только эффекты внутри него.
                 var juice = FindAnyObjectByType<CombatJuiceView>();
                 if (juice != null) juice.enabled = false;
             }
@@ -418,7 +443,7 @@ namespace Game.View
                 vfx.BeginShowcase(VfxShowcase);
             }
 
-            if (IsCombatFeelShowcase || WhirlwindShowcase)
+            if (!ForestBudShowcase && (IsCombatFeelShowcase || WhirlwindShowcase || TempoPreset >= 0))
             {
                 GcWarmupActive = true;
                 for (int i = 0; i < 120; i++)
@@ -464,6 +489,10 @@ namespace Game.View
                         : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt) < finish
                    || mark < _marks.Length)
             {
+                // Тестовая арена пересоздаёт привязку камеры после прогрева.
+                // Обзорный ракурс удерживается и после этого перехода.
+                if (LiveSkill || ReadFloat(Environment.GetCommandLineArgs(), "-capture-camera-pitch", -1f) >= 0)
+                    ConfigureCaptureView();
                 yield return new WaitForEndOfFrame();
 
                 float now = _recordVideo
@@ -657,6 +686,26 @@ namespace Game.View
 
         private void ConfigureCaptureView()
         {
+            // В изолированной записи портал не должен закрывать постановку тела.
+            if (LiveSkill)
+                foreach (var t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                    if (t.name == "Портал" || t.name == "Схрон" || t.name == "Вход в луга" || t.name == "Проход дальше") t.gameObject.SetActive(false);
+            float reviewPitch = ReadFloat(Environment.GetCommandLineArgs(), "-capture-camera-pitch", -1f);
+            if (reviewPitch >= 0 && Camera.main != null)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                var follow = FindAnyObjectByType<CameraFollow>();
+                if (follow != null) follow.enabled = false;
+                var juice = Camera.main.GetComponent<CombatCameraJuice>();
+                if (juice != null) juice.enabled = false;
+                var simPosition = driver.Sim.Entities.Position[ForestBudShowcase && driver.Sim.Entities.Count > 1 ? 1 : Simulation.PlayerId];
+                Vector3 pivot = new Vector3(simPosition.X.ToFloat(), .9f, simPosition.Y.ToFloat());
+                if (!ForestBudShowcase) pivot += Quaternion.Euler(0, CastYaw, 0) * Vector3.right * 1.8f;
+                Quaternion angle = Quaternion.Euler(reviewPitch,
+                    ReadFloat(Environment.GetCommandLineArgs(), "-capture-camera-yaw", 0f), 0);
+                Camera.main.transform.SetPositionAndRotation(pivot - angle * Vector3.forward * 12f, angle);
+                _cameraYaw = 0;
+            }
             if (Mathf.Abs(_cameraYaw) > 0.01f && Camera.main != null)
             {
                 var orbitArena = FindAnyObjectByType<ArenaView>();
@@ -752,6 +801,10 @@ namespace Game.View
                 case "cleave": return PelagVfxShowcase.Cleave;
                 case "blaze": return PelagVfxShowcase.Blaze;
                 case "dash": return PelagVfxShowcase.Dash;
+                case "wreck": return PelagVfxShowcase.Wreck;
+                case "fire-flask": return PelagVfxShowcase.FireFlask;
+                case "skewer": return PelagVfxShowcase.Skewer;
+                case "backblast": return PelagVfxShowcase.Backblast;
                 case "rotation": return PelagVfxShowcase.Rotation;
                 default:
                     Debug.LogWarning("[capture] Неизвестный VFX showcase: " + raw);
@@ -843,6 +896,13 @@ namespace Game.View
 
         private Texture2D CaptureFrame()
         {
+            // Layout может пересоздать пул после настройки камеры. Убираем
+            // перекрывающий героя портал непосредственно перед контрольным кадром.
+            if (LiveSkill && VfxShowcase == PelagVfxShowcase.AnchorSweep)
+                foreach (var item in FindObjectsByType<Transform>(FindObjectsInactive.Exclude))
+                    if (item.name == "Вход в луга" || item.name == "Проход дальше")
+                        foreach (var renderer in item.GetComponentsInChildren<Renderer>(true))
+                            renderer.forceRenderingOff = true;
             // Camera.Render не содержит IMGUI. Для QA системного меню нужен
             // именно итоговый framebuffer после OnGUI, иначе лог подтвердит
             // открытие экрана, а снимок покажет только арену под ним.

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -55,7 +55,9 @@ namespace Game.Data
         public EncounterPackAsset[] MainPath = {
             Pack("encounter.meadow.guardians", Guardian(2, 3)),
             Pack("encounter.meadow.swarm", Swarm(4, 5)),
-            Pack("encounter.meadow.mixed", Guardian(1, 2), Swarm(2, 3)) };
+            Pack("encounter.meadow.mixed", Guardian(1, 2), Swarm(2, 3)),
+            Pack("encounter.meadow.forest_bud", new EncounterGroupAsset { Kind = EnemyKind.ForestBud,
+                Min = 1, Max = 2, HealthPercent = 80 }, Guardian(0, 1)) };
         public EncounterPackAsset[] RewardBranch = {
             Pack("encounter.meadow.cache", Guardian(2, 2), Swarm(2, 3)) };
         public EncounterPackAsset[] ExitGuard = {

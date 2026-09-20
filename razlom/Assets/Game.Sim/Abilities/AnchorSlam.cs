@@ -11,6 +11,7 @@ namespace Game.Sim
         public FixVec2 AnchorSlamOrigin => _slamOrigin;
         public FixVec2 AnchorSlamDirection => _slamDirection;
         public int AnchorSlamImpactTick => _slamImpactTick;
+        public int AnchorSlamEndTick => _slamEndTick;
 
         private void StopAnchorSlam()
         {
@@ -27,8 +28,8 @@ namespace Game.Sim
             if (direction.LengthSq.Raw == 0) direction = Entities.Facing[PlayerId];
             if (direction.LengthSq.Raw == 0) direction = new FixVec2(Fix64.One, Fix64.Zero);
             _slamDirection = direction.Normalized();
-            _slamImpactTick = Tick + System.Math.Max(1, build.Get(AbilityStatType.WindupTicks).ToInt());
-            _slamEndTick = System.Math.Max(_slamImpactTick + 1, Tick + build.Get(AbilityStatType.DurationTicks).ToInt());
+            _slamImpactTick = Tick + AbilityExecutionTicks(build.Get(AbilityStatType.WindupTicks).ToInt());
+            _slamEndTick = System.Math.Max(_slamImpactTick + 1, Tick + AbilityExecutionTicks(build.Get(AbilityStatType.DurationTicks).ToInt()));
         }
 
         private void UpdateAnchorSlam()

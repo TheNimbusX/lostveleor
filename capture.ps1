@@ -24,12 +24,14 @@ param(
     [switch] $CampIntegration,
     [switch] $CampReview,
     [switch] $CampSound,
-    [ValidateSet('', 'Original', 'Clean', 'Painterly', 'Film', 'Aces')] [string] $CampLook = '',
+    [ValidateSet('', 'Original', 'Clean', 'Painterly', 'Film', 'Aces', 'GoldenEvening')] [string] $CampLook = '',
     [switch] $CampMagic,
     [switch] $CampFinish,
     [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison')] [string] $CampDetail = '',
     [switch] $MainMenu,
     [switch] $CampCollision,
+    [switch] $CampBlocked,
+    [switch] $TentRarities,
     [switch] $CampAmbience,
     [switch] $CampAmbienceStill,
     [switch] $CampKeyLight,
@@ -48,9 +50,12 @@ param(
     [string] $Quality = '',
     [ValidateSet(0, 60, 120, 144, 240, -1)]
     [int]    $FrameCap = 0,
-    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze', 'dash')]
+    [ValidateSet('', 'autoattack', 'whirlwind', 'anchor-leap', 'anchor-slam', 'chain-cyclone', 'squall', 'anchor-sweep', 'chain-step', 'rotation', 'cleave', 'blaze', 'dash', 'wreck', 'fire-flask', 'skewer', 'backblast')]
     [string] $Skill = '',
     [switch] $LiveSkill,
+    [switch] $AudioProbe,
+    [ValidateRange(-1,2)] [int] $TempoPreset = -1,
+    [ValidateSet('', 'fast', 'roll', 'ability', 'repeat', 'autoattack', 'roll-after', 'ability-after', 'roll-away-after', 'ability-away-after', 'pause')] [string] $SlamCase = '',
     [switch] $NoVfx,
     [switch] $CleaveMiss,
     [ValidateRange(-180,180)] [int] $CastYaw = 0,
@@ -62,25 +67,29 @@ param(
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
-    [ValidateSet('', 'root-swarm', 'mixed')] [string] $Encounter = '',
+    [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud')] [string] $Encounter = '',
+    [ValidateSet('', 'dodge', 'approach', 'kill', 'pause', 'repeat', 'impact-pause', 'impact-repeat')] [string] $ForestBudCase = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,
     [ValidateSet('', 'idle', 'combat-idle', 'death')] [string] $Pose = '',
     [ValidateSet('', 'normal', 'crit', 'kill')]
     [string] $HitTier = '',
-    [ValidateSet('', 'main', 'graphics', 'controls', 'audio')]
+    [ValidateSet('', 'main', 'graphics', 'controls', 'audio', 'game', 'tour')]
     [string] $PauseMenu = '',
     [double] $VideoStart = 0.4,
     [double] $VideoDuration = 3.9,
     [int]    $VideoFps = 60,
     [double] $CameraSize = 0,
     [double] $CameraYaw = 0,
+    [double] $CameraPitch = -1,
     [switch] $Rebuild,
     [switch] $NoRebuild
 )
 
 $ErrorActionPreference = 'Stop'
 if ($CampAmbienceStill) { $CampAmbience = $true }
+if ($CampBlocked) { $Camp = $true }
+if ($TentRarities) { $Camp = $true; $Hud = $true }
 if ($CampAmbience) { $Camp = $true }
 if ($CampIntegration) { $Camp = $true }
 if ($CampReview) { $Camp = $true }
@@ -235,6 +244,7 @@ $playerArgs = @(
     '-capture-height',  $Height
 )
 if ($SilentVideo) { $playerArgs += '-capture-silent-video' }
+if ($AudioProbe) { $playerArgs += '-capture-audio-probe' }
 if ($HudReview) { $playerArgs += '-capture-hud-review'; $playerArgs += '-capture-hud' }
 if ($Perf -gt 0) {
     $playerArgs += @(
@@ -255,6 +265,9 @@ if ($Locomotion) { $playerArgs += '-capture-locomotion' }
 if ($MovingCombat) { $playerArgs += '-capture-moving-combat'; $playerArgs += '-capture-moving-combat-delay'; $playerArgs += [string]$MovingCombatDelay }
 if ($Skill -ne '') { $playerArgs += @('-capture-skill', $Skill) }
 if ($LiveSkill) { $playerArgs += '-capture-live-skill' }
+if ($TempoPreset -ge 0) { $playerArgs += @('-capture-tempo', $TempoPreset.ToString(), '-capture-hud') }
+if ($CameraPitch -ge 0) { $playerArgs += @('-capture-camera-pitch', $CameraPitch.ToString([Globalization.CultureInfo]::InvariantCulture)) }
+if ($SlamCase -ne '') { $playerArgs += @('-capture-slam-case', $SlamCase) }
 if ($NoVfx) { $playerArgs += '-capture-no-vfx' }
 if ($CleaveMiss) { $playerArgs += '-capture-cleave-miss' }
 if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
@@ -272,6 +285,8 @@ if ($CampFinish) { $playerArgs += '-capture-camp-finish' }
 if ($CampDetail -ne '') { $playerArgs += @('-capture-camp-detail', $CampDetail) }
 if ($MainMenu) { $playerArgs += '-capture-main-menu' }
 if ($CampCollision) { $playerArgs += '-capture-camp-collision' }
+if ($CampBlocked) { $playerArgs += '-capture-camp-blocked' }
+if ($TentRarities) { $playerArgs += '-capture-tent-rarities' }
 if ($CampAmbience) { $playerArgs += '-capture-camp-ambience' }
 if ($CampAmbienceStill) { $playerArgs += '-capture-camp-ambience-still' }
 if ($CampKeyLight) { $playerArgs += '-capture-ground-key' }
@@ -279,6 +294,7 @@ if ($TurnDuringSkill) { $playerArgs += '-capture-turn-during-skill' }
 if ($Realtime) { $playerArgs += '-capture-real-time' }
 if ($ActiveEnemies) { $playerArgs += '-capture-active-enemies' }
 if ($Encounter -ne '') { $playerArgs += @('-capture-encounter', $Encounter) }
+if ($ForestBudCase -ne '') { $playerArgs += @('-capture-forest-bud-case', $ForestBudCase) }
 if ($AimSweep) { $playerArgs += '-capture-sweep-aim' }
 if ($DeathDuringSkill) { $playerArgs += '-capture-death-during-skill' }
 if ($Pose -ne '') { $playerArgs += @('-capture-pose', $Pose) }
@@ -326,7 +342,10 @@ if ($shots) {
 
 if ($Video) {
     $frames = Join-Path $OutDir 'video_frames\frame_%04d.jpg'
-    $movieName = if ($CampLook -ne '') {
+    $movieName = if ($Encounter -eq 'forest-bud') {
+        $caseName = if ($ForestBudCase) { $ForestBudCase } else { 'attack' }
+        "forest_bud_${caseName}_${Height}p${VideoFps}.mp4"
+    } elseif ($CampLook -ne '') {
         "camp_look_${CampLook}_${Height}p${VideoFps}.mp4"
     } elseif ($CampAmbience) {
         "camp_ambience_${Height}p${VideoFps}.mp4"

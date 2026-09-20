@@ -19,7 +19,8 @@ namespace Game.View
         }
         public static bool IsNear(CampDummyView dummy, Vector3 position)
             => Instance != null && (dummy.TargetPosition - position).sqrMagnitude <= Instance.ActivationDistance * Instance.ActivationDistance;
-        static Rect PanelRect => new Rect(Screen.width - 286, 90, 266, 164);
+        // Под миникартой и её подписью: на прежних 90 px панель уходила под карту.
+        static Rect PanelRect => new Rect(Screen.width - 286, Mathf.Max(90f, PlayerHud.MinimapBottom + 10f), 266, 164);
         public static bool PointerOverPanel(Vector2 screenPosition)
             => Instance != null && Instance.Nearby() && PanelRect.Contains(new Vector2(screenPosition.x, Screen.height - screenPosition.y));
         public void Initialize(TickDriver driver)

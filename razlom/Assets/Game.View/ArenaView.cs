@@ -20,6 +20,8 @@ namespace Game.View
         public int PrewarmWole = 8;
         public int PrewarmOrvill = 64;
         public int PrewarmRootSwarm = 6;
+        public int PrewarmForestBud = 40;
+        public float ForestBudScale = 1f;
 
         [Header("Вид")]
         public Color WoleColor = new Color(0.92f, 0.40f, 0.46f);
@@ -198,6 +200,8 @@ namespace Game.View
         private ViewPool _wolePool;
         private ViewPool _orvillPool;
         private ViewPool _rootSwarmPool;
+        private ViewPool _forestBudPool;
+        private ForestBudAnimatorView[] _forestBudViews;
 
         // Индекс сущности → её объект. Массив, а не словарь: индексы плотные,
         // а искать по ним надо каждый кадр.
@@ -372,6 +376,7 @@ namespace Game.View
             _viewPools = new ViewPool[capacity];
             _groundOffset = new float[capacity];
             _animationViews = new CharacterAnimatorView[capacity];
+            _forestBudViews = new ForestBudAnimatorView[capacity];
             _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
@@ -477,6 +482,14 @@ namespace Game.View
             }
 
             BindNewEntities();
+            if (_driver.GameplayPaused)
+                for (int i = 1; i < _boundCount; i++)
+                    if (_deathStarted[i] && sim.Entities.Kind[i] == EnemyKind.ForestBud)
+                    {
+                        // Пауза останавливает и падение, и последующее исчезновение бутона.
+                        _deathStartedAt[i] += Time.deltaTime;
+                        _deathUntil[i] += Time.deltaTime;
+                    }
             SyncAnimationEvents();
             UpdatePlayerEquipmentIntent();
             SyncTransforms();
@@ -614,7 +627,8 @@ namespace Game.View
 
         public void BeginPlayerAnchorUse(bool leap = false)
         {
-            _playerAnchorFallbackUntil = Time.unscaledTime + AnchorFallbackSeconds;
+            // Часы оружия идут вместе с анимацией: пауза и медленная запись не убирают цепь раньше контакта.
+            _playerAnchorFallbackUntil = Time.time + AnchorFallbackSeconds;
             _anchorSaberSuppressed = true;
             ApplyPlayerCombatReady(false, force: true);
             if (_equipmentViews != null && Simulation.PlayerId < _boundCount)
@@ -730,7 +744,7 @@ namespace Game.View
             }
 
             if (_playerAnchorFallbackUntil > 0f
-                && Time.unscaledTime >= _playerAnchorFallbackUntil)
+                && Time.time >= _playerAnchorFallbackUntil)
                 EndPlayerAnchorUse();
 
             bool threatened = (_driver != null && _driver.AttackHeld)
@@ -873,7 +887,9 @@ namespace Game.View
             {
                 // Авторский манекен уже стоит в сцене: пул боевых врагов им не владеет.
                 if (CampTrainingView.Find(i) != null) continue;
+                if (entities.Kind[i] == EnemyKind.ForestBud && _forestBudPool == null) PrepareForestBud();
                 ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
+                    : entities.Kind[i] == EnemyKind.ForestBud ? _forestBudPool
                     : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
                 GameObject go = pool.Acquire();
                 go.name = entities.Kind[i] == EnemyKind.None
@@ -881,6 +897,8 @@ namespace Game.View
                 _views[i] = go.transform;
                 _viewPools[i] = pool;
                 _animationViews[i] = go.GetComponent<CharacterAnimatorView>();
+                _forestBudViews[i] = go.GetComponent<ForestBudAnimatorView>();
+                _forestBudViews[i]?.Bind(_driver, i);
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
                 _equipmentViews[i] = go.GetComponent<PelagEquipmentView>();
                 _animationViews[i]?.ResetForSpawn();
@@ -926,7 +944,7 @@ namespace Game.View
                 go.transform.localScale = ExpectedBaseScale(entities.Side[i], entities.Kind[i], _animationViews[i]);
                 _baseScale[i] = go.transform.localScale;
 
-                _groundOffset[i] = _animationViews[i] != null
+                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null
                     ? 0f
                     : GroundOffset(entities.Side[i], WoleScale, OrvillScale);
             }
@@ -937,6 +955,7 @@ namespace Game.View
         private Vector3 ExpectedBaseScale(Faction faction, EnemyKind kind, CharacterAnimatorView animation)
         {
             float scale = faction == Faction.Wole ? WoleScale
+                : kind == EnemyKind.ForestBud ? ForestBudScale
                 : kind == EnemyKind.ForestRootSwarm ? RootSwarmScale : OrvillScale;
             if (animation != null && animation.UsesSprites)
                 scale *= SpriteScaleMultiplier(faction);
@@ -1478,6 +1497,7 @@ namespace Game.View
                         AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
                     case SimEventType.AbilityCast:
+                    case SimEventType.ActionStageStarted:
                         if ((uint)e.Amount < Simulation.AbilitySlots)
                         {
                             AbilityBuild build = _driver.Sim.GetAbility(e.Amount);
@@ -1518,8 +1538,9 @@ namespace Game.View
                             EndPlayerAnchorUse();
                         }
                         CharacterAnimatorView animation = AnimationOf(e.Target);
-                        if (animation == null) break;
-                        animation.PlayDeath();
+                        if (animation == null && _forestBudViews[e.Target] == null) break;
+                        animation?.PlayDeath();
+                        _forestBudViews[e.Target]?.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -1581,6 +1602,49 @@ namespace Game.View
         {
             return BodyFactory(WoleModel, WoleController, WoleMaterial, WoleTexture,
                 Faction.Wole, WoleScale)();
+        }
+
+        public void PrepareForestBud()
+        {
+            if (_forestBudPool != null) return;
+            var root = new GameObject("Пул: Forest_Bud").transform;
+            root.SetParent(transform, false);
+            _forestBudPool = new ViewPool(root, ForestBudFactory(), Mathf.Max(40, PrewarmForestBud));
+            while (_forestBudPool.NeedsPrewarm) _forestBudPool.PrewarmStep(40);
+            if (GetComponent<ForestBudCombatView>() == null) gameObject.AddComponent<ForestBudCombatView>();
+            if (GetComponent<ForestBudImpactView>() == null) gameObject.AddComponent<ForestBudImpactView>();
+        }
+
+        private System.Func<GameObject> ForestBudFactory()
+        {
+            var prefab = Resources.Load<GameObject>("Characters/Forest_Bud/Forest_Bud_Runtime");
+            var controller = Resources.Load<RuntimeAnimatorController>("Characters/Forest_Bud/Forest_Bud_Combat");
+            if (prefab == null || controller == null)
+                throw new System.InvalidOperationException("Forest_Bud: модель или боевой контроллер не собраны.");
+            return () =>
+            {
+                var body = Instantiate(prefab);
+                body.SetActive(false);
+                body.transform.localScale = Vector3.one * ForestBudScale;
+                SetLayerRecursively(body, LayerMask.NameToLayer("EnemyOutline"));
+                // Сырой preview не имеет права порождать физические снаряды по AnimationEvent.
+                foreach (var behaviour in body.GetComponentsInChildren<MonoBehaviour>(true))
+                    if (behaviour.GetType().Name == "ForestBudVolley") { behaviour.enabled = false; Destroy(behaviour); }
+                foreach (var rigidbody in body.GetComponentsInChildren<Rigidbody>(true)) Destroy(rigidbody);
+                foreach (var collider in body.GetComponentsInChildren<Collider>(true)) Destroy(collider);
+                foreach (var renderer in body.GetComponentsInChildren<Renderer>(true))
+                {
+                    renderer.shadowCastingMode = ShadowCastingMode.On;
+                    if (renderer is SkinnedMeshRenderer skin) skin.updateWhenOffscreen = true;
+                }
+                var animator = body.GetComponent<Animator>() ?? body.AddComponent<Animator>();
+                animator.runtimeAnimatorController = controller;
+                animator.applyRootMotion = false;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                CreateContactShadow(body.transform, Faction.Orvill, ForestBudScale);
+                body.AddComponent<ForestBudAnimatorView>();
+                return body;
+            };
         }
 
         private System.Func<GameObject> BodyFactory(string modelPath, string controllerPath,
@@ -1890,6 +1954,9 @@ namespace Game.View
             PelagEquipmentView equipment = body.GetComponent<PelagEquipmentView>();
             if (equipment == null) equipment = body.AddComponent<PelagEquipmentView>();
             if (body.GetComponent<PelagBlazeView>() == null) body.AddComponent<PelagBlazeView>();
+            if (body.GetComponent<PelagOrdnanceView>() == null) body.AddComponent<PelagOrdnanceView>();
+            if (body.GetComponent<PelagMobilityPoseView>() == null) body.AddComponent<PelagMobilityPoseView>();
+            if (body.GetComponent<PelagAnchorSlamView>() == null) body.AddComponent<PelagAnchorSlamView>();
             equipment.Configure(saber,
                 new PelagEquipmentView.MountPoint(saberStoredSocket,
                     WoleWeaponStoredLocalPosition, WoleWeaponStoredLocalRotation,
@@ -2080,5 +2147,6 @@ namespace Game.View
             => side == Faction.Wole ? woleScale : orvillScale * 0.5f;
     }
 }
+
 
 

@@ -161,7 +161,7 @@ namespace Game.View
                 bar.Root.localScale = elite ? new Vector3(1.4f, 1.2f, 1f) : Vector3.one;
 
                 Vector3 at = _driver.GetRenderPosition(i);
-                float height = entities.Kind[i] == EnemyKind.ForestRootSwarm
+                float height = entities.Kind[i] == EnemyKind.ForestBud ? 1.6f : entities.Kind[i] == EnemyKind.ForestRootSwarm
                     ? RootSwarmHeight3D : Height3D;
                 bar.Root.position = new Vector3(at.x, at.y + height, at.z);
                 if (dummy != null) bar.Root.position = dummy.BarPosition;

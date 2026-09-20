@@ -68,7 +68,7 @@ namespace Game.View
             if (!IsOpen) return;
             IsOpen = false; ClosedFrame = Time.frameCount;
             _driver.ClearCapturedInput();
-            if (enter) _driver.Session.EnterRift();
+            if (enter) { GameSound.Play("rift_portal", .9f); _driver.Session.EnterRift(); }
         }
         void Start()
         {

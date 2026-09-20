@@ -37,13 +37,21 @@ namespace Game.View
             EdgeColor = new Color(0.27f, 0.32f, 0.13f, 1f)
         };
 
+        public EnemyDeathPresentation ForestBud = new EnemyDeathPresentation
+        {
+            ClipSeconds = 1.2f, StartNormalized = 0f, RestNormalized = 1f,
+            StateSpeed = 1f, BlendSeconds = .09f, RestSeconds = .45f,
+            DissolveSeconds = .45f, RecoilMeters = .035f, EdgeGlow = .03f,
+            EdgeColor = new Color(.38f, .30f, .13f, 1f)
+        };
+
         private static EnemyPresentationProfile _current;
         public static EnemyDeathPresentation Death(EnemyKind kind)
         {
             if (_current == null)
                 _current = Resources.Load<EnemyPresentationProfile>("Combat/EnemyPresentation")
                     ?? CreateInstance<EnemyPresentationProfile>();
-            return kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
+            return kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

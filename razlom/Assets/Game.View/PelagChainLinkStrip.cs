@@ -10,6 +10,19 @@ namespace Game.View
     {
         public Transform[] Links;
         private readonly float[] _arcLengths = new float[65];
+        public void SetSolved(AnchorChainSolver solver)
+        {
+            if (Links == null) return;
+            for (int i=0;i<Links.Length;i++)
+            {
+                bool visible=i<solver.Count-1 && (i>0 || solver.SegmentLength(0)>.06f);
+                var link=Links[i]; link.gameObject.SetActive(visible); if(!visible)continue;
+                var a=solver[i]; var b=solver[i+1];
+                Vector3 from=new Vector3(a.X,a.Y,a.Z), to=new Vector3(b.X,b.Y,b.Z);
+                link.position=(from+to)*.5f;
+                if((to-from).sqrMagnitude>.000001f)link.rotation=Quaternion.LookRotation(to-from)*Quaternion.Euler(0,0,((solver.Count-2-i)&1)*90);
+            }
+        }
 
         public void SetPoints(Vector3[] points)
         {

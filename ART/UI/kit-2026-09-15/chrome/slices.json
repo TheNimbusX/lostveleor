@@ -1,0 +1,322 @@
+﻿{
+    "panel_navy":  {
+                       "w":  192,
+                       "h":  192,
+                       "left":  48,
+                       "bottom":  48,
+                       "right":  48,
+                       "top":  48
+                   },
+    "panel_navy_selected":  {
+                                "w":  192,
+                                "h":  192,
+                                "left":  48,
+                                "bottom":  48,
+                                "right":  48,
+                                "top":  48
+                            },
+    "card_cream":  {
+                       "w":  128,
+                       "h":  128,
+                       "left":  24,
+                       "bottom":  24,
+                       "right":  24,
+                       "top":  24
+                   },
+    "card_cream_selected":  {
+                                "w":  128,
+                                "h":  128,
+                                "left":  24,
+                                "bottom":  24,
+                                "right":  24,
+                                "top":  24
+                            },
+    "button_primary":  {
+                           "w":  256,
+                           "h":  96,
+                           "left":  44,
+                           "bottom":  30,
+                           "right":  44,
+                           "top":  30
+                       },
+    "button_primary_hover":  {
+                                 "w":  256,
+                                 "h":  96,
+                                 "left":  44,
+                                 "bottom":  30,
+                                 "right":  44,
+                                 "top":  30
+                             },
+    "button_primary_pressed":  {
+                                   "w":  256,
+                                   "h":  96,
+                                   "left":  44,
+                                   "bottom":  30,
+                                   "right":  44,
+                                   "top":  30
+                               },
+    "button_secondary":  {
+                             "w":  256,
+                             "h":  96,
+                             "left":  44,
+                             "bottom":  30,
+                             "right":  44,
+                             "top":  30
+                         },
+    "button_secondary_hover":  {
+                                   "w":  256,
+                                   "h":  96,
+                                   "left":  44,
+                                   "bottom":  30,
+                                   "right":  44,
+                                   "top":  30
+                               },
+    "button_disabled":  {
+                            "w":  256,
+                            "h":  96,
+                            "left":  44,
+                            "bottom":  30,
+                            "right":  44,
+                            "top":  30
+                        },
+    "slot":  {
+                 "w":  128,
+                 "h":  128,
+                 "left":  28,
+                 "bottom":  28,
+                 "right":  28,
+                 "top":  28
+             },
+    "slot_selected":  {
+                          "w":  128,
+                          "h":  128,
+                          "left":  28,
+                          "bottom":  28,
+                          "right":  28,
+                          "top":  28
+                      },
+    "slot_common":  {
+                        "w":  128,
+                        "h":  128,
+                        "left":  28,
+                        "bottom":  28,
+                        "right":  28,
+                        "top":  28
+                    },
+    "slot_magic":  {
+                       "w":  128,
+                       "h":  128,
+                       "left":  28,
+                       "bottom":  28,
+                       "right":  28,
+                       "top":  28
+                   },
+    "slot_rare":  {
+                      "w":  128,
+                      "h":  128,
+                      "left":  28,
+                      "bottom":  28,
+                      "right":  28,
+                      "top":  28
+                  },
+    "slot_unique":  {
+                        "w":  128,
+                        "h":  128,
+                        "left":  28,
+                        "bottom":  28,
+                        "right":  28,
+                        "top":  28
+                    },
+    "bar_track":  {
+                      "w":  128,
+                      "h":  40,
+                      "left":  16,
+                      "bottom":  16,
+                      "right":  16,
+                      "top":  16
+                  },
+    "bar_fill_white":  {
+                           "w":  128,
+                           "h":  40,
+                           "left":  14,
+                           "bottom":  14,
+                           "right":  14,
+                           "top":  14
+                       },
+    "keycap":  {
+                   "w":  64,
+                   "h":  64,
+                   "left":  20,
+                   "bottom":  20,
+                   "right":  20,
+                   "top":  20
+               },
+    "pill_navy":  {
+                      "w":  192,
+                      "h":  72,
+                      "left":  40,
+                      "bottom":  24,
+                      "right":  40,
+                      "top":  24
+                  },
+    "toggle_on":  {
+                      "w":  128,
+                      "h":  64,
+                      "left":  32,
+                      "bottom":  32,
+                      "right":  32,
+                      "top":  32
+                  },
+    "toggle_off":  {
+                       "w":  128,
+                       "h":  64,
+                       "left":  32,
+                       "bottom":  32,
+                       "right":  32,
+                       "top":  32
+                   },
+    "knob":  {
+                 "w":  64,
+                 "h":  64,
+                 "left":  0,
+                 "bottom":  0,
+                 "right":  0,
+                 "top":  0
+             },
+    "diamond":  {
+                    "w":  32,
+                    "h":  32,
+                    "left":  0,
+                    "bottom":  0,
+                    "right":  0,
+                    "top":  0
+                },
+    "divider":  {
+                    "w":  256,
+                    "h":  16,
+                    "left":  60,
+                    "bottom":  0,
+                    "right":  60,
+                    "top":  0
+                },
+    "hud_panel":  {
+                      "w":  128,
+                      "h":  128,
+                      "left":  28,
+                      "bottom":  28,
+                      "right":  28,
+                      "top":  28
+                  },
+    "hud_frame":  {
+                      "w":  128,
+                      "h":  128,
+                      "left":  32,
+                      "bottom":  32,
+                      "right":  32,
+                      "top":  32
+                  },
+    "hud_frame_active":  {
+                             "w":  128,
+                             "h":  128,
+                             "left":  32,
+                             "bottom":  32,
+                             "right":  32,
+                             "top":  32
+                         },
+    "hud_mask":  {
+                     "w":  128,
+                     "h":  128,
+                     "left":  32,
+                     "bottom":  32,
+                     "right":  32,
+                     "top":  32
+                 },
+    "tooltip_tail":  {
+                         "w":  64,
+                         "h":  40,
+                         "left":  0,
+                         "bottom":  0,
+                         "right":  0,
+                         "top":  0
+                     },
+    "icon_ring":  {
+                      "w":  128,
+                      "h":  128,
+                      "left":  0,
+                      "bottom":  0,
+                      "right":  0,
+                      "top":  0
+                  },
+    "map_player":  {
+                       "w":  96,
+                       "h":  96,
+                       "left":  0,
+                       "bottom":  0,
+                       "right":  0,
+                       "top":  0
+                   },
+    "stat_glyph_heart":  {
+                             "w":  96,
+                             "h":  96,
+                             "left":  0,
+                             "bottom":  0,
+                             "right":  0,
+                             "top":  0
+                         },
+    "stat_glyph_lavidium":  {
+                                "w":  96,
+                                "h":  96,
+                                "left":  0,
+                                "bottom":  0,
+                                "right":  0,
+                                "top":  0
+                            },
+    "stat_glyph_cooldown":  {
+                                "w":  96,
+                                "h":  96,
+                                "left":  0,
+                                "bottom":  0,
+                                "right":  0,
+                                "top":  0
+                            },
+    "stat_glyph_damage":  {
+                              "w":  96,
+                              "h":  96,
+                              "left":  0,
+                              "bottom":  0,
+                              "right":  0,
+                              "top":  0
+                          },
+    "stat_glyph_range":  {
+                             "w":  96,
+                             "h":  96,
+                             "left":  0,
+                             "bottom":  0,
+                             "right":  0,
+                             "top":  0
+                         },
+    "stat_glyph_radius":  {
+                              "w":  96,
+                              "h":  96,
+                              "left":  0,
+                              "bottom":  0,
+                              "right":  0,
+                              "top":  0
+                          },
+    "stat_glyph_duration":  {
+                                "w":  96,
+                                "h":  96,
+                                "left":  0,
+                                "bottom":  0,
+                                "right":  0,
+                                "top":  0
+                            },
+    "pause_shine":  {
+                        "w":  160,
+                        "h":  256,
+                        "left":  0,
+                        "bottom":  0,
+                        "right":  0,
+                        "top":  0
+                    }
+}

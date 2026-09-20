@@ -1,0 +1,29 @@
+КОНЦЕПТЫ ОКОН ЛАГЕРЯ — ЗАПРОСЫ ДЛЯ ГЕНЕРАЦИИ (15 сентября 2026)
+
+Как запускать: в том же генераторе, где делался утверждённый HUD (встроенный imagegen / ChatGPT / Higgsfield GPT Image).
+К каждому запросу прикладывать три картинки:
+  1) ART/HUD/approved-2026-09-15/HUD-Minimap-Approved.png   — стиль: утверждённый HUD
+  2) ART/HUD/final-2026-09-15/clean-symbols/shot_00_t14.00s.png — мир: настоящий кадр лагеря
+  3) референс раскладки из ART/UI/references/2026-09-15/ (указан у каждого окна)
+Формат: 16:9, 1920×1080 или 2K, высокое качество. Тексты на картинке — по-русски.
+
+Что берём из Hades / Hades II (решение владельца: Hades + stylized как у Genshin, «развитие HUD»):
+  - окно — предмет мира, а не прямоугольник: сверху тканевый вымпел-заголовок, по краям реквизит (ящики, фонари, верёвки);
+  - сбоку живой рисованный полупортрет того, кто торгует или куёт;
+  - строки товара — крупные плашки с рисованной иконкой на отдельной подложке и количеством;
+  - валюта — отдельная подвешенная табличка сверху справа;
+  - описание — светлая «бумажная» карточка, а не тёмный текстовый блок;
+  - подсказки клавиш — внизу справа, крупно и спокойно.
+Чего НЕ брать из Hades: тёмно-фиолетовую палитру, неон, тяжёлое золото и черепа.
+
+ОБЩИЙ СТИЛЬ (вставлять в начало каждого запроса):
+Premium stylized painterly toon ARPG game UI, same art direction as the attached approved HUD: light airy separate elements, soft rounded shapes, thin warm ivory contour (#F0E3BA), semi-transparent warm olive-brown backing (#332F24 at 80%), hand-painted texture and gentle volume, soft local shadow, cream parchment cards, coral-brown accent buttons (#78362A), soft rounded sans-serif typography similar to Rubik. Crafted game interface, not a website, not flat vector, not dark fantasy. No heavy metal frames, no gold filigree, no neon, never blue together with gold. Item rarity colors: common ivory, magic leaf green, rare warm amber. The camp from the attached screenshot is visible and softly blurred behind the window. Full 16:9 in-game screenshot, readable at 1080p.
+
+--- 1. ТОРГОВЕЦ (референс раскладки: h2-shop-5.jpg) ---
+[ОБЩИЙ СТИЛЬ] Trader window. Top: a hanging coral-and-cream cloth pennant titled «Лавка» with a small rope. Left two thirds: a wooden shop counter panel with five large item rows — painted icon plate on the left of each row (rusty sword, leather jacket, copper ring, woodland talisman, memory shard), item name and short stat line, price on a small round coin plaque on the right; the first row is highlighted with a soft glow. Right side: painted half-body portrait of a friendly forest merchant in a green coat with a satchel and a small book, leaning on the counter among barrels, jars and sacks. Top right: a hanging wooden tag showing gold coins «1 240» and shards «36». A small cream parchment tooltip next to the highlighted row compares the item with the equipped one using green and red numbers. Bottom right: key hints «ЛКМ Купить», «ПКМ Продать», «Esc Выйти». Tabs under the pennant: «Купить», «Продать».
+
+--- 2. КУЗНЕЦ · ПЕРЕКОВКА (референс раскладки: h1-upgrade-stat.jpg и h2-inventory-1.jpg) ---
+[ОБЩИЙ СТИЛЬ] Blacksmith reforge window. Top: cloth pennant «Кузня» with tabs «Перековка» and «Разбор». Center: a large featured item plate on a stone-and-wood anvil stand — a rare amber-glowing sabre «Клинок гребца», under it three small forge-spark pips showing «перековка 2 из 3» and «ур. 17 → 23». Below: three affix rows as parchment strips, one selected: «+12 к урону → +12…19», «+18% к скорости атаки → +18…26%», «+22 к здоровью → +22…78». Cost plaque with coins «80» and shards «20», a big coral-brown button «Перековать» with warm ember glow. Left side: painted half-body portrait of a strong woman blacksmith with dark curly hair in a bun, headband, cream shirt and rust-red apron holding a hammer (see character sheet ART/CAMP/concepts/Camp_Residents_v2.png). Right side: compact bag grid of item slots with small lock icons and pip counters. Soft forge light and floating embers at the edges.
+
+--- 3. ПАЛАТКА · СНАРЯЖЕНИЕ (референс раскладки: h2-equip.jpg) ---
+[ОБЩИЙ СТИЛЬ] Tent equipment window. Top: cloth pennant «Снаряжение». Left: the hero Pelag standing on a round woven rug inside a tent canvas frame, five equipment slots around him as painted round plates — «Оружие», «Броня», «Талисман» on the left, «Кольцо», «Артефакт» on the right; under him a row of stats with small painted symbols: урон 39, броня 18, здоровье 1 352, лавидий 310. Right: bag grid 8×6 of item slots on a canvas-and-wood board, filter tabs «Все», «Оружие», «Броня», «Украшения», some slots with small lock icons meaning «беречь». A cream parchment tooltip over a selected magic jacket shows its stats and comparison in green and red. Bottom right: key hints «Двойной клик Надеть», «ПКМ Беречь», «I Закрыть».

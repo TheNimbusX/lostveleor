@@ -48,9 +48,9 @@ namespace Game.Sim
             _cleaveSlot = slot;
             _cleaveTarget = -1;
             _cleaveStartTick = Tick;
-            _cleaveImpactTick = Tick + System.Math.Max(1, build.Get(AbilityStatType.WindupTicks).ToInt());
-            _cleaveEndTick = Tick + System.Math.Max(build.Get(AbilityStatType.DurationTicks).ToInt(),
-                build.Get(AbilityStatType.WindupTicks).ToInt() + build.Get(AbilityStatType.ContactWindowTicks).ToInt() + 1);
+            _cleaveImpactTick = Tick + AbilityExecutionTicks(build.Get(AbilityStatType.WindupTicks).ToInt());
+            _cleaveEndTick = System.Math.Max(Tick + AbilityExecutionTicks(build.Get(AbilityStatType.DurationTicks).ToInt()),
+                _cleaveImpactTick + build.Get(AbilityStatType.ContactWindowTicks).ToInt() + 1);
             _cleaveDirection = Entities.Facing[PlayerId];
             _cleaveOrigin = Entities.Position[PlayerId];
             _cleavePreviousCount = Entities.Count;
@@ -198,8 +198,8 @@ namespace Game.Sim
             AbilityBuild build = _abilityBuilds[slot];
             _blazeSlot = slot;
             _blazeStartTick = Tick;
-            _blazeIgniteTick = Tick + BlazeIgnitionDelayTicks;
-            _blazeEndTick = Tick + BlazeGestureTicks;
+            _blazeIgniteTick = Tick + AbilityExecutionTicks(BlazeIgnitionDelayTicks);
+            _blazeEndTick = Tick + AbilityExecutionTicks(BlazeGestureTicks);
             // Руки заняты бутылкой: прежний незавершённый взмах не попадает сквозь жест.
             Entities.PendingAttackTarget[PlayerId] = -1;
             Entities.AttackImpactTick[PlayerId] = 0;

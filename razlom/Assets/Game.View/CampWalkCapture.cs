@@ -108,6 +108,8 @@ namespace Game.View
                 var item=driver.Session.Camp.Bag.At(index);
                 int baseIndex=driver.Session.Camp.Items.IndexOfBase(item.BaseId);
                 int slot=(int)Equipment.SlotOf(driver.Session.Camp.Items.GetBase(baseIndex).Category);
+                // Палатка v3-tent показывает четыре слота: артефакта в ней нет намеренно.
+                if(wornCells[slot]==null){Debug.Log("[camp-ui] slot "+slot+" is not shown in this layout");continue;}
                 Drag(bagCells[index],wornCells[slot]);
                 if(driver.Session.Camp.Worn.Worn((EquipSlot)slot).BaseId!=item.BaseId)Debug.LogError("[camp-ui] Equip failed "+slot);
                 Drag(wornCells[slot],bagCells[47]);
@@ -122,7 +124,100 @@ namespace Game.View
             if(driver.Sim.Tick<=pausedTick)Debug.LogError("[camp-ui] Closing did not resume simulation");
             foreach(int id in PrototypeContent.ItemBaseIds())driver.Session.Camp.Bag.Add(new ItemInstance(id,3,ItemRarity.Normal,(ulong)(uint)id+7));
             ui.Open();ui.Select(0,false,false);
-            Debug.Log("[camp-ui] Five equipment slots dragged both ways; modal pause/resume checked");
+            int shown=0;foreach(var cell in wornCells)if(cell!=null)shown++;
+            Debug.Log("[camp-ui] "+shown+" equipment slots dragged both ways; modal pause/resume checked");
+            var tent=FindAnyObjectByType<CampTentView>();
+            if(tent==null)yield break;
+            yield return new WaitForSeconds(.6f);
+            AuditClicks(tent,ui,cells);
+            if(System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-capture-tent-rarities")>=0)
+                yield return EquipShow(ui,driver);
+        }
+
+        /// <summary>
+        /// Владелец 16 сентября: «не все кнопки клацаются». Для каждой кнопки и ячейки
+        /// палатки луч в её центр: верхнее попадание обязано принадлежать ей.
+        /// Вкладки и «Закрыть» ещё и нажимаются — проверяется реакция.
+        /// </summary>
+        static void AuditClicks(CampTentView tent,CampInventoryView ui,CampInventoryCell[] cells)
+        {
+            int pass=0,fail=0;
+            foreach(var button in tent.GetComponentsInChildren<UnityEngine.UI.Button>(false))
+                if(TopHit(button.transform,out string blocker))pass++;
+                else{fail++;Debug.LogError("[tent-click] FAIL button "+button.name+" covered by "+blocker);}
+            foreach(var cell in cells)
+                if(cell!=null&&cell.isActiveAndEnabled&&cell.Selectable)
+                    if(TopHit(cell.transform,out string blocker))pass++;
+                    else{fail++;Debug.LogError("[tent-click] FAIL cell "+(cell.Worn?"worn ":"bag ")+cell.Index+" covered by "+blocker);}
+            var filterField=typeof(CampInventoryView).GetField("_filter",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+            for(int f=tent.Filters.Length-1;f>=0;f--)
+            {
+                if(tent.Filters[f]==null)continue;
+                Click(tent.Filters[f].transform);
+                int filter=(int)filterField.GetValue(ui);
+                if(filter==f-1)pass++;else{fail++;Debug.LogError("[tent-click] FAIL tab "+f+" left filter at "+filter);}
+            }
+            if(tent.CloseHint!=null)
+            {
+                Click(tent.CloseHint.transform);
+                if(!ui.IsOpen)pass++;else{fail++;Debug.LogError("[tent-click] FAIL close hint did not close");}
+                ui.Open();
+            }
+            else{fail++;Debug.LogError("[tent-click] FAIL close hint is not a button");}
+            Debug.Log("[tent-click] "+pass+" PASS, "+fail+" FAIL");
+        }
+
+        static Vector2 Centre(Transform target)
+        {
+            var rect=(RectTransform)target;
+            return rect.TransformPoint(rect.rect.center);
+        }
+
+        static bool TopHit(Transform target,out string blocker)
+        {
+            var events=UnityEngine.EventSystems.EventSystem.current;
+            var pointer=new UnityEngine.EventSystems.PointerEventData(events){position=Centre(target)};
+            var hits=new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            events.RaycastAll(pointer,hits);
+            blocker=hits.Count>0?hits[0].gameObject.name+" ("+(hits[0].gameObject.transform.parent!=null?hits[0].gameObject.transform.parent.name:"")+")":"nothing";
+            return hits.Count>0&&hits[0].gameObject.transform.IsChildOf(target);
+        }
+
+        static void Click(Transform target)
+        {
+            var events=UnityEngine.EventSystems.EventSystem.current;
+            var pointer=new UnityEngine.EventSystems.PointerEventData(events){button=UnityEngine.EventSystems.PointerEventData.InputButton.Left,position=Centre(target)};
+            var hits=new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            events.RaycastAll(pointer,hits);
+            if(hits.Count==0)return;
+            pointer.pointerCurrentRaycast=hits[0];
+            UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(hits[0].gameObject,pointer,UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+        }
+
+        /// <summary>Для видео: надеть уникальную и эпическую вещь, потом снять — перелёт, вспышка, досчёт статов.</summary>
+        static IEnumerator EquipShow(CampInventoryView ui,TickDriver driver)
+        {
+            var camp=driver.Session.Camp;
+            yield return new WaitForSeconds(1.2f);
+            foreach(var rarity in new[]{ItemRarity.Unique,ItemRarity.Rare})
+            {
+                int index=-1;
+                for(int i=0;i<48;i++)
+                {
+                    var item=camp.Bag.At(i);
+                    if(!item.IsEmpty&&item.Rarity==rarity&&item.BaseId==StableId.Of(rarity==ItemRarity.Unique?"base.rusty_sword":"base.leather_jacket")){index=i;break;}
+                }
+                if(index<0){Debug.LogError("[tent-show] no "+rarity+" item to equip");continue;}
+                ui.Hover(index,false,true);
+                yield return new WaitForSeconds(.9f);
+                ui.Hover(index,false,false);
+                ui.Select(index,false,true);
+                yield return new WaitForSeconds(1.4f);
+            }
+            ui.Select(1,true,true);
+            yield return new WaitForSeconds(1.4f);
+            ui.Hover(0,true,true);
+            Debug.Log("[tent-show] equip sequence played");
         }
         static void Drag(CampInventoryCell from,CampInventoryCell to)
         {

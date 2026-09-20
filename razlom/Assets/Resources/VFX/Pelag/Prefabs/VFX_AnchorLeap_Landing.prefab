@@ -5072,6 +5072,7 @@ MonoBehaviour:
   Id: 15
   DefaultLifetime: 0.72
   DynamicLine: 0
+  AuthoredRadius: 0
 --- !u!1 &7347666257080834153
 GameObject:
   m_ObjectHideFlags: 0

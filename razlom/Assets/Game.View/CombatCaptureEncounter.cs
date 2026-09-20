@@ -1,4 +1,4 @@
-using Game.Sim;
+﻿using Game.Sim;
 using UnityEngine;
 
 namespace Game.View
@@ -10,6 +10,7 @@ namespace Game.View
         public static void Configure(TickDriver driver, string encounter, int count,
             CombatFeelCaptureTier tier, bool active)
         {
+            if (encounter == "forest-bud") return;
             var sim = driver.Sim;
             sim.SetupForestEncounter(driver.Run.Map, 20260829UL, 1000);
             var entities = sim.Entities;

@@ -4951,3 +4951,4 @@ MonoBehaviour:
   Id: 16
   DefaultLifetime: 0.3
   DynamicLine: 0
+  AuthoredRadius: 0

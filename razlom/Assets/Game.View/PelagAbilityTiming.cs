@@ -4,6 +4,15 @@ namespace Game.View
 {
     public static class PelagAbilityTiming
     {
+        public static float SampleLeap(in PlayerActionState action, float tick)
+        {
+            float launch = action.ContactTick - AnchorKit.LeapTicks;
+            if (tick <= launch) return LeapWindup * UnityEngine.Mathf.InverseLerp(action.StartTick, launch, tick);
+            if (tick <= action.ContactTick) return UnityEngine.Mathf.Lerp(LeapWindup, LeapArrival,
+                UnityEngine.Mathf.InverseLerp(launch, action.ContactTick, tick));
+            return UnityEngine.Mathf.Lerp(LeapArrival, LeapRecovery,
+                UnityEngine.Mathf.InverseLerp(action.ContactTick, action.EndTick, tick));
+        }
         public const float LeapTravel = AnchorKit.LeapTicks / (float)Simulation.TicksPerSecond;
         public const float SweepTravel = 9 / (float)Simulation.TicksPerSecond;
         public const float ChainHop = AnchorKit.ChainTicksPerHop / (float)Simulation.TicksPerSecond;

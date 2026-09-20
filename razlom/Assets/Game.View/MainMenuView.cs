@@ -61,7 +61,7 @@ namespace Game.View
         {
             // Съёмка не нажимает кнопок: с открытым меню capture.ps1 записал бы
             // заставку вместо игры. Поэтому под -razlom-capture меню не живёт.
-            if (CaptureRig.Installed && !CaptureRig.MainMenuCapture)
+            if ((CaptureRig.Installed && !CaptureRig.MainMenuCapture) || TickDriver.ForestBudPlaytestRequested || TickDriver.TempoPlaytestRequested)
             {
                 enabled = false;
                 return;
@@ -124,7 +124,7 @@ namespace Game.View
             // Экономия на экране меню копеечная, а камера меню и так кроет кадр.
         }
 
-        private void StartGame()
+        public void StartGame()
         {
             if (_started) return;
             _started = true;

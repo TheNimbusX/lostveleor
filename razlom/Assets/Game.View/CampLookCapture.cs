@@ -45,9 +45,11 @@ namespace Game.View
             look.enabled = false;
             bool restored = look.Sun.color == originalColor && look.Sun.shadowStrength == originalShadow &&
                 look.Fill.intensity == originalFill && look.Volume.sharedProfile == look.Original;
+            // Наклон солнца проверяется, пока компонент выключен: «Янтарный закат» опускает
+            // солнце нарочно, и после повторного применения стиля поворот законно другой.
+            bool direction = look.Sun.transform.rotation == rotation;
             look.enabled = true;
             while (!look.HasCaptured) yield return null;
-            bool direction = look.Sun.transform.rotation == rotation;
             if (!restored || !direction) Debug.LogError("[camp-look] Scope restoration failed");
             _camera = Camera.main;
             _follow = _camera.GetComponent<CameraFollow>();
@@ -61,7 +63,10 @@ namespace Game.View
             Directory.CreateDirectory(_output);
             File.WriteAllText(Path.Combine(_output, "look-check.txt"),
                 $"style={style}\nrestored={restored}\nsunDirectionPreserved={direction}\n" +
-                $"profile={look.Volume.sharedProfile.name}\nsun={look.Sun.color}\nshadow={look.Sun.shadowStrength}\nfill={look.Fill.intensity}\n");
+                $"profile={look.Volume.sharedProfile.name}\nsun={look.Sun.color}\nshadow={look.Sun.shadowStrength}\nfill={look.Fill.intensity}\n" +
+                $"sunPitch={look.Sun.transform.eulerAngles.x:0.0}\nsunIntensity={look.Sun.intensity:0.00}\n" +
+                $"fog={RenderSettings.fog} mode={RenderSettings.fogMode} " +
+                $"band={RenderSettings.fogStartDistance:0.0}..{RenderSettings.fogEndDistance:0.0} colour={RenderSettings.fogColor}\n");
             Debug.Log($"[camp-look] style={style} restored={restored} sunDirectionPreserved={direction}");
         }
 
@@ -104,7 +109,9 @@ namespace Game.View
             else if (time < 5) { focus = _root.Find("Campfire").position + Vector3.up * .6f; size = 6; }
             else if (time < 7) { focus = _root.Find("Anchor - Player").position + Vector3.up; size = 7; }
             else if (time < 9) { focus = _river.transform.TransformPoint(new Vector3(0, 0, 1.8f)); size = 10.8f; }
-            else { focus = _magic.Centre.position + Vector3.up * .6f; size = 9.4f; }
+            // Круг школ владелец убрал 15 сентября: без запасного ракурса съёмка падала здесь.
+            else if (_magic != null && _magic.Centre != null) { focus = _magic.Centre.position + Vector3.up * .6f; size = 9.4f; }
+            else { focus = _root.Find("Campfire").position + Vector3.up * .6f; size = 9.4f; }
             _camera.transform.rotation = Quaternion.Euler(48, 35, 0);
             _camera.transform.position = focus - _camera.transform.forward * 80;
             _camera.orthographicSize = size;

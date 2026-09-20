@@ -185,7 +185,7 @@ namespace Game.Sim
 
             AbilityBuild build = _abilityBuilds[slot];
             int windup = build.Get(AbilityStatType.WindupTicks).ToInt();
-            _wreckImpactTick = Tick + (windup < 1 ? 1 : windup);
+            _wreckImpactTick = Tick + AbilityExecutionTicks(windup);
             _wreckWindowEndTick = -1;
         }
 
@@ -287,7 +287,7 @@ namespace Game.Sim
         {
             int slot = _wreckSlot;
             StopWreck();
-            if (slot >= 0) _abilityReadyTick[slot] = Tick + build.CooldownTicks;
+            if (slot >= 0) _abilityReadyTick[slot] = Tick + AbilityCooldownTicks(build);
         }
 
         private void HashWreck(ref ulong hash)

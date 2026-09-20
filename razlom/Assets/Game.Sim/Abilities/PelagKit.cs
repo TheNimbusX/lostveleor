@@ -26,7 +26,7 @@ namespace Game.Sim
         /// </summary>
         public const int DashSlot = Simulation.AbilitySlots - 1;
 
-        public const int PoolSize = 8;
+        public const int PoolSize = 10;
 
         /// <summary>Вихрь — с него начинается каждый забег.</summary>
         public const int StarterPoolIndex = 0;
@@ -48,6 +48,8 @@ namespace Game.Sim
                 // сохранён: на него завязаны анимация, звук и VFX.
                 case 6: return AbilityDefinition.AnchorLeap();
                 case 7: return AbilityDefinition.FireFlask();
+                case 8: return AbilityDefinition.Skewer();
+                case 9: return AbilityDefinition.Backblast();
                 default: return null;
             }
         }
@@ -71,7 +73,10 @@ namespace Game.Sim
                 case 4: return AbilityDefinition.AnchorSlamId;
                 case 5: return AbilityDefinition.WreckId;
                 case 6: return AbilityDefinition.AnchorLeapId;
-                default: return AbilityDefinition.FireFlaskId;
+                case 7: return AbilityDefinition.FireFlaskId;
+                case 8: return AbilityDefinition.SkewerId;
+                case 9: return AbilityDefinition.BackblastId;
+                default: return 0;
             }
         }
     }

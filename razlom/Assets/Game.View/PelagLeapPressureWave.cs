@@ -50,7 +50,7 @@ namespace Game.View
             float phase=Mathf.Repeat(elapsed,.31f)/.31f;
             float envelope=Mathf.SmoothStep(0,1,phase/.17f)*(1-Mathf.SmoothStep(.68f,1,phase));
             transform.SetPositionAndRotation(center-direction*(phase*.85f),Quaternion.LookRotation(direction));
-            float radius=Mathf.Lerp(.55f,1.25f,Mathf.SmoothStep(0,1,phase));
+            float radius=Mathf.Lerp(.40f,.72f,Mathf.SmoothStep(0,1,phase));
             float span=Mathf.Lerp(2.6f,4.5f,Mathf.Sin(phase*Mathf.PI));
             float roll=layer*2.2f+phase*2.5f;
             for(int s=0;s<=Segments;s++)
@@ -61,13 +61,13 @@ namespace Game.View
                 for(int row=0;row<Rows;row++)
                 {
                     float v=row/(float)(Rows-1)-.5f;
-                    float r=radius+v*.90f*taper;
+                    float r=radius+v*.25f*taper;
                     float z=.22f*Mathf.Cos(v*Mathf.PI)-v*.48f-.36f*Mathf.Pow(2*u-1,2);
                     _vertices[s*Rows+row]=new Vector3(Mathf.Cos(angle)*r,Mathf.Sin(angle)*r*.82f,z);
                 }
             }
             _mesh.vertices=_vertices;
-            _properties.SetFloat(OpacityId,envelope);
+            _properties.SetFloat(OpacityId,envelope*.30f);
             _properties.SetFloat(PhaseId,phase+layer*.37f);
             _renderer.SetPropertyBlock(_properties);
         }

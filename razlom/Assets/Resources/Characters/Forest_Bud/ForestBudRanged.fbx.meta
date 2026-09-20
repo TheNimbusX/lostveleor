@@ -1,0 +1,500 @@
+fileFormatVersion: 2
+guid: 804d7ec7af9ec574ab8f4ee375eb1094
+ModelImporter:
+  serializedVersion: 24501
+  internalIDToNameTable: []
+  externalObjects: {}
+  materials:
+    materialImportMode: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+    searchTexturesGlobally: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 0
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
+    importUVs: -1
+    importVertexColors: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+    calculateBlendshapeNormalsDeltaFromImportedNormals: 0
+  referencedClips: []
+  importAnimation: 1
+  humanDescription:
+    serializedVersion: 3
+    human:
+    - boneName: pelvis
+      humanName: Hips
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Hind_Upper
+      humanName: LeftUpperLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Hind_Upper
+      humanName: RightUpperLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Hind_Lower
+      humanName: LeftLowerLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Hind_Lower
+      humanName: RightLowerLeg
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Hind_Foot
+      humanName: LeftFoot
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Hind_Foot
+      humanName: RightFoot
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: spine
+      humanName: Spine
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: bud
+      humanName: Head
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Front_Upper
+      humanName: LeftUpperArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Front_Upper
+      humanName: RightUpperArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Front_Lower
+      humanName: LeftLowerArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Front_Lower
+      humanName: RightLowerArm
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: L_Front_Foot
+      humanName: LeftHand
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: R_Front_Foot
+      humanName: RightHand
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: petal_02
+      humanName: LeftEye
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    - boneName: petal_06
+      humanName: RightEye
+      limit:
+        min: {x: 0, y: 0, z: 0}
+        max: {x: 0, y: 0, z: 0}
+        value: {x: 0, y: 0, z: 0}
+        length: 0
+        modified: 0
+    skeleton:
+    - name: ForestBudRanged(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: ARM_ForestBudRanged
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: root
+      parentName: ARM_ForestBudRanged
+      position: {x: -0, y: 0, z: 0.00000005423189}
+      rotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+      scale: {x: 1, y: 0.99999994, z: 0.99999994}
+    - name: pelvis
+      parentName: root
+      position: {x: 0, y: 0.55237186, z: 0.05423195}
+      rotation: {x: -0.09254136, y: -0, z: -0, w: 0.9957088}
+      scale: {x: 1, y: 1, z: 1}
+    - name: spine
+      parentName: pelvis
+      position: {x: -0, y: 0.2207078, z: 0.000000009313226}
+      rotation: {x: 0.29677096, y: -0, z: -0, w: 0.95494866}
+      scale: {x: 1, y: 1.0000019, z: 1.0000019}
+    - name: head
+      parentName: spine
+      position: {x: -0, y: 0.30103585, z: -0.000000016763806}
+      rotation: {x: 0.16895843, y: -0, z: -0, w: 0.9856232}
+      scale: {x: 1, y: 1.0000017, z: 1.0000017}
+    - name: bud
+      parentName: spine
+      position: {x: -0, y: 0.1398321, z: -0.1725002}
+      rotation: {x: -0.6576044, y: -0, z: -0, w: 0.75336343}
+      scale: {x: 1, y: 1.0000007, z: 1.0000007}
+    - name: petal_01
+      parentName: bud
+      position: {x: -1.0436452e-10, y: 0.112673864, z: 0.1374529}
+      rotation: {x: 0.34625596, y: 3.3605377e-17, z: 3.3605384e-17, w: 0.93814015}
+      scale: {x: 1, y: 1.0000006, z: 1.0000006}
+    - name: petal_01_mid
+      parentName: petal_01
+      position: {x: -2.8012437e-10, y: 0.2683455, z: -0.000000008790948}
+      rotation: {x: -0.45154455, y: -3.761518e-17, z: -4.0962834e-17, w: 0.8922486}
+      scale: {x: 0.99999994, y: 0.9999998, z: 0.9999998}
+    - name: petal_01_tip
+      parentName: petal_01_mid
+      position: {x: -8.913048e-11, y: 0.21567143, z: -0.000000021768528}
+      rotation: {x: -0.35243878, y: -1.3534266e-17, z: -1.2017164e-17, w: 0.93583494}
+      scale: {x: 1, y: 1.000001, z: 1.000001}
+    - name: petal_02
+      parentName: bud
+      position: {x: -0.12557366, y: 0.11267384, z: 0.0649529}
+      rotation: {x: 0.05175373, y: 0.34236628, z: 0.34236634, w: 0.87343705}
+      scale: {x: 1.0000013, y: 1.000001, z: 1.0000008}
+    - name: petal_02_mid
+      parentName: petal_02
+      position: {x: -0.000000007450581, y: 0.26834556, z: -0.000000011175871}
+      rotation: {x: -0.10919951, y: -0.4023349, z: -0.43814158, w: 0.79638815}
+      scale: {x: 1.0000057, y: 0.9999978, z: 0.9999967}
+    - name: petal_02_tip
+      parentName: petal_02_mid
+      position: {x: 0.0000000121071935, y: 0.2156714, z: 0.0000000037252903}
+      rotation: {x: -0.28838357, y: -0.22818024, z: -0.20260254, w: 0.9075907}
+      scale: {x: 0.9999984, y: 1.0000019, z: 0.9999997}
+    - name: petal_03
+      parentName: bud
+      position: {x: -0.12557366, y: 0.1126739, z: -0.08004711}
+      rotation: {x: -0.24527147, y: 0.24440728, z: 0.24440742, w: 0.90574384}
+      scale: {x: 1.0000002, y: 1.0000001, z: 1}
+    - name: petal_03_mid
+      parentName: petal_03
+      position: {x: -0.000000014901161, y: 0.2683456, z: 0.000000014901161}
+      rotation: {x: 0.28444484, y: -0.3220304, z: -0.35069025, w: 0.8321081}
+      scale: {x: 1.0000056, y: 0.9999983, z: 0.99999666}
+    - name: petal_03_tip
+      parentName: petal_03_mid
+      position: {x: -0.000000044703484, y: 0.21567151, z: -0.000000022351742}
+      rotation: {x: -0.042997852, y: -0.39396703, z: -0.34980607, w: 0.8488681}
+      scale: {x: 0.9999992, y: 1.0000018, z: 1.0000004}
+    - name: petal_04
+      parentName: bud
+      position: {x: -1.7826096e-10, y: 0.11267386, z: -0.15254709}
+      rotation: {x: -0.34625572, y: 1.5486265e-17, z: 1.5486267e-17, w: 0.9381402}
+      scale: {x: 1, y: 1.0000008, z: 1.0000008}
+    - name: petal_04_mid
+      parentName: petal_04
+      position: {x: 1.5734258e-10, y: 0.2683455, z: 4.7111826e-10}
+      rotation: {x: 0.45154452, y: -2.185792e-17, z: -2.3803212e-17, w: 0.8922486}
+      scale: {x: 1, y: 0.9999998, z: 0.9999998}
+    - name: petal_04_tip
+      parentName: petal_04_mid
+      position: {x: 1.1823431e-11, y: 0.21567139, z: 0.000000040870873}
+      rotation: {x: 0.35243878, y: -5.3222362e-17, z: -4.725646e-17, w: 0.93583494}
+      scale: {x: 1, y: 1.0000013, z: 1.0000013}
+    - name: petal_05
+      parentName: bud
+      position: {x: 0.12557368, y: 0.11267387, z: -0.08004709}
+      rotation: {x: -0.24527147, y: -0.24440728, z: -0.24440742, w: 0.90574384}
+      scale: {x: 1.0000002, y: 0.99999994, z: 1}
+    - name: petal_05_mid
+      parentName: petal_05
+      position: {x: -0.000000052154064, y: 0.2683456, z: 0.000000007450581}
+      rotation: {x: 0.28444484, y: 0.3220304, z: 0.35069025, w: 0.8321081}
+      scale: {x: 1.0000046, y: 0.99999803, z: 0.99999714}
+    - name: petal_05_tip
+      parentName: petal_05_mid
+      position: {x: 0.000000040978193, y: 0.21567155, z: 0.000000022351742}
+      rotation: {x: -0.042997852, y: 0.39396703, z: 0.34980607, w: 0.8488681}
+      scale: {x: 1, y: 1.0000018, z: 1.0000006}
+    - name: petal_06
+      parentName: bud
+      position: {x: 0.12557368, y: 0.11267388, z: 0.0649529}
+      rotation: {x: 0.05175373, y: -0.34236628, z: -0.34236634, w: 0.87343705}
+      scale: {x: 1.0000013, y: 1.000001, z: 1.000001}
+    - name: petal_06_mid
+      parentName: petal_06
+      position: {x: -0.000000011175871, y: 0.26834545, z: 0.0000000037252903}
+      rotation: {x: -0.10919951, y: 0.4023349, z: 0.43814158, w: 0.79638815}
+      scale: {x: 1.0000056, y: 0.9999978, z: 0.9999966}
+    - name: petal_06_tip
+      parentName: petal_06_mid
+      position: {x: 0.000000056810677, y: 0.21567132, z: -0.0000000037252903}
+      rotation: {x: -0.28838357, y: 0.22818024, z: 0.20260254, w: 0.9075907}
+      scale: {x: 0.9999979, y: 1.0000019, z: 0.99999994}
+    - name: Spawn_Fruit_01
+      parentName: bud
+      position: {x: -3.1388936e-10, y: 0.26267394, z: 0.1074529}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1.0000005, z: 1.0000005}
+    - name: Spawn_Fruit_02
+      parentName: bud
+      position: {x: -0.1093715, y: 0.2626739, z: 0.027989859}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1.0000005, z: 1.0000005}
+    - name: Spawn_Fruit_03
+      parentName: bud
+      position: {x: -0.067595296, y: 0.26267388, z: -0.10058407}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1.0000005, z: 1.0000005}
+    - name: Spawn_Fruit_04
+      parentName: bud
+      position: {x: 0.06759531, y: 0.26267388, z: -0.10058407}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1.0000005, z: 1.0000005}
+    - name: Spawn_Fruit_05
+      parentName: bud
+      position: {x: 0.1093715, y: 0.26267388, z: 0.027989859}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1.0000005, z: 1.0000005}
+    - name: L_Front_Upper
+      parentName: spine
+      position: {x: -0.24404351, y: 0.27233672, z: 0.009769935}
+      rotation: {x: 0.60216796, y: -0.5912723, z: 0.37283546, w: 0.3857261}
+      scale: {x: 1.0000006, y: 1.000004, z: 1.0000048}
+    - name: L_Front_Lower
+      parentName: L_Front_Upper
+      position: {x: 0.000000022351742, y: 0.22727305, z: -9.313226e-10}
+      rotation: {x: -0.02480492, y: 0.17523228, z: 0.0037930608, w: 0.9842073}
+      scale: {x: 1.0000017, y: 0.9999992, z: 0.9999984}
+    - name: L_Front_Foot
+      parentName: L_Front_Lower
+      position: {x: 0.000000007450581, y: 0.2268926, z: -0.00000003585592}
+      rotation: {x: -0.35518798, y: 0.030777752, z: -0.004288748, w: 0.93427825}
+      scale: {x: 0.9999998, y: 0.99999875, z: 1.0000005}
+    - name: R_Front_Upper
+      parentName: spine
+      position: {x: 0.24404351, y: 0.27233672, z: 0.009769935}
+      rotation: {x: 0.60216784, y: 0.5912725, z: -0.3728354, w: 0.38572606}
+      scale: {x: 1.0000006, y: 1.000004, z: 1.0000048}
+    - name: R_Front_Lower
+      parentName: R_Front_Upper
+      position: {x: -0.00000004656613, y: 0.22727299, z: -9.313226e-10}
+      rotation: {x: -0.024804618, y: -0.17523223, z: -0.0037929113, w: 0.9842073}
+      scale: {x: 1.0000018, y: 0.9999992, z: 0.99999875}
+    - name: R_Front_Foot
+      parentName: R_Front_Lower
+      position: {x: -0.00000001618173, y: 0.2268926, z: -0.000000013969839}
+      rotation: {x: -0.35518798, y: -0.030777752, z: 0.004288748, w: 0.93427825}
+      scale: {x: 0.99999994, y: 0.99999815, z: 1.0000001}
+    - name: L_Hind_Upper
+      parentName: pelvis
+      position: {x: -0.27793846, y: -0.016657159, z: -0.058300152}
+      rotation: {x: 0.99803025, y: -0.054017134, z: 0.028551633, w: -0.014236815}
+      scale: {x: 1.0000013, y: 1.0000054, z: 1.0000048}
+    - name: L_Hind_Lower
+      parentName: L_Hind_Upper
+      position: {x: -0.000000007450581, y: 0.21997787, z: -0.000000029802322}
+      rotation: {x: 0.27570644, y: 0.08243004, z: -0.090177126, w: 0.9534461}
+      scale: {x: 0.999999, y: 1, z: 0.9999998}
+    - name: L_Hind_Foot
+      parentName: L_Hind_Lower
+      position: {x: -0.0000000023283064, y: 0.27048412, z: -0.0000000022118911}
+      rotation: {x: 0.3908374, y: 0.13008803, z: -0.030197188, w: -0.9107203}
+      scale: {x: 0.9999996, y: 1.0000008, z: 0.99999994}
+    - name: R_Hind_Upper
+      parentName: pelvis
+      position: {x: 0.27793846, y: -0.016657159, z: -0.058300152}
+      rotation: {x: 0.9980302, y: 0.054017223, z: -0.028551502, w: -0.014236757}
+      scale: {x: 1.0000013, y: 1.0000054, z: 1.0000048}
+    - name: R_Hind_Lower
+      parentName: R_Hind_Upper
+      position: {x: -0.000000007450581, y: 0.21997783, z: -0.000000014901161}
+      rotation: {x: 0.27570647, y: -0.08243008, z: 0.09017721, w: 0.9534461}
+      scale: {x: 0.9999992, y: 1, z: 0.9999998}
+    - name: R_Hind_Foot
+      parentName: R_Hind_Lower
+      position: {x: -0.0000000041909516, y: 0.2704841, z: 0.00000000547152}
+      rotation: {x: 0.3908373, y: -0.13008799, z: 0.030197117, w: -0.91072035}
+      scale: {x: 0.9999997, y: 1.0000014, z: 1.0000006}
+    - name: SM_Body
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_BudBase
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_BudPetals
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_LoadedFruit_01
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_LoadedFruit_02
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_LoadedFruit_03
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_LoadedFruit_04
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    - name: SM_LoadedFruit_05
+      parentName: ForestBudRanged(Clone)
+      position: {x: -0, y: 0, z: 0}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 1, y: 1, z: 1}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 1
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

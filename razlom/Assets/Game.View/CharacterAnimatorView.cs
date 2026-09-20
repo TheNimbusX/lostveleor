@@ -8,7 +8,7 @@ namespace Game.View
     /// и никогда не вызывает damage, hit detection или движение сущности.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class CharacterAnimatorView : MonoBehaviour
+    public sealed partial class CharacterAnimatorView : MonoBehaviour
     {
         private static readonly int MoveSpeed = Animator.StringToHash("MoveSpeed");
         private static readonly int MoveX = Animator.StringToHash("MoveX");
@@ -277,6 +277,7 @@ namespace Game.View
                 _saberFootworkLayer = _animator.GetLayerIndex("Saber Footwork");
                 _stanceEquipment = GetComponent<PelagEquipmentView>();
                 _lowerBodyLayer = _animator.GetLayerIndex(LowerBodyLayerName);
+                _recoveryFootworkLayer = _animator.GetLayerIndex("Recovery Footwork");
             }
         }
 
@@ -418,13 +419,31 @@ namespace Game.View
                 return;
             }
             float elapsed = sim.Tick - 1 + _cycloneDriver.Alpha - sim.BlazeStartTick;
-            _animator.SetFloat("BlazePhase", Mathf.Clamp01(elapsed / Simulation.BlazeGestureTicks));
+            _animator.SetFloat("BlazePhase", Mathf.Clamp01(elapsed / Mathf.Max(1, sim.BlazeEndTick - sim.BlazeStartTick)));
+        }
+
+        private void UpdateAnchorSlamAnimation()
+        {
+            if (!_abilityPresentationActive || _abilityDefinitionId != AbilityDefinition.AnchorSlamId) return;
+            var slam = GetComponent<PelagAnchorSlamView>();
+            var sim = _cycloneDriver != null ? _cycloneDriver.Sim : null;
+            if (sim == null || !sim.AnchorSlamActive || IsDead)
+            {
+                slam?.Release();
+                _abilityPresentationActive = false;
+                _actionProtectedUntil = 0f;
+                if (!IsDead) _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", .06f, 0);
+                return;
+            }
+            if (slam != null) _animator.SetFloat("AnchorSlamPhase", slam.SampleClipTime() / .9f);
         }
 
         private void Update()
         {
+            UpdateTempoAnimation();
             UpdateBlazeAnimation();
             UpdateCleaveAnimation();
+            UpdateAnchorSlamAnimation();
             if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
             if (RollActive && _cycloneDriver != null && _cycloneDriver.Sim != null
                 && _cycloneDriver.Sim.Entities.ForcedKind[Simulation.PlayerId] != (byte)ForcedMotionKind.Roll)
@@ -434,7 +453,8 @@ namespace Game.View
                 _animator.CrossFadeInFixedTime(_locomotionMoving ? "Run_v5" : "CombatIdle_v5", .08f, 0);
             }
             if (_abilityPresentationActive && _abilityDefinitionId != AbilityDefinition.CleaveId
-                && _abilityDefinitionId != AbilityDefinition.BlazeId && Time.time >= _abilityPresentationUntil)
+                && _abilityDefinitionId != AbilityDefinition.BlazeId
+                && _abilityDefinitionId != AbilityDefinition.AnchorSlamId && Time.time >= _abilityPresentationUntil)
             {
                 if (_abilityUsesLowerBodyLayer) ReleaseUpperBodyToLocomotion(0.12f);
                 _abilityPresentationActive = false;
@@ -540,12 +560,13 @@ namespace Game.View
                 _animator.SetLayerWeight(_lowerBodyLayer, weight);
             }
 
+            UpdateRecoveryFootwork();
             if (!_attackWarpActive) return;
             // The derived clips already contain anticipation/acceleration and
             // recovery. Global hit-stop slows Sim and Animator together; a
             // second per-Animator freeze would drift the next combo stroke.
-            _animator.SetFloat(AttackPlaybackSpeed, 1f);
-            if (Time.time - _attackWarpStartedAt >= BasicAttackPresentationDuration) StopAttackWarp();
+            _animator.SetFloat(AttackPlaybackSpeed, CurrentAttackSpeed);
+            if (Time.time - _attackWarpStartedAt >= BasicAttackPresentationDuration / CurrentAttackSpeed) StopAttackWarp();
         }
 
         public void SetLocomotion(bool moving, float turnDirection, float normalizedSpeed,
@@ -719,10 +740,10 @@ namespace Game.View
                 StartAttackWarp();
                 _attackWarpStartedAt -= elapsed;
                 _attackPresentationActive = true;
-                _attackPresentationUntil = Time.time + BasicAttackPresentationDuration - elapsed;
+                _attackPresentationUntil = Time.time + BasicAttackPresentationDuration / CurrentAttackSpeed - elapsed;
                 // Слабые входящие попадания всё ещё получают recoil/flash в
                 // ArenaView, но не имеют права ломать читаемую фазу клинка.
-                _actionProtectedUntil = Time.time + BasicAttackClipDuration - elapsed;
+                _actionProtectedUntil = Time.time + PlayerAttackContactTime / CurrentAttackSpeed - elapsed;
             }
             else
             {
@@ -777,6 +798,8 @@ namespace Game.View
         /// </summary>
         public void PlayAbilityDefinition(int definitionId)
         {
+            if (TryPlayTempoAbility(definitionId)) return;
+            if (definitionId != AbilityDefinition.AnchorSlamId) GetComponent<PelagAnchorSlamView>()?.Release();
             if (definitionId == AbilityDefinition.CleaveId)
             {
                 if (IsDead || _animator == null) return;
@@ -797,7 +820,7 @@ namespace Game.View
                     {
                         var build = sim.GetAbility(slot);
                         if (build != null && build.DefinitionId == definitionId)
-                            windup = Mathf.Max(1, build.Get(AbilityStatType.WindupTicks).ToInt()) / (float)Simulation.TicksPerSecond;
+                            windup = sim.AbilityExecutionTicks(build.Get(AbilityStatType.WindupTicks).ToInt()) / (float)Simulation.TicksPerSecond;
                     }
                 _abilityPresentationUntil = Time.time + .9f * windup / .4f;
                 _actionProtectedUntil = _abilityPresentationUntil;
@@ -842,7 +865,7 @@ namespace Game.View
             if (definitionId == AbilityDefinition.AnchorSlamId)
             {
                 if (IsDead || _animator == null) return;
-                // До нового авторского клипа убираем прежний мах и вращение из окна удара.
+                // Контакт клипа задаётся тем же тиком, что и авторитетный удар.
                 StopAttackWarp();
                 CancelUpperBodyAttack(.04f);
                 ResetAbilityTriggers();
@@ -852,7 +875,14 @@ namespace Game.View
                 _abilityUsesLowerBodyLayer = false;
                 _abilityPresentationUntil = Time.time + .9f;
                 _actionProtectedUntil = _abilityPresentationUntil;
-                _animator.CrossFadeInFixedTime("CombatIdle_v5", .06f, 0);
+                if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
+                if (_upperBodyLayer >= 0) _animator.SetLayerWeight(_upperBodyLayer, 0f);
+                if (_lowerBodyLayer >= 0) _animator.SetLayerWeight(_lowerBodyLayer, 0f);
+                if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
+                if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
+                _animator.SetFloat("AnchorSlamPhase", 0f);
+                GetComponent<PelagAnchorSlamView>()?.Begin();
+                EnterCommittedAbilityState(Animator.StringToHash("Base Layer.AnchorSlam_v5"), .035f);
                 return;
             }
             if (definitionId == AbilityDefinition.BlazeId)
@@ -912,6 +942,7 @@ namespace Game.View
                 float abilitySpeed = 1f;
                 if (anchorLeap)
                 {
+                    _animator.SetFloat("LeapPhase", 0f);
                     stateHash = AnchorLeapState;
                     triggerHash = AnchorLeapTrigger;
                     duration = PelagAbilityTiming.LeapRecovery;
@@ -933,6 +964,7 @@ namespace Game.View
                     stateHash = 0;
                     triggerHash = 0;
                     duration = WhirlwindClipDuration;
+                    _animator.SetFloat("WhirlwindPhase", 0f);
                     _abilityUsesLowerBodyLayer = true;
                     EnterWhirlwindLayer(_upperBodyLayer, "UpperBody Combat.Whirlwind_v5", "HeavyAttack");
                     EnterWhirlwindLayer(_lowerBodyLayer, "LowerBody Combat.Lower_Whirlwind_v5", "LowerHeavyAttack");

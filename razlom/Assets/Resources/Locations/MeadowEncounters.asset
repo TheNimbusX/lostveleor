@@ -22,6 +22,8 @@ MonoBehaviour:
   Introduction:
   - StableKey: encounter.meadow.intro
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 0
     Groups:
     - Kind: 1
       Min: 1
@@ -32,8 +34,9 @@ MonoBehaviour:
       GrowWithDepth: 0
   MainPath:
   - StableKey: encounter.meadow.guardians
-    MaxLevel: 3
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 3
     Groups:
     - Kind: 1
       Min: 2
@@ -43,8 +46,9 @@ MonoBehaviour:
       Elite: 0
       GrowWithDepth: 0
   - StableKey: encounter.meadow.swarm
-    MaxLevel: 3
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 3
     Groups:
     - Kind: 2
       Min: 4
@@ -54,8 +58,9 @@ MonoBehaviour:
       Elite: 0
       GrowWithDepth: 1
   - StableKey: encounter.meadow.mixed
-    MaxLevel: 3
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 3
     Groups:
     - Kind: 1
       Min: 1
@@ -100,6 +105,7 @@ MonoBehaviour:
   - StableKey: encounter.meadow.veteran_patrol
     Weight: 100
     MinLevel: 7
+    MaxLevel: 0
     Groups:
     - Kind: 1
       Min: 2
@@ -122,9 +128,30 @@ MonoBehaviour:
       DamagePercent: 150
       Elite: 0
       GrowWithDepth: 1
+  - StableKey: encounter.meadow.forest_bud
+    Weight: 75
+    MinLevel: 1
+    MaxLevel: 0
+    Groups:
+    - Kind: 3
+      Min: 1
+      Max: 2
+      HealthPercent: 80
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 1
+      Min: 2
+      Max: 3
+      HealthPercent: 100
+      DamagePercent: 180
+      Elite: 0
+      GrowWithDepth: 0
   RewardBranch:
   - StableKey: encounter.meadow.cache
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 0
     Groups:
     - Kind: 1
       Min: 2
@@ -143,6 +170,8 @@ MonoBehaviour:
   ExitGuard:
   - StableKey: encounter.meadow.exit
     Weight: 100
+    MinLevel: 1
+    MaxLevel: 0
     Groups:
     - Kind: 1
       Min: 1
@@ -158,4 +187,3 @@ MonoBehaviour:
       DamagePercent: 150
       Elite: 0
       GrowWithDepth: 1
-

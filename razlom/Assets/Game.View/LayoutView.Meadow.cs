@@ -379,6 +379,12 @@ namespace Game.View
                 }
         }
 
+        public float WeaponGroundHeight(float x, float z)
+        {
+            return _shownMap == null || !_style.NaturalGround ? 0f
+                : Mathf.Max(0f, BackgroundHeight(_shownMap, x, z));
+        }
+
         private float BackgroundHeight(LayoutMap map, float x, float z)
         {
             float distance = float.MaxValue;

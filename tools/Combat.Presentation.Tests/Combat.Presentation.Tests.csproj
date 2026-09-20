@@ -5,10 +5,13 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <None Update="Fixtures/AnchorSlamPath.csv" CopyToOutputDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
     <Compile Include="../../razlom/Assets/Game.View/CombatVoiceBudget.cs" Link="CombatVoiceBudget.cs" />
     <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="AnchorHeadDynamics.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
   </ItemGroup>
 </Project>

@@ -82,5 +82,49 @@ namespace Game.Tests
             Assert.AreNotEqual(pos, sim.Entities.Position[enemy]);
         }
 
+        [TestCase(1, 0)] [TestCase(-1, 0)] [TestCase(0, 1)] [TestCase(0, -1)]
+        public void ContactEventMatchesLaneEndAndTiming(int x, int y)
+        {
+            var sim = Arena();
+            var input = Cast();
+            input.Aim = new FixVec2(Fix64.FromInt(x * 5), Fix64.FromInt(y * 5));
+            sim.Step(input);
+            Assert.AreEqual(27, sim.AnchorSlamEndTick);
+            for (int i = 0; i < 14; i++) sim.Step(InputFrame.Empty);
+            sim.Step(InputFrame.Empty);
+            int contacts = 0;
+            foreach (var e in sim.Events)
+                if (e.Type == SimEventType.AnchorSlamImpact)
+                {
+                    contacts++;
+                    Assert.AreEqual(new FixVec2(Fix64.Ratio(x * 45, 10), Fix64.Ratio(y * 45, 10)), e.Position);
+                }
+            Assert.AreEqual(1, contacts);
+            Assert.AreEqual(27, sim.AnchorSlamEndTick);
+        }
+
+        [TestCase("roll")] [TestCase("ability")] [TestCase("death")]
+        public void InterruptionReleasesSlamAndPreventsContact(string cancellation)
+        {
+            var sim = Arena();
+            int enemy = Enemy(sim, 30);
+            sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), new AbilityNode[0], 0);
+            sim.SetAbility(0, AbilityDefinition.Skewer(), new AbilityNode[0], 0);
+            sim.Step(Cast());
+            for (int i = 0; i < 6; i++) sim.Step(InputFrame.Empty);
+            var input = InputFrame.Empty;
+            input.Aim = new FixVec2(Fix64.FromInt(-5), Fix64.Zero);
+            if (cancellation == "death") sim.ApplyAbilityDamage(enemy, 0, 100000, 0, DamageType.Physical);
+            else input.AbilityMask = cancellation == "roll" ? (byte)(1 << PelagKit.DashSlot) : (byte)1;
+            sim.Step(input);
+            Assert.IsFalse(sim.AnchorSlamActive);
+            for (int i = 0; i < 30; i++)
+            {
+                sim.Step(InputFrame.Empty);
+                foreach (var e in sim.Events) Assert.AreNotEqual(SimEventType.AnchorSlamImpact, e.Type);
+            }
+            Assert.AreEqual(10000, sim.Entities.Health[enemy]);
+        }
+
     }
 }

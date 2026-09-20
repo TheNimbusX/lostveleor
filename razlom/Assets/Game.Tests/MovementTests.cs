@@ -90,7 +90,7 @@ namespace Game.Tests
             sim.Step(in frame);
 
             FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
-            Assert.That(facing.X.ToDouble(), Is.GreaterThan(0.9),
+            Assert.That(facing.X.ToDouble(), Is.InRange(0.765, 0.767),
                 "за один тик развернулись больше чем на шаг");
         }
 

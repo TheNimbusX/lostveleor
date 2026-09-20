@@ -237,7 +237,10 @@ namespace Game.View
         /// Остановку времени сюда намеренно не пускаем: для Броска якоря она
         /// не нужна, а глобальный timeScale в проекте однажды уже наделал бед.
         /// </summary>
-        public void PunchCamera(float trauma, float zoom) => Accumulate(trauma, zoom, 0f, 1f);
+        // Контроллер способности исполняется после ConsumeEvents. Камера сама
+        // объединяет импульсы через Max до своего LateUpdate; здесь нельзя
+        // складывать их в уже обработанный (и сбрасываемый следующим кадром) буфер.
+        public void PunchCamera(float trauma, float zoom) => _cameraJuice?.AddImpulse(trauma, zoom);
 
         /// <summary>Копит самый сильный толчок кадра, а не складывает все.</summary>
         private void Accumulate(float trauma, float zoom, float stopDuration, float stopScale)
@@ -413,6 +416,17 @@ namespace Game.View
                 FixVec2 to = sim.Entities.Position[e.Target];
                 deathDirection = new Vector3(to.X.ToFloat() - from.X.ToFloat(), 0f,
                     to.Y.ToFloat() - from.Y.ToFloat());
+            }
+
+            if (sim != null && sim.Entities.Kind[e.Target] == EnemyKind.ForestBud)
+            {
+                // Падение на лапы должно быть видно: общая каменная вспышка смерти закрывала весь бутон.
+                if (playerKill)
+                {
+                    _arena?.ReactToDeath(e.Target, deathDirection, 1f);
+                    Accumulate(.18f, .15f, 0f, 1f);
+                }
+                return;
             }
 
             // The hit already supplied the contact burst. Death adds only a

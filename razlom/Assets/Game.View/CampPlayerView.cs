@@ -148,6 +148,35 @@ namespace Game.View
                && mesh.sharedMesh.name != "Объём луча арки"
                && !IsDistantLod(mesh);
 
+        /// <summary>
+        /// Высота, ниже которой объект считается декором и перешагивается: трава, цветы,
+        /// мелкие камешки. Кусты в этот порог не попадают намеренно — владелец 16 сентября:
+        /// «куст и должен быть препятствием».
+        /// </summary>
+        const float StepOverHeight = .35f;
+        /// <summary>С этой высоты объект считается деревом и держит навигацию только стволом.</summary>
+        const float TrunkFromHeight = 2.5f;
+
+        static bool StepsOver(MeshFilter mesh, Bounds shape) => shape.size.y < StepOverHeight;
+
+        /// <summary>Ставит навигационный ствол вместо меша кроны. Вернёт false, если это не дерево.</summary>
+        static bool AddTrunk(MeshFilter mesh, Bounds shape, Transform root)
+        {
+            string name = mesh.name.ToLowerInvariant();
+            bool tree = name.Contains("tree") || name.Contains("spruce") || name.Contains("pine");
+            if (!tree || shape.size.y < TrunkFromHeight) return false;
+
+            var trunk = new GameObject("Ствол для навигации — " + mesh.name);
+            trunk.transform.SetParent(root, false);
+            trunk.transform.position = new Vector3(shape.center.x, shape.min.y + shape.size.y * .5f, shape.center.z);
+            trunk.transform.rotation = Quaternion.identity;
+            trunk.transform.localScale = Vector3.one;
+            CapsuleCollider capsule = trunk.AddComponent<CapsuleCollider>();
+            capsule.height = shape.size.y;
+            capsule.radius = Mathf.Clamp(Mathf.Min(shape.extents.x, shape.extents.z) * .22f, .18f, .6f);
+            return true;
+        }
+
         void BuildNavigation(Transform root)
         {
             if (_entrance != null) _entrance.BuildNavigationBarrier();
@@ -162,6 +191,14 @@ namespace Game.View
                 // Молча это пропустить нельзя — навигация в сборке отличалась
                 // бы от того, что видно в Play mode.
                 if (!mesh.sharedMesh.isReadable) unreadable.Add(mesh.sharedMesh.name);
+
+                Renderer renderer = mesh.GetComponent<Renderer>();
+                Bounds shape = renderer != null ? renderer.bounds : new Bounds(mesh.transform.position, Vector3.one * .5f);
+                // Трава и цветы: герой их перешагивает. Кусты остаются препятствием.
+                if (StepsOver(mesh, shape)) continue;
+                // Дерево держит навигацию стволом. Меш кроны с нижними ветками
+                // перекрывал до 45 м² вокруг — это и есть «невидимое препятствие».
+                if (AddTrunk(mesh, shape, root)) continue;
 
                 var collider = mesh.gameObject.AddComponent<MeshCollider>(); collider.sharedMesh = mesh.sharedMesh;
             }
@@ -247,17 +284,18 @@ namespace Game.View
             if (CampIntegrationCapture.IsRunning) return;
             bool interact; bool click; bool held; Vector2 pointer;
 #if ENABLE_INPUT_SYSTEM
-            interact = Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame;
+            interact = GameKeyBindings.Pressed(GameAction.Interact);
             // Здесь выбирается только интерактивный объект. Приказ движения
             // поступает из TickDriver вместе с удержанием и короткими тапами.
             click = Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
             held = Mouse.current != null && Mouse.current.rightButton.isPressed;
             pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
 #else
-            interact = Input.GetKeyDown(KeyCode.I);
+            interact = GameKeyBindings.Pressed(GameAction.Interact);
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
+            if (GameUserSettings.WasdMovement) { click = held = false; CancelRoute(); }
             if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
 
             if (_driver.PointerOverHud(pointer)) { click = false; held = false; }
@@ -352,6 +390,7 @@ namespace Game.View
         public void PrepareInput(ref InputFrame input)
         {
             if (!Active) return;
+            if (input.Has(InputFlags.DirectMovement)) { CancelRoute(); return; }
             if (input.AbilityMask != 0 || input.Has(InputFlags.Attack)) CancelRoute();
 
             // Маршрут снимает перетаскивание мыши, и решается это в Update,

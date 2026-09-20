@@ -29,6 +29,8 @@ namespace Game.Sim
         LavidiumRegen = 9,
 
         /// <summary>Не стат. Размер массива значений.</summary>
-        Count = 10,
+        AbilitySpeed = 10,
+        CooldownRecovery = 11,
+        Count = 12,
     }
 }

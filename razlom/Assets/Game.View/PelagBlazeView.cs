@@ -94,7 +94,7 @@ namespace Game.View
             var sim=_driver!=null?_driver.Sim:null;
             if(sim==null || _bottle==null)return;
             bool casting=sim.BlazeCasting;
-            float t=(sim.Tick-1+_driver.Alpha-sim.BlazeStartTick)/Simulation.TicksPerSecond;
+            float t=(sim.Tick-1+_driver.Alpha-sim.BlazeStartTick) / Mathf.Max(1,sim.BlazeEndTick-sim.BlazeStartTick) * (Simulation.BlazeGestureTicks/(float)Simulation.TicksPerSecond);
             GestureTime=casting?t:-1;PourStreamLength=0;
             if(casting){PoseHands(t);PoseBottleFingers(t);}
             _bottle.gameObject.SetActive(casting && t>=.32f && t<1.82f);

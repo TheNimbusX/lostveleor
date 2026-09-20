@@ -36,6 +36,27 @@ namespace Game.Sim
         }
 
         public static int WhirlwindId => StableId.Of("ability.whirlwind");
+        public static int SkewerId => StableId.Of("ability.skewer");
+        public static int BackblastId => StableId.Of("ability.backblast");
+
+        public static AbilityDefinition Skewer()
+            => new AbilityDefinition("ability.skewer")
+                .Set(AbilityStatType.Damage, 90)
+                .Set(AbilityStatType.Radius, 6)
+                .Set(AbilityStatType.Width, Fix64.Ratio(8, 10))
+                .Set(AbilityStatType.DurationTicks, 9)
+                .Set(AbilityStatType.LavidiumCost, 15)
+                .Set(AbilityStatType.CooldownTicks, 120);
+
+        public static AbilityDefinition Backblast()
+            => new AbilityDefinition("ability.backblast")
+                .Set(AbilityStatType.Damage, 60)
+                .Set(AbilityStatType.Radius, 3)
+                .Set(AbilityStatType.Width, Fix64.Ratio(15, 10))
+                .Set(AbilityStatType.DurationTicks, 8)
+                .Set(AbilityStatType.WindupTicks, 2)
+                .Set(AbilityStatType.LavidiumCost, 15)
+                .Set(AbilityStatType.CooldownTicks, 150);
 
         /// <summary>«Вихрь»: один физический круговой удар вокруг героя.</summary>
         public static AbilityDefinition Whirlwind()

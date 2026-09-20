@@ -120,6 +120,7 @@ namespace Game.View
         /// симуляции. Пока она активна, ввод не собирается и тики не копятся.
         /// </summary>
         public bool GameplayPaused { get; private set; }
+        private float _pausedAlpha, _pausedAccumulator;
 
         public bool CanReturnToCamp
             => Session != null && (Session.Mode != GameMode.Camp || Session.OnProvingGround);
@@ -290,11 +291,13 @@ namespace Game.View
                 return;
             }
 
+            StartForestBudPlaytestIfRequested();
+            StartTempoPlaytestIfRequested();
             if (GameplayPaused || CampPlayerView.Instance?.InputBlocked == true)
             {
                 _frameEvents.Clear();
                 _frameEventContexts.Clear();
-                Alpha = 0f;
+                Alpha = GameplayPaused ? _pausedAlpha : 0f;
                 return;
             }
 
@@ -328,6 +331,8 @@ namespace Game.View
                 if (Sim != null) SavePreviousPositions();
 
                 InputFrame frame = ConsumeInput();
+                if (CaptureRig.TempoPreset >= 0) PrepareTempoCapture(ref frame);
+                CaptureDirectionalMovement(ref frame);
                 CampPlayerView.Instance?.PrepareInput(ref frame);
                 CampIntegrationCapture.PrepareInput(ref frame);
 
@@ -360,7 +365,8 @@ namespace Game.View
                 // Новый Разлом — интерполировать не от чего: старые позиции
                 // относятся к другой локации, и кадр показал бы, как все
                 // размазываются через полкарты.
-                if (Sim != null && Run != null && Run.Depth != depthBefore) SavePreviousPositions();
+                if (Sim != null && Run != null && Run.Depth != depthBefore)
+                { PrepareForestBudRoster(); SavePreviousPositions(); }
 
                 _accumulator -= TickLength;
                 steps++;
@@ -389,8 +395,13 @@ namespace Game.View
         public void SetGameplayPaused(bool paused)
         {
             if (GameplayPaused == paused) return;
+            if (paused) { _pausedAlpha = Alpha; _pausedAccumulator = _accumulator; }
             GameplayPaused = paused;
             ClearCapturedInput();
+            // Пауза удерживает показанный подкадр. Сброс интерполяции отматывал
+            // оружие до предыдущего тика и давал заметный скачок при закрытии меню.
+            Alpha = _pausedAlpha;
+            if (!paused) _accumulator = _pausedAccumulator;
         }
 
         public void ClearCapturedInput()
@@ -433,7 +444,12 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
+            if (CaptureRig.TempoPreset >= 0)
+            { _pending = InputFrame.Empty; _abilityLatch = _commandLatch = 0;
+                _abilityPressLatched = _pointerPressLatched = false; AttackHeld = false; return; }
             MoveOrderPressedThisFrame = false;
+            if (CaptureRig.ForestBudShowcase && Session.Mode == GameMode.Rift)
+            { CaptureForestBudInput(); return; }
 
             // На экране награды тот же ряд означает ВЫБОР, а не способность.
             // Одни и те же клавиши: у игрока не должно быть двух рядов кнопок,
@@ -448,44 +464,22 @@ namespace Game.View
             Keyboard kb = Keyboard.current;
             if (kb != null)
             {
-                if (letters)
+                // Клавиши — из назначений игрока (Пауза → Управление). Раскладка
+                // QWER/1234 задаёт только умолчания ряда; пятый слот — кувырок,
+                // по умолчанию Space при обеих раскладках.
+                for (int slot = 0; slot <= (int)GameAction.Dash; slot++)
                 {
-                    _slotPressed[0] = kb.qKey.wasPressedThisFrame;
-                    if (kb.qKey.isPressed) _pending.AbilityHoldMask |= 1;
-                    _slotPressed[1] = kb.wKey.wasPressedThisFrame;
-                    if (kb.wKey.isPressed) _pending.AbilityHoldMask |= 2;
-                    _slotPressed[2] = kb.eKey.wasPressedThisFrame;
-                    if (kb.eKey.isPressed) _pending.AbilityHoldMask |= 4;
-                    _slotPressed[3] = kb.rKey.wasPressedThisFrame;
-                    if (kb.rKey.isPressed) _pending.AbilityHoldMask |= 8;
+                    _slotPressed[slot] = GameKeyBindings.Pressed((GameAction)slot);
+                    if (GameKeyBindings.Held((GameAction)slot)) _pending.AbilityHoldMask |= (byte)(1 << slot);
                 }
-                else
-                {
-                    _slotPressed[0] = kb.digit1Key.wasPressedThisFrame;
-                    if (kb.digit1Key.isPressed) _pending.AbilityHoldMask |= 1;
-                    _slotPressed[1] = kb.digit2Key.wasPressedThisFrame;
-                    if (kb.digit2Key.isPressed) _pending.AbilityHoldMask |= 2;
-                    _slotPressed[2] = kb.digit3Key.wasPressedThisFrame;
-                    if (kb.digit3Key.isPressed) _pending.AbilityHoldMask |= 4;
-                    _slotPressed[3] = kb.digit4Key.wasPressedThisFrame;
-                    if (kb.digit4Key.isPressed) _pending.AbilityHoldMask |= 8;
-                }
-
-                // ПЯТЫЙ СЛОТ — общий кувырок, и клавиша у него ОДНА В ОБОИХ
-                // РЯДАХ. Ряд способностей — это настройка вкуса, 1234 против
-                // QWER; кувырок в него не входит вовсе, он живёт под большим
-                // пальцем, как деш в любом экшене. Поэтому Space стоит после
-                // развилки, а не дважды внутри неё.
-                _slotPressed[4] = kb.spaceKey.wasPressedThisFrame;
-                if (kb.spaceKey.isPressed) _pending.AbilityHoldMask |= 16;
 
                 LatchSlots(_slotPressed, choosing);
 
                 LatchKeys(
-                    leave: kb.lKey.wasPressedThisFrame,
-                    enter: kb.eKey.wasPressedThisFrame || CaptureRig.AutoEnterRift,
-                    repeat: kb.rKey.wasPressedThisFrame,
-                    back: kb.cKey.wasPressedThisFrame,
+                    leave: GameKeyBindings.Pressed(GameAction.LeaveRift),
+                    enter: GameKeyBindings.Pressed(GameAction.EnterRift) || CaptureRig.AutoEnterRift,
+                    repeat: GameKeyBindings.Pressed(GameAction.RepeatRun),
+                    back: GameKeyBindings.Pressed(GameAction.ReturnToCamp),
                     ground: kb.tKey.wasPressedThisFrame,
                     salvage: kb.vKey.wasPressedThisFrame);
             }
@@ -498,44 +492,23 @@ namespace Game.View
                 attackHeld: mouse != null && mouse.leftButton.isPressed,
                 attackPressed: mouse != null && mouse.leftButton.wasPressedThisFrame);
 #else
-            if (letters)
+            // Те же назначения, что и в ветке ENABLE_INPUT_SYSTEM.
+            for (int slot = 0; slot <= (int)GameAction.Dash; slot++)
             {
-                _slotPressed[0] = Input.GetKeyDown(KeyCode.Q);
-                if (Input.GetKey(KeyCode.Q)) _pending.AbilityHoldMask |= 1;
-                _slotPressed[1] = Input.GetKeyDown(KeyCode.W);
-                if (Input.GetKey(KeyCode.W)) _pending.AbilityHoldMask |= 2;
-                _slotPressed[2] = Input.GetKeyDown(KeyCode.E);
-                if (Input.GetKey(KeyCode.E)) _pending.AbilityHoldMask |= 4;
-                _slotPressed[3] = Input.GetKeyDown(KeyCode.R);
-                if (Input.GetKey(KeyCode.R)) _pending.AbilityHoldMask |= 8;
+                _slotPressed[slot] = GameKeyBindings.Pressed((GameAction)slot);
+                if (GameKeyBindings.Held((GameAction)slot)) _pending.AbilityHoldMask |= (byte)(1 << slot);
             }
-            else
-            {
-                _slotPressed[0] = Input.GetKeyDown(KeyCode.Alpha1);
-                if (Input.GetKey(KeyCode.Alpha1)) _pending.AbilityHoldMask |= 1;
-                _slotPressed[1] = Input.GetKeyDown(KeyCode.Alpha2);
-                if (Input.GetKey(KeyCode.Alpha2)) _pending.AbilityHoldMask |= 2;
-                _slotPressed[2] = Input.GetKeyDown(KeyCode.Alpha3);
-                if (Input.GetKey(KeyCode.Alpha3)) _pending.AbilityHoldMask |= 4;
-                _slotPressed[3] = Input.GetKeyDown(KeyCode.Alpha4);
-                if (Input.GetKey(KeyCode.Alpha4)) _pending.AbilityHoldMask |= 8;
-            }
-
-            // Кувырок вне ряда: одна клавиша при обоих раскладах. См.
-            // комментарий в ветке ENABLE_INPUT_SYSTEM.
-            _slotPressed[4] = Input.GetKeyDown(KeyCode.Space);
-            if (Input.GetKey(KeyCode.Space)) _pending.AbilityHoldMask |= 16;
 
             LatchSlots(_slotPressed, choosing);
 
             LatchKeys(
-                leave: Input.GetKeyDown(KeyCode.L),
+                leave: GameKeyBindings.Pressed(GameAction.LeaveRift),
                 // На время combat-slice Play Mode сразу открывает тот же Rift
                 // 1+3, который проходит capture; старый Полигон здесь больше
                 // не должен маскироваться под проверку Вихря.
-                enter: Input.GetKeyDown(KeyCode.E) || CaptureRig.AutoEnterRift,
-                repeat: Input.GetKeyDown(KeyCode.R),
-                back: Input.GetKeyDown(KeyCode.C),
+                enter: GameKeyBindings.Pressed(GameAction.EnterRift) || CaptureRig.AutoEnterRift,
+                repeat: GameKeyBindings.Pressed(GameAction.RepeatRun),
+                back: GameKeyBindings.Pressed(GameAction.ReturnToCamp),
                 ground: Input.GetKeyDown(KeyCode.T),
                 salvage: Input.GetKeyDown(KeyCode.V));
 
@@ -604,7 +577,7 @@ namespace Game.View
                 AttackHeld = false;
             }
 
-            if (CaptureRig.IsCombatFeelShowcase && !CaptureRig.MovingCombatShowcase && !CaptureRig.LiveSkill && Sim != null)
+            if (CaptureRig.IsCombatFeelShowcase && !CaptureRig.ForestBudShowcase && !CaptureRig.MovingCombatShowcase && !CaptureRig.LiveSkill && Sim != null)
             {
                 bool attack = !CaptureRig.GcWarmupActive;
                 _pending.Flags = attack ? (byte)InputFlags.Attack : (byte)0;
@@ -683,6 +656,56 @@ namespace Game.View
                 {
                     if (_liveSkillStartedTick < 0) _liveSkillStartedTick = Sim.Tick;
                     int elapsed = Sim.Tick - _liveSkillStartedTick;
+                    if(elapsed == 0) ConfigureCapturedAbilities();
+                    if (CaptureRig.VfxShowcase != PelagVfxShowcase.Blaze && elapsed == 0)
+                    {
+                        var nodes = CaptureRig.SlamCase == "fast" ? new[] { AbilityNode.StatMod("talent.sabre.anchor_slam.1",
+                            AbilityStatType.WindupTicks, ModifierOp.Increased, Fix64.Ratio(-2, 5)) } : System.Array.Empty<AbilityNode>();
+                        // Для покадровой постановки — открытая арена; стены проверяются отдельными боевыми сценариями.
+                        if (CaptureRig.VfxShowcase != PelagVfxShowcase.AnchorSweep)
+                        {
+                            var origin = Sim.Entities.Position[Simulation.PlayerId];
+                            Sim.SetupTestArena(Mathf.Max(1, CaptureRig.EnemyOverride));
+                            Sim.Entities.Position[Simulation.PlayerId] = origin;
+                        }
+                        ConfigureCapturedAbilities();
+                        if (CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep)
+                        {
+                            Sim.SetAbility(0, AbilityDefinition.AnchorSlam(), nodes, nodes.Length);
+                            Sim.SetAbility(1, CaptureRig.SlamCase.StartsWith("ability") ? AbilityDefinition.Skewer() : AbilityDefinition.Cleave(), System.Array.Empty<AbilityNode>(), 0);
+                        }
+                        var before = Sim.Entities.Position[Simulation.PlayerId];
+                        var spawn = before + new FixVec2(Fix64.Zero, Fix64.FromInt(3));
+                        if (Run != null && Run.Map != null)
+                            for (int moduleIndex = 0; moduleIndex < Run.Map.PlacedCount; moduleIndex++)
+                            {
+                                var module = Run.Map.GetPlaced(moduleIndex);
+                                var candidate = new FixVec2(Fix64.Ratio(module.OriginX * 2 + module.Width, 2),
+                                    Fix64.Ratio(module.OriginY * 2 + module.Height, 2)) * LayoutMap.CellSize;
+                                if ((candidate - before).LengthSq < Fix64.FromInt(25)
+                                    || !Run.Map.IsWalkable(candidate, Fix64.FromInt(6))) continue;
+                                spawn = candidate;
+                                break;
+                            }
+                        Sim.Entities.Position[Simulation.PlayerId] = spawn;
+                        if (Camera.main != null)
+                            Camera.main.transform.position += new Vector3((spawn.X - before.X).ToFloat(), 0, (spawn.Y - before.Y).ToFloat());
+                        Vector3 castDirection = Quaternion.Euler(0, CaptureRig.CastYaw, 0) * Vector3.right;
+                        var face = new FixVec2(Fix64.FromDouble(castDirection.x), Fix64.FromDouble(castDirection.z));
+                        Sim.Entities.Facing[Simulation.PlayerId] = face;
+                        for (int enemy = 1; enemy < Sim.Entities.Count; enemy++)
+                        {
+                            Sim.Entities.Position[enemy] = Sim.Entities.Position[Simulation.PlayerId] + face
+                                * Fix64.FromDouble(enemy == 1 && CaptureRig.EnemyOverride != 0
+                                    ? (CaptureRig.VfxShowcase == PelagVfxShowcase.Backblast ? .9 : 3.8) : 25 + enemy);
+                            // Контроль постановки всех трёх контактов, без смерти цели после второго.
+                            if (CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck)
+                            {
+                                Sim.Entities.Stats[enemy].SetBase(StatType.MaxHealth,Fix64.FromInt(2000));
+                                Sim.Entities.RefreshStats(enemy); Sim.Entities.Health[enemy] = 2000;
+                            }
+                        }
+                    }
                     if (CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && elapsed == 0)
                     {
                         // Точка старого стенда занята порталом: поливание снимаем рядом.
@@ -726,7 +749,10 @@ namespace Game.View
                     int cycloneAt = sequence ? 93 : 18;
                     _pending.AbilityHoldMask = (byte)(elapsed >= cycloneAt && elapsed < cycloneAt + CaptureRig.HoldTicks ? 4 : 0);
                     int castAt = sequence ? 18 + _liveSkillCastStage * 75 : 18;
-                    if (_liveSkillCastStage < (sequence ? 4 : 1) && elapsed >= castAt)
+                    if (CaptureRig.SlamCase == "repeat") castAt = 18 + _liveSkillCastStage * 120;
+                    bool wreckSeries = CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck;
+                    if (wreckSeries) castAt = 18 + _liveSkillCastStage * 15;
+                    if (_liveSkillCastStage < (sequence ? 4 : wreckSeries ? 3 : CaptureRig.SlamCase == "repeat" ? 2 : 1) && elapsed >= castAt)
                     {
                         int definition = sequence
                             ? (_liveSkillCastStage == 0 ? AbilityDefinition.AnchorLeapId
@@ -738,6 +764,10 @@ namespace Game.View
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave ? AbilityDefinition.CleaveId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze ? AbilityDefinition.BlazeId
                             : CaptureRig.VfxShowcase == PelagVfxShowcase.Dash ? AbilityDefinition.DashId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck ? AbilityDefinition.WreckId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.FireFlask ? AbilityDefinition.FireFlaskId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Skewer ? AbilityDefinition.SkewerId
+                            : CaptureRig.VfxShowcase == PelagVfxShowcase.Backblast ? AbilityDefinition.BackblastId
                             : AbilityDefinition.WhirlwindId;
                         for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                             if (Sim.GetAbility(slot)?.DefinitionId == definition) _abilityLatch |= (byte)(1 << slot);
@@ -750,6 +780,20 @@ namespace Game.View
                         Vector3 cast = Quaternion.Euler(0f, CaptureRig.CastYaw, 0f) * Vector3.right * CaptureRig.CastDistance;
                         _pending.Aim = Sim.Entities.Position[Simulation.PlayerId]
                             + new FixVec2(Fix64.FromDouble(cast.x), Fix64.FromDouble(cast.z));
+                    }
+                    if (CaptureRig.VfxShowcase == PelagVfxShowcase.AnchorSweep
+                        && elapsed == (CaptureRig.SlamCase.EndsWith("after") ? 36 : 26))
+                    {
+                        if (CaptureRig.SlamCase.StartsWith("roll")) _abilityLatch |= (byte)(1 << PelagKit.DashSlot);
+                        if (CaptureRig.SlamCase.StartsWith("ability")) _abilityLatch |= 2;
+                        if (CaptureRig.SlamCase.Contains("away"))
+                            _pending.Aim = Sim.Entities.Position[Simulation.PlayerId] - Sim.AnchorSlamDirection * Fix64.FromInt(6);
+                    }
+                    if (CaptureRig.SlamCase == "autoattack" && elapsed < 18 && Sim.Entities.Count > 1)
+                    {
+                        _pending.Flags = (byte)InputFlags.Attack;
+                        _pending.AttackTarget = 1;
+                        _pending.Aim = Sim.Entities.Position[1];
                     }
                     if (elapsed >= (sequence ? 282 : 90) && Sim.Entities.Count > 1
                         && !(CaptureRig.VfxShowcase == PelagVfxShowcase.Blaze && CaptureRig.EnemyOverride == 0))
@@ -865,7 +909,9 @@ namespace Game.View
                                    && GameUserSettings.AbilityRowUsesLetters))
                         _commandLatch = (byte)CampCommand.EnterRift;
                     if (ground && CampPlayerView.Instance == null) _commandLatch = (byte)CampCommand.ToggleProvingGround;
-                    if (salvage) _commandLatch = (byte)CampCommand.SalvageJunk;
+                    // В авторском лагере V ничем не подсвечена и пометки «беречь»
+                    // в палатке нет: одно случайное нажатие молча разбирало всю сумку.
+                    if (salvage && CampPlayerView.Instance == null) _commandLatch = (byte)CampCommand.SalvageJunk;
                     break;
 
                 case GameMode.Summary:
@@ -970,6 +1016,7 @@ namespace Game.View
         internal void CaptureAim(Vector2 screenPosition, bool moveHeld, bool movePressed,
             bool attackHeld, bool attackPressed = false)
         {
+            if (GameUserSettings.WasdMovement) moveHeld = movePressed = false;
             if (_hud == null) _hud = GetComponent<PlayerHud>();
             int hudSlot = -1;
             bool overHud = _hud != null && _hud.HitTest(screenPosition, out hudSlot);
@@ -1305,6 +1352,7 @@ namespace Game.View
                 _prevPositions = new FixVec2[sim.Entities.Capacity];
 
             ApplyAbilityBuild();
+            PrepareForestBudRoster();
 
             // События расстановки надо проиграть до первого шага:
             // Step очищает список событий в начале тика.

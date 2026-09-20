@@ -33,6 +33,7 @@ namespace Game.View
         BlazeIgnite,
         BlazeBlade,
         BlazeHit,
+        AnchorSlamContact,
         Count
     }
 
@@ -47,7 +48,11 @@ namespace Game.View
         Rotation,
         Cleave,
         Blaze,
-        Dash
+        Dash,
+        Wreck,
+        FireFlask,
+        Skewer,
+        Backblast
     }
 
     /// <summary>

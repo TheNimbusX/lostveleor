@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Skewer",
+    "frames": 10,
+    "contactFrame": 10
+  },
+  {
+    "name": "Backblast",
+    "frames": 9,
+    "contactFrame": 3
+  },
+  {
+    "name": "FireFlask",
+    "frames": 19,
+    "contactFrame": 7
+  },
+  {
+    "name": "WreckA",
+    "frames": 16,
+    "contactFrame": 7
+  },
+  {
+    "name": "WreckB",
+    "frames": 16,
+    "contactFrame": 7
+  },
+  {
+    "name": "WreckFinish",
+    "frames": 19,
+    "contactFrame": 7
+  }
+]

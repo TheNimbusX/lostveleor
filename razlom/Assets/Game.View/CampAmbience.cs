@@ -18,6 +18,10 @@ namespace Game.View
         [Header("Мерцание вокруг исходной яркости")]
         [Range(0f, .65f)] public float FireVariation = .42f;
         [Range(0f, .55f)] public float LampVariation = .32f;
+        [Header("Множители яркости — их ставит стиль лагеря")]
+        [Tooltip("Вечером огонь и фонари читаются сильнее; авторские яркости в сцене не меняются.")]
+        [Range(.5f, 3f)] public float FireBoost = 1f;
+        [Range(.5f, 3f)] public float LampBoost = 1f;
 
         static readonly int BreezeId = Shader.PropertyToID("_CampBreeze");
         static readonly int PreviousTimeId = Shader.PropertyToID("_CampBreezePreviousTime");
@@ -54,10 +58,24 @@ namespace Game.View
             }
             _lights = lights.ToArray();
             _previousTime = Time.time;
+            EnsureAmbientSounds();
             _capture = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp") >= 0;
             _captureStill = _capture && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-ambience-still") >= 0;
             if (_capture) Debug.Log($"[camp-ambience] lights={_lights.Length} breeze={BreezeStrength:F2} fire={FireVariation:F3} lamps={LampVariation:F3}");
             Apply();
+        }
+
+        /// <summary>
+        /// Живой звук лагеря: объект заводится в игре рядом с ветром и огнём,
+        /// авторская сцена не меняется. В редакторе не создаётся — он пережил бы выход из Play.
+        /// </summary>
+        void EnsureAmbientSounds()
+        {
+            if (!Application.isPlaying) return;
+            if (GetComponentInChildren<CampAmbientSounds>(true) != null) return;
+            var host = new GameObject("Живой звук лагеря");
+            host.transform.SetParent(transform, false);
+            host.AddComponent<CampAmbientSounds>().Ambience = this;
         }
 
         void LateUpdate() => Apply();
@@ -89,7 +107,8 @@ namespace Game.View
                 float pulse = Mathf.Sin(t * 3.3f + state.Phase) * .58f + Mathf.Sin(t * 5.71f + state.Phase * 1.7f) * .22f;
                 float modulation = Mathf.Clamp(pulse + breathing * .4f + flicker * .18f, -1f, 1f);
                 float amount = _captureStill ? 0 : state.Fire ? FireVariation : LampVariation;
-                state.Source.intensity = state.Intensity * (1f + modulation * amount);
+                float boost = Mathf.Max(0f, state.Fire ? FireBoost : LampBoost);
+                state.Source.intensity = state.Intensity * boost * (1f + modulation * amount);
                 state.Minimum = Mathf.Min(state.Minimum, state.Source.intensity);
                 state.Maximum = Mathf.Max(state.Maximum, state.Source.intensity);
             }

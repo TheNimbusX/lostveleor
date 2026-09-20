@@ -59,6 +59,9 @@ public static class CampLookAuthoring
         controller.Painterly = Create(volume.sharedProfile, "CampPainterly", CampLookStyle.Painterly);
         controller.Film = Create(volume.sharedProfile, "CampFilm", CampLookStyle.Film);
         controller.Aces = Create(volume.sharedProfile, "CampAcesComparison", CampLookStyle.Aces);
+        controller.GoldenEvening = Create(volume.sharedProfile, "CampGoldenEvening", CampLookStyle.GoldenEvening);
+        // Вечер поднимает яркость костра и фонарей через компонент ветра и огня.
+        controller.Ambience = UnityEngine.Object.FindAnyObjectByType<CampAmbience>();
         controller.Style = CampLookStyle.Clean;
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
@@ -77,24 +80,30 @@ public static class CampLookAuthoring
         if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(path) == null)
             if (!AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(source), path)) throw new IOException(path);
         var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+        // Янтарный закат (выбор владельца 16 сентября): тёплые света, холодные тени,
+        // мягкое свечение огней. Сам свет и туман ставит CampLookController.
+        bool evening = style == CampLookStyle.GoldenEvening;
         var color = Get<ColorAdjustments>(profile);
-        color.contrast.Override(style == CampLookStyle.Painterly ? 5 : style == CampLookStyle.Film ? 22 : 10);
-        color.saturation.Override(style == CampLookStyle.Painterly ? 9 : style == CampLookStyle.Film ? -10 : 6);
-        color.postExposure.Override(style == CampLookStyle.Painterly ? .22f : style == CampLookStyle.Film ? .15f : .1f);
+        color.contrast.Override(evening ? 10 : style == CampLookStyle.Painterly ? 5 : style == CampLookStyle.Film ? 22 : 10);
+        color.saturation.Override(evening ? 8 : style == CampLookStyle.Painterly ? 9 : style == CampLookStyle.Film ? -10 : 6);
+        // Косое солнце само по себе съедает яркость земли — закату экспозиция нужна выше остальных стилей.
+        color.postExposure.Override(evening ? .25f : style == CampLookStyle.Painterly ? .22f : style == CampLookStyle.Film ? .15f : .1f);
         var balance = Get<WhiteBalance>(profile);
-        balance.temperature.Override(style == CampLookStyle.Painterly ? 6 : style == CampLookStyle.Film ? -9 : 0);
-        balance.tint.Override(style == CampLookStyle.Film ? 3 : 0);
+        balance.temperature.Override(evening ? 20 : style == CampLookStyle.Painterly ? 6 : style == CampLookStyle.Film ? -9 : 0);
+        balance.tint.Override(evening ? 3 : style == CampLookStyle.Film ? 3 : 0);
         var tones = Get<ShadowsMidtonesHighlights>(profile);
-        tones.shadows.Override(style == CampLookStyle.Painterly ? new Vector4(.76f, .94f, 1, .025f) :
+        tones.shadows.Override(evening ? new Vector4(.70f, .82f, 1, -.03f) :
+            style == CampLookStyle.Painterly ? new Vector4(.76f, .94f, 1, .025f) :
             style == CampLookStyle.Film ? new Vector4(.74f, .9f, 1, .035f) : new Vector4(.83177567f, .9439252f, 1, -.025f));
-        tones.highlights.Override(style == CampLookStyle.Painterly ? new Vector4(1, .94f, .82f, .015f) :
+        tones.highlights.Override(evening ? new Vector4(1, .84f, .62f, .04f) :
+            style == CampLookStyle.Painterly ? new Vector4(1, .94f, .82f, .015f) :
             style == CampLookStyle.Film ? new Vector4(1, .97f, .9f, 0) : new Vector4(1, .9710145f, .92753625f, 0));
         var bloom = Get<Bloom>(profile);
-        bloom.intensity.Override(style == CampLookStyle.Painterly ? .32f : .18f);
-        bloom.threshold.Override(style == CampLookStyle.Painterly ? 1.1f : 1.25f);
-        bloom.scatter.Override(style == CampLookStyle.Painterly ? .7f : .55f);
+        bloom.intensity.Override(evening ? .3f : style == CampLookStyle.Painterly ? .32f : .18f);
+        bloom.threshold.Override(evening ? 1.02f : style == CampLookStyle.Painterly ? 1.1f : 1.25f);
+        bloom.scatter.Override(evening ? .62f : style == CampLookStyle.Painterly ? .7f : .55f);
         var vignette = Get<Vignette>(profile);
-        vignette.intensity.Override(style == CampLookStyle.Painterly ? .13f : style == CampLookStyle.Film ? .2f : 0);
+        vignette.intensity.Override(evening ? .12f : style == CampLookStyle.Painterly ? .13f : style == CampLookStyle.Film ? .2f : 0);
         vignette.smoothness.Override(.8f);
         var grain = Get<FilmGrain>(profile);
         grain.type.Override(FilmGrainLookup.Thin1);

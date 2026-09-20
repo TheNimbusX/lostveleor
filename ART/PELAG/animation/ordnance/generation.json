@@ -1,0 +1,32 @@
+{
+  "generator": "built-in image_gen (not CLI)",
+  "source_reference": "artifacts/anchor-faithful/backblast-v9/shot_01_t0.80s.png (game style only, old effect excluded)",
+  "source": "Pelag_FireBurst_Atlas.png",
+  "draft": "Pelag_FireBurst_Atlas_Draft.png",
+  "layout": {
+    "columns": 4,
+    "rows": 4,
+    "frames": 16,
+    "alpha": "preserved original RGBA",
+    "burst_seconds": 0.48
+  },
+  "runtime": "razlom/Assets/Resources/VFX/Pelag/Ordnance/Pelag_FireBurst_Atlas.png",
+  "generation_prompt": "Create a production VFX animation sprite sheet for this stylized painted 3D action RPG. The attached screenshot is ONLY a reference for the game painted, crisp, warm fantasy art style. Do NOT depict the character, enemy, terrain or screenshot; do NOT copy the ugly placeholder orange effect. Square 4 by 4 atlas, EXACTLY 16 evenly sized animation cells, left to right then top to bottom. No borders, gutters, labels, numbers, lettering. Short small incendiary bottle explosion, volumetric hand painted golden-white hot core with vivid amber and vermilion flame lobes and curling pointed ragged tips, subtle internal shade, a handful of embers. Energetic upward and outward ground-level burst viewed from a slightly elevated action game camera. NOT photorealistic, NOT low poly, NOT a flat icon, NOT geometrical petals, NOT a uniform ring, no smoke blanket. SAME explosion evolves coherently: cell1 tightly compressed small hot flash at center-bottom, cells2-4 rapid expanding asymmetric burst, cells5-8 peaked mushroom-like lobes of FIRE with pointed lateral tongues, cells9-12 flame breaks into curling fragments and embers, cells13-16 dissipate, final almost blank. Consistent fixed ground origin and framing; every frame entirely inside its own exact quarter-by-quarter cell with at least 12% safe padding. Broad squat envelope, about twice as wide as tall. TRUE transparent background, preserve alpha, no floor/shadow/black rectangle. Polished full-color game sprite sheet, sharp sculpted flames with soft luminous core.",
+  "edit_prompt": "Technical sprite-sheet cleanup, preserve this exact painted fire art and its frame order, do not redesign the effect. Keep exactly 4 equal columns by 4 equal rows, 16 frames. REDUCE visual contents of EACH cell to 70% of current size and center horizontally in its own cell, ground origin at 78% down the cell. Every flame and ember contained inside its own cell with 12% EMPTY transparent padding on ALL FOUR sides. Recover clipped tips and provide generous padding. Uniform square cells, fixed ground origin, smooth progression tiny flash -> eruption -> flame curls -> tiny embers. True transparent RGBA. No visible grid, borders, text or numbers. Game animation atlas, exact equal cells and empty gutters. Keep luminous ivory-white core, rich golden yellow, orange, red edges and dimensional painted lobes.",
+  "oil_loop": {
+    "source": "Pelag_OilFlame_Atlas.png",
+    "generator": "built-in image_gen",
+    "generated_file": "exec-409854c5-8a58-425d-97cc-d9e1bc581094.png",
+    "reference": "Pelag_FireBurst_Atlas.png (palette and rendering)",
+    "layout": {
+      "columns": 4,
+      "rows": 4,
+      "frames": 16,
+      "alpha": "original RGBA"
+    },
+    "prompt": "Create a production game VFX flipbook texture atlas, 4 columns by 4 rows, EXACTLY 16 equally sized square cells, transparent RGBA background. Reference is ONLY for painterly amber/orange palette and crisp layered rendering. New subject is a seamless LOOP of a small oil FIRE FLAME, NOT an explosion: slender curving flame tongues rising from one anchored narrow base, three asymmetrical pointed tips, bright warm pale-yellow core inside amber then rich orange outer shapes. Hand painted stylized 3D fantasy ARPG, volume from curved layered color forms, restrained fine detail and readable silhouette. Same flame constant overall size and ground anchor throughout every cell, roughly 55% cell width and 65% cell height, base at 82% from top in every cell. 16 consecutive frames row-major: tips smoothly curl to the left and then right, flow rises from the base, subtle height flicker; frame16 returns close to frame1 for looping, never extinguish or grow from nothing. Every flame entirely inside its own cell with at least 15% transparent padding on all sides, NO embers outside cells. No smoke, NO circular ring, NO spherical bubbles, no surrounding glow cloud, no ground, no rocks, no text, no grid lines. Crisp alpha cutout with clean transparent empty space.",
+    "sha256": "a0f4529e21703e6bd9d022e3c25a32670fa9031dce0b7cf122fad86177bd8765"
+  },
+  "source_sha256": "9c6212aad86b8e1faacda9504d98893163b77bcc85cba51f6bc514854f3b04b5",
+  "draft_sha256": "35cfb119b69e07dc2856d0b966d70394b3f5ccafff533150319113e8d88ce3e4"
+}

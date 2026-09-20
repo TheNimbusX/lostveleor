@@ -29,7 +29,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void AttackOrder_ApproachesThenKeepsCommittedMotionBelowHalfSpeed()
+        public void AttackOrder_ApproachesThenKeepsCommittedMotionBelowThreeQuarterSpeed()
         {
             Simulation sim = ArenaWithStationaryEnemy(
                 new FixVec2(Fix64.FromInt(4), Fix64.Zero), out int enemy);
@@ -60,8 +60,8 @@ namespace Game.Tests
                 sim.Step(in released);
                 Assert.LessOrEqual(
                     sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
-                    (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Half).ToFloat() + 0.0001f,
-                    "committed-замах сохраняет управление, но не разгоняется выше 50%");
+                    (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
+                    "committed-замах сохраняет управление, но не разгоняется выше 75%");
             }
 
             sim.Step(in released);
@@ -105,7 +105,7 @@ namespace Game.Tests
                 "windup не должен съедать первый тик нового движения");
             Assert.LessOrEqual(
                 sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
-                (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Half).ToFloat() + 0.0001f,
+                (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
                 "во время замаха движение ограничено половиной скорости");
 
             InputFrame released = InputFrame.Empty;
@@ -150,7 +150,7 @@ namespace Game.Tests
                     "активная фаза способности не должна вставлять стоп-тики в locomotion");
                 Assert.LessOrEqual(
                     sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
-                    (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
+                    (sim.Entities.MoveStep[Simulation.PlayerId] * (sim.Tick - 1 < sim.PlayerAction.ContactTick ? Fix64.Ratio(3, 4) : Fix64.One)).ToFloat() + 0.0001f,
                     "способность сохраняет динамичное движение на 75% скорости");
                 previousY = currentY;
                 if (sim.Entities.Health[enemy] < healthBefore) impactResolved = true;

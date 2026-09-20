@@ -41,6 +41,17 @@ namespace Game.Sim
 
         /// <summary>Кувырок под огнём оставил кусок следа. Amount — сколько тиков горит, Position — где.</summary>
         BlazeTrail = 15,
+
+        /// <summary>Amount — номер залпа; часы анимации читаются из ForestBudAttackState.</summary>
+        ForestBudVolleyStarted = 16,
+        /// <summary>Amount — слот плода, ActionVariant — номер 0..4, Position — зафиксированная цель.</summary>
+        ForestFruitLaunched = 17,
+        ForestFruitImpact = 18,
+        /// <summary>Невыпущенные плоды отменены; уже летящие остаются в своём пуле.</summary>
+        ForestBudVolleyCancelled = 19,
+        BackblastBurst = 20,
+        /// <summary>Продолжение серии без повторной оплаты. Amount — слот, ActionVariant — этап.</summary>
+        ActionStageStarted = 21,
     }
 
     /// <summary>

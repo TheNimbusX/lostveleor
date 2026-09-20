@@ -33,10 +33,10 @@ ModelImporter:
     clipAnimations:
     - serializedVersion: 16
       name: Pelag_AN_AnchorLeap
-      takeName: Pelag_AN_AnchorLeap
-      internalID: -1519594306261444112
+      takeName: AN_Pelag_AnchorLeap_Weight.002
+      internalID: -1855757074447087825
       firstFrame: 0
-      lastFrame: 34
+      lastFrame: 45
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

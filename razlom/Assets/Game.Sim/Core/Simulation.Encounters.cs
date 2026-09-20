@@ -100,6 +100,9 @@ namespace Game.Sim
                     var group = pack.GetGroup(g);
                     counts[g] = rng.NextInt(group.Min, group.Max + 1) + (group.GrowWithDepth ? settings.CountBonus : 0);
                 }
+                bool hasRanged = false;
+                for (int g = 0; g < counts.Length; g++)
+                    if (counts[g] > 0 && pack.GetGroup(g).Kind == EnemyKind.ForestBud) hasRanged = true;
                 int first = Entities.Count;
                 // Reserve cramped rooms for their elite first; other groups retain authored order.
                 for (int pass = 0; pass < 2; pass++)
@@ -109,7 +112,21 @@ namespace Game.Sim
                         if (group.Elite != (pass == 0)) continue;
                         for (int n = 0; n < counts[g]; n++)
                         {
-                            var radius = group.Kind == EnemyKind.ForestRootSwarm ? Fix64.Ratio(45, 100) : Fix64.Ratio(85, 100);
+                            var radius = group.Kind == EnemyKind.ForestBud ? ForestBudConfig.BodyRadius
+                                : group.Kind == EnemyKind.ForestRootSwarm ? Fix64.Ratio(45, 100) : Fix64.Ratio(85, 100);
+                            if (hasRanged)
+                            {
+                                // Стрелки занимают дальнюю сторону комнаты относительно входа пачки.
+                                int parent = map.GetPlaced(site.Module).Parent;
+                                var entry = parent >= 0 ? map.CenterOf(parent) : map.EntryPoint;
+                                var away = (site.Center - entry).Normalized();
+                                cells.Sort((a, b) => {
+                                    int order = FixVec2.Dot(a - entry, away).Raw.CompareTo(FixVec2.Dot(b - entry, away).Raw);
+                                    if (order == 0) order = a.X.Raw.CompareTo(b.X.Raw);
+                                    order = order != 0 ? order : a.Y.Raw.CompareTo(b.Y.Raw);
+                                    return group.Kind == EnemyKind.ForestBud ? order : -order;
+                                });
+                            }
                             if (!TakeEncounterPoint(map, site.Module, cells, radius, ref rng, out var spot)) { omitted++; continue; }
                             int health = Math.Max(1, guardianHealth * group.HealthPercent / 100);
                             int id = Entities.Spawn(spot, health, Faction.Orvill);

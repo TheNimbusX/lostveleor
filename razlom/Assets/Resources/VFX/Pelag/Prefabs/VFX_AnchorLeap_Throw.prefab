@@ -47,8 +47,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.PelagVfxElement
   Id: 4
-  DefaultLifetime: 0.6
+  DefaultLifetime: 1.5
   DynamicLine: 0
+  AuthoredRadius: 0
 --- !u!96 &8052486431826096681
 TrailRenderer:
   serializedVersion: 4
@@ -98,11 +99,11 @@ TrailRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Time: 0.27
+  m_Time: 0.1
   m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.95
+    widthMultiplier: 0.22
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -187,15 +188,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.2643224
+      value: 1.9168758
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.2643224
+      value: 1.9168758
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.2643224
+      value: 1.9168758
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalPosition.x
@@ -207,7 +208,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.20197746
+      value: 0.3062239
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 9c696c761e1b20d44add79d4ebf1e709, type: 3}
       propertyPath: m_LocalRotation.w

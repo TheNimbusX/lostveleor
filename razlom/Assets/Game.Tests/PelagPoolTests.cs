@@ -45,13 +45,13 @@ namespace Game.Tests
         /// роллах карточек, поэтому молчаливая перестановка сдвинула бы сиды.
         /// </summary>
         [Test]
-        public void PoolHoldsTheEightApprovedAbilitiesInOrder()
+        public void PoolPreservesOldOrderAndAppendsMobility()
         {
             int[] expected =
             {
                 AbilityDefinition.WhirlwindId, AbilityDefinition.CleaveId, AbilityDefinition.BlazeId,
                 AbilityDefinition.ChainStepId, AbilityDefinition.AnchorSlamId, AbilityDefinition.WreckId,
-                AbilityDefinition.AnchorLeapId, AbilityDefinition.FireFlaskId,
+                AbilityDefinition.AnchorLeapId, AbilityDefinition.FireFlaskId, AbilityDefinition.SkewerId, AbilityDefinition.BackblastId,
             };
             Assert.AreEqual(expected.Length, PelagKit.PoolSize);
             for (int i = 0; i < expected.Length; i++)

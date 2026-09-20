@@ -31,6 +31,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsWhirlwind => NormalPath.EndsWith("/Pelag_v4/Animations/Pelag_Whirlwind.fbx");
 
     private bool IsPelagMixamo => NormalPath.Contains("/Pelag_v5/Mixamo/");
+    private bool IsForestBud => NormalPath.Contains("/Resources/Characters/Forest_Bud/");
 
     private bool IsPelagMixamoRuntime =>
         NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
@@ -61,7 +62,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     // Версия постпроцессора. Растёт при каждой смене правил разбора: без этого
     // Unity не переимпортирует уже разобранные модели, и новое правило не
     // применяется к тому, что уже лежит в проекте.
-    public override uint GetVersion() => 16;
+    public override uint GetVersion() => 17;
 
     private void OnPreprocessAnimation()
     {
@@ -360,6 +361,24 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         var importer = (ModelImporter)assetImporter;
 
+        if (IsForestBud)
+        {
+            // Авторский четвероногий риг нельзя пропускать через Humanoid-ретаргет.
+            bool body = NormalPath.EndsWith("/ForestBudRanged.fbx");
+            importer.animationType = body ? ModelImporterAnimationType.Generic : ModelImporterAnimationType.None;
+            importer.avatarSetup = body ? ModelImporterAvatarSetup.CreateFromThisModel : ModelImporterAvatarSetup.NoAvatar;
+            importer.importAnimation = body;
+            importer.optimizeGameObjects = false;
+            importer.animationCompression = ModelImporterAnimationCompression.Off;
+            importer.globalScale = 1f; importer.useFileScale = true;
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.importTangents = ModelImporterTangents.CalculateMikk;
+            importer.importBlendShapes = false;
+            importer.importCameras = false; importer.importLights = false;
+            importer.isReadable = false;
+            return;
+        }
+
         // The runtime body and every v5 clip use the exact same 65-bone Mixamo
         // hierarchy and bind pose. This belongs in OnPreprocessModel: putting
         // it in OnPreprocessAnimation leaves the importer on Humanoid before
@@ -603,7 +622,15 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         // записан путь к прежней папке `<старое имя>.fbm`, и Unity его не
         // находит. Сами картинки при этом лежат рядом и импортированы как
         // обычные ассеты — их достаточно связать обратно.
-        if (main == null) main = FindTextureBeside(material);
+        if (main == null && IsForestBud)
+        {
+            string textureName = material.name == "MAT_ForestBud" ? "ForestBud_BaseColor"
+                : material.name == "MAT_ForestBud_Fruit" ? "ForestBud_Fruit_BaseColor"
+                : material.name == "MAT_ForestBud_Petals" ? "ForestBud_Petals_BaseColor" : null;
+            if (textureName != null) main = AssetDatabase.LoadAssetAtPath<Texture2D>(
+                "Assets/Resources/Characters/Forest_Bud/Textures/" + textureName + ".png");
+        }
+        else if (main == null) main = FindTextureBeside(material);
 
         material.shader = urp;
 
