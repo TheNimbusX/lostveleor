@@ -50,7 +50,7 @@ namespace Game.View
         {
             for (int i = 0; i < _tileCount; i++)
                 if (_tiles[i] != null)
-                    _tiles[i].gameObject.SetActive(!_fogActive || (i < _tileRevealed.Length && _tileRevealed[i]));
+                    _tiles[i].gameObject.SetActive(!_fogActive || _style.NaturalGround || (i < _tileRevealed.Length && _tileRevealed[i]));
             for (int i = 0; i < _decorCount; i++)
                 if (_decor[i] != null)
                     _decor[i].gameObject.SetActive(!_fogActive || (i < _decorRevealed.Length && _decorRevealed[i]));
@@ -167,7 +167,9 @@ namespace Game.View
             {
                 if (_decorRevealed[i] || _decor[i] == null) continue;
                 Vector3 p = _decor[i].position;
-                if ((new Vector2(p.x, p.z) - player).sqrMagnitude > radiusSq) continue;
+                // Крона входит в поле зрения раньше ствола; дальние деревья остаются скрытыми.
+                float reach = FogRevealRadius + Mathf.Min(5, _decorRadii[_decorVariant[i]]);
+                if ((new Vector2(p.x, p.z) - player).sqrMagnitude > reach * reach) continue;
                 _decorRevealed[i] = true;
                 _decor[i].gameObject.SetActive(true);
             }

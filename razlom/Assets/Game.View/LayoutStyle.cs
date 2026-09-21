@@ -17,6 +17,10 @@ namespace Game.View
         public bool NaturalGround = true;
         [Tooltip("Материал лагерной поверхности; маска дорог создаётся заново для каждого разлома.")]
         public Material CampSurfaceMaterial;
+        [Tooltip("Доля камней на тропинке; остальное — утоптанная земля.")]
+        [Range(0, 1)] public float TrailStoneCoverage = .55f;
+        [Tooltip("Выраженность грунта и контактного затемнения под растительностью.")]
+        [Range(0, 1)] public float ForestGroundWear = .65f;
         public bool ForestClearings;
         [Range(.5f, 1.2f)] public float ClearingSize = 1f;
         public GameObject PortalPrefab;
@@ -156,6 +160,9 @@ namespace Game.View
 
         public void Validate()
         {
+            if (float.IsNaN(TrailStoneCoverage) || TrailStoneCoverage < 0 || TrailStoneCoverage > 1
+                || float.IsNaN(ForestGroundWear) || ForestGroundWear < 0 || ForestGroundWear > 1)
+                throw new ArgumentException("Покрытие тропы и грунт под лесом должны быть в пределах 0–1.");
             if (ClearingSize < .5f || ClearingSize > 1.2f)
                 throw new ArgumentException("Размер полян должен быть от 0.5 до 1.2.");
             if (ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12

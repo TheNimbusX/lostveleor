@@ -57,6 +57,7 @@ namespace Game.View
         private float[] _decorRadii;
         private readonly List<GameObject> _ownedRoots = new List<GameObject>();
         private readonly List<Material> _ownedMaterials = new List<Material>();
+        private readonly Dictionary<Material, Material> _understoryMaterials = new Dictionary<Material, Material>();
 
         public int TileCount => _tileCount;
         public int DecorCount => _decorCount;
@@ -123,6 +124,7 @@ namespace Game.View
             _ownedRoots.Clear();
             foreach (var material in _ownedMaterials) DestroyOwned(material);
             _ownedMaterials.Clear();
+            _understoryMaterials.Clear();
             _pool = null;
             _pathTrailPool = null;
             _decorPools = null;
@@ -469,12 +471,22 @@ namespace Game.View
             // на тесном модуле честнее пропустить один куст, чем закрутиться
             // в бесконечном переборе точек, которых физически может не быть.
             const int MaxAttemptsPerItem = 10;
+            Vector2 groupCenter = Vector2.zero;
+            int groupRemaining = 0;
             for (int i = 0; i < count; i++)
             {
+                // У группы общий центр, но разная численность и асимметричный контур.
+                if (groupRemaining-- <= 0)
+                {
+                    groupCenter = new Vector2(Mathf.Lerp(minX, maxX, (float)rng.NextDouble()),
+                        Mathf.Lerp(minZ, maxZ, (float)rng.NextDouble()));
+                    groupRemaining = rng.Next(3, 8);
+                }
                 for (int attempt = 0; attempt < MaxAttemptsPerItem; attempt++)
                 {
-                    float x = Mathf.Lerp(minX, maxX, (float)rng.NextDouble());
-                    float z = Mathf.Lerp(minZ, maxZ, (float)rng.NextDouble());
+                    Vector2 spot = groupCenter + DetailOffset(rng, .4f + (float)rng.NextDouble() * 2.3f);
+                    float x = spot.x, z = spot.y;
+                    if (x < minX || x > maxX || z < minZ || z > maxZ) continue;
                     float clump = Mathf.PerlinNoise(x * .21f + clumpX, z * .21f + clumpZ);
                     if (rng.NextDouble() > Mathf.Lerp(.3f, 1f, Mathf.SmoothStep(0f, 1f, clump))) continue;
                     if (TooCloseToConnector(x, z)) continue;
@@ -484,6 +496,14 @@ namespace Game.View
                     // Large props inside the playable area must have a Sim footprint.
                     if (_style.DecorVariants[variant].Kind == DecorKind.Rock || _style.DecorVariants[variant].Kind == DecorKind.Tree) continue;
                     if (BlocksRoute(variant, x, z)) continue;
+                    bool crowded = false;
+                    for (int other = 0; other < _decorCount; other++)
+                    {
+                        float spacing = Mathf.Max(.3f, (_decorRadii[variant] + _decorRadii[_decorVariant[other]]) * .45f);
+                        if ((new Vector2(x, z) - new Vector2(_decor[other].position.x, _decor[other].position.z)).sqrMagnitude
+                            < spacing * spacing) { crowded = true; break; }
+                    }
+                    if (crowded) continue;
                     SpawnDecor(variant, x, z, rng);
                     break;
                 }
@@ -602,7 +622,7 @@ namespace Game.View
             }
         }
 
-        private static GameObject CreateDecorInstance(DecorVariant variant, Material placeholderMaterial)
+        private GameObject CreateDecorInstance(DecorVariant variant, Material placeholderMaterial)
         {
             if (variant.Prefab != null)
             {
@@ -612,6 +632,25 @@ namespace Game.View
                 GameObject prefabInstance = Instantiate(variant.Prefab);
                 prefabInstance.name = "Декор: " + variant.Prefab.name;
                 RemoveColliders(prefabInstance);
+                if (variant.Kind == DecorKind.Bush)
+                    foreach (var renderer in prefabInstance.GetComponentsInChildren<Renderer>(true))
+                    {
+                        var materials = renderer.sharedMaterials;
+                        for (int m = 0; m < materials.Length; m++)
+                        {
+                            var source = materials[m];
+                            if (source == null || !source.HasProperty("_BaseColor")) continue;
+                            if (!_understoryMaterials.TryGetValue(source, out var foliage))
+                            {
+                                // Один экземпляр на исходный материал; лагерный ассет не перекрашивается.
+                                foliage = new Material(source) { name = source.name + " — подлесок" };
+                                foliage.SetColor("_BaseColor", source.GetColor("_BaseColor") * new Color(.77f, .88f, .83f, 1));
+                                _understoryMaterials.Add(source, foliage); _ownedMaterials.Add(foliage);
+                            }
+                            materials[m] = foliage;
+                        }
+                        renderer.sharedMaterials = materials;
+                    }
                 if (variant.Kind == DecorKind.Rock || variant.Kind == DecorKind.Tree)
                 {
                     var renderers = prefabInstance.GetComponentsInChildren<Renderer>();
@@ -754,6 +793,9 @@ namespace Game.View
         private void BuildRouteTrails(LayoutMap map)
         {
             if (map.Routes == null) return;
+            // Единая мировая маска уже включает вход, выход и ответвления.
+            // Дополнительные кубы поверх неё давали прямоугольные швы и ступени.
+            if (_style.NaturalGround) return;
             for (int i = 0; !_style.NaturalGround && i < map.Routes.CellCount; i++)
             {
                 if (!map.Routes.IsRoadCell(i)) continue;

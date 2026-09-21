@@ -19,12 +19,17 @@ namespace Game.View
         private GameObject _water;
         private GameObject _banks;
         private Material _glowMaterial;
+        private Material _portalSurfaceMaterial;
         private MaterialPropertyBlock _landmarkBlock;
+        private bool _forestBreezeActive;
+        private Vector4 _savedBreeze;
+        private float _savedBreezeTime, _previousBreezeTime;
 
-        private void OnDisable() => _meadowLighting.Restore();
+        private void OnDisable() { _meadowLighting.Restore(); RestoreForestBreeze(); }
 
         private void ClearMeadow()
         {
+            RestoreForestBreeze();
             ClearRivers();
             foreach (var portal in _portals) _portalPool?.Release(portal.gameObject);
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
@@ -58,15 +63,15 @@ namespace Game.View
             _glowMaterial.EnableKeyword("_EMISSION");
             _glowMaterial.SetFloat("_Cull", 0);
             _ownedMaterials.Add(_glowMaterial);
+            _portalSurfaceMaterial = new Material(Shader.Find("Game/Forest Portal"));
+            _ownedMaterials.Add(_portalSurfaceMaterial);
             _ringMesh = MakeRing(); _meadowMeshes.Add(_ringMesh);
             _portalPool = new ViewPool(root, () => MakeLandmark(true), 9, false);
             _cachePool = new ViewPool(root, () => MakeLandmark(false), 8, false);
             _dropPool = new ViewPool(root, () => MakeLandmark(false), 4, false);
             _banks = new GameObject("Земляной край");
             _banks.transform.SetParent(CreateRoot("Граница лугов"), false);
-            _bankMesh = new Mesh { name = "Контур занятого пола" };
-            _meadowMeshes.Add(_bankMesh);
-            _banks.AddComponent<MeshFilter>().sharedMesh = _bankMesh;
+            _banks.AddComponent<MeshFilter>();
             var material = CreateLocationGround(new Color(.65f, .76f, .64f),
                 _style.RoomFloorTexture, _style.PathFloorTexture, _style.FloorTextureTiling, .035f);
             _ownedMaterials.Add(material);
@@ -134,12 +139,35 @@ namespace Game.View
         {
             var run = _driver?.Run;
             if (run == null || run.Map != _shownMap) return;
+            if (Application.isPlaying && _style.UseCampLighting)
+            {
+                if (!_forestBreezeActive)
+                {
+                    _savedBreeze = Shader.GetGlobalVector("_CampBreeze");
+                    _savedBreezeTime = Shader.GetGlobalFloat("_CampBreezePreviousTime");
+                    _previousBreezeTime = Time.time;
+                    _forestBreezeActive = true;
+                }
+                // Те же лагерные материалы получают тихие порывы только на время разлома.
+                Shader.SetGlobalVector("_CampBreeze", new Vector4(.788f, .616f,
+                    .48f + .1f * Mathf.Sin(Time.time * .37f), Time.time));
+                Shader.SetGlobalFloat("_CampBreezePreviousTime", _previousBreezeTime);
+                _previousBreezeTime = Time.time;
+            }
             if (_shownMap != null && _portalPool != null && Application.isPlaying)
                 _meadowLighting.Apply(_style);
             for (int i = 1; i < _portals.Count; i++)
                 SetGlow(_portals[i], run.Phase == RunPhase.SeekingExit ? new Color(.22f, .95f, .65f) : new Color(.8f, .42f, .1f));
             for (int b = 0; b < _caches.Count; b++) _caches[b].gameObject.SetActive(!run.IsBranchClaimed(b));
             UpdateDropMarks(run);
+        }
+
+        private void RestoreForestBreeze()
+        {
+            if (!_forestBreezeActive) return;
+            Shader.SetGlobalVector("_CampBreeze", _savedBreeze);
+            Shader.SetGlobalFloat("_CampBreezePreviousTime", _savedBreezeTime);
+            _forestBreezeActive = false;
         }
 
         /// <summary>
@@ -192,6 +220,9 @@ namespace Game.View
                     for (int m = 0; m < materials.Length; m++)
                     {
                         var source = materials[m];
+                        // Отдельная поверхность портала из пака; каменная рама сохраняет материал.
+                        if (portal && source != null && source.name == "Portal01")
+                        { materials[m] = _portalSurfaceMaterial; continue; }
                         if (source == null || source.shader.name.StartsWith("Universal Render Pipeline")) continue;
                         var replacement = ViewMaterials.CreateLit(source.HasProperty("_Color") ? source.color : Color.white);
                         if (source.HasProperty("_MainTex")) replacement.SetTexture("_BaseMap", source.mainTexture);
@@ -237,6 +268,16 @@ namespace Game.View
 
         private void BuildBanks(float cell)
         {
+            // Естественный контур уже окружён непрерывным фоновым рельефом.
+            // Полосы по каждой клетке накладывались друг на друга на поворотах
+            // и выдавали сетку резкими треугольными гранями освещения.
+            if (_shownMap.Outline != null) { _banks.SetActive(false); return; }
+            if (_bankMesh == null)
+            {
+                _bankMesh = new Mesh { name = "Контур занятого пола" };
+                _meadowMeshes.Add(_bankMesh);
+                _banks.GetComponent<MeshFilter>().sharedMesh = _bankMesh;
+            }
             var vertices = new List<Vector3>(); var triangles = new List<int>();
             var ordered = new List<long>(_occupiedCells); ordered.Sort();
             foreach (long key in ordered)
@@ -522,6 +563,20 @@ namespace Game.View
                 else if (variant.Kind == DecorKind.GrassTuft) grass.Add(i);
             }
             if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
+            // Подлесок привязан к уже существующим кронам, а не к ещё одной сетке.
+            // Ограниченный бюджет не увеличивает число объектов с площадью фонового леса.
+            int canopyCount = _decorCount, dressed = 0;
+            for (int i = 0; i < canopyCount && dressed < 48; i++)
+            {
+                int variant = _decorVariant[i];
+                if (_style.DecorVariants[variant].Kind != DecorKind.Tree) continue;
+                var tree = _decor[i];
+                var rng = DecorRandom(i, 947);
+                if (rng.NextDouble() < .35) continue;
+                DressDetail(map, new Vector2(tree.position.x, tree.position.z),
+                    _decorRadii[variant] * .65f, bushes, grass, rng);
+                dressed++;
+            }
             // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
             for (int group = 0; group < map.GladeCount * 5; group++)
             {
@@ -598,10 +653,11 @@ namespace Game.View
                 for (int attempt = 0; attempt < 24; attempt++)
                 {
                     float angle = (float)rng.NextDouble() * Mathf.PI * 2;
-                    float spread = (float)rng.NextDouble() * .35f;
+                    // Домик крупнее боевой площадки: выбираем плечо поляны, не её свободный центр.
+                    float shoulder = _decorRadii[treehouse] + 1.5f + (float)rng.NextDouble() * 3;
                     var point = new Vector2(
-                        glade.Center.X.ToFloat() + Mathf.Cos(angle) * glade.Radii.X.ToFloat() * spread,
-                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * glade.Radii.Y.ToFloat() * spread);
+                        glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
                     if (TryForestDetail(map, treehouse, point, rng)) return;
                 }
             }
@@ -652,6 +708,10 @@ namespace Game.View
                 int otherVariant = _decorVariant[i];
                 float maxScale = Mathf.Max(.01f, _style.DecorVariants[otherVariant].ScaleRange.y);
                 float otherRadius = _decorRadii[otherVariant] * other.localScale.x / maxScale;
+                // Низкий подлесок может заходить под крону, но не в ствол.
+                if (_style.DecorVariants[otherVariant].Kind == DecorKind.Tree
+                    && (_style.DecorVariants[variant].Kind == DecorKind.Bush
+                        || _style.DecorVariants[variant].Kind == DecorKind.GrassTuft)) otherRadius *= .3f;
                 float gap = radius + otherRadius;
                 var delta = point - new Vector2(other.position.x, other.position.z);
                 if (delta.sqrMagnitude < gap * gap) return false;

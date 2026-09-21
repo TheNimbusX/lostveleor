@@ -65,18 +65,28 @@ namespace Game.View
                     // Положение вне пола сохраняет все внутренние проходы и боевые площадки.
                     SpawnDecor(variant, point.x, point.y, rng);
                     _decor[_decorCount - 1].localScale *= scale;
+                    if (_style.DecorVariants[variant].Kind == DecorKind.Bush)
+                    {
+                        var size = _decor[_decorCount - 1].localScale;
+                        size.y *= .68f + (float)rng.NextDouble() * .25f;
+                        _decor[_decorCount - 1].localScale = size;
+                    }
                     placed.Add(new Vector3(point.x, point.y, radius));
                     // Второй нерегулярный слой превращает цепочку меток в край леса.
-                    if (patch > .48f && rng.NextDouble() < .45f)
+                    int followers = rng.Next(1, 4);
+                    for (int follower = 0; follower < followers; follower++)
                     {
                         int companion = PickDetail(bushes, rng);
                         if (companion >= 0)
                         {
-                            var outer = point + normal * (radius * 1.4f) + tangent * radius * .65f;
-                            if (!BoundaryBlocksClearance(outer, _decorRadii[companion] * scale))
+                            float companionScale = scale * (.42f + (float)rng.NextDouble() * .25f);
+                            var outer = point + normal * (radius * (.75f + follower * .3f))
+                                + tangent * radius * (follower % 2 == 0 ? .85f : -.85f);
+                            if (!BoundaryBlocksClearance(outer, _decorRadii[companion] * companionScale)
+                                && !NearRiver(outer.x, outer.y, _decorRadii[companion] * companionScale))
                             {
                                 SpawnDecor(companion, outer.x, outer.y, rng);
-                                _decor[_decorCount - 1].localScale *= scale;
+                                _decor[_decorCount - 1].localScale *= companionScale;
                             }
                         }
                     }

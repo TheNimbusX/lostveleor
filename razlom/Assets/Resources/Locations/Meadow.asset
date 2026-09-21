@@ -19,6 +19,8 @@ MonoBehaviour:
     Thickness: 0.2
     ExitColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     NaturalGround: 1
+    TrailStoneCoverage: 0.55
+    ForestGroundWear: 0.65
     CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
     ForestClearings: 1
     ClearingSize: 1

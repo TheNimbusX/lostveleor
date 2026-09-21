@@ -364,9 +364,14 @@ namespace Game.LocationTests
             Assert.That(_theme.Style.CachePrefab, Is.Not.Null);
             _preview.Generate(_theme, 42, 1);
             var meshes = _preview.Root.GetComponentsInChildren<MeshFilter>(true).Select(f => f.sharedMesh)
-                .Where(m => m != null && (m.name == "Контур занятого пола" || m.name == "Свечение ориентира")).Distinct().ToArray();
+                .Where(m => m != null && (m.name == "Мягкий рельеф фона" || m.name == "Свечение ориентира")).Distinct().ToArray();
             Assert.That(meshes.Length, Is.EqualTo(2));
             Assert.That(meshes.All(m => m.vertexCount > 0), Is.True);
+            var portalShader = Shader.Find("Game/Forest Portal");
+            Assert.That(portalShader, Is.Not.Null);
+            Assert.That(ShaderUtil.ShaderHasError(portalShader), Is.False);
+            Assert.That(_preview.Root.GetComponentsInChildren<Renderer>().Any(r =>
+                r.sharedMaterials.Any(m => m != null && m.shader == portalShader)), Is.True);
             var source = _theme.Style.CampSurfaceMaterial;
             var floor = source != null ? source.shader : Shader.Find("Razlom/Meadow Ground");
             Assert.That(floor, Is.Not.Null);
