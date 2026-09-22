@@ -22,6 +22,8 @@ namespace Game.View
         LeaveRift = 7,
         RepeatRun = 8,
         ReturnToCamp = 9,
+        HealthPotion = 10,
+        LavidiumPotion = 11,
     }
 
     /// <summary>
@@ -38,7 +40,7 @@ namespace Game.View
     /// </summary>
     public static class GameKeyBindings
     {
-        public const int Count = 10;
+        public const int Count = 12;
         static string Prefix => GameUserSettings.WasdMovement ? "settings.keys.wasd." : "settings.keys.";
         static bool _loadedWasd;
 
@@ -57,6 +59,8 @@ namespace Game.View
                 case GameAction.Ability3: return "Способность 3";
                 case GameAction.Ability4: return "Способность 4";
                 case GameAction.Dash: return "Кувырок";
+                case GameAction.HealthPotion: return "Зелье здоровья";
+                case GameAction.LavidiumPotion: return "Зелье лавидия";
                 case GameAction.Interact: return "Взаимодействие · сумка";
                 case GameAction.EnterRift: return "Войти в Разлом";
                 case GameAction.LeaveRift: return "Уйти из Разлома с добычей";
@@ -75,6 +79,8 @@ namespace Game.View
                 case GameAction.Ability3: return letters ? KeyCode.E : KeyCode.Alpha3;
                 case GameAction.Ability4: return letters ? KeyCode.R : KeyCode.Alpha4;
                 case GameAction.Dash: return KeyCode.Space;
+                case GameAction.HealthPotion: return KeyCode.Alpha5;
+                case GameAction.LavidiumPotion: return KeyCode.Alpha6;
                 case GameAction.Interact: return KeyCode.I;
                 case GameAction.EnterRift: return KeyCode.E;
                 case GameAction.LeaveRift: return KeyCode.L;
@@ -96,7 +102,7 @@ namespace Game.View
             return Custom[(int)action] != KeyCode.None;
         }
 
-        static int Group(GameAction action) => action <= GameAction.Dash ? 0 : 1;
+        static int Group(GameAction action) => action <= GameAction.Dash || action >= GameAction.HealthPotion ? 0 : 1;
 
         /// <summary>Назначить клавишу; действие своей группы с той же клавишей получает прежнюю клавишу этого.</summary>
         public static bool Rebind(GameAction action, KeyCode key) => Rebind(action, key, out _);

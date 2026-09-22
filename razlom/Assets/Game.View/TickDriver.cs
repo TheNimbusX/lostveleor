@@ -406,24 +406,30 @@ namespace Game.View
 
         public void ClearCapturedInput()
         {
+            ClearWorldControls();
+            _accumulator = 0f;
+            _frameEvents.Clear();
+            _frameEventContexts.Clear();
+            Alpha = 0f;
+        }
+
+        // При удержании клика по NPC ввод блокируется, но часы движения продолжают идти.
+        void ClearWorldControls()
+        {
             _targetAimSlot = -1;
 
             // Ни приказ, нажатый перед открытием меню, ни клавиша из самого
             // меню не должны сработать после закрытия паузы.
-            _pending = InputFrame.Empty;
+            _pending = InputFrame.Empty;_potionLatch=0;
             _pointerPressFrame = InputFrame.Empty;
             _pointerPressLatched = false;
             _abilityLatch = 0;
             _abilityPressLatched = false;
             _commandLatch = 0;
-            _accumulator = 0f;
-            _frameEvents.Clear();
-            _frameEventContexts.Clear();
             AttackHeld = false;
             MoveOrderPressedThisFrame = false;
             MoveOrderHeld = false;
             HoveredEntity = -1;
-            Alpha = 0f;
         }
 
         /// <summary>Системное действие pause-меню, выполняемое вне боевого тика.</summary>
@@ -444,10 +450,12 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
+            if(CampServicesProbe.IsRunning){ClearWorldControls();return;}
             if (CaptureRig.TempoPreset >= 0)
             { _pending = InputFrame.Empty; _abilityLatch = _commandLatch = 0;
                 _abilityPressLatched = _pointerPressLatched = false; AttackHeld = false; return; }
             MoveOrderPressedThisFrame = false;
+            CapturePotions();
             if (CaptureRig.ForestBudShowcase && Session.Mode == GameMode.Rift)
             { CaptureForestBudInput(); return; }
 
@@ -1017,6 +1025,7 @@ namespace Game.View
             bool attackHeld, bool attackPressed = false)
         {
             if (GameUserSettings.WasdMovement) moveHeld = movePressed = false;
+            if(CampPlayerView.Instance?.Active==true && CampServicesView.PointerGesture){ClearWorldControls();return;}
             if (_hud == null) _hud = GetComponent<PlayerHud>();
             int hudSlot = -1;
             bool overHud = _hud != null && _hud.HitTest(screenPosition, out hudSlot);
@@ -1321,6 +1330,7 @@ namespace Game.View
                 frame.AbilityTarget = _abilityPressFrame.AbilityTarget;
             }
             _abilityPressLatched = false;
+            frame.PotionMask=_potionLatch;_potionLatch=0;
             frame.AbilityMask = _abilityLatch;
             frame.Command = _commandLatch;
             _abilityLatch = 0;
@@ -1461,7 +1471,7 @@ namespace Game.View
             FixVec2 curr = Sim.Entities.Position[entityId];
             float x = Mathf.Lerp(prev.X.ToFloat(), curr.X.ToFloat(), Alpha);
             float z = Mathf.Lerp(prev.Y.ToFloat(), curr.Y.ToFloat(), Alpha);
-            float height = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.GroundHeight : 0f;
+            float height = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.SurfaceHeight(x,z) : 0f;
             return new Vector3(x, height, z);
         }
 

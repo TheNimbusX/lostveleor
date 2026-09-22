@@ -49,6 +49,7 @@ namespace Game.Sim
         internal readonly int[] UsedGroups = new int[MaxAffixes];
 
         public RolledAffix GetAffix(int index) => _affixes[index];
+        internal void Replace(int index,RolledAffix value)=>_affixes[index]=value;
 
         internal void Clear()
         {

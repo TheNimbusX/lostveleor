@@ -257,6 +257,8 @@ namespace Game.EditorTools
         internal static Sprite Chrome(string name) => KitSprite("Chrome", name);
         internal static Sprite Icon(string name) => KitSprite("Icons", name);
         internal static Sprite Ornament(string name) => KitSprite("Ornaments", name);
+        /// <summary>Объёмные детали паузы (панель, плитка, вкладки): ими же собраны окна лагеря.</summary>
+        internal static Sprite PauseKit(string name) => KitSprite("Pause", name);
 
         static Sprite KitSprite(string folder, string name)
         {

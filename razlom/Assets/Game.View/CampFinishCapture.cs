@@ -28,14 +28,15 @@ namespace Game.View
             Check(river!=null && camp!=null && camp.WalkMap!=null,"river and navigation ready");
             if(river==null || camp==null || camp.WalkMap==null)yield break;
             int water=0,land=0;
+            var passage=river.GetComponent<CampRiverPassage>();
             for(float x=-100;x<=100;x+=.5f)
             {
                 float centre=river.CentreAt(x);
-                foreach(float z in new[]{centre,centre-river.Width*.5f-3,centre+river.Width*.5f})
-                    if(camp.WalkMap.Contains(Flat(river.transform.TransformPoint(new Vector3(x,0,z)))))water++;
+                foreach(float z in passage!=null?new[]{centre}:new[]{centre,centre-river.Width*.5f-3,centre+river.Width*.5f})
+                {var point=river.transform.TransformPoint(new Vector3(x,0,z));if((passage==null || !passage.IsOpen(river,point)) && camp.WalkMap.Contains(Flat(point)))water++;}
                 if(x>=-12 && x<=12 && camp.WalkMap.Contains(Flat(river.transform.TransformPoint(new Vector3(x,0,river.LandEdge(x)+.6f)))))land++;
             }
-            Check(water==0,"water and far bank blocked, including river ends: "+water);
+            Check(water==0,"water blocked outside authored crossing, including river ends: "+water);
             Check(land>=10,"near bank reachable samples: "+land);
             int colliders=river.GetComponentsInChildren<Collider>().Length;
             Check(colliders==0,"river decoration has no physical colliders: "+colliders);
@@ -53,6 +54,7 @@ namespace Game.View
                     if(args[detail+1]=="lights"){_focus=FindAnyObjectByType<CampAmbience>().transform.Find("Campfire").position+Vector3.up*.5f;_size=3.2f;}
                     if(args[detail+1]=="river"){_focus=river.transform.TransformPoint(new Vector3(0,0,1.8f));_size=10.8f;}
                     if(args[detail+1]=="river-turn"){_focus=river.transform.TransformPoint(new Vector3(7,0,11));_size=15;}
+                    if(args[detail+1]=="alchemist"){_focus=new Vector3(-3,0,-24);_size=8;}
                     if(args[detail+1]=="ice"){_focus=magic.IceAltar.position+Vector3.up*1.1f;_size=3.2f;}
                     if(args[detail+1]=="poison"){_focus=magic.AlchemyAltar.position+Vector3.up*.8f;_size=3.2f;}
                 }

@@ -198,6 +198,12 @@ namespace Game.Sim
         /// </summary>
         public void Step(in InputFrame input)
         {
+            bool potionAllowed=Mode==GameMode.Camp || (Mode==GameMode.Rift && !IsDeveloperRun && (Run.Phase==RunPhase.Clearing || Run.Phase==RunPhase.SeekingExit));
+            if(potionAllowed && ActiveSim.Entities.Alive[0])
+            {
+                for(int slot=0;slot<2;slot++)if((input.PotionMask&(16<<slot))!=0)Camp.SelectPotion((PotionKind)((int)Camp.SelectedPotion(slot)^1));
+                for(int kind=0;kind<4;kind++)if((input.PotionMask&(1<<kind))!=0)Camp.ConsumePotion((PotionKind)kind,ActiveSim);
+            }
             switch (Mode)
             {
                 case GameMode.Camp: StepCamp(in input); break;
@@ -388,7 +394,10 @@ namespace Game.Sim
 
         private void StepRift(in InputFrame input)
         {
+            int boss=Run.BossId;
+            bool bossWasAlive=boss>=0 && Run.Sim.Entities.Alive[boss];
             Run.Step(in input);
+            if(!IsDeveloperRun && bossWasAlive && Run.BossId==boss && !Run.Sim.Entities.Alive[boss] && Run.Sim.Entities.Alive[Simulation.PlayerId])Camp.RefreshTraderAfterBoss();
 
             // Опыт забега уходит в лагерь сразу, а не на экране итогов: смерть
             // не должна отнимать уровень. Разработческий забег опыта не даёт —

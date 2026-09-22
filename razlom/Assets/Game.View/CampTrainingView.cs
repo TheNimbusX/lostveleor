@@ -52,7 +52,17 @@ namespace Game.View
             if (_driver?.Session.Mode != GameMode.Camp) return;
             foreach (var e in _driver.FrameEvents)
                 if (e.Type == SimEventType.Damage || e.Type == SimEventType.DamageOverTime)
-                    Find(e.Target)?.ShowHit(e.Type == SimEventType.DamageOverTime);
+                {
+                    var dummy = Find(e.Target);
+                    if (dummy == null) continue;
+                    dummy.ShowHit(e.Type == SimEventType.DamageOverTime);
+                    // Удар по деревянной стойке и изредка её сухой скрип; горение не стучит.
+                    if (e.Type == SimEventType.Damage)
+                    {
+                        GameSound.Play("dummy_hit", .7f, .06f, .05f);
+                        if (Random.value < .25f) GameSound.Sequence(("dummy_creak", .1f, .4f));
+                    }
+                }
         }
         void OnGUI()
         {

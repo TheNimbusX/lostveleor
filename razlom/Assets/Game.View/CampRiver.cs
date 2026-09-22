@@ -70,6 +70,8 @@ namespace Game.View
         }
         public void AddNavigationSources(List<NavMeshBuildSource> sources)
         {
+            var passage=GetComponent<CampRiverPassage>();
+            if(passage!=null && passage.enabled) { AddPassageSources(sources,passage); passage.AddRailingSources(sources); return; }
             // ModifierBox перекрывает также старый сплошной пол и пространство за дальним берегом.
             for(float x=-140;x<140;x+=.5f)
             {
@@ -77,6 +79,31 @@ namespace Game.View
                 sources.Add(new NavMeshBuildSource { shape=NavMeshBuildSourceShape.ModifierBox,area=1,
                     transform=transform.localToWorldMatrix*Matrix4x4.Translate(new Vector3(x+.25f,0,(edge-180)*.5f)),
                     size=new Vector3(.502f,30,edge+180) });
+            }
+        }
+        void AddPassageSources(List<NavMeshBuildSource> sources,CampRiverPassage passage)
+        {
+            const float step=.25f;
+            void Block(float x,float lo,float hi)
+            {
+                if(hi<=lo)return;
+                sources.Add(new NavMeshBuildSource{shape=NavMeshBuildSourceShape.ModifierBox,area=1,
+                    transform=transform.localToWorldMatrix*Matrix4x4.Translate(new Vector3(x+step*.5f,0,(lo+hi)*.5f)),size=new Vector3(step+.002f,30,hi-lo)});
+            }
+            for(float x=-140;x<140;x+=step)
+            {
+                float edge=Mathf.Min(BlockedEdge(x),BlockedEdge(x+step));
+                float start=-180;
+                // Обрабатываем детально только окрестности перехода, сохраняя сплошной внешний запрет.
+                for(float z=-30;z<edge;z+=step)
+                {
+                    bool open=passage.IsOpen(this,transform.TransformPoint(new Vector3(x,0,z))) &&
+                        passage.IsOpen(this,transform.TransformPoint(new Vector3(x+step,0,z))) &&
+                        passage.IsOpen(this,transform.TransformPoint(new Vector3(x,0,z+step))) &&
+                        passage.IsOpen(this,transform.TransformPoint(new Vector3(x+step,0,z+step)));
+                    if(open) { Block(x,start,z);start=z+step; }
+                }
+                Block(x,start,edge);
             }
         }
         void OnEnable()=>Refresh();

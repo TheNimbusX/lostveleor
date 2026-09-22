@@ -241,7 +241,7 @@ namespace Game.View
             // Escape в главном меню не открывает паузу: паузить нечего, а
             // закрытие этой паузы сняло бы паузу самого меню.
             if (MainMenuView.IsOpen && !_open) return;
-            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount) return;
+            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame==Time.frameCount) return;
             if (_displayPreviewActive && Time.unscaledTime >= _displayConfirmationDeadline)
                 CancelDisplayPreview("Изменения экрана отменены: время подтверждения истекло.");
 

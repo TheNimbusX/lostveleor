@@ -36,7 +36,7 @@ namespace Game.View
             yield return Walk(root.Find("Anchor - Trader").position,"04-trader");
             // Ограда и крупные деревья отделяют наружный берег от игрового лагеря.
             // Точки взяты из связной области запечённой карты, чтобы проверить вид от самой границы.
-            foreach(float x in new[]{12f,19f})
+            foreach(float x in river.GetComponent<CampRiverPassage>()!=null?new float[0]:new[]{12f,19f})
             {
                 var outside=river.transform.TransformPoint(new Vector3(x,0,river.LandEdge(x)+1.3f));
                 Check(_camp.WalkMap.FindPath(CampTrainingView.Flat(_camp.Position),CampTrainingView.Flat(outside)).Length==0,
@@ -62,7 +62,8 @@ namespace Game.View
             for(float x=-35;x<28;x+=.5f)
             {
                 var p=river.transform.TransformPoint(new Vector3(x,0,river.CentreAt(x)));
-                if(_camp.WalkMap.Contains(CampTrainingView.Flat(p)))leaking++;
+                var passage=river.GetComponent<CampRiverPassage>();
+                if((passage==null || !passage.IsOpen(river,p)) && _camp.WalkMap.Contains(CampTrainingView.Flat(p)))leaking++;
             }
             Check(leaking==0,"river centre blocked at every sampled section: "+leaking);
             Finish();

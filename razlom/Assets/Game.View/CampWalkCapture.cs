@@ -32,6 +32,11 @@ namespace Game.View
             yield return new WaitForSeconds(1);
             var camp = CampPlayerView.Instance;
             var driver = FindAnyObjectByType<TickDriver>();
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-tent-rarities") >= 0)
+            {
+                yield return TentShowcase();
+                yield break;
+            }
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-collision") >= 0)
             {
                 var flame = FindAnyObjectByType<CampFlameProView>();
@@ -135,6 +140,32 @@ namespace Game.View
         }
 
         /// <summary>
+        /// Только палатка (-capture-tent-rarities): открыть сразу, без прогулки. Кадры
+        /// capture.ps1 -Times 3,5.5,8: карточка редкой вещи, разбивка стата, атлас.
+        /// </summary>
+        IEnumerator TentShowcase()
+        {
+            var ui=FindAnyObjectByType<CampInventoryView>();
+            if(ui==null){Debug.LogError("[tent-show] no inventory");yield break;}
+            ui.Open();
+            yield return new WaitForSeconds(1.2f);
+            var tent=FindAnyObjectByType<CampTentView>();
+            if(tent==null){Debug.LogError("[tent-show] tent prefab missing");yield break;}
+            var cells=Object.FindObjectsByType<CampInventoryCell>();
+            AuditClicks(tent,ui,cells);
+            yield return new WaitForSeconds(1.2f);
+            for(int i=0;i<48;i++)if(driver().Session.Camp.Bag.At(i).Rarity==ItemRarity.Magic){ui.Hover(i,false,true);break;}
+            yield return new WaitForSeconds(2.2f);
+            ui.ShowStatTooltip(1);
+            yield return new WaitForSeconds(2.4f);
+            ui.ShowAtlas(true);
+            yield return null;
+            ui.ShowAtlasTooltip(6);
+            Debug.Log("[tent-show] bag, stat and atlas shown");
+            static TickDriver driver()=>FindAnyObjectByType<TickDriver>();
+        }
+
+        /// <summary>
         /// Владелец 16 сентября: «не все кнопки клацаются». Для каждой кнопки и ячейки
         /// палатки луч в её центр: верхнее попадание обязано принадлежать ей.
         /// Вкладки и «Закрыть» ещё и нажимаются — проверяется реакция.
@@ -157,13 +188,20 @@ namespace Game.View
                 int filter=(int)filterField.GetValue(ui);
                 if(filter==f-1)pass++;else{fail++;Debug.LogError("[tent-click] FAIL tab "+f+" left filter at "+filter);}
             }
-            if(tent.CloseHint!=null)
+            var pageField=typeof(CampInventoryView).GetField("_atlasPage",System.Reflection.BindingFlags.NonPublic|System.Reflection.BindingFlags.Instance);
+            foreach(var (tab,atlas) in new[]{(tent.AtlasTab,true),(tent.BagTab,false)})
             {
-                Click(tent.CloseHint.transform);
-                if(!ui.IsOpen)pass++;else{fail++;Debug.LogError("[tent-click] FAIL close hint did not close");}
+                if(tab==null){fail++;Debug.LogError("[tent-click] FAIL page tab missing");continue;}
+                Click(tab.transform);
+                if((bool)pageField.GetValue(ui)==atlas)pass++;else{fail++;Debug.LogError("[tent-click] FAIL tab "+tab.name+" did not switch the page");}
+            }
+            if(tent.Close!=null)
+            {
+                Click(tent.Close.transform);
+                if(!ui.IsOpen)pass++;else{fail++;Debug.LogError("[tent-click] FAIL close did not close");}
                 ui.Open();
             }
-            else{fail++;Debug.LogError("[tent-click] FAIL close hint is not a button");}
+            else{fail++;Debug.LogError("[tent-click] FAIL close is not a button");}
             Debug.Log("[tent-click] "+pass+" PASS, "+fail+" FAIL");
         }
 
@@ -194,20 +232,20 @@ namespace Game.View
             UnityEngine.EventSystems.ExecuteEvents.ExecuteHierarchy(hits[0].gameObject,pointer,UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
         }
 
-        /// <summary>Для видео: надеть уникальную и эпическую вещь, потом снять — перелёт, вспышка, досчёт статов.</summary>
+        /// <summary>Для видео: надеть две редкие вещи, потом снять — перелёт, вспышка, досчёт статов.</summary>
         static IEnumerator EquipShow(CampInventoryView ui,TickDriver driver)
         {
             var camp=driver.Session.Camp;
             yield return new WaitForSeconds(1.2f);
-            foreach(var rarity in new[]{ItemRarity.Unique,ItemRarity.Rare})
+            foreach(var key in new[]{"base.officer_sabre","base.scout_jacket"})
             {
                 int index=-1;
                 for(int i=0;i<48;i++)
                 {
                     var item=camp.Bag.At(i);
-                    if(!item.IsEmpty&&item.Rarity==rarity&&item.BaseId==StableId.Of(rarity==ItemRarity.Unique?"base.rusty_sword":"base.leather_jacket")){index=i;break;}
+                    if(!item.IsEmpty&&item.BaseId==StableId.Of(key)){index=i;break;}
                 }
-                if(index<0){Debug.LogError("[tent-show] no "+rarity+" item to equip");continue;}
+                if(index<0){Debug.LogError("[tent-show] no "+key+" to equip");continue;}
                 ui.Hover(index,false,true);
                 yield return new WaitForSeconds(.9f);
                 ui.Hover(index,false,false);

@@ -57,6 +57,32 @@ namespace Game.Sim
         public ItemBaseDefinition GetBase(int index) => _bases[index];
         public AffixDefinition GetAffix(int index) => _affixes[index];
 
+        /// <summary>
+        /// Основа, подходящая редкости находки: обычная вещь — из обычных основ,
+        /// редкая и выше — из редких того же слота. Выбор среди подходящих берёт
+        /// биты уже выпавшего сида, поэтому потоки RNG расходуются как раньше и
+        /// шансы редкостей не меняются. Награда называет только слот (любую его
+        /// основу), конкретную основу выбирает эта функция. Нет подходящей
+        /// основы — остаётся исходная. Только для новых находок: сохранённые
+        /// вещи не перекладываются.
+        /// </summary>
+        public ItemInstance MatchTier(ItemInstance item)
+        {
+            int index = IndexOfBase(item.BaseId);
+            if (item.IsEmpty || index < 0) return item;
+            bool wantRare = item.Rarity >= ItemRarity.Magic;
+            ItemCategory category = _bases[index].Category;
+            int count = 0;
+            for (int i = 0; i < _bases.Length; i++)
+                if (_bases[i].Category == category && _bases[i].Rare == wantRare) count++;
+            if (count == 0) return item;
+            int pick = (int)((item.Seed >> 32) % (ulong)count);
+            for (int i = 0; i < _bases.Length; i++)
+                if (_bases[i].Category == category && _bases[i].Rare == wantRare && pick-- == 0)
+                    return new ItemInstance(_bases[i].Id, item.ItemLevel, item.Rarity, item.Seed);
+            return item;
+        }
+
         /// <summary>Индекс базы по id или -1. Двоичный поиск по отсортированному массиву.</summary>
         public int IndexOfBase(int id)
         {

@@ -57,10 +57,15 @@ namespace Game.Sim
         }
 
         public ItemInstance At(int slot) => _slots[slot];
+
+        /// <summary>Вещь легла в сумку — лагерь отмечает её основу в атласе.</summary>
+        internal System.Action<int> Placed;
+
         internal void Put(int slot, ItemInstance item, bool keep = false)
         {
             _slots[slot] = item;
             _keep[slot] = !item.IsEmpty && keep;
+            if (!item.IsEmpty) Placed?.Invoke(item.BaseId);
         }
 
         public bool Swap(int from, int to)
@@ -89,6 +94,7 @@ namespace Game.Sim
 
                 _slots[i] = item;
                 _keep[i] = false;
+                if (!item.IsEmpty) Placed?.Invoke(item.BaseId);
                 return i;
             }
             return -1;

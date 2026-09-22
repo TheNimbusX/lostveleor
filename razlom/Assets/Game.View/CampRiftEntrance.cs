@@ -53,6 +53,8 @@ namespace Game.View
             if (inside && _armed && !IsOpen && !driver.GameplayPaused)
             {
                 _armed = false; IsOpen = true;
+                // Арка просыпается, пока игрок решает, входить ли.
+                GameSound.Play("rift_awaken", .5f, .02f, 2f);
                 driver.ClearCapturedInput();
             }
             if (!IsOpen) return;
@@ -68,7 +70,7 @@ namespace Game.View
             if (!IsOpen) return;
             IsOpen = false; ClosedFrame = Time.frameCount;
             _driver.ClearCapturedInput();
-            if (enter) { GameSound.Play("rift_portal", .9f); _driver.Session.EnterRift(); }
+            if (enter) { GameSound.Sequence(("rift_whoosh", 0f, .75f), ("rift_portal", .08f, .9f)); _driver.Session.EnterRift(); }
         }
         void Start()
         {

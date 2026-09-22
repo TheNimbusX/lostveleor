@@ -432,10 +432,11 @@ namespace Game.View
                 Rect tile = new Rect(x, bar.Y + i * (size + 8f), size, size);
                 _chrome.Shape(tile, Plate, size * .125f);
                 Texture2D art = i == 0 ? _healthPotion : _lavidiumPotion;
-                if (art != null) _chrome.EmptyIcon(Inset(tile, 2f), art);
+                int stock=_driver.Session.Camp.PotionCount(_driver.Session.Camp.SelectedPotion(i));
+                if (art != null){if(stock==0)_chrome.EmptyIcon(Inset(tile,2f),art);else GUI.DrawTexture(Inset(tile,2f),art);}
                 _chrome.Shape(tile, new Color(.55f, .54f, .48f, .55f), size * .125f, 1f);
+                GUI.Label(tile,stock.ToString());
             }
-            // Запас и активация появятся вместе с моделью расходников; фиктивных чисел нет.
         }
 
         private void DrawAbilities(Simulation sim)

@@ -14,6 +14,22 @@ namespace Game.Tests
     public class CampRouteTests
     {
         const int Size = 80;
+        [Test]
+        public void NarrowRightAngleDoesNotStallAtTransitCorner()
+        {
+            const int size=64;var cells=new bool[size*size];
+            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+                cells[y*size+x]=(x<24 && y>=20 && y<=24)||(x>=20 && x<=24 && y>=20 && y<56);
+            var map=new CampWalkMap(FixVec2.Zero,Fix64.Ratio(1,8),size,size,cells);
+            for(int offset=0;offset<8;offset++)
+            {
+                var start=new FixVec2(Fix64.One,Fix64.Ratio(325+offset,128));
+                var goal=new FixVec2(Fix64.Ratio(45,16),Fix64.FromInt(6));
+                var session=Session(map);session.ConfigureCampWorld(start,map);
+                var route=new CampRoute(map);Assert.True(route.To(start,goal));
+                Assert.Greater(Walk(session,route,goal,200),0,"offset="+offset);
+            }
+        }
         // Клетка 1/8 метра, начало в (-2,-2): мир занимает от -2 до 8.
         const int WallColumn = 32;   // мировой x = 2
         const int GapFrom = 40, GapTo = 44;   // мировой z ≈ 3.0 … 3.5

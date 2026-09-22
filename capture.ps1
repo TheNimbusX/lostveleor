@@ -27,7 +27,7 @@ param(
     [ValidateSet('', 'Original', 'Clean', 'Painterly', 'Film', 'Aces', 'GoldenEvening')] [string] $CampLook = '',
     [switch] $CampMagic,
     [switch] $CampFinish,
-    [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison')] [string] $CampDetail = '',
+    [ValidateSet('', 'flags', 'lights', 'river', 'river-turn', 'ice', 'poison', 'alchemist')] [string] $CampDetail = '',
     [switch] $MainMenu,
     [switch] $CampCollision,
     [switch] $CampBlocked,

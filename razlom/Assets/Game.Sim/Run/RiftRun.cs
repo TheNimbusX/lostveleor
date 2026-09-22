@@ -381,7 +381,7 @@ namespace Game.Sim
                 // Bonus drops never shift the normal reward or affix streams.
                 var rng = new Pcg32(LayoutSeed ^ unchecked((ulong)(placement + 1) * 0x9E3779B97F4A7C15UL), 0x4252414E4348UL);
                 int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
-                ItemInstance item = ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5));
+                ItemInstance item = Tier(ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5)));
                 _taken[_takenCount++] = RewardOffer.OfItem(in item);
                 _branchClaimed[b] = true;
                 BranchesClaimed++;
@@ -443,7 +443,7 @@ namespace Game.Sim
             }
 
             int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
-            ItemInstance item = ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5));
+            ItemInstance item = Tier(ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5)));
             offer = RewardOffer.OfItem(in item);
             return true;
         }
@@ -631,10 +631,13 @@ namespace Game.Sim
             return RollTalentOffer(filled);
         }
 
+        /// <summary>Находка берёт основу своей редкости (обычная или редкая), RNG не расходует.</summary>
+        private ItemInstance Tier(ItemInstance item) => _items != null ? _items.MatchTier(item) : item;
+
         private RewardOffer RollItemOffer()
         {
             int baseIndex = _sim.Rng.Loot.NextInt(0, _itemBaseIds.Length);
-            ItemInstance item = ItemDrop.Roll(ref _sim.Rng.Affix, _itemBaseIds[baseIndex], (short)(Depth * 5));
+            ItemInstance item = Tier(ItemDrop.Roll(ref _sim.Rng.Affix, _itemBaseIds[baseIndex], (short)(Depth * 5)));
             return RewardOffer.OfItem(in item);
         }
 

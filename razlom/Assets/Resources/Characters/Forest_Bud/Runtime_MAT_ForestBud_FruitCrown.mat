@@ -30,6 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BlazeGlow: 0
+    - _BurstCharge: 0
     - _DeathFade: 0
     - _DissolveEdgeGlow: 2.6
     - _DissolveEdgeWidth: 0.14

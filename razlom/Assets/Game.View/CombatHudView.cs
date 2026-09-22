@@ -20,7 +20,7 @@ namespace Game.View
     /// Кликов Canvas не ловит (Raycast выключен, EventSystem не нужен): мышь
     /// разбирает TickDriver через <see cref="HitTest"/>, как и раньше.
     /// </summary>
-    public sealed class CombatHudView : MonoBehaviour
+    public sealed partial class CombatHudView : MonoBehaviour
     {
         [Header("Герой")]
         public RectTransform HeroPanel;
@@ -151,6 +151,7 @@ namespace Game.View
             if (hasDash) RefreshSlot(sim, DashSlot, Dash, pointer);
             RefreshTooltip(sim, driver);
             RefreshFeedback();
+            RefreshPotions(camp,driver);
         }
 
         void RefreshHero(Simulation sim, Camp camp)

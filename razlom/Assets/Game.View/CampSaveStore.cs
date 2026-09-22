@@ -7,10 +7,12 @@ namespace Game.View
     public sealed class CampSaveStore : MonoBehaviour
     {
         static bool _disabled; static bool _recovered; ulong _hash; bool _hasHash; TickDriver _driver;
+        ulong _potionState;
         static string PathName=>Path.Combine(Application.persistentDataPath,"camp-v1.sav");
         static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0
 #if UNITY_EDITOR
             || UnityEditor.SessionState.GetBool("CampIntegrationPlayCheck",false)
+            || UnityEditor.SessionState.GetBool("CampServices.Check",false)
 #endif
             ;
         public static GameSession Load(ulong seed, LocationDefinition location = null)
@@ -34,14 +36,19 @@ namespace Game.View
         void OnApplicationQuit(){Save();}
         void Save()
         {
-            if(_disabled||_driver?.Session==null||_driver.Session.Mode==GameMode.Rift)return;
+            if(_disabled||_driver?.Session==null||_driver.Session.IsDeveloperRun)return;
+            var camp=_driver.Session.Camp;
+            ulong potions=camp.PotionSelection;
+            for(int i=0;i<4;i++)potions=(potions<<10)|(uint)camp.PotionCount((PotionKind)i);
+            // В бою пишем только изменение расходников, а не каждую порцию опыта.
+            if(_driver.Session.Mode==GameMode.Rift && _hasHash && potions==_potionState)return;
             ulong hash=0;_driver.Session.Camp.HashInto(ref hash);if(_hasHash&&hash==_hash)return;
             try
             {
                 var bytes=CampSaveCodec.Encode(_driver.Session.Camp);string temp=PathName+".tmp";
                 using(var stream=new FileStream(temp,FileMode.Create,FileAccess.Write,FileShare.None)){stream.Write(bytes,0,bytes.Length);stream.Flush(true);}
                 if(File.Exists(PathName))File.Replace(temp,PathName,_recovered?null:PathName+".bak");else File.Move(temp,PathName);
-                _recovered=false;_hash=hash;_hasHash=true;
+                _recovered=false;_hash=hash;_hasHash=true;_potionState=potions;
             }
             catch(Exception e){_disabled=true;Debug.LogWarning("[camp-save] Запись остановлена: "+e.Message);}
         }

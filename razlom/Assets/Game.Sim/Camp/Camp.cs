@@ -11,7 +11,7 @@ namespace Game.Sim
     /// Лагерь растёт по актам: награда за акт — новый глагол в лагере,
     /// а не строчка статов.
     /// </summary>
-    public sealed class Camp
+    public sealed partial class Camp
     {
         /// <summary>
         /// Слотов в сумке. ЗАГЛУШКА БАЛАНСА: настоящее число настраивается
@@ -34,10 +34,12 @@ namespace Game.Sim
         {
             Items = items;
             Bag = new Inventory(bagSlots);
+            Bag.Placed = Discover;
             Worn = new Equipment(items);
 
             Act = 0;
             AdvanceToAct(act);
+            InitializeTrader();
         }
 
         // ---- услуги ----
@@ -58,7 +60,7 @@ namespace Game.Sim
             // потому что без него она — лотерея.
             Services |= CampService.ProvingGround;
 
-            if (act >= 1) Services |= CampService.Smith | CampService.Trader;
+            if (act >= 1) Services |= CampService.Smith | CampService.Trader | CampService.Alchemist;
             if (act >= 2) Services |= CampService.Chronicler | CampService.Stash;
             if (act >= 3) Services |= CampService.Founder | CampService.RiftPortal;
         }
@@ -148,7 +150,7 @@ namespace Game.Sim
         /// </summary>
         public int SellToTrader(int bagSlot)
         {
-            if (!Has(CampService.Trader)) return 0;
+            if (!Has(CampService.Trader) || (uint)bagSlot>=Bag.Capacity || Bag.IsKept(bagSlot)) return 0;
 
             ItemInstance item = Bag.At(bagSlot);
             if (item.IsEmpty) return 0;
@@ -167,32 +169,6 @@ namespace Game.Sim
         /// купил и тут же продал без потерь. Это не баланс, это дыра.
         /// </summary>
         public const int TraderMarkup = 3;
-
-        /// <summary>
-        /// Ассортимент торговца: по одной базе каждой категории.
-        ///
-        /// СКЛАДА НЕТ, товар не кончается. Это осознанно: «узкий ассортимент
-        /// баз» из диздока — это лавка с постоянным товаром, а не редкие
-        /// находки. Заодно ассортимент не нужно хранить в сейве и мигрировать
-        /// его формат: он выводится из содержимого и акта.
-        /// </summary>
-        public int TraderStockCount => Has(CampService.Trader) ? Items.BaseCount : 0;
-
-        /// <summary>
-        /// Товар на прилавке. Обычная редкость: торговец продаёт основу, из
-        /// которой игрок собирает своё, а не готовые сильные вещи.
-        /// </summary>
-        public ItemInstance TraderStock(int index)
-        {
-            if (index < 0 || index >= TraderStockCount) return default;
-            ItemBaseDefinition definition = Items.GetBase(index);
-            // Уровень товара привязан к акту: лавка растёт вместе с игроком,
-            // но не обгоняет добычу из Разлома.
-            short level = (short)(Act * 3);
-            // Сид нулевой: у обычной редкости аффиксов нет, и случайность тут
-            // только запутала бы — товар обязан выглядеть одинаково всегда.
-            return new ItemInstance(definition.Id, level, ItemRarity.Normal, 0UL);
-        }
 
         /// <summary>Сколько золота просит торговец за товар.</summary>
         public int BuyPriceOf(in ItemInstance item) => PriceOf(in item) * TraderMarkup;
@@ -223,6 +199,7 @@ namespace Game.Sim
                 return 0;
             }
 
+            _traderStock[stockIndex]=default;
             return price;
         }
 
@@ -302,6 +279,9 @@ namespace Game.Sim
 
             Bag.HashInto(ref hash);
             Worn.HashInto(ref hash);
+            HashPotions(ref hash);
+            Hashing.Mix(ref hash,TraderGeneration);Hashing.Mix(ref hash,TraderBossStock?1:0);
+            foreach(var item in _traderStock)item.HashInto(ref hash);
 
             Hashing.Mix(ref hash, Level);
             Hashing.Mix(ref hash, Experience);

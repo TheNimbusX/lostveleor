@@ -1786,7 +1786,7 @@ namespace Game.Sim
                 // умножается на 3/4 и до сантиметра ползёт десяток тиков. Всё
                 // это время тело числится идущим, и ходьба в конце вырождалась
                 // в еле заметное подползание вместо остановки.
-                Fix64 arrivalSq = navigating ? Fix64.Ratio(1,100) : TurnInPlaceRadiusSq;
+                Fix64 arrivalSq = _campWalkMap!=null && _navigationTransit ? Fix64.Zero : navigating ? Fix64.Ratio(1,100) : TurnInPlaceRadiusSq;
                 if (distSq > arrivalSq)
                 {
                     Fix64 distance = Fix64.Sqrt(distSq);
@@ -1795,7 +1795,7 @@ namespace Game.Sim
                         // Транзитный угол проходится насквозь на полной
                         // скорости: за ним дорога продолжается, и тормозить
                         // перед ним не перед чем.
-                        ? toTarget / distance * speed
+                        ? toTarget / distance * (_campWalkMap!=null?Fix64.Min(speed,distance):speed)
                         : _navigationWaypoint
                             // У ЦЕЛИ скорость ограничивается остатком пути: так
                             // тело подъезжает и встаёт, а не пролетает точку по
@@ -1829,6 +1829,8 @@ namespace Game.Sim
             FixVec2 velocity = Approach(Entities.Velocity[PlayerId], step, fullSpeed)
                 .ClampLength(speed);
 
+            // Маршрут рассчитан для отрезков: инерция на углах срезала путь в препятствие.
+            if(_campWalkMap!=null && (_navigationTransit || _navigationWaypoint))velocity=step;
             Entities.Velocity[PlayerId] = velocity;
             FixVec2 moved = MoveInsideLayout(PlayerId, pos, velocity);
             Entities.Position[PlayerId] = moved;

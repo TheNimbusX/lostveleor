@@ -263,7 +263,7 @@ public static class CampGroundStudyBuilder
             Tri(pollen,center+Vector3.up*.004f,center+new Vector3(Mathf.Cos(b),.004f,Mathf.Sin(b))*radius*.24f,center+new Vector3(Mathf.Cos(a),.004f,Mathf.Sin(a))*radius*.24f);
         }
     }
-    static void Leaf(List<Vector3> vertices,Vector3 root,float angle,float length,float width,float height)
+    internal static void Leaf(List<Vector3> vertices,Vector3 root,float angle,float length,float width,float height)
     {
         Vector3 along=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));
         Vector3 across=new Vector3(-along.z,0,along.x);
@@ -308,7 +308,7 @@ public static class CampGroundStudyBuilder
         }
         finally {RenderTexture.active=previous;RenderTexture.ReleaseTemporary(target);}
     }
-    static void AddBend(List<Vector3> vertices,List<Vector4> bends,int first,Vector3 root)
+    internal static void AddBend(List<Vector3> vertices,List<Vector4> bends,int first,Vector3 root)
     {
         for(int i=first;i<vertices.Count;i++)
         {

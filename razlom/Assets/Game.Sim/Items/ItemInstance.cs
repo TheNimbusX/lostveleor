@@ -54,13 +54,18 @@
 
         /// <summary>Из него разворачиваются аффиксы. Берётся из потока Rng.Affix при дропе.</summary>
         public readonly ulong Seed;
+        // По четыре бита на выбранный аффикс каждой из трёх перековок; ноль — попытки не было.
+        public readonly ushort ForgeRecipe;
+        public int ReforgeCount => ForgeRecipe==0?0:(ForgeRecipe>>8)!=0?3:(ForgeRecipe>>4)!=0?2:1;
+        public short OriginalLevel => (short)(ItemLevel-ReforgeCount*(1+(int)Rarity));
 
-        public ItemInstance(int baseId, short itemLevel, ItemRarity rarity, ulong seed)
+        public ItemInstance(int baseId, short itemLevel, ItemRarity rarity, ulong seed, ushort forgeRecipe=0)
         {
             BaseId = baseId;
             ItemLevel = itemLevel;
             Rarity = rarity;
             Seed = seed;
+            ForgeRecipe = forgeRecipe;
         }
 
         public bool IsEmpty => BaseId == 0 && Seed == 0UL;
@@ -71,6 +76,7 @@
             Hashing.Mix(ref hash, (int)ItemLevel);
             Hashing.Mix(ref hash, (int)Rarity);
             Hashing.Mix(ref hash, Seed);
+            if(ForgeRecipe!=0)Hashing.Mix(ref hash,(int)ForgeRecipe);
         }
     }
 }

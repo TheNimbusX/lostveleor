@@ -9,7 +9,7 @@ using UnityEngine.InputSystem.UI;
 
 namespace Game.View
 {
-    public sealed class CampInventoryView : MonoBehaviour
+    public sealed partial class CampInventoryView : MonoBehaviour
     {
         public bool IsOpen => _root != null && _root.activeSelf;
         public Transform CanvasRoot => _root.transform;
@@ -22,14 +22,14 @@ namespace Game.View
         static readonly string[] Names = { "Оружие", "Броня", "Кольцо", "Талисман", "Артефакт" };
         public void Initialize(TickDriver driver) { _driver = driver; }
         public static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Play("bag_open", .8f); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
+        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Sequence(("tent_flap", 0f, .7f), ("bag_open", .12f, .6f)); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
         public static int ClosedFrame { get; private set; } = -1;
-        public void Close() { if (IsOpen) { _root.SetActive(false); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
+        public void Close() { if (IsOpen) { GameSound.Play("tent_cloth", .45f); _root.SetActive(false); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
         void Update()
         {
             if (!IsOpen || _openedFrame == Time.frameCount) return;
 #if ENABLE_INPUT_SYSTEM
-            if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) || GameKeyBindings.Pressed(GameAction.Interact)) Close();
+            if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) || GameKeyBindings.Pressed(GameAction.Interact) || (Gamepad.current!=null && Gamepad.current.buttonEast.wasPressedThisFrame)) Close();
 #else
             if (Input.GetKeyDown(KeyCode.Escape) || GameKeyBindings.Pressed(GameAction.Interact)) Close();
 #endif
@@ -197,29 +197,40 @@ namespace Game.View
         }
         string Describe(ItemInstance item)
         { if(item.IsEmpty)return "—";int index=_driver.Session.Camp.Items.IndexOfBase(item.BaseId);return index>=0?ItemName(item.BaseId)+"\nур. "+item.ItemLevel:"Неизвестный предмет"; }
-        string ItemName(int id)
-        {if(id==StableId.Of("base.rusty_sword"))return "Старая сабля";if(id==StableId.Of("base.leather_jacket"))return "Кожаная куртка";if(id==StableId.Of("base.copper_ring"))return "Медное кольцо";if(id==StableId.Of("base.woodland_talisman"))return "Лесной талисман";if(id==StableId.Of("base.memory_shard"))return "Осколок памяти";return "Предмет";}
+        internal string ItemName(int id)
+        {int i=CatalogIndex(id);if(i<0)return "Предмет";string key="item."+Catalog[i,0];string text=CampServiceText.Get(key);return text!=key?text:Catalog[i,1];}
         int Category(ItemInstance item)
         {int b=_driver.Session.Camp.Items.IndexOfBase(item.BaseId);return item.IsEmpty||b<0?-1:(int)Equipment.SlotOf(_driver.Session.Camp.Items.GetBase(b).Category);}
         public Sprite ItemSprite(int index,bool worn)
-        {var item=worn?_driver.Session.Camp.Worn.Worn((EquipSlot)index):_driver.Session.Camp.Bag.At(index);int category=Category(item);return category<0?null:RaritySprite(category,(int)item.Rarity)??_icons[category];}
+        {var item=worn?_driver.Session.Camp.Worn.Worn((EquipSlot)index):_driver.Session.Camp.Bag.At(index);return SpriteFor(item); }
+        internal Sprite SpriteFor(ItemInstance item){int category=Category(item);return category<0?null:BaseSprite(item.BaseId)??_icons[category];}
 
-        // Значки вещей по слоту и редкости (16 сентября): Resources/UI/Items/{слот}_{редкость}.png.
-        // Нет файла — остаётся общий значок категории из атласа.
-        static readonly string[] SlotFiles={"weapon","armor","ring","talisman"}, RarityFiles={"common","rare","epic","unique"};
-        readonly Sprite[] _raritySprites=new Sprite[16];
-        readonly bool[] _rarityLoaded=new bool[16];
-        Sprite RaritySprite(int category,int rarity)
+        // Первый набор (владелец, 21 сентября): у каждой основы своя картинка, редкие богаче внешне,
+        // редкость дополнительно показывает рамка. Файлы — Resources/UI/Items/{ключ}.png, исходники ART/itmes.
+        // Имя — ключ локализации item.{ключ}, русский текст здесь запасной.
+        static readonly string[,] Catalog=
         {
-            if(category<0||category>=SlotFiles.Length||rarity<0||rarity>=RarityFiles.Length)return null;
-            int key=category*4+rarity;
-            if(!_rarityLoaded[key])
-            {
-                _rarityLoaded[key]=true;
-                var tex=Resources.Load<Texture2D>("UI/Items/"+SlotFiles[category]+"_"+RarityFiles[rarity]);
-                if(tex!=null)_raritySprites[key]=Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100);
-            }
-            return _raritySprites[key];
+            {"rusty_sword","Старая сабля"},{"boarding_cutlass","Абордажный тесак"},{"duelist_sabre","Сабля дуэлянта"},{"officer_sabre","Офицерская сабля"},
+            {"quilted_jacket","Стёганая куртка"},{"leather_jacket","Кожаная куртка"},{"scout_jacket","Куртка разведчика"},{"boarding_vest","Абордажный жилет"},
+            {"copper_ring","Медное кольцо"},{"smith_ring","Кольцо кузнеца"},{"marksman_ring","Кольцо стрелка"},{"lavidium_ring","Кольцо с лавидием"},
+            {"woodland_talisman","Лесной талисман"},{"fang_cord","Клык на шнурке"},{"sea_knot","Морской узел"},{"courier_token","Жетон гонца"},
+            {"memory_shard","Осколок памяти"},
+        };
+        static int[] _catalogIds;
+        static int CatalogIndex(int id)
+        {
+            if(_catalogIds==null){_catalogIds=new int[Catalog.GetLength(0)];for(int i=0;i<_catalogIds.Length;i++)_catalogIds[i]=StableId.Of("base."+Catalog[i,0]);}
+            return System.Array.IndexOf(_catalogIds,id);
+        }
+        readonly System.Collections.Generic.Dictionary<int,Sprite> _baseSprites=new System.Collections.Generic.Dictionary<int,Sprite>();
+        Sprite BaseSprite(int id)
+        {
+            if(_baseSprites.TryGetValue(id,out var sprite))return sprite;
+            int i=CatalogIndex(id);
+            var tex=i>=0?Resources.Load<Texture2D>("UI/Items/"+Catalog[i,0]):null;
+            sprite=tex!=null?Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100):null;
+            _baseSprites[id]=sprite;
+            return sprite;
         }
 
         /// <summary>
@@ -254,7 +265,7 @@ namespace Game.View
                 moved=true;
                 _tent.Fly(ItemSprite(j,false),(RectTransform)_tent.Worn[from].transform,_tentBag[j],_tent.ColourFor((int)now.Rarity),Refresh);
             }
-            if(moved)GameSound.Play("bag_open",.55f);
+            if(moved)GameSound.Play("tent_rustle",.6f);
             Refresh();
         }
         static bool Same(ItemInstance a,ItemInstance b)=>a.BaseId==b.BaseId&&a.Seed==b.Seed&&a.ItemLevel==b.ItemLevel&&a.Rarity==b.Rarity;
@@ -262,6 +273,7 @@ namespace Game.View
         {
             if(_root==null)return;
             if(_tent!=null){RefreshTent();return;}
+            RefreshPotionStock();
             var camp=_driver.Session.Camp;
             _wallet.text="● "+camp.Money(CurrencyType.Gold)+"    ◆ "+camp.Money(CurrencyType.Shards)+"    ◈ "+camp.Money(CurrencyType.Lavidium);
             int count=0;
@@ -294,198 +306,6 @@ namespace Game.View
             if(!chosen.IsEmpty)_details.text+=CompareStats(chosen,stats,"#99D86B","#EA8D76","#D8C5A0");
             _details.rectTransform.sizeDelta=new Vector2(247,Mathf.Max(124,_details.preferredHeight));
             _details.rectTransform.anchoredPosition=Vector2.zero;
-        }
-
-        // ---- палатка на Canvas ----
-        CampTentView _tent;
-        readonly CampTentCell[] _tentBag=new CampTentCell[48];
-
-        bool BuildTent(GameObject prefab)
-        {
-            _root=Instantiate(prefab);
-            _root.name="Camp Tent";
-            _tent=_root.GetComponentInChildren<CampTentView>(true);
-            if(_tent==null||_tent.BagTemplate==null||_tent.BagGrid==null){Destroy(_root);_root=null;_tent=null;return false;}
-            EnsureEventSystem();
-            LoadIcons();
-            if(_tent.Close!=null)_tent.Close.onClick.AddListener(Close);
-            if(_tent.CloseHint!=null)_tent.CloseHint.onClick.AddListener(Close);
-            if(_tent.Equip!=null)_tent.Equip.onClick.AddListener(EquipSelected);
-            if(_tent.Unequip!=null)_tent.Unequip.onClick.AddListener(UnequipSelected);
-            for(int f=0;f<_tent.Filters.Length;f++)
-            {
-                int tab=f,filter=f-1;
-                if(_tent.Filters[f]!=null)_tent.Filters[f].onClick.AddListener(()=>{_filter=filter;UiSound.Play(UiSoundEvent.Tab);_tent.ShowFilter(tab,false);Refresh();});
-                if(f>0&&f<_tent.FilterIcons.Length&&_tent.FilterIcons[f]!=null)_tent.FilterIcons[f].sprite=_icons[f-1];
-            }
-            for(int i=0;i<_tent.Worn.Length&&i<4;i++)
-            {
-                var cell=_tent.Worn[i];if(cell==null)continue;
-                if(cell.Placeholder!=null)cell.Placeholder.sprite=_icons[i];
-                _wornCells[i]=AddCell((RectTransform)cell.transform,i,true);
-            }
-            for(int i=0;i<48;i++)
-            {
-                var cell=Instantiate(_tent.BagTemplate,_tent.BagGrid);
-                cell.name="Bag "+i;
-                cell.gameObject.SetActive(true);
-                _tentBag[i]=cell;
-                _bagCells[i]=AddCell((RectTransform)cell.transform,i,false);
-            }
-            // Рисованный Пелаг владельца: лежит файлом в Resources и подхватывается без пересборки префаба.
-            if(_tent.HeroArt!=null&&_tent.HeroArt.sprite==null)
-            {
-                var art=Resources.Load<Texture2D>("UI/Tent/PelagArt");
-                if(art!=null)
-                {
-                    _heroSprite=Sprite.Create(art,new Rect(0,0,art.width,art.height),new Vector2(.5f,0f),100);
-                    _tent.HeroArt.sprite=_heroSprite;
-                    _tent.HeroArt.enabled=true;
-                }
-            }
-            bool painted=_tent.HeroArt!=null&&_tent.HeroArt.sprite!=null;
-            if(_tent.Portrait!=null)_tent.Portrait.enabled=!painted;
-            if(!painted&&_tent.Portrait!=null&&CreatePortraitStage())
-            {
-                _tent.Portrait.texture=_portraitTexture;
-                // Студия снимает 640×900, а карточка уже: срезаем бока, а не сплющиваем героя.
-                var rect=_tent.Portrait.rectTransform.rect;
-                float want=rect.width/Mathf.Max(1f,rect.height),have=640f/900f;
-                _tent.Portrait.uvRect=want<have?new Rect((1f-want/have)*.5f,0f,want/have,1f):new Rect(0f,(1f-have/want)*.5f,1f,have/want);
-            }
-            if(System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-capture-tent-rarities")>=0)AddRaritySample();
-            _tent.ShowFilter(0,true);
-            SyncPortraitStage();
-            Refresh();
-            return true;
-        }
-
-        System.Collections.IEnumerator RevealTent()
-        {
-            // Снимок лагеря берётся, пока палатка прозрачна, иначе размытие захватит её саму.
-            _tent.HideForSnapshot();
-            if(_tent.BackdropBlur!=null)yield return _tent.BackdropBlur.Capture();
-            _tent.PlayOpen();
-        }
-
-        int _hoverIndex=-1; bool _hoverWorn;
-        Sprite _heroSprite;
-
-        /// <summary>
-        /// Только для съёмки (-capture-tent-rarities): по вещи каждого слота каждой
-        /// редкости, уникальные отмечены «беречь» и одна выбрана — на кадре видны
-        /// шкала рамок, замок и карточка предмета.
-        /// </summary>
-        void AddRaritySample()
-        {
-            var bag=_driver.Session.Camp.Bag;
-            string[] bases={"base.rusty_sword","base.leather_jacket","base.copper_ring","base.woodland_talisman"};
-            int unique=-1;
-            for(int r=3;r>=0;r--)
-                for(int b=0;b<bases.Length;b++)
-                {
-                    int slot=bag.Add(new ItemInstance(StableId.Of(bases[b]),(short)(2+r*4),(ItemRarity)r,(ulong)(9000+r*10+b)));
-                    if(slot<0)continue;
-                    if(r==3){bag.SetKeep(slot,true);if(unique<0)unique=slot;}
-                }
-            if(unique>=0){_selection=unique;_selectedWorn=false;_hoverIndex=unique;_hoverWorn=false;}
-        }
-
-        /// <summary>Мышь над ячейкой: карточка предмета показывает её, а не выбранную.</summary>
-        public void Hover(int index,bool worn,bool on)
-        {
-            if(_tent==null)return;
-            if(on){_hoverIndex=index;_hoverWorn=worn;}
-            else if(_hoverIndex==index&&_hoverWorn==worn)_hoverIndex=-1;
-            RefreshTooltip();
-        }
-
-        /// <summary>ПКМ по вещи в сумке: «беречь» — разбор её не заберёт.</summary>
-        public void ToggleKeep(int index)
-        {
-            var bag=_driver.Session.Camp.Bag;
-            if(bag.IsEmpty(index))return;
-            bag.SetKeep(index,!bag.IsKept(index));
-            UiSound.Play(UiSoundEvent.Toggle);
-            SetFeedback(bag.IsKept(index)?"Вещь отмечена — в разбор не уйдёт.":"");
-            Refresh();
-        }
-
-        void RefreshTent()
-        {
-            var camp=_driver.Session.Camp;
-            if(_tent.Gold!=null)_tent.Gold.text=camp.Money(CurrencyType.Gold).ToString();
-            if(_tent.Shards!=null)_tent.Shards.text=camp.Money(CurrencyType.Shards).ToString();
-            if(_tent.Lavidium!=null)_tent.Lavidium.text=camp.Money(CurrencyType.Lavidium).ToString();
-            int count=0;
-            for(int i=0;i<48;i++)
-            {
-                var item=camp.Bag.At(i);if(!item.IsEmpty)count++;
-                int category=Category(item);bool visible=_filter<0||category==_filter;
-                _bagCells[i].Selectable=visible||item.IsEmpty;
-                _tentBag[i].Show(item.IsEmpty?_tent.EmptyFrame:_tent.FrameFor((int)item.Rarity),Color.white,
-                    item.IsEmpty?null:ItemSprite(i,false),item.IsEmpty?"":item.ItemLevel.ToString(),
-                    !_selectedWorn&&i==_selection&&!item.IsEmpty,!item.IsEmpty&&!visible,!item.IsEmpty&&camp.Bag.IsKept(i),
-                    item.IsEmpty?-1:(int)item.Rarity,_tent.ColourFor((int)item.Rarity));
-            }
-            for(int i=0;i<_tent.Worn.Length&&i<4;i++)
-            {
-                var cell=_tent.Worn[i];if(cell==null)continue;
-                var item=camp.Worn.Worn((EquipSlot)i);
-                cell.Show(null,item.IsEmpty?_tent.EmptyRing:_tent.ColourFor((int)item.Rarity),
-                    item.IsEmpty?null:ItemSprite(i,true),item.IsEmpty?"":item.ItemLevel.ToString(),
-                    _selectedWorn&&i==_selection&&!item.IsEmpty,false,false,
-                    item.IsEmpty?-1:(int)item.Rarity,_tent.ColourFor((int)item.Rarity));
-            }
-            if(_tent.BagCount!=null)_tent.BagCount.text=count+" / 48";
-            for(int f=0;f<_tent.Filters.Length;f++)
-                if(_tent.Filters[f]!=null&&_tent.Filters[f].image!=null)
-                    // Выбранная вкладка прозрачна — под ней видна коралловая подложка.
-                    _tent.Filters[f].image.color=f==_filter+1?new Color(1f,1f,1f,0f):Color.white;
-
-            var stats=_driver.Session.CampSim.Entities.Stats[0];
-            StatType[] shown={StatType.Damage,StatType.Armor,StatType.MaxHealth,StatType.MaxLavidium};
-            for(int i=0;i<_tent.StatValues.Length&&i<shown.Length;i++)
-                _tent.ShowStat(i,Mathf.Round(stats.Get(shown[i]).ToFloat()));
-            RefreshTooltip();
-        }
-
-        /// <summary>Карточка у ячейки под мышью, а без мыши — у выбранной; пустая ячейка карточку прячет.</summary>
-        void RefreshTooltip()
-        {
-            var camp=_driver.Session.Camp;
-            if(_hoverIndex<0){_tent.ShowTooltip(false);return;}
-            int index=_hoverIndex;
-            bool worn=_hoverWorn;
-            if(worn&&index>=_tent.Worn.Length){_tent.ShowTooltip(false);return;}
-            var item=worn?camp.Worn.Worn((EquipSlot)index):camp.Bag.At(index);
-            if(item.IsEmpty){_tent.ShowTooltip(false);return;}
-            int kind=Category(item);
-            int rarity=(int)item.Rarity;
-            if(_tent.ItemTitle!=null)_tent.ItemTitle.text=ItemName(item.BaseId);
-            if(_tent.ItemRarity!=null){_tent.ItemRarity.text=_tent.NameFor(rarity);_tent.ItemRarity.color=_tent.ColourFor(rarity);}
-            if(_tent.ItemKind!=null)_tent.ItemKind.text=(kind>=0?Names[kind]:"Предмет")+"  ·  ур. "+item.ItemLevel;
-            if(_tent.ItemFrame!=null)_tent.ItemFrame.sprite=_tent.FrameFor(rarity);
-            if(_tent.TooltipBand!=null)_tent.TooltipBand.color=_tent.ColourFor(rarity);
-            if(_tent.ItemArt!=null){_tent.ItemArt.sprite=ItemSprite(index,worn);_tent.ItemArt.enabled=_tent.ItemArt.sprite!=null;}
-            if(_tent.ItemStats!=null)
-            {
-                var stats=_driver.Session.CampSim.Entities.Stats[0];
-                string compare=worn?"":CompareStats(item,stats,"#2E8B3E","#C2452F","#1C3A5E",true).Replace("\n\n","\n").Trim();
-                _tent.ItemStats.text=worn?"<color=#5A7390>Надето на Пелаге</color>"
-                    :compare.Length==0?"<color=#5A7390>Без изменений</color>":"<color=#5A7390>Сравнение:</color>\n"+compare;
-            }
-            if(_tent.ItemStats!=null&&_tent.Tooltip!=null)
-            {
-                _tent.ItemStats.ForceMeshUpdate();
-                var statsRect=_tent.ItemStats.rectTransform;
-                float statsHeight=_tent.ItemStats.preferredHeight;
-                statsRect.sizeDelta=new Vector2(statsRect.sizeDelta.x,statsHeight);
-                _tent.Tooltip.sizeDelta=new Vector2(_tent.Tooltip.sizeDelta.x,Mathf.Max(200f,-statsRect.anchoredPosition.y+statsHeight+20f));
-            }
-            var cell=worn?_tent.Worn[index]:_tentBag[index];
-            if(cell!=null)_tent.PlaceTooltip((RectTransform)cell.transform);
-            _tent.ShowTooltip(true);
         }
 
         /// <summary>У кнопок нет смены спрайта: недоступная просто притухает.</summary>
@@ -525,7 +345,7 @@ namespace Game.View
         }
 
         /// <summary>Строки «стат: было → станет» для выбранной вещи; цвета — под фон доски.</summary>
-        string CompareStats(ItemInstance chosen,StatSheet stats,string better,string worse,string same,bool onlyChanges=false)
+        internal string CompareStats(ItemInstance chosen,StatSheet stats,string better,string worse,string same,bool onlyChanges=false)
         {
             var camp=_driver.Session.Camp;
             if(!ItemGenerator.Generate(in chosen,camp.Items,_roll))return "";
@@ -537,7 +357,7 @@ namespace Game.View
                 for(int i=0;i<(int)EquipSlot.Count;i++)
                 {var item=camp.Worn.Worn((EquipSlot)i);if(!item.IsEmpty)previewEquipment.Equip(item,out _);}
                 previewEquipment.Equip(chosen,out _);
-                var displayStats=new[]{StatType.Damage,StatType.AttackSpeed,StatType.CritChance,StatType.Armor,StatType.MaxHealth,StatType.MoveSpeed,StatType.FireResist};
+                var displayStats=new[]{StatType.Damage,StatType.AttackSpeed,StatType.CritChance,StatType.Armor,StatType.MaxHealth,StatType.MoveSpeed,StatType.FireResist,StatType.CritMultiplier,StatType.MaxLavidium,StatType.LavidiumRegen,StatType.AbilitySpeed,StatType.CooldownRecovery};
                 for(int s=0;s<displayStats.Length;s++)
                 {
                     var stat=displayStats[s];var v=sheet.Get(stat);var previous=stats.Get(stat);
@@ -568,8 +388,8 @@ namespace Game.View
             if(_portraitTexture!=null){_portraitTexture.Release();Destroy(_portraitTexture);}
             foreach(var material in _portraitMaterials)Destroy(material);
             foreach(var icon in _icons)if(icon!=null)Destroy(icon);
-            if(_heroSprite!=null)Destroy(_heroSprite);
-            foreach(var icon in _raritySprites)if(icon!=null)Destroy(icon);
+            foreach(var icon in _potionSprites)if(icon!=null)Destroy(icon);
+            foreach(var icon in _baseSprites.Values)if(icon!=null)Destroy(icon);
         }
         static string FormatStat(StatType stat,Fix64 value)=>stat==StatType.CritChance||stat==StatType.FireResist||stat==StatType.AbilitySpeed||stat==StatType.CooldownRecovery
             ?(value*Fix64.FromInt(100)).ToFloat().ToString("0.#")+"%":value.ToFloat().ToString("0.#");

@@ -68,6 +68,12 @@ namespace Game.Sim
             => new GameSession(sessionSeed, NewCamp(), Modules(), ItemBaseIds());
 
         /// <summary>Идентификаторы баз, которые может предложить награда.</summary>
+        /// <summary>
+        /// Идентификаторы баз, которые может предложить награда. Выпадают только
+        /// обычные основы: редкость находки переводит её на редкую основу того же
+        /// слота (<see cref="ItemDatabase.MatchTier"/>), так что шансы по слотам
+        /// и редкостям остаются прежними.
+        /// </summary>
         public static int[] ItemBaseIds() => new[]
         {
             StableId.Of("base.rusty_sword"),
@@ -77,19 +83,51 @@ namespace Game.Sim
             StableId.Of("base.memory_shard"),
         };
 
+        /// <summary>
+        /// Первый набор экипировки (STATE, 21 сентября): в каждом слоте две обычные
+        /// и две редкие основы. Строки id не менять никогда — на них сохранения.
+        /// Числа базовых свойств — черновые, владелец их ещё не задавал.
+        /// </summary>
         public static ItemDatabase Items()
         {
             var bases = new[]
             {
                 new ItemBaseDefinition(StableId.Of("base.rusty_sword"), ItemCategory.Weapon,
                     StatType.Damage, ModifierOp.Flat, Fix64.FromInt(5)),
+                new ItemBaseDefinition(StableId.Of("base.boarding_cutlass"), ItemCategory.Weapon,
+                    StatType.CritMultiplier, ModifierOp.Flat, Fix64.Ratio(20, 100)),
+                new ItemBaseDefinition(StableId.Of("base.duelist_sabre"), ItemCategory.Weapon,
+                    StatType.AttackSpeed, ModifierOp.Increased, Fix64.Ratio(12, 100), rare: true),
+                new ItemBaseDefinition(StableId.Of("base.officer_sabre"), ItemCategory.Weapon,
+                    StatType.CritChance, ModifierOp.Flat, Fix64.Ratio(6, 100), rare: true),
 
+                new ItemBaseDefinition(StableId.Of("base.quilted_jacket"), ItemCategory.Armor,
+                    StatType.MaxHealth, ModifierOp.Flat, Fix64.FromInt(15)),
                 new ItemBaseDefinition(StableId.Of("base.leather_jacket"), ItemCategory.Armor,
                     StatType.Armor, ModifierOp.Flat, Fix64.FromInt(8)),
+                new ItemBaseDefinition(StableId.Of("base.scout_jacket"), ItemCategory.Armor,
+                    StatType.MoveSpeed, ModifierOp.Increased, Fix64.Ratio(6, 100), rare: true),
+                new ItemBaseDefinition(StableId.Of("base.boarding_vest"), ItemCategory.Armor,
+                    StatType.Armor, ModifierOp.Flat, Fix64.FromInt(16), rare: true),
+
                 new ItemBaseDefinition(StableId.Of("base.copper_ring"), ItemCategory.Jewellery,
                     StatType.MaxHealth, ModifierOp.Flat, Fix64.FromInt(12)),
+                new ItemBaseDefinition(StableId.Of("base.smith_ring"), ItemCategory.Jewellery,
+                    StatType.Armor, ModifierOp.Flat, Fix64.FromInt(6)),
+                new ItemBaseDefinition(StableId.Of("base.marksman_ring"), ItemCategory.Jewellery,
+                    StatType.CritChance, ModifierOp.Flat, Fix64.Ratio(4, 100), rare: true),
+                new ItemBaseDefinition(StableId.Of("base.lavidium_ring"), ItemCategory.Jewellery,
+                    StatType.MaxLavidium, ModifierOp.Flat, Fix64.FromInt(15), rare: true),
+
                 new ItemBaseDefinition(StableId.Of("base.woodland_talisman"), ItemCategory.Talisman,
                     StatType.FireResist, ModifierOp.Flat, Fix64.Ratio(8, 100)),
+                new ItemBaseDefinition(StableId.Of("base.fang_cord"), ItemCategory.Talisman,
+                    StatType.Damage, ModifierOp.Flat, Fix64.FromInt(3)),
+                new ItemBaseDefinition(StableId.Of("base.sea_knot"), ItemCategory.Talisman,
+                    StatType.LavidiumRegen, ModifierOp.Flat, Fix64.One, rare: true),
+                new ItemBaseDefinition(StableId.Of("base.courier_token"), ItemCategory.Talisman,
+                    StatType.AbilitySpeed, ModifierOp.Flat, Fix64.Ratio(10, 100), rare: true),
+
                 new ItemBaseDefinition(StableId.Of("base.memory_shard"), ItemCategory.Artifact,
                     StatType.Damage, ModifierOp.Flat, Fix64.FromInt(3)),
             };

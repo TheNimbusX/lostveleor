@@ -1,0 +1,1 @@
+tufts=288 triangles=27648

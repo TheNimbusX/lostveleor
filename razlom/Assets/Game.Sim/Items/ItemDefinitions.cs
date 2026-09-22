@@ -71,6 +71,13 @@ namespace Game.Sim
         public readonly Fix64 ImplicitValue;
         public readonly bool HasImplicit;
 
+        /// <summary>
+        /// Редкая основа: выглядит богаче и выпадает только редкой и выше.
+        /// Владелец 21 сентября: в каждом слоте две обычные и две редкие основы,
+        /// они различаются не только рамкой, но и внешностью.
+        /// </summary>
+        public readonly bool Rare;
+
         public ItemBaseDefinition(int id, ItemCategory category)
         {
             Id = id;
@@ -79,10 +86,11 @@ namespace Game.Sim
             ImplicitOp = default;
             ImplicitValue = Fix64.Zero;
             HasImplicit = false;
+            Rare = false;
         }
 
         public ItemBaseDefinition(int id, ItemCategory category,
-            StatType implicitStat, ModifierOp implicitOp, Fix64 implicitValue)
+            StatType implicitStat, ModifierOp implicitOp, Fix64 implicitValue, bool rare = false)
         {
             Id = id;
             Category = category;
@@ -90,6 +98,7 @@ namespace Game.Sim
             ImplicitOp = implicitOp;
             ImplicitValue = implicitValue;
             HasImplicit = true;
+            Rare = rare;
         }
     }
 }

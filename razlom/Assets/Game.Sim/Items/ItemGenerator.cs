@@ -76,7 +76,7 @@ namespace Game.Sim
 
             for (int slot = 0; slot < wanted; slot++)
             {
-                int picked = PickAffix(db, baseDef.Category, item.ItemLevel,
+                int picked = PickAffix(db, baseDef.Category, item.OriginalLevel,
                     usedGroups, usedGroupCount, ref rng);
 
                 // Кандидаты кончились: на низком уровне предмета подходящих
@@ -88,6 +88,18 @@ namespace Game.Sim
 
                 into.Add(new RolledAffix(affix.Id, affix.Stat, affix.Op, value));
                 usedGroups[usedGroupCount++] = affix.Group;
+            }
+
+            // Рецепт повторяет улучшения поверх исходного ролла: остальные аффиксы не меняются.
+            var forgeRng=new Pcg32(item.Seed,0x534D495448UL);
+            for(int attempt=0;attempt<item.ReforgeCount;attempt++)
+            {
+                int slot=((item.ForgeRecipe>>(attempt*4))&15)-1;
+                Fix64 fraction=forgeRng.NextFix(Fix64.Ratio(1,4),Fix64.One);
+                if(slot<0 || slot>=into.AffixCount)continue;
+                var old=into.GetAffix(slot);Fix64 max=old.Value;
+                for(int i=0;i<db.AffixCount;i++)if(db.GetAffix(i).Id==old.AffixId)max=Fix64.Max(max,db.GetAffix(i).MaxValue);
+                into.Replace(slot,new RolledAffix(old.AffixId,old.Stat,old.Op,old.Value+(max-old.Value)*fraction));
             }
 
             return true;

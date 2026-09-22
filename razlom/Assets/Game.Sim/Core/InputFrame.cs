@@ -86,6 +86,8 @@ namespace Game.Sim
         /// Команда, поданная мимо потока ввода, сделала бы забег невоспроизводимым.
         /// </summary>
         public byte Command;
+        // Биты 0–3 — конкретная бутылка, 4–5 — смена размера двух слотов HUD.
+        public byte PotionMask;
 
         public bool Ability(int index) => (AbilityMask & (1 << index)) != 0;
         public bool Has(InputFlags flag) => (Flags & (byte)flag) != 0;
@@ -118,6 +120,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, AbilityTarget);
             Hashing.Mix(ref hash, (int)Flags);
             Hashing.Mix(ref hash, (int)Command);
+            if(PotionMask!=0)Hashing.Mix(ref hash,(int)PotionMask);
             Hashing.Mix(ref hash, AttackTarget);
         }
     }

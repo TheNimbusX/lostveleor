@@ -108,5 +108,6 @@ namespace Game.Sim
         /// что делает найденная вещь, и нужен ровно с первой найденной вещи.
         /// </summary>
         ProvingGround = 1 << 6,
+        Alchemist = 1 << 7,
     }
 }

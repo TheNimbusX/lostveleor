@@ -17,7 +17,9 @@
 #>
 param(
     [string] $Source = (Join-Path $env:USERPROFILE 'Downloads'),
-    [string] $Root = 'razlom/Assets/Resources/Audio'
+    [string] $Root = 'razlom/Assets/Resources/Audio',
+    # camp-sfx — только пак владельца из ART/camp-sfxs (22 сентября); пусто — всё остальное.
+    [ValidateSet('', 'camp-sfx')] [string] $Group = ''
 )
 # Не Stop: PowerShell 5.1 считает ошибкой любую строку ffmpeg в stderr (баннер, «Guessed Channel Layout»).
 # Сбои ffmpeg ловятся по $LASTEXITCODE после каждого вызова.
@@ -83,6 +85,85 @@ $camp = @(
     [pscustomobject]@{ Name='camp_birds_takeoff';  Dir='Camp'; File=$flock;  Peak=-7;  Mean=-27; Trim=$true }
 )
 
+# Действия лагеря, 22 сентября: пак владельца в ART/camp-sfxs. Серии ударов нарезаны на одиночные
+# варианты (_01, _02 …): GameSound.Play по имени без номера берёт случайный, не повторяя подряд.
+# Магия (зелья, Разлом) — тише, вторым слоем под стеклом и жидкостью.
+$sfx = 'ART/camp-sfxs'
+function Sfx($name, $file, $peak, $mean, $start = $null, $length = $null) {
+    $o = [pscustomobject]@{ Name=$name; Dir='Game'; File=$file; Src=$sfx; Peak=$peak; Mean=$mean; Trim=$true }
+    # Окно куска выбрано по записи; срез тишины по порогу до усиления отрезал бы слышимый хвост удара.
+    if ($null -ne $length) { $o | Add-Member Start $start; $o | Add-Member Length $length; $o.Trim = $false }
+    $o
+}
+$grassSteps = 'ES_Footsteps, Human, Boots, Grass, Jog, Run, Distant - Epidemic Sound.mp3'
+$woodSteps  = 'ES_Footsteps, Human, Shoes, Wood, Walk 02 - Epidemic Sound.mp3'
+$boards     = 'ES_Wood, Friction, Old Cabin Squeaking Floorboards 02 - Epidemic Sound.mp3'
+$bag        = 'ES_Objects, Bag, Leather Bag, Grab, Squish, Fill Up - Epidemic Sound.mp3'
+$anvil      = 'ES_Tools, Hand, Hammer, Anvil, Impacts, Blacksmith, Indoors, Close - Epidemic Sound.mp3'
+$brace      = 'ES_Metal, Impact, Steel, Roof Brace, Drop On Wooden Floor x5 - Epidemic Sound.mp3'
+$helm       = 'ES_Weapons, Armor, Armour, Hand Axe Hitting Steel Helm - Epidemic Sound.mp3'
+$coinBox    = 'ES_Objects, Coin, Ceramic, Box, Pour, Movement - Epidemic Sound.mp3'
+$cards      = 'ES_Games, Misc, Playing Card, Dealing Table, Flip, Singles - Epidemic Sound.mp3'
+$bottles    = 'ES_Magic, Misc, Potion Bottle, Put Down 06 - Epidemic Sound.mp3'
+$clink      = 'ES_Glass, Impact, Bottle, Hit, Clink, Tonal, Clean Small - Epidemic Sound.mp3'
+$shield     = 'ES_Weapons, Misc, Spear Thrust, Shield Boss, Wooden - Epidemic Sound.mp3'
+$creak      = 'ES_Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03 - Epidemic Sound.mp3'
+$portal     = 'ES_Magic, Spell, Dark Portal, Open & Close, Ghostly Whispers, Evil, Mysterious - Epidemic Sound - 0000-16404.wav'
+
+$campSfx = @(
+    # Шаги по траве и земле — отдельные шаги из пробежки, тихо.
+    (Sfx 'camp_step_grass_01' $grassSteps -12 -32 2.08 .34), (Sfx 'camp_step_grass_02' $grassSteps -12 -32 2.44 .34),
+    (Sfx 'camp_step_grass_03' $grassSteps -12 -32 2.82 .34), (Sfx 'camp_step_grass_04' $grassSteps -12 -32 3.21 .34),
+    (Sfx 'camp_step_grass_05' $grassSteps -12 -32 3.59 .34), (Sfx 'camp_step_grass_06' $grassSteps -12 -32 3.97 .34),
+    (Sfx 'camp_step_grass_07' $grassSteps -12 -32 4.36 .34), (Sfx 'camp_step_grass_08' $grassSteps -12 -32 4.73 .34),
+    # Мост: шаги по доскам и редкий скрип настила.
+    (Sfx 'camp_step_wood_01' $woodSteps -10 -30 0.05 .45), (Sfx 'camp_step_wood_02' $woodSteps -10 -30 0.61 .45),
+    (Sfx 'camp_step_wood_03' $woodSteps -10 -30 1.14 .45), (Sfx 'camp_step_wood_04' $woodSteps -10 -30 1.68 .45),
+    (Sfx 'camp_step_wood_05' $woodSteps -10 -30 2.16 .45), (Sfx 'camp_step_wood_06' $woodSteps -10 -30 2.67 .45),
+    (Sfx 'camp_bridge_creak_01' $boards -12 -32 2.45 1.2), (Sfx 'camp_bridge_creak_02' $boards -12 -32 8.70 1.2),
+    # Палатка: ткань и шорох сумки.
+    (Sfx 'tent_cloth' 'ES_Cloth, Flap, Flap, Blanket, Whoosh - Epidemic Sound.mp3' -8 -28),
+    (Sfx 'tent_rustle_01' $bag -8 -28 0.20 1.6), (Sfx 'tent_rustle_02' $bag -8 -28 1.90 1.7),
+    # Кузнец: молот, пар, звон готовой вещи; разбор — лом и осыпающиеся детали.
+    (Sfx 'smith_hammer_01' $anvil -5 -24 3.45 .6), (Sfx 'smith_hammer_02' $anvil -5 -24 0.90 .6),
+    (Sfx 'smith_hammer_03' $anvil -5 -24 1.55 .6), (Sfx 'smith_hammer_04' $anvil -5 -24 2.18 .6),
+    (Sfx 'smith_sizzle' 'ES_Water, Steam, Sizzle On Hot Metal Plate 02 - Epidemic Sound.mp3' -9 -28),
+    (Sfx 'smith_ring' 'ES_Metal, Friction, Metal, Spade, Ring - Epidemic Sound - 3795-5766.wav' -8 -28),
+    (Sfx 'smith_break_01' $helm -6 -24 0.01 .85), (Sfx 'smith_break_02' $helm -6 -24 0.94 .85),
+    (Sfx 'smith_debris_01' $brace -7 -26 0.07 .5), (Sfx 'smith_debris_02' $brace -7 -26 1.41 .5), (Sfx 'smith_debris_03' $brace -7 -26 2.35 .5),
+    (Sfx 'smith_crash' 'ES_Metal, Crash & Debris, Impact, Small Items, Drop, Clash - Epidemic Sound.mp3' -7 -26),
+    # Торговец: кошель, пересчёт, монеты на стойке, вещь в ящик, перекладка товара, тихий акцент.
+    (Sfx 'trader_pouch' 'ES_Objects, Coin, Coins, Money Pouch, Fabric, Movement, Shake 01 - Epidemic Sound.mp3' -7 -26),
+    (Sfx 'trader_count_01' $coinBox -8 -27 0.15 1.7), (Sfx 'trader_count_02' $coinBox -8 -27 3.70 1.2),
+    (Sfx 'trader_coins_table_01' 'ES_Objects, Coin, Money, Coins, Handful, Down On Table - Epidemic Sound.mp3' -7 -26),
+    (Sfx 'trader_coins_table_02' 'ES_Objects, Coin, Money, Pound, Coin, Down On Table - Epidemic Sound.mp3' -7 -26),
+    (Sfx 'trader_crate_01' 'ES_Objects, Furniture, Impact, Wood Table, Desk, Hit, Items On Top Rattle 01 - Epidemic Sound.mp3' -8 -27),
+    (Sfx 'trader_crate_02' 'ES_Wood, Impact, Wooden Blocks, Small, Place Down On Others - Epidemic Sound.mp3' -8 -27),
+    (Sfx 'trader_shuffle' 'ES_Games, Misc, Playing Cards, Shuffle Fast - Epidemic Sound.mp3' -9 -28 0 1.4),
+    (Sfx 'trader_flip_01' $cards -9 -28 0.24 .6), (Sfx 'trader_flip_02' $cards -9 -28 1.52 .6),
+    (Sfx 'trader_chime' 'ES_Clocks, Chime, Chime Rods, Ringing 01 - Epidemic Sound - 0000-1761.wav' -14 -34),
+    # Алхимик: бутылка на стол и звон стекла; выбор — пробка, переливание, тихое бурление.
+    (Sfx 'alch_bottle_01' $bottles -7 -26 0.01 1.1), (Sfx 'alch_bottle_02' $bottles -7 -26 1.22 1.1), (Sfx 'alch_bottle_03' $bottles -7 -26 2.45 1.1),
+    (Sfx 'alch_clink_01' $clink -10 -30 0.04 1.6), (Sfx 'alch_clink_02' $clink -10 -30 2.73 1.6),
+    (Sfx 'alch_cork_01' 'ES_Food & Drink, Glassware, Bottle, Glass, Cork, Open, Pop - Epidemic Sound.mp3' -8 -27),
+    (Sfx 'alch_cork_02' 'ES_Food & Drink, Glassware, Bottle, Wine, Cork, Pop Open - Epidemic Sound.mp3' -8 -27),
+    (Sfx 'alch_pour_01' 'ES_Food & Drink, Pour, Milk, Poured Into Glass - Epidemic Sound.mp3' -9 -28),
+    (Sfx 'alch_pour_02' 'ES_Food & Drink, Pour, Pour Small Amount From Jug Into Small Glass - Epidemic Sound.mp3' -9 -28),
+    (Sfx 'alch_bubble_01' 'ES_Water, Bubbles, Underwater, Bubble, Single, Tonal 01 - Epidemic Sound.mp3' -14 -34 0 1.4),
+    (Sfx 'alch_bubble_02' 'ES_Water, Bubbles, Underwater, Bubble, Single, Tonal 03 - Epidemic Sound.mp3' -14 -34 0 1.4),
+    # Зелье в бою: глоток и тонкий отклик ресурса.
+    (Sfx 'potion_gulp_01' 'ES_Food & Drink, Drinking, Human, Swallow, Gulp - Epidemic Sound.mp3' -7 -26),
+    (Sfx 'potion_gulp_02' 'ES_Food & Drink, Drinking, Human, Swallowing, Loud - Epidemic Sound.mp3' -7 -26),
+    (Sfx 'potion_heal' 'ES_Magic, Angelic, Spell, Cast, Buff, Power Up, Holy, Healing, Twinkle, Glimmer, Positive 01 - Epidemic Sound.mp3' -14 -34 0.1 1.8),
+    (Sfx 'potion_lavidium' 'ES_Magic, Spell, Soft Airy, Chimes, Bells - Epidemic Sound.mp3' -14 -34),
+    # Манекены: удар по дереву и сухой скрип стойки.
+    (Sfx 'dummy_hit_01' $shield -7 -26 0.09 1.0), (Sfx 'dummy_hit_02' $shield -7 -26 2.03 1.0), (Sfx 'dummy_hit_03' $shield -7 -26 4.06 1.0),
+    (Sfx 'dummy_creak_01' $creak -10 -30 0.03 .5), (Sfx 'dummy_creak_02' $creak -10 -30 0.59 .45),
+    # Вход в Разлом: пробуждение арки и короткий переход.
+    (Sfx 'rift_awaken' $portal -10 -30 0.14 5),
+    (Sfx 'rift_whoosh' 'ES_Swooshes, Whoosh, Eerie, Anxiety, Tonal, Mystic, Fast 02 - Epidemic Sound - 4521-7037.wav' -8 -28)
+)
+
 function Measure-Level([string] $path) {
     $log = & $ffmpeg -hide_banner -nostats -i $path -af volumedetect -f null NUL 2>&1 | Out-String
     [pscustomobject]@{
@@ -94,8 +175,10 @@ function Measure-Level([string] $path) {
 $temp = Join-Path ([IO.Path]::GetTempPath()) 'razlom-sounds'
 New-Item -ItemType Directory -Force $temp | Out-Null
 $failed = 0
-foreach ($s in ($sounds + $camp)) {
-    $src = Join-Path $Source $s.File
+$list = if ($Group -eq 'camp-sfx') { $campSfx } else { $sounds + $camp }
+foreach ($s in $list) {
+    $srcDir = if ($s.PSObject.Properties['Src']) { $s.Src } else { $Source }
+    $src = Join-Path $srcDir $s.File
     if (-not (Test-Path -LiteralPath $src)) { Write-Host ("  нет файла: {0}" -f $s.File); $failed++; continue }
     $outDir = Join-Path $Root "$($s.Dir)/Prepared"
     New-Item -ItemType Directory -Force $outDir | Out-Null

@@ -14,16 +14,23 @@ namespace Game.View
     {
         public static CampPlayerView Instance { get; private set; }
         public Vector3 Position => Body != null ? Body.position : _start;
+        internal Vector3 InteractionPosition => Active ? World(_driver.Session.CampSim.Entities.Position[0]) : Position;
         internal Transform Body => _arena != null && _arena.TryGetEntityView(Simulation.PlayerId, out var body) ? body : null;
         public bool Active => _driver != null && _driver.Session != null && _driver.Session.Mode == GameMode.Camp && !_driver.Session.OnProvingGround;
         public bool InventoryOpen => _inventory != null && _inventory.IsOpen;
         public bool EntranceOpen => _entrance != null && _entrance.IsOpen;
-        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampRiftEntrance.ClosedFrame == Time.frameCount;
+        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame == Time.frameCount || CampRiftEntrance.ClosedFrame == Time.frameCount;
         internal CampWalkMap WalkMap => _walkMap;
         internal Bounds MapBounds { get; private set; }
         public Transform Tent { get; private set; }
         TickDriver _driver; ArenaView _arena;
         float _height;
+        CampRiverPassage _riverPassage;
+        public float SurfaceHeight(float x,float z)
+        {
+            if(_riverPassage==null)_riverPassage=FindAnyObjectByType<CampRiverPassage>();
+            return _riverPassage!=null?_riverPassage.SurfaceHeight(x,z,_height):_height;
+        }
         CampWalkMap _walkMap;
         public float GroundHeight => _height;
         NavMeshPath _path;
@@ -65,6 +72,7 @@ namespace Game.View
             _arena = FindAnyObjectByType<ArenaView>();
             if (NavMesh.SamplePosition(_start, out var spawn, 10f, NavMesh.AllAreas)) _start = spawn.position;
             _height = _start.y;
+            _riverPassage=FindAnyObjectByType<CampRiverPassage>();
             var triangulation = NavMesh.CalculateTriangulation();
             if (triangulation.vertices.Length == 0) { Debug.LogError("[camp] No walkable surface."); enabled = false; return; }
             var bounds = new Bounds(_start, Vector3.zero);
@@ -95,6 +103,13 @@ namespace Game.View
             _scenePelagPreview = GameObject.Find("Pelag_MX_Idle");
             if(_scenePelagPreview != null) { _scenePelagPreviewWasActive=_scenePelagPreview.activeSelf; _scenePelagPreview.SetActive(false); }
             _inventory = gameObject.AddComponent<CampInventoryView>(); _inventory.Initialize(_driver);
+            if (GetComponent<CampFootsteps>() == null) gameObject.AddComponent<CampFootsteps>();
+            if(Tent!=null)
+            {
+                var interaction=Tent.GetComponent<CampServiceNpc>()??Tent.gameObject.AddComponent<CampServiceNpc>();
+                interaction.Kind=CampServiceKind.Tent;interaction.Reach=1.5f;
+            }
+            gameObject.AddComponent<CampServicesView>().Initialize(this,_driver);
             Debug.Log($"[camp] spawn={_start} sharedCombat=True tent={Tent} cells={width*height}");
         }
 
@@ -182,9 +197,14 @@ namespace Game.View
             if (_entrance != null) _entrance.BuildNavigationBarrier();
             // Добавляем недостающие коллизии только runtime: сохранённые трансформы не затрагиваются.
             var unreadable = new List<string>();
+            // Мост к алхимику проходим: настил и перила задаёт CampRiverPassage, а не меш.
+            // 21 сентября мост переложили внутрь CampRoot, и его модель стала сплошной стеной.
+            var passage = FindAnyObjectByType<CampRiverPassage>();
+            Transform bridge = passage != null ? passage.Bridge : null;
             foreach (MeshFilter mesh in root.GetComponentsInChildren<MeshFilter>())
             {
                 if (!UsedByNavigation(mesh)) continue;
+                if (bridge != null && mesh.transform.IsChildOf(bridge)) continue;
 
                 // Нечитаемый меш строит коллайдер в редакторе и НЕ строит в
                 // плеере: данные выгружены из памяти после загрузки на карту.
@@ -266,6 +286,10 @@ namespace Game.View
                 markups.Add(new NavMeshBuildMarkup { root = dummy.transform, ignoreFromBuild = true });
             NavMeshBuilder.CollectSources(root, ~0, NavMeshCollectGeometry.PhysicsColliders, 0,
                 markups, sources);
+            // Новые NPC стоят в корне сцены: их маленькие опорные области тоже участвуют в обходе.
+            foreach(var npc in FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Exclude))
+                sources.Add(new NavMeshBuildSource{shape=NavMeshBuildSourceShape.ModifierBox,area=1,
+                    transform=Matrix4x4.TRS(npc.transform.position+Vector3.up,Quaternion.identity,Vector3.one),size=new Vector3(.65f,3,.65f)});
             foreach(var river in root.GetComponentsInChildren<CampRiver>())river.AddNavigationSources(sources);
             var settings = NavMesh.GetSettingsByIndex(0);
             settings.agentRadius = .3f; settings.agentHeight = 1.7f; settings.agentClimb = .25f;
@@ -279,6 +303,7 @@ namespace Game.View
         void Update()
         {
             if (!Active) { _inventory?.Close(); return; }
+            if(CampServicesView.ConsumedFrame==Time.frameCount)return;
             if (!_driver.GameplayPaused && !InventoryOpen) _entrance?.Check(_driver, World(_driver.Session.CampSim.Entities.Position[0]));
             if (_driver.GameplayPaused || InputBlocked) { Stop(); return; }
             if (CampIntegrationCapture.IsRunning) return;
@@ -295,8 +320,7 @@ namespace Game.View
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
-            if (GameUserSettings.WasdMovement) { click = held = false; CancelRoute(); }
-            if (interact && NearTent()) { Stop(); _inventory.Open(); return; }
+            if (GameUserSettings.WasdMovement) { click = held = false; if(CampServicesView.Instance?.Pending==null)CancelRoute(); }
 
             if (_driver.PointerOverHud(pointer)) { click = false; held = false; }
 
@@ -362,7 +386,7 @@ namespace Game.View
                 return false;
             }
 
-            FixVec2 from = Flat(Position), to = Flat(target);
+            FixVec2 from = Flat(InteractionPosition), to = Flat(target);
             bool routed = _routing.To(from, to);
 
             // ЗАМЕР, А НЕ ОТЛАДОЧНЫЙ МУСОР. Маршрут строится на карте, которую
@@ -383,6 +407,7 @@ namespace Game.View
         {
             _routing?.Cancel();
             _approach = false;
+            CampServicesView.Instance?.CancelPending();
         }
         static FixVec2 Flat(Vector3 p) => new FixVec2(Fix64.FromRaw((long)(p.x * Fix64.One.Raw)), Fix64.FromRaw((long)(p.z * Fix64.One.Raw)));
         Vector3 World(FixVec2 p) => new Vector3(p.X.ToFloat(), _height, p.Y.ToFloat());
@@ -390,13 +415,13 @@ namespace Game.View
         public void PrepareInput(ref InputFrame input)
         {
             if (!Active) return;
-            if (input.Has(InputFlags.DirectMovement)) { CancelRoute(); return; }
+            if (input.Has(InputFlags.DirectMovement) && (input.MoveDirection.LengthSq>Fix64.Zero || CampServicesView.Instance?.Pending==null)) { CancelRoute(); return; }
             if (input.AbilityMask != 0 || input.Has(InputFlags.Attack)) CancelRoute();
 
             // Маршрут снимает перетаскивание мыши, и решается это в Update,
             // где виден курсор.
             if (_routing == null) return;
-            if (!_routing.Advance(Flat(Position), out FixVec2 aim, out bool final)) return;
+            if (!_routing.Advance(Flat(InteractionPosition), out FixVec2 aim, out bool final)) return;
 
             input.Aim = aim;
             input.Flags = CampRoute.FlagsFor(final);
@@ -407,6 +432,8 @@ namespace Game.View
             CancelRoute();
             if (Active) _driver.Session.CampSim.StopPlayerMovement();
         }
+        internal void StopForService()=>Stop();
+        internal void OpenTent(){Stop();_inventory.Open();}
         public bool ApproachTent()
         {
             if (Tent == null) return false;
