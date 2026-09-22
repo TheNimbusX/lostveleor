@@ -157,16 +157,8 @@ namespace Game.View
                 _ => Clean
             };
             if (profile == null) return;
-            bool original = Style == CampLookStyle.Original;
             bool evening = Style == CampLookStyle.GoldenEvening;
-            Sun.color = original ? _sunColor : evening ? EveningSunColor : SunColor;
-            Sun.shadowStrength = original ? _shadowStrength : evening ? EveningShadowStrength : ShadowStrength;
-            Fill.intensity = original ? _fillIntensity : evening ? EveningFillIntensity : FillIntensity;
-            Fill.color = evening ? EveningFillColor : _fillColor;
-            // Солнце садится: наклон ниже, сторона света авторская — тени лягут туда же, но длиннее.
-            Vector3 angles = _sunRotation.eulerAngles;
-            Sun.transform.rotation = evening ? Quaternion.Euler(EveningSunPitch, angles.y, angles.z) : _sunRotation;
-            Sun.intensity = evening ? _sunIntensity * EveningSunScale : _sunIntensity;
+            ApplyDirectionalLighting(Sun, Fill);
             if (Ambience != null)
             {
                 Ambience.FireBoost = evening ? EveningFireBoost : _fireBoost;
@@ -177,6 +169,24 @@ namespace Game.View
             EnsureWildlife(evening);
             Volume.sharedProfile = profile;
             _applied = Style;
+        }
+
+        // Один рецепт для лагеря и разлома, в том числе когда корень лагеря выключен.
+        public void ApplyDirectionalLighting(Light sun, Light fill)
+        {
+            bool original = Style == CampLookStyle.Original;
+            bool evening = Style == CampLookStyle.GoldenEvening;
+            var rotation = _captured ? _sunRotation : Sun.transform.rotation;
+            float intensity = _captured ? _sunIntensity : Sun.intensity;
+            sun.color = original ? (_captured ? _sunColor : Sun.color) : evening ? EveningSunColor : SunColor;
+            sun.shadowStrength = original ? (_captured ? _shadowStrength : Sun.shadowStrength)
+                : evening ? EveningShadowStrength : ShadowStrength;
+            fill.intensity = original ? (_captured ? _fillIntensity : Fill.intensity)
+                : evening ? EveningFillIntensity : FillIntensity;
+            fill.color = evening ? EveningFillColor : (_captured ? _fillColor : Fill.color);
+            var angles = rotation.eulerAngles;
+            sun.transform.rotation = evening ? Quaternion.Euler(EveningSunPitch, angles.y, angles.z) : rotation;
+            sun.intensity = evening ? intensity * EveningSunScale : intensity;
         }
 
         /// <summary>Лучи живут только в вечернем стиле; в сцене владельца объект не заводится.</summary>

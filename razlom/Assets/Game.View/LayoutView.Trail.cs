@@ -142,7 +142,7 @@ namespace Game.View
             {
                 float t = s / (float)steps;
                 Vector2 point = (1 - t) * (1 - t) * a + 2 * (1 - t) * t * control + t * t * b;
-                float variation = .93f + .07f * Mathf.Sin(point.x * .71f + point.y * .53f);
+                float variation = .82f + .32f * Mathf.PerlinNoise(point.x * .13f + 17, point.y * .13f + 41);
                 PaintTrailDisc(map, point, _style.RouteWidth * .5f * variation * width);
             }
         }

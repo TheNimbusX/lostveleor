@@ -273,6 +273,41 @@ namespace Game.LocationTests
             Assert.That(checkedObjects, Is.GreaterThan(20));
         }
 
+        [TestCase(42UL)]
+        [TestCase(73UL)]
+        public void EdgeCanopies_RebuildDeterministically_WithoutCoveringFloorOrChangingSim(ulong seed)
+        {
+            _theme.Style.DecorPerCell = 0;
+            _theme.Style.DecorVariants = new[]
+            {
+                new DecorVariant { Kind = DecorKind.Bush, Weight = 1, ScaleRange = new Vector2(.6f, 1.1f), UseAsBoundary = true },
+                new DecorVariant { Kind = DecorKind.Tree, Weight = 1, ScaleRange = new Vector2(.8f, 1.2f), UseAsBoundary = true }
+            };
+            _theme.Style.EdgeCanopyDensity = 1;
+            _preview.Generate(_theme, seed, 1);
+            var snapshot = VisualSnapshot(_preview.Root);
+            var mapHash = _preview.Map.Hash();
+            var simHash = _preview.Sim.StateHash();
+            var trees = _preview.Root.GetComponentsInChildren<Renderer>().Where(r => r.name == "Декор: дерево").ToArray();
+            Assert.That(trees.Length, Is.InRange(2, 420));
+            foreach (var tree in trees)
+            {
+                var bounds = tree.bounds;
+                for (float z = bounds.min.z; z <= bounds.max.z; z += .2f)
+                    for (float x = bounds.min.x; x <= bounds.max.x; x += .2f)
+                        Assert.That(_preview.Map.Outline.Contains(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z))),
+                            Is.False, $"Крона перекрывает пол: {bounds}");
+            }
+            _preview.View.Show(_preview.Map, _preview.Seeds.Layout + 1);
+            _preview.View.Show(_preview.Map, _preview.Seeds.Layout);
+            CollectionAssert.AreEqual(snapshot, VisualSnapshot(_preview.Root));
+            _theme.Style.EdgeCanopyDensity = 0;
+            _preview.Generate(_theme, seed, 1);
+            CollectionAssert.AreNotEqual(snapshot, VisualSnapshot(_preview.Root));
+            Assert.That(_preview.Map.Hash(), Is.EqualTo(mapHash));
+            Assert.That(_preview.Sim.StateHash(), Is.EqualTo(simHash));
+        }
+
         [Test]
         public void VisibleRoad_StaysOnFloor_AndDecorBoundsLeaveClearance()
         {
@@ -362,12 +397,19 @@ namespace Game.LocationTests
         {
             Assert.That(_theme.Style.PortalPrefab, Is.Not.Null);
             Assert.That(_theme.Style.CachePrefab, Is.Not.Null);
+            var source = _theme.Style.CampSurfaceMaterial;
+            float sourceSoftness = source != null ? source.GetFloat("_DetailSoftness") : 0;
+            float sourceTurf = source != null ? source.GetFloat("_TurfWeight") : 0;
             _preview.Generate(_theme, 42, 1);
             var meshes = _preview.Root.GetComponentsInChildren<MeshFilter>(true).Select(f => f.sharedMesh)
-                .Where(m => m != null && (m.name == "Контур занятого пола" || m.name == "Свечение ориентира")).Distinct().ToArray();
+                .Where(m => m != null && (m.name == "Мягкий рельеф фона" || m.name == "Свечение ориентира")).Distinct().ToArray();
             Assert.That(meshes.Length, Is.EqualTo(2));
             Assert.That(meshes.All(m => m.vertexCount > 0), Is.True);
-            var source = _theme.Style.CampSurfaceMaterial;
+            var portalShader = Shader.Find("Game/Forest Portal");
+            Assert.That(portalShader, Is.Not.Null);
+            Assert.That(ShaderUtil.ShaderHasError(portalShader), Is.False);
+            Assert.That(_preview.Root.GetComponentsInChildren<Renderer>().Any(r =>
+                r.sharedMaterials.Any(m => m != null && m.shader == portalShader)), Is.True);
             var floor = source != null ? source.shader : Shader.Find("Razlom/Meadow Ground");
             Assert.That(floor, Is.Not.Null);
             Assert.That(ShaderUtil.ShaderHasError(floor), Is.False);
@@ -378,6 +420,8 @@ namespace Game.LocationTests
                 var material = _preview.Root.GetComponentsInChildren<Renderer>()
                     .First(r => r.sharedMaterial.shader == floor).sharedMaterial;
                 Assert.That(material, Is.Not.SameAs(source));
+                Assert.That(material.GetFloat("_DetailSoftness"), Is.EqualTo(_theme.Style.GroundDetailSoftness));
+                Assert.That(material.GetFloat("_TurfWeight"), Is.EqualTo(_theme.Style.GroundTurfWeight));
                 generatedSurface = material.GetTexture("_SurfaceMap");
                 Assert.That(generatedSurface, Is.Not.Null);
                 Assert.That(generatedSurface, Is.Not.SameAs(source.GetTexture("_SurfaceMap")));
@@ -385,6 +429,11 @@ namespace Game.LocationTests
             _preview.Dispose();
             Assert.That(meshes.All(m => m == null), Is.True);
             Assert.That(generatedSurface == null, Is.True, "Маска разлома освобождается вместе с View");
+            if (source != null)
+            {
+                Assert.That(source.GetFloat("_DetailSoftness"), Is.EqualTo(sourceSoftness), "Материал лагеря изменён");
+                Assert.That(source.GetFloat("_TurfWeight"), Is.EqualTo(sourceTurf), "Материал лагеря изменён");
+            }
         }
 
         [Test]
@@ -408,9 +457,11 @@ namespace Game.LocationTests
             finally { state.Restore(); }
         }
 
-        [TestCase(CampLookStyle.Original)]
-        [TestCase(CampLookStyle.Clean)]
-        public void CampLighting_IsSharedWithoutEnablingCamp_AndRestoresOnExit(CampLookStyle style)
+        [TestCase(CampLookStyle.Original, false)]
+        [TestCase(CampLookStyle.Clean, false)]
+        [TestCase(CampLookStyle.GoldenEvening, false)]
+        [TestCase(CampLookStyle.GoldenEvening, true)]
+        public void CampLighting_IsSharedWithoutEnablingCamp_AndRestoresOnExit(CampLookStyle style, bool useOverride)
         {
             var world = Object.FindAnyObjectByType<SceneWorldView>();
             bool ownWorld = world == null;
@@ -421,6 +472,7 @@ namespace Game.LocationTests
             var fill = new GameObject("Тестовое заполнение").AddComponent<Light>();
             var original = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
             var clean = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
+            var custom = ScriptableObject.CreateInstance<UnityEngine.Rendering.VolumeProfile>();
             var lighting = new MeadowLighting();
             var serialized = new SerializedObject(world);
             try
@@ -430,28 +482,43 @@ namespace Game.LocationTests
                 var look = camp.AddComponent<CampLookController>();
                 look.Sun = sun; look.Fill = fill; look.Volume = camp.AddComponent<UnityEngine.Rendering.Volume>();
                 look.Original = original; look.Clean = clean; look.Style = style;
+                look.GoldenEvening = clean; look.EveningSunScale = .7f;
                 look.Volume.sharedProfile = original; look.Volume.priority = 17;
                 sun.color = Color.white; sun.shadowStrength = .7f; fill.intensity = .3f;
+                sun.intensity = 2; sun.transform.rotation = Quaternion.Euler(52, -35, 0); fill.color = Color.cyan;
+                var rotation = sun.transform.rotation;
                 bool fog = RenderSettings.fog; Color sky = RenderSettings.ambientSkyColor;
                 _theme.Style.UseCampLighting = true;
+                _theme.Style.PostProcessingOverride = useOverride ? custom : null;
+                bool evening = style == CampLookStyle.GoldenEvening;
                 for (int cycle = 0; cycle < 2; cycle++)
                 {
                     lighting.Apply(_theme.Style);
+                    lighting.Apply(_theme.Style);
                     Assert.That(camp.activeSelf, Is.False);
-                    Assert.That(RenderSettings.fog, Is.EqualTo(fog));
+                    Assert.That(RenderSettings.fog, Is.EqualTo(evening || fog));
                     Assert.That(RenderSettings.ambientSkyColor, Is.EqualTo(sky));
-                    Assert.That(sun.color, Is.EqualTo(style == CampLookStyle.Original ? Color.white : look.SunColor));
-                    Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : look.FillIntensity));
+                    Assert.That(sun.color, Is.EqualTo(style == CampLookStyle.Original ? Color.white : evening ? look.EveningSunColor : look.SunColor));
+                    Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : evening ? look.EveningFillIntensity : look.FillIntensity));
+                    Assert.That(fill.color, Is.EqualTo(evening ? look.EveningFillColor : Color.cyan));
+                    Assert.That(sun.intensity, Is.EqualTo(evening ? 1.4f : 2).Within(.0001f));
+                    Assert.That(Quaternion.Angle(sun.transform.rotation, evening
+                        ? Quaternion.Euler(look.EveningSunPitch, rotation.eulerAngles.y, rotation.eulerAngles.z) : rotation), Is.LessThan(.01f));
+                    if (evening) Assert.That(RenderSettings.fogColor, Is.EqualTo(look.EveningFogColor));
                     var volumes = Resources.FindObjectsOfTypeAll<UnityEngine.Rendering.Volume>()
                         .Where(v => v.isActiveAndEnabled && v.name == "Освещение разлома — профиль лагеря").ToArray();
                     Assert.That(volumes.Length, Is.EqualTo(1));
-                    Assert.That(volumes[0].sharedProfile, Is.SameAs(look.SelectedProfile));
+                    Assert.That(volumes[0].sharedProfile, Is.SameAs(useOverride ? custom : look.SelectedProfile));
                     Assert.That(volumes[0].priority, Is.EqualTo(17));
                     lighting.Restore();
                     Assert.That(volumes[0].gameObject.activeSelf, Is.False);
                     Assert.That(sun.color, Is.EqualTo(Color.white));
                     Assert.That(sun.shadowStrength, Is.EqualTo(.7f));
                     Assert.That(fill.intensity, Is.EqualTo(.3f));
+                    Assert.That(fill.color, Is.EqualTo(Color.cyan));
+                    Assert.That(sun.intensity, Is.EqualTo(2));
+                    Assert.That(Quaternion.Angle(sun.transform.rotation, rotation), Is.LessThan(.01f));
+                    Assert.That(RenderSettings.fog, Is.EqualTo(fog));
                 }
                 Assert.That(look.Volume.sharedProfile, Is.SameAs(original));
             }
@@ -461,7 +528,7 @@ namespace Game.LocationTests
                 serialized.FindProperty("_campRoot").objectReferenceValue = previousCamp;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 Object.DestroyImmediate(camp); Object.DestroyImmediate(sun.gameObject); Object.DestroyImmediate(fill.gameObject);
-                Object.DestroyImmediate(original); Object.DestroyImmediate(clean);
+                Object.DestroyImmediate(original); Object.DestroyImmediate(clean); Object.DestroyImmediate(custom);
                 if (ownWorld) Object.DestroyImmediate(world.gameObject);
             }
         }

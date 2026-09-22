@@ -19,6 +19,10 @@ MonoBehaviour:
     Thickness: 0.2
     ExitColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     NaturalGround: 1
+    GroundDetailSoftness: 1.7
+    GroundTurfWeight: 0.32
+    TrailStoneCoverage: 0.55
+    ForestGroundWear: 0.65
     CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
     ForestClearings: 1
     ClearingSize: 1
@@ -34,6 +38,7 @@ MonoBehaviour:
     ObstacleTree: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
     ForestBandWidth: 22
     ForestSpacing: 4.5
+    EdgeCanopyDensity: 0.7
     UseCampLighting: 1
     SunColor: {r: 1, g: 0.92, b: 0.8, a: 1}
     SunIntensity: 1.25

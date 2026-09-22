@@ -16,6 +16,9 @@ namespace Game.View
             material.SetFloat("_IsSurface", 1);
             material.SetFloat("_IsPath", 0);
             material.SetFloat("_IsRiverBank", 0);
+            material.SetColor("_BaseColor", material.GetColor("_BaseColor") * new Color(.88f, .95f, .89f, 1));
+            if (material.HasProperty("_DetailSoftness")) material.SetFloat("_DetailSoftness", _style.GroundDetailSoftness);
+            if (material.HasProperty("_TurfWeight")) material.SetFloat("_TurfWeight", _style.GroundTurfWeight);
             return material;
         }
 
@@ -34,7 +37,7 @@ namespace Game.View
                     int i = y * TrailResolution + x;
                     float px = _trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z;
                     float pz = _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w;
-                    float stones = Mathf.Lerp(.64f, 1, Mathf.SmoothStep(0, 1,
+                    float stones = _style.TrailStoneCoverage * Mathf.Lerp(.08f, 1, Mathf.SmoothStep(0, 1,
                         Mathf.InverseLerp(.3f, .7f, Mathf.PerlinNoise(px * .32f + 5, pz * .32f + 13))));
                     float turf = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.28f, .72f,
                         Mathf.PerlinNoise(px * .43f + 8, pz * .43f + 17) * .65f
@@ -44,11 +47,52 @@ namespace Game.View
                     if (x == 0 || y == 0 || x == TrailResolution - 1 || y == TrailResolution - 1) path = 0;
                     _campSurfacePixels[i] = new Color32(path, (byte)(stones * 255), 255, (byte)(turf * 255));
                 }
+            // Земля связывает предметы с окружением; на проходах не появляется новая геометрия.
+            for (int i = 0; i < _decorCount; i++)
+            {
+                int variant = _decorVariant[i];
+                var kind = _style.DecorVariants[variant].Kind;
+                if (kind == DecorKind.GrassTuft) continue;
+                var item = _decor[i];
+                float radius = _decorRadii[variant] * Mathf.Max(item.localScale.x, item.localScale.z)
+                    / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y);
+                StampForestGround(new Vector2(item.position.x, item.position.z), Mathf.Clamp(radius * 1.2f, .8f, 5),
+                    kind == DecorKind.Tree ? 1 : .6f);
+            }
+            for (int i = 0; i < _shownMap.ObstacleCount; i++)
+            {
+                var obstacle = _shownMap.GetObstacle(i);
+                StampForestGround(TrailPoint(obstacle.Center), obstacle.Radius.ToFloat() + 1.1f, .85f);
+            }
             _campSurfaceMap.SetPixels32(_campSurfacePixels); _campSurfaceMap.Apply(false, false);
             BindCampSurface(_roomMaterial); BindCampSurface(_entranceMaterial); BindCampSurface(_exitMaterial);
             if (_shore != null) BindCampSurface(_shore.GetComponent<MeshRenderer>().sharedMaterial);
             if (_banks != null) BindCampSurface(_banks.GetComponent<MeshRenderer>().sharedMaterial);
             if (_groundFill != null) BindCampSurface(_groundFill.GetComponent<MeshRenderer>().sharedMaterial);
+        }
+
+        private void StampForestGround(Vector2 center, float radius, float strength)
+        {
+            int x0 = Mathf.Max(1, Mathf.FloorToInt((center.x - radius - _trailBounds.x) / _trailBounds.z * TrailResolution));
+            int x1 = Mathf.Min(TrailResolution - 2, Mathf.CeilToInt((center.x + radius - _trailBounds.x) / _trailBounds.z * TrailResolution));
+            int y0 = Mathf.Max(1, Mathf.FloorToInt((center.y - radius - _trailBounds.y) / _trailBounds.w * TrailResolution));
+            int y1 = Mathf.Min(TrailResolution - 2, Mathf.CeilToInt((center.y + radius - _trailBounds.y) / _trailBounds.w * TrailResolution));
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    var p = new Vector2(_trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z,
+                        _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w);
+                    float edge = Vector2.Distance(p, center) / radius;
+                    float wear = Mathf.SmoothStep(0, 1, Mathf.Clamp01(1 - edge)) * strength * _style.ForestGroundWear;
+                    wear *= Mathf.Lerp(.65f, 1, Mathf.PerlinNoise(p.x * 1.7f, p.y * 1.7f));
+                    int index = y * TrailResolution + x;
+                    var pixel = _campSurfacePixels[index];
+                    bool road = _trailPixels[index] > 90;
+                    pixel.r = (byte)Mathf.Max(pixel.r, wear * 230);
+                    pixel.b = (byte)Mathf.Min(pixel.b, (1 - wear * .22f) * 255);
+                    if (!road) pixel.g = (byte)Mathf.Min(pixel.g, 25);
+                    _campSurfacePixels[index] = pixel;
+                }
         }
 
         private void BindCampSurface(Material material)
