@@ -102,7 +102,8 @@ namespace Game.View
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             _fogBlock.SetVector(MainTexStId, new Vector4(1f, 1f, 0f, 0f));
-            _fogBlock.SetColor(ColorId, _style.FogColor);
+            _fogBlock.SetColor(ColorId, _style.NaturalGround
+                ? Color.Lerp(_style.FogColor, new Color(.34f, .43f, .30f), .55f) : _style.FogColor);
             renderer.SetPropertyBlock(_fogBlock);
             _fogPlane = go.transform;
         }
@@ -169,6 +170,9 @@ namespace Game.View
                 Vector3 p = _decor[i].position;
                 // Крона входит в поле зрения раньше ствола; дальние деревья остаются скрытыми.
                 float reach = FogRevealRadius + Mathf.Min(5, _decorRadii[_decorVariant[i]]);
+                // Непроходимая опушка видна за пеленой; маска исследования и враги не раскрываются.
+                if (_style.NaturalGround && _style.DecorVariants[_decorVariant[i]].Kind == DecorKind.Tree)
+                    reach += 10;
                 if ((new Vector2(p.x, p.z) - player).sqrMagnitude > reach * reach) continue;
                 _decorRevealed[i] = true;
                 _decor[i].gameObject.SetActive(true);

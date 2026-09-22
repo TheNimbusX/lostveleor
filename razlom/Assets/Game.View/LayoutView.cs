@@ -423,8 +423,6 @@ namespace Game.View
                 PlaceModuleDecor(map, placed, i, cell);
             }
 
-            ScatterBoundaryDecor(map.Outline != null ? .5f : cell);
-
             BuildRouteTrails(map);
             BuildMeadow(map, cell);
             BuildSolids(map);
@@ -572,6 +570,18 @@ namespace Game.View
             float scaleJitter = Mathf.Lerp(variant.ScaleRange.x, variant.ScaleRange.y, (float)rng.NextDouble());
             Vector3 baseScale = variant.Prefab != null ? Vector3.one : PlaceholderBaseScale(variant.Kind);
             instance.localScale = baseScale * scaleJitter;
+
+            if (variant.Kind == DecorKind.Bush)
+            {
+                // Отдельный поток формы сохраняет позиции и выбор остальных объектов.
+                var shape = DecorRandom(unchecked(Mathf.RoundToInt(x * 100) * 486187739
+                    ^ Mathf.RoundToInt(z * 100) * 290797 ^ variantIndex), 821);
+                // Только сжимаем модель: проверенный до спавна габарит остаётся безопасным.
+                instance.localScale = Vector3.Scale(instance.localScale, new Vector3(
+                    .62f + (float)shape.NextDouble() * .32f,
+                    .7f + (float)shape.NextDouble() * .3f,
+                    .8f + (float)shape.NextDouble() * .2f));
+            }
 
             float yaw = (float)(rng.NextDouble() * 360.0);
             instance.rotation = Quaternion.Euler(0f, yaw, 0f);

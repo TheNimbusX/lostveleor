@@ -373,8 +373,11 @@ namespace Game.View
                 minZ=Mathf.Min(minZ,p.OriginY*cell); maxZ=Mathf.Max(maxZ,(p.OriginY+p.Height)*cell);
             }
             BuildBackgroundRelief(map, minX, maxX, minZ, maxZ);
+            // Вода и рельеф уже выбраны: опушка учитывает берег и высоту земли этой карты.
+            ScatterBoundaryDecor(map.Outline != null ? .5f : cell);
             if (trees.Count==0 || _style.ForestBandWidth<=0) return;
-            int created=0;
+            // Ближние группы занимают часть общего бюджета, не увеличивая лимит деревьев.
+            int created = map.Outline != null ? _edgeTreeCount : 0;
             var groveRng = DecorRandom(0, 193);
             float groveX = (float)groveRng.NextDouble() * 1000, groveZ = (float)groveRng.NextDouble() * 1000;
             float treeWeight = 0;

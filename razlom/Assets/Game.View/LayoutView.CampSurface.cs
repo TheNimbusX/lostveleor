@@ -17,6 +17,8 @@ namespace Game.View
             material.SetFloat("_IsPath", 0);
             material.SetFloat("_IsRiverBank", 0);
             material.SetColor("_BaseColor", material.GetColor("_BaseColor") * new Color(.88f, .95f, .89f, 1));
+            if (material.HasProperty("_DetailSoftness")) material.SetFloat("_DetailSoftness", _style.GroundDetailSoftness);
+            if (material.HasProperty("_TurfWeight")) material.SetFloat("_TurfWeight", _style.GroundTurfWeight);
             return material;
         }
 
@@ -52,7 +54,7 @@ namespace Game.View
                 var kind = _style.DecorVariants[variant].Kind;
                 if (kind == DecorKind.GrassTuft) continue;
                 var item = _decor[i];
-                float radius = _decorRadii[variant] * item.localScale.x
+                float radius = _decorRadii[variant] * Mathf.Max(item.localScale.x, item.localScale.z)
                     / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y);
                 StampForestGround(new Vector2(item.position.x, item.position.z), Mathf.Clamp(radius * 1.2f, .8f, 5),
                     kind == DecorKind.Tree ? 1 : .6f);

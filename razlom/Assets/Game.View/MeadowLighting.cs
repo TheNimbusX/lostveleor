@@ -19,10 +19,11 @@ namespace Game.View
         private Light _fill;
         private float _fillIntensity, _shadowStrength;
         private bool _usingCamp;
+        private Color _fillColor;
         public void Apply(LayoutStyle style)
         {
             if (_active) return;
-            if (style.UseCampLighting && ApplyCamp()) return;
+            if (style.UseCampLighting && ApplyCamp(style)) return;
             _active = true;
             _fog = RenderSettings.fog; _fogMode = RenderSettings.fogMode;
             _fogColor = RenderSettings.fogColor; _start = RenderSettings.fogStartDistance; _end = RenderSettings.fogEndDistance;
@@ -49,17 +50,24 @@ namespace Game.View
             RenderSettings.ambientGroundColor = style.AmbientColor * .45f;
             RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = style.FogColor; RenderSettings.fogStartDistance = style.FogStart; RenderSettings.fogEndDistance = style.FogEnd;
+            if (style.PostProcessingOverride != null) SetVolume(style.PostProcessingOverride, 0, 20, 1);
         }
         public void Restore()
         {
             if (!_active) return;
             _active = false;
+            if (_campVolume != null) _campVolume.gameObject.SetActive(false);
             if (_usingCamp)
             {
                 _usingCamp = false;
-                if (_campVolume != null) _campVolume.gameObject.SetActive(false);
-                if (_sun != null) { _sun.color = _sunColor; _sun.shadowStrength = _shadowStrength; }
-                if (_fill != null) _fill.intensity = _fillIntensity;
+                if (_sun != null)
+                {
+                    _sun.color = _sunColor; _sun.shadowStrength = _shadowStrength;
+                    _sun.intensity = _sunIntensity; _sun.transform.rotation = _rotation;
+                }
+                if (_fill != null) { _fill.intensity = _fillIntensity; _fill.color = _fillColor; }
+                RenderSettings.fog = _fog; RenderSettings.fogMode = _fogMode; RenderSettings.fogColor = _fogColor;
+                RenderSettings.fogStartDistance = _start; RenderSettings.fogEndDistance = _end;
                 return;
             }
             RenderSettings.fog = _fog; RenderSettings.fogMode = _fogMode; RenderSettings.fogColor = _fogColor;
@@ -70,7 +78,7 @@ namespace Game.View
             if (_camera != null) { _camera.backgroundColor = _background; _camera.clearFlags = _clearFlags; }
         }
 
-        private bool ApplyCamp()
+        private bool ApplyCamp(LayoutStyle style)
         {
             var world = Object.FindAnyObjectByType<SceneWorldView>();
             var look = world != null && world.CampRoot != null
@@ -79,27 +87,43 @@ namespace Game.View
                 return false;
             _sun = look.Sun; _fill = look.Fill;
             _sunColor = _sun.color; _shadowStrength = _sun.shadowStrength; _fillIntensity = _fill.intensity;
-            if (look.Style != CampLookStyle.Original)
+            _sunIntensity = _sun.intensity; _rotation = _sun.transform.rotation; _fillColor = _fill.color;
+            _fog = RenderSettings.fog; _fogMode = RenderSettings.fogMode; _fogColor = RenderSettings.fogColor;
+            _start = RenderSettings.fogStartDistance; _end = RenderSettings.fogEndDistance;
+            look.ApplyDirectionalLighting(_sun, _fill);
+            if (look.Style == CampLookStyle.GoldenEvening && look.EveningFog)
             {
-                _sun.color = look.SunColor; _sun.shadowStrength = look.ShadowStrength;
-                _fill.intensity = look.FillIntensity;
+                RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear;
+                RenderSettings.fogColor = look.EveningFogColor;
+                // Дистанция до земли под центром камеры: координаты лагеря не подходят разлому.
+                var camera = Camera.main;
+                float depth = camera != null && Mathf.Abs(camera.transform.forward.y) > .001f
+                    ? Mathf.Max(0, -camera.transform.position.y / camera.transform.forward.y) : 0;
+                RenderSettings.fogStartDistance = depth + look.FogNear;
+                RenderSettings.fogEndDistance = depth + look.FogFar;
             }
+            SetVolume(style.PostProcessingOverride != null ? style.PostProcessingOverride : look.SelectedProfile,
+                look.Volume.gameObject.layer, look.Volume.priority, look.Volume.weight);
+            _active = _usingCamp = true;
+            if (Application.isPlaying)
+                Debug.Log($"[rift-light] camp={look.Style} profile={_campVolume.sharedProfile.name} sun={_sun.intensity} fill={_fill.intensity}");
+            return true;
+        }
+
+        private void SetVolume(VolumeProfile profile, int layer, float priority, float weight)
+        {
             // Объекты лагеря остаются выключенными; переиспользуется только его профиль Volume.
             if (_campVolume == null)
             {
                 var root = new GameObject("Освещение разлома — профиль лагеря") { hideFlags = HideFlags.DontSave };
                 _campVolume = root.AddComponent<Volume>();
             }
-            _campVolume.gameObject.layer = look.Volume.gameObject.layer;
+            _campVolume.gameObject.layer = layer;
             _campVolume.isGlobal = true;
-            _campVolume.priority = look.Volume.priority;
-            _campVolume.weight = look.Volume.weight;
-            _campVolume.sharedProfile = look.SelectedProfile;
+            _campVolume.priority = priority;
+            _campVolume.weight = weight;
+            _campVolume.sharedProfile = profile;
             _campVolume.gameObject.SetActive(true);
-            _active = _usingCamp = true;
-            if (Application.isPlaying)
-                Debug.Log($"[rift-light] camp={look.Style} profile={look.SelectedProfile.name} sun={_sun.intensity} fill={_fill.intensity}");
-            return true;
         }
 
         public void Dispose()

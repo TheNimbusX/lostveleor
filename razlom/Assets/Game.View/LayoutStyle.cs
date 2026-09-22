@@ -17,6 +17,10 @@ namespace Game.View
         public bool NaturalGround = true;
         [Tooltip("Материал лагерной поверхности; маска дорог создаётся заново для каждого разлома.")]
         public Material CampSurfaceMaterial;
+        [Tooltip("Смягчение мелкой фактуры травы в разломе; материал лагеря не меняется.")]
+        [Range(0, 3)] public float GroundDetailSoftness = 1.7f;
+        [Tooltip("Доля пятнистого дерна в траве. Меньше — спокойнее фон боя.")]
+        [Range(0, 1)] public float GroundTurfWeight = .32f;
         [Tooltip("Доля камней на тропинке; остальное — утоптанная земля.")]
         [Range(0, 1)] public float TrailStoneCoverage = .55f;
         [Tooltip("Выраженность грунта и контактного затемнения под растительностью.")]
@@ -29,9 +33,13 @@ namespace Game.View
         public GameObject ObstacleTree;
         [Range(0, 30)] public float ForestBandWidth = 16;
         [Range(4, 12)] public float ForestSpacing = 6;
+        [Tooltip("Плотность групп крон за опушкой. Ноль оставляет только дальний лес; проходы всегда свободны.")]
+        [Range(0, 1)] public float EdgeCanopyDensity = .7f;
         [InspectorName("Освещение как в лагере")]
         [Tooltip("Использовать свет сцены и выбранную постобработку CampLookController. Цвета солнца и тумана ниже применяются при выключенном переключателе.")]
         public bool UseCampLighting;
+        [Tooltip("Пусто — постобработка художественного прохода лагеря. Отдельный ассет позволяет настроить другую локацию.")]
+        public UnityEngine.Rendering.VolumeProfile PostProcessingOverride;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
         [Range(0.1f, 3)] public float SunIntensity = 1.25f;
         public Vector3 SunAngles = new Vector3(52, -35, 0);
@@ -160,12 +168,16 @@ namespace Game.View
 
         public void Validate()
         {
+            if (float.IsNaN(GroundDetailSoftness) || GroundDetailSoftness < 0 || GroundDetailSoftness > 3
+                || float.IsNaN(GroundTurfWeight) || GroundTurfWeight < 0 || GroundTurfWeight > 1)
+                throw new ArgumentException("Смягчение травы должно быть 0–3, доля дерна — 0–1.");
             if (float.IsNaN(TrailStoneCoverage) || TrailStoneCoverage < 0 || TrailStoneCoverage > 1
                 || float.IsNaN(ForestGroundWear) || ForestGroundWear < 0 || ForestGroundWear > 1)
                 throw new ArgumentException("Покрытие тропы и грунт под лесом должны быть в пределах 0–1.");
             if (ClearingSize < .5f || ClearingSize > 1.2f)
                 throw new ArgumentException("Размер полян должен быть от 0.5 до 1.2.");
-            if (ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
+            if (float.IsNaN(EdgeCanopyDensity) || EdgeCanopyDensity < 0 || EdgeCanopyDensity > 1
+                || ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
                 || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3)
                 throw new ArgumentException("Проверьте ширину леса, шаг деревьев, свет и дальность тумана.");
             if (RouteWidth < 0.8f || RouteWidth > 2f || RouteClearance < 0 || EntryClearance < 0

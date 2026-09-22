@@ -8,9 +8,11 @@ namespace Game.View
     {
         private Mesh _shoreMesh;
         private GameObject _shore;
+        private int _edgeTreeCount;
 
         private void ScatterOutlinedBoundary(float cell)
         {
+            _edgeTreeCount = 0;
             if (_style.BoundaryDecorChance <= 0) return;
             var bushes = new List<int>(); var rocks = new List<int>(); var trees = new List<int>();
             for (int i = 0; i < _style.DecorVariants.Length; i++)
@@ -24,6 +26,7 @@ namespace Game.View
             if (bushes.Count == 0 && rocks.Count == 0) return;
             var occupied = new List<long>(_occupiedCells); occupied.Sort();
             var placed = new List<Vector3>();
+            var copses = new List<Vector2>();
             float spacing = Mathf.Clamp(_style.BoundarySpacing, 1.2f, 3)
                 * Mathf.Clamp(Mathf.Sqrt(.36f / _style.BoundaryDecorChance), .85f, 2);
             foreach (long key in occupied)
@@ -68,7 +71,7 @@ namespace Game.View
                     if (_style.DecorVariants[variant].Kind == DecorKind.Bush)
                     {
                         var size = _decor[_decorCount - 1].localScale;
-                        size.y *= .68f + (float)rng.NextDouble() * .25f;
+                        size.y *= .6f + (float)rng.NextDouble() * .28f;
                         _decor[_decorCount - 1].localScale = size;
                     }
                     placed.Add(new Vector3(point.x, point.y, radius));
@@ -80,8 +83,9 @@ namespace Game.View
                         if (companion >= 0)
                         {
                             float companionScale = scale * (.42f + (float)rng.NextDouble() * .25f);
-                            var outer = point + normal * (radius * (.75f + follower * .3f))
-                                + tangent * radius * (follower % 2 == 0 ? .85f : -.85f);
+                            // Спутники перекрывают основание куста, а не образуют отдельные круглые метки.
+                            var outer = point + normal * (radius * (.3f + follower * .18f))
+                                + tangent * radius * (follower % 2 == 0 ? .55f : -.55f);
                             if (!BoundaryBlocksClearance(outer, _decorRadii[companion] * companionScale)
                                 && !NearRiver(outer.x, outer.y, _decorRadii[companion] * companionScale))
                             {
@@ -90,15 +94,36 @@ namespace Game.View
                             }
                         }
                     }
-                    if (patch > .48f && rng.NextDouble() < .12f)
+                    // Отдельный поток не меняет кусты при настройке верхнего яруса леса.
+                    var canopyRng = DecorRandom(unchecked(x * 486187739 + z * 290797 + d * 65497), 631);
+                    if (_style.ForestBandWidth > 0 && patch > .38f && _edgeTreeCount < 96
+                        && canopyRng.NextDouble() < _style.EdgeCanopyDensity)
                     {
-                        int tree = PickDetail(trees, rng);
-                        if (tree >= 0)
+                        bool nearby = false;
+                        foreach (var copse in copses)
+                            if ((copse - point).sqrMagnitude < 81) { nearby = true; break; }
+                        if (nearby) continue;
+                        bool planted = false;
+                        int count = canopyRng.Next(2, 5);
+                        for (int member = 0; member < count && _edgeTreeCount < 96; member++)
                         {
-                            var outer = point + normal * (radius + _decorRadii[tree] + .6f);
-                            if (!BoundaryBlocksClearance(outer, _decorRadii[tree]))
-                                SpawnDecor(tree, outer.x, outer.y, rng);
+                            int tree = PickDetail(trees, canopyRng);
+                            if (tree < 0) break;
+                            float treeScale = member == 0 ? 1.3f : .85f + (float)canopyRng.NextDouble() * .3f;
+                            float canopyRadius = _decorRadii[tree] * treeScale;
+                            // Куст растёт под кроной: второй отступ на его радиус создавал пустую полосу.
+                            var outer = point + normal * (canopyRadius - radius + .35f + member * .65f)
+                                + tangent * ((member - (count - 1) * .5f) * canopyRadius * .85f);
+                            // Проверяем всю крону, а не только ствол: она не закрывает боевой центр.
+                            if (BoundaryBlocksClearance(outer, canopyRadius) || NearPond(outer.x, outer.y, canopyRadius)) continue;
+                            SpawnDecor(tree, outer.x, outer.y, canopyRng);
+                            var instance = _decor[_decorCount - 1];
+                            instance.localScale *= treeScale;
+                            instance.position = new Vector3(outer.x, BackgroundHeight(_shownMap, outer.x, outer.y) - .08f, outer.y);
+                            _edgeTreeCount++;
+                            planted = true;
                         }
+                        if (planted) copses.Add(point);
                     }
                 }
             }
