@@ -31,6 +31,9 @@ namespace Game.Sim
 
         /// <summary>Мини-меню над способностью с элиты: разобрать её на золото забега.</summary>
         PickupSalvage = 14,
+        ChooseRoute1 = 15,
+        ChooseRoute2 = 16,
+        ChooseRoute3 = 17,
     }
 
     /// <summary>Фаза забега. Одна за раз, переходы только по правилам RiftRun.</summary>
@@ -53,6 +56,24 @@ namespace Game.Sim
 
         /// <summary>Взята способность при полной панели: заменить одну из четырёх или разобрать на золото.</summary>
         ReplacingAbility = 5,
+        ChoosingRoute = 6,
+    }
+
+    public enum ArenaReward : byte { Upgrade, Shop }
+
+    /// <summary>Обещание следующей ветки. Бонус выдаётся только за её зачистку.</summary>
+    public readonly struct ArenaRouteOffer
+    {
+        public readonly ArenaReward Reward;
+        public readonly int Size, BonusGold;
+        public readonly bool Hard;
+        public ArenaRouteOffer(ArenaReward reward, int size, bool hard, int bonusGold)
+        { Reward = reward; Size = size; Hard = hard; BonusGold = bonusGold; }
+        public void HashInto(ref ulong hash)
+        {
+            Hashing.Mix(ref hash, (int)Reward); Hashing.Mix(ref hash, Size);
+            Hashing.Mix(ref hash, Hard ? 1 : 0); Hashing.Mix(ref hash, BonusGold);
+        }
     }
 
     /// <summary>Чем закончился забег.</summary>

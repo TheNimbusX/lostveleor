@@ -112,6 +112,7 @@ namespace Game.View
                         session.Run.Sim.Entities.Position[0]=session.Run.Map.ExitPoint(0);session.Step(Game.Sim.InputFrame.Empty);
                         session.Step(new Game.Sim.InputFrame{Command=(byte)Game.Sim.RunCommand.ChooseReward1});
                         if(session.Run.Phase==Game.Sim.RunPhase.ReplacingAbility)session.Step(new Game.Sim.InputFrame{Command=(byte)Game.Sim.RunCommand.SalvageAbility});
+                        if(session.Run.Phase==Game.Sim.RunPhase.ChoosingRoute)session.Step(new Game.Sim.InputFrame{Command=(byte)Game.Sim.RunCommand.ChooseRoute1});
                     }
                     if(session.Camp.TraderGeneration!=0)return false;
                 }

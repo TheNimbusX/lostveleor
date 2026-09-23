@@ -36,6 +36,8 @@ namespace Game.Tests
             // Способность при полной панели разбирается: петля локации проверяет уровни, а не набор.
             if (session.Mode == GameMode.Rift && session.Run.Phase == RunPhase.ReplacingAbility)
                 session.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
+            if (session.Mode == GameMode.Rift && session.Run.Phase == RunPhase.ChoosingRoute)
+                session.Step(new InputFrame { Command = (byte)RunCommand.ChooseRoute1 });
         }
 
         [TestCase(1UL)]
@@ -157,6 +159,35 @@ namespace Game.Tests
                     if (i != plan.BossId) Assert.That(a.Entities.Health[i], Is.EqualTo(b.Entities.Health[i]));
                 }
             }
+        }
+
+        [Test]
+        public void ArenaSizes_KeepReachableFloorAndSafeSpawnsAcrossSeeds()
+        {
+            var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
+            for (int size = 2; size <= 4; size++)
+                for (ulong seed = 1; seed <= 20; seed++)
+                {
+                    var level = profile.GetLevel(4).WithArenaSize(size);
+                    var map = new LayoutMap(profile.Modules, profile.MaxModules);
+                    var other = new LayoutMap(profile.Modules, profile.MaxModules);
+                    level.Generate(new LayoutGenerator(), profile.Modules, map, seed);
+                    level.Generate(new LayoutGenerator(), profile.Modules, other, seed);
+                    Assert.That(map.Hash(), Is.EqualTo(other.Hash()));
+                    Assert.That(map.GladeCount, Is.EqualTo(1));
+                    Assert.That(map.ExitCount, Is.EqualTo(1));
+                    Assert.That(map.RewardBranchCount, Is.Zero);
+                    for (int c = 0; c < map.Routes.CellCount; c++)
+                        Assert.That(map.Routes.DistanceFromEntry(c), Is.GreaterThanOrEqualTo(0), $"size {size}, seed {seed}");
+                    var sim = new Simulation(seed, 512);
+                    level.Spawn(sim, map, seed);
+                    Assert.That(sim.CountAliveEnemies(), Is.GreaterThan(0));
+                    for (int i = 1; i < sim.Entities.Count; i++)
+                    {
+                        Assert.That(map.IsWalkable(sim.Entities.Position[i], sim.Entities.BodyRadius[i]), Is.True);
+                        Assert.That(FixVec2.DistanceSq(sim.Entities.Position[i], map.EntryPoint) >= Fix64.FromInt(196), Is.True);
+                    }
+                }
         }
 
         [Test]

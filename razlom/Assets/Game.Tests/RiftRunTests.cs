@@ -120,6 +120,71 @@ namespace Game.Tests
 
         // ---- приёмка ----
 
+        private static RiftRun NewArenaRun()
+        {
+            var modules = Modules();
+            var level = new RiftLevelSettings(12, 1, 0, 0, 1, 2, 100, arenaSize: 3);
+            var location = new LocationDefinition(42, modules, new[] { level, level, level }, completeAtEnd: true);
+            var run = new RiftRun(new Simulation(Seed, 1024), modules, Items(), new[] { SwordId }, location: location);
+            run.StartRun();
+            return run;
+        }
+
+        [Test]
+        public void ArenaFlow_OffersRoutesThenCompletesFinalLevel()
+        {
+            var run = NewArenaRun();
+            for (int depth = 1; depth <= 3; depth++)
+            {
+                Assert.That(run.Depth, Is.EqualTo(depth));
+                Assert.That(run.Map.ExitCount, Is.EqualTo(1));
+                Assert.That(run.Map.RewardBranchCount, Is.Zero);
+                ClearRiftAndReachExit(run);
+                Take(run, RunCommand.ChooseReward1);
+                if (depth == 3) break;
+                Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingRoute));
+                int tick = run.Sim.Tick;
+                run.Step(Command(RunCommand.ChooseReward1));
+                Assert.That(run.Depth, Is.EqualTo(depth));
+                Assert.That(run.Sim.Tick, Is.EqualTo(tick));
+                run.Step(Command(RunCommand.ChooseRoute2));
+                Assert.That(run.CurrentRoute.Reward, Is.EqualTo(ArenaReward.Shop));
+            }
+            Assert.That(run.Outcome, Is.EqualTo(RunOutcome.Completed));
+        }
+
+        [Test]
+        public void ArenaFlow_HardRouteGrantsBonusOnceAfterClear()
+        {
+            var run = NewArenaRun();
+            ClearRiftAndReachExit(run);
+            Take(run, RunCommand.ChooseReward1);
+            var offer = run.GetRoute(2);
+            run.Step(Command(RunCommand.ChooseRoute3));
+            Assert.That(run.CurrentRoute.Hard, Is.True);
+            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(125));
+            int before = run.Gold;
+            KillAllEnemies(run);
+            run.Step(Idle);
+            Assert.That(run.Gold, Is.EqualTo(before + offer.BonusGold));
+            run.Step(Idle);
+            Assert.That(run.Gold, Is.EqualTo(before + offer.BonusGold));
+        }
+
+        [Test]
+        public void ArenaFlow_ReplaysRouteDecisionsDeterministically()
+        {
+            var a = NewArenaRun(); var b = NewArenaRun();
+            for (int depth = 1; depth < 3; depth++)
+            {
+                ClearRiftAndReachExit(a); ClearRiftAndReachExit(b);
+                Take(a, RunCommand.ChooseReward1); Take(b, RunCommand.ChooseReward1);
+                Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+                a.Step(Command(RunCommand.ChooseRoute3)); b.Step(Command(RunCommand.ChooseRoute3));
+                Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+            }
+        }
+
         [Test]
         public void Run_GoesFromEntranceToRewardScreen()
         {

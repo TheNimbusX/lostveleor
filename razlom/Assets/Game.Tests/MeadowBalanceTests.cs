@@ -41,7 +41,9 @@ namespace Game.Tests
                                 Assert.That(sim.Entities.Damage[i], Is.GreaterThanOrEqualTo(12));
                         }
                         if (site.Role == EncounterRole.MainPath)
-                            Assert.That(elite, Is.EqualTo(tier == 0 ? 0 : tier == 1 ? 1 : 2), "seed " + seed);
+                            // Пачка стрелков доступна на всех глубинах и не содержит элит по авторингу.
+                            Assert.That(elite, Is.EqualTo(site.PackId == StableId.Of("encounter.meadow.forest_bud")
+                                ? 0 : tier == 0 ? 0 : tier == 1 ? 1 : 2), "seed " + seed);
                     }
                 }
             TestContext.WriteLine("Enemies across 30 seeds, levels 1/4/9: " + string.Join(", ", population));

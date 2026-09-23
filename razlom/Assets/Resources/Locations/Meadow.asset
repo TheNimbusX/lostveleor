@@ -19,11 +19,11 @@ MonoBehaviour:
     Thickness: 0.2
     ExitColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     NaturalGround: 1
+    CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
     GroundDetailSoftness: 1.7
     GroundTurfWeight: 0.32
     TrailStoneCoverage: 0.55
     ForestGroundWear: 0.65
-    CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
     ForestClearings: 1
     ClearingSize: 1
     PortalPrefab: {fileID: 4129559968169376948, guid: fdc3fcdb18e51cf44b134308461bc877, type: 3}
@@ -40,6 +40,7 @@ MonoBehaviour:
     ForestSpacing: 4.5
     EdgeCanopyDensity: 0.7
     UseCampLighting: 1
+    PostProcessingOverride: {fileID: 0}
     SunColor: {r: 1, g: 0.92, b: 0.8, a: 1}
     SunIntensity: 1.25
     SunAngles: {x: 52, y: -35, z: 0}
@@ -168,9 +169,28 @@ MonoBehaviour:
       Weight: 0
       ScaleRange: {x: 0.95, y: 1.05}
       UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 6824127429085797097, guid: 67c78ee25f36e694aa61912dc0ffdd89, type: 3}
+      ResourcePath: 
+      Weight: 0.4
+      ScaleRange: {x: 0.8, y: 1.3}
+      UseAsBoundary: 1
+    - Kind: 1
+      Prefab: {fileID: 5108353442441782814, guid: e1db5d40e6b8b4e459159d34bdb1d0b4, type: 3}
+      ResourcePath: 
+      Weight: 0.4
+      ScaleRange: {x: 0.8, y: 1.3}
+      UseAsBoundary: 1
+    - Kind: 2
+      Prefab: {fileID: 6633985054807788465, guid: c3dcec82d7c72d9488556639d744f344, type: 3}
+      ResourcePath: 
+      Weight: 0.7
+      ScaleRange: {x: 0.8, y: 1.2}
+      UseAsBoundary: 0
     DecorPerCell: 0.45
     DecorEdgeMargin: 0.7
     DecorConnectorMargin: 1.6
+    FogOfWar: 0
     BoundaryDecorChance: 0.36
     BoundarySpacing: 1.6
     BoundaryDecorOutset: 0.6

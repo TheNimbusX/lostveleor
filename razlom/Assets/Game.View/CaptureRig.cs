@@ -388,6 +388,22 @@ namespace Game.View
                 yield return null;
             }
             ConfigureCaptureView();
+            // Явный флаг снимает настоящий экран перехода, не затрагивая обычный забег.
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-arena-route") >= 0)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                var run = driver.Run;
+                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                driver.Session.Step(InputFrame.Empty);
+                run.Sim.Entities.Position[0] = run.Map.ExitPoint(0);
+                driver.Session.Step(InputFrame.Empty);
+                driver.Session.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
+                if (run.Phase == RunPhase.ReplacingAbility)
+                    driver.Session.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
+                Debug.Log("[arena-qa] Portal phase=" + run.Phase + ", routes=" + run.GetRoute(0).Size
+                    + "/" + run.GetRoute(1).Size + "/" + run.GetRoute(2).Size);
+                yield return null;
+            }
             if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-no-vfx") >= 0)
             {
                 // Контроллер также ведёт физическую голову Абордажа: скрываем только эффекты внутри него.
@@ -509,6 +525,15 @@ namespace Game.View
                 }
             }
 
+            if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-arena-route") >= 0)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                driver.QueueRunCommand(RunCommand.ChooseRoute3);
+                for (int frame = 0; frame < 120 && driver.Run.Depth == 1; frame++) yield return null;
+                if (driver.Run.Depth != 2 || !driver.Run.CurrentRoute.Hard || driver.Run.Phase != RunPhase.Clearing)
+                    throw new InvalidOperationException("Arena route UI command did not enter the selected arena.");
+                Debug.Log("[arena-qa] Queued route accepted: depth=2, hard=true, phase=Clearing");
+            }
             _audioCapture?.Dispose();
             _audioCapture = null;
             if (_recordVideo) Time.captureFramerate = 0;
