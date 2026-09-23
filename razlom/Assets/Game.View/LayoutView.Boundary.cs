@@ -19,6 +19,8 @@ namespace Game.View
             {
                 var variant = _style.DecorVariants[i];
                 if (!variant.UseAsBoundary || variant.Weight <= 0) continue;
+                // Изгородь ставится рядами в ScatterForestDetails, одиночная секция на контуре читается как мусор.
+                if (variant.Prefab != null && variant.Prefab.name == "CreatingFence") continue;
                 if (variant.Kind == DecorKind.Bush) bushes.Add(i);
                 else if (variant.Kind == DecorKind.Rock) rocks.Add(i);
                 else if (variant.Kind == DecorKind.Tree) trees.Add(i);
@@ -46,29 +48,38 @@ namespace Game.View
                     if (water || NearRiver(edge.x, edge.y, 1)) continue;
                     var rng = DecorRandom(unchecked(x * 486187739 + z * 290797 + d * 65497), 619);
                     float patch = Mathf.PerlinNoise(edge.x * .13f + 91, edge.y * .13f + 37);
+                    // Крупный шум вдоль опушки чередует густые заросли и просветы; ровный шаг
+                    // по всему контуру давал пунктирную цепочку одинаковых кустов.
+                    float thicket = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.28f, .72f,
+                        Mathf.PerlinNoise(edge.x * .07f + 213, edge.y * .07f + 57)));
+                    if (thicket < .12f && rng.NextDouble() < .8) continue;
                     var choices = bushes.Count == 0 || rocks.Count > 0 && patch > .62f ? rocks : bushes;
                     int variant = PickDetail(choices, rng);
                     if (variant < 0) continue;
-                    float scale = _style.DecorVariants[variant].Kind == DecorKind.Bush ? Mathf.Lerp(1.4f, 1.9f, patch) : 1;
+                    bool bush = _style.DecorVariants[variant].Kind == DecorKind.Bush;
+                    float scale = bush ? Mathf.Lerp(1.1f, 2.2f, Mathf.Pow((float)rng.NextDouble(), .8f) * (.55f + thicket * .45f)) : 1;
                     float radius = _decorRadii[variant] * scale;
                     var normal = new Vector2(dx, dz); var tangent = new Vector2(dz, -dx);
-                    var point = edge + normal * (radius + .15f)
-                        + tangent * ((float)rng.NextDouble() - .5f) * .35f;
+                    // Кусты уходят вглубь на разную глубину — край не повторяет контур пола.
+                    var point = edge + normal * (radius + .15f + (float)rng.NextDouble() * Mathf.Lerp(.25f, 1.4f, thicket))
+                        + tangent * ((float)rng.NextDouble() - .5f) * .6f;
                     // Квадрат максимальных габаритов учитывает поворот модели и вогнутые участки контура.
                     int push = 0;
                     while (BoundaryBlocksClearance(point, radius) && push++ < 8) point += normal * .15f;
                     if (BoundaryBlocksClearance(point, radius)) continue;
                     bool overlap = false;
+                    // В зарослях кусты смыкаются, в просветах стоят редко.
+                    float stride = spacing * Mathf.Lerp(1.6f, .6f, thicket);
                     foreach (var other in placed)
                     {
-                        float gap = Mathf.Max(spacing * Mathf.Lerp(.85f, 1.15f, patch), (radius + other.z) * .8f);
+                        float gap = Mathf.Max(stride * Mathf.Lerp(.85f, 1.15f, patch), (radius + other.z) * Mathf.Lerp(.8f, .55f, thicket));
                         if ((point - new Vector2(other.x, other.y)).sqrMagnitude < gap * gap) { overlap = true; break; }
                     }
                     if (overlap) continue;
                     // Положение вне пола сохраняет все внутренние проходы и боевые площадки.
                     SpawnDecor(variant, point.x, point.y, rng);
                     _decor[_decorCount - 1].localScale *= scale;
-                    if (_style.DecorVariants[variant].Kind == DecorKind.Bush)
+                    if (bush)
                     {
                         var size = _decor[_decorCount - 1].localScale;
                         size.y *= .6f + (float)rng.NextDouble() * .28f;
@@ -76,16 +87,17 @@ namespace Game.View
                     }
                     placed.Add(new Vector3(point.x, point.y, radius));
                     // Второй нерегулярный слой превращает цепочку меток в край леса.
-                    int followers = rng.Next(1, 4);
+                    int followers = thicket < .35f ? rng.Next(0, 2) : rng.Next(1, 5);
                     for (int follower = 0; follower < followers; follower++)
                     {
                         int companion = PickDetail(bushes, rng);
                         if (companion >= 0)
                         {
-                            float companionScale = scale * (.42f + (float)rng.NextDouble() * .25f);
-                            // Спутники перекрывают основание куста, а не образуют отдельные круглые метки.
-                            var outer = point + normal * (radius * (.3f + follower * .18f))
-                                + tangent * radius * (follower % 2 == 0 ? .55f : -.55f);
+                            float companionScale = scale * (.45f + (float)rng.NextDouble() * .4f);
+                            // Спутники перекрывают куст вдоль опушки и уходят глубже, образуя массу, а не метки.
+                            float side = (follower % 2 == 0 ? 1 : -1) * (.5f + (float)rng.NextDouble() * .7f);
+                            var outer = point + normal * (radius * (.2f + (float)rng.NextDouble() * .8f))
+                                + tangent * radius * side;
                             if (!BoundaryBlocksClearance(outer, _decorRadii[companion] * companionScale)
                                 && !NearRiver(outer.x, outer.y, _decorRadii[companion] * companionScale))
                             {
