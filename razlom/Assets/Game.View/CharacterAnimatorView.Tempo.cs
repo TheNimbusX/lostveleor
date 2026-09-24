@@ -10,6 +10,48 @@ namespace Game.View
         private bool _tempoAbility;
         private int _tempoReleaseTick;
         private int _recoveryFootworkLayer = -1;
+        private float _whirlHoldTicks;
+        private bool _poseHeld;
+        private float _poseHoldUntil;
+
+        /// <summary>
+        /// Стоп-кадр героя на контакте Вихря. Держится только фаза клипа:
+        /// движение, ввод и Sim идут дальше.
+        /// </summary>
+        public void HoldWhirlwindPose(float seconds)
+        {
+            if (!WhirlwindActive || seconds <= 0f) return;
+            if (_whirlLooping) { _whirlLoopHoldUntil = Mathf.Max(_whirlLoopHoldUntil, Time.time + seconds); return; }
+            _whirlHoldTicks = Mathf.Max(_whirlHoldTicks, seconds * Simulation.TicksPerSecond);
+        }
+
+        /// <summary>
+        /// Стоп-кадр моба: аниматор стоит, пока длится удержание, затем
+        /// возвращается к скорости удара или бега. Sim не ждёт.
+        /// </summary>
+        public void HoldPose(float seconds)
+        {
+            if (_faction == Faction.Wole || IsDead || _animator == null || seconds <= 0f) return;
+            _poseHeld = true;
+            _poseHoldUntil = Mathf.Max(_poseHoldUntil, Time.time + seconds);
+            _animator.speed = 0f;
+            _contactPose?.Hold(seconds);
+        }
+
+        private void UpdatePoseHold()
+        {
+            if (!_poseHeld) return;
+            if (IsDead || _animator == null) { _poseHeld = false; return; }
+            if (Time.time < _poseHoldUntil)
+            {
+                // Переутверждается каждый кадр: реакция на удар ставит speed = 1 позже нас.
+                _animator.speed = 0f;
+                return;
+            }
+            _poseHeld = false;
+            _animator.speed = _attackPresentationActive || Time.time < _orvillHitPresentationUntil
+                ? 1f : _orvillLocomotionPlaybackSpeed;
+        }
 
         private void UpdateRecoveryFootwork()
         {
@@ -74,6 +116,73 @@ namespace Game.View
             return true;
         }
 
+        // ---- Вихрь: фаза клипа, стоп-кадр и цикл удержания ----
+
+        // Один авторский оборот сабли лежит в фазах 0.15–0.65 клипа (34° → 365°).
+        // При удержании этот отрезок крутится по кругу, один оборот на импульс
+        // Sim (полсекунды); перемотка приходится на кадр-вспышку импульса.
+        private const float WhirlwindLoopStart = .15f;
+        private const float WhirlwindLoopEnd = .65f;
+        private const float WhirlwindLoopSeconds = Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond;
+        private const float WhirlwindLoopRate = (WhirlwindLoopEnd - WhirlwindLoopStart) / WhirlwindLoopSeconds;
+        private const float WhirlwindExitRecoverySeconds = .16f;
+        /// <summary>После конца Вихря взгляд героя догоняет Sim плавно, а не рывком в один кадр.</summary>
+        public const float WhirlwindFacingRecoverySeconds = .28f;
+
+        private float _whirlPhase;
+        private bool _whirlLooping, _whirlExiting;
+        private float _whirlLoopTime, _whirlLoopHoldUntil, _whirlExitPhase, _whirlExitAt, _whirlExitSeconds;
+        private float _whirlwindEndedAt = -10f;
+
+        public bool WhirlwindChannelLooping => _whirlLooping;
+        public bool WhirlwindFacingRecovery => !WhirlwindActive && Time.time < _whirlwindEndedAt + WhirlwindFacingRecoverySeconds;
+
+        /// <summary>Время клипа текущей позы: по фазе в цикле и на выходе, −1 в обычном касте (там считают часы).</summary>
+        internal float WhirlwindPoseTime => _whirlLooping || _whirlExiting ? _whirlPhase * WhirlwindClipDuration : -1f;
+
+        private float WhirlwindPhaseFor(Simulation sim, in PlayerActionState action, float tick)
+        {
+            float contact = WhirlwindContactTime / WhirlwindClipDuration;
+            bool channeling = sim.WhirlwindChanneling && !IsDead && tick >= action.ContactTick;
+            if (channeling)
+            {
+                if (!_whirlLooping) { _whirlLooping = true; _whirlExiting = false; _whirlLoopTime = 0f; _whirlLoopHoldUntil = 0f; }
+                else if (Time.time >= _whirlLoopHoldUntil) _whirlLoopTime += Time.deltaTime;
+                // Слои и опора ног считают, что оборот в разгаре: часы держатся до начала возврата.
+                _abilityPresentationUntil = Time.time + WhirlwindClipDuration * (1f - WhirlwindLoopEnd);
+                _actionProtectedUntil = Time.time;
+                return Mathf.Lerp(WhirlwindLoopStart, WhirlwindLoopEnd, Mathf.Repeat(_whirlLoopTime / WhirlwindLoopSeconds, 1f));
+            }
+            if (_whirlLooping)
+            {
+                // Удержание кончилось: дойти до конца оборота на скорости цикла, потом возврат клипа.
+                _whirlLooping = false; _whirlExiting = true;
+                _whirlExitPhase = _whirlPhase; _whirlExitAt = Time.time;
+                _whirlExitSeconds = Mathf.Max(0f, WhirlwindLoopEnd - _whirlExitPhase) / WhirlwindLoopRate + WhirlwindExitRecoverySeconds;
+                _abilityPresentationUntil = Time.time + _whirlExitSeconds;
+                _actionProtectedUntil = Time.time;
+            }
+            if (_whirlExiting)
+            {
+                float elapsed = Time.time - _whirlExitAt;
+                float turn = Mathf.Max(0f, WhirlwindLoopEnd - _whirlExitPhase) / WhirlwindLoopRate;
+                if (elapsed >= _whirlExitSeconds) { _whirlExiting = false; return 1f; }
+                return elapsed < turn
+                    ? Mathf.Lerp(_whirlExitPhase, WhirlwindLoopEnd, turn > 0f ? elapsed / turn : 1f)
+                    : Mathf.Lerp(WhirlwindLoopEnd, 1f, (elapsed - turn) / WhirlwindExitRecoverySeconds);
+            }
+            // Стоп-кадр: после контакта поза держится _whirlHoldTicks, затем
+            // остаток клипа сжимается к прежнему EndTick — как у Рассекающего.
+            // Sim и управление не ждут.
+            float whirlTick = tick;
+            if (_whirlHoldTicks > 0f && tick > action.ContactTick)
+                whirlTick = tick < action.ContactTick + _whirlHoldTicks ? action.ContactTick
+                    : Mathf.Lerp(action.ContactTick, action.EndTick,
+                        Mathf.InverseLerp(action.ContactTick + _whirlHoldTicks, action.EndTick, tick));
+            return whirlTick <= action.ContactTick ? Mathf.Lerp(0, contact, Mathf.InverseLerp(action.StartTick, action.ContactTick, whirlTick))
+                : Mathf.Lerp(contact, 1, Mathf.InverseLerp(action.ContactTick, action.EndTick, whirlTick));
+        }
+
         private void UpdateTempoAnimation()
         {
             if (_faction != Faction.Wole || _animator == null) return;
@@ -85,14 +194,10 @@ namespace Game.View
                 if (action.DefinitionId == AbilityDefinition.AnchorLeapId)
                     _animator.SetFloat("LeapPhase", PelagAbilityTiming.SampleLeap(action, tick) / PelagAbilityTiming.LeapRecovery);
                 if (action.DefinitionId == AbilityDefinition.WhirlwindId)
-                {
-                    float contact = WhirlwindContactTime / WhirlwindClipDuration;
-                    float whirl = tick <= action.ContactTick ? Mathf.Lerp(0, contact, Mathf.InverseLerp(action.StartTick, action.ContactTick, tick))
-                        : Mathf.Lerp(contact, 1, Mathf.InverseLerp(action.ContactTick, action.EndTick, tick));
-                    _animator.SetFloat("WhirlwindPhase", whirl);
-                }
+                    _animator.SetFloat("WhirlwindPhase", _whirlPhase = WhirlwindPhaseFor(sim, action, tick));
             }
-            if (_abilityPresentationActive && action.DefinitionId == _abilityDefinitionId && !action.Interrupted)
+            if (_abilityPresentationActive && action.DefinitionId == _abilityDefinitionId && !action.Interrupted
+                && !_whirlLooping && !_whirlExiting)
             {
                 // Эти часы допускают новый каст сразу после контакта, даже при незавершённом возврате оружия.
                 _abilityPresentationUntil = Time.time + Mathf.Max(0f, action.EndTick - tick) / Simulation.TicksPerSecond;

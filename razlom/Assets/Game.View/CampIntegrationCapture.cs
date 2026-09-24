@@ -59,6 +59,15 @@ namespace Game.View
             var camp = CampPlayerView.Instance;
             var entrance = FindAnyObjectByType<CampRiftEntrance>();
             Check(camp.WalkMap != null, "camp navigation initialized");
+            var bridge = FindAnyObjectByType<CampRiverPassage>()?.BridgeBounds;
+            Check(bridge.HasValue, "camp bridge exists");
+            foreach (float lane in new[] { -.6f, 0f, .6f })
+            {
+                var near = CampTrainingView.Flat(new Vector3(bridge.Value.center.x + lane, 0, bridge.Value.max.z + 1f));
+                var far = CampTrainingView.Flat(new Vector3(bridge.Value.center.x + lane, 0, bridge.Value.min.z - 1f));
+                Check(camp.WalkMap.CanTravel(near, far) && camp.WalkMap.CanTravel(far, near),
+                    "bridge crossing stays open both ways, lane " + lane.ToString("0.0"));
+            }
             var tentBounds = camp.Tent.GetComponentInChildren<Renderer>().bounds;
             Check(!camp.WalkMap.Contains(CampTrainingView.Flat(tentBounds.center)), "authored tent blocks movement");
             Check(_driver.Session.Training?.Count == 2, "two authored targets");

@@ -11,6 +11,7 @@ namespace Game.View
         static string PathName=>Path.Combine(Application.persistentDataPath,"camp-v1.sav");
         static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0
 #if UNITY_EDITOR
+            || UnityEditor.SessionState.GetBool("AlchemyPlaytest.Active",false)
             || UnityEditor.SessionState.GetBool("CampIntegrationPlayCheck",false)
             || UnityEditor.SessionState.GetBool("CampServices.Check",false)
 #endif
@@ -38,9 +39,13 @@ namespace Game.View
         {
             if(_disabled||_driver?.Session==null||_driver.Session.IsDeveloperRun)return;
             var camp=_driver.Session.Camp;
-            ulong potions=camp.PotionSelection;
-            for(int i=0;i<4;i++)potions=(potions<<10)|(uint)camp.PotionCount((PotionKind)i);
-            // В бою пишем только изменение расходников, а не каждую порцию опыта.
+            ulong potions=Hashing.Offset;
+            for(int i=0;i<Camp.PotionKindCount;i++)Hashing.Mix(ref potions,camp.PotionCount((PotionKind)i));
+            Hashing.Mix(ref potions,(int)camp.SelectedPotion(0));Hashing.Mix(ref potions,(int)camp.SelectedPotion(1));
+            Hashing.Mix(ref potions,camp.HasMetAlchemist?1:0);
+            Hashing.Mix(ref potions,(int)camp.AlchemyStatus(AlchemistOrder.Resin));
+            Hashing.Mix(ref potions,(int)camp.AlchemyStatus(AlchemistOrder.Surge));
+            // В бою пишем изменение расходников и заказов, а не каждую порцию опыта.
             if(_driver.Session.Mode==GameMode.Rift && _hasHash && potions==_potionState)return;
             ulong hash=0;_driver.Session.Camp.HashInto(ref hash);if(_hasHash&&hash==_hash)return;
             try

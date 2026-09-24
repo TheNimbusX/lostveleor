@@ -19,8 +19,8 @@ namespace Game.View
         public CampServiceNpc Pending { get; private set; }
         CampServiceNpc[] _npcs;
         CampPlayerView _player;TickDriver _driver;
-        GameObject _canvas,_panel,_serviceCard;Text _hint,_title,_description;
-        Button _close;GameObject _previousSelection;float _errorUntil;
+        CampShopView _view;GameObject _panel;CanvasGroup _openGroup;Selectable _firstSelect;
+        GameObject _previousSelection;float _errorUntil;
         int _openedFrame;
         public void Initialize(CampPlayerView player,TickDriver driver)
         {
@@ -44,7 +44,7 @@ namespace Game.View
             if(!Input.GetMouseButton(0) && !Input.GetMouseButton(1))PointerGesture=false;
 #endif
             if(CampServicesProbe.IsRunning && !CampServicesProbe.AllowInteractionInput){use=cancel=left=right=moving=false;}
-            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && !_close.interactable){_close.interactable=true;if(_smith!=null && _smith.activeSelf){_smithInput.interactable=true;_smith.GetComponentInChildren<Button>().Select();}else if(_trader!=null && _trader.activeSelf){_traderInput.interactable=true;_trader.GetComponentInChildren<Button>().Select();}else if(_alchemist!=null && _alchemist.activeSelf){_alchemistInput.interactable=true;_alchemist.GetComponentInChildren<Button>().Select();}else _close.Select();}if(cancel)Close();return;}
+            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && _openGroup!=null && !_openGroup.interactable){_openGroup.interactable=true;if(_firstSelect!=null)_firstSelect.Select();}if(cancel)Close();return;}
             if(ConsumedFrame==Time.frameCount)return;
             bool overUi=CampInventoryView.PointerOverUI() || _driver.PointerOverHud(pointer);
             CampServiceNpc nearest=null,hover=null;float distance=3f,hitDistance=float.MaxValue;
@@ -67,23 +67,42 @@ namespace Game.View
         }
         void ShowHint(CampServiceNpc focus,Camera camera)
         {
-            if(focus==null || camera==null){_hint.text="";return;}
+            if(focus==null || camera==null){SetHint("","");return;}
             var bounds=focus.Shape;
             var screen=camera.WorldToScreenPoint(new Vector3(bounds.center.x,bounds.max.y+.3f,bounds.center.z));
-            if(screen.z<=0){_hint.text="";return;}
-            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_canvas.transform,screen,null,out var point);
-            _hint.rectTransform.anchoredPosition=point;
+            if(screen.z<=0){SetHint("","");return;}
+            RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_view.transform,screen,null,out var point);
+            _view.Hint.anchoredPosition=point;
             if(Time.unscaledTime<_errorUntil)return;
-            string key=focus.Near(_player.InteractionPosition)?(focus.Kind==CampServiceKind.Tent?"open.hint":"talk.hint"):"approach.hint";
-            _hint.text=focus.Title+"\n<size=15>"+CampServiceText.Get(key)+"</size>";
+            // Имя, кто это такой и клавиша плашкой пака. Подсказки геймпада не показываем:
+            // управление геймпадом отложено владельцем.
+            bool near=focus.Near(_player.InteractionPosition);
+            string action=CampServiceText.Get(near?(focus.Kind==CampServiceKind.Tent?"action.open":"action.talk"):"action.approach");
+            SetHint(focus.Title,CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant()),near?"E":"ПКМ",action);
         }
-        void HideHints(){if(_hint!=null)_hint.text="";if(_npcs!=null)foreach(var npc in _npcs)if(npc!=null)npc.Highlight(false);}
+        void SetHint(string title,string note)=>SetHint(title,"","",note);
+        void SetHint(string title,string role,string key,string action)
+        {
+            if(_view==null)return;
+            bool show=title.Length>0 || action.Length>0;
+            if(_view.Hint.gameObject.activeSelf!=show)_view.Hint.gameObject.SetActive(show);
+            _view.HintTitle.text=title;_view.HintNote.text=action;
+            if(_view.HintRole!=null){_view.HintRole.text=role;_view.HintRole.gameObject.SetActive(role.Length>0);}
+            if(_view.HintKeyCap!=null)
+            {
+                _view.HintKeyCap.gameObject.SetActive(key.Length>0);_view.HintKey.text=key;
+                _view.HintKey.fontSize=key.Length>1?16f:26f;
+            }
+        }
+        void HideHints(){SetHint("","");if(_npcs!=null)foreach(var npc in _npcs)if(npc!=null)npc.Highlight(false);}
         public bool Begin(CampServiceNpc npc)
         {
             if(npc==null || _player==null || !_player.Active || _driver.GameplayPaused || IsOpen)return false;
-            Consume();_player.StopForService();Pending=npc;
+            Pending=npc;
             if(npc.Near(_player.InteractionPosition)){Open(npc);return true;}
-            var approach=npc.Kind==CampServiceKind.Tent?npc.Shape.ClosestPoint(_player.InteractionPosition):npc.Approach;
+            // PointerGesture already keeps this click out of world movement.
+            // Do not set ConsumedFrame here: that would pause the whole tick.
+            var approach=npc.Kind==CampServiceKind.Tent?npc.Target(_player.InteractionPosition):npc.Approach;
             // Достижимую клетку выбираем у подхода, не внутри геометрии персонажа или верстака.
             for(float radius=0;radius<=1.5f;radius+=.25f)
                 for(int i=0;i<(radius==0?1:16);i++)
@@ -91,7 +110,7 @@ namespace Game.View
                     var p=approach+new Vector3(Mathf.Cos(i*Mathf.PI/8),0,Mathf.Sin(i*Mathf.PI/8))*radius;
                     if(npc.Near(p) && _player.WalkMap.Contains(CampTrainingView.Flat(p)) && _player.RouteTo(p))return true;
                 }
-            Pending=null;_errorUntil=Time.unscaledTime+2;_hint.text=CampServiceText.Get("unreachable");return false;
+            Pending=null;_errorUntil=Time.unscaledTime+2;SetHint("",CampServiceText.Get("unreachable"));return false;
         }
         public void CancelPending(){Pending=null;}
         public void CancelApproach(){Pending=null;_driver.ClearCapturedInput();_player.StopForService();}
@@ -101,10 +120,11 @@ namespace Game.View
             _player.StopForService();Pending=null;Current=npc;Consume();
             if(npc.Kind==CampServiceKind.Tent){Current=null;HideHints();_player.OpenTent();return;}
             ShowSmith(npc.Kind==CampServiceKind.Smith);ShowTrader(npc.Kind==CampServiceKind.Trader);ShowAlchemist(npc.Kind==CampServiceKind.Alchemist);
-            _title.text=npc.Title;_description.text=CampServiceText.Get("service."+npc.Kind.ToString().ToLowerInvariant());
             _previousSelection=EventSystem.current!=null?EventSystem.current.currentSelectedGameObject:null;
             // Подтверждение открытия с геймпада не должно тем же нажатием отправить Submit кнопке закрытия.
-            _openedFrame=Time.frameCount;_close.interactable=false;_panel.SetActive(true);HideHints();
+            _openedFrame=Time.frameCount;if(_openGroup!=null)_openGroup.interactable=false;_panel.SetActive(true);HideHints();
+            // Временная панель AlchemyPlaytestOverlay больше не открывается с Лео: заказы и все
+            // шесть зелий теперь в его окне, а панель при открытии закрывала это окно.
         }
         void Consume(){ConsumedFrame=Time.frameCount;_driver.ClearCapturedInput();}
         public void Close()
@@ -114,34 +134,17 @@ namespace Game.View
         }
         void Build()
         {
-            if(EventSystem.current==null)
-            {
-                var events=new GameObject("Camp service events",typeof(EventSystem));events.transform.SetParent(transform);
-#if ENABLE_INPUT_SYSTEM
-                events.AddComponent<InputSystemUIInputModule>();
-#else
-                events.AddComponent<StandaloneInputModule>();
-#endif
-            }
-            _canvas=new GameObject("Camp conversations",typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));_canvas.transform.SetParent(transform,false);
-            _canvas.GetComponent<Canvas>().renderMode=RenderMode.ScreenSpaceOverlay;_canvas.GetComponent<Canvas>().sortingOrder=105;
-            var scaler=_canvas.GetComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1920,1080);scaler.matchWidthOrHeight=.5f;
-            _hint=Label(_canvas.transform,"",Vector2.zero,new Vector2(350,62),22);_hint.color=new Color(1,.95f,.83f);
-            var shadow=_hint.gameObject.AddComponent<Shadow>();shadow.effectColor=new Color(.1f,.13f,.1f,.7f);shadow.effectDistance=new Vector2(0,-1);
-            _panel=new GameObject("Conversation",typeof(RectTransform),typeof(Image));_panel.transform.SetParent(_canvas.transform,false);
-            var shade=_panel.GetComponent<RectTransform>();shade.anchorMin=Vector2.zero;shade.anchorMax=Vector2.one;shade.offsetMin=shade.offsetMax=Vector2.zero;_panel.GetComponent<Image>().color=new Color(.04f,.055f,.045f,.25f);
-            var board=new GameObject("Card",typeof(RectTransform),typeof(Image));_serviceCard=board;board.transform.SetParent(_panel.transform,false);var rect=board.GetComponent<RectTransform>();rect.sizeDelta=new Vector2(570,300);board.GetComponent<Image>().color=new Color(.91f,.87f,.76f,.98f);
-            _title=Label(board.transform,"",new Vector2(0,88),new Vector2(500,50),30);
-            _description=Label(board.transform,"",new Vector2(0,25),new Vector2(510,60),21);
-            var button=new GameObject("Close",typeof(RectTransform),typeof(Image),typeof(Button));button.transform.SetParent(board.transform,false);var br=button.GetComponent<RectTransform>();br.anchoredPosition=new Vector2(0,-63);br.sizeDelta=new Vector2(390,48);button.GetComponent<Image>().color=new Color(.31f,.38f,.29f);
-            _close=button.GetComponent<Button>();_close.onClick.AddListener(Close);var label=Label(button.transform,CampServiceText.Get("close"),Vector2.zero,new Vector2(380,44),21);label.color=new Color(.99f,.96f,.86f);
-            Label(board.transform,CampServiceText.Get("close.hint"),new Vector2(0,-118),new Vector2(500,30),16);_panel.SetActive(false);
+            PauseMenuView.EnsureEventSystem();
+            // Окна NPC на паке «Ночная акварель»: префаб собирает CampShopsWcBuilder.
+            var prefab=Resources.Load<GameObject>("UI/Prefabs/CampShopsWc");
+            if(prefab==null){Debug.LogError("CampServicesView: нет префаба Resources/UI/Prefabs/CampShopsWc, окна NPC не откроются (Разлом → UI → Собрать окна лагеря).");enabled=false;return;}
+            _view=Instantiate(prefab,transform).GetComponent<CampShopView>();_view.name="Camp shops";
+            _panel=_view.transform.Find("Окна").gameObject;_panel.SetActive(false);
+            _view.Smith.Group.gameObject.SetActive(false);_view.Trader.Group.gameObject.SetActive(false);_view.Alchemist.Group.gameObject.SetActive(false);
+            HideHints();
         }
-        static Text Label(Transform parent,string value,Vector2 position,Vector2 size,int font)
-        {
-            var go=new GameObject("Text",typeof(RectTransform),typeof(Text));go.transform.SetParent(parent,false);var rt=go.GetComponent<RectTransform>();rt.anchoredPosition=position;rt.sizeDelta=size;
-            var text=go.GetComponent<Text>();text.font=GameTypography.Regular;text.fontSize=font;text.text=value;text.alignment=TextAnchor.MiddleCenter;text.color=new Color(.16f,.20f,.15f);text.raycastTarget=false;return text;
-        }
+        /// <summary>Открытое окно: ввод включается кадром позже (нажатие открытия не жмёт кнопку), первой выбирается кнопка действия.</summary>
+        void Present(CanvasGroup group,Selectable first){_openGroup=group;_firstSelect=first;group.gameObject.SetActive(true);group.interactable=false;}
         void OnDisable(){Close();CancelPending();HideHints();PointerGesture=false;}
         void OnDestroy(){if(Instance==this)Instance=null;}
     }

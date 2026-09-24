@@ -57,6 +57,7 @@ namespace Game.View
             }
             for(int i=0;i<_tent.StatRows.Length&&i<StatRows.Length;i++)
             {
+                if(_tent.StatLabels[i]!=null)_tent.StatLabels[i].text=StatText.Short(StatRows[i]);
                 if(_tent.StatRows[i]==null)continue;
                 int row=i;var relay=_tent.StatRows[i].gameObject.AddComponent<CampHoverRelay>();
                 relay.Hover=on=>{if(on)ShowStatTooltip(row);else _tent.ShowTooltip(false);};
@@ -177,7 +178,7 @@ namespace Game.View
             for(int i=0;i<_tent.StatValues.Length&&i<StatRows.Length;i++)
             {
                 var stat=StatRows[i];
-                _tent.ShowStat(i,Shown(stat,stats.Get(stat)),v=>StatText(stat,v));
+                _tent.ShowStat(i,StatText.Shown(stat,stats.Get(stat)),v=>StatText.Value(stat,v));
             }
 
             for(int i=0;i<_tent.Potions.Length&&i<4;i++)
@@ -185,7 +186,9 @@ namespace Game.View
                 var kind=(PotionKind)i;int have=camp.PotionCount(kind);
                 if(_tent.PotionCounts[i]!=null)_tent.PotionCounts[i].text=have.ToString();
                 if(_tent.PotionIcons[i]!=null)_tent.PotionIcons[i].color=have>0?Color.white:new Color(.55f,.6f,.7f,.55f);
-                if(_tent.PotionSelected[i]!=null)_tent.PotionSelected[i].SetActive(camp.SelectedPotion(i/2)==kind);
+                bool quick=camp.SelectedPotion(i/2)==kind;
+                if(_tent.PotionStates.Length>i&&_tent.PotionStates[i]!=null)_tent.PotionStates[i].Set(WcSlotState.Plain,quick);
+                else if(_tent.PotionSelected[i]!=null)_tent.PotionSelected[i].SetActive(quick);
             }
 
             if(_atlas!=null)
@@ -204,15 +207,24 @@ namespace Game.View
 
         bool IsRareBase(int id){var items=_driver.Session.Camp.Items;int b=items.IndexOfBase(id);return b>=0&&items.GetBase(b).Rare;}
 
-        /// <summary>Проценты показываются процентами, остальное — числом.</summary>
-        static bool Percent(StatType stat)=>stat==StatType.CritChance||stat==StatType.CritMultiplier||stat==StatType.FireResist
-            ||stat==StatType.AbilitySpeed||stat==StatType.CooldownRecovery;
-        static float Shown(StatType stat,Fix64 value)=>Percent(stat)?value.ToFloat()*100f:value.ToFloat();
-        static string StatText(StatType stat,float v)
+        /// <summary>Копия листа статов без модификаторов, которые выбрасывает drop.</summary>
+        static StatSheet CloneSheet(StatSheet stats,System.Predicate<StatModifier> drop)
         {
-            if(Percent(stat))return Mathf.RoundToInt(v)+"%";
-            if(stat==StatType.AttackSpeed||stat==StatType.LavidiumRegen||stat==StatType.MoveSpeed)return v.ToString("0.#");
-            return Mathf.RoundToInt(v).ToString();
+            var sheet=new StatSheet(Mathf.Max(32,stats.ModifierCount+16));
+            for(int s=0;s<(int)StatType.Count;s++)sheet.SetBase((StatType)s,stats.GetBase((StatType)s));
+            for(int m=0;m<stats.ModifierCount;m++){var mod=stats.GetModifier(m);if(drop==null||!drop(mod))sheet.Add(in mod);}
+            return sheet;
+        }
+
+        /// <summary>Свойства вещи строками: встроенное и аффиксы.</summary>
+        string ItemProperties(ItemInstance item)
+        {
+            var camp=_driver.Session.Camp;
+            if(!ItemGenerator.Generate(in item,camp.Items,_roll))return "";
+            string text="";
+            if(_roll.HasImplicit)text+=StatText.Name(_roll.ImplicitStat)+"  <b>"+StatText.Modifier(_roll.ImplicitStat,_roll.ImplicitValue,_roll.ImplicitOp)+"</b>\n";
+            for(int i=0;i<_roll.AffixCount;i++){var a=_roll.GetAffix(i);text+=StatText.Name(a.Stat)+"  <b>"+StatText.Modifier(a.Stat,a.Value,a.Op)+"</b>\n";}
+            return text.TrimEnd();
         }
 
         /// <summary>Карточка у ячейки под мышью; пустая ячейка карточку прячет.</summary>
@@ -230,11 +242,12 @@ namespace Game.View
             string kindText=(kind>=0?Names[kind]:"Предмет")+"  ·  ур. "+item.ItemLevel+"  ·  "+CampServiceText.Get("smith.attempts")+" "+item.ReforgeCount+"/3";
             string text;
             var stats=_driver.Session.CampSim.Entities.Stats[0];
-            if(worn)text="<color=#9DB6CB>Надето на Пелаге</color>";
+            string properties=ItemProperties(item);
+            if(worn)text=properties+(properties.Length>0?"\n\n":"")+"<color=#93A2BC>Надето на Пелаге</color>";
             else
             {
-                string compare=CompareStats(item,stats,"#8CE07A","#FF7A66","#DCE8F5",true).Replace("\n\n","\n").Trim();
-                text=compare.Length==0?"<color=#9DB6CB>Без изменений</color>":"<color=#9DB6CB>Если надеть:</color>\n"+compare;
+                string compare=CompareStats(item,stats,"#8FE3A8","#FF6A5A","#F4F7FB",true).Replace("\n\n","\n").Trim();
+                text=properties+(properties.Length>0?"\n\n":"")+(compare.Length==0?"<color=#93A2BC>Если надеть — без изменений</color>":"<color=#93A2BC>Если надеть:</color>\n"+compare);
             }
             FillTooltip(ItemName(item.BaseId),_tent.NameFor(rarity),_tent.ColourFor(rarity),kindText,text,_tent.FrameFor(rarity),ItemSprite(index,worn));
             var cell=worn?_tent.Worn[index]:_tentBag[index];
@@ -244,6 +257,20 @@ namespace Game.View
 
         void FillTooltip(string title,string rarity,Color rarityColour,string kind,string body,Sprite frame,Sprite art)
         {
+            if(_tent.TooltipAutoLayout)
+            {
+                // Новая карточка (CampTentWc) раскладывается сама: только тексты и видимость строк.
+                _tent.ItemTitle.text=title;
+                _tent.ItemRarity.text=rarity;_tent.ItemRarity.color=rarityColour;_tent.ItemRarity.gameObject.SetActive(rarity.Length>0);
+                _tent.ItemKind.text=kind;_tent.ItemKind.gameObject.SetActive(kind.Length>0);
+                _tent.ItemStats.text=body;_tent.ItemStats.gameObject.SetActive(body.Length>0);
+                bool picture=art!=null;
+                _tent.ItemArt.sprite=art;_tent.ItemArt.enabled=picture;
+                if(frame!=null)_tent.ItemFrame.sprite=frame;
+                _tent.ItemFrame.transform.parent.gameObject.SetActive(picture);
+                UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(_tent.Tooltip);
+                return;
+            }
             if(_tent.ItemTitle!=null)_tent.ItemTitle.text=title;
             if(_tent.ItemRarity!=null){_tent.ItemRarity.text=rarity;_tent.ItemRarity.color=rarityColour;}
             if(_tent.ItemKind!=null)_tent.ItemKind.text=kind;
@@ -270,21 +297,26 @@ namespace Game.View
             var camp=_driver.Session.Camp;var stat=StatRows[row];
             var stats=_driver.Session.CampSim.Entities.Stats[0];
             Fix64 total=stats.Get(stat);
-            string body="<color=#9DB6CB>Уровень "+camp.Level+":</color>  "+StatText(stat,Shown(stat,stats.GetBase(stat)));
+            // Вклад каждого источника — разница с листом без него (так честно считаются и проценты).
+            string Part(string name,System.Predicate<StatModifier> source)
+            {
+                Fix64 delta=total-CloneSheet(stats,source).Get(stat);
+                if(Mathf.Abs(StatText.Shown(stat,delta))<.005f)return "";
+                return "\n"+name+"<pos=74%><color="+(delta>Fix64.Zero?"#8FE3A8":"#FF6A5A")+">"+StatText.Delta(stat,delta)+"</color>";
+            }
+            string body=StatText.Hint(stat)+"\n\n<color=#93A2BC>"+CampServiceText.Get("stat.sources")+":</color>\n"
+                +"Основа<pos=74%>"+StatText.Value(stat,stats.GetBase(stat))
+                +Part(CampServiceText.Get("stat.level")+" "+camp.Level,m=>m.Source==ModifierSource.Level);
             for(int s=0;s<(int)EquipSlot.Count;s++)
             {
                 var item=camp.Worn.Worn((EquipSlot)s);if(item.IsEmpty)continue;
-                var sheet=new StatSheet();
-                for(int k=0;k<(int)StatType.Count;k++)sheet.SetBase((StatType)k,stats.GetBase((StatType)k));
-                var without=new Equipment(camp.Items);without.Bind(sheet);
-                for(int o=0;o<(int)EquipSlot.Count;o++){var other=camp.Worn.Worn((EquipSlot)o);if(o!=s&&!other.IsEmpty)without.Equip(other,out _);}
-                float diff=Shown(stat,total)-Shown(stat,sheet.Get(stat));
-                if(Mathf.Abs(diff)<.005f)continue;
-                body+="\n"+ItemName(item.BaseId)+":  <color=#8CE07A>+"+StatText(stat,diff)+"</color>";
+                int slot=s;body+=Part(ItemName(item.BaseId),m=>m.Source==ModifierSource.Equipment&&m.SourceId==slot);
             }
+            body+=Part(CampServiceText.Get("stat.buffs"),m=>m.Source==ModifierSource.Buff);
             _hoverIndex=-1;
-            FillTooltip(_tent.StatLabels[row]!=null?_tent.StatLabels[row].text:StatLabel(stat),"",Color.white,
-                "Итого: "+StatText(stat,Shown(stat,total)),body,null,null);
+            // Концепт tent-stats: значок стата в плитке, «Итого» бирюзой под названием.
+            var icon=_tent.StatIcons!=null&&row<_tent.StatIcons.Length?_tent.StatIcons[row]:null;
+            FillTooltip(StatText.Name(stat),"Итого: "+StatText.Value(stat,total),UiTheme.Current.Get(UiTheme.Role.Rare),"",body,_tent.EmptyFrame,icon);
             _tent.PlaceTooltip(_tent.StatRows[row]);
             _tent.ShowTooltip(true);
         }
@@ -311,8 +343,7 @@ namespace Game.View
             {
                 var definition=camp.Items.GetBase(b);
                 // Increased — прибавка в процентах к стату, а не число.
-                if(definition.HasImplicit)property=StatLabel(definition.ImplicitStat)+"  +"+(definition.ImplicitOp==ModifierOp.Increased
-                    ?Mathf.RoundToInt(definition.ImplicitValue.ToFloat()*100f)+"%":StatText(definition.ImplicitStat,Shown(definition.ImplicitStat,definition.ImplicitValue)));
+                if(definition.HasImplicit)property=StatText.Name(definition.ImplicitStat)+"  "+StatText.Modifier(definition.ImplicitStat,definition.ImplicitValue,definition.ImplicitOp);
             }
             string where=rare?"Разлом — редкая находка\nЛавка торговца — редко":"Разлом — любая находка\nЛавка торговца";
             _hoverIndex=-1;

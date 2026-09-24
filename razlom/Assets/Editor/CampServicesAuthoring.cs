@@ -13,6 +13,21 @@ public static class CampServicesAuthoring
     [InitializeOnLoadMethod] static void Watch()=>EditorApplication.update+=Poll;
     static void Poll()
     {
+        if(SessionState.GetBool("CampBridgeAudit.Active",false) && EditorApplication.isPlaying && !EditorApplication.isCompiling)
+        {
+            var menu=Object.FindAnyObjectByType<MainMenuView>();
+            if(MainMenuView.IsOpen && menu!=null)menu.StartGame();
+            if(CampPlayerView.Instance!=null)
+            {
+                string report=CampRouteAudit.Report();
+                if(report!="Camp walk map is not ready")
+                {
+                    File.WriteAllText(Path.Combine(Repo,"artifacts/camp-route-audit.txt"),report);
+                    SessionState.SetBool("CampBridgeAudit.Active",false);
+                    EditorApplication.isPlaying=false;
+                }
+            }
+        }
         if(SessionState.GetBool("CampServices.Check",false) && EditorApplication.isPlaying && !EditorApplication.isCompiling)
         {
             var menu=Object.FindAnyObjectByType<MainMenuView>();
@@ -38,6 +53,13 @@ public static class CampServicesAuthoring
             }
             else if(action=="tentbuild")File.WriteAllText(Path.Combine(Repo,"artifacts/camp-tent-build.txt"),Game.EditorTools.CampTentBuilder.EnsureBuilt(false)?"OK":"FAIL");
             else if(action=="bridgereport")File.WriteAllText(Path.Combine(Repo,"artifacts/camp-bridge-report.txt"),BridgeReport());
+            else if(action=="routeaudit")File.WriteAllText(Path.Combine(Repo,"artifacts/camp-route-audit.txt"),CampRouteAudit.Report());
+            else if(action=="bridgeaudit")
+            {
+                if(EditorApplication.isPlayingOrWillChangePlaymode)throw new InvalidOperationException("Остановите Play перед проверкой моста.");
+                SessionState.SetBool("CampBridgeAudit.Active",true);
+                EditorApplication.isPlaying=true;
+            }
             else if(action=="status")File.WriteAllText(Path.Combine(Repo,"artifacts/camp-services-status.txt"),"play="+EditorApplication.isPlaying+" check="+SessionState.GetBool("CampServices.Check",false)+" player="+CampPlayerView.Instance+" services="+CampServicesView.Instance+" probe="+Object.FindAnyObjectByType<CampServicesProbe>()+" serviceComponents="+Object.FindObjectsByType<CampServicesView>().Length);
             else if(action=="stopcheck"){SessionState.SetBool("CampServices.Check",false);EditorApplication.isPlaying=false;}
             else if(action=="install")Install();

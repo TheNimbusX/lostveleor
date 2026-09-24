@@ -44,7 +44,7 @@ Shader "Game/Camp Forest Water"
                 color*=1+(normal.x+second.y)*.075;
                 // Короткие широкие мазки дают читаемое течение без мелкого фотографического шума.
                 float crest=smoothstep(.34,.52,normal.y)*smoothstep(.08,.29,second.x)*.25;
-                float shore=(1-smoothstep(.008,.023,edge+normal.x*.003))*(.48+.15*normal.y);
+                float shore=(1-smoothstep(.006,.05,edge+normal.x*.003))*(.32+.10*normal.y);
                 color=lerp(color,_FoamColor.rgb,saturate(crest+shore));
                 Light light=GetMainLight(v.shadow);
                 color*=lerp(.74,1,light.shadowAttenuation);

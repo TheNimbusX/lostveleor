@@ -69,6 +69,9 @@ namespace Game.View
         public CampSunbeams Sunbeams;
         [Tooltip("Пусто — бабочки, листья и светлячки создаются в игре при вечернем стиле")]
         public CampWildlife Wildlife;
+        [Header("Локальная атмосфера — объекты в SampleScene")]
+        [Tooltip("Корень с дымкой и перегонкой; все дочерние объекты можно менять в сцене")]
+        public CampAtmosphereDetails AtmosphereDetails;
 
         Color _sunColor, _fillColor;
         float _shadowStrength, _fillIntensity, _sunIntensity;
@@ -167,6 +170,7 @@ namespace Game.View
             ApplyFog(evening && EveningFog);
             EnsureSunbeams(evening);
             EnsureWildlife(evening);
+            EnsureAtmosphereDetails(evening);
             Volume.sharedProfile = profile;
             _applied = Style;
         }
@@ -215,6 +219,16 @@ namespace Game.View
                 Wildlife.Ambience = Ambience;
             }
             Wildlife.gameObject.SetActive(evening);
+        }
+
+        void EnsureAtmosphereDetails(bool evening)
+        {
+            // Объекты уже размещены в SampleScene; в игре меняется только их активность.
+            if (!Application.isPlaying) return;
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-no-camp-atmosphere") >= 0)
+                evening = false;
+            if (AtmosphereDetails == null) AtmosphereDetails = GetComponentInChildren<CampAtmosphereDetails>(true);
+            if (AtmosphereDetails != null) AtmosphereDetails.gameObject.SetActive(evening);
         }
 
         VolumeProfile _runtimeEvening;

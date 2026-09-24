@@ -22,6 +22,7 @@ namespace Game.View
         private const int TrailVerticesPerSample = 3;
         private const int TrailSubdivisions = 6;
         private const int TrailRenderSamples = (TrailSamples - 1) * TrailSubdivisions + 1;
+        private const int CleaveVolumeVerticesPerSample = 6;
         private static readonly float AttackContactTime =
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
 
@@ -97,6 +98,7 @@ namespace Game.View
 
         private Sprite _sparkSprite;
         private Sprite _contactSprite;
+        private Sprite _cleaveContactSprite;
         private Sprite _slashSprite;
         private Sprite _dustSprite;
         private Sprite _afterglowSprite;
@@ -112,6 +114,10 @@ namespace Game.View
         private Transform _bladeTip;
         private Mesh _trailMesh;
         private MeshRenderer _trailRenderer;
+        private Mesh _cleaveVolumeMesh;
+        private MeshRenderer _cleaveVolumeRenderer;
+        private Sprite _cleaveArcSprite;
+        private SpriteRenderer _cleaveArcRenderer;
         private readonly Vector3[] _trailRoots = new Vector3[TrailSamples];
         private readonly Vector3[] _trailTips = new Vector3[TrailSamples];
         private readonly float[] _trailTimes = new float[TrailSamples];
@@ -119,6 +125,10 @@ namespace Game.View
         private readonly Color[] _trailColors = new Color[TrailRenderSamples * TrailVerticesPerSample];
         private readonly Vector2[] _trailUvs = new Vector2[TrailRenderSamples * TrailVerticesPerSample];
         private readonly int[] _trailTriangles = new int[(TrailRenderSamples - 1) * 12];
+        private readonly Vector3[] _cleaveVolumeVertices = new Vector3[TrailRenderSamples * CleaveVolumeVerticesPerSample];
+        private readonly Color[] _cleaveVolumeColors = new Color[TrailRenderSamples * CleaveVolumeVerticesPerSample];
+        private readonly Vector2[] _cleaveVolumeUvs = new Vector2[TrailRenderSamples * CleaveVolumeVerticesPerSample];
+        private readonly int[] _cleaveVolumeTriangles = new int[(TrailRenderSamples - 1) * 36];
         private int _trailCount;
         private float _trailDelay;
         private float _trailActive;
@@ -127,8 +137,8 @@ namespace Game.View
         private bool _trailCleave;
         private int _cleaveTrailCast = -1;
         private Vector3 _cleaveTrailPlayer;
-        [SerializeField, Range(.08f, .12f)] private float _cleaveTrailLifetime = .12f;
-        [SerializeField, Range(.2f, 1f)] private float _cleaveTrailWidth = 1f;
+        [SerializeField, Range(.12f, .28f)] private float _cleaveTrailLifetime = .23f;
+        [SerializeField, Range(.18f, .5f)] private float _cleaveTrailWidth = .28f;
 
         private void Awake()
         {
@@ -151,6 +161,11 @@ namespace Game.View
             // AoE frame. They are intentionally built once at startup.
             _sparkSprite = MakeSparkSprite();
             _contactSprite = MakeContactSprite();
+            Texture2D cleaveContact = Resources.Load<Texture2D>("VFX/Pelag/Textures/Pelag_Cleave_Silver_Contact");
+            if (cleaveContact != null)
+                _cleaveContactSprite = Sprite.Create(cleaveContact,
+                    new Rect(0f, 0f, cleaveContact.width, cleaveContact.height),
+                    new Vector2(.5f, .5f), cleaveContact.width / 2.5f);
             _slashSprite = MakeSlashSprite();
             _dustSprite = MakeDustSprite();
             _afterglowSprite = MakeAfterglowSprite();
@@ -166,6 +181,7 @@ namespace Game.View
             BuildFxMeshes();
             BuildPool();
             BuildSwordTrail();
+            BuildCleaveArc();
         }
 
         private void LateUpdate()
@@ -274,16 +290,73 @@ namespace Game.View
             // камера и hit-stop — они не засоряют силуэты.
             if (!fromPlayer && !playerHit) return;
 
-            // Cleave contact uses the authored Cartoon FX prefab in PelagVfxController.
+            // Cleave lands with a narrow steel-white cut and directional shards.
             if (fromPlayer && e.DamageOrigin == DamageOrigin.Ability
                 && (uint)e.ActionVariant < Simulation.AbilitySlots
                 && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId)
             {
                 if (e.DamageKind != DamageType.Physical) return;
-                PushTarget(in e, 1f, true);
+                Vector3 target = At(e.Position, .9f);
+                Vector3 cut = target;
+                Vector3 blade = Vector3.right;
+                if (_bladeRoot != null && _bladeTip != null)
+                {
+                    blade = _bladeTip.position - _bladeRoot.position;
+                    float along = Mathf.Clamp01(Vector3.Dot(target - _bladeRoot.position, blade)
+                        / Mathf.Max(.0001f, blade.sqrMagnitude));
+                    cut = Vector3.Lerp(_bladeRoot.position + blade * along, target, .65f);
+                }
+                if (_camera != null) cut -= _camera.transform.forward * .62f;
+                if (_cleaveContactSprite != null)
+                {
+                    Vector3 from = _camera != null
+                        ? _camera.WorldToScreenPoint(_driver.GetRenderPosition(Simulation.PlayerId))
+                        : Vector3.zero;
+                    Vector3 to = _camera != null ? _camera.WorldToScreenPoint(target) : Vector3.right;
+                    float cutAngle = Mathf.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg;
+                    SpawnFx(FxKind.Contact, _cleaveContactSprite, cut, Vector3.zero,
+                        Color.white, .12f, .72f, 1.15f, 0f, cutAngle, 0f);
+                }
+                if (_sparkSprite != null && _burstBudget > 0)
+                {
+                    _burstBudget--;
+                    Vector3 edge = blade.sqrMagnitude > .0001f ? blade.normalized : Vector3.right;
+                    Vector3 cross = Vector3.Cross(Vector3.up, edge).normalized;
+                    Vector3 forward = new Vector3(e.Position.X.ToFloat(), .9f, e.Position.Y.ToFloat())
+                        - _driver.GetRenderPosition(Simulation.PlayerId);
+                    forward.y = 0f;
+                    if (forward.sqrMagnitude < .01f) forward = Vector3.Cross(Vector3.up, edge);
+                    forward.Normalize();
+                    for (int i = 0; i < 17; i++)
+                    {
+                        float spread = (i - 8) / 8f;
+                        Vector3 velocity = forward * (2.4f + .35f * (i % 5))
+                            + edge * (spread * 3.5f)
+                            + cross * ((i % 3 - 1) * .6f)
+                            + Vector3.up * (.35f + .25f * (i % 4));
+                        float angle = 0f;
+                        if (_camera != null)
+                        {
+                            Vector3 a = _camera.WorldToScreenPoint(cut);
+                            Vector3 b = _camera.WorldToScreenPoint(cut + velocity);
+                            angle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg - 90f;
+                        }
+                        SpawnFx(FxKind.Spark, _sparkSprite, cut + edge * (spread * .07f), velocity,
+                            i % 4 == 0 ? new Color(2.3f, 2.25f, 2.05f, 1f)
+                                : new Color(.82f, .90f, 1.1f, .9f),
+                            .12f + .012f * (i % 4), .14f + .035f * (i % 5), .025f,
+                            0f, angle, .5f);
+                    }
+                }
+                if (_sparkSprite != null)
+                    SpawnFx(FxKind.GroundMark, _sparkSprite,
+                        new Vector3(e.Position.X.ToFloat(), .045f, e.Position.Y.ToFloat()),
+                        Vector3.zero, new Color(.75f, .84f, .96f, .7f),
+                        .45f, 1.2f, .32f, 0f, 55f, 0f);
+                PushTarget(in e, .27f, true);
                 _arena?.ConfirmCleaveContact();
                 // Импульс накапливается до отправки в камеру в этом же ConsumeEvents.
-                Accumulate(.24f, .18f, 0f, 1f);
+                Accumulate(.42f, .21f, 0f, 1f);
                 return;
             }
 
@@ -335,12 +408,14 @@ namespace Game.View
             }
 
             float push = e.Flag ? 1f
-                : whirlwindContact ? 1.05f
+                : whirlwindContact ? 0.85f
                 : playerHit ? 0.8f
                 : heavyBasicContact ? 0.82f
                 : basicContact ? 0.70f
                 : 0.62f;
-            PushTarget(in e, push);
+            // Круговой удар расталкивает: отдача в полтора раза дальше и
+            // тяжёлый наклон корпуса. Только картинка — тело в Sim стоит.
+            PushTarget(in e, push, whirlwindContact, whirlwindContact ? 1.5f : 1f);
 
             // ВХОДЯЩИЙ УДАР НЕ ОСТАНАВЛИВАЕТ ВРЕМЯ.
             //
@@ -359,9 +434,9 @@ namespace Game.View
             // подтверждение ТВОЕГО удара, а не наказание за чужой.
             bool stopsTime = (!playerHit || e.Flag) && !IsSlashContact(in e);
             Accumulate(
-                trauma: e.Flag ? 0.52f : whirlwindContact ? 0.42f : playerHit ? 0.33f
+                trauma: e.Flag ? 0.52f : whirlwindContact ? 0.55f : playerHit ? 0.33f
                     : heavyBasicContact ? 0.36f : basicContact ? 0.29f : 0.25f,
-                zoom: e.Flag ? 0.75f : whirlwindContact ? 0.55f
+                zoom: e.Flag ? 0.75f : whirlwindContact ? 0.70f
                     : heavyBasicContact ? 0.48f : basicContact ? 0.40f : 0.35f,
                 stopDuration: !stopsTime ? 0f
                     : e.Flag ? 0.070f
@@ -377,7 +452,7 @@ namespace Game.View
         /// Положение сущности по-прежнему решает тик, и трогать его отсюда
         /// нельзя ни при каких условиях.
         /// </summary>
-        private void PushTarget(in SimEvent e, float strength, bool heavy = false)
+        private void PushTarget(in SimEvent e, float strength, bool heavy = false, float recoilScale = 1f)
         {
             if (_arena == null) return;
 
@@ -393,7 +468,7 @@ namespace Game.View
                                         to.Y.ToFloat() - from.Y.ToFloat());
             }
 
-            _arena.ReactToHit(e.Target, direction, strength, heavy);
+            _arena.ReactToHit(e.Target, direction, strength, heavy, recoilScale);
         }
 
         private bool IsSlashContact(in SimEvent e)
@@ -528,6 +603,7 @@ namespace Game.View
                 _cleaveTrailPlayer = _driver.GetRenderPosition(Simulation.PlayerId);
                 _trailRenderer.sharedMaterial.SetFloat("_Brush", 0f);
                 _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.8f);
+                _trailRenderer.sharedMaterial.SetFloat("_Hard", 0f);
             }
             else StopSwordTrail();
         }
@@ -539,6 +615,8 @@ namespace Game.View
             _trailDelay = _trailActive = _trailFade = 0f;
             _trailCount = 0;
             if (_trailRenderer != null) _trailRenderer.enabled = false;
+            if (_cleaveVolumeRenderer != null) _cleaveVolumeRenderer.enabled = false;
+            if (_cleaveArcRenderer != null) _cleaveArcRenderer.enabled = false;
         }
 
         /// <summary>Запускает клинковую ленту в изолированной VFX-витрине.</summary>
@@ -573,8 +651,10 @@ namespace Game.View
             _trailActive = CharacterAnimatorView.WhirlwindTrailEnd - CharacterAnimatorView.WhirlwindTrailStart;
             _trailFade = 0.10f;
             _trailWhirlwind = true;
-            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Brush", .85f);
+            // Лента Вихря — три жёсткие ступени вместо мягкого градиента, как серп.
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Brush", .35f);
             if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.05f);
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Hard", 1f);
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -593,6 +673,7 @@ namespace Game.View
             _trailWhirlwind = false;
             if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Brush", 0f);
             if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Glow", 0.9f);
+            if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Hard", 0f);
             if (_trailRenderer != null) _trailRenderer.enabled = false;
         }
 
@@ -617,9 +698,59 @@ namespace Game.View
             _trailRenderer.sortingOrder = 100;
             _trailRenderer.sharedMaterial.renderQueue = 3100;
             _trailRenderer.enabled = false;
+
+            // The physical blade samples also drive a shallow solid sweep. Its
+            // near and far faces give the cleave depth at the gameplay camera;
+            // the existing translucent ribbon remains the luminous edge.
+            var volume = new GameObject("Pelag Cleave Blade Volume");
+            volume.transform.SetParent(transform, false);
+            _cleaveVolumeMesh = new Mesh { name = "Runtime Pelag Cleave Volume" };
+            _cleaveVolumeMesh.MarkDynamic();
+            volume.AddComponent<MeshFilter>().sharedMesh = _cleaveVolumeMesh;
+            _cleaveVolumeRenderer = volume.AddComponent<MeshRenderer>();
+            Shader volumeShader = Shader.Find("Razlom/CleaveVolume");
+            if (volumeShader != null)
+            {
+                _cleaveVolumeRenderer.sharedMaterial = new Material(volumeShader)
+                {
+                    name = "Runtime Pelag Cleave Volume",
+                    renderQueue = 3099
+                };
+                Texture2D paint = Resources.Load<Texture2D>("VFX/Pelag/Textures/Pelag_FX_trail_hero");
+                if (paint != null) _cleaveVolumeRenderer.sharedMaterial.SetTexture("_MainTex", paint);
+            }
+            _cleaveVolumeRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            _cleaveVolumeRenderer.receiveShadows = false;
+            _cleaveVolumeRenderer.sortingOrder = 99;
+            _cleaveVolumeRenderer.enabled = false;
+        }
+
+        private void BuildCleaveArc()
+        {
+            Texture2D texture = Resources.Load<Texture2D>("VFX/Pelag/Textures/Pelag_Cleave_Silver_Arc");
+            if (texture == null) return;
+            _cleaveArcSprite = Sprite.Create(texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(.5f, .5f), texture.width / 4.10f);
+            _cleaveArcSprite.name = "Pelag Cleave Silver Arc";
+            var go = new GameObject("Pelag Cleave Painted Arc");
+            go.transform.SetParent(transform, false);
+            _cleaveArcRenderer = go.AddComponent<SpriteRenderer>();
+            _cleaveArcRenderer.sprite = _cleaveArcSprite;
+            _cleaveArcRenderer.sortingOrder = 102;
+            _cleaveArcRenderer.enabled = false;
         }
 
         private void OnDisable() => StopSwordTrail();
+
+        private void OnDestroy()
+        {
+            if (_cleaveVolumeMesh != null) Destroy(_cleaveVolumeMesh);
+            if (_cleaveVolumeRenderer != null && _cleaveVolumeRenderer.sharedMaterial != null)
+                Destroy(_cleaveVolumeRenderer.sharedMaterial);
+            if (_cleaveArcSprite != null) Destroy(_cleaveArcSprite);
+            if (_cleaveContactSprite != null) Destroy(_cleaveContactSprite);
+        }
 
         private void AnimateSwordTrail()
         {
@@ -642,6 +773,7 @@ namespace Game.View
                 if (sampling && _bladeRoot != null && _bladeTip != null)
                     AddTrailSample(_bladeRoot.position, _bladeTip.position);
                 RebuildSwordTrail();
+                UpdateCleaveArc(sim, tick);
                 return;
             }
             float dt = Time.deltaTime;
@@ -651,6 +783,9 @@ namespace Game.View
                 return;
             }
 
+            // Удержание Вихря: лента живёт, пока Sim крутит оборот.
+            if (_trailWhirlwind && _driver != null && _driver.Sim != null && _driver.Sim.WhirlwindChanneling)
+                _trailActive = Mathf.Max(_trailActive, .06f);
             if (_trailActive > 0f && _bladeRoot != null && _bladeTip != null)
             {
                 _trailActive -= dt;
@@ -667,6 +802,37 @@ namespace Game.View
             }
 
             RebuildSwordTrail();
+        }
+
+        private void UpdateCleaveArc(Simulation sim, float tick)
+        {
+            if (_cleaveArcRenderer == null || _camera == null) return;
+            float windup = Mathf.InverseLerp(sim.CleaveSwingStartTick, sim.CleaveContactTick, tick);
+            float onset = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.10f, .96f, windup));
+            float release = 1f - Mathf.SmoothStep(0f, 1f,
+                Mathf.InverseLerp(sim.CleaveContactTick + .25f, sim.CleaveContactTick + 2.5f, tick));
+            float strength = onset * release;
+            if (strength < .015f) { _cleaveArcRenderer.enabled = false; return; }
+
+            FixVec2 aim = sim.Entities.Facing[Simulation.PlayerId];
+            Vector3 forward = new Vector3(aim.X.ToFloat(), 0f, aim.Y.ToFloat());
+            if (forward.sqrMagnitude < .001f) forward = Vector3.forward;
+            forward.Normalize();
+            Vector3 player = _driver.GetRenderPosition(Simulation.PlayerId);
+            Vector3 center = player + forward * Mathf.Lerp(-1.05f, -.25f, windup)
+                + Vector3.up * 2.12f
+                + _camera.transform.forward * .12f;
+            Vector3 screenA = _camera.WorldToScreenPoint(player);
+            Vector3 screenB = _camera.WorldToScreenPoint(player + forward);
+            float angle = Mathf.Atan2(screenB.y - screenA.y, screenB.x - screenA.x)
+                * Mathf.Rad2Deg;
+            Transform arc = _cleaveArcRenderer.transform;
+            arc.position = center;
+            arc.rotation = _camera.transform.rotation * Quaternion.Euler(0f, 0f, angle - 18f);
+            arc.localScale = Vector3.one * Mathf.Lerp(.56f, 1f, windup);
+            _cleaveArcRenderer.color = new Color(1f, 1f, 1f, strength);
+            _cleaveArcRenderer.enabled = true;
+            if (_cleaveVolumeRenderer != null) _cleaveVolumeRenderer.enabled = false;
         }
 
         private void AddTrailSample(Vector3 root, Vector3 tip)
@@ -717,7 +883,7 @@ namespace Game.View
             float fadeDuration = _trailWhirlwind ? 0.10f : 0.09f;
             float fade = _trailActive > 0f ? 1f : Mathf.Clamp01(_trailFade / fadeDuration);
             int renderCount = (_trailCount - 1) * TrailSubdivisions + 1;
-            float lifetime = _trailCleave ? _cleaveTrailLifetime : _trailWhirlwind ? 0.12f : 0.085f;
+            float lifetime = _trailCleave ? .085f : _trailWhirlwind ? 0.12f : 0.085f;
             for (int i = 0; i < renderCount; i++)
             {
                 int segment = Mathf.Min(i / TrailSubdivisions, _trailCount - 2);
@@ -738,11 +904,18 @@ namespace Game.View
                 _trailColors[vertex] = new Color(0.60f, 0.035f, 0.12f, alpha * 0.03f);
                 _trailColors[vertex + 1] = new Color(0.957f, 0.282f, 0.341f, alpha * 0.48f);
                 _trailColors[vertex + 2] = new Color(1.30f, 0.54f, 0.52f, alpha * 0.78f);
+                if (_trailWhirlwind)
+                {
+                    // Лента Вихря в палитре серпа: белое ядро, красная кромка.
+                    _trailColors[vertex] = new Color(1.35f, .12f, .025f, alpha * .55f);
+                    _trailColors[vertex + 1] = new Color(1.3f, 1.25f, 1.2f, alpha * .92f);
+                    _trailColors[vertex + 2] = new Color(1.35f, .12f, .025f, alpha * .55f);
+                }
                 if (_trailCleave)
                 {
-                    _trailColors[vertex] = new Color(1f, .24f, .27f, alpha * .65f);
-                    _trailColors[vertex + 1] = new Color(1.25f, 1.10f, .83f, alpha);
-                    _trailColors[vertex + 2] = new Color(1f, .24f, .27f, alpha * .65f);
+                    _trailColors[vertex] = new Color(.44f, .50f, .6f, alpha * .1f);
+                    _trailColors[vertex + 1] = new Color(1.6f, 1.72f, 1.9f, alpha * .7f);
+                    _trailColors[vertex + 2] = new Color(.86f, .94f, 1.1f, alpha * .26f);
                     for (int c = 0; c < 3; c++)
                         _trailVertices[vertex + c] = _trailRenderer.transform.InverseTransformPoint(_trailVertices[vertex + c]);
                 }
@@ -776,7 +949,104 @@ namespace Game.View
             _trailMesh.SetUVs(0, _trailUvs, 0, renderCount * TrailVerticesPerSample);
             _trailMesh.SetTriangles(_trailTriangles, 0, triangle, 0, true);
             _trailMesh.RecalculateBounds();
+            // A narrow 3D blade glint ties the painted silhouette to the sword.
             _trailRenderer.enabled = true;
+            if (_trailCleave && _cleaveVolumeRenderer != null) _cleaveVolumeRenderer.enabled = false;
+            else if (_cleaveVolumeRenderer != null) _cleaveVolumeRenderer.enabled = false;
+        }
+
+        private void RebuildCleaveVolume(int renderCount, float lifetime, float fade)
+        {
+            if (_cleaveVolumeMesh == null || _cleaveVolumeRenderer == null
+                || _cleaveVolumeRenderer.sharedMaterial == null) return;
+            bool visible = Time.time - _trailTimes[_trailCount - 1] < lifetime;
+            if (!visible) { _cleaveVolumeRenderer.enabled = false; return; }
+
+            for (int i = 0; i < renderCount; i++)
+            {
+                int segment = Mathf.Min(i / TrailSubdivisions, _trailCount - 2);
+                float t = (i - segment * TrailSubdivisions) / (float)TrailSubdivisions;
+                float sampleTime = Mathf.Lerp(_trailTimes[segment], _trailTimes[segment + 1], t);
+                float age = Mathf.Clamp01(1f - (Time.time - sampleTime) / lifetime);
+                Vector3 root = InterpolateTrailPoint(_trailRoots, segment, t);
+                Vector3 tip = InterpolateTrailPoint(_trailTips, segment, t);
+                Vector3 blade = tip - root;
+                Vector3 previous = InterpolateTrailPoint(_trailTips, Mathf.Max(0, segment - 1), t);
+                Vector3 next = InterpolateTrailPoint(_trailTips,
+                    Mathf.Min(_trailCount - 2, segment + 1), t);
+                Vector3 travel = next - previous;
+                Vector3 normal = Vector3.Cross(blade, travel);
+                if (normal.sqrMagnitude < .0001f) normal = Vector3.Cross(blade, Vector3.up);
+                normal.Normalize();
+                if (_camera != null && Vector3.Dot(normal, -_camera.transform.forward) < 0f)
+                    normal = -normal;
+                float taper = Mathf.Sin(Mathf.PI * Mathf.Lerp(.08f, .88f, age));
+                float depth = .12f * taper;
+                float reach = .48f + .84f * taper;
+                // Follow the blade tip, not the whole sword span: a broad fan
+                // across the entire blade reads as a rectangular white sheet.
+                Vector3 inner = root + blade * .94f;
+                Vector3 middle = inner + blade * (reach * .76f);
+                Vector3 outer = inner + blade * reach;
+                int v = i * CleaveVolumeVerticesPerSample;
+                Transform volume = _cleaveVolumeRenderer.transform;
+                _cleaveVolumeVertices[v] = volume.InverseTransformPoint(inner + normal * depth);
+                _cleaveVolumeVertices[v + 1] = volume.InverseTransformPoint(middle + normal * depth);
+                _cleaveVolumeVertices[v + 2] = volume.InverseTransformPoint(outer + normal * depth);
+                _cleaveVolumeVertices[v + 3] = volume.InverseTransformPoint(inner - normal * depth);
+                _cleaveVolumeVertices[v + 4] = volume.InverseTransformPoint(middle - normal * depth);
+                _cleaveVolumeVertices[v + 5] = volume.InverseTransformPoint(outer - normal * depth);
+                float opacity = Mathf.SmoothStep(0f, 1f, age) * fade * taper;
+                _cleaveVolumeColors[v] = new Color(.09f, .11f, .15f, 0f);
+                _cleaveVolumeColors[v + 1] = new Color(.38f, .43f, .52f, opacity * .56f);
+                _cleaveVolumeColors[v + 2] = new Color(2.2f, 2.3f, 2.4f, opacity * .9f);
+                _cleaveVolumeColors[v + 3] = new Color(.08f, .10f, .14f, 0f);
+                _cleaveVolumeColors[v + 4] = new Color(.26f, .31f, .39f, opacity * .38f);
+                _cleaveVolumeColors[v + 5] = new Color(1.55f, 1.68f, 1.82f, opacity * .6f);
+                for (int c = 0; c < 6; c++)
+                    _cleaveVolumeUvs[v + c] = new Vector2(age, (c % 3) * .5f);
+            }
+
+            int index = 0;
+            for (int i = 0; i < renderCount - 1; i++)
+            {
+                int a = i * CleaveVolumeVerticesPerSample;
+                int b = a + CleaveVolumeVerticesPerSample;
+                for (int c = 0; c < 2; c++)
+                {
+                    _cleaveVolumeTriangles[index++] = a + c;
+                    _cleaveVolumeTriangles[index++] = b + c;
+                    _cleaveVolumeTriangles[index++] = a + c + 1;
+                    _cleaveVolumeTriangles[index++] = a + c + 1;
+                    _cleaveVolumeTriangles[index++] = b + c;
+                    _cleaveVolumeTriangles[index++] = b + c + 1;
+                    _cleaveVolumeTriangles[index++] = a + c + 3;
+                    _cleaveVolumeTriangles[index++] = a + c + 4;
+                    _cleaveVolumeTriangles[index++] = b + c + 3;
+                    _cleaveVolumeTriangles[index++] = a + c + 4;
+                    _cleaveVolumeTriangles[index++] = b + c + 4;
+                    _cleaveVolumeTriangles[index++] = b + c + 3;
+                }
+                for (int edgeIndex = 0; edgeIndex < 2; edgeIndex++)
+                {
+                    int edge = edgeIndex * 2;
+                    int opposite = edge + 3;
+                    _cleaveVolumeTriangles[index++] = a + edge;
+                    _cleaveVolumeTriangles[index++] = b + edge;
+                    _cleaveVolumeTriangles[index++] = a + opposite;
+                    _cleaveVolumeTriangles[index++] = a + opposite;
+                    _cleaveVolumeTriangles[index++] = b + edge;
+                    _cleaveVolumeTriangles[index++] = b + opposite;
+                }
+            }
+
+            _cleaveVolumeMesh.Clear(false);
+            _cleaveVolumeMesh.SetVertices(_cleaveVolumeVertices, 0, renderCount * CleaveVolumeVerticesPerSample);
+            _cleaveVolumeMesh.SetColors(_cleaveVolumeColors, 0, renderCount * CleaveVolumeVerticesPerSample);
+            _cleaveVolumeMesh.SetUVs(0, _cleaveVolumeUvs, 0, renderCount * CleaveVolumeVerticesPerSample);
+            _cleaveVolumeMesh.SetTriangles(_cleaveVolumeTriangles, 0, index, 0, true);
+            _cleaveVolumeMesh.RecalculateBounds();
+            _cleaveVolumeRenderer.enabled = true;
         }
 
         private Vector3 InterpolateTrailPoint(Vector3[] points, int segment, float t)

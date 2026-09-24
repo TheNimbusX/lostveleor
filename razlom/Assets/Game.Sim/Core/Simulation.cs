@@ -863,8 +863,7 @@ namespace Game.Sim
         ///
         /// Мишень стоит в полутора метрах прямо перед игроком — дальность
         /// автоатаки два метра, а взгляд по умолчанию направлен по оси X.
-        /// Спарринг стоит ЗА СПИНОЙ: он обязан бить, но не обязан попадать
-        /// под автоатаку и портить замер, а фронтальный сектор его не видит.
+        /// Второй манекен стоит за спиной и тоже не атакует.
         /// </summary>
         public void SetupProvingGround(int dummyHealth, Fix64 dummyArmor, Fix64 dummyFireResist)
         {
@@ -883,23 +882,17 @@ namespace Game.Sim
             _events.Add(SimEvent.Spawn(dummy, Entities.Position[dummy]));
 
             int sparring = Entities.Spawn(new FixVec2(-Fix64.Ratio(3, 2), Fix64.Zero),
-                EnemyBaseHealth * 100, Faction.Orvill);
-            ConfigureEnemy(sparring);
-
-            // Спарринг тоже стоит на месте: Полигон меряет билд, а не догонялки.
-            Entities.PushWeight[sparring] = Fix64.Zero;
-            Entities.Stats[sparring].SetBase(StatType.MoveSpeed, Fix64.Zero);
-            Entities.RefreshStats(sparring);
+                System.Math.Max(10000, dummyHealth), Faction.Orvill);
+            ConfigureDummy(sparring, Fix64.Zero, Fix64.Zero);
             _events.Add(SimEvent.Spawn(sparring, Entities.Position[sparring]));
         }
 
         /// <summary>
         /// Манекен-мишень: не ходит, не бьёт, но имеет настраиваемые защиты.
         ///
-        /// И неподвижность, и молчание сделаны СТАТАМИ, а не флагом «манекен»:
-        /// нулевая скорость движения — это нулевой шаг, нулевая скорость атаки —
-        /// потолок кулдауна. Отдельного режима в бою заводить не пришлось,
-        /// а значит, и ломаться в бою нечему.
+        /// Нулевая скорость движения удерживает мишень на месте. Запрет атаки
+        /// задаётся отдельно: нулевая скорость атаки сама по себе допускает
+        /// первый удар до начала долгой перезарядки.
         /// </summary>
         private void ConfigureDummy(int id, Fix64 armor, Fix64 fireResist)
         {
@@ -916,6 +909,7 @@ namespace Game.Sim
 
             Entities.RefreshStats(id);
             Entities.Health[id] = Entities.MaxHealth[id];
+            Entities.NextAttackTick[id] = int.MaxValue;
         }
 
         /// <summary>
@@ -1037,6 +1031,7 @@ namespace Game.Sim
 
         private void ResetAbilityState()
         {
+            ResetPotionEffects();
             ResetTempo();
             CancelBlazeGesture();
             _blazeUntilTick = 0;
@@ -1139,6 +1134,7 @@ namespace Game.Sim
         public void Step(in InputFrame rawInput)
         {
             _events.Clear();
+            UpdatePotionEffects();
 
             // Пересчёт грязных листов статов — первой стадией и ровно один раз
             // за тик. У StatSheet пересчёт по грязному флагу, и точка, в которой
@@ -1530,6 +1526,7 @@ namespace Game.Sim
             int power = amount;
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
+            amount = ApplyResinReduction(target, amount);
 
             Entities.Health[target] -= amount;
             _events.Add(overTime
@@ -1562,7 +1559,7 @@ namespace Game.Sim
             Entities.Health[target] = 0;
             Entities.Alive[target] = false;
             if (target == PlayerId) ResetAbilityState();
-            _events.Add(SimEvent.Death(target, Entities.Position[target]));
+            _events.Add(SimEvent.Death(killer, target, Entities.Position[target]));
             GrantKillXp(target, killer);
             TalentOnKill(target, killer, slot);
 
@@ -2264,7 +2261,7 @@ namespace Game.Sim
                 }
 
                 if (!Entities.Alive[i]) continue;
-                if (Tick < Entities.NextAttackTick[i]) continue;
+                if (Entities.NextAttackTick[i] == int.MaxValue || Tick < Entities.NextAttackTick[i]) continue;
 
                 // Одна активная способность — одно читаемое действие. Приказ
                 // атаки живёт и возобновится после action-window, но второй
@@ -2454,6 +2451,7 @@ namespace Game.Sim
             // что реально прилетело.
             int power = damage;
             damage = CombatStats.MitigateByArmor(damage, Entities.Armor[target]);
+            damage = ApplyResinReduction(target, damage);
 
             Entities.Health[target] -= damage;
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
@@ -2492,6 +2490,7 @@ namespace Game.Sim
             if (PlayerInvulnerable) Hashing.Mix(ref hash, 0x474F44);
             Hashing.Mix(ref hash, Tick);
             HashTempo(ref hash);
+            HashPotionEffects(ref hash);
             HashAnchorSlam(ref hash);
             HashWreck(ref hash);
             HashCleave(ref hash);

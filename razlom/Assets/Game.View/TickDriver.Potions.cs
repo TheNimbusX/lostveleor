@@ -26,8 +26,8 @@ namespace Game.View
                 if(toggle)_potionLatch^=(byte)(16<<slot);
                 if(click){if(slot==0)health=true;else lavidium=true;}
             }
-            if(health)_potionLatch|=(byte)(1<<(int)Session.Camp.SelectedPotion(0));
-            if(lavidium)_potionLatch|=(byte)(1<<(int)Session.Camp.SelectedPotion(1));
+            if(health)_potionLatch|=Camp.PotionInputBit(Session.Camp.SelectedPotion(0));
+            if(lavidium)_potionLatch|=Camp.PotionInputBit(Session.Camp.SelectedPotion(1));
         }
     }
 }

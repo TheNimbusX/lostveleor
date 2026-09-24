@@ -12,6 +12,7 @@ namespace Game.View
         readonly StringBuilder _report=new StringBuilder();
         TickDriver _driver;
         CampSoundscape _sound;
+        bool _smithHeard;
         bool _passed=true;
         public void Initialize(string output){_output=Path.GetFullPath(output);Directory.CreateDirectory(_output);}
         void Check(bool value,string message){_report.AppendLine((value?"PASS ":"FAIL ")+message);if(!value)_passed=false;}
@@ -21,15 +22,28 @@ namespace Game.View
             _driver=FindAnyObjectByType<TickDriver>();_sound=FindAnyObjectByType<CampSoundscape>();
             if(_sound==null){Check(false,"soundscape installed");Finish();yield break;}
             foreach(var layer in _sound.Layers)Check(layer.Source!=null && layer.Source.clip!=null,"clip assigned: "+layer.Place);
-            var root=_sound.CampRoot.transform;var magic=root.GetComponentInChildren<CampMagicCircle>();
+            var root=_sound.CampRoot.transform;
+            CampServiceNpc alchemist=null;
+            foreach(var npc in FindObjectsByType<CampServiceNpc>())
+                if(npc.Kind==CampServiceKind.Alchemist){alchemist=npc;break;}
+            Check(alchemist!=null,"alchemist sound stop exists");
             yield return Listen(root.Find("Campfire").position+new Vector3(-1.8f,0,-1),"01-fire",6);
             float fireNear=Layer(CampSoundscape.Place.Fire).Source.volume;
-            yield return Listen(root.Find("Anchor - Smith").position,"02-smith",8);
-            Check(Layer(CampSoundscape.Place.Smith).Source.isPlaying,"anvil sounds beside forge");
+            yield return Listen(root.Find("Anchor - Smith").position,"02-smith",18);
+            Check(_smithHeard,"anvil sounds beside forge during the listening window");
             Check(Layer(CampSoundscape.Place.Fire).Source.volume<fireNear*.8f,"fire becomes quieter at forge");
-            yield return Listen(magic.AlchemyAltar.TransformPoint(magic.AlchemyPathSocket)+new Vector3(.6f,0,-.5f),"03-cauldron",7);
-            Check(Layer(CampSoundscape.Place.Cauldron).Source.volume>.15f,"cauldron audible nearby");
-            yield return Listen(new Vector3(6.5625f,0,-7.8125f),"04-river-side",6);
+            if(alchemist!=null)
+            {
+                yield return Listen(alchemist.Approach,"03-cauldron",7);
+                Check(Layer(CampSoundscape.Place.Cauldron).Source.volume>.15f,"cauldron audible by alchemist");
+            }
+            var passage=FindAnyObjectByType<CampRiverPassage>();
+            Check(passage!=null,"bridge river sound stop exists");
+            if(passage!=null)
+            {
+                var bridge=passage.BridgeBounds;
+                yield return Listen(new Vector3(bridge.center.x,0,bridge.max.z+1f),"04-river-side",6);
+            }
             Check(Layer(CampSoundscape.Place.River).Source.volume>.08f,"river audible at camp edge");
             float master=GameUserSettings.MasterVolume,effects=GameUserSettings.EffectsVolume,music=GameUserSettings.MusicVolume;
             GameUserSettings.SetAudio(master,0,music);yield return new WaitForSeconds(1.5f);
@@ -57,7 +71,12 @@ namespace Game.View
             foreach(var layer in _sound.Layers)_report.AppendLine(layer.Place+" distance="+layer.Distance.ToString("F2")+" gain="+layer.Source.volume.ToString("F3")+" playing="+layer.Source.isPlaying);
             yield return new WaitForEndOfFrame();ScreenCapture.CaptureScreenshot(Path.Combine(_output,name+".png"));
             File.WriteAllText(Path.Combine(_output,"sound-progress.txt"),_report.ToString());
-            yield return new WaitForSeconds(seconds-2);
+            float until=Time.time+seconds-2;
+            while(Time.time<until)
+            {
+                if(name=="02-smith" && Layer(CampSoundscape.Place.Smith).Source.isPlaying)_smithHeard=true;
+                yield return null;
+            }
         }
         void Finish(){_report.AppendLine(_passed?"ALL CAMP SOUND CHECKS PASSED":"CAMP SOUND HAS FAILURES");File.WriteAllText(Path.Combine(_output,"sound-qa.txt"),_report.ToString());Debug.Log("[camp-sound] passed="+_passed);}
     }

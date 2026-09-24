@@ -350,6 +350,7 @@ public static class CampGroundStudyBuilder
         mat.SetColor("_BaseColor",color);mat.SetFloat("_Smoothness",0);mat.SetFloat("_Cull",0);EditorUtility.SetDirty(mat);
         var child=new GameObject(name);child.transform.SetParent(parent,false);child.layer=2;
         child.AddComponent<MeshFilter>().sharedMesh=mesh;
-        var renderer=child.AddComponent<MeshRenderer>();renderer.sharedMaterial=mat;renderer.shadowCastingMode=ShadowCastingMode.TwoSided;
+        var renderer=child.AddComponent<MeshRenderer>();renderer.sharedMaterial=mat;
+        renderer.shadowCastingMode=name.StartsWith("Grass")?ShadowCastingMode.Off:ShadowCastingMode.TwoSided;
     }
 }

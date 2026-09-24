@@ -98,6 +98,7 @@ Material:
     - _AddPrecomputedVelocity: 0
     - _AlphaClip: 0
     - _AlphaToMask: 0
+    - _BlazeGlow: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _BumpScale: 1
@@ -125,7 +126,7 @@ Material:
     - _LightFeather: 0.001
     - _LightThreshold: 0
     - _Metallic: 0
-    - _MidThreshold: 0
+    - _MidThreshold: 0.29
     - _Mode: 0
     - _OcclusionStrength: 1
     - _OutlineDepthBias: 0
@@ -133,7 +134,7 @@ Material:
     - _Parallax: 0.02
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimPower: 3.95
+    - _RimPower: 1
     - _Smoothness: 0.353
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -141,11 +142,12 @@ Material:
     - _SrcBlendAlpha: 1
     - _Surface: 0
     - _UVSec: 0
+    - _WhiteClothLift: 0
     - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.8018868, g: 0.8018868, b: 0.8018868, a: 1}
     - _Color: {r: 0.9063317, g: 0.9063317, b: 0.9063317, a: 1}
     - _DissolveEdgeColor: {r: 1, g: 0.41999996, b: 0.11999995, a: 1}
     - _DissolveHeightRange: {r: 0, g: 1, b: 0, a: 0}

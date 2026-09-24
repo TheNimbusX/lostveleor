@@ -6,7 +6,7 @@ namespace Game.View
     [DisallowMultipleComponent]
     public sealed class CampDummyView : MonoBehaviour
     {
-        [Min(1)] public int Health = 2000;
+        [Min(10000)] public int Health = 10000;
         [Min(0)] public int Armor;
         [Range(0, 100)] public int FireResistance;
         public string Label = "Манекен";
@@ -42,7 +42,8 @@ namespace Game.View
             }
         }
         public Vector3 BarPosition { get { var b = VisualBounds; return new Vector3(b.center.x, b.max.y + BarOffset, b.center.z); } }
+        // Сопротивление в инспекторе — проценты 0–100; в Sim это доля (предел 3/4). FromInt давал 1 = 100%.
         internal CampDummyDefinition Definition => new CampDummyDefinition(
-            CampTrainingView.Flat(TargetPosition), Mathf.Max(1, Health), Fix64.FromInt(Armor), Fix64.FromInt(FireResistance));
+            CampTrainingView.Flat(TargetPosition), Mathf.Max(10000, Health), Fix64.FromInt(Armor), Fix64.Ratio(FireResistance, 100));
     }
 }

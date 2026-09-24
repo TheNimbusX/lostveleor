@@ -20,9 +20,12 @@ param(
     [string] $OutDir  = '',
     [ValidatePattern('^[a-zA-Z0-9-]+$')] [string] $WorkspaceName = 'capture',
     [switch] $Whirlwind,
+    [switch] $WhirlwindHold,
     [switch] $Camp,
     [switch] $CampIntegration,
     [switch] $CampReview,
+    [switch] $CampAtmospherePaths,
+    [switch] $CampAtmosphereOff,
     [switch] $CampSound,
     [ValidateSet('', 'Original', 'Clean', 'Painterly', 'Film', 'Aces', 'GoldenEvening')] [string] $CampLook = '',
     [switch] $CampMagic,
@@ -199,7 +202,7 @@ if ($needsBuild) {
     $unityRun = Start-Process -FilePath $unity -WindowStyle Hidden -Wait -PassThru -ArgumentList @(
         '-batchmode', '-nographics', '-quit'
         '-projectPath', $shadow
-        '-executeMethod', 'Game.EditorTools.RazlomCaptureBuild.Build'
+        '-executeMethod', $(if ($CampAtmospherePaths) { 'CampAtmospherePaths.BuildCapture' } else { 'Game.EditorTools.RazlomCaptureBuild.Build' })
         '-razlom-build-out', $build
         '-logFile', $log
     )
@@ -259,6 +262,7 @@ if ($PSBoundParameters.ContainsKey('FrameCap')) {
     $playerArgs += @('-capture-frame-cap', $FrameCap)
 }
 if ($Whirlwind) { $playerArgs += '-capture-whirlwind' }
+if ($WhirlwindHold) { $playerArgs += '-capture-whirlwind-hold' }
 if ($Run) { $playerArgs += '-capture-run' }
 if ($Equipment) { $playerArgs += '-capture-equipment' }
 if ($Locomotion) { $playerArgs += '-capture-locomotion' }
@@ -278,6 +282,7 @@ if ($HudTooltip -ge 0) { $playerArgs += '-capture-hud'; $playerArgs += @('-captu
 if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
 if ($CampReview) { $playerArgs += '-capture-camp-review' }
+if ($CampAtmosphereOff) { $playerArgs += '-capture-no-camp-atmosphere' }
 if ($CampSound) { $playerArgs += '-capture-camp-sound' }
 if ($CampLook -ne '') { $playerArgs += @('-capture-camp-look', $CampLook) }
 if ($CampMagic) { $playerArgs += '-capture-camp-magic' }

@@ -32,6 +32,8 @@ namespace Game.View
         Vector3 _listener;
         Camera _camera;
         PauseMenu _pause;
+        TickDriver _driver;
+        CampServiceNpc _alchemist;
         System.Random _variation;
         public float CurrentBlend=>_blend;
 
@@ -40,6 +42,9 @@ namespace Game.View
             _variation=new System.Random(72913);
             _camera=Camera.main;
             _pause=FindAnyObjectByType<PauseMenu>();
+            _driver=FindAnyObjectByType<TickDriver>();
+            foreach(var npc in FindObjectsByType<CampServiceNpc>())
+                if(npc.Kind==CampServiceKind.Alchemist){_alchemist=npc;break;}
             if(Layers==null)Layers=System.Array.Empty<Layer>();
             foreach(var layer in Layers)
             {
@@ -78,7 +83,8 @@ namespace Game.View
             _spatialClock-=dt;
             if(_spatialClock<=0){_spatialClock=.05f;RefreshDistances();}
             bool panel=player!=null && (player.InventoryOpen || player.EntranceOpen);
-            float duck=panel || (_pause!=null && _pause.IsOpen) ? MenuDuck : 1;
+            float duck=panel || CampServicesView.Instance?.IsOpen==true ||
+                (_pause!=null && _pause.IsOpen) || (_driver!=null && _driver.GameplayPaused) ? MenuDuck : 1;
             foreach(var layer in Layers)
             {
                 var source=layer.Source;
@@ -107,6 +113,7 @@ namespace Game.View
                 bool global=layer.Place==Place.Forest || layer.Place==Place.Music;
                 Vector3 position=layer.Anchor!=null?layer.Anchor.position:_listener;
                 if(layer.Place==Place.River && River!=null)position=ClosestRiver(_listener);
+                if(layer.Place==Place.Cauldron && _alchemist!=null)position=_alchemist.transform.position;
                 Vector3 delta=position-_listener;delta.y=0;
                 layer.Distance=delta.magnitude;
                 layer.Pan=global || _camera==null?0:Mathf.Clamp(Vector3.Dot(delta,_camera.transform.right)/12,-.58f,.58f);

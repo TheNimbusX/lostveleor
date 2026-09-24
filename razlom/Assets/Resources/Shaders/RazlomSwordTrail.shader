@@ -4,6 +4,7 @@ Shader "Razlom/SwordTrail"
     {
         _Glow ("HDR Glow", Range(0,4)) = 1.55
         _Brush ("Brush breakup", Range(0,1)) = 0
+        _Hard ("Hard bands", Range(0,1)) = 0
     }
 
     SubShader
@@ -38,6 +39,7 @@ Shader "Razlom/SwordTrail"
             CBUFFER_START(UnityPerMaterial)
                 half _Glow;
                 half _Brush;
+                half _Hard;
             CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -61,7 +63,16 @@ Shader "Razlom/SwordTrail"
                 half bristles = .68h + .32h * sin(input.uv.y * 57.0h + sin(input.uv.x * 12.0h) * 1.8h);
                 half pigment = smoothstep(.08h, .42h, bristles + input.uv.x * .25h);
                 alpha *= lerp(1.0h, pigment, _Brush);
-                half3 warmGlow = input.color.rgb * (_Glow * bladeCore);
+                // Жёсткий режим Вихря: три ступени поперёк и резкий срез хвоста,
+                // чтобы лента читалась плоской формой, как серп.
+                half av = max(fwidth(input.uv.y) * 1.2h, .004h);
+                half bandsHard = .35h + .30h * smoothstep(.30h - av, .30h + av, input.uv.y)
+                    + .35h * smoothstep(.58h - av, .58h + av, input.uv.y)
+                    - .55h * smoothstep(.90h - av, .90h + av, input.uv.y);
+                half tailHard = smoothstep(.10h - .02h, .10h + .02h, input.uv.x);
+                half alphaHard = saturate(input.color.a * tailHard) * bandsHard;
+                alpha = lerp(alpha, alphaHard, _Hard);
+                half3 warmGlow = input.color.rgb * (_Glow * lerp(bladeCore, 1.1h, _Hard));
                 return half4(warmGlow, alpha);
             }
             ENDHLSL

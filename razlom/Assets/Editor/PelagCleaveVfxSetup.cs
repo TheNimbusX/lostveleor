@@ -69,7 +69,7 @@ public static class PelagCleaveVfxSetup
     {
         string path = Folder + "VFX_Pelag_Cleave_Ground.prefab";
         var importer = AssetImporter.GetAtPath(path);
-        const string revision = "PelagGroundAuthoredV3";
+        const string revision = "PelagGroundAuthoredV7";
         if (importer != null && importer.userData.Contains(revision)) return;
         var source = AssetDatabase.LoadAssetAtPath<GameObject>(
             "Assets/Hovl Studio/Magic effects pack/Prefabs/AoE effects/Ground AOE explosion.prefab");
@@ -88,24 +88,29 @@ public static class PelagCleaveVfxSetup
                 var main = particles.main;
                 main.scalingMode = ParticleSystemScalingMode.Hierarchy;
                 main.simulationSpeed = 1.6f;
-                if (particles.name == "Flash")
+                // The imported root and crater billboards read as an orange orb.
+                // The cut is carried by the blade; the ground contributes only
+                // stone and dust so its contact has physical depth.
+                if (particles.gameObject == root || particles.name == "Flash"
+                    || particles.name == "Crater")
                 {
                     var emission = particles.emission; emission.enabled = false;
                     continue;
                 }
-                main.startColor = particles.name == "Stones" ? new Color(.24f, .19f, .17f, 1f)
-                    : particles.name == "Crater" ? new Color(.32f, .27f, .24f, 1f)
-                    : particles.name == "Smoke" ? new Color(.48f, .43f, .39f, .7f)
-                    : new Color(1.1f, .30f, .16f, .85f);
+                main.startColor = particles.name == "Stones" ? new Color(.22f, .18f, .17f, 1f)
+                    : particles.name == "Crater" ? new Color(.28f, .23f, .22f, .85f)
+                    : particles.name == "Smoke" ? new Color(.40f, .36f, .34f, .35f)
+                    : new Color(.55f, .15f, .11f, .42f);
                 NeutralLifetimeColor(particles);
                 if (particles.name == "Smoke")
                 {
-                    main.startSizeMultiplier *= .45f;
-                    main.startColor = new Color(.45f, .40f, .36f, .38f);
+                    main.startSizeMultiplier *= .22f;
+                    main.startLifetimeMultiplier *= .65f;
+                    main.startColor = new Color(.36f, .32f, .30f, .19f);
                     var emission = particles.emission;
-                    emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)4) });
+                    emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)2) });
                 }
-                if (particles.name == "Stones") main.startSizeMultiplier *= 1.5f;
+                if (particles.name == "Stones") main.startSizeMultiplier *= .8f;
                 var renderer = particles.GetComponent<ParticleSystemRenderer>();
                 if (renderer != null && renderer.sharedMaterial != null)
                 {

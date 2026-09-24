@@ -9,7 +9,7 @@ namespace Game.View
     {
         public Transform Bridge;
         public Vector3 CrossingCentre = new Vector3(2.82f,0,-21.53f);
-        public Vector2 CrossingSize = new Vector2(1.9f,8.8f);
+        public Vector2 CrossingSize = new Vector2(2.3f,8.8f);
         public Bounds FarBank = new Bounds(new Vector3(-1,0,-27.5f),new Vector3(14,30,9));
         [System.NonSerialized] float[] _deckHeights;
         [System.NonSerialized] Bounds _deckBounds;
@@ -69,6 +69,30 @@ namespace Game.View
                 bounds=renderers[0].bounds;
                 for(int i=1;i<renderers.Length;i++)bounds.Encapsulate(renderers[i].bounds);
                 return bounds;
+            }
+        }
+        // The river's quarter-metre modifier boxes and NavMesh agent erosion
+        // leave a different, sometimes interrupted strip on each bridge row.
+        // Sim movement uses the sampled cells, so give the deck one continuous
+        // lane with a clearance from the authored rails on both sides.
+        public void StraightenWalkCells(bool[] cells, Vector3 origin, float cellSize, int width, int height)
+        {
+            if (Bridge == null || cells == null) return;
+            Bounds deck = BridgeBounds;
+            float halfLane = Mathf.Min(.78f, CrossingSize.x * .5f - .35f);
+            if (halfLane <= 0f) return;
+            float minZ = deck.min.z + .15f;
+            float maxZ = deck.max.z - .15f;
+            for (int z = 0; z < height; z++)
+            {
+                float worldZ = origin.z + (z + .5f) * cellSize;
+                if (worldZ < minZ || worldZ > maxZ) continue;
+                for (int x = 0; x < width; x++)
+                {
+                    float worldX = origin.x + (x + .5f) * cellSize;
+                    if (Mathf.Abs(worldX - deck.center.x) > CrossingSize.x * .5f + cellSize) continue;
+                    cells[z * width + x] = Mathf.Abs(worldX - deck.center.x) <= halfLane;
+                }
             }
         }
         public void AddRailingSources(List<NavMeshBuildSource> sources)

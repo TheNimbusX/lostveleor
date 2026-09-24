@@ -126,6 +126,15 @@ namespace Game.View
             => Session != null && (Session.Mode != GameMode.Camp || Session.OnProvingGround);
 
         /// <summary>
+        /// Кнопки экрана итогов (RunHudWc): то же, что клавиши «повторить» и «в лагерь».
+        /// </summary>
+        public void QueueSummaryCommand(bool repeat)
+        {
+            if (Session == null || Session.Mode != GameMode.Summary) return;
+            _commandLatch = (byte)(repeat ? CampCommand.RepeatRift : CampCommand.ReturnToCamp);
+        }
+
+        /// <summary>
         /// Ставит команду забега в тот же буфер, что и клавиатурный ввод.
         /// HUD вызывает этот метод только после клика по карточке награды;
         /// команда будет применена на ближайшей границе тика.
@@ -192,6 +201,8 @@ namespace Game.View
         private readonly bool[] _hudSlotPressed = new bool[Simulation.AbilitySlots];
         private InputFrame _pending = InputFrame.Empty;
         private byte _abilityLatch;
+        private bool _whirlwindHoldTalent;
+        private int _whirlwindHoldUntilTick = -1;
         private InputFrame _abilityPressFrame;
         private bool _abilityPressLatched;
         private int _targetAimSlot = -1;
@@ -653,6 +664,19 @@ namespace Game.View
 
             if (!choosing && CaptureRig.ShouldCastWhirlwind(Sim != null ? Sim.Tick : -1))
                 _abilityLatch |= 1;
+            if (CaptureRig.WhirlwindHold && Sim != null && !choosing)
+            {
+                // Удержание в съёмке: талант как отладочный, кнопка «зажата»
+                // от нажатия до контакта плюс HoldTicks.
+                if (!_whirlwindHoldTalent)
+                {
+                    DeveloperTalents.Set(SabreTalentLine.Whirlwind, SabreTalents.TalentsPerLine - 1, true);
+                    _whirlwindHoldTalent = true;
+                }
+                if ((_abilityLatch & 1) != 0)
+                    _whirlwindHoldUntilTick = Sim.Tick + Simulation.WhirlwindContactDelayTicks + CaptureRig.HoldTicks;
+                if (Sim.Tick < _whirlwindHoldUntilTick) _pending.AbilityHoldMask |= 1;
+            }
             if (CaptureRig.SweepAimCapture && Sim != null) UpdateSweepAimCapture();
             else if (CaptureRig.LiveSkill && Sim != null)
             {
@@ -706,8 +730,10 @@ namespace Game.View
                             Sim.Entities.Position[enemy] = Sim.Entities.Position[Simulation.PlayerId] + face
                                 * Fix64.FromDouble(enemy == 1 && CaptureRig.EnemyOverride != 0
                                     ? (CaptureRig.VfxShowcase == PelagVfxShowcase.Backblast ? .9 : 3.8) : 25 + enemy);
-                            // Контроль постановки всех трёх контактов, без смерти цели после второго.
-                            if (CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck)
+                            // Visual captures keep the target alive so the authored
+                            // impact can be reviewed without the enemy death effect.
+                            if (CaptureRig.VfxShowcase == PelagVfxShowcase.Wreck
+                                || CaptureRig.VfxShowcase == PelagVfxShowcase.Cleave)
                             {
                                 Sim.Entities.Stats[enemy].SetBase(StatType.MaxHealth,Fix64.FromInt(2000));
                                 Sim.Entities.RefreshStats(enemy); Sim.Entities.Health[enemy] = 2000;

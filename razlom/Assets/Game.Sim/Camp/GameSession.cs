@@ -74,6 +74,11 @@ namespace Game.Sim
         private readonly int _simCapacity;
 
         private Pcg32 _runSeeds;
+        private int _alchemyTrackedDepth;
+        private bool _alchemyLevelWithoutPotion;
+        public bool AlchemyCleanLevelInProgress => Mode == GameMode.Rift && !IsDeveloperRun
+            && _alchemyTrackedDepth == Run.Depth && _alchemyLevelWithoutPotion
+            && Camp.AlchemyStatus(AlchemistOrder.Surge) == AlchemistOrderStatus.Accepted;
 
         public Camp Camp { get; }
         public GameMode Mode { get; private set; }
@@ -201,8 +206,11 @@ namespace Game.Sim
             bool potionAllowed=Mode==GameMode.Camp || (Mode==GameMode.Rift && !IsDeveloperRun && (Run.Phase==RunPhase.Clearing || Run.Phase==RunPhase.SeekingExit));
             if(potionAllowed && ActiveSim.Entities.Alive[0])
             {
-                for(int slot=0;slot<2;slot++)if((input.PotionMask&(16<<slot))!=0)Camp.SelectPotion((PotionKind)((int)Camp.SelectedPotion(slot)^1));
-                for(int kind=0;kind<4;kind++)if((input.PotionMask&(1<<kind))!=0)Camp.ConsumePotion((PotionKind)kind,ActiveSim);
+                for(int slot=0;slot<2;slot++)if((input.PotionMask&(16<<slot))!=0)Camp.CyclePotion(slot);
+                for(int kind=0;kind<Camp.PotionKindCount;kind++)
+                    if((input.PotionMask&Camp.PotionInputBit((PotionKind)kind))!=0
+                        && Camp.ConsumePotion((PotionKind)kind,ActiveSim) && Mode==GameMode.Rift)
+                        _alchemyLevelWithoutPotion=false;
             }
             switch (Mode)
             {
@@ -320,6 +328,7 @@ namespace Game.Sim
             IsDeveloperRun = false;
             Ground = null;
             Mode = GameMode.Camp;
+            _alchemyTrackedDepth=0;_alchemyLevelWithoutPotion=false;
             BindCampEquipment();
             Generation++;
         }
@@ -357,6 +366,15 @@ namespace Game.Sim
             BeginRift(location, seed, 1, false, true, count);
         }
 
+        /// <summary>Изолированный стенд алхимика: обычные правила заказов, но гарантированный Бутон.</summary>
+        public void StartAlchemyBudTrial(LocationDefinition location, ulong seed)
+        {
+            if (location == null) throw new System.ArgumentNullException(nameof(location));
+            location.ValidateCapacity(_simCapacity);
+            LeaveProvingGround();
+            BeginRift(location, seed, 1, false, false, 1);
+        }
+
         private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer,
             int forestBudCount = 0)
         {
@@ -389,6 +407,8 @@ namespace Game.Sim
             }
 
             Mode = GameMode.Rift;
+            _alchemyTrackedDepth=Run.Depth;
+            _alchemyLevelWithoutPotion=!developer;
             Generation++;
         }
 
@@ -396,7 +416,21 @@ namespace Game.Sim
         {
             int boss=Run.BossId;
             bool bossWasAlive=boss>=0 && Run.Sim.Entities.Alive[boss];
+            RunPhase beforePhase=Run.Phase;
             Run.Step(in input);
+            if(!IsDeveloperRun)
+            {
+                if(beforePhase==RunPhase.Clearing || beforePhase==RunPhase.SeekingExit)
+                    RecordAlchemyDeaths(Run.Sim.Events,Run.Sim);
+                if(_alchemyTrackedDepth==Run.Depth && _alchemyLevelWithoutPotion
+                    && Run.Phase==RunPhase.ChoosingReward && beforePhase!=RunPhase.ChoosingReward)
+                    Camp.CompleteAlchemyOrder(AlchemistOrder.Surge);
+            }
+            if(Run.Depth!=_alchemyTrackedDepth)
+            {
+                _alchemyTrackedDepth=Run.Depth;
+                _alchemyLevelWithoutPotion=!IsDeveloperRun;
+            }
             if(!IsDeveloperRun && bossWasAlive && Run.BossId==boss && !Run.Sim.Entities.Alive[boss] && Run.Sim.Entities.Alive[Simulation.PlayerId])Camp.RefreshTraderAfterBoss();
 
             // Опыт забега уходит в лагерь сразу, а не на экране итогов: смерть
@@ -406,6 +440,15 @@ namespace Game.Sim
             if (!IsDeveloperRun && Camp.GainExperience(xp) > 0) SyncPlayerLevel();
 
             if (Run.Phase == RunPhase.Ended) FinishRun();
+        }
+
+        internal void RecordAlchemyDeaths(System.Collections.Generic.IReadOnlyList<SimEvent> events, Simulation sim)
+        {
+            if(IsDeveloperRun || Camp.AlchemyStatus(AlchemistOrder.Resin)!=AlchemistOrderStatus.Accepted)return;
+            foreach(var e in events)
+                if(e.Type==SimEventType.Death && e.Source==Simulation.PlayerId && e.Target>0
+                    && e.Target<sim.Entities.Count && sim.Entities.Kind[e.Target]==EnemyKind.ForestBud)
+                    Camp.CompleteAlchemyOrder(AlchemistOrder.Resin);
         }
 
         /// <summary>
@@ -484,6 +527,8 @@ namespace Game.Sim
             Hashing.Mix(ref hash, RunNumber);
             if (IsDeveloperRun) Hashing.Mix(ref hash, 0x444556);
             Hashing.Mix(ref hash, LastRunSeed);
+            Hashing.Mix(ref hash, _alchemyTrackedDepth);
+            Hashing.Mix(ref hash, _alchemyLevelWithoutPotion ? 1 : 0);
             LastRun.HashInto(ref hash);
 
             Camp.HashInto(ref hash);

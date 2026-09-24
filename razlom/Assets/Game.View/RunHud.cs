@@ -5,7 +5,7 @@ namespace Game.View
 {
     /// <summary>Состояние забега и центральный экран выбора награды.</summary>
     [RequireComponent(typeof(TickDriver))]
-    public sealed class RunHud : MonoBehaviour
+    public sealed partial class RunHud : MonoBehaviour
     {
         private TickDriver _driver;
         private GUIStyle _title;
@@ -16,17 +16,22 @@ namespace Game.View
         private Texture2D _white;
         private readonly GeneratedItem _itemBuffer = new GeneratedItem();
 
-        private static readonly Color Panel = new Color(0.94f, 0.84f, 0.68f, 0.97f);
-        private static readonly Color Card = new Color(0.98f, 0.91f, 0.76f, 0.98f);
-        private static readonly Color CardHover = new Color(1.00f, 0.96f, 0.87f, 1f);
-        private static readonly Color Ink = new Color(0.20f, 0.10f, 0.065f, 0.98f);
-        private static readonly Color Coral = new Color(0.78f, 0.24f, 0.17f, 0.98f);
-        private static readonly Color Gold = new Color(0.77f, 0.48f, 0.14f, 0.98f);
-        private static readonly Color Cyan = new Color(0.10f, 0.48f, 0.49f, 0.98f);
+        // Цвета пака «Ночная акварель» (23 сентября 2026): тёмное стекло, светлый текст,
+        // оранжевый акцент. Ими рисуются подписи в мире и меню над добычей; экраны
+        // выбора и замены — на Canvas (RunHud.View), здесь они только запасные.
+        private static readonly Color Panel = new Color32(0x11, 0x16, 0x20, 0xDC);
+        private static readonly Color Card = new Color32(0x16, 0x1C, 0x28, 0xF5);
+        private static readonly Color CardHover = new Color32(0x22, 0x2A, 0x3A, 0xFF);
+        private static readonly Color Ink = new Color32(0xF4, 0xF7, 0xFB, 0xFF);
+        private static readonly Color Coral = new Color32(0xFD, 0x74, 0x42, 0xFF);
+        private static readonly Color Gold = new Color32(0xFA, 0x88, 0x3C, 0xFF);
+        private static readonly Color Cyan = new Color32(0x3B, 0xF0, 0xF5, 0xFF);
+        private static readonly Color Muted = new Color32(0xC9, 0xD2, 0xE0, 0xFF);
 
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
+            BindView();
         }
 
         private void OnGUI()
@@ -66,7 +71,9 @@ namespace Game.View
                     menuShown = DrawDropMenu(run, menuDrop, scale);
                 }
                 if (Event.current.type == EventType.Repaint) _menuShown = menuShown;
-                if (run.Phase == RunPhase.Clearing)
+                // Экраны и панели на Canvas (RunHudWc) рисует RunHud.View; здесь — только запасной вид.
+                if (_view != null) { }
+                else if (run.Phase == RunPhase.Clearing)
                     DrawCombatStatus(run, safeLeft);
                 else if (run.Phase == RunPhase.SeekingExit)
                     DrawSeekingExit(safeLeft);
@@ -523,11 +530,11 @@ namespace Game.View
             };
             _title.normal.textColor = Ink;
             _subtitle = new GUIStyle(_title) { fontSize = 13, fontStyle = FontStyle.Normal };
-            _subtitle.normal.textColor = new Color(0.30f, 0.20f, 0.14f);
+            _subtitle.normal.textColor = Muted;
             _body = new GUIStyle(_subtitle) { fontSize = 13, wordWrap = true, alignment = TextAnchor.UpperLeft };
-            _body.normal.textColor = new Color(0.25f, 0.16f, 0.11f);
+            _body.normal.textColor = Muted;
             _eyebrow = new GUIStyle(_subtitle) { fontSize = 11, fontStyle = FontStyle.Bold };
-            _eyebrow.normal.textColor = new Color(0.56f, 0.27f, 0.12f);
+            _eyebrow.normal.textColor = Coral;
             _cardButton = new GUIStyle(GameTypography.Button)
             {
                 fontSize = 16, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter,
@@ -541,13 +548,13 @@ namespace Game.View
             {
                 fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, wordWrap = true,
             };
-            _menuButton.normal.background = MakeTexture(new Color(0.30f, 0.16f, 0.10f, 0.96f));
+            _menuButton.normal.background = MakeTexture(CardHover);
             _menuButton.hover.background = MakeTexture(Coral);
-            _menuButton.active.background = MakeTexture(Ink);
+            _menuButton.active.background = MakeTexture(new Color32(0xDF, 0x5E, 0x30, 0xFF));
             _menuButton.normal.textColor = _menuButton.hover.textColor = _menuButton.active.textColor
-                = new Color(1f, 0.95f, 0.85f);
+                = Ink;
             _menuCaption = new GUIStyle(_eyebrow) { alignment = TextAnchor.MiddleCenter };
-            _menuCaption.normal.textColor = new Color(1f, 0.95f, 0.85f);
+            _menuCaption.normal.textColor = Ink;
         }
 
         private static Texture2D MakeTexture(Color color)

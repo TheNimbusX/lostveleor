@@ -50,6 +50,11 @@ namespace Game.View
         private bool _wasCamp;
         private CombatCameraJuice _juice;
 
+        /// <summary>Приближение камеры в лагере (1 — обычный план). Ставит CampTransition у арки и при возвращении.</summary>
+        public static float CampZoom = 1f;
+        /// <summary>Сдвиг кадра в лагере к точке интереса, метры (CampTransition подаёт камеру к арке).</summary>
+        public static Vector3 CampFocus;
+
         /// <summary>Явно связывает авторскую камеру с runtime-драйвером.</summary>
         public void Initialize(TickDriver driver, Transform target)
         {
@@ -117,8 +122,8 @@ namespace Game.View
                 // иначе герой менял бы размер только после перехода в меню.
                 transform.rotation = Quaternion.Euler(CombatPitch, transform.eulerAngles.y, 0f);
                 Camera camera = GetComponent<Camera>();
-                if (camera != null) camera.orthographicSize = CombatSize;
-                _juice?.SetBaseOrthographicSize(CombatSize);
+                if (camera != null) camera.orthographicSize = CombatSize * CampZoom;
+                _juice?.SetBaseOrthographicSize(CombatSize * CampZoom);
             }
             else
             {
@@ -180,7 +185,7 @@ namespace Game.View
             }
             _previousPlayer = player;
 
-            Vector3 wanted = _offset + player + framing + _leadVelocity / Mathf.Max(0.01f, Smoothing);
+            Vector3 wanted = _offset + player + framing + _leadVelocity / Mathf.Max(0.01f, Smoothing) + (camp ? CampFocus : Vector3.zero);
             Target.position = Vector3.Lerp(Target.position, wanted,
                 1f - Mathf.Exp(-Smoothing * dt));
         }

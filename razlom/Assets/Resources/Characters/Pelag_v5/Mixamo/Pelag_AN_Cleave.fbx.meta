@@ -33,8 +33,8 @@ ModelImporter:
     clipAnimations:
     - serializedVersion: 16
       name: Pelag_AN_Cleave
-      takeName: AN_Pelag_Cleave_GreatSword_Timed
-      internalID: 5441484128737761307
+      takeName: AN_Pelag_Cleave_Polish
+      internalID: 8350579608361856251
       firstFrame: 0
       lastFrame: 27
       wrapMode: 0

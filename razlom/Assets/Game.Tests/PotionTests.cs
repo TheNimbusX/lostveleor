@@ -51,8 +51,8 @@ namespace Game.Tests
         [Test] public void VersionFiveMigratesWithEmptyPotionsAndRetainsMerchant()
         {
             var c=Ready().Camp;c.RefreshTrader();var current=CampSaveCodec.Encode(c);
-            // Хвост v7: зелья (17 байт) и атлас (число + id); v5 не знает ни того, ни другого.
-            var old=new byte[current.Length-17-4-4*c.DiscoveredCount];Array.Copy(current,old,old.Length-4);BitConverter.GetBytes(5).CopyTo(old,4);
+            // Хвост v8: шесть зелий и два выбора, атлас, три байта заказов.
+            var old=new byte[current.Length-26-4-4*c.DiscoveredCount-3];Array.Copy(current,old,old.Length-4);BitConverter.GetBytes(5).CopyTo(old,4);
             uint hash=2166136261;for(int i=0;i<old.Length-4;i++){hash^=old[i];hash=unchecked(hash*16777619);}BitConverter.GetBytes(hash).CopyTo(old,old.Length-4);
             var restored=CampSaveCodec.Decode(old,c.Items);Assert.AreEqual(c.TraderGeneration,restored.TraderGeneration);
             Assert.AreEqual(c.Money(CurrencyType.Gold),restored.Money(CurrencyType.Gold));for(int i=0;i<4;i++)Assert.AreEqual(0,restored.PotionCount((PotionKind)i));

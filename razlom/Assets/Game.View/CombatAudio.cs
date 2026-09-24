@@ -44,6 +44,18 @@ namespace Game.View
         private float _anchorImpactAt = -1f, _anchorLandAt = -1f;
         private CombatVoiceBudget _voiceBudget;
         private float _whirlwindEndAt = -1f;
+
+        /// <summary>
+        /// Импульс удержания Вихря: тот же свист, чуть выше и тише, и конец
+        /// сдвигается за последний оборот. Вызывает контроллер VFX по тику Sim —
+        /// у симуляции нет события импульса.
+        /// </summary>
+        public void PlayWhirlwindPulse()
+        {
+            if (Profile == null) return;
+            Play(Sound.Whirlwind, WhirlwindVolume * .85f, 1.04f, .02f, 0f);
+            _whirlwindEndAt = Time.time + Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond + .1f;
+        }
         private bool _chainSoundActive;
         private int _generationShown = -1;
         private readonly CombatSoundEntry[] _entries = new CombatSoundEntry[(int)Sound.Count];

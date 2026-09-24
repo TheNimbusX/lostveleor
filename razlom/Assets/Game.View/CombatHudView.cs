@@ -32,15 +32,24 @@ namespace Game.View
         public GameObject LavidiumRow;
         public RectTransform LavidiumFill;
         public TMP_Text LavidiumText;
+        [Tooltip("Необязательно: область героя; числа здоровья и лавидия видны внутри полос только под мышью (владелец, 23 сентября). Пусто — видны всегда")]
+        public RectTransform VitalsHit;
+        [Tooltip("Необязательно: общая полоса-подложка HUD (вариант B) — ловит мышь, чтобы клик по ней не уходил в мир")]
+        public RectTransform Strip;
 
         [Header("Способности")]
         public RectTransform AbilityPanel;
+        [Tooltip("Сколько срезать с каждого края иконки способности. Старые иконки несли свою рамку (0,12); новые — без рамки")]
+        [Range(0f, .3f)] public float IconCrop = .12f;
         public HudSlotWidget[] Slots = new HudSlotWidget[4];
         public RectTransform DashPanel;
         public HudSlotWidget Dash;
         public RectTransform ExperienceHit;
         public RectTransform ExperienceFill;
         public TMP_Text ExperienceText;
+        [Tooltip("Высота полосы опыта под мышью, чтобы числа встали внутрь неё. 0 — полоса не растёт (старый префаб)")]
+        public float ExperienceHoverHeight;
+        [Tooltip("Секунд на рост полосы опыта")] public float ExperienceGrowTime = .12f;
 
         [Header("Зелья")]
         public RectTransform PotionPanel;
@@ -105,7 +114,8 @@ namespace Game.View
         Canvas _canvas;
         Image _healthImage;
         int _health = -1, _maxHealth = -1, _lavidium = -1, _maxLavidium = -1, _level = -1, _xp = -1, _xpMax = -1;
-        bool _xpHovered;
+        bool _xpHovered, _vitalsHovered;
+        float _xpRestHeight = -1f;
         int _feedbackSlot = -1;
         float _feedbackUntil;
         HudAbilityBlock _feedbackBlock;
@@ -131,6 +141,8 @@ namespace Game.View
 
         float Scale => _canvas != null ? _canvas.scaleFactor : 1f;
 
+        Rect IconRect => new Rect(IconCrop, IconCrop, 1f - IconCrop * 2f, 1f - IconCrop * 2f);
+
         /// <summary>Мышь в координатах экрана, начало снизу слева.</summary>
 #if ENABLE_INPUT_SYSTEM
         static Vector2 Pointer => Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(-1f, -1f);
@@ -141,7 +153,7 @@ namespace Game.View
         internal void Refresh(Simulation sim, Camp camp, TickDriver driver)
         {
             Vector2 pointer = Pointer;
-            RefreshHero(sim, camp);
+            RefreshHero(sim, camp, pointer);
             RefreshExperience(camp, pointer);
             HoverSlot = -1;
             for (int slot = 0; slot < DashSlot && slot < Slots.Length; slot++)
@@ -154,10 +166,10 @@ namespace Game.View
             RefreshPotions(camp,driver);
         }
 
-        void RefreshHero(Simulation sim, Camp camp)
+        void RefreshHero(Simulation sim, Camp camp, Vector2 pointer)
         {
             if (Portrait != null && Portrait.texture == null)
-                Portrait.texture = Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
+                Portrait.texture = Resources.Load<Texture2D>("UI/HUD/PelagPortraitPainted") ?? Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
             int level = camp != null ? camp.Level : 1;
             if (level != _level && Level != null)
             {
@@ -169,13 +181,16 @@ namespace Game.View
 
             int health = Mathf.Max(0, sim.Entities.Health[Simulation.PlayerId]);
             int max = Mathf.Max(1, sim.Entities.MaxHealth[Simulation.PlayerId]);
-            if (health != _health || max != _maxHealth)
+            bool vitals = VitalsHit == null || (HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : Contains(VitalsHit, pointer));
+            bool hoverChanged = vitals != _vitalsHovered;
+            _vitalsHovered = vitals;
+            if (health != _health || max != _maxHealth || hoverChanged)
             {
                 _health = health; _maxHealth = max;
                 float ratio = Mathf.Clamp01(health / (float)max);
                 SetFill(HealthFill, ratio);
                 if (_healthImage != null) _healthImage.color = ratio <= .25f ? HealthLow : HealthNormal;
-                if (HealthText != null) HealthText.text = health + " / " + max;
+                if (HealthText != null) HealthText.text = vitals ? health + " / " + max : string.Empty;
             }
 
             // Сердцебиение на низком здоровье: петля включается и гаснет каждый кадр,
@@ -187,22 +202,35 @@ namespace Game.View
             if (LavidiumRow != null) LavidiumRow.SetActive(maxResource > 0);
             if (maxResource <= 0) return;
             int resource = Mathf.FloorToInt(sim.Entities.Lavidium[Simulation.PlayerId].ToFloat());
-            if (resource == _lavidium && maxResource == _maxLavidium) return;
+            if (resource == _lavidium && maxResource == _maxLavidium && !hoverChanged) return;
             _lavidium = resource; _maxLavidium = maxResource;
             SetFill(LavidiumFill, resource / (float)maxResource);
-            if (LavidiumText != null) LavidiumText.text = resource + " / " + maxResource;
+            if (LavidiumText != null) LavidiumText.text = vitals ? resource + " / " + maxResource : string.Empty;
         }
 
         void RefreshExperience(Camp camp, Vector2 pointer)
         {
             int xp = camp != null ? camp.Experience : 0;
             int next = camp != null ? Mathf.Max(1, camp.ExperienceToNextLevel) : 1;
-            bool hovered = HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : Contains(ExperienceHit, pointer);
+            bool hovered = HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : Contains(ExperienceHit, pointer) || VitalsHit != null && Contains(VitalsHit, pointer);
+            GrowExperience(hovered);
             if (xp == _xp && next == _xpMax && hovered == _xpHovered) return;
             _xp = xp; _xpMax = next; _xpHovered = hovered;
             SetFill(ExperienceFill, Mathf.Clamp01(xp / (float)next));
             // Подпись «XP» стоит в префабе отдельной плашкой; числа — только под мышью.
             if (ExperienceText != null) ExperienceText.text = hovered && camp != null ? xp + " / " + next : string.Empty;
+        }
+
+        /// <summary>Полоса опыта под мышью плавно подрастает, чтобы числа поместились внутри.</summary>
+        void GrowExperience(bool hovered)
+        {
+            if (ExperienceHoverHeight <= 0f || ExperienceHit == null) return;
+            Vector2 size = ExperienceHit.sizeDelta;
+            if (_xpRestHeight < 0f) _xpRestHeight = size.y;
+            float target = hovered ? ExperienceHoverHeight : _xpRestHeight;
+            if (Mathf.Approximately(size.y, target)) return;
+            float speed = Mathf.Abs(ExperienceHoverHeight - _xpRestHeight) / Mathf.Max(.01f, ExperienceGrowTime);
+            ExperienceHit.sizeDelta = new Vector2(size.x, Mathf.MoveTowards(size.y, target, speed * Time.unscaledDeltaTime));
         }
 
         void RefreshSlot(Simulation sim, int slot, HudSlotWidget widget, Vector2 pointer)
@@ -224,11 +252,11 @@ namespace Game.View
             if (_iconIds[slot] != build.DefinitionId && widget.Art != null)
             {
                 _iconIds[slot] = build.DefinitionId;
-                string file = slot == DashSlot ? null : PlayerHud.IconFile(build.DefinitionId);
-                Texture2D icon = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file)
-                    : Resources.Load<Texture2D>("UI/HUD/DashSilhouette");
-                widget.Art.texture = icon;
-                widget.Art.uvRect = slot == DashSlot ? new Rect(0f, 0f, 1f, 1f) : new Rect(.12f, .12f, .76f, .76f);
+                // У кувырка своя иконка (Icon_Dash, 23 сентября); силуэт — только запасной.
+                string file = PlayerHud.IconFile(build.DefinitionId);
+                Texture2D icon = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
+                widget.Art.texture = icon != null ? icon : Resources.Load<Texture2D>("UI/HUD/DashSilhouette");
+                widget.Art.uvRect = icon != null ? IconRect : new Rect(0f, 0f, 1f, 1f);
             }
             if (widget.Key != null)
             {
@@ -248,7 +276,9 @@ namespace Game.View
             SetActive(widget.CooldownText, cooling);
             if (cooling)
             {
-                widget.Cooldown.fillAmount = Mathf.Clamp01(state.RemainingTicks / (float)Mathf.Max(1, sim.AbilityCooldownTicks(build)));
+                float left = Mathf.Clamp01(state.RemainingTicks / (float)Mathf.Max(1, sim.AbilityCooldownTicks(build)));
+                widget.Cooldown.fillAmount = left;
+                if (widget.CooldownRing != null) widget.CooldownRing.fillAmount = left;
                 widget.CooldownText.text = (state.RemainingTicks / (float)Simulation.TicksPerSecond).ToString("0.0");
             }
             bool lacking = state.Block == HudAbilityBlock.Resource;
@@ -262,6 +292,11 @@ namespace Game.View
 
             float press = Mathf.Clamp01((_pressUntil[slot] - Time.unscaledTime) / .16f);
             if (widget.Body != null) widget.Body.localScale = Vector3.one * (1f - press * .05f);
+            // Состояния по листу HUD: готово — бирюзовое свечение, нажата — оранжевая вспышка.
+            bool flash = Time.unscaledTime < _pressUntil[slot] + .2f;
+            if (widget.ReadyGlow != null && widget.ReadyGlow.activeSelf != (state.Ready && !flash)) widget.ReadyGlow.SetActive(state.Ready && !flash);
+            if (widget.ReadyGem != null) widget.ReadyGem.SetReady(state.Ready);
+            if (widget.PressGlow != null && widget.PressGlow.activeSelf != flash) widget.PressGlow.SetActive(flash);
         }
 
         void RefreshTooltip(Simulation sim, TickDriver driver)
@@ -288,7 +323,7 @@ namespace Game.View
                     string file = PlayerHud.IconFile(build.DefinitionId);
                     TooltipIcon.texture = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
                     TooltipIcon.enabled = TooltipIcon.texture != null;
-                    TooltipIcon.uvRect = new Rect(.12f, .12f, .76f, .76f);
+                    TooltipIcon.uvRect = IconRect;
                 }
                 if (TooltipTitle != null) TooltipTitle.text = PlayerHud.AbilityName(build.DefinitionId);
                 if (TooltipKey != null) TooltipKey.text = PlayerHud.SlotKey(slot);
@@ -369,7 +404,7 @@ namespace Game.View
                 }
             if (Dash != null && DashPanel != null && DashPanel.gameObject.activeInHierarchy && Contains(DashPanel, screen))
             { slot = DashSlot; return true; }
-            return Contains(HeroPanel, screen) || Contains(AbilityPanel, screen) || Contains(PotionPanel, screen)
+            return Contains(Strip, screen) || Contains(HeroPanel, screen) || Contains(AbilityPanel, screen) || Contains(PotionPanel, screen)
                 || Contains(MinimapFrame, screen) || Contains(MinimapCaptionPanel, screen);
         }
 
@@ -417,9 +452,16 @@ namespace Game.View
                 MinimapCaption.text = caption;
         }
 
+        static readonly System.Collections.Generic.Dictionary<RectTransform, HudBarAnim> BarAnims =
+            new System.Collections.Generic.Dictionary<RectTransform, HudBarAnim>();
+
         static void SetFill(RectTransform fill, float ratio)
         {
             if (fill == null) return;
+            // Полосы здоровья и лавидия анимирует HudBarAnim: здесь только новая цель.
+            if (!BarAnims.TryGetValue(fill, out HudBarAnim anim))
+                BarAnims[fill] = anim = fill.GetComponentInParent<HudBarAnim>();
+            if (anim != null) { anim.Target = ratio; return; }
             Vector2 max = fill.anchorMax;
             if (Mathf.Approximately(max.x, ratio)) return;
             fill.anchorMax = new Vector2(ratio, max.y);

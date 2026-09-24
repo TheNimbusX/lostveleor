@@ -68,6 +68,11 @@ namespace Game.View
         void OnEnable()
         {
             Refresh();
+            // Сгруппированные низкие травы дают сотни тысяч треугольников в теневом проходе.
+            // Форму поля задают деревья и кусты; мелкие листья остаются освещёнными без собственных теней.
+            if(Application.isPlaying)
+                foreach(var renderer in GetComponentsInChildren<MeshRenderer>(true))
+                    if(renderer.name.StartsWith("Grass"))renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
             if(Application.isPlaying && System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-capture-ground-key")>=0)
                 Shader.SetGlobalFloat("_CampShadowDiagnostic",2);
         }

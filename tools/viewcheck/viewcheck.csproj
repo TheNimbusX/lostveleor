@@ -23,6 +23,7 @@
     <AssemblyName>ViewCheck</AssemblyName>
     <RootNamespace>ViewCheck</RootNamespace>
     <NoWarn>CS0649;CS0414;CS0169;CS8032</NoWarn>
+    <DefineConstants>$(DefineConstants);UNITY_EDITOR</DefineConstants>
     <!-- Ссылки на DLL редактора: путь один и тот же у всех, кто ставил Unity
          через Hub. Версия вынесена, чтобы обновление редактора чинилось
          правкой одной строки. -->

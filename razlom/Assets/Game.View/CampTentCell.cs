@@ -19,6 +19,7 @@ namespace Game.View
         [Tooltip("Круглый слот снаряжения: кольцо не меняется, а красится цветом редкости")]
         public bool Round;
         public Image Frame;
+        [Tooltip("Одна рамка и цветной фон редкости; если задан, выбор и наведение рисует он")] public WcSlotState State;
         public Image Icon;
         [Tooltip("Бледный значок пустого слота снаряжения")] public Image Placeholder;
         public TMP_Text Level;
@@ -55,7 +56,8 @@ namespace Game.View
         public void Show(Sprite frame, Color tint, Sprite icon, string level, bool selected, bool filtered, bool kept,
             int rarity, Color rarityColour)
         {
-            if (Frame != null)
+            if (State != null) State.Set(icon == null ? WcSlotState.Empty : rarity, selected);
+            else if (Frame != null)
             {
                 if (Round) Frame.color = tint;
                 else if (frame != null && Frame.sprite != frame) Frame.sprite = frame;
@@ -80,9 +82,10 @@ namespace Game.View
                 Gem.color = rarityColour;
                 Gem.rectTransform.localScale = Vector3.one * (_rarity >= 3 ? 1.25f : _rarity == 2 ? 1.1f : 1f);
             }
-            if (RarityGlow != null)
+            if (RarityGlow != null && UiMotion.Now >= _flashUntil)
             {
-                RarityGlow.enabled = _rarity >= 1;
+                // С цветным фоном (State) свечение только вспыхивает при надевании.
+                RarityGlow.enabled = State == null && _rarity >= 1;
                 ApplyGlow(GlowAlpha);
             }
         }
@@ -108,13 +111,13 @@ namespace Game.View
                 return;
             }
             RarityGlow.rectTransform.localScale = Vector3.one;
-            if (_rarity < 0) { RarityGlow.enabled = false; return; }
-            if (_rarity >= 2)
+            if (_rarity < 0 || State != null) RarityGlow.enabled = false;
+            if (_rarity >= 2 && State == null)
             {
                 float wave = .5f + .5f * Mathf.Sin((now / Mathf.Max(.2f, BreathPeriod) + _phase) * Mathf.PI * 2f);
                 ApplyGlow(Mathf.Lerp(BreathMin, 1f, wave) * GlowAlpha * 1.4f);
             }
-            if (_rarity >= 3 && Shine != null && now >= _nextShine)
+            if (_rarity >= 3 && Shine != null && now >= _nextShine && !Hold)
             {
                 _nextShine = now + ShineEvery;
                 RunShine();

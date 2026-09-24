@@ -51,6 +51,13 @@ namespace Game.View
                 sideChecks++;
             }
             Check(sideLeaks==0,"bridge railings block both sides; samples="+sideChecks+" leaks="+sideLeaks);
+            foreach(float lane in new[]{-.6f,0f,.6f})
+            {
+                var near=CampTrainingView.Flat(new Vector3(bridge.center.x+lane,0,bridge.max.z+1f));
+                var far=CampTrainingView.Flat(new Vector3(bridge.center.x+lane,0,bridge.min.z-1f));
+                Check(player.WalkMap.CanTravel(near,far) && player.WalkMap.CanTravel(far,near),
+                    "bridge has an uninterrupted lane in both directions at x offset "+lane.ToString("0.0"));
+            }
             foreach(bool wasd in new[]{false,true})
             {
             GameUserSettings.SetWasdMovement(wasd);_report.AppendLine("MODE "+(wasd?"WASD":"mouse"));
@@ -65,18 +72,24 @@ namespace Game.View
                 Check((!services.IsOpen && !player.InventoryOpen) || player.InputBlocked,"world blocked during conversation");
                 if(kind==CampServiceKind.Trader && services.IsOpen)Check(services.ProbeTraderTransactions(),"trader UI: purchase, sale confirmation, refresh confirmation and charges; isolated inventory");
                 if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.ProbeSmithTransactions(),"smith UI: three reforges, costs, limit, dismantle confirmation; isolated inventory");
+                if(kind==CampServiceKind.Smith && services.IsOpen)Check(services.ProbeWornTransactions(),"worn row: smith reforges worn weapon in place, dismantle tab locks it; trader shows worn without price or sale");
                 if(kind==CampServiceKind.Alchemist && services.IsOpen)Check(services.ProbeAlchemyTransactions(),"alchemist: four purchases, prices, selection, consumption, HUD counts and empty icons; isolated inventory");
                 services.Close();GetComponent<CampInventoryView>().Close();yield return null;Check(!player.InputBlocked,"input restored after closing "+kind);
 #if ENABLE_INPUT_SYSTEM
                 // Проходим через настоящую очередь ввода, чтобы обнаружить неверную клавишу в UI.
-                _testKeyboard=InputSystem.AddDevice<Keyboard>();AllowInteractionInput=true;
+                if(_testKeyboard==null)_testKeyboard=InputSystem.AddDevice<Keyboard>();AllowInteractionInput=true;
                 InputSystem.QueueStateEvent(_testKeyboard,new KeyboardState(Key.E));
                 yield return null;yield return null;
-                Check(kind==CampServiceKind.Tent?player.InventoryOpen:services.IsOpen && services.Current==target,"E opens "+kind);
+                Check(kind==CampServiceKind.Tent?player.InventoryOpen:services.IsOpen && services.Current==target,
+                    "E opens "+kind+" near="+target.Near(player.InteractionPosition)
+                    +" distance="+target.Distance(player.InteractionPosition).ToString("0.00")
+                    +" keyboardCurrent="+(Keyboard.current==_testKeyboard)
+                    +" keyHeld="+_testKeyboard.eKey.isPressed
+                    +" paused="+GetComponent<TickDriver>().GameplayPaused);
                 yield return null;
                 Check(kind==CampServiceKind.Tent?player.InventoryOpen:services.IsOpen,"holding E keeps window open "+kind);
                 InputSystem.QueueStateEvent(_testKeyboard,new KeyboardState());yield return null;
-                InputSystem.RemoveDevice(_testKeyboard);_testKeyboard=null;AllowInteractionInput=false;
+                AllowInteractionInput=false;
                 services.Close();GetComponent<CampInventoryView>().Close();yield return null;
 #endif
             }

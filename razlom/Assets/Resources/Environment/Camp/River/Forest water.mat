@@ -65,7 +65,7 @@ Material:
     - _WF_Speed: 0.5
     m_Colors:
     - _DeepWaterColor: {r: 0.11058207, g: 0.31307647, b: 0.3301887, a: 1}
-    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FoamColor: {r: 0.68, g: 0.82, b: 0.76, a: 1}
     - _Normal01Speed: {r: 0.0075599994, g: 0, b: 0, a: 0}
     - _Normal02Speed: {r: 0.0050399997, g: 0.00168, b: 0, a: 0}
     - _NormalSpeed01: {r: 0, g: -0.05, b: 0, a: 0}

@@ -33,9 +33,9 @@ namespace Game.View
                 case SabreTalentLine.Cleave: return "Icon_Cleave";
                 case SabreTalentLine.Blaze: return "Icon_Blaze";
                 case SabreTalentLine.Squall: return "Icon_Squall";
-                // У Удара якорем, Крушения и Взрывной смеси иконок пока нет:
-                // Resources.Load вернёт null, и плитка останется без картинки.
-                case SabreTalentLine.AnchorSlam: return "Icon_AnchorSlam";
+                // Файл Удара якорем называется по старому имени способности (AnchorSweep),
+                // как и в PlayerHud.
+                case SabreTalentLine.AnchorSlam: return "Icon_AnchorSweep";
                 case SabreTalentLine.Wreck: return "Icon_Wreck";
                 case SabreTalentLine.Boarding: return "Icon_AnchorLeap";
                 default: return "Icon_FireFlask";

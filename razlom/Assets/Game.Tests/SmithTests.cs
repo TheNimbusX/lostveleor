@@ -38,6 +38,29 @@ namespace Game.Tests
             camp.UnequipToBag(EquipSlot.Weapon);
             Assert.AreEqual(3,camp.Bag.At(0).ReforgeCount);Assert.AreEqual(SmithResult.Exhausted,camp.Reforge(0,0));
         }
+        [Test] public void WornItemReforgesInPlaceAndItsStatsFollow()
+        {
+            var camp=Ready();var sheet=new StatSheet();sheet.SetBase(StatType.Damage,Fix64.FromInt(10));
+            camp.Worn.Bind(sheet);camp.EquipFromBag(0);
+            Assert.True(camp.Bag.IsEmpty(0));
+            var before=new GeneratedItem();var after=new GeneratedItem();
+            ItemGenerator.Generate(camp.Worn.Worn(EquipSlot.Weapon),camp.Items,before);
+            int selected=0;var stat=before.GetAffix(selected).Stat;var statBefore=sheet.Get(stat);
+            Assert.AreEqual(SmithResult.Success,camp.ReforgeRange(EquipSlot.Weapon,selected,out var lo,out var hi));
+            Assert.AreEqual(SmithResult.Success,camp.Reforge(EquipSlot.Weapon,selected));
+            var worn=camp.Worn.Worn(EquipSlot.Weapon);
+            Assert.AreEqual(1,worn.ReforgeCount);Assert.True(camp.Bag.IsEmpty(0));
+            ItemGenerator.Generate(worn,camp.Items,after);
+            Assert.GreaterOrEqual(after.GetAffix(selected).Value.Raw,lo.Raw);Assert.LessOrEqual(after.GetAffix(selected).Value.Raw,hi.Raw);
+            Assert.Greater(sheet.Get(stat).Raw,statBefore.Raw);
+            Assert.AreEqual(970,camp.Money(CurrencyType.Gold));Assert.AreEqual(997,camp.Money(CurrencyType.Shards));
+            camp.Reforge(EquipSlot.Weapon,selected);camp.Reforge(EquipSlot.Weapon,selected);
+            Assert.AreEqual(SmithResult.Exhausted,camp.Reforge(EquipSlot.Weapon,selected));
+            camp=CampSaveCodec.Decode(CampSaveCodec.Encode(camp),camp.Items);
+            Assert.AreEqual(3,camp.Worn.Worn(EquipSlot.Weapon).ReforgeCount);
+            Assert.AreEqual(SmithResult.InvalidItem,camp.Reforge(EquipSlot.Armor,0));
+            Assert.AreEqual(SmithResult.InvalidItem,camp.ReforgeRange((EquipSlot)9,0,out _,out _));
+        }
         [Test] public void FailedPaymentIsAtomicAndSalvageCannotBeRepeated()
         {
             var camp=Ready();camp.Spend(CurrencyType.Shards,1000);var original=CampSaveCodec.Encode(camp);

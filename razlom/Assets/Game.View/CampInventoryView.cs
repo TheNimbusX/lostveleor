@@ -62,7 +62,8 @@ namespace Game.View
         void Build()
         {
             // Палатка в новом стиле (16 сентября): префаб CampTentBuilder. Без него — прежняя доска.
-            var tentPrefab=Resources.Load<GameObject>("UI/Prefabs/CampTent");
+            // С 23 сентября первой берётся палатка на паке «Ночная акварель» (CampTentWcBuilder).
+            var tentPrefab=Resources.Load<GameObject>("UI/Prefabs/CampTentWc")??Resources.Load<GameObject>("UI/Prefabs/CampTent");
             if(tentPrefab!=null&&BuildTent(tentPrefab))return;
             _font=GameTypography.Regular;
             _heading=GameTypography.Semibold;
@@ -351,19 +352,23 @@ namespace Game.View
             if(!ItemGenerator.Generate(in chosen,camp.Items,_roll))return "";
             string text="";
             {
-                var sheet=new StatSheet();
+                // Копия настоящего листа (база, уровень, эффекты, надетое), в которой снята вещь
+                // того же слота и надета выбранная. Раньше сравнивалось «база+вещи» с настоящим
+                // листом, и с уровня 2 врали разницы урона, здоровья и лавидия.
+                var sheet=new StatSheet(Mathf.Max(32,stats.ModifierCount+16));
                 for(int s=0;s<(int)StatType.Count;s++)sheet.SetBase((StatType)s,stats.GetBase((StatType)s));
-                var previewEquipment=new Equipment(camp.Items);previewEquipment.Bind(sheet);
-                for(int i=0;i<(int)EquipSlot.Count;i++)
-                {var item=camp.Worn.Worn((EquipSlot)i);if(!item.IsEmpty)previewEquipment.Equip(item,out _);}
-                previewEquipment.Equip(chosen,out _);
+                for(int m=0;m<stats.ModifierCount;m++){var mod=stats.GetModifier(m);sheet.Add(in mod);}
+                int b=camp.Items.IndexOfBase(chosen.BaseId);if(b<0)return "";
+                int slot=(int)Equipment.SlotOf(camp.Items.GetBase(b).Category);
+                sheet.RemoveSource(ModifierSource.Equipment,slot);
+                _roll.ApplyTo(sheet,slot);
                 var displayStats=new[]{StatType.Damage,StatType.AttackSpeed,StatType.CritChance,StatType.Armor,StatType.MaxHealth,StatType.MoveSpeed,StatType.FireResist,StatType.CritMultiplier,StatType.MaxLavidium,StatType.LavidiumRegen,StatType.AbilitySpeed,StatType.CooldownRecovery};
                 for(int s=0;s<displayStats.Length;s++)
                 {
                     var stat=displayStats[s];var v=sheet.Get(stat);var previous=stats.Get(stat);
                     if(v==Fix64.Zero&&previous==Fix64.Zero)continue;
                     var delta=v-previous;if(onlyChanges&&delta==Fix64.Zero)continue;string color=delta>Fix64.Zero?better:delta<Fix64.Zero?worse:same;
-                    text+=StatLabel(stat)+"   "+FormatStat(stat,previous)+(delta!=Fix64.Zero?" → "+FormatStat(stat,v)+"  <color="+color+">"+(delta>Fix64.Zero?"+":"")+FormatStat(stat,delta)+"</color>":"")+"\n\n";
+                    text+=StatText.Name(stat)+"   "+StatText.Value(stat,previous)+(delta!=Fix64.Zero?" → "+StatText.Value(stat,v)+"  <color="+color+">"+StatText.Delta(stat,delta)+"</color>":"")+"\n\n";
                 }
             }
             return text;
@@ -391,10 +396,7 @@ namespace Game.View
             foreach(var icon in _potionSprites)if(icon!=null)Destroy(icon);
             foreach(var icon in _baseSprites.Values)if(icon!=null)Destroy(icon);
         }
-        static string FormatStat(StatType stat,Fix64 value)=>stat==StatType.CritChance||stat==StatType.FireResist||stat==StatType.AbilitySpeed||stat==StatType.CooldownRecovery
-            ?(value*Fix64.FromInt(100)).ToFloat().ToString("0.#")+"%":value.ToFloat().ToString("0.#");
-        static string StatLabel(StatType stat)
-        { switch(stat){case StatType.AbilitySpeed:return "Исполнение";case StatType.CooldownRecovery:return "Восстановление";case StatType.LavidiumRegen:return "Лавидий/с";case StatType.MaxLavidium:return "Лавидий";case StatType.Damage:return "Урон";case StatType.Armor:return "Броня";case StatType.MaxHealth:return "Здоровье";case StatType.FireResist:return "Сопр. огню";case StatType.AttackSpeed:return "Скор. атаки";case StatType.MoveSpeed:return "Скорость";case StatType.CritChance:return "Шанс крита";default:return "Сила крита";} }
+        static string StatLabel(StatType stat)=>StatText.Name(stat);
     }
     public sealed class CampInventoryCell : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IPointerEnterHandler, IPointerExitHandler
     {

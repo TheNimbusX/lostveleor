@@ -17,7 +17,18 @@ namespace Game.View
         public Vector3 GlowOffset = new Vector3(0, 0, .10f);
         [Header("Объёмные лучи")]
         [Range(.2f, 3f)] public float GlowIntensity = 2.2f;
+        [Header("Дыхание свечения")]
+        [Range(.5f, 1.5f)] public float PulseBase = .91f;
+        [Range(0f, .3f)] public float PulseSlowAmount = .085f;
+        [Range(0f, .3f)] public float PulseFastAmount = .055f;
+        [Range(.1f, 3f)] public float PulseSlowSpeed = .73f;
+        [Range(.1f, 4f)] public float PulseFastSpeed = 1.91f;
         public bool IsOpen { get; private set; }
+        /// <summary>Разгорание арки при входе (0..1): ставит CampTransition, пока камера подаётся к арке.</summary>
+        [System.NonSerialized] public float Surge;
+        // Вопрос на паке (CampRiftConfirmWc); без префаба — прежняя IMGUI-плашка.
+        CampRiftConfirmPanel _confirm;
+        bool _confirmLoaded;
         public static int ClosedFrame { get; private set; } = -1;
         bool _armed = true;
         TickDriver _driver;
@@ -56,21 +67,37 @@ namespace Game.View
                 // Арка просыпается, пока игрок решает, входить ли.
                 GameSound.Play("rift_awaken", .5f, .02f, 2f);
                 driver.ClearCapturedInput();
+                var panel = Confirm;
+                if (panel != null) panel.Show(true);
             }
             if (!IsOpen) return;
 #if ENABLE_INPUT_SYSTEM
             bool cancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+            bool accept = Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame);
 #else
             bool cancel = Input.GetKeyDown(KeyCode.Escape);
+            bool accept = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
 #endif
             if (cancel) Respond(false);
+            else if (accept) Respond(true);
         }
         public void Respond(bool enter)
         {
             if (!IsOpen) return;
             IsOpen = false; ClosedFrame = Time.frameCount;
+            if (_confirm != null) _confirm.Show(false);
             _driver.ClearCapturedInput();
-            if (enter) { GameSound.Sequence(("rift_whoosh", 0f, .75f), ("rift_portal", .08f, .9f)); _driver.Session.EnterRift(); }
+            if (!enter) return;
+            // Съёмочные сценарии входят сразу: им нужен предсказуемый кадр, а не переход.
+            if (CampIntegrationCapture.IsRunning || CaptureRig.AutoEnterRift)
+            {
+                GameSound.Sequence(("rift_whoosh", 0f, .75f), ("rift_portal", .08f, .9f));
+                _driver.Session.EnterRift();
+                return;
+            }
+            // Момент входа (владелец 24 сентября): камера к арке, разгорание, вспышка — и забег.
+            var driver = _driver;
+            CampTransition.EnterRift(this, transform.TransformPoint(TriggerCenter), () => driver.Session.EnterRift());
         }
         void Start()
         {
@@ -89,7 +116,8 @@ namespace Game.View
             _mesh.RecalculateBounds();
             for (int i = 0; i < BeamCount; i++)
             {
-                float length = .23f + .055f * Mathf.Sin(i * 2.39f + 1);
+                // Аудит 23 сентября: нити читались вытянутым пламенем на столбах — короче и ближе к арке.
+                float length = .15f + .04f * Mathf.Sin(i * 2.39f + 1);
                 float width = .047f + .012f * Mathf.Sin(i * 3.1f);
                 var beam = new GameObject("Мягкий луч арки " + (i + 1));
                 beam.transform.SetParent(transform, false);
@@ -125,6 +153,12 @@ namespace Game.View
             float time = Time.unscaledTime - _glowStarted;
             _material.SetFloat("_FlowTime", time);
             _material.SetColor("_Color", GlowColor);
+            // Разлом дышит неровно, но остаётся спокойным ориентиром в лагере.
+            // Две медленные частоты дают длинные паузы без случайных скачков яркости.
+            float pulse = Mathf.Clamp(PulseBase + PulseSlowAmount * Mathf.Sin(time * PulseSlowSpeed)
+                + PulseFastAmount * Mathf.Sin(time * PulseFastSpeed + 1.7f), .78f, 1.06f);
+            if (IsOpen) pulse = Mathf.Min(1.16f, pulse + .10f);
+            _material.SetFloat("_Intensity", GlowIntensity * pulse * (1f + Surge * 2.5f));
             var camp = CampPlayerView.Instance;
             Vector3 hero = camp != null && camp.Active ? transform.InverseTransformPoint(camp.Position + Vector3.up)
                 : new Vector3(0,.16f,-.5f);
@@ -145,12 +179,12 @@ namespace Game.View
                 var direction = hero - origin;
                 direction.y *= .25f;
                 direction.Normalize();
-                var at = origin + direction * (.015f + progress * .30f);
+                var at = origin + direction * (.015f + progress * .2f);
                 at.x += Mathf.Sin(time * 1.6f + phase) * .012f;
                 _beams[i].localPosition = at;
                 _beams[i].localScale = scale;
                 _beams[i].localRotation = Quaternion.FromToRotation(Vector3.up, direction);
-                _beamBlocks[i].SetFloat("_Intensity", GlowIntensity * (.75f + .25f * breath) * Mathf.Sin(progress * Mathf.PI));
+                _beamBlocks[i].SetFloat("_Intensity", GlowIntensity * pulse * (1f + Surge * 2.5f) * (.75f + .25f * breath) * Mathf.Sin(progress * Mathf.PI));
                 _beamRenderers[i].SetPropertyBlock(_beamBlocks[i]);
             }
         }
@@ -239,9 +273,25 @@ namespace Game.View
             }
             return hover;
         }
+        CampRiftConfirmPanel Confirm
+        {
+            get
+            {
+                if (_confirmLoaded) return _confirm;
+                _confirmLoaded = true;
+                var prefab = Resources.Load<GameObject>("UI/Prefabs/CampRiftConfirmWc");
+                if (prefab == null) return null;
+                _confirm = Instantiate(prefab).GetComponent<CampRiftConfirmPanel>();
+                if (_confirm == null) return null;
+                _confirm.name = "Вопрос у арки";
+                if (_confirm.Enter != null) _confirm.Enter.onClick.AddListener(() => Respond(true));
+                if (_confirm.Stay != null) _confirm.Stay.onClick.AddListener(() => Respond(false));
+                return _confirm;
+            }
+        }
         void OnGUI()
         {
-            if (!IsOpen) return;
+            if (!IsOpen || _confirm != null) return;
             int depth = GUI.depth; GUI.depth = -100;
             Color before = GUI.color; GUI.color = new Color(0,0,0,.65f);
             GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height), Texture2D.whiteTexture); GUI.color = before;
@@ -259,7 +309,7 @@ namespace Game.View
             Gizmos.DrawCube(TriggerCenter, TriggerSize); Gizmos.color = Color.cyan; Gizmos.DrawWireCube(TriggerCenter, TriggerSize);
             Gizmos.matrix = Matrix4x4.identity;
         }
-        void OnDisable() { IsOpen = false; }
-        void OnDestroy() { if (_material != null) Destroy(_material); if (_mesh != null) Destroy(_mesh); if (_moteMaterial != null) Destroy(_moteMaterial); if (_outlineMaterial != null) Destroy(_outlineMaterial); }
+        void OnDisable() { IsOpen = false; if (_confirm != null) _confirm.Show(false); }
+        void OnDestroy() { if (_confirm != null) Destroy(_confirm.gameObject); if (_material != null) Destroy(_material); if (_mesh != null) Destroy(_mesh); if (_moteMaterial != null) Destroy(_moteMaterial); if (_outlineMaterial != null) Destroy(_outlineMaterial); }
     }
 }

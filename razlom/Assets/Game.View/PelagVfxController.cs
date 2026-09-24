@@ -22,7 +22,7 @@ namespace Game.View
             Simulation.AttackWindupTicks / (float)Simulation.TicksPerSecond;
         private const float WhirlwindContactTime = CharacterAnimatorView.WhirlwindContactTime;
 
-        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain, Roll, Cleave, Blade, Skewer }
+        private enum Motion : byte { Static, Expand, Projectile, Dash, Chain, PullLine, Whirlwind, AnchorFlight, EnemyPull, HopChain, Roll, Blade, Skewer }
 
         private sealed class PoolRecord
         {
@@ -76,10 +76,24 @@ namespace Game.View
         private Vector3 _attackMotionDirection;
         private bool _whirlwindContactPending;
         private int _cleaveVfxCast = -1;
-        private bool _cleaveSlashPlayed;
         private bool _cleaveGroundPlayed;
-        [SerializeField, Range(.25f, 2f)] private float _cleaveSlashScale = 1f;
         private float _whirlwindContactDelay;
+        // Блик на острие перед контактом: «вдох» за 0.13 с до удара.
+        private bool _whirlwindGlintPending;
+        private float _whirlwindGlintDelay;
+        // Игровой контакт ждёт тик Sim, а не секундомер: на просевшем кадре
+        // секундомер уходит вперёд симуляции, и серп сгорал бы до удара.
+        // Витрина без Sim работает по прежним секундам (−1).
+        private float _whirlwindContactTick = -1f;
+        // Импульсы удержания: у Sim нет события импульса, он бьёт каждые
+        // WhirlwindPulseTicks после контакта, пока WhirlwindChanneling.
+        private float _whirlwindNextPulseTick = -1f;
+        private CombatAudio _audio;
+        private const float WhirlwindGlintLead = 0.13f;
+        // Стоп-кадр контакта Вихря: поза героя и задетых мобов держится, Sim идёт.
+        private const float WhirlwindHoldSeconds = 0.07f;
+        private const float WhirlwindCrowdHoldSeconds = 0.09f;
+        private int _whirlwindHitsThisFrame;
         private Light _heroLight;
         private float _combatLightPulse;
         private Transform _footstepBody;
@@ -110,6 +124,7 @@ namespace Game.View
             _driver = GetComponent<TickDriver>();
             _arena = GetComponent<ArenaView>();
             _juice = GetComponent<CombatJuiceView>();
+            _audio = GetComponent<CombatAudio>();
             _active = new ActiveFx[MaxActive];
             BuildPools();
             BuildHeroLight();
@@ -221,6 +236,8 @@ namespace Game.View
             _heroLight.renderMode = LightRenderMode.ForcePixel;
         }
 
+        private float _cleaveLightPulse;
+
         private void PulseCombatLight(float strength)
         {
             if (CaptureRig.NoVfx) return;
@@ -238,11 +255,13 @@ namespace Game.View
             }
 
             _combatLightPulse = Mathf.MoveTowards(_combatLightPulse, 0f, dt * 2.25f);
-            float peak = _combatLightPulse * _combatLightPulse;
+            _cleaveLightPulse = Mathf.MoveTowards(_cleaveLightPulse, 0f, dt * 8f);
+            float peak = Mathf.Max(_combatLightPulse * _combatLightPulse, _cleaveLightPulse);
             Vector3 position = PlayerPosition() + Vector3.up * 0.82f;
             float radius = Mathf.Lerp(4.2f, 6.1f, peak);
             float shaderIntensity = Mathf.Lerp(0.15f, 2.85f, peak);
-            Color shaderColor = new Color(1.00f, 0.23f, 0.035f, 1f) * shaderIntensity;
+            Color shaderColor = Color.Lerp(new Color(1.00f, 0.23f, 0.035f, 1f),
+                new Color(.74f, .84f, 1f, 1f), _cleaveLightPulse) * shaderIntensity;
 
             Shader.SetGlobalVector(HeroLightPositionId,
                 new Vector4(position.x, position.y, position.z, radius));
@@ -250,6 +269,8 @@ namespace Game.View
 
             if (_heroLight == null) return;
             _heroLight.transform.position = position;
+            _heroLight.color = Color.Lerp(new Color(1f, .24f, .055f),
+                new Color(.74f, .84f, 1f), _cleaveLightPulse);
             _heroLight.range = radius;
             _heroLight.intensity = Mathf.Lerp(0.38f, 4.4f, peak);
             if (!_heroLight.enabled) _heroLight.enabled = true;
@@ -276,6 +297,18 @@ namespace Game.View
             if (!PoolsReady || !_driver.enabled || _showcase != PelagVfxShowcase.None) return;
 
             IReadOnlyList<SimEvent> events = _driver.FrameEvents;
+            // Стоп-кадр считается по толпе, а не по первому попаданию: длина
+            // задержки известна до того, как разобран первый Damage.
+            _whirlwindHitsThisFrame = 0;
+            for (int i = 0; i < events.Count; i++)
+            {
+                SimEvent e = events[i];
+                if (e.Type == SimEventType.Damage && e.Source == Simulation.PlayerId
+                    && e.DamageOrigin == DamageOrigin.Ability && IsWhirlwindSlot(e.ActionVariant))
+                    _whirlwindHitsThisFrame++;
+            }
+            if (_whirlwindHitsThisFrame > 0 && !CaptureRig.NoVfx)
+                _arena.HoldPlayerWhirlwindPose(WhirlwindHoldFor(_whirlwindHitsThisFrame));
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
@@ -283,7 +316,7 @@ namespace Game.View
                 {
                     StopCleaveSlash();
                     CancelActiveAnchorMotionForReplacement();
-                    _whirlwindContactPending = false;
+                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
                     for (int effect = 0; effect < _active.Length; effect++) Release(effect);
                     continue;
                 }
@@ -319,7 +352,7 @@ namespace Game.View
                 else if (e.Type == SimEventType.Attack)
                 {
                     CancelActiveAnchorMotionForReplacement();
-                    _whirlwindContactPending = false;
+                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
                     // Animator уже запускает ArenaView. Здесь начинается только
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
@@ -365,14 +398,16 @@ namespace Game.View
                     AbilityBuild ability = (uint)e.ActionVariant < Simulation.AbilitySlots
                         ? _driver.Sim.GetAbility(e.ActionVariant) : null;
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
+                    {
                         PlayWhirlwindImpact(e.Target, e.Position);
+                        if (!CaptureRig.NoVfx)
+                            _arena.HoldEntityPose(e.Target, WhirlwindHoldFor(_whirlwindHitsThisFrame));
+                    }
                     // Огненная добавка «Ладно смазал» приходит отдельным ударом
                     // с типом Fire — по нему и рисуется вспышка на цели.
                     if (ability != null && ability.DefinitionId == AbilityDefinition.BlazeId
                         && e.DamageKind == DamageType.Fire)
                         PlayBlazeHit(e.Target, e.Position);
-                    if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId && e.DamageKind == DamageType.Physical)
-                        PlayCleaveImpact(e.Target, e.Position);
                     if (ability != null && ability.DefinitionId == AbilityDefinition.ChainStepId)
                     {
                         PlaySquallImpact(e.Target, e.Position, _squallFinalHop);
@@ -407,7 +442,6 @@ namespace Game.View
         private void StopCleaveSlash()
         {
             _cleaveVfxCast = -1;
-            _cleaveSlashPlayed = false;
             _cleaveGroundPlayed = false;
             if (_active == null) return;
             for (int i = 0; i < _active.Length; i++)
@@ -465,32 +499,12 @@ namespace Game.View
             if (!_cleaveGroundPlayed && tick >= sim.CleaveContactTick)
             {
                 _cleaveGroundPlayed = true;
-                FixVec2 facingAtContact = sim.Entities.Facing[Simulation.PlayerId];
-                Vector3 forward = new Vector3(facingAtContact.X.ToFloat(), 0f, facingAtContact.Y.ToFloat());
-                Vector3 ground = PlayerPosition() + forward * 1.4f + Vector3.up * .025f;
-                Spawn(PelagVfxId.CleaveGround, ground, Quaternion.identity, 1.2f, .65f, .65f, Motion.Static);
-                if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-ground-contact] tick={tick:F2} position={ground}");
+                // The imported ground explosion was a gray radial rock cloud.
+                // The sword's own contact cut now carries this beat.
+                if (!CaptureRig.NoVfx) _cleaveLightPulse = .85f;
+                if (!CaptureRig.NoVfx) _juice?.PunchCamera(.27f, .055f);
+                if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-contact] tick={tick:F2}");
             }
-            if (_cleaveSlashPlayed || tick < sim.CleaveSwingStartTick) return;
-            _cleaveSlashPlayed = true;
-            if (!TryAcquire(PelagVfxId.CleaveSlash, out GameObject go, out PelagVfxElement element)) return;
-            FixVec2 facing = sim.Entities.Facing[Simulation.PlayerId];
-            Vector3 direction = new Vector3(facing.X.ToFloat(), 0f, facing.Y.ToFloat()).normalized;
-            Vector3 at = PlayerPosition() + Vector3.up * 1.5f;
-            // Полукруг пака лежит в XY: нормаль вдоль правой стороны героя
-            // помещает рассечение в вертикальную плоскость реального взмаха.
-            Quaternion rotation = Quaternion.LookRotation(Vector3.Cross(Vector3.up, direction), Vector3.up)
-                * Quaternion.Euler(0f, 0f, -35f);
-            element.Begin(at, rotation);
-            go.transform.localScale = new Vector3(2.05f, 2.05f, 1.15f) * _cleaveSlashScale;
-            int index = ReserveActive();
-            _active[index] = new ActiveFx
-            {
-                Active = true, Id = PelagVfxId.CleaveSlash, Object = go, Element = element,
-                Duration = .25f, Start = at, End = direction, JustSpawned = true,
-                Motion = Motion.Cleave, FollowIndex = -1
-            };
-            if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-heavy-slash] tick={tick:F2} position={at} scale={go.transform.localScale}");
         }
 
         private void PlayCleaveImpact(int targetEntity, FixVec2 fallback)
@@ -519,14 +533,25 @@ namespace Game.View
             };
         }
 
+        private static float WhirlwindHoldFor(int hits)
+            => hits >= 3 ? WhirlwindCrowdHoldSeconds : WhirlwindHoldSeconds;
+
         private void PlayWhirlwindImpact(int targetEntity, FixVec2 fallback)
         {
             if (!TryAcquire(PelagVfxId.WhirlwindHit, out GameObject go, out PelagVfxElement element)) return;
             Vector3 position = EntityPosition(targetEntity, fallback) + Vector3.up * 0.85f;
             Camera camera = Camera.main;
             if (camera != null) position += (camera.transform.position - position).normalized * 0.45f;
+            // Искры уходят по касательной хода клинка: сабля идёт по часовой
+            // стрелке, если смотреть сверху, значит в точке цели она движется
+            // вправо от луча «герой → цель».
+            Vector3 radial = Vector3.ProjectOnPlane(position - PlayerPosition(), Vector3.up);
+            Vector3 tangent = Vector3.Cross(Vector3.up, radial);
+            Quaternion facing = tangent.sqrMagnitude > .0001f
+                ? Quaternion.LookRotation(tangent.normalized + Vector3.up * .35f) : Quaternion.identity;
             int index = ReserveActive();
-            element.Begin(position, Quaternion.identity);
+            // Begin возвращает авторский масштаб префаба: крест пака вписан в метр им.
+            element.Begin(position, facing);
             _active[index] = new ActiveFx
             {
                 Active = true, Id = PelagVfxId.WhirlwindHit, Object = go, Element = element,
@@ -535,6 +560,26 @@ namespace Game.View
             };
             if (CaptureRig.HasEnemyOverride)
                 Debug.Log($"[whirlwind-hit] target={targetEntity} scale={go.transform.localScale.x} lifetime={element.DefaultLifetime}");
+        }
+
+        /// <summary>Короткий блик на острие за миг до контакта: маленькая звезда удара на кончике сабли.</summary>
+        private void PlayWhirlwindGlint()
+        {
+            _whirlwindGlintPending = false;
+            if (CaptureRig.NoVfx) return;
+            if (!_arena.TryGetPlayerBlade(out Transform bladeRoot, out Transform bladeTip)) return;
+            if (!TryAcquire(PelagVfxId.WhirlwindHit, out GameObject go, out PelagVfxElement element)) return;
+            Vector3 position = Vector3.Lerp(bladeRoot.position, bladeTip.position, .92f);
+            Camera camera = Camera.main;
+            if (camera != null) position += (camera.transform.position - position).normalized * 0.25f;
+            int index = ReserveActive();
+            element.Begin(position, Quaternion.identity);
+            go.transform.localScale = go.transform.localScale * .42f;
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.WhirlwindHit, Object = go, Element = element,
+                Duration = 0.12f, Start = position, End = position, Motion = Motion.Static, FollowIndex = -1
+            };
         }
 
         private void PlaySquallImpact(int targetEntity, FixVec2 fallback, bool finisher)
@@ -631,6 +676,9 @@ namespace Game.View
             _whirlwindContactPending = true;
             var action = _driver.Sim.PlayerAction;
             _whirlwindContactDelay = Mathf.Max(0f, action.ContactTick - (_driver.Sim.Tick - 1 + _driver.Alpha)) / Simulation.TicksPerSecond;
+            _whirlwindContactTick = action.ContactTick;
+            _whirlwindGlintPending = true;
+            _whirlwindGlintDelay = Mathf.Max(0f, _whirlwindContactDelay - WhirlwindGlintLead);
             // Anticipation is visible, but the HDR peak belongs to contact.
             PulseCombatLight(0.06f);
         }
@@ -659,7 +707,7 @@ namespace Game.View
             _motionAbility = PelagVfxShowcase.None;
             _captureMotion = false;
             _attackMotionTime = -1f;
-            _whirlwindContactPending = false;
+            _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
         }
 
         private void UpdateShowcase()
@@ -800,6 +848,9 @@ namespace Game.View
             _juice?.PlayWhirlwindTrail();
             _whirlwindContactPending = true;
             _whirlwindContactDelay = WhirlwindContactTime;
+            _whirlwindContactTick = -1f;
+            _whirlwindGlintPending = true;
+            _whirlwindGlintDelay = Mathf.Max(0f, WhirlwindContactTime - WhirlwindGlintLead);
 
             // ПОДГОТОВКА ЧЕРЕЗ КОНТРАСТ, А НЕ ЧЕРЕЗ ЯРКОСТЬ.
             //
@@ -816,6 +867,42 @@ namespace Game.View
 
         private void UpdateWhirlwindContact()
         {
+            if (_whirlwindContactTick >= 0f && _driver.Sim != null && (_whirlwindGlintPending || _whirlwindContactPending))
+            {
+                float now = _driver.Sim.Tick - 1 + _driver.Alpha;
+                if (_whirlwindGlintPending && now >= _whirlwindContactTick - WhirlwindGlintLead * Simulation.TicksPerSecond)
+                    PlayWhirlwindGlint();
+                if (_whirlwindContactPending && now >= _whirlwindContactTick)
+                {
+                    PlayWhirlwindContact();
+                    _whirlwindNextPulseTick = _whirlwindContactTick + Simulation.WhirlwindPulseTicks;
+                }
+                return;
+            }
+            UpdateWhirlwindChannelPulses();
+        }
+
+        /// <summary>
+        /// Удержание: каждый оборот Sim получает тот же серп, вспышку и свист,
+        /// что и первый контакт. Стоп-кадр и удары по целям приходят от Damage.
+        /// </summary>
+        private void UpdateWhirlwindChannelPulses()
+        {
+            if (_whirlwindNextPulseTick < 0f || _driver.Sim == null) return;
+            float now = _driver.Sim.Tick - 1 + _driver.Alpha;
+            // На тике контакта удержание только начинается: судить по флагу можно со следующего.
+            if (now < _whirlwindContactTick + 1f) return;
+            if (!_driver.Sim.WhirlwindChanneling) { _whirlwindNextPulseTick = -1f; return; }
+            if (now < _whirlwindNextPulseTick) return;
+            _whirlwindNextPulseTick += Simulation.WhirlwindPulseTicks;
+            _whirlwindContactPending = true;
+            PlayWhirlwindContact();
+            if (!CaptureRig.NoVfx) _audio?.PlayWhirlwindPulse();
+            if (_whirlwindGlintPending)
+            {
+                _whirlwindGlintDelay -= Time.deltaTime;
+                if (_whirlwindGlintDelay <= 0f) PlayWhirlwindGlint();
+            }
             if (!_whirlwindContactPending) return;
             _whirlwindContactDelay -= Time.deltaTime;
             if (_whirlwindContactDelay > 0f) return;
@@ -825,7 +912,7 @@ namespace Game.View
         private void PlayWhirlwindContact()
         {
             if (!_whirlwindContactPending) return;
-            _whirlwindContactPending = false;
+            _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
 
             // The outer crescent expands from Pelag, at the blade's height.
             // Its particles fade themselves before the pooled object is released.
@@ -851,6 +938,8 @@ namespace Game.View
                 int brush = ReserveActive();
                 element.Begin(center, Quaternion.Euler(authored ? 90f : 0f, yaw, 0f));
                 go.transform.localScale = Vector3.one * scale;
+                // Раскадровка серпа читает масштаб корня — запускается после него.
+                element.Sweep?.Begin();
                 _active[brush] = new ActiveFx
                 {
                     Active = true, Id = PelagVfxId.WhirlwindRing, Object = go, Element = element,
@@ -862,7 +951,8 @@ namespace Game.View
                 if (CaptureRig.HasEnemyOverride)
                     Debug.Log($"[whirlwind-authored] authored={authored} radius={radius} scale={scale}");
             }
-            PulseCombatLight(0.55f);
+            // Пик света на кадре-вспышке: почти максимум против занижённого замаха.
+            PulseCombatLight(0.85f);
         }
         /// <summary>
         /// Показ способности по НАСТОЯЩЕМУ касту, а не по витрине.
@@ -883,7 +973,7 @@ namespace Game.View
             int id = build.DefinitionId;
             if (id == AbilityDefinition.SkewerId || id == AbilityDefinition.BackblastId || id == AbilityDefinition.FireFlaskId || id == AbilityDefinition.WreckId)
             {
-                CancelActiveAnchorMotionForReplacement(); _whirlwindContactPending = false;
+                CancelActiveAnchorMotionForReplacement(); _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
                 if (id == AbilityDefinition.SkewerId)
                 {
                     BeginSkewerWake();
@@ -893,9 +983,8 @@ namespace Game.View
             if (id == AbilityDefinition.CleaveId)
             {
                 CancelActiveAnchorMotionForReplacement();
-                _whirlwindContactPending = false;
+                _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
                 _cleaveVfxCast = sim.CleaveStartTick;
-                _cleaveSlashPlayed = false;
                 _cleaveGroundPlayed = false;
                 return;
             }
@@ -1370,13 +1459,6 @@ namespace Game.View
                         // неподвижный огонь отстал бы от собственного оружия.
                         fx.Object.transform.SetPositionAndRotation(BladePoint(out Quaternion blade), blade);
                         break;
-                    case Motion.Cleave:
-                        // Центр остаётся у героя; меняется только угол рассечения.
-                        // Эффект не летит к цели и не растягивается за её движением.
-                        float sweep = Smooth(Mathf.Clamp01(fx.Age / .16f));
-                        fx.Object.transform.rotation = Quaternion.LookRotation(Vector3.Cross(Vector3.up, fx.End), Vector3.up)
-                            * Quaternion.Euler(0f, 0f, Mathf.Lerp(-35f, 40f, sweep));
-                        break;
                     case Motion.AnchorFlight:
                         fx.Age = _motionTime;
                         float returnAt = fx.Duration - .06f;
@@ -1458,6 +1540,7 @@ namespace Game.View
                         }
                         fx.Element.AnimateBrush(fx.Age);
                         fx.Element.SetOpacity(1f - Smooth((t - 0.32f) / 0.68f));
+                        fx.Element.Sweep?.SetAge(fx.Age);
                         break;
                     case Motion.Expand:
                         float pulse = Mathf.Sin(t * Mathf.PI) * 0.08f;

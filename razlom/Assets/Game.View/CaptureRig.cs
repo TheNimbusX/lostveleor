@@ -101,6 +101,13 @@ namespace Game.View
         public static bool AutoEnterRift { get; private set; }
 
         public static bool WhirlwindShowcase { get; private set; }
+        /// <summary>
+        /// Съёмка удержания Вихря: талант «Удержание» включается как
+        /// отладочный, а первый слот держится HoldTicks тиков после каждого
+        /// нажатия. Без этого флага удержание в съёмке не показать —
+        /// у capture-нажатий нет удержания клавиши.
+        /// </summary>
+        public static bool WhirlwindHold { get; private set; }
         public static string PoseShowcase { get; private set; }
 
         public static bool RunShowcase { get; private set; }
@@ -209,6 +216,7 @@ namespace Game.View
             float[] marks = ParseMarks(ReadValue(args, TimesFlag));
 
             WhirlwindShowcase = Array.IndexOf(args, WhirlwindFlag) >= 0;
+            WhirlwindHold = Array.IndexOf(args, "-capture-whirlwind-hold") >= 0;
             PoseShowcase = ReadValue(args, "-capture-pose");
             RunShowcase = Array.IndexOf(args, RunFlag) >= 0;
             WatchTeleports = Array.IndexOf(args, WatchTeleportsFlag) >= 0;

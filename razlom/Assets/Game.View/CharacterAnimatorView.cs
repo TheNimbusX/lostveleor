@@ -230,7 +230,9 @@ namespace Game.View
         public float AnchorFacingWeight => _leapLocomotion
             ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((_abilityPresentationUntil - Time.time)
                 / (_leapLocomotion ? LeapRunHandoff : .20f))) : 1f;
-        public float WhirlwindElapsed => WhirlwindActive ? WhirlwindClipDuration - (_abilityPresentationUntil - Time.time) : 0f;
+        public float WhirlwindElapsed => !WhirlwindActive ? 0f
+            : WhirlwindPoseTime >= 0f ? WhirlwindPoseTime
+            : WhirlwindClipDuration - (_abilityPresentationUntil - Time.time);
         private float WhirlwindWeight => 1f - Mathf.SmoothStep(0f, 1f,
             Mathf.InverseLerp(WhirlwindRecoveryStart, WhirlwindClipDuration, WhirlwindElapsed));
         public bool LocomotionMoving => _locomotionMoving;
@@ -440,6 +442,7 @@ namespace Game.View
 
         private void Update()
         {
+            UpdatePoseHold();
             UpdateTempoAnimation();
             UpdateBlazeAnimation();
             UpdateCleaveAnimation();
@@ -457,6 +460,7 @@ namespace Game.View
                 && _abilityDefinitionId != AbilityDefinition.AnchorSlamId && Time.time >= _abilityPresentationUntil)
             {
                 if (_abilityUsesLowerBodyLayer) ReleaseUpperBodyToLocomotion(0.12f);
+                if (_abilityDefinitionId == AbilityDefinition.WhirlwindId) _whirlwindEndedAt = Time.time;
                 _abilityPresentationActive = false;
             }
             bool attackPresentationEnded = false;
@@ -965,6 +969,8 @@ namespace Game.View
                     triggerHash = 0;
                     duration = WhirlwindClipDuration;
                     _animator.SetFloat("WhirlwindPhase", 0f);
+                    _whirlHoldTicks = 0f;
+                    _whirlPhase = 0f; _whirlLooping = _whirlExiting = false;
                     _abilityUsesLowerBodyLayer = true;
                     EnterWhirlwindLayer(_upperBodyLayer, "UpperBody Combat.Whirlwind_v5", "HeavyAttack");
                     EnterWhirlwindLayer(_lowerBodyLayer, "LowerBody Combat.Lower_Whirlwind_v5", "LowerHeavyAttack");

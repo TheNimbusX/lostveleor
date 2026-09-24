@@ -98,8 +98,8 @@ namespace Game.View
             if (world == null || world.CampRoot == null) return;
             foreach (var anchor in world.CampRoot.GetComponentsInChildren<Transform>(true))
             {
-                if (anchor.name == "Anchor - Smith") _landmarks.Add((anchor, "Кузнец", 2));
-                else if (anchor.name == "Anchor - Trader") _landmarks.Add((anchor, "Торговец", 3));
+                if (anchor.name == "Anchor - Smith") _landmarks.Add((anchor, CampServiceText.Get("npc.smith"), 2));
+                else if (anchor.name == "Anchor - Trader") _landmarks.Add((anchor, CampServiceText.Get("npc.trader"), 3));
                 else if (anchor.name == "Anchor - Rift Portal") _landmarks.Add((anchor, "Вход в Разлом", 4));
             }
         }
@@ -196,7 +196,7 @@ namespace Game.View
             _hoverName = null;
             if (_hintLabel == null)
             {
-                _hintLabel = new GUIStyle(GameTypography.Label) { fontSize = 13, alignment = TextAnchor.MiddleCenter, padding = new RectOffset() };
+                _hintLabel = new GUIStyle(GameTypography.Label) { fontSize = 20, alignment = TextAnchor.MiddleCenter, padding = new RectOffset() };
                 _hintLabel.normal.textColor = new Color(.25f, .23f, .17f);
                 _captionLabel = new GUIStyle(_hintLabel) { font = GameTypography.Display, fontSize = 16 };
                 _captionLabel.normal.textColor = Rim;
@@ -324,14 +324,19 @@ namespace Game.View
             float left = safe.xMin / scale + 6f, right = safe.xMax / scale - 6f;
             float top = (Screen.height - safe.yMax) / scale + 6f;
             float bottom = (Screen.height - safe.yMin) / scale - 6f;
-            float width = Mathf.Min(right - left, _hintLabel.CalcSize(new GUIContent(text)).x + 22f);
+            // Крупнее и в цветах пака «Ночная акварель»: тёмная плашка, серебряная кромка, светлый текст.
+            const float height = 40f;
+            float width = Mathf.Min(right - left, _hintLabel.CalcSize(new GUIContent(text)).x + 32f);
             float x = Pointer.x + 16f;
             if (x + width > right) x = Pointer.x - width - 12f;
-            Rect hint = new Rect(Mathf.Clamp(x, left, right - width), Mathf.Clamp(Pointer.y + 18f, top, bottom - 29f), width, 29f);
-            chrome.Shape(new Rect(hint.x, hint.y + 2f, hint.width, hint.height), new Color(.17f, .16f, .11f, .14f), 7f);
-            chrome.Shape(hint, new Color(.97f, .94f, .85f, .98f), 7f);
-            chrome.Shape(hint, new Color(.67f, .61f, .47f, .65f), 7f, .7f);
+            Rect hint = new Rect(Mathf.Clamp(x, left, right - width), Mathf.Clamp(Pointer.y + 18f, top, bottom - height), width, height);
+            chrome.Shape(new Rect(hint.x, hint.y + 3f, hint.width, hint.height), new Color(.01f, .02f, .04f, .45f), 8f);
+            chrome.Shape(hint, new Color(.067f, .086f, .125f, .96f), 8f);
+            chrome.Shape(hint, new Color(.85f, .88f, .93f, .8f), 8f, 1f);
+            Color ink = _hintLabel.normal.textColor;
+            _hintLabel.normal.textColor = new Color(.96f, .97f, .98f);
             GUI.Label(hint, text, _hintLabel);
+            _hintLabel.normal.textColor = ink;
         }
 
         static bool InsideMap(Rect panel, Vector2 point) => point.x >= panel.x + 15f && point.x <= panel.xMax - 15f

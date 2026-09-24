@@ -118,8 +118,8 @@ namespace Game.Sim
             => new SimEvent(SimEventType.DamageOverTime, source, target, amount, false, at, kind,
                 DamageOrigin.DamageOverTime);
 
-        public static SimEvent Death(int target, FixVec2 at)
-            => new SimEvent(SimEventType.Death, -1, target, 0, false, at);
+        public static SimEvent Death(int source, int target, FixVec2 at)
+            => new SimEvent(SimEventType.Death, source, target, 0, false, at);
 
         public static SimEvent Cast(int source, int abilityIndex, FixVec2 at)
             => new SimEvent(SimEventType.AbilityCast, source, -1, abilityIndex, false, at);

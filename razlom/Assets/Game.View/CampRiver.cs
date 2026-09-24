@@ -120,11 +120,23 @@ namespace Game.View
             _refreshRequested=false;
             _lastMatrix=transform.worldToLocalMatrix;Shader.SetGlobalMatrix("_CampRiverWorldToLocal",_lastMatrix);
             bool ready=FoliageBoundary!=null && BakedLandContour!=null && BakedLandContour.Length>1;
-            if(ready){Shader.SetGlobalTexture("_CampRiverBoundary",FoliageBoundary);Shader.SetGlobalVector("_CampRiverBoundaryRange",new Vector4(BakedLandContour[0].x,BakedLandContour[BakedLandContour.Length-1].x-BakedLandContour[0].x,1f/FoliageBoundary.width,0));}
+            if(ready){Shader.SetGlobalTexture("_CampRiverBoundary",FoliageBoundary);Shader.SetGlobalVector("_CampRiverBoundaryRange",new Vector4(BakedLandContour[0].x,BakedLandContour[BakedLandContour.Length-1].x-BakedLandContour[0].x,1f/FoliageBoundary.width,0));Shader.SetGlobalVector("_CampRiverBand",RiverBand);}
             Shader.SetGlobalVector("_CampRiverMask",new Vector4(0,0,ready?1:0,0));
             if(WaterMaterial!=null)
             {
                 _lastFlow=FlowSpeed;if(WaterMaterial.HasProperty("_FlowSpeed"))WaterMaterial.SetFloat("_FlowSpeed",FlowSpeed);
+            }
+        }
+        /// <summary>
+        /// Где растения прячутся (аудит 23 сентября): только вода с запасом 15 см. x — от кромки травы
+        /// ближнего берега до воды, y — ширина воды. Берега и дальний берег за рекой зарастают.
+        /// </summary>
+        Vector4 RiverBand
+        {
+            get
+            {
+                float bank=HasBakedShape?BakedBankWidth:BankWidth,width=HasBakedShape?BakedWidth:Width;
+                return new Vector4(bank-.3f-.15f,width+.6f+.3f,0,0);
             }
         }
         void OnDisable()=>Shader.SetGlobalVector("_CampRiverMask",Vector4.zero);

@@ -28,7 +28,7 @@ namespace Game.View
             _driver=FindAnyObjectByType<TickDriver>();
             if(_camp==null || _camp.WalkMap==null){Check(false,"navigation initialized");Finish();yield break;}
             var root=FindAnyObjectByType<SceneWorldView>().CampRoot.transform;
-            var magic=root.GetComponentInChildren<CampMagicCircle>();var river=root.GetComponentInChildren<CampRiver>();
+            var river=root.GetComponentInChildren<CampRiver>();
             var origin=root.Find("Anchor - Player").position;
             yield return Walk(origin,"01-arrival");
             yield return Walk(root.Find("Anchor - Smith").position,"02-smith");
@@ -44,12 +44,27 @@ namespace Game.View
             }
             yield return Walk(new Vector3(1.3125f,0,-13.3125f),"05-bank-from-camp");
             yield return Walk(new Vector3(6.5625f,0,-7.8125f),"05b-turn-from-camp");
-            yield return Walk(magic.IceAltar.TransformPoint(magic.IcePathSocket)+new Vector3(-.7f,0,-.4f),"06-ice");
-            yield return Walk(magic.Centre.position+new Vector3(.8f,0,-.6f),"07-magic-centre");
-            yield return Walk(magic.FireAltar.TransformPoint(magic.FirePathSocket)+new Vector3(-.5f,0,-.5f),"07b-fire");
-            yield return Walk(magic.EarthAltar.TransformPoint(magic.EarthPathSocket)+new Vector3(-.65f,0,-.5f),"08-earth");
-            yield return Walk(magic.AlchemyAltar.TransformPoint(magic.AlchemyPathSocket)+new Vector3(.6f,0,-.5f),"09-alchemy");
-            yield return Walk(origin,"10-return");
+            var passage=river.GetComponent<CampRiverPassage>();
+            CampServiceNpc alchemist=null;
+            foreach(var npc in FindObjectsByType<CampServiceNpc>())
+                if(npc.Kind==CampServiceKind.Alchemist){alchemist=npc;break;}
+            Check(passage!=null && alchemist!=null,"bridge and alchemist are available for the camp route");
+            if(passage!=null && alchemist!=null)
+            {
+                foreach(var filter in passage.Bridge.GetComponentsInChildren<MeshFilter>())
+                    Check(filter.sharedMesh==null || filter.sharedMesh.isReadable,"bridge collision mesh readable: "+filter.name);
+                var bridge=passage.BridgeBounds;
+                yield return Walk(bridge.center,"05c-bridge-deck");
+                yield return Walk(alchemist.Approach,"05d-alchemist",2f);
+                yield return Walk(new Vector3(bridge.center.x,0,bridge.max.z+1f),"05e-return-over-bridge");
+            }
+            for(int id=1;id<=2;id++)
+            {
+                var dummy=CampTrainingView.Find(id);
+                Check(dummy!=null,"training dummy "+id+" present");
+                if(dummy!=null)yield return Walk(dummy.TargetPosition+Vector3.right*2f,"06-dummy-"+id);
+            }
+            yield return Walk(origin,"08-return");
             Check(_camp.ApproachTent(),"inventory approach route exists");
             float deadline=Time.unscaledTime+18;
             while(!_camp.InventoryOpen && Time.unscaledTime<deadline)yield return null;
@@ -62,11 +77,32 @@ namespace Game.View
             for(float x=-35;x<28;x+=.5f)
             {
                 var p=river.transform.TransformPoint(new Vector3(x,0,river.CentreAt(x)));
-                var passage=river.GetComponent<CampRiverPassage>();
                 if((passage==null || !passage.IsOpen(river,p)) && _camp.WalkMap.Contains(CampTrainingView.Flat(p)))leaking++;
             }
             Check(leaking==0,"river centre blocked at every sampled section: "+leaking);
+            AuditGeometry(root);
             Finish();
+        }
+        void AuditGeometry(Transform root)
+        {
+            var ranked=new List<(long triangles,string name)>();
+            long total=0;int renderers=0,shadows=0;
+            foreach(var renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                if(!renderer.enabled || !renderer.gameObject.activeInHierarchy)continue;
+                Mesh mesh=renderer is SkinnedMeshRenderer skin?skin.sharedMesh:renderer.GetComponent<MeshFilter>()?.sharedMesh;
+                if(mesh==null)continue;
+                long triangles=0;
+                for(int i=0;i<mesh.subMeshCount;i++)triangles+=(long)mesh.GetIndexCount(i)/3;
+                total+=triangles;renderers++;
+                if(renderer.shadowCastingMode!=UnityEngine.Rendering.ShadowCastingMode.Off)shadows++;
+                ranked.Add((triangles,renderer.name+" / "+mesh.name));
+            }
+            ranked.Sort((a,b)=>b.triangles.CompareTo(a.triangles));
+            var budget=new StringBuilder();
+            budget.AppendLine("Active camp renderers="+renderers+" shadow casters="+shadows+" source triangles="+total);
+            for(int i=0;i<Mathf.Min(30,ranked.Count);i++)budget.AppendLine(ranked[i].triangles+" "+ranked[i].name);
+            File.WriteAllText(Path.Combine(_output,"geometry-audit.txt"),budget.ToString());
         }
         IEnumerator Walk(Vector3 wanted,string name,float searchRadius=1.5f)
         {

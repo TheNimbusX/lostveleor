@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Палитра и шрифт</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&family=Nunito:wght@400;600;800&family=Cormorant+SC:wght@600;700&family=Alegreya+SC:wght@500;700&family=Alegreya+Sans:wght@400;500;700&family=Playfair+Display+SC:wght@700&family=Manrope:wght@400;600;700&family=Prata&family=Golos+Text:wght@400;500;600&family=Tektur:wght@600;700&display=swap">
+<style>
+:root{
+  --ground:#141519; --raise:#1c1e24; --line:#2c2f38; --text:#ece8e1; --muted:#9a9790; --faint:#6d6b66; --like:#3cc6b4; --cta:#e8645a;
+  --ui:'Golos Text',system-ui,sans-serif;
+  /* палитра, которой показаны шрифты — меняется выбором */
+  --veil:rgba(8,30,33,.55); --panel:rgba(12,40,44,.88); --pline:#5fbfb2; --ptext:#f2eee4; --pmuted:#9dbdb7; --accent:#ff7a5c; --atext:#fff;
+  --card:#16484c; --cink:#f2eee4; --common:#b8b3a8; --rare:#62e3d2; --good:#7fe0a0; --bad:#ff7a5c; --lav:#ff9a3c;
+  --fh:'Philosopher',serif; --fb:'Philosopher',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font:15px/1.5 var(--ui);padding:0 24px 110px}
+.wrap{max-width:1680px;margin:0 auto}
+h1,h2{font-family:'Tektur',var(--ui);margin:0;text-wrap:balance}
+header.top{padding-block:40px 8px;display:grid;gap:12px}
+header.top h1{font-size:32px}
+header.top p{margin:0;color:var(--muted);max-width:80ch}
+.find{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:6px}
+.find div{background:var(--raise);border:1px solid var(--line);border-radius:6px;padding:12px 14px;color:var(--muted);font-size:14px}
+.find b{display:block;color:var(--text);font-weight:600;margin-bottom:2px}
+.hue{display:flex;height:14px;border-radius:3px;overflow:hidden;margin-top:8px}
+section{padding-top:40px}
+section>header{display:grid;gap:4px;margin-bottom:16px}
+section>header h2{font-size:22px}
+section>header p{margin:0;color:var(--muted);max-width:80ch}
+.count{font:500 12px var(--ui);color:var(--faint);letter-spacing:.06em;text-transform:uppercase}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:20px}
+.opt{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--raise);display:flex;flex-direction:column}
+.opt.chosen{box-shadow:0 0 0 2px var(--like);border-color:var(--like)}
+.info{padding:12px 14px;display:grid;gap:6px;border-top:1px solid var(--line)}
+.info h3{margin:0;font:600 16px var(--ui)}
+.info p{margin:0;color:var(--muted);font-size:13.5px}
+.info .refs{color:var(--faint);font-size:12.5px}
+.pick{font:500 13px var(--ui);color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:4px;padding:7px 10px;cursor:pointer}
+.pick:hover{color:var(--text);border-color:var(--faint)}
+.pick:focus-visible{outline:2px solid var(--cta);outline-offset:2px}
+.opt.chosen .pick{background:var(--like);color:#0d1a18;border-color:var(--like)}
+.sw{display:flex;gap:4px;flex-wrap:wrap}
+.sw i{width:26px;height:18px;border-radius:3px;border:1px solid rgba(255,255,255,.12)}
+
+/* сцена: лагерь под вуалью */
+.scene{position:relative;aspect-ratio:16/10;background:url(_board/camp-blur.jpg) center/cover;overflow:hidden}
+.scene::before{content:"";position:absolute;inset:0;background:var(--veil)}
+.win{position:absolute;inset:7% 6%;display:grid;grid-template-columns:1.05fr 1fr;gap:14px;color:var(--ptext);font-family:var(--fb)}
+.col{background:var(--panel);border:1px solid var(--pline);border-radius:var(--rad,6px);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ttl{display:flex;align-items:center;gap:10px;font:700 21px/1.1 var(--fh);letter-spacing:.02em}
+.ttl::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--pline),transparent)}
+.tabs{display:flex;gap:14px;font-size:13px;color:var(--pmuted)}
+.tabs b{color:var(--ptext);font-weight:600;border-bottom:2px solid var(--accent);padding-bottom:2px}
+.cells{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cell{aspect-ratio:1;border-radius:5px;background:var(--card);border:2px solid var(--common);display:grid;place-items:center;position:relative;overflow:hidden}
+.cell.r{border-color:var(--rare);box-shadow:inset 0 0 14px color-mix(in srgb,var(--rare) 40%,transparent)}
+.cell.sel{outline:2px solid var(--accent);outline-offset:2px}
+.cell img{width:78%;height:78%;object-fit:contain}
+.cell.e{opacity:.45;border-style:dashed}
+.lav{display:grid;gap:4px;font-size:12.5px;color:var(--pmuted);margin-top:auto}
+.lav .bar{height:8px;border-radius:4px;background:color-mix(in srgb,var(--card) 60%,#000);overflow:hidden}
+.lav .bar i{display:block;height:100%;width:64%;background:var(--lav)}
+.item{display:flex;gap:12px;align-items:center}
+.item .cell{width:74px;flex:none}
+.nm{font:700 20px/1.1 var(--fh)}
+.tag{font-size:12.5px;color:var(--rare)}
+.stats{display:grid;gap:5px;font-size:14px;background:var(--card);color:var(--cink);border-radius:5px;padding:10px 12px}
+.stats div{display:flex;justify-content:space-between;gap:8px}
+.stats .u{color:var(--good);font-weight:600}
+.stats .d{color:var(--bad);font-weight:600}
+.desc{font-size:13px;color:var(--pmuted);line-height:1.4}
+.btns{display:flex;gap:8px;margin-top:auto}
+.btn{flex:1;text-align:center;border-radius:5px;padding:8px 6px;font:700 14px var(--fh);letter-spacing:.04em}
+.btn.a{background:var(--accent);color:var(--atext)}
+.btn.g{border:1px solid var(--pline);color:var(--ptext)}
+
+/* шрифты: меню + карточка */
+.fscene{position:relative;aspect-ratio:16/9;background:url(00-ours/camp-clean.jpg) center/cover;overflow:hidden;color:var(--ptext)}
+.fscene::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--veil) 100%,#000) 0%,transparent 70%)}
+.menu{position:absolute;left:6%;top:12%;display:grid;gap:4px}
+.menu .logo{font:700 40px/1 var(--fh);letter-spacing:.01em;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.menu .sub{font:400 16px var(--fh);color:var(--pmuted);margin-bottom:14px;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+.menu .it{font:600 18px var(--fh);letter-spacing:.05em;color:var(--ptext);text-shadow:0 1px 8px rgba(0,0,0,.7);padding:2px 0}
+.menu .it.on{color:var(--accent)}
+.menu .it.on::before{content:"◆ ";font-size:11px;vertical-align:3px}
+.fcard{position:absolute;right:5%;bottom:8%;width:44%;background:var(--panel);border:1px solid var(--pline);border-radius:6px;padding:12px 14px;display:grid;gap:8px;font-family:var(--fb)}
+.fcard .nm{font-size:20px}
+.fcard .stats{font-size:13.5px}
+
+.dock{position:fixed;left:0;right:0;bottom:0;background:#0f1013;border-top:1px solid var(--line);padding:12px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;z-index:5}
+.dock .sum{flex:1;color:var(--muted);font-size:14px;min-width:200px}
+.dock .sum b{color:var(--text)}
+.dock button{font:600 14px var(--ui);background:var(--cta);color:#fff;border:0;border-radius:4px;padding:10px 18px;cursor:pointer}
+@media (max-width:620px){body{padding:0 16px 140px}.grid{grid-template-columns:1fr}.win{inset:4%;grid-template-columns:1fr}.win .col:first-child{display:none}.fcard{width:60%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <span class="count">The War Remains · переработка UI · раунд 2</span>
+  <h1>Палитра и шрифт — по вашим отметкам</h1>
+  <p>Разобрал 49 кадров, которые вам понравились, и 110 отвергнутых. Картина получилась такая:</p>
+  <div class="find">
+    <div><b>Меньше рамок</b>Нравятся меню без плашек поверх арта (Hollow Knight, Kena, Prince of Persia, Child of Light). Не нравятся толстые кнопки и резные рамы.</div>
+    <div><b>Герой крупно, панели чистые</b>В инвентаре выбраны Genshin, Honkai, Dauntless, Zelda: модель героя и спокойные полупрозрачные панели.</div>
+    <div><b>Лавки — тёплые и уютные</b>Moonlighter отмечен 5 раз: бумага, бирюзовые шапки, рецепты с галочками.</div>
+    <div><b>Холодная основа, тёплый акцент</b>В понравившихся кадрах 54% цвета — бирюза и лазурь, 31% — красно-оранжевый акцент. В отвергнутых 58% — сплошной красно-оранжевый.
+      <div class="hue" title="понравившиеся"><i style="flex:18;background:#d9533f"></i><i style="flex:13;background:#e88a3a"></i><i style="flex:20;background:#3fc9a5"></i><i style="flex:11;background:#3cbfcf"></i><i style="flex:23;background:#3f8fd0"></i><i style="flex:4;background:#3f5bd0"></i><i style="flex:9;background:#d94f7c"></i></div>
+    </div>
+    <div><b>Лого — острая антиква со светом</b>Выбраны Hades, Shape of Dreams, Kena, Ravenswatch, Moonlighter. Отвергнуты блочные буквы (Dave, Rogue Legacy 2) и металл (Diablo, PoE).</div>
+    <div><b>Текущий UI отвергнут целиком</b>Меню, HUD, пауза, палатка и лого отмечены «не то». Значит, основа пишется с нуля, а не от паузы.</div>
+  </div>
+  <p>Поэтому палитра B (без синего) спорит с вашими же отметками. Ниже — четыре новых варианта, собранных из понравившихся кадров, и B для сравнения. Все показаны на одном окне сумки поверх вечернего лагеря. Выбор палитры сразу перекрашивает образцы шрифтов ниже.</p>
+</header>
+
+<section id="pal">
+  <header><span class="count">5 вариантов</span><h2>Палитра</h2><p>Редкости те же: обычная — серая, редкая — бирюзовая; лавидий оранжевый. Синий нигде не стоит рядом с жёлтым или золотым.</p></header>
+  <div class="grid" id="pals"></div>
+</section>
+
+<section id="fonts">
+  <header><span class="count">6 пар</span><h2>Шрифт — заголовки и текст</h2><p>В понравившихся играх почти везде два шрифта: характерный для заголовков и спокойный для текста и цифр. Поэтому тут пары. Слева главное меню поверх лагеря, справа карточка предмета.</p></header>
+  <div class="grid" id="fontGrid"></div>
+</section>
+</div>
+
+<div class="dock"><div class="sum" id="sum"></div><button id="copy" type="button">Скопировать выбор</button></div>
+
+<script>
+const PALS = [
+ {id:'P1', name:'Бирюзовые сумерки', why:'Тёмная морская бирюза, коралловый акцент, тонкие светлые линии. Бирюза перекликается с рекой лагеря, коралл — с тентами.', refs:'Hades II, Kena, Moonlighter 2, Shape of Dreams',
+  v:{veil:'rgba(8,30,33,.55)',panel:'rgba(12,40,44,.88)',pline:'#5fbfb2',ptext:'#f2eee4',pmuted:'#9dbdb7',accent:'#ff7a5c',atext:'#fff',card:'#16484c',cink:'#f2eee4',common:'#b8b3a8',rare:'#62e3d2',good:'#8fe3a8',bad:'#ff8a6e',lav:'#ff9a3c'}},
+ {id:'P2', name:'Светлое стекло', why:'Светлые кремовые панели, тёмный текст, коралловые кнопки. Самый «дорогой» и чистый вариант, мир виден сквозь вуаль.', refs:'Genshin, Honkai: Star Rail',
+  v:{veil:'rgba(20,24,28,.35)',panel:'rgba(248,244,236,.93)',pline:'#d8ccb6',ptext:'#2b2f36',pmuted:'#7d7466',accent:'#e0674f',atext:'#fff',card:'#ffffff',cink:'#2b2f36',common:'#a9a398',rare:'#1fa895',good:'#2f9a6a',bad:'#d0503e',lav:'#f08a24',rad:'10px'}},
+ {id:'P3', name:'Лавка', why:'Бумага, бирюзовые шапки и кнопки, тёмно-коричневый текст. Тепло и уютно, как в лавках Moonlighter.', refs:'Moonlighter, Child of Light',
+  v:{veil:'rgba(16,24,24,.5)',panel:'#efe3c6',pline:'#2f7f78',ptext:'#3a2c20',pmuted:'#85705a',accent:'#2c8279',atext:'#fff',card:'#f8efd9',cink:'#3a2c20',common:'#9d968a',rare:'#1f9f91',good:'#3b8f5a',bad:'#c9533c',lav:'#ea7d22'}},
+ {id:'P4', name:'Ночная акварель', why:'Почти без цвета: тёмная вуаль, белые тонкие линии, один тёплый акцент. Меню как в Hollow Knight, арт делает всю работу.', refs:'Hollow Knight, Silksong, Child of Light, Blasphemous',
+  v:{veil:'rgba(6,8,12,.68)',panel:'rgba(10,12,18,.55)',pline:'rgba(255,255,255,.5)',ptext:'#f4f1ea',pmuted:'#a7a6a3',accent:'#ff8a4c',atext:'#1a0f08',card:'rgba(255,255,255,.07)',cink:'#f4f1ea',common:'#b5b2ab',rare:'#6fe3d3',good:'#9fe3b0',bad:'#ff8a6a',lav:'#ff9a3c'}},
+ {id:'B', name:'Вечерний лагерь (прошлый выбор)', why:'Тёмное дерево и кожа, пергамент, угольно-оранжевый акцент, без синего. Для сравнения.', refs:'из раунда 1',
+  v:{veil:'rgba(29,22,17,.55)',panel:'rgba(52,38,27,.94)',pline:'#8a6a48',ptext:'#fbf0dc',pmuted:'#b9a183',accent:'#e2653c',atext:'#fff',card:'#efe1c4',cink:'#3a2a1c',common:'#aaa196',rare:'#2f9f8f',good:'#3b8f5a',bad:'#c9533c',lav:'#ff9331'}},
+];
+const FONTS = [
+ {id:'Philosopher', h:"'Philosopher',serif", b:"'Philosopher',sans-serif", why:'Ваш выбор из раунда 1, одним шрифтом на всё. Мягкий, чуть сказочный.'},
+ {id:'Philosopher + Nunito', h:"'Philosopher',serif", b:"'Nunito',sans-serif", why:'Заголовки Philosopher, текст и цифры — круглый Nunito, как в Genshin.'},
+ {id:'Cormorant SC + Nunito', h:"'Cormorant SC',serif", b:"'Nunito',sans-serif", why:'Высокая острая антиква, как лого Shape of Dreams и Kena, и мягкий текст.'},
+ {id:'Alegreya SC + Alegreya Sans', h:"'Alegreya SC',serif", b:"'Alegreya Sans',sans-serif", why:'Книжная капитель с родным гротеском, семья из одного корня.'},
+ {id:'Playfair Display SC + Manrope', h:"'Playfair Display SC',serif", b:"'Manrope',sans-serif", why:'Контрастная капитель с чёткими засечками, как Hades II, и строгий современный текст.'},
+ {id:'Prata + Golos Text', h:"'Prata',serif", b:"'Golos Text',sans-serif", why:'Прата — плотная антиква с характером; Golos — спокойный русский гротеск.'},
+];
+const KEY='twr-ui-round2';
+let S={pal:null,font:null};
+try{const v=JSON.parse(localStorage.getItem(KEY)); if(v) S=Object.assign(S,v);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+const style=v=>Object.entries(v).map(([k,x])=>`--${k}:${x}`).join(';');
+const IC='_board/items/';
+
+function windowHtml(){
+  return `<div class="win">
+   <div class="col">
+     <div class="ttl">Сумка</div>
+     <div class="tabs"><b>Все</b><span>Оружие</span><span>Броня</span><span>Кольца</span></div>
+     <div class="cells">
+       <div class="cell"><img src="${IC}rusty_sword.png" alt=""></div>
+       <div class="cell r sel"><img src="${IC}duelist_sabre.png" alt=""></div>
+       <div class="cell"><img src="${IC}leather_jacket.png" alt=""></div>
+       <div class="cell r"><img src="${IC}lavidium_ring.png" alt=""></div>
+       <div class="cell"><img src="${IC}copper_ring.png" alt=""></div>
+       <div class="cell r"><img src="${IC}sea_knot.png" alt=""></div>
+       <div class="cell e"></div><div class="cell e"></div>
+     </div>
+     <div class="lav">Лавидий 64 / 100<div class="bar"><i></i></div></div>
+   </div>
+   <div class="col">
+     <div class="item"><div class="cell r"><img src="${IC}duelist_sabre.png" alt=""></div><div><div class="nm">Сабля дуэлянта</div><div class="tag">Оружие · редкая</div></div></div>
+     <div class="stats"><div><span>Урон</span><span class="u">14 ▲ 3</span></div><div><span>Шанс крита</span><span class="u">8% ▲ 2%</span></div><div><span>Скорость атаки</span><span class="d">1,1 ▼ 0,1</span></div></div>
+     <div class="desc">Лёгкий клинок для быстрых выпадов. Найден в Разломе.</div>
+     <div class="btns"><div class="btn a">Надеть</div><div class="btn g">Разобрать</div></div>
+   </div></div>`;
+}
+function renderPals(){
+  const g=document.getElementById('pals'); g.innerHTML='';
+  for(const p of PALS){
+    const a=document.createElement('article'); a.className='opt'+(S.pal===p.id?' chosen':'');
+    a.innerHTML=`<div class="scene" style="${style(p.v)}">${windowHtml()}</div>
+      <div class="info"><h3>${p.id}. ${p.name}</h3><p>${p.why}</p><p class="refs">Откуда: ${p.refs}</p>
+      <div class="sw">${['panel','card','accent','rare','common','lav','pline'].map(k=>`<i title="${p.v[k]}" style="background:${p.v[k]}"></i>`).join('')}</div>
+      <button type="button" class="pick">${S.pal===p.id?'Выбрана':'Выбрать эту'}</button></div>`;
+    a.querySelector('.pick').onclick=()=>{S.pal=S.pal===p.id?null:p.id; save(); apply(); renderPals(); summary();};
+    g.append(a);
+  }
+}
+function apply(){
+  const p=PALS.find(x=>x.id===S.pal)||PALS[0];
+  document.getElementById('fonts').style.cssText=style(p.v);
+}
+function renderFonts(){
+  const g=document.getElementById('fontGrid'); g.innerHTML='';
+  for(const f of FONTS){
+    const a=document.createElement('article'); a.className='opt'+(S.font===f.id?' chosen':'');
+    a.innerHTML=`<div class="fscene" style="--fh:${f.h};--fb:${f.b}">
+      <div class="menu"><div class="logo">The War Remains</div><div class="sub">Лагерь у Разлома</div>
+        <div class="it on">Продолжить</div><div class="it">Новая игра</div><div class="it">Настройки</div><div class="it">Выход</div></div>
+      <div class="fcard"><div class="nm">Сабля дуэлянта</div><div class="tag">Оружие · редкая</div>
+        <div class="stats"><div><span>Урон</span><span class="u">14 ▲ 3</span></div><div><span>Шанс крита</span><span class="u">8% ▲ 2%</span></div></div>
+        <div class="btns"><div class="btn a">Надеть</div><div class="btn g">Разобрать</div></div></div>
+      </div>
+      <div class="info"><h3>${f.id}</h3><p>${f.why}</p><button type="button" class="pick">${S.font===f.id?'Выбран':'Выбрать этот'}</button></div>`;
+    a.querySelector('.pick').onclick=()=>{S.font=S.font===f.id?null:f.id; save(); renderFonts(); summary();};
+    g.append(a);
+  }
+}
+function summary(){
+  const s=document.getElementById('sum');
+  s.innerHTML=`Палитра <b>${S.pal||'—'}</b> · шрифт <b>${S.font||'—'}</b>`;
+}
+document.getElementById('copy').onclick=async e=>{
+  const t=`Палитра: ${S.pal||'—'}\nШрифт: ${S.font||'—'}`;
+  try{await navigator.clipboard.writeText(t); e.target.textContent='Скопировано';}catch(_){prompt('Скопируйте:',t);}
+  setTimeout(()=>e.target.textContent='Скопировать выбор',1600);
+};
+renderPals(); apply(); renderFonts(); summary();
+</script>
+</body>
+</html>

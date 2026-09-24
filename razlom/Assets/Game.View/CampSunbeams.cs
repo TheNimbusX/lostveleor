@@ -18,7 +18,7 @@ namespace Game.View
     {
         [Tooltip("Солнце: по нему считается наклон лучей. Пусто — самый яркий направленный свет сцены")]
         public Light Sun;
-        [Range(0, 24)] public int Count = 12;
+        [Range(0, 24)] public int Count = 9;
         [Tooltip("Коробка, внутри которой стоят лучи, в метрах")]
         public Vector3 AreaSize = new Vector3(14f, 0f, 14f);
         [Tooltip("Высота верхней точки луча над компонентом. Высоко поднятый луч не перекрывается " +
@@ -26,10 +26,11 @@ namespace Game.View
         public float Height = 4.5f;
         [Tooltip("Длина и толщина полосы, метры. Длинный луч при взгляде сверху тянется через весь лагерь")]
         public float Length = 6f;
-        public Vector2 Width = new Vector2(.5f, 1.2f);
+        public Vector2 Width = new Vector2(.7f, 1.5f);
         [Tooltip("Ближе к белому: насыщенный жёлтый читается как краска, а не как свет")]
         public Color Colour = new Color(1f, .87f, .72f, 1f);
-        [Range(0f, 3f)] public float Intensity = .2f;
+        // Аудит 23 сентября: полосы шли через весь кадр и лезли на героя — вдвое слабее и шире (мягче край).
+        [Range(0f, 3f)] public float Intensity = .1f;
         [Tooltip("Скорость мерцания внутри луча")]
         [Range(0f, 2f)] public float FlowSpeed = .35f;
         [Tooltip("Зерно расстановки: одно и то же зерно даёт одну и ту же картину")]
@@ -188,13 +189,24 @@ namespace Game.View
         void LateUpdate()
         {
             if (_material == null || _beams == null) return;
+            // Перекомпиляция в Play сохраняет массив лучей, но не блоки свойств: восстановить.
+            if (_blocks == null || _blocks.Length != _beams.Length || _renderers == null || _renderers.Length != _beams.Length)
+            {
+                _blocks = new MaterialPropertyBlock[_beams.Length];
+                _renderers = new MeshRenderer[_beams.Length];
+                for (int i = 0; i < _beams.Length; i++)
+                {
+                    _blocks[i] = new MaterialPropertyBlock();
+                    if (_beams[i] != null) _renderers[i] = _beams[i].GetComponent<MeshRenderer>();
+                }
+            }
             float time = (Time.unscaledTime - _started) * FlowSpeed;
             _material.SetColor("_Color", Colour);
             _material.SetFloat("_FlowTime", time);
             Vector3 direction = SunDirection();
             for (int i = 0; i < _beams.Length; i++)
             {
-                if (_beams[i] == null) continue;
+                if (_beams[i] == null || _renderers[i] == null) continue;
                 _beams[i].rotation = Quaternion.FromToRotation(Vector3.up, -direction);
                 float phase = i * 2.399963f;
                 _blocks[i].SetFloat("_Phase", phase);

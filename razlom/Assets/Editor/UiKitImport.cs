@@ -49,7 +49,13 @@ namespace Game.EditorTools
             Slice slice = Find(folder, Path.GetFileNameWithoutExtension(path));
             float ppu = slice.Ppu > 0f ? slice.Ppu : chrome ? 200f : 100f;
             Vector4 border = slice.Border;
-            bool changed = importer.textureType != TextureImporterType.Sprite
+            // Спрайты с границами тянутся и в мире (SpriteRenderer, режим Sliced —
+            // полоски над врагами): там нужна прямоугольная сетка, а не обрезанная по форме.
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            SpriteMeshType mesh = border != Vector4.zero ? SpriteMeshType.FullRect : settings.spriteMeshType;
+            bool changed = settings.spriteMeshType != mesh
+                || importer.textureType != TextureImporterType.Sprite
                 || importer.spriteImportMode != SpriteImportMode.Single
                 || !Mathf.Approximately(importer.spritePixelsPerUnit, ppu)
                 || importer.spriteBorder != border
@@ -70,6 +76,9 @@ namespace Game.EditorTools
             importer.filterMode = FilterMode.Bilinear;
             importer.wrapMode = TextureWrapMode.Clamp;
             importer.npotScale = TextureImporterNPOTScale.None;
+            importer.ReadTextureSettings(settings);
+            settings.spriteMeshType = mesh;
+            importer.SetTextureSettings(settings);
             return true;
         }
 

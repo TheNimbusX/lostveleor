@@ -13,6 +13,9 @@ namespace Game.View
     {
         public Graphic On;
         public Graphic Off;
+        [Tooltip("Необязательно: ручка, которая ездит между KnobOff и KnobOn по X")] public RectTransform Knob;
+        public float KnobOff = -16f;
+        public float KnobOn = 16f;
         [Tooltip("Секунд на смену положения")]
         public float Duration = 0.16f;
         public float PressScale = 0.95f;
@@ -46,6 +49,11 @@ namespace Game.View
             _shown = true;
             if (On != null) { On.gameObject.SetActive(true); On.CrossFadeAlpha(value ? 1f : 0f, duration, true); }
             if (Off != null) { Off.gameObject.SetActive(true); Off.CrossFadeAlpha(value ? 0f : 1f, duration, true); }
+            if (Knob != null)
+            {
+                var target = new Vector2(value ? KnobOn : KnobOff, Knob.anchoredPosition.y);
+                if (duration > 0f) UiMotion.MoveTo(Knob, target, duration); else Knob.anchoredPosition = target;
+            }
         }
     }
 }

@@ -74,7 +74,8 @@ namespace Game.View
         int _shot;
         AudioClip[] _gusts, _leaves;
         float _clock, _nextGust, _gustStarted = -99f, _baseBreeze = 1f;
-        bool _loaded;
+        bool _loaded, _baseBreezeCaptured;
+        TickDriver _driver;
 
         void OnEnable()
         {
@@ -89,12 +90,13 @@ namespace Game.View
         {
             if (_forest != null) _forest.Stop();
             if (_drone != null) _drone.Stop();
-            if (Ambience != null) Ambience.BreezeStrength = _baseBreeze;
+            if (Ambience != null && _baseBreezeCaptured) Ambience.BreezeStrength = _baseBreeze;
         }
 
         void Load()
         {
             _loaded = true;
+            _driver = FindAnyObjectByType<TickDriver>();
             AudioClip[] all = Resources.LoadAll<AudioClip>(Folder);
             AudioClip[] Pick(string prefix) => string.IsNullOrEmpty(prefix)
                 ? Array.Empty<AudioClip>()
@@ -114,7 +116,7 @@ namespace Game.View
             // Три источника по кругу: редкие звуки не обрывают друг друга.
             _shots = new AudioSource[3];
             for (int i = 0; i < _shots.Length; i++) _shots[i] = MakeSource("Одиночный звук " + (i + 1), false);
-            if (Ambience != null) _baseBreeze = Ambience.BreezeStrength;
+            CaptureBaseBreeze();
         }
 
         AudioSource MakeSource(string name, bool loop)
@@ -132,6 +134,8 @@ namespace Game.View
 
         void Update()
         {
+            // CampAmbience присваивает ссылку после AddComponent, когда OnEnable уже прошёл.
+            CaptureBaseBreeze();
             // При записи звука съёмка идёт по игровому времени кадра, иначе — по реальному.
             float dt = CombatAudioCapture.Recording ? Time.deltaTime : Time.unscaledDeltaTime;
             _clock += dt;
@@ -139,6 +143,7 @@ namespace Game.View
             CampPlayerView player = CampPlayerView.Instance;
             bool audible = player != null && player.Active && !MainMenuView.IsOpen;
             bool panel = player != null && (player.InventoryOpen || player.EntranceOpen);
+            panel |= CampServicesView.Instance?.IsOpen == true || _driver != null && _driver.GameplayPaused;
             float duck = panel ? MenuDuck : 1f;
             float gain = MasterGain * GameUserSettings.EffectsVolume * duck * (audible ? 1f : 0f);
 
@@ -186,7 +191,14 @@ namespace Game.View
 
         void ReleaseGust()
         {
-            if (Ambience != null) Ambience.BreezeStrength = _baseBreeze;
+            if (Ambience != null && _baseBreezeCaptured) Ambience.BreezeStrength = _baseBreeze;
+        }
+
+        void CaptureBaseBreeze()
+        {
+            if (_baseBreezeCaptured || Ambience == null) return;
+            _baseBreeze = Ambience.BreezeStrength;
+            _baseBreezeCaptured = true;
         }
 
         void PlayAround(AudioClip clip, float volume, float jitter, float spread)

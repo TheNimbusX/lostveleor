@@ -1,0 +1,7 @@
+wcp_frame 33 33 33 33 200
+wcp_frame_bold 33 33 33 33 200
+wcp_gem 0 0 0 0 200
+wcp_diamond_l 0 0 0 0 200
+wcp_diamond_m 0 0 0 0 200
+wcp_diamond_s 0 0 0 0 200
+wcp_button 56 54 56 54 200

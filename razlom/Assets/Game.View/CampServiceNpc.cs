@@ -8,6 +8,8 @@ namespace Game.View
         public CampServiceKind Kind;
         public Vector3 ApproachOffset = new Vector3(0,0,-1.3f);
         public float Reach = 1.8f;
+        [Tooltip("Палатка: точка входа. Досягаемость меряется до неё, а не до габаритов модели — иначе палатка открывалась за 5-6 м")]
+        public Transform Entrance;
         Renderer[] _renderers;
         MaterialPropertyBlock[] _original;
         bool _highlighted;
@@ -17,7 +19,9 @@ namespace Game.View
         {
             get { Cache();var bounds=new Bounds(transform.position+Vector3.up*.8f,new Vector3(.6f,1.6f,.6f));foreach(var r in _renderers)if(r!=null)bounds.Encapsulate(r.bounds);return bounds; }
         }
-        public float Distance(Vector3 p) { var d=(Kind==CampServiceKind.Tent?Shape.ClosestPoint(p):transform.position)-p;d.y=0;return d.magnitude; }
+        /// <summary>Куда подходить: у палатки — ко входу (или краю модели без входа), у NPC — к нему самому.</summary>
+        public Vector3 Target(Vector3 p) => Kind==CampServiceKind.Tent?(Entrance!=null?Entrance.position:Shape.ClosestPoint(p)):transform.position;
+        public float Distance(Vector3 p) { var d=Target(p)-p;d.y=0;return d.magnitude; }
         public bool Near(Vector3 p) => Distance(p)<=Reach;
         void Cache() { if(_renderers!=null)return;_renderers=GetComponentsInChildren<Renderer>();_original=new MaterialPropertyBlock[_renderers.Length];for(int i=0;i<_renderers.Length;i++){_original[i]=new MaterialPropertyBlock();_renderers[i].GetPropertyBlock(_original[i]);} }
         public void Highlight(bool value)

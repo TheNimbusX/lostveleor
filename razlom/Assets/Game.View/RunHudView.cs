@@ -1,0 +1,120 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace Game.View
+{
+    /// <summary>
+    /// Экраны забега на Canvas: префаб Resources/UI/Prefabs/RunHudWc (пак «Ночная
+    /// акварель», 23 сентября 2026) — выбор награды, замена способности, состояние
+    /// забега и полоса босса.
+    ///
+    /// ВИД — В ПРЕФАБЕ, СМЫСЛ — В <see cref="RunHud"/>: он кладёт тексты и иконки,
+    /// включает части и получает клики. Подписи в мире и меню над добычей остаются
+    /// в RunHud (IMGUI) — они привязаны к точкам сцены.
+    /// </summary>
+    public sealed class RunHudView : MonoBehaviour
+    {
+        [Header("Выбор награды")]
+        public CanvasGroup Choice;
+        public TMP_Text ChoiceTitle;
+        public TMP_Text ChoiceSubtitle;
+        public TMP_Text ChoiceHint;
+        public RunOfferCard[] Offers = new RunOfferCard[3];
+        [Tooltip("Значки вида награды: способность, талант, предмет, характеристика")] public Texture[] KindIcons = new Texture[4];
+
+        [Header("Замена способности")]
+        public CanvasGroup Replace;
+        public TMP_Text ReplaceTitle;
+        public TMP_Text ReplaceSubtitle;
+        public TMP_Text ReplaceHint;
+        public RunSlotTile[] Slots = new RunSlotTile[4];
+        public Button Salvage;
+        public TMP_Text SalvageLabel;
+
+        [Header("Состояние забега")]
+        public RectTransform Status;
+        public TMP_Text StatusTitle;
+        public TMP_Text StatusLine;
+        public TMP_Text StatusExtra;
+
+        [Header("Босс")]
+        public RectTransform Boss;
+        public TMP_Text BossName;
+        public WcBar BossBar;
+
+        [Header("Итог забега")]
+        public CanvasGroup Summary;
+        [Tooltip("Крупный значок исхода над заголовком")] public RawImage OutcomeIcon;
+        [Tooltip("Значки исхода: гибель, победа, ушёл с добычей")] public Texture[] OutcomeIcons = new Texture[3];
+        public TMP_Text SummaryTitle;
+        public TMP_Text SummarySubtitle;
+        [Tooltip("Числа в плашках: разломы, глубина, предметы, золото")] public TMP_Text[] SummaryValues = new TMP_Text[4];
+        public TMP_Text SummaryLoss;
+        public TMP_Text SummaryCampTitle;
+        public TMP_Text SummaryCamp;
+        public Button Repeat;
+        public TMP_Text RepeatLabel;
+        public Button ToCamp;
+        public TMP_Text ToCampLabel;
+
+        [Header("Движение")]
+        public float FadeDuration = .2f;
+
+        public event Action<int> OfferClicked;
+        public event Action<int> SlotClicked;
+        public event Action SalvageClicked;
+        public event Action RepeatClicked;
+        public event Action CampClicked;
+
+        void Awake()
+        {
+            for (int i = 0; i < Offers.Length; i++)
+            {
+                int index = i;
+                if (Offers[i] != null && Offers[i].Button != null) Offers[i].Button.onClick.AddListener(() => OfferClicked?.Invoke(index));
+            }
+            for (int i = 0; i < Slots.Length; i++)
+            {
+                int index = i;
+                if (Slots[i] != null && Slots[i].Button != null) Slots[i].Button.onClick.AddListener(() => SlotClicked?.Invoke(index));
+            }
+            if (Salvage != null) Salvage.onClick.AddListener(() => SalvageClicked?.Invoke());
+            if (Repeat != null) Repeat.onClick.AddListener(() => RepeatClicked?.Invoke());
+            if (ToCamp != null) ToCamp.onClick.AddListener(() => CampClicked?.Invoke());
+            SetShown(Summary, false, true);
+            if (GetComponent<CanvasScaler>() != null && GetComponent<UiScaleFollower>() == null) gameObject.AddComponent<UiScaleFollower>();
+            PauseMenuView.EnsureEventSystem();
+            SetShown(Choice, false, true);
+            SetShown(Replace, false, true);
+        }
+
+        /// <summary>Показ или скрытие экрана с проявлением; <paramref name="instant"/> — сразу.</summary>
+        public void SetShown(CanvasGroup group, bool shown, bool instant = false)
+        {
+            if (group == null) return;
+            bool active = group.gameObject.activeSelf;
+            if (shown == active && (!shown || group.alpha > .99f)) return;
+            UiMotion.Stop(group);
+            group.interactable = group.blocksRaycasts = shown;
+            if (instant) { group.gameObject.SetActive(shown); group.alpha = shown ? 1f : 0f; return; }
+            if (shown)
+            {
+                if (!active) { group.gameObject.SetActive(true); group.alpha = 0f; }
+                UiMotion.FadeTo(group, 1f, FadeDuration);
+            }
+            else UiMotion.FadeTo(group, 0f, FadeDuration * .7f, () => { if (group != null) group.gameObject.SetActive(false); });
+        }
+
+        public static void SetActive(Component part, bool active)
+        {
+            if (part != null && part.gameObject.activeSelf != active) part.gameObject.SetActive(active);
+        }
+
+        public static void SetText(TMP_Text label, string text)
+        {
+            if (label != null && label.text != text) label.text = text;
+        }
+    }
+}

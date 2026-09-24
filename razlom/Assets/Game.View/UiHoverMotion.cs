@@ -15,6 +15,8 @@ namespace Game.View
     {
         [Tooltip("Что увеличивать; пусто — сам объект")] public Transform Body;
         [Tooltip("Слой рамки-подсветки при наведении (необязательно)")] public Graphic Highlight;
+        [Tooltip("Необязательно: группа подсветки из нескольких частей (ромбы, цветная надпись, свечение) — проявляется так же, как Highlight")]
+        public CanvasGroup HighlightGroup;
         public float HoverScale = 1.03f;
         public float PressScale = 0.97f;
         public float Duration = 0.15f;
@@ -50,7 +52,7 @@ namespace Game.View
 
         void Update()
         {
-            if (!_inside || _pressed || !PulseWhileHovered || Highlight == null) return;
+            if (!_inside || _pressed || !PulseWhileHovered || (Highlight == null && HighlightGroup == null)) return;
             float since = UiMotion.Now - _hoverStarted;
             if (since < Duration) return;
             float wave = 0.5f + 0.5f * Mathf.Cos((since - Duration) * Mathf.PI * 2f / Mathf.Max(0.1f, PulsePeriod));
@@ -100,15 +102,16 @@ namespace Game.View
         void Animate(float scale, float highlight, float duration)
         {
             UiMotion.ScaleTo(Target, scale, duration);
-            if (Highlight == null) return;
+            if (Highlight == null && HighlightGroup == null) return;
             float from = _highlightAlpha;
-            UiMotion.Play(Highlight, 20, duration, t => SetHighlight(Mathf.LerpUnclamped(from, highlight, t)));
+            UiMotion.Play(Highlight != null ? (UnityEngine.Object)Highlight : HighlightGroup, 20, duration, t => SetHighlight(Mathf.LerpUnclamped(from, highlight, t)));
         }
 
         void SetHighlight(float alpha)
         {
             _highlightAlpha = alpha;
             if (Highlight != null) Highlight.canvasRenderer.SetAlpha(alpha);
+            if (HighlightGroup != null) HighlightGroup.alpha = alpha;
         }
 
         void RunShine()

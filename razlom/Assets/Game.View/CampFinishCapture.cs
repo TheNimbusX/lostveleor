@@ -41,22 +41,27 @@ namespace Game.View
             int colliders=river.GetComponentsInChildren<Collider>().Length;
             Check(colliders==0,"river decoration has no physical colliders: "+colliders);
             foreach(var filter in river.GetComponentsInChildren<MeshFilter>())Check(!CampPlayerView.UsedByNavigation(filter),"decorative mesh excluded: "+filter.name);
-            Check(magic!=null && magic.DecorationRoot!=null,"authored magic circle exists");
+            Check(magic==null || magic.DecorationRoot!=null,"legacy magic circle is valid when present");
+            var atmosphere=FindAnyObjectByType<CampAtmosphereDetails>();
+            text.AppendLine("Atmosphere="+(atmosphere!=null?atmosphere.name:"absent"));
+            if(atmosphere!=null)
+                foreach(var particles in atmosphere.GetComponentsInChildren<ParticleSystem>())
+                    text.AppendLine("Vapor="+particles.name+" count="+particles.particleCount+" position="+particles.transform.position);
             if(_frame)
             {
                 _camera=Camera.main;var follow=_camera.GetComponent<CameraFollow>();if(follow!=null)follow.enabled=false;
                 var juice=_camera.GetComponent<CombatCameraJuice>();if(juice!=null)juice.enabled=false;
-                _focus=magic.Centre.position+Vector3.up*.6f;_size=9.4f;
+                _focus=magic!=null?magic.Centre.position+Vector3.up*.6f:camp.Position+Vector3.up*.6f;_size=9.4f;
                 var args=System.Environment.GetCommandLineArgs();int detail=System.Array.IndexOf(args,"-capture-camp-detail");
                 if(detail>=0 && detail+1<args.Length)
                 {
-                    if(args[detail+1]=="flags"){_focus=magic.FireAltar.position+Vector3.up*1.5f;_size=2.1f;}
+                    if(args[detail+1]=="flags" && magic!=null){_focus=magic.FireAltar.position+Vector3.up*1.5f;_size=2.1f;}
                     if(args[detail+1]=="lights"){_focus=FindAnyObjectByType<CampAmbience>().transform.Find("Campfire").position+Vector3.up*.5f;_size=3.2f;}
                     if(args[detail+1]=="river"){_focus=river.transform.TransformPoint(new Vector3(0,0,1.8f));_size=10.8f;}
                     if(args[detail+1]=="river-turn"){_focus=river.transform.TransformPoint(new Vector3(7,0,11));_size=15;}
                     if(args[detail+1]=="alchemist"){_focus=new Vector3(-3,0,-24);_size=8;}
-                    if(args[detail+1]=="ice"){_focus=magic.IceAltar.position+Vector3.up*1.1f;_size=3.2f;}
-                    if(args[detail+1]=="poison"){_focus=magic.AlchemyAltar.position+Vector3.up*.8f;_size=3.2f;}
+                    if(args[detail+1]=="ice" && magic!=null){_focus=magic.IceAltar.position+Vector3.up*1.1f;_size=3.2f;}
+                    if(args[detail+1]=="poison" && magic!=null){_focus=magic.AlchemyAltar.position+Vector3.up*.8f;_size=3.2f;}
                 }
                 Frame();
             }

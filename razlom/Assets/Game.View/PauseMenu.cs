@@ -112,7 +112,9 @@ namespace Game.View
             _displayMode = GameUserSettings.DisplayMode;
             BuildResolutionList();
 
-            var prefab = Resources.Load<GameObject>("UI/Prefabs/PauseMenu");
+            // С 23 сентября первым берётся меню на паке «Ночная акварель» (PauseMenuWc);
+            // прежнее PauseMenu — запасное: удалить новый префаб, и игра вернётся к нему.
+            var prefab = Resources.Load<GameObject>("UI/Prefabs/PauseMenuWc") ?? Resources.Load<GameObject>("UI/Prefabs/PauseMenu");
             if (prefab != null)
             {
                 _view = Instantiate(prefab, transform).GetComponentInChildren<PauseMenuView>(true);

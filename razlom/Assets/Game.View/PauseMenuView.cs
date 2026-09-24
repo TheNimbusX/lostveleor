@@ -134,7 +134,7 @@ namespace Game.View
         }
 
         /// <summary>Кнопкам Canvas нужен EventSystem; в сцене его может ещё не быть.</summary>
-        static void EnsureEventSystem()
+        internal static void EnsureEventSystem()
         {
             if (EventSystem.current != null || FindAnyObjectByType<EventSystem>() != null) return;
             var events = new GameObject("UI EventSystem", typeof(EventSystem));

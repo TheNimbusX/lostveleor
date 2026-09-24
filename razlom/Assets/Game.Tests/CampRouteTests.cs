@@ -93,6 +93,24 @@ namespace Game.Tests
             Assert.Greater(ticks, 0, "герой не дошёл до цели за 30 секунд");
         }
 
+        [Test]
+        public void RepeatedRoutesAcrossTheSameWallReachBothSides()
+        {
+            var map = Map(withGap: true);
+            var left = FixVec2.Zero;
+            var right = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
+            for (int i = 0; i < 4; i++)
+            {
+                var start = i % 2 == 0 ? left : right;
+                var goal = i % 2 == 0 ? right : left;
+                var route = new CampRoute(map);
+                Assert.True(route.To(start, goal), "route " + i);
+                var session = Session(map);
+                session.ConfigureCampWorld(start, map);
+                Assert.Greater(Walk(session, route, goal, 900), 0, "route " + i);
+            }
+        }
+
         /// <summary>
         /// Ходьба обязана ЗАКАНЧИВАТЬСЯ.
         ///

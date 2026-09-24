@@ -115,7 +115,10 @@ namespace Game.View
             _lavidiumPotion = Resources.Load<Texture2D>("UI/HUD/PotionLavidium");
             // Префаб собирает Разлом/UI/Собрать боевой HUD и дальше правится
             // руками. Нет префаба — остаётся прежний IMGUI, игра не ломается.
-            var prefab = Resources.Load<GameObject>("UI/Prefabs/CombatHud");
+            // С 23 сентября первым берётся HUD на паке «Ночная акварель»
+            // (CombatHudWc); прежний CombatHud остаётся запасным — удалить новый
+            // префаб, и игра вернётся к нему.
+            var prefab = Resources.Load<GameObject>("UI/Prefabs/CombatHudWc") ?? Resources.Load<GameObject>("UI/Prefabs/CombatHud");
             if (prefab != null)
             {
                 _view = Instantiate(prefab, transform).GetComponentInChildren<CombatHudView>(true);
@@ -125,13 +128,16 @@ namespace Game.View
 
         private CombatHudView _view;
 
+        /// <summary>Открыта палатка или окно NPC: боевой HUD прячется целиком, чтобы не мешать окну.</summary>
+        static bool CampWindowOpen => CampPlayerView.Instance?.InventoryOpen == true || CampServicesView.Instance?.IsOpen == true;
+
         private void RefreshView()
         {
             if (_view == null) return;
             GameSession session = _driver.Session;
             Simulation sim = _driver.Sim;
             bool visible = !_driver.GameplayPaused && session != null && session.Mode != GameMode.Summary
-                && CampPlayerView.Instance?.InventoryOpen != true && sim != null && sim.Entities.Count > 0;
+                && !CampWindowOpen && sim != null && sim.Entities.Count > 0;
             if (_view.gameObject.activeSelf != visible) _view.gameObject.SetActive(visible);
             if (visible) _view.Refresh(sim, session.Camp, _driver);
         }
@@ -195,7 +201,7 @@ namespace Game.View
 
             if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
-            if (session == null || session.Mode == GameMode.Summary || CampPlayerView.Instance?.InventoryOpen == true) return;
+            if (session == null || session.Mode == GameMode.Summary || CampWindowOpen) return;
 
             Simulation sim = _driver.Sim;
             RiftRun run = _driver.Run;
@@ -255,7 +261,7 @@ namespace Game.View
         {
             slot = -1;
             if (_driver == null || _driver.GameplayPaused || _driver.Session == null ||
-                _driver.Session.Mode == GameMode.Summary || CampPlayerView.Instance?.InventoryOpen == true) return false;
+                _driver.Session.Mode == GameMode.Summary || CampWindowOpen) return false;
             Simulation sim = _driver.Sim;
             if (sim == null || sim.Entities.Count == 0) return false;
             if (_view != null) return _view.HitTest(screenPosition, sim, out slot);

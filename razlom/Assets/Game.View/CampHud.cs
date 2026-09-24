@@ -33,6 +33,8 @@ namespace Game.View
 
         private readonly GeneratedItem _itemBuffer = new GeneratedItem();
 
+        private RunHud _runHud;
+
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
@@ -48,7 +50,12 @@ namespace Game.View
 
             EnsureStyles();
 
-            if (session.Mode == GameMode.Summary) DrawSummary(session);
+            if (session.Mode == GameMode.Summary)
+            {
+                // Итог на Canvas (RunHudWc) — текстовый только запасной.
+                if (_runHud == null) _runHud = GetComponent<RunHud>();
+                if (_runHud == null || !_runHud.CanvasSummary) DrawSummary(session);
+            }
             else DrawCamp(session);
         }
 
@@ -125,12 +132,6 @@ namespace Game.View
 
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("сбросить счёт", GUILayout.Width(130))) ground.ResetCounters();
-                if (GUILayout.Button("голый манекен", GUILayout.Width(130)))
-                    session.RetuneDummy(100000, Fix64.Zero, Fix64.Zero);
-                if (GUILayout.Button("броня 200", GUILayout.Width(110)))
-                    session.RetuneDummy(100000, Fix64.FromInt(200), Fix64.Zero);
-                if (GUILayout.Button("огнеупор 75%", GUILayout.Width(130)))
-                    session.RetuneDummy(100000, Fix64.Zero, Fix64.Ratio(75, 100));
                 GUILayout.EndHorizontal();
             }
 

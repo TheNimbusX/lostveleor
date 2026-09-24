@@ -35,12 +35,14 @@ namespace Game.View
         [Tooltip("Строки листа героя по порядку StatRows в CampInventoryView")] public RectTransform[] StatRows = new RectTransform[12];
         public TMP_Text[] StatLabels = new TMP_Text[12];
         public TMP_Text[] StatValues = new TMP_Text[12];
+        [Tooltip("Значки статов по тем же строкам: для подсказки стата")] public Sprite[] StatIcons = new Sprite[12];
 
         [Header("Зелья: малое и большое здоровья, малое и большое лавидия")]
         public Button[] Potions = new Button[4];
         public Image[] PotionIcons = new Image[4];
         public TMP_Text[] PotionCounts = new TMP_Text[4];
         [Tooltip("Отметка зелья, стоящего в HUD")] public GameObject[] PotionSelected = new GameObject[4];
+        [Tooltip("Одна рамка зелья: толстая оранжевая у стоящего в HUD (вместо PotionSelected)")] public WcSlotState[] PotionStates = new WcSlotState[4];
 
         [Header("Правая панель")]
         public RectTransform BagPanel;
@@ -71,6 +73,8 @@ namespace Game.View
         public TMP_Text ItemRarity;
         public TMP_Text ItemKind;
         public TMP_Text ItemStats;
+        [Tooltip("Карточка сама раскладывается (VerticalLayoutGroup + ContentSizeFitter): код только ставит тексты")]
+        public bool TooltipAutoLayout;
 
         [Header("Редкости: обычная, редкая, эпическая, уникальная")]
         public Sprite EmptyFrame;
@@ -145,15 +149,28 @@ namespace Game.View
         public void ShowFilter(int index)
         {
             for (int i = 0; i < Filters.Length; i++)
-                if (Filters[i] != null && Filters[i].image != null) Filters[i].image.sprite = i == index ? TabOn : TabOff;
+            {
+                if (Filters[i] == null) continue;
+                // Пак «Ночная акварель» (префаб CampTentWc): выбранная — оранжевая подпись и подчёркивание.
+                if (TabOn == null) CampShopView.SetTab(Filters[i], i == index);
+                else if (Filters[i].image != null) Filters[i].image.sprite = i == index ? TabOn : TabOff;
+            }
         }
 
         public void ShowPage(bool atlas)
         {
             if (BagPage != null) BagPage.SetActive(!atlas);
             if (AtlasPage != null) AtlasPage.SetActive(atlas);
-            if (BagTab != null && BagTab.image != null) BagTab.image.sprite = atlas ? TabOff : TabOn;
-            if (AtlasTab != null && AtlasTab.image != null) AtlasTab.image.sprite = atlas ? TabOn : TabOff;
+            if (TabOn == null)
+            {
+                CampShopView.SetTab(BagTab, !atlas);
+                CampShopView.SetTab(AtlasTab, atlas);
+            }
+            else
+            {
+                if (BagTab != null && BagTab.image != null) BagTab.image.sprite = atlas ? TabOff : TabOn;
+                if (AtlasTab != null && AtlasTab.image != null) AtlasTab.image.sprite = atlas ? TabOn : TabOff;
+            }
             ShowTooltip(false, true);
         }
 

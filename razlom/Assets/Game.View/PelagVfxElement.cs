@@ -57,6 +57,9 @@ namespace Game.View
 
         public LineRenderer PrimaryLine => _lines != null && _lines.Length > 0 ? _lines[0] : null;
 
+        /// <summary>Раскадровка серпа Вихря, если prefab её несёт. Ищется один раз на прогреве.</summary>
+        public PelagWhirlwindSweepView Sweep { get; private set; }
+
         private Transform _spinner;
 
         /// <summary>
@@ -108,6 +111,7 @@ namespace Game.View
             }
             _trails = GetComponentsInChildren<TrailRenderer>(true);
             _particles = GetComponentsInChildren<ParticleSystem>(true);
+            Sweep = GetComponent<PelagWhirlwindSweepView>();
             _graphs = GetComponentsInChildren<VisualEffect>(true);
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
             _chainGlint = transform.Find(ChainGlintName);

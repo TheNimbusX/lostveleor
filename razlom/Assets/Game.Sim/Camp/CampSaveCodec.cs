@@ -15,7 +15,8 @@ namespace Game.Sim
         // Версия 5 сохраняет ассортимент, проданные позиции и номер обновления торговца.
         // Версия 6 сохраняет четыре запаса зелий и размеры двух быстрых слотов.
         // Версия 7 сохраняет атлас — открытые основы; в старых открыто всё, что лежит в сумке и на герое.
-        const int Version=7;
+        // Версия 8 добавляет два рецепта, выбранные виды и постоянные состояния заказов алхимика.
+        const int Version=8;
         const int LegacyTalentLines=4, LegacyTalentsPerLine=5;
 
         public static byte[] Encode(Camp camp)
@@ -29,8 +30,12 @@ namespace Game.Sim
                 w.Write(camp.Level);w.Write(camp.Experience);
                 w.Write(camp.TraderGeneration);w.Write(camp.TraderBossStock);w.Write(camp.TraderStockCount);
                 for(int i=0;i<camp.TraderStockCount;i++)Write(w,camp.TraderStock(i));
-                for(int i=0;i<4;i++)w.Write(camp.PotionCount((PotionKind)i));w.Write(camp.PotionSelection);
+                for(int i=0;i<Camp.PotionKindCount;i++)w.Write(camp.PotionCount((PotionKind)i));
+                w.Write((byte)camp.SelectedPotion(0));w.Write((byte)camp.SelectedPotion(1));
                 w.Write(camp.DiscoveredCount);for(int i=0;i<camp.DiscoveredCount;i++)w.Write(camp.DiscoveredAt(i));
+                w.Write(camp.HasMetAlchemist);
+                w.Write((byte)camp.AlchemyStatus(AlchemistOrder.Resin));
+                w.Write((byte)camp.AlchemyStatus(AlchemistOrder.Surge));
                 w.Flush();byte[] payload=stream.ToArray();w.Write(Checksum(payload,payload.Length));w.Flush();return stream.ToArray();
             }
         }
@@ -60,12 +65,23 @@ namespace Game.Sim
                     var stock=new ItemInstance[count];for(int i=0;i<count;i++)stock[i]=Read(r,items,version);
                     camp.RestoreTrader(generation,boss,stock);
                 }
-                if(version>=6){var counts=new int[4];for(int i=0;i<4;i++)counts[i]=r.ReadInt32();camp.RestorePotions(counts,r.ReadByte());}
+                if(version>=8)
+                {
+                    var counts=new int[Camp.PotionKindCount];
+                    for(int i=0;i<counts.Length;i++)counts[i]=r.ReadInt32();
+                    camp.RestorePotions(counts,(PotionKind)r.ReadByte(),(PotionKind)r.ReadByte());
+                }
+                else if(version>=6)
+                {
+                    var counts=new int[4];for(int i=0;i<4;i++)counts[i]=r.ReadInt32();
+                    camp.RestorePotions(counts,r.ReadByte());
+                }
                 if(version>=7)
                 {
                     int count=r.ReadInt32();if(count<0||count>items.BaseCount)throw new InvalidDataException("Некорректный атлас");
                     var ids=new int[count];for(int i=0;i<count;i++)ids[i]=r.ReadInt32();camp.RestoreDiscovered(ids);
                 }
+                if(version>=8)camp.RestoreAlchemy(r.ReadBoolean(),(AlchemistOrderStatus)r.ReadByte(),(AlchemistOrderStatus)r.ReadByte());
                 camp.DiscoverHeld();
                 if(stream.Position!=bytes.Length-4)throw new InvalidDataException("Лишние данные");return camp;
             }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 using Game.Sim;
 
 namespace Game.View
@@ -12,6 +13,10 @@ namespace Game.View
     /// Кольцевой пул: за забег цифр будут десятки тысяч, и ни одна не должна
     /// стоить аллокации. Когда все слоты заняты, переиспользуется самый старый —
     /// потерять цифру в мясорубке лучше, чем создать объект в бою.
+    ///
+    /// ВИД — ПАК «НОЧНАЯ АКВАРЕЛЬ» (лист HUD, 23 сентября 2026): TextMeshPro
+    /// шрифтом UiTheme.Numbers (Nunito Bold), мягкая тёмная обводка; крит —
+    /// градиент от светлого оранжевого к насыщенному, тёплое свечение и искра.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     public sealed class DamageNumbers : MonoBehaviour
@@ -20,8 +25,17 @@ namespace Game.View
         public int PoolSize = 64;
 
         [Header("Вид")]
-        public Color NormalColor = new Color(0.94f, 0.94f, 0.90f);
-        public Color CritColor = new Color(1.00f, 0.72f, 0.20f);
+        // Цвета пака «Ночная акварель» (23 сентября 2026): светлая обычная,
+        // оранжевый крит с искрой, как на листе HUD.
+        public Color NormalColor = new Color32(0xF4, 0xF7, 0xFB, 0xFF);
+        [Tooltip("Крит: верх цифры; к низу градиент густеет (CritBottom)")]
+        public Color CritColor = new Color32(0xFF, 0xB0, 0x5C, 0xFF);
+        [Tooltip("Множитель цвета крита у низа цифры")]
+        public Color CritBottom = new Color(1f, .6f, .38f, 1f);
+        [Tooltip("Размер шрифта на единицу прежнего characterSize: 0,036 × 96 ≈ 3,5")]
+        public float FontScale = 112f;
+        [Tooltip("Искра у крита, метры")]
+        public float SparkSize = 0.34f;
         public Color PlayerHitColor = new Color(1.00f, 0.28f, 0.30f);
         public Color FireColor = new Color(1.00f, 0.47f, 0.16f);
         public Color EvadeColor = new Color(.72f, .94f, 1f);
@@ -60,8 +74,8 @@ namespace Game.View
         private struct Slot
         {
             public Transform Transform;
-            public TextMesh Text;
-            public TextMesh Shadow;
+            public TextMeshPro Text;
+            public SpriteRenderer Spark;
             public float Remaining;
             public float Age;
             public Color BaseColor;
@@ -106,13 +120,16 @@ namespace Game.View
             if (_camera == null)
                 Debug.LogWarning("[Разлом] DamageNumbers: не найдена основная камера, цифры не будут развёрнуты к зрителю.");
 
-            Font font = LoadBuiltinFont();
+            TMP_FontAsset font = UiTheme.Current.Numbers != null ? UiTheme.Current.Numbers : UiTheme.Current.Body;
             if (font == null)
             {
-                Debug.LogError("[Разлом] DamageNumbers: не найден встроенный шрифт, цифры отключены.");
+                Debug.LogError("[Разлом] DamageNumbers: в теме UI нет шрифта цифр, цифры отключены.");
                 enabled = false;
                 return;
             }
+            // Обычная: тёмная обводка и мягкая тень снизу. Крит: тёплое свечение вокруг.
+            _normalMaterial = Styled(font, new Color(.03f, .04f, .07f, 1f), .26f, new Color(0f, 0f, 0f, .7f), .35f, .6f, -.6f);
+            _critMaterial = Styled(font, new Color(.28f, .08f, .02f, 1f), .2f, new Color(1f, .42f, .1f, .6f), .55f, 1f, 0f);
 
             Transform root = new GameObject("Пул: цифры урона").transform;
             root.SetParent(transform, false);
@@ -226,7 +243,6 @@ namespace Game.View
             s.BaseColor = s.Evaded ? EvadeColor : ColorFor(in e, crit, playerHit, overTime);
             WriteValue(ref s);
 
-            s.Shadow.color = new Color(0.025f, 0.03f, 0.055f, 0.95f);
             s.Remaining = Lifetime;
             s.Age = 0f;
             s.Velocity = Vector3.up * RiseSpeed;
@@ -275,15 +291,32 @@ namespace Game.View
                 : s.Crit ? s.Value.ToString() + "!" : s.Value.ToString();
 
             s.Text.text = value;
-            s.Shadow.text = value;
 
             s.Size = s.Evaded ? NormalSize * .8f : s.PlayerHit ? PlayerHitSize
                 : s.Crit ? CritSize
                 : s.OverTime ? BurnSize
                 : NormalSize;
-            s.Text.characterSize = s.Size;
-            s.Shadow.characterSize = s.Size;
+            s.Text.fontSize = s.Size * FontScale;
+            bool warm = s.Crit && !s.PlayerHit && !s.Evaded;
+            s.Text.fontSharedMaterial = warm ? _critMaterial : _normalMaterial;
+            s.Text.enableVertexGradient = warm;
+            if (warm) s.Text.colorGradient = new VertexGradient(Color.white, Color.white, CritBottom, CritBottom);
             s.Text.color = s.BaseColor;
+
+            // Искра крита — у правого верхнего угла числа.
+            bool spark = s.Crit && !s.PlayerHit && !s.Evaded && s.Spark != null;
+            if (s.Spark != null)
+            {
+                s.Spark.gameObject.SetActive(spark);
+                if (spark)
+                {
+                    float k = s.Size / CritSize;
+                    Vector2 size = s.Text.GetPreferredValues(value);
+                    s.Spark.transform.localPosition = new Vector3(size.x * .5f + .02f, size.y * .32f, -.01f);
+                    s.Spark.transform.localScale = Vector3.one * (SparkSize / Mathf.Max(.001f, s.Spark.sprite.bounds.size.x) * k);
+                    s.Spark.color = s.BaseColor;
+                }
+            }
         }
 
         /// <summary>
@@ -341,8 +374,12 @@ namespace Game.View
                 Color c = s.BaseColor;
                 c.a = 1f - Mathf.SmoothStep(0.58f, 1f, t);
                 s.Text.color = c;
-                Color shadow = new Color(0.025f, 0.03f, 0.055f, c.a * 0.95f);
-                s.Shadow.color = shadow;
+                if (s.Spark != null && s.Spark.gameObject.activeSelf)
+                {
+                    Color sc = s.BaseColor;
+                    sc.a = c.a;
+                    s.Spark.color = sc;
+                }
             }
 
             _visible = visible;
@@ -364,47 +401,63 @@ namespace Game.View
             }
         }
 
-        private Slot CreateSlot(Transform root, Font font, int index)
+        private Material _normalMaterial, _critMaterial;
+
+        /// <summary>Стиль шрифта: обводка и подложка (тень или свечение). Создаётся один раз на запуск.</summary>
+        private static Material Styled(TMP_FontAsset font, Color outline, float outlineWidth,
+            Color underlay, float dilate, float softness, float offsetY)
+        {
+            var m = new Material(font.material) { name = font.name + " Damage" };
+            m.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            m.SetColor(ShaderUtilities.ID_OutlineColor, outline);
+            m.SetFloat(ShaderUtilities.ID_OutlineWidth, outlineWidth);
+            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            m.SetColor(ShaderUtilities.ID_UnderlayColor, underlay);
+            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, dilate);
+            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, softness);
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, offsetY);
+            ShaderUtilities.GetShaderPropertyIDs();
+            ShaderUtilities.UpdateShaderRatios(m);
+            return m;
+        }
+
+        private Slot CreateSlot(Transform root, TMP_FontAsset font, int index)
         {
             GameObject go = new GameObject($"Цифра {index}");
             go.transform.SetParent(root, false);
 
-            TextMesh text = go.AddComponent<TextMesh>();
+            var text = go.AddComponent<TextMeshPro>();
             text.font = font;
-            text.fontSize = 96;
-            text.fontStyle = FontStyle.Bold;
-            text.characterSize = NormalSize;
-            text.anchor = TextAnchor.MiddleCenter;
-            text.alignment = TextAlignment.Center;
+            text.fontSharedMaterial = _normalMaterial;
+            text.fontSize = NormalSize * FontScale;
+            text.alignment = TextAlignmentOptions.Center;
+            text.fontStyle = FontStyles.Bold;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.rectTransform.sizeDelta = new Vector2(4f, 1f);
             text.color = NormalColor;
+            text.GetComponent<MeshRenderer>().sortingOrder = 6100;
 
-            // Материал шрифта обязателен, иначе TextMesh не рисуется.
-            MeshRenderer mainRenderer = go.GetComponent<MeshRenderer>();
-            mainRenderer.sharedMaterial = font.material;
-            mainRenderer.sortingOrder = 6100;
-
-            GameObject shadowGo = new GameObject("Ink outline");
-            shadowGo.transform.SetParent(go.transform, false);
-            shadowGo.transform.localPosition = new Vector3(0.035f, -0.035f, 0.018f);
-            shadowGo.transform.localScale = Vector3.one * 1.13f;
-            TextMesh shadowText = shadowGo.AddComponent<TextMesh>();
-            shadowText.font = font;
-            shadowText.fontSize = 96;
-            shadowText.fontStyle = FontStyle.Bold;
-            shadowText.characterSize = NormalSize;
-            shadowText.anchor = TextAnchor.MiddleCenter;
-            shadowText.alignment = TextAlignment.Center;
-            shadowText.color = new Color(0.025f, 0.03f, 0.055f, 0.95f);
-            MeshRenderer shadowRenderer = shadowGo.GetComponent<MeshRenderer>();
-            shadowRenderer.sharedMaterial = font.material;
-            shadowRenderer.sortingOrder = 6099;
+            SpriteRenderer spark = null;
+            Sprite sparkSprite = UiTheme.Current.Spark;
+            if (sparkSprite != null)
+            {
+                var sparkGo = new GameObject("Искра");
+                sparkGo.transform.SetParent(go.transform, false);
+                spark = sparkGo.AddComponent<SpriteRenderer>();
+                spark.sprite = sparkSprite;
+                spark.sortingOrder = 6101;
+                float native = Mathf.Max(.001f, sparkSprite.bounds.size.x);
+                sparkGo.transform.localScale = Vector3.one * (SparkSize / native);
+                sparkGo.SetActive(false);
+            }
 
             go.SetActive(false);
             return new Slot
             {
                 Transform = go.transform,
                 Text = text,
-                Shadow = shadowText,
+                Spark = spark,
                 Remaining = 0f,
                 BaseColor = NormalColor
             };
@@ -425,21 +478,6 @@ namespace Game.View
                 int h = (target * 83492791) ^ (tick * 297121507);
                 return ((h & 1023) / 1023f * 2f - 1f) * 8f;
             }
-        }
-
-        /// <summary>
-        /// Встроенный шрифт: в Unity 2022+ Arial.ttf переименован в LegacyRuntime.ttf.
-        /// Пробуем оба, чтобы файл не зависел от версии редактора.
-        /// </summary>
-        private static Font LoadBuiltinFont()
-        {
-            Font font = null;
-            try { font = GameTypography.Semibold; } catch { }
-            if (font == null)
-            {
-                try { font = Resources.GetBuiltinResource<Font>("Arial.ttf"); } catch { }
-            }
-            return font;
         }
     }
 }

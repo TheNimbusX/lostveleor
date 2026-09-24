@@ -227,9 +227,11 @@ namespace Game.EditorTools
             EditorApplication.delayCall += () => EnsureBuilt(false);
         }
 
-        internal static TMP_FontAsset EnsureFont(string weight)
+        internal static TMP_FontAsset EnsureFont(string weight) => EnsureFont(GameTypography.Family, weight);
+
+        /// <summary>SDF-шрифт гарнитуры из Resources/UI/Fonts/{family}-{weight}.ttf (новый пак: Philosopher, Nunito).</summary>
+        internal static TMP_FontAsset EnsureFont(string family, string weight)
         {
-            string family = GameTypography.Family;
             string path = FontFolder + "/" + family + "-" + weight + " SDF.asset";
             var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
             if (existing != null) return existing;

@@ -19,7 +19,7 @@ namespace Game.View
         public bool Active => _driver != null && _driver.Session != null && _driver.Session.Mode == GameMode.Camp && !_driver.Session.OnProvingGround;
         public bool InventoryOpen => _inventory != null && _inventory.IsOpen;
         public bool EntranceOpen => _entrance != null && _entrance.IsOpen;
-        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame == Time.frameCount || CampRiftEntrance.ClosedFrame == Time.frameCount;
+        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampTransition.Busy || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame == Time.frameCount || CampRiftEntrance.ClosedFrame == Time.frameCount;
         internal CampWalkMap WalkMap => _walkMap;
         internal Bounds MapBounds { get; private set; }
         public Transform Tent { get; private set; }
@@ -38,6 +38,10 @@ namespace Game.View
         CampInventoryView _inventory;
         NavMeshDataInstance _navigation; bool _approach;
         Bounds _tentBounds; Vector3 _start;
+        /// <summary>Вход в палатку: объект «Вход в палатку» в сцене под Tent - Player, иначе середина передней стороны.</summary>
+        Transform _tentEntrance;
+        /// <summary>Сколько до входа, чтобы палатка открылась (владелец 23 сентября: «прям подойти надо»).</summary>
+        const float TentReach = 1.3f;
         CampRiftEntrance _entrance;
         Vector2 _pressPointer;
         GameObject _scenePelagPreview; bool _scenePelagPreviewWasActive;
@@ -66,6 +70,7 @@ namespace Game.View
                 foreach (Renderer r in Tent.GetComponentsInChildren<Renderer>())
                 { if (first) { _tentBounds = r.bounds; first = false; } else _tentBounds.Encapsulate(r.bounds); }
                 if (first) _tentBounds = new Bounds(Tent.position, Vector3.one * 2);
+                _tentEntrance = FindTentEntrance(root);
             }
             _entrance = root.GetComponentInChildren<CampRiftEntrance>();
             BuildNavigation(root);
@@ -86,10 +91,13 @@ namespace Game.View
             for (int z=0;z<height;z++) for (int x=0;x<width;x++)
             {
                 Vector3 point = origin + new Vector3((x+.5f)*cell,0,(z+.5f)*cell);
-                cells[z*width+x] = NavMesh.SamplePosition(point,out var floor,.08f,NavMesh.AllAreas)
+                cells[z*width+x] = NavMesh.SamplePosition(point,out var floor,.35f,NavMesh.AllAreas)
                     && Mathf.Abs(floor.position.y-_height)<.3f
-                    && (floor.position-point).sqrMagnitude < .0025f;
+                    // The baked floor sits 5 cm below the spawn height. Check the
+                    // horizontal snap separately; a vertical offset is not a wall.
+                    && (new Vector2(floor.position.x-point.x,floor.position.z-point.z)).sqrMagnitude < .0025f;
             }
+            _riverPassage?.StraightenWalkCells(cells, origin, cell, width, height);
             var map = new CampWalkMap(Flat(origin), Fix64.Ratio(1,8), width,height,cells);
             _walkMap = map;
             _routing = new CampRoute(map);
@@ -107,9 +115,11 @@ namespace Game.View
             if(Tent!=null)
             {
                 var interaction=Tent.GetComponent<CampServiceNpc>()??Tent.gameObject.AddComponent<CampServiceNpc>();
-                interaction.Kind=CampServiceKind.Tent;interaction.Reach=1.5f;
+                interaction.Kind=CampServiceKind.Tent;interaction.Reach=TentReach;interaction.Entrance=_tentEntrance;
             }
             gameObject.AddComponent<CampServicesView>().Initialize(this,_driver);
+            if (GetComponent<CampGuideView>() == null) gameObject.AddComponent<CampGuideView>();
+            if (GetComponent<CampCharacterShadows>() == null) gameObject.AddComponent<CampCharacterShadows>();
             Debug.Log($"[camp] spawn={_start} sharedCombat=True tent={Tent} cells={width*height}");
         }
 
@@ -220,6 +230,20 @@ namespace Game.View
                 // перекрывал до 45 м² вокруг — это и есть «невидимое препятствие».
                 if (AddTrunk(mesh, shape, root)) continue;
 
+                // Кострище — кольцо камней с огнём внутри. Меш-коллайдер кольца оставлял проходимой
+                // середину (и склеенный статикой меш давал неверную форму): через огонь можно было
+                // пройти. Держим его целиком сплошным цилиндром по габаритам.
+                if (mesh.name.ToLowerInvariant().Contains("fire+pit") || mesh.name.ToLowerInvariant().Contains("firepit"))
+                {
+                    var pit = new GameObject("Кострище для навигации — " + mesh.name);
+                    pit.transform.SetParent(root, false);
+                    pit.transform.SetPositionAndRotation(new Vector3(shape.center.x, shape.min.y + 1f, shape.center.z), Quaternion.identity);
+                    CapsuleCollider solid = pit.AddComponent<CapsuleCollider>();
+                    solid.height = 2f;
+                    solid.radius = Mathf.Max(shape.extents.x, shape.extents.z) * .92f;
+                    continue;
+                }
+
                 var collider = mesh.gameObject.AddComponent<MeshCollider>(); collider.sharedMesh = mesh.sharedMesh;
             }
             if (unreadable.Count > 0)
@@ -300,8 +324,15 @@ namespace Game.View
             _navigationGround = null;
         }
 
+        bool _wasActive, _sawRift;
+
         void Update()
         {
+            // Вернулись из забега — лагерь проявляется из тёплой пелены (CampTransition).
+            bool active = Active;
+            if (!active && _driver?.Session != null && _driver.Session.Mode == GameMode.Rift) _sawRift = true;
+            if (active && !_wasActive && _sawRift) { _sawRift = false; if (!CampIntegrationCapture.IsRunning) CampTransition.ReturnToCamp(); }
+            _wasActive = active;
             if (!Active) { _inventory?.Close(); return; }
             if(CampServicesView.ConsumedFrame==Time.frameCount)return;
             if (!_driver.GameplayPaused && !InventoryOpen) _entrance?.Check(_driver, World(_driver.Session.CampSim.Entities.Position[0]));
@@ -320,6 +351,9 @@ namespace Game.View
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
+            // A right click claimed by a service starts its route in
+            // CampServicesView. Do not reinterpret it as a ground click.
+            if (CampServicesView.PointerGesture) { click = false; held = false; }
             if (GameUserSettings.WasdMovement) { click = held = false; if(CampServicesView.Instance?.Pending==null)CancelRoute(); }
 
             if (_driver.PointerOverHud(pointer)) { click = false; held = false; }
@@ -362,7 +396,7 @@ namespace Game.View
                 // В палатку идём к её краю, в остальных случаях — ровно туда,
                 // куда ткнули. Непроходимую точку разберёт сам поиск: он
                 // приводит цель к ближайшей достижимой клетке.
-                RouteTo(_approach ? _tentBounds.ClosestPoint(Position) : hit.point);
+                RouteTo(_approach ? TentDoor : hit.point);
             }
 
         /// <summary>
@@ -438,12 +472,30 @@ namespace Game.View
         {
             if (Tent == null) return false;
             _approach = true;
-            Vector3 target = _tentBounds.ClosestPoint(Position);
+            Vector3 target = TentDoor;
             bool routed = RouteTo(target);
             Debug.Log($"[camp-path] corners={_routing?.CornerCount} from={Position} target={target}");
             return routed;
         }
-        bool NearTent() { Vector3 d = _tentBounds.ClosestPoint(Position) - Position; d.y = 0; return Tent != null && d.sqrMagnitude < 2.25f; }
+        Vector3 TentDoor => _tentEntrance != null ? _tentEntrance.position : _tentBounds.ClosestPoint(Position);
+        bool NearTent() { Vector3 d = TentDoor - Position; d.y = 0; return Tent != null && d.sqrMagnitude < TentReach * TentReach; }
+
+        /// <summary>
+        /// Точка входа в палатку. Владелец двигает её в сцене (объект «Вход в палатку»);
+        /// без него — середина передней стороны модели, чуть внутри края.
+        /// </summary>
+        Transform FindTentEntrance(Transform campRoot)
+        {
+            foreach (Transform t in campRoot.GetComponentsInChildren<Transform>(true))
+                if (t.name == "Вход в палатку") return t;
+            var marker = new GameObject("Вход в палатку (по модели)").transform;
+            marker.SetParent(Tent, true);
+            var mesh = Tent.GetComponent<MeshFilter>();
+            float depth = mesh != null && mesh.sharedMesh != null ? mesh.sharedMesh.bounds.extents.z * Tent.lossyScale.z : 1.5f;
+            Vector3 centre = _tentBounds.center; centre.y = Tent.position.y;
+            marker.position = centre + Tent.forward * depth * .92f;
+            return marker;
+        }
 
         void OnDestroy()
         {

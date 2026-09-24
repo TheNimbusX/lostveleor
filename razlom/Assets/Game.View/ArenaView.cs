@@ -255,6 +255,12 @@ namespace Game.View
         private Color[] _contactShadowBaseColors;
         private MaterialPropertyBlock[] _materialBlocks;
         private float[] _hitFlash;
+        // Стоп-кадр попадания: до этого времени отдача тела не гаснет, а
+        // вспышка держится лишь первые два кадра — иначе моб стоит белым
+        // силуэтом весь стоп.
+        private float[] _poseHoldUntil;
+        private float[] _flashHoldUntil;
+        private const float FlashHoldSeconds = 0.035f;
         private float[] _lastVelocityMagnitude;
         private bool[] _locomotionMoving;
         private Vector3 _previousPlayerPosition;
@@ -390,6 +396,8 @@ namespace Game.View
             _contactShadowBaseColors = new Color[capacity];
             _materialBlocks = new MaterialPropertyBlock[capacity];
             _hitFlash = new float[capacity];
+            _poseHoldUntil = new float[capacity];
+            _flashHoldUntil = new float[capacity];
             _presentationOffset = new Vector3[capacity];
             _deathOffset = new Vector3[capacity];
             _lastVelocityMagnitude = new float[capacity];
@@ -505,7 +513,29 @@ namespace Game.View
         /// </summary>
         public void ConfirmCleaveContact() => AnimationOf(Simulation.PlayerId)?.ConfirmCleaveContact();
 
-        public void ReactToHit(int entityId, Vector3 direction, float strength, bool heavy = false)
+        /// <summary>
+        /// Стоп-кадр задетого тела: аниматор, отдача, наклон и вспышка
+        /// держатся, пока Sim идёт своим чередом. Вызывается после ReactToHit
+        /// того же кадра.
+        /// </summary>
+        public void HoldEntityPose(int entityId, float seconds)
+        {
+            if (!_initialized || seconds <= 0f) return;
+            if ((uint)entityId >= (uint)_boundCount || entityId == Simulation.PlayerId) return;
+            if (_views[entityId] == null) return;
+            _poseHoldUntil[entityId] = Mathf.Max(_poseHoldUntil[entityId], Time.time + seconds);
+            _flashHoldUntil[entityId] = Mathf.Max(_flashHoldUntil[entityId], Time.time + Mathf.Min(seconds, FlashHoldSeconds));
+            AnimationOf(entityId)?.HoldPose(seconds);
+        }
+
+        /// <summary>Стоп-кадр героя на контакте Вихря: фаза клипа замирает и догоняет.</summary>
+        public void HoldPlayerWhirlwindPose(float seconds)
+        {
+            if (!_initialized || seconds <= 0f) return;
+            AnimationOf(Simulation.PlayerId)?.HoldWhirlwindPose(seconds);
+        }
+
+        public void ReactToHit(int entityId, Vector3 direction, float strength, bool heavy = false, float recoilScale = 1f)
         {
             if (!_initialized) return;
             if ((uint)entityId >= (uint)_boundCount) return;
@@ -538,7 +568,7 @@ namespace Game.View
             if (alive && entityId != Simulation.PlayerId)
             {
                 AnimationOf(entityId)?.PlayContactPose(direction, strength, heavy);
-                Vector3 recoil = direction * (RecoilDistance * strength);
+                Vector3 recoil = direction * (RecoilDistance * strength * Mathf.Max(0f, recoilScale));
                 if (recoil.sqrMagnitude > _hitRecoil[entityId].sqrMagnitude)
                     _hitRecoil[entityId] = recoil;
             }
@@ -853,6 +883,8 @@ namespace Game.View
             _deathStartedAt[entityId] = 0f;
             _deathOffset[entityId] = Vector3.zero;
             _hitRecoil[entityId] = Vector3.zero;
+            _poseHoldUntil[entityId] = 0f;
+            _flashHoldUntil[entityId] = 0f;
             _baseScale[entityId] = Vector3.zero;
             _bodyRenderers[entityId] = null;
             _bodyMaterialSlotCounts[entityId] = null;
@@ -908,6 +940,8 @@ namespace Game.View
                 _deathStartedAt[i] = 0f;
                 _deathOffset[i] = Vector3.zero;
                 _hitRecoil[i] = Vector3.zero;
+                _poseHoldUntil[i] = 0f;
+                _flashHoldUntil[i] = 0f;
                 _bodyRenderers[i] = CacheBodyRenderers(go, out SpriteRenderer contactShadow);
                 _bodyMaterialSlotCounts[i] = CacheMaterialSlotCounts(_bodyRenderers[i]);
                 _contactShadows[i] = contactShadow;
@@ -1271,10 +1305,12 @@ namespace Game.View
 
                 // Отдача затухает экспоненциально: удар должен
                 // читаться как толчок, а не как отъезд тела в сторону.
-                float decay = Mathf.Exp(-ReactionDecay * Time.deltaTime);
-                _hitRecoil[i] *= decay;
+                // Во время стоп-кадра тело стоит на пике отдачи; вспышка держится два кадра.
+                if (Time.time >= _poseHoldUntil[i])
+                    _hitRecoil[i] *= Mathf.Exp(-ReactionDecay * Time.deltaTime);
                 // Roughly 60 ms above the visible 0.1 threshold at 60 FPS.
-                _hitFlash[i] *= Mathf.Exp(-36f * Time.deltaTime);
+                if (Time.time >= _flashHoldUntil[i])
+                    _hitFlash[i] *= Mathf.Exp(-36f * Time.deltaTime);
 
                 Renderer[] bodyRenderers = _bodyRenderers[i];
                 int[] materialSlotCounts = _bodyMaterialSlotCounts[i];
@@ -1421,6 +1457,15 @@ namespace Game.View
                                 float recover = Mathf.InverseLerp(0.53f, 0.80f, presentation.WhirlwindElapsed);
                                 visualFacing = Vector3.Slerp(previousVisual, facingWorld,
                                     1f - Mathf.Exp(-25f * recover * Time.deltaTime)).normalized;
+                            }
+                            else if (presentation != null && presentation.WhirlwindFacingRecovery
+                                && previousVisual.sqrMagnitude > 0.5f)
+                            {
+                                // Конец Вихря: удержанный взгляд догоняет Sim за
+                                // четверть секунды. Раньше он прыгал в один кадр —
+                                // тот самый обрыв в конце оборота.
+                                visualFacing = Vector3.Slerp(previousVisual, facingWorld,
+                                    1f - Mathf.Exp(-16f * Time.deltaTime)).normalized;
                             }
                             _visualFacingWorld[i] = visualFacing;
                         }

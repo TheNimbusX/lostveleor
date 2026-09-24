@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d8281f78d148154f97e979223aad732, type: 3}
+  m_Name: UiTheme
+  m_EditorClassIdentifier: Game.View::Game.View.UiTheme
+  Veil: {r: 0.02745098, g: 0.039215688, b: 0.0627451, a: 0.62}
+  Panel: {r: 0.06666667, g: 0.08627451, b: 0.1254902, a: 0.92}
+  PanelLine: {r: 0.84705883, g: 0.88235295, b: 0.93333334, a: 1}
+  Highlight: {r: 1, g: 1, b: 1, a: 0.07}
+  Track: {r: 0.105882354, g: 0.1254902, b: 0.16078432, a: 0.95}
+  Text: {r: 0.95686275, g: 0.96862745, b: 0.9843137, a: 1}
+  TextMuted: {r: 0.5764706, g: 0.63529414, b: 0.7372549, a: 1}
+  TextOnAccent: {r: 1, g: 0.9647059, b: 0.93333334, a: 1}
+  Accent: {r: 0.99215686, g: 0.45490196, b: 0.25882354, a: 1}
+  AccentHover: {r: 1, g: 0.54901963, b: 0.36862746, a: 1}
+  AccentPressed: {r: 0.8745098, g: 0.36862746, b: 0.1882353, a: 1}
+  Disabled: {r: 0.23529412, g: 0.2509804, b: 0.28235295, a: 0.6}
+  Common: {r: 0.6509804, g: 0.7019608, b: 0.78431374, a: 1}
+  Rare: {r: 0.23137255, g: 0.9411765, b: 0.9607843, a: 1}
+  Lavidium: {r: 0.98039216, g: 0.53333336, b: 0.23529412, a: 1}
+  Health: {r: 0.9529412, g: 0.30980393, b: 0.21568628, a: 1}
+  Experience: {r: 0.9019608, g: 0.92156863, b: 0.9490196, a: 1}
+  Coins: {r: 0.8509804, g: 0.5411765, b: 0.3529412, a: 1}
+  Good: {r: 0.56078434, g: 0.8901961, b: 0.65882355, a: 1}
+  Bad: {r: 1, g: 0.41568628, b: 0.3529412, a: 1}
+  Heading: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  Body: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  Numbers: {fileID: 11400000, guid: 13529c3135e92f44dbf299ccda834545, type: 2}
+  TitleSize: 44
+  HeadingSize: 28
+  BodySize: 20
+  CaptionSize: 16
+  SpaceS: 8
+  SpaceM: 16
+  SpaceL: 24
+  Fill: {fileID: 21300000, guid: a4c83aca96297c948b6706f233b06a3d, type: 3}
+  Frame: {fileID: 21300000, guid: c2859ef19b695fc498113b6b242c4f04, type: 3}
+  FrameBold: {fileID: 21300000, guid: f3a6893c760b4904dbdf2044f0e3022a, type: 3}
+  HighlightSprite: {fileID: 21300000, guid: c2a73c677f9e4e24988857cd3c215402, type: 3}
+  ShadeSprite: {fileID: 21300000, guid: da34eef995f3ac94cb61a22917f57f64, type: 3}
+  FillSmall: {fileID: 21300000, guid: d8b236c6708b1064e90d97f919904360, type: 3}
+  FrameSmall: {fileID: 21300000, guid: 95af8dc2e2afd48469369e16bd58077e, type: 3}
+  FrameBoldSmall: {fileID: 21300000, guid: 04774b14e33e9004194ee055e029e847, type: 3}
+  HighlightSmall: {fileID: 21300000, guid: 93e74d97b6746a349a088cf9d9c748d3, type: 3}
+  ShadeSmall: {fileID: 21300000, guid: 889bbc51e217f384a9a445735ec7fd5d, type: 3}
+  GlowSmall: {fileID: 21300000, guid: d3a5644c63c6bc1458c66eb5e6d62cbf, type: 3}
+  InnerGlowSmall: {fileID: 21300000, guid: d3ecdad79f050b44f99e0a1d168af762, type: 3}
+  Glow: {fileID: 21300000, guid: 5a3f212c7752af241bc148d8f8297487, type: 3}
+  InnerGlow: {fileID: 21300000, guid: eeb13144ba7eb4e4b8e6024f26a5665c, type: 3}
+  ButtonGlow: {fileID: 21300000, guid: 11c4279e3e695af4d9eecf8240e81ff2, type: 3}
+  FrameDashed: {fileID: 21300000, guid: 0f3bf52ee74193d4586edeb79d9f03a6, type: 3}
+  ButtonFill: {fileID: 21300000, guid: ff436bb0d68165c439e67fa738a9740c, type: 3}
+  ButtonFrame: {fileID: 21300000, guid: 7c8ec19bf8a494444b43eaca1a7f858f, type: 3}
+  PillFill: {fileID: 21300000, guid: e3814200283b9b0489787b575e1b669b, type: 3}
+  PillFrame: {fileID: 21300000, guid: 57f986fa966c69b4fb26703f70fdc85d, type: 3}
+  TagFill: {fileID: 21300000, guid: 85b2e67947005394e81afb84784841a9, type: 3}
+  TagFrame: {fileID: 21300000, guid: a7e40bfcbad99dc489a29c934f5c75ff, type: 3}
+  BarFill: {fileID: 21300000, guid: 3c5a18a73e7e8ec4097979bd2c004f69, type: 3}
+  BarFrame: {fileID: 21300000, guid: 070af29c914882b48982600217c449b3, type: 3}
+  CircleFill: {fileID: 21300000, guid: 2c2a3d4126014a347a38fcae63e74e92, type: 3}
+  CircleFrame: {fileID: 21300000, guid: 5f3211c7ac97b2046814767caca2e9a7, type: 3}
+  CircleFrameBold: {fileID: 21300000, guid: 48960706e777ea040836c21708b78e05, type: 3}
+  CircleRing: {fileID: 21300000, guid: e4e58f280987af641b6546674d8a7d2d, type: 3}
+  DiamondSmall: {fileID: 21300000, guid: 203ab41c6db5aec498f6550990c48f64, type: 3}
+  DiamondMedium: {fileID: 21300000, guid: 6b5519b94c7949a4caed4f0298b4b608, type: 3}
+  DiamondLarge: {fileID: 21300000, guid: 7a4d4eeea447e0a41969df184d1f4929, type: 3}
+  DiamondFrame: {fileID: 21300000, guid: 9bcf282b7e691d54da8e95ff1be3abc1, type: 3}
+  DiamondFrameSmall: {fileID: 21300000, guid: 643af930698a816428f8c06a9915280d, type: 3}
+  DiamondFill: {fileID: 21300000, guid: f39d16e3c5983d949abb9c9d59965a28, type: 3}
+  Gem: {fileID: 21300000, guid: 8be94d7e612ca214ea54b0fb858dccd6, type: 3}
+  Cross: {fileID: 21300000, guid: 06e62ee646a456f489ba4dfcc8c14a6f, type: 3}
+  Check: {fileID: 21300000, guid: 4d8ec3c2595bc194d9435dde35e92a82, type: 3}
+  Plus: {fileID: 21300000, guid: 72dbefde5b0f24b42b53e037be8af6d2, type: 3}
+  ChevronDown: {fileID: 21300000, guid: b6d786eea52e3ad4d95d46f36223fa78, type: 3}
+  ChevronRight: {fileID: 21300000, guid: 26a181e675fb87944b4c742aadee3a1c, type: 3}
+  TriangleUp: {fileID: 21300000, guid: d6b37ad93d46c0945b4d6d2772cfc125, type: 3}
+  TriangleDown: {fileID: 21300000, guid: 2f2650844730f1441aa65410bdd96d90, type: 3}
+  VeilRadial: {fileID: 21300000, guid: 303377557b53507439830a0667131ecb, type: 3}
+  VeilLinear: {fileID: 21300000, guid: ae7676221706f4d4f8f6454463b810c4, type: 3}
+  Pixel: {fileID: 21300000, guid: 84e5dbee6ac36424c8853aee658accbd, type: 3}
+  Grain: {fileID: 21300000, guid: a9d805d96ecb9494ca7a64172c7f8639, type: 3}
+  Knob: {fileID: 21300000, guid: d181ceffe08a96d43a6a9f092233df51, type: 3}
+  BarFillLarge: {fileID: 21300000, guid: eba68d7f3264cc34ea6f301f8614fdf2, type: 3}
+  BarFrameLarge: {fileID: 21300000, guid: 35c03b673d37c3f42940a3f80bceae38, type: 3}
+  CircleFrameLarge: {fileID: 21300000, guid: 34a169d165197f34e964474282119a39, type: 3}
+  FrameOpenTop: {fileID: 21300000, guid: 5e4bb25989fbb30488bbfb4ffb9d23f7, type: 3}
+  RingTicks: {fileID: 21300000, guid: 543ca1e92df5c9c4ea895447f266b6b5, type: 3}
+  RingGlow: {fileID: 21300000, guid: fbbcdab5331d46041bec02a6bb1f7fbb, type: 3}
+  Blob: {fileID: 21300000, guid: b16839d7df8faf142a69fcb333dca223, type: 3}
+  Haze: {fileID: 21300000, guid: c7d41e60f038f5f408ece27a10aa8855, type: 3}
+  Spark: {fileID: 21300000, guid: c0470047b238d3e4884058d8a4d68e75, type: 3}
+  Arrow: {fileID: 21300000, guid: 1131b86ea8b00104ca3d5e73c9d4fa67, type: 3}
+  Pointer: {fileID: 21300000, guid: 74128c886c16bcc479c19ec72f057737, type: 3}
+  Mouse: {fileID: 21300000, guid: 9fa1d00199c9d2545925668f38c052ed, type: 3}
