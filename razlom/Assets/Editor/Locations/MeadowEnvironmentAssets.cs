@@ -202,6 +202,24 @@ namespace Game.LocationEditor
             Debug.Log("[Луга] Добавлены забор, мост, трава и домик на дереве из Creating.");
         }
 
+        [MenuItem("Разлом/Локации/Добавить окружение арен из Creating", priority = 27)]
+        public static void AddArenaDressing()
+        {
+            AssetDatabase.Refresh();
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && v.Prefab.name.StartsWith("ArenaCreating"));
+            variants.Add(Variant(PrepareImported("ArenaCreatingRockA", "arena_smallRock_v1", .75f, true),
+                DecorKind.Rock, .4f, true, .8f, 1.3f));
+            variants.Add(Variant(PrepareImported("ArenaCreatingRockB", "arena_smallRock_v2", .9f, true),
+                DecorKind.Rock, .4f, true, .8f, 1.3f));
+            // Небольшой вес: новые пучки служат акцентами, основная трава остаётся лёгкой лагерной.
+            variants.Add(Variant(PrepareImported("ArenaCreatingGrass", "arena_grass", .38f, false),
+                DecorKind.GrassTuft, .7f, false, .8f, 1.2f));
+            theme.Style.DecorVariants = variants.ToArray();
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+        }
+
         private static GameObject PrepareImported(string name, string category, float size, bool footprint)
         {
             string folder = "Assets/Art/Meadow/Creating/" + category;

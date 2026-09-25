@@ -31,6 +31,8 @@ namespace Game.Data
         [Range(9, 30), Tooltip("Радиус без врагов вокруг входа, метры.")]
         public int EntryClearance = 14;
         public bool SolidEnvironment, NaturalGlade;
+        [Tooltip("Одна процедурная арена на этап и выбор следующей ветки у портала.")]
+        public bool ArenaFlow;
         [Range(2, 64)] public int MaxModules = 64;
         public ModuleAsset[] Modules = Array.Empty<ModuleAsset>();
         [Tooltip("Профиль групп вдоль тропы. Пусто — прежний случайный спавн по всем комнатам.")]
@@ -65,6 +67,7 @@ namespace Game.Data
             {
                 try { levels[i] = Levels[i].ToDefinition(Encounters != null ? Encounters.ToDefinition(i + 1) : null, PlayerHealth, EntryClearance, SolidEnvironment, NaturalGlade); }
                 catch (ArgumentException e) { throw new ArgumentException("Level " + (i + 1) + ": " + e.Message); }
+                if (ArenaFlow) levels[i] = levels[i].WithArenaSize(levels[i].Boss ? 4 : 3);
             }
             var result = new LocationDefinition(StableId.Of(StableKey), new ModuleSet(modules), levels, MaxModules, CompleteAtEnd);
             result.ValidateCapacity(512);

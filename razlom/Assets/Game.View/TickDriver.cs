@@ -146,12 +146,13 @@ namespace Game.View
             bool validChoice = Run.Phase == RunPhase.ChoosingReward
                                && (command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3
                                    || command == RunCommand.SkipReward && Run.ChoosingArtifact);
+            bool validRoute = Run.Phase == RunPhase.ChoosingRoute && command >= RunCommand.ChooseRoute1 && command <= RunCommand.ChooseRoute3;
             bool validReplace = Run.Phase == RunPhase.ReplacingAbility
                                 && command >= RunCommand.ReplaceSlot1 && command <= RunCommand.SalvageAbility;
             // Мини-меню добычи работает посреди боя и по пути к выходу.
             bool validPickup = (Run.Phase == RunPhase.Clearing || Run.Phase == RunPhase.SeekingExit)
                                && command >= RunCommand.PickupReplaceSlot1 && command <= RunCommand.PickupSalvage;
-            if (command != RunCommand.Leave && !validChoice && !validReplace && !validPickup)
+            if (command != RunCommand.Leave && !validChoice && !validReplace && !validPickup && !validRoute)
                 return;
 
             _commandLatch = (byte)command;
@@ -480,7 +481,7 @@ namespace Game.View
             // а бой на этом экране всё равно стоит.
             bool choosing = Session.Mode == GameMode.Rift
                             && Run != null && (Run.Phase == RunPhase.ChoosingReward
-                                               || Run.Phase == RunPhase.ReplacingAbility);
+                                               || Run.Phase == RunPhase.ReplacingAbility || Run.Phase == RunPhase.ChoosingRoute);
             bool letters = GameUserSettings.AbilityRowUsesLetters;
             _pending.AbilityHoldMask = 0;
 
@@ -996,7 +997,7 @@ namespace Game.View
                         // Артефакт при уже занятом слоте — сначала вопрос «Заменить артефакт?».
                         RunHud runHud = Run.ChoosingArtifact ? GetComponent<RunHud>() : null;
                         if (runHud != null) runHud.RequestOffer(i);
-                        else _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
+                        else _commandLatch = (byte)((int)(Run.Phase == RunPhase.ChoosingRoute ? RunCommand.ChooseRoute1 : RunCommand.ChooseReward1) + i);
                     }
                 }
                 else if (abilitiesLive)
@@ -1043,7 +1044,7 @@ namespace Game.View
             if (slot < 0 || slot >= Simulation.AbilitySlots || GameplayPaused || Sim == null ||
                 Session == null || Session.Mode == GameMode.Summary ||
                 (Run != null && Session.Mode == GameMode.Rift && (Run.Phase == RunPhase.ChoosingReward
-                                                                  || Run.Phase == RunPhase.ReplacingAbility)) ||
+                                                                  || Run.Phase == RunPhase.ReplacingAbility || Run.Phase == RunPhase.ChoosingRoute)) ||
                 CampPlayerView.Instance?.InputBlocked == true) return;
             AbilityBuild build = Sim.GetAbility(slot);
             if (build == null) return;

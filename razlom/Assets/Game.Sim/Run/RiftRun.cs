@@ -106,6 +106,10 @@ namespace Game.Sim
 
         /// <summary>Золото, найденное в забеге. Доезжает до лагеря только при выходе или прохождении.</summary>
         public int Gold { get; private set; }
+        public bool ArenaFlow => _location != null && _location.GetLevel(1).ArenaSize > 0;
+        public ArenaRouteOffer CurrentRoute { get; private set; } = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
+        private readonly ArenaRouteOffer[] _routes = new ArenaRouteOffer[3];
+        public ArenaRouteOffer GetRoute(int index) => _routes[index];
 
         /// <summary>
         /// Артефакт забега (владелец, 24 сентября): один слот, с босса выбор 1 из 3, из тайника
@@ -177,6 +181,7 @@ namespace Game.Sim
             Gold = 0;
             PendingAbility = -1;
             Loadout.ResetToStarter();
+            CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
 
             EnterNextRift();
         }
@@ -241,6 +246,7 @@ namespace Game.Sim
             System.Array.Clear(_eliteDropped, 0, _eliteDropped.Length);
 
             LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
+            if (ArenaFlow) LevelSettings = LevelSettings.WithArenaSize(LevelSettings.Boss ? 4 : CurrentRoute.Size);
             LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
             LevelSettings.Generate(_generator, _modules, _map, LayoutSeed);
 
@@ -258,6 +264,17 @@ namespace Game.Sim
                 _sim.SetupForestEncounter(_map, SpawnSeed, LevelSettings.EnemyHealth);
             else
                 Encounters = LevelSettings.Spawn(_sim, _map, SpawnSeed);
+
+            if (ArenaFlow && CurrentRoute.Hard)
+                for (int i = 1; i < _sim.Entities.Count; i++)
+                {
+                    if (!_sim.Entities.Alive[i] || _sim.Entities.Side[i] == Faction.Wole) continue;
+                    var stats = _sim.Entities.Stats[i];
+                    stats.SetBase(StatType.MaxHealth, _sim.Entities.MaxHealth[i] * Fix64.Ratio(5, 4));
+                    stats.SetBase(StatType.Damage, _sim.Entities.Damage[i] * Fix64.Ratio(5, 4));
+                    _sim.Entities.RefreshStats(i);
+                    _sim.Entities.Health[i] = _sim.Entities.MaxHealth[i];
+                }
 
             System.Array.Clear(_branchClaimed, 0, _branchClaimed.Length);
             BranchesClaimed = 0;
@@ -315,6 +332,9 @@ namespace Game.Sim
                 case RunPhase.ReplacingAbility:
                     StepReplacing(command);
                     break;
+                case RunPhase.ChoosingRoute:
+                    StepRoute(command);
+                    break;
             }
         }
 
@@ -349,6 +369,7 @@ namespace Game.Sim
             if (CountRequiredEnemies() == 0)
             {
                 RiftsCleared++;
+                if (ArenaFlow) Gold += CurrentRoute.BonusGold;
                 Phase = RunPhase.SeekingExit;
             }
         }
@@ -618,6 +639,22 @@ namespace Game.Sim
                 End(RunOutcome.Completed);
                 return;
             }
+            if (!ArenaFlow) { EnterNextRift(); return; }
+            // Свой поток предложений не расходует Layout/Spawns/Loot симуляции.
+            var rng = new Pcg32(LayoutSeed, 0x4152454E41524FUL);
+            bool boss = _location.GetLevel(Depth + 1).Boss;
+            for (int i = 0; i < _routes.Length; i++)
+                _routes[i] = new ArenaRouteOffer(i == 1 ? ArenaReward.Shop : ArenaReward.Upgrade,
+                    boss ? 4 : rng.NextInt(2, 5), i == 2, i == 2 ? 50 + Depth * 10 : 0);
+            Phase = RunPhase.ChoosingRoute;
+        }
+
+        private void StepRoute(RunCommand command)
+        {
+            if (command == RunCommand.Leave) { End(RunOutcome.Left); return; }
+            int choice = (int)command - (int)RunCommand.ChooseRoute1;
+            if (choice < 0 || choice >= _routes.Length) return;
+            CurrentRoute = _routes[choice];
             EnterNextRift();
         }
 
@@ -695,6 +732,7 @@ namespace Game.Sim
             int ability = CountAbilityCandidates(filled) > 0 ? (full ? FullAbilityWeight : AbilityWeight) : 0;
             int item = _itemBaseIds.Length > 0 ? ItemWeight : 0;
             int talent = CountTalentCandidates(filled) > 0 ? (full ? FullTalentWeight : TalentWeight) : 0;
+            if (ArenaFlow && CurrentRoute.Reward == ArenaReward.Upgrade && ability + talent > 0) item = 0;
             int total = ability + item + talent;
             if (total == 0) return RollStatOffer();
 
@@ -807,6 +845,12 @@ namespace Game.Sim
             Hashing.Mix(ref hash, (int)Phase);
             Hashing.Mix(ref hash, (int)Outcome);
             Hashing.Mix(ref hash, Depth);
+            if (ArenaFlow)
+            {
+                CurrentRoute.HashInto(ref hash);
+                if (Phase == RunPhase.ChoosingRoute)
+                    foreach (var route in _routes) route.HashInto(ref hash);
+            }
             Hashing.Mix(ref hash, RiftsCleared);
             if (TotalLevels > 0) Hashing.Mix(ref hash, TotalLevels);
             if (BossEnraged) Hashing.Mix(ref hash, 0x424F5353);

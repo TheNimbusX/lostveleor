@@ -60,7 +60,7 @@ namespace Game.Sim
         public static int ClearingCount(int targetModules) => targetModules >= 18 ? 5 : targetModules >= 14 ? 4 : 3;
         public static int RequiredModules(int targetModules, bool boss) => boss ? 12 : ClearingCount(targetModules) * 5 + 7;
 
-        public static void Generate(ModuleSet modules, LayoutMap map, ulong seed, int targetModules, bool boss = false)
+        public static void Generate(ModuleSet modules, LayoutMap map, ulong seed, int targetModules, bool boss = false, int arenaSize = 0)
         {
             int Find(string key)
             {
@@ -70,12 +70,14 @@ namespace Game.Sim
             int hall = Find("module.hall"), pocket = hall, entrance = modules.FindEntrance();
             if (entrance < 0) throw new ArgumentException("Glade layout requires an entrance.");
             var rng = new Pcg32(seed, 0x474C414445UL);
-            int turn = rng.NextInt(0, 4), count = boss ? 1 : ClearingCount(targetModules), across = boss ? 3 : 2;
+            bool singleArena = boss || arenaSize > 0;
+            int turn = rng.NextInt(0, 4), count = singleArena ? 1 : ClearingCount(targetModules),
+                across = arenaSize > 0 ? arenaSize : boss ? 3 : 2;
             var shapeRng = new Pcg32(seed, 0x534841504553UL);
             int firstShape = shapeRng.NextInt(0, 6);
             var branchRng = new Pcg32(seed, 0x5349444550415448UL);
-            int firstBranch = boss ? -1 : branchRng.NextInt(0, count - 1);
-            int secondBranch = boss ? -1 : branchRng.NextInt(firstBranch + 1, count);
+            int firstBranch = singleArena ? -1 : branchRng.NextInt(0, count - 1);
+            int secondBranch = singleArena ? -1 : branchRng.NextInt(firstBranch + 1, count);
             bool firstLeft = branchRng.NextInt(0, 2) == 0;
             int w = modules.Get(hall).Width, h = modules.Get(hall).Height;
             int width = w * across, height = h * across;
@@ -125,7 +127,7 @@ namespace Game.Sim
                 previousCenter = center;
                 arena = body[across / 2, across / 2];
                 previous = body[across / 2, across - 1];
-                if (!boss && (g == firstBranch || g == secondBranch))
+                if (!singleArena && (g == firstBranch || g == secondBranch))
                 {
                     bool left = g == firstBranch ? firstLeft : !firstLeft;
                     int length = branchRng.NextInt(1, 3);

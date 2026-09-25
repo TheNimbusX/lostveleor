@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Game.View
@@ -111,7 +111,7 @@ namespace Game.View
 
         [Header("Туман войны")]
         [Tooltip("Комната скрыта (пол и декор), пока игрок не зайдёт в неё; открытая комната остаётся видимой.")]
-        public bool FogOfWar = true;
+        public bool FogOfWar = false;
 
         [Header("Граница локации")]
         // Стен-заглушек больше нет: IsWalkable в Game.Sim и так не пускает

@@ -342,6 +342,7 @@ namespace Game.View
             ClearSolids();
             ClearMeadow();
             _shownMap = map;
+            _arenaCharacter = -1;
             for (int i = 0; _tiles != null && i < _tileCount; i++)
             {
                 if (_tiles[i] == null) continue;

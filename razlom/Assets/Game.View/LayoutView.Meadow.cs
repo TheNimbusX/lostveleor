@@ -15,6 +15,7 @@ namespace Game.View
         private Mesh _bankMesh, _ringMesh, _backgroundMesh;
         private Vector2 _reliefOffset;
         private readonly List<Vector4> _ponds = new List<Vector4>();
+        private int _arenaCharacter = -1;
         private Mesh _waterMesh;
         private GameObject _water;
         private GameObject _banks;
@@ -337,13 +338,24 @@ namespace Game.View
             return chosen;
         }
 
-        private static GladeCharacter CharacterOf(LayoutMap map, int index)
+        private GladeCharacter CharacterOf(LayoutMap map, int index)
         {
+            if (map.GladeCount == 1) return ArenaCharacter(map);
             if (map.GladeCount < 3) return GladeCharacter.Rocky;
             int water = WatersideGlade(map);
             if (index == water) return GladeCharacter.Waterside;
             // После исключения берега чередуем открытые и каменистые поляны.
             return (index < water ? index : index - 1) % 2 == 0 ? GladeCharacter.Sunny : GladeCharacter.Rocky;
+        }
+
+        // Одна арена на уровень: без выбора по сиду каждая арена была бы каменистой.
+        // Береговая — только если в арене есть вода. Поток визуальный, Simulation.Rng не трогается.
+        private GladeCharacter ArenaCharacter(LayoutMap map)
+        {
+            if (_arenaCharacter < 0)
+                _arenaCharacter = DecorRandom(0, 877).Next(map.WaterCount > 0 ? 3 : 2);
+            return _arenaCharacter == 0 ? GladeCharacter.Sunny
+                : _arenaCharacter == 1 ? GladeCharacter.Rocky : GladeCharacter.Waterside;
         }
 
         private static int NearestGlade(LayoutMap map, float x, float z)
@@ -550,14 +562,15 @@ namespace Game.View
             if (map.Outline == null || _style.ForestBandWidth <= 0
                 || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) return;
             var rocks = new List<int>(); var bushes = new List<int>(); var grass = new List<int>();
-            int log = -1, stump = -1, bridge = -1, treehouse = -1;
+            int log = -1, stump = -1, bridge = -1, treehouse = -1, fence = -1;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 var variant = _style.DecorVariants[i];
                 if (variant.Prefab == null) continue;
-                // Мост и домик расставляются явно ниже, а не через взвешенный пул.
+                // Мост, домик и изгородь расставляются явно ниже, а не через взвешенный пул.
                 if (variant.Prefab.name == "CreatingBridge") { bridge = i; continue; }
                 if (variant.Prefab.name == "MeadowTreehouse") { treehouse = i; continue; }
+                if (variant.Prefab.name == "CreatingFence") { if (variant.Weight > 0) fence = i; continue; }
                 if (variant.Weight <= 0) continue;
                 if (variant.Prefab.name == "MeadowFallenLog") log = i;
                 else if (variant.Prefab.name == "CreatingStump") stump = i;
@@ -612,6 +625,12 @@ namespace Game.View
                     break;
                 }
             }
+            if (fence >= 0)
+                for (int g = 0; g < map.GladeCount; g++)
+                {
+                    var rng = DecorRandom(g, 953);
+                    if (rng.NextDouble() < .45) PlaceFenceRun(map, fence, g, rng);
+                }
             // Короткие заросшие участки берега чередуются с открытой водой.
             for (int pondIndex = 0; pondIndex < _ponds.Count; pondIndex++)
             {
@@ -641,12 +660,43 @@ namespace Game.View
             }
         }
 
+        // Старая изгородь — короткий прерывистый ряд вдоль опушки, повёрнутый по касательной
+        // к краю поляны, а не одиночная секция, случайно стоящая посреди поля.
+        private void PlaceFenceRun(LayoutMap map, int fence, int glade, System.Random rng)
+        {
+            var region = map.GetGlade(glade);
+            float rx = region.Radii.X.ToFloat(), rz = region.Radii.Y.ToFloat();
+            // Шаг по габаритному кругу секции: соседи не отбраковывают друг друга, между ними остаётся щель.
+            float span = _decorRadii[fence] * 2 + .25f;
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                var tangent = new Vector2(-rx * Mathf.Sin(angle), rz * Mathf.Cos(angle)).normalized;
+                float shoulder = _decorRadii[fence] + 1.2f + (float)rng.NextDouble() * 1.5f;
+                var start = new Vector2(region.Center.X.ToFloat() + Mathf.Cos(angle) * (rx + shoulder),
+                    region.Center.Y.ToFloat() + Mathf.Sin(angle) * (rz + shoulder));
+                // Локальная ось X модели — длина секции.
+                float yaw = Mathf.Atan2(-tangent.y, tangent.x) * Mathf.Rad2Deg;
+                int segments = rng.Next(2, 4), placed = 0;
+                for (int s = 0; s < segments; s++)
+                {
+                    if (!TryForestDetail(map, fence, start + tangent * (s * span), rng)) break;
+                    float lean = s == segments - 1 && rng.NextDouble() < .4 ? 7 + (float)rng.NextDouble() * 5 : 0;
+                    _decor[_decorCount - 1].rotation = Quaternion.Euler(lean, yaw + ((float)rng.NextDouble() - .5f) * 14, 0);
+                    placed++;
+                }
+                if (placed > 0) return;
+            }
+        }
+
         // Разовый ориентир: не более одного домика на карту, только на светлой поляне,
         // подальше от воды и маршрутов. DecorRandom — визуальный поток, RNG симуляции не трогает.
         private void PlaceTreehouseLandmark(LayoutMap map, int treehouse)
         {
             if (map.GladeCount == 0) return;
             var rng = DecorRandom(0, 733);
+            // Арена — отдельный уровень: домик в каждом из них перестал бы быть ориентиром.
+            if (map.GladeCount == 1 && (CharacterOf(map, 0) != GladeCharacter.Sunny || rng.NextDouble() > .5)) return;
             int start = rng.Next(map.GladeCount);
             for (int offset = 0; offset < map.GladeCount; offset++)
             {
@@ -689,19 +739,39 @@ namespace Game.View
         private void DressDetail(LayoutMap map, Vector2 center, float radius, List<int> bushes,
             List<int> grass, System.Random rng)
         {
-            int count = rng.Next(5, 9);
-            for (int item = 0; item < count; item++)
+            // Куртина с одной стороны опоры, а не бусы по окружности: кусты разного
+            // размера перекрываются, трава расходится от них неровной каймой.
+            float lean = (float)rng.NextDouble() * Mathf.PI * 2;
+            var heart = center + new Vector2(Mathf.Cos(lean), Mathf.Sin(lean)) * (radius + .45f);
+            int shrubs = rng.Next(2, 5);
+            for (int item = 0; item < shrubs; item++)
             {
-                int variant = PickDetail(item < 2 ? bushes : grass, rng);
-                if (variant < 0) continue;
-                var point = center + DetailOffset(rng, radius + _decorRadii[variant] + .15f + (float)rng.NextDouble() * .6f);
-                TryForestDetail(map, variant, point, rng);
+                int variant = PickDetail(bushes, rng);
+                if (variant < 0) break;
+                float scale = item == 0 ? 1.2f + (float)rng.NextDouble() * .35f : .65f + (float)rng.NextDouble() * .45f;
+                var point = heart + DetailOffset(rng, .25f + item * .45f + (float)rng.NextDouble() * .35f);
+                TryForestDetail(map, variant, point, rng, scale, .55f);
+            }
+            int tufts = rng.Next(4, 9);
+            for (int item = 0; item < tufts; item++)
+            {
+                int variant = PickDetail(grass, rng);
+                if (variant < 0) break;
+                // Часть травы уходит к опоре, часть — в сторону поляны от куртины.
+                var origin = item % 3 == 0 ? center : heart;
+                var point = origin + DetailOffset(rng, radius * .4f + .6f + (float)rng.NextDouble() * 1.6f);
+                TryForestDetail(map, variant, point, rng, .8f + (float)rng.NextDouble() * .5f, .6f);
             }
         }
 
-        private bool TryForestDetail(LayoutMap map, int variant, Vector2 point, System.Random rng)
+        // scale уменьшает или увеличивает экземпляр и учитывается во всех проверках габарита;
+        // spacing < 1 позволяет подлеску (кусты и трава) частично перекрываться в куртине.
+        private bool TryForestDetail(LayoutMap map, int variant, Vector2 point, System.Random rng,
+            float scale = 1f, float spacing = 1f)
         {
-            float radius = _decorRadii[variant];
+            float radius = _decorRadii[variant] * scale;
+            var kind = _style.DecorVariants[variant].Kind;
+            bool understory = kind == DecorKind.Bush || kind == DecorKind.GrassTuft;
             if (TouchesOutlinedFloor(point.x, point.y, radius + .2f)
                 || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)) return false;
             // Учитываем уже расставленный лес и соседние группы, а не только текущую композицию.
@@ -711,17 +781,18 @@ namespace Game.View
                 int otherVariant = _decorVariant[i];
                 float maxScale = Mathf.Max(.01f, _style.DecorVariants[otherVariant].ScaleRange.y);
                 float otherRadius = _decorRadii[otherVariant] * other.localScale.x / maxScale;
+                var otherKind = _style.DecorVariants[otherVariant].Kind;
                 // Низкий подлесок может заходить под крону, но не в ствол.
-                if (_style.DecorVariants[otherVariant].Kind == DecorKind.Tree
-                    && (_style.DecorVariants[variant].Kind == DecorKind.Bush
-                        || _style.DecorVariants[variant].Kind == DecorKind.GrassTuft)) otherRadius *= .3f;
+                if (otherKind == DecorKind.Tree && understory) otherRadius *= .3f;
                 float gap = radius + otherRadius;
+                if (understory && (otherKind == DecorKind.Bush || otherKind == DecorKind.GrassTuft)) gap *= spacing;
                 var delta = point - new Vector2(other.position.x, other.position.z);
                 if (delta.sqrMagnitude < gap * gap) return false;
             }
             SpawnDecor(variant, point.x, point.y, rng);
-            _decor[_decorCount - 1].position = new Vector3(point.x,
-                BackgroundHeight(map, point.x, point.y) - .035f, point.y);
+            var placed = _decor[_decorCount - 1];
+            if (scale != 1f) placed.localScale *= scale;
+            placed.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .035f, point.y);
             return true;
         }
 

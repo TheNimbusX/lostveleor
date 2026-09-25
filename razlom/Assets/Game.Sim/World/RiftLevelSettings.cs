@@ -12,9 +12,10 @@ namespace Game.Sim
         public readonly int PlayerHealth;
         public readonly int EntryClearance;
         public readonly bool SolidEnvironment, NaturalGlade;
+        public readonly int ArenaSize;
 
         public RiftLevelSettings(int targetModules, int exitCount, int maxLoops, int rewardBranches,
-            int minEnemies, int maxEnemies, int enemyHealth, EncounterSettings encounters = null, bool boss = false, int playerHealth = 1000, int entryClearance = 9, bool solidEnvironment = false, bool naturalGlade = false)
+            int minEnemies, int maxEnemies, int enemyHealth, EncounterSettings encounters = null, bool boss = false, int playerHealth = 1000, int entryClearance = 9, bool solidEnvironment = false, bool naturalGlade = false, int arenaSize = 0)
         {
             if (targetModules < 2 || targetModules > 64 || exitCount < 1 || exitCount > 8 ||
                 maxLoops < 0 || maxLoops > 8 || rewardBranches < 0 || rewardBranches > 8 ||
@@ -35,7 +36,13 @@ namespace Game.Sim
             if (entryClearance < 9 || entryClearance > 30) throw new ArgumentOutOfRangeException(nameof(entryClearance));
             EntryClearance = entryClearance;
             SolidEnvironment = solidEnvironment; NaturalGlade = naturalGlade;
+            if (arenaSize != 0 && (arenaSize < 2 || arenaSize > 4)) throw new ArgumentOutOfRangeException(nameof(arenaSize));
+            ArenaSize = arenaSize;
         }
+
+        public RiftLevelSettings WithArenaSize(int size) => new RiftLevelSettings(TargetModules, ExitCount,
+            MaxLoops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth, Encounters, Boss,
+            PlayerHealth, EntryClearance, SolidEnvironment, NaturalGlade, size);
 
         // The existing prototype balance, without any additional RNG calls.
         public static RiftLevelSettings Prototype(int depth)
@@ -44,7 +51,8 @@ namespace Game.Sim
 
         public void Generate(LayoutGenerator generator, ModuleSet modules, LayoutMap map, ulong layoutSeed)
         {
-            if (NaturalGlade) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss);
+            if (ArenaSize > 0) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss, ArenaSize);
+            else if (NaturalGlade) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss);
             else if (Boss) generator.GenerateBossArena(modules, layoutSeed, map);
             else generator.Generate(modules, layoutSeed, map, TargetModules, ExitCount, MaxLoops, RewardBranches);
             if (SolidEnvironment && !Boss) map.BuildObstacles(layoutSeed);

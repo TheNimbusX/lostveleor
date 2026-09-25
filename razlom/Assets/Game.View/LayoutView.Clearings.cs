@@ -129,22 +129,28 @@ namespace Game.View
                     StampGroundWear(map, TrailPoint(obstacle.Center), obstacle.Radius.ToFloat() + 1.8f);
             }
             // Каменистые поляны отличаются плоским грунтом у края, центр остаётся травяным.
+            // Пятна прижаты к опушке, где стоят камни: одинокий круг посреди газона читался как проплешина.
             for (int g = 0; g < map.GladeCount; g++)
             {
                 if (CharacterOf(map, g) != GladeCharacter.Rocky) continue;
                 var glade = map.GetGlade(g); var rng = DecorRandom(g, 613);
-                for (int patch = 0; patch < 5; patch++)
+                for (int patch = 0; patch < 3; patch++)
                 {
                     float angle = (float)rng.NextDouble() * Mathf.PI * 2;
                     var center = TrailPoint(glade.Center) + new Vector2(Mathf.Cos(angle) * glade.Radii.X.ToFloat(),
-                        Mathf.Sin(angle) * glade.Radii.Y.ToFloat()) * .68f;
-                    StampGroundWear(map, center, 2.4f + (float)rng.NextDouble() * 1.4f);
+                        Mathf.Sin(angle) * glade.Radii.Y.ToFloat()) * (.86f + (float)rng.NextDouble() * .1f);
+                    StampGroundWear(map, center, 1.8f + (float)rng.NextDouble() * 1.2f);
                 }
             }
             _wearMask.SetPixelData(_wearPixels, 0);
             _wearMask.Apply(false, false);
             _roomMaterial.SetTexture("_WearMask", _wearMask);
         }
+
+        // Неровный контур пятна: радиус гуляет по шуму, привязанному к центру, —
+        // соседние пятна не повторяют одну и ту же кляксу, а круг не читается как штамп.
+        private static float PatchWobble(Vector2 point, Vector2 center)
+            => .72f + .56f * Mathf.PerlinNoise(point.x * .45f + center.x * .13f + 17, point.y * .45f + center.y * .13f + 41);
 
         private void StampGroundWear(LayoutMap map, Vector2 center, float radius)
         {
@@ -157,7 +163,7 @@ namespace Game.View
                 {
                     var p = new Vector2(_trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z,
                         _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w);
-                    float distance = Vector2.Distance(p, center) / radius;
+                    float distance = Vector2.Distance(p, center) / (radius * PatchWobble(p, center));
                     float strength = Mathf.SmoothStep(0, 1, Mathf.Clamp01(1 - distance));
                     if (strength <= 0 || !map.ContainsWorld(new FixVec2(Fix64.FromDouble(p.x), Fix64.FromDouble(p.y)))) continue;
                     int index = y * TrailResolution + x;

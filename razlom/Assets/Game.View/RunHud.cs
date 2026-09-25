@@ -48,7 +48,7 @@ namespace Game.View
             // перестанут нажиматься.
             // Мини-меню над добычей — тоже живые кнопки, и события мыши ему нужны.
             int menuDrop = DropMenuTarget(run);
-            if (run.Phase != RunPhase.ChoosingReward && run.Phase != RunPhase.ReplacingAbility
+            if (run.Phase != RunPhase.ChoosingReward && run.Phase != RunPhase.ReplacingAbility && run.Phase != RunPhase.ChoosingRoute
                 && menuDrop < 0 && Event.current.type != EventType.Repaint) return;
 
             EnsureStyles();
@@ -78,6 +78,8 @@ namespace Game.View
                     DrawCombatStatus(run, safeLeft);
                 else if (run.Phase == RunPhase.SeekingExit)
                     DrawSeekingExit(safeLeft);
+                else if (run.Phase == RunPhase.ChoosingRoute)
+                    DrawRouteChoice(run, canvasWidth, canvasHeight, safeLeft, safeRight);
                 else if (run.Phase == RunPhase.ChoosingReward)
                     DrawRewardChoice(run, canvasWidth, canvasHeight, safeLeft, safeRight);
                 else if (run.Phase == RunPhase.ReplacingAbility)
@@ -217,7 +219,9 @@ namespace Game.View
                 fights > 0 ? $"ВСТРЕЧИ: {cleared}/{fights} · ЦЕЛЕЙ: {run.CountRequiredEnemies()}"
                     : "ЦЕЛЕЙ: " + run.CountRequiredEnemies(), _subtitle);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 60f, 280f, 22f),
-                $"Тайники: {run.BranchesClaimed}/{run.Map.RewardBranchCount} · золото забега: {run.Gold}", _subtitle);
+                run.ArenaFlow ? (run.CurrentRoute.Hard ? "ОПАСНАЯ АРЕНА" : run.CurrentRoute.Reward == ArenaReward.Shop
+                    ? "МАГАЗИН · СКОРО" : "УЛУЧШЕНИЕ") + $" · золото: {run.Gold}"
+                    : $"Тайники: {run.BranchesClaimed}/{run.Map.RewardBranchCount} · золото забега: {run.Gold}", _subtitle);
             if (run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId])
             {
                 int id = run.BossId;
@@ -239,7 +243,7 @@ namespace Game.View
             GUI.Label(new Rect(panel.x + 16f, panel.y + 6f, 235f, 26f),
                 "ПУТЬ ОТКРЫТ", _title);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 235f, 20f),
-                "Следуй по тропе к выходу", _subtitle);
+                "Подойди к порталу", _subtitle);
         }
 
         private void DrawRouteLandmarks(RiftRun run, float scale)
@@ -271,6 +275,42 @@ namespace Game.View
             var box = new Rect(projected.x / scale - 110, (Screen.height - projected.y) / scale - 26, 220, 24);
             Fill(box, Panel);
             GUI.Label(new Rect(box.x + 6, box.y + 2, box.width - 12, 20), text, _subtitle);
+        }
+
+        private void DrawRouteChoice(RiftRun run, float canvasWidth, float canvasHeight,
+            float safeLeft, float safeRight)
+        {
+            float width = Mathf.Min(920f, canvasWidth - safeLeft - safeRight - 32f);
+            float height = Mathf.Min(440f, canvasHeight - 34f);
+            var panel = new Rect((canvasWidth - width) * .5f, (canvasHeight - height) * .5f, width, height);
+            Fill(panel, Panel); Frame(panel, Ink, 1f);
+            Fill(new Rect(panel.x, panel.y, width, 5f), Cyan);
+            GUI.Label(new Rect(panel.x + 28, panel.y + 20, width - 56, 30), "ВЫБЕРИ СЛЕДУЮЩУЮ АРЕНУ", _title);
+            GUI.Label(new Rect(panel.x + 28, panel.y + 54, width - 56, 26),
+                "Разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : "")
+                + " · награда ждёт после зачистки", _subtitle);
+            float cardWidth = (width - 80) / 3;
+            for (int i = 0; i < 3; i++)
+            {
+                var offer = run.GetRoute(i);
+                var card = new Rect(panel.x + 28 + i * (cardWidth + 12), panel.y + 90, cardWidth, height - 142);
+                bool selected = GUI.Button(card, GUIContent.none, _cardButton);
+                Fill(card, card.Contains(Event.current.mousePosition) ? CardHover : Card);
+                Frame(card, offer.Hard ? Coral : Cyan, 2);
+                string size = offer.Size == 2 ? "Малая" : offer.Size == 3 ? "Средняя" : "Большая";
+                GUI.Label(new Rect(card.x + 14, card.y + 14, card.width - 28, 28),
+                    (i + 1) + ". " + (offer.Reward == ArenaReward.Shop ? "МАГАЗИН · СКОРО" : "УЛУЧШЕНИЕ"), _eyebrow);
+                string text = size + " лесная арена\n" + (offer.Hard ? "Повышенная сложность" : "Обычная сложность")
+                    + "\n\n" + (offer.Reward == ArenaReward.Shop
+                        ? "Место для будущего торговца.\nПока — обычная награда за бой."
+                        : "Новая способность или талант\nпосле победы.")
+                    + (offer.Hard ? "\n\nВраги: +25% здоровья и урона\nБонус: +" + offer.BonusGold + " золота за зачистку" : "");
+                GUI.Label(new Rect(card.x + 14, card.y + 48, card.width - 28, card.height - 54), text, _body);
+                if (selected)
+                    _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseRoute1 + i));
+            }
+            GUI.Label(new Rect(panel.x + 28, panel.yMax - 35, width - 56, 24),
+                (GameUserSettings.AbilityRowUsesLetters ? "Q W E" : "1 2 3") + "  выбрать путь     L  уйти с добычей", _subtitle);
         }
 
         private void DrawRewardChoice(RiftRun run, float canvasWidth, float canvasHeight,

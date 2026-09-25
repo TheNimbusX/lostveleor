@@ -18,6 +18,7 @@ MonoBehaviour:
   EntryClearance: 14
   SolidEnvironment: 1
   NaturalGlade: 1
+  ArenaFlow: 1
   MaxModules: 64
   Modules:
   - {fileID: 11400000, guid: 54a3a68d650f2874aaf2c9bf977d426d, type: 2}

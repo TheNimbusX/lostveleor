@@ -63,6 +63,9 @@ namespace Game.LocationTests
         [Test]
         public void PointerCoordinates_ReachDistantGlades_WithoutClippingToOldArena()
         {
+            // Проверяем регрессию длинных карт независимо от размера нынешних арен.
+            _theme.Gameplay = Object.Instantiate(_theme.Gameplay);
+            _theme.Gameplay.ArenaFlow = false;
             var quantize = typeof(TickDriver).GetMethod("QuantizePosition",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             Assert.That(quantize, Is.Not.Null);
@@ -122,7 +125,7 @@ namespace Game.LocationTests
                     Assert.That(run.Depth, Is.EqualTo(level), "Забег перешёл на проверяемый уровень");
                     var seeds = RiftLevelSeeds.ForLevel(seed, level);
                     var newMap = new LayoutMap(authored.Modules, authored.MaxModules);
-                    authored.GetLevel(level).Generate(new LayoutGenerator(), authored.Modules, newMap, seeds.Layout);
+                    run.LevelSettings.Generate(new LayoutGenerator(), authored.Modules, newMap, seeds.Layout);
                     Assert.That(newMap.Hash(), Is.EqualTo(run.Map.Hash()), $"seed {seed}, level {level}");
                     var actual = new Simulation(seed, 512);
                     authored.GetLevel(level).Spawn(actual, newMap, seeds.Spawns);
@@ -140,6 +143,8 @@ namespace Game.LocationTests
                     run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
                     if (run.Phase == RunPhase.ReplacingAbility)
                         run.Step(new InputFrame { Command = (byte)RunCommand.SalvageAbility });
+                    if (run.Phase == RunPhase.ChoosingRoute)
+                        run.Step(new InputFrame { Command = (byte)RunCommand.ChooseRoute1 });
                 }
             }
         }
