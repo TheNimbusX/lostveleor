@@ -5,21 +5,29 @@ namespace Game.Sim
     ///
     /// Решение владельца от 15 сентября: всё, что герой нашёл в Разломе,
     /// живёт до конца забега. Забег начинается с автоатаки и Вихря, три слота
-    /// пусты; способности приходят с карточек и с элит, таланты берутся строго
-    /// по порядку внутри способности.
+    /// пусты; способности приходят с карточек и с элит.
+    ///
+    /// Таланты — УСИЛЕНИЯ СПОСОБНОСТИ (владелец, 24 сентября): уровней нет,
+    /// выпадают в любом порядке. Поэтому хранится набор взятых — битовая маска
+    /// на способность, а не «сколько взято».
     ///
     /// ХРАНИТСЯ ИНДЕКС В ПУЛЕ, А НЕ ОПРЕДЕЛЕНИЕ: так набор хешируется и
     /// сравнивается числами, а ролл карточек видит, чего у игрока ещё нет.
-    /// Ранг таланта — число, как и раньше: раз брать можно только следующий,
-    /// «сколько взято» и есть полный список взятого.
     /// </summary>
     public sealed class RunLoadout
     {
         public const int Slots = PelagKit.MainSlots;
         public const int EmptySlot = -1;
 
+        /// <summary>
+        /// Сколько усилений у способности по дизайну (владелец, 24 сентября) — столько граней
+        /// у ромбика в HUD. Сейчас у линий по SabreTalents.TalentsPerLine (5); по три новых на
+        /// способность — на утверждении.
+        /// </summary>
+        public const int MaxUpgrades = 8;
+
         private readonly int[] _slots = new int[Slots];
-        private readonly int[] _ranks = new int[PelagKit.PoolSize];
+        private readonly int[] _taken = new int[PelagKit.PoolSize];
         private readonly AbilityNode[] _nodes = new AbilityNode[SabreTalents.TalentsPerLine];
 
         /// <summary>Растёт при каждой смене набора или ранга.</summary>
@@ -34,7 +42,7 @@ namespace Game.Sim
         public void ResetToStarter()
         {
             for (int i = 0; i < Slots; i++) _slots[i] = EmptySlot;
-            System.Array.Clear(_ranks, 0, _ranks.Length);
+            System.Array.Clear(_taken, 0, _taken.Length);
             _slots[0] = PelagKit.StarterPoolIndex;
             Version++;
         }
@@ -42,7 +50,7 @@ namespace Game.Sim
         public void CopyFrom(RunLoadout other)
         {
             System.Array.Copy(other._slots, _slots, Slots);
-            System.Array.Copy(other._ranks, _ranks, _ranks.Length);
+            System.Array.Copy(other._taken, _taken, _taken.Length);
             Version++;
         }
 
@@ -86,7 +94,7 @@ namespace Game.Sim
             if (Owns(poolIndex)) return false;
 
             int old = _slots[slot];
-            if (old != EmptySlot) _ranks[old] = 0;
+            if (old != EmptySlot) _taken[old] = 0;
             _slots[slot] = poolIndex;
             Version++;
             return true;
@@ -99,26 +107,63 @@ namespace Game.Sim
             return free >= 0 && Put(free, poolIndex);
         }
 
-        // ---- таланты ----
+        // ---- таланты (усиления) ----
 
-        public int TalentRank(int poolIndex) => (uint)poolIndex < PelagKit.PoolSize ? _ranks[poolIndex] : 0;
+        /// <summary>Сколько усилений способности взято (0…TalentsPerLine). Порядок не важен.</summary>
+        public int TalentRank(int poolIndex) => TalentCount(poolIndex);
 
-        /// <summary>Способность в руках, у неё есть направление талантов, и оно не взято целиком.</summary>
+        public int TalentCount(int poolIndex)
+        {
+            int mask = TalentMask(poolIndex), count = 0;
+            for (; mask != 0; mask &= mask - 1) count++;
+            return count;
+        }
+
+        /// <summary>Набор взятых усилений: бит N — усиление N.</summary>
+        public int TalentMask(int poolIndex) => (uint)poolIndex < PelagKit.PoolSize ? _taken[poolIndex] : 0;
+
+        public bool HasTalent(int poolIndex, int index)
+            => (uint)index < SabreTalents.TalentsPerLine && (TalentMask(poolIndex) & (1 << index)) != 0;
+
+        /// <summary>Способность в руках, у неё есть усиления, и взяты не все.</summary>
         public bool CanTakeTalent(int poolIndex)
             => Owns(poolIndex)
                && SabreTalents.TryLineOf(poolIndex, out _)
-               && _ranks[poolIndex] < SabreTalents.TalentsPerLine;
+               && TalentCount(poolIndex) < SabreTalents.TalentsPerLine;
 
-        /// <summary>Берёт следующий по порядку талант способности.</summary>
-        public bool TakeTalent(int poolIndex)
+        /// <summary>Это конкретное усиление можно взять: способность в руках, усиление ещё не взято.</summary>
+        public bool CanTakeTalent(int poolIndex, int index)
+            => Owns(poolIndex)
+               && SabreTalents.TryLineOf(poolIndex, out _)
+               && (uint)index < SabreTalents.TalentsPerLine
+               && !HasTalent(poolIndex, index);
+
+        /// <summary>Берёт конкретное усиление способности — в любом порядке.</summary>
+        public bool TakeTalent(int poolIndex, int index)
         {
-            if (!CanTakeTalent(poolIndex)) return false;
-            _ranks[poolIndex]++;
+            if (!CanTakeTalent(poolIndex, index)) return false;
+            _taken[poolIndex] |= 1 << index;
             Version++;
             return true;
         }
 
-        /// <summary>Есть ли у игрока хоть один доступный талант — от этого зависят веса карточек.</summary>
+        /// <summary>Берёт первое ещё не взятое усиление. Для меню разработчика и тестов.</summary>
+        public bool TakeTalent(int poolIndex)
+        {
+            for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                if (TakeTalent(poolIndex, index)) return true;
+            return false;
+        }
+
+        /// <summary>Номер N-го (с нуля) ещё не взятого усиления способности или −1.</summary>
+        public int UntakenTalentAt(int poolIndex, int n)
+        {
+            for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                if (!HasTalent(poolIndex, index) && n-- == 0) return index;
+            return -1;
+        }
+
+        /// <summary>Есть ли у игрока хоть одно доступное усиление — от этого зависят веса карточек.</summary>
         public bool HasTalentToTake
         {
             get
@@ -129,12 +174,14 @@ namespace Game.Sim
             }
         }
 
-        /// <summary>Дописывает узлы взятых талантов способности в слоте.</summary>
+        /// <summary>Дописывает узлы взятых усилений способности в слоте.</summary>
         public int AppendTalentNodes(int slot, AbilityNode[] buffer, int count)
         {
             int pool = PoolIndexAt(slot);
             if (!SabreTalents.TryLineOf(pool, out SabreTalentLine line)) return count;
-            return SabreTalents.AppendNodes(line, _ranks[pool], buffer, count);
+            for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                if (HasTalent(pool, index)) count = SabreTalents.AppendNode(line, index, buffer, count);
+            return count;
         }
 
         /// <summary>Ставит набор в симуляцию: четыре слота и общий кувырок.</summary>
@@ -152,7 +199,7 @@ namespace Game.Sim
         public void HashInto(ref ulong hash)
         {
             for (int i = 0; i < Slots; i++) Hashing.Mix(ref hash, _slots[i]);
-            for (int i = 0; i < _ranks.Length; i++) Hashing.Mix(ref hash, _ranks[i]);
+            for (int i = 0; i < _taken.Length; i++) Hashing.Mix(ref hash, _taken[i]);
         }
     }
 }

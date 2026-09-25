@@ -201,6 +201,8 @@ namespace Game.View
         private ViewPool _orvillPool;
         private ViewPool _rootSwarmPool;
         private ViewPool _forestBudPool;
+        private ViewPool _wendigoPool;
+        private ForestWendigoAnimatorView[] _wendigoViews;
         private ForestBudAnimatorView[] _forestBudViews;
 
         // Индекс сущности → её объект. Массив, а не словарь: индексы плотные,
@@ -383,6 +385,7 @@ namespace Game.View
             _groundOffset = new float[capacity];
             _animationViews = new CharacterAnimatorView[capacity];
             _forestBudViews = new ForestBudAnimatorView[capacity];
+            _wendigoViews = new ForestWendigoAnimatorView[capacity];
             _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
@@ -492,7 +495,7 @@ namespace Game.View
             BindNewEntities();
             if (_driver.GameplayPaused)
                 for (int i = 1; i < _boundCount; i++)
-                    if (_deathStarted[i] && sim.Entities.Kind[i] == EnemyKind.ForestBud)
+                    if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo))
                     {
                         // Пауза останавливает и падение, и последующее исчезновение бутона.
                         _deathStartedAt[i] += Time.deltaTime;
@@ -920,7 +923,9 @@ namespace Game.View
                 // Авторский манекен уже стоит в сцене: пул боевых врагов им не владеет.
                 if (CampTrainingView.Find(i) != null) continue;
                 if (entities.Kind[i] == EnemyKind.ForestBud && _forestBudPool == null) PrepareForestBud();
+                if (entities.Kind[i] == EnemyKind.ForestWendigo && _wendigoPool == null) PrepareWendigo();
                 ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
+                    : entities.Kind[i] == EnemyKind.ForestWendigo ? _wendigoPool
                     : entities.Kind[i] == EnemyKind.ForestBud ? _forestBudPool
                     : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
                 GameObject go = pool.Acquire();
@@ -931,6 +936,8 @@ namespace Game.View
                 _animationViews[i] = go.GetComponent<CharacterAnimatorView>();
                 _forestBudViews[i] = go.GetComponent<ForestBudAnimatorView>();
                 _forestBudViews[i]?.Bind(_driver, i);
+                _wendigoViews[i] = go.GetComponent<ForestWendigoAnimatorView>();
+                _wendigoViews[i]?.Bind(_driver, i);
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
                 _equipmentViews[i] = go.GetComponent<PelagEquipmentView>();
                 _animationViews[i]?.ResetForSpawn();
@@ -978,7 +985,7 @@ namespace Game.View
                 go.transform.localScale = ExpectedBaseScale(entities.Side[i], entities.Kind[i], _animationViews[i]);
                 _baseScale[i] = go.transform.localScale;
 
-                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null
+                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null || _wendigoViews[i] != null
                     ? 0f
                     : GroundOffset(entities.Side[i], WoleScale, OrvillScale);
             }
@@ -989,6 +996,7 @@ namespace Game.View
         private Vector3 ExpectedBaseScale(Faction faction, EnemyKind kind, CharacterAnimatorView animation)
         {
             float scale = faction == Faction.Wole ? WoleScale
+                : kind == EnemyKind.ForestWendigo ? 1f
                 : kind == EnemyKind.ForestBud ? ForestBudScale
                 : kind == EnemyKind.ForestRootSwarm ? RootSwarmScale : OrvillScale;
             if (animation != null && animation.UsesSprites)
@@ -1583,9 +1591,10 @@ namespace Game.View
                             EndPlayerAnchorUse();
                         }
                         CharacterAnimatorView animation = AnimationOf(e.Target);
-                        if (animation == null && _forestBudViews[e.Target] == null) break;
+                        if (animation == null && _forestBudViews[e.Target] == null && _wendigoViews[e.Target] == null) break;
                         animation?.PlayDeath();
                         _forestBudViews[e.Target]?.PlayDeath();
+                        _wendigoViews[e.Target]?.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -1647,6 +1656,22 @@ namespace Game.View
         {
             return BodyFactory(WoleModel, WoleController, WoleMaterial, WoleTexture,
                 Faction.Wole, WoleScale)();
+        }
+
+        public void PrepareWendigo()
+        {
+            if (_wendigoPool != null) return;
+            var prefab = Resources.Load<GameObject>("Characters/Forest_Wendigo/ForestWendigo_Runtime");
+            if (prefab == null) throw new System.InvalidOperationException("Не собрано представление лесного вендиго.");
+            var root = new GameObject("Пул: Forest Wendigo").transform; root.SetParent(transform, false);
+            _wendigoPool = new ViewPool(root, () => {
+                var body = Instantiate(prefab); body.SetActive(false);
+                SetLayerRecursively(body, LayerMask.NameToLayer("EnemyOutline"));
+                CreateContactShadow(body.transform, Faction.Orvill, 1.4f);
+                return body;
+            }, 4);
+            while (_wendigoPool.NeedsPrewarm) _wendigoPool.PrewarmStep(4);
+            if (GetComponent<ForestWendigoCombatView>() == null) gameObject.AddComponent<ForestWendigoCombatView>();
         }
 
         public void PrepareForestBud()

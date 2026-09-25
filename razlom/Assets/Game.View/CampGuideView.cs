@@ -35,6 +35,7 @@ namespace Game.View
             var prefab = Resources.Load<GameObject>("UI/Prefabs/CampGuideWc");
             if (prefab == null) { enabled = false; return; }
             _panel = Instantiate(prefab).GetComponent<CampGuidePanel>();
+            if (_panel != null) UiScaleFollower.Attach(_panel.gameObject);
             _panel.name = "Дела в лагере";
             if (_panel.MarkerTemplate != null) _panel.MarkerTemplate.gameObject.SetActive(false);
         }

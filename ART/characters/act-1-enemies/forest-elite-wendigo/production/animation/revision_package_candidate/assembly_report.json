@@ -1,0 +1,285 @@
+{
+  "status": "superseded_validation_only_visual_review_rejected",
+  "review_note": "Technical audit only; Leap v6 in this report was later superseded by v7b. Owner rejected gallery motion. No six-action package was built or approved.",
+  "blender": "5.2.1 LTS",
+  "sources": {
+    "skin": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_SkinCandidate.blend",
+    "idle": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.blend",
+    "walkdeath": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_secondary\\output_final\\ForestWendigo_WalkDeath_Revised.blend",
+    "hit": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_hit\\ForestWendigo_Hit_v2.blend",
+    "leap": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_primary\\Wendigo_Primary_v6_ReachProbe.blend",
+    "claw": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\ForestWendigo_Claw_ArtRevision.blend"
+  },
+  "fps": 30,
+  "root_xy_tolerance_m": 1e-05,
+  "actions": {
+    "Idle": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.blend",
+      "frame_range": [
+        0,
+        60
+      ],
+      "frames_inclusive": 61,
+      "seconds": 2.0,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            0.002196904271841049,
+            0.27356624603271484,
+            2.1921558380126953
+          ]
+        ],
+        [
+          30,
+          [
+            -0.002075696364045143,
+            0.27729785442352295,
+            2.199673891067505
+          ]
+        ],
+        [
+          60,
+          [
+            0.002196904271841049,
+            0.27356624603271484,
+            2.1921558380126953
+          ]
+        ]
+      ]
+    },
+    "Walk": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_secondary\\output_final\\ForestWendigo_WalkDeath_Revised.blend",
+      "frame_range": [
+        0,
+        18
+      ],
+      "frames_inclusive": 19,
+      "seconds": 0.6,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            -0.01586940512061119,
+            0.5162553191184998,
+            2.0985517501831055
+          ]
+        ],
+        [
+          9,
+          [
+            0.01586940512061119,
+            0.5162553191184998,
+            2.0985517501831055
+          ]
+        ],
+        [
+          18,
+          [
+            -0.01586940512061119,
+            0.5162553191184998,
+            2.0985517501831055
+          ]
+        ]
+      ]
+    },
+    "Claw": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\ForestWendigo_Claw_ArtRevision.blend",
+      "frame_range": [
+        0,
+        30
+      ],
+      "frames_inclusive": 31,
+      "seconds": 1.0,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ],
+        [
+          15,
+          [
+            0.20256750285625458,
+            0.17946898937225342,
+            1.967322587966919
+          ]
+        ],
+        [
+          30,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ]
+      ]
+    },
+    "Leap": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_primary\\Wendigo_Primary_v6_ReachProbe.blend",
+      "frame_range": [
+        0,
+        51
+      ],
+      "frames_inclusive": 52,
+      "seconds": 1.7,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ],
+        [
+          25,
+          [
+            0.0,
+            0.5525564551353455,
+            2.295088291168213
+          ]
+        ],
+        [
+          51,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ]
+      ]
+    },
+    "Hit": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_hit\\ForestWendigo_Hit_v2.blend",
+      "frame_range": [
+        0,
+        14
+      ],
+      "frames_inclusive": 15,
+      "seconds": 0.4667,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ],
+        [
+          7,
+          [
+            0.16753844916820526,
+            -0.27452996373176575,
+            2.1839816570281982
+          ]
+        ],
+        [
+          14,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ]
+      ]
+    },
+    "Death": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_secondary\\output_final\\ForestWendigo_WalkDeath_Revised.blend",
+      "frame_range": [
+        0,
+        60
+      ],
+      "frames_inclusive": 61,
+      "seconds": 2.0,
+      "fcurves": 214,
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "max_root_bone_xy_m": 0.0,
+      "max_armature_xy_m": 0.0,
+      "head_samples": [
+        [
+          0,
+          [
+            0.0,
+            0.25999999046325684,
+            2.200000047683716
+          ]
+        ],
+        [
+          30,
+          [
+            -0.07286112010478973,
+            0.7988072633743286,
+            1.2986294031143188
+          ]
+        ],
+        [
+          60,
+          [
+            0.0953257605433464,
+            0.8595060110092163,
+            0.7988027334213257
+          ]
+        ]
+      ]
+    }
+  },
+  "source_sha256": {
+    "skin": "75ad8fb5f3740ae6473777fc15bfaf6cb08180ad311cba489a37b7798d27eb50",
+    "idle": "ebebbbd309f4f3c7b2738481592fb5de23089625a10d95a8dc0c87859b48a908",
+    "walkdeath": "ab02dd1da701aad94a706d6f841fdba6c6456872f53135542e110b5c24c243b8",
+    "hit": "d3a868ea6fdf16026fa1e38eae32fce6416422249878d60de959cead5550cb23",
+    "leap": "60151afb093e3398f570e2fb6ef2d175bcc4be76c27cc1a7a1651bfdb5d819a7",
+    "claw": "1bab5a8bc06d0d2eb89edc1a1b8951df65e0544423b0f7e0c593c269057fb167"
+  },
+  "contract": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_package_candidate\\animation_contract.json",
+  "skin": {
+    "triangles": 24636,
+    "max_triangles": 25000,
+    "vertices": 12361,
+    "material_count": 1,
+    "max_bone_influences_per_vertex": 4,
+    "bones": 30,
+    "deform_bones": 22,
+    "bone_digest": "a27de0e259a4552ded9959a5fbe1c0ad10c1957cdfd6c09e35c30eb9e41f50b7",
+    "mesh_digest": "06970b8dbd6000d9d0cc389f92260ace894085af3a928e11d5c275d5a7843f26",
+    "rig_object": "ARM_ForestWendigo",
+    "mesh_object": "SM_ForestWendigo_LOD0"
+  }
+}

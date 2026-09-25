@@ -1,0 +1,37 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_SkinCandidate.blend",
+  "output": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\pole_candidate\\ForestWendigo_Rig_PoleCandidate.blend",
+  "triangles": 24636,
+  "poles": {
+    "CTRL_R_elbow": {
+      "new_head": [
+        1.02,
+        -0.36,
+        1.23
+      ],
+      "pole_angle_deg": 45,
+      "neutral_joint_drift_m": 0.001189,
+      "neutral_joint_head": [
+        0.420558,
+        -0.619025,
+        1.479612
+      ]
+    },
+    "CTRL_R_knee": {
+      "new_head": [
+        1.13,
+        -0.82,
+        0.655
+      ],
+      "pole_angle_deg": -25,
+      "neutral_joint_drift_m": 0.002942,
+      "neutral_joint_head": [
+        0.241388,
+        -0.432359,
+        0.721078
+      ]
+    }
+  },
+  "deform_rest_change_max_m": 0.0,
+  "mesh_rest_change_max_m": 0.0
+}

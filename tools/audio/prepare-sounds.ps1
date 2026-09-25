@@ -18,8 +18,9 @@
 param(
     [string] $Source = (Join-Path $env:USERPROFILE 'Downloads'),
     [string] $Root = 'razlom/Assets/Resources/Audio',
-    # camp-sfx — только пак владельца из ART/camp-sfxs (22 сентября); пусто — всё остальное.
-    [ValidateSet('', 'camp-sfx')] [string] $Group = ''
+    # camp-sfx — только пак владельца из ART/camp-sfxs (22 сентября); ui-pack — звуки интерфейса
+    # и моментов забега из ART/ui-sfx (25 сентября); пусто — всё остальное.
+    [ValidateSet('', 'camp-sfx', 'ui-pack')] [string] $Group = ''
 )
 # Не Stop: PowerShell 5.1 считает ошибкой любую строку ffmpeg в stderr (баннер, «Guessed Channel Layout»).
 # Сбои ffmpeg ловятся по $LASTEXITCODE после каждого вызова.
@@ -164,6 +165,29 @@ $campSfx = @(
     (Sfx 'rift_whoosh' 'ES_Swooshes, Whoosh, Eerie, Anxiety, Tonal, Mystic, Fast 02 - Epidemic Sound - 4521-7037.wav' -8 -28)
 )
 
+# Интерфейс и моменты забега, 25 сентября (аудит UI, этап 2): «400 Sounds Pack» владельца из Downloads,
+# выбранные файлы лежат в ART/ui-sfx. Наведение и шаг ползунка — тихие щелчки; пауза — книга, окно — карта;
+# концы забега и события арены — одна семья, рояль и клавесин.
+$ui = 'ART/ui-sfx'
+function Ui($name, $dir, $file, $peak, $mean) { [pscustomobject]@{ Name=$name; Dir=$dir; File=$file; Src=$ui; Peak=$peak; Mean=$mean; Trim=$true } }
+$uiPack = @(
+    (Ui 'ui_hover_01' 'UI' 'select_1.wav' -16 -36), (Ui 'ui_hover_02' 'UI' 'select_2.wav' -16 -36),
+    (Ui 'ui_hover_03' 'UI' 'select_3.wav' -16 -36), (Ui 'ui_hover_04' 'UI' 'select_4.wav' -16 -36),
+    (Ui 'ui_slider' 'UI' 'pop_1.wav' -14 -34),
+    (Ui 'ui_list_open' 'UI' 'click_double_on.wav' -9 -29), (Ui 'ui_list_close' 'UI' 'click_double_off.wav' -9 -29),
+    (Ui 'ui_window_close' 'UI' 'map_close.wav' -8 -28),
+    (Ui 'ui_pause_open' 'UI' 'book_open.wav' -8 -28), (Ui 'ui_pause_close' 'UI' 'book_close.wav' -8 -28),
+    (Ui 'ui_key_waiting' 'UI' 'pop_2.wav' -9 -29),
+    (Ui 'run_death' 'Game' 'grand_piano_defeated.wav' -6 -24),
+    (Ui 'run_victory' 'Game' 'grand_piano_level_complete.wav' -6 -24),
+    (Ui 'run_leave' 'Game' 'grand_piano_chime_positive.wav' -7 -26),
+    (Ui 'arena_cleared' 'Game' 'harpsichord_chime_positive.wav' -7 -26),
+    (Ui 'boss_intro' 'Game' 'grand_piano_mystery.wav' -7 -26),
+    (Ui 'toast_item' 'Game' 'item_equip.wav' -9 -29),
+    (Ui 'toast_rare' 'Game' 'gem_collect.wav' -9 -29),
+    (Ui 'toast_gold' 'Game' 'coin_collect.wav' -10 -30)
+)
+
 function Measure-Level([string] $path) {
     $log = & $ffmpeg -hide_banner -nostats -i $path -af volumedetect -f null NUL 2>&1 | Out-String
     [pscustomobject]@{
@@ -175,7 +199,7 @@ function Measure-Level([string] $path) {
 $temp = Join-Path ([IO.Path]::GetTempPath()) 'razlom-sounds'
 New-Item -ItemType Directory -Force $temp | Out-Null
 $failed = 0
-$list = if ($Group -eq 'camp-sfx') { $campSfx } else { $sounds + $camp }
+$list = if ($Group -eq 'camp-sfx') { $campSfx } elseif ($Group -eq 'ui-pack') { $uiPack } else { $sounds + $camp }
 foreach ($s in $list) {
     $srcDir = if ($s.PSObject.Properties['Src']) { $s.Src } else { $Source }
     $src = Join-Path $srcDir $s.File

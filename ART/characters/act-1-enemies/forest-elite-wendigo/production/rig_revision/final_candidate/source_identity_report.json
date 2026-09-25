@@ -1,0 +1,20 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.blend",
+  "candidate": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_SkinCandidate.blend",
+  "vertices": 12361,
+  "triangles": 24636,
+  "max_position_delta_m": 0.0,
+  "same_faces": true,
+  "same_uv_layers": true,
+  "max_uv_delta": 0.0,
+  "same_material": true,
+  "source_material_names": [
+    "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6.001"
+  ],
+  "candidate_material_names": [
+    "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+  ],
+  "same_bone_names": true,
+  "max_bind_matrix_delta": 0.0,
+  "max_object_matrix_delta": 0.0
+}

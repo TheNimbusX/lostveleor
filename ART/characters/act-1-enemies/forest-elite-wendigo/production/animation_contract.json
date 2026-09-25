@@ -1,0 +1,86 @@
+{
+  "subject": "ForestWendigo",
+  "review_stage": "Blender clips awaiting owner review before Unity",
+  "fps": 30,
+  "root_motion": "none; Sim drives horizontal locomotion and leap displacement",
+  "blender_forward": "+Y",
+  "unity_export": {
+    "fbx_axis_forward": "-Z",
+    "fbx_axis_up": "Y",
+    "apply_unit_scale": true,
+    "global_scale": 1,
+    "bake_every_frame": true,
+    "simplify": 0,
+    "rig_type": "Generic"
+  },
+  "geometry": {
+    "maximum_exported_triangles": 25000,
+    "max_bone_influences_per_vertex": 4,
+    "materials_target": 1
+  },
+  "clips": [
+    {
+      "name": "AN_ForestWendigo_Idle",
+      "frames": [
+        0,
+        60
+      ],
+      "loop": true,
+      "beats": "Subtle asymmetrical breathing, slight shoulder and antler-leaf overlap; grounded claws and feet."
+    },
+    {
+      "name": "AN_ForestWendigo_Walk",
+      "frames": [
+        0,
+        12
+      ],
+      "loop": true,
+      "target_speed_mps": 3.6,
+      "cycle_ground_equivalent_m": 1.44,
+      "beats": "Alternating planted digitigrade feet; counter-swing heavy arms; stable head/antlers; seamless frame 0/12."
+    },
+    {
+      "name": "AN_ForestWendigo_Claw",
+      "frames": [
+        0,
+        30
+      ],
+      "loop": false,
+      "windup_end_frame": 18,
+      "contact_frame": 18,
+      "recovery_end_frame": 30,
+      "beats": "Right shoulder coils and forearm lifts; one 140-degree, 2.7m ground-level claw sweep powered by torso/hips; planted stance; visible recovery."
+    },
+    {
+      "name": "AN_ForestWendigo_Leap",
+      "frames": [
+        0,
+        51
+      ],
+      "loop": false,
+      "preparation_end_frame": 24,
+      "takeoff_frame": 24,
+      "landing_contact_frame": 33,
+      "recovery_end_frame": 51,
+      "beats": "Deep crouch; 9-frame airborne arc via visual pelvis height only; claws and digitigrade feet absorb landing; no horizontal root motion."
+    },
+    {
+      "name": "AN_ForestWendigo_Hit",
+      "frames": [
+        0,
+        14
+      ],
+      "loop": false,
+      "beats": "Brief readable recoil, no full-body collapse, blends back to current gameplay state."
+    },
+    {
+      "name": "AN_ForestWendigo_Death",
+      "frames": [
+        0,
+        45
+      ],
+      "loop": false,
+      "beats": "Forward weight loss, both claws brace, knees buckle, head lowers between arms; final pose remains supported on paws, no side roll or rebound."
+    }
+  ]
+}

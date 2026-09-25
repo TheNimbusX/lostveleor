@@ -14,9 +14,10 @@ namespace Game.View
     /// стоить аллокации. Когда все слоты заняты, переиспользуется самый старый —
     /// потерять цифру в мясорубке лучше, чем создать объект в бою.
     ///
-    /// ВИД — ПАК «НОЧНАЯ АКВАРЕЛЬ» (лист HUD, 23 сентября 2026): TextMeshPro
-    /// шрифтом UiTheme.Numbers (Nunito Bold), мягкая тёмная обводка; крит —
-    /// градиент от светлого оранжевого к насыщенному, тёплое свечение и искра.
+    /// ВИД — ПАК «НОЧНАЯ АКВАРЕЛЬ», лист HUD `kit-sheet-4` (владелец 25 сентября: «менять под лист»):
+    /// TextMeshPro шрифтом UiTheme.Numbers (Philosopher Bold — светлая антиква листа), у каждого
+    /// числа минус-тире, мягкая тёмная обводка; крит — оранжевый с тёплым свечением и искрой, без «!».
+    /// Урон по герою отличает цвет и размер (красный, крупнее).
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     public sealed class DamageNumbers : MonoBehaviour
@@ -27,11 +28,11 @@ namespace Game.View
         [Header("Вид")]
         // Цвета пака «Ночная акварель» (23 сентября 2026): светлая обычная,
         // оранжевый крит с искрой, как на листе HUD.
-        public Color NormalColor = new Color32(0xF4, 0xF7, 0xFB, 0xFF);
+        public Color NormalColor = new Color32(0xE6, 0xEA, 0xF5, 0xFF);
         [Tooltip("Крит: верх цифры; к низу градиент густеет (CritBottom)")]
-        public Color CritColor = new Color32(0xFF, 0xB0, 0x5C, 0xFF);
+        public Color CritColor = new Color32(0xFF, 0x9C, 0x58, 0xFF);
         [Tooltip("Множитель цвета крита у низа цифры")]
-        public Color CritBottom = new Color(1f, .6f, .38f, 1f);
+        public Color CritBottom = new Color(1f, .8f, .72f, 1f);
         [Tooltip("Размер шрифта на единицу прежнего characterSize: 0,036 × 96 ≈ 3,5")]
         public float FontScale = 112f;
         [Tooltip("Искра у крита, метры")]
@@ -283,12 +284,9 @@ namespace Game.View
 
         private void WriteValue(ref Slot s)
         {
-            // ОПОЗНАВАТЕЛЬ. Свой урон — просто число, урон по герою — число
-            // с минусом. Это первое, что читается, и читается оно даже боковым
-            // зрением, когда на цвет смотреть некогда.
-            string value = s.Evaded ? "УКЛОНЕНИЕ" : s.PlayerHit
-                ? "−" + s.Value.ToString()
-                : s.Crit ? s.Value.ToString() + "!" : s.Value.ToString();
+            // По листу HUD минус у каждого числа; урон по герою отличают красный цвет и
+            // размер. Минус — короткое тире: знака U+2212 в Philosopher нет.
+            string value = s.Evaded ? "УКЛОНЕНИЕ" : "–" + s.Value.ToString();
 
             s.Text.text = value;
 

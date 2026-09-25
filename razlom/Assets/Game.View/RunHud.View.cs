@@ -1,5 +1,8 @@
 using Game.Sim;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Game.View
 {
@@ -15,13 +18,31 @@ namespace Game.View
         private int _shownDepth = -1, _shownLetters = -1;
         private string _statusShown;
 
+        /// <summary>Метки мира, мини-меню добычи и подсказка цели на паке (RunWorldWc); без него — IMGUI.</summary>
+        private RunWorldView _world;
+
         private void BindView()
         {
+            var world = Resources.Load<GameObject>("UI/Prefabs/RunWorldWc");
+            if (world != null && _world == null)
+            {
+                _world = Instantiate(world, transform).GetComponentInChildren<RunWorldView>(true);
+                if (_world != null) UiScaleFollower.Attach(_world.gameObject);
+                if (_world != null) _world.Initialize(_driver);
+            }
             var prefab = Resources.Load<GameObject>("UI/Prefabs/RunHudWc");
             if (prefab == null) return;
             _view = Instantiate(prefab, transform).GetComponentInChildren<RunHudView>(true);
             if (_view == null) return;
-            _view.OfferClicked += i => _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseReward1 + i));
+            _view.OfferClicked += RequestOffer;
+            _view.SkipClicked += () => { _replaceOffer = -1; _driver.QueueRunCommand(RunCommand.SkipReward); };
+            _view.ArtifactConfirmClicked += () =>
+            {
+                int offer = _replaceOffer;
+                _replaceOffer = -1;
+                if (offer >= 0) _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseReward1 + offer));
+            };
+            _view.ArtifactKeepClicked += () => _replaceOffer = -1;
             _view.SlotClicked += i => _driver.QueueRunCommand((RunCommand)((int)RunCommand.ReplaceSlot1 + i));
             _view.SalvageClicked += () =>
             {
@@ -37,13 +58,19 @@ namespace Game.View
 
         private bool _summaryFilled;
 
+        // Числа итогов досчитываются от нуля, по очереди — как в концепте итогов (аудит UI, этап 2).
+        private readonly int[] _summaryTargets = new int[4];
+        private float _summaryCountAt = -1f;
+        private const float CountDuration = .6f, CountStagger = .12f;
+
         private void RefreshSummary()
         {
             GameSession session = _driver.Session;
-            bool shown = !_driver.GameplayPaused && session != null && session.Mode == GameMode.Summary;
+            // Итоги — после паузы конца забега (RunEndBeat): смерть и победа успевают прозвучать.
+            bool shown = !_driver.GameplayPaused && session != null && session.Mode == GameMode.Summary && !RunEndBeat.Holding;
             _view.SetShown(_view.Summary, shown);
-            if (!shown) { _summaryFilled = false; return; }
-            if (_summaryFilled) return;
+            if (!shown) { _summaryFilled = false; _summaryCountAt = -1f; return; }
+            if (_summaryFilled) { CountSummary(); return; }
             _summaryFilled = true;
 
             RunSummary summary = session.LastRun;
@@ -55,8 +82,9 @@ namespace Game.View
             RunHudView.SetText(_view.SummarySubtitle, died ? "Всё найденное в забеге осталось в Разломе"
                 : won ? "Локация пройдена" : "Разлом отпустил тебя с тем, что ты унёс");
             int[] values = { summary.RiftsCleared, summary.Depth, summary.ItemsKept, summary.GoldKept };
-            for (int i = 0; i < _view.SummaryValues.Length && i < values.Length; i++)
-                RunHudView.SetText(_view.SummaryValues[i], values[i].ToString());
+            for (int i = 0; i < _summaryTargets.Length; i++) _summaryTargets[i] = i < values.Length ? values[i] : 0;
+            _summaryCountAt = Time.unscaledTime;
+            CountSummary();
 
             string loss = string.Empty;
             if (summary.ItemsLeftBehind > 0 || summary.GoldLeftBehind > 0)
@@ -74,6 +102,21 @@ namespace Game.View
             RunHudView.SetText(_view.ToCampLabel, "В лагерь · " + GameKeyBindings.Label(GameAction.ReturnToCamp));
         }
 
+        private void CountSummary()
+        {
+            if (_summaryCountAt < 0f) return;
+            float since = Time.unscaledTime - _summaryCountAt;
+            bool done = true;
+            for (int i = 0; i < _view.SummaryValues.Length && i < _summaryTargets.Length; i++)
+            {
+                float k = Mathf.Clamp01((since - i * CountStagger) / CountDuration);
+                if (k < 1f) done = false;
+                float eased = 1f - (1f - k) * (1f - k) * (1f - k);
+                RunHudView.SetText(_view.SummaryValues[i], Mathf.RoundToInt(_summaryTargets[i] * eased).ToString());
+            }
+            if (done) _summaryCountAt = -1f;
+        }
+
         private void LateUpdate()
         {
             if (_view == null) return;
@@ -83,7 +126,8 @@ namespace Game.View
             RunPhase phase = live ? run.Phase : (RunPhase)255;
 
             bool choosing = phase == RunPhase.ChoosingReward, replacing = phase == RunPhase.ReplacingAbility;
-            int letters = GameUserSettings.AbilityRowUsesLetters ? 1 : 0;
+            int letters = TickDriver.GamepadLastUsed ? 2 : GameUserSettings.WasdMovement ? 3
+                : GameUserSettings.AbilityRowUsesLetters ? 1 : 0;
             if (live && (phase != _shownPhase || run.Depth != _shownDepth || letters != _shownLetters))
             {
                 _shownPhase = phase; _shownDepth = run.Depth; _shownLetters = letters;
@@ -92,20 +136,70 @@ namespace Game.View
             }
             if (!live) _shownPhase = (RunPhase)255;
             _view.SetShown(_view.Choice, choosing);
+            if (!choosing) _replaceOffer = -1;
+            HandleReplaceKeys();
+            _view.SetShown(_view.ArtifactReplace, choosing && _replaceOffer >= 0);
+            ReplaceOpen = choosing && _replaceOffer >= 0;
             _view.SetShown(_view.Replace, replacing);
 
             bool status = phase == RunPhase.Clearing || phase == RunPhase.SeekingExit;
             RunHudView.SetActive(_view.Status, status);
             if (status) FillStatus(run);
             bool boss = status && run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId];
+            if (!live) _bossMet = -1;
+            if (boss && _bossMet != run.Depth)
+            {
+                // Появление босса: полоса встаёт, когда босс вышел из тумана, — толчком и своим звуком,
+                // а не с первого кадра арены за пеленой (аудит UI, этап 2).
+                var at = run.Sim.Entities.Position[run.BossId];
+                if (_layout == null) _layout = FindAnyObjectByType<LayoutView>();
+                boss = _layout == null || _layout.IsRevealed(at.X.ToFloat(), at.Y.ToFloat())
+                    || run.Sim.Entities.Health[run.BossId] < run.Sim.Entities.MaxHealth[run.BossId];
+                if (boss)
+                {
+                    _bossMet = run.Depth;
+                    RunHudView.SetActive(_view.Boss, true);
+                    HudFx.Punch(_view.Boss, 1.22f, .55f);
+                    GameSound.Play("boss_intro", .85f, 0f, 1f);
+                }
+            }
             RunHudView.SetActive(_view.Boss, boss);
             if (boss)
             {
                 int id = run.BossId;
-                RunHudView.SetText(_view.BossName, run.BossEnraged ? "Хранитель лугов · ярость" : "Хранитель лугов");
-                if (_view.BossBar != null) _view.BossBar.Set(run.Sim.Entities.Health[id] / (float)Mathf.Max(1, run.Sim.Entities.MaxHealth[id]));
+                RunHudView.SetText(_view.BossName, EnemyTexts.BossName(run.Sim.Entities.Kind[id]));
+                if (_view.BossBar != null) BossBar(run.Sim.Entities.Health[id] / (float)Mathf.Max(1, run.Sim.Entities.MaxHealth[id]), run.BossEnraged);
             }
+            else _bossTrail = -1f;
         }
+
+        private float _bossTrail = -1f, _bossTrailHoldUntil;
+        /// <summary>Глубина, на которой босс уже показан; −1 — ещё нет.</summary>
+        private int _bossMet = -1;
+        private LayoutView _layout;
+
+        /// <summary>
+        /// Полоса босса: светлый след недавнего урона догоняет заполнение с задержкой, ярость —
+        /// горячим цветом заливки и пульсом, а не словом в имени.
+        /// </summary>
+        private void BossBar(float value, bool enraged)
+        {
+            WcBar bar = _view.BossBar;
+            if (_bossTrail < 0f || value > _bossTrail) _bossTrail = value;
+            else if (value < bar.Value) _bossTrailHoldUntil = Time.unscaledTime + .45f;
+            if (Time.unscaledTime >= _bossTrailHoldUntil)
+                _bossTrail = Mathf.MoveTowards(_bossTrail, value, Time.unscaledDeltaTime * .7f);
+            bar.TrailValue = _bossTrail;
+            bar.Set(value);
+            var fill = bar.Fill != null ? bar.Fill.GetComponent<UnityEngine.UI.Graphic>() : null;
+            if (fill == null) return;
+            if (_bossBaseColour.a <= 0f) _bossBaseColour = fill.color;
+            float pulse = enraged ? .5f + .5f * Mathf.Sin(Time.unscaledTime * 6f) : 0f;
+            fill.color = enraged ? Color.Lerp(RageColour, Color.white, pulse * .25f) : _bossBaseColour;
+        }
+
+        private Color _bossBaseColour;
+        private static readonly Color RageColour = new Color(1f, .36f, .16f, 1f);
 
         private void FillStatus(RiftRun run)
         {
@@ -133,15 +227,79 @@ namespace Game.View
             RunHudView.SetText(_view.StatusExtra, lines.Length > 2 ? lines[2] : string.Empty);
         }
 
-        private static string KeyLabel(int index, bool letters) => letters ? "QWER"[index].ToString() : (index + 1).ToString();
+        private static string KeyLabel(int index, bool letters)
+            => TickDriver.GamepadLastUsed
+                ? (index == 0 ? "←" : index == 1 ? "↑" : index == 2 ? "→" : "↓")
+                : GameKeyBindings.Label((GameAction)index);
+
+        /// <summary>Карточка артефакта, для которой открыт вопрос «Заменить артефакт?»; −1 — вопроса нет.</summary>
+        private int _replaceOffer = -1;
+
+        /// <summary>Открыт вопрос «Заменить артефакт?» — пауза по Escape в этот момент не открывается.</summary>
+        public static bool ReplaceOpen { get; private set; }
+        /// <summary>Кадр, в который вопрос закрыли Escape'ом: пауза в этот кадр тоже молчит.</summary>
+        public static int ReplaceClosedFrame { get; private set; } = -1;
+
+        /// <summary>
+        /// Вопрос «Заменить артефакт?» с клавиатуры: Enter или пробел — заменить, Escape — оставить.
+        /// Раньше его открывали клавишами 1–3, а закрыть можно было только мышью (аудит UI, 25 сентября).
+        /// </summary>
+        private void HandleReplaceKeys()
+        {
+            if (_replaceOffer < 0) return;
+            bool confirm, keep;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = Keyboard.current;
+            confirm = keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame);
+            keep = keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
+#else
+            confirm = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space);
+            keep = Input.GetKeyDown(KeyCode.Escape);
+#endif
+            if (keep)
+            {
+                _replaceOffer = -1;
+                ReplaceClosedFrame = Time.frameCount;
+                return;
+            }
+            if (!confirm) return;
+            int offer = _replaceOffer;
+            _replaceOffer = -1;
+            _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseReward1 + offer));
+        }
+
+        /// <summary>
+        /// Выбор карточки мышью или клавишей. Если на экране артефакты, а артефакт уже есть, —
+        /// сначала вопрос «Заменить артефакт?» (концепт 2-artifact-sheet): слот один.
+        /// </summary>
+        public void RequestOffer(int index)
+        {
+            RiftRun run = _driver != null ? _driver.Run : null;
+            if (run == null || run.Phase != RunPhase.ChoosingReward || index < 0 || index >= RiftRun.RewardChoices) return;
+            if (run.ChoosingArtifact && run.GetOffer(index).Artifact == RunArtifact.None) return;
+            if (run.ChoosingArtifact && run.Artifact != RunArtifact.None && _view != null && _view.ArtifactReplace != null)
+            {
+                _replaceOffer = index;
+                if (_view.ArtifactOld != null) _view.ArtifactOld.texture = RunArtifactTexts.Icon(run.Artifact);
+                if (_view.ArtifactNew != null) _view.ArtifactNew.texture = RunArtifactTexts.Icon(run.GetOffer(index).Artifact);
+                RunHudView.SetText(_view.ArtifactReplaceText, "«" + RunArtifactTexts.Name(run.Artifact) + "» уйдёт, на его место встанет «"
+                    + RunArtifactTexts.Name(run.GetOffer(index).Artifact) + "».");
+                return;
+            }
+            _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseReward1 + index));
+        }
 
         private void FillChoice(RiftRun run, bool letters)
         {
-            RunHudView.SetText(_view.ChoiceTitle, "Выберите награду");
+            if (run.ChoosingArtifact) { FillArtifactChoice(run, letters); return; }
+            RunHudView.SetActive(_view.Skip, false);
+            RunHudView.SetText(_view.ChoiceTitle, "Выбери награду");
             RunHudView.SetText(_view.ChoiceSubtitle, run.IsFinalLevel
                 ? "Локация пройдена — последняя награда, дальше итоги"
                 : "Разлом зачищен · дальше разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : ""));
-            RunHudView.SetText(_view.ChoiceHint, (letters ? "Q  W  E" : "1  2  3") + " — выбрать    ·    L — уйти с добычей");
+            RunHudView.SetText(_view.ChoiceHint,
+                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
+                + " — выбрать    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
             for (int i = 0; i < _view.Offers.Length; i++)
             {
                 RunOfferCard card = _view.Offers[i];
@@ -172,12 +330,51 @@ namespace Game.View
             }
         }
 
+        /// <summary>Награда босса: три артефакта на этот забег, можно отказаться (концепт 2-artifact-sheet).</summary>
+        private void FillArtifactChoice(RiftRun run, bool letters)
+        {
+            RunHudView.SetText(_view.ChoiceTitle, "Выбери артефакт");
+            RunHudView.SetText(_view.ChoiceSubtitle, run.Artifact == RunArtifact.None
+                ? "Награда босса · действует только в этом забеге"
+                : "Награда босса · сейчас у тебя «" + RunArtifactTexts.Name(run.Artifact) + "» — слот один");
+            RunHudView.SetText(_view.ChoiceHint, KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
+                + " — выбрать    ·    «Отказаться» — оставить как есть");
+            RunHudView.SetActive(_view.Skip, true);
+            for (int i = 0; i < _view.Offers.Length; i++)
+            {
+                RunOfferCard card = _view.Offers[i];
+                if (card == null) continue;
+                RunArtifact artifact = i < RiftRun.RewardChoices ? run.GetOffer(i).Artifact : RunArtifact.None;
+                bool shown = artifact != RunArtifact.None;
+                card.gameObject.SetActive(shown);
+                if (!shown) continue;
+                RunHudView.SetText(card.Title, RunArtifactTexts.Name(artifact));
+                RunHudView.SetText(card.Kind, "Уникальный артефакт");
+                if (card.KindIcon != null && _view.KindIcons.Length > 3)
+                {
+                    card.KindIcon.texture = _view.KindIcons[3];
+                    card.KindIcon.enabled = card.KindIcon.texture != null;
+                }
+                RunHudView.SetText(card.Description, RunArtifactTexts.Effect(artifact));
+                // Активный — клавиша и перезарядка; пассивный (Обет Хранителя) срабатывает сам.
+                int cooldown = Simulation.ArtifactCooldownTicks(artifact) / Simulation.TicksPerSecond;
+                RunHudView.SetText(card.ValueLabel, cooldown > 0 ? "Клавиша " + GameKeyBindings.Label(GameAction.UseArtifact) : "Срабатывает");
+                RunHudView.SetText(card.Value, cooldown > 0 ? "раз в " + cooldown + " с" : "сам, раз за забег");
+                RunHudView.SetText(card.Key, KeyLabel(i, letters));
+                Texture2D icon = RunArtifactTexts.Icon(artifact);
+                if (card.Icon != null) { card.Icon.texture = icon; card.Icon.enabled = icon != null; }
+                if (card.Rarity != null) card.Rarity.Set(WcRarity.Tier.Unique);
+            }
+        }
+
         private void FillReplace(RiftRun run, bool letters)
         {
             AbilityDefinition pending = PelagKit.PoolDefinition(run.PendingAbility);
             RunHudView.SetText(_view.ReplaceTitle, "Новая способность: " + (pending != null ? Capitalized(PlayerHud.AbilityName(pending.Id)) : "—"));
-            RunHudView.SetText(_view.ReplaceSubtitle, "Панель полна. Замени одну из четырёх — её таланты пропадут — или разбери новую на золото.");
-            RunHudView.SetText(_view.ReplaceHint, (letters ? "Q  W  E  R" : "1  2  3  4") + " — заменить слот    ·    L — уйти с добычей");
+            RunHudView.SetText(_view.ReplaceSubtitle, "Панель полна. Замени одну из четырёх — её усиления пропадут — или разбери новую на золото.");
+            RunHudView.SetText(_view.ReplaceHint,
+                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
+                + "  " + KeyLabel(3, letters) + " — заменить слот    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
             RunHudView.SetText(_view.SalvageLabel, "Разобрать на " + run.SalvageGold + " золота");
             for (int slot = 0; slot < _view.Slots.Length; slot++)
             {
@@ -188,7 +385,7 @@ namespace Game.View
                 if (tile.Icon != null) { tile.Icon.texture = icon; tile.Icon.enabled = icon != null; }
                 RunHudView.SetText(tile.Name, current != null ? Capitalized(PlayerHud.AbilityName(current.Id)) : "Пусто");
                 int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
-                RunHudView.SetText(tile.Note, rank > 0 ? "Талантов " + rank + " — пропадут" : "Талантов нет");
+                RunHudView.SetText(tile.Note, rank > 0 ? "Усилений " + rank + " — пропадут" : "Усилений нет");
                 RunHudView.SetText(tile.Key, KeyLabel(slot, letters));
             }
         }
@@ -221,7 +418,8 @@ namespace Game.View
                     AbilityDefinition definition = PelagKit.PoolDefinition(offer.PoolIndex);
                     icon = definition != null ? Icon(definition.Id) : null;
                     title = SabreTalentTexts.Name(line, offer.TalentIndex);
-                    kind = "Талант " + (offer.TalentIndex + 1) + " из " + SabreTalents.TalentsPerLine;
+                    // Уровней у усилений нет (владелец, 24 сентября) — только «сколько уже взято у способности».
+                    kind = "Усиление · " + (run.Loadout.TalentCount(offer.PoolIndex) + 1) + " из " + RunLoadout.MaxUpgrades;
                     body = SabreTalentTexts.Description(line, offer.TalentIndex);
                     valueLabel = Capitalized(SabreTalentTexts.LineName(line));
                     rare = true;
@@ -241,8 +439,10 @@ namespace Game.View
                 title = "Предмет не найден";
                 return;
             }
-            title = _itemBuffer.Category == ItemCategory.Weapon ? "Ржавый меч" : "Кожаная куртка";
-            kind = "Предмет · ур. " + offer.Item.ItemLevel;
+            // Имя и картинка — из общего каталога основ (как в палатке), а не две заглушки на всё.
+            title = ItemTexts.Name(offer.Item.BaseId);
+            icon = ItemTexts.Icon(offer.Item.BaseId);
+            kind = WcRarity.Name(WcRarity.FromItem((int)offer.Item.Rarity)) + " вещь · ур. " + offer.Item.ItemLevel;
             body = ItemDetails(_itemBuffer).Replace("\n", " · ");
             rare = offer.Item.Rarity >= ItemRarity.Magic;
         }

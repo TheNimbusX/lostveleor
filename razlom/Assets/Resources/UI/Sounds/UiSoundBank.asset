@@ -14,11 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.View::Game.View.UiSoundBank
   Entries:
   - Event: 0
-    Clips: []
+    Clips:
+    - {fileID: 8300000, guid: 7ad58812d1c5dd8469fc378d23281318, type: 3}
+    - {fileID: 8300000, guid: de10d6ed710a531499729cddf373f2d7, type: 3}
+    - {fileID: 8300000, guid: 91f4480039222ad40813f86dcb5aa361, type: 3}
+    - {fileID: 8300000, guid: 3a22264fe8c703c41a8c5f0c38cc2ed2, type: 3}
     Volume: 0.45
     PitchJitter: 0.04
     MinInterval: 0.05
-    AutoFilled: 0
+    AutoFilled: 1
   - Event: 1
     Clips:
     - {fileID: 8300000, guid: 43e9d6cae9faf2c448d8447f2a15e3b8, type: 3}
@@ -48,23 +52,26 @@ MonoBehaviour:
     MinInterval: 0.02
     AutoFilled: 1
   - Event: 5
-    Clips: []
+    Clips:
+    - {fileID: 8300000, guid: 0ba3f2c3a295bc64297f0d0687e7bde0, type: 3}
     Volume: 0.45
     PitchJitter: 0.04
     MinInterval: 0.05
-    AutoFilled: 0
+    AutoFilled: 1
   - Event: 6
-    Clips: []
+    Clips:
+    - {fileID: 8300000, guid: 5cfd01abd75f7a84e8da20a814a87406, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
-    AutoFilled: 0
+    AutoFilled: 1
   - Event: 7
-    Clips: []
+    Clips:
+    - {fileID: 8300000, guid: ded4bb265b1d3d848b83c2dc25c48cfb, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
-    AutoFilled: 0
+    AutoFilled: 1
   - Event: 8
     Clips:
     - {fileID: 8300000, guid: 711fc308cd653d545b1de8fb86ddde58, type: 3}
@@ -74,21 +81,21 @@ MonoBehaviour:
     AutoFilled: 1
   - Event: 9
     Clips:
-    - {fileID: 8300000, guid: 711fc308cd653d545b1de8fb86ddde58, type: 3}
+    - {fileID: 8300000, guid: 4d18540a0fe50f84dbf12526bdc40a76, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
     AutoFilled: 1
   - Event: 10
     Clips:
-    - {fileID: 8300000, guid: 711fc308cd653d545b1de8fb86ddde58, type: 3}
+    - {fileID: 8300000, guid: bfa0d0b143e38324c9f780de0f4f7391, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
     AutoFilled: 1
   - Event: 11
     Clips:
-    - {fileID: 8300000, guid: 711fc308cd653d545b1de8fb86ddde58, type: 3}
+    - {fileID: 8300000, guid: 10d9f2777a3c47f418c650a82a1c4430, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
@@ -101,11 +108,12 @@ MonoBehaviour:
     MinInterval: 0.02
     AutoFilled: 1
   - Event: 13
-    Clips: []
+    Clips:
+    - {fileID: 8300000, guid: 0c5ca74773f91804ead1ed54ec96a7e9, type: 3}
     Volume: 0.8
     PitchJitter: 0.04
     MinInterval: 0.02
-    AutoFilled: 0
+    AutoFilled: 1
   - Event: 14
     Clips:
     - {fileID: 8300000, guid: 43e9d6cae9faf2c448d8447f2a15e3b8, type: 3}

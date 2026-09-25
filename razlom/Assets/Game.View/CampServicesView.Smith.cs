@@ -85,9 +85,13 @@ namespace Game.View
             var camp=_smithCamp;
             if(_dismantling && !_confirmDismantle){_confirmDismantle=true;RefreshSmith();return;}
             SmithResult result;string message;
-            if(_dismantling){result=camp.Dismantle(_smithSlot,out int shards);message=CampServiceText.Get("dialogue.smith.dismantle")+"  ·  +"+shards+" "+SmithText("shards");}
+            string note="";
+            if(_dismantling){result=camp.Dismantle(_smithSlot,out int shards);message=CampServiceText.Get("dialogue.smith.dismantle");note="+"+shards+" "+SmithText("shards");}
             else{result=_smithWorn?camp.Reforge((EquipSlot)_smithSlot,_smithAffix):camp.Reforge(_smithSlot,_smithAffix);message=CampServiceText.Get("dialogue.smith.reforge");}
-            _confirmDismantle=false;RefreshSmith();_view.Smith.Message.text=result==SmithResult.Success?message:SmithFailure(result);
+            _confirmDismantle=false;RefreshSmith();
+            // Реплика — только после удачи; числа и отказы — системной строкой (CAMP-NPC-DIALOGUE.md).
+            if(result==SmithResult.Success){_view.Smith.Message.text=message;if(note.Length>0)_view.Smith.Note.text=note;}
+            else _view.Smith.Note.text=SmithFailure(result);
             // Перековка: два удара молота, пар, звон готовой вещи. Разбор: лом, осыпающиеся детали, осколки.
             if(result==SmithResult.Success)
             {

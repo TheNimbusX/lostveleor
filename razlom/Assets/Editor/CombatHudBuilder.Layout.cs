@@ -191,7 +191,6 @@ namespace Game.EditorTools
                 view.ExperienceText.fontSharedMaterial = OutlineMaterial(view.ExperienceText.font);
             }
 
-            AssignMapMarkers(view);
         }
 
         /// <summary>
@@ -314,8 +313,6 @@ namespace Game.EditorTools
         /// </summary>
         static void BiggerMapDetails(CombatHudView view)
         {
-            view.MinimapMarkerScale *= 1.1f;
-
             RectTransform ribbon = view.MinimapCaptionPanel;
             TMP_Text caption = view.MinimapCaption;
             if (ribbon != null)
@@ -414,13 +411,6 @@ namespace Game.EditorTools
                 hero.anchoredPosition += new Vector2(skillsLeft - 18f - heroRight, 0f);
         }
 
-        static void AssignMapMarkers(CombatHudView view)
-        {
-            Sprite ring = Chrome("icon_ring"), arrow = Chrome("map_player");
-            view.MinimapMarkerRing = ring != null ? ring.texture : null;
-            view.MinimapPlayerArrow = arrow != null ? arrow.texture : null;
-        }
-
         /// <summary>
         /// v5 — починка v3/v4. v3 переносила полосы жизни и лавидия с мировой
         /// позицией при нулевом масштабе Canvas: полосы сохранились со scale 0.
@@ -442,7 +432,6 @@ namespace Game.EditorTools
                 row.anchoredPosition = new Vector2(tileRight + 5f + row.anchoredPosition.x, row.anchoredPosition.y - 20f);
             }
             PlaceHeroBesideSkills(root.transform, view);
-            AssignMapMarkers(view);
         }
 
         // ---- v7: сетка нижней группы (единицы Canvas при эталонной высоте 1662) ----

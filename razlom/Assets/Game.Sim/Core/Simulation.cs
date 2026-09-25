@@ -468,6 +468,8 @@ namespace Game.Sim
             Entities = new EntityStore(capacity);
             ForestBudConfig = forestBud ?? ForestBudSettings.Default;
             _forestBudAttacks = new ForestBudAttackState[capacity];
+            _wendigoActions = new WendigoActionState[capacity];
+            _wendigoNextLeap = new int[capacity];
             _forestFruits = new ForestFruitState[capacity * ForestFruitSlotsPerEnemy];
             _cleavePreviousPositions = new FixVec2[capacity];
             _mobilityHits = new bool[capacity];
@@ -831,6 +833,7 @@ namespace Game.Sim
         {
             Entities.Kind[id] = kind;
             if (kind == EnemyKind.ForestBud) { ConfigureForestBud(id); return; }
+            if (kind == EnemyKind.ForestWendigo) { ConfigureWendigo(id); return; }
             bool swarm = kind == EnemyKind.ForestRootSwarm;
             // Щит и широкий силуэт требуют больше воздуха, чем прежняя
             // техническая капсула. Радиус не даёт строю схлопываться в одну
@@ -975,8 +978,9 @@ namespace Game.Sim
 
                     // Каждая пара обрабатывается ровно один раз, младшим индексом.
                     if (j <= i) continue;
-                    if ((i == PlayerId || j == PlayerId) && _mobilitySlot >= 0
-                        && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId) continue;
+                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j)) continue;
+                    if ((i == PlayerId || j == PlayerId) && (VoidPhased || _mobilitySlot >= 0
+                        && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId)) continue;
 
                     Fix64 wanted = Entities.BodyRadius[i] + Entities.BodyRadius[j];
                     FixVec2 delta = Entities.Position[j] - Entities.Position[i];
@@ -1032,6 +1036,8 @@ namespace Game.Sim
         private void ResetAbilityState()
         {
             ResetPotionEffects();
+            ResetUpgrades();
+            EndArtifactEffects();
             ResetTempo();
             CancelBlazeGesture();
             _blazeUntilTick = 0;
@@ -1177,6 +1183,7 @@ namespace Game.Sim
 
             // Порядок стадий боя зафиксирован. Любой другой был бы столь же
             // корректен, но менять его нельзя: он входит в поведение и хеш.
+            ResolveArtifactUse(in input);
             ResolveAbilityCasts(in input);
             UpdateBlaze();
             ResolveWhirlwindImpact(in input);
@@ -1186,6 +1193,8 @@ namespace Game.Sim
             UpdateCleave();
             UpdateFlask();
             UpdateBlazeTrail();
+            UpdateUpgrades();
+            UpdateArtifact();
             UpdateMobility();
             if (_leapLaunchTick >= 0 && Tick >= _leapLaunchTick)
             {
@@ -1194,6 +1203,7 @@ namespace Game.Sim
                 {
                     AbilityBuild leap = (uint)_leapSlot < (uint)AbilitySlots ? _abilityBuilds[_leapSlot] : null;
                     Fix64 range = leap != null ? leap.Get(AbilityStatType.Radius) : AnchorKit.LeapRange;
+                    BoardingUpgradesAtLaunch(leap);
                     int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget, range);
                     _leapPunchTick = Tick + ticks;
                 }
@@ -1202,6 +1212,7 @@ namespace Game.Sim
             ContinueChainStep();
             ResolveAttacks(in input);
             UpdateForestBud();
+            UpdateWendigo();
             TickBurning();
             TickIgnite();
 
@@ -1231,6 +1242,8 @@ namespace Game.Sim
         private void ResolveAbilityCasts(in InputFrame input)
         {
             if (!Entities.Alive[PlayerId]) return;
+            // Лик Пустоты: в фазе атаковать нельзя.
+            if (VoidPhased) return;
 
             for (int slot = 0; slot < AbilitySlots; slot++)
             {
@@ -1267,6 +1280,7 @@ namespace Game.Sim
                 {
                     _whirlwindImpactTick = Tick + AbilityExecutionTicks(WhirlwindContactDelayTicks);
                     _whirlwindImpactSlot = slot;
+                    WhirlwindUpgradesAtCast(slot);
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
                 {
@@ -1313,6 +1327,7 @@ namespace Game.Sim
 
                 _abilityReadyTick[slot] = Tick + AbilityCooldownTicks(build);
                 AnchorTalentAfterCast(slot, build);
+                FlaskTwoCharges(slot, build);
                 SpendLavidium(build);
                 CaptureAbilityClock(slot);
                 _events.Add(SimEvent.Cast(PlayerId, slot, Entities.Position[PlayerId]));
@@ -1365,6 +1380,8 @@ namespace Game.Sim
             if (target < 0) return;
 
             _chainSlot = slot;
+            _chainOrigin = Entities.Position[PlayerId];
+            _chainRepeatHop = false;
             // Талант «Пять прыжков» добавляет один; буфер посещённых рассчитан на него.
             _chainHopsLeft = BuildHas(slot, AbilityFlag.SquallFiveHops, AbilityDefinition.ChainStepId)
                 ? AnchorKit.ChainMaxHops + 1 : AnchorKit.ChainMaxHops;
@@ -1411,6 +1428,7 @@ namespace Game.Sim
                 int damage = build.Get(AbilityStatType.Damage).ToInt();
                 // «Добивающий прыжок»: последний прыжок серии бьёт вдвое.
                 if (_chainHopsLeft == 1 && build.Has(AbilityFlag.SquallFinisher)) damage *= 2;
+                damage = SquallHopDamage(build, _chainTarget, damage);
                 ApplyAbilityDamage(PlayerId, _chainTarget, damage, _chainSlot, DamageType.Physical);
             }
 
@@ -1420,6 +1438,7 @@ namespace Game.Sim
                 EmitChainHop();
                 _chainTarget = -1;
                 _chainSlot = -1;
+                SquallReturn(build);
                 return;
             }
 
@@ -1433,10 +1452,12 @@ namespace Game.Sim
                 EmitChainHop();
                 _chainTarget = -1;
                 _chainSlot = -1;
+                SquallReturn(build);
                 return;
             }
 
             bool repeatTarget = next == _chainTarget;
+            _chainRepeatHop = repeatTarget;
             _chainTarget = next;
             _chainVisited[_chainVisitedCount++] = next;
             ForcedMotion.Begin(Entities, PlayerId,
@@ -1471,6 +1492,7 @@ namespace Game.Sim
             // Урон, «Толпа разгоняет» и «Возврат лавидия» — в одном обороте;
             // удержание начинается, только если кнопку ещё держат к контакту.
             WhirlwindPulse(slot, firstContact: true);
+            StartWhirlwindWave(slot);
             BeginWhirlwindChannel(slot, in input);
         }
 
@@ -1523,12 +1545,18 @@ namespace Game.Sim
 
             // «Горючее»: враг в луже Взрывной смеси получает от Пелага +20%.
             if (source == PlayerId && InFuelledPool(target)) amount = amount * 120 / 100;
+            if (source == PlayerId && !overTime) amount = ApplySunder(target, amount);
+            amount = ArtifactOutgoing(source, target, amount, ability: !overTime);
             int power = amount;
             amount = CombatStats.Mitigate(amount, type,
                 Entities.Armor[target], Entities.FireResist[target]);
             amount = ApplyResinReduction(target, amount);
+            amount = ApplyUpgradeReduction(target, amount);
+            amount = MirrorIncoming(source, target, amount);
+            if (HoldDamage(source, target, amount)) return;
 
             Entities.Health[target] -= amount;
+            CrimsonTookDamage(target, amount);
             _events.Add(overTime
                 ? SimEvent.DamageOverTime(source, target, amount, Entities.Position[target], type)
                 : SimEvent.Damage(source, target, amount, false, Entities.Position[target], type,
@@ -1542,6 +1570,7 @@ namespace Game.Sim
                 if (!overTime && source == PlayerId) ApplyBlazeAbilityBonus(source, target, power, slot);
                 return;
             }
+            if (VowSaves(target)) return;
             Kill(target, source, slot);
         }
 
@@ -1562,6 +1591,7 @@ namespace Game.Sim
             _events.Add(SimEvent.Death(killer, target, Entities.Position[target]));
             GrantKillXp(target, killer);
             TalentOnKill(target, killer, slot);
+            UpgradeOnKill(target, killer);
 
             if (basicAttackKill && killer == PlayerId)
             {
@@ -1709,7 +1739,9 @@ namespace Game.Sim
             // Здесь герой лишь поворачивается к тому, кто рядом, — 20° за тик,
             // то есть полный разворот занимает девять тиков, ровно один замах.
             int swingTarget = attacking && !committedTargetValid && !AttackTargetValid
-                ? FindTurnTarget()
+                ? input.Has(InputFlags.DirectMovement)
+                    ? FindTurnTargetInAim(input.Aim - pos)
+                    : FindTurnTarget()
                 : -1;
 
             // ПОКА КНОПКА ЗАЖАТА, БОЕВОЙ ДОВОРОТ СИЛЬНЕЕ ПРИКАЗА ИДТИ.
@@ -1823,7 +1855,9 @@ namespace Game.Sim
             // Желаемая скорость достигается не сразу: разгон и торможение
             // и есть тот вес, из-за отсутствия которого движение читалось
             // как перестановка фишки.
-            FixVec2 velocity = Approach(Entities.Velocity[PlayerId], step, fullSpeed)
+            FixVec2 velocity = (input.Has(InputFlags.DirectMovement)
+                    ? ApproachDirect(Entities.Velocity[PlayerId], step, fullSpeed)
+                    : Approach(Entities.Velocity[PlayerId], step, fullSpeed))
                 .ClampLength(speed);
 
             // Маршрут рассчитан для отрезков: инерция на углах срезала путь в препятствие.
@@ -1876,6 +1910,16 @@ namespace Game.Sim
             if (maxChange.Raw <= 0) return wanted;
 
             return current + (wanted - current).ClampLength(maxChange);
+        }
+
+        // WASD/стик реагируют сразу: первый тик даёт 75% скорости, второй —
+        // полную; отпускание останавливает за один тик. Приказ мышью сохраняет
+        // прежний плавный разгон и собственную навигацию.
+        private static FixVec2 ApproachDirect(FixVec2 current, FixVec2 wanted, Fix64 fullSpeed)
+        {
+            Fix64 change = wanted.LengthSq == Fix64.Zero
+                ? fullSpeed : fullSpeed * Fix64.Ratio(3, 4);
+            return current + (wanted - current).ClampLength(change);
         }
 
         /// <summary>
@@ -1987,6 +2031,9 @@ namespace Game.Sim
                 if (!playerAlive) { Entities.Velocity[i] = FixVec2.Zero; continue; }
 
                 FixVec2 toPlayer = playerPos - Entities.Position[i];
+
+                if (Entities.Kind[i] == EnemyKind.ForestWendigo)
+                { MoveWendigo(i, toPlayer); continue; }
 
                 // Разворот идёт ВСЕГДА, даже до того как враг решил погнаться:
                 // тело следит взглядом за игроком, а погоня — отдельное,
@@ -2238,7 +2285,7 @@ namespace Game.Sim
 
             for (int i = 0; i < Entities.Count; i++)
             {
-                if (Entities.Kind[i] == EnemyKind.ForestBud) continue;
+                if (Entities.Kind[i] == EnemyKind.ForestBud || Entities.Kind[i] == EnemyKind.ForestWendigo) continue;
                 if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
                 if (pendingTarget >= 0)
@@ -2271,6 +2318,7 @@ namespace Game.Sim
                 // Игрок бьёт только по приказу. Враги — сами: у них нет игрока,
                 // который решал бы за них, и решать за них должен ИИ.
                 if (i == PlayerId && !playerAttacks) continue;
+                if (i == PlayerId && VoidPhased) continue;
 
                 int target = i == PlayerId && AttackTargetValid
                     ? ChosenTarget()
@@ -2290,7 +2338,10 @@ namespace Game.Sim
                 // Подход и доворот к живой цели — ещё подготовка атаки.
                 // Пустой взмах здесь тратил первый кулдаун после отхода,
                 // хотя к контакту герой уже успевал повернуться к врагу.
-                if (emptySwing && (AttackTargetValid || FindTurnTarget() >= 0)) continue;
+                if (emptySwing && (AttackTargetValid ||
+                    (input.Has(InputFlags.DirectMovement)
+                        ? FindTurnTargetInAim(input.Aim - Entities.Position[PlayerId])
+                        : FindTurnTarget()) >= 0)) continue;
 
                 int attackVariant = i == PlayerId ? _nextPlayerAttackVariant : 0;
                 if (i == PlayerId)
@@ -2372,6 +2423,29 @@ namespace Game.Sim
                 ? NaiveFindNearestEnemy(PlayerId, FullCircleCos)
                 : Grid.FindNearestEnemy(Entities, PlayerId, PlayerAttackRange, FullCircleCos);
 
+        // На прямом управлении помощь ограничена направлением указателя или
+        // правого стика. Ближайший моб ЗА спиной не перехватывает атаку.
+        private int FindTurnTargetInAim(FixVec2 aim)
+        {
+            if (aim.LengthSq == Fix64.Zero) return -1;
+            FixVec2 direction = aim.Normalized();
+            FixVec2 origin = Entities.Position[PlayerId];
+            int best = -1;
+            Fix64 bestDistance = Fix64.MaxValue;
+            for (int i = 1; i < Entities.Count; i++)
+            {
+                if (!Entities.Alive[i] || Entities.Side[i] == Entities.Side[PlayerId]) continue;
+                FixVec2 delta = Entities.Position[i] - origin;
+                Fix64 distance = delta.LengthSq;
+                if (distance == Fix64.Zero || distance > PlayerAttackRangeSq ||
+                    FixVec2.Dot(direction, delta.Normalized()) < Fix64.Ratio(1, 2)) continue;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                best = i;
+            }
+            return best;
+        }
+
         private int FindNearestEnemy(int from)
         {
             // Враг выбирает цель в расширенном секторе ±120°. Полное снятие
@@ -2439,12 +2513,16 @@ namespace Game.Sim
             // Keep the normal critical roll even when developer immunity absorbs the hit.
             if (target == PlayerId && PlayerImmune) return;
             if (BlazeEvades(target, overTime: false)) return;
+            // «Верный удар»: бросок уже сделан (поток не сдвигается), усиление подменяет результат.
+            crit = SureCrit(source, crit);
 
             int damage = CombatStats.RoundToInt(
                 Fix64.FromInt(Entities.Damage[source]) * damageScale);
             if (crit)
                 damage = CombatStats.RoundToInt(Fix64.FromInt(damage) * Entities.CritMultiplier[source]);
             if (source == PlayerId && InFuelledPool(target)) damage = damage * 120 / 100;
+            if (source == PlayerId) damage = ApplySunder(target, damage);
+            damage = ArtifactOutgoing(source, target, damage, ability: false);
 
             // Броня гасит удар ПОСЛЕ крита: крит увеличивает сам удар, а кривая
             // брони зависит от его размера — значит и считать её надо от того,
@@ -2452,8 +2530,12 @@ namespace Game.Sim
             int power = damage;
             damage = CombatStats.MitigateByArmor(damage, Entities.Armor[target]);
             damage = ApplyResinReduction(target, damage);
+            damage = ApplyUpgradeReduction(target, damage);
+            damage = MirrorIncoming(source, target, damage);
+            if (HoldDamage(source, target, damage)) return;
 
             Entities.Health[target] -= damage;
+            CrimsonTookDamage(target, damage);
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
                 DamageType.Physical, DamageOrigin.BasicAttack, variant));
 
@@ -2466,7 +2548,7 @@ namespace Game.Sim
             // Смерть от автоатаки идёт тем же путём, что и от способности:
             // стадия ПриУбийстве обязана срабатывать независимо от того, чем
             // добили. «Перекидывается» иначе не сработал бы на добитом мечом.
-            if (Entities.Health[target] <= 0)
+            if (Entities.Health[target] <= 0 && !VowSaves(target))
                 Kill(target, source, BurnSlotOf(target), basicAttackKill: true);
         }
 
@@ -2491,6 +2573,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, Tick);
             HashTempo(ref hash);
             HashPotionEffects(ref hash);
+            HashArtifact(ref hash);
             HashAnchorSlam(ref hash);
             HashWreck(ref hash);
             HashCleave(ref hash);
@@ -2498,7 +2581,9 @@ namespace Game.Sim
             HashFlask(ref hash);
             HashProgression(ref hash);
             HashTalents(ref hash);
+            HashUpgrades(ref hash);
             HashForestBud(ref hash);
+            HashWendigo(ref hash);
             HashCleaveFan(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает

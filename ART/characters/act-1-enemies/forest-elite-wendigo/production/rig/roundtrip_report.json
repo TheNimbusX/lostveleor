@@ -1,0 +1,76 @@
+{
+  "fbx": {
+    "file_bytes": 1190700,
+    "mesh_count": 1,
+    "armature_count": 1,
+    "bone_count": 22,
+    "triangles": 24636,
+    "boundary_edges": 0,
+    "overfull_edges": 0,
+    "unweighted_vertices": 0,
+    "vertices_over_four_influences": 0,
+    "materials": [
+      "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+    ],
+    "per_mesh": [
+      {
+        "name": "SM_ForestWendigo_LOD0",
+        "triangles": 24636,
+        "vertices": 12361,
+        "materials": [
+          "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+        ]
+      }
+    ],
+    "world_bounds_min": [
+      -0.7896,
+      -1.0182,
+      -0.0
+    ],
+    "world_bounds_max": [
+      0.7891,
+      1.0181,
+      3.1
+    ]
+  },
+  "glb": {
+    "file_bytes": 11424592,
+    "mesh_count": 2,
+    "armature_count": 1,
+    "bone_count": 22,
+    "triangles": 24716,
+    "boundary_edges": 12942,
+    "overfull_edges": 0,
+    "unweighted_vertices": 42,
+    "vertices_over_four_influences": 0,
+    "materials": [
+      "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6.001"
+    ],
+    "per_mesh": [
+      {
+        "name": "SM_ForestWendigo_LOD0",
+        "triangles": 24636,
+        "vertices": 19273,
+        "materials": [
+          "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6.001"
+        ]
+      },
+      {
+        "name": "Icosphere",
+        "triangles": 80,
+        "vertices": 42,
+        "materials": []
+      }
+    ],
+    "world_bounds_min": [
+      -0.9511,
+      -1.0182,
+      -1.0
+    ],
+    "world_bounds_max": [
+      0.9511,
+      1.0182,
+      3.1
+    ]
+  }
+}

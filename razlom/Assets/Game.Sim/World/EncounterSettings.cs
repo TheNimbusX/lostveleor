@@ -12,7 +12,7 @@ namespace Game.Sim
         public EncounterGroup(EnemyKind kind, int min, int max, int healthPercent = 100,
             int damagePercent = 100, bool elite = false, bool growWithDepth = false)
         {
-            if ((kind != EnemyKind.ForestGuardian && kind != EnemyKind.ForestRootSwarm && kind != EnemyKind.ForestBud) ||
+            if ((kind != EnemyKind.ForestGuardian && kind != EnemyKind.ForestRootSwarm && kind != EnemyKind.ForestBud && kind != EnemyKind.ForestWendigo) ||
                 min < 0 || max < min || max > 16 || healthPercent < 1 || healthPercent > 1000 ||
                 damagePercent < 1 || damagePercent > 1000)
                 throw new ArgumentException("Invalid encounter enemy group.");

@@ -95,6 +95,7 @@ namespace Game.View
         public GameObject PotionsPage, RecipesPage;
         public CampPotionCard[] Potions = new CampPotionCard[0];
         [Tooltip("Рецепты новых зелий: условие, заказ, обмен (поля заказа у CampPotionCard)")] public CampPotionCard[] Recipes = new CampPotionCard[0];
+        [Tooltip("Системная строка отказа («не хватает золота»): реплики алхимика про неудачу нет")] public TMP_Text Status;
         public Button Back;
         [Tooltip("Реплика NPC в облачке под портретом (пустая строка прячет облачко)")] public TMP_Text Message;
         [Tooltip("Имя в облачке реплики")] public TMP_Text Speaker;

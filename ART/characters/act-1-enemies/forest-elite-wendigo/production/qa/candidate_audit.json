@@ -1,0 +1,26 @@
+{
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\review\\candidate24k\\Wendigo_24k_candidate.blend",
+  "scene_fps": 24,
+  "visible_meshes": [
+    {
+      "name": "SM_ForestWendigo_LOD0_Candidate",
+      "triangles": 24000,
+      "vertices": 11966,
+      "materials": [
+        "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+      ],
+      "armatures": [],
+      "boundary_edges": 160,
+      "nonmanifold_three_or_more_face_edges": 160,
+      "unweighted_vertices": 0,
+      "vertices_with_more_than_four_bone_influences": 0,
+      "vertices_with_unnormalized_weights": 0,
+      "worst_weight_sum_deviation": 0.0
+    }
+  ],
+  "visible_triangle_total": 24000,
+  "triangle_budget": 25000,
+  "within_triangle_budget": true,
+  "armatures": [],
+  "actions": []
+}

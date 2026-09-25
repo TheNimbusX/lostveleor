@@ -61,6 +61,7 @@ namespace Game.Sim
         public CombatFeelCaptureTier CombatFeelShowcase { get; set; }
         public int CombatFeelEnemyCount { get; set; } = 1;
         public int ForestBudShowcaseCount { get; set; }
+        public int WendigoShowcase { get; set; }
 
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
@@ -105,6 +106,15 @@ namespace Game.Sim
 
         /// <summary>Золото, найденное в забеге. Доезжает до лагеря только при выходе или прохождении.</summary>
         public int Gold { get; private set; }
+
+        /// <summary>
+        /// Артефакт забега (владелец, 24 сентября): один слот, с босса выбор 1 из 3, из тайника
+        /// очень редко. Смерть или выход — пропадает вместе с забегом.
+        /// </summary>
+        public RunArtifact Artifact { get; private set; }
+
+        /// <summary>Экран награды сейчас — выбор артефакта после босса (можно отказаться).</summary>
+        public bool ChoosingArtifact => Phase == RunPhase.ChoosingReward && _offers[0].Kind == RewardKind.Artifact;
 
         /// <summary>Способность, ждущая замены при полной панели; −1 — не ждёт.</summary>
         public int PendingAbility { get; private set; } = -1;
@@ -161,6 +171,8 @@ namespace Game.Sim
             Depth = 0;
             RiftsCleared = 0;
             _takenCount = 0;
+            Artifact = RunArtifact.None;
+            _sim.SetArtifact(RunArtifact.None);
             Outcome = RunOutcome.None;
             Gold = 0;
             PendingAbility = -1;
@@ -234,7 +246,9 @@ namespace Game.Sim
 
             SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             Encounters = null;
-            if (ForestBudShowcaseCount > 0)
+            if (WendigoShowcase > 0)
+                Encounters = _sim.SetupWendigoEncounter(_map, SpawnSeed, WendigoShowcase > 1);
+            else if (ForestBudShowcaseCount > 0)
                 Encounters = _sim.SetupForestBudEncounter(_map, SpawnSeed, ForestBudShowcaseCount);
             else if (CombatFeelShowcase != CombatFeelCaptureTier.None)
                 _sim.SetupCombatFeelShowcase(_map, CombatFeelEnemyCount, CombatFeelShowcase);
@@ -382,8 +396,18 @@ namespace Game.Sim
                 var rng = new Pcg32(LayoutSeed ^ unchecked((ulong)(placement + 1) * 0x9E3779B97F4A7C15UL), 0x4252414E4348UL);
                 int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
                 ItemInstance item = Tier(ItemDrop.Roll(ref rng, baseId, (short)(Depth * 5)));
-                _taken[_takenCount++] = RewardOffer.OfItem(in item);
                 _branchClaimed[b] = true;
+                // Очень редко тайник отдаёт артефакт вместо вещи — если артефакта ещё нет.
+                // Бросок из того же локального потока тайника: награды и аффиксы забега не сдвигаются.
+                if (Artifact == RunArtifact.None && rng.NextInt(0, 100) < RunArtifacts.CacheChancePercent)
+                {
+                    RunArtifact found = RunArtifacts.At(rng.NextInt(0, RunArtifacts.Count));
+                    TakeArtifact(found);
+                    _taken[_takenCount++] = RewardOffer.OfArtifact(found);
+                    BranchesClaimed++;
+                    continue;
+                }
+                _taken[_takenCount++] = RewardOffer.OfItem(in item);
                 BranchesClaimed++;
             }
         }
@@ -533,14 +557,23 @@ namespace Game.Sim
 
             // Приведение к int явное: вычитание значений enum на byte
             // считается в byte и на команде None ушло бы в переполнение.
+            if (command == RunCommand.SkipReward && ChoosingArtifact)
+            {
+                FinishChoice();
+                return;
+            }
+
             int choice = (int)command - (int)RunCommand.ChooseReward1;
             if (choice < 0 || choice >= RewardChoices) return;
 
             RewardOffer offer = _offers[choice];
+            if (offer.Kind == RewardKind.Artifact && !RunArtifacts.IsValid(offer.Artifact)) return;
             if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = offer;
 
-            if (offer.Kind == RewardKind.Talent)
-                Loadout.TakeTalent(offer.PoolIndex);
+            if (offer.Kind == RewardKind.Artifact)
+                TakeArtifact(offer.Artifact);
+            else if (offer.Kind == RewardKind.Talent)
+                Loadout.TakeTalent(offer.PoolIndex, offer.TalentIndex);
             else if (offer.Kind == RewardKind.Ability && !Loadout.Add(offer.PoolIndex))
             {
                 // Панель полна — решение за игроком: заменить или разобрать.
@@ -607,8 +640,48 @@ namespace Game.Sim
         /// </summary>
         private void RollOffers()
         {
+            // Уровень с боссом: вместо карточек — выбор артефакта (владелец, 24 сентября).
+            if (BossId >= 0 && RollArtifactOffers()) return;
             for (int i = 0; i < RewardChoices; i++)
                 _offers[i] = RollOffer(i);
+        }
+
+        /// <summary>
+        /// Три разных артефакта, кроме того, что уже в руках. Если свободных меньше трёх,
+        /// пустые места занимает «нет артефакта» — экран их не показывает. False — нечего предложить.
+        /// </summary>
+        private bool RollArtifactOffers()
+        {
+            var pool = new RunArtifact[RunArtifacts.Count];
+            int count = 0;
+            for (int i = 0; i < RunArtifacts.Count; i++)
+                if (RunArtifacts.At(i) != Artifact) pool[count++] = RunArtifacts.At(i);
+            if (count == 0) return false;
+            for (int i = 0; i < RewardChoices; i++)
+            {
+                if (i >= count) { _offers[i] = RewardOffer.OfArtifact(RunArtifact.None); continue; }
+                int pick = i + _sim.Rng.Loot.NextInt(0, count - i);
+                RunArtifact chosen = pool[pick];
+                pool[pick] = pool[i];
+                pool[i] = chosen;
+                _offers[i] = RewardOffer.OfArtifact(chosen);
+            }
+            return true;
+        }
+
+        /// <summary>Меню разработчика: снять артефакт (в игре его можно только заменить).</summary>
+        public void ClearArtifactForDeveloper()
+        {
+            Artifact = RunArtifact.None;
+            _sim.SetArtifact(RunArtifact.None);
+        }
+
+        /// <summary>Взять артефакт: прежний (если был) уходит. Действует со следующего тика.</summary>
+        public void TakeArtifact(RunArtifact artifact)
+        {
+            if (!RunArtifacts.IsValid(artifact)) return;
+            Artifact = artifact;
+            _sim.SetArtifact(artifact);
         }
 
         /// <summary>
@@ -678,13 +751,20 @@ namespace Game.Sim
             return RollItemOffer();
         }
 
-        /// <summary>Конкретный следующий талант случайной имеющейся способности.</summary>
+        /// <summary>
+        /// Случайное ещё не взятое усиление случайной имеющейся способности.
+        /// Порядка нет (владелец, 24 сентября): любое из оставшихся с равным шансом.
+        /// </summary>
         private RewardOffer RollTalentOffer(int filled)
         {
             int pick = _sim.Rng.Loot.NextInt(0, CountTalentCandidates(filled));
             for (int pool = 0; pool < PelagKit.PoolSize; pool++)
                 if (IsTalentCandidate(pool, filled) && pick-- == 0)
-                    return RewardOffer.OfTalent(pool, Loadout.TalentRank(pool));
+                {
+                    int left = SabreTalents.TalentsPerLine - Loadout.TalentCount(pool);
+                    int index = Loadout.UntakenTalentAt(pool, _sim.Rng.Loot.NextInt(0, left));
+                    return RewardOffer.OfTalent(pool, index);
+                }
             return RollItemOffer();
         }
 
@@ -735,6 +815,7 @@ namespace Game.Sim
 
             Loadout.HashInto(ref hash);
             Hashing.Mix(ref hash, Gold);
+            Hashing.Mix(ref hash, (int)Artifact);
             Hashing.Mix(ref hash, PendingAbility);
             Hashing.Mix(ref hash, _dropCount);
             for (int d = 0; d < _dropCount; d++) _drops[d].HashInto(ref hash);

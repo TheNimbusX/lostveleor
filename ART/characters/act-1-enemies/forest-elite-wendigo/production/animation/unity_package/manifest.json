@@ -1,0 +1,35 @@
+{
+  "triangles": 24636,
+  "fps": 24,
+  "clips": {
+    "Idle": [
+      0.0,
+      60.0
+    ],
+    "Claw": [
+      0.0,
+      96.0
+    ],
+    "Leap": [
+      0.0,
+      96.0
+    ],
+    "Death": [
+      0.0,
+      96.0
+    ],
+    "Walk": [
+      0.0,
+      48.0
+    ],
+    "Hit": [
+      0.0,
+      12.0
+    ]
+  },
+  "max_weights": 4,
+  "pruned_vertices": 0,
+  "maximum_pruned_weight": 0,
+  "source": "reference-matched; Claw r02 immutable",
+  "root_motion": false
+}

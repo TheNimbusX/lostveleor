@@ -1,0 +1,42 @@
+{
+  "action": "AN_ForestWendigo_Hit",
+  "frames": [
+    0,
+    14
+  ],
+  "fps": 30,
+  "root_motion": "none; root XY remains zero",
+  "impact_side": "left shoulder and upper ribs",
+  "reaction_phases": {
+    "shoulder_compression": [
+      1,
+      3
+    ],
+    "torso_recoil": [
+      3,
+      7
+    ],
+    "head_antler_lag": [
+      5,
+      9
+    ],
+    "right_paw_catch": [
+      4,
+      7
+    ],
+    "right_paw_reset": [
+      10,
+      14
+    ],
+    "return_ready": [
+      10,
+      14
+    ]
+  },
+  "right_paw_offset_at_end_m": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mesh_triangles": 24636
+}

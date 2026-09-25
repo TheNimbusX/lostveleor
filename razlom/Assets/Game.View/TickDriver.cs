@@ -130,7 +130,7 @@ namespace Game.View
         /// </summary>
         public void QueueSummaryCommand(bool repeat)
         {
-            if (Session == null || Session.Mode != GameMode.Summary) return;
+            if (Session == null || Session.Mode != GameMode.Summary || RunEndBeat.Holding) return;
             _commandLatch = (byte)(repeat ? CampCommand.RepeatRift : CampCommand.ReturnToCamp);
         }
 
@@ -144,7 +144,8 @@ namespace Game.View
             if (Session == null || Session.Mode != GameMode.Rift || Run == null) return;
 
             bool validChoice = Run.Phase == RunPhase.ChoosingReward
-                               && command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3;
+                               && (command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3
+                                   || command == RunCommand.SkipReward && Run.ChoosingArtifact);
             bool validReplace = Run.Phase == RunPhase.ReplacingAbility
                                 && command >= RunCommand.ReplaceSlot1 && command <= RunCommand.SalvageAbility;
             // Мини-меню добычи работает посреди боя и по пути к выходу.
@@ -249,6 +250,7 @@ namespace Game.View
         private void Awake()
         {
             gameObject.AddComponent<PelagTargetAimView>();
+            gameObject.AddComponent<GameCursorView>();
             gameObject.AddComponent<CampPlayerView>();
             ulong seed = RunSeed != 0 ? RunSeed : (ulong)System.DateTime.UtcNow.Ticks;
             RunSeed = seed;
@@ -431,7 +433,7 @@ namespace Game.View
 
             // Ни приказ, нажатый перед открытием меню, ни клавиша из самого
             // меню не должны сработать после закрытия паузы.
-            _pending = InputFrame.Empty;_potionLatch=0;
+            _pending = InputFrame.Empty;_potionLatch=0;_artifactLatch=false;
             _pointerPressFrame = InputFrame.Empty;
             _pointerPressLatched = false;
             _abilityLatch = 0;
@@ -461,12 +463,15 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
+            if ((CaptureRig.WendigoShowcase || WendigoReviewCase != null) && Session.Mode == GameMode.Rift)
+            { CaptureWendigoInput(); return; }
             if(CampServicesProbe.IsRunning){ClearWorldControls();return;}
             if (CaptureRig.TempoPreset >= 0)
             { _pending = InputFrame.Empty; _abilityLatch = _commandLatch = 0;
                 _abilityPressLatched = _pointerPressLatched = false; AttackHeld = false; return; }
             MoveOrderPressedThisFrame = false;
             CapturePotions();
+            CaptureArtifact();
             if (CaptureRig.ForestBudShowcase && Session.Mode == GameMode.Rift)
             { CaptureForestBudInput(); return; }
 
@@ -537,6 +542,8 @@ namespace Game.View
                 attackHeld: Input.GetMouseButton(0),
                 attackPressed: Input.GetMouseButtonDown(0));
 #endif
+
+            CaptureGamepad(choosing);
 
             if (CaptureRig.RunShowcase && Sim != null)
             {
@@ -670,7 +677,7 @@ namespace Game.View
                 // от нажатия до контакта плюс HoldTicks.
                 if (!_whirlwindHoldTalent)
                 {
-                    DeveloperTalents.Set(SabreTalentLine.Whirlwind, SabreTalents.TalentsPerLine - 1, true);
+                    DeveloperTalents.Set(SabreTalentLine.Whirlwind, SabreTalents.WhirlwindChannelIndex, true);
                     _whirlwindHoldTalent = true;
                 }
                 if ((_abilityLatch & 1) != 0)
@@ -949,6 +956,8 @@ namespace Game.View
                     break;
 
                 case GameMode.Summary:
+                    // Пока итоги не показаны, R и выход не срабатывают: их жали в бою как способности.
+                    if (RunEndBeat.Holding) break;
                     if (repeat) _commandLatch = (byte)CampCommand.RepeatRift;
                     if (back) _commandLatch = (byte)CampCommand.ReturnToCamp;
                     break;
@@ -983,7 +992,12 @@ namespace Game.View
                             _commandLatch = (byte)((int)RunCommand.ReplaceSlot1 + i);
                     }
                     else if (i < RiftRun.RewardChoices)
-                        _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
+                    {
+                        // Артефакт при уже занятом слоте — сначала вопрос «Заменить артефакт?».
+                        RunHud runHud = Run.ChoosingArtifact ? GetComponent<RunHud>() : null;
+                        if (runHud != null) runHud.RequestOffer(i);
+                        else _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
+                    }
                 }
                 else if (abilitiesLive)
                 {
@@ -1235,7 +1249,7 @@ namespace Game.View
                 int nodes = loadout.AppendTalentNodes(slot, _nodeBuffer, 0);
                 int pool = loadout.PoolIndexAt(slot);
                 if (SabreTalents.TryLineOf(pool, out SabreTalentLine line))
-                    nodes = DeveloperTalents.AppendNodes(line, loadout.TalentRank(pool), _nodeBuffer, nodes);
+                    nodes = DeveloperTalents.AppendNodes(line, loadout.TalentMask(pool), _nodeBuffer, nodes);
                 sim.SetAbility(slot, loadout.DefinitionAt(slot), _nodeBuffer, nodes);
             }
             sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), _nodeBuffer, 0);
@@ -1357,6 +1371,8 @@ namespace Game.View
             }
             _abilityPressLatched = false;
             frame.PotionMask=_potionLatch;_potionLatch=0;
+            if(_artifactLatch)frame.Flags|=(byte)InputFlags.UseArtifact;
+            _artifactLatch=false;
             frame.AbilityMask = _abilityLatch;
             frame.Command = _commandLatch;
             _abilityLatch = 0;

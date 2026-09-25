@@ -62,6 +62,7 @@ namespace Game.Sim
 
             int damage = build.Get(AbilityStatType.Damage).ToInt();
             if (damage <= 0) return;
+            damage = BoardingMomentum(build, damage);
 
             // Бьём того, за кого цеплялись. Если он умер по дороге — ближайшего
             // из тех, к кому мы в итоге приехали: кулак уже занесён.
@@ -108,6 +109,7 @@ namespace Game.Sim
 
             if (landed && build.Has(AbilityFlag.BoardingHilt))
                 ShortenOtherCooldowns(_leapSlot, BoardingHiltTicks);
+            if (landed) BoardingSureCrit(build);
         }
 
         /// <summary>
@@ -240,11 +242,14 @@ namespace Game.Sim
             // не существовало бы как решения. Четвёртый удар таланта — втрое.
             if (heavy) damage *= 2;
             if (ground) damage *= 3;
+            damage = WreckMomentum(build, _wreckStage, damage);
 
             Fix64 radius = build.Get(AbilityStatType.Radius);
             Fix64 arc = ground ? WreckGroundArc : build.Get(AbilityStatType.ArcCosine);
             int stunTicks = heavy ? build.Get(AbilityStatType.StunTicks).ToInt()
                 : ground ? TicksPerSecond : 0;
+            // «Сотрясение»: второй удар серии тоже оглушает.
+            if (_wreckStage == 1 && stunTicks <= 0 && build.Has(AbilityFlag.WreckConcuss)) stunTicks = WreckConcussTicks;
             bool bigGame = build.Has(AbilityFlag.WreckBigGame);
 
             _events.Add(new SimEvent(SimEventType.WreckStage, PlayerId, -1, _wreckStage,

@@ -361,6 +361,20 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         var importer = (ModelImporter)assetImporter;
 
+        if (NormalPath.Contains("/Resources/Characters/Forest_Wendigo/"))
+        {
+            importer.animationType = ModelImporterAnimationType.Generic;
+            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            importer.importAnimation = true; importer.optimizeGameObjects = false;
+            importer.animationCompression = ModelImporterAnimationCompression.Off;
+            importer.globalScale = 1f; importer.useFileScale = true;
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.importTangents = ModelImporterTangents.CalculateMikk;
+            importer.importBlendShapes = false; importer.importCameras = false; importer.importLights = false;
+            importer.isReadable = false;
+            return;
+        }
+
         if (IsForestBud)
         {
             // Авторский четвероногий риг нельзя пропускать через Humanoid-ретаргет.

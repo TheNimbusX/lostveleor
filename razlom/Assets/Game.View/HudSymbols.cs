@@ -152,6 +152,15 @@ namespace Game.View
             Load(ref _map, ref _mapRects, ref _retryMap, "UI/HUD/MapSymbols", 4, 2);
             Draw(rect, _map, _mapRects, index);
         }
+
+        /// <summary>Знак места из атласа карты для RawImage холста: атлас и участок без пустых полей.</summary>
+        public static bool MapCell(int index, out Texture2D atlas, out Rect uv)
+        {
+            Load(ref _map, ref _mapRects, ref _retryMap, "UI/HUD/MapSymbols", 4, 2);
+            atlas = _map;
+            uv = _mapRects != null && index >= 0 && index < _mapRects.Length ? _mapRects[index] : new Rect(0f, 0f, 1f, 1f);
+            return _map != null && _mapRects != null && index >= 0 && index < _mapRects.Length;
+        }
         static void Load(ref Texture2D atlas, ref Rect[] rects, ref float retry, string path, int columns, int rows)
         {
             if (atlas != null || Time.unscaledTime < retry) return;

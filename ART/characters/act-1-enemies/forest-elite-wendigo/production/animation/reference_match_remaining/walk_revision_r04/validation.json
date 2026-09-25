@@ -1,0 +1,11 @@
+{
+  "cycle_endpoint_max_error": 0.0,
+  "max_bone_length_error_metres": 7.139291052782326e-07,
+  "min_surface_z": 0.008999058047312807,
+  "max_planted_sole_z": 0.009000152552304734,
+  "max_rotation_degrees_per_quarter_frame": 3.573520675368619,
+  "max_rotation_bone": "R_leg_upper",
+  "max_rotation_frame": 37.0,
+  "stride_metres": 2.4,
+  "runtime_cycle_seconds": 0.8
+}

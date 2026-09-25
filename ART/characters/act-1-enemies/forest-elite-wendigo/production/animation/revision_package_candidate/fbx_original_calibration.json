@@ -1,0 +1,83 @@
+{
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.fbx",
+  "blender": "5.2.1 LTS",
+  "rigs": [
+    {
+      "name": "ARM_ForestWendigo",
+      "bones": 22
+    }
+  ],
+  "meshes": [
+    {
+      "name": "SM_ForestWendigo_LOD0",
+      "triangles": 24636,
+      "rig": "ARM_ForestWendigo"
+    }
+  ],
+  "triangles": 24636,
+  "actions": {
+    "Idle": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Idle",
+        "frame_range": [
+          1.0,
+          61.0
+        ]
+      }
+    ],
+    "Walk": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Walk",
+        "frame_range": [
+          1.0,
+          13.0
+        ]
+      }
+    ],
+    "Claw": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Claw",
+        "frame_range": [
+          1.0,
+          31.0
+        ]
+      }
+    ],
+    "Leap": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Leap",
+        "frame_range": [
+          1.0,
+          52.0
+        ]
+      }
+    ],
+    "Hit": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Hit",
+        "frame_range": [
+          1.0,
+          15.0
+        ]
+      }
+    ],
+    "Death": [
+      {
+        "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Death",
+        "frame_range": [
+          1.0,
+          46.0
+        ]
+      }
+    ]
+  },
+  "all_imported_action_names": [
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Claw",
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Death",
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Hit",
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Idle",
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Leap",
+    "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Walk"
+  ],
+  "pass": true
+}

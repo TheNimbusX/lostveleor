@@ -7,5 +7,6 @@ namespace Game.Sim
         ForestGuardian = 1,
         ForestRootSwarm = 2,
         ForestBud = 3,
+        ForestWendigo = 4,
     }
 }

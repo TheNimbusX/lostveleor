@@ -146,6 +146,23 @@ namespace Game.EditorTools
         }
 
         /// <summary>Отдельная деталь фиксированного размера (ромб, камень, значок).</summary>
+        /// <summary>
+        /// Мягкая круглая тень — под круги, медальоны, портрет. Тень пака (Glow, GlowSmall) —
+        /// 9-slice прямоугольник: под кругом или шестиугольником она видна «прозрачной подложкой»
+        /// с краями (владелец, 25 сентября).
+        /// </summary>
+        public static Sprite RoundShadow => KitSprite("wc_shadow_round");
+
+        /// <summary>Мягкое круглое свечение (без жёстких краёв) — для круглых деталей.</summary>
+        public static Sprite RoundGlow => KitSprite("wc_fx_glow");
+
+        public static Sprite KitSprite(string name)
+        {
+            string path = UiKitImport.KitRoot + "/Watercolor/" + name + ".png";
+            UiKitImport.Ensure(path);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
         public static Image Mark(RectTransform parent, string name, Sprite sprite, Role role, float alpha, Vector2 anchor, Vector2 position, float size)
         {
             RectTransform rect = At(Node(name, parent), anchor, position, new Vector2(size, size));

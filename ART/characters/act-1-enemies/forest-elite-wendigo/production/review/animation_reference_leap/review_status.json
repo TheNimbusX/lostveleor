@@ -1,0 +1,8 @@
+{
+  "version": "r03",
+  "unity_import_allowed": true,
+  "owner_art_review_pending": true,
+  "fps": 24,
+  "frames": 97,
+  "note": "Исправлен разворот предплечья в полёте и при посадке. Дуга прыжка и положение ладоней сохранены."
+}

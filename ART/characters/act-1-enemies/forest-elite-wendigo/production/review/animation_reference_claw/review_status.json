@@ -1,0 +1,13 @@
+{
+  "status": "owner_approved",
+  "revision": "r02",
+  "unity_import_allowed": false,
+  "frames": 97,
+  "fps": 24,
+  "motion": "Claw only",
+  "source": "../../../review/higgsfield-refs/claw.mp4",
+  "scene": "../../animation/reference_match_claw/Claw_Reference_Spline.blend",
+  "remaining_review": "None for Claw reference-motion stage; other clips remain unapproved.",
+  "approved_date": "2026-09-25",
+  "approved_revision": "r02"
+}

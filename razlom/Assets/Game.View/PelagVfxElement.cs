@@ -60,6 +60,9 @@ namespace Game.View
         /// <summary>Раскадровка серпа Вихря, если prefab её несёт. Ищется один раз на прогреве.</summary>
         public PelagWhirlwindSweepView Sweep { get; private set; }
 
+        /// <summary>Раскадровка линии раскола Рассекающего, если prefab её несёт.</summary>
+        public PelagCleaveSplitView Crack { get; private set; }
+
         private Transform _spinner;
 
         /// <summary>
@@ -112,6 +115,7 @@ namespace Game.View
             _trails = GetComponentsInChildren<TrailRenderer>(true);
             _particles = GetComponentsInChildren<ParticleSystem>(true);
             Sweep = GetComponent<PelagWhirlwindSweepView>();
+            Crack = GetComponent<PelagCleaveSplitView>();
             _graphs = GetComponentsInChildren<VisualEffect>(true);
             _chainLinks = GetComponentInChildren<PelagChainLinkStrip>(true);
             _chainGlint = transform.Find(ChainGlintName);
@@ -302,6 +306,7 @@ namespace Game.View
         public void End()
         {
             _paidChain.Clear(); _paidAccumulator = 0f;
+            Crack?.End();
             foreach (var graph in _graphs) { graph.Stop(); graph.Reinit(); graph.Stop(); }
             for (int i = 0; i < _lines.Length; i++)
             {

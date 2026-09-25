@@ -375,8 +375,15 @@ namespace Game.Sim
             BeginRift(location, seed, 1, false, false, 1);
         }
 
+        public void StartWendigoTest(LocationDefinition location, ulong seed, bool withPack = false)
+        {
+            location?.ValidateCapacity(_simCapacity);
+            LeaveProvingGround();
+            BeginRift(location, seed, 1, false, true, wendigoShowcase: withPack ? 2 : 1);
+        }
+
         private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer,
-            int forestBudCount = 0)
+            int forestBudCount = 0, int wendigoShowcase = 0)
         {
             bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
@@ -397,6 +404,7 @@ namespace Game.Sim
             Run.CombatFeelShowcase = developer ? CombatFeelCaptureTier.None : CombatFeelShowcase;
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
             Run.ForestBudShowcaseCount = forestBudCount;
+            Run.WendigoShowcase = wendigoShowcase;
             if (developer && location != null) Run.StartTestAtLevel(level, nearBoss);
             else Run.StartRun();
             sim.PlayerInvulnerable = invulnerable;

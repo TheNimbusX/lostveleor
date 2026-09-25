@@ -24,6 +24,15 @@ namespace Game.View
         public RunOfferCard[] Offers = new RunOfferCard[3];
         [Tooltip("Значки вида награды: способность, талант, предмет, характеристика")] public Texture[] KindIcons = new Texture[4];
 
+        [Header("Артефакт (награда босса)")]
+        [Tooltip("«Отказаться» — показывается только на выборе артефакта")] public Button Skip;
+        [Tooltip("Окно «Заменить артефакт?»: старый → новый")] public CanvasGroup ArtifactReplace;
+        public RawImage ArtifactOld;
+        public RawImage ArtifactNew;
+        public TMP_Text ArtifactReplaceText;
+        public Button ArtifactConfirm;
+        public Button ArtifactKeep;
+
         [Header("Замена способности")]
         public CanvasGroup Replace;
         public TMP_Text ReplaceTitle;
@@ -67,6 +76,9 @@ namespace Game.View
         public event Action SalvageClicked;
         public event Action RepeatClicked;
         public event Action CampClicked;
+        public event Action SkipClicked;
+        public event Action ArtifactConfirmClicked;
+        public event Action ArtifactKeepClicked;
 
         void Awake()
         {
@@ -83,6 +95,10 @@ namespace Game.View
             if (Salvage != null) Salvage.onClick.AddListener(() => SalvageClicked?.Invoke());
             if (Repeat != null) Repeat.onClick.AddListener(() => RepeatClicked?.Invoke());
             if (ToCamp != null) ToCamp.onClick.AddListener(() => CampClicked?.Invoke());
+            if (Skip != null) Skip.onClick.AddListener(() => SkipClicked?.Invoke());
+            if (ArtifactConfirm != null) ArtifactConfirm.onClick.AddListener(() => ArtifactConfirmClicked?.Invoke());
+            if (ArtifactKeep != null) ArtifactKeep.onClick.AddListener(() => ArtifactKeepClicked?.Invoke());
+            SetShown(ArtifactReplace, false, true);
             SetShown(Summary, false, true);
             if (GetComponent<CanvasScaler>() != null && GetComponent<UiScaleFollower>() == null) gameObject.AddComponent<UiScaleFollower>();
             PauseMenuView.EnsureEventSystem();

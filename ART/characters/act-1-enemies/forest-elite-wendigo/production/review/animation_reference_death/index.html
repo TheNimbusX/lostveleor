@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вендиго · смерть · версия 3</title>
+<style>
+:root{color-scheme:dark;font:16px/1.5 system-ui,sans-serif;color:#e7e9e3;background:#161c19}*{box-sizing:border-box}body{margin:0}main{max-width:1480px;margin:auto;padding:24px}h1{font-size:28px;margin:0 0 6px}p{color:#bcc6bc;margin:8px 0 18px}video{display:block;width:100%;background:#111;border:1px solid #3f5144;border-radius:8px}.controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:14px 0}button,select{font:inherit;padding:8px 14px;background:#28382d;color:#eef3e9;border:1px solid #58705b;border-radius:6px;cursor:pointer}button:hover{background:#39503f}input[type=range]{width:100%;accent-color:#c0d2b0}output{font-variant-numeric:tabular-nums;min-width:170px}.note{background:#243025;border-left:3px solid #b7c59d;padding:12px 16px;font-size:14px}a{color:#d5dfba}.links{display:flex;gap:24px;flex-wrap:wrap;font-size:14px}details{margin-top:18px}details img{width:100%;margin-top:14px}
+</style>
+<main>
+<h1>Смерть · версия 3</h1>
+<p>Референс слева, рабочая 3D-анимация справа. Одна временная шкала, исходные 24 кадра/с.</p>
+<video id="clip" src="death_comparison_r03.mp4" controls muted loop playsinline preload="auto"></video>
+<div class="controls">
+ <button id="play">Воспроизвести</button><button id="prev" title="Стрелка влево">← Кадр</button><button id="next" title="Стрелка вправо">Кадр →</button>
+ <label>Скорость <select id="speed"><option value="1">1×</option><option value="0.5">0,5×</option><option value="0.25">0,25×</option></select></label>
+ <output id="counter">Кадр 0 / 96 · 0,00 с</output>
+</div>
+<input id="scrub" type="range" min="0" max="96" value="0" step="1" aria-label="Кадр анимации">
+
+<p class="note">Падение на лапы: опора кистей, проседание плеч, затем головы.</p>
+<p class="links"><a href="death_3d_r03.mp4">Только 3D</a><a href="../../animation/reference_match_remaining/death_work/Death_Final.blend">Редактируемая сцена Blender</a><a href="../animation_unity_package/index.html">Весь комплект и бой в Unity</a></p>
+
+</main>
+<script>
+const v=document.getElementById('clip'),slider=document.getElementById('scrub'),counter=document.getElementById('counter'),play=document.getElementById('play');
+function frame(){return Math.max(0,Math.min(96,Math.floor(v.currentTime*24+.00001)))}
+function update(){let n=frame();slider.value=n;counter.textContent=`Кадр ${n} / 96 · ${(n/24).toFixed(2).replace('.',',')} с`;play.textContent=v.paused?'Воспроизвести':'Пауза'}
+function seek(n){v.pause();v.currentTime=Math.max(0,Math.min(96,n))/24+.0001;update()}
+play.onclick=()=>v.paused?v.play():v.pause();
+document.getElementById('prev').onclick=()=>seek(frame()-1);
+document.getElementById('next').onclick=()=>seek(frame()+1);
+slider.oninput=()=>seek(Number(slider.value));
+document.getElementById('speed').onchange=e=>{v.playbackRate=Number(e.target.value)};
+document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>seek(Number(b.dataset.f)));
+for(const event of ['timeupdate','play','pause','seeked','loadedmetadata'])v.addEventListener(event,update);
+document.addEventListener('keydown',e=>{if(e.target.matches('input,select,button'))return;if(e.code==='ArrowRight'){e.preventDefault();seek(frame()+1)}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame()-1)}if(e.code==='Space'){e.preventDefault();play.click()}});
+if(v.requestVideoFrameCallback){function tick(){update();v.requestVideoFrameCallback(tick)}v.requestVideoFrameCallback(tick)}
+</script>
+</html>

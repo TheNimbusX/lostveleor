@@ -1,0 +1,1806 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\ForestWendigo_Rig_WeightRevision_v2.blend",
+  "tris": 24636,
+  "poses": {
+    "neutral": {
+      "edge_stretch_p95": 1.0,
+      "edge_stretch_p99": 1.0,
+      "edge_stretch_max": 1.001,
+      "edge_stretch_p99_over_5mm": 1.0,
+      "edge_stretch_worst_over_5mm": [
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0081,
+          "midpoint": [
+            -0.224,
+            -0.339,
+            2.322
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.75
+            ],
+            [
+              "head",
+              0.25
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.75
+            ],
+            [
+              "head",
+              0.25
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0052,
+          "midpoint": [
+            0.243,
+            -0.039,
+            2.357
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.5
+            ],
+            [
+              "head",
+              0.4
+            ],
+            [
+              "spine_02",
+              0.1
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.49
+            ],
+            [
+              "head",
+              0.41
+            ],
+            [
+              "spine_02",
+              0.1
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0078,
+          "midpoint": [
+            0.021,
+            -0.361,
+            2.317
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.61
+            ],
+            [
+              "spine_02",
+              0.2
+            ],
+            [
+              "head",
+              0.19
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.61
+            ],
+            [
+              "spine_02",
+              0.2
+            ],
+            [
+              "head",
+              0.19
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0072,
+          "midpoint": [
+            -0.141,
+            -0.016,
+            2.517
+          ],
+          "groups_a": [
+            [
+              "head",
+              1.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              1.0
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0085,
+          "midpoint": [
+            -0.367,
+            -0.066,
+            2.432
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.56
+            ],
+            [
+              "head",
+              0.35
+            ],
+            [
+              "spine_02",
+              0.09
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.62
+            ],
+            [
+              "head",
+              0.28
+            ],
+            [
+              "spine_02",
+              0.1
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0089,
+          "midpoint": [
+            -0.018,
+            -0.06,
+            2.512
+          ],
+          "groups_a": [
+            [
+              "head",
+              1.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              1.0
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0065,
+          "midpoint": [
+            -0.165,
+            0.364,
+            2.28
+          ],
+          "groups_a": [
+            [
+              "head",
+              1.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              1.0
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.01,
+          "midpoint": [
+            0.335,
+            0.179,
+            2.398
+          ],
+          "groups_a": [
+            [
+              "head",
+              0.83
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              0.83
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0089,
+          "midpoint": [
+            -0.227,
+            -0.26,
+            2.451
+          ],
+          "groups_a": [
+            [
+              "head",
+              0.75
+            ],
+            [
+              "neck",
+              0.21
+            ],
+            [
+              "spine_02",
+              0.05
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              0.81
+            ],
+            [
+              "neck",
+              0.15
+            ],
+            [
+              "spine_02",
+              0.03
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0053,
+          "midpoint": [
+            -0.531,
+            0.559,
+            1.474
+          ],
+          "groups_a": [
+            [
+              "L_arm_lower",
+              0.77
+            ],
+            [
+              "L_arm_upper",
+              0.23
+            ]
+          ],
+          "groups_b": [
+            [
+              "L_arm_lower",
+              0.74
+            ],
+            [
+              "L_arm_upper",
+              0.26
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0079,
+          "midpoint": [
+            0.041,
+            0.172,
+            2.55
+          ],
+          "groups_a": [
+            [
+              "head",
+              1.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "head",
+              1.0
+            ]
+          ]
+        },
+        {
+          "ratio": 1.0,
+          "rest_m": 0.0115,
+          "midpoint": [
+            -0.11,
+            -0.301,
+            2.407
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.62
+            ],
+            [
+              "head",
+              0.22
+            ],
+            [
+              "spine_02",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.66
+            ],
+            [
+              "head",
+              0.23
+            ],
+            [
+              "spine_02",
+              0.11
+            ]
+          ]
+        }
+      ],
+      "min_mesh_z": 0.0,
+      "min_by_limb": {
+        "L_hand": 0.544,
+        "L_foot": 0.013,
+        "R_hand": 0.58,
+        "R_foot": 0.0
+      },
+      "bone_heads": {
+        "pelvis": [
+          0.0,
+          0.0,
+          1.19
+        ],
+        "head": [
+          0.0,
+          0.26,
+          2.2
+        ],
+        "L_hand": [
+          -0.53,
+          0.76,
+          1.13
+        ],
+        "R_hand": [
+          0.51,
+          -0.81,
+          1.13
+        ],
+        "L_foot": [
+          -0.6,
+          0.39,
+          0.24
+        ],
+        "R_foot": [
+          0.48,
+          -0.51,
+          0.24
+        ]
+      }
+    },
+    "quad_crouch": {
+      "edge_stretch_p95": 1.163,
+      "edge_stretch_p99": 1.813,
+      "edge_stretch_max": 2587.152,
+      "edge_stretch_p99_over_5mm": 1.537,
+      "edge_stretch_worst_over_5mm": [
+        {
+          "ratio": 19.31,
+          "rest_m": 0.0162,
+          "midpoint": [
+            0.069,
+            -0.397,
+            2.202
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 11.19,
+          "rest_m": 0.0253,
+          "midpoint": [
+            0.123,
+            -0.385,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "spine_02",
+              0.31
+            ]
+          ]
+        },
+        {
+          "ratio": 10.99,
+          "rest_m": 0.0313,
+          "midpoint": [
+            0.075,
+            -0.41,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 10.05,
+          "rest_m": 0.0311,
+          "midpoint": [
+            0.072,
+            -0.385,
+            2.205
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ],
+            [
+              "head",
+              0.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 9.2,
+          "rest_m": 0.0132,
+          "midpoint": [
+            0.24,
+            -0.255,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.39
+            ],
+            [
+              "neck",
+              0.31
+            ],
+            [
+              "R_arm_upper",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.72
+            ],
+            [
+              "spine_02",
+              0.25
+            ],
+            [
+              "head",
+              0.03
+            ]
+          ]
+        },
+        {
+          "ratio": 9.13,
+          "rest_m": 0.0367,
+          "midpoint": [
+            0.082,
+            -0.409,
+            2.203
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 8.68,
+          "rest_m": 0.0118,
+          "midpoint": [
+            -0.437,
+            0.248,
+            2.199
+          ],
+          "groups_a": [
+            [
+              "L_clavicle",
+              0.4
+            ],
+            [
+              "L_arm_upper",
+              0.29
+            ],
+            [
+              "neck",
+              0.21
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "head",
+              0.31
+            ]
+          ]
+        },
+        {
+          "ratio": 8.53,
+          "rest_m": 0.0353,
+          "midpoint": [
+            0.116,
+            -0.382,
+            2.208
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 8.49,
+          "rest_m": 0.0389,
+          "midpoint": [
+            0.101,
+            -0.396,
+            2.207
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 7.44,
+          "rest_m": 0.0473,
+          "midpoint": [
+            0.094,
+            -0.41,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.16
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 7.28,
+          "rest_m": 0.0161,
+          "midpoint": [
+            0.227,
+            -0.224,
+            2.198
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.67
+            ],
+            [
+              "spine_02",
+              0.21
+            ],
+            [
+              "head",
+              0.11
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.37
+            ],
+            [
+              "neck",
+              0.32
+            ],
+            [
+              "R_arm_upper",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 7.23,
+          "rest_m": 0.0399,
+          "midpoint": [
+            0.151,
+            -0.39,
+            2.182
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "spine_02",
+              0.31
+            ],
+            [
+              "head",
+              0.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.5
+            ],
+            [
+              "R_arm_upper",
+              0.23
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        }
+      ],
+      "min_mesh_z": -0.024,
+      "min_by_limb": {
+        "L_hand": 0.013,
+        "L_foot": 0.001,
+        "R_hand": -0.01,
+        "R_foot": 0.029
+      },
+      "bone_heads": {
+        "pelvis": [
+          0.0,
+          0.16,
+          0.65
+        ],
+        "head": [
+          0.0,
+          0.874,
+          1.318
+        ],
+        "L_hand": [
+          -0.64,
+          1.18,
+          0.58
+        ],
+        "R_hand": [
+          0.55,
+          0.39,
+          0.49
+        ],
+        "L_foot": [
+          -0.67,
+          0.28,
+          0.33
+        ],
+        "R_foot": [
+          0.55,
+          -0.54,
+          0.26
+        ]
+      }
+    },
+    "claw_arc": {
+      "edge_stretch_p95": 1.118,
+      "edge_stretch_p99": 1.454,
+      "edge_stretch_max": 3959.167,
+      "edge_stretch_p99_over_5mm": 1.372,
+      "edge_stretch_worst_over_5mm": [
+        {
+          "ratio": 8.39,
+          "rest_m": 0.0162,
+          "midpoint": [
+            0.069,
+            -0.397,
+            2.202
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 7.48,
+          "rest_m": 0.0132,
+          "midpoint": [
+            0.24,
+            -0.255,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.39
+            ],
+            [
+              "neck",
+              0.31
+            ],
+            [
+              "R_arm_upper",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.72
+            ],
+            [
+              "spine_02",
+              0.25
+            ],
+            [
+              "head",
+              0.03
+            ]
+          ]
+        },
+        {
+          "ratio": 7.43,
+          "rest_m": 0.011,
+          "midpoint": [
+            0.149,
+            -0.149,
+            2.167
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.45
+            ],
+            [
+              "R_clavicle",
+              0.23
+            ],
+            [
+              "spine_02",
+              0.2
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.43
+            ],
+            [
+              "R_clavicle",
+              0.25
+            ],
+            [
+              "spine_02",
+              0.2
+            ]
+          ]
+        },
+        {
+          "ratio": 6.33,
+          "rest_m": 0.0161,
+          "midpoint": [
+            0.227,
+            -0.224,
+            2.198
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.67
+            ],
+            [
+              "spine_02",
+              0.21
+            ],
+            [
+              "head",
+              0.11
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.37
+            ],
+            [
+              "neck",
+              0.32
+            ],
+            [
+              "R_arm_upper",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 5.62,
+          "rest_m": 0.0172,
+          "midpoint": [
+            0.567,
+            -0.542,
+            1.199
+          ],
+          "groups_a": [
+            [
+              "R_arm_lower",
+              0.85
+            ],
+            [
+              "R_hand",
+              0.13
+            ],
+            [
+              "R_arm_upper",
+              0.02
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_arm_lower",
+              0.83
+            ],
+            [
+              "R_hand",
+              0.1
+            ],
+            [
+              "R_leg_upper",
+              0.06
+            ]
+          ]
+        },
+        {
+          "ratio": 4.89,
+          "rest_m": 0.0253,
+          "midpoint": [
+            0.123,
+            -0.385,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "spine_02",
+              0.31
+            ]
+          ]
+        },
+        {
+          "ratio": 4.85,
+          "rest_m": 0.0313,
+          "midpoint": [
+            0.075,
+            -0.41,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 4.82,
+          "rest_m": 0.0311,
+          "midpoint": [
+            0.072,
+            -0.385,
+            2.205
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ],
+            [
+              "head",
+              0.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 4.37,
+          "rest_m": 0.0277,
+          "midpoint": [
+            0.22,
+            -0.234,
+            2.201
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.38
+            ],
+            [
+              "neck",
+              0.31
+            ],
+            [
+              "R_arm_upper",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.67
+            ],
+            [
+              "spine_02",
+              0.21
+            ],
+            [
+              "head",
+              0.11
+            ]
+          ]
+        },
+        {
+          "ratio": 4.36,
+          "rest_m": 0.0184,
+          "midpoint": [
+            0.124,
+            -0.146,
+            2.171
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.44
+            ],
+            [
+              "R_clavicle",
+              0.22
+            ],
+            [
+              "spine_02",
+              0.22
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.46
+            ],
+            [
+              "spine_02",
+              0.23
+            ],
+            [
+              "R_clavicle",
+              0.21
+            ]
+          ]
+        },
+        {
+          "ratio": 4.27,
+          "rest_m": 0.0367,
+          "midpoint": [
+            0.082,
+            -0.409,
+            2.203
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 4.24,
+          "rest_m": 0.0374,
+          "midpoint": [
+            0.575,
+            -0.482,
+            1.099
+          ],
+          "groups_a": [
+            [
+              "R_arm_lower",
+              0.72
+            ],
+            [
+              "R_hand",
+              0.16
+            ],
+            [
+              "R_leg_upper",
+              0.1
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_arm_lower",
+              0.82
+            ],
+            [
+              "R_hand",
+              0.17
+            ],
+            [
+              "R_arm_upper",
+              0.01
+            ]
+          ]
+        }
+      ],
+      "min_mesh_z": -0.036,
+      "min_by_limb": {
+        "L_hand": 0.352,
+        "L_foot": -0.036,
+        "R_hand": 1.215,
+        "R_foot": 0.014
+      },
+      "bone_heads": {
+        "pelvis": [
+          -0.12,
+          0.12,
+          1.04
+        ],
+        "head": [
+          -0.508,
+          0.43,
+          1.89
+        ],
+        "L_hand": [
+          -0.571,
+          -0.305,
+          0.782
+        ],
+        "R_hand": [
+          -0.065,
+          1.012,
+          1.581
+        ],
+        "L_foot": [
+          -0.6,
+          0.39,
+          0.24
+        ],
+        "R_foot": [
+          0.48,
+          -0.51,
+          0.24
+        ]
+      }
+    },
+    "fold_dead": {
+      "edge_stretch_p95": 1.272,
+      "edge_stretch_p99": 2.393,
+      "edge_stretch_max": 3228.925,
+      "edge_stretch_p99_over_5mm": 2.087,
+      "edge_stretch_worst_over_5mm": [
+        {
+          "ratio": 24.5,
+          "rest_m": 0.0162,
+          "midpoint": [
+            0.069,
+            -0.397,
+            2.202
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 14.22,
+          "rest_m": 0.0253,
+          "midpoint": [
+            0.123,
+            -0.385,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "spine_02",
+              0.31
+            ]
+          ]
+        },
+        {
+          "ratio": 13.7,
+          "rest_m": 0.0313,
+          "midpoint": [
+            0.075,
+            -0.41,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 13.21,
+          "rest_m": 0.0132,
+          "midpoint": [
+            0.24,
+            -0.255,
+            2.2
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.39
+            ],
+            [
+              "neck",
+              0.31
+            ],
+            [
+              "R_arm_upper",
+              0.18
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.72
+            ],
+            [
+              "spine_02",
+              0.25
+            ],
+            [
+              "head",
+              0.03
+            ]
+          ]
+        },
+        {
+          "ratio": 12.81,
+          "rest_m": 0.0311,
+          "midpoint": [
+            0.072,
+            -0.385,
+            2.205
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ],
+            [
+              "head",
+              0.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.21
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 11.56,
+          "rest_m": 0.0367,
+          "midpoint": [
+            0.082,
+            -0.409,
+            2.203
+          ],
+          "groups_a": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.22
+            ],
+            [
+              "neck",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ]
+        },
+        {
+          "ratio": 11.39,
+          "rest_m": 0.0161,
+          "midpoint": [
+            0.227,
+            -0.224,
+            2.198
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.67
+            ],
+            [
+              "spine_02",
+              0.21
+            ],
+            [
+              "head",
+              0.11
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.37
+            ],
+            [
+              "neck",
+              0.32
+            ],
+            [
+              "R_arm_upper",
+              0.17
+            ]
+          ]
+        },
+        {
+          "ratio": 10.73,
+          "rest_m": 0.0353,
+          "midpoint": [
+            0.116,
+            -0.382,
+            2.208
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 10.69,
+          "rest_m": 0.0118,
+          "midpoint": [
+            -0.437,
+            0.248,
+            2.199
+          ],
+          "groups_a": [
+            [
+              "L_clavicle",
+              0.4
+            ],
+            [
+              "L_arm_upper",
+              0.29
+            ],
+            [
+              "neck",
+              0.21
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "head",
+              0.31
+            ]
+          ]
+        },
+        {
+          "ratio": 10.33,
+          "rest_m": 0.0389,
+          "midpoint": [
+            0.101,
+            -0.396,
+            2.207
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.68
+            ],
+            [
+              "spine_02",
+              0.32
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.53
+            ],
+            [
+              "R_arm_upper",
+              0.2
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 9.3,
+          "rest_m": 0.0399,
+          "midpoint": [
+            0.151,
+            -0.39,
+            2.182
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.69
+            ],
+            [
+              "spine_02",
+              0.31
+            ],
+            [
+              "head",
+              0.0
+            ]
+          ],
+          "groups_b": [
+            [
+              "R_clavicle",
+              0.5
+            ],
+            [
+              "R_arm_upper",
+              0.23
+            ],
+            [
+              "neck",
+              0.18
+            ]
+          ]
+        },
+        {
+          "ratio": 9.29,
+          "rest_m": 0.0176,
+          "midpoint": [
+            -0.325,
+            -0.313,
+            2.203
+          ],
+          "groups_a": [
+            [
+              "neck",
+              0.49
+            ],
+            [
+              "L_clavicle",
+              0.19
+            ],
+            [
+              "head",
+              0.17
+            ]
+          ],
+          "groups_b": [
+            [
+              "neck",
+              0.75
+            ],
+            [
+              "head",
+              0.25
+            ],
+            [
+              "spine_02",
+              0.0
+            ]
+          ]
+        }
+      ],
+      "min_mesh_z": -0.109,
+      "min_by_limb": {
+        "L_hand": 0.062,
+        "L_foot": -0.009,
+        "R_hand": -0.031,
+        "R_foot": -0.006
+      },
+      "bone_heads": {
+        "pelvis": [
+          0.0,
+          0.22,
+          0.52
+        ],
+        "head": [
+          0.0,
+          0.953,
+          0.868
+        ],
+        "L_hand": [
+          -0.71,
+          1.34,
+          0.55
+        ],
+        "R_hand": [
+          0.61,
+          0.54,
+          0.48
+        ],
+        "L_foot": [
+          -0.64,
+          0.19,
+          0.35
+        ],
+        "R_foot": [
+          0.52,
+          -0.61,
+          0.25
+        ]
+      }
+    }
+  }
+}

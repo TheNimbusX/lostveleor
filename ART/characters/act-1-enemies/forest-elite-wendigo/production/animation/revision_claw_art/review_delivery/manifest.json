@@ -1,0 +1,1224 @@
+{
+  "source_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\ForestWendigo_Claw_ArtRevision.blend",
+  "render_fps": 30,
+  "forward_axis": "+Y",
+  "expected_height_m": 3.1,
+  "triangle_limit": 25000,
+  "character_meshes": [
+    "SM_ForestWendigo_LOD0"
+  ],
+  "rest_sample": {
+    "vertex_count": 12361,
+    "triangle_count": 24636,
+    "world_min": [
+      -0.77119,
+      -1.01749,
+      -0.01004
+    ],
+    "world_max": [
+      0.80689,
+      1.03604,
+      3.1
+    ],
+    "silhouette_ndc": {}
+  },
+  "camera_positions": {
+    "side": [
+      11.932372093200684,
+      0.009274959564208984,
+      2.96970272064209
+    ],
+    "game": [
+      7.290577411651611,
+      7.2820024490356445,
+      7.721778869628906
+    ],
+    "front": [
+      0.017850011587142944,
+      11.923797607421875,
+      2.96970272064209
+    ]
+  },
+  "actions": {
+    "AN_ForestWendigo_Claw": {
+      "assigned": [
+        {
+          "target": "ARM_ForestWendigo",
+          "slot": "OBARM_ForestWendigo"
+        }
+      ],
+      "frame_start": 0,
+      "frame_end": 30,
+      "key_frames": [
+        0,
+        8,
+        15,
+        18,
+        22,
+        30
+      ],
+      "contact_markers": {
+        "windup_end_frame": 18,
+        "contact_frame": 18,
+        "recovery_end_frame": 30
+      },
+      "frames": [
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.77119,
+            -1.01749,
+            -0.01004
+          ],
+          "world_max": [
+            0.80689,
+            1.03604,
+            3.1
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31331,
+              0.20393,
+              0.68668,
+              0.78128
+            ],
+            "game": [
+              0.29181,
+              0.23734,
+              0.69482,
+              0.72006
+            ],
+            "front": [
+              0.35654,
+              0.20694,
+              0.64346,
+              0.77857
+            ]
+          },
+          "frame": 0,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.78591,
+            -1.02025,
+            -0.00942
+          ],
+          "world_max": [
+            0.84033,
+            1.062,
+            3.07983
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31281,
+              0.20393,
+              0.6914,
+              0.77745
+            ],
+            "game": [
+              0.2853,
+              0.23652,
+              0.69999,
+              0.71745
+            ],
+            "front": [
+              0.35046,
+              0.20887,
+              0.64614,
+              0.77551
+            ]
+          },
+          "frame": 1,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.8247,
+            -1.01643,
+            -0.00941
+          ],
+          "world_max": [
+            0.87075,
+            1.07913,
+            3.0624
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31351,
+              0.20384,
+              0.69452,
+              0.77356
+            ],
+            "game": [
+              0.27761,
+              0.23569,
+              0.70449,
+              0.71473
+            ],
+            "front": [
+              0.34493,
+              0.21012,
+              0.65319,
+              0.77241
+            ]
+          },
+          "frame": 2,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.84859,
+            -1.0146,
+            -0.00382
+          ],
+          "world_max": [
+            0.95253,
+            1.10077,
+            3.04457
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31384,
+              0.20474,
+              0.69845,
+              0.76932
+            ],
+            "game": [
+              0.26572,
+              0.23553,
+              0.71093,
+              0.71165
+            ],
+            "front": [
+              0.33006,
+              0.21181,
+              0.65754,
+              0.76911
+            ]
+          },
+          "frame": 3,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.86579,
+            -1.03035,
+            -2e-05
+          ],
+          "world_max": [
+            1.08737,
+            1.13081,
+            3.02486
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31098,
+              0.20745,
+              0.70392,
+              0.76453
+            ],
+            "game": [
+              0.25073,
+              0.23667,
+              0.71989,
+              0.70798
+            ],
+            "front": [
+              0.30554,
+              0.21414,
+              0.66066,
+              0.76543
+            ]
+          },
+          "frame": 4,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.87896,
+            -1.05127,
+            7e-05
+          ],
+          "world_max": [
+            1.19203,
+            1.16849,
+            3.00374
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.30717,
+              0.21067,
+              0.71077,
+              0.75932
+            ],
+            "game": [
+              0.24111,
+              0.23843,
+              0.73007,
+              0.70467
+            ],
+            "front": [
+              0.28651,
+              0.21701,
+              0.66306,
+              0.7615
+            ]
+          },
+          "frame": 5,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.88484,
+            -1.05678,
+            0.00015
+          ],
+          "world_max": [
+            1.24993,
+            1.20669,
+            2.98245
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.30617,
+              0.21098,
+              0.71771,
+              0.755
+            ],
+            "game": [
+              0.23812,
+              0.2401,
+              0.73974,
+              0.70301
+            ],
+            "front": [
+              0.27599,
+              0.21913,
+              0.66413,
+              0.75758
+            ]
+          },
+          "frame": 6,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.93898,
+            -1.04306,
+            3e-05
+          ],
+          "world_max": [
+            1.27822,
+            1.23669,
+            2.96239
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.30867,
+              0.21098,
+              0.72317,
+              0.75111
+            ],
+            "game": [
+              0.22911,
+              0.24184,
+              0.74727,
+              0.70194
+            ],
+            "front": [
+              0.27084,
+              0.21914,
+              0.67397,
+              0.75402
+            ]
+          },
+          "frame": 7,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.96892,
+            -1.00491,
+            0.00012
+          ],
+          "world_max": [
+            1.32148,
+            1.24566,
+            2.94428
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.3156,
+              0.21103,
+              0.7248,
+              0.74744
+            ],
+            "game": [
+              0.22711,
+              0.24351,
+              0.7502,
+              0.70245
+            ],
+            "front": [
+              0.26298,
+              0.21476,
+              0.67941,
+              0.75109
+            ]
+          },
+          "frame": 8,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.98056,
+            -0.9689,
+            0.00016
+          ],
+          "world_max": [
+            1.38041,
+            1.24071,
+            2.92829
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.32215,
+              0.21107,
+              0.7239,
+              0.74411
+            ],
+            "game": [
+              0.23216,
+              0.24297,
+              0.75025,
+              0.70414
+            ],
+            "front": [
+              0.25226,
+              0.20849,
+              0.68153,
+              0.74877
+            ]
+          },
+          "frame": 9,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.98355,
+            -0.94341,
+            -1e-05
+          ],
+          "world_max": [
+            1.30648,
+            1.23424,
+            2.91518
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.32678,
+              0.21099,
+              0.72272,
+              0.74139
+            ],
+            "game": [
+              0.24523,
+              0.24093,
+              0.74936,
+              0.70547
+            ],
+            "front": [
+              0.2657,
+              0.20613,
+              0.68207,
+              0.74692
+            ]
+          },
+          "frame": 10,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.98674,
+            -0.93047,
+            -0.00026
+          ],
+          "world_max": [
+            1.26182,
+            1.23085,
+            2.90489
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.32914,
+              0.21093,
+              0.7221,
+              0.73933
+            ],
+            "game": [
+              0.25227,
+              0.24056,
+              0.74916,
+              0.70586
+            ],
+            "front": [
+              0.27382,
+              0.20566,
+              0.68265,
+              0.74536
+            ]
+          },
+          "frame": 11,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.98941,
+            -0.92278,
+            -0.00122
+          ],
+          "world_max": [
+            1.23275,
+            1.22825,
+            2.89649
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.33054,
+              0.21084,
+              0.72163,
+              0.73767
+            ],
+            "game": [
+              0.25629,
+              0.24038,
+              0.74907,
+              0.70597
+            ],
+            "front": [
+              0.27911,
+              0.20538,
+              0.68314,
+              0.74405
+            ]
+          },
+          "frame": 12,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.99153,
+            -0.91592,
+            -0.0018
+          ],
+          "world_max": [
+            1.21128,
+            1.22614,
+            2.8894
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.33178,
+              0.21079,
+              0.72125,
+              0.73629
+            ],
+            "game": [
+              0.25906,
+              0.24027,
+              0.74897,
+              0.70602
+            ],
+            "front": [
+              0.28301,
+              0.20517,
+              0.68352,
+              0.74293
+            ]
+          },
+          "frame": 13,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.99197,
+            -0.90828,
+            -0.00234
+          ],
+          "world_max": [
+            1.18973,
+            1.22346,
+            2.883
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.33317,
+              0.21074,
+              0.72076,
+              0.73504
+            ],
+            "game": [
+              0.26215,
+              0.24017,
+              0.7486,
+              0.70621
+            ],
+            "front": [
+              0.28693,
+              0.20497,
+              0.6836,
+              0.74194
+            ]
+          },
+          "frame": 14,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.9901,
+            -0.89999,
+            -0.00234
+          ],
+          "world_max": [
+            1.18163,
+            1.22173,
+            2.88406
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.33468,
+              0.21074,
+              0.72045,
+              0.7353
+            ],
+            "game": [
+              0.2652,
+              0.24017,
+              0.74808,
+              0.70723
+            ],
+            "front": [
+              0.2884,
+              0.20497,
+              0.68326,
+              0.74217
+            ]
+          },
+          "frame": 15,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.10532,
+            -0.81238,
+            -0.00051
+          ],
+          "world_max": [
+            1.30629,
+            1.3331,
+            2.78081
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.35061,
+              0.21033,
+              0.7407,
+              0.7159
+            ],
+            "game": [
+              0.28349,
+              0.24414,
+              0.777,
+              0.67534
+            ],
+            "front": [
+              0.26574,
+              0.20396,
+              0.70421,
+              0.72021
+            ]
+          },
+          "frame": 16,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.26548,
+            -0.78031,
+            8e-05
+          ],
+          "world_max": [
+            1.19999,
+            1.32242,
+            2.47799
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.35644,
+              0.21043,
+              0.73875,
+              0.66308
+            ],
+            "game": [
+              0.33291,
+              0.24456,
+              0.7976,
+              0.60193
+            ],
+            "front": [
+              0.28507,
+              0.2034,
+              0.73333,
+              0.66298
+            ]
+          },
+          "frame": 17,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.49666,
+            -0.77219,
+            -0.0001
+          ],
+          "world_max": [
+            0.79904,
+            1.26629,
+            2.19298
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.35791,
+              0.21213,
+              0.72855,
+              0.62296
+            ],
+            "game": [
+              0.33711,
+              0.23466,
+              0.83387,
+              0.58421
+            ],
+            "front": [
+              0.35796,
+              0.20419,
+              0.77537,
+              0.60558
+            ]
+          },
+          "frame": 18,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.54877,
+            -0.71981,
+            -0.00092
+          ],
+          "world_max": [
+            0.80319,
+            1.04257,
+            2.1808
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.36744,
+              0.21183,
+              0.68787,
+              0.62588
+            ],
+            "game": [
+              0.33477,
+              0.241,
+              0.82143,
+              0.60444
+            ],
+            "front": [
+              0.35721,
+              0.20477,
+              0.78484,
+              0.60196
+            ]
+          },
+          "frame": 19,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.53667,
+            -0.71543,
+            -0.00094
+          ],
+          "world_max": [
+            0.80358,
+            1.03045,
+            2.20247
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.36824,
+              0.21184,
+              0.68567,
+              0.62944
+            ],
+            "game": [
+              0.33436,
+              0.24102,
+              0.81831,
+              0.60112
+            ],
+            "front": [
+              0.35714,
+              0.20468,
+              0.78264,
+              0.60547
+            ]
+          },
+          "frame": 20,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.50754,
+            -0.72045,
+            -6e-05
+          ],
+          "world_max": [
+            0.80346,
+            1.05558,
+            2.23052
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.36732,
+              0.21203,
+              0.69024,
+              0.63333
+            ],
+            "game": [
+              0.33428,
+              0.24108,
+              0.81664,
+              0.59441
+            ],
+            "front": [
+              0.35716,
+              0.20447,
+              0.77734,
+              0.6111
+            ]
+          },
+          "frame": 21,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.41976,
+            -0.72917,
+            -7e-05
+          ],
+          "world_max": [
+            0.80345,
+            1.11076,
+            2.28496
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.36574,
+              0.21213,
+              0.70027,
+              0.64173
+            ],
+            "game": [
+              0.33381,
+              0.24114,
+              0.80857,
+              0.5996
+            ],
+            "front": [
+              0.35716,
+              0.20405,
+              0.76138,
+              0.62146
+            ]
+          },
+          "frame": 22,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.21952,
+            -0.73346,
+            -0.00064
+          ],
+          "world_max": [
+            0.80321,
+            1.15997,
+            2.38054
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.36496,
+              0.21216,
+              0.70922,
+              0.6574
+            ],
+            "game": [
+              0.33259,
+              0.24143,
+              0.78898,
+              0.6107
+            ],
+            "front": [
+              0.35721,
+              0.20347,
+              0.72498,
+              0.63933
+            ]
+          },
+          "frame": 23,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.10418,
+            -0.72221,
+            -0.0
+          ],
+          "world_max": [
+            0.80082,
+            1.13939,
+            2.50313
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.367,
+              0.21235,
+              0.70548,
+              0.67768
+            ],
+            "game": [
+              0.33102,
+              0.24269,
+              0.76501,
+              0.62606
+            ],
+            "front": [
+              0.35764,
+              0.20326,
+              0.70401,
+              0.66221
+            ]
+          },
+          "frame": 24,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.11877,
+            -0.70069,
+            3e-05
+          ],
+          "world_max": [
+            0.79348,
+            1.15677,
+            2.62929
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.37091,
+              0.21086,
+              0.70864,
+              0.69859
+            ],
+            "game": [
+              0.32977,
+              0.2437,
+              0.75063,
+              0.64285
+            ],
+            "front": [
+              0.35898,
+              0.20329,
+              0.70666,
+              0.68591
+            ]
+          },
+          "frame": 25,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -1.06677,
+            -0.66599,
+            -0.00017
+          ],
+          "world_max": [
+            0.80299,
+            1.14407,
+            2.75898
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.37722,
+              0.21121,
+              0.70633,
+              0.7202
+            ],
+            "game": [
+              0.32839,
+              0.24204,
+              0.73465,
+              0.66081
+            ],
+            "front": [
+              0.35725,
+              0.20732,
+              0.6972,
+              0.71038
+            ]
+          },
+          "frame": 26,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.97247,
+            -0.65168,
+            -9e-05
+          ],
+          "world_max": [
+            0.80412,
+            1.12075,
+            2.89186
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.37983,
+              0.21148,
+              0.70209,
+              0.74248
+            ],
+            "game": [
+              0.32721,
+              0.23849,
+              0.71824,
+              0.68015
+            ],
+            "front": [
+              0.35704,
+              0.21096,
+              0.68006,
+              0.73564
+            ]
+          },
+          "frame": 27,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.87715,
+            -0.69419,
+            -0.00061
+          ],
+          "world_max": [
+            0.79191,
+            1.10381,
+            3.00376
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.3721,
+              0.20531,
+              0.69901,
+              0.7618
+            ],
+            "game": [
+              0.32732,
+              0.23627,
+              0.70566,
+              0.69793
+            ],
+            "front": [
+              0.35926,
+              0.21344,
+              0.66273,
+              0.75745
+            ]
+          },
+          "frame": 28,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.81229,
+            -0.85715,
+            -0.01374
+          ],
+          "world_max": [
+            0.78111,
+            1.04078,
+            3.06267
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.34247,
+              0.20318,
+              0.68755,
+              0.77354
+            ],
+            "game": [
+              0.32374,
+              0.23621,
+              0.69964,
+              0.71009
+            ],
+            "front": [
+              0.36123,
+              0.21141,
+              0.65094,
+              0.7702
+            ]
+          },
+          "frame": 29,
+          "over_triangle_budget": false
+        },
+        {
+          "vertex_count": 12361,
+          "triangle_count": 24636,
+          "world_min": [
+            -0.77119,
+            -1.01749,
+            -0.01004
+          ],
+          "world_max": [
+            0.80689,
+            1.03604,
+            3.1
+          ],
+          "silhouette_ndc": {
+            "side": [
+              0.31331,
+              0.20393,
+              0.68668,
+              0.78128
+            ],
+            "game": [
+              0.29181,
+              0.23734,
+              0.69482,
+              0.72006
+            ],
+            "front": [
+              0.35654,
+              0.20694,
+              0.64346,
+              0.77857
+            ]
+          },
+          "frame": 30,
+          "over_triangle_budget": false
+        }
+      ],
+      "outputs": {
+        "side": {
+          "png_sequence": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\side\\frames",
+          "keyposes": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\side\\keyposes",
+          "animated_webp": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\side\\review.webp"
+        },
+        "game": {
+          "png_sequence": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\game\\frames",
+          "keyposes": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\game\\keyposes",
+          "animated_webp": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\game\\review.webp"
+        },
+        "front": {
+          "png_sequence": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\front\\frames",
+          "keyposes": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\front\\keyposes",
+          "animated_webp": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_claw_art\\review_delivery\\AN_ForestWendigo_Claw\\front\\review.webp"
+        }
+      },
+      "summary": {
+        "max_triangles": 24636,
+        "over_triangle_budget": false,
+        "min_height_m": 2.18172,
+        "max_height_m": 3.11004,
+        "world_union_min": [
+          -1.54877,
+          -1.05678,
+          -0.01374
+        ],
+        "world_union_max": [
+          1.38041,
+          1.3331,
+          3.1
+        ],
+        "offscreen_frames": {
+          "side": [],
+          "game": [],
+          "front": []
+        },
+        "loop_end_bbox_delta_m": 0.0
+      }
+    }
+  }
+}

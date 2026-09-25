@@ -1,0 +1,156 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\manifold_repaired.blend",
+  "before_triangles": 23846,
+  "after_budget_reserve_triangles": 22898,
+  "after_triangles": 24636,
+  "triangle_budget": 25000,
+  "boundary_edges": 0,
+  "overfull_edges": 0,
+  "steps": [
+    {
+      "joint": "L_shoulder",
+      "offset_m": -0.045,
+      "selected_faces": 234,
+      "cut_elements": 82
+    },
+    {
+      "joint": "L_shoulder",
+      "offset_m": 0.045,
+      "selected_faces": 275,
+      "cut_elements": 68
+    },
+    {
+      "joint": "L_elbow",
+      "offset_m": -0.035,
+      "selected_faces": 310,
+      "cut_elements": 94
+    },
+    {
+      "joint": "L_elbow",
+      "offset_m": 0.035,
+      "selected_faces": 346,
+      "cut_elements": 125
+    },
+    {
+      "joint": "L_wrist",
+      "offset_m": -0.028,
+      "selected_faces": 118,
+      "cut_elements": 45
+    },
+    {
+      "joint": "L_wrist",
+      "offset_m": 0.028,
+      "selected_faces": 140,
+      "cut_elements": 43
+    },
+    {
+      "joint": "L_hip",
+      "offset_m": -0.045,
+      "selected_faces": 179,
+      "cut_elements": 82
+    },
+    {
+      "joint": "L_hip",
+      "offset_m": 0.045,
+      "selected_faces": 220,
+      "cut_elements": 48
+    },
+    {
+      "joint": "L_knee",
+      "offset_m": -0.035,
+      "selected_faces": 110,
+      "cut_elements": 33
+    },
+    {
+      "joint": "L_knee",
+      "offset_m": 0.035,
+      "selected_faces": 126,
+      "cut_elements": 33
+    },
+    {
+      "joint": "L_ankle",
+      "offset_m": -0.025,
+      "selected_faces": 278,
+      "cut_elements": 67
+    },
+    {
+      "joint": "L_ankle",
+      "offset_m": 0.025,
+      "selected_faces": 310,
+      "cut_elements": 92
+    },
+    {
+      "joint": "R_shoulder",
+      "offset_m": -0.045,
+      "selected_faces": 14,
+      "cut_elements": 15
+    },
+    {
+      "joint": "R_shoulder",
+      "offset_m": 0.045,
+      "selected_faces": 21,
+      "cut_elements": 5
+    },
+    {
+      "joint": "R_elbow",
+      "offset_m": -0.035,
+      "selected_faces": 204,
+      "cut_elements": 65
+    },
+    {
+      "joint": "R_elbow",
+      "offset_m": 0.035,
+      "selected_faces": 234,
+      "cut_elements": 57
+    },
+    {
+      "joint": "R_wrist",
+      "offset_m": -0.028,
+      "selected_faces": 204,
+      "cut_elements": 70
+    },
+    {
+      "joint": "R_wrist",
+      "offset_m": 0.028,
+      "selected_faces": 239,
+      "cut_elements": 70
+    },
+    {
+      "joint": "R_hip",
+      "offset_m": -0.045,
+      "selected_faces": 244,
+      "cut_elements": 75
+    },
+    {
+      "joint": "R_hip",
+      "offset_m": 0.045,
+      "selected_faces": 280,
+      "cut_elements": 48
+    },
+    {
+      "joint": "R_knee",
+      "offset_m": -0.035,
+      "selected_faces": 359,
+      "cut_elements": 89
+    },
+    {
+      "joint": "R_knee",
+      "offset_m": 0.035,
+      "selected_faces": 404,
+      "cut_elements": 133
+    },
+    {
+      "joint": "R_ankle",
+      "offset_m": -0.025,
+      "selected_faces": 310,
+      "cut_elements": 136
+    },
+    {
+      "joint": "R_ankle",
+      "offset_m": 0.025,
+      "selected_faces": 378,
+      "cut_elements": 120
+    }
+  ],
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\joint_ring_mesh.blend"
+}

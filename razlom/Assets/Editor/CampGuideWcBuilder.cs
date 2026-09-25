@@ -72,7 +72,7 @@ namespace Game.EditorTools
             marker.sizeDelta = new Vector2(58f, 70f);
             marker.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = false;
             RectTransform medal = TopLeft(Node("Медальон", marker), 0f, 0f, 58f, 58f);
-            Layer(medal, "Свечение", T.Glow, Role.Accent, .55f, 18f);
+            Layer(medal, "Свечение", RoundGlow, Role.Accent, .55f, 18f);
             // Два слоя заливки: акварельный круг сам по себе просвечивает, а значок должен читаться на земле.
             Layer(medal, "Подложка", T.CircleFill, Role.Panel, 1f);
             Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);

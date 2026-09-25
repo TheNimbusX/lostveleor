@@ -11,7 +11,20 @@ namespace Game.View
 {
     public sealed partial class CampInventoryView : MonoBehaviour
     {
-        public bool IsOpen => _root != null && _root.activeSelf;
+        public bool IsOpen => _root != null && _root.activeSelf && !_closing;
+        // Палатка закрывается затуханием, а не пропадает рывком (аудит UI, этап 2).
+        bool _closing;
+        CanvasGroup _rootGroup;
+        CanvasGroup RootGroup { get { if (_rootGroup == null && _root != null) { _rootGroup = _root.GetComponent<CanvasGroup>(); if (_rootGroup == null) _rootGroup = _root.AddComponent<CanvasGroup>(); } return _rootGroup; } }
+        void FadeOutRoot()
+        {
+            CanvasGroup group = RootGroup;
+            UiMotion.Stop(group);
+            group.blocksRaycasts = false;
+            void Done() { if (_root != null && _closing) _root.SetActive(false); _closing = false; group.alpha = 1f; group.blocksRaycasts = true; }
+            if (!isActiveAndEnabled) { Done(); return; }
+            UiMotion.FadeTo(group, 0f, .16f, Done);
+        }
         public Transform CanvasRoot => _root.transform;
         public bool HasItem(int index,bool worn)=>worn?_driver.Session.Camp.Worn.IsWorn((EquipSlot)index):!_driver.Session.Camp.Bag.IsEmpty(index);
         TickDriver _driver; GameObject _root; Font _font; Text _details;
@@ -22,9 +35,9 @@ namespace Game.View
         static readonly string[] Names = { "Оружие", "Броня", "Кольцо", "Талисман", "Артефакт" };
         public void Initialize(TickDriver driver) { _driver = driver; }
         public static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Sequence(("tent_flap", 0f, .7f), ("bag_open", .12f, .6f)); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
+        public void Open() { if (_root == null) Build(); _driver.ClearCapturedInput(); _driver.Sim?.StopPlayerMovement(); if (_closing) { UiMotion.Stop(RootGroup); _closing = false; RootGroup.alpha = 1f; RootGroup.blocksRaycasts = true; } _root.SetActive(true); SyncPortraitStage(); _openedFrame = Time.frameCount; GameSound.Sequence(("tent_flap", 0f, .7f), ("bag_open", .12f, .6f)); Refresh(); if (_tent != null) StartCoroutine(RevealTent()); }
         public static int ClosedFrame { get; private set; } = -1;
-        public void Close() { if (IsOpen) { GameSound.Play("tent_cloth", .45f); _root.SetActive(false); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
+        public void Close() { if (IsOpen) { GameSound.Play("tent_cloth", .45f); _closing = true; FadeOutRoot(); SyncPortraitStage(); _driver.ClearCapturedInput(); ClosedFrame = Time.frameCount; } }
         void Update()
         {
             if (!IsOpen || _openedFrame == Time.frameCount) return;
@@ -99,7 +112,7 @@ namespace Game.View
             var statNames=new[]{"Атака","Броня","Здоровье","Скорость"};
             for(int i=0;i<4;i++){Label(page,statNames[i],96+i*135,807,128,27,18);_stats[i]=Title(page,"",96+i*135,833,128,31,25);}
             _itemArt=Icon(page,null,712,195,254,213);
-            _itemTitle=Title(page,"Выберите предмет",713,413,255,76,32);
+            _itemTitle=Title(page,"Выбери предмет",713,413,255,76,32);
             _itemKind=Label(page,"",715,493,250,32,18);
             var viewport=Box(page,"Item comparison",713,535,254,124,Color.clear);
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -143,7 +156,7 @@ namespace Game.View
         void UnequipSelected()
         {
             SetFeedback("");
-            if(_driver.Session.Camp.Bag.IsFull){SetFeedback("Сумка заполнена. Освободите ячейку или обменяйте вещь перетаскиванием.");return;}
+            if(_driver.Session.Camp.Bag.IsFull){SetFeedback("Сумка заполнена. Освободи ячейку или обменяй вещь перетаскиванием.");return;}
             Animated(()=>{
             if(_selectedWorn)_driver.Session.Camp.UnequipToBag((EquipSlot)_selection);
             else {var item=_driver.Session.Camp.Bag.At(_selection);int b=_driver.Session.Camp.Items.IndexOfBase(item.BaseId);
@@ -198,37 +211,19 @@ namespace Game.View
         }
         string Describe(ItemInstance item)
         { if(item.IsEmpty)return "—";int index=_driver.Session.Camp.Items.IndexOfBase(item.BaseId);return index>=0?ItemName(item.BaseId)+"\nур. "+item.ItemLevel:"Неизвестный предмет"; }
-        internal string ItemName(int id)
-        {int i=CatalogIndex(id);if(i<0)return "Предмет";string key="item."+Catalog[i,0];string text=CampServiceText.Get(key);return text!=key?text:Catalog[i,1];}
+        internal string ItemName(int id)=>ItemTexts.Name(id);
         int Category(ItemInstance item)
         {int b=_driver.Session.Camp.Items.IndexOfBase(item.BaseId);return item.IsEmpty||b<0?-1:(int)Equipment.SlotOf(_driver.Session.Camp.Items.GetBase(b).Category);}
         public Sprite ItemSprite(int index,bool worn)
         {var item=worn?_driver.Session.Camp.Worn.Worn((EquipSlot)index):_driver.Session.Camp.Bag.At(index);return SpriteFor(item); }
         internal Sprite SpriteFor(ItemInstance item){int category=Category(item);return category<0?null:BaseSprite(item.BaseId)??_icons[category];}
 
-        // Первый набор (владелец, 21 сентября): у каждой основы своя картинка, редкие богаче внешне,
-        // редкость дополнительно показывает рамка. Файлы — Resources/UI/Items/{ключ}.png, исходники ART/itmes.
-        // Имя — ключ локализации item.{ключ}, русский текст здесь запасной.
-        static readonly string[,] Catalog=
-        {
-            {"rusty_sword","Старая сабля"},{"boarding_cutlass","Абордажный тесак"},{"duelist_sabre","Сабля дуэлянта"},{"officer_sabre","Офицерская сабля"},
-            {"quilted_jacket","Стёганая куртка"},{"leather_jacket","Кожаная куртка"},{"scout_jacket","Куртка разведчика"},{"boarding_vest","Абордажный жилет"},
-            {"copper_ring","Медное кольцо"},{"smith_ring","Кольцо кузнеца"},{"marksman_ring","Кольцо стрелка"},{"lavidium_ring","Кольцо с лавидием"},
-            {"woodland_talisman","Лесной талисман"},{"fang_cord","Клык на шнурке"},{"sea_knot","Морской узел"},{"courier_token","Жетон гонца"},
-            {"memory_shard","Осколок памяти"},
-        };
-        static int[] _catalogIds;
-        static int CatalogIndex(int id)
-        {
-            if(_catalogIds==null){_catalogIds=new int[Catalog.GetLength(0)];for(int i=0;i<_catalogIds.Length;i++)_catalogIds[i]=StableId.Of("base."+Catalog[i,0]);}
-            return System.Array.IndexOf(_catalogIds,id);
-        }
+        // Каталог основ (имена и картинки) — в ItemTexts: он общий с наградами забега.
         readonly System.Collections.Generic.Dictionary<int,Sprite> _baseSprites=new System.Collections.Generic.Dictionary<int,Sprite>();
         Sprite BaseSprite(int id)
         {
             if(_baseSprites.TryGetValue(id,out var sprite))return sprite;
-            int i=CatalogIndex(id);
-            var tex=i>=0?Resources.Load<Texture2D>("UI/Items/"+Catalog[i,0]):null;
+            var tex=ItemTexts.Icon(id);
             sprite=tex!=null?Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100):null;
             _baseSprites[id]=sprite;
             return sprite;
@@ -297,11 +292,11 @@ namespace Game.View
             var stats=_driver.Session.CampSim.Entities.Stats[0];
             _stats[0].text=stats.Get(StatType.Damage).ToString();_stats[1].text=stats.Get(StatType.Armor).ToString();_stats[2].text=stats.Get(StatType.MaxHealth).ToString();_stats[3].text=stats.Get(StatType.MoveSpeed).ToString();
             var chosen=_selectedWorn?camp.Worn.Worn((EquipSlot)_selection):camp.Bag.At(_selection);
-            _itemTitle.text=chosen.IsEmpty?"Выберите предмет":ItemName(chosen.BaseId);
+            _itemTitle.text=chosen.IsEmpty?"Выбери предмет":ItemName(chosen.BaseId);
             int kind=Category(chosen);
             _itemKind.text=chosen.IsEmpty?"Сумка и снаряжение":Names[kind]+"   ·   Ур. "+chosen.ItemLevel;
             _itemArt.sprite=ItemSprite(_selection,_selectedWorn);_itemArt.enabled=!chosen.IsEmpty;
-            _details.text=chosen.IsEmpty?"Выберите вещь в сумке или в ячейке снаряжения.":"";
+            _details.text=chosen.IsEmpty?"Выбери вещь в сумке или в ячейке снаряжения.":"";
             _equip.interactable=!chosen.IsEmpty&&!_selectedWorn;
             _unequip.interactable=kind>=0&&camp.Worn.IsWorn((EquipSlot)kind);
             if(!chosen.IsEmpty)_details.text+=CompareStats(chosen,stats,"#99D86B","#EA8D76","#D8C5A0");

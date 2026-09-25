@@ -135,6 +135,9 @@ namespace Game.View
         private float _trailFade;
         private bool _trailWhirlwind;
         private bool _trailCleave;
+        // «Раскол» (24.09): серп, звезду, линию и щепки рисует PelagVfxController;
+        // здесь у Рассекающего остаются отдача цели, стоп-кадр героя и камера.
+        private static readonly bool CleaveSplitVfx = true;
         private int _cleaveTrailCast = -1;
         private Vector3 _cleaveTrailPlayer;
         [SerializeField, Range(.12f, .28f)] private float _cleaveTrailLifetime = .23f;
@@ -296,6 +299,13 @@ namespace Game.View
                 && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId)
             {
                 if (e.DamageKind != DamageType.Physical) return;
+                if (CleaveSplitVfx)
+                {
+                    PushTarget(in e, .45f, true);
+                    _arena?.ConfirmCleaveContact();
+                    Accumulate(.55f, .30f, 0f, 1f);
+                    return;
+                }
                 Vector3 target = At(e.Position, .9f);
                 Vector3 cut = target;
                 Vector3 blade = Vector3.right;
@@ -807,6 +817,7 @@ namespace Game.View
         private void UpdateCleaveArc(Simulation sim, float tick)
         {
             if (_cleaveArcRenderer == null || _camera == null) return;
+            if (CleaveSplitVfx) { _cleaveArcRenderer.enabled = false; return; }
             float windup = Mathf.InverseLerp(sim.CleaveSwingStartTick, sim.CleaveContactTick, tick);
             float onset = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.10f, .96f, windup));
             float release = 1f - Mathf.SmoothStep(0f, 1f,

@@ -167,6 +167,7 @@ namespace Game.View
                 Arrive((RectTransform)buttons[i].transform, OpenDuration * 0.3f + shown++ * ButtonStagger, true);
             }
             UiSound.Play(fromMainMenu ? UiSoundEvent.WindowOpen : UiSoundEvent.PauseOpen);
+            FocusGamepad(window, tab, false);
         }
 
         /// <summary>Меню гаснет и выключается после анимации.</summary>
@@ -223,6 +224,19 @@ namespace Game.View
 
             _window = window; _tab = tab; _confirming = confirming; _fromMainMenu = fromMainMenu;
             _presented = true;
+            if (windowChanged || confirmChanged || tabChanged) FocusGamepad(window, tab, confirming);
+        }
+
+        private void FocusGamepad(Window window, Tab tab, bool confirming)
+        {
+            if (!TickDriver.GamepadLastUsed || EventSystem.current == null) return;
+            Selectable preferred = confirming ? ConfirmYes
+                : window == Window.None ? Continue
+                : window == Window.Settings
+                    ? tab == Tab.Graphics ? TabGraphics : tab == Tab.Audio ? TabAudio : TabGame
+                    : ControlsBack;
+            if (preferred != null && preferred.gameObject.activeInHierarchy && preferred.IsInteractable())
+                EventSystem.current.SetSelectedGameObject(preferred.gameObject);
         }
 
         void ShowWindows(Window window, bool fromMainMenu, bool instant)
@@ -245,7 +259,7 @@ namespace Game.View
             SetGlow(SettingsGlow, window == Window.Settings);
             SetGlow(ControlsGlow, window == Window.Controls);
             Show(SettingsBack, fromMainMenu);
-            if (Hint != null) Hint.text = fromMainMenu ? "ESC — назад" : window == Window.None ? "ESC — продолжить игру" : "ESC — назад к паузе";
+            if (Hint != null) Hint.text = fromMainMenu ? "Esc — назад" : window == Window.None ? "Esc — продолжить игру" : "Esc — назад к паузе";
         }
 
         void Slide(RectTransform panel, Vector2 rest, bool shown, bool instant)

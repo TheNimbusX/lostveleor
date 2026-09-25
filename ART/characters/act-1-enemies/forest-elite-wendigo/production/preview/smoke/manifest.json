@@ -1,0 +1,39 @@
+{
+  "source_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\review\\candidate24k\\Wendigo_24k_candidate.blend",
+  "render_fps": 30,
+  "forward_axis": "+Y",
+  "expected_height_m": 3.1,
+  "triangle_limit": 25000,
+  "character_meshes": [
+    "SM_ForestWendigo_LOD0_Candidate"
+  ],
+  "rest_sample": {
+    "vertex_count": 11966,
+    "triangle_count": 24000,
+    "world_min": [
+      -0.78909,
+      -1.01815,
+      0.0
+    ],
+    "world_max": [
+      0.78909,
+      1.01815,
+      3.1
+    ],
+    "silhouette_ndc": {}
+  },
+  "camera_positions": {
+    "side": [
+      11.914522171020508,
+      0.0,
+      2.9797425270080566
+    ],
+    "game": [
+      7.2727274894714355,
+      7.2727274894714355,
+      7.731819152832031
+    ]
+  },
+  "actions": {},
+  "warning": "No actions found; static camera/lighting smoke test only"
+}

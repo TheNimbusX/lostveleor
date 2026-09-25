@@ -1,0 +1,14 @@
+{
+  "voxel_vertices": 277718,
+  "voxel_triangles": 555440,
+  "voxel_seconds": 0.37,
+  "voxel_boundary": 0,
+  "voxel_noncontiguous": 0,
+  "quad_op_status": [
+    "CANCELLED"
+  ],
+  "quad_vertices": 277718,
+  "quad_faces": 277720,
+  "quad_triangles": 555440,
+  "quad_seconds": 0.01
+}

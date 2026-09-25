@@ -1,0 +1,13 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\tripo-out\\forest-elite-wendigo-b40452ee\\model.glb",
+  "source_vertices": 781262,
+  "source_triangles": 1477022,
+  "vertices_after_welding": 738397,
+  "triangles_after_welding": 1476862,
+  "candidate_triangles": 24000,
+  "budget_triangles": 25000,
+  "candidate_height_m": 3.1,
+  "materials": 1,
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\review\\candidate24k\\Wendigo_24k_candidate.blend",
+  "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\review\\candidate24k\\Wendigo_24k_candidate.glb"
+}

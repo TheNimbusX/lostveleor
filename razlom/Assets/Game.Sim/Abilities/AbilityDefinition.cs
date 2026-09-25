@@ -174,7 +174,9 @@ namespace Game.Sim
             => new AbilityDefinition("ability.cleaving_strike")
                 .Set(AbilityStatType.Damage, 260)
                 .Set(AbilityStatType.LavidiumCost, 15)
-                .Set(AbilityStatType.Radius, Fix64.Ratio(15, 10))
+                // 1,8 м: владелец 25.09 — «дальность урона должна совпадать с
+                // дальностью VFX», серп «Раскола» читался дальше прежних 1,5.
+                .Set(AbilityStatType.Radius, Fix64.Ratio(18, 10))
                 .Set(AbilityStatType.Width, Fix64.Ratio(15, 100))
                 .Set(AbilityStatType.ArcCosine, Fix64.Ratio(7071, 10000))
                 .Set(AbilityStatType.SwingLeadTicks, 3)

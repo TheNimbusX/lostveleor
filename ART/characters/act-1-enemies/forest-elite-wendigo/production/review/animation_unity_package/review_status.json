@@ -1,0 +1,33 @@
+{
+  "stage": "unity-playtest",
+  "date": "2026-09-25",
+  "owner_review_pending": true,
+  "normal_encounters_enabled": false,
+  "triangles": 24636,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Claw",
+    "Leap",
+    "Hit",
+    "Death"
+  ],
+  "tests": {
+    "sim": 299,
+    "presentation": 27,
+    "view_compile_errors": 0
+  },
+  "capture_step_fps": [
+    30,
+    60,
+    120
+  ],
+  "performance_measurement": false,
+  "standalone_build": "not completed: temporary build exhausted disk space",
+  "pause_check": {
+    "tick_before": 4529,
+    "tick_after": 4529,
+    "alpha_before": 0.7261829,
+    "alpha_after": 0.7261829
+  }
+}

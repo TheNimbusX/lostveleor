@@ -89,6 +89,7 @@ namespace Game.View
                 sim.AddComponent<HealthBars>();
                 sim.AddComponent<PlayerHud>();
                 sim.AddComponent<RunHud>();
+                sim.AddComponent<RunEndBeat>();
                 sim.AddComponent<CampHud>();
 
                 // Главное меню добавляется ПОСЛЕДНИМ и держит игру на паузе до

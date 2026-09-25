@@ -56,7 +56,7 @@ namespace Game.EditorTools
         {
             UiTheme t = Theme;
             RectTransform root = Root(parent, name, size, size);
-            Image shadow = Layer(root, "Тень", t.Glow, Role.Veil, .7f, 24f);
+            Image shadow = Layer(root, "Тень", RoundShadow, Role.Veil, .85f, 16f);
             shadow.rectTransform.anchoredPosition = new Vector2(0f, -6f);
             Image disk = Layer(root, "Диск", t.CircleFill, Role.Panel);
             disk.gameObject.AddComponent<Mask>().showMaskGraphic = true;
@@ -66,7 +66,7 @@ namespace Game.EditorTools
             var raw = art.gameObject.AddComponent<RawImage>();
             raw.texture = Tex("Assets/Resources/UI/HUD/PelagPortraitPainted.png");
             raw.raycastTarget = false;
-            Layer(disk.rectTransform, "Затемнение края", t.VeilRadial, Role.Veil, .55f);
+            Layer(disk.rectTransform, "Затемнение края", t.VeilRadial, Role.Veil, .44f);
             Layer(root, "Кольцо", t.CircleFrameLarge, Role.PanelLine);
 
             RectTransform badge = Place("LevelBadge", root, "Уровень");
@@ -321,7 +321,7 @@ namespace Game.EditorTools
             var terrain = map.gameObject.AddComponent<RawImage>();
             terrain.texture = Tex(MapSamplePath);
             terrain.raycastTarget = false;
-            Layer(map, "Затемнение края", t.VeilRadial, Role.Veil, .45f);
+            Layer(map, "Затемнение края", t.VeilRadial, Role.Veil, .36f);
             void Edge(string part, Vector2 min, Vector2 max, Vector2 size2)
             {
                 RectTransform edge = Node(part, root);

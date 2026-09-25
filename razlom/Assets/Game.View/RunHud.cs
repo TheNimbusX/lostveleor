@@ -64,7 +64,8 @@ namespace Game.View
             try
             {
                 bool menuShown = false;
-                if (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit)
+                // Метки мира и мини-меню добычи рисует пак (RunWorldView); здесь — только запасной вид.
+                if (_world == null && (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit))
                 {
                     DrawRouteLandmarks(run, scale);
                     DrawDrops(run, scale);
@@ -100,7 +101,8 @@ namespace Game.View
         /// чтобы клик по кнопке меню не стал ударом или приказом идти.
         /// </summary>
         public bool PointerOverDropMenu(Vector2 screenPosition)
-            => _menuShown && _menuScreenRect.Contains(new Vector2(screenPosition.x, Screen.height - screenPosition.y));
+            => _menuShown && _menuScreenRect.Contains(new Vector2(screenPosition.x, Screen.height - screenPosition.y))
+               || _world != null && _world.PointerOverMenu(screenPosition);
 
         /// <summary>Меню нужно только при полной панели: иначе способность поднимается сама.</summary>
         private static int DropMenuTarget(RiftRun run)
@@ -326,7 +328,7 @@ namespace Game.View
             GUI.Label(new Rect(panel.x + 28f, panel.y + 20f, panel.width - 56f, 30f),
                 "НОВАЯ СПОСОБНОСТЬ: " + (pending != null ? PlayerHud.AbilityName(pending.Id) : "—"), _title);
             GUI.Label(new Rect(panel.x + 28f, panel.y + 51f, panel.width - 56f, 22f),
-                "Панель полна. Замени одну из четырёх — её таланты пропадут — или разбери новую на золото.", _subtitle);
+                "Панель полна. Замени одну из четырёх — её усиления пропадут — или разбери новую на золото.", _subtitle);
 
             float gap = 12f;
             float top = panel.y + 88f;
@@ -345,7 +347,7 @@ namespace Game.View
                     (slot + 1) + ". " + (current != null ? PlayerHud.AbilityName(current.Id) : "ПУСТО"), _eyebrow);
                 int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
                 GUI.Label(new Rect(tile.x + 12f, tile.y + 90f, tile.width - 24f, 20f),
-                    rank > 0 ? "талантов " + rank + " — пропадут" : "талантов нет", _subtitle);
+                    rank > 0 ? "усилений " + rank + " — пропадут" : "усилений нет", _subtitle);
             }
 
             Rect salvage = new Rect(panel.x + 28f, top + tileHeight + 16f, panel.width - 56f, 40f);
@@ -417,7 +419,7 @@ namespace Game.View
 
             string kind = offer.Kind == RewardKind.Item ? "ПРЕДМЕТ"
                 : offer.Kind == RewardKind.Ability ? "СПОСОБНОСТЬ"
-                : offer.Kind == RewardKind.Talent ? "ТАЛАНТ " + (offer.TalentIndex + 1) + " ИЗ " + SabreTalents.TalentsPerLine
+                : offer.Kind == RewardKind.Talent ? "УСИЛЕНИЕ"
                 : offer.Kind == RewardKind.StatBoost ? "СТАТ"
                 : "УЗЕЛ СПОСОБНОСТИ";
             GUI.Label(new Rect(card.x + 58f, card.y + 15f, card.width - 72f, 18f), kind, _eyebrow);

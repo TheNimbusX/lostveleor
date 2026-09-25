@@ -109,6 +109,21 @@ namespace Game.View
                     if (session.Mode == Game.Sim.GameMode.Rift) session.MarkDeveloperRun();
                     _driver.RefreshAbilityBuild();
                 }
+                else if (request == 14)
+                {
+                    // Артефакт забега по кругу: нет → восемь артефактов набора → нет.
+                    var session = _driver.Session;
+                    var run = _driver.Run;
+                    if (session != null && session.Mode == Game.Sim.GameMode.Rift && run != null)
+                    {
+                        int index = -1;
+                        for (int i = 0; i < Game.Sim.RunArtifacts.Count; i++)
+                            if (Game.Sim.RunArtifacts.At(i) == run.Artifact) index = i;
+                        if (index + 1 >= Game.Sim.RunArtifacts.Count) run.ClearArtifactForDeveloper();
+                        else run.TakeArtifact(Game.Sim.RunArtifacts.At(index + 1));
+                        session.MarkDeveloperRun();
+                    }
+                }
                 else if (request == 3) _driver.ReturnToCampFromMenu();
                 else
                 {
@@ -245,7 +260,7 @@ namespace Game.View
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("◀", GUILayout.Width(44))) { _loadoutSlot = slot; _loadoutStep = -1; _request = 9; }
                 GUILayout.Label((slot + 1) + ": " + (definition == null ? "пусто" : PlayerHud.AbilityName(definition.Id))
-                    + (rank > 0 ? " · талантов " + rank : ""));
+                    + (rank > 0 ? " · усилений " + rank : ""));
                 if (GUILayout.Button("▶", GUILayout.Width(44))) { _loadoutSlot = slot; _loadoutStep = 1; _request = 9; }
                 GUILayout.EndHorizontal();
             }
@@ -253,6 +268,9 @@ namespace Game.View
             if (GUILayout.Button("Четыре сабельных", GUILayout.Height(30))) _request = 10;
             if (GUILayout.Button("Только Вихрь", GUILayout.Height(30))) _request = 11;
             GUILayout.EndHorizontal();
+            if (_driver.Session.Mode == Game.Sim.GameMode.Rift && _driver.Run != null
+                && GUILayout.Button("Артефакт: " + RunArtifactTexts.Name(_driver.Run.Artifact) + " · следующий", GUILayout.Height(30)))
+                _request = 14;
         }
 
         /// <summary>Следующая по кругу способность пула, которой нет в других слотах; «пусто» входит в круг.</summary>
@@ -274,7 +292,7 @@ namespace Game.View
         private GUIStyle _talentButton;
 
         /// <summary>
-        /// Двадцать сабельных талантов переключателями. Порядка и очков нет:
+        /// Усиления всех линий переключателями. Порядка и очков нет:
         /// это отладка визуала, а не прокачка — в игре таланты берутся в забеге.
         /// </summary>
         private void DrawTalentToggles()
@@ -289,6 +307,8 @@ namespace Game.View
                 GUILayout.BeginHorizontal();
                 for (int index = 0; index < Game.Sim.SabreTalents.TalentsPerLine; index++)
                 {
+                    // Восемь усилений — два ряда по четыре, иначе названия не помещаются.
+                    if (index == 4) { GUILayout.EndHorizontal(); GUILayout.BeginHorizontal(); }
                     bool on = DeveloperTalents.Has(lineId, index);
                     if (GUILayout.Toggle(on, SabreTalentTexts.Name(lineId, index), _talentButton, GUILayout.Height(48)) != on)
                     {

@@ -79,6 +79,7 @@ namespace Game.EditorTools
             // приехали новые клипы, — то есть врала про то, что в игре.
             global::RazlomMobAnimatorBuilder.Build();
             global::ForestBudCombatBuilder.Build();
+            global::ForestWendigoBuilder.Build();
             global::CombatPresentationSetup.EnsureProfiles();
             global::PelagAudioImport.Install();
             // Съёмка должна сохранять авторскую цветокоррекцию. Повторная

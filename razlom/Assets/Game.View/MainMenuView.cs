@@ -49,8 +49,20 @@ namespace Game.View
 
         private Vector2 _pointer;
 
+        /// <summary>
+        /// Меню на паке (MainMenuWc, владелец 24 сентября): рисованная панорама, лого и кнопки.
+        /// Есть префаб — сцена-параллакс и кнопки IMGUI не нужны, они остаются запасным видом.
+        /// </summary>
+        private MainMenuPanel _panel;
+
+        /// <summary>После «Новой игры» сцена перезагружается и меню сразу пропускается.</summary>
+        private static bool _skipOnce;
+
         private int _hovered = -1;
         private int _pressed = -1;
+        private int _controllerSelection;
+        private bool _controllerActive;
+        private float _controllerNextMoveAt;
         private bool _started;
         private bool _released;
         private float _musicFade = -1f;
@@ -71,10 +83,11 @@ namespace Game.View
             _pause = GetComponent<PauseMenu>();
             GameUserSettings.Load();
 
+            _panel = BindPanel();
             // Плоская картинка — запасной путь, если слои не доехали: меню не
             // должно превращаться в пустой экран из-за одного файла.
-            _scene = MainMenuScene.TryCreate();
-            if (_scene == null) _flatBackground = Load("UI/MainMenu/MainMenu_Background");
+            if (_panel == null) _scene = MainMenuScene.TryCreate();
+            if (_panel == null && _scene == null) _flatBackground = Load("UI/MainMenu/MainMenu_Background");
 
             _play = LoadStates("play");
             _settings = LoadStates("settings");
@@ -105,6 +118,50 @@ namespace Game.View
             if (_scene == null) MainMenuScene.DestroyLeftovers();
         }
 
+        private MainMenuPanel BindPanel()
+        {
+            var prefab = Resources.Load<GameObject>("UI/Prefabs/MainMenuWc");
+            if (prefab == null) return null;
+            var panel = Instantiate(prefab).GetComponent<MainMenuPanel>();
+            if (panel == null) return null;
+            UiScaleFollower.Attach(panel.gameObject);
+            panel.name = "Главное меню";
+            PauseMenuView.EnsureEventSystem();
+            bool saved = CampSaveStore.HasSave;
+            // Сохранения нет — одна кнопка «Начать»; есть — «Продолжить» и «Новая игра».
+            if (panel.ContinueLabel != null) panel.ContinueLabel.text = saved ? "Продолжить" : "Начать";
+            panel.SetContinueLine(null);
+            if (panel.NewGame != null) panel.NewGame.gameObject.SetActive(saved);
+            if (panel.Continue != null) panel.Continue.onClick.AddListener(() => Activate(0));
+            if (panel.Settings != null) panel.Settings.onClick.AddListener(() => Activate(1));
+            if (panel.Exit != null) panel.Exit.onClick.AddListener(() => Activate(2));
+            if (panel.NewGame != null) panel.NewGame.onClick.AddListener(() => ShowConfirm(panel, true));
+            if (panel.ConfirmNo != null) panel.ConfirmNo.onClick.AddListener(() => ShowConfirm(panel, false));
+            if (panel.ConfirmYes != null) panel.ConfirmYes.onClick.AddListener(NewGame);
+            ShowConfirm(panel, false);
+            return panel;
+        }
+
+        private static void ShowConfirm(MainMenuPanel panel, bool shown)
+        {
+            if (panel.Confirm == null) return;
+            panel.Confirm.gameObject.SetActive(shown);
+            panel.Confirm.alpha = shown ? 1f : 0f;
+            panel.Confirm.interactable = panel.Confirm.blocksRaycasts = shown;
+        }
+
+        /// <summary>
+        /// «Новая игра» после подтверждения: сохранение лагеря стирается, сцена загружается заново
+        /// с пустым лагерем, и меню в этот раз пропускается — игрок сразу в новом лагере.
+        /// </summary>
+        private void NewGame()
+        {
+            CampSaveStore.DeleteForNewGame();
+            _skipOnce = true;
+            Time.timeScale = 1f;
+            UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+        }
+
         private void Start()
         {
             if (!enabled) return;
@@ -116,6 +173,14 @@ namespace Game.View
             Time.timeScale = 0f;
             if (_driver != null) _driver.SetGameplayPaused(true);
             if (_music != null) _music.Play();
+            // Строка о сохранении — здесь, а не в Awake: сессию лагеря TickDriver создаёт после меню.
+            if (_panel != null && CampSaveStore.HasSave && _driver != null && _driver.Session != null)
+                _panel.SetContinueLine("Пелаг · уровень " + _driver.Session.Camp.Level);
+            if (_skipOnce)
+            {
+                _skipOnce = false;
+                StartGame();
+            }
 
             // Игровую камеру меню НЕ трогает. Раньше ей обнуляли маску, чтобы
             // лагерь не рисовался под сценой впустую, и возвращали её после
@@ -133,6 +198,7 @@ namespace Game.View
             // Сцена гаснет ПЕРВОЙ: что бы ни случилось дальше, камера меню не
             // останется рисовать поверх игры.
             _scene?.Hide();
+            if (_panel != null) UiMotion.FadeTo(_panel.Group, 0f, .35f, () => { if (_panel != null) Destroy(_panel.gameObject); });
 
             Time.timeScale = 1f;
             Cursor.lockState = _previousCursorLock;
@@ -169,6 +235,7 @@ namespace Game.View
                     if (Time.timeScale != 0f) Time.timeScale = 0f;
                     if (_driver != null) _driver.SetGameplayPaused(true);
                     _pointer = Vector2.Lerp(_pointer, ReadPointer(), 1f - Mathf.Exp(-PointerSmoothing * dt));
+                    if (_panel == null) UpdateControllerMenu();
                 }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -224,9 +291,35 @@ namespace Game.View
             return new Vector2(Mathf.Clamp(x, -1f, 1f), Mathf.Clamp(y, -1f, 1f));
         }
 
+        private void UpdateControllerMenu()
+        {
+#if ENABLE_INPUT_SYSTEM
+            Gamepad pad = Gamepad.current;
+            if (pad == null) return;
+            Mouse mouse = Mouse.current;
+            if (mouse != null && mouse.delta.ReadValue().sqrMagnitude > 4f)
+                _controllerActive = false;
+            Vector2 stick = pad.leftStick.ReadValue();
+            Vector2 dpad = pad.dpad.ReadValue();
+            int direction = dpad.y > 0.5f || dpad.x < -0.5f || stick.y > 0.6f || stick.x < -0.6f ? -1
+                : dpad.y < -0.5f || dpad.x > 0.5f || stick.y < -0.6f || stick.x > 0.6f ? 1 : 0;
+            if (direction != 0 && Time.unscaledTime >= _controllerNextMoveAt)
+            {
+                _controllerActive = true;
+                _controllerSelection = (_controllerSelection + direction + 3) % 3;
+                _controllerNextMoveAt = Time.unscaledTime + 0.22f;
+            }
+            if (pad.buttonSouth.wasPressedThisFrame)
+            {
+                _controllerActive = true;
+                Activate(_controllerSelection);
+            }
+#endif
+        }
+
         private void OnGUI()
         {
-            if (!IsOpen || _started) return;
+            if (!IsOpen || _started || _panel != null) return;
 
             // Под открытыми настройками только сцена: кнопки под затемнением
             // ловили бы наведение и клики сквозь чужой экран.
@@ -253,7 +346,9 @@ namespace Game.View
             Rect exit = Place(canvas, scale, ExitCenter, DiamondSize);
 
             Vector2 pointer = Event.current.mousePosition;
-            _hovered = play.Contains(pointer) ? 0
+            if (Event.current.type == EventType.MouseDown) _controllerActive = false;
+            _hovered = _controllerActive ? _controllerSelection
+                : play.Contains(pointer) ? 0
                 : settings.Contains(pointer) ? 1
                 : exit.Contains(pointer) ? 2 : -1;
 

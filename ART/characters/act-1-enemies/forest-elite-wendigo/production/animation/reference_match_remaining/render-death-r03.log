@@ -1,0 +1,926 @@
+[a_Rodin.utils-DBG]: RodinBridge: register
+[a_Rodin.utils-WRN]: Port 61863 is in use
+[a_Rodin.utils-WRN]: Server running on port 61864
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 458, in enable
+    mod = importlib.import_module(module_name)
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\python\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1395, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1023, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\extensions\user_default\higgsfield_blender\__init__.py", line 60, in <module>
+    from .features import bridge_gate, phonecam
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\extensions\user_default\higgsfield_blender\features\bridge_gate.py", line 23, in <module>
+    from ..fnf.session import _active_workspace_id, is_authenticated
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\extensions\user_default\higgsfield_blender\fnf\session.py", line 31, in <module>
+    import httpx
+ModuleNotFoundError: No module named 'httpx'
+[a_Rodin.utils-DBG]: on_scene_load
+[a_Rodin.utils-DBG]: ensure_default_image
+00:04.719  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\Death_Final.blend"
+00:04.797  render           | Rendering animation (frames 0..96)
+00:04.797  render           | Rendering frame 0
+00:04.797  render           | Start rendering: Scene, ViewLayer
+00:04.797  render           | Engine: EEVEE
+00:07.094  render           | Fra: 0 | Rendering 1 / 64 samples
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+00:07.219  render           | Fra: 0 | Rendering 25 / 64 samples
+00:07.344  render           | Fra: 0 | Rendering 50 / 64 samples
+00:07.422  render           | Fra: 0 | Rendering 64 / 64 samples
+00:07.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0000.png'
+00:07.578  render           | Time: 00:02.78 (Saving: 00:00.11)
+00:07.578  render           | Rendering frame 1
+00:07.578  render           | Start rendering: Scene, ViewLayer
+00:07.578  render           | Engine: EEVEE
+00:07.703  render           | Fra: 1 | Rendering 1 / 64 samples
+00:07.875  render           | Fra: 1 | Rendering 25 / 64 samples
+00:08.016  render           | Fra: 1 | Rendering 50 / 64 samples
+00:08.109  render           | Fra: 1 | Rendering 64 / 64 samples
+00:08.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0001.png'
+00:08.266  render           | Time: 00:00.68 (Saving: 00:00.10)
+00:08.266  render           | Rendering frame 2
+00:08.266  render           | Start rendering: Scene, ViewLayer
+00:08.266  render           | Engine: EEVEE
+00:08.391  render           | Fra: 2 | Rendering 1 / 64 samples
+00:08.562  render           | Fra: 2 | Rendering 25 / 64 samples
+00:08.719  render           | Fra: 2 | Rendering 50 / 64 samples
+00:08.797  render           | Fra: 2 | Rendering 64 / 64 samples
+00:08.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0002.png'
+00:08.953  render           | Time: 00:00.67 (Saving: 00:00.12)
+00:08.953  render           | Rendering frame 3
+00:08.953  render           | Start rendering: Scene, ViewLayer
+00:08.953  render           | Engine: EEVEE
+00:09.062  render           | Fra: 3 | Rendering 1 / 64 samples
+00:09.219  render           | Fra: 3 | Rendering 25 / 64 samples
+00:09.375  render           | Fra: 3 | Rendering 50 / 64 samples
+00:09.469  render           | Fra: 3 | Rendering 64 / 64 samples
+00:09.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0003.png'
+00:09.625  render           | Time: 00:00.67 (Saving: 00:00.12)
+00:09.625  render           | Rendering frame 4
+00:09.625  render           | Start rendering: Scene, ViewLayer
+00:09.625  render           | Engine: EEVEE
+00:09.734  render           | Fra: 4 | Rendering 1 / 64 samples
+00:09.906  render           | Fra: 4 | Rendering 25 / 64 samples
+00:10.047  render           | Fra: 4 | Rendering 50 / 64 samples
+00:10.141  render           | Fra: 4 | Rendering 64 / 64 samples
+00:10.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0004.png'
+00:10.328  render           | Time: 00:00.71 (Saving: 00:00.16)
+00:10.328  render           | Rendering frame 5
+00:10.328  render           | Start rendering: Scene, ViewLayer
+00:10.328  render           | Engine: EEVEE
+00:10.453  render           | Fra: 5 | Rendering 1 / 64 samples
+00:10.609  render           | Fra: 5 | Rendering 25 / 64 samples
+00:10.766  render           | Fra: 5 | Rendering 50 / 64 samples
+00:10.859  render           | Fra: 5 | Rendering 64 / 64 samples
+00:11.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0005.png'
+00:11.016  render           | Time: 00:00.68 (Saving: 00:00.12)
+00:11.016  render           | Rendering frame 6
+00:11.016  render           | Start rendering: Scene, ViewLayer
+00:11.016  render           | Engine: EEVEE
+00:11.125  render           | Fra: 6 | Rendering 1 / 64 samples
+00:11.281  render           | Fra: 6 | Rendering 25 / 64 samples
+00:11.437  render           | Fra: 6 | Rendering 50 / 64 samples
+00:11.531  render           | Fra: 6 | Rendering 64 / 64 samples
+00:11.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0006.png'
+00:11.625  render           | Time: 00:00.61 (Saving: 00:00.06)
+00:11.625  render           | Rendering frame 7
+00:11.625  render           | Start rendering: Scene, ViewLayer
+00:11.625  render           | Engine: EEVEE
+00:11.734  render           | Fra: 7 | Rendering 1 / 64 samples
+00:11.906  render           | Fra: 7 | Rendering 25 / 64 samples
+00:12.047  render           | Fra: 7 | Rendering 50 / 64 samples
+00:12.141  render           | Fra: 7 | Rendering 64 / 64 samples
+00:12.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0007.png'
+00:12.234  render           | Time: 00:00.60 (Saving: 00:00.05)
+00:12.234  render           | Rendering frame 8
+00:12.234  render           | Start rendering: Scene, ViewLayer
+00:12.234  render           | Engine: EEVEE
+00:12.328  render           | Fra: 8 | Rendering 1 / 64 samples
+00:12.469  render           | Fra: 8 | Rendering 25 / 64 samples
+00:12.625  render           | Fra: 8 | Rendering 50 / 64 samples
+00:12.703  render           | Fra: 8 | Rendering 64 / 64 samples
+00:12.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0008.png'
+00:12.797  render           | Time: 00:00.56 (Saving: 00:00.05)
+00:12.797  render           | Rendering frame 9
+00:12.797  render           | Start rendering: Scene, ViewLayer
+00:12.797  render           | Engine: EEVEE
+00:12.906  render           | Fra: 9 | Rendering 1 / 64 samples
+00:13.078  render           | Fra: 9 | Rendering 25 / 64 samples
+00:13.234  render           | Fra: 9 | Rendering 50 / 64 samples
+00:13.312  render           | Fra: 9 | Rendering 64 / 64 samples
+00:13.391  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0009.png'
+00:13.391  render           | Time: 00:00.59 (Saving: 00:00.06)
+00:13.391  render           | Rendering frame 10
+00:13.391  render           | Start rendering: Scene, ViewLayer
+00:13.391  render           | Engine: EEVEE
+00:13.469  render           | Fra: 10 | Rendering 1 / 64 samples
+00:13.641  render           | Fra: 10 | Rendering 25 / 64 samples
+00:13.797  render           | Fra: 10 | Rendering 50 / 64 samples
+00:13.859  render           | Fra: 10 | Rendering 64 / 64 samples
+00:13.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0010.png'
+00:13.953  render           | Time: 00:00.55 (Saving: 00:00.05)
+00:13.953  render           | Rendering frame 11
+00:13.953  render           | Start rendering: Scene, ViewLayer
+00:13.953  render           | Engine: EEVEE
+00:14.031  render           | Fra: 11 | Rendering 1 / 64 samples
+00:14.187  render           | Fra: 11 | Rendering 25 / 64 samples
+00:14.344  render           | Fra: 11 | Rendering 50 / 64 samples
+00:14.406  render           | Fra: 11 | Rendering 64 / 64 samples
+00:14.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0011.png'
+00:14.500  render           | Time: 00:00.54 (Saving: 00:00.05)
+00:14.500  render           | Rendering frame 12
+00:14.500  render           | Start rendering: Scene, ViewLayer
+00:14.500  render           | Engine: EEVEE
+00:14.562  render           | Fra: 12 | Rendering 1 / 64 samples
+00:14.734  render           | Fra: 12 | Rendering 25 / 64 samples
+00:14.859  render           | Fra: 12 | Rendering 50 / 64 samples
+00:14.906  render           | Fra: 12 | Rendering 64 / 64 samples
+00:15.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0012.png'
+00:15.016  render           | Time: 00:00.51 (Saving: 00:00.05)
+00:15.016  render           | Rendering frame 13
+00:15.016  render           | Start rendering: Scene, ViewLayer
+00:15.016  render           | Engine: EEVEE
+00:15.094  render           | Fra: 13 | Rendering 1 / 64 samples
+00:15.266  render           | Fra: 13 | Rendering 25 / 64 samples
+00:15.391  render           | Fra: 13 | Rendering 50 / 64 samples
+00:15.437  render           | Fra: 13 | Rendering 64 / 64 samples
+00:15.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0013.png'
+00:15.547  render           | Time: 00:00.53 (Saving: 00:00.05)
+00:15.547  render           | Rendering frame 14
+00:15.547  render           | Start rendering: Scene, ViewLayer
+00:15.547  render           | Engine: EEVEE
+00:15.625  render           | Fra: 14 | Rendering 1 / 64 samples
+00:15.781  render           | Fra: 14 | Rendering 25 / 64 samples
+00:15.891  render           | Fra: 14 | Rendering 50 / 64 samples
+00:15.937  render           | Fra: 14 | Rendering 64 / 64 samples
+00:16.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0014.png'
+00:16.031  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:16.031  render           | Rendering frame 15
+00:16.031  render           | Start rendering: Scene, ViewLayer
+00:16.031  render           | Engine: EEVEE
+00:16.109  render           | Fra: 15 | Rendering 1 / 64 samples
+00:16.266  render           | Fra: 15 | Rendering 25 / 64 samples
+00:16.375  render           | Fra: 15 | Rendering 50 / 64 samples
+00:16.437  render           | Fra: 15 | Rendering 64 / 64 samples
+00:16.516  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0015.png'
+00:16.516  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:16.516  render           | Rendering frame 16
+00:16.516  render           | Start rendering: Scene, ViewLayer
+00:16.516  render           | Engine: EEVEE
+00:16.609  render           | Fra: 16 | Rendering 1 / 64 samples
+00:16.766  render           | Fra: 16 | Rendering 25 / 64 samples
+00:16.875  render           | Fra: 16 | Rendering 50 / 64 samples
+00:16.937  render           | Fra: 16 | Rendering 64 / 64 samples
+00:17.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0016.png'
+00:17.016  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:17.016  render           | Rendering frame 17
+00:17.016  render           | Start rendering: Scene, ViewLayer
+00:17.016  render           | Engine: EEVEE
+00:17.094  render           | Fra: 17 | Rendering 1 / 64 samples
+00:17.250  render           | Fra: 17 | Rendering 25 / 64 samples
+00:17.344  render           | Fra: 17 | Rendering 50 / 64 samples
+00:17.406  render           | Fra: 17 | Rendering 64 / 64 samples
+00:17.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0017.png'
+00:17.500  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:17.500  render           | Rendering frame 18
+00:17.500  render           | Start rendering: Scene, ViewLayer
+00:17.500  render           | Engine: EEVEE
+00:17.578  render           | Fra: 18 | Rendering 1 / 64 samples
+00:17.719  render           | Fra: 18 | Rendering 25 / 64 samples
+00:17.828  render           | Fra: 18 | Rendering 50 / 64 samples
+00:17.891  render           | Fra: 18 | Rendering 64 / 64 samples
+00:17.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0018.png'
+00:17.984  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:17.984  render           | Rendering frame 19
+00:17.984  render           | Start rendering: Scene, ViewLayer
+00:17.984  render           | Engine: EEVEE
+00:18.062  render           | Fra: 19 | Rendering 1 / 64 samples
+00:18.203  render           | Fra: 19 | Rendering 25 / 64 samples
+00:18.312  render           | Fra: 19 | Rendering 50 / 64 samples
+00:18.375  render           | Fra: 19 | Rendering 64 / 64 samples
+00:18.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0019.png'
+00:18.453  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:18.453  render           | Rendering frame 20
+00:18.453  render           | Start rendering: Scene, ViewLayer
+00:18.453  render           | Engine: EEVEE
+00:18.531  render           | Fra: 20 | Rendering 1 / 64 samples
+00:18.687  render           | Fra: 20 | Rendering 25 / 64 samples
+00:18.781  render           | Fra: 20 | Rendering 50 / 64 samples
+00:18.844  render           | Fra: 20 | Rendering 64 / 64 samples
+00:18.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0020.png'
+00:18.953  render           | Time: 00:00.49 (Saving: 00:00.07)
+00:18.953  render           | Rendering frame 21
+00:18.953  render           | Start rendering: Scene, ViewLayer
+00:18.953  render           | Engine: EEVEE
+00:19.031  render           | Fra: 21 | Rendering 1 / 64 samples
+00:19.172  render           | Fra: 21 | Rendering 25 / 64 samples
+00:19.266  render           | Fra: 21 | Rendering 50 / 64 samples
+00:19.344  render           | Fra: 21 | Rendering 64 / 64 samples
+00:19.406  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0021.png'
+00:19.406  render           | Time: 00:00.45 (Saving: 00:00.05)
+00:19.406  render           | Rendering frame 22
+00:19.406  render           | Start rendering: Scene, ViewLayer
+00:19.406  render           | Engine: EEVEE
+00:19.484  render           | Fra: 22 | Rendering 1 / 64 samples
+00:19.625  render           | Fra: 22 | Rendering 25 / 64 samples
+00:19.719  render           | Fra: 22 | Rendering 50 / 64 samples
+00:19.797  render           | Fra: 22 | Rendering 64 / 64 samples
+00:19.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0022.png'
+00:19.875  render           | Time: 00:00.45 (Saving: 00:00.05)
+00:19.875  render           | Rendering frame 23
+00:19.875  render           | Start rendering: Scene, ViewLayer
+00:19.875  render           | Engine: EEVEE
+00:19.953  render           | Fra: 23 | Rendering 1 / 64 samples
+00:20.109  render           | Fra: 23 | Rendering 25 / 64 samples
+00:20.203  render           | Fra: 23 | Rendering 50 / 64 samples
+00:20.266  render           | Fra: 23 | Rendering 64 / 64 samples
+00:20.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0023.png'
+00:20.359  render           | Time: 00:00.48 (Saving: 00:00.06)
+00:20.359  render           | Rendering frame 24
+00:20.359  render           | Start rendering: Scene, ViewLayer
+00:20.359  render           | Engine: EEVEE
+00:20.437  render           | Fra: 24 | Rendering 1 / 64 samples
+00:20.578  render           | Fra: 24 | Rendering 25 / 64 samples
+00:20.672  render           | Fra: 24 | Rendering 50 / 64 samples
+00:20.734  render           | Fra: 24 | Rendering 64 / 64 samples
+00:20.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0024.png'
+00:20.812  render           | Time: 00:00.45 (Saving: 00:00.04)
+00:20.812  render           | Rendering frame 25
+00:20.812  render           | Start rendering: Scene, ViewLayer
+00:20.812  render           | Engine: EEVEE
+00:20.891  render           | Fra: 25 | Rendering 1 / 64 samples
+00:21.031  render           | Fra: 25 | Rendering 25 / 64 samples
+00:21.141  render           | Fra: 25 | Rendering 50 / 64 samples
+00:21.187  render           | Fra: 25 | Rendering 64 / 64 samples
+00:21.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0025.png'
+00:21.266  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:21.266  render           | Rendering frame 26
+00:21.266  render           | Start rendering: Scene, ViewLayer
+00:21.266  render           | Engine: EEVEE
+00:21.344  render           | Fra: 26 | Rendering 1 / 64 samples
+00:21.500  render           | Fra: 26 | Rendering 25 / 64 samples
+00:21.609  render           | Fra: 26 | Rendering 50 / 64 samples
+00:21.672  render           | Fra: 26 | Rendering 64 / 64 samples
+00:21.750  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0026.png'
+00:21.750  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:21.750  render           | Rendering frame 27
+00:21.750  render           | Start rendering: Scene, ViewLayer
+00:21.750  render           | Engine: EEVEE
+00:21.828  render           | Fra: 27 | Rendering 1 / 64 samples
+00:22.000  render           | Fra: 27 | Rendering 25 / 64 samples
+00:22.094  render           | Fra: 27 | Rendering 50 / 64 samples
+00:22.141  render           | Fra: 27 | Rendering 64 / 64 samples
+00:22.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0027.png'
+00:22.219  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:22.219  render           | Rendering frame 28
+00:22.219  render           | Start rendering: Scene, ViewLayer
+00:22.219  render           | Engine: EEVEE
+00:22.297  render           | Fra: 28 | Rendering 1 / 64 samples
+00:22.453  render           | Fra: 28 | Rendering 25 / 64 samples
+00:22.562  render           | Fra: 28 | Rendering 50 / 64 samples
+00:22.625  render           | Fra: 28 | Rendering 64 / 64 samples
+00:22.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0028.png'
+00:22.703  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:22.703  render           | Rendering frame 29
+00:22.703  render           | Start rendering: Scene, ViewLayer
+00:22.703  render           | Engine: EEVEE
+00:22.797  render           | Fra: 29 | Rendering 1 / 64 samples
+00:22.953  render           | Fra: 29 | Rendering 25 / 64 samples
+00:23.047  render           | Fra: 29 | Rendering 50 / 64 samples
+00:23.109  render           | Fra: 29 | Rendering 64 / 64 samples
+00:23.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0029.png'
+00:23.187  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:23.187  render           | Rendering frame 30
+00:23.187  render           | Start rendering: Scene, ViewLayer
+00:23.187  render           | Engine: EEVEE
+00:23.266  render           | Fra: 30 | Rendering 1 / 64 samples
+00:23.422  render           | Fra: 30 | Rendering 25 / 64 samples
+00:23.516  render           | Fra: 30 | Rendering 50 / 64 samples
+00:23.578  render           | Fra: 30 | Rendering 64 / 64 samples
+00:23.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0030.png'
+00:23.656  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:23.656  render           | Rendering frame 31
+00:23.656  render           | Start rendering: Scene, ViewLayer
+00:23.656  render           | Engine: EEVEE
+00:23.750  render           | Fra: 31 | Rendering 1 / 64 samples
+00:23.906  render           | Fra: 31 | Rendering 25 / 64 samples
+00:24.000  render           | Fra: 31 | Rendering 50 / 64 samples
+00:24.062  render           | Fra: 31 | Rendering 64 / 64 samples
+00:24.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0031.png'
+00:24.156  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:24.156  render           | Rendering frame 32
+00:24.156  render           | Start rendering: Scene, ViewLayer
+00:24.156  render           | Engine: EEVEE
+00:24.234  render           | Fra: 32 | Rendering 1 / 64 samples
+00:24.375  render           | Fra: 32 | Rendering 25 / 64 samples
+00:24.469  render           | Fra: 32 | Rendering 50 / 64 samples
+00:24.531  render           | Fra: 32 | Rendering 64 / 64 samples
+00:24.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0032.png'
+00:24.625  render           | Time: 00:00.47 (Saving: 00:00.06)
+00:24.625  render           | Rendering frame 33
+00:24.625  render           | Start rendering: Scene, ViewLayer
+00:24.625  render           | Engine: EEVEE
+00:24.703  render           | Fra: 33 | Rendering 1 / 64 samples
+00:24.828  render           | Fra: 33 | Rendering 25 / 64 samples
+00:24.937  render           | Fra: 33 | Rendering 50 / 64 samples
+00:25.000  render           | Fra: 33 | Rendering 64 / 64 samples
+00:25.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0033.png'
+00:25.078  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:25.078  render           | Rendering frame 34
+00:25.078  render           | Start rendering: Scene, ViewLayer
+00:25.078  render           | Engine: EEVEE
+00:25.172  render           | Fra: 34 | Rendering 1 / 64 samples
+00:25.328  render           | Fra: 34 | Rendering 25 / 64 samples
+00:25.422  render           | Fra: 34 | Rendering 50 / 64 samples
+00:25.469  render           | Fra: 34 | Rendering 64 / 64 samples
+00:25.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0034.png'
+00:25.547  render           | Time: 00:00.45 (Saving: 00:00.05)
+00:25.547  render           | Rendering frame 35
+00:25.547  render           | Start rendering: Scene, ViewLayer
+00:25.547  render           | Engine: EEVEE
+00:25.625  render           | Fra: 35 | Rendering 1 / 64 samples
+00:25.766  render           | Fra: 35 | Rendering 25 / 64 samples
+00:25.875  render           | Fra: 35 | Rendering 50 / 64 samples
+00:25.922  render           | Fra: 35 | Rendering 64 / 64 samples
+00:26.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0035.png'
+00:26.016  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:26.016  render           | Rendering frame 36
+00:26.016  render           | Start rendering: Scene, ViewLayer
+00:26.016  render           | Engine: EEVEE
+00:26.094  render           | Fra: 36 | Rendering 1 / 64 samples
+00:26.250  render           | Fra: 36 | Rendering 25 / 64 samples
+00:26.344  render           | Fra: 36 | Rendering 50 / 64 samples
+00:26.406  render           | Fra: 36 | Rendering 64 / 64 samples
+00:26.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0036.png'
+00:26.500  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:26.500  render           | Rendering frame 37
+00:26.500  render           | Start rendering: Scene, ViewLayer
+00:26.500  render           | Engine: EEVEE
+00:26.578  render           | Fra: 37 | Rendering 1 / 64 samples
+00:26.750  render           | Fra: 37 | Rendering 25 / 64 samples
+00:26.844  render           | Fra: 37 | Rendering 50 / 64 samples
+00:26.891  render           | Fra: 37 | Rendering 64 / 64 samples
+00:26.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0037.png'
+00:26.969  render           | Time: 00:00.46 (Saving: 00:00.04)
+00:26.969  render           | Rendering frame 38
+00:26.969  render           | Start rendering: Scene, ViewLayer
+00:26.969  render           | Engine: EEVEE
+00:27.047  render           | Fra: 38 | Rendering 1 / 64 samples
+00:27.187  render           | Fra: 38 | Rendering 25 / 64 samples
+00:27.297  render           | Fra: 38 | Rendering 50 / 64 samples
+00:27.359  render           | Fra: 38 | Rendering 64 / 64 samples
+00:27.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0038.png'
+00:27.453  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:27.453  render           | Rendering frame 39
+00:27.453  render           | Start rendering: Scene, ViewLayer
+00:27.453  render           | Engine: EEVEE
+00:27.547  render           | Fra: 39 | Rendering 1 / 64 samples
+00:27.703  render           | Fra: 39 | Rendering 25 / 64 samples
+00:27.797  render           | Fra: 39 | Rendering 50 / 64 samples
+00:27.844  render           | Fra: 39 | Rendering 64 / 64 samples
+00:27.922  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0039.png'
+00:27.922  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:27.922  render           | Rendering frame 40
+00:27.922  render           | Start rendering: Scene, ViewLayer
+00:27.922  render           | Engine: EEVEE
+00:28.000  render           | Fra: 40 | Rendering 1 / 64 samples
+00:28.156  render           | Fra: 40 | Rendering 25 / 64 samples
+00:28.266  render           | Fra: 40 | Rendering 50 / 64 samples
+00:28.312  render           | Fra: 40 | Rendering 64 / 64 samples
+00:28.391  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0040.png'
+00:28.391  render           | Time: 00:00.45 (Saving: 00:00.04)
+00:28.391  render           | Rendering frame 41
+00:28.391  render           | Start rendering: Scene, ViewLayer
+00:28.391  render           | Engine: EEVEE
+00:28.469  render           | Fra: 41 | Rendering 1 / 64 samples
+00:28.625  render           | Fra: 41 | Rendering 25 / 64 samples
+00:28.719  render           | Fra: 41 | Rendering 50 / 64 samples
+00:28.797  render           | Fra: 41 | Rendering 64 / 64 samples
+00:28.891  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0041.png'
+00:28.891  render           | Time: 00:00.49 (Saving: 00:00.06)
+00:28.891  render           | Rendering frame 42
+00:28.891  render           | Start rendering: Scene, ViewLayer
+00:28.891  render           | Engine: EEVEE
+00:28.969  render           | Fra: 42 | Rendering 1 / 64 samples
+00:29.109  render           | Fra: 42 | Rendering 25 / 64 samples
+00:29.203  render           | Fra: 42 | Rendering 50 / 64 samples
+00:29.266  render           | Fra: 42 | Rendering 64 / 64 samples
+00:29.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0042.png'
+00:29.328  render           | Time: 00:00.45 (Saving: 00:00.04)
+00:29.328  render           | Rendering frame 43
+00:29.328  render           | Start rendering: Scene, ViewLayer
+00:29.328  render           | Engine: EEVEE
+00:29.406  render           | Fra: 43 | Rendering 1 / 64 samples
+00:29.562  render           | Fra: 43 | Rendering 25 / 64 samples
+00:29.672  render           | Fra: 43 | Rendering 50 / 64 samples
+00:29.734  render           | Fra: 43 | Rendering 64 / 64 samples
+00:29.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0043.png'
+00:29.812  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:29.812  render           | Rendering frame 44
+00:29.812  render           | Start rendering: Scene, ViewLayer
+00:29.812  render           | Engine: EEVEE
+00:29.891  render           | Fra: 44 | Rendering 1 / 64 samples
+00:30.031  render           | Fra: 44 | Rendering 25 / 64 samples
+00:30.141  render           | Fra: 44 | Rendering 50 / 64 samples
+00:30.203  render           | Fra: 44 | Rendering 64 / 64 samples
+00:30.297  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0044.png'
+00:30.297  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:30.297  render           | Rendering frame 45
+00:30.297  render           | Start rendering: Scene, ViewLayer
+00:30.297  render           | Engine: EEVEE
+00:30.375  render           | Fra: 45 | Rendering 1 / 64 samples
+00:30.516  render           | Fra: 45 | Rendering 25 / 64 samples
+00:30.625  render           | Fra: 45 | Rendering 50 / 64 samples
+00:30.687  render           | Fra: 45 | Rendering 64 / 64 samples
+00:30.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0045.png'
+00:30.766  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:30.766  render           | Rendering frame 46
+00:30.766  render           | Start rendering: Scene, ViewLayer
+00:30.766  render           | Engine: EEVEE
+00:30.844  render           | Fra: 46 | Rendering 1 / 64 samples
+00:31.000  render           | Fra: 46 | Rendering 25 / 64 samples
+00:31.109  render           | Fra: 46 | Rendering 50 / 64 samples
+00:31.156  render           | Fra: 46 | Rendering 64 / 64 samples
+00:31.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0046.png'
+00:31.250  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:31.250  render           | Rendering frame 47
+00:31.250  render           | Start rendering: Scene, ViewLayer
+00:31.250  render           | Engine: EEVEE
+00:31.344  render           | Fra: 47 | Rendering 1 / 64 samples
+00:31.484  render           | Fra: 47 | Rendering 25 / 64 samples
+00:31.594  render           | Fra: 47 | Rendering 50 / 64 samples
+00:31.656  render           | Fra: 47 | Rendering 64 / 64 samples
+00:31.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0047.png'
+00:31.766  render           | Time: 00:00.51 (Saving: 00:00.06)
+00:31.766  render           | Rendering frame 48
+00:31.766  render           | Start rendering: Scene, ViewLayer
+00:31.766  render           | Engine: EEVEE
+00:31.859  render           | Fra: 48 | Rendering 1 / 64 samples
+00:32.016  render           | Fra: 48 | Rendering 25 / 64 samples
+00:32.125  render           | Fra: 48 | Rendering 50 / 64 samples
+00:32.172  render           | Fra: 48 | Rendering 64 / 64 samples
+00:32.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0048.png'
+00:32.266  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:32.266  render           | Rendering frame 49
+00:32.266  render           | Start rendering: Scene, ViewLayer
+00:32.266  render           | Engine: EEVEE
+00:32.359  render           | Fra: 49 | Rendering 1 / 64 samples
+00:32.500  render           | Fra: 49 | Rendering 25 / 64 samples
+00:32.625  render           | Fra: 49 | Rendering 50 / 64 samples
+00:32.687  render           | Fra: 49 | Rendering 64 / 64 samples
+00:32.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0049.png'
+00:32.797  render           | Time: 00:00.51 (Saving: 00:00.05)
+00:32.797  render           | Rendering frame 50
+00:32.797  render           | Start rendering: Scene, ViewLayer
+00:32.797  render           | Engine: EEVEE
+00:32.891  render           | Fra: 50 | Rendering 1 / 64 samples
+00:33.047  render           | Fra: 50 | Rendering 25 / 64 samples
+00:33.156  render           | Fra: 50 | Rendering 50 / 64 samples
+00:33.219  render           | Fra: 50 | Rendering 64 / 64 samples
+00:33.297  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0050.png'
+00:33.297  render           | Time: 00:00.51 (Saving: 00:00.05)
+00:33.297  render           | Rendering frame 51
+00:33.297  render           | Start rendering: Scene, ViewLayer
+00:33.297  render           | Engine: EEVEE
+00:33.391  render           | Fra: 51 | Rendering 1 / 64 samples
+00:33.547  render           | Fra: 51 | Rendering 25 / 64 samples
+00:33.656  render           | Fra: 51 | Rendering 50 / 64 samples
+00:33.703  render           | Fra: 51 | Rendering 64 / 64 samples
+00:33.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0051.png'
+00:33.797  render           | Time: 00:00.50 (Saving: 00:00.05)
+00:33.797  render           | Rendering frame 52
+00:33.797  render           | Start rendering: Scene, ViewLayer
+00:33.797  render           | Engine: EEVEE
+00:33.891  render           | Fra: 52 | Rendering 1 / 64 samples
+00:34.047  render           | Fra: 52 | Rendering 25 / 64 samples
+00:34.141  render           | Fra: 52 | Rendering 50 / 64 samples
+00:34.203  render           | Fra: 52 | Rendering 64 / 64 samples
+00:34.297  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0052.png'
+00:34.297  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:34.297  render           | Rendering frame 53
+00:34.297  render           | Start rendering: Scene, ViewLayer
+00:34.297  render           | Engine: EEVEE
+00:34.375  render           | Fra: 53 | Rendering 1 / 64 samples
+00:34.531  render           | Fra: 53 | Rendering 25 / 64 samples
+00:34.641  render           | Fra: 53 | Rendering 50 / 64 samples
+00:34.687  render           | Fra: 53 | Rendering 64 / 64 samples
+00:34.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0053.png'
+00:34.797  render           | Time: 00:00.50 (Saving: 00:00.07)
+00:34.797  render           | Rendering frame 54
+00:34.797  render           | Start rendering: Scene, ViewLayer
+00:34.797  render           | Engine: EEVEE
+00:34.875  render           | Fra: 54 | Rendering 1 / 64 samples
+00:35.031  render           | Fra: 54 | Rendering 25 / 64 samples
+00:35.125  render           | Fra: 54 | Rendering 50 / 64 samples
+00:35.187  render           | Fra: 54 | Rendering 64 / 64 samples
+00:35.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0054.png'
+00:35.266  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:35.266  render           | Rendering frame 55
+00:35.266  render           | Start rendering: Scene, ViewLayer
+00:35.266  render           | Engine: EEVEE
+00:35.344  render           | Fra: 55 | Rendering 1 / 64 samples
+00:35.500  render           | Fra: 55 | Rendering 25 / 64 samples
+00:35.609  render           | Fra: 55 | Rendering 50 / 64 samples
+00:35.656  render           | Fra: 55 | Rendering 64 / 64 samples
+00:35.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0055.png'
+00:35.734  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:35.734  render           | Rendering frame 56
+00:35.734  render           | Start rendering: Scene, ViewLayer
+00:35.734  render           | Engine: EEVEE
+00:35.797  render           | Fra: 56 | Rendering 1 / 64 samples
+00:35.969  render           | Fra: 56 | Rendering 25 / 64 samples
+00:36.078  render           | Fra: 56 | Rendering 50 / 64 samples
+00:36.141  render           | Fra: 56 | Rendering 64 / 64 samples
+00:36.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0056.png'
+00:36.234  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:36.234  render           | Rendering frame 57
+00:36.234  render           | Start rendering: Scene, ViewLayer
+00:36.234  render           | Engine: EEVEE
+00:36.328  render           | Fra: 57 | Rendering 1 / 64 samples
+00:36.484  render           | Fra: 57 | Rendering 25 / 64 samples
+00:36.594  render           | Fra: 57 | Rendering 50 / 64 samples
+00:36.656  render           | Fra: 57 | Rendering 64 / 64 samples
+00:36.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0057.png'
+00:36.734  render           | Time: 00:00.50 (Saving: 00:00.04)
+00:36.734  render           | Rendering frame 58
+00:36.734  render           | Start rendering: Scene, ViewLayer
+00:36.734  render           | Engine: EEVEE
+00:36.812  render           | Fra: 58 | Rendering 1 / 64 samples
+00:36.969  render           | Fra: 58 | Rendering 25 / 64 samples
+00:37.078  render           | Fra: 58 | Rendering 50 / 64 samples
+00:37.141  render           | Fra: 58 | Rendering 64 / 64 samples
+00:37.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0058.png'
+00:37.234  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:37.234  render           | Rendering frame 59
+00:37.234  render           | Start rendering: Scene, ViewLayer
+00:37.234  render           | Engine: EEVEE
+00:37.312  render           | Fra: 59 | Rendering 1 / 64 samples
+00:37.484  render           | Fra: 59 | Rendering 25 / 64 samples
+00:37.594  render           | Fra: 59 | Rendering 50 / 64 samples
+00:37.656  render           | Fra: 59 | Rendering 64 / 64 samples
+00:37.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0059.png'
+00:37.734  render           | Time: 00:00.50 (Saving: 00:00.04)
+00:37.734  render           | Rendering frame 60
+00:37.734  render           | Start rendering: Scene, ViewLayer
+00:37.734  render           | Engine: EEVEE
+00:37.812  render           | Fra: 60 | Rendering 1 / 64 samples
+00:37.953  render           | Fra: 60 | Rendering 25 / 64 samples
+00:38.062  render           | Fra: 60 | Rendering 50 / 64 samples
+00:38.125  render           | Fra: 60 | Rendering 64 / 64 samples
+00:38.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0060.png'
+00:38.187  render           | Time: 00:00.45 (Saving: 00:00.04)
+00:38.187  render           | Rendering frame 61
+00:38.187  render           | Start rendering: Scene, ViewLayer
+00:38.187  render           | Engine: EEVEE
+00:38.266  render           | Fra: 61 | Rendering 1 / 64 samples
+00:38.422  render           | Fra: 61 | Rendering 25 / 64 samples
+00:38.516  render           | Fra: 61 | Rendering 50 / 64 samples
+00:38.578  render           | Fra: 61 | Rendering 64 / 64 samples
+00:38.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0061.png'
+00:38.672  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:38.672  render           | Rendering frame 62
+00:38.672  render           | Start rendering: Scene, ViewLayer
+00:38.672  render           | Engine: EEVEE
+00:38.766  render           | Fra: 62 | Rendering 1 / 64 samples
+00:38.922  render           | Fra: 62 | Rendering 25 / 64 samples
+00:39.016  render           | Fra: 62 | Rendering 50 / 64 samples
+00:39.062  render           | Fra: 62 | Rendering 64 / 64 samples
+00:39.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0062.png'
+00:39.156  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:39.156  render           | Rendering frame 63
+00:39.156  render           | Start rendering: Scene, ViewLayer
+00:39.156  render           | Engine: EEVEE
+00:39.234  render           | Fra: 63 | Rendering 1 / 64 samples
+00:39.375  render           | Fra: 63 | Rendering 25 / 64 samples
+00:39.484  render           | Fra: 63 | Rendering 50 / 64 samples
+00:39.547  render           | Fra: 63 | Rendering 64 / 64 samples
+00:39.641  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0063.png'
+00:39.641  render           | Time: 00:00.48 (Saving: 00:00.06)
+00:39.641  render           | Rendering frame 64
+00:39.641  render           | Start rendering: Scene, ViewLayer
+00:39.641  render           | Engine: EEVEE
+00:39.719  render           | Fra: 64 | Rendering 1 / 64 samples
+00:39.875  render           | Fra: 64 | Rendering 25 / 64 samples
+00:40.000  render           | Fra: 64 | Rendering 50 / 64 samples
+00:40.047  render           | Fra: 64 | Rendering 64 / 64 samples
+00:40.141  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0064.png'
+00:40.141  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:40.141  render           | Rendering frame 65
+00:40.141  render           | Start rendering: Scene, ViewLayer
+00:40.141  render           | Engine: EEVEE
+00:40.219  render           | Fra: 65 | Rendering 1 / 64 samples
+00:40.359  render           | Fra: 65 | Rendering 25 / 64 samples
+00:40.469  render           | Fra: 65 | Rendering 50 / 64 samples
+00:40.516  render           | Fra: 65 | Rendering 64 / 64 samples
+00:40.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0065.png'
+00:40.594  render           | Time: 00:00.46 (Saving: 00:00.04)
+00:40.594  render           | Rendering frame 66
+00:40.594  render           | Start rendering: Scene, ViewLayer
+00:40.594  render           | Engine: EEVEE
+00:40.687  render           | Fra: 66 | Rendering 1 / 64 samples
+00:40.844  render           | Fra: 66 | Rendering 25 / 64 samples
+00:40.937  render           | Fra: 66 | Rendering 50 / 64 samples
+00:40.984  render           | Fra: 66 | Rendering 64 / 64 samples
+00:41.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0066.png'
+00:41.078  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:41.078  render           | Rendering frame 67
+00:41.078  render           | Start rendering: Scene, ViewLayer
+00:41.078  render           | Engine: EEVEE
+00:41.172  render           | Fra: 67 | Rendering 1 / 64 samples
+00:41.312  render           | Fra: 67 | Rendering 25 / 64 samples
+00:41.422  render           | Fra: 67 | Rendering 50 / 64 samples
+00:41.484  render           | Fra: 67 | Rendering 64 / 64 samples
+00:41.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0067.png'
+00:41.562  render           | Time: 00:00.48 (Saving: 00:00.04)
+00:41.562  render           | Rendering frame 68
+00:41.562  render           | Start rendering: Scene, ViewLayer
+00:41.562  render           | Engine: EEVEE
+00:41.641  render           | Fra: 68 | Rendering 1 / 64 samples
+00:41.797  render           | Fra: 68 | Rendering 25 / 64 samples
+00:41.891  render           | Fra: 68 | Rendering 50 / 64 samples
+00:41.969  render           | Fra: 68 | Rendering 64 / 64 samples
+00:42.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0068.png'
+00:42.047  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:42.047  render           | Rendering frame 69
+00:42.047  render           | Start rendering: Scene, ViewLayer
+00:42.047  render           | Engine: EEVEE
+00:42.125  render           | Fra: 69 | Rendering 1 / 64 samples
+00:42.281  render           | Fra: 69 | Rendering 25 / 64 samples
+00:42.375  render           | Fra: 69 | Rendering 50 / 64 samples
+00:42.437  render           | Fra: 69 | Rendering 64 / 64 samples
+00:42.516  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0069.png'
+00:42.516  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:42.516  render           | Rendering frame 70
+00:42.516  render           | Start rendering: Scene, ViewLayer
+00:42.516  render           | Engine: EEVEE
+00:42.594  render           | Fra: 70 | Rendering 1 / 64 samples
+00:42.734  render           | Fra: 70 | Rendering 25 / 64 samples
+00:42.844  render           | Fra: 70 | Rendering 50 / 64 samples
+00:42.891  render           | Fra: 70 | Rendering 64 / 64 samples
+00:42.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0070.png'
+00:42.984  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:42.984  render           | Rendering frame 71
+00:42.984  render           | Start rendering: Scene, ViewLayer
+00:42.984  render           | Engine: EEVEE
+00:43.078  render           | Fra: 71 | Rendering 1 / 64 samples
+00:43.234  render           | Fra: 71 | Rendering 25 / 64 samples
+00:43.328  render           | Fra: 71 | Rendering 50 / 64 samples
+00:43.391  render           | Fra: 71 | Rendering 64 / 64 samples
+00:43.469  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0071.png'
+00:43.469  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:43.469  render           | Rendering frame 72
+00:43.469  render           | Start rendering: Scene, ViewLayer
+00:43.469  render           | Engine: EEVEE
+00:43.547  render           | Fra: 72 | Rendering 1 / 64 samples
+00:43.703  render           | Fra: 72 | Rendering 25 / 64 samples
+00:43.812  render           | Fra: 72 | Rendering 50 / 64 samples
+00:43.859  render           | Fra: 72 | Rendering 64 / 64 samples
+00:43.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0072.png'
+00:43.953  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:43.953  render           | Rendering frame 73
+00:43.953  render           | Start rendering: Scene, ViewLayer
+00:43.953  render           | Engine: EEVEE
+00:44.031  render           | Fra: 73 | Rendering 1 / 64 samples
+00:44.187  render           | Fra: 73 | Rendering 25 / 64 samples
+00:44.281  render           | Fra: 73 | Rendering 50 / 64 samples
+00:44.344  render           | Fra: 73 | Rendering 64 / 64 samples
+00:44.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0073.png'
+00:44.453  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:44.453  render           | Rendering frame 74
+00:44.453  render           | Start rendering: Scene, ViewLayer
+00:44.453  render           | Engine: EEVEE
+00:44.531  render           | Fra: 74 | Rendering 1 / 64 samples
+00:44.687  render           | Fra: 74 | Rendering 25 / 64 samples
+00:44.781  render           | Fra: 74 | Rendering 50 / 64 samples
+00:44.828  render           | Fra: 74 | Rendering 64 / 64 samples
+00:44.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0074.png'
+00:44.969  render           | Time: 00:00.52 (Saving: 00:00.09)
+00:44.969  render           | Rendering frame 75
+00:44.969  render           | Start rendering: Scene, ViewLayer
+00:44.969  render           | Engine: EEVEE
+00:45.047  render           | Fra: 75 | Rendering 1 / 64 samples
+00:45.187  render           | Fra: 75 | Rendering 25 / 64 samples
+00:45.297  render           | Fra: 75 | Rendering 50 / 64 samples
+00:45.375  render           | Fra: 75 | Rendering 64 / 64 samples
+00:45.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0075.png'
+00:45.453  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:45.453  render           | Rendering frame 76
+00:45.453  render           | Start rendering: Scene, ViewLayer
+00:45.453  render           | Engine: EEVEE
+00:45.531  render           | Fra: 76 | Rendering 1 / 64 samples
+00:45.672  render           | Fra: 76 | Rendering 25 / 64 samples
+00:45.781  render           | Fra: 76 | Rendering 50 / 64 samples
+00:45.828  render           | Fra: 76 | Rendering 64 / 64 samples
+00:45.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0076.png'
+00:45.906  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:45.906  render           | Rendering frame 77
+00:45.906  render           | Start rendering: Scene, ViewLayer
+00:45.906  render           | Engine: EEVEE
+00:45.984  render           | Fra: 77 | Rendering 1 / 64 samples
+00:46.125  render           | Fra: 77 | Rendering 25 / 64 samples
+00:46.234  render           | Fra: 77 | Rendering 50 / 64 samples
+00:46.281  render           | Fra: 77 | Rendering 64 / 64 samples
+00:46.375  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0077.png'
+00:46.375  render           | Time: 00:00.45 (Saving: 00:00.05)
+00:46.375  render           | Rendering frame 78
+00:46.375  render           | Start rendering: Scene, ViewLayer
+00:46.375  render           | Engine: EEVEE
+00:46.453  render           | Fra: 78 | Rendering 1 / 64 samples
+00:46.594  render           | Fra: 78 | Rendering 25 / 64 samples
+00:46.703  render           | Fra: 78 | Rendering 50 / 64 samples
+00:46.766  render           | Fra: 78 | Rendering 64 / 64 samples
+00:46.844  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0078.png'
+00:46.844  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:46.844  render           | Rendering frame 79
+00:46.844  render           | Start rendering: Scene, ViewLayer
+00:46.844  render           | Engine: EEVEE
+00:46.922  render           | Fra: 79 | Rendering 1 / 64 samples
+00:47.078  render           | Fra: 79 | Rendering 25 / 64 samples
+00:47.172  render           | Fra: 79 | Rendering 50 / 64 samples
+00:47.234  render           | Fra: 79 | Rendering 64 / 64 samples
+00:47.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0079.png'
+00:47.312  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:47.312  render           | Rendering frame 80
+00:47.312  render           | Start rendering: Scene, ViewLayer
+00:47.312  render           | Engine: EEVEE
+00:47.391  render           | Fra: 80 | Rendering 1 / 64 samples
+00:47.547  render           | Fra: 80 | Rendering 25 / 64 samples
+00:47.641  render           | Fra: 80 | Rendering 50 / 64 samples
+00:47.703  render           | Fra: 80 | Rendering 64 / 64 samples
+00:47.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0080.png'
+00:47.781  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:47.781  render           | Rendering frame 81
+00:47.781  render           | Start rendering: Scene, ViewLayer
+00:47.781  render           | Engine: EEVEE
+00:47.859  render           | Fra: 81 | Rendering 1 / 64 samples
+00:48.000  render           | Fra: 81 | Rendering 25 / 64 samples
+00:48.109  render           | Fra: 81 | Rendering 50 / 64 samples
+00:48.172  render           | Fra: 81 | Rendering 64 / 64 samples
+00:48.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0081.png'
+00:48.234  render           | Time: 00:00.46 (Saving: 00:00.04)
+00:48.234  render           | Rendering frame 82
+00:48.234  render           | Start rendering: Scene, ViewLayer
+00:48.234  render           | Engine: EEVEE
+00:48.312  render           | Fra: 82 | Rendering 1 / 64 samples
+00:48.469  render           | Fra: 82 | Rendering 25 / 64 samples
+00:48.562  render           | Fra: 82 | Rendering 50 / 64 samples
+00:48.625  render           | Fra: 82 | Rendering 64 / 64 samples
+00:48.719  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0082.png'
+00:48.719  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:48.719  render           | Rendering frame 83
+00:48.719  render           | Start rendering: Scene, ViewLayer
+00:48.719  render           | Engine: EEVEE
+00:48.797  render           | Fra: 83 | Rendering 1 / 64 samples
+00:48.969  render           | Fra: 83 | Rendering 25 / 64 samples
+00:49.062  render           | Fra: 83 | Rendering 50 / 64 samples
+00:49.125  render           | Fra: 83 | Rendering 64 / 64 samples
+00:49.203  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0083.png'
+00:49.203  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:49.203  render           | Rendering frame 84
+00:49.203  render           | Start rendering: Scene, ViewLayer
+00:49.203  render           | Engine: EEVEE
+00:49.281  render           | Fra: 84 | Rendering 1 / 64 samples
+00:49.422  render           | Fra: 84 | Rendering 25 / 64 samples
+00:49.516  render           | Fra: 84 | Rendering 50 / 64 samples
+00:49.578  render           | Fra: 84 | Rendering 64 / 64 samples
+00:49.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0084.png'
+00:49.672  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:49.672  render           | Rendering frame 85
+00:49.672  render           | Start rendering: Scene, ViewLayer
+00:49.672  render           | Engine: EEVEE
+00:49.750  render           | Fra: 85 | Rendering 1 / 64 samples
+00:49.906  render           | Fra: 85 | Rendering 25 / 64 samples
+00:50.016  render           | Fra: 85 | Rendering 50 / 64 samples
+00:50.078  render           | Fra: 85 | Rendering 64 / 64 samples
+00:50.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0085.png'
+00:50.156  render           | Time: 00:00.49 (Saving: 00:00.05)
+00:50.156  render           | Rendering frame 86
+00:50.156  render           | Start rendering: Scene, ViewLayer
+00:50.156  render           | Engine: EEVEE
+00:50.250  render           | Fra: 86 | Rendering 1 / 64 samples
+00:50.391  render           | Fra: 86 | Rendering 25 / 64 samples
+00:50.500  render           | Fra: 86 | Rendering 50 / 64 samples
+00:50.547  render           | Fra: 86 | Rendering 64 / 64 samples
+00:50.641  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0086.png'
+00:50.641  render           | Time: 00:00.47 (Saving: 00:00.04)
+00:50.641  render           | Rendering frame 87
+00:50.641  render           | Start rendering: Scene, ViewLayer
+00:50.641  render           | Engine: EEVEE
+00:50.719  render           | Fra: 87 | Rendering 1 / 64 samples
+00:50.859  render           | Fra: 87 | Rendering 25 / 64 samples
+00:50.969  render           | Fra: 87 | Rendering 50 / 64 samples
+00:51.031  render           | Fra: 87 | Rendering 64 / 64 samples
+00:51.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0087.png'
+00:51.109  render           | Time: 00:00.46 (Saving: 00:00.05)
+00:51.109  render           | Rendering frame 88
+00:51.109  render           | Start rendering: Scene, ViewLayer
+00:51.109  render           | Engine: EEVEE
+00:51.187  render           | Fra: 88 | Rendering 1 / 64 samples
+00:51.344  render           | Fra: 88 | Rendering 25 / 64 samples
+00:51.453  render           | Fra: 88 | Rendering 50 / 64 samples
+00:51.500  render           | Fra: 88 | Rendering 64 / 64 samples
+00:51.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0088.png'
+00:51.594  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:51.594  render           | Rendering frame 89
+00:51.594  render           | Start rendering: Scene, ViewLayer
+00:51.594  render           | Engine: EEVEE
+00:51.672  render           | Fra: 89 | Rendering 1 / 64 samples
+00:51.812  render           | Fra: 89 | Rendering 25 / 64 samples
+00:51.922  render           | Fra: 89 | Rendering 50 / 64 samples
+00:51.984  render           | Fra: 89 | Rendering 64 / 64 samples
+00:52.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0089.png'
+00:52.062  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:52.062  render           | Rendering frame 90
+00:52.062  render           | Start rendering: Scene, ViewLayer
+00:52.062  render           | Engine: EEVEE
+00:52.141  render           | Fra: 90 | Rendering 1 / 64 samples
+00:52.297  render           | Fra: 90 | Rendering 25 / 64 samples
+00:52.406  render           | Fra: 90 | Rendering 50 / 64 samples
+00:52.453  render           | Fra: 90 | Rendering 64 / 64 samples
+00:52.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0090.png'
+00:52.547  render           | Time: 00:00.48 (Saving: 00:00.06)
+00:52.547  render           | Rendering frame 91
+00:52.547  render           | Start rendering: Scene, ViewLayer
+00:52.547  render           | Engine: EEVEE
+00:52.625  render           | Fra: 91 | Rendering 1 / 64 samples
+00:52.781  render           | Fra: 91 | Rendering 25 / 64 samples
+00:52.875  render           | Fra: 91 | Rendering 50 / 64 samples
+00:52.922  render           | Fra: 91 | Rendering 64 / 64 samples
+00:53.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0091.png'
+00:53.000  render           | Time: 00:00.45 (Saving: 00:00.04)
+00:53.000  render           | Rendering frame 92
+00:53.000  render           | Start rendering: Scene, ViewLayer
+00:53.000  render           | Engine: EEVEE
+00:53.094  render           | Fra: 92 | Rendering 1 / 64 samples
+00:53.234  render           | Fra: 92 | Rendering 25 / 64 samples
+00:53.344  render           | Fra: 92 | Rendering 50 / 64 samples
+00:53.406  render           | Fra: 92 | Rendering 64 / 64 samples
+00:53.484  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0092.png'
+00:53.484  render           | Time: 00:00.48 (Saving: 00:00.05)
+00:53.484  render           | Rendering frame 93
+00:53.484  render           | Start rendering: Scene, ViewLayer
+00:53.484  render           | Engine: EEVEE
+00:53.562  render           | Fra: 93 | Rendering 1 / 64 samples
+00:53.719  render           | Fra: 93 | Rendering 25 / 64 samples
+00:53.828  render           | Fra: 93 | Rendering 50 / 64 samples
+00:53.875  render           | Fra: 93 | Rendering 64 / 64 samples
+00:53.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0093.png'
+00:53.969  render           | Time: 00:00.47 (Saving: 00:00.05)
+00:53.969  render           | Rendering frame 94
+00:53.969  render           | Start rendering: Scene, ViewLayer
+00:53.969  render           | Engine: EEVEE
+00:54.047  render           | Fra: 94 | Rendering 1 / 64 samples
+00:54.203  render           | Fra: 94 | Rendering 25 / 64 samples
+00:54.297  render           | Fra: 94 | Rendering 50 / 64 samples
+00:54.344  render           | Fra: 94 | Rendering 64 / 64 samples
+00:54.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0094.png'
+00:54.437  render           | Time: 00:00.46 (Saving: 00:00.04)
+00:54.437  render           | Rendering frame 95
+00:54.437  render           | Start rendering: Scene, ViewLayer
+00:54.437  render           | Engine: EEVEE
+00:54.516  render           | Fra: 95 | Rendering 1 / 64 samples
+00:54.656  render           | Fra: 95 | Rendering 25 / 64 samples
+00:54.766  render           | Fra: 95 | Rendering 50 / 64 samples
+00:54.828  render           | Fra: 95 | Rendering 64 / 64 samples
+00:54.937  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0095.png'
+00:54.937  render           | Time: 00:00.50 (Saving: 00:00.05)
+00:54.937  render           | Rendering frame 96
+00:54.937  render           | Start rendering: Scene, ViewLayer
+00:54.937  render           | Engine: EEVEE
+00:55.016  render           | Fra: 96 | Rendering 1 / 64 samples
+00:55.187  render           | Fra: 96 | Rendering 25 / 64 samples
+00:55.297  render           | Fra: 96 | Rendering 50 / 64 samples
+00:55.344  render           | Fra: 96 | Rendering 64 / 64 samples
+00:55.422  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-elite-wendigo\production\animation\reference_match_remaining\death_work\final_frames\pose_0096.png'
+00:55.422  render           | Time: 00:00.48 (Saving: 00:00.05)
+[a_Rodin.utils-DBG]: RodinBridge: unregister
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Reloading external rigs...
+Reloading external metarigs...
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+
+Blender quit

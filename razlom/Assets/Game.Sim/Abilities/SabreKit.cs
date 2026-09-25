@@ -76,6 +76,7 @@ namespace Game.Sim
                 {
                     _cleaveFanMask = 0;
                     for (int i = 0; i < _cleaveFanTargets.Length; i++) _cleaveFanTargets[i] = -1;
+                    CleaveWave(build);
                 }
                 FixVec2 from = Entities.Position[PlayerId];
                 for (int d = 0; d < directions; d++)
@@ -106,6 +107,7 @@ namespace Game.Sim
                     int damage = build.Get(AbilityStatType.Damage).ToInt();
                     if (build.Has(AbilityFlag.CleaveBigGame) && IsElite(best)) damage = damage * 140 / 100;
                     ApplyAbilityDamage(PlayerId, best, damage, _cleaveSlot, DamageType.Physical);
+                    CleaveUpgradesOnHit(build, best, d, damage);
                 }
                 _cleaveHit = _cleaveFanMask == (1 << directions) - 1;
             }
@@ -223,6 +225,7 @@ namespace Game.Sim
             // Три секунды начинаются у огня, а не у нажатия кнопки.
             int duration = build.Get(AbilityStatType.DurationTicks).ToInt();
             _blazeUntilTick = Tick + duration;
+            BlazeUpgradesAtIgnition(build);
             _events.Add(new SimEvent(SimEventType.BlazeBegin, PlayerId, -1,
                 duration, false, Entities.Position[PlayerId]));
         }

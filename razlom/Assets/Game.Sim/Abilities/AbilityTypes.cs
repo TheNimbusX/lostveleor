@@ -91,9 +91,13 @@ namespace Game.Sim
     /// <summary>
     /// Поведения, которые включаются узлами типа Flag. Код на каждый флаг
     /// пишется ОДИН РАЗ, дальше узел его только включает.
+    ///
+    /// 64 бита: с усилениями 6–8 (24 сентября) 32 не хватило. Хеш сборки
+    /// подмешивает старшую половину, только если она не пуста, — прежние
+    /// наборы хешируются как раньше.
     /// </summary>
     [System.Flags]
-    public enum AbilityFlag : uint
+    public enum AbilityFlag : ulong
     {
         None = 0,
 
@@ -157,6 +161,52 @@ namespace Game.Sim
         FlaskOil = 1 << 26,
         /// <summary>Взрывная смесь: ещё три малые лужи вокруг взрыва.</summary>
         FlaskRing = 1 << 27,
+
+        // ---- усиления 6–8, выбор владельца 24 сентября ----
+        /// <summary>Вихрь: враги в 3,5 м подтягиваются к центру перед ударом.</summary>
+        WhirlwindPull = 1UL << 28,
+        /// <summary>Вихрь: после оборота кольцо расходится до 4 м, 40% урона.</summary>
+        WhirlwindWave = 1UL << 29,
+        /// <summary>Вихрь: во время вращения −30% входящего урона.</summary>
+        WhirlwindCocoon = 1UL << 30,
+        /// <summary>Рассекающий удар: следующий удар Пелага по цели +25%.</summary>
+        CleaveSunder = 1UL << 31,
+        /// <summary>Рассекающий удар: через 0,3 с второй удар, 50%.</summary>
+        CleaveDouble = 1UL << 32,
+        /// <summary>Рассекающий удар: удар уходит волной на 3 м вперёд, 50%.</summary>
+        CleaveWave = 1UL << 33,
+        /// <summary>«Ладно смазал»: при поджоге взрыв 60 огня вокруг, 2 м.</summary>
+        BlazeFlare = 1UL << 34,
+        /// <summary>«Ладно смазал»: пока горит, автоатаки на 20% быстрее.</summary>
+        BlazeHaste = 1UL << 35,
+        /// <summary>«Ладно смазал»: убийство пока горит +0,5 с горения, до +3 с.</summary>
+        BlazeStoke = 1UL << 36,
+        /// <summary>Шквал: после серии назад на место старта.</summary>
+        SquallReturn = 1UL << 37,
+        /// <summary>Шквал: повторный прыжок в ту же цель +50%.</summary>
+        SquallRepeat = 1UL << 38,
+        /// <summary>Шквал: первый прыжок ×2 по цели с полным здоровьем.</summary>
+        SquallOpener = 1UL << 39,
+        /// <summary>Удар якорем: полоса лежит 3 с, кто наступит — оглушение 0,3 с.</summary>
+        AnchorSlamCrack = 1UL << 40,
+        /// <summary>Удар якорем: каждый задетый враг −0,3 с перезарядки.</summary>
+        AnchorSlamRecoil = 1UL << 41,
+        /// <summary>Крушение: во время серии −25% входящего урона.</summary>
+        WreckUnstoppable = 1UL << 42,
+        /// <summary>Крушение: второй удар тоже оглушает, 0,3 с.</summary>
+        WreckConcuss = 1UL << 43,
+        /// <summary>Крушение: каждый следующий удар серии +15%.</summary>
+        WreckMomentum = 1UL << 44,
+        /// <summary>Абордаж: кулак +10% урона за каждый метр полёта.</summary>
+        BoardingMomentum = 1UL << 45,
+        /// <summary>Абордаж: зацеп сбивает замах врага.</summary>
+        BoardingInterrupt = 1UL << 46,
+        /// <summary>Абордаж: следующая автоатака за 2 с — крит.</summary>
+        BoardingSureCrit = 1UL << 47,
+        /// <summary>Взрывная смесь: два заряда.</summary>
+        FlaskTwoCharges = 1UL << 48,
+        /// <summary>Взрывная смесь: взрыв бросает 3 осколка во врагов до 4 м, по 30.</summary>
+        FlaskShrapnel = 1UL << 49,
     }
 
     /// <summary>

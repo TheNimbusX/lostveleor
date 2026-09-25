@@ -29,6 +29,7 @@ namespace Game.View
         {
             _root=Instantiate(prefab);
             _root.name="Camp Tent";
+            UiScaleFollower.Attach(_root);
             _tent=_root.GetComponentInChildren<CampTentView>(true);
             if(_tent==null||_tent.BagTemplate==null||_tent.BagGrid==null){Destroy(_root);_root=null;_tent=null;return false;}
             EnsureEventSystem();
@@ -73,13 +74,13 @@ namespace Game.View
                 if(tex!=null)_potionSprites[i]=Sprite.Create(tex,new Rect(0,0,tex.width,tex.height),new Vector2(.5f,.5f),100);
                 if(_tent.PotionIcons[i]!=null)_tent.PotionIcons[i].sprite=_potionSprites[i];
             }
-            int entries=System.Math.Min(16,Catalog.GetLength(0));
+            int entries=System.Math.Min(16,ItemTexts.Count);
             _atlas=new CampAtlasEntry[entries];
             if(_tent.AtlasTemplate!=null&&_tent.AtlasGrid!=null)
                 for(int i=0;i<entries;i++)
                 {
                     var entry=Instantiate(_tent.AtlasTemplate,_tent.AtlasGrid);
-                    entry.name="Atlas "+Catalog[i,0];entry.gameObject.SetActive(true);_atlas[i]=entry;
+                    entry.name="Atlas "+ItemTexts.KeyAt(i);entry.gameObject.SetActive(true);_atlas[i]=entry;
                     int index=i;var relay=entry.gameObject.AddComponent<CampHoverRelay>();
                     relay.Hover=on=>{if(on)ShowAtlasTooltip(index);else _tent.ShowTooltip(false);};
                 }
@@ -114,10 +115,10 @@ namespace Game.View
         {
             var bag=_driver.Session.Camp.Bag;
             int rare=-1;
-            for(int i=0;i<16&&i<Catalog.GetLength(0);i++)
+            for(int i=0;i<16&&i<ItemTexts.Count;i++)
             {
                 bool isRare=i%4>=2;
-                int slot=bag.Add(new ItemInstance(StableId.Of("base."+Catalog[i,0]),(short)(4+i),isRare?ItemRarity.Magic:ItemRarity.Normal,(ulong)(9000+i)));
+                int slot=bag.Add(new ItemInstance(StableId.Of("base."+ItemTexts.KeyAt(i)),(short)(4+i),isRare?ItemRarity.Magic:ItemRarity.Normal,(ulong)(9000+i)));
                 if(slot<0||!isRare)continue;
                 bag.SetKeep(slot,true);if(rare<0)rare=slot;
             }
@@ -197,7 +198,7 @@ namespace Game.View
                 for(int i=0;i<_atlas.Length;i++)
                 {
                     if(_atlas[i]==null)continue;
-                    int id=StableId.Of("base."+Catalog[i,0]);bool found=camp.Discovered(id);if(found)open++;
+                    int id=StableId.Of("base."+ItemTexts.KeyAt(i));bool found=camp.Discovered(id);if(found)open++;
                     _atlas[i].Show(_tent.FrameFor(IsRareBase(id)?1:0),BaseSprite(id),ItemName(id),found);
                 }
                 if(_tent.AtlasCount!=null)_tent.AtlasCount.text="Найдено "+open+" из "+_atlas.Length;
@@ -335,7 +336,7 @@ namespace Game.View
 
         internal void ShowAtlasTooltip(int index)
         {
-            var camp=_driver.Session.Camp;int id=StableId.Of("base."+Catalog[index,0]);
+            var camp=_driver.Session.Camp;int id=StableId.Of("base."+ItemTexts.KeyAt(index));
             bool found=camp.Discovered(id),rare=IsRareBase(id);
             int b=camp.Items.IndexOfBase(id);
             string property="";

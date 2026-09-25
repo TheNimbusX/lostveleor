@@ -47,13 +47,14 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Дописывает узлы включённых талантов направления. Первые takenRank
-        /// пропускаются: они уже взяты в забеге, и второй такой же узел удвоил бы прибавку.
+        /// Дописывает узлы включённых талантов направления. Уже взятые в забеге
+        /// (биты takenMask) пропускаются: второй такой же узел удвоил бы прибавку.
         /// </summary>
-        public static int AppendNodes(SabreTalentLine line, int takenRank, AbilityNode[] buffer, int count)
+        public static int AppendNodes(SabreTalentLine line, int takenMask, AbilityNode[] buffer, int count)
         {
-            for (int index = takenRank < 0 ? 0 : takenRank; index < SabreTalents.TalentsPerLine; index++)
-                if (Has(line, index)) count = SabreTalents.AppendNode(line, index, buffer, count);
+            for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                if (Has(line, index) && (takenMask & (1 << index)) == 0)
+                    count = SabreTalents.AppendNode(line, index, buffer, count);
             return count;
         }
     }

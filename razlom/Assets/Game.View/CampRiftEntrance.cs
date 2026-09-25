@@ -72,8 +72,10 @@ namespace Game.View
             }
             if (!IsOpen) return;
 #if ENABLE_INPUT_SYSTEM
-            bool cancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
-            bool accept = Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame);
+            bool cancel = (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
+            bool accept = (Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                || (Gamepad.current != null && Gamepad.current.buttonSouth.wasPressedThisFrame);
 #else
             bool cancel = Input.GetKeyDown(KeyCode.Escape);
             bool accept = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
@@ -283,6 +285,7 @@ namespace Game.View
                 if (prefab == null) return null;
                 _confirm = Instantiate(prefab).GetComponent<CampRiftConfirmPanel>();
                 if (_confirm == null) return null;
+                UiScaleFollower.Attach(_confirm.gameObject);
                 _confirm.name = "Вопрос у арки";
                 if (_confirm.Enter != null) _confirm.Enter.onClick.AddListener(() => Respond(true));
                 if (_confirm.Stay != null) _confirm.Stay.onClick.AddListener(() => Respond(false));

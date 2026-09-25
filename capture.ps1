@@ -70,7 +70,7 @@ param(
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
-    [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud')] [string] $Encounter = '',
+    [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud', 'forest-wendigo')] [string] $Encounter = '',
     [ValidateSet('', 'dodge', 'approach', 'kill', 'pause', 'repeat', 'impact-pause', 'impact-repeat')] [string] $ForestBudCase = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,
@@ -86,7 +86,10 @@ param(
     [double] $CameraYaw = 0,
     [double] $CameraPitch = -1,
     [switch] $Rebuild,
-    [switch] $NoRebuild
+    [switch] $NoRebuild,
+    # Дополнительные ключи плееру как есть (диагностика: -ExtraArgs '-cleave-debug').
+    # Имя не совпадает с $playerArgs ниже: переменные PowerShell без учёта регистра.
+    [string[]] $ExtraArgs = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -273,6 +276,7 @@ if ($TempoPreset -ge 0) { $playerArgs += @('-capture-tempo', $TempoPreset.ToStri
 if ($CameraPitch -ge 0) { $playerArgs += @('-capture-camera-pitch', $CameraPitch.ToString([Globalization.CultureInfo]::InvariantCulture)) }
 if ($SlamCase -ne '') { $playerArgs += @('-capture-slam-case', $SlamCase) }
 if ($NoVfx) { $playerArgs += '-capture-no-vfx' }
+if ($ExtraArgs.Count -gt 0) { $playerArgs += $ExtraArgs }
 if ($CleaveMiss) { $playerArgs += '-capture-cleave-miss' }
 if ($CastYaw -ne 0) { $playerArgs += @('-capture-cast-yaw', $CastYaw) }
 $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization.CultureInfo]::InvariantCulture))

@@ -1,0 +1,15 @@
+{
+  "source": "ForestWendigo_Rig.blend",
+  "output": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\ForestWendigo_Rig_WeightRevision_v2.blend",
+  "triangles": 24636,
+  "bones": 30,
+  "touched_vertices": 3817,
+  "region_vertices": {
+    "R_wrist": 660,
+    "L_wrist": 706,
+    "head_neck": 2451
+  },
+  "unweighted": 0,
+  "over_four": 0,
+  "unnormalized": 0
+}

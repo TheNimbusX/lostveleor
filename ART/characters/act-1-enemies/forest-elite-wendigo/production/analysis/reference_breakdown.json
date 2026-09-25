@@ -1,0 +1,87 @@
+{
+  "scope": "Visual comparison of approved Higgsfield motion references with the first Blender review; artistic guidance only, no production assets changed.",
+  "note": "The AI references have camera and anatomy drift. Transfer their pose hierarchy, weight changes, timing contrast and overlap, not every interpolated frame literally.",
+  "walk": {
+    "reference": "review/higgsfield-refs/idle_walk.mp4",
+    "reference_times_seconds": {
+      "idle_to_first_weight_shift": [1.38, 1.63],
+      "first_step_and_pelvis_over_support": [1.63, 2.13],
+      "opposite_step": [2.25, 2.88],
+      "lower_prowling_advance": [3.0, 3.88]
+    },
+    "current": "production/review/animation_stage/ForestWendigo_Walk_review.mp4; 12 frames/0.43 seconds incl. end frame",
+    "problem": "The short uniform loop reads as leg cycling. Hip and ribcage barely displace and the raised foot spends too much screen time high, so support/impact do not register; the claws swing in an almost sinusoidal unit with the shoulders. A numeric planted-foot contact audit reports approximately -0.001..0.020 m, so the issue is primarily visible weight rather than proven floor penetration.",
+    "key_poses_at_30_fps": [
+      "f0: left foot reaches front and accepts weight; right heel trails; chest leans over planted foot",
+      "f3: down pose, left knee and pelvis compress, mask/antlers still travelling forward",
+      "f6: passing pose; right knee drives through, left foot stays planted while right claw counter-swings later",
+      "f9: right foot contact, mirrored but deliberately not identical",
+      "f12/f15/f18: right down, left passing, seamless left contact at f18"
+    ],
+    "technical_motion": "Try about 18 frames (0.6 s) with a longer stride and foot support speed matched to Sim 3.6 m/s. During ~0.36 s stance, a planted paw moves ~1.30 m backward relative to the in-place body (reach about +/-0.65 m). Keep toe lift roughly 0.12-0.18 m except the passing knee; use non-sinusoidal impact/drop and torso/head lag."
+  },
+  "claw": {
+    "reference": "review/higgsfield-refs/claw.mp4",
+    "reference_times_seconds": {
+      "anticipation_and_step": [0.75, 1.25],
+      "held_open_windup": [1.38, 2.0],
+      "rapid_low_sweep": [2.08, 2.25],
+      "followthrough_and_return": [2.38, 3.38]
+    },
+    "current": "production/review/animation_stage/ForestWendigo_Claw_review.mp4; 30 frames/1.03 seconds; planned hit at f18/0.60 seconds",
+    "problem": "The lead hand moves, but hips, shoulders, head and planted legs do not load a convincing torque. The high open claw silhouette is too brief; the 140-degree low ground cut has no clearly traceable tip path, and the impact pose appears more like a reach than a powered slash.",
+    "key_poses_at_30_fps": [
+      "f0: grounded guard, both feet visible",
+      "f7: rear hip turns first; front foot steps toward the edge of the sector; free claw counters outward",
+      "f14-15: maximal open windup with strike claw high and wide, chest twisted behind pelvis, head still aimed at player",
+      "f18: planted front leg and full low cross-body sweep at exact Sim contact; claw tips near ground",
+      "f21: overswing of chest/shoulder/head; f30 returns from asymmetric low recovery"
+    ],
+    "timing": "Compress the reference's held windup to the 18-frame gameplay telegraph, but keep an actual 2-3-frame acceleration burst into contact. Pelvis leads, chest and striking shoulder follow 1-2 frames later, wrist/claws trace the widest late arc, heavy horned head decelerates last."
+  },
+  "leap": {
+    "reference": "review/higgsfield-refs/leap.mp4",
+    "reference_times_seconds": {
+      "lower_into_four_point_crouch": [0.45, 0.75],
+      "grounded_coil_and_hold": [0.75, 1.65],
+      "legs_push_and_airborne_open_shape": [1.75, 2.25],
+      "hands_then_feet_land": [2.35, 2.62],
+      "low_recovery": [2.75, 3.88]
+    },
+    "current": "production/review/animation_stage/ForestWendigo_Leap_review.mp4; 51 frames/1.73 seconds; planned takeoff f24/0.80 and hit/landing f33/1.10",
+    "problem": "The pre-launch crouch barely reaches a four-point supported silhouette. Body and arms rise together, then all parts descend together. At 1.10 s the body still reads suspended; a hard hand/foot contact, pelvis compression and delayed horn/head settle are missing.",
+    "key_poses_at_30_fps": [
+      "f0: guard",
+      "f12: feet widen, both clawed hands plant ahead of shoulders, hip drops; claws are visibly bearing weight",
+      "f23: maximum grounded coil, pelvis behind palms, mask points at fixed landing mark",
+      "f28: clear airborne stretch with chest forward, claws reaching, legs pushed back/tucked; Sim owns horizontal travel",
+      "f33-37: front claws receive landing at f33, then pelvis and knees compress through f37; head/horns overshoot and recover before f51 ready pose"
+    ],
+    "timing": "Within fixed gameplay timings, keep ~0.35-0.45 s of visibly held coil before f24 launch. Flight is only 9 frames, so exaggerate silhouette and vertical travel but do not put a neutral hover at f33. Exact visual touchdown and Sim damage must share f33."
+  },
+  "death": {
+    "reference": "review/higgsfield-refs/death.mp4",
+    "reference_times_seconds": {
+      "stagger": [0.70, 1.10],
+      "hands_catch": [1.15, 1.50],
+      "knees_and_chest_give_way": [1.60, 2.40],
+      "head_and_horns_settle": [2.40, 2.90],
+      "held_final": [2.90, 3.88]
+    },
+    "current": "production/review/animation_stage/ForestWendigo_Death_review.mp4; 45 frames/1.53 seconds",
+    "problem": "A broadly symmetric, single smooth forward fold replaces the reference's separate failures of balance, hand catch, knee collapse and head drop. The final pose reads like an active low crouch rather than a dead body's supported weight; it does not visibly settle onto the ground.",
+    "key_poses_at_30_fps": [
+      "f0: living guard",
+      "f7: asymmetric hit/stagger with one foot losing line of support; horned head lags behind chest",
+      "f18: first claw lands and braces, second claw arrives later; pelvis still above knees",
+      "f30: knees buckle, chest drops between planted arms; head continues after torso stops",
+      "f45-60: mask and antlers settle close to ground with small non-reversing aftershock; hold the corpse pose"
+    ],
+    "timing": "Death can be about 60 frames/2 s if scene cleanup allows; unlike combat attacks it is not bound to a hit tick. Even if kept at 45 frames, separate hand catch, knee failure and final head settle."
+  },
+  "hit_without_direct_reference": {
+    "current": "production/review/animation_stage/ForestWendigo_Hit_review.mp4; 14 frames/0.50 seconds",
+    "problem": "Small whole-body sway with no readable first shock, support adjustment or delayed head/horn reaction.",
+    "suggested_keys": "f0 guard, f2 sharp local shoulder/rib recoil, f4 head/horns continue, f6 one foot/paw adjusts, f10 counter-spring, f14 ready. Preserve gameplay timing."
+  }
+}

@@ -115,7 +115,8 @@ namespace Game.View
             t = 0f;
             while (t < FlashOutTime)
             {
-                t += Time.unscaledDeltaTime;
+                // Кадр сборки арены длится секунды: по настоящему шагу вспышка гасла за один кадр.
+                t += Mathf.Min(Time.unscaledDeltaTime, .1f);
                 SetFlash(1f - Ease(t / FlashOutTime));
                 yield return null;
             }

@@ -13,8 +13,8 @@ namespace Game.View
     /// мгновенно и не занимает центр экрана, а значит не спорит с правилом
     /// «середина экрана свободна всегда».
     ///
-    /// Всё рисуется ПОД телами и плоско по земле. Ни одного файла: кольцо
-    /// и сектор генерируются кодом, как и звук.
+    /// Кольцо и сектор рисуются под телами. Зелёный отклик ПКМ повторяет
+    /// поверхность пола, включая мост, и остаётся частью игрового мира.
     ///
     /// Представление только читает симуляцию и ничего в ней не трогает.
     /// </summary>
@@ -48,9 +48,6 @@ namespace Game.View
         [Tooltip("Сектор автоатаки. Виден, пока зажата кнопка удара.")]
         public Color ArcColor = new Color(1.00f, 0.72f, 0.30f, 0.16f);
 
-        [Tooltip("Короткий зелёный приказ движения — привычный язык Dota-подобных игр.")]
-        public Color OrderColor = new Color(0.34f, 1.00f, 0.46f, 0.95f);
-
         [Header("Размеры")]
         [Tooltip("Кольцо рисуется по НАСТОЯЩЕМУ радиусу тела из симуляции. " +
                  "Множитель только добавляет каёмку, чтобы обод не резался телом.")]
@@ -66,7 +63,7 @@ namespace Game.View
         [Range(0.45f, 0.65f)]
         public float MovePingDuration = 0.56f;
 
-        [Tooltip("Диаметр расходящихся колец метки приказа в мировых единицах.")]
+        [Tooltip("Размер наземной метки приказа относительно стандартного.")]
         [Range(0.65f, 1.35f)]
         public float MovePingDiameter = 0.98f;
 
@@ -80,15 +77,22 @@ namespace Game.View
         private Transform _ringRoot;
         private SpriteRenderer[] _rings;
         private SpriteRenderer _arc;
-        private LineRenderer _orderOuterRing;
-        private LineRenderer _orderInnerRing;
-        private LineRenderer[] _orderChevrons;
-        private LineRenderer _orderDiamond;
+        private Mesh[] _moveMarkerMeshes;
+        private MeshRenderer[] _moveMarkerRenderers;
+        private Vector3[][] _moveMarkerVertices;
+        private Material _moveMarkerMaterial;
+        private bool _moveMarkerTextureReady;
+        private LayoutView _layout;
         private LineRenderer _landingRing;
 
         private Sprite _ringSprite;
         private Sprite _arcSprite;
         private Material _orderLineMaterial;
+        private static readonly Vector2[] MoveDirections =
+            { Vector2.up, Vector2.right, Vector2.down, Vector2.left };
+        private static readonly float[] MoveRotations = { 0f, -90f, 180f, 90f };
+        private const int MoveMeshResolution = 6;
+        private const float MoveSurfaceClearance = 0.12f;
 
         // Метка приказа — короткая реакция на сам клик, а не отображение
         // долгоживущего приказа из симуляции. Поэтому здесь хранится только
@@ -131,8 +135,6 @@ namespace Game.View
             _arc = MakeFlatSprite(_ringRoot, _arcSprite, "Сектор удара", -140);
             BuildMoveOrderMarker();
 
-            _attackCursor = MakeAttackCursor(32);
-
             Debug.Log($"[Разлом] Опознаватели собраны: колец {_rings.Length}, " +
                       $"сектор {(_arcSprite != null ? "есть" : "НЕТ")}, курсор готов.");
         }
@@ -155,7 +157,6 @@ namespace Game.View
             DrawAttackArc(sim);
             DrawMoveOrder();
             DrawLandingRing(sim);
-            UpdateCursor(sim);
         }
 
         /// <summary>Запоминает, кого игрок ударил в этом кадре.</summary>
@@ -292,9 +293,10 @@ namespace Game.View
         {
             float now = Time.unscaledTime;
             float repeatInterval = Mathf.Clamp(MovePingRepeatInterval, 0.30f, 0.65f);
-            bool moveHeld = _driver.MoveOrderHeld;
-            bool moveSeriesStarted = _driver.MoveOrderPressedThisFrame
-                                     || (moveHeld && !_movePingHeldLastFrame);
+            bool mouseOrder = !GameUserSettings.WasdMovement && !_driver.UsingGamepad;
+            bool moveHeld = mouseOrder && _driver.MoveOrderHeld;
+            bool moveSeriesStarted = mouseOrder && (_driver.MoveOrderPressedThisFrame
+                                     || (moveHeld && !_movePingHeldLastFrame));
 
             // Первый импульс появляется сразу на фронте ПКМ. При удержании
             // повторяем его редко и фиксируем уже актуальную точку курсора:
@@ -318,63 +320,14 @@ namespace Game.View
 
             float duration = Mathf.Clamp(MovePingDuration, 0.45f, 0.65f);
             float normalizedAge = (now - _movePingStartedAt) / duration;
-            bool show = ShowMoveOrder && normalizedAge >= 0f && normalizedAge < 1f;
+            bool show = ShowMoveOrder && _moveMarkerTextureReady
+                && normalizedAge >= 0f && normalizedAge < 1f
+                && !_driver.GameplayPaused && !MainMenuView.IsOpen
+                && CampServicesView.Instance?.IsOpen != true
+                && CampPlayerView.Instance?.InventoryOpen != true;
             SetMoveOrderVisible(show);
             if (!show) return;
-
-            float eased = 1f - Mathf.Pow(1f - normalizedAge, 3f);
-            float ringFade = 1f - Mathf.SmoothStep(0.34f, 1f, normalizedAge);
-            float chevronFade = 1f - Mathf.SmoothStep(0.48f, 1f, normalizedAge);
-            float diameter = Mathf.Max(0.01f, MovePingDiameter);
-            float baseRadius = diameter * 0.5f;
-            float y = 0.045f;
-
-            Color outer = OrderColor;
-            outer.a *= ringFade;
-            Color inner = Color.Lerp(Color.white, OrderColor, 0.52f);
-            inner.a = ringFade * 0.82f;
-            SetLineColor(_orderOuterRing, outer);
-            SetLineColor(_orderInnerRing, inner);
-            WriteCircle(_orderOuterRing, _movePingPosition, y,
-                baseRadius * Mathf.Lerp(0.55f, 1.05f, eased));
-            WriteCircle(_orderInnerRing, _movePingPosition, y + 0.002f,
-                baseRadius * Mathf.Lerp(0.72f, 0.26f, eased));
-
-            // Четыре отдельные V-стрелки сходятся в точку клика. Это остаётся
-            // читаемым под изометрической камерой и никогда не превращается в
-            // залитый прямоугольник из-за особенностей SpriteRenderer/URP.
-            float shrink = Mathf.SmoothStep(0f, 1f, eased);
-            float tipRadius = baseRadius * Mathf.Lerp(0.72f, 0.23f, shrink);
-            float tailRadius = tipRadius + baseRadius * Mathf.Lerp(0.32f, 0.25f, shrink);
-            float halfWidth = baseRadius * Mathf.Lerp(0.24f, 0.16f, shrink);
-            Color chevronColor = Color.Lerp(Color.white, OrderColor, eased);
-            chevronColor.a = chevronFade;
-            for (int i = 0; i < _orderChevrons.Length; i++)
-            {
-                float angle = i * Mathf.PI * 0.5f;
-                Vector3 direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                Vector3 lateral = new Vector3(-direction.z, 0f, direction.x);
-                Vector3 tip = _movePingPosition + direction * tipRadius + Vector3.up * (y + 0.004f);
-                Vector3 tail = _movePingPosition + direction * tailRadius + Vector3.up * (y + 0.004f);
-                LineRenderer chevron = _orderChevrons[i];
-                SetLineColor(chevron, chevronColor);
-                chevron.SetPosition(0, tail + lateral * halfWidth);
-                chevron.SetPosition(1, tip);
-                chevron.SetPosition(2, tail - lateral * halfWidth);
-            }
-
-            Color diamondColor = Color.white;
-            diamondColor.a = chevronFade * (1f - normalizedAge * 0.55f);
-            SetLineColor(_orderDiamond, diamondColor);
-            float diamondRadius = baseRadius * Mathf.Lerp(0.12f, 0.07f, eased);
-            for (int i = 0; i < 4; i++)
-            {
-                float angle = (45f + i * 90f) * Mathf.Deg2Rad;
-                _orderDiamond.SetPosition(i, new Vector3(
-                    _movePingPosition.x + Mathf.Cos(angle) * diamondRadius,
-                    y + 0.006f,
-                    _movePingPosition.z + Mathf.Sin(angle) * diamondRadius));
-            }
+            AnimateMoveMarker(normalizedAge);
         }
 
         private void RestartMovePing(float now)
@@ -390,15 +343,9 @@ namespace Game.View
             if (shader == null) shader = Shader.Find("Universal Render Pipeline/Unlit");
             _orderLineMaterial = new Material(shader)
             {
-                name = "Метка приказа: материал"
+                name = "Кольцо приземления: материал"
             };
-
-            _orderOuterRing = MakeOrderLine("Метка приказа: внешнее кольцо", true, 48, 0.027f);
-            _orderInnerRing = MakeOrderLine("Метка приказа: внутреннее кольцо", true, 40, 0.018f);
-            _orderChevrons = new LineRenderer[4];
-            for (int i = 0; i < _orderChevrons.Length; i++)
-                _orderChevrons[i] = MakeOrderLine("Метка приказа: шеврон " + i, false, 3, 0.032f);
-            _orderDiamond = MakeOrderLine("Метка приказа: точка", true, 4, 0.020f);
+            BuildMoveMarkerWorld();
 
             // Кольцо приземления. Отдельное от метки приказа намеренно: та
             // живёт своей серией импульсов с повторами и затуханием, и
@@ -407,6 +354,122 @@ namespace Game.View
             _landingRing = MakeOrderLine("Кольцо приземления", true, 40, 0.045f);
 
             SetMoveOrderVisible(false);
+        }
+
+        private void BuildMoveMarkerWorld()
+        {
+            Texture2D texture = Resources.Load<Texture2D>("VFX/MoveOrderMarker");
+            _moveMarkerTextureReady = texture != null;
+            if (!_moveMarkerTextureReady)
+            {
+                Debug.LogError("[Разлом] Не найдена текстура VFX/MoveOrderMarker.");
+                return;
+            }
+            Shader shader = Resources.Load<Shader>("Shaders/MoveOrderGround");
+            if (shader == null) shader = Shader.Find("Razlom/Move Order Ground");
+            if (shader == null)
+            {
+                Debug.LogError("[Разлом] Не найден шейдер Razlom/Move Order Ground.");
+                _moveMarkerTextureReady = false;
+                return;
+            }
+            _moveMarkerMaterial = new Material(shader) { name = "Метка приказа: зелёные штрихи" };
+            _moveMarkerMaterial.SetTexture("_MainTex", texture);
+            _moveMarkerMeshes = new Mesh[4];
+            _moveMarkerRenderers = new MeshRenderer[4];
+            _moveMarkerVertices = new Vector3[4][];
+            for (int i = 0; i < 4; i++)
+            {
+                var go = new GameObject("Метка приказа: штрих " + i,
+                    typeof(MeshFilter), typeof(MeshRenderer));
+                go.transform.SetParent(_ringRoot, false);
+                var mesh = MakeMoveMarkerMesh();
+                go.GetComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.GetComponent<MeshRenderer>();
+                renderer.sharedMaterial = _moveMarkerMaterial;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                renderer.enabled = false;
+                _moveMarkerMeshes[i] = mesh;
+                _moveMarkerRenderers[i] = renderer;
+                _moveMarkerVertices[i] = new Vector3[MoveMeshResolution * MoveMeshResolution];
+            }
+        }
+
+        private static Mesh MakeMoveMarkerMesh()
+        {
+            int side = MoveMeshResolution;
+            var vertices = new Vector3[side * side];
+            var uv = new Vector2[vertices.Length];
+            var triangles = new int[(side - 1) * (side - 1) * 6];
+            for (int z = 0; z < side; z++)
+            for (int x = 0; x < side; x++)
+            {
+                float u = (float)x / (side - 1);
+                float v = (float)z / (side - 1);
+                uv[z * side + x] = new Vector2(0.265f + u * 0.47f, 0.265f + v * 0.47f);
+            }
+            int cursor = 0;
+            for (int z = 0; z < side - 1; z++)
+            for (int x = 0; x < side - 1; x++)
+            {
+                int a = z * side + x;
+                int b = a + 1;
+                int c = a + side;
+                int d = c + 1;
+                triangles[cursor++] = a; triangles[cursor++] = c; triangles[cursor++] = b;
+                triangles[cursor++] = b; triangles[cursor++] = c; triangles[cursor++] = d;
+            }
+            var mesh = new Mesh { name = "Метка приказа: поверхность штриха" };
+            mesh.MarkDynamic();
+            mesh.vertices = vertices;
+            mesh.uv = uv;
+            mesh.triangles = triangles;
+            return mesh;
+        }
+
+        private void AnimateMoveMarker(float age)
+        {
+            float scale = Mathf.Clamp(MovePingDiameter, 0.65f, 1.35f);
+            float inward = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(age / 0.22f));
+            float rebound = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - 0.22f) / 0.20f));
+            float exit = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((age - 0.63f) / 0.37f));
+            float spread = (Mathf.Lerp(0.49f, 0.14f, inward) + 0.13f * rebound + 0.07f * exit) * scale;
+            float diameter = 0.38f * scale;
+            float alpha = 1f - Mathf.SmoothStep(0.62f, 1f, age);
+            _moveMarkerMaterial.SetColor("_Color", new Color(1f, 1f, 1f, alpha));
+            for (int i = 0; i < _moveMarkerMeshes.Length; i++)
+            {
+                _moveMarkerRenderers[i].transform.position =
+                    new Vector3(_movePingPosition.x, 0f, _movePingPosition.z);
+                _moveMarkerRenderers[i].transform.rotation = Quaternion.identity;
+                Vector2 offset = MoveDirections[i] * spread;
+                float radians = MoveRotations[i] * Mathf.Deg2Rad;
+                float cosine = Mathf.Cos(radians), sine = Mathf.Sin(radians);
+                Vector3[] vertices = _moveMarkerVertices[i];
+                for (int z = 0; z < MoveMeshResolution; z++)
+                for (int x = 0; x < MoveMeshResolution; x++)
+                {
+                    float localX = ((float)x / (MoveMeshResolution - 1) - 0.5f) * diameter;
+                    float localZ = ((float)z / (MoveMeshResolution - 1) - 0.5f) * diameter;
+                    float worldX = _movePingPosition.x + offset.x + localX * cosine - localZ * sine;
+                    float worldZ = _movePingPosition.z + offset.y + localX * sine + localZ * cosine;
+                    vertices[z * MoveMeshResolution + x] = new Vector3(worldX - _movePingPosition.x,
+                        MoveSurfaceHeight(worldX, worldZ) + MoveSurfaceClearance,
+                        worldZ - _movePingPosition.z);
+                }
+                Mesh mesh = _moveMarkerMeshes[i];
+                mesh.vertices = vertices;
+                mesh.RecalculateBounds();
+            }
+        }
+
+        private float MoveSurfaceHeight(float x, float z)
+        {
+            var camp = CampPlayerView.Instance;
+            if (camp != null && camp.Active) return camp.SurfaceHeight(x, z);
+            if (_layout == null) _layout = FindAnyObjectByType<LayoutView>();
+            return _layout != null ? _layout.WeaponGroundHeight(x, z) : 0f;
         }
 
         private LineRenderer MakeOrderLine(string objectName, bool loop, int points, float width)
@@ -441,20 +504,11 @@ namespace Game.View
             }
         }
 
-        private static void SetLineColor(LineRenderer line, Color color)
-        {
-            line.startColor = color;
-            line.endColor = color;
-        }
-
         private void SetMoveOrderVisible(bool visible)
         {
-            if (_orderOuterRing != null) _orderOuterRing.enabled = visible;
-            if (_orderInnerRing != null) _orderInnerRing.enabled = visible;
-            if (_orderChevrons != null)
-                for (int i = 0; i < _orderChevrons.Length; i++)
-                    if (_orderChevrons[i] != null) _orderChevrons[i].enabled = visible;
-            if (_orderDiamond != null) _orderDiamond.enabled = visible;
+            if (_moveMarkerRenderers == null) return;
+            for (int i = 0; i < _moveMarkerRenderers.Length; i++)
+                _moveMarkerRenderers[i].enabled = visible && _moveMarkerTextureReady;
         }
 
         private void HideAll()
@@ -465,7 +519,6 @@ namespace Game.View
             _nextMovePingAt = float.PositiveInfinity;
             _movePingHeldLastFrame = false;
             _arena?.SetHoveredEntity(-1);
-            SetAttackCursor(false);
         }
 
         /// <summary>
@@ -475,74 +528,22 @@ namespace Game.View
         /// нужен именно как второй: кольцо под ногами живёт на полу и теряется
         /// в толпе, а курсор всегда там, куда игрок и смотрит.
         /// </summary>
-        private void UpdateCursor(Simulation sim)
-        {
-            if (!ShowAttackCursor)
-            {
-                SetAttackCursor(false);
-                return;
-            }
-            SetAttackCursor(_driver.HoveredEntity >= 0);
-        }
-
-        private void SetAttackCursor(bool attack)
-        {
-            if (attack == _cursorIsAttack) return;
-            _cursorIsAttack = attack;
-
-            // Смена курсора стоит дорого на некоторых платформах, поэтому она
-            // и делается только на переходе, а не каждый кадр.
-            Cursor.SetCursor(attack ? _attackCursor : null,
-                attack ? new Vector2(16f, 16f) : Vector2.zero, CursorMode.Auto);
-        }
-
         private void OnDisable()
         {
             _arena?.SetHoveredEntity(-1);
-            SetAttackCursor(false);
+            SetMoveOrderVisible(false);
         }
 
-        /// <summary>
-        /// Боевой курсор: кольцо с четырьмя засечками. Рисуется кодом, как
-        /// и всё остальное здесь — файла с курсором в проекте нет.
-        /// </summary>
-        private static Texture2D MakeAttackCursor(int size)
+        private void OnDestroy()
         {
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            tex.filterMode = FilterMode.Bilinear;
-
-            var pixels = new Color32[size * size];
-            float half = size * 0.5f;
-
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float dx = x + 0.5f - half;
-                    float dy = y + 0.5f - half;
-                    float r = Mathf.Sqrt(dx * dx + dy * dy) / half;
-
-                    // Кольцо.
-                    float ring = (r > 0.52f && r < 0.78f) ? 1f : 0f;
-
-                    // Четыре засечки по осям — они и делают курсор «боевым»,
-                    // а не просто кружком.
-                    bool spikeX = Mathf.Abs(dy) < 1.6f && r > 0.78f && r < 1.0f;
-                    bool spikeY = Mathf.Abs(dx) < 1.6f && r > 0.78f && r < 1.0f;
-                    float spike = (spikeX || spikeY) ? 1f : 0f;
-
-                    float a = Mathf.Clamp01(ring + spike);
-                    pixels[y * size + x] = a > 0.5f
-                        ? new Color32(255, 70, 60, 255)
-                        : new Color32(0, 0, 0, 0);
-                }
-            }
-
-            tex.SetPixels32(pixels);
-            tex.Apply();
-            return tex;
+            if (_orderLineMaterial != null) Destroy(_orderLineMaterial);
+            if (_moveMarkerMaterial != null) Destroy(_moveMarkerMaterial);
+            if (_moveMarkerMeshes != null)
+                foreach (Mesh mesh in _moveMarkerMeshes)
+                    if (mesh != null) Destroy(mesh);
         }
 
+        /// <summary>Кладёт вспомогательный спрайт ровно над плоским полом.</summary>
         private static void Place(Transform t, Vector3 at, float diameter)
         {
             // Чуть выше нуля: ровно на полу спрайт дерётся с плитой за глубину

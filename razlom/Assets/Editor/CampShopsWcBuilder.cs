@@ -127,7 +127,7 @@ namespace Game.EditorTools
             var rect = (RectTransform)button.transform;
             float disc = size + 12f;
             RectTransform medal = At(Node("Значок", rect), new Vector2(0f, .5f), new Vector2(disc * .32f, 0f), new Vector2(disc, disc));
-            Image glow = Layer(medal, "Тень", T.Glow, Role.Veil, .7f, 14f);
+            Image glow = Layer(medal, "Тень", RoundShadow, Role.Veil, .8f, 10f);
             glow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
             Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
             Layer(medal, "Ободок", T.CircleFrame, Role.PanelLine, .9f);
@@ -492,6 +492,8 @@ namespace Game.EditorTools
                 s.Recipes[i] = RecipeCard(recipes, i, Left + 10f, 216f + i * 262f, Right - Left - 20f, 236f);
             recipes.gameObject.SetActive(false);
 
+            // Отказ — системной строкой под карточками, не репликой (AGENTS/CAMP-NPC-DIALOGUE.md).
+            s.Status = Text(screen, "Состояние", "", Left + 10f, 928f, Right - Left - 20f, 34f, FontRole.Body, 18f, Role.Bad, TextAlignmentOptions.Center);
             s.Message = Speech(screen, "Алхимик");
             s.Speaker = s.Message.transform.parent.parent.Find("Имя/Надпись").GetComponent<TMP_Text>();
             CloseHint(screen);

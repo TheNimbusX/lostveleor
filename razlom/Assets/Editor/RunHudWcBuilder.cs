@@ -80,6 +80,7 @@ namespace Game.EditorTools
             BuildStatus(rect, view);
             BuildBoss(rect, view);
             BuildChoice(rect, view);
+            BuildArtifactReplace(rect, view);
             BuildReplace(rect, view);
             BuildSummary(rect, view);
             return root;
@@ -162,7 +163,7 @@ namespace Game.EditorTools
         {
             RectTransform screen = Screen(root, "Выбор награды", out view.Choice);
             Pic(screen, "Значок", "rift", new Vector2(.5f, 1f), new Vector2(0f, -66f), 92f);
-            view.ChoiceTitle = Title(screen, "Выберите награду", 150f, 58f);
+            view.ChoiceTitle = Title(screen, "Выбери награду", 150f, 58f);
             Box(Place("Divider", screen, "Линия"), new Vector2(.5f, 1f), Center, new Vector2(0f, -212f), new Vector2(860f, 16f));
             view.ChoiceSubtitle = Line(screen, "Пояснение", "Разлом зачищен", 246f, 19f, Role.TextMuted);
             view.KindIcons = new[] { Icon("ability"), Icon("talent"), Icon("items"), Icon("rift") };
@@ -173,6 +174,72 @@ namespace Game.EditorTools
 
             Box(Place("DividerPlain", screen, "Линия снизу"), new Vector2(.5f, 0f), Center, new Vector2(0f, 104f), new Vector2(700f, 16f));
             view.ChoiceHint = Line(screen, "Подсказка", "1  2  3 — выбрать    ·    L — уйти с добычей", 70f, 18f, Role.TextMuted, true);
+
+            // Награда босса: «Отказаться» — оставить артефакт как есть. На обычных наградах скрыта.
+            RectTransform skip = Place("ButtonSecondary", screen, "Отказаться");
+            Box(skip, new Vector2(.5f, 0f), Center, new Vector2(560f, 70f), new Vector2(260f, 52f));
+            view.Skip = skip.GetComponent<UnityEngine.UI.Button>();
+            NoNavigation(view.Skip);
+            skip.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.03f;
+            skip.GetComponentInChildren<TMP_Text>().text = "Отказаться";
+            skip.gameObject.SetActive(false);
+        }
+
+        // ---------------------------------------------------------------- «Заменить артефакт?»
+        /// <summary>
+        /// Слот артефакта один (владелец, 24 сентября): при занятом слоте выбор нового сначала
+        /// спрашивает, менять ли. Старый → новый, «Заменить» и «Оставить» (концепт 2-artifact-sheet).
+        /// </summary>
+        static void BuildArtifactReplace(RectTransform root, RunHudView view)
+        {
+            RectTransform shade = Stretch(Node("Заменить артефакт", root));
+            view.ArtifactReplace = shade.gameObject.AddComponent<CanvasGroup>();
+            Image veil = Layer(shade, "Вуаль", T.Pixel, Role.Veil, .85f);
+            veil.raycastTarget = true;
+
+            // Плотная подложка: карточки награды под окном не должны просвечивать.
+            RectTransform backing = Box(Node("Подложка", shade), Center, Center, Vector2.zero, new Vector2(612f, 352f));
+            Layer(backing, "Заливка", T.Fill, Role.Panel, 1f);
+            RectTransform card = Place("Panel", shade, "Карточка");
+            Box(card, Center, Center, Vector2.zero, new Vector2(620f, 360f));
+            var content = (RectTransform)card.Find("Содержимое");
+            RectTransform titleBox = Box(Node("Заголовок", content), new Vector2(.5f, 1f), Center, new Vector2(0f, -46f), new Vector2(560f, 50f));
+            Label(titleBox, "Надпись", "Заменить артефакт?", FontRole.Heading, 32f, Role.Text, TextAlignmentOptions.Center);
+
+            view.ArtifactOld = ArtifactDisc(content, "Прежний", new Vector2(-120f, -150f));
+            view.ArtifactNew = ArtifactDisc(content, "Новый", new Vector2(120f, -150f));
+            RectTransform arrowBox = Box(Node("Стрелка", content), new Vector2(.5f, 1f), Center, new Vector2(0f, -150f), new Vector2(80f, 60f));
+            Label(arrowBox, "Надпись", "→", FontRole.Heading, 44f, Role.Accent, TextAlignmentOptions.Center);
+
+            RectTransform lineBox = Box(Node("Пояснение", content), new Vector2(.5f, 1f), Center, new Vector2(0f, -236f), new Vector2(540f, 44f));
+            view.ArtifactReplaceText = Label(lineBox, "Надпись", "«Прежний» уйдёт, на его место встанет «Новый».", FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.Center);
+            view.ArtifactReplaceText.textWrappingMode = TextWrappingModes.Normal;
+
+            RectTransform confirm = Place("ButtonPrimary", content, "Заменить");
+            Box(confirm, new Vector2(.5f, 0f), Center, new Vector2(-132f, 46f), new Vector2(240f, 54f));
+            view.ArtifactConfirm = confirm.GetComponent<UnityEngine.UI.Button>();
+            NoNavigation(view.ArtifactConfirm);
+            confirm.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.03f;
+            confirm.GetComponentInChildren<TMP_Text>().text = "Заменить";
+
+            RectTransform keep = Place("ButtonSecondary", content, "Оставить");
+            Box(keep, new Vector2(.5f, 0f), Center, new Vector2(132f, 46f), new Vector2(240f, 54f));
+            view.ArtifactKeep = keep.GetComponent<UnityEngine.UI.Button>();
+            NoNavigation(view.ArtifactKeep);
+            keep.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.03f;
+            keep.GetComponentInChildren<TMP_Text>().text = "Оставить";
+            shade.gameObject.SetActive(false);
+        }
+
+        /// <summary>Круглый медальон артефакта: картинка в кольце пака.</summary>
+        static RawImage ArtifactDisc(RectTransform parent, string name, Vector2 position)
+        {
+            RectTransform disc = Box(Node(name, parent), new Vector2(.5f, 1f), Center, position, new Vector2(112f, 112f));
+            Layer(disc, "Подложка", T.CircleFill, Role.Panel, 1f);
+            var art = Stretch(Node("Картинка", disc), 6f).gameObject.AddComponent<RawImage>();
+            art.raycastTarget = false;
+            Layer(disc, "Кольцо", T.CircleFrame, Role.Unique, .9f);
+            return art;
         }
 
         static RunOfferCard OfferCard(RectTransform screen, int index)

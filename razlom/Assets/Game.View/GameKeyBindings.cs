@@ -24,6 +24,8 @@ namespace Game.View
         ReturnToCamp = 9,
         HealthPotion = 10,
         LavidiumPotion = 11,
+        /// <summary>Включить артефакт забега (24 сентября). В группе боя — после зелий.</summary>
+        UseArtifact = 12,
     }
 
     /// <summary>
@@ -40,7 +42,7 @@ namespace Game.View
     /// </summary>
     public static class GameKeyBindings
     {
-        public const int Count = 12;
+        public const int Count = 13;
         static string Prefix => GameUserSettings.WasdMovement ? "settings.keys.wasd." : "settings.keys.";
         static bool _loadedWasd;
 
@@ -61,6 +63,7 @@ namespace Game.View
                 case GameAction.Dash: return "Кувырок";
                 case GameAction.HealthPotion: return "Зелье здоровья";
                 case GameAction.LavidiumPotion: return "Зелье лавидия";
+                case GameAction.UseArtifact: return "Артефакт забега";
                 case GameAction.Interact: return "Взаимодействие · сумка";
                 case GameAction.EnterRift: return "Войти в Разлом";
                 case GameAction.LeaveRift: return "Уйти из Разлома с добычей";
@@ -81,6 +84,7 @@ namespace Game.View
                 case GameAction.Dash: return KeyCode.Space;
                 case GameAction.HealthPotion: return KeyCode.Alpha5;
                 case GameAction.LavidiumPotion: return KeyCode.Alpha6;
+                case GameAction.UseArtifact: return KeyCode.F;
                 case GameAction.Interact: return KeyCode.I;
                 case GameAction.EnterRift: return KeyCode.E;
                 case GameAction.LeaveRift: return KeyCode.L;

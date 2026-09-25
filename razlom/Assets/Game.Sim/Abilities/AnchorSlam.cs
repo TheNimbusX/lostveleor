@@ -51,6 +51,8 @@ namespace Game.Sim
             int lanes = build.Has(AbilityFlag.AnchorSlamThreeWays) ? 3 : 1;
             bool stunnedBonus = build.Has(AbilityFlag.AnchorSlamStunnedBonus);
             int damage = build.Get(AbilityStatType.Damage).ToInt();
+            StartCrack(build, lanes, length, halfWidth);
+            int hits = 0;
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i] || Entities.Side[i] == Entities.Side[PlayerId]) continue;
@@ -62,6 +64,8 @@ namespace Game.Sim
                 // этого же удара бонуса не даёт.
                 int hit = stunnedBonus && Statuses.IsStunned(i, Tick) ? damage * 150 / 100 : damage;
                 ApplyAbilityDamage(PlayerId, i, hit, _slamSlot, DamageType.Physical);
+                hits++;
+                MarkCracked(i);
                 if (!Entities.Alive[i] || stunTicks <= 0) continue;
                 Statuses.ApplyStun(i, Tick + stunTicks);
                 Entities.Velocity[i] = FixVec2.Zero;
@@ -70,6 +74,7 @@ namespace Game.Sim
                 Entities.PendingAttackVariant[i] = 0;
                 _events.Add(new SimEvent(SimEventType.Stun, PlayerId, i, stunTicks, false, Entities.Position[i]));
             }
+            SlamRecoil(build, _slamSlot, hits);
         }
 
         private static readonly Fix64 SlamSideCos = Fix64.Ratio(8660, 10000);   // cos 30°

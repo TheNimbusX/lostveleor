@@ -1,0 +1,11 @@
+{
+  "source": "ForestWendigo_Rig_WeightRevision_v6.blend",
+  "output": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_SkinCandidate.blend",
+  "four_residual_arm_leg_weights_removed": [
+    8532,
+    9919,
+    9960,
+    10139
+  ],
+  "triangles": 24636
+}

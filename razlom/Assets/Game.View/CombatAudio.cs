@@ -53,8 +53,8 @@ namespace Game.View
         public void PlayWhirlwindPulse()
         {
             if (Profile == null) return;
-            Play(Sound.Whirlwind, WhirlwindVolume * .85f, 1.04f, .02f, 0f);
-            _whirlwindEndAt = Time.time + Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond + .1f;
+            Play(Sound.WhirlwindPulse, WhirlwindVolume * .9f, 1f, .03f, 0f);
+            _whirlwindEndAt = Time.time + Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond + .18f;
         }
         private bool _chainSoundActive;
         private int _generationShown = -1;
@@ -190,9 +190,7 @@ namespace Game.View
             for (int i = 0; i < _voices.Length; i++) _voices[i].Stop();
             _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
-
-            if (_modeShown == GameMode.Summary)
-                Play(Sound.Reward, RewardVolume, 0.96f, 0.03f);
+            // Конец забега звучит в RunEndBeat: у смерти, победы и ухода свои фразы, а не общий звон награды.
         }
 
         private void ConsumeEvents()
@@ -402,8 +400,19 @@ namespace Game.View
                 // The spin is the hero layer. Contact only adds definition and
                 // weight; full-strength metal+body masked the sweep and could
                 // sum into a clipped wall together with a same-frame kill.
-                Play(Sound.HitMetal, MetalVolume * 0.70f, 0.96f, 0.025f);
-                Play(bodySound, BodyVolume * 0.65f, 0.88f, 0.025f);
+                // Свой удар по толпе (укол плоти + низкий гул) и немного стали для резкости.
+                // Второй и третий задетые в том же кадре упираются в MaxPerFrame —
+                // это и есть «один чистый удар по толпе», запасной звук тела
+                // нужен только если набора Вихря нет вовсе.
+                // Удар Вихря уже содержит тело и сталь — отдельная сталь сверху делала звук разнобойным.
+                var whirlwindHits = _variants[(int)Sound.WhirlwindHit];
+                if (whirlwindHits != null && whirlwindHits.Length > 0)
+                    Play(Sound.WhirlwindHit, BodyVolume * 1.15f, 1f, 0.03f);
+                else
+                {
+                    Play(Sound.HitMetal, MetalVolume * 0.70f, 0.96f, 0.025f);
+                    Play(bodySound, BodyVolume * 0.65f, 0.88f, 0.025f);
+                }
             }
             else
             {

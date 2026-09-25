@@ -91,7 +91,7 @@ namespace Game.EditorTools
 
             // Медальон разлома над карточкой, как камень на кромке ячеек пака.
             RectTransform medal = Box(Node("Медальон", card), new Vector2(.5f, 1f), Center, new Vector2(0f, 0f), new Vector2(88f, 88f));
-            Image glow = Layer(medal, "Свечение", T.Glow, Role.Lavidium, .45f, 22f);
+            Image glow = Layer(medal, "Свечение", RoundGlow, Role.Lavidium, .45f, 22f);
             glow.raycastTarget = false;
             Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
             Layer(medal, "Ободок", T.CircleFrame, Role.PanelLine, .95f);

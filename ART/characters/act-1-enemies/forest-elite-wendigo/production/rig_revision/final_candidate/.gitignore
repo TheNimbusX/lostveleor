@@ -1,0 +1,8 @@
+# Keep only the current review candidate and compact comparison sheets.
+ForestWendigo_Rig_WeightRevision_v*.blend
+stress_*/
+action_stress/ForestWendigo_Rig/
+action_stress/ForestWendigo_Rig_WeightRevision_v6/
+action_stress/ForestWendigo_Rig_SkinCandidate/
+probe.json
+counts.json

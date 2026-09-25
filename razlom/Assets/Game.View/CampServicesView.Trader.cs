@@ -79,7 +79,10 @@ namespace Game.View
             if(!s.Action.interactable || _traderSlot<0 || _traderWorn)return;
             if(_selling && !_confirmSale){_confirmSale=true;RefreshTraderPanel();return;}
             int value=_selling?_traderCamp.SellToTrader(_traderSlot):_traderCamp.BuyFromTrader(_traderSlot);
-            _confirmSale=false;RefreshTraderPanel();s.Message.text=value>0?CampServiceText.Get(_selling?"dialogue.trader.sell":"dialogue.trader.buy"):TradeText("failed");
+            _confirmSale=false;RefreshTraderPanel();
+            // Реплика — только после удачи; отказ — системной строкой (CAMP-NPC-DIALOGUE.md).
+            if(value>0)s.Message.text=CampServiceText.Get(_selling?"dialogue.trader.sell":"dialogue.trader.buy");
+            else s.Note.text=TradeText("failed");
             // Продажа — монеты на стойку и вещь в ящик; покупка — кошель, пересчёт и тихий акцент.
             if(value>0)
             {

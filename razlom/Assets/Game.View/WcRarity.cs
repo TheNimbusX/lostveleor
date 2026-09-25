@@ -31,6 +31,18 @@ namespace Game.View
 
         public static Tier FromItem(int rarity) => (Tier)Mathf.Clamp(rarity, 0, 3);
 
+        /// <summary>Редкость словом, как в палатке: «Обычная», «Редкая», «Эпическая», «Уникальная».</summary>
+        public static string Name(Tier tier)
+        {
+            switch (tier)
+            {
+                case Tier.Rare: return "Редкая";
+                case Tier.Epic: return "Эпическая";
+                case Tier.Unique: return "Уникальная";
+                default: return "Обычная";
+            }
+        }
+
         public Tier Value = Tier.Common;
         [Tooltip("Красится в цвет редкости")] public ThemeColor[] Tinted = new ThemeColor[0];
         [Tooltip("Текст: обычный цвет у обычной редкости, цвет редкости у редкой")] public ThemeColor[] TextTinted = new ThemeColor[0];

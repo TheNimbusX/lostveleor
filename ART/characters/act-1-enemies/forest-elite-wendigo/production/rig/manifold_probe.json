@@ -1,0 +1,24 @@
+{
+  "initial": {
+    "vertices": 11966,
+    "faces": 24000,
+    "boundary": 160,
+    "overfull": 160
+  },
+  "removed_faces": 160,
+  "boundary_before_fill": 12,
+  "filled_faces": 3,
+  "after": {
+    "vertices": 11966,
+    "faces": 23843,
+    "boundary": 0,
+    "overfull": 0
+  },
+  "repaired": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\manifold_repaired.blend",
+  "quadriflow": {
+    "faces": 23843,
+    "triangles": 23846,
+    "uv_layers": 1,
+    "seconds": 0.0
+  }
+}

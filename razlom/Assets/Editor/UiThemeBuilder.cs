@@ -125,7 +125,7 @@ namespace Game.EditorTools
             }
             if (theme.Numbers == null && CombatHudBuilder.EnsureEssentials())
             {
-                if ((theme.Numbers = CombatHudBuilder.EnsureFont(BodyFamily, "Bold")) != null) filled++;
+                if ((theme.Numbers = CombatHudBuilder.EnsureFont(HeadingFamily, "Bold")) != null) filled++;
             }
 
             if (created || filled > 0)

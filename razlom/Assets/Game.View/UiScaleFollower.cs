@@ -24,6 +24,18 @@ namespace Game.View
 
         void OnDestroy() => GameUserSettings.UiScaleChanged -= Apply;
 
+        /// <summary>
+        /// Масштаб из настроек — всем холстам экземпляра префаба. Раньше его слушали только бой,
+        /// пауза и экраны забега: лавки, палатка, меню и метки мира оставались прежнего размера
+        /// (аудит UI, 25 сентября).
+        /// </summary>
+        public static void Attach(GameObject root)
+        {
+            if (root == null) return;
+            foreach (CanvasScaler scaler in root.GetComponentsInChildren<CanvasScaler>(true))
+                if (scaler.GetComponent<UiScaleFollower>() == null) scaler.gameObject.AddComponent<UiScaleFollower>();
+        }
+
         void Apply()
         {
             if (_scaler != null)

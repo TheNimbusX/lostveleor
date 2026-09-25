@@ -1,0 +1,40 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\manifold_repaired.blend",
+  "bone_names": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "spine_02",
+    "neck",
+    "head",
+    "L_clavicle",
+    "L_arm_upper",
+    "L_arm_lower",
+    "L_hand",
+    "R_clavicle",
+    "R_arm_upper",
+    "R_arm_lower",
+    "R_hand",
+    "L_leg_upper",
+    "L_leg_lower",
+    "L_foot",
+    "L_toe",
+    "R_leg_upper",
+    "R_leg_lower",
+    "R_foot",
+    "R_toe"
+  ],
+  "front_axis": "+Y",
+  "up_axis": "+Z",
+  "scene_fps": 30,
+  "geometry": {
+    "triangles": 23846,
+    "boundary_edges": 0,
+    "overfull_edges": 0
+  },
+  "unweighted_vertices": 0,
+  "over_four_influences": 0,
+  "unnormalized_vertices": 0,
+  "material_count": 1,
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\Wendigo_Rig_v1.blend"
+}

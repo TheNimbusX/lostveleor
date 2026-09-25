@@ -317,7 +317,7 @@ public static partial class RazlomPelagVfxAssetBuilder
     {
         string path = MaterialFolder + "/" + name + ".mat";
         Material material = LoadOrCreateMaterial(path, shader);
-        Texture2D texture = string.IsNullOrEmpty(texturePath) ? Texture2D.whiteTexture : AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+        Texture2D texture = string.IsNullOrEmpty(texturePath) ? PelagWhirlwindVfxSetup.WhiteTexture() : AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
         material.name = name;
         material.SetTexture("_BaseMap", texture);
         material.SetColor("_BaseColor", tint);

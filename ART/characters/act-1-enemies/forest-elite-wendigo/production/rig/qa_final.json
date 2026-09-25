@@ -1,0 +1,57 @@
+{
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.blend",
+  "scene_fps": 30,
+  "visible_meshes": [
+    {
+      "name": "SM_ForestWendigo_LOD0",
+      "triangles": 24636,
+      "vertices": 12361,
+      "materials": [
+        "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+      ],
+      "armatures": [
+        "ARM_ForestWendigo"
+      ],
+      "boundary_edges": 0,
+      "nonmanifold_three_or_more_face_edges": 0,
+      "unweighted_vertices": 0,
+      "vertices_with_more_than_four_bone_influences": 0,
+      "vertices_with_unnormalized_weights": 0,
+      "worst_weight_sum_deviation": 0.0
+    }
+  ],
+  "visible_triangle_total": 24636,
+  "triangle_budget": 25000,
+  "within_triangle_budget": true,
+  "armatures": [
+    {
+      "name": "ARM_ForestWendigo",
+      "deform_bones": [
+        "root",
+        "pelvis",
+        "spine_01",
+        "spine_02",
+        "neck",
+        "head",
+        "L_clavicle",
+        "L_arm_upper",
+        "L_arm_lower",
+        "L_hand",
+        "R_clavicle",
+        "R_arm_upper",
+        "R_arm_lower",
+        "R_hand",
+        "L_leg_upper",
+        "L_leg_lower",
+        "L_foot",
+        "L_toe",
+        "R_leg_upper",
+        "R_leg_lower",
+        "R_foot",
+        "R_toe"
+      ],
+      "all_bones": 30
+    }
+  ],
+  "actions": []
+}

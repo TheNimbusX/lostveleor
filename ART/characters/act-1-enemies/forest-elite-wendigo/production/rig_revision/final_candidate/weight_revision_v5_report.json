@@ -1,0 +1,122 @@
+{
+  "source": "v4",
+  "output": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_WeightRevision_v5.blend",
+  "history": [
+    {
+      "iteration": 0,
+      "maximum": {
+        "quad_crouch": 7.847,
+        "claw_arc": 7.847,
+        "fold_dead": 9.495
+      },
+      "hot_edges": 137
+    },
+    {
+      "iteration": 1,
+      "maximum": {
+        "quad_crouch": 5.864,
+        "claw_arc": 5.864,
+        "fold_dead": 6.938
+      },
+      "hot_edges": 103
+    },
+    {
+      "iteration": 2,
+      "maximum": {
+        "quad_crouch": 4.848,
+        "claw_arc": 4.848,
+        "fold_dead": 5.677
+      },
+      "hot_edges": 91
+    },
+    {
+      "iteration": 3,
+      "maximum": {
+        "quad_crouch": 4.291,
+        "claw_arc": 4.291,
+        "fold_dead": 4.738
+      },
+      "hot_edges": 85
+    },
+    {
+      "iteration": 4,
+      "maximum": {
+        "quad_crouch": 7.154,
+        "claw_arc": 7.154,
+        "fold_dead": 8.598
+      },
+      "hot_edges": 78
+    },
+    {
+      "iteration": 5,
+      "maximum": {
+        "quad_crouch": 5.093,
+        "claw_arc": 5.664,
+        "fold_dead": 6.711
+      },
+      "hot_edges": 77
+    },
+    {
+      "iteration": 6,
+      "maximum": {
+        "quad_crouch": 5.768,
+        "claw_arc": 5.768,
+        "fold_dead": 6.88
+      },
+      "hot_edges": 85
+    },
+    {
+      "iteration": 7,
+      "maximum": {
+        "quad_crouch": 8.229,
+        "claw_arc": 8.229,
+        "fold_dead": 12.095
+      },
+      "hot_edges": 85
+    },
+    {
+      "iteration": 8,
+      "maximum": {
+        "quad_crouch": 9.678,
+        "claw_arc": 9.678,
+        "fold_dead": 11.668
+      },
+      "hot_edges": 99
+    },
+    {
+      "iteration": 9,
+      "maximum": {
+        "quad_crouch": 8.347,
+        "claw_arc": 8.347,
+        "fold_dead": 10.382
+      },
+      "hot_edges": 102
+    },
+    {
+      "iteration": 10,
+      "maximum": {
+        "quad_crouch": 7.586,
+        "claw_arc": 7.586,
+        "fold_dead": 9.066
+      },
+      "hot_edges": 105
+    },
+    {
+      "iteration": "final",
+      "maximum": {
+        "quad_crouch": 10.647,
+        "claw_arc": 10.647,
+        "fold_dead": 11.687
+      },
+      "hot_edges": 101
+    }
+  ],
+  "qa": {
+    "triangles": 24636,
+    "bones": 30,
+    "over_four": 0,
+    "unnormalized": 0,
+    "unweighted": 0,
+    "wrong_groups": 0
+  }
+}

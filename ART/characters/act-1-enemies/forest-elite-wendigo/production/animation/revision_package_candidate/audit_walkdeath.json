@@ -1,0 +1,105 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\revision_secondary\\output_final\\ForestWendigo_WalkDeath_Revised.blend",
+  "blender": "5.2.1 LTS",
+  "fps": 30,
+  "rigs": [
+    {
+      "name": "ARM_ForestWendigo",
+      "data_name": "ARM_ForestWendigo",
+      "bones": 30,
+      "deform_bones": 22,
+      "bone_digest": "a27de0e259a4552ded9959a5fbe1c0ad10c1957cdfd6c09e35c30eb9e41f50b7",
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "nla_tracks": 2
+    }
+  ],
+  "meshes": [
+    {
+      "name": "SM_ForestWendigo_LOD0",
+      "data_name": "SM_ForestWendigo_LOD0",
+      "rig": "ARM_ForestWendigo",
+      "vertices": 12361,
+      "polygons": 23725,
+      "triangles": 24636,
+      "mesh_digest": "06970b8dbd6000d9d0cc389f92260ace894085af3a928e11d5c275d5a7843f26",
+      "material_names": [
+        "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "AN_ForestWendigo_Death",
+      "frame_range": [
+        0.0,
+        60.0
+      ],
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "fcurves": 214
+    },
+    {
+      "name": "AN_ForestWendigo_Walk",
+      "frame_range": [
+        0.0,
+        18.0
+      ],
+      "slot_identifiers": [
+        "OBARM_ForestWendigo"
+      ],
+      "fcurves": 214
+    }
+  ]
+}

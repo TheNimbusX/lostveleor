@@ -28,8 +28,8 @@ namespace Game.EditorTools
             Save("Currency", () => Currency(null, "Currency", "coin", "Монеты", "1 240", Role.Coins));
             Save("LevelBadge", () => LevelBadge(null, "LevelBadge", "12"));
             Save("Tag", () => Tag(null, "Tag", "ур. 4", false));
-            Save("Dialog", () => Dialog(null, "Dialog", "Разобрать предмет?", "Вы получите материалы для крафта."));
-            Save("Toast", () => Toast(null, "Toast", "Новый предмет", "Вы получили: Лавидий"));
+            Save("Dialog", () => Dialog(null, "Dialog", "Разобрать предмет?", "Получишь материалы для крафта."));
+            Save("Toast", () => Toast(null, "Toast", "Новый предмет", "Получено: лавидий"));
             Save("LoadingBar", () => LoadingBar(null, "LoadingBar", .4f));
         }
 

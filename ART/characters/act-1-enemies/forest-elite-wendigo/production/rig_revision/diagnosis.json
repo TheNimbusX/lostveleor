@@ -1,0 +1,40 @@
+{
+  "status": "independent_audit_experimental_revision_not_for_export",
+  "source_rig": "../rig/ForestWendigo_Rig.blend",
+  "review": "../review/animation_stage/index.html",
+  "references": "../../review/higgsfield-refs",
+  "mesh_triangles": 24636,
+  "limit_triangles": 25000,
+  "deform_bones": 22,
+  "animator_controls": 8,
+  "conclusion": "Skeleton has enough major joints for large motion, but the current action design and local auto-weights cannot yet reproduce the approved references cleanly. Do not promote this experimental weight revision as finished.",
+  "motion_gaps": {
+    "Walk": "12 frames/0.4 s. Camera-side silhouette barely changes in chest and pelvis; swing is mostly leg pivots, lacking the low predatory body travel and limb overlap of idle_walk.mp4. Foot-path derivative changes abruptly at stance/swing boundaries.",
+    "Claw": "Reference loads the torso, opens the attacking arm, steps into a wide body-driven slash, and drags claws past target. Current action mainly displaces an IK hand while feet and torso remain near neutral; reach target around f15 can be unreachable.",
+    "Leap": "Reference plants both claws low, compresses through limbs, launches horizontally, then catches the landing with paws and body compression. Current f23/f33 right hand target is beyond the unposed shoulder's reach, leaving the claw high above the floor.",
+    "Hit": "Only a slight upper-body twitch; 14 frame clip height varies about 4.5 cm. Needs a more legible but brief directional recoil with delayed head/claw reaction.",
+    "Death": "Reference collapses onto four supports and lowers the skull. Current final pose still has one claw/wrist high and little final load transfer; body floats over the floor in the review camera."
+  },
+  "rig_details": {
+    "positive": "Pelvis, two spines, neck, head, both clavicles, upper/lower arm, hand, upper/lower leg, foot/toe, and four limb IK pairs are already present. Skull and distal claws can remain rigid. No new major bone is prerequisite for full-body blocking.",
+    "asymmetry": "Right clavicle/arm rest behind the body (-Y); left arm rests forward (+Y). This is a source-pose asymmetry, so mirrored keyframes are invalid. In a four-point pose, R_clavicle Z+60 degrees and X+30 degrees brings the right IK wrist to its target; neutral clavicle misses it by roughly 0.37 m in the independent pose.",
+    "contact_calibration": "Rig IK targets are wrists, not claw tips. In the independent crouch, floor contact measured at target wrist z about 0.58 m left and 0.49 m right. Setting wrist targets directly at z0.13 penetrates claws and can be unreachable.",
+    "skin_weight_defects": "Several right-wrist vertices have about 18-26% R_leg_upper influence despite being physically on the claw. Head/neck vertices carry clavicle influence. Under large pose changes, adjacent 1.5-3 cm edges diverge visibly; technical manifold/normalization QA alone did not detect this."
+  },
+  "independent_stress": {
+    "source_99th_percentile_edge_stretch_for_edges_above_5mm": {"crouch": 1.922, "claw": 1.474, "death": 2.670},
+    "experimental_weight_v2_99th_percentile": {"crouch": 1.537, "claw": 1.372, "death": 2.087},
+    "source_worst_ratio_edges_above_5mm": {"crouch": 25.25, "claw": 29.89, "death": 28.96},
+    "experimental_weight_v2_worst_ratio": {"crouch": 19.31, "claw": 8.39, "death": 24.50},
+    "interpretation": "Simple automatic cleanup improves bulk deformation but still leaves severe collar/neck stretches; requires manual weight paint or local topology/shoulder correction before extreme poses can be accepted.",
+    "source_metrics": "stress_current_rig/measurements.json",
+    "experimental_metrics": "stress_ForestWendigo_Rig_WeightRevision_v2/measurements.json"
+  },
+  "next_actions": [
+    "First create reference-matched blocking of Claw, Leap, Walk and Death with calibrated wrist/paw contact and torso weight transfer; review at game camera and side camera before spline polish.",
+    "Asymmetric right shoulder requires its own animated clavicle lead for low support. Keep attacking claw in FK for a broad arc, use IK only for planted support and contact.",
+    "Repair wrist and collar weights manually on the actual contact poses. Reject any pose with claw penetration, shoulder tearing, or >2x edge stretch near the visible silhouette.",
+    "Use the experimental blend only as a reproducible starting point, not as an approved rig or Unity export."
+  ],
+  "experimental_variant": "ForestWendigo_Rig_WeightRevision_v2.blend"
+}

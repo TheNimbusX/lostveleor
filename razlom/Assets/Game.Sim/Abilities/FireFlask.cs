@@ -172,6 +172,7 @@ namespace Game.Sim
 
                 ApplyAbilityDamage(PlayerId, i, blast, slot, DamageType.Fire);
             }
+            FlaskShrapnel(build, slot, _flaskTarget);
 
             LightFirePool(slot, _flaskTarget, radius, build);
             if (build.Has(AbilityFlag.FlaskRing))

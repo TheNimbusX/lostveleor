@@ -14,8 +14,8 @@ namespace Game.EditorTools
 
         /// <summary>
         /// Карта справа сверху: квадратная серебряная рамка с полыми ромбами по углам
-        /// (лист HUD), под ней плашка с названием места. Содержимое и метки рисует
-        /// HudMinimap в прямоугольнике MinimapArea.
+        /// (лист HUD), под ней плашка с названием места. Картинку карты и раскладку меток
+        /// даёт HudMinimap, показывает их HudMinimapMarks в прямоугольнике MinimapArea.
         /// </summary>
         static void BuildMinimap(RectTransform root, CombatHudView view)
         {
@@ -32,7 +32,12 @@ namespace Game.EditorTools
             image.raycastTarget = false;
             image.enabled = false;
             view.MinimapImage = image;
-            Layer(area, "Затемнение края", T.VeilRadial, Role.Veil, .4f);
+            // Туман Разлома: маска LayoutView белая, цвет даёт этот слой — чернила заливки пака.
+            var fog = Stretch(Node("Туман", area)).gameObject.AddComponent<RawImage>();
+            fog.raycastTarget = false;
+            fog.enabled = false;
+            Tint(fog, Role.Panel, 1f);
+            Layer(area, "Затемнение края", T.VeilRadial, Role.Veil, .32f);
 
             void Edge(string name, Vector2 min, Vector2 max, Vector2 size)
             {
@@ -76,13 +81,63 @@ namespace Game.EditorTools
             view.MinimapCaption.fontSizeMin = 12f;
             view.MinimapCaption.fontSizeMax = 18f;
 
-            // Метки рисует IMGUI; подложка значка — тёмный круг с серебряным ободком пака
-            // (Resources/UI/HUD/MapMarkerDisc.png) вместо прежнего синего круга. Масштаб — как у
-            // прежнего HUD: тот жил в эталоне 1662, и Canvas там был 0,65 от этого.
-            Sprite arrow = CombatHudBuilder.Chrome("map_player");
-            view.MinimapMarkerRing = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/HUD/MapMarkerDisc.png");
-            view.MinimapPlayerArrow = arrow != null ? arrow.texture : null;
-            view.MinimapMarkerScale = 1.21f * (1080f / 1662f);
+            BuildMinimapMarks(root, area, fog, view);
+        }
+
+        /// <summary>
+        /// Метки карты на холсте (аудит UI, 25 сентября; раньше — IMGUI старым шрифтом поверх окон).
+        /// Враги — точки листа HUD, места — знак в тёмном круге с оправой, герой — стрелка пака.
+        /// Подпись при наведении живёт вне маски карты, иначе у края её обрезало бы.
+        /// </summary>
+        static void BuildMinimapMarks(RectTransform root, RectTransform area, RawImage fog, CombatHudView view)
+        {
+            var topLeft = new Vector2(0f, 1f);
+            var centre = new Vector2(.5f, .5f);
+            RectTransform layer = Stretch(Node("Метки", area));
+            var marks = layer.gameObject.AddComponent<HudMinimapMarks>();
+            view.MinimapMarks = marks;
+
+            RectTransform enemies = Stretch(Node("Враги", layer));
+            RectTransform dot = Box(Node("Враг", enemies), topLeft, centre, Vector2.zero, new Vector2(12f, 12f));
+            Layer(dot, "Обводка", T.CircleFill, Role.Veil, .9f);
+            Stretch(Layer(dot, "Точка", T.CircleFill, Role.Health).rectTransform, 2f);
+            dot.gameObject.SetActive(false);
+
+            RectTransform places = Stretch(Node("Места", layer));
+            RectTransform place = Box(Node("Место", places), topLeft, centre, Vector2.zero, new Vector2(24f, 24f));
+            Image placeShadow = Layer(place, "Тень", RoundShadow, Role.Veil, .75f, 6f);
+            placeShadow.rectTransform.anchoredPosition = new Vector2(0f, -1.5f);
+            Layer(place, "Круг", T.CircleFill, Role.Panel);
+            Layer(place, "Оправа", T.CircleFrame, Role.PanelLine, .9f);
+            var symbol = Stretch(Node("Знак", place)).gameObject.AddComponent<RawImage>();
+            symbol.raycastTarget = false;
+            place.gameObject.SetActive(false);
+
+            RectTransform hero = Box(Node("Герой", layer), topLeft, centre, Vector2.zero, new Vector2(18f, 18f));
+            Layer(hero, "Тень", RoundShadow, Role.Veil, .6f, 5f);
+            Layer(hero, "Стрелка", T.Arrow, Role.Text).preserveAspect = true;
+            hero.gameObject.SetActive(false);
+
+            RectTransform hint = Box(Node("Подпись метки", root), Vector2.one, new Vector2(1f, .5f), Vector2.zero, new Vector2(120f, 32f));
+            Image hintShadow = Layer(hint, "Тень", T.GlowSmall, Role.Veil, .7f, 14f);
+            hintShadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
+            Layer(hint, "Заливка", T.FillSmall, Role.Panel, .97f);
+            Layer(hint, "Свет по кромке", T.HighlightSmall, Role.Highlight);
+            Layer(hint, "Рамка", T.FrameSmall, Role.PanelLine, .8f);
+            TMP_Text text = Label(hint, "Надпись", "Лео · 23 м", FontRole.Body, 16f, Role.Text, TextAlignmentOptions.Center);
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            hint.gameObject.SetActive(false);
+
+            marks.PlaceLayer = places;
+            marks.EnemyLayer = enemies;
+            marks.PlaceTemplate = place;
+            marks.EnemyTemplate = dot;
+            marks.Player = hero;
+            marks.Fog = fog;
+            marks.Hint = hint;
+            marks.HintText = text;
+            // Тот же знак, что у подсказки жителя с заказом (CampGuideWc).
+            marks.AlchemistSymbol = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/potion_health_small.png");
         }
     }
 }

@@ -14,7 +14,11 @@ namespace Game.View
         public static CampServicesView Instance { get; private set; }
         public static int ConsumedFrame { get; private set; }=-1;
         public static bool PointerGesture { get; private set; }
-        public bool IsOpen => _panel!=null && _panel.activeSelf;
+        public bool IsOpen => _panel!=null && _panel.activeSelf && !_closing;
+        // Окно проявляется и гаснет, а не выскакивает (аудит UI, этап 2); закрытие — со своим звуком.
+        CanvasGroup _panelGroup;bool _closing;
+        CanvasGroup PanelGroup{get{if(_panelGroup==null&&_panel!=null){_panelGroup=_panel.GetComponent<CanvasGroup>();if(_panelGroup==null)_panelGroup=_panel.AddComponent<CanvasGroup>();}return _panelGroup;}}
+        public bool HoveredService { get; private set; }
         public CampServiceNpc Current { get; private set; }
         public CampServiceNpc Pending { get; private set; }
         CampServiceNpc[] _npcs;
@@ -56,6 +60,7 @@ namespace Game.View
                 if(npc.Near(_player.InteractionPosition) && d<distance){nearest=npc;distance=d;}
                 if(!overUi && camera!=null && npc.Shape.IntersectRay(ray,out float t) && t<hitDistance){hover=npc;hitDistance=t;}
             }
+            HoveredService=hover!=null;
             var focus=hover!=null?hover:nearest;
             foreach(var npc in _npcs)if(npc!=null)npc.Highlight(npc==hover);
             ShowHint(focus,camera);
@@ -74,11 +79,11 @@ namespace Game.View
             RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_view.transform,screen,null,out var point);
             _view.Hint.anchoredPosition=point;
             if(Time.unscaledTime<_errorUntil)return;
-            // Имя, кто это такой и клавиша плашкой пака. Подсказки геймпада не показываем:
-            // управление геймпадом отложено владельцем.
+            // Подпись следует последнему активному устройству.
             bool near=focus.Near(_player.InteractionPosition);
             string action=CampServiceText.Get(near?(focus.Kind==CampServiceKind.Tent?"action.open":"action.talk"):"action.approach");
-            SetHint(focus.Title,CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant()),near?"E":"ПКМ",action);
+            string key=TickDriver.GamepadLastUsed?(near?"A":"подойти"):(near?"E":"ПКМ");
+            SetHint(focus.Title,CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant()),key,action);
         }
         void SetHint(string title,string note)=>SetHint(title,"","",note);
         void SetHint(string title,string role,string key,string action)
@@ -122,14 +127,23 @@ namespace Game.View
             ShowSmith(npc.Kind==CampServiceKind.Smith);ShowTrader(npc.Kind==CampServiceKind.Trader);ShowAlchemist(npc.Kind==CampServiceKind.Alchemist);
             _previousSelection=EventSystem.current!=null?EventSystem.current.currentSelectedGameObject:null;
             // Подтверждение открытия с геймпада не должно тем же нажатием отправить Submit кнопке закрытия.
-            _openedFrame=Time.frameCount;if(_openGroup!=null)_openGroup.interactable=false;_panel.SetActive(true);HideHints();
+            _openedFrame=Time.frameCount;if(_openGroup!=null)_openGroup.interactable=false;
+            var group=PanelGroup;UiMotion.Stop(group);_closing=false;if(!_panel.activeSelf)group.alpha=0f;_panel.SetActive(true);group.blocksRaycasts=true;UiMotion.FadeTo(group,1f,.18f);HideHints();
             // Временная панель AlchemyPlaytestOverlay больше не открывается с Лео: заказы и все
             // шесть зелий теперь в его окне, а панель при открытии закрывала это окно.
         }
         void Consume(){ConsumedFrame=Time.frameCount;_driver.ClearCapturedInput();}
         public void Close()
         {
-            if(!IsOpen)return;_panel.SetActive(false);Current=null;Pending=null;Consume();
+            if(!IsOpen)return;Current=null;Pending=null;Consume();
+            var group=PanelGroup;UiMotion.Stop(group);if(_openGroup!=null)_openGroup.interactable=false;
+            // Выключение лагеря (OnDisable) закрывает сразу и молча.
+            if(!isActiveAndEnabled){_panel.SetActive(false);_closing=false;}
+            else
+            {
+                _closing=true;group.blocksRaycasts=false;UiSound.Play(UiSoundEvent.WindowClose);
+                UiMotion.FadeTo(group,0f,.14f,()=>{if(_panel!=null&&_closing)_panel.SetActive(false);_closing=false;});
+            }
             if(EventSystem.current!=null)EventSystem.current.SetSelectedGameObject(_previousSelection);
         }
         void Build()
@@ -138,14 +152,14 @@ namespace Game.View
             // Окна NPC на паке «Ночная акварель»: префаб собирает CampShopsWcBuilder.
             var prefab=Resources.Load<GameObject>("UI/Prefabs/CampShopsWc");
             if(prefab==null){Debug.LogError("CampServicesView: нет префаба Resources/UI/Prefabs/CampShopsWc, окна NPC не откроются (Разлом → UI → Собрать окна лагеря).");enabled=false;return;}
-            _view=Instantiate(prefab,transform).GetComponent<CampShopView>();_view.name="Camp shops";
+            _view=Instantiate(prefab,transform).GetComponent<CampShopView>();_view.name="Camp shops";UiScaleFollower.Attach(_view.gameObject);
             _panel=_view.transform.Find("Окна").gameObject;_panel.SetActive(false);
             _view.Smith.Group.gameObject.SetActive(false);_view.Trader.Group.gameObject.SetActive(false);_view.Alchemist.Group.gameObject.SetActive(false);
             HideHints();
         }
         /// <summary>Открытое окно: ввод включается кадром позже (нажатие открытия не жмёт кнопку), первой выбирается кнопка действия.</summary>
         void Present(CanvasGroup group,Selectable first){_openGroup=group;_firstSelect=first;group.gameObject.SetActive(true);group.interactable=false;}
-        void OnDisable(){Close();CancelPending();HideHints();PointerGesture=false;}
+        void OnDisable(){Close();CancelPending();HideHints();PointerGesture=false;HoveredService=false;}
         void OnDestroy(){if(Instance==this)Instance=null;}
     }
 }

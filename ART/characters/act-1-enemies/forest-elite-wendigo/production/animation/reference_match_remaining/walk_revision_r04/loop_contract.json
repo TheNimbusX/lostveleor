@@ -1,0 +1,10 @@
+{
+  "stride_metres": 2.4,
+  "cycle_frames": 48,
+  "fps": 24,
+  "root_motion": false,
+  "metres_per_second": 3,
+  "runtime_cycle_seconds": 0.7999999999999999,
+  "source": "Higgsfield idle_walk 36..84; torso fit cleaned, feet reauthored with fixed-length IK",
+  "stance_fraction": 0.59
+}

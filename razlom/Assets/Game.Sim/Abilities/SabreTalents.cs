@@ -21,12 +21,10 @@ namespace Game.Sim
     }
 
     /// <summary>
-    /// Устройство сабельной ветки талантов. Решение владельца от 13 сентября:
-    /// четыре направления, по пять талантов, открываются строго по порядку.
-    ///
-    /// ПОРЯДОК ХРАНИТСЯ ЧИСЛОМ. Раз брать можно только следующий талант,
-    /// «сколько взято» и есть полный список взятого — отдельный набор флагов
-    /// позволил бы сохранению описать дыру, которой в игре не бывает.
+    /// Устройство усилений способностей. Было: четыре направления по пять талантов строго
+    /// по порядку (13 сентября). Сейчас (24 сентября): у каждой способности 8 усилений,
+    /// берутся в любом порядке — взятые хранятся маской в RunLoadout. Усиления 6–8 — выбор
+    /// владельца той же ночью.
     ///
     /// Названия и описания живут в представлении: симуляции нужны только
     /// номера и узлы, а текст меняется без пересборки боевых данных.
@@ -34,7 +32,10 @@ namespace Game.Sim
     public static class SabreTalents
     {
         public const int LineCount = 8;
-        public const int TalentsPerLine = 5;
+        public const int TalentsPerLine = 8;
+
+        /// <summary>Номер «Удержания» в линии Вихря — съёмка удержания включает именно его.</summary>
+        public const int WhirlwindChannelIndex = 4;
 
         /// <summary>Индекс способности направления в пуле Пелага.</summary>
         public static int PoolIndexOf(SabreTalentLine line) => (int)line;
@@ -89,38 +90,62 @@ namespace Game.Sim
                 case SabreTalentLine.Whirlwind:
                     return index == 2 ? AbilityFlag.WhirlwindCrowd
                         : index == 3 ? AbilityFlag.WhirlwindRefund
-                        : index == 4 ? AbilityFlag.WhirlwindChannel : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.WhirlwindChannel
+                        : index == 5 ? AbilityFlag.WhirlwindPull
+                        : index == 6 ? AbilityFlag.WhirlwindWave
+                        : index == 7 ? AbilityFlag.WhirlwindCocoon : AbilityFlag.None;
                 case SabreTalentLine.Cleave:
                     return index == 0 ? AbilityFlag.CleaveOnTheMove
                         : index == 2 ? AbilityFlag.CleaveBigGame
                         : index == 3 ? AbilityFlag.CleaveKillRefund
-                        : index == 4 ? AbilityFlag.CleaveFan : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.CleaveFan
+                        : index == 5 ? AbilityFlag.CleaveSunder
+                        : index == 6 ? AbilityFlag.CleaveDouble
+                        : index == 7 ? AbilityFlag.CleaveWave : AbilityFlag.None;
                 case SabreTalentLine.Blaze:
                     return index == 0 ? AbilityFlag.BlazeTrail
                         : index == 2 ? AbilityFlag.BlazeEvadeRefund
                         : index == 3 ? AbilityFlag.BlazeIgnite
-                        : index == 4 ? AbilityFlag.BlazeAbilities : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.BlazeAbilities
+                        : index == 5 ? AbilityFlag.BlazeFlare
+                        : index == 6 ? AbilityFlag.BlazeHaste
+                        : index == 7 ? AbilityFlag.BlazeStoke : AbilityFlag.None;
                 case SabreTalentLine.Squall:
                     return index == 0 ? AbilityFlag.SquallKillCooldown
                         : index == 2 ? AbilityFlag.SquallInvulnerable
                         : index == 3 ? AbilityFlag.SquallFinisher
-                        : index == 4 ? AbilityFlag.SquallFiveHops : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.SquallFiveHops
+                        : index == 5 ? AbilityFlag.SquallReturn
+                        : index == 6 ? AbilityFlag.SquallRepeat
+                        : index == 7 ? AbilityFlag.SquallOpener : AbilityFlag.None;
                 case SabreTalentLine.AnchorSlam:
                     return index == 3 ? AbilityFlag.AnchorSlamStunnedBonus
-                        : index == 4 ? AbilityFlag.AnchorSlamThreeWays : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.AnchorSlamThreeWays
+                        : index == 5 ? AbilityFlag.AnchorSlamCrack
+                        : index == 7 ? AbilityFlag.AnchorSlamRecoil : AbilityFlag.None;
                 case SabreTalentLine.Wreck:
                     return index == 2 ? AbilityFlag.WreckBigGame
                         : index == 3 ? AbilityFlag.WreckRefund
-                        : index == 4 ? AbilityFlag.WreckFourthStrike : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.WreckFourthStrike
+                        : index == 5 ? AbilityFlag.WreckUnstoppable
+                        : index == 6 ? AbilityFlag.WreckConcuss
+                        : index == 7 ? AbilityFlag.WreckMomentum : AbilityFlag.None;
                 case SabreTalentLine.Boarding:
                     return index == 1 ? AbilityFlag.BoardingStun
                         : index == 2 ? AbilityFlag.BoardingTwoCharges
                         : index == 3 ? AbilityFlag.BoardingHilt
-                        : index == 4 ? AbilityFlag.BoardingSweep : AbilityFlag.None;
-                default:
+                        : index == 4 ? AbilityFlag.BoardingSweep
+                        : index == 5 ? AbilityFlag.BoardingMomentum
+                        : index == 6 ? AbilityFlag.BoardingInterrupt
+                        : index == 7 ? AbilityFlag.BoardingSureCrit : AbilityFlag.None;
+                case SabreTalentLine.Flask:
                     return index == 2 ? AbilityFlag.FlaskFuel
                         : index == 3 ? AbilityFlag.FlaskOil
-                        : index == 4 ? AbilityFlag.FlaskRing : AbilityFlag.None;
+                        : index == 4 ? AbilityFlag.FlaskRing
+                        : index == 5 ? AbilityFlag.FlaskTwoCharges
+                        : index == 7 ? AbilityFlag.FlaskShrapnel : AbilityFlag.None;
+                default:
+                    return AbilityFlag.None;
             }
         }
 
@@ -209,6 +234,13 @@ namespace Game.Sim
                             ModifierOp.Increased, Fix64.Ratio(1, 2));
                         return true;
                     }
+                    // «Дальний удар»: полоса 4,5 → 6 м.
+                    if (index == 6)
+                    {
+                        node = AbilityNode.StatMod("talent.sabre.anchor_slam.7", AbilityStatType.Radius,
+                            ModifierOp.Increased, Fix64.Ratio(1, 3));
+                        return true;
+                    }
                     break;
 
                 case SabreTalentLine.Wreck:
@@ -251,6 +283,13 @@ namespace Game.Sim
                     {
                         node = AbilityNode.StatMod("talent.sabre.flask.2", AbilityStatType.DurationTicks,
                             ModifierOp.Flat, Fix64.FromInt(3 * Simulation.TicksPerSecond));
+                        return true;
+                    }
+                    // «Дальний бросок»: 7 → 10 м.
+                    if (index == 6)
+                    {
+                        node = AbilityNode.StatMod("talent.sabre.flask.7", AbilityStatType.Radius,
+                            ModifierOp.Flat, Fix64.FromInt(3));
                         return true;
                     }
                     break;

@@ -44,6 +44,7 @@ namespace Game.View
             if (prefab != null && _panel == null)
             {
                 _panel = Instantiate(prefab).GetComponent<CampTrainingPanel>();
+                if (_panel != null) UiScaleFollower.Attach(_panel.gameObject);
                 if (_panel != null)
                 {
                     _panel.name = "Тренировка — панель";

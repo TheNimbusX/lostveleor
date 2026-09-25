@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The War Remains — курсоры v3</title>
+<style>
+  :root { --size: 48px; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #171b19; color: #f7ecd7; font: 17px/1.4 Arial,sans-serif; }
+  main { max-width: 1440px; padding: 28px 36px 48px; margin: auto; }
+  h1 { margin: 0 0 5px; font: 700 27px Georgia,serif; }
+  p { margin: 0 0 24px; color: #c6bcab; }
+  .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 22px; }
+  input { accent-color: #f8833d; }
+  .scene { position: relative; aspect-ratio: 2688 / 1520; width: 100%; overflow: hidden;
+    background: url('../../concepts-2026-09-22/final-P4/2-combat-hud.png') center/cover; border: 1px solid #64523b; }
+  .scene .point { position: absolute; width: var(--size); height: var(--size); }
+  .scene img { width: 100%; height: 100%; object-fit: contain; }
+  .scene .point b { position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    color: white; background: #1b2220c9; padding: 2px 6px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; margin-top: 20px; }
+  .sample { height: 122px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    gap: 8px; background: linear-gradient(150deg,#bdab83 0 50%,#2b3a2e 50%); border: 1px solid #635944; }
+  .sample img { width: var(--size); height: var(--size); object-fit: contain; }
+  .sample span { background: #171b19dc; padding: 2px 7px; font-size: 13px; }
+</style>
+<main>
+  <h1>Курсоры — реальные размеры в игровом кадре</h1>
+  <p>Шесть разных силуэтов. Это просмотр изображений imagegen; в Unity они пока не подключены.</p>
+  <div class="controls"><label for="size">Размер</label><input id="size" type="range" min="32" max="56" value="48"><output id="value">48 px</output></div>
+  <div class="scene">
+    <div class="point" style="left:35%;top:35%"><img src="pointer.png"><b>Обычный</b></div>
+    <div class="point" style="left:56%;top:57%"><img src="move.png"><b>Движение</b></div>
+    <div class="point" style="left:56%;top:34%"><img src="attack.png"><b>Атака</b></div>
+    <div class="point" style="left:74%;top:48%"><img src="interact.png"><b>Взаимодействие</b></div>
+    <div class="point" style="left:42%;top:51%"><img src="aim.png"><b>Прицел</b></div>
+    <div class="point" style="left:24%;top:59%"><img src="blocked.png"><b>Недоступно</b></div>
+  </div>
+  <div class="grid">
+    <div class="sample"><img src="pointer.png"><span>Обычный</span></div>
+    <div class="sample"><img src="move.png"><span>Движение</span></div>
+    <div class="sample"><img src="attack.png"><span>Атака</span></div>
+    <div class="sample"><img src="interact.png"><span>Взаимодействие</span></div>
+    <div class="sample"><img src="aim.png"><span>Прицел</span></div>
+    <div class="sample"><img src="blocked.png"><span>Недоступно</span></div>
+  </div>
+</main>
+<script>
+  const slider = document.querySelector('#size'), output = document.querySelector('#value');
+  slider.addEventListener('input', () => {
+    document.documentElement.style.setProperty('--size', slider.value + 'px');
+    output.textContent = slider.value + ' px';
+  });
+</script>
+</html>

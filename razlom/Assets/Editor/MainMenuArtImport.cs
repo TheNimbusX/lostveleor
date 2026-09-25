@@ -18,7 +18,9 @@ public sealed class MainMenuArtImport : AssetPostprocessor
         importer.textureType = TextureImporterType.Default;
         importer.mipmapEnabled = false;
         importer.wrapMode = TextureWrapMode.Clamp;
-        importer.maxTextureSize = 2048;
+        // Панорама меню пака (3840x2160) — единственный полноэкранный арт: на 1440p и 4K
+        // ужатая до 2048 она заметно мылится.
+        importer.maxTextureSize = assetPath.EndsWith("/menu_panorama.png") ? 4096 : 2048;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
 
         // Маски анимации — это веса, а не цвет. В sRGB гамма исказила бы их:

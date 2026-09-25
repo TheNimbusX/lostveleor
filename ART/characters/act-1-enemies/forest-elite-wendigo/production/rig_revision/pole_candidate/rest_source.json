@@ -1,0 +1,285 @@
+{
+  "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig_revision\\final_candidate\\ForestWendigo_Rig_SkinCandidate.blend",
+  "tris": 24636,
+  "deform_bones": 22,
+  "bones": {
+    "L_clavicle": {
+      "head": [
+        -0.18,
+        0.05,
+        1.96
+      ],
+      "tail": [
+        -0.37,
+        0.29,
+        1.91
+      ],
+      "parent": "spine_02",
+      "deform": true
+    },
+    "L_arm_upper": {
+      "head": [
+        -0.37,
+        0.29,
+        1.91
+      ],
+      "tail": [
+        -0.49,
+        0.51,
+        1.48
+      ],
+      "parent": "L_clavicle",
+      "deform": true
+    },
+    "L_arm_lower": {
+      "head": [
+        -0.49,
+        0.51,
+        1.48
+      ],
+      "tail": [
+        -0.53,
+        0.76,
+        1.13
+      ],
+      "parent": "L_arm_upper",
+      "deform": true
+    },
+    "L_hand": {
+      "head": [
+        -0.53,
+        0.76,
+        1.13
+      ],
+      "tail": [
+        -0.54,
+        0.87,
+        0.85
+      ],
+      "parent": "L_arm_lower",
+      "deform": true
+    },
+    "R_clavicle": {
+      "head": [
+        0.18,
+        -0.12,
+        1.96
+      ],
+      "tail": [
+        0.37,
+        -0.42,
+        1.91
+      ],
+      "parent": "spine_02",
+      "deform": true
+    },
+    "R_arm_upper": {
+      "head": [
+        0.37,
+        -0.42,
+        1.91
+      ],
+      "tail": [
+        0.42,
+        -0.62,
+        1.48
+      ],
+      "parent": "R_clavicle",
+      "deform": true
+    },
+    "R_arm_lower": {
+      "head": [
+        0.42,
+        -0.62,
+        1.48
+      ],
+      "tail": [
+        0.51,
+        -0.81,
+        1.13
+      ],
+      "parent": "R_arm_upper",
+      "deform": true
+    },
+    "R_hand": {
+      "head": [
+        0.51,
+        -0.81,
+        1.13
+      ],
+      "tail": [
+        0.52,
+        -0.9,
+        0.85
+      ],
+      "parent": "R_arm_lower",
+      "deform": true
+    },
+    "L_leg_upper": {
+      "head": [
+        -0.2,
+        0.13,
+        1.27
+      ],
+      "tail": [
+        -0.43,
+        0.27,
+        0.72
+      ],
+      "parent": "pelvis",
+      "deform": true
+    },
+    "L_leg_lower": {
+      "head": [
+        -0.43,
+        0.27,
+        0.72
+      ],
+      "tail": [
+        -0.6,
+        0.39,
+        0.24
+      ],
+      "parent": "L_leg_upper",
+      "deform": true
+    },
+    "L_foot": {
+      "head": [
+        -0.6,
+        0.39,
+        0.24
+      ],
+      "tail": [
+        -0.6,
+        0.55,
+        0.09
+      ],
+      "parent": "L_leg_lower",
+      "deform": true
+    },
+    "R_leg_upper": {
+      "head": [
+        0.19,
+        -0.21,
+        1.27
+      ],
+      "tail": [
+        0.24,
+        -0.43,
+        0.72
+      ],
+      "parent": "pelvis",
+      "deform": true
+    },
+    "R_leg_lower": {
+      "head": [
+        0.24,
+        -0.43,
+        0.72
+      ],
+      "tail": [
+        0.48,
+        -0.51,
+        0.24
+      ],
+      "parent": "R_leg_upper",
+      "deform": true
+    },
+    "R_foot": {
+      "head": [
+        0.48,
+        -0.51,
+        0.24
+      ],
+      "tail": [
+        0.55,
+        -0.52,
+        0.09
+      ],
+      "parent": "R_leg_lower",
+      "deform": true
+    },
+    "CTRL_L_elbow": {
+      "head": [
+        -1.0223,
+        0.0163,
+        1.2917
+      ],
+      "tail": [
+        -1.0223,
+        0.0163,
+        1.4317
+      ],
+      "parent": "root",
+      "deform": false
+    },
+    "CTRL_L_knee": {
+      "head": [
+        -1.13,
+        0.2592,
+        0.9891
+      ],
+      "tail": [
+        -1.13,
+        0.2592,
+        1.1291
+      ],
+      "parent": "root",
+      "deform": false
+    },
+    "CTRL_R_elbow": {
+      "head": [
+        -0.2368,
+        -0.3574,
+        1.2308
+      ],
+      "tail": [
+        -0.2368,
+        -0.3574,
+        1.3708
+      ],
+      "parent": "root",
+      "deform": false
+    },
+    "CTRL_R_knee": {
+      "head": [
+        -0.396,
+        -0.8221,
+        0.6551
+      ],
+      "tail": [
+        -0.396,
+        -0.8221,
+        0.7951
+      ],
+      "parent": "root",
+      "deform": false
+    }
+  },
+  "ik": {
+    "L_arm_lower": {
+      "pole": "CTRL_L_elbow",
+      "target": "CTRL_L_hand",
+      "angle_deg": -150.0,
+      "chain_count": 2
+    },
+    "R_arm_lower": {
+      "pole": "CTRL_R_elbow",
+      "target": "CTRL_R_hand",
+      "angle_deg": 165.0,
+      "chain_count": 2
+    },
+    "L_leg_lower": {
+      "pole": "CTRL_L_knee",
+      "target": "CTRL_L_foot",
+      "angle_deg": 165.0,
+      "chain_count": 2
+    },
+    "R_leg_lower": {
+      "pole": "CTRL_R_knee",
+      "target": "CTRL_R_foot",
+      "angle_deg": -150.0,
+      "chain_count": 2
+    }
+  }
+}

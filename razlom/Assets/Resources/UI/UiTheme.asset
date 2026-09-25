@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d8281f78d148154f97e979223aad732, type: 3}
   m_Name: UiTheme
   m_EditorClassIdentifier: Game.View::Game.View.UiTheme
-  Veil: {r: 0.02745098, g: 0.039215688, b: 0.0627451, a: 0.62}
-  Panel: {r: 0.06666667, g: 0.08627451, b: 0.1254902, a: 0.92}
+  Veil: {r: 0.02745098, g: 0.039215688, b: 0.0627451, a: 0.78}
+  Panel: {r: 0.06666667, g: 0.08627451, b: 0.1254902, a: 0.97}
   PanelLine: {r: 0.84705883, g: 0.88235295, b: 0.93333334, a: 1}
   Highlight: {r: 1, g: 1, b: 1, a: 0.07}
   Track: {r: 0.105882354, g: 0.1254902, b: 0.16078432, a: 0.95}
@@ -34,7 +34,7 @@ MonoBehaviour:
   Bad: {r: 1, g: 0.41568628, b: 0.3529412, a: 1}
   Heading: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   Body: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  Numbers: {fileID: 11400000, guid: 13529c3135e92f44dbf299ccda834545, type: 2}
+  Numbers: {fileID: 11400000, guid: 02574f338ffe5fe43952a31425c71692, type: 2}
   TitleSize: 44
   HeadingSize: 28
   BodySize: 20

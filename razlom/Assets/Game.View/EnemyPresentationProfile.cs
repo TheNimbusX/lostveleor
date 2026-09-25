@@ -46,12 +46,17 @@ namespace Game.View
         };
 
         private static EnemyPresentationProfile _current;
+        public EnemyDeathPresentation ForestWendigo = new EnemyDeathPresentation {
+            ClipSeconds = 4f, StartNormalized = 18f/96f, RestNormalized = 1f,
+            StateSpeed = 1f, BlendSeconds = .07f, RestSeconds = .6f,
+            DissolveSeconds = .65f, RecoilMeters = .02f, EdgeGlow = .03f
+        };
         public static EnemyDeathPresentation Death(EnemyKind kind)
         {
             if (_current == null)
                 _current = Resources.Load<EnemyPresentationProfile>("Combat/EnemyPresentation")
                     ?? CreateInstance<EnemyPresentationProfile>();
-            return kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
+            return kind == EnemyKind.ForestWendigo ? _current.ForestWendigo : kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

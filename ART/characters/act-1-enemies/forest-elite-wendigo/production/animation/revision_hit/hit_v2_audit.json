@@ -1,0 +1,140 @@
+{
+  "paw_contacts": [
+    {
+      "frame": 0,
+      "L_paw_min_z": 0.0013,
+      "R_paw_min_z": -0.0,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 1,
+      "L_paw_min_z": 0.0013,
+      "R_paw_min_z": 0.0001,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 2,
+      "L_paw_min_z": 0.0019,
+      "R_paw_min_z": 0.0038,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 3,
+      "L_paw_min_z": 0.0044,
+      "R_paw_min_z": 0.0857,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 4,
+      "L_paw_min_z": 0.0045,
+      "R_paw_min_z": 0.1372,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 5,
+      "L_paw_min_z": 0.0044,
+      "R_paw_min_z": 0.1187,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 6,
+      "L_paw_min_z": 0.0045,
+      "R_paw_min_z": 0.0723,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 7,
+      "L_paw_min_z": 0.0041,
+      "R_paw_min_z": 0.003,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 8,
+      "L_paw_min_z": 0.0041,
+      "R_paw_min_z": 0.002,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 9,
+      "L_paw_min_z": 0.0044,
+      "R_paw_min_z": 0.0039,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 10,
+      "L_paw_min_z": 0.0041,
+      "R_paw_min_z": 0.0621,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 11,
+      "L_paw_min_z": 0.0001,
+      "R_paw_min_z": 0.1045,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 12,
+      "L_paw_min_z": 0.0014,
+      "R_paw_min_z": 0.1096,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 13,
+      "L_paw_min_z": 0.0014,
+      "R_paw_min_z": 0.0579,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 14,
+      "L_paw_min_z": 0.0013,
+      "R_paw_min_z": -0.0,
+      "root_xy": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "triangles": 24636
+}

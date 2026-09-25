@@ -1,0 +1,13 @@
+{
+  "master_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.blend",
+  "unity_fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.fbx",
+  "inspection_glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.glb",
+  "textures": [
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\textures\\Color_b40452ee-ecaf-4092-9ff1-bd2b239158b6.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\textures\\default_jpeg.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\textures\\NormalGL_b40452ee-ecaf-4092-9ff1-bd2b239158b6.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\textures\\ORM_b40452ee-ecaf-4092-9ff1-bd2b239158b6.png"
+  ],
+  "fps": 30,
+  "source_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\Wendigo_Rig_v3.blend"
+}

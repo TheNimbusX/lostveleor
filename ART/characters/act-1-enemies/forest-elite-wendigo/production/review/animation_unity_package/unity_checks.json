@@ -1,0 +1,454 @@
+{
+  "kill-60": {
+    "capture_step_fps": 60,
+    "performance_measurement": false,
+    "frames": 288,
+    "contacts": [
+      {
+        "serial": 1,
+        "kind": "Leap",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 2,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 3,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 4,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 5,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 6,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      }
+    ],
+    "events": [
+      {
+        "tick": 1,
+        "type": "WendigoStarted",
+        "variant": "2"
+      },
+      {
+        "tick": 34,
+        "type": "WendigoImpact",
+        "variant": "2"
+      },
+      {
+        "tick": 52,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 70,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 82,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 100,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 112,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 130,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 142,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 160,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 172,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 185,
+        "type": "Attack",
+        "variant": "0"
+      },
+      {
+        "tick": 190,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 194,
+        "type": "Damage",
+        "variant": "0"
+      },
+      {
+        "tick": 194,
+        "type": "Death",
+        "variant": "0"
+      },
+      {
+        "tick": 194,
+        "type": "WendigoCancelled",
+        "variant": "1"
+      }
+    ]
+  },
+  "dodge-30": {
+    "capture_step_fps": 30,
+    "performance_measurement": false,
+    "frames": 288,
+    "contacts": [
+      {
+        "serial": 1,
+        "kind": "Leap",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 2,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 3,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 4,
+        "kind": "Leap",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 5,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 6,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 7,
+        "kind": "Leap",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 8,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      }
+    ],
+    "events": [
+      {
+        "tick": 1,
+        "type": "WendigoStarted",
+        "variant": "2"
+      },
+      {
+        "tick": 34,
+        "type": "WendigoImpact",
+        "variant": "2"
+      },
+      {
+        "tick": 62,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 80,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 109,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 127,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 139,
+        "type": "WendigoStarted",
+        "variant": "2"
+      },
+      {
+        "tick": 172,
+        "type": "WendigoImpact",
+        "variant": "2"
+      },
+      {
+        "tick": 200,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 218,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 247,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 265,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 277,
+        "type": "WendigoStarted",
+        "variant": "2"
+      },
+      {
+        "tick": 310,
+        "type": "WendigoImpact",
+        "variant": "2"
+      },
+      {
+        "tick": 338,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 356,
+        "type": "WendigoImpact",
+        "variant": "1"
+      }
+    ]
+  },
+  "hit-120": {
+    "capture_step_fps": 120,
+    "performance_measurement": false,
+    "frames": 288,
+    "contacts": [
+      {
+        "serial": 1,
+        "kind": "Leap",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 2,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 3,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 4,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 5,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 6,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 7,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 8,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 9,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 10,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      },
+      {
+        "serial": 11,
+        "kind": "Claw",
+        "contact_delay_seconds": 0.0,
+        "within_display_frame": true
+      }
+    ],
+    "events": [
+      {
+        "tick": 1,
+        "type": "WendigoStarted",
+        "variant": "2"
+      },
+      {
+        "tick": 34,
+        "type": "WendigoImpact",
+        "variant": "2"
+      },
+      {
+        "tick": 52,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 70,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 82,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 100,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 112,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 130,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 142,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 160,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 172,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 190,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 202,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 220,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 232,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 250,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 262,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 280,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 292,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 310,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 322,
+        "type": "WendigoStarted",
+        "variant": "1"
+      },
+      {
+        "tick": 340,
+        "type": "WendigoImpact",
+        "variant": "1"
+      },
+      {
+        "tick": 352,
+        "type": "WendigoStarted",
+        "variant": "1"
+      }
+    ]
+  }
+}

@@ -9,6 +9,19 @@ namespace Game.View
         static bool _disabled; static bool _recovered; ulong _hash; bool _hasHash; TickDriver _driver;
         ulong _potionState;
         static string PathName=>Path.Combine(Application.persistentDataPath,"camp-v1.sav");
+        /// <summary>Есть ли сохранённый лагерь — главное меню решает, «Продолжить» или «Начать».</summary>
+        public static bool HasSave=>File.Exists(PathName)||File.Exists(PathName+".bak");
+        static bool _resetting;
+        /// <summary>
+        /// «Новая игра» из главного меню: стирает сохранение и резервную копию. До загрузки новой
+        /// сессии запись запрещена — иначе старый лагерь записался бы обратно при перезагрузке сцены.
+        /// </summary>
+        public static void DeleteForNewGame()
+        {
+            _resetting=true;
+            try{if(File.Exists(PathName))File.Delete(PathName);if(File.Exists(PathName+".bak"))File.Delete(PathName+".bak");}
+            catch(Exception e){Debug.LogWarning("[camp-save] Новая игра: "+e.Message);}
+        }
         static bool Capture=>Array.IndexOf(Environment.GetCommandLineArgs(),"-capture")>=0 || Array.IndexOf(Environment.GetCommandLineArgs(),"-capture-camp")>=0
 #if UNITY_EDITOR
             || UnityEditor.SessionState.GetBool("AlchemyPlaytest.Active",false)
@@ -18,6 +31,7 @@ namespace Game.View
             ;
         public static GameSession Load(ulong seed, LocationDefinition location = null)
         {
+            if(_resetting){_resetting=false;_disabled=false;_recovered=false;}
             _disabled=Capture || CaptureRig.AutoEnterRift;_recovered=false;Camp camp=null;
             if(!_disabled)
             {
@@ -37,7 +51,7 @@ namespace Game.View
         void OnApplicationQuit(){Save();}
         void Save()
         {
-            if(_disabled||_driver?.Session==null||_driver.Session.IsDeveloperRun)return;
+            if(_disabled||_resetting||_driver?.Session==null||_driver.Session.IsDeveloperRun)return;
             var camp=_driver.Session.Camp;
             ulong potions=Hashing.Offset;
             for(int i=0;i<Camp.PotionKindCount;i++)Hashing.Mix(ref potions,camp.PotionCount((PotionKind)i));

@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ForestWendigo
+  m_Shader: {fileID: 4800000, guid: 4c0d9f8f7de841aeaf783d23db501c3d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: 408157712ed77df4fa68db99acfc3e28, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BlazeGlow: 0
+    - _DeathFade: 0
+    - _DissolveEdgeGlow: 2.6
+    - _DissolveEdgeWidth: 0.14
+    - _DissolveHeightBias: 0
+    - _DissolveScale: 13
+    - _DissolveVoronoi: 1
+    - _GroundGlowBand: 0.16
+    - _GroundGlowFeather: 0.06
+    - _HitFlash: 0
+    - _LightFeather: 0.045
+    - _LightThreshold: 0.62
+    - _MidThreshold: 0.24
+    - _OutlineDepthBias: 0
+    - _OutlineWidth: 0
+    - _RimPower: 4
+    - _WhiteClothLift: 0
+    m_Colors:
+    - _BaseColor: {r: 1.7, g: 1.7, b: 1.7, a: 1}
+    - _DissolveEdgeColor: {r: 1, g: 0.41999996, b: 0.11999995, a: 1}
+    - _DissolveHeightRange: {r: 0, g: 1, b: 0, a: 0}
+    - _MidColor: {r: 0.94, g: 0.9, b: 0.91, a: 1}
+    - _OutlineColor: {r: 0.089999996, g: 0.025, b: 0.07499998, a: 1}
+    - _RimColor: {r: 1, g: 0.86, b: 0.65999997, a: 1}
+    - _ShadowColor: {r: 0.72, g: 0.75, b: 0.84, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

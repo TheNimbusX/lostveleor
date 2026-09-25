@@ -1,0 +1,52 @@
+{
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.blend",
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.fbx",
+  "secondary": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\secondary\\output_v9\\Wendigo_Secondary_Actions.blend",
+  "fps": 30,
+  "actions": {
+    "AN_ForestWendigo_Idle": {
+      "range": [
+        0,
+        60
+      ],
+      "head_start_to_middle_m": 0.0094
+    },
+    "AN_ForestWendigo_Walk": {
+      "range": [
+        0,
+        12
+      ],
+      "head_start_to_middle_m": 0.0
+    },
+    "AN_ForestWendigo_Claw": {
+      "range": [
+        0,
+        30
+      ],
+      "head_start_to_middle_m": 0.2541
+    },
+    "AN_ForestWendigo_Leap": {
+      "range": [
+        0,
+        51
+      ],
+      "head_start_to_middle_m": 0.3276
+    },
+    "AN_ForestWendigo_Hit": {
+      "range": [
+        0,
+        14
+      ],
+      "head_start_to_middle_m": 0.2611
+    },
+    "AN_ForestWendigo_Death": {
+      "range": [
+        0,
+        45
+      ],
+      "head_start_to_middle_m": 0.8601
+    }
+  },
+  "mesh_faces": 23725,
+  "deform_bones": 22
+}

@@ -52,6 +52,11 @@ namespace Game.Sim
         BackblastBurst = 20,
         /// <summary>Продолжение серии без повторной оплаты. Amount — слот, ActionVariant — этап.</summary>
         ActionStageStarted = 21,
+        /// <summary>Включён артефакт забега (или сработал Обет Хранителя); ActionVariant — номер артефакта.</summary>
+        ArtifactUsed = 22,
+        WendigoStarted = 23,
+        WendigoImpact = 24,
+        WendigoCancelled = 25,
     }
 
     /// <summary>

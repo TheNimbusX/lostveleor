@@ -234,7 +234,7 @@ public static class PelagWhirlwindVfxSetup
     /// z — смещение по местной оси корня: после X90 положительное значение
     /// уходит вниз, к земле.
     /// </summary>
-    private static ParticleSystem AddCfxrArc(GameObject root, string name, Mesh mesh, Material material,
+    internal static ParticleSystem AddCfxrArc(GameObject root, string name, Mesh mesh, Material material,
         float size, float life, float delay, float startDegrees, float spinRadPerSecond, float z)
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CfxrTrailPrefab);
@@ -332,7 +332,7 @@ public static class PelagWhirlwindVfxSetup
         finally { Object.DestroyImmediate(root); }
     }
 
-    private static Renderer MeshChild(GameObject root, string name, Mesh mesh, Material material)
+    internal static Renderer MeshChild(GameObject root, string name, Mesh mesh, Material material)
     {
         var go = new GameObject(name);
         go.transform.SetParent(root.transform, false);
@@ -395,7 +395,7 @@ public static class PelagWhirlwindVfxSetup
         renderer.sharedMaterial = material;
     }
 
-    private static ParticleSystem NewParticles(GameObject root, string name, int count,
+    internal static ParticleSystem NewParticles(GameObject root, string name, int count,
         float lifeMin, float lifeMax, float speedMin, float speedMax, float sizeMin, float sizeMax)
     {
         var host = new GameObject(name);
@@ -423,7 +423,7 @@ public static class PelagWhirlwindVfxSetup
         return particles;
     }
 
-    private static Gradient Gradient(Color start, Color end)
+    internal static Gradient Gradient(Color start, Color end)
     {
         var gradient = new Gradient();
         gradient.SetKeys(
@@ -435,7 +435,7 @@ public static class PelagWhirlwindVfxSetup
     // -------------------------------------------------------------- materials
 
     /// <summary>Копия плёнки CFXR «sword trail plain»: маска и dissolve пака, без правок в оригинале.</summary>
-    private static Material CfxrMaterial(string name, Material source, bool keepDissolve)
+    internal static Material CfxrMaterial(string name, Material source, bool keepDissolve)
     {
         string path = MaterialFolder + "/" + name + ".mat";
         Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -480,7 +480,7 @@ public static class PelagWhirlwindVfxSetup
     }
 
     /// <summary>Плоский цвет ядра без обвода и эрозии: щепки, ромбы.</summary>
-    private static Material FlatMaterial(Shader shader, string name, Color color)
+    internal static Material FlatMaterial(Shader shader, string name, Color color)
     {
         Material material = LoadOrCreateMaterial(MaterialFolder + "/" + name + ".mat", shader);
         material.SetColor("_Core", color);
@@ -500,14 +500,14 @@ public static class PelagWhirlwindVfxSetup
     private static Material SparkMaterial(Shader glowShader)
     {
         Material material = LoadOrCreateMaterial(MaterialFolder + "/M_Whirlwind_Spark.mat", glowShader);
-        material.SetTexture("_BaseMap", Texture2D.whiteTexture);
+        material.SetTexture("_BaseMap", WhiteTexture());
         material.SetColor("_BaseColor", new Color(1.25f, .92f, .55f, 1f));
         material.SetFloat("_Emission", 2.4f);
         EditorUtility.SetDirty(material);
         return material;
     }
 
-    private static Material LoadOrCreateMaterial(string path, Shader shader)
+    internal static Material LoadOrCreateMaterial(string path, Shader shader)
     {
         Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (material == null)
@@ -550,7 +550,7 @@ public static class PelagWhirlwindVfxSetup
     }
 
     /// <summary>Четырёхлучевая звезда диаметром 1 в плоскости XY.</summary>
-    private static Mesh StarMesh()
+    internal static Mesh StarMesh()
     {
         Mesh mesh = LoadOrCreateMesh(GeometryFolder + "/WhirlwindStar.asset", "WhirlwindStar");
         var vertices = new Vector3[9];
@@ -571,7 +571,7 @@ public static class PelagWhirlwindVfxSetup
         return mesh;
     }
 
-    private static Mesh LoadOrCreateMesh(string path, string name)
+    internal static Mesh LoadOrCreateMesh(string path, string name)
     {
         Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
         if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, path); }
@@ -580,7 +580,7 @@ public static class PelagWhirlwindVfxSetup
         return mesh;
     }
 
-    private static void Fill(Mesh mesh, Vector3[] vertices, Vector2[] uv, int[] triangles)
+    internal static void Fill(Mesh mesh, Vector3[] vertices, Vector2[] uv, int[] triangles)
     {
         mesh.vertices = vertices;
         mesh.uv = uv;
@@ -592,7 +592,7 @@ public static class PelagWhirlwindVfxSetup
 
     // ---------------------------------------------------------------- library
 
-    private static bool Bind(AbilityVfxLibrary library, PelagVfxId id, string path, int prewarm)
+    internal static bool Bind(AbilityVfxLibrary library, PelagVfxId id, string path, int prewarm)
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         if (prefab == null) return false;
@@ -604,8 +604,42 @@ public static class PelagWhirlwindVfxSetup
         return true;
     }
 
-    private static void EnsureFolder(string parent, string child)
+    internal static void EnsureFolder(string parent, string child)
     {
         if (!AssetDatabase.IsValidFolder(parent + "/" + child)) AssetDatabase.CreateFolder(parent, child);
+    }
+
+    private const string WhiteTexturePath = "Assets/Resources/VFX/Pelag/Textures/PelagWhite.png";
+
+    /// <summary>
+    /// Белая текстура-АССЕТ для слотов материалов. Texture2D.whiteTexture —
+    /// объект времени выполнения: в ассете материала он сохраняется как
+    /// пустая ссылка (fileID 0), в редакторе такой слот молча подменяется
+    /// белым, а в сборке плеера меш с таким материалом не рисуется вовсе —
+    /// двадцать шесть сборок Рассекающего (LOG 24–25.09). Материалы без
+    /// записи слота (как у Вихря) берут умолчание шейдера и рисуются.
+    /// </summary>
+    internal static Texture2D WhiteTexture()
+    {
+        var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(WhiteTexturePath);
+        if (texture != null) return texture;
+        EnsureFolder("Assets/Resources/VFX/Pelag", "Textures");
+        var pixels = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+        var white = new Color32[16];
+        for (int i = 0; i < white.Length; i++) white[i] = new Color32(255, 255, 255, 255);
+        pixels.SetPixels32(white);
+        pixels.Apply();
+        System.IO.File.WriteAllBytes(WhiteTexturePath, pixels.EncodeToPNG());
+        Object.DestroyImmediate(pixels);
+        AssetDatabase.ImportAsset(WhiteTexturePath, ImportAssetOptions.ForceSynchronousImport);
+        var importer = AssetImporter.GetAtPath(WhiteTexturePath) as TextureImporter;
+        if (importer != null)
+        {
+            importer.textureType = TextureImporterType.Default;
+            importer.mipmapEnabled = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(WhiteTexturePath);
     }
 }

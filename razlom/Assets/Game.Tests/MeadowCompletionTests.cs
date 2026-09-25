@@ -64,6 +64,8 @@ namespace Game.Tests
                     Assert.That(run.Sim.Entities.MaxHealth[boss], Is.EqualTo(run.LevelSettings.EnemyHealth * 6));
                 }
                 ReachReward(session);
+                // Награда босса — выбор артефакта (владелец, 24 сентября), обычные уровни — карточки.
+                Assert.That(run.ChoosingArtifact, Is.EqualTo(level == 10));
                 int rewards = run.TakenRewardCount;
                 Choose(session);
                 Assert.That(run.TakenRewardCount, Is.EqualTo(rewards + 1));

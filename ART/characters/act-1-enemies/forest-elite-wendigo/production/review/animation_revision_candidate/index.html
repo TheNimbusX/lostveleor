@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Лесной вендиго — сравнение правок анимации</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #0e1714;
+      --surface: #182520;
+      --surface-raised: #1e2e27;
+      --border: #3a5144;
+      --text: #f3eddf;
+      --muted: #b7c7bb;
+      --gold: #dfc487;
+      --ready: #a9d9b8;
+      --pending: #f0c78c;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: radial-gradient(ellipse at 50% -10%, #2a3e30 0, var(--page) 55%);
+      color: var(--text);
+      font: 16px/1.5 system-ui, "Segoe UI", sans-serif;
+    }
+    a { color: inherit; }
+    a:hover { color: var(--gold); }
+    .wrap { width: min(1550px, calc(100% - 40px)); margin: 0 auto; }
+    header { padding: 38px 0 29px; border-bottom: 1px solid var(--border); }
+    .eyebrow { color: var(--gold); font-size: .74rem; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 7px 0 12px; font: 600 clamp(2rem, 4vw, 3.25rem)/1.1 Georgia, serif; }
+    header p { max-width: 900px; margin: 0; color: var(--muted); }
+    .notice {
+      margin: 22px 0 15px; padding: 14px 18px; border: 1px solid #8d714c;
+      border-radius: 10px; background: #30291e; color: #f5dfba;
+    }
+    .key { margin: 0 0 24px; color: var(--muted); font-size: .93rem; }
+    .jump { display: flex; flex-wrap: wrap; gap: 9px; margin: 0 0 29px; }
+    .jump a {
+      padding: 7px 12px; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface); color: var(--text); font-size: .9rem; text-decoration: none;
+    }
+    .jump a:focus-visible, a:focus-visible, video:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .action {
+      margin: 0 0 22px; padding: 22px; border: 1px solid var(--border);
+      border-radius: 16px; background: var(--surface); box-shadow: 0 14px 35px #0003;
+      scroll-margin-top: 18px;
+    }
+    .action-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 11px 17px; margin-bottom: 8px; }
+    h2 { margin: 0; font: 600 1.7rem/1.2 Georgia, serif; }
+    .badge { padding: 3px 9px; border: 1px solid currentColor; border-radius: 999px; font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    .badge.ready { color: var(--ready); }
+    .badge.pending { color: var(--pending); }
+    .badge.unchanged { color: var(--muted); }
+    .action-note { margin: 0 0 17px; color: var(--muted); }
+    .comparison { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .media {
+      min-width: 0; padding: 12px; border: 1px solid #31473b; border-radius: 11px;
+      background: var(--surface-raised);
+    }
+    .media h3 { margin: 0 0 9px; color: var(--gold); font-size: .87rem; font-weight: 700; letter-spacing: .03em; }
+    video { display: block; width: 100%; max-height: 530px; aspect-ratio: 1 / 1; border-radius: 5px; background: #0a100d; object-fit: contain; }
+    .source { display: block; margin-top: 8px; color: var(--muted); font-size: .78rem; overflow-wrap: anywhere; }
+    .empty {
+      display: grid; min-height: 120px; max-height: 530px; aspect-ratio: 1 / 1; place-items: center;
+      padding: 18px; border: 1px dashed #6c7c68; border-radius: 5px;
+      color: var(--muted); text-align: center;
+    }
+    .combined { grid-column: span 2; }
+    .combined video { aspect-ratio: 2 / 1; }
+    .frame-note { margin: 15px 0 0; color: var(--text); font-size: .91rem; }
+    .frame-note strong { color: var(--gold); }
+    .idle { margin-bottom: 38px; }
+    .idle .comparison { grid-template-columns: minmax(0, 1fr) 2fr; }
+    .idle .media { max-width: 560px; }
+    .idle video { aspect-ratio: 2 / 1; }
+    .idle p:last-child { align-self: center; max-width: 570px; color: var(--muted); }
+    footer { padding: 0 0 42px; color: var(--muted); font-size: .86rem; }
+    @media (max-width: 1000px) {
+      .comparison { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .comparison .media:first-child { grid-column: span 2; }
+      .combined { grid-column: span 2; }
+      .idle .comparison { grid-template-columns: 1fr; }
+      .idle .comparison .media:first-child { grid-column: auto; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 24px, 520px); }
+      header { padding-top: 26px; }
+      .action { padding: 15px; }
+      .comparison { grid-template-columns: 1fr; }
+      .comparison .media:first-child, .combined { grid-column: auto; }
+      .combined video { aspect-ratio: 2 / 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <span class="eyebrow">Акт I · элитный противник · просмотр правок</span>
+      <h1>Лесной вендиго</h1>
+      <p>Утверждённые видеоориентиры Higgsfield рядом с доступными правками на игровой модели. Для каждого действия показаны имеющиеся ракурсы; отсутствующие ролики помечены отдельно.</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <p class="notice">ОТКЛОНЕНО ВЛАДЕЛЬЦЕМ · 25 сентября 2026. Все пять правок ниже не приняты. Они сохранены только для сравнения ошибок с видеореференсами. Idle оставлен прежним. Перенос в Unity запрещён до явного одобрения исправленных анимаций.</p>
+    <p class="key"><a href="../animation_reference_claw/index.html">Открыть новую работу над когтевым ударом — один клип, синхронное сравнение и покадровая перемотка</a>. Ниже сохранены отклонённые варианты. Числовые проверки старых кандидатов не подтверждают художественное качество.</p>
+    <nav class="jump" aria-label="Перейти к действию">
+      <a href="#walk">Ходьба</a><a href="#claw">Когтевой удар</a><a href="#leap">Прыжок</a><a href="#hit">Получение удара</a><a href="#death">Смерть</a><a href="#idle">Ожидание</a>
+    </nav>
+
+    <section class="action" id="walk" aria-labelledby="walk-title">
+      <div class="action-head"><h2 id="walk-title">Ходьба / Walk</h2><span class="badge pending">Отклонено</span></div>
+      <p class="action-note">Сравните тяжесть шага и перенос веса. Референс Higgsfield объединяет ожидание и ходьбу.</p>
+      <div class="comparison">
+        <div class="media"><h3>Утверждённый ориентир · Idle / Walk</h3><video controls muted loop playsinline preload="metadata" src="../../../review/higgsfield-refs/idle_walk.mp4" aria-label="Референс Higgsfield: ожидание и ходьба"></video><a class="source" href="../../../review/higgsfield-refs/idle_walk.mp4">Открыть исходный ролик</a></div>
+        <div class="media"><h3>Правка · игровая камера</h3><video controls muted loop playsinline preload="metadata" src="../../animation/revision_secondary/output_final/videos/ForestWendigo_Walk_game.mp4" aria-label="Правка ходьбы, игровая камера"></video><a class="source" href="../../animation/revision_secondary/output_final/videos/ForestWendigo_Walk_game.mp4">Открыть ролик</a></div>
+        <div class="media"><h3>Правка · вид сбоку</h3><video controls muted loop playsinline preload="metadata" src="../../animation/revision_secondary/output_final/videos/ForestWendigo_Walk_side.mp4" aria-label="Правка ходьбы, вид сбоку"></video><a class="source" href="../../animation/revision_secondary/output_final/videos/ForestWendigo_Walk_side.mp4">Открыть ролик</a></div>
+      </div>
+      <p class="frame-note"><strong>Опора:</strong> кандидат охватывает кадры 0–18; позы 0 и 18 совпадают для цикла. По отчёту, опорная фаза длится 8 кадров на шаг.</p>
+    </section>
+
+    <section class="action" id="claw" aria-labelledby="claw-title">
+      <div class="action-head"><h2 id="claw-title">Когтевой удар / Claw</h2><span class="badge pending">Отклонено</span></div>
+      <p class="action-note">Передняя лапа раскрывается в замахе и проходит низкую широкую дугу; корпус и опорная нога принимают вес.</p>
+      <div class="comparison">
+        <div class="media"><h3>Утверждённый ориентир · Higgsfield</h3><video controls muted playsinline preload="metadata" src="../../../review/higgsfield-refs/claw.mp4" aria-label="Референс Higgsfield: когтевой удар"></video><a class="source" href="../../../review/higgsfield-refs/claw.mp4">Открыть исходный ролик</a></div>
+        <div class="media"><h3>Правка · игровая камера</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_claw_art/ForestWendigo_Claw_game.mp4" aria-label="Правка когтевого удара, игровая камера"></video></div>
+        <div class="media"><h3>Правка · вид сбоку</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_claw_art/ForestWendigo_Claw_side.mp4" aria-label="Правка когтевого удара, вид сбоку"></video></div>
+      </div>
+      <p class="frame-note"><strong>Проверено:</strong> дуга когтя 140°, контакт на кадре 18 из 30; когти проходят около 7 см над землёй, опорная лапа остаётся на месте.</p>
+    </section>
+
+    <section class="action" id="leap" aria-labelledby="leap-title">
+      <div class="action-head"><h2 id="leap-title">Прыжок / Leap</h2><span class="badge pending">Отклонено</span></div>
+      <p class="action-note">В клипе горизонтальное перемещение отсутствует: его двигает игровая симуляция. Здесь можно оценить сжатие, толчок, полёт и посадку модели.</p>
+      <div class="comparison">
+        <div class="media"><h3>Утверждённый ориентир · Higgsfield</h3><video controls muted playsinline preload="metadata" src="../../../review/higgsfield-refs/leap.mp4" aria-label="Референс Higgsfield: прыжок"></video><a class="source" href="../../../review/higgsfield-refs/leap.mp4">Открыть исходный ролик</a></div>
+        <div class="media"><h3>Правка · игровая камера</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_primary/review_v7b_leap_final/AN_ForestWendigo_Leap/game/ForestWendigo_Leap_v7b_game.mp4" aria-label="Правка прыжка, игровая камера"></video></div>
+        <div class="media"><h3>Правка · вид сбоку</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_primary/review_v7b_leap_final/AN_ForestWendigo_Leap/side/ForestWendigo_Leap_v7b_side.mp4" aria-label="Правка прыжка, вид сбоку"></video></div>
+      </div>
+      <p class="frame-note"><strong>Проверено:</strong> опора на стопы и когти к кадру 23, отрыв на кадре 24, касание земли на кадре 33, восстановление до кадра 51.</p>
+    </section>
+
+    <section class="action" id="hit" aria-labelledby="hit-title">
+      <div class="action-head"><h2 id="hit-title">Получение удара / Hit</h2><span class="badge pending">Отклонено</span></div>
+      <p class="action-note">Отдельного утверждённого ролика Higgsfield для Hit нет. Правка собрана в один ролик: вид сбоку слева, игровая камера справа.</p>
+      <div class="comparison">
+        <div class="media"><h3>Higgsfield · отдельный ориентир</h3><div class="empty">Для Hit не предоставлен</div></div>
+        <div class="media combined"><h3>Правка · вид сбоку и игровая камера</h3><video controls muted loop playsinline preload="metadata" src="../../animation/revision_hit/ForestWendigo_Hit_v2_review.mp4" aria-label="Правка реакции на удар: вид сбоку слева и игровая камера справа"></video><a class="source" href="../../animation/revision_hit/ForestWendigo_Hit_v2_review.mp4">Открыть общий ролик</a></div>
+      </div>
+      <p class="frame-note"><strong>Контакт с опорой:</strong> в версии 0–14 правая лапа ловит вес в кадрах 4–7 и возвращается в исходное положение к кадру 14.</p>
+    </section>
+
+    <section class="action" id="death" aria-labelledby="death-title">
+      <div class="action-head"><h2 id="death-title">Смерть / Death</h2><span class="badge pending">Отклонено</span></div>
+      <p class="action-note">Сравните падение вперёд и конечную опору на обе лапы.</p>
+      <div class="comparison">
+        <div class="media"><h3>Утверждённый ориентир · Higgsfield</h3><video controls muted playsinline preload="metadata" src="../../../review/higgsfield-refs/death.mp4" aria-label="Референс Higgsfield: смерть"></video><a class="source" href="../../../review/higgsfield-refs/death.mp4">Открыть исходный ролик</a></div>
+        <div class="media"><h3>Правка · игровая камера</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_secondary/output_final/videos/ForestWendigo_Death_game.mp4" aria-label="Правка смерти, игровая камера"></video><a class="source" href="../../animation/revision_secondary/output_final/videos/ForestWendigo_Death_game.mp4">Открыть ролик</a></div>
+        <div class="media"><h3>Правка · вид сбоку</h3><video controls muted playsinline preload="metadata" src="../../animation/revision_secondary/output_final/videos/ForestWendigo_Death_side.mp4" aria-label="Правка смерти, вид сбоку"></video><a class="source" href="../../animation/revision_secondary/output_final/videos/ForestWendigo_Death_side.mp4">Открыть ролик</a></div>
+      </div>
+      <p class="frame-note"><strong>Конечная опора:</strong> кандидат длится до кадра 60; в конечной позе обе лапы остаются у земли (по проверке контакта: левая 5 мм, правая 7 мм).</p>
+    </section>
+
+    <section class="action idle" id="idle" aria-labelledby="idle-title">
+      <div class="action-head"><h2 id="idle-title">Ожидание / Idle</h2><span class="badge unchanged">Без изменений</span></div>
+      <div class="comparison">
+        <div class="media"><h3>Текущий ролик · исходная галерея</h3><video controls muted loop playsinline preload="metadata" src="../animation_stage/ForestWendigo_Idle_review.mp4" aria-label="Текущая анимация ожидания без изменений"></video><a class="source" href="../animation_stage/ForestWendigo_Idle_review.mp4">Открыть текущий ролик</a></div>
+        <p>Idle не входит в этот раунд правок. Текущий ролик приведён для полноты набора; новой версии и отдельного сравнения контакта здесь нет.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap">Источники подключены по относительным путям. Эта страница отделена от исходной галереи просмотра.</footer>
+</body>
+</html>

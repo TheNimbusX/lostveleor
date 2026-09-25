@@ -1,0 +1,21 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\Wendigo_Rig_v1.blend",
+  "views": [
+    "claw_followthrough_front.png",
+    "claw_followthrough_game.png",
+    "claw_windup_front.png",
+    "claw_windup_game.png",
+    "deep_crouch_front.png",
+    "deep_crouch_game.png",
+    "neutral_front.png",
+    "neutral_game.png",
+    "raised_arms_front.png"
+  ],
+  "pose_labels": [
+    "neutral",
+    "deep_crouch",
+    "claw_windup",
+    "claw_followthrough",
+    "raised_arms"
+  ]
+}

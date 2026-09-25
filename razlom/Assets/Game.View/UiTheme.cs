@@ -35,8 +35,8 @@ namespace Game.View
         public enum FontRole { Heading, Body }
 
         [Header("Основа")]
-        [Tooltip("Затемнение мира под окнами")] public Color Veil = Hex("070A10", .62f);
-        [Tooltip("Заливка окон, ячеек, карточек")] public Color Panel = Hex("111620", .92f);
+        [Tooltip("Затемнение мира под окнами (25 сентября: темнее — окна концептов стоят на глубокой тени)")] public Color Veil = Hex("070A10", .78f);
+        [Tooltip("Заливка окон, ячеек, карточек (25 сентября: почти непрозрачная — окна не должны просвечивать)")] public Color Panel = Hex("111620", .97f);
         [Tooltip("Серебро рамок и разделителей (блики нарисованы в спрайте)")] public Color PanelLine = Hex("D8E1EE", 1f);
         [Tooltip("Свет по верхней кромке панели")] public Color Highlight = Hex("FFFFFF", .07f);
         [Tooltip("Пустая часть полос и слайдеров")] public Color Track = Hex("1B2029", .95f);
@@ -71,7 +71,7 @@ namespace Game.View
         [Header("Шрифты")]
         [Tooltip("Заголовки, меню, названия — Philosopher")] public TMP_FontAsset Heading;
         [Tooltip("Текст, цифры, подписи — Nunito")] public TMP_FontAsset Body;
-        [Tooltip("Цифры урона над врагами — Nunito Bold")] public TMP_FontAsset Numbers;
+        [Tooltip("Цифры урона над врагами — Philosopher Bold, светлая антиква листа HUD")] public TMP_FontAsset Numbers;
 
         [Header("Размеры текста, единицы Canvas (1920×1080)")]
         public float TitleSize = 44f;

@@ -23,6 +23,29 @@ namespace Game.EditorTools
             return UiKitShowcase.Capture(outPath, PrefabPath, 1920, 1080, Preview);
         }
 
+        /// <summary>
+        /// Раскадровка баннера нового уровня: кадр на каждый момент из <paramref name="times"/>
+        /// (секунды от появления) — файлы level-XXX.png в <paramref name="outDir"/>. Остальной HUD
+        /// как в обычном кадре.
+        /// </summary>
+        public static string CaptureLevelSequence(string outDir, float[] times)
+        {
+            Build(false);
+            System.IO.Directory.CreateDirectory(outDir);
+            string last = null;
+            foreach (float t in times)
+            {
+                float at = t;
+                last = UiKitShowcase.Capture(System.IO.Path.Combine(outDir, "level-" + Mathf.RoundToInt(at * 1000f).ToString("0000") + ".png"),
+                    PrefabPath, 1920, 1080, inst =>
+                    {
+                        Preview(inst);
+                        inst.GetComponent<CombatHudView>().LevelBanner.Preview(4, at);
+                    });
+            }
+            return last;
+        }
+
         static Texture2D Ability(string key) => AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Abilities/Icon_" + key + ".png");
 
         static void Preview(GameObject inst)
@@ -66,10 +89,31 @@ namespace Game.EditorTools
             view.Dash.Key.text = "SPACE";
             view.Dash.Art.texture = Ability("Dash");
             view.Dash.Art.uvRect = view.Slots[0].Art.uvRect;
-            // Готовность — камень на кромке: у перезарядки и нехватки тусклый, у первой — искра мерцания.
-            foreach (HudSlotWidget idle in new[] { view.Slots[2], view.Slots[3] })
-                idle.ReadyGem.Gem.color = idle.ReadyGem.IdleColour;
-            view.Slots[0].ReadyGem.Spark.color = new Color(.75f, 1f, 1f, .6f);
+            // Камень: 2 / 4 / 7 / 8 — сталь, серебро, золото, кристалл; у перезарядки и нехватки
+            // лавидия тусклый. Ряд насечек — только у плитки под мышью (вторая, с подсказкой).
+            int[] upgrades = { 2, 4, 7, 8 };
+            for (int slot = 0; slot < view.Slots.Length && slot < upgrades.Length; slot++)
+                view.Slots[slot].ReadyGem.Preview(upgrades[slot], slot < 2, slot == 1);
+            view.Dash.ReadyGem.Preview(0, true);
+            // Эффекты зелий над героем: Живица на 4 с, Порыв на 2 с.
+            foreach (var (chip, fill, title) in new[] { (view.ResinChip, .66f, "Живица · 4 с"), (view.SurgeChip, .33f, "Порыв · 2 с") })
+            {
+                chip.gameObject.SetActive(true);
+                chip.Group.alpha = 1f;
+                chip.Ring.fillAmount = fill;
+                chip.Title.text = title;
+            }
+            // Артефакт забега: медальон у портрета.
+            view.ArtifactSlot.SetActive(true);
+            view.ArtifactIcon.texture = RunArtifactTexts.Icon(Game.Sim.RunArtifact.SunSeal);
+            // Новый уровень: баннер в покое, через секунду после появления.
+            view.LevelBanner.Preview(4, 1.2f);
+            // Концепт 2Б: всплывашки над портретом и объявление сверху.
+            view.Toasts.Preview(
+                (AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/leather_jacket.png"), Role.Rare, "Кожаная куртка", "Редкая · ур. 4", Role.Rare),
+                (view.GoldIcon, Role.Coins, "+45 золота", null, Role.TextMuted),
+                (view.OrderIcons[0], Role.Epic, "Заказ Лео выполнен", "Живица", Role.TextMuted));
+            view.Announce.Preview("РАЗЛОМ ЗАЧИЩЕН", "Путь к выходу открыт");
             // Под мышью над героем числа видны внутри полос.
             view.ExperienceText.text = "140 / 300";
             var xpBar = (RectTransform)view.ExperienceFill.parent;
@@ -88,6 +132,12 @@ namespace Game.EditorTools
             view.TooltipTitle.text = "Рассекающий удар";
             view.TooltipKey.text = "W";
             view.TooltipBody.text = "Сильный удар саблей сверху перед собой. Для применения не требуется выбранная цель.";
+            for (int i = 0; i < view.TooltipUpgradePips.Length; i++)
+            {
+                view.TooltipUpgradePips[i].sprite = i < 4 ? view.UpgradePipFilled : view.UpgradePipEmpty;
+                view.TooltipUpgradePips[i].color = i < 4 ? Color.white : new Color(1f, 1f, 1f, .45f);
+            }
+            view.TooltipUpgradeText.text = "Усилений: 4 из 8";
             string[] values = { "34", "6 с", "2,5 м" };
             int[] stat = { 3, 2, 4 };
             for (int i = 0; i < view.TooltipMetrics.Length; i++)
@@ -106,14 +156,15 @@ namespace Game.EditorTools
             view.Tooltip.anchoredPosition = new Vector2(slotCenter, RowBottom + Slot + view.TooltipGap);
             view.TooltipTail.anchoredPosition = Vector2.zero;
 
-            // Карта: образец местности и метки, которые в игре рисует HudMinimap.
+            // Карта: образец местности и настоящие метки холста — выход, награда за краем, алхимик
+            // под мышью с подписью, враги и герой.
             view.MinimapImage.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(UiKitImport.KitRoot + "/Watercolor/wc_map_sample.png");
             view.MinimapImage.enabled = true;
             view.MinimapCaption.text = "Разлом · 2";
-            foreach (var p in new[] { new Vector2(.32f, .62f), new Vector2(.6f, .7f), new Vector2(.66f, .38f), new Vector2(.36f, .3f) })
-                MinimapEnemy(view.MinimapArea, p);
-            Image player = Mark(view.MinimapArea, "Герой", UiTheme.Current.Arrow, Role.Text, 1f, new Vector2(.5f, .5f), Vector2.zero, 20f);
-            player.rectTransform.localEulerAngles = new Vector3(0f, 0f, -24f);
+            view.MinimapMarks.Preview(
+                new[] { new Vector3(.78f, .2f, 4f), new Vector3(.95f, .6f, 5f), new Vector3(.28f, .78f, HudMinimapMarks.AlchemistMark) },
+                new[] { new Vector2(.32f, .38f), new Vector2(.6f, .3f), new Vector2(.66f, .62f), new Vector2(.36f, .7f) },
+                new Vector2(.5f, .5f), 24f, 2);
         }
 
         static void SetFill(RectTransform fill, float ratio) => fill.anchorMax = new Vector2(ratio, fill.anchorMax.y);

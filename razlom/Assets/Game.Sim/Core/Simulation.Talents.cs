@@ -60,6 +60,8 @@ namespace Game.Sim
         /// </summary>
         private void EnsureTalentBuffers()
         {
+            EnsureUpgradeBuffers();
+            EnsureArtifactBuffers();
             if (_igniteUntil != null) return;
             _igniteUntil = new int[Entities.Capacity];
             _ignitePulseDamage = new int[Entities.Capacity];
@@ -181,7 +183,8 @@ namespace Game.Sim
         private void DropBlazeTrail(int entity)
         {
             if (entity != PlayerId || (ForcedMotionKind)Entities.ForcedKind[entity] != ForcedMotionKind.Roll) return;
-            if (!BlazeActive || !BuildHas(_blazeSlot, AbilityFlag.BlazeTrail, AbilityDefinition.BlazeId)) return;
+            bool talent = BlazeActive && BuildHas(_blazeSlot, AbilityFlag.BlazeTrail, AbilityDefinition.BlazeId);
+            if (!talent) return;
             if (Tick - _trailLastDropTick < 2) return;
 
             _trailLastDropTick = Tick;
@@ -308,7 +311,7 @@ namespace Game.Sim
         public bool SquallShielded
             => _chainHopsLeft > 0 && BuildHas(_chainSlot, AbilityFlag.SquallInvulnerable, AbilityDefinition.ChainStepId);
 
-        private bool PlayerImmune => PlayerInvulnerable || SquallShielded;
+        private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields;
 
         private void TalentOnKill(int target, int killer, int slot)
         {

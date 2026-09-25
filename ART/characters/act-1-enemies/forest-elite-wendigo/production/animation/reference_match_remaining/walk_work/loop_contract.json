@@ -1,0 +1,25 @@
+{
+  "source_frames": [
+    36,
+    84
+  ],
+  "cycle_frames": 48,
+  "fps": 24,
+  "stride_metres": 1.8,
+  "travel_source": [
+    0.7103027643915122,
+    0.3753105973482604,
+    0.0
+  ],
+  "root_motion": "removed; simulation moves model",
+  "stance": {
+    "R": [
+      36,
+      66
+    ],
+    "L": [
+      12,
+      42
+    ]
+  }
+}

@@ -77,6 +77,12 @@ namespace Game.View
         private bool _whirlwindContactPending;
         private int _cleaveVfxCast = -1;
         private bool _cleaveGroundPlayed;
+        /// <summary>Слот каста Рассекающего: по нему читаются таланты сборки (веер, волна, двойной замах).</summary>
+        private int _cleaveVfxSlot = -1;
+        private int _cleaveContactTick = -1, _cleaveEchoTick = -1;
+        /// <summary>«Волна клинка»: линия раскола уходит на столько же дальше клинка, сколько бьёт Sim.</summary>
+        private const float CleaveWaveMeters = 3f;
+        private const float CleaveFanDegrees = 35f;
         private float _whirlwindContactDelay;
         // Блик на острие перед контактом: «вдох» за 0.13 с до удара.
         private bool _whirlwindGlintPending;
@@ -88,11 +94,38 @@ namespace Game.View
         // Импульсы удержания: у Sim нет события импульса, он бьёт каждые
         // WhirlwindPulseTicks после контакта, пока WhirlwindChanneling.
         private float _whirlwindNextPulseTick = -1f;
+        private bool _whirlwindPulseSoundPlayed;
+        private const float WhirlwindPulseSoundLead = 0.08f;
         private CombatAudio _audio;
         private const float WhirlwindGlintLead = 0.13f;
         // Стоп-кадр контакта Вихря: поза героя и задетых мобов держится, Sim идёт.
         private const float WhirlwindHoldSeconds = 0.07f;
         private const float WhirlwindCrowdHoldSeconds = 0.09f;
+
+        // «Раскол» (целевой кадр 24.09): серп-билборд от макушки до земли,
+        // линия раскола по земле вперёд, звезда на теле, стоп-кадр цели.
+        private const float CleaveHoldSeconds = 0.08f;
+        // Серп проходит через цель на досягаемости клинка: центр почти на герое,
+        // радиус — досягаемость, верх хвоста высоко над головой, острие у ног.
+        private const float CleaveSplitForward = 0.45f;
+        private const float CleaveSplitHeight = 1.15f;
+        private const float CleaveSplitTowardCamera = 0.7f;
+        /// <summary>
+        /// Серп от макушки до земли, а не втрое выше героя: 1,2 давало 3,6 м
+        /// (владелец 25.09: «непропорционально огромный»), .75 — около 2,2 м на
+        /// базовой досягаемости, с «Длинным клинком» растёт сам.
+        /// </summary>
+        private const float CleaveSplitScale = .75f;
+        /// <summary>
+        /// Наклон плоскости серпа от плоскости экрана вокруг оси удара, град:
+        /// верх уходит от камеры, серп читается клинком, проходящим сквозь
+        /// пространство, а не наклейкой (владелец: «плоско и линейно»).
+        /// </summary>
+        private const float CleaveSplitTilt = 22f;
+        // Трещины расходятся от точки удара (две трети досягаемости), не от ног героя.
+        private const float CleaveCrackStart = 1.0f;
+        /// <summary>Линия раскола кончается там же, где урон: досягаемость + клинок + тело (владелец 25.09).</summary>
+        private const float CleaveCrackBeyond = .6f;
         private int _whirlwindHitsThisFrame;
         private Light _heroLight;
         private float _combatLightPulse;
@@ -213,6 +246,7 @@ namespace Game.View
                 // Блики перекрываются уже в первом броске; ViewPool сам создаёт только один экземпляр.
                 if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding
                     || entry.Id == PelagVfxId.FootstepDust || entry.Id == PelagVfxId.WhirlwindHit
+                    || entry.Id == PelagVfxId.WhirlwindRing
                     || entry.Id == PelagVfxId.ChainStepDash || entry.Id == PelagVfxId.ChainStepHit
                     || entry.Id == PelagVfxId.ChainStepFinish
                     || entry.Id == PelagVfxId.CleaveHit || entry.Id == PelagVfxId.CleaveSlash
@@ -261,7 +295,7 @@ namespace Game.View
             float radius = Mathf.Lerp(4.2f, 6.1f, peak);
             float shaderIntensity = Mathf.Lerp(0.15f, 2.85f, peak);
             Color shaderColor = Color.Lerp(new Color(1.00f, 0.23f, 0.035f, 1f),
-                new Color(.74f, .84f, 1f, 1f), _cleaveLightPulse) * shaderIntensity;
+                new Color(1f, .62f, .30f, 1f), _cleaveLightPulse) * shaderIntensity;
 
             Shader.SetGlobalVector(HeroLightPositionId,
                 new Vector4(position.x, position.y, position.z, radius));
@@ -316,7 +350,7 @@ namespace Game.View
                 {
                     StopCleaveSlash();
                     CancelActiveAnchorMotionForReplacement();
-                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                     for (int effect = 0; effect < _active.Length; effect++) Release(effect);
                     continue;
                 }
@@ -352,7 +386,7 @@ namespace Game.View
                 else if (e.Type == SimEventType.Attack)
                 {
                     CancelActiveAnchorMotionForReplacement();
-                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+                    _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                     // Animator уже запускает ArenaView. Здесь начинается только
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
                     BeginGameplayAttackMotion(e.Target);
@@ -402,6 +436,22 @@ namespace Game.View
                         PlayWhirlwindImpact(e.Target, e.Position);
                         if (!CaptureRig.NoVfx)
                             _arena.HoldEntityPose(e.Target, WhirlwindHoldFor(_whirlwindHitsThisFrame));
+                    }
+                    if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId
+                        && e.DamageKind == DamageType.Physical)
+                    {
+                        PlayCleaveImpact(e.Target, e.Position);
+                        if (!CaptureRig.NoVfx) _arena.HoldEntityPose(e.Target, CleaveHoldSeconds);
+                        // «Двойной замах»: Sim бьёт те же цели ещё раз через 0,3 с после
+                        // контакта — малый серп по направлению на цель, один на тик.
+                        Simulation echoSim = _driver.Sim;
+                        if (!CaptureRig.NoVfx && _cleaveContactTick >= 0 && echoSim.Tick >= _cleaveContactTick + 6 && _cleaveEchoTick != echoSim.Tick)
+                        {
+                            _cleaveEchoTick = echoSim.Tick;
+                            Vector3 toTarget = new Vector3(e.Position.X.ToFloat(), 0f, e.Position.Y.ToFloat()) - PlayerPosition();
+                            toTarget.y = 0f;
+                            PlayCleaveSplit(echoSim, toTarget.sqrMagnitude > .01f ? toTarget.normalized : CleaveForward(echoSim), .6f);
+                        }
                     }
                     // Огненная добавка «Ладно смазал» приходит отдельным ударом
                     // с типом Fire — по нему и рисуется вспышка на цели.
@@ -499,12 +549,155 @@ namespace Game.View
             if (!_cleaveGroundPlayed && tick >= sim.CleaveContactTick)
             {
                 _cleaveGroundPlayed = true;
-                // The imported ground explosion was a gray radial rock cloud.
-                // The sword's own contact cut now carries this beat.
-                if (!CaptureRig.NoVfx) _cleaveLightPulse = .85f;
-                if (!CaptureRig.NoVfx) _juice?.PunchCamera(.27f, .055f);
+                // «Раскол»: серп, линия раскола и щепки идут по тику контакта,
+                // даже при промахе; звезда удара — только по Damage.
+                _cleaveContactTick = sim.CleaveContactTick;
+                if (!CaptureRig.NoVfx)
+                {
+                    // Таланты сборки: «Тройной веер» — серп и линия на каждое из трёх
+                    // направлений (центр, ±35°, как в Sim); «Волна клинка» — линия
+                    // раскола уходит на 3 м дальше клинка, куда бьёт волна.
+                    AbilityBuild build = (uint)_cleaveVfxSlot < Simulation.AbilitySlots ? sim.GetAbility(_cleaveVfxSlot) : null;
+                    int directions = build != null && build.Has(AbilityFlag.CleaveFan) ? 3 : 1;
+                    float beyond = build != null && build.Has(AbilityFlag.CleaveWave) ? CleaveCrackBeyond + CleaveWaveMeters : CleaveCrackBeyond;
+                    for (int d = 0; d < directions; d++)
+                    {
+                        Vector3 forward = CleaveFanForward(sim, d);
+                        PlayCleaveSplit(sim, forward, 1f);
+                        PlayCleaveCrack(sim, forward, beyond);
+                    }
+                    _cleaveLightPulse = .85f;
+                    _juice?.PunchCamera(.34f, .07f);
+                }
                 if (CaptureRig.HasEnemyOverride) Debug.Log($"[cleave-contact] tick={tick:F2}");
             }
+        }
+
+        /// <summary>Направление удара в мире: Sim держит его на всё время замаха.</summary>
+        private static Vector3 CleaveForward(Simulation sim)
+        {
+            FixVec2 aim = sim.CleaveDirection;
+            var forward = new Vector3(aim.X.ToFloat(), 0f, aim.Y.ToFloat());
+            return forward.sqrMagnitude > .001f ? forward.normalized : Vector3.forward;
+        }
+
+        /// <summary>
+        /// Серп — билборд, поэтому его видимая дальность по земле зависит от
+        /// направления удара: вверх по экрану кончик кажется на 2,8 м, к камере —
+        /// на 1 м. Масштаб подбирается так, чтобы спроецированный на землю кончик
+        /// внешнего обода касался центра самой дальней достижимой цели
+        /// (Radius + Width + радиус тела) — «дальность урона совпадает с
+        /// дальностью VFX» (владелец 25.09). Проекция вдоль взгляда орто-камеры
+        /// линейна, поэтому масштаб решается одним делением; зажат, чтобы к
+        /// камере серп не раздувался вдвое.
+        /// </summary>
+        private static float FitCleaveSplitToReach(Simulation sim, Camera camera, Vector3 center, Quaternion rotation, Vector3 forward, float authored)
+        {
+            Vector3 view = camera.transform.forward;
+            if (view.y > -.05f) return authored;
+            float target = CleaveReach(sim) + CleaveWidth(sim) + EntityStore.DefaultBodyRadius.ToFloat();
+            Vector3 player = center - forward * CleaveSplitForward;
+            Vector3 Ground(Vector3 w) => w + view * (-w.y / view.y);
+            float baseReach = Vector3.Dot(Ground(center) - player, forward);
+            float rim = 0f;
+            for (int i = 0; i <= 12; i++)
+            {
+                float t = Mathf.Lerp(-Mathf.PI * .5f, Mathf.PI * .5f, i / 12f);
+                Vector3 point = center + rotation * new Vector3(Mathf.Cos(t), Mathf.Sin(t), 0f);
+                rim = Mathf.Max(rim, Vector3.Dot(Ground(point) - Ground(center), forward));
+            }
+            if (rim < .05f) return authored;
+            float fitted = (target - baseReach) / rim;
+            return Mathf.Clamp(fitted, authored * .7f, authored * 1.6f);
+        }
+
+        private static float CleaveWidth(Simulation sim)
+        {
+            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+            {
+                AbilityBuild ability = sim.GetAbility(slot);
+                if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId)
+                    return ability.Get(AbilityStatType.Width).ToFloat();
+            }
+            return .15f;
+        }
+
+        private static float CleaveReach(Simulation sim)
+        {
+            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+            {
+                AbilityBuild ability = sim.GetAbility(slot);
+                if (ability != null && ability.DefinitionId == AbilityDefinition.CleaveId)
+                    return ability.Get(AbilityStatType.Radius).ToFloat();
+            }
+            return 1.5f;
+        }
+
+        /// <summary>
+        /// Серп «Раскола»: плоский экранный силуэт от макушки до земли.
+        /// Билборд к камере — вертикальная плоскость вдоль удара при взгляде
+        /// вдоль неё схлопнулась бы в линию. Поворот в плоскости экрана — по
+        /// проекции направления удара: выпуклость смотрит от героя к цели.
+        /// </summary>
+        private Vector3 CleaveFanForward(Simulation sim, int direction)
+        {
+            Vector3 forward = CleaveForward(sim);
+            if (direction == 0) return forward;
+            // Sim: индекс 1 — поворот от X к Y на +35°; в Unity (Y = Z, левая тройка) это −35° вокруг оси вверх.
+            return Quaternion.AngleAxis(direction == 1 ? -CleaveFanDegrees : CleaveFanDegrees, Vector3.up) * forward;
+        }
+
+        /// <param name="forward">Направление серпа по земле (для веера — своё на каждый).</param>
+        /// <param name="size">Доля от полного размера: «Двойной замах» рисует малый серп на цели.</param>
+        private void PlayCleaveSplit(Simulation sim, Vector3 forward, float size)
+        {
+            if (!TryAcquire(PelagVfxId.CleaveSlash, out GameObject go, out PelagVfxElement element)) return;
+            Camera camera = Camera.main;
+            Vector3 center = PlayerPosition() + forward * CleaveSplitForward + Vector3.up * CleaveSplitHeight;
+            Quaternion rotation = Quaternion.identity;
+            if (camera != null)
+            {
+                Vector3 a = camera.WorldToScreenPoint(center);
+                Vector3 b = camera.WorldToScreenPoint(center + forward);
+                float angle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
+                rotation = camera.transform.rotation * Quaternion.Euler(0f, 0f, angle) * Quaternion.Euler(CleaveSplitTilt, 0f, 0f);
+                center += (camera.transform.position - center).normalized * CleaveSplitTowardCamera;
+            }
+            float scale = (element.AuthoredRadius > 0f ? CleaveReach(sim) * CleaveSplitScale / element.AuthoredRadius : 1f) * size;
+            if (camera != null && camera.orthographic) scale = FitCleaveSplitToReach(sim, camera, center, rotation, forward, scale);
+            int index = ReserveActive();
+            element.Begin(center, rotation);
+            go.transform.localScale = Vector3.one * scale;
+            // Частицы серпа читают масштаб корня при рождении — запускаются после него.
+            element.Crack?.Begin(0f);
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.CleaveSlash, Object = go, Element = element,
+                Duration = element.DefaultLifetime, Start = center, End = center,
+                Motion = Motion.Static, FollowIndex = -1
+            };
+            if (CaptureRig.HasEnemyOverride)
+                Debug.Log($"[cleave-split] scale={scale:F2} view={(element.Crack != null)} center={center.ToString("F2")} rot={rotation.eulerAngles.ToString("F1")}");
+        }
+
+        /// <summary>Линия раскола: лежит на земле от ног героя вперёд по удару, длиной в досягаемость с запасом.</summary>
+        private void PlayCleaveCrack(Simulation sim, Vector3 forward, float beyond)
+        {
+            if (!TryAcquire(PelagVfxId.CleaveGround, out GameObject go, out PelagVfxElement element)) return;
+            Vector3 origin = PlayerPosition() + forward * CleaveCrackStart + Vector3.up * .04f;
+            // Меш лежит в XY вдоль +X: местная +Z смотрит вверх, +X — по удару.
+            Quaternion rotation = Quaternion.LookRotation(Vector3.up, Vector3.Cross(Vector3.up, forward));
+            int index = ReserveActive();
+            element.Begin(origin, rotation);
+            element.Crack?.Begin(CleaveReach(sim) + beyond - CleaveCrackStart);
+            if (CaptureRig.HasEnemyOverride)
+                Debug.Log($"[cleave-crack] view={(element.Crack != null)} origin={origin.ToString("F2")} right={go.transform.right.ToString("F2")}");
+            _active[index] = new ActiveFx
+            {
+                Active = true, Id = PelagVfxId.CleaveGround, Object = go, Element = element,
+                Duration = element.DefaultLifetime, Start = origin, End = origin,
+                Motion = Motion.Static, FollowIndex = -1
+            };
         }
 
         private void PlayCleaveImpact(int targetEntity, FixVec2 fallback)
@@ -520,11 +713,19 @@ namespace Game.View
             }
             // The pack's view-aligned mesh must sit in front of the target surface.
             Camera camera = Camera.main;
-            if (camera != null) position += (camera.transform.position - position).normalized * .35f;
+            // Звезда лежит поверх серпа (тот подтянут к камере на .7): ближе него.
+            if (camera != null) position += (camera.transform.position - position).normalized * .95f;
             int index = ReserveActive();
-            element.Begin(position, _pools[(int)PelagVfxId.CleaveHit].AuthoredRotation);
+            // Искры уходят по ходу клинка: вперёд по удару и вниз. Авторский
+            // префаб «Раскола» несёт свой масштаб, старый крест домножается.
+            Simulation sim = _driver.Sim;
+            bool authored = element.AuthoredRadius > 0f;
+            Quaternion facing = authored && sim != null && sim.CleaveActive
+                ? Quaternion.LookRotation(CleaveForward(sim) + Vector3.down * .7f)
+                : _pools[(int)PelagVfxId.CleaveHit].AuthoredRotation;
+            element.Begin(position, facing);
             // Контакт одного тяжёлого удара должен перекрывать корпус цели, а не теряться у ног.
-            go.transform.localScale *= _cleaveImpactScale;
+            if (!authored) go.transform.localScale *= _cleaveImpactScale;
             _active[index] = new ActiveFx
             {
                 Active = true, Id = PelagVfxId.CleaveHit, Object = go, Element = element,
@@ -707,7 +908,7 @@ namespace Game.View
             _motionAbility = PelagVfxShowcase.None;
             _captureMotion = false;
             _attackMotionTime = -1f;
-            _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+            _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
         }
 
         private void UpdateShowcase()
@@ -867,37 +1068,18 @@ namespace Game.View
 
         private void UpdateWhirlwindContact()
         {
-            if (_whirlwindContactTick >= 0f && _driver.Sim != null && (_whirlwindGlintPending || _whirlwindContactPending))
+            if (_whirlwindContactTick >= 0f && _driver.Sim != null)
             {
+                // Игровой каст: блик, контакт и импульсы удержания по тикам Sim.
                 float now = _driver.Sim.Tick - 1 + _driver.Alpha;
                 if (_whirlwindGlintPending && now >= _whirlwindContactTick - WhirlwindGlintLead * Simulation.TicksPerSecond)
                     PlayWhirlwindGlint();
                 if (_whirlwindContactPending && now >= _whirlwindContactTick)
-                {
                     PlayWhirlwindContact();
-                    _whirlwindNextPulseTick = _whirlwindContactTick + Simulation.WhirlwindPulseTicks;
-                }
+                UpdateWhirlwindChannelPulses(now);
                 return;
             }
-            UpdateWhirlwindChannelPulses();
-        }
-
-        /// <summary>
-        /// Удержание: каждый оборот Sim получает тот же серп, вспышку и свист,
-        /// что и первый контакт. Стоп-кадр и удары по целям приходят от Damage.
-        /// </summary>
-        private void UpdateWhirlwindChannelPulses()
-        {
-            if (_whirlwindNextPulseTick < 0f || _driver.Sim == null) return;
-            float now = _driver.Sim.Tick - 1 + _driver.Alpha;
-            // На тике контакта удержание только начинается: судить по флагу можно со следующего.
-            if (now < _whirlwindContactTick + 1f) return;
-            if (!_driver.Sim.WhirlwindChanneling) { _whirlwindNextPulseTick = -1f; return; }
-            if (now < _whirlwindNextPulseTick) return;
-            _whirlwindNextPulseTick += Simulation.WhirlwindPulseTicks;
-            _whirlwindContactPending = true;
-            PlayWhirlwindContact();
-            if (!CaptureRig.NoVfx) _audio?.PlayWhirlwindPulse();
+            // Витрина без Sim: прежний секундомер.
             if (_whirlwindGlintPending)
             {
                 _whirlwindGlintDelay -= Time.deltaTime;
@@ -909,10 +1091,40 @@ namespace Game.View
             PlayWhirlwindContact();
         }
 
+        /// <summary>
+        /// Удержание: каждый оборот Sim получает тот же серп, вспышку и свист,
+        /// что и первый контакт. Стоп-кадр и удары по целям приходят от Damage.
+        /// Расписание заводит сам контакт (см. PlayWhirlwindContact), потому что
+        /// контакт может прийти и от события Damage раньше тикового таймера.
+        /// </summary>
+        private void UpdateWhirlwindChannelPulses(float now)
+        {
+            if (_whirlwindNextPulseTick < 0f) return;
+            // На тике контакта удержание только начинается: судить по флагу можно со следующего.
+            if (now < _whirlwindContactTick + 1f) return;
+            if (!_driver.Sim.WhirlwindChanneling) { _whirlwindNextPulseTick = -1f; return; }
+            // Свист импульса стартует за 0,08 с до тика: его пик ложится на вспышку.
+            if (!_whirlwindPulseSoundPlayed && now >= _whirlwindNextPulseTick - WhirlwindPulseSoundLead * Simulation.TicksPerSecond)
+            {
+                _whirlwindPulseSoundPlayed = true;
+                if (!CaptureRig.NoVfx) _audio?.PlayWhirlwindPulse();
+            }
+            if (now < _whirlwindNextPulseTick) return;
+            _whirlwindNextPulseTick += Simulation.WhirlwindPulseTicks;
+            _whirlwindPulseSoundPlayed = false;
+            _whirlwindContactPending = true;
+            PlayWhirlwindContact();
+        }
+
         private void PlayWhirlwindContact()
         {
             if (!_whirlwindContactPending) return;
-            _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+            _whirlwindContactPending = false; _whirlwindGlintPending = false;
+            if (_whirlwindContactTick >= 0f && _whirlwindNextPulseTick < 0f)
+            {
+                _whirlwindNextPulseTick = _whirlwindContactTick + Simulation.WhirlwindPulseTicks;
+                _whirlwindPulseSoundPlayed = false;
+            }
 
             // The outer crescent expands from Pelag, at the blade's height.
             // Its particles fade themselves before the pooled object is released.
@@ -973,7 +1185,7 @@ namespace Game.View
             int id = build.DefinitionId;
             if (id == AbilityDefinition.SkewerId || id == AbilityDefinition.BackblastId || id == AbilityDefinition.FireFlaskId || id == AbilityDefinition.WreckId)
             {
-                CancelActiveAnchorMotionForReplacement(); _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+                CancelActiveAnchorMotionForReplacement(); _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                 if (id == AbilityDefinition.SkewerId)
                 {
                     BeginSkewerWake();
@@ -983,8 +1195,10 @@ namespace Game.View
             if (id == AbilityDefinition.CleaveId)
             {
                 CancelActiveAnchorMotionForReplacement();
-                _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f;
+                _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                 _cleaveVfxCast = sim.CleaveStartTick;
+                _cleaveVfxSlot = slot;
+                _cleaveContactTick = -1; _cleaveEchoTick = -1;
                 _cleaveGroundPlayed = false;
                 return;
             }
@@ -1451,6 +1665,7 @@ namespace Game.View
                     && fx.Age >= 0.1f && fx.Age - dt < 0.1f)
                     Debug.Log($"[footstep-particles] count={fx.Object.GetComponent<ParticleSystem>().particleCount}");
                 float t = Mathf.Clamp01(fx.Age / Mathf.Max(0.01f, fx.Duration));
+                fx.Element.Crack?.SetAge(fx.Age);
 
                 switch (fx.Motion)
                 {

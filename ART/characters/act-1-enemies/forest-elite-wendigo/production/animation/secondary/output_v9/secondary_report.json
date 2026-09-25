@@ -1,0 +1,79 @@
+{
+  "source_rig": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\rig\\ForestWendigo_Rig.blend",
+  "source_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\secondary\\output_v9\\Wendigo_Secondary_Actions.blend",
+  "fps": 30,
+  "mesh_triangles": 24636,
+  "actions": [
+    {
+      "name": "AN_ForestWendigo_Idle",
+      "frames": [
+        0,
+        60
+      ],
+      "loop": true
+    },
+    {
+      "name": "AN_ForestWendigo_Walk",
+      "frames": [
+        0,
+        12
+      ],
+      "loop": true
+    },
+    {
+      "name": "AN_ForestWendigo_Hit",
+      "frames": [
+        0,
+        14
+      ],
+      "loop": false
+    },
+    {
+      "name": "AN_ForestWendigo_Death",
+      "frames": [
+        0,
+        45
+      ],
+      "loop": false
+    }
+  ],
+  "root_motion": "none",
+  "walk_stance_distance_m": 0.84,
+  "walk_stance_duration_frames": 7.199999999999999,
+  "walk_stance_equivalent_speed_mps": 3.5000000000000004,
+  "review_frames": {
+    "Idle": [
+      0,
+      15,
+      30,
+      45,
+      60
+    ],
+    "Walk": [
+      0,
+      2,
+      3,
+      4,
+      6,
+      8,
+      9,
+      11,
+      12
+    ],
+    "Hit": [
+      0,
+      4,
+      7,
+      11,
+      14
+    ],
+    "Death": [
+      0,
+      8,
+      17,
+      27,
+      35,
+      45
+    ]
+  }
+}

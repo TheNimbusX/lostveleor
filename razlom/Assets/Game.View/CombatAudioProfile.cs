@@ -10,7 +10,8 @@ namespace Game.View
         GuardianFall, RootSwarmHit, RootSwarmKill, RootSwarmFall, RootSwarmDissolve,
         EnemyWarning, PlayerHurt, CycloneRelease,
         WhooshHeavy, CycloneTurn, WhirlwindEnd, ChainStepHop, ChainStepEnd,
-        PelagAttack, Cleave, Dash, BlazePrepare, BlazeFire, Finisher, Count
+        PelagAttack, Cleave, Dash, BlazePrepare, BlazeFire, Finisher,
+        WhirlwindPulse, WhirlwindHit, Count
     }
 
     [Serializable]

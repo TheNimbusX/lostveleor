@@ -121,7 +121,10 @@ namespace Game.Sim
         {
             Hashing.Mix(ref hash, DefinitionId);
             for (int i = 0; i < StatCount; i++) Hashing.Mix(ref hash, _stats[i]);
-            Hashing.Mix(ref hash, (int)Flags);
+            Hashing.Mix(ref hash, (int)(uint)(ulong)Flags);
+            // Старшая половина флагов — усиления 6–8; пустая не меняет прежний хеш.
+            uint high = (uint)((ulong)Flags >> 32);
+            if (high != 0) Hashing.Mix(ref hash, (int)high);
 
             for (int s = 0; s < StageCount; s++)
             {

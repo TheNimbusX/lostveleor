@@ -29,7 +29,9 @@ public sealed class PelagAudioImport : AssetPostprocessor
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
         var profile = AssetDatabase.LoadAssetAtPath<CombatAudioProfile>("Assets/Resources/Combat/CombatAudio.asset");
-        if (profile == null || profile.PelagAudioRevision >= 1) return;
+        if (profile == null) return;
+        InstallWhirlwindSet(profile);
+        if (profile.PelagAudioRevision >= 1) return;
         string[] names = { "Attack_01", "Attack_02", "Attack_03", "Attack_04", "Attack_05", "Cleave", "Dash", "Whirlwind", "BlazePrepare", "BlazeFire", "Finisher" };
         var clips = new AudioClip[names.Length];
         for (int i = 0; i < names.Length; i++)
@@ -50,6 +52,35 @@ public sealed class PelagAudioImport : AssetPostprocessor
         EditorUtility.SetDirty(profile);
         AssetDatabase.SaveAssets();
         Debug.Log("[PelagAudio] Installed 11 prepared clips from 7 owner recordings.");
+    }
+
+    /// <summary>
+    /// Набор Вихря из записей Epidemic Sound владельца (24 сентября): каст с
+    /// пиком на 0,21 с, три импульса удержания, три удара по толпе, конец.
+    /// Ревизия 2 — ставится один раз, дальнейшее сведение в Inspector не трогается.
+    /// </summary>
+    static void InstallWhirlwindSet(CombatAudioProfile profile)
+    {
+        // Ревизия 4 (24.09): сведение v3 — семья сабли (Attack_01..05 + HitBody/HitMetal),
+        // низ из Epidemic только для веса; конец Вихря без звука.
+        if (profile.PelagAudioRevision >= 4) return;
+        AudioClip Load(string name) => AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Resources/Audio/Combat/Pelag/" + name + ".wav");
+        var cast = new[] { Load("Whirlwind_01"), Load("Whirlwind_02") };
+        var pulse = new[] { Load("WhirlwindPulse_01"), Load("WhirlwindPulse_02"), Load("WhirlwindPulse_03") };
+        var hit = new[] { Load("WhirlwindHit_01"), Load("WhirlwindHit_02"), Load("WhirlwindHit_03") };
+        foreach (var clip in cast) if (clip == null) return;
+        foreach (var clip in pulse) if (clip == null) return;
+        foreach (var clip in hit) if (clip == null) return;
+        var entries = new List<CombatSoundEntry>(profile.Sounds);
+        Set(entries, CombatSound.Whirlwind, cast, 1.4f, .02f, 65);
+        Set(entries, CombatSound.WhirlwindPulse, pulse, 1.25f, .03f, 60);
+        Set(entries, CombatSound.WhirlwindHit, hit, 1.3f, .03f, 72);
+        Set(entries, CombatSound.WhirlwindEnd, System.Array.Empty<AudioClip>(), .8f, .02f, 50);
+        profile.Sounds = entries.ToArray();
+        profile.PelagAudioRevision = 4;
+        EditorUtility.SetDirty(profile);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[PelagAudio] Whirlwind set installed: 2 casts, 3 pulses, 3 hits, no end cue.");
     }
 
     static void Set(List<CombatSoundEntry> entries, CombatSound sound, AudioClip[] clips, float gain, float variation, int priority)

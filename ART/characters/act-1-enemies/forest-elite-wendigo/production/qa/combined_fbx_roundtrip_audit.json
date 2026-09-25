@@ -1,0 +1,386 @@
+{
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-elite-wendigo\\production\\animation\\ForestWendigo_Animated.fbx",
+  "file_bytes": 2233292,
+  "geometry": {
+    "triangles": 24636,
+    "meshes": [
+      {
+        "name": "SM_ForestWendigo_LOD0",
+        "vertices": 12361,
+        "triangles": 24636,
+        "object_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "materials": [
+          "tripo_material_b40452ee-ecaf-4092-9ff1-bd2b239158b6"
+        ],
+        "unweighted_vertices": 0,
+        "vertices_over_four_influences": 0
+      }
+    ],
+    "bounds_min_m": [
+      -0.7896,
+      -1.0182,
+      0.0
+    ],
+    "bounds_max_m": [
+      0.7891,
+      1.0182,
+      3.1
+    ],
+    "height_m": 3.1
+  },
+  "armature": {
+    "name": "ARM_ForestWendigo",
+    "object_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "bone_count": 22,
+    "deform_bone_count": 22,
+    "bone_names": [
+      "root",
+      "pelvis",
+      "spine_01",
+      "spine_02",
+      "neck",
+      "head",
+      "L_clavicle",
+      "L_arm_upper",
+      "L_arm_lower",
+      "L_hand",
+      "R_clavicle",
+      "R_arm_upper",
+      "R_arm_lower",
+      "R_hand",
+      "L_leg_upper",
+      "L_leg_lower",
+      "L_foot",
+      "L_toe",
+      "R_leg_upper",
+      "R_leg_lower",
+      "R_foot",
+      "R_toe"
+    ],
+    "control_bones": [],
+    "blender_default_import_connected_bones": [
+      "pelvis",
+      "spine_02",
+      "head",
+      "L_arm_upper",
+      "L_arm_lower",
+      "L_hand",
+      "R_arm_upper",
+      "R_arm_lower",
+      "R_hand",
+      "L_leg_lower",
+      "L_foot",
+      "L_toe",
+      "R_leg_lower",
+      "R_foot",
+      "R_toe"
+    ],
+    "qa_disconnected_bones_in_memory_for_pose_comparison": true
+  },
+  "actions": [
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Claw",
+      "contract_name": "AN_ForestWendigo_Claw",
+      "frame_range": [
+        1.0,
+        31.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 31,
+      "fcurve_path_count": 69,
+      "scale_key_count": 2139,
+      "max_scale_error": 4e-06,
+      "event_pose_error": {
+        "max_joint_error_m": 0.0,
+        "per_joint_error_m": {
+          "pelvis": 0.0,
+          "head": 0.0,
+          "L_hand": 0.0,
+          "R_hand": 0.0,
+          "L_foot": 0.0,
+          "R_foot": 0.0
+        }
+      },
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        31,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": 18,
+      "event_imported_absolute_frame": 19,
+      "event_joints_m": {
+        "pelvis": [
+          0.0,
+          0.0,
+          0.99
+        ],
+        "head": [
+          0.2629,
+          0.4482,
+          1.8594
+        ],
+        "L_hand": [
+          0.27,
+          1.18,
+          0.78
+        ],
+        "R_hand": [
+          0.427,
+          -0.443,
+          1.2281
+        ],
+        "L_foot": [
+          -0.6,
+          0.39,
+          0.285
+        ],
+        "R_foot": [
+          0.48,
+          -0.51,
+          0.24
+        ]
+      }
+    },
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Death",
+      "contract_name": "AN_ForestWendigo_Death",
+      "frame_range": [
+        1.0,
+        46.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 46,
+      "fcurve_path_count": 69,
+      "scale_key_count": 3174,
+      "max_scale_error": 4e-06,
+      "event_pose_error": null,
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        46,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": null,
+      "event_imported_absolute_frame": null,
+      "event_joints_m": null
+    },
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Hit",
+      "contract_name": "AN_ForestWendigo_Hit",
+      "frame_range": [
+        1.0,
+        15.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 15,
+      "fcurve_path_count": 69,
+      "scale_key_count": 1035,
+      "max_scale_error": 4e-06,
+      "event_pose_error": null,
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        15,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": null,
+      "event_imported_absolute_frame": null,
+      "event_joints_m": null
+    },
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Idle",
+      "contract_name": "AN_ForestWendigo_Idle",
+      "frame_range": [
+        1.0,
+        61.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 61,
+      "fcurve_path_count": 69,
+      "scale_key_count": 4209,
+      "max_scale_error": 4e-06,
+      "event_pose_error": null,
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        61,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": null,
+      "event_imported_absolute_frame": null,
+      "event_joints_m": null
+    },
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Leap",
+      "contract_name": "AN_ForestWendigo_Leap",
+      "frame_range": [
+        1.0,
+        52.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 52,
+      "fcurve_path_count": 69,
+      "scale_key_count": 3588,
+      "max_scale_error": 4e-06,
+      "event_pose_error": {
+        "max_joint_error_m": 0.0,
+        "per_joint_error_m": {
+          "pelvis": 0.0,
+          "head": 0.0,
+          "L_hand": 0.0,
+          "R_hand": 0.0,
+          "L_foot": 0.0,
+          "R_foot": 0.0
+        }
+      },
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        52,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": 33,
+      "event_imported_absolute_frame": 34,
+      "event_joints_m": {
+        "pelvis": [
+          0.0,
+          0.14,
+          0.73
+        ],
+        "head": [
+          0.0,
+          0.7974,
+          1.4289
+        ],
+        "L_hand": [
+          -0.72,
+          1.1,
+          0.71
+        ],
+        "R_hand": [
+          0.6517,
+          0.1251,
+          0.8016
+        ],
+        "L_foot": [
+          -0.6,
+          0.39,
+          0.2899
+        ],
+        "R_foot": [
+          0.48,
+          -0.51,
+          0.27
+        ]
+      }
+    },
+    {
+      "name": "ARM_ForestWendigo|ARM_ForestWendigo|AN_ForestWendigo_Walk",
+      "contract_name": "AN_ForestWendigo_Walk",
+      "frame_range": [
+        1.0,
+        13.0
+      ],
+      "frame_origin_offset": 1.0,
+      "keyed_frame_count": 13,
+      "fcurve_path_count": 69,
+      "scale_key_count": 897,
+      "max_scale_error": 5e-06,
+      "event_pose_error": null,
+      "root_max_xy_delta_m": 0.0,
+      "root_start": [
+        1,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "root_end": [
+        13,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "event_relative_frame": null,
+      "event_imported_absolute_frame": null,
+      "event_joints_m": null
+    }
+  ],
+  "issues": [
+    {
+      "severity": "warn",
+      "code": "blender_importer_connects_translated_bones",
+      "connected_bones": [
+        "pelvis",
+        "spine_02",
+        "head",
+        "L_arm_upper",
+        "L_arm_lower",
+        "L_hand",
+        "R_arm_upper",
+        "R_arm_lower",
+        "R_hand",
+        "L_leg_lower",
+        "L_foot",
+        "L_toe",
+        "R_leg_lower",
+        "R_foot",
+        "R_toe"
+      ],
+      "note": "Local translation curves are present; in-memory disconnect is required to compare poses. Unity importer must be checked separately."
+    }
+  ],
+  "issue_counts": {
+    "fail": 0,
+    "warn": 1,
+    "note": 0
+  },
+  "roundtrip_pass": true,
+  "limits": [
+    "Blender roundtrip verifies FBX contents, not Unity's importer settings or game-frame contact timing.",
+    "Material appearance and Animation Controller transitions require an in-engine stage-4 check."
+  ]
+}

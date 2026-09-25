@@ -80,3 +80,5 @@ wc_rarity_bg_common 0 0 0 0 100
 wc_rarity_bg_rare 0 0 0 0 100
 wc_rarity_bg_epic 0 0 0 0 100
 wc_rarity_bg_unique 0 0 0 0 100
+wc_plate_fill 48 20 48 20 200
+wc_plate_frame 48 20 48 20 200

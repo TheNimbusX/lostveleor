@@ -244,6 +244,8 @@ namespace Game.View
             // закрытие этой паузы сняло бы паузу самого меню.
             if (MainMenuView.IsOpen && !_open) return;
             if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame==Time.frameCount) return;
+            // Escape в вопросе «Заменить артефакт?» — «Оставить», а не пауза.
+            if (!_open && (RunHud.ReplaceOpen || RunHud.ReplaceClosedFrame == Time.frameCount)) return;
             if (_displayPreviewActive && Time.unscaledTime >= _displayConfirmationDeadline)
                 CancelDisplayPreview("Изменения экрана отменены: время подтверждения истекло.");
 
@@ -274,7 +276,8 @@ namespace Game.View
         private static bool EscapePressed()
         {
 #if ENABLE_INPUT_SYSTEM
-            return Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+            return (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 #else
             return Input.GetKeyDown(KeyCode.Escape);
 #endif
@@ -717,9 +720,9 @@ namespace Game.View
                 v.AbilityLayout.SetSelected(GameUserSettings.WasdMovement ? 1 : 0);
             }
             PauseMenuView.SetText(v.ControlsHint, _waitingBinding >= 0
-                ? "Нажмите клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "» · ESC — отмена"
+                ? "Нажми клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "» · Esc — отмена"
                 : UiHint.Current ?? (!string.IsNullOrEmpty(_bindingStatus) ? _bindingStatus
-                : (GameUserSettings.WasdMovement ? "WASD — движение · мышь — прицел · 1–4 — навыки · Space — кувырок. Нажмите на клавишу для переназначения." : "ПКМ — движение · ЛКМ — атака. Нажмите на клавишу справа для переназначения.")));
+                : (GameUserSettings.WasdMovement ? "WASD — движение · мышь — прицел · 1–4 — способности · " + GameKeyBindings.Label(GameAction.Dash) + " — кувырок. Нажми на клавишу, чтобы переназначить." : "ПКМ — движение · ЛКМ — атака. Нажми на клавишу справа, чтобы переназначить.")));
             for (int i = 0; i < _bindingRows.Length; i++)
             {
                 var action = (GameAction)i;
@@ -913,8 +916,12 @@ namespace Game.View
 
             DrawSectionTitle(x, y, "ОСТАЛЬНОЕ");
             y += 60f;
-            DrawKeyRow(x, ref y, "Идти · атаковать", "ПКМ · ЛКМ");
-            DrawKeyRow(x, ref y, "Выбрать награду", letters ? "Q · W · E" : "1 · 2 · 3");
+            DrawKeyRow(x, ref y, "Идти · атаковать",
+                GameUserSettings.WasdMovement ? "WASD · ЛКМ" : "ПКМ · ЛКМ");
+            DrawKeyRow(x, ref y, "Выбрать награду",
+                GameKeyBindings.Label(GameAction.Ability1) + " · "
+                + GameKeyBindings.Label(GameAction.Ability2) + " · "
+                + GameKeyBindings.Label(GameAction.Ability3));
             DrawKeyRow(x, ref y, "Уйти из Разлома с добычей", "L");
             DrawKeyRow(x, ref y, "Войти в забег", "Зайти в арку");
             DrawKeyRow(x, ref y, "Повторить забег · вернуться в лагерь", "R · C");

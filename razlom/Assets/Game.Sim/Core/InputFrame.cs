@@ -34,6 +34,8 @@ namespace Game.Sim
         /// </summary>
         NavigationTransit = 1 << 3,
         DirectMovement = 1 << 4,
+        /// <summary>Включить артефакт забега — клавиша F (24 сентября). У Лика Пустоты — и выйти из фазы.</summary>
+        UseArtifact = 1 << 5,
     }
 
     /// <summary>

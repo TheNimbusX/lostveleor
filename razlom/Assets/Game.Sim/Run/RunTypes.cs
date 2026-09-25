@@ -31,6 +31,9 @@ namespace Game.Sim
 
         /// <summary>Мини-меню над способностью с элиты: разобрать её на золото забега.</summary>
         PickupSalvage = 14,
+
+        /// <summary>Отказаться от награды босса: артефакт остаётся прежним (или его нет).</summary>
+        SkipReward = 15,
     }
 
     /// <summary>Фаза забега. Одна за раз, переходы только по правилам RiftRun.</summary>
@@ -84,8 +87,11 @@ namespace Game.Sim
         /// <summary>Способность из пула Пелага, которой у игрока нет.</summary>
         Ability = 3,
 
-        /// <summary>Следующий по порядку талант имеющейся способности.</summary>
+        /// <summary>Усиление имеющейся способности — любое ещё не взятое (с 24 сентября без порядка).</summary>
         Talent = 4,
+
+        /// <summary>Уникальный артефакт на время забега: награда босса, выбор 1 из 3.</summary>
+        Artifact = 5,
     }
 
     /// <summary>
@@ -112,6 +118,9 @@ namespace Game.Sim
         /// <summary>Номер предлагаемого таланта, с нуля. Заполнено при Kind == Talent.</summary>
         public readonly int TalentIndex;
 
+        /// <summary>Заполнено при Kind == Artifact.</summary>
+        public RunArtifact Artifact => Kind == RewardKind.Artifact ? (RunArtifact)PoolIndex : RunArtifact.None;
+
         private RewardOffer(RewardKind kind, ItemInstance item,
             StatType stat, ModifierOp op, Fix64 value, int poolIndex = -1, int talentIndex = -1)
         {
@@ -136,6 +145,10 @@ namespace Game.Sim
         public static RewardOffer OfTalent(int poolIndex, int talentIndex)
             => new RewardOffer(RewardKind.Talent, default, default, default, Fix64.Zero, poolIndex, talentIndex);
 
+        /// <summary>Артефакт хранится в PoolIndex: отдельное поле раздуло бы каждую карточку.</summary>
+        public static RewardOffer OfArtifact(RunArtifact artifact)
+            => new RewardOffer(RewardKind.Artifact, default, default, default, Fix64.Zero, (int)artifact);
+
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, (int)Kind);
@@ -156,6 +169,9 @@ namespace Game.Sim
                 case RewardKind.Talent:
                     Hashing.Mix(ref hash, PoolIndex);
                     Hashing.Mix(ref hash, TalentIndex);
+                    break;
+                case RewardKind.Artifact:
+                    Hashing.Mix(ref hash, PoolIndex);
                     break;
             }
         }

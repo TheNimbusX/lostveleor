@@ -192,7 +192,7 @@ namespace Game.View
         private bool _locomotionMoving;
         private float _orvillLocomotionPlaybackSpeed = 1f;
         private float _orvillHitPresentationUntil;
-        [SerializeField, Range(.0f, .08f)] private float _cleaveHitStop = .045f;
+        [SerializeField, Range(.0f, .08f)] private float _cleaveHitStop = .07f;
         private float _cleaveHitTick = -1f;
 
         private bool _cleaveContactConfirmed;

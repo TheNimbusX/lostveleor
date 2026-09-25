@@ -28,6 +28,7 @@ namespace Game.Sim
 
         private void ResetForestBud()
         {
+            ResetWendigo();
             Array.Clear(_forestBudAttacks, 0, _forestBudAttacks.Length);
             Array.Clear(_forestFruits, 0, _forestFruits.Length);
             _forestSerial = _forestFruitHighWater = _forestFruitActiveCount = 0;
@@ -93,6 +94,19 @@ namespace Game.Sim
             FixVec2 from = Entities.Position[id];
             Entities.Position[id] = MoveInsideLayout(id, from, Entities.Velocity[id]);
             if (Entities.Position[id].Equals(from)) Entities.Velocity[id] = FixVec2.Zero;
+        }
+
+        /// <summary>Песочные Часы: летящие плоды замирают — их падение отодвигается на время остановки.</summary>
+        private void DelayForestFruit(int ticks)
+        {
+            for (int slot = 0; slot < _forestFruitHighWater; slot++)
+            {
+                // Состояние плода — readonly struct: пересобираем со сдвинутым тиком падения.
+                ForestFruitState fruit = _forestFruits[slot];
+                if (fruit.Serial == 0) continue;
+                _forestFruits[slot] = new ForestFruitState(fruit.Serial, fruit.Source, fruit.ShotIndex, fruit.LaunchTick,
+                    fruit.ImpactTick + ticks, fruit.Origin, fruit.Target, fruit.Radius, fruit.Damage);
+            }
         }
 
         private void UpdateForestBud()

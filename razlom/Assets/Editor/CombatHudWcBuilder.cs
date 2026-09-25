@@ -106,9 +106,18 @@ namespace Game.EditorTools
             view.HealthLow = new Color32(0xFF, 0x6A, 0x4A, 0xFF);
             view.Denied = T.Accent;
             view.ArtDimmed = new Color(.5f, .5f, .54f, 1f);
-            view.TooltipGap = 16f;
+            // Над плиткой камень и ряд насечек — подсказка встаёт выше, чтобы их не закрывать.
+            view.TooltipGap = 54f;
 
             var rect = (RectTransform)root.transform;
+            // Переход между аренами: новая арена проявляется из темноты, а не вспыхивает склейкой.
+            // Ниже всего HUD — затемняется мир, полосы и карта видны.
+            var fade = Stretch(Node("Затемнение перехода", rect)).gameObject.AddComponent<Image>();
+            fade.sprite = T.Pixel;
+            fade.raycastTarget = false;
+            fade.color = new Color(.027f, .039f, .063f, 0f);
+            fade.enabled = false;
+            view.ArenaFade = fade;
             // Мягкое затемнение по низу экрана: полоса и клавиши не сливаются со светлой землёй.
             RectTransform shade = Node("Затемнение низа", rect);
             shade.anchorMin = Vector2.zero;
@@ -119,13 +128,20 @@ namespace Game.EditorTools
             var shadeImage = shade.gameObject.AddComponent<Image>();
             shadeImage.sprite = T.VeilLinear;
             shadeImage.raycastTarget = false;
-            Tint(shadeImage, Role.Veil, .6f);
+            // Вуаль темы с 25 сентября .78 (было .62): сила подобрана, чтобы низ игры не потемнел.
+            Tint(shadeImage, Role.Veil, .48f);
             BuildStrip(rect, view);
             BuildHero(rect, view);
             BuildAbilities(rect, view);
             BuildPotions(rect, view);
             BuildTooltip(rect, view);
             BuildFeedback(rect, view);
+            BuildLevelBanner(rect, view);
+            BuildBuffs(rect, view);
+            BuildToasts(rect, view);
+            BuildAnnounce(rect, view);
+            view.OrderIcons = new[] { Kit("wc_buff_resin").texture, Kit("wc_buff_surge").texture };
+            view.GoldIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/UI/RunIcons/gold.png");
             BuildMinimap(rect, view);
             view.StatIcons = new[]
             {
@@ -165,6 +181,9 @@ namespace Game.EditorTools
             Material mat = ShadowMaterial(label.font);
             if (mat != null) label.fontSharedMaterial = mat;
         }
+
+        /// <summary>Ромбик усилений над плиткой, единицы Canvas.</summary>
+        const float GemSize = 52f;
 
         static Sprite Kit(string name)
         {
@@ -213,6 +232,18 @@ namespace Game.EditorTools
             // Под мышью над героем — числа внутри полос здоровья, лавидия и опыта.
             view.VitalsHit = hero;
 
+            // Красная дымка за портретом и полосами: пульсирует, пока здоровья ≤ 25% (HudPulse).
+            Image danger = Mark(hero, "Опасность", Kit("wc_fx_glow"), Role.Text, 0f, Vector2.zero, new Vector2(Portrait * .5f + 30f, Portrait * .5f + 6f), 330f);
+            Additive(danger, new Color(1f, .22f, .14f, 0f));
+            danger.rectTransform.sizeDelta = new Vector2(430f, 250f);
+            danger.enabled = false;
+            var dangerPulse = danger.gameObject.AddComponent<HudPulse>();
+            dangerPulse.Target = danger;
+            dangerPulse.Min = .12f;
+            dangerPulse.Max = .42f;
+            dangerPulse.Period = 1.05f;
+            view.DangerPulse = dangerPulse;
+
             // Портрет пака (кольцо, вырез, ромб уровня), заходит за левый край полосы.
             RectTransform portrait = Place("Portrait", hero, "Портрет");
             Box(portrait, Vector2.zero, Vector2.zero, Vector2.zero, new Vector2(200f, 200f));
@@ -220,16 +251,81 @@ namespace Game.EditorTools
             view.Portrait = portrait.Find("Диск/Портрет").GetComponent<RawImage>();
             view.Level = portrait.Find("Уровень/Число").GetComponent<TMP_Text>();
             view.Level.text = "1";
-            portrait.Find("Уровень").localScale = Vector3.one * 1.3f;
+            Transform badge = portrait.Find("Уровень");
+            badge.localScale = Vector3.one * 1.3f;
+            // Новый уровень — ромб на портрете вспыхивает светом.
+            Image flare = Mark((RectTransform)badge, "Вспышка уровня", Kit("wc_fx_glow"), Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, 150f);
+            Additive(flare, new Color(1f, .78f, .4f, 0f));
+            flare.enabled = false;
+            view.LevelFlare = flare;
+
+            // Медальон артефакта забега на нижней левой кромке портрета, чуть за кольцом (справа внизу —
+            // ромб уровня; в концепте 2-artifact-sheet стороны зеркальны). Виден, только пока артефакт есть.
+            // Активные: буква клавиши под медальоном, вуаль перезарядки по кругу, свет, пока действует.
+            RectTransform medal = Box(Node("Артефакт", hero), Vector2.zero, new Vector2(.5f, .5f), new Vector2(12f, 18f), new Vector2(54f, 54f));
+            Image active = Mark(medal, "Сияние", RoundGlow, Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, 118f);
+            Additive(active, new Color(1f, .7f, .38f, 0f));
+            active.enabled = false;
+            var activePulse = active.gameObject.AddComponent<HudPulse>();
+            activePulse.Target = active;
+            activePulse.Min = .3f;
+            activePulse.Max = .7f;
+            activePulse.Period = .9f;
+            view.ArtifactActive = activePulse;
+            Image medalShadow = Layer(medal, "Тень", RoundShadow, Role.Veil, .85f, 8f);
+            medalShadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
+            Layer(medal, "Подложка", T.CircleFill, Role.Panel, 1f);
+            view.ArtifactIcon = Stretch(Node("Картинка", medal), 4f).gameObject.AddComponent<RawImage>();
+            view.ArtifactIcon.raycastTarget = false;
+            Image cooldown = Layer(medal, "Перезарядка", T.CircleFill, Role.Panel, .8f, -3f);
+            cooldown.type = Image.Type.Filled;
+            cooldown.fillMethod = Image.FillMethod.Radial360;
+            cooldown.fillOrigin = (int)Image.Origin360.Top;
+            cooldown.fillClockwise = false;
+            cooldown.enabled = false;
+            view.ArtifactCooldown = cooldown;
+            RectTransform medalGlint = Stretch(Node("Проблеск", medal), 3f);
+            var medalMask = medalGlint.gameObject.AddComponent<Image>();
+            medalMask.sprite = T.CircleFill;
+            medalMask.raycastTarget = false;
+            medalGlint.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            HudGlint glint = Glint(medalGlint, 26f, 90f, .5f);
+            glint.Every = 6f;
+            glint.Repeat = true;
+            Layer(medal, "Кольцо", T.CircleFrame, Role.Unique, .95f);
+            Image ready = Mark(medal, "Вспышка", Kit("wc_fx_aura"), Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, 104f);
+            Additive(ready, new Color(1f, .84f, .55f, 0f));
+            ready.enabled = false;
+            view.ArtifactFlash = ready;
+            // Клавиша слева от медальона: снизу он стоит у края экрана.
+            RectTransform cap = Keycap(medal, "Клавиша", "F", 20f);
+            cap.anchorMin = cap.anchorMax = new Vector2(0f, .5f);
+            cap.pivot = new Vector2(1f, .5f);
+            cap.anchoredPosition = new Vector2(-2f, -6f);
+            view.ArtifactKey = cap.Find("Буква").GetComponent<TMP_Text>();
+            view.ArtifactSlot = medal.gameObject;
+            view.ArtifactHit = medal;
+            medal.gameObject.SetActive(false);
 
             float x = HeroX - left;
             RectTransform name = Box(Node("Имя", hero), Vector2.zero, new Vector2(0f, .5f), new Vector2(x, Bottom + 92f - bottom), new Vector2(BarWidth, 28f));
             view.HeroName = Label(name, "Надпись", "Пелаг", FontRole.Heading, 22f, Role.Text, TextAlignmentOptions.MidlineLeft, 1f);
             Shadowed(view.HeroName);
 
-            view.HealthFill = Vital(hero, "Здоровье", Role.Health, x, Bottom + 66f - bottom, 20f, 14f, out view.HealthText, out _);
+            view.HealthFill = Vital(hero, "Здоровье", Role.Health, x, Bottom + 66f - bottom, 20f, 14f, out view.HealthText, out GameObject healthRow);
+            view.HealthBar = (RectTransform)healthRow.transform;
+            // Удар по герою — полоса вспыхивает светом (HudFx.Flash из CombatHudView).
+            Image hit = Layer(view.HealthBar, "Вспышка", T.BarFill, Role.Text, 0f, 3f);
+            Additive(hit, new Color(1f, .55f, .45f, 0f));
+            hit.type = Image.Type.Sliced;
+            hit.enabled = false;
+            view.HealthFlash = hit;
             view.LavidiumFill = Vital(hero, "Лавидий", Role.Lavidium, x, Bottom + 42f - bottom, 16f, 12f, out view.LavidiumText, out GameObject row);
             view.LavidiumRow = row;
+            // Полный лавидий — редкий проблеск по полосе.
+            HudGlint lavidiumGlint = Glint(Stretch(Node("Проблеск", (RectTransform)row.transform), 2f), 30f, 60f, .45f);
+            lavidiumGlint.Every = 5f;
+            view.LavidiumGlint = lavidiumGlint;
 
             // Опыт: тонкая полоса под лавидием.
             RectTransform xp = Box(Node("Опыт", hero), Vector2.zero, new Vector2(0f, .5f), new Vector2(x + 6f, Bottom + 22f - bottom), new Vector2(BarWidth - 12f, 6f));
@@ -246,12 +342,33 @@ namespace Game.EditorTools
             Tint(fillImage, Role.Experience, .85f);
             view.ExperienceFill = fill;
             Layer(xp, "Рамка", T.BarFrame, Role.PanelLine, .5f);
+            // Опыт прибавился — проблеск по полосе.
+            view.ExperienceGlint = Glint(Stretch(Node("Проблеск", xp)), 30f, 50f, .6f);
             // Числа опыта — внутри полосы (владелец 24 сентября): под мышью она подрастает до 16 ед.
             view.ExperienceText = Label(xp, "Числа", "", FontRole.Body, 12f, Role.Text, TextAlignmentOptions.Center);
             view.ExperienceText.textWrappingMode = TextWrappingModes.NoWrap;
             view.ExperienceText.fontStyle = FontStyles.Bold;
             Shadowed(view.ExperienceText);
             view.ExperienceHoverHeight = 16f;
+        }
+
+        /// <summary>
+        /// Проблеск по элементу: <paramref name="box"/> получает RectMask2D (если на нём нет своей
+        /// маски), внутри — косая полоса света; бег полосы ведёт HudGlint.
+        /// </summary>
+        static HudGlint Glint(RectTransform box, float width, float height, float peak)
+        {
+            if (box.GetComponent<Mask>() == null) box.gameObject.AddComponent<RectMask2D>();
+            RectTransform stripe = Box(Node("Полоса", box), new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(width, height));
+            stripe.localRotation = Quaternion.Euler(0f, 0f, -24f);
+            var image = stripe.gameObject.AddComponent<Image>();
+            image.sprite = Kit("wc_fx_glow");
+            Additive(image, new Color(1f, .93f, .8f, 0f));
+            image.enabled = false;
+            var glint = box.gameObject.AddComponent<HudGlint>();
+            glint.Stripe = image;
+            glint.Peak = peak;
+            return glint;
         }
 
         /// <summary>

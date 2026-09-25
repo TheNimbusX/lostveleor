@@ -138,33 +138,64 @@ namespace Game.View
             Simulation sim = _driver.Sim;
             bool visible = !_driver.GameplayPaused && session != null && session.Mode != GameMode.Summary
                 && !CampWindowOpen && sim != null && sim.Entities.Count > 0;
-            if (_view.gameObject.activeSelf != visible) _view.gameObject.SetActive(visible);
-            if (visible) _view.Refresh(sim, session.Camp, _driver);
+            SetHudShown(visible);
+            if (!visible) return;
+            _view.Refresh(sim, session.Camp, _driver);
+            RefreshMinimap(sim, session, _driver.Run);
+        }
+
+        private bool _hudShown;
+        private CanvasGroup _hudGroup;
+
+        /// <summary>
+        /// HUD уходит и возвращается затуханием (аудит UI, этап 2): под окном палатки, паузой и итогами
+        /// он раньше пропадал рывком. Время реальное — пауза его не держит.
+        /// </summary>
+        private void SetHudShown(bool shown)
+        {
+            if (shown == _hudShown) return;
+            _hudShown = shown;
+            GameObject hud = _view.gameObject;
+            if (_hudGroup == null) _hudGroup = hud.GetComponent<CanvasGroup>();
+            if (_hudGroup == null) _hudGroup = hud.AddComponent<CanvasGroup>();
+            CanvasGroup group = _hudGroup;
+            UiMotion.Stop(group);
+            if (shown)
+            {
+                if (!hud.activeSelf) { group.alpha = 0f; hud.SetActive(true); }
+                UiMotion.FadeTo(group, 1f, .2f);
+            }
+            else UiMotion.FadeTo(group, 0f, .16f, () => { if (hud != null && !_hudShown) hud.SetActive(false); });
         }
 
         /// <summary>
-        /// При HUD на Canvas IMGUI остаётся только у содержимого карты (её
-        /// фон — RenderTexture с шейдером) и у радиуса способности в мире.
+        /// Карта целиком на холсте: HudMinimap раскладывает метки в единицах карты префаба,
+        /// HudMinimapMarks их показывает. До кадра холста, а не из OnGUI: иначе метки
+        /// отставали на кадр и рисовались поверх любых окон.
         /// </summary>
-        private void DrawCanvasCompanions(Simulation sim, GameSession session, RiftRun run, Vector2 screenPointer)
+        private void RefreshMinimap(Simulation sim, GameSession session, RiftRun run)
         {
-            // Метки карты масштабируются вместе с Canvas, а не с экраном.
-            float mapScale = Mathf.Max(.01f, _view.CanvasScale * _view.MinimapMarkerScale);
-            Rect area = _view.MinimapScreenRect;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(mapScale, mapScale, 1f));
+            Vector2 size = _view.MinimapSize;
+            if (size.x <= 0f || size.y <= 0f) return;
+            Rect panel = new Rect(0f, 0f, size.x, size.y);
             _minimap.Bare = true;
             _minimap.Zoom = Mathf.Max(1f, _view.MinimapZoom);
-            _minimap.MarkerRing = _view.MinimapMarkerRing;
-            _minimap.PlayerArrow = _view.MinimapPlayerArrow;
-            _minimap.Pointer = screenPointer / mapScale;
-            Rect panel = new Rect(area.x / mapScale, area.y / mapScale, area.width / mapScale, area.height / mapScale);
+            _minimap.Inset = 13f;
             if (session.Mode == GameMode.Rift && run != null) _minimap.DrawRift(panel, run, sim, _chrome, _mapLabel);
             else if (CampPlayerView.Instance != null && CampPlayerView.Instance.Active)
                 _minimap.DrawCamp(panel, CampPlayerView.Instance, _chrome, _mapLabel);
+            else return;
             _view.SetMinimapTexture(_minimap.MapTexture);
             _view.SetMinimapCaption(_minimap.Caption);
+            _view.SetMinimapMarks(_minimap);
             MinimapBottom = _view.MinimapBottom;
+        }
 
+        /// <summary>
+        /// При HUD на Canvas IMGUI остаётся только у радиуса способности в мире.
+        /// </summary>
+        private void DrawCanvasCompanions(Simulation sim)
+        {
             _tooltipSlot = _view.HoverSlot;
             int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AimingAbilityTarget ? _driver.AbilityTargetAimSlot : -1;
             AbilityBuild reach = reachSlot >= 0 ? sim.GetAbility(reachSlot) : null;
@@ -222,7 +253,7 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
-                if (_view != null) { DrawCanvasCompanions(sim, session, run, screenPointer); return; }
+                if (_view != null) { DrawCanvasCompanions(sim); return; }
                 float mapScale = scale * .85f;
                 GUI.matrix = Matrix4x4.Scale(new Vector3(mapScale, mapScale, 1f));
                 _minimap.Pointer = screenPointer / mapScale;
@@ -872,7 +903,9 @@ namespace Game.View
         {
             // Подпись из назначений игрока: своя клавиша видна сразу, без перезапуска.
             if (slot < 0 || slot > (int)GameAction.Dash) return string.Empty;
-            string label = GameKeyBindings.Label((GameAction)slot);
+            string label = TickDriver.GamepadLastUsed
+                ? (slot == 0 ? "LB" : slot == 1 ? "RB" : slot == 2 ? "X" : slot == 3 ? "Y" : "B")
+                : GameKeyBindings.Label((GameAction)slot);
             return slot == DashSlot ? label.ToUpperInvariant() : label;
         }
 

@@ -11,7 +11,7 @@ namespace Game.View
             var s=_view.Alchemist;
             if(!show){s.Group.gameObject.SetActive(false);return;}
             _alchemyCamp=_driver.Session.Camp;_alchemyCamp.MeetAlchemist();WireAlchemist();
-            _alchemyRecipes=false;_confirmOrder=-1;Present(s.Group,s.Potions[0].Buy);s.Message.text=CampServiceText.Get("dialogue.alchemist.open");RefreshAlchemy();
+            _alchemyRecipes=false;_confirmOrder=-1;Present(s.Group,s.Potions[0].Buy);s.Message.text=CampServiceText.Get("dialogue.alchemist.open");if(s.Status!=null)s.Status.text="";RefreshAlchemy();
             // Открытие лавки: стекло на столе и тихое бурление котла.
             GameSound.Sequence(("alch_clink",0f,.5f),("alch_bubble",.12f,.3f));
         }
@@ -57,9 +57,16 @@ namespace Game.View
             var backLabel=s.Back.GetComponentInChildren<TMPro.TMP_Text>();if(backLabel!=null)backLabel.text=CampServiceText.Get("back");
         }
         bool _alchemyRecipes;
+
+        /// <summary>Удача — реплика Лео в облачке; отказ — системная строка под карточками, облачко не меняется.</summary>
+        void AlchemyResult(bool success,string dialogueKey,string failure)
+        {
+            if(success)_view.Alchemist.Message.text=CampServiceText.Get(dialogueKey);
+            if(_view.Alchemist.Status!=null)_view.Alchemist.Status.text=success?"":failure;
+        }
         void BuyAlchemy(PotionKind kind)
         {
-            bool success=_alchemyCamp.BuyPotion(kind);RefreshAlchemy();_view.Alchemist.Message.text=success?CampServiceText.Get("dialogue.alchemist.buy"):PotionText("failed");
+            bool success=_alchemyCamp.BuyPotion(kind);RefreshAlchemy();AlchemyResult(success,"dialogue.alchemist.buy",PotionText("failed"));
             if(success)GameSound.Sequence(("alch_bottle",0f,.8f),("alch_clink",.2f,.5f),("coins",.35f,.4f));
         }
         void RefreshAlchemy()
@@ -121,7 +128,7 @@ namespace Game.View
             bool ready=_alchemyCamp.AlchemyStatus(order)==AlchemistOrderStatus.Ready;
             var result=ready?_alchemyCamp.TurnInAlchemyOrder(order):_alchemyCamp.AcceptAlchemyOrder(order);
             _confirmOrder=-1;RefreshAlchemy();
-            _view.Alchemist.Message.text=result==AlchemistActionResult.Success?CampServiceText.Get(ready?"dialogue.alchemist.order.complete":"dialogue.alchemist.order.accept"):OrderText("failed");
+            AlchemyResult(result==AlchemistActionResult.Success,ready?"dialogue.alchemist.order.complete":"dialogue.alchemist.order.accept",OrderText("failed"));
             if(result==AlchemistActionResult.Success)GameSound.Sequence(("alch_clink",0f,.5f),("alch_bubble",.15f,.35f));
         }
         void ExchangeOrder(AlchemistOrder order)
@@ -130,7 +137,7 @@ namespace Game.View
             if(_confirmOrder!=(int)order){_confirmOrder=(int)order;RefreshAlchemy();return;}
             var result=order==AlchemistOrder.Resin?_alchemyCamp.ExchangeRareForResin(ExchangeableRare()):_alchemyCamp.ExchangeShardsForSurge();
             _confirmOrder=-1;RefreshAlchemy();
-            _view.Alchemist.Message.text=result==AlchemistActionResult.Success?CampServiceText.Get("dialogue.alchemist.recipe.unlock"):OrderText("failed");
+            AlchemyResult(result==AlchemistActionResult.Success,"dialogue.alchemist.recipe.unlock",OrderText("failed"));
             if(result==AlchemistActionResult.Success)GameSound.Sequence(("alch_cork",0f,.65f),("alch_pour",.14f,.55f),("alch_bubble",.45f,.3f));
         }
         internal bool ProbeAlchemyTransactions()

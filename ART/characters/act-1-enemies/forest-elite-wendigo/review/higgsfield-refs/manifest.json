@@ -1,0 +1,38 @@
+{
+  "stage": "Higgsfield motion-reference review; awaiting owner approval before rigging",
+  "source_art": "art.png",
+  "tripo_task_id": "b40452ee-ecaf-4092-9ff1-bd2b239158b6",
+  "model_source": "tripo-out/forest-elite-wendigo-b40452ee/model.glb",
+  "static_mesh_candidate": "review/candidate24k/Wendigo_24k_candidate.glb",
+  "static_mesh_triangles": 24000,
+  "final_unity_triangle_budget": 25000,
+  "static_candidate_rig_ready": false,
+  "motion_references": [
+    {
+      "motion": "idle_walk",
+      "higgsfield_job_id": "db7eab4e-aa46-408b-80ce-a3702f4e4091",
+      "file": "review/higgsfield-refs/idle_walk.mp4"
+    },
+    {
+      "motion": "claw",
+      "higgsfield_job_id": "d898a424-8397-4378-8e27-4e375d8244b3",
+      "file": "review/higgsfield-refs/claw.mp4"
+    },
+    {
+      "motion": "leap",
+      "higgsfield_job_id": "d6368d72-10f1-4f42-8820-a39f86470ca5",
+      "file": "review/higgsfield-refs/leap.mp4"
+    },
+    {
+      "motion": "death",
+      "higgsfield_job_id": "29e9c5b3-913c-42f7-9856-f34bb539adaa",
+      "file": "review/higgsfield-refs/death.mp4"
+    }
+  ],
+  "rejected_motion_reference": {
+    "motion": "death",
+    "higgsfield_job_id": "2cc0103a-16a0-46ff-a9d3-bb9035bb3dcb",
+    "reason": "Finished lying on its side; replaced with face-down supported pose."
+  },
+  "next_stage": "After owner approval: retopologize deformation joints, repair inherited manifold defects, rig and author game-timed clips; then recount Unity-exported triangles."
+}

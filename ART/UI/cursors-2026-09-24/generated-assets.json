@@ -1,0 +1,32 @@
+{
+  "source": "unified-concept-v2.png",
+  "provider": "OpenAI image_gen",
+  "role": "hardware-cursor-family",
+  "background": "true RGBA alpha; ambient alpha removed during technical slicing",
+  "runtime_size_pixels": [48, 48],
+  "trim": "fit each silhouette inside 42 pixels, centered on 48-pixel canvas",
+  "runtime_directory": "razlom/Assets/Resources/UI/Cursors",
+  "assets": [
+    { "id": "pointer", "hotspot": [8, 3], "use": "default and ground movement" },
+    { "id": "attack", "hotspot": [8, 4], "use": "enemy hover" },
+    { "id": "interact", "hotspot": [24, 24], "use": "camp interaction" },
+    { "id": "aim", "hotspot": [24, 24], "use": "valid ability aim" },
+    { "id": "blocked", "hotspot": [8, 3], "use": "invalid ability aim" }
+  ],
+  "move_order_marker": {
+    "source": "move-order-marker-source.png",
+    "runtime": "razlom/Assets/Resources/VFX/MoveOrderMarker.png",
+    "provider": "OpenAI image_gen",
+    "role": "green click-to-move ground feedback",
+    "background": "true RGBA alpha",
+    "display_size_world_units": 0.38,
+    "composition": "four copies of one simple green chevron, no circle",
+    "motion": "converge, rebound, settle, drift and fade over 0.56 seconds",
+    "visibility": "four surface-conforming world meshes with depth bias and ground clearance",
+    "acceptance": "runtime art review pending"
+  },
+  "acceptance": {
+    "visual": "owner approved the unified five-icon sheet",
+    "runtime": "48-pixel preview reviewed; owner in-game review pending"
+  }
+}

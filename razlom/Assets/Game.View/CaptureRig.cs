@@ -138,12 +138,20 @@ namespace Game.View
         public static float CastDistance { get; private set; } = 3f;
         public static int HoldTicks { get; private set; } = 60;
         private static bool _showHud;
+        /// <summary>
+        /// Кадры видео — с экрана (то, что видит владелец), а не отдельным
+        /// Camera.Render в RenderTexture (ключ -capture-screen). Заведён при
+        /// разборе невидимых слоёв Рассекающего (LOG 24–25.09); оба пути дали
+        /// одно и то же, ключ оставлен для сравнения экрана с RT.
+        /// </summary>
+        private static bool _screenVideo;
         public static bool PerformanceCapture { get; private set; }
         public static bool TurnDuringSkill { get; private set; }
         public static bool ActiveEnemies { get; private set; }
         private static string _combatEncounter;
         public static string ForestBudCase { get; private set; }
         public static bool ForestBudShowcase => _combatEncounter == "forest-bud";
+        public static bool WendigoShowcase => _combatEncounter == "forest-wendigo";
         public static bool SweepAimCapture { get; private set; }
         public static bool DeathDuringSkill { get; private set; }
 
@@ -234,6 +242,7 @@ namespace Game.View
             CastDistance = Mathf.Clamp(ReadFloat(args, "-capture-cast-distance", 3f), .5f, 7f);
             HoldTicks = Mathf.Clamp(ReadInt(args, "-capture-hold-ticks", 60), 1, 60);
             _showHud = Array.IndexOf(args, "-capture-hud") >= 0;
+            _screenVideo = Array.IndexOf(args, "-capture-screen") >= 0;
             TurnDuringSkill = Array.IndexOf(args, "-capture-turn-during-skill") >= 0;
             ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
             _combatEncounter = ReadValue(args, "-capture-encounter");
@@ -389,6 +398,13 @@ namespace Game.View
                     Mathf.Clamp(EnemyOverride, 1, 8));
                 yield return null;
             }
+            if (WendigoShowcase)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                driver.StartWendigoTest(driver.GetComponent<LayoutView>().Profile, SeedOverride, EnemyOverride > 1);
+                driver.Session.SetDeveloperInvulnerable(true);
+                yield return null;
+            }
             if (TempoPreset >= 0)
             {
                 var driver = FindAnyObjectByType<TickDriver>();
@@ -479,12 +495,15 @@ namespace Game.View
             float lastMark = _marks.Length > 0 ? _marks[_marks.Length - 1] : 0f;
             float finish = Mathf.Max(lastMark, _recordVideo ? _videoEnd : 0f);
 
-            if (_showHud)
+            if (_showHud || _screenVideo)
             {
                 // Настройки игрока могут переопределить параметры запуска окна;
-                // для IMGUI нужен framebuffer именно запрошенного размера.
+                // для IMGUI и съёмки с экрана нужен framebuffer именно запрошенного размера.
                 Screen.SetResolution(_captureWidth, _captureHeight, FullScreenMode.Windowed);
                 yield return null;
+            }
+            if (_showHud)
+            {
                 // Нативная консоль перекрывает HUD на снимке; сами ошибки
                 // остаются в player.log и проверяются отдельно от вида интерфейса.
                 Debug.ClearDeveloperConsole();
@@ -891,7 +910,8 @@ namespace Game.View
         {
             string path = Path.Combine(_outputDirectory, "video_frames",
                 string.Format(CultureInfo.InvariantCulture, "frame_{0:0000}.jpg", _videoFrame++));
-            Texture2D frame = CaptureFrame();
+            // Контрольные снимки идут прежним путём (Camera.Render): по ним видно, расходится ли он с экраном.
+            Texture2D frame = _screenVideo ? ScreenCapture.CaptureScreenshotAsTexture() : CaptureFrame();
             try
             {
                 File.WriteAllBytes(path, frame.EncodeToJPG(92));
