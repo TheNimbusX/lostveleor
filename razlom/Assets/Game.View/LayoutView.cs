@@ -57,7 +57,11 @@ namespace Game.View
         private float[] _decorRadii;
         private readonly List<GameObject> _ownedRoots = new List<GameObject>();
         private readonly List<Material> _ownedMaterials = new List<Material>();
-        private readonly Dictionary<Material, Material> _understoryMaterials = new Dictionary<Material, Material>();
+        private readonly Dictionary<(Material, int), Material> _understoryMaterials = new Dictionary<(Material, int), Material>();
+        // Три оттенка подлеска: одинаковые ярко-салатовые шары читались россыпью меток, а не зарослями.
+        private static readonly Color[] UnderstoryTints =
+            { new Color(.6f, .7f, .62f, 1), new Color(.68f, .78f, .69f, 1), new Color(.76f, .78f, .62f, 1) };
+        private int _understoryTint;
 
         public int TileCount => _tileCount;
         public int DecorCount => _decorCount;
@@ -644,6 +648,9 @@ namespace Game.View
                 prefabInstance.name = "Декор: " + variant.Prefab.name;
                 RemoveColliders(prefabInstance);
                 if (variant.Kind == DecorKind.Bush)
+                {
+                    // Оттенок закреплён за экземпляром пула: соседние кусты получают разные, партия остаётся одной.
+                    int tint = _understoryTint++ % UnderstoryTints.Length;
                     foreach (var renderer in prefabInstance.GetComponentsInChildren<Renderer>(true))
                     {
                         var materials = renderer.sharedMaterials;
@@ -651,17 +658,18 @@ namespace Game.View
                         {
                             var source = materials[m];
                             if (source == null || !source.HasProperty("_BaseColor")) continue;
-                            if (!_understoryMaterials.TryGetValue(source, out var foliage))
+                            if (!_understoryMaterials.TryGetValue((source, tint), out var foliage))
                             {
-                                // Один экземпляр на исходный материал; лагерный ассет не перекрашивается.
-                                foliage = new Material(source) { name = source.name + " — подлесок" };
-                                foliage.SetColor("_BaseColor", source.GetColor("_BaseColor") * new Color(.77f, .88f, .83f, 1));
-                                _understoryMaterials.Add(source, foliage); _ownedMaterials.Add(foliage);
+                                // Один экземпляр на исходный материал и оттенок; лагерный ассет не перекрашивается.
+                                foliage = new Material(source) { name = source.name + " — подлесок " + tint };
+                                foliage.SetColor("_BaseColor", source.GetColor("_BaseColor") * UnderstoryTints[tint]);
+                                _understoryMaterials.Add((source, tint), foliage); _ownedMaterials.Add(foliage);
                             }
                             materials[m] = foliage;
                         }
                         renderer.sharedMaterials = materials;
                     }
+                }
                 if (variant.Kind == DecorKind.Rock || variant.Kind == DecorKind.Tree)
                 {
                     var renderers = prefabInstance.GetComponentsInChildren<Renderer>();
