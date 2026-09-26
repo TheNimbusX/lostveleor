@@ -1,0 +1,53 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61863 is in use[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61864 is in use[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61865[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+Reloading external rigs...
+Reloading external metarigs...
+20:00:05 | INFO: Data are loaded, start creating Blender stuff
+20:00:05 | INFO: Blender create Mesh node tripo_mesh_64347b8c-807a-4a6e-b833-bdea33da2ff4
+20:00:12 | INFO: glTF import finished in 7.04s
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\render_new_mob_review.py:65: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world.use_nodes = True
+00:19.968  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_front.png'
+00:23.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_left.png'
+00:26.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_back.png'
+00:29.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_right.png'
+00:32.593  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_game_camera.png'
+00:36.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\00.png'
+00:39.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\01.png'
+00:41.718  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\02.png'
+00:44.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\03.png'
+00:46.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\04.png'
+00:48.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\05.png'
+00:51.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\06.png'
+00:53.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\07.png'
+00:56.750  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\08.png'
+00:59.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\09.png'
+01:02.640  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\10.png'
+01:06.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\11.png'
+01:08.937  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\12.png'
+01:11.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\13.png'
+01:14.218  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\14.png'
+01:17.015  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\15.png'
+01:20.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\16.png'
+01:23.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\17.png'
+01:26.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\18.png'
+01:29.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\19.png'
+01:32.093  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\20.png'
+01:35.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\21.png'
+01:38.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\22.png'
+01:40.890  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\turntable_frames\23.png'
+01:43.640  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_vs_pelag.png'
+01:45.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\review\model_r01\snarer_vs_pelag_game.png'
+MOB_MESHES=1 FACES=1456370 MATERIALS=1
+MOB_RAW_BOUNDS=(0.9303, 1.0, 0.7716)
+MOB_BOUNDS_AT_TARGET=(1.628, 1.75, 1.35)
+FBX version: 7400
+COMPARISON_BOUNDS=(3.9151, 1.7497, 1.8065)
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

@@ -21,14 +21,21 @@ namespace Game.Sim
         ///
         /// УРОВЕНЬ ХРАНИТСЯ В СИМУЛЯЦИИ, потому что Spawn стирает модификаторы:
         /// ConfigurePlayer вешает прибавки заново при каждой расстановке.
-        /// Здоровье и лавидий при повышении не восполняются — растёт потолок.
+        ///
+        /// Повышение не лечит до полного, но его прибавка к здоровью приходит
+        /// и в текущее (+30 за уровень): здоровье теперь переносится между
+        /// аренами, и уровень — один из трёх способов его вернуть, наравне с
+        /// зельями и наградами. Лавидий по-прежнему только растит потолок.
         /// </summary>
         public void SetPlayerLevel(int level)
         {
             _playerLevel = level < 1 ? 1 : level;
             if (Entities.Count <= PlayerId) return;
+            int before = Entities.MaxHealth[PlayerId];
             ApplyLevelModifiers(Entities.Stats[PlayerId]);
             RefreshPlayerStats(heal: false);
+            int gained = Entities.MaxHealth[PlayerId] - before;
+            if (gained > 0 && Entities.Alive[PlayerId]) Entities.Health[PlayerId] += gained;
         }
 
         private void ApplyLevelModifiers(StatSheet sheet)

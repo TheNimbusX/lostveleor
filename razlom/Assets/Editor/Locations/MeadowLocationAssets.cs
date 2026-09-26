@@ -95,13 +95,15 @@ namespace Game.LocationEditor
                 gameplay.CompleteAtEnd = true;
                 gameplay.PlayerHealth = 150;
                 gameplay.Modules = modules;
-                gameplay.Levels = new LevelSettingsAsset[10];
+                // 8 арен + босс. Enemy Health — процент от таблицы видов с ростом
+                // глубины (100, 107, 114…), тот же, что у прототипного забега.
+                gameplay.Levels = new LevelSettingsAsset[ForestEncounterTemplates.ArenaCount + 1];
                 for (int i = 0; i < gameplay.Levels.Length; i++)
                 {
                     var s = RiftLevelSettings.Prototype(i + 1);
                     gameplay.Levels[i] = new LevelSettingsAsset { Rooms = s.TargetModules, Exits = s.ExitCount,
                         Loops = s.MaxLoops, RewardBranches = s.RewardBranches,
-                        MinEnemies = s.MinEnemies, MaxEnemies = s.MaxEnemies, EnemyHealth = 60 + i * 5,
+                        MinEnemies = s.MinEnemies, MaxEnemies = s.MaxEnemies, EnemyHealth = EnemyArchetypes.DepthHealthPercent(i + 1),
                         Boss = i == gameplay.Levels.Length - 1 };
                 }
                 gameplay.ToDefinition();

@@ -1,5 +1,5 @@
 {
-  "revision": "2026-09-19-combat-production",
+  "revision": "2026-09-26-hit-reaction",
   "source_scene": "ART/ENEMIES/Forest_Bud/ForestBudRanged_Production.blend",
   "original_scene": "ART/ENEMIES/Forest_Bud/SourceOriginal/ForestBudRanged.blend",
   "build_recipe": "ART/ENEMIES/Forest_Bud/build_forest_bud.py",
@@ -31,6 +31,15 @@
         37
       ],
       "duration_seconds": 1.2,
+      "loop": false,
+      "root_motion": false
+    },
+    "Hit": {
+      "frames": [
+        1,
+        11
+      ],
+      "duration_seconds": 0.3333333333333333,
       "loop": false,
       "root_motion": false
     },
@@ -69,6 +78,7 @@
     1.4,
     1.6
   ],
+  "hit_seconds": 0.3333333333333333,
   "projectile": "ProjectileFruit.fbx, sealed skin and green crown, pivot at mass center",
   "projectile_triangles": 568,
   "export": {
@@ -87,7 +97,8 @@
     "Petals rebuilt as thick watertight curved surfaces, three bend bones and smooth weights per petal.",
     "Foot weights repaired; all clips sampled frame by frame against ground.",
     "Fruit visual visibility is controlled by View from Sim shot events, not by bone scale.",
-    "Game.Sim owns aim, 0.2 second firing intervals, 2 second flight and impacts."
+    "Game.Sim owns aim, 0.2 second firing intervals, 2 second flight and impacts.",
+    "Hit: 11 frames (0.333 s), starts and ends in the rest pose; bud squash uses bone scale on bud only; View drives it by HitPhase, additively during Ranged_Attack."
   ],
   "validation": {
     "fbx_roundtrip_pass": true,

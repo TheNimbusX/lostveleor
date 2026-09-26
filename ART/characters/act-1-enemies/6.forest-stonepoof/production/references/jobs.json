@@ -33,5 +33,21 @@
     "sha256": "e0784aeba2184beeee7e0076dc42d3184a1c55d4f8d0b3de06c7bc19fc6e4605",
     "preview_frames": 49,
     "preview_fps": 12
+  },
+  {
+    "index": 4,
+    "slug": "turn",
+    "job_id": "ff22d4e2-255f-4f87-8cc2-a74c1349241a",
+    "status": "completed",
+    "type": "video",
+    "model": "seedance_2_0",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260926_102957_ff22d4e2-255f-4f87-8cc2-a74c1349241a.mp4",
+    "start_image": "fab35cdd-1203-421b-b0a5-be3a8e00c0bc",
+    "duration": 4,
+    "mode": "fast",
+    "resolution": "720p",
+    "credits": 10,
+    "sha256": "a01554cae1970e2ed8265a5f3c6d04555b8fd99724d5b104811d52b9eef94247",
+    "note": "26.09 Claude: turn in place ~90-180 deg toward camera and back; body drifts a little — use stepping pattern and head lead only, author hooves planted in Blender"
   }
 ]

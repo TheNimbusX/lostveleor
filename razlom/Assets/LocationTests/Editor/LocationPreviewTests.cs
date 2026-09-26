@@ -128,7 +128,13 @@ namespace Game.LocationTests
                     run.LevelSettings.Generate(new LayoutGenerator(), authored.Modules, newMap, seeds.Layout);
                     Assert.That(newMap.Hash(), Is.EqualTo(run.Map.Hash()), $"seed {seed}, level {level}");
                     var actual = new Simulation(seed, 512);
-                    authored.GetLevel(level).Spawn(actual, newMap, seeds.Spawns);
+                    // Арены по шаблонам (с 26 сентября): забег спавнит первую волну шаблона
+                    // плана, а не старую пачку уровня — повторяем тот же вызов.
+                    if (run.Plan != null && run.LevelSettings.Encounters != null)
+                        run.LevelSettings.Spawn(actual, newMap, seeds.Spawns, run.CurrentEncounter, level,
+                            run.CurrentRoute.Hard ? EnemyArchetypes.HardRoutePercent : 100);
+                    else
+                        authored.GetLevel(level).Spawn(actual, newMap, seeds.Spawns);
                     Assert.That(actual.Entities.Count, Is.EqualTo(run.Sim.Entities.Count));
                     for (int i = 0; i < actual.Entities.Count; i++)
                     {
@@ -136,8 +142,12 @@ namespace Game.LocationTests
                         if (i != Simulation.PlayerId)
                             Assert.That(actual.Entities.Health[i], Is.EqualTo(run.Sim.Entities.Health[i]));
                     }
-                    for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
-                    run.Step(InputFrame.Empty);
+                    // Встреча по шаблону выходит волнами: зачищаем, пока арена не отпустит.
+                    for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
+                    {
+                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                        run.Step(InputFrame.Empty);
+                    }
                     run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
                     run.Step(InputFrame.Empty);
                     run.Step(new InputFrame { Command = (byte)RunCommand.ChooseReward1 });
@@ -358,14 +368,18 @@ namespace Game.LocationTests
             {
                 var first = copy.ToDefinition(1);
                 var last = copy.ToDefinition(10);
-                Assert.That(last.MainCount, Is.GreaterThan(first.MainCount));
+                // С 26 сентября основных пачек две на любой глубине: рост идёт бонусом и волнами.
+                Assert.That(last.MainCount, Is.GreaterThanOrEqualTo(first.MainCount));
                 Assert.That(last.CountBonus, Is.GreaterThan(first.CountBonus));
                 Assert.That(last.DamagePercent, Is.GreaterThan(first.DamagePercent));
                 var rng = new Pcg32(1, 1);
                 int before = first.Pick(EncounterRole.Introduction, ref rng).GetGroup(0).Max;
                 copy.Introduction[0].Groups[0].Max = 7;
                 Assert.That(first.Pick(EncounterRole.Introduction, ref rng).GetGroup(0).Max, Is.EqualTo(before));
-                copy.ExitGuard[0].Groups[0].Elite = false;
+                // Правило владельца (26.09): в одной пачке не больше двух лесных хранителей.
+                copy.Introduction[0].Groups[0].Kind = EnemyKind.ForestGuardian;
+                copy.Introduction[0].Groups[0].Min = 1;
+                copy.Introduction[0].Groups[0].Max = 3;
                 Assert.Throws<ArgumentException>(() => copy.ToDefinition(1));
             }
             finally { Object.DestroyImmediate(copy); }
@@ -548,7 +562,7 @@ namespace Game.LocationTests
         }
 
         [TestCase(1)]
-        [TestCase(10)]
+        [TestCase(9)]
         public void MeadowArt_RendersAndRetainsItsSharedAssetMaterials(int level)
         {
             var authored = AssetDatabase.LoadAssetAtPath<LocationTheme>(MeadowLocationAssets.ThemePath);

@@ -293,12 +293,33 @@ namespace Game.View
                     if (run.Encounters.Get(e).Role != EncounterRole.RewardBranch) fights++;
             int caches = run.Map.RewardBranchCount;
             var lines = new System.Collections.Generic.List<string>(3);
-            if (fights > 0) lines.Add(Gold(fights) + " " + Plural(fights, "встреча", "встречи", "встреч"));
+            ArenaEncounterTemplate encounter = run.CurrentEncounter;
+            if (encounter != null)
+            {
+                // Арена по шаблону: встреча одна, у неё волны — старый счёт размещений
+                // показывал бы «1 встреча».
+                int waves = encounter.WaveCount;
+                switch (encounter.Type)
+                {
+                    case ArenaEncounterType.Survival:
+                        lines.Add("Выстоять " + Gold(encounter.SurvivalTicks / Simulation.TicksPerSecond) + " с");
+                        break;
+                    case ArenaEncounterType.Ambush:
+                        lines.Add("Засада · " + Gold(waves) + " " + Plural(waves, "волна", "волны", "волн"));
+                        break;
+                    case ArenaEncounterType.Elite:
+                        lines.Add("Здесь элита");
+                        break;
+                    default:
+                        lines.Add(Gold(waves) + " " + Plural(waves, "волна", "волны", "волн"));
+                        break;
+                }
+            }
+            else if (fights > 0) lines.Add(Gold(fights) + " " + Plural(fights, "встреча", "встречи", "встреч"));
             if (caches > 0) lines.Add(Gold(caches) + " " + Plural(caches, "тайник", "тайника", "тайников"));
-            if (run.IsFinalLevel) lines.Add("Последний разлом");
+            if (run.IsFinalLevel) lines.Add("Последняя арена");
             else if (run.BossId >= 0) lines.Add("Здесь ждёт босс");
-            string total = run.TotalLevels > 0 ? " ИЗ " + run.TotalLevels : string.Empty;
-            LevelBanner.ShowMoment(Mathf.Max(1, run.Depth - 1).ToString(), run.Depth.ToString(), "РАЗЛОМ" + total, lines.ToArray(), 2.1f);
+            LevelBanner.ShowMoment(Mathf.Max(1, run.Depth - 1).ToString(), run.Depth.ToString(), "АРЕНА", lines.ToArray(), 2.1f);
         }
 
         void ArenaCleared(RiftRun run)
@@ -306,14 +327,14 @@ namespace Game.View
             GameSound.Play("arena_cleared", .8f, 0f, 1f);
             GameSound.Play("map_ping", .45f, .02f, .5f);
             // Концепт 2Б: зачистка — узкий баннер сверху, плашка уровня остаётся уровню и входу на арену.
-            if (Announce != null) { Announce.Show("РАЗЛОМ ЗАЧИЩЕН", "Путь к выходу открыт"); return; }
+            if (Announce != null) { Announce.Show("АРЕНА ЗАЧИЩЕНА", "Путь к выходу открыт"); return; }
             if (LevelBanner == null) return;
             string[] lines =
             {
                 "Путь к выходу открыт",
                 run.Gold > 0 ? Gold(run.Gold) + " золота в забеге" : string.Empty,
             };
-            LevelBanner.ShowMoment(run.Depth.ToString(), run.Depth.ToString(), "РАЗЛОМ ЗАЧИЩЕН", lines, 1.8f);
+            LevelBanner.ShowMoment(run.Depth.ToString(), run.Depth.ToString(), "АРЕНА ЗАЧИЩЕНА", lines, 1.8f);
         }
 
         static string Gold(int value) => "<color=#FFD27A>" + value + "</color>";

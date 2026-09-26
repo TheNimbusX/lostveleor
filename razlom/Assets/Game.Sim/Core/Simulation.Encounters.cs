@@ -15,22 +15,34 @@ namespace Game.Sim
             { Module = module; Branch = branch; Role = role; Center = center; Distance = distance; }
         }
 
-        public EncounterPlan SetupBossArena(LayoutMap map, ulong spawnSeed, int health, EncounterSettings settings)
+        /// <summary>
+        /// Арена временного босса: Хранитель с EnemyArchetypes.InterimBossHealth,
+        /// выросшим с глубиной, как у всех (healthPercent — EnemyHealth уровня).
+        /// Удар — Хранителя ×1,25 и рост урона профиля; процентов пачки у босса
+        /// нет. Ярость на половине здоровья включает RiftRun.
+        ///
+        /// Подмога (стадия 6 плана): на 66% и 33% здоровья босса, по разу, из
+        /// земли встают 2–3 роя и хранитель (ForestEncounterTemplates.BossAdds)
+        /// — см. Simulation.EncounterWaves. Их здоровье и урон — глубина уровня;
+        /// hardPercent — маршрут «Сложно» (125) для босса и подмоги разом.
+        /// </summary>
+        public EncounterPlan SetupBossArena(LayoutMap map, ulong spawnSeed, int healthPercent, EncounterSettings settings,
+            int hardPercent = 100, int arena = ForestEncounterTemplates.ArenaCount + 1)
         {
-            SetupRift(map, spawnSeed, 0, 0, health);
+            SetupRift(map, spawnSeed, 0, 0, 1);
             int module = map.GetPlaced(map.GetExit(0)).Parent;
-            var center = map.CenterOf(module);
+            var center = BossFloorPoint(map, map.CenterOf(module), EnemyArchetypes.GuardianBodyRadius);
+            // Пачка выхода выбирается по-прежнему: её ключ остаётся в плане
+            // встреч и в хеше, хотя состав босс больше не читает.
             var rng = new Pcg32(spawnSeed, 0x424F5353UL);
             var pack = settings.Pick(EncounterRole.ExitGuard, ref rng);
-            EncounterGroup guardian = default;
-            for (int g = 0; g < pack.GroupCount; g++)
-                if (pack.GetGroup(g).Elite && pack.GetGroup(g).Kind == EnemyKind.ForestGuardian)
-                { guardian = pack.GetGroup(g); break; }
-            int boss = Entities.Spawn(center, health * 6, Faction.Orvill);
+            int boss = Entities.Spawn(center,
+                EnemyArchetypes.ScaleHealth(EnemyArchetypes.InterimBossHealth, healthPercent, hardPercent), Faction.Orvill);
             ConfigureEnemy(boss, EnemyKind.ForestGuardian);
             Entities.XpReward[boss] = Progression.BossKillXp;
-            Entities.Stats[boss].SetBase(StatType.Damage,
-                Entities.Damage[boss] * Fix64.Ratio(guardian.DamagePercent * settings.DamagePercent * 5, 40000));
+            Entities.Stats[boss].SetBase(StatType.Damage, Entities.Damage[boss]
+                * Fix64.Ratio(EnemyArchetypes.InterimBossDamagePercent * settings.DamagePercent, 10000)
+                * Fix64.Ratio(hardPercent, 100));
             Entities.RefreshStats(boss);
             _events.Add(SimEvent.Spawn(boss, center));
             var elite = new bool[Entities.Capacity]; elite[boss] = true;
@@ -38,10 +50,46 @@ namespace Game.Sim
             var sites = new List<EncounterPlacement> { new EncounterPlacement(EncounterRole.ExitGuard,
                 module, -1, pack.Id, center, boss, 1) };
             Grid.Rebuild(Entities);
-            return new EncounterPlan(sites, elite, Fix64.FromInt(9), 0) { BossId = boss };
+            var plan = new EncounterPlan(sites, elite, Fix64.FromInt(9), 0) { BossId = boss };
+            if (map.Routes != null)
+            {
+                PrepareBossAdds(map, spawnSeed, arena, healthPercent, settings.DamagePercent, hardPercent, boss);
+                _encounterPlan = plan;
+            }
+            return plan;
         }
 
-        public EncounterPlan SetupEncounters(LayoutMap map, ulong spawnSeed, int guardianHealth, EncounterSettings settings, int entryClearance = 9)
+        /// <summary>
+        /// Где встаёт босс: центр комнаты перед выходом, если там пол, иначе
+        /// ближайшая к нему клетка маршрута, до которой можно дойти от входа
+        /// и где тело босса стоит на полу. Центр угловой комнаты поляны бывает
+        /// за её контуром: сессия с сидом 10 ставила босса в (−30, 35), вне
+        /// пола, и до него было не дойти. При равном расстоянии — младшая клетка.
+        /// </summary>
+        private static FixVec2 BossFloorPoint(LayoutMap map, FixVec2 center, Fix64 radius)
+        {
+            if (map.IsWalkable(center, radius) || map.Routes == null) return map.ClampToWalkable(center, radius);
+            int best = -1;
+            Fix64 nearest = Fix64.MaxValue;
+            for (int i = 0; i < map.Routes.CellCount; i++)
+            {
+                FixVec2 cell = map.Routes.GetCell(i).Center;
+                if (map.Routes.DistanceFromEntry(i) < 0 || !map.IsWalkable(cell, radius)) continue;
+                Fix64 distance = FixVec2.DistanceSq(cell, center);
+                if (distance >= nearest) continue;
+                best = i; nearest = distance;
+            }
+            return best >= 0 ? map.Routes.GetCell(best).Center : map.ClampToWalkable(center, radius);
+        }
+
+        /// <summary>
+        /// Встречи вдоль маршрута. Здоровье каждого моба — строка его вида в
+        /// EnemyArchetypes × healthPercent уровня (EnemyHealth: 100 на первой
+        /// арене, +7 за каждую следующую) × HealthPercent группы. Урон — строка
+        /// вида × DamagePercent профиля (рост с глубиной) × DamagePercent
+        /// группы. Проценты группы — подстройка около 100; элиты стоят на 100.
+        /// </summary>
+        public EncounterPlan SetupEncounters(LayoutMap map, ulong spawnSeed, int healthPercent, EncounterSettings settings, int entryClearance = 9)
         {
             _encounterEntryRadius = Fix64.FromInt(entryClearance);
             if (map.Routes == null || map.ExitCount == 0) throw new ArgumentException("Encounters require generated walking routes and an exit.");
@@ -78,7 +126,7 @@ namespace Game.Sim
             }
 
             // Reuse the existing reset/player setup. Its local zero-count rolls never touch live streams.
-            SetupRift(map, spawnSeed, 0, 0, guardianHealth);
+            SetupRift(map, spawnSeed, 0, 0, 1);
             var placed = new List<EncounterPlacement>();
             var elite = new bool[Entities.Capacity];
             int omitted = 0;
@@ -112,8 +160,9 @@ namespace Game.Sim
                         if (group.Elite != (pass == 0)) continue;
                         for (int n = 0; n < counts[g]; n++)
                         {
-                            var radius = group.Kind == EnemyKind.ForestBud ? ForestBudConfig.BodyRadius
-                                : group.Kind == EnemyKind.ForestRootSwarm ? Fix64.Ratio(45, 100) : Fix64.Ratio(85, 100);
+                            // Место ищется под то тело, которое поставит Configure*:
+                            // Камнекопыту и Вендиго чужие 0.85 малы или велики.
+                            var radius = ArchetypeBodyRadius(group.Kind);
                             if (hasRanged)
                             {
                                 // Стрелки занимают дальнюю сторону комнаты относительно входа пачки.
@@ -128,7 +177,8 @@ namespace Game.Sim
                                 });
                             }
                             if (!TakeEncounterPoint(map, site.Module, cells, radius, ref rng, out var spot)) { omitted++; continue; }
-                            int health = Math.Max(1, guardianHealth * group.HealthPercent / 100);
+                            int health = EnemyArchetypes.ScaleHealth(ArchetypeHealth(group.Kind),
+                                healthPercent, group.HealthPercent);
                             int id = Entities.Spawn(spot, health, Faction.Orvill);
                             ConfigureEnemy(id, group.Kind);
                             var sheet = Entities.Stats[id];
@@ -146,6 +196,68 @@ namespace Game.Sim
             Grid.Rebuild(Entities);
             _eliteMask = elite;
             return new EncounterPlan(placed, elite, settings.FormationRadius, omitted);
+        }
+
+        /// <summary>
+        /// Стенд одного вида для тестов и съёмки: герой и count врагов kind в
+        /// шеренге поперёк линии «герой — враг» на distance от героя (0 — 6 м).
+        /// Здоровье и урон — строка вида, выросшая до арены arena, с «Сложно»
+        /// hardPercent — тем же путём, что у волн встречи (SpawnScaledEnemy).
+        /// Враги сразу заметили героя и смотрят на него; перезарядки — какие
+        /// ставит Configure* вида. Шипомёт и Вендиго помечены элитой.
+        ///
+        /// Без карты — пустое поле без стен; с картой — площадка стенда
+        /// Плюй-плода (FindForestBudTestStage), а на тестовой поляне из одного
+        /// входа без маршрута — её центр.
+        /// </summary>
+        public EncounterPlan SetupKindTestArena(EnemyKind kind, int count = 1, LayoutMap map = null, ulong seed = 0,
+            int arena = 1, int hardPercent = 100, Fix64 distance = default)
+        {
+            if (!EnemyArchetypes.IsDefined(kind)) throw new ArgumentOutOfRangeException(nameof(kind));
+            if (count < 1 || count >= Entities.Capacity) throw new ArgumentOutOfRangeException(nameof(count));
+            if (hardPercent < 1) throw new ArgumentOutOfRangeException(nameof(hardPercent));
+            if (distance.Raw <= 0) distance = Fix64.FromInt(6);
+            if (map == null) SetupTestArena(0); else SetupRift(map, seed, 0, 0, 1);
+            _campWalkMap = null; _events.Clear();
+            FixVec2 hero, enemy; int module;
+            if (map != null && map.PlacedCount == 1 && map.Routes == null)
+            {
+                // Тестовая поляна из одного входа (камни на линии): герой в её
+                // центре, враг по +X — как на пустом поле, только со стенами.
+                hero = map.CenterOf(0); enemy = hero + new FixVec2(Fix64.FromInt(6), Fix64.Zero); module = 0;
+            }
+            else FindForestBudTestStage(map, out hero, out enemy, out module);
+            var direction = (enemy - hero).Normalized();
+            if (direction.LengthSq.Raw == 0) direction = new FixVec2(Fix64.One, Fix64.Zero);
+            Fix64 radius = ArchetypeBodyRadius(kind);
+            enemy = hero + direction * distance;
+            if (map != null) enemy = map.ClampToWalkable(enemy, radius);
+            Entities.Position[PlayerId] = hero; Entities.Facing[PlayerId] = direction;
+
+            var side = new FixVec2(-direction.Y, direction.X);
+            Fix64 spacing = radius * 2 + Fix64.Ratio(1, 2);
+            bool eliteKind = kind == EnemyKind.ForestWendigo || kind == EnemyKind.ForestThorncaster;
+            var elite = new bool[Entities.Capacity];
+            int healthPercent = EnemyArchetypes.DepthHealthPercent(arena);
+            int damagePercent = EnemyArchetypes.DepthDamagePercent(arena);
+            for (int n = 0; n < count; n++)
+            {
+                // Шеренга от середины: 0, +1, −1, +2, −2…
+                int rank = (n + 1) / 2;
+                if ((n & 1) == 0) rank = -rank;
+                var point = enemy + side * (spacing * rank);
+                if (map != null) point = map.ClampToWalkable(point, radius);
+                int id = SpawnScaledEnemy(point, kind, healthPercent, damagePercent, hardPercent);
+                var look = (hero - point).Normalized();
+                if (look.LengthSq.Raw != 0) Entities.Facing[id] = look;
+                Entities.Aggro[id] = true;
+                if (eliteKind) { elite[id] = true; Entities.XpReward[id] = Progression.EliteKillXp; }
+                _events.Add(SimEvent.Spawn(id, point));
+            }
+            _eliteMask = elite;
+            Grid.Rebuild(Entities);
+            return new EncounterPlan(new List<EncounterPlacement> { new EncounterPlacement(EncounterRole.MainPath,
+                module, -1, StableId.Of("encounter.forest-kind.test"), enemy, 1, count) }, elite, Fix64.FromInt(5), 0);
         }
 
         private bool TryEncounterSite(LayoutMap map, int module, int branch, EncounterRole role, out EncounterSite site)

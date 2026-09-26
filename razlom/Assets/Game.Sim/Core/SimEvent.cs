@@ -60,6 +60,81 @@ namespace Game.Sim
         StonehoofStarted = 26,
         StonehoofStopped = 27,
         StonehoofCancelled = 28,
+
+        /// <summary>
+        /// На земле появилась метка удара. Source — владелец, Amount — слот
+        /// в общем списке меток, ActionVariant — её серийный номер, Flag —
+        /// рисует ли её общий вид (TelegraphFlags.SharedView), Position — начало фигуры.
+        /// </summary>
+        TelegraphOpened = 29,
+
+        /// <summary>Метка снята до удара: оглушение, смерть, волок. Поля как у TelegraphOpened.</summary>
+        TelegraphCancelled = 30,
+
+        /// <summary>
+        /// Враг ушёл в землю, не умерев: таймер выживания кончился. Target —
+        /// кто, Position — где. Ни опыта, ни добычи; Alive уже false.
+        /// </summary>
+        Burrowed = 31,
+
+        /// <summary>
+        /// Вышла волна встречи арены. Amount — номер волны с нуля,
+        /// ActionVariant — сколько волн у встречи, Flag — выживание,
+        /// Position — где встала первая группа. Волна подмоги босса —
+        /// Amount = −1, ActionVariant — какая по счёту (1 — на 66%, 2 — на 33%).
+        /// </summary>
+        EncounterWave = 32,
+
+        /// <summary>
+        /// Моб начал действие новых мобов леса (линия шипов, всплеск, удар
+        /// корнями). Source — моб, Target — герой, Amount — номер шага
+        /// действия (0), Position — откуда действует моб, ActionVariant —
+        /// EnemyActionKind. Им же кормится слот звука EnemyWarning.
+        /// </summary>
+        EnemyActionStarted = 33,
+
+        /// <summary>
+        /// Контакт действия: один шип линии, всплеск, удар корнями. Amount —
+        /// номер контакта в действии (шип 0..3), Flag — задел ли героя,
+        /// Position — центр сработавшей фигуры, ActionVariant — EnemyActionKind.
+        /// </summary>
+        EnemyActionImpact = 34,
+
+        /// <summary>Действие снято до конца: оглушение, смерть, волок. Поля как у EnemyActionStarted.</summary>
+        EnemyActionCancelled = 35,
+
+        /// <summary>
+        /// Расщепень распался. Source — родитель, Target — первый детёныш
+        /// (остальные идут подряд за ним), Amount — сколько детёнышей,
+        /// Position — где умер родитель.
+        /// </summary>
+        SplitterSplit = 36,
+    }
+
+    /// <summary>
+    /// Какое действие моба описывает событие EnemyAction*. Значение идёт в
+    /// ActionVariant и в хеш — новые только в конец. Будущий босс берёт свои
+    /// значения отсюда же.
+    /// </summary>
+    public enum EnemyActionKind : byte
+    {
+        None = 0,
+
+        /// <summary>Шипомёт: линия шипов вдоль взгляда.</summary>
+        ThornLine = 1,
+
+        /// <summary>Шипомёт: всплеск вокруг себя, когда героя прижало вплотную.</summary>
+        ThornBurst = 2,
+
+        /// <summary>Корнехват: удар корнями по месту героя.</summary>
+        SnarerSlam = 3,
+
+        /// <summary>
+        /// Резерв под замах Расщепеня. Сейчас замах идёт общим ближним
+        /// замахом (SimEvent.Attack, Simulation.EnemyMelee) и этим значением
+        /// не пользуется.
+        /// </summary>
+        SplitterSwing = 4,
     }
 
     /// <summary>
@@ -139,8 +214,32 @@ namespace Game.Sim
         public static SimEvent Spawn(int target, FixVec2 at)
             => new SimEvent(SimEventType.Spawn, -1, target, 0, false, at);
 
+        /// <summary>
+        /// Появление из-под земли: тот же Spawn, но Flag = true, Amount — сколько
+        /// тиков моб бездействует (Simulation.EmergeTicks). Вид играет выход из корней.
+        /// </summary>
+        public static SimEvent Emerge(int target, FixVec2 at, int dormantTicks)
+            => new SimEvent(SimEventType.Spawn, -1, target, dormantTicks, true, at);
+
+        public static SimEvent Burrow(int target, FixVec2 at)
+            => new SimEvent(SimEventType.Burrowed, -1, target, 0, false, at);
+
         public static SimEvent Attack(int source, int target, FixVec2 at, int variant = 0)
             => new SimEvent(SimEventType.Attack, source, target, variant, false, at,
                 DamageType.Physical, DamageOrigin.BasicAttack, variant);
+
+        /// <summary>
+        /// Событие действия моба: type — EnemyActionStarted, EnemyActionImpact
+        /// или EnemyActionCancelled. stage — номер контакта в действии, hit —
+        /// задел ли контакт героя (только у EnemyActionImpact).
+        /// </summary>
+        public static SimEvent EnemyAction(SimEventType type, int source, int target, EnemyActionKind kind,
+            FixVec2 at, int stage = 0, bool hit = false)
+            => new SimEvent(type, source, target, stage, hit, at,
+                DamageType.Physical, DamageOrigin.BasicAttack, (int)kind);
+
+        /// <summary>Распад Расщепеня: count детёнышей подряд, начиная с firstChild.</summary>
+        public static SimEvent Split(int parent, int firstChild, int count, FixVec2 at)
+            => new SimEvent(SimEventType.SplitterSplit, parent, firstChild, count, false, at);
     }
 }

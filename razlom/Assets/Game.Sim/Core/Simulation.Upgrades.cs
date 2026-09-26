@@ -286,7 +286,9 @@ namespace Game.Sim
             _leapFrom = Entities.Position[PlayerId];
             if (build == null || !build.Has(AbilityFlag.BoardingInterrupt)) return;
             if ((uint)_leapTarget >= (uint)Entities.Count || !Entities.Alive[_leapTarget]) return;
-            // Зацеп сбивает замах: начатая атака врага пропадает, как от оглушения.
+            // Зацеп сбивает замах: начатая атака врага пропадает, как от оглушения,
+            // вместе с меткой на земле и с той же паузой перед следующим замахом.
+            InterruptEnemySwing(_leapTarget);
             Entities.PendingAttackTarget[_leapTarget] = -1;
             Entities.AttackImpactTick[_leapTarget] = 0;
             Entities.PendingAttackVariant[_leapTarget] = 0;

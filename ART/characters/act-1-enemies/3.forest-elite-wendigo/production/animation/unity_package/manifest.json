@@ -22,6 +22,10 @@
       0.0,
       48.0
     ],
+    "Howl": [
+      0.0,
+      48.0
+    ],
     "Hit": [
       0.0,
       12.0
@@ -30,6 +34,9 @@
   "max_weights": 4,
   "pruned_vertices": 0,
   "maximum_pruned_weight": 0,
-  "source": "reference-matched; Claw r02 immutable",
+  "source": "reference-matched; Claw r02 immutable; Howl r01 added 2026-09-26",
+  "contact_frames": {
+    "Howl": 24
+  },
   "root_motion": false
 }

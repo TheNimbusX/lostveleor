@@ -1,0 +1,303 @@
+{
+  "stage": "turn_in_place_r01",
+  "owner_approved": false,
+  "fps": 30,
+  "frames": 15,
+  "frame_range": [
+    0,
+    15
+  ],
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend",
+  "source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_Baked_r01.blend": "34153a69ea6f37f7249127e931eb790ccf43264c9cbf9451b0208ec59668b5d2",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_r01.blend": "c8d4ea70675e5db835052b25952ab960c4f68e25ba87b574eb3598150d3871d5",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_Baked_r01.blend": "edf8bdb236f190f31c2886d218f68ea4ee3326b4a878af014d8b5e5901753367",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\brake\\Stonehoof_Brake_r01.blend": "e24f05a5fcf5e394c6a22d121c6a684c40e97c5e3dff9ca7df1f725bcc16eaa9",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\brake\\Stonehoof_Brake_Baked_r01.blend": "df345221a035beeb4edf913799cb711c87d47ab93d9b20c8e05244407683d62a",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\collision\\Stonehoof_Collision_Baked_r01.blend": "9a9ce3640dc5d8549642b04e05bde8fc8ad9d4b2f237944e6e7a1433b1c1963e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\death_r02\\Stonehoof_Death_Baked_r02.blend": "df1d2bac2a5b00b99dad22c170a7d486a2562464cfd73c767417f2852f1064bd"
+  },
+  "directions": {
+    "TurnLeft": {
+      "actions": {
+        "ARM_ForestStonehoof": "AN_Stonehoof_TurnLeft_Rig",
+        "CTRL_PreviewMotion_Only": "AN_Stonehoof_TurnLeft_Carrier",
+        "CTRL_Hoof_front_left": "AN_Stonehoof_TurnLeft_CTRL_Hoof_front_left",
+        "CTRL_Hoof_front_right": "AN_Stonehoof_TurnLeft_CTRL_Hoof_front_right",
+        "CTRL_Hoof_hind_left": "AN_Stonehoof_TurnLeft_CTRL_Hoof_hind_left",
+        "CTRL_Hoof_hind_right": "AN_Stonehoof_TurnLeft_CTRL_Hoof_hind_right"
+      },
+      "contacts": {
+        "front_left": {
+          "role": "inside_front",
+          "events": [
+            [
+              1.25,
+              "lift"
+            ],
+            [
+              3.25,
+              "plant"
+            ],
+            [
+              8.75,
+              "lift"
+            ],
+            [
+              10.75,
+              "plant"
+            ]
+          ]
+        },
+        "front_right": {
+          "role": "outside_front",
+          "events": [
+            [
+              4.25,
+              "lift"
+            ],
+            [
+              6.25,
+              "plant"
+            ],
+            [
+              11.75,
+              "lift"
+            ],
+            [
+              13.75,
+              "plant"
+            ]
+          ]
+        },
+        "hind_left": {
+          "role": "inside_hind",
+          "events": [
+            [
+              4.75,
+              "lift"
+            ],
+            [
+              6.5,
+              "plant"
+            ],
+            [
+              12.25,
+              "lift"
+            ],
+            [
+              14.0,
+              "plant"
+            ]
+          ]
+        },
+        "hind_right": {
+          "role": "outside_hind",
+          "events": [
+            [
+              1.75,
+              "lift"
+            ],
+            [
+              3.5,
+              "plant"
+            ],
+            [
+              9.25,
+              "lift"
+            ],
+            [
+              11.0,
+              "plant"
+            ]
+          ]
+        }
+      },
+      "crouch_m": {
+        "min": 0.050769917864967276,
+        "max": 0.0691174761493748
+      },
+      "raw_reach_deficit_max_m": 0.0691174761493748,
+      "yaw_sign_blender_z": 1,
+      "max_ik_target_error_m": 4.693666143562052e-05,
+      "max_planted_ankle_world_slip_m": {
+        "front_left": 0.0011994776885432123,
+        "front_right": 0.0014538461002210636,
+        "hind_left": 0.00044250976118974204,
+        "hind_right": 0.0003246020374328199
+      },
+      "stance_join_f0": {
+        "max_joint_position_m": 0.19396358114750042,
+        "max_matrix_error": 0.45513854175806046,
+        "worst_bones": [
+          [
+            0.194,
+            "head0_end"
+          ],
+          [
+            0.1665,
+            "leg_hind_right_bot1"
+          ],
+          [
+            0.1543,
+            "leg_hind_left_bot1"
+          ],
+          [
+            0.1538,
+            "leg_front_right_bot1"
+          ],
+          [
+            0.1204,
+            "leg_hind_left_bot0"
+          ],
+          [
+            0.1173,
+            "leg_front_right_bot0"
+          ]
+        ]
+      },
+      "loop_seam_max_position_m": 1.3838839248572819e-07
+    },
+    "TurnRight": {
+      "actions": {
+        "ARM_ForestStonehoof": "AN_Stonehoof_TurnRight_Rig",
+        "CTRL_PreviewMotion_Only": "AN_Stonehoof_TurnRight_Carrier",
+        "CTRL_Hoof_front_left": "AN_Stonehoof_TurnRight_CTRL_Hoof_front_left",
+        "CTRL_Hoof_front_right": "AN_Stonehoof_TurnRight_CTRL_Hoof_front_right",
+        "CTRL_Hoof_hind_left": "AN_Stonehoof_TurnRight_CTRL_Hoof_hind_left",
+        "CTRL_Hoof_hind_right": "AN_Stonehoof_TurnRight_CTRL_Hoof_hind_right"
+      },
+      "contacts": {
+        "front_right": {
+          "role": "inside_front",
+          "events": [
+            [
+              1.25,
+              "lift"
+            ],
+            [
+              3.25,
+              "plant"
+            ],
+            [
+              8.75,
+              "lift"
+            ],
+            [
+              10.75,
+              "plant"
+            ]
+          ]
+        },
+        "front_left": {
+          "role": "outside_front",
+          "events": [
+            [
+              4.25,
+              "lift"
+            ],
+            [
+              6.25,
+              "plant"
+            ],
+            [
+              11.75,
+              "lift"
+            ],
+            [
+              13.75,
+              "plant"
+            ]
+          ]
+        },
+        "hind_right": {
+          "role": "inside_hind",
+          "events": [
+            [
+              4.75,
+              "lift"
+            ],
+            [
+              6.5,
+              "plant"
+            ],
+            [
+              12.25,
+              "lift"
+            ],
+            [
+              14.0,
+              "plant"
+            ]
+          ]
+        },
+        "hind_left": {
+          "role": "outside_hind",
+          "events": [
+            [
+              1.75,
+              "lift"
+            ],
+            [
+              3.5,
+              "plant"
+            ],
+            [
+              9.25,
+              "lift"
+            ],
+            [
+              11.0,
+              "plant"
+            ]
+          ]
+        }
+      },
+      "crouch_m": {
+        "min": 0.03431012511425779,
+        "max": 0.07420432630350482
+      },
+      "raw_reach_deficit_max_m": 0.07420432630350482,
+      "yaw_sign_blender_z": -1,
+      "max_ik_target_error_m": 5.472364769454294e-05,
+      "max_planted_ankle_world_slip_m": {
+        "front_left": 0.0018523185471260985,
+        "front_right": 0.0013200506395195804,
+        "hind_left": 0.0003359118081256454,
+        "hind_right": 0.000448992072473374
+      },
+      "stance_join_f0": {
+        "max_joint_position_m": 0.1888522277997827,
+        "max_matrix_error": 0.3924454227089882,
+        "worst_bones": [
+          [
+            0.1889,
+            "head0_end"
+          ],
+          [
+            0.1497,
+            "leg_hind_right_bot1"
+          ],
+          [
+            0.1416,
+            "leg_hind_left_bot1"
+          ],
+          [
+            0.1067,
+            "leg_hind_left_bot0"
+          ],
+          [
+            0.1021,
+            "head0"
+          ],
+          [
+            0.0969,
+            "leg_hind_right_bot0"
+          ]
+        ]
+      },
+      "loop_seam_max_position_m": 2.2302015940987714e-07
+    }
+  }
+}

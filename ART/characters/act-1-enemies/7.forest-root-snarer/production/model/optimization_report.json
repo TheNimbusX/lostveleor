@@ -1,0 +1,18 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\tripo-out\\forest-root-snarer-r01-64347b8c\\model.glb",
+  "source_vertices": 761217,
+  "source_triangles": 1456370,
+  "vertices_after_welding": 727992,
+  "triangles_after_welding": 1455992,
+  "candidate_triangles": 24000,
+  "budget_triangles": 25000,
+  "height_m": 1.35,
+  "footprint_m": [
+    1.628,
+    1.749
+  ],
+  "front_axis": "-Y",
+  "materials": 1,
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\model\\ForestRootSnarer_24k_candidate.blend",
+  "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\model\\ForestRootSnarer_24k_candidate.glb"
+}

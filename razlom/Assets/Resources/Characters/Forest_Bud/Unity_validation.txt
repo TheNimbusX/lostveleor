@@ -5,7 +5,8 @@ Runtime FBX: Resources/Characters/Forest_Bud/ForestBudRanged.fbx
 Required rig import: Generic, 40 deform bones, 5 Spawn_Fruit sockets.
 Required projectile import: no avatar.
 Triangles: 27266 character, 568 projectile.
-Clips at 30 FPS: Idle 3.0s, Walk 1.0666667s, Ranged_Attack 2.2s, Death 1.2s.
+Clips at 30 FPS: Idle 3.0s, Walk 1.0666667s, Ranged_Attack 2.2s, Death 1.2s, Hit 0.3333333s.
+Hit (2026-09-26): starts and ends in the rest pose; View plays it by HitPhase, as an additive layer over Ranged_Attack/Walk.
 Attack shots: 0.8, 1.0, 1.2, 1.4, 1.6 seconds from cast start.
 Walk root-equivalent speed: 0.904017857 m/s; runtime adjusts playback to actual speed.
 Root motion: none; Sim owns gameplay timing and movement.
@@ -13,6 +14,6 @@ Geometry: zero boundary edges, zero non-manifold edges, zero inconsistent windin
 Weights: normalized, maximum four influences, no unweighted vertices.
 Every source clip sampled on every authored frame. Maximum ground penetration: 0.000006795 m.
 Idle/Walk/Attack loop pose error: zero. Root drift: below 0.00000006 m.
-FBX roundtrip: PASS, all four clips/sockets retained, maximum bone position error 0.000000778 m.
+FBX roundtrip: PASS, all five clips/sockets retained, maximum bone position error 0.000000778 m.
 Runtime integration and game-camera captures are validated separately by the gameplay presentation task.
 The old standalone ForestBudVolley Rigidbody demo is not the combat implementation.

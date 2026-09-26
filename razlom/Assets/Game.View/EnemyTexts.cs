@@ -18,6 +18,11 @@ namespace Game.View
                 case EnemyKind.ForestBud: return "Плюй-плод";
                 case EnemyKind.ForestWendigo: return "Лесной вендиго";
                 case EnemyKind.ForestStonehoof: return "Камнекопыт";
+                // Новые мобы леса (план 26.09); имена утверждены вместе с планом.
+                case EnemyKind.ForestThorncaster: return "Шипомет";
+                case EnemyKind.ForestRootSnarer: return "Корнехват";
+                case EnemyKind.ForestSplitter: return "Расщепень";
+                case EnemyKind.ForestSplitling: return "Детёныш Расщепеня";
                 default: return "Враг";
             }
         }

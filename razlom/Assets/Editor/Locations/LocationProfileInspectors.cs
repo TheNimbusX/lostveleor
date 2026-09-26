@@ -63,6 +63,11 @@ namespace Game.LocationEditor
     [CustomPropertyDrawer(typeof(LevelSettingsAsset))]
     public sealed class LevelSettingsDrawer : PropertyDrawer
     {
+        // Enemy Health — процент, а не очки: здоровье вида берётся из таблицы
+        // EnemyArchetypes, уровень только масштабирует его (100, 107, 114…).
+        private const string EnemyHealthTooltip = "Процент здоровья врагов от таблицы видов EnemyArchetypes: " +
+            "100 на первой арене, +7 за каждую следующую (100, 107, 114…). Не очки здоровья.";
+
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             => (EditorGUIUtility.singleLineHeight + 3) * (property.isExpanded ? 8 : 1);
 
@@ -79,13 +84,14 @@ namespace Game.LocationEditor
             {
                 EditorGUI.indentLevel++;
                 string[] fields = { "Rooms", "Exits", "Loops", "RewardBranches", "MinEnemies", "MaxEnemies", "EnemyHealth" };
-                string[] labels = { "Цель: модулей", "Выходов (до)", "Петель (до)", "Веток наград (до)", "Врагов: минимум", "Врагов: максимум", "Здоровье врага" };
+                string[] labels = { "Цель: модулей", "Выходов (до)", "Петель (до)", "Веток наград (до)", "Врагов: минимум", "Врагов: максимум", "Здоровье врагов, %" };
                 for (int i = 0; i < fields.Length; i++)
                 {
                     position.y += EditorGUIUtility.singleLineHeight + 3;
                     bool encounters = (property.serializedObject.targetObject as LocationProfileAsset)?.Encounters != null;
                     using (new EditorGUI.DisabledScope(encounters && (i == 4 || i == 5)))
-                        EditorGUI.PropertyField(position, property.FindPropertyRelative(fields[i]), new GUIContent(labels[i]));
+                        EditorGUI.PropertyField(position, property.FindPropertyRelative(fields[i]),
+                            new GUIContent(labels[i], i == 6 ? EnemyHealthTooltip : null));
                 }
                 EditorGUI.indentLevel--;
             }

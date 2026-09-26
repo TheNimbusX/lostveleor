@@ -544,9 +544,7 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
-#if UNITY_EDITOR
-            if (StonehoofReviewCase != null && Session.Mode == GameMode.Rift) { CaptureStonehoofInput(); return; }
-#endif
+            if (EnemyReviewCase != null && Session.Mode == GameMode.Rift) { CaptureStonehoofInput(); return; }
             if ((CaptureRig.WendigoShowcase || WendigoReviewCase != null) && Session.Mode == GameMode.Rift)
             { CaptureWendigoInput(); return; }
             if(CampServicesProbe.IsRunning){ClearWorldControls();return;}

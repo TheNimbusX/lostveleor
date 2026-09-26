@@ -61,7 +61,7 @@ namespace Game.EditorTools
             view.SummarySubtitle = Line(screen, "Пояснение", "Локация пройдена", 350f, 21f, Role.TextMuted);
             UiInkKit.Revealed(view.SummarySubtitle, .15f);
 
-            string[] captions = { "Разломов зачищено", "Глубина", "Предметов", "Золота" };
+            string[] captions = { "Арен зачищено", "Глубина", "Предметов", "Золота" };
             string[] icons = { "rift", "depth", "items", "gold" };
             view.SummaryValues = new TMP_Text[captions.Length];
             const float w = 230f, gap = 24f;

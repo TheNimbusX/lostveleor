@@ -7,11 +7,13 @@ namespace Game.View
 {
     /// <summary>
     /// Бой вендиго со стороны картинки: красные метки (клин когтей, круг
-    /// посадки), и VFX по референсам claw-sync-r03 (25.09) — свечение когтей
-    /// на замахе, мазок когтей с тремя лентами и одновременный веер земли на
-    /// контакте, выброс из-под стоп на отталкивании, столб пыли с комьями на
-    /// посадке. Префабы собирает ForestWendigoVfxSetup. Всё ведётся по
-    /// возрасту от тика Sim через Simulate — пауза и съёмка держат кадр.
+    /// посадки) и VFX V12 по целевым кадрам 26.09 — всё на нашей земле, без
+    /// экранных плоскостей: три ленты когтей широкой дугой по всему маху
+    /// кончика когтя, борозды и веер земли вместе с ними, выброс из-под стоп и
+    /// полоса пыли по ходу прыжка на отталкивании, кратер и юбка пыли на
+    /// посадке, кончики корней на замахе воя и кольцо корней в коре на ударе. Префабы
+    /// собирает ForestWendigoVfxSetup. Каждый эффект ведётся по возрасту от
+    /// тика Sim через Simulate — пауза и съёмка держат кадр.
     /// </summary>
     [DefaultExecutionOrder(640)]
     public sealed class ForestWendigoCombatView : MonoBehaviour
@@ -27,20 +29,27 @@ namespace Game.View
             public Vector3[] Vertices = new Vector3[65*9];
             public Vector2[] Uvs = new Vector2[65*9];
         }
-        /// <summary>Один пул эффектов одного вида: экземпляры префаба, ведомые по возрасту.</summary>
+
+        /// <summary>Экземпляр префаба эффекта: возраст — от тика Tick, системы догоняются приращениями.</summary>
         private sealed class Burst
         {
             public GameObject Root;
             public ParticleSystem[] Particles;
-            public Renderer[] Marks;
-            public MaterialPropertyBlock Block;
+            public uint[] Seeds;
             public int Tick = -1000;
-            public float Life, MarkLife;
-            public Transform Follow;
-            public Vector3 FollowOffset;
+            public float Life, Simulated = -1f;
+            // Эффект, начатый до удара (коготь, замах воя), гаснет, если Sim
+            // отменила атаку раньше контакта: оглушение не оставляет ленту в воздухе.
+            public int Entity = -1, Serial, CancelBefore = int.MinValue;
         }
-        private sealed class Bones { public Transform LeftHand, RightHand, LeftArm, RightArm, LeftFoot, RightFoot; }
-        private sealed class Swing { public WendigoClawRibbon Ribbon; public int Serial; public bool Sampling; }
+
+        private sealed class Pool
+        {
+            public Burst[] Items;
+            public int Cursor;
+        }
+
+        private sealed class Bones { public Transform Head; }
 
         private TickDriver _driver;
         private LayoutView _layout;
@@ -48,41 +57,30 @@ namespace Game.View
         private Simulation _shown;
         private readonly Mark[] _marks = new Mark[4];
         private Material _material;
-        private Burst[] _clawFlip, _landingSkirt, _landingColumn, _takeoffGround, _takeoffColumn;
-        private int _clawFlipCursor, _landingSkirtCursor, _landingColumnCursor, _takeoffGroundCursor, _takeoffColumnCursor;
+        private Pool _claw, _takeoff, _landing, _howlWindup, _howl, _breath;
+        private Pool[] _pools;
         private readonly Dictionary<int, int> _clawFired = new Dictionary<int, int>();
-        private readonly Dictionary<Transform, Bones> _bones = new Dictionary<Transform, Bones>();
         private readonly Dictionary<int, int> _launched = new Dictionary<int, int>();
-        private readonly Dictionary<int, int> _glowing = new Dictionary<int, int>();
-        private readonly Dictionary<int, Swing> _swings = new Dictionary<int, Swing>();
-        private readonly Dictionary<int, Burst[]> _glowBursts = new Dictionary<int, Burst[]>();
-        /// <summary>Мах когтей: серп идёт от тика контакта минус два до контакта плюс семь (0,3 с).</summary>
-        private const int SwingBeforeTicks = 2, SwingAfterTicks = 7;
+        private readonly Dictionary<int, int> _windupFired = new Dictionary<int, int>();
+        private readonly Dictionary<Transform, Bones> _bones = new Dictionary<Transform, Bones>();
+
         /// <summary>
-        /// Серп по рефу: три вложенных дуги вокруг зверя на высоте колена, от его
-        /// правого бока-сзади через фронт к левому боку; радиус — вылет когтей.
-        /// Угол — от направления удара, положительный — вправо.
+        /// Коготь стартует за тик до контакта: вид ведёт кадр 52 клипа на тик
+        /// удара, а мах, по которому идут ленты (кадры 49,5–54,5), начинается ~на тик раньше.
+        /// Время внутри префаба (голова ленты, борозды, веер земли) отсчитано от этого тика.
         /// </summary>
-        private const float SweepStartDegrees = 118f, SweepEndDegrees = -72f, SweepRadius = 2.0f;
-        /// <summary>
-        /// Флипбуки Higgsfield (V8): билборд к камере, повёрнутый в плоскости экрана
-        /// по направлению удара. В элементе когтей выпуклая сторона серпов смотрит
-        /// на экранный угол RefClawDegrees (вниз-влево: «C» открыт вправо-вверх),
-        /// в референсе выпуклость идёт по ходу удара. Билборд сдвинут к камере, чтобы ноги зверя его не резали.
-        /// </summary>
-        /// Сдвиг к камере не меняет место на экране (камера ортографическая), но
-        /// поднимает плоскость билборда над землёй: иначе нижняя часть ячейки
-        /// (юбка пыли, основания «свечей») уходила под грунт и срезалась.
-        private const float RefClawDegrees = -135f, ClawFlipForward = .35f, ClawFlipHeight = .12f;
-        private const int ClawFlipLeadTicks = 8;
-        private const float GroundLayerLift = .06f;
-        private const float LandingFlipTowardCamera = 1.6f, TakeoffFlipTowardCamera = 1.5f;
-        private const bool UseClawRibbon = false;
+        private const int ClawLeadTicks = 1;
+
+        /// <summary>Шаг догоняющей симуляции: столкновения комьев с землёй не проскакивают на рывке кадра.</summary>
+        private const float SimulateStep = 1f / 30f;
+
+        /// <summary>Череп в позе воя, если кости головы нет: над корнем, чуть вперёд.</summary>
+        private static readonly Vector3 HeadFallback = new Vector3(0f, 2.3f, .25f);
+
         private static readonly int Progress = Shader.PropertyToID("_Progress"), Opacity = Shader.PropertyToID("_Opacity"),
             IsSector = Shader.PropertyToID("_IsSector"), Impact = Shader.PropertyToID("_Impact"), Ring = Shader.PropertyToID("_Ring");
 
         private static readonly int WarningRadius = Shader.PropertyToID("_Radius");
-        private const float ClawGroundForward = 1.6f;
 
         private void Awake()
         {
@@ -102,36 +100,38 @@ namespace Game.View
                 m.Renderer.sharedMaterial=_material;m.Renderer.shadowCastingMode=ShadowCastingMode.Off;m.Renderer.receiveShadows=false;
                 m.Root.SetActive(false);_marks[i]=m;
             }
-            _clawFlip = Pool("VFX/Wendigo/Prefabs/VFX_Wendigo_ClawFlip", "Вендиго: серпы (флипбук)", 3, .62f, 0f);
-            _landingSkirt = Pool("VFX/Wendigo/Prefabs/VFX_Wendigo_LandingSkirt", "Вендиго: посадка, юбка", 2, 3.35f, 0f);
-            _landingColumn = Pool("VFX/Wendigo/Prefabs/VFX_Wendigo_LandingColumn", "Вендиго: посадка, столб", 2, 3.35f, 0f);
-            _takeoffGround = Pool("VFX/Wendigo/Prefabs/VFX_Wendigo_TakeoffGround", "Вендиго: отталкивание, земля", 2, 2.85f, 0f);
-            _takeoffColumn = Pool("VFX/Wendigo/Prefabs/VFX_Wendigo_TakeoffColumn", "Вендиго: отталкивание, свечи", 2, 2.85f, 0f);
+            // Пулы заводятся сразу: в бою ни одного Instantiate. Двух вендиго
+            // с частым когтем хватает четырёх когтей; крупные атаки — по жетону.
+            _claw = MakePool("VFX_Wendigo_Claw", "Вендиго: коготь", 4, 2.3f);
+            _takeoff = MakePool("VFX_Wendigo_Takeoff", "Вендиго: отталкивание", 2, 2.3f);
+            _landing = MakePool("VFX_Wendigo_Landing", "Вендиго: приземление", 2, 2.7f);
+            _howlWindup = MakePool("VFX_Wendigo_HowlWindup", "Вендиго: замах воя", 2, 1.15f);
+            _howl = MakePool("VFX_Wendigo_Howl", "Вендиго: вой", 2, 2.3f);
+            _breath = MakePool("VFX_Wendigo_HowlBreath", "Вендиго: дыхание воя", 2, 1.3f);
+            _pools = new[] { _claw, _takeoff, _landing, _howlWindup, _howl, _breath };
         }
 
-        private Burst[] Pool(string path, string name, int count, float life, float markLife, Color? tint = null)
+        private Pool MakePool(string prefabName, string name, int count, float life)
         {
-            var prefab = Resources.Load<GameObject>(path);
-            var pool = new Burst[count];
+            var pool = new Pool { Items = new Burst[0] };
+            var prefab = Resources.Load<GameObject>("VFX/Wendigo/Prefabs/" + prefabName);
             if (prefab == null) return pool;
+            pool.Items = new Burst[count];
             for (int i = 0; i < count; i++)
             {
                 var go = Instantiate(prefab, transform); go.name = name;
-                if (tint.HasValue)
-                    foreach (var ps in go.GetComponentsInChildren<ParticleSystem>(true))
-                    {
-                        var main = ps.main;
-                        main.startColor = tint.Value;
-                    }
-                var burst = new Burst
+                var burst = new Burst { Root = go, Particles = go.GetComponentsInChildren<ParticleSystem>(true), Life = life };
+                burst.Seeds = new uint[burst.Particles.Length];
+                for (int k = 0; k < burst.Particles.Length; k++)
                 {
-                    Root = go, Particles = go.GetComponentsInChildren<ParticleSystem>(true),
-                    Marks = go.GetComponentsInChildren<MeshRenderer>(true), Life = life, MarkLife = markLife,
-                    Block = new MaterialPropertyBlock()
-                };
-                foreach (var ps in burst.Particles) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    var ps = burst.Particles[k];
+                    // Прогрев: один короткий прогон заводит буферы частиц до боя.
+                    ps.Simulate(.05f, false, true, false);
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    burst.Seeds[k] = ps.randomSeed;
+                }
                 go.SetActive(false);
-                pool[i] = burst;
+                pool.Items[i] = burst;
             }
             return pool;
         }
@@ -142,53 +142,48 @@ namespace Game.View
             if(_shown!=sim)
             {
                 _shown=sim;foreach(var m in _marks){m.Entity=-1;m.Serial=0;m.Root.SetActive(false);}
-                foreach (var pool in new[] { _clawFlip, _landingSkirt, _landingColumn, _takeoffGround, _takeoffColumn })
-                    foreach (var b in pool) if (b != null) { b.Tick = -1000; b.Follow = null; b.Root.SetActive(false); }
-                _launched.Clear(); _glowing.Clear(); _glowBursts.Clear(); _clawFired.Clear();
-                foreach (var swing in _swings.Values) swing.Ribbon.End();
+                foreach (var pool in _pools) foreach (var b in pool.Items) Retire(b);
+                _launched.Clear(); _clawFired.Clear(); _windupFired.Clear(); _bones.Clear();
             }
             float tick=sim.Tick-1+_driver.Alpha;
+            // Удары, пришедшие событием: посадка прыжка и удар воя.
             foreach(var c in _driver.FrameEventContexts)
             {
                 var e = c.Event;
                 if (e.Type != SimEventType.WendigoImpact) continue;
-                if (e.ActionVariant == (int)WendigoAction.Leap)
-                    LandingImpact(e.Position, c.SimulationTick);
+                bool known = sim.TryGetWendigoAction(e.Source, out var action) && action.Serial == e.Amount;
+                int at = known ? action.ImpactTick : c.SimulationTick;
+                if (e.ActionVariant == (int)WendigoAction.Leap) Landing(e.Position, known ? action.Direction : default, at);
+                else if (e.ActionVariant == (int)WendigoAction.Howl) HowlImpact(e.Source, e.Position, known ? action.Direction : default, at);
             }
-            if (UseClawRibbon) UpdateSwings(sim, tick);
-            // Отталкивание: у Sim нет отдельного события, момент — LaunchTick прыжка.
-            // Серп когтей: за ClawFlipLeadTicks до контакта, чтобы к удару быть дорисованным (владелец: «с сильным запозданием»).
+            // Опрос: коготь (за тик до контакта), отталкивание (тик взлёта), замах воя (старт).
             for (int id = 1; id < sim.Entities.Count; id++)
             {
                 if (!sim.TryGetWendigoAction(id, out var a)) continue;
-                if (a.Kind == WendigoAction.Leap)
+                if (a.Kind == WendigoAction.Claw)
+                {
+                    int start = a.ImpactTick - ClawLeadTicks;
+                    if (tick < start || (_clawFired.TryGetValue(id, out int fired) && fired == a.Serial)) continue;
+                    _clawFired[id] = a.Serial;
+                    var b = Take(_claw, start, Ground(a.Origin, 0f), Facing(a.Direction), a.Serial);
+                    if (b != null) { b.Entity = id; b.Serial = a.Serial; b.CancelBefore = a.ImpactTick; }
+                }
+                else if (a.Kind == WendigoAction.Leap)
                 {
                     if (tick < a.LaunchTick || (_launched.TryGetValue(id, out int serial) && serial == a.Serial)) continue;
                     _launched[id] = a.Serial;
-                    Takeoff(id, a);
+                    Take(_takeoff, a.LaunchTick, Ground(a.Origin, 0f), Facing(a.Direction), a.Serial);
                 }
-                else if (a.Kind == WendigoAction.Claw)
+                else if (a.Kind == WendigoAction.Howl)
                 {
-                    if (tick < a.ImpactTick - ClawFlipLeadTicks || (_clawFired.TryGetValue(id, out int fired) && fired == a.Serial)) continue;
-                    _clawFired[id] = a.Serial;
-                    ClawImpact(id, a, a.ImpactTick - ClawFlipLeadTicks);
+                    if (tick < a.StartTick || (_windupFired.TryGetValue(id, out int serial) && serial == a.Serial)) continue;
+                    _windupFired[id] = a.Serial;
+                    var b = Take(_howlWindup, a.StartTick, Ground(a.Origin, 0f), Facing(a.Direction), a.Serial);
+                    if (b != null) { b.Entity = id; b.Serial = a.Serial; b.CancelBefore = a.ImpactTick; }
                 }
             }
-            foreach (var pool in new[] { _clawFlip, _landingSkirt, _landingColumn, _takeoffGround, _takeoffColumn })
-                foreach (var b in pool)
-                {
-                    if (b == null || !b.Root.activeSelf) continue;
-                    float age = Mathf.Max(0, tick - b.Tick) / Simulation.TicksPerSecond;
-                    if (age > b.Life) { b.Root.SetActive(false); b.Follow = null; continue; }
-                    if (b.Follow != null) b.Root.transform.position = b.Follow.TransformPoint(b.FollowOffset);
-                    foreach (var ps in b.Particles) { ps.Simulate(age, false, true, false); ps.Pause(false); }
-                    if (b.MarkLife > 0f && b.Marks.Length > 0)
-                    {
-                        float fade = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(b.MarkLife * .6f, b.MarkLife, age));
-                        b.Block.SetFloat(Opacity, .6f * fade);
-                        foreach (var mark in b.Marks) mark.SetPropertyBlock(b.Block);
-                    }
-                }
+            foreach (var pool in _pools)
+                foreach (var b in pool.Items) Advance(sim, b, tick);
             foreach(var m in _marks)
             {
                 if(m.Entity<0)continue;
@@ -203,7 +198,8 @@ namespace Game.View
             }
             for(int id=1;id<sim.Entities.Count;id++)
             {
-                if(!sim.TryGetWendigoAction(id,out var a)||tick>a.ImpactTick+9)continue;
+                // Кольцо воя рисует общий GroundTelegraphView (SharedView): здесь только клин и круг.
+                if(!sim.TryGetWendigoAction(id,out var a)||a.Kind==WendigoAction.Howl||tick>a.ImpactTick+9)continue;
                 Mark free=null;bool exists=false;
                 foreach(var m in _marks){if(m.Entity==id&&m.Serial==a.Serial)exists=true;if(m.Entity<0)free=m;}
                 if(exists||free==null)continue;Build(free,id,a);
@@ -212,162 +208,91 @@ namespace Game.View
 
         // ------------------------------------------------------------ effects
 
-        private Burst Take(Burst[] pool, ref int cursor, int tick, Vector3 position, Quaternion rotation, float scale)
+        /// <summary>
+        /// Берёт следующий экземпляр пула и ставит его корень на землю. Зерно
+        /// систем меняется с номером атаки: удары не повторяют друг друга, а
+        /// перемотка той же атаки даёт тот же кадр.
+        /// </summary>
+        private Burst Take(Pool pool, int tick, Vector3 position, Quaternion rotation, int serial)
         {
-            if (pool == null || pool.Length == 0 || pool[0] == null) return null;
-            var b = pool[cursor++ % pool.Length];
-            b.Tick = tick; b.Follow = null;
+            if (pool.Items.Length == 0) return null;
+            var b = pool.Items[pool.Cursor++ % pool.Items.Length];
+            b.Tick = tick; b.Simulated = -1f; b.Entity = -1; b.Serial = 0; b.CancelBefore = int.MinValue;
             b.Root.transform.SetPositionAndRotation(position, rotation);
-            b.Root.transform.localScale = Vector3.one * scale;
             b.Root.SetActive(true);
-            foreach (var ps in b.Particles) { ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); ps.Clear(true); }
-            if (b.MarkLife > 0f && b.Marks.Length > 0)
+            for (int k = 0; k < b.Particles.Length; k++)
             {
-                b.Block.SetFloat(Opacity, .6f);
-                foreach (var mark in b.Marks) mark.SetPropertyBlock(b.Block);
+                var ps = b.Particles[k];
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ps.randomSeed = b.Seeds[k] + (uint)serial * 7919u;
             }
             return b;
         }
 
-        private Vector3 Ground(float x, float z, float lift) => new Vector3(x, _layout.WeaponGroundHeight(x, z) + lift, z);
-
-        private static Vector3 TowardCamera(Vector3 point, float distance)
+        private static void Retire(Burst b)
         {
-            var camera = Camera.main;
-            if (camera == null) return point;
-            return point - camera.transform.forward * distance;
+            if (b == null) return;
+            b.Tick = -1000; b.Simulated = -1f; b.Entity = -1;
+            if (b.Root.activeSelf) b.Root.SetActive(false);
         }
 
         /// <summary>
-        /// Квад на плоскости земли: местный +Y — «верх экрана» (от камеры по горизонту),
-        /// +X — вправо по экрану, нормаль вниз (частицы двусторонние), так текстура не
-        /// зеркалится. Выпуклость элемента (referenceDegrees в осях кадра) доворачивается
-        /// вокруг вертикали на направление удара — одинаково честно с любой стороны.
+        /// Возраст эффекта — от тика Sim с долей кадра. Вперёд системы догоняются
+        /// приращениями, назад (перемотка) — перезапуском; на паузе возраст стоит
+        /// и частицы стоят.
         /// </summary>
-        /// <summary>Вертикальная вырезка: стоит на земле, повёрнута к камере по горизонтали, низ ячейки — на позиции.</summary>
-        private static Quaternion VerticalBillboard()
+        private void Advance(Simulation sim, Burst b, float tick)
         {
-            var camera = Camera.main;
-            Vector3 forwardFlat = camera != null ? Vector3.ProjectOnPlane(camera.transform.forward, Vector3.up) : Vector3.forward;
-            if (forwardFlat.sqrMagnitude < 1e-4f) forwardFlat = Vector3.forward;
-            return Quaternion.LookRotation(-forwardFlat.normalized, Vector3.up);
-        }
-
-        private static Quaternion GroundBillboard(Vector3 direction, float referenceDegrees)
-        {
-            var camera = Camera.main;
-            Vector3 forwardFlat = camera != null ? Vector3.ProjectOnPlane(camera.transform.forward, Vector3.up) : Vector3.forward;
-            if (forwardFlat.sqrMagnitude < 1e-4f) forwardFlat = Vector3.forward;
-            forwardFlat.Normalize();
-            Vector3 rightFlat = Vector3.Cross(Vector3.up, forwardFlat);
-            Quaternion flat = Quaternion.LookRotation(-Vector3.up, forwardFlat);
-            float r = referenceDegrees * Mathf.Deg2Rad;
-            Vector3 bulge = rightFlat * Mathf.Cos(r) + forwardFlat * Mathf.Sin(r);
-            float spin = direction.sqrMagnitude > 1e-4f ? Vector3.SignedAngle(bulge, direction, Vector3.up) : 0f;
-            return Quaternion.AngleAxis(spin, Vector3.up) * flat;
-        }
-
-        /// <summary>
-        /// Поворот билборда: лицом к камере, в плоскости экрана довёрнут так, чтобы
-        /// экранный угол направления совпал с углом референса. Нулевое направление — без доворота.
-        /// </summary>
-        private static Quaternion FacingBillboard(Vector3 at, Vector3 direction, float referenceDegrees)
-        {
-            var camera = Camera.main;
-            if (camera == null) return Quaternion.identity;
-            float spin = 0f;
-            if (direction.sqrMagnitude > 1e-4f)
+            if (b == null || !b.Root.activeSelf) return;
+            float age = (tick - b.Tick) / Simulation.TicksPerSecond;
+            if (age > b.Life) { Retire(b); return; }
+            if (b.Entity >= 0 && tick < b.CancelBefore
+                && (!sim.TryGetWendigoAction(b.Entity, out var a) || a.Serial != b.Serial)) { Retire(b); return; }
+            age = Mathf.Max(0f, age);
+            if (b.Simulated >= 0f && Mathf.Abs(age - b.Simulated) < 1e-5f) return;
+            bool restart = b.Simulated < 0f || age < b.Simulated;
+            float from = restart ? 0f : b.Simulated;
+            foreach (var ps in b.Particles)
             {
-                Vector3 a = camera.WorldToScreenPoint(at), b = camera.WorldToScreenPoint(at + direction);
-                float angle = Mathf.Atan2(b.y - a.y, b.x - a.x) * Mathf.Rad2Deg;
-                spin = angle - referenceDegrees;
-            }
-            return camera.transform.rotation * Quaternion.Euler(0f, 0f, spin);
-        }
-
-        /// <summary>
-        /// Контакт когтей: серпы референса лежат на плоскости земли у тела зверя и
-        /// повёрнуты по направлению удара (владелец 26.09: экранный билборд «не со всех
-        /// сторон правильно отображается к камере»).
-        /// </summary>
-        private void ClawImpact(int entity, WendigoActionState action, int tick)
-        {
-            var direction = new Vector3(action.Direction.X.ToFloat(), 0f, action.Direction.Y.ToFloat());
-            Vector3 origin = Ground(action.Origin.X.ToFloat(), action.Origin.Y.ToFloat(), 0f);
-            Vector3 body = Ground(origin.x + direction.x * ClawFlipForward, origin.z + direction.z * ClawFlipForward, ClawFlipHeight);
-            Take(_clawFlip, ref _clawFlipCursor, tick, body, GroundBillboard(direction, RefClawDegrees), 1f);
-        }
-
-        /// <summary>
-        /// Посадка: юбка и кольцо референса лежат на плоскости земли, столб с камнями и
-        /// угольками стоит вертикальной вырезкой на точке контакта (владелец 26.09:
-        /// билборд к камере «как будто поверх экрана», не на нашей земле).
-        /// </summary>
-        private void LandingImpact(FixVec2 at, int tick)
-        {
-            Vector3 point = Ground(at.X.ToFloat(), at.Y.ToFloat(), 0f);
-            Take(_landingSkirt, ref _landingSkirtCursor, tick, point + Vector3.up * GroundLayerLift, GroundBillboard(Vector3.zero, 0f), 1f);
-            Take(_landingColumn, ref _landingColumnCursor, tick, point + Vector3.up * .02f, VerticalBillboard(), 1f);
-        }
-
-        /// <summary>Отталкивание: выброс из-под каждой стопы назад по прыжку.</summary>
-        private void Takeoff(int entity, WendigoActionState a)
-        {
-            var direction = new Vector3(a.Direction.X.ToFloat(), 0f, a.Direction.Y.ToFloat());
-            Bones bones = BonesOf(entity);
-            Vector3 origin = Ground(a.Origin.X.ToFloat(), a.Origin.Y.ToFloat(), 0f);
-            Vector3 side = Vector3.Cross(Vector3.up, direction) * .32f;
-            Vector3 left = bones?.LeftFoot != null ? bones.LeftFoot.position : origin - side;
-            Vector3 right = bones?.RightFoot != null ? bones.RightFoot.position : origin + side;
-            int tick = _driver.Sim.Tick;
-            Vector3 between = Ground((left.x + right.x) * .5f, (left.z + right.z) * .5f, 0f);
-            Take(_takeoffGround, ref _takeoffGroundCursor, tick, between + Vector3.up * GroundLayerLift, GroundBillboard(Vector3.zero, 0f), 1f);
-            Take(_takeoffColumn, ref _takeoffColumnCursor, tick, between + Vector3.up * .02f, VerticalBillboard(), 1f);
-        }
-
-        private static Vector3 ClawDirection(Transform hand, Transform arm)
-        {
-            if (hand == null) return Vector3.forward;
-            Vector3 dir = arm != null ? hand.position - arm.position : hand.forward;
-            return dir.sqrMagnitude > 1e-4f ? dir.normalized : Vector3.forward;
-        }
-
-        private static Vector3 ClawTip(Transform hand, Transform arm) => hand.position + ClawDirection(hand, arm) * .42f;
-
-        /// <summary>Лента когтей: семплирует правую кисть каждый кадр быстрого маха, потом дорисовывает хвост.</summary>
-        private void UpdateSwings(Simulation sim, float tick)
-        {
-            float now = tick / Simulation.TicksPerSecond;
-            for (int id = 1; id < sim.Entities.Count; id++)
-            {
-                if (!sim.TryGetWendigoAction(id, out var a) || a.Kind != WendigoAction.Claw) continue;
-                if (tick < a.ImpactTick - SwingBeforeTicks || tick > a.ImpactTick + SwingAfterTicks) continue;
-                if (!_swings.TryGetValue(id, out Swing swing))
+                float done = from;
+                bool first = restart;
+                do
                 {
-                    var go = new GameObject("Вендиго: лента когтей " + id);
-                    go.transform.SetParent(transform, false);
-                    swing = new Swing { Ribbon = go.AddComponent<WendigoClawRibbon>() };
-                    _swings[id] = swing;
-                }
-                if (swing.Serial != a.Serial) { swing.Serial = a.Serial; swing.Ribbon.Begin(); swing.Sampling = true; }
-                // Голова серпа: дуга вокруг тела зверя по рефу, а не кость кисти
-                // (наш клип бьёт сверху вниз — по кости выходил вертикальный столб).
-                float t = Mathf.InverseLerp(a.ImpactTick - SwingBeforeTicks, a.ImpactTick + SwingAfterTicks, tick);
-                float angle = Mathf.Lerp(SweepStartDegrees, SweepEndDegrees, t) * Mathf.Deg2Rad;
-                var forward = new Vector3(a.Direction.X.ToFloat(), 0f, a.Direction.Y.ToFloat());
-                if (forward.sqrMagnitude < 1e-4f) forward = Vector3.forward;
-                forward.Normalize();
-                Vector3 right = Vector3.Cross(Vector3.up, forward);
-                Vector3 radial = forward * Mathf.Cos(angle) + right * Mathf.Sin(angle);
-                Vector3 center = _arena != null && _arena.TryGetEntityView(id, out Transform view) && view != null
-                    ? view.position : Ground(a.Origin.X.ToFloat(), a.Origin.Y.ToFloat(), 0f);
-                center = Ground(center.x, center.z, 0f);
-                // Высота: сзади у пояса, впереди у земли — серп «черкает» по контакту.
-                float height = .3f + .5f * (1f - Mathf.Cos(angle));
-                swing.Ribbon.Sample(center + Vector3.up * height + radial * SweepRadius, radial, now);
+                    float step = Mathf.Min(SimulateStep, age - done);
+                    ps.Simulate(step, false, first, false);
+                    first = false;
+                    done += step;
+                } while (done < age - 1e-5f);
+                ps.Pause(false);
             }
-            foreach (var pair in _swings)
-                if (pair.Value.Ribbon.Active) pair.Value.Ribbon.Rebuild(now);
+            b.Simulated = age;
+        }
+
+        private Vector3 Ground(FixVec2 at, float lift)
+        {
+            float x = at.X.ToFloat(), z = at.Y.ToFloat();
+            return new Vector3(x, (_layout != null ? _layout.WeaponGroundHeight(x, z) : 0f) + lift, z);
+        }
+
+        private static Quaternion Facing(FixVec2 direction)
+        {
+            var forward = new Vector3(direction.X.ToFloat(), 0f, direction.Y.ToFloat());
+            return forward.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(forward, Vector3.up) : Quaternion.identity;
+        }
+
+        /// <summary>Посадка: кратер, трещины, юбка пыли и комья в точке касания, +Z — по ходу прыжка.</summary>
+        private void Landing(FixVec2 at, FixVec2 direction, int tick) =>
+            Take(_landing, tick, Ground(at, 0f), Facing(direction), tick);
+
+        /// <summary>Удар воя: кольцо шипов у ног зверя и дыхание у его черепа.</summary>
+        private void HowlImpact(int entity, FixVec2 at, FixVec2 direction, int tick)
+        {
+            var facing = Facing(direction);
+            Vector3 origin = Ground(at, 0f);
+            Take(_howl, tick, origin, facing, tick);
+            Bones bones = BonesOf(entity);
+            Vector3 head = bones?.Head != null ? bones.Head.position : origin + facing * HeadFallback;
+            Take(_breath, tick, head, facing, tick);
         }
 
         private Bones BonesOf(int entity)
@@ -376,14 +301,7 @@ namespace Game.View
             if (_bones.TryGetValue(view, out Bones bones)) return bones;
             bones = new Bones();
             foreach (var t in view.GetComponentsInChildren<Transform>(true))
-            {
-                if (t.name == "L_hand") bones.LeftHand = t;
-                else if (t.name == "R_hand") bones.RightHand = t;
-                else if (t.name == "L_arm_lower") bones.LeftArm = t;
-                else if (t.name == "R_arm_lower") bones.RightArm = t;
-                else if (t.name == "L_foot") bones.LeftFoot = t;
-                else if (t.name == "R_foot") bones.RightFoot = t;
-            }
+                if (t.name == "head") { bones.Head = t; break; }
             _bones[view] = bones;
             return bones;
         }
@@ -413,10 +331,10 @@ namespace Game.View
 
         private void OnDestroy()
         {
-            foreach (var swing in _swings.Values) if (swing.Ribbon != null) Destroy(swing.Ribbon.gameObject);
             foreach(var m in _marks)if(m!=null){Destroy(m.Mesh);Destroy(m.Root);}if(_material!=null)Destroy(_material);
-            foreach (var pool in new[] { _clawFlip, _landingSkirt, _landingColumn, _takeoffGround, _takeoffColumn })
-                if (pool != null) foreach (var b in pool) if (b != null) Destroy(b.Root);
+            if (_pools != null)
+                foreach (var pool in _pools)
+                    foreach (var b in pool.Items) if (b != null) Destroy(b.Root);
         }
     }
 }

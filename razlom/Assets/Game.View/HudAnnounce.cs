@@ -25,6 +25,21 @@ namespace Game.View
 
         float Total => InTime + HoldTime + OutTime;
 
+        /// <summary>Баннер ещё на экране (до начала угасания): новый показ перебил бы недочитанный.</summary>
+        public bool Showing => gameObject.activeSelf && _t < InTime + HoldTime;
+
+        static HudAnnounce _found;
+
+        /// <summary>
+        /// Баннер боевого HUD (CombatHudWc) — и выключенный между показами. Для тех, кто
+        /// объявляет не из CombatHudView (волны встречи — RunHud). null — HUD не собран.
+        /// </summary>
+        public static HudAnnounce Find()
+        {
+            if (_found == null) _found = FindAnyObjectByType<HudAnnounce>(FindObjectsInactive.Include);
+            return _found;
+        }
+
         public void Show(string title, string line)
         {
             if (!_restKnown) { _rest = ((RectTransform)transform).anchoredPosition; _restKnown = true; }

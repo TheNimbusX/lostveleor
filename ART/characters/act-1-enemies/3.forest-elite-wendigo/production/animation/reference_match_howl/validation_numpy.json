@@ -1,0 +1,178 @@
+{
+ "fps": 24,
+ "frames": 48,
+ "samples_per_frame": 4,
+ "contact_frame": 24,
+ "hold_end_frame": 38,
+ "key_frames": [
+  0,
+  3,
+  6,
+  8,
+  11,
+  14,
+  16,
+  19,
+  21,
+  22,
+  24,
+  29,
+  32,
+  36,
+  38,
+  41,
+  44,
+  48
+ ],
+ "max_bone_length_error_m": 9.99347240626669e-07,
+ "root_bone_motion_m": 0.0,
+ "pelvis_horizontal_range_m": [
+  0.25399999999999995,
+  1.3877787807814457e-17
+ ],
+ "feet": {
+  "L": {
+   "ground_contact_vertices": 4,
+   "max_contact_slip_xy_mm": 8.780887928458629e-05,
+   "max_contact_slip_z_mm": 0.00015757556673726136,
+   "foot_bone_max_move_mm": 0.00015232600801889102,
+   "lower_sole_skin_max_deform_mm": 1.199445540866772
+  },
+  "R": {
+   "ground_contact_vertices": 6,
+   "max_contact_slip_xy_mm": 0.0005705785502133311,
+   "max_contact_slip_z_mm": 0.0008802002611281879,
+   "foot_bone_max_move_mm": 0.0009397387550520015,
+   "lower_sole_skin_max_deform_mm": 42.59737024123947
+  }
+ },
+ "claws": {
+  "L": {
+   "first_ground_touch_frame": 24.0,
+   "planted_tip_vertices": 8,
+   "max_tip_slip_during_hold_mm": 6.590679664711522e-05,
+   "max_tip_depth_mm": 17.999875889184167,
+   "lowest_tip_z_before_contact_mm": 76.51176717137176
+  },
+  "R": {
+   "first_ground_touch_frame": 24.0,
+   "planted_tip_vertices": 18,
+   "max_tip_slip_during_hold_mm": 5.149912038476314e-05,
+   "max_tip_depth_mm": 17.999884791813248,
+   "lowest_tip_z_before_contact_mm": 79.32909492290419
+  }
+ },
+ "min_body_z_m": 0.10465223874848528,
+ "min_body_z_frame": 36.25,
+ "min_body_z_bone": "R_hand",
+ "non_claw_vertices_below_ground": 0,
+ "idle_min_z_m": -0.00482421303273925,
+ "com": {
+  "height_m": {
+   "start": 1.371110518526345,
+   "min": 0.840000017474696,
+   "max": 1.4169999999850396,
+   "at_contact": 0.907898951247962
+  },
+  "vertical_accel_g_windup": {
+   "min": -1.0893857987270377,
+   "max": 1.5021662671054496
+  },
+  "vertical_accel_g_after_contact": {
+   "min": -0.9576347618297824,
+   "max": 2.087331659304014
+  },
+  "fall_speed_at_contact_m_s": 1.0952481837178425
+ },
+ "support_margin_m": {
+  "min": -0.08591116915074837,
+  "at_frame": 23.0,
+  "per_frame": [
+   0.096,
+   0.111,
+   0.147,
+   0.12,
+   0.097,
+   0.075,
+   0.064,
+   0.11,
+   0.125,
+   0.095,
+   0.07,
+   0.054,
+   0.045,
+   0.039,
+   0.035,
+   0.03,
+   0.027,
+   0.044,
+   0.089,
+   0.145,
+   0.078,
+   -0.006,
+   -0.078,
+   -0.086,
+   0.377,
+   0.385,
+   0.399,
+   0.415,
+   0.429,
+   0.435,
+   0.434,
+   0.43,
+   0.428,
+   0.427,
+   0.424,
+   0.418,
+   0.408,
+   0.332,
+   0.265,
+   0.014,
+   -0.008,
+   0.003,
+   0.058,
+   0.12,
+   0.139,
+   0.123,
+   0.109,
+   0.098,
+   0.096
+  ]
+ },
+ "max_rotation_deg_per_quarter_frame": {
+  "value": 17.23761395731472,
+  "bone": "R_arm_lower",
+  "frame": 23.75
+ },
+ "endpoints_match_idle": {
+  "frame0": 0.0,
+  "frame48": 0.0
+ },
+ "vertex_proximity": {
+  "hands-legs": {
+   "idle_min_m": 0.11258469389866099,
+   "clip_min_m": 0.035370889980859306,
+   "at_frame": 44.0
+  },
+  "forearms-legs": {
+   "idle_min_m": 0.23906950885144085,
+   "clip_min_m": 0.2242601019798522,
+   "at_frame": 43.5
+  },
+  "hands-head": {
+   "idle_min_m": 1.0191129976558366,
+   "clip_min_m": 0.4900229060815307,
+   "at_frame": 20.5
+  },
+  "head-forearms": {
+   "idle_min_m": 0.7060964197749193,
+   "clip_min_m": 0.4023119877677826,
+   "at_frame": 20.0
+  },
+  "hands-torso": {
+   "idle_min_m": 0.4486767333699126,
+   "clip_min_m": 0.4486767333699126,
+   "at_frame": 0.0
+  }
+ }
+}

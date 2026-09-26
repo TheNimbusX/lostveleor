@@ -168,7 +168,9 @@ namespace Game.Sim
         // (`BodyRadius[i] + MaxBodyRadius`), поэтому он обязан быть не меньше
         // самого толстого тела в игре — иначе часть пересечений не найдётся, и
         // тела разойдутся рывком позже, когда наконец попадут в выборку.
-        public static readonly Fix64 MaxBodyRadius = Fix64.Ratio(90, 100);
+        // 0.95 — тело Вендиго (EnemyArchetypes). Стояло 0.90, и пара «Хранитель
+        // младшим индексом, Вендиго старшим» не находила перекрытие 1.75–1.8 м.
+        public static readonly Fix64 MaxBodyRadius = Fix64.Ratio(95, 100);
 
         public EntityStore(int capacity)
         {

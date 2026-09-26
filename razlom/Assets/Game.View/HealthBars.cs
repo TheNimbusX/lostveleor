@@ -36,6 +36,12 @@ namespace Game.View
         [Tooltip("На сколько метров полоска висит над центром тела.")]
         public float Height3D = 2.15f;
         public float RootSwarmHeight3D = 1.25f;
+        // Новые мобы леса: над подписью заглушки (ForestMobPlaceholderView), чтобы
+        // полоска и «[заглушка] …» не лезли друг на друга. Придут модели — по их росту.
+        public float ThorncasterHeight3D = 2.95f;
+        public float RootSnarerHeight3D = 2.65f;
+        public float SplitterHeight3D = 2.25f;
+        public float SplitlingHeight3D = 1.45f;
 
         [Tooltip("Дорожка: чернильный дым, как у полос HUD (роль Smoke).")]
         public Color BackColor = new Color32(0x12, 0x19, 0x23, 0xEB);
@@ -208,8 +214,7 @@ namespace Game.View
                 bar.Root.localScale = elite ? EliteScale : Vector3.one;
 
                 Vector3 at = _driver.GetRenderPosition(i);
-                float height = entities.Kind[i] == EnemyKind.ForestBud ? 1.6f : entities.Kind[i] == EnemyKind.ForestRootSwarm
-                    ? RootSwarmHeight3D : Height3D;
+                float height = BarHeight(entities.Kind[i]);
                 bar.Root.position = new Vector3(at.x, at.y + height, at.z);
                 if (dummy != null) bar.Root.position = dummy.BarPosition;
                 if (_camera != null) bar.Root.rotation = _camera.rotation;
@@ -259,6 +264,18 @@ namespace Game.View
 
             HideFrom(used);
         }
+
+        /// <summary>На какой высоте над телом висит полоска этого вида, м.</summary>
+        private float BarHeight(EnemyKind kind) => kind switch
+        {
+            EnemyKind.ForestBud => 1.6f,
+            EnemyKind.ForestRootSwarm => RootSwarmHeight3D,
+            EnemyKind.ForestThorncaster => ThorncasterHeight3D,
+            EnemyKind.ForestRootSnarer => RootSnarerHeight3D,
+            EnemyKind.ForestSplitter => SplitterHeight3D,
+            EnemyKind.ForestSplitling => SplitlingHeight3D,
+            _ => Height3D,
+        };
 
         private void HideFrom(int from)
         {

@@ -89,6 +89,7 @@ namespace Game.EditorTools
             var rect = (RectTransform)root.transform;
 
             BuildStatus(rect, view);
+            BuildSurvival(rect, view);
             BuildBoss(rect, view);
             BuildChoice(rect, view);
             BuildArtifactReplace(rect, view);
@@ -328,10 +329,12 @@ namespace Game.EditorTools
             view.ChoiceTitle = Title(screen, "Выбери награду", 150f, 58f);
             // Огненная нить под заголовком — тусклее: экран частый (владелец: «успокоить огонь»).
             Box(UiInkKit.Divider(screen, "Линия", 860f, true, .35f), new Vector2(.5f, 1f), Center, new Vector2(0f, -212f), new Vector2(860f, 16f));
-            view.ChoiceSubtitle = Line(screen, "Пояснение", "Разлом зачищен", 242f, 19f, Role.TextMuted);
+            view.ChoiceSubtitle = Line(screen, "Пояснение", "Арена зачищена", 242f, 19f, Role.TextMuted);
             // Клавиши — сразу под пояснением: внизу строка ложилась на полосу способностей HUD.
             view.ChoiceHint = Hint(screen, "1  2  3 — выбрать    ·    L — уйти с добычей", 268f);
             view.KindIcons = new[] { Icon("ability"), Icon("talent"), Icon("items"), Icon("rift") };
+            // Родник (лечение сразу): белый знак здоровья — краску здоровья даёт RunHud.
+            view.SpringIcon = Icon("health") as Texture2D;
             // Выбор следующей арены — тот же экран (RunHud.FillRoute): улучшение, магазин, опасная арена.
             view.RouteIcons = new[] { Icon("talent"), Icon("gold"), Icon("encounter") };
 
@@ -543,11 +546,32 @@ namespace Game.EditorTools
             Pic(panel, "Значок встреч", "encounter", new Vector2(0f, 1f), new Vector2(86f, -62f), 30f);
             Pic(panel, "Значок тайников", "cache", new Vector2(0f, 1f), new Vector2(86f, -88f), 30f);
             RectTransform title = Box(Node("Заголовок", panel), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(72f, -12f), new Vector2(290f, 34f));
-            view.StatusTitle = UiInkKit.Label(title, "Надпись", "Разлом 1 / 5", FontRole.Heading, 26f, Role.Text);
+            view.StatusTitle = UiInkKit.Label(title, "Надпись", "Арена 1", FontRole.Heading, 26f, Role.Text);
             RectTransform line = Box(Node("Строка", panel), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(108f, -50f), new Vector2(256f, 24f));
             view.StatusLine = UiInkKit.Label(line, "Надпись", "Встречи 0 / 3 · целей 12", FontRole.Body, 16f, Role.Text, delay: .2f);
             RectTransform extra = Box(Node("Ещё строка", panel), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(108f, -76f), new Vector2(256f, 24f));
             view.StatusExtra = UiInkKit.Label(extra, "Надпись", "Тайники 0 / 2 · золото 0", FontRole.Body, 16f, Role.TextMuted, delay: .28f);
+            panel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Таймер выживания (стадия 6 «Мобы леса»): свой клуб дыма под панелью состояния, в её
+        /// манере — значок, антиква, огненная нить. Не сверху по центру: там полоса босса и узкое
+        /// объявление боевого HUD («Новая волна»). Проявляется при каждом показе — выживание
+        /// бывает раз за арену. Последние десять секунд RunHud красит акцентом.
+        /// </summary>
+        static void BuildSurvival(RectTransform root, RunHudView view)
+        {
+            RectTransform panel = Box(Node("Выживание", root), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(24f, -144f), new Vector2(300f, 62f));
+            UiInkKit.SmokeLayer(panel, "Дым", "smoke_band_1", 1f, 110f, 40f, origin: new Vector2(0f, 1f));
+            UiInkKit.LightAt(panel, "Нить", "light_thread", new Vector2(0f, 0f), new Vector2(140f, 0f), new Vector2(280f, 30f), .45f,
+                origin: new Vector2(0f, .5f), delay: .3f);
+            UiInkKit.Group(panel, UiInkGroup.Sweep.TopToBottom, .5f, .2f);
+            view.Survival = panel;
+            Pic(panel, "Значок", "encounter", new Vector2(0f, 1f), new Vector2(38f, -30f), 40f);
+            RectTransform time = Box(Node("Время", panel), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(72f, -12f), new Vector2(220f, 38f));
+            view.SurvivalLabel = UiInkKit.Label(time, "Надпись", "Выстоять 0:42", FontRole.Heading, 28f, Role.Text);
+            view.SurvivalLabel.textWrappingMode = TextWrappingModes.NoWrap;
             panel.gameObject.SetActive(false);
         }
 

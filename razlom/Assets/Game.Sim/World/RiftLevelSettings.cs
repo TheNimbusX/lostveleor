@@ -6,7 +6,15 @@ namespace Game.Sim
     public readonly struct RiftLevelSettings
     {
         public readonly int TargetModules, ExitCount, MaxLoops, RewardBranches;
-        public readonly int MinEnemies, MaxEnemies, EnemyHealth;
+        public readonly int MinEnemies, MaxEnemies;
+
+        /// <summary>
+        /// ПРОЦЕНТ здоровья врагов уровня от таблицы видов, а не очки: 100 на
+        /// первой арене, +7 за каждую следующую (EnemyArchetypes.DepthHealthPercent).
+        /// Одно число растит всех — Хранителя, рой, стрелка, босса, — и каждого
+        /// от его собственного здоровья.
+        /// </summary>
+        public readonly int EnemyHealth;
         public readonly EncounterSettings Encounters;
         public readonly bool Boss;
         public readonly int PlayerHealth;
@@ -19,7 +27,8 @@ namespace Game.Sim
         {
             if (targetModules < 2 || targetModules > 64 || exitCount < 1 || exitCount > 8 ||
                 maxLoops < 0 || maxLoops > 8 || rewardBranches < 0 || rewardBranches > 8 ||
-                minEnemies < 0 || maxEnemies < minEnemies || maxEnemies > 128 || enemyHealth < 1 || playerHealth < 1)
+                minEnemies < 0 || maxEnemies < minEnemies || maxEnemies > 128 || enemyHealth < 1 ||
+                enemyHealth > MaxEnemyHealthPercent || playerHealth < 1)
                 throw new ArgumentException("Invalid rift level settings.");
             TargetModules = targetModules;
             ExitCount = exitCount;
@@ -29,7 +38,7 @@ namespace Game.Sim
             MaxEnemies = maxEnemies;
             EnemyHealth = enemyHealth;
             Encounters = encounters;
-            if (boss && (encounters == null || exitCount != 1 || enemyHealth > int.MaxValue / 6))
+            if (boss && (encounters == null || exitCount != 1))
                 throw new ArgumentException("A boss level requires encounters and exactly one exit.");
             Boss = boss;
             PlayerHealth = playerHealth;
@@ -44,10 +53,14 @@ namespace Game.Sim
             MaxLoops, RewardBranches, MinEnemies, MaxEnemies, EnemyHealth, Encounters, Boss,
             PlayerHealth, EntryClearance, SolidEnvironment, NaturalGlade, size);
 
+        /// <summary>Потолок процента здоровья: стократ. Выше — опечатка, а не баланс.</summary>
+        public const int MaxEnemyHealthPercent = 10000;
+
         // The existing prototype balance, without any additional RNG calls.
+        // Здоровье — тот же рост с глубиной, что у авторских уровней.
         public static RiftLevelSettings Prototype(int depth)
             => new RiftLevelSettings(Math.Min(64, 10 + depth), 1, 1, 2,
-                1 + depth / 3, 3 + depth / 2, 100 + 100 * depth / 4);
+                1 + depth / 3, 3 + depth / 2, EnemyArchetypes.DepthHealthPercent(depth));
 
         public void Generate(LayoutGenerator generator, ModuleSet modules, LayoutMap map, ulong layoutSeed)
         {
@@ -59,15 +72,31 @@ namespace Game.Sim
         }
 
         public EncounterPlan Spawn(Simulation sim, LayoutMap map, ulong spawnSeed)
+            => Spawn(sim, map, spawnSeed, null, 0);
+
+        /// <summary>
+        /// Расстановка уровня. С шаблоном встречи (поток арен, стадия 6 плана)
+        /// пачки профиля не выбираются: встречу ставит шаблон, а от профиля
+        /// берётся только рост урона. arena — номер арены для бюджета угроз;
+        /// hardPercent — маршрут «Сложно» (125), его ставит сама расстановка,
+        /// потому что поздние волны выходят уже после неё.
+        /// </summary>
+        public EncounterPlan Spawn(Simulation sim, LayoutMap map, ulong spawnSeed, ArenaEncounterTemplate template,
+            int arena, int hardPercent = 100)
         {
             if (Encounters != null)
             {
-                var plan = Boss ? sim.SetupBossArena(map, spawnSeed, EnemyHealth, Encounters)
+                var plan = Boss ? sim.SetupBossArena(map, spawnSeed, EnemyHealth, Encounters, hardPercent,
+                        arena > 0 ? arena : ForestEncounterTemplates.ArenaCount + 1)
+                    : template != null ? sim.SetupArenaEncounter(map, spawnSeed, arena > 0 ? arena : 1, EnemyHealth,
+                        Encounters.DamagePercent, template, hardPercent, EntryClearance)
                     : sim.SetupEncounters(map, spawnSeed, EnemyHealth, Encounters, EntryClearance);
                 ApplyPlayerHealth(sim);
                 return plan;
             }
-            sim.SetupRift(map, spawnSeed, MinEnemies, MaxEnemies, EnemyHealth);
+            // Прежняя случайная расстановка ставит одних Хранителей.
+            sim.SetupRift(map, spawnSeed, MinEnemies, MaxEnemies,
+                EnemyArchetypes.ScaleHealth(sim.ArchetypeHealth(EnemyKind.ForestGuardian), EnemyHealth));
             ApplyPlayerHealth(sim);
             return null;
         }

@@ -1,0 +1,23 @@
+{
+  "deforming_bones": 34,
+  "sample_step_frames": 0.0625,
+  "root_yaw_removed": true,
+  "scale_curves": false,
+  "owner_approved": false,
+  "clips": {
+    "AN_Stonehoof_TurnLeft": {
+      "frames": 15,
+      "seconds": 0.5,
+      "max_joint_error_m": 8.720681004762371e-07,
+      "max_rotation_error_deg": 0.05595291023658669,
+      "loop_seam_position_m": 1.9213254687529247e-07
+    },
+    "AN_Stonehoof_TurnRight": {
+      "frames": 15,
+      "seconds": 0.5,
+      "max_joint_error_m": 8.346728854707655e-07,
+      "max_rotation_error_deg": 0.05595291023658669,
+      "loop_seam_position_m": 1.6924465733171325e-07
+    }
+  }
+}

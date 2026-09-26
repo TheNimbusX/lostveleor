@@ -149,7 +149,7 @@ namespace Game.Sim
                 .Set(AbilityStatType.Damage, 0)
                 .Set(AbilityStatType.Radius, 3)
                 .Set(AbilityStatType.DurationTicks, 10)            // 0.33 с — быстрый кувырок
-                .Set(AbilityStatType.CooldownTicks, 150);          // 5 с
+                .Set(AbilityStatType.CooldownTicks, 60);           // 2 с — владелец, 26.09
 
         public static int WreckId => StableId.Of("ability.wreck");
         public static int CleaveId => StableId.Of("ability.cleaving_strike");

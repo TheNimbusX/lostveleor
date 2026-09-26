@@ -30,6 +30,8 @@ namespace Game.Sim
         {
             ResetWendigo();
             ResetStonehoof();
+            ResetTelegraphs();
+            ResetEnemySwings();
             Array.Clear(_forestBudAttacks, 0, _forestBudAttacks.Length);
             Array.Clear(_forestFruits, 0, _forestFruits.Length);
             _forestSerial = _forestFruitHighWater = _forestFruitActiveCount = 0;
@@ -149,6 +151,8 @@ namespace Game.Sim
                     FixVec2 delta = Entities.Position[PlayerId] - Entities.Position[id];
                     if (delta.LengthSq > config.AttackRange * config.AttackRange) continue;
                     if (!FixVec2.WithinArc(Entities.Facing[id], delta, AttackCommitCos)) continue;
+                    // Залп — крупная атака: без жетона стрелок держит дистанцию и ждёт.
+                    if (!BigAttackTokenFree(id)) continue;
                     int first = Tick + config.WindupTicks;
                     attack = new ForestBudAttackState(++_forestSerial, Tick, first, Tick + config.ActionTicks, 0);
                     _forestBudAttacks[id] = attack;

@@ -71,7 +71,13 @@ param(
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
-    [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud', 'forest-wendigo')] [string] $Encounter = '',
+    # forest-thorncaster | forest-snarer | forest-splitter — новые мобы леса на стенде вида (1–3 по -Enemies);
+    # пока нет моделей, тела — серые заглушки с подписью (только dev-сборка съёмки).
+    [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud', 'forest-wendigo', 'forest-guardian', 'forest-stonehoof',
+                 'forest-thorncaster', 'forest-snarer', 'forest-splitter')] [string] $Encounter = '',
+    # Что делает герой против врага лесного стенда: уходит из замаха, стоит под ударами,
+    # глушит якорем посреди замаха, обходит по кругу (разворот на месте), добивает.
+    [ValidateSet('', 'dodge', 'tank', 'stun', 'turn', 'death')] [string] $EnemyCase = '',
     [ValidateSet('', 'dodge', 'approach', 'kill', 'pause', 'repeat', 'impact-pause', 'impact-repeat')] [string] $ForestBudCase = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,
@@ -307,6 +313,7 @@ if ($Realtime) { $playerArgs += '-capture-real-time' }
 if ($ActiveEnemies) { $playerArgs += '-capture-active-enemies' }
 if ($Encounter -ne '') { $playerArgs += @('-capture-encounter', $Encounter) }
 if ($ForestBudCase -ne '') { $playerArgs += @('-capture-forest-bud-case', $ForestBudCase) }
+if ($EnemyCase -ne '') { $playerArgs += @('-capture-enemy-case', $EnemyCase) }
 if ($AimSweep) { $playerArgs += '-capture-sweep-aim' }
 if ($DeathDuringSkill) { $playerArgs += '-capture-death-during-skill' }
 if ($Pose -ne '') { $playerArgs += @('-capture-pose', $Pose) }
@@ -357,6 +364,11 @@ if ($Video) {
     $movieName = if ($Encounter -eq 'forest-bud') {
         $caseName = if ($ForestBudCase) { $ForestBudCase } else { 'attack' }
         "forest_bud_${caseName}_${Height}p${VideoFps}.mp4"
+    } elseif ($Encounter -eq 'forest-guardian' -or $Encounter -eq 'forest-stonehoof' -or
+              $Encounter -in @('forest-thorncaster', 'forest-snarer', 'forest-splitter') -or
+              ($Encounter -eq 'forest-wendigo' -and $EnemyCase -ne '')) {
+        $caseName = if ($EnemyCase) { $EnemyCase } else { 'idle' }
+        "$($Encounter -replace '-', '_')_${caseName}_${Height}p${VideoFps}.mp4"
     } elseif ($CampLook -ne '') {
         "camp_look_${CampLook}_${Height}p${VideoFps}.mp4"
     } elseif ($CampAmbience) {

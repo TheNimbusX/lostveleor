@@ -1,0 +1,55 @@
+{
+  "roles": {
+    "inside_front": {
+      "o": 1.0,
+      "d": 2.25,
+      "H": 0.1,
+      "P": -18.0,
+      "bow": [
+        0.02,
+        0.015
+      ]
+    },
+    "outside_hind": {
+      "o": 1.5,
+      "d": 2.0,
+      "H": 0.055,
+      "P": -8.0,
+      "bow": [
+        0.0,
+        0.0
+      ]
+    },
+    "outside_front": {
+      "o": 4.0,
+      "d": 2.25,
+      "H": 0.11,
+      "P": -20.0,
+      "bow": [
+        0.05,
+        0.03
+      ]
+    },
+    "inside_hind": {
+      "o": 4.5,
+      "d": 2.0,
+      "H": 0.05,
+      "P": -8.0,
+      "bow": [
+        0.0,
+        0.0
+      ]
+    }
+  },
+  "directions": {
+    "TurnLeft": 1,
+    "TurnRight": -1
+  },
+  "c_clamp_deg": 5.0,
+  "stance_offsets_deg": {
+    "inside_front": -5.0,
+    "outside_hind": -5.0,
+    "outside_front": 5.0,
+    "inside_hind": 5.0
+  }
+}

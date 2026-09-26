@@ -1,0 +1,13 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Characters\\Forest_Wendigo\\ForestWendigo.fbx",
+ "take": "ARM_ForestWendigo|ARM_ForestWendigo|Wendigo_Howl",
+ "frame_range": [
+  1.0,
+  49.0
+ ],
+ "max_joint_error_m": 1.7931614327548367e-06,
+ "worst": [
+  25.75,
+  "R_hand"
+ ]
+}

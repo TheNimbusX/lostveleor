@@ -20,8 +20,26 @@ namespace Game.Sim
     {
         public const int StonehoofWindupTicks = 30, StonehoofAccelerationTicks = 6,
             StonehoofBrakeTicks = 18, StonehoofWallTicks = 36, StonehoofRestTicks = 120;
-        public static readonly Fix64 StonehoofRadius = Fix64.Ratio(7, 10);
+        public static readonly Fix64 StonehoofRadius = EnemyArchetypes.StonehoofBodyRadius;
         private static readonly Fix64 StonehoofStep = Fix64.Ratio(12, TicksPerSecond);
+
+        /// <summary>
+        /// Разворот Камнекопыта — свой, вдвое медленнее прочих мобов: 6° за
+        /// тик, полный оборот за две секунды. Тяжёлый кабан переступает на
+        /// месте, а не крутится юлой; и именно под этот темп рисуются клипы
+        /// TurnLeft/TurnRight (фаза клипа — накопленный поворот / 90°).
+        ///
+        /// Шаг за тик ровно один. Раньше прицел доворачивал и в движении, и
+        /// в UpdateStonehooves — 24° за тик, и на экране это читалось как
+        /// прокрутка модели вокруг оси.
+        /// </summary>
+        public const int StonehoofTurnDegreesPerTick = 6;
+        private static readonly Fix64 StonehoofTurnStep = Fix64.TwoPi / (360 / StonehoofTurnDegreesPerTick);
+        private static readonly Fix64 StonehoofTurnStepCos = Fix64.Cos(StonehoofTurnStep);
+        private static readonly Fix64 StonehoofTurnStepSin = Fix64.Sin(StonehoofTurnStep);
+
+        /// <summary>Шагать вперёд можно, только когда корпус смотрит почти туда же, куда идти.</summary>
+        public static readonly Fix64 StonehoofWalkAlignCos = Fix64.Ratio(95, 100);
         private readonly StonehoofActionState[] _stonehoofActions;
         private readonly int[] _stonehoofArena;
         private int _stonehoofSerial;
@@ -49,7 +67,8 @@ namespace Game.Sim
             Entities.PushWeight[id] = Fix64.One;
             var s = Entities.Stats[id];
             s.SetBase(StatType.MoveSpeed, Fix64.Ratio(5, 2));
-            s.SetBase(StatType.Damage, Fix64.FromInt(30));
+            // Урон тарана — строка таблицы видов; отброс идёт сверху, без урона.
+            s.SetBase(StatType.Damage, Fix64.FromInt(EnemyArchetypes.Get(EnemyKind.ForestStonehoof).BaseDamage));
             s.SetBase(StatType.CritChance, Fix64.Zero);
             s.SetBase(StatType.CritMultiplier, Fix64.One);
             Entities.RefreshStats(id); Entities.Health[id] = Entities.MaxHealth[id];
@@ -142,6 +161,10 @@ namespace Game.Sim
             Entities.Facing[id] = direction; Entities.Velocity[id] = FixVec2.Zero;
             Entities.NextAttackTick[id] = stopTick + StonehoofRestTicks;
             _events.Add(new SimEvent(SimEventType.StonehoofStarted, id, PlayerId, _stonehoofSerial, false, origin));
+            // Полоса тарана в общем списке без SharedView: рисует её пока свой вид.
+            // Удар считается прежней протяжкой тела; полоса — её след шириной в тело.
+            OpenTelegraph(id, EnemyTelegraph.Lane(origin, direction, distance, StonehoofRadius * 2),
+                Tick + StonehoofWindupTicks, stopTick + TelegraphLingerTicks, TelegraphFlags.None);
         }
 
         private void CancelInvalidStonehooves()
@@ -160,6 +183,7 @@ namespace Game.Sim
         {
             var a = _stonehoofActions[id]; if (a.Serial == 0) return;
             _stonehoofActions[id] = default;
+            CancelTelegraphsOf(id);
             Entities.NextAttackTick[id] = Math.Max(Entities.NextAttackTick[id], Tick + StonehoofRestTicks);
             Entities.Velocity[id] = FixVec2.Zero;
             _events.Add(new SimEvent(SimEventType.StonehoofCancelled, id, PlayerId, a.Serial, false, Entities.Position[id]));
@@ -190,15 +214,18 @@ namespace Game.Sim
             }
             if (!UpdateAggro(id, toPlayer)) return;
             var distance = toPlayer.Length; FixVec2 wanted = FixVec2.Zero;
-            if (Tick >= Entities.NextAttackTick[id] && distance <= Fix64.FromInt(7))
-            { Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, EnemyTurnStepCos, EnemyTurnStepSin); return; }
+            // Без крупного жетона таран не готов: держит дистанцию, как на перезарядке.
+            // Прицел: стоит и доворачивает на героя. Это единственный доворот
+            // за тик — UpdateStonehooves только проверяет, что корпус дошёл.
+            if (Tick >= Entities.NextAttackTick[id] && distance <= Fix64.FromInt(7) && BigAttackTokenFree(id))
+            { Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, StonehoofTurnStepCos, StonehoofTurnStepSin); return; }
             if (distance > Fix64.FromInt(7)) wanted = toPlayer.Normalized();
             else if (distance < Fix64.FromInt(4)) wanted = -toPlayer.Normalized();
             if (wanted.LengthSq == Fix64.Zero)
-            { Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, EnemyTurnStepCos, EnemyTurnStepSin); return; }
+            { Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, StonehoofTurnStepCos, StonehoofTurnStepSin); return; }
             // Turn feet and body first; never translate sideways while looking at the hero.
-            Entities.Facing[id] = TurnToward(Entities.Facing[id], wanted, EnemyTurnStepCos, EnemyTurnStepSin);
-            if (FixVec2.Dot(Entities.Facing[id], wanted) < Fix64.Ratio(95, 100)) return;
+            Entities.Facing[id] = TurnToward(Entities.Facing[id], wanted, StonehoofTurnStepCos, StonehoofTurnStepSin);
+            if (FixVec2.Dot(Entities.Facing[id], wanted) < StonehoofWalkAlignCos) return;
             var nextPosition = from + Entities.Facing[id] * Entities.MoveStep[id];
             if (InsideStonehoofArena(id, nextPosition) && !StonehoofBlocked(id, from, nextPosition))
             { Entities.Position[id] = nextPosition; Entities.Velocity[id] = nextPosition - from; }
@@ -247,6 +274,7 @@ namespace Game.Sim
                     {
                         Entities.Position[id] = a.Target; Entities.Velocity[id] = FixVec2.Zero;
                         _events.Add(new SimEvent(SimEventType.StonehoofStopped, id, PlayerId, a.Serial, a.StopReason == StonehoofStop.Obstacle, a.Target));
+                        ResolveTelegraphsOf(id);
                         if (a.StopReason == StonehoofStop.Obstacle)
                         { a.Phase = StonehoofPhase.WallImpact; Statuses.ApplyStun(id, a.EndTick); }
                     }
@@ -256,16 +284,21 @@ namespace Game.Sim
                 if (!Entities.Aggro[id] || Tick < Entities.NextAttackTick[id]) continue;
                 var offset = Entities.Position[PlayerId] - Entities.Position[id];
                 if (offset.LengthSq > Fix64.FromInt(49) || offset.LengthSq < Fix64.Ratio(1, 10000)) continue;
+                if (!BigAttackTokenFree(id)) continue;
                 var direction = offset.Normalized();
-                Entities.Facing[id] = TurnToward(Entities.Facing[id], direction, EnemyTurnStepCos, EnemyTurnStepSin);
-                if (FixVec2.Dot(Entities.Facing[id], direction) >= Fix64.Ratio(97, 100)) StartStonehoof(id, direction);
+                // Доворот уже сделан в MoveStonehoof. Разбег — когда корпус смотрит
+                // на героя с точностью до одного шага: StartStonehoof ставит взгляд
+                // точно по линии, и этот последний дожим не больше обычных 6°.
+                if (FixVec2.Dot(Entities.Facing[id], direction) >= StonehoofTurnStepCos) StartStonehoof(id, direction);
             }
         }
 
         public EncounterPlan SetupStonehoofEncounter(LayoutMap map, ulong seed, int count = 1, bool obstacle = false)
         {
             if (count < 1 || count > 3) throw new ArgumentOutOfRangeException(nameof(count));
-            if (map == null) SetupTestArena(0); else SetupRift(map, seed, 0, 0, 180);
+            // Здоровье стенда — табличное: стенд показывает того же Камнекопыта, что забег.
+            int health = ArchetypeHealth(EnemyKind.ForestStonehoof);
+            if (map == null) SetupTestArena(0); else SetupRift(map, seed, 0, 0, health);
             _campWalkMap = null; _events.Clear();
             int module = 0;
             var center = map == null ? FixVec2.Zero : map.GladeCount > 0 ? map.GetGlade(0).Center : map.CenterOf(0);
@@ -286,7 +319,7 @@ namespace Game.Sim
             {
                 var p = enemy + new FixVec2(Fix64.Zero, Fix64.FromInt(n * 2));
                 if (map != null) p = map.ClampToWalkable(p, StonehoofRadius);
-                int id = Entities.Spawn(p, 180, Faction.Orvill); ConfigureEnemy(id, EnemyKind.ForestStonehoof);
+                int id = Entities.Spawn(p, health, Faction.Orvill); ConfigureEnemy(id, EnemyKind.ForestStonehoof);
                 Entities.Facing[id] = (hero - p).Normalized(); Entities.Aggro[id] = true;
                 Entities.NextAttackTick[id] = Tick + 30 + n * 15;
                 _events.Add(SimEvent.Spawn(id, p));

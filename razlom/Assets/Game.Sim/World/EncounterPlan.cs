@@ -16,19 +16,28 @@ namespace Game.Sim
         }
     }
 
-    /// <summary>Spawned encounters shared by the run, HUD and authoring preview.</summary>
+    /// <summary>
+    /// Spawned encounters shared by the run, HUD and authoring preview.
+    ///
+    /// Волны шаблонов встреч (Simulation.SetupArenaEncounter) дописывают
+    /// сюда по размещению на каждую вышедшую волну: план растёт по ходу боя,
+    /// а флаги элиты — тот же массив, что у симуляции, и видят элиту волны.
+    /// </summary>
     public sealed class EncounterPlan
     {
-        private readonly EncounterPlacement[] _entries;
+        private readonly List<EncounterPlacement> _entries;
         private readonly bool[] _elite;
         public readonly Fix64 FormationRadius;
-        public readonly int OmittedEnemies;
-        public int Count => _entries.Length;
+        public int OmittedEnemies { get; internal set; }
+        public int Count => _entries.Count;
         public int BossId { get; internal set; } = -1;
         public EncounterPlacement Get(int index) => _entries[index];
         public bool IsElite(int entity) => entity >= 0 && entity < _elite.Length && _elite[entity];
         internal EncounterPlan(List<EncounterPlacement> entries, bool[] elite, Fix64 radius, int omitted)
-        { _entries = entries.ToArray(); _elite = elite; FormationRadius = radius; OmittedEnemies = omitted; }
+        { _entries = new List<EncounterPlacement>(entries); _elite = elite; FormationRadius = radius; OmittedEnemies = omitted; }
+
+        /// <summary>Вышедшая волна встречи: её сущности идут подряд.</summary>
+        internal void Add(EncounterPlacement placement) => _entries.Add(placement);
         public int ForEntity(int entity)
         {
             for (int i = 0; i < Count; i++)

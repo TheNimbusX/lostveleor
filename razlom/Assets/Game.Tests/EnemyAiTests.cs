@@ -61,5 +61,39 @@ namespace Game.Tests
                 "заметив игрока, враг не пошёл на сближение");
         }
 
+        /// <summary>
+        /// Хранитель начинает замах, только когда смотрит на героя (±37°):
+        /// замах боком нарисовал бы сектор мимо героя.
+        /// </summary>
+        [Test]
+        public void Guardian_StartsSwingOnlyWhenFacingThePlayer()
+        {
+            var sim = ArenaWithEnemyAt(new FixVec2(Fix64.FromInt(2), Fix64.Zero));
+            sim.Entities.Stats[Enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(Enemy);
+            sim.Entities.Facing[Enemy] = new FixVec2(Fix64.Zero, Fix64.One);
+
+            for (int t = 0; t < 30 && !sim.TryGetEnemySwing(Enemy, out _); t++)
+                sim.Step(InputFrame.Empty);
+            Assert.That(sim.TryGetEnemySwing(Enemy, out var swing), Is.True, "замах так и не начался");
+            // Доворот 12° за тик от 90°: на тике 3 остаётся 42° (мимо окна),
+            // на тике 4 — 30°. Старое правило ±120° дало бы замах на тике 0.
+            Assert.That(swing.StartTick, Is.EqualTo(4), "замах начался боком");
+            Assert.That(sim.Entities.Facing[Enemy], Is.EqualTo(swing.Direction),
+                "в начале замаха корпус встаёт по направлению удара");
+        }
+
+        // Радиус сектора 2,4 → 2,2 м (стенд баланса, 26.09): замах начинается на его дальности.
+        [TestCase(220, true)]
+        [TestCase(230, false)]
+        public void Guardian_StartsSwingOnlyWithinTwoPointTwoMetres(int centimetres, bool swings)
+        {
+            var sim = ArenaWithEnemyAt(new FixVec2(Fix64.Ratio(centimetres, 100), Fix64.Zero));
+            sim.Entities.Stats[Enemy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(Enemy);
+            sim.Entities.Facing[Enemy] = new FixVec2(-Fix64.One, Fix64.Zero);
+            Run(sim, InputFrame.Empty, 5);
+            Assert.That(sim.TryGetEnemySwing(Enemy, out _), Is.EqualTo(swings));
+        }
     }
 }

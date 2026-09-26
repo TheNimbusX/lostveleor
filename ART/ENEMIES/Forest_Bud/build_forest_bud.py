@@ -1,5 +1,8 @@
 """Forest Bud: восстановленная спина, объёмный бутон и анимации для боя.
 
+Клипы: Idle, Walk, Ranged_Attack, Death и короткий Hit (11 кадров, 0,33 с) —
+реакция на попадание, начинается и кончается ровно в позе покоя.
+
 Запуск через Blender MCP или CLI. Исходный пакет никогда не перезаписывается.
 Кадры контактов и раскрытия задаются здесь, игровой урон остаётся в Sim.
 """
@@ -309,13 +312,14 @@ def petals(opening,t,death=0):
             else:amount=opening(t-delay)
             angle=amount*[.90,.65,.22][j]+math.sin(t*2.1+i*.83-j*.6)*.007*(1-.7*amount)+death*[.07,.16,.25][j]
             rig.pose.bones[name].rotation_quaternion=qworld(name,axis,angle)
-def put_keys(frame):
+def put_keys(frame,scale=False):
     for pb in rig.pose.bones:
         pb.keyframe_insert(data_path='location',frame=frame,group=pb.name)
         pb.keyframe_insert(data_path='rotation_quaternion',frame=frame,group=pb.name)
+        if scale:pb.keyframe_insert(data_path='scale',frame=frame,group=pb.name)
 
 rig.animation_data_create()
-clip_frames={'Idle':91,'Walk':33,'Ranged_Attack':67,'Death':37}
+clip_frames={'Idle':91,'Walk':33,'Ranged_Attack':67,'Death':37,'Hit':11}
 for clip,endframe in clip_frames.items():
     action=bpy.data.actions.new(clip);rig.animation_data.action=action
     for frame in range(1,endframe+1):
@@ -351,6 +355,29 @@ for clip,endframe in clip_frames.items():
             rotation('bud',x=-.07*ease(.12,.62,t)*(1-ease(1.65,2.15,t))+recoil*1.8,y=.014*math.sin(t*5)*ease(.6,.8,t)*(1-ease(1.7,2.2,t)))
             opening=lambda time:ease(.40,.775,time)*(1-ease(1.68,2.16,time))
             petals(opening,t)
+        elif clip=='Hit':
+            # Удар спереди: корпус отбрасывает назад, бутон по инерции клюёт вперёд
+            # и сплющивается, лепестки на миг распахиваются и прихлопываются.
+            # Кадры 1 и 11 — ровно поза покоя: View накладывает клип на любую фазу.
+            k=frame-1
+            r=[0,.65,1,.85,.5,.18,-.04,-.08,-.04,-.01,0][k]
+            s=[0,.3,.75,1,.8,.4,.05,-.18,-.12,-.03,0][k]
+            h=[0,.2,.65,1,.75,.25,-.12,-.15,-.06,0,0][k]
+            w=[0,.5,1,.6,-.2,-.6,-.45,-.1,.12,.08,0][k]
+            offset('pelvis',y=.035*r,z=-.065*s);rotation('pelvis',x=-.05*r)
+            rotation('spine',x=-.10*r+.06*s);rotation('head',x=-.16*h+.05*s)
+            rotation('bud',x=.12*w,y=.03*w)
+            # Масштаб по оси кости бутона (мировая Z): сплющивание без потери объёма.
+            rig.pose.bones['bud'].scale=(1+.06*s,1-.11*s,1+.06*s)
+            flinch=[(n/30,.26*v) for n,v in enumerate([0,.55,1,.8,.22,0,0,.03,.03,.01,0])]
+            for i in range(6):
+                theta=-math.pi/2+i*math.tau/6;axis=(-math.sin(theta),math.cos(theta),0)
+                for j,suffix in enumerate(['','_mid','_tip']):
+                    name=f'petal_{i+1:02d}'+suffix
+                    # Короткая волна от основания к кончику; окно гасит запаздывание к кадру 11.
+                    # Внутрь лепестки не заходят: разнобой соседей открывал бы тёмную щель на макушке.
+                    amount=interp(t-i*.003-j*.012,flinch)*(1-ease(8/30,10/30,t))
+                    rig.pose.bones[name].rotation_quaternion=qworld(name,axis,amount*[.90,.65,.22][j])
         else:
             fall=ease(.08,.95,t);front=ease(.06,.65,t)
             offset('pelvis',y=-.035*fall,z=-.175*fall);rotation('pelvis',x=-.045*fall,y=.045*fall)
@@ -359,7 +386,7 @@ for clip,endframe in clip_frames.items():
             for leg in ['L_Front','R_Front','L_Hind','R_Hind']:
                 offset('CTRL_'+leg,x=(.032 if leg.startswith('L') else -.032)*fall,y=(-.035 if 'Front' in leg else .025)*fall)
             petals(0.03,t,fall)
-        put_keys(frame)
+        put_keys(frame,scale=clip=='Hit')
     # Точные замыкания исключают фазовый шов вторичного движения.
     if clip in ['Idle','Walk','Ranged_Attack']:
         scene.frame_set(1)
@@ -383,6 +410,7 @@ for act in bpy.data.actions:
         tr=rig.animation_data.nla_tracks.new();tr.name=act.name;tr.strips.new(act.name,1,act);tr.mute=True
 rig['walk_root_equivalent_speed']=.54/(.56*(32/30))
 rig['attack_shots_seconds']=[.8,1,1.2,1.4,1.6]
+rig['hit_seconds']=10/30
 rig['authoring']='Root stays at origin. Generic rig. Petals have three blended bend joints. Sim owns impacts.'
 
 # Источник сохраняется вне Assets, чтобы Unity не импортировала старую .blend-сцену.

@@ -1,0 +1,18 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\tripo-out\\forest-splitbark-r01-132f3063\\model.glb",
+  "source_vertices": 785876,
+  "source_triangles": 1470750,
+  "vertices_after_welding": 735073,
+  "triangles_after_welding": 1470326,
+  "candidate_triangles": 24000,
+  "budget_triangles": 25000,
+  "height_m": 1.3,
+  "footprint_m": [
+    1.566,
+    1.219
+  ],
+  "front_axis": "-Y",
+  "materials": 1,
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.blend",
+  "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.glb"
+}

@@ -96,8 +96,14 @@ namespace Game.Tests
         /// </summary>
         private static void ClearRiftAndReachExit(RiftRun run)
         {
-            KillAllEnemies(run);
-            run.Step(Idle);
+            // Встреча по шаблону выходит волнами: следующая встаёт, когда
+            // прежняя легла, — зачищаем, пока арена не отпустит.
+            for (int guard = 0; guard < 4000; guard++)
+            {
+                KillAllEnemies(run);
+                run.Step(Idle);
+                if (run.Phase != RunPhase.Clearing) break;
+            }
 
             run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
             run.Step(Idle);
@@ -116,6 +122,15 @@ namespace Game.Tests
         {
             run.Step(Command(choice));
             if (run.Phase == RunPhase.ReplacingAbility) run.Step(Command(RunCommand.SalvageAbility));
+        }
+
+        /// <summary>Первая карточка на экране, которая не родник.</summary>
+        private static RunCommand NotSpring(RiftRun run)
+        {
+            for (int i = 0; i < RiftRun.RewardChoices; i++)
+                if (run.GetOffer(i).Kind != RewardKind.Spring) return (RunCommand)((int)RunCommand.ChooseReward1 + i);
+            Assert.Fail("на экране одни родники");
+            return RunCommand.None;
         }
 
         // ---- приёмка ----
@@ -162,7 +177,9 @@ namespace Game.Tests
             var offer = run.GetRoute(2);
             run.Step(Command(RunCommand.ChooseRoute3));
             Assert.That(run.CurrentRoute.Hard, Is.True);
-            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(125));
+            // Хранитель 550 × 100% уровня × 125% «Сложно».
+            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(EnemyArchetypes.ScaleHealth(550, 100, 125)));
+            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(688));
             int before = run.Gold;
             KillAllEnemies(run);
             run.Step(Idle);
@@ -183,6 +200,67 @@ namespace Game.Tests
                 a.Step(Command(RunCommand.ChooseRoute3)); b.Step(Command(RunCommand.ChooseRoute3));
                 Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
             }
+        }
+
+        // ---- перенос здоровья между аренами (владелец, 26.09) ----
+
+        [Test]
+        public void ArenaFlow_CarriesMissingHealthToNextArena_AndNewRunStartsFull()
+        {
+            var run = NewArenaRun();
+            EntityStore e = run.Sim.Entities;
+            Assert.That(e.Health[0], Is.EqualTo(e.MaxHealth[0]), "забег начинается с полным здоровьем");
+            e.Health[0] = e.MaxHealth[0] - 40;
+            ClearRiftAndReachExit(run);
+            Take(run, RunCommand.ChooseReward1);
+            run.Step(Command(RunCommand.ChooseRoute1));
+            Assert.That(run.Depth, Is.EqualTo(2));
+            // Переезжает недостача: полученные 40 остаются полученными, а
+            // прибавка награды к максимуму (если выпала) дошла бы и до текущего.
+            Assert.That(e.Health[0], Is.EqualTo(e.MaxHealth[0] - 40), "дверь арены не лечит");
+            Assert.That(e.Lavidium[0], Is.EqualTo(Fix64.FromInt(e.MaxLavidium[0])), "лавидий по-прежнему полон");
+
+            run.StartRun();
+            Assert.That(run.Depth, Is.EqualTo(1));
+            Assert.That(e.Health[0], Is.EqualTo(e.MaxHealth[0]), "новый забег начинается с полным здоровьем");
+        }
+
+        [Test]
+        public void PrototypeFlow_CarriesMissingHealth_AndNeverEntersDead()
+        {
+            var run = NewRun();
+            EntityStore e = run.Sim.Entities;
+            e.Health[0] = 1;
+            ClearRiftAndReachExit(run);
+            // Родник на экране вылечил бы: берётся любая другая карточка.
+            Take(run, NotSpring(run));
+            Assert.That(run.Depth, Is.EqualTo(2));
+            Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing));
+            // Недостача больше нового максимума не убивает на входе.
+            Assert.That(e.Health[0], Is.EqualTo(System.Math.Max(1, e.MaxHealth[0] - (1000 - 1))));
+            Assert.That(e.Alive[0], Is.True);
+            Assert.That(run.Sim.PlayerMissingHealth, Is.EqualTo(e.MaxHealth[0] - e.Health[0]));
+        }
+
+        [Test]
+        public void CarriedHealth_ReplaysDeterministically()
+        {
+            var a = NewArenaRun(); var b = NewArenaRun();
+            a.Sim.Entities.Health[0] -= 77; b.Sim.Entities.Health[0] -= 77;
+            ClearRiftAndReachExit(a); ClearRiftAndReachExit(b);
+            Take(a, RunCommand.ChooseReward1); Take(b, RunCommand.ChooseReward1);
+            a.Step(Command(RunCommand.ChooseRoute3)); b.Step(Command(RunCommand.ChooseRoute3));
+            Assert.That(a.Sim.Entities.Health[0], Is.EqualTo(a.Sim.Entities.MaxHealth[0] - 77));
+            Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+        }
+
+        [Test]
+        public void BigAttackTokens_FollowArenaNumber()
+        {
+            var run = NewArenaRun();
+            Assert.That(run.Sim.BigAttackTokenLimit, Is.EqualTo(Simulation.BigAttackTokensForArena(1)));
+            Assert.That(run.Sim.BigAttackTokenLimit, Is.EqualTo(1));
+            Assert.That(Simulation.BigAttackTokensForArena(5), Is.EqualTo(2));
         }
 
         [Test]
@@ -314,5 +392,138 @@ namespace Game.Tests
             return run.Hash();
         }
 
+
+        // ---- родник ----
+
+        private static ulong OfferHash(in RewardOffer offer)
+        {
+            ulong hash = Hashing.Offset;
+            offer.HashInto(ref hash);
+            return hash;
+        }
+
+        private static int SpringIndex(RiftRun run)
+        {
+            int found = -1;
+            for (int i = 0; i < RiftRun.RewardChoices; i++)
+                if (run.GetOffer(i).Kind == RewardKind.Spring)
+                {
+                    Assert.That(found, Is.EqualTo(-1), "два родника на экране");
+                    found = i;
+                }
+            return found;
+        }
+
+        /// <summary>Ценность карточки из правила замены: стат, вещь, способность в полную панель, усиление, способность.</summary>
+        private static int Value(RiftRun run, in RewardOffer offer)
+            => offer.Kind == RewardKind.StatBoost ? 0 : offer.Kind == RewardKind.Item ? 1
+                : offer.Kind == RewardKind.Ability ? (run.Loadout.IsFull ? 2 : 4) : offer.Kind == RewardKind.Talent ? 3 : 5;
+
+        [TestCase(750, false)]
+        [TestCase(749, true)]
+        [TestCase(100, true)]
+        public void Spring_AppearsOnlyBelowThreeQuartersHealth(int permille, bool offered)
+        {
+            var run = NewArenaRun();
+            run.Sim.Entities.Health[0] = permille * run.Sim.Entities.MaxHealth[0] / 1000;
+            ClearRiftAndReachExit(run);
+            Assert.That(run.Phase, Is.EqualTo(RunPhase.ChoosingReward));
+            Assert.That(SpringIndex(run) >= 0, Is.EqualTo(offered));
+        }
+
+        [Test]
+        public void Spring_ReplacesTheWeakestCard_AndLeavesTheRestOfTheSeedAlone()
+        {
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                RiftRun full = NewRun(seed), hurt = NewRun(seed);
+                hurt.Sim.Entities.Health[0] = hurt.Sim.Entities.MaxHealth[0] / 2;
+                ClearRiftAndReachExit(full); ClearRiftAndReachExit(hurt);
+                Assert.That(SpringIndex(full), Is.EqualTo(-1));
+                int spring = SpringIndex(hurt);
+                Assert.That(spring, Is.GreaterThanOrEqualTo(0), "сид " + seed);
+                Assert.That(hurt.GetOffer(spring).HealPercent, Is.EqualTo(RiftRun.SpringHealPercent));
+                int replaced = Value(full, full.GetOffer(spring));
+                for (int i = 0; i < RiftRun.RewardChoices; i++)
+                {
+                    if (i == spring) continue;
+                    // Остальные карточки — те же, что у здорового героя: броски не сдвинуты.
+                    Assert.That(OfferHash(hurt.GetOffer(i)), Is.EqualTo(OfferHash(full.GetOffer(i))), "сид " + seed);
+                    int value = Value(full, full.GetOffer(i));
+                    Assert.That(replaced, Is.LessThanOrEqualTo(value), "ушла не самая слабая карточка, сид " + seed);
+                    if (value == replaced) Assert.That(i, Is.LessThan(spring), "при равной ценности уходит правая, сид " + seed);
+                }
+            }
+        }
+
+        [Test]
+        public void Spring_HealsFortyPercent_UpToMaximum_AndTheNextArenaKeepsIt()
+        {
+            var run = NewArenaRun();
+            EntityStore e = run.Sim.Entities;
+            int max = e.MaxHealth[0];
+            e.Health[0] = max / 10;
+            ClearRiftAndReachExit(run);
+            Assert.That(run.SpringHealAmount, Is.EqualTo(max * 40 / 100));
+            int spring = SpringIndex(run);
+            int taken = run.TakenRewardCount;
+            Take(run, (RunCommand)((int)RunCommand.ChooseReward1 + spring));
+            Assert.That(e.Health[0], Is.EqualTo(max / 10 + RiftRun.SpringHeal(max, RiftRun.SpringHealPercent)));
+            Assert.That(run.TakenRewardCount, Is.EqualTo(taken + 1));
+            Assert.That(run.GetTaken(taken).Kind, Is.EqualTo(RewardKind.Spring));
+            int healed = e.Health[0];
+            run.Step(Command(RunCommand.ChooseRoute1));
+            Assert.That(run.Depth, Is.EqualTo(2));
+            Assert.That(e.MaxHealth[0] - e.Health[0], Is.EqualTo(max - healed), "в следующую арену едет уже меньшая недостача");
+
+            // Родник не лечит сверх максимума.
+            e.Health[0] = max * 70 / 100;
+            ClearRiftAndReachExit(run);
+            Assert.That(run.SpringHealAmount, Is.EqualTo(max - max * 70 / 100));
+            Take(run, (RunCommand)((int)RunCommand.ChooseReward1 + SpringIndex(run)));
+            Assert.That(e.Health[0], Is.EqualTo(max));
+        }
+
+        [Test]
+        public void Spring_NeverTakesTheBossReward()
+        {
+            var modules = PrototypeContent.Modules();
+            var guardian = new EncounterGroup(EnemyKind.ForestGuardian, 1, 1);
+            var settings = new EncounterSettings(new[] { new EncounterPack(1, 100, new[] { guardian }) },
+                new[] { new EncounterPack(2, 100, new[] { guardian }) }, new[] { new EncounterPack(3, 100, new[] { guardian }) },
+                new[] { new EncounterPack(4, 100, new[] { new EncounterGroup(EnemyKind.ForestGuardian, 1, 1, elite: true) }) },
+                1, 0, 100, Fix64.FromInt(5));
+            var arena = new RiftLevelSettings(12, 1, 1, 2, 1, 2, 100, settings, playerHealth: 150, entryClearance: 14,
+                solidEnvironment: true, naturalGlade: true).WithArenaSize(3);
+            var boss = new RiftLevelSettings(20, 1, 1, 2, 1, 2, 100, settings, boss: true, playerHealth: 150,
+                entryClearance: 14, solidEnvironment: true, naturalGlade: true).WithArenaSize(4);
+            var location = new LocationDefinition(7, modules, new[] { arena, boss }, completeAtEnd: true);
+            var run = new RiftRun(new Simulation(Seed, 512), modules, Items(), new[] { SwordId }, location: location);
+            run.StartRun();
+            ClearRiftAndReachExit(run);
+            Take(run, NotSpring(run));
+            run.Step(Command(RunCommand.ChooseRoute1));
+            Assert.That(run.BossId, Is.GreaterThan(0));
+            run.Sim.Entities.Health[0] = 1;
+            ClearRiftAndReachExit(run);
+            Assert.That(run.ChoosingArtifact, Is.True);
+            Assert.That(SpringIndex(run), Is.EqualTo(-1), "после босса — только артефакты");
+        }
+
+        [Test]
+        public void Spring_ReplaysDeterministically_AndIsPartOfTheHash()
+        {
+            RiftRun a = NewArenaRun(), b = NewArenaRun();
+            a.Sim.Entities.Health[0] = b.Sim.Entities.Health[0] = 200;
+            ClearRiftAndReachExit(a); ClearRiftAndReachExit(b);
+            Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+            int spring = SpringIndex(a);
+            Take(a, (RunCommand)((int)RunCommand.ChooseReward1 + spring));
+            Take(b, (RunCommand)((int)RunCommand.ChooseReward1 + spring));
+            Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
+            Assert.That(OfferHash(RewardOffer.OfSpring(40)), Is.Not.EqualTo(OfferHash(RewardOffer.OfSpring(30))));
+            Assert.That(RewardOffer.OfSpring(40).HealPercent, Is.EqualTo(40));
+            Assert.That(RewardOffer.OfArtifact(RunArtifact.SunSeal).HealPercent, Is.Zero);
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace Game.Tests
                 new[] { new EncounterPack(1, 100, new[] { guardian }) },
                 new[] { new EncounterPack(2, 100, new[] { guardian, swarm }),
                     new EncounterPack(3, 100, new[] { swarm }), new EncounterPack(4, 100, new[] { guardian, guardian }) },
-                new[] { new EncounterPack(5, 100, new[] { new EncounterGroup(EnemyKind.ForestGuardian, 3, 3) }) },
+                new[] { new EncounterPack(5, 100, new[] { new EncounterGroup(EnemyKind.ForestGuardian, 2, 2) }) },
                 new[] { new EncounterPack(6, 100, new[] {
                     new EncounterGroup(EnemyKind.ForestGuardian, 1, 1, 240, 160, elite: true), swarm }) },
                 3, 0, 100, Fix64.FromInt(4));

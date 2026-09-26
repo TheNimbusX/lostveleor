@@ -128,6 +128,30 @@ namespace Game.Tests
             Assert.AreEqual(lavidium + 20, sim.Entities.MaxLavidium[Player]);
         }
 
+        /// <summary>
+        /// Здоровье переносится между аренами, поэтому повышение уровня — один
+        /// из способов его вернуть: прибавка к максимуму приходит и в текущее,
+        /// но до полного не лечит. Повтор того же уровня ничего не меняет.
+        /// </summary>
+        [Test]
+        public void LevelUpAddsItsHealthToCurrentWithoutFullHeal()
+        {
+            var sim = Arena(AbilityDefinition.Whirlwind());
+            int max = sim.Entities.MaxHealth[Player];
+            sim.Entities.Health[Player] = max - 500;
+
+            sim.SetPlayerLevel(3);
+            Assert.AreEqual(max + 60, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "+30 за уровень — и в текущее");
+
+            sim.SetPlayerLevel(3);
+            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "тот же уровень — без лечения");
+
+            sim.SetPlayerLevel(2);
+            Assert.AreEqual(max + 30, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "понижение не отнимает здоровье сверх потолка");
+        }
+
         [Test]
         public void SessionGivesTheCampLevelToTheCampAndTheRift()
         {

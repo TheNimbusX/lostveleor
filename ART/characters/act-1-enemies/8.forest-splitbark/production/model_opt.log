@@ -1,0 +1,24 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61863 is in use[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61864[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+Reloading external rigs...
+Reloading external metarigs...
+20:08:58 | INFO: Data are loaded, start creating Blender stuff
+20:08:58 | INFO: Blender create Mesh node tripo_mesh_132f3063-e8c3-4b27-b687-5ff2fa436f80
+20:09:08 | INFO: glTF import finished in 9.93s
+Info: Saved as "ForestSplitter_24k_candidate.blend"
+INFO Draco is available, use library at C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+20:10:27 | INFO: Starting glTF 2.0 export
+20:10:27 | INFO: Extracting primitive: SM_ForestSplitter_LOD0
+20:10:27 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:10:27 | INFO: Primitives created: 1
+20:10:27 | INFO: Finished glTF 2.0 export in 0.3321676254272461 s
+
+{"source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\tripo-out\\forest-splitbark-r01-132f3063\\model.glb", "source_vertices": 785876, "source_triangles": 1470750, "vertices_after_welding": 735073, "triangles_after_welding": 1470326, "candidate_triangles": 24000, "budget_triangles": 25000, "height_m": 1.3, "footprint_m": [1.566, 1.219], "front_axis": "-Y", "materials": 1, "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.blend", "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.glb"}
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

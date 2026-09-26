@@ -337,7 +337,7 @@ namespace Game.EditorTools
                 if (ribbon != null)
                 {
                     // Самая длинная подпись — разлом с двузначной глубиной.
-                    float text = caption.GetPreferredValues("Разлом · 10").x;
+                    float text = caption.GetPreferredValues("Арена · 10").x;
                     ribbon.sizeDelta = new Vector2(Mathf.Max(ribbon.sizeDelta.x, text + side * 2f), ribbon.sizeDelta.y);
                 }
             }

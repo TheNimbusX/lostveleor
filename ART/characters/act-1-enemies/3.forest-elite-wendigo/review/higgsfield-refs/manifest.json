@@ -34,5 +34,17 @@
     "higgsfield_job_id": "2cc0103a-16a0-46ff-a9d3-bb9035bb3dcb",
     "reason": "Finished lying on its side; replaced with face-down supported pose."
   },
-  "next_stage": "After owner approval: retopologize deformation joints, repair inherited manifold defects, rig and author game-timed clips; then recount Unity-exported triangles."
+  "next_stage": "After owner approval: retopologize deformation joints, repair inherited manifold defects, rig and author game-timed clips; then recount Unity-exported triangles.",
+  "references": [
+    {
+      "slug": "howl",
+      "file": "howl.mp4",
+      "job_id": "0f3ead1c-89d8-4030-b1cf-1525d4dc50eb",
+      "model": "seedance_2_0 fast 720p 1:1 4s",
+      "start_image": "30d3e050-b23b-47c8-a18c-606ca779d9e2",
+      "sha256": "8f01d7b827985a170bf912cdbb9da8b3c1ac9a200c50a838cac205a267badafe",
+      "accepted": "2026-09-26 by Claude (owner away, asked not to be asked)",
+      "timing": "crouch 0-0.6s, rear up + arms spread + howl 0.6-1.5s, both claws slam into ground ~1.75s, low vulnerable hold 1.8-3.0s, rise 3.0-4.0s"
+    }
+  ]
 }

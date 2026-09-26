@@ -168,6 +168,8 @@ namespace Game.View
             bool status = phase == RunPhase.Clearing || phase == RunPhase.SeekingExit;
             RunHudView.SetActive(_view.Status, status);
             if (status) FillStatus(run);
+            RefreshSurvival(run, status);
+            if (live) AnnounceWaves(run);
             bool boss = status && run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId];
             if (!live) _bossMet = -1;
             if (boss && _bossMet != run.Depth)
@@ -231,16 +233,10 @@ namespace Game.View
             if (run.Phase == RunPhase.SeekingExit) text = "Путь открыт\nСледуй по тропе к выходу\n";
             else
             {
-                int fights = 0, cleared = 0;
-                if (run.Encounters != null)
-                    for (int e = 0; e < run.Encounters.Count; e++)
-                    {
-                        if (run.Encounters.Get(e).Role == EncounterRole.RewardBranch) continue;
-                        fights++;
-                        if (run.Encounters.Alive(e, run.Sim.Entities) == 0) cleared++;
-                    }
-                text = "Разлом " + run.Depth + (run.TotalLevels > 0 ? " / " + run.TotalLevels : "") + "\n"
-                       + (fights > 0 ? "Встречи " + cleared + " / " + fights + " · целей " + run.CountRequiredEnemies() : "Целей " + run.CountRequiredEnemies()) + "\n"
+                // Префаб до пересборки без своего таймера — время выживания в строке панели.
+                int survival = _view.Survival == null ? run.Sim.SurvivalTicksLeft : 0;
+                text = "Арена " + run.Depth + "\n"
+                       + (survival > 0 ? SurvivalText(survival) + " · " : "") + FightsLine(run) + "\n"
                        + "Тайники " + run.BranchesClaimed + " / " + run.Map.RewardBranchCount + " · золото " + run.Gold;
             }
             if (text == _statusShown) return;
@@ -257,6 +253,90 @@ namespace Game.View
             RunHudView.SetText(_view.StatusTitle, lines[0]);
             RunHudView.SetText(_view.StatusLine, lines.Length > 1 ? lines[1] : string.Empty);
             RunHudView.SetText(_view.StatusExtra, lines.Length > 2 ? lines[2] : string.Empty);
+        }
+
+        /// <summary>
+        /// Счёт боя в панели состояния. Встреча по шаблону идёт волнами, и каждая волна
+        /// добавляет в план своё размещение: прежний счёт «Встречи 0 / 1» рос на глазах
+        /// (1 → 2 → 3) и ничего не значил. Теперь — «Волна 2 / 3 · целей 7»: сколько волн
+        /// уже вышло из скольких. У босса подмога тоже встаёт волнами — там только цели,
+        /// сам босс на своей полосе. Без шаблона — прежний счёт встреч.
+        /// </summary>
+        public static string FightsLine(RiftRun run)
+        {
+            int targets = run.CountRequiredEnemies();
+            ArenaEncounterTemplate encounter = run.Sim.ActiveEncounter;
+            if (encounter != null && encounter.WaveCount > 1)
+                return "Волна " + Mathf.Clamp(run.Sim.EncounterWavesSpawned, 1, encounter.WaveCount) + " / " + encounter.WaveCount
+                       + " · целей " + targets;
+            if (run.BossId >= 0) return "Целей " + targets;
+            int fights = 0, cleared = 0;
+            if (run.Encounters != null)
+                for (int e = 0; e < run.Encounters.Count; e++)
+                {
+                    if (run.Encounters.Get(e).Role == EncounterRole.RewardBranch) continue;
+                    fights++;
+                    if (run.Encounters.Alive(e, run.Sim.Entities) == 0) cleared++;
+                }
+            return fights > 0 ? "Встречи " + cleared + " / " + fights + " · целей " + targets : "Целей " + targets;
+        }
+
+        /// <summary>«Выстоять 0:42» — секунды вверх: ноль виден, только когда время вышло.</summary>
+        public static string SurvivalText(int ticks)
+        {
+            int seconds = (ticks + Simulation.TicksPerSecond - 1) / Simulation.TicksPerSecond;
+            return "Выстоять " + seconds / 60 + ":" + (seconds % 60).ToString("00");
+        }
+
+        private int _survivalShown = -1;
+
+        /// <summary>
+        /// Таймер выживания — свой клуб дыма под панелью состояния, в её манере. Текст
+        /// меняется раз в секунду; последние десять — тёплым акцентом: конец близко.
+        /// </summary>
+        private void RefreshSurvival(RiftRun run, bool status)
+        {
+            if (_view.Survival == null) return;
+            int ticks = status && run.Phase == RunPhase.Clearing ? run.Sim.SurvivalTicksLeft : 0;
+            RunHudView.SetActive(_view.Survival, ticks > 0);
+            if (ticks <= 0) { _survivalShown = -1; return; }
+            int seconds = (ticks + Simulation.TicksPerSecond - 1) / Simulation.TicksPerSecond;
+            if (seconds == _survivalShown) return;
+            _survivalShown = seconds;
+            RunHudView.SetText(_view.SurvivalLabel, SurvivalText(ticks));
+            ThemeColor tint = _view.SurvivalLabel != null ? _view.SurvivalLabel.GetComponent<ThemeColor>() : null;
+            if (tint != null) tint.SetRole(seconds <= 10 ? UiTheme.Role.Accent : UiTheme.Role.Text);
+        }
+
+        // Объявления волн: не чаще раза в WaveAnnounceSpacing секунд и не поверх чужого баннера.
+        private float _waveAnnouncedAt = -100f;
+        private const float WaveAnnounceSpacing = 6f;
+
+        /// <summary>
+        /// Короткий баннер боевого HUD (HudAnnounce) на выход волны из земли: «Засада!» —
+        /// первая волна засады за спиной приманки, «Новая волна» — остальные. Молчат: стартовая
+        /// волна (она стоит с начала арены), волны выживания (есть таймер, волна каждые 11 с —
+        /// это был бы спам), подмога босса (баннер лёг бы на полосу босса), волна раньше
+        /// WaveAnnounceSpacing после прошлой и волна поверх ещё видимого баннера.
+        /// </summary>
+        private void AnnounceWaves(RiftRun run)
+        {
+            var events = _driver.FrameEvents;
+            for (int i = 0; i < events.Count; i++)
+            {
+                SimEvent e = events[i];
+                if (e.Type != SimEventType.EncounterWave || e.Source >= 0 || e.Amount < 1 || e.Flag) continue;
+                ArenaEncounterTemplate encounter = run.Sim.ActiveEncounter;
+                if (encounter == null || encounter.Type == ArenaEncounterType.Survival) continue;
+                float now = Time.unscaledTime;
+                if (now - _waveAnnouncedAt < WaveAnnounceSpacing) continue;
+                HudAnnounce announce = HudAnnounce.Find();
+                if (announce == null || announce.Showing) continue;
+                _waveAnnouncedAt = now;
+                bool ambush = encounter.Type == ArenaEncounterType.Ambush && e.Amount == 1;
+                announce.Show(ambush ? "ЗАСАДА!" : "НОВАЯ ВОЛНА",
+                    ambush ? "Враги встают из земли вокруг" : "Волна " + (e.Amount + 1) + " из " + e.ActionVariant);
+            }
         }
 
         private static string KeyLabel(int index, bool letters)
@@ -338,7 +418,7 @@ namespace Game.View
             RunHudView.SetText(_view.ChoiceTitle, "Выбери награду");
             RunHudView.SetText(_view.ChoiceSubtitle, run.IsFinalLevel
                 ? "Локация пройдена — последняя награда, дальше итоги"
-                : "Разлом зачищен · дальше разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : ""));
+                : "Арена зачищена · дальше арена " + (run.Depth + 1));
             RunHudView.SetText(_view.ChoiceHint,
                 KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
                 + " — выбрать    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
@@ -354,17 +434,23 @@ namespace Game.View
                 RunHudView.SetText(card.Title, title);
                 RunHudView.SetText(card.Kind, kind);
                 RewardKind rewardKind = run.GetOffer(i).Kind;
+                bool spring = rewardKind == RewardKind.Spring;
                 int kindIcon = rewardKind == RewardKind.Ability ? 0 : rewardKind == RewardKind.Talent ? 1 : rewardKind == RewardKind.Item ? 2 : 3;
-                if (card.KindIcon != null && kindIcon < _view.KindIcons.Length)
+                // Родник: и в строке вида, и в круге — белый знак здоровья.
+                Texture kindTexture = spring && _view.SpringIcon != null ? _view.SpringIcon
+                    : kindIcon < _view.KindIcons.Length ? _view.KindIcons[kindIcon] : null;
+                if (card.KindIcon != null && kindTexture != null)
                 {
-                    card.KindIcon.texture = _view.KindIcons[kindIcon];
-                    card.KindIcon.enabled = card.KindIcon.texture != null;
+                    card.KindIcon.texture = kindTexture;
+                    card.KindIcon.enabled = true;
                 }
                 RunHudView.SetText(card.Description, body);
                 RunHudView.SetText(card.ValueLabel, valueLabel);
                 RunHudView.SetText(card.Value, value);
                 RunHudView.SetKey(card.Key, KeyLabel(i, letters));
-                card.SetIcon(icon, false);
+                card.SetIcon(icon, spring);
+                // Белый знак красится краской здоровья темы, как полоса здоровья героя.
+                if (spring && card.Icon != null) card.Icon.color = UiTheme.Current.Get(UiTheme.Role.Health);
                 // Вещь — её редкость (четыре цвета, как в палатке); способность и талант — «редкая» или обычная.
                 WcRarity.Tier tier = run.GetOffer(i).Kind == RewardKind.Item ? WcRarity.FromItem((int)run.GetOffer(i).Item.Rarity)
                     : rare ? WcRarity.Tier.Rare : WcRarity.Tier.Common;
@@ -519,6 +605,16 @@ namespace Game.View
                     rare = true;
                     return;
                 }
+                case RewardKind.Spring:
+                    // Родник (стадия 6): лечение сразу при выборе. Число — сколько вернётся
+                    // именно сейчас (не больше недостающего), как в RiftRun.SpringHealAmount.
+                    icon = _view.SpringIcon;
+                    title = "Родник";
+                    kind = "Лечение";
+                    body = "Сразу возвращает " + offer.HealPercent + "% здоровья";
+                    valueLabel = "Здоровье";
+                    value = "+" + run.SpringHealAmount;
+                    return;
                 case RewardKind.StatBoost:
                     title = Capitalized(StatTitle(offer.Stat));
                     kind = "Характеристика";

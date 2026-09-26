@@ -1,4 +1,4 @@
-"""Производная сцена и шесть клипов. Принятые источники не перезаписываются."""
+"""Производная сцена и семь клипов. Принятые источники не перезаписываются."""
 import bpy,json,math,shutil
 from pathlib import Path
 from mathutils import Quaternion,Vector
@@ -19,7 +19,9 @@ clips={
  'Claw':load(ANIM/'reference_match_claw/Claw_Reference_Spline.blend','AN_ForestWendigo_Claw_Reference_Spline.002'),
  'Leap':load(ANIM/'reference_match_leap/Leap_Final.blend','AN_ForestWendigo_Leap_Final'),
  'Death':load(ROOT/'death_work/Death_Final.blend','AN_ForestWendigo_Death_Final'),
- 'Walk':load(ROOT/'walk_revision_r04/Walk_Final.blend','AN_ForestWendigo_Walk_Final')}
+ 'Walk':load(ROOT/'walk_revision_r04/Walk_Final.blend','AN_ForestWendigo_Walk_Final'),
+ # Вой чащи (Howl): контакт когтей на кадре 24 из 48, см. reference_match_howl/validation.json.
+ 'Howl':load(ANIM/'reference_match_howl/Howl_Baked_r01.blend','AN_ForestWendigo_Howl_Baked')}
 for role,a in clips.items():
  a.name='Wendigo_'+role;a.use_fake_user=True
  if role=='Idle':
@@ -83,7 +85,9 @@ for b in r.pose.bones:
  for c in b.constraints:c.influence=0
 for im in bpy.data.images:
  if im.name.startswith('Color_'):
-  im.filepath_raw=str(UNITY/'ForestWendigo_BaseColor.png');im.file_format='PNG';im.save()
+  im.filepath_raw=str(UNITY/'ForestWendigo_BaseColor.png');im.file_format='PNG'
+  # Принятая текстура уже в Unity: пересохранение из упакованных данных меняет пиксели (26.09).
+  if not (UNITY/'ForestWendigo_BaseColor.png').exists():im.save()
 r.animation_data.action=clips['Idle'];s.frame_set(0);s.render.fps=24;s.frame_start=0;s.frame_end=96
 guide=bpy.data.objects.get('FacingGuide')
 if guide is None:guide=bpy.data.objects.new('FacingGuide',None);s.collection.objects.link(guide)
@@ -94,5 +98,5 @@ bpy.ops.export_scene.fbx(filepath=str(UNITY/'ForestWendigo.fbx'),use_selection=T
  add_leaf_bones=False,use_armature_deform_only=True,axis_forward='-Z',axis_up='Y',apply_unit_scale=True,
  bake_anim=True,bake_anim_use_nla_strips=False,bake_anim_use_all_actions=True,bake_anim_force_startend_keying=True,
  bake_anim_step=.25,bake_anim_simplify_factor=0,mesh_smooth_type='FACE',use_mesh_modifiers=True,path_mode='AUTO')
-manifest={'triangles':sum(len(p.vertices)-2 for p in mesh.data.polygons),'fps':24,'clips':{k:list(a.frame_range) for k,a in clips.items()},'max_weights':4,'pruned_vertices':pruned,'maximum_pruned_weight':lost_max,'source':'reference-matched; Claw r02 immutable','root_motion':False}
+manifest={'triangles':sum(len(p.vertices)-2 for p in mesh.data.polygons),'fps':24,'clips':{k:list(a.frame_range) for k,a in clips.items()},'max_weights':4,'pruned_vertices':pruned,'maximum_pruned_weight':lost_max,'source':'reference-matched; Claw r02 immutable; Howl r01 added 2026-09-26','contact_frames':{'Howl':24},'root_motion':False}
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2));result=manifest

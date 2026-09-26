@@ -1,0 +1,18 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\tripo-out\\forest-elite-shipomet-r01-05d8def3\\model.glb",
+  "source_vertices": 778308,
+  "source_triangles": 1466820,
+  "vertices_after_welding": 733368,
+  "triangles_after_welding": 1466745,
+  "candidate_triangles": 23999,
+  "budget_triangles": 25000,
+  "height_m": 2.7,
+  "footprint_m": [
+    1.607,
+    0.837
+  ],
+  "front_axis": "-Y",
+  "materials": 1,
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\model\\ForestThorncaster_23k_candidate.blend",
+  "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\model\\ForestThorncaster_23k_candidate.glb"
+}

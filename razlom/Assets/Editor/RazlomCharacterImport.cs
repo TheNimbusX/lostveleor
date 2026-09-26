@@ -471,7 +471,9 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         }
         else
         {
-            importer.importAnimation = false;
+            // Новый клип моба «Моб@Роль.fbx» лежит рядом с телом, а не в /Animations/:
+            // без анимации он приходил пустым, и роль (например @Hit) не собиралась.
+            importer.importAnimation = IsMobClip;
             importer.importNormals = ModelImporterNormals.Import;
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportStandard;
             importer.materialLocation = ModelImporterMaterialLocation.InPrefab;

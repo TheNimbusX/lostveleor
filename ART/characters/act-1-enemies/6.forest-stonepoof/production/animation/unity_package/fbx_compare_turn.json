@@ -1,0 +1,211 @@
+{
+  "old_takes": [
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Brake",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_ChargeLoop",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Death",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Hit",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Idle",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Launch",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Walk",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallBrace",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallImpact",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Windup"
+  ],
+  "new_takes": [
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Brake",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_ChargeLoop",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Death",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Hit",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Idle",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Launch",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnLeft",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnRight",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Walk",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallBrace",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallImpact",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Windup"
+  ],
+  "added": [
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnLeft",
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnRight"
+  ],
+  "removed": [],
+  "common": {
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Brake": {
+      "range_old": [
+        1.0,
+        19.0
+      ],
+      "range_new": [
+        1.0,
+        19.0
+      ],
+      "curves": 349,
+      "keys": 25477,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_ChargeLoop": {
+      "range_old": [
+        1.0,
+        13.0
+      ],
+      "range_new": [
+        1.0,
+        13.0
+      ],
+      "curves": 349,
+      "keys": 17101,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Death": {
+      "range_old": [
+        1.0,
+        61.0
+      ],
+      "range_new": [
+        1.0,
+        61.0
+      ],
+      "curves": 349,
+      "keys": 84109,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Hit": {
+      "range_old": [
+        1.0,
+        13.0
+      ],
+      "range_new": [
+        1.0,
+        13.0
+      ],
+      "curves": 349,
+      "keys": 17101,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Idle": {
+      "range_old": [
+        1.0,
+        91.0
+      ],
+      "range_new": [
+        1.0,
+        91.0
+      ],
+      "curves": 349,
+      "keys": 125989,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Launch": {
+      "range_old": [
+        1.0,
+        7.0
+      ],
+      "range_new": [
+        1.0,
+        7.0
+      ],
+      "curves": 349,
+      "keys": 8725,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Walk": {
+      "range_old": [
+        1.0,
+        19.0
+      ],
+      "range_new": [
+        1.0,
+        19.0
+      ],
+      "curves": 349,
+      "keys": 25477,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallBrace": {
+      "range_old": [
+        1.0,
+        5.0
+      ],
+      "range_new": [
+        1.0,
+        5.0
+      ],
+      "curves": 349,
+      "keys": 5933,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_WallImpact": {
+      "range_old": [
+        1.0,
+        37.0
+      ],
+      "range_new": [
+        1.0,
+        37.0
+      ],
+      "curves": 349,
+      "keys": 50605,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_Windup": {
+      "range_old": [
+        1.0,
+        31.0
+      ],
+      "range_new": [
+        1.0,
+        31.0
+      ],
+      "curves": 349,
+      "keys": 42229,
+      "max_frame_diff": 0.0,
+      "max_value_diff": 0.0,
+      "curve_mismatches": [],
+      "identical": true
+    }
+  },
+  "added_detail": {
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnLeft": {
+      "range": [
+        1.0,
+        16.0
+      ],
+      "curves": 349
+    },
+    "ARM_ForestStonehoof|ARM_ForestStonehoof|Stonehoof_TurnRight": {
+      "range": [
+        1.0,
+        16.0
+      ],
+      "curves": 349
+    }
+  }
+}

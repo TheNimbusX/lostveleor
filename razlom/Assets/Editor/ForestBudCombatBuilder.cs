@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -10,9 +10,24 @@ public static class ForestBudCombatBuilder
     private const string Root = "Assets/Resources/Characters/Forest_Bud/";
     private const string Model = Root + "ForestBudRanged.fbx";
     private const string Controller = Root + "Forest_Bud_Combat.controller";
+    // Hit — реакция на попадание, 11 кадров; View ведёт её параметром HitPhase.
+    private static readonly string[] Roles = { "Idle", "Walk", "Ranged_Attack", "Hit", "Death" };
 
     [InitializeOnLoadMethod]
     private static void QueueBuild() => EditorApplication.delayCall += BuildIfNeeded;
+
+    /// <summary>
+    /// Модель с новым клипом может импортироваться уже после перезагрузки домена:
+    /// тогда сборка при загрузке не нашла бы клип, а позже её никто бы не позвал.
+    /// </summary>
+    private sealed class ModelWatcher : AssetPostprocessor
+    {
+        private static void OnPostprocessAllAssets(string[] imported, string[] deleted,
+            string[] movedTo, string[] movedFrom)
+        {
+            if (Array.IndexOf(imported, Model) >= 0) EditorApplication.delayCall += BuildIfNeeded;
+        }
+    }
 
     private static void BuildIfNeeded()
     {
@@ -37,6 +52,10 @@ public static class ForestBudCombatBuilder
             if (!socketNames.Contains("Spawn_Fruit_" + i.ToString("00")))
                 throw new InvalidOperationException("Forest_Bud: отсутствует сокет плода " + i);
         var clips = AssetDatabase.LoadAllAssetsAtPath(Model).OfType<AnimationClip>().Where(c => !c.name.StartsWith("__")).ToArray();
+        // Клипы ищутся до правки контроллера: ошибка посреди сборки оставила бы его без слоёв.
+        var sources = Roles.Select(role => clips.FirstOrDefault(c => c.name == role || c.name.EndsWith("|" + role) || c.name.EndsWith("_" + role))).ToArray();
+        for (int i = 0; i < Roles.Length; i++)
+            if (sources[i] == null) throw new InvalidOperationException("Forest_Bud: отсутствует клип " + Roles[i]);
         var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(Controller);
         if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(Controller);
         foreach (var layer in controller.layers) UnityEngine.Object.DestroyImmediate(layer.stateMachine, true);
@@ -45,11 +64,13 @@ public static class ForestBudCombatBuilder
         controller.AddLayer("Base Layer");
         controller.AddParameter("AttackPhase", AnimatorControllerParameterType.Float);
         controller.AddParameter("WalkPhase", AnimatorControllerParameterType.Float);
+        controller.AddParameter("HitPhase", AnimatorControllerParameterType.Float);
         var machine = controller.layers[0].stateMachine;
-        foreach (string role in new[] { "Idle", "Walk", "Ranged_Attack", "Death" })
+        AnimationClip hit = null;
+        for (int r = 0; r < Roles.Length; r++)
         {
-            var original = clips.FirstOrDefault(c => c.name == role || c.name.EndsWith("|" + role) || c.name.EndsWith("_" + role));
-            if (original == null) throw new InvalidOperationException("Forest_Bud: отсутствует клип " + role);
+            string role = Roles[r];
+            var original = sources[r];
             string path = Root + "Forest_Bud_" + role + ".anim";
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
             if (clip == null) { clip = new AnimationClip(); AssetDatabase.CreateAsset(clip, path); }
@@ -64,7 +85,20 @@ public static class ForestBudCombatBuilder
             if (role == "Idle") machine.defaultState = state;
             if (role == "Ranged_Attack") { state.timeParameter = "AttackPhase"; state.timeParameterActive = true; }
             if (role == "Walk") { state.timeParameter = "WalkPhase"; state.timeParameterActive = true; }
+            if (role == "Hit") { state.timeParameter = "HitPhase"; state.timeParameterActive = true; hit = clip; }
         }
+        // Тот же Hit аддитивным слоем: поверх залпа и шага. Опорная поза — первый
+        // кадр клипа, он же поза покоя, поэтому в начале и в конце слой ничего не
+        // добавляет и вес можно включать и гасить без щелчка. Вес задаёт View.
+        controller.AddLayer("Hit Additive");
+        var layers = controller.layers;
+        layers[1].blendingMode = AnimatorLayerBlendingMode.Additive;
+        layers[1].defaultWeight = 0f;
+        controller.layers = layers;
+        var additive = layers[1].stateMachine.AddState("Hit");
+        additive.motion = hit; additive.writeDefaultValues = false;
+        additive.timeParameter = "HitPhase"; additive.timeParameterActive = true;
+        layers[1].stateMachine.defaultState = additive;
         EditorUtility.SetDirty(controller);
         string vfxFolder = Root.TrimEnd('/') + "/VFX";
         if (!AssetDatabase.IsValidFolder(vfxFolder)) AssetDatabase.CreateFolder(Root.TrimEnd('/'), "VFX");
@@ -110,34 +144,33 @@ public static class ForestBudCombatBuilder
         }
         finally { UnityEngine.Object.DestroyImmediate(fruitPrefab); }
         AssetDatabase.SaveAssets();
-        Debug.Log("[forest-bud] Four clips, five sockets and independent toon materials connected. "
+        Debug.Log("[forest-bud] Five clips (Hit also as additive layer), five sockets and independent toon materials connected. "
             + string.Join(", ", clips.Select(c => c.name + "=" + c.length.ToString("F3") + "s")));
     }
 
+    /// <summary>
+    /// Пачка Плюй-плода в MeadowEncounters — только если её нет. Существующую
+    /// не трогает: числа пачек правятся в ассете, а прежняя «починка» до 2–3
+    /// Хранителей с уроном 180% откатывала баланс видов (EnemyArchetypes).
+    /// Поток арен пачки профиля не читает — встречи там из шаблонов
+    /// (ForestEncounterTemplates), — поэтому пачка нужна только старой
+    /// расстановке по модулям. Состав повторяет ассет: 1–2 плода и 2–3
+    /// Корнеполза со второго уровня, проценты 100 — подстройка к таблице
+    /// видов, а не множитель; Хранителей в пачке не больше двух.
+    /// </summary>
     private static void AddMeadowEncounter()
     {
         var profile = AssetDatabase.LoadAssetAtPath<Game.Data.EncounterProfileAsset>("Assets/Resources/Locations/MeadowEncounters.asset");
         const string key = "encounter.meadow.forest_bud";
-        if (profile == null) return;
-        var existing = profile.MainPath.FirstOrDefault(pack => pack.StableKey == key);
-        if (existing != null)
-        {
-            var guard = existing.Groups.FirstOrDefault(group => group.Kind == Game.Sim.EnemyKind.ForestGuardian);
-            if (guard != null && (guard.Min != 2 || guard.Max != 3))
-            {
-                guard.Min = 2; guard.Max = 3;
-                EditorUtility.SetDirty(profile); AssetDatabase.SaveAssetIfDirty(profile);
-            }
-            return;
-        }
+        if (profile == null || profile.MainPath.Any(pack => pack.StableKey == key)) return;
         var packs = profile.MainPath.ToList();
         packs.Add(new Game.Data.EncounterPackAsset {
-            StableKey = key, Weight = 75, MinLevel = 1,
+            StableKey = key, Weight = 75, MinLevel = 2,
             Groups = new[] {
                 new Game.Data.EncounterGroupAsset { Kind = Game.Sim.EnemyKind.ForestBud,
-                    Min = 1, Max = 2, HealthPercent = 80, DamagePercent = 100 },
-                new Game.Data.EncounterGroupAsset { Kind = Game.Sim.EnemyKind.ForestGuardian,
-                    Min = 2, Max = 3, HealthPercent = 100, DamagePercent = 180 }
+                    Min = 1, Max = 2, HealthPercent = 100, DamagePercent = 100 },
+                new Game.Data.EncounterGroupAsset { Kind = Game.Sim.EnemyKind.ForestRootSwarm,
+                    Min = 2, Max = 3, HealthPercent = 100, DamagePercent = 100, GrowWithDepth = true }
             }
         });
         profile.MainPath = packs.ToArray();

@@ -84,14 +84,16 @@ namespace Game.View
         private const float AnchorSweepPlaybackSpeed = 1f;
         private const float ChainStepPlaybackSpeed = 1f;
 
-        // Imported Orvill clips have authored contact poses on frames 17 and
-        // 20. Per-clip playback keeps either pose on the deterministic 12/30 s
-        // Sim contact without moving damage authority into presentation.
-        private const float OrvillSwordAuthoredContactTime = 17f / 30f;
-        private const float OrvillSwordAuthoredDuration = 33f / 30f;
-        private const float OrvillShieldAuthoredContactTime = 20f / 30f;
-        private const float OrvillShieldAuthoredDuration = 42f / 30f;
+        // Контакты старого Орвилла (кадры 17 и 20) и множители под них сняты:
+        // вместе с ускорением в контроллере они гнали удар Хранителя ×2.3–2.7.
+        // Удар моба ведётся фазой от тиков замаха — см. «замах моба» ниже.
         private const float OrvillHitPresentationDuration = 0.57f;
+
+        /// <summary>
+        /// Нарисованная реакция Корнеполза: 11 кадров (0.33 с) родным темпом,
+        /// выход на 0.8 и смешивание 0.14 с — production/hit_build.json.
+        /// </summary>
+        private const float RootSwarmHitPresentationDuration = 0.43f;
 
         // GuardWalk covers about 0.387 m over a 0.20 s planted-foot phase:
         // 1.93 m/s at 1x versus Orvill's deterministic 3.5 m/s full speed.
@@ -136,15 +138,6 @@ namespace Game.View
         /// Треть: ноги переступают, но тело никуда не едет.
         /// </summary>
         private const float TurnShuffleMoveSpeed = 0.33f;
-        // Клипы Орвилла подгоняются под ЕГО контакт, а не под геройский.
-        private static readonly float OrvillSwordPlaybackSpeed =
-            OrvillSwordAuthoredContactTime / EnemyAttackContactTime;
-        private static readonly float OrvillSwordPresentationDuration =
-            OrvillSwordAuthoredDuration / OrvillSwordPlaybackSpeed;
-        private static readonly float OrvillShieldPlaybackSpeed =
-            OrvillShieldAuthoredContactTime / EnemyAttackContactTime;
-        private static readonly float OrvillShieldPresentationDuration =
-            OrvillShieldAuthoredDuration / OrvillShieldPlaybackSpeed;
 
         private Animator _animator;
 
@@ -263,6 +256,7 @@ namespace Game.View
             _faction = faction;
             _spriteVisual = GetComponentInChildren<SpriteCharacterVisual>(true);
             _animator = GetComponent<Animator>();
+            _attackPhaseSupport = _hitReactionSupport = -1;
             if (_spriteVisual != null) return;
             if (_animator == null)
                 Debug.LogError($"[Разлом] У prefab {name} отсутствует Animator.", this);
@@ -313,6 +307,13 @@ namespace Game.View
             TurnAngularSpeed = 0f;
             _orvillLocomotionPlaybackSpeed = 1f;
             _orvillHitPresentationUntil = 0f;
+            // Тело из пула приходит к другой сущности: номер ищется заново.
+            _swingEntity = -1;
+            _swingSerial = 0;
+            _swingDriven = false;
+            _swingReleasing = false;
+            _swingLag = 0f;
+            _swingCancelFrame = -1;
             StopAttackWarp();
             if (_spriteVisual != null)
             {
@@ -443,6 +444,7 @@ namespace Game.View
         private void Update()
         {
             UpdatePoseHold();
+            UpdateEnemySwingAnimation();
             UpdateTempoAnimation();
             UpdateBlazeAnimation();
             UpdateCleaveAnimation();
@@ -753,24 +755,302 @@ namespace Game.View
             {
                 bool shieldBash = IsRootSwarm ? _orvillAttackCount++ % 2 == 1
                     : _orvillAttackCount++ % 3 == 2;
-                float playbackSpeed = IsRootSwarm ? 1f : shieldBash
-                    ? OrvillShieldPlaybackSpeed
-                    : OrvillSwordPlaybackSpeed;
-                float presentationDuration = IsRootSwarm ? 16f / 30f : shieldBash
-                    ? OrvillShieldPresentationDuration
-                    : OrvillSwordPresentationDuration;
 
+                // Замах, который Sim уже взяла, ведётся фазой клипа от её тиков.
+                if (UsesAttackPhase)
+                {
+                    BeginPhaseSwing(shieldBash);
+                    return;
+                }
+
+                // Контроллер собран до AttackPhase: клип идёт своим темпом, контакт
+                // съезжает. Это переходное состояние до пересборки контроллеров.
+                if (!_warnedAttackPhase)
+                {
+                    _warnedAttackPhase = true;
+                    Debug.LogWarning("[Разлом] Контроллер моба без AttackPhase — удар не совпадёт с тиком. "
+                                     + "Пересобери: Разлом/Собрать контроллеры мобов.", this);
+                }
                 // Attack has priority over a presentation-only hit reaction:
                 // Sim has already committed this action and will resolve its
                 // Damage at AttackContactTime even if the view is struck.
                 ResetOrvillActionTriggers();
                 _orvillHitPresentationUntil = 0f;
                 _attackPresentationActive = true;
-                _attackPresentationUntil = Time.time + presentationDuration;
+                _attackPresentationUntil = Time.time + (IsRootSwarm ? 16f / 30f : 1f);
                 _actionProtectedUntil = Time.time + AttackContactTime;
-                _animator.speed = playbackSpeed;
+                _animator.speed = 1f;
                 _animator.SetTrigger(shieldBash ? OrvillShieldBash : OrvillSwordAttack);
             }
+        }
+
+        // ---- замах моба: фаза клипа от тиков Sim ----
+        //
+        // Кадры клипов измерены в Blender без глаз: контакт — пик скорости
+        // бьющей кисти, занесённая лапа — её самая дальняя точка назад, покой —
+        // таз вернулся на место. Замер и способ — в
+        // ART/characters/act-1-enemies/2.forest-guardian/production/swing_measure.json.
+        //
+        // Ключи — пары «тик окна Sim → кадр клипа» при окнах, под которые они
+        // поставлены (последний ключ). Другое окно растягивает их пропорционально,
+        // и контакт всё равно ложится ровно на ImpactTick. Между ключами —
+        // монотонная кубика: скорость клипа меняется без рывков и назад не идёт.
+        //
+        // НЕ РАВНОМЕРНОЕ ЗАМЕДЛЕНИЕ. Равномерно растянутый замах размазывает
+        // угрозу по всему окну. Здесь лапа быстро взлетает, долго висит занесённой
+        // (это и есть чтение «сейчас ударит») и падает родным темпом клипа.
+        private static readonly int AttackPhase = Animator.StringToHash("AttackPhase");
+        private static readonly int OrvillAttackAState = Animator.StringToHash("Base Layer.AttackA");
+        private static readonly int OrvillAttackBState = Animator.StringToHash("Base Layer.AttackB");
+        private static readonly int OrvillHitLeftState = Animator.StringToHash("Base Layer.HitLeft");
+        private static readonly int OrvillHitRightState = Animator.StringToHash("Base Layer.HitRight");
+
+        /// <summary>Сколько тиков стоп-кадр может задержать фазу замаха; потом она догоняет вдвое быстрее.</summary>
+        private const float SwingHoldLagMaxTicks = 4f;
+
+        private sealed class SwingClip
+        {
+            /// <summary>Окно импорта клипа в кадрах исходника (30 к/с = 1 кадр на тик).</summary>
+            public float FirstFrame, Frames;
+            public float[] WindupTicks, WindupFrames, RecoveryTicks, RecoveryFrames;
+            /// <summary>Сколько кадров клип ещё доигрывает после RecoverUntil, пока тело уходит в бег.</summary>
+            public float TailFrames, ReleaseSeconds;
+        }
+
+        // Mutant Swiping / SwipingMirrored (зеркало с теми же кадрами), 0…54:
+        // лапа занесена на 18, удар с 22, контакт 26, вынос до 30, покой к 48.
+        // Замах 21: подъём 3→18 за 11 тиков (×1.36), стойка 18→22 за 6 (×0.67),
+        // удар 22→26 за 4 — родной темп. Восстановление 15: вынос 26→30 родным
+        // темпом, дальше почти родным до 42; хвост до 54 уже под уход в бег.
+        private static readonly SwingClip GuardianSwing = new SwingClip
+        {
+            FirstFrame = 0f, Frames = 54f,
+            WindupTicks = new[] { 0f, 11f, 17f, 21f }, WindupFrames = new[] { 3f, 18f, 22f, 26f },
+            RecoveryTicks = new[] { 0f, 4f, 15f }, RecoveryFrames = new[] { 26f, 30f, 42f },
+            TailFrames = 12f, ReleaseSeconds = .30f,
+        };
+
+        // Корнеполз @AttackA/B, окно импорта 8…24: кисть проходит перед телом на
+        // пике скорости на 17. После 22 в исходнике начинается второй мах — туда
+        // не заходим, выход в бег держит 22. Замах 12: разгон 8→13 за 8 тиков,
+        // мах 13→17 за 4; восстановление 8: 17→22 — выпад Sim идёт на этой позе.
+        private static readonly SwingClip RootSwarmSwing = new SwingClip
+        {
+            FirstFrame = 8f, Frames = 16f,
+            WindupTicks = new[] { 0f, 8f, 12f }, WindupFrames = new[] { 8f, 13f, 17f },
+            RecoveryTicks = new[] { 0f, 8f }, RecoveryFrames = new[] { 17f, 22f },
+            TailFrames = 0f, ReleaseSeconds = .12f,
+        };
+
+        private SwingClip _swingClip;
+        private ArenaView _swingArena;
+        private int _swingEntity = -1;
+        private int _swingSerial, _swingStart, _swingImpact, _swingRecover;
+        private bool _swingDriven, _swingReleasing;
+        private float _swingLag;
+        private int _swingCancelFrame = -1;
+        private int _attackPhaseSupport = -1, _hitReactionSupport = -1;
+        private static bool _warnedAttackPhase;
+
+        /// <summary>Контроллер собран с AttackPhase (RazlomMobAnimatorBuilder v3). Проверяется раз на тело.</summary>
+        private bool UsesAttackPhase
+        {
+            get
+            {
+                if (_attackPhaseSupport < 0 && _animator != null && _animator.runtimeAnimatorController != null)
+                    _attackPhaseSupport = HasAnimatorParameter("AttackPhase")
+                                          && _animator.HasState(0, OrvillAttackAState) ? 1 : 0;
+                return _attackPhaseSupport == 1;
+            }
+        }
+
+        /// <summary>
+        /// Есть ли в контроллере реакция на попадание. У Корнеполза её не было до
+        /// @Hit: без клипа триггер висел бы впустую и сбивал темп бега и маха.
+        /// </summary>
+        private bool HasHitReaction
+        {
+            get
+            {
+                if (_hitReactionSupport < 0 && _animator != null && _spriteVisual == null
+                    && _animator.runtimeAnimatorController != null)
+                    _hitReactionSupport = _animator.HasState(0, OrvillHitLeftState)
+                                          || _animator.HasState(0, OrvillHitRightState) ? 1 : 0;
+                return _hitReactionSupport == 1;
+            }
+        }
+
+        /// <summary>
+        /// Номер сущности этого тела. ArenaView раздаёт тела из пула и сообщает
+        /// только вид моба, поэтому номер ищется обратным обходом — раз за
+        /// привязку, на первом замахе; ResetForSpawn его забывает.
+        /// </summary>
+        private bool ResolveSwingEntity(Simulation sim)
+        {
+            if (_swingEntity >= 0) return true;
+            if (_swingArena == null && _cycloneDriver != null) _swingArena = _cycloneDriver.GetComponent<ArenaView>();
+            if (_swingArena == null) return false;
+            for (int id = 1; id < sim.Entities.Count; id++)
+                if (_swingArena.TryGetEntityView(id, out Transform view) && view == transform)
+                {
+                    _swingEntity = id;
+                    return true;
+                }
+            return false;
+        }
+
+        private void BeginPhaseSwing(bool second)
+        {
+            var sim = TempoSim;
+            // Замаха в Sim уже нет (сняли в том же кадре) — показывать нечего,
+            // реакцию покажет событие помехи.
+            if (sim == null || !ResolveSwingEntity(sim) || !sim.TryGetEnemySwing(_swingEntity, out var swing)
+                || swing.Serial == _swingSerial) return;
+            _swingClip = IsRootSwarm ? RootSwarmSwing : GuardianSwing;
+            _swingSerial = swing.Serial;
+            _swingStart = swing.StartTick;
+            _swingImpact = swing.ImpactTick;
+            _swingRecover = swing.RecoverUntil;
+            _swingDriven = true;
+            _swingReleasing = false;
+            _swingLag = 0f;
+            _swingCancelFrame = -1;
+
+            // Attack has priority over a presentation-only hit reaction:
+            // Sim has already committed this action and will resolve its
+            // Damage at ImpactTick even if the view is struck.
+            ResetOrvillActionTriggers();
+            _orvillHitPresentationUntil = 0f;
+            _attackPresentationActive = true;
+            _attackPresentationUntil = Time.time + 1f;
+            // Время состояния задаёт параметр; скорость Animator — только темп смешиваний.
+            _animator.speed = 1f;
+            float tick = sim.Tick - 1 + _cycloneDriver.Alpha;
+            _animator.SetFloat(AttackPhase, SwingPhase(tick));
+            _actionProtectedUntil = Time.time + Mathf.Max(0f, _swingImpact - tick) / Simulation.TicksPerSecond;
+            int state = second && _animator.HasState(0, OrvillAttackBState) ? OrvillAttackBState : OrvillAttackAState;
+            _animator.CrossFadeInFixedTime(state, .085f, 0);
+        }
+
+        /// <summary>
+        /// Каждый кадр: фаза клипа по тику Sim с подкадром драйвера. Пауза и
+        /// съёмка держат кадр сами — тик стоит. Стоп-кадр попадания задерживает
+        /// фазу, дальше она догоняет. Замах, снятый в Sim до конца
+        /// восстановления, отпускается в бег; реакции (оглушение, волок, Hit,
+        /// смерть) снимают _attackPresentationActive сами и ведение прекращается.
+        /// </summary>
+        private void UpdateEnemySwingAnimation()
+        {
+            if (!_swingDriven) return;
+            var sim = TempoSim;
+            if (IsDead || _animator == null || sim == null || !_attackPresentationActive || _swingEntity < 0)
+            {
+                _swingDriven = false;
+                return;
+            }
+            float tick = sim.Tick - 1 + _cycloneDriver.Alpha;
+            bool present = sim.TryGetEnemySwing(_swingEntity, out var swing) && swing.Serial == _swingSerial;
+            if (!present && tick < _swingRecover)
+            {
+                // Событие помехи разбирается позже в этом же кадре (ArenaView,
+                // LateUpdate): ждём кадр. Никто не перехватил — сбит молча.
+                if (_swingCancelFrame < 0) { _swingCancelFrame = Time.frameCount; return; }
+                if (Time.frameCount == _swingCancelFrame) return;
+                EndPhaseSwing(.12f);
+                return;
+            }
+
+            bool held = _poseHeld && Time.time < _poseHoldUntil;
+            float step = Time.deltaTime * Simulation.TicksPerSecond;
+            _swingLag = held ? Mathf.Min(SwingHoldLagMaxTicks, _swingLag + step) : Mathf.Max(0f, _swingLag - step);
+            float shown = tick - _swingLag;
+            _animator.SetFloat(AttackPhase, SwingPhase(shown));
+            if (shown < _swingImpact)
+                _actionProtectedUntil = Time.time + (_swingImpact - shown) / Simulation.TicksPerSecond;
+            if (!_swingReleasing)
+            {
+                _attackPresentationUntil = Time.time + 1f;
+                if (shown >= _swingRecover)
+                {
+                    // Восстановление кончилось, Sim отпускает тело: клип доигрывает
+                    // хвост, пока смешивается с бегом.
+                    _swingReleasing = true;
+                    _attackPresentationUntil = Time.time + _swingClip.ReleaseSeconds;
+                    if (_animator.HasState(0, OrvillLocomotionState))
+                        _animator.CrossFadeInFixedTime(OrvillLocomotionState, _swingClip.ReleaseSeconds, 0);
+                }
+            }
+        }
+
+        /// <summary>Кадр клипа → нормированное время состояния. Кадр исходника — один тик Sim.</summary>
+        private float SwingPhase(float tick)
+        {
+            SwingClip clip = _swingClip;
+            float frame;
+            if (tick < _swingImpact)
+            {
+                float authored = clip.WindupTicks[clip.WindupTicks.Length - 1];
+                frame = Warp(clip.WindupTicks, clip.WindupFrames,
+                    (tick - _swingStart) * authored / Mathf.Max(1, _swingImpact - _swingStart));
+            }
+            else if (tick < _swingRecover)
+            {
+                float authored = clip.RecoveryTicks[clip.RecoveryTicks.Length - 1];
+                frame = Warp(clip.RecoveryTicks, clip.RecoveryFrames,
+                    (tick - _swingImpact) * authored / Mathf.Max(1, _swingRecover - _swingImpact));
+            }
+            else
+                frame = clip.RecoveryFrames[clip.RecoveryFrames.Length - 1] + Mathf.Min(clip.TailFrames, tick - _swingRecover);
+            return Mathf.Clamp01((frame - clip.FirstFrame) / clip.Frames);
+        }
+
+        /// <summary>
+        /// Монотонная кубика через ключи (x возрастает, y не убывает): касательные —
+        /// гармоническое среднее соседних наклонов (Фритч — Бутленд), на концах —
+        /// наклон крайнего отрезка. Не перелетает ключи и не идёт назад.
+        /// </summary>
+        private static float Warp(float[] x, float[] y, float t)
+        {
+            int last = x.Length - 1;
+            if (t <= x[0]) return y[0];
+            if (t >= x[last]) return y[last];
+            int k = 0;
+            while (t > x[k + 1]) k++;
+            float h = x[k + 1] - x[k];
+            float s = (t - x[k]) / h, s2 = s * s, s3 = s2 * s;
+            return (2f * s3 - 3f * s2 + 1f) * y[k] + (s3 - 2f * s2 + s) * h * WarpSlope(x, y, k)
+                   + (3f * s2 - 2f * s3) * y[k + 1] + (s3 - s2) * h * WarpSlope(x, y, k + 1);
+        }
+
+        private static float WarpSlope(float[] x, float[] y, int i)
+        {
+            int last = x.Length - 1;
+            if (i == 0) return (y[1] - y[0]) / (x[1] - x[0]);
+            if (i == last) return (y[last] - y[last - 1]) / (x[last] - x[last - 1]);
+            float left = (y[i] - y[i - 1]) / (x[i] - x[i - 1]), right = (y[i + 1] - y[i]) / (x[i + 1] - x[i]);
+            return left * right <= 0f ? 0f : 2f * left * right / (left + right);
+        }
+
+        /// <summary>Замах отпущен досрочно: тело возвращается в бег.</summary>
+        private void EndPhaseSwing(float blend)
+        {
+            StopPhaseSwing();
+            if (IsDead || _animator == null) return;
+            if (_animator.HasState(0, OrvillLocomotionState))
+                _animator.CrossFadeInFixedTime(OrvillLocomotionState, blend, 0);
+            RestoreOrvillLocomotionPlayback();
+        }
+
+        /// <summary>Замах больше не ведётся; позу забирает тот, кто позвал.</summary>
+        private void StopPhaseSwing()
+        {
+            if (!_swingDriven) return;
+            _swingDriven = false;
+            _swingReleasing = false;
+            _swingCancelFrame = -1;
+            _attackPresentationActive = false;
+            _attackPresentationUntil = 0f;
+            _actionProtectedUntil = 0f;
         }
 
         /// <summary>
@@ -1052,8 +1332,11 @@ namespace Game.View
         {
             if (_spriteVisual != null || _animator == null || IsDead) return;
             if (_faction == Faction.Wole) return;
-            if (IsRootSwarm) return;
+            // Knockback ведёт в состояние реакции; у Корнеполза оно есть только с @Hit.
+            if (IsRootSwarm && !HasHitReaction) return;
 
+            // Волок снимает замах в Sim: фаза удара больше не ведётся.
+            StopPhaseSwing();
             CancelUpperBodyAttack(0.03f);
             _animator.SetTrigger(OrvillKnockback);
         }
@@ -1062,20 +1345,23 @@ namespace Game.View
         {
             if (IsDead || _faction == Faction.Wole) return;
             // Оглушение в Sim отменило контакт: старый телеграф больше не должен доигрывать.
+            StopPhaseSwing();
             _actionProtectedUntil = 0f;
             _attackPresentationActive = false;
             _attackPresentationUntil = 0f;
             _lastHitAt = -1f;
-            if (_animator != null && IsRootSwarm && _animator.HasState(0, OrvillLocomotionState))
+            if (_animator != null && IsRootSwarm && !HasHitReaction && _animator.HasState(0, OrvillLocomotionState))
                 _animator.CrossFadeInFixedTime(OrvillLocomotionState, .05f, 0);
             else PlayHit(0);
         }
 
         public void PlayHit(int variant)
         {
-            // У роя нет Hit-клипа. Попадание уже показывает ArenaView;
-            // пустой триггер не должен сбивать темп бега и текущий мах.
-            if (IsRootSwarm) return;
+            // Реакция Корнеполза — нарисованный @Hit. Контроллер, собранный без
+            // него, состояний реакции не имеет: тогда, как раньше, попадание
+            // показывает только ArenaView, а пустой триггер не сбивает темп бега
+            // и текущий мах.
+            if (IsRootSwarm && !HasHitReaction) return;
             if (_spriteVisual != null)
             {
                 if (!IsDead) _spriteVisual.PlayHit(variant);
@@ -1098,10 +1384,12 @@ namespace Game.View
             CancelUpperBodyAttack(0.03f);
             // After contact, Hit may interrupt an Orvill attack recovery. Before
             // it, the guard above leaves only ArenaView recoil/flash visible.
+            StopPhaseSwing();
             _attackPresentationActive = false;
             _attackPresentationUntil = 0f;
             ResetOrvillActionTriggers();
-            _orvillHitPresentationUntil = Time.time + OrvillHitPresentationDuration;
+            _orvillHitPresentationUntil = Time.time
+                + (IsRootSwarm ? RootSwarmHitPresentationDuration : OrvillHitPresentationDuration);
             _animator.speed = 1f;
             _animator.SetTrigger((variant & 1) == 0 ? OrvillHitLeft : OrvillHitRight);
         }
@@ -1381,6 +1669,8 @@ namespace Game.View
             _locomotionMoving = false;
             _orvillLocomotionPlaybackSpeed = 1f;
             _orvillHitPresentationUntil = 0f;
+            _swingDriven = false;
+            _swingReleasing = false;
             if (_animator != null && _lowerBodyLayer >= 0)
                 _animator.SetLayerWeight(_lowerBodyLayer, 0f);
             if (_animator != null && _upperBodyLayer >= 0)

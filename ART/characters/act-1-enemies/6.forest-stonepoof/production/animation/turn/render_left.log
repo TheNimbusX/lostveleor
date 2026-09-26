@@ -1,0 +1,153 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61863[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+00:03.812  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\turn\Stonehoof_Turn_r01.blend"
+00:05.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0000.png'
+00:05.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0001.png'
+00:06.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0002.png'
+00:06.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0003.png'
+00:06.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0004.png'
+00:07.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0005.png'
+00:07.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0006.png'
+00:07.609  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0007.png'
+00:07.890  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0008.png'
+00:08.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0009.png'
+00:08.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0010.png'
+00:08.719  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0011.png'
+00:08.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0012.png'
+00:09.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0013.png'
+00:09.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0014.png'
+00:09.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0015.png'
+00:10.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0016.png'
+00:10.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0017.png'
+00:10.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0018.png'
+00:10.844  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0019.png'
+00:11.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0020.png'
+00:11.422  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0021.png'
+00:11.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0022.png'
+00:11.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0023.png'
+00:12.281  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0024.png'
+00:12.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0025.png'
+00:12.844  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0026.png'
+00:13.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0027.png'
+00:13.406  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0028.png'
+00:13.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0029.png'
+00:13.937  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0030.png'
+00:14.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0031.png'
+00:14.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0032.png'
+00:14.797  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0033.png'
+00:15.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0034.png'
+00:15.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0035.png'
+00:15.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0036.png'
+00:15.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0037.png'
+00:16.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0038.png'
+00:16.406  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0039.png'
+00:16.687  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0040.png'
+00:16.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0041.png'
+00:17.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0042.png'
+00:17.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0043.png'
+00:17.765  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0044.png'
+00:18.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0045.png'
+00:18.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0046.png'
+00:18.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0047.png'
+00:18.844  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0048.png'
+00:19.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0049.png'
+00:19.390  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0050.png'
+00:19.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0051.png'
+00:19.922  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0052.png'
+00:20.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0053.png'
+00:20.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0054.png'
+00:20.719  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0055.png'
+00:21.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0056.png'
+00:21.265  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0057.png'
+00:21.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0058.png'
+00:21.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_side_frames\0059.png'
+00:22.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0000.png'
+00:22.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0001.png'
+00:22.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0002.png'
+00:22.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0003.png'
+00:23.156  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0004.png'
+00:23.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0005.png'
+00:23.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0006.png'
+00:23.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0007.png'
+00:24.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0008.png'
+00:24.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0009.png'
+00:24.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0010.png'
+00:25.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0011.png'
+00:25.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0012.png'
+00:25.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0013.png'
+00:25.859  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0014.png'
+00:26.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0015.png'
+00:26.406  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0016.png'
+00:26.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0017.png'
+00:26.922  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0018.png'
+00:27.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0019.png'
+00:27.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0020.png'
+00:27.719  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0021.png'
+00:27.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0022.png'
+00:28.250  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0023.png'
+00:28.515  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0024.png'
+00:28.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0025.png'
+00:29.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0026.png'
+00:29.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0027.png'
+00:29.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0028.png'
+00:29.859  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0029.png'
+00:30.140  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0030.png'
+00:30.406  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0031.png'
+00:30.687  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0032.png'
+00:30.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0033.png'
+00:31.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0034.png'
+00:31.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0035.png'
+00:31.765  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0036.png'
+00:32.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0037.png'
+00:32.297  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0038.png'
+00:32.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0039.png'
+00:32.844  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0040.png'
+00:33.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0041.png'
+00:33.390  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0042.png'
+00:33.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0043.png'
+00:33.937  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0044.png'
+00:34.203  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0045.png'
+00:34.469  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0046.png'
+00:34.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0047.png'
+00:35.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0048.png'
+00:35.281  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0049.png'
+00:35.562  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0050.png'
+00:35.828  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0051.png'
+00:36.094  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0052.png'
+00:36.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0053.png'
+00:36.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0054.png'
+00:36.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0055.png'
+00:37.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0056.png'
+00:37.469  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0057.png'
+00:37.750  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0058.png'
+00:38.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_turn\TurnLeft_game_frames\0059.png'
+Reloading external rigs...
+Reloading external metarigs...
+TURN_RENDER_DONE
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

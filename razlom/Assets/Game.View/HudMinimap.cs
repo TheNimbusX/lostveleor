@@ -190,7 +190,7 @@ namespace Game.View
                 BuildInk(map);
                 _layoutView = Object.FindAnyObjectByType<LayoutView>();
             }
-            _caption = "Разлом · " + run.Depth;
+            _caption = "Арена · " + run.Depth;
             var heroWorld = sim.Entities.Position[Simulation.PlayerId];
             _hero = new Vector2(heroWorld.X.ToFloat(), heroWorld.Y.ToFloat());
             DrawBase(panel, chrome, label);

@@ -1,0 +1,154 @@
+{
+  "keys": [
+    "nose",
+    "brow",
+    "horn_R",
+    "horn_L",
+    "R_shoulder",
+    "R_elbow",
+    "R_wrist",
+    "R_tip",
+    "R_inner",
+    "L_shoulder",
+    "L_elbow",
+    "L_wrist",
+    "L_tip",
+    "waist",
+    "R_knee",
+    "R_ankle",
+    "R_toe",
+    "L_knee",
+    "L_ankle",
+    "L_toe"
+  ],
+  "vertex_ids": [
+    1310,
+    6624,
+    7403,
+    1413,
+    6885,
+    7493,
+    4443,
+    4311,
+    444,
+    7990,
+    1340,
+    2485,
+    10115,
+    3354,
+    9856,
+    10242,
+    6545,
+    3748,
+    9684,
+    6784
+  ],
+  "camera": [
+    1.2862977015978154,
+    0.19678713965779132,
+    3.5354461911844277,
+    491.3725575226685,
+    466.0169905762381
+  ],
+  "camera_rms_px": 13.337197068648216,
+  "per_landmark_px": {
+    "nose": 9.4,
+    "brow": 13.7,
+    "horn_R": 14.1,
+    "horn_L": 15.8,
+    "R_shoulder": 17.1,
+    "R_elbow": 10.3,
+    "R_wrist": 23.1,
+    "R_tip": 3.5,
+    "R_inner": 8.7,
+    "L_elbow": 11.8,
+    "L_wrist": 24.3,
+    "L_tip": 16.1,
+    "waist": 6.9,
+    "R_knee": 6.1,
+    "R_ankle": 14.5,
+    "R_toe": 12.2,
+    "L_knee": 11.2,
+    "L_ankle": 6.6,
+    "L_toe": 6.1
+  },
+  "base_targets": {
+    "nose": [
+      560,
+      383
+    ],
+    "brow": [
+      574,
+      262
+    ],
+    "horn_R": [
+      505,
+      40
+    ],
+    "horn_L": [
+      610,
+      40
+    ],
+    "R_shoulder": [
+      389,
+      280
+    ],
+    "R_elbow": [
+      303,
+      420
+    ],
+    "R_wrist": [
+      233,
+      558
+    ],
+    "R_tip": [
+      248,
+      757
+    ],
+    "R_inner": [
+      304,
+      708
+    ],
+    "L_elbow": [
+      655,
+      420
+    ],
+    "L_wrist": [
+      725,
+      571
+    ],
+    "L_tip": [
+      683,
+      746
+    ],
+    "waist": [
+      492,
+      430
+    ],
+    "R_knee": [
+      446,
+      608
+    ],
+    "R_ankle": [
+      346,
+      792
+    ],
+    "R_toe": [
+      320,
+      905
+    ],
+    "L_knee": [
+      575,
+      575
+    ],
+    "L_ankle": [
+      621,
+      758
+    ],
+    "L_toe": [
+      683,
+      817
+    ]
+  },
+  "note": "Camera fitted on howl.mp4 frame 0 against the Idle@0 pose (the clip start pose)."
+}

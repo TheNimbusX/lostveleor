@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вендиго · Вой чащи</title><link rel="stylesheet" href="review.css">
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · ЛЕСНОЙ ВЕНДИГО · ЭЛИТНАЯ АТАКА</div><h1>Вой чащи</h1><p>Сбор → рывок вверх → вой → удар обеими когтями → тяжёлая выдержка → стойка. Ноги не сходят с места.</p></div><span class="badge">Ждёт владельца · принято предварительно</span></div>
+<div class="pair">
+<section class="panel"><div class="caption"><h2>Принятый видеореференс</h2><p>howl.mp4, пересчитан по фазам в игровые 48 кадров.</p></div><img id="reference" src="reference_frames/0000.jpg" alt="Кадр видеореференса воя"></section>
+<section class="panel"><div class="caption"><h2>Анимация на нашей модели</h2><p id="viewLabel">Игровая камера · 48°, как в бою</p></div><img id="animation" src="game_frames/0000.jpg" alt="Вендиго, кадр анимации воя"></section>
+</div>
+<div class="controls">
+<div class="row"><button id="play" disabled>Загрузка кадров…</button><button id="reset">Сначала</button><button id="prev" aria-label="Предыдущий кадр">− кадр</button><button id="next" aria-label="Следующий кадр">+ кадр</button><button id="contact">К удару (кадр 24)</button>
+<select id="speed" aria-label="Скорость просмотра"><option value="game">Игровой темп</option><option value="24">24 кадра/с</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select>
+<button id="game" aria-pressed="true">Игровая камера</button><button id="side" aria-pressed="false">Сбоку</button><button id="fit" aria-pressed="false">Как в референсе</button><label class="small"><input id="repeat" type="checkbox" checked> Повторять</label></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="48" value="0" aria-label="Кадр анимации"><output id="counter">Кадр 0 / 48</output><span id="phase"></span></div>
+<p id="loading" class="small" aria-live="polite">Кадры загружаются заранее.</p>
+</div>
+<div class="note"><p><strong>На что смотреть.</strong> Кадры 0–24 идут ровно секунду — это замах до удара (30 тиков симуляции). На кадре 24 когти входят в землю, здесь вырастает кольцо. Кадры 24–48 игра проигрывает за 0,8 с (24 тика восстановления) — вендиго сидит низко на четырёх опорах и уязвим, затем поднимается в обычную стойку.</p></div>
+<p>Тайминг задан контрактом боя и весом: корпус падает к удару не быстрее свободного падения, а подъём тормозит не резче 1 g — иначе стопы оторвались бы от земли. Поэтому присед короче и мельче, чем в ролике: когти проходят назад низко над землёй, но не царапают её. Рога — часть черепа (отдельных костей нет), их инерция идёт через шею и голову: запаздывание на рывке и перехлёст вниз после удара.</p>
+<h2 style="margin-top:28px">Проверки</h2>
+<table class="checks">
+<tr><th>Что</th><th>Результат</th></tr>
+<tr><td>Контакт когтей с землёй</td><td class="num">кадр 24 из 48 — ровно момент удара; до него когти не касаются земли</td></tr>
+<tr><td>Скольжение стоп (точки опоры)</td><td class="num">0.0009 мм — стопы стоят на месте весь клип</td></tr>
+<tr><td>Скольжение когтей в выдержке 24–38</td><td class="num">0.0001 мм</td></tr>
+<tr><td>Кончики когтей в земле</td><td class="num">18 мм (намеренно); остальная сетка выше земли — вершин под землёй: 0</td></tr>
+<tr><td>Длины костей</td><td class="num">изменение ≤ 1.0e-06 м (только повороты + смещение таза)</td></tr>
+<tr><td>Перемещение корня</td><td class="num">нет (root на месте, движение задаёт симуляция)</td></tr>
+<tr><td>Взаимопроникновение частей тела</td><td class="num">новых пересечений треугольников: 0 (проверены все 193 четверть-кадра)</td></tr>
+<tr><td>Центр масс: падение</td><td class="num">не быстрее 1.09 g на замахе и 0.96 g после удара</td></tr>
+<tr><td>Скорость корпуса в момент удара</td><td class="num">1.1 м/с вниз, затем сжатие на четырёх опорах</td></tr>
+<tr><td>Начало и конец</td><td class="num">кадры 0 и 48 точно совпадают с позой ожидания (Idle)</td></tr>
+</table>
+<div class="keys"><h2 style="margin-top:28px">Ключевые позы</h2><img src="game_keys.jpg" alt="Ключевые позы с игровой камеры"><img src="side_keys.jpg" alt="Ключевые позы сбоку"></div>
+<div class="links"><a href="../../animation/reference_match_howl/Howl_r01.blend">Редактируемая сцена Blender (ключи)</a><a href="../../animation/reference_match_howl/Howl_Baked_r01.blend">Производный клип</a><a href="../../../review/higgsfield-refs/howl.mp4">Исходный ролик</a><a href="manifest.json">manifest.json</a></div>
+<details><summary>Обычные видеозаписи (24 кадра/с)</summary><div class="videos"><div><p>Игровая камера</p><video src="game.mp4" muted playsinline controls preload="none"></video></div><div><p>Сбоку</p><video src="side.mp4" muted playsinline controls preload="none"></video></div><div style="grid-column:1/-1"><p>Референс · камера референса · игровая камера</p><video src="comparison.mp4" muted playsinline controls preload="none"></video></div></div></details>
+<p class="small" style="margin-top:28px">Клавиши ← / → листают кадры, пробел — просмотр. Слева кадр ролика, сопоставленный по фазам: 0→0, 3→6, 6→12, 8→16, 11→20, 14→28, 16→36, 19→39, 21→41, 22→42, 24→43, 29→50, 32→58, 36→70, 38→75, 41→80, 44→86, 48→96.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),N=49,CONTACT=24,cache=[];
+const PHASES=[[0, "Сбор: вес вниз, когти назад"], [6, "Рывок вверх"], [11, "Вой: череп и рога назад"], [17, "Удар: корпус падает, когти вниз"], [24, "КОНТАКТ: когти в землю, кольцо"], [25, "Сжатие, рога по инерции"], [29, "Низкая тяжёлая выдержка (уязвим)"], [36, "Упор на когти: корпус назад, на ноги"], [38, "Когти отрываются, подъём в стойку"]];
+let frame=0,view='game',running=false,last=0,acc=0,speed='game';
+const pad=f=>String(f).padStart(4,'0');
+const labels={game:'Игровая камера · 48°, как в бою',side:'Сбоку · профиль справа',fit:'Камера референса · для сравнения с роликом'};
+function phase(f){let p='';for(const [s,l] of PHASES)if(f>=s)p=l;return p}
+function gameTime(f){return f<=CONTACT?f/24:1+(f-CONTACT)/30}
+function draw(){
+ $('animation').src=`${view}_frames/${pad(frame)}.jpg`;$('reference').src=`reference_frames/${pad(frame)}.jpg`;
+ $('seek').value=frame;$('counter').value=`Кадр ${frame} / 48 · в игре ${gameTime(frame).toFixed(2).replace('.',',')} с`;
+ $('phase').textContent=phase(frame);$('phase').className=frame===CONTACT?'contact':'';
+ if(!$('play').disabled)$('play').textContent=running?'Пауза':'Смотреть';
+}
+function seek(f){running=false;frame=Math.max(0,Math.min(N-1,f));draw()}
+function frameDur(f){if(speed==='game')return f<CONTACT?1/24:1/30;const base=1/24;return speed==='24'?base:base/Number(speed)}
+function toggle(){if($('play').disabled)return;if(!running&&frame===N-1)frame=0;running=!running;last=performance.now();acc=0;draw()}
+$('play').onclick=toggle;$('reset').onclick=()=>seek(0);$('prev').onclick=()=>seek(frame-1);$('next').onclick=()=>seek(frame+1);$('contact').onclick=()=>seek(CONTACT);
+$('seek').oninput=()=>seek(Number($('seek').value));$('speed').onchange=()=>{speed=$('speed').value};
+for(const v of ['game','side','fit'])$(v).onclick=()=>{view=v;for(const o of ['game','side','fit'])$(o).setAttribute('aria-pressed',String(o===v));$('viewLabel').textContent=labels[v];draw()};
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();toggle()}if(e.code==='ArrowRight'){e.preventDefault();seek(frame+1)}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame-1)}});
+function tick(now){if(running){acc+=(now-last)/1000;last=now;while(running&&acc>=frameDur(frame)){acc-=frameDur(frame);if(frame>=N-1){if($('repeat').checked){frame=0}else{running=false}}else frame++}draw()}else last=now;requestAnimationFrame(tick)}
+requestAnimationFrame(tick);draw();
+const assets=[];for(let f=0;f<N;f++){assets.push(`reference_frames/${pad(f)}.jpg`);for(const v of ['game','side','fit'])assets.push(`${v}_frames/${pad(f)}.jpg`)}
+let loaded=0,failed=0;
+function done(err){loaded++;if(err)failed++;$('loading').textContent=`Загружено ${loaded} из ${assets.length}`;if(loaded===assets.length){$('play').disabled=false;$('loading').textContent=failed?'Часть кадров недоступна — ниже есть обычные видео.':'Готово · можно смотреть и переключать камеры';draw()}}
+for(const p of assets){const im=new Image();cache.push(im);im.onload=()=>done(false);im.onerror=()=>done(true);im.src=p}
+</script></html>

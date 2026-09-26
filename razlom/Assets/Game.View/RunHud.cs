@@ -208,18 +208,11 @@ namespace Game.View
             Fill(panel, Panel);
             Fill(new Rect(panel.x, panel.y, 4f, panel.height), Coral);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 6f, 205f, 26f),
-                "РАЗЛОМ  " + run.Depth + (run.TotalLevels > 0 ? "/" + run.TotalLevels : ""), _title);
-            int fights = 0, cleared = 0;
-            if (run.Encounters != null)
-                for (int e = 0; e < run.Encounters.Count; e++)
-                {
-                    if (run.Encounters.Get(e).Role == EncounterRole.RewardBranch) continue;
-                    fights++;
-                    if (run.Encounters.Alive(e, run.Sim.Entities) == 0) cleared++;
-                }
+                "АРЕНА  " + run.Depth, _title);
+            // Тот же счёт, что у панели на Canvas: волны встречи, таймер выживания.
+            int survival = run.Sim.SurvivalTicksLeft;
             GUI.Label(new Rect(panel.x + 16f, panel.y + 34f, 280f, 20f),
-                fights > 0 ? $"ВСТРЕЧИ: {cleared}/{fights} · ЦЕЛЕЙ: {run.CountRequiredEnemies()}"
-                    : "ЦЕЛЕЙ: " + run.CountRequiredEnemies(), _subtitle);
+                ((survival > 0 ? SurvivalText(survival) + " · " : "") + FightsLine(run)).ToUpperInvariant(), _subtitle);
             GUI.Label(new Rect(panel.x + 16f, panel.y + 60f, 280f, 22f),
                 run.ArenaFlow ? (run.CurrentRoute.Hard ? "ОПАСНАЯ АРЕНА" : run.CurrentRoute.Reward == ArenaReward.Shop
                     ? "МАГАЗИН · СКОРО" : "УЛУЧШЕНИЕ") + $" · золото: {run.Gold}"
@@ -282,9 +275,9 @@ namespace Game.View
         /// <summary>Сколько путей предлагает RiftRun после награды (его _routes).</summary>
         private const int RouteChoices = 3;
 
-        /// <summary>Подзаголовок выбора арены: какой разлом следующий.</summary>
+        /// <summary>Подзаголовок выбора арены: какая арена следующая.</summary>
         private static string RouteSubtitle(RiftRun run)
-            => "Разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : "") + " · награда — после зачистки";
+            => "Арена " + (run.Depth + 1) + " · награда — после зачистки";
 
         /// <summary>
         /// Тексты карточки следующей арены — одни для Canvas (RunHud.View), запасного IMGUI и кадра
@@ -349,11 +342,10 @@ namespace Game.View
             Fill(new Rect(panel.x, panel.y, panel.width, 5f), Coral);
 
             GUI.Label(new Rect(panel.x + 28f, panel.y + 20f, panel.width - 56f, 30f),
-                "РАЗЛОМ ЗАЧИЩЕН", _title);
+                "АРЕНА ЗАЧИЩЕНА", _title);
             GUI.Label(new Rect(panel.x + 28f, panel.y + 51f, panel.width - 56f, 22f),
                 run.IsFinalLevel ? "Локация пройдена — выбери последнюю награду и перейди к итогам"
-                    : "Выбери награду — дальше разлом " + (run.Depth + 1)
-                        + (run.TotalLevels > 0 ? "/" + run.TotalLevels : ""), _subtitle);
+                    : "Выбери награду — дальше арена " + (run.Depth + 1), _subtitle);
 
             float gap = 12f;
             float cardsTop = panel.y + 88f;
@@ -472,7 +464,7 @@ namespace Game.View
         private void DrawOfferCard(Rect card, int index, in RewardOffer offer, RiftRun run)
         {
             Color accent = offer.Kind == RewardKind.Item ? Gold
-                : offer.Kind == RewardKind.StatBoost || offer.Kind == RewardKind.Talent ? Cyan : Coral;
+                : offer.Kind == RewardKind.StatBoost || offer.Kind == RewardKind.Talent || offer.Kind == RewardKind.Spring ? Cyan : Coral;
             Fill(card, Card);
             Frame(card, accent, 1f);
             Fill(new Rect(card.x, card.y, card.width, 4f), accent);
@@ -485,8 +477,17 @@ namespace Game.View
                 : offer.Kind == RewardKind.Ability ? "СПОСОБНОСТЬ"
                 : offer.Kind == RewardKind.Talent ? "УСИЛЕНИЕ"
                 : offer.Kind == RewardKind.StatBoost ? "СТАТ"
+                : offer.Kind == RewardKind.Spring ? "ЛЕЧЕНИЕ"
                 : "УЗЕЛ СПОСОБНОСТИ";
             GUI.Label(new Rect(card.x + 58f, card.y + 15f, card.width - 72f, 18f), kind, _eyebrow);
+
+            if (offer.Kind == RewardKind.Spring)
+            {
+                GUI.Label(new Rect(card.x + 16f, card.y + 72f, card.width - 32f, 54f), "РОДНИК", _title);
+                GUI.Label(new Rect(card.x + 16f, card.y + 132f, card.width - 32f, card.height - 150f),
+                    "Сразу возвращает " + offer.HealPercent + "% здоровья\n+" + run.SpringHealAmount + " здоровья", _body);
+                return;
+            }
 
             if (offer.Kind == RewardKind.Ability)
             {

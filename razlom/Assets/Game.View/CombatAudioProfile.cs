@@ -11,7 +11,10 @@ namespace Game.View
         EnemyWarning, PlayerHurt, CycloneRelease,
         WhooshHeavy, CycloneTurn, WhirlwindEnd, ChainStepHop, ChainStepEnd,
         PelagAttack, Cleave, Dash, BlazePrepare, BlazeFire, Finisher,
-        WhirlwindPulse, WhirlwindHit, Count
+        WhirlwindPulse, WhirlwindHit,
+        // Плюй-плод и тихий замах хранителя (26.09). Номер звука хранится в профиле —
+        // новые значения только в конец, перед Count.
+        BudVolley, BudPop, BudFruitImpact, BudHurt, BudDeath, GuardianSwing, Count
     }
 
     [Serializable]
@@ -45,9 +48,13 @@ namespace Game.View
             switch (sound)
             {
                 case CombatSound.EnemyWarning: case CombatSound.PlayerHurt: return 100;
-                case CombatSound.Kill: case CombatSound.RootSwarmKill: return 80;
-                case CombatSound.HitBody: case CombatSound.RootSwarmHit: return 70;
+                case CombatSound.Kill: case CombatSound.RootSwarmKill: case CombatSound.BudDeath: return 80;
+                case CombatSound.HitBody: case CombatSound.RootSwarmHit: case CombatSound.BudHurt: return 70;
                 case CombatSound.HitMetal: return 65;
+                case CombatSound.BudFruitImpact: return 50;
+                case CombatSound.BudVolley: case CombatSound.BudPop: return 45;
+                // Замах хранителя — фон: его первым вытесняют удары и сигналы.
+                case CombatSound.GuardianSwing: return 20;
                 case CombatSound.Footstep: case CombatSound.Dissolve:
                 case CombatSound.RootSwarmDissolve: return 10;
                 default: return 40;

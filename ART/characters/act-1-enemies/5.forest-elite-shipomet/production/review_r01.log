@@ -1,0 +1,52 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mPort 61863 is in use[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61864[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+Reloading external rigs...
+Reloading external metarigs...
+20:00:05 | INFO: Data are loaded, start creating Blender stuff
+20:00:05 | INFO: Blender create Mesh node tripo_mesh_05d8def3-f9dc-49ca-90b1-3339c1598efc
+20:00:12 | INFO: glTF import finished in 6.86s
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\render_new_mob_review.py:65: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world.use_nodes = True
+00:18.531  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_front.png'
+00:20.438  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_left.png'
+00:23.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_back.png'
+00:26.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_right.png'
+00:28.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_game_camera.png'
+00:31.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\00.png'
+00:33.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\01.png'
+00:37.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\02.png'
+00:39.750  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\03.png'
+00:42.203  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\04.png'
+00:44.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\05.png'
+00:47.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\06.png'
+00:49.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\07.png'
+00:52.313  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\08.png'
+00:54.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\09.png'
+00:57.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\10.png'
+01:00.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\11.png'
+01:02.781  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\12.png'
+01:06.313  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\13.png'
+01:09.094  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\14.png'
+01:11.672  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\15.png'
+01:14.313  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\16.png'
+01:17.031  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\17.png'
+01:20.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\18.png'
+01:23.016  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\19.png'
+01:25.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\20.png'
+01:28.063  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\21.png'
+01:30.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\22.png'
+01:33.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\turntable_frames\23.png'
+01:37.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_vs_pelag.png'
+01:39.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\5.forest-elite-shipomet\production\review\model_r01\shipomet_vs_pelag_game.png'
+MOB_MESHES=1 FACES=1466820 MATERIALS=1
+MOB_RAW_BOUNDS=(0.5946, 0.3089, 1.0)
+MOB_BOUNDS_AT_TARGET=(1.605, 0.834, 2.7)
+FBX version: 7400
+COMPARISON_BOUNDS=(3.8928, 0.834, 2.7)
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

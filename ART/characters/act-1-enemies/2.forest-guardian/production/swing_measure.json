@@ -1,0 +1,118 @@
+{
+ "what": "Кадры замаха клипов Хранителя и Корнеполза для фазового удара (CharacterAnimatorView, RazlomMobAnimatorBuilder AttackPhase).",
+ "measured": "2026-09-26, headless Blender 5.2 (import_scene.fbx, anim_offset 1 → кадр Blender минус 1 = кадр Unity), 30 к/с",
+ "method": {
+  "contact": "пик скорости бьющей кисти (центральная разность, ед. исходника/с); у Хранителя рядом отмечен и максимум выноса вперёд",
+  "reach": "проекция кисти минус таз кадра 0 на взгляд кадра 0 (правое бедро → левое × вверх); у Корнеполза бёдра не дают взгляда — только скорость",
+  "anticipation_start": "первый кадр, где бьющая кисть быстрее 0.5 ед/с",
+  "cocked": "самая дальняя точка кисти назад — лапа занесена",
+  "strike_start": "кисть пошла вперёд с разгоном (скорость ×2 за кадр)",
+  "recovery_end": "таз вернулся к кадру 0, кисть у позы покоя",
+  "units": "исходник FBX; рост модели по суставам голова–стопа указан в height_units"
+ },
+ "sim": {
+  "guardian_windup_ticks": 21,
+  "guardian_recovery_ticks": 15,
+  "rootswarm_windup_ticks": 12,
+  "rootswarm_recovery_ticks": 8,
+  "ticks_per_second": 30
+ },
+ "clips": [
+  {
+   "file": "razlom/Assets/Resources/Characters/Forest_Guardian/Forest_Guardian@Mutant Swiping.fbx",
+   "role": "AttackA",
+   "striking_hand": "LeftHand",
+   "unity_clip_frames": [0, 54],
+   "height_units": 0.607,
+   "anticipation_start": 4,
+   "cocked": 18,
+   "strike_start": 22,
+   "contact": 26,
+   "contact_hand_speed": 11.01,
+   "contact_reach": 0.6,
+   "max_reach_frame": 27,
+   "max_reach": 0.683,
+   "follow_through_end": 30,
+   "recovery_end": 48,
+   "rest": 54,
+   "hand_speed": [0.0, 0.206, 0.363, 0.445, 0.531, 0.611, 0.555, 0.672, 1.051, 1.781, 2.126, 2.058, 2.452, 2.926, 2.806, 2.292, 1.95, 1.705, 1.43, 1.067, 1.238, 1.54, 1.88, 4.578, 7.17, 10.702, 11.011, 7.454, 4.474, 2.963, 1.83, 1.096, 0.675, 0.471, 0.448, 0.496, 0.735, 1.134, 1.391, 1.362, 1.355, 1.276, 1.156, 1.146, 1.194, 1.203, 1.156, 0.95, 0.653, 0.435, 0.281, 0.155, 0.104, 0.146, 0.0],
+   "hand_reach": [0.11, 0.108, 0.106, 0.105, 0.1, 0.092, 0.086, 0.094, 0.104, 0.078, 0.003, -0.063, -0.118, -0.188, -0.272, -0.333, -0.375, -0.399, -0.401, -0.39, -0.361, -0.317, -0.269, -0.222, -0.111, 0.158, 0.6, 0.683, 0.568, 0.439, 0.376, 0.357, 0.356, 0.366, 0.369, 0.375, 0.384, 0.378, 0.38, 0.374, 0.361, 0.34, 0.314, 0.287, 0.258, 0.227, 0.196, 0.164, 0.141, 0.126, 0.115, 0.109, 0.106, 0.107, 0.11],
+   "hips_forward": [0.0, -0.0, -0.001, -0.003, -0.006, -0.013, -0.025, -0.039, -0.053, -0.059, -0.063, -0.068, -0.078, -0.09, -0.101, -0.113, -0.124, -0.131, -0.131, -0.127, -0.105, -0.063, -0.005, 0.048, 0.123, 0.23, 0.308, 0.341, 0.359, 0.363, 0.36, 0.351, 0.339, 0.323, 0.303, 0.281, 0.251, 0.21, 0.18, 0.154, 0.13, 0.107, 0.086, 0.068, 0.05, 0.036, 0.023, 0.009, 0.0, -0.004, -0.006, -0.007, -0.006, -0.004, -0.0]
+  },
+  {
+   "file": "razlom/Assets/Resources/Characters/Forest_Guardian/Forest_Guardian@Mutant SwipingMirrored.fbx",
+   "role": "AttackB",
+   "striking_hand": "RightHand",
+   "unity_clip_frames": [0, 54],
+   "height_units": 0.607,
+   "anticipation_start": 4,
+   "cocked": 18,
+   "strike_start": 22,
+   "contact": 26,
+   "contact_hand_speed": 11.0,
+   "contact_reach": 0.6,
+   "max_reach_frame": 27,
+   "max_reach": 0.683,
+   "follow_through_end": 30,
+   "recovery_end": 48,
+   "rest": 54,
+   "note": "зеркало Swiping: те же кадры с точностью до 0.001"
+  },
+  {
+   "file": "razlom/Assets/Resources/Characters/Forest_RootSwarm/Forest_RootSwarm@AttackA.fbx",
+   "role": "AttackA",
+   "striking_hand": "LeftHand",
+   "unity_clip_frames": [8, 24],
+   "source_frames": [0, 61],
+   "height_units": 0.398,
+   "anticipation_start": 11,
+   "contact": 17,
+   "contact_hand_speed": 2.97,
+   "recovery_end": 22,
+   "note": "в исходнике три маха; окно импорта 8…24 (RazlomCharacterImport). С 23 начинается второй мах (кисти 3.5→5.5 ед/с), вид туда не заходит",
+   "hand_speed_8_24": [0.46, 0.48, 0.46, 0.58, 0.67, 0.84, 1.47, 2.19, 2.92, 2.97, 2.22, 1.81, 1.89, 1.78, 1.67, 3.47, 5.08]
+  },
+  {
+   "file": "razlom/Assets/Resources/Characters/Forest_RootSwarm/Forest_RootSwarm@AttackB.fbx",
+   "role": "AttackB",
+   "striking_hand": "RightHand",
+   "unity_clip_frames": [8, 24],
+   "height_units": 0.398,
+   "anticipation_start": 11,
+   "contact": 17,
+   "contact_hand_speed": 2.97,
+   "recovery_end": 22,
+   "note": "зеркало AttackA"
+  }
+ ],
+ "view_mapping": {
+  "code": "razlom/Assets/Game.View/CharacterAnimatorView.cs, GuardianSwing / RootSwarmSwing",
+  "rule": "ключи «тик окна → кадр клипа» при окнах из sim; другое окно растягивает их пропорционально; между ключами монотонная кубика (Фритч — Бутленд)",
+  "guardian": {
+   "windup": {
+    "ticks": [0, 11, 17, 21],
+    "frames": [3, 18, 22, 26],
+    "why": "подъём ×1.36, лапа держится занесённой ×0.67 (чтение угрозы), удар 22→26 родным темпом — не равномерное замедление"
+   },
+   "recovery": {
+    "ticks": [0, 4, 15],
+    "frames": [26, 30, 42],
+    "why": "вынос родным темпом, возврат ×1.09"
+   },
+   "tail": "после RecoverUntil 1 кадр/тик до 54 под смешивание с бегом 0.30 с"
+  },
+  "rootswarm": {
+   "windup": {
+    "ticks": [0, 8, 12],
+    "frames": [8, 13, 17]
+   },
+   "recovery": {
+    "ticks": [0, 8],
+    "frames": [17, 22],
+    "why": "выпад Sim 0.5 м за 4 тика идёт на этой позе"
+   },
+   "tail": "нет: держит 22 и смешивается с бегом 0.12 с"
+  },
+  "verdict": "0.7 с замаха держатся на Mutant Swiping без своего клипа: 26 кадров до контакта против 21 тика — сжатие ×1.24 в среднем, удар остаётся родным"
+ }
+}

@@ -18,6 +18,19 @@ namespace Game.Sim
         Skewer = 4,
         Backblast = 5,
         Knockback = 6,
+
+        /// <summary>
+        /// Моб сам бросается вперёд в момент укуса. Корнеполз. Останавливается
+        /// у стены, а не скользит вдоль неё, и не считается помехой собственному
+        /// удару — в отличие от волока, который замах срывает.
+        /// </summary>
+        EnemyLunge = 7,
+
+        /// <summary>
+        /// Детёныша Расщепеня выбрасывает из тела родителя. Ведёт себя как
+        /// EnemyLunge: упирается в стену и не сбивает замах — это не помеха.
+        /// </summary>
+        SplitPop = 8,
     }
 
     /// <summary>
@@ -104,5 +117,14 @@ namespace Game.Sim
         /// <summary>Тащат ли тело прямо сейчас.</summary>
         public static bool IsActive(EntityStore entities, int id)
             => (uint)id < (uint)entities.Count && entities.ForcedTicksLeft[id] > 0;
+
+        /// <summary>
+        /// Тащат ли тело ЧУЖОЙ волей: волок, отброс, рывок. Собственный бросок
+        /// моба — выпад укуса, выброс детёныша — помехой его замаху не считается.
+        /// </summary>
+        public static bool IsInterrupting(EntityStore entities, int id)
+            => IsActive(entities, id)
+                && entities.ForcedKind[id] != (byte)ForcedMotionKind.EnemyLunge
+                && entities.ForcedKind[id] != (byte)ForcedMotionKind.SplitPop;
     }
 }

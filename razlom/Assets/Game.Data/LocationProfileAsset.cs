@@ -14,7 +14,8 @@ namespace Game.Data
         [Range(0, 8)] public int RewardBranches;
         [Min(0)] public int MinEnemies;
         [Min(0)] public int MaxEnemies;
-        [Min(1)] public int EnemyHealth;
+        [Min(1), Tooltip("Процент здоровья врагов от таблицы видов EnemyArchetypes: 100 на первом уровне, +7 за каждый следующий.")]
+        public int EnemyHealth;
         public bool Boss;
 
         public RiftLevelSettings ToDefinition(EncounterSettings encounters = null, int playerHealth = 1000, int entryClearance = 14, bool solidEnvironment = false, bool naturalGlade = false)

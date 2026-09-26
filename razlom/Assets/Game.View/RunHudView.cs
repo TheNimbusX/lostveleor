@@ -23,6 +23,9 @@ namespace Game.View
         public TMP_Text ChoiceHint;
         public RunOfferCard[] Offers = new RunOfferCard[3];
         [Tooltip("Значки вида награды: способность, талант, предмет, характеристика")] public Texture[] KindIcons = new Texture[4];
+        [Tooltip("Белый знак родника (RunIcons/health): картинка и знак вида карточки лечения; краску " +
+                 "здоровья даёт RunHud. Пусто (префаб до пересборки) — карточка без картинки")]
+        public Texture2D SpringIcon;
 
         [Header("Выбор арены (тот же экран и карточки)")]
         [Tooltip("Знаки пути на карточке: улучшение, магазин, опасная арена. Белые знаки — краску даёт RunHud; " +
@@ -52,6 +55,12 @@ namespace Game.View
         public TMP_Text StatusTitle;
         public TMP_Text StatusLine;
         public TMP_Text StatusExtra;
+
+        [Header("Выживание")]
+        [Tooltip("Таймер выживания под панелью состояния («Выстоять 0:42»); пусто (префаб до пересборки) — " +
+                 "время пишется в строку панели состояния")]
+        public RectTransform Survival;
+        public TMP_Text SurvivalLabel;
 
         [Header("Босс")]
         public RectTransform Boss;

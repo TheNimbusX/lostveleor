@@ -1,0 +1,378 @@
+{
+ "clip": "Wendigo_Howl",
+ "action_in_blend": "AN_ForestWendigo_Howl_Baked",
+ "revision": "r01",
+ "fps": 24,
+ "frame_range": [
+  0,
+  48
+ ],
+ "contact_frame": 24,
+ "hold_end_frame": 38,
+ "game_timing": {
+  "windup_ticks": 30,
+  "recovery_ticks": 24,
+  "ticks_per_second": 30,
+  "clip_0_24_seconds": 1.0,
+  "clip_24_48_seconds": 0.8,
+  "recovery_playback_rate": 1.25
+ },
+ "root_motion": false,
+ "samples_per_frame": 4,
+ "limits": {
+  "foot_contact_slip_mm_max": {
+   "value": 0.0008802002611281879,
+   "limit": 2.0,
+   "pass": true
+  },
+  "claw_tip_slip_during_hold_mm_max": {
+   "value": 6.590679664711522e-05,
+   "limit": 2.0,
+   "pass": true
+  },
+  "bone_length_error_m_max": {
+   "value": 9.99347240626669e-07,
+   "limit": 1e-05,
+   "pass": true
+  },
+  "root_bone_motion_m_max": {
+   "value": 0.0,
+   "limit": 1e-09,
+   "pass": true
+  },
+  "claw_tip_depth_mm_max": {
+   "value": 17.999884791813248,
+   "limit": 25.0,
+   "pass": true
+  },
+  "non_claw_vertices_below_ground": {
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  },
+  "claws_first_touch_frame": {
+   "value": 24.0,
+   "limit": 24.0,
+   "pass": true
+  },
+  "new_triangle_intersections_frames": {
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  },
+  "baked_action_vs_solve_m_max": {
+   "value": 5.364418029785156e-07,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "endpoint_vs_idle_max": {
+   "value": 0.0,
+   "limit": 1e-09,
+   "pass": true
+  },
+  "com_fall_accel_g_min_windup (>= -1.1)": {
+   "value": -1.0893857987270377,
+   "limit": -1.1,
+   "pass": true
+  },
+  "com_fall_accel_g_min_recovery (>= -1.1)": {
+   "value": -0.9576347618297824,
+   "limit": -1.1,
+   "pass": true
+  },
+  "exported_fbx_howl_vs_solve_m_max": {
+   "value": 1.7931614327548367e-06,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "accepted_takes_changed_in_fbx": {
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  }
+ },
+ "all_pass": true,
+ "numpy": {
+  "fps": 24,
+  "frames": 48,
+  "samples_per_frame": 4,
+  "contact_frame": 24,
+  "hold_end_frame": 38,
+  "key_frames": [
+   0,
+   3,
+   6,
+   8,
+   11,
+   14,
+   16,
+   19,
+   21,
+   22,
+   24,
+   29,
+   32,
+   36,
+   38,
+   41,
+   44,
+   48
+  ],
+  "max_bone_length_error_m": 9.99347240626669e-07,
+  "root_bone_motion_m": 0.0,
+  "pelvis_horizontal_range_m": [
+   0.25399999999999995,
+   1.3877787807814457e-17
+  ],
+  "feet": {
+   "L": {
+    "ground_contact_vertices": 4,
+    "max_contact_slip_xy_mm": 8.780887928458629e-05,
+    "max_contact_slip_z_mm": 0.00015757556673726136,
+    "foot_bone_max_move_mm": 0.00015232600801889102,
+    "lower_sole_skin_max_deform_mm": 1.199445540866772
+   },
+   "R": {
+    "ground_contact_vertices": 6,
+    "max_contact_slip_xy_mm": 0.0005705785502133311,
+    "max_contact_slip_z_mm": 0.0008802002611281879,
+    "foot_bone_max_move_mm": 0.0009397387550520015,
+    "lower_sole_skin_max_deform_mm": 42.59737024123947
+   }
+  },
+  "claws": {
+   "L": {
+    "first_ground_touch_frame": 24.0,
+    "planted_tip_vertices": 8,
+    "max_tip_slip_during_hold_mm": 6.590679664711522e-05,
+    "max_tip_depth_mm": 17.999875889184167,
+    "lowest_tip_z_before_contact_mm": 76.51176717137176
+   },
+   "R": {
+    "first_ground_touch_frame": 24.0,
+    "planted_tip_vertices": 18,
+    "max_tip_slip_during_hold_mm": 5.149912038476314e-05,
+    "max_tip_depth_mm": 17.999884791813248,
+    "lowest_tip_z_before_contact_mm": 79.32909492290419
+   }
+  },
+  "min_body_z_m": 0.10465223874848528,
+  "min_body_z_frame": 36.25,
+  "min_body_z_bone": "R_hand",
+  "non_claw_vertices_below_ground": 0,
+  "idle_min_z_m": -0.00482421303273925,
+  "com": {
+   "height_m": {
+    "start": 1.371110518526345,
+    "min": 0.840000017474696,
+    "max": 1.4169999999850396,
+    "at_contact": 0.907898951247962
+   },
+   "vertical_accel_g_windup": {
+    "min": -1.0893857987270377,
+    "max": 1.5021662671054496
+   },
+   "vertical_accel_g_after_contact": {
+    "min": -0.9576347618297824,
+    "max": 2.087331659304014
+   },
+   "fall_speed_at_contact_m_s": 1.0952481837178425
+  },
+  "support_margin_m": {
+   "min": -0.08591116915074837,
+   "at_frame": 23.0,
+   "per_frame": [
+    0.096,
+    0.111,
+    0.147,
+    0.12,
+    0.097,
+    0.075,
+    0.064,
+    0.11,
+    0.125,
+    0.095,
+    0.07,
+    0.054,
+    0.045,
+    0.039,
+    0.035,
+    0.03,
+    0.027,
+    0.044,
+    0.089,
+    0.145,
+    0.078,
+    -0.006,
+    -0.078,
+    -0.086,
+    0.377,
+    0.385,
+    0.399,
+    0.415,
+    0.429,
+    0.435,
+    0.434,
+    0.43,
+    0.428,
+    0.427,
+    0.424,
+    0.418,
+    0.408,
+    0.332,
+    0.265,
+    0.014,
+    -0.008,
+    0.003,
+    0.058,
+    0.12,
+    0.139,
+    0.123,
+    0.109,
+    0.098,
+    0.096
+   ]
+  },
+  "max_rotation_deg_per_quarter_frame": {
+   "value": 17.23761395731472,
+   "bone": "R_arm_lower",
+   "frame": 23.75
+  },
+  "endpoints_match_idle": {
+   "frame0": 0.0,
+   "frame48": 0.0
+  },
+  "vertex_proximity": {
+   "hands-legs": {
+    "idle_min_m": 0.11258469389866099,
+    "clip_min_m": 0.035370889980859306,
+    "at_frame": 44.0
+   },
+   "forearms-legs": {
+    "idle_min_m": 0.23906950885144085,
+    "clip_min_m": 0.2242601019798522,
+    "at_frame": 43.5
+   },
+   "hands-head": {
+    "idle_min_m": 1.0191129976558366,
+    "clip_min_m": 0.4900229060815307,
+    "at_frame": 20.5
+   },
+   "head-forearms": {
+    "idle_min_m": 0.7060964197749193,
+    "clip_min_m": 0.4023119877677826,
+    "at_frame": 20.0
+   },
+   "hands-torso": {
+    "idle_min_m": 0.4486767333699126,
+    "clip_min_m": 0.4486767333699126,
+    "at_frame": 0.0
+   }
+  }
+ },
+ "blender": {
+  "evaluated_bone_vs_solve_max_m": 5.364418029785156e-07,
+  "idle_baseline_overlaps": {
+   "L_arm-L_leg": 0,
+   "R_arm-R_leg": 0,
+   "L_arm-R_leg": 0,
+   "R_arm-L_leg": 0,
+   "L_arm-head": 0,
+   "R_arm-head": 0,
+   "L_arm-torso": 0,
+   "R_arm-torso": 0,
+   "head-torso": 0,
+   "L_arm-R_arm": 0,
+   "L_leg-R_leg": 0,
+   "head-L_upper": 0,
+   "head-R_upper": 0,
+   "L_upper-L_leg": 0,
+   "R_upper-R_leg": 0
+  },
+  "samples_checked": 193,
+  "new_triangle_overlaps_by_frame": {},
+  "frames_with_new_overlaps": [],
+  "action": "AN_ForestWendigo_Howl_Baked",
+  "action_frame_range": [
+   0.0,
+   48.0
+  ]
+ },
+ "fbx_howl": {
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Characters\\Forest_Wendigo\\ForestWendigo.fbx",
+  "take": "ARM_ForestWendigo|ARM_ForestWendigo|Wendigo_Howl",
+  "frame_range": [
+   1.0,
+   49.0
+  ],
+  "max_joint_error_m": 1.7931614327548367e-06,
+  "worst": [
+   25.75,
+   "R_hand"
+  ]
+ },
+ "fbx_package": {
+  "method": "Both FBX files re-imported in Blender 5.2 (factory settings); every animation curve key of each take compared.",
+  "previous_fbx_sha256": "4ec004fc896012362be039070ab505e4927151297fc3d3c05c8b1657128e4531",
+  "new_fbx_sha256": "cdf0910e4a3cf2bc8b3bb173b060676c394b41c8315824a8ce6c12130de5e18d",
+  "takes": {
+   "Wendigo_Claw": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Death": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Hit": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Idle": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Leap": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Walk": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   }
+  },
+  "new_takes": [
+   "Wendigo_Howl"
+  ],
+  "mesh": {
+   "old": {
+    "verts": 12361,
+    "polys": 23725
+   },
+   "new": {
+    "verts": 12361,
+    "polys": 23725
+   }
+  }
+ },
+ "sources_sha256": {
+  "Howl_r01.blend": "437b9f9dca8ca88d014472fbbbb1363bcd600af460d1cb15afeb3ce446f00a0f",
+  "Howl_Baked_r01.blend": "21e3d786c073ed09bc2030d19a0e441bbccc3262b54bf5d62aa3db80ab663219",
+  "final_samples.json": "7a11b65e47e629f1cbd2026462fbea0326e6c6dc882b82e5ff4ae519e286748b",
+  "pose_keys.py": "594a24786b8f2ef4569fc1e723d9fd2360a7758a1fdaf13536c994edff241a8f",
+  "contact_solutions.json": "55f6c6d7cdcfcf86c66bf22d0836dee7ab46f3feb9278d3c20acc1fe824ab643",
+  "build_howl.py": "56a15eb18ecf4c3d9901b35d4afb0a0e9dd8fe50c8199dbe861f44ab162df2f7"
+ },
+ "notes": [
+  "Foot slip is measured on the ground-contact vertices (z < 12 mm in Idle); the upper heel skin of the right foot deforms up to 43 mm through its existing ankle blend weights at the deepest knee bend (no ground contact).",
+  "Claw tips dig 18 mm into the ground from frame 24 to 38 (intended); no other vertex goes below the Idle foot level.",
+  "Centre of mass uses a segment mass model; the design keeps falls at <= ~1 g with feet planted. Upward peaks are pushes/landings.",
+  "Support: the centre of mass leaves the feet polygon only in frames 21-23 (the body tips forward onto the striking claws) and by 7 mm at frame 40 as the claws lift."
+ ]
+}

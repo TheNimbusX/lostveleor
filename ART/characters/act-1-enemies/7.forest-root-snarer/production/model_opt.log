@@ -1,0 +1,23 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61863[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+Reloading external rigs...
+Reloading external metarigs...
+20:08:58 | INFO: Data are loaded, start creating Blender stuff
+20:08:58 | INFO: Blender create Mesh node tripo_mesh_64347b8c-807a-4a6e-b833-bdea33da2ff4
+20:09:08 | INFO: glTF import finished in 9.42s
+Info: Saved as "ForestRootSnarer_24k_candidate.blend"
+INFO Draco is available, use library at C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+20:10:22 | INFO: Starting glTF 2.0 export
+20:10:22 | INFO: Extracting primitive: SM_ForestRootSnarer_LOD0
+20:10:23 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+20:10:23 | INFO: Primitives created: 1
+20:10:23 | INFO: Finished glTF 2.0 export in 0.6470181941986084 s
+
+{"source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\tripo-out\\forest-root-snarer-r01-64347b8c\\model.glb", "source_vertices": 761217, "source_triangles": 1456370, "vertices_after_welding": 727992, "triangles_after_welding": 1455992, "candidate_triangles": 24000, "budget_triangles": 25000, "height_m": 1.35, "footprint_m": [1.628, 1.749], "front_axis": "-Y", "materials": 1, "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\model\\ForestRootSnarer_24k_candidate.blend", "glb": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\model\\ForestRootSnarer_24k_candidate.glb"}
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

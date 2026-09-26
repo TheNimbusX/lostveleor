@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Новые мобы леса · движения и эффекты</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",sans-serif}
+main{max-width:1400px;margin:auto;padding:36px 32px 70px}h1{font-size:38px;line-height:1.1;margin:8px 0 10px;font-weight:650}
+h2{font-size:30px;margin:48px 0 4px;padding-top:22px;border-top:1px solid var(--line);font-weight:620}h3{font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:22px 0 10px;font-weight:600}
+p{margin:6px 0;color:var(--muted);max-width:75ch}.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}nav a{color:var(--ink);border:1px solid var(--line);border-radius:30px;padding:6px 14px;text-decoration:none}nav a:hover,nav a:focus-visible{border-color:var(--accent);outline:none}
+.grid{display:grid;gap:16px}.refs{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.frames{grid-template-columns:repeat(auto-fill,minmax(420px,1fr))}
+.card{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}.card video,.card img{display:block;width:100%;background:#1b2220}.card video{aspect-ratio:1}
+figcaption{padding:12px 14px;display:flex;flex-direction:column;gap:4px}figcaption span{color:var(--muted);font-size:14px}
+@media (max-width:700px){main{padding:24px 16px 50px}.frames{grid-template-columns:1fr}}
+</style>
+<main>
+  <p class="eyebrow">Лес · новые мобы · 26 сентября 2026</p>
+  <h1>Движения и эффекты: Шипомет, Корнехват, Расщепень</h1>
+  <p>Рефы движений — ролики Higgsfield по утверждённым моделям; по ним делаю клипы в Blender. Целевые кадры эффектов нарисованы поверх нашего кадра игры; по выбранному собираю эффект из паков CFXR/Hovl. Выбери по кадру на удар; рефы — годятся или переснять.</p>
+  <nav><a href="#shipomet">Шипомет</a><a href="#snarer">Корнехват</a><a href="#splitter">Расщепень</a></nav>
+  
+  <section id="shipomet">
+    <h2>Шипомет</h2>
+    <h3>Рефы движений</h3>
+    <div class="grid refs">
+      <figure class="card"><video src="shipomet/idle_walk.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Покой → ходьба</strong><span>Покачивается, потом идёт длинными ходульными шагами.</span></figcaption></figure>
+      <figure class="card"><video src="shipomet/line_cast.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Линия шипов</strong><span>Руки-шипы вверх, на ≈1,4 с вонзает в землю, держит ≈1,5 с, выпрямляется. В игре замах сожму до 0,9 с.</span></figcaption></figure>
+      <figure class="card"><video src="shipomet/burst.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Взрыв вплотную</strong><span>Сжимается и распахивается звездой. Шипы, что вырастают в рефе, делаю эффектом, не скелетом.</span></figcaption></figure>
+      <figure class="card"><video src="shipomet/death.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Смерть</strong><span>Шатается, падает на колени, валится кучей лоз.</span></figcaption></figure>
+    </div>
+    <h3>Целевые кадры эффектов</h3>
+    <div class="grid frames">
+      <figure class="card frame"><a href="shipomet/1-line-spikes.jpg" target="_blank"><img src="shipomet/1-line-spikes.jpg" alt="Линия: одиночные шипы"></a>
+        <figcaption><strong>1. Линия: одиночные шипы</strong><span>Четыре шипа по очереди, ближний выше всех, последний только трескает землю.</span></figcaption></figure>
+      <figure class="card frame"><a href="shipomet/2-line-root-clusters.jpg" target="_blank"><img src="shipomet/2-line-root-clusters.jpg" alt="Линия: пучки корней"></a>
+        <figcaption><strong>2. Линия: пучки корней</strong><span>Пучки из 3–4 изогнутых шипов, трещина бежит дальше.</span></figcaption></figure>
+      <figure class="card frame"><a href="shipomet/3-burst.jpg" target="_blank"><img src="shipomet/3-burst.jpg" alt="Взрыв вплотную"></a>
+        <figcaption><strong>3. Взрыв вплотную</strong><span>Круг шипов во все стороны, пыль и щепки по краю.</span></figcaption></figure>
+    </div>
+  </section>
+  <section id="snarer">
+    <h2>Корнехват</h2>
+    <h3>Рефы движений</h3>
+    <div class="grid refs">
+      <figure class="card"><video src="snarer/idle_walk.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Покой → ходьба</strong><span>Тяжёлая «горилья» походка на лапах-плитах.</span></figcaption></figure>
+      <figure class="card"><video src="snarer/slam.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Удар лапами в землю</strong><span>Встаёт на дыбы, бьёт лапами в землю и держит их там. В игре подъём сожму до 0,5 с, выдёргивание доделаю сам.</span></figcaption></figure>
+      <figure class="card"><video src="snarer/death.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Смерть</strong><span>Оседает и падает на брюхо, грибы качаются.</span></figcaption></figure>
+    </div>
+    <h3>Целевые кадры эффектов</h3>
+    <div class="grid frames">
+      <figure class="card frame"><a href="snarer/1-roots-snare.jpg" target="_blank"><img src="snarer/1-roots-snare.jpg" alt="Корни оплетают"></a>
+        <figcaption><strong>1. Корни оплетают</strong><span>Под героем трескается круг, корни обвивают ноги, от лап бегут трещины.</span></figcaption></figure>
+      <figure class="card frame"><a href="snarer/2-root-cage.jpg" target="_blank"><img src="snarer/2-root-cage.jpg" alt="Клетка из корней"></a>
+        <figcaption><strong>2. Клетка из корней</strong><span>Кольцо острых корней смыкается над героем.</span></figcaption></figure>
+    </div>
+  </section>
+  <section id="splitter">
+    <h2>Расщепень</h2>
+    <h3>Рефы движений</h3>
+    <div class="grid refs">
+      <figure class="card"><video src="splitter/idle_walk.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Покой → ходьба</strong><span>Быстрая рысь, створки покачиваются. Уходит из кадра к концу — для шага хватает.</span></figcaption></figure>
+      <figure class="card"><video src="splitter/bite.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Укус</strong><span>Приседает, створки приоткрываются, выпад клювом, отход.</span></figcaption></figure>
+      <figure class="card"><video src="splitter/death.mp4" autoplay loop muted playsinline controls></video>
+        <figcaption><strong>Смерть</strong><span>Створки отваливаются, внутри остаётся «голый» зверь. С решением «две копии в панцире» спорит — смерть большого сделаю коротким треском, а дети выскакивают в том же кадре.</span></figcaption></figure>
+    </div>
+    <h3>Целевые кадры эффектов</h3>
+    <div class="grid frames">
+      <figure class="card frame"><a href="splitter/1-burst-leap.jpg" target="_blank"><img src="splitter/1-burst-leap.jpg" alt="Раскол: дети в прыжке"></a>
+        <figcaption><strong>1. Раскол: дети в прыжке</strong><span>Пыль, щепки, грибные шляпки, две копии на 60% прыгают в стороны.</span></figcaption></figure>
+      <figure class="card frame"><a href="splitter/2-crater-split.jpg" target="_blank"><img src="splitter/2-crater-split.jpg" alt="Раскол: воронка"></a>
+        <figcaption><strong>2. Раскол: воронка</strong><span>Треснувший панцирь в воронке, дети уже стоят по бокам.</span></figcaption></figure>
+    </div>
+  </section>
+</main>
+</html>

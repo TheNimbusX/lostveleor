@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -11,8 +11,10 @@ namespace Game.Data
         public EnemyKind Kind = EnemyKind.ForestGuardian;
         [Min(0)] public int Min = 1;
         [Min(0)] public int Max = 1;
-        [Range(1, 1000)] public int HealthPercent = 100;
-        [Range(1, 1000)] public int DamagePercent = 100;
+        [Range(1, 1000), Tooltip("Подстройка около 100% к здоровью вида из таблицы EnemyArchetypes. Элиты — 100.")]
+        public int HealthPercent = 100;
+        [Range(1, 1000), Tooltip("Подстройка около 100% к урону вида из таблицы EnemyArchetypes. Элиты — 100.")]
+        public int DamagePercent = 100;
         public bool Elite;
         public bool GrowWithDepth;
         public EncounterGroup ToDefinition() => new EncounterGroup(Kind, Min, Max, HealthPercent, DamagePercent, Elite, GrowWithDepth);
@@ -49,26 +51,29 @@ namespace Game.Data
         [Header("Рост сложности")]
         [Min(1)] public int AddEnemyEveryLevels = 4;
         [Range(0, 8)] public int MaxExtraEnemies = 2;
-        [Range(0, 50)] public int DamagePerLevelPercent = 5;
-        [Tooltip("Здоровье берётся из Enemy Health соответствующего уровня. Здесь задаются проценты от него.")]
+        [Range(0, 50), Tooltip("Рост урона врагов за каждый уровень после первого, %. По таблице видов — 8.")]
+        public int DamagePerLevelPercent = EnemyArchetypes.DamagePercentPerArena;
+        [Tooltip("Здоровье и урон — строка вида в таблице EnemyArchetypes. Enemy Health уровня — процент здоровья " +
+            "(100, 107, 114…), рост урона — Damage Per Level Percent. Проценты групп — только подстройка около 100. " +
+            "Не больше двух Хранителей в пачке (правило владельца).")]
         public EncounterPackAsset[] Introduction = { Pack("encounter.meadow.intro", Guardian(1, 1)) };
         public EncounterPackAsset[] MainPath = {
-            Pack("encounter.meadow.guardians", Guardian(2, 3)),
+            Pack("encounter.meadow.guardians", Guardian(2, 2)),
             Pack("encounter.meadow.swarm", Swarm(4, 5)),
             Pack("encounter.meadow.mixed", Guardian(1, 2), Swarm(2, 3)),
             Pack("encounter.meadow.forest_bud", new EncounterGroupAsset { Kind = EnemyKind.ForestBud,
-                Min = 1, Max = 2, HealthPercent = 80 }, Guardian(0, 1)) };
+                Min = 1, Max = 2 }, Guardian(0, 1)) };
         public EncounterPackAsset[] RewardBranch = {
             Pack("encounter.meadow.cache", Guardian(2, 2), Swarm(2, 3)) };
         public EncounterPackAsset[] ExitGuard = {
             Pack("encounter.meadow.exit", new EncounterGroupAsset { Min = 1, Max = 1,
-                Elite = true, HealthPercent = 240, DamagePercent = 160 }, Swarm(2, 3)) };
+                Elite = true }, Swarm(2, 3)) };
 
         private static EncounterGroupAsset Guardian(int min, int max)
             => new EncounterGroupAsset { Min = min, Max = max };
         private static EncounterGroupAsset Swarm(int min, int max)
             => new EncounterGroupAsset { Kind = EnemyKind.ForestRootSwarm, Min = min, Max = max,
-                HealthPercent = 30, GrowWithDepth = true };
+                GrowWithDepth = true };
         private static EncounterPackAsset Pack(string key, params EncounterGroupAsset[] groups)
             => new EncounterPackAsset { StableKey = key, Groups = groups };
         private static EncounterPack[] Compile(EncounterPackAsset[] packs, int level)

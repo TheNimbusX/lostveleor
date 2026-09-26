@@ -103,7 +103,9 @@ namespace Game.Tests
             CollectionAssert.AreEqual(new[] { 24, 30, 36, 42, 48 }, launches);
             CollectionAssert.AreEqual(new[] { 69, 75, 81, 87, 93 }, impacts);
             CollectionAssert.AreEqual(new[] { 0, 1, 2, 3, 4 }, indices);
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(9900));
+            // Пять плодов по 11 — урон одного плода из таблицы видов.
+            Assert.That(sim.ForestBudConfig.Damage, Is.EqualTo(EnemyArchetypes.ForestBudDamage));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 5 * EnemyArchetypes.ForestBudDamage));
             Assert.That(sim.ForestFruitActiveCount, Is.Zero);
         }
 
@@ -157,7 +159,7 @@ namespace Game.Tests
             Assert.That(newLaunches, Is.Zero);
             Assert.That(impacts, Is.EqualTo(2));
             Assert.That(cancellations, Is.EqualTo(1));
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(9960));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 2 * EnemyArchetypes.ForestBudDamage));
             Assert.That(sim.TryGetForestBudAttack(1, out _), Is.False);
         }
 
@@ -184,7 +186,7 @@ namespace Game.Tests
             sim.Statuses.ApplyStun(1, 200);
             sim.Entities.Position[0] = new FixVec2(Fix64.Zero, Fix64.Ratio(hundredths, 100));
             Until(sim, 85);
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(hit ? 9980 : 10000));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(hit ? 10000 - EnemyArchetypes.ForestBudDamage : 10000));
         }
 
         [Test]
@@ -272,6 +274,9 @@ namespace Game.Tests
         public void MaximumAttackSpeedCannotOverflowFixedFruitPool()
         {
             var sim = Arena(3); sim.PlayerInvulnerable = true;
+            // Пул проверяется на трёх залпах сразу: крупный жетон здесь снят,
+            // иначе залпы шли бы по очереди и пул не нагружался бы вовсе.
+            sim.BigAttackTokenLimit = 3;
             for (int id = 1; id <= 3; id++) sim.Entities.Stats[id].SetBase(StatType.AttackSpeed, Fix64.FromInt(100));
             int peak = 0;
             for (int t = 0; t < 1200; t++)
@@ -318,8 +323,9 @@ namespace Game.Tests
             {
                 if (sim.Entities.Kind[id] != EnemyKind.ForestBud) continue;
                 buds++;
-                Assert.That(sim.Entities.MaxHealth[id], Is.EqualTo(80));
-                Assert.That(sim.Entities.Damage[id], Is.EqualTo(20));
+                // 300 из таблицы видов × 100% уровня × 80% группы.
+                Assert.That(sim.Entities.MaxHealth[id], Is.EqualTo(240));
+                Assert.That(sim.Entities.Damage[id], Is.EqualTo(11));
                 Assert.That(sim.Entities.BodyRadius[id], Is.EqualTo(sim.ForestBudConfig.BodyRadius));
                 Assert.That(map.IsWalkable(sim.Entities.Position[id], sim.Entities.BodyRadius[id]), Is.True);
             }

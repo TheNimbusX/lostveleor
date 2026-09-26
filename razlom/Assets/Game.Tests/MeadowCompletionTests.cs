@@ -1,4 +1,4 @@
-﻿#if UNITY_5_3_OR_NEWER
+#if UNITY_5_3_OR_NEWER
 using Game.Data;
 using Game.Sim;
 using NUnit.Framework;
@@ -8,11 +8,14 @@ namespace Game.Tests
 {
     public sealed class MeadowCompletionTests
     {
+        private const int Levels = 9;
+
         private static GameSession Session(ulong seed)
         {
             var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
             Assert.That(profile.CompleteAtEnd, Is.True);
-            Assert.That(profile.LevelCount, Is.EqualTo(10));
+            // Лес по документу владельца: восемь арен и босс (стадия 6 плана).
+            Assert.That(profile.LevelCount, Is.EqualTo(Levels));
             var session = new GameSession(seed, PrototypeContent.NewCamp(), profile.Modules,
                 PrototypeContent.ItemBaseIds(), location: profile);
             session.EnterRift();
@@ -22,8 +25,13 @@ namespace Game.Tests
         private static void ReachReward(GameSession session)
         {
             var run = session.Run;
-            for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
-            session.Step(InputFrame.Empty);
+            // Встреча по шаблону выходит волнами (выживание — ещё и по таймеру):
+            // зачищаем, пока арена не отпустит.
+            for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
+            {
+                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                session.Step(InputFrame.Empty);
+            }
             Assert.That(run.Phase, Is.EqualTo(RunPhase.SeekingExit));
             run.Sim.Entities.Position[0] = run.Map.ExitPoint(0);
             session.Step(InputFrame.Empty);
@@ -43,19 +51,22 @@ namespace Game.Tests
         [TestCase(1UL)]
         [TestCase(42UL)]
         [TestCase(999UL)]
-        public void TenLevels_EndAfterFinalReward_AndCanBeRepeated(ulong seed)
+        public void NineLevels_EndAfterFinalReward_AndCanBeRepeated(ulong seed)
         {
             var session = Session(seed);
-            for (int level = 1; level <= 10; level++)
+            for (int level = 1; level <= Levels; level++)
             {
                 var run = session.Run;
                 Assert.That(run.Depth, Is.EqualTo(level));
-                Assert.That(run.TotalLevels, Is.EqualTo(10));
-                Assert.That(run.BossId >= 0, Is.EqualTo(level == 10));
+                Assert.That(run.TotalLevels, Is.EqualTo(Levels));
+                Assert.That(run.BossId >= 0, Is.EqualTo(level == Levels));
+                // Арены — шаблоны плана забега, у босса шаблона нет.
+                Assert.That(run.Plan, Is.Not.Null);
+                Assert.That(run.CurrentEncounter, Is.SameAs(level == Levels ? null : run.Plan.TemplateFor(level)));
                 var seeds = RiftLevelSeeds.ForLevel(session.LastRunSeed, level);
                 Assert.That(run.LayoutSeed, Is.EqualTo(seeds.Layout));
                 Assert.That(run.SpawnSeed, Is.EqualTo(seeds.Spawns));
-                if (level == 10)
+                if (level == Levels)
                 {
                     int boss = run.BossId;
                     for (int i = 1; i < run.Sim.Entities.Count; i++)
@@ -63,11 +74,14 @@ namespace Game.Tests
                     session.Step(InputFrame.Empty);
                     Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing), "Boss must gate completion");
                     Assert.That(run.CountRequiredEnemies(), Is.EqualTo(1));
-                    Assert.That(run.Sim.Entities.MaxHealth[boss], Is.EqualTo(run.LevelSettings.EnemyHealth * 6));
+                    // Временный босс: 6800 × процент здоровья уровня (156% на девятом).
+                    Assert.That(run.Sim.Entities.MaxHealth[boss], Is.EqualTo(EnemyArchetypes.ScaleHealth(
+                        EnemyArchetypes.InterimBossHealth, run.LevelSettings.EnemyHealth)));
+                    Assert.That(run.LevelSettings.EnemyHealth, Is.EqualTo(EnemyArchetypes.DepthHealthPercent(level)));
                 }
                 ReachReward(session);
                 // Награда босса — выбор артефакта (владелец, 24 сентября), обычные уровни — карточки.
-                Assert.That(run.ChoosingArtifact, Is.EqualTo(level == 10));
+                Assert.That(run.ChoosingArtifact, Is.EqualTo(level == Levels));
                 int rewards = run.TakenRewardCount;
                 Choose(session);
                 Assert.That(run.TakenRewardCount, Is.EqualTo(rewards + 1));
@@ -75,8 +89,8 @@ namespace Game.Tests
             }
             Assert.That(session.Mode, Is.EqualTo(GameMode.Summary));
             Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Completed));
-            Assert.That(session.LastRun.Depth, Is.EqualTo(10));
-            Assert.That(session.Run.Depth, Is.EqualTo(10), "Level eleven must not be generated");
+            Assert.That(session.LastRun.Depth, Is.EqualTo(Levels));
+            Assert.That(session.Run.Depth, Is.EqualTo(Levels), "Level ten must not be generated");
             ulong hash = session.Run.Hash();
             Choose(session);
             Assert.That(session.Run.Hash(), Is.EqualTo(hash), "Summary cannot award twice");
@@ -92,7 +106,7 @@ namespace Game.Tests
         public void BossEnragesOnce_DeathStillWins_AndReplaysMatch()
         {
             var a = Session(17); var b = Session(17);
-            for (int level = 1; level < 10; level++)
+            for (int level = 1; level < Levels; level++)
             {
                 ReachReward(a); ReachReward(b); Choose(a); Choose(b);
                 Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
@@ -114,19 +128,19 @@ namespace Game.Tests
             a.Run.Sim.Entities.Alive[id] = false;
             a.Step(InputFrame.Empty);
             Assert.That(a.LastRun.Outcome, Is.EqualTo(RunOutcome.Died));
-            Assert.That(a.LastRun.RiftsCleared, Is.EqualTo(9));
+            Assert.That(a.LastRun.RiftsCleared, Is.EqualTo(Levels - 1));
         }
 
         [Test]
         public void LeavingFinalReward_IsNotVictory()
         {
             var session = Session(51);
-            for (int level = 1; level < 10; level++) { ReachReward(session); Choose(session); }
+            for (int level = 1; level < Levels; level++) { ReachReward(session); Choose(session); }
             ReachReward(session);
             int rewardsBeforeLeaving = session.Run.TakenRewardCount;
             session.Step(new InputFrame { Command = (byte)RunCommand.Leave });
             Assert.That(session.LastRun.Outcome, Is.EqualTo(RunOutcome.Left));
-            Assert.That(session.LastRun.RiftsCleared, Is.EqualTo(10), "Босс убит, но финальная награда не принята");
+            Assert.That(session.LastRun.RiftsCleared, Is.EqualTo(Levels), "Босс убит, но финальная награда не принята");
             // Добыча элитных врагов тоже учитывается, но выход не выдаёт финальную награду.
             Assert.That(session.Run.TakenRewardCount, Is.EqualTo(rewardsBeforeLeaving));
         }
@@ -135,10 +149,10 @@ namespace Game.Tests
         public void BossSpawnsAlone_InConnectedDedicatedArenaAcrossSeeds()
         {
             var profile = Resources.Load<LocationProfileAsset>("Locations/MeadowGameplay").ToDefinition();
-            var final = profile.GetLevel(10);
+            var final = profile.GetLevel(Levels);
             for (ulong seed = 1; seed <= 40; seed++)
             {
-                var seeds = RiftLevelSeeds.ForLevel(seed, 10);
+                var seeds = RiftLevelSeeds.ForLevel(seed, Levels);
                 var map = new LayoutMap(profile.Modules, profile.MaxModules);
                 final.Generate(new LayoutGenerator(), profile.Modules, map, seeds.Layout);
                 var a = new Simulation(seed, 512); var b = new Simulation(seed, 512);
@@ -148,7 +162,13 @@ namespace Game.Tests
                 Assert.That(map.Outline, Is.Not.Null);
                 Assert.That(map.RewardBranchCount, Is.Zero);
                 Assert.That(a.Entities.Count, Is.EqualTo(2));
-                Assert.That(a.Entities.Position[plan.BossId], Is.EqualTo(map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent)));
+                // Босс — в центре комнаты перед выходом, а если центр за контуром
+                // поляны — на ближайшей клетке маршрута, но всегда на полу.
+                var centre = map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent);
+                var bossRadius = a.Entities.BodyRadius[plan.BossId];
+                Assert.That(map.IsWalkable(a.Entities.Position[plan.BossId], bossRadius), Is.True, "seed " + seed);
+                if (map.IsWalkable(centre, bossRadius))
+                    Assert.That(a.Entities.Position[plan.BossId], Is.EqualTo(centre), "seed " + seed);
                 Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.EntryPoint) >= Fix64.FromInt(196), Is.True);
                 Assert.That(FixVec2.DistanceSq(a.Entities.Position[plan.BossId], map.ExitPoint(0)) >= Fix64.FromInt(196), Is.True);
                 Assert.That(plan.Get(plan.ForEntity(plan.BossId)).Module, Is.Not.EqualTo(map.GetExit(0)));
@@ -170,7 +190,15 @@ namespace Game.Tests
             for (int size = 2; size <= 4; size++)
                 for (ulong seed = 1; seed <= 20; seed++)
                 {
-                    var level = profile.GetLevel(4).WithArenaSize(size);
+                    // Шаблон встречи по кругу из тех, кому хватает этой арены.
+                    ArenaEncounterTemplate template = null;
+                    for (int k = 0; template == null; k++)
+                    {
+                        var candidate = ForestEncounterTemplates.All[(int)((seed + (ulong)k) % (ulong)ForestEncounterTemplates.All.Length)];
+                        if (candidate.MinArenaSize <= size) template = candidate;
+                    }
+                    int arena = template.MinArena;
+                    var level = profile.GetLevel(arena).WithArenaSize(size);
                     var map = new LayoutMap(profile.Modules, profile.MaxModules);
                     var other = new LayoutMap(profile.Modules, profile.MaxModules);
                     level.Generate(new LayoutGenerator(), profile.Modules, map, seed);
@@ -182,8 +210,8 @@ namespace Game.Tests
                     for (int c = 0; c < map.Routes.CellCount; c++)
                         Assert.That(map.Routes.DistanceFromEntry(c), Is.GreaterThanOrEqualTo(0), $"size {size}, seed {seed}");
                     var sim = new Simulation(seed, 512);
-                    level.Spawn(sim, map, seed);
-                    Assert.That(sim.CountAliveEnemies(), Is.GreaterThan(0));
+                    level.Spawn(sim, map, seed, template, arena);
+                    Assert.That(sim.CountAliveEnemies(), Is.GreaterThan(0), template.Key);
                     for (int i = 1; i < sim.Entities.Count; i++)
                     {
                         Assert.That(map.IsWalkable(sim.Entities.Position[i], sim.Entities.BodyRadius[i]), Is.True);
@@ -199,13 +227,13 @@ namespace Game.Tests
             var session = Session(71);
             for (ulong seed = 1; seed <= 40; seed++)
             {
-                session.StartDeveloperRift(profile, 10, true, seed);
+                session.StartDeveloperRift(profile, Levels, true, seed);
                 var run = session.Run;
                 Assert.That(session.IsDeveloperRun, Is.True);
-                Assert.That(run.Depth, Is.EqualTo(10));
+                Assert.That(run.Depth, Is.EqualTo(Levels));
                 Assert.That(run.RiftsCleared, Is.Zero);
                 Assert.That(run.TakenRewardCount, Is.Zero);
-                var seeds = RiftLevelSeeds.ForLevel(seed, 10);
+                var seeds = RiftLevelSeeds.ForLevel(seed, Levels);
                 Assert.That(run.LayoutSeed, Is.EqualTo(seeds.Layout));
                 Assert.That(run.SpawnSeed, Is.EqualTo(seeds.Spawns));
                 var player = run.Sim.Entities.Position[0];

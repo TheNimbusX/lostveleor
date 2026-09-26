@@ -53,6 +53,48 @@ namespace Game.Tests
                 "враг обязан заносить удар по своей константе, а не по геройской");
         }
 
+        /// <summary>
+        /// Окна мобов по правилу бестиария: Хранитель (11–25 урона) — 18–21
+        /// тик и фигура на земле; Корнеполз (до 10) — 9–12 и только поза.
+        /// </summary>
+        [Test]
+        public void EnemyWindows_FollowTheBestiaryRule()
+        {
+            Assert.AreEqual(21, Simulation.EnemyAttackWindupTicks, "замах Хранителя 0,7 с");
+            Assert.AreEqual(15, Simulation.GuardianSwingRecoveryTicks, "окно наказания 0,5 с");
+            Assert.AreEqual(48, Simulation.GuardianSwingCycleTicks);
+            Assert.GreaterOrEqual(Simulation.GuardianSwingCycleTicks,
+                Simulation.EnemyAttackWindupTicks + Simulation.GuardianSwingRecoveryTicks);
+            Assert.AreEqual(12, Simulation.RootSwarmAttackWindupTicks);
+            Assert.AreEqual(8, Simulation.RootSwarmRecoveryTicks);
+            // Цикл роя 24 → 30 (стенд баланса, 26.09): укус без метки не уворачивается.
+            Assert.AreEqual(30, Simulation.RootSwarmAttackCooldownTicks, "цикл роя");
+            Assert.GreaterOrEqual(Simulation.RootSwarmAttackCooldownTicks,
+                Simulation.RootSwarmAttackWindupTicks + Simulation.RootSwarmRecoveryTicks);
+        }
+
+        [Test]
+        public void RootSwarmAttack_LandsOnItsOwnWindup()
+        {
+            var sim = new Simulation(7102UL, 16);
+            sim.SetupTestArena(0);
+            int swarm = sim.SpawnEnemy(new FixVec2(Fix64.Ratio(6, 5), Fix64.Zero), 30,
+                EnemyKind.ForestRootSwarm);
+            sim.Entities.Stats[swarm].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(swarm);
+
+            int windup = -1;
+            for (int i = 0; i < 90 && windup < 0; i++)
+            {
+                int tickAtSwing = sim.Tick;
+                int before = sim.Entities.AttackImpactTick[swarm];
+                sim.Step(InputFrame.Empty);
+                int after = sim.Entities.AttackImpactTick[swarm];
+                if (after > before) windup = after - tickAtSwing;
+            }
+            Assert.AreEqual(Simulation.RootSwarmAttackWindupTicks, windup);
+        }
+
         [Test]
         public void MeleeDamage_LandsAtTheBladeContactTick()
         {

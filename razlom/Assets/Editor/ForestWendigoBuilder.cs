@@ -32,9 +32,14 @@ public static class ForestWendigoBuilder
         controller.layers = Array.Empty<AnimatorControllerLayer>(); controller.parameters = Array.Empty<AnimatorControllerParameter>();
         controller.AddLayer("Base Layer");
         var machine = controller.layers[0].stateMachine;
-        foreach (string role in new[] { "Idle", "Walk", "Claw", "Leap", "Hit", "Death" })
+        int built = 0;
+        foreach (string role in new[] { "Idle", "Walk", "Claw", "Leap", "Hit", "Death", "Howl" })
         {
             var original = originalClips.FirstOrDefault(c => c.name.EndsWith("Wendigo_" + role));
+            // «Вой чащи» ещё без клипа (reference_match_howl). Без него состояния нет,
+            // и ForestWendigoAnimatorView играет временную позу из кадров когтя.
+            if (original == null && role == "Howl")
+            { Debug.LogWarning("[wendigo] Нет клипа Howl — состояние пропущено, вид играет временную позу."); continue; }
             if (original == null) throw new InvalidOperationException("Нет клипа " + role + ": " + string.Join(",", originalClips.Select(c => c.name)));
             string path = Root + role + ".anim";
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
@@ -48,6 +53,7 @@ public static class ForestWendigoBuilder
             controller.AddParameter(role + "Phase", AnimatorControllerParameterType.Float);
             state.timeParameter = role + "Phase"; state.timeParameterActive = true;
             if (role == "Idle") machine.defaultState = state;
+            built++;
         }
         var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "ForestWendigo_BaseColor.png");
         var mat = AssetDatabase.LoadAssetAtPath<Material>(Root + "ForestWendigo.mat");
@@ -78,6 +84,6 @@ public static class ForestWendigoBuilder
         }
         finally { UnityEngine.Object.DestroyImmediate(root); }
         EditorUtility.SetDirty(controller); EditorUtility.SetDirty(mat); AssetDatabase.SaveAssets();
-        Debug.Log("[wendigo] Шесть клипов, Generic rig, материал и игровой prefab готовы.");
+        Debug.Log("[wendigo] Клипов: " + built + ", Generic rig, материал и игровой prefab готовы.");
     }
 }

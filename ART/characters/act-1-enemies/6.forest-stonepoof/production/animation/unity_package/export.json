@@ -4,7 +4,8 @@
     "charge_loop/Stonehoof_ChargeLoop_Baked_r01.blend": "edf8bdb236f190f31c2886d218f68ea4ee3326b4a878af014d8b5e5901753367",
     "brake/Stonehoof_Brake_Baked_r01.blend": "df345221a035beeb4edf913799cb711c87d47ab93d9b20c8e05244407683d62a",
     "collision/Stonehoof_Collision_Baked_r01.blend": "9a9ce3640dc5d8549642b04e05bde8fc8ad9d4b2f237944e6e7a1433b1c1963e",
-    "death_r02/Stonehoof_Death_Baked_r02.blend": "df1d2bac2a5b00b99dad22c170a7d486a2562464cfd73c767417f2852f1064bd"
+    "death_r02/Stonehoof_Death_Baked_r02.blend": "df1d2bac2a5b00b99dad22c170a7d486a2562464cfd73c767417f2852f1064bd",
+    "turn/Stonehoof_Turn_Baked_r01.blend": "0061df4ef7a378429c1af2a3247376b0bcb74c403696cfc610f674ea867915f9"
   },
   "clips": {
     "Windup": [
@@ -34,6 +35,14 @@
     "Death": [
       0.0,
       60.0
+    ],
+    "TurnLeft": [
+      0.0,
+      15.0
+    ],
+    "TurnRight": [
+      0.0,
+      15.0
     ],
     "Idle": [
       0.0,

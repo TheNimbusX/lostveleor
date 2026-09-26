@@ -1,0 +1,5 @@
+24 {'arm_ext': {'L': 0.884, 'R': 0.894}, 'hand_err': {'L': 0.0, 'R': 0.0}, 'body_min_z': 0.105, 'claw_min_z': -0.018, 'chest_pitch': 46.9, 'face_elev': 57.8, 'head_u': 1.342, 'pelvis_z': 0.745, 'com_f': 0.278, 'com_u': 0.908} 2.808
+29 {'arm_ext': {'L': 0.767, 'R': 0.772}, 'hand_err': {'L': 0.0, 'R': 0.0}, 'body_min_z': 0.105, 'claw_min_z': -0.018, 'chest_pitch': 52.1, 'face_elev': 53.6, 'head_u': 1.199, 'pelvis_z': 0.661, 'com_f': 0.338, 'com_u': 0.839} 0.268
+32 {'arm_ext': {'L': 0.807, 'R': 0.818}, 'hand_err': {'L': 0.0, 'R': 0.0}, 'body_min_z': 0.105, 'claw_min_z': -0.018, 'chest_pitch': 48.9, 'face_elev': 63.6, 'head_u': 1.259, 'pelvis_z': 0.693, 'com_f': 0.33, 'com_u': 0.866} 0.172
+36 {'arm_ext': {'L': 0.82, 'R': 0.837}, 'hand_err': {'L': 0.0, 'R': 0.0}, 'body_min_z': 0.105, 'claw_min_z': -0.018, 'chest_pitch': 46.7, 'face_elev': 65.9, 'head_u': 1.272, 'pelvis_z': 0.701, 'com_f': 0.311, 'com_u': 0.872} 0.158
+38 {'arm_ext': {'L': 0.935, 'R': 0.94}, 'hand_err': {'L': 0.0, 'R': 0.0}, 'body_min_z': 0.105, 'claw_min_z': -0.018, 'chest_pitch': 40.2, 'face_elev': 68.3, 'head_u': 1.381, 'pelvis_z': 0.745, 'com_f': 0.167, 'com_u': 0.906} 3.305

@@ -12,96 +12,220 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efe94afe3e914984ea0365e0f91fb8c5, type: 3}
   m_Name: MeadowEncounters
   m_EditorClassIdentifier: Game.Data::Game.Data.EncounterProfileAsset
-  MainCount: 3
-  MaxMainCount: 6
+  MainCount: 2
+  MaxMainCount: 2
   AddMainEveryLevels: 2
   FormationRadius: 5
-  AddEnemyEveryLevels: 3
-  MaxExtraEnemies: 3
+  AddEnemyEveryLevels: 2
+  MaxExtraEnemies: 2
   DamagePerLevelPercent: 8
   Introduction:
-  - StableKey: encounter.meadow.intro
+  - StableKey: encounter.meadow.intro_swarm
     Weight: 100
     MinLevel: 1
-    MaxLevel: 0
+    MaxLevel: 1
+    Groups:
+    - Kind: 2
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.intro
+    Weight: 100
+    MinLevel: 2
+    MaxLevel: 4
     Groups:
     - Kind: 1
       Min: 1
       Max: 1
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
-  MainPath:
-  - StableKey: encounter.meadow.guardians
+  - StableKey: encounter.meadow.intro_pair
     Weight: 100
-    MinLevel: 1
-    MaxLevel: 3
+    MinLevel: 5
+    MaxLevel: 0
     Groups:
     - Kind: 1
       Min: 2
-      Max: 3
+      Max: 2
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
+  MainPath:
   - StableKey: encounter.meadow.swarm
     Weight: 100
     MinLevel: 1
-    MaxLevel: 3
+    MaxLevel: 2
     Groups:
     - Kind: 2
-      Min: 4
-      Max: 5
-      HealthPercent: 30
-      DamagePercent: 150
+      Min: 3
+      Max: 4
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 1
   - StableKey: encounter.meadow.mixed
     Weight: 100
     MinLevel: 1
-    MaxLevel: 3
+    MaxLevel: 2
     Groups:
     - Kind: 1
       Min: 1
+      Max: 1
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 1
       Max: 2
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.guardians
+    Weight: 100
+    MinLevel: 2
+    MaxLevel: 2
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+  - StableKey: encounter.meadow.forest_bud
+    Weight: 75
+    MinLevel: 2
+    MaxLevel: 0
+    Groups:
+    - Kind: 3
+      Min: 1
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
     - Kind: 2
       Min: 2
       Max: 3
-      HealthPercent: 30
-      DamagePercent: 150
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 1
-  - StableKey: encounter.meadow.elite_patrol
+  - StableKey: encounter.meadow.swarm_large
+    Weight: 100
+    MinLevel: 3
+    MaxLevel: 3
+    Groups:
+    - Kind: 2
+      Min: 6
+      Max: 7
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.mixed_large
+    Weight: 100
+    MinLevel: 3
+    MaxLevel: 3
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 3
+      Max: 4
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.guardians_escort
+    Weight: 100
+    MinLevel: 3
+    MaxLevel: 3
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 3
+      Max: 4
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.patrol
     Weight: 100
     MinLevel: 4
     MaxLevel: 6
     Groups:
     - Kind: 1
       Min: 1
-      Max: 1
-      HealthPercent: 160
-      DamagePercent: 240
-      Elite: 1
-      GrowWithDepth: 0
-    - Kind: 1
-      Min: 1
       Max: 2
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
     - Kind: 2
       Min: 3
       Max: 4
-      HealthPercent: 30
-      DamagePercent: 150
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 1
+  - StableKey: encounter.meadow.guardian_pair
+    Weight: 100
+    MinLevel: 4
+    MaxLevel: 0
+    Groups:
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 2
+      Max: 3
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.crossfire
+    Weight: 75
+    MinLevel: 5
+    MaxLevel: 0
+    Groups:
+    - Kind: 3
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 1
+      Min: 2
+      Max: 2
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
   - StableKey: encounter.meadow.veteran_patrol
     Weight: 100
     MinLevel: 7
@@ -110,43 +234,24 @@ MonoBehaviour:
     - Kind: 1
       Min: 2
       Max: 2
-      HealthPercent: 160
-      DamagePercent: 240
-      Elite: 1
-      GrowWithDepth: 0
-    - Kind: 1
-      Min: 2
-      Max: 2
       HealthPercent: 100
-      DamagePercent: 180
-      Elite: 0
-      GrowWithDepth: 0
-    - Kind: 2
-      Min: 4
-      Max: 5
-      HealthPercent: 30
-      DamagePercent: 150
-      Elite: 0
-      GrowWithDepth: 1
-  - StableKey: encounter.meadow.forest_bud
-    Weight: 75
-    MinLevel: 1
-    MaxLevel: 0
-    Groups:
-    - Kind: 3
-      Min: 1
-      Max: 2
-      HealthPercent: 80
       DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
-    - Kind: 1
-      Min: 2
-      Max: 3
+    - Kind: 3
+      Min: 1
+      Max: 1
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
+    - Kind: 2
+      Min: 3
+      Max: 4
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
   RewardBranch:
   - StableKey: encounter.meadow.cache
     Weight: 100
@@ -157,33 +262,59 @@ MonoBehaviour:
       Min: 2
       Max: 2
       HealthPercent: 100
-      DamagePercent: 180
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 0
     - Kind: 2
       Min: 2
       Max: 3
-      HealthPercent: 30
-      DamagePercent: 150
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 1
   ExitGuard:
   - StableKey: encounter.meadow.exit
     Weight: 100
     MinLevel: 1
-    MaxLevel: 0
+    MaxLevel: 6
     Groups:
     - Kind: 1
       Min: 1
       Max: 1
-      HealthPercent: 240
-      DamagePercent: 260
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 1
       GrowWithDepth: 0
     - Kind: 2
       Min: 2
       Max: 3
-      HealthPercent: 30
-      DamagePercent: 150
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 1
+  - StableKey: encounter.meadow.exit_escort
+    Weight: 100
+    MinLevel: 7
+    MaxLevel: 0
+    Groups:
+    - Kind: 1
+      Min: 1
+      Max: 1
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 1
+      GrowWithDepth: 0
+    - Kind: 1
+      Min: 1
+      Max: 1
+      HealthPercent: 100
+      DamagePercent: 100
+      Elite: 0
+      GrowWithDepth: 0
+    - Kind: 2
+      Min: 2
+      Max: 3
+      HealthPercent: 100
+      DamagePercent: 100
       Elite: 0
       GrowWithDepth: 1

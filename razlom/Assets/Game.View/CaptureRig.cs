@@ -159,6 +159,25 @@ namespace Game.View
         public static string ForestBudCase { get; private set; }
         public static bool ForestBudShowcase => _combatEncounter == "forest-bud";
         public static bool WendigoShowcase => _combatEncounter == "forest-wendigo";
+        /// <summary>-capture-encounter forest-guardian: несколько Хранителей на ровной арене стенда.</summary>
+        public static bool GuardianShowcase => _combatEncounter == "forest-guardian";
+        /// <summary>-capture-encounter forest-stonehoof: один Камнекопыт, как в стенде StonehoofTestWindow.</summary>
+        public static bool StonehoofShowcase => _combatEncounter == "forest-stonehoof";
+        /// <summary>
+        /// -capture-encounter forest-thorncaster | forest-snarer | forest-splitter: новый моб леса
+        /// (1–3, -capture-enemies) на стенде вида. Пока модели не утверждены, тела — серые
+        /// заглушки с подписью (ForestMobPlaceholderView). None — стенд не новый моб.
+        /// </summary>
+        public static EnemyKind ForestMobShowcase => _combatEncounter == "forest-thorncaster" ? EnemyKind.ForestThorncaster
+            : _combatEncounter == "forest-snarer" ? EnemyKind.ForestRootSnarer
+            : _combatEncounter == "forest-splitter" ? EnemyKind.ForestSplitter : EnemyKind.None;
+        /// <summary>
+        /// -capture-enemy-case: что делает герой против врага (dodge, tank, stun, turn, death).
+        /// Ввод ведёт TickDriver.EnemyReviewCase; журнал плеера получает строки [enemy-qa].
+        /// </summary>
+        public static string EnemyCase { get; private set; }
+        private static bool EnemyQa => GuardianShowcase || StonehoofShowcase || ForestMobShowcase != EnemyKind.None
+            || !string.IsNullOrEmpty(EnemyCase);
         public static bool SweepAimCapture { get; private set; }
         public static bool DeathDuringSkill { get; private set; }
 
@@ -260,6 +279,7 @@ namespace Game.View
             ActiveEnemies = Array.IndexOf(args, "-capture-active-enemies") >= 0;
             _combatEncounter = ReadValue(args, "-capture-encounter");
             ForestBudCase = ReadValue(args, "-capture-forest-bud-case");
+            EnemyCase = ReadValue(args, "-capture-enemy-case");
             SweepAimCapture = Array.IndexOf(args, "-capture-sweep-aim") >= 0;
             DeathDuringSkill = Array.IndexOf(args, "-capture-death-during-skill") >= 0;
             CombatFeelTier = ParseHitTier(ReadValue(args, HitTierFlag));
@@ -418,6 +438,23 @@ namespace Game.View
                 driver.Session.SetDeveloperInvulnerable(true);
                 yield return null;
             }
+            if (GuardianShowcase || StonehoofShowcase || ForestMobShowcase != EnemyKind.None)
+            {
+                // Стенд Камнекопыта: свежее поколение, открытая поляна, прогресс не сохраняется.
+                // Хранители и новые мобы встают вместо быка в том же кадре — виды привязываются уже к ним.
+                var driver = FindAnyObjectByType<TickDriver>();
+                driver.StartStonehoofTest(driver.GetComponent<LayoutView>().Profile, SeedOverride, 1, StonehoofShowcase);
+                if (GuardianShowcase) CombatCaptureEncounter.SetupGuardians(driver, Mathf.Clamp(EnemyOverride, 1, 2));
+                else if (ForestMobShowcase != EnemyKind.None)
+                    CombatCaptureEncounter.SetupForestMob(driver, ForestMobShowcase, Mathf.Clamp(EnemyOverride, 1, 3));
+                yield return null;
+            }
+            if (EnemyQa)
+            {
+                // Без сценария герой просто стоит (как tank): запись не должна кончиться его смертью.
+                CombatCaptureEncounter.PrepareEnemyCase(FindAnyObjectByType<TickDriver>(), EnemyCase ?? "tank");
+                yield return null;
+            }
             if (TempoPreset >= 0)
             {
                 var driver = FindAnyObjectByType<TickDriver>();
@@ -540,6 +577,7 @@ namespace Game.View
                 Debug.Log("[capture-hud] Developer console overlay hidden for UI review; diagnostics remain in player.log.");
             }
 
+            TickDriver qaDriver = EnemyQa ? FindAnyObjectByType<TickDriver>() : null;
             while ((_recordVideo
                         ? _timelineFrame / (float)_videoFps
                         : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt) < finish
@@ -550,6 +588,7 @@ namespace Game.View
                 if (LiveSkill || ReadFloat(Environment.GetCommandLineArgs(), "-capture-camera-pitch", -1f) >= 0)
                     ConfigureCaptureView();
                 yield return new WaitForEndOfFrame();
+                if (qaDriver != null) CombatCaptureEncounter.LogEnemyEvents(qaDriver);
 
                 float now = _recordVideo
                     ? _timelineFrame++ / (float)_videoFps

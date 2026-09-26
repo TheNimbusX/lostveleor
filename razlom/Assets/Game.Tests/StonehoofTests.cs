@@ -47,7 +47,8 @@ namespace Game.Tests
                 s.Step(InputFrame.Empty);
                 foreach (var e in s.Events) if (e.Type == SimEventType.Damage && e.Source == 1 && e.Target == 0) hits++;
             }
-            Assert.That(hits, Is.EqualTo(1)); Assert.That(s.Entities.Health[0], Is.EqualTo(9970));
+            // 24 — урон тарана из таблицы видов (баланс v1); отброс урона не добавляет.
+            Assert.That(hits, Is.EqualTo(1)); Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - 24));
             Assert.That(Fix64.Abs(s.Entities.Position[0].Y).ToFloat(), Is.InRange(.95f, 1.05f));
             Assert.That(a.StopReason, Is.EqualTo(StonehoofStop.ArenaEdge));
             Assert.That(a.StopTick - a.BrakeTick, Is.EqualTo(18));
@@ -99,7 +100,8 @@ namespace Game.Tests
             for (int i = 2; i <= 3; i++) { s.Entities.Position[i] = a.Origin - new FixVec2(Fix64.FromInt(i), Fix64.Zero); s.Statuses.ApplyStun(i, 999); }
             while (s.Tick < a.StopTick)
             { s.Step(InputFrame.Empty); Assert.That(s.Entities.Position[1].Y.ToFloat(), Is.EqualTo(a.Origin.Y.ToFloat()).Within(.001f)); }
-            Assert.That(s.Entities.Health[2], Is.EqualTo(180)); Assert.That(s.Entities.Health[3], Is.EqualTo(180));
+            int full = EnemyArchetypes.Get(EnemyKind.ForestStonehoof).BaseHealth;
+            Assert.That(s.Entities.Health[2], Is.EqualTo(full)); Assert.That(s.Entities.Health[3], Is.EqualTo(full));
         }
         [Test]
         public void RepeatClearsActionsAndRandomnessIsDeterministic()
@@ -109,7 +111,7 @@ namespace Game.Tests
             { a.Step(InputFrame.Empty); b.Step(InputFrame.Empty); Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t); }
             a.SetupStonehoofEncounter(null, 76);
             Assert.That(a.Entities.Kind[1], Is.EqualTo(EnemyKind.ForestStonehoof));
-            Assert.That(a.Entities.Health[1], Is.EqualTo(180)); Assert.That(a.TryGetStonehoofAction(1, out _), Is.False);
+            Assert.That(a.Entities.Health[1], Is.EqualTo(650)); Assert.That(a.TryGetStonehoofAction(1, out _), Is.False);
         }
         [Test]
         public void AFailedRetreatStillAllowsFullWarningUpClose()
@@ -118,6 +120,79 @@ namespace Game.Tests
             s.Step(InputFrame.Empty); Assert.That(s.TryGetStonehoofAction(1, out var a), Is.True);
             Assert.That(a.LaunchTick - a.StartTick, Is.EqualTo(30)); Until(s, 30);
             Assert.That(s.Entities.Health[0], Is.EqualTo(10000));
+        }
+
+        // ---- разворот: один шаг 6° за тик ----
+
+        private static readonly FixVec2 West = new FixVec2(-Fix64.One, Fix64.Zero);
+
+        private static double Degrees(FixVec2 a, FixVec2 b)
+        {
+            double ax = a.X.ToDouble(), ay = a.Y.ToDouble(), bx = b.X.ToDouble(), by = b.Y.ToDouble();
+            double dot = (ax * bx + ay * by) / (System.Math.Sqrt(ax * ax + ay * ay) * System.Math.Sqrt(bx * bx + by * by));
+            return System.Math.Acos(System.Math.Max(-1.0, System.Math.Min(1.0, dot))) * 180.0 / System.Math.PI;
+        }
+
+        [Test]
+        public void TurnsInPlaceSixDegreesPerTick()
+        {
+            // Спиной к герою на пяти метрах: ни подхода, ни отступа, ни тарана — только поворот.
+            var s = Arena(); s.Entities.Facing[1] = -West; s.Entities.NextAttackTick[1] = 10000;
+            var origin = s.Entities.Position[1]; var previous = s.Entities.Facing[1]; int turning = 0;
+            for (int t = 0; t < 40; t++)
+            {
+                s.Step(InputFrame.Empty);
+                double step = Degrees(previous, s.Entities.Facing[1]); previous = s.Entities.Facing[1];
+                Assert.That(step, Is.LessThanOrEqualTo(Simulation.StonehoofTurnDegreesPerTick + .05), "tick " + t);
+                if (step > .5) turning++;
+                Assert.That(s.Entities.Position[1], Is.EqualTo(origin), "шаг во время разворота, тик " + t);
+            }
+            // 180° по 6° — тридцать тиков, секунда: вдвое медленнее прочих мобов.
+            Assert.That(Simulation.StonehoofTurnDegreesPerTick, Is.EqualTo(6));
+            Assert.That(turning, Is.InRange(30, 31));
+            Assert.That(Degrees(s.Entities.Facing[1], West), Is.LessThan(.01));
+        }
+
+        [Test]
+        public void AimTurnsOncePerTickAndChargesOnlyWhenFacingTheHero()
+        {
+            // Раньше прицел доворачивал и в движении, и в UpdateStonehooves — 24° за тик.
+            var s = Arena(); s.Entities.Facing[1] = -West;
+            var previous = s.Entities.Facing[1]; int started = -1;
+            for (int t = 0; t < 45 && started < 0; t++)
+            {
+                s.Step(InputFrame.Empty);
+                Assert.That(Degrees(previous, s.Entities.Facing[1]),
+                    Is.LessThanOrEqualTo(Simulation.StonehoofTurnDegreesPerTick + .05), "tick " + t);
+                previous = s.Entities.Facing[1];
+                if (s.TryGetStonehoofAction(1, out var a)) started = a.StartTick;
+            }
+            Assert.That(started, Is.InRange(29, 30));
+            s.TryGetStonehoofAction(1, out var charge);
+            Assert.That(Degrees(charge.Direction, West), Is.LessThan(.01));
+            Assert.That(Degrees(s.Entities.Facing[1], West), Is.LessThan(.01));
+        }
+
+        [Test]
+        public void NeverStepsForwardUntilFacingWithinDotNinetyFive()
+        {
+            // Герой за 11 м за спиной: сначала разворот на месте, шаг — только почти по взгляду.
+            var s = Arena(); s.Entities.Position[0] = new FixVec2(Fix64.FromInt(-6), Fix64.Zero);
+            s.Entities.Facing[1] = -West; s.Entities.NextAttackTick[1] = 10000;
+            int firstStep = -1;
+            for (int t = 0; t < 60; t++)
+            {
+                var before = s.Entities.Position[1];
+                var wanted = (s.Entities.Position[0] - before).Normalized();
+                s.Step(InputFrame.Empty);
+                var moved = s.Entities.Position[1] - before;
+                if (moved.LengthSq == Fix64.Zero) continue;
+                if (firstStep < 0) firstStep = t;
+                Assert.That(FixVec2.Dot(s.Entities.Facing[1], wanted), Is.GreaterThanOrEqualTo(Simulation.StonehoofWalkAlignCos), "tick " + t);
+                Assert.That(Degrees(moved, s.Entities.Facing[1]), Is.LessThan(.5), "боком, тик " + t);
+            }
+            // Шаг не раньше, чем корпус довернулся до 18° (cos 0,95): 162° / 6° — 27-й тик, индекс 26.
+            Assert.That(firstStep, Is.InRange(26, 27));
         }
     }
 }

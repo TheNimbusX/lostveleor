@@ -1,0 +1,28 @@
+{
+ "evaluated_bone_vs_solve_max_m": 5.364418029785156e-07,
+ "idle_baseline_overlaps": {
+  "L_arm-L_leg": 0,
+  "R_arm-R_leg": 0,
+  "L_arm-R_leg": 0,
+  "R_arm-L_leg": 0,
+  "L_arm-head": 0,
+  "R_arm-head": 0,
+  "L_arm-torso": 0,
+  "R_arm-torso": 0,
+  "head-torso": 0,
+  "L_arm-R_arm": 0,
+  "L_leg-R_leg": 0,
+  "head-L_upper": 0,
+  "head-R_upper": 0,
+  "L_upper-L_leg": 0,
+  "R_upper-R_leg": 0
+ },
+ "samples_checked": 193,
+ "new_triangle_overlaps_by_frame": {},
+ "frames_with_new_overlaps": [],
+ "action": "AN_ForestWendigo_Howl_Baked",
+ "action_frame_range": [
+  0.0,
+  48.0
+ ]
+}

@@ -17,16 +17,26 @@ namespace Game.Tests
         {
             EntityStore entities = run.Sim.Entities;
             int guardians = 0, swarm = 0;
+            // Прототипный забег растит здоровье тем же процентом глубины, что и
+            // авторские уровни: 100 на первой арене, 107 на второй.
+            int percent = EnemyArchetypes.DepthHealthPercent(run.Depth);
+            Assert.That(run.LevelSettings.EnemyHealth, Is.EqualTo(percent));
             for (int i = 1; i < entities.Count; i++)
             {
                 Assert.That(entities.Alive[i], Is.True);
                 Assert.That(run.Map.IsWalkable(entities.Position[i], entities.BodyRadius[i]), Is.True);
-                if (entities.Kind[i] == EnemyKind.ForestGuardian) guardians++;
+                if (entities.Kind[i] == EnemyKind.ForestGuardian)
+                {
+                    guardians++;
+                    Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(550, percent)));
+                    Assert.That(entities.Damage[i], Is.EqualTo(14));
+                }
                 if (entities.Kind[i] != EnemyKind.ForestRootSwarm) continue;
                 swarm++;
-                Assert.That(entities.Health[i], Is.EqualTo(30));
-                Assert.That(entities.Damage[i], Is.EqualTo(4));
-                Assert.That(entities.AttackCooldown[i], Is.EqualTo(24));
+                Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(130, percent)));
+                // Укус 3, цикл 30 тиков (стенд баланса, 26.09, проход 2).
+                Assert.That(entities.Damage[i], Is.EqualTo(3));
+                Assert.That(entities.AttackCooldown[i], Is.EqualTo(30));
                 Assert.That(entities.BodyRadius[i], Is.EqualTo(Fix64.Ratio(45, 100)));
                 for (int j = 4; j < i; j++)
                 {

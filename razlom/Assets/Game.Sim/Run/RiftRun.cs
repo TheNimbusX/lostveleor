@@ -52,6 +52,23 @@ namespace Game.Sim
             return count;
         }
 
+        /// <summary>
+        /// Детёныши Расщепеня наследуют метку тайника родителя: страж ветки
+        /// распался — ветка всё ещё под охраной, а обязательных врагов не
+        /// прибавилось. Зовётся после каждого шага симуляции, до проверок.
+        /// </summary>
+        private void InheritSplitBranches()
+        {
+            var events = _sim.Events;
+            for (int e = 0; e < events.Count; e++)
+            {
+                SimEvent split = events[e];
+                if (split.Type != SimEventType.SplitterSplit || (uint)split.Source >= (uint)_enemyBranch.Length) continue;
+                for (int child = split.Target; child < split.Target + split.Amount && child < _enemyBranch.Length; child++)
+                    if (child >= 0) _enemyBranch[child] = _enemyBranch[split.Source];
+            }
+        }
+
         private readonly ItemDatabase _items;
         private readonly int[] _itemBaseIds;
 
@@ -109,6 +126,21 @@ namespace Game.Sim
         /// <summary>Золото, найденное в забеге. Доезжает до лагеря только при выходе или прохождении.</summary>
         public int Gold { get; private set; }
         public bool ArenaFlow => _location != null && _location.GetLevel(1).ArenaSize > 0;
+
+        /// <summary>
+        /// Поток арен с профилем встреч: встречу каждой арены ставит шаблон
+        /// из плана забега (стадия 6 плана «Мобы леса»), а не пачки профиля.
+        /// </summary>
+        public bool TemplateFlow => ArenaFlow && _location.GetLevel(1).Encounters != null;
+
+        /// <summary>
+        /// План встреч забега: шаблон на каждой арене. Бросается один раз на
+        /// старте из мастер-сида симуляции, входит в хеш. null — не поток арен.
+        /// </summary>
+        public ArenaRunPlan Plan { get; private set; }
+
+        /// <summary>Шаблон встречи текущей арены; null — босс, стенд или встреча не по шаблону.</summary>
+        public ArenaEncounterTemplate CurrentEncounter { get; private set; }
         public ArenaRouteOffer CurrentRoute { get; private set; } = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
         private readonly ArenaRouteOffer[] _routes = new ArenaRouteOffer[3];
         public ArenaRouteOffer GetRoute(int index) => _routes[index];
@@ -133,6 +165,36 @@ namespace Game.Sim
         // Веса карточек из пропорций владельца: способность / вещь / талант.
         private const int AbilityWeight = 35, ItemWeight = 30, TalentWeight = 35;
         private const int FullAbilityWeight = 15, FullTalentWeight = 55;
+
+        // ---- родник ----
+        //
+        // Здоровье переносится между аренами (владелец, 26.09), лечат зелья,
+        // уровень и награды. Стенд баланса без лечения из наград: ни один
+        // забег из шестидесяти не дожил до босса. Родник встаёт на экран сам,
+        // когда герой пришёл к выходу ниже 75%, вместо самой слабой карточки;
+        // после босса — никогда (там выбор артефакта).
+
+        /// <summary>Сколько процентов максимума здоровья возвращает «Родник».</summary>
+        public const int SpringHealPercent = 40;
+
+        /// <summary>Родник предлагается, только если здоровье героя ниже этого процента.</summary>
+        public const int SpringOfferBelowPercent = 75;
+
+        /// <summary>Лечение родника при таком максимуме: процент вниз, но не меньше единицы.</summary>
+        public static int SpringHeal(int maxHealth, int percent)
+            => maxHealth <= 0 || percent <= 0 ? 0 : System.Math.Max(1, maxHealth * percent / 100);
+
+        /// <summary>Сколько здоровья родник вернёт герою прямо сейчас — для карточки награды.</summary>
+        public int SpringHealAmount
+        {
+            get
+            {
+                EntityStore e = _sim.Entities;
+                if (e.Count <= Simulation.PlayerId || !e.Alive[Simulation.PlayerId]) return 0;
+                int missing = e.MaxHealth[Simulation.PlayerId] - e.Health[Simulation.PlayerId];
+                return System.Math.Min(missing, SpringHeal(e.MaxHealth[Simulation.PlayerId], SpringHealPercent));
+            }
+        }
 
         // ---- добыча с элит ----
 
@@ -184,8 +246,11 @@ namespace Game.Sim
             PendingAbility = -1;
             Loadout.ResetToStarter();
             CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
+            RollPlan();
 
-            EnterNextRift();
+            // Новый забег начинается с полным здоровьем, даже если тот же
+            // RiftRun только что закончил прошлый избитым.
+            EnterNextRift(carryHealth: false);
         }
 
         /// <summary>Fresh test run: allocate skipped level seeds, without kills or rewards.</summary>
@@ -201,8 +266,27 @@ namespace Game.Sim
                 LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             }
             Depth = level - 1;
-            EnterNextRift();
+            RollPlan();
+            EnterNextRift(carryHealth: false);
             if (nearBoss) PlaceNearBoss();
+        }
+
+        /// <summary>
+        /// План встреч — свой поток от мастер-сида: Layout, Spawns и Loot не
+        /// сдвигаются, и сиды уровней (RiftLevelSeeds) остаются прежними.
+        /// </summary>
+        private void RollPlan()
+        {
+            Plan = TemplateFlow ? ArenaRunPlan.Roll(_sim.Rng.MasterSeed, _location) : null;
+            CurrentEncounter = null;
+        }
+
+        /// <summary>Наименьшая арена под шаблон уровня depth: таран и вой тесны на малой.</summary>
+        private int MinArenaSizeFor(int depth)
+        {
+            if (Plan == null || _location.GetLevel(depth).Boss) return 2;
+            ArenaEncounterTemplate template = Plan.TemplateFor(depth);
+            return template != null ? template.MinArenaSize : 2;
         }
 
         private void PlaceNearBoss()
@@ -238,9 +322,16 @@ namespace Game.Sim
         /// <summary>
         /// Вход в следующий Разлом. Тир растёт с глубиной: комнат больше,
         /// врагов больше, здоровья у них больше.
+        ///
+        /// ЗДОРОВЬЕ ГЕРОЯ ПЕРЕНОСИТСЯ между аренами одного забега (владелец,
+        /// 26.09): carryHealth — это переход из арены в арену, а не старт.
+        /// Расстановка рождает героя заново, поэтому недостача снимается ДО
+        /// неё и возвращается после того, как всё нажитое повешено обратно.
+        /// Лавидий по-прежнему полон на каждой арене.
         /// </summary>
-        private void EnterNextRift()
+        private void EnterNextRift(bool carryHealth)
         {
+            int missingHealth = carryHealth ? _sim.PlayerMissingHealth : 0;
             Depth++;
             BossEnraged = false;
             // Не подобранное на прошлой арене осталось там.
@@ -249,11 +340,19 @@ namespace Game.Sim
 
             LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
             if (ArenaFlow) LevelSettings = LevelSettings.WithArenaSize(LevelSettings.Boss ? 4 : CurrentRoute.Size);
+            // Крупных атак одновременно: одна на аренах 1–4, две с пятой.
+            // Расстановка это число не сбрасывает, поэтому ставится здесь.
+            _sim.BigAttackTokenLimit = Simulation.BigAttackTokensForArena(Depth);
             LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
             LevelSettings.Generate(_generator, _modules, _map, LayoutSeed);
 
             SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             Encounters = null;
+            CurrentEncounter = null;
+            // «Сложно» у встречи по шаблону ставит сама расстановка: поздние
+            // волны и подмога босса выходят уже после неё.
+            bool hardInSpawn = false;
+            int hardPercent = ArenaFlow && CurrentRoute.Hard ? EnemyArchetypes.HardRoutePercent : 100;
             if (StonehoofShowcase > 0)
                 Encounters = _sim.SetupStonehoofEncounter(_map, SpawnSeed, StonehoofShowcase, StonehoofTestObstacle);
             else if (WendigoShowcase > 0)
@@ -265,26 +364,37 @@ namespace Game.Sim
             else if (WhirlwindShowcase)
                 _sim.SetupWhirlwindShowcase(_map);
             else if (_location == null)
-                _sim.SetupForestEncounter(_map, SpawnSeed, LevelSettings.EnemyHealth);
+                _sim.SetupForestEncounter(_map, SpawnSeed,
+                    EnemyArchetypes.ScaleHealth(_sim.ArchetypeHealth(EnemyKind.ForestGuardian), LevelSettings.EnemyHealth),
+                    EnemyArchetypes.ScaleHealth(_sim.ArchetypeHealth(EnemyKind.ForestRootSwarm), LevelSettings.EnemyHealth));
+            else if (Plan != null && LevelSettings.Encounters != null)
+            {
+                CurrentEncounter = LevelSettings.Boss ? null : Plan.TemplateFor(Depth);
+                Encounters = LevelSettings.Spawn(_sim, _map, SpawnSeed, CurrentEncounter, Depth, hardPercent);
+                hardInSpawn = true;
+            }
             else
                 Encounters = LevelSettings.Spawn(_sim, _map, SpawnSeed);
 
-            if (ArenaFlow && CurrentRoute.Hard)
+            if (ArenaFlow && CurrentRoute.Hard && !hardInSpawn)
                 for (int i = 1; i < _sim.Entities.Count; i++)
                 {
                     if (!_sim.Entities.Alive[i] || _sim.Entities.Side[i] == Faction.Wole) continue;
                     var stats = _sim.Entities.Stats[i];
-                    stats.SetBase(StatType.MaxHealth, _sim.Entities.MaxHealth[i] * Fix64.Ratio(5, 4));
-                    stats.SetBase(StatType.Damage, _sim.Entities.Damage[i] * Fix64.Ratio(5, 4));
+                    var hard = Fix64.Ratio(EnemyArchetypes.HardRoutePercent, 100);
+                    stats.SetBase(StatType.MaxHealth, _sim.Entities.MaxHealth[i] * hard);
+                    stats.SetBase(StatType.Damage, _sim.Entities.Damage[i] * hard);
                     _sim.Entities.RefreshStats(i);
                     _sim.Entities.Health[i] = _sim.Entities.MaxHealth[i];
                 }
 
             System.Array.Clear(_branchClaimed, 0, _branchClaimed.Length);
             BranchesClaimed = 0;
+            // Весь массив, а не только расставленных: волны встречи рождают
+            // врагов позже, в слотах, где мог остаться тайник прошлой арены.
+            for (int i = 0; i < _enemyBranch.Length; i++) _enemyBranch[i] = -1;
             for (int i = 0; i < _sim.Entities.Count; i++)
             {
-                _enemyBranch[i] = -1;
                 if (_sim.Entities.Side[i] == Faction.Wole) continue;
                 if (Encounters != null)
                 {
@@ -304,6 +414,7 @@ namespace Game.Sim
             PlayerEquipment?.Reapply();
             ApplyStatRewards(_sim.Entities.Stats[Simulation.PlayerId]);
             _sim.RefreshPlayerStats(heal: true);
+            _sim.ApplyPlayerMissingHealth(missingHealth);
             // Способности тоже вешаются заново: набор принадлежит забегу,
             // и каждый новый Разлом обязан начинаться с ним.
             ApplyLoadout();
@@ -358,6 +469,7 @@ namespace Game.Sim
                 _sim.Entities.RefreshStats(BossId);
             }
             _sim.Step(in input);
+            InheritSplitBranches();
 
             // Смерть проверяется ПЕРВОЙ. Если игрок и последний враг погибли
             // на одном тике, забег заканчивается смертью: иначе труп получал бы
@@ -370,7 +482,9 @@ namespace Game.Sim
 
             CollectBranchRewards();
             UpdateDrops(command);
-            if (CountRequiredEnemies() == 0)
+            // Зачищена — когда вышли все волны встречи и все мертвы (или
+            // кончилось выживание: оставшиеся ушли в землю).
+            if (CountRequiredEnemies() == 0 && !_sim.EncounterWavesPending)
             {
                 RiftsCleared++;
                 if (ArenaFlow) Gold += CurrentRoute.BonusGold;
@@ -392,6 +506,7 @@ namespace Game.Sim
             }
 
             _sim.Step(in input);
+            InheritSplitBranches();
 
             if (!_sim.Entities.Alive[Simulation.PlayerId])
             {
@@ -597,6 +712,8 @@ namespace Game.Sim
 
             if (offer.Kind == RewardKind.Artifact)
                 TakeArtifact(offer.Artifact);
+            else if (offer.Kind == RewardKind.Spring)
+                DrinkSpring(offer.HealPercent);
             else if (offer.Kind == RewardKind.Talent)
                 Loadout.TakeTalent(offer.PoolIndex, offer.TalentIndex);
             else if (offer.Kind == RewardKind.Ability && !Loadout.Add(offer.PoolIndex))
@@ -643,13 +760,16 @@ namespace Game.Sim
                 End(RunOutcome.Completed);
                 return;
             }
-            if (!ArenaFlow) { EnterNextRift(); return; }
+            if (!ArenaFlow) { EnterNextRift(carryHealth: true); return; }
             // Свой поток предложений не расходует Layout/Spawns/Loot симуляции.
             var rng = new Pcg32(LayoutSeed, 0x4152454E41524FUL);
             bool boss = _location.GetLevel(Depth + 1).Boss;
+            // Размер бросается как раньше (поток тот же), но не меньше того,
+            // что нужно шаблону следующей арены.
+            int minSize = MinArenaSizeFor(Depth + 1);
             for (int i = 0; i < _routes.Length; i++)
                 _routes[i] = new ArenaRouteOffer(i == 1 ? ArenaReward.Shop : ArenaReward.Upgrade,
-                    boss ? 4 : rng.NextInt(2, 5), i == 2, i == 2 ? 50 + Depth * 10 : 0);
+                    boss ? 4 : System.Math.Max(minSize, rng.NextInt(2, 5)), i == 2, i == 2 ? 50 + Depth * 10 : 0);
             Phase = RunPhase.ChoosingRoute;
         }
 
@@ -659,7 +779,7 @@ namespace Game.Sim
             int choice = (int)command - (int)RunCommand.ChooseRoute1;
             if (choice < 0 || choice >= _routes.Length) return;
             CurrentRoute = _routes[choice];
-            EnterNextRift();
+            EnterNextRift(carryHealth: true);
         }
 
         private void End(RunOutcome outcome)
@@ -685,6 +805,61 @@ namespace Game.Sim
             if (BossId >= 0 && RollArtifactOffers()) return;
             for (int i = 0; i < RewardChoices; i++)
                 _offers[i] = RollOffer(i);
+            // Родник встаёт ПОСЛЕ бросков: поток Loot расходуется ровно как без
+            // него, и остальные карточки сида не меняются от того, ранен ли герой.
+            if (BossId < 0 && SpringWanted())
+                _offers[WeakestOffer()] = RewardOffer.OfSpring(SpringHealPercent);
+        }
+
+        /// <summary>Герой пришёл к выходу ниже SpringOfferBelowPercent здоровья.</summary>
+        private bool SpringWanted()
+        {
+            EntityStore e = _sim.Entities;
+            return e.Count > Simulation.PlayerId && e.Alive[Simulation.PlayerId]
+                && (long)e.Health[Simulation.PlayerId] * 100 < (long)e.MaxHealth[Simulation.PlayerId] * SpringOfferBelowPercent;
+        }
+
+        /// <summary>
+        /// Карточка, которую заменит родник: самая слабая по OfferValue, при
+        /// равной ценности — правая. Решение от содержимого экрана, без броска.
+        /// </summary>
+        private int WeakestOffer()
+        {
+            int weakest = 0, lowest = int.MaxValue;
+            for (int i = 0; i < RewardChoices; i++)
+            {
+                int value = OfferValue(in _offers[i]);
+                if (value > lowest) continue;
+                lowest = value;
+                weakest = i;
+            }
+            return weakest;
+        }
+
+        /// <summary>
+        /// Ценность карточки для замены родником. Прибавка к стату — запасная
+        /// карточка, ниже всех; дальше вещь; способность при полной панели (её
+        /// всё равно менять или разбирать); усиление; способность в свободный слот.
+        /// </summary>
+        private int OfferValue(in RewardOffer offer)
+        {
+            switch (offer.Kind)
+            {
+                case RewardKind.StatBoost: return 0;
+                case RewardKind.Item: return 1;
+                case RewardKind.Ability: return Loadout.IsFull ? 2 : 4;
+                case RewardKind.Talent: return 3;
+                default: return 5;
+            }
+        }
+
+        /// <summary>Родник взят: здоровье сразу, до следующей арены — туда переедет уже меньшая недостача.</summary>
+        private void DrinkSpring(int percent)
+        {
+            EntityStore e = _sim.Entities;
+            if (e.Count <= Simulation.PlayerId || !e.Alive[Simulation.PlayerId]) return;
+            int max = e.MaxHealth[Simulation.PlayerId];
+            e.Health[Simulation.PlayerId] = System.Math.Min(max, e.Health[Simulation.PlayerId] + SpringHeal(max, percent));
         }
 
         /// <summary>
@@ -879,6 +1054,8 @@ namespace Game.Sim
             PlayerEquipment?.HashInto(ref hash);
 
             Hashing.Mix(ref hash, _map.Hash());
+            Plan?.HashInto(ref hash);
+            if (CurrentEncounter != null) Hashing.Mix(ref hash, CurrentEncounter.Id);
             Encounters?.HashInto(ref hash);
             Hashing.Mix(ref hash, _sim.StateHash());
             return hash;

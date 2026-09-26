@@ -28,6 +28,15 @@ namespace Game.View
         [Range(0f, 1f)] public float AbilityVolume = 0.58f;
         [Range(0f, 1f)] public float FootstepVolume = 0.30f;
 
+        [Header("Враги")]
+        [Tooltip("Сигнал в начале крупного телеграфа: таран, коготь, прыжок, вой, залп.")]
+        [Range(0f, 1f)] public float WarningVolume = 0.46f;
+        [Tooltip("Тихий взмах в начале обычного замаха хранителя.")]
+        [Range(0f, 1f)] public float EnemySwingVolume = 0.16f;
+        [Range(0f, 1f)] public float BudVolume = 0.44f;
+        [Tooltip("Земля под встающими из неё и уходящими в неё врагами (волны встречи, конец выживания).")]
+        [Range(0f, 1f)] public float EarthVolume = 0.42f;
+
         [Header("Шаги")]
         [Tooltip("Сколько метров проходит герой между шагами.")]
         [Min(0.4f)] public float FootstepDistance = 1.35f;
@@ -74,6 +83,12 @@ namespace Game.View
         private bool _paused, _blazePreparing, _blazeBurning;
         private double _pausedAt;
         private float _finisherReadyAt;
+        private float _warningReadyAt;
+        // Три бутона, раскрывшиеся почти разом, дают один сигнал, а не хор.
+        private const float WarningSpacing = .30f;
+        // Волна встаёт из земли десятком тел за тик — земля звучит одним разом на волну.
+        private float _earthReadyAt;
+        private const float EarthSpacing = .45f;
 
         // ---- шаги ----
         //
@@ -186,7 +201,7 @@ namespace Game.View
             _whooshDelay = -1f;
             _stepAnchorSet = false;
             _blazePreparing = _blazeBurning = false;
-            _finisherReadyAt = 0f;
+            _finisherReadyAt = _warningReadyAt = _earthReadyAt = 0f;
             for (int i = 0; i < _voices.Length; i++) _voices[i].Stop();
             _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
@@ -211,7 +226,59 @@ namespace Game.View
                                 (e.ActionVariant == 1 ? 0.50f : 0.55f);
                             _whooshAttackVariant = e.ActionVariant;
                         }
-                        else if (_driver.Sim.Entities.Kind[e.Source] != EnemyKind.ForestBud) Play(Sound.EnemyWarning, 0.6f, 1f, 0f);
+                        // Обычный замах — не крупный телеграф: общий сигнал на каждый удар
+                        // приучил бы его не слушать. Хранителю — тихий тяжёлый взмах в начале
+                        // замаха, корнеползам — ничего: их на арене десяток. Расщепень машет
+                        // по-хранительски, тем же взмахом чуть выше; его детёныши кусают, как корнеползы.
+                        else if (_driver.Sim.Entities.Kind[e.Source] == EnemyKind.ForestGuardian)
+                            Play(Sound.GuardianSwing, EnemySwingVolume, 1f, .04f);
+                        else if (_driver.Sim.Entities.Kind[e.Source] == EnemyKind.ForestSplitter)
+                            Play(Sound.GuardianSwing, EnemySwingVolume, 1.08f, .04f);
+                        break;
+
+                    // Сигнал — только в начале крупных телеграфов: таран Камнекопыта,
+                    // коготь, прыжок и вой Вендиго (все идут через WendigoStarted), залп бутона.
+                    case SimEventType.StonehoofStarted:
+                    case SimEventType.WendigoStarted:
+                        PlayWarning();
+                        break;
+                    // Новые мобы леса: линия шипов и всплеск Шипомёта, удар корнями Корнехвата.
+                    // Тот же сигнал из своей семьи (EnemyWarning собран из Attack_0x/HitBody),
+                    // новых записей нет. Контакт шипа звучит своим Damage, если задел героя.
+                    case SimEventType.EnemyActionStarted:
+                        PlayWarning();
+                        break;
+                    // Расщепень распался на детёнышей: глухой низкий удар по телу — трещина,
+                    // из банка HitBody. Смерть родителя в этом же кадре звучит своим чередом.
+                    case SimEventType.SplitterSplit:
+                        Play(Sound.HitBody, BodyVolume * .8f, .72f, .03f);
+                        break;
+
+                    case SimEventType.ForestBudVolleyStarted:
+                        PlayWarning();
+                        Play(Sound.BudVolley, BudVolume * .9f, 1f, .03f);
+                        break;
+                    // Хлопок — по вылету каждого плода, а не склейкой от начала залпа:
+                    // хит-стоп, оглушение и уход героя из дальности не разводят звук с плодами.
+                    case SimEventType.ForestFruitLaunched:
+                        Play(Sound.BudPop, BudVolume * .8f, 1f, .02f, fixedVariant: e.ActionVariant);
+                        break;
+                    // То же событие, по которому ForestBudImpactView ставит брызги.
+                    case SimEventType.ForestFruitImpact:
+                        Play(Sound.BudFruitImpact, BudVolume, 1f, .04f);
+                        break;
+                    // Оглушённый или убитый бутон не дораскрывается. Гасится раскрытие всех
+                    // бутонов разом — два залпа в одну долю секунды почти не встречаются.
+                    case SimEventType.ForestBudVolleyCancelled:
+                        FadeKind(Sound.BudVolley);
+                        break;
+
+                    // Выход из-под земли (поздняя волна, подмога босса) и уход в неё (конец выживания).
+                    case SimEventType.Spawn:
+                        if (e.Flag) PlayEarth(false);
+                        break;
+                    case SimEventType.Burrowed:
+                        PlayEarth(true);
                         break;
 
                     case SimEventType.Damage:
@@ -223,7 +290,6 @@ namespace Game.View
                         if (e.Target != Simulation.PlayerId)
                         {
                             var kind = _driver.Sim.Entities.Kind[e.Target];
-                            if (kind == EnemyKind.ForestBud) break;
                             // Один акцент на группу смертей, без трёх полных слоёв поверх него.
                             if (Time.time >= _finisherReadyAt)
                             {
@@ -370,6 +436,30 @@ namespace Game.View
                 heavy ? .96f : 1.03f, .025f);
         }
 
+        /// <summary>
+        /// Короткий сигнал в начале крупного телеграфа. Одновременные телеграфы
+        /// (три бутона в одном кадре, таран под прыжок) звучат одним сигналом.
+        /// </summary>
+        private void PlayWarning()
+        {
+            if (Time.time < _warningReadyAt) return;
+            if (Play(Sound.EnemyWarning, WarningVolume, 1f, .02f) >= 0)
+                _warningReadyAt = Time.time + WarningSpacing;
+        }
+
+        /// <summary>
+        /// Земля разошлась или сомкнулась над телом. Своя семья звуков (новых записей нет):
+        /// осыпание песка ниже тоном — шорох земли, и глухой шаг ещё ниже — толчок из-под
+        /// ног. Уход в землю ниже и тише выхода. Тела одной волны звучат одним разом.
+        /// </summary>
+        private void PlayEarth(bool burrow)
+        {
+            if (Time.time < _earthReadyAt) return;
+            int slot = Play(Sound.Dissolve, EarthVolume, burrow ? .66f : .8f, .03f);
+            Play(Sound.Footstep, EarthVolume * (burrow ? 1.1f : 1.35f), burrow ? .5f : .58f, .03f, .03f);
+            if (slot >= 0) _earthReadyAt = Time.time + EarthSpacing;
+        }
+
         private void PlayDamage(in SimEvent e)
         {
             // Player damage keeps its visual flash/recoil but intentionally has
@@ -378,13 +468,14 @@ namespace Game.View
             { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); return; }
 
             if (e.Source != Simulation.PlayerId) return;
-            if (_driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestBud) return;
 
             // Подтверждённая смерть в этом кадре получает один финальный контакт.
             if (!_driver.Sim.Entities.Alive[e.Target]) return;
 
-            Sound bodySound = _driver.Sim.Entities.Kind[e.Target] == EnemyKind.ForestRootSwarm
-                ? Sound.RootSwarmHit : Sound.HitBody;
+            // Сталь сабли общая, тело — своё: у бутона сочное «тук» вместо удара по дереву.
+            EnemyKind targetKind = _driver.Sim.Entities.Kind[e.Target];
+            Sound bodySound = targetKind == EnemyKind.ForestRootSwarm || targetKind == EnemyKind.ForestSplitling ? Sound.RootSwarmHit
+                : targetKind == EnemyKind.ForestBud ? Sound.BudHurt : Sound.HitBody;
             bool ability = e.DamageOrigin == DamageOrigin.Ability;
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId
                 && e.DamageKind != DamageType.Physical) return;
@@ -475,7 +566,16 @@ namespace Game.View
         private void QueueDeathSounds(EnemyKind kind)
         {
             var timing = EnemyPresentationProfile.Death(kind);
-            bool swarm = kind == EnemyKind.ForestRootSwarm;
+            if (kind == EnemyKind.ForestBud)
+            {
+                // У бутона одна запись от удара до касания земли — падение в ней уже есть;
+                // осыпание общее, по времени его профиля.
+                Play(Sound.BudDeath, KillVolume, 1f, .02f);
+                Queue(Sound.Dissolve, timing.DissolveAt);
+                return;
+            }
+            // Детёныш Расщепеня мелкий и падает, как корнеполз.
+            bool swarm = kind == EnemyKind.ForestRootSwarm || kind == EnemyKind.ForestSplitling;
             Queue(swarm ? Sound.RootSwarmFall : Sound.GuardianFall, timing.FallSeconds);
             Queue(swarm ? Sound.RootSwarmDissolve : Sound.Dissolve, timing.DissolveAt);
         }
@@ -538,6 +638,7 @@ namespace Game.View
         {
             _deathCueCount = 0;
             _whooshDelay = _whirlwindEndAt = _anchorImpactAt = _anchorLandAt = -1f;
+            _warningReadyAt = _earthReadyAt = 0f;
             _chainSoundActive = false;
             _blazePreparing = _blazeBurning = _paused = false;
             if (_voices != null) foreach (var voice in _voices) if (voice != null) voice.Stop();
@@ -647,18 +748,44 @@ namespace Game.View
             if (steps != null && steps.Length > 1)
                 System.Array.Sort(steps, (a, b) => string.CompareOrdinal(a.name, b.name));
             _variants[(int)Sound.Footstep] = steps;
+
+            // Плюй-плод и сигналы врагов (26.09): здесь лежит кандидат, выбранный на
+            // странице ART/SFX/candidates-2026-09-26 (build-bud-sfx.py --install), под
+            // игровым именем. Клипы, назначенные в профиле, по-прежнему важнее.
+            AudioClip[] bud = Resources.LoadAll<AudioClip>("Audio/Combat/Bud");
+            _variants[(int)Sound.BudVolley] = Named(bud, "BudVolley");
+            // BudPop_01..05 по имени: номер плода выбирает свой хлопок.
+            _variants[(int)Sound.BudPop] = Named(bud, "BudPop");
+            _variants[(int)Sound.BudFruitImpact] = Named(bud, "BudFruitImpact");
+            _variants[(int)Sound.BudHurt] = Named(bud, "BudHurt");
+            _variants[(int)Sound.BudDeath] = Named(bud, "BudDeath");
+            _variants[(int)Sound.EnemyWarning] = Resources.LoadAll<AudioClip>("Audio/Combat/EnemyWarning");
+            // Пустая папка — выбор «тишина»: замах хранителя тогда молчит.
+            _variants[(int)Sound.GuardianSwing] = Resources.LoadAll<AudioClip>("Audio/Combat/GuardianSwing");
+
             // До получения новых записей используем прежние банки как временную основу.
             _variants[(int)Sound.WhooshHeavy] = _variants[(int)Sound.Whoosh];
             _variants[(int)Sound.CycloneTurn] = _variants[(int)Sound.Whoosh];
             _variants[(int)Sound.RootSwarmHit] = _variants[(int)Sound.HitBody];
             _variants[(int)Sound.RootSwarmKill] = _variants[(int)Sound.Kill];
             _variants[(int)Sound.RootSwarmDissolve] = _variants[(int)Sound.Dissolve];
+            if (_variants[(int)Sound.BudHurt].Length == 0) _variants[(int)Sound.BudHurt] = _variants[(int)Sound.HitBody];
             for (int i = 0; i < _entries.Length; i++)
             {
                 _entries[i] = Profile != null ? Profile.Find((Sound)i) : null;
                 if (_entries[i]?.Clips != null && _entries[i].Clips.Length > 0)
                     _variants[i] = _entries[i].Clips;
             }
+        }
+
+        private static AudioClip[] Named(AudioClip[] clips, string prefix)
+        {
+            var found = new List<AudioClip>();
+            for (int i = 0; i < clips.Length; i++)
+                if (clips[i] != null && clips[i].name.StartsWith(prefix, System.StringComparison.Ordinal))
+                    found.Add(clips[i]);
+            found.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            return found.ToArray();
         }
 
         // Audio presentation must not touch UnityEngine.Random: keeping a private

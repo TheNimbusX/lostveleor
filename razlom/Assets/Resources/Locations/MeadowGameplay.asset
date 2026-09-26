@@ -36,7 +36,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 1
     MaxEnemies: 3
-    EnemyHealth: 60
+    EnemyHealth: 100
     Boss: 0
   - Rooms: 12
     Exits: 1
@@ -44,7 +44,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 1
     MaxEnemies: 4
-    EnemyHealth: 65
+    EnemyHealth: 107
     Boss: 0
   - Rooms: 13
     Exits: 1
@@ -52,7 +52,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 4
-    EnemyHealth: 70
+    EnemyHealth: 114
     Boss: 0
   - Rooms: 14
     Exits: 1
@@ -60,7 +60,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 5
-    EnemyHealth: 75
+    EnemyHealth: 121
     Boss: 0
   - Rooms: 15
     Exits: 1
@@ -68,7 +68,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 2
     MaxEnemies: 5
-    EnemyHealth: 80
+    EnemyHealth: 128
     Boss: 0
   - Rooms: 16
     Exits: 1
@@ -76,7 +76,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 6
-    EnemyHealth: 85
+    EnemyHealth: 135
     Boss: 0
   - Rooms: 17
     Exits: 1
@@ -84,7 +84,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 6
-    EnemyHealth: 90
+    EnemyHealth: 142
     Boss: 0
   - Rooms: 18
     Exits: 1
@@ -92,15 +92,7 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 3
     MaxEnemies: 7
-    EnemyHealth: 95
-    Boss: 0
-  - Rooms: 19
-    Exits: 1
-    Loops: 1
-    RewardBranches: 2
-    MinEnemies: 4
-    MaxEnemies: 7
-    EnemyHealth: 100
+    EnemyHealth: 149
     Boss: 0
   - Rooms: 20
     Exits: 1
@@ -108,5 +100,5 @@ MonoBehaviour:
     RewardBranches: 2
     MinEnemies: 4
     MaxEnemies: 8
-    EnemyHealth: 105
+    EnemyHealth: 156
     Boss: 1

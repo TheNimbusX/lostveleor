@@ -4,7 +4,7 @@ R=Path(r'C:/Users/d.grab/Desktop/the-game');P=R/'ART/ENEMIES/Forest_Bud';O=R/'ar
 bpy.ops.wm.open_mainfile(filepath=str(P/'ForestBudRanged_Production.blend'))
 rig=bpy.data.objects['ARM_ForestBudRanged'];scene=bpy.context.scene
 for tr in rig.animation_data.nla_tracks:tr.mute=True
-frames={'Idle':[1,23,46,69,91],'Walk':[1,5,9,13,17,21,25,29,33],'Ranged_Attack':[1,13,20,25,31,37,43,49,58,67],'Death':[1,9,17,25,33,37]}
+frames={'Idle':[1,23,46,69,91],'Walk':[1,5,9,13,17,21,25,29,33],'Ranged_Attack':[1,13,20,25,31,37,43,49,58,67],'Death':[1,9,17,25,33,37],'Hit':[1,2,3,4,5,6,7,9,11]}
 bones=[b.name for b in rig.data.bones if b.use_deform];reference={}
 for name,ff in frames.items():
  ac=bpy.data.actions[name];rig.animation_data.action=ac;rig.animation_data.action_slot=ac.slots[0]

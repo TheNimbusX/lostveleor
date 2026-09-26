@@ -32,31 +32,40 @@ namespace Game.Sim
         public const int PlayerBaseAttackCycleTicks = 20;
 
         /// <summary>
-        /// От начала замаха до контакта у ВРАГА: 12 тиков = 400 мс.
+        /// От начала замаха до контакта у Лесного хранителя: 21 тик = 0,7 с.
         /// </summary>
         // Не трогать заодно с геройской цифрой. Это единственное окно, в
         // которое игрок видит занесённый удар и может уйти; укоротишь — и
         // враги начнут бить без предупреждения, а бой станет нечестным
         // ровно в том смысле, который игрок чувствует, но не формулирует.
-        public const int EnemyAttackWindupTicks = 12;
+        //
+        // Было 12, и моб при этом доворачивался и шёл: уйти можно было только
+        // угадав. Теперь направление фиксируется, на земле заполняется сектор,
+        // а удар бьёт ровно по нарисованному — см. Simulation.EnemyMelee.
+        public const int EnemyAttackWindupTicks = 21;
 
-        /// <summary>Замах той сущности, которая бьёт.</summary>
-        public const int RootSwarmHealth = 30;
-        public const int RootSwarmAttackWindupTicks = 9;
-        public const int RootSwarmAttackCooldownTicks = 24;
+        // Здоровье и урон Корнеполза — в EnemyArchetypes, как у всех видов.
+        // 9 тиков читались только как дёрганье. 12 — ещё поза без метки на
+        // земле, но уже поза, которую успеваешь увидеть.
+        //
+        // Цикл 24 → 30 (стенд баланса, 26.09): укус без метки не уворачивается,
+        // и рой делал 30–70% всего урона по герою. Реже кусает — и вместе с
+        // жетоном укуса (SwarmBiteTokenLimit) толпа перестаёт жевать героя разом.
+        public const int RootSwarmAttackWindupTicks = 12;
+        public const int RootSwarmAttackCooldownTicks = 30;
         public static readonly Fix64 RootSwarmMoveSpeed = Fix64.Ratio(34, 10);
         public static readonly Fix64 RootSwarmRushSpeed = Fix64.FromInt(5);
         private static readonly Fix64 RootSwarmAttackRange = Fix64.Ratio(14, 10);
 
+        // У моба окно и дистанция подхода — из профиля его замаха
+        // (Simulation.EnemyMelee): Хранитель 21 тик и 2 м, Корнеполз 12 и 1,4.
         private int WindupTicksFor(int entityId)
             => entityId == PlayerId ? PlayerAttackWindupTicks
-                : Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
-                    ? RootSwarmAttackWindupTicks : EnemyAttackWindupTicks;
+                : MeleeProfileOf(Entities.Kind[entityId]).WindupTicks;
 
         private Fix64 AttackRangeFor(int entityId)
             => entityId == PlayerId ? PlayerAttackRange
-                : Entities.Kind[entityId] == EnemyKind.ForestRootSwarm
-                    ? RootSwarmAttackRange : AttackRange;
+                : MeleeProfileOf(Entities.Kind[entityId]).ChaseRange;
 
         /// <summary>
         /// Во время активного действия герой сохраняет управление, но идёт
@@ -118,11 +127,11 @@ namespace Game.Sim
         // начаться боком, а затем Damage проверял уже другое направление.
         private static readonly Fix64 AttackCommitCos = Fix64.Ratio(4, 5);
 
-        // У моба сектор мягче, чем у игрока: его корпус доворачивается с
-        // ограниченной скоростью, а уже начатый замах не должен превращаться
-        // в пустой жест из-за пары кадров расталкивания. ±120° достаточно,
-        // чтобы надёжно принять контакт во время доворота, но всё ещё не
-        // превращает удар в полноценный круг вокруг тела.
+        // У Корнеполза старт мягче, чем у игрока: после расталкивания он
+        // часто стоит боком, а в начале замаха всё равно разворачивается к
+        // цели целиком. ±120° не дают ему зависнуть, но и не превращают
+        // укус в круг вокруг тела. Хранитель стартует строже — см.
+        // GuardianSwingCommitCos: его сектор нарисован на земле.
         private static readonly Fix64 EnemyAttackArcCos = Fix64.Ratio(-1, 2);
 
         /// <summary>
@@ -177,6 +186,9 @@ namespace Game.Sim
         // боевого числа отсюда — он читает лист статов сущности, и поэтому
         // надетый предмет меняет удар так же, как узел дерева или пассивка.
         private const int PlayerBaseHealth = 1000;
+
+        // Здоровье мишеней тестовой арены и стенда темпа — не баланс вида.
+        // Настоящее здоровье видов — в EnemyArchetypes, его ставит расстановка.
         private const int EnemyBaseHealth  = 100;
 
         // Щит и широкий силуэт требуют больше воздуха, чем прежняя техническая
@@ -190,14 +202,14 @@ namespace Game.Sim
         private static readonly Fix64 EnemySpawnWallMargin = Fix64.One;
 
         private static readonly Fix64 PlayerBaseDamage = Fix64.FromInt(34);
-        private static readonly Fix64 EnemyBaseDamage  = Fix64.FromInt(7);
 
         // Скорость атаки — В АТАКАХ В СЕКУНДУ: только в этих единицах «+20%»
         // на предмете значит то, что игрок прочитает. В тики её переводит
         // CombatStats.AttackCooldownTicks, и делает это в единственном месте.
-        // Базовый цикл героя — 20 тиков, врага — 36.
+        // Базовый цикл героя — 20 тиков, Хранителя — 48: замах, окно для
+        // наказания и свободная пауза (см. Simulation.EnemyMelee).
         private static readonly Fix64 PlayerBaseAttackSpeed = Fix64.Ratio(TicksPerSecond, PlayerBaseAttackCycleTicks);
-        private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, 36);
+        private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, GuardianSwingCycleTicks);
 
         // Скорость движения — в метрах в секунду; шаг за тик считает CombatStats.
         // 6 м/с было быстрее естественной подачи текущего authored-run и
@@ -472,7 +484,14 @@ namespace Game.Sim
             _stonehoofActions = new StonehoofActionState[capacity];
             _stonehoofArena = new int[capacity];
             _wendigoNextLeap = new int[capacity];
+            // Новые мобы леса: состояние на сущность и очередь распада Расщепеня.
+            _thorncasters = new ThorncasterState[capacity];
+            _rootSnarers = new RootSnarerState[capacity];
+            _splitters = new SplitterState[capacity];
+            _pendingSplits = new int[capacity];
             _forestFruits = new ForestFruitState[capacity * ForestFruitSlotsPerEnemy];
+            _telegraphs = new EnemyTelegraph[capacity * TelegraphSlotsPerEntity];
+            _enemySwings = new EnemySwingState[capacity];
             _cleavePreviousPositions = new FixVec2[capacity];
             _mobilityHits = new bool[capacity];
 
@@ -551,6 +570,8 @@ namespace Game.Sim
             ClearMoveOrder();
             Entities.Clear();
             ResetForestBud();
+            ResetForestMobs();
+            ResetEncounterWaves();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -595,6 +616,8 @@ namespace Game.Sim
             ClearMoveOrder();
             Entities.Clear();
             ResetForestBud();
+            ResetForestMobs();
+            ResetEncounterWaves();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -656,9 +679,14 @@ namespace Game.Sim
 
         /// <summary>
         /// Текущая тестовая пачка Разлома: три Хранителя и шесть Корнеползов.
+        ///
+        /// Здоровье — в очках, а не процент уровня: съёмка ставит своё
+        /// (CombatCaptureEncounter — 1000). Корнеполз без явного числа берёт
+        /// табличное; прототипный забег передаёт оба уже умноженными на глубину.
         /// </summary>
-        public void SetupForestEncounter(LayoutMap map, ulong spawnSeed, int guardianHealth)
+        public void SetupForestEncounter(LayoutMap map, ulong spawnSeed, int guardianHealth, int swarmHealth = 0)
         {
+            if (swarmHealth <= 0) swarmHealth = ArchetypeHealth(EnemyKind.ForestRootSwarm);
             SetupRift(map, spawnSeed, 3, 3, guardianHealth, enemyBudget: 3);
 
             // Весь рой приходит из одной комнаты плотной волной. Шаг сетки
@@ -672,7 +700,7 @@ namespace Game.Sim
                 FixVec2 spot = map.ClampToWalkable(center + offset, EnemyBodyRadius);
                 if (map.Routes != null && !map.Routes.TrySafeSpawn(placement, spot, out spot)) continue;
                     if (!map.IsWalkable(spot, Fix64.Ratio(85, 100))) continue;
-                int id = Entities.Spawn(spot, RootSwarmHealth, Faction.Orvill);
+                int id = Entities.Spawn(spot, swarmHealth, Faction.Orvill);
                 ConfigureEnemy(id, EnemyKind.ForestRootSwarm);
                 Entities.Facing[id] = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
                 _events.Add(SimEvent.Spawn(id, Entities.Position[id]));
@@ -689,6 +717,8 @@ namespace Game.Sim
             ClearMoveOrder();
             Entities.Clear();
             ResetForestBud();
+            ResetForestMobs();
+            ResetEncounterWaves();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -735,6 +765,8 @@ namespace Game.Sim
             ClearMoveOrder();
             Entities.Clear();
             ResetForestBud();
+            ResetForestMobs();
+            ResetEncounterWaves();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -828,8 +860,13 @@ namespace Game.Sim
         private static readonly Fix64 PlayerBaseLavidiumRegen = Fix64.FromInt(3);
 
         /// <summary>
-        /// Базовые статы рядового врага. Здоровье приходит из Spawn: им тир
-        /// Разлома и масштабирует сложность.
+        /// Базовые статы рядового врага. Здоровье приходит из Spawn: его
+        /// считает расстановка — таблица видов, глубина и подстройка пачки.
+        /// Урон, тело и окна — строка EnemyArchetypes этого вида.
+        ///
+        /// Криты у врагов выключены (шанс 0): «повезло мобу» в игре без
+        /// щита читается как нечестный удар. Сам бросок в ApplyAttack
+        /// остаётся — поток Combat не сдвигается от того, кто бьёт.
         /// </summary>
         private void ConfigureEnemy(int id, EnemyKind kind = EnemyKind.ForestGuardian)
         {
@@ -837,7 +874,12 @@ namespace Game.Sim
             if (kind == EnemyKind.ForestBud) { ConfigureForestBud(id); return; }
             if (kind == EnemyKind.ForestWendigo) { ConfigureWendigo(id); return; }
             if (kind == EnemyKind.ForestStonehoof) { ConfigureStonehoof(id); return; }
+            if (kind == EnemyKind.ForestThorncaster) { ConfigureThorncaster(id); return; }
+            if (kind == EnemyKind.ForestRootSnarer) { ConfigureRootSnarer(id); return; }
+            if (kind == EnemyKind.ForestSplitter) { ConfigureSplitter(id); return; }
+            if (kind == EnemyKind.ForestSplitling) { ConfigureSplitling(id); return; }
             bool swarm = kind == EnemyKind.ForestRootSwarm;
+            EnemyArchetype archetype = EnemyArchetypes.Get(kind);
             // Щит и широкий силуэт требуют больше воздуха, чем прежняя
             // техническая капсула. Радиус не даёт строю схлопываться в одну
             // нечитаемую стопку вокруг игрока.
@@ -849,19 +891,33 @@ namespace Game.Sim
             // 0.85 даёт 1.7 м между центрами. Больше брать нельзя без проверки
             // коридоров: этот же радиус проходит через LayoutMap.IsWalkable, и
             // слишком толстое тело перестанет пролезать в связки комнат.
-            Entities.BodyRadius[id] = swarm ? Fix64.Ratio(45, 100) : Fix64.Ratio(85, 100);
+            Entities.BodyRadius[id] = archetype.BodyRadius;
             Entities.PushWeight[id] = swarm ? Fix64.FromInt(2) : Fix64.One;
 
             StatSheet sheet = Entities.Stats[id];
-            sheet.SetBase(StatType.Damage, swarm ? Fix64.FromInt(4) : EnemyBaseDamage);
+            sheet.SetBase(StatType.Damage, Fix64.FromInt(archetype.BaseDamage));
             sheet.SetBase(StatType.AttackSpeed, swarm
                 ? Fix64.Ratio(TicksPerSecond, RootSwarmAttackCooldownTicks) : EnemyBaseAttackSpeed);
             sheet.SetBase(StatType.MoveSpeed, swarm ? RootSwarmMoveSpeed : EnemyBaseMoveSpeed);
-            sheet.SetBase(StatType.CritChance, swarm ? Fix64.Zero : BaseCritChance);
-            sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
+            sheet.SetBase(StatType.CritChance, Fix64.Zero);
+            sheet.SetBase(StatType.CritMultiplier, Fix64.One);
 
             Entities.RefreshStats(id);
             Entities.Health[id] = Entities.MaxHealth[id];
+        }
+
+        /// <summary>
+        /// Один враг вида kind в точке — с обычной настройкой вида и событием
+        /// появления. Для стендов и тестов: забег расставляет пачки сам,
+        /// через SetupEncounters.
+        /// </summary>
+        internal int SpawnEnemy(FixVec2 position, int health, EnemyKind kind)
+        {
+            int id = Entities.Spawn(position, health, Faction.Orvill);
+            ConfigureEnemy(id, kind);
+            _events.Add(SimEvent.Spawn(id, position));
+            Grid.Rebuild(Entities);
+            return id;
         }
 
         /// <summary>
@@ -876,6 +932,8 @@ namespace Game.Sim
             ClearMoveOrder();
             Entities.Clear();
             ResetForestBud();
+            ResetForestMobs();
+            ResetEncounterWaves();
             Statuses.Clear();
             for (int i = 0; i < AbilitySlots; i++) _abilityReadyTick[i] = 0;
             ResetAbilityState();
@@ -936,9 +994,10 @@ namespace Game.Sim
         /// Приводит производные боевые числа игрока в соответствие с листом
         /// после того, как снаряжение или награды поменяли снаружи.
         ///
-        /// heal нужен на входе в Разлом: игрок и так входит с полным здоровьем,
-        /// и прибавка к максимуму от надетой вещи иначе осталась бы пустой
-        /// строчкой в описании.
+        /// heal нужен на входе в забег и в лагерь: туда игрок входит с полным
+        /// здоровьем, и прибавка к максимуму от надетой вещи иначе осталась бы
+        /// пустой строчкой в описании. Между аренами забега здоровье НЕ
+        /// восполняется (владелец, 26.09): RiftRun переносит недостачу сам.
         /// </summary>
         public void RefreshPlayerStats(bool heal)
         {
@@ -948,6 +1007,30 @@ namespace Game.Sim
             // В Разлом входят и с полным лавидием: пустой пул на старте забега
             // наказывал бы за касты, сделанные ещё в лагере.
             Entities.Lavidium[PlayerId] = Fix64.FromInt(Entities.MaxLavidium[PlayerId]);
+        }
+
+        /// <summary>
+        /// Сколько здоровья герою не хватает до максимума.
+        ///
+        /// Между аренами переезжает ИМЕННО НЕДОСТАЧА, а не само здоровье:
+        /// прибавка к максимуму за уровень или награду доходит и до текущего
+        /// (то же правило, что при повышении уровня), а полученный урон
+        /// остаётся полученным. Лечат зелья, уровень и награды — не дверь.
+        /// </summary>
+        public int PlayerMissingHealth
+            => Entities.Count > PlayerId && Entities.Health[PlayerId] < Entities.MaxHealth[PlayerId]
+                ? Entities.MaxHealth[PlayerId] - Entities.Health[PlayerId] : 0;
+
+        /// <summary>
+        /// Возвращает перенесённую недостачу после расстановки новой арены.
+        /// Не убивает: вход в арену с нулём здоровья читался бы как смерть
+        /// без удара, поэтому минимум — единица.
+        /// </summary>
+        public void ApplyPlayerMissingHealth(int missing)
+        {
+            if (missing <= 0 || Entities.Count <= PlayerId) return;
+            int health = Entities.MaxHealth[PlayerId] - missing;
+            Entities.Health[PlayerId] = health < 1 ? 1 : health;
         }
 
         /// <summary>
@@ -1034,6 +1117,19 @@ namespace Game.Sim
                 FixVec2 push = _separationPush[i].ClampLength(MaxSeparationStep);
                 Entities.Position[i] = MoveInsideLayout(i, Entities.Position[i], push);
             }
+        }
+
+        /// <summary>
+        /// Сброс новых мобов леса и общего замедления героя при любой
+        /// расстановке — рядом с ResetForestBud, который сбрасывает Вендиго,
+        /// Камнекопыта, метки и замахи. Зовётся после Entities.Clear.
+        /// </summary>
+        private void ResetForestMobs()
+        {
+            ResetThorncasters();
+            ResetRootSnarers();
+            ResetSplitters();
+            ResetHeroSlow();
         }
 
         private void ResetAbilityState()
@@ -1143,7 +1239,12 @@ namespace Game.Sim
         public void Step(in InputFrame rawInput)
         {
             _events.Clear();
+            ExpireTelegraphs();
             UpdatePotionEffects();
+
+            // Замедление героя снимается до пересчёта листов: тик, в который
+            // оно кончилось, герой уже бежит в полную силу.
+            ExpireHeroSlow();
 
             // Пересчёт грязных листов статов — первой стадией и ровно один раз
             // за тик. У StatSheet пересчёт по грязному флагу, и точка, в которой
@@ -1218,8 +1319,21 @@ namespace Game.Sim
             UpdateForestBud();
             UpdateWendigo();
             UpdateStonehooves();
+            UpdateThorncasters();
+            UpdateRootSnarers();
+            UpdateSplitters();
             TickBurning();
             TickIgnite();
+
+            // Распад Расщепеня — после всех смертей тика и до волн: дети
+            // встают в тот же тик, что умер родитель, и счёт живых волн и
+            // зачистки забега никогда не видит ложного нуля. Не внутри Kill:
+            // тот зовётся посреди обходов сущностей и до пересборки сетки.
+            ResolvePendingSplits();
+
+            // Волны встречи — после всех обновлений врагов и горения: счёт
+            // живых видит смерти этого тика, и волна выходит в тот же тик.
+            UpdateEncounterWaves();
 
             Tick++;
         }
@@ -1594,6 +1708,14 @@ namespace Game.Sim
             Entities.Alive[target] = false;
             if (target == PlayerId) ResetAbilityState();
             _events.Add(SimEvent.Death(killer, target, Entities.Position[target]));
+            // Метка мёртвого гаснет в тик смерти, а не тиком позже, когда до
+            // него дойдёт очередь: иначе над трупом кадр висел бы живой сектор.
+            CancelEnemySwing(target);
+            CancelTelegraphsOf(target);
+            // Только настоящая смерть Расщепеня: уход в землю по концу
+            // выживания и Alive = false в тестах идут мимо Kill, а детёныш
+            // сам не делится. Дети встанут в ResolvePendingSplits этого тика.
+            if (Entities.Kind[target] == EnemyKind.ForestSplitter) QueueSplit(target);
             GrantKillXp(target, killer);
             TalentOnKill(target, killer, slot);
             UpgradeOnKill(target, killer);
@@ -2020,11 +2142,19 @@ namespace Game.Sim
             FixVec2 playerPos = Entities.Position[PlayerId];
             bool playerAlive = Entities.Alive[PlayerId];
 
+            // Жетоны считаются один раз на всё движение: за время хода ни один
+            // замах не начинается и не кончается — это делает ResolveAttacks.
+            bool meleeTokensTaken = CountMeleeAttackTokens(-1) >= MeleeAttackTokenLimit;
+
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i]) continue;
 
                 if (Statuses.IsStunned(i, Tick))
+                { Entities.Velocity[i] = FixVec2.Zero; continue; }
+
+                // Встающий из земли стоит: он ещё корни (Simulation.EncounterWaves).
+                if (IsEmerging(i))
                 { Entities.Velocity[i] = FixVec2.Zero; continue; }
 
                 // Волочимый враг не идёт своим ходом. Иначе он приезжал бы
@@ -2036,11 +2166,32 @@ namespace Game.Sim
                 if (!playerAlive) { Entities.Velocity[i] = FixVec2.Zero; continue; }
 
                 FixVec2 toPlayer = playerPos - Entities.Position[i];
+                EnemyKind kind = Entities.Kind[i];
 
-                if (Entities.Kind[i] == EnemyKind.ForestWendigo)
+                if (kind == EnemyKind.ForestWendigo)
                 { MoveWendigo(i, toPlayer); continue; }
-                if (Entities.Kind[i] == EnemyKind.ForestStonehoof)
+                if (kind == EnemyKind.ForestStonehoof)
                 { MoveStonehoof(i, toPlayer); continue; }
+
+                // Новые мобы леса ходят в своих файлах. true — ход сделан
+                // целиком (разворот, агро, шаг); false — общий ход ниже:
+                // Расщепень и детёныш идут как ближники, прочие стоят.
+                if (kind == EnemyKind.ForestThorncaster)
+                { if (MoveThorncaster(i, toPlayer)) continue; }
+                else if (kind == EnemyKind.ForestRootSnarer)
+                { if (MoveRootSnarer(i, toPlayer)) continue; }
+                else if (kind == EnemyKind.ForestSplitter || kind == EnemyKind.ForestSplitling)
+                { if (MoveSplitter(i, toPlayer)) continue; }
+
+                // Замах и восстановление держат тело: ни шага, ни доворота.
+                // Направление зафиксировано в начале замаха, и именно по нему
+                // нарисован сектор; доворот вслед за героем сделал бы метку ложью.
+                if (EnemySwingHoldsBody(i))
+                {
+                    Entities.Velocity[i] = FixVec2.Zero;
+                    Entities.Facing[i] = _enemySwings[i].Direction;
+                    continue;
+                }
 
                 // Разворот идёт ВСЕГДА, даже до того как враг решил погнаться:
                 // тело следит взглядом за игроком, а погоня — отдельное,
@@ -2058,14 +2209,22 @@ namespace Game.Sim
                     continue;
                 }
 
-                if (Entities.Kind[i] == EnemyKind.ForestBud)
+                if (kind == EnemyKind.ForestBud)
                 { MoveForestBud(i, toPlayer); continue; }
 
+                // Ход ближника — только тем, кто бьёт общим замахом. Вид со
+                // своими атаками, не сделавший хода сам, стоит и следит за
+                // героем: чужой подход к герою сделал бы из него Хранителя.
+                if (!UsesEnemySwing(kind))
+                { Entities.Velocity[i] = FixVec2.Zero; continue; }
+
                 Fix64 speed = Entities.MoveStep[i];
-                bool swarm = Entities.Kind[i] == EnemyKind.ForestRootSwarm;
+                bool swarm = IsSwarmLike(kind);
                 Fix64 attackRange = AttackRangeFor(i);
                 if (swarm && toPlayer.LengthSq <= Fix64.FromInt(4))
-                    speed = speed * RootSwarmRushSpeed / RootSwarmMoveSpeed;
+                    speed = kind == EnemyKind.ForestSplitling
+                        ? speed * SplitlingRushSpeed / SplitlingMoveSpeed
+                        : speed * RootSwarmRushSpeed / RootSwarmMoveSpeed;
 
                 // Подошёл на дистанцию удара — гасим ход, но не мгновенно:
                 // враг, встающий как вкопанный, выдаёт отсутствие тела ровно
@@ -2084,7 +2243,15 @@ namespace Game.Sim
                 // вплотную стоит союзник, который УЖЕ ближе к игроку, — встаём
                 // за ним. Толпа сама собирается в кольцо и перестаёт бурлить.
                 FixVec2 wanted;
-                if (toPlayer.LengthSq <= attackRange * attackRange)
+                if (!swarm && meleeTokensTaken && Tick >= Entities.NextAttackTick[i]
+                    && toPlayer.LengthSq <= ApproachBrakeRangeSq)
+                {
+                    // Готов бить, но оба ближних жетона заняты: не стоим в
+                    // упор, а кружим. Освободится жетон — моб уже на дистанции
+                    // удара и лицом к герою.
+                    wanted = TokenWaitCircle(i, toPlayer, speed);
+                }
+                else if (toPlayer.LengthSq <= attackRange * attackRange)
                 {
                     wanted = FixVec2.Zero;
                 }
@@ -2215,7 +2382,9 @@ namespace Game.Sim
                 int substeps = System.Math.Max(1, (step.Length / (LayoutMap.CellSize / Fix64.FromInt(8))).ToInt() + 1);
                 FixVec2 piece = step / Fix64.FromInt(substeps);
                 bool straight = Entities.ForcedKind[i] == (byte)ForcedMotionKind.Skewer
-                    || Entities.ForcedKind[i] == (byte)ForcedMotionKind.Backblast;
+                    || Entities.ForcedKind[i] == (byte)ForcedMotionKind.Backblast
+                    || Entities.ForcedKind[i] == (byte)ForcedMotionKind.EnemyLunge
+                    || Entities.ForcedKind[i] == (byte)ForcedMotionKind.SplitPop;
                 for (int s = 0; s < substeps; s++)
                 {
                     // Выпад и отскок заканчиваются у стены: скольжение меняло бы полосу удара.
@@ -2292,7 +2461,10 @@ namespace Game.Sim
 
             for (int i = 0; i < Entities.Count; i++)
             {
-                if (Entities.Kind[i] == EnemyKind.ForestBud || Entities.Kind[i] == EnemyKind.ForestWendigo || Entities.Kind[i] == EnemyKind.ForestStonehoof) continue;
+                // Ближние мобы живут по своему замаху: фиксированное направление,
+                // фигура на земле, восстановление. Ниже по циклу остаётся только
+                // герой — порядок обхода по индексу при этом прежний.
+                if (i != PlayerId) { UpdateEnemySwing(i); continue; }
                 if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
                 if (pendingTarget >= 0)
@@ -2396,12 +2568,9 @@ namespace Game.Sim
             FixVec2 toTarget = Entities.Position[target] - Entities.Position[source];
             Fix64 range = AttackRangeFor(source);
             if (toTarget.LengthSq > range * range) return false;
-            // У врага доворот — телеграф, а не дополнительный случайный
-            // бросок. Разрешаем мягкий сектор ±120°: уже показанный замах
-            // переживает небольшую ошибку ориентации, но удар не становится
-            // круговым. Игрок сохраняет строгий фронтальный commit.
-            Fix64 arc = source == PlayerId ? AttackCommitCos : EnemyAttackArcCos;
-            return FixVec2.WithinArc(Entities.Facing[source], toTarget, arc);
+            // Только герой: моб проверяет попадание по фигуре своего замаха,
+            // см. LandEnemySwing. Герой сохраняет строгий фронтальный commit.
+            return FixVec2.WithinArc(Entities.Facing[source], toTarget, AttackCommitCos);
         }
 
         /// <summary>
@@ -2455,12 +2624,6 @@ namespace Game.Sim
 
         private int FindNearestEnemy(int from)
         {
-            // Враг выбирает цель в расширенном секторе ±120°. Полное снятие
-            // ограничения делало бы удар через спину; узкий сектор, напротив,
-            // возвращал исходный баг: после расталкивания моб стоял боком,
-            // не создавал замах и выглядел зависшим. Расширенный сектор даёт
-            // время на доворот, а CanLandAttack использует то же правило.
-            //
             // У ИГРОКА ВЫБОР ИДЁТ В ШИРОКОМ СЕКТОРЕ 120°, А НЕ В УЗКОМ ОКНЕ
             // СТАРТА ВЗМАХА. Здесь стоял AttackCommitCos — порог, при котором
             // корпус уже почти смотрит на цель. Как условие ВЫБОРА он означал
@@ -2469,11 +2632,19 @@ namespace Game.Sim
             // не срабатывала. Доворот у героя 20° за тик при замахе в 9 тиков,
             // то есть цель на 60° он успевает добрать с запасом — и уже к
             // контакту CanLandAttack видит её во фронтальном секторе.
-            Fix64 arc = from == PlayerId ? AttackArcCos : EnemyAttackArcCos;
+            //
+            // У МОБА ЭТО УСЛОВИЕ СТАРТА ЗАМАХА. Хранитель ищет героя в 2,2 м и
+            // только перед собой (±37°), Корнеполз — в своих 1,4 м и ±120°.
+            // Дальность и сектор берутся из одних функций и сеткой, и прямым
+            // перебором: иначе тест эквивалентности сравнивал бы разные правила.
+            Fix64 arc = from == PlayerId ? AttackArcCos : EnemySwingStartCos(from);
             return DebugUseNaiveTargeting
                 ? NaiveFindNearestEnemy(from, arc)
-                : Grid.FindNearestEnemy(Entities, from, AttackRangeFor(from), arc);
+                : Grid.FindNearestEnemy(Entities, from, TargetSearchRange(from), arc);
         }
+
+        private Fix64 TargetSearchRange(int from)
+            => from == PlayerId ? PlayerAttackRange : EnemySwingStartRange(from);
 
         /// <summary>
         /// Эталонная реализация: прямой перебор всех сущностей.
@@ -2487,7 +2658,7 @@ namespace Game.Sim
             FixVec2 origin = Entities.Position[from];
             FixVec2 facing = Entities.Facing[from];
             Faction mySide = Entities.Side[from];
-            Fix64 range = AttackRangeFor(from);
+            Fix64 range = TargetSearchRange(from);
 
             for (int i = 0; i < Entities.Count; i++)
             {
@@ -2592,7 +2763,14 @@ namespace Game.Sim
             HashForestBud(ref hash);
             HashWendigo(ref hash);
             HashStonehooves(ref hash);
+            HashThorncasters(ref hash);
+            HashRootSnarers(ref hash);
+            HashSplitters(ref hash);
+            HashHeroSlow(ref hash);
+            HashTelegraphs(ref hash);
+            HashEnemySwings(ref hash);
             HashCleaveFan(ref hash);
+            HashEncounterWaves(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.

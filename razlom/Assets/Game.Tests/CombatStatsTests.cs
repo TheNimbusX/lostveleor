@@ -44,9 +44,15 @@ namespace Game.Tests
             EntityStore e = sim.Entities;
 
             Assert.AreEqual(34, e.Damage[Simulation.PlayerId], "урон игрока");
-            Assert.AreEqual(7, e.Damage[1], "урон врага");
+            // 14, а не 7: урон Хранителя теперь строка таблицы видов (баланс v1).
+            // Здоровье мишени тестовой арены — по-прежнему 100, оно не баланс.
+            Assert.AreEqual(14, e.Damage[1], "урон врага");
+            Assert.AreEqual(EnemyArchetypes.Get(EnemyKind.ForestGuardian).BaseDamage, e.Damage[1]);
+            Assert.AreEqual(0L, e.CritChance[1].Raw, "враги не критуют");
             Assert.AreEqual(20, e.AttackCooldown[Simulation.PlayerId], "кулдаун игрока в тиках");
-            Assert.AreEqual(36, e.AttackCooldown[1], "кулдаун врага в тиках");
+            // 48, а не 36: замах 21 + окно наказания 15 + свободные 12 тиков,
+            // см. Simulation.EnemyMelee.
+            Assert.AreEqual(48, e.AttackCooldown[1], "кулдаун врага в тиках");
             Assert.AreEqual(1000, e.MaxHealth[Simulation.PlayerId], "здоровье игрока");
             Assert.AreEqual(100, e.MaxHealth[1], "здоровье врага");
 
@@ -275,9 +281,11 @@ namespace Game.Tests
             Assert.AreEqual(2, run.Depth, "начался следующий Разлом");
             Assert.GreaterOrEqual(sim.Entities.Damage[Simulation.PlayerId], armedDamage,
                 "вход в Разлом рождает игрока заново — снаряжение обязано вернуться на лист");
+            // Здоровье между аренами переносится, но урона здесь не было —
+            // значит и недостачи нет, и прибавки награды не пропали.
             Assert.AreEqual(sim.Entities.MaxHealth[Simulation.PlayerId],
                 sim.Entities.Health[Simulation.PlayerId],
-                "в новый Разлом игрок входит с полным здоровьем");
+                "без полученного урона игрок входит в новый Разлом с полным здоровьем");
         }
 
     }

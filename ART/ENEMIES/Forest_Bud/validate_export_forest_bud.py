@@ -14,7 +14,7 @@ report['bones']=len(rig.data.bones);report['deform_bones']=sum(b.use_deform for 
 for track in rig.animation_data.nla_tracks:track.mute=True
 body=bpy.data.objects['SM_Body'];feet=['L_Front_Foot','R_Front_Foot','L_Hind_Foot','R_Hind_Foot']
 for action in bpy.data.actions:
-    if action.name not in ['Idle','Walk','Ranged_Attack','Death']:continue
+    if action.name not in ['Idle','Walk','Ranged_Attack','Death','Hit']:continue
     rig.animation_data.action=action;rig.animation_data.action_slot=action.slots[0]
     start,end=[int(x) for x in action.frame_range];rootpositions=[];mins=[];maxs=[];feet_z=[];stance_error=[]
     endpoints=[]
@@ -28,7 +28,7 @@ for action in bpy.data.actions:
             stance_error.append((rig.pose.bones[f].matrix.translation-rig.pose.bones[control].matrix.translation).length)
     loop=max(abs(endpoints[0][name][i][j]-endpoints[-1][name][i][j]) for name in endpoints[0] for i in range(4) for j in range(4))
     report['clips'].append({'name':action.name,'frames':[start,end],'duration':(end-start)/30,'root_max_drift':max(Vector(p).length for p in rootpositions),'body_min_z':min(mins),'body_max_z':max(maxs),'foot_height_range':[min(min(z) for z in feet_z),max(max(z) for z in feet_z)],'max_foot_ik_error':max(stance_error),'loop_matrix_error':loop,'body_min_z_frames':mins})
-report['walk_root_equivalent_speed']=rig['walk_root_equivalent_speed'];report['attack_shots_seconds']=list(rig['attack_shots_seconds'])
+report['walk_root_equivalent_speed']=rig['walk_root_equivalent_speed'];report['attack_shots_seconds']=list(rig['attack_shots_seconds']);report['hit_seconds']=rig['hit_seconds']
 (OUT/'validation.json').write_text(json.dumps(report,indent=2),encoding='utf8')
 print('FOREST_VALIDATION',json.dumps({k:v for k,v in report.items() if k not in ['meshes','clips']}))
 for rec in report['meshes']:
@@ -38,7 +38,8 @@ if '--export' not in sys.argv and not globals().get('FOREST_EXPORT',False):print
 for rec in report['clips']:
     if rec['root_max_drift']>.00001:raise RuntimeError('Root drift: '+rec['name'])
     if rec['body_min_z']<-.001:raise RuntimeError('Ground penetration: '+rec['name'])
-    if rec['name'] in ['Idle','Walk','Ranged_Attack'] and rec['loop_matrix_error']>.0001:raise RuntimeError('Loop seam: '+rec['name'])
+    # Hit не зациклен, но обязан вернуться в позу покоя: View накладывает его поверх любой фазы.
+    if rec['name'] in ['Idle','Walk','Ranged_Attack','Hit'] and rec['loop_matrix_error']>.0001:raise RuntimeError('Loop seam: '+rec['name'])
 scene.frame_set(1);rig.animation_data.action=bpy.data.actions['Idle'];rig.animation_data.action_slot=bpy.data.actions['Idle'].slots[0]
 rig.data.pose_position='POSE'
 bpy.ops.object.select_all(action='DESELECT');rig.hide_set(False);rig.select_set(True);bpy.context.view_layer.objects.active=rig

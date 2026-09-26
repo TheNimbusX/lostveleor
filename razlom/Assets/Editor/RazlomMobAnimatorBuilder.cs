@@ -32,7 +32,8 @@ using UnityEngine;
 public static class RazlomMobAnimatorBuilder
 {
     private const string CharactersFolder = "Assets/Resources/Characters";
-    private const string AutoBuildSessionKey = "Razlom.MobAnimator.AutoBuild.v2";
+    // v3 — удары ведутся фазой AttackPhase: старый контроллер без неё пересобирается сам.
+    private const string AutoBuildSessionKey = "Razlom.MobAnimator.AutoBuild.v3";
 
     /// <summary>Мобы, у которых контроллер собирается этим рецептом.</summary>
     private static readonly string[] Mobs = { "Forest_Guardian", "Forest_RootSwarm" };
@@ -49,6 +50,13 @@ public static class RazlomMobAnimatorBuilder
     private const string HitRight = "HitRight";
     private const string Knockback = "Knockback";
     private const string Death = "Death";
+
+    /// <summary>
+    /// Время клипа удара, 0…1. Ведёт CharacterAnimatorView от тиков замаха
+    /// Sim: старт → контакт → конец восстановления ложатся на измеренные кадры
+    /// клипа (ART/.../2.forest-guardian/production/swing_measure.json).
+    /// </summary>
+    private const string AttackPhase = "AttackPhase";
 
     // Состояние смерти адресуется ИЗ КОДА по имени: CharacterAnimatorView делает
     // CrossFadeInFixedTime("Base Layer.DeathBack"). Имя нельзя менять, не меняя
@@ -73,13 +81,15 @@ public static class RazlomMobAnimatorBuilder
 
     // Реакция ~1.1 с ускоряется до ~0.44 с: справочник анимаций требует от
     // попадания 0.4 секунды — достаточно, чтобы прочитать, и мало, чтобы
-    // следующее тоже прочиталось.
+    // следующее тоже прочиталось. Реакция Корнеполза нарисована сразу под
+    // эту длину (0.33 с, production/hit_build.json) и идёт своим темпом.
     private const float HitSpeed = 2.5f;
+    private const float RootSwarmHitSpeed = 1f;
 
-    // Удар 1.8 с против замаха в 0.4 с. 1.6 не лечит рассинхрон до конца —
-    // лечит его перерезка клипа, — но убирает худшее: лапу, доезжающую через
-    // секунду после того, как урон уже прошёл.
-    private const float AttackSpeed = 1.6f;
+    // СКОРОСТИ УДАРА БОЛЬШЕ НЕТ. Здесь стояло 1.6, а представление ускоряло
+    // клип ещё раз — вместе ×2.3–2.7, и контакт всё равно съезжал. Теперь
+    // время клипа задаёт параметр AttackPhase, и скорость состояния ни на что
+    // не влияет: оставлена единицей, чтобы переходы шли в реальном времени.
 
     [InitializeOnLoadMethod]
     private static void AutoBuild()
@@ -224,6 +234,7 @@ public static class RazlomMobAnimatorBuilder
         AnimatorController controller = AnimatorController.CreateAnimatorControllerAtPath(output);
         controller.AddParameter(MoveSpeed, AnimatorControllerParameterType.Float);
         controller.AddParameter(Stunned, AnimatorControllerParameterType.Bool);
+        controller.AddParameter(AttackPhase, AnimatorControllerParameterType.Float);
         // Все восемь триггеров заводятся всегда, даже когда клипа под них нет:
         // код зовёт ResetTrigger по всему списку, а ResetTrigger по
         // несуществующему параметру сыплет предупреждениями каждый кадр.
@@ -276,18 +287,22 @@ public static class RazlomMobAnimatorBuilder
         machine.defaultState = locomotion;
 
         // ---- удары ----
-        // Клипы Mixamo под замах в 12 тиков (0.4 с) длинны: у Стража удар идёт
-        // 1.8 с, то есть урон приходит задолго до того, как лапа доедет. Пока
-        // клипы не перерезаны, ускоряем — контакт съезжает к тику урона.
+        // Удар ведётся фазой, а не часами: клип Mixamo (1.8 с) и замах Sim
+        // (0.7 с) не совпадут ни при какой скорости — контакт, стойка до него
+        // и восстановление после растягиваются по-разному. CharacterAnimatorView
+        // кладёт кадры клипа на тики замаха; вход и выход тоже его — выход по
+        // времени остался только страховкой, если фаза дошла до конца клипа.
         AnimatorState attackAState = AddOneShot(machine, locomotion, "AttackA", attackA,
-            AttackATrigger, 0.085f, 0.85f, 0.16f);
+            AttackATrigger, 0.085f, 1f, 0.16f);
         AnimatorState attackBState = AddOneShot(machine, locomotion, "AttackB", attackB,
-            AttackBTrigger, 0.085f, 0.85f, 0.16f);
-        // У Корнеполза темп задаёт представление под его замах в 9 тиков;
-        // множитель Хранителя иначе ускорил бы клип второй раз.
-        float attackSpeed = mob == "Forest_RootSwarm" ? 1f : AttackSpeed;
-        if (attackAState != null) attackAState.speed = attackSpeed;
-        if (attackBState != null) attackBState.speed = attackSpeed;
+            AttackBTrigger, 0.085f, 1f, 0.16f);
+        foreach (AnimatorState attack in new[] { attackAState, attackBState })
+        {
+            if (attack == null) continue;
+            attack.speed = 1f;
+            attack.timeParameterActive = true;
+            attack.timeParameter = AttackPhase;
+        }
 
         // ---- реакции ----
         // Левая и правая разведены, если клипы есть: в изометрии бьют со всех
@@ -306,8 +321,9 @@ public static class RazlomMobAnimatorBuilder
         // третий, и ни один не виден. Справочник анимаций требует 0.4 секунды
         // ровно поэтому. Ускорение вместо перерезки — приближение, но оно
         // возвращает попаданию отзывчивость сегодня.
-        if (leftState != null) leftState.speed = HitSpeed;
-        if (rightState != null) rightState.speed = HitSpeed;
+        float hitSpeed = mob == "Forest_RootSwarm" ? RootSwarmHitSpeed : HitSpeed;
+        if (leftState != null) leftState.speed = hitSpeed;
+        if (rightState != null) rightState.speed = hitSpeed;
 
         AnimatorState knockbackTarget = leftState ?? rightState;
         if (knockbackTarget != null)

@@ -2,7 +2,11 @@ using System;
 
 namespace Game.Sim
 {
-    /// <summary>Начальный баланс отдельного вида; существующие враги его не читают.</summary>
+    /// <summary>
+    /// Настройка Плюй-плода. Значения по умолчанию — его строка в
+    /// EnemyArchetypes; отдельный класс живёт ради тестов, которые подменяют
+    /// дальность, окна и тело целиком. Другие виды его не читают.
+    /// </summary>
     public sealed class ForestBudSettings
     {
         public static readonly ForestBudSettings Default = new ForestBudSettings();
@@ -11,8 +15,10 @@ namespace Game.Sim
         public readonly Fix64 MoveSpeed, AttackRange, PreferredRange, RetreatRange, ImpactRadius, BodyRadius;
         public int ActionTicks => WindupTicks + (ShotCount - 1) * ShotIntervalTicks + RecoveryTicks;
 
-        public ForestBudSettings(int health = 80, int damage = 20, int attackCooldownTicks = 135,
-            int windupTicks = 24, int recoveryTicks = 18, Fix64? moveSpeed = null,
+        public ForestBudSettings(int health = EnemyArchetypes.ForestBudHealth, int damage = EnemyArchetypes.ForestBudDamage,
+            int attackCooldownTicks = EnemyArchetypes.ForestBudCycleTicks,
+            int windupTicks = EnemyArchetypes.ForestBudWindupTicks, int recoveryTicks = EnemyArchetypes.ForestBudRecoveryTicks,
+            Fix64? moveSpeed = null,
             Fix64? attackRange = null, Fix64? preferredRange = null, Fix64? retreatRange = null,
             Fix64? impactRadius = null, Fix64? bodyRadius = null)
         {
@@ -23,7 +29,7 @@ namespace Game.Sim
             PreferredRange = preferredRange ?? Fix64.Ratio(17, 2);
             RetreatRange = retreatRange ?? Fix64.FromInt(4);
             ImpactRadius = impactRadius ?? Fix64.Ratio(8, 10);
-            BodyRadius = bodyRadius ?? Fix64.Ratio(65, 100);
+            BodyRadius = bodyRadius ?? EnemyArchetypes.ForestBudBodyRadius;
             if (Health <= 0 || Damage < 0 || WindupTicks < 1 || RecoveryTicks < 1 ||
                 AttackCooldownTicks < ActionTicks || AttackCooldownTicks > CombatStats.MaxAttackCooldown ||
                 MoveSpeed < Fix64.Zero || RetreatRange <= BodyRadius || PreferredRange <= RetreatRange ||

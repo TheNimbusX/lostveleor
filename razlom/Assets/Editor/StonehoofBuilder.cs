@@ -32,9 +32,14 @@ public static class StonehoofBuilder
         controller.layers = Array.Empty<AnimatorControllerLayer>(); controller.parameters = Array.Empty<AnimatorControllerParameter>();
         controller.AddLayer("Base Layer");
         var machine = controller.layers[0].stateMachine;
-        foreach (string role in new[] { "Idle", "Walk", "Windup", "Launch", "ChargeLoop", "Brake", "WallBrace", "WallImpact", "Hit", "Death" })
+        int built = 0;
+        foreach (string role in new[] { "Idle", "Walk", "Windup", "Launch", "ChargeLoop", "Brake", "WallBrace", "WallImpact", "Hit", "Death", "TurnLeft", "TurnRight" })
         {
             var original = originalClips.FirstOrDefault(c => c.name.EndsWith("Stonehoof_" + role));
+            // Разворот на месте (AN_Stonehoof_TurnLeft/Right) ещё рисуется. Без клипа
+            // состояния нет, и StonehoofAnimatorView переступает фазой Walk.
+            if (original == null && OptionalRoles.Contains(role))
+            { Debug.LogWarning("[stonehoof] Нет клипа " + role + " — состояние пропущено до экспорта клипа."); continue; }
             if (original == null) throw new InvalidOperationException("Нет клипа " + role + ": " + string.Join(",", originalClips.Select(c => c.name)));
             string path = Root + role + ".anim";
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
@@ -48,6 +53,7 @@ public static class StonehoofBuilder
             controller.AddParameter(role + "Phase", AnimatorControllerParameterType.Float);
             state.timeParameter = role + "Phase"; state.timeParameterActive = true;
             if (role == "Idle") machine.defaultState = state;
+            built++;
         }
         var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "Stonehoof_BaseColor.png");
         var mat = AssetDatabase.LoadAssetAtPath<Material>(Root + "ForestStonehoof.mat");
@@ -78,15 +84,20 @@ public static class StonehoofBuilder
         finally { UnityEngine.Object.DestroyImmediate(root); }
         EditorUtility.SetDirty(controller); EditorUtility.SetDirty(mat); AssetDatabase.SaveAssets();
         BuildEffects();
-        Debug.Log("[stonehoof] Десять клипов, Generic rig, материал и игровой prefab готовы.");
+        Debug.Log("[stonehoof] Клипов: " + built + ", Generic rig, материал и игровой prefab готовы.");
     }
+
+    /// <summary>Роли, без которых сборка не падает: клипы ещё в работе.</summary>
+    private static readonly string[] OptionalRoles = { "TurnLeft", "TurnRight" };
+
+    private const string CfxrBlurredSmoke = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr smoke cloud x4 ab blurred.mat";
 
     private static void BuildEffects()
     {
-        var sourceDust = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/VFX/Wendigo/Materials/M_Wendigo_Dust.mat");
-        if (sourceDust == null) throw new InvalidOperationException("Нет материала мягкой пыли.");
+        // Своя пыль лежит рядом с моделью. Материалы Вендиго удалены вместе с его эффектами —
+        // от них сборщик больше не зависит: недостающую пыль берём из размытого облака CFXR.
         var dust = AssetDatabase.LoadAssetAtPath<Material>(Root + "Stonehoof_Dust.mat");
-        if (dust == null) { dust = new Material(sourceDust); AssetDatabase.CreateAsset(dust, Root + "Stonehoof_Dust.mat"); }
+        if (dust == null) dust = CreateDust();
         var chip = AssetDatabase.LoadAssetAtPath<Material>(Root + "Stonehoof_Stone.mat");
         if (chip == null)
         {
@@ -133,5 +144,18 @@ public static class StonehoofBuilder
             finally { UnityEngine.Object.DestroyImmediate(root); }
         }
         AssetDatabase.SaveAssets();
+    }
+
+    /// <summary>Unlit-облако CFXR без растворения и мягких частиц: в URP без depth-текстуры они гасят пыль у земли.</summary>
+    private static Material CreateDust()
+    {
+        var source = AssetDatabase.LoadAssetAtPath<Material>(CfxrBlurredSmoke);
+        if (source == null) throw new InvalidOperationException("Нет размытого облака CFXR: " + CfxrBlurredSmoke);
+        var dust = new Material(source) { name = "Stonehoof_Dust" };
+        dust.DisableKeyword("_CFXR_DISSOLVE"); dust.DisableKeyword("_CFXR_DISSOLVE_ALONG_UV_X"); dust.DisableKeyword("_FADING_ON");
+        foreach (string property in new[] { "_UseDissolve", "_UseDissolveOffsetUV", "_UseSP", "_UseLighting" })
+            if (dust.HasProperty(property)) dust.SetFloat(property, 0f);
+        AssetDatabase.CreateAsset(dust, Root + "Stonehoof_Dust.mat");
+        return dust;
     }
 }

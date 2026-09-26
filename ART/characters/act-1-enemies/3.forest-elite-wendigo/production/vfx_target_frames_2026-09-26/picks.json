@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-26",
+  "note": "Owner away; Claude picked per owner instruction «не спрашивай, доделай». Bases: our game frames artifacts/wendigo-review/editor-*-60 cropped x2 (scratchpad wvfx/base-*.jpg), Higgsfield gpt_image_2_5 2k edits.",
+  "picked": {
+    "claw": {
+      "file": "1-claw-ivory.png",
+      "job": "a6c6d461-1b52-4e4a-8015-14abca754381",
+      "why": "three short warm-ivory claw ribbons low over the ground, three grooves, directional soil/bark/leaf spray; clean, matches the bright palette"
+    },
+    "takeoff": {
+      "file": "3-takeoff.png",
+      "job": "0d43378c-31ee-462f-8058-fab41cc3cc9f",
+      "why": "backward soil-clod burst from both feet, low dust roll, scuffed furrows, faint dust along the arc"
+    },
+    "landing": {
+      "file": "4-landing.png",
+      "job": "ed956683-3fef-4ab3-96f6-c1af38c7e4dd",
+      "why": "compact low dust skirt, shallow crater, clods and leaves; add the radial fissure star decal from 8-landing-heavy.png"
+    },
+    "howl": {
+      "file": "5-howl-roots.png",
+      "job": "38185125-91f4-4e11-8c31-267ec2a3aa65",
+      "why": "ring of dark twisted roots/thorny wooden spikes erupting 2-5.5 m around the wendigo with a calm inner circle, dust ring, clods; faint pale breath mist at the skull"
+    },
+    "howl_windup_detail": {
+      "file": "7-howl-windup.png",
+      "job": "681667ee-b079-4eb4-a266-0e4e43a368dc",
+      "why": "only the idea of small root tips poking out along the ring during the windup; the warning itself is our shared ring telegraph with a safe inner circle"
+    }
+  },
+  "rejected": {
+    "2-claw-frost.png": "cold spirit palette fights the warm game palette",
+    "6-howl-frost.png": "too flashy/white, reads as ice magic",
+    "8-landing-heavy.png": "busier; has a ghost duplicate of the wendigo"
+  }
+}

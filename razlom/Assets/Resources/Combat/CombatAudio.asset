@@ -286,4 +286,47 @@ MonoBehaviour:
     PitchVariation: 0.03
     Priority: 72
     MaxPerFrame: 1
+  - Sound: 32
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 45
+    MaxPerFrame: 1
+  - Sound: 33
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 45
+    MaxPerFrame: 1
+  - Sound: 34
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 50
+    MaxPerFrame: 1
+  - Sound: 35
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 70
+    MaxPerFrame: 1
+  - Sound: 36
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 80
+    MaxPerFrame: 1
+  - Sound: 37
+    Clips:
+    - {fileID: 8300000, guid: fb828838991fd764ab00ad7540a2718b, type: 3}
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 20
+    MaxPerFrame: 1
   PelagAudioRevision: 4

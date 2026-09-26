@@ -41,6 +41,8 @@ namespace Game.EditorTools
             view.Replace.gameObject.SetActive(shot == Shot.Replace);
             view.Status.gameObject.SetActive(shot == Shot.Status);
             view.Boss.gameObject.SetActive(shot == Shot.Status);
+            // Таймер выживания — на том же кадре, под панелью (в игре с боссом не встречается).
+            if (view.Survival != null) view.Survival.gameObject.SetActive(shot == Shot.Status);
             view.Summary.gameObject.SetActive(shot == Shot.Summary);
             if (shot == Shot.Summary)
             {
@@ -63,7 +65,7 @@ namespace Game.EditorTools
                 // Выбор следующей арены после награды: обычная с улучшением, магазин, опасная с бонусом.
                 // Тексты карточек — из игры (RunHud.RouteTexts), чтобы кадр не расходился с экраном.
                 view.ChoiceTitle.text = "Выбери следующую арену";
-                view.ChoiceSubtitle.text = "Разлом 3 / 5 · награда — после зачистки";
+                view.ChoiceSubtitle.text = "Арена 3 · награда — после зачистки";
                 view.ChoiceHint.text = "1  2  3 — выбрать путь    ·    L — уйти с добычей";
                 Game.Sim.ArenaRouteOffer[] routes =
                 {
@@ -89,7 +91,7 @@ namespace Game.EditorTools
 
             if (shot == Shot.Choice)
             {
-                view.ChoiceSubtitle.text = "Разлом зачищен · дальше разлом 3 / 5";
+                view.ChoiceSubtitle.text = "Арена зачищена · дальше арена 3";
                 Offer(view.Offers[0], "Рассекающий удар", "Способность", "Сильный удар саблей сверху перед собой. Бьёт одну цель и не двигает героя.", "Лавидий", "30", "Cleave", false, "1");
                 view.Offers[0].KindIcon.texture = view.KindIcons[0];
                 Offer(view.Offers[1], "Длинный клинок", "Усиление · 3 из 8", "Дальность Рассекающего удара +50%. Удар достаёт врагов за спиной первого.", "Рассекающий удар", "", "Cleave", true, "2");
@@ -146,9 +148,10 @@ namespace Game.EditorTools
             }
             if (shot == Shot.Status)
             {
-                view.StatusTitle.text = "Разлом 2 / 5";
-                view.StatusLine.text = "Встречи 1 / 3 · целей 14";
+                view.StatusTitle.text = "Арена 2";
+                view.StatusLine.text = "Волна 2 / 3 · целей 14";
                 view.StatusExtra.text = "Тайники 0 / 2 · золото 36";
+                if (view.SurvivalLabel != null) view.SurvivalLabel.text = "Выстоять 0:42";
                 view.BossName.text = "Хранитель лугов";
                 view.BossBar.Set(.64f);
             }

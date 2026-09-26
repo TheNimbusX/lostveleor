@@ -64,6 +64,22 @@ namespace Game.View
         public string RootSwarmMaterial = "Characters/Forest_RootSwarm/Forest_RootSwarm_Material";
         public string RootSwarmTexture = "Characters/Forest_RootSwarm/Forest_RootSwarm_BaseColor";
 
+        // ТЕЛО НОВОГО МОБА — ТОЛЬКО СВОЁ (план мобов леса, 26.09). Вид без своей
+        // записи здесь раньше уходил в пул Хранителя и молча рисовался им: такой
+        // бой нельзя ни проверить, ни показать. Теперь у каждого нового вида свой
+        // пул. Нет готового префаба — серая заглушка с подписью
+        // (ForestMobPlaceholderView), и только в редакторе и dev-сборке; в релизе
+        // без префаба — ошибка в лог и никакого тела, чужой меш не подставляется.
+        [Header("Новые мобы леса")]
+        [Tooltip("Префаб Шипомёта в Resources. Нет файла — заглушка (только редактор и dev-сборка).")]
+        public string ThorncasterPrefab = "Characters/Forest_Thorncaster/ForestThorncaster_Runtime";
+        [Tooltip("Префаб Корнехвата в Resources. Нет файла — заглушка (только редактор и dev-сборка).")]
+        public string RootSnarerPrefab = "Characters/Forest_RootSnarer/ForestRootSnarer_Runtime";
+        [Tooltip("Префаб Расщепеня в Resources. Его детёныш — то же тело в масштабе ниже.")]
+        public string SplitterPrefab = "Characters/Forest_Splitter/ForestSplitter_Runtime";
+        [Tooltip("Детёныш Расщепеня — тело Расщепеня в этом масштабе (радиус тела в Sim 0.42 против 0.70).")]
+        public float SplitlingScale = 0.6f;
+
         [Header("Модели персонажей")]
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
         public string WoleModel = "Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig";
@@ -207,6 +223,14 @@ namespace Game.View
         private ForestWendigoAnimatorView[] _wendigoViews;
         private ForestBudAnimatorView[] _forestBudViews;
 
+        // Новые мобы леса по семьям тела: 0 — Шипомёт, 1 — Корнехват, 2 — Расщепень
+        // вместе с детёнышем. Пул собирается при первом теле семьи; пустой после
+        // попытки — тела нет (релизная сборка без префаба).
+        private const int ForestMobFamilies = 3;
+        private readonly ViewPool[] _forestMobPools = new ViewPool[ForestMobFamilies];
+        private readonly bool[] _forestMobPrepared = new bool[ForestMobFamilies];
+        private ForestMobPlaceholderView[] _placeholderViews;
+
         // Индекс сущности → её объект. Массив, а не словарь: индексы плотные,
         // а искать по ним надо каждый кадр.
         private Transform[] _views;
@@ -322,6 +346,23 @@ namespace Game.View
         // после цветокоррекции становится охристо-оранжевым, как в концепте.
         private static readonly Color HostileOutlineColor = new Color(0.70f, 0.46f, 0.30f, 1f);
         private static readonly Color HoveredOutlineColor = new Color(0.90f, 0.62f, 0.38f, 1f);
+        // ВСТАЮЩИЙ ИЗ ЗЕМЛИ ЕЩЁ НЕ ВРАГ: тёплого контура угрозы у него нет, только
+        // тонкая земляная кромка. Контур загорается, когда моб пошёл, — это и есть
+        // «проснулся». Тело не красим: высветление персонажей владелец отверг.
+        private static readonly Color DormantOutlineColor = new Color(0.34f, 0.25f, 0.17f, 1f);
+        private const float DormantOutlineWidth = 0.8f;
+
+        // ---- выход из-под земли и уход в неё (Simulation.EncounterWaves) ----
+        [Tooltip("За сколько тиков симуляции (30 в секунду) тело уходит в землю по концу выживания")]
+        public int BurrowTicks = 21;
+        private EnemyEmergeView _emerge;
+        // Последняя глубина тела под землёй, м: убитый на выходе застывает на ней.
+        private float[] _emergeSink;
+        private bool[] _burrowing;
+        // Начало ухода в землю на часах отрисовки (тик симуляции + Alpha).
+        private float[] _burrowTick;
+        private static readonly System.Collections.Generic.List<GameObject> PrewarmScratch
+            = new System.Collections.Generic.List<GameObject>(32);
         private static Sprite _contactShadowSprite;
         private const string ContactShadowName = "Contact Shadow";
         private const float WoleSpriteScaleMultiplier = 0.78f;
@@ -389,6 +430,7 @@ namespace Game.View
             _forestBudViews = new ForestBudAnimatorView[capacity];
             _wendigoViews = new ForestWendigoAnimatorView[capacity];
             _stonehoofViews = new StonehoofAnimatorView[capacity];
+            _placeholderViews = new ForestMobPlaceholderView[capacity];
             _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
@@ -414,6 +456,9 @@ namespace Game.View
             _hasLastRenderPosition = new bool[capacity];
             _turnVisualUntil = new float[capacity];
             _turnVisualDirection = new float[capacity];
+            _emergeSink = new float[capacity];
+            _burrowing = new bool[capacity];
+            _burrowTick = new float[capacity];
 
             Transform woleRoot = new GameObject("Пул: Wole").transform;
             Transform orvillRoot = new GameObject("Пул: Orvill").transform;
@@ -434,10 +479,19 @@ namespace Game.View
                 BodyFactory(OrvillModel, OrvillController, OrvillMaterial, OrvillTexture,
                     Faction.Orvill, OrvillScale),
                 PrewarmOrvill > 0 ? PrewarmOrvill : capacity);
+            // Рой — под самую людную встречу леса: волны поднимают его из земли
+            // посреди боя, и расширять пул в этот момент нельзя (см. PrewarmEncounter).
             _rootSwarmPool = new ViewPool(swarmRoot,
                 BodyFactory(RootSwarmModel, RootSwarmController, RootSwarmMaterial, RootSwarmTexture,
                     Faction.Orvill, RootSwarmScale),
-                PrewarmRootSwarm > 0 ? PrewarmRootSwarm : capacity);
+                PrewarmRootSwarm > 0 ? Mathf.Max(PrewarmRootSwarm, MaxForestBodies(EnemyKind.ForestRootSwarm)) : capacity);
+
+            // Общие метки ударов на земле. Заводятся сразу, а не по первому телу,
+            // как виды Вендиго и Камнекопыта: Хранитель есть в любой арене.
+            if (GetComponent<GroundTelegraphView>() == null) gameObject.AddComponent<GroundTelegraphView>();
+            // Земля под встающими и уходящими в неё врагами; свой пул выбросов готов сразу.
+            _emerge = GetComponent<EnemyEmergeView>();
+            if (_emerge == null) _emerge = gameObject.AddComponent<EnemyEmergeView>();
 
             BindNewEntities();
         }
@@ -455,6 +509,105 @@ namespace Game.View
             if (_orvillPool != null && _orvillPool.NeedsPrewarm) _orvillPool.PrewarmStep(PerFrame);
             else if (_rootSwarmPool != null && _rootSwarmPool.NeedsPrewarm) _rootSwarmPool.PrewarmStep(PerFrame);
             else if (_wolePool != null && _wolePool.NeedsPrewarm) _wolePool.PrewarmStep(PerFrame);
+        }
+
+        /// <summary>
+        /// Прогрев под встречу арены: пулы всех видов, что встанут в её волнах (и в
+        /// подмоге босса), готовы ДО боя. Поздняя волна встаёт из земли посреди драки,
+        /// и Instantiate в этот момент — ровно тот рывок кадра, ради которого пулы и
+        /// заводились. Зовётся сразу после ReleaseEverything: все тела свободны.
+        ///
+        /// Тел нужно не больше, чем бросает сумма волн: живые плюс ещё осыпающиеся.
+        /// Пул догревается до этого числа разом (вход на арену закрыт завесой), а
+        /// остаток прежнего прогрева идёт своим чередом по четыре за кадр.
+        /// </summary>
+        private void PrewarmEncounter()
+        {
+            Simulation sim = _driver.Sim;
+            ArenaEncounterTemplate template = sim != null ? sim.ActiveEncounter : null;
+            bool boss = _driver.Run != null && _driver.Run.BossId >= 0;
+            if (template == null && !boss) return;
+            if (template != null)
+            {
+                if (template.Uses(EnemyKind.ForestBud)) PrepareForestBud();
+                if (template.Uses(EnemyKind.ForestWendigo)) PrepareWendigo();
+                if (template.Uses(EnemyKind.ForestStonehoof)) PrepareStonehoof();
+            }
+            EnemyKind[] kinds = PrewarmKinds;
+            for (int k = 0; k < kinds.Length; k++)
+            {
+                // Арена босса расставлена по-старому: всё, что уже стоит, плюс две подмоги.
+                // Расщепень — три тела на место в группе: сам и два детёныша из того же пула
+                // (родитель ещё падает, когда детёныши уже встали).
+                int need = (MaxBodies(template, kinds[k]) + (boss
+                    ? CountBodies(sim, kinds[k]) + 2 * MaxBodies(ForestEncounterTemplates.BossAdds, kinds[k]) : 0))
+                    * EnemyArchetypes.BodiesPerSpawn(kinds[k]);
+                if (need <= 0) continue;
+                ViewPool pool = kinds[k] == EnemyKind.ForestRootSwarm ? _rootSwarmPool
+                    : kinds[k] == EnemyKind.ForestBud ? _forestBudPool
+                    : kinds[k] == EnemyKind.ForestWendigo ? _wendigoPool
+                    : kinds[k] == EnemyKind.ForestStonehoof ? _stonehoofPool
+                    : ForestMobFamily(kinds[k]) >= 0 ? ForestMobPool(kinds[k]) : _orvillPool;
+                EnsurePool(pool, need);
+            }
+        }
+
+        // Детёныша Расщепеня здесь нет: в группы он не ставится, его тела считает Расщепень.
+        private static readonly EnemyKind[] PrewarmKinds =
+        {
+            EnemyKind.ForestGuardian, EnemyKind.ForestRootSwarm, EnemyKind.ForestBud,
+            EnemyKind.ForestWendigo, EnemyKind.ForestStonehoof,
+            EnemyKind.ForestThorncaster, EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter,
+        };
+
+        /// <summary>Сколько тел вида бросает встреча в худшем случае: сумма верхних границ групп всех волн.</summary>
+        private static int MaxBodies(ArenaEncounterTemplate template, EnemyKind kind)
+        {
+            if (template == null) return 0;
+            int count = 0;
+            for (int w = 0; w < template.WaveCount; w++) count += MaxBodies(template.GetWave(w), kind);
+            return count;
+        }
+
+        private static int CountBodies(Simulation sim, EnemyKind kind)
+        {
+            int count = 0;
+            for (int i = 1; i < sim.Entities.Count; i++)
+                if (sim.Entities.Side[i] == Faction.Orvill && sim.Entities.Kind[i] == kind) count++;
+            return count;
+        }
+
+        private static int MaxBodies(EncounterWave wave, EnemyKind kind)
+        {
+            int count = 0;
+            for (int g = 0; g < wave.GroupCount; g++)
+                if (wave.GetGroup(g).Kind == kind) count += wave.GetGroup(g).Max;
+            return count;
+        }
+
+        /// <summary>Самая людная по виду встреча леса (с подмогой босса) — размер пула на весь забег.</summary>
+        private static int MaxForestBodies(EnemyKind kind)
+        {
+            int most = 2 * MaxBodies(ForestEncounterTemplates.BossAdds, kind);
+            foreach (ArenaEncounterTemplate template in ForestEncounterTemplates.All)
+                most = Mathf.Max(most, MaxBodies(template, kind));
+            return most;
+        }
+
+        /// <summary>
+        /// Не меньше <paramref name="need"/> готовых тел в пуле. Прогрев добирается
+        /// сразу; если нужно больше, чем пул собирался греть (встреча не из таблицы
+        /// леса), тела достаются и тут же возвращаются — пул растёт сейчас, а не в бою.
+        /// </summary>
+        private static void EnsurePool(ViewPool pool, int need)
+        {
+            if (pool == null) return;
+            while (pool.Created < need && pool.NeedsPrewarm) pool.PrewarmStep(1);
+            if (pool.Created >= need) return;
+            PrewarmScratch.Clear();
+            for (int i = 0; i < need; i++) PrewarmScratch.Add(pool.Acquire());
+            for (int i = 0; i < PrewarmScratch.Count; i++) pool.Release(PrewarmScratch[i]);
+            PrewarmScratch.Clear();
         }
 
         private void LateUpdate()
@@ -493,12 +646,16 @@ namespace Game.View
             {
                 ReleaseEverything();
                 _depthShown = depth;
+                // Все тела только что вернулись в пулы — самое время догреть их под
+                // встречу этой арены, пока бой не начался.
+                PrewarmEncounter();
             }
 
             BindNewEntities();
             if (_driver.GameplayPaused)
                 for (int i = 1; i < _boundCount; i++)
-                    if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo || sim.Entities.Kind[i] == EnemyKind.ForestStonehoof))
+                    if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo || sim.Entities.Kind[i] == EnemyKind.ForestStonehoof
+                        || ForestMobFamily(sim.Entities.Kind[i]) >= 0))
                     {
                         // Пауза останавливает и падение, и последующее исчезновение бутона.
                         _deathStartedAt[i] += Time.deltaTime;
@@ -882,6 +1039,7 @@ namespace Game.View
             _views[entityId] = null;
             _viewPools[entityId] = null;
             _animationViews[entityId] = null;
+            _placeholderViews[entityId] = null;
             if (_equipmentViews != null && (uint)entityId < (uint)_equipmentViews.Length)
                 _equipmentViews[entityId] = null;
             _deathUntil[entityId] = 0f;
@@ -908,8 +1066,39 @@ namespace Game.View
             _turnVisualDirection[entityId] = 0f;
             _presentationOffset[entityId] = Vector3.zero;
             _groundOffset[entityId] = 0f;
+            // Ушедший в землю вернётся в пул с выключенным видом моба — включаем обратно.
+            if (_burrowing[entityId]) SetMobViewsEnabled(entityId, true);
+            _burrowing[entityId] = false;
+            _burrowTick[entityId] = 0f;
+            _emergeSink[entityId] = 0f;
 
             if (_hoveredEntity == entityId) _hoveredEntity = -1;
+        }
+
+        /// <summary>
+        /// Насколько тело живого врага ещё под землёй, м: поздняя волна встаёт за свои
+        /// тики бездействия (Simulation.EmergeTicks) — быстро в начале и мягко у
+        /// поверхности. 0 — стоит на земле.
+        /// </summary>
+        private float EmergeSink(int entityId)
+        {
+            Simulation sim = _driver.Sim;
+            if (sim == null || _emerge == null || !sim.IsEmerging(entityId)) return 0f;
+            float rise = Mathf.Clamp01(1f - (sim.EmergeTicksLeft(entityId) - _driver.Alpha) / Simulation.EmergeTicks);
+            float below = 1f - rise;
+            return _emerge.SinkDepth(sim.Entities.Kind[entityId]) * below * below * below;
+        }
+
+        /// <summary>
+        /// Бутон, вендиго и камнекопыт сами играют смерть, едва сущность перестала
+        /// жить. Уход в землю — не смерть: на время погружения их вид выключен, и тело
+        /// уходит вниз в той позе, в которой его застал конец выживания.
+        /// </summary>
+        private void SetMobViewsEnabled(int entityId, bool enabled)
+        {
+            if (_forestBudViews[entityId] != null) _forestBudViews[entityId].enabled = enabled;
+            if (_wendigoViews[entityId] != null) _wendigoViews[entityId].enabled = enabled;
+            if (_stonehoofViews[entityId] != null) _stonehoofViews[entityId].enabled = enabled;
         }
 
         /// <summary>
@@ -928,11 +1117,22 @@ namespace Game.View
                 if (entities.Kind[i] == EnemyKind.ForestBud && _forestBudPool == null) PrepareForestBud();
                 if (entities.Kind[i] == EnemyKind.ForestWendigo && _wendigoPool == null) PrepareWendigo();
                 if (entities.Kind[i] == EnemyKind.ForestStonehoof && _stonehoofPool == null) PrepareStonehoof();
+                bool forestMob = entities.Side[i] != Faction.Wole && ForestMobFamily(entities.Kind[i]) >= 0;
                 ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
+                    : forestMob ? ForestMobPool(entities.Kind[i])
                     : entities.Kind[i] == EnemyKind.ForestStonehoof ? _stonehoofPool
                     : entities.Kind[i] == EnemyKind.ForestWendigo ? _wendigoPool
                     : entities.Kind[i] == EnemyKind.ForestBud ? _forestBudPool
                     : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
+                if (pool == null)
+                {
+                    // Новый моб без тела (релиз без префаба, ошибка уже в логе): чужой меш не
+                    // подставляем. Слот чистится целиком — прежний владелец индекса мог быть
+                    // бутоном или вендиго, и их вид не должен откликаться на эту сущность.
+                    ReleaseEntityView(i);
+                    _forestBudViews[i] = null; _wendigoViews[i] = null; _stonehoofViews[i] = null;
+                    continue;
+                }
                 GameObject go = pool.Acquire();
                 go.name = entities.Kind[i] == EnemyKind.None
                     ? $"{entities.Side[i]} #{i}" : $"{entities.Kind[i]} #{i}";
@@ -945,6 +1145,8 @@ namespace Game.View
                 _wendigoViews[i]?.Bind(_driver, i);
                 _stonehoofViews[i] = go.GetComponent<StonehoofAnimatorView>();
                 _stonehoofViews[i]?.Bind(_driver, i);
+                // Привязка заглушки — ниже, после базового масштаба: её размеры делятся на него.
+                _placeholderViews[i] = go.GetComponent<ForestMobPlaceholderView>();
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
                 _equipmentViews[i] = go.GetComponent<PelagEquipmentView>();
                 _animationViews[i]?.ResetForSpawn();
@@ -975,6 +1177,11 @@ namespace Game.View
                 _visualFacingWorld[i] = _lastFacingWorld[i];
                 _turnVisualUntil[i] = 0f;
                 _turnVisualDirection[i] = 0f;
+                _burrowing[i] = false;
+                _burrowTick[i] = 0f;
+                // Встающий из земли в первый же кадр стоит на полной глубине — без мигания на поверхности.
+                _emergeSink[i] = EmergeSink(i);
+                SetMobViewsEnabled(i, true);
 
                 if (i == Simulation.PlayerId)
                 {
@@ -991,8 +1198,10 @@ namespace Game.View
                 // станет «нормальным» размером врага в следующем Разломе.
                 go.transform.localScale = ExpectedBaseScale(entities.Side[i], entities.Kind[i], _animationViews[i]);
                 _baseScale[i] = go.transform.localScale;
+                _placeholderViews[i]?.Bind(_driver, i, _baseScale[i].x);
 
-                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null || _wendigoViews[i] != null || _stonehoofViews[i] != null
+                // Тела новых мобов (префаб и заглушка) стоят ногами в нуле, как вендиго.
+                _groundOffset[i] = forestMob || _animationViews[i] != null || _forestBudViews[i] != null || _wendigoViews[i] != null || _stonehoofViews[i] != null
                     ? 0f
                     : GroundOffset(entities.Side[i], WoleScale, OrvillScale);
             }
@@ -1003,6 +1212,8 @@ namespace Game.View
         private Vector3 ExpectedBaseScale(Faction faction, EnemyKind kind, CharacterAnimatorView animation)
         {
             float scale = faction == Faction.Wole ? WoleScale
+                : kind == EnemyKind.ForestSplitling ? SplitlingScale
+                : ForestMobFamily(kind) >= 0 ? 1f
                 : kind == EnemyKind.ForestWendigo || kind == EnemyKind.ForestStonehoof ? 1f
                 : kind == EnemyKind.ForestBud ? ForestBudScale
                 : kind == EnemyKind.ForestRootSwarm ? RootSwarmScale : OrvillScale;
@@ -1066,6 +1277,9 @@ namespace Game.View
                     contactShadow = sprite;
                     continue;
                 }
+                // Подпись заглушки — не тело: вспышка, растворение и ширина контура тела
+                // легли бы на её шрифтовой шейдер (у TMP свой _OutlineWidth).
+                if (ForestMobPlaceholderView.IsLabel(renderer)) continue;
 
                 bodyCount++;
             }
@@ -1077,7 +1291,7 @@ namespace Game.View
             for (int i = 0; i < all.Length; i++)
             {
                 Renderer renderer = all[i];
-                if (IsContactShadow(renderer, out _)) continue;
+                if (IsContactShadow(renderer, out _) || ForestMobPlaceholderView.IsLabel(renderer)) continue;
                 renderers[write++] = renderer;
             }
 
@@ -1260,6 +1474,21 @@ namespace Game.View
                 p.y += _groundOffset[i];
                 p += _presentationOffset[i] + _deathOffset[i];
 
+                // Выход из-под земли и уход в неё: тело ниже поверхности, земля его
+                // прячет. Уход — с ускорением, по часам симуляции (пауза его держит).
+                float burrow = 0f;
+                if (_burrowing[i])
+                {
+                    burrow = Mathf.Clamp01((_driver.Sim.Tick - 1 + _driver.Alpha - _burrowTick[i]) / Mathf.Max(1, BurrowTicks));
+                    p.y -= _emerge != null ? _emerge.SinkDepth(entities.Kind[i]) * burrow * burrow : 0f;
+                }
+                else
+                {
+                    // Убитый на выходе застывает на своей глубине и падает там же.
+                    if (alive) _emergeSink[i] = EmergeSink(i);
+                    p.y -= _emergeSink[i];
+                }
+
                 // Старт locomotion должен отвечать на первый ненулевой тик,
                 // а остановка — происходить до последнего микрошажка торможения.
                 // Проверка только velocity != 0 держала Run ещё несколько
@@ -1349,11 +1578,14 @@ namespace Game.View
                     // Свечение гаснет вместе с телом: иначе над осыпающимся
                     // трупом ещё полсекунды висит контур живого врага.
                     float outlineFade = alive ? 1f : 1f - Mathf.Clamp01(deathElapsed / 0.12f);
+                    // Встающий из земли и уходящий в неё — не угроза: земляная кромка вместо тёплой.
+                    bool dormant = hostile && !hoveredHostile
+                                   && (_burrowing[i] || (alive && _driver.Sim.IsEmerging(i)));
                     block.SetFloat(OutlineWidthId,
-                        (hostile ? (hoveredHostile ? HoveredOutlineWidth : HostileOutlineWidth)
+                        (hostile ? (hoveredHostile ? HoveredOutlineWidth : dormant ? DormantOutlineWidth : HostileOutlineWidth)
                             : HeroOutlineWidth) * outlineFade);
                     block.SetColor(OutlineColorId, hostile
-                        ? (hoveredHostile ? HoveredOutlineColor : HostileOutlineColor)
+                        ? (hoveredHostile ? HoveredOutlineColor : dormant ? DormantOutlineColor : HostileOutlineColor)
                         : HeroOutlineColor);
 
                     ApplyRendererPropertyBlock(bodyRenderers, materialSlotCounts, block);
@@ -1512,7 +1744,9 @@ namespace Game.View
                 // считает сущность мёртвой; эта задержка существует только в View.
                 if (!alive)
                 {
-                    bool showDeath = _deathStarted[i] && Time.time < _deathUntil[i];
+                    // Ушедший в землю виден, пока погружается; смерти у него нет.
+                    bool showDeath = _burrowing[i] ? burrow < 1f
+                        : _deathStarted[i] && Time.time < _deathUntil[i];
                     if (!showDeath)
                     {
                         ReleaseEntityView(i);
@@ -1598,11 +1832,17 @@ namespace Game.View
                             EndPlayerAnchorUse();
                         }
                         CharacterAnimatorView animation = AnimationOf(e.Target);
-                        if (animation == null && _forestBudViews[e.Target] == null && _wendigoViews[e.Target] == null && _stonehoofViews[e.Target] == null) break;
+                        // Тело нового моба (заглушка или префаб без своего вида) тоже умирает по
+                        // профилю: иначе оно пропадало бы в кадр смерти, без падения и растворения.
+                        bool forestMobBody = e.Target < _boundCount && _views[e.Target] != null
+                                             && ForestMobFamily(entities.Kind[e.Target]) >= 0;
+                        if (animation == null && _forestBudViews[e.Target] == null && _wendigoViews[e.Target] == null && _stonehoofViews[e.Target] == null
+                            && !forestMobBody) break;
                         animation?.PlayDeath();
                         _forestBudViews[e.Target]?.PlayDeath();
                         _wendigoViews[e.Target]?.PlayDeath();
                         _stonehoofViews[e.Target]?.PlayDeath();
+                        _placeholderViews[e.Target]?.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -1610,8 +1850,37 @@ namespace Game.View
                             : animation.DeathDuration;
                         _deathUntil[e.Target] = Time.time + presentationDuration;
                         break;
+                    case SimEventType.Burrowed:
+                        // Конец выживания: тело уходит в землю, а не падает замертво.
+                        // Часы — тик события на часах отрисовки, как у выброса земли.
+                        if ((uint)e.Target >= (uint)_boundCount || _views[e.Target] == null) break;
+                        var contexts = _driver.FrameEventContexts;
+                        _burrowing[e.Target] = true;
+                        _burrowTick[e.Target] = i < contexts.Count ? contexts[i].SimulationTick - 1 : _driver.Sim.Tick - 1;
+                        // Вид бутона, вендиго и камнекопыта идёт раньше (Update, порядок 300) и уже
+                        // увидел «не жив» — начал смерть. Привязка заново ставит его в покой, а
+                        // выключение не даёт начать снова: тело уходит вниз стоя.
+                        _forestBudViews[e.Target]?.Bind(_driver, e.Target);
+                        _wendigoViews[e.Target]?.Bind(_driver, e.Target);
+                        _stonehoofViews[e.Target]?.Bind(_driver, e.Target);
+                        SetMobViewsEnabled(e.Target, false);
+                        break;
+                    // Шипомёт и Корнехват: поза заглушки идёт от начала, контакта и снятия действия.
+                    case SimEventType.EnemyActionStarted:
+                    case SimEventType.EnemyActionImpact:
+                    case SimEventType.EnemyActionCancelled:
+                        if ((uint)e.Source < (uint)_boundCount && _placeholderViews[e.Source] != null)
+                            _placeholderViews[e.Source].OnEnemyAction(e.Type, (EnemyActionKind)e.ActionVariant, FrameEventTick(i));
+                        break;
                 }
             }
+        }
+
+        /// <summary>Тик Sim, в котором родилось i-е событие кадра (часы отрисовки: тик − 1 + Alpha).</summary>
+        private int FrameEventTick(int index)
+        {
+            var contexts = _driver.FrameEventContexts;
+            return index < contexts.Count ? contexts[index].SimulationTick - 1 : _driver.Sim.Tick - 1;
         }
 
         private CharacterAnimatorView AnimationOf(int entity)
@@ -1695,6 +1964,79 @@ namespace Game.View
             }, 4);
             while (_wendigoPool.NeedsPrewarm) _wendigoPool.PrewarmStep(4);
             if (GetComponent<ForestWendigoCombatView>() == null) gameObject.AddComponent<ForestWendigoCombatView>();
+        }
+
+        /// <summary>
+        /// Семья тела нового моба леса: 0 — Шипомёт, 1 — Корнехват, 2 — Расщепень и
+        /// его детёныш (то же тело мельче). −1 — вид не из новых, у него свой путь.
+        /// </summary>
+        internal static int ForestMobFamily(EnemyKind kind)
+        {
+            switch (kind)
+            {
+                case EnemyKind.ForestThorncaster: return 0;
+                case EnemyKind.ForestRootSnarer: return 1;
+                case EnemyKind.ForestSplitter:
+                case EnemyKind.ForestSplitling: return 2;
+                default: return -1;
+            }
+        }
+
+        /// <summary>Пул тел нового моба; null — тела нет (релиз без префаба, ошибка уже в логе).</summary>
+        private ViewPool ForestMobPool(EnemyKind kind)
+        {
+            int family = ForestMobFamily(kind);
+            if (family < 0) return null;
+            if (!_forestMobPrepared[family]) PrepareForestMob(family);
+            return _forestMobPools[family];
+        }
+
+        /// <summary>
+        /// Пул семьи собирается один раз за сессию: префаб из Resources, а без него —
+        /// заглушка (редактор и dev-сборка) или ничего (релиз). Прогрев — сразу, как у
+        /// вендиго: пул заводится до боя, из PrewarmEncounter или первого тела стенда.
+        /// </summary>
+        private void PrepareForestMob(int family)
+        {
+            _forestMobPrepared[family] = true;
+            EnemyKind kind = family == 0 ? EnemyKind.ForestThorncaster
+                : family == 1 ? EnemyKind.ForestRootSnarer : EnemyKind.ForestSplitter;
+            string path = family == 0 ? ThorncasterPrefab : family == 1 ? RootSnarerPrefab : SplitterPrefab;
+            string title = EnemyTexts.Name(kind);
+            GameObject prefab = string.IsNullOrEmpty(path) ? null : Resources.Load<GameObject>(path);
+            int layer = LayerMask.NameToLayer("EnemyOutline");
+            System.Func<GameObject> factory;
+            if (prefab != null)
+                factory = () =>
+                {
+                    var body = Instantiate(prefab); body.SetActive(false);
+                    SetLayerRecursively(body, layer);
+                    CreateContactShadow(body.transform, Faction.Orvill, 1f);
+                    return body;
+                };
+            else if (ForestMobPlaceholderView.Allowed)
+            {
+                Debug.LogWarning($"[Разлом] {title}: нет префаба «{path}» — рисуется серая заглушка. " +
+                                 "Только редактор и dev-сборка: в релизе у моба не будет тела.");
+                factory = () =>
+                {
+                    var body = ForestMobPlaceholderView.Create(kind);
+                    SetLayerRecursively(body, layer);
+                    CreateContactShadow(body.transform, Faction.Orvill, 1f);
+                    return body;
+                };
+            }
+            else
+            {
+                Debug.LogError($"[Разлом] {title}: нет префаба «{path}» в Resources. В релизной сборке заглушек нет, " +
+                               "а чужое тело не подставляется — моб останется невидимым. Собери префаб или убери вид из встреч.");
+                return;
+            }
+            var root = new GameObject("Пул: " + title).transform;
+            root.SetParent(transform, false);
+            var pool = new ViewPool(root, factory, 4);
+            while (pool.NeedsPrewarm) pool.PrewarmStep(4);
+            _forestMobPools[family] = pool;
         }
 
         public void PrepareForestBud()

@@ -113,6 +113,15 @@ namespace Game.Sim
 
         /// <summary>Уникальный артефакт на время забега: награда босса, выбор 1 из 3.</summary>
         Artifact = 5,
+
+        /// <summary>
+        /// «Родник»: сразу лечит героя на HealPercent максимума здоровья.
+        /// Здоровье переносится между аренами (владелец, 26.09), и родник —
+        /// одна из трёх дорог назад, наравне с зельями и уровнем. На экране
+        /// награды появляется сам, только когда герой ниже
+        /// RiftRun.SpringOfferBelowPercent, и никогда — после босса.
+        /// </summary>
+        Spring = 6,
     }
 
     /// <summary>
@@ -142,6 +151,9 @@ namespace Game.Sim
         /// <summary>Заполнено при Kind == Artifact.</summary>
         public RunArtifact Artifact => Kind == RewardKind.Artifact ? (RunArtifact)PoolIndex : RunArtifact.None;
 
+        /// <summary>Заполнено при Kind == Spring: сколько процентов максимума здоровья вернёт родник.</summary>
+        public int HealPercent => Kind == RewardKind.Spring ? PoolIndex : 0;
+
         private RewardOffer(RewardKind kind, ItemInstance item,
             StatType stat, ModifierOp op, Fix64 value, int poolIndex = -1, int talentIndex = -1)
         {
@@ -170,6 +182,10 @@ namespace Game.Sim
         public static RewardOffer OfArtifact(RunArtifact artifact)
             => new RewardOffer(RewardKind.Artifact, default, default, default, Fix64.Zero, (int)artifact);
 
+        /// <summary>Процент лечения родника тоже лежит в PoolIndex — по той же причине, что артефакт.</summary>
+        public static RewardOffer OfSpring(int healPercent)
+            => new RewardOffer(RewardKind.Spring, default, default, default, Fix64.Zero, healPercent);
+
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, (int)Kind);
@@ -192,6 +208,7 @@ namespace Game.Sim
                     Hashing.Mix(ref hash, TalentIndex);
                     break;
                 case RewardKind.Artifact:
+                case RewardKind.Spring:
                     Hashing.Mix(ref hash, PoolIndex);
                     break;
             }

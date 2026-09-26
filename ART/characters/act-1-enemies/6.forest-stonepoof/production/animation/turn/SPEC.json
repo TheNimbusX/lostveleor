@@ -1,0 +1,75 @@
+{
+  "stage": "turn_in_place_conventions",
+  "written": "2026-09-26",
+  "status": "Step 1 spec only; no clip authored yet. Owner approval required after review page.",
+  "game_contract": {
+    "sim": "Simulation.Stonehoof.cs: StonehoofTurnDegreesPerTick=6 at 30 ticks/s -> 90 deg in 15 ticks (0.5 s), constant angular speed",
+    "view": "CharacterAnimatorView.UpdateTurn: TurnPhase = Repeat(accumulated |yaw|, 90)/90 (1.0 at exact 90); TurnDirection = sign(delta); sign<0 -> LeftTurnState, else RightTurnState; crossfade 0.035 s from idle; state uses timeParameter=TurnPhase",
+    "unity_builder": "StonehoofBuilder.cs roles include optional TurnLeft/TurnRight; looks up clip name ending 'Stonehoof_TurnLeft'/'Stonehoof_TurnRight' in ForestStonehoof.fbx; skips state with warning if missing (falls back to Walk phase). loopTime not set for turns (phase driven), so frame 15 must equal frame 0 exactly.",
+    "direction": "Unity yaw delta < 0 = TurnLeft. Blender: model faces -Y, left side is +X, TurnLeft = +Z yaw (CCW seen from above), TurnRight = -Z yaw."
+  },
+  "clip": {
+    "fps": 30,
+    "frame_range": [0, 15],
+    "loop": "one 90 deg cycle; pose(0) == pose(15) in armature space",
+    "root_yaw_deg": "TurnLeft: +90*f/15, TurnRight: -90*f/15; LINEAR keys (sim angular speed is constant, phase is proportional to yaw)",
+    "pivot": "armature/object origin (0,0,0) = sim entity position; no translation of the root",
+    "frame0": "accepted stance = windup_start r01 frame 0 (same stance brake ends in, Idle hoof_key(tag,0)); all four hooves planted at f=0 and f=15; join check vs that stance (max joint error < 0.05 m allowed since the loop may carry small stance offsets; report it)"
+  },
+  "rig": {
+    "armature": "ARM_ForestStonehoof",
+    "mesh": "SM_ForestStonehoof_LOD0",
+    "source_file": "animation/windup_start/Stonehoof_WindupStart_r01.blend (r03 model + editable IK controls; open it, clear animation like build_brake.py)",
+    "deform_bones_spine": ["body (root of hierarchy, keyed loc+rot)", "body_top0 (chest)", "body_top1 (front torso)", "neck0", "head0", "body_bot", "pelvis", "tail0"],
+    "legs": {
+      "front_left":  {"chain": ["leg_front_left_top0", "leg_front_left_top1", "leg_front_left_bot0", "leg_front_left_bot1", "leg_front_left_bot2"], "ankle_xy": [0.340, -0.473], "radius_m": 0.583},
+      "front_right": {"chain": ["leg_front_right_top0", "leg_front_right_top1", "leg_front_right_bot0", "leg_front_right_bot1", "leg_front_right_bot2"], "ankle_xy": [-0.383, -0.454], "radius_m": 0.594},
+      "hind_left":   {"chain": ["leg_hind_left_top0", "leg_hind_left_top1", "leg_hind_left_bot0", "leg_hind_left_bot1", "leg_hind_left_bot2"], "ankle_xy": [0.256, 0.610], "radius_m": 0.662},
+      "hind_right":  {"chain": ["leg_hind_right_top0", "leg_hind_right_top1", "leg_hind_right_bot0", "leg_hind_right_bot1", "leg_hind_right_bot2"], "ankle_xy": [-0.275, 0.602], "radius_m": 0.662}
+    },
+    "hoof_bone": "leg_<tag>_bot2 (sole = its >0.95-weight verts; sole_ids <sole_z+0.008 in windup_start/rig_build.json)",
+    "rig_is_asymmetric": "L/R bones are not mirror-exact; author Right as its own pass with mirrored PARAMETERS (per-leg offsets relative to each leg's own rest ankle), never by pose-bone mirroring",
+    "controls": {
+      "carrier": "CTRL_PreviewMotion_Only (arm and all CTRL_Hoof_*/CTRL_Pole_* parented to it); for turn: key rotation_euler.z / quaternion yaw here, preview only, excluded from bake",
+      "hoof_targets": "CTRL_Hoof_<tag> empties: location + rotation_quaternion + ['sole_clearance'] (float!) keyed via hoof_key()",
+      "poles": "CTRL_Pole_<tag>, children of carrier (rotate with body)",
+      "ik": "MCH_Lower_<tag> IK 'Hoof plant · fixed limb lengths' chain 2, use_stretch False, ik_stretch 0; MCH_Drive_* + COPY_TRANSFORMS 'Follow editable IK' on top1/bot0/bot1; COPY_ROTATION 'Hoof orientation' (WORLD) on bot2",
+      "helpers_reuse": "exec body_pose(frame,offset,pitch,roll,chest,neck,head,tail) and hoof_key(tag,frame,dy,dz,pitch,dx) from windup_start/build_clip.py via ast (as build_brake.py). body_pose has no yaw: add a small local helper spine_yaw(frame, body, chest, neck, head) composing Z-rotation in the same rest-space way."
+    }
+  },
+  "planted_contact_method": {
+    "principle": "hoof targets are carrier children; a planted hoof keeps its WORLD position/orientation, so in carrier space it counter-rotates: loc(f)=Rz(-(yaw(f)-yaw_plant)) @ loc_plant, rot(f)=Rz(-(yaw(f)-yaw_plant)) @ rot_plant",
+    "keying": "key planted hooves densely (every 1/4 frame, as build_brake sole-height resample) so bezier arcs do not chord-cut; swing keys BEZIER AUTO_CLAMPED; carrier yaw LINEAR",
+    "sole_height": "after authoring, resample location.z from the rotated sole like build_brake.py (sole_z + sole_clearance - lowest rotated hoof vert) at 1/8 frame",
+    "geometry": "per 90 deg each hoof must cover chord r*sqrt2 = 0.82 m (front) / 0.94 m (hind) in world -> about 2 steps per hoof per cycle (~45 deg each), 3-4 frame swings; front steps are lateral cross-steps, hind short pivot steps; reference hind 'pivot' cannot be literal because the sim pivot is the origin between the legs",
+    "style_from_reference": "references/turn.mp4 (4.1 s, 24 fps, 1280x720; review_notes/jobs: use stepping pattern + head lead only; ignore drift and ~180 deg amount): head0/neck0 yaw lead of ~10-15 deg into the turn, chest (body_top0) shifts weight toward the outside, front cross-steps, hind small steps",
+    "loop_rule": "hoof carrier-space trajectories periodic with period 15 (or 7.5 for 2 steps); all four planted at f=0/15; spine yaw lead identical at 0 and 15"
+  },
+  "files_to_create": {
+    "folder": "animation/turn/",
+    "brief": "brief.json (stage, reference, contract, owner approval fields)",
+    "build": "build_turn.py -- keys|all mode; builds both directions -> Stonehoof_Turn_r01.blend (editable master; actions AN_Stonehoof_TurnLeft_Rig / _TurnRight_Rig and per-hoof control actions; NLA or scenes per direction), writes build.json + pose_keys.json; renders review/animation_turn/{side,game,top}_frames",
+    "bake": "bake_turn.py -- same as brake/bake_brake.py: sample deform bone pose matrices (armature space => root yaw removed, since arm is parented to carrier) at 1/16 frame, strip constraints, CTRL_* and non-deform bones, key loc+rot quaternion with sign continuity, BEZIER, actions AN_Stonehoof_TurnLeft and AN_Stonehoof_TurnRight (frame_range 0-15, use_frame_range) -> Stonehoof_Turn_Baked_r01.blend + bake_validation.json (assert joint error < 1 mm)",
+    "validate": "validate_turn.py -> validation.json; validate_interpolation.py -> interpolation_validation.json; package_review.py + validate_review.py -> review/animation_turn/",
+    "unity_package_change": "unity_package/build_package.py SOURCES += 'TurnLeft':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnLeft'), 'TurnRight':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnRight') -> exported as Stonehoof_TurnLeft/Right in ForestStonehoof.fbx (only after owner approval)"
+  },
+  "validator_checks": {
+    "hoof_slip": "while planted (sole_clearance==0), world sole centroid (evaluate r01 with carrier yaw; and baked: Rz(yaw(f)) @ armature-space sole) drift < 0.002 m; also horizontal sole yaw drift < 1 deg",
+    "hoof_target_error": "ankle (bot2 head) vs CTRL_Hoof target < 0.001 m (IK reach)",
+    "ground": "minimum mesh z > -0.001; planted sole min z within [-0.001, 0.007]",
+    "bone_lengths": "max |posed length / rest length - 1| < 1e-4 for deform bones",
+    "loop_seam": "armature-space deform matrices f0 vs f15: position < 1e-5 m, matrix error < 1e-4; also world continuity across seam when yaw is re-applied",
+    "stance_join": "f0 vs windup_start r01 frame 0 deform pose (report; target < 0.05 m, used for idle crossfade)",
+    "constraints": "every constraint influence explicitly keyed at f0 and f15 (=1), no un-keyed state leakage",
+    "rotation_step": "max per-1/8-frame deform bone rotation step reported (pops)",
+    "bake": "baked vs source joint error < 0.001 m, rotation < 2 deg at 1/32 frame; no scale curves; no object transform keys on ARM",
+    "sources_unchanged": "sha256 of accepted blends (windup_start r01/Baked, charge_loop, brake, collision, death_r02) identical before/after",
+    "direction": "sign check: TurnLeft carrier yaw +Z; head0 tail moves toward +X at f=7.5"
+  },
+  "review_page": {
+    "folder": "review/animation_turn/",
+    "pattern": "as review/animation_brake: index.html + review.css + manifest.json (stage, owner_clip_approved false, fps, frames, duration_seconds, reference_time_map, editable_master, derived_clip, sha256, validation summaries, next_review) + side/game (+top) .webm/.mp4 via charge_loop/package_review.py encode(), *_keys.jpg sheets, reference_frames from turn.mp4 via ffmpeg (imageio_ffmpeg), review_validation.json from validate_review.py (links exist, node --check script, videos decode, numeric asserts)",
+    "preview": "render 4 loops (360 deg) with carrier yaw so the viewer sees planted hooves; plus a local (no-yaw) loop; QA floor marks like build_brake.py"
+  },
+  "run": "\"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe\" -b --python animation/turn/build_turn.py -- keys ; never open Unity, never edit .cs/.prefab/.meta"
+}

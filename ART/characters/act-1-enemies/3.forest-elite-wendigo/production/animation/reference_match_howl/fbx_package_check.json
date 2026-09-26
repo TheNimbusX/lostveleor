@@ -1,0 +1,50 @@
+{
+ "method": "Both FBX files re-imported in Blender 5.2 (factory settings); every animation curve key of each take compared.",
+ "previous_fbx_sha256": "4ec004fc896012362be039070ab505e4927151297fc3d3c05c8b1657128e4531",
+ "new_fbx_sha256": "cdf0910e4a3cf2bc8b3bb173b060676c394b41c8315824a8ce6c12130de5e18d",
+ "takes": {
+  "Wendigo_Claw": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  },
+  "Wendigo_Death": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  },
+  "Wendigo_Hit": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  },
+  "Wendigo_Idle": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  },
+  "Wendigo_Leap": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  },
+  "Wendigo_Walk": {
+   "curves": 229,
+   "max_key_difference": 0.0,
+   "unchanged": true
+  }
+ },
+ "new_takes": [
+  "Wendigo_Howl"
+ ],
+ "mesh": {
+  "old": {
+   "verts": 12361,
+   "polys": 23725
+  },
+  "new": {
+   "verts": 12361,
+   "polys": 23725
+  }
+ }
+}

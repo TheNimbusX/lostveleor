@@ -176,7 +176,7 @@ namespace Game.EditorTools
             // под мышью с подписью, враги и герой.
             view.MinimapImage.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(UiKitImport.KitRoot + "/Watercolor/wc_map_sample.png");
             view.MinimapImage.enabled = true;
-            view.MinimapCaption.text = "Разлом · 2";
+            view.MinimapCaption.text = "Арена · 2";
             view.MinimapMarks.Preview(
                 new[] { new Vector3(.78f, .2f, 4f), new Vector3(.95f, .6f, 5f), new Vector3(.28f, .78f, HudMinimapMarks.AlchemistMark) },
                 new[] { new Vector2(.32f, .38f), new Vector2(.6f, .3f), new Vector2(.66f, .62f), new Vector2(.36f, .7f) },

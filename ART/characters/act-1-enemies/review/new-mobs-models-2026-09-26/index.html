@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Новые мобы леса · модели</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",sans-serif}
+main{max-width:1380px;margin:auto;padding:38px 32px 70px}h1{font-size:40px;line-height:1.1;margin:8px 0 10px;font-weight:650}
+h2{font-size:30px;margin:0;font-weight:620}p{margin:6px 0;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 8px}nav a{color:var(--ink);border:1px solid var(--line);border-radius:30px;padding:6px 14px;text-decoration:none}nav a:hover{border-color:var(--accent)}
+.mob{margin-top:48px;padding-top:26px;border-top:1px solid var(--line)}.mob-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}.size{font-variant-numeric:tabular-nums}
+.mob-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px}
+figure{margin:0}.viewer{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}.viewer img{display:block;width:100%;aspect-ratio:1;object-fit:contain;background:#1b2220}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px}button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--ink);background:#29342d}button:hover,button:focus-visible{border-color:var(--accent);outline:none}button[aria-pressed=true]{background:var(--accent);color:#1c271d;border-color:var(--accent)}
+.side{display:flex;flex-direction:column;gap:14px}.side video,.side img{display:block;width:100%;border-radius:12px;border:1px solid var(--line);background:#1b2220}.side figcaption,.compare figcaption{font-size:13px;color:var(--muted);padding-top:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pair img{aspect-ratio:1;object-fit:contain;background:#fff}
+.note{padding:12px 14px;border-left:3px solid #819567;background:#27312a;font-size:14px;color:#d3dccb}
+.compare{margin-top:18px}.compare img{display:block;width:100%;border-radius:12px;border:1px solid var(--line)}
+@media (max-width:860px){main{padding:24px 16px 50px}.mob-grid{grid-template-columns:1fr}}
+</style>
+<main>
+  <p class="eyebrow">Лес · новые мобы · 26 сентября 2026</p>
+  <h1>Модели: Шипомет, Корнехват, Расщепень</h1>
+  <p>Сырые модели Tripo по чистым видам с Higgsfield (по концептам). Это приёмка формы и силуэта; риг, анимации и эффекты — после утверждения. Рост в игре подгоняется при сборке.</p>
+  <nav><a href="#shipomet">Шипомет</a><a href="#snarer">Корнехват</a><a href="#splitter">Расщепень</a></nav>
+  
+<section class="mob" id="shipomet">
+  <header class="mob-head">
+    <div><p class="eyebrow">Элита · линия шипов</p><h2>Шипомет</h2></div>
+    <p class="size">рост в игре ≈ 2,7 м</p>
+  </header>
+  <div class="mob-grid">
+    <figure class="viewer"><img src="shipomet/game_camera.jpg" alt="Шипомет: модель" data-main><figcaption class="toolbar"><button type="button" data-view="shipomet/game_camera.jpg" aria-pressed="true">Игровая камера</button><button type="button" data-view="shipomet/front.jpg">Спереди</button><button type="button" data-view="shipomet/left.jpg">Слева</button><button type="button" data-view="shipomet/back.jpg">Сзади</button><button type="button" data-view="shipomet/right.jpg">Справа</button></figcaption></figure>
+    <div class="side">
+      <figure><video src="shipomet/turntable.mp4" autoplay loop muted playsinline></video><figcaption>Поворот</figcaption></figure>
+      <div class="pair">
+        <figure><img src="shipomet/concept.jpg" alt="Концепт"><figcaption>Концепт</figcaption></figure>
+        <figure><img src="shipomet/model_input.jpg" alt="Вход для 3D"><figcaption>Вход для 3D</figcaption></figure>
+      </div>
+      <p class="note">Тонкий высокий силуэт, вместо кистей — два длинных шипа. Рост взят меньше Вендиго (3,1 м), чтобы не спорить с ним по силуэту.</p>
+    </div>
+  </div>
+  <figure class="compare"><img src="shipomet/vs_pelag_game.jpg" alt="Рядом с Пелагом, игровой угол"><figcaption>Рядом с Пелагом (1,8 м), угол как в игре</figcaption></figure>
+</section>
+<section class="mob" id="snarer">
+  <header class="mob-head">
+    <div><p class="eyebrow">Обычный · круг под игроком → корни</p><h2>Корнехват</h2></div>
+    <p class="size">рост в игре ≈ 1,35 м</p>
+  </header>
+  <div class="mob-grid">
+    <figure class="viewer"><img src="snarer/game_camera.jpg" alt="Корнехват: модель" data-main><figcaption class="toolbar"><button type="button" data-view="snarer/game_camera.jpg" aria-pressed="true">Игровая камера</button><button type="button" data-view="snarer/front.jpg">Спереди</button><button type="button" data-view="snarer/left.jpg">Слева</button><button type="button" data-view="snarer/back.jpg">Сзади</button><button type="button" data-view="snarer/right.jpg">Справа</button></figcaption></figure>
+    <div class="side">
+      <figure><video src="snarer/turntable.mp4" autoplay loop muted playsinline></video><figcaption>Поворот</figcaption></figure>
+      <div class="pair">
+        <figure><img src="snarer/concept.jpg" alt="Концепт"><figcaption>Концепт</figcaption></figure>
+        <figure><img src="snarer/model_input.jpg" alt="Вход для 3D"><figcaption>Вход для 3D</figcaption></figure>
+      </div>
+      <p class="note">Приземистый грибной краб: тяжёлые лапы-плиты вонзает в землю, грибы на спине. Силуэт не похож ни на рой, ни на кабана, ни на гуманоидов.</p>
+    </div>
+  </div>
+  <figure class="compare"><img src="snarer/vs_pelag_game.jpg" alt="Рядом с Пелагом, игровой угол"><figcaption>Рядом с Пелагом (1,8 м), угол как в игре</figcaption></figure>
+</section>
+<section class="mob" id="splitter">
+  <header class="mob-head">
+    <div><p class="eyebrow">Обычный · после смерти — два детёныша</p><h2>Расщепень</h2></div>
+    <p class="size">рост в игре ≈ 1,3 м, детёныш 0,78 м</p>
+  </header>
+  <div class="mob-grid">
+    <figure class="viewer"><img src="splitter/game_camera.jpg" alt="Расщепень: модель" data-main><figcaption class="toolbar"><button type="button" data-view="splitter/game_camera.jpg" aria-pressed="true">Игровая камера</button><button type="button" data-view="splitter/front.jpg">Спереди</button><button type="button" data-view="splitter/left.jpg">Слева</button><button type="button" data-view="splitter/back.jpg">Сзади</button><button type="button" data-view="splitter/right.jpg">Справа</button></figcaption></figure>
+    <div class="side">
+      <figure><video src="splitter/turntable.mp4" autoplay loop muted playsinline></video><figcaption>Поворот</figcaption></figure>
+      <div class="pair">
+        <figure><img src="splitter/concept.jpg" alt="Концепт"><figcaption>Концепт</figcaption></figure>
+        <figure><img src="splitter/model_input.jpg" alt="Вход для 3D"><figcaption>Вход для 3D</figcaption></figure>
+      </div>
+      <p class="note">Детёныш — та же модель на 60%, на сравнении стоит рядом с большим. Панцирь трескается, выскакивают две копии в панцире — как решено.</p>
+    </div>
+  </div>
+  <figure class="compare"><img src="splitter/vs_pelag_game.jpg" alt="Рядом с Пелагом, игровой угол"><figcaption>Рядом с Пелагом (1,8 м), угол как в игре</figcaption></figure>
+</section>
+</main>
+<script>
+document.querySelectorAll('.mob').forEach(section => {
+  const main = section.querySelector('[data-main]');
+  section.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
+    main.src = button.dataset.view;
+    section.querySelectorAll('[data-view]').forEach(other => other.setAttribute('aria-pressed', other === button ? 'true' : 'false'));
+  }));
+});
+</script>
+</html>
