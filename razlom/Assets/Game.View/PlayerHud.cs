@@ -54,7 +54,6 @@ namespace Game.View
         private readonly TooltipValue[] _tooltipValues = new TooltipValue[8];
         private int _tooltipValueCount;
         private Camera _rangeCamera;
-        private bool _reachNoCameraLogged;
         private HudRangePreview _rangePreview;
         private float _screenHudScale = 1f;
         private GUIStyle _xpLabel, _tooltipKey, _tooltipMetric, _tooltipCaption;
@@ -232,34 +231,11 @@ namespace Game.View
             _portraitBaking = false;
         }
 
-        // Проба для съёмки: как часто плеер на самом деле шлёт Repaint в OnGUI. Досягаемость до 26
-        // сентября строилась оттуда и считала «раз в кадр»; одна строка через 4 с после первого
-        // Repaint говорит, так ли это (maxGap > 1 — пропуски кадров, sameFrame > 0 — повторы).
-        private int _repaintFirstFrame = -1, _repaintLastFrame = -1, _repaintCount, _repaintMaxGap, _repaintSameFrame;
-        private float _repaintStartedAt;
-        private bool _repaintLogged;
-
-        private void ProbeRepaint()
-        {
-            if (_repaintLogged) return;
-            int frame = Time.frameCount;
-            if (_repaintFirstFrame < 0) { _repaintFirstFrame = frame; _repaintStartedAt = Time.unscaledTime; }
-            else if (frame == _repaintLastFrame) _repaintSameFrame++;
-            else _repaintMaxGap = Mathf.Max(_repaintMaxGap, frame - _repaintLastFrame);
-            _repaintLastFrame = frame;
-            _repaintCount++;
-            if (Time.unscaledTime - _repaintStartedAt < 4f) return;
-            _repaintLogged = true;
-            Debug.Log($"[reach-probe] ongui repaints={_repaintCount} frames={frame - _repaintFirstFrame + 1} " +
-                      $"maxGap={_repaintMaxGap} sameFrame={_repaintSameFrame} canvasHud={_view != null}");
-        }
-
         private void OnGUI()
         {
             // Мышь снимает TickDriver перед шагом Sim; здесь только рисунок.
             // Не дублируем нажатия на Layout/Repaint и не теряем тап между тиками.
             if (Event.current.type != EventType.Repaint) return;
-            if (CaptureRig.Installed) ProbeRepaint();
             // При HUD на Canvas досягаемостью владеет LateUpdate; здесь — только запасной IMGUI.
             if (_view == null) _rangePreview?.Hide();
 
@@ -786,15 +762,7 @@ namespace Game.View
             if (radius <= 0f) return;
             // Камера меню или студии могла быть главной на первом кадре и потом выключиться.
             if (_rangeCamera == null || !_rangeCamera.isActiveAndEnabled) _rangeCamera = Camera.main;
-            if (_rangeCamera == null)
-            {
-                if (CaptureRig.Installed && !_reachNoCameraLogged)
-                {
-                    _reachNoCameraLogged = true;
-                    Debug.Log("[reach-probe] no Camera.main — reach skipped");
-                }
-                return;
-            }
+            if (_rangeCamera == null) return;
             _rangePreview.Begin(_rangeCamera,Availability(sim,_tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,build).Ready);
             Vector3 center = _driver.GetRenderPosition(Simulation.PlayerId) + Vector3.up * .06f;
             var position = sim.Entities.Position[Simulation.PlayerId];

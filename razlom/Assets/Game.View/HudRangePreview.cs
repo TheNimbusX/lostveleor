@@ -189,7 +189,6 @@ namespace Game.View
             _lastShown=now;
             _material.SetFloat(AppearId,Mathf.Clamp01((now-_shownAt)/.14f));
             _renderer.enabled=true;
-            if(CaptureRig.Installed) Probe(now);
         }
         public void Hide() { if(_renderer!=null)_renderer.enabled=false; }
         public void Dispose()
@@ -197,41 +196,6 @@ namespace Game.View
             if(_root!=null)Object.Destroy(_root);
             if(_mesh!=null)Object.Destroy(_mesh);
             if(_material!=null)Object.Destroy(_material);
-        }
-
-        // Проба для съёмки (26 сентября фигура не появлялась в плеере при чистом логе): строка при первом
-        // показе и строка через полсекунды, когда наплыв закончился. isVisible во второй строке — дошёл ли
-        // меш до камеры в прошлых кадрах; appear/lift — что ушло в шейдер; maxGap — самый длинный
-        // перерыв между построениями в кадрах. По ним видно, где фигура теряется: не построена, отсечена
-        // или нарисована, но погашена в шейдере.
-        int _probeStage, _probeFrame = -1, _probeMaxGap;
-        float _probeAt;
-        void Probe(float now)
-        {
-            if(_probeStage>1) return;
-            int frame=Time.frameCount;
-            if(_probeFrame>=0) _probeMaxGap=Mathf.Max(_probeMaxGap,frame-_probeFrame);
-            _probeFrame=frame;
-            if(_probeStage==0) { _probeStage=1; _probeAt=now; Debug.Log("[reach-probe] shown "+Describe(now)); return; }
-            if(now-_probeAt<.5f) return;
-            _probeStage=2;
-            Debug.Log("[reach-probe] settled "+Describe(now));
-        }
-        string Describe(float now)
-        {
-            Shader shader=_material.shader;
-            int layer=_root.layer;
-            string camera=_camera==null ? "camera=NULL" :
-                "camera="+_camera.name+" ortho="+_camera.orthographic+"/"+_camera.orthographicSize.ToString("0.00")
-                +" near="+_camera.nearClipPlane+" far="+_camera.farClipPlane+" pos="+_camera.transform.position
-                +" seesLayer="+((_camera.cullingMask&(1<<layer))!=0)+" enabled="+_camera.isActiveAndEnabled;
-            return "frame="+Time.frameCount+" maxGap="+_probeMaxGap+" verts="+_mesh.vertexCount+" indices="+_indices.Count
-                +" meshBounds="+_mesh.bounds+" rendererBounds="+_renderer.bounds
-                +" enabled="+_renderer.enabled+" active="+_root.activeInHierarchy+" isVisible="+_renderer.isVisible
-                +" layer="+layer+" shader="+shader.name+" supported="+shader.isSupported+" queue="+_material.renderQueue
-                +" appear="+_material.GetFloat(AppearId).ToString("0.00")+" lift="+_material.GetFloat(LiftId)
-                +" fringe="+_fringe.ToString("0.000")+" now="+now.ToString("0.00")+" shownAt="+_shownAt.ToString("0.00")
-                +" toLocalIdentity="+_toLocal.isIdentity+" "+camera;
         }
 
         void Style(float strength, float band) { _strength=Mathf.Clamp01(strength); _band=band; }
