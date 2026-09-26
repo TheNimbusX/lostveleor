@@ -1,0 +1,10 @@
+{
+  "deforming_bones": 34,
+  "duration_seconds": 2,
+  "sample_step_frames": 0.0625,
+  "maximum_baked_joint_error_m": 7.278058002217831e-07,
+  "maximum_baked_rotation_error_degrees": 0.07912936529690494,
+  "owner_approved": false,
+  "constraints": 0,
+  "travel_removed": true
+}

@@ -1,0 +1,22 @@
+{
+ "clip": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\3.forest-elite-wendigo\\production\\vfx_elements\\claw_element_r01.mp4",
+ "start": 0.0,
+ "duration": 1.0,
+ "cols": 6,
+ "rows": 4,
+ "fps": 24.0,
+ "crop": [
+  0.05,
+  0.12,
+  0.95,
+  0.92
+ ],
+ "cell": [
+  1152,
+  576
+ ],
+ "unity_cell": [
+  680,
+  340
+ ]
+}

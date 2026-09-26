@@ -7,9 +7,9 @@ using UnityEngine.InputSystem;
 namespace Game.View
 {
     /// <summary>
-    /// Экраны забега на Canvas (префаб RunHudWc, пак «Ночная акварель»): выбор награды,
-    /// замена способности, панель состояния и полоса босса. Нет префаба — остаётся
-    /// прежний IMGUI из RunHud.cs.
+    /// Экраны забега на Canvas (префаб RunHudWc, «Дым и свет» с 26 сентября): выбор награды и
+    /// следующей арены, замена способности, панель состояния, полоса босса и итог забега.
+    /// Нет префаба — остаётся прежний IMGUI из RunHud.cs.
     /// </summary>
     public sealed partial class RunHud
     {
@@ -59,9 +59,12 @@ namespace Game.View
         private bool _summaryFilled;
 
         // Числа итогов досчитываются от нуля, по очереди — как в концепте итогов (аудит UI, этап 2).
+        // Счёт — когда цифры уже проявились из дыма (владелец 26 сентября: итоги тлеют медленно,
+        // и счёт, начатый с показа, кончался раньше, чем цифры становились видны).
         private readonly int[] _summaryTargets = new int[4];
-        private float _summaryCountAt = -1f;
-        private const float CountDuration = .6f, CountStagger = .12f;
+        /// <summary>Часы итогов с показа, шагом не больше 0,1 с (как у UiInkGroup); меньше нуля — счёт не идёт.</summary>
+        private float _summaryClock = -1f, _summaryLast;
+        private const float CountDelay = .9f, CountDuration = .6f, CountStagger = .12f;
 
         private void RefreshSummary()
         {
@@ -69,7 +72,7 @@ namespace Game.View
             // Итоги — после паузы конца забега (RunEndBeat): смерть и победа успевают прозвучать.
             bool shown = !_driver.GameplayPaused && session != null && session.Mode == GameMode.Summary && !RunEndBeat.Holding;
             _view.SetShown(_view.Summary, shown);
-            if (!shown) { _summaryFilled = false; _summaryCountAt = -1f; return; }
+            if (!shown) { _summaryFilled = false; _summaryClock = -1f; return; }
             if (_summaryFilled) { CountSummary(); return; }
             _summaryFilled = true;
 
@@ -78,12 +81,16 @@ namespace Game.View
             RunHudView.SetText(_view.SummaryTitle, died ? "Гибель" : won ? "Победа" : "Ушёл с добычей");
             int outcome = died ? 0 : won ? 1 : 2;
             if (_view.OutcomeIcon != null && outcome < _view.OutcomeIcons.Length) _view.OutcomeIcon.texture = _view.OutcomeIcons[outcome];
+            // Знаки исхода белые: гибель — приглушённый красный, победа и уход — тёплые.
+            Paint(_view.OutcomeIcon, died ? UiTheme.Role.Health : won ? UiTheme.Role.Accent : UiTheme.Role.Coins, died ? .78f : 1f);
+            Paint(_view.OutcomeHalo, died ? UiTheme.Role.Health : UiTheme.Role.Accent, died ? .12f : .18f);
             _view.SummaryTitle.GetComponent<ThemeColor>()?.SetRole(died ? UiTheme.Role.Health : won ? UiTheme.Role.Accent : UiTheme.Role.Text);
             RunHudView.SetText(_view.SummarySubtitle, died ? "Всё найденное в забеге осталось в Разломе"
                 : won ? "Локация пройдена" : "Разлом отпустил тебя с тем, что ты унёс");
             int[] values = { summary.RiftsCleared, summary.Depth, summary.ItemsKept, summary.GoldKept };
             for (int i = 0; i < _summaryTargets.Length; i++) _summaryTargets[i] = i < values.Length ? values[i] : 0;
-            _summaryCountAt = Time.unscaledTime;
+            _summaryClock = 0f;
+            _summaryLast = UiMotion.Now;
             CountSummary();
 
             string loss = string.Empty;
@@ -92,20 +99,18 @@ namespace Game.View
             if (summary.ItemsLost > 0)
                 loss += (loss.Length > 0 ? "    ·    " : "") + "Не влезло в сумку: " + summary.ItemsLost;
             RunHudView.SetText(_view.SummaryLoss, loss);
-
-            string camp = string.Empty;
-            if (session.NewItemsToTry > 0) camp += "Новых вещей проверить на манекенах: " + session.NewItemsToTry;
-            if (session.JunkToSalvage > 0) camp += (camp.Length > 0 ? "\n" : "") + "Мусора под разбор: " + session.JunkToSalvage;
-            if (camp.Length == 0) camp = "Ничего. Значит, повторяй.";
-            RunHudView.SetText(_view.SummaryCamp, camp);
             RunHudView.SetText(_view.RepeatLabel, "Повторить · " + GameKeyBindings.Label(GameAction.RepeatRun));
             RunHudView.SetText(_view.ToCampLabel, "В лагерь · " + GameKeyBindings.Label(GameAction.ReturnToCamp));
         }
 
         private void CountSummary()
         {
-            if (_summaryCountAt < 0f) return;
-            float since = Time.unscaledTime - _summaryCountAt;
+            if (_summaryClock < 0f) return;
+            float now = UiMotion.Now;
+            _summaryClock += Mathf.Clamp(now - _summaryLast, 0f, .1f);
+            _summaryLast = now;
+            // До CountDelay — нули: цифры проявляются вместе с подписями.
+            float since = _summaryClock - CountDelay;
             bool done = true;
             for (int i = 0; i < _view.SummaryValues.Length && i < _summaryTargets.Length; i++)
             {
@@ -114,7 +119,18 @@ namespace Game.View
                 float eased = 1f - (1f - k) * (1f - k) * (1f - k);
                 RunHudView.SetText(_view.SummaryValues[i], Mathf.RoundToInt(_summaryTargets[i] * eased).ToString());
             }
-            if (done) _summaryCountAt = -1f;
+            if (done) _summaryClock = -1f;
+        }
+
+        /// <summary>Цвет белого знака по роли темы; у префаба без ThemeColor на детали — прямо в цвет.</summary>
+        private static void Paint(UnityEngine.UI.Graphic graphic, UiTheme.Role role, float alpha)
+        {
+            if (graphic == null) return;
+            var theme = graphic.GetComponent<ThemeColor>();
+            if (theme != null) { theme.SetRole(role, alpha); return; }
+            Color color = UiTheme.Current.Get(role);
+            color.a *= alpha;
+            graphic.color = color;
         }
 
         private void LateUpdate()
@@ -125,22 +141,29 @@ namespace Game.View
             bool live = !_driver.GameplayPaused && _driver.Session != null && _driver.Session.Mode == GameMode.Rift && run != null;
             RunPhase phase = live ? run.Phase : (RunPhase)255;
 
-            bool choosing = phase == RunPhase.ChoosingReward, replacing = phase == RunPhase.ReplacingAbility;
+            // Выбор арены (ArenaFlow) — тот же экран с тремя карточками, что и награда.
+            bool reward = phase == RunPhase.ChoosingReward, route = phase == RunPhase.ChoosingRoute;
+            bool choosing = reward || route, replacing = phase == RunPhase.ReplacingAbility;
             int letters = TickDriver.GamepadLastUsed ? 2 : GameUserSettings.WasdMovement ? 3
                 : GameUserSettings.AbilityRowUsesLetters ? 1 : 0;
             if (live && (phase != _shownPhase || run.Depth != _shownDepth || letters != _shownLetters))
             {
+                // Награда взята — сразу выбор арены: экран тот же, но вопрос новый, и карточки
+                // проявляются заново, а не меняют текст под рукой.
+                if (route && _shownPhase == RunPhase.ChoosingReward) _view.SetShown(_view.Choice, false, true);
                 _shownPhase = phase; _shownDepth = run.Depth; _shownLetters = letters;
-                if (choosing) FillChoice(run, letters == 1);
+                if (reward) FillChoice(run, letters == 1);
+                if (route) FillRoute(run, letters == 1);
                 if (replacing) FillReplace(run, letters == 1);
             }
             if (!live) _shownPhase = (RunPhase)255;
             _view.SetShown(_view.Choice, choosing);
-            if (!choosing) _replaceOffer = -1;
+            if (!reward) _replaceOffer = -1;
             HandleReplaceKeys();
-            _view.SetShown(_view.ArtifactReplace, choosing && _replaceOffer >= 0);
-            ReplaceOpen = choosing && _replaceOffer >= 0;
+            _view.SetShown(_view.ArtifactReplace, reward && _replaceOffer >= 0);
+            ReplaceOpen = reward && _replaceOffer >= 0;
             _view.SetShown(_view.Replace, replacing);
+            ModalOpen = live && (choosing || replacing);
 
             bool status = phase == RunPhase.Clearing || phase == RunPhase.SeekingExit;
             RunHudView.SetActive(_view.Status, status);
@@ -191,7 +214,8 @@ namespace Game.View
                 _bossTrail = Mathf.MoveTowards(_bossTrail, value, Time.unscaledDeltaTime * .7f);
             bar.TrailValue = _bossTrail;
             bar.Set(value);
-            var fill = bar.Fill != null ? bar.Fill.GetComponent<UnityEngine.UI.Graphic>() : null;
+            // Заливка «Дыма и света» — маска с мазком внутри: красится первый мазок; у полосы пака — сама заливка.
+            var fill = bar.Fill != null ? bar.Fill.GetComponentInChildren<UnityEngine.UI.Graphic>(true) : null;
             if (fill == null) return;
             if (_bossBaseColour.a <= 0f) _bossBaseColour = fill.color;
             float pulse = enraged ? .5f + .5f * Mathf.Sin(Time.unscaledTime * 6f) : 0f;
@@ -220,8 +244,16 @@ namespace Game.View
                        + "Тайники " + run.BranchesClaimed + " / " + run.Map.RewardBranchCount + " · золото " + run.Gold;
             }
             if (text == _statusShown) return;
+            // Новый заголовок («Путь открыт», следующий разлом) — дым и буквы проявляются заново;
+            // смена счётчиков под ним панель не перерисовывает.
+            string oldTitle = _statusShown != null ? _statusShown.Split('\n')[0] : null;
             _statusShown = text;
             string[] lines = text.Split('\n');
+            if (oldTitle != null && oldTitle != lines[0] && _view.Status != null)
+            {
+                var ink = _view.Status.GetComponent<UiInkGroup>();
+                if (ink != null && ink.isActiveAndEnabled) ink.Show();
+            }
             RunHudView.SetText(_view.StatusTitle, lines[0]);
             RunHudView.SetText(_view.StatusLine, lines.Length > 1 ? lines[1] : string.Empty);
             RunHudView.SetText(_view.StatusExtra, lines.Length > 2 ? lines[2] : string.Empty);
@@ -237,6 +269,9 @@ namespace Game.View
 
         /// <summary>Открыт вопрос «Заменить артефакт?» — пауза по Escape в этот момент не открывается.</summary>
         public static bool ReplaceOpen { get; private set; }
+
+        /// <summary>Открыт экран выбора забега (награда, арена, замена): плашка уровня ждёт, пока он закроется.</summary>
+        public static bool ModalOpen { get; private set; }
         /// <summary>Кадр, в который вопрос закрыли Escape'ом: пауза в этот кадр тоже молчит.</summary>
         public static int ReplaceClosedFrame { get; private set; } = -1;
 
@@ -275,7 +310,14 @@ namespace Game.View
         public void RequestOffer(int index)
         {
             RiftRun run = _driver != null ? _driver.Run : null;
-            if (run == null || run.Phase != RunPhase.ChoosingReward || index < 0 || index >= RiftRun.RewardChoices) return;
+            if (run == null || index < 0) return;
+            // Те же карточки на выборе арены: клик — путь, без вопросов.
+            if (run.Phase == RunPhase.ChoosingRoute)
+            {
+                if (index < RouteChoices) _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseRoute1 + index));
+                return;
+            }
+            if (run.Phase != RunPhase.ChoosingReward || index >= RiftRun.RewardChoices) return;
             if (run.ChoosingArtifact && run.GetOffer(index).Artifact == RunArtifact.None) return;
             if (run.ChoosingArtifact && run.Artifact != RunArtifact.None && _view != null && _view.ArtifactReplace != null)
             {
@@ -321,8 +363,8 @@ namespace Game.View
                 RunHudView.SetText(card.Description, body);
                 RunHudView.SetText(card.ValueLabel, valueLabel);
                 RunHudView.SetText(card.Value, value);
-                RunHudView.SetText(card.Key, KeyLabel(i, letters));
-                if (card.Icon != null) { card.Icon.texture = icon; card.Icon.enabled = icon != null; }
+                RunHudView.SetKey(card.Key, KeyLabel(i, letters));
+                card.SetIcon(icon, false);
                 // Вещь — её редкость (четыре цвета, как в палатке); способность и талант — «редкая» или обычная.
                 WcRarity.Tier tier = run.GetOffer(i).Kind == RewardKind.Item ? WcRarity.FromItem((int)run.GetOffer(i).Item.Rarity)
                     : rare ? WcRarity.Tier.Rare : WcRarity.Tier.Common;
@@ -360,11 +402,60 @@ namespace Game.View
                 int cooldown = Simulation.ArtifactCooldownTicks(artifact) / Simulation.TicksPerSecond;
                 RunHudView.SetText(card.ValueLabel, cooldown > 0 ? "Клавиша " + GameKeyBindings.Label(GameAction.UseArtifact) : "Срабатывает");
                 RunHudView.SetText(card.Value, cooldown > 0 ? "раз в " + cooldown + " с" : "сам, раз за забег");
-                RunHudView.SetText(card.Key, KeyLabel(i, letters));
-                Texture2D icon = RunArtifactTexts.Icon(artifact);
-                if (card.Icon != null) { card.Icon.texture = icon; card.Icon.enabled = icon != null; }
+                RunHudView.SetKey(card.Key, KeyLabel(i, letters));
+                card.SetIcon(RunArtifactTexts.Icon(artifact), false);
                 if (card.Rarity != null) card.Rarity.Set(WcRarity.Tier.Unique);
             }
+        }
+
+        /// <summary>
+        /// Выбор следующей арены (ArenaFlow): те же три карточки, что у награды. Раньше этот экран был
+        /// только в IMGUI, а Canvas его глушил — после награды игра стояла без экрана, и казалось, что
+        /// переход на следующий разлом сломан (владелец 26 сентября). Клавиши те же, что у награды
+        /// (TickDriver.LatchSlots), клик — RequestOffer, L — уйти с добычей.
+        /// </summary>
+        private void FillRoute(RiftRun run, bool letters)
+        {
+            RunHudView.SetActive(_view.Skip, false);
+            RunHudView.SetText(_view.ChoiceTitle, "Выбери следующую арену");
+            RunHudView.SetText(_view.ChoiceSubtitle, RouteSubtitle(run));
+            RunHudView.SetText(_view.ChoiceHint,
+                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
+                + " — выбрать путь    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
+            for (int i = 0; i < _view.Offers.Length; i++)
+            {
+                RunOfferCard card = _view.Offers[i];
+                if (card == null) continue;
+                bool shown = i < RouteChoices;
+                card.gameObject.SetActive(shown);
+                if (!shown) continue;
+                ArenaRouteOffer offer = run.GetRoute(i);
+                RouteTexts(offer, out string title, out string kind, out string body, out string valueLabel, out string value);
+                RunHudView.SetText(card.Title, title);
+                RunHudView.SetText(card.Kind, kind);
+                // В плашке — знак разлома: это арена, а не вещь.
+                if (card.KindIcon != null && _view.KindIcons.Length > 3)
+                {
+                    card.KindIcon.texture = _view.KindIcons[3];
+                    card.KindIcon.enabled = card.KindIcon.texture != null;
+                }
+                RunHudView.SetText(card.Description, body);
+                RunHudView.SetText(card.ValueLabel, valueLabel);
+                RunHudView.SetText(card.Value, value);
+                RunHudView.SetKey(card.Key, KeyLabel(i, letters));
+                card.SetIcon(RouteIcon(offer.Hard ? 2 : offer.Reward == ArenaReward.Shop ? 1 : 0), true);
+                // Опасная арена — рамкой «редкой»: там бонус золота и враги сильнее.
+                if (card.Rarity != null) card.Rarity.Set(offer.Hard ? WcRarity.Tier.Rare : WcRarity.Tier.Common);
+            }
+        }
+
+        /// <summary>Знак пути: улучшение, магазин, опасная; у префаба до пересборки — значки вида награды.</summary>
+        private Texture RouteIcon(int index)
+        {
+            if (_view.RouteIcons != null && index < _view.RouteIcons.Length && _view.RouteIcons[index] != null)
+                return _view.RouteIcons[index];
+            int kind = index == 0 ? 1 : index == 1 ? 2 : 3;
+            return kind < _view.KindIcons.Length ? _view.KindIcons[kind] : null;
         }
 
         private void FillReplace(RiftRun run, bool letters)
@@ -386,7 +477,10 @@ namespace Game.View
                 RunHudView.SetText(tile.Name, current != null ? Capitalized(PlayerHud.AbilityName(current.Id)) : "Пусто");
                 int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
                 RunHudView.SetText(tile.Note, rank > 0 ? "Усилений " + rank + " — пропадут" : "Усилений нет");
-                RunHudView.SetText(tile.Key, KeyLabel(slot, letters));
+                // Что пропадёт — красным: замена стирает усиления.
+                ThemeColor noteTint = tile.Note != null ? tile.Note.GetComponent<ThemeColor>() : null;
+                if (noteTint != null) noteTint.SetRole(rank > 0 ? UiTheme.Role.Bad : UiTheme.Role.TextMuted);
+                RunHudView.SetKey(tile.Key, KeyLabel(slot, letters));
             }
         }
 

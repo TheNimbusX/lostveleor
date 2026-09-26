@@ -7,11 +7,12 @@ using UnityEngine.UI;
 namespace Game.View
 {
     /// <summary>
-    /// Интерфейс, привязанный к точкам мира, на паке «Ночная акварель» (владелец, 24 сентября,
-    /// концепт 3-rift-world): метки «Вход», «Выход», «Тайник · охрана 4», табличка элиты с полоской
-    /// здоровья, подпись лежащей добычи, мини-меню способности при полной панели («Разобрать» и
-    /// «Заменить 1–4» на одной карточке) и подсказка выбора цели у курсора. Раньше это рисовал IMGUI
-    /// в RunHud и PelagTargetAimView; они остаются запасным видом, пока префаба нет.
+    /// Интерфейс, привязанный к точкам мира (владелец, 24 сентября, концепт 3-rift-world; с 26 сентября —
+    /// материал «Дым и свет»): метки «Вход», «Выход», «Тайник · охрана 4», табличка элиты с огоньком,
+    /// подпись лежащей добычи, мини-меню способности при полной панели («Разобрать» и «Заменить 1–4»
+    /// на одном клубе дыма) и подсказка выбора цели у курсора. Мини-меню и подсказку проявляет их
+    /// UiInkGroup при включении (без огня: всплывают часто). Раньше это рисовал IMGUI в RunHud и
+    /// PelagTargetAimView; они остаются запасным видом, пока префаба нет.
     /// Префаб Resources/UI/Prefabs/RunWorldWc, добавляет RunHud.
     /// </summary>
     public sealed class RunWorldView : MonoBehaviour
@@ -107,14 +108,15 @@ namespace Game.View
             return _markers[_used++];
         }
 
-        void Place(Camera camera, FixVec2 point, float height, Texture icon, string text, float health = -1f, bool elite = false)
+        /// <param name="art">Значок — цветной рисунок способности (метка кладёт его в круг), а не белый знак.</param>
+        void Place(Camera camera, FixVec2 point, float height, Texture icon, string text, float health = -1f, bool elite = false, bool art = false)
         {
             Vector3 screen = camera.WorldToScreenPoint(new Vector3(point.X.ToFloat(), height, point.Y.ToFloat()));
             if (screen.z <= 0f || screen.x < -60f || screen.x > Screen.width + 60f || screen.y < -40f || screen.y > Screen.height + 40f) return;
             if (MarkerTemplate == null) return;
             RunWorldMarker marker = Next();
             if (!marker.gameObject.activeSelf) marker.gameObject.SetActive(true);
-            marker.Show(icon, text, health, elite);
+            marker.Show(icon, text, health, elite, art);
             marker.transform.position = new Vector3(screen.x, screen.y, 0f);
         }
 
@@ -150,7 +152,7 @@ namespace Game.View
                 if (drop.Claimed || d == menu) continue;
                 AbilityDefinition definition = drop.Offer.Kind == RewardKind.Ability ? PelagKit.PoolDefinition(drop.Offer.PoolIndex) : null;
                 Place(camera, drop.Position, .9f, definition != null ? AbilityIcon(definition.Id) : ItemIcon,
-                    definition != null ? PlayerHud.AbilityName(definition.Id) : "Предмет · подойди");
+                    definition != null ? PlayerHud.AbilityName(definition.Id) : "Предмет · подойди", art: definition != null);
             }
         }
 

@@ -84,6 +84,9 @@ namespace Game.View
                     int index=i;var relay=entry.gameObject.AddComponent<CampHoverRelay>();
                     relay.Hover=on=>{if(on)ShowAtlasTooltip(index);else _tent.ShowTooltip(false);};
                 }
+            // «Дым и свет»: группы проявления собрали части до клонов ячеек — пересобрать, иначе
+            // клоны (с шаблона они берут «скрыто») не проявятся до следующего открытия.
+            foreach(var group in _root.GetComponentsInChildren<UiInkGroup>(true))group.Collect();
             if(System.Array.IndexOf(System.Environment.GetCommandLineArgs(),"-capture-tent-rarities")>=0)AddRaritySample();
             _tent.ShowFilter(0);
             _tent.ShowPage(false);
@@ -199,7 +202,8 @@ namespace Game.View
                 {
                     if(_atlas[i]==null)continue;
                     int id=StableId.Of("base."+ItemTexts.KeyAt(i));bool found=camp.Discovered(id);if(found)open++;
-                    _atlas[i].Show(_tent.FrameFor(IsRareBase(id)?1:0),BaseSprite(id),ItemName(id),found);
+                    int rarity=IsRareBase(id)?1:0;
+                    _atlas[i].Show(_tent.FrameFor(rarity),BaseSprite(id),ItemName(id),found,rarity);
                 }
                 if(_tent.AtlasCount!=null)_tent.AtlasCount.text="Найдено "+open+" из "+_atlas.Length;
             }
@@ -250,13 +254,14 @@ namespace Game.View
                 string compare=CompareStats(item,stats,"#8FE3A8","#FF6A5A","#F4F7FB",true).Replace("\n\n","\n").Trim();
                 text=properties+(properties.Length>0?"\n\n":"")+(compare.Length==0?"<color=#93A2BC>Если надеть — без изменений</color>":"<color=#93A2BC>Если надеть:</color>\n"+compare);
             }
-            FillTooltip(ItemName(item.BaseId),_tent.NameFor(rarity),_tent.ColourFor(rarity),kindText,text,_tent.FrameFor(rarity),ItemSprite(index,worn));
+            FillTooltip(ItemName(item.BaseId),_tent.NameFor(rarity),_tent.ColourFor(rarity),kindText,text,rarity,ItemSprite(index,worn));
             var cell=worn?_tent.Worn[index]:_tentBag[index];
             if(cell!=null)_tent.PlaceTooltip((RectTransform)cell.transform);
             _tent.ShowTooltip(true);
         }
 
-        void FillTooltip(string title,string rarity,Color rarityColour,string kind,string body,Sprite frame,Sprite art)
+        /// <param name="frameRarity">Редкость рамки картинки: 0..3, -1 — без редкости (стат, зелье).</param>
+        void FillTooltip(string title,string rarity,Color rarityColour,string kind,string body,int frameRarity,Sprite art)
         {
             if(_tent.TooltipAutoLayout)
             {
@@ -267,7 +272,7 @@ namespace Game.View
                 _tent.ItemStats.text=body;_tent.ItemStats.gameObject.SetActive(body.Length>0);
                 bool picture=art!=null;
                 _tent.ItemArt.sprite=art;_tent.ItemArt.enabled=picture;
-                if(frame!=null)_tent.ItemFrame.sprite=frame;
+                _tent.SetItemFrame(frameRarity);
                 _tent.ItemFrame.transform.parent.gameObject.SetActive(picture);
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(_tent.Tooltip);
                 return;
@@ -276,7 +281,7 @@ namespace Game.View
             if(_tent.ItemRarity!=null){_tent.ItemRarity.text=rarity;_tent.ItemRarity.color=rarityColour;}
             if(_tent.ItemKind!=null)_tent.ItemKind.text=kind;
             bool hasArt=art!=null;
-            if(_tent.ItemFrame!=null){_tent.ItemFrame.gameObject.SetActive(hasArt);if(frame!=null)_tent.ItemFrame.sprite=frame;}
+            if(_tent.ItemFrame!=null){_tent.ItemFrame.gameObject.SetActive(hasArt);_tent.SetItemFrame(frameRarity);}
             // Без картинки (стат, пустое зелье) текст встаёт к левому краю, а не рядом с пустым местом.
             float left=hasArt&&_tent.ItemFrame!=null?_tent.ItemFrame.rectTransform.anchoredPosition.x+_tent.ItemFrame.rectTransform.sizeDelta.x+16f:32f;
             foreach(var label in new TMPro.TMP_Text[]{_tent.ItemTitle,_tent.ItemRarity,_tent.ItemKind})
@@ -317,7 +322,7 @@ namespace Game.View
             _hoverIndex=-1;
             // Концепт tent-stats: значок стата в плитке, «Итого» бирюзой под названием.
             var icon=_tent.StatIcons!=null&&row<_tent.StatIcons.Length?_tent.StatIcons[row]:null;
-            FillTooltip(StatText.Name(stat),"Итого: "+StatText.Value(stat,total),UiTheme.Current.Get(UiTheme.Role.Rare),"",body,_tent.EmptyFrame,icon);
+            FillTooltip(StatText.Name(stat),"Итого: "+StatText.Value(stat,total),UiTheme.Current.Get(UiTheme.Role.Rare),"",body,-1,icon);
             _tent.PlaceTooltip(_tent.StatRows[row]);
             _tent.ShowTooltip(true);
         }
@@ -329,7 +334,7 @@ namespace Game.View
             string body="Запас: "+camp.PotionCount(kind)+(camp.SelectedPotion(potion/2)==kind?"\n<color=#8CE07A>Стоит в HUD</color>":"\n<color=#9DB6CB>Клик — поставить в HUD</color>")
                 +"\n<color=#9DB6CB>Купить — у алхимика</color>";
             _hoverIndex=-1;
-            FillTooltip(title,"",Color.white,"Восстанавливает "+Camp.PotionPercent(kind)+"% "+(potion<2?"здоровья":"лавидия"),body,_tent.EmptyFrame,_potionSprites[potion]);
+            FillTooltip(title,"",Color.white,"Восстанавливает "+Camp.PotionPercent(kind)+"% "+(potion<2?"здоровья":"лавидия"),body,-1,_potionSprites[potion]);
             if(_tent.Potions[potion]!=null)_tent.PlaceTooltip((RectTransform)_tent.Potions[potion].transform);
             _tent.ShowTooltip(true);
         }
@@ -350,7 +355,7 @@ namespace Game.View
             _hoverIndex=-1;
             FillTooltip(found?ItemName(id):"Не найдено",_tent.NameFor(rare?1:0),_tent.ColourFor(rare?1:0),
                 found?property:"","<color=#9DB6CB>Где искать:</color>\n"+where,
-                _tent.FrameFor(rare?1:0),found?BaseSprite(id):null);
+                rare?1:0,found?BaseSprite(id):null);
             if(_atlas[index]!=null)_tent.PlaceTooltip((RectTransform)_atlas[index].transform);
             _tent.ShowTooltip(true);
         }

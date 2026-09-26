@@ -1,0 +1,17 @@
+00:05.094  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+Info: Saved as "Stonehoof_Idle_Controls.blend"
+AUTHORED Idle {'minimum_skin_z': -2.73853629551013e-07, 'maximum_unreachable_target': 0, 'reach_data': {}}
+Info: Saved as "Stonehoof_Walk_Controls.blend"
+AUTHORED Walk {'minimum_skin_z': -1.9604340195655823e-05, 'maximum_unreachable_target': 0, 'reach_data': {}}
+Info: Saved as "Stonehoof_Hit_Controls.blend"
+AUTHORED Hit {'minimum_skin_z': 3.7213141013126005e-08, 'maximum_unreachable_target': 0, 'reach_data': {}}
+00:13.719  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_Baked_r01.blend"
+Info: Saved as "ForestStonehoof_Production.blend"
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Characters\\Forest_Stonehoof\\ForestStonehoof.fbx'
+(bpy.data.armatures['rig'], 'POSE')
+export finished in 2.0068 sec.
+PACKAGE_EXPORTED
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

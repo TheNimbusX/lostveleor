@@ -469,6 +469,8 @@ namespace Game.Sim
             ForestBudConfig = forestBud ?? ForestBudSettings.Default;
             _forestBudAttacks = new ForestBudAttackState[capacity];
             _wendigoActions = new WendigoActionState[capacity];
+            _stonehoofActions = new StonehoofActionState[capacity];
+            _stonehoofArena = new int[capacity];
             _wendigoNextLeap = new int[capacity];
             _forestFruits = new ForestFruitState[capacity * ForestFruitSlotsPerEnemy];
             _cleavePreviousPositions = new FixVec2[capacity];
@@ -834,6 +836,7 @@ namespace Game.Sim
             Entities.Kind[id] = kind;
             if (kind == EnemyKind.ForestBud) { ConfigureForestBud(id); return; }
             if (kind == EnemyKind.ForestWendigo) { ConfigureWendigo(id); return; }
+            if (kind == EnemyKind.ForestStonehoof) { ConfigureStonehoof(id); return; }
             bool swarm = kind == EnemyKind.ForestRootSwarm;
             // Щит и широкий силуэт требуют больше воздуха, чем прежняя
             // техническая капсула. Радиус не даёт строю схлопываться в одну
@@ -978,7 +981,7 @@ namespace Game.Sim
 
                     // Каждая пара обрабатывается ровно один раз, младшим индексом.
                     if (j <= i) continue;
-                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j)) continue;
+                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j) || StonehoofOwnsPosition(i) || StonehoofOwnsPosition(j)) continue;
                     if ((i == PlayerId || j == PlayerId) && (VoidPhased || _mobilitySlot >= 0
                         && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId)) continue;
 
@@ -1166,6 +1169,7 @@ namespace Game.Sim
             // Принудительное перемещение решается ДО собственного движения:
             // тело, которое тащат, своим шагом не идёт, и порядок здесь — это
             // и есть правило приоритета, а не деталь реализации.
+            CancelInvalidStonehooves();
             ResolveForcedMotion();
 
             MovePlayer(input);
@@ -1213,6 +1217,7 @@ namespace Game.Sim
             ResolveAttacks(in input);
             UpdateForestBud();
             UpdateWendigo();
+            UpdateStonehooves();
             TickBurning();
             TickIgnite();
 
@@ -2034,6 +2039,8 @@ namespace Game.Sim
 
                 if (Entities.Kind[i] == EnemyKind.ForestWendigo)
                 { MoveWendigo(i, toPlayer); continue; }
+                if (Entities.Kind[i] == EnemyKind.ForestStonehoof)
+                { MoveStonehoof(i, toPlayer); continue; }
 
                 // Разворот идёт ВСЕГДА, даже до того как враг решил погнаться:
                 // тело следит взглядом за игроком, а погоня — отдельное,
@@ -2285,7 +2292,7 @@ namespace Game.Sim
 
             for (int i = 0; i < Entities.Count; i++)
             {
-                if (Entities.Kind[i] == EnemyKind.ForestBud || Entities.Kind[i] == EnemyKind.ForestWendigo) continue;
+                if (Entities.Kind[i] == EnemyKind.ForestBud || Entities.Kind[i] == EnemyKind.ForestWendigo || Entities.Kind[i] == EnemyKind.ForestStonehoof) continue;
                 if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
                 if (pendingTarget >= 0)
@@ -2584,6 +2591,7 @@ namespace Game.Sim
             HashUpgrades(ref hash);
             HashForestBud(ref hash);
             HashWendigo(ref hash);
+            HashStonehooves(ref hash);
             HashCleaveFan(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает

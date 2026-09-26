@@ -24,9 +24,17 @@ namespace Game.View
     {
         Texture2D _terrain, _player;
         RenderTexture _detail;
-        Material _mapInk;
+        // Снимок лагеря подгоняется под HUD шейдером MinimapTerrain, схема Разлома рисуется
+        // по полю расстояний шейдером MinimapInk.
+        Material _terrainMat, _inkMat;
+        bool _materialsTried;
         Texture _detailSource;
         Rect _detailUv;
+        // Поле расстояний Разлома: метры до кромки прохода (внутри > 0) по квадрату _world и
+        // перевод значения в метры (RHalf — как есть, R8 — из 0..1).
+        Texture2D _field;
+        Vector2 _fieldDecode = new Vector2(1f, 0f);
+        float _panelWidth = 1f;
         readonly HudMapBackdrop _backdrop = new HudMapBackdrop();
         HudChrome _chrome;
         CampWalkMap _campMap;
@@ -57,6 +65,11 @@ namespace Game.View
         public float Zoom = 1.819f;
         /// <summary>Отступ от края карты, за которым метка места прижимается к краю.</summary>
         public float Inset = 15f;
+        /// <summary>
+        /// Ширина карты на экране в пикселях (ставит <see cref="HudMinimapMarks"/>); 0 — неизвестна.
+        /// По ней подбирается размер картинки: без лишнего сжатия кромка не мерцает при движении.
+        /// </summary>
+        public float PixelSize;
 
         /// <summary>Метки последнего кадра (режим <see cref="Bare"/>).</summary>
         public readonly List<MapMark> Marks = new List<MapMark>();
@@ -74,10 +87,19 @@ namespace Game.View
         static readonly Color Rim = new Color(1f, .95f, .81f, 1f);
         static readonly Color Ground = new Color(.36f, .37f, .20f, .82f);
         static readonly Color Path = new Color(.64f, .57f, .38f, .88f);
-        // Чернила карты Разлома (лист HUD P4): глубокая тень, чуть светлее проход, серебро кромки.
+        // Чернила карты Разлома (лист HUD P4): глубокая тень, чуть светлее проход. Кромка — мягкая
+        // кремовая линия кистью (владелец 26 сентября: серебряная лесенка в texel «очень пиксельная»).
         static readonly Color InkOutside = new Color(.047f, .063f, .090f, 1f);
         static readonly Color InkFloor = new Color(.118f, .149f, .192f, 1f);
-        static readonly Color InkEdge = new Color(.73f, .77f, .83f, 1f);
+        static readonly Color InkEdge = new Color(.95f, .87f, .72f, .9f);
+        // Линия кисти и её дрожание — в единицах холста карты: одинаковые на любом уровне.
+        const float EdgeWidth = 2.6f, EdgeWobble = 1.3f;
+        // Поле расстояний: шаг выборки (в клетке природной формы 2×2 выборки), предел и
+        // сглаживание в метрах — ступени по полметра скругляются, прямые края стоят на месте.
+        const float FieldStep = .25f, FieldRange = 3f, FieldBlur = .55f;
+        // Карта — округлый клуб (map_shape: суперэллипс 2,4): «рядом» и прижатие меток к краю
+        // считаются по той же форме, иначе метки в углах висели бы за краем клуба.
+        const float ShapePower = 2.4f, ShapeRim = .92f;
 
         public void DrawCamp(Rect panel, CampPlayerView camp, HudChrome chrome, GUIStyle label)
         {
@@ -165,7 +187,7 @@ namespace Game.View
                 float size = Mathf.Max(maxX - minX, maxY - minY) * cell * 1.15f;
                 _world = new Rect((minX + maxX) * .5f * cell - size * .5f,
                     (minY + maxY) * .5f * cell - size * .5f, size, size);
-                BuildInk(map, size);
+                BuildInk(map);
                 _layoutView = Object.FindAnyObjectByType<LayoutView>();
             }
             _caption = "Разлом · " + run.Depth;
@@ -225,6 +247,7 @@ namespace Game.View
             Marks.Clear();
             HasPlayer = false;
             FogMask = null;
+            _panelWidth = Mathf.Max(1f, panel.width);
             // На холсте картинку и её обрезку под рамку показывает RawImage под маской префаба.
             // Стили IMGUI здесь не создаются: этот путь идёт из LateUpdate, вне OnGUI.
             if (Bare) { UpdateView(); return; }
@@ -256,31 +279,84 @@ namespace Game.View
                 Mathf.Clamp(_hero.x, _world.xMin + size * .5f, _world.xMax - size * .5f),
                 Mathf.Clamp(_hero.y, _world.yMin + size * .5f, _world.yMax - size * .5f));
             _view = new Rect(center.x - size * .5f, center.y - size * .5f, size, size);
-            Texture source = !_ink && _backdrop.Texture != null ? _backdrop.Texture : _terrain;
+            LoadMaterials();
+            // Разлом: поле расстояний под шейдер, без шейдера — запасная раскраска поля (_terrain).
+            Texture source = _ink ? (_inkMat != null && _field != null ? _field : (Texture)_terrain)
+                : _backdrop.Texture != null ? _backdrop.Texture : _terrain;
             if (source == null) return;
             Rect uv = new Rect((_view.x - _world.x) / _world.width, (_view.y - _world.y) / _world.height,
                 _view.width / _world.width, _view.height / _world.height);
+            int side = DetailSide();
+            if (_detail != null && _detail.width != side)
+            {
+                _detail.Release();
+                Object.Destroy(_detail);
+                _detail = null;
+            }
             if (_detail == null)
             {
-                _detail = new RenderTexture(512, 512, 0, RenderTextureFormat.ARGB32)
-                { name = "HUD nearby terrain", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                // С мипами: карту на экране сдвигают и масштабируют анимации HUD.
+                _detail = new RenderTexture(side, side, 0, RenderTextureFormat.ARGB32)
+                {
+                    name = "HUD nearby terrain", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp,
+                    useMipMap = true, autoGenerateMips = true,
+                };
                 _detail.Create();
-                var shader = Resources.Load<Shader>("UI/HUD/MinimapTerrain");
-                if (shader != null) _mapInk = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+                _detailSource = null;
             }
             if (_detailSource == source && _detailUv == uv) return;
             _detailSource = source;
             _detailUv = uv;
             // Двигается выборка из готового фона, а не дополнительная камера сцены.
             RenderTexture previous = RenderTexture.active;
-            // Чернильную схему Разлома не осветляем: шейдер подгоняет под HUD только снимок лагеря.
-            if (_mapInk != null && !_ink)
+            if (_ink && source == _field)
             {
-                _mapInk.SetVector("_View", new Vector4(uv.x, uv.y, uv.width, uv.height));
-                Graphics.Blit(source, _detail, _mapInk);
+                // Кисть задана в единицах холста: метров в единице — ширина вида на ширину карты.
+                float unit = _view.width / _panelWidth;
+                _inkMat.SetVector("_View", new Vector4(_view.x, _view.y, _view.width, _view.height));
+                _inkMat.SetVector("_Field", new Vector4(_world.x, _world.y, _world.width, _world.height));
+                _inkMat.SetVector("_Decode", new Vector4(_fieldDecode.x, _fieldDecode.y, 0f, 0f));
+                _inkMat.SetVector("_Brush", new Vector4(_view.width / side, EdgeWidth * unit, EdgeWobble * unit, unit));
+                Graphics.Blit(source, _detail, _inkMat);
+            }
+            // Чернильную схему Разлома не осветляем: шейдер подгоняет под HUD только снимок лагеря.
+            else if (_terrainMat != null && !_ink)
+            {
+                _terrainMat.SetVector("_View", new Vector4(uv.x, uv.y, uv.width, uv.height));
+                Graphics.Blit(source, _detail, _terrainMat);
             }
             else Graphics.Blit(source, _detail, new Vector2(uv.width, uv.height), new Vector2(uv.x, uv.y));
             RenderTexture.active = previous;
+        }
+
+        /// <summary>
+        /// Сторона картинки: по ширине карты на экране, кратно 64. Растёт сразу, а уменьшается,
+        /// только когда вдвое больше нужного, — анимации HUD не пересоздают её каждый кадр.
+        /// </summary>
+        int DetailSide()
+        {
+            int current = _detail != null ? _detail.width : 512;
+            // Совсем мелкая — карта спрятана или ещё не разложена: размер не трогаем.
+            if (PixelSize < 64f) return current;
+            int need = Mathf.Clamp(Mathf.CeilToInt(PixelSize / 64f) * 64, 128, 1024);
+            return _detail != null && need <= current && current <= need * 2 ? current : need;
+        }
+
+        void LoadMaterials()
+        {
+            if (_materialsTried) return;
+            _materialsTried = true;
+            var terrain = Resources.Load<Shader>("UI/HUD/MinimapTerrain");
+            if (terrain != null && terrain.isSupported) _terrainMat = new Material(terrain) { hideFlags = HideFlags.HideAndDontSave };
+            var ink = Resources.Load<Shader>("UI/HUD/MinimapInk");
+            if (ink != null && ink.isSupported)
+            {
+                _inkMat = new Material(ink) { hideFlags = HideFlags.HideAndDontSave };
+                _inkMat.SetColor("_Outside", InkOutside);
+                _inkMat.SetColor("_Floor", InkFloor);
+                _inkMat.SetColor("_Edge", InkEdge);
+            }
+            else Debug.LogWarning("HudMinimap: нет шейдера UI/HUD/MinimapInk — карта Разлома рисуется запасной раскраской поля.");
         }
 
         bool Revealed(float x, float z) => _layoutView == null || _layoutView.IsRevealed(x, z);
@@ -308,9 +384,10 @@ namespace Game.View
             bool nearby = InsideMap(panel, point);
             if (!nearby)
             {
+                // Прижимается к краю клуба по той же округлой форме, что и маска карты.
                 Vector2 direction = point - panel.center;
-                float extent = panel.width * .5f - Inset - 2f;
-                point = panel.center + direction * (extent / Mathf.Max(Mathf.Abs(direction.x), Mathf.Abs(direction.y)));
+                Vector2 extent = new Vector2(panel.width * .5f - Inset - 2f, panel.height * .5f - Inset - 2f) * ShapeRim;
+                point = panel.center + direction / Mathf.Max(.001f, ShapeRadius(direction, extent));
                 if (Bare)
                 {
                     Marks.Add(new MapMark { Point = point, Symbol = symbol, Nearby = false, Kind = kind, Name = name,
@@ -364,8 +441,15 @@ namespace Game.View
             _hintLabel.normal.textColor = ink;
         }
 
-        bool InsideMap(Rect panel, Vector2 point) => point.x >= panel.x + Inset && point.x <= panel.xMax - Inset
-            && point.y >= panel.y + Inset && point.y <= panel.yMax - Inset;
+        bool InsideMap(Rect panel, Vector2 point) => ShapeRadius(point - panel.center,
+            new Vector2(panel.width * .5f - Inset, panel.height * .5f - Inset) * ShapeRim) <= 1f;
+
+        /// <summary>Радиус точки в суперэллипсе клуба с полуосями <paramref name="extent"/>: 1 — на краю.</summary>
+        static float ShapeRadius(Vector2 offset, Vector2 extent)
+        {
+            float x = Mathf.Abs(offset.x) / Mathf.Max(1f, extent.x), y = Mathf.Abs(offset.y) / Mathf.Max(1f, extent.y);
+            return Mathf.Pow(Mathf.Pow(x, ShapePower) + Mathf.Pow(y, ShapePower), 1f / ShapePower);
+        }
 
         Vector2 Project(Rect panel, float x, float z) => new Vector2(
             panel.x + (x - _view.x) / _view.width * panel.width,
@@ -396,53 +480,208 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Чернильная схема Разлома: пол — чуть светлее тени, по кромке прохода серебряная линия
-        /// в один texel. Пол берётся из той же природной формы, по которой ходит Sim (полуметровые
-        /// клетки), а без неё — из прямоугольников модулей.
+        /// Чернильная схема Разлома — поле расстояний до кромки прохода, печётся раз на уровень.
+        /// Пол берётся из той же природной формы, по которой ходит Sim (полуметровые клетки), а без
+        /// неё — из прямоугольников модулей. Точное расстояние до пола и до пустоты (Felzenszwalb),
+        /// затем гауссово сглаживание: полуметровые ступени скругляются, прямые края стоят на месте.
+        /// Заливку и кремовую линию кистью по полю рисует шейдер MinimapInk с краем в пиксель при
+        /// любом приближении. Раньше здесь была маска с серебряной кромкой в один texel, растянутая
+        /// на экране в семь раз, — отсюда лесенка (владелец 26 сентября: «очень пиксельное»).
+        /// Квадрат мира (_world) выравнивается по сетке выборки, так что поле покрывает его ровно.
         /// </summary>
-        void BuildInk(LayoutMap map, float size)
+        void BuildInk(LayoutMap map)
         {
-            int resolution = Mathf.Clamp(Mathf.CeilToInt(size / .4f), 192, 512);
-            float perMetre = resolution / size;
-            var floor = new bool[resolution * resolution];
-            void Fill(float x0, float z0, float x1, float z1)
+            float texel = FieldStep;
+            while (_world.width / texel > 512f) texel *= 2f;
+            // Сетка выборки выровнена по клеткам природной формы: в клетке ровно 2×2 выборки.
+            float x0 = Mathf.Floor(_world.x / texel) * texel, z0 = Mathf.Floor(_world.y / texel) * texel;
+            int n = Mathf.Max(16, Mathf.Max(Mathf.CeilToInt((_world.xMax - x0) / texel), Mathf.CeilToInt((_world.yMax - z0) / texel)));
+            _world = new Rect(x0, z0, n * texel, n * texel);
+            var inside = new bool[n * n];
+            if (map.Outline != null)
             {
-                int px0 = Mathf.Clamp(Mathf.FloorToInt((x0 - _world.x) * perMetre), 0, resolution);
-                int pz0 = Mathf.Clamp(Mathf.FloorToInt((z0 - _world.y) * perMetre), 0, resolution);
-                int px1 = Mathf.Clamp(Mathf.CeilToInt((x1 - _world.x) * perMetre), 0, resolution);
-                int pz1 = Mathf.Clamp(Mathf.CeilToInt((z1 - _world.y) * perMetre), 0, resolution);
-                for (int z = pz0; z < pz1; z++) for (int x = px0; x < px1; x++) floor[z * resolution + x] = true;
+                float step = NaturalOutline.Step.ToFloat();
+                var columns = new int[n];
+                for (int x = 0; x < n; x++) columns[x] = Mathf.FloorToInt((x0 + (x + .5f) * texel) / step);
+                int lastRow = int.MinValue;
+                for (int z = 0; z < n; z++)
+                {
+                    int row = Mathf.FloorToInt((z0 + (z + .5f) * texel) / step);
+                    // Соседняя строка выборки в той же строке клеток: в словарь формы второй раз не ходим.
+                    if (row == lastRow) { System.Array.Copy(inside, (z - 1) * n, inside, z * n, n); continue; }
+                    lastRow = row;
+                    for (int x = 0; x < n; x++) inside[z * n + x] = map.Outline.ContainsCell(columns[x], row);
+                }
             }
-            float cell = LayoutMap.CellSize.ToFloat();
-            float step = NaturalOutline.Step.ToFloat();
-            // В одной клетке модуля — 4×4 клетки природной формы (NaturalOutline).
-            int fine = Mathf.RoundToInt(cell / step);
-            for (int i = 0; i < map.PlacedCount; i++)
+            else
             {
-                PlacedModule room = map.GetPlaced(i);
-                if (map.Outline == null)
+                float cell = LayoutMap.CellSize.ToFloat();
+                for (int i = 0; i < map.PlacedCount; i++)
                 {
-                    Fill(room.OriginX * cell, room.OriginY * cell, (room.OriginX + room.Width) * cell, (room.OriginY + room.Height) * cell);
-                    continue;
+                    PlacedModule room = map.GetPlaced(i);
+                    // Выборки, чьи центры внутри модуля.
+                    int ix0 = Mathf.Clamp(Mathf.CeilToInt((room.OriginX * cell - x0) / texel - .5f), 0, n);
+                    int ix1 = Mathf.Clamp(Mathf.CeilToInt(((room.OriginX + room.Width) * cell - x0) / texel - .5f), 0, n);
+                    int iz0 = Mathf.Clamp(Mathf.CeilToInt((room.OriginY * cell - z0) / texel - .5f), 0, n);
+                    int iz1 = Mathf.Clamp(Mathf.CeilToInt(((room.OriginY + room.Height) * cell - z0) / texel - .5f), 0, n);
+                    for (int z = iz0; z < iz1; z++) for (int x = ix0; x < ix1; x++) inside[z * n + x] = true;
                 }
-                for (int y = room.OriginY * fine; y < (room.OriginY + room.Height) * fine; y++)
-                    for (int x = room.OriginX * fine; x < (room.OriginX + room.Width) * fine; x++)
-                        if (map.Outline.ContainsCell(x, y)) Fill(x * step, y * step, (x + 1) * step, (y + 1) * step);
             }
-            var pixels = new Color[floor.Length];
-            for (int z = 0; z < resolution; z++)
-                for (int x = 0; x < resolution; x++)
-                {
-                    int i = z * resolution + x;
-                    if (!floor[i]) { pixels[i] = InkOutside; continue; }
-                    bool edge = x == 0 || z == 0 || x == resolution - 1 || z == resolution - 1
-                        || !floor[i - 1] || !floor[i + 1] || !floor[i - resolution] || !floor[i + resolution];
-                    // Лёгкая неровность заливки — акварельная, как у панелей пака, без узора.
-                    float grain = (Mathf.PerlinNoise(x * .09f, z * .09f) - .5f) * .035f;
-                    pixels[i] = edge ? InkEdge : new Color(InkFloor.r + grain, InkFloor.g + grain, InkFloor.b + grain, 1f);
-                }
-            SetTerrain(pixels, resolution);
+
+            float[] toFloor = SquaredDistance(inside, n, true), toVoid = SquaredDistance(inside, n, false);
+            var field = new float[n * n];
+            for (int i = 0; i < field.Length; i++)
+            {
+                // Кромка — посередине между выборкой пола и выборкой пустоты: поправка на полвыборки.
+                float d = inside[i] ? Mathf.Sqrt(toVoid[i]) - .5f : .5f - Mathf.Sqrt(toFloor[i]);
+                field[i] = Mathf.Clamp(d * texel, -FieldRange, FieldRange);
+            }
+            Smooth(field, n, FieldBlur / texel);
+
+            // RHalf хранит метры как есть; где его нет — R8 в пределах ±FieldRange.
+            bool half = SystemInfo.SupportsTextureFormat(TextureFormat.RHalf);
+            _field = new Texture2D(n, n, half ? TextureFormat.RHalf : TextureFormat.R8, false, true)
+                { name = "HUD rift distance", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            if (half)
+            {
+                var data = new ushort[field.Length];
+                for (int i = 0; i < data.Length; i++) data[i] = Mathf.FloatToHalf(field[i]);
+                _field.SetPixelData(data, 0);
+                _fieldDecode = new Vector2(1f, 0f);
+            }
+            else
+            {
+                var data = new byte[field.Length];
+                for (int i = 0; i < data.Length; i++) data[i] = (byte)Mathf.RoundToInt((field[i] / FieldRange * .5f + .5f) * 255f);
+                _field.SetPixelData(data, 0);
+                _fieldDecode = new Vector2(FieldRange * 2f, -FieldRange);
+            }
+            _field.Apply(false, true);
+
+            LoadMaterials();
+            if (_inkMat == null) Colourize(field, n, texel);
+        }
+
+        /// <summary>
+        /// Запасная раскраска поля на процессоре, если шейдер MinimapInk не загрузился: та же
+        /// заливка и кремовая кромка, только без кисти и с краем в выборку, а не в пиксель.
+        /// </summary>
+        void Colourize(float[] field, int n, float texel)
+        {
+            var pixels = new Color[field.Length];
+            var edge = new Color(InkEdge.r, InkEdge.g, InkEdge.b, 1f);
+            for (int i = 0; i < field.Length; i++)
+            {
+                float d = field[i];
+                Color colour = Color.Lerp(InkOutside, InkFloor, Smooth01(-texel * .5f, texel * .5f, d));
+                float line = 1f - Smooth01(texel * .5f, texel * 1.5f, Mathf.Abs(d - texel * .5f));
+                pixels[i] = Color.Lerp(colour, edge, line * InkEdge.a);
+            }
+            SetTerrain(pixels, n);
             _terrain.filterMode = FilterMode.Bilinear;
+        }
+
+        static float Smooth01(float from, float to, float x)
+        {
+            float t = Mathf.Clamp01((x - from) / (to - from));
+            return t * t * (3f - 2f * t);
+        }
+
+        const float Far = 1e20f;
+
+        /// <summary>
+        /// Квадрат точного евклидова расстояния (в выборках) от каждой выборки до ближайшей, у
+        /// которой inside == <paramref name="target"/>: столбцы, потом строки (Felzenszwalb, Huttenlocher).
+        /// Где таких нет совсем — <see cref="Far"/>.
+        /// </summary>
+        static float[] SquaredDistance(bool[] inside, int n, bool target)
+        {
+            var grid = new float[n * n];
+            for (int i = 0; i < grid.Length; i++) grid[i] = inside[i] == target ? 0f : Far;
+            var f = new float[n];
+            var d = new float[n];
+            var v = new int[n];
+            var z = new float[n + 1];
+            for (int x = 0; x < n; x++)
+            {
+                for (int y = 0; y < n; y++) f[y] = grid[y * n + x];
+                LowerEnvelope(f, d, v, z, n);
+                for (int y = 0; y < n; y++) grid[y * n + x] = d[y];
+            }
+            for (int y = 0; y < n; y++)
+            {
+                System.Array.Copy(grid, y * n, f, 0, n);
+                LowerEnvelope(f, d, v, z, n);
+                System.Array.Copy(d, 0, grid, y * n, n);
+            }
+            return grid;
+        }
+
+        /// <summary>
+        /// Одномерный проход: d[q] = min по p (f[p] + (q − p)²) через нижнюю огибающую парабол.
+        /// Выборки без цели (f = Far) в огибающую не входят — так нет переполнений и NaN.
+        /// </summary>
+        static void LowerEnvelope(float[] f, float[] d, int[] v, float[] z, int n)
+        {
+            int k = -1;
+            for (int q = 0; q < n; q++)
+            {
+                if (f[q] >= Far) continue;
+                if (k < 0) { k = 0; v[0] = q; z[0] = float.NegativeInfinity; z[1] = float.PositiveInfinity; continue; }
+                float s = Crossing(f, v[k], q);
+                // z[0] = −∞: ниже первой параболы огибающая не опускается.
+                while (s <= z[k]) { k--; s = Crossing(f, v[k], q); }
+                k++;
+                v[k] = q;
+                z[k] = s;
+                z[k + 1] = float.PositiveInfinity;
+            }
+            if (k < 0) { for (int q = 0; q < n; q++) d[q] = Far; return; }
+            k = 0;
+            for (int q = 0; q < n; q++)
+            {
+                while (z[k + 1] < q) k++;
+                float dq = q - v[k];
+                d[q] = dq * dq + f[v[k]];
+            }
+        }
+
+        static float Crossing(float[] f, int p, int q) => (f[q] + q * q - (f[p] + p * p)) / (2f * (q - p));
+
+        /// <summary>Разделимое гауссово сглаживание поля (σ в выборках); за краем — крайние значения.</summary>
+        static void Smooth(float[] field, int n, float sigma)
+        {
+            if (sigma < .3f) return;
+            int radius = Mathf.CeilToInt(sigma * 2.5f);
+            var kernel = new float[radius * 2 + 1];
+            float sum = 0f;
+            for (int k = -radius; k <= radius; k++) sum += kernel[k + radius] = Mathf.Exp(-.5f * k * k / (sigma * sigma));
+            for (int k = 0; k < kernel.Length; k++) kernel[k] /= sum;
+            var pass = new float[field.Length];
+            for (int z = 0; z < n; z++)
+                for (int x = 0; x < n; x++)
+                {
+                    float value = 0f;
+                    for (int k = -radius; k <= radius; k++)
+                    {
+                        int at = x + k;
+                        if (at < 0) at = 0; else if (at >= n) at = n - 1;
+                        value += kernel[k + radius] * field[z * n + at];
+                    }
+                    pass[z * n + x] = value;
+                }
+            for (int z = 0; z < n; z++)
+                for (int x = 0; x < n; x++)
+                {
+                    float value = 0f;
+                    for (int k = -radius; k <= radius; k++)
+                    {
+                        int at = z + k;
+                        if (at < 0) at = 0; else if (at >= n) at = n - 1;
+                        value += kernel[k + radius] * pass[at * n + x];
+                    }
+                    field[z * n + x] = value;
+                }
         }
 
         void SetTerrain(Color[] pixels, int size)
@@ -453,10 +692,14 @@ namespace Game.View
         void ClearTerrain()
         {
             _detailSource = null;
-            if (_terrain == null) return;
-            _chrome?.Forget(_terrain);
-            Object.Destroy(_terrain);
-            _terrain = null;
+            if (_terrain == null && _field == null) return;
+            if (_field != null) { Object.Destroy(_field); _field = null; }
+            if (_terrain != null)
+            {
+                _chrome?.Forget(_terrain);
+                Object.Destroy(_terrain);
+                _terrain = null;
+            }
             _backdrop.Invalidate();
         }
         public void Dispose()
@@ -464,7 +707,8 @@ namespace Game.View
             ClearTerrain();
             _backdrop.Dispose();
             if (_player != null) Object.Destroy(_player);
-            if (_mapInk != null) Object.Destroy(_mapInk);
+            if (_terrainMat != null) Object.Destroy(_terrainMat);
+            if (_inkMat != null) Object.Destroy(_inkMat);
             if (_detail != null) { _detail.Release(); Object.Destroy(_detail); }
         }
     }

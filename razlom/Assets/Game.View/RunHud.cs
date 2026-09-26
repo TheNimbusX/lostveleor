@@ -73,6 +73,8 @@ namespace Game.View
                 }
                 if (Event.current.type == EventType.Repaint) _menuShown = menuShown;
                 // Экраны и панели на Canvas (RunHudWc) рисует RunHud.View; здесь — только запасной вид.
+                // Выбор арены тоже на Canvas (RunHud.View.FillRoute): раньше он был только здесь, и
+                // Canvas его глушил — после награды игра стояла без экрана (баг 26 сентября).
                 if (_view != null) { }
                 else if (run.Phase == RunPhase.Clearing)
                     DrawCombatStatus(run, safeLeft);
@@ -277,6 +279,32 @@ namespace Game.View
             GUI.Label(new Rect(box.x + 6, box.y + 2, box.width - 12, 20), text, _subtitle);
         }
 
+        /// <summary>Сколько путей предлагает RiftRun после награды (его _routes).</summary>
+        private const int RouteChoices = 3;
+
+        /// <summary>Подзаголовок выбора арены: какой разлом следующий.</summary>
+        private static string RouteSubtitle(RiftRun run)
+            => "Разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : "") + " · награда — после зачистки";
+
+        /// <summary>
+        /// Тексты карточки следующей арены — одни для Canvas (RunHud.View), запасного IMGUI и кадра
+        /// редактора (RunHudWcBuilder.Preview). Название — что ждёт после победы, плашка — размер
+        /// или «Опасная арена», описание — всё вместе, строка значения — бонус золота опасной.
+        /// </summary>
+        public static void RouteTexts(in ArenaRouteOffer offer, out string title, out string kind, out string body,
+            out string valueLabel, out string value)
+        {
+            string size = offer.Size == 2 ? "Малая" : offer.Size == 3 ? "Средняя" : "Большая";
+            title = offer.Reward == ArenaReward.Shop ? "Магазин · скоро" : "Улучшение";
+            kind = offer.Hard ? "Опасная арена" : size + " арена";
+            body = size + " лесная арена. " + (offer.Reward == ArenaReward.Shop
+                    ? "Место для будущего торговца — пока обычная награда за бой."
+                    : "После победы — новая способность или талант.")
+                + (offer.Hard ? " Враги: +25% здоровья и урона." : "");
+            valueLabel = offer.Hard ? "За зачистку" : string.Empty;
+            value = offer.Hard ? "+" + offer.BonusGold + " золота" : string.Empty;
+        }
+
         private void DrawRouteChoice(RiftRun run, float canvasWidth, float canvasHeight,
             float safeLeft, float safeRight)
         {
@@ -286,31 +314,27 @@ namespace Game.View
             Fill(panel, Panel); Frame(panel, Ink, 1f);
             Fill(new Rect(panel.x, panel.y, width, 5f), Cyan);
             GUI.Label(new Rect(panel.x + 28, panel.y + 20, width - 56, 30), "ВЫБЕРИ СЛЕДУЮЩУЮ АРЕНУ", _title);
-            GUI.Label(new Rect(panel.x + 28, panel.y + 54, width - 56, 26),
-                "Разлом " + (run.Depth + 1) + (run.TotalLevels > 0 ? " / " + run.TotalLevels : "")
-                + " · награда ждёт после зачистки", _subtitle);
-            float cardWidth = (width - 80) / 3;
-            for (int i = 0; i < 3; i++)
+            GUI.Label(new Rect(panel.x + 28, panel.y + 54, width - 56, 26), RouteSubtitle(run), _subtitle);
+            float cardWidth = (width - 80) / RouteChoices;
+            for (int i = 0; i < RouteChoices; i++)
             {
                 var offer = run.GetRoute(i);
                 var card = new Rect(panel.x + 28 + i * (cardWidth + 12), panel.y + 90, cardWidth, height - 142);
                 bool selected = GUI.Button(card, GUIContent.none, _cardButton);
                 Fill(card, card.Contains(Event.current.mousePosition) ? CardHover : Card);
                 Frame(card, offer.Hard ? Coral : Cyan, 2);
-                string size = offer.Size == 2 ? "Малая" : offer.Size == 3 ? "Средняя" : "Большая";
+                RouteTexts(offer, out string title, out string kind, out string body, out string valueLabel, out string value);
                 GUI.Label(new Rect(card.x + 14, card.y + 14, card.width - 28, 28),
-                    (i + 1) + ". " + (offer.Reward == ArenaReward.Shop ? "МАГАЗИН · СКОРО" : "УЛУЧШЕНИЕ"), _eyebrow);
-                string text = size + " лесная арена\n" + (offer.Hard ? "Повышенная сложность" : "Обычная сложность")
-                    + "\n\n" + (offer.Reward == ArenaReward.Shop
-                        ? "Место для будущего торговца.\nПока — обычная награда за бой."
-                        : "Новая способность или талант\nпосле победы.")
-                    + (offer.Hard ? "\n\nВраги: +25% здоровья и урона\nБонус: +" + offer.BonusGold + " золота за зачистку" : "");
+                    KeyLabel(i, false) + ". " + title.ToUpperInvariant(), _eyebrow);
+                string text = kind + "\n\n" + body + (valueLabel.Length > 0 ? "\n\n" + valueLabel + ": " + value : "");
                 GUI.Label(new Rect(card.x + 14, card.y + 48, card.width - 28, card.height - 54), text, _body);
                 if (selected)
                     _driver.QueueRunCommand((RunCommand)((int)RunCommand.ChooseRoute1 + i));
             }
+            // Клавиши — из настроек (GameKeyBindings), а не «Q W E / 1 2 3» и «L» на все случаи.
             GUI.Label(new Rect(panel.x + 28, panel.yMax - 35, width - 56, 24),
-                (GameUserSettings.AbilityRowUsesLetters ? "Q W E" : "1 2 3") + "  выбрать путь     L  уйти с добычей", _subtitle);
+                KeyLabel(0, false) + " " + KeyLabel(1, false) + " " + KeyLabel(2, false) + "  выбрать путь     "
+                + GameKeyBindings.Label(GameAction.LeaveRift) + "  уйти с добычей", _subtitle);
         }
 
         private void DrawRewardChoice(RiftRun run, float canvasWidth, float canvasHeight,

@@ -1,0 +1,21 @@
+{
+  "sample_count": 387,
+  "maximum_interpolated_joint_error_m": [
+    0.0018901849387801132,
+    5.34375,
+    "leg_front_right_bot2_end"
+  ],
+  "maximum_interpolated_rotation_error_degrees": [
+    0.3165175555172581,
+    0.03125,
+    "leg_hind_left_bot1"
+  ],
+  "baked_seam_error_m": 0.0,
+  "display_rates_checked": [
+    30,
+    60,
+    120
+  ],
+  "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.",
+  "source_sha256_unchanged": true
+}

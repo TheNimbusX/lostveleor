@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// Реплика NPC в окне лавки (префаб CampShopsWc): облачко над головой портрета,
-    /// с хвостиком к нему и именем на ленточке. Текст ставит CampServicesView (поле
+    /// Реплика NPC в окне лавки (префаб CampShopsWc): облачко дыма над головой портрета,
+    /// с хвостиком к нему и именем на нити света. Текст ставит CampServicesView (поле
     /// Message окна); пустой текст прячет облачко. Новая реплика: облачко мягко
     /// выпрыгивает, буквы печатаются одна за другой. Время неигровое.
     /// </summary>
@@ -18,6 +18,8 @@ namespace Game.View
         [Tooltip("Секунд на проявление новой реплики")] public float FadeIn = .18f;
         [Tooltip("Букв в секунду")] public float LettersPerSecond = 55f;
         [Tooltip("Насколько облачко меньше в начале выпрыгивания")] public float PopFrom = .9f;
+        [Tooltip("Проявление дыма облачка («Дым и свет»): заново, когда реплика появляется после пустоты. Пусто — нет")]
+        public UiInkGroup Ink;
 
         string _shown = "";
         float _since;
@@ -36,6 +38,9 @@ namespace Game.View
             string text = Line.text ?? "";
             if (text != _shown)
             {
+                // Облачко возникает из пустоты — дым растекается заново (с окном его проявляет включение
+                // группы). Смена одной реплики на другую — только печать по буквам.
+                if (!instant && _shown.Length == 0 && text.Length > 0 && Ink != null && Ink.isActiveAndEnabled) Ink.Show();
                 _shown = text;
                 _since = 0f;
             }

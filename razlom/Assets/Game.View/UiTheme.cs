@@ -30,6 +30,7 @@ namespace Game.View
             Lavidium, Health, Experience, Coins,
             Good, Bad,
             Epic, Unique,
+            Smoke, SmokeDeep,
         }
 
         public enum FontRole { Heading, Body }
@@ -45,6 +46,9 @@ namespace Game.View
         public Color Text = Hex("F4F7FB");
         public Color TextMuted = Hex("93A2BC");
         [Tooltip("Текст на оранжевой кнопке")] public Color TextOnAccent = Hex("FFF6EE");
+
+        [Tooltip("Чернильный дым материала «Дым и свет» (владелец 25 сентября): подложка текста и значков прямо над миром")] public Color Smoke = Hex("121923", .93f);
+        [Tooltip("Глубокий дым: колонны окон поверх притемнённого мира (итоги, пауза) — почти чёрный и плотный")] public Color SmokeDeep = Hex("04060A", 1f);
 
         [Header("Акцент и состояния")]
         [Tooltip("Единственный акцент: выбранное, основная кнопка, маркер пункта")] public Color Accent = Hex("FD7442");
@@ -190,6 +194,8 @@ namespace Game.View
             Role.Bad => Bad,
             Role.Epic => Epic,
             Role.Unique => Unique,
+            Role.Smoke => Smoke,
+            Role.SmokeDeep => SmokeDeep,
             _ => Color.magenta,
         };
 

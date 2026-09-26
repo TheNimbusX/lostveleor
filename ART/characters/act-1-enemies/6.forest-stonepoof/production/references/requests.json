@@ -1,0 +1,37 @@
+{
+  "stage": "motion_references",
+  "owner_motion_references_approved": true,
+  "owner_approval": "2026-09-25: супер рефы - делай дальше",
+  "model_approved": true,
+  "approved_model": "../Stonehoof_ModelCandidate_r03.blend",
+  "estimated_total_credits": 35,
+  "model": "seedance_2_0",
+  "mode": "fast",
+  "resolution": "720p",
+  "requests": [
+    {
+      "index": 1,
+      "slug": "charge",
+      "title": "Подготовка, разбег и торможение",
+      "duration": 6,
+      "media_id": "fab35cdd-1203-421b-b0a5-be3a8e00c0bc",
+      "prompt": "Animation reference for the exact stylized wooden stone-forehead boar in the supplied first frame, a four-legged game creature. Preserve the same ivory forehead shield and spiral emblem, tusks, cloven stone hooves, wood anatomy, olive foliage, proportions and painted materials. Exactly one creature, four legs throughout. Same neutral studio ground, soft light and locked camera as the input. One continuous full-body shot, feet always inside frame, no cuts, camera movement, zoom, text or UI. Clear physically grounded weight transfer, articulated shoulder blades and hips, planted support hooves, inertial head and foliage follow-through. No body morphing or stretched limbs. Only very faint contact dust if needed; no magic, trails, telegraphs or added sound. Six-second motion study. The boar starts on the RIGHT facing LEFT with the open floor in front. 0.0-1.0 seconds: body remains in its starting location, braces on three hooves, scrapes the near FRONT hoof BACKWARDS across the ground exactly TWICE, briefly lifting and replacing it between scrapes. Both scrapes are clearly visible. Chest subtly rocks with each scrape, shoulders compress, head lowers ready to ram; no frozen hold. At 1.0 second plant that hoof, hindquarters push forcefully and the boar launches LEFT. 1.0-2.2 seconds: explosive accelerating quadrupedal gallop along a perfectly straight path across the available floor, powerful alternating reach and gather of the front legs, hind legs propel the heavy body, head remains low. Stay inside the left edge of frame. 2.2-2.8 seconds: plant the forelegs ahead, lower the hips and brake to a stop with one short heavy skid; hooves grip rather than skate throughout the run. 2.8-6.0 seconds: chest and head overshoot then settle, two small weight-correcting steps and breathing, return to a grounded low ready stance. Do not turn around or perform a second attack. The initial two-hoof-scrape warning and heavy launch are the most important parts."
+    },
+    {
+      "index": 2,
+      "slug": "collision",
+      "title": "Столкновение и оглушение",
+      "duration": 4,
+      "media_id": "3ba153d5-b19c-4b01-95df-0719c7db142a",
+      "prompt": "Animation reference for the exact stylized wooden stone-forehead boar in the supplied first frame, a four-legged game creature. Preserve the same ivory forehead shield and spiral emblem, tusks, cloven stone hooves, wood anatomy, olive foliage, proportions and painted materials. Exactly one creature, four legs throughout. Same neutral studio ground, soft light and locked camera as the input. One continuous full-body shot, feet always inside frame, no cuts, camera movement, zoom, text or UI. Clear physically grounded weight transfer, articulated shoulder blades and hips, planted support hooves, inertial head and foliage follow-through. No body morphing or stretched limbs. Only very faint contact dust if needed; no magic, trails, telegraphs or added sound. Four-second motion study of ONE failed charge into the stone block shown in the input. 0.0-0.6 seconds: boar drops its forehead and takes two powerful fast galloping strides LEFT into the block. At 0.6 seconds the IVORY FOREHEAD PLATE strikes the solid stone; the head stops outside the stone, shoulders compress, the back and hindquarters continue briefly with inertia. The block stays completely fixed. Hooves catch and the forelegs bend under the chest; no penetration, no bounce like rubber, no tumbling or flight. 0.6-1.0 seconds: short heavy recoil of the neck and chest, hind hooves step in to arrest momentum. 1.0-2.4 seconds: dazed vulnerable pause with continuous small wobble of shoulders, head sagging then a short shake, weight visibly supported by the legs. 2.4-4.0 seconds: regains stable four-hoof stance and steadies its head without turning or charging again. Keep the contact between forehead and stone clearly visible, with only a tiny puff of ordinary dust, no glowing stars or magical effects."
+    },
+    {
+      "index": 3,
+      "slug": "death",
+      "title": "Смерть с оседанием на лапы",
+      "duration": 4,
+      "media_id": "9e79eed3-3798-4fcc-8404-754491ae02b7",
+      "prompt": "Animation reference for the exact stylized wooden stone-forehead boar in the supplied first frame, a four-legged game creature. Preserve the same ivory forehead shield and spiral emblem, tusks, cloven stone hooves, wood anatomy, olive foliage, proportions and painted materials. Exactly one creature, four legs throughout. Same neutral studio ground, soft light and locked camera as the input. One continuous full-body shot, feet always inside frame, no cuts, camera movement, zoom, text or UI. Clear physically grounded weight transfer, articulated shoulder blades and hips, planted support hooves, inertial head and foliage follow-through. No body morphing or stretched limbs. Only very faint contact dust if needed; no magic, trails, telegraphs or added sound. Four-second non-graphic death animation reference. The creature begins standing on all four feet. 0.0-0.4 seconds: a small involuntary recoil runs from chest to shoulders and its head drops. 0.4-1.3 seconds: both front knees buckle visibly under the heavy chest; forehooves remain grounded and slide only a few centimeters as the chest descends. Hind legs fold next to lower the pelvis rather than keeping the rump in the air. 1.3-2.3 seconds: belly and chest settle onto the ground, forehead and snout lower close to the ground in front, tusks do not penetrate the floor. Body remains belly-down with legs folded underneath or slightly splayed, not upright and not lying flat on its side. 2.3-3.0 seconds: one last small inertial settling of the shoulders and foliage. 3.0-4.0 seconds: the creature remains dead and still. No recovery, revival, roll, explosion, disintegration, blood or additional creatures. Every body part must keep its original shape and scale."
+    }
+  ]
+}

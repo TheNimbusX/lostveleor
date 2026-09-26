@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-25",
+  "concept_approved": true,
+  "runtime_owner_approved": false,
+  "runtime_scope": [
+    "Forest Bud landing warnings",
+    "Wendigo claw sector",
+    "Wendigo leap landing"
+  ],
+  "lane_scope": "Actual Unity shader preview only; Stonehoof integration follows animation acceptance.",
+  "captures": "Editor gameplay sampled at 24 images/s with capture clock 60. Not a performance benchmark.",
+  "behavior_changes": "None to Sim, attack timings, damage, cancellation or targeting.",
+  "validation": [
+    "View build: 0 errors",
+    "All three shaders supported, no ShaderUtil errors",
+    "Real gameplay inspected: circle, sector, leap, partial overlap",
+    "Fixed contour with countdown fill; terrain-sampled pooled Bud mesh"
+  ],
+  "unverified": [
+    "Owner artistic acceptance",
+    "Weak-PC performance",
+    "Stonehoof lane combat integration"
+  ],
+  "shader_sha256": {
+    "GroundTelegraphStyle.hlsl": "8ef1065d09386d972877f1da4939ab3f98f657ea4de45e1ce878f210504f175e",
+    "GroundTelegraphLane.shader": "231d8db771d2dabb3aff12b0a48534b72e6fbab52c20c30627299db6171c63c7",
+    "ForestBudLanding.shader": "9ab7463bd8b37854bd98e1ed63cdad6147336c764d7136bd8d44e4a353f58da1",
+    "WendigoWarning.shader": "5d200fef8ad9585350de4a2b4debce9e1c152b2f806faecaff447458421cf3f4"
+  }
+}

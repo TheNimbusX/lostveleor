@@ -1,0 +1,11 @@
+{
+  "date": "2026-09-25",
+  "generator": "OpenAI imagegen tool",
+  "source_reference": "artifacts/capture/ui-moments-5/ui-01-arena-intro.png",
+  "output": "telegraphs-family-r01.png",
+  "role": "Approved visual direction, not a runtime texture",
+  "owner_approved": true,
+  "approval_quote": "Да, берём за основу",
+  "brief": "A cohesive enemy ground-telegraph family on the supplied painterly olive forest ground. Three columns: directional charge lane with one broad chevron, 140-degree claw sector, circular landing area. Two rows: 25% and 95% countdown. Restrained warm coral-red narrow contour, darker inner keyline, thin warm highlight, translucent red interior revealing ground. Fixed exact danger boundary visible from start. Fill progresses rear-to-front for lane, outward for circle and sector. No runes, decorative roots, petals, icons, flames, particle clutter, vertical cylinder or screen-space overlay. Readable from the game camera.",
+  "original_prompt_note": "Reconstructed art brief; original tool-call text is in task history."
+}

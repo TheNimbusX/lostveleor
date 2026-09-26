@@ -1,0 +1,28 @@
+{
+  "source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_r01.blend": "c8d4ea70675e5db835052b25952ab960c4f68e25ba87b574eb3598150d3871d5"
+  },
+  "joins": {
+    "from_accepted_gallop_phase_0": {
+      "max_joint_position_m": 1.6049041769309353e-07,
+      "max_matrix_error": 1.1026859283447266e-06
+    },
+    "to_accepted_stance": {
+      "max_joint_position_m": 3.533335239106231e-06,
+      "max_matrix_error": 1.5363097190856934e-05
+    }
+  },
+  "contacts": {
+    "front_left": 3,
+    "front_right": 3.7,
+    "hind_left": 4.3,
+    "hind_right": 5
+  },
+  "frames": 18,
+  "fps": 30,
+  "stop_frame": 14,
+  "braking_distance_preview_m": 3.4,
+  "owner_approved": false,
+  "phase_transition_note": "Canonical phase-0 join shown. Runtime must blend arbitrary gait phase within the braking interval, never wait past the arena boundary."
+}

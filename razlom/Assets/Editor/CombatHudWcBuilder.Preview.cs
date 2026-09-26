@@ -46,6 +46,20 @@ namespace Game.EditorTools
             return last;
         }
 
+        /// <summary>
+        /// Кадр с подсказкой в режиме Alt (владелец 26 сентября): над второй плиткой — взятые усиления
+        /// и «было → стало». Остальной HUD как в обычном кадре.
+        /// </summary>
+        public static string CaptureTooltipDetail(string outPath)
+        {
+            Build(false);
+            return UiKitShowcase.Capture(outPath, PrefabPath, 1920, 1080, inst =>
+            {
+                Preview(inst);
+                PreviewDetail(inst.GetComponent<CombatHudView>());
+            });
+        }
+
         static Texture2D Ability(string key) => AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Abilities/Icon_" + key + ".png");
 
         static void Preview(GameObject inst)
@@ -89,11 +103,13 @@ namespace Game.EditorTools
             view.Dash.Key.text = "SPACE";
             view.Dash.Art.texture = Ability("Dash");
             view.Dash.Art.uvRect = view.Slots[0].Art.uvRect;
-            // Камень: 2 / 4 / 7 / 8 — сталь, серебро, золото, кристалл; у перезарядки и нехватки
-            // лавидия тусклый. Ряд насечек — только у плитки под мышью (вторая, с подсказкой).
+            // Огонёк: 2 / 4 / 7 / 8 — сталь, серебро, золото, кристалл; у перезарядки и нехватки
+            // лавидия притушен. Дуга точек — только у плитки под мышью (вторая, с подсказкой).
+            // Кольцо: у готовых горит, у первой — вспышка момента готовности, у перезарядки и
+            // нехватки лавидия тлеет углём.
             int[] upgrades = { 2, 4, 7, 8 };
             for (int slot = 0; slot < view.Slots.Length && slot < upgrades.Length; slot++)
-                view.Slots[slot].ReadyGem.Preview(upgrades[slot], slot < 2, slot == 1);
+                view.Slots[slot].ReadyGem.Preview(upgrades[slot], slot < 2, slot == 1, slot == 0 ? .6f : 0f);
             view.Dash.ReadyGem.Preview(0, true);
             // Эффекты зелий над героем: Живица на 4 с, Порыв на 2 с.
             foreach (var (chip, fill, title) in new[] { (view.ResinChip, .66f, "Живица · 4 с"), (view.SurgeChip, .33f, "Порыв · 2 с") })
@@ -110,9 +126,9 @@ namespace Game.EditorTools
             view.LevelBanner.Preview(4, 1.2f);
             // Концепт 2Б: всплывашки над портретом и объявление сверху.
             view.Toasts.Preview(
-                (AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/leather_jacket.png"), Role.Rare, "Кожаная куртка", "Редкая · ур. 4", Role.Rare),
-                (view.GoldIcon, Role.Coins, "+45 золота", null, Role.TextMuted),
-                (view.OrderIcons[0], Role.Epic, "Заказ Лео выполнен", "Живица", Role.TextMuted));
+                (AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/leather_jacket.png"), Role.Rare, "Кожаная куртка", "Редкая · ур. 4", Role.Rare, false),
+                (view.GoldIcon, Role.Coins, "+45 золота", null, Role.TextMuted, true),
+                (view.OrderIcons[0], Role.Epic, "Заказ Лео выполнен", "Живица", Role.TextMuted, false));
             view.Announce.Preview("РАЗЛОМ ЗАЧИЩЕН", "Путь к выходу открыт");
             // Под мышью над героем числа видны внутри полос.
             view.ExperienceText.text = "140 / 300";
@@ -126,7 +142,8 @@ namespace Game.EditorTools
                 tile.Find("Клавиша/Буква").GetComponent<TMP_Text>().text = potion.StartsWith("Health") ? "5" : "6";
             }
 
-            // Подсказка над второй плиткой — как её ставит CombatHudView.
+            // Подсказка над второй плиткой — как её ставит CombatHudView: 4 усиления, дальность
+            // выросла от усиления (цветом «хорошо»), справа в строке усилений «Alt подробнее».
             view.Tooltip.gameObject.SetActive(true);
             view.TooltipIcon.texture = Ability("Cleave");
             view.TooltipTitle.text = "Рассекающий удар";
@@ -135,10 +152,11 @@ namespace Game.EditorTools
             for (int i = 0; i < view.TooltipUpgradePips.Length; i++)
             {
                 view.TooltipUpgradePips[i].sprite = i < 4 ? view.UpgradePipFilled : view.UpgradePipEmpty;
-                view.TooltipUpgradePips[i].color = i < 4 ? Color.white : new Color(1f, 1f, 1f, .45f);
+                view.TooltipUpgradePips[i].color = i < 4 ? Color.white : new Color(1f, 1f, 1f, .24f);
             }
             view.TooltipUpgradeText.text = "Усилений: 4 из 8";
-            string[] values = { "34", "6 с", "2,5 м" };
+            if (view.TooltipDetailHint != null) view.TooltipDetailHint.SetActive(true);
+            string[] values = { "34", "6 с", "3,8 м" };
             int[] stat = { 3, 2, 4 };
             for (int i = 0; i < view.TooltipMetrics.Length; i++)
             {
@@ -148,13 +166,11 @@ namespace Game.EditorTools
                 if (!shown) continue;
                 metric.Icon.sprite = view.StatIcons[stat[i]];
                 metric.Value.text = values[i];
+                var tint = metric.Value.GetComponent<ThemeColor>();
+                if (tint != null) tint.SetRole(i == 2 ? Role.Good : Role.Text);
                 metric.Separator.SetActive(i % view.TooltipMetricColumns != 0);
             }
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.Tooltip);
-            var slotRect = (RectTransform)view.Slots[1].transform;
-            float slotCenter = AbilitiesX + slotRect.anchoredPosition.x + Slot * .5f;
-            view.Tooltip.anchoredPosition = new Vector2(slotCenter, RowBottom + Slot + view.TooltipGap);
-            view.TooltipTail.anchoredPosition = Vector2.zero;
+            PlaceTooltip(view);
 
             // Карта: образец местности и настоящие метки холста — выход, награда за краем, алхимик
             // под мышью с подписью, враги и герой.
@@ -165,6 +181,39 @@ namespace Game.EditorTools
                 new[] { new Vector3(.78f, .2f, 4f), new Vector3(.95f, .6f, 5f), new Vector3(.28f, .78f, HudMinimapMarks.AlchemistMark) },
                 new[] { new Vector2(.32f, .38f), new Vector2(.6f, .3f), new Vector2(.66f, .62f), new Vector2(.36f, .7f) },
                 new Vector2(.5f, .5f), 24f, 2);
+        }
+
+        /// <summary>Подсказка над второй плиткой после смены содержимого: высота по раскладке, низом над плиткой.</summary>
+        static void PlaceTooltip(CombatHudView view)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.Tooltip);
+            var slotRect = (RectTransform)view.Slots[1].transform;
+            float slotCenter = AbilitiesX + slotRect.anchoredPosition.x + Slot * .5f;
+            view.Tooltip.anchoredPosition = new Vector2(slotCenter, RowBottom + Slot + view.TooltipGap);
+            view.TooltipTail.anchoredPosition = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Та же подсказка с зажатым Alt: «Alt подробнее» уходит, под параметрами — взятые усиления
+        /// Рассекающего удара и «было → стало». Текст собран так же, как в CombatHudView.
+        /// </summary>
+        static void PreviewDetail(CombatHudView view)
+        {
+            if (view.TooltipDetail == null || view.TooltipDetailText == null) return;
+            if (view.TooltipDetailHint != null) view.TooltipDetailHint.SetActive(false);
+            string muted = ColorUtility.ToHtmlStringRGB(T.Get(Role.TextMuted)), good = ColorUtility.ToHtmlStringRGB(T.Get(Role.Good));
+            var text = new System.Text.StringBuilder();
+            int[] taken = { 0, 1, 3, 5 };
+            foreach (int i in taken)
+            {
+                if (text.Length > 0) text.Append('\n');
+                text.Append("<b>").Append(SabreTalentTexts.Name(Game.Sim.SabreTalentLine.Cleave, i)).Append("</b>  <color=#").Append(muted).Append('>')
+                    .Append(SabreTalentTexts.Description(Game.Sim.SabreTalentLine.Cleave, i)).Append("</color>");
+            }
+            text.Append("\n<size=45%> </size>\nДальность  <color=#").Append(muted).Append(">2,5 м</color> → <color=#").Append(good).Append(">3,8 м</color>");
+            view.TooltipDetailText.text = text.ToString();
+            view.TooltipDetail.SetActive(true);
+            PlaceTooltip(view);
         }
 
         static void SetFill(RectTransform fill, float ratio) => fill.anchorMax = new Vector2(ratio, fill.anchorMax.y);

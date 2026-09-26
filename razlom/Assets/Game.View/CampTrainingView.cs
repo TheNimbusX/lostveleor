@@ -10,7 +10,7 @@ namespace Game.View
         CampDummyView[] _dummies;
         TickDriver _driver;
         int _generation = -1;
-        // Панель на паке (CampTrainingWc); без префаба — прежняя IMGUI-панель.
+        // Панель «Дыма и света» (CampTrainingWc); без префаба — прежняя IMGUI-панель.
         CampTrainingPanel _panel;
         float _shown;
         readonly long[] _values = { -1, -1, -1, -1, -1, -1 };
@@ -87,7 +87,10 @@ namespace Game.View
                     }
                 }
         }
-        /// <summary>Панель на паке: появляется у манекенов, числа замера, подписи «Манекен» над полосками.</summary>
+        /// <summary>
+        /// Панель «Дыма и света»: появляется у манекенов, числа замера, подписи «Манекен» над полосками.
+        /// Включение панели и каждой подписи само запускает проявление их UiInkGroup; прозрачность здесь — поверх.
+        /// </summary>
         void RefreshPanel()
         {
             if (_panel == null) return;

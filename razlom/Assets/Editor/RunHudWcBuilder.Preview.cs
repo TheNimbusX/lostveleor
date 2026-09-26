@@ -9,7 +9,7 @@ namespace Game.EditorTools
     /// <summary>Кадры экранов забега без запуска игры, поверх кадра игры (ART/no-ui.png), с примером данных.</summary>
     public static partial class RunHudWcBuilder
     {
-        public enum Shot { Choice, Replace, Status, Summary, Artifact }
+        public enum Shot { Choice, Replace, Status, Summary, Artifact, Route }
 
         public static string Capture(string outPath, Shot shot)
         {
@@ -35,7 +35,7 @@ namespace Game.EditorTools
                 back.uvRect = new Rect(.035f, 0f, .965f, .955f);
                 back.transform.SetSiblingIndex(0);
             }
-            view.Choice.gameObject.SetActive(shot == Shot.Choice || shot == Shot.Artifact);
+            view.Choice.gameObject.SetActive(shot == Shot.Choice || shot == Shot.Artifact || shot == Shot.Route);
             view.ArtifactReplace.gameObject.SetActive(shot == Shot.Artifact);
             view.Skip.gameObject.SetActive(shot == Shot.Artifact);
             view.Replace.gameObject.SetActive(shot == Shot.Replace);
@@ -46,12 +46,45 @@ namespace Game.EditorTools
             {
                 view.SummaryTitle.text = "Гибель";
                 view.OutcomeIcon.texture = view.OutcomeIcons[0];
+                // Краски гибели — те же, что ставит RunHud.RefreshSummary (префаб до пересборки их не держит).
+                ThemeColor iconTint = view.OutcomeIcon.GetComponent<ThemeColor>();
+                if (iconTint != null) iconTint.SetRole(UiTheme.Role.Health, .78f);
+                ThemeColor haloTint = view.OutcomeHalo != null ? view.OutcomeHalo.GetComponent<ThemeColor>() : null;
+                if (haloTint != null) haloTint.SetRole(UiTheme.Role.Health, .12f);
                 view.SummaryTitle.GetComponent<ThemeColor>().SetRole(UiTheme.Role.Health);
                 view.SummarySubtitle.text = "Всё найденное в забеге осталось в Разломе";
                 int[] values = { 3, 4, 2, 118 };
                 for (int i = 0; i < 4; i++) view.SummaryValues[i].text = values[i].ToString();
                 view.SummaryLoss.text = "Потеряно со смертью: предметов 3, золота 64";
-                view.SummaryCamp.text = "Новых вещей проверить на манекенах: 2\nМусора под разбор: 5";
+            }
+
+            if (shot == Shot.Route)
+            {
+                // Выбор следующей арены после награды: обычная с улучшением, магазин, опасная с бонусом.
+                // Тексты карточек — из игры (RunHud.RouteTexts), чтобы кадр не расходился с экраном.
+                view.ChoiceTitle.text = "Выбери следующую арену";
+                view.ChoiceSubtitle.text = "Разлом 3 / 5 · награда — после зачистки";
+                view.ChoiceHint.text = "1  2  3 — выбрать путь    ·    L — уйти с добычей";
+                Game.Sim.ArenaRouteOffer[] routes =
+                {
+                    new Game.Sim.ArenaRouteOffer(Game.Sim.ArenaReward.Upgrade, 3, false, 0),
+                    new Game.Sim.ArenaRouteOffer(Game.Sim.ArenaReward.Shop, 2, false, 0),
+                    new Game.Sim.ArenaRouteOffer(Game.Sim.ArenaReward.Upgrade, 4, true, 70),
+                };
+                for (int i = 0; i < routes.Length; i++)
+                {
+                    RunOfferCard card = view.Offers[i];
+                    RunHud.RouteTexts(routes[i], out string title, out string kind, out string body, out string valueLabel, out string value);
+                    card.Title.text = title;
+                    card.Kind.text = kind;
+                    card.KindIcon.texture = view.KindIcons[3];
+                    card.Description.text = body;
+                    card.ValueLabel.text = valueLabel;
+                    card.Value.text = value;
+                    card.Key.text = (i + 1).ToString();
+                    card.SetIcon(i < view.RouteIcons.Length ? view.RouteIcons[i] : null, true);
+                    card.Rarity.Set(routes[i].Hard ? WcRarity.Tier.Rare : WcRarity.Tier.Common);
+                }
             }
 
             if (shot == Shot.Choice)
@@ -61,7 +94,7 @@ namespace Game.EditorTools
                 view.Offers[0].KindIcon.texture = view.KindIcons[0];
                 Offer(view.Offers[1], "Длинный клинок", "Усиление · 3 из 8", "Дальность Рассекающего удара +50%. Удар достаёт врагов за спиной первого.", "Рассекающий удар", "", "Cleave", true, "2");
                 view.Offers[1].KindIcon.texture = view.KindIcons[1];
-                Offer(view.Offers[2], "Кожаная куртка", "Предмет · ур. 4", "Броня +12 · Скорость движения +4% · Сопротивление огню +8%", "", "", null, false, "3");
+                Offer(view.Offers[2], "Кожаная куртка", "Обычная вещь · ур. 4", "Броня +12 · Скорость движения +4% · Сопротивление огню +8%", "", "", null, false, "3");
                 view.Offers[2].KindIcon.texture = view.KindIcons[2];
             }
             if (shot == Shot.Artifact)
@@ -103,6 +136,9 @@ namespace Game.EditorTools
                 {
                     view.Slots[i].Name.text = names[i];
                     view.Slots[i].Note.text = notes[i];
+                    // Цвет строки — как у RunHud.FillReplace: усиления пропадут — красным.
+                    ThemeColor noteTint = view.Slots[i].Note.GetComponent<ThemeColor>();
+                    if (noteTint != null) noteTint.SetRole(notes[i].EndsWith("пропадут") ? UiTheme.Role.Bad : UiTheme.Role.TextMuted);
                     view.Slots[i].Icon.texture = Ability(icons[i]);
                     view.Slots[i].Icon.enabled = true;
                 }
@@ -120,6 +156,13 @@ namespace Game.EditorTools
             // В игре подсветки наведения гасит UiHoverMotion.OnEnable; в предпросмотре его нет.
             foreach (var motion in inst.GetComponentsInChildren<UiHoverMotion>(true))
                 if (motion.Highlight != null) motion.Highlight.canvasRenderer.SetAlpha(0f);
+            // На выборе награды вторая карточка — под мышью, как на кадре из игры: видно кремовый
+            // свет наведения и яркую нить рядом с тусклыми нитями соседей.
+            if (shot == Shot.Choice)
+            {
+                var hovered = view.Offers[1].GetComponent<UiHoverMotion>();
+                if (hovered != null && hovered.HighlightGroup != null) hovered.HighlightGroup.alpha = 1f;
+            }
         }
 
         static void Offer(RunOfferCard card, string title, string kind, string body, string valueLabel, string value, string icon, bool rare, string key)

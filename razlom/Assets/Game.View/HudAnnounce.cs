@@ -4,9 +4,10 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// Узкий баннер сверху по центру — концепт 2Б (владелец, 25 сентября): скошенная плашка пака,
-    /// «РАЗЛОМ ЗАЧИЩЕН» антиквой с ромбами по бокам и строка под ней. Сползает сверху, держится и гаснет; новый
-    /// показ перебивает старый. Часы свои, шаг не больше 0,1 с за кадр.
+    /// Узкий баннер сверху по центру — концепт 2Б (владелец, 25 сентября), в «Дыме и свете»: клуб дыма,
+    /// «РАЗЛОМ ЗАЧИЩЕН» антиквой с огоньками по бокам и строка под ней. Сползает сверху, держится и гаснет; новый
+    /// показ перебивает старый. Дым проявляет своя UiInkGroup (медленно и мягко — большой момент).
+    /// Часы свои, шаг не больше 0,1 с за кадр.
     /// </summary>
     public sealed class HudAnnounce : MonoBehaviour
     {
@@ -37,7 +38,11 @@ namespace Game.View
             if (Line != null) { Line.text = line ?? string.Empty; Line.gameObject.SetActive(!string.IsNullOrEmpty(line)); }
             _t = 0f;
             _lastNow = UiMotion.Now;
+            bool wasShown = gameObject.activeSelf;
             gameObject.SetActive(true);
+            // Уже на экране — дым и буквы проявляются заново (выключенный объект проявит OnEnable).
+            var ink = GetComponent<UiInkGroup>();
+            if (wasShown && ink != null) ink.Show();
             Apply(0f);
         }
 

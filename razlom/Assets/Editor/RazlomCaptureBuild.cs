@@ -70,6 +70,23 @@ namespace Game.EditorTools
             CombatHudBuilder.EnsureBuilt(false);
             PauseMenuBuilder.EnsureBuilt(false);
             CampTentBuilder.EnsureBuilt(false);
+            SmokeTransitionBuilder.Build(false);
+            // Проверка нового UI в зеркале, пока общий редактор занят: RAZLOM_REBUILD_UI=1 пересобирает
+            // префабы боевого HUD, забега, меню, паузы, меток мира и окон лагеря из сборщиков (в живом проекте они не меняются).
+            if (Environment.GetEnvironmentVariable("RAZLOM_REBUILD_UI") == "1")
+            {
+                CombatHudWcBuilder.Build(true);
+                RunHudWcBuilder.Build(true);
+                MainMenuWcBuilder.Build(true);
+                PauseMenuWcBuilder.Build(true);
+                RunWorldWcBuilder.Build(true);
+                CampTentWcBuilder.Build(true);
+                CampShopsWcBuilder.Build(true);
+                CampTrainingWcBuilder.Build(true);
+                CampGuideWcBuilder.Build(true);
+                CampRiftConfirmWcBuilder.Build(true);
+                SmokeTransitionBuilder.Build(true);
+            }
             // Controller is generated from imported FBXs. Rebuild it explicitly
             // in batch mode as delayCall order is not a reliable build contract.
             global::RazlomPelagV5AnimatorBuilder.Build();

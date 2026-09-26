@@ -13,7 +13,7 @@ namespace Game.View
         public TMP_Text BuyLabel;
         public Button Select;
         public TMP_Text SelectLabel;
-        [Tooltip("Рамка выбранного для слота зелья")] public GameObject Chosen;
+        [Tooltip("Отметка выбранного для слота зелья (у рецепта — открытого): ореол за бутылкой и яркая нить по низу")] public GameObject Chosen;
         [Tooltip("Закрыто до заказа алхимика")] public GameObject Locked;
         [Tooltip("Условие и ход заказа, который открывает зелье")] public TMP_Text LockedLabel;
 

@@ -1,0 +1,346 @@
+[
+  {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\Stonehoof_Audit_Idle_r03.blend",
+    "arm": "ARM_ForestStonehoof",
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bones": 34,
+    "actions": [
+      [
+        "AUDIT_Source_Idle",
+        [
+          1.0,
+          120.0
+        ]
+      ],
+      [
+        "rig|rig|idle",
+        [
+          1.0,
+          121.0
+        ]
+      ]
+    ],
+    "tracks": []
+  },
+  {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\Stonehoof_Audit_Run_r03.blend",
+    "arm": "ARM_ForestStonehoof",
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bones": 34,
+    "actions": [
+      [
+        "AUDIT_Source_Run",
+        [
+          1.0,
+          14.0
+        ]
+      ],
+      [
+        "rig|rig|run",
+        [
+          1.0,
+          15.0
+        ]
+      ]
+    ],
+    "tracks": []
+  },
+  {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_Baked_r01.blend",
+    "arm": "ARM_ForestStonehoof",
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bones": 34,
+    "actions": [
+      [
+        "AN_Stonehoof_Launch",
+        [
+          0.0,
+          6.0
+        ]
+      ],
+      [
+        "AN_Stonehoof_Windup",
+        [
+          0.0,
+          30.0
+        ]
+      ],
+      [
+        "AN_Stonehoof_WindupStart_Controls",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "AN_Stonehoof_WindupStart_Review",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "CTRL_Hoof_front_leftAction",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "CTRL_Hoof_front_rightAction",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "CTRL_Hoof_hind_leftAction",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "CTRL_Hoof_hind_rightAction",
+        [
+          0.0,
+          36.0
+        ]
+      ],
+      [
+        "CTRL_PreviewMotion_OnlyAction",
+        [
+          0.0,
+          36.0
+        ]
+      ]
+    ],
+    "tracks": [
+      [
+        "Review only \u00b7 preparation and launch",
+        [
+          [
+            "AN_Stonehoof_WindupStart_Review",
+            "AN_Stonehoof_WindupStart_Review"
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\brake\\Stonehoof_Brake_Baked_r01.blend",
+    "arm": "ARM_ForestStonehoof",
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bones": 34,
+    "actions": [
+      [
+        "AN_Stonehoof_Brake",
+        [
+          0.0,
+          18.0
+        ]
+      ]
+    ],
+    "tracks": [
+      [
+        "Open-edge brake \u00b7 no arena travel",
+        [
+          [
+            "AN_Stonehoof_Brake",
+            "AN_Stonehoof_Brake"
+          ]
+        ]
+      ]
+    ]
+  },
+  {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\collision\\Stonehoof_Collision_Baked_r01.blend",
+    "arm": "ARM_ForestStonehoof",
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bones": 34,
+    "actions": [
+      [
+        "AN_Stonehoof_CollisionReview",
+        [
+          0.0,
+          48.0
+        ]
+      ],
+      [
+        "AN_Stonehoof_WallBrace",
+        [
+          0.0,
+          4.0
+        ]
+      ],
+      [
+        "AN_Stonehoof_WallImpact",
+        [
+          0.0,
+          36.0
+        ]
+      ]
+    ],
+    "tracks": [
+      [
+        "Review only \u00b7 approach, impact and stun",
+        [
+          [
+            "AN_Stonehoof_CollisionReview",
+            "AN_Stonehoof_CollisionReview"
+          ]
+        ]
+      ]
+    ]
+  }
+]

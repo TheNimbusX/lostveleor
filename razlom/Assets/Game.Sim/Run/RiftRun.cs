@@ -62,6 +62,8 @@ namespace Game.Sim
         public int CombatFeelEnemyCount { get; set; } = 1;
         public int ForestBudShowcaseCount { get; set; }
         public int WendigoShowcase { get; set; }
+        public int StonehoofShowcase { get; set; }
+        public bool StonehoofTestObstacle { get; set; }
 
         public Simulation Sim => _sim;
         public LayoutMap Map => _map;
@@ -252,7 +254,9 @@ namespace Game.Sim
 
             SpawnSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Spawns);
             Encounters = null;
-            if (WendigoShowcase > 0)
+            if (StonehoofShowcase > 0)
+                Encounters = _sim.SetupStonehoofEncounter(_map, SpawnSeed, StonehoofShowcase, StonehoofTestObstacle);
+            else if (WendigoShowcase > 0)
                 Encounters = _sim.SetupWendigoEncounter(_map, SpawnSeed, WendigoShowcase > 1);
             else if (ForestBudShowcaseCount > 0)
                 Encounters = _sim.SetupForestBudEncounter(_map, SpawnSeed, ForestBudShowcaseCount);

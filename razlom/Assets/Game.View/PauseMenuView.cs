@@ -18,7 +18,8 @@ namespace Game.View
     /// префаба при запуске, длительности — поля ниже).
     ///
     /// Состояния: одна пауза по центру → «Настройки»/«Управление»: пауза
-    /// уезжает влево, окно выезжает справа → подтверждение поверх всего.
+    /// уезжает влево, окно выезжает справа → подтверждение поверх всего,
+    /// окна под ним гаснут.
     /// </summary>
     public sealed class PauseMenuView : MonoBehaviour
     {
@@ -109,6 +110,8 @@ namespace Game.View
         public Button ControlsBack;
 
         [Header("Подтверждение")]
+        [Tooltip("Пауза и окна под подтверждением: 0 — гаснут целиком и не просвечивают сквозь его дым")]
+        [Range(0f, 1f)] public float UnderConfirmAlpha = 0f;
         public RectTransform ConfirmPanel;
         public TMP_Text ConfirmTitle;
         public TMP_Text ConfirmText;
@@ -207,6 +210,8 @@ namespace Game.View
             if (windowChanged) ShowWindows(window, fromMainMenu, first);
             if (tabChanged) ShowTab(tab, first);
             if (confirmChanged) ShowConfirmation(confirming, first);
+            // Смена окна под открытым подтверждением: Slide/SetShown вернули бы окно в полную силу.
+            if (confirmChanged || confirming && windowChanged) DimUnder(confirming, window, fromMainMenu, first);
             if (!first)
             {
                 if (windowChanged)
@@ -353,14 +358,6 @@ namespace Game.View
         {
             if (ConfirmPanel == null) return;
             CanvasGroup group = Group(ConfirmPanel);
-            // Окна под подтверждением притухают и не ловят мышь.
-            foreach (RectTransform panel in new[] { PausePanel, SettingsPanel, ControlsPanel })
-            {
-                if (panel == null) continue;
-                CanvasGroup under = Group(panel);
-                under.interactable = under.blocksRaycasts = !confirming;
-                if (panel.gameObject.activeSelf && !instant) UiMotion.FadeTo(under, confirming ? 0.35f : 1f, OpenDuration);
-            }
             if (confirming)
             {
                 ConfirmPanel.gameObject.SetActive(true);
@@ -372,6 +369,30 @@ namespace Game.View
             {
                 if (instant) ConfirmPanel.gameObject.SetActive(false);
                 else UiMotion.FadeTo(group, 0f, CloseDuration, () => ConfirmPanel.gameObject.SetActive(false));
+            }
+        }
+
+        /// <summary>
+        /// Окна под подтверждением гаснут (<see cref="UnderConfirmAlpha"/>) и не ловят мышь: притушенные
+        /// до трети пункты паузы просвечивали сквозь дым подтверждения, «Выйти из игры» ложилось под его
+        /// кнопки (26 сентября). Уходят быстро, пока дым подтверждения растекается, и возвращаются после.
+        /// Трогает только окна, видные в новом состоянии: уезжающее (подтверждение открыто прямо из
+        /// настроек) доигрывает уход и выключается само — иначе оно застывало бы на полпути.
+        /// </summary>
+        void DimUnder(bool confirming, Window window, bool fromMainMenu, bool instant)
+        {
+            RectTransform[] panels = { PausePanel, SettingsPanel, ControlsPanel };
+            bool[] wanted = { !fromMainMenu, window == Window.Settings, window == Window.Controls };
+            for (int i = 0; i < panels.Length; i++)
+            {
+                RectTransform panel = panels[i];
+                if (panel == null) continue;
+                CanvasGroup under = Group(panel);
+                under.interactable = under.blocksRaycasts = !confirming;
+                if (!wanted[i] || !panel.gameObject.activeSelf) continue;
+                // Мгновенно — только погасить: полную силу при открытии ставят ShowWindows и PopIn.
+                if (instant) { if (confirming) under.alpha = UnderConfirmAlpha; }
+                else UiMotion.FadeTo(under, confirming ? UnderConfirmAlpha : 1f, confirming ? CloseDuration : OpenDuration);
             }
         }
 
@@ -450,6 +471,9 @@ namespace Game.View
                 row.Clicked += clicked;
                 rows[i] = row;
             }
+            // Строки «Дыма и света» — части группы появления окна: клоны отдаются ей сразу,
+            // иначе клон, сделанный посреди проявления, застывал бы полупрозрачным.
+            fallback.GetComponentInParent<UiInkGroup>(true)?.Collect();
             return rows;
         }
 

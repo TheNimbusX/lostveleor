@@ -54,6 +54,7 @@ namespace Game.View
         private readonly TooltipValue[] _tooltipValues = new TooltipValue[8];
         private int _tooltipValueCount;
         private Camera _rangeCamera;
+        private bool _reachNoCameraLogged;
         private HudRangePreview _rangePreview;
         private float _screenHudScale = 1f;
         private GUIStyle _xpLabel, _tooltipKey, _tooltipMetric, _tooltipCaption;
@@ -192,10 +193,17 @@ namespace Game.View
         }
 
         /// <summary>
-        /// При HUD на Canvas IMGUI остаётся только у радиуса способности в мире.
+        /// Досягаемость способности при HUD на Canvas. Строится в LateUpdate, а не в OnGUI: OnGUI идёт
+        /// после отрисовки камер, и фигура из него попадала на экран только кадром позже — отставала
+        /// от героя и камеры, а её показ держался на том, что Repaint приходит ровно раз в кадр.
+        /// Здесь меш готов до камер того же кадра. Условия показа — те же, что у самого HUD.
         /// </summary>
-        private void DrawCanvasCompanions(Simulation sim)
+        private void DrawCanvasCompanions()
         {
+            if (_view == null) return;
+            _rangePreview.Hide();
+            Simulation sim = _driver.Sim;
+            if (!_hudShown || sim == null) return;
             _tooltipSlot = _view.HoverSlot;
             int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AimingAbilityTarget ? _driver.AbilityTargetAimSlot : -1;
             AbilityBuild reach = reachSlot >= 0 ? sim.GetAbility(reachSlot) : null;
@@ -209,6 +217,7 @@ namespace Game.View
         private void LateUpdate()
         {
             RefreshView();
+            DrawCanvasCompanions();
             if (_portraitArt != null || HeroPortrait.Texture != null || _portraitBaking || Time.unscaledTime < _nextPortraitTry) return;
             _nextPortraitTry = Time.unscaledTime + 2f;
             ArenaView arena = FindAnyObjectByType<ArenaView>();
@@ -223,12 +232,36 @@ namespace Game.View
             _portraitBaking = false;
         }
 
+        // Проба для съёмки: как часто плеер на самом деле шлёт Repaint в OnGUI. Досягаемость до 26
+        // сентября строилась оттуда и считала «раз в кадр»; одна строка через 4 с после первого
+        // Repaint говорит, так ли это (maxGap > 1 — пропуски кадров, sameFrame > 0 — повторы).
+        private int _repaintFirstFrame = -1, _repaintLastFrame = -1, _repaintCount, _repaintMaxGap, _repaintSameFrame;
+        private float _repaintStartedAt;
+        private bool _repaintLogged;
+
+        private void ProbeRepaint()
+        {
+            if (_repaintLogged) return;
+            int frame = Time.frameCount;
+            if (_repaintFirstFrame < 0) { _repaintFirstFrame = frame; _repaintStartedAt = Time.unscaledTime; }
+            else if (frame == _repaintLastFrame) _repaintSameFrame++;
+            else _repaintMaxGap = Mathf.Max(_repaintMaxGap, frame - _repaintLastFrame);
+            _repaintLastFrame = frame;
+            _repaintCount++;
+            if (Time.unscaledTime - _repaintStartedAt < 4f) return;
+            _repaintLogged = true;
+            Debug.Log($"[reach-probe] ongui repaints={_repaintCount} frames={frame - _repaintFirstFrame + 1} " +
+                      $"maxGap={_repaintMaxGap} sameFrame={_repaintSameFrame} canvasHud={_view != null}");
+        }
+
         private void OnGUI()
         {
             // Мышь снимает TickDriver перед шагом Sim; здесь только рисунок.
             // Не дублируем нажатия на Layout/Repaint и не теряем тап между тиками.
             if (Event.current.type != EventType.Repaint) return;
-            _rangePreview?.Hide();
+            if (CaptureRig.Installed) ProbeRepaint();
+            // При HUD на Canvas досягаемостью владеет LateUpdate; здесь — только запасной IMGUI.
+            if (_view == null) _rangePreview?.Hide();
 
             if (_driver.GameplayPaused) return;
             GameSession session = _driver.Session;
@@ -253,7 +286,7 @@ namespace Game.View
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             try
             {
-                if (_view != null) { DrawCanvasCompanions(sim); return; }
+                if (_view != null) return;
                 float mapScale = scale * .85f;
                 GUI.matrix = Matrix4x4.Scale(new Vector3(mapScale, mapScale, 1f));
                 _minimap.Pointer = screenPointer / mapScale;
@@ -751,8 +784,17 @@ namespace Game.View
         {
             float radius = build.Get(AbilityStatType.Radius).ToFloat();
             if (radius <= 0f) return;
-            if (_rangeCamera == null) _rangeCamera = Camera.main;
-            if (_rangeCamera == null) return;
+            // Камера меню или студии могла быть главной на первом кадре и потом выключиться.
+            if (_rangeCamera == null || !_rangeCamera.isActiveAndEnabled) _rangeCamera = Camera.main;
+            if (_rangeCamera == null)
+            {
+                if (CaptureRig.Installed && !_reachNoCameraLogged)
+                {
+                    _reachNoCameraLogged = true;
+                    Debug.Log("[reach-probe] no Camera.main — reach skipped");
+                }
+                return;
+            }
             _rangePreview.Begin(_rangeCamera,Availability(sim,_tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,build).Ready);
             Vector3 center = _driver.GetRenderPosition(Simulation.PlayerId) + Vector3.up * .06f;
             var position = sim.Entities.Position[Simulation.PlayerId];
@@ -761,18 +803,24 @@ namespace Game.View
             if (aim.LengthSq.Raw == 0) aim = facing;
             if (aim.LengthSq.Raw == 0) aim = new FixVec2(Fix64.One, Fix64.Zero);
             Vector3 forward = new Vector3(aim.X.ToFloat(), 0f, aim.Y.ToFloat()).normalized;
+            float width = build.Get(AbilityStatType.Width).ToFloat();
+            float cursor = (_driver.CursorWorld - position).Length.ToFloat();
             int id = build.DefinitionId;
+            // Одна форма на способность (владелец 26 сентября): предел — кольцо вокруг героя,
+            // область — залитый круг, веер — сектор, удар полосой — прямоугольник, выпад — капсула.
+            // Кольцо предела при точке приземления тише: главное — куда упадёт.
             if (id == AbilityDefinition.CleaveId)
             {
-                // Width здесь радиус клинка, а не полная ширина полосы.
+                // Width здесь радиус клинка. Полоса в 0,3 м читалась как линия — не уже полуметра.
                 var direction = sim.CleaveActive ? sim.CleaveDirection : facing;
                 forward = new Vector3(direction.X.ToFloat(), 0f, direction.Y.ToFloat()).normalized;
                 if (forward.sqrMagnitude < .01f) forward = Vector3.right;
-                ReachCapsule(center, forward, radius, build.Get(AbilityStatType.Width).ToFloat());
+                float blade = Mathf.Max(width, .25f);
+                _rangePreview.Capsule(center, forward, radius, blade);
                 if (build.Has(AbilityFlag.CleaveFan))
                 {
-                    ReachCapsule(center, Quaternion.Euler(0f, 35f, 0f) * forward, radius, build.Get(AbilityStatType.Width).ToFloat());
-                    ReachCapsule(center, Quaternion.Euler(0f, -35f, 0f) * forward, radius, build.Get(AbilityStatType.Width).ToFloat());
+                    _rangePreview.Capsule(center, Quaternion.Euler(0f, 35f, 0f) * forward, radius, blade);
+                    _rangePreview.Capsule(center, Quaternion.Euler(0f, -35f, 0f) * forward, radius, blade);
                 }
             }
             else if (id == AbilityDefinition.AnchorSlamId)
@@ -780,98 +828,75 @@ namespace Game.View
                 if (sim.AnchorSlamActive)
                 {
                     center.x = sim.AnchorSlamOrigin.X.ToFloat(); center.z = sim.AnchorSlamOrigin.Y.ToFloat();
-                    forward = new Vector3(sim.AnchorSlamDirection.X.ToFloat(), 0f, sim.AnchorSlamDirection.Y.ToFloat());
+                    forward = new Vector3(sim.AnchorSlamDirection.X.ToFloat(), 0f, sim.AnchorSlamDirection.Y.ToFloat()).normalized;
                 }
-                Vector3 side = new Vector3(forward.z, 0f, -forward.x) * build.Get(AbilityStatType.Width).ToFloat() * .5f;
-                ReachLine(center - side, center + forward * radius - side);
-                ReachLine(center + side, center + forward * radius + side);
-                ReachLine(center - side, center + side);
-                ReachLine(center + forward * radius - side, center + forward * radius + side);
-                ReachArrow(center, center + forward * radius);
+                // Sim бьёт прямоугольником с квадратными концами; «Три направления» — ещё две полосы под ±30°.
+                _rangePreview.Lane(center, forward, radius, width * .5f);
+                if (build.Has(AbilityFlag.AnchorSlamThreeWays))
+                {
+                    _rangePreview.Lane(center, Quaternion.Euler(0f, 30f, 0f) * forward, radius, width * .5f);
+                    _rangePreview.Lane(center, Quaternion.Euler(0f, -30f, 0f) * forward, radius, width * .5f);
+                }
             }
             else if (id == AbilityDefinition.WreckId)
             {
                 if (sim.WreckDirection.LengthSq.Raw != 0)
                     forward = new Vector3(sim.WreckDirection.X.ToFloat(), 0f, sim.WreckDirection.Y.ToFloat()).normalized;
-                float angle = Mathf.Atan2(forward.z, forward.x);
                 float half = Mathf.Acos(Mathf.Clamp(build.Get(AbilityStatType.ArcCosine).ToFloat(), -1f, 1f));
-                ReachArc(center, radius, angle - half, angle + half);
-                ReachLine(center, center + RingOffset(angle - half) * radius);
-                ReachLine(center, center + RingOffset(angle + half) * radius);
+                _rangePreview.Sector(center, forward, radius, half);
             }
             else if (id == AbilityDefinition.SkewerId)
-                ReachCapsule(center, forward, radius, build.Get(AbilityStatType.Width).ToFloat() * .5f);
+                _rangePreview.Capsule(center, forward, radius, width * .5f);
             else if (id == AbilityDefinition.BackblastId)
             {
-                ReachArrow(center, center - forward * radius);
-                ReachArc(center, build.Get(AbilityStatType.Width).ToFloat(), 0f, Mathf.PI * 2f);
+                // Огненный выброс радиусом Width остаётся на месте каста; метка — куда отскочит герой.
+                _rangePreview.Disc(center, width);
+                _rangePreview.Disc(center - forward * radius, ReachMark);
             }
             else if (id == AbilityDefinition.DashId)
-                ReachArrow(center, center + forward * radius);
+                // Рывок всегда проходит всю дальность к курсору: кольцо на этой дальности вокруг героя.
+                _rangePreview.Ring(center, radius);
             else if (id == AbilityDefinition.AnchorLeapId)
             {
-                // Дальность из сборки: талант «Длинная цепь» её удлиняет.
-                float range = build.Get(AbilityStatType.Radius).ToFloat();
-                float reach = Mathf.Min((_driver.CursorWorld - position).Length.ToFloat(), range);
-                ReachArc(center, range, 0f, Mathf.PI * 2f);
-                ReachArrow(center, center + forward * reach);
+                // Дальность из сборки: талант «Длинная цепь» её удлиняет. «На абордаж!» бьёт в 2 м вокруг прибытия.
+                Vector3 landing = center + forward * Mathf.Min(cursor, radius);
+                _rangePreview.Ring(center, radius, ReachLimitStrength);
+                _rangePreview.Disc(landing, build.Has(AbilityFlag.BoardingSweep) ? 2f : ReachMark);
             }
             else if (id == AbilityDefinition.FireFlaskId)
             {
-                float distance = (_driver.CursorWorld - position).Length.ToFloat();
-                if (distance <= 0f) distance = 1f;
-                Vector3 landing = center + forward * Mathf.Min(distance, radius);
+                if (cursor <= 0f) cursor = 1f;
+                Vector3 landing = center + forward * Mathf.Min(cursor, radius);
                 if (sim.FlaskInFlight) { landing.x = sim.FlaskTarget.X.ToFloat(); landing.z = sim.FlaskTarget.Y.ToFloat(); }
-                ReachArrow(center, landing);
-                ReachArc(landing, build.Get(AbilityStatType.Width).ToFloat() * .5f, 0f, Mathf.PI * 2f);
+                float pool = width * .5f;
+                _rangePreview.Ring(center, radius, ReachLimitStrength);
+                _rangePreview.Disc(landing, pool);
+                // «Огненное кольцо»: три малые лужи на 90°, 210° и 330° мира (FireFlask.RingDirections).
+                if (build.Has(AbilityFlag.FlaskRing))
+                    for (int k = 0; k < 3; k++)
+                    {
+                        float angle = Mathf.PI * (.5f + k * 2f / 3f);
+                        Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * pool * 1.2f;
+                        _rangePreview.Disc(landing + offset, pool * .5f, ReachLimitStrength);
+                    }
             }
-            else if (id == AbilityDefinition.WhirlwindId || id == AbilityDefinition.ChainStepId)
-                ReachArc(center, radius, 0f, Mathf.PI * 2f);
+            else if (id == AbilityDefinition.WhirlwindId)
+                _rangePreview.Disc(center, radius);
+            else if (id == AbilityDefinition.ChainStepId)
+                // Первая цель ищется в этом радиусе — предел, а не область удара.
+                _rangePreview.Ring(center, radius);
             else
             {
                 Vector3 target = new Vector3(_driver.CursorWorld.X.ToFloat(), center.y, _driver.CursorWorld.Y.ToFloat());
-                ReachArc(target, radius, 0f, Mathf.PI * 2f);
+                _rangePreview.Disc(target, radius);
             }
             _rangePreview.End();
         }
 
-        private static Vector3 RingOffset(float angle) => new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-
-        private void ReachArc(Vector3 center, float radius, float start, float end)
-        {
-            int segments = Mathf.Max(8, Mathf.CeilToInt(Mathf.Abs(end - start) * 12f));
-            for (int i = 0; i < segments; i++)
-                ReachLine(center + RingOffset(Mathf.Lerp(start, end, i / (float)segments)) * radius,
-                    center + RingOffset(Mathf.Lerp(start, end, (i + 1f) / segments)) * radius);
-        }
-
-        private void ReachCapsule(Vector3 center, Vector3 forward, float length, float halfWidth)
-        {
-            Vector3 side = new Vector3(forward.z, 0f, -forward.x) * halfWidth;
-            Vector3 end = center + forward * length;
-            float angle = Mathf.Atan2(forward.z, forward.x);
-            ReachLine(center - side, end - side);
-            ReachLine(center + side, end + side);
-            ReachArc(center, halfWidth, angle + Mathf.PI * .5f, angle + Mathf.PI * 1.5f);
-            ReachArc(end, halfWidth, angle - Mathf.PI * .5f, angle + Mathf.PI * .5f);
-        }
-
-        private void ReachArrow(Vector3 from, Vector3 to)
-        {
-            Vector3 delta = to - from;
-            if (delta.sqrMagnitude < .001f) return;
-            Vector3 direction = delta.normalized;
-            Vector3 side = new Vector3(direction.z, 0f, -direction.x);
-            float size = Mathf.Min(.28f, delta.magnitude * .2f);
-            ReachLine(from, to);
-            ReachLine(to, to - direction * size + side * size * .55f);
-            ReachLine(to, to - direction * size - side * size * .55f);
-        }
-
-        private void ReachLine(Vector3 from, Vector3 to)
-        {
-            _rangePreview.Line(from,to);
-        }
+        /// <summary>Радиус метки приземления (отскок, абордаж), метры.</summary>
+        private const float ReachMark = .45f;
+        /// <summary>Сила кольца предела, когда рядом есть точка приземления.</summary>
+        private const float ReachLimitStrength = .6f;
         /// <summary>Низ миникарты вместе с подписью, в пикселях экрана. Панели справа сверху встают ниже.</summary>
         internal static float MinimapBottom { get; private set; }
 

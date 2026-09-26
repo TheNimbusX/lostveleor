@@ -1,0 +1,16 @@
+{
+  "links_checked": 19,
+  "missing_links": [],
+  "javascript_syntax": "passed",
+  "decoded_videos": [
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\references\\charge.mp4",
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\review\\motion_references\\charge.webm",
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\references\\collision.mp4",
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\review\\motion_references\\collision.webm",
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\references\\death.mp4",
+    "ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\review\\motion_references\\death.webm"
+  ],
+  "frame_fallback_sequences": "complete",
+  "browser_runtime": "not automatically tested: file URL browser policy restriction",
+  "owner_motion_approval": false
+}

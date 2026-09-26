@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Камнекопыт · Подготовка и старт</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Segoe UI',sans-serif}main{max-width:1500px;margin:auto;padding:30px 24px 65px}h1{font-size:38px;line-height:1.2;margin:8px 0 12px}h2{font-size:20px;margin:0}p{margin:8px 0;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent)}.top{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:20px}.badge{border:1px solid #647353;border-radius:30px;color:var(--accent);padding:8px 16px;white-space:nowrap}.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.caption{padding:16px 19px}.caption p{font-size:14px;margin-bottom:0}.panel img{display:block;width:100%;aspect-ratio:3/2;object-fit:contain;background:#8a958e}.controls{padding:20px;margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.timeline{display:flex;gap:16px;align-items:center;margin-top:17px}button,select,.button{font:inherit;padding:8px 13px;background:#29342d;border:1px solid #53634f;border-radius:7px;color:var(--ink);cursor:pointer;text-decoration:none}button:hover,.button:hover{border-color:var(--accent)}button:disabled{opacity:.5;cursor:wait}button[aria-pressed=true],#play{background:var(--accent);color:#1b281d}input[type=range]{flex:1;min-width:100px;accent-color:var(--accent)}output{min-width:180px;font-variant-numeric:tabular-nums}#phase{color:var(--accent)}a{color:var(--accent)}.small{font-size:14px}.links{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0}.note{border-left:3px solid #83956c;padding:10px 16px;background:#273128;margin:20px 0}.note p{color:#d3ddcb}.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:15px}video{width:100%;display:block}details{margin-top:22px}summary{cursor:pointer;color:var(--accent)}@media(max-width:800px){main{padding:20px 12px}.pair,.video-grid{grid-template-columns:1fr}h1{font-size:29px}.top{align-items:flex-start;flex-direction:column}.timeline{flex-wrap:wrap}.controls{padding:14px}}
+</style>
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · КАМНЕКОПЫТ · КЛИП 01</div><h1>Подготовка и старт разбега</h1><p>Два скребка передним копытом → подсед → толчок задними ногами.</p></div><span class="badge">Первый клип · принят</span></div>
+<div class="pair">
+<section class="panel"><div class="caption"><h2>Принятый видеореференс</h2><p>Приближённый фрагмент Higgsfield. Сопоставлен по фазам движения.</p></div><img id="reference" src="reference_frames/0000.jpg" alt="Камнекопыт в принятом референсе"></section>
+<section class="panel"><div class="caption"><h2>Анимация на нашей модели</h2><p id="viewLabel">Боковой ракурс · Blender · игровая длительность</p></div><img id="animation" src="side_frames/0000.png" alt="Первый клип Камнекопыта на настоящем риге"></section>
+</div>
+<div class="controls">
+<div class="row"><button id="play" disabled>Загрузка кадров…</button><button id="reset">Сначала</button><button id="prev" aria-label="Предыдущий кадр">− кадр</button><button id="next" aria-label="Следующий кадр">+ кадр</button><select id="speed" aria-label="Скорость просмотра"><option value="1">Скорость ×1</option><option value="0.5">Скорость ×0,5</option><option value="0.25">Скорость ×0,25</option></select><button id="side" aria-pressed="true">Сбоку</button><button id="game" aria-pressed="false">Игровой ракурс</button><label class="small"><input id="loop" type="checkbox"> Повторять</label></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="36" value="0" aria-label="Кадр анимации"><output id="counter">Кадр 0 / 36 · 0,00 с</output><span id="phase">Перенос веса</span></div>
+<p id="loading" class="small" aria-live="polite">Кадры загружаются заранее для плавного просмотра.</p>
+</div>
+<div class="note"><p><strong>Подготовка — 1 секунда; старт — следующие 0,2 секунды.</strong> Два скребка поставлены отдельно по нашему плану: в генеративном референсе они не были отчётливыми. Клип заканчивается в отрыве от земли — цикл бега показан на отдельной странице второго клипа.</p></div>
+<p>Проверь, читаются ли оба скребка, чувствуется ли подсед перед стартом и достаточно ли энергичный толчок. При переключении камеры сохраняется тот же кадр. Клавиши ← / → листают кадры, пробел включает просмотр.</p>
+<div class="links"><a href="../animation_charge_loop/index.html">Дальше: быстрый бег и связка со стартом</a><a href="side_keys.jpg">Ключевые позы сбоку</a><a href="game_keys.jpg">Ключевые позы сверху</a><a href="../motion_references/index.html">Все принятые референсы</a><a href="../../animation/windup_start/Stonehoof_WindupStart_r01.blend">Редактируемый риг и движение</a><a href="../../animation/windup_start/Stonehoof_WindupStart_Baked_r01.blend">Клипы подготовки и старта</a></div>
+<details><summary>Обычные видеозаписи</summary><div class="video-grid"><div><p>Сбоку</p><video src="side.webm" poster="side_frames/0000.png" muted playsinline controls preload="none"></video><a href="side.mp4">Открыть MP4</a></div><div><p>Игровой ракурс</p><video src="game.webm" poster="game_frames/0000.png" muted playsinline controls preload="none"></video><a href="game.mp4">Открыть MP4</a></div></div></details>
+<p class="small" style="margin-top:28px">Первый клип принят владельцем. Второй клип — быстрый бег — доступен по ссылке выше; перенос в Unity после согласования движений.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),cache=[];let frame=0,view='side',running=false,started=0,first=0,rate=1,last=-1,lastView='';
+const filename=f=>String(f).padStart(4,'0');
+function draw(){
+  if(last!==frame){$('reference').src=`reference_frames/${filename(frame)}.jpg`;}
+  if(last!==frame||lastView!==view){$('animation').src=`${view}_frames/${filename(frame)}.png`;lastView=view;}
+  last=frame;$('seek').value=frame;$('counter').value=`Кадр ${frame} / 36 · ${(frame/30).toFixed(2).replace('.',',')} с`;
+  $('phase').textContent=frame<3?'Перенос веса':frame<9?'Подъём копыта':frame<=12?'Первый скребок':frame<18?'Повторный подъём':frame<=21?'Второй скребок':frame<30?'Подсед и сборка':frame<34?'Толчок':'Отрыв → переход в бег';
+  if(!$('play').disabled)$('play').textContent=running?'Пауза':(frame===36?'Ещё раз':'Смотреть');
+}
+function seek(f){running=false;frame=Math.max(0,Math.min(36,f));draw();}
+function toggle(){if($('play').disabled)return;if(!running&&frame===36)frame=0;running=!running;first=frame;started=performance.now();draw();}
+$('play').onclick=toggle;$('reset').onclick=()=>seek(0);$('prev').onclick=()=>seek(frame-1);$('next').onclick=()=>seek(frame+1);$('seek').oninput=()=>seek(Number($('seek').value));
+$('speed').onchange=()=>{rate=Number($('speed').value);first=frame;started=performance.now();};
+for(const name of ['side','game'])$(name).onclick=()=>{view=name;for(const other of ['side','game'])$(other).setAttribute('aria-pressed',String(name===other));$('viewLabel').textContent=name==='side'?'Боковой ракурс · Blender · игровая длительность':'Игровой ракурс · Blender · тот же момент';draw();};
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();toggle();}if(e.code==='ArrowRight'){e.preventDefault();seek(frame+1);}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame-1);}});
+function tick(now){if(running){const elapsed=first+Math.floor((now-started)*30*rate/1000);if(elapsed>36){if($('loop').checked){frame=0;first=0;started=now;}else{frame=36;running=false;}}else frame=elapsed;draw();}requestAnimationFrame(tick);}
+requestAnimationFrame(tick);draw();
+let loaded=0,failed=0;const total=111;
+for(const name of ['reference','side','game'])for(let f=0;f<=36;f++){
+  const im=new Image();cache.push(im);im.onload=()=>done(false);im.onerror=()=>done(true);im.src=`${name}_frames/${filename(f)}.${name==='reference'?'jpg':'png'}`;
+}
+function done(error){loaded++;if(error)failed++;$('loading').textContent=`Загружено ${loaded} из ${total}`;if(loaded===total){$('play').disabled=failed>0;$('loading').textContent=failed?'Не удалось прочитать часть кадров. Ниже доступны обычные видеозаписи.':'Готово · синхронный просмотр кадров работает без видеодекодера';draw();}}
+</script></html>

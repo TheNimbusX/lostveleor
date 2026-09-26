@@ -11,12 +11,18 @@ using Role = Game.View.UiTheme.Role;
 namespace Game.EditorTools
 {
     /// <summary>
-    /// Окна лагерных NPC на паке «Ночная акварель» (23 сентября 2026):
+    /// Окна лагерных NPC (раскладка 23 сентября 2026, тогда на паке «Ночная акварель»):
     /// Resources/UI/Prefabs/CampShopsWc.prefab — кузнец, торговец, алхимик и подпись над NPC.
     /// Раскладка по концепту final-P4/4-smith.png: рисованный портрет NPC слева поверх
     /// лагеря, справа заголовок с линией, вкладки, сетка вещей и карточка выбранной вещи.
     /// Портреты и значки — ART/UI/camp-shops-2026-09-23 → Assets/UI/CampShops.
     /// Префаб создаётся, только если его нет: ручные правки не затираются.
+    ///
+    /// Материал — «Дым и свет», как у боевого HUD (владелец 26 сентября: «перевести вообще всё
+    /// на новую версию»). Раскладка прежняя, сменился материал: вместо серебряных плашек пака —
+    /// глубокий дым под содержимым, нити света вместо линий, ячейки и кнопки UiInkKit. Префабы
+    /// пака (Place) больше не используются. Окно проявляет UiInkGroup экрана — коротко и почти
+    /// без огня; облачко реплики и подпись над NPC — свои группы без огня (частые всплывашки).
     /// </summary>
     public static partial class CampShopsWcBuilder
     {
@@ -46,7 +52,6 @@ namespace Game.EditorTools
         {
             if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
             UiThemeBuilder.Ensure(false);
-            EnsurePrefabs();
             GameObject root = Layout();
             try
             {
@@ -64,20 +69,45 @@ namespace Game.EditorTools
         static Texture Art(string name) => AssetDatabase.LoadAssetAtPath<Texture2D>(ArtFolder + name + ".png")
                                            ?? AssetDatabase.LoadAssetAtPath<Texture2D>(RunIconFolder + name + ".png");
 
-        static RawImage Pic(RectTransform parent, string name, string art, float x, float y, float w, float h)
+        /// <summary>
+        /// Значок (золото, осколки): с 26 сентября знаки — белые силуэты, краску даёт тема (кремовый
+        /// текст). Материал рисунка вещи — без дымки, проявляется вместе с окном.
+        /// </summary>
+        static RawImage Pic(RectTransform parent, string name, string art, float x, float y, float w, float h, Role role = Role.Text)
         {
             RectTransform rect = TopLeft(Node(name, parent), x, y, w, h);
             var raw = rect.gameObject.AddComponent<RawImage>();
             raw.texture = Art(art);
             raw.raycastTarget = false;
+            Tint(raw, role);
+            raw.material = UiInkKit.Art;
+            UiInkKit.Inked(raw, delay: .12f);
             return raw;
         }
 
+        /// <summary>Надпись в своей рамке; <paramref name="ink"/> — проявление по буквам (у реплики свой набор букв).</summary>
         static TMP_Text Text(RectTransform parent, string name, string text, float x, float y, float w, float h, FontRole font, float size, Role role,
-            TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft)
+            TextAlignmentOptions align = TextAlignmentOptions.MidlineLeft, bool ink = true)
         {
             RectTransform box = TopLeft(Node(name, parent), x, y, w, h);
-            return Label(box, "Надпись", text, font, size, role, align);
+            return ink ? UiInkKit.Label(box, "Надпись", text, font, size, role, align) : Label(box, "Надпись", text, font, size, role, align);
+        }
+
+        /// <summary>Надпись прямо на узле: её ширину берёт раскладка строки (подпись над NPC).</summary>
+        static TMP_Text TextOn(RectTransform rect, string text, FontRole font, float size, Role role)
+        {
+            var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
+            label.text = text;
+            label.fontSize = size;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.raycastTarget = false;
+            var themeFont = rect.gameObject.AddComponent<ThemeFont>();
+            themeFont.Role = font;
+            themeFont.Apply();
+            Tint(label, role);
+            UiInkKit.Revealed(label, .12f);
+            return label;
         }
 
         static void NoNavigation(Selectable selectable)
@@ -87,34 +117,30 @@ namespace Game.EditorTools
             selectable.navigation = navigation;
         }
 
-        /// <summary>Кнопка по всему элементу: невидимый ловец мыши и (по желанию) оранжевая рамка наведения.</summary>
-        static Button Clickable(RectTransform rect, Sprite hover, float grow)
+        /// <summary>
+        /// Кнопка по всему элементу «Дыма и света» (вкладка, строка): прозрачный ловец мыши на самом узле
+        /// (UiInkKit.HitArea) — картинки дыма мышь не ловят.
+        /// </summary>
+        static Button Clickable(RectTransform rect)
         {
-            Image catcher = Layer(rect, "Ловец", T.Pixel, Role.Panel, 0f);
-            catcher.raycastTarget = true;
-            catcher.transform.SetAsFirstSibling();
+            Image hit = UiInkKit.HitArea(rect);
             var button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = catcher;
+            button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
             NoNavigation(button);
-            if (hover != null)
-            {
-                var motion = rect.gameObject.AddComponent<UiHoverMotion>();
-                motion.Highlight = Layer(rect, "Наведение", hover, Role.Accent, 1f);
-                motion.HoverScale = grow;
-            }
             return button;
         }
 
-        static Button KitButton(RectTransform parent, string prefab, string name, string text, float x, float y, float w, float h, float font, out TMP_Text label)
+        /// <summary>
+        /// Кнопка «Дыма и света»: основная — оранжевый мазок, вторичная — тёмный мазок с нитью.
+        /// Наведение (UiHoverMotion) и мышь (прозрачный ловец) ставит UiInkKit.Button.
+        /// </summary>
+        static Button InkButton(RectTransform parent, bool primary, string name, string text, float x, float y, float w, float h, float font, out TMP_Text label)
         {
-            RectTransform rect = Place(prefab, parent, name);
+            RectTransform rect = UiInkKit.Button(parent, name, text, primary, new Vector2(w, h), font);
             TopLeft(rect, x, y, w, h);
             label = rect.Find("Надпись").GetComponent<TMP_Text>();
-            label.text = text;
-            label.fontSize = font;
             label.characterSpacing = 1f;
-            rect.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.03f;
             var button = rect.GetComponent<Button>();
             NoNavigation(button);
             return button;
@@ -122,19 +148,25 @@ namespace Game.EditorTools
 
         static void ButtonArt(Button button, string art, float size)
         {
-            // Медальон на левом краю кнопки: тёмный круг с серебряным ободком, значок крупно поверх.
-            // На оранжевой заливке сама картинка не читалась (владелец, 23 сентября).
+            // Медальон на левом краю кнопки: тёмный круг в клубе дыма, тонкое кольцо, значок поверх.
+            // На оранжевом мазке сам знак без круга не читался (владелец, 23 сентября).
             var rect = (RectTransform)button.transform;
             float disc = size + 12f;
             RectTransform medal = At(Node("Значок", rect), new Vector2(0f, .5f), new Vector2(disc * .32f, 0f), new Vector2(disc, disc));
-            Image glow = Layer(medal, "Тень", RoundShadow, Role.Veil, .8f, 10f);
-            glow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
-            Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
-            Layer(medal, "Ободок", T.CircleFrame, Role.PanelLine, .9f);
-            RectTransform pic = Stretch(Node("Картинка", medal), -4f);
+            UiInkKit.SmokeLayer(medal, "Дым", "soft_blot", .9f, disc * .14f, disc * .14f, deep: true);
+            Image circle = Layer(medal, "Круг", T.CircleFill, Role.SmokeDeep, .92f);
+            circle.material = UiInkKit.Plain;
+            UiInkKit.Inked(circle, delay: .08f);
+            Image ring = Layer(medal, "Ободок", T.CircleFrame, Role.PanelLine, .5f);
+            ring.material = UiInkKit.Plain;
+            UiInkKit.Inked(ring, delay: .12f);
+            RectTransform pic = Stretch(Node("Картинка", medal), disc * .18f);
             var raw = pic.gameObject.AddComponent<RawImage>();
             raw.texture = Art(art);
             raw.raycastTarget = false;
+            Tint(raw, Role.Text);
+            raw.material = UiInkKit.Art;
+            UiInkKit.Inked(raw, delay: .15f);
             var label = rect.Find("Надпись").GetComponent<TMP_Text>();
             label.rectTransform.offsetMin = new Vector2(disc * .82f + 6f, label.rectTransform.offsetMin.y);
         }
@@ -145,6 +177,8 @@ namespace Game.EditorTools
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 105;
+            // Шейдер «Дыма и света» берёт данные элемента из uv1/uv2 (UiInkReveal).
+            canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.TexCoord2;
             var scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -171,29 +205,47 @@ namespace Game.EditorTools
             hint.sizeDelta = new Vector2(240f, 108f);
             view.Hint = hint;
 
-            // Плашка с именем и тем, кто это: читается на траве, камне и у огня.
+            // Всплывает при каждом наведении на NPC: коротко и без огня (владелец отверг красную вспышку).
+            UiInkKit.Group(hint, UiInkGroup.Sweep.FromCenter, .3f, .08f).Burn = 0f;
+
+            // Имя и кто это — на мягкой дымной капсуле, под именем нить света: читается на траве,
+            // камне и у огня.
             RectTransform plate = TopLeft(Node("Имя", hint), 20f, 0f, 200f, 58f);
-            Image shadow = Layer(plate, "Тень", T.GlowSmall, Role.Veil, .8f, 18f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
-            Layer(plate, "Заливка", T.FillSmall, Role.Panel, .92f);
-            Layer(plate, "Свет по кромке", T.HighlightSmall, Role.Highlight);
-            Layer(plate, "Рамка", T.FrameSmall, Role.PanelLine, .8f);
-            Mark(plate, "Камень", T.Gem, Role.Accent, 1f, new Vector2(.5f, 1f), Vector2.zero, 14f);
+            UiInkKit.SmokeLayer(plate, "Тень", "soft_blot", .9f, 34f, 16f, deep: true);
+            UiInkKit.SmokeLayer(plate, "Дым", "smoke_plate", 1f, 56f, 22f, deep: true);
+            UiInkKit.LightAt(plate, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, 2f), new Vector2(210f, 28f), .5f);
             view.HintTitle = Text(plate, "Имя", "Эни", 0f, 5f, 200f, 30f, FontRole.Heading, 24f, Role.Text, TextAlignmentOptions.Center);
             view.HintTitle.textWrappingMode = TextWrappingModes.NoWrap;
             view.HintTitle.characterSpacing = 2f;
             view.HintRole = Text(plate, "Кто это", "Кузнец", 0f, 34f, 200f, 18f, FontRole.Body, 14f, Role.Accent, TextAlignmentOptions.Center);
 
-            // Действие — готовая плашка пака: клавиша, ромб, подпись.
-            RectTransform prompt = Place("InteractPrompt", hint, "Действие");
+            // Действие — малая дымная капсула: клавиша «Дыма и света» и подпись. Ширина — по содержимому
+            // (клавиша E — круг, ПКМ — капсула; её ширину подгоняет CampServicesView).
+            RectTransform prompt = Node("Действие", hint);
             prompt.anchorMin = prompt.anchorMax = new Vector2(.5f, 1f);
             prompt.pivot = new Vector2(.5f, 1f);
-            prompt.anchoredPosition = new Vector2(0f, -64f);
-            prompt.localScale = Vector3.one * .62f;
-            view.HintKeyCap = (RectTransform)prompt.Find("Клавиша");
-            view.HintKey = prompt.Find("Клавиша/Буква").GetComponent<TMP_Text>();
-            view.HintNote = prompt.Find("Действие").GetComponent<TMP_Text>();
-            view.HintNote.text = "Поговорить";
+            prompt.anchoredPosition = new Vector2(0f, -66f);
+            prompt.sizeDelta = new Vector2(170f, 38f);
+            foreach (Image smoke in new[]
+                     {
+                         UiInkKit.SmokeLayer(prompt, "Тень", "soft_blot", .85f, 16f, 8f, deep: true),
+                         UiInkKit.SmokeLayer(prompt, "Дым", "smoke_plate", 1f, 30f, 12f, deep: true),
+                     })
+                smoke.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            var row = prompt.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.padding = new RectOffset(10, 14, 4, 4);
+            row.spacing = 9f;
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.childControlWidth = row.childControlHeight = true;
+            row.childForceExpandWidth = row.childForceExpandHeight = false;
+            prompt.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            const float key = 30f;
+            view.HintKeyCap = UiInkKit.Keycap(prompt, "Клавиша", "E", key);
+            var capSize = view.HintKeyCap.gameObject.AddComponent<LayoutElement>();
+            capSize.preferredWidth = capSize.minWidth = view.HintKeyCap.sizeDelta.x;
+            capSize.preferredHeight = capSize.minHeight = key;
+            view.HintKey = view.HintKeyCap.Find("Буква").GetComponent<TMP_Text>();
+            view.HintNote = TextOn(Node("Подпись", prompt), "Поговорить", FontRole.Body, 17f, Role.Text);
         }
 
         /// <summary>Материал шрифта с тёмным контуром и тенью (подпись над NPC поверх мира). Создаётся один раз ассетом.</summary>
@@ -221,20 +273,25 @@ namespace Game.EditorTools
             RectTransform screen = Stretch(Node(name, windows));
             group = screen.gameObject.AddComponent<CanvasGroup>();
             // Лагерь остаётся виден: вуаль тише, чем на экранах забега, и темнее справа, где текст.
+            // Вуаль ловит мышь: клик по окну не проваливается в ходьбу по лагерю.
             Image veil = Layer(screen, "Вуаль", T.Pixel, Role.Veil, 1f);
             veil.raycastTarget = true;
             Layer(screen, "Глубина", T.Pixel, Role.Panel, .32f);
             Layer(screen, "Виньетка", T.VeilRadial, Role.Veil, 1f);
-            // Мягкое тёмное пятно под содержимым: текст читается и на светлой земле, жёсткого края нет.
-            Image under = Layer(screen, "Тень под содержимым", T.Blob, Role.Veil, 1f);
-            under.preserveAspect = false;
-            TopLeft(under.rectTransform, Left - 260f, -120f, Right - Left + 520f, 1320f);
+            // Под содержимым — глубокий дым без краёв (как колонна паузы и итогов): текст читается и на
+            // светлой земле. Мягкое пятно на всю правую часть и рваный клуб поверх, края тают в лагерь.
+            UiInkKit.SmokeAt(screen, "Тень под содержимым", "soft_blot", new Vector2(0f, 1f), new Vector2(Mid, -540f),
+                new Vector2(Right - Left + 520f, 1320f), .7f, origin: new Vector2(.8f, .5f), deep: true);
+            UiInkKit.SmokeAt(screen, "Дым под содержимым", "smoke_blot_1", new Vector2(0f, 1f), new Vector2(Mid, -520f),
+                new Vector2(Right - Left + 360f, 1180f), .8f, origin: new Vector2(.5f, .85f), delay: -.1f, deep: true);
             // Подложка-сцена за NPC (кузня, прилавок, котёл): края растворены в самой картинке.
             RectTransform scene = TopLeft(Node("Сцена за портретом", screen), 0f, 0f, 720f, 1080f);
             var sceneArt = scene.gameObject.AddComponent<RawImage>();
             sceneArt.texture = Art("scene-" + portrait.Substring("portrait-".Length));
             sceneArt.raycastTarget = false;
             sceneArt.enabled = sceneArt.texture != null;
+            sceneArt.material = UiInkKit.Art;
+            UiInkKit.Inked(sceneArt, new Vector2(0f, .5f));
             RectTransform face = Node("Портрет", screen);
             face.anchorMin = face.anchorMax = new Vector2(0f, 0f);
             face.pivot = new Vector2(.5f, 0f);
@@ -242,37 +299,44 @@ namespace Game.EditorTools
             picture = face.gameObject.AddComponent<RawImage>();
             picture.texture = Art(portrait);
             picture.raycastTarget = false;
+            // Портрет проявляется снизу вверх, как дым; рисунок — без дымки материала.
+            picture.material = UiInkKit.Art;
+            UiInkKit.Inked(picture, new Vector2(.5f, 0f), .05f);
             float height = 900f;
             face.sizeDelta = picture.texture != null ? new Vector2(height * picture.texture.width / picture.texture.height, height) : new Vector2(675f, height);
+            // Окно открывают часто: короткое мягкое проявление, огонь по кромке едва тлеет.
+            UiInkGroup appear = UiInkKit.Group(screen, UiInkGroup.Sweep.LeftToRight, .36f, .2f);
+            appear.Burn = .2f;
+            appear.HideDuration = .16f;
             return screen;
         }
 
-        /// <summary>Закрыть окно: крестик пака в правом верхнем углу, одинаковый у всех NPC.</summary>
+        /// <summary>Закрыть окно: круглый крестик «Дыма и света» в правом верхнем углу, одинаковый у всех NPC.</summary>
         static Button Closer(RectTransform screen)
         {
-            RectTransform close = Place("CloseButton", screen, "Закрыть");
+            RectTransform close = UiInkKit.CloseButton(screen, "Закрыть", 52f);
             TopLeft(close, 1830f, 38f, 52f, 52f);
-            close.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.08f;
             var button = close.GetComponent<Button>();
             NoNavigation(button);
             return button;
         }
 
-        /// <summary>Подсказка внизу окна: плашка Esc и «Закрыть». Кнопки геймпада не показываем, пока он не выбран.</summary>
+        /// <summary>Подсказка внизу окна: клавиша Esc и «Закрыть». Кнопки геймпада не показываем, пока он не выбран.</summary>
         static void CloseHint(RectTransform screen)
         {
             RectTransform row = TopLeft(Node("Клавиши", screen), Mid - 100f, 1004f, 200f, 36f);
-            RectTransform cap = Keycap(row, "Клавиша", "Esc", 36f);
-            TopLeft(cap, 40f, 0f, 50f, 36f);
-            cap.Find("Буква").GetComponent<TMP_Text>().fontSize = 16f;
+            // Клавиша сама берёт ширину по подписи (Esc — капсула); правый край — там же, где был.
+            RectTransform cap = UiInkKit.Keycap(row, "Клавиша", "Esc", 32f);
+            TopLeft(cap, 90f - cap.sizeDelta.x, 2f, cap.sizeDelta.x, 32f);
             Text(row, "Подпись", CampServiceText.Get("close.action"), 100f, 0f, 100f, 36f, FontRole.Body, 18f, Role.TextMuted);
         }
 
         /// <summary>Облачко реплики под портретом: имя NPC и текст; пустой текст прячет облачко.</summary>
         static TMP_Text Speech(RectTransform screen, string speaker)
         {
-            // Облачко над головой портрета, хвостик вниз к нему, имя на ленточке. Выпрыгивание
-            // и печать по буквам — CampSpeechBubble.
+            // Облачко над головой портрета: клуб глубокого дыма, мягкий хвостик из двух дымных капель
+            // вниз к голове, имя антиквой на нити света. Выпрыгивание и печать по буквам — CampSpeechBubble;
+            // проявление дыма — своя группа без огня (облачко появляется с каждой новой репликой).
             RectTransform box = TopLeft(Node("Реплика", screen), 70f, 52f, 470f, 96f);
             var bubble = box.gameObject.AddComponent<CampSpeechBubble>();
             bubble.Group = box.gameObject.AddComponent<CanvasGroup>();
@@ -281,26 +345,26 @@ namespace Game.EditorTools
             body.pivot = new Vector2(.45f, 0f);
             body.anchoredPosition = Vector2.zero;
             bubble.Body = body;
-            Image shadow = Layer(body, "Тень", T.Glow, Role.Veil, .85f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -6f);
-            // Хвостик — ромб под облачком: верхняя половина уходит под заливку, видна острая нижняя.
-            RectTransform tail = At(Node("Хвостик", body), new Vector2(.45f, 0f), new Vector2(0f, 0f), new Vector2(38f, 38f));
-            Layer(tail, "Заливка", T.DiamondFill, Role.Panel, 1f);
-            Layer(tail, "Оправа", T.DiamondFrameSmall, Role.PanelLine, .9f);
-            Layer(body, "Заливка", T.Fill, Role.Panel, .97f);
-            Layer(body, "Тень снизу", T.ShadeSprite, Role.Veil, .45f);
-            Layer(body, "Свет по кромке", T.HighlightSprite, Role.Highlight);
-            Layer(body, "Рамка", T.Frame, Role.PanelLine, .9f);
+            // Хвостик — две мягкие капли дыма под облачком, к голове портрета (ромба больше нет).
+            RectTransform tail = At(Node("Хвостик", body), new Vector2(.45f, 0f), new Vector2(0f, 0f), new Vector2(60f, 60f));
+            UiInkKit.SmokeAt(tail, "Капля", "soft_blot", new Vector2(.5f, .5f), new Vector2(8f, -14f), new Vector2(46f, 40f), .95f,
+                origin: new Vector2(.5f, 1f), deep: true);
+            UiInkKit.SmokeAt(tail, "Капля меньше", "soft_blot", new Vector2(.5f, .5f), new Vector2(22f, -44f), new Vector2(22f, 20f), .9f,
+                origin: new Vector2(.5f, 1f), delay: .06f, deep: true);
+            // Подложка всплывашки (как у подсказок HUD); нить по низу не нужна — нить под именем.
+            Object.DestroyImmediate(UiInkKit.Plate(body, small: true).gameObject);
 
-            // Имя — оранжевая ленточка на верхней кромке.
-            RectTransform ribbon = TopLeft(Node("Имя", body), 24f, -16f, 150f, 32f);
-            Image ribbonGlow = Layer(ribbon, "Свечение", T.ButtonGlow, Role.Accent, .25f, 12f);
-            ribbonGlow.raycastTarget = false;
-            Layer(ribbon, "Заливка", T.TagFill, Role.Accent, 1f);
-            Layer(ribbon, "Ободок", T.TagFrame, Role.TextOnAccent, .45f);
-            bubble.Speaker = Label(ribbon, "Надпись", speaker, FontRole.Heading, 20f, Role.TextOnAccent, TextAlignmentOptions.Center, 1f);
+            // Имя — антиквой на верхней кромке, под ним нить света.
+            RectTransform ribbon = TopLeft(Node("Имя", body), 24f, -16f, 170f, 32f);
+            UiInkKit.LightAt(ribbon, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, -1f), new Vector2(230f, 28f), .75f,
+                origin: new Vector2(0f, .5f), delay: .1f);
+            bubble.Speaker = UiInkKit.Label(ribbon, "Надпись", speaker, FontRole.Heading, 21f, Role.Text, TextAlignmentOptions.Center, 1.5f, 1f, .08f);
             bubble.Speaker.textWrappingMode = TextWrappingModes.NoWrap;
-            bubble.Line = Text(body, "Текст", "", 26f, 22f, 418f, 64f, FontRole.Body, 21f, Role.Text, TextAlignmentOptions.MidlineLeft);
+            // Текст реплики печатается по буквам сам (CampSpeechBubble) — без второго проявления.
+            bubble.Line = Text(body, "Текст", "", 26f, 22f, 418f, 64f, FontRole.Body, 21f, Role.Text, TextAlignmentOptions.MidlineLeft, false);
+            UiInkGroup ink = UiInkKit.Group(box, UiInkGroup.Sweep.FromCenter, .32f, .1f);
+            ink.Burn = 0f;
+            bubble.Ink = ink;
             bubble.Line.enableAutoSizing = true;
             bubble.Line.fontSizeMin = 15f;
             bubble.Line.fontSizeMax = 21f;
@@ -311,8 +375,22 @@ namespace Game.EditorTools
         {
             TMP_Text title = Text(screen, "Заголовок", text, Left, 34f, Right - Left, 76f, FontRole.Heading, 58f, Role.Text, TextAlignmentOptions.Center);
             title.characterSpacing = 3f;
-            TopLeft(Place("Divider", screen, "Линия"), Mid - 300f, 112f, 600f, 16f);
+            TopLeft(UiInkKit.Divider(screen, "Линия", 600f, true, .7f), Mid - 300f, 112f, 600f, 16f);
             return title;
+        }
+
+        /// <summary>
+        /// Заголовок раздела «Дыма и света» (надетое, сетка): подпись с разрядкой и нить света под ней
+        /// на всю ширину колонки — вместо ромбов и серебряной черты пака.
+        /// </summary>
+        static TMP_Text SectionHeader(RectTransform screen, string name, string text, float x, float y, float w)
+        {
+            RectTransform header = TopLeft(Node(name, screen), x, y, w, 30f);
+            TMP_Text label = UiInkKit.Label(header, "Надпись", text, FontRole.Heading, 19f, Role.Text, TextAlignmentOptions.MidlineLeft, 4f, .9f, .1f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            UiInkKit.LightAt(header, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, -3f), new Vector2(w + 40f, 24f), .4f,
+                origin: new Vector2(0f, .5f));
+            return label;
         }
 
         static TMP_Text Wallet(RectTransform screen, string name, string art, float x, Role color, out GameObject group)
@@ -325,19 +403,24 @@ namespace Game.EditorTools
             return value;
         }
 
+        /// <summary>Вкладка «Дыма и света» (UiInkKit.Tab): подпись и нить света под выбранной; мышь ловит сам узел.</summary>
         static Button TabButton(RectTransform screen, string name, float x)
         {
-            RectTransform tab = Place("Tab", screen, name);
+            RectTransform tab = UiInkKit.Tab(screen, name, "Вкладка", false, 240f, 52f, 24f);
             TopLeft(tab, x, 138f, 240f, 52f);
-            tab.Find("Надпись").GetComponent<TMP_Text>().fontSize = 24f;
-            return Clickable(tab, null, 1f);
+            return Clickable(tab);
         }
 
-        /// <summary>Ячейка вещи: элемент Cell пака, картинка вещи спрайтом, уровень в углу, рамка выбора.</summary>
-        static CampShopCell Cell(RectTransform parent, string name, float x, float y, float size, bool clickable)
+        /// <summary>
+        /// Ячейка вещи «Дыма и света» (UiInkKit.Cell): дымная лунка, тонкая скруглённая рамка цвета
+        /// редкости, мягкий свет редкости за вещью; картинка вещи спрайтом, уровень в углу.
+        /// </summary>
+        /// <param name="small">Малая ячейка (ряд «Надето»): дым мягче, угол рамки круглее.</param>
+        static CampShopCell Cell(RectTransform parent, string name, float x, float y, float size, bool clickable, bool small = false)
         {
-            RectTransform rect = Place("Cell", parent, name);
+            RectTransform rect = UiInkKit.Cell(parent, name, size, small);
             TopLeft(rect, x, y, size, size);
+            // Своя картинка вещи — спрайтом (CampShopCell.Icon); «Предмет» ячейки не нужен.
             rect.Find("Предмет").gameObject.SetActive(false);
             var cell = rect.gameObject.AddComponent<CampShopCell>();
             RectTransform art = Stretch(Node("Иконка", rect), size * .1f);
@@ -346,23 +429,35 @@ namespace Game.EditorTools
             cell.Icon.preserveAspect = true;
             cell.Icon.raycastTarget = false;
             cell.Icon.enabled = false;
+            cell.Icon.material = UiInkKit.Art;
+            UiInkKit.Inked(cell.Icon, delay: .12f);
             cell.Rarity = rect.GetComponent<WcRarity>();
-            // Выбор и наведение меняют единственную рамку ячейки (WcSlotState), без второго контура.
+            // Выбор и наведение меняют единственную рамку ячейки и её свет (WcSlotState), без второго контура.
             cell.State = rect.GetComponent<WcSlotState>();
-            Image empty = Mark(rect, "Пусто", T.DiamondMedium, Role.TextMuted, .3f, new Vector2(.5f, .5f), Vector2.zero, size * .2f);
+            // Пустая ячейка — едва заметная точка (круг, а не ромб: ромб остался только мелким светом).
+            Image empty = Mark(rect, "Пусто", T.CircleFill, Role.TextMuted, .22f, new Vector2(.5f, .5f), Vector2.zero, size * .1f);
+            empty.material = UiInkKit.Plain;
+            UiInkKit.Inked(empty, delay: .1f);
             cell.Empty = empty.gameObject;
             RectTransform level = Node("Уровень", rect);
             level.anchorMin = level.anchorMax = new Vector2(1f, 0f);
             level.pivot = new Vector2(1f, 0f);
             level.anchoredPosition = new Vector2(-4f, 1f);
             level.sizeDelta = new Vector2(size * .6f, size * .3f);
-            cell.Level = Label(level, "Надпись", "", FontRole.Body, Mathf.Max(13f, size * .2f), Role.Text, TextAlignmentOptions.BottomRight);
+            cell.Level = UiInkKit.Label(level, "Надпись", "", FontRole.Body, Mathf.Max(13f, size * .2f), Role.Text, TextAlignmentOptions.BottomRight, delay: .15f);
             if (clickable)
             {
-                cell.Button = Clickable(rect, null, 1f);
+                // Мышь ловит «Ловец» самой ячейки: второй ловец не нужен.
+                var button = rect.gameObject.AddComponent<Button>();
+                button.targetGraphic = rect.Find("Ловец").GetComponent<Image>();
+                button.transition = Selectable.Transition.None;
+                NoNavigation(button);
+                cell.Button = button;
                 var motion = rect.gameObject.AddComponent<UiHoverMotion>();
                 motion.HoverScale = 1.06f;
             }
+            // Выбранная вещь справа не нажимается: свет наведения на ней обманывал бы.
+            else rect.Find("Ловец").GetComponent<Image>().raycastTarget = false;
             return cell;
         }
 
@@ -379,22 +474,13 @@ namespace Game.EditorTools
 
             // Левая колонка: сверху надетое (владелец 23 сентября: «видно надетые вещи»;
             // кузнец их перековывает, торговец показывает для сравнения), ниже сетка 8 × 6.
-            RectTransform wornCaption = Place("SectionHeader", screen, "Подпись надетого");
-            TopLeft(wornCaption, GridX, 204f, 8 * CellStep - 8f, 30f);
-            s.WornCaption = wornCaption.Find("Надпись").GetComponent<TMP_Text>();
-            s.WornCaption.text = "Надето";
-            s.WornCaption.fontSize = 19f;
-            s.WornCaption.characterSpacing = 4f;
+            s.WornCaption = SectionHeader(screen, "Подпись надетого", "Надето", GridX, 204f, 8 * CellStep - 8f);
             s.Worn = new CampShopCell[4];
             string[] wornNames = { "Оружие", "Броня", "Кольцо", "Талисман" };
             for (int i = 0; i < 4; i++)
-                s.Worn[i] = Cell(screen, "Надето: " + wornNames[i], GridX + i * WornStep, WornY, WornSize, true);
+                s.Worn[i] = Cell(screen, "Надето: " + wornNames[i], GridX + i * WornStep, WornY, WornSize, true, true);
 
-            RectTransform caption = Place("SectionHeader", screen, "Подпись сетки");
-            TopLeft(caption, GridX, GridY - 44f, 8 * CellStep - 8f, 30f);
-            s.GridCaption = caption.Find("Надпись").GetComponent<TMP_Text>();
-            s.GridCaption.fontSize = 19f;
-            s.GridCaption.characterSpacing = 4f;
+            s.GridCaption = SectionHeader(screen, "Подпись сетки", "Предметы", GridX, GridY - 44f, 8 * CellStep - 8f);
             RectTransform grid = Node("Сетка", screen);
             Stretch(grid);
             s.Cells = new CampShopCell[48];
@@ -403,7 +489,7 @@ namespace Game.EditorTools
             s.Info = Text(screen, "Пояснение", "", GridX, GridY + 6 * CellStep + 4f, 8 * CellStep - 8f, 50f, FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.TopLeft);
             if (!smith)
             {
-                s.Extra = KitButton(screen, "ButtonSecondary", "Обновить товары", "Обновить товары", GridX, GridY + 6 * CellStep + 58f, 8 * CellStep - 8f, 54f, 21f, out s.ExtraLabel);
+                s.Extra = InkButton(screen, false, "Обновить товары", "Обновить товары", GridX, GridY + 6 * CellStep + 58f, 8 * CellStep - 8f, 54f, 21f, out s.ExtraLabel);
                 ButtonArt(s.Extra, "refresh", 46f);
             }
 
@@ -414,7 +500,7 @@ namespace Game.EditorTools
             s.ItemName.fontSizeMin = 22f;
             s.ItemName.fontSizeMax = 34f;
             s.ItemMeta = Text(screen, "Уровень и перековки", "", DetailX + 152f, 270f, DetailW - 152f, 56f, FontRole.Body, 18f, Role.TextMuted, TextAlignmentOptions.TopLeft);
-            TopLeft(Place("DividerPlain", screen, "Линия под вещью"), DetailX, 356f, DetailW, 16f);
+            TopLeft(UiInkKit.Divider(screen, "Линия под вещью", DetailW, false, .5f), DetailX, 356f, DetailW, 16f);
 
             if (smith)
             {
@@ -422,11 +508,11 @@ namespace Game.EditorTools
                 s.RowLabels = new TMP_Text[6];
                 for (int i = 0; i < 6; i++)
                 {
-                    RectTransform row = Place("ListItem", screen, "Свойство " + (i + 1));
+                    RectTransform row = UiInkKit.ListRow(screen, "Свойство " + (i + 1), "Свойство", false, DetailW, 46f);
                     TopLeft(row, DetailX, 380f + i * 50f, DetailW, 46f);
                     s.RowLabels[i] = row.Find("Надпись").GetComponent<TMP_Text>();
                     s.RowLabels[i].fontSize = 20f;
-                    s.Rows[i] = Clickable(row, null, 1f);
+                    s.Rows[i] = Clickable(row);
                 }
             }
             else
@@ -437,7 +523,7 @@ namespace Game.EditorTools
                 s.Detail.fontSizeMin = 14f;
                 s.Detail.fontSizeMax = 19f;
             }
-            TopLeft(Place("DividerPlain", screen, "Линия над ценой"), DetailX, 694f, DetailW, 16f);
+            TopLeft(UiInkKit.Divider(screen, "Линия над ценой", DetailW, false, .5f), DetailX, 694f, DetailW, 16f);
             s.Preview = Text(screen, "Результат", "", DetailX, 716f, DetailW, 36f, FontRole.Body, 21f, Role.Text);
 
             RectTransform price = TopLeft(Node("Стоимость", screen), DetailX, 756f, DetailW, 46f);
@@ -451,7 +537,7 @@ namespace Game.EditorTools
             s.PriceShards = Text(shards, "Число", "0", 48f, 0f, 90f, 46f, FontRole.Heading, 28f, Role.Text);
             s.Note = Text(screen, "Примечание", "", DetailX, 804f, DetailW, 56f, FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.TopLeft);
 
-            s.Action = KitButton(screen, "ButtonPrimary", "Действие", smith ? "Перековать" : "Купить", DetailX + 40f, 870f, DetailW - 40f, 62f, 26f, out s.ActionLabel);
+            s.Action = InkButton(screen, true, "Действие", smith ? "Перековать" : "Купить", DetailX + 40f, 870f, DetailW - 40f, 62f, 26f, out s.ActionLabel);
             ButtonArt(s.Action, smith ? "reforge" : "sell", 58f);
 
             s.Message = Speech(screen, name);
@@ -500,75 +586,116 @@ namespace Game.EditorTools
             return s;
         }
 
+        /// <summary>
+        /// Подложка карточки зелья или рецепта «Дыма и света»: мягкая дымная плита без рамки, чуть шире
+        /// карточки (между карточками 16–20 единиц — соседние клубы не сливаются в одно облако), и
+        /// тихая нить света по низу.
+        /// </summary>
+        static void CardPlate(RectTransform card, float w)
+        {
+            UiInkKit.SmokeLayer(card, "Тень", "soft_blot", .9f, 24f, 18f, deep: true);
+            UiInkKit.SmokeLayer(card, "Дым", "smoke_plate", 1f, 46f, 28f, origin: new Vector2(0f, .5f), deep: true);
+            UiInkKit.LightAt(card, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, -2f), new Vector2(w * .7f, 28f), .3f);
+        }
+
+        /// <summary>
+        /// Отметка выбранного (зелье в быстром слоте) или открытого (рецепт) — тихая: слабый ореол цвета
+        /// отметки только за бутылкой (чуть шире её собственного сияния) и нить по низу ярче обычной.
+        /// Свет на всю карточку заливал текст цветом (26 сентября: рецепт «Живица» весь бирюзовый,
+        /// выбранные зелья — красные) — его больше нет.
+        /// </summary>
+        /// <param name="bottle">Центр бутылки от левого края карточки по середине высоты.</param>
+        /// <param name="size">Размер рисунка бутылки: ореол выглядывает из-за неё тонким кольцом.</param>
+        static GameObject CardChosen(RectTransform card, string name, Role role, float w, Vector2 bottle, float size)
+        {
+            RectTransform chosen = Stretch(Node(name, card));
+            Image glow = UiInkKit.LightAt(chosen, "Свет за бутылкой", "soft_blot", new Vector2(0f, .5f), bottle,
+                new Vector2(size * 1.35f, size * 1.35f), 1f, delay: .2f);
+            Tint(glow, role, .12f);
+            // Нить своего тёплого цвета, без краски: оранжевый спрайт под бирюзой редкого выходил болотным.
+            // Свет складывается с обычной нитью карточки (.3): вместе ≈ .7 и шире — заметно, но не пламя.
+            UiInkKit.LightAt(chosen, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, -2f), new Vector2(w * .85f, 30f), .4f);
+            return chosen.gameObject;
+        }
+
+        /// <summary>
+        /// Слабое сияние цвета зелья за бутылкой (огненного кольца у зелий нет, владелец 26 сентября).
+        /// Размер — чуть больше бутылки, свет тихий: пятно в полкарточки читалось красной кляксой.
+        /// </summary>
+        static void BottleGlow(RectTransform card, bool health, Vector2 at, float size, float alpha)
+        {
+            Image halo = UiInkKit.LightAt(card, "Свет за бутылкой", "soft_blot", new Vector2(0f, .5f), at, new Vector2(size, size), 1f, delay: .15f);
+            Tint(halo, health ? Role.Health : Role.Lavidium, alpha);
+        }
+
+        /// <summary>Бутылка (Resources/UI/Items): рисунок вещи без дымки материала, проявляется с карточкой.</summary>
+        static RawImage Bottle(RectTransform rect, string key)
+        {
+            var art = rect.gameObject.AddComponent<RawImage>();
+            art.texture = Resources.Load<Texture2D>("UI/Items/" + key);
+            art.raycastTarget = false;
+            art.material = UiInkKit.Art;
+            UiInkKit.Inked(art, delay: .1f);
+            return art;
+        }
+
         /// <summary>Карточка рецепта: бутылка, что даёт зелье, условие и ход заказа, взять/сдать и обмен.</summary>
         static CampPotionCard RecipeCard(RectTransform page, int index, float x, float y, float w, float h)
         {
             RectTransform card = TopLeft(Node("Рецепт " + (index + 1), page), x, y, w, h);
-            Image shadow = Layer(card, "Тень", T.Glow, Role.Veil, .8f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -6f);
-            Layer(card, "Заливка", T.Fill, Role.Panel);
-            Layer(card, "Тень снизу", T.ShadeSprite, Role.Veil, .5f);
-            Layer(card, "Свет по кромке", T.HighlightSprite, Role.Highlight);
-            Layer(card, "Рамка", T.Frame, Role.PanelLine, .9f);
+            CardPlate(card, w);
             var recipe = card.gameObject.AddComponent<CampPotionCard>();
-            recipe.Chosen = Layer(card, "Открыт", T.FrameBold, Role.Rare, .9f).gameObject;
+            Vector2 at = new Vector2(120f, 0f);
+            const float art = 176f;
+            recipe.Chosen = CardChosen(card, "Открыт", Role.Rare, w, at, art);
             recipe.Chosen.SetActive(false);
 
             bool health = index == 0;
-            Image halo = Mark(card, "Свет за бутылкой", T.Blob, health ? Role.Health : Role.Lavidium, .25f, new Vector2(0f, .5f), new Vector2(120f, 0f), 220f);
-            halo.preserveAspect = false;
-            RectTransform bottle = At(Node("Бутылка", card), new Vector2(0f, .5f), new Vector2(120f, 0f), new Vector2(176f, 176f));
-            recipe.Art = bottle.gameObject.AddComponent<RawImage>();
-            recipe.Art.texture = Resources.Load<Texture2D>("UI/Items/potion_" + (health ? "health" : "lavidium") + "_large");
-            recipe.Art.raycastTarget = false;
+            BottleGlow(card, health, at, art * 1.08f, .12f);
+            RectTransform bottle = At(Node("Бутылка", card), new Vector2(0f, .5f), at, new Vector2(art, art));
+            recipe.Art = Bottle(bottle, "potion_" + (health ? "health" : "lavidium") + "_large");
 
             const float tx = 250f;
             recipe.Name = Text(card, "Название", "Рецепт", tx, 22f, 560f, 40f, FontRole.Heading, 32f, Role.Text);
             recipe.Name.textWrappingMode = TextWrappingModes.NoWrap;
             recipe.Effect = Text(card, "Действие", "", tx, 66f, 560f, 30f, FontRole.Body, 18f, Role.TextMuted);
-            TopLeft(Place("DividerPlain", card, "Линия"), tx, 104f, w - tx - 30f, 16f);
+            TopLeft(UiInkKit.Divider(card, "Линия", w - tx - 30f, false, .45f), tx, 104f, w - tx - 30f, 16f);
             recipe.LockedLabel = Text(card, "Условие", "", tx, 128f, 520f, 84f, FontRole.Body, 19f, Role.Text, TextAlignmentOptions.TopLeft);
             recipe.Stock = Text(card, "Состояние", "", w - 330f, 26f, 300f, 34f, FontRole.Heading, 22f, Role.Accent, TextAlignmentOptions.MidlineRight);
-            recipe.OrderMain = KitButton(card, "ButtonPrimary", "Заказ", "Взять заказ", w - 540f, 150f, 250f, 58f, 21f, out recipe.OrderMainLabel);
-            recipe.OrderAlt = KitButton(card, "ButtonSecondary", "Обмен", "Отдать 12 осколков", w - 280f, 150f, 250f, 58f, 18f, out recipe.OrderAltLabel);
+            recipe.OrderMain = InkButton(card, true, "Заказ", "Взять заказ", w - 540f, 150f, 250f, 58f, 21f, out recipe.OrderMainLabel);
+            recipe.OrderAlt = InkButton(card, false, "Обмен", "Отдать 12 осколков", w - 280f, 150f, 250f, 58f, 18f, out recipe.OrderAltLabel);
             return recipe;
         }
 
         static CampPotionCard PotionCard(RectTransform screen, int index, float x, float y, float w, float h)
         {
             RectTransform card = TopLeft(Node("Зелье " + (index + 1), screen), x, y, w, h);
-            Image shadow = Layer(card, "Тень", T.Glow, Role.Veil, .8f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -6f);
-            Layer(card, "Заливка", T.Fill, Role.Panel);
-            Layer(card, "Тень снизу", T.ShadeSprite, Role.Veil, .5f);
-            Layer(card, "Свет по кромке", T.HighlightSprite, Role.Highlight);
-            Layer(card, "Рамка", T.Frame, Role.PanelLine, .9f);
+            CardPlate(card, w);
             var potion = card.gameObject.AddComponent<CampPotionCard>();
-            potion.Chosen = Layer(card, "Выбрано", T.FrameBold, Role.Accent, 1f).gameObject;
 
             bool health = index == 0 || index == 1 || index == 4;
             bool large = index == 1 || index == 3;
-            Image halo = Mark(card, "Свет за бутылкой", T.Blob, health ? Role.Health : Role.Lavidium, .22f, new Vector2(0f, .5f), new Vector2(96f, 6f), 170f);
-            halo.preserveAspect = false;
             float art = large || index >= 4 ? 150f : 118f;
-            RectTransform bottle = At(Node("Бутылка", card), new Vector2(0f, .5f), new Vector2(96f, 6f), new Vector2(art, art));
-            potion.Art = bottle.gameObject.AddComponent<RawImage>();
+            Vector2 at = new Vector2(96f, 6f);
+            potion.Chosen = CardChosen(card, "Выбрано", Role.Accent, w, at, art);
+            BottleGlow(card, health, at, art * 1.08f, .11f);
+            RectTransform bottle = At(Node("Бутылка", card), new Vector2(0f, .5f), at, new Vector2(art, art));
             // Бутылки первого набора (Resources/UI/Items); у зелий заказов пока большие бутылки.
-            potion.Art.texture = Resources.Load<Texture2D>("UI/Items/potion_" + (health ? "health" : "lavidium") + (large || index >= 4 ? "_large" : "_small"));
-            potion.Art.raycastTarget = false;
+            potion.Art = Bottle(bottle, "potion_" + (health ? "health" : "lavidium") + (large || index >= 4 ? "_large" : "_small"));
 
             const float tx = 188f;
             potion.Name = Text(card, "Название", "Зелье", tx, 20f, w - tx - 20f, 38f, FontRole.Heading, 27f, Role.Text);
             potion.Name.textWrappingMode = TextWrappingModes.NoWrap;
             potion.Effect = Text(card, "Действие", "", tx, 60f, w - tx - 20f, 48f, FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.TopLeft);
             potion.Stock = Text(card, "Запас", "", tx, 110f, w - tx - 20f, 28f, FontRole.Body, 18f, Role.TextMuted);
-            potion.Buy = KitButton(card, "ButtonPrimary", "Купить", "Купить", tx, 150f, 190f, 52f, 20f, out potion.BuyLabel);
+            potion.Buy = InkButton(card, true, "Купить", "Купить", tx, 150f, 190f, 52f, 20f, out potion.BuyLabel);
             ButtonArt(potion.Buy, "gold", 34f);
-            potion.Select = KitButton(card, "ButtonSecondary", "Выбрать", "В быстрый слот", tx + 200f, 150f, w - tx - 220f, 52f, 18f, out potion.SelectLabel);
+            potion.Select = InkButton(card, false, "Выбрать", "В быстрый слот", tx + 200f, 150f, w - tx - 220f, 52f, 18f, out potion.SelectLabel);
 
             RectTransform locked = Stretch(Node("Закрыто", card));
             potion.Locked = locked.gameObject;
-            Layer(locked, "Вуаль", T.Fill, Role.Veil, .55f);
+            // Закрытое — под тёмной дымкой (мягкое пятно без краёв, как тень под текстом).
+            UiInkKit.SmokeLayer(locked, "Вуаль", "soft_blot", .7f, 16f, 10f, deep: true);
             // Закрытое зелье отсылает к вкладке «Рецепты», где живёт заказ Лео.
             potion.LockedLabel = Text(locked, "Рецепт", "Нужен рецепт · вкладка «Рецепты»", tx, 150f, w - tx - 20f, 52f, FontRole.Body, 18f, Role.Accent);
             locked.gameObject.SetActive(false);

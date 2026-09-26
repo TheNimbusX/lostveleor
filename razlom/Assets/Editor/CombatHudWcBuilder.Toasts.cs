@@ -14,8 +14,9 @@ namespace Game.EditorTools
 
         /// <summary>
         /// Всплывашки над портретом (концепт 2Б, `ART/UI/concepts-2026-09-25-audit/2-toasts-B.png`):
-        /// тёмная «пилюля» с серебряной кромкой и ромбами на концах, слева круг значка с кольцом
-        /// и светом цвета события, справа имя и строка. Столбик растёт вверх над эффектами зелий.
+        /// полоса дыма с нитью света, слева круг значка с кольцом и светом цвета события, справа имя
+        /// и строка. Столбик растёт вверх над эффектами зелий. Белые значки забега (золото)
+        /// HudToasts красит кремовым, картинки вещей и заказов — как есть.
         /// </summary>
         static void BuildToasts(RectTransform root, CombatHudView view)
         {
@@ -31,17 +32,16 @@ namespace Game.EditorTools
 
             RectTransform pill = Box(Node("Плашка", toast), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(ToastCircle * .5f, 0f),
                 new Vector2(ToastWidth - ToastCircle * .5f, ToastHeight));
-            Image shadow = Layer(pill, "Тень", T.PillFill, Role.Veil, .5f, 3f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
-            Layer(pill, "Заливка", T.PillFill, Role.Panel, .95f);
-            Layer(pill, "Рамка", T.PillFrame, Role.PanelLine, .7f);
-            Mark(pill, "Ромб справа", T.DiamondSmall, Role.PanelLine, .95f, new Vector2(1f, .5f), new Vector2(-1f, 0f), 10f);
-            Mark(toast, "Ромб слева", T.DiamondSmall, Role.PanelLine, .95f, new Vector2(0f, .5f), new Vector2(-4f, 0f), 10f);
+            // «Дым и свет»: вместо пилюли — полоса дыма, тающая вправо; по низу огненная нить.
+            UiInkKit.SmokeLayer(pill, "Дым", "smoke_band_2", 1f, 44f, 22f, origin: new Vector2(0f, .5f));
+            UiInkKit.LightAt(pill, "Нить", "light_thread", new Vector2(0f, 0f), new Vector2(120f, 0f), new Vector2(240f, 26f), .4f,
+                origin: new Vector2(0f, .5f), delay: .2f);
 
             RectTransform circle = Box(Node("Круг", toast), new Vector2(0f, .5f), new Vector2(.5f, .5f), new Vector2(ToastCircle * .5f + 4f, 0f),
                 new Vector2(ToastCircle, ToastCircle));
             Image light = Layer(circle, "Свет", RoundGlow, Role.Rare, .5f, 12f);
             light.raycastTarget = false;
+            UiInkKit.SmokeLayer(circle, "Клякса", "smoke_ring", 1f, 10f, 10f);
             Layer(circle, "Подложка", T.CircleFill, Role.Panel);
             var icon = Stretch(Node("Значок", circle), 6f).gameObject.AddComponent<RawImage>();
             icon.raycastTarget = false;
@@ -51,21 +51,25 @@ namespace Game.EditorTools
             // Высота с запасом: у «многоточия» TMP строка выше коробки пропадает целиком.
             RectTransform titleBox = Box(Node("Имя", toast), new Vector2(0f, .5f), new Vector2(0f, 0f), new Vector2(textX, -4f), new Vector2(ToastWidth - textX - 20f, 28f));
             TMP_Text title = LabelOn(titleBox, "Кожаная куртка", FontRole.Body, 17f, Role.Text, TextAlignmentOptions.BottomLeft);
+            UiInkKit.Revealed(title, .1f);
             title.textWrappingMode = TextWrappingModes.NoWrap;
             title.overflowMode = TextOverflowModes.Ellipsis;
             RectTransform lineBox = Box(Node("Строка", toast), new Vector2(0f, .5f), new Vector2(0f, 1f), new Vector2(textX, -1f), new Vector2(ToastWidth - textX - 20f, 22f));
             TMP_Text line = LabelOn(lineBox, "Редкая · ур. 4", FontRole.Body, 13f, Role.Rare, TextAlignmentOptions.TopLeft);
+            UiInkKit.Revealed(line, .2f);
             line.textWrappingMode = TextWrappingModes.NoWrap;
             line.overflowMode = TextOverflowModes.Ellipsis;
 
+            // Всплывашки частые (золото с каждого врага) — без тлеющей кромки, как подсказки.
+            UiInkKit.Group(toast, UiInkGroup.Sweep.LeftToRight, .4f, .15f).Burn = 0f;
             toast.gameObject.SetActive(false);
             toasts.Template = toast;
             toasts.Pitch = ToastHeight + 10f;
         }
 
         /// <summary>
-        /// Узкий баннер сверху по центру (концепт 2Б): скошенная плашка пака, «◆ РАЗЛОМ ЗАЧИЩЕН ◆»
-        /// антиквой, под ним строка и две короткие линейки с ромбами.
+        /// Узкий баннер сверху по центру (концепт 2Б, «Дым и свет»): клуб дыма, «РАЗЛОМ ЗАЧИЩЕН» антиквой
+        /// с огоньками-ромбами по бокам, под ним строка и нить света (ромб — только мелкий свет).
         /// </summary>
         static void BuildAnnounce(RectTransform root, CombatHudView view)
         {
@@ -77,36 +81,34 @@ namespace Game.EditorTools
             announce.Group.interactable = false;
             view.Announce = announce;
 
-            Image shadow = Layer(banner, "Тень", Kit("wc_plate_fill"), Role.Veil, .55f, 6f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -4f);
-            Layer(banner, "Заливка", Kit("wc_plate_fill"), Role.Panel, .96f);
-            Layer(banner, "Свет по кромке", T.InnerGlowSmall, Role.PanelLine, .08f, -6f);
-            Layer(banner, "Рамка", Kit("wc_plate_frame"), Role.PanelLine, .85f);
-            Mark(banner, "Ромб слева", T.DiamondSmall, Role.PanelLine, 1f, new Vector2(0f, .5f), new Vector2(2f, 0f), 12f);
-            Mark(banner, "Ромб справа", T.DiamondSmall, Role.PanelLine, 1f, new Vector2(1f, .5f), new Vector2(-2f, 0f), 12f);
+            // «Дым и свет»: широкий клуб дыма, растекается от середины; под надписью — нить света с ромбом.
+            UiInkKit.SmokeLayer(banner, "Дым", "smoke_band_1", 1f, 110f, 46f);
+            UiInkKit.LightAt(banner, "Нить с ромбом", "light_thread_gem", new Vector2(.5f, .5f), new Vector2(0f, -30f), new Vector2(520f, 50f), .8f,
+                delay: .25f);
 
             RectTransform titleBox = Box(Node("Надпись", banner), new Vector2(.5f, .5f), new Vector2(.5f, 0f), new Vector2(0f, -2f), new Vector2(440f, 34f));
             TMP_Text title = LabelOn(titleBox, "РАЗЛОМ ЗАЧИЩЕН", FontRole.Heading, 24f, Role.Text, TextAlignmentOptions.Bottom);
+            UiInkKit.Revealed(title, .08f);
             title.characterSpacing = 4f;
             title.textWrappingMode = TextWrappingModes.NoWrap;
             announce.Title = title;
             // Ромбы у надписи — спрайтом пака: знака ◆ нет ни в Philosopher, ни в Nunito, ни в запасном шрифте.
-            announce.LeftMark = Mark(banner, "Ромб у надписи слева", T.DiamondSmall, Role.PanelLine, 1f, new Vector2(.5f, .5f), new Vector2(-120f, 12f), 10f).rectTransform;
-            announce.RightMark = Mark(banner, "Ромб у надписи справа", T.DiamondSmall, Role.PanelLine, 1f, new Vector2(.5f, .5f), new Vector2(120f, 12f), 10f).rectTransform;
+            announce.LeftMark = UiInkKit.LightAt(banner, "Ромб у надписи слева", "light_gem", new Vector2(.5f, .5f), new Vector2(-120f, 12f), new Vector2(16f, 18f), .95f,
+                delay: .3f).rectTransform;
+            announce.RightMark = UiInkKit.LightAt(banner, "Ромб у надписи справа", "light_gem", new Vector2(.5f, .5f), new Vector2(120f, 12f), new Vector2(16f, 18f), .95f,
+                delay: .3f).rectTransform;
             RectTransform lineBox = Box(Node("Строка", banner), new Vector2(.5f, .5f), new Vector2(.5f, 1f), new Vector2(0f, -6f), new Vector2(360f, 22f));
             TMP_Text line = LabelOn(lineBox, "Путь к выходу открыт", FontRole.Body, 16f, Role.Text, TextAlignmentOptions.Top);
             line.textWrappingMode = TextWrappingModes.NoWrap;
+            UiInkKit.Revealed(line, .25f);
             announce.Line = line;
-            foreach (float side in new[] { -1f, 1f })
-            {
-                RectTransform rule = Box(Node(side < 0f ? "Линейка слева" : "Линейка справа", banner), new Vector2(.5f, .5f), new Vector2(.5f, .5f),
-                    new Vector2(side * 168f, -16f), new Vector2(96f, 1.5f));
-                var image = rule.gameObject.AddComponent<Image>();
-                image.sprite = T.Pixel;
-                image.raycastTarget = false;
-                Tint(image, Role.PanelLine, .5f);
-                Mark(rule, "Ромб", T.DiamondSmall, Role.PanelLine, .9f, new Vector2(side < 0f ? 1f : 0f, .5f), Vector2.zero, 8f);
-            }
+            // Большой момент — огонь можно, но медленный и мягкий (владелец 26 сентября: красная кромка
+            // «очень-очень быстрая»): дым тлеет ровно почти секунду, кромка шире и тусклее.
+            UiInkGroup group = UiInkKit.Group(banner, UiInkGroup.Sweep.FromCenter, .5f, .2f);
+            group.InkDuration = .9f;
+            group.Curve = UiInkGroup.Easing.Smooth;
+            group.EdgeScale = 1.6f;
+            group.Burn = .7f;
             banner.gameObject.SetActive(false);
         }
     }

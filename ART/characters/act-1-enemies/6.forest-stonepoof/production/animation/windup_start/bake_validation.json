@@ -1,0 +1,18 @@
+{
+  "deforming_bones": 34,
+  "runtime_clips": {
+    "AN_Stonehoof_Windup": 1.0,
+    "AN_Stonehoof_Launch": 0.2
+  },
+  "sample_step_frames": 0.25,
+  "maximum_baked_joint_position_error_m": 7.356104282854488e-07,
+  "maximum_baked_rotation_error_degrees": 0.05595291023658669,
+  "maximum_quarter_frame_rotation_change_degrees": 8.530889341372287,
+  "maximum_step_at": {
+    "bone": "leg_hind_right_bot1",
+    "frame": 35.0
+  },
+  "root_travel_removed": true,
+  "scale_curves": false,
+  "owner_approved": false
+}

@@ -120,6 +120,8 @@ namespace Game.View
             gameObject.AddComponent<CampServicesView>().Initialize(this,_driver);
             if (GetComponent<CampGuideView>() == null) gameObject.AddComponent<CampGuideView>();
             if (GetComponent<CampCharacterShadows>() == null) gameObject.AddComponent<CampCharacterShadows>();
+            // Дымная завеса перехода создаётся и прогревается сейчас, а не в миг входа в арку.
+            CampTransition.Prewarm();
             Debug.Log($"[camp] spawn={_start} sharedCombat=True tent={Tent} cells={width*height}");
         }
 
@@ -328,7 +330,8 @@ namespace Game.View
 
         void Update()
         {
-            // Вернулись из забега — лагерь проявляется из тёплой пелены (CampTransition).
+            // Вернулись из забега мимо дымной завесы (пути разработчика) — лагерь проявляется из
+            // тёплой пелены. Смена под завесой рассеивается сама: ReturnToCamp тогда ничего не делает.
             bool active = Active;
             if (!active && _driver?.Session != null && _driver.Session.Mode == GameMode.Rift) _sawRift = true;
             if (active && !_wasActive && _sawRift) { _sawRift = false; if (!CampIntegrationCapture.IsRunning) CampTransition.ReturnToCamp(); }

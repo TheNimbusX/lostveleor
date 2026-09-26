@@ -1,0 +1,158 @@
+{
+  "stage": "brake_owner_review",
+  "owner_clip_approved": true,
+  "previous_clip_approved": true,
+  "previous_approval_quote": "ок идем дальше",
+  "fps": 30,
+  "frames": [
+    0,
+    18
+  ],
+  "duration_seconds": 0.6,
+  "preview_start_speed_m_s": 12,
+  "preview_distance_m": 3.4,
+  "preview_stop_frame": 14,
+  "transition_preview_frames": 79,
+  "reference_time_map": [
+    [
+      0,
+      3.125
+    ],
+    [
+      3,
+      3.375
+    ],
+    [
+      7,
+      3.625
+    ],
+    [
+      14,
+      4
+    ],
+    [
+      18,
+      4.375
+    ]
+  ],
+  "reference_note": "Phase-aligned extract of accepted Higgsfield charge/braking reference, compressed to agreed gameplay duration. No synthetic inbetween reference frames.",
+  "editable_master": "../../animation/brake/Stonehoof_Brake_r01.blend",
+  "derived_clip": "../../animation/brake/Stonehoof_Brake_Baked_r01.blend",
+  "accepted_source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_r01.blend": "c8d4ea70675e5db835052b25952ab960c4f68e25ba87b574eb3598150d3871d5"
+  },
+  "master_sha256": "e24f05a5fcf5e394c6a22d121c6a684c40e97c5e3dff9ca7df1f725bcc16eaa9",
+  "model_triangles": 20042,
+  "validation": {
+    "samples": 147,
+    "maximum_hoof_target_error_m": {
+      "front_left": [
+        4.198270407359146e-05,
+        0.625
+      ],
+      "front_right": [
+        3.874315951853763e-05,
+        4.875
+      ],
+      "hind_left": [
+        7.669293418067034e-05,
+        1.75
+      ],
+      "hind_right": [
+        6.271259157031616e-05,
+        0.0
+      ]
+    },
+    "post_stop_support_drift_m": {
+      "front_left": 1.926581665729614e-06,
+      "front_right": 1.306854986817086e-06,
+      "hind_left": 1.3448148861815233e-05,
+      "hind_right": 9.16870761046491e-06
+    },
+    "skid_sole_z_ranges_m": {
+      "front_left": [
+        -3.218937126803212e-05,
+        4.963190463058709e-07
+      ],
+      "front_right": [
+        0.0026905417907983065,
+        0.0027271544095128775
+      ],
+      "hind_left": [
+        0.0023609562776982784,
+        0.002426090883091092
+      ],
+      "hind_right": [
+        0.005565699189901352,
+        0.005616281181573868
+      ]
+    },
+    "minimum_mesh_z_m": [
+      -3.218937126803212e-05,
+      10.125
+    ],
+    "bone_length_error": 1.8990361985160575e-06,
+    "max_rotation_step_eighth_frame": [
+      4.618377077944697,
+      0.875,
+      "leg_hind_left_bot1"
+    ],
+    "joins": {
+      "from_accepted_gallop_phase_0": {
+        "max_joint_position_m": 1.6049041769309353e-07,
+        "max_matrix_error": 1.1026859283447266e-06
+      },
+      "to_accepted_stance": {
+        "max_joint_position_m": 3.533335239106231e-06,
+        "max_matrix_error": 1.5363097190856934e-05
+      }
+    },
+    "accepted_sources_unchanged": true,
+    "owner_approved": false
+  },
+  "bake_validation": {
+    "deforming_bones": 34,
+    "runtime_clips": {
+      "AN_Stonehoof_Brake": 0.6
+    },
+    "sample_step_frames": 0.0625,
+    "maximum_baked_joint_position_error_m": 9.499709393273873e-07,
+    "maximum_baked_rotation_error_degrees": 0.05595291023658669,
+    "maximum_sixteenth_frame_rotation_change_degrees": 2.3171926235159295,
+    "maximum_step_at": {
+      "bone": "leg_hind_left_bot0",
+      "frame": 1.0
+    },
+    "root_travel_removed": true,
+    "scale_curves": false,
+    "owner_approved": false
+  },
+  "interpolation_validation": {
+    "sample_count": 579,
+    "maximum_interpolated_joint_error_m": [
+      0.00011505707150606696,
+      0.03125,
+      "leg_hind_left_bot1"
+    ],
+    "maximum_interpolated_rotation_error_degrees": [
+      0.05595291023658669,
+      1.78125,
+      "pelvis"
+    ],
+    "baked_endpoint_error_m": 4.135575618260478e-07,
+    "display_rates_checked": [
+      30,
+      60,
+      120
+    ],
+    "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.",
+    "source_sha256_unchanged": true
+  },
+  "runtime_followup": "During integration: reserve braking distance inside arena; blend arbitrary incoming loop phase without delaying the stop or snapping. Only canonical phase-0 join is shown here.",
+  "browser_check": "file:// CUA policy denies automated browsing; local assets, decoding and JS syntax checked separately. Owner playback approval pending.",
+  "owner_approval_quote": "ок идем дальше",
+  "owner_approval_date": "2026-09-25",
+  "owner_approval_context": "animation_brake/index.html",
+  "next_review": "../animation_collision/index.html"
+}

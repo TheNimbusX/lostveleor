@@ -11,6 +11,11 @@ namespace Game.View
     /// прокруткой и пункты по шаблону <see cref="OptionTemplate"/> — всё в
     /// префабе. Список открывается и закрывается с проявлением и лёгким
     /// масштабом; выбранный пункт подсвечен.
+    ///
+    /// «Дым и свет» (26 сентября): выбранный пункт отмечает ребёнок «Выбрано» (полоса дыма и огонёк) —
+    /// он включается только у выбранного; пунктов без него касается цвет подложки, как раньше.
+    /// Клоны пунктов с частями дыма сразу отдаются группе появления (UiInkGroup.Collect): иначе клон,
+    /// сделанный посреди проявления, застывал полупрозрачным.
     /// </summary>
     public sealed class UiDropdown : MonoBehaviour
     {
@@ -26,6 +31,9 @@ namespace Game.View
         public Color OptionSelected = new Color32(0xCB, 0x51, 0x58, 0xFF);
         public Color OptionIdle = new Color(1f, 1f, 1f, 0f);
         public float Duration = 0.15f;
+
+        /// <summary>Имя ребёнка пункта, который включается только у выбранного.</summary>
+        const string SelectedMark = "Выбрано";
 
         /// <summary>Выбран пункт с индексом.</summary>
         public event Action<int> Chosen;
@@ -78,6 +86,7 @@ namespace Game.View
                 option.onClick.AddListener(() => { Chosen?.Invoke(index); Close(); });
                 _options.Add(option);
             }
+            Content.GetComponentInParent<UiInkGroup>(true)?.Collect();
             _selected = -1;
         }
 
@@ -87,8 +96,12 @@ namespace Game.View
             if (index == _selected) return;
             _selected = index;
             for (int i = 0; i < _options.Count; i++)
-                if (_options[i] != null && _options[i].image != null)
-                    _options[i].image.color = i == index ? OptionSelected : OptionIdle;
+            {
+                if (_options[i] == null) continue;
+                if (_options[i].image != null) _options[i].image.color = i == index ? OptionSelected : OptionIdle;
+                Transform mark = _options[i].transform.Find(SelectedMark);
+                if (mark != null && mark.gameObject.activeSelf != (i == index)) mark.gameObject.SetActive(i == index);
+            }
         }
 
         public void Open()

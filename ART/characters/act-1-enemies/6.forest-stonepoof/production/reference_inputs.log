@@ -1,0 +1,9 @@
+00:03.781  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\Stonehoof_ModelCandidate_r03.blend"
+00:05.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\references\charge_start.jpg'
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\render_reference_inputs.py:20: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat=bpy.data.materials.new('MAT_ReferenceStone');mat.use_nodes=True
+00:06.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\references\collision_start.jpg'
+00:07.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\references\death_start.jpg'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

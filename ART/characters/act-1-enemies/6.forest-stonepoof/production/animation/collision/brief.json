@@ -1,0 +1,18 @@
+{
+  "stage": "fourth_clip_wall_impact_and_stun",
+  "previous_clip_approved": true,
+  "approval": "2026-09-25: ок идем дальше",
+  "source": "../charge_loop/Stonehoof_ChargeLoop_r01.blend",
+  "reference": "../../references/collision.mp4",
+  "stun_frames": 36,
+  "fps": 30,
+  "review_approach_frames": 12,
+  "impact_frame": 12,
+  "last_frame": 48,
+  "entry": "gallop phase 0; contact pose tucks forehead in final 4 approach frames",
+  "exit": "accepted ready stance",
+  "motion": "short neck/chest recoil, forefeet catch promptly, supported dazed sway with small head shake, stable recovery",
+  "root_motion": "12 m/s preview approach stops at contact; exported impact clip excludes carrier travel. Sim owns obstacle stop and stun timer.",
+  "scope": "One collision/stun clip; no new VFX, audio, Unity or sibling-owned scene modifications",
+  "integration_followup": "Canonical approach shown. Blend from arbitrary gallop phase without delaying Sim contact; optional head tuck based on remaining distance cannot alter charge direction."
+}

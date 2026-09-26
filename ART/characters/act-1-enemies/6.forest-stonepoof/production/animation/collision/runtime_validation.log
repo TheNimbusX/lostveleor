@@ -1,0 +1,6 @@
+00:02.563  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\collision\Stonehoof_Collision_r01.blend"
+00:02.766  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\collision\Stonehoof_Collision_Baked_r01.blend"
+{"AN_Stonehoof_WallBrace": {"frames": [0.0, 4.0], "samples": 33, "max_joint_error_m": 7.721332554836044e-07, "max_rotation_error_deg": 0.03956468205889273}, "AN_Stonehoof_WallImpact": {"frames": [0.0, 36.0], "samples": 289, "max_joint_error_m": 8.616943535090066e-07, "max_rotation_error_deg": 0.06852804019207596}, "no_root_carrier": true, "note": "Blender actions only. Arbitrary incoming gait phases and Unity collision timing remain integration checks."}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

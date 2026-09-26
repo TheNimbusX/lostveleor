@@ -1,0 +1,35 @@
+[a_Rodin.utils-DBG]: RodinBridge: register
+[a_Rodin.utils-WRN]: Port 61863 is in use
+[a_Rodin.utils-WRN]: Server running on port 61864
+[a_Rodin.utils-DBG]: on_scene_load
+[a_Rodin.utils-DBG]: ensure_default_image
+00:05.000  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death\Stonehoof_Death_r01.blend"
+Reloading external rigs...
+Reloading external metarigs...
+Info: Saved as "Stonehoof_Death_Baked_r01.blend"
+{"deforming_bones": 34, "duration_seconds": 2, "sample_step_frames": 0.0625, "maximum_baked_joint_error_m": 7.278058002217831e-07, "maximum_baked_rotation_error_degrees": 0.07912936529690494, "owner_approved": false, "constraints": 0, "travel_removed": true}
+[a_Rodin.utils-DBG]: RodinBridge: unregister
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

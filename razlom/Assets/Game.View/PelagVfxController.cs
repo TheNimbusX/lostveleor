@@ -111,11 +111,14 @@ namespace Game.View
         private const float CleaveSplitHeight = 1.15f;
         private const float CleaveSplitTowardCamera = 0.7f;
         /// <summary>
-        /// Серп от макушки до земли, а не втрое выше героя: 1,2 давало 3,6 м
-        /// (владелец 25.09: «непропорционально огромный»), .75 — около 2,2 м на
-        /// базовой досягаемости, с «Длинным клинком» растёт сам.
+        /// Размер серпа V16 (принят владельцем 25.09) на базовой дальности 1,8 м:
+        /// 1,8 × 0,75 = 1,35 в единицах авторского радиуса. Постоянный, а не от
+        /// досягаемости: с талантами серп рос до 3,6 м («при талантах всё ещё
+        /// слишком громен»); дальность показывает линия раскола, подгонка к
+        /// дальности только ужимает серп. V17 на вращающихся дугах CFXR откачен:
+        /// дуги крутились вокруг героя, а не шли по клинку.
         /// </summary>
-        private const float CleaveSplitScale = .75f;
+        private const float CleaveSplitSize = 1.35f;
         /// <summary>
         /// Наклон плоскости серпа от плоскости экрана вокруг оси удара, град:
         /// верх уходит от камеры, серп читается клинком, проходящим сквозь
@@ -563,7 +566,8 @@ namespace Game.View
                     for (int d = 0; d < directions; d++)
                     {
                         Vector3 forward = CleaveFanForward(sim, d);
-                        PlayCleaveSplit(sim, forward, 1f);
+                        // Веер: три серпа поменьше, иначе три полных закрывают экран.
+                        PlayCleaveSplit(sim, forward, directions == 3 ? .78f : 1f);
                         PlayCleaveCrack(sim, forward, beyond);
                     }
                     _cleaveLightPulse = .85f;
@@ -608,7 +612,8 @@ namespace Game.View
             }
             if (rim < .05f) return authored;
             float fitted = (target - baseReach) / rim;
-            return Mathf.Clamp(fitted, authored * .7f, authored * 1.6f);
+            // Только ужимаем: серп не должен расти вместе с дальностью талантов.
+            return Mathf.Clamp(fitted, authored * .7f, authored * 1.08f);
         }
 
         private static float CleaveWidth(Simulation sim)
@@ -663,7 +668,7 @@ namespace Game.View
                 rotation = camera.transform.rotation * Quaternion.Euler(0f, 0f, angle) * Quaternion.Euler(CleaveSplitTilt, 0f, 0f);
                 center += (camera.transform.position - center).normalized * CleaveSplitTowardCamera;
             }
-            float scale = (element.AuthoredRadius > 0f ? CleaveReach(sim) * CleaveSplitScale / element.AuthoredRadius : 1f) * size;
+            float scale = (element.AuthoredRadius > 0f ? CleaveSplitSize / element.AuthoredRadius : 1f) * size;
             if (camera != null && camera.orthographic) scale = FitCleaveSplitToReach(sim, camera, center, rotation, forward, scale);
             int index = ReserveActive();
             element.Begin(center, rotation);

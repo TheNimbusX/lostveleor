@@ -1,0 +1,14 @@
+{
+  "purpose": "Изолированные элементы VFX вендиго на чёрном фоне для флипбуков в игре (владелец 25.09: решение 1 в 1 как на референсе, кредиты не проблема)",
+  "model": "seedance_2_0", "mode": "fast", "resolution": "720p", "duration": 4, "audio": false,
+  "reference_media": {
+    "claw": {"media_id": "02f6fc28-6934-4742-b651-d577a5b24088", "source": "review/vfx_references/claw_sync_r03.mp4 frame 34"},
+    "landing": {"media_id": "aae537de-ef8b-4920-8bed-dbf80f4a63c7", "source": "review/vfx_references/landing.mp4 frame 36"},
+    "takeoff": {"media_id": "71194ee6-8241-46e6-abef-d15afd7d565c", "source": "review/vfx_references/takeoff.mp4 frame 47"}
+  },
+  "jobs": [
+    {"index": 1, "slug": "claw", "job_id": "1c88baba-5e93-458d-9ffd-e5284d2536c2"},
+    {"index": 2, "slug": "landing", "job_id": "a8e9931f-3a01-45ac-9f69-3739afed3705"},
+    {"index": 3, "slug": "takeoff", "job_id": "b47a1be0-3a30-47bf-a8d1-b1ceaaa249fa"}
+  ]
+}

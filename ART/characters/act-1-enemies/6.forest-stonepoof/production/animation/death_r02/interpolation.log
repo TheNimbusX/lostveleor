@@ -1,0 +1,6 @@
+00:03.453  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death_r02\Stonehoof_Death_r02.blend"
+00:04.859  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death_r02\Stonehoof_Death_Baked_r02.blend"
+{"sample_count": 1923, "maximum_interpolated_joint_error_m": [7.026447228368696e-05, 34.53125, "leg_hind_right_bot2_end"], "maximum_interpolated_rotation_error_degrees": [0.05595291023658669, 2.3125, "pelvis"], "baked_endpoint_error_m": 2.5331974029541016e-07, "display_rates_checked": [30, 60, 120], "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.", "source_sha256_unchanged": true}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

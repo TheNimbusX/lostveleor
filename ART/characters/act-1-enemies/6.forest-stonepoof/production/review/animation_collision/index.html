@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Камнекопыт · Столкновение и оглушение</title><link rel="stylesheet" href="review.css">
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · КАМНЕКОПЫТ · КЛИП 04</div><h1>Столкновение и оглушение</h1><p>Удар каменным лбом → отдача → опора копытами → покачивание и восстановление.</p></div><span class="badge">Принято владельцем</span></div>
+<div class="pair">
+<section class="panel"><div class="caption"><h2>Принятый видеореференс</h2><p>Столкновение из Higgsfield. Моменты движения сопоставлены.</p></div><img id="reference" src="reference_frames/0000.jpg" alt="Столкновение в принятом видеореференсе"></section>
+<section class="panel"><div class="caption"><h2>Анимация на нашей модели</h2><p id="viewLabel">Сбоку · с разбега</p></div><img id="animation" src="side_frames/0000.png" alt="Камнекопыт разбегается перед столкновением"></section>
+</div>
+<div class="controls">
+<div class="row" style="margin-bottom:14px"><button id="modeFull" aria-pressed="true">С разбега</button><button id="modeImpact" aria-pressed="false">Только удар и оглушение</button><button id="contact">Кадр контакта</button></div>
+<div class="row"><button id="play" disabled>Загрузка кадров…</button><button id="reset">Сначала</button><button id="prev" aria-label="Предыдущий кадр">− кадр</button><button id="next" aria-label="Следующий кадр">+ кадр</button><select id="speed" aria-label="Скорость просмотра"><option value="1">Скорость ×1</option><option value="0.5">Скорость ×0,5</option><option value="0.25">Скорость ×0,25</option></select><button id="side" aria-pressed="true">Сбоку</button><button id="game" aria-pressed="false">Сверху сзади</button><label class="small"><input id="repeat" type="checkbox"> Повторять</label></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="48" value="0" aria-label="Кадр анимации"><output id="counter">Кадр 0 / 48 · 0,00 с</output><span id="phase">Разбег</span></div>
+<p id="loading" class="small" aria-live="polite">Кадры загружаются заранее.</p>
+</div>
+<div class="note"><p><strong>Оглушение длится 1,2 секунды от контакта.</strong> Передние копыта принимают вес сразу после удара; корпус проседает, голова качается, затем он выравнивается. В конце возвращается в принятую стойку.</p></div>
+<p>По сравнению с референсом отдача короче, а копыта раньше находят опору. Верхний ракурс повёрнут со спины, чтобы препятствие не заслоняло голову. Камень и полосы пола нужны только для просмотра движения.</p>
+<p class="small">Клавиши ← / → листают кадры, пробел включает просмотр. Слева — исходные кадры референса, сопоставленные с фазами анимации; полный ролик с исходной скоростью доступен по ссылке ниже.</p>
+<div class="links"><a href="side_keys.jpg">Ключевые позы сбоку</a><a href="game_keys.jpg">Ключевые позы сверху</a><a href="../animation_brake/index.html">Принятое торможение</a><a href="../motion_references/index.html">Полные видеореференсы</a><a href="../../animation/collision/Stonehoof_Collision_r01.blend">Редактируемая сцена Blender</a><a href="../../animation/collision/Stonehoof_Collision_Baked_r01.blend">Производные клипы</a></div>
+<details><summary>Обычные видеозаписи</summary><div class="videos"><div><p>С разбега · сбоку</p><video src="side.webm" poster="side_frames/0000.png" muted playsinline controls preload="none"></video><a href="side.mp4">MP4</a></div><div><p>С разбега · сверху сзади</p><video src="game.webm" poster="game_frames/0000.png" muted playsinline controls preload="none"></video><a href="game.mp4">MP4</a></div><div><p>Удар и оглушение · сбоку</p><video src="impact_side.webm" poster="side_frames/0012.png" muted playsinline controls preload="none"></video><a href="impact_side.mp4">MP4</a></div><div><p>Удар и оглушение · сверху сзади</p><video src="impact_game.webm" poster="game_frames/0012.png" muted playsinline controls preload="none"></video><a href="impact_game.mp4">MP4</a></div></div></details>
+<p class="small" style="margin-top:28px">Следующий отдельный клип после приёмки — смерть: передние ноги подкашиваются, тяжёлый корпус оседает на землю. Это просмотр анимации в Blender; перенос и проверка в игровом бою будут отдельным этапом.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),cache=[];
+let frame=0,view='side',mode='full',running=false,started=0,first=0,rate=1,lastKey='';
+const filename=f=>String(f).padStart(4,'0'),count=()=>mode==='full'?49:37,sourceFrame=()=>frame+(mode==='impact'?12:0);
+function paths(f,v,m){const p=f+(m==='impact'?12:0);return [`${v}_frames/${filename(p)}.png`,`reference_frames/${filename(p)}.jpg`];}
+function draw(){
+ const key=`${frame}/${view}/${mode}`;
+ if(key!==lastKey){const [a,r]=paths(frame,view,mode);$('animation').src=a;$('reference').src=r;lastKey=key;}
+ const p=sourceFrame();
+ $('seek').max=count()-1;$('seek').value=frame;$('counter').value=`Кадр ${p} / 48 · ${(frame/30).toFixed(2).replace('.',',')} с`;
+ $('phase').textContent=p<8?'Разбег':p<12?'Опускает лоб':p===12?'Контакт':p<16?'Копыта принимают вес':p<40?'Оглушение':p<48?'Выравнивается':'Стойка';
+ $('viewLabel').textContent=`${view==='side'?'Сбоку':'Сверху сзади'} · ${mode==='full'?'с разбега':'удар и оглушение за 1,2 секунды'}`;
+ if(!$('play').disabled)$('play').textContent=running?'Пауза':(frame===count()-1?'Ещё раз':'Смотреть');
+}
+function seek(f){running=false;frame=Math.max(0,Math.min(count()-1,f));draw();}
+function toggle(){if($('play').disabled)return;if(!running&&frame===count()-1)frame=0;running=!running;first=frame;started=performance.now();draw();}
+$('play').onclick=toggle;$('reset').onclick=()=>seek(0);$('prev').onclick=()=>seek(frame-1);$('next').onclick=()=>seek(frame+1);$('seek').oninput=()=>seek(Number($('seek').value));$('contact').onclick=()=>seek(mode==='full'?12:0);
+$('speed').onchange=()=>{rate=Number($('speed').value);first=frame;started=performance.now();};
+for(const [id,m] of [['modeFull','full'],['modeImpact','impact']])$(id).onclick=()=>{mode=m;seek(0);$('modeFull').setAttribute('aria-pressed',String(m==='full'));$('modeImpact').setAttribute('aria-pressed',String(m==='impact'));};
+for(const name of ['side','game'])$(name).onclick=()=>{view=name;for(const other of ['side','game'])$(other).setAttribute('aria-pressed',String(name===other));draw();};
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();toggle();}if(e.code==='ArrowRight'){e.preventDefault();seek(frame+1);}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame-1);}});
+function tick(now){if(running){const elapsed=first+Math.floor((now-started)*30*rate/1000);if(elapsed>=count()){if($('repeat').checked){frame=elapsed%count();first=frame;started=now;}else{frame=count()-1;running=false;}}else frame=elapsed;draw();}requestAnimationFrame(tick);}
+requestAnimationFrame(tick);draw();
+const assets=new Set();for(const m of ['full','impact'])for(const v of ['side','game'])for(let f=0;f<(m==='full'?49:37);f++)for(const p of paths(f,v,m))assets.add(p);
+let loaded=0,failed=0;
+function done(error){loaded++;if(error)failed++;$('loading').textContent=`Загружено ${loaded} из ${assets.size}`;if(loaded===assets.size){$('play').disabled=failed>0;$('loading').textContent=failed?'Часть кадров недоступна. Ниже есть обычные видеозаписи.':'Готово · можно смотреть и переключать камеры';draw();}}
+for(const path of assets){const im=new Image();cache.push(im);im.onload=()=>done(false);im.onerror=()=>done(true);im.src=path;}
+</script></html>

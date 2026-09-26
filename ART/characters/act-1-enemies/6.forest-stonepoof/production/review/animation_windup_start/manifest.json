@@ -1,0 +1,85 @@
+{
+  "stage": "windup_start_owner_review",
+  "references_approved": true,
+  "owner_clip_approved": true,
+  "fps": 30,
+  "frames": 37,
+  "duration_seconds": 1.2,
+  "windup_seconds": 1,
+  "launch_seconds": 0.2,
+  "reference_time_map": [
+    [
+      0,
+      0
+    ],
+    [
+      1,
+      1.5
+    ],
+    [
+      1.2,
+      1.833333
+    ]
+  ],
+  "reference_note": "Reference preparation lacks the two scrapes; they are authored according to the agreed attack design. Phase-aligned comparison, not equal absolute timings.",
+  "editable_master": "../../animation/windup_start/Stonehoof_WindupStart_r01.blend",
+  "derived_clip": "../../animation/windup_start/Stonehoof_WindupStart_Baked_r01.blend",
+  "model_triangles": 20042,
+  "validation": {
+    "samples": 145,
+    "maximum_hoof_target_error_m_and_frame": {
+      "front_left": [
+        7.095059395788231e-05,
+        22.0
+      ],
+      "front_right": [
+        5.009504064601881e-05,
+        29.75
+      ],
+      "hind_left": [
+        7.436089728928844e-05,
+        35.5
+      ],
+      "hind_right": [
+        6.276165314977156e-05,
+        36.0
+      ]
+    },
+    "stationary_support_drift_m": {
+      "front_right": 5.029650889795425e-05,
+      "hind_left": 4.371956762546229e-05,
+      "hind_right": 4.846659888799229e-05
+    },
+    "minimum_mesh_z_m": [
+      -0.000232744961977005,
+      19.0
+    ],
+    "maximum_bone_length_relative_error": 1.296930526750728e-06,
+    "owner_approved": false
+  },
+  "bake_validation": {
+    "deforming_bones": 34,
+    "runtime_clips": {
+      "AN_Stonehoof_Windup": 1.0,
+      "AN_Stonehoof_Launch": 0.2
+    },
+    "sample_step_frames": 0.25,
+    "maximum_baked_joint_position_error_m": 7.356104282854488e-07,
+    "maximum_baked_rotation_error_degrees": 0.05595291023658669,
+    "maximum_quarter_frame_rotation_change_degrees": 8.530889341372287,
+    "maximum_step_at": {
+      "bone": "leg_hind_right_bot1",
+      "frame": 35.0
+    },
+    "root_travel_removed": true,
+    "scale_curves": false,
+    "owner_approved": false
+  },
+  "master_sha256": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+  "owner_approval": {
+    "date": "2026-09-25",
+    "quote": "ок идем дальше",
+    "context": "animation_windup_start/index.html"
+  },
+  "next_clip_review": "../animation_charge_loop/index.html"
+}

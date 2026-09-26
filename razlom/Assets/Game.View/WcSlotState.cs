@@ -11,6 +11,8 @@ namespace Game.View
     /// обычная — светящаяся линия цвета редкости; наведение — светлеет; выбор — толще и светлее.
     /// Фон — рисованная акварель своей редкости (24 сентября: градиент выглядел «как html»),
     /// поэтому редкость видна и у выбранной вещи. Пустая ячейка — тонкая тихая рамка без свечения.
+    /// Ячейка «Дыма и света» (UiInkKit.Cell, SlotOrb) — без рисованных спрайтов: тонкая линия
+    /// цвета редкости, мягкий свет редкости за вещью и слой света выбора (<see cref="Glow"/>).
     /// Свой файл обязателен: компонент стоит в префабах.
     /// </summary>
     [ExecuteAlways, DisallowMultipleComponent]
@@ -44,6 +46,17 @@ namespace Game.View
         [Range(0f, 1f)] public float HoverLighten = .7f;
         [Tooltip("Насколько фон без рисунка ярче при наведении")] public float HoverFill = .14f;
         [Tooltip("Секунд на проявление наведения")] public float Fade = .12f;
+        [Tooltip("Рамка ячейки без редкости (зелье): у тонкого кольца «Дыма и света» тише серебра пака")]
+        [Range(0f, 1f)] public float PlainAlpha = 1f;
+
+        // «Дым и свет» (26 сентября): рисованных спрайтов у ячейки нет — поля спрайтов пустые, и
+        // тогда меняются только цвет и сила; фон редкости — мягкий свет за вещью. Выбор и
+        // наведение дополнительно зажигают слой света. У ячеек пака слоя нет — всё как раньше.
+        [Header("Дым и свет")]
+        [Tooltip("Свет за вещью: у выбранной горит цветом выбора, при наведении проступает цветом редкости. Пусто — нет")]
+        public Graphic Glow;
+        [Range(0f, 1f)] public float GlowSelected = .42f;
+        [Range(0f, 1f)] public float GlowHover = .3f;
 
         bool _hovered;
         float _hover;
@@ -122,6 +135,16 @@ namespace Game.View
                     }
                 }
             }
+            if (Glow != null)
+            {
+                float strength = Mathf.Max(Selected ? GlowSelected : 0f, _hover * GlowHover);
+                Color glow = Selected ? theme.Get(SelectedRole) : item ? tone : theme.Get(UiTheme.Role.Text);
+                glow.a = strength;
+                Glow.color = glow;
+                // Погасший свет не рисуется: ячеек в сетке сотня. Из OnValidate — только цвет.
+                bool lit = strength > .002f;
+                if (activate && Glow.enabled != lit) Glow.enabled = lit;
+            }
             if (Frame == null) return;
             // Рамку раньше прятала WcRarity у редких (была вторая, «Рамка редкой»); теперь она всегда одна.
             if (activate && !Frame.gameObject.activeSelf) Frame.gameObject.SetActive(true);
@@ -142,6 +165,7 @@ namespace Game.View
             {
                 frame = tone;
                 if (Rarity == Empty) frame.a *= EmptyAlpha;
+                else if (Rarity == Plain) frame.a *= PlainAlpha;
                 else if (Rarity == 0) frame.a *= CommonFrameAlpha;
                 frame = Color.Lerp(frame, new Color(1f, 1f, 1f, Mathf.Max(frame.a, .9f)), _hover * HoverLighten);
             }

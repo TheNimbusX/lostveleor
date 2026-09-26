@@ -15,7 +15,8 @@ namespace Game.View
             public Renderer[] FruitRenderers;
             public MaterialPropertyBlock FruitProperties;
             public Vector3 FruitScale;
-            public Mesh TrailMesh;
+            public Mesh TrailMesh, MarkMesh;
+            public Vector3[] MarkVertices;
             public Vector3[] TrailVertices, TrailNormals;
             public Color[] TrailColors;
             public MeshRenderer MarkRenderer;
@@ -41,6 +42,7 @@ namespace Game.View
         private Material _markMaterial, _trailMaterial, _burstMaterial;
         private static readonly int Progress = Shader.PropertyToID("_Progress");
         private static readonly int Opacity = Shader.PropertyToID("_Opacity");
+        private static readonly int WarningRadius = Shader.PropertyToID("_Radius");
         private static readonly int NeighborCount = Shader.PropertyToID("_NeighborCount");
         private static readonly int NearbyDisks = Shader.PropertyToID("_NearbyDisks");
         private static readonly int BurstCharge = Shader.PropertyToID("_BurstCharge");
@@ -76,7 +78,9 @@ namespace Game.View
             foreach (var rigidbody in fruit.GetComponentsInChildren<Rigidbody>()) Destroy(rigidbody);
             item.Mark = new GameObject("Зафиксированное место падения").transform;
             item.Mark.SetParent(item.Root, false);
-            item.Mark.gameObject.AddComponent<MeshFilter>().sharedMesh = Quad();
+            item.MarkMesh = Instantiate(Quad()); item.MarkMesh.MarkDynamic();
+            item.MarkVertices = item.MarkMesh.vertices;
+            item.Mark.gameObject.AddComponent<MeshFilter>().sharedMesh = item.MarkMesh;
             item.MarkRenderer = item.Mark.gameObject.AddComponent<MeshRenderer>();
             item.MarkRenderer.sharedMaterial = _markMaterial;
             item.MarkRenderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -137,30 +141,17 @@ namespace Game.View
         private static Mesh Quad()
         {
             if (_quad != null) return _quad;
-            _quad = new Mesh { name = "ForestBudLandingQuad" };
-            const int sides = 80;
-            var vertices = new Vector3[4+(sides+1)*2];
-            var uv = new Vector2[vertices.Length]; var colors = new Color[vertices.Length];
-            vertices[0]=new Vector3(-1,0,-1); vertices[1]=new Vector3(-1,0,1);
-            vertices[2]=new Vector3(1,0,1); vertices[3]=new Vector3(1,0,-1);
-            uv[0]=Vector2.zero; uv[1]=Vector2.up; uv[2]=Vector2.one; uv[3]=Vector2.right;
-            var triangles = new int[6+sides*6];
-            triangles[0]=0; triangles[1]=1; triangles[2]=2; triangles[3]=0; triangles[4]=2; triangles[5]=3;
-            for (int i=0;i<=sides;i++)
+            _quad = new Mesh { name = "EnemyWarningGroundGrid" };
+            var vertices = new Vector3[81]; var uv = new Vector2[81];
+            var indices = new int[8*8*6]; int at=0;
+            for(int y=0;y<=8;y++) for(int x=0;x<=8;x++)
             {
-                float angle=i*Mathf.PI*2/sides;
-                var radial=new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle))*.955f;
-                int k=4+i*2;
-                vertices[k]=radial; vertices[k+1]=radial+Vector3.up*(.07f+.24f*Mathf.Pow(.5f+.5f*Mathf.Cos(angle*5),8));
-                uv[k]=uv[k+1]=new Vector2(radial.x*.5f+.5f,radial.z*.5f+.5f);
-                colors[k]=new Color(1,0,0,1); colors[k+1]=new Color(1,1,0,1);
-                if (i==sides) continue;
-                int t=6+i*6;
-                triangles[t]=k; triangles[t+1]=k+1; triangles[t+2]=k+3;
-                triangles[t+3]=k; triangles[t+4]=k+3; triangles[t+5]=k+2;
+                int i=y*9+x;vertices[i]=new Vector3(x/4f-1,0,y/4f-1);uv[i]=new Vector2(x/8f,y/8f);
+                if(x==8||y==8)continue;
+                indices[at++]=i;indices[at++]=i+9;indices[at++]=i+1;
+                indices[at++]=i+1;indices[at++]=i+9;indices[at++]=i+10;
             }
-            _quad.vertices=vertices; _quad.uv=uv; _quad.colors=colors;
-            _quad.triangles=triangles; _quad.RecalculateBounds();
+            _quad.vertices=vertices;_quad.uv=uv;_quad.triangles=indices;_quad.RecalculateBounds();
             return _quad;
         }
 
@@ -233,7 +224,7 @@ namespace Game.View
                     { if (earlier.Serial < item.Serial) markVisible = false; continue; }
                     float reach = item.Radius + earlier.Radius;
                     if (distance < reach * reach && neighbors < item.NearbyDisks.Length)
-                        item.NearbyDisks[neighbors++] = new Vector4(earlier.Target.x, earlier.Target.z, earlier.Radius, 0);
+                        item.NearbyDisks[neighbors++] = new Vector4(earlier.Target.x, earlier.Target.z, earlier.Radius, earlier.Serial < item.Serial ? 1f : 0f);
                 }
                 item.Properties.SetFloat(NeighborCount, neighbors);
                 item.Properties.SetVectorArray(NearbyDisks, item.NearbyDisks);
@@ -265,9 +256,18 @@ namespace Game.View
             float vertical = ((variation >> 16) / 65535f * 2f - 1f) * .3f;
             item.Fan = Vector3.Cross(Vector3.up, direction) * ((fruit.ShotIndex - 2) * .65f + lateral);
             item.ArcHeight = 3.5f + vertical;
-            item.Mark.position = new Vector3(item.Target.x, ground + .055f, item.Target.z);
+            item.Mark.position = new Vector3(item.Target.x, 0f, item.Target.z);
             item.Radius = fruit.Radius.ToFloat();
-            item.Mark.localScale = Vector3.one * (item.Radius / .98f);
+            item.Mark.localScale = Vector3.one;
+            // Conform the pooled warning mesh once when its destination becomes fixed.
+            for (int y=0;y<=8;y++) for (int x=0;x<=8;x++)
+            {
+                float dx=(x/4f-1f)*item.Radius, dz=(y/4f-1f)*item.Radius;
+                float py=_layout!=null?_layout.WeaponGroundHeight(item.Target.x+dx,item.Target.z+dz):0f;
+                item.MarkVertices[y*9+x]=new Vector3(dx,py+.045f,dz);
+            }
+            item.MarkMesh.vertices=item.MarkVertices;item.MarkMesh.RecalculateBounds();
+            item.Properties.SetFloat(WarningRadius,item.Radius);
             item.Fruit.gameObject.SetActive(true); item.Trail.enabled = true;
             item.MarkRenderer.enabled = true;
             item.Root.gameObject.SetActive(true);
@@ -320,7 +320,7 @@ namespace Game.View
         private void OnDisable() => Clear();
         private void OnDestroy()
         {
-            if (_items != null) foreach (var item in _items) Destroy(item.TrailMesh);
+            if (_items != null) foreach (var item in _items) { Destroy(item.TrailMesh); Destroy(item.MarkMesh); }
             Destroy(_markMaterial); Destroy(_trailMaterial); Destroy(_burstMaterial);
         }
     }

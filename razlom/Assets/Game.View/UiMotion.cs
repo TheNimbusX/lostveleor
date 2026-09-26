@@ -80,6 +80,8 @@ namespace Game.View
             AnimationCurve curve = null, Action done = null, float delay = 0f, Action begin = null)
         {
             if (target == null) return;
+            // Превью сборщиков в редакторе: сразу конечное состояние, без скрытого объекта в сцене.
+            if (!Application.isPlaying) { begin?.Invoke(); apply(1f); done?.Invoke(); return; }
             UiMotion runner = Runner;
             runner._tracks.RemoveAll(t => t.Target == target && t.Channel == channel);
             if (duration <= 0f && delay <= 0f) { begin?.Invoke(); apply(1f); done?.Invoke(); return; }
@@ -93,7 +95,10 @@ namespace Game.View
             runner._tracks.Add(track);
         }
 
-        public static void Stop(UnityEngine.Object target) => Runner._tracks.RemoveAll(t => t.Target == target);
+        public static void Stop(UnityEngine.Object target)
+        {
+            if (_runner != null) _runner._tracks.RemoveAll(t => t.Target == target);
+        }
 
         void Update()
         {

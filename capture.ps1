@@ -67,6 +67,7 @@ param(
     [switch] $Hud,
     [switch] $HudReview,
     [ValidateRange(-1,4)] [int] $HudTooltip = -1,
+    [switch] $HudTooltipDetail,
     [switch] $TurnDuringSkill,
     [switch] $Realtime,
     [switch] $ActiveEnemies,
@@ -283,6 +284,8 @@ $playerArgs += @('-capture-cast-distance', $CastDistance.ToString([Globalization
 $playerArgs += @('-capture-hold-ticks', $HoldTicks)
 if ($Hud) { $playerArgs += '-capture-hud' }
 if ($HudTooltip -ge 0) { $playerArgs += '-capture-hud'; $playerArgs += @('-capture-hud-tooltip', $HudTooltip.ToString()) }
+# Подсказка способности как с зажатым Alt: взятые усиления и «было → стало» (вместе с -HudTooltip N).
+if ($HudTooltipDetail) { $playerArgs += '-capture-hud-tooltip-detail' }
 if ($Camp) { $playerArgs += '-capture-camp' }
 if ($CampIntegration) { $playerArgs += '-capture-camp-integration' }
 if ($CampReview) { $playerArgs += '-capture-camp-review' }

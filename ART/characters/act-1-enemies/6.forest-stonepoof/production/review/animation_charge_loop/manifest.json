@@ -1,0 +1,112 @@
+{
+  "stage": "charge_loop_owner_review",
+  "owner_clip_approved": true,
+  "previous_clip_approved": true,
+  "previous_approval_quote": "ок идем дальше",
+  "fps": 30,
+  "loop_frames_exclusive_end": [
+    0,
+    12
+  ],
+  "duration_seconds": 0.4,
+  "preview_speed_m_s": 12,
+  "stride_m": 4.8,
+  "loop_preview_cycles": 5,
+  "transition_preview_frames": 96,
+  "reference_source_seconds": [
+    1.833333,
+    2.233333
+  ],
+  "reference_note": "One approved generated gallop fragment is repeated for pose comparison. No claim of pixel-identical animation.",
+  "editable_master": "../../animation/charge_loop/Stonehoof_ChargeLoop_r01.blend",
+  "derived_clip": "../../animation/charge_loop/Stonehoof_ChargeLoop_Baked_r01.blend",
+  "source_windup_sha256": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+  "master_sha256": "c8d4ea70675e5db835052b25952ab960c4f68e25ba87b574eb3598150d3871d5",
+  "model_triangles": 20042,
+  "validation": {
+    "samples": 103,
+    "maximum_hoof_target_error_m": {
+      "front_left": [
+        8.845964870662677e-05,
+        5.625
+      ],
+      "front_right": [
+        6.652445805266588e-05,
+        8.0
+      ],
+      "hind_left": [
+        7.685731777618895e-05,
+        0.75
+      ],
+      "hind_right": [
+        6.316940212690281e-05,
+        12.0
+      ]
+    },
+    "world_plant_drift_m_at_12m_s": {
+      "front_left": 6.026511718083966e-05,
+      "front_right": 0.0012288382714396265,
+      "hind_left": 0.0010839554743552462,
+      "hind_right": 0.0011775757432631168
+    },
+    "minimum_mesh_z_m": [
+      -6.835815293015912e-05,
+      4.25
+    ],
+    "bone_length_error": 1.3542981622816086e-06,
+    "max_rotation_step_eighth_frame": [
+      11.49329957402758,
+      7.875,
+      "leg_hind_right_bot1"
+    ],
+    "loop_seam_position_m": 5.686408848491962e-07,
+    "loop_seam_matrix_error": 2.0563602447509766e-06,
+    "launch_join_position_m": 2.5636927089222153e-07,
+    "owner_approved": false
+  },
+  "bake_validation": {
+    "deforming_bones": 34,
+    "runtime_clips": {
+      "AN_Stonehoof_ChargeLoop": 0.4
+    },
+    "sample_step_frames": 0.0625,
+    "maximum_baked_joint_position_error_m": 6.690604782296314e-07,
+    "maximum_baked_rotation_error_degrees": 0.05595291023658669,
+    "maximum_sixteenth_frame_rotation_change_degrees": 5.8634259760381,
+    "maximum_step_at": {
+      "bone": "leg_hind_right_bot1",
+      "frame": 7.9375
+    },
+    "root_travel_removed": true,
+    "scale_curves": false,
+    "owner_approved": false
+  },
+  "browser_check": "file:// CUA policy denies automated browsing; local assets, decoding and JS syntax checked separately. Owner playback approval pending.",
+  "interpolation_validation": {
+    "sample_count": 387,
+    "maximum_interpolated_joint_error_m": [
+      0.0018901849387801132,
+      5.34375,
+      "leg_front_right_bot2_end"
+    ],
+    "maximum_interpolated_rotation_error_degrees": [
+      0.3165175555172581,
+      0.03125,
+      "leg_hind_left_bot1"
+    ],
+    "baked_seam_error_m": 0.0,
+    "display_rates_checked": [
+      30,
+      60,
+      120
+    ],
+    "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.",
+    "source_sha256_unchanged": true
+  },
+  "owner_approval": {
+    "date": "2026-09-25",
+    "quote": "ок идем дальше",
+    "context": "animation_charge_loop/index.html"
+  },
+  "next_clip_review": "../animation_brake/index.html"
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Камнекопыт · Торможение с заносом</title><link rel="stylesheet" href="review.css">
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · КАМНЕКОПЫТ · КЛИП 03</div><h1>Торможение с заносом</h1><p>Последний прыжок → опора передними копытами → занос → стойка.</p></div><span class="badge">Принято</span></div>
+<div class="pair">
+<section class="panel"><div class="caption"><h2>Принятый видеореференс</h2><p id="refLabel">Остановка из ролика Higgsfield. Сопоставлена по фазам движения.</p></div><img id="reference" src="reference_frames/0000.jpg" alt="Торможение в принятом видеореференсе"></section>
+<section class="panel"><div class="caption"><h2>Анимация на нашей модели</h2><p id="viewLabel">Сбоку · торможение за 0,6 секунды</p></div><img id="animation" src="side_frames/0000.png" alt="Камнекопыт перед касанием земли и торможением"></section>
+</div>
+<div class="controls">
+<div class="row" style="margin-bottom:14px"><button id="modeBrake" aria-pressed="true">Только торможение</button><button id="modeFull" aria-pressed="false">Подготовка → бег → торможение</button></div>
+<div class="row"><button id="play" disabled>Загрузка кадров…</button><button id="reset">Сначала</button><button id="prev" aria-label="Предыдущий кадр">− кадр</button><button id="next" aria-label="Следующий кадр">+ кадр</button><select id="speed" aria-label="Скорость просмотра"><option value="1">Скорость ×1</option><option value="0.5">Скорость ×0,5</option><option value="0.25">Скорость ×0,25</option></select><button id="side" aria-pressed="true">Сбоку</button><button id="game" aria-pressed="false">Игровой ракурс</button><label class="small"><input id="repeat" type="checkbox"> Повторять</label></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="18" value="0" aria-label="Кадр анимации"><output id="counter">Кадр 0 / 18 · 0,00 с</output><span id="phase">Последний прыжок</span></div>
+<p id="loading" class="small" aria-live="polite">Кадры загружаются заранее.</p>
+</div>
+<div class="note"><p><strong>Посмотри отдельно и в полной связке.</strong> Передние копыта принимают вес, корпус проседает, задние ноги удерживают занос. После остановки голова и корпус гасят остаточное движение. Конечная поза совпадает со стойкой перед принятой подготовкой.</p></div>
+<p>Полосы пола помогают увидеть замедление и контакт с землёй. Они остаются только в просмотре. Пыль и борозды добавим на согласованном этапе эффектов. Здесь проверяем движение и контакт копыт с землёй.</p>
+<p class="small">Клавиши ← / → листают кадры, пробел включает просмотр. Слева — фрагмент исходного ролика, сопоставленный по фазам с игровыми 0,6 секунды.</p>
+<div class="links"><a href="side_keys.jpg">Ключевые позы сбоку</a><a href="game_keys.jpg">Позы с игровой камеры</a><a href="../animation_charge_loop/index.html">Принятый галоп</a><a href="../motion_references/index.html">Полные видеореференсы</a><a href="../../animation/brake/Stonehoof_Brake_r01.blend">Редактируемая сцена Blender</a><a href="../../animation/brake/Stonehoof_Brake_Baked_r01.blend">Производный клип</a></div>
+<details><summary>Обычные видеозаписи</summary><div class="videos"><div><p>Торможение · сбоку</p><video src="side.webm" poster="side_frames/0000.png" muted playsinline controls preload="none"></video><a href="side.mp4">MP4</a></div><div><p>Торможение · игровая камера</p><video src="game.webm" poster="game_frames/0000.png" muted playsinline controls preload="none"></video><a href="game.mp4">MP4</a></div><div><p>Полная связка · сбоку</p><video src="transition_side.webm" poster="../animation_charge_loop/transition_side_frames/0000.png" muted playsinline controls preload="none"></video><a href="transition_side.mp4">MP4</a></div><div><p>Полная связка · игровая камера</p><video src="transition_game.webm" poster="../animation_charge_loop/transition_game_frames/0000.png" muted playsinline controls preload="none"></video><a href="transition_game.mp4">MP4</a></div></div></details>
+<p class="small" style="margin-top:28px">Это остановка у открытого края арены. Торможение принято. <a href="../animation_collision/index.html">Следующий клип — столкновение лбом и оглушение.</a> Перенос в Unity остаётся следующим этапом после согласования движений.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),cache=[];
+let frame=0,view='side',mode='brake',running=false,started=0,first=0,rate=1,lastKey='';
+const filename=f=>String(f).padStart(4,'0'),count=()=>mode==='brake'?19:79;
+function paths(f,v,m){
+ if(m==='full'&&f<36)return [`../animation_charge_loop/transition_${v}_frames/${filename(f)}.png`,`../animation_windup_start/reference_frames/${filename(f)}.jpg`];
+ if(m==='full'&&f<60){const p=(f-36)%12;return [`../animation_charge_loop/${v}_frames/${filename(p)}.png`,`../animation_charge_loop/reference_frames/${filename(p)}.jpg`];}
+ const p=m==='full'?f-60:f;return [`${v}_frames/${filename(p)}.png`,`reference_frames/${filename(p)}.jpg`];
+}
+function draw(){
+ const key=`${frame}/${view}/${mode}`;
+ if(key!==lastKey){const [a,r]=paths(frame,view,mode);$('animation').src=a;$('reference').src=r;lastKey=key;}
+ $('seek').max=count()-1;$('seek').value=frame;$('counter').value=`Кадр ${frame} / ${count()-1} · ${(frame/30).toFixed(2).replace('.',',')} с`;
+ const p=mode==='full'?frame-60:frame;
+ $('phase').textContent=mode==='full'&&frame<60?(frame<30?'Подготовка':frame<36?'Старт':'Галоп'):(p<3?'Последний прыжок':p<5?'Контакт копыт':p<10?'Занос':p<14?'Гашение скорости':p<18?'Гашение инерции':'Стойка');
+ if(!$('play').disabled)$('play').textContent=running?'Пауза':(frame===count()-1?'Ещё раз':'Смотреть');
+}
+function seek(f){running=false;frame=Math.max(0,Math.min(count()-1,f));draw();}
+function toggle(){if($('play').disabled)return;if(!running&&frame===count()-1)frame=0;running=!running;first=frame;started=performance.now();draw();}
+$('play').onclick=toggle;$('reset').onclick=()=>seek(0);$('prev').onclick=()=>seek(frame-1);$('next').onclick=()=>seek(frame+1);$('seek').oninput=()=>seek(Number($('seek').value));
+$('speed').onchange=()=>{rate=Number($('speed').value);first=frame;started=performance.now();};
+for(const [id,m] of [['modeBrake','brake'],['modeFull','full']])$(id).onclick=()=>{mode=m;seek(0);$('modeBrake').setAttribute('aria-pressed',String(m==='brake'));$('modeFull').setAttribute('aria-pressed',String(m==='full'));$('refLabel').textContent=m==='brake'?'Остановка из ролика Higgsfield. Сопоставлена по фазам движения.':'Фазовое сравнение принятой подготовки, галопа и остановки.';};
+for(const name of ['side','game'])$(name).onclick=()=>{view=name;for(const other of ['side','game'])$(other).setAttribute('aria-pressed',String(name===other));$('viewLabel').textContent=name==='side'?'Сбоку · торможение за 0,6 секунды':'Игровой ракурс · тот же момент';draw();};
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();toggle();}if(e.code==='ArrowRight'){e.preventDefault();seek(frame+1);}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame-1);}});
+function tick(now){if(running){const elapsed=first+Math.floor((now-started)*30*rate/1000);if(elapsed>=count()){if($('repeat').checked){frame=elapsed%count();first=frame;started=now;}else{frame=count()-1;running=false;}}else frame=elapsed;draw();}requestAnimationFrame(tick);}
+requestAnimationFrame(tick);draw();
+const assets=new Set();for(const m of ['brake','full'])for(const v of ['side','game'])for(let f=0;f<(m==='brake'?19:79);f++)for(const p of paths(f,v,m))assets.add(p);
+let loaded=0,failed=0;
+function done(error){loaded++;if(error)failed++;$('loading').textContent=`Загружено ${loaded} из ${assets.size}`;if(loaded===assets.size){$('play').disabled=failed>0;$('loading').textContent=failed?'Часть кадров недоступна. Ниже есть обычные видеозаписи.':'Готово · можно смотреть и переключать камеры';draw();}}
+for(const path of assets){const im=new Image();cache.push(im);im.onload=()=>done(false);im.onerror=()=>done(true);im.src=path;}
+</script></html>

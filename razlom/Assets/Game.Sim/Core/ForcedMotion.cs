@@ -17,6 +17,7 @@ namespace Game.Sim
         Roll = 3,
         Skewer = 4,
         Backblast = 5,
+        Knockback = 6,
     }
 
     /// <summary>

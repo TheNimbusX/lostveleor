@@ -9,6 +9,9 @@ namespace Game.View
     /// Строка назначения клавиши: название действия и клавиша-плашка. Пока
     /// игра ждёт новую клавишу, плашка «дышит» свечением. Строки создаются
     /// из шаблона в префабе — вид правится на шаблоне.
+    ///
+    /// Клавиша «Дыма и света» (<see cref="KeySize"/> больше нуля) — круг под одну букву и капсула
+    /// по ширине подписи под длинную (Пробел, ЛКМ): ширина подгоняется при каждой смене подписи.
     /// </summary>
     public sealed class UiKeyBindingRow : MonoBehaviour
     {
@@ -24,6 +27,10 @@ namespace Game.View
         [Tooltip("Подсветка строки: вспыхивает, когда эта строка отдала клавишу при обмене")]
         public Graphic FlashGraphic;
         public float FlashDuration = 0.6f;
+
+        [Tooltip("Высота клавиши-круга; больше нуля — ширина клавиши подгоняется под подпись (капсула). 0 — плашка своей ширины")]
+        public float KeySize;
+        [Tooltip("Самая широкая капсула, в высотах клавиши")] public float KeyMaxWidth = 4.5f;
 
         [HideInInspector] public GameAction Binding;
 
@@ -50,7 +57,7 @@ namespace Game.View
             string label = waiting ? "…" : key;
             if (KeyLabel != null)
             {
-                if (KeyLabel.text != label) KeyLabel.text = label;
+                if (KeyLabel.text != label) { KeyLabel.text = label; FitKey(label); }
                 KeyLabel.color = custom && !waiting ? KeyCustom : KeyDefault;
             }
             if (Waiting != null && Waiting.activeSelf != waiting)
@@ -59,6 +66,21 @@ namespace Game.View
                 if (waiting && Key != null) UiMotion.ScaleTo(Key.transform, 1.06f, 0.12f);
                 else if (Key != null) UiMotion.ScaleTo(Key.transform, 1f, 0.12f);
             }
+        }
+
+        /// <summary>Круг под одну букву, капсула под длинную подпись — как у UiInkKit.Keycap при сборке.</summary>
+        void FitKey(string label)
+        {
+            if (KeySize <= 0f || Key == null || KeyLabel == null) return;
+            var rect = (RectTransform)Key.transform;
+            float width = KeySize;
+            if (label.Length > 1)
+            {
+                // Ширина самой подписи, без полей (поля не дают буквам наезжать на круглые концы).
+                float text = KeyLabel.GetPreferredValues(label).x - KeyLabel.margin.x - KeyLabel.margin.z;
+                width = Mathf.Clamp(text + KeySize * 0.7f, KeySize, KeySize * KeyMaxWidth);
+            }
+            if (!Mathf.Approximately(rect.sizeDelta.x, width)) rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
         }
     }
 }

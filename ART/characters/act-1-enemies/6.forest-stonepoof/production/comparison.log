@@ -1,0 +1,12 @@
+00:03.203  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\Stonehoof_ModelCandidate_r02.blend"
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\render_review.py:39: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat=bpy.data.materials.new('MAT_Pelag_Review');mat.use_nodes=True
+00:07.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\model_stage\comparison_front.png'
+00:08.922  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\model_stage\comparison_game.png'
+FBX version: 7400
+FBX version: 7400
+Info: Saved as "Stonehoof_ScaleReview.blend"
+STONEHOOF_REVIEW_COMPLETE comparison
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

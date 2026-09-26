@@ -1,0 +1,59 @@
+[a_Rodin.utils-DBG]: RodinBridge: register
+[a_Rodin.utils-WRN]: Port 61863 is in use
+[a_Rodin.utils-WRN]: Server running on port 61864
+[a_Rodin.utils-DBG]: on_scene_load
+[a_Rodin.utils-DBG]: ensure_default_image
+00:07.515  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+00:53.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0000.png'
+00:54.078  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0008.png'
+00:54.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0012.png'
+00:55.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0016.png'
+00:55.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0020.png'
+00:55.843  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0024.png'
+00:56.218  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0028.png'
+00:56.609  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0032.png'
+00:56.953  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0036.png'
+00:57.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0040.png'
+00:57.750  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0048.png'
+00:58.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\side_frames\0060.png'
+00:58.468  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0000.png'
+00:58.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0008.png'
+00:59.218  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0012.png'
+00:59.578  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0016.png'
+01:00.015  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0020.png'
+01:00.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0024.png'
+01:00.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0028.png'
+01:01.218  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0032.png'
+01:01.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0036.png'
+01:02.265  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0040.png'
+01:02.734  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0048.png'
+01:03.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\review\animation_death\game_frames\0060.png'
+Reloading external rigs...
+Reloading external metarigs...
+Info: Saved as "Stonehoof_Death_r01.blend"
+DEATH_CANDIDATE_SAVED
+[a_Rodin.utils-DBG]: RodinBridge: unregister
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

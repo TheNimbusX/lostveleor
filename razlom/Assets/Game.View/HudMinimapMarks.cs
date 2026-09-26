@@ -59,6 +59,9 @@ namespace Game.View
         {
             if (PlaceLayer == null) return;
             Rect area = PlaceLayer.rect;
+            // Картинку карты HudMinimap рисует под её ширину на экране (холст поверх экрана:
+            // мировые единицы — пиксели), чтобы кромка не мельчила и не мерцала при сжатии.
+            map.PixelSize = area.width * Mathf.Abs(PlaceLayer.lossyScale.x);
             Vector2 pointer = new Vector2(float.MinValue, float.MinValue);
             if (RectTransformUtility.RectangleContainsScreenPoint(PlaceLayer, screen, null)
                 && RectTransformUtility.ScreenPointToLocalPointInRectangle(PlaceLayer, screen, null, out Vector2 local))

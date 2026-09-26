@@ -1,0 +1,35 @@
+[a_Rodin.utils-DBG]: RodinBridge: register
+[a_Rodin.utils-WRN]: Port 61863 is in use
+[a_Rodin.utils-WRN]: Server running on port 61864
+[a_Rodin.utils-DBG]: on_scene_load
+[a_Rodin.utils-DBG]: ensure_default_image
+00:04.782  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+00:04.829  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death\Stonehoof_Death_r01.blend"
+Reloading external rigs...
+Reloading external metarigs...
+{"samples": 481, "minimum_mesh_z": [-0.000496596097946167, 46.25, 2950], "entry_joint_error_m": 0.0009219102797843705, "bone_length_error": 9.851246004499714e-07, "max_hoof_target_error_m": 6.0313526322000146e-05, "max_hoof_error_at": [60.0, "front_right"], "max_eighth_frame_rotation_degrees": [4.068840639772287, 31.375, "leg_hind_right_bot1"], "owner_approved": false}
+[a_Rodin.utils-DBG]: RodinBridge: unregister
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

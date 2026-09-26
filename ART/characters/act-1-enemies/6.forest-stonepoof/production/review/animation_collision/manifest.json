@@ -1,0 +1,211 @@
+{
+  "stage": "collision_owner_review",
+  "owner_clip_approved": true,
+  "previous_clip_approved": true,
+  "previous_approval_quote": "РѕРє РёРґРµРј РґР°Р»СЊС€Рµ",
+  "fps": 30,
+  "review_frames": [
+    0,
+    48
+  ],
+  "impact_frame": 12,
+  "stun_frames": 36,
+  "stun_seconds": 1.2,
+  "runtime_clips": {
+    "AN_Stonehoof_WallBrace": {
+      "source_frames": [
+        8,
+        12
+      ],
+      "duration": 0.13333333333333333
+    },
+    "AN_Stonehoof_WallImpact": {
+      "source_frames": [
+        12,
+        48
+      ],
+      "duration": 1.2
+    }
+  },
+  "reference_time_map": [
+    [
+      0,
+      0
+    ],
+    [
+      8,
+      0.3333333333333333
+    ],
+    [
+      12,
+      0.5
+    ],
+    [
+      16,
+      0.75
+    ],
+    [
+      22,
+      1.4
+    ],
+    [
+      32,
+      2.3
+    ],
+    [
+      40,
+      3.2
+    ],
+    [
+      48,
+      3.95
+    ]
+  ],
+  "reference_note": "Phase-aligned accepted Higgsfield reference. Recoil reduced and hoof support made earlier; anatomy and gameplay 1.2 s preserved. Original timing available in full reference.",
+  "upper_camera_note": "Elevated rear three-quarter view, rotated so the review obstacle does not occlude the head. This is a Blender review, not in-game evidence.",
+  "editable_master": "../../animation/collision/Stonehoof_Collision_r01.blend",
+  "derived_clip": "../../animation/collision/Stonehoof_Collision_Baked_r01.blend",
+  "accepted_source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_r01.blend": "c8d4ea70675e5db835052b25952ab960c4f68e25ba87b574eb3598150d3871d5",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\brake\\Stonehoof_Brake_r01.blend": "e24f05a5fcf5e394c6a22d121c6a684c40e97c5e3dff9ca7df1f725bcc16eaa9"
+  },
+  "master_sha256": "d31645103ecf94861f86c4fcce9cd0cf69db75a5be94d596bb78db2d2da9e274",
+  "model_triangles": 20042,
+  "validation": {
+    "samples": 385,
+    "maximum_hoof_target_error_m": {
+      "front_left": [
+        8.849614840640171e-05,
+        5.625
+      ],
+      "front_right": [
+        6.651809592259032e-05,
+        8.0
+      ],
+      "hind_left": [
+        7.685731777618895e-05,
+        0.75
+      ],
+      "hind_right": [
+        6.276165314977156e-05,
+        0.0
+      ]
+    },
+    "post_landing_support_drift_m": {
+      "front_left": 3.854968704763979e-05,
+      "front_right": 3.156278977003734e-05,
+      "hind_left": 4.8116502483475894e-05,
+      "hind_right": 4.85699823246833e-05
+    },
+    "minimum_wall_clearance_after_contact_m": [
+      -0.00046062469482421875,
+      12.125
+    ],
+    "skid_sole_z_ranges_m": {
+      "front_left": [
+        -3.451769589446485e-05,
+        4.98179190344672e-07
+      ],
+      "front_right": [
+        0.0026862435042858124,
+        0.0027194751892238855
+      ],
+      "hind_left": [
+        0.0023659744765609503,
+        0.0024240510538220406
+      ],
+      "hind_right": [
+        0.005568153224885464,
+        0.005616370588541031
+      ]
+    },
+    "minimum_mesh_z_m": [
+      -6.835815293015912e-05,
+      4.25
+    ],
+    "bone_length_error": 1.4610558911609672e-06,
+    "max_rotation_step_eighth_frame": [
+      11.918085674790273,
+      7.625,
+      "leg_hind_left_bot1"
+    ],
+    "joins": {
+      "from_accepted_gallop_phase_0": {
+        "max_joint_position_m": 0.0,
+        "max_matrix_error": 0.0
+      },
+      "to_accepted_stance": {
+        "max_joint_position_m": 1.4394861073176052e-06,
+        "max_matrix_error": 4.999339580535889e-06
+      }
+    },
+    "accepted_sources_unchanged": true,
+    "owner_approved": false
+  },
+  "bake_validation": {
+    "deforming_bones": 34,
+    "runtime_clips": {
+      "AN_Stonehoof_WallBrace": 0.13333333333333333,
+      "AN_Stonehoof_WallImpact": 1.2
+    },
+    "sample_step_frames": 0.0625,
+    "maximum_baked_joint_position_error_m": 8.616943535090066e-07,
+    "maximum_baked_rotation_error_degrees": 0.06852804019207596,
+    "maximum_sixteenth_frame_rotation_change_degrees": 7.304752700161119,
+    "maximum_step_at": {
+      "bone": "leg_hind_right_bot1",
+      "frame": 7.9375
+    },
+    "root_travel_removed": true,
+    "scale_curves": false,
+    "owner_approved": false
+  },
+  "interpolation_validation": {
+    "sample_count": 1539,
+    "maximum_interpolated_joint_error_m": [
+      0.0016431874335053125,
+      5.34375,
+      "leg_front_right_bot2_end"
+    ],
+    "maximum_interpolated_rotation_error_degrees": [
+      0.2533376249713025,
+      5.34375,
+      "leg_front_right_bot1"
+    ],
+    "baked_endpoint_error_m": 4.519745972187251e-07,
+    "display_rates_checked": [
+      30,
+      60,
+      120
+    ],
+    "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.",
+    "source_sha256_unchanged": true
+  },
+  "runtime_validation": {
+    "AN_Stonehoof_WallBrace": {
+      "frames": [
+        0.0,
+        4.0
+      ],
+      "samples": 33,
+      "max_joint_error_m": 7.721332554836044e-07,
+      "max_rotation_error_deg": 0.03956468205889273
+    },
+    "AN_Stonehoof_WallImpact": {
+      "frames": [
+        0.0,
+        36.0
+      ],
+      "samples": 289,
+      "max_joint_error_m": 8.616943535090066e-07,
+      "max_rotation_error_deg": 0.06852804019207596
+    },
+    "no_root_carrier": true,
+    "note": "Blender actions only. Arbitrary incoming gait phases and Unity collision timing remain integration checks."
+  },
+  "runtime_followup": "Blend arbitrary incoming gait phase at the actual Sim collision without delaying impact. WallBrace only within approach time. Preview carrier and obstacle are not gameplay assets.",
+  "browser_check": "Automated file:// browsing unavailable by CUA policy. Local assets, decoding, player logic and syntax checked separately; owner playback and art approval pending.",
+  "owner_approval_quote": "ок идем дальше",
+  "owner_approval_date": "2026-09-25"
+}

@@ -8,11 +8,13 @@ namespace Game.View
     /// <summary>
     /// Тумблер: две нарисованные картинки «вкл» и «выкл» плавно сменяют друг
     /// друга, при нажатии тумблер чуть утапливается. Вид — в префабе.
+    /// Тумблер-круг «Дыма и света»: у «вкл» несколько частей (огонёк и свет) — их ведёт <see cref="OnGroup"/>.
     /// </summary>
     public sealed class UiToggle : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
     {
         public Graphic On;
         public Graphic Off;
+        [Tooltip("Необязательно: группа частей «вкл» (огонёк, свет) — проявляется и гаснет вместе с On")] public CanvasGroup OnGroup;
         [Tooltip("Необязательно: ручка, которая ездит между KnobOff и KnobOn по X")] public RectTransform Knob;
         public float KnobOff = -16f;
         public float KnobOn = 16f;
@@ -49,6 +51,11 @@ namespace Game.View
             _shown = true;
             if (On != null) { On.gameObject.SetActive(true); On.CrossFadeAlpha(value ? 1f : 0f, duration, true); }
             if (Off != null) { Off.gameObject.SetActive(true); Off.CrossFadeAlpha(value ? 0f : 1f, duration, true); }
+            if (OnGroup != null)
+            {
+                UiMotion.Stop(OnGroup);
+                if (duration > 0f) UiMotion.FadeTo(OnGroup, value ? 1f : 0f, duration); else OnGroup.alpha = value ? 1f : 0f;
+            }
             if (Knob != null)
             {
                 var target = new Vector2(value ? KnobOn : KnobOff, Knob.anchoredPosition.y);

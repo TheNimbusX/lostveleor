@@ -382,8 +382,15 @@ namespace Game.Sim
             BeginRift(location, seed, 1, false, true, wendigoShowcase: withPack ? 2 : 1);
         }
 
+        public void StartStonehoofTest(LocationDefinition location, ulong seed, int count = 1, bool obstacle = false)
+        {
+            if (count < 1 || count > 3) throw new System.ArgumentOutOfRangeException(nameof(count));
+            location?.ValidateCapacity(_simCapacity); LeaveProvingGround();
+            BeginRift(location, seed, 1, false, true, stonehoofCount: count, stonehoofObstacle: obstacle);
+        }
+
         private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer,
-            int forestBudCount = 0, int wendigoShowcase = 0)
+            int forestBudCount = 0, int wendigoShowcase = 0, int stonehoofCount = 0, bool stonehoofObstacle = false)
         {
             bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
@@ -405,6 +412,7 @@ namespace Game.Sim
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
             Run.ForestBudShowcaseCount = forestBudCount;
             Run.WendigoShowcase = wendigoShowcase;
+            Run.StonehoofShowcase = stonehoofCount; Run.StonehoofTestObstacle = stonehoofObstacle;
             if (developer && location != null) Run.StartTestAtLevel(level, nearBoss);
             else Run.StartRun();
             sim.PlayerInvulnerable = invulnerable;

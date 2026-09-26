@@ -6,10 +6,11 @@ using UnityEngine.UI;
 namespace Game.View
 {
     /// <summary>
-    /// Всплывашки над портретом — концепт 2Б (владелец, 25 сентября): тёмная «пилюля» с серебряной
-    /// кромкой, слева круг значка с подсветкой цвета события (редкость вещи, медь золота, заказ
-    /// жителя), справа имя и строка. Новая встаёт снизу и выезжает слева, старые поднимаются;
-    /// каждая живёт несколько секунд и гаснет. Одинаковые подряд (золото) складываются в одну.
+    /// Всплывашки над портретом — концепт 2Б (владелец, 25 сентября), в «Дыме и свете»: полоса дыма,
+    /// слева круг значка с подсветкой цвета события (редкость вещи, медь золота, заказ жителя),
+    /// справа имя и строка. Значок забега (золото) — белый глиф, он красится кремовым текстом темы;
+    /// картинки вещей и заказов цветные и остаются как есть. Новая встаёт снизу и выезжает слева,
+    /// старые поднимаются; каждая живёт несколько секунд и гаснет. Одинаковые подряд (золото) складываются в одну.
     /// Часы свои, шаг не больше 0,1 с за кадр: кадр сборки арены длится секунды.
     /// </summary>
     public sealed class HudToasts : MonoBehaviour
@@ -32,7 +33,7 @@ namespace Game.View
             public float Age;
             public string Key;
             public int Amount;
-            public Vector2 TitleRest;
+            public Vector2 TitleRest, IconMin, IconMax;
         }
 
         readonly List<Toast> _shown = new List<Toast>();
@@ -43,8 +44,9 @@ namespace Game.View
         /// Новая всплывашка. <paramref name="mergeKey"/> — одинаковые подряд складываются:
         /// «+45 золота» и «+30 золота» за пару секунд становятся «+75 золота».
         /// </summary>
+        /// <param name="glyph">Значок — белый глиф (Assets/UI/RunIcons): красится кремовым, а не рисуется белым.</param>
         public void Push(Texture icon, UiTheme.Role ring, string title, string line, UiTheme.Role lineRole,
-            string mergeKey = null, int amount = 0, System.Func<int, string> titleFor = null)
+            string mergeKey = null, int amount = 0, System.Func<int, string> titleFor = null, bool glyph = false)
         {
             if (Template == null) return;
             if (mergeKey != null && _shown.Count > 0)
@@ -75,6 +77,11 @@ namespace Game.View
             if (toast.Light != null) toast.Light.SetRole(ring);
             toast.Icon.texture = icon;
             toast.Icon.enabled = icon != null;
+            toast.Icon.color = glyph ? UiTheme.Current.Get(UiTheme.Role.Text) : Color.white;
+            // Глиф — тонкие линии во весь квадрат: чуть меньше картинки вещи, чтобы не упирался в кольцо.
+            float inset = glyph ? 3f : 0f;
+            toast.Icon.rectTransform.offsetMin = toast.IconMin + new Vector2(inset, inset);
+            toast.Icon.rectTransform.offsetMax = toast.IconMax - new Vector2(inset, inset);
             toast.Root.SetAsLastSibling();
             toast.Root.anchoredPosition = new Vector2(SlideFrom, 0f);
             toast.Group.alpha = 0f;
@@ -98,6 +105,8 @@ namespace Game.View
                 Line = root.Find("Строка").GetComponent<TMP_Text>(),
             };
             toast.TitleRest = toast.Title.rectTransform.anchoredPosition;
+            toast.IconMin = toast.Icon.rectTransform.offsetMin;
+            toast.IconMax = toast.Icon.rectTransform.offsetMax;
             if (toast.Group == null) toast.Group = root.gameObject.AddComponent<CanvasGroup>();
             return toast;
         }
@@ -136,9 +145,9 @@ namespace Game.View
         }
 
         /// <summary>Кадр редактора: всплывашки на месте, без анимации.</summary>
-        public void Preview(params (Texture icon, UiTheme.Role ring, string title, string line, UiTheme.Role lineRole)[] items)
+        public void Preview(params (Texture icon, UiTheme.Role ring, string title, string line, UiTheme.Role lineRole, bool glyph)[] items)
         {
-            foreach (var item in items) Push(item.icon, item.ring, item.title, item.line, item.lineRole);
+            foreach (var item in items) Push(item.icon, item.ring, item.title, item.line, item.lineRole, glyph: item.glyph);
             for (int i = 0; i < _shown.Count; i++)
             {
                 Toast toast = _shown[i];

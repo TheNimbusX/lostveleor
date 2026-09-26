@@ -1,0 +1,23 @@
+{
+  "stage": "first_authored_clip",
+  "reference_approved": true,
+  "approval": "2026-09-25: супер рефы - делай дальше",
+  "asset": "../../Stonehoof_ModelCandidate_r03.blend",
+  "triangles": 20042,
+  "texture": "original packed 4096 square albedo",
+  "target": "Unity Generic, PC; this stage stays in ART until clip acceptance",
+  "clip": "windup and launch",
+  "fps": 30,
+  "windup_seconds": 1,
+  "launch_seconds": 0.2,
+  "root_motion": "in-place deform animation; separate preview carrier displays simulation displacement",
+  "reference_analysis": {
+    "source": "../../references/charge.mp4",
+    "preserve": ["low head before launch", "hind-leg propulsion", "compact heavy chest", "spine/head overlap", "reach and gather of first stride"],
+    "approved_design_corrections": ["two visible front-hoof backward scrapes before launch", "fixed charge direction", "prepare exactly one second"],
+    "camera": "full-body side with visible hoof contact plus separate elevated gameplay-like camera"
+  },
+  "workflow": ["inspect rest rig and skin", "foot IK with pole controls", "block body and two scrapes", "spline timing and overlap", "render key poses", "check sliding and deformation", "render continuous two-camera review", "owner accepts first clip"],
+  "editable_source": "Stonehoof_WindupStart.blend with keyed controls and explicit constraints",
+  "shared_blender": "Wendigo master is open: use an isolated background Blender process to preserve other work"
+}

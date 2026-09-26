@@ -95,9 +95,23 @@ namespace Game.View
             if(_view.HintRole!=null){_view.HintRole.text=role;_view.HintRole.gameObject.SetActive(role.Length>0);}
             if(_view.HintKeyCap!=null)
             {
-                _view.HintKeyCap.gameObject.SetActive(key.Length>0);_view.HintKey.text=key;
-                _view.HintKey.fontSize=key.Length>1?16f:26f;
+                _view.HintKeyCap.gameObject.SetActive(key.Length>0);
+                if(_view.HintKey.text!=key){_view.HintKey.text=key;FitHintKey();}
             }
+        }
+        /// <summary>
+        /// Клавиша «Дыма и света» (подпись сама ужимается): одна буква — круг, ПКМ и «подойти» — капсула
+        /// по ширине подписи; ширину берёт раскладка строки. У старой плашки пака — только размер букв.
+        /// </summary>
+        void FitHintKey()
+        {
+            var key=_view.HintKey;string text=key.text??"";
+            if(!key.enableAutoSizing){key.fontSize=text.Length>1?16f:26f;return;}
+            var cap=_view.HintKeyCap;var layout=cap.GetComponent<LayoutElement>();
+            float size=layout!=null && layout.preferredHeight>0f?layout.preferredHeight:cap.rect.height;
+            if(size<=0f)return;
+            float width=text.Length>1?Mathf.Max(size,key.GetPreferredValues(text).x+size*.7f):size;
+            if(layout!=null)layout.preferredWidth=layout.minWidth=width;else cap.sizeDelta=new Vector2(width,cap.sizeDelta.y);
         }
         void HideHints(){SetHint("","");if(_npcs!=null)foreach(var npc in _npcs)if(npc!=null)npc.Highlight(false);}
         public bool Begin(CampServiceNpc npc)
@@ -149,7 +163,7 @@ namespace Game.View
         void Build()
         {
             PauseMenuView.EnsureEventSystem();
-            // Окна NPC на паке «Ночная акварель»: префаб собирает CampShopsWcBuilder.
+            // Окна NPC в материале «Дым и свет»: префаб собирает CampShopsWcBuilder.
             var prefab=Resources.Load<GameObject>("UI/Prefabs/CampShopsWc");
             if(prefab==null){Debug.LogError("CampServicesView: нет префаба Resources/UI/Prefabs/CampShopsWc, окна NPC не откроются (Разлом → UI → Собрать окна лагеря).");enabled=false;return;}
             _view=Instantiate(prefab,transform).GetComponent<CampShopView>();_view.name="Camp shops";UiScaleFollower.Attach(_view.gameObject);

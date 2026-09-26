@@ -90,16 +90,22 @@ namespace Game.View
             if (_confirm != null) _confirm.Show(false);
             _driver.ClearCapturedInput();
             if (!enter) return;
-            // Съёмочные сценарии входят сразу: им нужен предсказуемый кадр, а не переход.
-            if (CampIntegrationCapture.IsRunning || CaptureRig.AutoEnterRift)
+            // Съёмочные сценарии входят сразу: им нужен предсказуемый кадр, а не переход
+            // (кроме съёмки самого перехода, -capture-smoke).
+            if (CampTransition.Bypass)
             {
                 GameSound.Sequence(("rift_whoosh", 0f, .75f), ("rift_portal", .08f, .9f));
                 _driver.Session.EnterRift();
                 return;
             }
-            // Момент входа (владелец 24 сентября): камера к арке, разгорание, вспышка — и забег.
+            // Момент входа (владелец 24 сентября): камера к арке, разгорание; 26 сентября — дымная
+            // завеса вместо вспышки: дым накатывает к концу подачи камеры, под ним — забег.
             var driver = _driver;
-            CampTransition.EnterRift(this, transform.TransformPoint(TriggerCenter), () => driver.Session.EnterRift());
+            CampTransition.EnterRift(this, transform.TransformPoint(TriggerCenter), () =>
+            {
+                driver.Session.EnterRift();
+                driver.SyncAfterSwitch();
+            });
         }
         void Start()
         {

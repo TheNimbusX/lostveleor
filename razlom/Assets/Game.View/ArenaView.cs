@@ -202,6 +202,8 @@ namespace Game.View
         private ViewPool _rootSwarmPool;
         private ViewPool _forestBudPool;
         private ViewPool _wendigoPool;
+        private ViewPool _stonehoofPool;
+        private StonehoofAnimatorView[] _stonehoofViews;
         private ForestWendigoAnimatorView[] _wendigoViews;
         private ForestBudAnimatorView[] _forestBudViews;
 
@@ -386,6 +388,7 @@ namespace Game.View
             _animationViews = new CharacterAnimatorView[capacity];
             _forestBudViews = new ForestBudAnimatorView[capacity];
             _wendigoViews = new ForestWendigoAnimatorView[capacity];
+            _stonehoofViews = new StonehoofAnimatorView[capacity];
             _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
@@ -495,7 +498,7 @@ namespace Game.View
             BindNewEntities();
             if (_driver.GameplayPaused)
                 for (int i = 1; i < _boundCount; i++)
-                    if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo))
+                    if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo || sim.Entities.Kind[i] == EnemyKind.ForestStonehoof))
                     {
                         // Пауза останавливает и падение, и последующее исчезновение бутона.
                         _deathStartedAt[i] += Time.deltaTime;
@@ -568,7 +571,7 @@ namespace Game.View
             // Летальный Damage уже относится к DeathBack: труп не должен перед
             // падением получать ещё один процедурный толчок. Вспышка контакта
             // остаётся, чтобы последний удар не потерял визуальное подтверждение.
-            if (alive && entityId != Simulation.PlayerId)
+            if (alive && entityId != Simulation.PlayerId && _driver.Sim.Entities.Kind[entityId] != EnemyKind.ForestStonehoof)
             {
                 AnimationOf(entityId)?.PlayContactPose(direction, strength, heavy);
                 Vector3 recoil = direction * (RecoilDistance * strength * Mathf.Max(0f, recoilScale));
@@ -924,7 +927,9 @@ namespace Game.View
                 if (CampTrainingView.Find(i) != null) continue;
                 if (entities.Kind[i] == EnemyKind.ForestBud && _forestBudPool == null) PrepareForestBud();
                 if (entities.Kind[i] == EnemyKind.ForestWendigo && _wendigoPool == null) PrepareWendigo();
+                if (entities.Kind[i] == EnemyKind.ForestStonehoof && _stonehoofPool == null) PrepareStonehoof();
                 ViewPool pool = entities.Side[i] == Faction.Wole ? _wolePool
+                    : entities.Kind[i] == EnemyKind.ForestStonehoof ? _stonehoofPool
                     : entities.Kind[i] == EnemyKind.ForestWendigo ? _wendigoPool
                     : entities.Kind[i] == EnemyKind.ForestBud ? _forestBudPool
                     : entities.Kind[i] == EnemyKind.ForestRootSwarm ? _rootSwarmPool : _orvillPool;
@@ -938,6 +943,8 @@ namespace Game.View
                 _forestBudViews[i]?.Bind(_driver, i);
                 _wendigoViews[i] = go.GetComponent<ForestWendigoAnimatorView>();
                 _wendigoViews[i]?.Bind(_driver, i);
+                _stonehoofViews[i] = go.GetComponent<StonehoofAnimatorView>();
+                _stonehoofViews[i]?.Bind(_driver, i);
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
                 _equipmentViews[i] = go.GetComponent<PelagEquipmentView>();
                 _animationViews[i]?.ResetForSpawn();
@@ -985,7 +992,7 @@ namespace Game.View
                 go.transform.localScale = ExpectedBaseScale(entities.Side[i], entities.Kind[i], _animationViews[i]);
                 _baseScale[i] = go.transform.localScale;
 
-                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null || _wendigoViews[i] != null
+                _groundOffset[i] = _animationViews[i] != null || _forestBudViews[i] != null || _wendigoViews[i] != null || _stonehoofViews[i] != null
                     ? 0f
                     : GroundOffset(entities.Side[i], WoleScale, OrvillScale);
             }
@@ -996,7 +1003,7 @@ namespace Game.View
         private Vector3 ExpectedBaseScale(Faction faction, EnemyKind kind, CharacterAnimatorView animation)
         {
             float scale = faction == Faction.Wole ? WoleScale
-                : kind == EnemyKind.ForestWendigo ? 1f
+                : kind == EnemyKind.ForestWendigo || kind == EnemyKind.ForestStonehoof ? 1f
                 : kind == EnemyKind.ForestBud ? ForestBudScale
                 : kind == EnemyKind.ForestRootSwarm ? RootSwarmScale : OrvillScale;
             if (animation != null && animation.UsesSprites)
@@ -1591,10 +1598,11 @@ namespace Game.View
                             EndPlayerAnchorUse();
                         }
                         CharacterAnimatorView animation = AnimationOf(e.Target);
-                        if (animation == null && _forestBudViews[e.Target] == null && _wendigoViews[e.Target] == null) break;
+                        if (animation == null && _forestBudViews[e.Target] == null && _wendigoViews[e.Target] == null && _stonehoofViews[e.Target] == null) break;
                         animation?.PlayDeath();
                         _forestBudViews[e.Target]?.PlayDeath();
                         _wendigoViews[e.Target]?.PlayDeath();
+                        _stonehoofViews[e.Target]?.PlayDeath();
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -1656,6 +1664,21 @@ namespace Game.View
         {
             return BodyFactory(WoleModel, WoleController, WoleMaterial, WoleTexture,
                 Faction.Wole, WoleScale)();
+        }
+
+        public void PrepareStonehoof()
+        {
+            if (_stonehoofPool != null) return;
+            var prefab = Resources.Load<GameObject>("Characters/Forest_Stonehoof/ForestStonehoof_Runtime");
+            if (prefab == null) throw new System.InvalidOperationException("Не собрано представление Камнекопыта.");
+            var root = new GameObject("Пул: Камнекопыт").transform; root.SetParent(transform, false);
+            _stonehoofPool = new ViewPool(root, () => {
+                var body = Instantiate(prefab); body.SetActive(false);
+                SetLayerRecursively(body, LayerMask.NameToLayer("EnemyOutline"));
+                CreateContactShadow(body.transform, Faction.Orvill, 1f); return body;
+            }, 4);
+            while (_stonehoofPool.NeedsPrewarm) _stonehoofPool.PrewarmStep(4);
+            if (GetComponent<StonehoofCombatView>() == null) gameObject.AddComponent<StonehoofCombatView>();
         }
 
         public void PrepareWendigo()

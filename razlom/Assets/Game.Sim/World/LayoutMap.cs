@@ -75,6 +75,10 @@ namespace Game.Sim
         private readonly int[] _rewardBranches;
         private int _rewardBranchCount;
         private LayoutObstacle[] _obstacles = System.Array.Empty<LayoutObstacle>();
+        internal void AddTestObstacle(LayoutObstacle obstacle)
+        { ArrayResizeObstacle(obstacle); }
+        private void ArrayResizeObstacle(LayoutObstacle obstacle)
+        { System.Array.Resize(ref _obstacles, _obstacles.Length + 1); _obstacles[_obstacles.Length - 1] = obstacle; }
         public int ObstacleCount => _obstacles.Length;
         public LayoutObstacle GetObstacle(int index) => _obstacles[index];
         internal void BuildObstacles(ulong seed) => _obstacles = LayoutObstacle.Generate(this, seed);

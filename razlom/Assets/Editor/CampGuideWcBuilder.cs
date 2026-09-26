@@ -9,8 +9,9 @@ using Role = Game.View.UiTheme.Role;
 namespace Game.EditorTools
 {
     /// <summary>
-    /// Значок «здесь есть дело» над жителем лагеря на паке «Ночная акварель» (владелец 24 сентября):
-    /// Resources/UI/Prefabs/CampGuideWc. Шаблон — круглый медальон с картинкой и ромбом-хвостиком вниз.
+    /// Значок «здесь есть дело» над жителем лагеря (владелец 24 сентября): Resources/UI/Prefabs/CampGuideWc.
+    /// Материал — «Дым и свет» (26 сентября): круг тёмного дыма, тонкое кольцо света, кремовый знак и
+    /// огонёк вниз к жителю; появляется без огня по кромке (частая всплывашка).
     /// Логика — CampGuideView. Карточки знакомства с лагерем нет: владелец её отверг.
     /// </summary>
     public static class CampGuideWcBuilder
@@ -32,7 +33,6 @@ namespace Game.EditorTools
         {
             if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
             UiThemeBuilder.Ensure(false);
-            EnsurePrefabs();
             GameObject root = Layout();
             try
             {
@@ -49,6 +49,13 @@ namespace Game.EditorTools
 
         static Texture2D Tex(string path) => AssetDatabase.LoadAssetAtPath<Texture2D>(path);
 
+        /// <summary>Знак алхимика: белая колба (набор знаков 26 сентября); пока её нет — бутылка первого набора.</summary>
+        static Texture2D Flask()
+        {
+            Texture2D flask = Tex("Assets/UI/RunIcons/alchemist.png");
+            return flask != null ? flask : Tex("Assets/Resources/UI/Items/potion_health_small.png");
+        }
+
         static GameObject Layout()
         {
             var root = new GameObject("CampGuideWc", typeof(RectTransform)) { layer = 5 };
@@ -56,6 +63,8 @@ namespace Game.EditorTools
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             // Над HUD (10) и тренировкой (12), под окнами лагеря (100).
             canvas.sortingOrder = 14;
+            // Шейдер «Дыма и света» берёт данные элемента из uv1/uv2 (UiInkReveal).
+            canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.TexCoord2;
             var scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -65,29 +74,36 @@ namespace Game.EditorTools
             var panel = root.AddComponent<CampGuidePanel>();
             var rect = (RectTransform)root.transform;
 
-            // Шаблон значка над целью: медальон и хвостик-ромб вниз.
+            // Шаблон значка над целью «Дыма и света»: круг тёмного дыма, тонкое кольцо света, знак
+            // кремовым; под кругом — огонёк-капля вниз к жителю (ромб остался только мелким светом).
             RectTransform marker = Node("Значок цели", rect);
             marker.anchorMin = marker.anchorMax = Vector2.zero;
             marker.pivot = new Vector2(.5f, 0f);
             marker.sizeDelta = new Vector2(58f, 70f);
             marker.gameObject.AddComponent<CanvasGroup>().blocksRaycasts = false;
             RectTransform medal = TopLeft(Node("Медальон", marker), 0f, 0f, 58f, 58f);
-            Layer(medal, "Свечение", RoundGlow, Role.Accent, .55f, 18f);
-            // Два слоя заливки: акварельный круг сам по себе просвечивает, а значок должен читаться на земле.
-            Layer(medal, "Подложка", T.CircleFill, Role.Panel, 1f);
-            Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
-            Layer(medal, "Ободок", T.CircleFrame, Role.Accent, .95f);
-            var art = Stretch(Node("Картинка", medal), 7f).gameObject.AddComponent<RawImage>();
+            UiInkKit.SmokeLayer(medal, "Дым", "smoke_ring", 1f, 12f, 12f, deep: true);
+            // Плотный диск под знаком: дым сам по себе просвечивает, а знак должен читаться на траве.
+            Image disc = Layer(medal, "Круг", T.CircleFill, Role.SmokeDeep, .92f, -2f);
+            disc.material = UiInkKit.Plain;
+            UiInkKit.Inked(disc, delay: .05f);
+            UiInkKit.LightLayer(medal, "Кольцо", "light_ring", .5f, 8f, delay: .15f);
+            // Первая RawImage значка — знак: её картинку меняет CampGuideView.
+            var art = Stretch(Node("Картинка", medal), 13f).gameObject.AddComponent<RawImage>();
             art.raycastTarget = false;
-            RectTransform tail = TopLeft(Node("Хвостик", marker), 21f, 47f, 16f, 16f);
-            Layer(tail, "Заливка", T.DiamondFill, Role.Accent, 1f);
+            Tint(art, Role.Text);
+            art.material = UiInkKit.Art;
+            UiInkKit.Inked(art, delay: .1f);
+            UiInkKit.LightAt(marker, "Хвостик", "light_gem", new Vector2(.5f, 1f), new Vector2(0f, -64f), new Vector2(11f, 13f), .85f, delay: .2f);
+            // Значок всплывает над жителем каждый раз, как появляется дело: без огня по кромке.
+            UiInkKit.Group(marker, UiInkGroup.Sweep.FromCenter, .3f, .08f).Burn = 0f;
             marker.gameObject.SetActive(false);
             panel.MarkerTemplate = marker;
             panel.Icons = new Texture[]
             {
                 Tex("Assets/UI/CampShops/reforge.png"),
                 Tex("Assets/UI/RunIcons/gold.png"),
-                Tex("Assets/Resources/UI/Items/potion_health_small.png"),
+                Flask(),
             };
             return root;
         }

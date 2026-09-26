@@ -11,10 +11,11 @@ using Role = Game.View.UiTheme.Role;
 namespace Game.EditorTools
 {
     /// <summary>
-    /// Вопрос у арки «Отправиться в забег?» на паке «Ночная акварель»:
-    /// Resources/UI/Prefabs/CampRiftConfirmWc.prefab. Затемнение, карточка пака (как
-    /// подтверждение в паузе) с медальоном разлома, вопрос, «Отправиться»,
-    /// «Остаться» (Enter и Esc работают без подписей). Прежняя IMGUI-плашка остаётся запасной.
+    /// Вопрос у арки «Отправиться в забег?»: Resources/UI/Prefabs/CampRiftConfirmWc.prefab.
+    /// Затемнение, окно «Дыма и света» (26 сентября, вместо карточки пака; раскладка прежняя):
+    /// клуб глубокого дыма с нитью света, круглый медальон разлома, вопрос, разделитель
+    /// с огоньком, кнопки-мазки «Отправиться» и «Остаться» (Enter и Esc работают без подписей).
+    /// Прежняя IMGUI-плашка остаётся запасной.
     /// </summary>
     public static class CampRiftConfirmWcBuilder
     {
@@ -36,7 +37,6 @@ namespace Game.EditorTools
         {
             if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
             UiThemeBuilder.Ensure(false);
-            EnsurePrefabs();
             GameObject root = Layout();
             try
             {
@@ -67,6 +67,8 @@ namespace Game.EditorTools
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             // Над HUD и окнами лагеря, под паузой (300).
             canvas.sortingOrder = 150;
+            // Шейдер «Дыма и света» берёт данные элемента из uv1/uv2 (UiInkReveal).
+            canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.TexCoord2;
             var scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -83,28 +85,28 @@ namespace Game.EditorTools
             veilImage.raycastTarget = true;
             Layer(veil, "Виньетка", T.VeilRadial, Role.Veil, .9f);
 
-            RectTransform card = Place("Panel", rect, "Карточка");
-            // Без пояснения мелким текстом (владелец 24 сентября): вопрос и две кнопки.
-            Box(card, Center, Center, Vector2.zero, new Vector2(620f, 280f));
+            // Окно «Дыма и света» на месте карточки пака: клуб глубокого дыма шире окна, огненная нить
+            // по низу. Мышь ловит вуаль (весь экран) и прозрачный ловец окна — клик не уходит в лагерь.
+            RectTransform card = Box(Node("Карточка", rect), Center, Center, Vector2.zero, new Vector2(620f, 280f));
+            UiInkKit.Plate(card);
+            UiInkKit.HitArea(card);
+            // Проявление от центра, быстро; огня по кромке чуть-чуть — вопрос у арки не частая
+            // всплывашка, но и не большой момент. Показ запускает включение окна (CampRiftConfirmPanel.Show),
+            // подъём, масштаб и прозрачность карточки панель ведёт сама, поверх проявления.
+            UiInkKit.Group(card, UiInkGroup.Sweep.FromCenter, .35f, .12f).Burn = .25f;
             panel.Card = card;
-            var content = (RectTransform)card.Find("Содержимое");
+            RectTransform content = Stretch(Node("Содержимое", card));
 
-            // Медальон разлома над карточкой, как камень на кромке ячеек пака.
-            RectTransform medal = Box(Node("Медальон", card), new Vector2(.5f, 1f), Center, new Vector2(0f, 0f), new Vector2(88f, 88f));
-            Image glow = Layer(medal, "Свечение", RoundGlow, Role.Lavidium, .45f, 22f);
-            glow.raycastTarget = false;
-            Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
-            Layer(medal, "Ободок", T.CircleFrame, Role.PanelLine, .95f);
-            var art = Stretch(Node("Разлом", medal), 6f).gameObject.AddComponent<RawImage>();
-            art.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/UI/RunIcons/rift.png");
-            art.raycastTarget = false;
+            Medal(card);
 
+            // Без пояснения мелким текстом (владелец 24 сентября): вопрос и две кнопки.
             RectTransform title = Box(Node("Заголовок", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -58f), new Vector2(580f, 50f));
-            panel.Title = Label(title, "Надпись", "Отправиться в забег?", FontRole.Heading, 36f, Role.Text, TextAlignmentOptions.Center, 1f);
-            Box(Place("Divider", content, "Линия"), new Vector2(.5f, 1f), Center, new Vector2(0f, -122f), new Vector2(380f, 16f));
+            panel.Title = UiInkKit.Label(title, "Надпись", "Отправиться в забег?", FontRole.Heading, 36f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
+            panel.Title.textWrappingMode = TextWrappingModes.NoWrap;
+            Box(UiInkKit.Divider(content, "Линия", 380f), new Vector2(.5f, 1f), Center, new Vector2(0f, -122f), new Vector2(380f, 16f));
 
-            panel.Enter = KitButton(content, "ButtonPrimary", "Отправиться", -145f);
-            panel.Stay = KitButton(content, "ButtonSecondary", "Остаться", 145f);
+            panel.Enter = InkButton(content, true, "Отправиться", -145f);
+            panel.Stay = InkButton(content, false, "Остаться", 145f);
             panel.Stay.GetComponent<UiHoverMotion>().ClickSound = UiSoundEvent.Back;
             // Мелких подписей нет (владелец 24 сентября): Esc и Enter работают, кнопки говорят сами.
 
@@ -112,14 +114,35 @@ namespace Game.EditorTools
             return root;
         }
 
-        static Button KitButton(RectTransform content, string prefab, string text, float x)
+        /// <summary>
+        /// Медальон разлома на верхней кромке окна: круг, а не камень пака. Клуб дыма кругом, тёплое
+        /// свечение за диском, тёмный диск, тонкое тёплое кольцо света (тихое, как кольцо способности
+        /// в покое) и знак разлома кремовым — знаки забега теперь белые силуэты, краску даёт тема.
+        /// </summary>
+        static void Medal(RectTransform card)
         {
-            RectTransform button = Place(prefab, content, text);
-            Box(button, new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(x, 32f), new Vector2(250f, 58f));
-            TMP_Text label = button.GetComponentInChildren<TMP_Text>();
-            label.text = text;
-            label.fontSize = 24f;
-            button.gameObject.AddComponent<UiHoverMotion>().HoverScale = 1.03f;
+            const float size = 88f;
+            RectTransform medal = Box(Node("Медальон", card), new Vector2(.5f, 1f), Center, Vector2.zero, new Vector2(size, size));
+            UiInkKit.SmokeLayer(medal, "Дым", "smoke_ring", 1f, size * .2f, size * .2f, deep: true);
+            UiInkKit.LightAt(medal, "Свечение", "light_glow", Center, Vector2.zero, new Vector2(size * 1.7f, size * 1.7f), .3f, delay: .2f);
+            Image disc = Layer(medal, "Круг", T.CircleFill, Role.Panel, 1f);
+            disc.material = UiInkKit.Plain;
+            UiInkKit.Inked(disc, delay: .05f);
+            UiInkKit.LightLayer(medal, "Кольцо", "light_ring", .32f, size * .2f, delay: .25f);
+            var art = Stretch(Node("Разлом", medal), 12f).gameObject.AddComponent<RawImage>();
+            art.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/UI/RunIcons/rift.png");
+            art.raycastTarget = false;
+            Tint(art, Role.Text);
+            art.material = UiInkKit.Art;
+            UiInkKit.Inked(art, delay: .15f);
+        }
+
+        /// <summary>Кнопка-мазок «Дыма и света» по нижней кромке окна; наведение и звук — в UiInkKit.Button.</summary>
+        static Button InkButton(RectTransform content, bool primary, string text, float x)
+        {
+            var size = new Vector2(250f, 58f);
+            RectTransform button = UiInkKit.Button(content, text, text, primary, size, 24f);
+            Box(button, new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(x, 32f), size);
             var result = button.GetComponent<Button>();
             Navigation navigation = result.navigation;
             navigation.mode = Navigation.Mode.None;

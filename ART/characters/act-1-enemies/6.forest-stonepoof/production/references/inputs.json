@@ -1,0 +1,9 @@
+{
+  "approved_model": "../Stonehoof_ModelCandidate_r03.blend",
+  "images": [
+    "charge_start.jpg",
+    "collision_start.jpg",
+    "death_start.jpg"
+  ],
+  "note": "Rendered directly from owner-approved model; collision stone is a reference prop only."
+}

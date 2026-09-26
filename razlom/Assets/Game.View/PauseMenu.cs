@@ -236,6 +236,9 @@ namespace Game.View
         private void Update()
         {
             if (CaptureRig.ForestBudShowcase) return;
+            // Под дымной завесой перехода (в лагерь, в забег, на новую арену) пауза не открывается:
+            // смена идёт в неигровом времени и увела бы открытую паузу в другой мир.
+            if (!_open && CampTransition.Covering) return;
             if (CampPlayerView.Instance?.EntranceOpen == true || CampRiftEntrance.ClosedFrame == Time.frameCount) return;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (DeveloperMenu.BlocksPause) return;

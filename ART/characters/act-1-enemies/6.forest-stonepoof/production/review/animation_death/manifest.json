@@ -1,0 +1,111 @@
+{
+  "stage": "death_owner_review",
+  "owner_clip_approved": false,
+  "previous_clip_approved": true,
+  "previous_approval_quote": "ок идем дальше",
+  "fps": 30,
+  "frames": [
+    0,
+    60
+  ],
+  "duration_seconds": 2,
+  "editable_master": "../../animation/death/Stonehoof_Death_r01.blend",
+  "derived_clip": "../../animation/death/Stonehoof_Death_Baked_r01.blend",
+  "master_sha256": "d513f6a062311e2881af84af114f3a0a616db0105625d9fb6b2af0c8417923e6",
+  "model_triangles": 20042,
+  "reference_time_map": [
+    [
+      0,
+      0.75
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      16,
+      1.25
+    ],
+    [
+      24,
+      1.5
+    ],
+    [
+      32,
+      1.75
+    ],
+    [
+      42,
+      2.1
+    ],
+    [
+      54,
+      2.7
+    ],
+    [
+      60,
+      3.5
+    ]
+  ],
+  "reference_note": "Phase-aligned accepted Higgsfield reference, not a pixel-identical mocap. No generated tongue added.",
+  "validation": {
+    "samples": 481,
+    "minimum_mesh_z": [
+      -0.000496596097946167,
+      46.25,
+      2950
+    ],
+    "entry_joint_error_m": 0.0009219102797843705,
+    "bone_length_error": 9.851246004499714e-07,
+    "max_hoof_target_error_m": 6.0313526322000146e-05,
+    "max_hoof_error_at": [
+      60.0,
+      "front_right"
+    ],
+    "max_eighth_frame_rotation_degrees": [
+      4.068840639772287,
+      31.375,
+      "leg_hind_right_bot1"
+    ],
+    "owner_approved": false
+  },
+  "bake_validation": {
+    "deforming_bones": 34,
+    "duration_seconds": 2,
+    "sample_step_frames": 0.0625,
+    "maximum_baked_joint_error_m": 7.278058002217831e-07,
+    "maximum_baked_rotation_error_degrees": 0.07912936529690494,
+    "owner_approved": false,
+    "constraints": 0,
+    "travel_removed": true
+  },
+  "interpolation_validation": {
+    "sample_count": 1923,
+    "maximum_interpolated_joint_error_m": [
+      3.14215498531349e-05,
+      4.03125,
+      "head0_end"
+    ],
+    "maximum_interpolated_rotation_error_degrees": [
+      0.07912936529690494,
+      36.125,
+      "tail0_end"
+    ],
+    "baked_endpoint_error_m": 3.0836764107011074e-07,
+    "display_rates_checked": [
+      30,
+      60,
+      120
+    ],
+    "note": "Blender source/derived interpolation check, not Unity runtime or performance evidence.",
+    "source_sha256_unchanged": true
+  },
+  "source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e"
+  },
+  "browser_check": "Automated file URL browsing unavailable. Validate local links, decoded media, JS syntax separately; owner playback/art review pending.",
+  "integration": "Not in Unity. Runtime death blend from arbitrary action awaits integration stage.",
+  "owner_rejected": true,
+  "rejection_quote": "смерть нет - тело как то сминается",
+  "replacement": "../animation_death_r02/index.html"
+}

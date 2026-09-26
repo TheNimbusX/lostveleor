@@ -17,6 +17,7 @@ namespace Game.View
                 case EnemyKind.ForestRootSwarm: return "Корнеполз";
                 case EnemyKind.ForestBud: return "Плюй-плод";
                 case EnemyKind.ForestWendigo: return "Лесной вендиго";
+                case EnemyKind.ForestStonehoof: return "Камнекопыт";
                 default: return "Враг";
             }
         }

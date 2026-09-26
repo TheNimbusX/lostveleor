@@ -45,7 +45,9 @@ namespace Game.View
                 if (run.Gold > _toastGold)
                 {
                     GameSound.Play("toast_gold", .6f, .03f, .3f);
-                    Toasts.Push(GoldIcon, UiTheme.Role.Coins, null, null, UiTheme.Role.TextMuted, "gold", run.Gold - _toastGold, n => "+" + n + " золота");
+                    // Значок золота — белый глиф набора забега: кремовый, как текст.
+                    Toasts.Push(GoldIcon, UiTheme.Role.Coins, null, null, UiTheme.Role.TextMuted, "gold", run.Gold - _toastGold, n => "+" + n + " золота",
+                        glyph: true);
                 }
                 _toastGold = run.Gold;
                 _toastPhase = run.Phase;

@@ -18,7 +18,8 @@ namespace Game.EditorTools
     /// Пауза — по концепту ART/UI/concepts-2026-09-22/final-P4/6-pause.png:
     /// без плашки, заголовок антиквой, линии с ромбами, пункты текстом; наведение
     /// и открытое окно — оранжевая надпись с ромбами по бокам. Окна настроек,
-    /// управления и подтверждения — панели пака. Смысл — в PauseMenu и
+    /// управления и подтверждения — «Дым и свет» (26 сентября): глубокий дым вместо
+    /// панелей пака, нити света вместо серебряных линий. Смысл — в PauseMenu и
     /// PauseMenuView, вид — здесь. Префаб создаётся, только если его нет.
     /// </summary>
     public static partial class PauseMenuWcBuilder
@@ -62,6 +63,8 @@ namespace Game.EditorTools
             var canvas = root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 300;
+            // Шейдер «Дыма и света» берёт данные элемента из uv1/uv2 (UiInkReveal).
+            canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1 | AdditionalCanvasShaderChannels.TexCoord2;
             var scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
@@ -70,7 +73,8 @@ namespace Game.EditorTools
             root.AddComponent<GraphicRaycaster>();
             root.AddComponent<UiScaleFollower>();
             var view = root.AddComponent<PauseMenuView>();
-            view.TabTextOn = T.Text;
+            // Выбранная вкладка — акцент, как у вкладок «Дыма и света» в окнах лагеря (UiInkKit.Tab).
+            view.TabTextOn = T.Accent;
             view.TabTextOff = T.TextMuted;
             var rect = (RectTransform)root.transform;
 
@@ -108,6 +112,17 @@ namespace Game.EditorTools
 
         static readonly Vector2 Center = new Vector2(.5f, .5f);
 
+        /// <summary>Темп проявления паузы и её окон: быстро и без тлеющей кромки.</summary>
+        static UiInkGroup Pace(UiInkGroup group)
+        {
+            group.Duration = .28f;
+            group.Stagger = .12f;
+            group.StartDelay = 0f;
+            group.Burn = 0f;
+            group.HideDuration = .16f;
+            return group;
+        }
+
         /// <summary>Без клавиатурной навигации: стрелки и Esc у игры свои.</summary>
         static void NoNavigation(Selectable selectable)
         {
@@ -135,14 +150,20 @@ namespace Game.EditorTools
         {
             RectTransform panel = Box(Node("Пауза", root), Center, Center, Vector2.zero, new Vector2(480f, 760f));
             panel.gameObject.AddComponent<CanvasGroup>();
+            // «Дым и свет» (владелец 25 сентября): колонна дыма за пунктами, нити света вместо линий,
+            // огненные ромбы; при открытии дым растекается сверху вниз, пункты проявляются по очереди.
+            UiInkKit.SmokeAt(panel, "Дым", "smoke_blot_1", Center, new Vector2(0f, -10f), new Vector2(900f, 980f), 1f, origin: new Vector2(.5f, .85f), deep: true);
+            // Esc открывает паузу часто: без огня по кромке (владелец 26 сентября — «красная анимация
+            // очень быстрая, странновато») и в темпе PopIn/Arrive вида — всё встаёт примерно за .45 с.
+            Pace(UiInkKit.Group(panel, UiInkGroup.Sweep.TopToBottom));
             view.PausePanel = panel;
             view.PauseCenterX = 0f;
             view.PauseShiftedX = -560f;
 
             RectTransform title = Box(Node("Заголовок", panel), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -40f), new Vector2(480f, 96f));
-            TMP_Text titleLabel = Label(title, "Надпись", "Пауза", FontRole.Heading, 76f, Role.Text, TextAlignmentOptions.Center, 1f);
+            TMP_Text titleLabel = UiInkKit.Label(title, "Надпись", "Пауза", FontRole.Heading, 76f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
             titleLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            Box(Place("DividerPlain", panel, "Линия сверху"), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -164f), new Vector2(340f, 16f));
+            UiInkKit.LightAt(panel, "Линия сверху", "light_thread_gem", new Vector2(.5f, 1f), new Vector2(0f, -164f), new Vector2(420f, 44f), .75f);
 
             view.Continue = MenuItem(panel, "Продолжить", 0, true, out _);
             view.Settings = MenuItem(panel, "Настройки", 1, false, out view.SettingsGlow);
@@ -150,9 +171,9 @@ namespace Game.EditorTools
             view.Camp = MenuItem(panel, "В лагерь", 3, false, out _);
             view.Quit = MenuItem(panel, "Выйти из игры", 4, false, out _);
 
-            Box(Place("DividerPlain", panel, "Линия снизу"), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -596f), new Vector2(340f, 16f));
+            UiInkKit.LightAt(panel, "Линия снизу", "light_thread", new Vector2(.5f, 1f), new Vector2(0f, -596f), new Vector2(380f, 34f), .55f);
             RectTransform hint = Box(Node("Подсказка", panel), new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(0f, 20f), new Vector2(460f, 30f));
-            view.Hint = Label(hint, "Надпись", "Esc — продолжить игру", FontRole.Body, 18f, Role.TextMuted, TextAlignmentOptions.Center, 1f);
+            view.Hint = UiInkKit.Label(hint, "Надпись", "Esc — продолжить игру", FontRole.Body, 18f, Role.TextMuted, TextAlignmentOptions.Center, 1f, 1f, .2f);
         }
 
         /// <summary>
@@ -166,7 +187,7 @@ namespace Game.EditorTools
             RectTransform item = Box(Node(text, panel), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -232f - index * 72f), new Vector2(420f, 60f));
             Button button = HitButton(item);
 
-            TMP_Text label = Label(item, "Надпись", text, FontRole.Heading, 36f, accent ? Role.Accent : Role.Text, TextAlignmentOptions.Center);
+            TMP_Text label = UiInkKit.Label(item, "Надпись", text, FontRole.Heading, 36f, accent ? Role.Accent : Role.Text, TextAlignmentOptions.Center, 0f, 1f, .1f);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             float half = label.GetPreferredValues(text).x * .5f + 30f;
 
@@ -191,9 +212,9 @@ namespace Game.EditorTools
             }
             else
             {
-                // У «Продолжить» ромбы видны всегда.
-                Mark(item, "Ромб слева", T.DiamondSmall, Role.Accent, 1f, Center, new Vector2(-half, 0f), 14f);
-                Mark(item, "Ромб справа", T.DiamondSmall, Role.Accent, 1f, Center, new Vector2(half, 0f), 14f);
+                // У «Продолжить» огненные ромбы видны всегда.
+                UiInkKit.LightAt(item, "Ромб слева", "light_gem", Center, new Vector2(-half, 0f), new Vector2(20f, 22f), .95f, delay: .25f);
+                UiInkKit.LightAt(item, "Ромб справа", "light_gem", Center, new Vector2(half, 0f), new Vector2(20f, 22f), .95f, delay: .25f);
             }
             return button;
         }
@@ -205,8 +226,8 @@ namespace Game.EditorTools
             glow.rectTransform.sizeDelta = new Vector2(half * 2f + 40f, 70f);
             TMP_Text label = Label(parent, "Надпись", text, FontRole.Heading, 36f, Role.Accent, TextAlignmentOptions.Center);
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            Mark(parent, "Ромб слева", T.DiamondSmall, Role.Accent, alpha, Center, new Vector2(-half, 0f), 14f);
-            Mark(parent, "Ромб справа", T.DiamondSmall, Role.Accent, alpha, Center, new Vector2(half, 0f), 14f);
+            UiInkKit.LightAt(parent, "Ромб слева", "light_gem", Center, new Vector2(-half, 0f), new Vector2(20f, 22f), alpha);
+            UiInkKit.LightAt(parent, "Ромб справа", "light_gem", Center, new Vector2(half, 0f), new Vector2(20f, 22f), alpha);
         }
     }
 }

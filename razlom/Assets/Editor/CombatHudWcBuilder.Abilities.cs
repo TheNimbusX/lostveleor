@@ -25,46 +25,49 @@ namespace Game.EditorTools
                 view.Slots[i] = SlotWidget(slot, keys[i], 26f, upgrades: true);
             }
 
-            // Кувырок — плитка того же размера справа от ряда (вариант B); клавиша — широкая плашка.
+            // Кувырок — плитка того же размера справа от ряда (вариант B); клавиша — капсула по ширине подписи.
             RectTransform dash = Box(Node("Кувырок", root), BottomCenter, Vector2.zero, new Vector2(DashX, RowBottom), new Vector2(Slot, Slot));
             view.DashPanel = dash;
             RectTransform dashSlot = Stretch(Node("Плитка кувырка", dash));
-            view.Dash = SlotWidget(dashSlot, "SPACE", 22f, 66f, upgrades: false);
+            view.Dash = SlotWidget(dashSlot, "SPACE", 22f, upgrades: false);
             view.Dash.Art.texture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Abilities/Icon_Dash.png");
         }
 
-        /// <summary>Свечение и цветная рамка одного состояния плитки; выключено, пока его не включит CombatHudView.</summary>
+        /// <summary>Свечение и цветное кольцо одного состояния плитки; выключено, пока его не включит CombatHudView.</summary>
         static GameObject StateGlow(RectTransform body, string name, Role role, float glow, float frame)
         {
             RectTransform group = Stretch(Node(name, body));
-            Image halo = Layer(group, "Свечение", T.GlowSmall, role, glow, 22f);
-            Layer(group, "Рамка", T.FrameBoldSmall, role, frame);
+            Image halo = Layer(group, "Свечение", RoundGlow, role, glow, 22f);
+            Layer(group, "Рамка", T.CircleFrameBold, role, frame);
             group.gameObject.SetActive(false);
             return group.gameObject;
         }
 
-        /// <summary>Рисунок камня по числу усилений: ступенями — пустой, сталь, серебро, золото, кристалл.</summary>
-        static Sprite GemFor(int upgrades) => Kit("wc_upgrade_gem_" + (upgrades >= 8 ? 8 : upgrades >= 6 ? 7 : upgrades >= 3 ? 4 : upgrades >= 1 ? 2 : 0));
+        /// <summary>Огонёк над верхней кромкой плитки: центр на столько выше её края.</summary>
+        const float OrbLift = 1f;
 
         /// <summary>
-        /// Плитка способности на паке: заливка ячейки, иконка под маской формы,
-        /// при перезарядке — тёмная вуаль и кольцо делений, светлая рамка при
-        /// наведении, камень с насечками усилений, плашка нехватки лавидия, клавиша на нижней кромке.
+        /// Плитка способности в материале «Дым и свет» (владелец 25 сентября): круглая иконка в
+        /// чернильной кляксе, вокруг — огненное кольцо; при перезарядке — тёмная вуаль и кольцо
+        /// делений, светлое кольцо при наведении, огонёк усилений с дугой точек, плашка нехватки
+        /// лавидия, клавиша на нижней кромке.
+        /// 26 сентября (владелец: «огня слишком много», «треугольники и круги — выбрать фигуру»):
+        /// кольцо тоньше и в покое едва тлеет, разгорается у готовой и вспыхивает на готовности и
+        /// нажатии (HudReadyGem); гранёный камень стал круглым огоньком, насечки — точками.
         /// </summary>
-        static HudSlotWidget SlotWidget(RectTransform slot, string key, float keySize, float keyWidth = 0f, bool upgrades = true)
+        static HudSlotWidget SlotWidget(RectTransform slot, string key, float keySize, bool upgrades = true)
         {
             var widget = slot.gameObject.AddComponent<HudSlotWidget>();
             widget.Hit = slot;
             RectTransform body = Stretch(Node("Тело", slot));
             widget.Body = body;
 
-            Image shadow = Layer(body, "Тень", T.GlowSmall, Role.Veil, .8f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
-            Layer(body, "Заливка", T.FillSmall, Role.Panel);
-            RectTransform mask = Stretch(Node("Маска", body), 1.5f);
+            UiInkKit.SmokeLayer(body, "Клякса", "smoke_ring", 1f, Slot * .2f, Slot * .2f);
+            Layer(body, "Заливка", T.CircleFill, Role.Panel, .9f, -2f);
+            RectTransform mask = Stretch(Node("Маска", body), 3f);
             var maskImage = mask.gameObject.AddComponent<Image>();
-            maskImage.sprite = T.FillSmall;
-            maskImage.type = Image.Type.Sliced;
+            maskImage.sprite = T.CircleFill;
+            maskImage.type = Image.Type.Simple;
             maskImage.raycastTarget = false;
             mask.gameObject.AddComponent<Mask>().showMaskGraphic = false;
             var art = Stretch(Node("Иконка", mask)).gameObject.AddComponent<RawImage>();
@@ -88,99 +91,114 @@ namespace Game.EditorTools
             widget.CooldownRing = ring;
             veil.gameObject.SetActive(false);
 
-            Layer(body, "Свет по кромке", T.HighlightSmall, Role.Highlight, .8f);
-            widget.Frame = Layer(body, "Рамка", T.FrameSmall, Role.PanelLine, .9f);
+            // Огненное кольцо вместо серебряной рамки: HudReadyGem держит его яркость — тлеет в покое,
+            // горит у готовой, вспыхивает на готовности и нажатии. Толщина нарисована в спрайте и
+            // растёт с размером, поэтому кольцо чуть уже прежнего (было Slot * .2).
+            var ready = Stretch(Node("Готовность", body)).gameObject.AddComponent<HudReadyGem>();
+            widget.Frame = UiInkKit.LightLayer(body, "Огненное кольцо", "light_ring", ready.RestAlpha, Slot * .16f, delay: .3f);
             // Наведение и отказ: цвет ставит CombatHudView (белый или вспышка отказа), поэтому без темы.
             RectTransform highlight = Stretch(Node("Наведение", body), -1f);
             var hi = highlight.gameObject.AddComponent<Image>();
-            hi.sprite = T.FrameBoldSmall;
-            hi.type = Image.Type.Sliced;
+            hi.sprite = T.CircleFrameBold;
+            hi.type = Image.Type.Simple;
             hi.raycastTarget = false;
             widget.Highlight = hi;
             highlight.gameObject.SetActive(false);
 
             // Нажатие — короткая оранжевая вспышка. «Готово» — не постоянное свечение (владелец:
-            // «слишком явное»): камень горит в полную силу, а в момент готовности по плитке проходит
-            // одна волна света. Старая мерцающая искра спорила с камнем — убрана (24 сентября).
-            widget.PressGlow = StateGlow(body, "Нажата", Role.Accent, .6f, 1f);
+            // «слишком явное»): в момент готовности по плитке проходит одна волна света.
+            widget.PressGlow = StateGlow(body, "Нажата", Role.Accent, .45f, .8f);
             Image wave = Layer(body, "Волна готовности", Kit("wc_fx_aura"), Role.Text, 0f, Slot * .3f);
             Additive(wave, new Color(1f, .84f, .55f, 0f));
             wave.enabled = false;
-
-            // Камень + 8 насечек (владелец, 24 сентября: ступени камня «нечитаемы»). Насечки дают
-            // точный счёт, камень — материал ступенями: сталь, серебро, золото, кристалл.
-            RectTransform gemBox = Box(Node("Готовность", body), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, 9f), new Vector2(GemSize, GemSize));
-            var ready = gemBox.gameObject.AddComponent<HudReadyGem>();
-            ready.Grades = new Sprite[Game.Sim.RunLoadout.MaxUpgrades + 1];
-            for (int grade = 0; grade < ready.Grades.Length; grade++) ready.Grades[grade] = GemFor(grade);
-            Image halo = Mark(gemBox, "Сияние", Kit("wc_fx_glow"), Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, GemSize * 1.9f);
-            Additive(halo, new Color(1f, .88f, .62f, 0f));
-            halo.enabled = false;
-            ready.Halo = halo;
-            ready.Gem = Mark(gemBox, "Камень", ready.Grades[0] != null ? ready.Grades[0] : T.Gem, Role.Text, 1f, new Vector2(.5f, .5f), Vector2.zero, GemSize);
-            Object.DestroyImmediate(ready.Gem.GetComponent<ThemeColor>());
-            if (upgrades) ready.Notches = NotchRow(gemBox, out ready.NotchGroup);
+            ready.Grades = new Sprite[0];
             ready.Burst = wave;
             ready.Frame = widget.Frame;
             ready.ReadyColour = new Color(1f, .9f, .72f, 1f);
+            // Огонёк и дуга точек — только у способностей с усилениями: у кувырка их не бывает.
+            if (upgrades) UpgradeOrb(body, ready);
             widget.ReadyGem = ready;
 
             widget.CooldownText = Label(body, "Секунды", "0.0", FontRole.Body, Slot * .27f, Role.Text, TextAlignmentOptions.Center);
             widget.CooldownText.fontStyle = FontStyles.Bold;
             widget.CooldownText.gameObject.SetActive(false);
 
-            // Нехватка лавидия: плашка с недостачей на нижней кромке (камень на углу убран — спорил с камнем усилений).
+            // Нехватка лавидия: недостача капсулой на нижней кромке — клуб дыма и тонкое кольцо цвета лавидия.
             RectTransform lacking = Stretch(Node("Нет лавидия", body));
-            RectTransform pill = Box(Node("Плашка", lacking), new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(0f, 16f), new Vector2(46f, 20f));
-            Layer(pill, "Заливка", T.TagFill, Role.Panel, .95f);
-            Layer(pill, "Ободок", T.TagFrame, Role.Lavidium, .8f);
-            widget.ResourceText = Label(pill, "Надпись", "−0", FontRole.Body, 14f, Role.Lavidium, TextAlignmentOptions.Center);
+            RectTransform pill = UiInkKit.Keycap(lacking, "Плашка", "−00", 20f);
+            pill.anchorMin = pill.anchorMax = new Vector2(.5f, 0f);
+            pill.pivot = new Vector2(.5f, 0f);
+            pill.anchoredPosition = new Vector2(0f, 16f);
+            pill.Find("Кольцо").GetComponent<ThemeColor>().SetRole(Role.Lavidium, .75f);
+            widget.ResourceText = pill.Find("Буква").GetComponent<TMP_Text>();
+            widget.ResourceText.GetComponent<ThemeColor>().SetRole(Role.Lavidium);
+            widget.ResourceText.text = "−0";
             widget.ResourceText.fontStyle = FontStyles.Bold;
             widget.ResourceBadge = lacking.gameObject;
             lacking.gameObject.SetActive(false);
 
-            // Клавиша на нижней кромке. CombatHudView прячет её родителя у пустой плитки.
-            RectTransform cap = Keycap(body, "Клавиша", key, keySize);
+            // Клавиша на нижней кромке: круг у буквы, капсула у длинной подписи (SPACE). CombatHudView
+            // прячет её у пустой плитки и подгоняет ширину после смены клавиши.
+            RectTransform cap = UiInkKit.Keycap(body, "Клавиша", key, keySize);
             cap.anchorMin = cap.anchorMax = new Vector2(.5f, 0f);
             cap.pivot = new Vector2(.5f, .5f);
             cap.anchoredPosition = new Vector2(0f, -4f);
-            if (keyWidth > 0f) cap.sizeDelta = new Vector2(keyWidth, keySize);
             widget.Key = cap.Find("Буква").GetComponent<TMP_Text>();
-            widget.Key.fontSize = keySize * .58f;
-            widget.Key.enableAutoSizing = true;
-            widget.Key.fontSizeMin = 9f;
-            widget.Key.fontSizeMax = keySize * .58f;
-            widget.Key.textWrappingMode = TextWrappingModes.NoWrap;
             return widget;
         }
 
+        /// <summary>
+        /// Огонёк усилений на верхней кромке плитки: круг цвета ступени (тусклый, сталь, серебро,
+        /// золото, кристалл — красит HudReadyGem) в тёмной оправе, за ним мягкое сияние того же цвета.
+        /// Над ним по кругу плитки — дуга из 8 точек (видна только под мышью).
+        /// </summary>
+        static void UpgradeOrb(RectTransform body, HudReadyGem ready)
+        {
+            RectTransform box = Box(Node("Огонёк", body), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, OrbLift),
+                new Vector2(OrbSize + 6f, OrbSize + 6f));
+            Image halo = Mark(box, "Сияние", Kit("wc_fx_glow"), Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, OrbSize * 3.6f);
+            Additive(halo, new Color(1f, .88f, .62f, 0f));
+            halo.enabled = false;
+            ready.Halo = halo;
+            // Тёмная оправа: над светлой землёй огонёк не теряется.
+            Mark(box, "Оправа", T.CircleFill, Role.SmokeDeep, .9f, new Vector2(.5f, .5f), Vector2.zero, OrbSize + 6f);
+            ready.Gem = Mark(box, "Огонёк", T.CircleFill, Role.Text, 1f, new Vector2(.5f, .5f), Vector2.zero, OrbSize);
+            Object.DestroyImmediate(ready.Gem.GetComponent<ThemeColor>());
+            ready.Gem.color = ready.OrbNone;
+            ready.NotchOff = new Color(.3f, .32f, .38f, .95f);
+            ready.Notches = DotArc(box, out ready.NotchGroup);
+        }
+
         const int NotchCount = Game.Sim.RunLoadout.MaxUpgrades;
-        const float NotchSize = 9f, NotchStep = 10f;
+        /// <summary>Точка усиления, радиус дуги от центра плитки и шаг между точками в градусах.</summary>
+        const float DotSize = 5f, DotRadius = 56f, DotStep = 9f;
 
         /// <summary>
-        /// Ряд из 8 насечек над камнем на тёмной плашке: над светлой землёй тоже читается.
-        /// У каждой — серебряная оправа и заливка; цвет заливки ставит HudReadyGem. Ряд виден
-        /// только при наведении на плитку (владелец, 24 сентября) — в покое прозрачен.
+        /// Дуга из 8 точек над огоньком по кругу плитки: сколько горит — столько усилений. У каждой
+        /// тёмная оправа (читается над светлой землёй) и заливка; цвет заливки ставит HudReadyGem.
+        /// Видна только при наведении на плитку (владелец, 24 сентября) — в покое прозрачна.
         /// </summary>
-        static Image[] NotchRow(RectTransform gemBox, out CanvasGroup group)
+        static Image[] DotArc(RectTransform orb, out CanvasGroup group)
         {
-            float width = NotchStep * (NotchCount - 1) + NotchSize;
-            RectTransform row = Box(Node("Насечки", gemBox), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0f, GemSize * .5f + 4f),
-                new Vector2(width + 10f, NotchSize + 6f));
-            group = row.gameObject.AddComponent<CanvasGroup>();
+            RectTransform arc = Box(Node("Точки усилений", orb), new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero,
+                new Vector2(DotRadius * 1.2f, 40f));
+            group = arc.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = false;
             group.interactable = false;
-            Layer(row, "Подложка", T.TagFill, Role.Panel, .88f);
+            // Центр плитки — ниже огонька на полплитки и подъём огонька.
+            float centreY = -(Slot * .5f + OrbLift);
             var fills = new Image[NotchCount];
             for (int i = 0; i < NotchCount; i++)
             {
-                var at = new Vector2(-width * .5f + NotchSize * .5f + i * NotchStep, 0f);
-                RectTransform notch = Box(Node("Насечка " + (i + 1), row), new Vector2(.5f, .5f), new Vector2(.5f, .5f), at, new Vector2(NotchSize, NotchSize));
-                Image fill = Layer(notch, "Заливка", T.DiamondFill, Role.Text, 1f);
+                float angle = (90f + (NotchCount - 1) * .5f * DotStep - i * DotStep) * Mathf.Deg2Rad;
+                var at = new Vector2(Mathf.Cos(angle) * DotRadius, centreY + Mathf.Sin(angle) * DotRadius);
+                RectTransform dot = Box(Node("Точка " + (i + 1), arc), new Vector2(.5f, .5f), new Vector2(.5f, .5f), at,
+                    new Vector2(DotSize + 3f, DotSize + 3f));
+                Layer(dot, "Оправа", T.CircleFill, Role.SmokeDeep, .85f);
+                Image fill = Layer(dot, "Заливка", T.CircleFill, Role.Text, 1f, -1.5f);
                 Object.DestroyImmediate(fill.GetComponent<ThemeColor>());
-                fill.color = new Color(.08f, .09f, .12f, .9f);
-                Layer(notch, "Оправа", T.DiamondFrameSmall, Role.PanelLine, .75f);
+                fill.color = new Color(.3f, .32f, .38f, .95f);
                 fills[i] = fill;
             }
             return fills;

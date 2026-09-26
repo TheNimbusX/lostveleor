@@ -89,7 +89,7 @@ namespace Game.EditorTools
             view.ItemKind.text = "Оружие · уровень 3";
             view.ItemArt.sprite = ItemSprite("duelist_sabre");
             view.ItemArt.enabled = true;
-            view.ItemFrame.sprite = view.FrameFor(1);
+            view.SetItemFrame(1);
             view.ItemStats.text = "Урон  <b>+14</b>\nШанс крита  <b>+8%</b>\n\n<color=#93A2BC>Если надеть:</color>\nУрон   14 → 17  <color=#8FE3A8>+3</color>\nБроня   6 → 4  <color=#FF6A5A>−2</color>";
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.Tooltip);
@@ -101,7 +101,7 @@ namespace Game.EditorTools
                 view.ItemRarity.color = UiTheme.Current.Get(UiTheme.Role.Rare);
                 view.ItemKind.gameObject.SetActive(false);
                 view.ItemArt.sprite = view.StatIcons[9];
-                view.ItemFrame.sprite = view.EmptyFrame;
+                view.SetItemFrame(-1);
                 view.ItemStats.text = "Способности исполняются быстрее: короче замах и анимация приёма. Перезарядку не меняет.\n\n"
                     + "<color=#93A2BC>Из чего складывается:</color>\nОснова<pos=74%>0%\nЖетон гонца<pos=74%><color=#8FE3A8>+10%</color>";
                 LayoutRebuilder.ForceRebuildLayoutImmediate(view.Tooltip);

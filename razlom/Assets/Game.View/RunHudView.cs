@@ -6,9 +6,9 @@ using UnityEngine.UI;
 namespace Game.View
 {
     /// <summary>
-    /// Экраны забега на Canvas: префаб Resources/UI/Prefabs/RunHudWc (пак «Ночная
-    /// акварель», 23 сентября 2026) — выбор награды, замена способности, состояние
-    /// забега и полоса босса.
+    /// Экраны забега на Canvas: префаб Resources/UI/Prefabs/RunHudWc (материал «Дым и свет»,
+    /// 25–26 сентября 2026) — выбор награды и следующей арены, замена способности,
+    /// состояние забега, полоса босса и итог забега.
     ///
     /// ВИД — В ПРЕФАБЕ, СМЫСЛ — В <see cref="RunHud"/>: он кладёт тексты и иконки,
     /// включает части и получает клики. Подписи в мире и меню над добычей остаются
@@ -23,6 +23,11 @@ namespace Game.View
         public TMP_Text ChoiceHint;
         public RunOfferCard[] Offers = new RunOfferCard[3];
         [Tooltip("Значки вида награды: способность, талант, предмет, характеристика")] public Texture[] KindIcons = new Texture[4];
+
+        [Header("Выбор арены (тот же экран и карточки)")]
+        [Tooltip("Знаки пути на карточке: улучшение, магазин, опасная арена. Белые знаки — краску даёт RunHud; " +
+                 "пусто (префаб до пересборки) — берутся значки вида награды")]
+        public Texture[] RouteIcons = new Texture[3];
 
         [Header("Артефакт (награда босса)")]
         [Tooltip("«Отказаться» — показывается только на выборе артефакта")] public Button Skip;
@@ -57,12 +62,15 @@ namespace Game.View
         public CanvasGroup Summary;
         [Tooltip("Крупный значок исхода над заголовком")] public RawImage OutcomeIcon;
         [Tooltip("Значки исхода: гибель, победа, ушёл с добычей")] public Texture[] OutcomeIcons = new Texture[3];
+        [Tooltip("Мягкое свечение за значком исхода: его цвет, как и значка, ставит RunHud")] public Graphic OutcomeHalo;
         public TMP_Text SummaryTitle;
         public TMP_Text SummarySubtitle;
         [Tooltip("Числа в плашках: разломы, глубина, предметы, золото")] public TMP_Text[] SummaryValues = new TMP_Text[4];
         public TMP_Text SummaryLoss;
-        public TMP_Text SummaryCampTitle;
-        public TMP_Text SummaryCamp;
+        // Строки «В лагере ждёт» убраны (владелец 26 сентября); ссылки остались только ради префаба
+        // до пересборки — вид гасит эти строки в Awake. Новый префаб их не строит.
+        [HideInInspector] public TMP_Text SummaryCampTitle;
+        [HideInInspector] public TMP_Text SummaryCamp;
         public Button Repeat;
         public TMP_Text RepeatLabel;
         public Button ToCamp;
@@ -100,6 +108,8 @@ namespace Game.View
             if (ArtifactKeep != null) ArtifactKeep.onClick.AddListener(() => ArtifactKeepClicked?.Invoke());
             SetShown(ArtifactReplace, false, true);
             SetShown(Summary, false, true);
+            SetActive(SummaryCampTitle, false);
+            SetActive(SummaryCamp, false);
             if (GetComponent<CanvasScaler>() != null && GetComponent<UiScaleFollower>() == null) gameObject.AddComponent<UiScaleFollower>();
             PauseMenuView.EnsureEventSystem();
             SetShown(Choice, false, true);
@@ -131,6 +141,22 @@ namespace Game.View
         public static void SetText(TMP_Text label, string text)
         {
             if (label != null && label.text != text) label.text = text;
+        }
+
+        /// <summary>
+        /// Буква клавиши «Дыма и света» (UiInkKit.Keycap: «Буква» внутри узла с «Кольцом»): одна буква —
+        /// круг, длинная подпись после смены клавиш («Space», «Mouse4») — капсула по ширине текста.
+        /// Кольцо — капсула 9-slice, растягивается без овала. У клавиши пака (префаб до пересборки) — только текст.
+        /// </summary>
+        public static void SetKey(TMP_Text label, string text)
+        {
+            if (label == null) return;
+            SetText(label, text);
+            if (!(label.transform.parent is RectTransform cap) || cap.Find("Кольцо") == null) return;
+            float height = cap.sizeDelta.y;
+            float width = string.IsNullOrEmpty(text) || text.Length < 2 ? height
+                : Mathf.Max(height, label.GetPreferredValues(text).x + height * .5f);
+            if (!Mathf.Approximately(cap.sizeDelta.x, width)) cap.sizeDelta = new Vector2(width, height);
         }
     }
 }

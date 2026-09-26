@@ -1,0 +1,15 @@
+{
+  "stage": "second_clip_charge_loop",
+  "previous_clip_approved": true,
+  "approval": "2026-09-25: ок идем дальше",
+  "source": "../windup_start/Stonehoof_WindupStart_r01.blend",
+  "reference": "../../references/charge.mp4",
+  "preserve": ["accepted model, material, hoof rig and skin", "launch endpoint as loop entry pose", "low head, heavy forequarters, gathering and hind-leg propulsion"],
+  "cycle_frames": 12,
+  "fps": 30,
+  "sim_speed_m_s": 12,
+  "stride_m": 4.8,
+  "root_motion": "no arena travel in deform clip; separate preview carrier represents Sim",
+  "delivery": "one loop, side and elevated camera, connected launch preview, editable master and baked clip",
+  "gates": "owner accepts this clip before braking; Unity and VFX remain later stages"
+}

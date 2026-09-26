@@ -25,6 +25,8 @@ namespace Game.View
         [Header("Герой")]
         public RectTransform HeroPanel;
         public RawImage Portrait;
+        [Tooltip("Необязательно: верх того же портрета вне круга (голова выходит за кромку, 26 сентября); текстура — как у Portrait")]
+        public RawImage PortraitOuter;
         public TMP_Text Level;
         public TMP_Text HeroName;
         public RectTransform HealthFill;
@@ -62,11 +64,16 @@ namespace Game.View
         public TMP_Text TooltipBody;
         public HudTooltipMetric[] TooltipMetrics = new HudTooltipMetric[6];
         public TMP_Text TooltipStatus;
-        [Tooltip("Необязательно: ряд ромбиков усилений в подсказке (8) — первые N залиты")]
+        [Tooltip("Необязательно: ряд точек усилений в подсказке (8) — первые N горят")]
         public Image[] TooltipUpgradePips = new Image[0];
         [Tooltip("Необязательно: «Усилений: N из 8»")] public TMP_Text TooltipUpgradeText;
         [Tooltip("Строка усилений целиком — прячется у кувырка и способностей без усилений")] public GameObject TooltipUpgradeRow;
         public Sprite UpgradePipFilled, UpgradePipEmpty;
+        [Tooltip("Необязательно: блок под Alt — взятые усиления и «было → стало» (владелец 26 сентября: видеть, что висит поверх базы)")]
+        public GameObject TooltipDetail;
+        [Tooltip("Текст блока под Alt")] public TMP_Text TooltipDetailText;
+        [Tooltip("Необязательно: «Alt — подробнее» в строке усилений; виден, пока усиления есть, а Alt не зажат")]
+        public GameObject TooltipDetailHint;
         [Tooltip("Хвостик под карточкой; по X встаёт напротив плитки")]
         public RectTransform TooltipTail;
         [Tooltip("Столбцов в сетке параметров; черта-разделитель стоит только между столбцами")]
@@ -95,7 +102,7 @@ namespace Game.View
         [Tooltip("Свет на банке здоровья: здоровья < 40%, а зелье есть")] public HudPulse HealthPotionPulse;
         [Tooltip("Полоса здоровья: вздрагивает от удара")] public RectTransform HealthBar;
         [Tooltip("Вспышка по полосе здоровья от удара (аддитивная)")] public Graphic HealthFlash;
-        [Tooltip("Вспышка у ромба уровня на портрете (аддитивная)")] public Graphic LevelFlare;
+        [Tooltip("Вспышка у кружка уровня на портрете (аддитивная)")] public Graphic LevelFlare;
         [Tooltip("Проблеск по полосе опыта, когда опыт прибавился")] public HudGlint ExperienceGlint;
         [Tooltip("Редкий проблеск по полному лавидию")] public HudGlint LavidiumGlint;
 
@@ -131,6 +138,8 @@ namespace Game.View
 
         const int DashSlot = Simulation.AbilitySlots - 1;
         readonly float[] _pressUntil = new float[Simulation.AbilitySlots];
+        // Нажатие прошло (способность была готова): только такое разжигает кольцо, отказ — нет.
+        readonly bool[] _pressCast = new bool[Simulation.AbilitySlots];
         readonly int[] _iconIds = new int[Simulation.AbilitySlots];
         readonly PlayerHud.TooltipValue[] _values = new PlayerHud.TooltipValue[8];
         Canvas _canvas;
@@ -155,7 +164,12 @@ namespace Game.View
             // «Масштаб интерфейса» из настроек паузы; эталон CanvasScaler берётся из префаба.
             if (GetComponent<UnityEngine.UI.CanvasScaler>() != null && GetComponent<UiScaleFollower>() == null)
                 gameObject.AddComponent<UiScaleFollower>();
-            if (HealthFill != null) _healthImage = HealthFill.GetComponent<Image>();
+            // У мазка кистью («Дым и свет») заливка — маска, краска лежит внутри неё.
+            if (HealthFill != null)
+            {
+                _healthImage = HealthFill.GetComponent<Image>();
+                if (_healthImage == null) _healthImage = HealthFill.GetComponentInChildren<Image>(true);
+            }
             for (int i = 0; i < _iconIds.Length; i++) _iconIds[i] = int.MinValue;
             if (Tooltip != null) Tooltip.gameObject.SetActive(false);
             if (Feedback != null) Feedback.gameObject.SetActive(false);
@@ -173,24 +187,41 @@ namespace Game.View
 #endif
 
         readonly int[] _upgrades = new int[8];
-        int _tooltipUpgrades = -1;
+        readonly int[] _upgradeMasks = new int[8];
+        int _tooltipUpgrades = -1, _tooltipMask = -1;
+        bool _tooltipDetailed;
         RunArtifact _artifact = (RunArtifact)255;
         bool _artifactHovered;
         const int ArtifactTooltip = -2;
 
+        // Блок под Alt: та же способность без усилений — от неё «было → стало».
+        readonly AbilityBuild _baseBuild = new AbilityBuild();
+        readonly PlayerHud.TooltipValue[] _baseValues = new PlayerHud.TooltipValue[8];
+        readonly System.Text.StringBuilder _detail = new System.Text.StringBuilder(512);
+
+        /// <summary>Alt зажат (или съёмка -capture-hud-tooltip-detail): подсказка способности показывает взятые усиления.</summary>
+        static bool DetailHeld => GameKeyBindings.HeldKey(KeyCode.LeftAlt) || GameKeyBindings.HeldKey(KeyCode.RightAlt) || CaptureRig.HudTooltipDetail;
+
+        static RunLoadout LoadoutOf(TickDriver driver) => driver != null && driver.Session != null ? driver.Session.ActiveLoadout : null;
+
         /// <summary>
-        /// Сколько усилений у способности в слоте: взятые в забеге (или в наборе лагеря) плюс
-        /// включённые в меню разработчика. Порядок не важен — только число (ромбик и подсказка).
+        /// Какие усиления у способности в слоте, маской (бит N — усиление N): взятые в забеге (или
+        /// в наборе лагеря) плюс включённые в меню разработчика. Порядка взятия нет — только маска.
         /// </summary>
-        static int UpgradesAt(TickDriver driver, int slot)
+        static int UpgradeMaskAt(TickDriver driver, int slot)
         {
-            RunLoadout loadout = driver != null && driver.Session != null ? driver.Session.ActiveLoadout : null;
+            RunLoadout loadout = LoadoutOf(driver);
             if (loadout == null) return 0;
             int pool = loadout.PoolIndexAt(slot);
             if (!SabreTalents.TryLineOf(pool, out SabreTalentLine line)) return 0;
             int mask = loadout.TalentMask(pool);
             for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
                 if (DeveloperTalents.Has(line, index)) mask |= 1 << index;
+            return mask;
+        }
+
+        static int CountBits(int mask)
+        {
             int count = 0;
             for (; mask != 0; mask &= mask - 1) count++;
             return count;
@@ -202,7 +233,10 @@ namespace Game.View
             // Момент арены — раньше уровня: «Разлом зачищен» причина, новый уровень — следствие.
             RefreshMoments(driver);
             for (int slot = 0; slot < _upgrades.Length; slot++)
-                _upgrades[slot] = slot < DashSlot ? UpgradesAt(driver, slot) : 0;
+            {
+                _upgradeMasks[slot] = slot < DashSlot ? UpgradeMaskAt(driver, slot) : 0;
+                _upgrades[slot] = CountBits(_upgradeMasks[slot]);
+            }
             RefreshHero(sim, camp, pointer);
             RefreshExperience(camp, pointer);
             HoverSlot = -1;
@@ -232,6 +266,8 @@ namespace Game.View
         {
             RiftRun run = driver.Session != null && driver.Session.Mode == GameMode.Rift ? driver.Run : null;
             if (run == null || run.Map == null) { _momentDepth = -1; _momentPhase = RunPhase.Idle; return; }
+            // Под дымной завесой перехода плашка не начинается: её появление и смена числа ушли бы под дым.
+            if (CampTransition.Covering) return;
             if (run.Depth != _momentDepth && run.Phase == RunPhase.Clearing)
             {
                 bool next = _momentDepth > 0;
@@ -247,8 +283,8 @@ namespace Game.View
 
         void ArenaIntro(RiftRun run, bool next)
         {
-            // Первую арену открывает вспышка арки (CampTransition); следующие — выход из темноты.
-            if (next && ArenaFade != null) HudFx.Flash(ArenaFade, .92f, .55f);
+            // Арены открывает дымная завеса (CampTransition); без неё следующие — выход из темноты.
+            if (next && ArenaFade != null && !CampTransition.Running) HudFx.Flash(ArenaFade, .92f, .55f);
             GameSound.Play("rift_whoosh", .55f, .03f, .5f);
             if (LevelBanner == null) return;
             int fights = 0;
@@ -291,8 +327,7 @@ namespace Game.View
 
         void RefreshHero(Simulation sim, Camp camp, Vector2 pointer)
         {
-            if (Portrait != null && Portrait.texture == null)
-                Portrait.texture = Resources.Load<Texture2D>("UI/HUD/PelagPortraitPainted") ?? Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
+            RefreshPortrait();
             int level = camp != null ? camp.Level : 1;
             if (level != _level && Level != null)
             {
@@ -345,6 +380,23 @@ namespace Game.View
             if (LavidiumGlint != null) LavidiumGlint.Repeat = resource >= maxResource;
             SetFill(LavidiumFill, resource / (float)maxResource);
             if (LavidiumText != null) LavidiumText.text = vitals ? resource + " / " + maxResource : string.Empty;
+        }
+
+        /// <summary>
+        /// Портрет без текстуры (сборка до импорта арта) берёт запасной из Resources. С верхом вне круга
+        /// (<see cref="PortraitOuter"/>) годится только вырез без фона: у квадратной картинки над кругом
+        /// встал бы её фон — тогда верх прячется, портрет остаётся в круге.
+        /// </summary>
+        void RefreshPortrait()
+        {
+            if (Portrait == null) return;
+            if (Portrait.texture == null)
+                Portrait.texture = PortraitOuter != null
+                    ? Resources.Load<Texture2D>("UI/HUD/PelagPortraitPaintedCutout")
+                    : Resources.Load<Texture2D>("UI/HUD/PelagPortraitPainted") ?? Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
+            if (PortraitOuter == null || PortraitOuter.texture == Portrait.texture) return;
+            PortraitOuter.texture = Portrait.texture;
+            PortraitOuter.enabled = Portrait.texture != null;
         }
 
         void RefreshExperience(Camp camp, Vector2 pointer)
@@ -401,7 +453,11 @@ namespace Game.View
             if (widget.Key != null)
             {
                 string key = PlayerHud.SlotKey(slot);
-                if (widget.Key.text != key) widget.Key.text = key;
+                if (widget.Key.text != key)
+                {
+                    widget.Key.text = key;
+                    FitKeycap(widget.Key);
+                }
             }
 
             HudAbilityAvailability state = PlayerHud.Availability(sim, slot, build);
@@ -440,6 +496,8 @@ namespace Game.View
                 widget.ReadyGem.SetReady(state.Ready);
                 widget.ReadyGem.SetHover(hovered);
                 widget.ReadyGem.SetUpgrades(slot < _upgrades.Length ? _upgrades[slot] : 0);
+                // Кольцо вспыхивает на прошедшем нажатии и гаснет за треть секунды; отказ его не трогает.
+                widget.ReadyGem.SetPress(_pressCast[slot] ? Mathf.Clamp01((_pressUntil[slot] + .2f - Time.unscaledTime) / .36f) : 0f);
             }
             if (widget.PressGlow != null && widget.PressGlow.activeSelf != flash) widget.PressGlow.SetActive(flash);
         }
@@ -460,6 +518,7 @@ namespace Game.View
                 {
                     ArtifactKey.transform.parent.gameObject.SetActive(active);
                     ArtifactKey.text = GameKeyBindings.Label(GameAction.UseArtifact);
+                    FitKeycap(ArtifactKey);
                 }
                 _artifactWasReady = true;
             }
@@ -484,6 +543,18 @@ namespace Game.View
 
         bool _artifactWasReady = true;
 
+        /// <summary>
+        /// Подсказка появляется поверх всего HUD: значки зелий, всплывашки и объявление в старом префабе
+        /// собраны после неё и рисовались сверху (26 сентября «−25% получаемого урона» лежало на подсказке).
+        /// Наверх — только в миг появления, не каждый кадр: смена порядка перестраивает холст.
+        /// </summary>
+        void OpenTooltip()
+        {
+            if (Tooltip.gameObject.activeSelf) return;
+            Tooltip.SetAsLastSibling();
+            Tooltip.gameObject.SetActive(true);
+        }
+
         /// <summary>Подсказка артефакта — та же карточка, что у способностей, без клавиши и параметров.</summary>
         void ShowArtifactTooltip()
         {
@@ -491,7 +562,7 @@ namespace Game.View
             {
                 _tooltipShown = ArtifactTooltip;
                 _tooltipDefinition = int.MinValue;
-                Tooltip.gameObject.SetActive(true);
+                OpenTooltip();
                 if (TooltipIcon != null)
                 {
                     TooltipIcon.texture = RunArtifactTexts.Icon(_artifact);
@@ -499,10 +570,13 @@ namespace Game.View
                     TooltipIcon.uvRect = new Rect(0f, 0f, 1f, 1f);
                 }
                 if (TooltipTitle != null) TooltipTitle.text = RunArtifactTexts.Name(_artifact);
-                if (TooltipKey != null) TooltipKey.transform.parent.gameObject.SetActive(false);
+                Transform keyBox = TooltipKeyBox;
+                if (keyBox != null) keyBox.gameObject.SetActive(false);
                 if (TooltipBody != null) TooltipBody.text = RunArtifactTexts.Effect(_artifact);
                 foreach (HudTooltipMetric metric in TooltipMetrics) if (metric != null) metric.gameObject.SetActive(false);
                 if (TooltipUpgradeRow != null) TooltipUpgradeRow.SetActive(false);
+                if (TooltipDetail != null) TooltipDetail.SetActive(false);
+                _tooltipDetailed = false;
                 if (TooltipStatus != null)
                 {
                     TooltipStatus.text = RunArtifactTexts.Use(_artifact) + "\nАртефакт забега · пропадёт с концом забега";
@@ -529,7 +603,7 @@ namespace Game.View
         {
             if (Tooltip == null) return;
             if (_artifactHovered) { ShowArtifactTooltip(); return; }
-            if (_tooltipShown == ArtifactTooltip && TooltipKey != null) TooltipKey.transform.parent.gameObject.SetActive(true);
+            if (_tooltipShown == ArtifactTooltip && TooltipKeyBox != null) TooltipKeyBox.gameObject.SetActive(true);
             int slot = HoverSlot;
             AbilityBuild build = slot >= 0 ? sim.GetAbility(slot) : null;
             if (build == null)
@@ -542,12 +616,17 @@ namespace Game.View
             string status = driver.AbilityTargetAimSlot == slot ? "Выбери цель · ПКМ — отмена"
                 : !state.Ready ? PlayerHud.AvailabilityText(state) : string.Empty;
             int upgrades = slot < _upgrades.Length ? _upgrades[slot] : 0;
-            bool rebuilt = slot != _tooltipShown || build.DefinitionId != _tooltipDefinition || upgrades != _tooltipUpgrades;
+            int mask = slot < _upgradeMasks.Length ? _upgradeMasks[slot] : 0;
+            // Alt меняет подсказку на месте: без усилений показывать нечего, Alt ничего не делает.
+            bool detailed = mask != 0 && DetailHeld;
+            bool rebuilt = slot != _tooltipShown || build.DefinitionId != _tooltipDefinition || upgrades != _tooltipUpgrades
+                || mask != _tooltipMask || detailed != _tooltipDetailed;
             if (rebuilt)
             {
                 _tooltipShown = slot; _tooltipDefinition = build.DefinitionId; _tooltipUpgrades = upgrades;
+                _tooltipMask = mask; _tooltipDetailed = detailed;
                 RefreshTooltipUpgrades(slot, driver, upgrades);
-                Tooltip.gameObject.SetActive(true);
+                OpenTooltip();
                 if (TooltipIcon != null)
                 {
                     string file = PlayerHud.IconFile(build.DefinitionId);
@@ -556,9 +635,15 @@ namespace Game.View
                     TooltipIcon.uvRect = IconRect;
                 }
                 if (TooltipTitle != null) TooltipTitle.text = PlayerHud.AbilityName(build.DefinitionId);
-                if (TooltipKey != null) TooltipKey.text = PlayerHud.SlotKey(slot);
+                if (TooltipKey != null)
+                {
+                    TooltipKey.text = PlayerHud.SlotKey(slot);
+                    FitKeycap(TooltipKey);
+                }
                 if (TooltipBody != null) TooltipBody.text = PlayerHud.AbilityDescription(build.DefinitionId);
                 int count = PlayerHud.CollectTooltipValues(build, _values, sim);
+                // Та же способность без усилений: изменённое усилениями число — цветом «хорошо».
+                int baseCount = mask != 0 ? CollectBaseValues(slot, driver, sim) : -1;
                 for (int i = 0; i < TooltipMetrics.Length; i++)
                 {
                     HudTooltipMetric metric = TooltipMetrics[i];
@@ -569,9 +654,15 @@ namespace Game.View
                     PlayerHud.TooltipValue value = _values[i];
                     int icon = value.Caption == "Длительность" ? 6 : value.Icon;
                     if (metric.Icon != null && (uint)icon < (uint)StatIcons.Length) metric.Icon.sprite = StatIcons[icon];
-                    if (metric.Value != null) metric.Value.text = value.Value;
+                    if (metric.Value != null)
+                    {
+                        metric.Value.text = value.Value;
+                        string before = BaseValue(value.Caption, baseCount);
+                        TintValue(metric.Value, before != null && before != value.Value);
+                    }
                     if (metric.Separator != null) metric.Separator.SetActive(i % Mathf.Max(1, TooltipMetricColumns) != 0);
                 }
+                RefreshTooltipDetail(slot, build, driver, mask, detailed, count, baseCount);
                 _tooltipStatusShown = null;
             }
             if (TooltipStatus != null && status != _tooltipStatusShown)
@@ -585,22 +676,154 @@ namespace Game.View
             PlaceTooltip(slot);
         }
 
-        /// <summary>Ряд из 8 ромбиков и «Усилений: N из 8» (подсказка из концепта 1-gem-ingame).</summary>
+        /// <summary>
+        /// Ряд из 8 точек и «Усилений: N из 8» (подсказка из концепта 1-gem-ingame; ромбики стали
+        /// точками 26 сентября — один язык фигур).
+        /// </summary>
         void RefreshTooltipUpgrades(int slot, TickDriver driver, int upgrades)
         {
-            RunLoadout loadout = driver != null && driver.Session != null ? driver.Session.ActiveLoadout : null;
+            RunLoadout loadout = LoadoutOf(driver);
             bool has = slot < DashSlot && loadout != null && SabreTalents.TryLineOf(loadout.PoolIndexAt(slot), out _);
             if (TooltipUpgradeRow != null) TooltipUpgradeRow.SetActive(has);
             if (!has) return;
+            // Пустая точка — та же точка, только тусклая; у старых ромбиков пустой — отдельная рамка, ей нужно больше света.
+            float empty = UpgradePipFilled != null && UpgradePipFilled == UpgradePipEmpty ? .24f : .45f;
             for (int i = 0; i < TooltipUpgradePips.Length; i++)
             {
                 Image pip = TooltipUpgradePips[i];
                 if (pip == null) continue;
                 bool lit = i < upgrades;
                 if (UpgradePipFilled != null && UpgradePipEmpty != null) pip.sprite = lit ? UpgradePipFilled : UpgradePipEmpty;
-                pip.color = lit ? Color.white : new Color(1f, 1f, 1f, .45f);
+                pip.color = lit ? Color.white : new Color(1f, 1f, 1f, empty);
             }
             if (TooltipUpgradeText != null) TooltipUpgradeText.text = "Усилений: " + upgrades + " из " + RunLoadout.MaxUpgrades;
+        }
+
+        /// <summary>
+        /// Узел клавиши в шапке подсказки: «Клавиша» раскладки вокруг плашки. У старых префабов,
+        /// где его нет, — сама плашка.
+        /// </summary>
+        Transform TooltipKeyBox
+        {
+            get
+            {
+                if (TooltipKey == null) return null;
+                Transform cap = TooltipKey.transform.parent;
+                return cap != null && cap.parent != null && cap.parent.name == "Клавиша" ? cap.parent : cap;
+            }
+        }
+
+        /// <summary>
+        /// Клавиша «Дыма и света» по ширине подписи: одна буква — круг, длинная (Space, Alt, ЛКМ) —
+        /// капсула. Подпись меняется, когда игрок переназначает клавиши. Трогает только узлы
+        /// «Клавиша» (клавиша плитки и шапка подсказки): у запасных префабов другие имена — их не трогаем.
+        /// </summary>
+        static void FitKeycap(TMP_Text key)
+        {
+            if (key == null || key.transform.parent == null) return;
+            Transform cap = key.transform.parent;
+            Transform box = cap.name == "Клавиша" ? cap : cap.parent != null && cap.parent.name == "Клавиша" ? cap.parent : null;
+            if (box == null) return;
+            var rect = (RectTransform)box;
+            var layout = box.GetComponent<LayoutElement>();
+            float size = layout != null && layout.preferredHeight > 0f ? layout.preferredHeight : rect.rect.height;
+            if (size <= 0f) return;
+            string text = key.text ?? string.Empty;
+            float width = text.Length > 1 ? Mathf.Max(size, key.GetPreferredValues(text).x + size * .7f) : size;
+            if (layout != null) layout.preferredWidth = layout.minWidth = width;
+            else rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+        }
+
+        /// <summary>
+        /// Параметры той же способности без усилений в <see cref="_baseValues"/>; −1 — не вышло
+        /// (нет набора). Бонусы героя входят в обе сборки одинаково, разница — только усиления.
+        /// Определение создаётся заново — звать только на пересборке подсказки, не каждый кадр.
+        /// </summary>
+        int CollectBaseValues(int slot, TickDriver driver, Simulation sim)
+        {
+            RunLoadout loadout = LoadoutOf(driver);
+            AbilityDefinition definition = loadout != null ? PelagKit.PoolDefinition(loadout.PoolIndexAt(slot)) : null;
+            if (definition == null) return -1;
+            _baseBuild.Rebuild(definition, System.Array.Empty<AbilityNode>(), 0);
+            return PlayerHud.CollectTooltipValues(_baseBuild, _baseValues, sim);
+        }
+
+        /// <summary>Значение без усилений с той же подписью; null — нет такого (или нет базы).</summary>
+        string BaseValue(string caption, int baseCount)
+        {
+            for (int i = 0; i < baseCount; i++)
+                if (_baseValues[i].Caption == caption) return _baseValues[i].Value;
+            return null;
+        }
+
+        /// <summary>Число, изменённое усилениями, — цветом «хорошо»; остальное — обычным текстом.</summary>
+        static void TintValue(TMP_Text value, bool changed)
+        {
+            UiTheme.Role role = changed ? UiTheme.Role.Good : UiTheme.Role.Text;
+            var tint = value.GetComponent<ThemeColor>();
+            if (tint == null) value.color = UiTheme.Current.Get(role);
+            else if (tint.Role != role) tint.SetRole(role);
+        }
+
+        static string Hex(UiTheme.Role role) => ColorUtility.ToHtmlStringRGB(UiTheme.Current.Get(role));
+
+        /// <summary>
+        /// Блок под Alt (владелец 26 сентября: «видеть, что на скилле уже висит поверх базы»): взятые
+        /// усиления по порядку номеров — имя и описание, ниже «было → стало» по изменённым числам.
+        /// Без Alt при усилениях в строке усилений видна подсказка «Alt — подробнее».
+        /// </summary>
+        void RefreshTooltipDetail(int slot, AbilityBuild build, TickDriver driver, int mask, bool detailed, int count, int baseCount)
+        {
+            if (TooltipDetailHint != null) TooltipDetailHint.SetActive(mask != 0 && !detailed);
+            if (TooltipDetail == null) return;
+            if (TooltipDetail.activeSelf != detailed) TooltipDetail.SetActive(detailed);
+            if (!detailed || TooltipDetailText == null) return;
+
+            string muted = Hex(UiTheme.Role.TextMuted), good = Hex(UiTheme.Role.Good);
+            _detail.Clear();
+            RunLoadout loadout = LoadoutOf(driver);
+            if (loadout != null && SabreTalents.TryLineOf(loadout.PoolIndexAt(slot), out SabreTalentLine line))
+                for (int i = 0; i < SabreTalents.TalentsPerLine; i++)
+                {
+                    if ((mask & (1 << i)) == 0) continue;
+                    if (_detail.Length > 0) _detail.Append('\n');
+                    _detail.Append("<b>").Append(SabreTalentTexts.Name(line, i)).Append("</b>  <color=#").Append(muted).Append('>')
+                        .Append(SabreTalentTexts.Description(line, i)).Append("</color>");
+                }
+
+            bool gap = false;
+            for (int i = 0; i < count && baseCount >= 0; i++)
+            {
+                string before = BaseValue(_values[i].Caption, baseCount);
+                if (before != null && before != _values[i].Value) AppendChange(ref gap, _values[i].Caption, before, _values[i].Value, muted, good);
+            }
+            // Числа, которых нет в сетке параметров, но их меняют усиления Якоря и Разгрома.
+            if (baseCount >= 0)
+            {
+                AppendSeconds(ref gap, "Замах", build, AbilityStatType.WindupTicks, muted, good);
+                AppendSeconds(ref gap, "Оглушение", build, AbilityStatType.StunTicks, muted, good);
+                AppendSeconds(ref gap, "Окно следующего удара", build, AbilityStatType.ComboWindowTicks, muted, good);
+            }
+            TooltipDetailText.text = _detail.ToString();
+        }
+
+        void AppendSeconds(ref bool gap, string caption, AbilityBuild build, AbilityStatType stat, string muted, string good)
+        {
+            Fix64 now = build.Get(stat), was = _baseBuild.Get(stat);
+            if (now == was) return;
+            AppendChange(ref gap, caption, Seconds(was), Seconds(now), muted, good);
+        }
+
+        static string Seconds(Fix64 ticks) => (ticks.ToFloat() / Simulation.TicksPerSecond).ToString("0.##") + " с";
+
+        /// <summary>Строка «Радиус  3 м → 3,8 м»; перед первой — короткий отступ от списка усилений.</summary>
+        void AppendChange(ref bool gap, string caption, string before, string after, string muted, string good)
+        {
+            if (!gap && _detail.Length > 0) _detail.Append("\n<size=45%> </size>");
+            gap = true;
+            if (_detail.Length > 0) _detail.Append('\n');
+            _detail.Append(caption).Append("  <color=#").Append(muted).Append('>').Append(before).Append("</color> → <color=#")
+                .Append(good).Append('>').Append(after).Append("</color>");
         }
 
         void PlaceTooltip(int slot)
@@ -635,6 +858,7 @@ namespace Game.View
         {
             if ((uint)slot >= _pressUntil.Length) return;
             _pressUntil[slot] = Time.unscaledTime + .16f;
+            _pressCast[slot] = state.Ready;
             _feedbackSlot = slot; _feedbackBlock = state.Block; _feedbackUntil = Time.unscaledTime + 1.25f;
             _feedbackMessage = PlayerHud.AvailabilityText(state);
         }

@@ -24,26 +24,49 @@ namespace Game.View
         public CampShopScreen Trader;
         public CampAlchemyScreen Alchemist;
 
-        /// <summary>Вкладка пака: оранжевая подпись и подчёркивание у выбранной.</summary>
+        /// <summary>
+        /// Вкладка пака или «Дыма и света» (UiInkKit.Tab): оранжевая подпись и подчёркивание
+        /// (у пака — полоса, у «Дыма и света» — нить света) у выбранной.
+        /// </summary>
         public static void SetTab(Button tab, bool selected)
         {
             if (tab == null) return;
-            var label = tab.transform.Find("Надпись")?.GetComponent<ThemeColor>();
+            var label = Part(tab.transform, "Надпись")?.GetComponent<ThemeColor>();
             if (label != null) label.SetRole(selected ? UiTheme.Role.Accent : UiTheme.Role.Text, selected ? 1f : .85f);
-            var line = tab.transform.Find("Подчёркивание");
+            var line = Part(tab.transform, "Подчёркивание");
             if (line != null) line.gameObject.SetActive(selected);
         }
 
-        /// <summary>Строка списка пака: у выбранной — подложка, рамка и оранжевый ромб.</summary>
+        /// <summary>
+        /// Строка списка пака или «Дыма и света» (UiInkKit.ListRow): у выбранной — подложка
+        /// (у «Дыма и света» — полоса дыма), рамка (нить света) и оранжевый ромб-огонёк.
+        /// </summary>
         public static void SetRow(Button row, bool selected)
         {
             if (row == null) return;
-            var bg = row.transform.Find("Подложка");
+            var bg = Part(row.transform, "Подложка");
             if (bg != null) bg.gameObject.SetActive(selected);
-            var frame = row.transform.Find("Рамка");
+            var frame = Part(row.transform, "Рамка");
             if (frame != null) frame.gameObject.SetActive(selected);
-            var marker = row.transform.Find("Маркер")?.GetComponent<ThemeColor>();
+            var marker = Part(row.transform, "Маркер")?.GetComponent<ThemeColor>();
             if (marker != null) marker.SetRole(selected ? UiTheme.Role.Accent : UiTheme.Role.TextMuted);
+        }
+
+        /// <summary>
+        /// Часть вкладки или строки: прямой ребёнок (пак, UiInkKit.Tab и ListRow), иначе внук —
+        /// окно может завернуть деталь «Дыма и света» в свою кнопку. Глубже не ищем: у вложенной
+        /// ячейки тоже есть «Рамка».
+        /// </summary>
+        static Transform Part(Transform root, string name)
+        {
+            Transform part = root.Find(name);
+            if (part != null) return part;
+            foreach (Transform child in root)
+            {
+                part = child.Find(name);
+                if (part != null) return part;
+            }
+            return null;
         }
     }
 

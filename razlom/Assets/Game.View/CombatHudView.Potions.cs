@@ -67,9 +67,14 @@ namespace Game.View
             {
                 var kind=camp.SelectedPotion(i);int count=camp.PotionCount(kind);
                 if(_potionCounts[i]!=null)_potionCounts[i].text=count.ToString();
-                if(_potionKeys[i]!=null)_potionKeys[i].text=TickDriver.GamepadLastUsed
-                    ? (i==0?"←":"→")
-                    : GameKeyBindings.Label(i==0?GameAction.HealthPotion:GameAction.LavidiumPotion);
+                if(_potionKeys[i]!=null)
+                {
+                    string key=TickDriver.GamepadLastUsed
+                        ? (i==0?"←":"→")
+                        : GameKeyBindings.Label(i==0?GameAction.HealthPotion:GameAction.LavidiumPotion);
+                    // Клавиша-кружок растягивается в капсулу под длинную подпись после смены клавиши.
+                    if(_potionKeys[i].text!=key){_potionKeys[i].text=key;FitKeycap(_potionKeys[i]);}
+                }
                 if(_potionArts[i]!=null)
                 {
                     // Бутылка по выбранному зелью: малая или большая (набор предметов 21 сентября).

@@ -1,0 +1,294 @@
+[a_Rodin.utils-DBG]: RodinBridge: register
+[a_Rodin.utils-WRN]: Port 61863 is in use
+[a_Rodin.utils-WRN]: Server running on port 61864
+[a_Rodin.utils-DBG]: on_scene_load
+[a_Rodin.utils-DBG]: ensure_default_image
+00:04.968  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death\Stonehoof_Death_r01.blend"
+Reloading external rigs...
+Reloading external metarigs...
+{
+  "groups": {
+    "leg_front_left_bot2": [
+      1.6540288925170898e-06,
+      145,
+      [
+        0.47291964292526245,
+        -0.30417361855506897,
+        1.6540288925170898e-06
+      ]
+    ],
+    "leg_front_left_bot1": [
+      0.15674802660942078,
+      187,
+      [
+        0.42725884914398193,
+        -0.1961580514907837,
+        0.15674802660942078
+      ]
+    ],
+    "leg_front_left_bot0": [
+      0.1500532031059265,
+      3616,
+      [
+        0.3159446716308594,
+        -0.23944967985153198,
+        0.1500532031059265
+      ]
+    ],
+    "leg_front_left_top1": [
+      0.022934675216674805,
+      2522,
+      [
+        0.03852958604693413,
+        -0.28801557421684265,
+        0.022934675216674805
+      ]
+    ],
+    "leg_front_left_top0": [
+      0.01901233196258545,
+      3027,
+      [
+        -0.016111774370074272,
+        -0.18261852860450745,
+        0.01901233196258545
+      ]
+    ],
+    "head0": [
+      0.0051718056201934814,
+      4116,
+      [
+        0.054868947714567184,
+        -0.4575226306915283,
+        0.0051718056201934814
+      ]
+    ],
+    "neck0": [
+      0.019412219524383545,
+      3026,
+      [
+        -0.037078458815813065,
+        -0.17692232131958008,
+        0.019412219524383545
+      ]
+    ],
+    "leg_front_right_top0": [
+      0.19672557711601257,
+      3023,
+      [
+        -0.21912716329097748,
+        -0.21762296557426453,
+        0.19672557711601257
+      ]
+    ],
+    "leg_front_right_top1": [
+      0.19748175144195557,
+      4105,
+      [
+        -0.08918797969818115,
+        -0.30345723032951355,
+        0.19748175144195557
+      ]
+    ],
+    "body_top0": [
+      0.11336216330528259,
+      2574,
+      [
+        0.13932636380195618,
+        -0.03190765529870987,
+        0.11336216330528259
+      ]
+    ],
+    "body": [
+      0.040099531412124634,
+      2573,
+      [
+        -0.02302023395895958,
+        -0.03444066643714905,
+        0.040099531412124634
+      ]
+    ],
+    "body_top1": [
+      0.3450585603713989,
+      2445,
+      [
+        0.27273476123809814,
+        -0.12439453601837158,
+        0.3450585603713989
+      ]
+    ],
+    "body_bot": [
+      0.29391205310821533,
+      3012,
+      [
+        -0.037103019654750824,
+        0.3857654333114624,
+        0.29391205310821533
+      ]
+    ],
+    "leg_hind_right_top1": [
+      0.24728678166866302,
+      3261,
+      [
+        -0.38140249252319336,
+        0.5520879626274109,
+        0.24728678166866302
+      ]
+    ],
+    "leg_hind_left_top0": [
+      0.23008078336715698,
+      7914,
+      [
+        0.17024758458137512,
+        0.4604198932647705,
+        0.23008078336715698
+      ]
+    ],
+    "leg_hind_right_top0": [
+      0.3268839418888092,
+      3160,
+      [
+        -0.19252783060073853,
+        0.4596934914588928,
+        0.3268839418888092
+      ]
+    ],
+    "leg_hind_left_top1": [
+      0.135297030210495,
+      7858,
+      [
+        0.34756848216056824,
+        0.638841986656189,
+        0.135297030210495
+      ]
+    ],
+    "leg_hind_left_bot0": [
+      0.05257943272590637,
+      8134,
+      [
+        0.5398201942443848,
+        0.5869398713111877,
+        0.05257943272590637
+      ]
+    ],
+    "leg_hind_right_bot0": [
+      0.06914418935775757,
+      9871,
+      [
+        -0.4992855191230774,
+        0.6394278407096863,
+        0.06914418935775757
+      ]
+    ],
+    "leg_hind_right_bot1": [
+      0.03218623250722885,
+      9858,
+      [
+        -0.507010281085968,
+        0.7271120548248291,
+        0.03218623250722885
+      ]
+    ],
+    "leg_hind_right_bot2": [
+      0.0056180283427238464,
+      9727,
+      [
+        -0.4473056495189667,
+        0.6677230596542358,
+        0.0056180283427238464
+      ]
+    ],
+    "leg_front_right_bot0": [
+      0.27615371346473694,
+      6336,
+      [
+        -0.45145633816719055,
+        -0.3312414586544037,
+        0.27615371346473694
+      ]
+    ],
+    "leg_front_right_bot1": [
+      0.16253049671649933,
+      6170,
+      [
+        -0.5268970131874084,
+        -0.1845749020576477,
+        0.16253049671649933
+      ]
+    ],
+    "leg_front_right_bot2": [
+      0.0027156472206115723,
+      5946,
+      [
+        -0.46727538108825684,
+        -0.3107755184173584,
+        0.0027156472206115723
+      ]
+    ],
+    "leg_hind_left_bot2": [
+      0.002423688769340515,
+      7651,
+      [
+        0.43042701482772827,
+        0.672589898109436,
+        0.002423688769340515
+      ]
+    ],
+    "leg_hind_left_bot1": [
+      0.011376455426216125,
+      8075,
+      [
+        0.5035258531570435,
+        0.7370100021362305,
+        0.011376455426216125
+      ]
+    ],
+    "pelvis": [
+      0.04924765229225159,
+      8734,
+      [
+        0.01725541055202484,
+        0.7332254648208618,
+        0.04924765229225159
+      ]
+    ],
+    "tail0": [
+      0.015832602977752686,
+      8700,
+      [
+        0.01489519327878952,
+        0.8071276545524597,
+        0.015832602977752686
+      ]
+    ]
+  },
+  "root_local": [
+    0.049987923353910446,
+    -0.1564258635044098,
+    0.3890208303928375
+  ]
+}
+[a_Rodin.utils-DBG]: RodinBridge: unregister
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

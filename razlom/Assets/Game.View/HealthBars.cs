@@ -12,10 +12,14 @@ namespace Game.View
     /// в этой игре свободна всегда. Полоска нужна ровно тогда, когда игрок
     /// начал кого-то бить и хочет понять, добьёт он его или нет.
     ///
-    /// Рисуется из пула, всегда лицом к камере. Вид — пак «Ночная акварель»
-    /// (23 сентября 2026, лист HUD): капсула-дорожка, заливка капсулой, серебряный
-    /// контур; у элиты — светлый ромб в красной оправе на конце заливки. Спрайты
-    /// берутся из UiTheme (Resources), поэтому работают и в сборке.
+    /// Рисуется из пула, всегда лицом к камере. Вид — материал «Дым и свет», как
+    /// полоса героя в боевом HUD (владелец 26 сентября: «перевести вообще всё»):
+    /// тёмная дымная дорожка, заливка — мазок кистью цвета здоровья, обрезанный по
+    /// доле (мазок не сжимается), без серебряного контура; у элиты на конце заливки —
+    /// светящийся огонёк-круг вместо ромба. Шейдер «Дыма и света» в мире не работает,
+    /// поэтому дым и мазки заранее вырезаны из пака: Resources/UI/HUD/EnemyBar*.png
+    /// (tools/ui-kit/make-enemy-bars.py). Нет их — прежний вид пака «Ночная акварель»
+    /// из UiTheme (Resources), поэтому работает и в сборке.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(950)]
@@ -26,21 +30,28 @@ namespace Game.View
         public float Height = 0.13f;
         [Tooltip("Зазор заливки внутри дорожки, метры")]
         public float Inset = 0.022f;
-        [Tooltip("Ромб элиты, метры")]
+        [Tooltip("Огонёк элиты, метры")]
         public float EliteGem = 0.2f;
 
         [Tooltip("На сколько метров полоска висит над центром тела.")]
         public float Height3D = 2.15f;
         public float RootSwarmHeight3D = 1.25f;
 
-        public Color BackColor = new Color32(0x1B, 0x20, 0x29, 0xE0);
+        [Tooltip("Дорожка: чернильный дым, как у полос HUD (роль Smoke).")]
+        public Color BackColor = new Color32(0x12, 0x19, 0x23, 0xEB);
         public Color FillColor = new Color32(0xE0, 0x46, 0x34, 0xF2);
-        [Tooltip("Заливка элиты; саму элиту выделяет ромб на конце.")]
+        [Tooltip("Заливка элиты; саму элиту выделяет огонёк на конце.")]
         public Color EliteColor = new Color32(0xF3, 0x4F, 0x37, 0xFF);
+        [Tooltip("Серебряный контур прежнего вида (только без спрайтов «Дыма и света»).")]
         public Color FrameColor = new Color32(0xD8, 0xE1, 0xEE, 0x90);
 
         [Tooltip("Цель, которую бьют прямо сейчас, отмечается ярче.")]
         public Color FocusColor = new Color32(0xFF, 0x6A, 0x4A, 0xFF);
+
+        [Tooltip("Огонёк элиты: тёплый свет (как вспышка готовности способности в HUD).")]
+        public Color OrbColor = new Color(1f, .9f, .72f, 1f);
+        [Tooltip("Сияние вокруг огонька; альфа — сила, свет дышит вокруг неё.")]
+        public Color OrbGlowColor = new Color(1f, .5f, .2f, .7f);
 
         [Header("Время")]
         [Tooltip("Сколько секунд полоска висит после последнего попадания.")]
@@ -51,6 +62,20 @@ namespace Game.View
 
         [Tooltip("Потолок одновременно видимых полосок.")]
         public int MaxBars = 24;
+
+        // Спрайты «Дыма и света» и их раскладка (tools/ui-kit/make-enemy-bars.py, числа — оттуда):
+        // плотная часть дорожки — середина 448×64 холста 512×128, у заливки плотная часть — 40 из
+        // 64 по высоте (холст ложится на полную высоту полоски), огонёк — круг 44 из 64.
+        private const string TrackPath = "UI/HUD/EnemyBarTrack";
+        private const string FillPath = "UI/HUD/EnemyBarFill";
+        private const string OrbPath = "UI/HUD/EnemyBarOrb";
+        private const string GlowPath = "UI/HUD/EnemyBarGlow";
+        private const float TrackSpanX = 512f / 448f, TrackSpanY = 128f / 64f;
+        private const float OrbDisc = .6f, OrbSpan = OrbDisc * 64f / 44f, GlowSpan = 2f;
+        // Ступеней обрезки мазка: доля здоровья выбирает готовый спрайт, в кадре ничего не создаётся.
+        private const int FillSteps = 128;
+
+        private static readonly Vector3 EliteScale = new Vector3(1.4f, 1.2f, 1f);
 
         private TickDriver _driver;
         private Transform _camera;
@@ -70,6 +95,11 @@ namespace Game.View
         private Bar[] _bars;
         private Sprite _quad;
 
+        // «Дым и свет»: дорожка, ступени заливки (i — доля (i + 1) / FillSteps), огонёк и сияние.
+        private bool _ink;
+        private Sprite _track, _orb, _glow;
+        private Sprite[] _fillSteps;
+
         // Когда по кому в последний раз попали. Индекс — сущность.
         private float[] _hitAt;
         private int _focus = -1;
@@ -85,6 +115,7 @@ namespace Game.View
             _ready = true;
             _camera = Camera.main != null ? Camera.main.transform : null;
             _quad = MakeQuadSprite();
+            _ink = LoadInk();
 
             Transform root = new GameObject("Пул: полоски здоровья").transform;
             root.SetParent(transform, false);
@@ -143,6 +174,9 @@ namespace Game.View
             EntityStore entities = sim.Entities;
             float now = Time.unscaledTime;
             int used = 0;
+            float inner = Width - Inset * 2f;
+            // Сияние огонька дышит, как свет «Дыма и света» в HUD (пульс шейдера ≈ 0,14).
+            float breath = .86f + .14f * Mathf.Sin(now * 2.1f);
 
             for (int i = 0; i < entities.Count && used < _bars.Length; i++)
             {
@@ -171,7 +205,7 @@ namespace Game.View
 
                 Bar bar = _bars[used++];
                 bar.Root.gameObject.SetActive(true);
-                bar.Root.localScale = elite ? new Vector3(1.4f, 1.2f, 1f) : Vector3.one;
+                bar.Root.localScale = elite ? EliteScale : Vector3.one;
 
                 Vector3 at = _driver.GetRenderPosition(i);
                 float height = entities.Kind[i] == EnemyKind.ForestBud ? 1.6f : entities.Kind[i] == EnemyKind.ForestRootSwarm
@@ -181,23 +215,45 @@ namespace Game.View
                 if (_camera != null) bar.Root.rotation = _camera.rotation;
 
                 bar.BackRenderer.color = Faded(BackColor, alpha);
-                bar.FrameRenderer.color = Faded(FrameColor, alpha);
+                if (bar.FrameRenderer != null) bar.FrameRenderer.color = Faded(FrameColor, alpha);
                 bar.FillRenderer.color = Faded(elite ? EliteColor : i == _focus ? FocusColor : FillColor, alpha);
-
-                // Заливка — капсула от левого края дорожки. Короче своей высоты
-                // капсула сминается, поэтому ширина не меньше высоты.
-                float inner = Width - Inset * 2f, h = Height - Inset * 2f;
-                float w = Mathf.Max(h, inner * fill);
                 bar.Fill.gameObject.SetActive(fill > .001f);
-                bar.FillRenderer.size = new Vector2(w, h);
-                bar.Fill.localPosition = new Vector3(-inner * .5f + w * .5f, 0f, -.001f);
+
+                // Где кончается заливка: там едет огонёк элиты.
+                float end;
+                if (_ink)
+                {
+                    // Мазок во всю длину, обрезанный справа по доле: готовая ступень, не сжатие.
+                    int step = Mathf.Clamp(Mathf.CeilToInt(fill * FillSteps), 1, FillSteps);
+                    Sprite sprite = _fillSteps[step - 1];
+                    if (bar.FillRenderer.sprite != sprite) bar.FillRenderer.sprite = sprite;
+                    end = -inner * .5f + inner * step / FillSteps;
+                }
+                else
+                {
+                    // Заливка — капсула от левого края дорожки. Короче своей высоты
+                    // капсула сминается, поэтому ширина не меньше высоты.
+                    float h = Height - Inset * 2f;
+                    float w = Mathf.Max(h, inner * fill);
+                    bar.FillRenderer.size = new Vector2(w, h);
+                    bar.Fill.localPosition = new Vector3(-inner * .5f + w * .5f, 0f, -.001f);
+                    end = -inner * .5f + w;
+                }
 
                 bar.Gem.gameObject.SetActive(elite && fill > .001f);
                 if (elite)
                 {
-                    bar.Gem.localPosition = new Vector3(-inner * .5f + w, 0f, -.003f);
-                    bar.GemFill.color = Faded(Color.white, alpha);
-                    bar.GemRim.color = Faded(EliteColor, alpha);
+                    bar.Gem.localPosition = new Vector3(end, 0f, -.003f);
+                    if (_ink)
+                    {
+                        bar.GemFill.color = Faded(OrbColor, alpha);
+                        bar.GemRim.color = Faded(OrbGlowColor, alpha * breath);
+                    }
+                    else
+                    {
+                        bar.GemFill.color = Faded(Color.white, alpha);
+                        bar.GemRim.color = Faded(EliteColor, alpha);
+                    }
                 }
             }
 
@@ -236,20 +292,107 @@ namespace Game.View
             var rootGo = new GameObject("Полоска " + index);
             rootGo.transform.SetParent(root, false);
             rootGo.SetActive(false);
+            return _ink ? InkBar(rootGo.transform) : KitBar(rootGo.transform);
+        }
+
+        /// <summary>
+        /// Мазки «Дыма и света» из Resources. Импорт текстур любой (спрайт или обычная текстура):
+        /// спрайты собираются здесь, один раз. Нет хоть одной — false, рисуется прежний вид.
+        /// </summary>
+        private bool LoadInk()
+        {
+            var track = Resources.Load<Texture2D>(TrackPath);
+            var fill = Resources.Load<Texture2D>(FillPath);
+            var orb = Resources.Load<Texture2D>(OrbPath);
+            var glow = Resources.Load<Texture2D>(GlowPath);
+            if (track == null || fill == null || orb == null || glow == null) return false;
+
+            _track = Whole(track);
+            _orb = Whole(orb);
+            _glow = Whole(glow);
+            // Ступени заливки — один и тот же мазок, обрезанный справа; якорь — левый край.
+            _fillSteps = new Sprite[FillSteps];
+            for (int i = 0; i < FillSteps; i++)
+            {
+                float width = Mathf.Max(1f, Mathf.Round(fill.width * (i + 1) / (float)FillSteps));
+                _fillSteps[i] = Sprite.Create(fill, new Rect(0f, 0f, width, fill.height), new Vector2(0f, .5f), 100f, 0, SpriteMeshType.FullRect);
+                _fillSteps[i].name = "Мазок " + (i + 1);
+            }
+            return true;
+        }
+
+        private static Sprite Whole(Texture2D texture)
+        {
+            Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(.5f, .5f), 100f, 0, SpriteMeshType.FullRect);
+            sprite.name = texture.name;
+            return sprite;
+        }
+
+        /// <summary>Масштаб, при котором весь спрайт ложится в <paramref name="width"/>×<paramref name="height"/> метров.</summary>
+        private static void Fit(SpriteRenderer renderer, float width, float height)
+        {
+            Vector2 size = renderer.sprite.bounds.size;
+            renderer.transform.localScale = new Vector3(width / Mathf.Max(.001f, size.x), height / Mathf.Max(.001f, size.y), 1f);
+        }
+
+        /// <summary>
+        /// Полоска «Дыма и света»: плотная часть дымной дорожки — ровно Width×Height (ореол
+        /// выходит за неё), мазок заливки — во всю внутреннюю длину и полную высоту (его плотная
+        /// часть — как прежняя капсула), огонёк элиты — сияние и ядро.
+        /// </summary>
+        private Bar InkBar(Transform root)
+        {
+            float inner = Width - Inset * 2f;
+            SpriteRenderer back = Part(root, "Дорожка", _track, 4000, false);
+            Fit(back, Width * TrackSpanX, Height * TrackSpanY);
+
+            // Масштаб — по полному мазку: короткая ступень той же высоты и плотности, просто обрезана.
+            SpriteRenderer fill = Part(root, "Заливка", _fillSteps[FillSteps - 1], 4001, false);
+            Fit(fill, inner, Height);
+            fill.transform.localPosition = new Vector3(-inner * .5f, 0f, -.001f);
+
+            var gem = new GameObject("Элита").transform;
+            gem.SetParent(root, false);
+            // Корень элиты растянут неровно (1,4 × 1,2): огонёк сжимается обратно в круг.
+            gem.localScale = new Vector3(EliteScale.y / EliteScale.x, 1f, 1f);
+            SpriteRenderer glow = Part(gem, "Сияние", _glow, 4003, false);
+            Fit(glow, EliteGem * GlowSpan, EliteGem * GlowSpan);
+            SpriteRenderer orb = Part(gem, "Огонёк", _orb, 4004, false);
+            Fit(orb, EliteGem * OrbSpan, EliteGem * OrbSpan);
+            gem.gameObject.SetActive(false);
+
+            return new Bar
+            {
+                Root = root,
+                Fill = fill.transform,
+                BackRenderer = back,
+                FillRenderer = fill,
+                Gem = gem,
+                GemFill = orb,
+                GemRim = glow,
+            };
+        }
+
+        /// <summary>
+        /// Прежний вид пака «Ночная акварель» (спрайтов «Дыма и света» нет): капсула-дорожка,
+        /// заливка капсулой, серебряный контур; у элиты — светлый ромб в оправе цвета здоровья.
+        /// </summary>
+        private Bar KitBar(Transform root)
+        {
             UiTheme theme = UiTheme.Current;
 
-            SpriteRenderer back = Part(rootGo.transform, "Дорожка", theme.BarFill, 4000, true);
+            SpriteRenderer back = Part(root, "Дорожка", theme.BarFill, 4000, true);
             if (back.drawMode == SpriteDrawMode.Sliced) back.size = new Vector2(Width, Height);
             else back.transform.localScale = new Vector3(Width, Height, 1f);
 
-            SpriteRenderer fill = Part(rootGo.transform, "Заливка", theme.BarFill, 4001, true);
-            SpriteRenderer frame = Part(rootGo.transform, "Контур", theme.BarFrame, 4002, true);
+            SpriteRenderer fill = Part(root, "Заливка", theme.BarFill, 4001, true);
+            SpriteRenderer frame = Part(root, "Контур", theme.BarFrame, 4002, true);
             if (frame.drawMode == SpriteDrawMode.Sliced) frame.size = new Vector2(Width, Height);
             else frame.gameObject.SetActive(false);
 
             // Ромб элиты: светлая заливка в оправе цвета здоровья, едет за концом заливки.
             var gem = new GameObject("Элита").transform;
-            gem.SetParent(rootGo.transform, false);
+            gem.SetParent(root, false);
             SpriteRenderer gemFill = Part(gem, "Заливка", theme.DiamondFill, 4003, false);
             SpriteRenderer gemRim = Part(gem, "Оправа", theme.DiamondFrameSmall, 4004, false);
             foreach (SpriteRenderer part in new[] { gemFill, gemRim })
@@ -262,7 +405,7 @@ namespace Game.View
 
             return new Bar
             {
-                Root = rootGo.transform,
+                Root = root,
                 Fill = fill.transform,
                 BackRenderer = back,
                 FillRenderer = fill,

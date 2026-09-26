@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Game.View
 {
-    /// <summary>Плитка слота на экране замены способности (префаб RunHudWc). Только ссылки.</summary>
+    /// <summary>Плитка слота на экране замены способности (префаб RunHudWc, «Дым и свет»): медальон, имя, клавиша. Только ссылки.</summary>
     public sealed class RunSlotTile : MonoBehaviour
     {
         public Button Button;

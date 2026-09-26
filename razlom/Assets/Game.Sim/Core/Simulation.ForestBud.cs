@@ -29,6 +29,7 @@ namespace Game.Sim
         private void ResetForestBud()
         {
             ResetWendigo();
+            ResetStonehoof();
             Array.Clear(_forestBudAttacks, 0, _forestBudAttacks.Length);
             Array.Clear(_forestFruits, 0, _forestFruits.Length);
             _forestSerial = _forestFruitHighWater = _forestFruitActiveCount = 0;

@@ -1,0 +1,164 @@
+{
+  "source_master_sha256": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+  "frames": 12,
+  "fps": 30,
+  "speed_m_s": 12,
+  "stride_m": 4.8,
+  "contacts": {
+    "front_left": [
+      3,
+      4.5
+    ],
+    "front_right": [
+      3.7,
+      5.2
+    ],
+    "hind_left": [
+      6.1,
+      7.6
+    ],
+    "hind_right": [
+      6.8,
+      7.9
+    ]
+  },
+  "launch_join": {
+    "body": {
+      "position_m": 0.0,
+      "matrix_max": 3.637978807091713e-12
+    },
+    "body_top0": {
+      "position_m": 0.0,
+      "matrix_max": 1.4901161193847656e-08
+    },
+    "body_top1": {
+      "position_m": 0.0,
+      "matrix_max": 2.9802322387695312e-08
+    },
+    "leg_front_left_top0": {
+      "position_m": 0.0,
+      "matrix_max": 5.960464477539063e-08
+    },
+    "leg_front_left_top1": {
+      "position_m": 0.0,
+      "matrix_max": 1.126900315284729e-06
+    },
+    "leg_front_left_bot0": {
+      "position_m": 1.0745380149674383e-07,
+      "matrix_max": 8.940696716308594e-07
+    },
+    "leg_front_left_bot1": {
+      "position_m": 1.9314112360500873e-07,
+      "matrix_max": 8.642673492431641e-07
+    },
+    "leg_front_left_bot2": {
+      "position_m": 7.300048299977713e-08,
+      "matrix_max": 4.3213367462158203e-07
+    },
+    "leg_front_left_bot2_end": {
+      "position_m": 8.940696716308594e-08,
+      "matrix_max": 4.3213367462158203e-07
+    },
+    "neck0": {
+      "position_m": 0.0,
+      "matrix_max": 5.960464477539063e-08
+    },
+    "head0": {
+      "position_m": 1.5133991837501526e-08,
+      "matrix_max": 1.1920928955078125e-07
+    },
+    "head0_end": {
+      "position_m": 6.738466374834794e-08,
+      "matrix_max": 1.1920928955078125e-07
+    },
+    "leg_front_right_top0": {
+      "position_m": 2.9802322387695312e-08,
+      "matrix_max": 5.960464477539063e-08
+    },
+    "leg_front_right_top1": {
+      "position_m": 2.9802322387695312e-08,
+      "matrix_max": 1.5050172805786133e-06
+    },
+    "leg_front_right_bot0": {
+      "position_m": 1.7120130796843852e-07,
+      "matrix_max": 1.6689300537109375e-06
+    },
+    "leg_front_right_bot1": {
+      "position_m": 2.5636927089222153e-07,
+      "matrix_max": 1.6093254089355469e-06
+    },
+    "leg_front_right_bot2": {
+      "position_m": 1.737759081973225e-07,
+      "matrix_max": 4.76837158203125e-07
+    },
+    "leg_front_right_bot2_end": {
+      "position_m": 1.9082797281243946e-07,
+      "matrix_max": 4.76837158203125e-07
+    },
+    "body_bot": {
+      "position_m": 0.0,
+      "matrix_max": 0.0
+    },
+    "pelvis": {
+      "position_m": 0.0,
+      "matrix_max": 0.0
+    },
+    "tail0": {
+      "position_m": 0.0,
+      "matrix_max": 4.470348358154297e-08
+    },
+    "tail0_end": {
+      "position_m": 0.0,
+      "matrix_max": 4.470348358154297e-08
+    },
+    "leg_hind_right_top0": {
+      "position_m": 0.0,
+      "matrix_max": 0.0
+    },
+    "leg_hind_right_top1": {
+      "position_m": 0.0,
+      "matrix_max": 1.1920928955078125e-07
+    },
+    "leg_hind_right_bot0": {
+      "position_m": 1.4901161193847656e-08,
+      "matrix_max": 1.1920928955078125e-07
+    },
+    "leg_hind_right_bot1": {
+      "position_m": 1.4901161193847656e-08,
+      "matrix_max": 1.7881393432617188e-07
+    },
+    "leg_hind_right_bot2": {
+      "position_m": 0.0,
+      "matrix_max": 1.7881393432617188e-07
+    },
+    "leg_hind_right_bot2_end": {
+      "position_m": 0.0,
+      "matrix_max": 1.7881393432617188e-07
+    },
+    "leg_hind_left_top0": {
+      "position_m": 0.0,
+      "matrix_max": 0.0
+    },
+    "leg_hind_left_top1": {
+      "position_m": 0.0,
+      "matrix_max": 2.384185791015625e-07
+    },
+    "leg_hind_left_bot0": {
+      "position_m": 6.143906154658885e-08,
+      "matrix_max": 2.384185791015625e-07
+    },
+    "leg_hind_left_bot1": {
+      "position_m": 6.143906154658885e-08,
+      "matrix_max": 4.172325134277344e-07
+    },
+    "leg_hind_left_bot2": {
+      "position_m": 0.0,
+      "matrix_max": 2.384185791015625e-07
+    },
+    "leg_hind_left_bot2_end": {
+      "position_m": 2.9802322387695312e-08,
+      "matrix_max": 2.384185791015625e-07
+    }
+  },
+  "owner_approved": false
+}

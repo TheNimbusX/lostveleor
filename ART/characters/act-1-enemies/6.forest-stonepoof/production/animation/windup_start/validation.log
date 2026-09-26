@@ -1,0 +1,5 @@
+00:03.187  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+{"samples": 145, "maximum_hoof_target_error_m_and_frame": {"front_left": [7.095059395788231e-05, 22.0], "front_right": [5.009504064601881e-05, 29.75], "hind_left": [7.436089728928844e-05, 35.5], "hind_right": [6.276165314977156e-05, 36.0]}, "stationary_support_drift_m": {"front_right": 5.029650889795425e-05, "hind_left": 4.371956762546229e-05, "hind_right": 4.846659888799229e-05}, "minimum_mesh_z_m": [-0.000232744961977005, 19.0], "maximum_bone_length_relative_error": 1.296930526750728e-06, "owner_approved": false}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

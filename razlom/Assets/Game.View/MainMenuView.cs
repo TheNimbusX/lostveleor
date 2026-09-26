@@ -214,7 +214,7 @@ namespace Game.View
             float dt = Time.unscaledDeltaTime;
 
             // Съёмка меню: стенд кнопок не нажимает, поэтому PLAY — сам.
-            if (CaptureRig.MainMenuCapture && IsOpen && !_started && Time.unscaledTime >= 3f) StartGame();
+            if (CaptureRig.MainMenuCapture && IsOpen && !_started && UiMomentsCapture.MenuReady) StartGame();
 
             // Состояние камер после PLAY — в лог, в редакторе и под съёмкой.
             // Появилось из-за голубого экрана после PLAY, который по коду не

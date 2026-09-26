@@ -45,6 +45,11 @@ namespace Game.View
             EdgeColor = new Color(.38f, .30f, .13f, 1f)
         };
 
+        public EnemyDeathPresentation ForestStonehoof = new EnemyDeathPresentation {
+            ClipSeconds = 2f, StartNormalized = 0, RestNormalized = 1, StateSpeed = 1,
+            BlendSeconds = .09f, RestSeconds = .55f, DissolveSeconds = .55f,
+            RecoilMeters = 0, EdgeGlow = .025f, EdgeColor = new Color(.36f,.3f,.19f,1)
+        };
         private static EnemyPresentationProfile _current;
         public EnemyDeathPresentation ForestWendigo = new EnemyDeathPresentation {
             ClipSeconds = 4f, StartNormalized = 18f/96f, RestNormalized = 1f,
@@ -56,7 +61,7 @@ namespace Game.View
             if (_current == null)
                 _current = Resources.Load<EnemyPresentationProfile>("Combat/EnemyPresentation")
                     ?? CreateInstance<EnemyPresentationProfile>();
-            return kind == EnemyKind.ForestWendigo ? _current.ForestWendigo : kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
+            return kind == EnemyKind.ForestStonehoof ? _current.ForestStonehoof : kind == EnemyKind.ForestWendigo ? _current.ForestWendigo : kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm ? _current.RootSwarm : _current.Guardian;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

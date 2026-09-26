@@ -25,17 +25,15 @@ namespace Game.EditorTools
                 // Имена частей — те, что ищет CombatHudView.Potions: «Art», «Count», «Key».
                 RectTransform tileRect = Box(Node(i == 0 ? "Health Potion" : "Lavidium Potion", panel), Vector2.zero, Vector2.zero,
                     new Vector2(i * PotionPitch, 0f), new Vector2(Slot, Slot));
-                Image shadow = Layer(tileRect, "Тень", T.GlowSmall, Role.Veil, .8f, 20f);
-                shadow.rectTransform.anchoredPosition = new Vector2(0f, -3f);
-                Layer(tileRect, "Заливка", T.FillSmall, Role.Panel);
-                Layer(tileRect, "Тень снизу", T.ShadeSmall, Role.Veil, .5f);
+                // «Дым и свет»: банка в чернильной кляксе и слабый свет цвета зелья изнутри. Огненного
+                // кольца у зелий нет (владелец 26 сентября: «огня слишком много») — огонь только у способностей.
+                UiInkKit.SmokeLayer(tileRect, "Клякса", "smoke_ring", 1f, Slot * .2f, Slot * .2f);
+                Layer(tileRect, "Заливка", T.CircleFill, Role.Panel, .9f, -2f);
                 Image halo = Mark(tileRect, "Свет", T.Blob, i == 0 ? Role.Health : Role.Lavidium, .18f, new Vector2(.5f, .5f), Vector2.zero, Slot);
                 halo.preserveAspect = false;
                 var raw = Stretch(Node("Art", tileRect), 6f).gameObject.AddComponent<RawImage>();
                 raw.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/" + art[i] + ".png");
                 raw.raycastTarget = false;
-                Layer(tileRect, "Свет по кромке", T.HighlightSmall, Role.Highlight, .8f);
-                Layer(tileRect, "Рамка", T.FrameSmall, Role.PanelLine, .9f);
                 if (i == 0)
                 {
                     // Здоровья мало, а Живица есть — банка мягко дышит светом (HudPulse, CombatHudView).
@@ -53,16 +51,18 @@ namespace Game.EditorTools
                 TMP_Text countLabel = LabelOn(count, "0", FontRole.Body, 19f, Role.Text, TextAlignmentOptions.BottomRight);
                 countLabel.fontStyle = FontStyles.Bold;
                 Shadowed(countLabel);
-                // Клавиша — плашкой на нижней кромке, как у способностей.
-                RectTransform cap = Keycap(tileRect, "Клавиша", "5", 26f);
+                UiInkKit.Revealed(countLabel, .25f);
+                // Клавиша — кружком на нижней кромке, как у способностей.
+                RectTransform cap = UiInkKit.Keycap(tileRect, "Клавиша", "5", 26f);
                 cap.anchorMin = cap.anchorMax = new Vector2(.5f, 0f);
                 cap.pivot = new Vector2(.5f, .5f);
                 cap.anchoredPosition = new Vector2(0f, -4f);
             }
 
-            // Подсказка зелья: малая карточка пака, высота по тексту.
+            // Подсказка зелья: малая подложка «Дыма и света», высота по тексту.
             RectTransform tip = Box(Node("Подсказка зелья", root), BottomCenter, new Vector2(.5f, 0f), new Vector2(0f, 200f), new Vector2(320f, 90f));
-            Card(tip, 8f);
+            UiInkKit.Plate(tip, small: true);
+            UiInkKit.Group(tip, UiInkGroup.Sweep.FromCenter, .35f, .1f).Burn = 0f;
             var column = tip.gameObject.AddComponent<VerticalLayoutGroup>();
             column.padding = new RectOffset(18, 18, 12, 12);
             column.childControlWidth = column.childControlHeight = true;
@@ -71,6 +71,7 @@ namespace Game.EditorTools
             tip.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             RectTransform text = Node("Текст", tip);
             view.PotionTooltipText = LabelOn(text, "Зелье здоровья · 10%\nЛКМ — выпить\nПКМ — сменить размер", FontRole.Body, 16f, Role.Text, TextAlignmentOptions.Center);
+            UiInkKit.Revealed(view.PotionTooltipText, .08f);
             view.PotionTooltip = tip;
             tip.gameObject.SetActive(false);
         }
@@ -95,25 +96,19 @@ namespace Game.EditorTools
             return label;
         }
 
-        /// <summary>Фон карточки пака слоями, которые не участвуют в раскладке.</summary>
-        static void Card(RectTransform rect, float radius)
-        {
-            bool small = radius < 12f;
-            Image shadow = Layer(rect, "Тень", small ? T.GlowSmall : T.Glow, Role.Veil, .85f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -6f);
-            Layer(rect, "Заливка", small ? T.FillSmall : T.Fill, Role.Panel, .96f);
-            Layer(rect, "Тень снизу", small ? T.ShadeSmall : T.ShadeSprite, Role.Veil, .5f);
-            Layer(rect, "Свет по кромке", small ? T.HighlightSmall : T.HighlightSprite, Role.Highlight);
-            Layer(rect, "Рамка", small ? T.FrameSmall : T.Frame, Role.PanelLine, .9f);
-            foreach (Transform child in rect)
-                child.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
-        }
-
         // ---------------------------------------------------------------- подсказка способности
+        /// <summary>
+        /// Подсказка способности: подложка «Дыма и света» (UiInkKit.Plate), шапка (круглая иконка,
+        /// название, клавиша), ряд точек усилений, описание, сетка параметров, блок под Alt и строка
+        /// состояния. Высота по содержимому, низом над плиткой — ставит CombatHudView.
+        /// </summary>
         static void BuildTooltip(RectTransform root, CombatHudView view)
         {
             RectTransform tip = Box(Node("Подсказка", root), BottomCenter, new Vector2(.5f, 0f), new Vector2(0f, 180f), new Vector2(420f, 200f));
-            Card(tip, 14f);
+            UiInkKit.Plate(tip);
+            // Подсказка всплывает на каждом наведении: чернила без огня — тлеющая кромка здесь
+            // смотрелась красной вспышкой (владелец 25 сентября).
+            UiInkKit.Group(tip, UiInkGroup.Sweep.TopToBottom, .38f, .16f).Burn = 0f;
             var column = tip.gameObject.AddComponent<VerticalLayoutGroup>();
             column.padding = new RectOffset(20, 20, 16, 18);
             column.spacing = 10f;
@@ -123,7 +118,7 @@ namespace Game.EditorTools
             tip.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             view.Tooltip = tip;
 
-            // Шапка: иконка в ячейке, название антиквой, клавиша.
+            // Шапка: иконка в круге (как на плитке), название антиквой, клавиша.
             RectTransform header = Node("Шапка", tip);
             var row = header.gameObject.AddComponent<HorizontalLayoutGroup>();
             row.spacing = 14f;
@@ -133,31 +128,38 @@ namespace Game.EditorTools
             Size(header, -1f, 56f);
             RectTransform cell = Node("Иконка", header);
             Size(cell, 56f, 56f);
-            Layer(cell, "Заливка", T.FillSmall, Role.Panel);
-            RectTransform mask = Stretch(Node("Маска", cell), 1.5f);
+            UiInkKit.SmokeLayer(cell, "Клякса", "smoke_ring", 1f, 12f, 12f, deep: true);
+            Layer(cell, "Заливка", T.CircleFill, Role.Panel);
+            RectTransform mask = Stretch(Node("Маска", cell), 2f);
             var maskImage = mask.gameObject.AddComponent<Image>();
-            maskImage.sprite = T.FillSmall;
-            maskImage.type = Image.Type.Sliced;
+            maskImage.sprite = T.CircleFill;
+            maskImage.type = Image.Type.Simple;
+            maskImage.raycastTarget = false;
             mask.gameObject.AddComponent<Mask>().showMaskGraphic = false;
             view.TooltipIcon = Stretch(Node("Картинка", mask)).gameObject.AddComponent<RawImage>();
             view.TooltipIcon.raycastTarget = false;
-            Layer(cell, "Рамка", T.FrameSmall, Role.PanelLine, .9f);
+            // Тонкое тлеющее кольцо по кромке иконки — то же, что у плитки в покое.
+            UiInkKit.LightLayer(cell, "Кольцо", "light_ring", .3f, 19f, delay: .15f);
 
             RectTransform title = Node("Название", header);
             Size(title, -1f, 40f).flexibleWidth = 1f;
             view.TooltipTitle = LabelOn(title, "Способность", FontRole.Heading, 26f, Role.Text, TextAlignmentOptions.MidlineLeft);
+            UiInkKit.Revealed(view.TooltipTitle, .05f);
             view.TooltipTitle.characterSpacing = 1f;
             view.TooltipTitle.textWrappingMode = TextWrappingModes.NoWrap;
             view.TooltipTitle.enableAutoSizing = true;
             view.TooltipTitle.fontSizeMin = 16f;
             view.TooltipTitle.fontSizeMax = 26f;
+            // Клавиша: круг у одной буквы, капсула у длинной подписи — ширину узла «Клавиша» подгоняет
+            // CombatHudView (у кувырка «SPACE» не помещалась в квадрат 34 и переносилась: «SP/AC/E»).
             RectTransform keyBox = Node("Клавиша", header);
             Size(keyBox, 34f, 34f);
-            RectTransform cap = Keycap(keyBox, "Плашка", "Q", 34f);
+            RectTransform cap = UiInkKit.Keycap(keyBox, "Плашка", "Q", 34f);
             Stretch(cap);
             view.TooltipKey = cap.Find("Буква").GetComponent<TMP_Text>();
 
-            // Усиления (концепт 1-gem-ingame): ряд из 8 ромбиков, первые N залиты, и «Усилений: N из 8».
+            // Усиления (концепт 1-gem-ingame): ряд из 8 точек, первые N горят, «Усилений: N из 8»;
+            // справа — «Alt подробнее», пока Alt не зажат (26 сентября: ромбики стали точками).
             RectTransform upgrades = Node("Усиления", tip);
             var upgradeRow = upgrades.gameObject.AddComponent<HorizontalLayoutGroup>();
             upgradeRow.spacing = 5f;
@@ -166,31 +168,36 @@ namespace Game.EditorTools
             upgradeRow.childForceExpandWidth = upgradeRow.childForceExpandHeight = false;
             Size(upgrades, -1f, 22f);
             view.TooltipUpgradePips = new Image[Game.Sim.RunLoadout.MaxUpgrades];
-            view.UpgradePipFilled = T.DiamondFill;
-            view.UpgradePipEmpty = T.DiamondFrameSmall;
+            view.UpgradePipFilled = T.CircleFill;
+            view.UpgradePipEmpty = T.CircleFill;
             for (int i = 0; i < view.TooltipUpgradePips.Length; i++)
             {
-                RectTransform pipBox = Node("Ромбик " + (i + 1), upgrades);
-                Size(pipBox, 14f, 14f);
+                RectTransform pipBox = Node("Точка " + (i + 1), upgrades);
+                Size(pipBox, 11f, 11f);
                 var pip = pipBox.gameObject.AddComponent<Image>();
-                pip.sprite = T.DiamondFrameSmall;
+                pip.sprite = T.CircleFill;
                 pip.preserveAspect = true;
                 pip.raycastTarget = false;
+                pip.color = new Color(1f, 1f, 1f, .24f);
                 view.TooltipUpgradePips[i] = pip;
             }
             RectTransform upgradeText = Node("Счёт", upgrades);
             Size(upgradeText, -1f, 22f).flexibleWidth = 1f;
-            view.TooltipUpgradeText = LabelOn(upgradeText, "Усилений: 0 из 8", FontRole.Body, 15f, Role.TextMuted, TextAlignmentOptions.MidlineRight);
+            view.TooltipUpgradeText = LabelOn(upgradeText, "Усилений: 0 из 8", FontRole.Body, 15f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
+            view.TooltipUpgradeText.textWrappingMode = TextWrappingModes.NoWrap;
+            view.TooltipDetailHint = DetailHint(upgrades).gameObject;
             view.TooltipUpgradeRow = upgrades.gameObject;
 
-            RectTransform divider = Place("DividerPlain", tip, "Разделитель");
+            RectTransform divider = UiInkKit.Divider(tip, "Разделитель", 380f, gem: false, strength: .45f);
             Size(divider, -1f, 16f);
 
             RectTransform body = Node("Описание", tip);
             view.TooltipBody = LabelOn(body, "Описание способности.", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.TopLeft);
+            UiInkKit.Revealed(view.TooltipBody, .08f).Softness = .6f;
             view.TooltipBody.lineSpacing = 2f;
 
-            // Параметры: сетка в три столбца, черта только между столбцами.
+            // Параметры: сетка в три столбца, черта только между столбцами. Число, изменённое
+            // усилениями, CombatHudView красит цветом «хорошо».
             RectTransform metrics = Node("Параметры", tip);
             var grid = metrics.gameObject.AddComponent<GridLayoutGroup>();
             grid.cellSize = new Vector2(126f, 32f);
@@ -218,19 +225,72 @@ namespace Game.EditorTools
                 view.TooltipMetrics[i] = metric;
             }
 
+            BuildTooltipDetail(tip, view);
+
             // Состояние («Перезарядка 2,1 с»): CombatHudView включает и прячет сам текст.
             RectTransform status = Node("Состояние", tip);
             Size(status, -1f, 24f);
             view.TooltipStatus = LabelOn(status, "", FontRole.Body, 16f, Role.Bad, TextAlignmentOptions.MidlineLeft);
             status.gameObject.SetActive(false);
 
-            // Хвостик — гранёный ромб на нижней кромке, напротив плитки.
-            RectTransform tail = Box(Node("Хвостик", tip), new Vector2(.5f, 0f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(18f, 18f));
+            // Хвостик — огонёк-ромб на нижней кромке, напротив плитки (ромб остался только мелким светом).
+            RectTransform tail = Box(Node("Хвостик", tip), new Vector2(.5f, 0f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(22f, 24f));
             tail.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
-            Layer(tail, "Заливка", T.DiamondFill, Role.Panel);
-            Layer(tail, "Оправа", T.DiamondFrameSmall, Role.PanelLine);
+            UiInkKit.LightLayer(tail, "Огненный ромб", "light_gem", .95f, 4f, delay: .15f);
             view.TooltipTail = tail;
             tip.gameObject.SetActive(false);
+        }
+
+        /// <summary>«[Alt] подробнее» справа в строке усилений: клавиша-капсула и приглушённая подпись.</summary>
+        static RectTransform DetailHint(RectTransform row)
+        {
+            RectTransform hint = Node("Подсказка Alt", row);
+            var layout = hint.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 5f;
+            layout.childAlignment = TextAnchor.MiddleRight;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            RectTransform cap = UiInkKit.Keycap(hint, "Клавиша", "Alt", 20f);
+            Size(cap, cap.sizeDelta.x, cap.sizeDelta.y);
+            RectTransform text = Node("Надпись", hint);
+            TMP_Text label = LabelOn(text, "подробнее", FontRole.Body, 13f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            UiInkKit.Revealed(label, .15f);
+            Size(text, label.GetPreferredValues("подробнее").x + 2f, 20f);
+            Size(hint, -1f, 22f);
+            hint.gameObject.SetActive(false);
+            return hint;
+        }
+
+        /// <summary>
+        /// Блок под Alt (владелец 26 сентября: «видеть, что на скилле уже висит поверх базы»): черта,
+        /// «ВЗЯТО» и один текст — взятые усиления (имя жирным, описание приглушённо) и «было → стало»
+        /// по числам, изменённым усилениями. Текст пишет CombatHudView. У блока своя группа
+        /// появления: при нажатии Alt он проявляется, а не выскакивает; огня нет — это частая всплывашка.
+        /// </summary>
+        static void BuildTooltipDetail(RectTransform tip, CombatHudView view)
+        {
+            RectTransform detail = Node("Взято", tip);
+            var column = detail.gameObject.AddComponent<VerticalLayoutGroup>();
+            column.spacing = 6f;
+            column.childControlWidth = column.childControlHeight = true;
+            column.childForceExpandWidth = true;
+            column.childForceExpandHeight = false;
+            RectTransform line = UiInkKit.Divider(detail, "Черта", 380f, gem: false, strength: .4f);
+            Size(line, -1f, 12f);
+            RectTransform caption = Node("Заголовок", detail);
+            Size(caption, -1f, 20f);
+            TMP_Text captionText = LabelOn(caption, "ВЗЯТО", FontRole.Heading, 14f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
+            captionText.characterSpacing = 4f;
+            UiInkKit.Revealed(captionText, .02f);
+            RectTransform text = Node("Текст", detail);
+            view.TooltipDetailText = LabelOn(text, "Усиление  Что оно даёт.", FontRole.Body, 15f, Role.Text, TextAlignmentOptions.TopLeft);
+            view.TooltipDetailText.lineSpacing = 2f;
+            view.TooltipDetailText.paragraphSpacing = 5f;
+            UiInkKit.Revealed(view.TooltipDetailText, .06f).Softness = .6f;
+            UiInkKit.Group(detail, UiInkGroup.Sweep.TopToBottom, .3f, .1f).Burn = 0f;
+            view.TooltipDetail = detail.gameObject;
+            detail.gameObject.SetActive(false);
         }
 
         static LayoutElement Size(RectTransform rect, float width, float height)
@@ -243,13 +303,19 @@ namespace Game.EditorTools
 
         // ---------------------------------------------------------------- отказ при нажатии
         // ---------------------------------------------------------------- новый уровень
-        const float BannerWidth = 780f, BannerHeight = 193f, BannerNumberX = -236f;
+        const float BannerWidth = 560f, BannerHeight = 110f, BannerMedal = 100f, BannerMedalX = 62f, BannerTextX = 140f;
 
         /// <summary>
-        /// Большой баннер «Новый уровень» сверху по центру — вариант А листа 4-buffs-level-sheet
-        /// (владелец, 24 сентября: «скудно, нет эффекта вау»). Рисованная плашка с обожжённой
-        /// кромкой (wc_level_banner, из генерации по концепту), слева крупная золотая цифра с
-        /// лучами, справа прибавки; вспышка, искры и проблеск — свет (Razlom/UI Additive).
+        /// Баннер «Новый уровень» и входа на арену в «Дыме и свете» (владелец 26 сентября: бумажная
+        /// плашка «громоздкая» и «не сочетается с интерфейсом»). Сверху по центру, верх на −150 —
+        /// ниже объявления «Разлом зачищен» и полосы босса (−22…−126). Полоса глубокого дыма с нитью
+        /// света под строкой; слева круглый медальон (круг — одна фигура с портретом и способностями):
+        /// клуб дыма, мягкий тёплый свет, тёмный диск, тонкое кремовое кольцо, едва заметная искра огня
+        /// и число антиквой с мягкой тенью (26 сентября, первая съёмка: оранжевый свет и кольцо огня
+        /// давали яркое красное кольцо — «огня меньше»); справа подпись и одна строка прибавок через
+        /// « · ». Ширина — по тексту
+        /// (HudLevelBanner.FitWidth), поэтому медальон и строки стоят от левого края, а дым и нить
+        /// растянуты. Своя группа появления: дым проигрывается на каждом показе, кромка тлеет мягко.
         /// Движение — в HudLevelBanner.
         /// </summary>
         static void BuildLevelBanner(RectTransform root, CombatHudView view)
@@ -261,134 +327,119 @@ namespace Game.EditorTools
             bannerView.Group.blocksRaycasts = false;
             bannerView.Group.interactable = false;
 
-            Image flash = Layer(banner, "Вспышка", Kit("wc_fx_glow"), Role.Text, 0f, 150f);
-            Additive(flash, new Color(1f, .62f, .3f, 0f));
-            bannerView.Flash = flash;
-            // Тень — размытый силуэт самой плашки: прямоугольная тень пака выдавала «подложку» у острых концов.
-            Image shadow = Layer(banner, "Тень", Kit("wc_level_banner_shadow"), Role.Veil, .8f, BannerWidth * 48f / 1192f);
-            shadow.type = Image.Type.Simple;
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -8f);
-
             RectTransform plate = Stretch(Node("Плашка", banner));
             bannerView.Plate = plate;
-            Image art = Layer(plate, "Рисунок", Kit("wc_level_banner"), Role.Text, 1f);
-            Object.DestroyImmediate(art.GetComponent<ThemeColor>());
-            art.color = Color.white;
-            art.type = Image.Type.Simple;
-            // Лучи — поверх рисунка, под цифрой; маска по форме плашки не даёт им вылезти за кромку.
-            RectTransform raysBox = PlateMask(plate, "Лучи");
-            Image rays = Mark(raysBox, "Свет", Kit("wc_fx_shine"), Role.Text, 0f, new Vector2(.5f, .5f), new Vector2(BannerNumberX, 0f), 360f);
-            Additive(rays, new Color(1f, .74f, .38f, 0f));
-            bannerView.Rays = rays;
+            // Полоса глубокого дыма: вверх не выше −130, в зону объявления не заходит.
+            UiInkKit.SmokeLayer(plate, "Дым", "smoke_band_1", .96f, 56f, 20f, deep: true);
 
-            // Проблеск по плашке: косая полоса света под маской той же формы.
-            RectTransform glintBox = PlateMask(plate, "Проблеск");
-            RectTransform stripe = Box(Node("Полоса", glintBox), new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(42f, 320f));
-            stripe.localRotation = Quaternion.Euler(0f, 0f, -22f);
-            var stripeImage = stripe.gameObject.AddComponent<Image>();
-            stripeImage.sprite = Kit("wc_fx_glow");
-            Additive(stripeImage, new Color(1f, .82f, .55f, 0f));
-            stripeImage.enabled = false;
-            var glint = glintBox.gameObject.AddComponent<HudGlint>();
-            glint.Stripe = stripeImage;
-            glint.Peak = .5f;
-            glint.Driven = true;
-            bannerView.Glint = glint;
+            var left = new Vector2(0f, .5f);
+            var centre = new Vector2(.5f, .5f);
+            RectTransform medal = Box(Node("Медальон", plate), left, centre, new Vector2(BannerMedalX, 0f), new Vector2(BannerMedal, BannerMedal));
+            UiInkKit.SmokeLayer(medal, "Дым", "smoke_blot_2", 1f, 16f, 16f, deep: true);
+            // Мягкий тёплый свет за диском: виден ореолом по краю, вздыхает на щелчке числа (силу ставит
+            // баннер). Белое сияние, окрашенное в тёплый крем: у оранжевого light_glow край диска ложился
+            // на красный спад пятна и читался красным кольцом.
+            Image halo = UiInkKit.LightAt(medal, "Свет", "light_glow", centre, Vector2.zero, new Vector2(196f, 196f), 0f, delay: .1f);
+            halo.sprite = RoundGlow;
+            halo.color = new Color(1f, .84f, .6f, 0f);
+            bannerView.Flash = halo;
+            Image disc = Layer(medal, "Диск", T.CircleFill, Role.SmokeDeep, .92f);
+            disc.type = Image.Type.Simple;
+            disc.material = UiInkKit.Plain;
+            UiInkKit.Inked(disc, delay: .05f);
+            // Тонкое кремовое кольцо — как у значка уровня на портрете; без огня кромку держит оно.
+            Image ring = Layer(medal, "Кольцо", T.CircleFrame, Role.Text, 1f);
+            Object.DestroyImmediate(ring.GetComponent<ThemeColor>());
+            ring.color = new Color(1f, .9f, .74f, .78f);
+            ring.type = Image.Type.Simple;
+            ring.material = UiInkKit.Plain;
+            UiInkKit.Inked(ring, delay: .1f);
+            // Кольцо огня — едва заметная искра (сила .1 от баннера; при .3 оно горело красным кольцом) и
+            // медленно вращается. Окружность в спрайте — 0,656 ширины и 0,693 высоты: спрайт больше
+            // медальона, чтобы огонь и его красная дымка легли снаружи кремового кольца, а не на диск.
+            const float fireRing = BannerMedal + 10f;
+            bannerView.Rays = UiInkKit.LightAt(medal, "Огонь", "light_ring", centre, Vector2.zero,
+                new Vector2(fireRing / .656f, fireRing / .693f), 0f);
 
-            // Цифра: золото сверху вниз в оранжевое, тёмная обводка и тёплое свечение подложкой.
-            RectTransform number = Box(Node("Уровень", plate), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(BannerNumberX, 2f), new Vector2(210f, 170f));
-            TMP_Text digits = LabelOn(number, "4", FontRole.Heading, 128f, Role.Text, TextAlignmentOptions.Center);
+            // Число: тёплый крем в золото, мягкая тень шрифта; без оранжевой обводки и свечения старой плашки.
+            RectTransform number = Box(Node("Число", medal), centre, centre, new Vector2(0f, 2f), new Vector2(BannerMedal - 16f, BannerMedal - 20f));
+            TMP_Text digits = LabelOn(number, "4", FontRole.Heading, 56f, Role.Text, TextAlignmentOptions.Center);
             Object.DestroyImmediate(digits.GetComponent<ThemeColor>());
             digits.color = Color.white;
             digits.enableVertexGradient = true;
-            digits.colorGradient = new VertexGradient(new Color(1f, .96f, .74f), new Color(1f, .96f, .74f), new Color(1f, .62f, .2f), new Color(1f, .62f, .2f));
+            digits.colorGradient = new VertexGradient(new Color(1f, .95f, .84f), new Color(1f, .95f, .84f), new Color(1f, .8f, .52f), new Color(1f, .8f, .52f));
             digits.textWrappingMode = TextWrappingModes.NoWrap;
-            Material gold = LevelNumberMaterial(digits.font);
-            if (gold != null) digits.fontSharedMaterial = gold;
+            digits.enableAutoSizing = true;
+            digits.fontSizeMin = 34f;
+            digits.fontSizeMax = 56f;
+            Shadowed(digits);
+            UiInkKit.Revealed(digits, .05f);
             bannerView.Number = digits;
 
-            // Черта между цифрой и прибавками — с ромбом, как на плашке.
-            RectTransform divider = Box(Node("Черта", plate), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(BannerNumberX + 112f, 0f), new Vector2(2f, 104f));
-            var line = divider.gameObject.AddComponent<Image>();
-            line.sprite = T.Pixel;
-            line.raycastTarget = false;
-            Tint(line, Role.PanelLine, .45f);
-            Mark(divider, "Ромб", T.DiamondSmall, Role.PanelLine, .9f, new Vector2(.5f, .5f), Vector2.zero, 11f);
-
-            float textX = BannerNumberX + 136f;
-            RectTransform caption = Box(Node("Надпись", plate), new Vector2(.5f, .5f), new Vector2(0f, .5f), new Vector2(textX, 52f), new Vector2(380f, 30f));
-            TMP_Text captionText = LabelOn(caption, "НОВЫЙ УРОВЕНЬ", FontRole.Heading, 21f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
-            captionText.characterSpacing = 6f;
+            RectTransform caption = Box(Node("Надпись", plate), left, left, new Vector2(BannerTextX, 15f), new Vector2(500f, 26f));
+            TMP_Text captionText = LabelOn(caption, "НОВЫЙ УРОВЕНЬ", FontRole.Heading, 20f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
+            captionText.characterSpacing = 5f;
             captionText.textWrappingMode = TextWrappingModes.NoWrap;
+            UiInkKit.Revealed(captionText, .1f);
             bannerView.Caption = captionText;
-            bannerView.GainLines = new TMP_Text[3];
-            string[] gains = { "+30 здоровья", "+5 урона", "+10 лавидия" };
-            for (int i = 0; i < gains.Length; i++)
-            {
-                RectTransform gainBox = Box(Node("Прибавка " + (i + 1), plate), new Vector2(.5f, .5f), new Vector2(0f, .5f), new Vector2(textX, 16f - i * 30f), new Vector2(380f, 30f));
-                TMP_Text gain = LabelOn(gainBox, gains[i], FontRole.Body, 22f, Role.Text, TextAlignmentOptions.MidlineLeft);
-                gain.textWrappingMode = TextWrappingModes.NoWrap;
-                gain.fontStyle = FontStyles.Bold;
-                bannerView.GainLines[i] = gain;
-            }
+            // Одна строка прибавок: остальные строки склеивает HudLevelBanner через « · ». Своего
+            // проявления по буквам у неё нет — выезд и прозрачность ведёт баннер, второе легло бы поверх.
+            RectTransform gainBox = Box(Node("Прибавки", plate), left, left, new Vector2(BannerTextX, -14f), new Vector2(500f, 30f));
+            TMP_Text gain = LabelOn(gainBox, "<color=#FFD27A>+30</color> здоровья · <color=#FFD27A>+5</color> урона · <color=#FFD27A>+10</color> лавидия",
+                FontRole.Body, 18f, Role.Text, TextAlignmentOptions.MidlineLeft);
+            gain.textWrappingMode = TextWrappingModes.NoWrap;
+            gain.richText = true;
+            bannerView.GainLines = new[] { gain };
 
-            // Искры веером из-за цифры, поверх плашки.
-            RectTransform sparks = Box(Node("Искры", banner), new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(BannerNumberX, 0f), new Vector2(10f, 10f));
-            var burst = sparks.gameObject.AddComponent<HudSparkBurst>();
-            burst.Sparks = new Image[20];
-            for (int i = 0; i < burst.Sparks.Length; i++)
-            {
-                RectTransform one = Box(Node("Искра " + (i + 1), sparks), new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, new Vector2(24f, 24f));
-                var image = one.gameObject.AddComponent<Image>();
-                image.sprite = T.Spark;
-                Additive(image, i % 3 == 0 ? new Color(1f, .95f, .8f, 0f) : new Color(1f, .72f, .36f, 0f));
-                image.enabled = false;
-                burst.Sparks[i] = image;
-            }
-            burst.Driven = true;
-            burst.Distance = 240f;
-            burst.Size = 38f;
-            burst.Stretch = 1.9f;
-            bannerView.Sparks = burst;
+            // Нить света под строкой: от медальона до правого края, растягивается с шириной баннера.
+            RectTransform threadBox = Node("Нить", plate);
+            threadBox.anchorMin = left;
+            threadBox.anchorMax = new Vector2(1f, .5f);
+            threadBox.pivot = centre;
+            threadBox.offsetMin = new Vector2(BannerTextX - 26f, -55f);
+            threadBox.offsetMax = new Vector2(-18f, -25f);
+            var thread = threadBox.gameObject.AddComponent<Image>();
+            thread.sprite = UiInkKit.Sprite("light_thread");
+            thread.type = Image.Type.Simple;
+            thread.raycastTarget = false;
+            thread.material = UiInkKit.Light;
+            // Тише, как нить полосы HUD (огня меньше): при .45 под строкой горела красная черта.
+            thread.color = new Color(1f, 1f, 1f, .3f);
+            UiInkKit.Inked(thread, left, .25f);
 
+            // Угли из медальона: горстка на щелчке числа (Burst из HudLevelBanner), в покое не летят;
+            // медленные и недолгие — до объявления сверху не долетают.
+            UiEmbers embers = UiInkKit.Embers(banner, "Угли", left, new Vector2(BannerMedalX, 0f), new Vector2(BannerMedal + 20f, BannerMedal), 0f);
+            embers.Life = new Vector2(1f, 1.8f);
+            embers.Speed = new Vector2(10f, 24f);
+            embers.Size = new Vector2(4f, 9f);
+            embers.Sway = 8f;
+            embers.SpawnBand = .5f;
+            embers.Max = 16;
+            bannerView.Embers = embers;
+            bannerView.EmberBurst = 10;
+
+            // Своя группа: группа HUD играет только первый раз. Большой момент — огонь есть, но слабый и медленный.
+            UiInkGroup group = UiInkKit.Group(banner, UiInkGroup.Sweep.FromCenter, .5f, .2f);
+            group.InkDuration = .7f;
+            group.Curve = UiInkGroup.Easing.Smooth;
+            group.EdgeScale = 1.4f;
+            group.Burn = .4f;
+
+            bannerView.FitWidth = true;
+            bannerView.WidthRange = new Vector2(400f, 680f);
+            bannerView.RightPad = 48f;
+            bannerView.PopScale = 1.06f;
+            bannerView.HoldTime = 2.4f;
+            bannerView.OutTime = .5f;
+            bannerView.ClickAt = .6f;
+            bannerView.NumberPunch = 1.18f;
+            bannerView.FlashPeak = .4f;
+            bannerView.FlashRest = .12f;
+            bannerView.RaysAlpha = .1f;
+            bannerView.RaysSpin = 6f;
             view.LevelBanner = bannerView;
             banner.gameObject.SetActive(false);
-        }
-
-        /// <summary>Маска по форме рисунка плашки: всё внутри видно только на самой плашке.</summary>
-        static RectTransform PlateMask(RectTransform plate, string name)
-        {
-            RectTransform box = Stretch(Node(name, plate));
-            var shape = box.gameObject.AddComponent<Image>();
-            shape.sprite = Kit("wc_level_banner");
-            shape.raycastTarget = false;
-            box.gameObject.AddComponent<Mask>().showMaskGraphic = false;
-            return box;
-        }
-
-        /// <summary>
-        /// Материал цифры уровня: тёмно-коричневая обводка и тёплое свечение подложкой (шрифт на
-        /// мобильном SDF-шейдере — своего свечения у него нет). Лежит рядом со шрифтом.
-        /// </summary>
-        static Material LevelNumberMaterial(TMP_FontAsset font)
-        {
-            if (font == null) return null;
-            string path = "Assets/UI/Fonts/" + font.name + " Level.mat";
-            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (mat != null) return mat;
-            mat = new Material(font.material) { name = font.name + " Level" };
-            mat.SetFloat("_OutlineWidth", .12f);
-            mat.SetColor("_OutlineColor", new Color(.28f, .12f, .03f, 1f));
-            mat.EnableKeyword("UNDERLAY_ON");
-            mat.SetColor("_UnderlayColor", new Color(1f, .45f, .1f, .75f));
-            mat.SetFloat("_UnderlayOffsetX", 0f);
-            mat.SetFloat("_UnderlayOffsetY", 0f);
-            mat.SetFloat("_UnderlayDilate", 1f);
-            mat.SetFloat("_UnderlaySoftness", 1f);
-            ShaderUtilities.GetShaderPropertyIDs();
-            ShaderUtilities.UpdateShaderRatios(mat);
-            AssetDatabase.CreateAsset(mat, path);
-            return mat;
         }
 
         // ---------------------------------------------------------------- эффекты зелий
@@ -422,7 +473,9 @@ namespace Game.EditorTools
 
             // Подложка под текстом — светлая земля не съедает подпись.
             RectTransform plate = Box(Node("Подложка", chip), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(222f, 40f));
-            Layer(plate, "Заливка", T.PillFill, Role.Panel, .82f);
+            UiInkKit.SmokeLayer(plate, "Дым", "smoke_band_2", .95f, 36f, 22f, origin: new Vector2(0f, .5f));
+            // Частая всплывашка (каждое зелье) — без тлеющей кромки: огонь на ней читался красной вспышкой.
+            UiInkKit.Group(chip, UiInkGroup.Sweep.LeftToRight, .4f, .12f).Burn = 0f;
 
             RectTransform circle = Box(Node("Круг", chip), new Vector2(0f, .5f), new Vector2(.5f, .5f), new Vector2(24f, 0f), new Vector2(46f, 46f));
             Layer(circle, "Тень", T.CircleFill, Role.Panel, 1f);
@@ -445,6 +498,7 @@ namespace Game.EditorTools
 
             RectTransform effectBox = Box(Node("Эффект", chip), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 8f), new Vector2(186f, 22f));
             buff.Effect = LabelOn(effectBox, effect, FontRole.Body, 15f, Role.Text, TextAlignmentOptions.MidlineLeft);
+            UiInkKit.Revealed(buff.Effect);
             buff.Effect.fontStyle = FontStyles.Bold;
             buff.Effect.textWrappingMode = TextWrappingModes.NoWrap;
             buff.Effect.enableAutoSizing = true;
@@ -459,10 +513,8 @@ namespace Game.EditorTools
         static void BuildFeedback(RectTransform root, CombatHudView view)
         {
             RectTransform pill = Box(Node("Отказ", root), BottomCenter, new Vector2(.5f, 0f), new Vector2(0f, Bottom + StripHeight + 22f), new Vector2(240f, 40f));
-            Image shadow = Layer(pill, "Тень", T.ButtonGlow, Role.Veil, .7f, 24f);
-            shadow.rectTransform.anchoredPosition = new Vector2(0f, -4f);
-            Layer(pill, "Заливка", T.PillFill, Role.Panel, .95f);
-            Layer(pill, "Ободок", T.PillFrame, Role.Accent, .9f);
+            UiInkKit.SmokeLayer(pill, "Дым", "smoke_band_1", 1f, 60f, 26f);
+            UiInkKit.LightAt(pill, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, -2f), new Vector2(260f, 30f), .6f, delay: .1f);
             foreach (Transform child in pill) child.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
             var row = pill.gameObject.AddComponent<HorizontalLayoutGroup>();
             row.padding = new RectOffset(26, 26, 6, 6);
@@ -471,6 +523,8 @@ namespace Game.EditorTools
             pill.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             RectTransform text = Node("Сообщение", pill);
             view.FeedbackText = LabelOn(text, "Перезарядка", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.Center);
+            UiInkKit.Revealed(view.FeedbackText, .05f);
+            UiInkKit.Group(pill, UiInkGroup.Sweep.FromCenter, .3f, .08f).Burn = 0f;
             view.FeedbackText.textWrappingMode = TextWrappingModes.NoWrap;
             view.Feedback = pill;
             pill.gameObject.SetActive(false);

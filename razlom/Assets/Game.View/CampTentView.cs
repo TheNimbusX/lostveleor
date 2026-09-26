@@ -10,7 +10,8 @@ namespace Game.View
     /// Палатка снаряжения по концепту владельца `ART/UI/concepts-2026-09-22/tent-O-portrait-card.png`
     /// (22 сентября), в языке боевого HUD и паузы. Слева карточка героя: портрет, имя, уровень
     /// и опыт, 4 слота, лист характеристик, зелья. Справа вкладки «Сумка / Атлас». Фон — живой
-    /// лагерь, без размытия.
+    /// лагерь, без размытия. С 26 сентября — материал «Дым и свет» (CampTentWcBuilder): ячейки
+    /// UiInkKit.Cell, рамка и свет редкости — у их WcSlotState, спрайтов рамок редкости нет.
     ///
     /// Префаб собирает CampTentBuilder, дальше он правится руками. Здесь только ссылки на части
     /// и внешний вид; что надеть и что показать — решает CampInventoryView.
@@ -75,6 +76,10 @@ namespace Game.View
         public TMP_Text ItemStats;
         [Tooltip("Карточка сама раскладывается (VerticalLayoutGroup + ContentSizeFitter): код только ставит тексты")]
         public bool TooltipAutoLayout;
+        [Tooltip("«Дым и свет»: состояние ячейки картинки (рамка и свет цвета редкости). Пусто — рамка меняет спрайт (FrameFor)")]
+        public WcSlotState ItemState;
+        [Tooltip("«Дым и свет»: проявление карточки; заново — когда она всплывает из скрытой")]
+        public UiInkGroup TooltipInk;
 
         [Header("Редкости: обычная, редкая, эпическая, уникальная")]
         public Sprite EmptyFrame;
@@ -151,7 +156,7 @@ namespace Game.View
             for (int i = 0; i < Filters.Length; i++)
             {
                 if (Filters[i] == null) continue;
-                // Пак «Ночная акварель» (префаб CampTentWc): выбранная — оранжевая подпись и подчёркивание.
+                // Префаб CampTentWc: выбранная — оранжевая подпись и подчёркивание (нить света).
                 if (TabOn == null) CampShopView.SetTab(Filters[i], i == index);
                 else if (Filters[i].image != null) Filters[i].image.sprite = i == index ? TabOn : TabOff;
             }
@@ -174,9 +179,22 @@ namespace Game.View
             ShowTooltip(false, true);
         }
 
+        /// <summary>
+        /// Рамка картинки в карточке по редкости (-1 — без редкости: стат, зелье). У ячейки «Дыма и
+        /// света» — цвет рамки и свет за вещью (WcSlotState), у прежней палатки — спрайт рамки.
+        /// </summary>
+        public void SetItemFrame(int rarity)
+        {
+            if (ItemState != null) ItemState.Set(rarity >= 0 ? rarity : WcSlotState.Empty, false);
+            else if (ItemFrame != null && FrameFor(rarity) is Sprite frame) ItemFrame.sprite = frame;
+        }
+
         public void ShowTooltip(bool shown, bool instant = false)
         {
             if (TooltipGroup == null || (shown == _tooltipShown && !instant)) return;
+            // Карточка всплывает из скрытой — чернила проявляются заново (без огня). С ячейки на ячейку
+            // она не успевает погаснуть: тогда только меняется текст, дым не мигает на каждом наведении.
+            if (shown && !instant && TooltipInk != null && TooltipInk.isActiveAndEnabled && TooltipGroup.alpha < .5f) TooltipInk.Show();
             _tooltipShown = shown;
             if (instant) TooltipGroup.alpha = shown ? 1f : 0f;
             else UiMotion.FadeTo(TooltipGroup, shown ? 1f : 0f, TooltipDuration);

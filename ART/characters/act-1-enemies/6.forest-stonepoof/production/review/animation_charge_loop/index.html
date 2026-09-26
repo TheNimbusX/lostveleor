@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Камнекопыт · Быстрый бег</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Segoe UI',sans-serif}main{max-width:1500px;margin:auto;padding:30px 24px 65px}h1{font-size:38px;line-height:1.2;margin:8px 0 12px}h2{font-size:20px;margin:0}p{margin:8px 0;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent)}.top{display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:20px}.badge{border:1px solid #647353;border-radius:30px;color:var(--accent);padding:8px 16px;white-space:nowrap}.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.caption{padding:16px 19px}.caption p{font-size:14px;margin-bottom:0}.panel img{display:block;width:100%;aspect-ratio:3/2;object-fit:contain;background:#8a958e}.controls{padding:20px;margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.timeline{display:flex;gap:16px;align-items:center;margin-top:17px}button,select{font:inherit;padding:8px 13px;background:#29342d;border:1px solid #53634f;border-radius:7px;color:var(--ink);cursor:pointer}button:hover{border-color:var(--accent)}button:disabled{opacity:.5;cursor:wait}button[aria-pressed=true],#play{background:var(--accent);color:#1b281d}input[type=range]{flex:1;min-width:100px;accent-color:var(--accent)}output{min-width:195px;font-variant-numeric:tabular-nums}#phase{color:var(--accent)}a{color:var(--accent)}.small{font-size:14px}.links{display:flex;gap:14px;flex-wrap:wrap;margin:20px 0}.note{border-left:3px solid #83956c;padding:10px 16px;background:#273128;margin:20px 0}.note p{color:#d3ddcb}.videos{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:15px}video{width:100%;display:block}details{margin-top:22px}summary{cursor:pointer;color:var(--accent)}@media(max-width:800px){main{padding:20px 12px}.pair,.videos{grid-template-columns:1fr}h1{font-size:29px}.top{align-items:flex-start;flex-direction:column}.timeline{flex-wrap:wrap}.controls{padding:14px}}
+</style>
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · КАМНЕКОПЫТ · КЛИП 02</div><h1>Быстрый бег</h1><p>Передние копыта принимают вес → задние ноги подбираются → толчок и полёт.</p></div><span class="badge">Галоп · принят</span></div>
+<div class="pair">
+<section class="panel"><div class="caption"><h2>Принятый видеореференс</h2><p id="refLabel">Фрагмент галопа Higgsfield, повтор для сравнения.</p></div><img id="reference" src="reference_frames/0000.jpg" alt="Галоп Камнекопыта в принятом видеореференсе"></section>
+<section class="panel"><div class="caption"><h2>Анимация на нашей модели</h2><p id="viewLabel">Сбоку · скорость разбега 12 м/с</p></div><img id="animation" src="side_frames/0000.png" alt="Новый цикл бега на настоящем риге Камнекопыта"></section>
+</div>
+<div class="controls">
+<div class="row" style="margin-bottom:14px"><button id="modeLoop" aria-pressed="true">Бег в повторе</button><button id="modeFull" aria-pressed="false">Подготовка → старт → бег</button></div>
+<div class="row"><button id="play" disabled>Загрузка кадров…</button><button id="reset">Сначала</button><button id="prev" aria-label="Предыдущий кадр">− кадр</button><button id="next" aria-label="Следующий кадр">+ кадр</button><select id="speed" aria-label="Скорость просмотра"><option value="1">Скорость ×1</option><option value="0.5">Скорость ×0,5</option><option value="0.25">Скорость ×0,25</option></select><button id="side" aria-pressed="true">Сбоку</button><button id="game" aria-pressed="false">Игровой ракурс</button><label class="small"><input id="repeat" type="checkbox" checked> Повторять</label></div>
+<div class="timeline"><input id="seek" type="range" min="0" max="59" value="0" aria-label="Кадр анимации"><output id="counter">Кадр 0 / 59 · 0,00 с</output><span id="phase">Полёт</span></div>
+<p id="loading" class="small" aria-live="polite">Кадры загружаются заранее.</p>
+</div>
+<div class="note"><p><strong>Проверь сначала бег на обычной скорости, затем связку со стартом.</strong> Цикл длится 0,4 секунды и повторяется пять раз. Полосы на полу — временные отметки для проверки контакта копыт; в игру они не пойдут.</p></div>
+<p>Подготовка и старт уже приняты и сохранены. Здесь проверяем только галоп и переход в него: работу четырёх ног, вес передней части и непрерывность повторения. Видеореференс слева сопоставлен по фазе; это сравнение пластики, а не равенство времени исходного ролика.</p>
+<div class="links"><a href="../animation_brake/index.html">Дальше: торможение с заносом</a><a href="side_keys.jpg">Позы сбоку</a><a href="game_keys.jpg">Позы с игровой камеры</a><a href="../animation_windup_start/index.html">Принятые подготовка и старт</a><a href="../motion_references/index.html">Полные видеореференсы</a><a href="../../animation/charge_loop/Stonehoof_ChargeLoop_r01.blend">Редактируемая сцена Blender</a><a href="../../animation/charge_loop/Stonehoof_ChargeLoop_Baked_r01.blend">Производный клип</a></div>
+<details><summary>Обычные видеозаписи</summary><div class="videos"><div><p>Повтор бега · сбоку</p><video src="side.webm" poster="side_frames/0000.png" muted loop playsinline controls preload="none"></video><a href="side.mp4">MP4</a></div><div><p>Повтор бега · игровая камера</p><video src="game.webm" poster="game_frames/0000.png" muted loop playsinline controls preload="none"></video><a href="game.mp4">MP4</a></div><div><p>Связка со стартом · сбоку</p><video src="transition_side.webm" poster="transition_side_frames/0000.png" muted playsinline controls preload="none"></video><a href="transition_side.mp4">MP4</a></div><div><p>Связка со стартом · игровая камера</p><video src="transition_game.webm" poster="transition_game_frames/0000.png" muted playsinline controls preload="none"></video><a href="transition_game.mp4">MP4</a></div></div></details>
+<p class="small" style="margin-top:28px">Галоп принят владельцем. Торможение с заносом доступно на отдельной странице по ссылке выше. Перенос в Unity — после согласования движений.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),cache=[];
+let frame=0,view='side',mode='loop',running=false,started=0,first=0,rate=1,lastKey='';
+const filename=f=>String(f).padStart(4,'0'),count=()=>mode==='loop'?60:96;
+function paths(f,v,m){
+  if(m==='full'&&f<36)return [`transition_${v}_frames/${filename(f)}.png`,`../animation_windup_start/reference_frames/${filename(f)}.jpg`];
+  const phase=(m==='full'?f-36:f)%12;return [`${v}_frames/${filename(phase)}.png`,`reference_frames/${filename(phase)}.jpg`];
+}
+function draw(){
+ const key=`${frame}/${view}/${mode}`;
+ if(key!==lastKey){const [a,r]=paths(frame,view,mode);$('animation').src=a;$('reference').src=r;lastKey=key;}
+ $('seek').max=count()-1;$('seek').value=frame;$('counter').value=`Кадр ${frame} / ${count()-1} · ${(frame/30).toFixed(2).replace('.',',')} с`;
+ const p=(mode==='full'?frame-36:frame)%12;
+ $('phase').textContent=mode==='full'&&frame<36?(frame<9?'Первый замах копытом':frame<15?'Первый скребок':frame<22?'Второй скребок':frame<30?'Подсед':'Старт'):(p<3?'Полёт':p<5?'Передняя опора':p<7?'Подбор задних ног':p<9?'Толчок':'Отрыв');
+ if(!$('play').disabled)$('play').textContent=running?'Пауза':(frame===count()-1?'Ещё раз':'Смотреть');
+}
+function seek(f){running=false;frame=Math.max(0,Math.min(count()-1,f));draw();}
+function toggle(){if($('play').disabled)return;if(!running&&frame===count()-1)frame=0;running=!running;first=frame;started=performance.now();draw();}
+$('play').onclick=toggle;$('reset').onclick=()=>seek(0);$('prev').onclick=()=>seek(frame-1);$('next').onclick=()=>seek(frame+1);$('seek').oninput=()=>seek(Number($('seek').value));
+$('speed').onchange=()=>{rate=Number($('speed').value);first=frame;started=performance.now();};
+for(const [id,m] of [['modeLoop','loop'],['modeFull','full']])$(id).onclick=()=>{mode=m;seek(0);$('modeLoop').setAttribute('aria-pressed',String(m==='loop'));$('modeFull').setAttribute('aria-pressed',String(m==='full'));$('refLabel').textContent=m==='loop'?'Фрагмент галопа Higgsfield, повтор для сравнения.':'Принятые подготовка и старт, затем фрагмент галопа.';};
+for(const name of ['side','game'])$(name).onclick=()=>{view=name;for(const other of ['side','game'])$(other).setAttribute('aria-pressed',String(name===other));$('viewLabel').textContent=name==='side'?'Сбоку · скорость разбега 12 м/с':'Игровой ракурс · тот же момент';draw();};
+document.addEventListener('keydown',e=>{if(['INPUT','SELECT','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Space'){e.preventDefault();toggle();}if(e.code==='ArrowRight'){e.preventDefault();seek(frame+1);}if(e.code==='ArrowLeft'){e.preventDefault();seek(frame-1);}});
+function tick(now){if(running){const elapsed=first+Math.floor((now-started)*30*rate/1000);if(elapsed>=count()){if($('repeat').checked){frame=elapsed%count();first=frame;started=now;}else{frame=count()-1;running=false;}}else frame=elapsed;draw();}requestAnimationFrame(tick);}
+requestAnimationFrame(tick);draw();
+const assets=new Set();for(const m of ['loop','full'])for(const v of ['side','game'])for(let f=0;f<(m==='loop'?60:96);f++)for(const p of paths(f,v,m))assets.add(p);
+let loaded=0,failed=0;
+function done(error){loaded++;if(error)failed++;$('loading').textContent=`Загружено ${loaded} из ${assets.size}`;if(loaded===assets.size){$('play').disabled=failed>0;$('loading').textContent=failed?'Часть кадров недоступна. Ниже есть обычные видеозаписи.':'Готово · ← / → листают кадры, пробел включает просмотр';draw();}}
+for(const path of assets){const im=new Image();cache.push(im);im.onload=()=>done(false);im.onerror=()=>done(true);im.src=path;}
+</script></html>

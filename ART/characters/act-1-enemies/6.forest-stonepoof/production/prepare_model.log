@@ -1,0 +1,17 @@
+00:03.141  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\Stonehoof_SourceRig.blend"
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\prepare_model.py:102: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat=bpy.data.materials.new('MAT_ForestStonehoof_Bark');mat.use_nodes=True
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\prepare_model.py:114: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world=bpy.data.worlds.new('World_Review');scene.world.use_nodes=True
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\prepare_model.py:123: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  fm=bpy.data.materials.new('MAT_ReviewFloor');fm.diffuse_color=(0.12,0.15,0.15,1);fm.use_nodes=True
+Traceback (most recent call last):
+  File "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\prepare_model.py", line 135, in <module>
+    bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'Stonehoof_ModelCandidate.blend'))
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Error: Cannot change old file (file saved with @)
+
+Error: Cannot change old file (file saved with @)
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

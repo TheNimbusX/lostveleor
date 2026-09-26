@@ -1,0 +1,17 @@
+{
+  "frame_images_checked": 147,
+  "local_links_checked": 21,
+  "decoded_videos": {
+    "game.webm": 428624,
+    "impact_game.webm": 287831,
+    "impact_side.webm": 302746,
+    "side.webm": 457534,
+    "game.mp4": 523567,
+    "impact_game.mp4": 363112,
+    "impact_side.mp4": 349118,
+    "side.mp4": 510319
+  },
+  "javascript_syntax": "passed",
+  "accepted_sources_unchanged": true,
+  "browser_runtime": "not checked: CUA file URL policy"
+}

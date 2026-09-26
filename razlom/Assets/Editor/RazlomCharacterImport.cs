@@ -361,7 +361,7 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
 
         var importer = (ModelImporter)assetImporter;
 
-        if (NormalPath.Contains("/Resources/Characters/Forest_Wendigo/"))
+        if (NormalPath.Contains("/Resources/Characters/Forest_Wendigo/") || NormalPath.Contains("/Resources/Characters/Forest_Stonehoof/"))
         {
             importer.animationType = ModelImporterAnimationType.Generic;
             importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;

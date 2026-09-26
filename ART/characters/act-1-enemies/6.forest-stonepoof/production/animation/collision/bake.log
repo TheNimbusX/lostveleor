@@ -1,0 +1,6 @@
+00:02.953  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\collision\Stonehoof_Collision_r01.blend"
+Info: Saved as "Stonehoof_Collision_Baked_r01.blend"
+{"deforming_bones": 34, "runtime_clips": {"AN_Stonehoof_WallBrace": 0.13333333333333333, "AN_Stonehoof_WallImpact": 1.2}, "sample_step_frames": 0.0625, "maximum_baked_joint_position_error_m": 8.616943535090066e-07, "maximum_baked_rotation_error_degrees": 0.06852804019207596, "maximum_sixteenth_frame_rotation_change_degrees": 7.304752700161119, "maximum_step_at": {"bone": "leg_hind_right_bot1", "frame": 7.9375}, "root_travel_removed": true, "scale_curves": false, "owner_approved": false}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

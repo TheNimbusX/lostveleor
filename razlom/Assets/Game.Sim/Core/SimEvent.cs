@@ -57,6 +57,9 @@ namespace Game.Sim
         WendigoStarted = 23,
         WendigoImpact = 24,
         WendigoCancelled = 25,
+        StonehoofStarted = 26,
+        StonehoofStopped = 27,
+        StonehoofCancelled = 28,
     }
 
     /// <summary>

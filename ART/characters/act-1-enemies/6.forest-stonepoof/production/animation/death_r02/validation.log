@@ -1,0 +1,6 @@
+00:02.781  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+00:02.812  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\death_r02\Stonehoof_Death_r02.blend"
+{"samples": 481, "minimum_mesh_z": [-0.00034242868423461914, 18.75, 3724], "entry_joint_error_m": 0.0009219102797843705, "bone_length_error": 9.464918022672464e-07, "max_hoof_target_error_m": 1.9947217789149952e-05, "max_hoof_error_at": [49.625, "front_left"], "max_eighth_frame_rotation_degrees": [3.0075226834219095, 21.75, "leg_hind_right_bot1"], "owner_approved": false}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

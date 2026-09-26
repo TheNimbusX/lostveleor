@@ -74,6 +74,13 @@ namespace Game.View
         public static int HudTooltipSlot { get; private set; } = -1;
 
         /// <summary>
+        /// -capture-hud-tooltip-detail: подсказка способности снимается как с зажатым Alt (взятые
+        /// усиления, «было → стало»). Съёмке без усилений показывать нечего, поэтому флаг включает
+        /// первые три усиления у четырёх способностей съёмочного набора через меню разработчика.
+        /// </summary>
+        public static bool HudTooltipDetail { get; private set; }
+
+        /// <summary>
         /// Съёмка главного меню: под -capture-main-menu меню не выключается, а
         /// само нажимает PLAY через три секунды и пишет в лог состояние камер.
         /// Нужна, чтобы увидеть переход меню → игра в настоящем плеере.
@@ -219,6 +226,12 @@ namespace Game.View
             if (int.TryParse(ReadValue(args, "-capture-hud-tooltip"), out int tooltipSlot)
                 && tooltipSlot >= 0 && tooltipSlot < Simulation.AbilitySlots)
                 HudTooltipSlot = tooltipSlot;
+            HudTooltipDetail = Array.IndexOf(args, "-capture-hud-tooltip-detail") >= 0;
+            if (HudTooltipDetail)
+                // Съёмочный набор — пул 0–3 в слотах 1–4 (TickDriver): Вихрь, Рассекающий, Пламя, Шквал.
+                for (int line = 0; line < 4; line++)
+                    for (int index = 0; index < 3; index++)
+                        DeveloperTalents.Set((SabreTalentLine)line, index, true);
 
             string output = ReadValue(args, OutputFlag) ?? "capture";
             float[] marks = ParseMarks(ReadValue(args, TimesFlag));

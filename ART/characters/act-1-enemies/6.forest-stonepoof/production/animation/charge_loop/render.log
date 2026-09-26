@@ -1,0 +1,34 @@
+00:02.250  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\animation\charge_loop\build_loop.py:138: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  mat=bpy.data.materials.new('MAT_QA_FloorMarks');mat.use_nodes=True;mat.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=(.035,.045,.045,1);mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value=.9;go.data.materials.append(mat)
+00:05.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0000.png'
+00:05.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0001.png'
+00:05.922  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0002.png'
+00:06.204  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0003.png'
+00:06.469  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0004.png'
+00:06.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0005.png'
+00:07.063  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0006.png'
+00:07.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0007.png'
+00:07.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0008.png'
+00:07.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0009.png'
+00:08.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0010.png'
+00:08.485  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0011.png'
+00:08.782  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\side_frames\0012.png'
+00:09.063  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0000.png'
+00:09.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0001.png'
+00:09.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0002.png'
+00:09.907  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0003.png'
+00:10.204  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0004.png'
+00:10.485  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0005.png'
+00:10.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0006.png'
+00:11.032  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0007.png'
+00:11.313  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0008.png'
+00:11.610  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0009.png'
+00:11.891  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0010.png'
+00:12.141  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0011.png'
+00:12.438  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\forest-stonepoof\production\review\animation_charge_loop\game_frames\0012.png'
+Info: Saved as "Stonehoof_ChargeLoop_r01.blend"
+LOOP_BUILT {"join_position_m": 2.5636927089222153e-07, "join_matrix_max": 1.6689300537109375e-06}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

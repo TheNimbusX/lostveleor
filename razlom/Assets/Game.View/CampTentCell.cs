@@ -13,6 +13,10 @@ namespace Game.View
     /// Редкость видна сразу (владелец 16 сентября: «нечитаемая»): подкраска-свечение
     /// за вещью, камень в углу, у эпической и уникальной свечение дышит, по
     /// уникальной время от времени пробегает блик.
+    ///
+    /// «Дым и свет» (26 сентября, CampTentWcBuilder): ячейка — UiInkKit.Cell или круглый SlotOrb,
+    /// рамку и свет редкости ведёт их WcSlotState (<see cref="State"/>), камень — малый светящийся
+    /// шарик (<see cref="Gem"/> и <see cref="GemGlow"/>), а не гранёный ромб.
     /// </summary>
     public sealed class CampTentCell : MonoBehaviour
     {
@@ -31,6 +35,8 @@ namespace Game.View
         [Header("Редкость")]
         [Tooltip("Мягкое свечение за вещью, красится в цвет редкости")] public Image RarityGlow;
         [Tooltip("Камень в углу; у обычной скрыт")] public Image Gem;
+        [Tooltip("«Дым и свет»: сияние вокруг камня-шарика, цвета редкости; живёт вместе с камнем")] public Image GemGlow;
+        [Range(0f, 1f)] public float GemGlowAlpha = .6f;
         [Tooltip("Полоса блика под маской; пробегает по уникальной")] public RectTransform Shine;
         [Range(0f, 1f)] public float GlowAlpha = .55f;
         [Range(0f, 1f)] public float BreathMin = .3f;
@@ -81,6 +87,14 @@ namespace Game.View
                 Gem.enabled = _rarity >= 1;
                 Gem.color = rarityColour;
                 Gem.rectTransform.localScale = Vector3.one * (_rarity >= 3 ? 1.25f : _rarity == 2 ? 1.1f : 1f);
+                if (GemGlow != null)
+                {
+                    GemGlow.enabled = Gem.enabled;
+                    Color glow = rarityColour;
+                    glow.a = GemGlowAlpha;
+                    GemGlow.color = glow;
+                    GemGlow.rectTransform.localScale = Gem.rectTransform.localScale;
+                }
             }
             if (RarityGlow != null && UiMotion.Now >= _flashUntil)
             {

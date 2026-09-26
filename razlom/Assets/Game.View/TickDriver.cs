@@ -131,7 +131,7 @@ namespace Game.View
         public void QueueSummaryCommand(bool repeat)
         {
             if (Session == null || Session.Mode != GameMode.Summary || RunEndBeat.Holding) return;
-            _commandLatch = (byte)(repeat ? CampCommand.RepeatRift : CampCommand.ReturnToCamp);
+            LeaveSummary(repeat);
         }
 
         /// <summary>
@@ -154,6 +154,9 @@ namespace Game.View
                                && command >= RunCommand.PickupReplaceSlot1 && command <= RunCommand.PickupSalvage;
             if (command != RunCommand.Leave && !validChoice && !validReplace && !validPickup && !validRoute)
                 return;
+            // Следующая арена — под дымной завесой (владелец 26 сентября): и клик по
+            // карточке маршрута, и клавиши ряда приходят сюда.
+            if (validRoute && ChooseRouteUnderSmoke(command)) return;
 
             _commandLatch = (byte)command;
         }
@@ -307,10 +310,19 @@ namespace Game.View
 
             StartForestBudPlaytestIfRequested();
             StartTempoPlaytestIfRequested();
-            if (GameplayPaused || CampPlayerView.Instance?.InputBlocked == true)
+            if (GameplayPaused || CampTransition.Busy || CampPlayerView.Instance?.InputBlocked == true)
             {
                 _frameEvents.Clear();
                 _frameEventContexts.Clear();
+                if (CampTransition.Busy)
+                {
+                    // Под дымной завесой смена симуляции уже случилась, а тики стоят: буферы
+                    // отрисовки переходят на новую сразу. Иначе до конца завесы герой и камера
+                    // стояли бы в точке прежней симуляции. Подкадр держится, как в паузе:
+                    // сброс в ноль откатывал тела на полтика, пока дым накатывает.
+                    SyncGeneration();
+                    return;
+                }
                 Alpha = GameplayPaused ? _pausedAlpha : 0f;
                 return;
             }
@@ -332,7 +344,9 @@ namespace Game.View
                 || loadout.Version != _appliedLoadoutVersion || loadout.Applications != _appliedLoadoutApplications)
                 ApplyAbilityBuild();
 
-            if (!CampIntegrationCapture.IsRunning) CaptureInput();
+            // Пока дымная завеса закрывает мир (смена арены: тики идут, чтобы команда
+            // маршрута дошла до симуляции), ввод не собирается — игрок не видит, куда жмёт.
+            if (!CampIntegrationCapture.IsRunning && !CampTransition.Covering) CaptureInput();
             CampIntegrationCapture.CaptureInput();
 
             _frameEvents.Clear();
@@ -379,8 +393,11 @@ namespace Game.View
                 // Новый Разлом — интерполировать не от чего: старые позиции
                 // относятся к другой локации, и кадр показал бы, как все
                 // размазываются через полкарты.
+                // Накопленное время старой арены новой не принадлежит: за ним следом идёт
+                // кадр сборки в секунды, и догонять его пятью тиками разом значит начать
+                // бой, пока арена ещё под дымной завесой.
                 if (Sim != null && Run != null && Run.Depth != depthBefore)
-                { PrepareForestBudRoster(); SavePreviousPositions(); }
+                { PrepareForestBudRoster(); SavePreviousPositions(); _accumulator = 0f; }
 
                 _accumulator -= TickLength;
                 steps++;
@@ -446,11 +463,74 @@ namespace Game.View
             HoveredEntity = -1;
         }
 
-        /// <summary>Системное действие pause-меню, выполняемое вне боевого тика.</summary>
+        /// <summary>
+        /// Системное действие pause-меню, выполняемое вне боевого тика. Из забега и
+        /// с итогов — под дымной завесой (CampTransition): смена идёт, когда экран
+        /// закрыт целиком. С Полигона и без префаба завесы — сразу, как раньше.
+        /// </summary>
         public void ReturnToCampFromMenu()
         {
             if (Session == null) return;
+            if (Session.Mode != GameMode.Camp && CampTransition.Swap(() =>
+                {
+                    if (Session.Mode == GameMode.Camp) return;
+                    Session.ReturnToCamp();
+                    SyncAfterSwitch();
+                }, true))
+                return;
             Session.ReturnToCamp();
+        }
+
+        /// <summary>
+        /// Смена симуляции вне тика (под дымной завесой): буферы отрисовки переходят
+        /// на новую в том же кадре, до LateUpdate. Иначе камера и тела на кадре смены
+        /// вставали бы в точку прежней симуляции, а на следующем ехали бы оттуда.
+        /// </summary>
+        internal void SyncAfterSwitch()
+        {
+            if (Session != null) SyncGeneration();
+        }
+
+        /// <summary>
+        /// «Повторить» и «В лагерь» на итогах — кнопкой или клавишей. Под дымной
+        /// завесой смена зовётся напрямую, как из паузы: пока завеса стоит, тик
+        /// не идёт, и защёлкнутая команда до симуляции не дошла бы. Без завесы
+        /// (съёмка, префаб не собран) — прежняя защёлка на ближайший тик.
+        /// </summary>
+        private void LeaveSummary(bool repeat)
+        {
+            if (CampTransition.Swap(() =>
+                {
+                    if (Session.Mode != GameMode.Summary) return;
+                    if (repeat) Session.EnterRift();
+                    else Session.ReturnToCamp();
+                    SyncAfterSwitch();
+                }, !repeat))
+            {
+                ClearCapturedInput();
+                return;
+            }
+            _commandLatch = (byte)(repeat ? CampCommand.RepeatRift : CampCommand.ReturnToCamp);
+        }
+
+        /// <summary>
+        /// Выбор следующей арены под дымной завесой: дым накрывает старую арену,
+        /// команда маршрута уходит в обычный тик уже под ним, и завеса держится,
+        /// пока новая арена не собрана (кадр сборки в секунды не виден). false —
+        /// завесы нет, команда защёлкивается сразу.
+        /// </summary>
+        private bool ChooseRouteUnderSmoke(RunCommand command)
+        {
+            RiftRun run = Run;
+            int depth = run.Depth;
+            return CampTransition.BetweenArenas(() =>
+                {
+                    if (Session.Mode != GameMode.Rift || Run != run || run.Phase != RunPhase.ChoosingRoute) return false;
+                    ClearCapturedInput();
+                    _commandLatch = (byte)command;
+                    return true;
+                },
+                () => Session.Mode != GameMode.Rift || Run != run || run.Depth != depth);
         }
 
         /// <summary>
@@ -464,6 +544,9 @@ namespace Game.View
         /// </summary>
         private void CaptureInput()
         {
+#if UNITY_EDITOR
+            if (StonehoofReviewCase != null && Session.Mode == GameMode.Rift) { CaptureStonehoofInput(); return; }
+#endif
             if ((CaptureRig.WendigoShowcase || WendigoReviewCase != null) && Session.Mode == GameMode.Rift)
             { CaptureWendigoInput(); return; }
             if(CampServicesProbe.IsRunning){ClearWorldControls();return;}
@@ -959,8 +1042,9 @@ namespace Game.View
                 case GameMode.Summary:
                     // Пока итоги не показаны, R и выход не срабатывают: их жали в бою как способности.
                     if (RunEndBeat.Holding) break;
-                    if (repeat) _commandLatch = (byte)CampCommand.RepeatRift;
-                    if (back) _commandLatch = (byte)CampCommand.ReturnToCamp;
+                    // Обе сразу — «в лагерь», как и раньше (защёлка выхода писалась последней).
+                    if (back) LeaveSummary(false);
+                    else if (repeat) LeaveSummary(true);
                     break;
             }
         }
@@ -997,7 +1081,9 @@ namespace Game.View
                         // Артефакт при уже занятом слоте — сначала вопрос «Заменить артефакт?».
                         RunHud runHud = Run.ChoosingArtifact ? GetComponent<RunHud>() : null;
                         if (runHud != null) runHud.RequestOffer(i);
-                        else _commandLatch = (byte)((int)(Run.Phase == RunPhase.ChoosingRoute ? RunCommand.ChooseRoute1 : RunCommand.ChooseReward1) + i);
+                        // Маршрут — тем же путём, что клик по карточке: под дымной завесой.
+                        else if (Run.Phase == RunPhase.ChoosingRoute) QueueRunCommand((RunCommand)((int)RunCommand.ChooseRoute1 + i));
+                        else _commandLatch = (byte)((int)RunCommand.ChooseReward1 + i);
                     }
                 }
                 else if (abilitiesLive)

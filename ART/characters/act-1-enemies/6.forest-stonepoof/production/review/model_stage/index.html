@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Камнекопыт · Приёмка модели</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",sans-serif}main{max-width:1380px;margin:auto;padding:38px 32px 70px}header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:25px}h1{font-size:44px;line-height:1.1;margin:9px 0 12px;font-weight:650}h2{font-size:25px;font-weight:600;margin:0 0 8px}p{margin:8px 0;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}.status{border:1px solid #66745a;padding:9px 15px;border-radius:30px;color:var(--accent);white-space:nowrap;font-size:14px}.hero{display:grid;grid-template-columns:minmax(0,1fr) 315px;gap:24px}.viewer{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#a7b0ab}.viewer img,.viewer video{display:block;width:100%;height:min(65vw,650px);object-fit:contain;background:#818e86}.viewer [hidden]{display:none}.toolbar{padding:15px;background:var(--panel);display:flex;gap:8px;flex-wrap:wrap}button,a.button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:8px 13px;color:var(--ink);background:#29342d;text-decoration:none}button:hover,a.button:hover{border-color:var(--accent)}button[aria-pressed=true]{background:var(--accent);color:#1c271d;border-color:var(--accent)}aside{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:25px}dl{margin:24px 0}dl div{padding:12px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}dt{color:var(--muted)}dd{margin:0;font-weight:600}.note{padding:14px 16px;border-left:3px solid #819567;background:#27312a;font-size:14px;color:#d3dccb}.section{margin-top:46px}.wide{width:100%;display:block;border-radius:12px;border:1px solid var(--line)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:18px}.card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}.card video,.card img{display:block;width:100%;background:#88958c}.caption{padding:18px 21px}.caption h3{margin:0;font-size:19px;font-weight:600}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 21px 20px}.controls input{flex:1;min-width:120px;accent-color:var(--accent)}output{min-width:48px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}footer{margin-top:38px;color:var(--muted);font-size:14px}a{color:var(--accent)}@media(max-width:900px){main{padding:24px 17px}.hero{grid-template-columns:1fr}aside dl{display:grid;grid-template-columns:1fr 1fr;column-gap:20px}header{align-items:flex-start;flex-direction:column}h1{font-size:34px}.grid{grid-template-columns:1fr}.viewer img,.viewer video{height:auto;max-height:650px}}
+[hidden]{display:none!important}</style>
+<main>
+<header><div><div class="eyebrow">The War Remains · Лесные враги · Этап 01</div><h1>Камнекопыт</h1><p>Внешность, модель со всех сторон и размер рядом с героем.</p><p><a href="../motion_references/index.html">Перейти к видеореференсам движений →</a></p></div><span class="status">Модель принята · 25 сентября</span></header>
+<div class="hero"><div class="viewer">
+<video id="mainVideo" src="turntable.webm?v=2" poster="three_quarter.png" autoplay muted loop playsinline controls></video>
+<img id="mainImage" src="three_quarter.png" alt="Камнекопыт" hidden>
+<div class="toolbar" aria-label="Ракурсы"><button data-video="turntable.webm?v=2" aria-pressed="true">Поворот 360°</button><button data-image="three_quarter.png" aria-pressed="false">¾</button><button data-image="front.png" aria-pressed="false">Спереди</button><button data-image="side.png" aria-pressed="false">Сбоку</button><button data-image="back.png" aria-pressed="false">Сзади</button><button data-image="game_camera.png" aria-pressed="false">Сверху</button><button data-image="../../../art.png" aria-pressed="false">Исходный арт</button></div>
+</div><aside><h2>Тяжёлый лесной таран</h2><p>Сохранены каменный лоб, бивни, крупные копыта, древесная кора и листва. Использована уже подготовленная модель.</p><dl><div><dt>Треугольники</dt><dd>20 042 / 25 000</dd></div><div><dt>Высота с листвой</dt><dd>1,45 м</dd></div><div><dt>Длина</dt><dd>1,89 м</dd></div><div><dt>Ширина</dt><dd>0,94 м</dd></div><div><dt>Материал</dt><dd>1 · текстура 4K</dd></div></dl><div class="note">Закрыты обратные стороны деталей, исправлен масштаб рига. Оригинальные файлы сохранены.</div><p style="font-size:14px;margin-top:18px">Это просмотр модели в Blender. Боевого поведения и новых эффектов на этой странице пока нет.</p></aside></div>
+<section class="section"><h2>Размер рядом с Пелагом</h2><p>Один масштаб и общая плоскость земли. Пелаг — текущая модель из игры, рост около 1,79 м.</p><div class="grid"><img class="wide" src="comparison_front.png" alt="Камнекопыт и Пелаг спереди" loading="lazy"><img class="wide" src="comparison_game.png" alt="Сравнение с Пелагом сверху" loading="lazy"></div></section>
+<section class="section"><h2>Что уже было в исходниках</h2><p>Idle и Run воспроизведены на исправленной копии для проверки рига. Это заготовки, а не новые принятые анимации. Финальную пластику и опору копыт дорабатываем на следующем этапе.</p><div class="grid">
+<article class="card"><video id="idle" src="idle.webm?v=2" poster="idle_frames/0000.png" muted loop playsinline controls preload="auto"></video><img id="idleFrames" src="idle_frames/0000.png" alt="Покадровое ожидание" hidden><div class="caption"><h3>Ожидание · исходный Idle</h3><p>4 секунды · 30 кадров/с</p></div><div class="controls" data-clip="idle" data-frames="120"><button class="toggle">Смотреть</button><button class="previous" aria-label="Предыдущий кадр Idle">− кадр</button><button class="next" aria-label="Следующий кадр Idle">+ кадр</button><input type="range" min="0" max="119" value="0" aria-label="Кадр Idle"><output>1 / 120</output></div></article>
+<article class="card"><video id="run" src="run.webm?v=2" poster="run_frames/0003.png" muted loop playsinline controls preload="auto"></video><img id="runFrames" src="run_frames/0000.png" alt="Покадровый бег" hidden><div class="caption"><h3>Бег · исходный Run</h3><p>Короткий цикл из 14 кадров · 30 кадров/с</p></div><div class="controls" data-clip="run" data-frames="14"><button class="toggle">Смотреть</button><button class="previous" aria-label="Предыдущий кадр Run">− кадр</button><button class="next" aria-label="Следующий кадр Run">+ кадр</button><input type="range" min="0" max="13" value="0" aria-label="Кадр Run"><output>1 / 14</output></div></article>
+</div></section>
+<section class="section"><h2>Модель и размер приняты</h2><p>Следующий этап — видеореференсы с этой моделью, затем отдельно подготовка с двумя скребками и старт разбега.</p><div class="links"><a class="button" href="../../Stonehoof_ModelCandidate_r03.blend">Редактируемая модель .blend</a><a class="button" href="../../Stonehoof_ScaleReview_r03.blend">Сцена сравнения с Пелагом .blend</a><a class="button" href="../../../art.png">Исходный арт</a></div></section>
+<footer>Камнекопыт ещё не добавлен в Unity. Платные генерации на этом этапе не использовались.</footer>
+</main>
+<script>
+const mainVideo=document.querySelector('#mainVideo'),mainImage=document.querySelector('#mainImage');
+document.querySelectorAll('.toolbar button').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.toolbar button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));if(button.dataset.video){mainImage.hidden=true;mainVideo.hidden=false;mainVideo.play().catch(()=>{});}else{mainVideo.pause();mainVideo.hidden=true;mainImage.src=button.dataset.image;mainImage.hidden=false;}}));
+document.querySelectorAll('.controls').forEach(panel => {
+  const name = panel.dataset.clip, video = document.getElementById(name);
+  const image = document.getElementById(name + 'Frames');
+  const range = panel.querySelector('input'), out = panel.querySelector('output');
+  const toggle = panel.querySelector('.toggle'), count = Number(panel.dataset.frames);
+  let useFrames = false, running = false, frame = 0, started = 0, first = 0, lastDrawn = -1;
+  const mode = document.createElement('button');
+  mode.textContent = 'Показать кадрами';
+  panel.appendChild(mode);
+  function draw() {
+    if (useFrames && lastDrawn !== frame) {
+      image.src = `${name}_frames/${String(frame).padStart(4, '0')}.png`;
+      lastDrawn = frame;
+    }
+    range.value = frame; out.value = `${frame + 1} / ${count}`;
+    toggle.textContent = (useFrames ? running : !video.paused) ? 'Пауза' : 'Смотреть';
+  }
+  function fallback(play = false) {
+    video.pause(); video.hidden = true; image.hidden = false;
+    useFrames = true; running = play; started = performance.now(); first = frame;
+    mode.textContent = 'Покадровый просмотр'; mode.disabled = true; draw();
+  }
+  function seek(value) {
+    video.pause(); running = false;
+    frame = Math.max(0, Math.min(count - 1, value));
+    if (!useFrames) video.currentTime = (frame + 0.05) / 30;
+    draw();
+  }
+  toggle.onclick = () => {
+    if (useFrames) {
+      running = !running; started = performance.now(); first = frame; draw();
+    } else if (video.paused) video.play().catch(() => fallback(true));
+    else video.pause();
+  };
+  mode.onclick = () => fallback(false);
+  video.addEventListener('error', () => fallback(false));
+  range.oninput = () => seek(Number(range.value));
+  panel.querySelector('.previous').onclick = () => seek(frame - 1);
+  panel.querySelector('.next').onclick = () => seek(frame + 1);
+  function update(time) {
+    if (useFrames && running) frame = (first + Math.floor((time - started) * 30 / 1000)) % count;
+    else if (!useFrames) frame = Math.max(0, Math.min(count - 1, Math.floor(video.currentTime * 30 + 0.001)));
+    draw(); requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+  if (video.error) fallback(false);
+});
+</script>
+</html>

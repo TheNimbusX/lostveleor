@@ -1,0 +1,15 @@
+{
+  "stage": "third_clip_open_edge_braking",
+  "previous_clip_approved": true,
+  "approval": "2026-09-25: ок идем дальше",
+  "source": "../charge_loop/Stonehoof_ChargeLoop_r01.blend",
+  "reference": "../../references/charge.mp4",
+  "duration_frames": 18,
+  "fps": 30,
+  "entry_phase": 0,
+  "exit": "same stance as accepted windup frame 0",
+  "preview_speed": "12 m/s for first 3 frames; linear deceleration to 0 at frame 14; body settles through 18",
+  "preview_brake_distance_m": 3.4,
+  "runtime_note": "Sim reserves the braking distance inside the arena. Preview carrier only; no arena travel in exported clip. Continuous runtime transitions from arbitrary loop phase are checked at Unity integration, not solved by snapping phase.",
+  "scope": "Single open-edge brake animation for owner review. Collision/stun, VFX and Unity later."
+}
