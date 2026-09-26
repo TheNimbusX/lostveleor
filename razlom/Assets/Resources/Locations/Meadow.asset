@@ -187,6 +187,30 @@ MonoBehaviour:
       Weight: 0.7
       ScaleRange: {x: 0.8, y: 1.2}
       UseAsBoundary: 0
+    - Kind: 0
+      Prefab: {fileID: 3303133418849362650, guid: afdf44ab3ce6c5f4f9e2f2ecfa53ba44, type: 3}
+      ResourcePath: 
+      Weight: 0.4
+      ScaleRange: {x: 0.85, y: 1.2}
+      UseAsBoundary: 1
+    - Kind: 2
+      Prefab: {fileID: 8331427628062453554, guid: ea7db0fe72e7b0647bd78c4de16f34af, type: 3}
+      ResourcePath: 
+      Weight: 0.6
+      ScaleRange: {x: 0.8, y: 1.2}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 9128991883017574537, guid: c69ef172237cbbc4d97ace8424691a1c, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.85, y: 1.2}
+      UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 574051903435740080, guid: b1de595225965e248a11d78d33a4cebb, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.95, y: 1.05}
+      UseAsBoundary: 0
     DecorPerCell: 0.45
     DecorEdgeMargin: 0.7
     DecorConnectorMargin: 1.6

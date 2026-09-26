@@ -16,6 +16,13 @@ namespace Game.View
         private Vector2 _reliefOffset;
         private readonly List<Vector4> _ponds = new List<Vector4>();
         private int _arenaCharacter = -1;
+        private MeshRenderer _runeRenderer;
+        private Color _runeGlow;
+        private MaterialPropertyBlock _runeBlock;
+        // x, y — центр ориентира на земле (мировые x и z), z — радиус, который он реально занимает,
+        // w = 1 — ориентир виден только под открытым небом (круг рун, домик), кроны над ним не нависают.
+        private readonly List<Vector4> _landmarkSpots = new List<Vector4>();
+        private bool[] _landmarkVariants;
         private Mesh _waterMesh;
         private GameObject _water;
         private GameObject _banks;
@@ -36,6 +43,8 @@ namespace Game.View
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
             foreach (var mark in _dropMarks) _dropPool?.Release(mark.gameObject);
             _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
+            _runeRenderer = null;
+            _landmarkSpots.Clear();
             if (_banks != null) _banks.SetActive(false);
             if (_water != null) _water.SetActive(false);
             if (_shore != null) _shore.SetActive(false);
@@ -59,6 +68,7 @@ namespace Game.View
         private void InitializeMeadow()
         {
             _landmarkBlock = new MaterialPropertyBlock();
+            _runeBlock = new MaterialPropertyBlock();
             var root = CreateRoot("Пул: ориентиры");
             _glowMaterial = ViewMaterials.CreateLit(Color.white);
             _glowMaterial.EnableKeyword("_EMISSION");
@@ -161,6 +171,12 @@ namespace Game.View
                 SetGlow(_portals[i], run.Phase == RunPhase.SeekingExit ? new Color(.22f, .95f, .65f) : new Color(.8f, .42f, .1f));
             for (int b = 0; b < _caches.Count; b++) _caches[b].gameObject.SetActive(!run.IsBranchClaimed(b));
             UpdateDropMarks(run);
+            if (_runeRenderer != null)
+            {
+                // Руны медленно дышат, а не мигают: это ориентир, а не сигнал опасности.
+                _runeBlock.SetColor("_EmissionColor", _runeGlow * (.72f + .28f * Mathf.Sin(Time.time * .8f)));
+                _runeRenderer.SetPropertyBlock(_runeBlock);
+            }
         }
 
         private void RestoreForestBreeze()
@@ -385,6 +401,7 @@ namespace Game.View
                 minZ=Mathf.Min(minZ,p.OriginY*cell); maxZ=Mathf.Max(maxZ,(p.OriginY+p.Height)*cell);
             }
             BuildBackgroundRelief(map, minX, maxX, minZ, maxZ);
+            PlaceLandmarks(map);
             // Вода и рельеф уже выбраны: опушка учитывает берег и высоту земли этой карты.
             ScatterBoundaryDecor(map.Outline != null ? .5f : cell);
             if (trees.Count==0 || _style.ForestBandWidth<=0) return;
@@ -415,6 +432,8 @@ namespace Game.View
                     float pick = (float)rng.NextDouble() * treeWeight;
                     int variant = trees[trees.Count - 1];
                     foreach (int tree in trees) { pick -= _style.DecorVariants[tree].Weight; if (pick <= 0) { variant = tree; break; } }
+                    // Крона может нависать над ориентиром, ствол — нет.
+                    if (NearLandmark(px, pz, _decorRadii[variant] * .35f) || ShadesLandmark(px, pz, _decorRadii[variant] * 1.1f)) continue;
                     float nearest=float.MaxValue;
                     for (int m=0;m<map.PlacedCount;m++)
                     {
@@ -562,15 +581,15 @@ namespace Game.View
             if (map.Outline == null || _style.ForestBandWidth <= 0
                 || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) return;
             var rocks = new List<int>(); var bushes = new List<int>(); var grass = new List<int>();
-            int log = -1, stump = -1, bridge = -1, treehouse = -1, fence = -1;
+            int log = -1, stump = -1, bridge = -1, seeds = -1;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 var variant = _style.DecorVariants[i];
                 if (variant.Prefab == null) continue;
-                // Мост, домик и изгородь расставляются явно ниже, а не через взвешенный пул.
+                // Мост, колоски и ориентиры (PlaceLandmarks) расставляются явно, а не через взвешенный пул.
                 if (variant.Prefab.name == "CreatingBridge") { bridge = i; continue; }
-                if (variant.Prefab.name == "MeadowTreehouse") { treehouse = i; continue; }
-                if (variant.Prefab.name == "CreatingFence") { if (variant.Weight > 0) fence = i; continue; }
+                if (variant.Prefab.name == "CreatingSeedHeads") { seeds = i; continue; }
+                if (_landmarkVariants[i] || variant.Prefab.name == "CreatingFence") continue;
                 if (variant.Weight <= 0) continue;
                 if (variant.Prefab.name == "MeadowFallenLog") log = i;
                 else if (variant.Prefab.name == "CreatingStump") stump = i;
@@ -578,7 +597,23 @@ namespace Game.View
                 else if (variant.Kind == DecorKind.Bush) bushes.Add(i);
                 else if (variant.Kind == DecorKind.GrassTuft) grass.Add(i);
             }
-            if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
+            // Поваленные стволы лежат в лесу у любой арены, а не только у береговой композиции.
+            // Ставятся до подлеска: иначе длинному стволу в густой полосе не находилось места.
+            if (log >= 0)
+                for (int g = 0; g < map.GladeCount; g++)
+                {
+                    var glade = map.GetGlade(g); var rng = DecorRandom(g, 971);
+                    for (int trunk = rng.Next(1, 3), attempt = 0; trunk > 0 && attempt < 24; attempt++)
+                    {
+                        float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                        float shoulder = _decorRadii[log] + 1.5f + (float)rng.NextDouble() * 4;
+                        var point = new Vector2(glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                            glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                        if (!TryForestDetail(map, log, point, rng)) continue;
+                        DressDetail(map, point, _decorRadii[log] * .6f, bushes, grass, rng);
+                        trunk--;
+                    }
+                }
             // Подлесок привязан к уже существующим кронам, а не к ещё одной сетке.
             // Ограниченный бюджет не увеличивает число объектов с площадью фонового леса.
             int canopyCount = _decorCount, dressed = 0;
@@ -625,12 +660,7 @@ namespace Game.View
                     break;
                 }
             }
-            if (fence >= 0)
-                for (int g = 0; g < map.GladeCount; g++)
-                {
-                    var rng = DecorRandom(g, 953);
-                    if (rng.NextDouble() < .45) PlaceFenceRun(map, fence, g, rng);
-                }
+            if (seeds >= 0) PlaceSeedDrifts(map, seeds);
             // Короткие заросшие участки берега чередуются с открытой водой.
             for (int pondIndex = 0; pondIndex < _ponds.Count; pondIndex++)
             {
@@ -646,6 +676,16 @@ namespace Game.View
                         pond.y + Mathf.Sin(angle) * (pond.w * 1.4f + margin));
                     TryForestDetail(map, variant, point, rng);
                 }
+                // Колоски у воды читаются как тростник: одна куртина на пруд, в стороне от мостика.
+                // Свой поток случайности: мостики и заросли берега остаются на прежних местах.
+                if (seeds >= 0)
+                {
+                    var reeds = DecorRandom(pondIndex, 461);
+                    float angle = start + 1.4f + (float)reeds.NextDouble() * .8f;
+                    float margin = _decorRadii[seeds] + .2f;
+                    PlaceSeedDrift(map, seeds, new Vector2(pond.x + Mathf.Cos(angle) * (pond.z * 1.4f + margin),
+                        pond.y + Mathf.Sin(angle) * (pond.w * 1.4f + margin)), reeds.Next(3, 6), reeds);
+                }
                 // Небольшой мостик-настил у берега части прудов, не пересекающий воду.
                 if (bridge >= 0 && rng.NextDouble() < .45)
                 {
@@ -658,6 +698,63 @@ namespace Game.View
                             new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)), Vector3.up);
                 }
             }
+        }
+
+        // Ориентиры встают сразу после рельефа, до опушки и леса: иначе заросли занимали
+        // плечо поляны, и на аренах домик, круг рун и изгородь почти не находили места.
+        private void PlaceLandmarks(LayoutMap map)
+        {
+            _landmarkSpots.Clear();
+            if (_landmarkVariants == null || _landmarkVariants.Length != _style.DecorVariants.Length)
+                _landmarkVariants = new bool[_style.DecorVariants.Length];
+            int treehouse = -1, runes = -1, fence = -1;
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+            {
+                var variant = _style.DecorVariants[i];
+                string name = variant.Prefab != null ? variant.Prefab.name : "";
+                if (name == "MeadowTreehouse") treehouse = i;
+                else if (name == "CreatingStoneRuin") runes = i;
+                else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == fence;
+            }
+            if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
+            if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
+            if (runes >= 0) PlaceRuneCircle(map, runes);
+            if (fence >= 0)
+                for (int g = 0; g < map.GladeCount; g++)
+                {
+                    var rng = DecorRandom(g, 953);
+                    if (rng.NextDouble() < .45) PlaceFenceRun(map, fence, g, rng);
+                }
+        }
+
+        // footprint — доля габаритного круга, которую ориентир занимает у земли: крона домика
+        // и углы квадрата вокруг круга камней не мешают траве и кустам подходить вплотную.
+        private void AddLandmark(float footprint, bool openSky)
+        {
+            var placed = _decor[_decorCount - 1]; int variant = _decorVariant[_decorCount - 1];
+            float radius = _decorRadii[variant] * placed.localScale.x / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y);
+            _landmarkSpots.Add(new Vector4(placed.position.x, placed.position.z, radius * footprint, openSky ? 1 : 0));
+        }
+
+        private bool NearLandmark(float x, float z, float radius) => TouchesLandmark(x, z, radius, false);
+
+        // Камера смотрит сверху: плоский круг рун и крышу домика кроны прячут целиком,
+        // поэтому деревья держат над ними открытое небо, а не только место для ствола.
+        private bool ShadesLandmark(float x, float z, float canopy) => TouchesLandmark(x, z, canopy, true);
+
+        private bool TouchesLandmark(float x, float z, float radius, bool openSkyOnly)
+        {
+            foreach (var spot in _landmarkSpots)
+            {
+                if (openSkyOnly && spot.w < .5f) continue;
+                float gap = spot.z + radius, dx = x - spot.x, dz = z - spot.y;
+                // Камера смотрит с юга под наклоном: высокая ель южнее ориентира закрывает его
+                // верхушкой даже в 7–8 м, поэтому с этой стороны деревья держатся вдвое дальше.
+                if (openSkyOnly && dz < 0) dz *= .5f;
+                if (dx * dx + dz * dz < gap * gap) return true;
+            }
+            return false;
         }
 
         // Старая изгородь — короткий прерывистый ряд вдоль опушки, повёрнутый по касательной
@@ -683,6 +780,7 @@ namespace Game.View
                     if (!TryForestDetail(map, fence, start + tangent * (s * span), rng)) break;
                     float lean = s == segments - 1 && rng.NextDouble() < .4 ? 7 + (float)rng.NextDouble() * 5 : 0;
                     _decor[_decorCount - 1].rotation = Quaternion.Euler(lean, yaw + ((float)rng.NextDouble() - .5f) * 14, 0);
+                    AddLandmark(.6f, false);
                     placed++;
                 }
                 if (placed > 0) return;
@@ -707,13 +805,78 @@ namespace Game.View
                 {
                     float angle = (float)rng.NextDouble() * Mathf.PI * 2;
                     // Домик крупнее боевой площадки: выбираем плечо поляны, не её свободный центр.
-                    float shoulder = _decorRadii[treehouse] + 1.5f + (float)rng.NextDouble() * 3;
+                    float shoulder = _decorRadii[treehouse] + .6f + (float)rng.NextDouble() * 2;
                     var point = new Vector2(
                         glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
                         glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
-                    if (TryForestDetail(map, treehouse, point, rng)) return;
+                    if (TryForestDetail(map, treehouse, point, rng)) { AddLandmark(.5f, true); return; }
                 }
             }
+        }
+
+        // Круг рунных камней — разовый ориентир: всегда у арены босса, у каменистой арены —
+        // в половине уровней. Стоит на плече поляны, как домик: камни не заходят на боевой пол.
+        private void PlaceRuneCircle(LayoutMap map, int runes)
+        {
+            if (map.GladeCount == 0) return;
+            var rng = DecorRandom(0, 983);
+            bool boss = _shownEncounters != null && _shownEncounters.BossId >= 0;
+            if (map.GladeCount == 1 && !boss && (CharacterOf(map, 0) != GladeCharacter.Rocky || rng.NextDouble() > .5)) return;
+            int start = rng.Next(map.GladeCount);
+            for (int offset = 0; offset < map.GladeCount; offset++)
+            {
+                int index = (start + offset) % map.GladeCount;
+                if (map.GladeCount >= 3 && CharacterOf(map, index) != GladeCharacter.Rocky) continue;
+                var glade = map.GetGlade(index);
+                for (int attempt = 0; attempt < 32; attempt++)
+                {
+                    float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                    float shoulder = _decorRadii[runes] + .4f + (float)rng.NextDouble() * 2.5f;
+                    var point = new Vector2(
+                        glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                    if (!TryForestDetail(map, runes, point, rng)) continue;
+                    // Круг вписан в габаритный квадрат: у земли он занимает около 0,7 его радиуса.
+                    AddLandmark(.7f, true);
+                    _runeRenderer = _decor[_decorCount - 1].GetComponentInChildren<MeshRenderer>();
+                    _runeGlow = _runeRenderer != null ? _runeRenderer.sharedMaterial.GetColor("_EmissionColor") : Color.black;
+                    return;
+                }
+            }
+        }
+
+        // Высокие колоски растут куртинами у светлой опушки, а не поштучно по всему лесу.
+        private void PlaceSeedDrifts(LayoutMap map, int seeds)
+        {
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+                var character = CharacterOf(map, g);
+                var glade = map.GetGlade(g); var rng = DecorRandom(g, 967);
+                int drifts = character == GladeCharacter.Sunny ? 3 : 2;
+                for (int drift = 0; drift < drifts; drift++)
+                    for (int attempt = 0; attempt < 12; attempt++)
+                    {
+                        float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                        float shoulder = .8f + (float)rng.NextDouble() * 1.6f;
+                        var center = new Vector2(glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                            glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                        if (PlaceSeedDrift(map, seeds, center, rng.Next(4, 8), rng) > 0) break;
+                    }
+            }
+        }
+
+        // Куртина — несколько пучков: самый высокий в середине, по краям ниже и реже.
+        // Сверху тонкие стебли читаются слабо, поэтому пучки крупнее трав подлеска.
+        private int PlaceSeedDrift(LayoutMap map, int seeds, Vector2 center, int count, System.Random rng)
+        {
+            int placed = 0;
+            for (int item = 0; item < count; item++)
+            {
+                float spread = item == 0 ? 0 : .35f + (float)rng.NextDouble() * .85f;
+                float scale = item == 0 ? 1.2f + (float)rng.NextDouble() * .25f : .85f + (float)rng.NextDouble() * .35f;
+                if (TryForestDetail(map, seeds, center + DetailOffset(rng, spread), rng, scale, .45f)) placed++;
+            }
+            return placed;
         }
 
         private int PickDetail(List<int> variants, System.Random rng)
@@ -773,12 +936,15 @@ namespace Game.View
             var kind = _style.DecorVariants[variant].Kind;
             bool understory = kind == DecorKind.Bush || kind == DecorKind.GrassTuft;
             if (TouchesOutlinedFloor(point.x, point.y, radius + .2f)
-                || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)) return false;
+                || NearPond(point.x, point.y, radius) || BlocksRoute(variant, point.x, point.y)
+                || NearLandmark(point.x, point.y, understory ? radius * .7f : radius)) return false;
             // Учитываем уже расставленный лес и соседние группы, а не только текущую композицию.
             for (int i = 0; i < _decorCount; i++)
             {
                 var other = _decor[i];
                 int otherVariant = _decorVariant[i];
+                // Ориентиры уже проверены по занятому ими месту, а не по габаритному кругу.
+                if (_landmarkVariants != null && _landmarkVariants[otherVariant]) continue;
                 float maxScale = Mathf.Max(.01f, _style.DecorVariants[otherVariant].ScaleRange.y);
                 float otherRadius = _decorRadii[otherVariant] * other.localScale.x / maxScale;
                 var otherKind = _style.DecorVariants[otherVariant].Kind;

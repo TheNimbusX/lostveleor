@@ -20,6 +20,7 @@ namespace Game.View
         [Tooltip("Подъём над землёй против мерцания, метры")] public float Lift = .03f;
 
         Transform _root;
+        GameObject _anchor;
         Material _material;
         Mesh _quad;
 
@@ -38,7 +39,20 @@ namespace Game.View
                 Bounds body = BodyBounds(npc);
                 var blob = Blob("Под жителем — " + npc.Kind, NpcSize);
                 blob.position = new Vector3(body.center.x, GroundAt(body.center, body.min.y) + Lift, body.center.z);
+                if (_anchor == null) _anchor = npc.gameObject;
             }
+        }
+
+        // Корень пятен лежит вне иерархии лагеря: когда лагерь скрыт на время разлома,
+        // пятна оставались на своих местах и проступали тёмными кляксами на траве арен.
+        void LateUpdate()
+        {
+            if (_root != null) _root.gameObject.SetActive(_anchor != null && _anchor.activeInHierarchy);
+        }
+
+        void OnDisable()
+        {
+            if (_root != null) _root.gameObject.SetActive(false);
         }
 
         void OnDestroy()

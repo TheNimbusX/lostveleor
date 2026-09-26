@@ -66,7 +66,7 @@ namespace Game.View
                     // Квадрат максимальных габаритов учитывает поворот модели и вогнутые участки контура.
                     int push = 0;
                     while (BoundaryBlocksClearance(point, radius) && push++ < 8) point += normal * .15f;
-                    if (BoundaryBlocksClearance(point, radius)) continue;
+                    if (BoundaryBlocksClearance(point, radius) || NearLandmark(point.x, point.y, radius * .6f)) continue;
                     bool overlap = false;
                     // В зарослях кусты смыкаются, в просветах стоят редко.
                     float stride = spacing * Mathf.Lerp(1.6f, .6f, thicket);
@@ -99,7 +99,8 @@ namespace Game.View
                             var outer = point + normal * (radius * (.2f + (float)rng.NextDouble() * .8f))
                                 + tangent * radius * side;
                             if (!BoundaryBlocksClearance(outer, _decorRadii[companion] * companionScale)
-                                && !NearRiver(outer.x, outer.y, _decorRadii[companion] * companionScale))
+                                && !NearRiver(outer.x, outer.y, _decorRadii[companion] * companionScale)
+                                && !NearLandmark(outer.x, outer.y, _decorRadii[companion] * companionScale * .6f))
                             {
                                 SpawnDecor(companion, outer.x, outer.y, rng);
                                 _decor[_decorCount - 1].localScale *= companionScale;
@@ -127,7 +128,8 @@ namespace Game.View
                             var outer = point + normal * (canopyRadius - radius + .35f + member * .65f)
                                 + tangent * ((member - (count - 1) * .5f) * canopyRadius * .85f);
                             // Проверяем всю крону, а не только ствол: она не закрывает боевой центр.
-                            if (BoundaryBlocksClearance(outer, canopyRadius) || NearPond(outer.x, outer.y, canopyRadius)) continue;
+                            if (BoundaryBlocksClearance(outer, canopyRadius) || NearPond(outer.x, outer.y, canopyRadius)
+                                || NearLandmark(outer.x, outer.y, canopyRadius * .35f) || ShadesLandmark(outer.x, outer.y, canopyRadius * .85f)) continue;
                             SpawnDecor(tree, outer.x, outer.y, canopyRng);
                             var instance = _decor[_decorCount - 1];
                             instance.localScale *= treeScale;
