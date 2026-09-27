@@ -1,0 +1,406 @@
+{
+ "objects": [
+  [
+   "ARM_ForestThorncaster",
+   "ARMATURE"
+  ],
+  [
+   "Muzzle_RightSpike",
+   "EMPTY"
+  ],
+  [
+   "SM_ForestThorncaster_LOD0",
+   "MESH"
+  ]
+ ],
+ "scene_fps": 30.0,
+ "imported_takes": [
+  "ForestThorncaster_Burst",
+  "ForestThorncaster_Death",
+  "ForestThorncaster_Hit",
+  "ForestThorncaster_Idle",
+  "ForestThorncaster_LineCast",
+  "ForestThorncaster_Shot",
+  "ForestThorncaster_Walk"
+ ],
+ "expected_takes": [
+  "ForestThorncaster_Burst",
+  "ForestThorncaster_Death",
+  "ForestThorncaster_Hit",
+  "ForestThorncaster_Idle",
+  "ForestThorncaster_LineCast",
+  "ForestThorncaster_Shot",
+  "ForestThorncaster_Walk"
+ ],
+ "takes": {
+  "ForestThorncaster_Idle": {
+   "action_range": [
+    0.0,
+    60.0
+   ],
+   "expected": [
+    0,
+    60
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 4.76837158203125e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    0.024000000208616257,
+    0.007956178858876228
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.02539803273975849,
+   "min_z_all": -8.727656602303549e-07,
+   "min_z_all_frame": 23,
+   "min_z_body": -8.727656602303549e-07,
+   "min_z_body_frame": 23,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 1.777478135273205,
+    "frame": 55,
+    "bone": "RightHand"
+   },
+   "edge_squash_min": {
+    "ratio": 0.19917345251302312,
+    "frame": 15,
+    "bone": "LeftLeg"
+   },
+   "rigid_parts_edge_dev_max": 0.00021038519085081475,
+   "first_last_vertex_max_m": 0.0,
+   "first_last_bone_pos_max_m": 0.0,
+   "first_last_bone_rot_max_deg": 0.027976455118293345,
+   "loop_velocity_jump_m_per_frame": 0.0013565842870583242,
+   "loop_ok": true,
+   "max_vertex_step_m": {
+    "value": 0.013361420451116891,
+    "frame": 19
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 0.002176218271966978,
+    "frame": 10
+   }
+  },
+  "ForestThorncaster_Walk": {
+   "action_range": [
+    0.0,
+    24.0
+   ],
+   "expected": [
+    0,
+    24
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 3.5762786865234375e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    0.05562887340784073,
+    3.3993273973464966e-08
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.04100995510816574,
+   "min_z_all": -3.182878230401251e-07,
+   "min_z_all_frame": 20,
+   "min_z_body": -3.182878230401251e-07,
+   "min_z_body_frame": 20,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 4.896129532755249,
+    "frame": 18,
+    "bone": "LeftUpLeg"
+   },
+   "edge_squash_min": {
+    "ratio": 0.06241324184561735,
+    "frame": 7,
+    "bone": "RightUpLeg"
+   },
+   "rigid_parts_edge_dev_max": 0.0002678257008985607,
+   "first_last_vertex_max_m": 0.0,
+   "first_last_bone_pos_max_m": 0.0,
+   "first_last_bone_rot_max_deg": 0.0,
+   "loop_velocity_jump_m_per_frame": 0.06351738772138726,
+   "loop_ok": true,
+   "max_vertex_step_m": {
+    "value": 0.19622422477165322,
+    "frame": 20
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 0.10234504881367205,
+    "frame": 2
+   }
+  },
+  "ForestThorncaster_LineCast": {
+   "action_range": [
+    0.0,
+    75.0
+   ],
+   "expected": [
+    0,
+    75
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 4.76837158203125e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    4.6566128730773926e-09,
+    0.12999992072582245
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.1266690492630005,
+   "min_z_all": -0.10000120096504182,
+   "min_z_all_frame": 31,
+   "min_z_body": -6.343326846872211e-07,
+   "min_z_body_frame": 25,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 8.718402237047412,
+    "frame": 8,
+    "bone": "LeftForeArm"
+   },
+   "edge_squash_min": {
+    "ratio": 0.04615027853538074,
+    "frame": 11,
+    "bone": "LeftForeArm"
+   },
+   "rigid_parts_edge_dev_max": 0.0002890999015984219,
+   "first_last_vertex_max_m": 0.0,
+   "first_last_bone_pos_max_m": 0.0,
+   "first_last_bone_rot_max_deg": 0.027976455118293345,
+   "max_vertex_step_m": {
+    "value": 2.261799784610319,
+    "frame": 21
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 2.0426435002137393,
+    "frame": 22
+   }
+  },
+  "ForestThorncaster_Burst": {
+   "action_range": [
+    0.0,
+    36.0
+   ],
+   "expected": [
+    0,
+    36
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 4.76837158203125e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    3.725290298461914e-09,
+    0.0599999725818634
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.05748934671282768,
+   "min_z_all": -8.631214272223255e-07,
+   "min_z_all_frame": 32,
+   "min_z_body": -8.631214272223255e-07,
+   "min_z_body_frame": 32,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 11.573438741220478,
+    "frame": 20,
+    "bone": "LeftForeArm"
+   },
+   "edge_squash_min": {
+    "ratio": 0.07975304500539847,
+    "frame": 20,
+    "bone": "LeftForeArm"
+   },
+   "rigid_parts_edge_dev_max": 0.00026546637262081507,
+   "first_last_vertex_max_m": 0.0,
+   "first_last_bone_pos_max_m": 0.0,
+   "first_last_bone_rot_max_deg": 0.027976455118293345,
+   "max_vertex_step_m": {
+    "value": 1.201683254781105,
+    "frame": 20
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 1.1205420811515012,
+    "frame": 21
+   }
+  },
+  "ForestThorncaster_Shot": {
+   "action_range": [
+    0.0,
+    33.0
+   ],
+   "expected": [
+    0,
+    33
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 5.960464477539062e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    4.6566128730773926e-09,
+    0.12999999523162842
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.06726835668087006,
+   "min_z_all": -6.363803397982351e-07,
+   "min_z_all_frame": 4,
+   "min_z_body": -6.363803397982351e-07,
+   "min_z_body_frame": 4,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 10.48916702741812,
+    "frame": 8,
+    "bone": "RightHand"
+   },
+   "edge_squash_min": {
+    "ratio": 0.037684350728536896,
+    "frame": 19,
+    "bone": "RightForeArm"
+   },
+   "rigid_parts_edge_dev_max": 0.0002763077447256457,
+   "first_last_vertex_max_m": 2.811545334751355e-07,
+   "first_last_bone_pos_max_m": 1.3328003944934608e-07,
+   "first_last_bone_rot_max_deg": 0.027976455118293345,
+   "max_vertex_step_m": {
+    "value": 1.3016993825625944,
+    "frame": 20
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 1.236395588517002,
+    "frame": 21
+   }
+  },
+  "ForestThorncaster_Hit": {
+   "action_range": [
+    0.0,
+    12.0
+   ],
+   "expected": [
+    0,
+    12
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 3.5762786865234375e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    7.450580596923828e-09,
+    0.06999997794628143
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.0,
+    0.0
+   ],
+   "hips_xy_max_from_origin_m": 0.06726836413145065,
+   "min_z_all": -4.7055378685452353e-07,
+   "min_z_all_frame": 7,
+   "min_z_body": -4.7055378685452353e-07,
+   "min_z_body_frame": 7,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 3.644124391436031,
+    "frame": 3,
+    "bone": "RightHand"
+   },
+   "edge_squash_min": {
+    "ratio": 0.1191283090329795,
+    "frame": 6,
+    "bone": "LeftLeg"
+   },
+   "rigid_parts_edge_dev_max": 0.00034268761624689503,
+   "first_last_vertex_max_m": 0.0,
+   "first_last_bone_pos_max_m": 0.0,
+   "first_last_bone_rot_max_deg": 0.027976455118293345,
+   "max_vertex_step_m": {
+    "value": 0.3243321090236823,
+    "frame": 0
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 0.1454056570977132,
+    "frame": 1
+   }
+  },
+  "ForestThorncaster_Death": {
+   "action_range": [
+    0.0,
+    48.0
+   ],
+   "expected": [
+    0,
+    48
+   ],
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 4.76837158203125e-07,
+   "armature_object_travel_m": 0.0,
+   "hips_xy_range_m": [
+    0.049999989569187164,
+    0.4400002956390381
+   ],
+   "hips_xy_net_first_to_last_m": [
+    0.02999998815357685,
+    -0.3400002419948578
+   ],
+   "hips_xy_max_from_origin_m": 0.34667712450027466,
+   "min_z_all": -0.009380871531996753,
+   "min_z_all_frame": 21,
+   "min_z_body": -0.007126490180099839,
+   "min_z_body_frame": 38,
+   "frames_body_below_minus2cm": [],
+   "edge_stretch_max": {
+    "ratio": 9.242302178114272,
+    "frame": 40,
+    "bone": "RightHand"
+   },
+   "edge_squash_min": {
+    "ratio": 0.03957774810284744,
+    "frame": 15,
+    "bone": "RightUpLeg"
+   },
+   "rigid_parts_edge_dev_max": 0.00034683800223211936,
+   "first_last_vertex_max_m": 2.4533305982526312,
+   "first_last_bone_pos_max_m": 2.2140424251556396,
+   "first_last_bone_rot_max_deg": 176.4662562616537,
+   "max_vertex_step_m": {
+    "value": 0.5228572398787656,
+    "frame": 38
+   },
+   "max_vertex_accel_m_per_frame2": {
+    "value": 0.5520826788518387,
+    "frame": 39
+   }
+  }
+ },
+ "triangles": 23999,
+ "max_weights_per_vertex": 4,
+ "vertices_over_4_weights": 0,
+ "weight_sum_min_max": [
+  0.9999999552965164,
+  1.0000000447034836
+ ],
+ "unweighted_vertices": 0,
+ "armature_world_scale": [
+  1.0,
+  1.0,
+  1.0
+ ],
+ "mesh_parent": "ARM_ForestThorncaster",
+ "mesh_armature_modifier": [
+  "ARM_ForestThorncaster"
+ ],
+ "rest_min_z": 6.98734705160694e-08,
+ "rest_xy_center": [
+  -5.365740396445773e-08,
+  4.860480537494105e-08
+ ]
+}

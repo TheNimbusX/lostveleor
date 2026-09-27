@@ -1,0 +1,135 @@
+{
+ "objects": [
+  [
+   "ARM_ForestThorncaster",
+   "ARMATURE"
+  ],
+  [
+   "Muzzle_RightSpike",
+   "EMPTY"
+  ],
+  [
+   "SM_ForestThorncaster_LOD0",
+   "MESH"
+  ]
+ ],
+ "bones": 24,
+ "triangles": 23999,
+ "armature_world_scale": [
+  1.0,
+  1.0,
+  1.0
+ ],
+ "actions": {
+  "ARM_ForestThorncaster|ForestThorncaster_Burst": {
+   "range": [
+    0.0,
+    36.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_Death": {
+   "range": [
+    0.0,
+    48.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_Hit": {
+   "range": [
+    0.0,
+    12.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_Idle": {
+   "range": [
+    0.0,
+    60.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_LineCast": {
+   "range": [
+    0.0,
+    75.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_Shot": {
+   "range": [
+    0.0,
+    33.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "ARM_ForestThorncaster|ForestThorncaster_Walk": {
+   "range": [
+    0.0,
+    24.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Burst": {
+   "range": [
+    0.0,
+    36.0
+   ],
+   "object_level_curve_max_span": 1e-06
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Death": {
+   "range": [
+    0.0,
+    48.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Hit": {
+   "range": [
+    0.0,
+    12.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Idle": {
+   "range": [
+    0.0,
+    60.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "Muzzle_RightSpike|ForestThorncaster_LineCast": {
+   "range": [
+    0.0,
+    75.0
+   ],
+   "object_level_curve_max_span": 1e-06
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Shot": {
+   "range": [
+    0.0,
+    33.0
+   ],
+   "object_level_curve_max_span": 0.0
+  },
+  "Muzzle_RightSpike|ForestThorncaster_Walk": {
+   "range": [
+    0.0,
+    24.0
+   ],
+   "object_level_curve_max_span": 0.0
+  }
+ },
+ "scene_fps": 30,
+ "shot_f21_muzzle_empty_world": [
+  -0.12,
+  -1.42,
+  1.9
+ ],
+ "note": "imported bone tails are re-guessed by the FBX importer; the Muzzle empty and the skinned mesh are the ground truth",
+ "linecast_spike_min_z": {
+  "23": 0.4147,
+  "24": 0.0,
+  "25": -0.075
+ }
+}

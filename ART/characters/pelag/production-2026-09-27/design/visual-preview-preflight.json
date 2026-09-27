@@ -1,0 +1,249 @@
+{
+  "schema": "pelag-visual-preview-preflight.v1",
+  "date": "2026-09-27",
+  "status": "prepared_only_no_generation_no_upload",
+  "purpose": "Short visual demonstration of the two largest proposed presentation changes; no character redesign and no live asset edits.",
+  "recommendation_ru": "Два целевых листа: внешняя волна Вихря и тяжёлый третий финал Крушения. Новую внешность Пелага не генерируем. Видеореференс делаем после выбора механики и исправления креплений.",
+  "service": "Higgsfield",
+  "model": "gpt_image_2_5",
+  "model_catalog_checked": true,
+  "parameters": {
+    "variant": "flare",
+    "quality": "high",
+    "resolution": "2k",
+    "aspect_ratio": "16:9",
+    "count": 1
+  },
+  "cost": {
+    "source": "higgsfield_estimate_image_cost live preflight, no medias passed",
+    "credits_per_request": 2.75,
+    "independent_requests": 2,
+    "total_estimated_credits": 5.5,
+    "note": "The endpoint returned the same amount with count 1 and count 2. Therefore use two independent count=1 requests; do not mistake the count=2 result for the total. Recheck with actual media IDs immediately before paid submission if required.",
+    "cheaper_option": {
+      "quality": "medium",
+      "resolution": "1k",
+      "credits_per_request": 0.5,
+      "two_requests_total": 1.0,
+      "tradeoff": "Lower resolution is less useful for hand grip and layered VFX judgement."
+    }
+  },
+  "references": [
+    {
+      "id": "pelag_identity",
+      "path": "ART/characters/pelag/a pose.png",
+      "type": "original_identity_art",
+      "inspected": true,
+      "use": "Current face, body proportions and white/pink/turquoise costume. Does not establish weapon mounting.",
+      "absolute_path": "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/a pose.png",
+      "exists": true,
+      "uploaded_media_id": null
+    },
+    {
+      "id": "saber_identity",
+      "path": "ART/PELAG/sabre-pelag1.png",
+      "type": "original_weapon_art",
+      "inspected": true,
+      "use": "Exact current saber silhouette, guard, gem, handle and ribbon. Do not borrow the altered sword from tentative pose/redesign art.",
+      "absolute_path": "C:/Users/d.grab/Desktop/the-game/ART/PELAG/sabre-pelag1.png",
+      "exists": true,
+      "uploaded_media_id": null
+    },
+    {
+      "id": "anchor_identity",
+      "path": "ART/PELAG/animation/anchor-slam/Pelag_Approved_Anchor_Reference.jpg",
+      "type": "approved_original_weapon_art",
+      "inspected": true,
+      "use": "Exact original smooth curved anchor, linked chain and separate grip. No Heavy low-poly replacement.",
+      "absolute_path": "C:/Users/d.grab/Desktop/the-game/ART/PELAG/animation/anchor-slam/Pelag_Approved_Anchor_Reference.jpg",
+      "exists": true,
+      "uploaded_media_id": null
+    },
+    {
+      "id": "whirlwind_current",
+      "path": "artifacts/capture/whirlwind-ring-recheck2/shot_01_t1.00s.png",
+      "type": "real_game_capture",
+      "inspected": true,
+      "use": "Actual accepted Whirlwind A palette and dark edge in a clear forest gameplay capture. Hero, current saber and dimensional sweep visible, no portal obstruction. The base effect must stay unchanged.",
+      "absolute_path": "C:/Users/d.grab/Desktop/the-game/artifacts/capture/whirlwind-ring-recheck2/shot_01_t1.00s.png",
+      "exists": true,
+      "uploaded_media_id": null
+    },
+    {
+      "id": "pelag_game_grip",
+      "path": "artifacts/capture/pelag-combat-grip-55/shot_00_t1.10s.png",
+      "absolute_path": "C:/Users/d.grab/Desktop/the-game/artifacts/capture/pelag-combat-grip-55/shot_00_t1.10s.png",
+      "type": "real_game_capture",
+      "inspected": true,
+      "exists": true,
+      "uploaded_media_id": null,
+      "use": "Clear actual-game combat pose showing current hero and closed right hand around saber grip, crossguard outside fingers. Style and grip reference only; not a new pose requirement."
+    }
+  ],
+  "upload_state": {
+    "uploaded": false,
+    "known_usable_current_identity_media_ids": [],
+    "known_usable_current_identity_https_urls": [],
+    "do_not_reuse": {
+      "file": "ART/characters/pelag/redesign-2026-09-27/higgsfield-generation.json",
+      "media_id": "920a7d1b-ebe2-44e3-8b6a-f2914bbc8999",
+      "reason": "Input is the rejected dark redesign board, not the retained in-game Pelag."
+    },
+    "constraints": "Actual returned media_upload instructions permit native PUT on the owner machine for supplied project files and prohibit base64 relay. Parent confirmed that this is the correct route for user-authorized game references. Five files were sent by native HTTPS PUT and confirmed after HTTP 200. See execution_record for IDs and provenance; no base64 relay or web-interface upload used."
+  },
+  "jobs": [
+    {
+      "key": "whirlwind_outer_wave",
+      "title_ru": "Вихрь: видимая внешняя волна",
+      "short_ru": "Принятый Вихрь сохраняем; после каждого оборота за его пределами уходит отдельная режущая волна на 40% урона.",
+      "decision_state": "Outer wave behavior approved; visual interpretation pending owner review.",
+      "reference_ids": [
+        "pelag_game_grip",
+        "pelag_identity",
+        "saber_identity",
+        "whirlwind_current"
+      ],
+      "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a clean two-panel comparison on the same scale and camera. LEFT: the accepted base Whirlwind from the gameplay reference, the actual saber held firmly by its leather grip, its existing warm ivory-gold dimensional spiral around Pelag. Keep the base effect itself unchanged; keep the forest floor clear of distracting scenery. RIGHT: the SAME moment and base effect, plus the proposed visible outer cutting wave. A single thin but dimensional blade-like annular crest expands only OUTSIDE the base 2.3m circle toward 4m; a clear empty separation distinguishes it from the core sweep. The traveling crest carries bright ivory steel at its leading edge, warm gold reflected underside, a restrained dark edge matching the accepted ground ring, and a few directional wisps. Floor remains visible. The inner zone is not filled or hit by this outer wave; do not draw a solid disk, magic sigils, a bubble, fire, or several decorative rings. This is one outer wave emitted by one actual damaging rotation. The picture should make the additional reach instantly obvious without making the base effect larger. Do not attempt to demonstrate anchor mounting; frame the hero from front-side and keep stowed equipment unobtrusive.",
+      "acceptance": [
+        "Same hero and exact saber",
+        "Accepted base swirl unchanged",
+        "Outer crest is separate and never fills inner circle",
+        "Actual projected range clearly visible",
+        "Not a flat decorative circle"
+      ],
+      "next_after_approval": "One short Higgsfield motion reference with the corrected model and weapon mounting.",
+      "parameters_template": {
+        "params": {
+          "model": "gpt_image_2_5",
+          "variant": "flare",
+          "quality": "high",
+          "resolution": "2k",
+          "aspect_ratio": "16:9",
+          "count": 1,
+          "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a clean two-panel comparison on the same scale and camera. LEFT: the accepted base Whirlwind from the gameplay reference, the actual saber held firmly by its leather grip, its existing warm ivory-gold dimensional spiral around Pelag. Keep the base effect itself unchanged; keep the forest floor clear of distracting scenery. RIGHT: the SAME moment and base effect, plus the proposed visible outer cutting wave. A single thin but dimensional blade-like annular crest expands only OUTSIDE the base 2.3m circle toward 4m; a clear empty separation distinguishes it from the core sweep. The traveling crest carries bright ivory steel at its leading edge, warm gold reflected underside, a restrained dark edge matching the accepted ground ring, and a few directional wisps. Floor remains visible. The inner zone is not filled or hit by this outer wave; do not draw a solid disk, magic sigils, a bubble, fire, or several decorative rings. This is one outer wave emitted by one actual damaging rotation. The picture should make the additional reach instantly obvious without making the base effect larger. Do not attempt to demonstrate anchor mounting; frame the hero from front-side and keep stowed equipment unobtrusive.",
+          "medias": [
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_pelag_game_grip"
+            },
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_pelag_identity"
+            },
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_saber_identity"
+            },
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_whirlwind_current"
+            }
+          ]
+        }
+      },
+      "parameters_template_note": "Replace only the placeholder IDs with confirmed uploads; templates are deliberately not submit-ready without media. Canonical role image is server-mapped to model role image_references. Do not send placeholders."
+    },
+    {
+      "key": "wreck_third_finisher",
+      "title_ru": "Крушение: усиленный третий финал",
+      "short_ru": "Вместо дополнительного четвёртого нажатия — мощный третий удар якорем, шире перед собой и с отчётливым тяжёлым контактом.",
+      "decision_state": "Optional mechanic change; owner has not approved replacing the fourth attack.",
+      "reference_ids": [
+        "pelag_game_grip",
+        "pelag_identity",
+        "anchor_identity"
+      ],
+      "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a three-panel action beat board, same fixed game camera and scale: compact loaded preparation, the single heavy third-hit contact, then recovery. This illustrates the optional new Crushing Finale talent replacing a fourth input with a stronger THIRD finisher; do not add a fourth attack. Use the exact supplied anchor reference with its broad smooth curved flukes, solid dark metal mass, central diamond keel, top ring, linked chain and separate leather-wrapped hand grip. Pelag holds the GRIP firmly; connected chain leads to the actual top ring, visibly taut under load. Large believable weapon, never a toy, never a floating anchor. The finisher is a low heavy forward half-circle sweep, approximately 180 degrees and 2.8m reach, with planted leading foot, hip/shoulder rotation, counterbalancing torso and hands. At contact the heavy outer anchor head drives a short angular silver-white edge flash and dense local earth burst: a few substantial chips, low dust curled by its path, a brief compact impact star. The trail is a short dimensional ribbon following the real anchor path and fading behind it. Dust and debris remain in the forward semicircle; nothing erupts behind the hero. Show anchor mass through pose and localized response, not a huge glowing spell disk, long ground shockwave, pillar or whole-arena explosion. Face, body and actual weapon remain readable. Final panel shows decelerating weight and chain beginning to slacken, not a frozen impact pose. A still beat board is a visual proposal, not proof of animation or physics.",
+      "acceptance": [
+        "Same hero and original anchor",
+        "Grip and chain topology sensible",
+        "Three action beats, one finisher contact",
+        "Forward semicircle only",
+        "Mass conveyed through pose and localized impact, not a flat magic disk"
+      ],
+      "next_after_approval": "Fix exact hand/chain pose, approve timing, then create a short Higgsfield motion reference.",
+      "parameters_template": {
+        "params": {
+          "model": "gpt_image_2_5",
+          "variant": "flare",
+          "quality": "high",
+          "resolution": "2k",
+          "aspect_ratio": "16:9",
+          "count": 1,
+          "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a three-panel action beat board, same fixed game camera and scale: compact loaded preparation, the single heavy third-hit contact, then recovery. This illustrates the optional new Crushing Finale talent replacing a fourth input with a stronger THIRD finisher; do not add a fourth attack. Use the exact supplied anchor reference with its broad smooth curved flukes, solid dark metal mass, central diamond keel, top ring, linked chain and separate leather-wrapped hand grip. Pelag holds the GRIP firmly; connected chain leads to the actual top ring, visibly taut under load. Large believable weapon, never a toy, never a floating anchor. The finisher is a low heavy forward half-circle sweep, approximately 180 degrees and 2.8m reach, with planted leading foot, hip/shoulder rotation, counterbalancing torso and hands. At contact the heavy outer anchor head drives a short angular silver-white edge flash and dense local earth burst: a few substantial chips, low dust curled by its path, a brief compact impact star. The trail is a short dimensional ribbon following the real anchor path and fading behind it. Dust and debris remain in the forward semicircle; nothing erupts behind the hero. Show anchor mass through pose and localized response, not a huge glowing spell disk, long ground shockwave, pillar or whole-arena explosion. Face, body and actual weapon remain readable. Final panel shows decelerating weight and chain beginning to slacken, not a frozen impact pose. A still beat board is a visual proposal, not proof of animation or physics.",
+          "medias": [
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_pelag_game_grip"
+            },
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_pelag_identity"
+            },
+            {
+              "role": "image",
+              "value": "CONFIRMED_MEDIA_ID_FOR_anchor_identity"
+            }
+          ]
+        }
+      },
+      "parameters_template_note": "Replace only the placeholder IDs with confirmed uploads; templates are deliberately not submit-ready without media. Canonical role image is server-mapped to model role image_references. Do not send placeholders."
+    }
+  ],
+  "do_not_use": [
+    "Any production-2026-09-27/model candidate render until owner mounting rejection is fixed",
+    "Any rejected Pelag redesign",
+    "Low-poly rejected Heavy anchor",
+    "Old pose artwork as saber identity"
+  ],
+  "paid_submission": false,
+  "live_game_changes": false,
+  "art_acceptance": "pending",
+  "tool_preflight": {
+    "estimate_arguments": {
+      "params": {
+        "model": "gpt_image_2_5",
+        "variant": "flare",
+        "quality": "high",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1
+      }
+    },
+    "upload_batch_arguments_if_authorized_route_exists": {
+      "files": [
+        {
+          "filename": "a pose.png",
+          "content_type": "image/png"
+        },
+        {
+          "filename": "sabre-pelag1.png",
+          "content_type": "image/png"
+        },
+        {
+          "filename": "Pelag_Approved_Anchor_Reference.jpg",
+          "content_type": "image/jpeg"
+        },
+        {
+          "filename": "shot_01_t1.00s.png",
+          "content_type": "image/png"
+        },
+        {
+          "filename": "shot_00_t1.10s.png",
+          "content_type": "image/png"
+        }
+      ]
+    },
+    "upload_method": "Native HTTPS PUT where source file bytes already reside, following actual media_upload slot instructions. First curl failed Schannel revocation check before upload; Python urllib using normal verified TLS uploaded to the same URLs successfully. All five uploads confirmed after HTTP 200.",
+    "confirm_arguments_template": {
+      "type": "image",
+      "media_ids": [
+        "CONFIRMED_UPLOAD_IDS_FROM_SUCCESSFUL_HTTP_PUT_ONLY"
+      ]
+    },
+    "generation_method": "Two independent count=1 calls using templates above; use generate_image_batch if gallery delivery is preferred, then await returned jobs and show exact indexed batch once. Never automatically retry unknown/failed generation.",
+    "folder_note": "A project/folder ID exists in redesign-2026-09-27/higgsfield-generation.json but this subagent cannot establish that it belongs to the current conversation. Root may reuse only if its own conversation history establishes ownership; otherwise choose the current conversation folder through documented tools. The rejected reference media in that file must not be reused.",
+    "metadata_refresh_note": "Preflight generic routing was refined by actual returned upload instructions. Original base64 relay suggestion was discarded before any byte transfer. Execution results live separately."
+  },
+  "execution_record": "../visual-concepts/generation.json"
+}

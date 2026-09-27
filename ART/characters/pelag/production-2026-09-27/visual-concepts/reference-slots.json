@@ -1,0 +1,62 @@
+[
+  {
+    "id": "pelag_identity",
+    "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\a pose.png",
+    "source_sha256": "b09a37291c64b5a69bff2d245b55ad592ff367a205aea7ce139b780db7c65ad1",
+    "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\pelag_identity.jpg",
+    "upload_sha256": "a9418de608a9a66fe220085a249cf251536ee6da83a6e31a37f269aea5888308",
+    "size_bytes": 336303,
+    "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+    "media_id": "fa5ebd2b-7061-4aa2-a431-bd4a248d3788",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/fa5ebd2b-7061-4aa2-a431-bd4a248d3788.jpg",
+    "status": "uploaded"
+  },
+  {
+    "id": "saber_identity",
+    "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\PELAG\\sabre-pelag1.png",
+    "source_sha256": "78bd5a9e780ec6db82e32e43a3447343bd1fa0fa94f439179d5deee1457e93ba",
+    "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\saber_identity.jpg",
+    "upload_sha256": "26204d50aa6721d241cbf4fa91692219b3b79c00a610a432e6ed2418a25438d1",
+    "size_bytes": 209887,
+    "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+    "media_id": "3466cc9e-4f11-47cf-a942-d911ee4cb50c",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/3466cc9e-4f11-47cf-a942-d911ee4cb50c.jpg",
+    "status": "uploaded"
+  },
+  {
+    "id": "anchor_identity",
+    "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\PELAG\\animation\\anchor-slam\\Pelag_Approved_Anchor_Reference.jpg",
+    "source_sha256": "4d83e457bebd9a1db031b0f8a28afdb6483699f1c554905689b3c864cb7f7586",
+    "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\anchor_identity.jpg",
+    "upload_sha256": "ffb8781d250ce4fa5b141d35ea02ea957dc98d372895b7894f909c5d6698806a",
+    "size_bytes": 332593,
+    "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+    "media_id": "7c8c9a13-8ffb-4c6e-b263-e3d43c1cc591",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/7c8c9a13-8ffb-4c6e-b263-e3d43c1cc591.jpg",
+    "status": "uploaded"
+  },
+  {
+    "id": "whirlwind_current",
+    "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\whirlwind-ring-recheck2\\shot_01_t1.00s.png",
+    "source_sha256": "ae17abddaa3aec082dc334e702f3299ab44576e268b23a05c2c640d3d9dd30b3",
+    "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\whirlwind_current.jpg",
+    "upload_sha256": "6224f1524986af19707b08c8248bc4fddd25402d6c4d222b483273a679f25c6c",
+    "size_bytes": 646265,
+    "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+    "media_id": "0b48b3d4-e82b-4f98-957e-620682807bca",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/0b48b3d4-e82b-4f98-957e-620682807bca.jpg",
+    "status": "uploaded"
+  },
+  {
+    "id": "pelag_game_grip",
+    "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combat-grip-55\\shot_00_t1.10s.png",
+    "source_sha256": "e8a98d9cf3001389bc4d1759cf0863009bc9bcb8fdd87a444bae8b50c8e31f3e",
+    "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\pelag_game_grip.jpg",
+    "upload_sha256": "6b7811b759a0dd15deacc483267e89789f4e226fb822b5dd90fafeb0ea96df7a",
+    "size_bytes": 412399,
+    "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+    "media_id": "6d6d546f-1d0a-4d6e-a414-1e215ca6787f",
+    "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/6d6d546f-1d0a-4d6e-a414-1e215ca6787f.jpg",
+    "status": "uploaded"
+  }
+]

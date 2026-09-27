@@ -1,0 +1,595 @@
+{
+ "subject": "ForestRootSnarer",
+ "revision": "animation_r01 + 27.09 Mend (independent check)",
+ "date": "2026-09-27",
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\ForestRootSnarer.fbx",
+ "method": "FBX parsed byte-level (check_r01/fbx_bin.py) and re-imported into an empty Blender scene (check_r01/check_pose.py); every number below is measured on that import",
+ "all_pass": true,
+ "checks": {
+  "1_takes_fps_ranges_loops": {
+   "result": "pass",
+   "anim_stacks_in_fbx": [
+    "ForestRootSnarer_Death",
+    "ForestRootSnarer_Hit",
+    "ForestRootSnarer_Idle",
+    "ForestRootSnarer_Mend",
+    "ForestRootSnarer_Slam",
+    "ForestRootSnarer_Walk"
+   ],
+   "fbx_time_mode": [
+    6
+   ],
+   "fbx_frame_rate": [
+    30.0
+   ],
+   "stack_frame_ranges": {
+    "ForestRootSnarer_Idle": [
+     0.0,
+     60.0
+    ],
+    "ForestRootSnarer_Walk": [
+     0.0,
+     16.0
+    ],
+    "ForestRootSnarer_Slam": [
+     0.0,
+     72.0
+    ],
+    "ForestRootSnarer_Hit": [
+     0.0,
+     12.0
+    ],
+    "ForestRootSnarer_Death": [
+     0.0,
+     45.0
+    ],
+    "ForestRootSnarer_Mend": [
+     0.0,
+     50.0
+    ]
+   },
+   "keys_off_integer_frames": {
+    "ForestRootSnarer_Idle": 0,
+    "ForestRootSnarer_Walk": 0,
+    "ForestRootSnarer_Slam": 0,
+    "ForestRootSnarer_Hit": 0,
+    "ForestRootSnarer_Death": 0,
+    "ForestRootSnarer_Mend": 0
+   },
+   "blender_import_actions": [
+    "ForestRootSnarer_Death",
+    "ForestRootSnarer_Hit",
+    "ForestRootSnarer_Idle",
+    "ForestRootSnarer_Mend",
+    "ForestRootSnarer_Slam",
+    "ForestRootSnarer_Walk"
+   ],
+   "loop_seams": {
+    "Idle": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "vertex_mm": 0.0
+    },
+    "Walk": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "vertex_mm": 0.0
+    }
+   }
+  },
+  "2_in_place_origin_scale": {
+   "result": "pass",
+   "root_travel_mm": {
+    "Idle": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Walk": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Slam": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Hit": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Death": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "Mend": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "root_bone_head_z_mm": {
+    "Idle": 0.0,
+    "Walk": 0.0,
+    "Slam": 0.0,
+    "Hit": 0.0,
+    "Death": 0.0,
+    "Mend": 0.0
+   },
+   "bone_scale_keys_in_fbx": {
+    "ForestRootSnarer_Idle": [
+     1.0,
+     1.0
+    ],
+    "ForestRootSnarer_Walk": [
+     1.0,
+     1.0
+    ],
+    "ForestRootSnarer_Slam": [
+     1.0,
+     1.0
+    ],
+    "ForestRootSnarer_Hit": [
+     1.0,
+     1.0
+    ],
+    "ForestRootSnarer_Death": [
+     1.0,
+     1.0
+    ],
+    "ForestRootSnarer_Mend": [
+     1.0,
+     1.0
+    ]
+   },
+   "bone_world_scale_max_dev": 1e-06,
+   "armature_object": {
+    "location": [
+     0.0,
+     0.0,
+     0.0
+    ],
+    "rotation": [
+     -1.6292067073209182e-07,
+     0.0,
+     0.0
+    ],
+    "scale": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "rest_root_head": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "note": "the armature Null node carries a constant -90 deg X / scale 100 (Blender unit export, same as the in-game ForestWendigo.fbx); every bone scale key is exactly 1"
+  },
+  "3_walk_contacts": {
+   "result": "pass",
+   "target_speed_mps": 2.4,
+   "measured_ground_speed_mps_on_ground_3mm": {
+    "slab_L": 2.406,
+    "slab_R": 2.394,
+    "hind_L": 2.411,
+    "hind_R": 2.38
+   },
+   "max_slide_during_plant_cm_on_ground_3mm": {
+    "slab_L": 0.15,
+    "slab_R": 0.5,
+    "hind_L": 0.34,
+    "hind_R": 0.93
+   },
+   "max_slip_per_frame_cm_on_ground_3mm": {
+    "slab_L": 0.15,
+    "slab_R": 0.49,
+    "hind_L": 0.15,
+    "hind_R": 0.43
+   },
+   "within_1cm_of_ground": {
+    "slab_L": {
+     "speed_mps": 2.404,
+     "slide_cm": 0.37
+    },
+    "slab_R": {
+     "speed_mps": 2.332,
+     "slide_cm": 2.16
+    },
+    "hind_L": {
+     "speed_mps": 2.288,
+     "slide_cm": 4.9
+    },
+    "hind_R": {
+     "speed_mps": 2.305,
+     "slide_cm": 2.19
+    }
+   },
+   "contact_min_z_mm": {
+    "slab_L": -0.1,
+    "slab_R": -0.0,
+    "hind_L": -0.0,
+    "hind_R": -0.0
+   },
+   "plant_runs_frames": {
+    "slab_L": [
+     [
+      0,
+      5
+     ]
+    ],
+    "slab_R": [
+     [
+      8,
+      13
+     ]
+    ],
+    "hind_L": [
+     [
+      0,
+      2
+     ],
+     [
+      6,
+      10
+     ],
+     [
+      14,
+      18
+     ]
+    ],
+    "hind_R": [
+     [
+      2,
+      6
+     ],
+     [
+      10,
+      14
+     ]
+    ]
+   },
+   "idle_contact_slide_mm": {
+    "slab_L_3mm": 13.71,
+    "slab_L_1cm": 13.28,
+    "slab_R_3mm": 10.93,
+    "slab_R_1cm": 20.24,
+    "hind_L_3mm": 1.12,
+    "hind_L_1cm": 13.89,
+    "hind_R_3mm": 4.46,
+    "hind_R_1cm": 4.85
+   }
+  },
+  "4_contact_frames": {
+   "result": "pass",
+   "sim_contract": "Simulation.RootSnarer: slam (circle) tick 15, impact tick 15+21 = 36, stands 36 ticks -> 72; mend (27.09): plant from t0, slabs in the ground on 8, channel to 30, heal ring tick 30, recovery 30-50",
+   "slam_slab_min_z_cm_by_frame": {
+    "10": [
+     110.3,
+     119.7
+    ],
+    "11": [
+     110.2,
+     120.0
+    ],
+    "12": [
+     110.6,
+     119.8
+    ],
+    "13": [
+     99.1,
+     101.2
+    ],
+    "14": [
+     47.3,
+     44.8
+    ],
+    "15": [
+     -11.0,
+     -10.9
+    ],
+    "16": [
+     -16.6,
+     -13.5
+    ]
+   },
+   "slam_contact_frame_both_slabs": 15,
+   "slam_overhead_frames": [
+    10,
+    11,
+    12
+   ],
+   "slam_socket_drift_mm_16_60": 0.0,
+   "slam_socket_move_15_to_16_mm": 54.42,
+   "slam_slabs_fully_out_of_ground_frame": 61,
+   "slam_roots_erupt_pelvis_z_cm_30_40": [
+    49.1,
+    49.4,
+    49.5,
+    49.5,
+    49.2,
+    48.4,
+    46.9,
+    47.4,
+    47.6,
+    47.2,
+    47.2
+   ],
+   "slam_roots_erupt_extreme_frame": 36,
+   "slam_end_vs_idle0": {
+    "bone_pos_mm": 0.075,
+    "bone_rot_deg": 0.0276,
+    "vertex_mm": 0.089
+   },
+   "hit_peak_frame": 3,
+   "death_belly_on_ground_frame": 25,
+   "mend_contact_frame_both_slabs": 8,
+   "mend_slab_min_z_cm_by_frame": {
+    "5": [
+     60.9,
+     64.8
+    ],
+    "6": [
+     53.3,
+     58.0
+    ],
+    "7": [
+     31.8,
+     29.4
+    ],
+    "8": [
+     -9.0,
+     -9.0
+    ],
+    "9": [
+     -11.2,
+     -11.3
+    ],
+    "10": [
+     -12.0,
+     -12.0
+    ],
+    "30": [
+     -12.8,
+     -12.6
+    ],
+    "38": [
+     -13.3,
+     -12.0
+    ],
+    "39": [
+     -0.1,
+     1.6
+    ],
+    "40": [
+     9.2,
+     11.0
+    ]
+   },
+   "mend_pinned_socket_drift_mm_10_38": 0.21,
+   "mend_release_dome_top_peak_frame": 30,
+   "mend_release_pelvis_peak_frame": 30,
+   "mend_pulse_dome_top_cm": {
+    "swell_15": 124.5,
+    "push_20": 118.0,
+    "swell_24": 124.5,
+    "push_28": 116.6,
+    "release_30": 132.0
+   },
+   "mend_slabs_fully_out_of_ground_frame": 40,
+   "mend_start_end_vs_idle0": {
+    "start": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "vertex_mm": 0.0
+    },
+    "end": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "vertex_mm": 0.0
+    }
+   },
+   "mend_body_head_min_z_mm": 46.0
+  },
+  "5_deformation": {
+   "result": "pass",
+   "rigid_slab_edges_len_dev_mm": {
+    "Idle": 0.0003,
+    "Walk": 0.0002,
+    "Slam": 0.0003,
+    "Hit": 0.0002,
+    "Death": 0.0002,
+    "Mend": 0.0002
+   },
+   "edge_stretch_ratio_max": {
+    "Idle": 25.8275,
+    "Walk": 57.6555,
+    "Slam": 96.5445,
+    "Hit": 49.1948,
+    "Death": 44.6965,
+    "Mend": 58.4463
+   },
+   "edge_stretch_note": "worst stretch is the L/R clavicle-neck skin at the shoulder junction (short 1-2 cm edges, up to ~9 cm longer with the slabs overhead in Slam 8-12); renders at the game angle, front, back and side show no spikes, tears or exploded vertices; slabs are rigid",
+   "min_z_mm_per_region": {
+    "Idle": {
+     "slab_L": -0.19,
+     "slab_R": -0.04,
+     "hind_L": 1.22,
+     "hind_R": -1.72,
+     "body": 238.86,
+     "head": 213.54
+    },
+    "Walk": {
+     "slab_L": -0.07,
+     "slab_R": -0.02,
+     "hind_L": -0.03,
+     "hind_R": -0.0,
+     "body": 229.02,
+     "head": 345.9
+    },
+    "Slam": {
+     "slab_L": -221.78,
+     "slab_R": -175.96,
+     "hind_L": -3.93,
+     "hind_R": -2.02,
+     "body": 47.8,
+     "head": 9.76
+    },
+    "Hit": {
+     "slab_L": -0.14,
+     "slab_R": -0.07,
+     "hind_L": 1.62,
+     "hind_R": -0.5,
+     "body": 260.48,
+     "head": 292.35
+    },
+    "Death": {
+     "slab_L": -0.14,
+     "slab_R": -8.73,
+     "hind_L": -4.9,
+     "hind_R": -6.48,
+     "body": -5.24,
+     "head": -3.94
+    },
+    "Mend": {
+     "slab_L": -143.47,
+     "slab_R": -129.66,
+     "hind_L": -2.19,
+     "hind_R": -1.71,
+     "body": 121.41,
+     "head": 46.04
+    }
+   },
+   "slam_note": "slabs 11-22 cm in the ground 15-60 by design (buried), body never below -4 mm; Mend: slabs 9-14 cm in the ground 8-38 by design, belly >= 12 cm, face >= 4.6 cm; worst Mend stretch = clavicle skin in the sideways lift 4-6 (same junction as Slam, lower ratio)",
+   "death_end_min_z_mm": {
+    "slab_L": -0.1,
+    "slab_R": -0.1,
+    "hind_L": -2.4,
+    "hind_R": -2.2,
+    "body": -5.2,
+    "head": -3.9,
+    "all": -5.2
+   },
+   "death_still_32_45_max_bone_step_mm": 0.25,
+   "renders_looked_at": "check_r01/out/*.jpg (game 52 deg 3/4, front, back, side, low)"
+  },
+  "6_mesh_budget_weights": {
+   "result": "pass",
+   "triangles": 24000,
+   "vertices": 11996,
+   "max_influences": 4,
+   "influence_histogram": {
+    "1": 2956,
+    "2": 2028,
+    "3": 2537,
+    "4": 4475
+   },
+   "weight_sum_range": [
+    1.0,
+    1.0
+   ],
+   "skin_clusters": 18
+  },
+  "7_review_page": {
+   "result": "pass",
+   "page": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\review\\animation_r01\\index.html",
+   "references": 29,
+   "missing": [],
+   "mp4_decoded_vs_expected_frames": {
+    "idle_game.mp4": [
+     60,
+     60
+    ],
+    "idle_side.mp4": [
+     60,
+     60
+    ],
+    "walk_game.mp4": [
+     16,
+     16
+    ],
+    "walk_side.mp4": [
+     16,
+     16
+    ],
+    "slam_game.mp4": [
+     83,
+     83
+    ],
+    "slam_side.mp4": [
+     83,
+     83
+    ],
+    "hit_game.mp4": [
+     23,
+     23
+    ],
+    "hit_side.mp4": [
+     23,
+     23
+    ],
+    "death_game.mp4": [
+     56,
+     56
+    ],
+    "death_side.mp4": [
+     56,
+     56
+    ],
+    "mend_game.mp4": [
+     61,
+     61
+    ],
+    "mend_side.mp4": [
+     61,
+     61
+    ]
+   }
+  },
+  "8_r01_takes_unchanged": {
+   "result": "pass",
+   "compared_with": "work/r01_approved/ForestRootSnarer_r01.fbx (approved 26.09 package)",
+   "added_takes": [
+    "ForestRootSnarer_Mend"
+   ],
+   "per_take": {
+    "ForestRootSnarer_Idle": {
+     "curves": 198,
+     "keys": 12078,
+     "identical_curves": 198,
+     "range_identical": true
+    },
+    "ForestRootSnarer_Walk": {
+     "curves": 198,
+     "keys": 3366,
+     "identical_curves": 198,
+     "range_identical": true
+    },
+    "ForestRootSnarer_Slam": {
+     "curves": 198,
+     "keys": 14454,
+     "identical_curves": 198,
+     "range_identical": true
+    },
+    "ForestRootSnarer_Hit": {
+     "curves": 198,
+     "keys": 2574,
+     "identical_curves": 198,
+     "range_identical": true
+    },
+    "ForestRootSnarer_Death": {
+     "curves": 198,
+     "keys": 9108,
+     "identical_curves": 198,
+     "range_identical": true
+    }
+   },
+   "mesh_skin_bind_identical": true,
+   "method": "every AnimationCurve (KeyTime + KeyValueFloat arrays) of the 5 old stacks and every geometry / skin cluster / bind-pose array compared for exact equality in the FBX bytes (check_r01/compare_old_takes.py)"
+  }
+ }
+}

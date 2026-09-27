@@ -56,16 +56,43 @@ namespace Game.View
             StateSpeed = 1f, BlendSeconds = .07f, RestSeconds = .6f,
             DissolveSeconds = .65f, RecoilMeters = .02f, EdgeGlow = .03f
         };
+        // Шипомёт (клип Death, 48 кадров): касание земли на 39-м — ThorncasterAnimatorView
+        // играет кадры 0–39 за время падения этого профиля, 39–48 за стойку.
+        public EnemyDeathPresentation ForestThorncaster = new EnemyDeathPresentation {
+            ClipSeconds = 48f / 30f, StartNormalized = 0f, RestNormalized = 39f / 48f,
+            StateSpeed = 1f, BlendSeconds = .07f, RestSeconds = .45f,
+            DissolveSeconds = .5f, RecoilMeters = .04f, EdgeGlow = .03f,
+            EdgeColor = new Color(.36f, .30f, .17f, 1f)
+        };
+        // Корнехват (Death, 45 кадров): брюхом в землю на 25-м. Тело под URP Lit без
+        // растворения — к концу показа RootSnarerAnimatorView уводит его в землю.
+        public EnemyDeathPresentation ForestRootSnarer = new EnemyDeathPresentation {
+            ClipSeconds = 45f / 30f, StartNormalized = 0f, RestNormalized = 25f / 45f,
+            StateSpeed = 1f, BlendSeconds = .08f, RestSeconds = .5f,
+            DissolveSeconds = .4f, RecoilMeters = .04f, EdgeGlow = .03f,
+            EdgeColor = new Color(.30f, .26f, .16f, 1f)
+        };
         /// <summary>
-        /// Смерть вида. Прочие новые мобы леса падают по-хранительски, детёныш Расщепеня — по
-        /// корнеползу: мелкое тело, короткое падение. Свои профили появятся вместе с моделями.
+        /// Смерть вида. Расщепень не падает, а раскалывается (SplitterCombatView): тело
+        /// прячется через 0,2 с, профиль Хранителя лишь держит слот до конца распада;
+        /// детёныш — по корнеползу.
         /// </summary>
         public static EnemyDeathPresentation Death(EnemyKind kind)
         {
             if (_current == null)
                 _current = Resources.Load<EnemyPresentationProfile>("Combat/EnemyPresentation")
                     ?? CreateInstance<EnemyPresentationProfile>();
-            return kind == EnemyKind.ForestStonehoof ? _current.ForestStonehoof : kind == EnemyKind.ForestWendigo ? _current.ForestWendigo : kind == EnemyKind.ForestBud ? _current.ForestBud : kind == EnemyKind.ForestRootSwarm || kind == EnemyKind.ForestSplitling ? _current.RootSwarm : _current.Guardian;
+            switch (kind)
+            {
+                case EnemyKind.ForestStonehoof: return _current.ForestStonehoof;
+                case EnemyKind.ForestWendigo: return _current.ForestWendigo;
+                case EnemyKind.ForestBud: return _current.ForestBud;
+                case EnemyKind.ForestThorncaster: return _current.ForestThorncaster;
+                case EnemyKind.ForestRootSnarer: return _current.ForestRootSnarer;
+                case EnemyKind.ForestRootSwarm:
+                case EnemyKind.ForestSplitling: return _current.RootSwarm;
+                default: return _current.Guardian;
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

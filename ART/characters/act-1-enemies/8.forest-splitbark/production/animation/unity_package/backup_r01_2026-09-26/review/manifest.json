@@ -1,0 +1,168 @@
+{
+  "stage": "animation_r01_owner_review",
+  "owner_review_pending": true,
+  "fps": 30,
+  "takes": {
+    "ForestSplitter_Idle": {
+      "frames": [
+        0,
+        60
+      ],
+      "length_s": 2.0,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "breathing, shells rock slightly, head looks around",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Walk": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "in-place diagonal trot; planted feet slide back at exactly 3.1 m/s",
+      "muzzle_offset": null,
+      "speed_mps": 3.1,
+      "stride_m_per_cycle": 1.0333,
+      "stance_foot_speed_mps": [
+        3.099,
+        3.102
+      ],
+      "child": {
+        "scale": 0.6,
+        "speed_mps": 4.2,
+        "playback_speed": 2.2581,
+        "why": "planted feet match ground speed when playback = speed / (scale * 3.1)"
+      }
+    },
+    "ForestSplitter_Bite": {
+      "frames": [
+        0,
+        30
+      ],
+      "length_s": 1.0,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "crouch back + shells open 0-12, lunge, beak snap + shell clap + paw stomp at 18",
+      "contact_frame": 18,
+      "contact_phase": 0.6,
+      "muzzle_offset": null,
+      "windup_ticks": 18,
+      "recovery_ticks": 12,
+      "contact_rule": "beak furthest forward + shells clap + front-left paw stomp on frame 18 = sim windup tick 18",
+      "bite_point_at_contact_m": {
+        "forward": 0.823,
+        "up": 0.487,
+        "right": 0.057,
+        "unity_local": [
+          0.057,
+          0.487,
+          0.823
+        ],
+        "what": "head bone tip at frame 18, entity-local; no projectile"
+      },
+      "beak_mesh_tip_at_contact_m": {
+        "forward": 0.851,
+        "up": 0.352,
+        "right": 0.057,
+        "unity_local": [
+          0.057,
+          0.352,
+          0.851
+        ],
+        "what": "forwardmost skinned vertex of the head at frame 18 (the visible beak tip; use this for bite VFX)"
+      },
+      "child_bite": {
+        "windup_ticks": 12,
+        "recovery_ticks": 8,
+        "contact_phase": 0.6,
+        "playback_speed": 1.5,
+        "scale": 0.6,
+        "why": "Splitling bite 12+8 ticks has the same contact phase 0.6 as this clip, so the child can reuse ForestSplitter_Bite at x1.5 (contact on its tick 12)"
+      }
+    },
+    "ForestSplitter_Hit": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "flinch back, head retracts, shells clamp then jolt open",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Death": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "short crack: shells jolt apart, body sags; view hides parent and pops 2 children on the last frame",
+      "release_frame": 12,
+      "muzzle_offset": null,
+      "release_rule": "last frame: the view hides the parent and pops two children (SplitterSplit)"
+    },
+    "ForestSplitter_Pop": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "child: crouched ball, hop with splayed legs, lands on frame 8 = end of the 8-tick SplitPop",
+      "contact_frame": 8,
+      "contact_phase": 0.8,
+      "muzzle_offset": null,
+      "takeoff_frame": 2,
+      "contact_rule": "landing on frame 8 = end of the sim's 8-tick SplitPop (1 m sideways, moved by the sim)",
+      "scale": 0.6
+    }
+  },
+  "validation_all_pass": true,
+  "fbx_roundtrip_all_pass": true,
+  "fbx": "../../animation/unity_package/ForestSplitter.fbx",
+  "issues": [
+    "Исправлено на независимой проверке FBX: в укусе шея выезжала на 0,25 м, и между головой и жёсткими краями створок тянулся «рукав» растянутой текстуры до 24 см (риг проверялся на выпад 0,14 м). Теперь шея выезжает на 0,11 м, дальность возвращена рывком корпуса на 3,5 см и задранным клювом: растяжка до 13 см, кончик клюва на 0,85 м вперёд вместо 0,92, контакт по-прежнему на кадре 18.",
+    "С игровой камеры (52°, 3/4) голова маленькая и частично под краями створок: укус читается прежде всего рывком корпуса и хлопком створок, сам клюв хорошо виден сбоку и спереди. Голова идёт вперёд и чуть вверх, а не клюёт вниз под створки.",
+    "Рта нет (клюв цельный), поэтому клюв не раскрывается, как в референсе: укус — выпад головой.",
+    "Створки срощены с телом: при раскрытии тянется спинная полоса (тёмный мох между створками на замахе укуса 11–13° и в смерти ~25°). Отвалиться створки не могут без правки модели — смерть сделана как треск; сам раскол лучше закрыть VFX.",
+    "В рыси лапы короткие, походка низкая; кожа лап местами уходит под землю до 7 мм.",
+    "Лапы модели стоят неровно: в покое касается земли только передняя левая, правая передняя висит на 8,5 мм, задние на 6–10 мм. Опустить их IK нельзя — задние ноги почти выпрямлены (вытяжка 0,97 при пределе 0,975). С игровой камеры почти незаметно.",
+    "У детей ходьба ×2,26: цикл 10 кадров проходит за 0,15 с — будет выглядеть как семенящий бег."
+  ],
+  "videos": {
+    "ForestSplitter_Idle": [
+      "ForestSplitter_Idle_game.mp4",
+      "ForestSplitter_Idle_side.mp4"
+    ],
+    "ForestSplitter_Walk": [
+      "ForestSplitter_Walk_game.mp4",
+      "ForestSplitter_Walk_side.mp4"
+    ],
+    "ForestSplitter_Bite": [
+      "ForestSplitter_Bite_game.mp4",
+      "ForestSplitter_Bite_side.mp4"
+    ],
+    "ForestSplitter_Hit": [
+      "ForestSplitter_Hit_game.mp4",
+      "ForestSplitter_Hit_side.mp4"
+    ],
+    "ForestSplitter_Death": [
+      "ForestSplitter_Death_game.mp4",
+      "ForestSplitter_Death_side.mp4"
+    ],
+    "ForestSplitter_Pop": [
+      "ForestSplitter_Pop_game.mp4",
+      "ForestSplitter_Pop_side.mp4"
+    ],
+    "Sequence": [
+      "Sequence_game.mp4"
+    ]
+  }
+}

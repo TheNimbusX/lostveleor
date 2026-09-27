@@ -8,20 +8,20 @@ namespace Game.Tests
     /// Шаблоны встреч, план забега и волны (стадия 6 плана «Мобы леса»).
     ///
     /// План леса — 8 арен и босс — бросается на тысяче сидов: одна элита на
-    /// А4–А6 всегда, вторая на А7–А8 в 25–35% забегов, засада и выживание не
-    /// чаще раза, повторов нет, уроки раньше сочетаний. Волны — детерминизм,
-    /// выход из-под земли, выживание по таймеру, подмога босса.
+    /// А5–А7 всегда, вторая после неё на А7–А8 в 25–35% забегов, вендиго и
+    /// Шипомёт никогда не в одном забеге, засада и выживание не чаще раза,
+    /// повторов нет, уроки раньше сочетаний, и каждый вид встречается хотя бы
+    /// в трети забегов. Волны — детерминизм, выход из-под земли, выживание по
+    /// таймеру, подмога босса.
     ///
-    /// Шаблоны новых видов (ForestEncounterTemplates.Staged) в игре ещё нет,
-    /// но таблица, волны и план с ними (staged) проверяются здесь же: по All +
-    /// Staged у каждого вида один урок, элита — вендиго или Шипомёт, и никогда
-    /// оба в одном забеге.
+    /// Корнехват, Расщепень и Шипомёт в игре с 27.09: их шаблоны — в All.
+    /// Staged (виды без арта) сейчас пуст, но таблица проверяет и его.
     /// </summary>
     public class ArenaEncounterTests
     {
         private static readonly bool[] Forest = { false, false, false, false, false, false, false, false, true };
 
-        /// <summary>Шаблоны с разными ключами: игры (All) и новых видов (Staged).</summary>
+        /// <summary>Шаблоны с разными ключами: игры (All) и видов без арта (Staged).</summary>
         internal static List<ArenaEncounterTemplate> GameAndStaged()
         {
             var result = new List<ArenaEncounterTemplate>(ForestEncounterTemplates.All);
@@ -29,18 +29,8 @@ namespace Game.Tests
             return result;
         }
 
-        /// <summary>
-        /// Каждый объект шаблона по разу: All, Staged и копии пула Release с
-        /// другими аренами (E04, E05, E08) — их бюджет и волны проверяются на
-        /// их собственных аренах.
-        /// </summary>
-        internal static List<ArenaEncounterTemplate> EveryTemplate()
-        {
-            var result = GameAndStaged();
-            foreach (var t in ForestEncounterTemplates.Release)
-                if (!result.Contains(t)) result.Add(t);
-            return result;
-        }
+        /// <summary>Каждый объект шаблона по разу: All и Staged.</summary>
+        internal static List<ArenaEncounterTemplate> EveryTemplate() => GameAndStaged();
 
         /// <summary>Лесная локация без Unity: 8 арен и босс, как MeadowGameplay, профиль — простой.</summary>
         internal static LocationDefinition ForestLocation(int arenas = 8)
@@ -132,7 +122,8 @@ namespace Game.Tests
                     Assert.That(t.WaveCount, Is.GreaterThanOrEqualTo(2), t.Key);
             }
             // У каждого вида, которого ставит расстановка, ровно один урок по All +
-            // Staged; детёныша Расщепеня не ставит ни один шаблон — он только из распада.
+            // Staged (все — в All); детёныша Расщепеня не ставит ни один шаблон —
+            // он только из распада.
             for (int k = 0; k < EnemyArchetypes.Count; k++)
             {
                 var kind = EnemyArchetypes.At(k).Kind;
@@ -170,52 +161,30 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Staged_StaysOutOfTheGame_AndReleaseCopiesDifferOnlyInArenas()
+        public void NewMobs_AreInTheGame_WithTheDocArenas()
         {
-            var game = new HashSet<string>();
-            foreach (var t in ForestEncounterTemplates.All) game.Add(t.Key);
-            foreach (var t in ForestEncounterTemplates.Staged)
-            {
-                Assert.That(game.Contains(t.Key), Is.False, t.Key + " уже в игре");
-                Assert.That(ForestEncounterTemplates.Find(t.Key), Is.SameAs(t));
-            }
-            // Release — те же ключи, что All + Staged, по разу и в порядке ключей.
-            var byKey = new Dictionary<string, ArenaEncounterTemplate>();
-            foreach (var t in GameAndStaged()) byKey[t.Key] = t;
-            var release = ForestEncounterTemplates.Release;
-            Assert.That(release.Length, Is.EqualTo(byKey.Count));
-            for (int i = 0; i < release.Length; i++)
-            {
-                var copy = release[i];
-                Assert.That(byKey.TryGetValue(copy.Key, out var source), Is.True, copy.Key);
-                if (i > 0) Assert.That(string.CompareOrdinal(release[i - 1].Key, copy.Key), Is.LessThan(0), copy.Key);
-                if (ReferenceEquals(copy, source)) continue;
-                // Копия отличается только аренами: ключ, урок, вес, бюджет и сами волны — те же.
-                Assert.That(copy.Id, Is.EqualTo(source.Id), copy.Key);
-                Assert.That(copy.Type, Is.EqualTo(source.Type), copy.Key);
-                Assert.That(copy.Lesson, Is.EqualTo(source.Lesson), copy.Key);
-                Assert.That(copy.Weight, Is.EqualTo(source.Weight), copy.Key);
-                Assert.That(copy.MinArenaSize, Is.EqualTo(source.MinArenaSize), copy.Key);
-                Assert.That(copy.BudgetPercent, Is.EqualTo(source.BudgetPercent), copy.Key);
-                Assert.That(copy.SurvivalTicks, Is.EqualTo(source.SurvivalTicks), copy.Key);
-                Assert.That(copy.WaveCount, Is.EqualTo(source.WaveCount), copy.Key);
-                for (int w = 0; w < copy.WaveCount; w++) Assert.That(copy.GetWave(w), Is.SameAs(source.GetWave(w)), copy.Key);
-            }
-            Assert.That(ForestEncounterTemplates.Pool(false), Is.SameAs(ForestEncounterTemplates.All));
-            Assert.That(ForestEncounterTemplates.Pool(true), Is.SameAs(ForestEncounterTemplates.Release));
+            // Владелец, 27.09: «добавляй в игру». Шаблоны Корнехвата, Расщепня и
+            // Шипомёта — в All, в порядке ключей (порядок входит в бросок плана).
+            var all = ForestEncounterTemplates.All;
+            for (int i = 1; i < all.Length; i++)
+                Assert.That(string.CompareOrdinal(all[i - 1].Key, all[i].Key), Is.LessThan(0), all[i].Key);
+            foreach (var t in all) Assert.That(ForestEncounterTemplates.Find(t.Key), Is.SameAs(t), t.Key);
+            foreach (var key in new[] { "forest.E06", "forest.E07", "forest.E08T", "forest.E09", "forest.E10", "forest.E14" })
+                Assert.That(System.Array.Exists(all, t => t.Key == key), Is.True, key + " не в игре");
+            Assert.That(ForestEncounterTemplates.Staged, Is.Empty, "все мобы леса в игре");
+            foreach (var kind in new[] { EnemyKind.ForestThorncaster, EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter })
+                Assert.That(System.Array.Exists(all, t => t.Lesson == kind), Is.True, kind + ": урок в игре");
 
-            // Игра — как до новых видов: временные диапазоны на месте.
-            AssertArenas(ForestEncounterTemplates.All, "forest.E03", 3, 4);
-            AssertArenas(ForestEncounterTemplates.All, "forest.E04", 3, 3);
-            AssertArenas(ForestEncounterTemplates.All, "forest.E05", 5, 7);
-            AssertArenas(ForestEncounterTemplates.All, "forest.E08", 4, 6);
-            // С новыми видами — диапазоны дока; E03 — запасной А3–А4 (иначе
-            // камнекопыт не встаёт ни в один план), E08 — в окне первой элиты А5–А7.
-            AssertArenas(release, "forest.E03", 3, 4);
-            AssertArenas(release, "forest.E04", 2, 3);
-            AssertArenas(release, "forest.E05", 5, 8);
-            AssertArenas(release, "forest.E08", 5, 7);
-            AssertArenas(release, "forest.E08T", 5, 7);
+            // Диапазоны дока; E03 — запасной А3–А4 (иначе камнекопыт не встаёт
+            // ни в один план), E08 и E08T — в окне первой элиты А5–А7.
+            AssertArenas(all, "forest.E03", 3, 4);
+            AssertArenas(all, "forest.E04", 2, 3);
+            AssertArenas(all, "forest.E05", 5, 8);
+            AssertArenas(all, "forest.E06", 5, 5);
+            AssertArenas(all, "forest.E07", 6, 6);
+            AssertArenas(all, "forest.E08", 5, 7);
+            AssertArenas(all, "forest.E08T", 5, 7);
+            AssertArenas(all, "forest.E14", 7, 8);
         }
 
         private static void AssertArenas(ArenaEncounterTemplate[] pool, string key, int min, int max)
@@ -251,7 +220,7 @@ namespace Game.Tests
                 Assert.That(splitters > 0, Is.EqualTo(t.Uses(EnemyKind.ForestSplitter)), t.Key);
             }
 
-            // Пул ровно под шаблон: оба Расщепня урока убиты честно, и каждый
+            // Пул ровно под шаблон: все три Расщепня урока убиты честно, и каждый
             // распался — детям хватило мест. На единицу меньше — шаблон не встаёт.
             var location = ForestLocation();
             var lesson = ForestEncounterTemplates.E07;
@@ -280,7 +249,7 @@ namespace Game.Tests
                 }
                 Assert.That(sim.EncounterWavesPending, Is.False, "seed " + seed);
                 Assert.That(sim.CountAliveEnemies(), Is.Zero, "seed " + seed);
-                Assert.That(killed, Is.EqualTo(2), "два Расщепня урока, seed " + seed);
+                Assert.That(killed, Is.EqualTo(3), "три Расщепня урока, seed " + seed);
                 Assert.That(splits, Is.EqualTo(killed), "seed " + seed);
                 Assert.That(children, Is.EqualTo(killed * Simulation.SplitChildren), "seed " + seed);
                 Assert.That(sim.Entities.Count, Is.LessThanOrEqualTo(sim.Entities.Capacity));
@@ -288,73 +257,6 @@ namespace Game.Tests
         }
 
         // ---------- план ----------
-
-        [Test]
-        public void Plan_OverThousandSeeds_FollowsTheForestRules()
-        {
-            int secondElite = 0, secondRolled = 0, ambushes = 0, survivals = 0;
-            var used = new Dictionary<string, int>();
-            var where = new Dictionary<string, int>();
-            for (ulong seed = 1; seed <= 1000; seed++)
-            {
-                var plan = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
-                Assert.That(plan.LevelCount, Is.EqualTo(9));
-                Assert.That(plan.IsBoss(9), Is.True);
-                Assert.That(plan.TemplateFor(9), Is.Null, "у босса нет шаблона");
-                var seen = new HashSet<string>();
-                var known = new HashSet<EnemyKind>();
-                int firstElites = 0, lateElites = 0, ambush = 0, survival = 0, normal = 0;
-                for (int arena = 1; arena <= 8; arena++)
-                {
-                    var t = plan.TemplateFor(arena);
-                    Assert.That(t, Is.Not.Null, "seed " + seed);
-                    Assert.That(t.AllowsArena(arena), Is.True, t.Key + " на А" + arena + ", seed " + seed);
-                    Assert.That(seen.Add(t.Key), Is.True, "повтор " + t.Key + ", seed " + seed);
-                    used[t.Key] = used.TryGetValue(t.Key, out int n) ? n + 1 : 1;
-                    string at = "A" + arena + " " + t.Key;
-                    where[at] = where.TryGetValue(at, out int m) ? m + 1 : 1;
-                    // Урок раньше сочетаний: каждый вид шаблона уже был, кроме его урока.
-                    for (int k = 0; k < EnemyArchetypes.Count; k++)
-                    {
-                        var kind = EnemyArchetypes.At(k).Kind;
-                        if (t.Uses(kind) && kind != t.Lesson)
-                            Assert.That(known.Contains(kind), Is.True, kind + " раньше урока в " + t.Key + ", seed " + seed);
-                    }
-                    if (t.Lesson != EnemyKind.None) known.Add(t.Lesson);
-                    if (t.Type == ArenaEncounterType.Elite)
-                    {
-                        if (arena >= 4 && arena <= 6) firstElites++;
-                        else if (arena >= 7) lateElites++;
-                        else Assert.Fail("элита на А" + arena + ", seed " + seed);
-                    }
-                    if (t.Type == ArenaEncounterType.Ambush) ambush++;
-                    if (t.Type == ArenaEncounterType.Survival) survival++;
-                    if (t.Type == ArenaEncounterType.Normal) normal++;
-                }
-                Assert.That(firstElites, Is.EqualTo(1), "seed " + seed);
-                Assert.That(lateElites, Is.EqualTo(plan.SecondEliteRolled ? 1 : 0), "seed " + seed);
-                Assert.That(ambush, Is.LessThanOrEqualTo(1));
-                Assert.That(survival, Is.LessThanOrEqualTo(1));
-                Assert.That(normal, Is.InRange(5, 6), "seed " + seed);
-                secondElite += lateElites;
-                if (plan.SecondEliteRolled) secondRolled++;
-                ambushes += ambush; survivals += survival;
-
-                var again = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
-                ulong a = 1, b = 1;
-                plan.HashInto(ref a); again.HashInto(ref b);
-                Assert.That(a, Is.EqualTo(b), "план — функция сида");
-            }
-            TestContext.WriteLine("second elite " + secondElite + "/1000, ambush " + ambushes + ", survival " + survivals);
-            var places = new List<string>(where.Keys);
-            places.Sort(System.StringComparer.Ordinal);
-            foreach (var place in places) TestContext.WriteLine(place + ": " + where[place]);
-            Assert.That(secondElite, Is.InRange(250, 350));
-            Assert.That(secondElite, Is.EqualTo(secondRolled), "выпавшая вторая элита всегда помещается");
-            // Все шаблоны реально встают в планы.
-            foreach (var t in ForestEncounterTemplates.All)
-                Assert.That(used.ContainsKey(t.Key), Is.True, t.Key + " не встал ни в один план");
-        }
 
         /// <summary>
         /// Хватает ли забегов, где вид вообще встречается: ниже этой доли вид
@@ -365,7 +267,7 @@ namespace Game.Tests
         private const int MinKindSharePercent = 35;
 
         [Test]
-        public void StagedPlan_OverThousandSeeds_FollowsTheReleaseRules_AndMeetsEveryKind()
+        public void Plan_OverThousandSeeds_FollowsTheForestRules_AndMeetsEveryKind()
         {
             int secondElite = 0, secondRolled = 0, ambushes = 0, survivals = 0;
             var used = new Dictionary<string, int>();
@@ -373,9 +275,9 @@ namespace Game.Tests
             var runsWith = new Dictionary<EnemyKind, int>();
             for (ulong seed = 1; seed <= 1000; seed++)
             {
-                var plan = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.Release, staged: true);
-                Assert.That(plan.Staged, Is.True);
+                var plan = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
                 Assert.That(plan.LevelCount, Is.EqualTo(9));
+                Assert.That(plan.IsBoss(9), Is.True);
                 Assert.That(plan.TemplateFor(9), Is.Null, "у босса нет шаблона");
                 var seen = new HashSet<string>();
                 var known = new HashSet<EnemyKind>();
@@ -385,12 +287,13 @@ namespace Game.Tests
                 {
                     var t = plan.TemplateFor(arena);
                     Assert.That(t, Is.Not.Null, "seed " + seed);
-                    Assert.That(System.Array.IndexOf(ForestEncounterTemplates.Release, t), Is.GreaterThanOrEqualTo(0), t.Key);
+                    Assert.That(System.Array.IndexOf(ForestEncounterTemplates.All, t), Is.GreaterThanOrEqualTo(0), t.Key);
                     Assert.That(t.AllowsArena(arena), Is.True, t.Key + " на А" + arena + ", seed " + seed);
                     Assert.That(seen.Add(t.Key), Is.True, "повтор " + t.Key + ", seed " + seed);
                     used[t.Key] = used.TryGetValue(t.Key, out int n) ? n + 1 : 1;
                     string at = "A" + arena + " " + t.Key;
                     where[at] = where.TryGetValue(at, out int m) ? m + 1 : 1;
+                    // Урок раньше сочетаний: каждый вид шаблона уже был, кроме его урока.
                     for (int k = 0; k < EnemyArchetypes.Count; k++)
                     {
                         var kind = EnemyArchetypes.At(k).Kind;
@@ -406,8 +309,8 @@ namespace Game.Tests
                         if (++elites == 1)
                         {
                             firstElite = arena;
-                            Assert.That(arena, Is.InRange(ArenaRunPlan.StagedFirstEliteMinArena,
-                                ArenaRunPlan.StagedFirstEliteMaxArena), "первая элита на А" + arena + ", seed " + seed);
+                            Assert.That(arena, Is.InRange(ArenaRunPlan.FirstEliteMinArena,
+                                ArenaRunPlan.FirstEliteMaxArena), "первая элита на А" + arena + ", seed " + seed);
                         }
                         else
                             Assert.That(arena, Is.InRange(ArenaRunPlan.SecondEliteMinArena,
@@ -429,14 +332,12 @@ namespace Game.Tests
                 if (plan.SecondEliteRolled) secondRolled++;
                 ambushes += ambush; survivals += survival;
 
-                var again = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.Release, staged: true);
-                ulong a = 1, b = 1, game = 1;
+                var again = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
+                ulong a = 1, b = 1;
                 plan.HashInto(ref a); again.HashInto(ref b);
                 Assert.That(a, Is.EqualTo(b), "план — функция сида");
-                ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All).HashInto(ref game);
-                Assert.That(game, Is.Not.EqualTo(a), "план с новыми видами — другой план");
             }
-            TestContext.WriteLine("staged: second elite " + secondElite + "/1000, ambush " + ambushes + ", survival " + survivals);
+            TestContext.WriteLine("second elite " + secondElite + "/1000, ambush " + ambushes + ", survival " + survivals);
             var kinds = new List<string>();
             for (int k = 0; k < EnemyArchetypes.Count; k++)
             {
@@ -452,32 +353,32 @@ namespace Game.Tests
             Assert.That(kinds, Is.Empty, "виды реже " + MinKindSharePercent + "% забегов");
             Assert.That(secondElite, Is.InRange(250, 350));
             Assert.That(secondElite, Is.EqualTo(secondRolled), "выпавшая вторая элита всегда помещается");
-            foreach (var t in ForestEncounterTemplates.Release)
+            // Все шаблоны реально встают в планы.
+            foreach (var t in ForestEncounterTemplates.All)
                 Assert.That(used.ContainsKey(t.Key), Is.True, t.Key + " не встал ни в один план");
         }
 
         [Test]
         public void Plan_ShortLocationsStillGetValidTemplates()
         {
-            foreach (bool staged in new[] { false, true })
-                for (int arenas = 1; arenas <= 3; arenas++)
-                    for (ulong seed = 1; seed <= 50; seed++)
+            for (int arenas = 1; arenas <= 3; arenas++)
+                for (ulong seed = 1; seed <= 50; seed++)
+                {
+                    var boss = new bool[arenas + 1];
+                    boss[arenas] = true;
+                    var plan = ArenaRunPlan.Roll(seed, boss, ForestEncounterTemplates.All);
+                    for (int arena = 1; arena <= arenas; arena++)
                     {
-                        var boss = new bool[arenas + 1];
-                        boss[arenas] = true;
-                        var plan = ArenaRunPlan.Roll(seed, boss, ForestEncounterTemplates.Pool(staged), staged);
-                        for (int arena = 1; arena <= arenas; arena++)
-                        {
-                            Assert.That(plan.TemplateFor(arena).AllowsArena(arena), Is.True);
-                            Assert.That(plan.TemplateFor(arena).Type, Is.Not.EqualTo(ArenaEncounterType.Elite));
-                        }
-                        Assert.That(plan.TemplateFor(1), Is.SameAs(ForestEncounterTemplates.E01));
-                        // Бесконечная локация: дальше конца плана — допустимый шаблон восьмой арены.
-                        var extra = plan.TemplateFor(12);
-                        Assert.That(extra.AllowsArena(8), Is.True);
-                        Assert.That(System.Array.IndexOf(ForestEncounterTemplates.Pool(staged), extra), Is.GreaterThanOrEqualTo(0));
-                        Assert.That(plan.TemplateFor(12), Is.SameAs(extra));
+                        Assert.That(plan.TemplateFor(arena).AllowsArena(arena), Is.True);
+                        Assert.That(plan.TemplateFor(arena).Type, Is.Not.EqualTo(ArenaEncounterType.Elite));
                     }
+                    Assert.That(plan.TemplateFor(1), Is.SameAs(ForestEncounterTemplates.E01));
+                    // Бесконечная локация: дальше конца плана — допустимый шаблон восьмой арены.
+                    var extra = plan.TemplateFor(12);
+                    Assert.That(extra.AllowsArena(8), Is.True);
+                    Assert.That(System.Array.IndexOf(ForestEncounterTemplates.All, extra), Is.GreaterThanOrEqualTo(0));
+                    Assert.That(plan.TemplateFor(12), Is.SameAs(extra));
+                }
         }
 
         [Test]

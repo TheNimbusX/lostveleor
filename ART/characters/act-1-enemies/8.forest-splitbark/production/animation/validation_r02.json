@@ -1,0 +1,167 @@
+{
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\animation\\ForestSplitter_Baked_r02.blend",
+  "fps": 30,
+  "takes": {
+    "ForestSplitter_RollCurl": {
+      "range": [
+        0.0,
+        30.0
+      ],
+      "loop": false,
+      "frames": 30,
+      "bake_vs_authored_max_ankle_err_m": 8e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0002,
+      "shell_min_z_m": -0.0002,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.951,
+      "pass": true
+    },
+    "ForestSplitter_RollLoop": {
+      "range": [
+        0.0,
+        12.0
+      ],
+      "loop": true,
+      "frames": 12,
+      "bake_vs_authored_max_ankle_err_m": 3e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0045,
+      "shell_min_z_m": -0.0045,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.413,
+      "loop_seam": {
+        "bone_pos_mm": 0.0,
+        "bone_rot_deg": 0.0,
+        "skin_mm": 0.0
+      },
+      "pass": true
+    },
+    "ForestSplitter_RollUncurl": {
+      "range": [
+        0.0,
+        30.0
+      ],
+      "loop": false,
+      "frames": 30,
+      "bake_vs_authored_max_ankle_err_m": 5e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0056,
+      "shell_min_z_m": 0.0011,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.951,
+      "pass": true
+    },
+    "ForestSplitter_RollDizzy": {
+      "range": [
+        0.0,
+        45.0
+      ],
+      "loop": false,
+      "frames": 45,
+      "bake_vs_authored_max_ankle_err_m": 7e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.002,
+      "shell_min_z_m": 0.0007,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.951,
+      "pass": true
+    }
+  },
+  "handoffs": {
+    "Idle f0 -> RollCurl f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    },
+    "RollCurl f30 -> RollLoop f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    },
+    "RollLoop f0 -> RollUncurl f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    },
+    "RollLoop f0 -> RollDizzy f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    },
+    "RollUncurl f30 -> Idle f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    },
+    "RollDizzy f45 -> Idle f0": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+    }
+  },
+  "r01_identical": {
+    "ForestSplitter_Idle": {
+      "fcurves": 133,
+      "keys": 32053,
+      "identical": true
+    },
+    "ForestSplitter_Walk": {
+      "fcurves": 133,
+      "keys": 5453,
+      "identical": true
+    },
+    "ForestSplitter_Bite": {
+      "fcurves": 133,
+      "keys": 16093,
+      "identical": true
+    },
+    "ForestSplitter_Hit": {
+      "fcurves": 133,
+      "keys": 6517,
+      "identical": true
+    },
+    "ForestSplitter_Death": {
+      "fcurves": 133,
+      "keys": 6517,
+      "identical": true
+    },
+    "ForestSplitter_Pop": {
+      "fcurves": 133,
+      "keys": 5453,
+      "identical": true
+    }
+  },
+  "ball": {
+    "bounds_min_m": [
+      -0.776,
+      -0.522,
+      -0.004
+    ],
+    "bounds_max_m": [
+      0.774,
+      0.578,
+      1.09
+    ],
+    "size_m": {
+      "width_x": 1.55,
+      "length_y": 1.1,
+      "height_z": 1.094
+    },
+    "spin_pivot_blender": [
+      0.0,
+      0.028,
+      0.546
+    ],
+    "spin_pivot_unity_local": [
+      0.0,
+      0.546,
+      -0.028
+    ],
+    "spin_radius_m": 0.627,
+    "lift_to_clear_ground_m": 0.081,
+    "what": "bounds centre of the ball pose (RollLoop f0); spin_radius = farthest skin vertex from the lateral axis through that pivot over the whole loop. Spinning about the pivot at its own height clips the ground by up to lift_to_clear_ground_m."
+  },
+  "r01_all_identical": true,
+  "all_pass": true
+}

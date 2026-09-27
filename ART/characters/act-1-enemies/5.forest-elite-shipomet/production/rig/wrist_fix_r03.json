@@ -1,0 +1,17 @@
+{
+ "Left": {
+  "free_vertices": 448,
+  "fore_s": -0.1,
+  "root_s": 0.08,
+  "max_edge_share_jump_before": 0.959,
+  "max_edge_share_jump_after": 0.226
+ },
+ "Right": {
+  "free_vertices": 313,
+  "fore_s": -0.1,
+  "root_s": 0.08,
+  "max_edge_share_jump_before": 0.788,
+  "max_edge_share_jump_after": 0.205
+ },
+ "max_influences": 4
+}

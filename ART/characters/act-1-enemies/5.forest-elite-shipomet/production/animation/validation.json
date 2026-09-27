@@ -1,0 +1,178 @@
+{
+ "triangles": 23999,
+ "bones": 24,
+ "takes": {
+  "Idle": {
+   "frames": [
+    0,
+    60
+   ],
+   "min_z_body": -9.198572570312535e-07,
+   "min_z_all": -9.198572570312535e-07,
+   "bone_length_err_max": 1.5978874966515733e-06,
+   "hips_xy_max": 0.02539807848416613,
+   "armature_object_moved": false,
+   "min_z_body_frame": 29,
+   "loop_seam_vertex_m": 0.0,
+   "loop_velocity_jump_m_per_frame": 0.0013543316551180792,
+   "max_accel_m_per_frame2": {
+    "value": 0.0021768355482688815,
+    "frame": 10,
+    "bone": "LeftHand"
+   }
+  },
+  "Walk": {
+   "frames": [
+    0,
+    24
+   ],
+   "min_z_body": -3.360355833592621e-07,
+   "min_z_all": -3.360355833592621e-07,
+   "bone_length_err_max": 1.8811923101491601e-06,
+   "hips_xy_max": 0.041009981221505176,
+   "armature_object_moved": false,
+   "min_z_body_frame": 15,
+   "loop_seam_vertex_m": 0.0,
+   "loop_velocity_jump_m_per_frame": 0.0635179539411579,
+   "max_accel_m_per_frame2": {
+    "value": 0.10234548731808983,
+    "frame": 2,
+    "bone": "RightToeBase"
+   },
+   "planted_claw_slip_per_frame_m": 0.001324240582258748,
+   "planted_claw_slip_per_stance_m_est": 0.017797793425557575,
+   "planted_claw_height_max_m": 0.007060196250677109,
+   "speed_mps": 2.2,
+   "cycle_m": 1.7600000000000002
+  },
+  "LineCast": {
+   "frames": [
+    0,
+    75
+   ],
+   "min_z_body": -6.370914888975676e-07,
+   "min_z_all": -0.10000073909759521,
+   "bone_length_err_max": 3.23920401945621e-06,
+   "hips_xy_max": 0.12666889150964167,
+   "armature_object_moved": false,
+   "min_z_body_frame": 7,
+   "spike_tip_first_ground_frame": 24,
+   "spike_tip_z_22_26": {
+    "22": [
+     2.38,
+     2.35
+    ],
+    "23": [
+     1.15,
+     1.12
+    ],
+    "24": [
+     -0.0,
+     0.0
+    ],
+    "25": [
+     -0.075,
+     -0.075
+    ],
+    "26": [
+     -0.1,
+     -0.1
+    ]
+   },
+   "spike_tips_buried_24_60_max_z": 2.384185791015625e-07,
+   "spike_tip_drift_hold_30_60_m": 0.0
+  },
+  "Burst": {
+   "frames": [
+    0,
+    36
+   ],
+   "min_z_body": -8.285026638077397e-07,
+   "min_z_all": -8.285026638077397e-07,
+   "bone_length_err_max": 3.4082890458808635e-06,
+   "hips_xy_max": 0.057489138830421865,
+   "armature_object_moved": false,
+   "min_z_body_frame": 34,
+   "tip_spread_m": {
+    "f18": 0.2083265781402588,
+    "f21": 2.680670738220215,
+    "max_frame": 22,
+    "max": 2.6806719303131104
+   }
+  },
+  "Shot": {
+   "frames": [
+    0,
+    33
+   ],
+   "min_z_body": -5.839513619321224e-07,
+   "min_z_all": -5.839513619321224e-07,
+   "bone_length_err_max": 1.689413601457801e-06,
+   "hips_xy_max": 0.06726811280617791,
+   "armature_object_moved": false,
+   "min_z_body_frame": 30,
+   "muzzle": {
+    "bone": "RightHand",
+    "bone_local_offset_blender": [
+     0.0,
+     0.4995,
+     0.0
+    ],
+    "note": "tail of RightHand = tip of the right arm-spike; bone local +Y runs wrist->tip",
+    "world_blender_at_release": [
+     -0.12,
+     -1.42,
+     1.9
+    ],
+    "world_unity_at_release": [
+     0.12,
+     1.9,
+     1.42
+    ],
+    "spike_dir_blender": [
+     -0.0,
+     -0.9982,
+     -0.0599
+    ],
+    "spike_dir_unity": [
+     0.0,
+     -0.0599,
+     0.9982
+    ],
+    "tip_speed_into_release_mps": 16.04
+   }
+  },
+  "Hit": {
+   "frames": [
+    0,
+    12
+   ],
+   "min_z_body": -5.363103809941094e-07,
+   "min_z_all": -5.363103809941094e-07,
+   "bone_length_err_max": 1.4691178229497837e-06,
+   "hips_xy_max": 0.06726811298616206,
+   "armature_object_moved": false,
+   "min_z_body_frame": 5
+  },
+  "Death": {
+   "frames": [
+    0,
+    48
+   ],
+   "min_z_body": -0.000446319580078125,
+   "min_z_all": -0.02164006233215332,
+   "bone_length_err_max": 2.0502630706520364e-06,
+   "hips_xy_max": 0.3466771240603837,
+   "armature_object_moved": false,
+   "min_z_body_frame": 30,
+   "final_min_z": -0.0001671314239501953,
+   "final_max_z": 0.7283205986022949,
+   "final_body_low_z": {
+    "Hips": 0.14282822608947754,
+    "Spine01": 0.11622583866119385,
+    "Head": 0.07788729667663574
+   },
+   "still_44_48_max_move_m": 0.0
+  }
+ }
+}

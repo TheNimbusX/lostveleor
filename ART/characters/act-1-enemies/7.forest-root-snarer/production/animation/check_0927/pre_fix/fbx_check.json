@@ -1,0 +1,125 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\ForestRootSnarer.fbx",
+ "size_mb": 2.22,
+ "anim_stacks_in_fbx": [
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Walk",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Mend"
+ ],
+ "imported_bones": 21,
+ "imported_bone_names": [
+  "root",
+  "pelvis",
+  "spine_01",
+  "spine_02",
+  "neck",
+  "head",
+  "jaw",
+  "L_clavicle",
+  "L_arm_upper",
+  "L_arm_lower",
+  "L_hand",
+  "R_clavicle",
+  "R_arm_upper",
+  "R_arm_lower",
+  "R_hand",
+  "L_leg_upper",
+  "L_leg_lower",
+  "L_foot",
+  "R_leg_upper",
+  "R_leg_lower",
+  "R_foot"
+ ],
+ "triangles": 24000,
+ "vertices": 11996,
+ "materials": 1,
+ "images": [
+  "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\textures\\T_ForestRootSnarer_Color.png",
+  "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\textures\\T_ForestRootSnarer_NormalGL.png"
+ ],
+ "imported_actions": [
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Death",
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Hit",
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Idle",
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Mend",
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Slam",
+  "ARM_ForestRootSnarer.001|ForestRootSnarer_Walk"
+ ],
+ "takes": {
+  "ForestRootSnarer_Death": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Death",
+   "frame_range": [
+    0.0,
+    45.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.12
+  },
+  "ForestRootSnarer_Hit": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Hit",
+   "frame_range": [
+    0.0,
+    12.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.054
+  },
+  "ForestRootSnarer_Idle": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Idle",
+   "frame_range": [
+    0.0,
+    60.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.02
+  },
+  "ForestRootSnarer_Mend": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Mend",
+   "frame_range": [
+    0.0,
+    50.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.0545
+  },
+  "ForestRootSnarer_Slam": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Slam",
+   "frame_range": [
+    0.0,
+    72.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.1055
+  },
+  "ForestRootSnarer_Walk": {
+   "imported_action": "ARM_ForestRootSnarer.001|ForestRootSnarer_Walk",
+   "frame_range": [
+    0.0,
+    16.0
+   ],
+   "max_bone_head_diff_m": 0.0,
+   "max_vertex_diff_m": 0.0,
+   "root_xy_travel_m": 0.0,
+   "pelvis_xy_range_m": 0.0557
+  }
+ },
+ "rest_facing_head_minus_pelvis": [
+  0.0,
+  -0.89,
+  0.04
+ ],
+ "rest_L_clavicle_x": 0.14
+}

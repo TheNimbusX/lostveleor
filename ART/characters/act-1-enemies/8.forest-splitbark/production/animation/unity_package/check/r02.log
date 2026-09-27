@@ -1,0 +1,16 @@
+FBX version: 7400
+FBX version: 7400
+R01 ForestSplitter_Idle {'samples': 241, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+R01 ForestSplitter_Walk {'samples': 41, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+R01 ForestSplitter_Bite {'samples': 121, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+R01 ForestSplitter_Hit {'samples': 49, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+R01 ForestSplitter_Death {'samples': 49, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+R01 ForestSplitter_Pop {'samples': 41, 'max_bone_matrix_diff': 0.0, 'max_skin_diff_m': 0.0, 'identical': True}
+NEW ForestSplitter_RollCurl {"frames": 30, "root": {"root_head_start": [0.0, 0.0, 0.0], "root_travel_xy_mm": 0.0, "root_travel_z_mm": 0.0, "root_rot_deg": 0.0}, "scale": {"max_bone_scale_dev": 1e-06, "bone": "leg_front_R_lower"}, "ground": {"skin_min_z_mm": -0.19, "at_frame": 29.25, "verts_below_minus_1cm": 0, "end_min_z_mm": 2.39}, "stretch": {"grow_max_mm": 206.7, "grow_max_at": 28.0, "grow_max_pair": ["leg_front_R_upper", "shell_R"], "edges_grow_over_5cm": 137}, "rigid_edges_max_change_mm": 0.0003, "finite": true, "pass": true}
+NEW ForestSplitter_RollLoop {"frames": 12, "root": {"root_head_start": [0.0, 0.0, 0.0], "root_travel_xy_mm": 0.0, "root_travel_z_mm": 0.0, "root_rot_deg": 0.0}, "scale": {"max_bone_scale_dev": 1e-06, "bone": "leg_front_L_lower"}, "ground": {"skin_min_z_mm": -4.48, "at_frame": 3.0, "verts_below_minus_1cm": 0, "end_min_z_mm": 2.39}, "stretch": {"grow_max_mm": 178.9, "grow_max_at": 8.0, "grow_max_pair": ["leg_front_R_upper", "shell_R"], "edges_grow_over_5cm": 121}, "rigid_edges_max_change_mm": 0.0002, "finite": true, "loop_seam": {"bone_pos_mm": 0.0, "bone_rot_deg": 0.0, "skin_mm": 0.0}, "pass": true}
+NEW ForestSplitter_RollUncurl {"frames": 30, "root": {"root_head_start": [0.0, 0.0, 0.0], "root_travel_xy_mm": 0.0, "root_travel_z_mm": 0.0, "root_rot_deg": 0.0}, "scale": {"max_bone_scale_dev": 1e-06, "bone": "leg_front_L_lower"}, "ground": {"skin_min_z_mm": -5.56, "at_frame": 13.0, "verts_below_minus_1cm": 0, "end_min_z_mm": 0.0}, "stretch": {"grow_max_mm": 193.5, "grow_max_at": 0.75, "grow_max_pair": ["leg_front_R_upper", "shell_R"], "edges_grow_over_5cm": 146}, "rigid_edges_max_change_mm": 0.0003, "finite": true, "pass": true}
+NEW ForestSplitter_RollDizzy {"frames": 45, "root": {"root_head_start": [0.0, 0.0, 0.0], "root_travel_xy_mm": 0.0, "root_travel_z_mm": 0.0, "root_rot_deg": 0.0}, "scale": {"max_bone_scale_dev": 1e-06, "bone": "leg_front_R_lower"}, "ground": {"skin_min_z_mm": -2.0, "at_frame": 13.0, "verts_below_minus_1cm": 0, "end_min_z_mm": 0.0}, "stretch": {"grow_max_mm": 177.2, "grow_max_at": 0.0, "grow_max_pair": ["leg_front_R_upper", "shell_R"], "edges_grow_over_5cm": 168}, "rigid_edges_max_change_mm": 0.0003, "finite": true, "pass": true}
+CHECK_R02 True
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

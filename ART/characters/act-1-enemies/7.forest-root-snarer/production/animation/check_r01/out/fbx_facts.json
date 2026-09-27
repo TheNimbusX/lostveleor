@@ -1,0 +1,898 @@
+{
+ "fbx_version": 7400,
+ "time_mode": [
+  6
+ ],
+ "custom_frame_rate": [
+  30.0
+ ],
+ "unit_scale": [
+  1.0
+ ],
+ "axes": {
+  "UpAxis": [
+   1
+  ],
+  "UpAxisSign": [
+   1
+  ],
+  "FrontAxis": [
+   2
+  ],
+  "FrontAxisSign": [
+   1
+  ],
+  "CoordAxis": [
+   0
+  ],
+  "CoordAxisSign": [
+   1
+  ]
+ },
+ "models": {
+  "ARM_ForestRootSnarer": "Null",
+  "SM_ForestRootSnarer_LOD0": "Mesh",
+  "root": "LimbNode",
+  "pelvis": "LimbNode",
+  "spine_01": "LimbNode",
+  "spine_02": "LimbNode",
+  "neck": "LimbNode",
+  "head": "LimbNode",
+  "jaw": "LimbNode",
+  "L_clavicle": "LimbNode",
+  "L_arm_upper": "LimbNode",
+  "L_arm_lower": "LimbNode",
+  "L_hand": "LimbNode",
+  "R_clavicle": "LimbNode",
+  "R_arm_upper": "LimbNode",
+  "R_arm_lower": "LimbNode",
+  "R_hand": "LimbNode",
+  "L_leg_upper": "LimbNode",
+  "L_leg_lower": "LimbNode",
+  "L_foot": "LimbNode",
+  "R_leg_upper": "LimbNode",
+  "R_leg_lower": "LimbNode",
+  "R_foot": "LimbNode"
+ },
+ "anim_stacks": {
+  "ForestRootSnarer_Idle": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 60.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 60.0,
+   "keys": 12078,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  },
+  "ForestRootSnarer_Walk": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 16.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 16.0,
+   "keys": 3366,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  },
+  "ForestRootSnarer_Slam": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 72.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 72.0,
+   "keys": 14454,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  },
+  "ForestRootSnarer_Hit": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 12.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 12.0,
+   "keys": 2574,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  },
+  "ForestRootSnarer_Death": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 45.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 45.0,
+   "keys": 9108,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  },
+  "ForestRootSnarer_Mend": {
+   "local_start_frame": 0.0,
+   "local_stop_frame": 50.0,
+   "key_first_frame": 0.0,
+   "key_last_frame": 50.0,
+   "keys": 10098,
+   "keys_off_integer_frames": 0,
+   "bone_scale_key_range": [
+    1.0,
+    1.0
+   ],
+   "animated_models": 22,
+   "root_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      90.000008,
+      90.000008,
+      90.000008,
+      90.000008
+     ],
+     "d|Y": [
+      -0.0,
+      -0.0,
+      -0.0,
+      -0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Y": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "d|Z": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ]
+    }
+   },
+   "ARM_ForestRootSnarer_channels": {
+    "Lcl Translation": {
+     "d|X": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Rotation": {
+     "d|X": [
+      -90.000008,
+      -90.000008,
+      -90.000008,
+      -90.000008
+     ],
+     "d|Y": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "d|Z": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "Lcl Scaling": {
+     "d|X": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Y": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ],
+     "d|Z": [
+      100.0,
+      100.0,
+      100.0,
+      100.0
+     ]
+    }
+   }
+  }
+ },
+ "geometries": [
+  {
+   "name": "SM_ForestRootSnarer_LOD0",
+   "vertices": 11996,
+   "triangles": 24000,
+   "clusters": 18,
+   "max_influences": 4,
+   "influence_histogram": {
+    "1": 2956,
+    "2": 2028,
+    "3": 2537,
+    "4": 4475
+   },
+   "weight_sum_min": 1.0,
+   "weight_sum_max": 1.0
+  }
+ ]
+}

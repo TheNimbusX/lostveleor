@@ -247,6 +247,8 @@ namespace Game.Sim
             for (int i = 1; i < Entities.Count; i++)
                 if (Entities.Alive[i] && Entities.Side[i] != Entities.Side[PlayerId]) StunByTalent(i, HourglassTicks);
             DelayForestFruit(HourglassTicks);
+            // Выпущенный шип Шипомёта оглушение не отзывает — он стоит в воздухе сам.
+            DelayThornShots(HourglassTicks);
         }
 
         /// <summary>Урон по врагу в остановленном времени не проходит, а копится до конца остановки.</summary>

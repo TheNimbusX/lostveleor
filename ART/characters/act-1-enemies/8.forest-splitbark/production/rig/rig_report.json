@@ -1,0 +1,958 @@
+{
+  "mob": "Расщепень / ForestSplitter",
+  "step": "1 - game rig",
+  "rig_version": "r01",
+  "files": {
+    "master_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.blend",
+    "unity_fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.fbx",
+    "fbx_textures": [
+      "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_Color.png",
+      "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_NormalGL.png",
+      "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_ORM.png"
+    ],
+    "scripts": [
+      "rig_spec.py",
+      "segment.py",
+      "proxy_heat.py",
+      "weights.py",
+      "ik_controls.py",
+      "build_rig.py",
+      "pose_lib.py",
+      "render_util.py",
+      "deform_test.py",
+      "sheet.py",
+      "export_rig.py",
+      "verify_export.py",
+      "report_rig.py"
+    ],
+    "rebuild": "blender -b -P build_rig.py -- ../model/ForestSplitter_24k_candidate.blend <rig_dir>; then export_rig.py, verify_export.py, deform_test.py, report_rig.py on the rig blend"
+  },
+  "model": {
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.blend",
+    "height_m": 1.3,
+    "front_axis_blender": "-Y",
+    "up": "+Z",
+    "origin": "entity origin on the ground (0,0,0)",
+    "triangle_budget": 25000,
+    "triangles": 24000,
+    "vertices": 11910,
+    "boundary_edges": 424,
+    "islands_note": "one welded island (shells fused to body)",
+    "materials": [
+      "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80"
+    ],
+    "images": [
+      {
+        "name": "Color_132f3063-e8c3-4b27-b687-5ff2fa436f80",
+        "packed": true,
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "default.jpeg",
+        "packed": false,
+        "size": [
+          680,
+          680
+        ]
+      },
+      {
+        "name": "NormalGL_132f3063-e8c3-4b27-b687-5ff2fa436f80",
+        "packed": true,
+        "size": [
+          2048,
+          2048
+        ]
+      },
+      {
+        "name": "ORM_132f3063-e8c3-4b27-b687-5ff2fa436f80",
+        "packed": true,
+        "size": [
+          2048,
+          2048
+        ]
+      }
+    ]
+  },
+  "objects": [
+    "ARM_ForestSplitter",
+    "SM_ForestSplitter_LOD0"
+  ],
+  "scene_fps": 30,
+  "bones": [
+    {
+      "name": "root",
+      "parent": null,
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tail": [
+        0.0,
+        0.0,
+        0.15
+      ]
+    },
+    {
+      "name": "body",
+      "parent": "root",
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.0,
+        0.3,
+        0.6
+      ],
+      "tail": [
+        0.0,
+        0.05,
+        0.64
+      ]
+    },
+    {
+      "name": "spine",
+      "parent": "body",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.0,
+        0.05,
+        0.64
+      ],
+      "tail": [
+        0.0,
+        -0.22,
+        0.64
+      ]
+    },
+    {
+      "name": "neck",
+      "parent": "spine",
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.0,
+        -0.22,
+        0.64
+      ],
+      "tail": [
+        0.0,
+        -0.38,
+        0.64
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.0,
+        -0.38,
+        0.64
+      ],
+      "tail": [
+        0.0,
+        -0.6,
+        0.5
+      ]
+    },
+    {
+      "name": "shell_L",
+      "parent": "spine",
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.4,
+        -0.05,
+        0.47
+      ],
+      "tail": [
+        0.3,
+        -0.05,
+        1.02
+      ]
+    },
+    {
+      "name": "shell_R",
+      "parent": "spine",
+      "deform": true,
+      "connected": false,
+      "head": [
+        -0.4,
+        -0.05,
+        0.47
+      ],
+      "tail": [
+        -0.3,
+        -0.05,
+        1.02
+      ]
+    },
+    {
+      "name": "leg_front_L_upper",
+      "parent": "spine",
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.29,
+        -0.24,
+        0.52
+      ],
+      "tail": [
+        0.44,
+        -0.25,
+        0.31
+      ]
+    },
+    {
+      "name": "leg_front_L_lower",
+      "parent": "leg_front_L_upper",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.44,
+        -0.25,
+        0.31
+      ],
+      "tail": [
+        0.455,
+        -0.3,
+        0.12
+      ]
+    },
+    {
+      "name": "leg_front_L_foot",
+      "parent": "leg_front_L_lower",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.455,
+        -0.3,
+        0.12
+      ],
+      "tail": [
+        0.46,
+        -0.45,
+        0.035
+      ]
+    },
+    {
+      "name": "leg_front_R_upper",
+      "parent": "spine",
+      "deform": true,
+      "connected": false,
+      "head": [
+        -0.29,
+        -0.24,
+        0.52
+      ],
+      "tail": [
+        -0.44,
+        -0.25,
+        0.31
+      ]
+    },
+    {
+      "name": "leg_front_R_lower",
+      "parent": "leg_front_R_upper",
+      "deform": true,
+      "connected": true,
+      "head": [
+        -0.44,
+        -0.25,
+        0.31
+      ],
+      "tail": [
+        -0.455,
+        -0.3,
+        0.12
+      ]
+    },
+    {
+      "name": "leg_front_R_foot",
+      "parent": "leg_front_R_lower",
+      "deform": true,
+      "connected": true,
+      "head": [
+        -0.455,
+        -0.3,
+        0.12
+      ],
+      "tail": [
+        -0.46,
+        -0.45,
+        0.035
+      ]
+    },
+    {
+      "name": "leg_hind_L_upper",
+      "parent": "body",
+      "deform": true,
+      "connected": false,
+      "head": [
+        0.22,
+        0.33,
+        0.58
+      ],
+      "tail": [
+        0.33,
+        0.45,
+        0.37
+      ]
+    },
+    {
+      "name": "leg_hind_L_lower",
+      "parent": "leg_hind_L_upper",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.33,
+        0.45,
+        0.37
+      ],
+      "tail": [
+        0.42,
+        0.49,
+        0.12
+      ]
+    },
+    {
+      "name": "leg_hind_L_foot",
+      "parent": "leg_hind_L_lower",
+      "deform": true,
+      "connected": true,
+      "head": [
+        0.42,
+        0.49,
+        0.12
+      ],
+      "tail": [
+        0.43,
+        0.36,
+        0.035
+      ]
+    },
+    {
+      "name": "leg_hind_R_upper",
+      "parent": "body",
+      "deform": true,
+      "connected": false,
+      "head": [
+        -0.22,
+        0.33,
+        0.58
+      ],
+      "tail": [
+        -0.33,
+        0.45,
+        0.37
+      ]
+    },
+    {
+      "name": "leg_hind_R_lower",
+      "parent": "leg_hind_R_upper",
+      "deform": true,
+      "connected": true,
+      "head": [
+        -0.33,
+        0.45,
+        0.37
+      ],
+      "tail": [
+        -0.42,
+        0.49,
+        0.12
+      ]
+    },
+    {
+      "name": "leg_hind_R_foot",
+      "parent": "leg_hind_R_lower",
+      "deform": true,
+      "connected": true,
+      "head": [
+        -0.42,
+        0.49,
+        0.12
+      ],
+      "tail": [
+        -0.43,
+        0.36,
+        0.035
+      ]
+    },
+    {
+      "name": "CTRL_foot_front_L",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        0.455,
+        -0.3,
+        0.12
+      ],
+      "tail": [
+        0.46,
+        -0.45,
+        0.035
+      ]
+    },
+    {
+      "name": "CTRL_pole_front_L",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        0.833,
+        -0.077,
+        0.446
+      ],
+      "tail": [
+        0.833,
+        -0.077,
+        0.546
+      ]
+    },
+    {
+      "name": "CTRL_foot_front_R",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        -0.455,
+        -0.3,
+        0.12
+      ],
+      "tail": [
+        -0.46,
+        -0.45,
+        0.035
+      ]
+    },
+    {
+      "name": "CTRL_pole_front_R",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        -0.833,
+        -0.077,
+        0.446
+      ],
+      "tail": [
+        -0.833,
+        -0.077,
+        0.546
+      ]
+    },
+    {
+      "name": "CTRL_foot_hind_L",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        0.42,
+        0.49,
+        0.12
+      ],
+      "tail": [
+        0.43,
+        0.36,
+        0.035
+      ]
+    },
+    {
+      "name": "CTRL_pole_hind_L",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        0.434,
+        0.848,
+        0.553
+      ],
+      "tail": [
+        0.434,
+        0.848,
+        0.653
+      ]
+    },
+    {
+      "name": "CTRL_foot_hind_R",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        -0.42,
+        0.49,
+        0.12
+      ],
+      "tail": [
+        -0.43,
+        0.36,
+        0.035
+      ]
+    },
+    {
+      "name": "CTRL_pole_hind_R",
+      "parent": "root",
+      "deform": false,
+      "connected": false,
+      "head": [
+        -0.434,
+        0.848,
+        0.553
+      ],
+      "tail": [
+        -0.434,
+        0.848,
+        0.653
+      ]
+    }
+  ],
+  "deform_bone_count": 19,
+  "control_bones": [
+    "CTRL_foot_front_L",
+    "CTRL_pole_front_L",
+    "CTRL_foot_front_R",
+    "CTRL_pole_front_R",
+    "CTRL_foot_hind_L",
+    "CTRL_pole_hind_L",
+    "CTRL_foot_hind_R",
+    "CTRL_pole_hind_R"
+  ],
+  "constraints_default_influence_0": {
+    "leg_front_L_lower": [
+      {
+        "type": "IK",
+        "name": "IK_leg_front_L",
+        "influence": 0.0
+      }
+    ],
+    "leg_front_L_foot": [
+      {
+        "type": "COPY_ROTATION",
+        "name": "FootRot_leg_front_L",
+        "influence": 0.0
+      }
+    ],
+    "leg_front_R_lower": [
+      {
+        "type": "IK",
+        "name": "IK_leg_front_R",
+        "influence": 0.0
+      }
+    ],
+    "leg_front_R_foot": [
+      {
+        "type": "COPY_ROTATION",
+        "name": "FootRot_leg_front_R",
+        "influence": 0.0
+      }
+    ],
+    "leg_hind_L_lower": [
+      {
+        "type": "IK",
+        "name": "IK_leg_hind_L",
+        "influence": 0.0
+      }
+    ],
+    "leg_hind_L_foot": [
+      {
+        "type": "COPY_ROTATION",
+        "name": "FootRot_leg_hind_L",
+        "influence": 0.0
+      }
+    ],
+    "leg_hind_R_lower": [
+      {
+        "type": "IK",
+        "name": "IK_leg_hind_R",
+        "influence": 0.0
+      }
+    ],
+    "leg_hind_R_foot": [
+      {
+        "type": "COPY_ROTATION",
+        "name": "FootRot_leg_hind_R",
+        "influence": 0.0
+      }
+    ]
+  },
+  "conventions": {
+    "side": "_L = +X = character left, _R = -X",
+    "shell_open": "shell_L/shell_R: positive rotation about the bone's local X opens the half (top outward); pivot = bone head on the belly-pocket crease (|x|=0.40, y=-0.05, z=0.47); parented to spine",
+    "shell_open_armature_space": "shell_L about +Y world, shell_R about -Y world",
+    "neck": "not connected: can be translated forward for a head thrust out of the shell gap",
+    "legs": "leg_<front|hind>_<L|R>_<upper|lower|foot>; FK default; IK_leg_* + FootRot_leg_* (influence 0) with CTRL_foot_* (ankle, foot frame) and CTRL_pole_* for planted feet",
+    "fbx": "deform bones only, no leaf bones, axis_forward -Z / up Y (Blender -Y front -> Unity +Z), no animation",
+    "children": "same rig at uniform scale 0.6 (scale the Unity root); weights are scale-independent"
+  },
+  "weights": {
+    "method": [
+      "bone heat on a watertight voxel proxy (12 mm, largest component) transferred back (raw mesh and plain remesh both fail the heat solve)",
+      "shell/body segmentation: multi-source Dijkstra with concave-crease cost (segment.py)",
+      "shell verts 100% rigid to shell_L/shell_R",
+      "body verts within 0.25 m of a crease: harmonic shell influence (spreads the opening stretch over the V floor and belly pockets); neck/head excluded",
+      "max 4 influences, normalized"
+    ],
+    "max_influences": 4,
+    "unweighted_vertices": 0,
+    "max_weight_sum_error": 0.0,
+    "build": {
+      "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.blend",
+      "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.blend",
+      "bones": [
+        "root",
+        "body",
+        "spine",
+        "neck",
+        "head",
+        "shell_L",
+        "shell_R",
+        "leg_front_L_upper",
+        "leg_front_L_lower",
+        "leg_front_L_foot",
+        "leg_front_R_upper",
+        "leg_front_R_lower",
+        "leg_front_R_foot",
+        "leg_hind_L_upper",
+        "leg_hind_L_lower",
+        "leg_hind_L_foot",
+        "leg_hind_R_upper",
+        "leg_hind_R_lower",
+        "leg_hind_R_foot"
+      ],
+      "heat_unweighted_vertices": 0,
+      "heat_proxy": {
+        "proxy_faces": 76480,
+        "proxy_components": 69,
+        "proxy_dropped_vertices": 690,
+        "proxy_unweighted_vertices": 0,
+        "voxel_m": 0.012
+      },
+      "weights": {
+        "labels": {
+          "body": 5018,
+          "shell_L": 3667,
+          "shell_R": 3225
+        },
+        "band_verts": {
+          "shell_L": 1893,
+          "shell_R": 1845
+        },
+        "band": {
+          "free_verts": 2790,
+          "iterations": {
+            "shell_L": 594,
+            "shell_R": 589
+          },
+          "radius_m": 0.25
+        }
+      },
+      "ik": {
+        "IK_leg_front_L": {
+          "pole_angle_deg": -155.0,
+          "rest_joint_drift_m_if_enabled": 0.0012
+        },
+        "IK_leg_front_R": {
+          "pole_angle_deg": -25.0,
+          "rest_joint_drift_m_if_enabled": 0.0012
+        },
+        "IK_leg_hind_L": {
+          "pole_angle_deg": -115.0,
+          "rest_joint_drift_m_if_enabled": 0.00117
+        },
+        "IK_leg_hind_R": {
+          "pole_angle_deg": -65.0,
+          "rest_joint_drift_m_if_enabled": 0.00117
+        }
+      }
+    }
+  },
+  "deformation_test": {
+    "requested_pose": "combined = shells 25 deg open, neck thrust 0.12 m + head pitch up 12 deg, front-left paw lifted 0.16 m / forward 0.10 m via IK+FootRot",
+    "renders": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\deform_test",
+    "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\deform_test\\sheet_requested.png",
+    "child_renders": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\deform_test_child",
+    "metrics_adult": {
+      "rest": {
+        "shell_edge_ratio_range": [
+          1.0,
+          1.0
+        ],
+        "body_edge_ratio_p01_p99": [
+          1.0,
+          1.0
+        ],
+        "body_edge_ratio_min_max": [
+          1.0,
+          1.0
+        ],
+        "edges_stretched_over_2x": 0,
+        "edges_squashed_under_0.5x": 0,
+        "min_z_m": 0.0
+      },
+      "combined": {
+        "shell_edge_ratio_range": [
+          0.9995,
+          1.0009
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.671,
+          3.296
+        ],
+        "body_edge_ratio_min_max": [
+          0.207,
+          25.566
+        ],
+        "edges_stretched_over_2x": 407,
+        "edges_squashed_under_0.5x": 34,
+        "min_z_m": 0.0056
+      },
+      "shells_15": {
+        "shell_edge_ratio_range": [
+          0.9996,
+          1.0009
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.843,
+          2.164
+        ],
+        "body_edge_ratio_min_max": [
+          0.287,
+          12.951
+        ],
+        "edges_stretched_over_2x": 174,
+        "edges_squashed_under_0.5x": 1,
+        "min_z_m": 0.0
+      },
+      "shells_25": {
+        "shell_edge_ratio_range": [
+          0.9995,
+          1.0009
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.752,
+          3.131
+        ],
+        "body_edge_ratio_min_max": [
+          0.32,
+          21.981
+        ],
+        "edges_stretched_over_2x": 382,
+        "edges_squashed_under_0.5x": 5,
+        "min_z_m": 0.0
+      },
+      "shells_45": {
+        "shell_edge_ratio_range": [
+          0.9994,
+          1.0008
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.622,
+          5.071
+        ],
+        "body_edge_ratio_min_max": [
+          0.128,
+          39.48
+        ],
+        "edges_stretched_over_2x": 925,
+        "edges_squashed_under_0.5x": 63,
+        "min_z_m": 0.0
+      },
+      "shells_clap": {
+        "shell_edge_ratio_range": [
+          0.9997,
+          1.0007
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.78,
+          1.102
+        ],
+        "body_edge_ratio_min_max": [
+          0.138,
+          6.308
+        ],
+        "edges_stretched_over_2x": 38,
+        "edges_squashed_under_0.5x": 18,
+        "min_z_m": 0.0
+      },
+      "head_lunge": {
+        "shell_edge_ratio_range": [
+          0.9993,
+          1.0002
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.897,
+          1.839
+        ],
+        "body_edge_ratio_min_max": [
+          0.24,
+          17.655
+        ],
+        "edges_stretched_over_2x": 139,
+        "edges_squashed_under_0.5x": 1,
+        "min_z_m": -0.0539
+      },
+      "ik_steps": {
+        "shell_edge_ratio_range": [
+          1.0,
+          1.0
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.74,
+          1.383
+        ],
+        "body_edge_ratio_min_max": [
+          0.085,
+          8.087
+        ],
+        "edges_stretched_over_2x": 17,
+        "edges_squashed_under_0.5x": 18,
+        "min_z_m": 0.0085
+      },
+      "walk_twist": {
+        "shell_edge_ratio_range": [
+          0.9993,
+          1.0006
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.701,
+          1.271
+        ],
+        "body_edge_ratio_min_max": [
+          0.246,
+          3.879
+        ],
+        "edges_stretched_over_2x": 9,
+        "edges_squashed_under_0.5x": 20,
+        "min_z_m": -0.0422
+      },
+      "hind_lift": {
+        "shell_edge_ratio_range": [
+          0.9994,
+          1.0008
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.793,
+          1.28
+        ],
+        "body_edge_ratio_min_max": [
+          0.333,
+          4.865
+        ],
+        "edges_stretched_over_2x": 8,
+        "edges_squashed_under_0.5x": 5,
+        "min_z_m": -0.0363
+      }
+    },
+    "metrics_child_0.6": {
+      "rest": {
+        "shell_edge_ratio_range": [
+          1.0,
+          1.0
+        ],
+        "body_edge_ratio_p01_p99": [
+          1.0,
+          1.0
+        ],
+        "body_edge_ratio_min_max": [
+          1.0,
+          1.0
+        ],
+        "edges_stretched_over_2x": 0,
+        "edges_squashed_under_0.5x": 0,
+        "min_z_m": 0.0
+      },
+      "combined": {
+        "shell_edge_ratio_range": [
+          0.9995,
+          1.001
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.671,
+          3.296
+        ],
+        "body_edge_ratio_min_max": [
+          0.207,
+          25.566
+        ],
+        "edges_stretched_over_2x": 407,
+        "edges_squashed_under_0.5x": 34,
+        "min_z_m": 0.0056
+      },
+      "shells_15": {
+        "shell_edge_ratio_range": [
+          0.9992,
+          1.0006
+        ],
+        "body_edge_ratio_p01_p99": [
+          0.843,
+          2.164
+        ],
+        "body_edge_ratio_min_max": [
+          0.287,
+          12.951
+        ],
+        "edges_stretched_over_2x": 174,
+        "edges_squashed_under_0.5x": 1,
+        "min_z_m": 0.0
+      }
+    }
+  },
+  "roundtrip_fbx": {
+    "fbx_bytes": 1126204,
+    "objects": {
+      "armatures": 1,
+      "meshes": 1,
+      "mesh_name": "SM_ForestSplitter_LOD0",
+      "armature_name": "ARM_ForestSplitter"
+    },
+    "bones_fbx": 19,
+    "bones_master_deform": 19,
+    "bone_names_match": true,
+    "max_bone_head_error_m": 0.0,
+    "triangles_fbx": 24000,
+    "triangles_master": 24000,
+    "vertex_order_preserved": true,
+    "bounds_min": [
+      -0.783,
+      -0.6094,
+      0.0
+    ],
+    "bounds_max": [
+      0.783,
+      0.6094,
+      1.3
+    ],
+    "max_influences": 4,
+    "unweighted_vertices": 0,
+    "max_weight_sum_error": 0.0,
+    "max_weight_diff_vs_master": 0.0,
+    "shell_L_20deg_max_vertex_diff_m": 0.0,
+    "shell_L_20deg_moved_vertices": 5437
+  },
+  "checked_in_renders": [
+    "shell halves stay rigid in every pose (shell edge length ratio 0.9995-1.0009)",
+    "shells 15 deg: gap reads as the creature's green back between the halves (best range for idle/bite)",
+    "shells 25 deg (requested): tops move ~0.36 m out each; V floor stretches ~2.5-3x (p99 edge 3.1x), dark wedges between shell front rims and head sides; still reads as an open pod from the game camera",
+    "head thrust: neck slides forward out of the gap, beak and eyes undistorted",
+    "front-left paw lift (IK+FootRot): paw stays level, knee folds under the shell rim, no shell pull",
+    "hind leg IK step, spine/body twist, shell clap -6 deg: clean",
+    "child at 0.6 uniform scale: identical deformation",
+    "FBX round trip: 19 bones, 24000 tris, weights and posed shell identical to master"
+  ],
+  "open_problems": [
+    "Shells are fused to the body (one welded island, no body surface under them): any opening stretches the back strip; >25 deg is unusable and full detachment (death burst / shells flying off) needs the halves split off + a core cap under them (model change, owner OK) or full VFX cover.",
+    "No jaw bone: the beak is a solid wedge without mouth line or cavity; a probe jaw only lengthened the beak. A readable bite gape needs a mouth cut + interior in the model; until then bite = head lunge + shells.",
+    "Shell pivot sits on the belly-pocket crease: at 25 deg the lower rim swings ~0.1 m inward/down toward the front leg tops (hidden from the game camera, visible from below).",
+    "FK spine/body pitch drives the front legs into the ground; clips should key IK_leg_*/FootRot_leg_* influence 1 for planted feet.",
+    "Segmentation seeds are hand-placed coordinates for this candidate; a new model needs re-tuning (segment.py)."
+  ]
+}

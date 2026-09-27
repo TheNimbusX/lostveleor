@@ -1,0 +1,293 @@
+{
+  "body": {
+    "original": 24316,
+    "candidate": 24316,
+    "vertices": 12141,
+    "rig_bones": 65,
+    "geometry_uv_weights": "unchanged",
+    "display_root_unit_correction": 100,
+    "candidate_sha256": "cffa80a0d3aca6a601047dfead1eba7b1430b53460f1b143da14423f765a51b6",
+    "byte_identical_fbx": true,
+    "weights_max": 7,
+    "weights_over4_vertices": 473,
+    "weight_sum_max_error": 1.5192199498414993e-07
+  },
+  "saber": {
+    "original": 23134,
+    "candidate": 3978,
+    "ratio": 0.172,
+    "uv_layers": [
+      "UVMap"
+    ],
+    "materials": 1,
+    "lod1_triangles": 1988
+  },
+  "anchor": {
+    "original": 2600,
+    "candidate": 2642,
+    "ratio": 1,
+    "uv_layers": [
+      "Attribute"
+    ],
+    "materials": 1,
+    "top_boundary_edges_closed": 44
+  },
+  "grip": {
+    "original": 1400,
+    "candidate": 1488,
+    "ratio": 1,
+    "uv_layers": [
+      "Attribute"
+    ],
+    "materials": 1,
+    "boundary_edges_closed": 94
+  },
+  "link": {
+    "original": 384,
+    "candidate": 80,
+    "ratio": 0.209,
+    "uv_layers": [
+      "SteelAtlas"
+    ],
+    "materials": 1
+  },
+  "back_carry": {
+    "bone": "mixamorig:Spine2",
+    "anchor_world_matrix": [
+      [
+        1.874988317489624,
+        0.3328275978565216,
+        -0.2192276567220688,
+        -0.04129526764154434
+      ],
+      [
+        -0.398541122674942,
+        1.5658303499221802,
+        -1.031385064125061,
+        0.1599186658859253
+      ],
+      [
+        -2.60770320892334e-08,
+        1.0544267892837524,
+        1.6008119583129883,
+        1.329605221748352
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "bone_parent_matrix_basis": [
+      [
+        1.8932766914367676,
+        0.25042232871055603,
+        -0.1649487465620041,
+        -0.04754147306084633
+      ],
+      [
+        -0.0387045182287693,
+        1.2496839761734009,
+        1.452999234199524,
+        -0.07724392414093018
+      ],
+      [
+        0.29735738039016724,
+        -1.4317798614501953,
+        1.2393546104431152,
+        -0.11173415184020996
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "anchor_width_m": 0.94,
+    "anchor_eye_world": [
+      -0.011457864195108414,
+      0.3184152841567993,
+      1.4682748317718506
+    ],
+    "carry_links": 6,
+    "review_only": true,
+    "runtime_handoff_implementation": "not installed until owner model approval",
+    "shaft_axis_world": [
+      7.451605554820162e-09,
+      0.0,
+      1.0
+    ],
+    "idle_surface_clearance_m": 0.03311706706881523,
+    "idle_possible_penetrating_vertices": 0,
+    "clearance_note": "Nearest-surface preflight in existing combat idle; full moving pose collision checks belong to next animation gate."
+  },
+  "budget": {
+    "hero_and_static_weapons": 32504,
+    "link_tris": 80,
+    "max_links_under_40000": 93,
+    "runtime_pool_capacity_main_feed_bridge": [
+      96,
+      24,
+      16
+    ],
+    "warning": "Static code envelope, not measured runtime. Assumes exactly one active weapon ownership and carry chain hidden during deployment. Runtime overdraw/drawcalls/transition overlaps need measurement after approved integration.",
+    "anchor_eye_triangles": 80,
+    "static_code_upper_bound_links": {
+      "slam": 51,
+      "slam_return": 56,
+      "boarding": 93
+    },
+    "peak_static_envelope_triangles": 39944
+  },
+  "lineage": {
+    "body": {
+      "path": "razlom/Assets/Resources/Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig.fbx",
+      "sha256": "cffa80a0d3aca6a601047dfead1eba7b1430b53460f1b143da14423f765a51b6"
+    },
+    "saber": {
+      "path": "razlom/Assets/Resources/Weapons/Pelag/FantasySaber/Pelag_FantasySaber.fbx",
+      "sha256": "51787ef1accdf35cc043787bd88ff9d9287accf7c8e6c73c37f34684c49d7bd3"
+    },
+    "anchor": {
+      "path": "razlom/Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorHead.fbx",
+      "sha256": "254953c4b487258417af5164f94fc6c1659f897d6ee556e338f17eb9b324f080"
+    },
+    "grip": {
+      "path": "razlom/Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_AnchorGrip.fbx",
+      "sha256": "442c1d3fa71b13e13dfb558418f2dfc4b2fe3770338bc619a8e8eb3f46243546"
+    },
+    "link": {
+      "path": "razlom/Assets/Resources/Weapons/Pelag/AnchorChain/Pelag_ChainLink_Painted.fbx",
+      "sha256": "1e0d6dbc7a4dcedccef90415bda9f4670a312516ee4a21976b79e24b497490a5"
+    }
+  },
+  "status": "MODEL CANDIDATE \u2014 not owner accepted, not installed in Unity",
+  "review_pose": {
+    "source": "razlom/Assets/Resources/Characters/Pelag_v5/Mixamo/Pelag_AN_CombatIdle.fbx",
+    "frame": 1,
+    "method": "existing pose world rotations, target original joint lengths; no animation keys authored"
+  },
+  "geometry_error": {
+    "saber": {
+      "max_distance_m": 0.0015369948232546449,
+      "p95_distance_m": 0.0004532976890914142,
+      "mean_distance_m": 0.00016068046954890774,
+      "original_triangles": 23134,
+      "candidate_triangles": 3978,
+      "metric": "original vertices to nearest candidate surface in unscaled source units"
+    },
+    "link": {
+      "max_distance_m": 0.004269812256097794,
+      "p95_distance_m": 0.0032551083713769913,
+      "mean_distance_m": 0.0013598606655117844,
+      "original_triangles": 384,
+      "candidate_triangles": 80,
+      "metric": "original vertices to nearest candidate surface in unscaled source units"
+    }
+  },
+  "version": "candidate-r1",
+  "topology": {
+    "body": {
+      "vertices": 12141,
+      "triangles": 24316,
+      "boundary_edges": 0,
+      "non_manifold_edges": 0,
+      "loose_vertices": 0,
+      "uv_layers": [
+        "Pelag_v6DiffuseUVLayer"
+      ]
+    },
+    "saber": {
+      "vertices": 1989,
+      "triangles": 3978,
+      "boundary_edges": 0,
+      "non_manifold_edges": 0,
+      "loose_vertices": 0,
+      "uv_layers": [
+        "UVMap"
+      ]
+    },
+    "anchor": {
+      "vertices": 1323,
+      "triangles": 2642,
+      "boundary_edges": 0,
+      "non_manifold_edges": 0,
+      "loose_vertices": 0,
+      "uv_layers": [
+        "Attribute"
+      ]
+    },
+    "grip": {
+      "vertices": 738,
+      "triangles": 1488,
+      "boundary_edges": 0,
+      "non_manifold_edges": 0,
+      "loose_vertices": 0,
+      "uv_layers": [
+        "Attribute"
+      ]
+    },
+    "link": {
+      "vertices": 40,
+      "triangles": 80,
+      "boundary_edges": 0,
+      "non_manifold_edges": 0,
+      "loose_vertices": 0,
+      "uv_layers": [
+        "SteelAtlas"
+      ]
+    }
+  },
+  "outputs": {
+    "blend": "Pelag_Model_Candidate.blend",
+    "glb": "Pelag_Model_Candidate.glb",
+    "views": [
+      "front.png",
+      "back.png",
+      "side.png",
+      "game.png"
+    ],
+    "comparison": [
+      "game_original_geometry.png",
+      "saber_original.png",
+      "saber_candidate.png"
+    ],
+    "body": "Pelag_v6_Body_Unchanged.fbx",
+    "weapons": [
+      "Pelag_saber_Candidate.fbx",
+      "Pelag_anchor_Candidate.fbx",
+      "Pelag_grip_Candidate.fbx",
+      "Pelag_link_Candidate.fbx"
+    ]
+  },
+  "review_status": "static model candidate ready for review",
+  "pose_compatibility": "NOT PASSED",
+  "runtime_ready": false,
+  "owner_accepted": false,
+  "pose_preflight": {
+    "report": "stress_pose_preflight.json",
+    "pictures": [
+      "pose_preflight_cleave_windup_game.png",
+      "pose_preflight_cleave_windup_side.png",
+      "pose_preflight_cleave_contact_game.png",
+      "pose_preflight_cleave_contact_side.png",
+      "pose_preflight_roll_mid_game.png",
+      "pose_preflight_roll_mid_side.png"
+    ],
+    "limitations": "Sampled poses only. Ray parity tests anchor vertices, not triangle penetration or swept collisions. This is not the Unity Animator or Sim movement/ground alignment.",
+    "floor_penetration_samples": [
+      {
+        "label": "roll_mid",
+        "anchor_min_z_m": -0.21870936453342438,
+        "body_min_z_m": 0.0431944765150547
+      }
+    ]
+  },
+  "open_findings": [
+    "Existing Roll frame 12 intersects the ground with the back-carried anchor; new base movement must accommodate the approved weapon size.",
+    "Deep existing Cleave contact visually separates the rigid mount from the bent back. Back carry must be reviewed throughout new animation curves and action handoffs.",
+    "No Unity runtime, swept collision, cancellation or dynamic chain budget acceptance yet."
+  ]
+}

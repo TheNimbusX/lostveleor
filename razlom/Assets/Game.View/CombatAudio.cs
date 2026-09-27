@@ -47,7 +47,8 @@ namespace Game.View
         [Min(4)] public int Voices = 14;
 
         public CombatAudioProfile Profile;
-        private struct DelayedCue { public float Due; public Sound Sound; }
+        // Volume < 0 — звук смерти по старому правилу (громкость по банку, высота 1).
+        private struct DelayedCue { public float Due; public Sound Sound; public float Volume, Pitch, Spread; }
         private readonly DelayedCue[] _deathCues = new DelayedCue[64];
         private int _deathCueCount;
         private float _anchorImpactAt = -1f, _anchorLandAt = -1f;
@@ -245,8 +246,29 @@ namespace Game.View
                     // Новые мобы леса: линия шипов и всплеск Шипомёта, удар корнями Корнехвата.
                     // Тот же сигнал из своей семьи (EnemyWarning собран из Attack_0x/HitBody),
                     // новых записей нет. Контакт шипа звучит своим Damage, если задел героя.
+                    // Выстрел шипом — обычная атака Шипомёта (раз в две секунды), не крупный
+                    // телеграф: вместо сигнала — тихий взмах, как у Хранителя, чуть выше.
                     case SimEventType.EnemyActionStarted:
-                        PlayWarning();
+                        if (e.ActionVariant == (int)EnemyActionKind.ThornShot)
+                            Play(Sound.GuardianSwing, EnemySwingVolume, 1.15f, .04f);
+                        else PlayWarning();
+                        break;
+                    // Шип сорвался с руки Шипомёта (кадр 21 клипа, снятый до выпуска выстрел
+                    // события не шлёт): тихий высокий взмах из своей семьи — Attack_0x героя.
+                    case SimEventType.EnemyProjectileLaunched:
+                        if (e.ActionVariant == (int)EnemyActionKind.ThornShot)
+                            Cue(Sound.PelagAttack, WhooshVolume * .5f, 1.3f, .04f);
+                        break;
+                    case SimEventType.EnemyActionImpact:
+                        PlayEnemyImpact(in e);
+                        break;
+                    // Корнехват вбил плиты в землю — круг встал: глухой низкий удар по земле.
+                    case SimEventType.TelegraphOpened:
+                        if (IsKind(e.Source, EnemyKind.ForestRootSnarer))
+                        {
+                            Cue(Sound.HitBody, BodyVolume * .8f, .6f, .03f);
+                            Cue(Sound.Footstep, EarthVolume * 1.3f, .52f, .03f);
+                        }
                         break;
                     // Расщепень распался на детёнышей: глухой низкий удар по телу — трещина,
                     // из банка HitBody. Смерть родителя в этом же кадре звучит своим чередом.
@@ -563,8 +585,58 @@ namespace Game.View
             return 0.95f;
         }
 
+        /// <summary>
+        /// Контакт действия нового моба леса. Всё — через Cue: звук встаёт после
+        /// событий кадра, и удар героя в том же кадре не теряет свой HitBody.
+        /// </summary>
+        private void PlayEnemyImpact(in SimEvent e)
+        {
+            switch ((EnemyActionKind)e.ActionVariant)
+            {
+                // Шип линии вышел из земли: сухой удар по дереву и хруст земли;
+                // к концу линии (Amount — номер шипа 0..3) чуть выше.
+                case EnemyActionKind.ThornLine:
+                    Cue(Sound.HitBody, BodyVolume * .55f, .62f + .03f * e.Amount, .03f);
+                    Cue(Sound.Footstep, EarthVolume * 1.2f, .55f, .03f);
+                    break;
+                // Всплеск: тот же удар тяжелее — плюс осыпание земли.
+                case EnemyActionKind.ThornBurst:
+                    Cue(Sound.HitBody, BodyVolume * .8f, .58f, .03f);
+                    Cue(Sound.Dissolve, EarthVolume, .75f, .03f);
+                    Cue(Sound.Footstep, EarthVolume * 1.35f, .5f, .03f);
+                    break;
+                // Шип выстрела встал: попал — звучит Damage героя; мимо — клюёт в землю.
+                case EnemyActionKind.ThornShot:
+                    if (!e.Flag) Cue(Sound.Footstep, EarthVolume * .8f, .9f, .05f);
+                    break;
+                // Корни Корнехвата рвутся из круга: земля расходится, корни хлещут.
+                case EnemyActionKind.SnarerSlam:
+                    Cue(Sound.Dissolve, EarthVolume, .72f, .03f);
+                    Cue(Sound.GuardianSwing, EnemySwingVolume * 1.4f, .78f, .04f);
+                    break;
+            }
+        }
+
+        private bool IsKind(int entity, EnemyKind kind)
+        {
+            var sim = _driver.Sim;
+            return sim != null && (uint)entity < (uint)sim.Entities.Count && sim.Entities.Kind[entity] == kind;
+        }
+
         private void QueueDeathSounds(EnemyKind kind)
         {
+            if (kind == EnemyKind.ForestSplitter || kind == EnemyKind.ForestSplitling)
+            {
+                // Расщепень не падает и не осыпается — раскалывается (SplitterCombatView):
+                // трещина звучит по SplitterSplit, через 0,2 с раскол — сухой удар по коре,
+                // потом половины коры глухо ложатся на землю. Детёныш — мельче и выше.
+                bool child = kind == EnemyKind.ForestSplitling;
+                float breakAt = SplitterCombatView.BreakDelaySeconds;
+                Cue(Sound.HitBody, BodyVolume * (child ? .55f : .7f), child ? 1.3f : 1.1f, .04f, breakAt);
+                Cue(Sound.HitBody, BodyVolume * (child ? .28f : .4f), child ? .85f : .6f, .04f,
+                    breakAt + SplitterCombatView.ShellLandSeconds);
+                return;
+            }
             var timing = EnemyPresentationProfile.Death(kind);
             if (kind == EnemyKind.ForestBud)
             {
@@ -583,7 +655,18 @@ namespace Game.View
         private void Queue(Sound sound, float delay)
         {
             if (_deathCueCount >= _deathCues.Length) return;
-            _deathCues[_deathCueCount++] = new DelayedCue { Sound = sound, Due = Time.time + delay };
+            _deathCues[_deathCueCount++] = new DelayedCue { Sound = sound, Due = Time.time + delay, Volume = -1f };
+        }
+
+        /// <summary>
+        /// Звук своей громкости и высоты через delay секунд; 0 — в этом же кадре, но
+        /// после всех событий кадра (FlushDissolves идёт за ConsumeEvents).
+        /// </summary>
+        private void Cue(Sound sound, float volume, float pitch, float spread, float delay = 0f)
+        {
+            if (_deathCueCount >= _deathCues.Length) return;
+            _deathCues[_deathCueCount++] = new DelayedCue
+                { Sound = sound, Due = Time.time + delay, Volume = volume, Pitch = pitch, Spread = spread };
         }
 
         private void FlushDissolves()
@@ -593,6 +676,7 @@ namespace Game.View
             {
                 var cue = _deathCues[i];
                 if (cue.Due > Time.time) { _deathCues[write++] = cue; continue; }
+                if (cue.Volume >= 0f) { Play(cue.Sound, cue.Volume, cue.Pitch, cue.Spread); continue; }
                 bool dissolve = cue.Sound == Sound.Dissolve || cue.Sound == Sound.RootSwarmDissolve;
                 Play(cue.Sound, dissolve ? DissolveVolume : BodyVolume * 0.7f, 1f, 0f);
             }

@@ -1,0 +1,44 @@
+{
+ "target_speed_mps": 2.2,
+ "frames": 24,
+ "feet": {
+  "Left": {
+   "stance_frames": [
+    0,
+    13
+   ],
+   "stance_len": 14,
+   "planted_frames_total": 14,
+   "tracked_ground_vertices": 4,
+   "measured_planted_speed_mps": 2.189,
+   "speed_error_pct": -0.5,
+   "slide_over_stance_max_m": 0.0053,
+   "slide_per_frame_max_m": 0.0017,
+   "sideways_x_drift_max_m": 0.0,
+   "ground_z_range_m": [
+    0.0052,
+    0.0106
+   ]
+  },
+  "Right": {
+   "stance_frames": [
+    12,
+    1
+   ],
+   "stance_len": 14,
+   "planted_frames_total": 14,
+   "tracked_ground_vertices": 7,
+   "measured_planted_speed_mps": 2.191,
+   "speed_error_pct": -0.42,
+   "slide_over_stance_max_m": 0.0059,
+   "slide_per_frame_max_m": 0.0018,
+   "sideways_x_drift_max_m": 0.0,
+   "ground_z_range_m": [
+    -0.0,
+    0.0106
+   ]
+  }
+ },
+ "cycle_m_measured": 1.752,
+ "pass": true
+}

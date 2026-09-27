@@ -1,0 +1,140 @@
+{
+  "fbx": "ForestSplitter.fbx",
+  "fbx_bytes": 2469404,
+  "textures": [
+    "textures/ForestSplitter_Color.png",
+    "textures/ForestSplitter_NormalGL.png",
+    "textures/ForestSplitter_ORM.png"
+  ],
+  "fps": 30,
+  "root_motion": false,
+  "in_place": "root bone static in every take; no XZ travel",
+  "axes": {
+    "blender": "front -Y, up +Z",
+    "fbx_export": "axis_forward -Z, axis_up Y (Unity front +Z)",
+    "scale": "apply_unit_scale, FBX_SCALE_NONE (as Stonehoof/Wendigo)"
+  },
+  "facing_guide": "empty 'FacingGuide' 1 m in front of the origin",
+  "fbx_take_names": [
+    "ForestSplitter_Idle",
+    "ForestSplitter_Walk",
+    "ForestSplitter_Bite",
+    "ForestSplitter_Hit",
+    "ForestSplitter_Death",
+    "ForestSplitter_Pop"
+  ],
+  "bake_step_frames": 0.25,
+  "triangles": 24000,
+  "deform_bones": 19,
+  "max_influences": 4,
+  "takes": {
+    "ForestSplitter_Idle": {
+      "frames": [
+        0,
+        60
+      ],
+      "length_s": 2.0,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "breathing, shells rock slightly, head looks around",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Walk": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "in-place diagonal trot; planted feet slide back at exactly 3.1 m/s",
+      "muzzle_offset": null,
+      "speed_mps": 3.1,
+      "stride_m_per_cycle": 1.0333,
+      "stance_foot_speed_mps": [
+        3.099,
+        3.102
+      ],
+      "child": {
+        "scale": 0.6,
+        "speed_mps": 4.2,
+        "playback_speed": 2.2581,
+        "why": "planted feet match ground speed when playback = speed / (scale * 3.1)"
+      }
+    },
+    "ForestSplitter_Bite": {
+      "frames": [
+        0,
+        30
+      ],
+      "length_s": 1.0,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "crouch back + shells open 0-12, lunge, beak snap + shell clap + paw stomp at 18",
+      "contact_frame": 18,
+      "contact_phase": 0.6,
+      "muzzle_offset": null,
+      "windup_ticks": 18,
+      "recovery_ticks": 12,
+      "contact_rule": "beak furthest forward + shells clap + front-left paw stomp on frame 18 = sim windup tick 18",
+      "bite_point_at_contact_m": {
+        "forward": 0.905,
+        "up": 0.435,
+        "right": 0.064,
+        "unity_local": [
+          0.064,
+          0.435,
+          0.905
+        ],
+        "what": "head bone tip (beak) at frame 18, entity-local; no projectile"
+      }
+    },
+    "ForestSplitter_Hit": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "flinch back, head retracts, shells clamp then jolt open",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Death": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "short crack: shells jolt apart, body sags; view hides parent and pops 2 children on the last frame",
+      "release_frame": 12,
+      "muzzle_offset": null,
+      "release_rule": "last frame: the view hides the parent and pops two children (SplitterSplit)"
+    },
+    "ForestSplitter_Pop": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "child: crouched ball, hop with splayed legs, lands on frame 8 = end of the 8-tick SplitPop",
+      "contact_frame": 8,
+      "contact_phase": 0.8,
+      "muzzle_offset": null,
+      "takeoff_frame": 2,
+      "contact_rule": "landing on frame 8 = end of the sim's 8-tick SplitPop (1 m sideways, moved by the sim)",
+      "scale": 0.6
+    }
+  },
+  "sources": {
+    "baked": "ForestSplitter_Baked_r01.blend",
+    "baked_sha256": "f1a862e612321ac4e937d90f81d47bff8ac64096cc6732b9d881b2f75cfbb674",
+    "editable": "ForestSplitter_Anim_r01.blend",
+    "editable_sha256": "be5579c5fb249743266f095de7bd8ad14a21365bca3cf69734577a26e5953344",
+    "authoring": "takes_loops.py, takes_bite.py, takes_react.py -> bake_takes.py"
+  }
+}

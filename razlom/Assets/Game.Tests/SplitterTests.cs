@@ -127,18 +127,18 @@ namespace Game.Tests
         [Test]
         public void Children_TakeHealthAndDamageFromTheParent_FiveXp_NeverElite()
         {
-            // Шестая арена на «Сложно»: 420 × 135% × 125% = 709, урон 12 × 140% × 125% = 21.
+            // Шестая арена на «Сложно»: 560 × 135% × 125% = 945, урон 12 × 140% × 125% = 21.
             var sim = Stand(arena: 6, hard: EnemyArchetypes.HardRoutePercent);
             int parentHealth = sim.Entities.MaxHealth[1], parentDamage = sim.Entities.Damage[1];
-            Assert.That(parentHealth, Is.EqualTo(709));
+            Assert.That(parentHealth, Is.EqualTo(945));
             Assert.That(parentDamage, Is.EqualTo(21));
             Doom(sim, 1);
             sim.Step(InputFrame.Empty);
 
             for (int c = 2; c <= 3; c++)
             {
-                // 709 × 120 / 420 = 202,57 → 203; 21 × 4 / 12 = 7.
-                Assert.That(sim.Entities.MaxHealth[c], Is.EqualTo(203));
+                // 945 × 160 / 560 = 270; 21 × 4 / 12 = 7.
+                Assert.That(sim.Entities.MaxHealth[c], Is.EqualTo(270));
                 Assert.That(sim.Entities.MaxHealth[c], Is.EqualTo(EnemyArchetypes.Share(parentHealth,
                     EnemyArchetypes.SplitlingHealth, EnemyArchetypes.SplitterHealth)));
                 Assert.That(sim.Entities.Health[c], Is.EqualTo(sim.Entities.MaxHealth[c]));

@@ -1,0 +1,309 @@
+{
+  "stage": "animation_r02_roll_owner_review",
+  "owner_review_pending": true,
+  "fps": 30,
+  "r02": {
+    "date": "2026-09-27",
+    "new_takes": [
+      "ForestSplitter_RollCurl",
+      "ForestSplitter_RollLoop",
+      "ForestSplitter_RollUncurl",
+      "ForestSplitter_RollDizzy"
+    ],
+    "section": "27.09 — новые способности",
+    "validation_all_pass": true,
+    "r01_identical": true,
+    "issues": [
+      "Шар не идеально круглый: створки сверху сходятся гребнем, сзади между створками видна зелёная спина, а у самой земли спереди между краями створок торчит кончик клюва (с игровой камеры не видно). Когда вид крутит шар, низ (живот и поджатые лапы) раз в оборот проходит сверху — при 36° за тик это мелькание, пыль/листья из эффекта его закроют.",
+      "Сжатие сделано без масштаба костей (в пакете только поворот и сдвиг, как у всех дублей): тело оседает на 17,5 см, створки смыкаются на −6° (низ расходится). Растяжка кожи в шаре до 18 см у стыка передней правой лапы со створкой и у головы — внутри шара, снаружи не видно.",
+      "Вращение и движение переката — работа вида: ось — поперечная ось сущности через центр шара (export.json → ForestSplitter_RollLoop.roll), радиус 0,63 м, 36,5° за тик; без подъёма на 8 см шар при вращении режет землю.",
+      "Края створок в шаре касаются земли; в петле при сжатии уходят под землю до 4,5 мм."
+    ]
+  },
+  "takes": {
+    "ForestSplitter_Idle": {
+      "frames": [
+        0,
+        60
+      ],
+      "length_s": 2.0,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "breathing, shells rock slightly, head looks around",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Walk": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": true,
+      "reference": "idle_walk.mp4",
+      "note": "in-place diagonal trot; planted feet slide back at exactly 3.1 m/s",
+      "muzzle_offset": null,
+      "speed_mps": 3.1,
+      "stride_m_per_cycle": 1.0333,
+      "stance_foot_speed_mps": [
+        3.099,
+        3.102
+      ],
+      "child": {
+        "scale": 0.6,
+        "speed_mps": 4.2,
+        "playback_speed": 2.2581,
+        "why": "planted feet match ground speed when playback = speed / (scale * 3.1)"
+      }
+    },
+    "ForestSplitter_Bite": {
+      "frames": [
+        0,
+        30
+      ],
+      "length_s": 1.0,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "crouch back + shells open 0-12, lunge, beak snap + shell clap + paw stomp at 18",
+      "contact_frame": 18,
+      "contact_phase": 0.6,
+      "muzzle_offset": null,
+      "windup_ticks": 18,
+      "recovery_ticks": 12,
+      "contact_rule": "beak furthest forward + shells clap + front-left paw stomp on frame 18 = sim windup tick 18",
+      "bite_point_at_contact_m": {
+        "forward": 0.823,
+        "up": 0.487,
+        "right": 0.057,
+        "unity_local": [
+          0.057,
+          0.487,
+          0.823
+        ],
+        "what": "head bone tip at frame 18, entity-local; no projectile"
+      },
+      "beak_mesh_tip_at_contact_m": {
+        "forward": 0.851,
+        "up": 0.352,
+        "right": 0.057,
+        "unity_local": [
+          0.057,
+          0.352,
+          0.851
+        ],
+        "what": "forwardmost skinned vertex of the head at frame 18 (the visible beak tip; use this for bite VFX)"
+      },
+      "child_bite": {
+        "windup_ticks": 12,
+        "recovery_ticks": 8,
+        "contact_phase": 0.6,
+        "playback_speed": 1.5,
+        "scale": 0.6,
+        "why": "Splitling bite 12+8 ticks has the same contact phase 0.6 as this clip, so the child can reuse ForestSplitter_Bite at x1.5 (contact on its tick 12)"
+      }
+    },
+    "ForestSplitter_Hit": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "bite.mp4",
+      "note": "flinch back, head retracts, shells clamp then jolt open",
+      "muzzle_offset": null
+    },
+    "ForestSplitter_Death": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "short crack: shells jolt apart, body sags; view hides parent and pops 2 children on the last frame",
+      "release_frame": 12,
+      "muzzle_offset": null,
+      "release_rule": "last frame: the view hides the parent and pops two children (SplitterSplit)"
+    },
+    "ForestSplitter_Pop": {
+      "frames": [
+        0,
+        10
+      ],
+      "length_s": 0.3333,
+      "loop": false,
+      "reference": "death.mp4",
+      "note": "child: crouched ball, hop with splayed legs, lands on frame 8 = end of the 8-tick SplitPop",
+      "contact_frame": 8,
+      "contact_phase": 0.8,
+      "muzzle_offset": null,
+      "takeoff_frame": 2,
+      "contact_rule": "landing on frame 8 = end of the sim's 8-tick SplitPop (1 m sideways, moved by the sim)",
+      "scale": 0.6
+    },
+    "ForestSplitter_RollCurl": {
+      "frames": [
+        0,
+        30
+      ],
+      "length_s": 1.0,
+      "loop": false,
+      "reference": "vfx_target_frames_2026-09-27/2-roll-windup.png + 1-roll.png (target frames, no video reference)",
+      "note": "curls into the ball: body sinks, legs fold under the rims, head pulls in, shells clamp; tucked by 12 (direction lock), tension, shake 24-30, ends in the ball pose = RollLoop f0",
+      "muzzle_offset": null,
+      "lock_frame": 12,
+      "shake_frames": [
+        24,
+        30
+      ],
+      "launch_frame": 30,
+      "contract_rule": "tick 0 curl starts (body sinks, the view keeps turning the entity to the hero) = frame 0; ball fully tucked by frame 12 = direction lock; frames 24-30 shake; frame 30 = launch tick = ball pose, identical to RollLoop frame 0",
+      "phases": {
+        "0-2": "startled: head up, shells open a hair",
+        "2-11": "body sinks, legs fold, head pulls in, shells clamp (snap past -7 deg at 10, squash bounce 10-14)",
+        "13-24": "tension: shells tremble",
+        "24-30": "shake: yaw rattle +-5 deg, rims lift <= 7 mm, shells rattle"
+      },
+      "start_pose": "Idle frame 0",
+      "end_pose": "ball (= RollLoop frame 0)"
+    },
+    "ForestSplitter_RollLoop": {
+      "frames": [
+        0,
+        12
+      ],
+      "length_s": 0.4,
+      "loop": true,
+      "reference": "vfx_target_frames_2026-09-27/2-roll-windup.png + 1-roll.png (target frames, no video reference)",
+      "note": "ball hold with a tiny squash wobble; the view spins the whole body about its lateral axis and moves it (0.40 m/tick)",
+      "muzzle_offset": null,
+      "start_pose": "ball",
+      "roll": {
+        "sim": "launch on RollCurl frame 30, 0.40 m/tick for up to 16 ticks",
+        "view_spin": "spin the whole model about its lateral axis through spin_pivot; this clip only keeps the tucked pose with a small squash wobble (2 beats per 12-frame loop, rims dip <= 4.5 mm)",
+        "spin_pivot_unity_local": [
+          0.0,
+          0.546,
+          -0.028
+        ],
+        "spin_radius_m": 0.627,
+        "lift_while_spinning_m": 0.081,
+        "spin_direction": "rolling forward = positive rotation about the entity's local +X (the top moves forward, +Z)",
+        "angle_per_tick_deg": 36.6,
+        "stop": "on the last roll tick finish the turn to the next upright (~4 frames, ease out) while RollUncurl / RollDizzy frames 0-4 play (they start in the ball pose)",
+        "ball_size_m": {
+          "width_x": 1.55,
+          "length_y": 1.1,
+          "height_z": 1.094
+        }
+      }
+    },
+    "ForestSplitter_RollUncurl": {
+      "frames": [
+        0,
+        30
+      ],
+      "length_s": 1.0,
+      "loop": false,
+      "reference": "vfx_target_frames_2026-09-27/2-roll-windup.png + 1-roll.png (target frames, no video reference)",
+      "note": "punish window: stop jolt, stunned beat, head peeks out, legs unfold and lift the body, shells exhale open, head shake; ends = Idle f0",
+      "muzzle_offset": null,
+      "punish_ticks": 30,
+      "start_pose": "ball (= RollLoop frame 0)",
+      "end_pose": "Idle frame 0",
+      "phases": {
+        "0-5": "stop jolt: shells rattle, small yaw",
+        "5-8": "stunned beat (still a ball)",
+        "8-11": "head peeks out",
+        "7-17": "legs unfold",
+        "8-20": "body rises",
+        "19-26": "shells exhale open (~7 deg) and settle",
+        "16-25": "head shake"
+      }
+    },
+    "ForestSplitter_RollDizzy": {
+      "frames": [
+        0,
+        45
+      ],
+      "length_s": 1.5,
+      "loop": false,
+      "reference": "vfx_target_frames_2026-09-27/2-roll-windup.png + 1-roll.png (target frames, no video reference)",
+      "note": "after a wall hit: bounce back off the wall, graceless unfold onto splayed feet, dizzy sway with the head circling, shake-off, feet step home; ends = Idle f0",
+      "muzzle_offset": null,
+      "wall_hit_frame": 0,
+      "bump_peak_frame": 2,
+      "start_pose": "ball (= RollLoop frame 0)",
+      "end_pose": "Idle frame 0",
+      "use": "instead of RollUncurl when the roll ends on a wall",
+      "phases": {
+        "0-5": "bounces back off the wall (+3.5 cm back, +1.8 cm up at 2), shells clap",
+        "5-13": "graceless unfold onto splayed feet",
+        "12-36": "dizzy: body sways in a lopsided circle, head circles the other way, shells flap unevenly",
+        "35-43": "head shake-off",
+        "36-44": "feet step home one by one"
+      }
+    }
+  },
+  "validation_all_pass": true,
+  "fbx_roundtrip_all_pass": true,
+  "fbx": "../../animation/unity_package/ForestSplitter.fbx",
+  "issues": [
+    "Исправлено на независимой проверке FBX: в укусе шея выезжала на 0,25 м, и между головой и жёсткими краями створок тянулся «рукав» растянутой текстуры до 24 см (риг проверялся на выпад 0,14 м). Теперь шея выезжает на 0,11 м, дальность возвращена рывком корпуса на 3,5 см и задранным клювом: растяжка до 13 см, кончик клюва на 0,85 м вперёд вместо 0,92, контакт по-прежнему на кадре 18.",
+    "С игровой камеры (52°, 3/4) голова маленькая и частично под краями створок: укус читается прежде всего рывком корпуса и хлопком створок, сам клюв хорошо виден сбоку и спереди. Голова идёт вперёд и чуть вверх, а не клюёт вниз под створки.",
+    "Рта нет (клюв цельный), поэтому клюв не раскрывается, как в референсе: укус — выпад головой.",
+    "Створки срощены с телом: при раскрытии тянется спинная полоса (тёмный мох между створками на замахе укуса 11–13° и в смерти ~25°). Отвалиться створки не могут без правки модели — смерть сделана как треск; сам раскол лучше закрыть VFX.",
+    "В рыси лапы короткие, походка низкая; кожа лап местами уходит под землю до 7 мм.",
+    "Лапы модели стоят неровно: в покое касается земли только передняя левая, правая передняя висит на 8,5 мм, задние на 6–10 мм. Опустить их IK нельзя — задние ноги почти выпрямлены (вытяжка 0,97 при пределе 0,975). С игровой камеры почти незаметно.",
+    "У детей ходьба ×2,26: цикл 10 кадров проходит за 0,15 с — будет выглядеть как семенящий бег."
+  ],
+  "videos": {
+    "ForestSplitter_Idle": [
+      "ForestSplitter_Idle_game.mp4",
+      "ForestSplitter_Idle_side.mp4"
+    ],
+    "ForestSplitter_Walk": [
+      "ForestSplitter_Walk_game.mp4",
+      "ForestSplitter_Walk_side.mp4"
+    ],
+    "ForestSplitter_Bite": [
+      "ForestSplitter_Bite_game.mp4",
+      "ForestSplitter_Bite_side.mp4"
+    ],
+    "ForestSplitter_Hit": [
+      "ForestSplitter_Hit_game.mp4",
+      "ForestSplitter_Hit_side.mp4"
+    ],
+    "ForestSplitter_Death": [
+      "ForestSplitter_Death_game.mp4",
+      "ForestSplitter_Death_side.mp4"
+    ],
+    "ForestSplitter_Pop": [
+      "ForestSplitter_Pop_game.mp4",
+      "ForestSplitter_Pop_side.mp4"
+    ],
+    "ForestSplitter_RollCurl": [
+      "ForestSplitter_RollCurl_game.mp4",
+      "ForestSplitter_RollCurl_side.mp4"
+    ],
+    "ForestSplitter_RollLoop": [
+      "ForestSplitter_RollLoop_game.mp4",
+      "ForestSplitter_RollLoop_side.mp4"
+    ],
+    "ForestSplitter_RollUncurl": [
+      "ForestSplitter_RollUncurl_game.mp4",
+      "ForestSplitter_RollUncurl_side.mp4"
+    ],
+    "ForestSplitter_RollDizzy": [
+      "ForestSplitter_RollDizzy_game.mp4",
+      "ForestSplitter_RollDizzy_side.mp4"
+    ],
+    "Sequence": [
+      "Sequence_game.mp4"
+    ],
+    "RollSeq": [
+      "RollSeq_uncurl.mp4",
+      "RollSeq_dizzy.mp4"
+    ]
+  }
+}

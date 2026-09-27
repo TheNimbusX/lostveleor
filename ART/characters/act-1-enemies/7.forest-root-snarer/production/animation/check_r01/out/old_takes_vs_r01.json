@@ -1,0 +1,73 @@
+{
+ "old_fbx": "../work/r01_approved/ForestRootSnarer_r01.fbx",
+ "new_fbx": "../unity_package/ForestRootSnarer.fbx",
+ "old_takes": [
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Walk"
+ ],
+ "new_takes": [
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Mend",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Walk"
+ ],
+ "added_takes": [
+  "ForestRootSnarer_Mend"
+ ],
+ "takes": {
+  "ForestRootSnarer_Idle": {
+   "curves": 198,
+   "keys": 12078,
+   "identical_curves": 198,
+   "range_identical": true,
+   "differing": [],
+   "extra_curves_in_new": [],
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Walk": {
+   "curves": 198,
+   "keys": 3366,
+   "identical_curves": 198,
+   "range_identical": true,
+   "differing": [],
+   "extra_curves_in_new": [],
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Slam": {
+   "curves": 198,
+   "keys": 14454,
+   "identical_curves": 198,
+   "range_identical": true,
+   "differing": [],
+   "extra_curves_in_new": [],
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Hit": {
+   "curves": 198,
+   "keys": 2574,
+   "identical_curves": 198,
+   "range_identical": true,
+   "differing": [],
+   "extra_curves_in_new": [],
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Death": {
+   "curves": 198,
+   "keys": 9108,
+   "identical_curves": 198,
+   "range_identical": true,
+   "differing": [],
+   "extra_curves_in_new": [],
+   "max_value_diff": 0.0
+  }
+ },
+ "mesh_skin_bind_identical": true,
+ "mesh_skin_bind_differing": [],
+ "static_items_compared": 97,
+ "all_old_takes_bit_identical": true
+}

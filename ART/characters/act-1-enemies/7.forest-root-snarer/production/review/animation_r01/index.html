@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Корнехват · анимации r01</title><link rel="stylesheet" href="review.css">
+<main>
+<div class="top"><div><div class="eyebrow">THE WAR REMAINS · АКТ I · ЧАЩА · КОРНЕХВАТ (ForestRootSnarer)</div><h1>Анимации r01</h1>
+<p>Шесть клипов на модели 24k (24 000 треугольников, 21 кость), 30 кадров/с = тики симуляции: пять принятых 26.09 и новое лечение «Волна из корней» от 27.09 (первый раздел). Все клипы на месте: корень не двигается, движение задаёт симуляция. Слева игровая камера (52° сверху, три четверти спереди), в середине вид сбоку, справа принятый видеореференс. Кадры контакта обведены жёлтой рамкой.</p></div>
+<span class="badge">27.09: Mend ждёт владельца</span></div>
+<nav class="toc"><a href="#new-0927">27.09 — новые способности</a><a href="#mend">Лечение (Mend)</a><a href="#slam">Удар (Slam)</a><a href="#walk">Шаг (Walk)</a><a href="#idle">Ожидание (Idle)</a><a href="#hit">Попадание (Hit)</a><a href="#death">Смерть (Death)</a><a href="#checks">Проверки</a><a href="#issues">Известные вопросы</a></nav>
+
+<section id="new-0927"><h2>27.09 — новые способности</h2>
+<p>Лечение поддержки «Волна из корней» (владелец, вариант эффекта 1 — золотисто-зелёное кольцо). Клип добавлен в тот же FBX на ту же арматуру; пять клипов от 26.09 в пакете не изменились ни на бит (сравнение кривых FBX до и после).</p></section>
+
+<section class="take" id="mend" data-n="50">
+<header><h2>ForestRootSnarer_Mend</h2><span class="meta">50 кадров · 1,67 с · <span class="amber">контакт 8</span> · канал 8–30 · <span class="amber">волна 30</span> · выдёргивает 38–50</span></header>
+<p>0–5 короткий замах: плиты расходятся в стороны на высоту плеч, без подъёма на задние лапы (как в ударе). 5–8 вонзает обе плиты вниз, <b class="amber">кадр 8</b>: обе плиты в земле (на кадре 7 ещё в 29–32 см над ней). 8–30 канал: стоит выше, чем в ударе, голова опущена между плитами, спокойный медленный пульс без дрожи — набухает на 15 и 24, давит в землю на 20 и глубже всего на 28, будто вливает жизнь в землю. <b class="amber">Кадр 30</b>: выдох-толчок — спина и купол с грибами вздымаются (верх купола 1,17 → 1,32 м), пасть приоткрыта; в этот тик уходит кольцо лечения. 30–38 стоит раскрытым, плиты ещё в земле; 38–50 выдёргивает плиты (на 39 кончики у поверхности, на 40 целиком над землёй) и оседает точно в первый кадр Idle.</p>
+<div class="grid">
+<div class="cell"><video src="mend_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера</p></div>
+<div class="cell"><video src="mend_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку, левый профиль</p></div>
+<div class="cell ref"><a href="ref_mend_ring.jpg"><img src="ref_mend_ring.jpg" alt="Целевой кадр: лечение кольцом из корней"></a><p>Целевой кадр 1-mend-ring.png: обе плиты в земле по бокам, голова низко, купол с грибами вверху, кольцо расходится от плит. Кольцо, корни и листья — эффект, в клипе только тело.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><button data-f="5">Замах · 5</button><button class="contact" data-f="8">Контакт · 8</button><button data-f="20">Толчок · 20</button><button data-f="28">Сбор · 28</button><button class="contact" data-f="30">Волна · 30</button><button data-f="38">Выдёргивает · 38</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 50</output></div>
+<div class="keys"><img src="keys_mend.jpg" alt="Ключевые позы лечения: 0, 5, 8, 20, 28, 30, 42, 50"></div>
+<div class="note"><p>Отличие от удара: там подъём на задние лапы, удар и частая дрожь натуги 6–9 Гц; здесь короткий замах в стороны, корпус в среднем на 3–4 см выше, голова опущена, пульс медленный (около 3 толчков в секунду) и без дрожи. Кулаки-сокеты L_hand / R_hand с 10 по 38 кадр стоят на месте (сдвиг 0,2 мм) — от них удобно пускать кольцо и корни.</p>
+<p>Грибы на спине своих костей не имеют (едут на pelvis / spine_01 / spine_02), поэтому «пых» грибов на 30 — это выгиб спины и подъём купола; облачко спор лучше добавить эффектом на куполе.</p></div>
+</section>
+
+<section class="take" id="slam" data-n="72">
+<header><h2>ForestRootSnarer_Slam</h2><span class="meta">72 кадра · 2,4 с · <span class="amber">контакт 15</span> · <span class="amber">корни 36</span> · рывок 60</span></header>
+<p>0–3 сбор; 3–12 встаёт на задние лапы, обе плиты над головой; 12–15 удар. <b class="amber">Кадр 15</b>: обе плиты уходят в землю (11–22 см), в этот тик под героем открывается круг. 15–60 держит плиты в земле и дрожит от натуги; на <b class="amber">кадре 36</b> рывок всем телом вниз, вырастают корни, начинается окно наказания (36 тиков). 60–66 выдирает плиты, 66–72 оседает точно в первый кадр Idle.</p>
+<div class="grid">
+<div class="cell"><video src="slam_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера</p></div>
+<div class="cell"><video src="slam_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку, левый профиль</p></div>
+<div class="cell ref"><a href="ref_slam.jpg"><img src="ref_slam.jpg" alt="Лист кадров референса slam.mp4"></a><p>slam.mp4: встаёт 0,3–1,5 с, удар ~1,6 с, остаётся прижатым. У нас подъём 0,1–0,4 с почти без задержки наверху, удар на 0,5 с — так требует тик 15.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><button data-f="12">Плиты над головой · 12</button><button class="contact" data-f="15">Контакт · 15</button><button class="contact" data-f="36">Корни · 36</button><button data-f="60">Рывок · 60</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 72</output></div>
+<div class="keys"><img src="keys_slam.jpg" alt="Ключевые позы удара: 0, 12, 15, 36, 60, 72"></div>
+<div class="note"><p>В удержании голова и шея подняты на 12°, корпус на 2–7° выше, чем в черновых ключах: иначе морда уходила в землю до 17 см. Теперь подбородок висит в 1,5–2,5 см над землёй, в землю входят только плиты.</p></div>
+</section>
+
+<section class="take" id="walk" data-n="16">
+<header><h2>ForestRootSnarer_Walk</h2><span class="meta">16 кадров · 0,53 с · петля · 2,4 м/с · 1,28 м за цикл · <span class="amber">левая плита 0</span> · <span class="amber">правая плита 8</span></span></header>
+<p>Тяжёлый шаг на кулаках: каждая плита опирается один раз за цикл (левая на кадре 0, правая на 8) и уезжает назад вместе с землёй: точка плиты, которая касается земли, идёт ровно 0,08 м за кадр, а сама плита перекатывается по ней, как ступня с пятки на носок. Корпус переваливается на опорную плиту, свободная плита маятником уходит вперёд. Задние лапы семенят по два шага за цикл (правая 1,5 и 9,5, левая 5,5 и 13,5). Шахматка под мобом едет со скоростью 2,4 м/с — опоры на ней должны стоять.</p>
+<div class="grid">
+<div class="cell"><video src="walk_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера · земля едет 2,4 м/с</p></div>
+<div class="cell"><video src="walk_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку</p></div>
+<div class="cell ref"><a href="ref_idle_walk.jpg"><img src="ref_idle_walk.jpg" alt="Лист кадров референса idle_walk.mp4"></a><p>idle_walk.mp4: ожидание до ~1,2 с, дальше тяжёлый шаг на кулаках.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><button class="contact" data-f="0">Левая плита · 0</button><button class="contact" data-f="8">Правая плита · 8</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 16</output></div>
+<div class="keys"><img src="keys_walk.jpg" alt="Ключевые позы шага: 0, 4, 8, 12"></div>
+</section>
+
+<section class="take" id="idle" data-n="60">
+<header><h2>ForestRootSnarer_Idle</h2><span class="meta">60 кадров · 2 с · петля</span></header>
+<p>Два тяжёлых вдоха за петлю: грудь и плечи поднимаются, голова догоняет с запозданием, пасть чуть приоткрывается на выдохе; медленный перенос веса. Все четыре опоры стоят на земле, шов петли 0/60 без скачка.</p>
+<div class="grid">
+<div class="cell"><video src="idle_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера</p></div>
+<div class="cell"><video src="idle_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку</p></div>
+<div class="cell ref"><a href="ref_idle_walk.jpg"><img src="ref_idle_walk.jpg" alt="Лист кадров референса idle_walk.mp4"></a><p>idle_walk.mp4, первые ~1,2 с — ожидание.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 60</output></div>
+<div class="keys"><img src="keys_idle.jpg" alt="Ключевые позы ожидания: 0, 15, 30, 45"></div>
+</section>
+
+<section class="take" id="hit" data-n="12">
+<header><h2>ForestRootSnarer_Hit</h2><span class="meta">12 кадров · 0,4 с · пик на кадре 3</span></header>
+<p>Короткое вздрагивание: голова и грудь отдёргиваются назад, пасть открывается, плиты проскальзывают назад на 3–8 см. Начинается и заканчивается первым кадром Idle.</p>
+<div class="grid">
+<div class="cell"><video src="hit_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера</p></div>
+<div class="cell"><video src="hit_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку</p></div>
+<div class="cell ref"><p>Отдельного референса нет (не заказывался); поза и масса — как в idle_walk.mp4.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><button data-f="3">Пик · 3</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 12</output></div>
+<div class="keys"><img src="keys_hit.jpg" alt="Ключевые позы попадания: 0, 3, 6, 12"></div>
+</section>
+
+<section class="take" id="death" data-n="45">
+<header><h2>ForestRootSnarer_Death</h2><span class="meta">45 кадров · 1,5 с · <span class="amber">брюхо на земле 25</span> · неподвижен с 32</span></header>
+<p>0–8 отшатывается и привстаёт, 8–19 заваливается вперёд, лапы подламываются. <b class="amber">Кадр 25</b>: брюхо ложится на землю, морда между раскинутыми плитами тоже лежит на земле; 28 небольшой отскок; с 32 лежит неподвижно, без зазора под телом.</p>
+<div class="grid">
+<div class="cell"><video src="death_game.mp4" muted playsinline loop autoplay preload="auto"></video><p>Игровая камера</p></div>
+<div class="cell"><video src="death_side.mp4" muted playsinline loop autoplay preload="auto"></video><p>Сбоку</p></div>
+<div class="cell ref"><a href="ref_death.jpg"><img src="ref_death.jpg" alt="Лист кадров референса death.mp4"></a><p>death.mp4: отшатывается, привстаёт, падает плашмя на брюхо ~2,7 с.</p></div>
+</div>
+<div class="controls"><button class="play">Пауза / смотреть</button><button class="prev">− кадр</button><button class="next">+ кадр</button><button data-f="8">Привстал · 8</button><button class="contact" data-f="25">На земле · 25</button><button data-f="32">Лежит · 32</button><select aria-label="Скорость"><option value="1">×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select><output>кадр 0 / 45</output></div>
+<div class="keys"><img src="keys_death.jpg" alt="Ключевые позы смерти: 0, 8, 19, 25, 45"></div>
+</section>
+
+<section id="checks"><h2>Проверки</h2>
+<table>
+<tr><th>Что</th><th>Результат</th></tr>
+<tr><td>Пакет для Unity</td><td class="num">один FBX: сетка + 21 кость + 6 клипов (Idle, Walk, Slam, Hit, Death + Mend от 27.09), имена клипов в FBX точно как в контракте (без префикса арматуры)</td></tr>
+<tr><td>FBX после повторного импорта</td><td class="num">совпадает с клипами в Blender: разница костей и вершин 0,0 мм во всех кадрах</td></tr>
+<tr><td>Клипы 26.09 после добавления Mend</td><td class="num">все 5 старых клипов бит в бит те же: 990 кривых, 41 580 ключей, диапазоны кадров, сетка, веса и bind-поза совпадают с принятым FBX</td></tr>
+<tr><td>Mend: тайминг</td><td class="num">обе плиты впервые в земле на кадре 8 (на 7 ещё в 29 см над землёй); верх купола и таз выше всего точно на кадре 30; на 39 кончики плит у поверхности (−1 мм и +16 мм), на 40 плиты целиком над землёй; кадр 50 = первый кадр Idle (разница 0,0 мм)</td></tr>
+<tr><td>Mend: опоры и тело</td><td class="num">кулаки в земле 10–38 не сдвигаются (0,2 мм), плиты на 9–14 см в земле; кости задних лап стоят на месте (0 мм), подошвы не уходят в землю глубже 2 мм; кожа подошвы перекатывается за наклоном корпуса до 1,4 см (в принятом ударе до 4 см); брюхо не ниже 12 см, морда в канале не ниже 4,6 см над землёй</td></tr>
+<tr><td>Перемещение корня</td><td class="num">0 во всех клипах; таз гуляет в пределах 2–12 см</td></tr>
+<tr><td>Кадр контакта удара</td><td class="num">плиты впервые уходят в землю на кадре 15; в кадре 14 они ещё в 45 см над землёй</td></tr>
+<tr><td>Плиты в удержании 15–60</td><td class="num">на 15→16 плиты доходят вглубь (5 см), дальше до 60 кулаки не сдвигаются (0,0 мм), глубина 11–22 см; тело не ниже −4 мм; на 61 плиты уже над землёй</td></tr>
+<tr><td>Опоры шага против 2,4 м/с</td><td class="num">по сетке в игре: вершины на земле (до 3 мм) едут назад со скоростью 2,38–2,41 м/с, за одну опору съезжают не больше чем на 0,93 см (плиты 0,15 и 0,5 см, задние лапы 0,34 и 0,93 см); ничего не уходит в землю</td></tr>
+<tr><td>Швы петель</td><td class="num">Idle 0/60 и Walk 0/16 совпадают точно</td></tr>
+<tr><td>Idle / Hit: опоры</td><td class="num">вершины на земле съезжают не больше чем на 1,4 см (левая плита качается на плоском низе); в Hit плиты намеренно проскальзывают на 3–8 см</td></tr>
+<tr><td>Смерть</td><td class="num">брюхо и морда на земле с кадра 25, в конце тело на −5 мм, лапы и плиты на −2…0 мм (не парит и не проваливается); кадры 32–45 кости сдвигаются ≤ 2 мм</td></tr>
+<tr><td>Сетка</td><td class="num">24 000 треугольников (лимит 25 000), 1 материал, до 4 костей на вершину, веса в сумме 1</td></tr>
+<tr><td>Независимая проверка</td><td class="num">FBX разобран побайтно и заново импортирован в пустую сцену: 8 из 8 проверок пройдены, цифры в <a href="../../animation/unity_package/verification.json">verification.json</a>; повторная независимая проверка 27.09 (animation/check_0927): все проверки пройдены, одна правка — плавный замах Mend</td></tr>
+</table></section>
+
+<section id="issues"><h2>Известные вопросы</h2>
+<ul>
+<li>Исправлено при независимой проверке 27.09: замах Mend притормаживал на кадре 3 и снова разгонялся (кулак 9 → 16 → 9 → 27 см за кадр) — кадры 1–2 переинтерполированы, теперь разгон ровный (4 → 13 → 22 → 29 см за кадр). Кадры 0 и 3–50, контакт 8, волна 30 и все старые клипы не изменились.</li>
+<li>Mend (27.09): вздымание на кадре 30 ограничено длиной рук — плиты вбиты в землю, и выше плечи подняться не могут; взято 90 % задуманного подъёма (купол +15 см к кадру 28), дальше кулаки начали бы выходить из земли. Если нужен толчок сильнее — его надо добирать эффектом.</li>
+<li>Mend: в замахе на кадрах 4–6 растягивается кожа у ключицы (короткие рёбра, как в ударе) — с игровой камеры не видно, рваных или торчащих вершин нет.</li>
+<li>Исправлено при проверке: в шаге низ плиты проскальзывал до 4 см за опору (стоял кулак, а не точка касания), левая задняя ступня — до 5 см (сетка ступни наполовину привязана к голени); в Idle кончик правой плиты ездил на 3 см; в смерти грудь висела в 9 см над землёй на подбородке. Теперь касание катится без проскальзывания, а брюхо лежит на земле.</li>
+<li>Левая задняя ступня в шаге: точка опоры стоит, но часть подошвы в 5–10 мм над землёй сминается вслед за голенью (до 5 см за опору) — это веса ступни в риге, а не анимация. С игровой камеры ступня почти закрыта телом.</li>
+<li>Шаг: каждая плита стоит на земле 5,5 из 16 кадров (длинная жёсткая плита дальше не дотягивается), поэтому шаг выглядит как тяжёлые прыжки на кулаках, а не ровная ходьба. Если скорость в симуляции не 2,4 м/с, скорость клипа в Unity надо умножить на скорость/2,4.</li>
+<li>Удар: в ролике плиты висят над головой ~0,8 с и бьют на 1,6 с; у нас задержка наверху всего 2 кадра и удар на 0,5 с (тик 15), поэтому замах читается быстрее, чем в ролике.</li>
+<li>Текстура ORM в FBX не попадает — материал в Unity собирать вручную из unity_package/textures.</li>
+<li>Кадры сняты в Blender Workbench, свет темнее игрового; смотреть движение, а не цвет.</li>
+</ul></section>
+<div class="links"><a href="../../animation/unity_package/ForestRootSnarer.fbx">ForestRootSnarer.fbx</a><a href="../../animation/unity_package/export.json">export.json</a><a href="../../animation/unity_package/verification.json">verification.json</a><a href="../../animation/ForestRootSnarer_Anim_r01.blend">Рабочая сцена (ключи)</a><a href="../../animation/ForestRootSnarer_Package.blend">Сцена пакета</a><a href="media.json">media.json</a></div>
+<p style="font-size:13px">Одноразовые клипы в видео держат последний кадр ещё 10 кадров (подписано «стоп-кадр»). Кнопки событий ставят оба вида на нужный кадр.</p>
+</main>
+<script>
+document.querySelectorAll('.take').forEach(sec=>{
+ const vids=[...sec.querySelectorAll('video')],[g,s]=vids,n=+sec.dataset.n,out=sec.querySelector('output');
+ const cur=()=>Math.floor(g.currentTime*30+1e-4);
+ const setF=f=>vids.forEach(v=>{v.pause();v.currentTime=(Math.max(0,f)+0.5)/30});
+ sec.querySelector('.play').onclick=()=>{if(g.paused){s.currentTime=g.currentTime;vids.forEach(v=>v.play())}else vids.forEach(v=>v.pause())};
+ sec.querySelector('.prev').onclick=()=>setF(cur()-1);
+ sec.querySelector('.next').onclick=()=>setF(cur()+1);
+ sec.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>setF(+b.dataset.f));
+ sec.querySelector('select').onchange=e=>vids.forEach(v=>v.playbackRate=+e.target.value);
+ (function tick(){const f=cur();out.value=f>n?`кадр ${n} / ${n} · стоп-кадр`:`кадр ${f} / ${n}`;
+  if(!g.paused&&s&&Math.abs(s.currentTime-g.currentTime)>0.06)s.currentTime=g.currentTime;requestAnimationFrame(tick)})();
+});
+</script></html>

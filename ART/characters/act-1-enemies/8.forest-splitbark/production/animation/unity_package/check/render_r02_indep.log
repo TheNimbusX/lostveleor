@@ -1,0 +1,31 @@
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\check_render.py:37: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  world.use_nodes = True
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\check_render.py:46: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  gm.use_nodes = True
+00:04.890  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_00.00.png'
+00:05.265  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_03.00.png'
+00:05.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_08.00.png'
+00:06.015  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_12.00.png'
+00:06.359  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_26.00.png'
+00:06.671  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollCurl_30.00.png'
+00:07.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollLoop_00.00.png'
+00:07.484  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollLoop_03.00.png'
+00:07.890  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollLoop_06.00.png'
+00:08.265  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollLoop_09.00.png'
+00:08.671  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_00.00.png'
+00:09.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_08.00.png'
+00:09.484  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_11.00.png'
+00:09.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_13.00.png'
+00:10.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_17.00.png'
+00:10.718  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollUncurl_30.00.png'
+00:11.093  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_00.00.png'
+00:11.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_02.00.png'
+00:11.796  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_08.00.png'
+00:12.203  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_10.00.png'
+00:12.609  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_22.00.png'
+00:12.984  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\check\renders\game_RollDizzy_45.00.png'
+FBX version: 7400
+RENDER_DONE
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

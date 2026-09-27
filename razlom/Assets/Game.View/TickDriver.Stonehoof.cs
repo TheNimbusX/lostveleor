@@ -11,7 +11,8 @@ namespace Game.View
         /// Сценарий героя против врага: запись Камнекопыта в редакторе или -capture-enemy-case
         /// изолированной съёмки. dodge — уходит из замаха, tank — стоит и принимает удары,
         /// stun — глушит якорем посреди замаха, turn — обходит врага по кругу, чтобы тот
-        /// разворачивался на месте, death — добивает. Любой другой (wall) — стоит.
+        /// разворачивался на месте, hug — стоит вплотную и не бьёт (всплеск Шипомёта),
+        /// death — добивает. Любой другой (wall) — стоит.
         /// </summary>
         public static string EnemyReviewCase => StonehoofReviewCase ?? CaptureRig.EnemyCase;
 #else
@@ -21,7 +22,18 @@ namespace Game.View
         private static readonly int AnchorSlamPool = FindPool(AbilityDefinition.AnchorSlamId);
         private int _enemyCaseGeneration = -1, _enemyCaseStart, _enemyCaseDodgeKey, _enemyCaseCastTick;
         private int _enemyCaseSeenImpact, _enemyCaseWindup, _enemyCaseSlamLead, _enemyCaseThreatSerial;
-        private FixVec2 _enemyCaseAnchor, _enemyCaseDodgeTarget;
+        private int _enemyCaseShotSerial, _enemyCaseVictim, _enemyCaseNextKillTick;
+        private FixVec2 _enemyCaseAnchor, _enemyCaseDodgeTarget, _enemyCaseShotTarget;
+
+        // Уход от выстрела Шипомёта (dodge): метки у шипа нет, герой читает замах — шаг
+        // вбок через 8 тиков после его начала (реакция игрока), на 1,5 м от линии полёта:
+        // полоса попадания — 2 × 0,25 м плюс тело героя.
+        private const int ThornShotReactTicks = 8;
+        private static readonly Fix64 ThornShotSidestep = Fix64.Ratio(3, 2);
+
+        // Добивание (death): после смерти врага следующего бьём через 1,5 с — раскол
+        // Расщепеня и прыжок детёнышей видно целиком, а не рубку поверх них.
+        private const int DeathCaseKillPauseTicks = 45;
 
         // Общий уход из меток (dodge): запас к телу героя, как у бота стенда баланса; метка
         // ближе DodgeWatchTicks до контакта уже гонит героя наружу — 20 тиков хватает выйти
@@ -43,6 +55,7 @@ namespace Game.View
                 _enemyCaseGeneration = Generation; _enemyCaseStart = tick;
                 _enemyCaseAnchor = entities.Position[Simulation.PlayerId];
                 _enemyCaseDodgeKey = _enemyCaseCastTick = _enemyCaseSeenImpact = _enemyCaseThreatSerial = -1;
+                _enemyCaseShotSerial = _enemyCaseVictim = -1; _enemyCaseNextKillTick = 0;
                 _enemyCaseWindup = 0; _enemyCaseSlamLead = 16;
             }
             int enemy = -1;
@@ -55,8 +68,15 @@ namespace Game.View
                 case "dodge": CaptureEnemyDodge(tick, hero); break;
                 case "stun": CaptureEnemyStun(enemy, tick, hero); break;
                 case "turn": CaptureEnemyTurn(enemy, hero); break;
+                case "hug": CaptureEnemyHug(enemy, hero); break;
                 case "death":
                     if (tick - _enemyCaseStart <= 100) break;
+                    if (enemy != _enemyCaseVictim)
+                    {
+                        if (_enemyCaseVictim >= 0) _enemyCaseNextKillTick = tick + DeathCaseKillPauseTicks;
+                        _enemyCaseVictim = enemy;
+                    }
+                    if (tick < _enemyCaseNextKillTick) break;
                     // Один HP: запись показывает смерть, а не долгую рубку.
                     if (entities.Health[enemy] > 1) entities.Health[enemy] = 1;
                     _pending.Flags = (byte)InputFlags.Attack; _pending.AttackTarget = enemy;
@@ -89,6 +109,7 @@ namespace Game.View
             // Всё остальное, что нарисовано на земле: сектор Хранителя и Расщепеня, линия
             // и всплеск Шипомёта, корни Корнехвата — и любая будущая метка без своей ветки.
             if (CaptureTelegraphDodge(tick, hero)) return;
+            if (CaptureThornShotDodge(tick, hero)) return;
             for (int id = 1; id < entities.Count; id++)
             {
                 if (!entities.Alive[id]) continue;
@@ -140,6 +161,37 @@ namespace Game.View
             }
             MoveCaptured(_enemyCaseDodgeTarget);
             return true;
+        }
+
+        /// <summary>
+        /// Уход от выстрела Шипомёта: направление шипа фиксируется в начале замаха, метки
+        /// нет — через ThornShotReactTicks после начала (или пока шип в воздухе) шаг вбок
+        /// от линии полёта, к исходной точке героя, чтобы он не уползал с поляны. Точка
+        /// одна на выстрел. Показывает, что от шипа можно увернуться без полосы на земле.
+        /// </summary>
+        private bool CaptureThornShotDodge(int tick, FixVec2 hero)
+        {
+            var sim = Sim; var entities = sim.Entities;
+            for (int id = 1; id < entities.Count; id++)
+            {
+                FixVec2 direction; int serial;
+                if (sim.TryGetThornShot(id, out var shot)) { direction = shot.Direction; serial = shot.Serial; }
+                else if (entities.Alive[id] && sim.TryGetThorncasterAction(id, out var action)
+                         && action.Action == ThornAction.Shot && action.Erupted == 0
+                         && tick >= action.StartTick + ThornShotReactTicks)
+                { direction = action.Direction; serial = action.Serial; }
+                else continue;
+                if (serial != _enemyCaseShotSerial)
+                {
+                    _enemyCaseShotSerial = serial;
+                    var aside = new FixVec2(-direction.Y, direction.X);
+                    if (FixVec2.Dot(_enemyCaseAnchor - hero, aside) < Fix64.Zero) aside = -aside;
+                    _enemyCaseShotTarget = hero + aside * ThornShotSidestep;
+                }
+                MoveCaptured(_enemyCaseShotTarget);
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Накроет ли точку любая ещё открытая метка — и та, что упадёт позже.</summary>
@@ -268,6 +320,18 @@ namespace Game.View
             from = from.LengthSq < Fix64.Ratio(1, 100) ? new FixVec2(Fix64.One, Fix64.Zero) : from.Normalized();
             var ahead = new FixVec2(from.X * EnemyTurnLead - from.Y * EnemyTurnLead, from.X * EnemyTurnLead + from.Y * EnemyTurnLead);
             MoveCaptured(center + ahead * radius);
+        }
+
+        /// <summary>
+        /// Вплотную к врагу и без ударов: 1,4 м от его центра. Шипомёт отвечает всплеском
+        /// (ближе 2,6 м), Расщепень кусает, Корнехват бьёт корнями в упор.
+        /// </summary>
+        private void CaptureEnemyHug(int enemy, FixVec2 hero)
+        {
+            var center = Sim.Entities.Position[enemy];
+            var toEnemy = center - hero;
+            Fix64 hold = Fix64.Ratio(7, 5), slack = hold + Fix64.Ratio(3, 10);
+            if (toEnemy.LengthSq > slack * slack) MoveCaptured(center - toEnemy.Normalized() * hold);
         }
 
         private void MoveCaptured(FixVec2 point)

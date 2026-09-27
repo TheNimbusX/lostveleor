@@ -1,0 +1,70 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\model\\ForestSplitter_24k_candidate.blend",
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.blend",
+  "bones": [
+    "root",
+    "body",
+    "spine",
+    "neck",
+    "head",
+    "shell_L",
+    "shell_R",
+    "leg_front_L_upper",
+    "leg_front_L_lower",
+    "leg_front_L_foot",
+    "leg_front_R_upper",
+    "leg_front_R_lower",
+    "leg_front_R_foot",
+    "leg_hind_L_upper",
+    "leg_hind_L_lower",
+    "leg_hind_L_foot",
+    "leg_hind_R_upper",
+    "leg_hind_R_lower",
+    "leg_hind_R_foot"
+  ],
+  "heat_unweighted_vertices": 0,
+  "heat_proxy": {
+    "proxy_faces": 76480,
+    "proxy_components": 69,
+    "proxy_dropped_vertices": 690,
+    "proxy_unweighted_vertices": 0,
+    "voxel_m": 0.012
+  },
+  "weights": {
+    "labels": {
+      "body": 5018,
+      "shell_L": 3667,
+      "shell_R": 3225
+    },
+    "band_verts": {
+      "shell_L": 1893,
+      "shell_R": 1845
+    },
+    "band": {
+      "free_verts": 2790,
+      "iterations": {
+        "shell_L": 594,
+        "shell_R": 589
+      },
+      "radius_m": 0.25
+    }
+  },
+  "ik": {
+    "IK_leg_front_L": {
+      "pole_angle_deg": -155.0,
+      "rest_joint_drift_m_if_enabled": 0.0012
+    },
+    "IK_leg_front_R": {
+      "pole_angle_deg": -25.0,
+      "rest_joint_drift_m_if_enabled": 0.0012
+    },
+    "IK_leg_hind_L": {
+      "pole_angle_deg": -115.0,
+      "rest_joint_drift_m_if_enabled": 0.00117
+    },
+    "IK_leg_hind_R": {
+      "pole_angle_deg": -65.0,
+      "rest_joint_drift_m_if_enabled": 0.00117
+    }
+  }
+}

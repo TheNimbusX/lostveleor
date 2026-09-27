@@ -1,0 +1,15 @@
+{
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.fbx",
+  "textures": [
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_Color.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_NormalGL.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\textures\\ForestSplitter_ORM.png"
+  ],
+  "fps": 30,
+  "fbx_axes": {
+    "forward": "-Z",
+    "up": "Y"
+  },
+  "deform_only": true,
+  "leaf_bones": false
+}

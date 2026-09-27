@@ -1,0 +1,15 @@
+00:02.343  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\Pelag_Model_Candidate.blend"
+00:06.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\mount_preview.png'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_saber_Candidate.fbx'
+export finished in 0.0257 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_anchor_Candidate.fbx'
+export finished in 0.0146 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_grip_Candidate.fbx'
+export finished in 0.0129 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_link_Candidate.fbx'
+export finished in 0.0108 sec.

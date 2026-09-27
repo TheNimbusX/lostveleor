@@ -1,0 +1,2226 @@
+{
+  "schema": "pelag-production-audit/1",
+  "summary_ru": [
+    "Принятым считаем только базовый VFX Вихря. Его текущие префабы, назначенные материалы, следы и зависимости зафиксированы контрольными суммами; это не приёмка остальных эффектов, анимаций или звука.",
+    "Сейчас работают 64 таланта. Места для набора 80 уже хватает: по восемь независимых выборов у десяти способностей. Нужно добавить две линии и согласовать все 80 результатов до изменения механик.",
+    "В общем наборе механических переключателей свободны 14 мест. Поэтому сначала распределяем новые таланты на числовые изменения и новые механики; расширение этого набора решается по утверждённому листу.",
+    "Сохранение лагеря версии 8 не хранит таланты забега. Само добавление 80 талантов не требует переделывать сохранения; прежний порядок способностей и их постоянные идентификаторы сохраняются.",
+    "Базовая автоатака сейчас состоит из двух ударов. Для трёхударной связки есть пригодные игровые часы и события, но нужен настоящий третий клип и явные правила продолжения, отмены и сброса серии.",
+    "Звуковые исходники и готовые записи есть, но несколько способностей используют общие звуки. Для каждого навыка в аудите указан текущий звук, недостающие события и найденные сведения о происхождении.",
+    "До изменений Пелага выполнен общий технический базовый прогон: 541 проверка симуляции и 32 проверки вспомогательного отображения/звука прошли. Это исходная точка, а не проверка нового Пелага и не художественная приёмка."
+  ],
+  "created_at_utc": "2026-09-26T22:29:09.408900+00:00",
+  "workspace": "C:/Users/d.grab/Desktop/the-game",
+  "git_head": "94ef389a14195f73e8edab190f99a9a6560b6eda",
+  "scope": {
+    "mode": "read_only_audit_plus_this_new_json_only",
+    "current_stage": "design_and_model_gate",
+    "no_runtime_changes": true,
+    "no_unity_play": true,
+    "no_generated_media_or_paid_calls": true,
+    "tests_executed": false,
+    "approval_truth": "Latest user direction: only base Whirlwind VFX is accepted. Existing models, animations, other VFX and audio are not considered accepted because old docs say otherwise.",
+    "gates": [
+      "Review the complete 80-talent sheet before implementing planned mechanics.",
+      "Root owns design/review page; separate model agent owns new model.",
+      "Do not change existing code, AGENTS, UI, mobs or arenas in this audit."
+    ],
+    "tests_executed_note": "False refers to this audit agent; parent baseline results are in validation.baseline_results."
+  },
+  "talent_capacity": {
+    "current": {
+      "ability_pool": 10,
+      "talent_lines": 8,
+      "talents_per_line": 8,
+      "runtime_talents": 64,
+      "selection_storage": "int[10], one low-8-bit mask per pool ability",
+      "node_buffer_per_build": 8,
+      "blocked_lines": [
+        8,
+        9
+      ]
+    },
+    "supports_80_selection_masks": true,
+    "supports_80_runtime_catalog_now": false,
+    "required_after_sheet_review": [
+      "Append SabreTalentLine Skewer=8 and Backblast=9; set LineCount=10; keep pool and old talent indices stable.",
+      "Append two line keys and supply numeric/flag nodes, texts and approved outcomes; DeveloperTalents bool array follows constants.",
+      "Update card tests and the explicit test requiring no talents for pool8/9.",
+      "Assign each new mechanic a durable key and flag/effect/state contract; numeric nodes consume no AbilityFlag bits."
+    ],
+    "flag_capacity": {
+      "storage": "ulong",
+      "reserved_bits": [
+        0
+      ],
+      "allocated_bits": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "used_named_flags": 49,
+      "free_bits": [
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "free_count": 14,
+      "warning": "16 new talent slots do not imply 16 new flags. If all are distinct mechanical flags, the present ulong is short by 2. Do not reuse reserved bit0 or alias flags before approved design determines demand.",
+      "hash_behavior": "AbilityBuild hashes low32 and hashes high32 when nonzero; any multiword replacement must preserve/explicitly version deterministic hashing."
+    },
+    "identifier_policy": "80 identifiers below are audit allocation map only. First64 are current runtime keys. Last16 are candidate namespaces, not approved mechanics or code changes. All80 candidate FNV-1a UTF-16LE IDs are collision-free against each other; broader database collisions not audited.",
+    "identifier_slots": [
+      {
+        "audit_slot": 1,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 0,
+        "key": "talent.sabre.whirlwind.1",
+        "stable_id_fnv1a_utf16le": 748250439,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 2,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 1,
+        "key": "talent.sabre.whirlwind.2",
+        "stable_id_fnv1a_utf16le": -1164839412,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 3,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 2,
+        "key": "talent.sabre.whirlwind.3",
+        "stable_id_fnv1a_utf16le": -527142795,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindCrowd",
+        "flag_bit": 1
+      },
+      {
+        "audit_slot": 4,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 3,
+        "key": "talent.sabre.whirlwind.4",
+        "stable_id_fnv1a_utf16le": 1854734650,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindRefund",
+        "flag_bit": 2
+      },
+      {
+        "audit_slot": 5,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 4,
+        "key": "talent.sabre.whirlwind.5",
+        "stable_id_fnv1a_utf16le": -1802536029,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindChannel",
+        "flag_bit": 3
+      },
+      {
+        "audit_slot": 6,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 5,
+        "key": "talent.sabre.whirlwind.6",
+        "stable_id_fnv1a_utf16le": 579341416,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindPull",
+        "flag_bit": 28
+      },
+      {
+        "audit_slot": 7,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 6,
+        "key": "talent.sabre.whirlwind.7",
+        "stable_id_fnv1a_utf16le": 1217038033,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindWave",
+        "flag_bit": 29
+      },
+      {
+        "audit_slot": 8,
+        "pool_index": 0,
+        "line": "Whirlwind",
+        "talent_index": 7,
+        "key": "talent.sabre.whirlwind.8",
+        "stable_id_fnv1a_utf16le": -696051818,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WhirlwindCocoon",
+        "flag_bit": 30
+      },
+      {
+        "audit_slot": 9,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 0,
+        "key": "talent.sabre.cleave.1",
+        "stable_id_fnv1a_utf16le": -831551317,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveOnTheMove",
+        "flag_bit": 4
+      },
+      {
+        "audit_slot": 10,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 1,
+        "key": "talent.sabre.cleave.2",
+        "stable_id_fnv1a_utf16le": 1550326128,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 11,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 2,
+        "key": "talent.sabre.cleave.3",
+        "stable_id_fnv1a_utf16le": -2106944551,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveBigGame",
+        "flag_bit": 5
+      },
+      {
+        "audit_slot": 12,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 3,
+        "key": "talent.sabre.cleave.4",
+        "stable_id_fnv1a_utf16le": 1081538534,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveKillRefund",
+        "flag_bit": 6
+      },
+      {
+        "audit_slot": 13,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 4,
+        "key": "talent.sabre.cleave.5",
+        "stable_id_fnv1a_utf16le": 1719235151,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveFan",
+        "flag_bit": 7
+      },
+      {
+        "audit_slot": 14,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 5,
+        "key": "talent.sabre.cleave.6",
+        "stable_id_fnv1a_utf16le": -193854700,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveSunder",
+        "flag_bit": 31
+      },
+      {
+        "audit_slot": 15,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 6,
+        "key": "talent.sabre.cleave.7",
+        "stable_id_fnv1a_utf16le": 443841917,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveDouble",
+        "flag_bit": 32
+      },
+      {
+        "audit_slot": 16,
+        "pool_index": 1,
+        "line": "Cleave",
+        "talent_index": 7,
+        "key": "talent.sabre.cleave.8",
+        "stable_id_fnv1a_utf16le": -662642294,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "CleaveWave",
+        "flag_bit": 33
+      },
+      {
+        "audit_slot": 17,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 0,
+        "key": "talent.sabre.blaze.1",
+        "stable_id_fnv1a_utf16le": 114303923,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeTrail",
+        "flag_bit": 8
+      },
+      {
+        "audit_slot": 18,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 1,
+        "key": "talent.sabre.blaze.2",
+        "stable_id_fnv1a_utf16le": -1798785928,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 19,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 2,
+        "key": "talent.sabre.blaze.3",
+        "stable_id_fnv1a_utf16le": -1161089311,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeEvadeRefund",
+        "flag_bit": 9
+      },
+      {
+        "audit_slot": 20,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 3,
+        "key": "talent.sabre.blaze.4",
+        "stable_id_fnv1a_utf16le": 2027393774,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeIgnite",
+        "flag_bit": 10
+      },
+      {
+        "audit_slot": 21,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 4,
+        "key": "talent.sabre.blaze.5",
+        "stable_id_fnv1a_utf16le": -1629876905,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeAbilities",
+        "flag_bit": 11
+      },
+      {
+        "audit_slot": 22,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 5,
+        "key": "talent.sabre.blaze.6",
+        "stable_id_fnv1a_utf16le": 752000540,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeFlare",
+        "flag_bit": 34
+      },
+      {
+        "audit_slot": 23,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 6,
+        "key": "talent.sabre.blaze.7",
+        "stable_id_fnv1a_utf16le": 1389697157,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeHaste",
+        "flag_bit": 35
+      },
+      {
+        "audit_slot": 24,
+        "pool_index": 2,
+        "line": "Blaze",
+        "talent_index": 7,
+        "key": "talent.sabre.blaze.8",
+        "stable_id_fnv1a_utf16le": -1329998334,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BlazeStoke",
+        "flag_bit": 36
+      },
+      {
+        "audit_slot": 25,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 0,
+        "key": "talent.sabre.squall.1",
+        "stable_id_fnv1a_utf16le": 1207325109,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallKillCooldown",
+        "flag_bit": 12
+      },
+      {
+        "audit_slot": 26,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 1,
+        "key": "talent.sabre.squall.2",
+        "stable_id_fnv1a_utf16le": 1845021726,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 27,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 2,
+        "key": "talent.sabre.squall.3",
+        "stable_id_fnv1a_utf16le": -1812248953,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallInvulnerable",
+        "flag_bit": 13
+      },
+      {
+        "audit_slot": 28,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 3,
+        "key": "talent.sabre.squall.4",
+        "stable_id_fnv1a_utf16le": -1981157976,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallFinisher",
+        "flag_bit": 14
+      },
+      {
+        "audit_slot": 29,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 4,
+        "key": "talent.sabre.squall.5",
+        "stable_id_fnv1a_utf16le": -1343461359,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallFiveHops",
+        "flag_bit": 15
+      },
+      {
+        "audit_slot": 30,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 5,
+        "key": "talent.sabre.squall.6",
+        "stable_id_fnv1a_utf16le": -705764742,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallReturn",
+        "flag_bit": 37
+      },
+      {
+        "audit_slot": 31,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 6,
+        "key": "talent.sabre.squall.7",
+        "stable_id_fnv1a_utf16le": -68068125,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallRepeat",
+        "flag_bit": 38
+      },
+      {
+        "audit_slot": 32,
+        "pool_index": 3,
+        "line": "Squall",
+        "talent_index": 7,
+        "key": "talent.sabre.squall.8",
+        "stable_id_fnv1a_utf16le": -236977148,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "SquallOpener",
+        "flag_bit": 39
+      },
+      {
+        "audit_slot": 33,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 0,
+        "key": "talent.sabre.anchor_slam.1",
+        "stable_id_fnv1a_utf16le": -1150846178,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 34,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 1,
+        "key": "talent.sabre.anchor_slam.2",
+        "stable_id_fnv1a_utf16le": -1788542795,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 35,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 2,
+        "key": "talent.sabre.anchor_slam.3",
+        "stable_id_fnv1a_utf16le": 1868727884,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 36,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 3,
+        "key": "talent.sabre.anchor_slam.4",
+        "stable_id_fnv1a_utf16le": 1231031267,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "AnchorSlamStunnedBonus",
+        "flag_bit": 16
+      },
+      {
+        "audit_slot": 37,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 4,
+        "key": "talent.sabre.anchor_slam.5",
+        "stable_id_fnv1a_utf16le": 593334650,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "AnchorSlamThreeWays",
+        "flag_bit": 17
+      },
+      {
+        "audit_slot": 38,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 5,
+        "key": "talent.sabre.anchor_slam.6",
+        "stable_id_fnv1a_utf16le": -44361967,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "AnchorSlamCrack",
+        "flag_bit": 40
+      },
+      {
+        "audit_slot": 39,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 6,
+        "key": "talent.sabre.anchor_slam.7",
+        "stable_id_fnv1a_utf16le": -682058584,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 40,
+        "pool_index": 4,
+        "line": "AnchorSlam",
+        "talent_index": 7,
+        "key": "talent.sabre.anchor_slam.8",
+        "stable_id_fnv1a_utf16le": -1319755201,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "AnchorSlamRecoil",
+        "flag_bit": 41
+      },
+      {
+        "audit_slot": 41,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 0,
+        "key": "talent.sabre.wreck.1",
+        "stable_id_fnv1a_utf16le": 1311465891,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 42,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 1,
+        "key": "talent.sabre.wreck.2",
+        "stable_id_fnv1a_utf16le": -601623960,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 43,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 2,
+        "key": "talent.sabre.wreck.3",
+        "stable_id_fnv1a_utf16le": 36072657,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckBigGame",
+        "flag_bit": 18
+      },
+      {
+        "audit_slot": 44,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 3,
+        "key": "talent.sabre.wreck.4",
+        "stable_id_fnv1a_utf16le": -1070411554,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckRefund",
+        "flag_bit": 19
+      },
+      {
+        "audit_slot": 45,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 4,
+        "key": "talent.sabre.wreck.5",
+        "stable_id_fnv1a_utf16le": -432714937,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckFourthStrike",
+        "flag_bit": 20
+      },
+      {
+        "audit_slot": 46,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 5,
+        "key": "talent.sabre.wreck.6",
+        "stable_id_fnv1a_utf16le": 1949162508,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckUnstoppable",
+        "flag_bit": 42
+      },
+      {
+        "audit_slot": 47,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 6,
+        "key": "talent.sabre.wreck.7",
+        "stable_id_fnv1a_utf16le": -1708108171,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckConcuss",
+        "flag_bit": 43
+      },
+      {
+        "audit_slot": 48,
+        "pool_index": 5,
+        "line": "Wreck",
+        "talent_index": 7,
+        "key": "talent.sabre.wreck.8",
+        "stable_id_fnv1a_utf16le": -132836366,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "WreckMomentum",
+        "flag_bit": 44
+      },
+      {
+        "audit_slot": 49,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 0,
+        "key": "talent.sabre.boarding.1",
+        "stable_id_fnv1a_utf16le": -1667466239,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 50,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 1,
+        "key": "talent.sabre.boarding.2",
+        "stable_id_fnv1a_utf16le": -1029769622,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingStun",
+        "flag_bit": 21
+      },
+      {
+        "audit_slot": 51,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 2,
+        "key": "talent.sabre.boarding.3",
+        "stable_id_fnv1a_utf16le": -392073005,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingTwoCharges",
+        "flag_bit": 22
+      },
+      {
+        "audit_slot": 52,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 3,
+        "key": "talent.sabre.boarding.4",
+        "stable_id_fnv1a_utf16le": 245623612,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingHilt",
+        "flag_bit": 23
+      },
+      {
+        "audit_slot": 53,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 4,
+        "key": "talent.sabre.boarding.5",
+        "stable_id_fnv1a_utf16le": 883320229,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingSweep",
+        "flag_bit": 24
+      },
+      {
+        "audit_slot": 54,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 5,
+        "key": "talent.sabre.boarding.6",
+        "stable_id_fnv1a_utf16le": 1521016846,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingMomentum",
+        "flag_bit": 45
+      },
+      {
+        "audit_slot": 55,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 6,
+        "key": "talent.sabre.boarding.7",
+        "stable_id_fnv1a_utf16le": -2136253833,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingInterrupt",
+        "flag_bit": 46
+      },
+      {
+        "audit_slot": 56,
+        "pool_index": 6,
+        "line": "Boarding",
+        "talent_index": 7,
+        "key": "talent.sabre.boarding.8",
+        "stable_id_fnv1a_utf16le": 1183198800,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "BoardingSureCrit",
+        "flag_bit": 47
+      },
+      {
+        "audit_slot": 57,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 0,
+        "key": "talent.sabre.flask.1",
+        "stable_id_fnv1a_utf16le": -452163200,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 58,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 1,
+        "key": "talent.sabre.flask.2",
+        "stable_id_fnv1a_utf16le": 1460926651,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 59,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 2,
+        "key": "talent.sabre.flask.3",
+        "stable_id_fnv1a_utf16le": 823230034,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "FlaskFuel",
+        "flag_bit": 25
+      },
+      {
+        "audit_slot": 60,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 3,
+        "key": "talent.sabre.flask.4",
+        "stable_id_fnv1a_utf16le": -1558647411,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "FlaskOil",
+        "flag_bit": 26
+      },
+      {
+        "audit_slot": 61,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 4,
+        "key": "talent.sabre.flask.5",
+        "stable_id_fnv1a_utf16le": 2098623268,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "FlaskRing",
+        "flag_bit": 27
+      },
+      {
+        "audit_slot": 62,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 5,
+        "key": "talent.sabre.flask.6",
+        "stable_id_fnv1a_utf16le": -283254177,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "FlaskTwoCharges",
+        "flag_bit": 48
+      },
+      {
+        "audit_slot": 63,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 6,
+        "key": "talent.sabre.flask.7",
+        "stable_id_fnv1a_utf16le": -920950794,
+        "status": "runtime_existing",
+        "node_kind": "numeric_stat",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 64,
+        "pool_index": 7,
+        "line": "Flask",
+        "talent_index": 7,
+        "key": "talent.sabre.flask.8",
+        "stable_id_fnv1a_utf16le": 992139057,
+        "status": "runtime_existing",
+        "node_kind": "mechanical_flag",
+        "flag": "FlaskShrapnel",
+        "flag_bit": 49
+      },
+      {
+        "audit_slot": 65,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 0,
+        "key": "talent.sabre.skewer.1",
+        "stable_id_fnv1a_utf16le": -282089954,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 66,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 1,
+        "key": "talent.sabre.skewer.2",
+        "stable_id_fnv1a_utf16le": -919786571,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 67,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 2,
+        "key": "talent.sabre.skewer.3",
+        "stable_id_fnv1a_utf16le": -1557483188,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 68,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 3,
+        "key": "talent.sabre.skewer.4",
+        "stable_id_fnv1a_utf16le": 2099787491,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 69,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 4,
+        "key": "talent.sabre.skewer.5",
+        "stable_id_fnv1a_utf16le": 1462090874,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 70,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 5,
+        "key": "talent.sabre.skewer.6",
+        "stable_id_fnv1a_utf16le": 824394257,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 71,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 6,
+        "key": "talent.sabre.skewer.7",
+        "stable_id_fnv1a_utf16le": 186697640,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 72,
+        "pool_index": 8,
+        "line": "Skewer",
+        "talent_index": 7,
+        "key": "talent.sabre.skewer.8",
+        "stable_id_fnv1a_utf16le": -450998977,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 73,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 0,
+        "key": "talent.sabre.backblast.1",
+        "stable_id_fnv1a_utf16le": -545300688,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 74,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 1,
+        "key": "talent.sabre.backblast.2",
+        "stable_id_fnv1a_utf16le": 1367789163,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 75,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 2,
+        "key": "talent.sabre.backblast.3",
+        "stable_id_fnv1a_utf16le": 730092546,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 76,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 3,
+        "key": "talent.sabre.backblast.4",
+        "stable_id_fnv1a_utf16le": -1651784899,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 77,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 4,
+        "key": "talent.sabre.backblast.5",
+        "stable_id_fnv1a_utf16le": 2005485780,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 78,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 5,
+        "key": "talent.sabre.backblast.6",
+        "stable_id_fnv1a_utf16le": -376391665,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 79,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 6,
+        "key": "talent.sabre.backblast.7",
+        "stable_id_fnv1a_utf16le": -1014088282,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      },
+      {
+        "audit_slot": 80,
+        "pool_index": 9,
+        "line": "Backblast",
+        "talent_index": 7,
+        "key": "talent.sabre.backblast.8",
+        "stable_id_fnv1a_utf16le": 899001569,
+        "status": "candidate_identifier_only_not_allocated_in_runtime",
+        "node_kind": "pending_80_talent_sheet_review",
+        "flag": null,
+        "flag_bit": null
+      }
+    ],
+    "evidence": [
+      {
+        "path": "razlom/Assets/Game.Sim/Run/RunLoadout.cs",
+        "line": 29
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Run/RunLoadout.cs",
+        "line": 123
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Abilities/PelagKit.cs",
+        "line": 29
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Abilities/SabreTalents.cs",
+        "line": 34
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Abilities/AbilityTypes.cs",
+        "line": 100
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Abilities/AbilityBuild.cs",
+        "line": 120
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Items/StableId.cs",
+        "line": 25
+      }
+    ]
+  },
+  "persistence": {
+    "camp_save_version": 8,
+    "camp_saves_run_talents": false,
+    "run_resume_codec_found": false,
+    "current_run_talents": "Transient RunLoadout masks are copied/applied/hashed; no on-disk run loadout serializer found in inspected Game.Sim/Run and CampSaveStore.",
+    "migration_for_80_run_talents_only": "No CampSaveCodec schema migration required. Version2 legacy 4x5 rank fields remain parsed and discarded; do not change those constants to10x8.",
+    "conditional_migration": "If later adding resumable runs or persistent talent ownership, use an explicit versioned format with stable pool/key mapping; not authorized in this stage.",
+    "replay_impact": "Changing talent pool/card availability changes deterministic outcomes for old seeds even without a save schema change. Preserve append-only pool IDs and keep baseline comparisons explicit.",
+    "evidence": [
+      {
+        "path": "razlom/Assets/Game.Sim/Camp/CampSaveCodec.cs",
+        "line": 9
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Camp/CampSaveCodec.cs",
+        "line": 19
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Camp/CampSaveCodec.cs",
+        "line": 89
+      },
+      {
+        "path": "razlom/Assets/Game.View/CampSaveStore.cs",
+        "line": 67
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Run/RunLoadout.cs",
+        "line": 199
+      }
+    ]
+  },
+  "base_attack_three_stage_readiness": {
+    "current": "A/B alternating basic attacks; second attack has heavier primary damage and cleave. There is no third basic-combo stage.",
+    "reusable_interfaces": [
+      "PlayerActionState: Serial, DefinitionId, Slot, StartTick, ContactTick, EndTick, Interrupted.",
+      "SetActionClock + CancelPlayerAction; tempo-derived windup/cycle and existing ability input buffer.",
+      "SimEvent.Attack carries variant in Amount; confirmed damage carries origin/variant; FrameEventContext retains originating SimulationTick.",
+      "WhirlwindPhase and TempoPhase demonstrate normalized animation sampling from Sim ticks; use as architecture reference, not approval of current animation."
+    ],
+    "gaps_for_three_stage": [
+      "Sim toggles variant with XOR1; View branches on variant&1. A third supplied variant currently renders attackA.",
+      "Current PlayerActionState has one contact and no explicit combo stage/queued continuation/reset deadline/locked aim/target snapshot.",
+      "Basic View entry still uses Time.time/CurrentAttackSpeed and ignores event elapsed at ArenaView.PlayAttack(e.Amount). FrameEventContext holds no full action snapshot, so low-render-FPS multi-tick catch-up must be designed.",
+      "Need genuine third authored clip, contact/recovery windows, stage-specific geometry/damage, cancel/timeout/empty-swing/reset rules and event-bound SFX/VFX; none implemented here."
+    ],
+    "evidence": [
+      {
+        "path": "razlom/Assets/Game.Sim/Core/PlayerActionState.cs",
+        "line": 4
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Core/Simulation.Tempo.cs",
+        "line": 79
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Core/Simulation.cs",
+        "line": 2475
+      },
+      {
+        "path": "razlom/Assets/Game.Sim/Core/Simulation.cs",
+        "line": 2526
+      },
+      {
+        "path": "razlom/Assets/Game.View/CharacterAnimatorView.cs",
+        "line": 698
+      },
+      {
+        "path": "razlom/Assets/Game.View/CharacterAnimatorView.cs",
+        "line": 722
+      },
+      {
+        "path": "razlom/Assets/Game.View/CharacterAnimatorView.Tempo.cs",
+        "line": 186
+      },
+      {
+        "path": "razlom/Assets/Game.View/TickDriver.cs",
+        "line": 20
+      },
+      {
+        "path": "razlom/Assets/Game.View/ArenaView.cs",
+        "line": 1811
+      }
+    ]
+  },
+  "audio": {
+    "approval": "File/routing availability only; no user sound acceptance inferred. No listening or game capture performed.",
+    "profile_path": "razlom/Assets/Resources/Combat/CombatAudio.asset",
+    "profile_revision": 4,
+    "runtime_profile_entries": [
+      {
+        "sound": "Whoosh",
+        "enum_value": 0,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_01.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_03.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_04.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_06.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_07.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Whoosh/sword_whoosh_08.ogg"
+        ],
+        "clip_count": 6,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "HitMetal",
+        "enum_value": 1,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/HitMetal/sword_hit_01.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitMetal/sword_hit_03.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitMetal/sword_hit_05.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitMetal/sword_hit_08.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitMetal/sword_hit_10.ogg"
+        ],
+        "clip_count": 5,
+        "gain": 1.0,
+        "priority": 65
+      },
+      {
+        "sound": "HitBody",
+        "enum_value": 2,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/HitBody/body_hit_00.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitBody/body_hit_01.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitBody/body_hit_02.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitBody/body_hit_03.ogg",
+          "razlom/Assets/Resources/Audio/Combat/HitBody/body_hit_04.ogg"
+        ],
+        "clip_count": 5,
+        "gain": 1.0,
+        "priority": 70
+      },
+      {
+        "sound": "Whirlwind",
+        "enum_value": 4,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Whirlwind_01.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Whirlwind_02.wav"
+        ],
+        "clip_count": 2,
+        "gain": 1.4,
+        "priority": 65
+      },
+      {
+        "sound": "Cast",
+        "enum_value": 5,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Cast/whirlwind_cast_01.ogg",
+          "razlom/Assets/Resources/Audio/Combat/Cast/whirlwind_cast_02.ogg"
+        ],
+        "clip_count": 2,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "AnchorSweep",
+        "enum_value": 7,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/AnchorSweep/anchor_sweep_01.mp3"
+        ],
+        "clip_count": 1,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "ChainStep",
+        "enum_value": 8,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/ChainStep/chain_step_01.mp3"
+        ],
+        "clip_count": 1,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "WhirlwindEnd",
+        "enum_value": 21,
+        "clips": [],
+        "clip_count": 0,
+        "gain": 0.8,
+        "priority": 50
+      },
+      {
+        "sound": "ChainStepHop",
+        "enum_value": 22,
+        "clips": [],
+        "clip_count": 0,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "ChainStepEnd",
+        "enum_value": 23,
+        "clips": [],
+        "clip_count": 0,
+        "gain": 1.0,
+        "priority": 40
+      },
+      {
+        "sound": "PelagAttack",
+        "enum_value": 24,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Attack_01.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Attack_02.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Attack_03.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Attack_04.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Attack_05.wav"
+        ],
+        "clip_count": 5,
+        "gain": 1.35,
+        "priority": 55
+      },
+      {
+        "sound": "Cleave",
+        "enum_value": 25,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Cleave.wav"
+        ],
+        "clip_count": 1,
+        "gain": 1.3,
+        "priority": 65
+      },
+      {
+        "sound": "Dash",
+        "enum_value": 26,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Dash.wav"
+        ],
+        "clip_count": 1,
+        "gain": 1.55,
+        "priority": 60
+      },
+      {
+        "sound": "BlazePrepare",
+        "enum_value": 27,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/BlazePrepare.wav"
+        ],
+        "clip_count": 1,
+        "gain": 1.3,
+        "priority": 55
+      },
+      {
+        "sound": "BlazeFire",
+        "enum_value": 28,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/BlazeFire.wav"
+        ],
+        "clip_count": 1,
+        "gain": 0.8,
+        "priority": 60
+      },
+      {
+        "sound": "Finisher",
+        "enum_value": 29,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/Finisher.wav"
+        ],
+        "clip_count": 1,
+        "gain": 1.2,
+        "priority": 85
+      },
+      {
+        "sound": "WhirlwindPulse",
+        "enum_value": 30,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindPulse_01.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindPulse_02.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindPulse_03.wav"
+        ],
+        "clip_count": 3,
+        "gain": 1.25,
+        "priority": 60
+      },
+      {
+        "sound": "WhirlwindHit",
+        "enum_value": 31,
+        "clips": [
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindHit_01.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindHit_02.wav",
+          "razlom/Assets/Resources/Audio/Combat/Pelag/WhirlwindHit_03.wav"
+        ],
+        "clip_count": 3,
+        "gain": 1.3,
+        "priority": 72
+      }
+    ],
+    "skills": [
+      {
+        "pool_index": 0,
+        "skill": "Whirlwind",
+        "routing": "Whirlwind + WhirlwindPulse + WhirlwindHit; WhirlwindEnd intentionally empty",
+        "available": "2 cast, 3 channel pulse, 3 hit variants bound in current profile",
+        "gap": "No distinct talent-wave, pull or cocoon cues; acceptance of sound not inferred from VFX approval",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Editor/PelagAudioImport.cs",
+            "line": 62
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 344
+          }
+        ]
+      },
+      {
+        "pool_index": 1,
+        "skill": "Cleave",
+        "routing": "Cleave contact-aligned cue plus general hit layers; default Cast is explicitly skipped for Cleave in ConsumeEvents",
+        "available": "Pelag/Cleave.wav, original cleave-attack.mp3",
+        "gap": "Separate talent marker/echo/wave cues not allocated; assess layered mix and false cues under cancellation",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 174
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 559
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 337
+          }
+        ]
+      },
+      {
+        "pool_index": 2,
+        "skill": "Blaze",
+        "routing": "BlazePrepare then BlazeFire on BlazeBegin; fades when inactive",
+        "available": "Pelag/BlazePrepare.wav + BlazeFire.wav, original ladno-smazal and fireburst",
+        "gap": "Flare, haste, stoke have no dedicated sound entries",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 371
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 570
+          }
+        ]
+      },
+      {
+        "pool_index": 3,
+        "skill": "Squall",
+        "routing": "ChainStep cast; attempts ChainStepHop on damage and ChainStepEnd",
+        "available": "Audio/Combat/ChainStep/chain_step_01.mp3",
+        "gap": "Hop/end slots empty in current profile and no fallback clips loaded for these slots",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 506
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 811
+          }
+        ]
+      },
+      {
+        "pool_index": 4,
+        "skill": "AnchorSlam",
+        "routing": "default Cast and general ability-hit metal/body layers",
+        "available": "shared Cast/HitMetal/HitBody banks",
+        "gap": "No distinct anchor windup, chain release/return, ground contact or crack cue in CombatSound enum",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 559
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudioProfile.cs",
+            "line": 6
+          }
+        ]
+      },
+      {
+        "pool_index": 5,
+        "skill": "Wreck",
+        "routing": "default Cast for cast; general metal/body for confirmed damage",
+        "available": "shared banks; existing AnchorSweep bank is legacy and not routed by AbilitySound",
+        "gap": "No dedicated 3-stage/4th-stage Wreck sound family; misses/stage continuation need explicit cue contract",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 559
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 826
+          }
+        ]
+      },
+      {
+        "pool_index": 6,
+        "skill": "Boarding",
+        "routing": "default Cast pitched 1.22; delayed HitMetal+HitBody near launch; footstep on arrival; general hit layers",
+        "available": "shared Cast/HitMetal/HitBody/Footstep",
+        "gap": "No distinct hook, taut chain, travel, punch or return family",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 139
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 338
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 583
+          }
+        ]
+      },
+      {
+        "pool_index": 7,
+        "skill": "FireFlask",
+        "routing": "default Cast; reuses BlazeFire on FlaskBurst",
+        "available": "BlazeFire and shared Cast/hit banks",
+        "gap": "No independent bottle throw, shatter, burning loop or directed shrapnel cues",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 380
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 559
+          }
+        ]
+      },
+      {
+        "pool_index": 8,
+        "skill": "Skewer",
+        "routing": "reuses Dash; general ability-hit layers",
+        "available": "Pelag/Dash.wav originally dash--pelag.wav",
+        "gap": "No distinct thrust/pass-through/stop cue family; eight talent mechanics pending review",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 568
+          }
+        ]
+      },
+      {
+        "pool_index": 9,
+        "skill": "Backblast",
+        "routing": "reuses Dash then BlazeFire on BackblastBurst",
+        "available": "Pelag/Dash.wav and BlazeFire.wav",
+        "gap": "No separate recoil/explosion family; eight talent mechanics pending review",
+        "evidence": [
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 380
+          },
+          {
+            "path": "razlom/Assets/Game.View/CombatAudio.cs",
+            "line": 568
+          }
+        ]
+      }
+    ],
+    "basic_attack": {
+      "available": "5 bound Attack variants plus Finisher; prepared from autoattack-pelag.mp3 and last-hit-with-blood.mp3",
+      "gap": "Not a discrete three-stage combo sound contract; all clips require new model/animation sync and mix review."
+    },
+    "provenance_found": [
+      {
+        "path": "razlom/Assets/Resources/Audio/Combat/LICENSES.md",
+        "claim": "Legacy Whoosh/HitMetal/Cast: StarNinjas Sword Sounds CC0; HitBody/Kill/Reward: Kenney Impact Sounds CC0. This is project metadata, not independent legal verification."
+      },
+      {
+        "path": "razlom/Assets/Resources/Audio/Combat/LICENSES.md",
+        "claim": "Whirlwind current layered set: owner sabre recordings + CC0 impacts + two named Epidemic sources under owner subscription, not CC0."
+      },
+      {
+        "path": "ART/PELAG/audio/2026-09-15/preparation.json",
+        "claim": "Source-to-output trims/levels for 7 originals and11 prepared clips; original files exist."
+      },
+      {
+        "path": "ART/PELAG/sfx/2026-09-24-whirlwind",
+        "claim": "5 untouched Epidemic source files exist; actual build uses selected low/airy layers."
+      },
+      {
+        "path": "tools/audio/build-whirlwind-sfx.py",
+        "claim": "Reproducible sound preparation recipe exists; intentionally not executed."
+      }
+    ],
+    "provenance_gaps": [
+      "LICENSES.md legacy ART/designed-images/assets/art-brief-v05/PELAG/sfx path is stale; current ART/PELAG/sfx/whirlewind.mp3 exists.",
+      "LICENSES.md says archives are in artifacts/audio-source; that directory is absent in this checkout.",
+      "No source-specific license/receipt manifest found for seven 2026-09-15 originals or chainstepsfx/chainsweep within inspected Pelag folders; scripts call them owner-provided.",
+      "No provider receipt/certificate was found in inspected Pelag audio metadata. Subscription scope is not independently verified by this audit."
+    ]
+  },
+  "whirlwind_freeze": {
+    "approval_scope": "Accepted base Whirlwind VFX appearance only; added talent VFX must not replace/recolor its accepted sweep and impact.",
+    "roots": [
+      "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Sweep_A.prefab",
+      "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Strike.prefab"
+    ],
+    "bindings": [
+      {
+        "id": 2,
+        "name": "WhirlwindRing",
+        "guid": "ba6393807640dcb4a8423878b6f835fb",
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Sweep_A.prefab",
+        "entry_sha256": "bd69f2cca19d2607470ff77ef50264a969d405b804d82ed004651094691351a7",
+        "entry_text": "  - Id: 2\n    Prefab: {fileID: 8588987595708273566, guid: ba6393807640dcb4a8423878b6f835fb, type: 3}\n    Prewarm: 3"
+      },
+      {
+        "id": 3,
+        "name": "WhirlwindHit",
+        "guid": "9aeee9da33f8eae488ab6cf11125c7d9",
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Strike.prefab",
+        "entry_sha256": "c0ef2e70f17751538a92330e5c97edd2f0539463169f2238320688155337005a",
+        "entry_text": "  - Id: 3\n    Prefab: {fileID: 7384060316098262906, guid: 9aeee9da33f8eae488ab6cf11125c7d9, type: 3}\n    Prewarm: 16"
+      }
+    ],
+    "file_hash_algorithm": "SHA-256",
+    "dependency_scan": "Transitive Unity GUID references through text assets and .meta files, plus local shader includes. Scripts/textures/meshes/materials/import settings included.",
+    "dependency_files": [
+      {
+        "path": "razlom/Assets/Game.View/PelagVfxElement.cs",
+        "bytes": 15756,
+        "sha256": "7a080c878dc096e6f42c584bcc8824a34a7cb15f21b39ab534bee896b6c087b3"
+      },
+      {
+        "path": "razlom/Assets/Game.View/PelagVfxElement.cs.meta",
+        "bytes": 59,
+        "sha256": "17a477985be2da2cf15f8232ed06806ac81814edccd7900037bd63a5c0820dfe"
+      },
+      {
+        "path": "razlom/Assets/Game.View/PelagWhirlwindSweepView.cs",
+        "bytes": 7614,
+        "sha256": "dd8bee57271564cb6666528dd77fdfddd0438cdae902dd76eb597043763ea934"
+      },
+      {
+        "path": "razlom/Assets/Game.View/PelagWhirlwindSweepView.cs.meta",
+        "bytes": 59,
+        "sha256": "aac139fb5bd497dc6452181597e6ea9f53a708bebbb5754da448f68e760ef87b"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Editor/CFXR_ShaderImporter.cs",
+        "bytes": 19080,
+        "sha256": "c7d82ab47fd7e9f17cf1cbb6e97ad7ff4246c0131b3e0866d1230624d3108bc9"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Editor/CFXR_ShaderImporter.cs.meta",
+        "bytes": 477,
+        "sha256": "85b2ae4097cad28057592290257405be68be3131723d68bb182d4ff7e0aa9ff0"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr perlin big.png",
+        "bytes": 284328,
+        "sha256": "b336e92d52813f50b82bd997ef59a94168beb6c88d8f8d967ecbb411c27adc8b"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr perlin big.png.meta",
+        "bytes": 3064,
+        "sha256": "0b3eec278171895cff4658a14278deb3fc1594d9195999f58d4ea473bcdc600f"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr perlin mid.png",
+        "bytes": 251504,
+        "sha256": "6fbaae463a46d1f643e1d951cf83fd0f06952b345f9b3a19e5adb9711bc1507c"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr perlin mid.png.meta",
+        "bytes": 2945,
+        "sha256": "57281b5148c8feeb771ffb75e5856fff7e350908be427774da3b167c9e8644ce"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact dissolve ab.mat",
+        "bytes": 3156,
+        "sha256": "7e1f8af49f7b733d74efe36962469d691c1b4a24aaf98613d7bbf00e722d36bc"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact dissolve ab.mat.meta",
+        "bytes": 440,
+        "sha256": "8b5b026e28f410df28540b43245f8e0ba19a15279230fa002aae0d5f295657d7"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact dissolve.png",
+        "bytes": 59518,
+        "sha256": "709ed6f246027d3a174e9b8c3ff2a62c6477fe02c00e4373753fbea2718119bf"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact dissolve.png.meta",
+        "bytes": 3022,
+        "sha256": "9ab82a69ff34a67afc2d8a9dd2beaf391a53579e2ece466fbf80a1f14ea28d6f"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact mesh.asset",
+        "bytes": 11264,
+        "sha256": "a0486e14948b28e8293a328a62de93d51d0187f5d5f7d59236e6cdf5a4426501"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact mesh.asset.meta",
+        "bytes": 435,
+        "sha256": "b69b01789448a47f3e948cb9ce3b10355d7d4ca94640a31eb3bc43864d49eae5"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact.png",
+        "bytes": 37836,
+        "sha256": "2dbc6741aec2b48a8ee375baf66340c982d655ff1a14bcd0c5156f817643b850"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr spikes impact.png.meta",
+        "bytes": 3013,
+        "sha256": "a3a586a8d006d87b0e56667eb217fe5940a2877a9654be85a51236d234b3669d"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr sword trail mask plain.png",
+        "bytes": 23544,
+        "sha256": "8d262299f2f7d719a3de33efca32df4df176b99456685d4cd65779ecf0f54bf8"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr sword trail mask plain.png.meta",
+        "bytes": 3278,
+        "sha256": "bd5ebb63994821d3455287967077184f75ab57b5366f0fcfb954ec77f4bb19d4"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr sword trail plain.mat",
+        "bytes": 3306,
+        "sha256": "5b4a20b0ea8df14c1f2f583e6b10e600e546b5dfba50191040823cca622ff3ae"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/cfxr sword trail plain.mat.meta",
+        "bytes": 432,
+        "sha256": "13b0a58b5f26faaa47c3e7b6836cafac40625db342d97ec25572a671347ecc5a"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Meshes/cfxr mesh sword_slashes.fbx",
+        "bytes": 49052,
+        "sha256": "232a7a9b7994d9e7560e5b0e12744ef3f439bf46acfbfc626e68e979698e3a46"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Meshes/cfxr mesh sword_slashes.fbx.meta",
+        "bytes": 2666,
+        "sha256": "0e1d295fbe7e2ea2ce62d9e3b759f2bcad5a70cb709e92b370ce112e442ca890"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR Particle Ubershader.cfxrshader",
+        "bytes": 15239,
+        "sha256": "818b941ff03b9ebb28470fb21eff65504dd3f693abe724914b4233091f735159"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR Particle Ubershader.cfxrshader.meta",
+        "bytes": 20542,
+        "sha256": "d08fa329957d0436666a16efc8cd4139d57f721b40e2428c223f06a9c8569620"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR.cginc",
+        "bytes": 12914,
+        "sha256": "ff630e2b3a3b0bacf03e26667cc10128941a49c53bfe128d75c3b0c729d07bcf"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR.cginc.meta",
+        "bytes": 427,
+        "sha256": "af10f96ce5b074a487f417b1043a929b9aa683ff2f66af0bd2250cb63aaf395a"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_PASSES.cginc",
+        "bytes": 35606,
+        "sha256": "61c5ae22cac7097053b397eea91ce5e34e1f4b99287bf8d8a93378d110ae8828"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_PASSES.cginc.meta",
+        "bytes": 434,
+        "sha256": "d3312f9dec427d409316f6fad6a08b780a9226a83a8b66af3bb105a0e0e57d1f"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_SETTINGS.cginc",
+        "bytes": 1047,
+        "sha256": "480d072e9f6f407a52d62749ebda55680c630658daffda596241f231aa810a14"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_SETTINGS.cginc.meta",
+        "bytes": 436,
+        "sha256": "e759c2eab68abfd2dd366269337a870375786cd19b74d53d51ddd64f40d18d0e"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_URP.cginc",
+        "bytes": 11341,
+        "sha256": "0ad0a5dbf1145ff0916c7af7ee4673860430fbad46473b8e88a2ae2e9b65eb9a"
+      },
+      {
+        "path": "razlom/Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Shaders/CFXR_URP.cginc.meta",
+        "bytes": 431,
+        "sha256": "e34b2196abe972d276c8b0c6334fcfa6922641c0b9b7eab68e2d16e4e01684d9"
+      },
+      {
+        "path": "razlom/Assets/Resources/Shaders/RazlomPelagGlow.shader",
+        "bytes": 3635,
+        "sha256": "ba53b6cbeee80e5a1f18ce4d6801512513b515f5093dc65427253b0968e32b5a"
+      },
+      {
+        "path": "razlom/Assets/Resources/Shaders/RazlomPelagGlow.shader.meta",
+        "bytes": 204,
+        "sha256": "f1117b919fc39ed03723c99d6d7f886704413e10aa031a36f69e3a36167de715"
+      },
+      {
+        "path": "razlom/Assets/Resources/Shaders/RazlomWhirlwindSweep.shader",
+        "bytes": 12137,
+        "sha256": "2e018d18607678286f287e1faf1947a99caf8876e454d3f24746756e42137a88"
+      },
+      {
+        "path": "razlom/Assets/Resources/Shaders/RazlomWhirlwindSweep.shader.meta",
+        "bytes": 204,
+        "sha256": "b9a38e61eb3c52fb6c5cb5f14af9eb48e9cdb3e449b82ef51760fbf20bee4e75"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Geometry/WhirlwindRing.asset",
+        "bytes": 18125,
+        "sha256": "759be2f923f1eccaefdfe1ab5f78746bf510ff5c9243474153769ce4b936972b"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Geometry/WhirlwindRing.asset.meta",
+        "bytes": 188,
+        "sha256": "5a5cad6f9bcd2ee5e01d1ee56b0d9597d9e8361de9ef8adef21132ce992e99f6"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Geometry/WhirlwindStar.asset",
+        "bytes": 4079,
+        "sha256": "303be8fb5db499f0b66dc7614071cff68eb1d8a6c2259fbc615db3f5ae85609a"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Geometry/WhirlwindStar.asset.meta",
+        "bytes": 188,
+        "sha256": "497b49e70eba9dd4a789d9a644fcc2700e673bddfafe15a7bd656abe372a1e1d"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_CfxrTrail.mat",
+        "bytes": 3404,
+        "sha256": "c581c80e6a95f39e2020adf4057abc124ac367442c046a41217889761ceff3fe"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_CfxrTrail.mat.meta",
+        "bytes": 188,
+        "sha256": "714e84ba38075e51a4905b14c0efb7691f17181f5fdd90a6e7d1ecdf62e1eafa"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Chip_A.mat",
+        "bytes": 1211,
+        "sha256": "35724d32f5a52861fc10069b203b07c09bafb210ee1fa643de67c184474a63bb"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Chip_A.mat.meta",
+        "bytes": 188,
+        "sha256": "b0e2e382e57b50c785add46090e0765c6da6865ffef7772878b532b85b8255d0"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Ember_A.mat",
+        "bytes": 1208,
+        "sha256": "74107cc8eed3edd03c7d01390b139d39f58640c8998ea9aaa5a1e4280a567473"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Ember_A.mat.meta",
+        "bytes": 188,
+        "sha256": "4002e4d47988d9b444def2fe3cfc7a1630a80cc7c9d4b12b4cc5c8f78d590512"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Ring_A.mat",
+        "bytes": 1211,
+        "sha256": "a0a2aca8a3bf9cdff29f96cf38210f2fa03a6fb3c80811da13fc47e54ece2909"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Ring_A.mat.meta",
+        "bytes": 188,
+        "sha256": "56e8a389cb604766d9810756fb76f2ed0456dd9f2c2b08e93dd6972c912873a3"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Spark.mat",
+        "bytes": 934,
+        "sha256": "e86a298559005c31c519c17529249439627846ddce39e9d804e43283f1edadc7"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Materials/M_Whirlwind_Spark.mat.meta",
+        "bytes": 188,
+        "sha256": "6f1347d5e3002a338ac19ba6ba4728d405ba66351964152b717a1d1b492fb056"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Pelag_ImpactChip.asset",
+        "bytes": 3815,
+        "sha256": "220d108a9ecabe38389b2265d68b31c37f8d2161f82d5443443478af0d03225f"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Pelag_ImpactChip.asset.meta",
+        "bytes": 188,
+        "sha256": "94b01489d0d4b8efc5673573e39112128703b36581920e50fd71828a01b83720"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Strike.prefab",
+        "bytes": 463687,
+        "sha256": "d187bd87060b1a7ce53ab5d8d421b18d3ccbf7d8590a5b7566da885145cdd729"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Strike.prefab.meta",
+        "bytes": 174,
+        "sha256": "475de51e240e3e38dc7ca057b1f5cef4f5c916942149db3e23512aa2a48dd344"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Sweep_A.prefab",
+        "bytes": 702403,
+        "sha256": "2587e3a3e4a82c65b6cd4c5983a9f78457f0e6af6e87e5cd54f5fb0a972202cc"
+      },
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/Prefabs/VFX_Pelag_Whirlwind_Sweep_A.prefab.meta",
+        "bytes": 154,
+        "sha256": "bdf49bf6c9869dcb34cb00f64b7303e5b3fd77b66b67bafbe4318c757c295500"
+      }
+    ],
+    "dependency_file_count": 58,
+    "unresolved_non_builtin_guids": [],
+    "external_shader_includes": [
+      "AutoLight.cginc",
+      "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl",
+      "UnityCG.cginc",
+      "UnityLightingCommon.cginc",
+      "UnityStandardParticleInstancing.cginc",
+      "UnityStandardUtils.cginc"
+    ],
+    "shared_baseline_files": [
+      {
+        "path": "razlom/Assets/Resources/VFX/Pelag/AbilityVfxLibrary.asset",
+        "bytes": 3909,
+        "sha256": "fb493e0398acc5f3fa971f380c8d1f5e1f32ba31e92923ab62d67171a225e024"
+      },
+      {
+        "path": "razlom/Assets/Editor/PelagWhirlwindVfxSetup.cs",
+        "bytes": 34172,
+        "sha256": "866b72ded3384361b5a86ba3450b03389bbfc58db9d80f5fd2c556bc5da925fa"
+      },
+      {
+        "path": "razlom/Assets/Game.View/PelagVfxController.cs",
+        "bytes": 108737,
+        "sha256": "f24e35b7da181eca9c76e74bd3827038d91c5a8bab9099df6dcde2ac98227dac"
+      },
+      {
+        "path": "razlom/Assets/Game.View/PelagVfxElement.Chain.cs",
+        "bytes": 2197,
+        "sha256": "b25ecf72d43bf28e26fab956881f9a2bb7f6d3e8aacd44856f2405f2c5c10a97"
+      },
+      {
+        "path": "razlom/Assets/Game.View/CharacterAnimatorView.cs",
+        "bytes": 97397,
+        "sha256": "abb46205f8abb9a626a4072c48172605dd35df71ca537f3b03d93a6de0c6c358"
+      },
+      {
+        "path": "razlom/Assets/Game.View/CharacterAnimatorView.Tempo.cs",
+        "bytes": 13999,
+        "sha256": "8a32ec1648de35a6d1d8d33959ce2a44659c1742c381614e731b33ed0619cccb"
+      },
+      {
+        "path": "razlom/Assets/Editor/RazlomPelagWhirlwindClip.cs",
+        "bytes": 3965,
+        "sha256": "2a76cc0fb4a6c2145106e475725d8f95c38729b5ffe0ede7788e4a4238cc230d"
+      },
+      {
+        "path": "razlom/Assets/Editor/RazlomPelagV5AnimatorBuilder.cs",
+        "bytes": 47568,
+        "sha256": "b5a0fe96ed0c895995ad15107611931387249de440ef5952200c3875b7fc3f1c"
+      },
+      {
+        "path": "razlom/Assets/Resources/Characters/Pelag_v5/Pelag_Whirlwind_Timed.anim",
+        "bytes": 7781623,
+        "sha256": "8c6277dda925fbb6a465b54355f0cd22f9f98c8b44628a9251b2256982105160"
+      },
+      {
+        "path": "razlom/Assets/Resources/Characters/Pelag_v5/Mixamo/Pelag_MX_Whirlwind.fbx",
+        "bytes": 1682252,
+        "sha256": "f69ef734abf7636c382477bec9e1d33f599a78ff0f60bfb5f06a7f9ebf312427"
+      },
+      {
+        "path": "razlom/ProjectSettings/ProjectVersion.txt",
+        "bytes": 85,
+        "sha256": "68312bd68c3d81c0dabeaa9905955fd523a6a184f4e6ae180377a1cdb8b2fd42"
+      }
+    ],
+    "shared_change_policy": "Shared controller/library/renderer files are comparison baselines, not exclusive locks: additions for talents or other skills may be necessary, but Whirlwind bindings, palette, particle timings and source dependencies must be diff-reviewed. Preserve existing selected VFX without rebuilding palette/geometry as a side effect.",
+    "limits": [
+      "No gameplay camera capture was produced; artifact hashes prove file identity, not visual equivalence under a new model/camera/URP configuration.",
+      "Engine/package shader includes outside referenced local assets are listed, not recursively frozen.",
+      "Do not call InitializeOnLoad/setup rebuild menus during design/model gate."
+    ]
+  },
+  "vfx_logic_findings": [
+    {
+      "id": "whirlwind_wave_missing_view",
+      "severity": "high",
+      "finding": "40% outer wave exists in Sim, no dedicated wave visual state/event consumer. Base ground ring is unconditional .38->1.12x ability radius and follows player; wave center is fixed.",
+      "evidence": [
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 53
+        },
+        {
+          "path": "razlom/Assets/Game.View/PelagWhirlwindSweepView.cs",
+          "line": 59
+        },
+        {
+          "path": "razlom/Assets/Game.View/PelagVfxController.cs",
+          "line": 1748
+        }
+      ]
+    },
+    {
+      "id": "whirlwind_wave_semantics",
+      "severity": "design_contract",
+      "finding": "Once per cast at first contact, expands over8 ticks from main radius to4m; damage is40% build damage, no Crowd multiplier; hits outside inner circle. UI says after revolution. Settle intended channel repetition explicitly.",
+      "evidence": [
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.cs",
+          "line": 1614
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 53
+        },
+        {
+          "path": "razlom/Assets/Game.View/SabreTalentTexts.cs",
+          "line": 71
+        }
+      ]
+    },
+    {
+      "id": "cleave_fan_wave_mismatch",
+      "severity": "high",
+      "finding": "View extends all3 fan lanes by3m, Sim applies wave only on center lane once.",
+      "evidence": [
+        {
+          "path": "razlom/Assets/Game.View/PelagVfxController.cs",
+          "line": 564
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Abilities/SabreKit.cs",
+          "line": 79
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 132
+        }
+      ]
+    },
+    {
+      "id": "talent_feedback_gaps",
+      "severity": "coverage",
+      "finding": "No dedicated representation found for Whirlwind cocoon, Cleave sunder mark, persistent AnchorSlam crack and aimed Flask shrapnel. Generic damage flashes/audio are insufficient to reveal their active state/geometry.",
+      "evidence": [
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 83
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 103
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 228
+        },
+        {
+          "path": "razlom/Assets/Game.Sim/Core/Simulation.Upgrades.cs",
+          "line": 334
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "executed": false,
+    "reason": "This audit agent only read files and wrote this report. Parent agent ran the baseline Sim/presentation suites outside Unity; inspected TRX results are recorded separately. No Unity Play or planned mechanics implementation performed.",
+    "baseline_commands": [
+      {
+        "command": ".\\run-tests.ps1",
+        "purpose": "Repository aggregate: full Sim tests, presentation helper tests, View/Editor compilation. Does not enter Unity Play; writes test/build outputs."
+      },
+      {
+        "command": "dotnet test tools/Game.Sim.Tests/Game.Sim.Tests.csproj --nologo --configuration Release",
+        "purpose": "Full deterministic Sim suite, net9.0."
+      },
+      {
+        "command": "dotnet test tools/Combat.Presentation.Tests/Combat.Presentation.Tests.csproj --nologo --configuration Release",
+        "purpose": "Audio voice budget, HUD availability, anchor dynamics/chain helpers; not rendered VFX acceptance."
+      },
+      {
+        "command": "dotnet build tools/viewcheck/viewcheck.csproj --nologo -v q",
+        "purpose": "Compile Sim/Data/View/Editor against Unity6000.5.10f1 and existing Library assemblies; compilation only."
+      },
+      {
+        "command": "dotnet test tools/Game.Sim.Tests/Game.Sim.Tests.csproj --nologo --configuration Release --filter \"FullyQualifiedName~UpgradeOrderTests|FullyQualifiedName~UpgradeSixToEightTests|FullyQualifiedName~CombatTempoTests|FullyQualifiedName~PelagProgressionTests\"",
+        "purpose": "Focused existing talent/order/action/save compatibility baseline."
+      }
+    ],
+    "existing_coverage": [
+      {
+        "file": "razlom/Assets/Game.Tests/UpgradeOrderTests.cs",
+        "coverage": "Arbitrary talent order, exact selection, no repeated offers."
+      },
+      {
+        "file": "razlom/Assets/Game.Tests/UpgradeSixToEightTests.cs",
+        "coverage": "Eight nodes per current line; positive mechanics checks for new6-8 talents. Wave asserts damage at3.5m, not exact40% or edge timing."
+      },
+      {
+        "file": "razlom/Assets/Game.Tests/CombatTempoTests.cs",
+        "coverage": "Cancellation, buffer, scaled timing, mobility, Wreck stage events, simulated30/60/120 frame replay."
+      },
+      {
+        "file": "razlom/Assets/Game.Tests/CombatTempoTests.cs",
+        "line": 151,
+        "coverage": "Explicitly requires pool8/9 to have no talents; must be deliberately revised only after80-sheet approval."
+      },
+      {
+        "file": "razlom/Assets/Game.Tests/PelagProgressionTests.cs",
+        "line": 180,
+        "coverage": "v2 camp level retained, old permanent talent ranks discarded."
+      },
+      {
+        "file": "razlom/Assets/Game.Tests/CombatTempoBenchmark.cs",
+        "line": 11,
+        "coverage": "Explicit fixed-input benchmark; not included by normal default test run."
+      }
+    ],
+    "future_required_after_approval": [
+      "80 unique stable IDs and all10x8 node reachability; isolated slot masks and any-order offers including8/9.",
+      "Flags above31 and any widened representation participate in deterministic hash without collisions; max masks/copy/reset/replacement.",
+      "Exact wave40% and radius/time boundary cases, fixed center while moving, once-versus-per-pulse contract, combined pull/radius/channel/Crowd.",
+      "Cleave fan+wave damage footprint equals all rendered lanes; no ghost visuals on misses/cancel.",
+      "3-stage base combo order/timeout/reset, empty swings, targets moving/dying, cancel at each phase, speed extremes and low-render-FPS catch-up.",
+      "No delayed sound after cancellation; silence-on-intended-slot versus missing clip; no clipping/voice starvation; talent distinguishability.",
+      "Per-skill animation-only, VFX-only and final gameplay recordings at game camera and diagnostic angles; only owner review counts as visual acceptance."
+    ],
+    "capture_tools_not_run": [
+      "capture.ps1",
+      "tools/check-anchor-slam.ps1",
+      "tools/check_pelag_audio_capture.py"
+    ],
+    "capture_tool_caveat": "check_pelag_audio_capture.py writes audio-check.json and contains historical hardcoded Blaze1.05-1.35s alignment; validate against approved timing before reuse. check-anchor-slam.ps1 even -AuditOnly writes directories/results.csv, so not used as read-only tool.",
+    "baseline_results": [
+      {
+        "suite": "sim",
+        "artifact": "ART/characters/pelag/production-2026-09-27/validation/sim-baseline.trx",
+        "counters": {
+          "total": "543",
+          "executed": "541",
+          "passed": "541",
+          "failed": "0",
+          "error": "0",
+          "timeout": "0",
+          "aborted": "0",
+          "inconclusive": "0",
+          "passedButRunAborted": "0",
+          "notRunnable": "0",
+          "notExecuted": "0",
+          "disconnected": "0",
+          "warning": "0",
+          "completed": "0",
+          "inProgress": "0",
+          "pending": "0"
+        },
+        "times": {
+          "creation": "2026-09-27T01:24:49.2655035+03:00",
+          "queuing": "2026-09-27T01:24:49.2655038+03:00",
+          "start": "2026-09-27T01:24:48.4015048+03:00",
+          "finish": "2026-09-27T01:26:10.5598499+03:00"
+        },
+        "sha256": "94a2b08361f16a3abfea58a4dffa7d6b08f30da56cf9edf22e6eeefb3d790ce0",
+        "scope": "Existing project baseline before Pelag implementation; executed by parent/root agent, report inspected read-only here."
+      },
+      {
+        "suite": "presentation",
+        "artifact": "ART/characters/pelag/production-2026-09-27/validation/presentation-baseline.trx",
+        "counters": {
+          "total": "32",
+          "executed": "32",
+          "passed": "32",
+          "failed": "0",
+          "error": "0",
+          "timeout": "0",
+          "aborted": "0",
+          "inconclusive": "0",
+          "passedButRunAborted": "0",
+          "notRunnable": "0",
+          "notExecuted": "0",
+          "disconnected": "0",
+          "warning": "0",
+          "completed": "0",
+          "inProgress": "0",
+          "pending": "0"
+        },
+        "times": {
+          "creation": "2026-09-27T01:24:48.9392448+03:00",
+          "queuing": "2026-09-27T01:24:48.9392451+03:00",
+          "start": "2026-09-27T01:24:47.6930848+03:00",
+          "finish": "2026-09-27T01:24:48.9748424+03:00"
+        },
+        "sha256": "c96e465c597dfe6f04bc69d64a7de1538f312bdb5c0c2f0801124fcf143cf6e8",
+        "scope": "Existing project baseline before Pelag implementation; executed by parent/root agent, report inspected read-only here."
+      }
+    ],
+    "executed_by_this_audit_agent": false,
+    "baseline_executed_by_parent_agent": true
+  }
+}

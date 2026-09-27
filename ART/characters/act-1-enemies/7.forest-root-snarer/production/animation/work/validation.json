@@ -1,0 +1,287 @@
+{
+ "ForestRootSnarer_Death": {
+  "frames": 45,
+  "min_z_all": -0.0087,
+  "min_z_without_slabs": -0.0065,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.12,
+  "body_min_z_by_frame": {
+   "0": 0.264,
+   "13": 0.0925,
+   "19": 0.0471,
+   "23": 0.0252,
+   "24": 0.013,
+   "25": -0.0033,
+   "26": 0.0102,
+   "28": 0.021,
+   "32": -0.0033,
+   "40": -0.0046,
+   "45": -0.0052
+  },
+  "first_frame_body_on_ground": 25,
+  "still_32_45_max_bone_move_m": 0.0022,
+  "resting_45_body_min_z": -0.0052
+ },
+ "ForestRootSnarer_Hit": {
+  "frames": 12,
+  "min_z_all": -0.0005,
+  "min_z_without_slabs": -0.0005,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.054,
+  "planted_drift_m": {
+   "L_socket": 0.0344,
+   "L_ankle": 0.0,
+   "R_socket": 0.0786,
+   "R_ankle": 0.0
+  },
+  "slab_min_z_range": [
+   -0.0001,
+   0.0789
+  ]
+ },
+ "ForestRootSnarer_Idle": {
+  "frames": 60,
+  "min_z_all": -0.0017,
+  "min_z_without_slabs": -0.0017,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.02,
+  "loop_seam_max_matrix_diff": 0.0,
+  "planted_drift_m": {
+   "L_socket": 0.0,
+   "L_ankle": 0.0008,
+   "R_socket": 0.0277,
+   "R_ankle": 0.0
+  },
+  "slab_min_z_range": [
+   -0.0002,
+   0.0001
+  ]
+ },
+ "ForestRootSnarer_Mend": {
+  "frames": 50,
+  "min_z_all": -0.1435,
+  "min_z_without_slabs": -0.0022,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.0545,
+  "slab_min_z_by_frame": {
+   "0": [
+    -0.0001,
+    0.0
+   ],
+   "3": [
+    0.3102,
+    0.2918
+   ],
+   "5": [
+    0.6089,
+    0.6476
+   ],
+   "6": [
+    0.5332,
+    0.5795
+   ],
+   "7": [
+    0.3177,
+    0.2936
+   ],
+   "8": [
+    -0.0899,
+    -0.0901
+   ],
+   "9": [
+    -0.1125,
+    -0.1126
+   ],
+   "10": [
+    -0.1199,
+    -0.12
+   ],
+   "20": [
+    -0.1148,
+    -0.1124
+   ],
+   "28": [
+    -0.1044,
+    -0.1067
+   ],
+   "30": [
+    -0.1285,
+    -0.1259
+   ],
+   "33": [
+    -0.1249,
+    -0.1198
+   ],
+   "38": [
+    -0.1327,
+    -0.1203
+   ],
+   "39": [
+    -0.0012,
+    0.0164
+   ],
+   "40": [
+    0.092,
+    0.1097
+   ],
+   "42": [
+    0.1587,
+    0.1829
+   ],
+   "46": [
+    0.0433,
+    0.0544
+   ],
+   "50": [
+    -0.0001,
+    0.0
+   ]
+  },
+  "first_frame_slabs_below_ground": 8,
+  "last_frame_slabs_above_ground_before_contact": 7,
+  "first_frame_slabs_out_after_38": 39,
+  "pinned_socket_drift_10_38_m": 0.0002,
+  "socket_move_8_to_10_m": 0.0345,
+  "pinned_depth_range_m": [
+   -0.1435,
+   -0.0899
+  ],
+  "vfx_sockets_at_contact": {
+   "L": [
+    0.69,
+    -0.58,
+    0.0291
+   ],
+   "R": [
+    -0.69,
+    -0.62,
+    0.0115
+   ]
+  },
+  "hind_ankle_drift_m": 0.0,
+  "dome_top_z_by_frame": {
+   "0": 1.3099,
+   "10": 1.1882,
+   "15": 1.2449,
+   "20": 1.1799,
+   "24": 1.2449,
+   "28": 1.166,
+   "29": 1.2839,
+   "30": 1.3197,
+   "31": 1.2943,
+   "33": 1.2145,
+   "38": 1.2509
+  },
+  "dome_top_peak_frame_24_36": 30,
+  "pelvis_z_by_frame": {
+   "0": 0.58,
+   "8": 0.52,
+   "10": 0.51,
+   "15": 0.53,
+   "20": 0.498,
+   "24": 0.53,
+   "28": 0.4916,
+   "29": 0.5445,
+   "30": 0.5621,
+   "31": 0.5499,
+   "33": 0.515,
+   "38": 0.53,
+   "42": 0.54,
+   "50": 0.58
+  },
+  "channel_body_min_z_8_38": 0.046,
+  "channel_face_min_z_10_29": 0.046,
+  "end_vs_start_max_matrix_diff": 0.0
+ },
+ "ForestRootSnarer_Slam": {
+  "frames": 72,
+  "min_z_all": -0.2218,
+  "min_z_without_slabs": -0.0039,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.1055,
+  "slab_min_z_by_frame": {
+   "12": [
+    1.1063,
+    1.1167
+   ],
+   "13": [
+    0.9489,
+    0.9635
+   ],
+   "14": [
+    0.4733,
+    0.4477
+   ],
+   "15": [
+    -0.1229,
+    -0.1089
+   ],
+   "16": [
+    -0.1728,
+    -0.1353
+   ],
+   "36": [
+    -0.2218,
+    -0.176
+   ],
+   "60": [
+    -0.2036,
+    -0.156
+   ],
+   "63": [
+    0.2926,
+    0.3102
+   ],
+   "66": [
+    0.1648,
+    0.1785
+   ],
+   "72": [
+    -0.0001,
+    -0.0001
+   ]
+  },
+  "first_frame_slabs_below_ground": 15,
+  "pinned_socket_drift_15_60_m": 0.0,
+  "pinned_depth_range_m": [
+   -0.2218,
+   -0.1089
+  ],
+  "vfx_sockets_at_contact": {
+   "L": [
+    0.8,
+    -0.6,
+    0.027
+   ],
+   "R": [
+    -0.8,
+    -0.64,
+    0.0447
+   ]
+  },
+  "hind_ankle_drift_m": 0.0
+ },
+ "ForestRootSnarer_Walk": {
+  "frames": 16,
+  "min_z_all": -0.0001,
+  "min_z_without_slabs": -0.0,
+  "root_moves_m": 0.0,
+  "pelvis_xy_range_m": 0.0557,
+  "loop_seam_max_matrix_diff": 0.0,
+  "contacts_vs_2_4_mps": {
+   "L": {
+    "slab_socket_speed_err_m_per_frame": 0.0128,
+    "slab_touching_verts_slip_m_per_frame": 0.0055,
+    "hind_ankle_speed_err_m_per_frame": 0.0136,
+    "stance_frames_checked": 5
+   },
+   "R": {
+    "slab_socket_speed_err_m_per_frame": 0.0084,
+    "slab_touching_verts_slip_m_per_frame": 0.0068,
+    "hind_ankle_speed_err_m_per_frame": 0.0069,
+    "stance_frames_checked": 5
+   }
+  },
+  "swing_slab_min_clearance_m": 0.1124
+ }
+}

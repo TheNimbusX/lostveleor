@@ -1,0 +1,1310 @@
+{
+  "mesh": {
+    "verts": 11910,
+    "triangles": 24000,
+    "max_influences": 4,
+    "verts_over_4": 0,
+    "unweighted_verts": 0,
+    "weight_sum_dev_max": 0.0,
+    "rest_skin_min_z_mm": 0.0,
+    "rest_bbox_m": [
+      [
+        -0.783,
+        -0.609,
+        0.0
+      ],
+      [
+        0.783,
+        0.609,
+        1.3
+      ]
+    ],
+    "sole_rest_z_mm": {
+      "front_L": 10.06,
+      "front_R": 17.44,
+      "hind_L": 17.4,
+      "hind_R": 15.77
+    },
+    "dominant_bone_counts": {
+      "body": 409,
+      "head": 489,
+      "leg_front_L_foot": 229,
+      "leg_front_L_lower": 204,
+      "leg_front_L_upper": 19,
+      "leg_front_R_foot": 238,
+      "leg_front_R_lower": 204,
+      "leg_front_R_upper": 9,
+      "leg_hind_L_foot": 175,
+      "leg_hind_L_lower": 276,
+      "leg_hind_L_upper": 162,
+      "leg_hind_R_foot": 173,
+      "leg_hind_R_lower": 251,
+      "leg_hind_R_upper": 111,
+      "neck": 5,
+      "shell_L": 4589,
+      "shell_R": 4064,
+      "spine": 303
+    }
+  },
+  "armature_object": {
+    "location": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "rotation": [
+      -1.6292067073209182e-07,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "takes": {
+    "ForestSplitter_Idle": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Idle",
+      "frame_range": [
+        0.0,
+        60.0
+      ],
+      "key_range": [
+        0.0,
+        60.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 13737,
+        "min": 0.999999,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_L_foot"
+      },
+      "body": {
+        "body_xy_start_end_mm": 0.0,
+        "body_xy_max_from_start_mm": 9.53
+      },
+      "ground": {
+        "skin_min_z_mm": -0.0,
+        "at_frame": 13.75,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": 0.0
+      },
+      "stretch": {
+        "ratio_max": 4.379,
+        "ratio_min": 0.189,
+        "max_at": [
+          29.75,
+          "head",
+          "shell_L",
+          7.1
+        ],
+        "min_at": [
+          31.75,
+          "shell_R",
+          "head"
+        ],
+        "p999_max": 1.942,
+        "grow_max_mm": 47.2,
+        "grow_max_at": 45.75,
+        "grow_max_pair": [
+          "leg_front_R_upper",
+          "shell_R"
+        ],
+        "edges_grow_over_2cm": 105,
+        "edges_grow_over_5cm": 0,
+        "pairs_over_2cm": {
+          "leg_front_R_upper-shell_R": 7,
+          "shell_L-shell_R": 1,
+          "shell_R-spine": 2,
+          "neck-shell_L": 6,
+          "head-shell_R": 44,
+          "head-shell_L": 38,
+          "neck-shell_R": 3,
+          "shell_L-spine": 4
+        }
+      },
+      "loop_seam": {
+        "bone_pos_mm": 0.0,
+        "bone_rot_deg": 0.0,
+        "skin_mm": 0.0
+      },
+      "loop_velocity_jump_mps": {
+        "seam_mps": 0.004,
+        "worst_inside_cycle_mps": 0.006
+      },
+      "feet": {
+        "front_L": {
+          "min_z_mm": -0.0,
+          "max_lift_mm": 0.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 1.45
+        },
+        "front_R": {
+          "min_z_mm": 8.5,
+          "max_lift_mm": 8.5,
+          "contacts": 1,
+          "slide_within_contact_mm": 0.26
+        },
+        "hind_L": {
+          "min_z_mm": 8.9,
+          "max_lift_mm": 10.5,
+          "contacts": 1,
+          "slide_within_contact_mm": 1.01
+        },
+        "hind_R": {
+          "min_z_mm": 5.7,
+          "max_lift_mm": 5.9,
+          "contacts": 1,
+          "slide_within_contact_mm": 1.49
+        }
+      }
+    },
+    "ForestSplitter_Walk": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Walk",
+      "frame_range": [
+        0.0,
+        10.0
+      ],
+      "key_range": [
+        0.0,
+        10.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 2337,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_L_foot"
+      },
+      "body": {
+        "body_xy_start_end_mm": 0.0,
+        "body_xy_max_from_start_mm": 0.0
+      },
+      "ground": {
+        "skin_min_z_mm": -7.56,
+        "at_frame": 3.5,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": -6.7
+      },
+      "stretch": {
+        "ratio_max": 9.309,
+        "ratio_min": 0.032,
+        "max_at": [
+          7.75,
+          "body",
+          "body",
+          1.5
+        ],
+        "min_at": [
+          9.25,
+          "leg_front_R_lower",
+          "shell_R"
+        ],
+        "p999_max": 3.187,
+        "grow_max_mm": 144.4,
+        "grow_max_at": 8.25,
+        "grow_max_pair": [
+          "leg_front_R_upper",
+          "shell_R"
+        ],
+        "edges_grow_over_2cm": 403,
+        "edges_grow_over_5cm": 73,
+        "pairs_over_2cm": {
+          "leg_front_R_upper-shell_R": 12,
+          "head-shell_R": 63,
+          "leg_hind_R_foot-leg_hind_R_lower": 3,
+          "head-shell_L": 41,
+          "shell_R-spine": 5,
+          "head-spine": 6,
+          "shell_R-shell_R": 29,
+          "body-spine": 10,
+          "neck-shell_R": 5,
+          "neck-shell_L": 6,
+          "shell_L-shell_R": 1,
+          "head-head": 14,
+          "leg_hind_R_lower-leg_hind_R_lower": 24,
+          "shell_L-spine": 7,
+          "spine-spine": 80,
+          "body-shell_L": 4,
+          "shell_L-shell_L": 12,
+          "leg_hind_L_lower-leg_hind_L_lower": 13,
+          "leg_hind_L_foot-leg_hind_L_lower": 6,
+          "body-body": 21,
+          "body-shell_R": 1,
+          "leg_front_L_lower-leg_front_L_lower": 10,
+          "leg_front_R_lower-leg_front_R_lower": 7,
+          "leg_front_L_foot-leg_front_L_lower": 1,
+          "leg_hind_R_upper-leg_hind_R_upper": 4,
+          "body-leg_hind_L_upper": 4,
+          "leg_front_R_lower-shell_R": 2,
+          "body-leg_hind_R_upper": 1,
+          "leg_hind_L_foot-leg_hind_L_foot": 1,
+          "leg_front_L_upper-spine": 1,
+          "neck-spine": 1,
+          "leg_front_R_foot-leg_front_R_lower": 1,
+          "leg_front_L_lower-shell_L": 2,
+          "leg_front_L_upper-shell_L": 1,
+          "leg_hind_L_lower-shell_L": 1
+        }
+      },
+      "loop_seam": {
+        "bone_pos_mm": 0.0,
+        "bone_rot_deg": 0.0,
+        "skin_mm": 0.0
+      },
+      "loop_velocity_jump_mps": {
+        "seam_mps": 4.269,
+        "worst_inside_cycle_mps": 4.038
+      },
+      "walk": {
+        "front_L": {
+          "sole_plants": [
+            {
+              "frames": [
+                2.5,
+                3.75
+              ],
+              "len_frames": 1.25,
+              "speed_mps": 3.183,
+              "slide_vs_target_mm": 6.36,
+              "lateral_mm": 2.77
+            }
+          ],
+          "ankle_plants": [
+            {
+              "frames": [
+                0.0,
+                3.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.0,
+              "lateral_mm": 0.0
+            }
+          ],
+          "sole_min_z_mm": -7.56
+        },
+        "front_R": {
+          "sole_plants": [
+            {
+              "frames": [
+                5.0,
+                8.75
+              ],
+              "len_frames": 3.75,
+              "speed_mps": 3.098,
+              "slide_vs_target_mm": 3.75,
+              "lateral_mm": 0.34
+            }
+          ],
+          "ankle_plants": [
+            {
+              "frames": [
+                5.0,
+                8.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.0,
+              "lateral_mm": 0.0
+            }
+          ],
+          "sole_min_z_mm": 8.52
+        },
+        "hind_L": {
+          "sole_plants": [
+            {
+              "frames": [
+                5.25,
+                8.0
+              ],
+              "len_frames": 2.75,
+              "speed_mps": 3.233,
+              "slide_vs_target_mm": 12.64,
+              "lateral_mm": 2.95
+            }
+          ],
+          "ankle_plants": [
+            {
+              "frames": [
+                5.0,
+                8.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.01,
+              "lateral_mm": 0.01
+            }
+          ],
+          "sole_min_z_mm": -0.32
+        },
+        "hind_R": {
+          "sole_plants": [
+            {
+              "frames": [
+                0.0,
+                2.75
+              ],
+              "len_frames": 2.75,
+              "speed_mps": 3.178,
+              "slide_vs_target_mm": 7.38,
+              "lateral_mm": 1.4
+            }
+          ],
+          "ankle_plants": [
+            {
+              "frames": [
+                0.0,
+                3.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.01,
+              "lateral_mm": 0.01
+            }
+          ],
+          "sole_min_z_mm": -3.72
+        }
+      },
+      "walk_speed_measured_mps": [
+        3.098,
+        3.233
+      ],
+      "walk_speed_target_mps": 3.1,
+      "walk_max_slide_mm": 12.64
+    },
+    "ForestSplitter_Bite": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Bite",
+      "frame_range": [
+        0.0,
+        30.0
+      ],
+      "key_range": [
+        0.0,
+        30.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 6897,
+        "min": 0.999999,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_R_lower"
+      },
+      "body": {
+        "body_xy_start_end_mm": 0.0,
+        "body_xy_max_from_start_mm": 50.0
+      },
+      "ground": {
+        "skin_min_z_mm": -0.0,
+        "at_frame": 20.5,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": 0.0
+      },
+      "stretch": {
+        "ratio_max": 34.157,
+        "ratio_min": 0.087,
+        "max_at": [
+          18.0,
+          "head",
+          "shell_L",
+          7.1
+        ],
+        "min_at": [
+          15.5,
+          "leg_front_L_lower",
+          "leg_front_L_lower"
+        ],
+        "p999_max": 9.41,
+        "grow_max_mm": 244.6,
+        "grow_max_at": 18.0,
+        "grow_max_pair": [
+          "head",
+          "shell_L"
+        ],
+        "edges_grow_over_2cm": 526,
+        "edges_grow_over_5cm": 181,
+        "pairs_over_2cm": {
+          "head-shell_L": 46,
+          "head-shell_R": 69,
+          "neck-shell_R": 10,
+          "shell_L-shell_R": 7,
+          "neck-shell_L": 6,
+          "shell_L-spine": 13,
+          "leg_front_R_upper-shell_R": 13,
+          "shell_R-spine": 6,
+          "head-spine": 16,
+          "head-leg_front_R_upper": 5,
+          "head-leg_front_L_upper": 7,
+          "leg_front_L_upper-shell_L": 3,
+          "head-head": 67,
+          "spine-spine": 70,
+          "shell_R-shell_R": 21,
+          "leg_front_L_upper-leg_front_L_upper": 4,
+          "leg_front_L_upper-spine": 6,
+          "shell_L-shell_L": 22,
+          "body-shell_L": 4,
+          "body-spine": 4,
+          "body-shell_R": 1
+        }
+      },
+      "bite": {
+        "beak_forwardmost_frame": 17.75,
+        "beak_tip_at_contact_m": {
+          "forward": 0.916,
+          "up": 0.347,
+          "right": 0.058
+        },
+        "beak_tip_rest_forward_m": 0.609,
+        "head_forwardmost_per_frame_m": [
+          0.609,
+          0.609,
+          0.602,
+          0.593,
+          0.586,
+          0.584,
+          0.58,
+          0.577,
+          0.574,
+          0.572,
+          0.57,
+          0.569,
+          0.568,
+          0.584,
+          0.632,
+          0.708,
+          0.753,
+          0.84,
+          0.916,
+          0.885,
+          0.866,
+          0.849,
+          0.804,
+          0.745,
+          0.686,
+          0.64,
+          0.624,
+          0.623,
+          0.618,
+          0.612,
+          0.609
+        ],
+        "beak_tip_z_per_frame_m": [
+          0.387,
+          0.41,
+          0.427,
+          0.441,
+          0.453,
+          0.468,
+          0.48,
+          0.489,
+          0.498,
+          0.504,
+          0.508,
+          0.511,
+          0.512,
+          0.505,
+          0.483,
+          0.437,
+          0.419,
+          0.396,
+          0.347,
+          0.318,
+          0.302,
+          0.308,
+          0.321,
+          0.336,
+          0.35,
+          0.36,
+          0.366,
+          0.372,
+          0.379,
+          0.384,
+          0.387
+        ],
+        "shell_L_deg_per_frame": [
+          2.0,
+          2.5,
+          3.5,
+          4.5,
+          5.0,
+          6.4,
+          7.6,
+          8.7,
+          9.5,
+          9.4,
+          11.2,
+          10.7,
+          10.8,
+          11.9,
+          11.2,
+          13.5,
+          12.4,
+          10.9,
+          4.0,
+          2.5,
+          2.0,
+          0.4,
+          2.4,
+          4.0,
+          3.6,
+          2.7,
+          1.9,
+          1.5,
+          1.6,
+          1.9,
+          2.0
+        ],
+        "shell_R_deg_per_frame": [
+          2.0,
+          2.5,
+          3.5,
+          4.5,
+          5.0,
+          6.4,
+          7.6,
+          8.7,
+          9.5,
+          10.9,
+          10.0,
+          11.2,
+          11.2,
+          10.8,
+          12.8,
+          11.9,
+          13.6,
+          10.9,
+          4.0,
+          2.5,
+          2.0,
+          0.4,
+          2.4,
+          4.0,
+          3.6,
+          2.7,
+          1.9,
+          1.5,
+          1.6,
+          1.9,
+          2.0
+        ],
+        "shell_span_per_frame_m": [
+          0.751,
+          0.754,
+          0.763,
+          0.771,
+          0.775,
+          0.786,
+          0.796,
+          0.804,
+          0.811,
+          0.816,
+          0.82,
+          0.822,
+          0.823,
+          0.826,
+          0.834,
+          0.842,
+          0.844,
+          0.826,
+          0.701,
+          0.714,
+          0.718,
+          0.731,
+          0.755,
+          0.768,
+          0.765,
+          0.758,
+          0.751,
+          0.747,
+          0.748,
+          0.75,
+          0.751
+        ],
+        "shell_span_min_frame_after_windup": 18.0,
+        "front_L_sole_z_per_frame_mm": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          36.4,
+          51.8,
+          56.8,
+          52.2,
+          34.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          -0.0,
+          2.8,
+          8.6,
+          12.2,
+          15.3,
+          16.1,
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "body_forward_per_frame_m": [
+          -0.3,
+          -0.304,
+          -0.312,
+          -0.323,
+          -0.331,
+          -0.335,
+          -0.339,
+          -0.342,
+          -0.345,
+          -0.347,
+          -0.349,
+          -0.35,
+          -0.35,
+          -0.343,
+          -0.321,
+          -0.285,
+          -0.266,
+          -0.254,
+          -0.25,
+          -0.25,
+          -0.25,
+          -0.254,
+          -0.265,
+          -0.279,
+          -0.293,
+          -0.304,
+          -0.308,
+          -0.307,
+          -0.304,
+          -0.301,
+          -0.3
+        ],
+        "body_forwardmost_frame": 18.0
+      },
+      "feet": {
+        "front_L": {
+          "min_z_mm": -0.0,
+          "max_lift_mm": 56.9,
+          "contacts": 3,
+          "slide_within_contact_mm": 17.38
+        },
+        "front_R": {
+          "min_z_mm": 8.5,
+          "max_lift_mm": 8.5,
+          "contacts": 1,
+          "slide_within_contact_mm": 0.5
+        },
+        "hind_L": {
+          "min_z_mm": 1.5,
+          "max_lift_mm": 11.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 5.33
+        },
+        "hind_R": {
+          "min_z_mm": 1.6,
+          "max_lift_mm": 6.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 4.46
+        }
+      }
+    },
+    "ForestSplitter_Hit": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Hit",
+      "frame_range": [
+        0.0,
+        12.0
+      ],
+      "key_range": [
+        0.0,
+        12.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 2793,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_L_foot"
+      },
+      "body": {
+        "body_xy_start_end_mm": 0.0,
+        "body_xy_max_from_start_mm": 20.0
+      },
+      "ground": {
+        "skin_min_z_mm": -0.0,
+        "at_frame": 2.25,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": 0.0
+      },
+      "stretch": {
+        "ratio_max": 11.138,
+        "ratio_min": 0.149,
+        "max_at": [
+          2.75,
+          "head",
+          "shell_L",
+          7.1
+        ],
+        "min_at": [
+          1.25,
+          "leg_front_R_upper",
+          "head"
+        ],
+        "p999_max": 3.493,
+        "grow_max_mm": 105.6,
+        "grow_max_at": 3.0,
+        "grow_max_pair": [
+          "shell_R",
+          "shell_L"
+        ],
+        "edges_grow_over_2cm": 150,
+        "edges_grow_over_5cm": 78,
+        "pairs_over_2cm": {
+          "shell_L-shell_R": 2,
+          "neck-shell_L": 6,
+          "head-shell_L": 42,
+          "shell_L-spine": 9,
+          "head-shell_R": 58,
+          "leg_front_R_upper-shell_R": 8,
+          "shell_R-spine": 5,
+          "neck-shell_R": 10,
+          "shell_L-shell_L": 6,
+          "body-spine": 1,
+          "shell_R-shell_R": 2,
+          "leg_front_L_upper-shell_L": 1
+        }
+      },
+      "feet": {
+        "front_L": {
+          "min_z_mm": -0.0,
+          "max_lift_mm": 0.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 2.42
+        },
+        "front_R": {
+          "min_z_mm": 8.5,
+          "max_lift_mm": 8.5,
+          "contacts": 1,
+          "slide_within_contact_mm": 0.45
+        },
+        "hind_L": {
+          "min_z_mm": 4.8,
+          "max_lift_mm": 9.6,
+          "contacts": 1,
+          "slide_within_contact_mm": 4.13
+        },
+        "hind_R": {
+          "min_z_mm": 4.7,
+          "max_lift_mm": 6.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 2.46
+        }
+      }
+    },
+    "ForestSplitter_Death": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Death",
+      "frame_range": [
+        0.0,
+        12.0
+      ],
+      "key_range": [
+        0.0,
+        12.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 2793,
+        "min": 0.999999,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_R_lower"
+      },
+      "body": {
+        "body_xy_start_end_mm": 15.0,
+        "body_xy_max_from_start_mm": 15.0
+      },
+      "ground": {
+        "skin_min_z_mm": -5.87,
+        "at_frame": 12.0,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": -5.87
+      },
+      "stretch": {
+        "ratio_max": 34.129,
+        "ratio_min": 0.052,
+        "max_at": [
+          12.0,
+          "head",
+          "shell_L",
+          7.1
+        ],
+        "min_at": [
+          2.25,
+          "shell_R",
+          "head"
+        ],
+        "p999_max": 11.131,
+        "grow_max_mm": 354.6,
+        "grow_max_at": 12.0,
+        "grow_max_pair": [
+          "shell_R",
+          "shell_L"
+        ],
+        "edges_grow_over_2cm": 772,
+        "edges_grow_over_5cm": 199,
+        "pairs_over_2cm": {
+          "shell_L-shell_R": 15,
+          "leg_front_R_upper-shell_R": 13,
+          "neck-shell_L": 6,
+          "head-shell_L": 45,
+          "head-shell_R": 67,
+          "shell_L-spine": 15,
+          "neck-shell_R": 10,
+          "shell_R-spine": 9,
+          "shell_R-shell_R": 82,
+          "shell_L-shell_L": 69,
+          "spine-spine": 44,
+          "leg_front_L_upper-shell_L": 1,
+          "body-spine": 4,
+          "body-body": 10,
+          "leg_front_R_lower-leg_front_R_lower": 3,
+          "head-spine": 1,
+          "neck-spine": 1,
+          "head-head": 2,
+          "leg_front_L_upper-spine": 1,
+          "body-leg_hind_L_upper": 1,
+          "body-shell_L": 1
+        }
+      },
+      "death": {
+        "release_frame": 12,
+        "last_frame": 12.0,
+        "shell_L_deg_per_frame": [
+          2.0,
+          3.0,
+          11.3,
+          16.0,
+          13.0,
+          17.0,
+          14.0,
+          15.5,
+          17.0,
+          18.3,
+          22.0,
+          23.0,
+          26.0
+        ],
+        "shell_R_deg_per_frame": [
+          2.0,
+          1.4,
+          3.0,
+          9.7,
+          14.0,
+          11.5,
+          15.0,
+          12.5,
+          14.3,
+          16.0,
+          17.3,
+          21.0,
+          24.5
+        ],
+        "shell_span_per_frame_m": [
+          0.751,
+          0.727,
+          0.767,
+          0.841,
+          0.847,
+          0.853,
+          0.856,
+          0.852,
+          0.866,
+          0.878,
+          0.899,
+          0.918,
+          0.943
+        ],
+        "body_z_per_frame_m": [
+          0.575,
+          0.579,
+          0.58,
+          0.57,
+          0.54,
+          0.536,
+          0.527,
+          0.519,
+          0.515,
+          0.513,
+          0.509,
+          0.501,
+          0.49
+        ],
+        "end_sole_z_mm": {
+          "front_L": -3.7,
+          "front_R": 8.5,
+          "hind_L": 2.9,
+          "hind_R": 1.4
+        },
+        "end_skin_min_z_mm": -5.87
+      },
+      "feet": {
+        "front_L": {
+          "min_z_mm": -3.7,
+          "max_lift_mm": 0.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 7.51
+        },
+        "front_R": {
+          "min_z_mm": 8.5,
+          "max_lift_mm": 8.5,
+          "contacts": 1,
+          "slide_within_contact_mm": 0.89
+        },
+        "hind_L": {
+          "min_z_mm": 2.9,
+          "max_lift_mm": 9.6,
+          "contacts": 1,
+          "slide_within_contact_mm": 4.65
+        },
+        "hind_R": {
+          "min_z_mm": 1.4,
+          "max_lift_mm": 6.0,
+          "contacts": 1,
+          "slide_within_contact_mm": 4.59
+        }
+      }
+    },
+    "ForestSplitter_Pop": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Pop",
+      "frame_range": [
+        0.0,
+        10.0
+      ],
+      "key_range": [
+        0.0,
+        10.0
+      ],
+      "non_bone_fcurves": [
+        "location",
+        "rotation_euler",
+        "scale"
+      ],
+      "armature_object_channels": {
+        "location[0]": 0.0,
+        "location[1]": 0.0,
+        "location[2]": 0.0,
+        "rotation_euler[0]": 0.0,
+        "rotation_euler[1]": 0.0,
+        "rotation_euler[2]": 0.0,
+        "scale[0]": 0.0,
+        "scale[1]": 0.0,
+        "scale[2]": 0.0
+      },
+      "armature_object_static": true,
+      "scale_keys": {
+        "count": 2337,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "facing_guide_static": true,
+      "root": {
+        "root_head_start": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "root_travel_xy_mm": 0.0,
+        "root_travel_z_mm": 0.0,
+        "root_rot_deg": 0.0
+      },
+      "scale": {
+        "max_bone_scale_dev": 1e-06,
+        "bone": "leg_front_L_foot"
+      },
+      "body": {
+        "body_xy_start_end_mm": 0.0,
+        "body_xy_max_from_start_mm": 0.0
+      },
+      "ground": {
+        "skin_min_z_mm": -4.79,
+        "at_frame": 0.0,
+        "verts_below_minus_1cm": 0,
+        "end_min_z_mm": -0.0
+      },
+      "stretch": {
+        "ratio_max": 9.909,
+        "ratio_min": 0.124,
+        "max_at": [
+          5.0,
+          "body",
+          "body",
+          1.5
+        ],
+        "min_at": [
+          9.5,
+          "shell_R",
+          "neck"
+        ],
+        "p999_max": 2.888,
+        "grow_max_mm": 92.1,
+        "grow_max_at": 5.0,
+        "grow_max_pair": [
+          "shell_R",
+          "shell_L"
+        ],
+        "edges_grow_over_2cm": 268,
+        "edges_grow_over_5cm": 33,
+        "pairs_over_2cm": {
+          "shell_L-shell_R": 2,
+          "neck-shell_L": 6,
+          "shell_R-spine": 5,
+          "head-shell_L": 42,
+          "neck-shell_R": 10,
+          "head-shell_R": 53,
+          "shell_L-spine": 7,
+          "body-spine": 12,
+          "shell_L-shell_L": 6,
+          "body-shell_L": 4,
+          "leg_front_R_upper-shell_R": 8,
+          "head-spine": 3,
+          "body-body": 27,
+          "head-head": 8,
+          "spine-spine": 60,
+          "shell_R-shell_R": 7,
+          "leg_front_R_lower-leg_front_R_lower": 1,
+          "body-shell_R": 1,
+          "leg_hind_R_upper-leg_hind_R_upper": 2,
+          "body-leg_hind_L_upper": 1,
+          "leg_front_R_lower-shell_R": 2,
+          "leg_hind_R_lower-shell_R": 1
+        }
+      },
+      "pop": {
+        "lowest_foot_z_per_frame_mm": [
+          -3.1,
+          -0.0,
+          55.0,
+          188.5,
+          279.6,
+          312.2,
+          282.1,
+          178.3,
+          -0.0,
+          -1.5,
+          -0.0
+        ],
+        "highest_foot_z_per_frame_mm": [
+          8.5,
+          8.5,
+          63.5,
+          227.1,
+          320.2,
+          350.5,
+          320.5,
+          211.8,
+          9.1,
+          8.5,
+          8.5
+        ],
+        "airborne_frames": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "takeoff_frame_first_airborne": 2,
+        "landing_frame_first_grounded": 8,
+        "contract": {
+          "takeoff": 2,
+          "landing": 8
+        }
+      },
+      "feet": {
+        "front_L": {
+          "min_z_mm": -3.1,
+          "max_lift_mm": 328.1,
+          "contacts": 2,
+          "slide_within_contact_mm": 4.26
+        },
+        "front_R": {
+          "min_z_mm": 8.5,
+          "max_lift_mm": 350.5,
+          "contacts": 2,
+          "slide_within_contact_mm": 0.69
+        },
+        "hind_L": {
+          "min_z_mm": 3.1,
+          "max_lift_mm": 320.7,
+          "contacts": 2,
+          "slide_within_contact_mm": 2.63
+        },
+        "hind_R": {
+          "min_z_mm": 2.1,
+          "max_lift_mm": 312.2,
+          "contacts": 2,
+          "slide_within_contact_mm": 2.79
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,311 @@
+{
+  "schema": "pelag-higgsfield-concepts.v1",
+  "status": "completed",
+  "provider": "Higgsfield",
+  "model": "gpt_image_2_5",
+  "folder_id": "78388566-1b59-4757-bf33-81f160a9d272",
+  "folder_ownership": "Parent confirmed current conversation Pelag project from 2026-09-27 redesign production. Generated redesign images and rejected reference media not reused.",
+  "references": [
+    {
+      "id": "pelag_identity",
+      "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\a pose.png",
+      "source_sha256": "b09a37291c64b5a69bff2d245b55ad592ff367a205aea7ce139b780db7c65ad1",
+      "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\pelag_identity.jpg",
+      "upload_sha256": "a9418de608a9a66fe220085a249cf251536ee6da83a6e31a37f269aea5888308",
+      "size_bytes": 336303,
+      "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+      "media_id": "fa5ebd2b-7061-4aa2-a431-bd4a248d3788",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/fa5ebd2b-7061-4aa2-a431-bd4a248d3788.jpg",
+      "status": "uploaded"
+    },
+    {
+      "id": "saber_identity",
+      "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\PELAG\\sabre-pelag1.png",
+      "source_sha256": "78bd5a9e780ec6db82e32e43a3447343bd1fa0fa94f439179d5deee1457e93ba",
+      "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\saber_identity.jpg",
+      "upload_sha256": "26204d50aa6721d241cbf4fa91692219b3b79c00a610a432e6ed2418a25438d1",
+      "size_bytes": 209887,
+      "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+      "media_id": "3466cc9e-4f11-47cf-a942-d911ee4cb50c",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/3466cc9e-4f11-47cf-a942-d911ee4cb50c.jpg",
+      "status": "uploaded"
+    },
+    {
+      "id": "anchor_identity",
+      "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\PELAG\\animation\\anchor-slam\\Pelag_Approved_Anchor_Reference.jpg",
+      "source_sha256": "4d83e457bebd9a1db031b0f8a28afdb6483699f1c554905689b3c864cb7f7586",
+      "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\anchor_identity.jpg",
+      "upload_sha256": "ffb8781d250ce4fa5b141d35ea02ea957dc98d372895b7894f909c5d6698806a",
+      "size_bytes": 332593,
+      "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+      "media_id": "7c8c9a13-8ffb-4c6e-b263-e3d43c1cc591",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/7c8c9a13-8ffb-4c6e-b263-e3d43c1cc591.jpg",
+      "status": "uploaded"
+    },
+    {
+      "id": "whirlwind_current",
+      "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\whirlwind-ring-recheck2\\shot_01_t1.00s.png",
+      "source_sha256": "ae17abddaa3aec082dc334e702f3299ab44576e268b23a05c2c640d3d9dd30b3",
+      "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\whirlwind_current.jpg",
+      "upload_sha256": "6224f1524986af19707b08c8248bc4fddd25402d6c4d222b483273a679f25c6c",
+      "size_bytes": 646265,
+      "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+      "media_id": "0b48b3d4-e82b-4f98-957e-620682807bca",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/0b48b3d4-e82b-4f98-957e-620682807bca.jpg",
+      "status": "uploaded"
+    },
+    {
+      "id": "pelag_game_grip",
+      "source_path": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combat-grip-55\\shot_00_t1.10s.png",
+      "source_sha256": "e8a98d9cf3001389bc4d1759cf0863009bc9bcb8fdd87a444bae8b50c8e31f3e",
+      "upload_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\reference-inputs\\pelag_game_grip.jpg",
+      "upload_sha256": "6b7811b759a0dd15deacc483267e89789f4e226fb822b5dd90fafeb0ea96df7a",
+      "size_bytes": 412399,
+      "conversion": "JPEG transport copy at same pixel dimensions, quality 94, 4:4:4; no crop, resize or artistic edit.",
+      "media_id": "6d6d546f-1d0a-4d6e-a414-1e215ca6787f",
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/6d6d546f-1d0a-4d6e-a414-1e215ca6787f.jpg",
+      "status": "uploaded"
+    }
+  ],
+  "upload_route": "Native local HTTPS PUT per actual media_upload response instructions, then confirmed all five HTTP 200 uploads. No base64 relay. First curl Schannel failed TLS revocation check before transfer; native Python urllib with normal verified TLS succeeded against same slot URLs.",
+  "returned_upload_routing_instruction": "Run that PUT where the bytes already are: the user's own machine for a path they supplied, or the same sandbox_exec command that creates a sandbox file. Never relay the bytes between environments as base64 or text chunks, and never upload through the higgsfield.ai web interface.",
+  "requests": [
+    {
+      "index": 0,
+      "params": {
+        "model": "gpt_image_2_5",
+        "variant": "flare",
+        "quality": "high",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a clean two-panel comparison on the same scale and camera. LEFT: the accepted base Whirlwind from the gameplay reference, the actual saber held firmly by its leather grip, its existing warm ivory-gold dimensional spiral around Pelag. Keep the base effect itself unchanged; keep the forest floor clear of distracting scenery. RIGHT: the SAME moment and base effect, plus the proposed visible outer cutting wave. A single thin but dimensional blade-like annular crest expands only OUTSIDE the base 2.3m circle toward 4m; a clear empty separation distinguishes it from the core sweep. The traveling crest carries bright ivory steel at its leading edge, warm gold reflected underside, a restrained dark edge matching the accepted ground ring, and a few directional wisps. Floor remains visible. The inner zone is not filled or hit by this outer wave; do not draw a solid disk, magic sigils, a bubble, fire, or several decorative rings. This is one outer wave emitted by one actual damaging rotation. The picture should make the additional reach instantly obvious without making the base effect larger. Do not attempt to demonstrate anchor mounting; frame the hero from front-side and keep stowed equipment unobtrusive.",
+        "medias": [
+          {
+            "role": "image",
+            "value": "6d6d546f-1d0a-4d6e-a414-1e215ca6787f"
+          },
+          {
+            "role": "image",
+            "value": "fa5ebd2b-7061-4aa2-a431-bd4a248d3788"
+          },
+          {
+            "role": "image",
+            "value": "3466cc9e-4f11-47cf-a942-d911ee4cb50c"
+          },
+          {
+            "role": "image",
+            "value": "0b48b3d4-e82b-4f98-957e-620682807bca"
+          }
+        ],
+        "folder_id": "78388566-1b59-4757-bf33-81f160a9d272"
+      }
+    },
+    {
+      "index": 1,
+      "params": {
+        "model": "gpt_image_2_5",
+        "variant": "flare",
+        "quality": "high",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Use the supplied Pelag identity image exactly: same current warm-skinned face, brown hair and pink headband, compact athletic human proportions, white short tunic and trousers, coral-pink sash, turquoise trim and brown sandals. Preserve current costume, face and body; this is an ability-effect concept, not a character redesign. Match our stylized dimensional painted game rendering with tactile materials. Fixed elevated three-quarter gameplay camera, plain readable forest-earth floor, full hero and full effect in frame, clean silhouette. No cinematic camera tilt, no photorealism, no anime redesign, no interface, no text, no invented extra weapons, no full-screen flash. Every effect has depth, thickness, directional motion and a sharp readable contact; never flat concentric graphic circles. Create a three-panel action beat board, same fixed game camera and scale: compact loaded preparation, the single heavy third-hit contact, then recovery. This illustrates the optional new Crushing Finale talent replacing a fourth input with a stronger THIRD finisher; do not add a fourth attack. Use the exact supplied anchor reference with its broad smooth curved flukes, solid dark metal mass, central diamond keel, top ring, linked chain and separate leather-wrapped hand grip. Pelag holds the GRIP firmly; connected chain leads to the actual top ring, visibly taut under load. Large believable weapon, never a toy, never a floating anchor. The finisher is a low heavy forward half-circle sweep, approximately 180 degrees and 2.8m reach, with planted leading foot, hip/shoulder rotation, counterbalancing torso and hands. At contact the heavy outer anchor head drives a short angular silver-white edge flash and dense local earth burst: a few substantial chips, low dust curled by its path, a brief compact impact star. The trail is a short dimensional ribbon following the real anchor path and fading behind it. Dust and debris remain in the forward semicircle; nothing erupts behind the hero. Show anchor mass through pose and localized response, not a huge glowing spell disk, long ground shockwave, pillar or whole-arena explosion. Face, body and actual weapon remain readable. Final panel shows decelerating weight and chain beginning to slacken, not a frozen impact pose. A still beat board is a visual proposal, not proof of animation or physics.",
+        "medias": [
+          {
+            "role": "image",
+            "value": "6d6d546f-1d0a-4d6e-a414-1e215ca6787f"
+          },
+          {
+            "role": "image",
+            "value": "fa5ebd2b-7061-4aa2-a431-bd4a248d3788"
+          },
+          {
+            "role": "image",
+            "value": "7c8c9a13-8ffb-4c6e-b263-e3d43c1cc591"
+          }
+        ],
+        "folder_id": "78388566-1b59-4757-bf33-81f160a9d272"
+      }
+    }
+  ],
+  "exact_estimates": [
+    {
+      "cost": {
+        "credits": 2.75,
+        "credits_exact": 2.75
+      },
+      "adjustments": {
+        "medias[0].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        },
+        "medias[1].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        },
+        "medias[2].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        },
+        "medias[3].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        }
+      }
+    },
+    {
+      "cost": {
+        "credits": 2.75,
+        "credits_exact": 2.75
+      },
+      "adjustments": {
+        "medias[0].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        },
+        "medias[1].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        },
+        "medias[2].role": {
+          "requested": "image",
+          "used": "image_references",
+          "reason": "GPT Image 2.5 backend expects schema-key media roles"
+        }
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "index": 0,
+      "job_id": "382d5488-22d4-4dfb-963e-637063440c39",
+      "status": "completed",
+      "type": "image",
+      "model": "gpt_image_2_5",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260926_232158_382d5488-22d4-4dfb-963e-637063440c39.png"
+    },
+    {
+      "index": 1,
+      "job_id": "1c4a4232-31a1-4e2c-a971-ad4b455ef1fb",
+      "status": "completed",
+      "type": "image",
+      "model": "gpt_image_2_5",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260926_232158_1c4a4232-31a1-4e2c-a971-ad4b455ef1fb.png"
+    }
+  ],
+  "paid_generation_count": 2,
+  "owner_acceptance": "pending",
+  "submission": {
+    "jobs": [
+      {
+        "index": 0,
+        "job_id": "382d5488-22d4-4dfb-963e-637063440c39",
+        "status": "pending",
+        "adjustments": {
+          "medias[0].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          },
+          "medias[1].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          },
+          "medias[2].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          },
+          "medias[3].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          }
+        }
+      },
+      {
+        "index": 1,
+        "job_id": "1c4a4232-31a1-4e2c-a971-ad4b455ef1fb",
+        "status": "pending",
+        "adjustments": {
+          "medias[0].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          },
+          "medias[1].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          },
+          "medias[2].role": {
+            "requested": "image",
+            "used": "image_references",
+            "reason": "GPT Image 2.5 backend expects schema-key media roles"
+          }
+        }
+      }
+    ],
+    "submitted_count": 2,
+    "failed_count": 0
+  },
+  "native_gallery_display_count": 1,
+  "actual_billing": "Submitted two image jobs at 2.75 credits exact preflight each; final account debit not separately queried.",
+  "outputs": [
+    {
+      "index": 0,
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260926_232158_382d5488-22d4-4dfb-963e-637063440c39.png",
+      "file": "01-whirlwind-outer-wave.png",
+      "sha256": "c6b9c1e77b8f62632afa4008cd1db441eea889e12d8390c311832bd384b75d5b",
+      "dimensions": [
+        2688,
+        1520
+      ],
+      "absolute_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\01-whirlwind-outer-wave.png"
+    },
+    {
+      "index": 1,
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260926_232158_1c4a4232-31a1-4e2c-a971-ad4b455ef1fb.png",
+      "file": "02-wreck-third-finisher.png",
+      "sha256": "1bf8bc6632eae90c478fc4861c5a85b22c3047f332470c38e7738ad702d6fdb3",
+      "dimensions": [
+        2688,
+        1520
+      ],
+      "absolute_path": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\visual-concepts\\02-wreck-third-finisher.png"
+    }
+  ],
+  "visual_review": [
+    {
+      "index": 0,
+      "status": "concept_pending_owner_review",
+      "usable": "Clearly separated external cutting wave, recognizable current Pelag and saber, dimensional warm ivory-gold sweep.",
+      "limitations": [
+        "Generated reinterpretation of existing swirl; do not replace the accepted runtime base effect.",
+        "No actual damage timing or radius validation demonstrated by a still image.",
+        "Image is not a new character or mounting proposal."
+      ]
+    },
+    {
+      "index": 1,
+      "status": "impact_mood_only_not_rig_or_motion_reference",
+      "usable": "Heavy anchor mass, forward contact, local earth burst and short bright edge are readable.",
+      "critical_deviations": [
+        "Generator elongated the separate ring grip into a straight two-hand staff handle. This differs from the actual approved weapon and must not be copied.",
+        "Recovery panel keeps chain taut rather than showing slack; no verified chain physics or recovery motion.",
+        "Static pose board is not an approved animation or finalized new mechanic."
+      ],
+      "no_retry": "No new paid generation attempted; show limitation and let owner choose the finisher mechanic first."
+    }
+  ],
+  "gallery": "One show_generation_by_ids call after both jobs completed; no duplicate gallery calls.",
+  "download_purpose": "Production archive and local review deliverable after native gallery displayed, not a workaround for display restrictions."
+}

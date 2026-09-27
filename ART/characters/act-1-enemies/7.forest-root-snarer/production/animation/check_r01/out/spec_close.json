@@ -1,0 +1,4 @@
+{"Slam": {"frames": [8, 10, 12], "views": ["front", "game", "back"], "ortho": 2.6, "center": [0, -0.1, 1.05]},
+ "Walk": {"frames": [8, 9], "views": ["front", "low", "game_r"], "ortho": 2.2, "center": [0, -0.2, 0.55]},
+ "Death": {"frames": [45], "views": ["front", "low", "side", "game"], "ortho": 2.6, "center": [0, -0.2, 0.35]},
+ "Hit": {"frames": [3], "views": ["front", "game"], "ortho": 2.4, "center": [0, -0.2, 0.6]}}

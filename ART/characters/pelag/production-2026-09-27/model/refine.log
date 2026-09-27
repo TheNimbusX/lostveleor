@@ -1,0 +1,15 @@
+00:20.141  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\Pelag_Model_Candidate.blend"
+00:56.579  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\front.png'
+01:23.641  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\back.png'
+01:49.532  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\side.png'
+02:14.188  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\game.png'
+02:37.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\game_original_geometry.png'
+02:52.407  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\saber_candidate.png'
+03:06.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\saber_original.png'
+03:21.688  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\game.png'
+FBX version: 7400
+Info: Saved as "Pelag_Model_Candidate.blend"
+REFINED {"hero_and_static_weapons": 32416, "link_tris": 80, "max_links_under_40000": 94, "runtime_pool_capacity_main_feed_bridge": [96, 24, 16], "warning": "Static code envelope, not measured runtime. Assumes exactly one active weapon ownership and carry chain hidden during deployment. Runtime overdraw/drawcalls/transition overlaps need measurement after approved integration.", "anchor_eye_triangles": 80, "static_code_upper_bound_links": {"slam": 51, "slam_return": 56, "boarding": 93}, "peak_static_envelope_triangles": 39856}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

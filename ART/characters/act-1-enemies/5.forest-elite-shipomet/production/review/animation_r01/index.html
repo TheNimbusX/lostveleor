@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Шипомет · анимации r01</title>
+<style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d;--hot:#ff8c28}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Segoe UI',sans-serif}
+main{max-width:1500px;margin:auto;padding:28px 16px 60px}h1{font-size:34px;margin:6px 0 8px}h2{font-size:20px;margin:0}
+p{color:var(--muted);margin:6px 0}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent)}
+code{font-size:13px;color:var(--accent);margin-left:8px}.pill{display:inline-block;border:1px solid #53634f;border-radius:20px;padding:2px 10px;margin-left:6px;font-size:13px;color:var(--muted)}
+.pill.hot{border-color:var(--hot);color:var(--hot)}.take{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin:18px 0}
+.take header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.phases{font-size:14px}.phases b{color:var(--ink)}.sim{color:var(--hot);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:10px}
+figure{margin:0}video,.grid img{width:100%;display:block;border-radius:8px;background:#6d7773}figcaption{font-size:13px;color:var(--muted);padding:4px 2px}
+.ref img{object-fit:contain}.noref{border:1px dashed var(--line);border-radius:8px;padding:16px;color:var(--muted);display:flex;align-items:center}
+.stills{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0}.stills img{width:100%;border-radius:6px;display:block}
+.stills figure.hot img{outline:3px solid var(--hot)}table{border-collapse:collapse;width:100%;font-size:14px}td{border-top:1px solid var(--line);padding:6px 8px;vertical-align:top}
+td:first-child{color:var(--muted);width:32%}ul{color:var(--muted)}nav a{color:var(--accent);margin-right:12px;text-decoration:none}
+</style></head><body><main>
+<div class="eyebrow">THE WAR REMAINS · ЛЕС · ЭЛИТА · ШИПОМЕТ (ForestThorncaster)</div>
+<h1>Анимации r01: 7 клипов на игровом риге</h1>
+<p>Все клипы 30 кадров/с, на месте (корень не двигается, перемещает симуляция), модель 23 999 треугольников, 24 кости.
+Кадры контакта совпадают с тиками симуляции. Ждёт проверки владельцем.</p>
+<nav><a href="#Idle">Ожидание</a><a href="#Walk">Ходьба</a><a href="#LineCast">Линия шипов</a><a href="#Burst">Взрыв вплотную</a><a href="#Shot">Выстрел шипом (новая)</a><a href="#Hit">Попадание</a><a href="#Death">Смерть</a></nav>
+
+<section class="take" id="Idle">
+  <header><h2>Ожидание <code>ForestThorncaster_Idle</code></h2><div><span class='pill'>петля</span><span class="pill">0–60 · 2.00 с</span></div></header>
+  <p class="phases"><b>0</b> Ожидание: дыхание, покачивание, шипы плавают</p>
+  <div class="grid">
+    <figure><video src="Idle_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Idle_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <figure class='ref'><img src='refs/idle_walk_sheet.jpg' alt='Лист референса Idle' loading='lazy'><figcaption>Референс: idle_walk.mp4, 0–2 с (6 кадров/с)</figcaption></figure>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Idle_game_0000.jpg' alt='Idle кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Idle_game_0015.jpg' alt='Idle кадр 15' loading='lazy'><figcaption>15</figcaption></figure><figure class=''><img src='stills/Idle_game_0030.jpg' alt='Idle кадр 30' loading='lazy'><figcaption>30</figcaption></figure><figure class=''><img src='stills/Idle_game_0045.jpg' alt='Idle кадр 45' loading='lazy'><figcaption>45</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 1.6e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 2,5 см</td></tr><tr><td>Шов петли</td><td>поза 0 = поза 60 (расхождение 0,00 мм)</td></tr></table>
+</section>
+<section class="take" id="Walk">
+  <header><h2>Ходьба <code>ForestThorncaster_Walk</code></h2><div><span class='pill'>петля</span><span class="pill">0–24 · 0.80 с</span></div></header>
+  <p class="phases"><b>0</b> Ходьба на ходулях: 2,2 м/с, 1,76 м за цикл</p>
+  <div class="grid">
+    <figure><video src="Walk_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Walk_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <figure class='ref'><img src='refs/idle_walk_sheet.jpg' alt='Лист референса Walk' loading='lazy'><figcaption>Референс: idle_walk.mp4, 2–4 с (6 кадров/с)</figcaption></figure>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Walk_game_0000.jpg' alt='Walk кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Walk_game_0006.jpg' alt='Walk кадр 6' loading='lazy'><figcaption>6</figcaption></figure><figure class=''><img src='stills/Walk_game_0012.jpg' alt='Walk кадр 12' loading='lazy'><figcaption>12</figcaption></figure><figure class=''><img src='stills/Walk_game_0018.jpg' alt='Walk кадр 18' loading='lazy'><figcaption>18</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 1.9e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 4,1 см</td></tr><tr><td>Шов петли</td><td>поза 0 = поза 24 (расхождение 0,00 мм)</td></tr><tr><td>Проскальзывание опорной ноги</td><td>≤ 1,8 см за опору (цель &lt; 2 см)</td></tr><tr><td>Скорость / шаг</td><td>2,2 м/с · 1,76 м за цикл 24 кадра · шаг 0,88 м</td></tr></table>
+</section>
+<section class="take" id="LineCast">
+  <header><h2>Линия шипов <code>ForestThorncaster_LineCast</code></h2><div><span class='pill hot'>контакт 24</span><span class="pill">0–75 · 2.50 с</span></div></header>
+  <p class="phases"><b>0</b> Подъём обоих шипов над головой → <b>18</b> Удар вниз → <b>24</b> КОНТАКТ: шипы вошли в землю → <b>26</b> Шипы в земле: волна по линии до тика 45 → <b>45</b> Окно наказания: стоит согнутым → <b>60</b> Выдёргивает шипы, выпрямляется</p><p class='sim'>кадр 24 = шипы в земле; сим: первый шип из земли на тике 27, волна до 45, затем 30 тиков наказания</p>
+  <div class="grid">
+    <figure><video src="LineCast_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="LineCast_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <figure class='ref'><img src='refs/line_cast_sheet.jpg' alt='Лист референса LineCast' loading='lazy'><figcaption>Референс: line_cast.mp4 (6 кадров/с)</figcaption></figure>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/LineCast_game_0000.jpg' alt='LineCast кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/LineCast_game_0018.jpg' alt='LineCast кадр 18' loading='lazy'><figcaption>18</figcaption></figure><figure class=''><img src='stills/LineCast_game_0022.jpg' alt='LineCast кадр 22' loading='lazy'><figcaption>22</figcaption></figure><figure class='hot'><img src='stills/LineCast_game_0024.jpg' alt='LineCast кадр 24' loading='lazy'><figcaption>24</figcaption></figure><figure class=''><img src='stills/LineCast_game_0040.jpg' alt='LineCast кадр 40' loading='lazy'><figcaption>40</figcaption></figure><figure class=''><img src='stills/LineCast_game_0068.jpg' alt='LineCast кадр 68' loading='lazy'><figcaption>68</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 3.2e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 12,7 см</td></tr><tr><td>Первое касание земли</td><td>кадр 24 (кончики шипов, z ≤ 5 мм)</td></tr><tr><td>Высота кончиков 22–26</td><td>22: 2,38 м · 23: 1,15 м · 24: -0,00 м · 25: -0,07 м · 26: -0,10 м</td></tr><tr><td>Шипы в земле 24–60</td><td>кончики не выше 0,0 см, дрейф 0,0 мм</td></tr></table>
+</section>
+<section class="take" id="Burst">
+  <header><h2>Взрыв вплотную <code>ForestThorncaster_Burst</code></h2><div><span class='pill hot'>контакт 21</span><span class="pill">0–36 · 1.20 с</span></div></header>
+  <p class="phases"><b>0</b> Сжимается, руки к груди → <b>18</b> Рывок → <b>21</b> ВЗРЫВ: поза звезды → <b>27</b> Возврат в стойку</p><p class='sim'>кадр 21 = поза звезды; сим: замах 21 тик</p>
+  <div class="grid">
+    <figure><video src="Burst_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Burst_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <figure class='ref'><img src='refs/burst_sheet.jpg' alt='Лист референса Burst' loading='lazy'><figcaption>Референс: burst.mp4 (6 кадров/с)</figcaption></figure>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Burst_game_0000.jpg' alt='Burst кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Burst_game_0012.jpg' alt='Burst кадр 12' loading='lazy'><figcaption>12</figcaption></figure><figure class=''><img src='stills/Burst_game_0018.jpg' alt='Burst кадр 18' loading='lazy'><figcaption>18</figcaption></figure><figure class='hot'><img src='stills/Burst_game_0021.jpg' alt='Burst кадр 21' loading='lazy'><figcaption>21</figcaption></figure><figure class=''><img src='stills/Burst_game_0027.jpg' alt='Burst кадр 27' loading='lazy'><figcaption>27</figcaption></figure><figure class=''><img src='stills/Burst_game_0036.jpg' alt='Burst кадр 36' loading='lazy'><figcaption>36</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 3.4e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 5,7 см</td></tr><tr><td>Размах шипов</td><td>кадр 18: 0,21 м → кадр 21: 2,68 м (макс. 2,68 м; с кадра 21 держится до 27)</td></tr></table>
+</section>
+<section class="take" id="Shot">
+  <header><h2>Выстрел шипом (новая) <code>ForestThorncaster_Shot</code></h2><div><span class='pill hot'>контакт 21</span><span class="pill">0–33 · 1.10 с</span></div></header>
+  <p class="phases"><b>0</b> Замах правым шипом, как копьём → <b>15</b> Прицел: линия полёта (оверлей ревью) → <b>21</b> ВЫСТРЕЛ: шип срывается с кончика → <b>22</b> Доводка вниз-поперёк → <b>25</b> Возврат в стойку</p><p class='sim'>кадр 21 = шип срывается с кончика; сим: замах 21 тик</p>
+  <div class="grid">
+    <figure><video src="Shot_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Shot_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <div class='noref'>Референса нет: клип поставлен с нуля по описанию.</div>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Shot_game_0000.jpg' alt='Shot кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Shot_game_0015.jpg' alt='Shot кадр 15' loading='lazy'><figcaption>15</figcaption></figure><figure class=''><img src='stills/Shot_game_0019.jpg' alt='Shot кадр 19' loading='lazy'><figcaption>19</figcaption></figure><figure class='hot'><img src='stills/Shot_game_0021.jpg' alt='Shot кадр 21' loading='lazy'><figcaption>21</figcaption></figure><figure class=''><img src='stills/Shot_game_0025.jpg' alt='Shot кадр 25' loading='lazy'><figcaption>25</figcaption></figure><figure class=''><img src='stills/Shot_game_0033.jpg' alt='Shot кадр 33' loading='lazy'><figcaption>33</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 1.7e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 6,7 см</td></tr><tr><td>Дуло</td><td>кончик кости RightHand, локально (0; 0,499; 0) м по оси кости</td></tr><tr><td>Дуло в кадре 21</td><td>Unity (x, y, z) = (0,12, 1,90, 1,42) от корня; направление (0,00, -0,06, 1,00)</td></tr><tr><td>Скорость кончика перед выстрелом</td><td>16,0 м/с</td></tr></table>
+</section>
+<section class="take" id="Hit">
+  <header><h2>Попадание <code>ForestThorncaster_Hit</code></h2><div><span class="pill">0–12 · 0.40 с</span></div></header>
+  <p class="phases"><b>0</b> Отдёргивается назад → <b>3</b> Возврат</p>
+  <div class="grid">
+    <figure><video src="Hit_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Hit_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <div class='noref'>Референса нет: клип поставлен с нуля по описанию.</div>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Hit_game_0000.jpg' alt='Hit кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Hit_game_0003.jpg' alt='Hit кадр 3' loading='lazy'><figcaption>3</figcaption></figure><figure class=''><img src='stills/Hit_game_0006.jpg' alt='Hit кадр 6' loading='lazy'><figcaption>6</figcaption></figure><figure class=''><img src='stills/Hit_game_0012.jpg' alt='Hit кадр 12' loading='lazy'><figcaption>12</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 1.5e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 6,7 см</td></tr></table>
+</section>
+<section class="take" id="Death">
+  <header><h2>Смерть <code>ForestThorncaster_Death</code></h2><div><span class="pill">0–48 · 1.60 с</span></div></header>
+  <p class="phases"><b>0</b> Шатается назад → <b>11</b> Колени подламываются → <b>22</b> На коленях → <b>29</b> Падает лицом вниз → <b>39</b> Лежит неподвижно</p>
+  <div class="grid">
+    <figure><video src="Death_game.mp4" autoplay loop muted playsinline controls></video><figcaption>Игровая камера (52° вниз, 3/4)</figcaption></figure>
+    <figure><video src="Death_side.mp4" autoplay loop muted playsinline controls></video><figcaption>Сбоку (слева от моба)</figcaption></figure>
+    <figure class='ref'><img src='refs/death_sheet.jpg' alt='Лист референса Death' loading='lazy'><figcaption>Референс: death.mp4 (6 кадров/с)</figcaption></figure>
+  </div>
+  <div class="stills"><figure class=''><img src='stills/Death_game_0000.jpg' alt='Death кадр 0' loading='lazy'><figcaption>0</figcaption></figure><figure class=''><img src='stills/Death_game_0011.jpg' alt='Death кадр 11' loading='lazy'><figcaption>11</figcaption></figure><figure class=''><img src='stills/Death_game_0022.jpg' alt='Death кадр 22' loading='lazy'><figcaption>22</figcaption></figure><figure class=''><img src='stills/Death_game_0029.jpg' alt='Death кадр 29' loading='lazy'><figcaption>29</figcaption></figure><figure class=''><img src='stills/Death_game_0039.jpg' alt='Death кадр 39' loading='lazy'><figcaption>39</figcaption></figure><figure class=''><img src='stills/Death_game_0048.jpg' alt='Death кадр 48' loading='lazy'><figcaption>48</figcaption></figure></div>
+  <table><tr><td>Пересечение земли телом</td><td>-0,0 см (мин. z, без шипов рук)</td></tr><tr><td>Длины костей</td><td>≤ 2.1e-06</td></tr><tr><td>Корень</td><td>объект арматуры не двигается; таз в плоскости XY ≤ 34,7 см</td></tr><tr><td>Финальная поза</td><td>мин. z -0,0 см, макс. z 0,73 м, неподвижна 44–48 (0,0 мм)</td></tr></table>
+</section>
+<section class="take"><h2>Пакет для Unity</h2>
+<p><code>animation/unity_package/ForestThorncaster.fbx</code> — меш, арматура, 7 дублей с точными именами, пустышка <code>Muzzle_RightSpike</code>; описание в <code>export.json</code>.
+Проверка обратным импортом: 24 костей, 23999 треугольников, масштаб арматуры 1, анимации объекта нет, дуло в кадре 21 выстрела = (-0,12, -1,42, 1,90) м в Blender.</p>
+<h2 style="margin-top:14px">Исправлено после независимой проверки (третья сборка)</h2><ul><li>Кисти (риг): у корня руки-шипа вес кисти граничил с весом предплечья через одно ребро — при сгибе запястья кора рвалась тонкой щепкой до 16 см (линия 8, взрыв 20, смерть 44). Вес кисти/предплечья теперь плавно переходит на 18 см вокруг запястья, сам шип остаётся жёстким; растяжение запястья ≤ 3,6 см.</li><li>Выстрел 4–10: шип складывался назад в предплечье (сгиб 165°, шипа не было видно). Теперь рука уходит назад маятником и шип переворачивается над головой; сгиб ≤ 107° (это сам прицел).</li><li>Линия шипов 20–24: удар замирал на кадре 22 в 0,75 м над землёй и дополз до земли (скорость кончика 68 → 13 → 19 м/с). Теперь разгон до контакта: 25 → 31 → 38 → 37 м/с, кадр 23 — 1,15 м над землёй, кадр 24 — в земле.</li><li>Взрыв: шипы продолжали расходиться после выпуска (максимум на 23-м); теперь самая широкая звезда на кадре 21 и держится до 27. Кадр 20 больше не заламывает шипы на 100° назад.</li><li>Смерть: тело висело в воздухе — кадры 16–21 без опоры до 8 см, «на коленях» 22–31 колени в 2–5 см над землёй. Теперь самая низкая точка тела на земле в каждом кадре. Убраны две остановки посреди падения (кадры 17 и 33–35).</li></ul>
+<p>Замеры проверки по реимпорту FBX: <code>animation/unity_package/verification.json</code>.</p>
+<h2 style="margin-top:14px">Исправлено во второй сборке</h2><ul><li>Линия шипов 0–18: подъём рук переставлен — локти больше не перескакивают и рука не выпрямляется рывком (было в кадрах 4–10).</li><li>Взрыв 0–8: шипы идут к груди вперёд-внутрь, без замаха назад и без рывка выпрямленной руки (было в кадре 5).</li><li>Смерть: колени и бёдра больше не уходят в землю (было до 4,7 см в кадрах 33–38); лежит на земле без зазора, неподвижна 44–48.</li></ul>
+<h2 style="margin-top:14px">Известные проблемы</h2><ul><li>Позы поставлены процедурно по листам референса (не покадровый трекинг видео); ритм подогнан под тики симуляции.</li><li>Взрыв: на референсе «звезда» — это много шипов, выросших из тела; риг двигает только две руки-шипа, остальное должен дать VFX в кадре 21.</li><li>Ходьба: быстрый вынос ноги на ходулях — у отрыва и постановки стопы пик ускорения голени/стопы ~0,1 м/кадр² (так задуман широкий шаг, не рывок шва петли).</li><li>Линия полёта шипа и летящий шип на видео выстрела — оверлей ревью, в FBX их нет. Для игры есть пустышка Muzzle_RightSpike на кончике правого шипа.</li><li>Кости head_end и headfront не анимируются (точки крепления). Мелкие шипы на конечностях слегка гнутся у локтей и колен (от рига).</li><li>Колено при глубоком сгибе (ходьба 18, стойка линии 30–60, смерть 19–20) — кора на сгибе растягивается до ~13 см на одном ребре; сверху выглядит как скруглённое колено, разрывов нет.</li><li>Выстрел: в прицеле 12–18 шип над головой смотрит вперёд, на игровую камеру, поэтому с неё он укорочен ракурсом.</li><li>Меш несимметричный (ноги и руки разной длины), поэтому значения поз по сторонам разные; зеркалить клипы в Unity нельзя.</li><li>Материал FBX ссылается только на Color и NormalGL; ORM лежит в Textures/ и подключается вручную.</li></ul></section>
+</main></body></html>

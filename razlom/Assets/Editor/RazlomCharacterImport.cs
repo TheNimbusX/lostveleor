@@ -33,6 +33,18 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private bool IsPelagMixamo => NormalPath.Contains("/Pelag_v5/Mixamo/");
     private bool IsForestBud => NormalPath.Contains("/Resources/Characters/Forest_Bud/");
 
+    /// <summary>Новые мобы леса со своим ригом: клипы внутри одного FBX, Generic.</summary>
+    private bool IsNewForestMob =>
+        NormalPath.Contains("/Resources/Characters/Forest_Thorncaster/") || HasLitNormalMap;
+
+    /// <summary>
+    /// Тела под URP Lit с картой нормалей (Корнехват, Расщепень): им нужны
+    /// настоящие тангенсы, а не сглаженная нормаль для обводки тун-шейдера.
+    /// </summary>
+    private bool HasLitNormalMap =>
+        NormalPath.Contains("/Resources/Characters/Forest_RootSnarer/")
+        || NormalPath.Contains("/Resources/Characters/Forest_Splitter/");
+
     private bool IsPelagMixamoRuntime =>
         NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
 
@@ -375,6 +387,25 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             return;
         }
 
+        // Новые мобы леса (26.09): Шипомёт, Корнехват, Расщепень. Свой риг, все
+        // клипы в одном FBX, корень в клипах не едет — Generic без root motion,
+        // как у вендиго. Без этой ветки общий путь ниже перевёл бы тело в Humanoid
+        // без клипов. Остальное (читаемость, текстуры) ставят их сборщики:
+        // ThorncasterBuilder, RootSnarerBuilder, SplitterBuilder.
+        if (IsNewForestMob)
+        {
+            importer.animationType = ModelImporterAnimationType.Generic;
+            importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+            importer.importAnimation = true; importer.optimizeGameObjects = false;
+            importer.animationCompression = ModelImporterAnimationCompression.Off;
+            importer.globalScale = 1f; importer.useFileScale = true;
+            importer.importNormals = ModelImporterNormals.Import;
+            importer.importTangents = ModelImporterTangents.CalculateMikk;
+            importer.materialImportMode = ModelImporterMaterialImportMode.None;
+            importer.importBlendShapes = false; importer.importCameras = false; importer.importLights = false;
+            return;
+        }
+
         if (IsForestBud)
         {
             // Авторский четвероногий риг нельзя пропускать через Humanoid-ретаргет.
@@ -566,6 +597,9 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
     private void OnPostprocessMesh(Mesh mesh)
     {
         if (!IsCharacter || IsAnimationOnly) return;
+        // URP Lit читает карту нормалей по тангенсам: подмена их сглаженной
+        // нормалью ломает освещение Корнехвата и Расщепеня.
+        if (HasLitNormalMap) return;
 
         Vector3[] vertices = mesh.vertices;
         Vector3[] normals = mesh.normals;

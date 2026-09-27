@@ -27,10 +27,13 @@ namespace Game.Tests
         [TestCase(EnemyKind.ForestStonehoof, 650, 24, 3)]
         [TestCase(EnemyKind.ForestWendigo, 2000, 26, 6)]
         // Новые мобы леса (план от 26.09). Угроза Расщепеня — вместе с детьми.
-        [TestCase(EnemyKind.ForestThorncaster, 1700, 30, 6)]
-        [TestCase(EnemyKind.ForestRootSnarer, 520, 20, 3)]
-        [TestCase(EnemyKind.ForestSplitter, 420, 12, 4)]
-        [TestCase(EnemyKind.ForestSplitling, 120, 4, 1)]
+        // Стенд 27.09 (выход в игру): Шипомёт 1700 → 2000 (как Вендиго),
+        // Корнехват 520 → 650 (как Камнекопыт той же угрозы), Расщепень
+        // 420/120 → 560/160 (доля детёныша та же, 2/7).
+        [TestCase(EnemyKind.ForestThorncaster, 2000, 30, 6)]
+        [TestCase(EnemyKind.ForestRootSnarer, 650, 20, 3)]
+        [TestCase(EnemyKind.ForestSplitter, 560, 12, 4)]
+        [TestCase(EnemyKind.ForestSplitling, 160, 4, 1)]
         public void Table_HoldsBalanceV1(EnemyKind kind, int health, int damage, int threat)
         {
             var a = EnemyArchetypes.Get(kind);
@@ -294,10 +297,11 @@ namespace Game.Tests
                 case EnemyKind.ForestBud: min = 3; max = 7; break;
                 case EnemyKind.ForestStonehoof: min = 6; max = 13; break;
                 case EnemyKind.ForestWendigo: min = 20; max = 40; break;
-                // 1700 здоровья: 32 удара на первой арене (21 с), 47 на восьмой.
+                // 2000 здоровья, как у Вендиго: 38 ударов на первой арене (25 с), 56 на восьмой.
                 case EnemyKind.ForestThorncaster: min = 20; max = 40; break;
                 case EnemyKind.ForestRootSnarer: min = 4; max = 12; break;
-                case EnemyKind.ForestSplitter: min = 3; max = 9; break;
+                // 560 здоровья: 11 ударов на первой арене, 16 (10,7 с) на восьмой.
+                case EnemyKind.ForestSplitter: min = 3; max = 12; break;
                 default: min = 0; max = 0; Assert.Fail("Нет полосы для " + kind); break;
             }
         }

@@ -1,0 +1,179 @@
+{
+  "title": "Нынешний Пелаг: оптимизация и якорь за спиной",
+  "summary": "Оптимизация сетки готова к сравнению. Тело и скелет сохранены; облегчены сабля и повторяющиеся звенья. Посадка большого якоря — кандидат: проверка старых боевых поз выявила проблемы, показанные ниже. Показаны реальные экспортируемые ассеты, а не сгенерированная иллюстрация.",
+  "stats": [
+    {
+      "label": "Тело — исходная сетка сохранена",
+      "value": "24 316"
+    },
+    {
+      "label": "Сабля: было 23 134 треугольника",
+      "value": "3 978"
+    },
+    {
+      "label": "Звено цепи: было 384 треугольника",
+      "value": 80
+    },
+    {
+      "label": "С оружием и 93 звеньями: оценка по коду, не замер игры",
+      "value": "39 944"
+    }
+  ],
+  "notes": [
+    "Исходный FBX тела сохранён побайтно. Геометрия, UV, веса и 65 костей не менялись.",
+    "Крепление якоря следует верхней части спины. Его ширина в этой посадке — 0,94 м.",
+    "В исходной боевой стойке проверены хват сабли и отсутствие проникновения якоря в тело. Минимальный измеренный зазор — около 3,3 см.",
+    "Повторно импортированы экспортированные FBX оружия: число треугольников и UV совпали. Собранный GLB сохранил 65 костей.",
+    "В модели с убранным за спину якорем 33 064 треугольников."
+  ],
+  "images": [
+    {
+      "path": "../model/game_original_geometry.png",
+      "title": "Исходная геометрия оружия",
+      "caption": "Сравнение сеток при одинаковой позе и новом размещении якоря. Это рендер Blender, не запись прежней версии игры."
+    },
+    {
+      "path": "../model/game.png",
+      "title": "Оптимизированная геометрия",
+      "caption": "Тот же ракурс и свет. Сохранены лицо, костюм, пропорции и рисунок сабли."
+    },
+    {
+      "path": "../model/front.png",
+      "title": "Спереди"
+    },
+    {
+      "path": "../model/back.png",
+      "title": "Большой якорь за спиной",
+      "caption": "Использована существующая голова якоря. Новая отвергнутая модель не используется."
+    },
+    {
+      "path": "../model/side.png",
+      "title": "Сбоку",
+      "caption": "Посадка и зазор между оружием и спиной видны без перспективного сокращения."
+    },
+    {
+      "path": "../model/saber_original.png",
+      "title": "Сабля крупно — исходник"
+    },
+    {
+      "path": "../model/saber_candidate.png",
+      "title": "Сабля крупно — кандидат",
+      "caption": "Отклонение исходных вершин от поверхности кандидата: до 1,54 мм; у 95% — до 0,46 мм в исходном масштабе."
+    }
+  ],
+  "downloads": [
+    {
+      "path": "../model/Pelag_Model_Candidate.blend",
+      "title": "Редактируемая сцена Blender"
+    },
+    {
+      "path": "../model/Pelag_Model_Candidate.glb",
+      "title": "Собранная модель GLB"
+    },
+    {
+      "path": "../model/candidate_report.json",
+      "title": "Измерения и источники"
+    },
+    {
+      "path": "../model/roundtrip_verification.json",
+      "title": "Проверка повторного импорта"
+    },
+    {
+      "path": "../model/stress_pose_preflight.json",
+      "title": "Измерения крайних поз"
+    }
+  ],
+  "limitations": [
+    "Крепление ещё не прошло проверку всех движений. В кадре 12 прежнего кувырка якорь проникает ниже плоскости земли на 21,9 см; при глубоком наклоне Рассекающего заметно отходит от спины (минимальный зазор 8,9 см). Эти случаи необходимо закрыть при постановке базовых движений и работе крепления, до установки в игру. Уменьшением оружия или скрытием проблемы они не исправлялись.",
+    "Игровая модель пока не заменена. Материалы и освещение Unity могут отличаться от этих рендеров.",
+    "Оценка до 40 тысяч предполагает один активный якорь и скрытую цепь на спине при выдаче боевой цепи. Переходы владения оружием, реальное число видимых звеньев, вызовы отрисовки и стоимость кадра проверяем после согласованной интеграции.",
+    "У тела сохранены исходные веса: на 473 вершинах больше четырёх влияний. Их фактическую обработку проверяем при импорте; автоматическая обрезка сейчас не выполнялась.",
+    "Постоянная длина звеньев, натяжение, выдача и столкновения цепи в бою ещё предстоят. Эти статичные виды не являются проверкой физики."
+  ],
+  "ownerAcceptance": "pending",
+  "posePreflight": {
+    "summary": "Крайние позы существующих клипов выявили проникновение якоря в землю на кувырке и отрыв от спины при глубоком наклоне. Совместимость крепления с этими движениями ещё не пройдена. Это не новые анимации и не их приёмка.",
+    "images": [
+      {
+        "path": "../model/pose_preflight_cleave_windup_game.png",
+        "title": "Замах · игровой ракурс"
+      },
+      {
+        "path": "../model/pose_preflight_cleave_windup_side.png",
+        "title": "Замах · сбоку"
+      },
+      {
+        "path": "../model/pose_preflight_cleave_contact_game.png",
+        "title": "Контакт · игровой ракурс"
+      },
+      {
+        "path": "../model/pose_preflight_cleave_contact_side.png",
+        "title": "Контакт · сбоку"
+      },
+      {
+        "path": "../model/pose_preflight_roll_mid_game.png",
+        "title": "Кувырок · игровой ракурс"
+      },
+      {
+        "path": "../model/pose_preflight_roll_mid_side.png",
+        "title": "Кувырок · сбоку"
+      }
+    ],
+    "measurements": [
+      {
+        "label": "idle",
+        "existing_clip": "razlom\\Assets\\Resources\\Characters\\Pelag_v5\\Mixamo\\Pelag_AN_CombatIdle.fbx",
+        "sample_frame": 1,
+        "min_anchor_body_surface_distance_m": 0.03311706706881523,
+        "anchor_vertices_inside_closed_body_ray_parity": 0,
+        "anchor_floor_clearance_m": 0.687610924243927,
+        "body_floor_clearance_m": -0.010684836655855179,
+        "pictures": [],
+        "method": "existing clip bone orientations and hip offset mapped to unchanged v6 bone lengths; single-pose preflight only, not engine retargeting or moving/cancel acceptance"
+      },
+      {
+        "label": "cleave_windup",
+        "existing_clip": "razlom\\Assets\\Resources\\Characters\\Pelag_v5\\Mixamo\\Pelag_AN_Cleave.fbx",
+        "sample_frame": 8,
+        "min_anchor_body_surface_distance_m": 0.013991221785545349,
+        "anchor_vertices_inside_closed_body_ray_parity": 0,
+        "anchor_floor_clearance_m": 0.6978233456611633,
+        "body_floor_clearance_m": 0.059323664754629135,
+        "pictures": [
+          "pose_preflight_cleave_windup_game.png",
+          "pose_preflight_cleave_windup_side.png"
+        ],
+        "method": "existing clip bone orientations and hip offset mapped to unchanged v6 bone lengths; single-pose preflight only, not engine retargeting or moving/cancel acceptance"
+      },
+      {
+        "label": "cleave_contact",
+        "existing_clip": "razlom\\Assets\\Resources\\Characters\\Pelag_v5\\Mixamo\\Pelag_AN_Cleave.fbx",
+        "sample_frame": 13,
+        "min_anchor_body_surface_distance_m": 0.08883979916572571,
+        "anchor_vertices_inside_closed_body_ray_parity": 0,
+        "anchor_floor_clearance_m": 1.1909929513931274,
+        "body_floor_clearance_m": 0.06948655098676682,
+        "pictures": [
+          "pose_preflight_cleave_contact_game.png",
+          "pose_preflight_cleave_contact_side.png"
+        ],
+        "method": "existing clip bone orientations and hip offset mapped to unchanged v6 bone lengths; single-pose preflight only, not engine retargeting or moving/cancel acceptance"
+      },
+      {
+        "label": "roll_mid",
+        "existing_clip": "razlom\\Assets\\Resources\\Characters\\Pelag_v5\\Mixamo\\Pelag_AN_Roll.fbx",
+        "sample_frame": 12,
+        "min_anchor_body_surface_distance_m": 0.08808731287717819,
+        "anchor_vertices_inside_closed_body_ray_parity": 0,
+        "anchor_floor_clearance_m": -0.21870936453342438,
+        "body_floor_clearance_m": 0.0431944765150547,
+        "pictures": [
+          "pose_preflight_roll_mid_game.png",
+          "pose_preflight_roll_mid_side.png"
+        ],
+        "method": "existing clip bone orientations and hip offset mapped to unchanged v6 bone lengths; single-pose preflight only, not engine retargeting or moving/cancel acceptance"
+      }
+    ],
+    "limitation": "Проверены отдельные кадры в Blender. Смещение таза взято из исходного клипа; перемещение по арене из Sim не воспроизводится. Эти кадры не доказывают отсутствие пересечений между отсчётами или в переходах Unity."
+  }
+}

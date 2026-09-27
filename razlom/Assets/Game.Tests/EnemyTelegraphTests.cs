@@ -403,7 +403,8 @@ namespace Game.Tests
         /// <summary>
         /// Сколько общих меток держит одна особь вида разом, с запасом. Шипомёт —
         /// линию из ThornLineSegments полос или круг всплеска (действие у него
-        /// одно, считаем оба); Корнехват — свой круг: перезарядка длиннее круга
+        /// одно, считаем оба); у выстрела шипом метки нет вовсе (ThorncasterTests,
+        /// ShotOpensNoMark_LineWhileItsThornFlies); Корнехват — свой круг: перезарядка длиннее круга
         /// с угасанием; Хранитель и Расщепень — сектор замаха; вендиго — кольцо
         /// воя. Коготь, прыжок и таран рисуют собственные виды мобов.
         /// </summary>
@@ -452,7 +453,8 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Живой прогон шаблонов новых видов на их последней арене: герой стоит
+        /// Живой прогон шаблонов новых мобов леса (с Шипомётом, Корнехватом или
+        /// Расщепнем) на их последней арене: герой стоит
         /// у входа бессмертным, все сразу идут на него. Раз в полторы секунды он
         /// кладёт самого позднего из живых, кроме Шипомёта и Корнехвата; их —
         /// последними и не чаще раза в десять секунд, чтобы они успели дойти и
@@ -460,11 +462,15 @@ namespace Game.Tests
         /// меток по фигурам против пулов вида.
         /// </summary>
         [Test]
-        public void StagedTemplates_LiveRun_KeepSharedMarksInsideTheViewPools()
+        public void NewMobTemplates_LiveRun_KeepSharedMarksInsideTheViewPools()
         {
             var location = ArenaEncounterTests.ForestLocation();
-            int lanes = 0, circles = 0, sectors = 0, rings = 0;
-            foreach (var t in ForestEncounterTemplates.Staged)
+            int lanes = 0, circles = 0, sectors = 0, rings = 0, templates = 0;
+            foreach (var t in ArenaEncounterTests.EveryTemplate())
+            {
+                if (!t.Uses(EnemyKind.ForestThorncaster) && !t.Uses(EnemyKind.ForestRootSnarer)
+                    && !t.Uses(EnemyKind.ForestSplitter)) continue;
+                templates++;
                 for (ulong seed = 1; seed <= 2; seed++)
                 {
                     int arena = t.MaxArena;
@@ -504,7 +510,10 @@ namespace Game.Tests
                         sectors = System.Math.Max(sectors, s); rings = System.Math.Max(rings, r);
                     }
                 }
-            TestContext.WriteLine("live max: lanes " + lanes + ", circles " + circles + ", sectors " + sectors + ", rings " + rings);
+            }
+            TestContext.WriteLine("live max over " + templates + " templates: lanes " + lanes + ", circles " + circles
+                + ", sectors " + sectors + ", rings " + rings);
+            Assert.That(templates, Is.EqualTo(6), "E06, E07, E08T, E09, E10, E14");
             // Прогон что-то проверил: линии Шипомёта и круги Корнехвата правда падали.
             Assert.That(lanes, Is.GreaterThan(0), "ни одной линии шипов");
             Assert.That(circles, Is.GreaterThan(0), "ни одного круга");

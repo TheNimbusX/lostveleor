@@ -1,0 +1,85 @@
+{
+  "source_mesh": "ForestSplitter_Package.blend",
+  "same_as": "model/ForestSplitter_24k_candidate.glb (11910 verts / 24000 tris)",
+  "pose": {
+    "action": "ForestSplitter_Death",
+    "frame": 12
+  },
+  "labels": "rig\\work\\tri_labels.npy",
+  "cap_uv": [
+    0.7476,
+    0.492
+  ],
+  "cap_color": [
+    0.239,
+    0.137,
+    0.031
+  ],
+  "unity_axes": "unity_local = (-x, z, -y) Blender; origin = entity origin at the feet",
+  "parts": {
+    "ShellHalfL": {
+      "label": 1,
+      "tris": 7640,
+      "verts": 3768,
+      "cap_faces": 346,
+      "cap_contours": 79,
+      "dropped_island_faces": 12,
+      "trimmed_ears": 74,
+      "open_edges_after_fill": 155,
+      "bounds_unity": {
+        "min": [
+          -0.8315,
+          0.1188,
+          -0.494
+        ],
+        "max": [
+          0.0041,
+          1.224,
+          0.5201
+        ]
+      },
+      "center_unity": [
+        -0.4137,
+        0.6714,
+        0.013
+      ]
+    },
+    "ShellHalfR": {
+      "label": 2,
+      "tris": 6728,
+      "verts": 3340,
+      "cap_faces": 301,
+      "cap_contours": 62,
+      "dropped_island_faces": 0,
+      "trimmed_ears": 75,
+      "open_edges_after_fill": 120,
+      "bounds_unity": {
+        "min": [
+          0.0227,
+          0.0451,
+          -0.5333
+        ],
+        "max": [
+          0.8227,
+          1.1391,
+          0.5194
+        ]
+      },
+      "center_unity": [
+        0.4227,
+        0.5921,
+        -0.007
+      ]
+    },
+    "MushroomCap": {
+      "tris": 45,
+      "source_size_m": 0.1642,
+      "orange_faces": 334,
+      "center_unity_in_body": [
+        -0.5585,
+        0.5031,
+        -0.3989
+      ]
+    }
+  }
+}

@@ -1,0 +1,670 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\ForestRootSnarer.fbx",
+ "scene_fps_after_import": 30.0,
+ "imported_actions": [
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Mend",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Walk"
+ ],
+ "armature_object": {
+  "loc": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "rot_deg": [
+   -0.0,
+   0.0,
+   0.0
+  ],
+  "scale": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "has_own_animation": false
+ },
+ "mesh": {
+  "triangles": 24000,
+  "vertices": 11996,
+  "max_influences": 4,
+  "bones": 21,
+  "materials": 1,
+  "region_sizes": {
+   "slab_L": 1554,
+   "slab_R": 1278,
+   "hind_L": 112,
+   "hind_R": 217,
+   "body": 4971,
+   "head": 1628
+  }
+ },
+ "Idle": {
+  "action_frame_range": [
+   0.0,
+   60.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -0.19,
+   "slab_R": -0.04,
+   "hind_L": 1.22,
+   "hind_R": -1.72,
+   "body": 238.86,
+   "head": 213.54,
+   "all": -1.72
+  },
+  "edge_stretch_max": 25.8275,
+  "edge_stretch_max_frame": 22,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0003,
+  "loop_seam": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  }
+ },
+ "Walk": {
+  "action_frame_range": [
+   0.0,
+   16.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -0.07,
+   "slab_R": -0.02,
+   "hind_L": -0.03,
+   "hind_R": -0.0,
+   "body": 229.02,
+   "head": 345.9,
+   "all": -0.07
+  },
+  "edge_stretch_max": 57.6555,
+  "edge_stretch_max_frame": 6,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "loop_seam": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "start_vs_idle0": {
+   "bone_pos_mm": 423.202,
+   "bone_rot_deg": 63.3115,
+   "vertex_mm": 470.85
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 423.202,
+   "bone_rot_deg": 63.3115,
+   "vertex_mm": 470.85
+  },
+  "contacts_3mm": {
+   "slab_L": {
+    "ground_speed_mps": 2.406,
+    "slide_cm": 0.15,
+    "min_z_mm": -0.1
+   },
+   "slab_R": {
+    "ground_speed_mps": 2.394,
+    "slide_cm": 0.5,
+    "min_z_mm": -0.0
+   },
+   "hind_L": {
+    "ground_speed_mps": 2.411,
+    "slide_cm": 0.34,
+    "min_z_mm": -0.0
+   },
+   "hind_R": {
+    "ground_speed_mps": 2.38,
+    "slide_cm": 0.93,
+    "min_z_mm": -0.0
+   }
+  },
+  "max_vertex_accel_mm_per_f2": 197.2
+ },
+ "Slam": {
+  "action_frame_range": [
+   0.0,
+   72.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -221.78,
+   "slab_R": -175.96,
+   "hind_L": -3.93,
+   "hind_R": -2.02,
+   "body": 47.8,
+   "head": 9.76,
+   "all": -221.78
+  },
+  "edge_stretch_max": 96.5444,
+  "edge_stretch_max_frame": 10,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0003,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "timing": {
+   "contact_frame_both_slabs": 15,
+   "slab_min_z_cm_10_16": {
+    "10": [
+     110.3,
+     119.7
+    ],
+    "11": [
+     110.2,
+     120.0
+    ],
+    "12": [
+     110.6,
+     119.8
+    ],
+    "13": [
+     99.1,
+     101.2
+    ],
+    "14": [
+     47.3,
+     44.8
+    ],
+    "15": [
+     -11.0,
+     -10.9
+    ],
+    "16": [
+     -16.6,
+     -13.5
+    ]
+   },
+   "socket_drift_mm_16_60": 0.0,
+   "slabs_fully_out_frame": 61,
+   "pelvis_z_cm_30_40": [
+    49.1,
+    49.4,
+    49.5,
+    49.5,
+    49.2,
+    48.4,
+    46.9,
+    47.4,
+    47.6,
+    47.2,
+    47.2
+   ]
+  },
+  "max_vertex_accel_mm_per_f2": 1153.9
+ },
+ "Hit": {
+  "action_frame_range": [
+   0.0,
+   12.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -0.14,
+   "slab_R": -0.07,
+   "hind_L": 1.62,
+   "hind_R": -0.5,
+   "body": 260.48,
+   "head": 292.35,
+   "all": -0.5
+  },
+  "edge_stretch_max": 49.1948,
+  "edge_stretch_max_frame": 3,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "peak_frame": 3
+ },
+ "Death": {
+  "action_frame_range": [
+   0.0,
+   45.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -0.14,
+   "slab_R": -8.73,
+   "hind_L": -4.9,
+   "hind_R": -6.48,
+   "body": -5.24,
+   "head": -3.94,
+   "all": -8.73
+  },
+  "edge_stretch_max": 44.6965,
+  "edge_stretch_max_frame": 45,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "landing": {
+   "first_frame_belly_within_2cm": 25,
+   "still_32_45_max_bone_step_mm": 0.25,
+   "end_min_z_mm": {
+    "slab_L": -0.1,
+    "slab_R": -0.1,
+    "hind_L": -2.4,
+    "hind_R": -2.2,
+    "body": -5.2,
+    "head": -3.9
+   }
+  },
+  "max_vertex_accel_mm_per_f2": 257.6
+ },
+ "Mend": {
+  "action_frame_range": [
+   0.0,
+   50.0
+  ],
+  "range_ok": true,
+  "root_travel_mm_xyz": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm": {
+   "slab_L": -143.47,
+   "slab_R": -129.66,
+   "hind_L": -2.19,
+   "hind_R": -1.71,
+   "body": 121.41,
+   "head": 46.04,
+   "all": -143.47
+  },
+  "edge_stretch_max": 58.4463,
+  "edge_stretch_max_frame": 6,
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "timing": {
+   "slab_min_z_cm_by_frame": {
+    "0": [
+     -0.0,
+     0.0
+    ],
+    "1": [
+     3.7,
+     3.9
+    ],
+    "2": [
+     14.9,
+     15.4
+    ],
+    "3": [
+     31.0,
+     29.2
+    ],
+    "4": [
+     53.2,
+     55.2
+    ],
+    "5": [
+     60.9,
+     64.8
+    ],
+    "6": [
+     53.3,
+     58.0
+    ],
+    "7": [
+     31.8,
+     29.4
+    ],
+    "8": [
+     -9.0,
+     -9.0
+    ],
+    "9": [
+     -11.2,
+     -11.3
+    ],
+    "10": [
+     -12.0,
+     -12.0
+    ],
+    "11": [
+     -12.4,
+     -12.2
+    ],
+    "12": [
+     -13.1,
+     -12.6
+    ],
+    "13": [
+     -13.7,
+     -12.8
+    ],
+    "14": [
+     -14.0,
+     -12.9
+    ],
+    "15": [
+     -14.2,
+     -13.0
+    ],
+    "16": [
+     -14.0,
+     -12.8
+    ],
+    "17": [
+     -13.4,
+     -12.4
+    ],
+    "18": [
+     -12.7,
+     -12.0
+    ],
+    "19": [
+     -11.9,
+     -11.5
+    ],
+    "20": [
+     -11.5,
+     -11.2
+    ],
+    "21": [
+     -12.1,
+     -11.6
+    ],
+    "22": [
+     -13.2,
+     -12.1
+    ],
+    "23": [
+     -14.0,
+     -12.5
+    ],
+    "24": [
+     -14.3,
+     -12.8
+    ],
+    "25": [
+     -14.0,
+     -12.5
+    ],
+    "26": [
+     -13.0,
+     -11.9
+    ],
+    "27": [
+     -11.5,
+     -11.2
+    ],
+    "28": [
+     -10.4,
+     -10.7
+    ],
+    "29": [
+     -12.4,
+     -11.1
+    ],
+    "30": [
+     -12.8,
+     -12.6
+    ],
+    "31": [
+     -12.6,
+     -11.5
+    ],
+    "32": [
+     -12.5,
+     -11.6
+    ],
+    "33": [
+     -12.5,
+     -12.0
+    ],
+    "34": [
+     -12.6,
+     -12.0
+    ],
+    "35": [
+     -12.9,
+     -12.0
+    ],
+    "36": [
+     -13.1,
+     -12.0
+    ],
+    "37": [
+     -13.2,
+     -12.0
+    ],
+    "38": [
+     -13.3,
+     -12.0
+    ],
+    "39": [
+     -0.1,
+     1.6
+    ],
+    "40": [
+     9.2,
+     11.0
+    ],
+    "41": [
+     14.3,
+     16.5
+    ],
+    "42": [
+     15.9,
+     18.3
+    ],
+    "43": [
+     15.2,
+     17.4
+    ],
+    "44": [
+     13.1,
+     15.0
+    ],
+    "45": [
+     9.5,
+     10.9
+    ],
+    "46": [
+     4.3,
+     5.4
+    ],
+    "47": [
+     1.0,
+     1.3
+    ],
+    "48": [
+     -0.1,
+     -0.0
+    ],
+    "49": [
+     -0.1,
+     -0.0
+    ],
+    "50": [
+     -0.0,
+     0.0
+    ]
+   },
+   "first_frame_both_slabs_below_ground": 8,
+   "first_frame_both_slabs_within_1cm": 0,
+   "last_frame_any_slab_below_1mm": 48,
+   "first_frame_both_slabs_at_or_above_ground_after_30": 39,
+   "first_frame_both_slabs_fully_above_ground_after_30": 40,
+   "slab_depth_cm_8_38": [
+    -14.3,
+    -9.0
+   ],
+   "socket_drift_mm_10_38": 0.21,
+   "sockets_at_8_blender_m": {
+    "L": [
+     0.69,
+     -0.58,
+     0.0291
+    ],
+    "R": [
+     -0.69,
+     -0.62,
+     0.0115
+    ]
+   },
+   "dome_top_cm": {
+    "0": 131.0,
+    "5": 135.6,
+    "8": 120.7,
+    "15": 124.5,
+    "20": 118.0,
+    "24": 124.5,
+    "28": 116.6,
+    "29": 128.4,
+    "30": 132.0,
+    "31": 129.4,
+    "34": 121.9,
+    "38": 125.1,
+    "44": 129.7,
+    "50": 131.0
+   },
+   "dome_top_peak_frame": 5,
+   "pelvis_peak_frame_20_40": 30,
+   "body_head_min_z_mm": 46.0,
+   "body_head_min_z_frame": 28,
+   "hind_feet": {
+    "hind_L": {
+     "sole_vertices": 1,
+     "sole_z_mm_range": [
+      0.21,
+      1.67
+     ],
+     "sole_xy_drift_mm": 0.69,
+     "min_z_mm_any_frame": -2.19
+    },
+    "hind_R": {
+     "sole_vertices": 18,
+     "sole_z_mm_range": [
+      -1.71,
+      5.21
+     ],
+     "sole_xy_drift_mm": 9.85,
+     "min_z_mm_any_frame": -1.71
+    }
+   },
+   "max_bone_step_mm_per_frame": 459.0,
+   "max_vertex_step_mm_per_frame": 557.3,
+   "max_vertex_accel_mm_per_f2": 538.3,
+   "max_vertex_accel_frame": 8
+  }
+ },
+ "old_takes_vs_r01_pose": {
+  "Idle": {
+   "old_action_range": [
+    0.0,
+    60.0
+   ],
+   "frames": 61,
+   "max_bone_matrix_abs_diff": 0.0,
+   "max_vertex_diff_m": 0.0
+  },
+  "Walk": {
+   "old_action_range": [
+    0.0,
+    16.0
+   ],
+   "frames": 17,
+   "max_bone_matrix_abs_diff": 0.0,
+   "max_vertex_diff_m": 0.0
+  },
+  "Slam": {
+   "old_action_range": [
+    0.0,
+    72.0
+   ],
+   "frames": 73,
+   "max_bone_matrix_abs_diff": 0.0,
+   "max_vertex_diff_m": 0.0
+  },
+  "Hit": {
+   "old_action_range": [
+    0.0,
+    12.0
+   ],
+   "frames": 13,
+   "max_bone_matrix_abs_diff": 0.0,
+   "max_vertex_diff_m": 0.0
+  },
+  "Death": {
+   "old_action_range": [
+    0.0,
+    45.0
+   ],
+   "frames": 46,
+   "max_bone_matrix_abs_diff": 0.0,
+   "max_vertex_diff_m": 0.0
+  }
+ },
+ "old_takes_pose_identical": true
+}

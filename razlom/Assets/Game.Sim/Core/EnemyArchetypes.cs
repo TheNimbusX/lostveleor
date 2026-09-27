@@ -131,13 +131,29 @@ namespace Game.Sim
         // Шипомёт — элита: шип линии — BaseDamage вида, всплеск против
         // объятий — та же доля от шипа, что в таблице (Share), как прыжок
         // Вендиго от когтя. Корнехват бьёт 20 и замедляет. Расщепень —
-        // 420/12; его детёныш — доля РОДИТЕЛЯ (120/420 здоровья, 4/12 урона):
+        // 560/12; его детёныш — доля РОДИТЕЛЯ (160/560 здоровья, 4/12 урона):
         // глубина, «Сложно» и проценты пачки родителя переходят к детям.
-        public const int ThorncasterSpikeDamage = 30;
+        //
+        // Здоровье — стенд баланса 27.09, выход в игру (герой 5-го уровня, 100
+        // сидов): Шипомёт 1700 → 2000, как Вендиго той же угрозы (первая
+        // элита на А5 шла 51 с при цели 50–70, на А7 — 44 с при 60–75);
+        // Корнехват 520 → 650, как Камнекопыт той же угрозы; Расщепень
+        // 420/120 → 560/160 — доля детёныша та же (2/7). До того на угрозу
+        // выходило меньше здоровья, чем у старых видов, и их арены шли вдвое
+        // быстрее целей. Урон не менялся.
+        //
+        // Выстрел шипом (требование владельца от 26.09) — обычная дальняя
+        // атака Шипомёта: 14 на А1, та же доля от шипа (Share), что и всплеск,
+        // поэтому растёт с глубиной и «Сложно» вместе с ним. 14 — удар 11–25
+        // из правила меток: замах 21, но вместо фигуры на земле — сам летящий
+        // шип (владелец, 26.09: «просто проджектайл, от которого можно
+        // увернуться»); бьёт только там, где шип пролетел.
+        public const int ThorncasterHealth = 2000, ThorncasterSpikeDamage = 30;
         public const int ThorncasterBurstDamage = 22;
-        public const int RootSnarerDamage = 20;
-        public const int SplitterHealth = 420, SplitterDamage = 12;
-        public const int SplitlingHealth = 120, SplitlingDamage = 4;
+        public const int ThorncasterShotDamage = 14;
+        public const int RootSnarerHealth = 650, RootSnarerDamage = 20;
+        public const int SplitterHealth = 560, SplitterDamage = 12;
+        public const int SplitlingHealth = 160, SplitlingDamage = 4;
 
         // ---- тела ----
         //
@@ -187,19 +203,19 @@ namespace Game.Sim
                 Simulation.StonehoofWindupTicks + Simulation.StonehoofBrakeTicks + Simulation.StonehoofRestTicks),
             // Шипомёт: замах — до первого шипа, стойка — от него до конца
             // заморозки после последнего, цикл — перезарядка линии.
-            new EnemyArchetype(EnemyKind.ForestThorncaster, 1700, ThorncasterSpikeDamage, 6, ThorncasterBodyRadius,
+            new EnemyArchetype(EnemyKind.ForestThorncaster, ThorncasterHealth, ThorncasterSpikeDamage, 6, ThorncasterBodyRadius,
                 Simulation.ThornLineWindupTicks,
                 Simulation.ThornLineLastImpactTicks - Simulation.ThornLineWindupTicks + Simulation.ThornLineRecoveryTicks,
                 Simulation.ThornLineCooldownTicks),
             // Корнехват: замах — поза и круг до удара корнями.
-            new EnemyArchetype(EnemyKind.ForestRootSnarer,   520, RootSnarerDamage, 3, RootSnarerBodyRadius,
+            new EnemyArchetype(EnemyKind.ForestRootSnarer, RootSnarerHealth, RootSnarerDamage, 3, RootSnarerBodyRadius,
                 Simulation.RootSnarerSlamTicks + Simulation.RootSnarerImpactDelayTicks,
                 Simulation.RootSnarerRecoveryTicks, Simulation.RootSnarerCooldownTicks),
             // Угроза Расщепеня 4 — вместе с детьми: бюджет волны платит за всё, что встанет.
             new EnemyArchetype(EnemyKind.ForestSplitter, SplitterHealth, SplitterDamage, 4, SplitterBodyRadius,
                 Simulation.SplitterSwingWindupTicks, Simulation.SplitterSwingRecoveryTicks,
                 Simulation.SplitterSwingCycleTicks),
-            // Детёныш: числа строки — для родителя с табличными 420/12; настоящие
+            // Детёныш: числа строки — для родителя с табличными 560/12; настоящие
             // считает распад от живого родителя (Share).
             new EnemyArchetype(EnemyKind.ForestSplitling, SplitlingHealth, SplitlingDamage, 1, SplitlingBodyRadius,
                 Simulation.SplitlingBiteWindupTicks, Simulation.SplitlingBiteRecoveryTicks,
@@ -269,7 +285,7 @@ namespace Game.Sim
         /// <summary>
         /// То же правило для любой пары чисел таблицы: value относится к
         /// authoredBase, как ответ — к authored, с округлением до ближайшего.
-        /// Всплеск Шипомёта от шипа (22/30), детёныш от Расщепеня (120/420,
+        /// Всплеск Шипомёта от шипа (22/30), детёныш от Расщепеня (160/560,
         /// 4/12). Ноль и меньше — ноль.
         /// </summary>
         public static int Share(int value, int authored, int authoredBase)

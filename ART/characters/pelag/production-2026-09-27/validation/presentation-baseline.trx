@@ -1,0 +1,237 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="5edaec0e-db2a-454b-80f8-167f7c931006" name="d.grab@MITPC08 2026-09-27 01:24:48" runUser="MIT\d.grab" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-27T01:24:48.9392448+03:00" queuing="2026-09-27T01:24:48.9392451+03:00" start="2026-09-27T01:24:47.6930848+03:00" finish="2026-09-27T01:24:48.9748424+03:00" />
+  <TestSettings name="default" id="8a4f5e9e-e6a9-4537-891f-923a69259797">
+    <Deployment runDeploymentRoot="d.grab_MITPC08_2026-09-27_01_24_48" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="9bc9a9ef-6f25-4ec2-9b92-39d91ec835d6" testId="4f66e528-0075-8892-9cac-50782e3d6201" testName="BudClipsAreInstalledUnderTheNamesCombatAudioLoads" computerName="MITPC08" duration="00:00:00.0055319" startTime="2026-09-27T01:24:48.8599959+03:00" endTime="2026-09-27T01:24:48.8655267+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9bc9a9ef-6f25-4ec2-9b92-39d91ec835d6" />
+    <UnitTestResult executionId="d018a13a-032a-448b-a7d3-0069a4739480" testId="b8c31c16-a925-80bf-05a5-9e96bacd1db2" testName="CooldownExpiryRestoresAvailability" computerName="MITPC08" duration="00:00:00.0000649" startTime="2026-09-27T01:24:48.9064941+03:00" endTime="2026-09-27T01:24:48.9065595+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d018a13a-032a-448b-a7d3-0069a4739480" />
+    <UnitTestResult executionId="443e1dd6-349a-40e3-9c9f-9a532c9f809e" testId="aa2bcda7-aa54-63dc-4087-0f11c34f830e" testName="SlackCableDoesNotMoveOrSpinHead" computerName="MITPC08" duration="00:00:00.0005019" startTime="2026-09-27T01:24:48.8574712+03:00" endTime="2026-09-27T01:24:48.8579727+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="443e1dd6-349a-40e3-9c9f-9a532c9f809e" />
+    <UnitTestResult executionId="9e8cfabb-da54-48b8-87a9-fe9f7237984b" testId="eafebfb2-74df-2f62-c9e1-db4a6303f190" testName="CatchTracksMovingHolsterWithoutPositionSnap" computerName="MITPC08" duration="00:00:00.0017710" startTime="2026-09-27T01:24:48.8499253+03:00" endTime="2026-09-27T01:24:48.8516961+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9e8cfabb-da54-48b8-87a9-fe9f7237984b" />
+    <UnitTestResult executionId="0dfe3d51-2ea1-4b8d-8d4b-d2328abc7261" testId="1dbe7dd2-9740-3839-3ce9-b79b5bac27fd" testName="ExactCostIsAvailable" computerName="MITPC08" duration="00:00:00.0000830" startTime="2026-09-27T01:24:48.9074253+03:00" endTime="2026-09-27T01:24:48.9075079+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0dfe3d51-2ea1-4b8d-8d4b-d2328abc7261" />
+    <UnitTestResult executionId="ca5ba9e0-d7c9-4fb7-8c0e-2106c2be7dce" testId="778877c1-b3f0-fa1c-2021-0a92a779ae36" testName="WarningStealsLowestPriorityNotNextRingSlot" computerName="MITPC08" duration="00:00:00.0001010" startTime="2026-09-27T01:24:48.8598205+03:00" endTime="2026-09-27T01:24:48.8599212+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="ca5ba9e0-d7c9-4fb7-8c0e-2106c2be7dce" />
+    <UnitTestResult executionId="0e05a222-5371-4fa0-b070-5d638cec44d6" testId="e2d65f17-4045-d771-0d21-58af42f9e79b" testName="ResourceDenialReportsTheMissingAmount" computerName="MITPC08" duration="00:00:00.0000890" startTime="2026-09-27T01:24:48.9075148+03:00" endTime="2026-09-27T01:24:48.9076033+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0e05a222-5371-4fa0-b070-5d638cec44d6" />
+    <UnitTestResult executionId="5bb906cc-e1d0-44dd-a72c-ab2a3cfd5759" testId="6d1a614b-aca8-09a5-6904-686a46c5ffdc" testName="FootstepsCannotInterruptWarningOrDelayedImpact" computerName="MITPC08" duration="00:00:00.0001440" startTime="2026-09-27T01:24:48.8594194+03:00" endTime="2026-09-27T01:24:48.8595629+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5bb906cc-e1d0-44dd-a72c-ab2a3cfd5759" />
+    <UnitTestResult executionId="89bf3355-16f7-4837-a835-4c2e79c24b2a" testId="6d3e6dd0-ffc1-b80c-9099-a85d8268d387" testName="PaidOutChainKeepsAttachmentsAndLength(30)" computerName="MITPC08" duration="00:00:00.0205110" startTime="2026-09-27T01:24:48.7716736+03:00" endTime="2026-09-27T01:24:48.7921177+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89bf3355-16f7-4837-a835-4c2e79c24b2a" />
+    <UnitTestResult executionId="323d6ab2-38c9-4879-a27b-2b5ef0223ed7" testId="4f9922ac-29d8-792a-eb93-2754592cbbd9" testName="ContactClipsHitAtTheirEvent" computerName="MITPC08" duration="00:00:00.0070710" startTime="2026-09-27T01:24:48.8655702+03:00" endTime="2026-09-27T01:24:48.8726404+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="323d6ab2-38c9-4879-a27b-2b5ef0223ed7" />
+    <UnitTestResult executionId="b41408c6-4ff7-485d-9220-912326c076f0" testId="0e45f866-31ee-103c-3f7a-121a6eee5eac" testName="UnforcedFlightKeepsMomentumAndBallisticContact(120)" computerName="MITPC08" duration="00:00:00.0000090" startTime="2026-09-27T01:24:48.8586827+03:00" endTime="2026-09-27T01:24:48.8586918+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b41408c6-4ff7-485d-9220-912326c076f0" />
+    <UnitTestResult executionId="98afdcd8-b854-478d-9f33-4c35561c64f0" testId="258e8746-9a2f-a69e-7bac-16c33d74dc40" testName="PauseDoesNotReserveAReleasedVoice" computerName="MITPC08" duration="00:00:00.0000740" startTime="2026-09-27T01:24:48.8597365+03:00" endTime="2026-09-27T01:24:48.8598102+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="98afdcd8-b854-478d-9f33-4c35561c64f0" />
+    <UnitTestResult executionId="88d938c3-8578-4990-a36b-125576728e9b" testId="877c5fcd-100e-36c1-4ab7-4a6f9d955b0f" testName="HeavyHeadSettlesAboveGroundWithoutGainingEnergy" computerName="MITPC08" duration="00:00:00.0036030" startTime="2026-09-27T01:24:48.8538277+03:00" endTime="2026-09-27T01:24:48.8574301+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="88d938c3-8578-4990-a36b-125576728e9b" />
+    <UnitTestResult executionId="a7414239-bb89-4a03-a386-8936981ee6a0" testId="3c3616c7-b60a-f00a-b821-8924a79b0fae" testName="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(120)" computerName="MITPC08" duration="00:00:00.0036240" startTime="2026-09-27T01:24:48.8280716+03:00" endTime="2026-09-27T01:24:48.8316957+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a7414239-bb89-4a03-a386-8936981ee6a0">
+      <Output>
+        <StdOut>fps=120, peak iterations=52</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="9c25c1f8-c32c-4b00-b198-dd1cb99b04cd" testId="59cc0014-d7cb-0c51-69f3-d0dc88884ef6" testName="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(60)" computerName="MITPC08" duration="00:00:00.0034340" startTime="2026-09-27T01:24:48.8246185+03:00" endTime="2026-09-27T01:24:48.8280520+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9c25c1f8-c32c-4b00-b198-dd1cb99b04cd">
+      <Output>
+        <StdOut>fps=60, peak iterations=4</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="73b18d09-f124-412e-81f8-7351792df308" testId="63fe7149-6587-7022-4ed4-6b4eab75d979" testName="CancelledChannelReleasesItsVoiceAndSceneChangeClearsReservations" computerName="MITPC08" duration="00:00:00.0004950" startTime="2026-09-27T01:24:48.8587788+03:00" endTime="2026-09-27T01:24:48.8592733+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="73b18d09-f124-412e-81f8-7351792df308" />
+    <UnitTestResult executionId="71553c80-2f75-4e6c-93d4-a881fc8ace4a" testId="e65aaa4d-dbfc-b274-4125-fa6edde423c9" testName="PausedCueKeepsItsRemainingReservationAfterDspAdvances" computerName="MITPC08" duration="00:00:00.0001570" startTime="2026-09-27T01:24:48.8595718+03:00" endTime="2026-09-27T01:24:48.8597288+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="71553c80-2f75-4e6c-93d4-a881fc8ace4a" />
+    <UnitTestResult executionId="a1fea6d1-021e-4ba6-95b0-550ed3295f2e" testId="aaa64e59-1c0a-fffb-5ae6-45fed54ab635" testName="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(30)" computerName="MITPC08" duration="00:00:00.0092640" startTime="2026-09-27T01:24:48.8153302+03:00" endTime="2026-09-27T01:24:48.8245940+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1fea6d1-021e-4ba6-95b0-550ed3295f2e">
+      <Output>
+        <StdOut>fps=30, peak iterations=52</StdOut>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="395e6405-91c5-4dcb-a3af-f3ac6edc43ca" testId="86215e88-22a9-ee1d-fb56-7729135fa26f" testName="UnforcedFlightKeepsMomentumAndBallisticContact(60)" computerName="MITPC08" duration="00:00:00.0001620" startTime="2026-09-27T01:24:48.8585128+03:00" endTime="2026-09-27T01:24:48.8586749+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="395e6405-91c5-4dcb-a3af-f3ac6edc43ca" />
+    <UnitTestResult executionId="776be859-d4a0-437f-9242-80d8ecdb6cc4" testId="c04d32ec-8b93-14ee-dd66-e39f1310c80f" testName="ForceAtRingRotatesMassWhileCenterImpulseDoesNot" computerName="MITPC08" duration="00:00:00.0020600" startTime="2026-09-27T01:24:48.8517295+03:00" endTime="2026-09-27T01:24:48.8537892+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="776be859-d4a0-437f-9242-80d8ecdb6cc4" />
+    <UnitTestResult executionId="5ecf7305-5cb0-4aee-85f8-6e0691b15891" testId="2c4e1f45-628e-3985-a84e-5089d1544400" testName="UnforcedFlightKeepsMomentumAndBallisticContact(30)" computerName="MITPC08" duration="00:00:00.0001770" startTime="2026-09-27T01:24:48.8583280+03:00" endTime="2026-09-27T01:24:48.8585048+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5ecf7305-5cb0-4aee-85f8-6e0691b15891" />
+    <UnitTestResult executionId="505f277a-e768-488c-99df-fc6f9a884727" testId="6ab8823b-2e11-0772-c1fe-79bec2255477" testName="PaidOutChainKeepsAttachmentsAndLength(60)" computerName="MITPC08" duration="00:00:00.0102320" startTime="2026-09-27T01:24:48.7933739+03:00" endTime="2026-09-27T01:24:48.8036056+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="505f277a-e768-488c-99df-fc6f9a884727" />
+    <UnitTestResult executionId="664db20d-8422-4a27-92c8-8cb819bca3f1" testId="80b1c27f-d035-6e02-e809-01d3260f3267" testName="ReleasingAndRecastingDoesNotRetainOldPoints" computerName="MITPC08" duration="00:00:00.0173570" startTime="2026-09-27T01:24:48.8317501+03:00" endTime="2026-09-27T01:24:48.8491064+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="664db20d-8422-4a27-92c8-8cb819bca3f1" />
+    <UnitTestResult executionId="e3d10af0-4ce7-4e68-bb70-962f0c641d3d" testId="86e0c04f-2bab-ce10-6bf0-fdc5222f593a" testName="ComboContinuationDoesNotChargeOrWaitAgain" computerName="MITPC08" duration="00:00:00.0002760" startTime="2026-09-27T01:24:48.9062100+03:00" endTime="2026-09-27T01:24:48.9064857+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e3d10af0-4ce7-4e68-bb70-962f0c641d3d" />
+    <UnitTestResult executionId="6557981e-3646-4194-a0bf-5dfea2ba4ee8" testId="f1615ca2-6d64-4d0e-9c85-6716a75e15e7" testName="TautCableTransfersMomentumAtEyeAndPreservesReach" computerName="MITPC08" duration="00:00:00.0003190" startTime="2026-09-27T01:24:48.8579847+03:00" endTime="2026-09-27T01:24:48.8583040+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6557981e-3646-4194-a0bf-5dfea2ba4ee8" />
+    <UnitTestResult executionId="4aabcf47-0c55-4c16-bf7c-ab44b2c40888" testId="7c3aed4a-38f1-4049-27a5-ea4e7ec1dd22" testName="DeadHeroCannotContinueCombo" computerName="MITPC08" duration="00:00:00.0001180" startTime="2026-09-27T01:24:48.9072996+03:00" endTime="2026-09-27T01:24:48.9074172+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4aabcf47-0c55-4c16-bf7c-ab44b2c40888" />
+    <UnitTestResult executionId="cf2c7d22-82bf-4dc6-a823-f37aefd35acf" testId="f5aff577-e208-0762-161e-8fb82fa70c50" testName="InstalledClipsAreCleanMonoPcmWithoutClipping" computerName="MITPC08" duration="00:00:00.0059430" startTime="2026-09-27T01:24:48.8726781+03:00" endTime="2026-09-27T01:24:48.8786199+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf2c7d22-82bf-4dc6-a823-f37aefd35acf" />
+    <UnitTestResult executionId="5b3b1937-e986-4ef7-a763-1f7fc6ab60ad" testId="cac3df01-0b5f-27b3-88a7-13002435cf45" testName="TelegraphCuesStayShortAndSubtle" computerName="MITPC08" duration="00:00:00.0035630" startTime="2026-09-27T01:24:48.9024963+03:00" endTime="2026-09-27T01:24:48.9060592+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5b3b1937-e986-4ef7-a763-1f7fc6ab60ad" />
+    <UnitTestResult executionId="41625875-7405-4edd-86fd-e6069cd3ceed" testId="c17dbee5-6c90-5dd5-88fb-cffd26118d61" testName="CooldownHasPriorityOverResourceDenial" computerName="MITPC08" duration="00:00:00.0007220" startTime="2026-09-27T01:24:48.9065667+03:00" endTime="2026-09-27T01:24:48.9072890+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="41625875-7405-4edd-86fd-e6069cd3ceed" />
+    <UnitTestResult executionId="3cfd66ae-3c0b-4021-a5ce-de206f00f4d1" testId="08e1a343-3009-e155-39cb-e0b819eff75e" testName="PaidOutChainKeepsAttachmentsAndLength(120)" computerName="MITPC08" duration="00:00:00.0104250" startTime="2026-09-27T01:24:48.8036374+03:00" endTime="2026-09-27T01:24:48.8140623+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3cfd66ae-3c0b-4021-a5ce-de206f00f4d1" />
+    <UnitTestResult executionId="a0861827-f962-446f-a1c9-b877d783b5b0" testId="71d097a1-828c-0360-e8e1-d27df3ee39ed" testName="EqualPriorityDoesNotRestartAnAudibleContact" computerName="MITPC08" duration="00:00:00.0001299" startTime="2026-09-27T01:24:48.8592818+03:00" endTime="2026-09-27T01:24:48.8594117+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a0861827-f962-446f-a1c9-b877d783b5b0" />
+    <UnitTestResult executionId="7ff988d6-c838-44a6-a94d-eb2d2ca0a16d" testId="9f0dea94-b837-cfdf-544d-71e6e0fcf789" testName="ListeningPageOffersThreeCandidatesPerSlot" computerName="MITPC08" duration="00:00:00.0238030" startTime="2026-09-27T01:24:48.8786451+03:00" endTime="2026-09-27T01:24:48.9024479+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7ff988d6-c838-44a6-a94d-eb2d2ca0a16d" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="UnforcedFlightKeepsMomentumAndBallisticContact(120)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="0e45f866-31ee-103c-3f7a-121a6eee5eac">
+      <Execution id="b41408c6-4ff7-485d-9220-912326c076f0" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="UnforcedFlightKeepsMomentumAndBallisticContact(120)" />
+    </UnitTest>
+    <UnitTest name="PaidOutChainKeepsAttachmentsAndLength(60)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="6ab8823b-2e11-0772-c1fe-79bec2255477">
+      <Execution id="505f277a-e768-488c-99df-fc6f9a884727" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="PaidOutChainKeepsAttachmentsAndLength(60)" />
+    </UnitTest>
+    <UnitTest name="ContactClipsHitAtTheirEvent" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="4f9922ac-29d8-792a-eb93-2754592cbbd9">
+      <Execution id="323d6ab2-38c9-4879-a27b-2b5ef0223ed7" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="EnemyAudioClipTests" name="ContactClipsHitAtTheirEvent" />
+    </UnitTest>
+    <UnitTest name="ForceAtRingRotatesMassWhileCenterImpulseDoesNot" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="c04d32ec-8b93-14ee-dd66-e39f1310c80f">
+      <Execution id="776be859-d4a0-437f-9242-80d8ecdb6cc4" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="ForceAtRingRotatesMassWhileCenterImpulseDoesNot" />
+    </UnitTest>
+    <UnitTest name="ComboContinuationDoesNotChargeOrWaitAgain" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="86e0c04f-2bab-ce10-6bf0-fdc5222f593a">
+      <Execution id="e3d10af0-4ce7-4e68-bb70-962f0c641d3d" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="ComboContinuationDoesNotChargeOrWaitAgain" />
+    </UnitTest>
+    <UnitTest name="PauseDoesNotReserveAReleasedVoice" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="258e8746-9a2f-a69e-7bac-16c33d74dc40">
+      <Execution id="98afdcd8-b854-478d-9f33-4c35561c64f0" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="PauseDoesNotReserveAReleasedVoice" />
+    </UnitTest>
+    <UnitTest name="UnforcedFlightKeepsMomentumAndBallisticContact(30)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="2c4e1f45-628e-3985-a84e-5089d1544400">
+      <Execution id="5ecf7305-5cb0-4aee-85f8-6e0691b15891" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="UnforcedFlightKeepsMomentumAndBallisticContact(30)" />
+    </UnitTest>
+    <UnitTest name="CancelledChannelReleasesItsVoiceAndSceneChangeClearsReservations" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="63fe7149-6587-7022-4ed4-6b4eab75d979">
+      <Execution id="73b18d09-f124-412e-81f8-7351792df308" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="CancelledChannelReleasesItsVoiceAndSceneChangeClearsReservations" />
+    </UnitTest>
+    <UnitTest name="DeadHeroCannotContinueCombo" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="7c3aed4a-38f1-4049-27a5-ea4e7ec1dd22">
+      <Execution id="4aabcf47-0c55-4c16-bf7c-ab44b2c40888" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="DeadHeroCannotContinueCombo" />
+    </UnitTest>
+    <UnitTest name="FootstepsCannotInterruptWarningOrDelayedImpact" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="6d1a614b-aca8-09a5-6904-686a46c5ffdc">
+      <Execution id="5bb906cc-e1d0-44dd-a72c-ab2a3cfd5759" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="FootstepsCannotInterruptWarningOrDelayedImpact" />
+    </UnitTest>
+    <UnitTest name="ResourceDenialReportsTheMissingAmount" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="e2d65f17-4045-d771-0d21-58af42f9e79b">
+      <Execution id="0e05a222-5371-4fa0-b070-5d638cec44d6" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="ResourceDenialReportsTheMissingAmount" />
+    </UnitTest>
+    <UnitTest name="HeavyHeadSettlesAboveGroundWithoutGainingEnergy" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="877c5fcd-100e-36c1-4ab7-4a6f9d955b0f">
+      <Execution id="88d938c3-8578-4990-a36b-125576728e9b" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="HeavyHeadSettlesAboveGroundWithoutGainingEnergy" />
+    </UnitTest>
+    <UnitTest name="ReleasingAndRecastingDoesNotRetainOldPoints" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="80b1c27f-d035-6e02-e809-01d3260f3267">
+      <Execution id="664db20d-8422-4a27-92c8-8cb819bca3f1" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="ReleasingAndRecastingDoesNotRetainOldPoints" />
+    </UnitTest>
+    <UnitTest name="SlackCableDoesNotMoveOrSpinHead" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="aa2bcda7-aa54-63dc-4087-0f11c34f830e">
+      <Execution id="443e1dd6-349a-40e3-9c9f-9a532c9f809e" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="SlackCableDoesNotMoveOrSpinHead" />
+    </UnitTest>
+    <UnitTest name="EqualPriorityDoesNotRestartAnAudibleContact" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="71d097a1-828c-0360-e8e1-d27df3ee39ed">
+      <Execution id="a0861827-f962-446f-a1c9-b877d783b5b0" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="EqualPriorityDoesNotRestartAnAudibleContact" />
+    </UnitTest>
+    <UnitTest name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(60)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="59cc0014-d7cb-0c51-69f3-d0dc88884ef6">
+      <Execution id="9c25c1f8-c32c-4b00-b198-dd1cb99b04cd" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(60)" />
+    </UnitTest>
+    <UnitTest name="PaidOutChainKeepsAttachmentsAndLength(120)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="08e1a343-3009-e155-39cb-e0b819eff75e">
+      <Execution id="3cfd66ae-3c0b-4021-a5ce-de206f00f4d1" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="PaidOutChainKeepsAttachmentsAndLength(120)" />
+    </UnitTest>
+    <UnitTest name="PaidOutChainKeepsAttachmentsAndLength(30)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="6d3e6dd0-ffc1-b80c-9099-a85d8268d387">
+      <Execution id="89bf3355-16f7-4837-a835-4c2e79c24b2a" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="PaidOutChainKeepsAttachmentsAndLength(30)" />
+    </UnitTest>
+    <UnitTest name="InstalledClipsAreCleanMonoPcmWithoutClipping" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="f5aff577-e208-0762-161e-8fb82fa70c50">
+      <Execution id="cf2c7d22-82bf-4dc6-a823-f37aefd35acf" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="EnemyAudioClipTests" name="InstalledClipsAreCleanMonoPcmWithoutClipping" />
+    </UnitTest>
+    <UnitTest name="WarningStealsLowestPriorityNotNextRingSlot" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="778877c1-b3f0-fa1c-2021-0a92a779ae36">
+      <Execution id="ca5ba9e0-d7c9-4fb7-8c0e-2106c2be7dce" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="WarningStealsLowestPriorityNotNextRingSlot" />
+    </UnitTest>
+    <UnitTest name="CooldownHasPriorityOverResourceDenial" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="c17dbee5-6c90-5dd5-88fb-cffd26118d61">
+      <Execution id="41625875-7405-4edd-86fd-e6069cd3ceed" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="CooldownHasPriorityOverResourceDenial" />
+    </UnitTest>
+    <UnitTest name="CooldownExpiryRestoresAvailability" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="b8c31c16-a925-80bf-05a5-9e96bacd1db2">
+      <Execution id="d018a13a-032a-448b-a7d3-0069a4739480" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="CooldownExpiryRestoresAvailability" />
+    </UnitTest>
+    <UnitTest name="UnforcedFlightKeepsMomentumAndBallisticContact(60)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="86215e88-22a9-ee1d-fb56-7729135fa26f">
+      <Execution id="395e6405-91c5-4dcb-a3af-f3ac6edc43ca" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="UnforcedFlightKeepsMomentumAndBallisticContact(60)" />
+    </UnitTest>
+    <UnitTest name="CatchTracksMovingHolsterWithoutPositionSnap" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="eafebfb2-74df-2f62-c9e1-db4a6303f190">
+      <Execution id="9e8cfabb-da54-48b8-87a9-fe9f7237984b" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="CatchTracksMovingHolsterWithoutPositionSnap" />
+    </UnitTest>
+    <UnitTest name="ExactCostIsAvailable" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="1dbe7dd2-9740-3839-3ce9-b79b5bac27fd">
+      <Execution id="0dfe3d51-2ea1-4b8d-8d4b-d2328abc7261" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="HudAbilityAvailabilityTests" name="ExactCostIsAvailable" />
+    </UnitTest>
+    <UnitTest name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(120)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="3c3616c7-b60a-f00a-b821-8924a79b0fae">
+      <Execution id="a7414239-bb89-4a03-a386-8936981ee6a0" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(120)" />
+    </UnitTest>
+    <UnitTest name="TautCableTransfersMomentumAtEyeAndPreservesReach" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="f1615ca2-6d64-4d0e-9c85-6716a75e15e7">
+      <Execution id="6557981e-3646-4194-a0bf-5dfea2ba4ee8" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorHeadDynamicsTests" name="TautCableTransfersMomentumAtEyeAndPreservesReach" />
+    </UnitTest>
+    <UnitTest name="BudClipsAreInstalledUnderTheNamesCombatAudioLoads" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="4f66e528-0075-8892-9cac-50782e3d6201">
+      <Execution id="9bc9a9ef-6f25-4ec2-9b92-39d91ec835d6" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="EnemyAudioClipTests" name="BudClipsAreInstalledUnderTheNamesCombatAudioLoads" />
+    </UnitTest>
+    <UnitTest name="PausedCueKeepsItsRemainingReservationAfterDspAdvances" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="e65aaa4d-dbfc-b274-4125-fa6edde423c9">
+      <Execution id="71553c80-2f75-4e6c-93d4-a881fc8ace4a" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="CombatVoiceBudgetTests" name="PausedCueKeepsItsRemainingReservationAfterDspAdvances" />
+    </UnitTest>
+    <UnitTest name="ListeningPageOffersThreeCandidatesPerSlot" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="9f0dea94-b837-cfdf-544d-71e6e0fcf789">
+      <Execution id="7ff988d6-c838-44a6-a94d-eb2d2ca0a16d" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="EnemyAudioClipTests" name="ListeningPageOffersThreeCandidatesPerSlot" />
+    </UnitTest>
+    <UnitTest name="TelegraphCuesStayShortAndSubtle" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="cac3df01-0b5f-27b3-88a7-13002435cf45">
+      <Execution id="5b3b1937-e986-4ef7-a763-1f7fc6ab60ad" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="EnemyAudioClipTests" name="TelegraphCuesStayShortAndSubtle" />
+    </UnitTest>
+    <UnitTest name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(30)" storage="c:\users\d.grab\desktop\the-game\tools\combat.presentation.tests\bin\debug\net9.0\combat.presentation.tests.dll" id="aaa64e59-1c0a-fffb-5ae6-45fed54ab635">
+      <Execution id="a1fea6d1-021e-4ba6-95b0-550ed3295f2e" />
+      <TestMethod codeBase="C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="AnchorChainTests" name="RecordedSlamPayoutAndRetractionKeepTheTwoPercentBudget(30)" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="4f66e528-0075-8892-9cac-50782e3d6201" executionId="9bc9a9ef-6f25-4ec2-9b92-39d91ec835d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b8c31c16-a925-80bf-05a5-9e96bacd1db2" executionId="d018a13a-032a-448b-a7d3-0069a4739480" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aa2bcda7-aa54-63dc-4087-0f11c34f830e" executionId="443e1dd6-349a-40e3-9c9f-9a532c9f809e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="eafebfb2-74df-2f62-c9e1-db4a6303f190" executionId="9e8cfabb-da54-48b8-87a9-fe9f7237984b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1dbe7dd2-9740-3839-3ce9-b79b5bac27fd" executionId="0dfe3d51-2ea1-4b8d-8d4b-d2328abc7261" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="778877c1-b3f0-fa1c-2021-0a92a779ae36" executionId="ca5ba9e0-d7c9-4fb7-8c0e-2106c2be7dce" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e2d65f17-4045-d771-0d21-58af42f9e79b" executionId="0e05a222-5371-4fa0-b070-5d638cec44d6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6d1a614b-aca8-09a5-6904-686a46c5ffdc" executionId="5bb906cc-e1d0-44dd-a72c-ab2a3cfd5759" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6d3e6dd0-ffc1-b80c-9099-a85d8268d387" executionId="89bf3355-16f7-4837-a835-4c2e79c24b2a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4f9922ac-29d8-792a-eb93-2754592cbbd9" executionId="323d6ab2-38c9-4879-a27b-2b5ef0223ed7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0e45f866-31ee-103c-3f7a-121a6eee5eac" executionId="b41408c6-4ff7-485d-9220-912326c076f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="258e8746-9a2f-a69e-7bac-16c33d74dc40" executionId="98afdcd8-b854-478d-9f33-4c35561c64f0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="877c5fcd-100e-36c1-4ab7-4a6f9d955b0f" executionId="88d938c3-8578-4990-a36b-125576728e9b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3c3616c7-b60a-f00a-b821-8924a79b0fae" executionId="a7414239-bb89-4a03-a386-8936981ee6a0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="59cc0014-d7cb-0c51-69f3-d0dc88884ef6" executionId="9c25c1f8-c32c-4b00-b198-dd1cb99b04cd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="63fe7149-6587-7022-4ed4-6b4eab75d979" executionId="73b18d09-f124-412e-81f8-7351792df308" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e65aaa4d-dbfc-b274-4125-fa6edde423c9" executionId="71553c80-2f75-4e6c-93d4-a881fc8ace4a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aaa64e59-1c0a-fffb-5ae6-45fed54ab635" executionId="a1fea6d1-021e-4ba6-95b0-550ed3295f2e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86215e88-22a9-ee1d-fb56-7729135fa26f" executionId="395e6405-91c5-4dcb-a3af-f3ac6edc43ca" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c04d32ec-8b93-14ee-dd66-e39f1310c80f" executionId="776be859-d4a0-437f-9242-80d8ecdb6cc4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c4e1f45-628e-3985-a84e-5089d1544400" executionId="5ecf7305-5cb0-4aee-85f8-6e0691b15891" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6ab8823b-2e11-0772-c1fe-79bec2255477" executionId="505f277a-e768-488c-99df-fc6f9a884727" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="80b1c27f-d035-6e02-e809-01d3260f3267" executionId="664db20d-8422-4a27-92c8-8cb819bca3f1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86e0c04f-2bab-ce10-6bf0-fdc5222f593a" executionId="e3d10af0-4ce7-4e68-bb70-962f0c641d3d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f1615ca2-6d64-4d0e-9c85-6716a75e15e7" executionId="6557981e-3646-4194-a0bf-5dfea2ba4ee8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c3aed4a-38f1-4049-27a5-ea4e7ec1dd22" executionId="4aabcf47-0c55-4c16-bf7c-ab44b2c40888" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f5aff577-e208-0762-161e-8fb82fa70c50" executionId="cf2c7d22-82bf-4dc6-a823-f37aefd35acf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cac3df01-0b5f-27b3-88a7-13002435cf45" executionId="5b3b1937-e986-4ef7-a763-1f7fc6ab60ad" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c17dbee5-6c90-5dd5-88fb-cffd26118d61" executionId="41625875-7405-4edd-86fd-e6069cd3ceed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="08e1a343-3009-e155-39cb-e0b819eff75e" executionId="3cfd66ae-3c0b-4021-a5ce-de206f00f4d1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="71d097a1-828c-0360-e8e1-d27df3ee39ed" executionId="a0861827-f962-446f-a1c9-b877d783b5b0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9f0dea94-b837-cfdf-544d-71e6e0fcf789" executionId="7ff988d6-c838-44a6-a94d-eb2d2ca0a16d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Список результатов" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Все загруженные результаты" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="32" executed="32" passed="32" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>NUnit Adapter 5.0.0.0: Test execution started&#xD;
+Running all tests in C:\Users\d.grab\Desktop\the-game\tools\Combat.Presentation.Tests\bin\Debug\net9.0\Combat.Presentation.Tests.dll&#xD;
+   NUnit3TestExecutor discovered 32 of 32 NUnit test cases using Current Discovery mode, Non-Explicit run&#xD;
+fps=30, peak iterations=52&#xD;
+&#xD;
+fps=60, peak iterations=4&#xD;
+&#xD;
+fps=120, peak iterations=52&#xD;
+&#xD;
+NUnit Adapter 5.0.0.0: Test execution complete&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

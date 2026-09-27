@@ -1,0 +1,70 @@
+{
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\ForestRootSnarer_Rig.fbx",
+  "bones": [
+    "root",
+    "pelvis",
+    "spine_01",
+    "spine_02",
+    "neck",
+    "head",
+    "jaw",
+    "L_clavicle",
+    "L_arm_upper",
+    "L_arm_lower",
+    "L_hand",
+    "R_clavicle",
+    "R_arm_upper",
+    "R_arm_lower",
+    "R_hand",
+    "L_leg_upper",
+    "L_leg_lower",
+    "L_foot",
+    "R_leg_upper",
+    "R_leg_lower",
+    "R_foot"
+  ],
+  "bone_count": 21,
+  "vertex_groups": 18,
+  "triangles": 24000,
+  "bbox_min": [
+    -0.814,
+    -0.874,
+    0.0
+  ],
+  "bbox_max": [
+    0.814,
+    0.874,
+    1.35
+  ],
+  "L_slab_centroid": [
+    0.576,
+    -0.537,
+    0.327
+  ],
+  "faces_minus_y_and_L_is_plus_x": true,
+  "armature_modifier": true,
+  "slab_rigid_vertices": 1554,
+  "slab_rigid_max_distance_change_m": 0.0,
+  "slab_max_move_m": 0.863,
+  "materials": [
+    "M_ForestRootSnarer"
+  ],
+  "images": [
+    [
+      "Color_64347b8c-807a-4a6e-b833-bdea33da2ff4",
+      "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\textures\\T_ForestRootSnarer_Color.png",
+      [
+        2048,
+        2048
+      ]
+    ],
+    [
+      "NormalGL_64347b8c-807a-4a6e-b833-bdea33da2ff4",
+      "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\textures\\T_ForestRootSnarer_NormalGL.png",
+      [
+        2048,
+        2048
+      ]
+    ]
+  ]
+}

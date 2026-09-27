@@ -486,6 +486,7 @@ namespace Game.Sim
             _wendigoNextLeap = new int[capacity];
             // Новые мобы леса: состояние на сущность и очередь распада Расщепеня.
             _thorncasters = new ThorncasterState[capacity];
+            _thornShots = new ThornShotState[capacity];
             _rootSnarers = new RootSnarerState[capacity];
             _splitters = new SplitterState[capacity];
             _pendingSplits = new int[capacity];

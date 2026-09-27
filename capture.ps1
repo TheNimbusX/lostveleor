@@ -76,8 +76,9 @@ param(
     [ValidateSet('', 'root-swarm', 'mixed', 'forest-bud', 'forest-wendigo', 'forest-guardian', 'forest-stonehoof',
                  'forest-thorncaster', 'forest-snarer', 'forest-splitter')] [string] $Encounter = '',
     # Что делает герой против врага лесного стенда: уходит из замаха, стоит под ударами,
-    # глушит якорем посреди замаха, обходит по кругу (разворот на месте), добивает.
-    [ValidateSet('', 'dodge', 'tank', 'stun', 'turn', 'death')] [string] $EnemyCase = '',
+    # глушит якорем посреди замаха, обходит по кругу (разворот на месте), стоит вплотную
+    # и не бьёт (hug — всплеск Шипомёта), добивает (death — следующий враг через 1,5 с).
+    [ValidateSet('', 'dodge', 'tank', 'stun', 'turn', 'hug', 'death')] [string] $EnemyCase = '',
     [ValidateSet('', 'dodge', 'approach', 'kill', 'pause', 'repeat', 'impact-pause', 'impact-repeat')] [string] $ForestBudCase = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,

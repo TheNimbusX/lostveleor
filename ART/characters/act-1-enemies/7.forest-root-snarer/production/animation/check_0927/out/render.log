@@ -1,0 +1,27 @@
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\render_new.py:44: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m.use_nodes = True
+00:08.485  render           | Saved: 'C:\check_0927\out\renders\Mend_game_000.png'
+00:08.547  render           | Saved: 'C:\check_0927\out\renders\Mend_game_005.png'
+00:08.610  render           | Saved: 'C:\check_0927\out\renders\Mend_game_007.png'
+00:08.672  render           | Saved: 'C:\check_0927\out\renders\Mend_game_008.png'
+00:08.735  render           | Saved: 'C:\check_0927\out\renders\Mend_game_020.png'
+00:08.782  render           | Saved: 'C:\check_0927\out\renders\Mend_game_028.png'
+00:08.844  render           | Saved: 'C:\check_0927\out\renders\Mend_game_030.png'
+00:08.907  render           | Saved: 'C:\check_0927\out\renders\Mend_game_039.png'
+00:08.969  render           | Saved: 'C:\check_0927\out\renders\Mend_game_044.png'
+00:09.016  render           | Saved: 'C:\check_0927\out\renders\Mend_game_050.png'
+00:09.078  render           | Saved: 'C:\check_0927\out\renders\Mend_side_000.png'
+00:09.125  render           | Saved: 'C:\check_0927\out\renders\Mend_side_005.png'
+00:09.188  render           | Saved: 'C:\check_0927\out\renders\Mend_side_007.png'
+00:09.235  render           | Saved: 'C:\check_0927\out\renders\Mend_side_008.png'
+00:09.297  render           | Saved: 'C:\check_0927\out\renders\Mend_side_020.png'
+00:09.360  render           | Saved: 'C:\check_0927\out\renders\Mend_side_028.png'
+00:09.422  render           | Saved: 'C:\check_0927\out\renders\Mend_side_030.png'
+00:09.485  render           | Saved: 'C:\check_0927\out\renders\Mend_side_039.png'
+00:09.547  render           | Saved: 'C:\check_0927\out\renders\Mend_side_044.png'
+00:09.610  render           | Saved: 'C:\check_0927\out\renders\Mend_side_050.png'
+FBX version: 7400
+RENDER_DONE
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

@@ -1,0 +1,74 @@
+{
+ "rest": {
+  "edge_ratio_p001": 1.0,
+  "edge_ratio_p999": 1.0,
+  "edge_ratio_max": 1.0,
+  "worst200_by_bone": {
+   "Spine": 115,
+   "RightShoulder": 33,
+   "RightArm": 8,
+   "RightForeArm": 7,
+   "Head": 7,
+   "LeftArm": 7
+  },
+  "rigid_spike_edge_ratio_range": [
+   1.0,
+   1.0
+  ],
+  "min_z": 0.0
+ },
+ "arms_up": {
+  "edge_ratio_p001": 0.441,
+  "edge_ratio_p999": 1.71,
+  "edge_ratio_max": 2.416,
+  "worst200_by_bone": {
+   "RightArm": 50,
+   "LeftArm": 38,
+   "RightShoulder": 36,
+   "Head": 27,
+   "LeftForeArm": 13,
+   "LeftShoulder": 13
+  },
+  "rigid_spike_edge_ratio_range": [
+   0.9998,
+   1.0
+  ],
+  "min_z": 0.0
+ },
+ "crouch": {
+  "edge_ratio_p001": 0.311,
+  "edge_ratio_p999": 1.708,
+  "edge_ratio_max": 5.714,
+  "worst200_by_bone": {
+   "Hips": 77,
+   "LeftLeg": 49,
+   "RightUpLeg": 24,
+   "LeftUpLeg": 19,
+   "RightLeg": 13,
+   "RightFoot": 7
+  },
+  "rigid_spike_edge_ratio_range": [
+   1.0,
+   1.0
+  ],
+  "min_z": 0.13
+ },
+ "leg_lift": {
+  "edge_ratio_p001": 0.429,
+  "edge_ratio_p999": 2.075,
+  "edge_ratio_max": 5.444,
+  "worst200_by_bone": {
+   "LeftLeg": 49,
+   "LeftUpLeg": 49,
+   "Hips": 32,
+   "RightUpLeg": 30,
+   "LeftFoot": 20,
+   "LeftToeBase": 13
+  },
+  "rigid_spike_edge_ratio_range": [
+   0.9999,
+   1.0
+  ],
+  "min_z": 0.0
+ }
+}

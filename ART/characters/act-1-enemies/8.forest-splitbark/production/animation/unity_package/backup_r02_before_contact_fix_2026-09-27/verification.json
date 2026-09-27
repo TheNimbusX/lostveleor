@@ -1,0 +1,930 @@
+{
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\animation\\unity_package\\ForestSplitter.fbx",
+  "fbx_bytes": 2470572,
+  "method": "FBX re-imported into an empty Blender 5.2 scene (--factory-startup), sampled every 0.25 frame; check/check_measure.py, check_metrics.py, check_takes.py, check_render.py, probe_bite.py",
+  "checks": {
+    "1_takes": {
+      "fbx_stacks": {
+        "ForestSplitter_Idle": 60.0,
+        "ForestSplitter_Walk": 10.0,
+        "ForestSplitter_Bite": 30.0,
+        "ForestSplitter_Hit": 12.0,
+        "ForestSplitter_Death": 12.0,
+        "ForestSplitter_Pop": 10.0
+      },
+      "expected": [
+        "ForestSplitter_Idle",
+        "ForestSplitter_Walk",
+        "ForestSplitter_Bite",
+        "ForestSplitter_Hit",
+        "ForestSplitter_Death",
+        "ForestSplitter_Pop"
+      ],
+      "names_exact": true,
+      "fbx_fps": 30.0,
+      "fbx_time_mode": 6,
+      "ranges_match_export": true,
+      "loop_seams": {
+        "ForestSplitter_Idle": {
+          "bone_pos_mm": 0.0,
+          "bone_rot_deg": 0.0,
+          "skin_mm": 0.0
+        },
+        "ForestSplitter_Walk": {
+          "bone_pos_mm": 0.0,
+          "bone_rot_deg": 0.0,
+          "skin_mm": 0.0
+        }
+      },
+      "loop_velocity": {
+        "ForestSplitter_Idle": {
+          "seam_mps": 0.004,
+          "worst_inside_cycle_mps": 0.006
+        },
+        "ForestSplitter_Walk": {
+          "seam_mps": 4.269,
+          "worst_inside_cycle_mps": 4.038
+        }
+      },
+      "pass": true
+    },
+    "2_in_place": {
+      "root_bone": {
+        "ForestSplitter_Idle": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        },
+        "ForestSplitter_Walk": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        },
+        "ForestSplitter_Bite": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        },
+        "ForestSplitter_Hit": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        },
+        "ForestSplitter_Death": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        },
+        "ForestSplitter_Pop": {
+          "root_head_start": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "root_travel_xy_mm": 0.0,
+          "root_travel_z_mm": 0.0,
+          "root_rot_deg": 0.0
+        }
+      },
+      "armature_object_static": {
+        "ForestSplitter_Idle": true,
+        "ForestSplitter_Walk": true,
+        "ForestSplitter_Bite": true,
+        "ForestSplitter_Hit": true,
+        "ForestSplitter_Death": true,
+        "ForestSplitter_Pop": true
+      },
+      "armature_object": {
+        "location": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "rotation": [
+          -1.6292067073209182e-07,
+          0.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "rest_skin_min_z_mm": 0.0,
+      "max_bone_scale_dev": 1e-06,
+      "scale_key_range": [
+        0.999999,
+        1.0
+      ],
+      "facing_guide_static": true,
+      "pass": true
+    },
+    "3_walk": {
+      "target_mps": 3.1,
+      "measured_mps": [
+        3.098,
+        3.233
+      ],
+      "ankle_plant_speed_mps": [
+        3.1
+      ],
+      "max_slide_mm": 12.64,
+      "per_leg": {
+        "front_L": {
+          "sole": [
+            {
+              "frames": [
+                2.5,
+                3.75
+              ],
+              "len_frames": 1.25,
+              "speed_mps": 3.183,
+              "slide_vs_target_mm": 6.36,
+              "lateral_mm": 2.77
+            }
+          ],
+          "ankle": [
+            {
+              "frames": [
+                0.0,
+                3.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.0,
+              "lateral_mm": 0.0
+            }
+          ],
+          "sole_min_z_mm": -7.56
+        },
+        "front_R": {
+          "sole": [
+            {
+              "frames": [
+                5.0,
+                8.75
+              ],
+              "len_frames": 3.75,
+              "speed_mps": 3.098,
+              "slide_vs_target_mm": 3.75,
+              "lateral_mm": 0.34
+            }
+          ],
+          "ankle": [
+            {
+              "frames": [
+                5.0,
+                8.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.0,
+              "lateral_mm": 0.0
+            }
+          ],
+          "sole_min_z_mm": 8.52
+        },
+        "hind_L": {
+          "sole": [
+            {
+              "frames": [
+                5.25,
+                8.0
+              ],
+              "len_frames": 2.75,
+              "speed_mps": 3.233,
+              "slide_vs_target_mm": 12.64,
+              "lateral_mm": 2.95
+            }
+          ],
+          "ankle": [
+            {
+              "frames": [
+                5.0,
+                8.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.01,
+              "lateral_mm": 0.01
+            }
+          ],
+          "sole_min_z_mm": -0.32
+        },
+        "hind_R": {
+          "sole": [
+            {
+              "frames": [
+                0.0,
+                2.75
+              ],
+              "len_frames": 2.75,
+              "speed_mps": 3.178,
+              "slide_vs_target_mm": 7.38,
+              "lateral_mm": 1.4
+            }
+          ],
+          "ankle": [
+            {
+              "frames": [
+                0.0,
+                3.5
+              ],
+              "len_frames": 3.5,
+              "speed_mps": 3.1,
+              "slide_vs_target_mm": 0.01,
+              "lateral_mm": 0.01
+            }
+          ],
+          "sole_min_z_mm": -3.72
+        }
+      },
+      "note": "sole = centroid of the lowest 15 mm of each paw's skin; it rocks a little while the ankle moves exactly",
+      "pass": true
+    },
+    "4_contacts": {
+      "bite": {
+        "contract_frame": 18,
+        "beak_forwardmost_integer_frame": 18,
+        "beak_forwardmost_subframe": 17.75,
+        "shell_clap_frame": 18,
+        "front_L_paw_lands_frame": 18,
+        "body_forwardmost_frame": 18.0,
+        "beak_tip_at_contact_m": {
+          "forward": 0.851,
+          "up": 0.352,
+          "right": 0.057
+        },
+        "export_beak_mesh_tip": {
+          "forward": 0.851,
+          "up": 0.352,
+          "right": 0.057,
+          "unity_local": [
+            0.057,
+            0.352,
+            0.851
+          ],
+          "what": "forwardmost skinned vertex of the head at frame 18 (the visible beak tip; use this for bite VFX)"
+        }
+      },
+      "death": {
+        "release_frame": 12,
+        "last_frame": 12.0,
+        "shell_span_max_frame": 12
+      },
+      "pop": {
+        "contract": {
+          "takeoff": 2,
+          "landing": 8
+        },
+        "takeoff_first_airborne": 2,
+        "landing_first_grounded": 8,
+        "airborne": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "pass": true
+    },
+    "5_deformation": {
+      "per_take": {
+        "ForestSplitter_Idle": {
+          "edge_grow_max_mm": 47.2,
+          "at": 45.75,
+          "pair": [
+            "leg_front_R_upper",
+            "shell_R"
+          ],
+          "edges_grow_over_5cm": 0,
+          "skin_min_z_mm": -0.0,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        },
+        "ForestSplitter_Walk": {
+          "edge_grow_max_mm": 144.4,
+          "at": 8.25,
+          "pair": [
+            "leg_front_R_upper",
+            "shell_R"
+          ],
+          "edges_grow_over_5cm": 73,
+          "skin_min_z_mm": -7.56,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        },
+        "ForestSplitter_Bite": {
+          "edge_grow_max_mm": 161.9,
+          "at": 15.5,
+          "pair": [
+            "shell_R",
+            "shell_L"
+          ],
+          "edges_grow_over_5cm": 144,
+          "skin_min_z_mm": -0.0,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        },
+        "ForestSplitter_Hit": {
+          "edge_grow_max_mm": 105.6,
+          "at": 3.0,
+          "pair": [
+            "shell_R",
+            "shell_L"
+          ],
+          "edges_grow_over_5cm": 78,
+          "skin_min_z_mm": -0.0,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        },
+        "ForestSplitter_Death": {
+          "edge_grow_max_mm": 354.6,
+          "at": 12.0,
+          "pair": [
+            "shell_R",
+            "shell_L"
+          ],
+          "edges_grow_over_5cm": 199,
+          "skin_min_z_mm": -5.87,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        },
+        "ForestSplitter_Pop": {
+          "edge_grow_max_mm": 92.1,
+          "at": 5.0,
+          "pair": [
+            "shell_R",
+            "shell_L"
+          ],
+          "edges_grow_over_5cm": 33,
+          "skin_min_z_mm": -4.79,
+          "verts_below_minus_1cm": 0,
+          "rigid_edges_max_change_mm": 0.0003,
+          "finite": true
+        }
+      },
+      "bite_head_shell_sleeve_mm": {
+        "before_fix": 244.6,
+        "after_fix": 129.7,
+        "edges_over_5cm_before_after": [
+          181,
+          144
+        ]
+      },
+      "death_shell_split_mm": [
+        354.6,
+        12.0
+      ],
+      "death_end_pose": {
+        "skin_min_z_mm": -5.87,
+        "sole_z_mm": {
+          "front_L": -3.7,
+          "front_R": 8.5,
+          "hind_L": 2.9,
+          "hind_R": 1.4
+        }
+      },
+      "rest_sole_float_mm": {
+        "front_L": -0.0,
+        "front_R": 8.5,
+        "hind_L": 8.9,
+        "hind_R": 5.7
+      },
+      "renders_looked_at": "check/renders/_s_<Take>.jpg (game angle, 5-6 frames per take), _s_Bite_*_new.jpg (close/side)",
+      "rigid_edge_count": 20847,
+      "pass": true
+    },
+    "6_budget": {
+      "triangles": 24000,
+      "limit": 25000,
+      "max_influences": 4,
+      "verts_over_4": 0,
+      "unweighted_verts": 0,
+      "weight_sum_dev_max": 0.0,
+      "pass": true
+    },
+    "7_review_page": {
+      "page": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\review\\animation_r01\\index.html",
+      "refs": 25,
+      "missing": [],
+      "take_sections": [
+        "ForestSplitter_Idle",
+        "ForestSplitter_Walk",
+        "ForestSplitter_Bite",
+        "ForestSplitter_Hit",
+        "ForestSplitter_Death",
+        "ForestSplitter_Pop"
+      ],
+      "pass": true
+    }
+  },
+  "all_pass": true,
+  "fixes": [
+    "Bite: neck jab 0.25 -> 0.11 m (rig validated 0.14 m) + 3.5 cm body lurch + 10 deg nose-up on the same envelope (takes_bite.py); head/shell sleeve 245 -> 130 mm, beak tip 0.916 -> 0.851 m forward, contact still frame 18; re-baked, validated, package rebuilt and round-trip verified.",
+    "export.json: added beak_mesh_tip_at_contact_m (real beak tip, ~13 cm below the head bone tail) and child_bite (Splitling 12+8 ticks = contact phase 0.6, reuse Bite at x1.5).",
+    "Review page: Bite videos/strip re-rendered, text and issues updated, step-3 summary added."
+  ],
+  "remaining": [
+    "Death release frame: shells split 35 cm apart on the fused mesh, dark stretched moss + a stretched fin at the front (frames 9-12); needs the split VFX (model change otherwise).",
+    "Rest paws: only front_L touches the ground; front_R floats 8.5 mm, hind 6-10 mm (model); hind IK is at reach 0.97/0.975 so feet cannot be lowered without crouching every take.",
+    "Walk: paw skin dips to -7.6 mm; sole contact points slide up to 12.6 mm (ankles exact 3.1 m/s).",
+    "Head-shell stretch 130 mm at bite contact is still visible from the side; from the game camera it reads as a short neck.",
+    "Material still named tripo_material_<uuid>; Unity import (loop flags, material) not done."
+  ],
+  "r02_2026_09_27": {
+    "date": "2026-09-27",
+    "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\animation\\unity_package\\ForestSplitter.fbx",
+    "fbx_bytes": 3470476,
+    "method": "check/check_r02.py: the r01 FBX (backup_r01_2026-09-26) and the r02 FBX re-imported into an emptied Blender 5.2 scene (--factory-startup) and sampled every 0.25 frame; validate_roll.py on the baked blend; verify_package.py round trip of all 10 takes",
+    "checks": {
+      "1_takes": {
+        "fbx_stacks": {
+          "ForestSplitter_Idle": 60.0,
+          "ForestSplitter_Walk": 10.0,
+          "ForestSplitter_Bite": 30.0,
+          "ForestSplitter_Hit": 12.0,
+          "ForestSplitter_Death": 12.0,
+          "ForestSplitter_Pop": 10.0,
+          "ForestSplitter_RollCurl": 30.0,
+          "ForestSplitter_RollLoop": 12.0,
+          "ForestSplitter_RollUncurl": 30.0,
+          "ForestSplitter_RollDizzy": 45.0
+        },
+        "names_exact": true,
+        "fbx_fps": 30.0,
+        "pass": true
+      },
+      "2_r01_takes_unchanged": {
+        "baked_keys_identical": {
+          "ForestSplitter_Idle": {
+            "fcurves": 133,
+            "keys": 32053,
+            "identical": true
+          },
+          "ForestSplitter_Walk": {
+            "fcurves": 133,
+            "keys": 5453,
+            "identical": true
+          },
+          "ForestSplitter_Bite": {
+            "fcurves": 133,
+            "keys": 16093,
+            "identical": true
+          },
+          "ForestSplitter_Hit": {
+            "fcurves": 133,
+            "keys": 6517,
+            "identical": true
+          },
+          "ForestSplitter_Death": {
+            "fcurves": 133,
+            "keys": 6517,
+            "identical": true
+          },
+          "ForestSplitter_Pop": {
+            "fcurves": 133,
+            "keys": 5453,
+            "identical": true
+          }
+        },
+        "fbx_samples_vs_r01_fbx": {
+          "ForestSplitter_Idle": {
+            "samples": 241,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          },
+          "ForestSplitter_Walk": {
+            "samples": 41,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          },
+          "ForestSplitter_Bite": {
+            "samples": 121,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          },
+          "ForestSplitter_Hit": {
+            "samples": 49,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          },
+          "ForestSplitter_Death": {
+            "samples": 49,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          },
+          "ForestSplitter_Pop": {
+            "samples": 41,
+            "max_bone_matrix_diff": 0.0,
+            "max_skin_diff_m": 0.0,
+            "identical": true
+          }
+        },
+        "pass": true
+      },
+      "3_new_takes_in_place": {
+        "ForestSplitter_RollCurl": {
+          "root": {
+            "root_head_start": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "root_travel_xy_mm": 0.0,
+            "root_travel_z_mm": 0.0,
+            "root_rot_deg": 0.0
+          },
+          "scale": {
+            "max_bone_scale_dev": 1e-06,
+            "bone": "leg_front_R_lower"
+          },
+          "ground": {
+            "skin_min_z_mm": -0.19,
+            "at_frame": 29.25,
+            "verts_below_minus_1cm": 0,
+            "end_min_z_mm": 2.39
+          }
+        },
+        "ForestSplitter_RollLoop": {
+          "root": {
+            "root_head_start": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "root_travel_xy_mm": 0.0,
+            "root_travel_z_mm": 0.0,
+            "root_rot_deg": 0.0
+          },
+          "scale": {
+            "max_bone_scale_dev": 1e-06,
+            "bone": "leg_front_L_lower"
+          },
+          "ground": {
+            "skin_min_z_mm": -4.48,
+            "at_frame": 3.0,
+            "verts_below_minus_1cm": 0,
+            "end_min_z_mm": 2.39
+          }
+        },
+        "ForestSplitter_RollUncurl": {
+          "root": {
+            "root_head_start": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "root_travel_xy_mm": 0.0,
+            "root_travel_z_mm": 0.0,
+            "root_rot_deg": 0.0
+          },
+          "scale": {
+            "max_bone_scale_dev": 1e-06,
+            "bone": "leg_front_L_foot"
+          },
+          "ground": {
+            "skin_min_z_mm": -0.0,
+            "at_frame": 17.5,
+            "verts_below_minus_1cm": 0,
+            "end_min_z_mm": 0.0
+          }
+        },
+        "ForestSplitter_RollDizzy": {
+          "root": {
+            "root_head_start": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "root_travel_xy_mm": 0.0,
+            "root_travel_z_mm": 0.0,
+            "root_rot_deg": 0.0
+          },
+          "scale": {
+            "max_bone_scale_dev": 1e-06,
+            "bone": "leg_front_L_lower"
+          },
+          "ground": {
+            "skin_min_z_mm": -1.0,
+            "at_frame": 14.5,
+            "verts_below_minus_1cm": 0,
+            "end_min_z_mm": 0.0
+          }
+        }
+      },
+      "4_handoffs": {
+        "fbx": {
+          "Idle f0 -> RollCurl f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollCurl end -> RollLoop f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollLoop f0 -> RollUncurl f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollLoop f0 -> RollDizzy f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollUncurl end -> Idle f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollDizzy end -> Idle f0": {
+            "bone_pos_mm": 0.0,
+            "skin_mm": 0.0
+          }
+        },
+        "baked": {
+          "Idle f0 -> RollCurl f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollCurl f30 -> RollLoop f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollLoop f0 -> RollUncurl f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollLoop f0 -> RollDizzy f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollUncurl f30 -> Idle f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          },
+          "RollDizzy f45 -> Idle f0": {
+            "bone_pos_mm": 0.0,
+            "bone_rot_deg": 0.0,
+            "skin_mm": 0.0
+          }
+        },
+        "pass": true
+      },
+      "5_deformation": {
+        "ForestSplitter_RollCurl": {
+          "stretch": {
+            "grow_max_mm": 206.7,
+            "grow_max_at": 28.0,
+            "grow_max_pair": [
+              "leg_front_R_upper",
+              "shell_R"
+            ],
+            "edges_grow_over_5cm": 137
+          },
+          "rigid_edges_max_change_mm": 0.0003,
+          "ik_pull_m": 0.0
+        },
+        "ForestSplitter_RollLoop": {
+          "stretch": {
+            "grow_max_mm": 178.9,
+            "grow_max_at": 8.0,
+            "grow_max_pair": [
+              "leg_front_R_upper",
+              "shell_R"
+            ],
+            "edges_grow_over_5cm": 121
+          },
+          "rigid_edges_max_change_mm": 0.0002,
+          "ik_pull_m": 0.0
+        },
+        "ForestSplitter_RollUncurl": {
+          "stretch": {
+            "grow_max_mm": 193.5,
+            "grow_max_at": 0.75,
+            "grow_max_pair": [
+              "leg_front_R_upper",
+              "shell_R"
+            ],
+            "edges_grow_over_5cm": 134
+          },
+          "rigid_edges_max_change_mm": 0.0003,
+          "ik_pull_m": 0.0
+        },
+        "ForestSplitter_RollDizzy": {
+          "stretch": {
+            "grow_max_mm": 177.2,
+            "grow_max_at": 0.0,
+            "grow_max_pair": [
+              "leg_front_R_upper",
+              "shell_R"
+            ],
+            "edges_grow_over_5cm": 147
+          },
+          "rigid_edges_max_change_mm": 0.0003,
+          "ik_pull_m": 0.0
+        }
+      },
+      "6_budget": {
+        "triangles": 24000,
+        "max_influences": 4,
+        "unweighted": 0,
+        "limit": 25000,
+        "pass": true
+      },
+      "7_roundtrip": {
+        "ForestSplitter_Idle": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Idle",
+          "action_range": [
+            0.0,
+            60.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_Walk": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Walk",
+          "action_range": [
+            0.0,
+            10.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_Bite": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Bite",
+          "action_range": [
+            0.0,
+            30.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_Hit": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Hit",
+          "action_range": [
+            0.0,
+            12.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_Death": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Death",
+          "action_range": [
+            0.0,
+            12.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_Pop": {
+          "action": "ARM_ForestSplitter|ForestSplitter_Pop",
+          "action_range": [
+            0.0,
+            10.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_RollCurl": {
+          "action": "ARM_ForestSplitter|ForestSplitter_RollCurl",
+          "action_range": [
+            0.0,
+            30.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_RollLoop": {
+          "action": "ARM_ForestSplitter|ForestSplitter_RollLoop",
+          "action_range": [
+            0.0,
+            12.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_RollUncurl": {
+          "action": "ARM_ForestSplitter|ForestSplitter_RollUncurl",
+          "action_range": [
+            0.0,
+            30.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        },
+        "ForestSplitter_RollDizzy": {
+          "action": "ARM_ForestSplitter|ForestSplitter_RollDizzy",
+          "action_range": [
+            0.0,
+            45.0
+          ],
+          "max_bone_err_m": 0.0,
+          "max_vertex_err_m": 0.0,
+          "root_travel_m": 0.0,
+          "pass": true
+        }
+      },
+      "8_ball": {
+        "bounds_min_m": [
+          -0.776,
+          -0.522,
+          -0.004
+        ],
+        "bounds_max_m": [
+          0.774,
+          0.578,
+          1.09
+        ],
+        "size_m": {
+          "width_x": 1.55,
+          "length_y": 1.1,
+          "height_z": 1.094
+        },
+        "spin_pivot_blender": [
+          0.0,
+          0.028,
+          0.546
+        ],
+        "spin_pivot_unity_local": [
+          0.0,
+          0.546,
+          -0.028
+        ],
+        "spin_radius_m": 0.627,
+        "lift_to_clear_ground_m": 0.081,
+        "what": "bounds centre of the ball pose (RollLoop f0); spin_radius = farthest skin vertex from the lateral axis through that pivot over the whole loop. Spinning about the pivot at its own height clips the ground by up to lift_to_clear_ground_m."
+      }
+    },
+    "all_pass": true,
+    "notes": [
+      "Old takes: every baked key identical to ForestSplitter_Baked_r01.blend and every FBX sample identical to the r01 FBX (max difference 0.0), so the r01 checks above stay valid for them.",
+      "Largest skin stretch in the new takes is inside the ball: front-right leg top vs the right shell and head vs the left shell (~0.18-0.21 m at the ball / shake), hidden under the clamped shells from outside views.",
+      "RollLoop rims dip up to 4.5 mm under the ground on the squash beat; the view spins the ball there anyway."
+    ]
+  },
+  "revisions": {
+    "r01": "checks/fixes/remaining above: r01 FBX (6 takes), 26.09",
+    "r02": "r02_2026_09_27: + 4 roll takes, r01 takes proven identical, 27.09"
+  }
+}

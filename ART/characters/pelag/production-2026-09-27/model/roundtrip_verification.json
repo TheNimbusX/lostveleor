@@ -1,0 +1,44 @@
+{
+  "saber": {
+    "triangles": 3978,
+    "uv_layers": [
+      [
+        "UVMap"
+      ]
+    ],
+    "matches_candidate": true
+  },
+  "anchor": {
+    "triangles": 2642,
+    "uv_layers": [
+      [
+        "Attribute"
+      ]
+    ],
+    "matches_candidate": true
+  },
+  "grip": {
+    "triangles": 1488,
+    "uv_layers": [
+      [
+        "Attribute"
+      ]
+    ],
+    "matches_candidate": true
+  },
+  "link": {
+    "triangles": 80,
+    "uv_layers": [
+      [
+        "SteelAtlas"
+      ]
+    ],
+    "matches_candidate": true
+  },
+  "assembled_glb": {
+    "meshes": 12,
+    "bones": 65,
+    "triangles_visible_stowed": 33064
+  },
+  "status": "candidate only; not game runtime verified or owner accepted"
+}

@@ -1,0 +1,812 @@
+{
+ "issues_fixed": [
+  "Deleted stray 'Icosphere' helper mesh from the Meshy GLB.",
+  "Wrists moved from mid-forearm (Meshy) to 8 cm above the spike root on the spike axis.",
+  "Leg joints re-measured (Meshy ankles were at 0.46 m left vs 0.77 m right; left toe bone had no weights) and leg weights re-split along knee 0.94 m / ankle 0.38 m.",
+  "Head crown branches were weighted to LeftShoulder/RightShoulder/neck; everything above the skull base is now rigid to Head.",
+  "Long arm spikes rigidly weighted to LeftHand/RightHand (weight 1.0).",
+  "Wrist (r03, animation verification): Hand/ForeArm weights blended harmonically from 10 cm above to 8 cm below the wrist joint (spike beyond its root stays rigid); the old single-edge seam at the spike root stretched up to 16 cm."
+ ],
+ "meshy": {
+  "armature_object_scale": [
+   0.009999999776482582,
+   0.009999999776482582,
+   0.009999999776482582
+  ],
+  "mesh_tris": 23948,
+  "bones": [
+   "Hips",
+   "LeftUpLeg",
+   "LeftLeg",
+   "LeftFoot",
+   "LeftToeBase",
+   "RightUpLeg",
+   "RightLeg",
+   "RightFoot",
+   "RightToeBase",
+   "Spine02",
+   "Spine01",
+   "Spine",
+   "LeftShoulder",
+   "LeftArm",
+   "LeftForeArm",
+   "LeftHand",
+   "RightShoulder",
+   "RightArm",
+   "RightForeArm",
+   "RightHand",
+   "neck",
+   "Head",
+   "head_end",
+   "headfront"
+  ]
+ },
+ "height_m": 2.700000286102295,
+ "ground_z": 0.0,
+ "footprint_m": [
+  1.606599748134613,
+  0.8365018665790558
+ ],
+ "weight_transfer": {
+  "candidate_verts": 19691,
+  "exact_position_matches": 19622,
+  "interpolated_from_neighbours": 69
+ },
+ "arm_spikes": {
+  "Left": {
+   "vertices": 159,
+   "base": [
+    0.729,
+    -0.21,
+    1.269
+   ],
+   "tip": [
+    0.79,
+    -0.416,
+    0.828
+   ],
+   "length_m": 0.491,
+   "wrist_joint": [
+    0.719,
+    -0.176,
+    1.341
+   ],
+   "forearm_length_m": 0.615
+  },
+  "Right": {
+   "vertices": 123,
+   "base": [
+    -0.715,
+    -0.152,
+    1.235
+   ],
+   "tip": [
+    -0.77,
+    -0.34,
+    0.864
+   ],
+   "length_m": 0.42,
+   "wrist_joint": [
+    -0.705,
+    -0.116,
+    1.306
+   ],
+   "forearm_length_m": 0.576
+  }
+ },
+ "joints": {
+  "Hips": [
+   0.013000000268220901,
+   -0.004000000189989805,
+   1.6480000019073486
+  ],
+  "Spine02": [
+   0.009999999776482582,
+   -0.02800000086426735,
+   1.7589999437332153
+  ],
+  "Spine01": [
+   0.00800000037997961,
+   -0.052000001072883606,
+   1.8700000047683716
+  ],
+  "Spine": [
+   0.006000000052154064,
+   -0.07599999755620956,
+   1.9809999465942383
+  ],
+  "neck": [
+   0.004999999888241291,
+   -0.08399999886751175,
+   2.015000104904175
+  ],
+  "Head": [
+   0.0,
+   -0.10700000077486038,
+   2.122999906539917
+  ],
+  "head_end": [
+   0.0,
+   -0.09000000357627869,
+   2.4000000953674316
+  ],
+  "headfront": [
+   0.0,
+   -0.2759999930858612,
+   2.122999906539917
+  ],
+  "LeftShoulder": [
+   0.02800000086426735,
+   -0.07500000298023224,
+   2.0769999027252197
+  ],
+  "LeftArm": [
+   0.11400000005960464,
+   -0.07400000095367432,
+   2.0769999027252197
+  ],
+  "LeftForeArm": [
+   0.4050000011920929,
+   0.003000000026077032,
+   1.8389999866485596
+  ],
+  "LeftHand": [
+   0.718999981880188,
+   -0.17599999904632568,
+   1.340999960899353
+  ],
+  "RightShoulder": [
+   -0.02199999988079071,
+   -0.07699999958276749,
+   2.052000045776367
+  ],
+  "RightArm": [
+   -0.13300000131130219,
+   -0.07699999958276749,
+   2.052000045776367
+  ],
+  "RightForeArm": [
+   -0.414000004529953,
+   -0.004999999888241291,
+   1.7910000085830688
+  ],
+  "RightHand": [
+   -0.7049999833106995,
+   -0.11599999666213989,
+   1.305999994277954
+  ],
+  "LeftUpLeg": [
+   0.17299999296665192,
+   -0.026000000536441803,
+   1.5390000343322754
+  ],
+  "LeftLeg": [
+   0.25,
+   -0.019999999552965164,
+   0.9399999976158142
+  ],
+  "LeftFoot": [
+   0.33500000834465027,
+   0.0949999988079071,
+   0.3799999952316284
+  ],
+  "LeftToeBase": [
+   0.38499999046325684,
+   -0.029999999329447746,
+   0.10000000149011612
+  ],
+  "RightUpLeg": [
+   -0.08900000154972076,
+   -0.012000000104308128,
+   1.5460000038146973
+  ],
+  "RightLeg": [
+   -0.20000000298023224,
+   -0.014999999664723873,
+   0.9399999976158142
+  ],
+  "RightFoot": [
+   -0.3199999928474426,
+   0.07500000298023224,
+   0.3799999952316284
+  ],
+  "RightToeBase": [
+   -0.4000000059604645,
+   -0.029999999329447746,
+   0.10000000149011612
+  ]
+ },
+ "wrist_blend": {
+  "Left": {
+   "free_vertices": 448,
+   "fore_s": -0.1,
+   "root_s": 0.08,
+   "max_edge_share_jump_before": 0.959,
+   "max_edge_share_jump_after": 0.226
+  },
+  "Right": {
+   "free_vertices": 313,
+   "fore_s": -0.1,
+   "root_s": 0.08,
+   "max_edge_share_jump_before": 0.788,
+   "max_edge_share_jump_after": 0.205
+  },
+  "script": "rig/fix_wrist_weights.py (rig_wrist.py; also step 6b of build_rig.py)"
+ },
+ "files": {
+  "blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\ForestThorncaster_Rig.blend",
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\ForestThorncaster_Rig.fbx",
+  "textures": [
+   "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\textures\\ForestThorncaster_Color.png",
+   "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\textures\\ForestThorncaster_NormalGL.png",
+   "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\textures\\ForestThorncaster_ORM.png"
+  ]
+ },
+ "armature_object": {
+  "name": "ARM_ForestThorncaster",
+  "location": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "rotation": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "scale": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "mesh_object": {
+  "name": "SM_ForestThorncaster_LOD0",
+  "triangles": 23999,
+  "materials": [
+   "tripo_material_05d8def3-f9dc-49ca-90b1-3339c1598efc"
+  ],
+  "parent": "ARM_ForestThorncaster",
+  "modifiers": [
+   "ARMATURE"
+  ]
+ },
+ "bounds": {
+  "min": [
+   -0.8033000230789185,
+   -0.41830000281333923,
+   0.0
+  ],
+  "max": [
+   0.8033000230789185,
+   0.41830000281333923,
+   2.700000047683716
+  ],
+  "height_m": 2.7
+ },
+ "weights": {
+  "vertices": 19691,
+  "influence_histogram": {
+   "1": 10098,
+   "2": 4856,
+   "3": 2089,
+   "4": 2648
+  },
+  "max_influences": 4,
+  "unweighted_vertices": 0,
+  "worst_weight_sum_deviation": 0.0,
+  "vertices_per_bone": {
+   "Hips": 2908,
+   "Spine02": 1192,
+   "Spine01": 1675,
+   "Spine": 1842,
+   "neck": 1500,
+   "Head": 4881,
+   "head_end": 0,
+   "headfront": 0,
+   "LeftShoulder": 1947,
+   "LeftArm": 2336,
+   "LeftForeArm": 1739,
+   "LeftHand": 588,
+   "RightShoulder": 1962,
+   "RightArm": 1663,
+   "RightForeArm": 973,
+   "RightHand": 437,
+   "LeftUpLeg": 2278,
+   "LeftLeg": 1412,
+   "LeftFoot": 1417,
+   "LeftToeBase": 214,
+   "RightUpLeg": 2981,
+   "RightLeg": 1270,
+   "RightFoot": 1014,
+   "RightToeBase": 440
+  },
+  "vertices_rigid_to_hand": {
+   "LeftHand": 151,
+   "RightHand": 124
+  }
+ },
+ "bones": [
+  {
+   "name": "Hips",
+   "parent": null,
+   "head": [
+    0.013,
+    -0.004,
+    1.648
+   ],
+   "tail": [
+    0.012,
+    -0.016,
+    1.759
+   ],
+   "deform": true
+  },
+  {
+   "name": "Spine02",
+   "parent": "Hips",
+   "head": [
+    0.01,
+    -0.028,
+    1.759
+   ],
+   "tail": [
+    0.008,
+    -0.052,
+    1.87
+   ],
+   "deform": true
+  },
+  {
+   "name": "Spine01",
+   "parent": "Spine02",
+   "head": [
+    0.008,
+    -0.052,
+    1.87
+   ],
+   "tail": [
+    0.006,
+    -0.076,
+    1.981
+   ],
+   "deform": true
+  },
+  {
+   "name": "Spine",
+   "parent": "Spine01",
+   "head": [
+    0.006,
+    -0.076,
+    1.981
+   ],
+   "tail": [
+    0.005,
+    -0.084,
+    2.015
+   ],
+   "deform": true
+  },
+  {
+   "name": "neck",
+   "parent": "Spine",
+   "head": [
+    0.005,
+    -0.084,
+    2.015
+   ],
+   "tail": [
+    0.0,
+    -0.107,
+    2.123
+   ],
+   "deform": true
+  },
+  {
+   "name": "Head",
+   "parent": "neck",
+   "head": [
+    0.0,
+    -0.107,
+    2.123
+   ],
+   "tail": [
+    0.0,
+    -0.09,
+    2.4
+   ],
+   "deform": true
+  },
+  {
+   "name": "head_end",
+   "parent": "Head",
+   "head": [
+    0.0,
+    -0.09,
+    2.4
+   ],
+   "tail": [
+    0.0,
+    -0.09,
+    2.52
+   ],
+   "deform": true
+  },
+  {
+   "name": "headfront",
+   "parent": "Head",
+   "head": [
+    0.0,
+    -0.276,
+    2.123
+   ],
+   "tail": [
+    0.0,
+    -0.396,
+    2.123
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftShoulder",
+   "parent": "Spine",
+   "head": [
+    0.028,
+    -0.075,
+    2.077
+   ],
+   "tail": [
+    0.114,
+    -0.074,
+    2.077
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftArm",
+   "parent": "LeftShoulder",
+   "head": [
+    0.114,
+    -0.074,
+    2.077
+   ],
+   "tail": [
+    0.405,
+    0.003,
+    1.839
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftForeArm",
+   "parent": "LeftArm",
+   "head": [
+    0.405,
+    0.003,
+    1.839
+   ],
+   "tail": [
+    0.7191,
+    -0.1762,
+    1.3411
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftHand",
+   "parent": "LeftForeArm",
+   "head": [
+    0.7191,
+    -0.1762,
+    1.3411
+   ],
+   "tail": [
+    0.7901,
+    -0.4164,
+    0.8279
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightShoulder",
+   "parent": "Spine",
+   "head": [
+    -0.022,
+    -0.077,
+    2.052
+   ],
+   "tail": [
+    -0.133,
+    -0.077,
+    2.052
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightArm",
+   "parent": "RightShoulder",
+   "head": [
+    -0.133,
+    -0.077,
+    2.052
+   ],
+   "tail": [
+    -0.414,
+    -0.005,
+    1.791
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightForeArm",
+   "parent": "RightArm",
+   "head": [
+    -0.414,
+    -0.005,
+    1.791
+   ],
+   "tail": [
+    -0.7045,
+    -0.1163,
+    1.3059
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightHand",
+   "parent": "RightForeArm",
+   "head": [
+    -0.7045,
+    -0.1163,
+    1.3059
+   ],
+   "tail": [
+    -0.7696,
+    -0.3401,
+    0.8641
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftUpLeg",
+   "parent": "Hips",
+   "head": [
+    0.173,
+    -0.026,
+    1.539
+   ],
+   "tail": [
+    0.25,
+    -0.02,
+    0.94
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftLeg",
+   "parent": "LeftUpLeg",
+   "head": [
+    0.25,
+    -0.02,
+    0.94
+   ],
+   "tail": [
+    0.335,
+    0.095,
+    0.38
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftFoot",
+   "parent": "LeftLeg",
+   "head": [
+    0.335,
+    0.095,
+    0.38
+   ],
+   "tail": [
+    0.385,
+    -0.03,
+    0.1
+   ],
+   "deform": true
+  },
+  {
+   "name": "LeftToeBase",
+   "parent": "LeftFoot",
+   "head": [
+    0.385,
+    -0.03,
+    0.1
+   ],
+   "tail": [
+    0.39,
+    -0.215,
+    0.03
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightUpLeg",
+   "parent": "Hips",
+   "head": [
+    -0.089,
+    -0.012,
+    1.546
+   ],
+   "tail": [
+    -0.2,
+    -0.015,
+    0.94
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightLeg",
+   "parent": "RightUpLeg",
+   "head": [
+    -0.2,
+    -0.015,
+    0.94
+   ],
+   "tail": [
+    -0.32,
+    0.075,
+    0.38
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightFoot",
+   "parent": "RightLeg",
+   "head": [
+    -0.32,
+    0.075,
+    0.38
+   ],
+   "tail": [
+    -0.4,
+    -0.03,
+    0.1
+   ],
+   "deform": true
+  },
+  {
+   "name": "RightToeBase",
+   "parent": "RightFoot",
+   "head": [
+    -0.4,
+    -0.03,
+    0.1
+   ],
+   "tail": [
+    -0.41,
+    -0.255,
+    0.03
+   ],
+   "deform": true
+  }
+ ],
+ "bone_count": 24,
+ "triangle_budget": 25000,
+ "within_budget": true,
+ "front_axis": "-Y (Blender); FBX axis_forward=-Z, axis_up=Y -> Unity +Z forward",
+ "unity_humanoid_mapping": {
+  "Hips": "Hips",
+  "Spine": "Spine02",
+  "Chest": "Spine01",
+  "UpperChest": "Spine",
+  "Neck": "neck",
+  "Head": "Head",
+  "LeftShoulder": "LeftShoulder",
+  "LeftUpperArm": "LeftArm",
+  "LeftLowerArm": "LeftForeArm",
+  "LeftHand": "LeftHand",
+  "RightShoulder": "RightShoulder",
+  "RightUpperArm": "RightArm",
+  "RightLowerArm": "RightForeArm",
+  "RightHand": "RightHand",
+  "LeftUpperLeg": "LeftUpLeg",
+  "LeftLowerLeg": "LeftLeg",
+  "LeftFoot": "LeftFoot",
+  "LeftToes": "LeftToeBase",
+  "RightUpperLeg": "RightUpLeg",
+  "RightLowerLeg": "RightLeg",
+  "RightFoot": "RightFoot",
+  "RightToes": "RightToeBase",
+  "_note": "Meshy numbers the spine top-down (Spine02 is lowest). If Unity auto-maps 'Spine' to Spine, set it by hand as above. head_end/headfront are unweighted socket bones; rest pose is an A-pose (use Enforce T-Pose)."
+ },
+ "deformation_test": {
+  "poses": {
+   "rest": {
+    "edge_ratio_p001": 1.0,
+    "edge_ratio_p999": 1.0,
+    "edge_ratio_max": 1.0,
+    "worst200_by_bone": {
+     "Spine": 115,
+     "RightShoulder": 33,
+     "RightArm": 8,
+     "RightForeArm": 7,
+     "Head": 7,
+     "LeftArm": 7
+    },
+    "rigid_spike_edge_ratio_range": [
+     1.0,
+     1.0
+    ],
+    "min_z": 0.0
+   },
+   "arms_up": {
+    "edge_ratio_p001": 0.441,
+    "edge_ratio_p999": 1.71,
+    "edge_ratio_max": 2.416,
+    "worst200_by_bone": {
+     "RightArm": 50,
+     "LeftArm": 38,
+     "RightShoulder": 36,
+     "Head": 27,
+     "LeftForeArm": 13,
+     "LeftShoulder": 13
+    },
+    "rigid_spike_edge_ratio_range": [
+     0.9998,
+     1.0
+    ],
+    "min_z": 0.0
+   },
+   "crouch": {
+    "edge_ratio_p001": 0.311,
+    "edge_ratio_p999": 1.708,
+    "edge_ratio_max": 5.714,
+    "worst200_by_bone": {
+     "Hips": 77,
+     "LeftLeg": 49,
+     "RightUpLeg": 24,
+     "LeftUpLeg": 19,
+     "RightLeg": 13,
+     "RightFoot": 7
+    },
+    "rigid_spike_edge_ratio_range": [
+     1.0,
+     1.0
+    ],
+    "min_z": 0.13
+   },
+   "leg_lift": {
+    "edge_ratio_p001": 0.429,
+    "edge_ratio_p999": 2.075,
+    "edge_ratio_max": 5.444,
+    "worst200_by_bone": {
+     "LeftLeg": 49,
+     "LeftUpLeg": 49,
+     "Hips": 32,
+     "RightUpLeg": 30,
+     "LeftFoot": 20,
+     "LeftToeBase": 13
+    },
+    "rigid_spike_edge_ratio_range": [
+     0.9999,
+     1.0
+    ],
+    "min_z": 0.0
+   }
+  },
+  "renders": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\deform_test"
+ },
+ "fbx_roundtrip": {
+  "bones": 24,
+  "bone_names_match": true,
+  "triangles": 23999,
+  "vertex_groups": 22,
+  "height_m": 2.7,
+  "min_z": 0.0,
+  "armature_world_scale": [
+   1.0,
+   1.0,
+   1.0
+  ],
+  "faces_minus_y": true,
+  "unweighted_vertices": 0
+ }
+}

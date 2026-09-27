@@ -1,0 +1,57 @@
+{
+  "unity_source": "Existing imported .anim sampled on isolated PreviewScene copy, no rebuild/no scene save",
+  "coordinate_conversion": [
+    [
+      -1.01132071018219,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      -1.01132071018219,
+      0.0
+    ],
+    [
+      0.0,
+      1.01132071018219,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "saber_head_local": [
+    [
+      0.23021474480628967,
+      0.8616926074028015,
+      0.009824827313423157,
+      0.034971415996551514
+    ],
+    [
+      -1.023948073387146,
+      0.19325032830238342,
+      -0.06712350994348526,
+      0.14724843204021454
+    ],
+    [
+      -0.08841235935688019,
+      0.005611196160316467,
+      0.8029738664627075,
+      0.03497207909822464
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "bone_world_max_translation_error_m": 7.177349673981843e-07,
+  "source_note": "World bone matrices from existing imported .anim with KnifeIdle_Grounded initialization; native FBX bind inverse used. No visual hand placement."
+}

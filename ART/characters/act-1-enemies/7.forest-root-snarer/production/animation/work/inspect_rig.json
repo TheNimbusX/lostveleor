@@ -1,0 +1,231 @@
+{
+ "objects": {
+  "ARM_ForestRootSnarer": {
+   "type": "ARMATURE",
+   "parent": null,
+   "mods": [],
+   "matrix_world_is_identity": true
+  },
+  "SM_ForestRootSnarer_LOD0": {
+   "type": "MESH",
+   "parent": "ARM_ForestRootSnarer",
+   "mods": [
+    [
+     "ARMATURE",
+     "ARM_ForestRootSnarer"
+    ]
+   ],
+   "matrix_world_is_identity": true
+  }
+ },
+ "actions": [],
+ "fps": 30,
+ "unit_scale": 1.0,
+ "constraints": {
+  "L_arm_lower": [
+   [
+    "IK",
+    "IK_L_hand",
+    0.0
+   ]
+  ],
+  "R_arm_lower": [
+   [
+    "IK",
+    "IK_R_hand",
+    0.0
+   ]
+  ],
+  "L_leg_lower": [
+   [
+    "IK",
+    "IK_L_foot",
+    0.0
+   ]
+  ],
+  "R_leg_lower": [
+   [
+    "IK",
+    "IK_R_foot",
+    0.0
+   ]
+  ]
+ },
+ "contact_sets": {
+  "L_hand": {
+   "bone": "L_arm_lower",
+   "count": 1554,
+   "min_z": 0.0,
+   "lowest_centroid": [
+    0.556,
+    -0.691,
+    0.007
+   ],
+   "bbox_min": [
+    0.261,
+    -0.874,
+    0.0
+   ],
+   "bbox_max": [
+    0.814,
+    -0.146,
+    0.8
+   ]
+  },
+  "L_foot": {
+   "bone": "L_foot",
+   "count": 74,
+   "min_z": 0.0953,
+   "lowest_centroid": [
+    0.562,
+    0.633,
+    0.099
+   ],
+   "bbox_min": [
+    0.443,
+    0.585,
+    0.095
+   ],
+   "bbox_max": [
+    0.651,
+    0.763,
+    0.186
+   ]
+  },
+  "L_shin": {
+   "bone": "L_leg_lower",
+   "count": 257,
+   "min_z": 0.1424,
+   "lowest_centroid": [
+    0.453,
+    0.742,
+    0.185
+   ],
+   "bbox_min": [
+    0.326,
+    0.548,
+    0.142
+   ],
+   "bbox_max": [
+    0.622,
+    0.851,
+    0.469
+   ]
+  },
+  "R_hand": {
+   "bone": "R_arm_lower",
+   "count": 1278,
+   "min_z": 0.0439,
+   "lowest_centroid": [
+    -0.362,
+    -0.792,
+    0.063
+   ],
+   "bbox_min": [
+    -0.814,
+    -0.874,
+    0.044
+   ],
+   "bbox_max": [
+    -0.182,
+    -0.16,
+    0.805
+   ]
+  },
+  "R_foot": {
+   "bone": "R_foot",
+   "count": 158,
+   "min_z": 0.0319,
+   "lowest_centroid": [
+    -0.547,
+    0.461,
+    0.033
+   ],
+   "bbox_min": [
+    -0.684,
+    0.381,
+    0.032
+   ],
+   "bbox_max": [
+    -0.431,
+    0.643,
+    0.158
+   ]
+  },
+  "R_shin": {
+   "bone": "R_leg_lower",
+   "count": 242,
+   "min_z": 0.1404,
+   "lowest_centroid": [
+    -0.451,
+    0.594,
+    0.161
+   ],
+   "bbox_min": [
+    -0.622,
+    0.318,
+    0.14
+   ],
+   "bbox_max": [
+    -0.336,
+    0.697,
+    0.365
+   ]
+  }
+ },
+ "body_min_z": 0.3065,
+ "body_lowest_centroid": [
+  -0.055,
+  0.144,
+  0.335
+ ],
+ "belly_profile_y_to_minz": {
+  "-0.7": 0.449,
+  "-0.6": 0.342,
+  "-0.5": 0.331,
+  "-0.4": 0.414,
+  "-0.3": 1.056,
+  "-0.2": 1.161,
+  "-0.1": 1.034,
+  "0.0": 1.007,
+  "0.1": 0.349,
+  "0.2": 0.35,
+  "0.3": 0.321,
+  "0.4": 0.306,
+  "0.5": 0.311,
+  "0.6": 0.352,
+  "0.7": 0.415,
+  "0.8": 0.445
+ },
+ "bones_len": {
+  "root": 0.12,
+  "pelvis": 0.2879,
+  "spine_01": 0.2631,
+  "spine_02": 0.2236,
+  "neck": 0.1523,
+  "head": 0.2807,
+  "jaw": 0.2886,
+  "L_clavicle": 0.2891,
+  "L_arm_upper": 0.1543,
+  "L_arm_lower": 0.6519,
+  "L_hand": 0.1393,
+  "R_clavicle": 0.2926,
+  "R_arm_upper": 0.1446,
+  "R_arm_lower": 0.6631,
+  "R_hand": 0.1304,
+  "L_leg_upper": 0.2555,
+  "L_leg_lower": 0.2858,
+  "L_foot": 0.1735,
+  "R_leg_upper": 0.2337,
+  "R_leg_lower": 0.2968,
+  "R_foot": 0.1775,
+  "CTRL_L_hand": 0.12,
+  "CTRL_L_elbow": 0.12,
+  "CTRL_L_foot": 0.12,
+  "CTRL_L_knee": 0.12,
+  "CTRL_R_hand": 0.12,
+  "CTRL_R_elbow": 0.12,
+  "CTRL_R_foot": 0.12,
+  "CTRL_R_knee": 0.12
+ }
+}

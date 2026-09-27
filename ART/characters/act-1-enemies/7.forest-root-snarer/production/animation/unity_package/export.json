@@ -1,0 +1,358 @@
+{
+ "subject": "ForestRootSnarer",
+ "name_ru": "Корнехват",
+ "revision": "animation_r01 + 27.09 Mend",
+ "date": "2026-09-27",
+ "history": {
+  "2026-09-26": "animation_r01: Idle, Walk, Slam, Hit, Death (approved)",
+  "2026-09-27": "added ForestRootSnarer_Mend (support heal «Волна из корней»); r01 takes unchanged bit for bit; independent check re-eased Mend frames 1-2 (lift hitch), contact / release / ranges unchanged"
+ },
+ "fbx": "ForestRootSnarer.fbx",
+ "fps": 30,
+ "root_motion": false,
+ "root_motion_note": "clips are in place; the root bone never moves; the Sim moves the entity",
+ "muzzle_offset": null,
+ "muzzle_note": "melee mob, no projectile; slam and mend VFX sockets are the L_hand / R_hand bones",
+ "axes": {
+  "blender": "faces -Y, Z up, L side = +X",
+  "fbx_export": {
+   "axis_forward": "-Z",
+   "axis_up": "Y"
+  },
+  "unity": "faces +Z, Y up (same settings as ForestRootSnarer_Rig.fbx and the Stonehoof / Wendigo packages)"
+ },
+ "fbx_settings": {
+  "deform_bones_only": true,
+  "leaf_bones": false,
+  "bake_every_frame": true,
+  "simplify": 0,
+  "takes_from": "NLA strips (take names exact, no armature prefix)",
+  "apply_unit_scale": true,
+  "global_scale": 1.0,
+  "rig_type_in_unity": "Generic"
+ },
+ "mesh": {
+  "triangles": 24000,
+  "vertices": 11996,
+  "materials": 1,
+  "bones": 21,
+  "max_influences": 4,
+  "budget_triangles": 25000
+ },
+ "textures": {
+  "folder": "textures/",
+  "in_fbx": [
+   "T_ForestRootSnarer_Color.png",
+   "T_ForestRootSnarer_NormalGL.png"
+  ],
+  "set_up_by_hand": [
+   "T_ForestRootSnarer_ORM.png (R occlusion, G roughness, B metallic)"
+  ]
+ },
+ "fbx_anim_stacks": [
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Walk",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Mend"
+ ],
+ "takes": {
+  "ForestRootSnarer_Idle": {
+   "frames": [
+    0,
+    60
+   ],
+   "loop": true,
+   "seconds": 2.0,
+   "notes": "two heavy breaths per loop, all four contacts planted; frame 60 == frame 0",
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     60.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  },
+  "ForestRootSnarer_Walk": {
+   "frames": [
+    0,
+    16
+   ],
+   "loop": true,
+   "seconds": 0.533,
+   "speed_mps": 2.4,
+   "ground_per_cycle_m": 1.28,
+   "contact_frames": {
+    "L_slab_plant": 0,
+    "R_slab_plant": 8,
+    "R_hind_plant": [
+     1.5,
+     9.5
+    ],
+    "L_hind_plant": [
+     5.5,
+     13.5
+    ]
+   },
+   "slab_stance_frames": 5.5,
+   "notes": "in place; planted contacts roll: the slab / sole vertex on the ground moves back at 0.08 m/frame (2.4 m/s, measured 2.38-2.41 on the skinned mesh, slide <= 0.93 cm per plant), the knuckle socket rolls at 0.069-0.086 m/frame. The Sim must move the entity at 2.4 m/s (or scale the clip speed by speed/2.4) for zero foot skate",
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     16.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  },
+  "ForestRootSnarer_Slam": {
+   "frames": [
+    0,
+    72
+   ],
+   "loop": false,
+   "seconds": 2.4,
+   "contact_frame": 15,
+   "roots_erupt_frame": 36,
+   "release_frame": 60,
+   "recovery_end_frame": 72,
+   "phases": {
+    "gather": [
+     0,
+     3
+    ],
+    "rear_up_slabs_overhead": [
+     3,
+     12
+    ],
+    "slam": [
+     12,
+     15
+    ],
+    "pinned_straining": [
+     15,
+     60
+    ],
+    "wrench_out_and_settle": [
+     60,
+     72
+    ]
+   },
+   "sim_ticks": "contact 15 = slam tick (circle opens under the hero); roots erupt tick 36; punish window 36..72 (36 ticks); clip ends on Idle frame 0",
+   "vfx_sockets": {
+    "bones": [
+     "L_hand",
+     "R_hand"
+    ],
+    "note": "hand bones are knuckle points of the slabs (no skin); use them for impact dust / root VFX",
+    "at_contact_blender_m": {
+     "L": [
+      0.8,
+      -0.6,
+      0.027
+     ],
+     "R": [
+      -0.8,
+      -0.64,
+      0.0447
+     ]
+    },
+    "at_contact_unity_model_m": {
+     "L": [
+      -0.8,
+      0.027,
+      0.6
+     ],
+     "R": [
+      0.8,
+      0.045,
+      0.64
+     ]
+    }
+   },
+   "slab_depth_below_ground_m": [
+    0.1089,
+    0.2218
+   ],
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     72.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  },
+  "ForestRootSnarer_Hit": {
+   "frames": [
+    0,
+    12
+   ],
+   "loop": false,
+   "seconds": 0.4,
+   "notes": "flinch peaks on frame 3; starts and ends on Idle frame 0",
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     12.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  },
+  "ForestRootSnarer_Death": {
+   "frames": [
+    0,
+    45
+   ],
+   "loop": false,
+   "seconds": 1.5,
+   "ground_contact_frame": 25,
+   "still_from_frame": 32,
+   "notes": "recoil 0-8, buckle 8-19, belly on the ground 25 (face down between the slabs, chin on the ground too), small bounce 28, lies still 32-45 (hold the last frame)",
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     45.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  },
+  "ForestRootSnarer_Mend": {
+   "frames": [
+    0,
+    50
+   ],
+   "loop": false,
+   "seconds": 1.667,
+   "added": "2026-09-27",
+   "ability": "support heal «Волна из корней» (heal ring, target frame vfx_target_frames_2026-09-27/1-mend-ring.png)",
+   "contact_frame": 8,
+   "channel_frames": [
+    8,
+    30
+   ],
+   "release_frame": 30,
+   "pull_out_frames": [
+    38,
+    50
+   ],
+   "recovery_end_frame": 50,
+   "phases": {
+    "short_lift": [
+     0,
+     5
+    ],
+    "stab": [
+     5,
+     8
+    ],
+    "channel_rooted_pulse": [
+     8,
+     30
+    ],
+    "release_heave": [
+     28,
+     30
+    ],
+    "stands_open_slabs_in_ground": [
+     30,
+     38
+    ],
+    "pull_out_and_settle": [
+     38,
+     50
+    ]
+   },
+   "sim_ticks": "t0 plant starts (stab); slabs in the ground from frame 8 (first frame both slabs below ground; frame 7 both still >= 29 cm up); channel to 30; heal ring on tick 30 (release heave, dome top peaks exactly on 30); recovery 30-50, slab tips reach the surface on 39 (L -1 mm, R +16 mm) and are clear of it on 40, clip ends on Idle frame 0",
+   "lift_note": "0-3 eases in (accelerates through the passing pose on 3), 3-5 settles to the top; 27.09 independent check re-eased frames 1-2 (the lift stopped on 3 and restarted, a hitch); frames 0 and 3-50 unchanged",
+   "pulse": "calm, no tremble: swell 15 / push 20 / swell 24 / deepest push 28 (dome top 1.24 / 1.18 / 1.24 / 1.17 m), release 30 (dome top 1.32 m); head kept low",
+   "vfx_sockets": {
+    "bones": [
+     "L_hand",
+     "R_hand"
+    ],
+    "note": "knuckle points of the slabs; ring / root VFX from both sockets or from the entity origin between them; the sockets are fixed 10-38",
+    "at_contact_blender_m": {
+     "L": [
+      0.69,
+      -0.58,
+      0.0291
+     ],
+     "R": [
+      -0.69,
+      -0.62,
+      0.0115
+     ]
+    },
+    "at_contact_unity_model_m": {
+     "L": [
+      -0.69,
+      0.029,
+      0.58
+     ],
+     "R": [
+      0.69,
+      0.011,
+      0.62
+     ]
+    }
+   },
+   "mushroom_puff": "the mushrooms have no bones (they ride pelvis / spine_01 / spine_02): the puff on 30 is the back arching up; a spore puff VFX on the dome sells it",
+   "slab_depth_below_ground_m": [
+    0.0899,
+    0.1435
+   ],
+   "fbx_check": {
+    "frame_range": [
+     0.0,
+     50.0
+    ],
+    "max_bone_diff_vs_blender_m": 0.0,
+    "root_xy_travel_m": 0.0
+   }
+  }
+ },
+ "checks": {
+  "fbx_roundtrip": "re-imported FBX matches the Blender takes (bone and vertex difference 0.0 m)",
+  "independent_check": "verification.json (FBX parsed + re-imported into an empty scene; all 8 checks)",
+  "r01_takes_unchanged": {
+   "bit_identical": true,
+   "mesh_skin_bind_identical": true,
+   "compared_with": "work/r01_approved/ForestRootSnarer_r01.fbx",
+   "report": "check_r01/out/old_takes_vs_r01.json"
+  },
+  "walk_contact_slide_on_ground_cm": {
+   "slab_L": 0.15,
+   "slab_R": 0.5,
+   "hind_L": 0.34,
+   "hind_R": 0.93
+  },
+  "walk_contact_ground_speed_mps": {
+   "slab_L": 2.406,
+   "slab_R": 2.394,
+   "hind_L": 2.411,
+   "hind_R": 2.38
+  },
+  "walk_knuckle_socket_speed_err_m_per_frame": 0.0128,
+  "loop_seams": {
+   "Idle": 0.0,
+   "Walk": 0.0
+  },
+  "slam_body_min_z_m": -0.0039,
+  "slam_pinned_socket_drift_m": 0.0,
+  "death_first_frame_on_ground": 25,
+  "death_rest_body_min_z_m": -0.0052,
+  "death_still_32_45_max_bone_move_m": 0.0022,
+  "mend_first_frame_slabs_in_ground": 8,
+  "mend_pinned_socket_drift_10_38_m": 0.0002,
+  "mend_dome_top_peak_frame": 30,
+  "mend_slabs_out_frame": 39,
+  "mend_body_min_z_m": -0.0022,
+  "mend_end_vs_idle0_max_matrix_diff": 0.0,
+  "max_ik_reach_error_m": 0.0018
+ }
+}

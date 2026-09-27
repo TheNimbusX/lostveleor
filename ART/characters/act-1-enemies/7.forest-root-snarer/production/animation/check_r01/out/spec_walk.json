@@ -1,0 +1,2 @@
+{"Walk": {"frames": [0, 2, 4, 6, 8, 10, 12, 14], "views": ["game", "side"], "ortho": 3.2, "center": [0, 0, 0.6]},
+ "Idle": {"frames": [0, 15, 30, 45], "views": ["game"], "ortho": 3.2, "center": [0, 0, 0.6]}}

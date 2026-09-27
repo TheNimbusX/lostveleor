@@ -1,0 +1,31 @@
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\build_candidate.py:14: DeprecationWarning: 'World.use_nodes' is expected to be removed in Blender 6.0
+  scene.world=bpy.data.worlds.new('Neutral daylight');scene.world.use_nodes=True
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\build_candidate.py:31: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m=bpy.data.materials.new(name);m.use_nodes=True
+C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\production-2026-09-27\model\build_candidate.py:110: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m=bpy.data.materials.new('MAT_Neutral_Ground');m.diffuse_color=(.16,.18,.19,1);m.use_nodes=True;m.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value=(.16,.18,.19,1);m.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value=.9;assign(floor,m)
+FBX version: 7400
+FBX version: 7400
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_saber_Candidate.fbx'
+export finished in 0.1636 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_saber_LOD1.fbx'
+export finished in 0.1713 sec.
+FBX version: 7400
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_anchor_Candidate.fbx'
+export finished in 0.1146 sec.
+FBX version: 7400
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_grip_Candidate.fbx'
+export finished in 0.1836 sec.
+FBX version: 7400
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\production-2026-09-27\\model\\Pelag_link_Candidate.fbx'
+export finished in 0.1650 sec.
+Info: Saved as "Pelag_Model_Candidate.blend"
+CANDIDATE {"hero_and_static_weapons": 32294, "link_tris": 80, "max_links_under_40000": 96, "runtime_pool_capacity_main_feed_bridge": [96, 24, 16], "warning": "Pool capacity is not a measured visible link count. Runtime budget must be checked before replacement."}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

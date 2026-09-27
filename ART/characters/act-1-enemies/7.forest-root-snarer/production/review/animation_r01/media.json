@@ -1,0 +1,215 @@
+{
+ "ForestRootSnarer_Idle": {
+  "frames": 60,
+  "loop": true,
+  "events": [
+   [
+    0,
+    "шов петли",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "idle_game.mp4",
+    "video_frames": 60,
+    "kb": 150
+   },
+   "side": {
+    "file": "idle_side.mp4",
+    "video_frames": 60,
+    "kb": 148
+   }
+  }
+ },
+ "ForestRootSnarer_Walk": {
+  "frames": 16,
+  "loop": true,
+  "events": [
+   [
+    0,
+    "Л плита",
+    true
+   ],
+   [
+    1.5,
+    "П задн.",
+    false
+   ],
+   [
+    5.5,
+    "Л задн.",
+    false
+   ],
+   [
+    8,
+    "П плита",
+    true
+   ],
+   [
+    9.5,
+    "П задн.",
+    false
+   ],
+   [
+    13.5,
+    "Л задн.",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "walk_game.mp4",
+    "video_frames": 16,
+    "kb": 92
+   },
+   "side": {
+    "file": "walk_side.mp4",
+    "video_frames": 16,
+    "kb": 89
+   }
+  }
+ },
+ "ForestRootSnarer_Slam": {
+  "frames": 72,
+  "loop": false,
+  "events": [
+   [
+    12,
+    "плиты над головой",
+    false
+   ],
+   [
+    15,
+    "КОНТАКТ",
+    true
+   ],
+   [
+    36,
+    "корни",
+    true
+   ],
+   [
+    60,
+    "рывок",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "slam_game.mp4",
+    "video_frames": 83,
+    "kb": 179
+   },
+   "side": {
+    "file": "slam_side.mp4",
+    "video_frames": 83,
+    "kb": 143
+   }
+  }
+ },
+ "ForestRootSnarer_Hit": {
+  "frames": 12,
+  "loop": false,
+  "events": [
+   [
+    3,
+    "пик",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "hit_game.mp4",
+    "video_frames": 23,
+    "kb": 66
+   },
+   "side": {
+    "file": "hit_side.mp4",
+    "video_frames": 23,
+    "kb": 64
+   }
+  }
+ },
+ "ForestRootSnarer_Death": {
+  "frames": 45,
+  "loop": false,
+  "events": [
+   [
+    8,
+    "вздыбился",
+    false
+   ],
+   [
+    25,
+    "брюхо на земле",
+    true
+   ],
+   [
+    32,
+    "лежит",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "death_game.mp4",
+    "video_frames": 56,
+    "kb": 141
+   },
+   "side": {
+    "file": "death_side.mp4",
+    "video_frames": 56,
+    "kb": 146
+   }
+  }
+ },
+ "ForestRootSnarer_Mend": {
+  "frames": 50,
+  "loop": false,
+  "events": [
+   [
+    5,
+    "замах",
+    false
+   ],
+   [
+    8,
+    "КОНТАКТ",
+    true
+   ],
+   [
+    20,
+    "толчок",
+    false
+   ],
+   [
+    28,
+    "сбор",
+    false
+   ],
+   [
+    30,
+    "ВОЛНА",
+    true
+   ],
+   [
+    38,
+    "выдёргивает",
+    false
+   ]
+  ],
+  "videos": {
+   "game": {
+    "file": "mend_game.mp4",
+    "video_frames": 61,
+    "kb": 176
+   },
+   "side": {
+    "file": "mend_side.mp4",
+    "video_frames": 61,
+    "kb": 177
+   }
+  }
+ }
+}

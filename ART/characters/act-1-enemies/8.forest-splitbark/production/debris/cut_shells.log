@@ -1,0 +1,44 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61863[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+00:05.359  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\unity_package\ForestSplitter_Package.blend"
+00:08.140  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\debris\preview_shells.png'
+00:08.281  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\debris\preview_shells_cut.png'
+Reloading external rigs...
+Reloading external metarigs...
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\VFX\\Splitter\\ShellHalfL.fbx'
+export finished in 0.0264 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\VFX\\Splitter\\ShellHalfR.fbx'
+export finished in 0.0208 sec.
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\VFX\\Splitter\\MushroomCap.fbx'
+export finished in 0.0067 sec.
+SHELLS_REPORT {"source_mesh": "ForestSplitter_Package.blend", "same_as": "model/ForestSplitter_24k_candidate.glb (11910 verts / 24000 tris)", "pose": {"action": "ForestSplitter_Death", "frame": 12}, "labels": "rig\\work\\tri_labels.npy", "cap_uv": [0.7476, 0.492], "cap_color": [0.239, 0.137, 0.031], "unity_axes": "unity_local = (-x, z, -y) Blender; origin = entity origin at the feet", "parts": {"ShellHalfL": {"label": 1, "tris": 7640, "verts": 3768, "cap_faces": 346, "cap_contours": 79, "dropped_island_faces": 12, "trimmed_ears": 74, "open_edges_after_fill": 155, "bounds_unity": {"min": [-0.8315, 0.1188, -0.494], "max": [0.0041, 1.224, 0.5201]}, "center_unity": [-0.4137, 0.6714, 0.013]}, "ShellHalfR": {"label": 2, "tris": 6728, "verts": 3340, "cap_faces": 301, "cap_contours": 62, "dropped_island_faces": 0, "trimmed_ears": 75, "open_edges_after_fill": 120, "bounds_unity": {"min": [0.0227, 0.0451, -0.5333], "max": [0.8227, 1.1391, 0.5194]}, "center_unity": [0.4227, 0.5921, -0.007]}, "MushroomCap": {"tris": 45, "source_size_m": 0.1642, "orange_faces": 334, "center_unity_in_body": [-0.5585, 0.5031, -0.3989]}}}
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

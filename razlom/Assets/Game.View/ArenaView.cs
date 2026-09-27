@@ -230,6 +230,10 @@ namespace Game.View
         private readonly ViewPool[] _forestMobPools = new ViewPool[ForestMobFamilies];
         private readonly bool[] _forestMobPrepared = new bool[ForestMobFamilies];
         private ForestMobPlaceholderView[] _placeholderViews;
+        // Вид тела из префаба (клипы по фазам Sim). Заглушка их не имеет — там null.
+        private ThorncasterAnimatorView[] _thorncasterViews;
+        private RootSnarerAnimatorView[] _rootSnarerViews;
+        private SplitterAnimatorView[] _splitterViews;
 
         // Индекс сущности → её объект. Массив, а не словарь: индексы плотные,
         // а искать по ним надо каждый кадр.
@@ -431,6 +435,9 @@ namespace Game.View
             _wendigoViews = new ForestWendigoAnimatorView[capacity];
             _stonehoofViews = new StonehoofAnimatorView[capacity];
             _placeholderViews = new ForestMobPlaceholderView[capacity];
+            _thorncasterViews = new ThorncasterAnimatorView[capacity];
+            _rootSnarerViews = new RootSnarerAnimatorView[capacity];
+            _splitterViews = new SplitterAnimatorView[capacity];
             _equipmentViews = new PelagEquipmentView[capacity];
             _deathUntil = new float[capacity];
             _deathStarted = new bool[capacity];
@@ -1068,6 +1075,10 @@ namespace Game.View
             _groundOffset[entityId] = 0f;
             // Ушедший в землю вернётся в пул с выключенным видом моба — включаем обратно.
             if (_burrowing[entityId]) SetMobViewsEnabled(entityId, true);
+            // Тело нового моба ушло в пул: его вид больше не слушает эту сущность.
+            _thorncasterViews[entityId] = null;
+            _rootSnarerViews[entityId] = null;
+            _splitterViews[entityId] = null;
             _burrowing[entityId] = false;
             _burrowTick[entityId] = 0f;
             _emergeSink[entityId] = 0f;
@@ -1099,6 +1110,9 @@ namespace Game.View
             if (_forestBudViews[entityId] != null) _forestBudViews[entityId].enabled = enabled;
             if (_wendigoViews[entityId] != null) _wendigoViews[entityId].enabled = enabled;
             if (_stonehoofViews[entityId] != null) _stonehoofViews[entityId].enabled = enabled;
+            if (_thorncasterViews[entityId] != null) _thorncasterViews[entityId].enabled = enabled;
+            if (_rootSnarerViews[entityId] != null) _rootSnarerViews[entityId].enabled = enabled;
+            if (_splitterViews[entityId] != null) _splitterViews[entityId].enabled = enabled;
         }
 
         /// <summary>
@@ -1131,6 +1145,7 @@ namespace Game.View
                     // бутоном или вендиго, и их вид не должен откликаться на эту сущность.
                     ReleaseEntityView(i);
                     _forestBudViews[i] = null; _wendigoViews[i] = null; _stonehoofViews[i] = null;
+                    _thorncasterViews[i] = null; _rootSnarerViews[i] = null; _splitterViews[i] = null;
                     continue;
                 }
                 GameObject go = pool.Acquire();
@@ -1145,6 +1160,14 @@ namespace Game.View
                 _wendigoViews[i]?.Bind(_driver, i);
                 _stonehoofViews[i] = go.GetComponent<StonehoofAnimatorView>();
                 _stonehoofViews[i]?.Bind(_driver, i);
+                // Новые мобы леса: вид тела из префаба привязывается в кадр выдачи из пула,
+                // без кадра в Idle. Детёныш Расщепеня здесь же узнаёт тик своего распада.
+                _thorncasterViews[i] = ThorncasterViewInstaller.ViewOf(go.transform);
+                _thorncasterViews[i]?.Bind(_driver, i);
+                _rootSnarerViews[i] = go.GetComponent<RootSnarerAnimatorView>();
+                _rootSnarerViews[i]?.Bind(_driver, i);
+                _splitterViews[i] = go.GetComponent<SplitterAnimatorView>();
+                _splitterViews[i]?.Bind(_driver, i);
                 // Привязка заглушки — ниже, после базового масштаба: её размеры делятся на него.
                 _placeholderViews[i] = go.GetComponent<ForestMobPlaceholderView>();
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
@@ -1843,6 +1866,11 @@ namespace Game.View
                         _wendigoViews[e.Target]?.PlayDeath();
                         _stonehoofViews[e.Target]?.PlayDeath();
                         _placeholderViews[e.Target]?.PlayDeath();
+                        _thorncasterViews[e.Target]?.PlayDeath();
+                        _rootSnarerViews[e.Target]?.PlayDeath();
+                        // Расщепень не падает, а раскалывается: трещина с тика смерти,
+                        // сам раскол и обломки — SplitterCombatView.
+                        _splitterViews[e.Target]?.PlayDeath(FrameEventTick(i));
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -1863,6 +1891,9 @@ namespace Game.View
                         _forestBudViews[e.Target]?.Bind(_driver, e.Target);
                         _wendigoViews[e.Target]?.Bind(_driver, e.Target);
                         _stonehoofViews[e.Target]?.Bind(_driver, e.Target);
+                        _thorncasterViews[e.Target]?.Bind(_driver, e.Target);
+                        _rootSnarerViews[e.Target]?.Bind(_driver, e.Target);
+                        _splitterViews[e.Target]?.Bind(_driver, e.Target);
                         SetMobViewsEnabled(e.Target, false);
                         break;
                     // Шипомёт и Корнехват: поза заглушки идёт от начала, контакта и снятия действия.
@@ -1871,6 +1902,12 @@ namespace Game.View
                     case SimEventType.EnemyActionCancelled:
                         if ((uint)e.Source < (uint)_boundCount && _placeholderViews[e.Source] != null)
                             _placeholderViews[e.Source].OnEnemyAction(e.Type, (EnemyActionKind)e.ActionVariant, FrameEventTick(i));
+                        // Хук арта: настоящее тело Шипомёта с клипом ForestThorncaster_Shot
+                        // играет его от начала выстрела, догоняя тики, прошедшие до кадра.
+                        else if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThornShot
+                                 && (uint)e.Source < (uint)_boundCount)
+                            ThorncasterAnimationHook.TryPlayShot(_views[e.Source],
+                                _driver.Sim.Tick - 1 + _driver.Alpha - FrameEventTick(i));
                         break;
                 }
             }
@@ -1999,6 +2036,15 @@ namespace Game.View
         private void PrepareForestMob(int family)
         {
             _forestMobPrepared[family] = true;
+            // Шип выстрела Шипомёта — снаряд, его видно при любом теле (и без тела):
+            // вид шипа заводится вместе с семьёй, до первого выстрела.
+            if (family == 0 && GetComponent<ForestThornShotView>() == null) gameObject.AddComponent<ForestThornShotView>();
+            // Эффекты семьи — на объекте арены, с пулами до боя (все рождаются из событий Sim):
+            // линия, всплеск и выпуск шипа Шипомёта; плиты, корни и путы Корнехвата;
+            // раскол Расщепеня с половинами коры и прыжком детёнышей.
+            if (family == 0) ThorncasterViewInstaller.Prepare(gameObject);
+            else if (family == 1) RootSnarerCombatView.EnsureOn(gameObject);
+            else SplitterCombatView.Install(this);
             EnemyKind kind = family == 0 ? EnemyKind.ForestThorncaster
                 : family == 1 ? EnemyKind.ForestRootSnarer : EnemyKind.ForestSplitter;
             string path = family == 0 ? ThorncasterPrefab : family == 1 ? RootSnarerPrefab : SplitterPrefab;

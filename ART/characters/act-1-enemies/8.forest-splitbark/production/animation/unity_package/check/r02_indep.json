@@ -1,0 +1,2401 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\animation\\unity_package\\ForestSplitter.fbx",
+ "fbx_bytes": 3470140,
+ "old_fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\animation\\unity_package\\backup_r01_2026-09-26\\ForestSplitter.fbx",
+ "A_raw_fbx": {
+  "fbx_version": 7400,
+  "global": {
+   "UpAxis": 1,
+   "UpAxisSign": 1,
+   "FrontAxis": 2,
+   "FrontAxisSign": 1,
+   "CoordAxis": 0,
+   "CoordAxisSign": 1,
+   "UnitScaleFactor": 1.0,
+   "OriginalUnitScaleFactor": 1.0,
+   "TimeMode": 6,
+   "CustomFrameRate": 30.0
+  },
+  "global_same_as_r01": true,
+  "stack_order": [
+   "ForestSplitter_Idle",
+   "ForestSplitter_Walk",
+   "ForestSplitter_Bite",
+   "ForestSplitter_Hit",
+   "ForestSplitter_Death",
+   "ForestSplitter_Pop",
+   "ForestSplitter_RollCurl",
+   "ForestSplitter_RollLoop",
+   "ForestSplitter_RollUncurl",
+   "ForestSplitter_RollDizzy"
+  ],
+  "names_exact_and_ordered": true,
+  "spans": {
+   "ForestSplitter_Idle": {
+    "LocalStart": 0.0,
+    "LocalStop": 60.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 60.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     60.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_Walk": {
+    "LocalStart": 0.0,
+    "LocalStop": 10.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 10.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     10.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_Bite": {
+    "LocalStart": 0.0,
+    "LocalStop": 30.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 30.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     30.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_Hit": {
+    "LocalStart": 0.0,
+    "LocalStop": 12.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 12.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     12.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_Death": {
+    "LocalStart": 0.0,
+    "LocalStop": 12.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 12.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     12.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_Pop": {
+    "LocalStart": 0.0,
+    "LocalStop": 10.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 10.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     10.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_RollCurl": {
+    "LocalStart": 0.0,
+    "LocalStop": 30.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 30.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     30.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_RollLoop": {
+    "LocalStart": 0.0,
+    "LocalStop": 12.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 12.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     12.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_RollUncurl": {
+    "LocalStart": 0.0,
+    "LocalStop": 30.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 30.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     30.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   },
+   "ForestSplitter_RollDizzy": {
+    "LocalStart": 0.0,
+    "LocalStop": 45.0,
+    "ReferenceStart": 0.0,
+    "ReferenceStop": 45.0,
+    "matches_export": true,
+    "key_range_frames": [
+     0.0,
+     45.0
+    ],
+    "channels": 189,
+    "bones_keyed": 21
+   }
+  },
+  "r01_curves": {
+   "ForestSplitter_Idle": {
+    "channels": 189,
+    "keys": 45549,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   },
+   "ForestSplitter_Walk": {
+    "channels": 189,
+    "keys": 7749,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   },
+   "ForestSplitter_Bite": {
+    "channels": 189,
+    "keys": 22869,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   },
+   "ForestSplitter_Hit": {
+    "channels": 189,
+    "keys": 9261,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   },
+   "ForestSplitter_Death": {
+    "channels": 189,
+    "keys": 9261,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   },
+   "ForestSplitter_Pop": {
+    "channels": 189,
+    "keys": 7749,
+    "same_channels": true,
+    "channels_differing": 0,
+    "span_same": true,
+    "identical": true
+   }
+  },
+  "geometry_identical_to_r01": true,
+  "skin_clusters_identical_to_r01": true,
+  "triangles": 24000,
+  "max_influences": 4,
+  "geometry_objects": 1,
+  "pass": true
+ },
+ "B_import": {
+  "imported_actions": [
+   "ARM_ForestSplitter|ForestSplitter_Bite",
+   "ARM_ForestSplitter|ForestSplitter_Death",
+   "ARM_ForestSplitter|ForestSplitter_Hit",
+   "ARM_ForestSplitter|ForestSplitter_Idle",
+   "ARM_ForestSplitter|ForestSplitter_Pop",
+   "ARM_ForestSplitter|ForestSplitter_RollCurl",
+   "ARM_ForestSplitter|ForestSplitter_RollDizzy",
+   "ARM_ForestSplitter|ForestSplitter_RollLoop",
+   "ARM_ForestSplitter|ForestSplitter_RollUncurl",
+   "ARM_ForestSplitter|ForestSplitter_Walk",
+   "FacingGuide|ForestSplitter_Bite",
+   "FacingGuide|ForestSplitter_Death",
+   "FacingGuide|ForestSplitter_Hit",
+   "FacingGuide|ForestSplitter_Idle",
+   "FacingGuide|ForestSplitter_Pop",
+   "FacingGuide|ForestSplitter_RollCurl",
+   "FacingGuide|ForestSplitter_RollDizzy",
+   "FacingGuide|ForestSplitter_RollLoop",
+   "FacingGuide|ForestSplitter_RollUncurl",
+   "FacingGuide|ForestSplitter_Walk"
+  ],
+  "fps_after_import": 30.0,
+  "armature_object": {
+   "loc": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rot": [
+    -0.0,
+    0.0,
+    0.0
+   ],
+   "scale": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  },
+  "mesh": {
+   "verts": 11910,
+   "triangles": 24000,
+   "max_influences": 4,
+   "unweighted": 0,
+   "rest_skin_min_z_mm": 0.0,
+   "rigid_edges": 20847,
+   "rigid_bones": [
+    "head",
+    "leg_front_L_foot",
+    "leg_front_R_foot",
+    "leg_hind_L_foot",
+    "leg_hind_R_foot",
+    "shell_L",
+    "shell_R"
+   ]
+  },
+  "1_takes_ranges_fps": {
+   "actions": {
+    "ForestSplitter_Idle": {
+     "range": [
+      0.0,
+      60.0
+     ],
+     "export": [
+      0,
+      60
+     ],
+     "loop_in_export": true,
+     "ok": true
+    },
+    "ForestSplitter_Walk": {
+     "range": [
+      0.0,
+      10.0
+     ],
+     "export": [
+      0,
+      10
+     ],
+     "loop_in_export": true,
+     "ok": true
+    },
+    "ForestSplitter_Bite": {
+     "range": [
+      0.0,
+      30.0
+     ],
+     "export": [
+      0,
+      30
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_Hit": {
+     "range": [
+      0.0,
+      12.0
+     ],
+     "export": [
+      0,
+      12
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_Death": {
+     "range": [
+      0.0,
+      12.0
+     ],
+     "export": [
+      0,
+      12
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_Pop": {
+     "range": [
+      0.0,
+      10.0
+     ],
+     "export": [
+      0,
+      10
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_RollCurl": {
+     "range": [
+      0.0,
+      30.0
+     ],
+     "export": [
+      0,
+      30
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_RollLoop": {
+     "range": [
+      0.0,
+      12.0
+     ],
+     "export": [
+      0,
+      12
+     ],
+     "loop_in_export": true,
+     "ok": true
+    },
+    "ForestSplitter_RollUncurl": {
+     "range": [
+      0.0,
+      30.0
+     ],
+     "export": [
+      0,
+      30
+     ],
+     "loop_in_export": false,
+     "ok": true
+    },
+    "ForestSplitter_RollDizzy": {
+     "range": [
+      0.0,
+      45.0
+     ],
+     "export": [
+      0,
+      45
+     ],
+     "loop_in_export": false,
+     "ok": true
+    }
+   },
+   "fbx_fps": 30.0,
+   "pass": true
+  },
+  "2_in_place": {
+   "ForestSplitter_Idle": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_foot"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_Walk": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_foot"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_Bite": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_R_foot"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_Hit": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_foot"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_Death": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_R_lower"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_Pop": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_foot"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_RollCurl": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_R_lower"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_RollLoop": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_lower"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_RollUncurl": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_L_lower"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "ForestSplitter_RollDizzy": {
+    "root": {
+     "root_head_start": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "root_travel_xy_mm": 0.0,
+     "root_travel_z_mm": 0.0,
+     "root_rot_deg": 0.0
+    },
+    "scale": {
+     "max_bone_scale_dev": 1e-06,
+     "bone": "leg_front_R_lower"
+    },
+    "armature_object_travel_mm": 0.0,
+    "armature_object_channels": [
+     "location",
+     "rotation_euler",
+     "scale"
+    ],
+    "facing_guide_travel_mm": 0.0,
+    "facing_guide": [
+     0.0,
+     -1.0,
+     0.0
+    ],
+    "ok": true
+   },
+   "origin_on_ground_rest_min_z_mm": 0.0,
+   "facing_guide_blender": [
+    0.0,
+    -1.0,
+    0.0
+   ],
+   "faces_minus_y": true,
+   "pass": true
+  },
+  "3_old_takes_unchanged": {
+   "vs_r01_fbx_samples": {
+    "ForestSplitter_Idle": {
+     "samples": 241,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    },
+    "ForestSplitter_Walk": {
+     "samples": 41,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    },
+    "ForestSplitter_Bite": {
+     "samples": 121,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    },
+    "ForestSplitter_Hit": {
+     "samples": 49,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    },
+    "ForestSplitter_Death": {
+     "samples": 49,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    },
+    "ForestSplitter_Pop": {
+     "samples": 41,
+     "max_bone_diff": 0.0,
+     "max_skin_diff_m": 0.0,
+     "identical": true
+    }
+   },
+   "vs_stored_r01_numbers": {
+    "ForestSplitter_Idle": {
+     "now": {
+      "edge_grow_max_mm": 47.2,
+      "at": 45.75,
+      "pair": [
+       "leg_front_R_upper",
+       "shell_R"
+      ],
+      "edges_grow_over_5cm": 0,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 47.2,
+      "at": 45.75,
+      "pair": [
+       "leg_front_R_upper",
+       "shell_R"
+      ],
+      "edges_grow_over_5cm": 0,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "loop_seam": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+     },
+     "loop_velocity": {
+      "seam_mps": 0.004,
+      "worst_inside_cycle_mps": 0.006
+     },
+     "stored_seam": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+     },
+     "stored_velocity": {
+      "seam_mps": 0.004,
+      "worst_inside_cycle_mps": 0.006
+     },
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "loop_seam": true,
+      "loop_velocity": true,
+      "root": true
+     },
+     "all_match": true
+    },
+    "ForestSplitter_Walk": {
+     "now": {
+      "edge_grow_max_mm": 144.4,
+      "at": 8.25,
+      "pair": [
+       "leg_front_R_upper",
+       "shell_R"
+      ],
+      "edges_grow_over_5cm": 73,
+      "skin_min_z_mm": -7.56,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 144.4,
+      "at": 8.25,
+      "pair": [
+       "leg_front_R_upper",
+       "shell_R"
+      ],
+      "edges_grow_over_5cm": 73,
+      "skin_min_z_mm": -7.56,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "loop_seam": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+     },
+     "loop_velocity": {
+      "seam_mps": 4.269,
+      "worst_inside_cycle_mps": 4.038
+     },
+     "stored_seam": {
+      "bone_pos_mm": 0.0,
+      "bone_rot_deg": 0.0,
+      "skin_mm": 0.0
+     },
+     "stored_velocity": {
+      "seam_mps": 4.269,
+      "worst_inside_cycle_mps": 4.038
+     },
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "loop_seam": true,
+      "loop_velocity": true,
+      "root": true
+     },
+     "all_match": true
+    },
+    "ForestSplitter_Bite": {
+     "now": {
+      "edge_grow_max_mm": 161.9,
+      "at": 15.5,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 144,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 161.9,
+      "at": 15.5,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 144,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "beak_tip_f18": {
+      "forward": 0.851,
+      "up": 0.352,
+      "right": 0.057
+     },
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "root": true,
+      "beak_tip_f18": true
+     },
+     "all_match": true
+    },
+    "ForestSplitter_Hit": {
+     "now": {
+      "edge_grow_max_mm": 105.6,
+      "at": 3.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 78,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 105.6,
+      "at": 3.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 78,
+      "skin_min_z_mm": -0.0,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "root": true
+     },
+     "all_match": true
+    },
+    "ForestSplitter_Death": {
+     "now": {
+      "edge_grow_max_mm": 354.6,
+      "at": 12.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 199,
+      "skin_min_z_mm": -5.87,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 354.6,
+      "at": 12.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 199,
+      "skin_min_z_mm": -5.87,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "root": true
+     },
+     "all_match": true
+    },
+    "ForestSplitter_Pop": {
+     "now": {
+      "edge_grow_max_mm": 92.1,
+      "at": 5.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 33,
+      "skin_min_z_mm": -4.79,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "stored": {
+      "edge_grow_max_mm": 92.1,
+      "at": 5.0,
+      "pair": [
+       "shell_R",
+       "shell_L"
+      ],
+      "edges_grow_over_5cm": 33,
+      "skin_min_z_mm": -4.79,
+      "verts_below_minus_1cm": 0,
+      "rigid_edges_max_change_mm": 0.0003
+     },
+     "airborne": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "match": {
+      "edge_grow_max_mm": true,
+      "at": true,
+      "pair": true,
+      "edges_grow_over_5cm": true,
+      "skin_min_z_mm": true,
+      "verts_below_minus_1cm": true,
+      "rigid_edges_max_change_mm": true,
+      "root": true,
+      "airborne": true
+     },
+     "all_match": true
+    }
+   },
+   "pass": true
+  },
+  "4_loops_handoffs": {
+   "RollLoop_seam": {
+    "bone_pos_mm": 0.0,
+    "bone_rot_deg": 0.0,
+    "skin_mm": 0.0
+   },
+   "RollLoop_velocity_seam_mps": 0.0854,
+   "RollLoop_velocity_worst_inside_mps": 0.111,
+   "handoffs": {
+    "Idle f0 -> RollCurl f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    },
+    "RollCurl f30 -> RollLoop f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    },
+    "RollLoop f0 -> RollUncurl f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    },
+    "RollLoop f0 -> RollDizzy f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    },
+    "RollUncurl f30 -> Idle f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    },
+    "RollDizzy f45 -> Idle f0": {
+     "bone_pos_mm": 0.0,
+     "bone_rot_deg": 0.0,
+     "skin_mm": 0.0
+    }
+   },
+   "handoff_speeds_mps": {
+    "RollCurl end (entering launch)": 0.966,
+    "RollLoop start (leaving)": 0.226,
+    "RollUncurl end (entering Idle)": 0.01,
+    "RollDizzy end (entering Idle)": 0.0,
+    "Idle start (leaving)": 0.203
+   },
+   "pass": true
+  },
+  "5_contract_frames": {
+   "RollCurl": {
+    "legs_dev_from_ball_mm": {
+     "0": 380.9,
+     "1": 387.9,
+     "2": 369.3,
+     "3": 303.7,
+     "4": 249.4,
+     "5": 224.7,
+     "6": 187.3,
+     "7": 141.2,
+     "8": 91.5,
+     "9": 45.9,
+     "10": 12.7,
+     "11": 14.1,
+     "12": 10.5,
+     "13": 3.7,
+     "14": 0.5,
+     "15": 0.3,
+     "16": 0.3,
+     "17": 0.1,
+     "18": 0.3,
+     "19": 0.7,
+     "20": 1.0,
+     "21": 1.1,
+     "22": 0.9,
+     "23": 0.2,
+     "24": 0.8,
+     "25": 43.9,
+     "26": 76.4,
+     "27": 5.4,
+     "28": 45.7,
+     "29": 44.0,
+     "30": 0.0
+    },
+    "head_dev_from_ball_mm": {
+     "0": 510.7,
+     "1": 583.8,
+     "2": 597.6,
+     "3": 544.4,
+     "4": 458.9,
+     "5": 340.0,
+     "6": 186.6,
+     "7": 41.3,
+     "8": 29.0,
+     "9": 15.7,
+     "10": 4.5,
+     "11": 13.3,
+     "12": 9.9,
+     "13": 3.5,
+     "14": 0.2,
+     "15": 0.1,
+     "16": 0.1,
+     "17": 0.1,
+     "18": 0.1,
+     "19": 0.3,
+     "20": 0.4,
+     "21": 0.5,
+     "22": 0.4,
+     "23": 0.1,
+     "24": 0.3,
+     "25": 40.0,
+     "26": 66.6,
+     "27": 4.0,
+     "28": 42.0,
+     "29": 38.5,
+     "30": 0.0
+    },
+    "all_dev_from_ball_mm": {
+     "0": 510.7,
+     "1": 583.8,
+     "2": 597.6,
+     "3": 544.4,
+     "4": 458.9,
+     "5": 340.0,
+     "6": 187.3,
+     "7": 141.2,
+     "8": 91.5,
+     "9": 45.9,
+     "10": 18.5,
+     "11": 16.1,
+     "12": 10.5,
+     "13": 5.8,
+     "14": 3.5,
+     "15": 2.3,
+     "16": 1.9,
+     "17": 0.9,
+     "18": 1.8,
+     "19": 5.0,
+     "20": 6.9,
+     "21": 7.3,
+     "22": 5.9,
+     "23": 1.3,
+     "24": 5.2,
+     "25": 58.1,
+     "26": 77.4,
+     "27": 23.6,
+     "28": 59.1,
+     "29": 44.9,
+     "30": 0.0
+    },
+    "body_above_ball_mm": {
+     "0": 150.0,
+     "1": 145.5,
+     "2": 132.0,
+     "3": 91.7,
+     "4": 58.7,
+     "5": 33.0,
+     "6": 14.7,
+     "7": 3.7,
+     "8": 0.0,
+     "9": 0.0,
+     "10": 0.0,
+     "11": 9.0,
+     "12": 6.7,
+     "13": 2.3,
+     "14": 0.0,
+     "15": 0.0,
+     "16": 0.0,
+     "17": 0.0,
+     "18": 0.0,
+     "19": 0.0,
+     "20": 0.0,
+     "21": 0.0,
+     "22": 0.0,
+     "23": 0.0,
+     "24": 0.0,
+     "25": 3.3,
+     "26": 0.5,
+     "27": 3.0,
+     "28": 4.7,
+     "29": 0.3,
+     "30": 0.0
+    },
+    "first_frame_legs_tucked_(<15mm)": 10,
+    "first_frame_head_tucked_(<15mm)": 10,
+    "body_yaw_deg_24_30": [
+     -0.0,
+     1.89,
+     3.25,
+     -0.0,
+     -4.33,
+     -4.19,
+     -0.0,
+     3.6,
+     3.46,
+     -0.0,
+     -2.6,
+     -1.52,
+     -0.0
+    ],
+    "body_yaw_abs_max_24_30": 4.96,
+    "body_yaw_abs_max_0_24": 0.0,
+    "skin_min_z_mm": {
+     "0": 0.0,
+     "1": 0.4,
+     "2": 1.2,
+     "3": 1.7,
+     "4": 2.5,
+     "5": 4.9,
+     "6": 8.6,
+     "7": 11.7,
+     "8": 0.7,
+     "9": 1.2,
+     "10": -0.1,
+     "11": 10.6,
+     "12": 9.4,
+     "13": 5.4,
+     "14": 2.8,
+     "15": 2.4,
+     "16": 2.6,
+     "17": 2.3,
+     "18": 2.2,
+     "19": 2.9,
+     "20": 1.7,
+     "21": 3.2,
+     "22": 1.8,
+     "23": 2.5,
+     "24": 2.9,
+     "25": 5.8,
+     "26": 2.8,
+     "27": 3.1,
+     "28": 10.1,
+     "29": 0.8,
+     "30": 2.4
+    },
+    "rim_lift_24_30_above_ball_mm": 7.67,
+    "f30_equals_ball_mm": 0.0,
+    "note": "tucked = within 15 mm of the ball pose (the 10-14 squash bounce keeps the body up to 9 mm above it); rim lift during the shake is measured on the lowest skin point above the ball's own 2.4 mm",
+    "ok": true
+   },
+   "RollLoop": {
+    "skin_min_z_mm": {
+     "0": 2.39,
+     "1": 0.33,
+     "2": -2.93,
+     "3": -4.48,
+     "4": -2.93,
+     "5": 0.33,
+     "6": 2.39,
+     "7": 1.6,
+     "8": -0.8,
+     "9": -2.06,
+     "10": -0.8,
+     "11": 1.6,
+     "12": 2.39
+    },
+    "rim_dip_below_ground_mm": 4.48,
+    "ball_pose_min_z_mm": 2.39,
+    "max_dev_from_ball_mm": 33.28,
+    "ok": true
+   },
+   "RollUncurl": {
+    "f0_equals_ball_mm": 0.0,
+    "end_equals_idle0_mm": 0.0,
+    "body_z_mm": {
+     "0": -150.0,
+     "1": -150.0,
+     "2": -150.0,
+     "3": -150.0,
+     "4": -150.0,
+     "5": -150.0,
+     "6": -150.0,
+     "7": -150.0,
+     "8": -150.0,
+     "9": -150.0,
+     "10": -150.0,
+     "11": -150.0,
+     "12": -150.0,
+     "13": -144.9,
+     "14": -131.1,
+     "15": -111.1,
+     "16": -87.4,
+     "17": -62.6,
+     "18": -38.9,
+     "19": -18.9,
+     "20": -5.1,
+     "21": 0.0,
+     "22": 0.0,
+     "23": 0.0,
+     "24": 0.0,
+     "25": 0.0,
+     "26": 0.0,
+     "27": 0.0,
+     "28": 0.0,
+     "29": 0.0,
+     "30": 0.0
+    },
+    "body_back_mm": {
+     "0": 0.0,
+     "1": 0.0,
+     "2": 0.0,
+     "3": 0.0,
+     "4": 0.0,
+     "5": 0.0,
+     "6": 0.0,
+     "7": 0.0,
+     "8": 0.0,
+     "9": 0.0,
+     "10": 0.0,
+     "11": 0.0,
+     "12": 0.0,
+     "13": 0.0,
+     "14": 0.0,
+     "15": 0.0,
+     "16": 0.0,
+     "17": 0.0,
+     "18": 0.0,
+     "19": 0.0,
+     "20": 0.0,
+     "21": 0.0,
+     "22": 0.0,
+     "23": 0.0,
+     "24": 0.0,
+     "25": 0.0,
+     "26": 0.0,
+     "27": 0.0,
+     "28": 0.0,
+     "29": 0.0,
+     "30": 0.0
+    },
+    "head_forward_m": {
+     "0": 0.26,
+     "1": 0.26,
+     "2": 0.26,
+     "3": 0.26,
+     "4": 0.26,
+     "5": 0.26,
+     "6": 0.26,
+     "7": 0.283,
+     "8": 0.297,
+     "9": 0.301,
+     "10": 0.298,
+     "11": 0.295,
+     "12": 0.308,
+     "13": 0.336,
+     "14": 0.362,
+     "15": 0.375,
+     "16": 0.375,
+     "17": 0.375,
+     "18": 0.375,
+     "19": 0.375,
+     "20": 0.375,
+     "21": 0.375,
+     "22": 0.375,
+     "23": 0.375,
+     "24": 0.375,
+     "25": 0.375,
+     "26": 0.375,
+     "27": 0.375,
+     "28": 0.375,
+     "29": 0.375,
+     "30": 0.375
+    },
+    "sole_z_mm": {
+     "front_L": {
+      "0": 29.0,
+      "1": 29.0,
+      "2": 29.0,
+      "3": 29.0,
+      "4": 29.0,
+      "5": 29.0,
+      "6": 29.0,
+      "7": 29.0,
+      "8": 28.2,
+      "9": 29.6,
+      "10": 39.2,
+      "11": 46.4,
+      "12": 34.9,
+      "13": -3.8,
+      "14": -3.3,
+      "15": -2.5,
+      "16": -2.0,
+      "17": -0.8,
+      "18": -0.0,
+      "19": -0.0,
+      "20": -0.0,
+      "21": 0.0,
+      "22": 0.0,
+      "23": 0.0,
+      "24": 0.0,
+      "25": 0.0,
+      "26": 0.0,
+      "27": 0.0,
+      "28": 0.0,
+      "29": 0.0,
+      "30": 0.0
+     },
+     "front_R": {
+      "0": 37.1,
+      "1": 37.1,
+      "2": 37.1,
+      "3": 37.1,
+      "4": 37.1,
+      "5": 37.1,
+      "6": 37.1,
+      "7": 37.1,
+      "8": 36.3,
+      "9": 37.9,
+      "10": 47.6,
+      "11": 54.9,
+      "12": 43.4,
+      "13": 8.5,
+      "14": 8.5,
+      "15": 8.5,
+      "16": 8.5,
+      "17": 8.5,
+      "18": 8.5,
+      "19": 8.5,
+      "20": 8.5,
+      "21": 8.5,
+      "22": 8.5,
+      "23": 8.5,
+      "24": 8.5,
+      "25": 8.5,
+      "26": 8.5,
+      "27": 8.5,
+      "28": 8.5,
+      "29": 8.5,
+      "30": 8.5
+     },
+     "hind_L": {
+      "0": 65.7,
+      "1": 65.7,
+      "2": 65.7,
+      "3": 65.7,
+      "4": 65.7,
+      "5": 65.7,
+      "6": 65.7,
+      "7": 65.7,
+      "8": 63.5,
+      "9": 61.0,
+      "10": 64.0,
+      "11": 60.0,
+      "12": 38.4,
+      "13": 2.9,
+      "14": 2.9,
+      "15": 3.0,
+      "16": 3.5,
+      "17": 4.2,
+      "18": 5.4,
+      "19": 6.9,
+      "20": 8.2,
+      "21": 8.9,
+      "22": 8.9,
+      "23": 8.9,
+      "24": 8.9,
+      "25": 8.9,
+      "26": 8.9,
+      "27": 8.9,
+      "28": 8.9,
+      "29": 8.9,
+      "30": 8.9
+     },
+     "hind_R": {
+      "0": 59.4,
+      "1": 59.3,
+      "2": 59.4,
+      "3": 59.3,
+      "4": 59.4,
+      "5": 59.4,
+      "6": 59.4,
+      "7": 59.4,
+      "8": 56.9,
+      "9": 53.5,
+      "10": 55.6,
+      "11": 55.3,
+      "12": 36.6,
+      "13": 1.5,
+      "14": 1.7,
+      "15": 2.1,
+      "16": 2.9,
+      "17": 4.0,
+      "18": 5.5,
+      "19": 5.9,
+      "20": 5.8,
+      "21": 5.8,
+      "22": 5.8,
+      "23": 5.8,
+      "24": 5.8,
+      "25": 5.8,
+      "26": 5.8,
+      "27": 5.8,
+      "28": 5.8,
+      "29": 5.8,
+      "30": 5.8
+     }
+    },
+    "skin_min_z_mm": {
+     "0": 2.4,
+     "1": 2.2,
+     "2": 2.7,
+     "3": 2.2,
+     "4": 2.4,
+     "5": 2.4,
+     "6": 2.4,
+     "7": 2.4,
+     "8": 2.0,
+     "9": 1.2,
+     "10": 1.2,
+     "11": 1.9,
+     "12": 2.8,
+     "13": -5.6,
+     "14": -5.0,
+     "15": -3.9,
+     "16": -2.4,
+     "17": -0.8,
+     "18": -0.0,
+     "19": -0.0,
+     "20": -0.0,
+     "21": 0.0,
+     "22": 0.0,
+     "23": 0.0,
+     "24": 0.0,
+     "25": 0.0,
+     "26": 0.0,
+     "27": 0.0,
+     "28": 0.0,
+     "29": 0.0,
+     "30": 0.0
+    },
+    "feet": {
+     "front_L": {
+      "min_z_mm": -3.8,
+      "max_lift_mm": 46.4,
+      "contacts": 1,
+      "slide_within_contact_mm": 6.65
+     },
+     "front_R": {
+      "min_z_mm": 8.5,
+      "max_lift_mm": 54.9,
+      "contacts": 1,
+      "slide_within_contact_mm": 0.92
+     },
+     "hind_L": {
+      "min_z_mm": 2.9,
+      "max_lift_mm": 65.8,
+      "contacts": 1,
+      "slide_within_contact_mm": 5.6
+     },
+     "hind_R": {
+      "min_z_mm": 1.5,
+      "max_lift_mm": 59.4,
+      "contacts": 1,
+      "slide_within_contact_mm": 4.82
+     }
+    },
+    "paw_first_grounded_frame": {
+     "front_L": 13,
+     "front_R": 13,
+     "hind_L": 13,
+     "hind_R": 13
+    },
+    "slide_while_planted_mm": {
+     "front_L": 6.65,
+     "front_R": 0.92,
+     "hind_L": 6.57,
+     "hind_R": 4.82
+    },
+    "skid_path_near_ground_mm": {
+     "front_L": 7.7,
+     "front_R": 0.9,
+     "hind_L": 7.7,
+     "hind_R": 5.8
+    },
+    "support_gap_while_body_rises_mm": 5.3,
+    "paws_planted_by_frame": 13,
+    "ok": true
+   },
+   "RollDizzy": {
+    "f0_equals_ball_mm": 0.0,
+    "end_equals_idle0_mm": 0.0,
+    "body_z_mm": {
+     "0": -150.0,
+     "1": -136.5,
+     "2": -132.0,
+     "3": -136.5,
+     "4": -150.0,
+     "5": -150.0,
+     "6": -150.0,
+     "7": -150.0,
+     "8": -150.0,
+     "9": -150.0,
+     "10": -150.0,
+     "11": -141.7,
+     "12": -121.8,
+     "13": -98.2,
+     "14": -78.3,
+     "15": -70.0,
+     "16": -70.0,
+     "17": -70.0,
+     "18": -70.0,
+     "19": -70.0,
+     "20": -70.0,
+     "21": -70.0,
+     "22": -70.0,
+     "23": -70.0,
+     "24": -70.0,
+     "25": -70.0,
+     "26": -70.0,
+     "27": -70.0,
+     "28": -70.0,
+     "29": -70.0,
+     "30": -70.0,
+     "31": -70.0,
+     "32": -70.0,
+     "33": -70.0,
+     "34": -70.0,
+     "35": -70.0,
+     "36": -70.0,
+     "37": -67.0,
+     "38": -59.1,
+     "39": -47.9,
+     "40": -35.0,
+     "41": -22.1,
+     "42": -10.9,
+     "43": -3.0,
+     "44": 0.0,
+     "45": 0.0
+    },
+    "body_back_mm": {
+     "0": 0.0,
+     "1": 26.3,
+     "2": 35.0,
+     "3": 31.1,
+     "4": 23.9,
+     "5": 20.0,
+     "6": 16.9,
+     "7": 10.0,
+     "8": 3.1,
+     "9": 0.0,
+     "10": 0.0,
+     "11": 0.0,
+     "12": 0.0,
+     "13": 0.0,
+     "14": 0.0,
+     "15": 0.0,
+     "16": 0.0,
+     "17": 0.0,
+     "18": 0.0,
+     "19": 0.0,
+     "20": 0.0,
+     "21": 0.0,
+     "22": 0.0,
+     "23": 0.0,
+     "24": 0.0,
+     "25": 0.0,
+     "26": 0.0,
+     "27": 0.0,
+     "28": 0.0,
+     "29": 0.0,
+     "30": 0.0,
+     "31": 0.0,
+     "32": 0.0,
+     "33": 0.0,
+     "34": 0.0,
+     "35": 0.0,
+     "36": 0.0,
+     "37": 0.0,
+     "38": 0.0,
+     "39": 0.0,
+     "40": 0.0,
+     "41": 0.0,
+     "42": 0.0,
+     "43": 0.0,
+     "44": 0.0,
+     "45": 0.0
+    },
+    "head_forward_m": {
+     "0": 0.26,
+     "1": 0.236,
+     "2": 0.228,
+     "3": 0.231,
+     "4": 0.236,
+     "5": 0.282,
+     "6": 0.317,
+     "7": 0.347,
+     "8": 0.367,
+     "9": 0.374,
+     "10": 0.374,
+     "11": 0.375,
+     "12": 0.374,
+     "13": 0.374,
+     "14": 0.373,
+     "15": 0.372,
+     "16": 0.372,
+     "17": 0.372,
+     "18": 0.372,
+     "19": 0.372,
+     "20": 0.372,
+     "21": 0.372,
+     "22": 0.373,
+     "23": 0.374,
+     "24": 0.375,
+     "25": 0.375,
+     "26": 0.375,
+     "27": 0.375,
+     "28": 0.373,
+     "29": 0.372,
+     "30": 0.372,
+     "31": 0.372,
+     "32": 0.372,
+     "33": 0.373,
+     "34": 0.374,
+     "35": 0.374,
+     "36": 0.375,
+     "37": 0.375,
+     "38": 0.375,
+     "39": 0.375,
+     "40": 0.375,
+     "41": 0.375,
+     "42": 0.375,
+     "43": 0.375,
+     "44": 0.375,
+     "45": 0.375
+    },
+    "sole_z_mm": {
+     "front_L": {
+      "0": 29.0,
+      "1": 29.0,
+      "2": 29.0,
+      "3": 29.0,
+      "4": 29.0,
+      "5": 29.0,
+      "6": 25.4,
+      "7": 30.3,
+      "8": 40.4,
+      "9": 32.8,
+      "10": -0.0,
+      "11": -0.0,
+      "12": -0.0,
+      "13": -0.0,
+      "14": -0.0,
+      "15": 0.0,
+      "16": 0.0,
+      "17": 0.0,
+      "18": 0.0,
+      "19": 0.0,
+      "20": 0.0,
+      "21": 0.0,
+      "22": -0.0,
+      "23": -0.0,
+      "24": 0.0,
+      "25": 0.0,
+      "26": 0.0,
+      "27": 0.0,
+      "28": 0.0,
+      "29": -0.0,
+      "30": 0.0,
+      "31": 0.0,
+      "32": 0.0,
+      "33": -0.0,
+      "34": -0.0,
+      "35": 0.0,
+      "36": -0.0,
+      "37": 35.4,
+      "38": 49.6,
+      "39": 34.5,
+      "40": 0.0,
+      "41": 0.0,
+      "42": 0.0,
+      "43": 0.0,
+      "44": 0.0,
+      "45": 0.0
+     },
+     "front_R": {
+      "0": 37.1,
+      "1": 37.1,
+      "2": 37.1,
+      "3": 37.1,
+      "4": 37.1,
+      "5": 37.1,
+      "6": 33.6,
+      "7": 38.7,
+      "8": 48.9,
+      "9": 41.3,
+      "10": 8.5,
+      "11": 8.5,
+      "12": 8.5,
+      "13": 8.5,
+      "14": 8.5,
+      "15": 8.5,
+      "16": 8.5,
+      "17": 8.5,
+      "18": 8.5,
+      "19": 8.5,
+      "20": 8.5,
+      "21": 8.5,
+      "22": 8.5,
+      "23": 8.5,
+      "24": 8.5,
+      "25": 8.5,
+      "26": 8.5,
+      "27": 8.5,
+      "28": 8.5,
+      "29": 8.5,
+      "30": 8.5,
+      "31": 8.5,
+      "32": 8.5,
+      "33": 8.5,
+      "34": 8.5,
+      "35": 8.5,
+      "36": 8.5,
+      "37": 8.5,
+      "38": 8.5,
+      "39": 8.5,
+      "40": 43.9,
+      "41": 58.5,
+      "42": 43.9,
+      "43": 8.5,
+      "44": 8.5,
+      "45": 8.5
+     },
+     "hind_L": {
+      "0": 65.7,
+      "1": 65.7,
+      "2": 65.7,
+      "3": 65.7,
+      "4": 65.7,
+      "5": 65.7,
+      "6": 60.5,
+      "7": 59.6,
+      "8": 61.5,
+      "9": 41.5,
+      "10": 6.9,
+      "11": 6.8,
+      "12": 6.6,
+      "13": 6.6,
+      "14": 6.6,
+      "15": 6.8,
+      "16": 7.0,
+      "17": 7.5,
+      "18": 8.0,
+      "19": 8.5,
+      "20": 8.8,
+      "21": 8.8,
+      "22": 8.7,
+      "23": 8.6,
+      "24": 8.7,
+      "25": 8.9,
+      "26": 9.3,
+      "27": 9.6,
+      "28": 10.0,
+      "29": 10.5,
+      "30": 11.0,
+      "31": 11.6,
+      "32": 11.7,
+      "33": 11.8,
+      "34": 11.0,
+      "35": 9.9,
+      "36": 9.1,
+      "37": 8.7,
+      "38": 9.0,
+      "39": 9.8,
+      "40": 10.9,
+      "41": 43.5,
+      "42": 56.2,
+      "43": 41.3,
+      "44": 8.9,
+      "45": 8.9
+     },
+     "hind_R": {
+      "0": 59.4,
+      "1": 59.5,
+      "2": 59.6,
+      "3": 59.5,
+      "4": 59.5,
+      "5": 59.5,
+      "6": 53.8,
+      "7": 51.7,
+      "8": 52.5,
+      "9": 38.4,
+      "10": 4.4,
+      "11": 4.6,
+      "12": 5.6,
+      "13": 5.9,
+      "14": 5.8,
+      "15": 5.8,
+      "16": 5.8,
+      "17": 5.8,
+      "18": 5.8,
+      "19": 5.9,
+      "20": 5.9,
+      "21": 5.9,
+      "22": 5.9,
+      "23": 5.9,
+      "24": 5.9,
+      "25": 5.9,
+      "26": 5.9,
+      "27": 5.9,
+      "28": 5.9,
+      "29": 5.7,
+      "30": 5.1,
+      "31": 4.7,
+      "32": 4.5,
+      "33": 4.7,
+      "34": 5.1,
+      "35": 5.7,
+      "36": 5.9,
+      "37": 5.9,
+      "38": 40.2,
+      "39": 53.5,
+      "40": 39.1,
+      "41": 5.9,
+      "42": 5.9,
+      "43": 5.8,
+      "44": 5.8,
+      "45": 5.8
+     }
+    },
+    "skin_min_z_mm": {
+     "0": 2.4,
+     "1": 29.0,
+     "2": 29.0,
+     "3": 29.0,
+     "4": 2.7,
+     "5": 1.7,
+     "6": 0.8,
+     "7": 1.5,
+     "8": 3.6,
+     "9": 6.0,
+     "10": -1.5,
+     "11": -1.6,
+     "12": -1.8,
+     "13": -2.0,
+     "14": -1.6,
+     "15": -0.8,
+     "16": 0.0,
+     "17": 0.0,
+     "18": 0.0,
+     "19": 0.0,
+     "20": 0.0,
+     "21": 0.0,
+     "22": -0.0,
+     "23": -0.0,
+     "24": 0.0,
+     "25": 0.0,
+     "26": 0.0,
+     "27": 0.0,
+     "28": 0.0,
+     "29": -0.0,
+     "30": 0.0,
+     "31": 0.0,
+     "32": 0.0,
+     "33": -0.0,
+     "34": -0.0,
+     "35": 0.0,
+     "36": -0.0,
+     "37": 4.6,
+     "38": 4.7,
+     "39": 5.1,
+     "40": 0.0,
+     "41": 0.0,
+     "42": 0.0,
+     "43": 0.0,
+     "44": 0.0,
+     "45": 0.0
+    },
+    "feet": {
+     "front_L": {
+      "min_z_mm": -0.0,
+      "max_lift_mm": 49.6,
+      "contacts": 2,
+      "slide_within_contact_mm": 8.21
+     },
+     "front_R": {
+      "min_z_mm": 8.5,
+      "max_lift_mm": 58.5,
+      "contacts": 2,
+      "slide_within_contact_mm": 0.92
+     },
+     "hind_L": {
+      "min_z_mm": 6.6,
+      "max_lift_mm": 65.7,
+      "contacts": 3,
+      "slide_within_contact_mm": 5.05
+     },
+     "hind_R": {
+      "min_z_mm": 4.4,
+      "max_lift_mm": 59.6,
+      "contacts": 2,
+      "slide_within_contact_mm": 3.25
+     }
+    },
+    "paw_first_grounded_frame": {
+     "front_L": 10,
+     "front_R": 10,
+     "hind_L": 10,
+     "hind_R": 10
+    },
+    "slide_while_planted_mm": {
+     "front_L": 8.21,
+     "front_R": 0.92,
+     "hind_L": 4.41,
+     "hind_R": 3.25
+    },
+    "skid_path_near_ground_mm": {
+     "front_L": 18.0,
+     "front_R": 2.1,
+     "hind_L": 11.2,
+     "hind_R": 10.1
+    },
+    "bump": {
+     "body_back_peak_frame": 2.0,
+     "body_back_peak_mm": 35.0,
+     "body_up_peak_frame": 2.0,
+     "body_up_peak_mm": 18.0
+    },
+    "paws_off_ground_13_36_(>6mm, rest paws float 6-9 mm)": {
+     "front_L": [],
+     "front_R": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36
+     ],
+     "hind_L": [
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36
+     ],
+     "hind_R": []
+    },
+    "support_gap_while_body_rises_mm": 5.6,
+    "ok": true
+   },
+   "pass": true
+  },
+  "6_rigid_ground_deform": {
+   "ForestSplitter_RollCurl": {
+    "rigid_edges_max_change_mm": 0.0003,
+    "edge_grow_max_mm": 206.7,
+    "at": 28.0,
+    "pair": [
+     "leg_front_R_upper",
+     "shell_R"
+    ],
+    "edges_grow_over_5cm": 137,
+    "pairs_over_2cm": {
+     "leg_front_R_upper-shell_R": 13,
+     "head-shell_R": 67,
+     "head-shell_L": 45,
+     "shell_R-shell_R": 44,
+     "leg_front_L_lower-leg_front_L_lower": 36,
+     "neck-shell_R": 10,
+     "neck-shell_L": 6,
+     "shell_R-spine": 5,
+     "body-spine": 13,
+     "leg_front_L_upper-shell_L": 2,
+     "shell_L-shell_R": 1,
+     "shell_L-shell_L": 26,
+     "body-shell_L": 4,
+     "head-spine": 5,
+     "leg_hind_R_foot-leg_hind_R_lower": 4,
+     "head-head": 10,
+     "leg_hind_R_upper-leg_hind_R_upper": 8,
+     "spine-spine": 91,
+     "shell_L-spine": 9,
+     "body-leg_hind_L_upper": 7,
+     "leg_front_R_lower-leg_front_R_lower": 11,
+     "leg_front_L_foot-leg_front_L_lower": 9,
+     "leg_front_R_foot-leg_front_R_lower": 4,
+     "body-leg_hind_R_upper": 2,
+     "body-shell_R": 1,
+     "body-body": 35,
+     "leg_hind_L_upper-leg_hind_L_upper": 6,
+     "leg_hind_R_lower-leg_hind_R_lower": 4,
+     "neck-spine": 1,
+     "leg_front_L_upper-spine": 2,
+     "leg_hind_L_lower-leg_hind_L_lower": 3,
+     "leg_front_R_lower-shell_R": 1,
+     "leg_hind_R_upper-shell_R": 2,
+     "leg_hind_L_lower-shell_L": 1,
+     "leg_hind_L_foot-leg_hind_L_lower": 4,
+     "leg_front_R_foot-leg_front_R_foot": 1,
+     "leg_hind_L_lower-leg_hind_L_upper": 1
+    },
+    "ground": {
+     "skin_min_z_mm": -0.19,
+     "at_frame": 29.25,
+     "verts_below_minus_1cm": 0,
+     "end_min_z_mm": 2.39
+    },
+    "frames_floating_over_10mm": [
+     6.5,
+     6.75,
+     7.0,
+     11.0,
+     11.25,
+     11.5,
+     11.75,
+     28.0
+    ],
+    "finite": true,
+    "ok": true
+   },
+   "ForestSplitter_RollLoop": {
+    "rigid_edges_max_change_mm": 0.0002,
+    "edge_grow_max_mm": 178.9,
+    "at": 8.0,
+    "pair": [
+     "leg_front_R_upper",
+     "shell_R"
+    ],
+    "edges_grow_over_5cm": 121,
+    "pairs_over_2cm": {
+     "leg_front_R_upper-shell_R": 13,
+     "head-shell_L": 45,
+     "head-shell_R": 67,
+     "shell_R-shell_R": 35,
+     "leg_front_L_lower-leg_front_L_lower": 31,
+     "leg_front_L_upper-shell_L": 2,
+     "neck-shell_R": 5,
+     "neck-shell_L": 3,
+     "shell_L-shell_L": 20,
+     "leg_hind_R_upper-leg_hind_R_upper": 8,
+     "leg_hind_R_foot-leg_hind_R_lower": 3,
+     "body-spine": 8,
+     "body-shell_L": 4,
+     "body-leg_hind_L_upper": 7,
+     "shell_L-spine": 6,
+     "body-leg_hind_R_upper": 2,
+     "body-body": 31,
+     "leg_front_R_lower-leg_front_R_lower": 7,
+     "spine-spine": 29,
+     "leg_hind_L_upper-leg_hind_L_upper": 6,
+     "head-head": 5,
+     "body-shell_R": 1,
+     "shell_R-spine": 2,
+     "head-spine": 1,
+     "leg_front_L_foot-leg_front_L_lower": 5,
+     "leg_front_R_foot-leg_front_R_lower": 2,
+     "shell_L-shell_R": 1,
+     "leg_hind_R_lower-leg_hind_R_lower": 3,
+     "leg_front_R_lower-shell_R": 1,
+     "leg_hind_R_upper-shell_R": 2,
+     "leg_front_L_upper-spine": 2,
+     "leg_hind_L_lower-leg_hind_L_lower": 2,
+     "leg_hind_L_lower-shell_L": 1,
+     "neck-spine": 1,
+     "leg_hind_L_foot-leg_hind_L_lower": 1,
+     "leg_front_L_lower-shell_L": 1
+    },
+    "ground": {
+     "skin_min_z_mm": -4.48,
+     "at_frame": 3.0,
+     "verts_below_minus_1cm": 0,
+     "end_min_z_mm": 2.39
+    },
+    "frames_floating_over_10mm": [],
+    "finite": true,
+    "ok": true
+   },
+   "ForestSplitter_RollUncurl": {
+    "rigid_edges_max_change_mm": 0.0003,
+    "edge_grow_max_mm": 193.5,
+    "at": 0.75,
+    "pair": [
+     "leg_front_R_upper",
+     "shell_R"
+    ],
+    "edges_grow_over_5cm": 146,
+    "pairs_over_2cm": {
+     "leg_front_R_upper-shell_R": 13,
+     "head-shell_L": 45,
+     "head-shell_R": 67,
+     "shell_R-shell_R": 42,
+     "body-spine": 13,
+     "leg_front_L_lower-leg_front_L_lower": 34,
+     "shell_R-spine": 5,
+     "head-spine": 4,
+     "neck-shell_R": 10,
+     "shell_L-shell_R": 2,
+     "head-head": 11,
+     "leg_front_L_upper-shell_L": 2,
+     "spine-spine": 106,
+     "neck-shell_L": 6,
+     "body-shell_L": 4,
+     "body-body": 39,
+     "shell_L-shell_L": 26,
+     "leg_hind_R_foot-leg_hind_R_lower": 3,
+     "leg_hind_R_upper-leg_hind_R_upper": 11,
+     "body-leg_hind_L_upper": 7,
+     "shell_L-spine": 9,
+     "body-shell_R": 1,
+     "leg_front_R_lower-leg_front_R_lower": 8,
+     "body-leg_hind_R_upper": 2,
+     "leg_front_L_foot-leg_front_L_lower": 8,
+     "leg_front_R_foot-leg_front_R_lower": 3,
+     "leg_hind_L_upper-leg_hind_L_upper": 6,
+     "neck-spine": 1,
+     "leg_front_L_upper-spine": 2,
+     "leg_hind_R_lower-leg_hind_R_lower": 3,
+     "leg_hind_R_upper-shell_R": 2,
+     "leg_front_R_lower-shell_R": 1,
+     "leg_hind_L_lower-leg_hind_L_lower": 2,
+     "leg_hind_L_lower-shell_L": 1,
+     "leg_hind_L_foot-leg_hind_L_lower": 4,
+     "leg_front_L_lower-shell_L": 1,
+     "leg_front_R_foot-leg_front_R_foot": 1
+    },
+    "ground": {
+     "skin_min_z_mm": -5.56,
+     "at_frame": 13.0,
+     "verts_below_minus_1cm": 0,
+     "end_min_z_mm": 0.0
+    },
+    "frames_floating_over_10mm": [],
+    "finite": true,
+    "ok": true
+   },
+   "ForestSplitter_RollDizzy": {
+    "rigid_edges_max_change_mm": 0.0003,
+    "edge_grow_max_mm": 177.2,
+    "at": 0.0,
+    "pair": [
+     "leg_front_R_upper",
+     "shell_R"
+    ],
+    "edges_grow_over_5cm": 168,
+    "pairs_over_2cm": {
+     "leg_front_R_upper-shell_R": 13,
+     "head-shell_L": 45,
+     "head-shell_R": 67,
+     "shell_R-spine": 5,
+     "body-spine": 13,
+     "neck-shell_R": 10,
+     "shell_R-shell_R": 36,
+     "head-spine": 4,
+     "neck-shell_L": 6,
+     "shell_L-spine": 10,
+     "leg_front_L_lower-leg_front_L_lower": 30,
+     "head-head": 12,
+     "spine-spine": 105,
+     "leg_front_L_upper-shell_L": 2,
+     "shell_L-shell_R": 1,
+     "body-body": 40,
+     "leg_hind_R_foot-leg_hind_R_lower": 4,
+     "body-shell_L": 4,
+     "shell_L-shell_L": 23,
+     "leg_hind_R_upper-leg_hind_R_upper": 11,
+     "body-leg_hind_L_upper": 7,
+     "body-shell_R": 1,
+     "body-leg_hind_R_upper": 2,
+     "leg_front_R_lower-leg_front_R_lower": 14,
+     "leg_hind_L_upper-leg_hind_L_upper": 6,
+     "leg_hind_R_lower-leg_hind_R_lower": 5,
+     "leg_front_L_foot-leg_front_L_lower": 6,
+     "leg_front_R_foot-leg_front_R_lower": 2,
+     "leg_front_L_upper-spine": 2,
+     "leg_hind_L_lower-leg_hind_L_lower": 3,
+     "leg_front_R_lower-shell_R": 1,
+     "leg_hind_R_upper-shell_R": 2,
+     "leg_hind_L_foot-leg_hind_L_lower": 4,
+     "leg_front_L_lower-shell_L": 1,
+     "neck-spine": 1,
+     "leg_hind_L_lower-shell_L": 1
+    },
+    "ground": {
+     "skin_min_z_mm": -2.0,
+     "at_frame": 13.0,
+     "verts_below_minus_1cm": 0,
+     "end_min_z_mm": 0.0
+    },
+    "frames_floating_over_10mm": [
+     0.25,
+     0.5,
+     0.75,
+     1.0,
+     1.25,
+     1.5,
+     1.75,
+     2.0,
+     2.25,
+     2.5,
+     2.75,
+     3.0,
+     3.25,
+     3.5,
+     3.75
+    ],
+    "finite": true,
+    "ok": true
+   },
+   "pass": true
+  },
+  "7_ball_spin_data": {
+   "pivot_unity_local": [
+    0.001,
+    0.546,
+    -0.028
+   ],
+   "export_pivot": [
+    0.0,
+    0.546,
+    -0.028
+   ],
+   "spin_radius_m": 0.627,
+   "export_radius": 0.627,
+   "lift_m": 0.081,
+   "export_lift": 0.081,
+   "deg_per_tick_for_0.40m": 36.57,
+   "export_deg_per_tick": 36.6,
+   "ball_size_m": [
+    1.55,
+    1.099,
+    1.087
+   ],
+   "export_size": [
+    1.55,
+    1.1,
+    1.094
+   ],
+   "pass": true
+  },
+  "8_budget": {
+   "triangles_fbx": 24000,
+   "triangles_imported": 24000,
+   "max_influences_fbx": 4,
+   "max_influences_imported": 4,
+   "unweighted": 0,
+   "pass": true
+  }
+ },
+ "all_pass": true
+}

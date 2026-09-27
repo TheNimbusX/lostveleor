@@ -1,0 +1,69 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61863[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+00:04.094  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\ForestRootSnarer_Anim_r01.blend"
+00:05.484  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f00_game.png'
+00:05.531  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f00_side.png'
+00:05.594  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f00_front.png'
+00:05.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f05_game.png'
+00:05.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f05_side.png'
+00:05.765  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f05_front.png'
+00:05.812  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f07_game.png'
+00:05.859  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f07_side.png'
+00:05.906  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f07_front.png'
+00:05.969  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f08_game.png'
+00:06.015  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f08_side.png'
+00:06.062  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f08_front.png'
+00:06.109  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f10_game.png'
+00:06.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f10_side.png'
+00:06.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f10_front.png'
+00:06.281  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f15_game.png'
+00:06.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f15_side.png'
+00:06.375  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f15_front.png'
+00:06.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f20_game.png'
+00:06.484  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f20_side.png'
+00:06.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f20_front.png'
+00:06.609  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f28_game.png'
+00:06.656  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f28_side.png'
+00:06.719  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f28_front.png'
+00:06.765  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f30_game.png'
+00:06.828  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f30_side.png'
+00:06.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f30_front.png'
+00:06.937  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f38_game.png'
+00:07.000  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f38_side.png'
+00:07.047  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f38_front.png'
+00:07.125  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f42_game.png'
+00:07.187  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f42_side.png'
+00:07.234  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f42_front.png'
+00:07.312  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f46_game.png'
+00:07.390  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f46_side.png'
+00:07.437  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\work\probe_mend\f46_front.png'
+Reloading external rigs...
+Reloading external metarigs...
+PROBE {"f00": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.0001, "R": 0.0}, "mesh_min_z": -0.0005, "mesh_max_z": 1.3099, "hand_socket": {"L": [0.6, -0.6, 0.102], "R": [-0.6, -0.66, 0.057]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f05": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": 0.4044, "R": 0.459}, "mesh_min_z": -0.0002, "mesh_max_z": 1.3394, "hand_socket": {"L": [0.679, -0.66, 0.556], "R": [-0.679, -0.699, 0.563]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f07": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": 0.2067, "R": 0.2163}, "mesh_min_z": -0.0012, "mesh_max_z": 1.2826, "hand_socket": {"L": [0.706, -0.638, 0.325], "R": [-0.706, -0.677, 0.325]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f08": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.0898, "R": -0.0901}, "mesh_min_z": -0.0901, "mesh_max_z": 1.2067, "hand_socket": {"L": [0.74, -0.61, 0.036], "R": [-0.74, -0.65, 0.026]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f10": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1197, "R": -0.1198}, "mesh_min_z": -0.1198, "mesh_max_z": 1.1882, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f15": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1366, "R": -0.1261}, "mesh_min_z": -0.1366, "mesh_max_z": 1.2333, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f20": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1167, "R": -0.1148}, "mesh_min_z": -0.1167, "mesh_max_z": 1.1861, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f28": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1103, "R": -0.1114}, "mesh_min_z": -0.1114, "mesh_max_z": 1.1784, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f30": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1164, "R": -0.1098}, "mesh_min_z": -0.1164, "mesh_max_z": 1.2695, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f38": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": -0.1284, "R": -0.12}, "mesh_min_z": -0.1284, "mesh_max_z": 1.2341, "hand_socket": {"L": [0.74, -0.61, 0.002], "R": [-0.74, -0.65, -0.007]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f42": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": 0.1587, "R": 0.1829}, "mesh_min_z": -0.0009, "mesh_max_z": 1.3026, "hand_socket": {"L": [0.68, -0.56, 0.26], "R": [-0.68, -0.6, 0.26]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}, "f46": {"reach_err": {"L_arm": 0.0, "L_leg": 0.0, "R_arm": 0.0, "R_leg": 0.0}, "slab_min_z": {"L": 0.0433, "R": 0.0544}, "mesh_min_z": -0.0014, "mesh_max_z": 1.2764, "hand_socket": {"L": [0.6, -0.6, 0.152], "R": [-0.6, -0.66, 0.107]}, "ankle": {"L": [0.55, 0.64, 0.055], "R": [-0.53, 0.53, 0.098]}}}
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

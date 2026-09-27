@@ -1,0 +1,175 @@
+{
+  "scale": 1.0,
+  "poses": {
+    "rest": {
+      "shell_edge_ratio_range": [
+        1.0,
+        1.0
+      ],
+      "body_edge_ratio_p01_p99": [
+        1.0,
+        1.0
+      ],
+      "body_edge_ratio_min_max": [
+        1.0,
+        1.0
+      ],
+      "edges_stretched_over_2x": 0,
+      "edges_squashed_under_0.5x": 0,
+      "min_z_m": 0.0
+    },
+    "combined": {
+      "shell_edge_ratio_range": [
+        0.9995,
+        1.0009
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.671,
+        3.296
+      ],
+      "body_edge_ratio_min_max": [
+        0.207,
+        25.566
+      ],
+      "edges_stretched_over_2x": 407,
+      "edges_squashed_under_0.5x": 34,
+      "min_z_m": 0.0056
+    },
+    "shells_15": {
+      "shell_edge_ratio_range": [
+        0.9996,
+        1.0009
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.843,
+        2.164
+      ],
+      "body_edge_ratio_min_max": [
+        0.287,
+        12.951
+      ],
+      "edges_stretched_over_2x": 174,
+      "edges_squashed_under_0.5x": 1,
+      "min_z_m": 0.0
+    },
+    "shells_25": {
+      "shell_edge_ratio_range": [
+        0.9995,
+        1.0009
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.752,
+        3.131
+      ],
+      "body_edge_ratio_min_max": [
+        0.32,
+        21.981
+      ],
+      "edges_stretched_over_2x": 382,
+      "edges_squashed_under_0.5x": 5,
+      "min_z_m": 0.0
+    },
+    "shells_45": {
+      "shell_edge_ratio_range": [
+        0.9994,
+        1.0008
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.622,
+        5.071
+      ],
+      "body_edge_ratio_min_max": [
+        0.128,
+        39.48
+      ],
+      "edges_stretched_over_2x": 925,
+      "edges_squashed_under_0.5x": 63,
+      "min_z_m": 0.0
+    },
+    "shells_clap": {
+      "shell_edge_ratio_range": [
+        0.9997,
+        1.0007
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.78,
+        1.102
+      ],
+      "body_edge_ratio_min_max": [
+        0.138,
+        6.308
+      ],
+      "edges_stretched_over_2x": 38,
+      "edges_squashed_under_0.5x": 18,
+      "min_z_m": 0.0
+    },
+    "head_lunge": {
+      "shell_edge_ratio_range": [
+        0.9993,
+        1.0002
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.897,
+        1.839
+      ],
+      "body_edge_ratio_min_max": [
+        0.24,
+        17.655
+      ],
+      "edges_stretched_over_2x": 139,
+      "edges_squashed_under_0.5x": 1,
+      "min_z_m": -0.0539
+    },
+    "ik_steps": {
+      "shell_edge_ratio_range": [
+        1.0,
+        1.0
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.74,
+        1.383
+      ],
+      "body_edge_ratio_min_max": [
+        0.085,
+        8.087
+      ],
+      "edges_stretched_over_2x": 17,
+      "edges_squashed_under_0.5x": 18,
+      "min_z_m": 0.0085
+    },
+    "walk_twist": {
+      "shell_edge_ratio_range": [
+        0.9993,
+        1.0006
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.701,
+        1.271
+      ],
+      "body_edge_ratio_min_max": [
+        0.246,
+        3.879
+      ],
+      "edges_stretched_over_2x": 9,
+      "edges_squashed_under_0.5x": 20,
+      "min_z_m": -0.0422
+    },
+    "hind_lift": {
+      "shell_edge_ratio_range": [
+        0.9994,
+        1.0008
+      ],
+      "body_edge_ratio_p01_p99": [
+        0.793,
+        1.28
+      ],
+      "body_edge_ratio_min_max": [
+        0.333,
+        4.865
+      ],
+      "edges_stretched_over_2x": 8,
+      "edges_squashed_under_0.5x": 5,
+      "min_z_m": -0.0363
+    }
+  }
+}

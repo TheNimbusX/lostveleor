@@ -1,0 +1,5 @@
+{"Idle": {"frames": [0, 22, 45], "views": ["game"]},
+ "Walk": {"frames": [0, 4, 8, 12], "views": ["game"]},
+ "Slam": {"frames": [0, 8, 12, 15, 24, 36, 60, 66, 72], "views": ["game"], "ortho": 4.2, "center": [0, 0, 1.0]},
+ "Hit": {"frames": [0, 3, 8], "views": ["game"]},
+ "Death": {"frames": [10, 19, 25, 32, 45], "views": ["game"]}}

@@ -1,0 +1,222 @@
+{
+ "fbx": "unity_package/ForestRootSnarer.fbx",
+ "baseline": "work/r01_approved/ForestRootSnarer_r01.fbx",
+ "fbx_version": 7400,
+ "time_mode": 6,
+ "custom_frame_rate": 30.0,
+ "fps_ok": true,
+ "stacks": [
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Mend",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Walk"
+ ],
+ "stacks_exact": true,
+ "stack_frame_ranges": {
+  "ForestRootSnarer_Idle": [
+   0.0,
+   60.0
+  ],
+  "ForestRootSnarer_Walk": [
+   0.0,
+   16.0
+  ],
+  "ForestRootSnarer_Slam": [
+   0.0,
+   72.0
+  ],
+  "ForestRootSnarer_Hit": [
+   0.0,
+   12.0
+  ],
+  "ForestRootSnarer_Death": [
+   0.0,
+   45.0
+  ],
+  "ForestRootSnarer_Mend": [
+   0.0,
+   50.0
+  ]
+ },
+ "ranges_match_export_json": true,
+ "keys": {
+  "ForestRootSnarer_Idle": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    60.0
+   ]
+  },
+  "ForestRootSnarer_Walk": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    16.0
+   ]
+  },
+  "ForestRootSnarer_Slam": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    72.0
+   ]
+  },
+  "ForestRootSnarer_Hit": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    12.0
+   ]
+  },
+  "ForestRootSnarer_Death": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    45.0
+   ]
+  },
+  "ForestRootSnarer_Mend": {
+   "keys_off_integer_frames": 0,
+   "key_span": [
+    0.0,
+    50.0
+   ]
+  }
+ },
+ "armature_null_animated_channels": {
+  "ForestRootSnarer_Idle": {},
+  "ForestRootSnarer_Walk": {},
+  "ForestRootSnarer_Slam": {},
+  "ForestRootSnarer_Hit": {},
+  "ForestRootSnarer_Death": {},
+  "ForestRootSnarer_Mend": {}
+ },
+ "root_bone_translation_range": {
+  "ForestRootSnarer_Idle": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  },
+  "ForestRootSnarer_Walk": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  },
+  "ForestRootSnarer_Slam": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  },
+  "ForestRootSnarer_Hit": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  },
+  "ForestRootSnarer_Death": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  },
+  "ForestRootSnarer_Mend": {
+   "d|X": 0.0,
+   "d|Y": 0.0,
+   "d|Z": 0.0
+  }
+ },
+ "bone_scale_key_range": {
+  "ForestRootSnarer_Idle": [
+   0.9999996423721313,
+   1.000000238418579
+  ],
+  "ForestRootSnarer_Walk": [
+   0.9999997019767761,
+   1.0000003576278687
+  ],
+  "ForestRootSnarer_Slam": [
+   0.9999997019767761,
+   1.0000003576278687
+  ],
+  "ForestRootSnarer_Hit": [
+   0.9999997019767761,
+   1.000000238418579
+  ],
+  "ForestRootSnarer_Death": [
+   0.9999996423721313,
+   1.0000003576278687
+  ],
+  "ForestRootSnarer_Mend": [
+   0.9999997019767761,
+   1.000000238418579
+  ]
+ },
+ "mesh": {
+  "geometries": 1,
+  "triangles": 24000,
+  "vertices": 11996
+ },
+ "skin": {
+  "clusters": 21,
+  "max_influences": 4,
+  "influence_histogram": {
+   "1": 2956,
+   "2": 2028,
+   "3": 2537,
+   "4": 4475
+  },
+  "weight_sum_range": [
+   1.0,
+   1.0
+  ]
+ },
+ "old_takes_vs_r01": {
+  "ForestRootSnarer_Idle": {
+   "curves": 198,
+   "identical_curves": 198,
+   "extra_curves_in_new": 0,
+   "keys": 12078,
+   "range_identical": true,
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Walk": {
+   "curves": 198,
+   "identical_curves": 198,
+   "extra_curves_in_new": 0,
+   "keys": 3366,
+   "range_identical": true,
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Slam": {
+   "curves": 198,
+   "identical_curves": 198,
+   "extra_curves_in_new": 0,
+   "keys": 14454,
+   "range_identical": true,
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Hit": {
+   "curves": 198,
+   "identical_curves": 198,
+   "extra_curves_in_new": 0,
+   "keys": 2574,
+   "range_identical": true,
+   "max_value_diff": 0.0
+  },
+  "ForestRootSnarer_Death": {
+   "curves": 198,
+   "identical_curves": 198,
+   "extra_curves_in_new": 0,
+   "keys": 9108,
+   "range_identical": true,
+   "max_value_diff": 0.0
+  }
+ },
+ "old_takes_bit_identical": true,
+ "added_takes": [
+  "ForestRootSnarer_Mend"
+ ],
+ "mesh_uv_normals_skin_bind_identical": true,
+ "static_items_compared": 111,
+ "static_differing": []
+}

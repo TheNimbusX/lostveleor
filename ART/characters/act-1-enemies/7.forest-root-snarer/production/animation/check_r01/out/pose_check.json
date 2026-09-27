@@ -1,0 +1,673 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\check_r01\\..\\unity_package\\ForestRootSnarer.fbx",
+ "scene_fps": 30.0,
+ "actions": [
+  "ForestRootSnarer_Death",
+  "ForestRootSnarer_Hit",
+  "ForestRootSnarer_Idle",
+  "ForestRootSnarer_Mend",
+  "ForestRootSnarer_Slam",
+  "ForestRootSnarer_Walk"
+ ],
+ "armature_object": {
+  "location": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "rotation": [
+   -1.6292067073209182e-07,
+   0.0,
+   0.0
+  ],
+  "scale": [
+   1.0,
+   1.0,
+   1.0
+  ]
+ },
+ "mesh": {
+  "triangles": 24000,
+  "vertices": 11996,
+  "max_influences": 4,
+  "region_sizes": {
+   "slab_L": 1554,
+   "slab_R": 1278,
+   "hind_L": 112,
+   "hind_R": 217,
+   "body": 4971,
+   "head": 1628,
+   "all": 11996
+  }
+ },
+ "rest": {
+  "root_head": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "facing_head_minus_pelvis": [
+   0.0,
+   -0.89,
+   0.04
+  ],
+  "L_arm_upper_x": 0.4
+ },
+ "ForestRootSnarer_Idle": {
+  "frame_range": [
+   0,
+   60
+  ],
+  "expected": [
+   0,
+   60
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -1.72,
+  "min_z_mm_per_region": {
+   "slab_L": -0.19,
+   "slab_R": -0.04,
+   "hind_L": 1.22,
+   "hind_R": -1.72,
+   "body": 238.86,
+   "head": 213.54
+  },
+  "edge_stretch_max": 25.8275,
+  "edge_stretch_min": 0.1311,
+  "edge_stretch_worst_at": {
+   "frame": 22,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0003,
+  "loop_seam": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "contact_slide_mm": {
+   "slab_L_3mm": 13.71,
+   "slab_L_1cm": 13.28,
+   "slab_R_3mm": 10.93,
+   "slab_R_1cm": 20.24,
+   "hind_L_3mm": 1.12,
+   "hind_L_1cm": 13.89,
+   "hind_R_3mm": 4.46,
+   "hind_R_1cm": 4.85
+  },
+  "contact_min_z_mm_frame0": {
+   "slab_L": -0.1,
+   "slab_R": 0.0,
+   "hind_L": 1.6,
+   "hind_R": -0.5
+  }
+ },
+ "ForestRootSnarer_Walk": {
+  "frame_range": [
+   0,
+   16
+  ],
+  "expected": [
+   0,
+   16
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -0.07,
+  "min_z_mm_per_region": {
+   "slab_L": -0.07,
+   "slab_R": -0.02,
+   "hind_L": -0.03,
+   "hind_R": -0.0,
+   "body": 229.02,
+   "head": 345.9
+  },
+  "edge_stretch_max": 57.6555,
+  "edge_stretch_min": 0.0173,
+  "edge_stretch_worst_at": {
+   "frame": 6,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "loop_seam": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "start_vs_idle0": {
+   "bone_pos_mm": 423.202,
+   "bone_rot_deg": 63.3115,
+   "vertex_mm": 470.85
+  },
+  "contacts": {
+   "slab_L": {
+    "plant_runs_frames": [
+     [
+      0,
+      5
+     ]
+    ],
+    "ground_speed_mps_3mm": 2.406,
+    "max_slip_per_frame_cm_3mm": 0.15,
+    "max_slide_during_plant_cm_3mm": 0.15,
+    "ground_speed_mps_1cm": 2.404,
+    "max_slip_per_frame_cm_1cm": 0.15,
+    "max_slide_during_plant_cm_1cm": 0.37,
+    "min_z_mm": -0.1,
+    "socket_dy_per_frame_m": [
+     0.0736,
+     0.0714,
+     0.0698,
+     0.072,
+     0.0688
+    ]
+   },
+   "slab_R": {
+    "plant_runs_frames": [
+     [
+      8,
+      13
+     ]
+    ],
+    "ground_speed_mps_3mm": 2.394,
+    "max_slip_per_frame_cm_3mm": 0.49,
+    "max_slide_during_plant_cm_3mm": 0.5,
+    "ground_speed_mps_1cm": 2.332,
+    "max_slip_per_frame_cm_1cm": 1.01,
+    "max_slide_during_plant_cm_1cm": 2.16,
+    "min_z_mm": -0.0,
+    "socket_dy_per_frame_m": [
+     0.079,
+     0.0862,
+     0.0769,
+     0.0778,
+     0.0719
+    ]
+   },
+   "hind_L": {
+    "plant_runs_frames": [
+     [
+      0,
+      2
+     ],
+     [
+      6,
+      10
+     ],
+     [
+      14,
+      18
+     ]
+    ],
+    "ground_speed_mps_3mm": 2.411,
+    "max_slip_per_frame_cm_3mm": 0.15,
+    "max_slide_during_plant_cm_3mm": 0.34,
+    "ground_speed_mps_1cm": 2.288,
+    "max_slip_per_frame_cm_1cm": 1.38,
+    "max_slide_during_plant_cm_1cm": 4.9,
+    "min_z_mm": -0.0
+   },
+   "hind_R": {
+    "plant_runs_frames": [
+     [
+      2,
+      6
+     ],
+     [
+      10,
+      14
+     ]
+    ],
+    "ground_speed_mps_3mm": 2.38,
+    "max_slip_per_frame_cm_3mm": 0.43,
+    "max_slide_during_plant_cm_3mm": 0.93,
+    "ground_speed_mps_1cm": 2.305,
+    "max_slip_per_frame_cm_1cm": 0.78,
+    "max_slide_during_plant_cm_1cm": 2.19,
+    "min_z_mm": -0.0
+   }
+  }
+ },
+ "ForestRootSnarer_Slam": {
+  "frame_range": [
+   0,
+   72
+  ],
+  "expected": [
+   0,
+   72
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -221.78,
+  "min_z_mm_per_region": {
+   "slab_L": -221.78,
+   "slab_R": -175.96,
+   "hind_L": -3.93,
+   "hind_R": -2.02,
+   "body": 47.8,
+   "head": 9.76
+  },
+  "edge_stretch_max": 96.5445,
+  "edge_stretch_min": 0.0592,
+  "edge_stretch_worst_at": {
+   "frame": 10,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0003,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "timing": {
+   "contact_frame_both_slabs": 15,
+   "first_slab_touch": 15,
+   "slab_min_z_cm_at": {
+    "10": [
+     110.3,
+     119.7
+    ],
+    "11": [
+     110.2,
+     120.0
+    ],
+    "12": [
+     110.6,
+     119.8
+    ],
+    "13": [
+     99.1,
+     101.2
+    ],
+    "14": [
+     47.3,
+     44.8
+    ],
+    "15": [
+     -11.0,
+     -10.9
+    ],
+    "16": [
+     -16.6,
+     -13.5
+    ]
+   },
+   "overhead_peak_frame": 10,
+   "overhead_frames_within_5cm_of_peak": [
+    10,
+    11,
+    12
+   ],
+   "socket_max_height_m": 1.949,
+   "pinned_socket_drift_mm_until_60": 54.42,
+   "pinned_socket_drift_mm_16_60": 0.0,
+   "first_frame_socket_moves_5mm": 16,
+   "first_frame_slabs_fully_above_ground": 61,
+   "slab_depth_cm_pinned": [
+    -22.2,
+    -10.9
+   ],
+   "pelvis_heave_peak_frame_24_52": 32,
+   "pelvis_z_cm_30_40": [
+    49.1,
+    49.4,
+    49.5,
+    49.5,
+    49.2,
+    48.4,
+    46.9,
+    47.4,
+    47.6,
+    47.2,
+    47.2
+   ],
+   "body_head_min_z_mm": 9.8,
+   "body_head_min_z_frame": 40
+  }
+ },
+ "ForestRootSnarer_Hit": {
+  "frame_range": [
+   0,
+   12
+  ],
+  "expected": [
+   0,
+   12
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -0.5,
+  "min_z_mm_per_region": {
+   "slab_L": -0.14,
+   "slab_R": -0.07,
+   "hind_L": 1.62,
+   "hind_R": -0.5,
+   "body": 260.48,
+   "head": 292.35
+  },
+  "edge_stretch_max": 49.1948,
+  "edge_stretch_min": 0.2358,
+  "edge_stretch_worst_at": {
+   "frame": 3,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "timing": {
+   "peak_frame": 3,
+   "head_disp_cm": [
+    0.0,
+    13.1,
+    17.6,
+    17.7,
+    15.8,
+    13.2,
+    10.6,
+    8.2,
+    5.6,
+    3.1,
+    1.2,
+    0.3,
+    0.0
+   ]
+  }
+ },
+ "ForestRootSnarer_Death": {
+  "frame_range": [
+   0,
+   45
+  ],
+  "expected": [
+   0,
+   45
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -8.73,
+  "min_z_mm_per_region": {
+   "slab_L": -0.14,
+   "slab_R": -8.73,
+   "hind_L": -4.9,
+   "hind_R": -6.48,
+   "body": -5.24,
+   "head": -3.94
+  },
+  "edge_stretch_max": 44.6965,
+  "edge_stretch_min": 0.0924,
+  "edge_stretch_worst_at": {
+   "frame": 45,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.075,
+   "bone_rot_deg": 0.0276,
+   "vertex_mm": 0.089
+  },
+  "landing": {
+   "first_frame_belly_within_2cm": 25,
+   "body_min_z_cm": [
+    26.4,
+    27.2,
+    27.7,
+    27.9,
+    27.8,
+    27.6,
+    27.2,
+    26.9,
+    26.8,
+    26.8,
+    26.7,
+    26.4,
+    25.7,
+    16.1,
+    15.8,
+    14.9,
+    13.7,
+    12.6,
+    11.8,
+    11.4,
+    11.2,
+    10.6,
+    9.5,
+    8.0,
+    5.0,
+    -0.3,
+    1.0,
+    1.8,
+    2.1,
+    1.9,
+    1.5,
+    0.7,
+    -0.3,
+    -0.3,
+    -0.3,
+    -0.4,
+    -0.4,
+    -0.4,
+    -0.4,
+    -0.4,
+    -0.5,
+    -0.5,
+    -0.5,
+    -0.5,
+    -0.5,
+    -0.5
+   ],
+   "still_from_32_max_bone_step_mm": 0.25,
+   "end_min_z_mm": {
+    "slab_L": -0.1,
+    "slab_R": -0.1,
+    "hind_L": -2.4,
+    "hind_R": -2.2,
+    "body": -5.2,
+    "head": -3.9,
+    "all": -5.2
+   },
+   "end_max_z_m": 1.052
+  }
+ },
+ "ForestRootSnarer_Mend": {
+  "frame_range": [
+   0,
+   50
+  ],
+  "expected": [
+   0,
+   50
+  ],
+  "range_ok": true,
+  "root_travel_mm": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "root_head_z_mm": 0.0,
+  "bone_scale_max_dev": 1e-06,
+  "min_z_mm_all": -143.47,
+  "min_z_mm_per_region": {
+   "slab_L": -143.47,
+   "slab_R": -129.66,
+   "hind_L": -2.19,
+   "hind_R": -1.71,
+   "body": 121.41,
+   "head": 46.04
+  },
+  "edge_stretch_max": 58.4463,
+  "edge_stretch_min": 0.1145,
+  "edge_stretch_worst_at": {
+   "frame": 6,
+   "bones": [
+    "L_clavicle"
+   ]
+  },
+  "rigid_edges": 8687,
+  "rigid_edge_len_dev_mm": 0.0002,
+  "start_vs_idle0": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "end_vs_idle0": {
+   "bone_pos_mm": 0.0,
+   "bone_rot_deg": 0.0,
+   "vertex_mm": 0.0
+  },
+  "timing": {
+   "contact_frame_both_slabs": 8,
+   "lift_peak_frame": 5,
+   "slab_min_z_cm_at": {
+    "5": [
+     60.9,
+     64.8
+    ],
+    "6": [
+     53.3,
+     58.0
+    ],
+    "7": [
+     31.8,
+     29.4
+    ],
+    "8": [
+     -9.0,
+     -9.0
+    ],
+    "9": [
+     -11.2,
+     -11.3
+    ],
+    "10": [
+     -12.0,
+     -12.0
+    ],
+    "30": [
+     -12.8,
+     -12.6
+    ],
+    "38": [
+     -13.3,
+     -12.0
+    ],
+    "39": [
+     -0.1,
+     1.6
+    ],
+    "40": [
+     9.2,
+     11.0
+    ]
+   },
+   "pinned_socket_drift_mm_10_38": 0.21,
+   "first_frame_slabs_fully_above_ground_after_30": 40,
+   "slab_depth_cm_pinned_8_38": [
+    -14.3,
+    -9.0
+   ],
+   "dome_top_cm_8_38": [
+    120.7,
+    119.3,
+    118.8,
+    119.5,
+    121.0,
+    122.6,
+    124.0,
+    124.5,
+    123.9,
+    122.3,
+    120.4,
+    118.7,
+    118.0,
+    119.1,
+    121.3,
+    123.5,
+    124.5,
+    123.3,
+    120.7,
+    117.9,
+    116.6,
+    128.4,
+    132.0,
+    129.4,
+    124.4,
+    121.5,
+    121.9,
+    122.8,
+    123.9,
+    124.7,
+    125.1
+   ],
+   "dome_top_peak_frame_20_40": 30,
+   "pelvis_z_peak_frame_20_40": 30,
+   "channel_pulse_top_extremes_cm": {
+    "swell_15": 124.5,
+    "push_20": 118.0,
+    "swell_24": 124.5,
+    "push_28": 116.6,
+    "release_30": 132.0
+   },
+   "body_head_min_z_mm": 46.0,
+   "body_head_min_z_frame": 28
+  }
+ }
+}

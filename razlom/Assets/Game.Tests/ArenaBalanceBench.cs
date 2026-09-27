@@ -28,19 +28,16 @@ namespace Game.Tests
     /// вывод теста, строки по аренам — в artifacts/balance/bench-&lt;дата&gt;.csv.
     /// Переменные окружения: ARENA_BENCH_SEEDS (20), ARENA_BENCH_LEVELS (1,5,10),
     /// ARENA_BENCH_MODES (carry,immortal), ARENA_BENCH_OUT — папка для CSV,
-    /// ARENA_BENCH_DODGE_TICKS (12) — за сколько тиков до удара бот видит метку,
-    /// ARENA_BENCH_STAGED=1 — план с новыми видами (All + Staged и правила элит
-    /// релиза, ArenaRunPlan.Roll(..., staged: true)); CSV тогда bench-staged-*.
-    /// Урон по герою делится по видам, и у Шипомёта, Корнехвата, Расщепня и его
-    /// детёнышей — свои столбцы.
+    /// ARENA_BENCH_DODGE_TICKS (12) — за сколько тиков до удара бот видит метку
+    /// (и шип выстрела Шипомёта: метки у него нет, бот уходит с его пути).
+    /// Корнехват, Расщепень и Шипомёт в игре с 27.09 — план забега тот же, что
+    /// у игры. Урон по герою делится по видам, и у Шипомёта, Корнехвата,
+    /// Расщепня и его детёнышей — свои столбцы.
     /// </summary>
     public class ArenaBalanceBench
     {
         /// <summary>Восемь арен и босс — лес по документу владельца (стадия 6 плана).</summary>
         private const int ArenaCount = 9;
-
-        /// <summary>ARENA_BENCH_STAGED=1: встречи из пула с новыми видами.</summary>
-        private static readonly bool Staged = Environment.GetEnvironmentVariable("ARENA_BENCH_STAGED") == "1";
 
         /// <summary>Цели владельца, секунды боя: А1…А8 и босс.</summary>
         private static readonly int[,] TargetSeconds =
@@ -73,8 +70,7 @@ namespace Game.Tests
 
             var report = new StringBuilder();
             report.AppendLine("ArenaBalanceBench: " + seeds + " seeds, camp levels " + string.Join("/", levels)
-                + ", " + clock.Elapsed.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s wall"
-                + (Staged ? ", STAGED plan (All + Staged)" : ""));
+                + ", " + clock.Elapsed.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s wall");
             foreach (string mode in new[] { "carry", "immortal" })
                 foreach (int level in levels)
                     AppendTable(report, records, mode, level, seeds);
@@ -108,7 +104,6 @@ namespace Game.Tests
             session.Camp.DeveloperSetLevel(campLevel);
             session.SyncPlayerLevel();
             session.EnterRift();
-            if (Staged) UseStagedPlan(session.Run, meadow);
             var bot = new ArenaBot(session);
             var records = new List<ArenaRecord>();
             ArenaRecord arena = null;
@@ -207,20 +202,6 @@ namespace Game.Tests
                 if (immortal && e.Alive[Simulation.PlayerId]) e.Health[Simulation.PlayerId] = e.MaxHealth[Simulation.PlayerId];
             }
             return records;
-        }
-
-        /// <summary>
-        /// Игра бросает план без новых видов, и RiftRun своего переключателя не
-        /// имеет. Бенч подменяет план сразу после входа тем же сидом, но с
-        /// staged: на А1 оба плана ставят E01, так что первая арена уже та, а
-        /// дальше встречи, размер арен в маршрутах и хеш забега идут от нового.
-        /// </summary>
-        private static void UseStagedPlan(RiftRun run, LocationDefinition meadow)
-        {
-            var plan = ArenaRunPlan.Roll(run.Sim.Rng.MasterSeed, meadow, staged: true);
-            if (run.Plan == null || run.Depth != 1 || !ReferenceEquals(plan.TemplateFor(1), run.CurrentEncounter))
-                throw new InvalidOperationException("The staged plan must keep the first arena of the run.");
-            typeof(RiftRun).GetProperty(nameof(RiftRun.Plan)).SetValue(run, plan);
         }
 
         private static ArenaRecord StartRecord(GameSession session, int campLevel, ulong seed, bool immortal)
@@ -459,7 +440,7 @@ namespace Game.Tests
             var bossRows = rows.FindAll(r => r.Arena == ArenaCount && r.Cleared);
             int died = rows.FindAll(r => r.Died).Count, timeouts = rows.FindAll(r => r.TimedOut).Count;
             // Новые виды — отдельными долями, и только если они вообще били: в
-            // забеге без Staged строка та же, что была.
+            // забеге без них строка та же, что была.
             var sources = new[] { "guardian", "swarm", "bud", "boss", "other", "thorncaster", "snarer", "splitter", "splitling" };
             var shares = new double[sources.Length];
             foreach (var r in rows)
@@ -533,7 +514,7 @@ namespace Game.Tests
             string folder = Environment.GetEnvironmentVariable("ARENA_BENCH_OUT");
             if (string.IsNullOrEmpty(folder)) folder = Path.Combine(RepositoryRoot(), "artifacts", "balance");
             Directory.CreateDirectory(folder);
-            string path = Path.Combine(folder, (Staged ? "bench-staged-" : "bench-")
+            string path = Path.Combine(folder, "bench-"
                 + DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + ".csv");
             var csv = new StringBuilder();
             // Столбцы новых видов — в конце: прежние стоят на своих местах.
@@ -772,7 +753,7 @@ namespace Game.Tests
             /// <summary>
             /// Всё, что нарисовано на земле и ещё не упало: общий список меток
             /// (сектор Хранителя и метки Вендиго/Камнекопыта — у тех свой вид, но
-            /// игрок их тоже видит) и точки падения плодов.
+            /// игрок их тоже видит), точки падения плодов и путь шипа Шипомёта.
             /// </summary>
             private void CollectThreats(Simulation sim)
             {
@@ -783,10 +764,43 @@ namespace Game.Tests
                     if (!sim.TryGetTelegraph(slot, out EnemyTelegraph t) || !t.IsActive) continue;
                     AddThreat(t, t.ImpactTick - sim.Tick);
                 }
+                CollectThornShots(sim);
                 if (sim.ForestFruitActiveCount == 0) return;
                 for (int slot = 0; slot < sim.ForestFruitCapacity; slot++)
                     if (sim.TryGetForestFruit(slot, out ForestFruitState fruit))
                         AddThreat(EnemyTelegraph.Circle(fruit.Target, fruit.Radius), fruit.ImpactTick - sim.Tick);
+            }
+
+            /// <summary>
+            /// Шип выстрела Шипомёта метки не рисует: живой игрок видит бросок
+            /// (замах 21 тик, стрелок смотрит на него) и сам шип. Угроза — ещё не
+            /// пройденная часть пути шириной в толщину шипа; срок — когда остриё
+            /// дойдёт до героя. Та же реакция DodgeTicks, что и на метки.
+            /// </summary>
+            private void CollectThornShots(Simulation sim)
+            {
+                EntityStore e = sim.Entities;
+                FixVec2 hero = e.Position[Simulation.PlayerId];
+                Fix64 body = e.BodyRadius[Simulation.PlayerId];
+                for (int id = 1; id < e.Count; id++)
+                {
+                    if (e.Kind[id] != EnemyKind.ForestThorncaster) continue;
+                    ThornShotState shot;
+                    if (!sim.TryGetThornShot(id, out shot))
+                    {
+                        // Ещё в замахе: путь уже известен — направление зафиксировано в его начале.
+                        if (!sim.TryGetThorncasterAction(id, out ThorncasterState a) || a.Action != ThornAction.Shot
+                            || a.Erupted > 0) continue;
+                        shot = new ThornShotState
+                        {
+                            Serial = a.Serial, ReleaseTick = a.ImpactTick, Origin = a.Origin + a.Direction * Simulation.ThornShotStartOffset,
+                            Direction = a.Direction, Length = sim.ThornShotFlightLength(a.Origin, a.Direction),
+                        };
+                    }
+                    Fix64 along = FixVec2.Dot(hero - shot.Origin, shot.Direction) - body;
+                    int arrive = shot.ReleaseTick + Math.Max(0, ((along / Simulation.ThornShotSpeed).ToInt()));
+                    AddThreat(Simulation.ThornShotSweep(in shot, shot.Travelled, shot.Length), arrive - sim.Tick);
+                }
             }
 
             private void AddThreat(in EnemyTelegraph shape, int left)

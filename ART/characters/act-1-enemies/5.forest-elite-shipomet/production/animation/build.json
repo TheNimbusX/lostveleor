@@ -1,0 +1,200 @@
+{
+ "rig": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\rig\\ForestThorncaster_Rig.blend",
+ "fps": 30,
+ "contact_front_claws": {
+  "Left": [
+   0.5010143518447876,
+   -0.2148391753435135,
+   0.0
+  ],
+  "Right": [
+   -0.4064303934574127,
+   -0.283419668674469,
+   0.0
+  ]
+ },
+ "takes": {
+  "Idle": {
+   "frames": [
+    0,
+    60
+   ],
+   "loop": true,
+   "contact": null,
+   "events": {},
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {}
+  },
+  "Walk": {
+   "frames": [
+    0,
+    24
+   ],
+   "loop": true,
+   "contact": null,
+   "events": {},
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {},
+   "speed_mps": 2.2,
+   "cycle_m": 1.7600000000000002
+  },
+  "LineCast": {
+   "frames": [
+    0,
+    75
+   ],
+   "loop": false,
+   "contact": 24,
+   "events": {
+    "raise_end": 18,
+    "contact": 24,
+    "buried_hold": [
+     26,
+     60
+    ],
+    "pull_out": [
+     60,
+     75
+    ]
+   },
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0041,
+   "ik_short_frames": {},
+   "tips_at_contact": {
+    "L": [
+     0.39999985694885254,
+     -0.8399999141693115,
+     -2.384185791015625e-07
+    ],
+    "R": [
+     -0.36999985575675964,
+     -0.8000002503395081,
+     -2.682209014892578e-07
+    ]
+   },
+   "tips_before_contact_min_z": 0.8042774200439453,
+   "ground_targets": {
+    "L": [
+     0.4,
+     -0.84,
+     0.0
+    ],
+    "R": [
+     -0.37,
+     -0.8,
+     0.0
+    ]
+   }
+  },
+  "Burst": {
+   "frames": [
+    0,
+    36
+   ],
+   "loop": false,
+   "contact": 21,
+   "events": {
+    "curl": [
+     0,
+     18
+    ],
+    "release": 21,
+    "hold": [
+     21,
+     27
+    ],
+    "recover": [
+     27,
+     36
+    ]
+   },
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {}
+  },
+  "Shot": {
+   "frames": [
+    0,
+    33
+   ],
+   "loop": false,
+   "contact": 21,
+   "events": {
+    "cock": [
+     0,
+     15
+    ],
+    "hold": [
+     15,
+     18
+    ],
+    "release": 21,
+    "follow": [
+     21,
+     25
+    ],
+    "recover": [
+     25,
+     33
+    ]
+   },
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {},
+   "muzzle_world_at_release": [
+    -0.11999976634979248,
+    -1.4200003147125244,
+    1.899999976158142
+   ],
+   "throw_dir_world": [
+    0.0,
+    -0.9982048273086548,
+    -0.05989228934049606
+   ]
+  },
+  "Hit": {
+   "frames": [
+    0,
+    12
+   ],
+   "loop": false,
+   "contact": null,
+   "events": {
+    "impact": 0,
+    "peak": 3
+   },
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {}
+  },
+  "Death": {
+   "frames": [
+    0,
+    48
+   ],
+   "loop": false,
+   "contact": null,
+   "events": {
+    "stagger": [
+     0,
+     11
+    ],
+    "knees": 22,
+    "falls": [
+     29,
+     39
+    ],
+    "ground": 39,
+    "still": [
+     44,
+     48
+    ]
+   },
+   "arm_ik_shortfall_max_m": 0.0,
+   "leg_ik_shortfall_max_m": 0.0,
+   "ik_short_frames": {}
+  }
+ }
+}

@@ -1,0 +1,47 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\model\\ForestRootSnarer_24k_candidate.blend",
+  "heat_A": [
+    "FINISHED"
+  ],
+  "heat_B": [
+    "FINISHED"
+  ],
+  "cfg": {
+    "clav_r0": 0.14,
+    "clav_r1": 0.3,
+    "thigh_z0": 0.44,
+    "thigh_z1": 0.56,
+    "slab_x0": 0.42,
+    "slab_x1": 0.5,
+    "jaw_z0": 0.4,
+    "jaw_z1": 0.47,
+    "smooth_iterations": 6
+  },
+  "rule_stats": {
+    "rigid_slab": {
+      "L": 1387,
+      "R": 1042
+    },
+    "jaw": 244
+  },
+  "heat_A_unweighted": 0,
+  "heat_B_unweighted": 0,
+  "ik": {
+    "IK_L_hand": {
+      "rest_drift_m_if_enabled": 0.00028,
+      "pole_angle_deg": 111.0
+    },
+    "IK_L_foot": {
+      "rest_drift_m_if_enabled": 0.00031,
+      "pole_angle_deg": -7.5
+    },
+    "IK_R_hand": {
+      "rest_drift_m_if_enabled": 0.00112,
+      "pole_angle_deg": 68.5
+    },
+    "IK_R_foot": {
+      "rest_drift_m_if_enabled": 0.00018,
+      "pole_angle_deg": -151.0
+    }
+  }
+}

@@ -1,0 +1,213 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\animation\\unity_package\\ForestThorncaster.fbx",
+ "source_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\animation\\ForestThorncaster_Anim_r01.blend",
+ "source_sha256": "8240e4d6bc468bd655f1479e499b0a1baa5eee92235392e5db5cfe31594b2116",
+ "fps": 30,
+ "root_motion": false,
+ "root": "armature object at origin, never animated; Hips XY sway only (in place)",
+ "axes": "Blender -Y forward, Z up -> FBX axis_forward=-Z, axis_up=Y -> Unity +Z forward; Unity pos = (-x_b, z_b, -y_b)",
+ "triangles": 23999,
+ "deform_bones": 24,
+ "takes": {
+  "ForestThorncaster_Idle": {
+   "fbx_take": "ForestThorncaster_Idle",
+   "frames": [
+    0,
+    60
+   ],
+   "frame_count": 61,
+   "seconds": 2.0,
+   "loop": true,
+   "events": {}
+  },
+  "ForestThorncaster_Walk": {
+   "fbx_take": "ForestThorncaster_Walk",
+   "frames": [
+    0,
+    24
+   ],
+   "frame_count": 25,
+   "seconds": 0.8,
+   "loop": true,
+   "events": {},
+   "speed_mps": 2.2,
+   "cycle_m": 1.7600000000000002,
+   "planted_claw_slip_per_stance_m_est": 0.017797793425557575
+  },
+  "ForestThorncaster_LineCast": {
+   "fbx_take": "ForestThorncaster_LineCast",
+   "frames": [
+    0,
+    75
+   ],
+   "frame_count": 76,
+   "seconds": 2.5,
+   "loop": false,
+   "events": {
+    "raise_end": 18,
+    "contact": 24,
+    "buried_hold": [
+     26,
+     60
+    ],
+    "pull_out": [
+     60,
+     75
+    ]
+   },
+   "contact_frame": 24,
+   "contact_meaning": "both spike tips touch the ground (z=0) in front; sim: first ground spike erupts at tick 27",
+   "spike_tip_ground_points_blender": {
+    "L": [
+     0.4,
+     -0.84,
+     0.0
+    ],
+    "R": [
+     -0.37,
+     -0.8,
+     0.0
+    ]
+   }
+  },
+  "ForestThorncaster_Burst": {
+   "fbx_take": "ForestThorncaster_Burst",
+   "frames": [
+    0,
+    36
+   ],
+   "frame_count": 37,
+   "seconds": 1.2,
+   "loop": false,
+   "events": {
+    "curl": [
+     0,
+     18
+    ],
+    "release": 21,
+    "hold": [
+     21,
+     27
+    ],
+    "recover": [
+     27,
+     36
+    ]
+   },
+   "release_frame": 21,
+   "release_meaning": "explosive star pose (sim windup 21 ticks)"
+  },
+  "ForestThorncaster_Shot": {
+   "fbx_take": "ForestThorncaster_Shot",
+   "frames": [
+    0,
+    33
+   ],
+   "frame_count": 34,
+   "seconds": 1.1,
+   "loop": false,
+   "events": {
+    "cock": [
+     0,
+     15
+    ],
+    "hold": [
+     15,
+     18
+    ],
+    "release": 21,
+    "follow": [
+     21,
+     25
+    ],
+    "recover": [
+     25,
+     33
+    ]
+   },
+   "release_frame": 21,
+   "release_meaning": "thorn leaves the right arm-spike tip (sim windup 21 ticks)",
+   "muzzle": {
+    "bone": "RightHand",
+    "bone_local_offset_blender": [
+     0.0,
+     0.4995,
+     0.0
+    ],
+    "note": "tail of RightHand = tip of the right arm-spike; bone local +Y runs wrist->tip",
+    "world_blender_at_release": [
+     -0.12,
+     -1.42,
+     1.9
+    ],
+    "world_unity_at_release": [
+     0.12,
+     1.9,
+     1.42
+    ],
+    "spike_dir_blender": [
+     -0.0,
+     -0.9982,
+     -0.0599
+    ],
+    "spike_dir_unity": [
+     0.0,
+     -0.0599,
+     0.9982
+    ],
+    "tip_speed_into_release_mps": 16.04,
+    "socket_object": "Muzzle_RightSpike (child of bone RightHand, at its tail)"
+   }
+  },
+  "ForestThorncaster_Hit": {
+   "fbx_take": "ForestThorncaster_Hit",
+   "frames": [
+    0,
+    12
+   ],
+   "frame_count": 13,
+   "seconds": 0.4,
+   "loop": false,
+   "events": {
+    "impact": 0,
+    "peak": 3
+   }
+  },
+  "ForestThorncaster_Death": {
+   "fbx_take": "ForestThorncaster_Death",
+   "frames": [
+    0,
+    48
+   ],
+   "frame_count": 49,
+   "seconds": 1.6,
+   "loop": false,
+   "events": {
+    "stagger": [
+     0,
+     11
+    ],
+    "knees": 22,
+    "falls": [
+     29,
+     39
+    ],
+    "ground": 39,
+    "still": [
+     44,
+     48
+    ]
+   }
+  }
+ },
+ "textures": [
+  "ForestThorncaster_Color.png",
+  "ForestThorncaster_NormalGL.png",
+  "ForestThorncaster_ORM.png"
+ ],
+ "unity_notes": [
+  "Rig is an A-pose Meshy skeleton; Humanoid mapping in rig/rig_report.json (Spine02 is the lowest spine bone)",
+  "ORM map is not linked by the FBX material; connect textures/ForestThorncaster_ORM.png by hand",
+  "Generic rig works as-is; no root motion curves"
+ ]
+}

@@ -1,0 +1,240 @@
+{
+ "Idle": {
+  "LeftHand": [
+   9.1,
+   10
+  ],
+  "RightHand": [
+   10.4,
+   56
+  ],
+  "LeftForeArm": [
+   19.4,
+   8
+  ],
+  "RightForeArm": [
+   20.9,
+   57
+  ],
+  "LeftLeg": [
+   25.4,
+   14
+  ],
+  "RightLeg": [
+   25.7,
+   45
+  ],
+  "LeftFoot": [
+   12.9,
+   16
+  ],
+  "RightFoot": [
+   13.3,
+   45
+  ]
+ },
+ "Walk": {
+  "LeftHand": [
+   21.6,
+   3
+  ],
+  "RightHand": [
+   23.1,
+   16
+  ],
+  "LeftForeArm": [
+   31.6,
+   2
+  ],
+  "RightForeArm": [
+   35.1,
+   15
+  ],
+  "LeftLeg": [
+   93.4,
+   18
+  ],
+  "RightLeg": [
+   95.6,
+   6
+  ],
+  "LeftFoot": [
+   22.6,
+   10
+  ],
+  "RightFoot": [
+   24.6,
+   4
+  ]
+ },
+ "LineCast": {
+  "LeftHand": [
+   75.9,
+   9
+  ],
+  "RightHand": [
+   70.1,
+   9
+  ],
+  "LeftForeArm": [
+   120.0,
+   11
+  ],
+  "RightForeArm": [
+   122.6,
+   11
+  ],
+  "LeftLeg": [
+   119.1,
+   45
+  ],
+  "RightLeg": [
+   117.0,
+   45
+  ],
+  "LeftFoot": [
+   45.4,
+   44
+  ],
+  "RightFoot": [
+   43.4,
+   45
+  ]
+ },
+ "Burst": {
+  "LeftHand": [
+   117.3,
+   20
+  ],
+  "RightHand": [
+   109.7,
+   20
+  ],
+  "LeftForeArm": [
+   109.3,
+   20
+  ],
+  "RightForeArm": [
+   114.9,
+   20
+  ],
+  "LeftLeg": [
+   80.8,
+   18
+  ],
+  "RightLeg": [
+   80.6,
+   18
+  ],
+  "LeftFoot": [
+   37.4,
+   18
+  ],
+  "RightFoot": [
+   36.7,
+   18
+  ]
+ },
+ "Shot": {
+  "LeftHand": [
+   36.6,
+   26
+  ],
+  "RightHand": [
+   169.0,
+   9
+  ],
+  "LeftForeArm": [
+   108.1,
+   20
+  ],
+  "RightForeArm": [
+   154.9,
+   19
+  ],
+  "LeftLeg": [
+   37.6,
+   24
+  ],
+  "RightLeg": [
+   36.9,
+   23
+  ],
+  "LeftFoot": [
+   22.7,
+   25
+  ],
+  "RightFoot": [
+   25.3,
+   25
+  ]
+ },
+ "Hit": {
+  "LeftHand": [
+   38.2,
+   6
+  ],
+  "RightHand": [
+   39.0,
+   6
+  ],
+  "LeftForeArm": [
+   53.1,
+   3
+  ],
+  "RightForeArm": [
+   54.8,
+   6
+  ],
+  "LeftLeg": [
+   32.2,
+   3
+  ],
+  "RightLeg": [
+   30.4,
+   3
+  ],
+  "LeftFoot": [
+   14.2,
+   3
+  ],
+  "RightFoot": [
+   13.6,
+   3
+  ]
+ },
+ "Death": {
+  "LeftHand": [
+   94.0,
+   44
+  ],
+  "RightHand": [
+   114.5,
+   39
+  ],
+  "LeftForeArm": [
+   90.4,
+   38
+  ],
+  "RightForeArm": [
+   76.8,
+   2
+  ],
+  "LeftLeg": [
+   130.8,
+   19
+  ],
+  "RightLeg": [
+   129.5,
+   19
+  ],
+  "LeftFoot": [
+   60.5,
+   17
+  ],
+  "RightFoot": [
+   57.4,
+   17
+  ]
+ }
+}

@@ -1,0 +1,122 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Расщепень · анимация r01</title><style>
+:root{color-scheme:dark;--bg:#141b19;--panel:#202925;--line:#3b473e;--ink:#eae9df;--muted:#b3beb1;--accent:#cad69d;--red:#e24034}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 'Segoe UI',sans-serif}
+main{max-width:1500px;margin:auto;padding:30px 24px 65px}h1{font-size:36px;line-height:1.2;margin:8px 0 10px}
+h2{font-size:22px;margin:0}p{margin:8px 0;color:var(--muted)}.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent)}
+.top{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.badge{border:1px solid #647353;border-radius:30px;color:var(--accent);padding:8px 16px;white-space:nowrap}
+.bar{position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;margin:0 0 22px;
+background:var(--panel);border:1px solid var(--line);border-radius:12px}
+button,select{font:inherit;padding:7px 12px;background:#29342d;border:1px solid #53634f;border-radius:7px;color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}button.mark{border-color:var(--red);color:#ffd9d4}
+section.take{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 0 26px}
+.head{display:flex;gap:14px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.facts{font-size:14px;color:var(--accent);font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;margin-top:14px}
+figure{margin:0;background:#1a221f;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+figcaption{font-size:13px;color:var(--muted);padding:7px 10px}video,figure img{display:block;width:100%;height:auto;background:#8a958e}
+.strip{margin-top:14px;overflow-x:auto;border-radius:10px;border:1px solid var(--line)}.strip img{display:block;max-width:none;height:230px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}a{color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+th{color:var(--accent);font-weight:600}.note{border-left:3px solid #83956c;padding:10px 16px;background:#273128;margin:14px 0}
+.note li{color:#d3ddcb;margin:6px 0}.ok{color:#9fd08a}.bad{color:var(--red)}
+@media(max-width:900px){main{padding:18px 12px}.grid{grid-template-columns:1fr}h1{font-size:28px}.top{flex-direction:column}}
+</style></head>
+<body><main><div class="top"><div><div class="eyebrow">THE WAR REMAINS · РАСЩЕПЕНЬ · ИГРОВЫЕ КЛИПЫ · R01</div>
+<h1>Расщепень · анимация r01</h1><p>Шесть игровых клипов на принятой модели 24k: 30 кадров/с, всё на месте (корень не уезжает — по арене тело двигает сим). Красная рамка — кадр, привязанный к тику сима.</p></div><span class="badge">На просмотр владельцу</span></div>
+<div class="bar"><button id="playAll">играть все</button><button id="pauseAll">пауза</button>
+<select id="speed"><option value="1">скорость ×1</option><option value="0.5">×0,5</option><option value="0.25">×0,25</option></select>
+<a href="#ForestSplitter_Idle">Ожидание</a><a href="#ForestSplitter_Walk">Ходьба (рысь)</a><a href="#ForestSplitter_Bite">Укус</a><a href="#ForestSplitter_Hit">Получение урона</a><a href="#ForestSplitter_Death">Смерть (треск)</a><a href="#ForestSplitter_Pop">Появление ребёнка</a><a href="#sequence">смерть → дети</a><a href="#issues">вопросы</a></div>
+
+<section class="take" id="ForestSplitter_Idle"><div class="head"><h2>Ожидание <span class="facts">· ForestSplitter_Idle</span></h2>
+<span class="facts">60 кадров · 2.00 с · петля</span></div><p>Дыхание, створки покачиваются в противофазе на ±2°, голова осматривается. Петля 60 кадров = 2 с, в ролике два круга.</p>
+<div class="grid"><figure><video src="ForestSplitter_Idle_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Idle_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/idle_walk.mp4"><img src="refs/idle_walk_sheet.jpg" alt="Референс: ожидание и рысь"></a>
+<figcaption>Референс: ожидание и рысь · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button></div>
+<div class="strip"><img src="ForestSplitter_Idle_keys.jpg" alt="ключевые кадры ForestSplitter_Idle"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 0 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="ForestSplitter_Walk"><div class="head"><h2>Ходьба (рысь) <span class="facts">· ForestSplitter_Walk</span></h2>
+<span class="facts">10 кадров · 0.33 с · петля</span></div><p>Рысь на месте диагональными парами, цикл 10 кадров = шаг 1,03 м. Стоящие лапы едут назад ровно со скоростью 3,1 м/с, поэтому в игре не скользят (клетка пола в ролике едет с той же скоростью). Дети ×0,6 на 4,2 м/с — тот же клип, скорость ×2,26.</p>
+<div class="grid"><figure><video src="ForestSplitter_Walk_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Walk_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/idle_walk.mp4"><img src="refs/idle_walk_sheet.jpg" alt="Референс: ожидание и рысь"></a>
+<figcaption>Референс: ожидание и рысь · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button></div>
+<div class="strip"><img src="ForestSplitter_Walk_keys.jpg" alt="ключевые кадры ForestSplitter_Walk"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 7 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="ForestSplitter_Bite"><div class="head"><h2>Укус <span class="facts">· ForestSplitter_Bite</span></h2>
+<span class="facts">30 кадров · 1.00 с · один раз · контакт: кадр 18</span></div><p>0–12: присед назад, створки раскрываются до 11–13° и дрожат. 15–18: корпус рывком подаётся вперёд, голова выстреливает и задирает клюв: кончик клюва уходит с 0,61 до 0,85 м перед центром и дальше всего на кадре 18, створки схлопываются, передняя левая лапа бьёт в землю. 20–30: возврат. Кадр 18 = тик 18 замаха, 12 кадров восстановления.</p>
+<div class="grid"><figure><video src="ForestSplitter_Bite_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Bite_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/bite.mp4"><img src="refs/bite_sheet.jpg" alt="Референс: укус"></a>
+<figcaption>Референс: укус · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button><button class="mark" data-frame="18">к кадру 18: контакт</button></div>
+<div class="strip"><img src="ForestSplitter_Bite_keys.jpg" alt="ключевые кадры ForestSplitter_Bite"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 0 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="ForestSplitter_Hit"><div class="head"><h2>Получение урона <span class="facts">· ForestSplitter_Hit</span></h2>
+<span class="facts">12 кадров · 0.40 с · один раз</span></div><p>12 кадров: вздрог назад, голова втягивается, створки сжимаются и дёргаются.</p>
+<div class="grid"><figure><video src="ForestSplitter_Hit_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Hit_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/bite.mp4"><img src="refs/bite_sheet.jpg" alt="Референс: укус"></a>
+<figcaption>Референс: укус · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button></div>
+<div class="strip"><img src="ForestSplitter_Hit_keys.jpg" alt="ключевые кадры ForestSplitter_Hit"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 0 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="ForestSplitter_Death"><div class="head"><h2>Смерть (треск) <span class="facts">· ForestSplitter_Death</span></h2>
+<span class="facts">12 кадров · 0.40 с · один раз · скрыть: кадр 12</span></div><p>12 кадров: створки рывком расходятся до ~25°, тело оседает. На последнем кадре вид прячет родителя и выпускает двух детей.</p>
+<div class="grid"><figure><video src="ForestSplitter_Death_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Death_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/death.mp4"><img src="refs/death_sheet.jpg" alt="Референс: смерть"></a>
+<figcaption>Референс: смерть · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button><button class="mark" data-frame="12">к кадру 12: скрыть</button></div>
+<div class="strip"><img src="ForestSplitter_Death_keys.jpg" alt="ключевые кадры ForestSplitter_Death"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 6 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="ForestSplitter_Pop"><div class="head"><h2>Появление ребёнка <span class="facts">· ForestSplitter_Pop</span></h2>
+<span class="facts">10 кадров · 0.33 с · один раз · отрыв: кадр 2 · приземление: кадр 8</span></div><p>10 кадров, масштаб ×0,6: из сжатого шара прыжок с раскинутыми лапами, отрыв на кадре 2, приземление на кадре 8 = конец 8-тикового отлёта SplitPop (1 м вбок несёт сим).</p>
+<div class="grid"><figure><video src="ForestSplitter_Pop_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера: 52° сверху, 3/4 спереди</figcaption></figure>
+<figure><video src="ForestSplitter_Pop_side.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Сбоку (орто), морда влево</figcaption></figure>
+<figure><a href="../../references/death.mp4"><img src="refs/death_sheet.jpg" alt="Референс: смерть"></a>
+<figcaption>Референс: смерть · 6 кадров/с, клик — видео</figcaption></figure></div>
+<div class="row"><button data-play="1">играть</button><button data-step="-1">− кадр</button><button data-step="1">+ кадр</button><button class="mark" data-frame="2">к кадру 2: отрыв</button><button class="mark" data-frame="8">к кадру 8: приземление</button></div>
+<div class="strip"><img src="ForestSplitter_Pop_keys.jpg" alt="ключевые кадры ForestSplitter_Pop"></div>
+<p class="facts">проверка: <span class="ok">пройдена</span> ·
+корень не двигается · кожа ниже земли max 5 мм ·
+FBX совпадает с бейком: 0.0 мм</p></section>
+<section class="take" id="sequence"><h2>Как в бою: смерть → дети</h2><p>Родитель играет Death, на последнем кадре исчезает, двое детей ×0,6 играют Pop и разлетаются на 1 м за 8 кадров (в игре их несёт сим), дальше Idle.</p>
+<div class="grid" style="grid-template-columns:minmax(0,640px)"><figure><video src="Sequence_game.mp4" muted loop autoplay playsinline preload="auto"></video><figcaption>Игровая камера, общий план</figcaption></figure></div></section>
+
+<section class="take"><h2>Пакет для Unity</h2>
+<p><code>production/animation/unity_package/ForestSplitter.fbx</code> — меш 24000 треугольников, 19
+костей, 6 дублей с точными именами, 30 кадров/с, оси как у Камнекопыта/Вендиго, пустышка FacingGuide в 1 м перед мордой.
+Разметка — <code>export.json</code>.</p>
+<table><tr><th>дубль</th><th>кадры</th><th>петля</th><th>метка</th><th>FBX</th></tr><tr><td>ForestSplitter_Idle</td><td>0–60</td><td>да</td><td>—</td><td>ok</td></tr><tr><td>ForestSplitter_Walk</td><td>0–10</td><td>да</td><td>—</td><td>ok</td></tr><tr><td>ForestSplitter_Bite</td><td>0–30</td><td>нет</td><td>18</td><td>ok</td></tr><tr><td>ForestSplitter_Hit</td><td>0–12</td><td>нет</td><td>—</td><td>ok</td></tr><tr><td>ForestSplitter_Death</td><td>0–12</td><td>нет</td><td>12</td><td>ok</td></tr><tr><td>ForestSplitter_Pop</td><td>0–10</td><td>нет</td><td>8</td><td>ok</td></tr></table>
+<p class="facts">Рысь: стоящие лапы 3.099–3.102 м/с при сим 3,1 м/с ·
+кончик клюва на кадре 18: 0.851 м вперёд, 0.352 м вверх.</p><p class="facts">Независимая проверка FBX (шаг 3, <code>unity_package/verification.json</code>): 7 из 7 пунктов пройдены · <span class="ok">всё в порядке</span> · рысь по подошвам 3.098–3.233 м/с, проскальзывание ≤ 13 мм.</p></section>
+<section class="take" id="issues"><h2>Известные ограничения</h2><div class="note"><ul><li>Исправлено на независимой проверке FBX: в укусе шея выезжала на 0,25 м, и между головой и жёсткими краями створок тянулся «рукав» растянутой текстуры до 24 см (риг проверялся на выпад 0,14 м). Теперь шея выезжает на 0,11 м, дальность возвращена рывком корпуса на 3,5 см и задранным клювом: растяжка до 13 см, кончик клюва на 0,85 м вперёд вместо 0,92, контакт по-прежнему на кадре 18.</li><li>С игровой камеры (52°, 3/4) голова маленькая и частично под краями створок: укус читается прежде всего рывком корпуса и хлопком створок, сам клюв хорошо виден сбоку и спереди. Голова идёт вперёд и чуть вверх, а не клюёт вниз под створки.</li><li>Рта нет (клюв цельный), поэтому клюв не раскрывается, как в референсе: укус — выпад головой.</li><li>Створки срощены с телом: при раскрытии тянется спинная полоса (тёмный мох между створками на замахе укуса 11–13° и в смерти ~25°). Отвалиться створки не могут без правки модели — смерть сделана как треск; сам раскол лучше закрыть VFX.</li><li>В рыси лапы короткие, походка низкая; кожа лап местами уходит под землю до 7 мм.</li><li>Лапы модели стоят неровно: в покое касается земли только передняя левая, правая передняя висит на 8,5 мм, задние на 6–10 мм. Опустить их IK нельзя — задние ноги почти выпрямлены (вытяжка 0,97 при пределе 0,975). С игровой камеры почти незаметно.</li><li>У детей ходьба ×2,26: цикл 10 кадров проходит за 0,15 с — будет выглядеть как семенящий бег.</li></ul></div></section>
+</main><script>
+const vids=[...document.querySelectorAll('video')];
+document.getElementById('speed').onchange=ev=>vids.forEach(v=>v.playbackRate=+ev.target.value);
+document.getElementById('pauseAll').onclick=()=>vids.forEach(v=>v.pause());
+document.getElementById('playAll').onclick=()=>vids.forEach(v=>v.play());
+document.querySelectorAll('button[data-frame]').forEach(b=>b.onclick=()=>{
+  const sec=b.closest('section');const f=+b.dataset.frame;
+  sec.querySelectorAll('video').forEach(v=>{v.pause();v.currentTime=(f+0.5)/30;});});
+document.querySelectorAll('button[data-play]').forEach(b=>b.onclick=()=>{
+  b.closest('section').querySelectorAll('video').forEach(v=>{v.playbackRate=+document.getElementById('speed').value;v.play();});});
+document.querySelectorAll('button[data-step]').forEach(b=>b.onclick=()=>{
+  b.closest('section').querySelectorAll('video').forEach(v=>{v.pause();
+  const f=Math.max(0,Math.round(v.currentTime*30-0.5)+(+b.dataset.step));v.currentTime=(f+0.5)/30;});});
+</script></body></html>

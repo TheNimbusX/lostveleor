@@ -1,0 +1,128 @@
+{
+ "ForestRootSnarer_Death": {
+  "frames": 45,
+  "views": {
+   "game": {
+    "ortho_m": 3.597,
+    "center": [
+     -0.125,
+     0.055,
+     0.091
+    ]
+   },
+   "side": {
+    "ortho_m": 2.42,
+    "center": [
+     -0.074,
+     -0.017,
+     0.618
+    ]
+   }
+  }
+ },
+ "ForestRootSnarer_Hit": {
+  "frames": 12,
+  "views": {
+   "game": {
+    "ortho_m": 3.041,
+    "center": [
+     -0.112,
+     0.07,
+     0.095
+    ]
+   },
+   "side": {
+    "ortho_m": 2.267,
+    "center": [
+     -0.073,
+     -0.026,
+     0.609
+    ]
+   }
+  }
+ },
+ "ForestRootSnarer_Idle": {
+  "frames": 60,
+  "views": {
+   "game": {
+    "ortho_m": 2.983,
+    "center": [
+     -0.106,
+     0.056,
+     0.083
+    ]
+   },
+   "side": {
+    "ortho_m": 2.254,
+    "center": [
+     -0.073,
+     -0.028,
+     0.604
+    ]
+   }
+  }
+ },
+ "ForestRootSnarer_Mend": {
+  "frames": 50,
+  "views": {
+   "game": {
+    "ortho_m": 3.237,
+    "center": [
+     -0.12,
+     0.017,
+     0.064
+    ]
+   },
+   "side": {
+    "ortho_m": 2.43,
+    "center": [
+     -0.067,
+     -0.051,
+     0.555
+    ]
+   }
+  }
+ },
+ "ForestRootSnarer_Slam": {
+  "frames": 72,
+  "views": {
+   "game": {
+    "ortho_m": 4.36,
+    "center": [
+     -0.266,
+     0.216,
+     0.257
+    ]
+   },
+   "side": {
+    "ortho_m": 3.881,
+    "center": [
+     -0.109,
+     -0.076,
+     0.912
+    ]
+   }
+  }
+ },
+ "ForestRootSnarer_Walk": {
+  "frames": 16,
+  "views": {
+   "game": {
+    "ortho_m": 3.255,
+    "center": [
+     -0.14,
+     -0.037,
+     0.039
+    ]
+   },
+   "side": {
+    "ortho_m": 2.293,
+    "center": [
+     -0.071,
+     -0.097,
+     0.593
+    ]
+   }
+  }
+ }
+}

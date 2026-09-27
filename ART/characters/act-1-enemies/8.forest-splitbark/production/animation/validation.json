@@ -1,0 +1,119 @@
+{
+  "fps": 30,
+  "deform_bones": 19,
+  "triangles": 24000,
+  "takes": {
+    "ForestSplitter_Idle": {
+      "range": [
+        0.0,
+        60.0
+      ],
+      "loop": true,
+      "bake_vs_authored_max_ankle_err_m": 0.0,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.967,
+      "start_end_body_xy_delta_m": 0.0,
+      "loop_seam_max_ankle_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Walk": {
+      "range": [
+        0.0,
+        10.0
+      ],
+      "loop": true,
+      "bake_vs_authored_max_ankle_err_m": 6e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0067,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.894,
+      "start_end_body_xy_delta_m": 0.0,
+      "loop_seam_max_ankle_m": 0.0,
+      "stance_foot_speed_mps": [
+        3.099,
+        3.102
+      ],
+      "stride_m_per_cycle": 1.0333,
+      "pass": true
+    },
+    "ForestSplitter_Bite": {
+      "range": [
+        0.0,
+        30.0
+      ],
+      "loop": false,
+      "bake_vs_authored_max_ankle_err_m": 5e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.97,
+      "start_end_body_xy_delta_m": 0.0,
+      "contact_frame": 18,
+      "beak_forwardmost_frame": 18,
+      "beak_y": {
+        "rest": -0.6,
+        "contact": -0.8231
+      },
+      "shell_clap_frame": 18,
+      "pass": true
+    },
+    "ForestSplitter_Hit": {
+      "range": [
+        0.0,
+        12.0
+      ],
+      "loop": false,
+      "bake_vs_authored_max_ankle_err_m": 0.0,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.974,
+      "start_end_body_xy_delta_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Death": {
+      "range": [
+        0.0,
+        12.0
+      ],
+      "loop": false,
+      "bake_vs_authored_max_ankle_err_m": 4e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0059,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.971,
+      "start_end_body_xy_delta_m": 0.015,
+      "pass": true
+    },
+    "ForestSplitter_Pop": {
+      "range": [
+        0.0,
+        10.0
+      ],
+      "loop": false,
+      "bake_vs_authored_max_ankle_err_m": 3e-05,
+      "root_bone_max_dev": 0.0,
+      "skin_min_z_m": -0.0048,
+      "max_ik_pull_m": 0.0,
+      "max_reach": 0.965,
+      "start_end_body_xy_delta_m": 0.0,
+      "hind_ankle_z_by_frame": [
+        0.12,
+        0.12,
+        0.175,
+        0.325,
+        0.422,
+        0.455,
+        0.425,
+        0.315,
+        0.12,
+        0.12,
+        0.12
+      ],
+      "pass": true
+    }
+  },
+  "all_pass": true
+}

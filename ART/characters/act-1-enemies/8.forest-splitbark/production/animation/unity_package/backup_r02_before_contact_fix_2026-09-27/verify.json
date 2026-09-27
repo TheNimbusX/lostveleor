@@ -1,0 +1,159 @@
+{
+  "fbx": "ForestSplitter.fbx",
+  "fbx_bytes": 3470476,
+  "animation_stacks": [
+    "ForestSplitter_Idle",
+    "ForestSplitter_Walk",
+    "ForestSplitter_Bite",
+    "ForestSplitter_Hit",
+    "ForestSplitter_Death",
+    "ForestSplitter_Pop",
+    "ForestSplitter_RollCurl",
+    "ForestSplitter_RollLoop",
+    "ForestSplitter_RollUncurl",
+    "ForestSplitter_RollDizzy"
+  ],
+  "stack_names_exact": true,
+  "imported_actions": [
+    "ARM_ForestSplitter|ForestSplitter_Bite",
+    "ARM_ForestSplitter|ForestSplitter_Death",
+    "ARM_ForestSplitter|ForestSplitter_Hit",
+    "ARM_ForestSplitter|ForestSplitter_Idle",
+    "ARM_ForestSplitter|ForestSplitter_Pop",
+    "ARM_ForestSplitter|ForestSplitter_RollCurl",
+    "ARM_ForestSplitter|ForestSplitter_RollDizzy",
+    "ARM_ForestSplitter|ForestSplitter_RollLoop",
+    "ARM_ForestSplitter|ForestSplitter_RollUncurl",
+    "ARM_ForestSplitter|ForestSplitter_Walk",
+    "FacingGuide|ForestSplitter_Bite",
+    "FacingGuide|ForestSplitter_Death",
+    "FacingGuide|ForestSplitter_Hit",
+    "FacingGuide|ForestSplitter_Idle",
+    "FacingGuide|ForestSplitter_Pop",
+    "FacingGuide|ForestSplitter_RollCurl",
+    "FacingGuide|ForestSplitter_RollDizzy",
+    "FacingGuide|ForestSplitter_RollLoop",
+    "FacingGuide|ForestSplitter_RollUncurl",
+    "FacingGuide|ForestSplitter_Walk"
+  ],
+  "imported_bones": 19,
+  "triangles": 24000,
+  "facing_guide_world": [
+    0.0,
+    -1.0,
+    0.0
+  ],
+  "takes": {
+    "ForestSplitter_Idle": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Idle",
+      "action_range": [
+        0.0,
+        60.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Walk": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Walk",
+      "action_range": [
+        0.0,
+        10.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Bite": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Bite",
+      "action_range": [
+        0.0,
+        30.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Hit": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Hit",
+      "action_range": [
+        0.0,
+        12.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Death": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Death",
+      "action_range": [
+        0.0,
+        12.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_Pop": {
+      "action": "ARM_ForestSplitter|ForestSplitter_Pop",
+      "action_range": [
+        0.0,
+        10.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_RollCurl": {
+      "action": "ARM_ForestSplitter|ForestSplitter_RollCurl",
+      "action_range": [
+        0.0,
+        30.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_RollLoop": {
+      "action": "ARM_ForestSplitter|ForestSplitter_RollLoop",
+      "action_range": [
+        0.0,
+        12.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_RollUncurl": {
+      "action": "ARM_ForestSplitter|ForestSplitter_RollUncurl",
+      "action_range": [
+        0.0,
+        30.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    },
+    "ForestSplitter_RollDizzy": {
+      "action": "ARM_ForestSplitter|ForestSplitter_RollDizzy",
+      "action_range": [
+        0.0,
+        45.0
+      ],
+      "max_bone_err_m": 0.0,
+      "max_vertex_err_m": 0.0,
+      "root_travel_m": 0.0,
+      "pass": true
+    }
+  },
+  "all_pass": true
+}

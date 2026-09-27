@@ -1,0 +1,501 @@
+{
+  "master_blend": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\ForestRootSnarer_Rig.blend",
+  "unity_fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\ForestRootSnarer_Rig.fbx",
+  "fbx_sha256": "2499ee348461cc9bafe5db81dd9acfebea38659459f6693ac5c28e80b062b625",
+  "textures": [
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\textures\\T_ForestRootSnarer_Color.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\textures\\T_ForestRootSnarer_NormalGL.png",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\rig\\textures\\T_ForestRootSnarer_ORM.png"
+  ],
+  "fbx_settings": {
+    "axis_forward": "-Z",
+    "axis_up": "Y",
+    "deform_only": true,
+    "leaf_bones": false,
+    "bake_anim": false,
+    "note": "same axis/deform settings as Stonehoof unity_package"
+  },
+  "triangles": 24000,
+  "vertices": 11996,
+  "materials": [
+    "M_ForestRootSnarer"
+  ],
+  "bones": [
+    {
+      "name": "root",
+      "parent": null,
+      "deform": false,
+      "head": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "tail": [
+        0.0,
+        0.0,
+        0.12
+      ]
+    },
+    {
+      "name": "pelvis",
+      "parent": "root",
+      "deform": true,
+      "head": [
+        0.0,
+        0.45,
+        0.62
+      ],
+      "tail": [
+        0.0,
+        0.18,
+        0.72
+      ]
+    },
+    {
+      "name": "spine_01",
+      "parent": "pelvis",
+      "deform": true,
+      "head": [
+        0.0,
+        0.18,
+        0.72
+      ],
+      "tail": [
+        0.0,
+        -0.08,
+        0.76
+      ]
+    },
+    {
+      "name": "spine_02",
+      "parent": "spine_01",
+      "deform": true,
+      "head": [
+        0.0,
+        -0.08,
+        0.76
+      ],
+      "tail": [
+        0.0,
+        -0.3,
+        0.72
+      ]
+    },
+    {
+      "name": "neck",
+      "parent": "spine_02",
+      "deform": true,
+      "head": [
+        0.0,
+        -0.3,
+        0.72
+      ],
+      "tail": [
+        0.0,
+        -0.44,
+        0.66
+      ]
+    },
+    {
+      "name": "head",
+      "parent": "neck",
+      "deform": true,
+      "head": [
+        0.0,
+        -0.44,
+        0.66
+      ],
+      "tail": [
+        0.0,
+        -0.72,
+        0.64
+      ]
+    },
+    {
+      "name": "jaw",
+      "parent": "head",
+      "deform": true,
+      "head": [
+        0.0,
+        -0.42,
+        0.47
+      ],
+      "tail": [
+        0.0,
+        -0.7,
+        0.4
+      ]
+    },
+    {
+      "name": "L_clavicle",
+      "parent": "spine_02",
+      "deform": true,
+      "head": [
+        0.14,
+        -0.2,
+        0.8
+      ],
+      "tail": [
+        0.4,
+        -0.24,
+        0.68
+      ]
+    },
+    {
+      "name": "L_arm_upper",
+      "parent": "L_clavicle",
+      "deform": true,
+      "head": [
+        0.4,
+        -0.24,
+        0.68
+      ],
+      "tail": [
+        0.55,
+        -0.27,
+        0.66
+      ]
+    },
+    {
+      "name": "L_arm_lower",
+      "parent": "L_arm_upper",
+      "deform": true,
+      "head": [
+        0.55,
+        -0.27,
+        0.66
+      ],
+      "tail": [
+        0.6,
+        -0.6,
+        0.1
+      ]
+    },
+    {
+      "name": "L_hand",
+      "parent": "L_arm_lower",
+      "deform": true,
+      "head": [
+        0.6,
+        -0.6,
+        0.1
+      ],
+      "tail": [
+        0.61,
+        -0.72,
+        0.03
+      ]
+    },
+    {
+      "name": "R_clavicle",
+      "parent": "spine_02",
+      "deform": true,
+      "head": [
+        -0.14,
+        -0.22,
+        0.8
+      ],
+      "tail": [
+        -0.4,
+        -0.28,
+        0.68
+      ]
+    },
+    {
+      "name": "R_arm_upper",
+      "parent": "R_clavicle",
+      "deform": true,
+      "head": [
+        -0.4,
+        -0.28,
+        0.68
+      ],
+      "tail": [
+        -0.54,
+        -0.31,
+        0.66
+      ]
+    },
+    {
+      "name": "R_arm_lower",
+      "parent": "R_arm_upper",
+      "deform": true,
+      "head": [
+        -0.54,
+        -0.31,
+        0.66
+      ],
+      "tail": [
+        -0.6,
+        -0.66,
+        0.1
+      ]
+    },
+    {
+      "name": "R_hand",
+      "parent": "R_arm_lower",
+      "deform": true,
+      "head": [
+        -0.6,
+        -0.66,
+        0.1
+      ],
+      "tail": [
+        -0.6,
+        -0.77,
+        0.03
+      ]
+    },
+    {
+      "name": "L_leg_upper",
+      "parent": "pelvis",
+      "deform": true,
+      "head": [
+        0.36,
+        0.5,
+        0.56
+      ],
+      "tail": [
+        0.52,
+        0.56,
+        0.37
+      ]
+    },
+    {
+      "name": "L_leg_lower",
+      "parent": "L_leg_upper",
+      "deform": true,
+      "head": [
+        0.52,
+        0.56,
+        0.37
+      ],
+      "tail": [
+        0.55,
+        0.74,
+        0.15
+      ]
+    },
+    {
+      "name": "L_foot",
+      "parent": "L_leg_lower",
+      "deform": true,
+      "head": [
+        0.55,
+        0.74,
+        0.15
+      ],
+      "tail": [
+        0.58,
+        0.58,
+        0.09
+      ]
+    },
+    {
+      "name": "R_leg_upper",
+      "parent": "pelvis",
+      "deform": true,
+      "head": [
+        -0.36,
+        0.42,
+        0.56
+      ],
+      "tail": [
+        -0.49,
+        0.38,
+        0.37
+      ]
+    },
+    {
+      "name": "R_leg_lower",
+      "parent": "R_leg_upper",
+      "deform": true,
+      "head": [
+        -0.49,
+        0.38,
+        0.37
+      ],
+      "tail": [
+        -0.53,
+        0.55,
+        0.13
+      ]
+    },
+    {
+      "name": "R_foot",
+      "parent": "R_leg_lower",
+      "deform": true,
+      "head": [
+        -0.53,
+        0.55,
+        0.13
+      ],
+      "tail": [
+        -0.56,
+        0.4,
+        0.04
+      ]
+    },
+    {
+      "name": "CTRL_L_hand",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        0.6,
+        -0.6,
+        0.1
+      ],
+      "tail": [
+        0.6,
+        -0.6,
+        0.22
+      ]
+    },
+    {
+      "name": "CTRL_L_elbow",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        1.0269,
+        -0.2431,
+        0.8078
+      ],
+      "tail": [
+        1.0269,
+        -0.2431,
+        0.9278
+      ]
+    },
+    {
+      "name": "CTRL_L_foot",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        0.55,
+        0.74,
+        0.15
+      ],
+      "tail": [
+        0.55,
+        0.74,
+        0.27
+      ]
+    },
+    {
+      "name": "CTRL_L_knee",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        0.9219,
+        0.2627,
+        0.3822
+      ],
+      "tail": [
+        0.9219,
+        0.2627,
+        0.5022
+      ]
+    },
+    {
+      "name": "CTRL_R_hand",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        -0.6,
+        -0.66,
+        0.1
+      ],
+      "tail": [
+        -0.6,
+        -0.66,
+        0.22
+      ]
+    },
+    {
+      "name": "CTRL_R_elbow",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        -1.0174,
+        -0.2814,
+        0.8059
+      ],
+      "tail": [
+        -1.0174,
+        -0.2814,
+        0.9259
+      ]
+    },
+    {
+      "name": "CTRL_R_foot",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        -0.53,
+        0.55,
+        0.13
+      ],
+      "tail": [
+        -0.53,
+        0.55,
+        0.25
+      ]
+    },
+    {
+      "name": "CTRL_R_knee",
+      "parent": "root",
+      "deform": false,
+      "head": [
+        -0.7469,
+        -0.0481,
+        0.3421
+      ],
+      "tail": [
+        -0.7469,
+        -0.0481,
+        0.4621
+      ]
+    }
+  ],
+  "weights": {
+    "unweighted": 0,
+    "over_4": 0,
+    "unnormalized": 0,
+    "verts_per_bone": {
+      "pelvis": 5073,
+      "spine_01": 5719,
+      "spine_02": 5443,
+      "neck": 4137,
+      "head": 2478,
+      "jaw": 295,
+      "L_clavicle": 528,
+      "L_arm_upper": 383,
+      "L_arm_lower": 1917,
+      "L_hand": 0,
+      "R_clavicle": 702,
+      "R_arm_upper": 580,
+      "R_arm_lower": 1792,
+      "R_hand": 0,
+      "L_leg_upper": 618,
+      "L_leg_lower": 661,
+      "L_foot": 407,
+      "R_leg_upper": 532,
+      "R_leg_lower": 793,
+      "R_foot": 465
+    }
+  },
+  "constraints": {
+    "L_arm_lower": [
+      "IK_L_hand"
+    ],
+    "R_arm_lower": [
+      "IK_R_hand"
+    ],
+    "L_leg_lower": [
+      "IK_L_foot"
+    ],
+    "R_leg_lower": [
+      "IK_R_foot"
+    ]
+  }
+}

@@ -16,7 +16,8 @@ namespace Game.View
     ///
     /// ПОЗА ИЗ ФАЗ SIM, а не из клипов. Замах Расщепеня и его детёныша — общий
     /// замах (TryGetEnemySwing); Шипомёт и Корнехват — события EnemyAction* и тики
-    /// их действий (Simulation.ThornLine*, RootSnarer*). Подготовка — отклон назад
+    /// их действий (Simulation.ThornLine*, ThornShot*, RootSnarer*). Клипы настоящей
+    /// модели Шипомёта подключаются через ThorncasterAnimationHook. Подготовка — отклон назад
     /// и приседание, контакт — рывок вперёд, наказание — наклонённая стойка, которая
     /// к концу восстановления выпрямляется; каждый шип или удар корнями — толчок.
     /// Часы — часы Sim (тик − 1 + Alpha): пауза и хит-стоп держат позу сами.
@@ -171,6 +172,12 @@ namespace Game.View
                             _actionImpact = _actionHold = tick + Simulation.ThornBurstWindupTicks;
                             _actionEnd = _actionHold + Simulation.ThornBurstRecoveryTicks;
                             break;
+                        case EnemyActionKind.ThornShot:
+                            // Фаза «Shot»: замах до выпуска шипа (кадр 21 клипа ForestThorncaster_Shot,
+                            // см. ThorncasterAnimationHook), контакт — сам выпуск, затем стойка.
+                            _actionImpact = _actionHold = tick + Simulation.ThornShotWindupTicks;
+                            _actionEnd = _actionHold + Simulation.ThornShotRecoveryTicks;
+                            break;
                         case EnemyActionKind.SnarerSlam:
                             // Контакт позы — удар корнями о землю; корни выходят позже, у героя.
                             _actionImpact = tick + Simulation.RootSnarerSlamTicks;
@@ -181,7 +188,9 @@ namespace Game.View
                     }
                     break;
                 case SimEventType.EnemyActionImpact:
-                    _lastImpact = tick;
+                    // Шип выстрела встаёт далеко от тела — в герое или в конце полосы:
+                    // толчок тела у выстрела — на выпуске, его даёт поза.
+                    if (kind != EnemyActionKind.ThornShot) _lastImpact = tick;
                     break;
                 case SimEventType.EnemyActionCancelled:
                     _action = EnemyActionKind.None;
@@ -262,6 +271,9 @@ namespace Game.View
                     Phase(now, _actionStart, _actionImpact, _actionHold, _actionEnd, 0f, 4f, .2f, .16f, ref lean, ref squash);
                 else if (_action == EnemyActionKind.ThornLine)
                     Phase(now, _actionStart, _actionImpact, _actionHold, _actionEnd, 10f, 16f, .12f, .05f, ref lean, ref squash);
+                else if (_action == EnemyActionKind.ThornShot)
+                    // Выстрел мельче линии: короткий отклон, резкий кивок вперёд на выпуске.
+                    Phase(now, _actionStart, _actionImpact, _actionHold, _actionEnd, 7f, 12f, .08f, .07f, ref lean, ref squash);
                 else
                     Phase(now, _actionStart, _actionImpact, _actionHold, _actionEnd, 14f, 22f, .14f, .1f, ref lean, ref squash);
             }

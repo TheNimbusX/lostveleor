@@ -203,7 +203,7 @@ namespace Game.Tests
             var b = MixedForestArena(Seed);
             Assert.AreEqual(a.StateHash(), b.StateHash(), "Расстановка разошлась.");
 
-            int lines = 0, slams = 0, impacts = 0, splits = 0;
+            int lines = 0, shots = 0, slams = 0, impacts = 0, splits = 0;
             for (int t = 0; t < script.Count; t++)
             {
                 // Расщепени гибнут наверняка, если герой не успел сам: один — между
@@ -232,6 +232,7 @@ namespace Game.Tests
                 foreach (var e in a.Events)
                 {
                     if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThornLine) lines++;
+                    if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThornShot) shots++;
                     if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.SnarerSlam) slams++;
                     if (e.Type == SimEventType.EnemyActionImpact) impacts++;
                     if (e.Type == SimEventType.SplitterSplit) splits++;
@@ -240,7 +241,11 @@ namespace Game.Tests
 
             int splitlings = 0;
             for (int i = 1; i < a.Entities.Count; i++) if (a.Entities.Kind[i] == EnemyKind.ForestSplitling) splitlings++;
-            Assert.That(lines, Is.GreaterThan(0), "Шипомёт ни разу не начал линию — тест ничего не проверил.");
+            // Жетон крупной атаки здесь нарасхват (плод, Камнекопыт, Корнехват), и
+            // Шипомёт между линиями стреляет шипом: годится любое его действие, а
+            // выстрел обязан случиться — шип в полёте тоже в хеше.
+            Assert.That(lines + shots, Is.GreaterThan(0), "Шипомёт ни разу не начал ни линию, ни выстрел — тест ничего не проверил.");
+            Assert.That(shots, Is.GreaterThan(0), "Шипомёт ни разу не выстрелил шипом.");
             Assert.That(slams, Is.GreaterThan(0), "Корнехват ни разу не ударил корнями.");
             Assert.That(impacts, Is.GreaterThan(0), "Ни одного контакта шипов или корней.");
             Assert.That(splits, Is.EqualTo(2), "Оба Расщепеня распались.");

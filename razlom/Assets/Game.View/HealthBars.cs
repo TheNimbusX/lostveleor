@@ -36,12 +36,12 @@ namespace Game.View
         [Tooltip("На сколько метров полоска висит над центром тела.")]
         public float Height3D = 2.15f;
         public float RootSwarmHeight3D = 1.25f;
-        // Новые мобы леса: над подписью заглушки (ForestMobPlaceholderView), чтобы
-        // полоска и «[заглушка] …» не лезли друг на друга. Придут модели — по их росту.
+        // Новые мобы леса — по росту моделей (27.09): Шипомёт 2,7 м, Корнехват 1,31 м,
+        // Расщепень 1,28 м, его детёныш — то же тело в 0,6. Над макушкой, как у стража.
         public float ThorncasterHeight3D = 2.95f;
-        public float RootSnarerHeight3D = 2.65f;
-        public float SplitterHeight3D = 2.25f;
-        public float SplitlingHeight3D = 1.45f;
+        public float RootSnarerHeight3D = 1.65f;
+        public float SplitterHeight3D = 1.6f;
+        public float SplitlingHeight3D = 1.1f;
 
         [Tooltip("Дорожка: чернильный дым, как у полос HUD (роль Smoke).")]
         public Color BackColor = new Color32(0x12, 0x19, 0x23, 0xEB);

@@ -1,0 +1,32 @@
+{
+  "fbx_bytes": 1126204,
+  "objects": {
+    "armatures": 1,
+    "meshes": 1,
+    "mesh_name": "SM_ForestSplitter_LOD0",
+    "armature_name": "ARM_ForestSplitter"
+  },
+  "bones_fbx": 19,
+  "bones_master_deform": 19,
+  "bone_names_match": true,
+  "max_bone_head_error_m": 0.0,
+  "triangles_fbx": 24000,
+  "triangles_master": 24000,
+  "vertex_order_preserved": true,
+  "bounds_min": [
+    -0.783,
+    -0.6094,
+    0.0
+  ],
+  "bounds_max": [
+    0.783,
+    0.6094,
+    1.3
+  ],
+  "max_influences": 4,
+  "unweighted_vertices": 0,
+  "max_weight_sum_error": 0.0,
+  "max_weight_diff_vs_master": 0.0,
+  "shell_L_20deg_max_vertex_diff_m": 0.0,
+  "shell_L_20deg_moved_vertices": 5437
+}

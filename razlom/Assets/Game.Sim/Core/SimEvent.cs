@@ -94,9 +94,11 @@ namespace Game.Sim
         EnemyActionStarted = 33,
 
         /// <summary>
-        /// Контакт действия: один шип линии, всплеск, удар корнями. Amount —
-        /// номер контакта в действии (шип 0..3), Flag — задел ли героя,
-        /// Position — центр сработавшей фигуры, ActionVariant — EnemyActionKind.
+        /// Контакт действия: один шип линии, всплеск, удар корнями, шип
+        /// выстрела. Amount — номер контакта в действии (шип 0..3), Flag —
+        /// задел ли героя, Position — центр сработавшей фигуры, а у выстрела —
+        /// точка, где шип остановился (в герое или в конце пути).
+        /// ActionVariant — EnemyActionKind.
         /// </summary>
         EnemyActionImpact = 34,
 
@@ -109,6 +111,15 @@ namespace Game.Sim
         /// Position — где умер родитель.
         /// </summary>
         SplitterSplit = 36,
+
+        /// <summary>
+        /// Снаряд моба вылетел: шип выстрела Шипомёта в тик выпуска. Source —
+        /// стрелок, Target — герой, Amount — номер выстрела (ThornShotState.Serial),
+        /// Position — начало пути, ActionVariant — EnemyActionKind. Вид ставит
+        /// по нему шип, след и звук броска; где шип дальше — читает из Sim
+        /// (Simulation.TryGetThornShot), где встал — из EnemyActionImpact.
+        /// </summary>
+        EnemyProjectileLaunched = 37,
     }
 
     /// <summary>
@@ -135,6 +146,14 @@ namespace Game.Sim
         /// не пользуется.
         /// </summary>
         SplitterSwing = 4,
+
+        /// <summary>
+        /// Шипомёт: выстрел шипом (обычная дальняя атака) без метки на земле.
+        /// Started — начало замаха, EnemyProjectileLaunched — выпуск на 21-м
+        /// тике, Impact — шип остановился: попал (Flag) или долетел до конца
+        /// пути; Position — где он встал.
+        /// </summary>
+        ThornShot = 5,
     }
 
     /// <summary>
@@ -236,6 +255,11 @@ namespace Game.Sim
         public static SimEvent EnemyAction(SimEventType type, int source, int target, EnemyActionKind kind,
             FixVec2 at, int stage = 0, bool hit = false)
             => new SimEvent(type, source, target, stage, hit, at,
+                DamageType.Physical, DamageOrigin.BasicAttack, (int)kind);
+
+        /// <summary>Снаряд моба вылетел: serial — номер выстрела, at — начало пути.</summary>
+        public static SimEvent EnemyProjectile(int source, int target, int serial, EnemyActionKind kind, FixVec2 at)
+            => new SimEvent(SimEventType.EnemyProjectileLaunched, source, target, serial, false, at,
                 DamageType.Physical, DamageOrigin.BasicAttack, (int)kind);
 
         /// <summary>Распад Расщепеня: count детёнышей подряд, начиная с firstChild.</summary>

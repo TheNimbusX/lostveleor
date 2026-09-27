@@ -1,0 +1,27 @@
+C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\render_new.py:44: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  m.use_nodes = True
+00:07.297  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_001.png'
+00:07.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_002.png'
+00:07.391  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_003.png'
+00:07.453  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_005.png'
+00:07.500  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_008.png'
+00:07.547  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_020.png'
+00:07.610  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_028.png'
+00:07.657  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_030.png'
+00:07.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_039.png'
+00:07.766  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_game_050.png'
+00:07.813  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_001.png'
+00:07.875  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_002.png'
+00:07.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_003.png'
+00:07.985  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_005.png'
+00:08.032  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_008.png'
+00:08.110  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_020.png'
+00:08.157  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_028.png'
+00:08.219  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_030.png'
+00:08.266  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_039.png'
+00:08.328  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\7.forest-root-snarer\production\animation\check_0927\out\renders_final\Mend_side_050.png'
+FBX version: 7400
+RENDER_DONE
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

@@ -1,0 +1,34 @@
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: register[0m
+[a_Rodin.utils-[33mWRN[0m]: [33mServer running on port 61863[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mon_scene_load[0m
+[a_Rodin.utils-[36mDBG[0m]: [36mensure_default_image[0m
+00:04.704  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\8.forest-splitbark\production\animation\ForestSplitter_Baked_r02.blend"
+Reloading external rigs...
+Reloading external metarigs...
+FBX version: 7400
+VERIFY {"fbx": "ForestSplitter.fbx", "fbx_bytes": 3470140, "animation_stacks": ["ForestSplitter_Idle", "ForestSplitter_Walk", "ForestSplitter_Bite", "ForestSplitter_Hit", "ForestSplitter_Death", "ForestSplitter_Pop", "ForestSplitter_RollCurl", "ForestSplitter_RollLoop", "ForestSplitter_RollUncurl", "ForestSplitter_RollDizzy"], "stack_names_exact": true, "imported_actions": ["ARM_ForestSplitter|ForestSplitter_Bite", "ARM_ForestSplitter|ForestSplitter_Death", "ARM_ForestSplitter|ForestSplitter_Hit", "ARM_ForestSplitter|ForestSplitter_Idle", "ARM_ForestSplitter|ForestSplitter_Pop", "ARM_ForestSplitter|ForestSplitter_RollCurl", "ARM_ForestSplitter|ForestSplitter_RollDizzy", "ARM_ForestSplitter|ForestSplitter_RollLoop", "ARM_ForestSplitter|ForestSplitter_RollUncurl", "ARM_ForestSplitter|ForestSplitter_Walk", "FacingGuide|ForestSplitter_Bite", "FacingGuide|ForestSplitter_Death", "FacingGuide|ForestSplitter_Hit", "FacingGuide|ForestSplitter_Idle", "FacingGuide|ForestSplitter_Pop", "FacingGuide|ForestSplitter_RollCurl", "FacingGuide|ForestSplitter_RollDizzy", "FacingGuide|ForestSplitter_RollLoop", "FacingGuide|ForestSplitter_RollUncurl", "FacingGuide|ForestSplitter_Walk"], "imported_bones": 19, "triangles": 24000, "facing_guide_world": [0.0, -1.0, 0.0], "takes": {"ForestSplitter_Idle": {"action": "ARM_ForestSplitter|ForestSplitter_Idle", "action_range": [0.0, 60.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_Walk": {"action": "ARM_ForestSplitter|ForestSplitter_Walk", "action_range": [0.0, 10.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_Bite": {"action": "ARM_ForestSplitter|ForestSplitter_Bite", "action_range": [0.0, 30.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_Hit": {"action": "ARM_ForestSplitter|ForestSplitter_Hit", "action_range": [0.0, 12.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_Death": {"action": "ARM_ForestSplitter|ForestSplitter_Death", "action_range": [0.0, 12.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_Pop": {"action": "ARM_ForestSplitter|ForestSplitter_Pop", "action_range": [0.0, 10.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_RollCurl": {"action": "ARM_ForestSplitter|ForestSplitter_RollCurl", "action_range": [0.0, 30.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_RollLoop": {"action": "ARM_ForestSplitter|ForestSplitter_RollLoop", "action_range": [0.0, 12.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_RollUncurl": {"action": "ARM_ForestSplitter|ForestSplitter_RollUncurl", "action_range": [0.0, 30.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}, "ForestSplitter_RollDizzy": {"action": "ARM_ForestSplitter|ForestSplitter_RollDizzy", "action_range": [0.0, 45.0], "max_bone_err_m": 0.0, "max_vertex_err_m": 0.0, "root_travel_m": 0.0, "pass": true}}, "all_pass": true}
+[a_Rodin.utils-[36mDBG[0m]: [36mRodinBridge: unregister[0m
+Traceback (most recent call last):
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\addon_utils.py", line 595, in disable
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\__init__.py", line 28, in unregister
+    unreg()
+    ~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Program Files\Blender Foundation\Blender 5.2\5.2\scripts\modules\bpy\utils\__init__.py", line 1054, in unregister
+    mod.unregister()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Users\d.grab\AppData\Roaming\Blender Foundation\Blender\5.2\scripts\addons\a_Rodin\src\rodin\properties.py", line 408, in unregister
+    bpy.app.handlers.load_post.remove(on_scene_load)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+ValueError: list.remove(x): x not in list
+Exception in module unregister(): 'C:\\Users\\d.grab\\AppData\\Roaming\\Blender Foundation\\Blender\\5.2\\scripts\\addons\\a_Rodin\\__init__.py'
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

@@ -1,0 +1,554 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\animation\\unity_package\\ForestThorncaster.fbx",
+ "method": "FBX re-imported into an empty Blender 5.2 scene; binary FBX parsed for time mode and stack ranges; vertex positions sampled every frame; renders at the game camera inspected by eye",
+ "scripts": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\animation\\unity_package\\verify",
+ "checks": {
+  "1_takes_fps_ranges_loops": {
+   "names_match": true,
+   "fbx_time_mode": [
+    6
+   ],
+   "fbx_custom_frame_rate": [
+    30.0
+   ],
+   "reimport_scene_fps": 30.0,
+   "ranges_fbx_stack": {
+    "ForestThorncaster_Idle": [
+     0.0,
+     60.0
+    ],
+    "ForestThorncaster_Walk": [
+     0.0,
+     24.0
+    ],
+    "ForestThorncaster_LineCast": [
+     0.0,
+     75.0
+    ],
+    "ForestThorncaster_Burst": [
+     0.0,
+     36.0
+    ],
+    "ForestThorncaster_Shot": [
+     0.0,
+     33.0
+    ],
+    "ForestThorncaster_Hit": [
+     0.0,
+     12.0
+    ],
+    "ForestThorncaster_Death": [
+     0.0,
+     48.0
+    ]
+   },
+   "ranges_match_export": true,
+   "keys_off_integer_frames": 0,
+   "loops": {
+    "Idle": {
+     "seam_vertex_mm": 0.0,
+     "seam_bone_rot_deg": 0.028,
+     "velocity_jump_m_per_frame": 0.0014
+    },
+    "Walk": {
+     "seam_vertex_mm": 0.0,
+     "seam_bone_rot_deg": 0.0,
+     "velocity_jump_m_per_frame": 0.0635
+    }
+   },
+   "pass": true
+  },
+  "2_in_place_root_scale": {
+   "armature_object_travel_m": {
+    "Idle": 0.0,
+    "Walk": 0.0,
+    "LineCast": 0.0,
+    "Burst": 0.0,
+    "Shot": 0.0,
+    "Hit": 0.0,
+    "Death": 0.0
+   },
+   "object_level_channel_span": 0.0,
+   "bone_scale_max_dev_from_1": 5.960464477539062e-07,
+   "hips_xy_max_from_origin_m": {
+    "Idle": 0.025,
+    "Walk": 0.041,
+    "LineCast": 0.127,
+    "Burst": 0.057,
+    "Shot": 0.067,
+    "Hit": 0.067,
+    "Death": 0.347
+   },
+   "hips_xy_net_first_to_last_m": {
+    "Idle": [
+     0.0,
+     0.0
+    ],
+    "Walk": [
+     0.0,
+     0.0
+    ],
+    "LineCast": [
+     0.0,
+     0.0
+    ],
+    "Burst": [
+     0.0,
+     0.0
+    ],
+    "Shot": [
+     0.0,
+     0.0
+    ],
+    "Hit": [
+     0.0,
+     0.0
+    ],
+    "Death": [
+     0.03,
+     -0.34
+    ]
+   },
+   "rest_min_z_m": 6.98734705160694e-08,
+   "rest_xy_center_m": [
+    -5.365740396445773e-08,
+    4.860480537494105e-08
+   ],
+   "armature_world_scale": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "note": "no root motion: armature object never moves; Hips sway only (Death: body falls 0.34 m forward, the entity stays put)",
+   "pass": true
+  },
+  "3_walk_feet": {
+   "target_speed_mps": 2.2,
+   "frames": 24,
+   "feet": {
+    "Left": {
+     "stance_frames": [
+      0,
+      13
+     ],
+     "stance_len": 14,
+     "planted_frames_total": 14,
+     "tracked_ground_vertices": 4,
+     "measured_planted_speed_mps": 2.189,
+     "speed_error_pct": -0.5,
+     "slide_over_stance_max_m": 0.0053,
+     "slide_per_frame_max_m": 0.0017,
+     "sideways_x_drift_max_m": 0.0,
+     "ground_z_range_m": [
+      0.0052,
+      0.0106
+     ]
+    },
+    "Right": {
+     "stance_frames": [
+      12,
+      1
+     ],
+     "stance_len": 14,
+     "planted_frames_total": 14,
+     "tracked_ground_vertices": 7,
+     "measured_planted_speed_mps": 2.191,
+     "speed_error_pct": -0.42,
+     "slide_over_stance_max_m": 0.0059,
+     "slide_per_frame_max_m": 0.0018,
+     "sideways_x_drift_max_m": 0.0,
+     "ground_z_range_m": [
+      -0.0,
+      0.0106
+     ]
+    }
+   },
+   "cycle_m_measured": 1.752,
+   "pass": true
+  },
+  "4_contact_frames": {
+   "LineCast": {
+    "contract_contact": 24,
+    "first_frame_both_tips_at_ground": 24,
+    "spike_low_z_m_f20_27": {
+     "20": [
+      2.97,
+      3.006
+     ],
+     "21": [
+      2.719,
+      2.73
+     ],
+     "22": [
+      2.204,
+      2.139
+     ],
+     "23": [
+      1.15,
+      1.118
+     ],
+     "24": [
+      0.0,
+      0.0
+     ],
+     "25": [
+      -0.075,
+      -0.075
+     ],
+     "26": [
+      -0.1,
+      -0.1
+     ],
+     "27": [
+      -0.1,
+      -0.1
+     ]
+    },
+    "tip_speed_mps_f18_26": {
+     "18": 1.5,
+     "19": 4.2,
+     "20": 3.5,
+     "21": 25.5,
+     "22": 31.0,
+     "23": 37.9,
+     "24": 37.3,
+     "25": 2.3,
+     "26": 0.8
+    },
+    "buried_depth_26_60_m": [
+     -0.1,
+     -0.1
+    ],
+    "buried_drift_26_60_m": 0.0,
+    "sim": "first ground spike erupts at tick 27 (3 ticks after the slam); the view maps windup 0-27 ticks onto clip 0-24"
+   },
+   "Burst": {
+    "contract_release": 21,
+    "first_frame_at_99pct_spread": 21,
+    "spread_m": {
+     "16": 0.21,
+     "17": 0.21,
+     "18": 0.21,
+     "19": 0.31,
+     "20": 1.82,
+     "21": 2.68,
+     "22": 2.68,
+     "23": 2.68,
+     "24": 2.68,
+     "25": 2.68,
+     "26": 2.68,
+     "27": 2.68,
+     "28": 2.64,
+     "29": 2.53
+    }
+   },
+   "Shot": {
+    "contract_release": 21,
+    "tip_most_forward_frame": 21,
+    "tip_speed_peak_frame": 20,
+    "tip_speed_mps_f16_26": {
+     "16": 0.9,
+     "17": 1.1,
+     "18": 0.5,
+     "19": 13.3,
+     "20": 30.8,
+     "21": 16.0,
+     "22": 14.9,
+     "23": 17.8,
+     "24": 13.5,
+     "25": 5.0,
+     "26": 2.0
+    },
+    "muzzle_unity_at_release": [
+     0.12,
+     1.9,
+     1.42
+    ],
+    "muzzle_axis_unity": [
+     -0.0,
+     -0.06,
+     0.998
+    ],
+    "muzzle_to_spike_tip_vertex_m": 0.0
+   },
+   "Hit": {
+    "contract_peak": 3,
+    "measured_peak": 3
+   },
+   "pass": true
+  },
+  "5_deformation_ground": {
+   "rigid_spike_edge_dev_max": 0.00034683800223211936,
+   "body_min_z_m": {
+    "Idle": -0.0,
+    "Walk": -0.0,
+    "LineCast": -0.0,
+    "Burst": -0.0,
+    "Shot": -0.0,
+    "Hit": -0.0,
+    "Death": -0.0004
+   },
+   "frames_body_below_minus_2cm": {
+    "Idle": [],
+    "Walk": [],
+    "LineCast": [],
+    "Burst": [],
+    "Shot": [],
+    "Hit": [],
+    "Death": []
+   },
+   "linecast_spikes_buried_by_design_m": -0.1,
+   "death_final": {
+    "final_min_z_all": -0.0002,
+    "final_min_z_body": -0.0002,
+    "final_max_z": 0.728,
+    "final_verts_within_2cm_of_ground": 83,
+    "final_verts_below_minus1cm": 0,
+    "hold_44_48_max_move_m": 0.0,
+    "min_z_per_frame": {
+     "28": -0.0,
+     "29": -0.0,
+     "30": -0.0,
+     "31": -0.0,
+     "32": -0.0,
+     "33": -0.0,
+     "34": 0.0,
+     "35": -0.0,
+     "36": 0.0,
+     "37": -0.0,
+     "38": 0.0,
+     "39": -0.0,
+     "40": -0.0,
+     "41": -0.0,
+     "42": -0.0,
+     "43": -0.0,
+     "44": -0.0,
+     "45": -0.0,
+     "46": -0.0,
+     "47": -0.0,
+     "48": -0.0
+    }
+   },
+   "wrist_edge_gain_cm_max_frame": {
+    "Idle": [
+     0.7,
+     8
+    ],
+    "Walk": [
+     1.2,
+     1
+    ],
+    "LineCast": [
+     3.6,
+     13
+    ],
+    "Burst": [
+     2.6,
+     20
+    ],
+    "Shot": [
+     3.4,
+     24
+    ],
+    "Hit": [
+     1.5,
+     6
+    ],
+    "Death": [
+     3.6,
+     44
+    ]
+   },
+   "largest_edge_gain_cm": {
+    "Idle": [
+     -2.81,
+     42,
+     "LeftUpLeg",
+     "LeftLeg",
+     4.37
+    ],
+    "Walk": [
+     8.42,
+     18,
+     "LeftUpLeg",
+     "LeftLeg",
+     4.37
+    ],
+    "LineCast": [
+     10.12,
+     45,
+     "LeftUpLeg",
+     "LeftLeg",
+     4.37
+    ],
+    "Burst": [
+     -7.18,
+     18,
+     "LeftFoot",
+     "LeftLeg",
+     8.91
+    ],
+    "Shot": [
+     -4.51,
+     19,
+     "LeftArm",
+     "LeftForeArm",
+     4.76
+    ],
+    "Hit": [
+     -3.43,
+     4,
+     "LeftArm",
+     "LeftForeArm",
+     4.11
+    ],
+    "Death": [
+     13.23,
+     19,
+     "LeftUpLeg",
+     "LeftLeg",
+     4.37
+    ]
+   },
+   "wrist_fold_deg_max_L_R": {
+    "Rest": [
+     24.1,
+     26.3
+    ],
+    "Idle": [
+     23.5,
+     25.9
+    ],
+    "Walk": [
+     27.5,
+     30.0
+    ],
+    "LineCast": [
+     73.7,
+     70.6
+    ],
+    "Burst": [
+     90.3,
+     79.7
+    ],
+    "Shot": [
+     35.8,
+     107.4
+    ],
+    "Hit": [
+     27.6,
+     19.0
+    ],
+    "Death": [
+     70.5,
+     88.3
+    ]
+   },
+   "renders_looked_at": "verify/out/sheet3_*.jpg (game camera 52 deg, 3/4), sheet_wrist3.jpg, sheet_knee3.jpg (clay close-ups)",
+   "pass": true
+  },
+  "6_triangles_weights": {
+   "triangles": 23999,
+   "budget": 25000,
+   "max_weights_per_vertex": 4,
+   "vertices_over_4": 0,
+   "weight_sum_range": [
+    0.9999999552965164,
+    1.0000000447034836
+   ],
+   "unweighted": 0,
+   "pass": true
+  },
+  "7_review_page": {
+   "page": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\5.forest-elite-shipomet\\production\\review\\animation_r01\\index.html",
+   "references": 55,
+   "missing": [],
+   "videos": 14,
+   "pass": true
+  }
+ },
+ "fixed_in_r03": {
+  "wrist_seam_rig": {
+   "before_cm": {
+    "LineCast": [
+     12.1,
+     8
+    ],
+    "Burst": [
+     16.8,
+     20
+    ],
+    "Shot": [
+     12.3,
+     10
+    ],
+    "Death": [
+     16.0,
+     44
+    ]
+   },
+   "after_cm": {
+    "Idle": [
+     0.7,
+     8
+    ],
+    "Walk": [
+     1.2,
+     1
+    ],
+    "LineCast": [
+     3.6,
+     13
+    ],
+    "Burst": [
+     2.6,
+     20
+    ],
+    "Shot": [
+     3.4,
+     24
+    ],
+    "Hit": [
+     1.5,
+     6
+    ],
+    "Death": [
+     3.6,
+     44
+    ]
+   },
+   "change": "rig/fix_wrist_weights.py + rig_wrist.py (build_rig.py step 6b)"
+  },
+  "shot_wrist_fold": {
+   "before_deg": 165.7,
+   "after_deg": 107.4
+  },
+  "linecast_strike": {
+   "before_tip_speed_mps_21_24": [
+    23.8,
+    67.9,
+    12.6,
+    18.5
+   ],
+   "before_tip_z_22_23": [
+    0.75,
+    0.41
+   ],
+   "after_tip_speed_mps_21_24": [
+    25.5,
+    31.0,
+    37.9,
+    37.3
+   ]
+  },
+  "burst_release_extreme": {
+   "before": "spread 2.68 m at 21, max 2.76 m at 23",
+   "after_first_99pct_frame": 21
+  },
+  "death_float": {
+   "before": "no ground contact 16-21 (up to 8.5 cm), knees 2-5 cm above ground 22-31",
+   "after_body_min_z_m": -0.0004
+  }
+ },
+ "pass": true
+}

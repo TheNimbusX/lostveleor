@@ -1,0 +1,58 @@
+{
+ "face_clearance": {
+  "8": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.0787,
+   "chest_min_z": 0.1616
+  },
+  "10": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.0482,
+   "chest_min_z": 0.1447
+  },
+  "15": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.1603,
+   "chest_min_z": 0.1984
+  },
+  "20": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.0553,
+   "chest_min_z": 0.1426
+  },
+  "24": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.1603,
+   "chest_min_z": 0.1984
+  },
+  "28": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.0399,
+   "chest_min_z": 0.133
+  },
+  "30": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.285,
+   "chest_min_z": 0.2272
+  },
+  "33": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.1476,
+   "chest_min_z": 0.1833
+  },
+  "38": {
+   "head_up_deg": 0.0,
+   "pelvis_raised_m": 0.0,
+   "face_min_z": 0.174,
+   "chest_min_z": 0.1907
+  }
+ }
+}

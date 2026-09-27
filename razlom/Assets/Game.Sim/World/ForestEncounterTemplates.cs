@@ -7,35 +7,32 @@ namespace Game.Sim
     ///
     /// По документу владельца «Локация 1 — Лес»: 8 арен и босс; обычных 5–6
     /// из 8, засада и выживание — не больше одной за забег, одна элитная
-    /// встреча на А4–А6 наверняка и вторая на А7–А8 с шансом 30%. Цена
-    /// видов — Threat в EnemyArchetypes (рой 1, хранитель 2, плюй-плод 2,
-    /// камнекопыт 3, вендиго 6); бюджет угроз читается на ВОЛНУ (решение от
+    /// встреча наверняка (А5–А7, см. ArenaRunPlan) и вторая на А7–А8 с шансом
+    /// 30%. Цена видов — Threat в EnemyArchetypes (рой 1, хранитель 2,
+    /// плюй-плод 2, камнекопыт 3, Корнехват 3, Расщепень 4 вместе с детьми,
+    /// вендиго и Шипомёт 6); бюджет угроз читается на ВОЛНУ (решение от
     /// 26.09), в обычной арене с А2 — не меньше двух волн. Обычная волна
     /// держит бюджет целиком (от нижней границы до верхней), засада, выживание
     /// и элита — только потолок: у них свой процент бюджета и своя поддержка.
     ///
     /// НОВЫЙ ВИД — СНАЧАЛА ОДИН. Урок (Lesson) — единственный путь вида в
     /// забег: E01 — рой, E02 — хранитель, E04 — плюй-плод, E03 — камнекопыт,
-    /// E08 — вендиго; в Staged — E06 Корнехват, E07 Расщепень, E08T Шипомёт.
+    /// E06 — Корнехват, E07 — Расщепень, E08 — вендиго, E08T — Шипомёт.
     /// Сочетания (E05, E09, E10, E13, E14, E15, засада, выживание) план
     /// ставит только после уроков всех своих видов — см. ArenaRunPlan.
     ///
-    /// ОТСТУП ОТ ДОКА В ДИАПАЗОНАХ. С нынешним составом (без Корнехвата,
-    /// Расщепня и Шипомёта: E06/E07/E09/E10/E14) на А2–А3 три урока — E02,
-    /// E03, E04 — на два места, и хотя бы один вид оставался бы без урока.
-    /// Поэтому E03 — А3–А4 (в доке А3), и на деле А1–А4 всегда E01, E02,
-    /// E04, E03. E04 — только А3 (в доке А2–А3): после E02 в нём можно
-    /// хранителя. E05 — до А7 (в доке «А5+»): на А8 он шёл 96 с.
+    /// НОВЫЕ МОБЫ В ИГРЕ (27.09, владелец: «добавляй в игру»). Корнехват,
+    /// Расщепень и Шипомёт получили арт, и их шаблоны (E06, E07, E08T, E09,
+    /// E10, E14) переехали из Staged в All. Вместе с ними вернулись диапазоны
+    /// дока у E04 (А2–А3; на деле всё равно А3 — хранитель в нём знаком только
+    /// после E02) и E05 (А5–А8), а E08 встал в окно первой элиты, А5–А7.
     ///
-    /// С НОВЫМИ ВИДАМИ (пул Release, план с staged) диапазоны дока вернулись
-    /// у E04 (А2–А3; на деле всё равно А3 — хранитель в нём знаком только
-    /// после E02) и E05 (А5–А8), а E08 встал в новое окно первой элиты,
-    /// А5–А7. E03 остался на А3–А4 — запасной вариант плана от 26.09: при А3
-    /// на А4 не остаётся ни одной обычной встречи (элита с новыми видами — с
-    /// А5), А3 всегда брал бы E04, А4 — засаду, и камнекопыт не встречался
-    /// бы ни в одном забеге. План на 1000 сидах (26.09): рой, хранитель и
-    /// плюй-плод — в каждом забеге, Расщепень — в 60%, камнекопыт и Корнехват —
-    /// в 49–50%, вендиго и Шипомёт — поровну, по 49–51%; засада — в 77%.
+    /// ОТСТУП ОТ ДОКА: E03 — А3–А4 (в доке А3). При А3 на А4 не остаётся ни
+    /// одной обычной встречи (элита — с А5), А3 всегда брал бы E04, А4 —
+    /// засаду, и камнекопыт не встречался бы ни в одном забеге. План на 1000
+    /// сидах (26.09): рой, хранитель и плюй-плод — в каждом забеге,
+    /// Расщепень — в 60%, камнекопыт и Корнехват — в 49–50%, вендиго и
+    /// Шипомёт — поровну, по 49–51%; засада — в 77%.
     ///
     /// ОТСТУП ПО ВОЛНАМ: E01 — семь волн по четыре Корнеполза, а не одна.
     /// Одной волной в 4–6 угроз А1 шла 7 с при цели 25–35, тремя — 15 с,
@@ -137,67 +134,45 @@ namespace Game.Sim
                 Wave(WaveTrigger.AliveAtMost(0), Stonehoof(1, Front), Guardian(2, 2, Flank), SwarmFill(0, 4, Center)),
             });
 
-        // Волны E04, E05 и E08 — общие у шаблона игры и его копии для пула
-        // Release: ключ, урок и состав у копии те же, другие только арены.
-        private static readonly EncounterWave[] E08Waves =
-        {
-            Wave(WaveTrigger.Start, Wendigo(Center), Swarm(2, 3, Front)),
-            Wave(WaveTrigger.AliveAtMost(0), Guardian(2, 2, Flank), Swarm(2, 3, Back)),
-        };
-
-        private static readonly EncounterWave[] E04Waves =
-        {
-            Wave(WaveTrigger.Start, Bud(1, 1, Front), Guardian(1, 1, Center), SwarmFill(3, 5, Center)),
-            Wave(WaveTrigger.AliveAtMost(3), Bud(1, 1, Flank), Guardian(1, 1, Front), BudFill(0, 1, Back), SwarmFill(1, 5, Front)),
-            Wave(WaveTrigger.AliveAtMost(3), Bud(1, 1, Back), Guardian(1, 1, Flank), SwarmFill(3, 5, Flank)),
-        };
-
-        private static readonly EncounterWave[] E05Waves =
-        {
-            Wave(WaveTrigger.Start, Stonehoof(1, Front), Bud(1, 1, Flank), Guardian(1, 1, Center),
-                BudFill(0, 2, Flank), SwarmFill(0, 7, Center)),
-            Wave(WaveTrigger.AliveAtMost(2), Stonehoof(1, Flank), Bud(1, 1, Back), Guardian(1, 1, Front),
-                BudFill(0, 2, Flank), SwarmFill(0, 7, Front)),
-        };
-
         /// <summary>
-        /// E04 — урок стрелка: плюй-плод с хранителем и роем, три волны. Только
-        /// А3 (в доке А2–А3): так он всегда после E02, и хранитель в нём знаком.
+        /// E04 — урок стрелка: плюй-плод с хранителем и роем, три волны. А2–А3
+        /// по доку; на деле А3 — хранитель в нём знаком только после E02.
         /// </summary>
         public static readonly ArenaEncounterTemplate E04 = new ArenaEncounterTemplate("forest.E04",
-            ArenaEncounterType.Normal, 3, 3, 2, EnemyKind.ForestBud, E04Waves);
+            ArenaEncounterType.Normal, 2, 3, 2, EnemyKind.ForestBud, new[]
+            {
+                Wave(WaveTrigger.Start, Bud(1, 1, Front), Guardian(1, 1, Center), SwarmFill(3, 5, Center)),
+                Wave(WaveTrigger.AliveAtMost(3), Bud(1, 1, Flank), Guardian(1, 1, Front), BudFill(0, 1, Back), SwarmFill(1, 5, Front)),
+                Wave(WaveTrigger.AliveAtMost(3), Bud(1, 1, Back), Guardian(1, 1, Flank), SwarmFill(3, 5, Flank)),
+            });
 
         /// <summary>
         /// E05 — перекрёстное давление: таран, плоды с фланга, хранители, рой —
-        /// остаток. До А7: на А8 две такие волны шли 96 с при цели 60–80.
+        /// остаток. А5–А8 по доку.
         /// </summary>
         public static readonly ArenaEncounterTemplate E05 = new ArenaEncounterTemplate("forest.E05",
-            ArenaEncounterType.Normal, 5, 7, 3, EnemyKind.None, E05Waves);
-
-        /// <summary>E04 с диапазоном дока, А2–А3, — только в пуле Release.</summary>
-        public static readonly ArenaEncounterTemplate E04Release = new ArenaEncounterTemplate("forest.E04",
-            ArenaEncounterType.Normal, 2, 3, 2, EnemyKind.ForestBud, E04Waves);
-
-        /// <summary>E05 с диапазоном дока, А5–А8, — только в пуле Release.</summary>
-        public static readonly ArenaEncounterTemplate E05Release = new ArenaEncounterTemplate("forest.E05",
-            ArenaEncounterType.Normal, 5, 8, 3, EnemyKind.None, E05Waves);
+            ArenaEncounterType.Normal, 5, 8, 3, EnemyKind.None, new[]
+            {
+                Wave(WaveTrigger.Start, Stonehoof(1, Front), Bud(1, 1, Flank), Guardian(1, 1, Center),
+                    BudFill(0, 2, Flank), SwarmFill(0, 7, Center)),
+                Wave(WaveTrigger.AliveAtMost(2), Stonehoof(1, Flank), Bud(1, 1, Back), Guardian(1, 1, Front),
+                    BudFill(0, 2, Flank), SwarmFill(0, 7, Front)),
+            });
 
         /// <summary>
         /// E08 — первая элита: вендиго с парой роя — урок вендиго; когда арена
         /// пуста, из земли встаёт небольшая подмога. Подмога ПОСЛЕ вендиго, а не
         /// к нему: с ней в бою вендиго на А5–А6 клал половину забегов с переносом
-        /// здоровья (стенд, 26.09).
+        /// здоровья (стенд, 26.09). А5–А7 — окно первой элиты: с А4–А6 на А7 из
+        /// первых элит вставал бы один E08T, и Шипомёт выпадал бы втрое чаще
+        /// вендиго (1000 сидов: 78% против 22%); с А5–А7 — поровну.
         /// </summary>
         public static readonly ArenaEncounterTemplate E08 = new ArenaEncounterTemplate("forest.E08",
-            ArenaEncounterType.Elite, 4, 6, 3, EnemyKind.ForestWendigo, E08Waves);
-
-        /// <summary>
-        /// E08 в окне первой элиты релиза, А5–А7, — только в пуле Release. С
-        /// А4–А6 на А7 из первых элит вставал бы один E08T, и Шипомёт выпадал
-        /// бы втрое чаще вендиго (1000 сидов: 78% против 22%); с А5–А7 — поровну.
-        /// </summary>
-        public static readonly ArenaEncounterTemplate E08Release = new ArenaEncounterTemplate("forest.E08",
-            ArenaEncounterType.Elite, 5, 7, 3, EnemyKind.ForestWendigo, E08Waves);
+            ArenaEncounterType.Elite, 5, 7, 3, EnemyKind.ForestWendigo, new[]
+            {
+                Wave(WaveTrigger.Start, Wendigo(Center), Swarm(2, 3, Front)),
+                Wave(WaveTrigger.AliveAtMost(0), Guardian(2, 2, Flank), Swarm(2, 3, Back)),
+            });
 
         /// <summary>
         /// E11 — засада: приманка (рой и хранитель), потом две волны с парой
@@ -252,14 +227,7 @@ namespace Game.Sim
                     BudFill(0, 3, Front), SwarmFill(0, 9, Center)),
             }, budgetPercent: 70);
 
-        // ---------- Staged: новые мобы леса (план от 26.09) ----------
-        //
-        // Шаблоны Корнехвата, Расщепня и Шипомёта ждут арта своих мобов и в All
-        // не входят: игра их пока не ставит. Тесты и стенд баланса
-        // (ARENA_BENCH_STAGED=1) гоняют All + Staged, план с ними — пул Release
-        // и ArenaRunPlan.Roll(..., staged: true): там же правила элит релиза
-        // (первая элита на А5–А7, Вендиго и Шипомёт не в одном забеге). Моб
-        // получил арт и сыгран владельцем — его шаблоны переезжают в All.
+        // ---------- новые мобы леса (план от 26.09, в игре с 27.09) ----------
         //
         // Угроза видов: Корнехват 3, Расщепень 4 вместе с детьми распада,
         // Шипомёт 6 (элита, как вендиго). Не больше двух хранителей на волну —
@@ -267,26 +235,35 @@ namespace Game.Sim
 
         /// <summary>
         /// E06 — урок корней: Корнехват с хранителем и роем; когда живых не
-        /// больше одного — второй Корнехват с хранителями. Только А5.
+        /// больше одного — второй Корнехват с парой хранителей; потом пара
+        /// хранителей без Корнехвата. Только А5. Стенд 27.09: двумя полными
+        /// волнами А5 шла 31 с при цели 50–70 (рой добора гибнет с двух ударов);
+        /// тремя полными — 65 с, но пятнадцать Корнеползов снимали герою 5-го
+        /// уровня половину здоровья, а третий Корнехват под замедлением добивал
+        /// тех, кто пришёл на А5 с половиной. Три волны по 80% бюджета: время
+        /// держат Корнехваты и хранители, Корнехват в волне — один.
         /// </summary>
         public static readonly ArenaEncounterTemplate E06 = new ArenaEncounterTemplate("forest.E06",
             ArenaEncounterType.Normal, 5, 5, 2, EnemyKind.ForestRootSnarer, new[]
             {
-                Wave(WaveTrigger.Start, Snarer(1, 1, Front), Guardian(1, 1, Center), SwarmFill(5, 7, Center)),
-                Wave(WaveTrigger.AliveAtMost(1), Snarer(1, 1, Back), Guardian(1, 2, Front), SwarmFill(3, 7, Flank)),
-            });
+                Wave(WaveTrigger.Start, Snarer(1, 1, Front), Guardian(1, 1, Center), SwarmFill(3, 5, Center)),
+                Wave(WaveTrigger.AliveAtMost(1), Snarer(1, 1, Back), Guardian(2, 2, Front), SwarmFill(1, 3, Flank)),
+                Wave(WaveTrigger.AliveAtMost(1), Guardian(2, 2, Back), SwarmFill(4, 6, Front)),
+            }, budgetPercent: 80);
 
         /// <summary>
         /// E07 — урок раскола: Расщепень с хранителем и роем, 70% бюджета —
         /// распад добавляет двух детей на каждого, и урок не тонет в толпе.
-        /// Вторая волна — только на пустой арене: дети считаются живыми, и
-        /// порог выше нуля выпускал бы её прямо на детей первой. Только А6.
+        /// Следующая волна — только на пустой арене: дети считаются живыми, и
+        /// порог выше нуля выпускал бы её прямо на детей прошлой. Только А6.
+        /// Три волны — стенд 27.09: двумя А6 шла 31 с при цели 50–65.
         /// </summary>
         public static readonly ArenaEncounterTemplate E07 = new ArenaEncounterTemplate("forest.E07",
             ArenaEncounterType.Normal, 6, 6, 2, EnemyKind.ForestSplitter, new[]
             {
                 Wave(WaveTrigger.Start, Splitter(1, 1, Front), Guardian(1, 1, Center), SwarmFill(0, 4, Flank)),
                 Wave(WaveTrigger.AliveAtMost(0), Splitter(1, 1, Flank), Guardian(0, 1, Front), SwarmFill(0, 4, Back)),
+                Wave(WaveTrigger.AliveAtMost(0), Splitter(1, 1, Back), Guardian(0, 1, Flank), SwarmFill(0, 4, Front)),
             }, budgetPercent: 70);
 
         /// <summary>
@@ -304,28 +281,33 @@ namespace Game.Sim
         /// <summary>
         /// E09 — точка и линия: круг Корнехвата под героем, пока камнекопыт
         /// целит таран, а плод бьёт сверху; во второй волне вместо тарана —
-        /// хранители. Рой — остаток бюджета.
+        /// хранители. Рой — остаток бюджета; 80% бюджета, как у E10 (стенд
+        /// 27.09): полным бюджетом на А8 добор давал по 7–9 Корнеползов на волну,
+        /// и рой снимал герою больше, чем у него было.
         /// </summary>
         public static readonly ArenaEncounterTemplate E09 = new ArenaEncounterTemplate("forest.E09",
             ArenaEncounterType.Normal, 6, 8, 3, EnemyKind.None, new[]
             {
-                Wave(WaveTrigger.Start, Snarer(1, 1, Flank), Stonehoof(1, Front), Bud(1, 1, Back), SwarmFill(4, 10, Center)),
+                Wave(WaveTrigger.Start, Snarer(1, 1, Flank), Stonehoof(1, Front), Bud(1, 1, Back), SwarmFill(2, 10, Center)),
                 Wave(WaveTrigger.AliveAtMost(2), Snarer(1, 1, Back), Guardian(1, 2, Front), Bud(1, 1, Flank),
-                    SwarmFill(3, 11, Center)),
-            });
+                    SwarmFill(1, 11, Center)),
+            }, budgetPercent: 80);
 
         /// <summary>
         /// E10 — раскол под давлением: Расщепень под плодом и с хранителем,
         /// рой — остаток. Дети распада считаются живыми и держат порог второй
-        /// волны: она не выходит, пока их не добили.
+        /// волны: она не выходит, пока их не добили. 80% бюджета и хранитель в
+        /// обеих волнах — стенд 27.09: полным бюджетом добор давал на А8 по
+        /// 7–10 Корнеползов на волну, рой снимал герою 5-го уровня две трети
+        /// здоровья, и 4 забега из 9 с переносом кончились здесь.
         /// </summary>
         public static readonly ArenaEncounterTemplate E10 = new ArenaEncounterTemplate("forest.E10",
             ArenaEncounterType.Normal, 6, 8, 3, EnemyKind.None, new[]
             {
-                Wave(WaveTrigger.Start, Splitter(1, 1, Front), Bud(1, 1, Back), Guardian(1, 1, Center), SwarmFill(4, 10, Flank)),
-                Wave(WaveTrigger.AliveAtMost(2), Splitter(1, 1, Flank), Bud(1, 1, Front), Guardian(0, 1, Back),
-                    SwarmFill(4, 12, Center)),
-            });
+                Wave(WaveTrigger.Start, Splitter(1, 1, Front), Bud(1, 1, Back), Guardian(1, 1, Center), SwarmFill(2, 10, Flank)),
+                Wave(WaveTrigger.AliveAtMost(2), Splitter(1, 1, Flank), Bud(1, 1, Front), Guardian(1, 1, Back),
+                    SwarmFill(2, 10, Center)),
+            }, budgetPercent: 80);
 
         /// <summary>
         /// E14 — поле шипов: Шипомёт с хранителями и, может быть, плодом —
@@ -346,27 +328,23 @@ namespace Game.Sim
         public static readonly EncounterWave BossAdds = Wave(WaveTrigger.AliveAtMost(64),
             Swarm(2, 3, Flank), Guardian(1, 1, Front));
 
-        /// <summary>Пул шаблонов леса в порядке ключей. Порядок входит в бросок плана.</summary>
-        public static readonly ArenaEncounterTemplate[] All = { E01, E02, E03, E04, E05, E08, E11, E12, E13, E15 };
-
         /// <summary>
-        /// Шаблоны новых видов, которых ещё нет в игре: в All не входят. У
-        /// каждого вида — ровно один урок по All + Staged.
+        /// Пул шаблонов леса в порядке ключей. Порядок входит в бросок плана:
+        /// тот же, что был у пула с новыми видами, и планы те же, что мерил
+        /// стенд и тест плана до выхода мобов в игру.
         /// </summary>
-        public static readonly ArenaEncounterTemplate[] Staged = { E06, E07, E08T, E09, E10, E14 };
-
-        /// <summary>
-        /// Пул плана с новыми видами (ArenaRunPlan.Roll(..., staged: true)): All +
-        /// Staged в порядке ключей; E04, E05 и E08 — копии с теми же ключами и
-        /// другими аренами, см. «с новыми видами» выше.
-        /// </summary>
-        public static readonly ArenaEncounterTemplate[] Release =
+        public static readonly ArenaEncounterTemplate[] All =
         {
-            E01, E02, E03, E04Release, E05Release, E06, E07, E08Release, E08T, E09, E10, E11, E12, E13, E14, E15,
+            E01, E02, E03, E04, E05, E06, E07, E08, E08T, E09, E10, E11, E12, E13, E14, E15,
         };
 
-        /// <summary>Пул плана: игры (All) или с новыми видами (Release).</summary>
-        public static ArenaEncounterTemplate[] Pool(bool staged) => staged ? Release : All;
+        /// <summary>
+        /// Шаблоны видов, которых ещё нет в игре (ждут арта): в All не входят,
+        /// игра их не ставит, а тесты и стенд проверяют. Сейчас пусто — все
+        /// мобы леса в игре; следующий новый вид (босс «Хозяин Чащи» и его
+        /// свита) заводит свои шаблоны сначала здесь.
+        /// </summary>
+        public static readonly ArenaEncounterTemplate[] Staged = new ArenaEncounterTemplate[0];
 
         /// <summary>Шаблон по стабильному ключу или null: сначала All, потом Staged.</summary>
         public static ArenaEncounterTemplate Find(string key)

@@ -41,6 +41,13 @@ namespace Game.Tests
                 case EnemyKind.ForestBud: min = 3; max = 7; break;
                 case EnemyKind.ForestStonehoof: min = 6; max = 13; break;
                 case EnemyKind.ForestWendigo: min = 20; max = 40; break;
+                // Новые мобы леса (27.09, в потоке арен): Шипомёт — элита со здоровьем
+                // Вендиго (2000), Корнехват — угроза Камнекопыта (650), Расщепень 560,
+                // его детёныш 160 — 3–5 ударов, как крупный корнеполз.
+                case EnemyKind.ForestThorncaster: min = 20; max = 40; break;
+                case EnemyKind.ForestRootSnarer: min = 6; max = 13; break;
+                case EnemyKind.ForestSplitter: min = 5; max = 12; break;
+                case EnemyKind.ForestSplitling: min = 1; max = 4; break;
                 default: min = 0; max = 0; Assert.Fail("Нет полосы для " + kind); break;
             }
         }
@@ -106,8 +113,9 @@ namespace Game.Tests
                                 * Fix64.Ratio(settings.Encounters.DamagePercent, 100))), kind + " seed " + seed);
                             Assert.That(sim.Entities.BodyRadius[i], Is.EqualTo(sim.ArchetypeBodyRadius(kind)));
                             Assert.That(sim.Entities.CritChance[i], Is.EqualTo(Fix64.Zero), "враги не критуют");
-                            // Элита в потоке арен — только Вендиго элитной встречи.
-                            Assert.That(plan.IsElite(i), Is.EqualTo(kind == EnemyKind.ForestWendigo), kind + " seed " + seed);
+                            // Элита в потоке арен — Вендиго и Шипомёт элитных встреч.
+                            Assert.That(plan.IsElite(i), Is.EqualTo(kind == EnemyKind.ForestWendigo || kind == EnemyKind.ForestThorncaster),
+                                kind + " seed " + seed);
                         }
                         // Правило владельца: не больше двух Хранителей в пачке — волне.
                         Assert.That(guardians, Is.LessThanOrEqualTo(2), template.Key + " seed " + seed);
@@ -140,17 +148,19 @@ namespace Game.Tests
                     Assert.That(KillSeconds(sim, i), Is.InRange(min, max),
                         kind + (plan.IsElite(i) ? " (elite)" : "") + " at level " + level + ", seed " + seed);
                     int hit = sim.Entities.Damage[i];
-                    if (kind == EnemyKind.ForestStonehoof || kind == EnemyKind.ForestWendigo)
+                    if (kind == EnemyKind.ForestStonehoof || kind == EnemyKind.ForestWendigo
+                        || kind == EnemyKind.ForestThorncaster || kind == EnemyKind.ForestRootSnarer)
                     {
-                        // Крупные фигуры (таран, коготь) — по правилу окон 10–16% на
-                        // первых аренах; к А8 рост урона выводит коготь Вендиго к 15%.
+                        // Крупные фигуры (таран, коготь, линия шипов, корни) — по правилу окон
+                        // 10–16% на первых аренах; к А8 рост урона выводит коготь Вендиго к 15%,
+                        // шип линии Шипомёта — к 17%.
                         Assert.That(hit * 100, Is.LessThanOrEqualTo(20 * heroHealth), kind + " hit at level " + level);
                         continue;
                     }
                     // Обычный удар моба — не больше 10% эталонного героя даже на
                     // восьмой арене; на первой Хранитель и плод — в окне 4–8%.
                     Assert.That(hit * 100, Is.LessThanOrEqualTo(10 * heroHealth), kind + " hit at level " + level);
-                    if (level == 1 && kind != EnemyKind.ForestRootSwarm)
+                    if (level == 1 && kind != EnemyKind.ForestRootSwarm && kind != EnemyKind.ForestSplitling)
                         Assert.That(hit * 100, Is.InRange(4 * heroHealth, 8 * heroHealth), kind + " hit at level 1");
                 }
             }

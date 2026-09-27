@@ -1,0 +1,142 @@
+{
+ "fbx_version": 7400,
+ "TimeMode": [
+  6
+ ],
+ "CustomFrameRate": [
+  30.0
+ ],
+ "stacks": {
+  "ForestThorncaster_Idle": {
+   "local_frames": [
+    0.0,
+    60.0
+   ],
+   "reference_frames": [
+    0.0,
+    60.0
+   ]
+  },
+  "ForestThorncaster_Walk": {
+   "local_frames": [
+    0.0,
+    24.0
+   ],
+   "reference_frames": [
+    0.0,
+    24.0
+   ]
+  },
+  "ForestThorncaster_LineCast": {
+   "local_frames": [
+    0.0,
+    75.0
+   ],
+   "reference_frames": [
+    0.0,
+    75.0
+   ]
+  },
+  "ForestThorncaster_Burst": {
+   "local_frames": [
+    0.0,
+    36.0
+   ],
+   "reference_frames": [
+    0.0,
+    36.0
+   ]
+  },
+  "ForestThorncaster_Shot": {
+   "local_frames": [
+    0.0,
+    33.0
+   ],
+   "reference_frames": [
+    0.0,
+    33.0
+   ]
+  },
+  "ForestThorncaster_Hit": {
+   "local_frames": [
+    0.0,
+    12.0
+   ],
+   "reference_frames": [
+    0.0,
+    12.0
+   ]
+  },
+  "ForestThorncaster_Death": {
+   "local_frames": [
+    0.0,
+    48.0
+   ],
+   "reference_frames": [
+    0.0,
+    48.0
+   ]
+  }
+ },
+ "curve_key_count_histogram": {
+  "61": 234,
+  "25": 234,
+  "76": 234,
+  "37": 234,
+  "34": 234,
+  "13": 234,
+  "49": 234
+ },
+ "keys_off_integer_frames": 0,
+ "takes_section": [
+  {
+   "name": "ForestThorncaster_Idle",
+   "local_frames": [
+    0.0,
+    60.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_Walk",
+   "local_frames": [
+    0.0,
+    24.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_LineCast",
+   "local_frames": [
+    0.0,
+    75.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_Burst",
+   "local_frames": [
+    0.0,
+    36.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_Shot",
+   "local_frames": [
+    0.0,
+    33.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_Hit",
+   "local_frames": [
+    0.0,
+    12.0
+   ]
+  },
+  {
+   "name": "ForestThorncaster_Death",
+   "local_frames": [
+    0.0,
+    48.0
+   ]
+  }
+ ]
+}

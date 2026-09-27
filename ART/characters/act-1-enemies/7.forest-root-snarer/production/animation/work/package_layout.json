@@ -1,0 +1,67 @@
+{
+ "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\7.forest-root-snarer\\production\\animation\\unity_package\\ForestRootSnarer.fbx",
+ "nla_layout": {
+  "ForestRootSnarer_Idle": [
+   0,
+   60
+  ],
+  "ForestRootSnarer_Walk": [
+   70,
+   86
+  ],
+  "ForestRootSnarer_Slam": [
+   96,
+   168
+  ],
+  "ForestRootSnarer_Hit": [
+   178,
+   190
+  ],
+  "ForestRootSnarer_Death": [
+   200,
+   245
+  ],
+  "ForestRootSnarer_Mend": [
+   255,
+   305
+  ]
+ },
+ "removed_helper_bones": [
+  "CTRL_L_hand",
+  "CTRL_L_elbow",
+  "CTRL_L_foot",
+  "CTRL_L_knee",
+  "CTRL_R_hand",
+  "CTRL_R_elbow",
+  "CTRL_R_foot",
+  "CTRL_R_knee"
+ ],
+ "deform_bones": [
+  "root",
+  "pelvis",
+  "spine_01",
+  "spine_02",
+  "neck",
+  "head",
+  "jaw",
+  "L_clavicle",
+  "L_arm_upper",
+  "L_arm_lower",
+  "L_hand",
+  "R_clavicle",
+  "R_arm_upper",
+  "R_arm_lower",
+  "R_hand",
+  "L_leg_upper",
+  "L_leg_lower",
+  "L_foot",
+  "R_leg_upper",
+  "R_leg_lower",
+  "R_foot"
+ ],
+ "textures": [
+  "T_ForestRootSnarer_Color.png",
+  "T_ForestRootSnarer_NormalGL.png",
+  "T_ForestRootSnarer_ORM.png"
+ ]
+}

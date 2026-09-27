@@ -1,0 +1,19 @@
+{
+  "skills": 10,
+  "talents": 80,
+  "existingIdsPreserved": 64,
+  "newProposedIds": 16,
+  "requiredFieldsPresent": true,
+  "embeddedDataMatchesSources": true,
+  "shortReview": {
+    "basics": 6,
+    "skills": 10,
+    "talents": 80
+  },
+  "modelManifestPresent": true,
+  "localMediaAndDownloadsChecked": 20,
+  "javascriptSyntax": "passed",
+  "browserVisualCheck": "not_run_browser_URL_policy_blocked_file_access",
+  "runtimeChanged": false,
+  "ownerAcceptance": "pending"
+}
