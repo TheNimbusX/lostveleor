@@ -45,6 +45,7 @@ namespace Game.View
             _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
             _runeRenderer = null;
             _landmarkSpots.Clear();
+            _grassField.Clear();
             if (_banks != null) _banks.SetActive(false);
             if (_water != null) _water.SetActive(false);
             if (_shore != null) _shore.SetActive(false);
@@ -63,6 +64,7 @@ namespace Game.View
             _riverMesh = _riverBankMesh = _bridgeMesh = null;
             _riverObject = _riverBanks = null; _bridgePool = null;
             _portalPool = _cachePool = _dropPool = null;
+            _grassLookedUp = false; _grassMesh = null;
         }
 
         private void InitializeMeadow()
@@ -134,6 +136,7 @@ namespace Game.View
             }
             if (Application.isPlaying && _driver != null) _meadowLighting.Apply(_style);
             ApplyCampSurface();
+            ScatterGrassField(map);
             UpdateMeadow();
         }
 
@@ -369,7 +372,7 @@ namespace Game.View
         private GladeCharacter ArenaCharacter(LayoutMap map)
         {
             if (_arenaCharacter < 0)
-                _arenaCharacter = DecorRandom(0, 877).Next(map.WaterCount > 0 ? 3 : 2);
+                _arenaCharacter = DecorRandom(0, 877).Next(map.WaterCount > 0 || map.RiverCount > 0 ? 3 : 2);
             return _arenaCharacter == 0 ? GladeCharacter.Sunny
                 : _arenaCharacter == 1 ? GladeCharacter.Rocky : GladeCharacter.Waterside;
         }
@@ -484,11 +487,13 @@ namespace Game.View
             float broad = Mathf.PerlinNoise(x * .035f + _reliefOffset.x, z * .035f + _reliefOffset.y);
             float detail = Mathf.PerlinNoise(x * .09f + _reliefOffset.y, z * .09f + _reliefOffset.x);
             float height = -_style.GroundFillDepthOffset + fade * (broad * 1.1f + detail * .25f);
+            // Русло — плавная ложбина по расстоянию до середины реки, как у прудов:
+            // ступенька по сетке фона давала чёрные зубчатые берега.
             for (int r = 0; r < map.RiverCount; r++)
             {
-                var river = map.GetRiver(r);
-                var point = new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z));
-                if (river.ContainsWater(point, Fix64.One)) height = Mathf.Min(height, -.55f);
+                float across = RiverOffset(map.GetRiver(r), x, z);
+                if (across < 1.6f)
+                    height = Mathf.Min(height, Mathf.Lerp(-.65f, height, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.75f, 1.55f, across))));
             }
             foreach (var pond in _ponds)
             {
@@ -496,6 +501,16 @@ namespace Game.View
                 if (r < 1.3f) height = Mathf.Min(height, Mathf.Lerp(-.65f, height, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, 1.3f, r))));
             }
             return height;
+        }
+
+        // Расстояние от середины русла в полуширинах реки; за концами русла — «далеко».
+        private static float RiverOffset(LayoutRiver river, float x, float z)
+        {
+            float ax = river.Across.X.ToFloat(), az = river.Across.Y.ToFloat();
+            float t = (x - river.Center.X.ToFloat()) * ax + (z - river.Center.Y.ToFloat()) * az;
+            if (Mathf.Abs(t) > river.HalfLength.ToFloat() + 3) return float.MaxValue;
+            var middle = RiverPoint(river, Mathf.Clamp(t, -river.HalfLength.ToFloat(), river.HalfLength.ToFloat()));
+            return Mathf.Abs((x - middle.x) * -az + (z - middle.z) * ax) / river.HalfWidth.ToFloat();
         }
 
         private static float PondRadius(Vector4 pond, float x, float z)
@@ -530,6 +545,8 @@ namespace Game.View
                     _ponds.Add(new Vector4(point.X.ToFloat(), point.Y.ToFloat(), 4.6f, 4.6f));
                 }
             if (map.Outline == null || map.GladeCount == 0) return;
+            // У арены вода уже есть — река с прудами на концах или озеро; лишние пруды её дробили бы.
+            if (map.GladeCount == 1 && (map.RiverCount > 0 || map.WaterCount > 0)) return;
             int existingPonds = _ponds.Count;
             var rng = DecorRandom(0, 397);
             for (int attempt = 0; attempt < 96 && _ponds.Count < existingPonds + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
@@ -707,19 +724,20 @@ namespace Game.View
             _landmarkSpots.Clear();
             if (_landmarkVariants == null || _landmarkVariants.Length != _style.DecorVariants.Length)
                 _landmarkVariants = new bool[_style.DecorVariants.Length];
-            int treehouse = -1, runes = -1, fence = -1;
+            int treehouse = -1, runes = -1, stone = -1, fence = -1;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 var variant = _style.DecorVariants[i];
                 string name = variant.Prefab != null ? variant.Prefab.name : "";
                 if (name == "MeadowTreehouse") treehouse = i;
                 else if (name == "CreatingStoneRuin") runes = i;
+                else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == fence;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
-            if (runes >= 0) PlaceRuneCircle(map, runes);
+            if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
                 {
@@ -814,14 +832,18 @@ namespace Game.View
             }
         }
 
-        // Круг рунных камней — разовый ориентир: всегда у арены босса, у каменистой арены —
-        // в половине уровней. Стоит на плече поляны, как домик: камни не заходят на боевой пол.
-        private void PlaceRuneCircle(LayoutMap map, int runes)
+        // Рунное место — разовый ориентир: всегда у арены босса, у каменистой и береговой арены —
+        // в половине уровней (у светлой вместо него домик). У каменистой — кольцо-руина,
+        // утопленное в землю, у береговой и у босса — большой рунный камень-помост.
+        // Стоит на плече поляны, как домик: камни не заходят на боевой пол.
+        private void PlaceRuneCircle(LayoutMap map, int ring, int stone)
         {
             if (map.GladeCount == 0) return;
             var rng = DecorRandom(0, 983);
             bool boss = _shownEncounters != null && _shownEncounters.BossId >= 0;
-            if (map.GladeCount == 1 && !boss && (CharacterOf(map, 0) != GladeCharacter.Rocky || rng.NextDouble() > .5)) return;
+            var character = map.GladeCount == 1 ? CharacterOf(map, 0) : GladeCharacter.Rocky;
+            if (map.GladeCount == 1 && !boss && (character == GladeCharacter.Sunny || rng.NextDouble() > .5)) return;
+            int runes = ring < 0 ? stone : stone < 0 ? ring : boss || character == GladeCharacter.Waterside ? stone : ring;
             int start = rng.Next(map.GladeCount);
             for (int offset = 0; offset < map.GladeCount; offset++)
             {

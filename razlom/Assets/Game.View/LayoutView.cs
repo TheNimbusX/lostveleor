@@ -312,6 +312,7 @@ namespace Game.View
         private void LateUpdate()
         {
             UpdateMeadow();
+            DrawGrassField();
             if (!Application.isPlaying || _driver == null) return;
             if (_driver.Run == null || _driver.Sim == null)
             {
@@ -494,6 +495,8 @@ namespace Game.View
                     if (rng.NextDouble() > Mathf.Lerp(.3f, 1f, Mathf.SmoothStep(0f, 1f, clump))) continue;
                     if (TooCloseToConnector(x, z)) continue;
                     if (map.Outline != null && !map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.One)) continue;
+                    // Переправа проходима, но это вода: кусты и трава на броде не растут.
+                    if (NearRiver(x, z, .6f)) continue;
 
                     int variant = PickVariantIndex(rng, totalWeight);
                     // Large props inside the playable area must have a Sim footprint.

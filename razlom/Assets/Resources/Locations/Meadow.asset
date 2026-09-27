@@ -211,6 +211,18 @@ MonoBehaviour:
       Weight: 0
       ScaleRange: {x: 0.95, y: 1.05}
       UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 1721998534168104194, guid: 6feafa8363d0cb9448c5d44b21d2ad48, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.95, y: 1.05}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 5086111615655363204, guid: 967e69383cbfce1498d26a9754cb6784, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.9, y: 1.1}
+      UseAsBoundary: 0
     DecorPerCell: 0.45
     DecorEdgeMargin: 0.7
     DecorConnectorMargin: 1.6

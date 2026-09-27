@@ -238,7 +238,8 @@ namespace Game.LocationEditor
             // Колоски и круг рун расставляются явно в LayoutView.Meadow: нулевой вес не пускает их
             // ни в общие пулы, ни на боевой пол (PlaceModuleDecor выбирает декор по весу).
             variants.Add(Variant(PrepareSeedHeads(), DecorKind.GrassTuft, 0f, false, .85f, 1.2f));
-            variants.Add(Variant(PrepareStoneRuin(), DecorKind.Rock, 0f, false, .95f, 1.05f));
+            variants.Add(Variant(PrepareRuneLandmark("CreatingStoneRuin", "arena_stone_ruin", 3.7f, .05f),
+                DecorKind.Rock, 0f, false, .95f, 1.05f));
             // Остальные пучки из Creating качаются тем же ветром, что и трава лагеря.
             foreach (var variant in variants)
                 if (variant.Prefab != null && (variant.Prefab.name == "CreatingGrass" || variant.Prefab.name == "ArenaCreatingGrass"))
@@ -495,18 +496,109 @@ namespace Game.LocationEditor
             EditorUtility.SetDirty(target);
         }
 
-        // Круг рунных камней из Creating плоский (высота около 0,18 диаметра): ставится одним
-        // ориентиром у края арены, салатовые руны текстуры получают собственное свечение.
-        private static GameObject PrepareStoneRuin()
+        // Рунные ориентиры из Creating плоские: кольцо-руина (высота около 0,18 диаметра) и
+        // большой рунный камень-помост (около 0,22). Салатовые руны текстуры получают собственное
+        // свечение; модель утоплена в землю так, что верх камней по краю стоит на keepAbove метров над ней.
+        private static GameObject PrepareRuneLandmark(string name, string category, float size, float keepAbove)
         {
-            var prefab = PrepareImported("CreatingStoneRuin", "arena_stone_ruin", 3.7f, true);
-            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingStoneRuin_Surface.mat");
-            material.SetTexture("_EmissionMap", BuildRuneEmission("arena_stone_ruin", Folder + "/CreatingStoneRuin_Runes.png"));
+            var prefab = PrepareImported(name, category, size, true);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/" + name + "_Surface.mat");
+            material.SetTexture("_EmissionMap", BuildRuneEmission(category, Folder + "/" + name + "_Runes.png"));
             material.SetColor("_EmissionColor", new Color(.75f, 1f, .45f) * 1.5f);
             material.EnableKeyword("_EMISSION");
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
             EditorUtility.SetDirty(material);
+            SinkIntoGround(name, keepAbove);
             return prefab;
+        }
+
+        // Мерить по высшей точке нельзя: у кольца это тонкие лозы, и при 0,22 м над землёй
+        // сами камни и руны уходили под траву целиком. Повторный запуск модель не двигает.
+        private static void SinkIntoGround(string name, float keep)
+        {
+            string path = Folder + "/" + name + ".prefab";
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                float drop = RimTop(root) - keep;
+                if (Mathf.Abs(drop) <= .01f) return;
+                root.transform.GetChild(0).localPosition += Vector3.down * drop;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                Debug.Log($"[Луга] {name}: опущен на {drop:0.00} м, край над землёй {keep:0.00} м");
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+
+        // Медиана высот верхних граней во внешней пятой части радиуса — верх камней по краю.
+        private static float RimTop(GameObject root)
+        {
+            var filter = root.GetComponentInChildren<MeshFilter>(true);
+            var bounds = filter.GetComponent<Renderer>().bounds;
+            float radius = Mathf.Max(bounds.extents.x, bounds.extents.z);
+            var matrix = filter.transform.localToWorldMatrix;
+            var vertices = filter.sharedMesh.vertices; var normals = filter.sharedMesh.normals;
+            var heights = new List<float>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var p = matrix.MultiplyPoint3x4(vertices[i]);
+                if (matrix.MultiplyVector(normals[i]).normalized.y < .8f
+                    || new Vector2(p.x - bounds.center.x, p.z - bounds.center.z).magnitude < radius * .8f) continue;
+                heights.Add(p.y);
+            }
+            heights.Sort();
+            return heights[heights.Count / 2];
+        }
+
+        [MenuItem("Разлом/Локации/Добавить рунный камень и траву по карте из Creating", priority = 29)]
+        public static void AddRuneStoneAndGrassField()
+        {
+            AssetDatabase.Refresh();
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRuneStone" || v.Prefab.name == "CreatingGrassField"));
+            // Кольцо-руина уходит в землю: над травой остаётся только верх камней.
+            PrepareRuneLandmark("CreatingStoneRuin", "arena_stone_ruin", 3.7f, .05f);
+            // Рунный камень ставится явно как ориентир, трава — ковром в LayoutView.Grass:
+            // нулевой вес не пускает их ни в общие пулы, ни на боевой пол.
+            variants.Add(Variant(PrepareRuneLandmark("CreatingRuneStone", "arena_rune_stone", 3.3f, .18f),
+                DecorKind.Rock, 0f, false, .95f, 1.05f));
+            variants.Add(Variant(PrepareGrassField(), DecorKind.GrassTuft, 0f, false, .9f, 1.1f));
+            theme.Style.DecorVariants = variants.ToArray();
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Подключены рунный камень и трава по карте, кольцо-руина утоплено в землю.");
+        }
+
+        // Пучок для травяного ковра по всей карте: 970 треугольников упрощаются штатным Mesh LOD
+        // примерно до 300 — тысяча экземпляров на арену не должна весить как лес.
+        private static GameObject PrepareGrassField()
+        {
+            var prefab = PrepareImported("CreatingGrassField", "arena_grass_field", .36f, false);
+            string path = AssetDatabase.GetAssetPath(prefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var filter = root.GetComponentInChildren<MeshFilter>(true);
+                var work = UnityEngine.Object.Instantiate(filter.sharedMesh);
+                string meshPath = Folder + "/CreatingGrassField_Mesh.asset";
+                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+                if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, meshPath); }
+                try
+                {
+                    MeshLodUtility.GenerateMeshLods(work, (MeshLodUtility.LodGenerationFlags)0, -1);
+                    int level = 0;
+                    while (level + 1 < work.lodCount && LodTriangles(work, level) > 320) level++;
+                    ExtractLod(work, level, mesh);
+                    mesh.name = "CreatingGrassField_Mesh";
+                    Debug.Log($"[Луга] CreatingGrassField: LOD {level}, {LodTriangles(work, level)} из {LodTriangles(work, 0)} треугольников");
+                }
+                finally { UnityEngine.Object.DestroyImmediate(work); }
+                filter.sharedMesh = mesh;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            // Модель насыщенно-зелёная: приглушаем под вечерний лес, как остальную траву.
+            TintPrefab("CreatingGrassField", new Color(.7f, .78f, .64f));
+            return AddBreeze(prefab, .12f);
         }
 
         private static Texture2D BuildRuneEmission(string category, string output)

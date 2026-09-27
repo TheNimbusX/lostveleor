@@ -70,6 +70,7 @@ namespace Game.View
             BindCampSurface(_roomMaterial); BindCampSurface(_entranceMaterial); BindCampSurface(_exitMaterial);
             if (_shore != null) BindCampSurface(_shore.GetComponent<MeshRenderer>().sharedMaterial);
             if (_banks != null) BindCampSurface(_banks.GetComponent<MeshRenderer>().sharedMaterial);
+            if (_riverBanks != null) BindCampSurface(_riverBanks.GetComponent<MeshRenderer>().sharedMaterial);
             if (_groundFill != null) BindCampSurface(_groundFill.GetComponent<MeshRenderer>().sharedMaterial);
         }
 
