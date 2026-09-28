@@ -6,17 +6,17 @@ namespace Game.View
 {
     /// <summary>
     /// РАСКОЛ РАСЩЕПЕНЯ со стороны картинки (целевой кадр владельца 1-burst-leap,
-    /// 26.09). Скорлупа модели срослась с телом, клип Death — только короткая
-    /// трещина, поэтому распад продают обломки:
+    /// 26.09). В пакете r03 панцирь — две отдельные части со скином;
+    /// клип Death раскрывает их перед переходом в летящие обломки:
     ///
-    ///   тик T (Death + SplitterSplit) — тело играет трещину (SplitterAnimatorView);
+    ///   тик T (Death) — тело играет трещину (SplitterAnimatorView);
     ///   T + CrackTicks — тело прячется, на его месте тёплая пыль, щепки коры,
     ///     листья и шляпки грибов (VFX_Splitter_Burst), а две половины коры,
     ///     вырезанные из той же модели в позе последнего кадра трещины,
     ///     разлетаются дугами, кувыркаются, ложатся (пыль касания) и тают;
-    ///   детёныши (настоящие сущности Sim) до этого тика спрятаны, потом играют
-    ///     Pop и прыгают вбок из центра родителя туда, куда их уже вынес выброс
-    ///     Sim (метр за 8 тиков) — вид лишь догоняет их тело за время прыжка.
+    ///   на T + CrackTicks приходит SplitterSplit: детёныши только теперь
+    ///     создаются в Sim и сразу играют Pop. Выброс идёт метр за 8 тиков;
+    ///     второй задержки появления в представлении нет.
     ///
     /// Смерть детёныша — тот же раскол в его масштабе (0,6), без новых детей:
     /// своего растворения у освещённого материала нет.
@@ -24,6 +24,14 @@ namespace Game.View
     /// Всё — от СОБЫТИЙ Sim (Death, SplitterSplit) с тиком события; возраст
     /// эффектов и обломков считается от тика Sim с долей кадра — пауза держит
     /// кадр, съёмка повторяется. Префабы собирает SplitterVfxSetup.
+    ///
+    /// ПЕРЕКАТ (27.09, кадры 2-roll-windup и 1-roll): с фиксации полосы вдоль
+    /// неё от клубка проступает борозда — продавленная тёмная земля с
+    /// трещинками и комьями (VFX_Splitter_GrooveSegment), вся за 10 тиков; это
+    /// и есть метка переката — общая заливка его полосу не рисует. Катится —
+    /// каждые 2 тика из-под клубка летит дёрн (VFX_Splitter_RollTurf).
+    /// Остановился — пыль касания; о стену — удар со щепками (VFX_Splitter_RollWall).
+    /// Снят до пуска — борозда гаснет сразу.
     ///
     /// Ставится на объект ArenaView: SplitterCombatView.Install(arena). Тела
     /// Расщепеня вид привязывает сам, если ArenaView этого не сделал.
@@ -35,6 +43,15 @@ namespace Game.View
         public const string ShellLandPrefab = "VFX/Splitter/VFX_Splitter_ShellLand";
         public const string ShellLeftPrefab = "VFX/Splitter/Splitter_ShellL";
         public const string ShellRightPrefab = "VFX/Splitter/Splitter_ShellR";
+        public const string GroovePrefab = "VFX/Splitter/VFX_Splitter_GrooveSegment";
+        public const string TurfPrefab = "VFX/Splitter/VFX_Splitter_RollTurf";
+        public const string RollWallPrefab = "VFX/Splitter/VFX_Splitter_RollWall";
+
+        /// <summary>Шаг кусков борозды вдоль полосы, метры, и за сколько тиков она проступает целиком.</summary>
+        private const float GrooveStep = .45f, GroovePressTicks = 10f;
+
+        /// <summary>Дёрн из-под клубка — раз в столько тиков качения.</summary>
+        private const int TurfEveryTicks = 2;
 
         /// <summary>Через сколько тиков после смерти тело раскалывается (трещина Death).</summary>
         public const int BreakDelayTicks = SplitterAnimatorView.CrackTicks;
@@ -63,6 +80,15 @@ namespace Game.View
             public ParticleSystem[] Particles;
             public uint[] Seeds;
             public float Tick = -1000f, Life, Simulated = -1f;
+            /// <summary>Номер переката, которому принадлежит кусок борозды; 0 — ничей.</summary>
+            public int Owner;
+        }
+
+        /// <summary>Перекат, за которым вид ставит борозду и дёрн.</summary>
+        private sealed class RollTrack
+        {
+            public int Entity, Serial, NextGroove, NextTurfTick;
+            public bool Seen;
         }
 
         private sealed class Pool
@@ -100,7 +126,8 @@ namespace Game.View
         private ArenaView _arena;
         private LayoutView _layout;
         private Simulation _shown;
-        private Pool _bursts, _lands;
+        private Pool _bursts, _lands, _grooves, _turfs, _walls;
+        private readonly List<RollTrack> _rolls = new List<RollTrack>(8);
         private Shell[] _left, _right;
         private int _shellCursor;
         private readonly List<PendingBreak> _breaks = new List<PendingBreak>(8);
@@ -118,6 +145,10 @@ namespace Game.View
             _lands = MakePool(ShellLandPrefab, "Расщепень: касание коры", 12, 1.1f);
             _left = MakeShells(ShellLeftPrefab, "Расщепень: левая кора", 6);
             _right = MakeShells(ShellRightPrefab, "Расщепень: правая кора", 6);
+            // Перекат: две полосы разом по 12 кусков, дёрн — до 16 разом, стены — редкость.
+            _grooves = MakePool(GroovePrefab, "Расщепень: борозда", 28, 2.4f);
+            _turfs = MakePool(TurfPrefab, "Расщепень: дёрн", 18, 1.2f);
+            _walls = MakePool(RollWallPrefab, "Расщепень: удар о стену", 3, 1.6f);
             if (_bursts.Items.Length == 0 || _left.Length == 0)
                 Debug.LogWarning("[splitter] Нет префабов раскола в Resources/VFX/Splitter — собери: Разлом/Расщепень/VFX распада.", this);
         }
@@ -140,7 +171,9 @@ namespace Game.View
                 int at = contexts[i].SimulationTick - 1;
                 if (e.Type == SimEventType.SplitterSplit) OnSplit(sim, e, at);
                 else if (e.Type == SimEventType.Death && IsSplitterKind(sim, e.Target)) OnDeath(sim, e, at);
+                else if (e.ActionVariant == (int)EnemyActionKind.SplitterRoll) OnRollEvent(sim, e, at);
             }
+            UpdateRolls(sim, tick);
 
             for (int i = _breaks.Count - 1; i >= 0; i--)
             {
@@ -153,6 +186,9 @@ namespace Game.View
 
             foreach (var b in _bursts.Items) Advance(b, tick);
             foreach (var b in _lands.Items) Advance(b, tick);
+            foreach (var b in _grooves.Items) Advance(b, tick);
+            foreach (var b in _turfs.Items) Advance(b, tick);
+            foreach (var b in _walls.Items) Advance(b, tick);
             foreach (var s in _left) AdvanceShell(s, tick);
             foreach (var s in _right) AdvanceShell(s, tick);
         }
@@ -163,8 +199,12 @@ namespace Game.View
             _breaks.Clear();
             _leaps.Clear();
             _bodies.Clear();
+            _rolls.Clear();
             foreach (var b in _bursts.Items) Retire(b);
             foreach (var b in _lands.Items) Retire(b);
+            foreach (var b in _grooves.Items) Retire(b);
+            foreach (var b in _turfs.Items) Retire(b);
+            foreach (var b in _walls.Items) Retire(b);
             foreach (var s in _left) RetireShell(s);
             foreach (var s in _right) RetireShell(s);
         }
@@ -217,7 +257,7 @@ namespace Game.View
                     body.BeginPop(tick);
                     body.Refresh();
                 }
-                _leaps.Add(new Leap { Child = child, Parent = e.Source, StartTick = tick + BreakDelayTicks, At = e.Position });
+                _leaps.Add(new Leap { Child = child, Parent = e.Source, StartTick = tick, At = e.Position });
             }
         }
 
@@ -235,6 +275,83 @@ namespace Game.View
             }
             float scale = sim.Entities.Kind[id] == EnemyKind.ForestSplitling ? .6f : 1f;
             _breaks.Add(new PendingBreak { Entity = id, Tick = breakTick, Scale = scale, At = e.Position });
+        }
+
+        // -------------------------------------------------------------- roll
+
+        /// <summary>
+        /// Стоп переката (Impact stage 1) — пыль касания или удар о стену; снят
+        /// (Cancelled) — борозда гаснет сразу. Пуск (stage 0) продаёт сам клубок.
+        /// </summary>
+        private void OnRollEvent(Simulation sim, SimEvent e, int tick)
+        {
+            if (e.Type == SimEventType.EnemyActionCancelled)
+            {
+                for (int i = 0; i < _rolls.Count; i++)
+                    if (_rolls[i].Entity == e.Source)
+                        foreach (var b in _grooves.Items) if (b.Owner == _rolls[i].Serial) Retire(b);
+                return;
+            }
+            if (e.Type != SimEventType.EnemyActionImpact || e.Amount != 1) return;
+            bool wall = sim.TryGetSplitterRoll(e.Source, out var roll) && roll.WallStop;
+            var at = Ground(e.Position);
+            var look = wall ? Quaternion.LookRotation(new Vector3(roll.Direction.X.ToFloat(), 0f, roll.Direction.Y.ToFloat()))
+                : Quaternion.identity;
+            Take(wall ? _walls : _lands, tick, at, look, e.Source * 31 + tick);
+        }
+
+        /// <summary>
+        /// Борозда и дёрн — по состоянию переката Sim на тик: куски борозды
+        /// проступают от клубка по полосе за GroovePressTicks после фиксации,
+        /// дёрн — каждые TurfEveryTicks тиков качения там, где клубок был в тот тик.
+        /// </summary>
+        private void UpdateRolls(Simulation sim, float tick)
+        {
+            for (int i = 0; i < _rolls.Count; i++) _rolls[i].Seen = false;
+            var entities = sim.Entities;
+            for (int id = 1; id < entities.Count; id++)
+            {
+                if (entities.Kind[id] != EnemyKind.ForestSplitter || !sim.TryGetSplitterRoll(id, out var roll)) continue;
+                var track = Track(id, roll.Serial);
+                track.Seen = true;
+                if (roll.Phase == SplitterRollPhase.Curl || roll.Length.Raw <= 0) continue;
+                float length = roll.Length.ToFloat();
+                var origin = new Vector3(roll.Origin.X.ToFloat(), 0f, roll.Origin.Y.ToFloat());
+                var direction = new Vector3(roll.Direction.X.ToFloat(), 0f, roll.Direction.Y.ToFloat());
+                var along = Quaternion.LookRotation(direction);
+
+                int pieces = Mathf.Max(1, Mathf.CeilToInt(length / GrooveStep));
+                while (track.NextGroove < pieces)
+                {
+                    float appear = roll.LockTick + track.NextGroove * GroovePressTicks / pieces;
+                    if (tick < appear) break;
+                    float d = Mathf.Min(length, GrooveStep * (track.NextGroove + .5f));
+                    var at = origin + direction * d; at.y = GroundHeight(at);
+                    var b = Take(_grooves, appear, at, along, roll.Serial * 17 + track.NextGroove);
+                    if (b != null) b.Owner = roll.Serial;
+                    track.NextGroove++;
+                }
+
+                if (track.NextTurfTick == 0) track.NextTurfTick = roll.LaunchTick;
+                int last = roll.Phase == SplitterRollPhase.Rolling ? Mathf.FloorToInt(tick) : roll.StopTick;
+                while (track.NextTurfTick <= last && track.NextTurfTick >= roll.LaunchTick)
+                {
+                    float d = Mathf.Min(length, Simulation.SplitterRollSpeed.ToFloat() * (track.NextTurfTick - roll.LaunchTick + 1));
+                    var at = origin + direction * d; at.y = GroundHeight(at);
+                    Take(_turfs, track.NextTurfTick, at, along, roll.Serial * 13 + track.NextTurfTick);
+                    track.NextTurfTick += TurfEveryTicks;
+                }
+            }
+            for (int i = _rolls.Count - 1; i >= 0; i--) if (!_rolls[i].Seen) _rolls.RemoveAt(i);
+        }
+
+        private RollTrack Track(int entity, int serial)
+        {
+            for (int i = 0; i < _rolls.Count; i++)
+                if (_rolls[i].Entity == entity && _rolls[i].Serial == serial) return _rolls[i];
+            var track = new RollTrack { Entity = entity, Serial = serial };
+            _rolls.Add(track);
+            return track;
         }
 
         // ------------------------------------------------------------- break
@@ -487,6 +604,7 @@ namespace Game.View
             var b = pool.Items[pool.Cursor++ % pool.Items.Length];
             b.Tick = tick;
             b.Simulated = -1f;
+            b.Owner = 0;
             b.Root.transform.SetPositionAndRotation(position, rotation);
             b.Root.transform.localScale = Vector3.one;
             b.Root.SetActive(true);
@@ -557,6 +675,8 @@ namespace Game.View
         {
             if (_bursts != null) foreach (var b in _bursts.Items) if (b != null && b.Root != null) Destroy(b.Root);
             if (_lands != null) foreach (var b in _lands.Items) if (b != null && b.Root != null) Destroy(b.Root);
+            foreach (var pool in new[] { _grooves, _turfs, _walls })
+                if (pool != null) foreach (var b in pool.Items) if (b != null && b.Root != null) Destroy(b.Root);
             if (_left != null) foreach (var s in _left) if (s.Root != null) Destroy(s.Root);
             if (_right != null) foreach (var s in _right) if (s.Root != null) Destroy(s.Root);
         }

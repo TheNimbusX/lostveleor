@@ -255,15 +255,23 @@ namespace Game.View
         {
             gameObject.AddComponent<PelagTargetAimView>();
             gameObject.AddComponent<GameCursorView>();
-            gameObject.AddComponent<CampPlayerView>();
+            if (EnemySandbox == null) gameObject.AddComponent<CampPlayerView>();
             ulong seed = RunSeed != 0 ? RunSeed : (ulong)System.DateTime.UtcNow.Ticks;
             RunSeed = seed;
 
             // Игра начинается в ЛАГЕРЕ, а не в Разломе. Забег теперь то, во что
             // входят, а не то, что запускается вместо главного меню.
             var location = Location != null ? Location.ToDefinition() : null;
-            Session = CampSaveStore.Load(seed, location);
-            gameObject.AddComponent<CampSaveStore>();
+            if (EnemySandbox != null)
+            {
+                Session = new GameSession(seed, PrototypeContent.NewCamp(),
+                    Simulation.EnemySandboxModules(), PrototypeContent.ItemBaseIds());
+            }
+            else
+            {
+                Session = CampSaveStore.Load(seed, location);
+                gameObject.AddComponent<CampSaveStore>();
+            }
             // ВИТРИНА БОЛЬШЕ НЕ ВКЛЮЧАЕТСЯ САМА В PLAY MODE.
             //
             // Здесь стояло `|| Application.isEditor`. Это была подпорка под
@@ -356,6 +364,11 @@ namespace Game.View
             int steps = 0;
             while (_accumulator >= TickLength && steps < MaxTicksPerFrame)
             {
+                if (_enemySandboxResetPending)
+                {
+                    StartEnemySandbox();
+                    break;
+                }
                 if (Sim != null) SavePreviousPositions();
 
                 InputFrame frame = ConsumeInput();
@@ -470,6 +483,7 @@ namespace Game.View
         /// </summary>
         public void ReturnToCampFromMenu()
         {
+            if (EnemySandbox != null) { QueueEnemySandboxReset(); return; }
             if (Session == null) return;
             if (Session.Mode != GameMode.Camp && CampTransition.Swap(() =>
                 {
@@ -1667,6 +1681,11 @@ namespace Game.View
                         // TODO: анимация смерти, дроп лута.
                         break;
                     case SimEventType.Spawn:
+                        if (EnemySandbox != null && e.Target >= 0 && e.Target < sim.Entities.Count)
+                        {
+                            _prevPositions[e.Target] = sim.Entities.Position[e.Target];
+                            _prevFacings[e.Target] = sim.Entities.Facing[e.Target];
+                        }
                         // Объект из пула привязывает ArenaView по индексу сущности.
                         break;
                 }

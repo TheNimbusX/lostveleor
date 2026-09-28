@@ -10,7 +10,7 @@ using UnityEngine;
 /// пакета ART/…/8.forest-splitbark/production/animation/unity_package.
 ///
 /// Импорт Generic без корневого движения (все клипы на месте), клипы копиями в
-/// .anim, контроллер из шести состояний, каждое — Motion Time от параметра
+/// .anim, контроллер из десяти состояний (шесть исходных и четыре переката), каждое — Motion Time от параметра
 /// «&lt;Роль&gt;Phase»: их ведёт SplitterAnimatorView от тиков Sim.
 ///
 /// Материал — URP Lit без подъёма яркости (белый _BaseColor): цвет, нормали
@@ -43,7 +43,9 @@ public static class SplitterBuilder
     /// <summary>Рост взрослого по пакету (rig_report: height_m).</summary>
     public const float Height = 1.3f;
 
-    private static readonly string[] Roles = { "Idle", "Walk", "Bite", "Hit", "Death", "Pop" };
+    // Перекат клубком (27.09): сжатие, клубок (петля, вид сам вращает тело), раскрытие, оглушение о стену.
+    private static readonly string[] Roles = { "Idle", "Walk", "Bite", "Hit", "Death", "Pop",
+        "RollCurl", "RollLoop", "RollUncurl", "RollDizzy" };
 
     [InitializeOnLoadMethod]
     private static void QueueBuild() => EditorApplication.delayCall += () =>
@@ -94,7 +96,7 @@ public static class SplitterBuilder
             clip.name = role; // имя = имя файла .anim: иначе Unity ругается на каждой пересборке
             AnimationUtility.SetAnimationEvents(clip, Array.Empty<AnimationEvent>());
             var settings = AnimationUtility.GetAnimationClipSettings(clip);
-            settings.loopTime = role == "Idle" || role == "Walk";
+            settings.loopTime = role == "Idle" || role == "Walk" || role == "RollLoop";
             settings.loopBlend = false;
             AnimationUtility.SetAnimationClipSettings(clip, settings);
             EditorUtility.SetDirty(clip);
@@ -123,6 +125,9 @@ public static class SplitterBuilder
             body.transform.localRotation = Quaternion.FromToRotation(facing.normalized, Vector3.forward);
 
             var renderers = body.GetComponentsInChildren<SkinnedMeshRenderer>();
+            if (!renderers.Any(r => r.name == "SM_ForestSplitter_ShellL")
+                || !renderers.Any(r => r.name == "SM_ForestSplitter_ShellR"))
+                throw new InvalidOperationException("[splitter] Нужен пакет r03: две отдельные створки панциря со скином.");
             height = MeasureHeight(renderers);
             // Пакет снят в метрах (1,3 м). Если импорт дал другой рост — чиним масштабом
             // узла, а не глобальным масштабом импорта: половины коры (SplitterVfxSetup)

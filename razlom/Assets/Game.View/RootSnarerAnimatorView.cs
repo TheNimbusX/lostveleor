@@ -59,10 +59,19 @@ namespace Game.View
 
         private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle"),
             WalkState = Animator.StringToHash("Base Layer.Walk"), SlamState = Animator.StringToHash("Base Layer.Slam"),
-            HitState = Animator.StringToHash("Base Layer.Hit"), DeathState = Animator.StringToHash("Base Layer.Death");
+            HitState = Animator.StringToHash("Base Layer.Hit"), DeathState = Animator.StringToHash("Base Layer.Death"),
+            MendState = Animator.StringToHash("Base Layer.Mend");
         private static readonly int IdlePhase = Animator.StringToHash("IdlePhase"),
             WalkPhase = Animator.StringToHash("WalkPhase"), SlamPhase = Animator.StringToHash("SlamPhase"),
-            HitPhase = Animator.StringToHash("HitPhase"), DeathPhase = Animator.StringToHash("DeathPhase");
+            HitPhase = Animator.StringToHash("HitPhase"), DeathPhase = Animator.StringToHash("DeathPhase"),
+            MendPhase = Animator.StringToHash("MendPhase");
+
+        /// <summary>
+        /// «Волна из корней» (клип Mend, 50 кадров): плиты в земле с 8-го кадра,
+        /// выброс волны на 30-м, выдёргивание 38–50. Действие Sim длится ровно 50
+        /// тиков (30 сбора и 20 стойки), поэтому кадр = тик от начала.
+        /// </summary>
+        private const float MendFrames = 50f;
         private static readonly int DeathFadeId = Shader.PropertyToID("_DeathFade");
 
         private Animator _animator;
@@ -149,14 +158,19 @@ namespace Game.View
             {
                 if (a.Serial != _slamSerial) { _slamSerial = a.Serial; _slamDone = false; }
                 float time = Mathf.Max(0f, sim.Tick - 1 + _driver.Alpha - a.StartTick);
-                Sample(SlamState, SlamPhase, SlamFrame(a, time) / SlamFrames, .06f);
+                if (a.Action == RootSnarerAction.Mend)
+                {
+                    float length = Mathf.Max(1f, a.EndTick - a.StartTick);
+                    Sample(MendState, MendPhase, Mathf.Clamp01(time / length), .06f);
+                }
+                else Sample(SlamState, SlamPhase, SlamFrame(a, time) / SlamFrames, .06f);
                 _turnUntil = -1f;
                 return;
             }
             // Удар кончился стойкой — клип уже на кадре Idle, смесь короткая. Снят оглушением
             // или волоком посреди — поза далеко от Idle, смесь длиннее.
             float leave = .1f;
-            if (_state == SlamState)
+            if (_state == SlamState || _state == MendState)
             {
                 leave = _slamDone ? .1f : .22f;
                 _slamSerial = 0;
@@ -164,7 +178,7 @@ namespace Game.View
 
             if (_hitClock * ClipFramesPerSecond < HitFrames)
             {
-                Sample(HitState, HitPhase, Mathf.Clamp01(_hitClock * ClipFramesPerSecond / HitFrames), Mathf.Max(.05f, _state == SlamState ? leave : 0f));
+                Sample(HitState, HitPhase, Mathf.Clamp01(_hitClock * ClipFramesPerSecond / HitFrames), Mathf.Max(.05f, (_state == SlamState || _state == MendState) ? leave : 0f));
                 return;
             }
 
@@ -174,7 +188,7 @@ namespace Game.View
             {
                 _walkPhase += speed * dt / WalkMetresPerCycle;
                 _turnUntil = -1f;
-                Sample(WalkState, WalkPhase, Mathf.Repeat(_walkPhase, 1f), _state == SlamState ? leave : .12f);
+                Sample(WalkState, WalkPhase, Mathf.Repeat(_walkPhase, 1f), (_state == SlamState || _state == MendState) ? leave : .12f);
                 return;
             }
             // Разворот на месте: переступание фазой Walk от поворота корпуса.
@@ -183,10 +197,10 @@ namespace Game.View
             if (Time.time < _turnUntil)
             {
                 _walkPhase += Mathf.Abs(yaw) / TurnShuffleDegreesPerCycle;
-                Sample(WalkState, WalkPhase, Mathf.Repeat(_walkPhase, 1f), _state == SlamState ? leave : .12f);
+                Sample(WalkState, WalkPhase, Mathf.Repeat(_walkPhase, 1f), (_state == SlamState || _state == MendState) ? leave : .12f);
                 return;
             }
-            Sample(IdleState, IdlePhase, Mathf.Repeat(_idleClock * ClipFramesPerSecond / IdleFrames, 1f), _state == SlamState ? leave : .13f);
+            Sample(IdleState, IdlePhase, Mathf.Repeat(_idleClock * ClipFramesPerSecond / IdleFrames, 1f), (_state == SlamState || _state == MendState) ? leave : .13f);
         }
 
         /// <summary>
@@ -209,6 +223,7 @@ namespace Game.View
             _animator.SetFloat(parameter, phase);
             // Плиты уже выдернуты (последние кадры клипа близки к Idle) — выход короткой смесью.
             if (state == SlamState && phase >= (SlamFrames - 6f) / SlamFrames) _slamDone = true;
+            if (state == MendState && phase >= (MendFrames - 4f) / MendFrames) _slamDone = true;
             if (_state == state) return;
             _state = state;
             if (blend <= 0f) _animator.Play(state, 0, 0f);

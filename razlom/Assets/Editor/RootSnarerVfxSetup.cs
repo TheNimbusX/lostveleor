@@ -37,7 +37,7 @@ using UnityEngine.Rendering;
 /// </summary>
 public static class RootSnarerVfxSetup
 {
-    private const string Revision = "RootSnarerVfxV1";
+    private const string Revision = "RootSnarerVfxV3";
     private const string Root = "Assets/Resources/VFX/RootSnarer";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
@@ -66,9 +66,15 @@ public static class RootSnarerVfxSetup
     private static readonly Color RockLight = new Color(.50f, .38f, .27f), RockDark = new Color(.34f, .25f, .17f);
     private static readonly Color CrackTone = new Color(SoilDark.r * .7f, SoilDark.g * .7f, SoilDark.b * .7f, .95f);
 
+    // «Волна из корней» (кадр 1-mend-ring): золотисто-зелёный свет, не неон — тёплая
+    // трава на закате. Альфа держит яркость: материалы без подъёма цвета.
+    private static readonly Color MendGold = new Color(.93f, .82f, .40f), MendGreen = new Color(.56f, .78f, .30f);
+    private const string CfxrGlowSoft = "cfxr proc glow soft ab.mat", CfxrRing = "cfxr proc ring ab.mat",
+        CfxrStar = "cfxr magic star hdr ab.mat";
+
     private sealed class Kit
     {
-        public Material Clod, Splinter, Leaf, Haze, Splat, Crack, Vein, Wood, WoodDark;
+        public Material Clod, Splinter, Leaf, Haze, Splat, Crack, Vein, Wood, WoodDark, Glow, Ring, Spark;
         public Mesh LeafMesh, Quad;
         public Mesh[] Curls, Stubs, Coils;
     }
@@ -107,7 +113,8 @@ public static class RootSnarerVfxSetup
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + RootSnarerCombatView.RootsEruptName + ".prefab");
         return importer != null && importer.userData == Revision
             && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.SlamCracksName + ".prefab") != null
-            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.SnareName + ".prefab") != null;
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.SnareName + ".prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.MendRingName + ".prefab") != null;
     }
 
     private static void Build()
@@ -120,6 +127,9 @@ public static class RootSnarerVfxSetup
         SaveSlamCracks(kit);
         SaveRootsErupt(kit);
         SaveSnare(kit);
+        SaveMendChannel(kit);
+        SaveMendRing(kit);
+        SaveMendLeaves(kit);
         AssetDatabase.SaveAssets();
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + RootSnarerCombatView.RootsEruptName + ".prefab");
         if (importer != null && importer.userData != Revision)
@@ -127,7 +137,7 @@ public static class RootSnarerVfxSetup
             importer.userData = Revision;
             importer.SaveAndReimport();
         }
-        Debug.Log("[rootsnarer-vfx] Удар плитами, корни и путы собраны из паков, ревизия " + Revision + ".");
+        Debug.Log("[rootsnarer-vfx] Удар плитами, корни, путы и волна лечения собраны из паков, ревизия " + Revision + ".");
     }
 
     // ------------------------------------------------------------- materials
@@ -146,6 +156,12 @@ public static class RootSnarerVfxSetup
         // Трещины — одноканальная плёнка CFXR с маской Hovl, тёмный цвет из частиц.
         kit.Crack = Textured(NoDissolve(PackCopy("M_RootSnarer_Crack", CfxrTrailMaterial)), HovlTextures + "Crack4.png", true);
         kit.Vein = Textured(NoDissolve(PackCopy("M_RootSnarer_Vein", CfxrTrailMaterial)), HovlTextures + "Crater19.png", true);
+        // Волна лечения: мягкое свечение, кольцо и искры CFXR — альфа-смешение, без аддитива.
+        kit.Glow = Plain(PackCopy("M_RootSnarer_MendGlow", CfxrGraphics + CfxrGlowSoft));
+        // Кольцо волны — диск Hovl с яркой кромкой (Circle17) одним каналом: процедурное
+        // кольцо CFXR без своих данных частиц невидимо (съёмка 28.09).
+        kit.Ring = Textured(NoDissolve(PackCopy("M_RootSnarer_MendRing", CfxrTrailMaterial)), HovlTextures + "Circle17.png", true);
+        kit.Spark = Plain(PackCopy("M_RootSnarer_MendSpark", CfxrGraphics + CfxrStar));
         // Декали рисуются до пыли и комьев.
         foreach (var decal in new[] { kit.Splat, kit.Crack, kit.Vein }) { decal.renderQueue = 2990; EditorUtility.SetDirty(decal); }
         // Корни — URP Lit с корой: свет, тень и объём, как у корней воя. Тёмная тёплая кора.
@@ -674,6 +690,56 @@ public static class RootSnarerVfxSetup
         renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
     }
 
+    /// <summary>Кольцо волны: горизонтальный билборд кольца CFXR, растёт из центра до радиуса волны.</summary>
+    private static ParticleSystem Wave(GameObject host, string name, Material material, float diameter, float life,
+        float from, Color color, float delay)
+    {
+        var particles = Particles(host, name, 1, life, life, 0f, 0f, diameter, diameter, delay);
+        particles.transform.localPosition = Vector3.up * .05f;
+        var main = particles.main;
+        main.startColor = color;
+        main.startRotation = 0f;
+        var shape = particles.shape; shape.enabled = false;
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        // Быстро разбегается и тормозит к кромке: 0,8 м → радиус волны.
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, from, .35f, .86f, 1f, 1f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(0f, .45f);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+        renderer.sharedMaterial = material;
+        renderer.sortingFudge = 3f;
+        return particles;
+    }
+
+    /// <summary>Искры и пылинки света: звёздочки CFXR, медленно всплывают и гаснут.</summary>
+    private static ParticleSystem Motes(GameObject host, string name, Material material, int count, Vector3 at, float radius,
+        float speedMin, float speedMax, float sizeMin, float sizeMax, float lifeMin, float lifeMax, Color color, float delay, bool ring)
+    {
+        var particles = Particles(host, name, count, lifeMin, lifeMax, speedMin, speedMax, sizeMin, sizeMax, delay);
+        particles.transform.localPosition = at;
+        particles.transform.localRotation = Aim(Vector3.up);
+        var main = particles.main;
+        main.gravityModifier = -.06f;
+        main.startColor = new ParticleSystem.MinMaxGradient(new Color(color.r, color.g, color.b, .85f),
+            new Color(color.r * .8f, color.g * .95f, color.b * .7f, .7f));
+        var shape = particles.shape; shape.enabled = true;
+        shape.shapeType = ring ? ParticleSystemShapeType.Circle : ParticleSystemShapeType.Cone;
+        shape.angle = ring ? 0f : 20f;
+        shape.radius = Mathf.Max(.01f, radius);
+        var drag = particles.limitVelocityOverLifetime; drag.enabled = true;
+        drag.limit = new ParticleSystem.MinMaxCurve(.8f);
+        drag.dampen = .15f;
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .4f, .2f, 1f, 1f, .2f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(.1f, .55f);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sharedMaterial = material;
+        return particles;
+    }
+
     private static void Save(GameObject root)
     {
         try { PrefabUtility.SaveAsPrefabAsset(root, PrefabFolder + "/" + root.name + ".prefab"); }
@@ -689,6 +755,85 @@ public static class RootSnarerVfxSetup
     /// частице (оси сегмента, длину и ширину даёт масштаб ребёнка «Crack») и
     /// горсть комьев. Вид ставит сегменты по длине до кромки круга.
     /// </summary>
+    /// <summary>
+    /// Сбор волны (кадры 8–30 клипа Mend): у каждой плиты в земле — мягкое
+    /// золотисто-зелёное свечение и пылинки света, которые всплывают порциями
+    /// всю секунду сбора; у ног шевелится пыль и пара листьев. Корень — в
+    /// центре моба, +Z — взгляд.
+    /// </summary>
+    private static void SaveMendChannel(Kit kit)
+    {
+        var root = new GameObject(RootSnarerCombatView.MendChannelName);
+        const float planted = 8f / 30f;
+        for (int side = 0; side < 2; side++)
+        {
+            var slab = new GameObject(side == 0 ? "Slab L" : "Slab R");
+            slab.transform.SetParent(root.transform, false);
+            slab.transform.localPosition = side == 0 ? RootSnarerCombatView.SlabLeft : RootSnarerCombatView.SlabRight;
+            if (kit.Glow != null)
+                Decal(slab, "Glow", kit.Glow, 1.1f, 1.4f, 1.1f, .7f, new Color(MendGreen.r, MendGreen.g, MendGreen.b, .5f), planted, .04f);
+            if (kit.Spark != null)
+            {
+                var motes = Motes(slab, "Motes", kit.Spark, 12, Vector3.up * .1f, .3f, .3f, .7f, .07f, .12f, .8f, 1.2f, MendGold, planted, false);
+                var emission = motes.emission;
+                emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 3), new ParticleSystem.Burst(.22f, 3),
+                    new ParticleSystem.Burst(.44f, 3), new ParticleSystem.Burst(.62f, 3) });
+            }
+        }
+        Dust(root, kit, "Stir", 4, Vector3.up * .03f, 88f, .6f, .2f, .5f, .6f, .9f, .8f, 1.1f, .18f, planted, true);
+        Leaves(root, kit, "Stir Leaves", 4, Vector3.up * .15f, .5f, 1.1f, planted + .1f);
+        Save(root);
+    }
+
+    /// <summary>
+    /// Волна (кадр 30 клипа Mend, 1-mend-ring): золотисто-зелёное кольцо
+    /// разбегается от моба до 5 м за полсекунды, за ним второе потоньше;
+    /// по земле расползаются светлые корешки-прожилки (маска Hovl Crater19);
+    /// листья и искры летят низко наружу, пыль — юбкой. Корень — центр волны.
+    /// </summary>
+    private static void SaveMendRing(Kit kit)
+    {
+        var root = new GameObject(RootSnarerCombatView.MendRingName);
+        float diameter = Simulation.RootSnarerMendRadius.ToFloat() * 2f;
+        if (kit.Ring != null)
+        {
+            Wave(root, "Ring", kit.Ring, diameter, .7f, .16f, new Color(MendGold.r, MendGold.g, MendGold.b, .75f), 0f);
+            Wave(root, "Ring Inner", kit.Ring, diameter * .9f, .6f, .12f, new Color(MendGreen.r, MendGreen.g, MendGreen.b, .5f), .08f);
+        }
+        // Корешки — тёплое золото с зеленью, не лайм: V2 читалась молниями.
+        Decal(root, "Veins", kit.Vein, diameter * .8f, diameter * .88f, 1.3f, .5f,
+            new Color((MendGold.r + MendGreen.r) * .45f, (MendGold.g + MendGreen.g) * .45f, (MendGold.b + MendGreen.b) * .4f, .6f), 0f, .03f);
+        if (kit.Glow != null)
+            Decal(root, "Glow", kit.Glow, 3.2f, 3.8f, .9f, .35f, new Color(MendGold.r, MendGold.g, MendGold.b, .35f), 0f, .04f);
+        var leaves = Leaves(root, kit, "Leaves", 14, Vector3.up * .15f, 3.0f, 5.5f, .02f);
+        var leafShape = leaves.shape; leafShape.enabled = true;
+        leafShape.shapeType = ParticleSystemShapeType.Circle; leafShape.radius = .8f;
+        leaves.transform.localRotation = Aim(Vector3.up);
+        if (kit.Spark != null)
+            Motes(root, "Sparks", kit.Spark, 24, Vector3.up * .2f, 1.0f, 1.8f, 3.6f, .08f, .15f, .7f, 1.1f, MendGold, 0f, true);
+        Dust(root, kit, "Skirt", 10, Vector3.up * .03f, 88f, .8f, 2.4f, 4.0f, .8f, 1.3f, .7f, 1.0f, .2f, 0f, true);
+        Save(root);
+    }
+
+    /// <summary>
+    /// Лечение на союзнике: мягкое свечение у ног, листья раскрываются вокруг
+    /// тела и всплывают искры. Корень — у ног союзника.
+    /// </summary>
+    private static void SaveMendLeaves(Kit kit)
+    {
+        var root = new GameObject(RootSnarerCombatView.MendLeavesName);
+        if (kit.Glow != null)
+            Decal(root, "Glow", kit.Glow, 1.3f, 1.6f, 1.1f, .5f, new Color(MendGreen.r, MendGreen.g, MendGreen.b, .45f), 0f, .04f);
+        var leaves = Leaves(root, kit, "Leaves", 8, Vector3.up * .35f, .8f, 1.6f, 0f);
+        var main = leaves.main; main.gravityModifier = .12f;
+        var shape = leaves.shape; shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Cone; shape.angle = 55f; shape.radius = .35f;
+        leaves.transform.localRotation = Aim(Vector3.up);
+        if (kit.Spark != null)
+            Motes(root, "Motes", kit.Spark, 12, Vector3.up * .2f, .45f, .8f, 1.6f, .07f, .13f, .8f, 1.2f, MendGold, 0f, false);
+        Save(root);
+    }
+
     private static void SaveSlamCracks(Kit kit)
     {
         var root = new GameObject(RootSnarerCombatView.SlamCracksName);

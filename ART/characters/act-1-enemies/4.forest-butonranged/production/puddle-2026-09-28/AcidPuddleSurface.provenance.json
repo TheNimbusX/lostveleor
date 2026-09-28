@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "asset": "AcidPuddleSurface.png",
+  "generation_date": "2026-09-28",
+  "date_timezone": "Europe/Moscow",
+  "generator": {
+    "provider": "OpenAI",
+    "tool": "builtin image_gen",
+    "tool_api": "image_gen.imagegen",
+    "model": null,
+    "generation_id": null
+  },
+  "reference": {
+    "selection": "option 2, acid-puddle-flat",
+    "path": "ART/characters/act-1-enemies/4.forest-butonranged/vfx_target_frames_2026-09-27/2-acid-puddle-flat.png",
+    "role": "User-approved visual target for the Forest Bud acid puddle revision."
+  },
+  "exact_prompt": "Create ONE production game VFX color texture using the supplied approved screenshot as style reference, not an illustrative scene. Extract and re-author ONLY the acid liquid puddle as an orthographic perfectly TOP-DOWN cutout on genuinely transparent alpha background. Square 1024 texture. Bright viscous yellow-lime green poison liquid, juicy painterly stylized 3D game treatment matching screenshot, luminous yellow-green depths, broad smooth moving-looking currents, subtle broad creamy highlights along irregular lobed perimeter, thin olive wet rim. Puddle occupies central 82% of image; roughly round but naturally irregular splash silhouette with asymmetrical large rounded lobes and 5-7 disconnected tiny nearby droplets. Avoid busy micro details. No surrounding soil, no grass, no character, no fruit, no stones, no text, no perspective, no ground shadow, no solid background or checkerboard baked in, no frame. Keep center filled with clear liquid, not a hollow ring. Texture will be animated on ground-conforming 3D mesh with separate physical bubbles and fruit geometry, so no mist or bubbles painted over the center. Need strong handsome coherent silhouette and fluid material, not a glowing neon disc. Match acid color/material of screenshot.",
+  "exact_prompt_status": "Recorded from the generation request.",
+  "intended_usage": {
+    "type": "Game VFX liquid-surface color and alpha texture",
+    "runtime_path": "razlom/Assets/Resources/VFX/ForestPuddle/Textures/AcidPuddleSurface.png",
+    "surface": "V5: custom transparent URP shader with scene main-light shading on the ground-conforming ForestPuddleSurface mesh; reveal, flow and highlights follow simulation age.",
+    "appearance": "Source texture: glossy yellow-lime liquid, broad irregular lobes and detached droplets on transparent background. V5 rendering moderates the color toward olive acid and integrates scene lighting after the owner rejected the V4 game appearance.",
+    "separate_geometry": "Retained fruit fragment and animated 3D bubbles/droplets are supplied by runtime geometry, not baked into this texture.",
+    "gameplay": "Visual presentation only; acid damage, hit radius and timing remain owned by Game.Sim."
+  },
+  "file": {
+    "format": "PNG",
+    "width": 1254,
+    "height": 1254,
+    "channels": "RGBA",
+    "alpha_min": 0,
+    "alpha_max": 255,
+    "bytes": 1309717,
+    "sha256": "a14ef9dc3c93c3ac5b283db5ac957c39b77b23570f8a40bb6709fa5fc6d8b24e"
+  },
+  "review_status": {
+    "reference_selection": "Approved by owner",
+    "generated_texture": "Inspected as an image",
+    "v4_game_result": "Rejected by owner: too large and flat, abrupt appearance, movement not readable, poor fit with the surroundings.",
+    "current_candidate": "ForestPuddleVfxV5; owner-approved surface and danger radius 1.2 m, hero-center hit threshold 1.45 m. Main-project prefabs/meta match the isolated capture build, as verified by the coordinating agent.",
+    "gameplay_recording": "artifacts/forest-revision-0928/puddle-v5-60/forest_bud_puddle_720p60.mp4",
+    "unity_visual_and_performance_verification": "V5 gameplay recording is ready, with the hero moving aside to expose the spreading surface and bubbles. Final review and performance validation remain open.",
+    "owner_artistic_acceptance_of_game_result": "Pending"
+  }
+}

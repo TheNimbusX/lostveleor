@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Game.Sim;
 using NUnit.Framework;
 
@@ -5,7 +8,7 @@ namespace Game.Tests
 {
     /// <summary>
     /// Расщепень (план новых мобов леса от 26.09): настоящая смерть — ровно два
-    /// детёныша в тот же тик, по бокам от родителя, со здоровьем и уроном от
+    /// детёныша на 12-м тике смерти, по бокам от родителя, со здоровьем и уроном от
     /// него, 5 опыта, не элита; выброс на метр за 8 тиков и 15 тиков без укуса.
     /// Уход в землю, Alive = false и смерть детёныша не делят. Волна «0 живых»
     /// и зачистка забега не видят ложного нуля, дети стража тайника остаются
@@ -32,6 +35,13 @@ namespace Game.Tests
         /// <summary>Настоящая смерть между шагами — тоже через Kill.</summary>
         private static void KillNow(Simulation sim, int id)
             => sim.ApplyAbilityDamage(Simulation.PlayerId, id, 1000000, -1, DamageType.Physical);
+
+        private static void ReleasePending(Simulation sim)
+        {
+            int deadline = sim.Tick + Simulation.SplitterDeathReleaseTicks + 1;
+            while (sim.HasPendingSplits && sim.Tick <= deadline) sim.Step(InputFrame.Empty);
+            Assert.That(sim.HasPendingSplits, Is.False, "queued split must release once");
+        }
 
         private static int Count(Simulation sim, SimEventType type)
         {
@@ -76,7 +86,7 @@ namespace Game.Tests
         // ---------- распад ----------
 
         [Test]
-        public void TrueDeath_SpawnsExactlyTwoChildren_InTheSameTick_BesideTheParent()
+        public void TrueDeath_SpawnsExactlyTwoChildren_OnReleaseTick_BesideTheParent()
         {
             var sim = Stand();
             Assert.That(Simulation.SplitChildren, Is.EqualTo(2));
@@ -84,8 +94,17 @@ namespace Game.Tests
             sim.Step(InputFrame.Empty);
 
             Assert.That(sim.Entities.Alive[1], Is.False);
+            Assert.That(Count(sim, SimEventType.Death), Is.EqualTo(1));
+            Assert.That(sim.PendingSplitCount, Is.EqualTo(1));
+            for (int t = sim.Tick; t <= Simulation.SplitterDeathReleaseTicks; t++)
+            {
+                Assert.That(sim.Entities.Count, Is.EqualTo(2), "no hidden live children before the crack");
+                Assert.That(Count(sim, SimEventType.SplitterSplit), Is.Zero);
+                sim.Step(InputFrame.Empty);
+            }
+            Assert.That(sim.HasPendingSplits, Is.False);
+            Assert.That(sim.Tick - 1, Is.EqualTo(Simulation.SplitterDeathReleaseTicks));
             Assert.That(sim.Entities.Count, Is.EqualTo(2 + Simulation.SplitChildren));
-            Assert.That(Count(sim, SimEventType.Death), Is.EqualTo(1), "смерть родителя — в этом же тике");
             Assert.That(Count(sim, SimEventType.SplitterSplit), Is.EqualTo(1));
             Assert.That(Count(sim, SimEventType.Spawn), Is.EqualTo(2));
             var at = sim.Entities.Position[1];
@@ -134,6 +153,7 @@ namespace Game.Tests
             Assert.That(parentDamage, Is.EqualTo(21));
             Doom(sim, 1);
             sim.Step(InputFrame.Empty);
+            ReleasePending(sim);
 
             for (int c = 2; c <= 3; c++)
             {
@@ -156,6 +176,7 @@ namespace Game.Tests
             var plain = Stand();
             Doom(plain, 1);
             plain.Step(InputFrame.Empty);
+            ReleasePending(plain);
             Assert.That(plain.Entities.MaxHealth[2], Is.EqualTo(EnemyArchetypes.SplitlingHealth));
             Assert.That(plain.Entities.Damage[2], Is.EqualTo(EnemyArchetypes.SplitlingDamage));
         }
@@ -166,6 +187,7 @@ namespace Game.Tests
             var sim = Stand();
             Doom(sim, 1);
             sim.Step(InputFrame.Empty);
+            ReleasePending(sim);
             var at = sim.Entities.Position[1];
             var facing = sim.Entities.Facing[1];
             var side = new FixVec2(-facing.Y, facing.X);
@@ -200,15 +222,22 @@ namespace Game.Tests
             var sim = Stand(distance: Fix64.Ratio(6, 5));
             Doom(sim, 1);
             sim.Step(InputFrame.Empty);
+            ReleasePending(sim);
             int split = sim.Tick - 1;
-            Assert.That(sim.Entities.NextAttackTick[2], Is.EqualTo(split + 1 + Simulation.SplitlingSpawnGuardTicks));
+            Assert.That(sim.Entities.NextAttackTick[2], Is.EqualTo(split + Simulation.SplitlingSpawnGuardTicks));
             Assert.That((sim.Entities.Position[2] - sim.Entities.Position[0]).Length.ToDouble(),
                 Is.LessThan(Simulation.SplitlingBiteRange.ToDouble()));
 
             int firstBite = -1;
             while (sim.Tick < split + 120 && firstBite < 0)
             {
+                int executing = sim.Tick;
                 sim.Step(InputFrame.Empty);
+                if (executing < split + Simulation.SplitlingSpawnGuardTicks)
+                {
+                    Assert.That(sim.TryGetEnemySwing(2, out _), Is.False, "no bite windup before child age 15");
+                    Assert.That(sim.TryGetEnemySwing(3, out _), Is.False, "no bite windup before child age 15");
+                }
                 foreach (var e in sim.Events)
                     if (e.Type == SimEventType.Attack && (e.Source == 2 || e.Source == 3)) { firstBite = sim.Tick - 1; break; }
             }
@@ -217,6 +246,40 @@ namespace Game.Tests
         }
 
         // ---------- когда распада нет ----------
+
+        [Test]
+        public void PendingSplit_SnapshotsDeathState_AndHashesItsFutureChildren()
+        {
+            var a = Stand();
+            var b = Stand();
+            int original = a.Entities.MaxHealth[1];
+            a.Entities.MaxHealth[1] = original * 2;
+            KillNow(a, 1);
+            KillNow(b, 1);
+            a.Entities.MaxHealth[1] = original;
+            Assert.That(a.Entities.Count, Is.EqualTo(2));
+            Assert.That(a.PendingSplitCount, Is.EqualTo(1));
+            Assert.That(a.StateHash(), Is.Not.EqualTo(b.StateHash()), "future child stats are part of the state");
+            var deathAt = a.Entities.Position[1];
+            a.Entities.Position[1] += new FixVec2(Fix64.FromInt(30), Fix64.Zero);
+            ReleasePending(a);
+            ReleasePending(b);
+            Assert.That(a.Entities.MaxHealth[2], Is.EqualTo(b.Entities.MaxHealth[2] * 2));
+            Assert.That((a.Entities.Position[2] - deathAt).Length.ToDouble(), Is.EqualTo(.1).Within(.002));
+        }
+
+        [Test]
+        public void PendingSplit_ResetBeforeRelease_DoesNotLeakChildrenIntoTheNextArena()
+        {
+            var sim = Stand();
+            KillNow(sim, 1);
+            Assert.That(sim.HasPendingSplits, Is.True);
+            sim.SetupKindTestArena(EnemyKind.ForestSplitter);
+            Assert.That(sim.HasPendingSplits, Is.False);
+            for (int t = 0; t <= Simulation.SplitterDeathReleaseTicks; t++) sim.Step(InputFrame.Empty);
+            Assert.That(sim.Entities.Count, Is.EqualTo(2));
+            Assert.That(Count(sim, SimEventType.SplitterSplit), Is.Zero);
+        }
 
         [Test]
         public void MarkedDead_OrSplitlingDeath_NeverSplits()
@@ -235,6 +298,7 @@ namespace Game.Tests
             var kids = Stand();
             Doom(kids, 1);
             kids.Step(InputFrame.Empty);
+            ReleasePending(kids);
             Doom(kids, 2);
             KillNow(kids, 3);
             Assert.That(kids.Entities.Alive[3], Is.False);
@@ -274,6 +338,7 @@ namespace Game.Tests
             Doom(sim, 1);
             Doom(sim, 2);
             Assert.DoesNotThrow(() => sim.Step(InputFrame.Empty));
+            ReleasePending(sim);
             Assert.That(sim.Entities.Alive[1], Is.False);
             Assert.That(sim.Entities.Alive[2], Is.False);
             Assert.That(sim.Entities.Count, Is.EqualTo(5));
@@ -301,6 +366,7 @@ namespace Game.Tests
 
             Doom(sim, 1);
             sim.Step(InputFrame.Empty);
+            ReleasePending(sim);
             Assert.That(sim.Entities.Alive[1], Is.False);
             Assert.That(sim.CountAliveEnemies(), Is.EqualTo(2));
             Assert.That(sim.EncounterWavesSpawned, Is.EqualTo(1), "дети живы — ложного нуля нет");
@@ -348,6 +414,11 @@ namespace Game.Tests
                 // Все родители мертвы — между шагами, через Kill.
                 for (int i = 1; i <= parents; i++) KillNow(sim, i);
                 run.Step(InputFrame.Empty);
+                Assert.That(sim.HasPendingSplits, Is.True);
+                Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing), "pending crack holds completion");
+                for (int b = 0; b < guards.Length; b++)
+                    Assert.That(run.BranchGuardsAlive(b), Is.EqualTo(guards[b]), "pending parent still guards its cache");
+                while (sim.HasPendingSplits) run.Step(InputFrame.Empty);
                 Assert.That(sim.Entities.Count, Is.EqualTo(1 + parents * 3), "seed " + seed);
                 Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing), "дети живы — арена не зачищена, seed " + seed);
                 Assert.That(run.CountRequiredEnemies(), Is.EqualTo(required * Simulation.SplitChildren), "seed " + seed);
@@ -401,6 +472,423 @@ namespace Game.Tests
             a.SetupKindTestArena(EnemyKind.ForestSplitter);
             Assert.That(a.Entities.Count, Is.EqualTo(2));
             Assert.That(a.SplitParentOf(1), Is.EqualTo(-1));
+        }
+
+        // ---------- перекат клубком ----------
+
+        private const int RollT0 = Simulation.SplitterRollFirstDelayTicks;
+
+        private static FixVec2 At(double x, double y) => new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(y));
+
+        /// <summary>
+        /// Стенд переката: герой в нуле с запасом здоровья и без брони,
+        /// Расщепень в distance м под углом angle (градусы от +X) и смотрит на
+        /// героя. Скорость хода — ноль: моб не подходит сам, и перекат (у него
+        /// своя скорость) начинается ровно на 60-м тике.
+        /// </summary>
+        private static Simulation RollStand(double distance = 4, double angle = 0, LayoutMap map = null, ulong seed = 11)
+        {
+            var sim = new Simulation(seed, 64);
+            sim.SetupKindTestArena(EnemyKind.ForestSplitter, 1, map, seed, 1, 100, Fix64.FromDouble(distance));
+            sim.Entities.Stats[0].SetBase(StatType.MaxHealth, Fix64.FromInt(10000));
+            sim.Entities.Stats[0].SetBase(StatType.Armor, Fix64.Zero);
+            sim.Entities.RefreshStats(0); sim.Entities.Health[0] = 10000;
+            if (angle != 0)
+            {
+                double r = angle * Math.PI / 180;
+                var hero = sim.Entities.Position[0];
+                sim.Entities.Position[1] = hero + At(Math.Cos(r) * distance, Math.Sin(r) * distance);
+                sim.Entities.Facing[1] = (hero - sim.Entities.Position[1]).Normalized();
+            }
+            sim.Entities.Stats[1].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(1);
+            return sim;
+        }
+
+        /// <summary>Поляна 20×20 м с центром в нуле; rock — камень на оси (x, 0).</summary>
+        private static LayoutMap Glade(double rockX = double.NaN, double rockRadius = 0.5)
+        {
+            var room = new ModuleDefinition("splitter.test", 20, 20, new ModuleConnector[0], isEntrance: true);
+            var map = new LayoutMap(new ModuleSet(new[] { room })); map.TryPlace(0, 0, -10, -10);
+            if (!double.IsNaN(rockX))
+                map.AddTestObstacle(new LayoutObstacle(At(rockX, 0), Fix64.FromDouble(rockRadius), 0));
+            return map;
+        }
+
+        private sealed class RollLog
+        {
+            public readonly List<int> Started = new List<int>(), Cancelled = new List<int>(), Damage = new List<int>();
+            public readonly List<int> ImpactTicks = new List<int>(), Stages = new List<int>(), DamageAmounts = new List<int>();
+            public readonly List<bool> Hits = new List<bool>();
+            public readonly List<FixVec2> ImpactAt = new List<FixVec2>(), StartedAt = new List<FixVec2>();
+        }
+
+        /// <summary>Шагает до тика until и пишет события переката моба 1 и его урон по герою; input — ввод на тик.</summary>
+        private static void RunRoll(Simulation sim, int until, RollLog log, Func<int, InputFrame> input = null,
+            Action<int> before = null)
+        {
+            while (sim.Tick < until)
+            {
+                int tick = sim.Tick;
+                before?.Invoke(tick);
+                sim.Step(input != null ? input(tick) : InputFrame.Empty);
+                foreach (var e in sim.Events)
+                {
+                    bool roll = e.ActionVariant == (int)EnemyActionKind.SplitterRoll;
+                    if (e.Type == SimEventType.EnemyActionStarted && roll && e.Source == 1)
+                    { log.Started.Add(tick); log.StartedAt.Add(e.Position); }
+                    if (e.Type == SimEventType.EnemyActionCancelled && roll && e.Source == 1) log.Cancelled.Add(tick);
+                    if (e.Type == SimEventType.EnemyActionImpact && roll && e.Source == 1)
+                    { log.ImpactTicks.Add(tick); log.Stages.Add(e.Amount); log.Hits.Add(e.Flag); log.ImpactAt.Add(e.Position); }
+                    if (e.Type == SimEventType.Damage && e.Source == 1 && e.Target == Simulation.PlayerId)
+                    { log.Damage.Add(tick); log.DamageAmounts.Add(e.Amount); }
+                }
+            }
+        }
+
+        /// <summary>Метки моба source в пуле.</summary>
+        private static List<EnemyTelegraph> Marks(Simulation sim, int source)
+        {
+            var list = new List<EnemyTelegraph>();
+            for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
+                if (sim.TryGetTelegraph(slot, out var t) && t.Source == source) list.Add(t);
+            return list;
+        }
+
+        private static int MeleeTokens(Simulation sim)
+            => (int)typeof(Simulation).GetMethod("CountMeleeAttackTokens", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(sim, new object[] { -1 });
+
+        private static InputFrame MoveTo(FixVec2 point) => new InputFrame
+        { Aim = point, Flags = (byte)InputFlags.MoveOrder, AttackTarget = -1, AbilityTarget = -1 };
+
+        [Test]
+        public void Roll_CurlLockLaunch_OnExactTicks_HitsOnce()
+        {
+            var sim = RollStand(4);
+            var log = new RollLog();
+            RunRoll(sim, RollT0, log);
+            Assert.That(log.Started, Is.Empty, "первый перекат — не раньше 60 тиков после агро");
+            var start = sim.Entities.Position[1];
+
+            RunRoll(sim, RollT0 + 1, log);
+            Assert.That(log.Started, Is.EqualTo(new[] { RollT0 }));
+            Assert.That(log.StartedAt[0], Is.EqualTo(start));
+            Assert.That(sim.TryGetSplitterRoll(1, out var curl), Is.True);
+            Assert.That(curl.Phase, Is.EqualTo(SplitterRollPhase.Curl));
+            Assert.That(curl.StartTick, Is.EqualTo(RollT0));
+            Assert.That(curl.LockTick, Is.EqualTo(RollT0 + 12));
+            Assert.That(curl.LaunchTick, Is.EqualTo(RollT0 + 30));
+            Assert.That(sim.SplitterRollHoldsMeleeToken(1), Is.True, "жетон — с тика сжатия");
+            Assert.That(MeleeTokens(sim), Is.EqualTo(1));
+
+            RunRoll(sim, RollT0 + 12, log);
+            Assert.That(Marks(sim, 1), Is.Empty, "в сжатии метки нет");
+            Assert.That(sim.Entities.Velocity[1], Is.EqualTo(FixVec2.Zero));
+
+            RunRoll(sim, RollT0 + 13, log);
+            var marks = Marks(sim, 1);
+            Assert.That(marks.Count, Is.EqualTo(1));
+            var lane = marks[0];
+            Assert.That(sim.TryGetSplitterRoll(1, out var locked), Is.True);
+            Assert.That(locked.Phase, Is.EqualTo(SplitterRollPhase.Locked));
+            Assert.That(lane.Shape, Is.EqualTo(TelegraphShape.Lane));
+            Assert.That(lane.SharedView, Is.False, "борозду рисует свой вид");
+            Assert.That(lane.StartTick, Is.EqualTo(RollT0 + 12));
+            Assert.That(lane.ImpactTick, Is.EqualTo(RollT0 + 30));
+            Assert.That(lane.Width, Is.EqualTo(Simulation.SplitterRollLaneWidth));
+            Assert.That(lane.Width.ToDouble(), Is.EqualTo(1.6).Within(1e-6));
+            Assert.That(lane.Serial, Is.EqualTo(locked.TelegraphSerial));
+            Assert.That(lane.Origin, Is.EqualTo(locked.Origin));
+            Assert.That(lane.Direction, Is.EqualTo(locked.Direction));
+            double heroDistance = FixVec2.Distance(locked.Origin, sim.Entities.Position[0]).ToDouble();
+            Assert.That(lane.Length.ToDouble(), Is.EqualTo(Math.Min(heroDistance + 2, 6.5)).Within(1e-3),
+                "до героя + 2 м");
+            Assert.That(locked.Length, Is.EqualTo(lane.Length));
+            Assert.That(FixVec2.Dot(locked.Direction, (sim.Entities.Position[0] - locked.Origin).Normalized()).ToDouble(),
+                Is.GreaterThan(0.9999), "полоса смотрит на героя");
+            int rollTicks = (int)Math.Ceiling(lane.Length.ToDouble() / 0.4 - 1e-9);
+            Assert.That(locked.StopTick, Is.EqualTo(RollT0 + 30 + rollTicks - 1));
+
+            RunRoll(sim, RollT0 + 30, log);
+            Assert.That(log.ImpactTicks, Is.Empty);
+            Assert.That(sim.Entities.Position[1], Is.EqualTo(locked.Origin), "до пуска стоит");
+            RunRoll(sim, RollT0 + 31, log);
+            Assert.That(log.ImpactTicks, Is.EqualTo(new[] { RollT0 + 30 }), "пуск на 30-м");
+            Assert.That(log.Stages, Is.EqualTo(new[] { 0 }));
+            Assert.That(log.Hits, Is.EqualTo(new[] { false }));
+            Assert.That(log.ImpactAt[0], Is.EqualTo(locked.Origin));
+            Assert.That(sim.Entities.Velocity[1].Length.ToDouble(), Is.EqualTo(0.4).Within(1e-3), "0,4 м за тик");
+            Assert.That(sim.TryGetSplitterRoll(1, out var rolling), Is.True);
+            Assert.That(rolling.Phase, Is.EqualTo(SplitterRollPhase.Rolling));
+
+            RunRoll(sim, locked.StopTick + 1, log);
+            Assert.That(log.ImpactTicks, Is.EqualTo(new[] { RollT0 + 30, locked.StopTick }));
+            Assert.That(log.Stages, Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(log.Hits, Is.EqualTo(new[] { false, true }), "стоп говорит, что задел");
+            Assert.That(log.Damage.Count, Is.EqualTo(1), "удар один на перекат");
+            Assert.That(log.DamageAmounts, Is.EqualTo(new[] { 18 }), "18/12 урона листа");
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 18));
+            var end = locked.Origin + locked.Direction * lane.Length;
+            Assert.That(FixVec2.Distance(sim.Entities.Position[1], end).ToDouble(), Is.LessThan(1e-3), "встал в конце полосы");
+            Assert.That(log.ImpactAt[1], Is.EqualTo(sim.Entities.Position[1]));
+            Assert.That(sim.TryGetSplitterRoll(1, out var uncurl), Is.True);
+            Assert.That(uncurl.Phase, Is.EqualTo(SplitterRollPhase.Uncurl));
+            Assert.That(uncurl.HitResolved, Is.True);
+            Assert.That(uncurl.EndTick, Is.EqualTo(locked.StopTick + Simulation.SplitterRollUncurlTicks));
+            Assert.That(sim.SplitterRollHoldsMeleeToken(1), Is.False, "жетон свободен с остановки");
+            Assert.That(sim.Entities.Velocity[1], Is.EqualTo(FixVec2.Zero));
+
+            RunRoll(sim, uncurl.EndTick, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out _), Is.False);
+            Assert.That(log.Damage.Count, Is.EqualTo(1));
+            Assert.That(log.Cancelled, Is.Empty);
+        }
+
+        [Test]
+        public void Roll_HitKnocksTheHeroSideways()
+        {
+            var sim = RollStand(4);
+            var log = new RollLog();
+            while (log.Damage.Count == 0 && sim.Tick < RollT0 + 60) RunRoll(sim, sim.Tick + 1, log);
+            Assert.That(log.Damage.Count, Is.EqualTo(1));
+            Assert.That(sim.Entities.ForcedKind[0], Is.EqualTo((byte)ForcedMotionKind.Knockback));
+            var push = sim.Entities.ForcedTarget[0] - sim.Entities.Position[0];
+            Assert.That(push.Length.ToDouble(), Is.EqualTo(1.2).Within(0.01));
+            Assert.That(sim.TryGetSplitterRoll(1, out var roll), Is.True);
+            Assert.That(roll.Phase, Is.EqualTo(SplitterRollPhase.Rolling), "катится дальше сквозь героя");
+            Assert.That(Math.Abs(FixVec2.Dot(push.Normalized(), roll.Direction).ToDouble()), Is.LessThan(1e-3), "вбок от полосы");
+        }
+
+        [Test]
+        public void Roll_BotSteppingAsideTwelveTicksAfterTheLane_IsNeverHit()
+        {
+            for (int k = 0; k < 20; k++)
+            {
+                double distance = 3.3 + 0.18 * k;
+                double angle = (k * 37) % 360;
+                double side = (k & 1) == 0 ? 1.5 : -1.5;
+                var sim = RollStand(distance, angle, null, (ulong)(100 + k));
+                var log = new RollLog();
+                RunRoll(sim, RollT0 + 13, log);
+                Assert.That(log.Started, Is.EqualTo(new[] { RollT0 }), "setup " + k);
+                Assert.That(sim.TryGetSplitterRoll(1, out var roll), Is.True, "setup " + k);
+                Assert.That(roll.Phase, Is.EqualTo(SplitterRollPhase.Locked), "setup " + k);
+                var hero = sim.Entities.Position[0];
+                var aside = hero + new FixVec2(-roll.Direction.Y, roll.Direction.X) * Fix64.FromDouble(side);
+                int dodge = roll.LockTick + 12;
+                RunRoll(sim, roll.EndTick + 1, log, tick => tick >= dodge ? MoveTo(aside) : InputFrame.Empty);
+                Assert.That(log.Stages, Is.EqualTo(new[] { 0, 1 }), "пуск и стоп, setup " + k);
+                Assert.That(log.Hits, Is.EqualTo(new[] { false, false }), "setup " + k);
+                Assert.That(log.Damage, Is.Empty, "setup " + k);
+                Assert.That(sim.Entities.Health[0], Is.EqualTo(10000), "setup " + k);
+                double lateral = Math.Abs((sim.Entities.Position[0].X - hero.X).ToDouble() * -roll.Direction.Y.ToDouble()
+                    + (sim.Entities.Position[0].Y - hero.Y).ToDouble() * roll.Direction.X.ToDouble());
+                // Приказ мышью тормозит у точки: бот уходит на ~1,2 м из заказанных 1,5.
+                Assert.That(lateral, Is.GreaterThan(1.0), "бот действительно отошёл, setup " + k);
+
+                // Тот же стенд без шага в сторону — удар есть: проверка не пустая.
+                var still = RollStand(distance, angle, null, (ulong)(100 + k));
+                var control = new RollLog();
+                RunRoll(still, RollT0 + 60, control);
+                Assert.That(control.Damage.Count, Is.EqualTo(1), "стоящего бьёт, setup " + k);
+            }
+        }
+
+        [Test]
+        public void Roll_IntoAWall_StunsFor45_AsDizzy()
+        {
+            // Камень на оси между героем (0) и Расщепенем (6,5): тело (0,7) упирается
+            // в камень (0,5 в 1,5 м) на 2,7 — полоса 3,8 м, в её конце стена.
+            var sim = RollStand(6.5, 0, Glade(1.5));
+            Assert.That(sim.Entities.Position[0], Is.EqualTo(FixVec2.Zero), "герой в центре поляны");
+            Assert.That(sim.Entities.Position[1], Is.EqualTo(At(6.5, 0)));
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 13, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out var roll), Is.True);
+            Assert.That(roll.WallStop, Is.True, "стена впереди видна с фиксации");
+            Assert.That(roll.Length.ToDouble(), Is.EqualTo(6.5 - 2.7).Within(0.01));
+            Assert.That(Marks(sim, 1)[0].Length, Is.EqualTo(roll.Length), "полоса обрезана стеной");
+
+            RunRoll(sim, roll.StopTick + 1, log);
+            Assert.That(log.Stages, Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(log.ImpactTicks[1], Is.EqualTo(roll.StopTick));
+            Assert.That(log.Hits, Is.EqualTo(new[] { false, false }));
+            Assert.That(sim.Entities.Position[1].X.ToDouble(), Is.EqualTo(2.7).Within(0.01), "у камня, не в нём");
+            Assert.That(sim.TryGetSplitterRoll(1, out var dizzy), Is.True);
+            Assert.That(dizzy.Phase, Is.EqualTo(SplitterRollPhase.Dizzy));
+            Assert.That(dizzy.EndTick, Is.EqualTo(roll.StopTick + 45));
+            Assert.That(sim.Statuses.StunUntilTick[1], Is.EqualTo(roll.StopTick + Simulation.SplitterRollDizzyTicks));
+            Assert.That(sim.Statuses.IsStunned(1, sim.Tick), Is.True);
+
+            // Последний тик оглушения — StopTick + 44; с EndTick перекат кончен, как у раскрытия.
+            RunRoll(sim, roll.StopTick + 44, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out var still), Is.True);
+            Assert.That(still.Phase, Is.EqualTo(SplitterRollPhase.Dizzy));
+            RunRoll(sim, roll.StopTick + 45, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out _), Is.False);
+            Assert.That(sim.Statuses.IsStunned(1, sim.Tick), Is.False);
+            Assert.That(log.Cancelled, Is.Empty, "своё оглушение перекат не снимает");
+            Assert.That(log.Damage, Is.Empty);
+        }
+
+        [Test]
+        public void Roll_RockAppearingOnTheLockedLane_StopsItThereAsAWallHit()
+        {
+            var map = Glade();
+            var sim = RollStand(5, 0, map);
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 13, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out var roll), Is.True);
+            Assert.That(roll.WallStop, Is.False);
+            // Камень встал поперёк уже зафиксированной полосы: клубок упирается в него, не скользит.
+            map.AddTestObstacle(new LayoutObstacle(At(2, 0), Fix64.FromDouble(0.5), 0));
+            RunRoll(sim, RollT0 + 60, log);
+            Assert.That(log.Stages, Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(log.ImpactTicks[1], Is.LessThan(roll.StopTick), "встал раньше конца полосы");
+            Assert.That(sim.Entities.Position[1].X.ToDouble(), Is.EqualTo(3.2).Within(0.01));
+            Assert.That(sim.Entities.Position[1].Y.ToDouble(), Is.EqualTo(0).Within(1e-3), "без скольжения");
+            Assert.That(sim.TryGetSplitterRoll(1, out var dizzy), Is.True);
+            Assert.That(dizzy.Phase, Is.EqualTo(SplitterRollPhase.Dizzy));
+            Assert.That(sim.Statuses.StunUntilTick[1], Is.EqualTo(log.ImpactTicks[1] + 45));
+        }
+
+        [Test]
+        public void Roll_StunAtFifteen_Cancels_FreesTheToken_NoDamage()
+        {
+            var sim = RollStand(4);
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 15, log);
+            Assert.That(sim.TryGetSplitterRoll(1, out var roll), Is.True);
+            Assert.That(roll.Phase, Is.EqualTo(SplitterRollPhase.Locked));
+            Assert.That(MeleeTokens(sim), Is.EqualTo(1));
+            var lane = Marks(sim, 1)[0];
+            Assert.That(lane.IsActive, Is.True);
+
+            sim.Statuses.ApplyStun(1, sim.Tick + 30);
+            RunRoll(sim, RollT0 + 16, log);
+            Assert.That(log.Cancelled, Is.EqualTo(new[] { RollT0 + 15 }));
+            Assert.That(sim.TryGetSplitterRoll(1, out _), Is.False);
+            Assert.That(sim.SplitterRollHoldsMeleeToken(1), Is.False);
+            Assert.That(MeleeTokens(sim), Is.Zero, "жетон свободен");
+            var marks = Marks(sim, 1);
+            Assert.That(marks.Count, Is.EqualTo(1));
+            Assert.That(marks[0].Serial, Is.EqualTo(lane.Serial));
+            Assert.That(marks[0].State, Is.EqualTo(TelegraphState.Cancelled), "полоса гаснет");
+
+            RunRoll(sim, RollT0 + 90, log);
+            Assert.That(log.ImpactTicks, Is.Empty, "пуска нет");
+            Assert.That(log.Damage, Is.Empty);
+            Assert.That(log.Started.Count, Is.EqualTo(1), "перезарядка осталась — 180 от сжатия");
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000));
+        }
+
+        [Test]
+        public void Splitlings_NeverRoll()
+        {
+            var sim = Stand(distance: Fix64.FromInt(5));
+            Doom(sim, 1);
+            sim.Step(InputFrame.Empty);
+            ReleasePending(sim);
+            Assert.That(sim.Entities.Kind[2], Is.EqualTo(EnemyKind.ForestSplitling));
+            var hero = sim.Entities.Position[0];
+            int rolls = 0;
+            for (int t = 0; t < 300; t++)
+            {
+                // Детёныши держатся в 5 м лицом к герою — ровно там, где Расщепень катится.
+                for (int c = 2; c <= 3; c++)
+                {
+                    sim.Entities.Position[0] = hero;
+                    sim.Entities.Position[c] = hero + At(5, c == 2 ? 0.8 : -0.8);
+                    sim.Entities.Facing[c] = (sim.Entities.Position[0] - sim.Entities.Position[c]).Normalized();
+                }
+                sim.Step(InputFrame.Empty);
+                foreach (var e in sim.Events)
+                    if (e.ActionVariant == (int)EnemyActionKind.SplitterRoll
+                        && (e.Type == SimEventType.EnemyActionStarted || e.Type == SimEventType.EnemyActionImpact)) rolls++;
+                for (int c = 2; c <= 3; c++)
+                {
+                    Assert.That(sim.TryGetSplitterRoll(c, out _), Is.False);
+                    Assert.That(sim.SplitterRollHoldsMeleeToken(c), Is.False);
+                }
+            }
+            Assert.That(rolls, Is.Zero);
+        }
+
+        [TestCase(2.8, false)]
+        [TestCase(3.2, true)]
+        [TestCase(6.8, true)]
+        [TestCase(7.2, false)]
+        public void Roll_StartsOnlyBetweenThreeAndSevenMetres(double distance, bool rolls)
+        {
+            var sim = RollStand(distance);
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 150, log);
+            Assert.That(log.Started.Count, Is.EqualTo(rolls ? 1 : 0));
+            if (rolls) Assert.That(log.Started[0], Is.EqualTo(RollT0));
+            else Assert.That(sim.TryGetSplitterRoll(1, out _), Is.False);
+        }
+
+        [Test]
+        public void Roll_NotWhileFacingAway()
+        {
+            var sim = RollStand(5);
+            // Смотрит поперёк линии на героя: за тик общий доворот (12°) до ±30° не доводит.
+            var aside = new FixVec2(Fix64.Zero, Fix64.One);
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 30, log, null, tick => sim.Entities.Facing[1] = aside);
+            Assert.That(log.Started, Is.Empty, "герой вне ±30°");
+            // Отпустили — доворачивается и катится.
+            RunRoll(sim, RollT0 + 40, log);
+            Assert.That(log.Started.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Roll_ReadyInMelee_BacksOffToRollRange_ThenRolls()
+        {
+            // Вплотную (1,6 м) и на ходу: готовый перекат уводит Расщепеня на кольцо
+            // 4,5 м, и оттуда он катится — без отхода перекат в ближнем бою не случался бы.
+            var sim = RollStand(1.6);
+            sim.Entities.Stats[1].SetBase(StatType.MoveSpeed, Simulation.SplitterMoveSpeed);
+            sim.Entities.RefreshStats(1);
+            var log = new RollLog();
+            RunRoll(sim, RollT0 + 150, log);
+            Assert.That(log.Started.Count, Is.GreaterThanOrEqualTo(1), "перекат так и не начался");
+            Assert.That(log.Started[0], Is.GreaterThanOrEqualTo(RollT0));
+        }
+
+        [Test]
+        public void Roll_IsDeterministic()
+        {
+            Simulation Make()
+            {
+                var s = new Simulation(33, 64);
+                s.SetupKindTestArena(EnemyKind.ForestSplitter, 3, Glade(-2.5), 33, 2, 100, Fix64.FromInt(7));
+                s.Entities.Stats[0].SetBase(StatType.MaxHealth, Fix64.FromInt(100000));
+                s.Entities.RefreshStats(0); s.Entities.Health[0] = 100000;
+                return s;
+            }
+            var a = Make();
+            var b = Make();
+            int started = 0, stops = 0, hits = 0;
+            for (int t = 0; t < 600; t++)
+            {
+                // Герой ходит между четырьмя точками: то под перекатом, то в стороне.
+                int leg = (t / 40) % 4;
+                var input = MoveTo(At(leg == 1 || leg == 2 ? -4 : 3, leg >= 2 ? -4 : 4));
+                a.Step(input);
+                b.Step(input);
+                Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t);
+                foreach (var e in a.Events)
+                {
+                    if (e.ActionVariant != (int)EnemyActionKind.SplitterRoll) continue;
+                    if (e.Type == SimEventType.EnemyActionStarted) started++;
+                    if (e.Type == SimEventType.EnemyActionImpact && e.Amount == 1) { stops++; if (e.Flag) hits++; }
+                }
+            }
+            Assert.That(started, Is.GreaterThan(0), "катались");
+            Assert.That(stops, Is.GreaterThan(0));
+            TestContext.WriteLine("rolls " + started + ", stops " + stops + ", hits " + hits);
         }
     }
 }

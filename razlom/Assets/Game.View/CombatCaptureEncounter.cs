@@ -83,9 +83,72 @@ namespace Game.View
         public static void SetupForestMob(TickDriver driver, EnemyKind kind, int count)
         {
             var sim = driver.Sim;
-            sim.SetupKindTestArena(kind, Mathf.Clamp(count, 1, 3), driver.Run != null ? driver.Run.Map : null,
+            bool allForest = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-all-forest") >= 0;
+            sim.SetupKindTestArena(kind, allForest ? 1 : Mathf.Clamp(count, 1, 3), driver.Run != null ? driver.Run.Map : null,
                 CaptureRig.SeedOverride);
+            if (allForest) AddAllForestKinds(driver, kind);
+            // -ExtraArgs '-capture-mend': к Корнехвату — два Хранителя на половине здоровья рядом
+            // с ним, чтобы на записи была «Волна из корней» (сам себя и других Корнехватов он не лечит).
+            if (!allForest && kind == EnemyKind.ForestRootSnarer && System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-mend") >= 0)
+            {
+                var entities = sim.Entities;
+                FixVec2 snarer = entities.Position[1], hero = entities.Position[Simulation.PlayerId];
+                FixVec2 axis = (hero - snarer).Normalized(), side = new FixVec2(-axis.Y, axis.X);
+                for (int n = 0; n < 2; n++)
+                {
+                    FixVec2 spot = snarer + axis * Fix64.FromInt(2) + side * Fix64.FromInt(n == 0 ? 2 : -2);
+                    if (driver.Run != null && driver.Run.Map != null) spot = driver.Run.Map.ClampToWalkable(spot, Fix64.One);
+                    sim.AddKindTestEnemy(EnemyKind.ForestGuardian, spot, 50);
+                }
+            }
             Debug.Log($"[capture-encounter] {kind} ({EnemyTexts.Name(kind)}) alive={sim.CountAliveEnemies()}");
+        }
+
+        // Только съёмка: ровно по одному представителю девяти видов, первый — выбранный стендом.
+        private static void AddAllForestKinds(TickDriver driver, EnemyKind firstKind)
+        {
+            var sim = driver.Sim;
+            var entities = sim.Entities;
+            var map = driver.Run != null ? driver.Run.Map : null;
+            FixVec2 hero = entities.Position[Simulation.PlayerId];
+            FixVec2 axis = (entities.Position[1] - hero).Normalized();
+            if (axis.LengthSq.Raw == 0) axis = new FixVec2(Fix64.One, Fix64.Zero);
+            FixVec2 side = new FixVec2(-axis.Y, axis.X);
+            int ordinal = 0;
+            for (int value = (int)EnemyKind.ForestGuardian; value <= (int)EnemyKind.ForestSplitling; value++)
+            {
+                var kind = (EnemyKind)value;
+                if (kind == firstKind) continue;
+                ordinal++;
+                Fix64 radius = sim.ArchetypeBodyRadius(kind);
+                bool placed = false;
+                // Фиксированный обход углов/радиусов: та же карта и seed дают те же точки.
+                for (int attempt = 0; attempt < 360 && !placed; attempt++)
+                {
+                    Fix64 angle = Fix64.TwoPi * (Fix64.Ratio(ordinal, 9) + Fix64.Ratio(attempt / 5, 72));
+                    Fix64 distance = Fix64.FromInt(6 + (ordinal + attempt % 5) % 5);
+                    FixVec2 direction = axis * Fix64.Cos(angle) + side * Fix64.Sin(angle);
+                    FixVec2 spot = hero + direction * distance;
+                    if (map != null) spot = map.ClampToWalkable(spot, radius);
+                    Fix64 fromHero = FixVec2.DistanceSq(hero, spot);
+                    if (fromHero < Fix64.FromInt(36) || fromHero > Fix64.FromInt(100)
+                        || (map != null && !map.IsWalkable(spot, radius))) continue;
+                    bool clear = true;
+                    for (int other = 1; other < entities.Count; other++)
+                    {
+                        if (!entities.Alive[other]) continue;
+                        Fix64 spacing = radius + entities.BodyRadius[other] + Fix64.Ratio(1, 2);
+                        if (FixVec2.DistanceSq(spot, entities.Position[other]) < spacing * spacing)
+                        { clear = false; break; }
+                    }
+                    if (!clear) continue;
+                    sim.AddKindTestEnemy(kind, spot, 100);
+                    placed = true;
+                }
+                if (!placed) throw new System.InvalidOperationException("Нет свободного места в кольце 6–10 м для " + kind);
+            }
+            sim.Grid.Rebuild(entities);
+            Debug.Log($"[capture-encounter] all-forest kinds=9 alive={sim.CountAliveEnemies()} seed={CaptureRig.SeedOverride}");
         }
 
         /// <summary>
@@ -108,6 +171,11 @@ namespace Game.View
                     entities.Stats[i].SetBase(StatType.MaxHealth, Fix64.FromInt(5000));
                     entities.RefreshStats(i); entities.Health[i] = entities.MaxHealth[i];
                 }
+            // -capture-mend: союзники Корнехвата ранены уже после запаса здоровья — иначе лечить некого.
+            if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-mend") >= 0)
+                for (int i = 1; i < entities.Count; i++)
+                    if (entities.Alive[i] && entities.Kind[i] == EnemyKind.ForestGuardian)
+                        entities.Health[i] = entities.MaxHealth[i] / 2;
             Debug.Log($"[enemy-qa] case={enemyCase} enemies={sim.CountAliveEnemies()}");
         }
 

@@ -15,7 +15,13 @@ namespace Game.View
     ///   в землю, когда он выдёргивает плиты (или раньше — оглушение, смерть);
     /// • путы на герое — тот же контакт с попаданием и Damage по герою в том же
     ///   тике (значит, замедление повешено): кольца корней вокруг ног, пока идёт
-    ///   замедление, и уходят в землю к его концу.
+    ///   замедление, и уходят в землю к его концу;
+    /// • «Волна из корней» (лечение, кадр 1-mend-ring от 27.09): лапы в землю
+    ///   (EnemyActionStarted SnarerMend) — у плит свечение и пылинки света всю
+    ///   секунду сбора; волна (EnemyActionImpact SnarerMend) — золотисто-зелёное
+    ///   кольцо разбегается до 5 м, по земле — светлые корешки, листья и искры;
+    ///   на каждом вылеченном (Heal) — листья раскрываются и всплывают искры.
+    ///   Сбит — свечение гаснет сразу.
     ///
     /// Всё — от событий кадра (TickDriver.FrameEventContexts), не опросом. Возраст
     /// каждого эффекта — от тика Sim (тик − 1 + Alpha): частицы догоняются через
@@ -30,6 +36,9 @@ namespace Game.View
         public const string SlamCracksName = "VFX_RootSnarer_SlamCracks";
         public const string RootsEruptName = "VFX_RootSnarer_RootsErupt";
         public const string SnareName = "VFX_RootSnarer_SnareOnHero";
+        public const string MendChannelName = "VFX_RootSnarer_MendChannel";
+        public const string MendRingName = "VFX_RootSnarer_MendRing";
+        public const string MendLeavesName = "VFX_RootSnarer_MendLeaves";
 
         /// <summary>Сегментов трещины на каждую плиту в префабе удара («Seg L 0» … «Seg R 7»).</summary>
         public const int RunSegmentsPerSide = 8;
@@ -82,6 +91,8 @@ namespace Game.View
             public int Tick = -1000, Entity = -1, Serial;
             public float Life, SinkAge = float.MaxValue, RiseSeconds, SinkSeconds;
             public bool FollowHero;
+            /// <summary>Держится за этим союзником (листья лечения); −1 — стоит на месте.</summary>
+            public int FollowEntity = -1;
         }
 
         private sealed class Pool
@@ -96,7 +107,7 @@ namespace Game.View
         private ArenaView _arena;
         private Simulation _shown;
         private int _generation = -1, _depth = -1;
-        private Pool _slam, _roots, _snare;
+        private Pool _slam, _roots, _snare, _mendChannel, _mendRing, _mendLeaves;
         private Pool[] _pools;
         private readonly float[] _segmentDelay = new float[RunSegmentsPerSide * 2];
 
@@ -121,7 +132,11 @@ namespace Game.View
             _slam = MakePool(SlamCracksName, "Корнехват: удар плитами", 3, SlamCracksLife);
             _roots = MakePool(RootsEruptName, "Корнехват: корни", 3, RootsEruptLife);
             _snare = MakePool(SnareName, "Корнехват: путы", 2, 2f);
-            _pools = new[] { _slam, _roots, _snare };
+            // Лечит разом один Корнехват: сбор и волна — по два, листья — на всю пачку.
+            _mendChannel = MakePool(MendChannelName, "Корнехват: сбор волны", 2, 1.4f);
+            _mendRing = MakePool(MendRingName, "Корнехват: волна лечения", 2, 1.4f);
+            _mendLeaves = MakePool(MendLeavesName, "Корнехват: лечение союзника", 8, 1.3f);
+            _pools = new[] { _slam, _roots, _snare, _mendChannel, _mendRing, _mendLeaves };
         }
 
         private Pool MakePool(string prefabName, string title, int count, float life)
@@ -239,10 +254,17 @@ namespace Game.View
                         // Круг Корнехвата встаёт ровно в тик удара плитами.
                         if (IsSnarer(sim, e.Source)) Slam(sim, e, at);
                         break;
+                    case SimEventType.EnemyActionStarted:
+                        if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) MendChannel(sim, e, at);
+                        break;
                     case SimEventType.EnemyActionImpact:
+                        if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) { MendRing(e, at); break; }
                         if (e.ActionVariant != (int)EnemyActionKind.SnarerSlam) break;
                         Roots(sim, e, at);
                         if (e.Flag) { caught = e.Source; caughtAt = at; }
+                        break;
+                    case SimEventType.Heal:
+                        if (IsSnarer(sim, e.Source)) MendLeaves(sim, e, at);
                         break;
                     case SimEventType.Damage:
                         // Урон по герою от того же удара в том же тике — замедление повешено
@@ -252,6 +274,7 @@ namespace Game.View
                         break;
                     case SimEventType.EnemyActionCancelled:
                         if (e.ActionVariant == (int)EnemyActionKind.SnarerSlam) SinkRootsOf(e.Source, at);
+                        else if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) StopMendOf(e.Source);
                         break;
                     case SimEventType.Death:
                         if (e.Target == Simulation.PlayerId) RetractSnare(at);
@@ -356,6 +379,52 @@ namespace Game.View
             fx.SinkAge = Mathf.Max(RootsRiseSeconds, (sinkTick - tick) / (float)Simulation.TicksPerSecond);
         }
 
+        // ------------------------------------------------------------- mend
+
+        /// <summary>Лапы в землю: свечение и пылинки у плит, корень — в центре моба, +Z — его взгляд.</summary>
+        private void MendChannel(Simulation sim, in SimEvent e, int at)
+        {
+            int id = e.Source;
+            if (!IsSnarer(sim, id)) return;
+            var fx = Take(_mendChannel, at, Ground(e.Position.X.ToFloat(), e.Position.Y.ToFloat()),
+                Quaternion.LookRotation(FacingOf(sim, id), Vector3.up), at * 3 + id);
+            if (fx == null) return;
+            fx.Entity = id;
+            foreach (var slab in fx.Slabs) Snap(slab, 0f);
+        }
+
+        /// <summary>Волна: кольцо, корешки, листья и искры от центра волны.</summary>
+        private void MendRing(in SimEvent e, int at)
+        {
+            float x = e.Position.X.ToFloat(), z = e.Position.Y.ToFloat();
+            var fx = Take(_mendRing, at, Ground(x, z), Quaternion.identity, at * 5 + e.Source);
+            if (fx != null) fx.Entity = e.Source;
+        }
+
+        /// <summary>Вылеченный союзник: листья и искры у его ног, держатся за ним.</summary>
+        private void MendLeaves(Simulation sim, in SimEvent e, int at)
+        {
+            int ally = e.Target;
+            if ((uint)ally >= (uint)sim.Entities.Count) return;
+            var fx = Take(_mendLeaves, at, EntityGround(sim, ally), Quaternion.identity, at * 7 + ally);
+            if (fx != null) fx.FollowEntity = ally;
+        }
+
+        /// <summary>Сбор сбит (оглушение, волок, урон): свечение гаснет сразу.</summary>
+        private void StopMendOf(int entity)
+        {
+            foreach (var fx in _mendChannel.Items)
+                if (fx != null && fx.Root.activeSelf && fx.Entity == entity) Retire(fx);
+        }
+
+        private Vector3 EntityGround(Simulation sim, int id)
+        {
+            Vector3 p;
+            if (_arena != null && _arena.TryGetEntityView(id, out var view) && view != null) p = view.position;
+            else p = _driver.GetRenderPosition(id);
+            return Ground(p.x, p.z);
+        }
+
         /// <summary>Оглушение или смерть моба после контакта: корни уходят сразу.</summary>
         private void SinkRootsOf(int entity, int at)
         {
@@ -405,6 +474,7 @@ namespace Game.View
             fx.Tick = tick; fx.Entity = -1; fx.Serial = 0; fx.Life = pool.Life;
             fx.SinkAge = float.MaxValue; fx.RiseSeconds = RootsRiseSeconds; fx.SinkSeconds = RootsSinkSeconds;
             fx.FollowHero = false;
+            fx.FollowEntity = -1;
             fx.Root.transform.SetPositionAndRotation(position, rotation);
             fx.Root.SetActive(true);
             foreach (var seg in fx.Segments) if (seg != null && !seg.gameObject.activeSelf) seg.gameObject.SetActive(true);
@@ -427,7 +497,7 @@ namespace Game.View
         private static void Retire(Fx fx)
         {
             if (fx == null) return;
-            fx.Tick = -1000; fx.Entity = -1; fx.FollowHero = false;
+            fx.Tick = -1000; fx.Entity = -1; fx.FollowHero = false; fx.FollowEntity = -1;
             if (fx.Root.activeSelf) fx.Root.SetActive(false);
         }
 
@@ -449,6 +519,8 @@ namespace Game.View
             if (age > fx.Life) { Retire(fx); return; }
             age = Mathf.Max(0f, age);
             if (fx.FollowHero) Follow(fx);
+            else if (fx.FollowEntity >= 0 && _driver.Sim != null && (uint)fx.FollowEntity < (uint)_driver.Sim.Entities.Count)
+                fx.Root.transform.position = EntityGround(_driver.Sim, fx.FollowEntity);
             AnimateGrows(fx, age);
             for (int k = 0; k < fx.Particles.Length; k++)
             {

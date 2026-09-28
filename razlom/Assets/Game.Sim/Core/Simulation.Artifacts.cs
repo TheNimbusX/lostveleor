@@ -249,6 +249,8 @@ namespace Game.Sim
             DelayForestFruit(HourglassTicks);
             // Выпущенный шип Шипомёта оглушение не отзывает — он стоит в воздухе сам.
             DelayThornShots(HourglassTicks);
+            // Кислые лужи тоже стоят: не зреют, не жгут по расписанию и не сохнут.
+            DelayForestPuddles(HourglassTicks);
         }
 
         /// <summary>Урон по врагу в остановленном времени не проходит, а копится до конца остановки.</summary>

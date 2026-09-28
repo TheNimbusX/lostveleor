@@ -210,6 +210,23 @@ namespace Game.Sim
         /// Плюй-плода (FindForestBudTestStage), а на тестовой поляне из одного
         /// входа без маршрута — её центр.
         /// </summary>
+        /// <summary>
+        /// Стенд: ещё один враг вида kind в точке at на healthPercent здоровья, уже
+        /// заметивший героя. Для съёмки «Волны из корней»: Корнехвату нужны раненые
+        /// союзники рядом. Бою забега не нужен.
+        /// </summary>
+        public int AddKindTestEnemy(EnemyKind kind, FixVec2 at, int healthPercent)
+        {
+            int id = SpawnEnemy(at, ArchetypeHealth(kind), kind);
+            Entities.Health[id] = Math.Max(1, Entities.MaxHealth[id] * healthPercent / 100);
+            FixVec2 look = (Entities.Position[PlayerId] - at).Normalized();
+            if (look.LengthSq.Raw != 0) Entities.Facing[id] = look;
+            Entities.Aggro[id] = true;
+            _events.Add(SimEvent.Spawn(id, at));
+            Grid.Rebuild(Entities);
+            return id;
+        }
+
         public EncounterPlan SetupKindTestArena(EnemyKind kind, int count = 1, LayoutMap map = null, ulong seed = 0,
             int arena = 1, int hardPercent = 100, Fix64 distance = default)
         {

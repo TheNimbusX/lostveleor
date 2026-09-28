@@ -174,9 +174,10 @@ namespace Game.Tests
         }
 
         [Test]
-        public void NeverStepsForwardUntilFacingWithinDotNinetyFive()
+        public void NeverStepsForwardUntilFacingWithinFiftyThreeDegrees()
         {
-            // Герой за 11 м за спиной: сначала разворот на месте, шаг — только почти по взгляду.
+            // Герой за 11 м за спиной: сначала разворот на месте, шаг — только вдоль взгляда,
+            // когда корпус довернулся до ≈53° (cos 0,6): поворот и шаг дальше идут вместе, дугой.
             var s = Arena(); s.Entities.Position[0] = new FixVec2(Fix64.FromInt(-6), Fix64.Zero);
             s.Entities.Facing[1] = -West; s.Entities.NextAttackTick[1] = 10000;
             int firstStep = -1;
@@ -191,8 +192,8 @@ namespace Game.Tests
                 Assert.That(FixVec2.Dot(s.Entities.Facing[1], wanted), Is.GreaterThanOrEqualTo(Simulation.StonehoofWalkAlignCos), "tick " + t);
                 Assert.That(Degrees(moved, s.Entities.Facing[1]), Is.LessThan(.5), "боком, тик " + t);
             }
-            // Шаг не раньше, чем корпус довернулся до 18° (cos 0,95): 162° / 6° — 27-й тик, индекс 26.
-            Assert.That(firstStep, Is.InRange(26, 27));
+            // Шаг не раньше, чем корпус довернулся до 53° (cos 0,6): 127° / 6° — 22-й тик, индекс 21.
+            Assert.That(firstStep, Is.InRange(20, 22));
         }
     }
 }

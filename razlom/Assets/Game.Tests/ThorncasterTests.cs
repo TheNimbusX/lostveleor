@@ -14,7 +14,7 @@ namespace Game.Tests
     /// за тик, одно попадание и только там, где шип пролетел, шаг вбок спасает,
     /// снаряд переживает смерть стрелка, приоритеты, перезарядка 60.
     /// </summary>
-    public sealed class ThorncasterTests
+    public sealed partial class ThorncasterTests
     {
         private static FixVec2 At(double x, double y) => new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(y));
 
@@ -448,6 +448,9 @@ namespace Game.Tests
             Assert.That(started, Is.True);
 
             var ticks = new List<int>(); var hits = new List<bool>(); var damage = new List<int>();
+            Run(sim, 30, ticks, null, hits, damage);
+            // Return to hugging distance after the push, before recovery ends.
+            sim.Entities.Position[0] = a.Origin + a.Direction * Fix64.FromInt(2);
             Run(sim, 40, ticks, null, hits, damage);
             Assert.That(ticks, Is.EqualTo(new[] { 21 }));
             Assert.That(hits, Is.EqualTo(new[] { true }));
@@ -487,11 +490,15 @@ namespace Game.Tests
         // ---- жетон, глубина, походка, детерминизм ----
 
         [TestCase(1, 46)]
-        [TestCase(2, 0)]
+        // Два жетона, но меткам на земле нужен разнос 0,3 с: в тик первой линии второй
+        // стреляет шипом (без метки) и встаёт в линию, когда выстрел кончился.
+        [TestCase(2, Simulation.ThornShotWindupTicks + Simulation.ThornShotRecoveryTicks)]
         public void LineHoldsTheBigTokenUntilItsLastSpike(int limit, int secondStart)
         {
             var sim = Arena(2);
             sim.BigAttackTokenLimit = limit;
+            // С двумя жетонами — и бюджет пятой арены; вторая линия встаёт через 0,3 с после первой.
+            if (limit > 1) sim.BigMarkBudget = Simulation.BigMarkBudgetForArena(5);
             int second = -1;
             for (int t = 0; t < 60 && second < 0; t++)
             {
@@ -543,7 +550,9 @@ namespace Game.Tests
             sim.Entities.Facing[1] = new FixVec2(Fix64.One, Fix64.Zero);
             double previous = FixVec2.Distance(sim.Entities.Position[1], sim.Entities.Position[0]).ToDouble();
             bool lined = false;
-            for (int t = 0; t < 400; t++)
+            // Double attacks add stationary windups while approaching; allow
+            // the full cadence to finish before testing the final hold distance.
+            for (int t = 0; t < 900; t++)
             {
                 var before = sim.Entities.Position[1];
                 var toHero = sim.Entities.Position[0] - before;

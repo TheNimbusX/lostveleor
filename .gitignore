@@ -80,3 +80,6 @@ Desktop.ini
 # Vendored Python packages and tool binaries that DCC scripts download next to their work
 # (e.g. imageio_ffmpeg with an 87 MB ffmpeg.exe); they are re-fetched, never versioned.
 **/.vendor/
+
+# Local compiled test tooling and downloaded runtime dependencies
+/tools/artifacts/

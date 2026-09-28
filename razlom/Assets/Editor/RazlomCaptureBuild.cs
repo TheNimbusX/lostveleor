@@ -97,6 +97,11 @@ namespace Game.EditorTools
             global::RazlomMobAnimatorBuilder.Build();
             global::ForestBudCombatBuilder.Build();
             global::ForestWendigoBuilder.Build();
+            // Версии эффектов мобов проверяются до сериализации плеера,
+            // независимо от порядка InitializeOnLoad в зеркале проекта.
+            global::ThorncasterVfxSetup.Install();
+            global::SplitterVfxSetup.Install();
+            global::ForestPuddleVfxSetup.Install();
             global::CombatPresentationSetup.EnsureProfiles();
             global::PelagAudioImport.Install();
             // Съёмка должна сохранять авторскую цветокоррекцию. Повторная

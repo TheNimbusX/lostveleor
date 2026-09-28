@@ -1,0 +1,14 @@
+{
+  "ForestSplitter.fbx": {
+    "runtime": "razlom\\Assets\\Resources\\Characters\\Forest_Splitter\\ForestSplitter.fbx",
+    "sha256": "eeb1755aeba46077f84699b02c40f7c32166b7dbf7c765599c666f1fcf8a2619"
+  },
+  "ShellHalfL.fbx": {
+    "runtime": "razlom\\Assets\\Resources\\VFX\\Splitter\\ShellHalfL.fbx",
+    "sha256": "79326d83c9cff8b6c37b8a5c2f8556ce46ff610ac66841f3df4ca988d92003f6"
+  },
+  "ShellHalfR.fbx": {
+    "runtime": "razlom\\Assets\\Resources\\VFX\\Splitter\\ShellHalfR.fbx",
+    "sha256": "08e2e108696aadf06c20579b4a5a3556c99d8eca962f861b7e7d9a9fc1522c85"
+  }
+}

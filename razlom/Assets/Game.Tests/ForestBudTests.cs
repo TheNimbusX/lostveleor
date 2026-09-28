@@ -277,6 +277,8 @@ namespace Game.Tests
             // Пул проверяется на трёх залпах сразу: крупный жетон здесь снят,
             // иначе залпы шли бы по очереди и пул не нагружался бы вовсе.
             sim.BigAttackTokenLimit = 3;
+            // И бюджет меток на земле снят: три залпа по весу 2.
+            sim.BigMarkBudget = 6;
             for (int id = 1; id <= 3; id++) sim.Entities.Stats[id].SetBase(StatType.AttackSpeed, Fix64.FromInt(100));
             int peak = 0;
             for (int t = 0; t < 1200; t++)

@@ -234,7 +234,8 @@ namespace Game.Tests
                 location.GetLevel(arena).Spawn(sim, ArenaMap(location, arena, seed), seed ^ 0x5151UL, lesson, arena);
                 sim.PlayerInvulnerable = true;
                 int killed = 0, children = 0, splits = 0;
-                for (int tick = 0; tick < 4000 && (sim.EncounterWavesPending || sim.CountAliveEnemies() > 0); tick++)
+                bool sawPendingChildren = false;
+                for (int tick = 0; tick < 4000 && (sim.EncounterWavesPending || sim.HasPendingSplits || sim.CountAliveEnemies() > 0); tick++)
                 {
                     if (tick % 10 == 0)
                         for (int i = 1; i < sim.Entities.Count; i++)
@@ -244,10 +245,19 @@ namespace Game.Tests
                             sim.ApplyAbilityDamage(Simulation.PlayerId, i, 1000000, -1, DamageType.Physical);
                         }
                     sim.Step(InputFrame.Empty);
+                    sawPendingChildren |= sim.HasPendingSplits;
+                    int reservedChildren = sim.PendingSplitCount * Simulation.SplitChildren;
+                    for (int i = 1; i < sim.Entities.Count; i++)
+                        if (sim.Entities.Alive[i] && sim.Entities.Kind[i] == EnemyKind.ForestSplitter)
+                            reservedChildren += Simulation.SplitChildren;
+                    Assert.That(sim.Entities.Count + reservedChildren, Is.LessThanOrEqualTo(sim.Entities.Capacity),
+                        "места живых родителей и ожидающих детёнышей, seed " + seed + ", tick " + tick);
                     foreach (var e in sim.Events)
                         if (e.Type == SimEventType.SplitterSplit) { splits++; children += e.Amount; }
                 }
                 Assert.That(sim.EncounterWavesPending, Is.False, "seed " + seed);
+                Assert.That(sawPendingChildren, Is.True, "тест прошёл задержку появления, seed " + seed);
+                Assert.That(sim.HasPendingSplits, Is.False, "все ожидающие детёныши появились, seed " + seed);
                 Assert.That(sim.CountAliveEnemies(), Is.Zero, "seed " + seed);
                 Assert.That(killed, Is.EqualTo(3), "три Расщепня урока, seed " + seed);
                 Assert.That(splits, Is.EqualTo(killed), "seed " + seed);
@@ -522,12 +532,15 @@ namespace Game.Tests
                 sim.Step(InputFrame.Empty);
                 Assert.That(sim.EncounterWavesSpawned, Is.EqualTo(2), "seed " + seed);
                 Assert.That(sim.Entities.Count, Is.GreaterThan(before));
+                // Члены волны встают по одному: k-й — через EmergeTicks + min(4k, 12).
+                int Dormant(int k) => Simulation.EmergeTicks
+                    + System.Math.Min(k * Simulation.EmergeStaggerTicks, Simulation.EmergeStaggerMaxTicks);
                 int emerged = 0;
                 foreach (var e in sim.Events)
                     if (e.Type == SimEventType.Spawn)
                     {
                         Assert.That(e.Flag, Is.True, "поздняя волна встаёт из земли");
-                        Assert.That(e.Amount, Is.EqualTo(Simulation.EmergeTicks));
+                        Assert.That(e.Amount, Is.EqualTo(Dormant(e.Target - before)));
                         emerged++;
                     }
                 Assert.That(emerged, Is.EqualTo(sim.Entities.Count - before));
@@ -542,13 +555,16 @@ namespace Game.Tests
                     Assert.That(FixVec2.DistanceSq(start[i], hero) >= Fix64.FromInt(36), Is.True, "ближе 6 м к герою");
                     Assert.That(map.IsWalkable(start[i], sim.Entities.BodyRadius[i]), Is.True);
                     Assert.That(sim.Entities.Aggro[i], Is.True, "вставший сразу идёт на героя");
-                    Assert.That(sim.EmergeTicksLeft(i), Is.EqualTo(Simulation.EmergeTicks));
+                    Assert.That(sim.EmergeTicksLeft(i), Is.EqualTo(Dormant(i - before)));
                 }
-                for (int tick = 0; tick < Simulation.EmergeTicks; tick++)
+                int longest = Dormant(sim.Entities.Count - 1 - before);
+                for (int tick = 0; tick < longest; tick++)
                 {
                     for (int i = before; i < sim.Entities.Count; i++)
                     {
-                        Assert.That(sim.IsEmerging(i), Is.True, "tick " + tick);
+                        bool dormant = tick < Dormant(i - before);
+                        Assert.That(sim.IsEmerging(i), Is.EqualTo(dormant), "tick " + tick);
+                        if (!dormant) continue;
                         Assert.That(sim.Entities.Position[i], Is.EqualTo(start[i]), "встающий не ходит, tick " + tick);
                         Assert.That(sim.Entities.PendingAttackTarget[i], Is.EqualTo(-1), "и не бьёт");
                     }

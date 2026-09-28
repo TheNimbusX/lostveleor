@@ -43,6 +43,22 @@ namespace Game.View
                     : _forestCaptureOrigin;
             }
             int elapsed = Sim.Tick - _forestCaptureStart;
+            // Только съёмка: после появления кислоты герой освобождает центр
+            // кадра, чтобы были видны жидкость и оставшийся плод.
+            if (CaptureRig.ForestBudCase == "puddle")
+            {
+                for (int slot = 0; slot < Simulation.ForestPuddleCapacity; slot++)
+                {
+                    if (!Sim.TryGetForestPuddle(slot, out var puddle)
+                        || FixVec2.DistanceSq(Sim.Entities.Position[Simulation.PlayerId], puddle.Center) > Fix64.FromInt(9)) continue;
+                    var forward = (_forestCaptureDodge - _forestCaptureOrigin).Normalized();
+                    var side = new FixVec2(-forward.Y, forward.X);
+                    _pending.Flags = (byte)InputFlags.MoveOrder;
+                    _pending.Aim = puddle.Center + side * Fix64.FromInt(3);
+                    return;
+                }
+                return;
+            }
             if (CaptureRig.ForestBudCase == "dodge" && elapsed >= 52 && elapsed < 120)
             {
                 _pending.Flags = (byte)InputFlags.MoveOrder;

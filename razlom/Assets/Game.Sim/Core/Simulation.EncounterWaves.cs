@@ -11,21 +11,54 @@ namespace Game.Sim
     /// герой подойдёт на радиус обнаружения. ПОЗДНИЕ ВОЛНЫ встают из земли в
     /// заранее отобранных точках арены (проходимые клетки маршрута внутри
     /// поляны, куда от входа можно дойти) не ближе WaveHeroClearance к герою
-    /// и EmergeTicks тиков бездействуют — ни шага, ни замаха; их видно и по
-    /// ним можно бить, но сами они ещё корни. Потом сразу идут на героя.
+    /// и EmergeTicks тиков (с разносом — до EmergeTicks + EmergeStaggerMaxTicks)
+    /// бездействуют — ни шага, ни замаха; их видно и по ним можно бить, но
+    /// сами они ещё корни. Потом сразу идут на героя.
+    ///
+    /// ПАЧКИ РАЗНЕСЕНЫ (владелец, 26.09: «по пачкам их чуть правильнее надо
+    /// рассредоточить»). Центры групп одной волны не ближе WaveAnchorSpread
+    /// друг к другу (точка у занятого центра теряет очки), второй «центр»
+    /// волны ставится как фланг. Члены группы крупных видов — не плечом к
+    /// плечу, а через WaveMemberSpacing; рой стоит кучей, как стоял. Стрелки
+    /// (плюй-плод, Корнехват, Шипомёт) тянутся дальше от героя — как у
+    /// прежних пачек. Волна встаёт из земли и бьёт впервые вразнобой: k-й
+    /// член волны встаёт на EmergeStaggerTicks·k позже (не больше
+    /// EmergeStaggerMaxTicks), первые удары — по кругу из трёх через
+    /// FirstAttackStaggerTicks; стартовая волна — только удары.
     ///
     /// Арена зачищена, только когда вышли все волны и все мертвы
     /// (EncounterWavesPending — для RiftRun). Выживание кончается по таймеру:
     /// оставшиеся уходят в землю (SimEventType.Burrowed), арена засчитана.
     ///
-    /// Всё здесь — часть состояния: хеш в HashEncounterWaves. Потоки случайности
+    /// Всё здесь — часть состояния: хеш в HashEncounterWaves (кроме черновика
+    /// одной расстановки — центров групп и мест членов: после неё он ни на что
+    /// не влияет, а разнос ложится в _emergeUntil и NextAttackTick). Потоки случайности
     /// свои, от сида расстановки и номера волны: когда бы волна ни вышла, её
     /// состав тот же, а место зависит только от того, где стоит герой.
     /// </summary>
     public sealed partial class Simulation
     {
-        /// <summary>Сколько тиков вставший из земли моб бездействует: 0,8 с.</summary>
+        /// <summary>
+        /// Сколько тиков вставший из земли моб бездействует: 0,8 с. Это первый
+        /// член волны; следующие — дольше на разнос (EmergeStaggerTicks).
+        /// </summary>
         public const int EmergeTicks = 24;
+
+        /// <summary>k-й член волны (с нуля) встаёт на столько тиков позже первого за каждый номер…</summary>
+        public const int EmergeStaggerTicks = 4;
+
+        /// <summary>…но не позже этого: волна целиком на ногах за EmergeTicks + 12 тиков.</summary>
+        public const int EmergeStaggerMaxTicks = 12;
+
+        /// <summary>
+        /// Первые удары волны вразнобой: член k бьёт не раньше чем через
+        /// (k mod FirstAttackStaggerGroups) · FirstAttackStaggerTicks после выхода
+        /// (у стартовой волны — после появления).
+        /// </summary>
+        public const int FirstAttackStaggerTicks = 10, FirstAttackStaggerGroups = 3;
+
+        /// <summary>Центры групп одной волны не ближе этого друг к другу, метры (если арена позволяет).</summary>
+        public static readonly Fix64 WaveAnchorSpread = Fix64.FromInt(5);
 
         /// <summary>Поздняя волна не встаёт ближе этого к герою, метры.</summary>
         public static readonly Fix64 WaveHeroClearance = Fix64.FromInt(6);
@@ -48,6 +81,12 @@ namespace Game.Sim
         // Из скольких лучших точек бросается центр группы.
         private const int WaveAnchorChoices = 4;
         private const int WaveAnchorCandidates = 12;
+        // Точка ближе WaveAnchorSpread к центру уже вставшей группы волны теряет
+        // столько очков за каждый такой центр: больше разброса по направлению
+        // (±4), и соседний центр почти всегда проигрывает свободному месту.
+        private static readonly Fix64 WaveAnchorCrowdPenalty = Fix64.FromInt(8);
+        // Групп в волне не больше шести (EncounterWave), членов группы — 16 (WaveGroup).
+        private const int MaxWaveGroups = 6, MaxWaveGroupMembers = 16;
 
         private const ulong WaveStream = 0x57415645454E4355UL;      // "WAVEENCU"
         private const ulong BossAddStream = 0x424F535341444453UL;   // "BOSSADDS"
@@ -66,6 +105,15 @@ namespace Game.Sim
         private bool[] _spawnTaken = new bool[0];
         private int[] _waveCounts = new int[8];
         private readonly int[] _anchorScratch = new int[WaveAnchorCandidates];
+        // Черновик одной расстановки волны (SpawnGroups), не состояние: центры
+        // уже вставших групп и их сущности, был ли «центр», места членов
+        // текущей группы и номер следующего члена волны. Ни на что после
+        // расстановки не влияет — в хеш не идёт; тесты читают последнюю волну.
+        private readonly FixVec2[] _waveAnchors = new FixVec2[MaxWaveGroups];
+        private readonly int[] _waveGroupFirst = new int[MaxWaveGroups], _waveGroupEnd = new int[MaxWaveGroups];
+        private int _waveAnchorCount, _waveMember;
+        private bool _waveCenterTaken;
+        private readonly FixVec2[] _groupSpots = new FixVec2[MaxWaveGroupMembers];
 
         /// <summary>Шаблон встречи этой арены; null — встреча не по шаблону.</summary>
         public ArenaEncounterTemplate ActiveEncounter => _encounter;
@@ -91,6 +139,17 @@ namespace Game.Sim
 
         /// <summary>Сколько волн подмоги босса уже вышло: 0, 1 или 2.</summary>
         public int BossAddWavesSpawned => _encounterBoss >= 0 ? _bossAddsSpawned : 0;
+
+        /// <summary>Для тестов разноса: сколько групп встало в последней расставленной волне (или подмоге).</summary>
+        internal int LastWaveGroupCount => _waveAnchorCount;
+
+        /// <summary>Для тестов разноса: центр группы последней волны и её сущности [first, end).</summary>
+        internal FixVec2 LastWaveGroup(int group, out int first, out int end)
+        {
+            first = _waveGroupFirst[group];
+            end = _waveGroupEnd[group];
+            return _waveAnchors[group];
+        }
 
         /// <summary>Сброс при любой новой расстановке (SetupRift).</summary>
         private void ResetEncounterWaves()
@@ -246,15 +305,16 @@ namespace Game.Sim
             {
                 // Все волны выживания вышли и легли раньше таймера — выживание
                 // окончено: HUD больше не тикает над пустой ареной.
-                if (_encounter.SurvivalTicks > 0 && CountAliveEnemies() == 0) _survivalEnded = true;
+                if (_encounter.SurvivalTicks > 0 && CountAliveEnemies() == 0 && !HasPendingSplits) _survivalEnded = true;
                 return;
             }
             if (!Entities.Alive[PlayerId]) return;
             // Две волны не встают друг на друга: следующая — не раньше, чем
-            // предыдущая поднялась из земли. Стартовая из земли не встаёт.
+            // из земли поднялся первый член предыдущей (остальные встают следом,
+            // до EmergeStaggerMaxTicks позже). Стартовая из земли не встаёт.
             if (_wavesSpawned > 1 && Tick - _lastWaveTick < EmergeTicks) return;
 
-            int alive = CountAliveEnemies();
+            int alive = CountAliveEnemies() + PendingSplitCount * SplitChildren;
             var trigger = _encounter.GetWave(_wavesSpawned).Trigger;
             bool due;
             switch (trigger.Kind)
@@ -306,6 +366,9 @@ namespace Game.Sim
             center = hero;
             bool placed = false;
             for (int i = 0; i < _spawnPoints.Count; i++) _spawnTaken[i] = false;
+            _waveAnchorCount = 0;
+            _waveMember = 0;
+            _waveCenterTaken = false;
             for (int g = 0; g < wave.GroupCount; g++)
             {
                 var group = wave.GetGroup(g);
@@ -318,22 +381,32 @@ namespace Game.Sim
 
         /// <summary>
         /// Одна группа: точка-центр по месту группы (лучшие по счёту точки,
-        /// бросок среди первых), члены — в ближайших к нему свободных точках.
-        /// Не поместившиеся считаются в OmittedEnemies плана.
+        /// бросок среди первых), члены — в ближайших к нему свободных точках
+        /// не ближе WaveMemberSpacing друг к другу. Центр не садится у центров
+        /// уже вставших групп волны; стрелки тянутся от героя. Не
+        /// поместившиеся считаются в OmittedEnemies плана.
         /// </summary>
         private FixVec2 PlaceWaveGroup(in WaveGroup group, int count, FixVec2 hero, Fix64 minDistance,
             Fix64 preferred, bool emerge, bool aggro, ref Pcg32 rng)
         {
             int points = _spawnPoints.Count;
+            // Второй «центр» волны — уже фланг: два центра садились в один ком
+            // посреди поляны (E04: хранитель и рой).
+            WavePlacement placement = group.Placement;
+            if (placement == WavePlacement.Center && _waveCenterTaken) placement = WavePlacement.Flank;
             FixVec2 direction = FixVec2.Zero;
-            if (group.Placement == WavePlacement.Front) direction = _arenaAxis;
-            else if (group.Placement == WavePlacement.Back) direction = -_arenaAxis;
-            else if (group.Placement == WavePlacement.Flank)
+            if (placement == WavePlacement.Front) direction = _arenaAxis;
+            else if (placement == WavePlacement.Back) direction = -_arenaAxis;
+            else if (placement == WavePlacement.Flank)
             {
                 var side = new FixVec2(-_arenaAxis.Y, _arenaAxis.X);
                 direction = rng.NextInt(0, 2) == 0 ? side : -side;
             }
+            // Стрелки — в глубину, как у прежних пачек (SetupEncounters): дальше
+            // желаемой дальности счёт не падает, ближе — падает вдвое быстрее.
+            bool keepBack = WaveKeepsBack(group.Kind);
             Fix64 minSq = minDistance * minDistance;
+            Fix64 spreadSq = WaveAnchorSpread * WaveAnchorSpread;
             for (int i = 0; i < points; i++)
             {
                 FixVec2 d = _spawnPoints[i] - hero;
@@ -341,10 +414,13 @@ namespace Game.Sim
                 if (_spawnTaken[i] || distanceSq < minSq) { _spawnScore[i] = long.MinValue; continue; }
                 Fix64 distance = Fix64.Sqrt(distanceSq);
                 Fix64 score = -Fix64.Abs(distance - preferred) / 4;
-                if (group.Placement == WavePlacement.Center)
+                if (keepBack) score += distance / 4;
+                if (placement == WavePlacement.Center)
                     score -= FixVec2.Distance(_spawnPoints[i], _arenaCenter) / 2;
                 else if (distance.Raw > 0)
                     score += FixVec2.Dot(d, direction) / distance * 4;
+                for (int a = 0; a < _waveAnchorCount; a++)
+                    if (FixVec2.DistanceSq(_spawnPoints[i], _waveAnchors[a]) < spreadSq) score -= WaveAnchorCrowdPenalty;
                 _spawnScore[i] = score.Raw;
             }
 
@@ -370,36 +446,97 @@ namespace Game.Sim
             }
 
             FixVec2 anchorPoint = _spawnPoints[anchor];
+            int slot = _waveAnchorCount < _waveAnchors.Length ? _waveAnchorCount++ : -1;
+            if (slot >= 0)
+            {
+                _waveAnchors[slot] = anchorPoint;
+                _waveGroupFirst[slot] = _waveGroupEnd[slot] = Entities.Count;
+            }
+            if (placement == WavePlacement.Center) _waveCenterTaken = true;
             FixVec2 face = hero;
             Fix64 jitter = Fix64.Ratio(1, 4);
+            Fix64 spacing = WaveMemberSpacing(group.Kind);
+            Fix64 spacingSq = spacing * spacing;
+            int placed = 0;
             for (int n = 0; n < count; n++)
             {
                 bool done = false;
                 while (!done)
                 {
-                    // Ближайшая к центру ещё не занятая точка, при равенстве — младшая.
-                    int next = -1;
-                    Fix64 nearest = Fix64.MaxValue;
-                    for (int i = 0; i < points; i++)
-                    {
-                        if (_spawnScore[i] == long.MinValue) continue;
-                        Fix64 d = FixVec2.DistanceSq(_spawnPoints[i], anchorPoint);
-                        if (d < nearest) { nearest = d; next = i; }
-                    }
+                    // Ближайшая к центру свободная точка не ближе spacing к уже
+                    // вставшим членам группы; такой нет — просто ближайшая.
+                    int next = NearestWavePoint(anchorPoint, placed, spacingSq);
+                    bool spaced = next >= 0 && placed > 0 && spacing.Raw > 0;
+                    if (next < 0 && placed > 0 && spacing.Raw > 0) next = NearestWavePoint(anchorPoint, 0, spacingSq);
                     if (next < 0) break;
                     _spawnScore[next] = long.MinValue;
                     FixVec2 spot = _spawnPoints[next]
                         + new FixVec2(rng.NextFix(-jitter, jitter), rng.NextFix(-jitter, jitter));
                     if (_layout != null && !_layout.IsWalkable(spot, radius)) spot = _spawnPoints[next];
+                    // Сдвиг не должен съедать разнос: точка разнос держит, она и берётся.
+                    if (spaced && !SpacedFromGroup(spot, placed, spacingSq)) spot = _spawnPoints[next];
                     if (FixVec2.DistanceSq(spot, hero) < minSq || !WaveSpotFree(spot, radius)) continue;
                     _spawnTaken[next] = true;
-                    SpawnEncounterEnemy(spot, group.Kind, group.Elite, emerge, aggro, face);
+                    if (placed < _groupSpots.Length) _groupSpots[placed++] = spot;
+                    SpawnEncounterEnemy(spot, group.Kind, group.Elite, emerge, aggro, face, _waveMember++);
                     done = true;
                 }
                 if (!done) { _encounterPlan.OmittedEnemies += count - n; break; }
             }
+            if (slot >= 0) _waveGroupEnd[slot] = Entities.Count;
             return anchorPoint;
         }
+
+        /// <summary>
+        /// Ближайшая к anchor ещё не отброшенная точка (счёт не MinValue), не
+        /// ближе spacingSq к первым spaced местам группы; при равенстве — младшая.
+        /// spaced = 0 — без разноса. -1 — такой нет.
+        /// </summary>
+        private int NearestWavePoint(FixVec2 anchor, int spaced, Fix64 spacingSq)
+        {
+            int next = -1;
+            Fix64 nearest = Fix64.MaxValue;
+            for (int i = 0; i < _spawnPoints.Count; i++)
+            {
+                if (_spawnScore[i] == long.MinValue) continue;
+                Fix64 d = FixVec2.DistanceSq(_spawnPoints[i], anchor);
+                if (d >= nearest || !SpacedFromGroup(_spawnPoints[i], spaced, spacingSq)) continue;
+                nearest = d;
+                next = i;
+            }
+            return next;
+        }
+
+        /// <summary>Не ближе ли spacingSq точка к первым count местам текущей группы.</summary>
+        private bool SpacedFromGroup(FixVec2 point, int count, Fix64 spacingSq)
+        {
+            for (int m = 0; m < count; m++)
+                if (FixVec2.DistanceSq(point, _groupSpots[m]) < spacingSq) return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Разнос членов одной группы волны, метры: крупные и стрелки не встают
+        /// плечом к плечу. Рой и дети Расщепеня — 0: им куча к лицу.
+        /// </summary>
+        public static Fix64 WaveMemberSpacing(EnemyKind kind)
+        {
+            switch (kind)
+            {
+                case EnemyKind.ForestGuardian: return Fix64.FromInt(3);
+                case EnemyKind.ForestBud:
+                case EnemyKind.ForestRootSnarer:
+                case EnemyKind.ForestStonehoof:
+                case EnemyKind.ForestThorncaster:
+                case EnemyKind.ForestWendigo: return Fix64.FromInt(4);
+                case EnemyKind.ForestSplitter: return Fix64.Ratio(5, 2);
+                default: return Fix64.Zero;
+            }
+        }
+
+        /// <summary>Стрелки волны — плюй-плод, Корнехват, Шипомёт: их группа встаёт дальше от героя.</summary>
+        public static bool WaveKeepsBack(EnemyKind kind)
+            => kind == EnemyKind.ForestBud || kind == EnemyKind.ForestRootSnarer || kind == EnemyKind.ForestThorncaster;
 
         /// <summary>Лучшие по счёту точки, по убыванию; при равенстве — младшая. Возвращает сколько.</summary>
         private int TopSpawnPoints(int[] best)
@@ -433,9 +570,14 @@ namespace Game.Sim
 
         /// <summary>
         /// Один враг встречи: строка вида, глубина и «Сложно». Вставший из
-        /// земли сразу заметил героя, но EmergeTicks не ходит и не бьёт.
+        /// земли сразу заметил героя, но не ходит и не бьёт EmergeTicks тиков
+        /// и ещё разнос по номеру order в волне (EmergeStaggerTicks·order, не
+        /// больше EmergeStaggerMaxTicks). Первый удар — ещё позже на
+        /// (order mod FirstAttackStaggerGroups)·FirstAttackStaggerTicks; у
+        /// стартовой волны — столько же от появления.
         /// </summary>
-        private int SpawnEncounterEnemy(FixVec2 spot, EnemyKind kind, bool elite, bool emerge, bool aggro, FixVec2 face)
+        private int SpawnEncounterEnemy(FixVec2 spot, EnemyKind kind, bool elite, bool emerge, bool aggro, FixVec2 face,
+            int order)
         {
             int id = SpawnScaledEnemy(spot, kind, _encounterHealthPercent, _encounterDamagePercent, _encounterHardPercent);
             FixVec2 look = (face - spot).Normalized();
@@ -446,14 +588,24 @@ namespace Game.Sim
                 Entities.XpReward[id] = Progression.EliteKillXp;
             }
             if (aggro) Entities.Aggro[id] = true;
+            // Волна не бьёт залпом: первые удары по кругу из трёх — +0, +10, +20 тиков.
+            int attackDelay = order % FirstAttackStaggerGroups * FirstAttackStaggerTicks;
+            int firstAttack;
             if (emerge)
             {
                 // Тик выхода уже идёт: бездействие считается со следующего.
-                _emergeUntil[id] = Tick + 1 + EmergeTicks;
-                if (Entities.NextAttackTick[id] < _emergeUntil[id]) Entities.NextAttackTick[id] = _emergeUntil[id];
-                _events.Add(SimEvent.Emerge(id, spot, EmergeTicks));
+                // Члены волны встают по одному, а не разом (4 тика на номер).
+                int dormant = EmergeTicks + Math.Min(order * EmergeStaggerTicks, EmergeStaggerMaxTicks);
+                _emergeUntil[id] = Tick + 1 + dormant;
+                firstAttack = _emergeUntil[id] + attackDelay;
+                _events.Add(SimEvent.Emerge(id, spot, dormant));
             }
-            else _events.Add(SimEvent.Spawn(id, spot));
+            else
+            {
+                firstAttack = Tick + attackDelay;
+                _events.Add(SimEvent.Spawn(id, spot));
+            }
+            if (Entities.NextAttackTick[id] < firstAttack) Entities.NextAttackTick[id] = firstAttack;
             return id;
         }
 

@@ -175,10 +175,16 @@ namespace Game.View
             _scroll = GUILayout.BeginScrollView(_scroll);
             if (_wrapped == null) _wrapped = new GUIStyle(GameTypography.Label) { wordWrap = true };
             GUILayout.Label("МЕНЮ РАЗРАБОТЧИКА · ПАУЗА");
+            bool sandbox = _driver.EnemySandbox != null;
+            if (sandbox)
+                GUILayout.Label("Стенд мобов. Расстановка и управление врагами — в окне Разлом → Мобы. Прогресс не загружается и не сохраняется.", _wrapped);
+            else
+            {
             GUILayout.Label("Переход создаёт свежую тестовую карту. Текущий бой заменяется.", _wrapped);
             GUILayout.Label("Снаряжение сохраняется; наград за пропуск нет, добыча теста не переносится в сумку.", _wrapped);
+            }
             GUILayout.Space(12);
-            if (_locations.Length > 0)
+            if (!sandbox && _locations.Length > 0)
             {
                 GUILayout.Label("Локация:");
                 for (int i = 0; i < _locations.Length; i++)
@@ -198,7 +204,7 @@ namespace Game.View
                 if (GUILayout.Button("Лесной бутон · тестовый бой / повтор", GUILayout.Height(42))) _request = 12;
                 GUILayout.Label("Один дальнобой. Уклоняйся от красных меток, атакуй обычными способностями. F8 — повтор или выход в лагерь.", _wrapped);
             }
-            else GUILayout.Label("Профили локаций не найдены.");
+            else if (!sandbox) GUILayout.Label("Профили локаций не найдены.");
             bool canToggle = _driver.Session.Mode == Game.Sim.GameMode.Rift;
             GUI.enabled = canToggle;
             bool immortal = _driver.Session.DeveloperInvulnerable;
@@ -206,7 +212,7 @@ namespace Game.View
             GUI.enabled = true;
             if (!canToggle) GUILayout.Label("Для бессмертия сначала войди в любой разлом.", _wrapped);
             else GUILayout.Label("Бессмертие помечает текущий забег тестовым: добыча не переносится в сумку.", _wrapped);
-            if (GUILayout.Button("Вернуться в лагерь", GUILayout.Height(32))) _request = 3;
+            if (!sandbox && GUILayout.Button("Вернуться в лагерь", GUILayout.Height(32))) _request = 3;
             GUILayout.Space(8);
             var camp = _driver.Session.Camp;
             GUILayout.Label("Прокачка: уровень " + camp.Level + " · опыт " + camp.Experience + " / " + camp.ExperienceToNextLevel, _wrapped);
@@ -221,6 +227,8 @@ namespace Game.View
             GUILayout.Space(8);
             DrawLoadout();
             GUILayout.Space(8);
+            if (!sandbox)
+            {
             GUILayout.Label("Пелаг · темп боя");
             _tempoPreset = GUILayout.SelectionGrid(_tempoPreset, new[] { "Базовая", "Средняя", "Быстрая" }, 3);
             bool tempoReady = true;
@@ -230,6 +238,7 @@ namespace Game.View
             if (GUILayout.Button("Повторить бой с текущими навыками", GUILayout.Height(36))) _request = 13;
             GUI.enabled = true;
             GUILayout.Label("Четыре навыка выше, лесной бутон и четыре ближника. Настоящие расходы и КД; прогресс лагеря не меняется.", _wrapped);
+            }
             GUILayout.Space(8);
             DrawTalentToggles();
             if (_driver.Session?.IsDeveloperRun == true)

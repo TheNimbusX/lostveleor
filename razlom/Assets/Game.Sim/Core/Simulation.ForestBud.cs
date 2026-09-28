@@ -65,7 +65,7 @@ namespace Game.Sim
             // Держим ближников между героем и бутоном, но не уходим за дальность залпа.
             for (int ally = 1; ally < Entities.Count; ally++)
             {
-                if (ally == id || !Entities.Alive[ally] || Entities.Kind[ally] == EnemyKind.ForestBud) continue;
+                if (ally == id || !Entities.Alive[ally] || !UsesSurround(Entities.Kind[ally])) continue;
                 var relative = Entities.Position[ally] - Entities.Position[PlayerId];
                 var ahead = FixVec2.Dot(relative, awayDirection);
                 var lateral = relative - awayDirection * ahead;
@@ -85,18 +85,50 @@ namespace Game.Sim
             if (distance > config.PreferredRange)
             {
                 Fix64 ramp = Fix64.Min(Fix64.One, (distance - config.PreferredRange) / Fix64.FromInt(2));
-                wanted = toPlayer.Normalized() * (speed * ramp);
+                wanted = SteerHeading(id, toPlayer) * (speed * ramp);
             }
             else if (distance < rearRange)
             {
                 var away = distance.Raw > 0 ? -toPlayer.Normalized() : -Entities.Facing[id];
+                // Отход — не строго назад, в стену и в угол: на 35° в ту сторону,
+                // где в двух метрах есть пол. Обе открыты — обход прикрытия, как раньше.
+                away = BudRetreatHeading(id, away);
                 // Обходим прикрытие сбоку, иначе два тела толкаются назад и стрелок остаётся впереди.
                 wanted = (away + bypass * Fix64.Ratio(3, 2)).Normalized() * speed;
             }
+            else if (distance.Raw > 0)
+            {
+                // Хорошая огневая позиция удерживается до изменения обстановки.
+                if (BigAttackerSpread(id, out var side)) wanted = side * (speed * Fix64.Ratio(1, 3));
+            }
+            // В чужой метке или в луже — вон из неё, бегом.
+            if (InAllyDanger(id, Entities.Position[id], out FixVec2 escape)) wanted = escape * speed;
             Entities.Velocity[id] = Approach(Entities.Velocity[id], wanted, speed);
             FixVec2 from = Entities.Position[id];
-            Entities.Position[id] = MoveInsideLayout(id, from, Entities.Velocity[id]);
+            Entities.Position[id] = EnemyStep(id, from, Entities.Velocity[id]);
             if (Entities.Position[id].Equals(from)) Entities.Velocity[id] = FixVec2.Zero;
+        }
+
+        private static readonly Fix64 BudRetreatTurnCos = Fix64.Ratio(81915, 100000);   // 35°
+        private static readonly Fix64 BudRetreatTurnSin = Fix64.Ratio(57358, 100000);
+
+        /// <summary>
+        /// Куда отходить: прямо назад, если там в 2 м есть пол, иначе на 35°
+        /// в ту сторону, где пол есть (сначала левая). Без карты — прямо.
+        /// </summary>
+        private FixVec2 BudRetreatHeading(int id, FixVec2 away)
+        {
+            if (_layout == null) return away;
+            var from = Entities.Position[id];
+            var radius = Entities.BodyRadius[id];
+            var probe = Fix64.FromInt(2);
+            if (_layout.CanTravel(from, from + away * probe, radius)) return away;
+            var left = new FixVec2(away.X * BudRetreatTurnCos - away.Y * BudRetreatTurnSin, away.X * BudRetreatTurnSin + away.Y * BudRetreatTurnCos);
+            var right = new FixVec2(away.X * BudRetreatTurnCos + away.Y * BudRetreatTurnSin, away.Y * BudRetreatTurnCos - away.X * BudRetreatTurnSin);
+            if (_layout.CanTravel(from, from + left * probe, radius)) return left;
+            if (_layout.CanTravel(from, from + right * probe, radius)) return right;
+            // Зажат с трёх сторон — вбок вдоль стены, куда ближе к стае.
+            return new FixVec2(-away.Y, away.X);
         }
 
         /// <summary>Песочные Часы: летящие плоды замирают — их падение отодвигается на время остановки.</summary>
@@ -108,7 +140,7 @@ namespace Game.Sim
                 ForestFruitState fruit = _forestFruits[slot];
                 if (fruit.Serial == 0) continue;
                 _forestFruits[slot] = new ForestFruitState(fruit.Serial, fruit.Source, fruit.ShotIndex, fruit.LaunchTick,
-                    fruit.ImpactTick + ticks, fruit.Origin, fruit.Target, fruit.Radius, fruit.Damage);
+                    fruit.ImpactTick + ticks, fruit.Origin, fruit.Target, fruit.Radius, fruit.Damage, fruit.Rotten);
             }
         }
 
@@ -123,7 +155,9 @@ namespace Game.Sim
                 _forestFruits[slot] = default;
                 _forestFruitActiveCount--;
                 _events.Add(new SimEvent(SimEventType.ForestFruitImpact, fruit.Source, PlayerId,
-                    slot, false, fruit.Target, actionVariant: fruit.ShotIndex));
+                    slot, fruit.Rotten, fruit.Target, actionVariant: fruit.ShotIndex));
+                // Гнилой плод оставляет кислую лужу; удар самого плода — как у обычного.
+                if (fruit.Rotten) OpenForestPuddle(fruit.Source, fruit.Target, fruit.Damage);
                 // Радиус описывает реальный диск поражения; тело героя должно полностью выйти из него.
                 Fix64 limit = fruit.Radius + Entities.BodyRadius[PlayerId];
                 if (Entities.Alive[PlayerId] &&
@@ -152,7 +186,11 @@ namespace Game.Sim
                     if (delta.LengthSq > config.AttackRange * config.AttackRange) continue;
                     if (!FixVec2.WithinArc(Entities.Facing[id], delta, AttackCommitCos)) continue;
                     // Залп — крупная атака: без жетона стрелок держит дистанцию и ждёт.
-                    if (!BigAttackTokenFree(id)) continue;
+                    // На земле он — пять дисков разом, поэтому весит в бюджете меток два.
+                    if (!BigAttackTokenFree(id, BudVolleyMarkWeight, Tick + config.WindupTicks + config.FlightTicks)) continue;
+                    // Каждый третий залп несёт гнилой плод; не упавший — ждёт следующего.
+                    _budVolleys[id]++;
+                    if (_budVolleys[id] % RottenVolleyEvery == 0) _budRotPending[id] = true;
                     int first = Tick + config.WindupTicks;
                     attack = new ForestBudAttackState(++_forestSerial, Tick, first, Tick + config.ActionTicks, 0);
                     _forestBudAttacks[id] = attack;
@@ -184,10 +222,14 @@ namespace Game.Sim
             if (slot == firstSlot + ForestFruitSlotsPerEnemy)
                 throw new InvalidOperationException("Forest fruit pool capacity invariant failed.");
             var config = ForestBudConfig;
+            FixVec2 target = Entities.Position[PlayerId];
+            // Гнилой — четвёртый плод залпа, если луж не много и рядом с целью нет живой.
+            bool rotten = shotIndex == RottenShotIndex && _budRotPending[source] && RottenFruitAllowed(target);
+            if (rotten) _budRotPending[source] = false;
             // Цель берётся заново для каждого плода; после этого ни движение героя, ни смерть стрелка её не меняют.
             _forestFruits[slot] = new ForestFruitState(++_forestSerial, source, shotIndex, Tick,
-                Tick + config.FlightTicks, Entities.Position[source], Entities.Position[PlayerId],
-                config.ImpactRadius, Entities.Damage[source]);
+                Tick + config.FlightTicks, Entities.Position[source], target,
+                rotten ? RottenFruitRadius : config.ImpactRadius, Entities.Damage[source], rotten);
             _forestFruitHighWater = Math.Max(_forestFruitHighWater, slot + 1);
             _forestFruitActiveCount++;
             _events.Add(new SimEvent(SimEventType.ForestFruitLaunched, source, PlayerId, slot,
@@ -219,8 +261,9 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, fruit.ImpactTick); Hashing.Mix(ref hash, fruit.Damage);
                 Hashing.Mix(ref hash, fruit.Origin.X); Hashing.Mix(ref hash, fruit.Origin.Y);
                 Hashing.Mix(ref hash, fruit.Target.X); Hashing.Mix(ref hash, fruit.Target.Y);
-                Hashing.Mix(ref hash, fruit.Radius);
+                Hashing.Mix(ref hash, fruit.Radius); Hashing.Mix(ref hash, fruit.Rotten ? 1 : 0);
             }
+            HashBudVolleys(ref hash);
         }
 
         /// <summary>Один и тот же настоящий бой для F8, игровых съёмок и тестов.</summary>

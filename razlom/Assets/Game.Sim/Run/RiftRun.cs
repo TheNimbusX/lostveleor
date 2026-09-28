@@ -13,7 +13,7 @@ namespace Game.Sim
     /// для выбора награды нет намеренно: реплей обязан воспроизводить забег
     /// целиком, включая нажатия на экране награды.
     /// </summary>
-    public sealed class RiftRun
+    public sealed partial class RiftRun
     {
         /// <summary>Сколько предложений на экране награды. Ровно три, см. бриф.</summary>
         public const int RewardChoices = 3;
@@ -48,7 +48,7 @@ namespace Game.Sim
         {
             int count = 0;
             for (int i = 0; i < _sim.Entities.Count; i++)
-                if (_sim.Entities.Alive[i] && _enemyBranch[i] == branch) count++;
+                if ((_sim.Entities.Alive[i] || _sim.HasPendingSplitFor(i)) && _enemyBranch[i] == branch) count++;
             return count;
         }
 
@@ -343,6 +343,8 @@ namespace Game.Sim
             // Крупных атак одновременно: одна на аренах 1–4, две с пятой.
             // Расстановка это число не сбрасывает, поэтому ставится здесь.
             _sim.BigAttackTokenLimit = Simulation.BigAttackTokensForArena(Depth);
+            // И сколько крупных меток может лежать на земле разом (Simulation.TelegraphBudget).
+            _sim.BigMarkBudget = Simulation.BigMarkBudgetForArena(Depth);
             LayoutSeed = LayoutGenerator.RollSeed(ref _sim.Rng.Layout);
             LevelSettings.Generate(_generator, _modules, _map, LayoutSeed);
 
@@ -428,6 +430,9 @@ namespace Game.Sim
         /// </summary>
         public void Step(in InputFrame input)
         {
+            // The editor sandbox stays available after an empty field or hero death.
+            // Only its explicit reset starts a fresh simulation; no rewards or exits.
+            if (IsEnemySandbox) { _sim.Step(in input); return; }
             var command = (RunCommand)input.Command;
 
             switch (Phase)
@@ -484,7 +489,7 @@ namespace Game.Sim
             UpdateDrops(command);
             // Зачищена — когда вышли все волны встречи и все мертвы (или
             // кончилось выживание: оставшиеся ушли в землю).
-            if (CountRequiredEnemies() == 0 && !_sim.EncounterWavesPending)
+            if (CountRequiredEnemies() == 0 && !_sim.EncounterWavesPending && !_sim.HasPendingSplits)
             {
                 RiftsCleared++;
                 if (ArenaFlow) Gold += CurrentRoute.BonusGold;

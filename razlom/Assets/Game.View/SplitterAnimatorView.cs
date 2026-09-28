@@ -15,11 +15,18 @@ namespace Game.View
     /// 1,0333 м на цикл, у детёныша шаг в 0,6 раза короче — его 4,2 м/с
     /// сами дают ногам нужный темп.
     ///
-    /// СМЕРТЬ — НЕ ПАДЕНИЕ, А РАСКОЛ. Скорлупа срослась с телом, клип Death —
+    /// СМЕРТЬ — НЕ ПАДЕНИЕ, А РАСКОЛ. Панцирь разделён на настоящие створки, клип Death —
     /// только короткая трещина (12 кадров). Вид играет её за CrackTicks тиков
     /// от тика смерти и на последнем кадре прячет тело: дальше распад продают
-    /// обломки и пыль (SplitterCombatView). Детёныш из распада до того же тика
-    /// спрятан, потом играет Pop — прыжок из пыли.
+    /// обломки и пыль (SplitterCombatView). Детёныш создаётся симуляцией на тике раскола
+    /// и сразу играет Pop — прыжок из пыли.
+    ///
+    /// ПЕРЕКАТ КЛУБКОМ (27.09). Сжатие RollCurl идёт за 30 тиков от начала до
+    /// пуска (кадр 12 — фиксация полосы, 24–30 — дрожь). Катится — RollLoop
+    /// петлёй, а всё тело вращается вокруг поперечной оси через точку пакета
+    /// (spin_pivot, радиус 0,627 м) по пройденному пути: клубок катится, а не
+    /// скользит. На остановке доворачивается до ближайшего «стоя» за 4 тика и
+    /// играет RollUncurl (окно наказания, 30 тиков) или RollDizzy (о стену, 45).
     ///
     /// Все часы — тики Sim с долей кадра: пауза держит позу, съёмка повторяется.
     /// </summary>
@@ -28,7 +35,7 @@ namespace Game.View
     public sealed class SplitterAnimatorView : MonoBehaviour
     {
         /// <summary>За сколько тиков играется трещина Death (кадры 0–12) до раскола.</summary>
-        public const int CrackTicks = 6;
+        public const int CrackTicks = Simulation.SplitterDeathReleaseTicks;
 
         /// <summary>Клип Pop: 10 кадров по тику, отрыв на 2-м, касание на 8-м.</summary>
         public const int PopTicks = 10, PopTakeoffTicks = 2, PopLandTicks = 8;
@@ -44,12 +51,22 @@ namespace Game.View
         private static readonly int Idle = Animator.StringToHash("Base Layer.Idle"),
             Walk = Animator.StringToHash("Base Layer.Walk"), Bite = Animator.StringToHash("Base Layer.Bite"),
             Hit = Animator.StringToHash("Base Layer.Hit"), Death = Animator.StringToHash("Base Layer.Death"),
-            Pop = Animator.StringToHash("Base Layer.Pop");
+            Pop = Animator.StringToHash("Base Layer.Pop"),
+            RollCurl = Animator.StringToHash("Base Layer.RollCurl"), RollLoop = Animator.StringToHash("Base Layer.RollLoop"),
+            RollUncurl = Animator.StringToHash("Base Layer.RollUncurl"), RollDizzy = Animator.StringToHash("Base Layer.RollDizzy");
 
         private static readonly int IdlePhase = Animator.StringToHash("IdlePhase"),
             WalkPhase = Animator.StringToHash("WalkPhase"), BitePhase = Animator.StringToHash("BitePhase"),
             HitPhase = Animator.StringToHash("HitPhase"), DeathPhase = Animator.StringToHash("DeathPhase"),
-            PopPhase = Animator.StringToHash("PopPhase");
+            PopPhase = Animator.StringToHash("PopPhase"),
+            RollCurlPhase = Animator.StringToHash("RollCurlPhase"), RollLoopPhase = Animator.StringToHash("RollLoopPhase"),
+            RollUncurlPhase = Animator.StringToHash("RollUncurlPhase"), RollDizzyPhase = Animator.StringToHash("RollDizzyPhase");
+
+        // Перекат: точка вращения клубка в осях тела (export.json: spin_pivot_unity_local),
+        // радиус качения, подъём клубка в качении, петля RollLoop (12 кадров = 12 тиков),
+        // доворот до «стоя» на остановке.
+        private static readonly Vector3 SpinPivot = new Vector3(0f, .546f, -.028f);
+        private const float SpinRadius = .627f, SpinLift = .081f, RollLoopTicks = 12f, SettleTicks = 4f;
 
         private Animator _animator;
         private TickDriver _driver;
@@ -59,6 +76,11 @@ namespace Game.View
         private float _idleClock, _walkPhase, _hitClock = 1f;
         private Renderer[] _hidden;
         private bool _isHidden;
+        private bool _spinning;
+        private Quaternion _bodyRotation = Quaternion.identity;
+        private Vector3 _bodyPosition;
+        private int _spinSerial;
+        private float _spinAtStop;
 
         /// <summary>Сущность, к которой привязано тело; −1 — не привязано.</summary>
         public int Entity => _entity;
@@ -70,13 +92,18 @@ namespace Game.View
         public int BreakTick => _deathTick == None ? None : _deathTick + CrackTicks;
 
         /// <summary>Тик, с которого детёныш виден и прыгает (раскол родителя). None — не из распада.</summary>
-        public int PopStartTick => _popTick == None ? None : _popTick + CrackTicks;
+        public int PopStartTick => _popTick;
 
         public bool IsBoundTo(Simulation sim, int entity) => _driver != null && _sim == sim && _entity == entity;
 
         private void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
+            if (_animator != null)
+            {
+                _bodyRotation = _animator.transform.localRotation;
+                _bodyPosition = _animator.transform.localPosition;
+            }
         }
 
         /// <summary>
@@ -93,6 +120,7 @@ namespace Game.View
             _idleClock = _walkPhase = 0f;
             _hitClock = 1f;
             SetHidden(false);
+            StopSpin();
             if (_sim == null || (uint)entity >= (uint)_sim.Entities.Count || _animator == null) return;
             _health = _sim.Entities.Health[entity];
             _animator.Rebind();
@@ -117,16 +145,14 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Смерть на тике события Death. Детёныш, убитый ещё до своего прыжка, трескается
-        /// не раньше, чем станет виден: иначе спрятанное тело мелькнуло бы трещиной.
+        /// Смерть на тике события Death. Дети существуют только после выпуска из родителя.
         /// </summary>
         public void PlayDeath(int deathTick)
         {
-            if (_popTick != None && deathTick < _popTick + CrackTicks) deathTick = _popTick + CrackTicks;
             _deathTick = deathTick;
         }
 
-        /// <summary>Детёныш из распада на тике splitTick: спрятан до раскола родителя, потом Pop.</summary>
+        /// <summary>Детёныш создан на тике splitTick: Pop начинается сразу, без повторной задержки.</summary>
         public void BeginPop(int splitTick)
         {
             _popTick = splitTick;
@@ -171,7 +197,7 @@ namespace Game.View
 
             if (_popTick != None)
             {
-                float age = tick - _popTick - CrackTicks;
+                float age = tick - _popTick;
                 if (age < 0f)
                 {
                     // До раскола родителя детёныш сидит внутри него — его не видно.
@@ -197,6 +223,15 @@ namespace Game.View
                 Sample(Idle, IdlePhase, Mathf.Repeat(_idleClock / IdleSeconds, 1f), .15f);
                 return;
             }
+
+            if (_sim.TryGetSplitterRoll(_entity, out var roll))
+            {
+                EvaluateRoll(in roll, tick);
+                _health = entities.Health[_entity];
+                _hitClock = 1f;
+                return;
+            }
+            StopSpin();
 
             if (_sim.TryGetEnemySwing(_entity, out var swing) && tick < swing.RecoverUntil)
             {
@@ -229,6 +264,76 @@ namespace Game.View
                 Sample(Walk, WalkPhase, Mathf.Repeat(_walkPhase, 1f), .12f);
             }
             else Sample(Idle, IdlePhase, Mathf.Repeat(_idleClock / IdleSeconds, 1f), .15f);
+        }
+
+        /// <summary>
+        /// Перекат: сжатие до пуска, клубок с вращением по пройденному пути,
+        /// раскрытие или оглушение после остановки. Вращение — от места корня
+        /// на экране (ArenaView его уже сгладил), поэтому клубок катится ровно
+        /// с той скоростью, с какой едет.
+        /// </summary>
+        private void EvaluateRoll(in SplitterRollState roll, float tick)
+        {
+            switch (roll.Phase)
+            {
+                case SplitterRollPhase.Curl:
+                case SplitterRollPhase.Locked:
+                    StopSpin();
+                    Sample(RollCurl, RollCurlPhase,
+                        Mathf.Clamp01((tick - roll.StartTick) / Mathf.Max(1, roll.LaunchTick - roll.StartTick)), .06f);
+                    return;
+                case SplitterRollPhase.Rolling:
+                {
+                    Sample(RollLoop, RollLoopPhase, Mathf.Repeat((tick - roll.LaunchTick) / RollLoopTicks, 1f), 0f);
+                    var origin = new Vector3(roll.Origin.X.ToFloat(), 0f, roll.Origin.Y.ToFloat());
+                    var direction = new Vector3(roll.Direction.X.ToFloat(), 0f, roll.Direction.Y.ToFloat());
+                    var here = transform.position; here.y = 0f;
+                    float travelled = Mathf.Max(0f, Vector3.Dot(here - origin, direction));
+                    float angle = travelled / SpinRadius * Mathf.Rad2Deg;
+                    _spinSerial = roll.Serial;
+                    _spinAtStop = angle;
+                    ApplySpin(angle, 1f);
+                    return;
+                }
+                default:
+                {
+                    bool dizzy = roll.Phase == SplitterRollPhase.Dizzy;
+                    float age = tick - roll.StopTick;
+                    // Доворот до ближайшего «стоя» за 4 тика с замедлением, пока
+                    // первые кадры раскрытия ещё держат позу клубка.
+                    if (_spinSerial == roll.Serial && _spinning)
+                    {
+                        float upright = Mathf.Ceil(_spinAtStop / 360f) * 360f;
+                        float t = Mathf.Clamp01(age / SettleTicks);
+                        float eased = 1f - (1f - t) * (1f - t);
+                        if (t >= 1f) StopSpin();
+                        else ApplySpin(Mathf.Lerp(_spinAtStop, upright, eased), 1f - eased);
+                    }
+                    if (dizzy) Sample(RollDizzy, RollDizzyPhase, Mathf.Clamp01(age / Simulation.SplitterRollDizzyTicks), 0f);
+                    else Sample(RollUncurl, RollUncurlPhase, Mathf.Clamp01(age / Simulation.SplitterRollUncurlTicks), 0f);
+                    return;
+                }
+            }
+        }
+
+        /// <summary>Поворот тела на angle градусов вокруг поперечной оси через точку клубка; lift — доля подъёма.</summary>
+        private void ApplySpin(float angle, float lift)
+        {
+            if (_animator == null) return;
+            var body = _animator.transform;
+            var spin = Quaternion.AngleAxis(angle, Vector3.right);
+            // Точка вращения — в осях корня (тело повёрнуто к +Z сборщиком): p' = P + R(p - P).
+            body.localPosition = SpinPivot + spin * (_bodyPosition - SpinPivot) + Vector3.up * (SpinLift * lift);
+            body.localRotation = spin * _bodyRotation;
+            _spinning = true;
+        }
+
+        private void StopSpin()
+        {
+            if (!_spinning || _animator == null) return;
+            _animator.transform.localRotation = _bodyRotation;
+            _animator.transform.localPosition = _bodyPosition;
+            _spinning = false;
         }
 
         private void Sample(int state, int parameter, float phase, float blend)
@@ -267,8 +372,9 @@ namespace Game.View
 
         private void OnDisable()
         {
-            // Возврат в пул: следующий владелец тела не должен получить его спрятанным.
+            // Возврат в пул: следующий владелец тела не должен получить его спрятанным или повёрнутым.
             SetHidden(false);
+            StopSpin();
             // Выключен только сам вид (ArenaView на уходе в землю) — привязка остаётся.
             if (gameObject.activeInHierarchy) return;
             _deathTick = _popTick = None;

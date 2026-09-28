@@ -55,11 +55,15 @@ namespace Game.Sim
         public readonly int Serial, Source, ShotIndex, LaunchTick, ImpactTick, Damage;
         public readonly FixVec2 Origin, Target;
         public readonly Fix64 Radius;
+
+        /// <summary>Гнилой плод: диск шире, на месте падения зреет кислая лужа (Simulation.ForestPuddles).</summary>
+        public readonly bool Rotten;
         internal ForestFruitState(int serial, int source, int shotIndex, int launchTick,
-            int impactTick, FixVec2 origin, FixVec2 target, Fix64 radius, int damage)
+            int impactTick, FixVec2 origin, FixVec2 target, Fix64 radius, int damage, bool rotten = false)
         {
             Serial = serial; Source = source; ShotIndex = shotIndex; LaunchTick = launchTick;
             ImpactTick = impactTick; Origin = origin; Target = target; Radius = radius; Damage = damage;
+            Rotten = rotten;
         }
     }
 

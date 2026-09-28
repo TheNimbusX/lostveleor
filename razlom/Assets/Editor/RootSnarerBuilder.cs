@@ -51,6 +51,8 @@ public static class RootSnarerBuilder
     private static readonly (string Role, int Frames, bool Loop)[] Roles =
     {
         ("Idle", 60, true), ("Walk", 16, true), ("Slam", 72, false), ("Hit", 12, false), ("Death", 45, false),
+        // «Волна из корней» (27.09): 50 кадров = 50 тиков лечения, волна на 30-м.
+        ("Mend", 50, false),
     };
 
     [InitializeOnLoadMethod]

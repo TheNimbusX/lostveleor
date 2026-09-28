@@ -66,7 +66,7 @@ namespace Game.Sim
     /// воспроизводима целиком, а не только каждый по отдельности. Это то самое
     /// свойство, на котором потом стоит проверка топ-100.
     /// </summary>
-    public sealed class GameSession
+    public sealed partial class GameSession
     {
         private readonly ModuleSet _modules;
         private readonly LocationDefinition _location;

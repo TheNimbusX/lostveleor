@@ -248,9 +248,15 @@ namespace Game.View
                     // новых записей нет. Контакт шипа звучит своим Damage, если задел героя.
                     // Выстрел шипом — обычная атака Шипомёта (раз в две секунды), не крупный
                     // телеграф: вместо сигнала — тихий взмах, как у Хранителя, чуть выше.
+                    // Лечение Корнехвата — не угроза: вместо сигнала глухо уходят в землю плиты.
                     case SimEventType.EnemyActionStarted:
                         if (e.ActionVariant == (int)EnemyActionKind.ThornShot)
                             Play(Sound.GuardianSwing, EnemySwingVolume, 1.15f, .04f);
+                        else if (e.ActionVariant == (int)EnemyActionKind.SnarerMend)
+                        {
+                            Cue(Sound.HitBody, BodyVolume * .5f, .55f, .03f);
+                            Cue(Sound.Footstep, EarthVolume * 1.1f, .6f, .03f);
+                        }
                         else PlayWarning();
                         break;
                     // Шип сорвался с руки Шипомёта (кадр 21 клипа, снятый до выпуска выстрел
@@ -288,6 +294,8 @@ namespace Game.View
                     // То же событие, по которому ForestBudImpactView ставит брызги.
                     case SimEventType.ForestFruitImpact:
                         Play(Sound.BudFruitImpact, BudVolume, 1f, .04f);
+                        // Гнилой плод (Flag): мокрый шлепок ниже — лопается в кислую лужу.
+                        if (e.Flag) Cue(Sound.Dissolve, EarthVolume * .9f, .62f, .04f);
                         break;
                     // Оглушённый или убитый бутон не дораскрывается. Гасится раскрытие всех
                     // бутонов разом — два залпа в одну долю секунды почти не встречаются.
@@ -613,6 +621,27 @@ namespace Game.View
                 case EnemyActionKind.SnarerSlam:
                     Cue(Sound.Dissolve, EarthVolume, .72f, .03f);
                     Cue(Sound.GuardianSwing, EnemySwingVolume * 1.4f, .78f, .04f);
+                    break;
+                // Волна лечения: земля мягко расходится кругом — выше и тише удара корнями.
+                case EnemyActionKind.SnarerMend:
+                    Cue(Sound.Dissolve, EarthVolume * .8f, 1.05f, .03f);
+                    Cue(Sound.Footstep, EarthVolume * .9f, .7f, .03f);
+                    break;
+                // Перекат Расщепеня: пуск (Amount 0) — тяжёлый низкий взмах и толчок
+                // от земли; стоп (1) — о стену сухой удар по коре и осыпь, в конце
+                // полосы — глухой юз по земле. Попадание в героя звучит его Damage.
+                case EnemyActionKind.SplitterRoll:
+                    if (e.Amount == 0)
+                    {
+                        Cue(Sound.WhooshHeavy, WhooshVolume * .7f, .72f, .04f);
+                        Cue(Sound.Footstep, EarthVolume * 1.2f, .5f, .03f);
+                    }
+                    else if (_driver.Sim != null && _driver.Sim.TryGetSplitterRoll(e.Source, out var roll) && roll.WallStop)
+                    {
+                        Cue(Sound.HitBody, BodyVolume * .9f, .55f, .03f);
+                        Cue(Sound.Dissolve, EarthVolume * .9f, .8f, .03f);
+                    }
+                    else Cue(Sound.Footstep, EarthVolume * 1.1f, .62f, .03f);
                     break;
             }
         }

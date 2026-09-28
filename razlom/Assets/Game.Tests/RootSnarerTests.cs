@@ -13,6 +13,13 @@ namespace Game.Tests
     /// воем Вендиго, сильнейшее побеждает; оглушение, волок и смерть снимают
     /// круг; 36 тиков стойки после контакта; крупный жетон — от начала позы
     /// до контакта.
+    ///
+    /// «Волна из корней» (27.09): лечит 10% здоровья союзника (элите 5%), не
+    /// выше недостающего; ни себя, ни других Корнехватов; одного союзника —
+    /// не чаще раза в 240 тиков, сколько бы Корнехватов ни было; оглушение
+    /// или урон от 15% за 30 тиков сбора сбивают, и следующее — через 150;
+    /// главнее удара, крупного жетона не берёт; к далёкому раненому сначала
+    /// идёт, но не дольше 60 тиков.
     /// </summary>
     public sealed class RootSnarerTests
     {
@@ -269,7 +276,12 @@ namespace Game.Tests
             sim.Step(InputFrame.Empty);
             Assert.IsTrue(sim.TryGetWendigoAction(wendigo, out var howl));
             Assert.AreEqual(WendigoAction.Howl, howl.Kind);
-            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var a), "с пятой арены жетонов два");
+            // Бюджет меток: следующая крупная метка — не раньше чем через 9 тиков.
+            RootSnarerState a = default;
+            while (!sim.TryGetRootSnarerAction(Snarer, out a) && sim.Tick < howl.StartTick + 30)
+                sim.Step(InputFrame.Empty);
+            Assert.AreNotEqual(0, a.Serial, "с пятой арены жетонов два");
+            Assert.AreEqual(howl.StartTick + Simulation.BigMarkStaggerTicks, a.StartTick);
             Assert.Less(howl.ImpactTick, a.ImpactTick);
 
             // Вой первым: 30% на 30 тиков.
@@ -490,11 +502,19 @@ namespace Game.Tests
             Assert.IsTrue(sim.TryGetRootSnarerAction(second, out var next));
             Assert.AreEqual(first.ImpactTick + 1, next.StartTick, "жетон свободен сразу после контакта");
 
+            // С пятой арены крупных атак две, но бюджет меток разводит их на 9 тиков.
             var wide = Arena(5, count: 2);
             wide.BigAttackTokenLimit = 2;
+            wide.BigMarkBudget = 4;
             wide.Step(InputFrame.Empty);
-            Assert.IsTrue(wide.TryGetRootSnarerAction(Snarer, out _));
-            Assert.IsTrue(wide.TryGetRootSnarerAction(second, out _), "с пятой арены крупных атак две");
+            Assert.IsTrue(wide.TryGetRootSnarerAction(Snarer, out var one));
+            Assert.IsFalse(wide.TryGetRootSnarerAction(second, out _), "вторая крупная метка в тот же тик");
+            RootSnarerState two = default;
+            while (!wide.TryGetRootSnarerAction(second, out two) && wide.Tick < one.ImpactTick)
+                wide.Step(InputFrame.Empty);
+            Assert.AreNotEqual(0, two.Serial, "с пятой арены крупных атак две");
+            Assert.AreEqual(one.StartTick + Simulation.BigMarkStaggerTicks, two.StartTick);
+            Assert.Less(two.StartTick, one.ImpactTick, "второй встал, пока первый ещё держит жетон");
         }
 
         [Test]
@@ -569,6 +589,485 @@ namespace Game.Tests
                 Assert.AreEqual(a.StateHash(), b.StateHash(), "тик " + tick);
             }
             Assert.Greater(impacts, 2, "Корнехваты должны были бить");
+        }
+
+        // ---------- «Волна из корней» ----------
+
+        /// <summary>
+        /// Союзник Корнехвата: Хранитель (или kind) в точке at, maxHealth
+        /// здоровья, из них percent%. Не ходит и не бьёт — здоровье ему
+        /// меняет только волна.
+        /// </summary>
+        private static int Ally(Simulation sim, FixVec2 at, int percent, int maxHealth = 1000,
+            EnemyKind kind = EnemyKind.ForestGuardian)
+        {
+            int id = sim.SpawnEnemy(at, maxHealth, kind);
+            sim.Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.RefreshStats(id);
+            sim.Entities.NextAttackTick[id] = int.MaxValue;
+            sim.Entities.Health[id] = sim.Entities.MaxHealth[id] * percent / 100;
+            return id;
+        }
+
+        /// <summary>Шагает, пока Корнехват snarer не начнёт лечение (не дальше тика limit).</summary>
+        private static RootSnarerState UntilMend(Simulation sim, int limit, int snarer = Snarer)
+        {
+            while (sim.Tick < limit)
+            {
+                sim.Step(InputFrame.Empty);
+                if (sim.TryGetRootSnarerAction(snarer, out var a) && a.Action == RootSnarerAction.Mend
+                    && a.StartTick == sim.Tick - 1) return a;
+            }
+            Assert.Fail("лечение не началось до тика " + limit);
+            return default;
+        }
+
+        private static bool HasEvent(Simulation sim, SimEventType type, EnemyActionKind kind)
+        {
+            foreach (var e in sim.Events)
+                if (e.Type == type && e.ActionVariant == (int)kind) return true;
+            return false;
+        }
+
+        private static bool HasHeal(Simulation sim)
+        {
+            foreach (var e in sim.Events) if (e.Type == SimEventType.Heal) return true;
+            return false;
+        }
+
+        [Test]
+        public void MendHealsTenPercent_FiveForElites_CappedAtTheMissingHealth()
+        {
+            Assert.AreEqual(30, Simulation.RootSnarerMendChannelTicks);
+            Assert.AreEqual(20, Simulation.RootSnarerMendRecoveryTicks);
+            Assert.AreEqual(300, Simulation.RootSnarerMendCooldownTicks);
+            Assert.AreEqual(150, Simulation.RootSnarerMendCancelCooldownTicks);
+            Assert.AreEqual(90, Simulation.RootSnarerMendFirstDelayTicks);
+            Assert.AreEqual(30, Simulation.RootSnarerMendGapTicks);
+            Assert.AreEqual(240, Simulation.RootSnarerMendAllyCooldownTicks);
+            Assert.AreEqual(10, Simulation.RootSnarerMendPercent);
+            Assert.AreEqual(5, Simulation.RootSnarerMendElitePercent);
+            Assert.AreEqual(Fix64.FromInt(5), Simulation.RootSnarerMendRadius);
+
+            // Герой далеко: удара нет, только лечение.
+            var sim = Arena(20);
+            int hurt = Ally(sim, At(20, 3), 70);          // 700 → +100
+            int scratched = Ally(sim, At(22, 2), 96);     // 960 → +40: не выше недостающего
+            int elite = Ally(sim, At(18, 2), 60);         // 600 → +50
+            sim.MarkElite(elite);
+            int wendigo = Ally(sim, At(20, -3), 50, 4000, EnemyKind.ForestWendigo);  // 2000 → +200
+            int full = Ally(sim, At(17, -1), 100);        // полному — ничего
+            int far = Ally(sim, At(27, 0), 50);           // 7 м — вне волны
+
+            var a = UntilMend(sim, 200);
+            Assert.AreEqual(90, a.StartTick, "первое лечение — через 90 тиков после агро");
+            Assert.AreEqual(RootSnarerAction.Mend, a.Action);
+            Assert.AreEqual(120, a.ImpactTick);
+            Assert.AreEqual(120, a.SlamTick, "кадр контакта позы — на волне");
+            Assert.AreEqual(140, a.EndTick);
+            Assert.IsFalse(a.Slammed);
+            Assert.AreEqual(0, a.TelegraphSerial);
+            Assert.AreEqual(sim.Entities.Health[Snarer], a.StartHealth);
+            Assert.AreEqual(sim.Entities.Position[Snarer], a.Target);
+            Assert.IsFalse(sim.RootSnarerHoldsBigToken(Snarer), "лечение крупного жетона не берёт");
+            int started = 0;
+            foreach (var e in sim.Events)
+            {
+                Assert.AreNotEqual(SimEventType.TelegraphOpened, e.Type, "у лечения метки на земле нет");
+                if (e.Type != SimEventType.EnemyActionStarted) continue;
+                started++;
+                Assert.AreEqual(Snarer, e.Source);
+                Assert.AreEqual((int)EnemyActionKind.SnarerMend, e.ActionVariant);
+                Assert.AreEqual(sim.Entities.Position[Snarer], e.Position);
+            }
+            Assert.AreEqual(1, started);
+
+            while (sim.Tick < a.ImpactTick)
+            {
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(HasHeal(sim), "лечение до волны, тик " + (sim.Tick - 1));
+                Assert.AreEqual(FixVec2.Zero, sim.Entities.Velocity[Snarer]);
+            }
+            sim.Step(InputFrame.Empty);
+            var healed = new Dictionary<int, int>();
+            int impacts = 0;
+            foreach (var e in sim.Events)
+            {
+                if (e.Type == SimEventType.Heal)
+                {
+                    Assert.AreEqual(Snarer, e.Source);
+                    Assert.AreEqual(sim.Entities.Position[e.Target], e.Position);
+                    Assert.IsFalse(healed.ContainsKey(e.Target), "одно лечение на союзника");
+                    healed[e.Target] = e.Amount;
+                }
+                if (e.Type != SimEventType.EnemyActionImpact) continue;
+                impacts++;
+                Assert.AreEqual(Snarer, e.Source);
+                Assert.AreEqual((int)EnemyActionKind.SnarerMend, e.ActionVariant);
+                Assert.AreEqual(4, e.Amount, "скольких вылечила");
+                Assert.IsTrue(e.Flag);
+                Assert.AreEqual(sim.Entities.Position[Snarer], e.Position);
+            }
+            Assert.AreEqual(1, impacts);
+            Assert.AreEqual(4, healed.Count);
+            Assert.AreEqual(100, healed[hurt]);
+            Assert.AreEqual(40, healed[scratched]);
+            Assert.AreEqual(50, healed[elite]);
+            Assert.AreEqual(200, healed[wendigo]);
+            Assert.AreEqual(800, sim.Entities.Health[hurt]);
+            Assert.AreEqual(1000, sim.Entities.Health[scratched]);
+            Assert.AreEqual(650, sim.Entities.Health[elite]);
+            Assert.AreEqual(2200, sim.Entities.Health[wendigo]);
+            Assert.AreEqual(1000, sim.Entities.Health[full]);
+            Assert.AreEqual(500, sim.Entities.Health[far]);
+            Assert.AreEqual(120, sim.LastMendTick(hurt));
+            Assert.AreEqual(-1, sim.LastMendTick(full));
+            Assert.AreEqual(-1, sim.LastMendTick(far));
+
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var waved));
+            Assert.IsTrue(waved.HitResolved);
+            Assert.AreEqual(4, waved.Healed);
+            Until(sim, a.EndTick + 1);
+            Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _), "стойка лечения — 20 тиков");
+        }
+
+        // Повод: один союзник на ≤ 75% или двое на ≤ 90%. 0 — второго нет.
+        [TestCase(75, 0, true)]
+        [TestCase(76, 0, false)]
+        [TestCase(90, 90, true)]
+        [TestCase(91, 90, false)]
+        [TestCase(90, 100, false)]
+        public void MendNeedsOneAllyAtThreeQuartersOrTwoAtNinetyPercent(int first, int second, bool mends)
+        {
+            var sim = Arena(20);
+            Ally(sim, At(20, 3), first);
+            if (second > 0) Ally(sim, At(20, -3), second);
+            bool started = false;
+            while (sim.Tick < 200)
+            {
+                sim.Step(InputFrame.Empty);
+                started |= sim.TryGetRootSnarerAction(Snarer, out _);
+            }
+            Assert.AreEqual(mends, started);
+        }
+
+        [Test]
+        public void MendNeverHealsItselfOrAnotherSnarer()
+        {
+            const int second = 2;
+            var sim = Arena(20, count: 2);
+            sim.Entities.Health[Snarer] = sim.Entities.MaxHealth[Snarer] / 2;
+            sim.Entities.Health[second] = sim.Entities.MaxHealth[second] / 2;
+            int own = sim.Entities.Health[Snarer], other = sim.Entities.Health[second];
+            while (sim.Tick < 250)
+            {
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(HasEvent(sim, SimEventType.EnemyActionStarted, EnemyActionKind.SnarerMend),
+                    "раненые Корнехваты — не повод, тик " + (sim.Tick - 1));
+                Assert.IsFalse(HasHeal(sim));
+            }
+
+            // Раненый Хранитель рядом с обоими — лечат только его.
+            int guardian = Ally(sim, At(22.5, 1), 60);
+            int heals = 0;
+            while (sim.Tick < 450)
+            {
+                sim.Step(InputFrame.Empty);
+                foreach (var e in sim.Events)
+                    if (e.Type == SimEventType.Heal) { heals++; Assert.AreEqual(guardian, e.Target); }
+            }
+            Assert.Greater(heals, 0, "Хранителя должны были лечить");
+            Assert.AreEqual(own, sim.Entities.Health[Snarer]);
+            Assert.AreEqual(other, sim.Entities.Health[second]);
+        }
+
+        [Test]
+        public void OneAllyIsHealedAtMostOncePer240Ticks_EvenByTwoSnarers()
+        {
+            const int second = 2;
+            var sim = Arena(20, count: 2);
+            int guardian = Ally(sim, At(22.5, 1), 40);
+            var ticks = new List<int>();
+            var sources = new HashSet<int>();
+            while (sim.Tick < 720)
+            {
+                sim.Step(InputFrame.Empty);
+                bool oneMends = sim.TryGetRootSnarerAction(Snarer, out var x) && x.Action == RootSnarerAction.Mend;
+                bool twoMends = sim.TryGetRootSnarerAction(second, out var y) && y.Action == RootSnarerAction.Mend;
+                Assert.IsFalse(oneMends && twoMends, "лечат двое разом, тик " + (sim.Tick - 1));
+                foreach (var e in sim.Events)
+                {
+                    if (e.Type != SimEventType.Heal) continue;
+                    Assert.AreEqual(guardian, e.Target);
+                    ticks.Add(sim.Tick - 1); sources.Add(e.Source);
+                }
+            }
+            Assert.GreaterOrEqual(ticks.Count, 3);
+            Assert.AreEqual(120, ticks[0], "первым лечит младший");
+            for (int k = 1; k < ticks.Count; k++)
+                Assert.GreaterOrEqual(ticks[k] - ticks[k - 1], Simulation.RootSnarerMendAllyCooldownTicks,
+                    "тик " + ticks[k]);
+            Assert.IsTrue(sources.Contains(Snarer) && sources.Contains(second), "лечили оба по очереди");
+        }
+
+        // Помеха на 15-м тике сбора: 0 — оглушение, 1 — волок.
+        [TestCase(0)]
+        [TestCase(1)]
+        public void StunOrDragInTheChannelCancels_NoHeal_NextMend150TicksLater(int reason)
+        {
+            var sim = Arena(20);
+            int guardian = Ally(sim, At(20, 3), 70);
+            var a = UntilMend(sim, 200);
+            int cut = a.StartTick + 15;
+            Until(sim, cut);
+            if (reason == 0) sim.Statuses.ApplyStun(Snarer, sim.Tick + 3);
+            else Assert.IsTrue(ForcedMotion.Begin(sim.Entities, Snarer, sim.Entities.Position[Snarer], 3,
+                ForcedMotionKind.Dragged));
+            sim.Step(InputFrame.Empty);
+            Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _));
+            int cancelled = 0;
+            foreach (var e in sim.Events)
+            {
+                if (e.Type != SimEventType.EnemyActionCancelled) continue;
+                cancelled++;
+                Assert.AreEqual(Snarer, e.Source);
+                Assert.AreEqual((int)EnemyActionKind.SnarerMend, e.ActionVariant);
+            }
+            Assert.AreEqual(1, cancelled, "отмена — одно событие");
+            Assert.AreEqual(cut + Simulation.RootSnarerMendCancelCooldownTicks, sim.RootSnarerNextMendTick(Snarer));
+
+            while (sim.Tick < cut + 150)
+            {
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _), "лечение раньше срока, тик " + (sim.Tick - 1));
+                Assert.IsFalse(HasHeal(sim), "волна после отмены");
+                Assert.IsFalse(HasEvent(sim, SimEventType.EnemyActionImpact, EnemyActionKind.SnarerMend));
+            }
+            Assert.AreEqual(700, sim.Entities.Health[guardian]);
+            sim.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var again));
+            Assert.AreEqual(RootSnarerAction.Mend, again.Action);
+            Assert.AreEqual(cut + 150, again.StartTick);
+        }
+
+        // Здоровье Корнехвата 650: сбивает урон от 97,5 — на 5-м тике сбора и, если есть, ещё на 20-м.
+        [TestCase(97, 0, false)]
+        [TestCase(98, 0, true)]
+        [TestCase(50, 48, true)]
+        [TestCase(50, 47, false)]
+        public void DamageOfFifteenPercentSinceThePlantBreaksTheMend(int first, int second, bool breaks)
+        {
+            var sim = Arena(20);
+            Assert.AreEqual(650, sim.Entities.MaxHealth[Snarer]);
+            Assert.AreEqual(15, Simulation.RootSnarerMendBreakPercent);
+            int guardian = Ally(sim, At(20, 3), 70);
+            var a = UntilMend(sim, 200);
+            int cutAt = -1;
+            while (sim.Tick <= a.ImpactTick)
+            {
+                if (sim.Tick == a.StartTick + 5) sim.Entities.Health[Snarer] -= first;
+                if (sim.Tick == a.StartTick + 20) sim.Entities.Health[Snarer] -= second;
+                sim.Step(InputFrame.Empty);
+                if (HasEvent(sim, SimEventType.EnemyActionCancelled, EnemyActionKind.SnarerMend)) cutAt = sim.Tick - 1;
+            }
+            Assert.AreEqual(breaks, cutAt >= 0);
+            Assert.AreEqual(breaks ? 700 : 800, sim.Entities.Health[guardian]);
+            if (!breaks) return;
+            Assert.AreEqual(a.StartTick + (first >= 98 ? 5 : 20), cutAt);
+            Assert.AreEqual(cutAt + Simulation.RootSnarerMendCancelCooldownTicks, sim.RootSnarerNextMendTick(Snarer));
+        }
+
+        [Test]
+        public void MendWinsOverTheSlam_TheSlamWaitsThirtyTicksAfterIt()
+        {
+            // Герой вне дальности, союзник цел: до 90-го тика ни удара, ни лечения.
+            var sim = Arena(10);
+            int guardian = Ally(sim, At(10, 3), 100);
+            Until(sim, 90);
+            Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _));
+
+            // Разом: герой в 5 м — удар готов, и союзник на 70% — лечение готово.
+            sim.Entities.Position[0] = At(5, 0);
+            sim.Entities.Health[guardian] = 700;
+            sim.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var mend));
+            Assert.AreEqual(RootSnarerAction.Mend, mend.Action, "лечение главнее удара");
+            Assert.AreEqual(90, mend.StartTick);
+            Assert.IsFalse(HasEvent(sim, SimEventType.EnemyActionStarted, EnemyActionKind.SnarerSlam));
+
+            while (sim.Tick < mend.EndTick + Simulation.RootSnarerMendGapTicks)
+            {
+                sim.Step(InputFrame.Empty);
+                if (sim.TryGetRootSnarerAction(Snarer, out var s))
+                    Assert.AreEqual(RootSnarerAction.Mend, s.Action, "удар раньше тишины, тик " + (sim.Tick - 1));
+            }
+            Assert.AreEqual(800, sim.Entities.Health[guardian]);
+            sim.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var slam));
+            Assert.AreEqual(RootSnarerAction.Slam, slam.Action);
+            Assert.AreEqual(mend.EndTick + 30, slam.StartTick);
+            Assert.IsTrue(sim.RootSnarerHoldsBigToken(Snarer));
+        }
+
+        [Test]
+        public void SlamWorksAsBeforeWhenNobodyIsHurt()
+        {
+            var sim = Arena(5);
+            Ally(sim, At(5, 3), 100);
+            var starts = new List<int>();
+            while (sim.Tick < 400)
+            {
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(HasEvent(sim, SimEventType.EnemyActionStarted, EnemyActionKind.SnarerMend));
+                Assert.IsFalse(HasHeal(sim));
+                if (!HasEvent(sim, SimEventType.EnemyActionStarted, EnemyActionKind.SnarerSlam)) continue;
+                Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var a));
+                Assert.AreEqual(RootSnarerAction.Slam, a.Action);
+                starts.Add(a.StartTick);
+            }
+            Assert.That(starts, Is.EqualTo(new[] { 0, 150, 300 }));
+        }
+
+        [Test]
+        public void MendIgnoresTheBigTokenAndDoesNotHoldIt()
+        {
+            // Вой берёт единственный крупный жетон в тот же тик — лечение всё равно начинается.
+            var sim = Arena(10);
+            Assert.AreEqual(1, sim.BigAttackTokenLimit);
+            int wendigo = HowlingWendigo(sim, At(0, 4));
+            sim.SetWendigoCooldowns(wendigo, 100000, 90);
+            Ally(sim, At(10, 3), 70);
+            Until(sim, 91);
+            Assert.IsTrue(sim.TryGetWendigoAction(wendigo, out var howl));
+            Assert.AreEqual(WendigoAction.Howl, howl.Kind);
+            Assert.AreEqual(90, howl.StartTick);
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var mend), "лечение не ждёт крупного жетона");
+            Assert.AreEqual(RootSnarerAction.Mend, mend.Action);
+            Assert.AreEqual(90, mend.StartTick);
+
+            // Лечение идёт — вой встаёт поверх: жетон лечением не занят.
+            var other = Arena(10);
+            int second = HowlingWendigo(other, At(0, 4));
+            other.SetWendigoCooldowns(second, 100000, 95);
+            Ally(other, At(10, 3), 70);
+            Until(other, 96);
+            Assert.IsTrue(other.TryGetRootSnarerAction(Snarer, out var running));
+            Assert.AreEqual(RootSnarerAction.Mend, running.Action);
+            Assert.IsTrue(other.TryGetWendigoAction(second, out var late));
+            Assert.AreEqual(95, late.StartTick);
+        }
+
+        [Test]
+        public void WalksToAFarHurtAlly_MendsFromTwoAndAHalfMetres()
+        {
+            var sim = Arena(20, walks: true);
+            Until(sim, 89);
+            var from = sim.Entities.Position[Snarer];
+            int guardian = Ally(sim, from + At(0, 4.6), 70);
+            var a = UntilMend(sim, 200);
+            Assert.Greater(a.StartTick, 90, "самый раненый дальше 4 м — сначала идёт");
+            Assert.Less(a.StartTick, 90 + Simulation.RootSnarerMendWalkTicks, "дошёл раньше срока");
+            var at = sim.Entities.Position[Snarer];
+            Assert.LessOrEqual((sim.Entities.Position[guardian] - at).Length.ToDouble(), 2.5 + 1e-3);
+            Assert.Greater(at.Y.ToDouble() - from.Y.ToDouble(), 1.5, "шёл к союзнику, а не к герою");
+            Until(sim, a.ImpactTick + 1);
+            Assert.AreEqual(800, sim.Entities.Health[guardian]);
+        }
+
+        [Test]
+        public void GivesUpTheWalkAfterSixtyTicks_MendsWhereItStands_ThenSlams()
+        {
+            // Стоит на месте (MoveSpeed 0): до союзника в 4,5 м ему не дойти.
+            var sim = Arena(5);
+            Ally(sim, At(5, 4.5), 70);
+            var slam = Start(sim);
+            Assert.AreEqual(RootSnarerAction.Slam, slam.Action);
+            var mend = UntilMend(sim, 400);
+            Assert.AreEqual(slam.EndTick + Simulation.RootSnarerMendGapTicks + Simulation.RootSnarerMendWalkTicks,
+                mend.StartTick, "тишина после удара, потом 60 тиков похода");
+            // Перезарядка удара вышла на 150-м, но поход и лечение главнее.
+            while (sim.Tick < mend.EndTick + Simulation.RootSnarerMendGapTicks)
+            {
+                sim.Step(InputFrame.Empty);
+                if (sim.TryGetRootSnarerAction(Snarer, out var s)) Assert.AreEqual(RootSnarerAction.Mend, s.Action);
+            }
+            sim.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var next));
+            Assert.AreEqual(RootSnarerAction.Slam, next.Action);
+            Assert.AreEqual(mend.EndTick + 30, next.StartTick);
+        }
+
+        [Test]
+        public void AWalkIsDroppedWhenTheAllyStopsNeedingIt()
+        {
+            var sim = Arena(20);
+            int guardian = Ally(sim, At(20, 4.5), 70);
+            // На 90-м пошёл (стоя на месте); на 100-м союзник цел — поход брошен.
+            Until(sim, 100);
+            sim.Entities.Health[guardian] = 1000;
+            while (sim.Tick < 200)
+            {
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _), "тик " + (sim.Tick - 1));
+            }
+            // Снова ранен — поход заново, полные 60 тиков, а не сразу.
+            sim.Entities.Health[guardian] = 700;
+            var mend = UntilMend(sim, 400);
+            Assert.AreEqual(200 + Simulation.RootSnarerMendWalkTicks, mend.StartTick);
+        }
+
+        [Test]
+        public void RepeatSetupClearsTheMendMemory()
+        {
+            var sim = Arena(20);
+            int guardian = Ally(sim, At(20, 3), 70);
+            var a = UntilMend(sim, 200);
+            Until(sim, a.ImpactTick + 1);
+            Assert.AreEqual(a.ImpactTick, sim.LastMendTick(guardian));
+            sim.SetupKindTestArena(EnemyKind.ForestRootSnarer, distance: Fix64.FromInt(20));
+            Assert.AreEqual(-1, sim.LastMendTick(guardian));
+            Assert.AreEqual(0, sim.RootSnarerNextMendTick(Snarer));
+            int tick = sim.Tick;
+            sim.Step(InputFrame.Empty);
+            Assert.AreEqual(tick + Simulation.RootSnarerMendFirstDelayTicks, sim.RootSnarerNextMendTick(Snarer));
+        }
+
+        [Test]
+        public void MendRunsAreDeterministic()
+        {
+            var a = Arena(8, count: 2, walks: true);
+            var b = Arena(8, count: 2, walks: true);
+            var sims = new[] { a, b };
+            var guardians = new int[3];
+            var spots = new[] { At(6, -2), At(6, 3.5), At(4, 5) };
+            foreach (var sim in sims)
+            {
+                sim.BigAttackTokenLimit = 2;
+                // Хранители ходят и бьют: волна ловит их в толчее.
+                for (int n = 0; n < 3; n++)
+                {
+                    guardians[n] = sim.SpawnEnemy(spots[n], 1000, EnemyKind.ForestGuardian);
+                    sim.Entities.Health[guardians[n]] = 400 + 200 * n;
+                    sim.Entities.Aggro[guardians[n]] = true;
+                }
+            }
+            int heals = 0;
+            for (int tick = 0; tick < 600; tick++)
+            {
+                double angle = tick * .02;
+                var hero = At(4 * System.Math.Cos(angle), 4 * System.Math.Sin(angle));
+                foreach (var sim in sims)
+                {
+                    sim.Entities.Position[0] = hero;
+                    if (tick == 105) sim.Statuses.ApplyStun(Snarer, 110);
+                    if (tick % 100 == 50) sim.ApplyAbilityDamage(0, guardians[tick / 100 % 3], 150, -1, DamageType.Physical);
+                    if (tick == 400) sim.ApplyAbilityDamage(0, 2, 120, -1, DamageType.Physical);
+                    sim.Step(InputFrame.Empty);
+                }
+                foreach (var e in a.Events) if (e.Type == SimEventType.Heal) heals++;
+                Assert.AreEqual(a.StateHash(), b.StateHash(), "тик " + tick);
+            }
+            Assert.Greater(heals, 1, "Корнехваты должны были лечить");
         }
     }
 }

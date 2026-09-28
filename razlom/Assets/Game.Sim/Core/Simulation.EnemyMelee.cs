@@ -232,6 +232,8 @@ namespace Game.Sim
             if (!UsesEnemySwing(kind)) return;
             if (!Entities.Alive[id]) { CancelEnemySwing(id); return; }
 
+            // Расщепень в перекате (сжатие, пуск, раскрытие) замахом не бьёт.
+            if (SplitterBusy(id)) { CancelEnemySwing(id); return; }
             var swing = _enemySwings[id];
             // Свой бросок — выпад укуса, выброс детёныша — замаху не помеха.
             bool forced = ForcedMotion.IsInterrupting(Entities, id);
@@ -256,9 +258,11 @@ namespace Game.Sim
                 }
                 if (swing.Serial == 0 || Tick < swing.RecoverUntil) return;
                 _enemySwings[id] = default;
+                YieldSurroundSlot(id);
             }
 
             if (Entities.NextAttackTick[id] == int.MaxValue || Tick < Entities.NextAttackTick[id]) return;
+            if (_surroundSlot[id] < 0 && _surroundWaitSince[id] >= 0) return;
             int target = FindNearestEnemy(id);
             if (target < 0) return;
             if (IsSwarmLike(kind)
@@ -285,7 +289,7 @@ namespace Game.Sim
             if (!swarm)
             {
                 slot = OpenTelegraph(id, EnemyTelegraph.Sector(origin, direction, profile.Radius, profile.ArcCos),
-                    impact, impact + TelegraphLingerTicks, TelegraphFlags.SharedView);
+                    impact, impact + TelegraphLingerTicks, default);
                 if (slot >= 0) telegraphSerial = _telegraphs[slot].Serial;
             }
 
@@ -398,7 +402,8 @@ namespace Game.Sim
             {
                 if (id == except || !Entities.Alive[id] || IsSwarmLike(Entities.Kind[id])) continue;
                 var swing = _enemySwings[id];
-                if (swing.Serial != 0 && !swing.HitResolved) held++;
+                // Перекат Расщепеня держит ближний жетон от сжатия до остановки.
+                if ((swing.Serial != 0 && !swing.HitResolved) || SplitterRollHoldsMeleeToken(id)) held++;
             }
             return held;
         }
@@ -437,7 +442,10 @@ namespace Game.Sim
                 switch (Entities.Kind[id])
                 {
                     case EnemyKind.ForestBud:
-                        if (_forestBudAttacks[id].Serial != 0) held++;
+                        // Залп держит жетон до падения ПОСЛЕДНЕГО плода, а не до
+                        // конца позы: иначе 27 тиков пять дисков лежали на земле
+                        // ничьими, и следующая крупная атака вставала поверх них.
+                        if (_forestBudAttacks[id].Serial != 0 || BudLastFruitImpact(id, out _) >= Tick) held++;
                         break;
                     case EnemyKind.ForestWendigo:
                     {
@@ -461,6 +469,15 @@ namespace Game.Sim
             }
             return held < _bigAttackTokenLimit;
         }
+
+        /// <summary>
+        /// Крупный жетон свободен И крупная метка весом weight с ударом в
+        /// impactTick умещается в бюджет меток на земле (Simulation.TelegraphBudget).
+        /// Этим зовут старт крупных атак; без веса — только проверка жетона
+        /// (доворот Камнекопыта заранее).
+        /// </summary>
+        private bool BigAttackTokenFree(int self, int weight, int impactTick)
+            => BigAttackTokenFree(self) && BigMarkAllowed(self, weight, impactTick);
 
         /// <summary>
         /// Хранитель без жетона не встаёт в очередь, а кружит на дистанции
@@ -491,6 +508,7 @@ namespace Game.Sim
         private void HashEnemySwings(ref ulong hash)
         {
             Hashing.Mix(ref hash, _bigAttackTokenLimit);
+            Hashing.Mix(ref hash, _bigMarkBudget);
             if (_enemySwingSerial == 0) return;
             Hashing.Mix(ref hash, 0x5357494E); Hashing.Mix(ref hash, _enemySwingSerial);
             for (int id = 1; id < Entities.Count; id++)

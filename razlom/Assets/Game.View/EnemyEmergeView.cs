@@ -135,6 +135,10 @@ namespace Game.View
                 if ((uint)e.Target >= (uint)sim.Entities.Count) continue;
                 // Событие тика T приходит с Tick = T + 1; часы отрисовки считают его тиком T.
                 float at = i < contexts.Count ? contexts[i].SimulationTick - 1 : now;
+                // Волна встаёт вразнобой (Simulation.EncounterWaves: EmergeTicks + до 12 тиков
+                // сдвига на члена, Amount — свой срок): земля рвётся тогда, когда тело
+                // начинает подниматься, а не у всех разом в тик волны.
+                if (emerge) at += Mathf.Max(0, e.Amount - Simulation.EmergeTicks);
                 float scale = Mathf.Clamp(sim.Entities.BodyRadius[e.Target].ToFloat() * ScalePerRadius, .7f, 2.4f);
                 Emit(new Vector3(e.Position.X.ToFloat(), 0f, e.Position.Y.ToFloat()), at, scale);
             }
@@ -155,9 +159,13 @@ namespace Game.View
         {
             foreach (Burst burst in _bursts)
             {
-                if (!burst.Root.activeSelf) continue;
+                if (burst.Tick < -999f) continue;
+                // Отложенный выход (сдвиг члена волны): до своего тика земля ещё цела.
+                bool due = tick >= burst.Tick;
+                if (burst.Root.activeSelf != due) burst.Root.SetActive(due);
+                if (!due) continue;
                 float age = Mathf.Max(0f, tick - burst.Tick) / Simulation.TicksPerSecond;
-                if (age > BurstSeconds) { burst.Root.SetActive(false); continue; }
+                if (age > BurstSeconds) { burst.Root.SetActive(false); burst.Tick = -1000f; continue; }
                 foreach (ParticleSystem system in burst.Particles)
                 {
                     system.Simulate(age, false, true, false);

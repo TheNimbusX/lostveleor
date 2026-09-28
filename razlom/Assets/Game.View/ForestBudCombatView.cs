@@ -27,6 +27,8 @@ namespace Game.View
             public float ArcHeight;
             public float Started, Ended;
             public float Radius;
+            /// <summary>Гнилой плод (каждый третий залп): кисло-зелёный, диск шире, падает в лужу.</summary>
+            public bool Rotten;
             public readonly Vector4[] NearbyDisks = new Vector4[8];
         }
 
@@ -46,6 +48,10 @@ namespace Game.View
         private static readonly int NeighborCount = Shader.PropertyToID("_NeighborCount");
         private static readonly int NearbyDisks = Shader.PropertyToID("_NearbyDisks");
         private static readonly int BurstCharge = Shader.PropertyToID("_BurstCharge");
+        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+
+        /// <summary>Гнилой плод: болезненно-кислая зелень, не неон (владелец: «кисло-зелёные лужи»).</summary>
+        private static readonly Color RottenTint = new Color(.78f, .94f, .40f, 1f);
 
         private void Awake()
         {
@@ -207,9 +213,12 @@ namespace Game.View
                     * Quaternion.AngleAxis(t * 400f + fruit.ShotIndex * 72f, Vector3.up);
                 float pressure = Mathf.SmoothStep(0f,1f,Mathf.InverseLerp(.55f,1f,t));
                 item.Fruit.localScale = item.FruitScale * (1f + pressure * (.09f + .015f * Mathf.Sin(t*90f)));
+                // Блок чистится каждый кадр: цвет гнилого не должен остаться обычному плоду в этом слоте.
+                item.FruitProperties.Clear();
                 item.FruitProperties.SetFloat(BurstCharge, .15f + pressure * .85f);
+                if (item.Rotten) item.FruitProperties.SetColor(BaseColor, RottenTint);
                 foreach (var renderer in item.FruitRenderers) renderer.SetPropertyBlock(item.FruitProperties);
-                UpdateDrops(item, t, fruit.ShotIndex);
+                UpdateDrops(item, t, fruit.ShotIndex, item.Rotten);
                 item.Properties.SetFloat(Progress, t); item.Properties.SetFloat(Opacity, 1f);
                 bool markVisible = true;
                 int neighbors = 0;
@@ -258,6 +267,7 @@ namespace Game.View
             item.ArcHeight = 3.5f + vertical;
             item.Mark.position = new Vector3(item.Target.x, 0f, item.Target.z);
             item.Radius = fruit.Radius.ToFloat();
+            item.Rotten = fruit.Rotten;
             item.Mark.localScale = Vector3.one;
             // Conform the pooled warning mesh once when its destination becomes fixed.
             for (int y=0;y<=8;y++) for (int x=0;x<=8;x++)
@@ -275,7 +285,7 @@ namespace Game.View
                 Debug.Log($"[forest-fruit] serial={fruit.Serial} source={fruit.Source} shot={fruit.ShotIndex} launch={fruit.LaunchTick} impact={fruit.ImpactTick} origin={item.Origin} target={item.Target}");
         }
 
-        private static void UpdateDrops(FruitView item, float t, int shot)
+        private static void UpdateDrops(FruitView item, float t, int shot, bool rotten)
         {
             // Короткий шлейф состоит из объёмных капель: нет повёрнутой к камере ленты.
             for (int drop=0;drop<6;drop++)
@@ -289,7 +299,10 @@ namespace Game.View
                 var tangent=Arc(item,Mathf.Min(1,sample+.004f))-Arc(item,Mathf.Max(0,sample-.004f));
                 var rotation=Quaternion.FromToRotation(Vector3.up,tangent.normalized);
                 float size=Mathf.Lerp(.085f,.018f,drop/5f)*age;
-                Color color=Color.Lerp(new Color(1,.69f,.19f,.88f),new Color(1,.22f,.045f,0),drop/6f);
+                // Сок обычного плода — рыжий; гнилой капает кислой зеленью.
+                Color color=rotten
+                    ?Color.Lerp(new Color(.62f,.86f,.24f,.88f),new Color(.30f,.52f,.08f,0),drop/6f)
+                    :Color.Lerp(new Color(1,.69f,.19f,.88f),new Color(1,.22f,.045f,0),drop/6f);
                 for(int y=0;y<=6;y++)
                     for(int x=0;x<6;x++)
                     {

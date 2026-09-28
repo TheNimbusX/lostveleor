@@ -143,7 +143,7 @@ namespace Game.View
                 {
                     case ThornAction.Line: Sample(LineCast, LineFrame(a, time) / LineFrames, .06f); return;
                     case ThornAction.Burst: Sample(Burst, TwoPhase(a, time, BurstReleaseFrame, BurstFrames) / BurstFrames, .05f); return;
-                    case ThornAction.Shot: Sample(Shot, TwoPhase(a, time, ShotReleaseFrame, ShotFrames) / ShotFrames, .06f); return;
+                    case ThornAction.Shot: Sample(Shot, ShotFrame(a, tick) / ShotFrames, .06f); return;
                 }
             }
             if (_hitClock < HitSeconds) { _turnUntil = -1f; Sample(Hit, _hitClock / HitSeconds, .04f); return; }
@@ -188,6 +188,23 @@ namespace Game.View
             float windup = Mathf.Max(1f, a.ImpactTick - a.StartTick), recovery = Mathf.Max(1f, a.EndTick - a.ImpactTick);
             if (time < windup) return Mathf.Lerp(0f, release, time / windup);
             return Mathf.Lerp(release, last, Mathf.Clamp01((time - windup) / recovery));
+        }
+
+        /// <summary>Both releases use the same complete windup, with nine ticks to recover between them.</summary>
+        public static float ShotFrame(in ThorncasterState a, float tick)
+        {
+            float start = a.StartTick;
+            float recovery = Simulation.ThornShotRecoveryTicks;
+            if (a.SecondShotReleaseTick != 0)
+            {
+                if (tick >= a.SecondShotWindupTick) start = a.SecondShotWindupTick;
+                else recovery = Simulation.ThornDoubleShotRecoveryTicks;
+            }
+            float time = Mathf.Max(0f, tick - start);
+            if (time < Simulation.ThornShotWindupTicks)
+                return Mathf.Lerp(0f, ShotReleaseFrame, time / Simulation.ThornShotWindupTicks);
+            return Mathf.Lerp(ShotReleaseFrame, ShotFrames,
+                Mathf.Clamp01((time - Simulation.ThornShotWindupTicks) / recovery));
         }
 
         /// <summary>

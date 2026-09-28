@@ -233,7 +233,9 @@ namespace Game.Tests
                 {
                     if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThornLine) lines++;
                     if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThornShot) shots++;
-                    if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.SnarerSlam) slams++;
+                    // Корнехват в свалке бьёт корнями или лечит раненых (лечение главнее) — годится любое.
+                    if (e.Type == SimEventType.EnemyActionStarted && (e.ActionVariant == (int)EnemyActionKind.SnarerSlam
+                        || e.ActionVariant == (int)EnemyActionKind.SnarerMend)) slams++;
                     if (e.Type == SimEventType.EnemyActionImpact) impacts++;
                     if (e.Type == SimEventType.SplitterSplit) splits++;
                 }
@@ -246,7 +248,7 @@ namespace Game.Tests
             // выстрел обязан случиться — шип в полёте тоже в хеше.
             Assert.That(lines + shots, Is.GreaterThan(0), "Шипомёт ни разу не начал ни линию, ни выстрел — тест ничего не проверил.");
             Assert.That(shots, Is.GreaterThan(0), "Шипомёт ни разу не выстрелил шипом.");
-            Assert.That(slams, Is.GreaterThan(0), "Корнехват ни разу не ударил корнями.");
+            Assert.That(slams, Is.GreaterThan(0), "Корнехват ни разу не ударил корнями и не лечил.");
             Assert.That(impacts, Is.GreaterThan(0), "Ни одного контакта шипов или корней.");
             Assert.That(splits, Is.EqualTo(2), "Оба Расщепеня распались.");
             Assert.That(splitlings, Is.EqualTo(2 * Simulation.SplitChildren));

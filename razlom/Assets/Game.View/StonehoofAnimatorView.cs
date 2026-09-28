@@ -24,6 +24,14 @@ namespace Game.View
         private const float TurnRateThreshold = 30f, TurnHoldSeconds = .25f, TurnClipDegrees = 90f;
         private const float TurnBlendSeconds = .18f, TurnEnterDegrees = 8f;
         private const float TurnShuffleDegreesPerCycle = 120f;
+
+        // ИИ v2 (27.09): кабан пятится от прижавшего героя, глядя на него, — клип Walk
+        // идёт НАЗАД в темпе отхода (фаза — по скорости вдоль взгляда со знаком).
+        // Вздрагивание от удара — не чаще раза в секунду и не от горения и кислоты:
+        // раньше каждый тик урона по времени перезапускал Hit, и кабан скользил в
+        // застывшей позе. Ход держится WalkHoldSeconds после остановки — шаг,
+        // упёршийся на тик в соседа, не мигает Idle.
+        private const float HitCooldownTicks = 30f, WalkHoldSeconds = .12f;
         private static readonly int TurnLeftState = Animator.StringToHash("Base Layer.TurnLeft"),
             TurnRightState = Animator.StringToHash("Base Layer.TurnRight");
         private Animator _animator;
@@ -31,7 +39,7 @@ namespace Game.View
         private int _entity, _health;
         private string _state;
         private bool _dead, _hasTurnClips;
-        private float _deathClock, _idleClock, _walkPhase, _hitClock;
+        private float _deathClock, _idleClock, _walkPhase, _hitClock, _lastHitTick = -1000f, _walkHold;
         // _turnSign: 0 — разворота нет, −1 — влево, +1 — вправо. _pendingYaw —
         // поворот со знаком, ещё не включивший разворот. _turnSettled — время
         // конца последней смеси с участием разворота.
@@ -54,7 +62,7 @@ namespace Game.View
         public void Bind(TickDriver driver, int entity)
         {
             _driver = driver; _entity = entity; _dead = false; _state = "Idle";
-            _deathClock = _idleClock = _walkPhase = 0; _hitClock = 1;
+            _deathClock = _idleClock = _walkPhase = 0; _hitClock = 1; _lastHitTick = -1000f; _walkHold = 0f;
             _turnTravel = _turnSign = _pendingYaw = 0; _turnUntil = _pendingUntil = _turnSettled = -1;
             _lastFacing = Vector3.zero;
             _health = driver.Sim.Entities.Health[entity];
@@ -77,9 +85,14 @@ namespace Game.View
                 ? Vector3.SignedAngle(_lastFacing, facing, Vector3.up) : 0f;
             if (facing.sqrMagnitude > .5f) _lastFacing = facing;
             bool acting = sim.TryGetStonehoofAction(_entity, out var a);
-            if (_health > sim.Entities.Health[_entity] && !acting) _hitClock = 0;
-            _health = sim.Entities.Health[_entity]; _hitClock += dt;
             float tick = sim.Tick - 1 + _driver.Alpha;
+            // Удар — только событие Damage по кабану (не DamageOverTime) и не чаще раза в секунду.
+            var events = _driver.FrameEvents;
+            for (int i = 0; i < events.Count; i++)
+                if (events[i].Type == SimEventType.Damage && events[i].Target == _entity && events[i].Amount > 0
+                    && !acting && tick - _lastHitTick >= HitCooldownTicks)
+                { _hitClock = 0; _lastHitTick = tick; }
+            _health = sim.Entities.Health[_entity]; _hitClock += dt;
             if (acting)
             {
                 ForgetTurn();
@@ -95,11 +108,17 @@ namespace Game.View
                 return;
             }
             if (_hitClock < .4f) { ForgetTurn(); Sample("Hit", _hitClock / .4f, .05f); return; }
-            float speed = sim.Entities.Velocity[_entity].Length.ToFloat() * Simulation.TicksPerSecond;
-            _idleClock += dt; _walkPhase += speed * dt / 1.0f;
-            if (speed > .04f) ForgetTurn();
+            var velocity = sim.Entities.Velocity[_entity];
+            float speed = velocity.Length.ToFloat() * Simulation.TicksPerSecond;
+            // Со знаком: вдоль взгляда — вперёд, против — назад (отход лицом к герою).
+            float along = facing.sqrMagnitude > .5f
+                ? (velocity.X.ToFloat() * facing.x + velocity.Y.ToFloat() * facing.z) * Simulation.TicksPerSecond : speed;
+            _idleClock += dt; _walkPhase += along * dt / 1.0f;
+            if (speed > .04f) _walkHold = WalkHoldSeconds; else _walkHold -= dt;
+            bool walking = _walkHold > 0f;
+            if (walking) ForgetTurn();
             else if (UpdateTurn(yaw, dt)) return;
-            Sample(speed > .04f ? "Walk" : "Idle", speed > .04f ? Mathf.Repeat(_walkPhase, 1) : Mathf.Repeat(_idleClock / 3, 1), .12f);
+            Sample(walking ? "Walk" : "Idle", walking ? Mathf.Repeat(_walkPhase, 1) : Mathf.Repeat(_idleClock / 3, 1), .12f);
         }
 
         /// <summary>Корпус крутится на месте — играет разворот. False — разворота нет.</summary>

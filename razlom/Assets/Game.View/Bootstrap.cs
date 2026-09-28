@@ -22,6 +22,8 @@ namespace Game.View
         public LocationTheme Location;
         public int EnemyCount = 40;
         public bool LogStateHash = false;
+        [Tooltip("Только отдельная сцена стенда. Создаёт сессию в памяти без загрузки и записи прогресса.")]
+        public EnemyTestArena EnemySandbox;
 
         [Header("Звук")]
         // Синтетический прототип полностью заменён короткими CC0 one-shot.
@@ -58,6 +60,7 @@ namespace Game.View
             sim.SetActive(false);
 
             Driver = sim.AddComponent<TickDriver>();
+            Driver.EnemySandbox = EnemySandbox;
 
             // Съёмочная рига может задать сид и число врагов из командной
             // строки. Сцена при этом не трогается: сохранённый .unity — это
@@ -68,7 +71,12 @@ namespace Game.View
             var location = Location != null ? Location : Resources.Load<LocationTheme>("Locations/Meadow");
             Driver.Location = location != null ? location.Gameplay : null;
 
-            sim.AddComponent<ArenaView>();
+            var arena = sim.AddComponent<ArenaView>();
+            if (EnemySandbox != null)
+            {
+                arena.PrewarmWole = 1;
+                arena.PrewarmOrvill = arena.PrewarmRootSwarm = arena.PrewarmForestBud = 4;
+            }
             // Лента сабли — часть самой атаки, поэтому она нужна и в обычном
             // бою, и в изолированной VFX-съёмке.
             sim.AddComponent<CombatJuiceView>();
@@ -82,29 +90,33 @@ namespace Game.View
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             sim.AddComponent<DeveloperMenu>();
 #endif
-            sim.AddComponent<LayoutView>().Profile = location;
+            var layout = sim.AddComponent<LayoutView>();
+            layout.Profile = location;
+            if (EnemySandbox != null) layout.enabled = false;
             if (!CaptureRig.IsVfxShowcase)
             {
                 sim.AddComponent<CombatIndicators>();
                 sim.AddComponent<HealthBars>();
                 sim.AddComponent<PlayerHud>();
-                sim.AddComponent<RunHud>();
-                sim.AddComponent<RunEndBeat>();
-                sim.AddComponent<CampHud>();
+                if (EnemySandbox == null)
+                {
+                    sim.AddComponent<RunHud>();
+                    sim.AddComponent<RunEndBeat>();
+                    sim.AddComponent<CampHud>();
 
-                // Главное меню добавляется ПОСЛЕДНИМ и держит игру на паузе до
-                // PLAY. Под съёмкой оно выключает себя само: capture.ps1 кнопок
-                // не нажимает и записал бы заставку вместо игры.
-                sim.AddComponent<MainMenuView>();
+                    // Главное меню держит обычную игру на паузе до PLAY.
+                    sim.AddComponent<MainMenuView>();
+                }
             }
 
             sim.SetActive(true);
+            if (EnemySandbox != null) Driver.StartEnemySandbox();
 
             // Авторские представления получают зависимости только после
             // TickDriver.Awake: к этому моменту сессия уже существует.
             CameraFollow follow = _gameplayCamera.GetComponent<CameraFollow>();
             follow.Initialize(Driver, _gameplayCamera.transform);
-            _sceneWorld.Initialize(Driver);
+            if (EnemySandbox == null) _sceneWorld.Initialize(Driver);
         }
 
         private bool ValidateSceneContract()
@@ -115,7 +127,7 @@ namespace Game.View
                 return false;
             }
 
-            if (_sceneWorld == null)
+            if (_sceneWorld == null && EnemySandbox == null)
             {
                 Debug.LogError("[Разлом] Bootstrap: в сцене не назначен SceneWorldView.", this);
                 return false;
@@ -133,7 +145,7 @@ namespace Game.View
                 return false;
             }
 
-            return _sceneWorld.ValidateContract(true);
+            return EnemySandbox != null || _sceneWorld.ValidateContract(true);
         }
     }
 }

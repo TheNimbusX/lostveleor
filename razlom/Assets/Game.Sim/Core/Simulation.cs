@@ -489,7 +489,7 @@ namespace Game.Sim
             _thornShots = new ThornShotState[capacity];
             _rootSnarers = new RootSnarerState[capacity];
             _splitters = new SplitterState[capacity];
-            _pendingSplits = new int[capacity];
+            _pendingSplits = new PendingSplitterSplit[capacity];
             _forestFruits = new ForestFruitState[capacity * ForestFruitSlotsPerEnemy];
             _telegraphs = new EnemyTelegraph[capacity * TelegraphSlotsPerEntity];
             _enemySwings = new EnemySwingState[capacity];
@@ -512,6 +512,9 @@ namespace Game.Sim
             _separationScratch = new int[capacity];
             _crowdScratch = new int[capacity];
             _separationPush = new FixVec2[capacity];
+            // ИИ мобов v2: путь, застревание, места вокруг героя; лужи гнилых плодов.
+            AllocateEnemyBrain(capacity);
+            AllocateForestPuddles(capacity);
 
             Tick = 0;
         }
@@ -1065,7 +1068,8 @@ namespace Game.Sim
 
                     // Каждая пара обрабатывается ровно один раз, младшим индексом.
                     if (j <= i) continue;
-                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j) || StonehoofOwnsPosition(i) || StonehoofOwnsPosition(j)) continue;
+                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j) || StonehoofOwnsPosition(i) || StonehoofOwnsPosition(j)
+                        || SplitterOwnsPosition(i) || SplitterOwnsPosition(j)) continue;
                     if ((i == PlayerId || j == PlayerId) && (VoidPhased || _mobilitySlot >= 0
                         && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId)) continue;
 
@@ -1131,6 +1135,8 @@ namespace Game.Sim
             ResetRootSnarers();
             ResetSplitters();
             ResetHeroSlow();
+            ResetEnemyBrain();
+            ResetForestPuddles();
         }
 
         private void ResetAbilityState()
@@ -1240,6 +1246,7 @@ namespace Game.Sim
         public void Step(in InputFrame rawInput)
         {
             _events.Clear();
+            ApplyEnemySandboxCommands();
             ExpireTelegraphs();
             UpdatePotionEffects();
 
@@ -1318,6 +1325,7 @@ namespace Game.Sim
             ContinueChainStep();
             ResolveAttacks(in input);
             UpdateForestBud();
+            UpdateForestPuddles();
             UpdateWendigo();
             UpdateStonehooves();
             UpdateThorncasters();
@@ -2147,6 +2155,12 @@ namespace Game.Sim
             // замах не начинается и не кончается — это делает ResolveAttacks.
             bool meleeTokensTaken = CountMeleeAttackTokens(-1) >= MeleeAttackTokenLimit;
 
+            // Готовность к подходу меняется сразу, места каждый выбирает по
+            // своему расписанию. Замахи и рывки не переориентируются.
+            if (playerAlive) UpdateSurround();
+            for (int i = 1; i < Entities.Count; i++)
+                if (Entities.Alive[i] && Entities.Aggro[i]) ProbeStuck(i);
+
             for (int i = 1; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i]) continue;
@@ -2194,30 +2208,34 @@ namespace Game.Sim
                     continue;
                 }
 
-                // Разворот идёт ВСЕГДА, даже до того как враг решил погнаться:
-                // тело следит взглядом за игроком, а погоня — отдельное,
-                // не мгновенное решение (см. UpdateAggro). Разворот идёт и
-                // когда враг уже подошёл вплотную и стоит: добежав, он должен
-                // доворачиваться к цели, а не замирать боком.
-                Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
-                    EnemyTurnStepCos, EnemyTurnStepSin);
-
                 if (!UpdateAggro(i, toPlayer))
                 {
-                    // Ещё не заметил — стоит на месте, а не бежит вслепую
-                    // через весь Разлом с той секунды, как игрок вошёл.
+                    // Ещё не заметил — стоит на месте и следит взглядом, а не
+                    // бежит вслепую через весь Разлом с той секунды, как игрок вошёл.
+                    Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
+                        EnemyTurnStepCos, EnemyTurnStepSin);
                     Entities.Velocity[i] = FixVec2.Zero;
                     continue;
                 }
 
                 if (kind == EnemyKind.ForestBud)
-                { MoveForestBud(i, toPlayer); continue; }
+                {
+                    Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
+                        EnemyTurnStepCos, EnemyTurnStepSin);
+                    MoveForestBud(i, toPlayer);
+                    continue;
+                }
 
                 // Ход ближника — только тем, кто бьёт общим замахом. Вид со
                 // своими атаками, не сделавший хода сам, стоит и следит за
                 // героем: чужой подход к герою сделал бы из него Хранителя.
                 if (!UsesEnemySwing(kind))
-                { Entities.Velocity[i] = FixVec2.Zero; continue; }
+                {
+                    Entities.Facing[i] = TurnToward(Entities.Facing[i], toPlayer,
+                        EnemyTurnStepCos, EnemyTurnStepSin);
+                    Entities.Velocity[i] = FixVec2.Zero;
+                    continue;
+                }
 
                 Fix64 speed = Entities.MoveStep[i];
                 bool swarm = IsSwarmLike(kind);
@@ -2243,76 +2261,25 @@ namespace Game.Sim
                 // Правило простое и детерминированное: если прямо по курсу
                 // вплотную стоит союзник, который УЖЕ ближе к игроку, — встаём
                 // за ним. Толпа сама собирается в кольцо и перестаёт бурлить.
-                FixVec2 wanted;
-                if (!swarm && meleeTokensTaken && Tick >= Entities.NextAttackTick[i]
-                    && toPlayer.LengthSq <= ApproachBrakeRangeSq)
-                {
-                    // Готов бить, но оба ближних жетона заняты: не стоим в
-                    // упор, а кружим. Освободится жетон — моб уже на дистанции
-                    // удара и лицом к герою.
-                    wanted = TokenWaitCircle(i, toPlayer, speed);
-                }
-                else if (toPlayer.LengthSq <= attackRange * attackRange)
-                {
-                    wanted = FixVec2.Zero;
-                }
-                else if (!swarm && toPlayer.LengthSq <= ApproachBrakeRangeSq)
-                {
-                    // ПОДЪЕЗД, А НЕ РЫВОК. Здесь стояла та же ветка, что и для
-                    // дальнего хода: шаг на полной скорости.
-                    //
-                    // Отсюда и «дрыгаются». У стоящего вплотную моба скорость
-                    // ноль, но расталкивание отодвигает его на пять сантиметров
-                    // за тик — и он мгновенно оказывается за границей удара.
-                    // Полный ход возвращал его внутрь за пару тиков, там он
-                    // снова тормозил в ноль, сосед снова выпихивал. Кольцо у
-                    // игрока кипело: разгон, торможение, толчок, разгон.
-                    //
-                    // Теперь у самой границы желаемая скорость падает до нуля
-                    // линейно. Выпихнутый на сантиметр возвращается сантиметром,
-                    // а не разбегом: колебание гаснет само, вместо того чтобы
-                    // подпитывать себя.
-                    Fix64 distance = Fix64.Sqrt(toPlayer.LengthSq);
-                    Fix64 slack = ApproachBrakeRange - AttackRange;
-                    Fix64 ramp = (distance - AttackRange) / slack;
-                    // A solo enemy must cross the range boundary, not approach it asymptotically.
-                    if (ramp < Fix64.Ratio(1, 10)) ramp = Fix64.Ratio(1, 10);
-                    wanted = toPlayer.Normalized() * (speed * ramp);
-                }
-                else if (BlockedByCloserAlly(i, playerPos, toPlayer, out FixVec2 blocker))
-                {
-                    // ОБХОДИМ, А НЕ ВСТАЁМ В ОЧЕРЕДЬ. Останавливаться за спиной
-                    // соседа — значит выстроить колонну к игроку, и владелец
-                    // так и сказал: «стоят в очереди, чтобы меня ударить».
-                    //
-                    // Вместо этого шаг вбок вдоль кольца. Сторона выбирается по
-                    // знаку векторного произведения — та, куда ближе обходить, —
-                    // и это чистая арифметика, одинаковая на всех машинах.
-                    FixVec2 side = new FixVec2(-toPlayer.Y, toPlayer.X).Normalized();
-                    Fix64 cross = toPlayer.X * blocker.Y - toPlayer.Y * blocker.X;
-                    if (cross.Raw > 0) side = new FixVec2(-side.X, -side.Y);
+                // Место вокруг героя: к нему — по пути в обход, у кольца — по дуге.
+                FixVec2 wanted = SurroundWanted(i, toPlayer, speed, attackRange, out FixVec2 look);
 
-                    // ОБХОД ПО ДУГЕ, А НЕ СТРОГО ВБОК. Чистый боковой шаг — это
-                    // поворот желаемой скорости ровно на 90°, а проверка «занято
-                    // ли место» переключается туда-обратно от тика к тику, пока
-                    // толпа шевелится. Каждое переключение разворачивало ход на
-                    // прямой угол, и Approach отрабатывал его три тика — те же
-                    // рывки, только по другой причине, чем у границы удара.
-                    //
-                    // Подмешанный ход к игроку уменьшает скачок с 90° примерно
-                    // до 55°, и остаток съедает разгон. Кольцо по-прежнему
-                    // собирается — вбок тянет сильнее, — но перестаёт трястись.
-                    FixVec2 arc = side * ArcSideShare + toPlayer.Normalized() * ArcForwardShare;
-                    wanted = arc.Normalized() * (speed * CircleAroundScale);
-                }
-                else
+                // Стоит в чужой метке (круг, кольцо, полоса) или в кислой луже —
+                // выходит бегом вбок от неё: умный моб не ждёт удара союзника.
+                if (InAllyDanger(i, Entities.Position[i], out FixVec2 escape))
                 {
-                    wanted = toPlayer.Normalized() * speed;
+                    wanted = escape * Entities.MoveStep[i];
+                    look = escape;
                 }
+
+                // Взгляд — по ходу при заметном боковом шаге (клипы боком не
+                // ходят), иначе на героя: добежав, моб доворачивается к цели.
+                Entities.Facing[i] = TurnToward(Entities.Facing[i], look,
+                    EnemyTurnStepCos, EnemyTurnStepSin);
 
                 Entities.Velocity[i] = Approach(Entities.Velocity[i], wanted, speed);
                 FixVec2 from = Entities.Position[i];
-                FixVec2 moved = MoveInsideLayout(i, from, Entities.Velocity[i]);
+                FixVec2 moved = EnemyStep(i, from, Entities.Velocity[i]);
                 Entities.Position[i] = moved;
                 if (moved.Equals(from) && Entities.Velocity[i].LengthSq.Raw != 0)
                     Entities.Velocity[i] = FixVec2.Zero;
@@ -2333,6 +2300,14 @@ namespace Game.Sim
         {
             if (Entities.Aggro[i]) return true;
 
+            // Позвала пачка: сосед заметил героя — этот идёт следом, даже не видя его сам.
+            if (PackAlerted(i))
+            {
+                Entities.Aggro[i] = true;
+                AlertPack(i);
+                return true;
+            }
+
             if (toPlayer.LengthSq > EnemyDetectRangeSq)
             {
                 Entities.NoticeTick[i] = -1;
@@ -2345,6 +2320,7 @@ namespace Game.Sim
             if (Tick < Entities.NoticeTick[i]) return false;
 
             Entities.Aggro[i] = true;
+            AlertPack(i);
             return true;
         }
 
@@ -2385,6 +2361,7 @@ namespace Game.Sim
                 bool straight = Entities.ForcedKind[i] == (byte)ForcedMotionKind.Skewer
                     || Entities.ForcedKind[i] == (byte)ForcedMotionKind.Backblast
                     || Entities.ForcedKind[i] == (byte)ForcedMotionKind.EnemyLunge
+                    || Entities.ForcedKind[i] == (byte)ForcedMotionKind.Knockback
                     || Entities.ForcedKind[i] == (byte)ForcedMotionKind.SplitPop;
                 for (int s = 0; s < substeps; s++)
                 {
@@ -2460,11 +2437,11 @@ namespace Game.Sim
             // персонаж бьёт, пока цель не кончится.
             bool playerAttacks = input.Has(InputFlags.Attack) || AttackTargetValid;
 
-            for (int i = 0; i < Entities.Count; i++)
+            for (int order = 0; order < Entities.Count; order++)
             {
-                // Ближние мобы живут по своему замаху: фиксированное направление,
-                // фигура на земле, восстановление. Ниже по циклу остаётся только
-                // герой — порядок обхода по индексу при этом прежний.
+                // Первый остаётся герой. Начало очереди мобов смещается по
+                // времени Sim: низкий id не забирает свободный жетон вечно.
+                int i = order == 0 ? PlayerId : 1 + (order - 1 + Tick / SurroundAssignTicks) % (Entities.Count - 1);
                 if (i != PlayerId) { UpdateEnemySwing(i); continue; }
                 if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
@@ -2772,6 +2749,8 @@ namespace Game.Sim
             HashEnemySwings(ref hash);
             HashCleaveFan(ref hash);
             HashEncounterWaves(ref hash);
+            HashEnemyBrain(ref hash);
+            HashForestPuddles(ref hash);
 
             // Приказ — часть состояния персонажа, а не ввода: он переживает
             // отпущенную кнопку, значит обязан быть в хеше.

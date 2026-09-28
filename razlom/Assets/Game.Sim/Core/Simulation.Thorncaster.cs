@@ -18,13 +18,20 @@ namespace Game.Sim
 
         /// <summary>
         /// Последний контакт действия: всплеск или последний ОТКРЫТЫЙ шип
-        /// линии, у выстрела — выпуск шипа. До него включительно линия держит
+        /// линии, у выстрела — последний запланированный выпуск. До него включительно линия держит
         /// крупный жетон; стойка (заморозка) идёт от него до EndTick.
         /// </summary>
         public int ImpactTick;
 
         /// <summary>Когда линия, всплеск и выстрел снова готовы. Переживают действие.</summary>
         public int NextLineTick, NextBurstTick, NextShotTick;
+
+        /// <summary>Released normal attacks modulo three; cancellation before release never advances it.</summary>
+        public int ShotsSinceDouble;
+
+        /// <summary>Second preparation/release within a double attack; zero when no second shot is scheduled.</summary>
+        public int SecondShotWindupTick, SecondShotReleaseTick;
+        public bool SecondShotAimed;
 
         /// <summary>Откуда и куда — фиксируются в тик начала.</summary>
         public FixVec2 Origin, Direction;
@@ -33,11 +40,11 @@ namespace Game.Sim
         /// Метки действия: номер первой и сколько открыто (у всплеска одна).
         /// Номера подряд (открыты одним вызовом); не открытых сегментов нет
         /// вовсе — ни рисунка, ни удара. У выстрела метки нет (номер 0,
-        /// Segments = 1): его угроза — сам летящий шип.
+        /// Segments = 1 либо 2): его угроза — сам летящий шип.
         /// </summary>
         public int FirstTelegraphSerial, Segments;
 
-        /// <summary>Сколько сегментов уже сработало; у выстрела 1 — шип выпущен.</summary>
+        /// <summary>Сколько сегментов сработало или шипов выпущено в текущем действии.</summary>
         public int Erupted;
 
         /// <summary>Уже попал: за одно действие — одно попадание.</summary>
@@ -53,15 +60,15 @@ namespace Game.Sim
     /// <summary>
     /// Шип выстрела в полёте. Живёт отдельно от действия: выпущенный шип
     /// летит, даже если Шипомёта оглушили, отбросили или убили, — это
-    /// снаряд, а не замах. Один на Шипомёта: выстрел не чаще раза в 60
-    /// тиков, а полёт — не дольше 17 (плюс остановка Песочных Часов, в
+    /// снаряд, а не замах. Один в воздухе на Шипомёта: выпуски разделены
+    /// минимум 30 тиками, а полёт — не дольше 17 (плюс остановка Песочных Часов, в
     /// которой шип стоит). Метки на земле у него нет (решение владельца от
     /// 26.09): угроза — сам шип, и бьёт он только там, где пролетел.
     /// Каждое поле обязано попасть в HashThorncasters.
     /// </summary>
     public struct ThornShotState
     {
-        /// <summary>Номер выстрела — Serial действия, выпустившего шип; 0 — шипа в воздухе нет.</summary>
+        /// <summary>Unique projectile number, independent of action Serial; 0 means no projectile.</summary>
         public int Serial;
 
         /// <summary>
@@ -119,8 +126,11 @@ namespace Game.Sim
     /// перед телом, 10 м или до первого препятствия; путь до героя не
     /// достаёт (камень между ними) — выстрела нет. Замах 21 тик, затем шип
     /// летит 0,6 м за тик (18 м/с) и бьёт героя, только если тело коснулось
-    /// полосы, которую остриё прошло за этот тик (толщина шипа 2 × 0,25 м), —
+    /// полосы, которую остриё прошло за этот тик (толщина шипа 2 × 0,1 м), —
     /// одно попадание; долетел до конца пути — падает. Стойка 12 тиков после выпуска.
+    /// Каждый третий состоявшийся обычный выстрел — двойной: через 9 тиков
+    /// новый замах с новой целью, ещё через 21 — второй шип. Прежний КД 60
+    /// идёт от начала; другое действие ждёт завершения всей серии.
     ///
     /// Оглушение, волок и смерть снимают действие: ещё не сработавшие метки
     /// гаснут, сработавшие доживают вспышку; невыпущенный шип не вылетает.
@@ -145,6 +155,10 @@ namespace Game.Sim
         public const int ThornShotWindupTicks = 21;       // выпуск шипа (кадр 21 клипа ForestThorncaster_Shot)
         public const int ThornShotRecoveryTicks = 12;     // стоит после выпуска
         public const int ThornShotCooldownTicks = 60;     // от начала выстрела
+        public const int ThornDoubleShotReleaseSpacingTicks = 30;
+        public const int ThornDoubleShotRecoveryTicks = ThornDoubleShotReleaseSpacingTicks - ThornShotWindupTicks;
+        public const int ThornBurstKnockbackTicks = 8;
+        public static readonly Fix64 ThornBurstKnockbackDistance = Fix64.Ratio(3, 2);
 
         public static readonly Fix64 ThornShotMinDistance = Fix64.Ratio(7, 2);
         public static readonly Fix64 ThornShotMaxDistance = Fix64.FromInt(10);
@@ -157,11 +171,9 @@ namespace Game.Sim
         /// <summary>
         /// Полутолщина шипа для попадания, м. Полосы на земле нет, поэтому бьёт
         /// только то, что видно: тело героя обязано коснуться полосы шириной
-        /// 2 × 0,25 м, которую остриё прошло за тик (ThornShotSweep). Шире
-        /// нарисованного шипа (≈0,2 м у основания) на пару сантиметров пыли
-        /// следа, а не на полметра, как была полоса 0,7 м, — шаг вбок спасает.
+        /// 2 × 0,1 м, которую остриё прошло за тик (ThornShotSweep).
         /// </summary>
-        public static readonly Fix64 ThornShotRadius = Fix64.Ratio(1, 4);
+        public static readonly Fix64 ThornShotRadius = Fix64.Ratio(1, 10);
 
         /// <summary>Шаг пробы пути выстрела; край уточняется делением пополам (ThornShotFlightLength).</summary>
         private static readonly Fix64 ThornShotProbeStep = Fix64.Ratio(1, 4);
@@ -212,6 +224,7 @@ namespace Game.Sim
         private readonly ThorncasterState[] _thorncasters;
         private readonly ThornShotState[] _thornShots;
         private int _thorncasterSerial;
+        private int _thornShotSerial;
 
         public bool TryGetThorncasterAction(int id, out ThorncasterState state)
         {
@@ -276,7 +289,7 @@ namespace Game.Sim
         /// </summary>
         public static int ThornContactTick(in ThorncasterState state, int index)
             => state.Action == ThornAction.Burst ? state.StartTick + ThornBurstWindupTicks
-                : state.Action == ThornAction.Shot ? state.StartTick + ThornShotWindupTicks
+                : state.Action == ThornAction.Shot ? state.StartTick + ThornShotWindupTicks + ThornDoubleShotReleaseSpacingTicks * index
                 : state.StartTick + ThornLineWindupTicks + ThornLineSpikeStepTicks * index;
 
         /// <summary>Вид действия для событий EnemyAction*.</summary>
@@ -286,7 +299,8 @@ namespace Game.Sim
 
         /// <summary>Перезарядки переживают действие: его конец, снятие, новое действие.</summary>
         private static ThorncasterState ThornCooldowns(in ThorncasterState a)
-            => new ThorncasterState { NextLineTick = a.NextLineTick, NextBurstTick = a.NextBurstTick, NextShotTick = a.NextShotTick };
+            => new ThorncasterState { NextLineTick = a.NextLineTick, NextBurstTick = a.NextBurstTick,
+                NextShotTick = a.NextShotTick, ShotsSinceDouble = a.ShotsSinceDouble };
 
         /// <summary>
         /// Держит ли крупный жетон: линия — до последнего шипа включительно.
@@ -304,6 +318,7 @@ namespace Game.Sim
             // Шипы в воздухе гаснут вместе с расстановкой.
             Array.Clear(_thornShots, 0, _thornShots.Length);
             _thorncasterSerial = 0;
+            _thornShotSerial = 0;
         }
 
         private void ConfigureThorncaster(int id)
@@ -344,6 +359,18 @@ namespace Game.Sim
             // До агро не обходит: он ещё не охотится, только следит взглядом.
             var goal = toPlayer;
             bool detour = Entities.Aggro[id] && ThornDetourHeading(id, toPlayer, out goal);
+            // ИИ v2: к герою — по полю пути, если упёрся; из чужой метки — вон.
+            if (!detour && Entities.Aggro[id]) goal = SteerHeading(id, toPlayer);
+            // На огневой дистанции выбирает свободный угол вместе с дальниками.
+            // Вплотную сохраняет самозащиту всплеском, а начатая серия стоит выше.
+            if (!detour && Entities.Aggro[id] && toPlayer.LengthSq <= ThorncasterHoldMax * ThorncasterHoldMax
+                && toPlayer.LengthSq >= ThornShotMinDistance * ThornShotMinDistance
+                && Tick < a.NextLineTick && Tick < a.NextShotTick
+                && BigAttackerSpread(id, out var positionHeading))
+            { goal = positionHeading; detour = true; }
+            FixVec2 escape = FixVec2.Zero;
+            bool escaping = Entities.Aggro[id] && InAllyDanger(id, Entities.Position[id], out escape);
+            if (escaping) { goal = escape; detour = true; }
             Entities.Facing[id] = TurnToward(Entities.Facing[id], goal, EnemyTurnStepCos, EnemyTurnStepSin);
             if (!UpdateAggro(id, toPlayer)) { Entities.Velocity[id] = FixVec2.Zero; return true; }
 
@@ -366,7 +393,7 @@ namespace Game.Sim
             var change = step / AccelerationTicks;
             speed = change.Raw <= 0 ? wanted : speed + Fix64.Clamp(wanted - speed, -change, change);
             var from = Entities.Position[id];
-            Entities.Position[id] = MoveInsideLayout(id, from, facing * speed);
+            Entities.Position[id] = EnemyStep(id, from, facing * speed);
             Entities.Velocity[id] = Entities.Position[id] - from;
             // Упёрся в обходе (стена, второй ствол) — пробует другую сторону.
             if (detour && speed.Raw > 0 && Entities.Position[id].Equals(from))
@@ -460,7 +487,7 @@ namespace Game.Sim
                 _thorncasters[id] = a;
             }
             if (a.Serial == 0 && !TryStartThorncaster(id)) return;
-            if (_thorncasters[id].Action == ThornAction.Shot) ReleaseThornShot(id);
+            if (_thorncasters[id].Action == ThornAction.Shot) UpdateThornShotSequence(id);
             else ResolveThornContacts(id);
         }
 
@@ -488,13 +515,11 @@ namespace Game.Sim
             bool aimed = a.DetourSide == 0 && FixVec2.Dot(Entities.Facing[id], direction) >= EnemyTurnStepCos;
             // Линия — крупная атака: без жетона идёт или стоит.
             if (aimed && distance >= ThornLineMinDistance && distance <= ThornLineMaxDistance && Tick >= a.NextLineTick
-                && BigAttackTokenFree(id) && StartThornLine(id, direction))
+                && BigAttackTokenFree(id, 1, Tick + ThornLineWindupTicks) && StartThornLine(id, direction))
                 return true;
-            // Выстрел — обычная атака, жетона не берёт. Шип прошлого выстрела к
-            // этому времени давно упал (полёт ≤ 17 тиков, перезарядка 60), но
-            // второй поверх летящего не встаёт никогда: шип у Шипомёта один.
-            if (aimed && distance >= ThornShotMinDistance && distance <= ThornShotMaxDistance && Tick >= a.NextShotTick
-                && _thornShots[id].Serial == 0)
+            // The preceding shot may finish during this windup. Flight is at
+            // most 17 ticks, below the full 21-tick preparation of this release.
+            if (aimed && distance >= ThornShotMinDistance && distance <= ThornShotMaxDistance && Tick >= a.NextShotTick)
                 return StartThornShot(id, direction, distance);
             return false;
         }
@@ -620,21 +645,75 @@ namespace Game.Sim
         /// (FlyThornShot зовётся следом). Событие EnemyProjectileLaunched —
         /// виду: шип, след и звук броска ставятся по нему, а не опросом.
         /// </summary>
-        private void ReleaseThornShot(int id)
+        private void UpdateThornShotSequence(int id)
         {
             var a = _thorncasters[id];
-            if (a.Serial == 0 || a.Erupted > 0 || Tick < a.ImpactTick) return;
-            a.Erupted = 1;
-            _thorncasters[id] = a;
+            if (a.Serial == 0) return;
+            if (a.Erupted == 0)
+            {
+                if (Tick >= a.StartTick + ThornShotWindupTicks) ReleaseThornShot(id, false);
+                return;
+            }
+            if (a.SecondShotReleaseTick == 0 || a.Erupted >= 2) return;
+            if (!a.SecondShotAimed && Tick >= a.SecondShotWindupTick)
+            {
+                // Reacquire once, at the beginning of the second full windup. From
+                // this point the facing and projectile direction remain frozen.
+                var origin = Entities.Position[id];
+                var delta = Entities.Position[PlayerId] - origin;
+                var distance = delta.Length;
+                var direction = delta.Normalized();
+                var length = ThornShotFlightLength(origin, direction);
+                if (distance < ThornShotMinDistance || distance > ThornShotMaxDistance
+                    || length.Raw <= 0 || ThornShotStartOffset + length + Entities.BodyRadius[PlayerId] < distance)
+                {
+                    a.SecondShotWindupTick = a.SecondShotReleaseTick = 0;
+                    a.Segments = 1;
+                    a.ImpactTick = a.StartTick + ThornShotWindupTicks;
+                    a.EndTick = a.ImpactTick + ThornShotRecoveryTicks;
+                    _thorncasters[id] = a;
+                    return;
+                }
+                a.Origin = origin; a.Direction = direction; a.SecondShotAimed = true;
+                Entities.Facing[id] = direction;
+                _thorncasters[id] = a;
+            }
+            if (Tick >= a.SecondShotReleaseTick) ReleaseThornShot(id, true);
+        }
+
+        private void ReleaseThornShot(int id, bool second)
+        {
+            var a = _thorncasters[id];
             var length = ThornShotFlightLength(a.Origin, a.Direction);
-            if (length.Raw <= 0) return;
+            if (length.Raw <= 0)
+            {
+                // No actual release: this attempt does not advance the 1–1–2 cadence.
+                a.Erupted = second ? 2 : 1;
+                _thorncasters[id] = a;
+                return;
+            }
+            a.Erupted = second ? 2 : 1;
+            if (!second)
+            {
+                a.ShotsSinceDouble = (a.ShotsSinceDouble + 1) % 3;
+                if (a.ShotsSinceDouble == 0)
+                {
+                    a.Segments = 2;
+                    a.SecondShotWindupTick = Tick + ThornDoubleShotRecoveryTicks;
+                    a.SecondShotReleaseTick = Tick + ThornDoubleShotReleaseSpacingTicks;
+                    a.ImpactTick = a.SecondShotReleaseTick;
+                    a.EndTick = a.ImpactTick + ThornShotRecoveryTicks;
+                }
+            }
+            _thorncasters[id] = a;
             var start = a.Origin + a.Direction * ThornShotStartOffset;
+            int serial = ++_thornShotSerial;
             _thornShots[id] = new ThornShotState
             {
-                Serial = a.Serial, ReleaseTick = Tick, Damage = ThornShotDamageOf(id),
+                Serial = serial, ReleaseTick = Tick, Damage = ThornShotDamageOf(id),
                 Origin = start, Direction = a.Direction, Length = length,
             };
-            _events.Add(SimEvent.EnemyProjectile(id, PlayerId, a.Serial, EnemyActionKind.ThornShot, start));
+            _events.Add(SimEvent.EnemyProjectile(id, PlayerId, serial, EnemyActionKind.ThornShot, start));
         }
 
         /// <summary>
@@ -682,7 +761,7 @@ namespace Game.Sim
             // убить Шипомёта внутри ApplyAbilityDamage.
             _thornShots[id] = default;
             _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
-                EnemyActionKind.ThornShot, shot.Origin + shot.Direction * stop, 0, hit));
+                EnemyActionKind.ThornShot, shot.Origin + shot.Direction * stop, shot.Serial, hit));
             if (!hit) return;
             ApplyAbilityDamage(id, PlayerId, shot.Damage, -1, DamageType.Physical);
             if (!Entities.Alive[id]) CancelThorncaster(id);
@@ -769,12 +848,34 @@ namespace Game.Sim
                 _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
                     ThornActionKind(a.Action), center, k, hit));
                 if (!hit) continue;
+                int health = Entities.Health[PlayerId];
                 ApplyAbilityDamage(id, PlayerId,
                     a.Action == ThornAction.Burst ? ThornBurstDamageOf(id) : ThornSpikeDamageOf(id),
                     -1, DamageType.Physical);
+                if (a.Action == ThornAction.Burst && Entities.Alive[PlayerId] && Entities.Health[PlayerId] < health)
+                    ApplyThornBurstKnockback(a);
                 if (!Entities.Alive[id]) { CancelThorncaster(id); return; }
                 if (!Entities.Alive[PlayerId]) return;
             }
+        }
+
+        private void ApplyThornBurstKnockback(in ThorncasterState action)
+        {
+            if (PlayerImmune || ForcedMotion.IsActive(Entities, PlayerId)) return;
+            var hero = Entities.Position[PlayerId];
+            var away = hero - action.Origin;
+            var direction = away.LengthSq.Raw > 0 ? away.Normalized() : action.Direction;
+            var radius = Entities.BodyRadius[PlayerId];
+            var target = hero;
+            var piece = ThornBurstKnockbackDistance / 24;
+            for (int step = 0; step < 24; step++)
+            {
+                var next = target + direction * piece;
+                if ((_layout != null || _campWalkMap != null) && !CanTravel(target, next, radius)) break;
+                target = next;
+            }
+            if (!target.Equals(hero))
+                ForcedMotion.Begin(Entities, PlayerId, target, ThornBurstKnockbackTicks, ForcedMotionKind.Knockback);
         }
 
         /// <summary>
@@ -800,6 +901,7 @@ namespace Game.Sim
             for (int id = 1; id < Entities.Count && !present; id++) present = Entities.Kind[id] == EnemyKind.ForestThorncaster;
             if (!present) return;
             Hashing.Mix(ref hash, 0x54484F52); Hashing.Mix(ref hash, _thorncasterSerial);
+            Hashing.Mix(ref hash, _thornShotSerial);
             for (int id = 1; id < Entities.Count; id++)
             {
                 if (Entities.Kind[id] != EnemyKind.ForestThorncaster) continue;
@@ -808,6 +910,9 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, a.StartTick); Hashing.Mix(ref hash, a.ImpactTick); Hashing.Mix(ref hash, a.EndTick);
                 Hashing.Mix(ref hash, a.NextLineTick); Hashing.Mix(ref hash, a.NextBurstTick);
                 Hashing.Mix(ref hash, a.NextShotTick);
+                Hashing.Mix(ref hash, a.ShotsSinceDouble);
+                Hashing.Mix(ref hash, a.SecondShotWindupTick); Hashing.Mix(ref hash, a.SecondShotReleaseTick);
+                Hashing.Mix(ref hash, a.SecondShotAimed ? 1 : 0);
                 Hashing.Mix(ref hash, a.Origin.X.Raw); Hashing.Mix(ref hash, a.Origin.Y.Raw);
                 Hashing.Mix(ref hash, a.Direction.X.Raw); Hashing.Mix(ref hash, a.Direction.Y.Raw);
                 Hashing.Mix(ref hash, a.FirstTelegraphSerial); Hashing.Mix(ref hash, a.Segments);

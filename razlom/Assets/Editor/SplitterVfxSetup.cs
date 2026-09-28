@@ -21,13 +21,19 @@ using UnityEngine.Rendering;
 ///   VFX_Splitter_ShellLand — пыль, где легла половина коры;
 ///   Splitter_ShellL / Splitter_ShellR — половина коры, корень в её центре,
 ///     ребёнок «Mesh» стоит так, что при корне в позе узла тела половина
-///     ложится ровно на тело (SplitterCombatView ведёт полёт).
+///     ложится ровно на тело (SplitterCombatView ведёт полёт);
+///   ПЕРЕКАТ (27.09, кадры 2-roll-windup и 1-roll):
+///   VFX_Splitter_GrooveSegment — кусок борозды: продавленная тёмная земля
+///     (маска Hovl Crater2), трещинки (Crack4), комья и низкая пыль; вид
+///     ставит их вдоль полосы по очереди от клубка — полоса «продавливается»;
+///   VFX_Splitter_RollTurf — дёрн из-под клубка: комья, листья, пыль назад;
+///   VFX_Splitter_RollWall — удар клубка о стену: клуб пыли, щепки коры, комья.
 /// Системы — один залп, местные оси, постоянное зерно: вид ведёт их Simulate
 /// по возрасту от тика Sim.
 /// </summary>
 public static class SplitterVfxSetup
 {
-    private const string Revision = "SplitterVfxV1";
+    private const string Revision = "SplitterVfxV4";
     private const string Root = "Assets/Resources/VFX/Splitter";
     private const string MaterialFolder = Root + "/Materials";
     private const string GeometryFolder = Root + "/Geometry";
@@ -42,10 +48,12 @@ public static class SplitterVfxSetup
     private const string CfxrDebrisUnlit = CfxrGraphics + "cfxr debris unlit 3x3 ab.mat";
     private const string CfxrLeafMaterial = CfxrGraphics + "cfxr leave a ab lit normal.mat";
     private const string CfxrLeafMesh = CfxrMeshes + "cfxr mesh leave.fbx";
+    private const string CfxrTrailMaterial = CfxrGraphics + "cfxr sword trail plain.mat";
+    private const string HovlTextures = "Assets/Hovl Studio/HSFiles/Textures/";
 
-    // Рамки половин в осях тела Unity (debris/shells_report.json: (-x, z, -y) Blender).
-    private static readonly Bounds ShellLeftBounds = FromMinMax(new Vector3(-.8315f, .1188f, -.494f), new Vector3(.0041f, 1.224f, .5201f));
-    private static readonly Bounds ShellRightBounds = FromMinMax(new Vector3(.0227f, .0451f, -.5333f), new Vector3(.8227f, 1.1391f, .5194f));
+    // Рамки половин в осях тела Unity (animation/revision_r03/report.json: (-x, z, -y) Blender).
+    private static readonly Bounds ShellLeftBounds = FromMinMax(new Vector3(-1.007568f, 0.033627f, -0.492827f), new Vector3(-0.208229f, 1.047262f, 0.526029f));
+    private static readonly Bounds ShellRightBounds = FromMinMax(new Vector3(0.130044f, -0.036635f, -0.518498f), new Vector3(1.050691f, 0.966957f, 0.518894f));
 
     // Тона целевого кадра: тёплая охра пыли, светлое и тёмное дерево, свежая зелень.
     private static readonly Color DustLight = new Color(.80f, .63f, .43f), DustDark = new Color(.62f, .47f, .31f);
@@ -53,9 +61,13 @@ public static class SplitterVfxSetup
     private static readonly Color SoilLight = new Color(.56f, .41f, .26f), SoilDark = new Color(.34f, .24f, .15f);
     private static readonly Color LeafLight = new Color(.56f, .74f, .28f), LeafDark = new Color(.38f, .56f, .18f);
 
+    // Борозда: влажная продавленная земля и тёмные трещинки в ней.
+    private static readonly Color GrooveLight = new Color(.30f, .21f, .13f, .82f), GrooveDark = new Color(.20f, .14f, .09f, .88f);
+    private static readonly Color GrooveCrack = new Color(.12f, .08f, .05f, .9f);
+
     private sealed class Kit
     {
-        public Material Dust, Bark, Clod, Leaf, Shell;
+        public Material Dust, Bark, Clod, Leaf, Shell, Groove, Crack;
         public Mesh LeafMesh, Cap;
     }
 
@@ -86,7 +98,8 @@ public static class SplitterVfxSetup
         var importer = AssetImporter.GetAtPath(Root + "/VFX_Splitter_Burst.prefab");
         return importer != null && importer.userData == Revision
             && AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Splitter_ShellL.prefab") != null
-            && AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Splitter_ShellR.prefab") != null;
+            && AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/Splitter_ShellR.prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(Root + "/VFX_Splitter_GrooveSegment.prefab") != null;
     }
 
     private static void Rebuild()
@@ -100,6 +113,9 @@ public static class SplitterVfxSetup
         SaveShell("Splitter_ShellR", ShellRightModel, ShellRightBounds, kit.Shell);
         SaveBurst(kit);
         SaveShellLand(kit);
+        SaveGrooveSegment(kit);
+        SaveRollTurf(kit);
+        SaveRollWall(kit);
         AssetDatabase.SaveAssets();
         var importer = AssetImporter.GetAtPath(Root + "/VFX_Splitter_Burst.prefab");
         if (importer != null && importer.userData != Revision)
@@ -107,7 +123,7 @@ public static class SplitterVfxSetup
             importer.userData = Revision;
             importer.SaveAndReimport();
         }
-        Debug.Log("[splitter-vfx] Раскол: пыль, щепки, листья, шляпки и две половины коры собраны, ревизия " + Revision + ".");
+        Debug.Log("[splitter-vfx] Раскол (пыль, щепки, листья, шляпки, две половины коры) и перекат (борозда, дёрн, удар о стену) собраны, ревизия " + Revision + ".");
     }
 
     // ---------------------------------------------------------------- models
@@ -241,9 +257,34 @@ public static class SplitterVfxSetup
             Leaf = Unlit(PackCopy("M_Splitter_Leaf", CfxrLeafMaterial)),
             Shell = ShellMaterial(),
             LeafMesh = LoadMesh(CfxrLeafMesh),
-            Cap = CapMesh()
+            Cap = CapMesh(),
+            // Борозда: своя окраска маски Hovl через материал облаков CFXR (как земля Корнехвата);
+            // трещинки — одноканальная плёнка CFXR с маской Hovl, тёмный цвет из частиц.
+            Groove = Textured(Plain(PackCopy("M_Splitter_Groove", CfxrSmokeBlurred)), HovlTextures + "Crater2.png", false),
+            Crack = Textured(NoDissolve(PackCopy("M_Splitter_GrooveCrack", CfxrTrailMaterial)), HovlTextures + "Crack4.png", true)
         };
         return kit;
+    }
+
+    private static Material Textured(Material material, string texturePath, bool singleChannel)
+    {
+        if (material == null) return null;
+        var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+        if (texture != null) material.SetTexture("_MainTex", texture);
+        if (material.HasProperty("_SingleChannel")) material.SetFloat("_SingleChannel", singleChannel ? 1f : 0f);
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    private static Material NoDissolve(Material material)
+    {
+        if (material == null) return null;
+        material.DisableKeyword("_CFXR_DISSOLVE");
+        material.DisableKeyword("_CFXR_DISSOLVE_ALONG_UV_X");
+        if (material.HasProperty("_UseDissolve")) material.SetFloat("_UseDissolve", 0f);
+        if (material.HasProperty("_UseDissolveOffsetUV")) material.SetFloat("_UseDissolveOffsetUV", 0f);
+        EditorUtility.SetDirty(material);
+        return material;
     }
 
     /// <summary>
@@ -514,8 +555,9 @@ public static class SplitterVfxSetup
     private static void SaveBurst(Kit kit)
     {
         var root = new GameObject("VFX_Splitter_Burst");
-        Dust(root, kit, "Puff", 11, Vector3.up * .3f, 75f, .35f, 1.0f, 2.4f, .55f, 1.0f, .85f, 1.3f, .50f, false);
-        Dust(root, kit, "Skirt", 12, Vector3.up * .05f, 88f, .40f, 1.8f, 3.0f, .9f, 1.5f, 1.0f, 1.5f, .36f, true);
+        // Короткая низкая пыль подчёркивает раскол, не закрывая оболочку и детей.
+        Dust(root, kit, "Puff", 4, Vector3.up * .12f, 82f, .35f, .7f, 1.5f, .3f, .55f, .35f, .6f, .20f, false);
+        Dust(root, kit, "Skirt", 6, Vector3.up * .05f, 88f, .40f, 1.5f, 2.6f, .55f, .9f, .45f, .75f, .16f, true);
         Debris(root, "Splinters", kit.Bark, 22, Vector3.up * .55f, 65f, .30f, 3.0f, 5.5f, .10f, .24f, 1.4f, 1.6f, BarkLight, BarkDark);
         Debris(root, "Chips", kit.Clod, 8, Vector3.up * .2f, 55f, .30f, 2.0f, 3.6f, .06f, .12f, 1.6f, 1.4f, SoilLight, SoilDark);
         Tumblers(root, "Leaves", kit.LeafMesh, kit.Leaf, 12, Vector3.up * .7f, 75f, 1.8f, 3.6f, .16f, .26f, .45f, 1.6f, 2.0f, LeafLight, LeafDark);
@@ -524,6 +566,76 @@ public static class SplitterVfxSetup
         else
             Debris(root, "Caps", kit.Clod, 5, Vector3.up * .8f, 55f, .25f, 2.4f, 4.2f, .08f, .13f, 1.3f, 1.8f,
                 new Color(.95f, .45f, .22f), new Color(.80f, .32f, .16f));
+        Save(root);
+    }
+
+    /// <summary>
+    /// Пятно на земле: лежит плашмя, не движется, держится life секунд и тает
+    /// с fadeFrom. Для борозды: продавленная земля и трещинки.
+    /// </summary>
+    private static void Decal(GameObject root, string name, Material material, int count, float sizeMin, float sizeMax,
+        float life, float fadeFrom, Color light, Color dark, float spread, float fudge)
+    {
+        if (material == null) return;
+        var particles = Particles(root, name, count, life, life, 0f, 0f, sizeMin, sizeMax, 0f, Vector3.up * .02f, 0f, spread);
+        var main = particles.main;
+        main.startColor = new ParticleSystem.MinMaxGradient(light, dark);
+        var shape = particles.shape; shape.shapeType = ParticleSystemShapeType.Circle; shape.radius = Mathf.Max(.01f, spread);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        // Вдавливается за первые 15% жизни: пятно растёт из точки, как проминается дёрн.
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .35f, .15f, 1f, 1f, 1f));
+        var color = particles.colorOverLifetime; color.enabled = true;
+        color.color = Alpha(.08f, fadeFrom);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+        renderer.sharedMaterial = material;
+        renderer.sortingFudge = fudge;
+    }
+
+    /// <summary>
+    /// Кусок борозды переката (2-roll-windup): продавленная тёмная земля шире
+    /// тела, трещинки поверх, пара комьев вылетает на краях и низкая пыль.
+    /// Корень на земле, +Z — вдоль полосы. Лежит 2,4 с — от фиксации до
+    /// пуска и ещё немного после того, как клубок прокатился.
+    /// </summary>
+    private static void SaveGrooveSegment(Kit kit)
+    {
+        var root = new GameObject("VFX_Splitter_GrooveSegment");
+        // V3 (съёмка 28.09): V2 читалась дорожкой в полметра при полосе удара 1,6 м —
+        // борозда шире полосы, куски гуще, чтобы игрок видел всю ширину опасности.
+        Decal(root, "Groove", kit.Groove, 3, 1.9f, 2.2f, 2.4f, .78f, GrooveLight, GrooveDark, .25f, 3f);
+        Decal(root, "Cracks", kit.Crack, 1, 1.5f, 1.7f, 2.4f, .75f, GrooveCrack, GrooveCrack, .05f, 2f);
+        Debris(root, "Clods", kit.Clod, 4, Vector3.up * .05f, 40f, .45f, 1.0f, 2.0f, .05f, .10f, 1.8f, .8f, SoilLight, SoilDark);
+        Dust(root, kit, "Haze", 2, Vector3.up * .03f, 85f, .35f, .3f, .7f, .55f, .8f, .6f, .9f, .22f, true);
+        Save(root);
+    }
+
+    /// <summary>
+    /// Дёрн из-под клубка (1-roll): вид ставит его за клубком каждые пару тиков
+    /// качения, +Z — куда катится. Комья и травинки летят назад-вверх, пыль —
+    /// низким следом.
+    /// </summary>
+    private static void SaveRollTurf(Kit kit)
+    {
+        var root = new GameObject("VFX_Splitter_RollTurf");
+        Dust(root, kit, "Trail", 3, Vector3.up * .05f, 80f, .30f, .4f, 1.0f, .55f, .9f, .6f, 1.0f, .40f, true);
+        var clods = root.transform.childCount;
+        Debris(root, "Turf", kit.Clod, 6, Vector3.up * .15f, 35f, .30f, 2.2f, 3.6f, .06f, .13f, 1.6f, .8f, SoilLight, SoilDark);
+        Tumblers(root, "Grass", kit.LeafMesh, kit.Leaf, 3, Vector3.up * .2f, 40f, 1.4f, 2.6f, .10f, .16f, .5f, 1.4f, 1.1f, LeafLight, LeafDark);
+        // Комья и трава — назад и вверх: конус смотрит вверх-назад (−Z).
+        for (int i = clods; i < root.transform.childCount; i++)
+            root.transform.GetChild(i).localRotation = Quaternion.FromToRotation(Vector3.forward, new Vector3(0f, .8f, -.6f).normalized);
+        Save(root);
+    }
+
+    /// <summary>Удар клубка о стену: клуб пыли, щепки коры вверх-назад, комья.</summary>
+    private static void SaveRollWall(Kit kit)
+    {
+        var root = new GameObject("VFX_Splitter_RollWall");
+        Dust(root, kit, "Puff", 8, Vector3.up * .45f, 70f, .35f, .9f, 2.0f, .55f, .95f, .8f, 1.2f, .48f, false);
+        Dust(root, kit, "Skirt", 7, Vector3.up * .05f, 88f, .35f, 1.4f, 2.4f, .7f, 1.2f, .8f, 1.2f, .32f, true);
+        Debris(root, "Splinters", kit.Bark, 14, Vector3.up * .6f, 60f, .25f, 2.6f, 4.6f, .09f, .20f, 1.4f, 1.3f, BarkLight, BarkDark);
+        Debris(root, "Chips", kit.Clod, 6, Vector3.up * .3f, 50f, .25f, 1.8f, 3.0f, .05f, .10f, 1.6f, 1.1f, SoilLight, SoilDark);
         Save(root);
     }
 

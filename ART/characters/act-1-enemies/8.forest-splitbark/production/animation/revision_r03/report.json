@@ -1,0 +1,78 @@
+{
+  "revision": "r03",
+  "fps": 30,
+  "release_frame": 12,
+  "release_ticks": 12,
+  "bite_contact_frame": 18,
+  "bite_recovery_frames": 12,
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\8.forest-splitbark\\production\\rig\\ForestSplitter_Rig.blend",
+  "parts": {
+    "SM_ForestSplitter_LOD0": {
+      "vertices": 4943,
+      "triangles": 9902,
+      "cap_faces": 370,
+      "open_edges": 0,
+      "material": "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80"
+    },
+    "SM_ForestSplitter_ShellL": {
+      "vertices": 3452,
+      "triangles": 6992,
+      "cap_faces": 187,
+      "open_edges": 0,
+      "material": "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80",
+      "death_bounds_unity": {
+        "min": [
+          -1.0075676441192627,
+          0.0336269736289978,
+          -0.49282729625701904
+        ],
+        "max": [
+          -0.2082291543483734,
+          1.0472623109817505,
+          0.5260290503501892
+        ]
+      }
+    },
+    "SM_ForestSplitter_ShellR": {
+      "vertices": 3098,
+      "triangles": 6234,
+      "cap_faces": 178,
+      "open_edges": 0,
+      "material": "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80",
+      "death_bounds_unity": {
+        "min": [
+          0.130043625831604,
+          -0.03663545846939087,
+          -0.5184980630874634
+        ],
+        "max": [
+          1.0506908893585205,
+          0.9669572114944458,
+          0.5188939571380615
+        ]
+      }
+    }
+  },
+  "reference": [
+    "production/references/death.mp4",
+    "production/references/bite.mp4",
+    "production/vfx_target_frames_2026-09-26/1-burst-leap.png"
+  ],
+  "approach": "Existing 24k shell segmentation becomes three independent closed skinned meshes. Original outer UVs and rig retained.",
+  "triangles": 23128,
+  "triangles_before_cap_budget_pass": 23128,
+  "bones": 19,
+  "takes": [
+    "ForestSplitter_Idle",
+    "ForestSplitter_Walk",
+    "ForestSplitter_Bite",
+    "ForestSplitter_Hit",
+    "ForestSplitter_Death",
+    "ForestSplitter_Pop",
+    "ForestSplitter_RollCurl",
+    "ForestSplitter_RollLoop",
+    "ForestSplitter_RollUncurl",
+    "ForestSplitter_RollDizzy"
+  ],
+  "artistic_review": "pending owner; inspect game/side release and windup renders"
+}

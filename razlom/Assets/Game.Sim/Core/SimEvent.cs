@@ -120,6 +120,19 @@ namespace Game.Sim
         /// (Simulation.TryGetThornShot), где встал — из EnemyActionImpact.
         /// </summary>
         EnemyProjectileLaunched = 37,
+
+        /// <summary>
+        /// Кислая лужа гнилого плода Плюй-плода легла. Source — стрелок (может
+        /// быть уже мёртв), Amount — слот лужи (Simulation.TryGetForestPuddle),
+        /// ActionVariant — номер лужи, Position — центр.
+        /// </summary>
+        PuddleOpened = 38,
+
+        /// <summary>
+        /// Лужа ушла с земли. Поля как у PuddleOpened; Flag — вытеснена новой
+        /// раньше срока (вид гасит её быстрее).
+        /// </summary>
+        PuddleClosed = 39,
     }
 
     /// <summary>
@@ -154,6 +167,27 @@ namespace Game.Sim
         /// пути; Position — где он встал.
         /// </summary>
         ThornShot = 5,
+
+        /// <summary>
+        /// Расщепень: перекат клубком. Started — сжатие (0), Impact со stage 0 —
+        /// пуск (тик 30, Position — начало полосы), Impact со stage 1 — стоп
+        /// (Flag — задел героя, Position — где встал), Cancelled — снят.
+        /// </summary>
+        SplitterRoll = 6,
+
+        /// <summary>
+        /// Корнехват: «Волна из корней», лечение союзников. Started — лапы в
+        /// землю, Impact — волна (Flag — кого-то вылечила, Amount — скольких),
+        /// Cancelled — сбит. Само лечение — события Heal по каждому союзнику.
+        /// </summary>
+        SnarerMend = 7,
+
+        /// <summary>
+        /// Плюй-плод: гнилой плод. ForestFruitLaunched с ActionVariant = номер
+        /// плода несёт гнилость в ForestFruitState.Rotten; это значение — для
+        /// звука и описаний.
+        /// </summary>
+        BudRotFruit = 8,
     }
 
     /// <summary>
@@ -250,7 +284,8 @@ namespace Game.Sim
         /// <summary>
         /// Событие действия моба: type — EnemyActionStarted, EnemyActionImpact
         /// или EnemyActionCancelled. stage — номер контакта в действии, hit —
-        /// задел ли контакт героя (только у EnemyActionImpact).
+        /// задел ли контакт героя (только у EnemyActionImpact). Для контакта
+        /// ThornShot stage содержит уникальный Serial снаряда, а не номер стадии.
         /// </summary>
         public static SimEvent EnemyAction(SimEventType type, int source, int target, EnemyActionKind kind,
             FixVec2 at, int stage = 0, bool hit = false)
@@ -263,6 +298,10 @@ namespace Game.Sim
                 DamageType.Physical, DamageOrigin.BasicAttack, (int)kind);
 
         /// <summary>Распад Расщепеня: count детёнышей подряд, начиная с firstChild.</summary>
+        /// <summary>Лечение моба мобом: source лечит target на amount.</summary>
+        public static SimEvent Heal(int source, int target, int amount, FixVec2 at)
+            => new SimEvent(SimEventType.Heal, source, target, amount, false, at);
+
         public static SimEvent Split(int parent, int firstChild, int count, FixVec2 at)
             => new SimEvent(SimEventType.SplitterSplit, parent, firstChild, count, false, at);
     }

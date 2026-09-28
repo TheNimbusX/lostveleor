@@ -1,0 +1,110 @@
+{
+  "parts": {
+    "SM_ForestSplitter_LOD0": {
+      "triangles": 9900,
+      "open_edges": 2,
+      "nonmanifold_edges": 7,
+      "uv_layers": 1,
+      "unweighted": 0,
+      "material_names": [
+        "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80"
+      ]
+    },
+    "SM_ForestSplitter_ShellL": {
+      "triangles": 6992,
+      "open_edges": 0,
+      "nonmanifold_edges": 3,
+      "uv_layers": 1,
+      "unweighted": 0,
+      "material_names": [
+        "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80"
+      ]
+    },
+    "SM_ForestSplitter_ShellR": {
+      "triangles": 6233,
+      "open_edges": 1,
+      "nonmanifold_edges": 6,
+      "uv_layers": 1,
+      "unweighted": 0,
+      "material_names": [
+        "tripo_material_132f3063-e8c3-4b27-b687-5ff2fa436f80"
+      ]
+    }
+  },
+  "takes": {
+    "ForestSplitter_Bite": {
+      "frames": [
+        1.0,
+        31.0
+      ],
+      "duration_seconds": 1.0
+    },
+    "ForestSplitter_Death": {
+      "frames": [
+        1.0,
+        13.0
+      ],
+      "duration_seconds": 0.4
+    },
+    "ForestSplitter_Hit": {
+      "frames": [
+        1.0,
+        13.0
+      ],
+      "duration_seconds": 0.4
+    },
+    "ForestSplitter_Idle": {
+      "frames": [
+        1.0,
+        61.0
+      ],
+      "duration_seconds": 2.0
+    },
+    "ForestSplitter_Pop": {
+      "frames": [
+        1.0,
+        11.0
+      ],
+      "duration_seconds": 0.3333
+    },
+    "ForestSplitter_RollCurl": {
+      "frames": [
+        1.0,
+        31.0
+      ],
+      "duration_seconds": 1.0
+    },
+    "ForestSplitter_RollDizzy": {
+      "frames": [
+        1.0,
+        46.0
+      ],
+      "duration_seconds": 1.5
+    },
+    "ForestSplitter_RollLoop": {
+      "frames": [
+        1.0,
+        13.0
+      ],
+      "duration_seconds": 0.4
+    },
+    "ForestSplitter_RollUncurl": {
+      "frames": [
+        1.0,
+        31.0
+      ],
+      "duration_seconds": 1.0
+    },
+    "ForestSplitter_Walk": {
+      "frames": [
+        1.0,
+        11.0
+      ],
+      "duration_seconds": 0.3333
+    }
+  },
+  "bones": 19,
+  "root_motion": false,
+  "triangles": 23125,
+  "pass": true
+}

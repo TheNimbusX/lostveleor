@@ -67,12 +67,13 @@ namespace Game.Tests
             Enemy(sim, At(2, 0)); Enemy(sim, At(-2, 0));
             int waiting = Enemy(sim, At(0, 2), stationary: false);
             FixVec2 start = sim.Entities.Position[waiting];
-            for (int t = 0; t < 10; t++) sim.Step(InputFrame.Empty);
+            for (int t = 0; t < 20; t++) sim.Step(InputFrame.Empty);
 
             Assert.IsFalse(sim.TryGetEnemySwing(waiting, out _));
             Assert.AreNotEqual(start, sim.Entities.Position[waiting], "без жетона стоит столбом");
+            // ИИ v2: без жетона ждёт на кольце ожидания (3 м — за краем сектора) и кружит со стаей.
             double distance = sim.Entities.Position[waiting].Length.ToDouble();
-            Assert.That(distance, Is.InRange(1.5, 3.2), "кружит на дистанции удара");
+            Assert.That(distance, Is.InRange(2.0, 3.6), "ждёт на кольце ожидания");
         }
 
         [Test]
@@ -108,17 +109,29 @@ namespace Game.Tests
         public void TwoBuds_VolleyOneAtATime_UntilTheLimitIsRaised()
         {
             var sim = TwoBuds(1);
+            var config = sim.ForestBudConfig;
             sim.Step(InputFrame.Empty);
             Assert.IsTrue(sim.TryGetForestBudAttack(1, out var first));
             Assert.IsFalse(sim.TryGetForestBudAttack(2, out _), "второй залп поверх первого");
-            while (sim.Tick <= first.EndTick) sim.Step(InputFrame.Empty);
-            Assert.IsTrue(sim.TryGetForestBudAttack(2, out var second));
-            Assert.AreEqual(first.EndTick, second.StartTick);
+            // Жетон держится до падения ПОСЛЕДНЕГО плода, а не до конца позы.
+            int lastFruit = first.FirstShotTick + (config.ShotCount - 1) * config.ShotIntervalTicks + config.FlightTicks;
+            int second = -1;
+            while (sim.Tick <= lastFruit + 1 && second < 0)
+            {
+                sim.Step(InputFrame.Empty);
+                if (sim.TryGetForestBudAttack(2, out var b)) second = b.StartTick;
+            }
+            Assert.AreEqual(lastFruit, second, "второй залп — когда упал последний плод первого");
 
+            // С пятой арены жетонов два и меток на земле четыре, но залпы разнесены на 0,3 с.
             var wide = TwoBuds(2);
+            wide.BigMarkBudget = Simulation.BigMarkBudgetForArena(5);
             wide.Step(InputFrame.Empty);
-            Assert.IsTrue(wide.TryGetForestBudAttack(1, out _));
-            Assert.IsTrue(wide.TryGetForestBudAttack(2, out _), "с пятой арены залпов два");
+            Assert.IsTrue(wide.TryGetForestBudAttack(1, out var w1));
+            Assert.IsFalse(wide.TryGetForestBudAttack(2, out _), "два залпа в один тик");
+            while (wide.Tick < w1.StartTick + Simulation.BigMarkStaggerTicks + 1) wide.Step(InputFrame.Empty);
+            Assert.IsTrue(wide.TryGetForestBudAttack(2, out var w2), "с пятой арены залпов два");
+            Assert.AreEqual(w1.StartTick + Simulation.BigMarkStaggerTicks, w2.StartTick);
         }
 
         [Test]
@@ -142,7 +155,9 @@ namespace Game.Tests
                 Assert.IsFalse(volley && charging, "залп и таран разом, тик " + (sim.Tick - 1));
                 if (charged < 0 && charging) charged = charge.StartTick;
             }
-            Assert.AreEqual(sim.ForestBudConfig.ActionTicks, charged, "таран — сразу после залпа");
+            var config = sim.ForestBudConfig;
+            int lastFruit = config.WindupTicks + (config.ShotCount - 1) * config.ShotIntervalTicks + config.FlightTicks;
+            Assert.AreEqual(lastFruit, charged, "таран — сразу после падения последнего плода");
         }
 
         [Test]
@@ -264,7 +279,7 @@ namespace Game.Tests
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var sector));
             Assert.AreEqual(swing.TelegraphSerial, sector.Serial);
             Assert.AreEqual(TelegraphShape.Sector, sector.Shape);
-            Assert.IsTrue(sector.SharedView);
+            Assert.IsFalse(sector.SharedView, "замах Расщепеня читается по телу, сектор скрыт");
             Assert.AreEqual(Simulation.SplitterSwingRadius, sector.Radius);
             Assert.AreEqual(Simulation.SplitterSwingArcCos, sector.ArcCos);
             Assert.AreEqual(Fix64.Ratio(9, 5), Simulation.SplitterSwingRadius);

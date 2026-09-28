@@ -194,14 +194,26 @@ namespace Game.Sim
                 }
                 return;
             }
-            Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, EnemyTurnStepCos, EnemyTurnStepSin);
+            // ИИ v2: к герою — по полю пути, если упёрся; из чужой метки — вон.
+            var goal = Entities.Aggro[id] ? SteerHeading(id, toPlayer) : toPlayer;
+            bool positioning = false;
+            if (Entities.Aggro[id] && toPlayer.LengthSq <= Fix64.FromInt(49))
+            {
+                FixVec2 point = CloseApproachPosition(id, WendigoClawRange);
+                positioning = FixVec2.DistanceSq(point, Entities.Position[id]) > Fix64.Ratio(1, 25);
+                if (positioning) goal = SteerToward(id, point);
+            }
+            FixVec2 escape = FixVec2.Zero;
+            bool escaping = Entities.Aggro[id] && InAllyDanger(id, Entities.Position[id], out escape);
+            if (escaping) goal = escape;
+            Entities.Facing[id] = TurnToward(Entities.Facing[id], goal, EnemyTurnStepCos, EnemyTurnStepSin);
             if (!UpdateAggro(id, toPlayer)) { Entities.Velocity[id] = FixVec2.Zero; return; }
             // Сначала разворот, потом шаг — и только вдоль взгляда (см. WendigoWalkAlignFrom).
             var facing = Entities.Facing[id]; var step = Entities.MoveStep[id];
             Fix64 wanted = Fix64.Zero;
-            if (toPlayer.LengthSq > WendigoClawRange * WendigoClawRange)
+            if (escaping || positioning || toPlayer.LengthSq > WendigoClawRange * WendigoClawRange)
             {
-                var share = (FixVec2.Dot(facing, toPlayer.Normalized()) - WendigoWalkAlignFrom)
+                var share = (FixVec2.Dot(facing, goal.Normalized()) - WendigoWalkAlignFrom)
                     / (Fix64.One - WendigoWalkAlignFrom);
                 if (share > Fix64.Zero) wanted = step * Fix64.Min(share, Fix64.One);
             }
@@ -211,7 +223,7 @@ namespace Game.Sim
             var change = step / AccelerationTicks;
             speed = change.Raw <= 0 ? wanted : speed + Fix64.Clamp(wanted - speed, -change, change);
             var from = Entities.Position[id];
-            Entities.Position[id] = MoveInsideLayout(id, from, facing * speed);
+            Entities.Position[id] = EnemyStep(id, from, facing * speed);
             Entities.Velocity[id] = Entities.Position[id] - from;
         }
 
@@ -257,11 +269,11 @@ namespace Game.Sim
                     // Вой — только пока прыжок перезаряжается: два крупных удара чередуются,
                     // и вой не отнимает у прыжка его дистанцию.
                     if (distance >= Fix64.FromInt(3) && distance <= Fix64.FromInt(7)
-                        && Tick >= _wendigoNextLeap[id] && BigAttackTokenFree(id)
+                        && Tick >= _wendigoNextLeap[id] && BigAttackTokenFree(id, 1, Tick + WendigoLeapImpactTicks)
                         && WendigoLeapPathClear(id, Entities.Position[PlayerId]))
                         kind = WendigoAction.Leap;
                     else if (distance >= WendigoHowlMinDistance && distance <= WendigoHowlMaxDistance
-                        && Tick < _wendigoNextLeap[id] && Tick >= WendigoNextHowl[id] && BigAttackTokenFree(id))
+                        && Tick < _wendigoNextLeap[id] && Tick >= WendigoNextHowl[id] && BigAttackTokenFree(id, 1, Tick + WendigoHowlWindupTicks))
                         kind = WendigoAction.Howl;
                     else if (distance <= WendigoClawRange) kind = WendigoAction.Claw;
                     if (kind == WendigoAction.None) continue;

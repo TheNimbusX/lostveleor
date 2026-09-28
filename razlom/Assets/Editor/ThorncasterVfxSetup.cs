@@ -39,7 +39,7 @@ using UnityEngine.Rendering;
 public static class ThorncasterVfxSetup
 {
     // V2 — шип выстрела ThornDart (закрытое веретено вместо трубы с раструбом).
-    private const string Revision = "ThorncasterVfxV2";
+    private const string Revision = "ThorncasterVfxV3";
     private const string Root = "Assets/Resources/VFX/Thorncaster";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
@@ -117,6 +117,7 @@ public static class ThorncasterVfxSetup
     {
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + ThorncasterCombatView.BurstPrefab + ".prefab");
         return importer != null && importer.userData == Revision
+            && AssetDatabase.LoadAssetAtPath<Material>(MaterialFolder + "/M_Thorn_ShotRibbon.mat") != null
             && AssetDatabase.LoadAssetAtPath<Mesh>(GeometryFolder + "/ThornDart.asset") != null
             && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + ThorncasterCombatView.LineSpikePrefab + ".prefab") != null
             && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + ThorncasterCombatView.ShotReleasePrefab + ".prefab") != null;
@@ -159,6 +160,7 @@ public static class ThorncasterVfxSetup
         kit.Crater = Textured(Plain(PackCopy("M_Thorn_Crater", CfxrSmokeBlurred)), HovlTextures + "Crater40.png", false);
         kit.Crack = Textured(NoDissolve(PackCopy("M_Thorn_Crack", CfxrTrailMaterial)), HovlTextures + "Crack4.png", true);
         kit.Fissure = Textured(NoDissolve(PackCopy("M_Thorn_Fissure", CfxrTrailMaterial)), HovlTextures + "Crater19.png", true);
+        ShotRibbon();
         // Декали рисуются до пыли и комьев.
         foreach (var decal in new[] { kit.Soil, kit.Crater, kit.Crack, kit.Fissure }) { decal.renderQueue = 2990; EditorUtility.SetDirty(decal); }
         kit.Wood = Wood();
@@ -180,6 +182,24 @@ public static class ThorncasterVfxSetup
             ThornMesh("ThornShootB", 52, .17f, .14f, 2.2f, .14f, 0)
         };
         return kit;
+    }
+
+    private static void ShotRibbon()
+    {
+        // Preserve the accepted Wendigo/CFXR ribbon shader and mask family;
+        // tint only this derivative to the Thorncaster bark and red tip.
+        var source = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/VFX/Wendigo/Materials/M_Wendigo_ClawRibbon.mat");
+        if (source == null) return;
+        var material = PackCopy("M_Thorn_ShotRibbon", AssetDatabase.GetAssetPath(source));
+        material.SetColor("_Core", new Color(.88f, .47f, .21f));
+        material.SetColor("_Mid", new Color(.68f, .32f, .14f));
+        material.SetColor("_Edge", new Color(.42f, .38f, .15f));
+        material.SetColor("_Rim", new Color(.23f, .20f, .09f));
+        material.SetFloat("_Timed", 0f);
+        material.SetFloat("_Glow", .04f);
+        material.SetFloat("_TaperSkew", 1.9f);
+        material.SetFloat("_TaperPower", .7f);
+        EditorUtility.SetDirty(material);
     }
 
     /// <summary>

@@ -95,7 +95,7 @@ namespace Game.Tests
         // ---- Хранитель ----
 
         [Test]
-        public void GuardianSwing_OpensSharedSectorThatLandsAfterTwentyOneTicks()
+        public void GuardianSwing_KeepsHitSectorHiddenAndLandsAfterTwentyOneTicks()
         {
             var sim = Arena();
             int g = Enemy(sim, At(2, 0));
@@ -107,12 +107,12 @@ namespace Game.Tests
             Assert.AreEqual(15, swing.RecoverUntil - swing.ImpactTick);
             Assert.AreEqual(48, sim.Entities.NextAttackTick[g] - swing.StartTick);
             Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
-                e.Type == SimEventType.TelegraphOpened && e.Source == g && e.Flag && e.Amount == swing.Telegraph));
+                e.Type == SimEventType.TelegraphOpened && e.Source == g && !e.Flag && e.Amount == swing.Telegraph));
 
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var t));
             Assert.AreEqual(TelegraphShape.Sector, t.Shape);
             Assert.AreEqual(TelegraphState.Active, t.State);
-            Assert.IsTrue(t.SharedView);
+            Assert.IsFalse(t.SharedView, "обычный удар предупреждается замахом, а не полом");
             Assert.AreEqual(swing.ImpactTick, t.ImpactTick);
             Assert.AreEqual(Simulation.GuardianSwingRadius, t.Radius);
             Assert.AreEqual(Fix64.Ratio(1, 2), t.ArcCos);

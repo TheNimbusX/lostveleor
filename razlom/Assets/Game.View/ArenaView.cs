@@ -491,7 +491,8 @@ namespace Game.View
             _rootSwarmPool = new ViewPool(swarmRoot,
                 BodyFactory(RootSwarmModel, RootSwarmController, RootSwarmMaterial, RootSwarmTexture,
                     Faction.Orvill, RootSwarmScale),
-                PrewarmRootSwarm > 0 ? Mathf.Max(PrewarmRootSwarm, MaxForestBodies(EnemyKind.ForestRootSwarm)) : capacity);
+                _driver.EnemySandbox != null ? Mathf.Max(1, PrewarmRootSwarm)
+                    : PrewarmRootSwarm > 0 ? Mathf.Max(PrewarmRootSwarm, MaxForestBodies(EnemyKind.ForestRootSwarm)) : capacity);
 
             // Общие метки ударов на земле. Заводятся сразу, а не по первому телу,
             // как виды Вендиго и Камнекопыта: Хранитель есть в любой арене.
@@ -2090,10 +2091,13 @@ namespace Game.View
             if (_forestBudPool != null) return;
             var root = new GameObject("Пул: Forest_Bud").transform;
             root.SetParent(transform, false);
-            _forestBudPool = new ViewPool(root, ForestBudFactory(), Mathf.Max(40, PrewarmForestBud));
+            _forestBudPool = new ViewPool(root, ForestBudFactory(),
+                _driver.EnemySandbox != null ? Mathf.Max(1, PrewarmForestBud) : Mathf.Max(40, PrewarmForestBud));
             while (_forestBudPool.NeedsPrewarm) _forestBudPool.PrewarmStep(40);
             if (GetComponent<ForestBudCombatView>() == null) gameObject.AddComponent<ForestBudCombatView>();
             if (GetComponent<ForestBudImpactView>() == null) gameObject.AddComponent<ForestBudImpactView>();
+            // Кислые лужи гнилых плодов (27.09): живут по слотам Sim, переживают стрелка.
+            ForestPuddleView.EnsureOn(gameObject);
         }
 
         private System.Func<GameObject> ForestBudFactory()

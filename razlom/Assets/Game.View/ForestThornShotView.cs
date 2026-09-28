@@ -15,8 +15,8 @@ namespace Game.View
     /// ThornDart — главный шип без раструба, с закрытым основанием; нет его —
     /// ThornSpire; кора M_Thorn_Wood: мшистое дерево, красно-оранжевый
     /// кончик с отростками — как шипы линии и на теле), остриём по полёту, на
-    /// уровне груди, ≈0,2 м в радиусе (толщина попадания Simulation.ThornShotRadius —
-    /// 0,25), с вращением вокруг оси и лёгким покачиванием. Нет ThornSpire —
+    /// уровне груди, длиной 0,45 м (радиус попадания Simulation.ThornShotRadius —
+    /// 0,1), с вращением вокруг оси и лёгким покачиванием. Нет ThornSpire —
     /// корневой шип Вендиго (WendigoRootThornC, M_Wendigo_RootWood). За ним короткий след из паков: пыль (размытое облако CFXR,
     /// M_Wendigo_Dust) и щепки коры (CFXR debris wood unlit 3×3, M_Wendigo_Bark);
     /// на остановке — горсть щепок и пыли: попал — шип ломается о героя, не
@@ -46,6 +46,7 @@ namespace Game.View
         {
             public Transform Root, Wobble, Body;
             public ParticleSystem Dust, Bark;
+            public LineRenderer Ribbon;
             public ParticleSystem.Particle[] DustBuffer, BarkBuffer;
             public int Caster = -1, Serial;
             public bool Shown, Flying, Hit;
@@ -68,6 +69,7 @@ namespace Game.View
         private const string MaterialResource = "VFX/Wendigo/Materials/M_Wendigo_RootWood";
         private const string DustResource = "VFX/Wendigo/Materials/M_Wendigo_Dust";
         private const string BarkResource = "VFX/Wendigo/Materials/M_Wendigo_Bark";
+        private const string RibbonResource = "VFX/Thorncaster/Materials/M_Thorn_ShotRibbon";
 
         /// <summary>Шипомёт — элита, их в бою один-два, шип у каждого один: шесть мест с запасом.</summary>
         private const int PoolSize = 6;
@@ -76,7 +78,10 @@ namespace Game.View
         /// Длина шипа в мире, м, и толщина меша: ThornSpire — 0,15 м в радиусе при
         /// единичном масштабе (раструб у основания шире), корень Вендиго — ≈0,13.
         /// </summary>
-        private const float ThornLength = 1.3f, SpireThickness = 1.3f, ThornThickness = 1.7f;
+        public const float ThornLength = .45f;
+        private const float SpireThickness = .55f, ThornThickness = .65f;
+        public const float TrailLength = .9f;
+        private const int TrailPoints = 8;
 
         /// <summary>Высота полёта над землёй — на уровне груди героя.</summary>
         private const float FlightHeight = 1.05f;
@@ -96,10 +101,9 @@ namespace Game.View
         /// <summary>Сломанный о героя шип исчезает за столько тиков, упавший — клюёт и уходит в землю.</summary>
         private const float ShatterTicks = 3f, DropTicks = 9f;
 
-        // След: клуб пыли каждые 0,3 м пути, щепка — через клуб. Короткий: пыль
-        // живёт 0,3 с, щепка — 0,45 с, за шипом тянется метра три-четыре.
+        // The .9 m ribbon is the trail; sparse dust and bark live only 2–3 ticks.
         private const float PuffSpacing = .3f;
-        private const float DustLifeTicks = 9f, BarkLifeTicks = 13.5f;
+        private const float DustLifeTicks = 2f, BarkLifeTicks = 3f;
         private const int BurstBark = 10, BurstDust = 4, DropBark = 5, DropDust = 3;
         private const float BurstLifeTicks = 15f;
         private const float Gravity = 12f;
@@ -114,7 +118,7 @@ namespace Game.View
         private Simulation _shown;
         private int _generation = -1, _depth = -1;
         private Thorn[] _thorns;
-        private Material _fallbackMaterial, _spireMaterial;
+        private Material _fallbackMaterial, _spireMaterial, _ribbonMaterial;
         private bool _overflowReported;
 
         /// <summary>
@@ -147,6 +151,18 @@ namespace Game.View
             var material = _spireMaterial != null ? null : Resources.Load<Material>(MaterialResource);
             var dust = Resources.Load<Material>(DustResource);
             var bark = Resources.Load<Material>(BarkResource);
+            var ribbon = Resources.Load<Material>(RibbonResource);
+            if (ribbon == null) ribbon = Resources.Load<Material>("VFX/Wendigo/Materials/M_Wendigo_ClawRibbon");
+            if (ribbon != null)
+            {
+                _ribbonMaterial = new Material(ribbon) { name = "Runtime_ThornShotRibbon" };
+                _ribbonMaterial.SetFloat("_Timed", 0f);
+                _ribbonMaterial.SetColor("_Core", new Color(.88f, .47f, .21f));
+                _ribbonMaterial.SetColor("_Mid", new Color(.68f, .32f, .14f));
+                _ribbonMaterial.SetColor("_Edge", new Color(.42f, .38f, .15f));
+                _ribbonMaterial.SetColor("_Rim", new Color(.23f, .20f, .09f));
+                _ribbonMaterial.SetFloat("_Glow", .04f);
+            }
             if (_spireMaterial == null)
                 Debug.LogWarning($"[Разлом] Шип Шипомёта: нет «{SpireResource}» — летит корнем Вендиго (собери «Разлом/Шипомёт/VFX: пересобрать»).");
             if (_spireMaterial == null && (mesh == null || material == null))
@@ -178,8 +194,9 @@ namespace Game.View
                 // ThornSpire: основание в нуле, ось +Y, длина 1. Поворот на 90° вокруг X
                 // кладёт ось по полёту (+Z): основание позади, остриё в корне шипа.
                 body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                body.transform.localScale = new Vector3(SpireThickness, ThornLength, SpireThickness);
-                body.transform.localPosition = new Vector3(0f, 0f, -ThornLength * .5f);
+                float lengthScale = ThornLength / Mathf.Max(.001f, spire.bounds.size.y);
+                body.transform.localScale = new Vector3(SpireThickness, lengthScale, SpireThickness);
+                body.transform.localPosition = new Vector3(0f, 0f, ThornLength * .5f - spire.bounds.max.y * lengthScale);
             }
             else if (mesh != null && material != null)
             {
@@ -190,8 +207,9 @@ namespace Game.View
                 // Меш корня Вендиго: основание в нуле, остриё в −Z на 1 м. Разворот
                 // на 180° и сдвиг ставят остриё в корень, основание — позади него.
                 body.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
-                body.transform.localScale = new Vector3(ThornThickness, ThornThickness, ThornLength);
-                body.transform.localPosition = new Vector3(0f, 0f, -ThornLength * .5f);
+                float lengthScale = ThornLength / Mathf.Max(.001f, mesh.bounds.size.z);
+                body.transform.localScale = new Vector3(ThornThickness, ThornThickness, lengthScale);
+                body.transform.localPosition = new Vector3(0f, 0f, ThornLength * .5f + mesh.bounds.min.z * lengthScale);
             }
             else
             {
@@ -213,7 +231,7 @@ namespace Game.View
                 body.transform.SetParent(thorn.Wobble, false);
                 // Капсула лежит вдоль Y: поворот на 90° вокруг X кладёт её по полёту.
                 body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-                body.transform.localScale = new Vector3(.3f, ThornLength * .5f, .3f);
+                body.transform.localScale = new Vector3(.16f, ThornLength * .5f, .16f);
                 body.transform.localPosition = Vector3.zero;
             }
             thorn.Body = body.transform;
@@ -221,6 +239,21 @@ namespace Game.View
             renderer.shadowCastingMode = ShadowCastingMode.On;
             renderer.receiveShadows = false;
             thorn.Root.gameObject.SetActive(false);
+            if (_ribbonMaterial != null)
+            {
+                var ribbon = new GameObject("След шипа: лента " + index);
+                ribbon.transform.SetParent(transform, false);
+                thorn.Ribbon = ribbon.AddComponent<LineRenderer>();
+                thorn.Ribbon.sharedMaterial = _ribbonMaterial;
+                thorn.Ribbon.useWorldSpace = true;
+                thorn.Ribbon.positionCount = TrailPoints;
+                thorn.Ribbon.widthMultiplier = .11f;
+                thorn.Ribbon.widthCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(.7f, .7f), new Keyframe(1f, 1f));
+                thorn.Ribbon.textureMode = LineTextureMode.Stretch;
+                thorn.Ribbon.shadowCastingMode = ShadowCastingMode.Off;
+                thorn.Ribbon.receiveShadows = false;
+                thorn.Ribbon.enabled = false;
+            }
             // Частицы — в мире и вне корня шипа: след и щепки остаются, когда шип ушёл.
             if (dust != null && bark != null)
             {
@@ -290,7 +323,7 @@ namespace Game.View
                 if (e.ActionVariant != (int)EnemyActionKind.ThornShot) continue;
                 int at = contexts[i].SimulationTick - 1;
                 if (e.Type == SimEventType.EnemyProjectileLaunched) Launch(sim, e.Source, e.Amount, e.Position, at, fromHand: true);
-                else if (e.Type == SimEventType.EnemyActionImpact) Stop(sim, e.Source, e.Position, e.Flag, at);
+                else if (e.Type == SimEventType.EnemyActionImpact) Stop(sim, e.Source, e.Amount, e.Position, e.Flag, at);
             }
 
             // Летящие: путь и пройденное — из Sim. Шип, чей выпуск вид пропустил
@@ -366,16 +399,14 @@ namespace Game.View
         /// догоняет точку по своему расписанию и дальше не идёт; возраст щепок
         /// и падения — от тика, когда оно туда пришло.
         /// </summary>
-        private void Stop(Simulation sim, int caster, FixVec2 point, bool hit, int at)
+        private void Stop(Simulation sim, int caster, int serial, FixVec2 point, bool hit, int at)
         {
-            Thorn stopped = null;
-            foreach (var thorn in _thorns)
-                if (thorn.Shown && thorn.Flying && thorn.Caster == caster) { stopped = thorn; break; }
+            Thorn stopped = Find(caster, serial);
             if (stopped == null)
             {
                 // Выпуска вид не видел: шип встаёт сразу, направление — от стрелка к точке.
                 var from = (uint)caster < (uint)sim.Entities.Count ? sim.Entities.Position[caster] : point;
-                stopped = Launch(sim, caster, -1 - at, point, at);
+                stopped = Launch(sim, caster, serial, point, at);
                 if (stopped == null) return;
                 var away = point - from;
                 if (away.LengthSq.Raw > 0) stopped.Shot.Direction = away.Normalized();
@@ -443,7 +474,29 @@ namespace Game.View
                 return;
             }
             PlaceThorn(thorn, origin + direction * tip, direction, tip, tick, after, thornEnd);
+            DrawRibbon(thorn, origin, direction, tip, after);
             DrawParticles(thorn, origin, direction, tip, tick, after);
+        }
+
+        // Analytic positions keep the short tapered ribbon frozen on pause and
+        // identical after replay; it never depends on TrailRenderer wall time.
+        private void DrawRibbon(Thorn thorn, Vector2 origin, Vector2 direction, float tip, float after)
+        {
+            if (thorn.Ribbon == null) return;
+            float fade = after < 0f ? 1f : Mathf.Clamp01(1f - after / 3f);
+            float head = Mathf.Max(0f, tip - ThornLength * .8f);
+            float tail = Mathf.Max(0f, head - TrailLength * fade);
+            thorn.Ribbon.enabled = head - tail > .01f && fade > 0f;
+            if (!thorn.Ribbon.enabled) return;
+            var color = new Color(1f, 1f, 1f, .72f * fade);
+            thorn.Ribbon.startColor = color; thorn.Ribbon.endColor = color;
+            for (int i = 0; i < TrailPoints; i++)
+            {
+                float distance = Mathf.Lerp(tail, head, i / (float)(TrailPoints - 1));
+                var point = origin + direction * distance;
+                thorn.Ribbon.SetPosition(i, new Vector3(point.x, Ground(point.x, point.y) + FlightHeight, point.y)
+                    + thorn.MuzzleOffset * MuzzleShare(distance));
+            }
         }
 
         /// <summary>
@@ -514,18 +567,18 @@ namespace Game.View
                     var p = at + side * ((Rand(thorn.Serial, j, 2) - .5f) * .2f)
                         + Vector3.up * ((Rand(thorn.Serial, j, 3) - .5f) * .16f)
                         - forward * (.25f * u) + Vector3.up * (.3f * u);
-                    float size = Mathf.Lerp(.25f, .55f, Mathf.Sqrt(u)) * (.8f + .4f * Rand(thorn.Serial, j, 4));
-                    float alpha = .32f * (1f - u) * (1f - u) * Mathf.Clamp01(age);
+                    float size = Mathf.Lerp(.09f, .17f, Mathf.Sqrt(u)) * (.8f + .4f * Rand(thorn.Serial, j, 4));
+                    float alpha = .14f * (1f - u) * (1f - u) * Mathf.Clamp01(age);
                     Set(ref thorn.DustBuffer[dust++], p, size, Color.Lerp(DustLight, DustDark, Rand(thorn.Serial, j, 5)), alpha,
                         Rand(thorn.Serial, j, 6) * 360f, Seed(thorn.Serial, j, 7));
                 }
-                if (Rand(thorn.Serial, j, 8) > .55f || bark >= Capacity) continue;
+                if (Rand(thorn.Serial, j, 8) > .18f || bark >= Capacity) continue;
                 float barkLife = BarkLifeTicks * (.8f + .4f * Rand(thorn.Serial, j, 9));
                 if (age >= barkLife) continue;
                 var velocity = -forward * (.6f + 1.2f * Rand(thorn.Serial, j, 10))
                     + side * ((Rand(thorn.Serial, j, 11) - .5f) * 2.4f)
                     + Vector3.up * (.8f + 1.4f * Rand(thorn.Serial, j, 12));
-                Set(ref thorn.BarkBuffer[bark++], Fly(at, velocity, age), .08f + .06f * Rand(thorn.Serial, j, 13),
+                Set(ref thorn.BarkBuffer[bark++], Fly(at, velocity, age), .035f + .025f * Rand(thorn.Serial, j, 13),
                     Color.Lerp(BarkLight, BarkDark, Rand(thorn.Serial, j, 14)), Fade(age / barkLife),
                     Rand(thorn.Serial, j, 15) * 360f + (Rand(thorn.Serial, j, 16) - .5f) * 24f * age, Seed(thorn.Serial, j, 17));
             }
@@ -619,6 +672,7 @@ namespace Game.View
             thorn.MuzzleOffset = Vector3.zero;
             thorn.Root.localScale = Vector3.one;
             thorn.Root.gameObject.SetActive(false);
+            if (thorn.Ribbon != null) thorn.Ribbon.enabled = false;
             if (thorn.Dust != null) { thorn.Dust.SetParticles(thorn.DustBuffer, 0); thorn.Bark.SetParticles(thorn.BarkBuffer, 0); }
         }
 
@@ -634,6 +688,7 @@ namespace Game.View
         {
             if (_fallbackMaterial != null) Destroy(_fallbackMaterial);
             if (_spireMaterial != null) Destroy(_spireMaterial);
+            if (_ribbonMaterial != null) Destroy(_ribbonMaterial);
         }
     }
 }

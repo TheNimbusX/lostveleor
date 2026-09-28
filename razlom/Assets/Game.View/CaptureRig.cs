@@ -444,7 +444,9 @@ namespace Game.View
                 // Хранители и новые мобы встают вместо быка в том же кадре — виды привязываются уже к ним.
                 var driver = FindAnyObjectByType<TickDriver>();
                 driver.StartStonehoofTest(driver.GetComponent<LayoutView>().Profile, SeedOverride, 1, StonehoofShowcase);
-                if (GuardianShowcase) CombatCaptureEncounter.SetupGuardians(driver, Mathf.Clamp(EnemyOverride, 1, 2));
+                // -ExtraArgs '-capture-pack': до шести Хранителей — места вокруг героя и кружение стаи (ИИ v2).
+                bool pack = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-pack") >= 0;
+                if (GuardianShowcase) CombatCaptureEncounter.SetupGuardians(driver, Mathf.Clamp(EnemyOverride, 1, pack ? 6 : 2));
                 else if (ForestMobShowcase != EnemyKind.None)
                     CombatCaptureEncounter.SetupForestMob(driver, ForestMobShowcase, Mathf.Clamp(EnemyOverride, 1, 3));
                 yield return null;
