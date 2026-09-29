@@ -51,19 +51,21 @@ namespace Game.Tests
         // И ещё раз 29.09 (съёмка stonehoof-hug): досягаемость клыков меряется от
         // поверхностей тел, а кабан с готовыми клыками не пятится от героя в их
         // досягаемости — четыре кабана толпы теперь бьют клыками по-настоящему.
+        // И ещё раз 29.09 (слияние ветки Kostya): поляна арены меньше, река с бродом
+        // и рунный круг меняют карту лесной арены 6 — бой расходится с первого тика.
         private static readonly ulong[] CircleFolds =
         {
-            0xFA2333BF642E2D92UL, 0x21A00E9A550C11DAUL, 0x92B969BD13067909UL,
-            0x0287FD91D2EB4918UL, 0xAA45730B216AA0D0UL, 0x6F4FBC4C35D0DB48UL,
+            0x1EB1A4FC110E528EUL, 0xD09CF9D637FB91D5UL, 0x04FB31D2470F61D6UL,
+            0xD1C69B04F0CA2A9EUL, 0x71E5959BD56EF3ACUL, 0x5438A42AA2891B16UL,
         };
-        private const ulong CircleEnd = 0xBCF28ED1D8B238CCUL;
+        private const ulong CircleEnd = 0xCA478DBF74A14B29UL;
 
         private static readonly ulong[] FightFolds =
         {
-            0x0C64E25CCDF41120UL, 0x93C9D2CA5C7A1462UL, 0x1264396940C7ABF8UL,
-            0x4F2B9AACA9A1BEA6UL, 0x3518361C1284B02BUL, 0xCAE495D10804A841UL,
+            0x4D6CE33E59317CE0UL, 0x55AD2F4195879810UL, 0x492F721034BFAB67UL,
+            0xC1FA44CADFCC48E6UL, 0xB243CAC45D93EE98UL, 0xE398B999859029DDUL,
         };
-        private const ulong FightEnd = 0xFD796EB9D68C9F9BUL;
+        private const ulong FightEnd = 0x9871EE0F75914A60UL;
 
         [Test]
         public void CircleCrowd48_HashSequencePinned() => Check(false, CircleFolds, CircleEnd);

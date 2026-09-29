@@ -44,7 +44,10 @@ namespace Game.View
             if (_riverObject == null)
             {
                 _riverObject = RiverObject("Лесные реки", _water.GetComponent<Renderer>().sharedMaterial, out _riverMesh);
-                var bank = ViewMaterials.CreateLit(new Color(.36f, .33f, .24f));
+                // Берег — та же земля, что у берегов прудов, а не плоская бурая заливка.
+                var bank = CreateLocationGround(new Color(.52f, .49f, .37f), _style.RoomFloorTexture,
+                    _style.PathFloorTexture, _style.FloorTextureTiling, 1);
+                if (bank.HasProperty("_IsRiverBank")) bank.SetFloat("_IsRiverBank", 1);
                 _ownedMaterials.Add(bank);
                 _riverBanks = RiverObject("Берега рек", bank, out _riverBankMesh);
                 _bridgeMesh = MakeBridgeMesh(); _meadowMeshes.Add(_bridgeMesh);
@@ -78,6 +81,8 @@ namespace Game.View
                         Quad(banks, bankIndices, innerA, innerB, outerB, outerA);
                     }
                 }
+                // У арены вместо дощатого моста — импровизированный брод из камней.
+                if (map.GladeCount == 1) { PlaceStoneFord(river, r); continue; }
                 var bridge = _bridgePool.Acquire();
                 bridge.transform.position = new Vector3(river.Center.X.ToFloat(), 0, river.Center.Y.ToFloat());
                 bridge.transform.rotation = Quaternion.LookRotation(along);
@@ -120,6 +125,57 @@ namespace Game.View
                             DressDetail(map, center, _decorRadii[variant], bushes, grass, rng);
                     }
             }
+        }
+
+        // Два неровных ряда плоских камней поперёк русла по ширине переправы и валуны у берегов.
+        // Пол под переправой вырезан (LayoutView.Outline), поэтому между камнями видна вода.
+        private void PlaceStoneFord(LayoutRiver river, int index)
+        {
+            var steps = new List<int>(); var boulders = new List<int>();
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+            {
+                var prefab = _style.DecorVariants[i].Prefab;
+                if (prefab == null || _style.DecorVariants[i].Kind != DecorKind.Rock) continue;
+                if (prefab.name.StartsWith("ArenaCreatingRock")) steps.Add(i);
+                else if (prefab.name == "CreatingRock" || prefab.name.StartsWith("Rock")) boulders.Add(i);
+            }
+            if (steps.Count == 0) return;
+            var rng = DecorRandom(index, 863);
+            var center = new Vector3(river.Center.X.ToFloat(), 0, river.Center.Y.ToFloat());
+            var along = new Vector3(river.Along.X.ToFloat(), 0, river.Along.Y.ToFloat());
+            var across = new Vector3(river.Across.X.ToFloat(), 0, river.Across.Y.ToFloat());
+            float reach = river.HalfWidth.ToFloat() + .3f;
+            int rows = 5;
+            for (int row = 0; row < rows; row++)
+                for (int column = -1; column <= 1; column += 2)
+                {
+                    float s = -reach + row * 2 * reach / (rows - 1) + ((float)rng.NextDouble() - .5f) * .3f;
+                    float t = column * .8f + (row % 2 == 0 ? .3f : -.3f) + ((float)rng.NextDouble() - .5f) * .5f;
+                    var point = center + along * s + across * t;
+                    SpawnDecor(steps[rng.Next(steps.Count)], point.x, point.z, rng);
+                    var stone = _decor[_decorCount - 1];
+                    float spread = 1.25f + (float)rng.NextDouble() * .35f;
+                    stone.localScale = Vector3.Scale(stone.localScale, new Vector3(spread, .45f, spread));
+                    SetTop(stone, .05f);
+                }
+            if (boulders.Count == 0) return;
+            for (int side = -1; side <= 1; side += 2)
+            {
+                // Валуны у концов брода стоят за краем переправы и не мешают пройти.
+                float t = side * (river.BridgeHalfWidth.ToFloat() + .6f + (float)rng.NextDouble() * .5f);
+                float s = (rng.NextDouble() < .5 ? -1 : 1) * (reach - .2f);
+                var point = center + along * s + across * t;
+                SpawnDecor(boulders[rng.Next(boulders.Count)], point.x, point.z, rng);
+                var boulder = _decor[_decorCount - 1];
+                boulder.localScale *= .75f;
+                SetTop(boulder, .45f + (float)rng.NextDouble() * .25f);
+            }
+        }
+
+        private static void SetTop(Transform item, float top)
+        {
+            var renderer = item.GetComponentInChildren<Renderer>();
+            if (renderer != null) item.position += Vector3.up * (top - renderer.bounds.max.y);
         }
 
         private static Vector3 RiverPoint(LayoutRiver river, float t)

@@ -40,6 +40,13 @@ namespace Game.View
         public bool UseCampLighting;
         [Tooltip("Пусто — постобработка художественного прохода лагеря. Отдельный ассет позволяет настроить другую локацию.")]
         public UnityEngine.Rendering.VolumeProfile PostProcessingOverride;
+        [Tooltip("Вечерняя дымка лагеря в разломе: начало и полная сила, метры дальше земли под центром камеры. " +
+                 "Лагерная полоса (−6…18) закрывала арену тёплой пеленой — верх кадра уходил в дымку на две трети.")]
+        public float CampHazeNear = 4f;
+        public float CampHazeFar = 60f;
+        [Tooltip("Высота солнца над горизонтом в разломе, градусы; 0 — как вечером в лагере. " +
+                 "Низкое вечернее солнце лагеря клало на поляну арены длинные тени деревьев.")]
+        [Range(0, 80)] public float CampSunPitch;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
         [Range(0.1f, 3)] public float SunIntensity = 1.25f;
         public Vector3 SunAngles = new Vector3(52, -35, 0);
@@ -178,7 +185,9 @@ namespace Game.View
                 throw new ArgumentException("Размер полян должен быть от 0.5 до 1.2.");
             if (float.IsNaN(EdgeCanopyDensity) || EdgeCanopyDensity < 0 || EdgeCanopyDensity > 1
                 || ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
-                || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3)
+                || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3
+                || float.IsNaN(CampHazeNear) || !(CampHazeFar > CampHazeNear)
+                || float.IsNaN(CampSunPitch) || CampSunPitch < 0 || CampSunPitch > 80)
                 throw new ArgumentException("Проверьте ширину леса, шаг деревьев, свет и дальность тумана.");
             if (RouteWidth < 0.8f || RouteWidth > 2f || RouteClearance < 0 || EntryClearance < 0
                 || Thickness <= 0 || Gap < 0 || Gap >= Game.Sim.LayoutMap.CellSize.ToFloat()

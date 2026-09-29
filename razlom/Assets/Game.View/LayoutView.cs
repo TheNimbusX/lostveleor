@@ -59,8 +59,9 @@ namespace Game.View
         private readonly List<Material> _ownedMaterials = new List<Material>();
         private readonly Dictionary<(Material, int), Material> _understoryMaterials = new Dictionary<(Material, int), Material>();
         // Три оттенка подлеска: одинаковые ярко-салатовые шары читались россыпью меток, а не зарослями.
+        // Оттенки зеленее прежних (.6/.7/.62…): под дымкой заросли сливались в оливковую массу.
         private static readonly Color[] UnderstoryTints =
-            { new Color(.6f, .7f, .62f, 1), new Color(.68f, .78f, .69f, 1), new Color(.76f, .78f, .62f, 1) };
+            { new Color(.62f, .78f, .58f, 1), new Color(.72f, .86f, .64f, 1), new Color(.82f, .84f, .6f, 1) };
         private int _understoryTint;
 
         public int TileCount => _tileCount;
@@ -312,6 +313,8 @@ namespace Game.View
         private void LateUpdate()
         {
             UpdateMeadow();
+            DrawGrassField();
+            DrawFallenLeaves();
             if (!Application.isPlaying || _driver == null) return;
             if (_driver.Run == null || _driver.Sim == null)
             {
@@ -494,6 +497,10 @@ namespace Game.View
                     if (rng.NextDouble() > Mathf.Lerp(.3f, 1f, Mathf.SmoothStep(0f, 1f, clump))) continue;
                     if (TooCloseToConnector(x, z)) continue;
                     if (map.Outline != null && !map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.One)) continue;
+                    // Переправа проходима, но это вода: кусты и трава на броде не растут.
+                    if (NearRiver(x, z, .6f)) continue;
+                    // Середина арены — утоптанная земля (LayoutView.Glade): растения пола только в кайме у края.
+                    if (map.GladeCount == 1 && map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.FromInt(3))) continue;
 
                     int variant = PickVariantIndex(rng, totalWeight);
                     // Large props inside the playable area must have a Sim footprint.

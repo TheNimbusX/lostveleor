@@ -99,6 +99,12 @@ namespace Game.Sim
                 return placed;
             }
             int middle = (width - ew) / 2;
+            // Вода обычной арены: река с каменным бродом перед выходом либо одно озеро у края
+            // поляны вместо россыпи луж. Река у выхода, а не у входа: враги не ищут путь и
+            // упирались бы в берег, пока герой стоит за рекой на старте. Отдельный поток
+            // не сдвигает остальные броски.
+            var waterKind = new Pcg32(seed, 0x4C414B45UL);
+            bool riverArena = singleArena && !boss && waterKind.NextInt(0, 3) != 0;
             Place(entrance, middle, -(boss ? 2 : 1) * eh, -1);
             int previous = boss ? Place(entrance, middle, -eh, 0) : 0;
             FixVec2 previousCenter = map.CenterOf(0);
@@ -120,6 +126,9 @@ namespace Game.Sim
                 var worldRadii = turn % 2 == 0
                     ? new FixVec2(Fix64.FromInt(width), Fix64.FromInt(height))
                     : new FixVec2(Fix64.FromInt(height), Fix64.FromInt(width));
+                // Арена чуть теснее блока модулей: бой собраннее, по краю больше леса.
+                // Поляна босса сохраняет прежний простор.
+                if (singleArena && !boss) worldRadii = worldRadii * Fix64.Ratio(85, 100);
                 // Different neighbouring silhouettes, selected independently of layout and spawns.
                 regions[g] = new GladeRegion(center, worldRadii,
                     boss ? GladeShape.Rounded : (GladeShape)((firstShape + g) % 6), shapeRng.NextInt(0, 4));
@@ -140,7 +149,10 @@ namespace Game.Sim
                     pockets.Add(p); links.Add((map.CenterOf(p), center, Fix64.Ratio(19, 10)));
                 }
             }
-            int exit = Place(entrance, middle, (count - 1) * (height + eh) + height, boss ? arena : previous);
+            // Речной арене между поляной и выходом нужен коридор-модуль: по нему идёт река с бродом.
+            int exitParent = boss ? arena : previous, exitRow = (count - 1) * (height + eh) + height, ford = -1;
+            if (riverArena) { ford = Place(entrance, middle, exitRow, exitParent); exitParent = ford; exitRow += eh; }
+            int exit = Place(entrance, middle, exitRow, exitParent);
             links.Add((previousCenter, map.CenterOf(exit), Fix64.Ratio(22, 10)));
             // Water is a hole in the actual floor, so movement, navigation and rendering agree.
             var rivers = new List<LayoutRiver>();
@@ -149,27 +161,54 @@ namespace Game.Sim
             for (int g = 1; g < count; g += 2)
                 rivers.Add(new LayoutRiver((regions[g - 1].Center + regions[g].Center) / Fix64.FromInt(2),
                     acrossRiver, riverRng.NextFix(Fix64.One, Fix64.FromInt(3))));
+            // Река арены пересекает коридор выхода: брод шириной 6 м лежит ровно на пути к порталу.
+            if (riverArena)
+                rivers.Add(new LayoutRiver(map.CenterOf(ford), acrossRiver,
+                    riverRng.NextFix(Fix64.One, Fix64.FromInt(2)), Fix64.FromInt(3)));
             map.SetRivers(rivers.ToArray());
             var water = new List<LayoutObstacle>();
             var waterRng = new Pcg32(seed, 0x5741544552UL);
             foreach (var region in regions)
             {
-                int wanted = boss ? 3 : 2;
+                // У речной арены луж нет, у обычной — одно озеро, врезанное в край поляны,
+                // у босса — одно озеро посреди поляны с сухим кольцом вокруг, вместо трёх луж.
+                bool lake = singleArena && !riverArena && !boss;
+                int wanted = boss ? 1 : singleArena ? (lake ? 1 : 0) : 2;
                 for (int attempt = 0, placed = 0; attempt < 200 && placed < wanted; attempt++)
                 {
-                    // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее.
-                    var radius = waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
-                    var point = region.Center + new FixVec2(
-                        waterRng.NextFix(-region.Radii.X, region.Radii.X) * Fix64.Ratio(7, 10),
-                        waterRng.NextFix(-region.Radii.Y, region.Radii.Y) * Fix64.Ratio(7, 10));
-                    bool clear = FixVec2.DistanceSq(point, region.Center) > Fix64.FromInt(boss ? 81 : 25);
-                    // A dry ring wide enough for enemies must remain around the entire pond.
-                    var margin = radius + Fix64.FromInt(3);
-                    for (int d = 0; d < 16 && clear; d++)
+                    Fix64 radius; FixVec2 point; bool clear;
+                    if (lake)
                     {
-                        var angle = Fix64.TwoPi * Fix64.Ratio(d, 16);
-                        var offset = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle)) * margin;
-                        if (region.Field(point + offset) > Fix64.One) clear = false;
+                        // Озеро — край арены (владелец, 29 сентября): крупное, по размеру поляны. Центр за
+                        // настоящей кромкой пола (форма поляны уже её радиусов), вода заходит на пол на
+                        // 45–70% своего радиуса — берег забирает у поляны длинную дугу, остальное в лесу.
+                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(55, 100), Fix64.Ratio(70, 100));
+                        var angle = waterRng.NextFix(Fix64.Zero, Fix64.TwoPi);
+                        var outside = waterRng.NextFix(Fix64.Ratio(30, 100), Fix64.Ratio(55, 100));
+                        var direction = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle));
+                        var edge = Fix64.Zero;
+                        while (edge < region.Radii.X + region.Radii.Y && region.Field(region.Center + direction * edge) <= Fix64.One)
+                            edge += Fix64.Ratio(1, 4);
+                        point = region.Center + direction * (edge + radius * outside);
+                        clear = true;
+                    }
+                    else
+                    {
+                        // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее; у босса — одно большое.
+                        radius = boss ? waterRng.NextFix(Fix64.FromInt(5), Fix64.Ratio(65, 10))
+                            : waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
+                        point = region.Center + new FixVec2(
+                            waterRng.NextFix(-region.Radii.X, region.Radii.X) * Fix64.Ratio(7, 10),
+                            waterRng.NextFix(-region.Radii.Y, region.Radii.Y) * Fix64.Ratio(7, 10));
+                        clear = FixVec2.DistanceSq(point, region.Center) > Fix64.FromInt(boss ? 81 : 25);
+                        // A dry ring wide enough for enemies must remain around the entire pond.
+                        var margin = radius + Fix64.FromInt(3);
+                        for (int d = 0; d < 16 && clear; d++)
+                        {
+                            var angle = Fix64.TwoPi * Fix64.Ratio(d, 16);
+                            var offset = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle)) * margin;
+                            if (region.Field(point + offset) > Fix64.One) clear = false;
+                        }
                     }
                     foreach (var link in links)
                         if (Corridor(point, link.A, link.B, radius + link.Radius + Fix64.FromInt(2))) clear = false;

@@ -32,18 +32,25 @@ namespace Game.View
                         ? _style.ObstacleTree : _style.ObstacleRocks[kind], kind == rocks), 16, false);
                 }
             }
+            // На арене ствол-препятствие рисуется стоячим камнем, как в референсе владельца (29 сентября):
+            // крона дерева посреди поляны закрывала бой. Высокий камень пака вытянут вверх,
+            // отпечаток в симуляции прежний.
+            bool menhirs = map.GladeCount == 1 && rocks > 3;
             for (int i = 0; i < map.ObstacleCount; i++)
             {
                 var obstacle = map.GetObstacle(i);
-                int kind = obstacle.VisualKind == 1 || rocks == 0 ? rocks : i % rocks;
+                bool menhir = menhirs && obstacle.VisualKind == 1;
+                int kind = menhir ? 3 : obstacle.VisualKind == 1 || rocks == 0 ? rocks : i % rocks;
                 var go = _solidPools[kind].Acquire();
                 float radius = obstacle.Radius.ToFloat();
                 go.transform.position = new Vector3(obstacle.Center.X.ToFloat(), 0, obstacle.Center.Y.ToFloat());
                 go.transform.rotation = Quaternion.Euler(0, (float)DecorRandom(i, 71).NextDouble() * 360, 0);
-                go.transform.GetChild(0).localScale = Vector3.one * (kind == rocks ? 1 : radius);
+                go.transform.GetChild(0).localScale = kind == rocks ? Vector3.one
+                    : menhir ? new Vector3(radius * 1.3f, radius * 2.1f, radius * 1.3f) : Vector3.one * radius;
                 // Bury only the visual rock base; the simulation footprint and collider stay unchanged.
                 go.transform.GetChild(0).localPosition = kind == rocks ? Vector3.zero
                     : Vector3.down * radius * Mathf.Lerp(.15f, .3f, (float)DecorRandom(i, 73).NextDouble());
+                if (menhir) AddMenhirCrystals(obstacle, i);
                 var collider = go.GetComponent<CapsuleCollider>();
                 collider.radius = radius;
                 collider.height = kind == rocks ? 3 : radius * 2;

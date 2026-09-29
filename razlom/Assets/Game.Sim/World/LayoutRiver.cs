@@ -4,12 +4,14 @@ namespace Game.Sim
     public readonly struct LayoutRiver
     {
         public readonly FixVec2 Center, Across;
-        public readonly Fix64 HalfLength, HalfWidth, Bend;
-        public static readonly Fix64 BridgeHalfWidth = Fix64.FromInt(2);
+        public readonly Fix64 HalfLength, HalfWidth, Bend, BridgeHalfWidth;
+        public static readonly Fix64 DefaultBridgeHalfWidth = Fix64.FromInt(2);
         public FixVec2 Along => new FixVec2(-Across.Y, Across.X);
-        public LayoutRiver(FixVec2 center, FixVec2 across, Fix64 bend)
+        public LayoutRiver(FixVec2 center, FixVec2 across, Fix64 bend) : this(center, across, bend, DefaultBridgeHalfWidth) { }
+        // Каменный брод арены шире мостика между полянами: по нему проходят стая и самое толстое тело.
+        public LayoutRiver(FixVec2 center, FixVec2 across, Fix64 bend, Fix64 bridgeHalfWidth)
         {
-            Center = center; Across = across; Bend = bend;
+            Center = center; Across = across; Bend = bend; BridgeHalfWidth = bridgeHalfWidth;
             HalfLength = Fix64.FromInt(42); HalfWidth = Fix64.Ratio(23, 10);
         }
         public FixVec2 Point(Fix64 t) => Center + Across * t
@@ -33,6 +35,8 @@ namespace Game.Sim
             Hashing.Mix(ref hash, Center.X); Hashing.Mix(ref hash, Center.Y);
             Hashing.Mix(ref hash, Across.X); Hashing.Mix(ref hash, Across.Y);
             Hashing.Mix(ref hash, Bend);
+            // Ширина по умолчанию не меняет хеш старых карт с мостиками между полянами.
+            if (BridgeHalfWidth != DefaultBridgeHalfWidth) Hashing.Mix(ref hash, BridgeHalfWidth);
         }
     }
 }

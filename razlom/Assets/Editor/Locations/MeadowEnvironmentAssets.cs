@@ -238,7 +238,8 @@ namespace Game.LocationEditor
             // Колоски и круг рун расставляются явно в LayoutView.Meadow: нулевой вес не пускает их
             // ни в общие пулы, ни на боевой пол (PlaceModuleDecor выбирает декор по весу).
             variants.Add(Variant(PrepareSeedHeads(), DecorKind.GrassTuft, 0f, false, .85f, 1.2f));
-            variants.Add(Variant(PrepareStoneRuin(), DecorKind.Rock, 0f, false, .95f, 1.05f));
+            variants.Add(Variant(PrepareRuneLandmark("CreatingStoneRuin", "arena_stone_ruin", 3.7f, .05f),
+                DecorKind.Rock, 0f, false, .95f, 1.05f));
             // Остальные пучки из Creating качаются тем же ветром, что и трава лагеря.
             foreach (var variant in variants)
                 if (variant.Prefab != null && (variant.Prefab.name == "CreatingGrass" || variant.Prefab.name == "ArenaCreatingGrass"))
@@ -495,18 +496,357 @@ namespace Game.LocationEditor
             EditorUtility.SetDirty(target);
         }
 
-        // Круг рунных камней из Creating плоский (высота около 0,18 диаметра): ставится одним
-        // ориентиром у края арены, салатовые руны текстуры получают собственное свечение.
-        private static GameObject PrepareStoneRuin()
+        // Рунные ориентиры из Creating плоские: кольцо-руина (высота около 0,18 диаметра) и
+        // большой рунный камень-помост (около 0,22). Салатовые руны текстуры получают собственное
+        // свечение; модель утоплена в землю так, что верх камней по краю стоит на keepAbove метров над ней.
+        private static GameObject PrepareRuneLandmark(string name, string category, float size, float keepAbove)
         {
-            var prefab = PrepareImported("CreatingStoneRuin", "arena_stone_ruin", 3.7f, true);
-            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingStoneRuin_Surface.mat");
-            material.SetTexture("_EmissionMap", BuildRuneEmission("arena_stone_ruin", Folder + "/CreatingStoneRuin_Runes.png"));
+            var prefab = PrepareImported(name, category, size, true);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/" + name + "_Surface.mat");
+            material.SetTexture("_EmissionMap", BuildRuneEmission(category, Folder + "/" + name + "_Runes.png"));
             material.SetColor("_EmissionColor", new Color(.75f, 1f, .45f) * 1.5f);
             material.EnableKeyword("_EMISSION");
             material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
             EditorUtility.SetDirty(material);
+            SinkIntoGround(name, keepAbove);
             return prefab;
+        }
+
+        // Мерить по высшей точке нельзя: у кольца это тонкие лозы, и при 0,22 м над землёй
+        // сами камни и руны уходили под траву целиком. Повторный запуск модель не двигает.
+        private static void SinkIntoGround(string name, float keep)
+        {
+            string path = Folder + "/" + name + ".prefab";
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                float drop = RimTop(root) - keep;
+                if (Mathf.Abs(drop) <= .01f) return;
+                root.transform.GetChild(0).localPosition += Vector3.down * drop;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                Debug.Log($"[Луга] {name}: опущен на {drop:0.00} м, край над землёй {keep:0.00} м");
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+
+        // Медиана высот верхних граней во внешней пятой части радиуса — верх камней по краю.
+        private static float RimTop(GameObject root)
+        {
+            var filter = root.GetComponentInChildren<MeshFilter>(true);
+            var bounds = filter.GetComponent<Renderer>().bounds;
+            float radius = Mathf.Max(bounds.extents.x, bounds.extents.z);
+            var matrix = filter.transform.localToWorldMatrix;
+            var vertices = filter.sharedMesh.vertices; var normals = filter.sharedMesh.normals;
+            var heights = new List<float>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var p = matrix.MultiplyPoint3x4(vertices[i]);
+                if (matrix.MultiplyVector(normals[i]).normalized.y < .8f
+                    || new Vector2(p.x - bounds.center.x, p.z - bounds.center.z).magnitude < radius * .8f) continue;
+                heights.Add(p.y);
+            }
+            heights.Sort();
+            return heights[heights.Count / 2];
+        }
+
+        [MenuItem("Разлом/Локации/Добавить рунный камень и траву по карте из Creating", priority = 29)]
+        public static void AddRuneStoneAndGrassField()
+        {
+            AssetDatabase.Refresh();
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRuneStone" || v.Prefab.name == "CreatingGrassField"));
+            // Кольцо-руина уходит в землю: над травой остаётся только верх камней.
+            PrepareRuneLandmark("CreatingStoneRuin", "arena_stone_ruin", 3.7f, .05f);
+            // Рунный камень ставится явно как ориентир, трава — ковром в LayoutView.Grass:
+            // нулевой вес не пускает их ни в общие пулы, ни на боевой пол.
+            variants.Add(Variant(PrepareRuneLandmark("CreatingRuneStone", "arena_rune_stone", 3.3f, .18f),
+                DecorKind.Rock, 0f, false, .95f, 1.05f));
+            variants.Add(Variant(PrepareGrassField(), DecorKind.GrassTuft, 0f, false, .9f, 1.1f));
+            theme.Style.DecorVariants = variants.ToArray();
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Подключены рунный камень и трава по карте, кольцо-руина утоплено в землю.");
+        }
+
+        // Пучок для травяного ковра по всей карте: 970 треугольников упрощаются штатным Mesh LOD
+        // примерно до 300 — тысяча экземпляров на арену не должна весить как лес.
+        private static GameObject PrepareGrassField()
+        {
+            var prefab = PrepareImported("CreatingGrassField", "arena_grass_field", .36f, false);
+            string path = AssetDatabase.GetAssetPath(prefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var filter = root.GetComponentInChildren<MeshFilter>(true);
+                var work = UnityEngine.Object.Instantiate(filter.sharedMesh);
+                string meshPath = Folder + "/CreatingGrassField_Mesh.asset";
+                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+                if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, meshPath); }
+                try
+                {
+                    MeshLodUtility.GenerateMeshLods(work, (MeshLodUtility.LodGenerationFlags)0, -1);
+                    int level = 0;
+                    while (level + 1 < work.lodCount && LodTriangles(work, level) > 320) level++;
+                    ExtractLod(work, level, mesh);
+                    mesh.name = "CreatingGrassField_Mesh";
+                    Debug.Log($"[Луга] CreatingGrassField: LOD {level}, {LodTriangles(work, level)} из {LodTriangles(work, 0)} треугольников");
+                }
+                finally { UnityEngine.Object.DestroyImmediate(work); }
+                filter.sharedMesh = mesh;
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            TintPrefab("CreatingGrassField", GrassFieldTint);
+            return AddBreeze(prefab, .12f);
+        }
+
+        // Модель ядовито-зелёная, прежний тон .7/.78/.64 вместе с дымкой делал ковёр блёклым.
+        private static readonly Color GrassFieldTint = new Color(.82f, .9f, .72f);
+
+        // Арена выглядела блёклой: вечерняя дымка лагеря ложилась на весь кадр, постобработка
+        // заката грела и гасила цвет, фактура земли была размыта. У арены свой профиль цвета
+        // (контраст и насыщенность выше, закат мягче), чётче земля и светлее трава ковра.
+        // Лагерь не меняется: его профиль и материалы не трогаются.
+        [MenuItem("Разлом/Локации/Сочнее цвет арены", priority = 30)]
+        public static void BrightenArena()
+        {
+            var theme = MeadowLocationAssets.EnsureCreated();
+            theme.Style.PostProcessingOverride = ArenaGrade();
+            theme.Style.GroundDetailSoftness = 1.2f;
+            TintPrefab("CreatingGrassField", GrassFieldTint);
+            TintLeaves("MeadowBroadleaf", BroadleafLeafTint);
+            TintLeaves("MeadowSpruceA", SpruceNeedleTint);
+            TintLeaves("MeadowSpruceB", SpruceNeedleTint);
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Арена: свой профиль цвета, чётче земля, светлее трава ковра, зеленее листва.");
+        }
+
+        // Сказочная поляна по референсу владельца (29 сентября): красные грибы, лиловые цветы и
+        // светящиеся зелёные кристаллы у кромки, фонари у порталов. Нулевой вес: всё ставится явно
+        // в LayoutView.Glade и не попадает во взвешенные пулы декора.
+        [MenuItem("Разлом/Локации/Сказочная поляна: грибы, цветы, кристаллы, фонари", priority = 31)]
+        public static void AddGladeDressing()
+        {
+            AssetDatabase.Refresh();
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "MeadowMushrooms" || v.Prefab.name == "MeadowFlower"
+                || v.Prefab.name == "MeadowCrystals" || v.Prefab.name == "MeadowLanternPost"));
+            const string nature = "Assets/InnerverseInteractive/Ultimate Nature – Starter/Environment/Vegetation/";
+            variants.Add(Variant(Prepare("MeadowMushrooms", nature + "Mushrooms/Prefabs/UNS_Mushroom_Patch.prefab", .42f, false),
+                DecorKind.GrassTuft, 0f, false, .9f, 1.6f));
+            variants.Add(Variant(Prepare("MeadowFlower", nature + "Flowers/Prefabs/UNS_Flower.prefab", .85f, false),
+                DecorKind.GrassTuft, 0f, false, .8f, 1.25f));
+            variants.Add(Variant(PrepareCrystals(), DecorKind.Rock, 0f, false, .8f, 1.25f));
+            variants.Add(Variant(PrepareLanternPost(), DecorKind.Rock, 0f, false, .95f, 1.05f));
+            theme.Style.DecorVariants = variants.ToArray();
+            // Золотой день вместо позднего заката: тени деревьев не ложатся на половину поляны.
+            theme.Style.CampSunPitch = 40;
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Сказочная поляна: грибы, цветы, кристаллы и фонари подключены.");
+        }
+
+        // Друза из пяти кристаллов Hovl: высокий в середине, четыре пониже наклонены наружу.
+        // Свой светящийся материал: 100 треугольников на кристалл, свечение подхватывает bloom.
+        private static GameObject PrepareCrystals()
+        {
+            Mesh mesh = null;
+            foreach (var asset in AssetDatabase.LoadAllAssetsAtPath("Assets/Hovl Studio/Magic effects pack/Models/Crystal1.fbx"))
+                if (asset is Mesh found) mesh = found;
+            if (mesh == null) throw new InvalidOperationException("Нет меша Crystal1");
+            string materialPath = Folder + "/MeadowCrystals_Surface.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            material.SetColor("_BaseColor", new Color(.22f, .78f, .46f));
+            material.SetFloat("_Smoothness", .8f);
+            // Свечение умеренное: ярче — и нейтральный тонмаппинг выжигал кристаллы до белого.
+            material.SetColor("_EmissionColor", new Color(.1f, .95f, .4f) * .85f);
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            var root = new GameObject("MeadowCrystals");
+            try
+            {
+                var random = new System.Random(2909);
+                var bounds = mesh.bounds;
+                for (int i = 0; i < 5; i++)
+                {
+                    float height = i == 0 ? 1.05f : .42f + (float)random.NextDouble() * .33f;
+                    float scale = height / bounds.size.y;
+                    float yaw = i * 72 + (float)random.NextDouble() * 30;
+                    var shard = new GameObject("Кристалл " + i).transform;
+                    shard.SetParent(root.transform, false);
+                    // Основание кристалла чуть уходит в землю, наклон — от центра друзы.
+                    shard.localPosition = Quaternion.Euler(0, yaw, 0) * Vector3.forward * (i == 0 ? 0 : .2f + (float)random.NextDouble() * .12f)
+                        + Vector3.down * height * .15f;
+                    shard.localRotation = Quaternion.Euler(0, yaw, 0) * Quaternion.Euler(i == 0 ? 5 : 16 + (float)random.NextDouble() * 16, 0, 0);
+                    var body = new GameObject("Меш").transform;
+                    body.SetParent(shard, false);
+                    body.localScale = Vector3.one * scale;
+                    body.localPosition = -new Vector3(bounds.center.x, bounds.min.y, bounds.center.z) * scale;
+                    body.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    var renderer = body.gameObject.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterial = material;
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+                return PrefabUtility.SaveAsPrefabAsset(root, Folder + "/MeadowCrystals.prefab");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        // Лагерный столб с фонарём: 1,87 млн треугольников упрощаются штатным Mesh LOD до ~6 тысяч.
+        // Огонь фонаря получает свечение из тёплых пикселей текстуры, рядом — тёплый точечный свет.
+        private static GameObject PrepareLanternPost()
+        {
+            const string source = "Assets/Resources/Environment/Camp/fonar.fbx";
+            const string textures = "Assets/Resources/Environment/Camp/fonar.fbm/";
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(source);
+            var filter = model.GetComponentInChildren<MeshFilter>(true);
+            string meshPath = Folder + "/MeadowLanternPost_Mesh.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
+            if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, meshPath); }
+            var work = UnityEngine.Object.Instantiate(filter.sharedMesh);
+            try
+            {
+                MeshLodUtility.GenerateMeshLods(work, (MeshLodUtility.LodGenerationFlags)0, -1);
+                int level = 0;
+                while (level + 1 < work.lodCount && LodTriangles(work, level) > 6000) level++;
+                ExtractLod(work, level, mesh);
+                mesh.name = "MeadowLanternPost_Mesh";
+                Debug.Log($"[Луга] MeadowLanternPost: LOD {level}, {LodTriangles(work, level)} из {LodTriangles(work, 0)} треугольников");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(work); }
+            var baseMap = AssetDatabase.LoadAssetAtPath<Texture2D>(textures + "wooden_lantern_post_3d_model_basecolor.JPEG");
+            var glow = BuildGlowMap(textures + "wooden_lantern_post_3d_model_basecolor.JPEG", Folder + "/MeadowLanternPost_Glow.png",
+                // Огонь — яркий жёлто-оранжевый; светлое дерево столба (r ~150, g ~100) сюда не попадает.
+                p => p.r > 215 && p.g > 120 && p.r > p.b + 80 ? Mathf.InverseLerp(215, 250, p.r) : 0);
+            string materialPath = Folder + "/MeadowLanternPost_Surface.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            material.SetTexture("_BaseMap", baseMap);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetFloat("_Smoothness", .15f);
+            material.SetTexture("_EmissionMap", glow);
+            material.SetColor("_EmissionColor", new Color(1f, .62f, .28f) * 2.2f);
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            var root = new GameObject("MeadowLanternPost");
+            try
+            {
+                // Экземпляр исходной модели сохраняет поворот узла FBX (столб в нём лежит на боку).
+                var body = UnityEngine.Object.Instantiate(model, root.transform).transform;
+                body.name = "Столб";
+                var bodyFilter = body.GetComponentInChildren<MeshFilter>(true);
+                bodyFilter.sharedMesh = mesh;
+                bodyFilter.GetComponent<MeshRenderer>().sharedMaterials = new[] { material };
+                foreach (var collider in body.GetComponentsInChildren<Collider>(true)) UnityEngine.Object.DestroyImmediate(collider);
+                var bounds = bodyFilter.GetComponent<MeshRenderer>().bounds;
+                float scale = 2.4f / Mathf.Max(.01f, bounds.size.y);
+                body.localScale *= scale;
+                body.localPosition = -new Vector3(bounds.center.x, bounds.min.y, bounds.center.z) * scale;
+                // Свет — там, где на меше огонь: средняя точка вершин с тёплым цветом текстуры.
+                var glowPoint = GlowCentre(mesh, glow, mesh.bounds.center);
+                var lantern = bodyFilter.transform.TransformPoint(glowPoint);
+                // Кронштейн разворачивается вдоль оси X префаба: LayoutView вешает фонарь над проходом.
+                body.RotateAround(Vector3.zero, Vector3.up, Mathf.Atan2(lantern.z, lantern.x) * Mathf.Rad2Deg);
+                lantern = bodyFilter.transform.TransformPoint(glowPoint);
+                var light = new GameObject("Свет фонаря").AddComponent<Light>();
+                light.transform.SetParent(root.transform, false);
+                light.transform.position = lantern;
+                light.type = LightType.Point; light.range = 3.8f; light.intensity = .9f;
+                light.color = new Color(1f, .76f, .5f); light.shadows = LightShadows.None;
+                Debug.Log($"[Луга] MeadowLanternPost: высота 2,4 м, огонь на {light.transform.localPosition}");
+                return PrefabUtility.SaveAsPrefabAsset(root, Folder + "/MeadowLanternPost.prefab");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        private static Texture2D BuildGlowMap(string source, string output, Func<Color32, float> glow)
+        {
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                texture.LoadImage(File.ReadAllBytes(source));
+                var pixels = texture.GetPixels32();
+                int lit = 0;
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    float amount = glow(pixels[i]);
+                    if (amount > .05f) lit++;
+                    var p = pixels[i];
+                    pixels[i] = new Color32((byte)(p.r * amount), (byte)(p.g * amount), (byte)(p.b * amount), 255);
+                }
+                texture.SetPixels32(pixels);
+                File.WriteAllBytes(output, texture.EncodeToPNG());
+                Debug.Log($"[Луга] {Path.GetFileNameWithoutExtension(output)}: светится {lit * 100f / pixels.Length:0.00}% текстуры");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(output);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(output);
+        }
+
+        private static Vector3 GlowCentre(Mesh mesh, Texture2D glow, Vector3 fallback)
+        {
+            var readable = new Texture2D(2, 2);
+            try
+            {
+                readable.LoadImage(File.ReadAllBytes(AssetDatabase.GetAssetPath(glow)));
+                var vertices = mesh.vertices; var uv = mesh.uv;
+                var sum = Vector3.zero; int count = 0;
+                for (int i = 0; i < vertices.Length && i < uv.Length; i++)
+                {
+                    if (readable.GetPixelBilinear(uv[i].x, uv[i].y).maxColorComponent < .25f) continue;
+                    sum += vertices[i]; count++;
+                }
+                return count > 0 ? sum / count : fallback;
+            }
+            finally { UnityEngine.Object.DestroyImmediate(readable); }
+        }
+
+        // Листва деревьев — материалы с альфа-отсечением из PrepareNaturalTree; кора не меняется.
+        private static void TintLeaves(string tree, Color tint)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/" + tree + ".prefab");
+            foreach (var renderer in prefab.GetComponentsInChildren<Renderer>(true))
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    if (material == null || !material.HasProperty("_AlphaClip") || material.GetFloat("_AlphaClip") < .5f
+                        || !AssetDatabase.GetAssetPath(material).StartsWith(Folder + "/")) continue;
+                    material.SetColor("_BaseColor", tint);
+                    EditorUtility.SetDirty(material);
+                }
+        }
+
+        private static UnityEngine.Rendering.VolumeProfile ArenaGrade()
+        {
+            const string path = Folder + "/MeadowArenaGrade.asset";
+            if (AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(path) == null
+                && !AssetDatabase.CopyAsset("Assets/Resources/Environment/Camp/LookVariants/CampGoldenEvening.asset", path))
+                throw new InvalidOperationException("Не удалось скопировать профиль вечера лагеря.");
+            var profile = AssetDatabase.LoadAssetAtPath<UnityEngine.Rendering.VolumeProfile>(path);
+            if (profile.TryGet(out UnityEngine.Rendering.Universal.ColorAdjustments color))
+            {
+                color.contrast.Override(20); color.saturation.Override(20); color.postExposure.Override(.32f);
+            }
+            if (profile.TryGet(out UnityEngine.Rendering.Universal.WhiteBalance balance))
+            {
+                balance.temperature.Override(5); balance.tint.Override(2);
+            }
+            if (profile.TryGet(out UnityEngine.Rendering.Universal.Vignette vignette)) vignette.intensity.Override(.16f);
+            foreach (var component in profile.components) EditorUtility.SetDirty(component);
+            EditorUtility.SetDirty(profile);
+            return profile;
         }
 
         private static Texture2D BuildRuneEmission(string category, string output)
@@ -599,6 +939,10 @@ namespace Game.LocationEditor
             Debug.Log("[Луга] Подключены лиственное дерево и две ели с отдельными приглушёнными материалами.");
         }
 
+        // Листва зеленее прежней (.9/.94/.82 и .3/.42/.24): кроны арены читались бурой массой.
+        private static readonly Color BroadleafLeafTint = new Color(.95f, 1.02f, .82f);
+        private static readonly Color SpruceNeedleTint = new Color(.33f, .48f, .26f);
+
         private static GameObject PrepareNaturalTree(string name, string source, float height)
         {
             var prefab = Prepare(name, source, height, false);
@@ -637,8 +981,7 @@ namespace Game.LocationEditor
                         copy.SetFloat("_Smoothness", .12f);
                         if (leaf)
                         {
-                            copy.SetColor("_BaseColor", name == "MeadowBroadleaf"
-                                ? new Color(.9f, .94f, .82f) : new Color(.3f, .42f, .24f));
+                            copy.SetColor("_BaseColor", name == "MeadowBroadleaf" ? BroadleafLeafTint : SpruceNeedleTint);
                             // A small textured fill keeps the backs of leaf cards from reading as black.
                             copy.SetTexture("_EmissionMap", copy.GetTexture("_BaseMap"));
                             copy.SetColor("_EmissionColor", name == "MeadowBroadleaf"

@@ -20,7 +20,7 @@ MonoBehaviour:
     ExitColor: {r: 0.62, g: 0.59, b: 0.51, a: 1}
     NaturalGround: 1
     CampSurfaceMaterial: {fileID: 2100000, guid: 435559c6d81c1964889140a01618e14e, type: 2}
-    GroundDetailSoftness: 1.7
+    GroundDetailSoftness: 1.2
     GroundTurfWeight: 0.32
     TrailStoneCoverage: 0.55
     ForestGroundWear: 0.65
@@ -40,7 +40,10 @@ MonoBehaviour:
     ForestSpacing: 4.5
     EdgeCanopyDensity: 0.7
     UseCampLighting: 1
-    PostProcessingOverride: {fileID: 0}
+    PostProcessingOverride: {fileID: 11400000, guid: cacbde6dc2f36f7458241b0d0149d3ac, type: 2}
+    CampHazeNear: 4
+    CampHazeFar: 60
+    CampSunPitch: 40
     SunColor: {r: 1, g: 0.92, b: 0.8, a: 1}
     SunIntensity: 1.25
     SunAngles: {x: 52, y: -35, z: 0}
@@ -207,6 +210,42 @@ MonoBehaviour:
       UseAsBoundary: 0
     - Kind: 1
       Prefab: {fileID: 574051903435740080, guid: b1de595225965e248a11d78d33a4cebb, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.95, y: 1.05}
+      UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 1721998534168104194, guid: 6feafa8363d0cb9448c5d44b21d2ad48, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.95, y: 1.05}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 5086111615655363204, guid: 967e69383cbfce1498d26a9754cb6784, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.9, y: 1.1}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 4857629105565458565, guid: d7fbd0b5d5355ff44b0b39f179e0ec20, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.9, y: 1.6}
+      UseAsBoundary: 0
+    - Kind: 2
+      Prefab: {fileID: 1493929090850798157, guid: 5954c772abddc19448e0b49a2d972642, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.8, y: 1.25}
+      UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 9008271572845687593, guid: f19f78a56783e3249b86f44879af0298, type: 3}
+      ResourcePath: 
+      Weight: 0
+      ScaleRange: {x: 0.8, y: 1.25}
+      UseAsBoundary: 0
+    - Kind: 1
+      Prefab: {fileID: 6314699467256690275, guid: 306bbc2fb6bf7fa4f936f5b69f8b8a72, type: 3}
       ResourcePath: 
       Weight: 0
       ScaleRange: {x: 0.95, y: 1.05}
