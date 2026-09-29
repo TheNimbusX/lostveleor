@@ -133,6 +133,15 @@ namespace Game.Sim
         /// раньше срока (вид гасит её быстрее).
         /// </summary>
         PuddleClosed = 39,
+
+        /// <summary>
+        /// На героя наложен контроль. Source — кто наложил (моб, -1 если нет),
+        /// Target — герой, Amount — сколько тиков длится, Flag — корни
+        /// (true: не ходит и не кувыркается, но бьёт и кастует) или оглушение
+        /// (false), Position — где стоит герой. Контроль, отбитый иммунитетом,
+        /// события не даёт. Фабрика — SimEvent.HeroControl.
+        /// </summary>
+        HeroControl = 40,
     }
 
     /// <summary>
@@ -188,6 +197,20 @@ namespace Game.Sim
         /// звука и описаний.
         /// </summary>
         BudRotFruit = 8,
+
+        /// <summary>
+        /// Камнекопыт: взмах клыками вплотную (герой уже рядом, сам кабан не
+        /// подходит), отброс на 1 м. Started — замах со знаком на теле,
+        /// Impact — контакт (Flag — задел героя), Cancelled — снят.
+        /// </summary>
+        StonehoofTusk = 9,
+
+        /// <summary>
+        /// Вендиго: размашистый удар на 360° с отбросом, когда герой долго
+        /// крутится сбоку или сзади. Started — замах, Impact — круг
+        /// (Flag — задел героя), Cancelled — снят.
+        /// </summary>
+        WendigoSweep = 10,
     }
 
     /// <summary>
@@ -297,12 +320,20 @@ namespace Game.Sim
             => new SimEvent(SimEventType.EnemyProjectileLaunched, source, target, serial, false, at,
                 DamageType.Physical, DamageOrigin.BasicAttack, (int)kind);
 
-        /// <summary>Распад Расщепеня: count детёнышей подряд, начиная с firstChild.</summary>
         /// <summary>Лечение моба мобом: source лечит target на amount.</summary>
         public static SimEvent Heal(int source, int target, int amount, FixVec2 at)
             => new SimEvent(SimEventType.Heal, source, target, amount, false, at);
 
+        /// <summary>Распад Расщепеня: count детёнышей подряд, начиная с firstChild.</summary>
         public static SimEvent Split(int parent, int firstChild, int count, FixVec2 at)
             => new SimEvent(SimEventType.SplitterSplit, parent, firstChild, count, false, at);
+
+        /// <summary>
+        /// Контроль героя наложен: source — кто (или -1), hero — на кого, ticks —
+        /// сколько тиков, rooted — корни (true) или оглушение (false), at — где
+        /// стоит герой. Вид рисует корни у ног или кружок оглушения.
+        /// </summary>
+        public static SimEvent HeroControl(int source, int hero, int ticks, bool rooted, FixVec2 at)
+            => new SimEvent(SimEventType.HeroControl, source, hero, ticks, rooted, at);
     }
 }

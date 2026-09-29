@@ -6,42 +6,82 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// VFX КОРНЕХВАТА по целевому кадру 1-roots-snare (выбор владельца 26.09,
-/// ART/…/7.forest-root-snarer/production/vfx_target_frames_2026-09-26).
+/// VFX КОРНЕХВАТА И КОНТРОЛЯ НА ГЕРОЕ.
 ///
-/// На кадре: под героем треснувший круг, из него рвутся толстые узловатые
-/// тёмные корни и оплетают ноги героя; от вбитых в землю плит к кругу бегут
-/// тёмные трещины с корешками; вокруг — комья, камни, немного тёплой пыли.
+/// Удар плитами — по кадру 1-roots-snare (выбор владельца 26.09,
+/// ART/…/7.forest-root-snarer/production/vfx_target_frames_2026-09-26): от
+/// вбитых в землю плит к кругу бегут тёмные трещины с корешками.
 ///
+/// Корни и контроль — по выбору владельца 29.09
+/// (ART/characters/act-1-enemies/review/mobs-v2-concepts-2026-09-29/abilities):
+/// • 07-snarer-roots-emerging-a-burst — миг выхода: из треснувшей тёмной земли
+///   круга веером от центра рвутся толстые узловатые корни в коре — лежат на
+///   земле горбами, ныряют в неё и выходят снова, пара встаёт арками; комья и
+///   тёмные камни летят наружу, встаёт кольцо тёплой пыли, листья; ноги героя
+///   обвивает толстый жгут корней до середины бедра;
+/// • 02-stonehoof-stun-daze — оглушение: над головой тонкое золотое кольцо, по
+///   нему кружат кремовые звёздочки-щепки с тёмной кромкой и осенние листья.
+///
+/// Префабы:
 /// • VFX_RootSnarer_SlamCracks — удар плитами (тик 15, круг встал): у каждой
 ///   плиты тёмное пятно земли, звезда трещин (Hovl Crater19), пыль и комья;
 ///   от плит к кругу — сегменты трещины «Seg L/R i» (вид расставляет их по
 ///   длине и задерживает по бегу трещины).
-/// • VFX_RootSnarer_RootsErupt — корни (тик 36): кольцо толстых загнутых внутрь
-///   корней в коре и короткие колючие побеги по кромке, треснувшая земля круга
-///   (Hovl Crack4, Crater19, Crater2), кольцо мягкой пыли, комья, камни, щепки,
-///   листья. Корни держатся, пока моб прижат, и уходят в землю (вид).
-/// • VFX_RootSnarer_SnareOnHero — путы: три кольца корней вокруг ног и два
-///   побега у стоп, трещинки под ногами, пыль и комья на старте.
+/// • VFX_RootSnarer_RootsErupt — корни (тик 36, кадр 07): девять корней веером
+///   по земле от центра круга, три арки, пять колючих побегов по кромке;
+///   треснувшая земля круга (Hovl Crack4, Crater19, Crater2), кольцо пыли,
+///   комья, камни, щепки, дёрн, листья. Корни держатся, пока моб прижат, и
+///   уходят в землю (RootSnarerCombatView).
+/// • HeroControl/VFX_HeroControl_Roots — корни на ногах героя (HeroControlView,
+///   событие HeroControl с Flag): три толстых кольца вокруг ног до бедра, четыре
+///   коротких корня веером в грунт, два побега, трещины и тёмная земля под
+///   ногами, пыль, комья и камни на старте.
+/// • HeroControl/VFX_HeroControl_Daze — оглушение (HeroControlView, событие
+///   HeroControl без Flag): Halo — кольцо Hovl Circle82 золотом и Orbit — три
+///   звёздочки CFXR (кремовая поверх тёмной, чуть крупнее — кромка) и три
+///   листа, вид крутит Orbit; от головы на старте — щепки и пара листьев.
 ///
 /// Паки: CFXR (debris unlit 3x3, debris wood unlit 3x3, лист leave a + cfxr
-/// mesh leave — без освещения, smoke cloud x4 blurred с cloud blur, плёнка sword
-/// trail plain одним каналом под маски Hovl), Hovl (Crack4, Crater19, Crater2),
-/// кора Fantasy Forest (bark01_bottom). Наш слой — меши корней (трубы из колец
-/// с узлами и колючками, как корни воя Вендиго), раскладка и тайминг.
+/// mesh leave — без освещения, star, smoke cloud x4 blurred с cloud blur,
+/// плёнка sword trail plain одним каналом под маски Hovl), Hovl (Crack4,
+/// Crater19, Crater2, Circle82), кора Fantasy Forest (bark01_bottom → наша
+/// перекраска RootBark.png: тёплая средне-коричневая кора, как на кадре 07, с
+/// мхом у земли). Наш слой — меши корней (трубы из колец с узлами и колючками),
+/// раскладка и тайминг.
 ///
 /// Растущие корни — не частицы, а MeshRenderer-дети корня префаба с именем
-/// «Grow|задержка мс|скрутка °|подпись»: RootSnarerCombatView выдвигает их
-/// из земли вдоль оси +Y ребёнка и уводит обратно по возрасту от тика Sim.
-/// Корни префабов лежат на земле: +Z — от моба к кругу, +Y — вверх.
+/// «Grow|задержка мс|скрутка °|подпись»: вид выдвигает их из земли вдоль оси
+/// +Y ребёнка и уводит обратно по возрасту от тика Sim. Корни префабов лежат
+/// на земле: +Z — от моба к кругу, +Y — вверх.
 /// </summary>
 public static class RootSnarerVfxSetup
 {
-    private const string Revision = "RootSnarerVfxV3";
+    // V6 (интеграция N, 29.09): кольцо оглушения по радиусу орбиты звёздочек.
+    private const string Revision = "RootSnarerVfxV6";
     private const string Root = "Assets/Resources/VFX/RootSnarer";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
     private const string GeometryFolder = Root + "/Geometry";
+    private const string TextureFolder = Root + "/Textures";
+    private const string RootBarkTexture = TextureFolder + "/RootBark.png";
+
+    private const string HeroRoot = "Assets/Resources/VFX/HeroControl";
+    private const string HeroPrefabFolder = HeroRoot + "/Prefabs";
+    private const string HeroMaterialFolder = HeroRoot + "/Materials";
+    private const string HeroGeometryFolder = HeroRoot + "/Geometry";
+
+    /// <summary>
+    /// Прежние сборки: путы на герое переехали в HeroControl (их рисует
+    /// HeroControlView по событию HeroControl), загнутые внутрь корни круга
+    /// сменил веер по кадру 07. Пересборка их удаляет.
+    /// </summary>
+    private static readonly string[] Stale =
+    {
+        PrefabFolder + "/VFX_RootSnarer_SnareOnHero.prefab",
+        GeometryFolder + "/RootSnarerCoilA.asset", GeometryFolder + "/RootSnarerCoilB.asset", GeometryFolder + "/RootSnarerCoilC.asset",
+        GeometryFolder + "/RootSnarerCurlA.asset", GeometryFolder + "/RootSnarerCurlB.asset",
+        GeometryFolder + "/RootSnarerCurlC.asset", GeometryFolder + "/RootSnarerCurlD.asset",
+    };
 
     private const string CfxrGraphics = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Graphics/";
     private const string CfxrMeshes = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Assets/Meshes/";
@@ -52,6 +92,7 @@ public static class RootSnarerVfxSetup
     private const string CfxrLeafMesh = CfxrMeshes + "cfxr mesh leave.fbx";
     private const string CfxrTrailMaterial = CfxrGraphics + "cfxr sword trail plain.mat";
     private const string CfxrCloudBlur = CfxrGraphics + "cfxr cloud blur.png";
+    private const string CfxrStar = CfxrGraphics + "cfxr star ab.mat";
     private const string HovlTextures = "Assets/Hovl Studio/HSFiles/Textures/";
     private const string BarkTexture = "Assets/Fantasy Forest Environment Free Sample/Textures/bark01_bottom.tga";
 
@@ -69,14 +110,31 @@ public static class RootSnarerVfxSetup
     // «Волна из корней» (кадр 1-mend-ring): золотисто-зелёный свет, не неон — тёплая
     // трава на закате. Альфа держит яркость: материалы без подъёма цвета.
     private static readonly Color MendGold = new Color(.93f, .82f, .40f), MendGreen = new Color(.56f, .78f, .30f);
-    private const string CfxrGlowSoft = "cfxr proc glow soft ab.mat", CfxrRing = "cfxr proc ring ab.mat",
-        CfxrStar = "cfxr magic star hdr ab.mat";
+    private const string CfxrGlowSoft = "cfxr proc glow soft ab.mat", CfxrMagicStar = "cfxr magic star hdr ab.mat";
+
+    // Оглушение (кадр 02-stonehoof-stun-daze): тёплое золото кольца, кремовые
+    // звёздочки-щепки с тёмно-коричневой кромкой, осенние листья. Без подъёма
+    // яркости: цвета — из частиц, материалы alpha-blend.
+    private static readonly Color DazeGold = new Color(1f, .80f, .30f);
+    private static readonly Color StarCream = new Color(.97f, .87f, .66f), StarShade = new Color(.30f, .18f, .09f);
+    private static readonly Color AutumnRed = new Color(.84f, .34f, .12f), AutumnOrange = new Color(.90f, .50f, .18f),
+        AutumnTan = new Color(.84f, .62f, .34f);
+    private static readonly Color TurfLight = new Color(.46f, .54f, .22f), TurfDark = new Color(.30f, .38f, .14f);
+
+    /// <summary>Кольцо оглушения: поперечник частицы, м; радиус, по которому кружат звёздочки и листья.</summary>
+    /// <remarks>
+    /// Горизонтальный билборд выходит примерно в 0,72 от startSize (проба 29.09:
+    /// при .95 кольцо Circle82 легло на .33 м, звёздочки на .44 кружили снаружи) —
+    /// 1,3 кладёт яркий край Circle82 на орбиту.
+    /// </remarks>
+    private const float DazeRingSize = 1.3f, DazeOrbitRadius = .44f;
 
     private sealed class Kit
     {
         public Material Clod, Splinter, Leaf, Haze, Splat, Crack, Vein, Wood, WoodDark, Glow, Ring, Spark;
+        public Material DazeRing, Star, StarRim, AutumnLeaf;
         public Mesh LeafMesh, Quad;
-        public Mesh[] Curls, Stubs, Coils;
+        public Mesh[] Stubs, Flares, Arches, Coils, Tendrils;
     }
 
     [InitializeOnLoadMethod]
@@ -99,7 +157,8 @@ public static class RootSnarerVfxSetup
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
         if (AssetDatabase.LoadAssetAtPath<Material>(CfxrDebrisUnlit) == null || AssetDatabase.LoadAssetAtPath<Material>(CfxrSmokeBlurred) == null
-            || AssetDatabase.LoadAssetAtPath<Material>(CfxrTrailMaterial) == null || AssetDatabase.LoadAssetAtPath<Texture2D>(HovlTextures + "Crater19.png") == null)
+            || AssetDatabase.LoadAssetAtPath<Material>(CfxrTrailMaterial) == null || AssetDatabase.LoadAssetAtPath<Texture2D>(HovlTextures + "Crater19.png") == null
+            || AssetDatabase.LoadAssetAtPath<Material>(CfxrStar) == null)
         {
             Debug.LogWarning("[rootsnarer-vfx] Нет паков Hovl/CFXR, VFX Корнехвата не собран.");
             return;
@@ -113,8 +172,9 @@ public static class RootSnarerVfxSetup
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + RootSnarerCombatView.RootsEruptName + ".prefab");
         return importer != null && importer.userData == Revision
             && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.SlamCracksName + ".prefab") != null
-            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.SnareName + ".prefab") != null
-            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.MendRingName + ".prefab") != null;
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + RootSnarerCombatView.MendRingName + ".prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(HeroPrefabFolder + "/" + HeroControlView.RootsName + ".prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(HeroPrefabFolder + "/" + HeroControlView.DazeName + ".prefab") != null;
     }
 
     private static void Build()
@@ -123,13 +183,20 @@ public static class RootSnarerVfxSetup
         PelagWhirlwindVfxSetup.EnsureFolder(Root, "Prefabs");
         PelagWhirlwindVfxSetup.EnsureFolder(Root, "Materials");
         PelagWhirlwindVfxSetup.EnsureFolder(Root, "Geometry");
+        PelagWhirlwindVfxSetup.EnsureFolder("Assets/Resources/VFX", "HeroControl");
+        PelagWhirlwindVfxSetup.EnsureFolder(HeroRoot, "Prefabs");
+        PelagWhirlwindVfxSetup.EnsureFolder(HeroRoot, "Materials");
+        PelagWhirlwindVfxSetup.EnsureFolder(HeroRoot, "Geometry");
         var kit = Materials();
         SaveSlamCracks(kit);
         SaveRootsErupt(kit);
-        SaveSnare(kit);
         SaveMendChannel(kit);
         SaveMendRing(kit);
         SaveMendLeaves(kit);
+        SaveHeroRoots(kit);
+        SaveDaze(kit);
+        foreach (string path in Stale)
+            if (AssetDatabase.LoadMainAssetAtPath(path) != null) AssetDatabase.DeleteAsset(path);
         AssetDatabase.SaveAssets();
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + RootSnarerCombatView.RootsEruptName + ".prefab");
         if (importer != null && importer.userData != Revision)
@@ -137,7 +204,7 @@ public static class RootSnarerVfxSetup
             importer.userData = Revision;
             importer.SaveAndReimport();
         }
-        Debug.Log("[rootsnarer-vfx] Удар плитами, корни, путы и волна лечения собраны из паков, ревизия " + Revision + ".");
+        Debug.Log("[rootsnarer-vfx] Удар плитами, корни, волна лечения, корни и оглушение на герое собраны из паков, ревизия " + Revision + ".");
     }
 
     // ------------------------------------------------------------- materials
@@ -161,55 +228,108 @@ public static class RootSnarerVfxSetup
         // Кольцо волны — диск Hovl с яркой кромкой (Circle17) одним каналом: процедурное
         // кольцо CFXR без своих данных частиц невидимо (съёмка 28.09).
         kit.Ring = Textured(NoDissolve(PackCopy("M_RootSnarer_MendRing", CfxrTrailMaterial)), HovlTextures + "Circle17.png", true);
-        kit.Spark = Plain(PackCopy("M_RootSnarer_MendSpark", CfxrGraphics + CfxrStar));
+        kit.Spark = Plain(PackCopy("M_RootSnarer_MendSpark", CfxrGraphics + CfxrMagicStar));
         // Декали рисуются до пыли и комьев.
         foreach (var decal in new[] { kit.Splat, kit.Crack, kit.Vein }) { decal.renderQueue = 2990; EditorUtility.SetDirty(decal); }
-        // Корни — URP Lit с корой: свет, тень и объём, как у корней воя. Тёмная тёплая кора.
-        kit.Wood = Wood("M_RootSnarer_RootWood", new Color(.62f, .50f, .43f));
-        kit.WoodDark = Wood("M_RootSnarer_RootDark", new Color(.48f, .38f, .32f));
+        // Корни — URP Lit с корой: свет, тень и объём. Кадр 07: тёплая средне-
+        // коричневая кора со светлыми гребнями (прежняя тёмная тонировка в игре
+        // читалась чёрными «паучьими лапами»). Вторая — чуть темнее, для разнобоя.
+        kit.Wood = Wood("M_RootSnarer_RootWood", Color.white);
+        kit.WoodDark = Wood("M_RootSnarer_RootDark", new Color(.80f, .76f, .72f));
         kit.LeafMesh = LoadMesh(CfxrLeafMesh);
         kit.Quad = Quad("RootSnarerCrackQuad");
         // (длина, радиус основания, загиб внутрь, узлы, колючки, скрутка)
-        kit.Curls = new[]
-        {
-            CurlRoot("RootSnarerCurlA", 11, 1.35f, .15f, 2.3f, .12f, 4, 2.0f),
-            CurlRoot("RootSnarerCurlB", 12, 1.20f, .14f, 2.6f, .14f, 3, 2.6f),
-            CurlRoot("RootSnarerCurlC", 13, 1.50f, .17f, 2.0f, .10f, 5, 1.6f),
-            CurlRoot("RootSnarerCurlD", 14, 1.10f, .13f, 2.8f, .15f, 3, 3.0f),
-        };
         kit.Stubs = new[]
         {
             CurlRoot("RootSnarerStubA", 21, .62f, .10f, .9f, .16f, 3, 2.2f),
             CurlRoot("RootSnarerStubB", 22, .48f, .09f, 1.3f, .18f, 2, 2.8f),
         };
-        // (радиус кольца, витки, низ, верх, толщина, по часовой)
+        // Веер кадра 07 (длина, радиус основания, высота горбов, горбов, змейка, корешков, скрутка).
+        kit.Flares = new[]
+        {
+            SurfaceRoot("RootSnarerFlareA", 61, 1.30f, .16f, .13f, 2, .16f, 2, 2.0f),
+            SurfaceRoot("RootSnarerFlareB", 62, 1.20f, .15f, .10f, 2, .20f, 2, 2.6f),
+            SurfaceRoot("RootSnarerFlareC", 63, 1.40f, .17f, .15f, 3, .14f, 3, 1.7f),
+            SurfaceRoot("RootSnarerFlareD", 64, 1.15f, .14f, .20f, 1, .22f, 1, 2.3f),
+        };
+        // Арки: корень встаёт над землёй дугой и уходит обратно.
+        kit.Arches = new[]
+        {
+            SurfaceRoot("RootSnarerArchA", 71, 1.00f, .13f, .48f, 1, .10f, 2, 1.8f),
+            SurfaceRoot("RootSnarerArchB", 72, .90f, .12f, .40f, 1, .14f, 1, 2.4f),
+        };
+        // Корни на ногах героя (радиус кольца, витки, низ, верх, толщина, по часовой, сужение к верху).
         kit.Coils = new[]
         {
-            Coil("RootSnarerCoilA", 31, .30f, 1.25f, -.10f, .55f, .065f, true),
-            Coil("RootSnarerCoilB", 32, .34f, 1.00f, -.10f, .38f, .075f, false),
-            Coil("RootSnarerCoilC", 33, .27f, 1.45f, -.10f, .70f, .055f, true),
+            Coil("HeroRootsCoilA", 41, .25f, 1.6f, -.12f, .78f, .085f, true, .80f, HeroGeometryFolder),
+            Coil("HeroRootsCoilB", 42, .29f, 1.2f, -.12f, .52f, .095f, false, .85f, HeroGeometryFolder),
+            Coil("HeroRootsCoilC", 43, .23f, 1.9f, -.12f, .66f, .070f, true, .78f, HeroGeometryFolder),
         };
+        kit.Tendrils = new[]
+        {
+            SurfaceRoot("HeroRootsTendrilA", 51, .62f, .10f, .07f, 1, .08f, 1, 1.8f, HeroGeometryFolder),
+            SurfaceRoot("HeroRootsTendrilB", 52, .50f, .085f, .05f, 1, .10f, 1, 2.2f, HeroGeometryFolder),
+        };
+
+        // Оглушение: кольцо — диск Hovl с витой лентой (Circle82) одним каналом;
+        // звёздочки — звезда CFXR дважды: тёмная крупнее под кремовой (кромка).
+        // Очередь выше пыли, кромка раньше звезды — порядок не зависит от дальности.
+        kit.DazeRing = Textured(NoDissolve(PackCopy("M_HeroControl_DazeRing", CfxrTrailMaterial, HeroMaterialFolder)), HovlTextures + "Circle82.png", true);
+        kit.StarRim = Unlit(Plain(PackCopy("M_HeroControl_StarRim", CfxrStar, HeroMaterialFolder)));
+        kit.Star = Unlit(Plain(PackCopy("M_HeroControl_Star", CfxrStar, HeroMaterialFolder)));
+        kit.AutumnLeaf = Unlit(PackCopy("M_HeroControl_Leaf", CfxrLeafMaterial, HeroMaterialFolder));
+        kit.DazeRing.renderQueue = 3005; kit.StarRim.renderQueue = 3006; kit.Star.renderQueue = 3007; kit.AutumnLeaf.renderQueue = 3007;
+        foreach (var m in new[] { kit.DazeRing, kit.StarRim, kit.Star, kit.AutumnLeaf }) EditorUtility.SetDirty(m);
         return kit;
     }
 
+    /// <summary>
+    /// Кора корней: URP Lit с RootBark.png — перекраска bark01_bottom пака
+    /// Fantasy Forest в тёплую коричневую кору кадра 07, мох у земли (v = 0).
+    /// Вдоль корня текстура не повторяется (V — Clamp): мох только у основания.
+    /// </summary>
     private static Material Wood(string name, Color tint)
     {
         var material = PelagWhirlwindVfxSetup.LoadOrCreateMaterial(MaterialFolder + "/" + name + ".mat", Shader.Find("Universal Render Pipeline/Lit"));
-        var bark = AssetDatabase.LoadAssetAtPath<Texture2D>(BarkTexture);
+        var bark = RootBark() ?? AssetDatabase.LoadAssetAtPath<Texture2D>(BarkTexture);
         if (bark != null) material.SetTexture("_BaseMap", bark);
         material.SetTextureScale("_BaseMap", Vector2.one);
         material.SetColor("_BaseColor", tint);
-        material.SetFloat("_Smoothness", .15f);
+        material.SetFloat("_Smoothness", .12f);
         material.SetFloat("_Metallic", 0f);
+        material.enableInstancing = true;
         EditorUtility.SetDirty(material);
         return material;
     }
 
+    /// <summary>RootBark.png с настройками импорта коры; нет файла — null (тогда кора пака).</summary>
+    private static Texture2D RootBark()
+    {
+        if (!System.IO.File.Exists(RootBarkTexture))
+        {
+            Debug.LogWarning("[rootsnarer-vfx] Нет " + RootBarkTexture + " — корни в коре пака bark01_bottom.");
+            return null;
+        }
+        if (AssetImporter.GetAtPath(RootBarkTexture) == null) AssetDatabase.ImportAsset(RootBarkTexture, ImportAssetOptions.ForceSynchronousImport);
+        if (AssetImporter.GetAtPath(RootBarkTexture) is TextureImporter importer)
+        {
+            bool changed = false;
+            if (importer.textureShape != TextureImporterShape.Texture2D) { importer.textureShape = TextureImporterShape.Texture2D; changed = true; }
+            if (importer.textureType != TextureImporterType.Default) { importer.textureType = TextureImporterType.Default; changed = true; }
+            if (!importer.sRGBTexture) { importer.sRGBTexture = true; changed = true; }
+            if (importer.wrapModeU != TextureWrapMode.Repeat) { importer.wrapModeU = TextureWrapMode.Repeat; changed = true; }
+            if (importer.wrapModeV != TextureWrapMode.Clamp) { importer.wrapModeV = TextureWrapMode.Clamp; changed = true; }
+            if (importer.maxTextureSize != 1024) { importer.maxTextureSize = 1024; changed = true; }
+            if (changed) importer.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(RootBarkTexture);
+    }
+
     /// <summary>Копия материала пака в нашей папке (перезаписывается при пересборке).</summary>
-    private static Material PackCopy(string name, string sourcePath)
+    private static Material PackCopy(string name, string sourcePath, string folder = MaterialFolder)
     {
         var source = AssetDatabase.LoadAssetAtPath<Material>(sourcePath);
-        string path = MaterialFolder + "/" + name + ".mat";
+        string path = folder + "/" + name + ".mat";
         var material = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (material == null)
         {
@@ -325,12 +445,15 @@ public static class RootSnarerVfxSetup
     }
 
     /// <summary>
-    /// Кольцо пут: корень выходит из земли чуть снаружи ног и обвивает их по
-    /// спирали вокруг вертикали (turns витков) до высоты top, к концу тоньше.
+    /// Кольцо корней на ногах героя: корень выходит из земли чуть снаружи ног и
+    /// обвивает их по спирали вокруг вертикали (turns витков) до высоты top; к
+    /// верху кольцо уже (taper — доля радиуса наверху: бёдра ближе друг к
+    /// другу, чем стопы), сам корень тоньше.
     /// </summary>
-    private static Mesh Coil(string name, int salt, float ringRadius, float turns, float bottom, float top, float radius, bool clockwise)
+    private static Mesh Coil(string name, int salt, float ringRadius, float turns, float bottom, float top, float radius, bool clockwise,
+        float taper, string folder)
     {
-        const int rings = 44;
+        const int rings = 48;
         float phase = Hash01(salt, 7) * Mathf.PI * 2f, sign = clockwise ? -1f : 1f;
         var centers = new Vector3[rings + 1];
         var radii = new float[rings + 1];
@@ -338,13 +461,46 @@ public static class RootSnarerVfxSetup
         {
             float s = r / (float)rings;
             float angle = phase + sign * turns * Mathf.PI * 2f * s;
-            float ring = ringRadius * (1f + .6f * Mathf.Max(0f, 1f - s / .12f));
+            float ring = ringRadius * (1f + .6f * Mathf.Max(0f, 1f - s / .12f)) * Mathf.Lerp(1f, taper, s);
             float y = Mathf.Lerp(bottom, top, Mathf.Pow(s, .85f)) + .02f * Mathf.Sin(s * 17f + phase);
             centers[r] = new Vector3(Mathf.Cos(angle) * ring, y, Mathf.Sin(angle) * ring);
             radii[r] = radius * (1f - .55f * s) * (1f + .5f * Mathf.Pow(Mathf.Max(0f, 1f - s / .1f), 2f))
+                * (1f + .12f * Mathf.Sin(s * 23f + phase))
                 * Mathf.Pow(Mathf.Clamp01((1f - s) / .1f), .6f) + .003f;
         }
-        return Tube(name, salt, centers, radii, 8, 3f, 3, turns * ringRadius * 5f);
+        return Tube(name, salt, centers, radii, 9, 3f, 3, turns * ringRadius * 5f, folder);
+    }
+
+    /// <summary>
+    /// Корень по земле (кадр 07): из-под центра наружу по +Z. Основание выходит
+    /// из грунта, дальше корень горбами ложится на землю и ныряет в неё между
+    /// горбами, кончик уходит в грунт; сбоку змеится (snake, м). hump — высота
+    /// горбов над землёй, м (у арки — почти полметра), humps — сколько их. У
+    /// основания толстая пята, по длине узлы, пара корешков-колючек.
+    /// </summary>
+    private static Mesh SurfaceRoot(string name, int salt, float length, float radius, float hump, int humps, float snake,
+        int rootlets, float twist, string folder = GeometryFolder)
+    {
+        const int rings = 26;
+        float phase = Hash01(salt, 7) * Mathf.PI * 2f;
+        var centers = new Vector3[rings + 1];
+        var radii = new float[rings + 1];
+        for (int r = 0; r <= rings; r++)
+        {
+            float s = r / (float)rings;
+            radii[r] = radius * Mathf.Pow(1f - .86f * s, 1.15f)
+                * (1f + .45f * Mathf.Pow(Mathf.Max(0f, 1f - s / .18f), 2f))
+                * (1f + .14f * Mathf.Sin(s * 19f + phase) * (1f - s)) + .006f;
+            // Горбы — |sin| по длине, к концу ниже; между горбами хребет уходит
+            // под землю. Пята и кончик — целиком в грунте.
+            float wave = Mathf.Pow(Mathf.Abs(Mathf.Sin(Mathf.PI * humps * s)), .8f) * (1f - .3f * s);
+            float y = (hump + radii[r] * .5f) * wave - radii[r] * .45f
+                - radius * 1.3f * Mathf.Pow(Mathf.Max(0f, 1f - s / .14f), 2f)
+                - .09f * Mathf.Pow(s, 4f);
+            float x = snake * Mathf.Sin(s * 7.2f + phase) * s;
+            centers[r] = new Vector3(x, y, s * length);
+        }
+        return Tube(name, salt, centers, radii, 10, twist, rootlets, length * .8f, folder);
     }
 
     /// <summary>
@@ -352,7 +508,8 @@ public static class RootSnarerVfxSetup
     /// загибе), сечение с долями и скруткой twist по длине, боковые колючки.
     /// Кора: u — вокруг сечения, v — вдоль (0 у земли, мшистый низ текстуры).
     /// </summary>
-    private static Mesh Tube(string name, int salt, Vector3[] centers, float[] radii, int sides, float twist, int thorns, float vLength)
+    private static Mesh Tube(string name, int salt, Vector3[] centers, float[] radii, int sides, float twist, int thorns, float vLength,
+        string folder = GeometryFolder)
     {
         int rings = centers.Length - 1;
         float phase = Hash01(salt, 11) * Mathf.PI * 2f;
@@ -409,7 +566,7 @@ public static class RootSnarerVfxSetup
                 if (s < 5) triangles.AddRange(new[] { start + s * 2, start + s * 2 + 1, start + s * 2 + 2 });
             }
         }
-        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
+        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(folder + "/" + name + ".asset", name);
         mesh.SetVertices(vertices);
         mesh.SetUVs(0, uv);
         mesh.SetColors(colors);
@@ -740,10 +897,40 @@ public static class RootSnarerVfxSetup
         return particles;
     }
 
-    private static void Save(GameObject root)
+    private static void Save(GameObject root, string folder = PrefabFolder)
     {
-        try { PrefabUtility.SaveAsPrefabAsset(root, PrefabFolder + "/" + root.name + ".prefab"); }
+        try { PrefabUtility.SaveAsPrefabAsset(root, folder + "/" + root.name + ".prefab"); }
         finally { Object.DestroyImmediate(root); }
+    }
+
+    /// <summary>
+    /// Одна частица на месте at (оси host), без разброса: звёздочка или лист на
+    /// кольце оглушения. Живёт life, крутится spin °/с — всё постоянное, чтобы
+    /// кромка и звезда одной пары совпадали кадр в кадр.
+    /// </summary>
+    private static ParticleSystem Token(GameObject host, string name, Material material, Vector3 at, float size, Color color,
+        float rotation, float spin, float life)
+    {
+        var particles = Particles(host, name, 1, life, life, 0f, 0f, size, size, 0f);
+        particles.transform.localPosition = at;
+        var main = particles.main;
+        main.startColor = color;
+        main.startRotation = rotation * Mathf.Deg2Rad;
+        var shape = particles.shape; shape.enabled = false;
+        if (spin != 0f)
+        {
+            var turn = particles.rotationOverLifetime; turn.enabled = true;
+            turn.z = new ParticleSystem.MinMaxCurve(spin * Mathf.Deg2Rad);
+        }
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sharedMaterial = material;
+        return particles;
+    }
+
+    private static void NoCollision(ParticleSystem particles)
+    {
+        var collision = particles.collision; collision.enabled = false;
     }
 
     // ---------------------------------------------------------------- prefabs
@@ -880,78 +1067,190 @@ public static class RootSnarerVfxSetup
     }
 
     /// <summary>
-    /// Корни (тик 36). Корень — в центре круга, +Z — от моба. Восемь толстых
-    /// корней на кольце 0,95–1,35 м, основанием чуть наружу, крючком внутрь,
-    /// шесть колючих побегов по кромке наружу; треснувшая тёмная земля круга,
-    /// кольцо мягкой пыли, комья, камни, щепки, листья.
+    /// Корни (тик 36, кадр 07-snarer-roots-emerging-a-burst). Корень — в центре
+    /// круга, +Z — от моба. Девять толстых корней веером от центра по земле:
+    /// горбами выходят из грунта и ныряют обратно, у центра пяты сливаются в
+    /// узел; три арки между ними встают над землёй; пять колючих побегов по
+    /// кромке. Выходят от центра к кромке за ~0,1 с. Треснувшая тёмная земля
+    /// круга, кольцо тёплой пыли снаружи, комья, тёмные камни, щепки, дёрн и
+    /// листья летят наружу.
     /// </summary>
     private static void SaveRootsErupt(Kit kit)
     {
         float radius = Simulation.RootSnarerCircleRadius.ToFloat();
+        float k = radius / 1.5f;
         var root = new GameObject(RootSnarerCombatView.RootsEruptName);
         Decal(root, "Soil", kit.Splat, radius * 2.3f, radius * 2.5f, RootSnarerCombatView.RootsEruptLife, .72f,
-            new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .75f), 0f, .03f);
+            new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .8f), 0f, .03f);
         Decal(root, "Cracked", kit.Crack, radius * 2.2f, radius * 2.3f, RootSnarerCombatView.RootsEruptLife, .72f, CrackTone, 0f, .036f);
         Decal(root, "Veins", kit.Vein, radius * 2.9f, radius * 3.1f, RootSnarerCombatView.RootsEruptLife, .72f,
             new Color(CrackTone.r, CrackTone.g, CrackTone.b, .85f), 0f, .042f);
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 9; i++)
         {
-            float angle = (i + Hash01(i, 501) * .6f) / 8f * Mathf.PI * 2f;
-            float ring = Mathf.Lerp(.95f, 1.35f, Hash01(i, 502)) * radius / 1.5f;
+            float angle = (i + (Hash01(i, 521) - .5f) * .5f) / 9f * Mathf.PI * 2f;
             var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
-            var inward = Quaternion.AngleAxis((Hash01(i, 503) - .5f) * 24f, Vector3.up) * -outward;
-            // Основание наклонено наружу, загиб крючка приводит кончик в круг.
-            var rotation = Quaternion.LookRotation(inward, Vector3.up) * Quaternion.Euler(-Mathf.Lerp(8f, 20f, Hash01(i, 504)), 0f, 0f);
-            GrowChild(root, "Корень " + i, kit.Curls[i % kit.Curls.Length], i % 3 == 1 ? kit.WoodDark : kit.Wood,
-                outward * ring, rotation, Mathf.Lerp(.9f, 1.15f, Hash01(i, 505)), Mathf.RoundToInt(Hash01(i, 506) * 55f), 0);
+            float start = Mathf.Lerp(.06f, .22f, Hash01(i, 522)) * k;
+            // Пята у самого центра, хребет наружу по +Z ребёнка; выходят за 0–40 мс.
+            GrowChild(root, "Корень " + i, kit.Flares[i % kit.Flares.Length], i % 3 == 2 ? kit.WoodDark : kit.Wood,
+                outward * start, Quaternion.LookRotation(outward, Vector3.up), Mathf.Lerp(.92f, 1.1f, Hash01(i, 523)) * k,
+                Mathf.RoundToInt(Hash01(i, 524) * 40f), 0);
         }
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 3; i++)
         {
-            float angle = (i + .5f + Hash01(i, 511) * .5f) / 6f * Mathf.PI * 2f;
-            float ring = Mathf.Lerp(1.3f, 1.6f, Hash01(i, 512)) * radius / 1.5f;
+            float angle = (i + .35f + Hash01(i, 531) * .3f) / 3f * Mathf.PI * 2f;
+            var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            float start = Mathf.Lerp(.30f, .45f, Hash01(i, 532)) * k;
+            GrowChild(root, "Арка " + i, kit.Arches[i % kit.Arches.Length], kit.Wood, outward * start,
+                Quaternion.LookRotation(outward, Vector3.up), Mathf.Lerp(.9f, 1.1f, Hash01(i, 533)) * k,
+                25 + Mathf.RoundToInt(Hash01(i, 534) * 45f), 0);
+        }
+        for (int i = 0; i < 5; i++)
+        {
+            float angle = (i + .5f + Hash01(i, 511) * .5f) / 5f * Mathf.PI * 2f;
+            float ring = Mathf.Lerp(1.3f, 1.6f, Hash01(i, 512)) * k;
             var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
             var rotation = Quaternion.LookRotation(outward, Vector3.up) * Quaternion.Euler(-Mathf.Lerp(5f, 15f, Hash01(i, 513)), 0f, 0f);
             GrowChild(root, "Побег " + i, kit.Stubs[i % kit.Stubs.Length], kit.WoodDark, outward * ring, rotation,
-                Mathf.Lerp(.85f, 1.2f, Hash01(i, 514)), 15 + Mathf.RoundToInt(Hash01(i, 515) * 65f), 0);
+                Mathf.Lerp(.9f, 1.25f, Hash01(i, 514)), 40 + Mathf.RoundToInt(Hash01(i, 515) * 60f), 0);
         }
-        var rim = RingPoints("RootSnarerEruptRimPoints", 18, radius * .75f, radius * 1.1f, 55f, 80f, 601);
-        var burst = RingPoints("RootSnarerEruptBurstPoints", 16, radius * .6f, radius, 15f, 40f, 611);
-        var dustLow = Dust(root, kit, "DustLow", 18, Vector3.up * .03f, 0f, .1f, .4f, 1.0f, 1.2f, 1.9f, 1.1f, 1.6f, .24f, .02f, true);
-        FromPoints(dustLow, rim, .3f);
-        var dust = Dust(root, kit, "Dust", 8, Vector3.up * .02f, 0f, .1f, .3f, .8f, .7f, 1.1f, .9f, 1.3f, .2f, .03f, false);
-        FromPoints(dust, rim, .6f);
-        var clods = Debris(root, "Clods", kit.Clod, 24, Vector3.up * .1f, Vector3.up, 0f, .1f, 3.0f, 5.2f, .1f, .22f, 1.6f, 0f, SoilLight, SoilDark);
-        FromPoints(clods, burst, .35f);
-        var rocks = Debris(root, "Rocks", kit.Clod, 7, Vector3.up * .1f, Vector3.up, 0f, .1f, 2.4f, 4.0f, .24f, .38f, 1.9f, 0f, RockLight, RockDark);
-        FromPoints(rocks, burst, .3f);
+        // Места выброса — по кольцу, у каждой системы свои и ровно по числу частиц:
+        // вершины идут по кругу, и залп короче списка лёг бы только на его часть.
+        // Пыль кадра 07 — плотное тёплое кольцо снаружи корней, сами корни не застилает.
+        var dustLow = Dust(root, kit, "DustLow", 22, Vector3.up * .03f, 0f, .1f, .4f, 1.1f, 1.4f, 2.1f, 1.2f, 1.7f, .32f, .02f, true);
+        FromPoints(dustLow, RingPoints("RootSnarerEruptRimPoints", 22, radius * .8f, radius * 1.15f, 55f, 80f, 601), .3f);
+        var dust = Dust(root, kit, "Dust", 10, Vector3.up * .02f, 0f, .1f, .3f, .8f, .8f, 1.2f, .9f, 1.3f, .24f, .03f, false);
+        FromPoints(dust, RingPoints("RootSnarerEruptDustPoints", 10, radius * .8f, radius * 1.1f, 55f, 80f, 605), .6f);
+        var clods = Debris(root, "Clods", kit.Clod, 30, Vector3.up * .1f, Vector3.up, 0f, .1f, 3.0f, 5.4f, .1f, .22f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(clods, RingPoints("RootSnarerEruptBurstPoints", 30, radius * .45f, radius, 15f, 40f, 611), .35f);
+        var rocks = Debris(root, "Rocks", kit.Clod, 12, Vector3.up * .1f, Vector3.up, 0f, .1f, 2.4f, 4.4f, .18f, .36f, 1.9f, 0f, RockLight, RockDark);
+        FromPoints(rocks, RingPoints("RootSnarerEruptRockPoints", 12, radius * .45f, radius * .9f, 15f, 40f, 621), .3f);
         var splinters = Debris(root, "Splinters", kit.Splinter, 10, Vector3.up * .1f, Vector3.up, 0f, .1f, 2.6f, 4.4f, .11f, .2f, 1.3f, .02f, BarkLight, BarkDark);
-        FromPoints(splinters, burst, .5f);
-        var leaves = Leaves(root, kit, "Leaves", 6, Vector3.up * .15f, 1.8f, 3.2f, .03f);
-        FromPoints(leaves, burst, .6f);
+        FromPoints(splinters, RingPoints("RootSnarerEruptSplinterPoints", 10, radius * .3f, radius * .8f, 20f, 45f, 631), .5f);
+        var turf = Debris(root, "Turf", kit.Clod, 8, Vector3.up * .08f, Vector3.up, 0f, .1f, 2.2f, 3.6f, .08f, .15f, 1.5f, .01f, TurfLight, TurfDark);
+        FromPoints(turf, RingPoints("RootSnarerEruptTurfPoints", 8, radius * .6f, radius, 20f, 45f, 641), .5f);
+        var leaves = Leaves(root, kit, "Leaves", 10, Vector3.up * .15f, 1.8f, 3.2f, .03f);
+        FromPoints(leaves, RingPoints("RootSnarerEruptLeafPoints", 10, radius * .4f, radius * .9f, 20f, 50f, 651), .6f);
         Save(root);
     }
 
     /// <summary>
-    /// Путы на герое. Корень — у стоп героя (вид держит его на герое), +Y — вверх.
-    /// Три кольца вокруг ног (довинчиваются при выходе), два побега у стоп,
-    /// трещинки и тёмная земля под ногами, пыль и комья на старте.
+    /// Корни на ногах героя (HeroControlView, корни 30 тиков; кадр 07). Корень —
+    /// у стоп героя (вид держит его на герое), +Y — вверх. Три толстых кольца
+    /// обвивают ноги до середины бедра и довинчиваются при выходе, четыре
+    /// коротких корня веером уходят от стоп в грунт, два колючих побега; под
+    /// ногами тёмная земля и трещины, на старте — комья, камни, пыль, листья.
     /// </summary>
-    private static void SaveSnare(Kit kit)
+    private static void SaveHeroRoots(Kit kit)
     {
-        var root = new GameObject(RootSnarerCombatView.SnareName);
-        Decal(root, "Soil", kit.Splat, .8f, .95f, 1.4f, .5f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .7f), 0f, .03f);
-        Decal(root, "Cracks", kit.Crack, 1.0f, 1.2f, 1.4f, .5f, CrackTone, 0f, .036f);
+        const float life = 1.6f;
+        var root = new GameObject(HeroControlView.RootsName);
+        Decal(root, "Soil", kit.Splat, 1.0f, 1.2f, life, .6f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .75f), 0f, .03f);
+        Decal(root, "Cracks", kit.Crack, 1.2f, 1.4f, life, .6f, CrackTone, 0f, .036f);
         for (int i = 0; i < kit.Coils.Length; i++)
             GrowChild(root, "Кольцо " + i, kit.Coils[i], i == 1 ? kit.WoodDark : kit.Wood, Vector3.zero,
-                Quaternion.Euler(0f, i * 120f + (Hash01(i, 701) - .5f) * 40f, 0f), 1f, i * 30, i % 2 == 0 ? 110 : -110);
+                Quaternion.Euler(0f, i * 120f + (Hash01(i, 701) - .5f) * 40f, 0f), 1f, i * 35, i % 2 == 0 ? 110 : -110);
+        for (int i = 0; i < 4; i++)
+        {
+            float angle = (i + .3f + (Hash01(i, 711) - .5f) * .4f) / 4f * Mathf.PI * 2f;
+            var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            GrowChild(root, "Корень " + i, kit.Tendrils[i % kit.Tendrils.Length], i % 2 == 0 ? kit.WoodDark : kit.Wood,
+                outward * .16f, Quaternion.LookRotation(outward, Vector3.up), Mathf.Lerp(.9f, 1.1f, Hash01(i, 712)),
+                10 + i * 12, 0);
+        }
         for (int i = 0; i < 2; i++)
         {
-            var at = new Vector3(i == 0 ? -.32f : .3f, 0f, i == 0 ? .12f : -.14f);
+            var at = new Vector3(i == 0 ? -.34f : .32f, 0f, i == 0 ? .12f : -.14f);
             var rotation = Quaternion.LookRotation(-at.normalized, Vector3.up) * Quaternion.Euler(-10f, 0f, 0f);
             GrowChild(root, "Побег " + i, kit.Stubs[i % kit.Stubs.Length], kit.WoodDark, at, rotation, .7f, 40 + i * 25, 0);
         }
-        Dust(root, kit, "DustLow", 6, Vector3.up * .03f, 85f, .3f, .6f, 1.2f, .5f, .8f, .7f, 1.0f, .24f, 0f, true);
-        Debris(root, "Clods", kit.Clod, 6, Vector3.up * .06f, Vector3.up, 55f, .3f, 1.6f, 2.8f, .06f, .12f, 1.5f, 0f, SoilLight, SoilDark);
-        Save(root);
+        Dust(root, kit, "DustLow", 7, Vector3.up * .03f, 85f, .3f, .6f, 1.2f, .55f, .85f, .7f, 1.0f, .26f, 0f, true);
+        Debris(root, "Clods", kit.Clod, 8, Vector3.up * .06f, Vector3.up, 55f, .3f, 1.6f, 3.0f, .06f, .13f, 1.5f, 0f, SoilLight, SoilDark);
+        Debris(root, "Rocks", kit.Clod, 3, Vector3.up * .06f, Vector3.up, 45f, .25f, 1.4f, 2.4f, .12f, .2f, 1.7f, 0f, RockLight, RockDark);
+        var leaves = Leaves(root, kit, "Leaves", 3, Vector3.up * .12f, .9f, 1.8f, .02f);
+        var leafShape = leaves.shape; leafShape.enabled = true;
+        leafShape.shapeType = ParticleSystemShapeType.Cone; leafShape.angle = 55f; leafShape.radius = .25f;
+        leaves.transform.localRotation = Aim(Vector3.up);
+        Save(root, HeroPrefabFolder);
+    }
+
+    /// <summary>
+    /// Оглушение (HeroControlView, 30 тиков; кадр 02-stonehoof-stun-daze). Корень —
+    /// над головой героя. Halo (вид вскакивает и сжимает его): тонкое кольцо
+    /// Circle82 тёплым золотом лёжа (горизонтальный билборд, медленно вертится)
+    /// и Orbit (вид крутит его вокруг +Y): три звёздочки-щепки — кремовая звезда
+    /// CFXR поверх тёмно-коричневой крупнее (кромка) — и три осенних листа между
+    /// ними. От головы на старте брызгают щепки и падают два листа. Вспышек и
+    /// подсветки тела нет — героя не высветлять.
+    /// </summary>
+    private static void SaveDaze(Kit kit)
+    {
+        // Дольше любого оглушения: гасит вид по сроку из события.
+        const float life = 4f;
+        var root = new GameObject(HeroControlView.DazeName);
+        var halo = new GameObject(HeroControlView.HaloName);
+        halo.transform.SetParent(root.transform, false);
+
+        var ring = Particles(halo, "Ring", 1, life, life, 0f, 0f, DazeRingSize, DazeRingSize, 0f);
+        var ringMain = ring.main;
+        ringMain.startColor = new Color(DazeGold.r, DazeGold.g, DazeGold.b, .95f);
+        ringMain.startRotation = 0f;
+        var ringShape = ring.shape; ringShape.enabled = false;
+        var ringTurn = ring.rotationOverLifetime; ringTurn.enabled = true;
+        ringTurn.z = new ParticleSystem.MinMaxCurve(140f * Mathf.Deg2Rad);
+        var ringRenderer = ring.GetComponent<ParticleSystemRenderer>();
+        ringRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+        ringRenderer.sharedMaterial = kit.DazeRing;
+
+        var orbit = new GameObject(HeroControlView.OrbitName);
+        orbit.transform.SetParent(halo.transform, false);
+        for (int i = 0; i < 3; i++)
+        {
+            float a = i * 120f * Mathf.Deg2Rad;
+            var at = new Vector3(Mathf.Sin(a), 0f, Mathf.Cos(a)) * DazeOrbitRadius;
+            float rotation = Hash01(i, 801) * 72f, spin = (i % 2 == 0 ? 1f : -1f) * Mathf.Lerp(60f, 110f, Hash01(i, 802));
+            float size = Mathf.Lerp(.17f, .21f, Hash01(i, 803));
+            Token(orbit, "Star Rim " + i, kit.StarRim, at, size * 1.36f, StarShade, rotation, spin, life);
+            Token(orbit, "Star " + i, kit.Star, at, size, StarCream, rotation, spin, life);
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            float a = (i * 120f + 60f + (Hash01(i, 811) - .5f) * 20f) * Mathf.Deg2Rad;
+            var at = new Vector3(Mathf.Sin(a), .02f, Mathf.Cos(a)) * DazeOrbitRadius;
+            var tone = i == 0 ? AutumnRed : i == 1 ? AutumnTan : AutumnOrange;
+            var leaf = Token(orbit, "Leaf " + i, kit.AutumnLeaf, at, Mathf.Lerp(.22f, .27f, Hash01(i, 812)), tone, 0f, 0f, life);
+            var leafMain = leaf.main;
+            leafMain.startRotation3D = true;
+            leafMain.startRotationX = Hash01(i, 813) * Mathf.PI * 2f;
+            leafMain.startRotationY = Hash01(i, 814) * Mathf.PI * 2f;
+            leafMain.startRotationZ = Hash01(i, 815) * Mathf.PI * 2f;
+            // Лист кувыркается на лету: постоянные скорости по трём осям.
+            var tumble = leaf.rotationOverLifetime; tumble.enabled = true; tumble.separateAxes = true;
+            tumble.x = new ParticleSystem.MinMaxCurve(Mathf.Lerp(-2.2f, 2.2f, Hash01(i, 816)));
+            tumble.y = new ParticleSystem.MinMaxCurve(Mathf.Lerp(-1.5f, 1.5f, Hash01(i, 817)));
+            tumble.z = new ParticleSystem.MinMaxCurve(Mathf.Lerp(-2.2f, 2.2f, Hash01(i, 818)));
+            var leafRenderer = leaf.GetComponent<ParticleSystemRenderer>();
+            if (kit.LeafMesh != null)
+            {
+                leafRenderer.renderMode = ParticleSystemRenderMode.Mesh;
+                leafRenderer.mesh = kit.LeafMesh;
+                leafRenderer.alignment = ParticleSystemRenderSpace.Local;
+            }
+        }
+
+        // Старт: щепки брызгами от головы (без земли под ними — не отскакивают) и два листа вниз.
+        var chips = Debris(root, "Chips", kit.Splinter, 7, Vector3.zero, Vector3.up, 75f, .12f, 1.4f, 2.6f, .06f, .11f, 1.1f, 0f, BarkLight, BarkDark);
+        NoCollision(chips);
+        var chipsMain = chips.main; chipsMain.startLifetime = new ParticleSystem.MinMaxCurve(.4f, .55f);
+        var falling = Leaves(root, kit, "Falling Leaves", 2, Vector3.zero, .4f, .9f, .03f);
+        NoCollision(falling);
+        var fallingMain = falling.main;
+        fallingMain.startLifetime = new ParticleSystem.MinMaxCurve(1.0f, 1.25f);
+        fallingMain.gravityModifier = .3f;
+        fallingMain.startColor = new ParticleSystem.MinMaxGradient(AutumnRed, AutumnOrange);
+        var fallingShape = falling.shape; fallingShape.enabled = true;
+        fallingShape.shapeType = ParticleSystemShapeType.Cone; fallingShape.angle = 70f; fallingShape.radius = .15f;
+        falling.transform.localRotation = Aim(Vector3.up);
+        falling.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.AutumnLeaf;
+        Save(root, HeroPrefabFolder);
     }
 }

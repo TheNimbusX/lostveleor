@@ -93,9 +93,14 @@ namespace Game.Tests
         }
 
         // ---- Хранитель ----
+        //
+        // Окна — из констант: сами числа 23/17/53 закреплены одним местом,
+        // в GuardianTempoTests. Здесь проверяется, что удар живёт по ним.
+        private const int GuardianWindup = Simulation.GuardianSwingWindupTicks;
+        private const int GuardianCycle = Simulation.GuardianSwingCycleTicks;
 
         [Test]
-        public void GuardianSwing_KeepsHitSectorHiddenAndLandsAfterTwentyOneTicks()
+        public void GuardianSwing_KeepsHitSectorHiddenAndLandsAfterItsWindup()
         {
             var sim = Arena();
             int g = Enemy(sim, At(2, 0));
@@ -103,9 +108,9 @@ namespace Game.Tests
 
             Assert.IsTrue(sim.TryGetEnemySwing(g, out var swing));
             Assert.AreEqual(0, swing.StartTick);
-            Assert.AreEqual(21, swing.ImpactTick - swing.StartTick);
-            Assert.AreEqual(15, swing.RecoverUntil - swing.ImpactTick);
-            Assert.AreEqual(48, sim.Entities.NextAttackTick[g] - swing.StartTick);
+            Assert.AreEqual(GuardianWindup, swing.ImpactTick - swing.StartTick);
+            Assert.AreEqual(Simulation.GuardianSwingRecoveryTicks, swing.RecoverUntil - swing.ImpactTick);
+            Assert.AreEqual(GuardianCycle, sim.Entities.NextAttackTick[g] - swing.StartTick);
             Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
                 e.Type == SimEventType.TelegraphOpened && e.Source == g && !e.Flag && e.Amount == swing.Telegraph));
 
@@ -136,21 +141,22 @@ namespace Game.Tests
             sim.Entities.Position[Simulation.PlayerId] =
                 At(2 - distance * System.Math.Cos(radians), distance * System.Math.Sin(radians));
 
-            var hits = Until(sim, 22, g);
+            var hits = Until(sim, GuardianWindup + 1, g);
             sim.TryGetEnemySwing(g, out var swing);
             Assert.IsTrue(swing.HitResolved);
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var t));
             Assert.AreEqual(TelegraphState.Resolved, t.State, "метка сработала и промахом");
             hits.AddRange(Until(sim, 40, g));
-            CollectionAssert.AreEqual(hit ? new[] { 21 } : new int[0], hits);
+            CollectionAssert.AreEqual(hit ? new[] { GuardianWindup } : new int[0], hits);
         }
 
         [Test]
-        public void GuardianSwing_HitsExactlyOncePerTelegraph_EveryFortyEightTicks()
+        public void GuardianSwing_HitsExactlyOncePerTelegraph_OncePerCycle()
         {
             var sim = Arena();
             int g = Enemy(sim, At(2, 0));
-            CollectionAssert.AreEqual(new[] { 21, 69 }, Until(sim, 96, g));
+            CollectionAssert.AreEqual(new[] { GuardianWindup, GuardianCycle + GuardianWindup },
+                Until(sim, 2 * GuardianCycle, g));
         }
 
         [Test]
@@ -171,7 +177,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void GuardianSwing_StandsForFifteenTicksAfterImpact()
+        public void GuardianSwing_StandsThroughItsRecoveryAfterImpact()
         {
             var sim = Arena();
             int g = Enemy(sim, At(2, 0), stationary: false);
@@ -224,8 +230,9 @@ namespace Game.Tests
             int g = Enemy(sim, At(2, 0));
             Until(sim, 15, g);
             sim.Statuses.ApplyStun(g, 22);
-            // Следующий замах — в свой срок 48, контакт 69.
-            CollectionAssert.AreEqual(new[] { 69 }, Until(sim, 70, g));
+            // Следующий замах — в свой срок, через цикл: 53, контакт 76.
+            int nextImpact = GuardianCycle + GuardianWindup;
+            CollectionAssert.AreEqual(new[] { nextImpact }, Until(sim, nextImpact + 1, g));
         }
 
         [Test]
@@ -255,7 +262,8 @@ namespace Game.Tests
             Assert.IsFalse(sim.TryGetTelegraph(swing.Telegraph, out _));
             Assert.AreEqual(0, sim.TelegraphHighWater);
 
-            Until(sim, 50, g);
+            // Второй замах уже идёт.
+            Until(sim, GuardianCycle + 2, g);
             Assert.IsTrue(sim.TryGetEnemySwing(g, out _));
             sim.SetupTestArena(0);
             Assert.IsFalse(sim.TryGetEnemySwing(g, out _));
@@ -513,7 +521,7 @@ namespace Game.Tests
             }
             TestContext.WriteLine("live max over " + templates + " templates: lanes " + lanes + ", circles " + circles
                 + ", sectors " + sectors + ", rings " + rings);
-            Assert.That(templates, Is.EqualTo(6), "E06, E07, E08T, E09, E10, E14");
+            Assert.That(templates, Is.EqualTo(12), "E06, E07, E08T, E09, E10, E14, E20, E21, E22, E23, E24, E25");
             // Прогон что-то проверил: линии Шипомёта и круги Корнехвата правда падали.
             Assert.That(lanes, Is.GreaterThan(0), "ни одной линии шипов");
             Assert.That(circles, Is.GreaterThan(0), "ни одного круга");

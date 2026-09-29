@@ -1,0 +1,39 @@
+{
+  "section": "telegraphs",
+  "gate": "G6",
+  "date": "2026-09-29",
+  "model": "gpt_image_2_5 (quality high, 2k, 16:9) — output 2688x1520",
+  "base_prep": "game frame 1920x1080 cropped 960x540 around the action (2x) and upscaled to 1920x1080 before upload",
+  "credits_spent": 11.0,
+  "items": [
+    {
+      "file": "01-ink-forest-ornament.png",
+      "direction": "ink + forest ornament",
+      "base": "artifacts/mobsv2-bases/wendigo/shot_03_t6.00s.png (crop x490 y190 960x540) — Wendigo claw sector",
+      "prompt_summary": "Replace the flat red sector with a hand-inked dark outline plus carved wood/root ornament along the rim and straight edges; warm red-orange translucent fill grows from the apex at the Wendigo to ~60% with a brighter front line; unfilled band faintly tinted. Keep camera/terrain/hero/mobs exactly; no text/UI/blue/purple.",
+      "job_id": "96dd5e6e-f07a-41ec-b41d-fef8c20a0f28"
+    },
+    {
+      "file": "02-cracks-inner-light.png",
+      "direction": "cracks with inner light",
+      "base": "artifacts/mobsv2-bases/thorncaster/shot_01_t3.00s.png (crop x520 y210 960x540) — Thorncaster 4-segment lane with erupting spikes",
+      "prompt_summary": "Ground cracks open along the lane outline and inside it, hot orange-red ember light from inside the cracks; open and glowing from the thorncaster end for ~60% with a bright orange-yellow running rim at the fill front; the rest outlined by thin dark hairline cracks. Spikes/hero/mobs unchanged.",
+      "job_id": "453ca985-869c-41c3-8b56-8bd31f8db490"
+    },
+    {
+      "file": "03-runic-circle-running-rim.png",
+      "direction": "runic circle / running rim",
+      "base": "artifacts/mobsv2-bases/snarer/shot_03_t6.00s.png (crop x570 y230 960x540) — Snarer circle under the hero",
+      "prompt_summary": "Circle border becomes a carved band of angular forest glyphs (no readable text) cut into soil with warm red-orange paint; a bright orange-red band runs clockwise around it as the timer (~60% covered, glowing head at the leading end); subtle warm translucent fill inside.",
+      "job_id": "b0170c46-84c0-4968-9e47-b9ed4b34def8"
+    },
+    {
+      "file": "04-brush-stroke.png",
+      "direction": "brush stroke",
+      "base": "artifacts/mobsv2-bases/thorncaster/shot_03_t6.00s.png (crop x420 y200 960x540) — Thorncaster 5-segment diagonal lane",
+      "prompt_summary": "Lane becomes one bold painterly crimson-red brush stroke with dry-brush streaks and ragged edges; opaque saturated paint from the thorncaster end for ~60% with a wet leading edge and spatter; the rest only a dry-brush sketch/faint wash.",
+      "job_id": "4ad4169c-1004-4f3d-8417-ce612a6a49ee"
+    }
+  ],
+  "notes": "Each direction shown on one shape (sector, lane+spikes, circle, lane). 04 reads close to a blood smear because of the saturated crimson — a warmer orange-red would separate it from gore."
+}

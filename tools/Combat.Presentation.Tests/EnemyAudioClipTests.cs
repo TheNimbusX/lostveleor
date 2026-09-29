@@ -105,16 +105,7 @@ public sealed class EnemyAudioClipTests
 
     private static string Audio => Path.Combine(Root, "razlom", "Assets", "Resources", "Audio", "Combat");
 
-    private static string Root
-    {
-        get
-        {
-            var dir = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
-            while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "razlom", "Assets"))) dir = dir.Parent;
-            Assert.That(dir, Is.Not.Null, "не найден корень репозитория");
-            return dir.FullName;
-        }
-    }
+    private static string Root => RepoRoot.Path;
 
     private sealed class Wav
     {

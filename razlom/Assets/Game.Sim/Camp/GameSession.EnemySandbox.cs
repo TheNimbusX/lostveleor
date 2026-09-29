@@ -11,7 +11,7 @@ namespace Game.Sim
             RunNumber++;
             IsDeveloperRun = true;
             var sim = new Simulation(seed, _simCapacity);
-            sim.SetPlayerLevel(Camp.Level);
+            sim.ApplyHeroBaseline();
             Camp.Worn.Bind(sim.Entities.Stats[Simulation.PlayerId]);
             var run = new RiftRun(sim, Simulation.EnemySandboxModules(), Camp.Items, _itemBaseIds);
             run.PlayerEquipment = Camp.Worn;

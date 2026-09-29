@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_Puddle_Crust
+  m_Shader: {fileID: 4800000, guid: e7ceeaf8ab2dfda42a46b5394291c0da, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2986
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: bb4e37cc365b8ff48b62687d56f76b97, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AgeSeconds: 0
+    - _Dry: 0
+    - _DstBlend: 10
+    - _Fade: 1
+    - _Layer: 1
+    - _Lift: 0.035
+    - _Radius: 1.2
+    - _Seed: 0
+    - _SrcBlend: 1
+    m_Colors:
+    - _Crack: {r: 0.21, g: 0.15, b: 0.08, a: 1}
+    - _CrustDark: {r: 0.37, g: 0.28, b: 0.14, a: 1}
+    - _CrustLight: {r: 0.47, g: 0.36, b: 0.19, a: 1}
+    - _Scorch: {r: 0.84, g: 0.72, b: 0.88, a: 1}
+    - _UnderAcid: {r: 0.5, g: 0.42, b: 0.62, a: 1}
+    - _WetSoil: {r: 0.62, g: 0.5, b: 0.8, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -32,13 +32,23 @@ namespace Game.View
         // застывшей позе. Ход держится WalkHoldSeconds после остановки — шаг,
         // упёршийся на тик в соседа, не мигает Idle.
         private const float HitCooldownTicks = 30f, WalkHoldSeconds = .12f;
+
+        // ВЗМАХ КЛЫКАМИ (ревью владельца 29.09). Клип Stonehoof_Tusk — 26 кадров
+        // по 30 к/с (ART/.../animation/tusk): 14 кадров замаха, контакт на 14-м,
+        // 12 кадров восстановления в стойку. Фаза — по тику Sim кусками: замах
+        // [StartTick, ImpactTick] ложится на кадры 0–14, восстановление
+        // [ImpactTick, RecoverUntil] — на 14–26, так что контакт клипа совпадает
+        // с тиком удара, даже если числа StonehoofTusk* подкрутят. Вход короткой
+        // смесью (клип начинается со стойки), выход — обычной смесью Idle.
+        private const float TuskClipFrames = 26f, TuskContactFrame = 14f, TuskBlendSeconds = .06f;
         private static readonly int TurnLeftState = Animator.StringToHash("Base Layer.TurnLeft"),
-            TurnRightState = Animator.StringToHash("Base Layer.TurnRight");
+            TurnRightState = Animator.StringToHash("Base Layer.TurnRight"),
+            TuskState = Animator.StringToHash("Base Layer.Tusk");
         private Animator _animator;
         private TickDriver _driver;
         private int _entity, _health;
         private string _state;
-        private bool _dead, _hasTurnClips;
+        private bool _dead, _hasTurnClips, _hasTuskClip;
         private float _deathClock, _idleClock, _walkPhase, _hitClock, _lastHitTick = -1000f, _walkHold;
         // _turnSign: 0 — разворота нет, −1 — влево, +1 — вправо. _pendingYaw —
         // поворот со знаком, ещё не включивший разворот. _turnSettled — время
@@ -68,6 +78,8 @@ namespace Game.View
             _health = driver.Sim.Entities.Health[entity];
             _animator.Rebind(); _animator.SetFloat("IdlePhase", 0);
             _hasTurnClips = _animator.HasState(0, TurnLeftState) && _animator.HasState(0, TurnRightState);
+            // Старый контроллер (сборщик ещё не прогнан) — без состояния: кабан бьёт из Idle.
+            _hasTuskClip = _animator.HasState(0, TuskState);
             _animator.Play("Base Layer.Idle", 0, 0); _animator.Update(0);
         }
         private void Update()
@@ -85,14 +97,23 @@ namespace Game.View
                 ? Vector3.SignedAngle(_lastFacing, facing, Vector3.up) : 0f;
             if (facing.sqrMagnitude > .5f) _lastFacing = facing;
             bool acting = sim.TryGetStonehoofAction(_entity, out var a);
+            StonehoofTuskState tusk = default;
+            bool tusking = _hasTuskClip && sim.TryGetStonehoofTusk(_entity, out tusk);
             float tick = sim.Tick - 1 + _driver.Alpha;
             // Удар — только событие Damage по кабану (не DamageOverTime) и не чаще раза в секунду.
+            // Во взмахе клыками вздрагивания нет: Sim его не прерывает, и клип не рвётся.
             var events = _driver.FrameEvents;
             for (int i = 0; i < events.Count; i++)
                 if (events[i].Type == SimEventType.Damage && events[i].Target == _entity && events[i].Amount > 0
-                    && !acting && tick - _lastHitTick >= HitCooldownTicks)
+                    && !acting && !tusking && tick - _lastHitTick >= HitCooldownTicks)
                 { _hitClock = 0; _lastHitTick = tick; }
             _health = sim.Entities.Health[_entity]; _hitClock += dt;
+            if (tusking)
+            {
+                ForgetTurn();
+                Sample("Tusk", TuskPhase(tusk, tick), TuskBlendSeconds);
+                return;
+            }
             if (acting)
             {
                 ForgetTurn();
@@ -162,6 +183,21 @@ namespace Game.View
                 Sample("Walk", Mathf.Repeat(_walkPhase, 1), .12f);
             }
             return true;
+        }
+
+        /// <summary>
+        /// Фаза клипа Tusk по тику Sim: замах — кадры 0…14, восстановление —
+        /// 14…26. Кадр 14 (контакт клыков) приходится ровно на ImpactTick.
+        /// </summary>
+        private static float TuskPhase(in StonehoofTuskState tusk, float tick)
+        {
+            float frame;
+            if (tick < tusk.ImpactTick)
+                frame = TuskContactFrame * Mathf.Clamp01((tick - tusk.StartTick) / Mathf.Max(1, tusk.ImpactTick - tusk.StartTick));
+            else
+                frame = TuskContactFrame + (TuskClipFrames - TuskContactFrame)
+                    * Mathf.Clamp01((tick - tusk.ImpactTick) / Mathf.Max(1, tusk.RecoverUntil - tusk.ImpactTick));
+            return frame / TuskClipFrames;
         }
 
         /// <summary>Атака, попадание или ход перебили разворот: копить поворот заново.</summary>

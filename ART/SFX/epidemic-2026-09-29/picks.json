@@ -1,0 +1,430 @@
+{
+ "Forest Guardian: claw swing whoosh": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Swooshes, Swish, Wood Stick, Heavy",
+    "file": "ES_Swooshes, Swish, Wood Stick, Heavy - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Guardian: claw impact on hero": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01",
+    "file": "ES_Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01 - Epidemic Sound.wav"
+   },
+   {
+    "candidate": "3",
+    "title": "Wood, Impact, Hit, Thud, Heavy, Distant",
+    "file": "ES_Wood, Impact, Hit, Thud, Heavy, Distant - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Guardian: hurt (creak + growl)": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03",
+    "file": "ES_Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Guardian: death (crumble, creak, thud)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Wood, Break, Tree Crack, Fall 04",
+    "file": "ES_Wood, Break, Tree Crack, Fall 04 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Guardian: footsteps (heavy wooden)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS)",
+    "file": "ES_Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS) - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Swarm: bite / snap": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Food & Drink, Eating, Bite Carrot",
+    "file": "ES_Food & Drink, Eating, Bite Carrot - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Swarm: scuttle / skitter": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02",
+    "file": "ES_Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Swarm: hurt squeak": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Creatures, Small, Sheitan's Baby, Voice 03",
+    "file": "ES_Creatures, Small, Sheitan's Baby, Voice 03 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Swarm: death pop / crunch": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Vegetation, Tree, Stick, Thin, Snap, Break",
+    "file": "ES_Vegetation, Tree, Stick, Thin, Snap, Break - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Bud: spit / pop volley": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single",
+    "file": "ES_Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Bud: fruit splat on ground": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Cartoon, Splat, Wet",
+    "file": "ES_Cartoon, Splat, Wet - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Bud: acid puddle sizzle / bubbling": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Chemicals, Acid, Bubbling, Sizzling, Close",
+    "file": "ES_Chemicals, Acid, Bubbling, Sizzling, Close - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Bud: hurt": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Creatures, Small, Gurgling, Bubble",
+    "file": "ES_Creatures, Small, Gurgling, Bubble - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Forest Bud: death (squelch / burst)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Slime, Movement, Fast 05",
+    "file": "ES_Slime, Movement, Fast 05 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: snort / paw windup": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Animals, Farm, Pig, Big, Snorts, Grunts",
+    "file": "ES_Animals, Farm, Pig, Big, Snorts, Grunts - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: charge rumble / gallop": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Animals, Horse, Foley Stage, Horse Galloping Dirt 01",
+    "file": "ES_Animals, Horse, Foley Stage, Horse Galloping Dirt 01 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: collision heavy thud": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Designed, Impact, Sudden, Heavy, Percussive Hit",
+    "file": "ES_Designed, Impact, Sudden, Heavy, Percussive Hit - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: tusk swipe": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh",
+    "file": "ES_Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: hurt squeal-grunt": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05",
+    "file": "ES_Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Stonehoof: death": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff",
+    "file": "ES_Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: claw swipe": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Swooshes, Swish, Fast, Double Swish, Variations",
+    "file": "ES_Swooshes, Swish, Fast, Double Swish, Variations - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: leap takeoff": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Swooshes, Whoosh, Short, Deep Reversed, Dry",
+    "file": "ES_Swooshes, Whoosh, Short, Deep Reversed, Dry - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: heavy landing": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Rocks, Impact, Heavy, Drop On Ground, Grit",
+    "file": "ES_Rocks, Impact, Heavy, Drop On Ground, Grit - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: howl / roar (eerie)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+    "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: 360 sweep": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Swooshes, Whoosh, Deep, Low, Cinematic",
+    "file": "ES_Swooshes, Whoosh, Deep, Low, Cinematic - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: hurt": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01",
+    "file": "ES_Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Wendigo: death": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Creatures, Monster, Ill Or Dying, Moan",
+    "file": "ES_Creatures, Monster, Ill Or Dying, Moan - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Thorncaster: thorn spikes erupting (sequential)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Tools, Hand, Shovel, Spade, Dig Into Ground x6",
+    "file": "ES_Tools, Hand, Shovel, Spade, Dig Into Ground x6 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Thorncaster: thorn burst": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Wood, Break, Ukulele, Thin, Smash 01",
+    "file": "ES_Wood, Break, Ukulele, Thin, Smash 01 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Thorncaster: thorn projectile whoosh + wooden impact": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB)",
+    "file": "ES_Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB) - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Thorncaster: hurt": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Vegetation, Leaves, Bush, Twig Breaks",
+    "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Thorncaster: death": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02",
+    "file": "ES_Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Snarer: heavy slam into ground": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Designed, Impact, Troll, Fight, Impact Rock Ground 07",
+    "file": "ES_Designed, Impact, Troll, Fight, Impact Rock Ground 07 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Snarer: roots erupting from ground": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02",
+    "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Snarer: healing channel / nature heal": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex",
+    "file": "ES_Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Snarer: hurt": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Vegetation, Grass, Foliage, Moss, Squish",
+    "file": "ES_Vegetation, Grass, Foliage, Moss, Squish - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Root Snarer: death": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Creatures, Humanoid, Giant, Male, Groan",
+    "file": "ES_Creatures, Humanoid, Giant, Male, Groan - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: bite": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Animals, Insect, Caterpillar, Bite, Eat Leaf 04",
+    "file": "ES_Animals, Insect, Caterpillar, Bite, Eat Leaf 04 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: rolling ball rumble": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Swooshes, Whoosh, Wood, Roll Long",
+    "file": "ES_Swooshes, Whoosh, Wood, Roll Long - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: shell crack / split": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03",
+    "file": "ES_Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: small creature pop / hop": {
+  "picked": [
+   {
+    "candidate": "3",
+    "title": "Creatures, Small, Misc, Granular, Bouncing",
+    "file": "ES_Creatures, Small, Misc, Granular, Bouncing - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: hurt": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Creatures, Misc, Goblin's Pug, Voice 02",
+    "file": "ES_Creatures, Misc, Goblin's Pug, Voice 02 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Splitter: death": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03",
+    "file": "ES_Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03 - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Generic: layered kill impact (crack + thump)": {
+  "picked": [
+   {
+    "candidate": "1",
+    "title": "Games, Video, Video Game, Wood Break, Fat, Log",
+    "file": "ES_Games, Video, Video Game, Wood Break, Fat, Log - Epidemic Sound.wav"
+   },
+   {
+    "candidate": "2",
+    "title": "Fight, Impact, Magic Hits, Thick, Punchy",
+    "file": "ES_Fight, Impact, Magic Hits, Thick, Punchy - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Generic: essence motes absorbed": {
+  "picked": []
+ },
+ "Generic: hero stunned (daze ring)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out",
+    "file": "ES_Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "Generic: hero rooted (roots wrapping)": {
+  "picked": [
+   {
+    "candidate": "2",
+    "title": "Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines",
+    "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines - Epidemic Sound.wav"
+   }
+  ]
+ },
+ "_note": "Выбор владельца 29.09. Номера через + — слои одного звука. Generic kill impact «1- 2» понят как слои 1+2. Огоньки сущности — без звука."
+}

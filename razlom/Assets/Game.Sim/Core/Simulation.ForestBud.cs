@@ -98,8 +98,10 @@ namespace Game.Sim
             }
             else if (distance.Raw > 0)
             {
-                // Хорошая огневая позиция удерживается до изменения обстановки.
-                if (BigAttackerSpread(id, out var side)) wanted = side * (speed * Fix64.Ratio(1, 3));
+                // Хорошая огневая позиция удерживается до изменения обстановки; между
+                // залпами стрелок идёт на соседнюю точку полным шагом (ShooterRestless).
+                if (BigAttackerSpread(id, out var side))
+                    wanted = side * (ShooterRestless(id) ? speed : speed * Fix64.Ratio(1, 3));
             }
             // В чужой метке или в луже — вон из неё, бегом.
             if (InAllyDanger(id, Entities.Position[id], out FixVec2 escape)) wanted = escape * speed;
@@ -202,7 +204,10 @@ namespace Game.Sim
                 if (attack.ShotsFired >= config.ShotCount ||
                     Tick < attack.FirstShotTick + attack.ShotsFired * config.ShotIntervalTicks) continue;
                 // Уход за десять метров прерывает оставшиеся выстрелы; уже выпущенные плоды сохраняют цель.
-                if ((Entities.Position[PlayerId] - Entities.Position[id]).LengthSq > config.AttackRange * config.AttackRange)
+                // Так же и плод, который упал бы на связанного или оглушённого героя: по
+                // стоящему без выбора не стреляют (такт ударов, Simulation.AttackRhythm).
+                if ((Entities.Position[PlayerId] - Entities.Position[id]).LengthSq > config.AttackRange * config.AttackRange
+                    || HeroControlledAt(Tick + config.FlightTicks))
                 {
                     _events.Add(new SimEvent(SimEventType.ForestBudVolleyCancelled, id, PlayerId,
                         attack.Serial, false, Entities.Position[id], actionVariant: attack.ShotsFired));

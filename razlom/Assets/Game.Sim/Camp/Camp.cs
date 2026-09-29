@@ -222,8 +222,9 @@ namespace Game.Sim
 
         /// <summary>
         /// Уровень героя. Живёт в лагере, а не в забеге: смерть отнимает
-        /// добытое в Разломе, но не уровень. Уровень даёт базовые статы
-        /// (Simulation.SetPlayerLevel); таланты с 15 сентября живут в забеге.
+        /// добытое в Разломе, но не уровень. Статов уровень с 29 сентября не
+        /// даёт: герой всегда на базе (Simulation.ApplyHeroBaseline); таланты с
+        /// 15 сентября живут в забеге.
         /// </summary>
         public int Level { get; private set; } = 1;
 
@@ -252,8 +253,8 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Только редактор и dev-сборка: поднять уровень без гринда. Статы
-        /// симуляций обновляет GameSession.SyncPlayerLevel.
+        /// Только редактор и dev-сборка: поднять уровень без гринда. Статов
+        /// уровень не даёт; GameSession.SyncPlayerLevel лишь подтверждает базу героя.
         /// </summary>
         public void DeveloperGrantLevel() => DeveloperSetLevel(Level + 1);
 

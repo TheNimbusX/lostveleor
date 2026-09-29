@@ -25,6 +25,20 @@ namespace Game.Sim
     }
 
     /// <summary>
+    /// Уровень пачки на лестнице арен (решение владельца от 29.09): А1 —
+    /// лёгкая, А2 — лёгкая или средняя, А3–А5 — средние, А6 — средняя или
+    /// тяжёлая, А7–А8 — тяжёлые. Веса лестницы — ArenaRunPlan.TierWeight.
+    /// Элитные встречи стоят в своих слотах вне лестницы; их уровень — Hard.
+    /// Новые значения — только в конец.
+    /// </summary>
+    public enum EncounterTier : byte
+    {
+        Easy = 0,
+        Medium = 1,
+        Hard = 2,
+    }
+
+    /// <summary>
     /// Где встаёт группа волны. Направления считаются по оси арены — от входа
     /// к выходу — от места героя в миг появления волны: «спереди» — ближе к
     /// выходу, «сзади» — к входу, «с фланга» — поперёк оси.
@@ -186,7 +200,7 @@ namespace Game.Sim
     }
 
     /// <summary>
-    /// Шаблон встречи арены: тип, где он допустим, и волны. Таблица шаблонов
+    /// Шаблон встречи арены: тип, уровень, где он допустим, и волны. Таблица шаблонов
     /// леса — ForestEncounterTemplates; что на какой арене — ArenaRunPlan.
     /// </summary>
     public sealed class ArenaEncounterTemplate
@@ -195,6 +209,13 @@ namespace Game.Sim
         public readonly string Key;
         public readonly int Id;
         public readonly ArenaEncounterType Type;
+
+        /// <summary>
+        /// Уровень пачки: на обычную арену план ставит шаблон того уровня,
+        /// что выпал ей по лестнице. Окно MinArena..MaxArena шаблона лежит
+        /// в аренах, где лестница этот уровень допускает.
+        /// </summary>
+        public readonly EncounterTier Tier;
 
         /// <summary>Номера арен, на которых шаблон допустим (А1 = 1).</summary>
         public readonly int MinArena, MaxArena;
@@ -206,7 +227,9 @@ namespace Game.Sim
         /// <summary>
         /// Урок: вид, который этот шаблон показывает впервые, одним и среди
         /// знакомых. Шаблон с уроком — единственный путь нового вида в забег;
-        /// None — шаблон только из уже знакомых видов.
+        /// None — шаблон только из уже знакомых видов. Уроков у вида может
+        /// быть несколько — по одному на уровень лестницы, где вид встречается
+        /// впервые; когда вид уже знаком, урок идёт как обычная пачка.
         /// </summary>
         public readonly EnemyKind Lesson;
 
@@ -223,14 +246,19 @@ namespace Game.Sim
         public int WaveCount => _waves.Length;
         public EncounterWave GetWave(int index) => _waves[index];
 
+        /// <param name="tier">
+        /// Уровень лестницы. По умолчанию — средний: так старые вызовы (тестовые
+        /// шаблоны) собираются без правок; шаблоны леса задают его явно.
+        /// </param>
         public ArenaEncounterTemplate(string key, ArenaEncounterType type, int minArena, int maxArena,
             int minArenaSize, EnemyKind lesson, EncounterWave[] waves, int weight = 100,
-            int budgetPercent = 100, int survivalTicks = 0)
+            int budgetPercent = 100, int survivalTicks = 0, EncounterTier tier = EncounterTier.Medium)
         {
             if (string.IsNullOrWhiteSpace(key) || type == ArenaEncounterType.Boss || minArena < 1
                 || maxArena < minArena || minArenaSize < 2 || minArenaSize > 4 || weight < 1 || weight > 10000
                 || budgetPercent < 10 || budgetPercent > 200 || survivalTicks < 0
                 || (survivalTicks > 0) != (type == ArenaEncounterType.Survival)
+                || tier > EncounterTier.Hard
                 || waves == null || waves.Length == 0 || waves.Length > 8)
                 throw new ArgumentException("Invalid arena encounter template: " + key);
             for (int w = 0; w < waves.Length; w++)
@@ -239,7 +267,7 @@ namespace Game.Sim
                 if ((waves[w].Trigger.Kind == WaveTriggerKind.Start) != (w == 0))
                     throw new ArgumentException(key + ": only the first wave starts with the arena.");
             }
-            Key = key; Id = StableId.Of(key); Type = type; MinArena = minArena; MaxArena = maxArena;
+            Key = key; Id = StableId.Of(key); Type = type; Tier = tier; MinArena = minArena; MaxArena = maxArena;
             MinArenaSize = minArenaSize; Weight = weight; Lesson = lesson; BudgetPercent = budgetPercent;
             SurvivalTicks = survivalTicks; _waves = (EncounterWave[])waves.Clone();
             if (lesson != EnemyKind.None && !Uses(lesson)) throw new ArgumentException(key + ": the lesson kind is absent.");

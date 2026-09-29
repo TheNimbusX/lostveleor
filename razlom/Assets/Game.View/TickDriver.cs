@@ -383,6 +383,8 @@ namespace Game.View
                 int depthBefore = Run != null ? Run.Depth : 0;
 
                 Session.Step(in frame);
+                // Запись боя для метрик «ощущения» (-capture-feel): только редактор и dev-сборка.
+                CombatFeelRecorder.AfterStep(this, frame);
 
                 // У короткого Шквала смерть должна попасть внутрь серии;
                 // 24 тика оставляем длинным якорным способностям.

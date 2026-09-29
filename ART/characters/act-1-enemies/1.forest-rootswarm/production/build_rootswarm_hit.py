@@ -1,5 +1,8 @@
 """Корнеполз: реакция на попадание, Forest_RootSwarm@Hit.fbx.
 
+ЗАМЕНЁН 29.09: все клипы, включая @Hit, собирает build_rootswarm_v2.py. Этот скрипт
+не запускать — он перезапишет новую реакцию старой и возьмёт стойку из уже новой @Idle.
+
 Запуск: blender -b --factory-startup --python build_rootswarm_hit.py
 
 Скелет и меш берутся из Forest_RootSwarm@Idle.fbx — того же файла, из которого

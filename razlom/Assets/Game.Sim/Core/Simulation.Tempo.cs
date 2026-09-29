@@ -28,6 +28,9 @@ namespace Game.Sim
         {
             var build = _abilityBuilds[slot];
             if (build == null) return false;
+            // Корни: уходы (кувырок, Выпад, Отскок) не начинаются, нажатие
+            // пропадает и не сбивает начатый удар. Удары и касты — как обычно.
+            if (HeroRooted && IsEvade(build.DefinitionId)) return false;
             if (build.DefinitionId == AbilityDefinition.WreckId && _wreckSlot == slot && WreckComboOpen) return true;
             return Tick >= _abilityReadyTick[slot] && CanAffordAbility(build)
                 && (build.DefinitionId != AbilityDefinition.ChainStepId || ValidAbilityTarget(input.AbilityTarget, build));
@@ -39,7 +42,9 @@ namespace Game.Sim
             result.AbilityMask = 0;
             if (!Entities.Alive[PlayerId] || Statuses.IsStunned(PlayerId, Tick))
             {
-                CancelPlayerAction();
+                // Оглушение снимает только собственное действие героя: отброс,
+                // с которым оно пришло (разбег Камнекопыта), доезжает до конца.
+                CancelPlayerAction(keepKnockback: Entities.Alive[PlayerId]);
                 _bufferedUntil = -1;
                 result.Flags = 0;
                 result.AbilityHoldMask = 0;
@@ -100,7 +105,11 @@ namespace Game.Sim
             else if (id == AbilityDefinition.BackblastId) { contact = _backblastTick; end = _mobilityEndTick; }
             SetActionClock(slot, id, contact, end);
         }
-        private void CancelPlayerAction()
+        /// <param name="keepKnockback">
+        /// true — чужой отброс или волок героя не снимается: снимается только
+        /// его собственное движение (кувырок, выпад, прыжок).
+        /// </param>
+        private void CancelPlayerAction(bool keepKnockback = false)
         {
             StopAnchorSlam(); StopWreck(); StopCleave(); StopFlask();
             CancelBlazeGesture(); StopWhirlwindChannel();
@@ -108,7 +117,9 @@ namespace Game.Sim
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
             _chainHopsLeft = _chainVisitedCount = 0;
             _mobilitySlot = _backblastTick = -1;
-            ForcedMotion.Clear(Entities, PlayerId);
+            var pushed = (ForcedMotionKind)Entities.ForcedKind[PlayerId];
+            if (!keepKnockback || (pushed != ForcedMotionKind.Knockback && pushed != ForcedMotionKind.Dragged))
+                ForcedMotion.Clear(Entities, PlayerId);
             Entities.PendingAttackTarget[PlayerId] = -1;
             Entities.AttackImpactTick[PlayerId] = 0;
             Entities.PendingAttackVariant[PlayerId] = 0;

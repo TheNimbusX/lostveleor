@@ -237,9 +237,13 @@ namespace Game.View
         private void UpdateDeathSink(Simulation sim)
         {
             if (_hasDissolve || _body == null) return;
+            // Такт убийства (поток I, 29.09): тело уходит через ~0,44 с, а клип
+            // ложится к 1,07 с — оседание от «лёг» сжималось в 50 мс перед исчезновением.
+            // Теперь оно идёт вместе с распадом: от залпа до ухода тела.
             float total = EnemyPresentationProfile.Death(EnemyKind.ForestRootSnarer).TotalSeconds;
-            float to = Mathf.Max(.1f, total - .03f);
-            float from = Mathf.Min(Mathf.Max(DeathStillSeconds, to - .45f), to - .05f);
+            var beat = EnemyPresentationProfile.Kill(EnemyKind.ForestRootSnarer, false, false);
+            float to = Mathf.Max(.1f, Mathf.Min(total, beat.BodyGoneAt) - .03f);
+            float from = Mathf.Min(beat.BurstAt, to - .05f);
             float k = Mathf.Clamp01((_deathClock - from) / Mathf.Max(.05f, to - from));
             SetSink(k * k * DeathSinkMetres);
         }

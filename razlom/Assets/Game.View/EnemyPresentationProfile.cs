@@ -4,6 +4,78 @@ using UnityEngine;
 
 namespace Game.View
 {
+    /// <summary>Из чего сделан моб — во что он рассыпается в момент убийства (поток I, 29.09).</summary>
+    public enum DeathMaterial : byte
+    {
+        /// <summary>Кора и щепки, листья с головы — Хранитель, Камнекопыт.</summary>
+        Bark = 0,
+        /// <summary>Труха, волокна корней, сухие листья, земля — Корнеполз, Корнехват.</summary>
+        Rot = 1,
+        /// <summary>Золотые споры, капли сока, рваные лепестки — Плюй-плод.</summary>
+        Spore = 2,
+        /// <summary>Сколы панциря поверх своего раскола — Расщепень и детёныш.</summary>
+        Shell = 3,
+        /// <summary>Шипы и тёмная кора — Шипомёт.</summary>
+        Thorn = 4,
+        /// <summary>Костяные осколки рогов и мох — Вендиго.</summary>
+        Bone = 5,
+    }
+
+    /// <summary>
+    /// ТАКТ УБИЙСТВА одного моба (поток I). Все времена — секунды от тика
+    /// события Death; эффекты считают возраст от тика Sim, тело — от кадра, в
+    /// котором ArenaView увидел смерть (расходятся не больше чем на кадр).
+    ///
+    ///   0            — вспышка на теле (_HitFlash, KillFlashSeconds, потом гаснет за 1–2 кадра);
+    ///   0…HitStop    — стоп-кадр тяжёлого: тело держит отдачу, распад ждёт;
+    ///   BurstAt      — залп материала вида и начало распада тела (тряска у тяжёлых);
+    ///   MotesAt      — первые огоньки сущности летят в героя;
+    ///   BodyGoneAt   — тело рассыпалось и возвращается в пул.
+    ///
+    /// Звук (поток K): слоёная смерть — на BurstAt, «огоньки долетели» — на
+    /// FirstMoteArrivesAt…LastMoteArrivesAt. Такт считает
+    /// <see cref="EnemyDeathFxView.BeatFor"/> в кадре события смерти.
+    /// </summary>
+    public readonly struct EnemyKillBeat
+    {
+        public readonly EnemyKind Kind;
+        public readonly DeathMaterial Material;
+        /// <summary>Крупный, элита или последний в волне: стоп-кадр и лёгкая тряска.</summary>
+        public readonly bool Heavy;
+        /// <summary>Убийство зачистило поле (последний в волне).</summary>
+        public readonly bool LastOfWave;
+        public readonly float HitStopSeconds;
+        public readonly float BurstAt;
+        public readonly float CrumbleSeconds;
+        public readonly float MotesAt;
+        public readonly int MoteCount;
+        /// <summary>Масштаб залпа: единица — Хранитель.</summary>
+        public readonly float Scale;
+        /// <summary>Размер куска, на которые трескается тело, м.</summary>
+        public readonly float ChunkMetres;
+        /// <summary>Тело оседает и сжимается. Расщепень — нет: он раскалывается сам (SplitterCombatView).</summary>
+        public readonly bool Crumbles;
+        public readonly float ShakeTrauma, ShakeZoom;
+
+        public EnemyKillBeat(EnemyKind kind, DeathMaterial material, bool heavy, bool lastOfWave, float hitStop,
+            float burstAt, float crumbleSeconds, int motes, float scale, float chunkMetres,
+            bool crumbles, float shakeTrauma, float shakeZoom)
+        {
+            Kind = kind; Material = material; Heavy = heavy; LastOfWave = lastOfWave;
+            HitStopSeconds = hitStop; BurstAt = burstAt; CrumbleSeconds = crumbleSeconds;
+            MotesAt = burstAt + EnemyPresentationProfile.MoteDelaySeconds; MoteCount = motes;
+            Scale = scale; ChunkMetres = chunkMetres; Crumbles = crumbles;
+            ShakeTrauma = shakeTrauma; ShakeZoom = shakeZoom;
+        }
+
+        /// <summary>Центр залпа над землёй, м: префабы Resources/VFX/Death собраны с центром на 0,8 при масштабе 1.</summary>
+        public float CentreHeight => EnemyPresentationProfile.BurstCentreUnit * Scale;
+        public float BodyGoneAt => BurstAt + CrumbleSeconds;
+        public float FirstMoteArrivesAt => MotesAt + EnemyPresentationProfile.MoteFlightMinSeconds;
+        public float LastMoteArrivesAt => MotesAt + EnemyPresentationProfile.MoteLaunchSpreadSeconds
+                                          + EnemyPresentationProfile.MoteFlightMaxSeconds;
+    }
+
     [Serializable]
     public sealed class EnemyDeathPresentation
     {
@@ -18,9 +90,25 @@ namespace Game.View
         [Range(0f, 1f)] public float EdgeGlow = 0.10f;
         public Color EdgeColor = new Color(0.38f, 0.29f, 0.15f, 1f);
 
+        /// <summary>
+        /// За сколько клип доходит до «лёг». Теперь это только скорость
+        /// проигрывания клипа смерти (Шипомёт, заглушка): тело рассыпается раньше,
+        /// чем ляжет, — см. <see cref="DissolveAt"/>.
+        /// </summary>
         public float FallSeconds => Mathf.Max(0.01f,
             (RestNormalized - StartNormalized) * ClipSeconds / Mathf.Max(0.01f, StateSpeed));
-        public float DissolveAt => FallSeconds + RestSeconds;
+
+        /// <summary>
+        /// Начало распада лёгкого убийства. БЫЛО «упал — полежал — осыпался»
+        /// (FallSeconds + RestSeconds, у Хранителя 1,13 с): выплата за удар
+        /// приходила через секунду после удара, и убийство не ощущалось (ревью
+        /// 29.09). Теперь тело трескается и рассыпается в материал сразу после
+        /// вспышки, клип смерти даёт лишь оседание. Тяжёлым ArenaView добавляет
+        /// стоп-кадр (<see cref="EnemyKillBeat.HitStopSeconds"/>).
+        /// </summary>
+        public float DissolveAt => EnemyPresentationProfile.KillBreakSeconds;
+
+        /// <summary>Тело рассыпалось (лёгкое убийство); DissolveSeconds — длительность распада.</summary>
         public float TotalSeconds => DissolveAt + DissolveSeconds;
     }
 
@@ -51,10 +139,12 @@ namespace Game.View
             RecoilMeters = 0, EdgeGlow = .025f, EdgeColor = new Color(.36f,.3f,.19f,1)
         };
         private static EnemyPresentationProfile _current;
+        // Кромка трещин Вендиго — цвет кости на изломе, не коры: он рассыпается в рога.
         public EnemyDeathPresentation ForestWendigo = new EnemyDeathPresentation {
             ClipSeconds = 4f, StartNormalized = 18f/96f, RestNormalized = 1f,
             StateSpeed = 1f, BlendSeconds = .07f, RestSeconds = .6f,
-            DissolveSeconds = .65f, RecoilMeters = .02f, EdgeGlow = .03f
+            DissolveSeconds = .65f, RecoilMeters = .02f, EdgeGlow = .03f,
+            EdgeColor = new Color(.62f, .57f, .46f, 1f)
         };
         // Шипомёт (клип Death, 48 кадров): касание земли на 39-м — ThorncasterAnimatorView
         // играет кадры 0–39 за время падения этого профиля, 39–48 за стойку.
@@ -93,6 +183,88 @@ namespace Game.View
                 case EnemyKind.ForestSplitling: return _current.RootSwarm;
                 default: return _current.Guardian;
             }
+        }
+
+        // ------------------------------------------------------------ момент убийства
+        //
+        // Решение владельца 29.09: распад в материал по виду, вспышка на теле 2–3
+        // кадра, лёгкая тряска и стоп-кадр — только у крупных и у последнего в волне,
+        // огоньки сущности летят в героя. Числа ниже — общий такт для тела
+        // (ArenaView), залпа (EnemyDeathFxView), огоньков (EssenceMotesView) и
+        // звука (поток K). Меняешь — меняется у всех разом.
+
+        /// <summary>Вспышка на теле держится на пике столько (2 кадра при 60 fps), потом гаснет за 1–2 кадра.</summary>
+        public const float KillFlashSeconds = .035f;
+
+        /// <summary>Сила вспышки добивания: _HitFlash тела, тёплый lerp Texture Toon. Не постоянное высветление.</summary>
+        public const float KillFlashPeak = .92f;
+
+        /// <summary>
+        /// Стоп-кадр тяжёлого убийства: тело держит отдачу, залп и распад ждут.
+        /// Глобальное время бой не трогает (правило CombatJuiceView): стоп — у тела.
+        /// </summary>
+        public const float KillHitStopSeconds = .075f;
+
+        /// <summary>Лёгкое убийство: залп материала и распад — сразу после пика вспышки.</summary>
+        public const float KillBreakSeconds = KillFlashSeconds;
+
+        /// <summary>Огоньки вылетают после залпа — из облака обломков, а не из целого тела.</summary>
+        public const float MoteDelaySeconds = .06f;
+
+        /// <summary>Разброс вылета огоньков одного убийства.</summary>
+        public const float MoteLaunchSpreadSeconds = .12f;
+
+        /// <summary>Полёт огонька до героя.</summary>
+        public const float MoteFlightMinSeconds = .6f, MoteFlightMaxSeconds = .9f;
+
+        /// <summary>Потолок летящих огоньков: лишние на массовом убийстве не рождаются.</summary>
+        public const int MotePoolSize = 64;
+
+        /// <summary>Высота центра залпа при масштабе 1, м (Хранитель).</summary>
+        public const float BurstCentreUnit = .8f;
+
+        /// <summary>
+        /// Такт убийства вида. elite — элита забега (Sim.IsElite), lastOfWave —
+        /// убийство зачистило поле. Тяжёлое — крупный вид (Камнекопыт, Вендиго,
+        /// Шипомёт, Корнехват, Расщепень), элита или последний в волне.
+        /// </summary>
+        public static EnemyKillBeat Kill(EnemyKind kind, bool elite, bool lastOfWave)
+        {
+            DeathMaterial material;
+            bool big, crumbles = true;
+            int motes;
+            float scale, chunk;
+            switch (kind)
+            {
+                case EnemyKind.ForestRootSwarm:
+                    material = DeathMaterial.Rot; big = false; motes = 3; scale = .6f; chunk = .09f; break;
+                case EnemyKind.ForestBud:
+                    material = DeathMaterial.Spore; big = false; motes = 4; scale = .75f; chunk = .11f; break;
+                case EnemyKind.ForestWendigo:
+                    material = DeathMaterial.Bone; big = true; motes = 12; scale = 1.35f; chunk = .22f; break;
+                case EnemyKind.ForestStonehoof:
+                    material = DeathMaterial.Bark; big = true; motes = 8; scale = 1.15f; chunk = .18f; break;
+                case EnemyKind.ForestThorncaster:
+                    material = DeathMaterial.Thorn; big = true; motes = 7; scale = 1f; chunk = .15f; break;
+                case EnemyKind.ForestRootSnarer:
+                    material = DeathMaterial.Rot; big = true; motes = 7; scale = .95f; chunk = .15f; break;
+                case EnemyKind.ForestSplitter:
+                    material = DeathMaterial.Shell; big = true; motes = 6; scale = 1f; chunk = .15f; crumbles = false; break;
+                case EnemyKind.ForestSplitling:
+                    material = DeathMaterial.Shell; big = false; motes = 3; scale = .6f; chunk = .09f; crumbles = false; break;
+                default:
+                    material = DeathMaterial.Bark; big = false; motes = 6; scale = 1f; chunk = .16f; break;
+            }
+            bool heavy = big || elite || lastOfWave;
+            float stop = heavy ? KillHitStopSeconds : 0f;
+            // Расщепень раскалывается по своей трещине (SplitterCombatView): сколы — в тот же тик.
+            float burst = crumbles ? KillBreakSeconds + stop
+                : Mathf.Max(SplitterCombatView.BreakDelaySeconds, KillBreakSeconds + stop);
+            if (elite) motes = motes * 3 / 2;
+            float trauma = !heavy ? 0f : lastOfWave ? .6f : .5f;
+            float zoom = !heavy ? 0f : lastOfWave ? .75f : .55f;
+            return new EnemyKillBeat(kind, material, heavy, lastOfWave, stop, burst,
+                Death(kind).DissolveSeconds, motes, scale, chunk, crumbles, trauma, zoom);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

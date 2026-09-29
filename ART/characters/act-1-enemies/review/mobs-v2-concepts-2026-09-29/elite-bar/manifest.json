@@ -1,0 +1,32 @@
+{
+  "section": "elite-bar",
+  "gate": "G8",
+  "model": "gpt_image_2_5",
+  "quality": "high",
+  "resolution": "2k",
+  "aspect_ratio": "16:9",
+  "credits_each": 2.75,
+  "date": "2026-09-29",
+  "references": [
+    "wendigo/shot_00_t1.50s.png crop x590-1550 y110-650 (image 1)",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png downscaled to 1920 wide (image 2)"
+  ],
+  "common_prompt": "Replace the thin red line with orange dot across the wendigo with a world-space ELITE bar above its head; kit-sheet typography/frames/diamond accents in P4 'Night Watercolor' (painterly dark ink + warm gold), Philosopher-like serif for the name, Nunito-like digits; wide bar ~1.6x wendigo width, red fill ~62% with pale chip segment, antlered-skull medallion at left, name «Вендиго» above, «1240 / 2000» inside. Scene otherwise unchanged.",
+  "items": [
+    {
+      "file": "01-wendigo-bar-heavy.png",
+      "job_id": "dac4a007-c372-4778-a47d-d352938426ca",
+      "prompt_summary": "Variant A: heavier thick carved gold-stone frame with chunky pointed end caps and notches."
+    },
+    {
+      "file": "02-wendigo-bar-light.png",
+      "job_id": "7ea4a9b0-9027-41e5-ab74-cca896dfa4be",
+      "prompt_summary": "Variant B: lighter thin gold line frame with diamond end accents, slim bar."
+    },
+    {
+      "file": "03-wendigo-bar-rank-crest.png",
+      "job_id": "5bca56eb-ad8a-4217-b46b-77418b8ec75e",
+      "prompt_summary": "Variant C: medium gold-stone frame plus small shield rank crest with three gold diamond pips above the skull medallion."
+    }
+  ]
+}

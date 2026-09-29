@@ -318,6 +318,19 @@ namespace Game.View
         // сопротивление цепи, не меняя детерминированную позицию в Sim.
         private Vector3[] _presentationOffset;
         private Vector3[] _deathOffset;
+        // МОМЕНТ УБИЙСТВА (поток I, 29.09): такт смерти тела — когда оно
+        // трескается, сколько рассыпается, оседает ли — и частота кусков
+        // распада в объектных единицах его рендерера (см. RazlomDissolve.hlsl).
+        private EnemyKillBeat[] _killBeats;
+        private float[] _killChunkScale;
+        private static readonly int DissolveScaleId = Shader.PropertyToID("_DissolveScale");
+        private static readonly int DissolveEdgeWidthId = Shader.PropertyToID("_DissolveEdgeWidth");
+        // Кромка излома у кусков узкая: шов, а не заливка — иначе трещины
+        // сливаются в цветное пятно на полкуска.
+        private const float KillSeamWidth = 0.05f;
+        // Вспышка добивания после пика гаснет за кадр-два (у живых — медленнее,
+        // стоп-кадр попадания держит её дольше): владелец просил 2–3 кадра.
+        private const float KillFlashDecay = 60f;
         private static readonly int HitFlashId = Shader.PropertyToID("_HitFlash");
         private static readonly int DissolveEdgeGlowId = Shader.PropertyToID("_DissolveEdgeGlow");
         private static readonly int DissolveEdgeColorId = Shader.PropertyToID("_DissolveEdgeColor");
@@ -390,6 +403,12 @@ namespace Game.View
         // Прежние 0.16 + 0.30 не позволяли увидеть падение в принципе: за
         // 0.16 с клип на скорости 0.67 доходил до девятого кадра, где тело ещё
         // стоит. Всё «падение» в кадре делал выброс, которого больше нет.
+        //
+        // 29.09 ПОРЯДОК СМЕНИЛСЯ (ревью владельца «убийства не ощущаются»):
+        // вспышка — (стоп-кадр тяжёлого) — тело трескается кусками своего
+        // материала и оседает, залп обломков и огоньки — сразу. Падение клипа
+        // осталось только оседанием внутри распада. Такт — EnemyKillBeat
+        // (EnemyPresentationProfile.Kill), тело ведёт BeginKillBeat.
         public static float DeathDissolveStartDelay(EnemyKind kind)
             => EnemyPresentationProfile.Death(kind).DissolveAt;
 
@@ -455,6 +474,8 @@ namespace Game.View
             _flashHoldUntil = new float[capacity];
             _presentationOffset = new Vector3[capacity];
             _deathOffset = new Vector3[capacity];
+            _killBeats = new EnemyKillBeat[capacity];
+            _killChunkScale = new float[capacity];
             _lastVelocityMagnitude = new float[capacity];
             _locomotionMoving = new bool[capacity];
             _lastFacingWorld = new Vector3[capacity];
@@ -500,6 +521,12 @@ namespace Game.View
             // Земля под встающими и уходящими в неё врагами; свой пул выбросов готов сразу.
             _emerge = GetComponent<EnemyEmergeView>();
             if (_emerge == null) _emerge = gameObject.AddComponent<EnemyEmergeView>();
+            // Виды «Мобов леса v2» (этап 0): по строке на поток, каждый свой файл правит сам.
+            EnemyBodyTelegraphView.EnsureOn(gameObject);
+            EnemyDeathFxView.EnsureOn(gameObject);
+            EssenceMotesView.EnsureOn(gameObject);
+            HeroControlView.EnsureOn(gameObject);
+            EliteBarView.EnsureOn(gameObject);
 
             BindNewEntities();
         }
@@ -772,6 +799,58 @@ namespace Game.View
             _deathOffset[entityId] = direction * death.RecoilMeters * Mathf.Clamp01(strength);
             _hitRecoil[entityId] = -_deathOffset[entityId];
             _hitFlash[entityId] = Mathf.Max(_hitFlash[entityId], 0.92f);
+        }
+
+        /// <summary>
+        /// МОМЕНТ УБИЙСТВА со стороны тела (поток I). Вспышка добивания на пике
+        /// KillFlashSeconds; у тяжёлого (крупный, элита, последний в волне)
+        /// стоп-кадр — отдача стоит на пике, распад ждёт; дальше тело трескается
+        /// кусками своего материала и оседает (SyncTransforms), пока залп
+        /// EnemyDeathFxView продаёт распад частицами. Возвращает, сколько секунд
+        /// тело ещё показывать. Sim не трогает.
+        /// </summary>
+        private float BeginKillBeat(int id)
+        {
+            EnemyKillBeat beat = EnemyDeathFxView.BeatFor(_driver.Sim, id);
+            _killBeats[id] = beat;
+            _killChunkScale[id] = ChunkScale(id, beat.ChunkMetres);
+            _hitFlash[id] = Mathf.Max(_hitFlash[id], EnemyPresentationProfile.KillFlashPeak);
+            _flashHoldUntil[id] = Mathf.Max(_flashHoldUntil[id], Time.time + EnemyPresentationProfile.KillFlashSeconds);
+            if (beat.HitStopSeconds > 0f)
+                _poseHoldUntil[id] = Mathf.Max(_poseHoldUntil[id], Time.time + beat.HitStopSeconds);
+            return beat.BodyGoneAt;
+        }
+
+        /// <summary>
+        /// Кусков распада на объектную единицу тела: размер куска вида задан в
+        /// метрах, а шейдер режет в объектных координатах рендерера, у которых у
+        /// каждого импорта свой масштаб. Снимается в кадр смерти, пока тело ещё
+        /// в базовом масштабе: оседание меняет масштаб корня, а узор кусков
+        /// должен остаться приклеенным к телу. 0 — оставить значение материала.
+        ///
+        /// Масштаб берётся из матрицы рендерера (у скиннед-меша это не матрица
+        /// его Transform), а проверяется по его же localBounds: тело должно
+        /// выйти в 2–60 кусков поперёк. Не вышло — единицы меша не те, что мы
+        /// думаем, и лучше оставить узор материала, чем нарезать тело в
+        /// пиксельную пыль или отколоть его одним куском.
+        /// </summary>
+        private float ChunkScale(int id, float chunkMetres)
+        {
+            Renderer[] renderers = _bodyRenderers[id];
+            if (renderers == null || chunkMetres <= 0f) return 0f;
+            for (int r = 0; r < renderers.Length; r++)
+            {
+                Renderer renderer = renderers[r];
+                if (renderer == null || renderer is SpriteRenderer) continue;
+                Vector3 axes = renderer.localToWorldMatrix.lossyScale;
+                float metresPerUnit = (Mathf.Abs(axes.x) + Mathf.Abs(axes.y) + Mathf.Abs(axes.z)) / 3f;
+                if (!(metresPerUnit > 1e-5f) || float.IsInfinity(metresPerUnit)) continue;
+                float perUnit = metresPerUnit / chunkMetres;
+                Vector3 size = renderer.localBounds.size;
+                float across = Mathf.Max(size.x, Mathf.Max(size.y, size.z)) * perUnit;
+                return across >= 2f && across <= 60f ? perUnit : 0f;
+            }
+            return 0f;
         }
 
         /// <summary>Опорные точки фактически установленной сабли Pelag.</summary>
@@ -1054,6 +1133,8 @@ namespace Game.View
             _deathStarted[entityId] = false;
             _deathStartedAt[entityId] = 0f;
             _deathOffset[entityId] = Vector3.zero;
+            _killBeats[entityId] = default;
+            _killChunkScale[entityId] = 0f;
             _hitRecoil[entityId] = Vector3.zero;
             _poseHoldUntil[entityId] = 0f;
             _flashHoldUntil[entityId] = 0f;
@@ -1179,6 +1260,8 @@ namespace Game.View
                 _deathStarted[i] = false;
                 _deathStartedAt[i] = 0f;
                 _deathOffset[i] = Vector3.zero;
+                _killBeats[i] = default;
+                _killChunkScale[i] = 0f;
                 _hitRecoil[i] = Vector3.zero;
                 _poseHoldUntil[i] = 0f;
                 _flashHoldUntil[i] = 0f;
@@ -1484,11 +1567,10 @@ namespace Game.View
                 float deathElapsed = !alive && _deathStarted[i]
                     ? Mathf.Max(0f, Time.time - _deathStartedAt[i])
                     : 0f;
-                float deathFade = orvill && !alive
-                    ? Mathf.InverseLerp(
-                        DeathDissolveStartDelay(entities.Kind[i]),
-                        EnemyPresentationProfile.Death(entities.Kind[i]).TotalSeconds,
-                        deathElapsed)
+                // Распад по такту убийства: с залпа (после вспышки и стоп-кадра)
+                // до «тело рассыпалось». Ушедший в землю такта не имеет — 0.
+                float deathFade = orvill && !alive && _deathStarted[i]
+                    ? Mathf.InverseLerp(_killBeats[i].BurstAt, _killBeats[i].BodyGoneAt, deathElapsed)
                     : 0f;
                 if (deathFade > 0f) SetContactShadowFade(i, deathFade);
 
@@ -1577,8 +1659,9 @@ namespace Game.View
                 if (Time.time >= _poseHoldUntil[i])
                     _hitRecoil[i] *= Mathf.Exp(-ReactionDecay * Time.deltaTime);
                 // Roughly 60 ms above the visible 0.1 threshold at 60 FPS.
+                // Вспышка добивания гаснет быстрее: 2–3 кадра на всё, не дольше.
                 if (Time.time >= _flashHoldUntil[i])
-                    _hitFlash[i] *= Mathf.Exp(-36f * Time.deltaTime);
+                    _hitFlash[i] *= Mathf.Exp(-(alive ? 36f : KillFlashDecay) * Time.deltaTime);
 
                 Renderer[] bodyRenderers = _bodyRenderers[i];
                 int[] materialSlotCounts = _bodyMaterialSlotCounts[i];
@@ -1592,6 +1675,13 @@ namespace Game.View
                         var death = EnemyPresentationProfile.Death(entities.Kind[i]);
                         block.SetFloat(DissolveEdgeGlowId, death.EdgeGlow);
                         block.SetColor(DissolveEdgeColorId, death.EdgeColor);
+                        // Куски распада в метрах вида и узкий шов излома — только трупу:
+                        // живым телам блок не меняет ничего, пока _DeathFade равен нулю.
+                        if (!alive && _killChunkScale[i] > 0f)
+                        {
+                            block.SetFloat(DissolveScaleId, _killChunkScale[i]);
+                            block.SetFloat(DissolveEdgeWidthId, KillSeamWidth);
+                        }
                     }
                     bool hovered = alive && i == _hoveredEntity;
                     // Цвет отделяет врага от фона постоянно. Маска видимого
@@ -1627,7 +1717,19 @@ namespace Game.View
                 // только потом осыпается — см. OrvillDeathAnimationDuration.
                 view.position = p + _hitRecoil[i];
                 if (_baseScale[i] != Vector3.zero)
+                {
                     view.localScale = _baseScale[i];
+                    // Распад: тело оседает в кучу — ниже и чуть уже — пока трескается
+                    // кусками. Корень стоит ногами на земле, поэтому сжатие по Y
+                    // садит тело вниз, а не втягивает к центру. Расщепень не оседает:
+                    // его раскол и половины коры ведёт SplitterCombatView.
+                    if (deathFade > 0f && _killBeats[i].Crumbles)
+                    {
+                        float settle = deathFade * deathFade * (3f - 2f * deathFade);
+                        view.localScale = Vector3.Scale(_baseScale[i],
+                            new Vector3(1f - 0.22f * settle, 1f - 0.5f * settle, 1f - 0.22f * settle));
+                    }
+                }
 
                 if (_driver.WatchTeleports)
                 {
@@ -1875,7 +1977,7 @@ namespace Game.View
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
-                            ? EnemyPresentationProfile.Death(entities.Kind[e.Target]).TotalSeconds
+                            ? BeginKillBeat(e.Target)
                             : animation.DeathDuration;
                         _deathUntil[e.Target] = Time.time + presentationDuration;
                         break;

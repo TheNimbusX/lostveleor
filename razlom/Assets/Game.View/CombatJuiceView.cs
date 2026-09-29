@@ -503,6 +503,24 @@ namespace Game.View
                     to.Y.ToFloat() - from.Y.ToFloat());
             }
 
+            // МОМЕНТ УБИЙСТВА ТЕПЕРЬ У EnemyDeathFxView (поток I, 29.09): залп
+            // материала вида, лёгкая тряска и стоп-кадр только у тяжёлых (крупный,
+            // элита, последний в волне), огоньки к герою. Здесь остаются отдача
+            // трупа и отметина на земле. Прежняя оранжевая искра, пыль и толчок
+            // 0,85 на КАЖДОЕ убийство делали мелкого корнеполза «тяжелее» удара,
+            // которым его убили, — владелец просил тряску только у крупных.
+            if (sim != null && (uint)e.Target < (uint)sim.Entities.Count
+                && sim.Entities.Side[e.Target] == Faction.Orvill && DeathFx() is EnemyDeathFxView deathFx
+                && deathFx.HandlesKind(sim.Entities.Kind[e.Target]))
+            {
+                if (playerKill)
+                {
+                    _arena?.ReactToDeath(e.Target, deathDirection, 1f);
+                    if (sim.Entities.Kind[e.Target] != EnemyKind.ForestBud) SpawnKillMarks(e.Position);
+                }
+                return;
+            }
+
             if (sim != null && sim.Entities.Kind[e.Target] == EnemyKind.ForestBud)
             {
                 // Падение на лапы должно быть видно: общая каменная вспышка смерти закрывала весь бутон.
@@ -538,6 +556,15 @@ namespace Game.View
             }
         }
 
+        private EnemyDeathFxView _deathFx;
+
+        /// <summary>Вид распада ставит ArenaView при первой симуляции — ищем лениво.</summary>
+        private EnemyDeathFxView DeathFx()
+        {
+            if (_deathFx == null) _deathFx = GetComponent<EnemyDeathFxView>();
+            return _deathFx;
+        }
+
         private void SpawnKillAftermath(FixVec2 position)
         {
             if (_afterglowSprite != null)
@@ -545,6 +572,12 @@ namespace Game.View
                     Vector3.up * 0.08f, new Color(1.55f, 0.42f, 0.075f, 0.62f),
                     0.58f, 0.46f, 1.58f, 0f, 0f, 0f);
 
+            SpawnKillMarks(position);
+            SpawnKillDust(position);
+        }
+
+        private void SpawnKillMarks(FixVec2 position)
+        {
             // Отметина под ногами убитого. Кладётся ПЕРВОЙ, чтобы пыль и
             // осколки летели поверх неё, а не наоборот.
             if (_dustSprite != null)
@@ -566,7 +599,10 @@ namespace Game.View
                         0f, Random01() * 360f, 0f);
                 }
             }
+        }
 
+        private void SpawnKillDust(FixVec2 position)
+        {
             if (_dustSprite == null) return;
 
             // ПЫЛЬ — ЭТО СЛЕД СОБЫТИЯ, А НЕ УКРАШЕНИЕ.

@@ -1,0 +1,249 @@
+{
+  "fps": 30,
+  "game_scale": 1.5867906479092901,
+  "run_ground_speed_mps": 2.3801859718639347,
+  "run_frames": 12,
+  "run_stride_units": 0.6,
+  "bite": {
+    "window": [
+      8,
+      24
+    ],
+    "contact_frame": 18,
+    "windup": {
+      "ticks": [
+        0,
+        6,
+        10,
+        12
+      ],
+      "frames": [
+        8,
+        14,
+        16,
+        18
+      ]
+    },
+    "recovery": {
+      "ticks": [
+        0,
+        4,
+        8
+      ],
+      "frames": [
+        18,
+        22,
+        24
+      ]
+    }
+  },
+  "clips": {
+    "Idle": {
+      "frames": [
+        0,
+        120
+      ],
+      "loop": true,
+      "seam_error": 0.0,
+      "last_frame_vs_stance": null,
+      "first_frame_vs_stance": 0.0037402017923797498,
+      "first_frame_worst_bone": "mixamorig:RightForeArm",
+      "hips_forward_range": [
+        -0.003000013530254364,
+        0.003000006079673767
+      ],
+      "hips_up_range": [
+        -0.0020000040531158447,
+        0.0020000189542770386
+      ],
+      "ik_misses": 0
+    },
+    "Run": {
+      "frames": [
+        0,
+        12
+      ],
+      "loop": true,
+      "seam_error": 0.0,
+      "last_frame_vs_stance": null,
+      "first_frame_vs_stance": 0.22135348965620777,
+      "first_frame_worst_bone": "mixamorig:RightHandMiddle4",
+      "hips_forward_range": [
+        -0.009781483560800552,
+        0.009781472384929657
+      ],
+      "hips_up_range": [
+        -0.05284598469734192,
+        -0.03115403652191162
+      ],
+      "ik_misses": 0
+    },
+    "AttackA": {
+      "frames": [
+        0,
+        24
+      ],
+      "loop": false,
+      "seam_error": null,
+      "last_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_worst_bone": "mixamorig:RightHandMiddle4",
+      "hips_forward_range": [
+        -0.08100000768899918,
+        0.08499999344348907
+      ],
+      "hips_up_range": [
+        -0.048600003123283386,
+        0.03399999439716339
+      ],
+      "ik_misses": 1
+    },
+    "AttackB": {
+      "frames": [
+        0,
+        24
+      ],
+      "loop": false,
+      "seam_error": null,
+      "last_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_worst_bone": "mixamorig:RightHandMiddle4",
+      "hips_forward_range": [
+        -0.08100000023841858,
+        0.08499999344348907
+      ],
+      "hips_up_range": [
+        -0.048600032925605774,
+        0.03399999439716339
+      ],
+      "ik_misses": 1
+    },
+    "Hit": {
+      "frames": [
+        0,
+        10
+      ],
+      "loop": false,
+      "seam_error": null,
+      "last_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_worst_bone": "mixamorig:RightHandMiddle4",
+      "hips_forward_range": [
+        -0.03599999099969864,
+        0.0
+      ],
+      "hips_up_range": [
+        -0.0260000079870224,
+        0.0
+      ],
+      "ik_misses": 0
+    },
+    "Death": {
+      "frames": [
+        0,
+        66
+      ],
+      "loop": false,
+      "seam_error": null,
+      "last_frame_vs_stance": null,
+      "first_frame_vs_stance": 7.233205377663523e-08,
+      "first_frame_worst_bone": "mixamorig:RightHandMiddle4",
+      "hips_forward_range": [
+        -0.04129999130964279,
+        0.0
+      ],
+      "hips_up_range": [
+        -0.09269998967647552,
+        0.0
+      ],
+      "ik_misses": 12
+    }
+  },
+  "ik_misses": [
+    [
+      "AttackA",
+      18,
+      "mixamorig:RightFoot",
+      0.0066
+    ],
+    [
+      "AttackB",
+      18,
+      "mixamorig:RightFoot",
+      0.0086
+    ],
+    [
+      "Death",
+      10,
+      "mixamorig:LeftHand",
+      0.0096
+    ],
+    [
+      "Death",
+      11,
+      "mixamorig:LeftHand",
+      0.0144
+    ],
+    [
+      "Death",
+      12,
+      "mixamorig:LeftHand",
+      0.0112
+    ],
+    [
+      "Death",
+      13,
+      "mixamorig:LeftHand",
+      0.0007
+    ],
+    [
+      "Death",
+      15,
+      "mixamorig:RightHand",
+      0.0006
+    ],
+    [
+      "Death",
+      16,
+      "mixamorig:RightHand",
+      0.009
+    ],
+    [
+      "Death",
+      17,
+      "mixamorig:RightHand",
+      0.0092
+    ],
+    [
+      "Death",
+      18,
+      "mixamorig:RightHand",
+      0.0013
+    ],
+    [
+      "Death",
+      21,
+      "mixamorig:LeftHand",
+      0.0072
+    ],
+    [
+      "Death",
+      22,
+      "mixamorig:LeftHand",
+      0.0126
+    ],
+    [
+      "Death",
+      23,
+      "mixamorig:LeftHand",
+      0.0114
+    ],
+    [
+      "Death",
+      24,
+      "mixamorig:LeftHand",
+      0.0036
+    ]
+  ],
+  "ik_miss_count": 14
+}

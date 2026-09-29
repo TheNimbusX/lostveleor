@@ -7,12 +7,13 @@ namespace Game.Tests
     /// <summary>
     /// Шаблоны встреч, план забега и волны (стадия 6 плана «Мобы леса»).
     ///
-    /// План леса — 8 арен и босс — бросается на тысяче сидов: одна элита на
-    /// А5–А7 всегда, вторая после неё на А7–А8 в 25–35% забегов, вендиго и
-    /// Шипомёт никогда не в одном забеге, засада и выживание не чаще раза,
-    /// повторов нет, уроки раньше сочетаний, и каждый вид встречается хотя бы
-    /// в трети забегов. Волны — детерминизм, выход из-под земли, выживание по
-    /// таймеру, подмога босса.
+    /// План леса — 8 арен и босс — бросается на 10 000 сидов: уровни арен по
+    /// лестнице владельца (29.09) и в её долях, одна элита на А5–А7 всегда,
+    /// вторая после неё на А7–А8 в 30% забегов, вендиго и Шипомёт никогда не
+    /// в одном забеге, засада и выживание не чаще раза, повторов нет, первая
+    /// встреча вида — урок, и каждый вид встречается не реже чем в 45%
+    /// забегов. Волны — детерминизм, выход из-под земли, выживание по
+    /// таймеру, подмога босса. Состав пула по уровням — ForestEncounterTests.
     ///
     /// Корнехват, Расщепень и Шипомёт в игре с 27.09: их шаблоны — в All.
     /// Staged (виды без арта) сейчас пуст, но таблица проверяет и его.
@@ -121,9 +122,10 @@ namespace Game.Tests
                 if (t.Type == ArenaEncounterType.Normal && t.MinArena >= 2)
                     Assert.That(t.WaveCount, Is.GreaterThanOrEqualTo(2), t.Key);
             }
-            // У каждого вида, которого ставит расстановка, ровно один урок по All +
-            // Staged (все — в All); детёныша Расщепеня не ставит ни один шаблон —
-            // он только из распада.
+            // У каждого вида, которого ставит расстановка, есть урок по All +
+            // Staged (все — в All), с лестницы 29.09 — по одному на уровень, где
+            // вид может встретиться впервые (ForestEncounterTests); детёныша
+            // Расщепеня не ставит ни один шаблон — он только из распада.
             for (int k = 0; k < EnemyArchetypes.Count; k++)
             {
                 var kind = EnemyArchetypes.At(k).Kind;
@@ -133,7 +135,7 @@ namespace Game.Tests
                     Assert.That(lessons.ContainsKey(kind), Is.False, kind + ": урок");
                     continue;
                 }
-                Assert.That(lessons.TryGetValue(kind, out int count) ? count : 0, Is.EqualTo(1), kind + ": урок");
+                Assert.That(lessons.TryGetValue(kind, out int count) ? count : 0, Is.GreaterThanOrEqualTo(1), kind + ": урок");
             }
             // Пул игры полон сам по себе: каждый вид из All учит урок из All.
             foreach (var t in ForestEncounterTemplates.All)
@@ -150,10 +152,11 @@ namespace Game.Tests
             for (int g = 0; g < adds.GroupCount; g++)
             {
                 if (adds.GetGroup(g).Kind == EnemyKind.ForestGuardian) addGuardians += adds.GetGroup(g).Max;
-                if (adds.GetGroup(g).Kind == EnemyKind.ForestRootSwarm) { addSwarm += adds.GetGroup(g).Max; Assert.That(adds.GetGroup(g).Min, Is.EqualTo(2)); }
+                if (adds.GetGroup(g).Kind == EnemyKind.ForestRootSwarm) { addSwarm += adds.GetGroup(g).Max; Assert.That(adds.GetGroup(g).Min, Is.EqualTo(4)); }
             }
+            // Подмога босса — хранитель и 4–5 роя (подгонка 29.09, было 2–3).
             Assert.That(addGuardians, Is.EqualTo(1));
-            Assert.That(addSwarm, Is.EqualTo(3));
+            Assert.That(addSwarm, Is.EqualTo(5));
             // Выше двух Хранителей волну не собрать вовсе.
             Assert.Throws<System.ArgumentException>(() => new EncounterWave(WaveTrigger.Start,
                 new WaveGroup(EnemyKind.ForestGuardian, 2, 2, WavePlacement.Front),
@@ -175,16 +178,23 @@ namespace Game.Tests
             foreach (var kind in new[] { EnemyKind.ForestThorncaster, EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter })
                 Assert.That(System.Array.Exists(all, t => t.Lesson == kind), Is.True, kind + ": урок в игре");
 
-            // Диапазоны дока; E03 — запасной А3–А4 (иначе камнекопыт не встаёт
-            // ни в один план), E08 и E08T — в окне первой элиты А5–А7.
-            AssertArenas(all, "forest.E03", 3, 4);
-            AssertArenas(all, "forest.E04", 2, 3);
-            AssertArenas(all, "forest.E05", 5, 8);
-            AssertArenas(all, "forest.E06", 5, 5);
-            AssertArenas(all, "forest.E07", 6, 6);
+            // Окна с лестницы (29.09): элиты — в своих окнах (первая А5–А7,
+            // вторая А7–А8), прочие — там, где лестница допускает их уровень.
+            AssertArenas(all, "forest.E01", 1, 1);
+            AssertArenas(all, "forest.E02", 2, 2);
+            AssertArenas(all, "forest.E03", 3, 5);
+            AssertArenas(all, "forest.E04", 3, 4);
+            AssertArenas(all, "forest.E05", 6, 8);
+            AssertArenas(all, "forest.E06", 4, 6);
+            AssertArenas(all, "forest.E07", 4, 6);
             AssertArenas(all, "forest.E08", 5, 7);
             AssertArenas(all, "forest.E08T", 5, 7);
+            AssertArenas(all, "forest.E11", 4, 6);
+            // Выживание — ровно 60 с — не на А4 (окно 45–55): подгонка 29.09.
+            AssertArenas(all, "forest.E12", 5, 6);
+            AssertArenas(all, "forest.E13", 7, 8);
             AssertArenas(all, "forest.E14", 7, 8);
+            AssertArenas(all, "forest.E15", 8, 8);
         }
 
         private static void AssertArenas(ArenaEncounterTemplate[] pool, string key, int min, int max)
@@ -271,24 +281,47 @@ namespace Game.Tests
         /// <summary>
         /// Хватает ли забегов, где вид вообще встречается: ниже этой доли вид
         /// почти выпал из леса (E08 с А4–А6 давал вендиго 22% против 78% у
-        /// Шипомёта). Уроки нового вида — одна арена (E06 — А5, E07 — А6), а
-        /// обычных встреч не больше шести, и все виды в один забег не входят.
+        /// Шипомёта). Все виды в один забег не входят: средних арен три-четыре,
+        /// и в них же уроки, засада и выживание; вендиго и Шипомёт делят забеги
+        /// пополам. До лестницы (29.09) порог был 35%, камнекопыт и Корнехват
+        /// стояли на 49–50%; с тяжёлыми уроками все виды — не реже 45%.
         /// </summary>
-        private const int MinKindSharePercent = 35;
+        private const int MinKindSharePercent = 45;
 
+        /// <summary>Допуск долей лестницы и слотов на 10 000 сидов, процентные пункты (≈6σ).</summary>
+        private const double LadderTolerance = 3.0;
+
+        /// <summary>
+        /// Лестница владельца на 10 000 сидов (29.09): уровень каждой обычной и
+        /// особой арены — из допустимых лестницей, и доли уровней — её веса;
+        /// первая элита — на А5/А6/А7 по весам 30/30/40, вторая — после неё на
+        /// А7–А8 в 30% забегов; первая встреча каждого вида — урок; повторов
+        /// нет; засада и выживание — не больше чем по одной, обычных — 5–6;
+        /// вендиго и Шипомёт порознь; правила не снимаются ни разу; каждый вид —
+        /// не реже MinKindSharePercent забегов, каждый шаблон — не реже 1%.
+        /// </summary>
         [Test]
-        public void Plan_OverThousandSeeds_FollowsTheForestRules_AndMeetsEveryKind()
+        public void Plan_OverTenThousandSeeds_FollowsTheLadder_LessonsFirst_AndMeetsEveryKind()
         {
+            const int runs = 10000;
             int secondElite = 0, secondRolled = 0, ambushes = 0, survivals = 0;
+            var tiers = new int[9, 3];
+            var ordinaryArenas = new int[9];
+            var firstEliteAt = new int[9];
             var used = new Dictionary<string, int>();
             var where = new Dictionary<string, int>();
             var runsWith = new Dictionary<EnemyKind, int>();
-            for (ulong seed = 1; seed <= 1000; seed++)
+            var failures = new List<string>();
+            void Check(bool ok, string what)
+            {
+                if (!ok && failures.Count < 20) failures.Add(what);
+            }
+            for (ulong seed = 1; seed <= runs; seed++)
             {
                 var plan = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
-                Assert.That(plan.LevelCount, Is.EqualTo(9));
-                Assert.That(plan.IsBoss(9), Is.True);
-                Assert.That(plan.TemplateFor(9), Is.Null, "у босса нет шаблона");
+                string at0 = "seed " + seed + ": ";
+                Check(plan.LevelCount == 9 && plan.IsBoss(9) && plan.TemplateFor(9) == null, at0 + "босс не девятый");
+                Check(plan.Relaxed == 0, at0 + "план снял правила (" + plan.Relaxed + ")");
                 var seen = new HashSet<string>();
                 var known = new HashSet<EnemyKind>();
                 var met = new HashSet<EnemyKind>();
@@ -296,21 +329,23 @@ namespace Game.Tests
                 for (int arena = 1; arena <= 8; arena++)
                 {
                     var t = plan.TemplateFor(arena);
-                    Assert.That(t, Is.Not.Null, "seed " + seed);
-                    Assert.That(System.Array.IndexOf(ForestEncounterTemplates.All, t), Is.GreaterThanOrEqualTo(0), t.Key);
-                    Assert.That(t.AllowsArena(arena), Is.True, t.Key + " на А" + arena + ", seed " + seed);
-                    Assert.That(seen.Add(t.Key), Is.True, "повтор " + t.Key + ", seed " + seed);
+                    string at = at0 + "А" + arena + " ";
+                    if (t == null) { Check(false, at + "без шаблона"); continue; }
+                    at += t.Key + ": ";
+                    Check(System.Array.IndexOf(ForestEncounterTemplates.All, t) >= 0, at + "не из пула");
+                    Check(t.AllowsArena(arena), at + "вне своих арен");
+                    Check(seen.Add(t.Key), at + "повтор");
                     used[t.Key] = used.TryGetValue(t.Key, out int n) ? n + 1 : 1;
-                    string at = "A" + arena + " " + t.Key;
-                    where[at] = where.TryGetValue(at, out int m) ? m + 1 : 1;
-                    // Урок раньше сочетаний: каждый вид шаблона уже был, кроме его урока.
+                    string place = "A" + arena + " " + t.Key;
+                    where[place] = where.TryGetValue(place, out int m) ? m + 1 : 1;
+                    // Урок раньше сочетаний: каждый вид шаблона уже был, кроме его
+                    // урока, — первая встреча вида всегда урок.
                     for (int k = 0; k < EnemyArchetypes.Count; k++)
                     {
                         var kind = EnemyArchetypes.At(k).Kind;
                         if (!t.Uses(kind)) continue;
                         met.Add(kind);
-                        if (kind != t.Lesson)
-                            Assert.That(known.Contains(kind), Is.True, kind + " раньше урока в " + t.Key + ", seed " + seed);
+                        if (kind != t.Lesson) Check(known.Contains(kind), at + kind + " раньше урока");
                     }
                     if (t.Lesson != EnemyKind.None) known.Add(t.Lesson);
                     if (t.Type == ArenaEncounterType.Elite)
@@ -319,53 +354,84 @@ namespace Game.Tests
                         if (++elites == 1)
                         {
                             firstElite = arena;
-                            Assert.That(arena, Is.InRange(ArenaRunPlan.FirstEliteMinArena,
-                                ArenaRunPlan.FirstEliteMaxArena), "первая элита на А" + arena + ", seed " + seed);
+                            firstEliteAt[arena]++;
+                            Check(arena >= ArenaRunPlan.FirstEliteMinArena && arena <= ArenaRunPlan.FirstEliteMaxArena,
+                                at + "первая элита вне окна");
                         }
                         else
-                            Assert.That(arena, Is.InRange(ArenaRunPlan.SecondEliteMinArena,
-                                ArenaRunPlan.SecondEliteMaxArena), "вторая элита на А" + arena + ", seed " + seed);
+                            Check(arena >= ArenaRunPlan.SecondEliteMinArena && arena <= ArenaRunPlan.SecondEliteMaxArena,
+                                at + "вторая элита вне окна");
+                        continue;
                     }
+                    // Уровень обычной и особой арены — из тех, что допускает лестница.
+                    Check(ArenaRunPlan.TierWeight(arena, t.Tier) > 0, at + t.Tier + " не по лестнице");
+                    tiers[arena, (int)t.Tier]++;
+                    ordinaryArenas[arena]++;
                     if (t.Type == ArenaEncounterType.Ambush) ambush++;
                     if (t.Type == ArenaEncounterType.Survival) survival++;
                     if (t.Type == ArenaEncounterType.Normal) normal++;
                 }
-                Assert.That(firstElite, Is.Not.Zero, "seed " + seed);
-                Assert.That(elites, Is.EqualTo(plan.SecondEliteRolled ? 2 : 1), "seed " + seed);
-                Assert.That(met.Contains(EnemyKind.ForestWendigo) && met.Contains(EnemyKind.ForestThorncaster), Is.False,
-                    "вендиго и Шипомёт в одном забеге, seed " + seed);
-                Assert.That(ambush, Is.LessThanOrEqualTo(1));
-                Assert.That(survival, Is.LessThanOrEqualTo(1));
-                Assert.That(normal, Is.InRange(5, 6), "seed " + seed);
+                Check(firstElite != 0, at0 + "нет элиты");
+                Check(elites == (plan.SecondEliteRolled ? 2 : 1), at0 + "элит " + elites);
+                Check(!(met.Contains(EnemyKind.ForestWendigo) && met.Contains(EnemyKind.ForestThorncaster)),
+                    at0 + "вендиго и Шипомёт в одном забеге");
+                Check(ambush <= 1 && survival <= 1, at0 + "засад " + ambush + ", выживаний " + survival);
+                Check(normal >= ArenaRunPlan.MinNormal && normal <= ArenaRunPlan.MaxNormal, at0 + "обычных " + normal);
                 foreach (var kind in met) runsWith[kind] = runsWith.TryGetValue(kind, out int r) ? r + 1 : 1;
                 if (elites == 2) secondElite++;
                 if (plan.SecondEliteRolled) secondRolled++;
                 ambushes += ambush; survivals += survival;
 
-                var again = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
-                ulong a = 1, b = 1;
-                plan.HashInto(ref a); again.HashInto(ref b);
-                Assert.That(a, Is.EqualTo(b), "план — функция сида");
+                if (seed % 10 == 0)
+                {
+                    var again = ArenaRunPlan.Roll(seed, Forest, ForestEncounterTemplates.All);
+                    ulong a = 1, b = 1;
+                    plan.HashInto(ref a); again.HashInto(ref b);
+                    Check(a == b, at0 + "план — не функция сида");
+                }
             }
-            TestContext.WriteLine("second elite " + secondElite + "/1000, ambush " + ambushes + ", survival " + survivals);
+            Assert.That(failures, Is.Empty);
+
+            TestContext.WriteLine("second elite " + secondElite + "/" + runs + ", ambush " + ambushes + ", survival " + survivals);
+            for (int arena = 1; arena <= 8; arena++)
+            {
+                string line = "A" + arena + ": elite first " + firstEliteAt[arena];
+                for (int tier = 0; tier < 3; tier++)
+                {
+                    int weight = ArenaRunPlan.TierWeight(arena, (EncounterTier)tier);
+                    double share = ordinaryArenas[arena] > 0 ? 100.0 * tiers[arena, tier] / ordinaryArenas[arena] : 0;
+                    line += ", " + (EncounterTier)tier + " " + tiers[arena, tier] + " (" + share.ToString("0.0") + "% / " + weight + "%)";
+                    // Доли уровней арены — веса лестницы.
+                    Assert.That(share, Is.EqualTo((double)weight).Within(LadderTolerance), "А" + arena + " " + (EncounterTier)tier);
+                }
+                TestContext.WriteLine(line);
+            }
+            // Арена первой элиты — по весам 30/30/40.
+            for (int arena = ArenaRunPlan.FirstEliteMinArena; arena <= ArenaRunPlan.FirstEliteMaxArena; arena++)
+                Assert.That(100.0 * firstEliteAt[arena] / runs,
+                    Is.EqualTo((double)ArenaRunPlan.FirstEliteWeight(arena)).Within(LadderTolerance), "первая элита на А" + arena);
             var kinds = new List<string>();
             for (int k = 0; k < EnemyArchetypes.Count; k++)
             {
                 var kind = EnemyArchetypes.At(k).Kind;
-                int runs = runsWith.TryGetValue(kind, out int r) ? r : 0;
-                TestContext.WriteLine("kind " + kind + ": " + runs / 10.0 + "% of runs");
-                if (!EnemyArchetypes.IsPlaceable(kind)) { Assert.That(runs, Is.Zero, kind + " в шаблоне"); continue; }
-                if (runs * 100 < MinKindSharePercent * 1000) kinds.Add(kind + " " + runs / 10.0 + "%");
+                int count = runsWith.TryGetValue(kind, out int r) ? r : 0;
+                TestContext.WriteLine("kind " + kind + ": " + (100.0 * count / runs).ToString("0.0") + "% of runs");
+                if (!EnemyArchetypes.IsPlaceable(kind)) { Assert.That(count, Is.Zero, kind + " в шаблоне"); continue; }
+                if (count * 100 < MinKindSharePercent * runs) kinds.Add(kind + " " + (100.0 * count / runs).ToString("0.0") + "%");
             }
             var places = new List<string>(where.Keys);
             places.Sort(System.StringComparer.Ordinal);
             foreach (var place in places) TestContext.WriteLine(place + ": " + where[place]);
             Assert.That(kinds, Is.Empty, "виды реже " + MinKindSharePercent + "% забегов");
-            Assert.That(secondElite, Is.InRange(250, 350));
+            Assert.That(secondElite, Is.InRange(runs * 30 / 100 - runs / 40, runs * 30 / 100 + runs / 40));
             Assert.That(secondElite, Is.EqualTo(secondRolled), "выпавшая вторая элита всегда помещается");
-            // Все шаблоны реально встают в планы.
+            // Все шаблоны реально встают в планы — и не реже раза на сотню забегов.
             foreach (var t in ForestEncounterTemplates.All)
-                Assert.That(used.ContainsKey(t.Key), Is.True, t.Key + " не встал ни в один план");
+            {
+                int count = used.TryGetValue(t.Key, out int u) ? u : 0;
+                TestContext.WriteLine(t.Key + " " + t.Tier + ": " + (100.0 * count / runs).ToString("0.0") + "% of runs");
+                Assert.That(count * 100, Is.GreaterThanOrEqualTo(runs), t.Key + " почти не встаёт в планы");
+            }
         }
 
         [Test]
@@ -377,12 +443,16 @@ namespace Game.Tests
                     var boss = new bool[arenas + 1];
                     boss[arenas] = true;
                     var plan = ArenaRunPlan.Roll(seed, boss, ForestEncounterTemplates.All);
+                    Assert.That(plan.Relaxed, Is.Zero, "короткий лес тоже встаёт по лестнице, seed " + seed);
                     for (int arena = 1; arena <= arenas; arena++)
                     {
                         Assert.That(plan.TemplateFor(arena).AllowsArena(arena), Is.True);
-                        Assert.That(plan.TemplateFor(arena).Type, Is.Not.EqualTo(ArenaEncounterType.Elite));
+                        Assert.That(plan.TemplateFor(arena).Type, Is.EqualTo(ArenaEncounterType.Normal));
+                        Assert.That(ArenaRunPlan.TierWeight(arena, plan.TemplateFor(arena).Tier), Is.GreaterThan(0));
                     }
-                    Assert.That(plan.TemplateFor(1), Is.SameAs(ForestEncounterTemplates.E01));
+                    // А1 — лёгкий урок роя: E01 или E16.
+                    Assert.That(plan.TemplateFor(1).Lesson, Is.EqualTo(EnemyKind.ForestRootSwarm));
+                    Assert.That(plan.TemplateFor(1).Tier, Is.EqualTo(EncounterTier.Easy));
                     // Бесконечная локация: дальше конца плана — допустимый шаблон восьмой арены.
                     var extra = plan.TemplateFor(12);
                     Assert.That(extra.AllowsArena(8), Is.True);
@@ -402,7 +472,9 @@ namespace Game.Tests
             a.StartRun(); b.StartRun();
             Assert.That(a.TemplateFlow, Is.True);
             Assert.That(a.Plan, Is.Not.Null);
-            Assert.That(a.CurrentEncounter, Is.SameAs(ForestEncounterTemplates.E01));
+            // А1 — лёгкий урок роя (E01 или E16), тот, что выпал плану сида.
+            Assert.That(a.CurrentEncounter, Is.SameAs(ArenaRunPlan.Roll(77, location).TemplateFor(1)));
+            Assert.That(a.CurrentEncounter.Lesson, Is.EqualTo(EnemyKind.ForestRootSwarm));
             Assert.That(a.Sim.ActiveEncounter, Is.SameAs(a.CurrentEncounter));
             Assert.That(a.Hash(), Is.EqualTo(b.Hash()));
             ulong expected = 1, actual = 1;
@@ -641,7 +713,7 @@ namespace Game.Tests
             for (ulong seed = 1; seed <= 400 && run == null; seed++)
             {
                 var plan = ArenaRunPlan.Roll(seed, location);
-                for (int arena = 5; arena <= 7; arena++)
+                for (int arena = 4; arena <= 6; arena++)
                     if (plan.TemplateFor(arena).Type == ArenaEncounterType.Survival)
                     {
                         run = new RiftRun(new Simulation(seed, 512), location.Modules, PrototypeContent.Items(),
@@ -793,7 +865,8 @@ namespace Game.Tests
                 Assert.That(sim.Entities.MaxHealth[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(
                     sim.ArchetypeHealth(sim.Entities.Kind[i]), EnemyArchetypes.DepthHealthPercent(9))));
             }
-            Assert.That(swarm, Is.InRange(2, 3), "seed " + seed);
+            // 4–5 роя с подгонки 29.09 (было 2–3): ForestEncounterTemplates.BossAdds.
+            Assert.That(swarm, Is.InRange(4, 5), "seed " + seed);
             Assert.That(guardians, Is.EqualTo(1), "seed " + seed);
         }
 

@@ -436,6 +436,11 @@ namespace Game.View
                 var driver = FindAnyObjectByType<TickDriver>();
                 driver.StartWendigoTest(driver.GetComponent<LayoutView>().Profile, SeedOverride, EnemyOverride > 1);
                 driver.Session.SetDeveloperInvulnerable(true);
+                // -ExtraArgs '-capture-wendigo-howl': вой через секунду, прыжок заперт. Иначе первый
+                // вой — только после прыжка и 9 с перезарядки, и на коротких записях его нет.
+                if (Array.IndexOf(Environment.GetCommandLineArgs(), "-capture-wendigo-howl") >= 0)
+                    for (int id = 1; id < driver.Sim.Entities.Count; id++)
+                        driver.Sim.SetWendigoCooldowns(id, driver.Sim.Tick + 100000, driver.Sim.Tick + 30);
                 yield return null;
             }
             if (GuardianShowcase || StonehoofShowcase || ForestMobShowcase != EnemyKind.None)

@@ -74,7 +74,7 @@ namespace Game.Tests
                     session.Step(InputFrame.Empty);
                     Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing), "Boss must gate completion");
                     Assert.That(run.CountRequiredEnemies(), Is.EqualTo(1));
-                    // Временный босс: 6800 × процент здоровья уровня (156% на девятом).
+                    // Временный босс: 6000 × процент здоровья уровня (156% на девятом).
                     Assert.That(run.Sim.Entities.MaxHealth[boss], Is.EqualTo(EnemyArchetypes.ScaleHealth(
                         EnemyArchetypes.InterimBossHealth, run.LevelSettings.EnemyHealth)));
                     Assert.That(run.LevelSettings.EnemyHealth, Is.EqualTo(EnemyArchetypes.DepthHealthPercent(level)));

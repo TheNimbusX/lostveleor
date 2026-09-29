@@ -18,11 +18,12 @@ namespace Game.Sim
         /// <summary>
         /// Арена временного босса: Хранитель с EnemyArchetypes.InterimBossHealth,
         /// выросшим с глубиной, как у всех (healthPercent — EnemyHealth уровня).
-        /// Удар — Хранителя ×1,25 и рост урона профиля; процентов пачки у босса
-        /// нет. Ярость на половине здоровья включает RiftRun.
+        /// Удар — Хранителя ×1,5 (EnemyArchetypes.InterimBossDamagePercent) и рост
+        /// урона профиля; процентов пачки у босса нет. Ярость на половине здоровья
+        /// включает RiftRun.
         ///
         /// Подмога (стадия 6 плана): на 66% и 33% здоровья босса, по разу, из
-        /// земли встают 2–3 роя и хранитель (ForestEncounterTemplates.BossAdds)
+        /// земли встают 4–5 роя и хранитель (ForestEncounterTemplates.BossAdds)
         /// — см. Simulation.EncounterWaves. Их здоровье и урон — глубина уровня;
         /// hardPercent — маршрут «Сложно» (125) для босса и подмоги разом.
         /// </summary>

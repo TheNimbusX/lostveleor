@@ -37,6 +37,21 @@ namespace Game.View
         [Tooltip("Земля под встающими из неё и уходящими в неё врагами (волны встречи, конец выживания).")]
         [Range(0f, 1f)] public float EarthVolume = 0.42f;
 
+        [Header("Мобы леса")]
+        [Tooltip("Разовые звуки мобов: взмахи, укусы, шипы, плевки. Клипы сведены к -18 LUFS, как HitBody.")]
+        [Range(0f, 1f)] public float MobVolume = 0.46f;
+        [Tooltip("Голос боли моба — слой под ударом сабли, раз в 0,35 с на моба.")]
+        [Range(0f, 1f)] public float MobHurtVolume = 0.30f;
+        [Range(0f, 1f)] public float MobDeathVolume = 0.50f;
+        [Tooltip("Общий слоёный удар убийства; у крупных мобов громче и ниже.")]
+        [Range(0f, 1f)] public float KillImpactVolume = 0.62f;
+        [Tooltip("Удар моба по герою: когти, клыки, таран, шип.")]
+        [Range(0f, 1f)] public float HeroImpactVolume = 0.60f;
+        [Tooltip("Оглушение и корни на герое.")]
+        [Range(0f, 1f)] public float HeroControlVolume = 0.55f;
+        [Tooltip("Фон: топот роя, шипение лужи, галоп тарана, лечение Корнехвата (клипы -20 LUFS).")]
+        [Range(0f, 1f)] public float MobBedVolume = 0.40f;
+
         [Header("Шаги")]
         [Tooltip("Сколько метров проходит герой между шагами.")]
         [Min(0.4f)] public float FootstepDistance = 1.35f;
@@ -44,7 +59,8 @@ namespace Game.View
         [Header("Density")]
         [Tooltip("AoE contacts in one frame are mixed into one readable impact.")]
         [Min(1)] public int MaxPerKindPerFrame = 1;
-        [Min(4)] public int Voices = 14;
+        // 14 → 18 (29.09): у мобов леса появились свои взмахи, боль, смерти и удар убийства.
+        [Min(4)] public int Voices = 18;
 
         public CombatAudioProfile Profile;
         // Volume < 0 — звук смерти по старому правилу (громкость по банку, высота 1).
@@ -91,6 +107,36 @@ namespace Game.View
         private float _earthReadyAt;
         private const float EarthSpacing = .45f;
 
+        // ---- мобы леса ----
+        //
+        // Звук, чей пик должен лечь на тик контакта (взмах, взлёт, вой, галоп с
+        // разгона), ждёт в _mobCues до своего тика. Каждый кадр он сверяется с
+        // Sim по номеру действия: снятое действие (оглушение, смерть, волок)
+        // молча выпадает, и свист когтей не звучит над сбитым замахом.
+        private enum MobCueKind : byte { Swing, Tusk, Wendigo, Stonehoof }
+        private struct MobCue
+        {
+            public MobCueKind Kind;
+            public int Entity, Serial;
+            public float Tick, Volume, Pitch;
+            public Sound Sound;
+            public bool Owned;
+        }
+        private readonly MobCue[] _mobCues = new MobCue[32];
+        private int _mobCueCount;
+
+        // Длинные звуки, которые гасит событие своего моба: галоп — остановка тарана,
+        // лечение и перекат — снятие, вой — снятый вой, шипение — ушедшая лужа.
+        private struct OwnedVoice { public int Owner, Slot; public Sound Sound; }
+        private readonly OwnedVoice[] _owned = new OwnedVoice[16];
+        private int _ownedCount;
+
+        private float[] _hurtReadyAt = new float[64];
+        private float _hurtAnyReadyAt, _scuttleReadyAt, _swarmDeathReadyAt, _killImpactReadyAt;
+        // Удар убийства этого кадра: 0 — нет, 1 — мелкий моб, 2 — крупный. Один на кадр, крупный важнее.
+        private int _killImpactThisFrame;
+        private const float HurtSpacing = .35f, HurtAnySpacing = .06f, ScuttleSpacing = .55f, KillImpactSpacing = .09f;
+
         // ---- шаги ----
         //
         // Считаются по ПРОЙДЕННОМУ ПУТИ, а не по таймеру. Таймер отвязан от
@@ -134,6 +180,9 @@ namespace Game.View
             if (_driver.Sim != null)
             {
             ConsumeEvents();
+            FlushKillImpact();
+            UpdateMobCues();
+            UpdateSwarmScuttle();
             UpdateCleaveSound();
             UpdateBlazeSound();
             if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
@@ -206,6 +255,7 @@ namespace Game.View
             for (int i = 0; i < _voices.Length; i++) _voices[i].Stop();
             _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
+            ResetMobState();
             // Конец забега звучит в RunEndBeat: у смерти, победы и ухода свои фразы, а не общий звон награды.
         }
 
@@ -228,58 +278,81 @@ namespace Game.View
                             _whooshAttackVariant = e.ActionVariant;
                         }
                         // Обычный замах — не крупный телеграф: общий сигнал на каждый удар
-                        // приучил бы его не слушать. Хранителю — тихий тяжёлый взмах в начале
-                        // замаха, корнеползам — ничего: их на арене десяток. Расщепень машет
-                        // по-хранительски, тем же взмахом чуть выше; его детёныши кусают, как корнеползы.
-                        else if (_driver.Sim.Entities.Kind[e.Source] == EnemyKind.ForestGuardian)
-                            Play(Sound.GuardianSwing, EnemySwingVolume, 1f, .04f);
-                        else if (_driver.Sim.Entities.Kind[e.Source] == EnemyKind.ForestSplitter)
-                            Play(Sound.GuardianSwing, EnemySwingVolume, 1.08f, .04f);
+                        // приучил бы его не слушать. Свой звук замаха — PlayEnemySwingStart.
+                        else PlayEnemySwingStart(in e);
                         break;
 
                     // Сигнал — только в начале крупных телеграфов: таран Камнекопыта,
                     // коготь, прыжок и вой Вендиго (все идут через WendigoStarted), залп бутона.
+                    // Поверх сигнала — голос самого действия (храп и галоп, свист, взлёт, вой).
                     case SimEventType.StonehoofStarted:
+                        PlayWarning();
+                        PlayStonehoofStart(in e);
+                        break;
                     case SimEventType.WendigoStarted:
                         PlayWarning();
+                        PlayWendigoStart(in e);
                         break;
-                    // Новые мобы леса: линия шипов и всплеск Шипомёта, удар корнями Корнехвата.
-                    // Тот же сигнал из своей семьи (EnemyWarning собран из Attack_0x/HitBody),
-                    // новых записей нет. Контакт шипа звучит своим Damage, если задел героя.
-                    // Выстрел шипом — обычная атака Шипомёта (раз в две секунды), не крупный
-                    // телеграф: вместо сигнала — тихий взмах, как у Хранителя, чуть выше.
-                    // Лечение Корнехвата — не угроза: вместо сигнала глухо уходят в землю плиты.
+                    // Таран кончился: галоп гаснет; удар о ствол или камень (Flag) — тяжёлый глухой удар.
+                    case SimEventType.StonehoofStopped:
+                        FadeOwned(e.Source, Sound.StonehoofCharge);
+                        if (e.Flag) Cue(Sound.StonehoofCollision, MobVolume * 1.1f, .92f, .03f);
+                        break;
+                    case SimEventType.StonehoofCancelled:
+                        FadeOwned(e.Source, Sound.StonehoofCharge);
+                        break;
+                    // Приземление прыжка Вендиго; удар когтя по герою звучит его Damage.
+                    case SimEventType.WendigoImpact:
+                        if (e.ActionVariant == (int)WendigoAction.Leap) Cue(Sound.WendigoLand, MobVolume * 1.1f, 1f, .03f);
+                        break;
+                    case SimEventType.WendigoCancelled:
+                        FadeOwned(e.Source, Sound.WendigoHowl);
+                        break;
+                    // Контроль героя: корни (Flag) или оглушение.
+                    case SimEventType.HeroControl:
+                        Cue(e.Flag ? Sound.HeroRooted : Sound.HeroStunned, HeroControlVolume, 1f, .02f);
+                        break;
+                    // Кислая лужа легла — шипит, пока не уйдёт (вытесненная гаснет раньше).
+                    case SimEventType.PuddleOpened:
+                    {
+                        int slot = Play(Sound.BudPuddle, MobBedVolume, 1f, .04f);
+                        if (slot >= 0) Own(PuddleOwner(e.Amount), Sound.BudPuddle, slot);
+                        break;
+                    }
+                    case SimEventType.PuddleClosed:
+                        FadeOwned(PuddleOwner(e.Amount), Sound.BudPuddle);
+                        break;
+                    // Новые мобы леса: линия шипов и всплеск Шипомёта, удар корнями Корнехвата
+                    // и круг когтей Вендиго — общий сигнал; разбор по видам — PlayEnemyActionStart.
                     case SimEventType.EnemyActionStarted:
-                        if (e.ActionVariant == (int)EnemyActionKind.ThornShot)
-                            Play(Sound.GuardianSwing, EnemySwingVolume, 1.15f, .04f);
-                        else if (e.ActionVariant == (int)EnemyActionKind.SnarerMend)
-                        {
-                            Cue(Sound.HitBody, BodyVolume * .5f, .55f, .03f);
-                            Cue(Sound.Footstep, EarthVolume * 1.1f, .6f, .03f);
-                        }
-                        else PlayWarning();
+                        PlayEnemyActionStart(in e);
+                        break;
+                    // Лечение и перекат сбиты: их длинные звуки гаснут. Клыки и круг когтей
+                    // сняты — их свист выпадает из ожидания сам (UpdateMobCues).
+                    case SimEventType.EnemyActionCancelled:
+                        if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) FadeOwned(e.Source, Sound.SnarerMend);
+                        else if (e.ActionVariant == (int)EnemyActionKind.SplitterRoll) FadeOwned(e.Source, Sound.SplitterRoll);
                         break;
                     // Шип сорвался с руки Шипомёта (кадр 21 клипа, снятый до выпуска выстрел
-                    // события не шлёт): тихий высокий взмах из своей семьи — Attack_0x героя.
+                    // события не шлёт): свист стрелы из записи владельца.
                     case SimEventType.EnemyProjectileLaunched:
                         if (e.ActionVariant == (int)EnemyActionKind.ThornShot)
-                            Cue(Sound.PelagAttack, WhooshVolume * .5f, 1.3f, .04f);
+                            Cue(Sound.ThornShot, MobVolume * .8f, 1f, .04f);
                         break;
                     case SimEventType.EnemyActionImpact:
                         PlayEnemyImpact(in e);
                         break;
-                    // Корнехват вбил плиты в землю — круг встал: глухой низкий удар по земле.
+                    // Корнехват вбил лапы в землю — круг встал: тяжёлый удар по земле.
                     case SimEventType.TelegraphOpened:
                         if (IsKind(e.Source, EnemyKind.ForestRootSnarer))
-                        {
-                            Cue(Sound.HitBody, BodyVolume * .8f, .6f, .03f);
-                            Cue(Sound.Footstep, EarthVolume * 1.3f, .52f, .03f);
-                        }
+                            Cue(Sound.SnarerSlam, MobVolume * 1.1f, 1f, .03f);
                         break;
-                    // Расщепень распался на детёнышей: глухой низкий удар по телу — трещина,
-                    // из банка HitBody. Смерть родителя в этом же кадре звучит своим чередом.
+                    // Расщепень распался (через 0,4 с после смерти): скорлупа лопается, детёныши
+                    // выскакивают один за другим. Трещина по телу прозвучала на самой смерти.
                     case SimEventType.SplitterSplit:
-                        Play(Sound.HitBody, BodyVolume * .8f, .72f, .03f);
+                        Cue(Sound.SplitterCrack, MobVolume, 1f, .03f);
+                        Cue(Sound.SplitlingPop, MobVolume * .7f, 1.05f, .05f, .06f);
+                        Cue(Sound.SplitlingPop, MobVolume * .6f, 1.2f, .05f, .16f);
                         break;
 
                     case SimEventType.ForestBudVolleyStarted:
@@ -288,12 +361,13 @@ namespace Game.View
                         break;
                     // Хлопок — по вылету каждого плода, а не склейкой от начала залпа:
                     // хит-стоп, оглушение и уход героя из дальности не разводят звук с плодами.
+                    // Выстрел горохострела из выбора 29.09 (-18 LUFS, прежние хлопки были -24) — тише в миксе.
                     case SimEventType.ForestFruitLaunched:
-                        Play(Sound.BudPop, BudVolume * .8f, 1f, .02f, fixedVariant: e.ActionVariant);
+                        Play(Sound.BudPop, BudVolume * .5f, 1f, .02f, fixedVariant: e.ActionVariant);
                         break;
                     // То же событие, по которому ForestBudImpactView ставит брызги.
                     case SimEventType.ForestFruitImpact:
-                        Play(Sound.BudFruitImpact, BudVolume, 1f, .04f);
+                        Play(Sound.BudFruitImpact, BudVolume * .6f, 1f, .04f);
                         // Гнилой плод (Flag): мокрый шлепок ниже — лопается в кислую лужу.
                         if (e.Flag) Cue(Sound.Dissolve, EarthVolume * .9f, .62f, .04f);
                         break;
@@ -326,7 +400,9 @@ namespace Game.View
                                 Play(Sound.Finisher, KillVolume, 1f, .02f);
                                 _finisherReadyAt = Time.time + .10f;
                             }
-                            QueueDeathSounds(kind);
+                            // Слоёный удар убийства — один на кадр, крупный моб важнее (FlushKillImpact).
+                            _killImpactThisFrame = Mathf.Max(_killImpactThisFrame, IsBigMob(kind) ? 2 : 1);
+                            QueueDeathSounds(kind, e.Target);
                         }
                         break;
 
@@ -495,7 +571,7 @@ namespace Game.View
             // Player damage keeps its visual flash/recoil but intentionally has
             // no one-shot until a dedicated, approved hurt cue exists.
             if (e.Target == Simulation.PlayerId)
-            { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); return; }
+            { Play(Sound.PlayerHurt, 0.65f, 1f, 0.02f); PlayHeroImpact(in e); return; }
 
             if (e.Source != Simulation.PlayerId) return;
 
@@ -542,6 +618,7 @@ namespace Game.View
                 Play(bodySound, BodyVolume * (heavy ? 1.22f : 1f),
                     ability ? 0.76f : (heavy ? 0.86f : 0.94f), 0.045f);
             }
+            PlayMobHurt(e.Target, targetKind);
         }
 
         private bool IsWhirlwindSlot(int slot)
@@ -601,42 +678,41 @@ namespace Game.View
         {
             switch ((EnemyActionKind)e.ActionVariant)
             {
-                // Шип линии вышел из земли: сухой удар по дереву и хруст земли;
+                // Шип линии вышел из земли: лопата в землю из записи владельца;
                 // к концу линии (Amount — номер шипа 0..3) чуть выше.
                 case EnemyActionKind.ThornLine:
-                    Cue(Sound.HitBody, BodyVolume * .55f, .62f + .03f * e.Amount, .03f);
-                    Cue(Sound.Footstep, EarthVolume * 1.2f, .55f, .03f);
+                    Cue(Sound.ThornSpike, MobVolume * .9f, .96f + .03f * e.Amount, .03f);
                     break;
-                // Всплеск: тот же удар тяжелее — плюс осыпание земли.
+                // Всплеск: сухой разлом тонкого дерева.
                 case EnemyActionKind.ThornBurst:
-                    Cue(Sound.HitBody, BodyVolume * .8f, .58f, .03f);
-                    Cue(Sound.Dissolve, EarthVolume, .75f, .03f);
-                    Cue(Sound.Footstep, EarthVolume * 1.35f, .5f, .03f);
+                    Cue(Sound.ThornBurst, MobVolume * 1.1f, 1f, .03f);
                     break;
-                // Шип выстрела встал: попал — звучит Damage героя; мимо — клюёт в землю.
+                // Шип выстрела встал: попал — звучит Damage героя; мимо — тише клюёт в землю.
                 case EnemyActionKind.ThornShot:
-                    if (!e.Flag) Cue(Sound.Footstep, EarthVolume * .8f, .9f, .05f);
+                    if (!e.Flag) Cue(Sound.ThornSpike, MobVolume * .45f, .9f, .05f);
                     break;
-                // Корни Корнехвата рвутся из круга: земля расходится, корни хлещут.
+                // Корни Корнехвата рвутся из круга.
                 case EnemyActionKind.SnarerSlam:
-                    Cue(Sound.Dissolve, EarthVolume, .72f, .03f);
-                    Cue(Sound.GuardianSwing, EnemySwingVolume * 1.4f, .78f, .04f);
+                    Cue(Sound.SnarerRoots, MobVolume, 1f, .03f);
                     break;
                 // Волна лечения: земля мягко расходится кругом — выше и тише удара корнями.
                 case EnemyActionKind.SnarerMend:
                     Cue(Sound.Dissolve, EarthVolume * .8f, 1.05f, .03f);
                     Cue(Sound.Footstep, EarthVolume * .9f, .7f, .03f);
                     break;
-                // Перекат Расщепеня: пуск (Amount 0) — тяжёлый низкий взмах и толчок
-                // от земли; стоп (1) — о стену сухой удар по коре и осыпь, в конце
-                // полосы — глухой юз по земле. Попадание в героя звучит его Damage.
+                // Перекат Расщепеня: пуск (Amount 0) — деревянный клубок катится (гаснет на
+                // остановке) и толчок от земли; стоп (1) — о стену сухой удар по коре и осыпь,
+                // в конце полосы — глухой юз по земле. Попадание в героя звучит его Damage.
                 case EnemyActionKind.SplitterRoll:
                     if (e.Amount == 0)
                     {
-                        Cue(Sound.WhooshHeavy, WhooshVolume * .7f, .72f, .04f);
+                        int slot = Play(Sound.SplitterRoll, MobVolume, 1f, .04f);
+                        if (slot >= 0) Own(e.Source, Sound.SplitterRoll, slot);
                         Cue(Sound.Footstep, EarthVolume * 1.2f, .5f, .03f);
+                        break;
                     }
-                    else if (_driver.Sim != null && _driver.Sim.TryGetSplitterRoll(e.Source, out var roll) && roll.WallStop)
+                    FadeOwned(e.Source, Sound.SplitterRoll);
+                    if (_driver.Sim != null && _driver.Sim.TryGetSplitterRoll(e.Source, out var roll) && roll.WallStop)
                     {
                         Cue(Sound.HitBody, BodyVolume * .9f, .55f, .03f);
                         Cue(Sound.Dissolve, EarthVolume * .9f, .8f, .03f);
@@ -652,33 +728,354 @@ namespace Game.View
             return sim != null && (uint)entity < (uint)sim.Entities.Count && sim.Entities.Kind[entity] == kind;
         }
 
-        private void QueueDeathSounds(EnemyKind kind)
+        // ================= мобы леса (поток K, выбор владельца 29.09) =================
+
+        private static float Ticks(float seconds) => seconds * Simulation.TicksPerSecond;
+
+        /// <summary>
+        /// Начало ближнего замаха моба. Хранитель — свист когтей пиком в тик контакта
+        /// (прежний тихий взмах в начале замаха им заменён); Расщепень — прежний взмах
+        /// в начале и укус в контакт; детёныш и корнеползы — укус в контакт. Укусов
+        /// роя разом не больше трёх — их держит жетон укусов в Sim.
+        /// </summary>
+        private void PlayEnemySwingStart(in SimEvent e)
+        {
+            var sim = _driver.Sim;
+            if ((uint)e.Source >= (uint)sim.Entities.Count || !sim.TryGetEnemySwing(e.Source, out var swing)) return;
+            switch (sim.Entities.Kind[e.Source])
+            {
+                case EnemyKind.ForestGuardian:
+                    QueueMobCue(MobCueKind.Swing, e.Source, swing.Serial, swing.ImpactTick - Ticks(MobSoundBank.SwingPeakSeconds),
+                        Sound.GuardianClawSwing, MobVolume, 1f);
+                    break;
+                case EnemyKind.ForestSplitter:
+                    Play(Sound.GuardianSwing, EnemySwingVolume, 1.08f, .04f);
+                    QueueMobCue(MobCueKind.Swing, e.Source, swing.Serial, swing.ImpactTick, Sound.SplitterBite, MobVolume * .9f, 1f);
+                    break;
+                case EnemyKind.ForestSplitling:
+                    QueueMobCue(MobCueKind.Swing, e.Source, swing.Serial, swing.ImpactTick, Sound.SplitterBite, MobVolume * .6f, 1.25f);
+                    break;
+                case EnemyKind.ForestRootSwarm:
+                    QueueMobCue(MobCueKind.Swing, e.Source, swing.Serial, swing.ImpactTick, Sound.RootSwarmBite, MobVolume * .7f, 1f);
+                    break;
+            }
+        }
+
+        /// <summary>Таран: храп на замахе (1 с), галоп с тика разгона до остановки.</summary>
+        private void PlayStonehoofStart(in SimEvent e)
+        {
+            Cue(Sound.StonehoofSnort, MobVolume, 1f, .03f);
+            if (_driver.Sim.TryGetStonehoofAction(e.Source, out var charge) && charge.Serial == e.Amount)
+                QueueMobCue(MobCueKind.Stonehoof, e.Source, charge.Serial, charge.LaunchTick, Sound.StonehoofCharge,
+                    MobBedVolume * 1.3f, 1f, owned: true);
+        }
+
+        /// <summary>
+        /// Коготь — свист пиком в контакт; прыжок — обратный свист пиком в отрыв
+        /// (приземление звучит по WendigoImpact); вой — крик пиком в удар кольца,
+        /// снятый вой гаснет.
+        /// </summary>
+        private void PlayWendigoStart(in SimEvent e)
+        {
+            if (!_driver.Sim.TryGetWendigoAction(e.Source, out var action) || action.Serial != e.Amount) return;
+            switch (action.Kind)
+            {
+                case WendigoAction.Claw:
+                    QueueMobCue(MobCueKind.Wendigo, e.Source, action.Serial, action.ImpactTick - Ticks(MobSoundBank.SwingPeakSeconds),
+                        Sound.WendigoClaw, MobVolume, 1f);
+                    break;
+                case WendigoAction.Leap:
+                    QueueMobCue(MobCueKind.Wendigo, e.Source, action.Serial, action.LaunchTick - Ticks(MobSoundBank.LeapPeakSeconds),
+                        Sound.WendigoLeap, MobVolume, 1f);
+                    break;
+                case WendigoAction.Howl:
+                    QueueMobCue(MobCueKind.Wendigo, e.Source, action.Serial, action.ImpactTick - Ticks(MobSoundBank.HowlPeakSeconds),
+                        Sound.WendigoHowl, MobVolume * 1.2f, 1f, owned: true);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Начало действия новых мобов леса. Выстрел шипом — обычная атака Шипомёта, не
+        /// крупный телеграф: тихий взмах, как у Хранителя, выше. Лечение Корнехвата — не
+        /// угроза: лапы глухо уходят в землю, звучит набор силы природы (гаснет, если
+        /// сбили). Клыки Камнекопыта — короткий ближний взмах со знаком на теле: вместо
+        /// общего сигнала короткий храп, свист клыков — пиком в контакт. Круг когтей
+        /// Вендиго — крупная атака: сигнал и низкий свист пиком в удар круга. Остальное
+        /// (линия шипов, всплеск, удар корнями) — общий сигнал.
+        /// </summary>
+        private void PlayEnemyActionStart(in SimEvent e)
+        {
+            var sim = _driver.Sim;
+            switch ((EnemyActionKind)e.ActionVariant)
+            {
+                case EnemyActionKind.ThornShot:
+                    Play(Sound.GuardianSwing, EnemySwingVolume, 1.15f, .04f);
+                    break;
+                case EnemyActionKind.SnarerMend:
+                {
+                    Cue(Sound.HitBody, BodyVolume * .5f, .55f, .03f);
+                    Cue(Sound.Footstep, EarthVolume * 1.1f, .6f, .03f);
+                    int slot = Play(Sound.SnarerMend, MobBedVolume, 1f, .02f);
+                    if (slot >= 0) Own(e.Source, Sound.SnarerMend, slot);
+                    break;
+                }
+                case EnemyActionKind.StonehoofTusk:
+                    Play(Sound.StonehoofSnort, MobVolume * .7f, 1.12f, .04f);
+                    if (sim.TryGetStonehoofTusk(e.Source, out var tusk))
+                        QueueMobCue(MobCueKind.Tusk, e.Source, tusk.Serial, tusk.ImpactTick - Ticks(MobSoundBank.SwingPeakSeconds),
+                            Sound.StonehoofTusk, MobVolume, 1f);
+                    break;
+                case EnemyActionKind.WendigoSweep:
+                    PlayWarning();
+                    if (sim.TryGetWendigoAction(e.Source, out var sweep) && sweep.Kind == WendigoAction.Sweep)
+                        QueueMobCue(MobCueKind.Wendigo, e.Source, sweep.Serial, sweep.ImpactTick - Ticks(MobSoundBank.SweepPeakSeconds),
+                            Sound.WendigoSweep, MobVolume * 1.1f, 1f);
+                    break;
+                default:
+                    PlayWarning();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Удар моба по герою. Хранитель — когти с деревянным ударом; коготь и круг
+        /// Вендиго — те же когти (выше и ниже); таран — тяжёлый удар, клыки — он же
+        /// легче и выше; шип Шипомёта — лопата в землю. Укус, плод, прыжок, вой и
+        /// корни звучат своими событиями — второй слой им не нужен.
+        /// </summary>
+        private void PlayHeroImpact(in SimEvent e)
+        {
+            var sim = _driver.Sim;
+            if (e.Source == Simulation.PlayerId || (uint)e.Source >= (uint)sim.Entities.Count) return;
+            switch (sim.Entities.Kind[e.Source])
+            {
+                case EnemyKind.ForestGuardian:
+                    Cue(Sound.GuardianClawImpact, HeroImpactVolume, 1f, .04f);
+                    break;
+                case EnemyKind.ForestWendigo:
+                    if (sim.TryGetWendigoAction(e.Source, out var claw)
+                        && (claw.Kind == WendigoAction.Claw || claw.Kind == WendigoAction.Sweep))
+                        Cue(Sound.GuardianClawImpact, HeroImpactVolume, claw.Kind == WendigoAction.Sweep ? .95f : 1.1f, .04f);
+                    break;
+                case EnemyKind.ForestStonehoof:
+                {
+                    bool tuskHit = sim.TryGetStonehoofTusk(e.Source, out var tuskState) && tuskState.HitResolved;
+                    Cue(Sound.StonehoofCollision, HeroImpactVolume * (tuskHit ? .7f : 1f), tuskHit ? 1.15f : 1f, .03f);
+                    break;
+                }
+                case EnemyKind.ForestThorncaster:
+                    Cue(Sound.ThornSpike, HeroImpactVolume * .8f, 1.1f, .04f);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Голос боли моба под ударом сабли: не чаще раза в 0,35 с на моба и 0,06 с на
+        /// всех — Вихрь по толпе даёт один голос, а не хор. Сучки Шипомёта и мох
+        /// Корнехвата — острые записи, упёрлись в пик тише цели: чуть громче в миксе.
+        /// </summary>
+        private void PlayMobHurt(int target, EnemyKind kind)
+        {
+            Sound sound;
+            float gain = 1f, pitch = 1f;
+            switch (kind)
+            {
+                case EnemyKind.ForestGuardian: sound = Sound.GuardianHurt; break;
+                case EnemyKind.ForestRootSwarm: sound = Sound.RootSwarmHurt; gain = .7f; break;
+                case EnemyKind.ForestBud: sound = Sound.BudGurgle; break;
+                case EnemyKind.ForestStonehoof: sound = Sound.StonehoofHurt; break;
+                case EnemyKind.ForestWendigo: sound = Sound.WendigoHurt; break;
+                case EnemyKind.ForestThorncaster: sound = Sound.ThorncasterHurt; gain = 1.8f; break;
+                case EnemyKind.ForestRootSnarer: sound = Sound.SnarerHurt; gain = 1.3f; break;
+                case EnemyKind.ForestSplitter: sound = Sound.SplitterHurt; break;
+                case EnemyKind.ForestSplitling: sound = Sound.SplitterHurt; gain = .7f; pitch = 1.3f; break;
+                default: return;
+            }
+            float now = Time.time;
+            if (now < _hurtAnyReadyAt || target < 0) return;
+            if (target >= _hurtReadyAt.Length) System.Array.Resize(ref _hurtReadyAt, Mathf.NextPowerOfTwo(target + 1));
+            if (now < _hurtReadyAt[target]) return;
+            if (Play(sound, Mathf.Min(1f, MobHurtVolume * gain), pitch, .05f) < 0) return;
+            _hurtReadyAt[target] = now + HurtSpacing;
+            _hurtAnyReadyAt = now + HurtAnySpacing;
+        }
+
+        /// <summary>Своя смерть вида; Корнеполз, Плюй-плод и Расщепень — в QueueDeathSounds отдельно.</summary>
+        private static Sound DeathSound(EnemyKind kind)
+        {
+            switch (kind)
+            {
+                case EnemyKind.ForestGuardian: return Sound.GuardianDeath;
+                case EnemyKind.ForestStonehoof: return Sound.StonehoofDeath;
+                case EnemyKind.ForestWendigo: return Sound.WendigoDeath;
+                case EnemyKind.ForestThorncaster: return Sound.ThorncasterDeath;
+                case EnemyKind.ForestRootSnarer: return Sound.SnarerDeath;
+                default: return Sound.Count;
+            }
+        }
+
+        /// <summary>Крупные — всё, кроме корнеполза, детёныша и Плюй-плода: им удар убийства громче и ниже.</summary>
+        private static bool IsBigMob(EnemyKind kind)
+            => kind != EnemyKind.ForestRootSwarm && kind != EnemyKind.ForestSplitling && kind != EnemyKind.ForestBud;
+
+        /// <summary>
+        /// Общий слоёный удар убийства (разлом дерева + плотный удар) — один на кадр.
+        /// Мелкие убийства не чаще раза в KillImpactSpacing; крупное звучит всегда.
+        /// </summary>
+        private void FlushKillImpact()
+        {
+            int size = _killImpactThisFrame;
+            _killImpactThisFrame = 0;
+            if (size == 0 || (size == 1 && Time.time < _killImpactReadyAt)) return;
+            bool big = size == 2;
+            if (Play(Sound.KillImpact, KillImpactVolume * (big ? 1f : .55f), big ? .94f : 1.1f, .03f) >= 0)
+                _killImpactReadyAt = Time.time + KillImpactSpacing;
+        }
+
+        private void QueueMobCue(MobCueKind kind, int entity, int serial, float tick, Sound sound, float volume, float pitch,
+            bool owned = false)
+        {
+            if (_mobCueCount >= _mobCues.Length) return;
+            _mobCues[_mobCueCount++] = new MobCue
+            {
+                Kind = kind, Entity = entity, Serial = serial, Tick = tick, Sound = sound,
+                Volume = volume, Pitch = pitch, Owned = owned
+            };
+        }
+
+        /// <summary>Действие, под которое ждёт звук, ещё идёт: тот же номер в Sim.</summary>
+        private bool MobCueAlive(in MobCue cue)
+        {
+            var sim = _driver.Sim;
+            if ((uint)cue.Entity >= (uint)sim.Entities.Count || !sim.Entities.Alive[cue.Entity]) return false;
+            switch (cue.Kind)
+            {
+                case MobCueKind.Swing: return sim.TryGetEnemySwing(cue.Entity, out var swing) && swing.Serial == cue.Serial;
+                case MobCueKind.Tusk: return sim.TryGetStonehoofTusk(cue.Entity, out var tusk) && tusk.Serial == cue.Serial;
+                case MobCueKind.Wendigo: return sim.TryGetWendigoAction(cue.Entity, out var action) && action.Serial == cue.Serial;
+                default: return sim.TryGetStonehoofAction(cue.Entity, out var charge) && charge.Serial == cue.Serial;
+            }
+        }
+
+        /// <summary>Тик — тот же, что у звука Рассечения: время кадра в тиках Sim с долей между ними.</summary>
+        private void UpdateMobCues()
+        {
+            if (_mobCueCount == 0) return;
+            var sim = _driver.Sim;
+            float now = sim.Tick - 1 + _driver.Alpha;
+            int write = 0;
+            for (int i = 0; i < _mobCueCount; i++)
+            {
+                var cue = _mobCues[i];
+                if (!MobCueAlive(in cue)) continue;
+                if (now < cue.Tick) { _mobCues[write++] = cue; continue; }
+                int slot = Play(cue.Sound, cue.Volume, cue.Pitch, .04f);
+                if (cue.Owned && slot >= 0) Own(cue.Entity, cue.Sound, slot);
+            }
+            _mobCueCount = write;
+        }
+
+        /// <summary>Лужа — не сущность: хозяин её звука — отрицательный ключ по слоту лужи.</summary>
+        private static int PuddleOwner(int puddleSlot) => -1000 - puddleSlot;
+
+        private void Own(int owner, Sound sound, int slot)
+        {
+            // Выписываем голоса, которые уже заняты другим звуком или отзвучали.
+            int write = 0;
+            for (int i = 0; i < _ownedCount; i++)
+            {
+                var o = _owned[i];
+                if (o.Slot != slot && _voiceSounds[o.Slot] == o.Sound && _voices[o.Slot].isPlaying) _owned[write++] = o;
+            }
+            _ownedCount = write;
+            if (_ownedCount >= _owned.Length) return;
+            _owned[_ownedCount++] = new OwnedVoice { Owner = owner, Sound = sound, Slot = slot };
+        }
+
+        /// <summary>Гасит за 0,1 с длинный звук этого хозяина, если голос ещё играет его.</summary>
+        private void FadeOwned(int owner, Sound sound)
+        {
+            int write = 0;
+            for (int i = 0; i < _ownedCount; i++)
+            {
+                var o = _owned[i];
+                if (o.Owner != owner || o.Sound != sound) { _owned[write++] = o; continue; }
+                if (_voiceSounds[o.Slot] == sound && _voices[o.Slot].isPlaying && _fadeLeft[o.Slot] < 0f)
+                    _fadeLeft[o.Slot] = .10f;
+            }
+            _ownedCount = write;
+        }
+
+        /// <summary>
+        /// Топот роя: пока корнеползы бегут, раз в ScuttleSpacing — один шорох, громче
+        /// с числом бегущих. Двадцать корнеползов — всё равно один голос, и тот берёт
+        /// только свободный (приоритет 5).
+        /// </summary>
+        private void UpdateSwarmScuttle()
+        {
+            if (Time.time < _scuttleReadyAt) return;
+            EntityStore e = _driver.Sim.Entities;
+            int moving = 0;
+            for (int i = 1; i < e.Count; i++)
+                if (e.Alive[i] && e.Kind[i] == EnemyKind.ForestRootSwarm && e.Velocity[i].LengthSq.Raw != 0) moving++;
+            if (moving == 0) { _scuttleReadyAt = Time.time + .2f; return; }
+            Play(Sound.RootSwarmScuttle, MobBedVolume * Mathf.Min(1f, .4f + .12f * moving), 1f, .06f);
+            _scuttleReadyAt = Time.time + ScuttleSpacing;
+        }
+
+        private void QueueDeathSounds(EnemyKind kind, int entity)
         {
             if (kind == EnemyKind.ForestSplitter || kind == EnemyKind.ForestSplitling)
             {
                 // Расщепень не падает и не осыпается — раскалывается (SplitterCombatView):
-                // трещина звучит по SplitterSplit, через 0,2 с раскол — сухой удар по коре,
+                // в миг смерти трещит скорлупа, через BreakDelaySeconds раскол — у родителя
+                // он звучит по SplitterSplit, у детёныша (своего распада нет) — здесь же;
                 // потом половины коры глухо ложатся на землю. Детёныш — мельче и выше.
                 bool child = kind == EnemyKind.ForestSplitling;
                 float breakAt = SplitterCombatView.BreakDelaySeconds;
-                Cue(Sound.HitBody, BodyVolume * (child ? .55f : .7f), child ? 1.3f : 1.1f, .04f, breakAt);
+                Cue(Sound.SplitterDeath, MobDeathVolume * (child ? .6f : 1f), child ? 1.25f : 1f, .04f);
+                if (child) Cue(Sound.SplitterCrack, MobDeathVolume * .6f, 1.3f, .04f, breakAt);
                 Cue(Sound.HitBody, BodyVolume * (child ? .28f : .4f), child ? .85f : .6f, .04f,
                     breakAt + SplitterCombatView.ShellLandSeconds);
                 return;
             }
             var timing = EnemyPresentationProfile.Death(kind);
+            // Такт убийства (поток I, 29.09): тело трескается в залпе BurstAt (у тяжёлых —
+            // после стоп-кадра) и уходит к BodyGoneAt. Осыпание звучит на залпе, а не на
+            // старом DissolveAt; «упал» — не позже ухода тела (клип ложится к FallSeconds,
+            // когда тела уже нет).
+            var beat = EnemyDeathFxView.BeatFor(_driver.Sim, entity);
+            float dissolveAt = beat.BurstAt;
+            float fallAt = Mathf.Min(timing.FallSeconds, Mathf.Max(dissolveAt, beat.BodyGoneAt - .05f));
             if (kind == EnemyKind.ForestBud)
             {
-                // У бутона одна запись от удара до касания земли — падение в ней уже есть;
-                // осыпание общее, по времени его профиля.
-                Play(Sound.BudDeath, KillVolume, 1f, .02f);
-                Queue(Sound.Dissolve, timing.DissolveAt);
+                // Мокрый шлепок-лопание из выбора 29.09 в миг смерти; осыпание общее,
+                // на залпе распада.
+                Play(Sound.BudDeath, MobDeathVolume, 1f, .03f);
+                Queue(Sound.Dissolve, dissolveAt);
                 return;
+            }
+            // Голос или разлом самого вида — в миг смерти (у Хранителя падение дерева
+            // в записи ложится через ~0,9 с, как тело). Корнеползы гибнут пачками — их
+            // хруст не чаще раза в 0,07 с.
+            if (kind == EnemyKind.ForestRootSwarm)
+            {
+                if (Time.time >= _swarmDeathReadyAt)
+                {
+                    Cue(Sound.RootSwarmDeath, MobDeathVolume * .7f, 1f, .06f);
+                    _swarmDeathReadyAt = Time.time + .07f;
+                }
+            }
+            else
+            {
+                Sound death = DeathSound(kind);
+                if (death != Sound.Count) Cue(death, MobDeathVolume, 1f, .03f);
             }
             // Детёныш Расщепеня мелкий и падает, как корнеполз.
             bool swarm = kind == EnemyKind.ForestRootSwarm || kind == EnemyKind.ForestSplitling;
-            Queue(swarm ? Sound.RootSwarmFall : Sound.GuardianFall, timing.FallSeconds);
-            Queue(swarm ? Sound.RootSwarmDissolve : Sound.Dissolve, timing.DissolveAt);
+            Queue(swarm ? Sound.RootSwarmFall : Sound.GuardianFall, fallAt);
+            Queue(swarm ? Sound.RootSwarmDissolve : Sound.Dissolve, dissolveAt);
         }
 
         private void Queue(Sound sound, float delay)
@@ -756,6 +1153,15 @@ namespace Game.View
             _blazePreparing = _blazeBurning = _paused = false;
             if (_voices != null) foreach (var voice in _voices) if (voice != null) voice.Stop();
             _voiceBudget?.Clear();
+            ResetMobState();
+        }
+
+        /// <summary>Новый бой — новые номера сущностей: ожидания, хозяева голосов и паузы боли не переносятся.</summary>
+        private void ResetMobState()
+        {
+            _mobCueCount = _ownedCount = _killImpactThisFrame = 0;
+            _hurtAnyReadyAt = _scuttleReadyAt = _swarmDeathReadyAt = _killImpactReadyAt = 0f;
+            System.Array.Clear(_hurtReadyAt, 0, _hurtReadyAt.Length);
         }
 
         private void StopKind(Sound sound)
@@ -876,6 +1282,56 @@ namespace Game.View
             // Пустая папка — выбор «тишина»: замах хранителя тогда молчит.
             _variants[(int)Sound.GuardianSwing] = Resources.LoadAll<AudioClip>("Audio/Combat/GuardianSwing");
 
+            // Мобы леса (поток K, выбор владельца 29.09): Mobs/<Моб>/<слот>_NN.wav, таблица —
+            // MobSoundBank. У Плюй-плода выстрел, шлепок и смерть заменяют кандидатов 26.09
+            // (те остаются запасом, если новых клипов нет); «тук» тела BudHurt и раскрытие
+            // залпа — прежние. Шаги Хранителя лежат про запас: хука шагов врагов нет.
+            LoadMob(Sound.GuardianClawSwing, "Guardian", "swing");
+            LoadMob(Sound.GuardianClawImpact, "Guardian", "impact");
+            LoadMob(Sound.GuardianHurt, "Guardian", "hurt");
+            LoadMob(Sound.GuardianDeath, "Guardian", "death");
+            LoadMob(Sound.RootSwarmBite, "RootSwarm", "bite");
+            LoadMob(Sound.RootSwarmScuttle, "RootSwarm", "scuttle");
+            LoadMob(Sound.RootSwarmHurt, "RootSwarm", "hurt");
+            LoadMob(Sound.RootSwarmDeath, "RootSwarm", "death");
+            LoadMob(Sound.BudPop, "Bud", "spit");
+            LoadMob(Sound.BudFruitImpact, "Bud", "splat");
+            LoadMob(Sound.BudPuddle, "Bud", "puddle");
+            LoadMob(Sound.BudGurgle, "Bud", "hurt");
+            LoadMob(Sound.BudDeath, "Bud", "death");
+            LoadMob(Sound.StonehoofSnort, "Stonehoof", "snort");
+            LoadMob(Sound.StonehoofCharge, "Stonehoof", "charge");
+            LoadMob(Sound.StonehoofCollision, "Stonehoof", "collision");
+            LoadMob(Sound.StonehoofTusk, "Stonehoof", "tusk");
+            LoadMob(Sound.StonehoofHurt, "Stonehoof", "hurt");
+            LoadMob(Sound.StonehoofDeath, "Stonehoof", "death");
+            LoadMob(Sound.WendigoClaw, "Wendigo", "claw");
+            LoadMob(Sound.WendigoLeap, "Wendigo", "leap");
+            LoadMob(Sound.WendigoLand, "Wendigo", "land");
+            LoadMob(Sound.WendigoHowl, "Wendigo", "howl");
+            LoadMob(Sound.WendigoSweep, "Wendigo", "sweep");
+            LoadMob(Sound.WendigoHurt, "Wendigo", "hurt");
+            LoadMob(Sound.WendigoDeath, "Wendigo", "death");
+            LoadMob(Sound.ThornSpike, "Thorncaster", "spike");
+            LoadMob(Sound.ThornBurst, "Thorncaster", "burst");
+            LoadMob(Sound.ThornShot, "Thorncaster", "shot");
+            LoadMob(Sound.ThorncasterHurt, "Thorncaster", "hurt");
+            LoadMob(Sound.ThorncasterDeath, "Thorncaster", "death");
+            LoadMob(Sound.SnarerSlam, "RootSnarer", "slam");
+            LoadMob(Sound.SnarerRoots, "RootSnarer", "roots");
+            LoadMob(Sound.SnarerMend, "RootSnarer", "mend");
+            LoadMob(Sound.SnarerHurt, "RootSnarer", "hurt");
+            LoadMob(Sound.SnarerDeath, "RootSnarer", "death");
+            LoadMob(Sound.SplitterBite, "Splitter", "bite");
+            LoadMob(Sound.SplitterRoll, "Splitter", "roll");
+            LoadMob(Sound.SplitterCrack, "Splitter", "crack");
+            LoadMob(Sound.SplitlingPop, "Splitter", "pop");
+            LoadMob(Sound.SplitterHurt, "Splitter", "hurt");
+            LoadMob(Sound.SplitterDeath, "Splitter", "death");
+            LoadMob(Sound.KillImpact, "Generic", "kill");
+            LoadMob(Sound.HeroStunned, "Generic", "stun");
+            LoadMob(Sound.HeroRooted, "Generic", "rooted");
+
             // До получения новых записей используем прежние банки как временную основу.
             _variants[(int)Sound.WhooshHeavy] = _variants[(int)Sound.Whoosh];
             _variants[(int)Sound.CycloneTurn] = _variants[(int)Sound.Whoosh];
@@ -889,6 +1345,17 @@ namespace Game.View
                 if (_entries[i]?.Clips != null && _entries[i].Clips.Length > 0)
                     _variants[i] = _entries[i].Clips;
             }
+        }
+
+        private readonly Dictionary<string, AudioClip[]> _mobFolders = new Dictionary<string, AudioClip[]>();
+
+        /// <summary>Клипы слота моба по имени «слот_»; нет клипов — прежний банк звука остаётся.</summary>
+        private void LoadMob(Sound sound, string mob, string slot)
+        {
+            if (!_mobFolders.TryGetValue(mob, out var all))
+                _mobFolders[mob] = all = Resources.LoadAll<AudioClip>(MobSoundBank.Folder + "/" + mob);
+            AudioClip[] clips = Named(all, slot + "_");
+            if (clips.Length > 0 || _variants[(int)sound] == null) _variants[(int)sound] = clips;
         }
 
         private static AudioClip[] Named(AudioClip[] clips, string prefix)

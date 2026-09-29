@@ -386,13 +386,20 @@ namespace Game.Tests
             sim.ApplyHeroSlow(20,90);
             Assert.That(sim.HeroSlowPercent,Is.EqualTo(30));
             Assert.That(sim.HeroSlowTicksLeft,Is.GreaterThan(left));
-            // Сильнее и короче: корни поверх, срок не укорачивается.
+            // 100% — корни (29.09): отдельное состояние, с замедлением не
+            // сливаются — ни процент, ни срок замедления не меняются.
             int longer=sim.HeroSlowTicksLeft;
             sim.ApplyHeroSlow(Simulation.HeroRootPercent,5);
             Assert.That(sim.HeroRooted,Is.True);
             Assert.That(sim.HeroSlowTicksLeft,Is.EqualTo(longer));
+            Assert.That(sim.HeroSlowPercent,Is.EqualTo(30));
             sim.Step(InputFrame.Empty);
             Assert.That(sim.Entities.MoveStep[0],Is.EqualTo(Fix64.Zero));
+            // Корни кончились раньше — замедление доживает своё.
+            Until(sim,sim.Tick+sim.HeroRootTicksLeft);
+            sim.Step(InputFrame.Empty);
+            Assert.That(sim.HeroRooted,Is.False);
+            Assert.That(sim.Entities.MoveStep[0].ToDouble(),Is.EqualTo(full.ToDouble()*.7).Within(1e-3));
             Until(sim,sim.Tick+longer);
             Assert.That(sim.HeroSlowTicksLeft,Is.Zero);
             Assert.That(sim.HeroSlowPercent,Is.Zero);
@@ -400,7 +407,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void RootedHeroStandsButStillRolls()
+        public void RootedHeroStandsAndCannotRoll()
         {
             var sim=new Simulation(1234,64);sim.SetupTestArena(0);new RunLoadout().ApplyTo(sim);
             sim.ApplyHeroSlow(Simulation.HeroRootPercent,60);
@@ -408,12 +415,20 @@ namespace Game.Tests
             for(int k=0;k<10;k++)sim.Step(walk);
             Assert.That(sim.HeroRooted,Is.True);
             Assert.That(sim.Entities.Position[0],Is.EqualTo(FixVec2.Zero),"в корнях герой не идёт");
-            // Кувырок — принудительное движение, скорость бега ему не нужна.
+            // Корни держат и кувырок (решение владельца 29.09): нажатие пропадает.
             var roll=InputFrame.Empty;roll.AbilityMask=(byte)(1<<PelagKit.DashSlot);roll.Aim=walk.Aim;
             sim.Step(roll);
+            foreach(var e in sim.Events)Assert.That(e.Type,Is.Not.EqualTo(SimEventType.AbilityCast),"кувырок в корнях");
             for(int k=0;k<12;k++)sim.Step(InputFrame.Empty);
-            Assert.That(sim.Entities.Position[0].X.ToDouble(),Is.GreaterThan(1.0),"кувырок в корнях");
+            Assert.That(sim.Entities.Position[0],Is.EqualTo(FixVec2.Zero),"кувырок в корнях");
             Assert.That(sim.HeroRooted,Is.True);
+            // Корни сошли — тот же кувырок уходит.
+            Until(sim,sim.Tick+sim.HeroRootTicksLeft);
+            Assert.That(sim.HeroRooted,Is.False);
+            sim.Step(roll);
+            bool cast=false;foreach(var e in sim.Events)cast|=e.Type==SimEventType.AbilityCast;
+            Assert.That(cast,Is.True,"кувырок после корней");
+            Assert.That(sim.Entities.ForcedKind[0],Is.EqualTo((byte)ForcedMotionKind.Roll));
         }
 
         [Test]
@@ -427,7 +442,7 @@ namespace Game.Tests
             Assert.That(sim.Entities.MoveStep[0],Is.EqualTo(full));
         }
 
-        // Причина: 0 — оглушение, 1 — смерть, 2 — волок.
+        // Причина: 0 — оглушение, 1 — смерть, 2 — вынужденное движение (отброс).
         [TestCase(5,0)] [TestCase(29,0)] [TestCase(12,1)] [TestCase(29,1)] [TestCase(20,2)]
         public void HowlIsCancelledByStunDeathAndForcedMotion(int at,int reason)
         {
@@ -436,9 +451,10 @@ namespace Game.Tests
             Until(sim,start+at);int health=sim.Entities.Health[0];
             if(reason==0)sim.Statuses.ApplyStun(1,sim.Tick+3);
             else if(reason==1)sim.Entities.Alive[1]=false;
-            // Волок на три тика: Вендиго решает свои действия в конце тика, когда
-            // однотиковый волок уже разрешён, — поэтому не на один, как у Камнекопыта.
-            else ForcedMotion.Begin(sim.Entities,1,sim.Entities.Position[1],3,ForcedMotionKind.Dragged);
+            // Отброс на три тика: Вендиго решает свои действия в конце тика, когда
+            // однотиковый уже разрешён, — поэтому не на один, как у Камнекопыта.
+            // Волоком его больше не сдвинуть (PushWeight 0, WendigoSweepTests).
+            else Assert.That(ForcedMotion.Begin(sim.Entities,1,sim.Entities.Position[1],3,ForcedMotionKind.Knockback),Is.True);
             sim.Step(InputFrame.Empty);
             Assert.That(sim.TryGetWendigoAction(1,out _),Is.False);
             Assert.That(TelegraphOf(sim,1,out var ring),Is.True);

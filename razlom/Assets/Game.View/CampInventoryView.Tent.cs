@@ -296,7 +296,11 @@ namespace Game.View
             _tent.Tooltip.sizeDelta=new Vector2(_tent.Tooltip.sizeDelta.x,Mathf.Max(200f,-statsRect.anchoredPosition.y+statsHeight+22f));
         }
 
-        /// <summary>Откуда складывается стат: база уровня и вклад каждой надетой вещи.</summary>
+        /// <summary>
+        /// Откуда складывается стат: основа героя и вклад каждой надетой вещи. Уровень лагеря
+        /// с 29 сентября статов не даёт: база эталонного героя (бывший 5-й уровень, источник
+        /// ModifierSource.Level) входит в «Основу», отдельной строки «Уровень N» больше нет.
+        /// </summary>
         internal void ShowStatTooltip(int row)
         {
             if(row<0||row>=StatRows.Length)return;
@@ -310,9 +314,10 @@ namespace Game.View
                 if(Mathf.Abs(StatText.Shown(stat,delta))<.005f)return "";
                 return "\n"+name+"<pos=74%><color="+(delta>Fix64.Zero?"#8FE3A8":"#FF6A5A")+">"+StatText.Delta(stat,delta)+"</color>";
             }
+            // Основа — лист только с базой героя: без вещей и бафов, чьи проценты иначе легли бы и на неё.
+            Fix64 core=CloneSheet(stats,m=>m.Source!=ModifierSource.Level).Get(stat);
             string body=StatText.Hint(stat)+"\n\n<color=#93A2BC>"+CampServiceText.Get("stat.sources")+":</color>\n"
-                +"Основа<pos=74%>"+StatText.Value(stat,stats.GetBase(stat))
-                +Part(CampServiceText.Get("stat.level")+" "+camp.Level,m=>m.Source==ModifierSource.Level);
+                +"Основа<pos=74%>"+StatText.Value(stat,core);
             for(int s=0;s<(int)EquipSlot.Count;s++)
             {
                 var item=camp.Worn.Worn((EquipSlot)s);if(item.IsEmpty)continue;

@@ -2,9 +2,9 @@ Shader "Razlom/Forest Acid Drop"
 {
     Properties
     {
-        _Deep ("Dense green", Color) = (.24,.40,.005,1)
-        _Bright ("Lime body", Color) = (.62,.86,.015,1)
-        _Specular ("Wet glint", Color) = (.97,1,.63,1)
+        _Deep ("Dense murk", Color) = (.20,.21,.03,1)
+        _Bright ("Murky acid body", Color) = (.50,.52,.13,1)
+        _Specular ("Wet glint", Color) = (.95,.98,.72,1)
         _Opacity ("Visible fraction", Range(0,1)) = 1
     }
     SubShader

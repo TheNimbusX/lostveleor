@@ -3,7 +3,8 @@ Shader "Razlom/Ground Telegraph Sector"
     // Сектор, круг и кольцо общих меток (GroundTelegraphView). Ветка сектора
     // из WendigoWarning.shader, плюс внутренний радиус: тем же шейдером
     // рисуется кольцо воя Вендиго. Кромки считаются в метрах от настоящей
-    // фигуры, заливка идёт от внутреннего края к внешнему.
+    // фигуры, заливка идёт от внутреннего края к внешнему. Вид — общий стиль
+    // «трещины со светом изнутри» (GroundTelegraphStyle.hlsl).
     Properties
     {
         _Progress("Заполнение",Range(0,1))=0
@@ -39,8 +40,9 @@ Shader "Razlom/Ground Telegraph Sector"
                 // Боковые кромки только у сектора: у круга и кольца шва на u=0/1 нет.
                 // Дальше прямого угла от кромки ближайшая точка луча — его начало.
                 if(_Span<6.27)edge=min(edge,sin(min(min(i.uv.x,1-i.uv.x)*_Span,1.5707963))*r);
-                float fill=saturate((r-_InnerRadius)/max(.01,_Radius-_InnerRadius));
-                return GroundTelegraph(i.world.xz,edge,fill,_Progress,_Opacity,1,0);
+                float span=max(.01,_Radius-_InnerRadius);
+                float fill=saturate((r-_InnerRadius)/span);
+                return GroundTelegraphCracks(i.world.xz,edge,fill,span,_Progress,_Opacity,1);
             }
             ENDHLSL
         }

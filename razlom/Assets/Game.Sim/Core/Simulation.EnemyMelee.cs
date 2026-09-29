@@ -65,13 +65,22 @@ namespace Game.Sim
     {
         // ---- Лесной хранитель ----
         //
-        // Урон 11–25 по правилу окна из бестиария: 18–21 тик замаха и фигура
-        // на земле. Замах 21 тик — EnemyAttackWindupTicks; направление
-        // фиксируется в первый тик, и моб не доворачивается и не идёт до
-        // конца восстановления. 15 тиков стоит после удара — окно, в которое
-        // его наказывают; ещё 12 свободен. Итого цикл 48.
-        public const int GuardianSwingRecoveryTicks = 15;
-        public const int GuardianSwingCycleTicks = 48;
+        // Урон 11–25, фигура на земле. Направление фиксируется в первый тик
+        // замаха, и моб не доворачивается и не идёт до конца восстановления.
+        // После удара стоит — окно, в которое его наказывают; остаток цикла
+        // свободен.
+        //
+        // ВЕСЬ ВЗМАХ НА 10% МЕДЛЕННЕЕ (решение владельца, 29.09): замах
+        // 21 → 23 тика (0,77 с), стойка 15 → 17, цикл 48 → 53 — свободных
+        // 13. Замах вышел за полосу бестиария 18–21 сознательно. Числа только
+        // Хранителя (и моба без вида на стендах): EnemyAttackWindupTicks —
+        // лишь прежнее имя этого замаха, у остальных видов окна свои. Скорость
+        // атаки со стата (EnemyBaseAttackSpeed) считается из цикла. Ключи клипа
+        // (CharacterAnimatorView.GuardianSwing) поставлены под 21/15 и
+        // растягиваются под окно Sim сами — контакт ложится на ImpactTick.
+        public const int GuardianSwingWindupTicks = 23;
+        public const int GuardianSwingRecoveryTicks = 17;
+        public const int GuardianSwingCycleTicks = 53;
         //
         // Радиус 2,4 → 2,2 (стенд баланса, 26.09): попадание считается до края
         // тела героя, и сектор 2,4 м доставал на 2,85 м, когда герой бьёт с
@@ -197,7 +206,7 @@ namespace Game.Sim
                         SplitlingBiteRange, RootSwarmBiteArcCos, SplitlingBiteRange, EnemyAttackArcCos,
                         SplitlingBiteRange);
                 default:
-                    return new EnemyMeleeProfile(EnemyAttackWindupTicks, GuardianSwingRecoveryTicks,
+                    return new EnemyMeleeProfile(GuardianSwingWindupTicks, GuardianSwingRecoveryTicks,
                         GuardianSwingRadius, GuardianSwingArcCos, GuardianSwingRadius, GuardianSwingCommitCos,
                         AttackRange);
             }
@@ -268,6 +277,9 @@ namespace Game.Sim
             if (IsSwarmLike(kind)
                     ? CountSwarmBiteTokens(id) >= SwarmBiteTokenLimit
                     : CountMeleeAttackTokens(id) >= MeleeAttackTokenLimit) return;
+            // Такт ударов по герою (Simulation.AttackRhythm): окно ответа после
+            // прошлого удара, контакт не внахлёст с чужим и не по связанному.
+            if (target == PlayerId && !MeleeRhythmAllows(id, WindupTicksFor(id))) return;
             StartEnemySwing(id, target);
         }
 
@@ -333,6 +345,8 @@ namespace Game.Sim
             // ApplyAttack, и запись после него воскресила бы снятый замах.
             _enemySwings[id] = swing.Resolve();
             int target = swing.Target;
+            // Удар по герою лёг (попал или нет) — соседи дают ему ответить.
+            if (target == PlayerId) NoteMeleeContactOnHero();
             if (swarm) BeginRootSwarmLunge(id, swing.Direction, target);
 
             if ((uint)target < (uint)Entities.Count && Entities.Alive[target]
@@ -392,8 +406,8 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Сколько ближних замахов (Хранитель, Расщепень) сейчас в замахе,
-        /// кроме except. Замах есть только у видов общего замаха.
+        /// Сколько ближних замахов (Хранитель, Расщепень, клыки Камнекопыта)
+        /// сейчас в замахе, кроме except.
         /// </summary>
         private int CountMeleeAttackTokens(int except)
         {
@@ -402,8 +416,10 @@ namespace Game.Sim
             {
                 if (id == except || !Entities.Alive[id] || IsSwarmLike(Entities.Kind[id])) continue;
                 var swing = _enemySwings[id];
-                // Перекат Расщепеня держит ближний жетон от сжатия до остановки.
-                if ((swing.Serial != 0 && !swing.HitResolved) || SplitterRollHoldsMeleeToken(id)) held++;
+                // Перекат Расщепеня держит ближний жетон от сжатия до остановки,
+                // взмах клыками Камнекопыта — от начала замаха до контакта.
+                if ((swing.Serial != 0 && !swing.HitResolved) || SplitterRollHoldsMeleeToken(id)
+                    || StonehoofTuskHoldsMeleeToken(id)) held++;
             }
             return held;
         }
@@ -449,7 +465,8 @@ namespace Game.Sim
                         break;
                     case EnemyKind.ForestWendigo:
                     {
-                        // Прыжок держит жетон до приземления, вой — до удара кольца.
+                        // Прыжок держит жетон до приземления, вой — до удара кольца,
+                        // круговой удар — до удара круга.
                         if (WendigoHoldsBigToken(id)) held++;
                         break;
                     }
@@ -503,12 +520,14 @@ namespace Game.Sim
         {
             Array.Clear(_enemySwings, 0, _enemySwings.Length);
             _enemySwingSerial = 0;
+            ResetAttackRhythm();
         }
 
         private void HashEnemySwings(ref ulong hash)
         {
             Hashing.Mix(ref hash, _bigAttackTokenLimit);
             Hashing.Mix(ref hash, _bigMarkBudget);
+            HashAttackRhythm(ref hash);
             if (_enemySwingSerial == 0) return;
             Hashing.Mix(ref hash, 0x5357494E); Hashing.Mix(ref hash, _enemySwingSerial);
             for (int id = 1; id < Entities.Count; id++)

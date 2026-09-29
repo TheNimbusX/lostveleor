@@ -324,12 +324,22 @@ namespace Game.Sim
         public bool IsWalkable(FixVec2 center, Fix64 radius)
         {
             if (_placedCount == 0) return true;
+            return BodyFits(center, radius, radius * Fix64.Ratio(7, 10));
+        }
+
+        /// <summary>
+        /// IsWalkable с готовой диагональю опорных точек: CanTravel проверяет
+        /// одно и то же тело через каждые полметра пути.
+        /// </summary>
+        private bool BodyFits(FixVec2 center, Fix64 radius, Fix64 diagonal)
+        {
             foreach (var obstacle in _obstacles)
             {
                 var sum = radius + obstacle.Radius;
                 if (FixVec2.DistanceSq(center, obstacle.Center) < sum * sum) return false;
             }
-            Fix64 diagonal = radius * Fix64.Ratio(7, 10);
+            // Контур поляны: те же девять точек, но без сборки векторов (поток D, 29.09).
+            if (Outline != null) return Outline.ContainsBody(center, radius, diagonal);
             return ContainsWorld(center)
                    && ContainsWorld(center + new FixVec2(radius, Fix64.Zero))
                    && ContainsWorld(center + new FixVec2(-radius, Fix64.Zero))
@@ -387,22 +397,52 @@ namespace Game.Sim
             return best;
         }
 
+        /// <summary>
+        /// Путь короче этого проверяется одной точкой конца: корень из квадрата
+        /// меньше 0,98 шага контура не дотянет до шага даже с округлением Sqrt,
+        /// и считать его не нужно — так ходит почти каждый шаг тела за тик.
+        /// </summary>
+        private static readonly Fix64 SingleProbeTravelSq = NaturalOutline.Step * NaturalOutline.Step * Fix64.Ratio(24, 25);
+
+        /// <summary>Запас на округление Fix64 в отсечке дерева по прямоугольнику пути.</summary>
+        private static readonly Fix64 ObstacleBoundsSlack = Fix64.Ratio(1, 1000);
+
+        /// <summary>
+        /// Проходит ли тело radius по прямой from → to. Самая частая проверка
+        /// симуляции (ход, расталкивание, места ИИ, лучи стрелков), поэтому
+        /// ускорена без смены ответа: короткий шаг — без корня, диагональ
+        /// опорных точек — один раз на путь, дерево дальше зазора от
+        /// прямоугольника пути отсекается до деления (поток D, 29.09).
+        /// </summary>
         public bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
         {
             if (!IsWalkable(to, radius)) return false;
             var delta = to - from;
-            if (Outline != null)
+            Fix64 lengthSq = delta.LengthSq;
+            if (Outline != null && (lengthSq.Raw < 0 || lengthSq >= SingleProbeTravelSq))
             {
                 int steps = 1 + (int)(delta.Length.Raw / NaturalOutline.Step.Raw);
-                for (int i = 1; i < steps; i++)
-                    if (!IsWalkable(from + delta * Fix64.Ratio(i, steps), radius)) return false;
+                if (steps > 1 && _placedCount != 0)
+                {
+                    Fix64 diagonal = radius * Fix64.Ratio(7, 10);
+                    for (int i = 1; i < steps; i++)
+                        if (!BodyFits(from + delta * Fix64.Ratio(i, steps), radius, diagonal)) return false;
+                }
             }
+            if (_obstacles.Length == 0) return true;
+            Fix64 minX = Fix64.Min(from.X, to.X), maxX = Fix64.Max(from.X, to.X);
+            Fix64 minY = Fix64.Min(from.Y, to.Y), maxY = Fix64.Max(from.Y, to.Y);
             foreach (var obstacle in _obstacles)
             {
-                var offset = obstacle.Center - from;
-                var t = delta.LengthSq == Fix64.Zero ? Fix64.Zero
-                    : Fix64.Clamp((offset.X * delta.X + offset.Y * delta.Y) / delta.LengthSq, Fix64.Zero, Fix64.One);
                 var clearance = obstacle.Radius + radius;
+                // Ближайшая точка отрезка лежит в его прямоугольнике: дерево
+                // дальше зазора от прямоугольника не заденет — ответ тот же.
+                var reach = clearance + ObstacleBoundsSlack;
+                if (obstacle.Center.X < minX - reach || obstacle.Center.X > maxX + reach
+                    || obstacle.Center.Y < minY - reach || obstacle.Center.Y > maxY + reach) continue;
+                var offset = obstacle.Center - from;
+                var t = lengthSq == Fix64.Zero ? Fix64.Zero
+                    : Fix64.Clamp((offset.X * delta.X + offset.Y * delta.Y) / lengthSq, Fix64.Zero, Fix64.One);
                 if (FixVec2.DistanceSq(from + delta * t, obstacle.Center) < clearance * clearance) return false;
             }
             return true;

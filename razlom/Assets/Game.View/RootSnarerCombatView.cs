@@ -4,18 +4,20 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// БОЙ КОРНЕХВАТА СО СТОРОНЫ КАРТИНКИ (целевой кадр 1-roots-snare от 26.09).
+    /// БОЙ КОРНЕХВАТА СО СТОРОНЫ КАРТИНКИ. Удар плитами — кадр 1-roots-snare от
+    /// 26.09; корни — кадр 07-snarer-roots-emerging-a-burst (выбор владельца 29.09).
     ///
     /// Круг на земле рисует общий GroundTelegraphView (метка SharedView), здесь —
     /// только VFX из паков (префабы собирает RootSnarerVfxSetup):
     /// • удар плитами — TelegraphOpened от Корнехвата (тик 15 позы: круг встал):
     ///   пыль, комья и тёмная земля у обеих плит, трещины бегут от плит к кругу;
-    /// • корни — EnemyActionImpact(SnarerSlam), тик 36: толстые узловатые корни
-    ///   рвутся из круга и загибаются внутрь, держатся, пока моб прижат, и уходят
-    ///   в землю, когда он выдёргивает плиты (или раньше — оглушение, смерть);
-    /// • путы на герое — тот же контакт с попаданием и Damage по герою в том же
-    ///   тике (значит, замедление повешено): кольца корней вокруг ног, пока идёт
-    ///   замедление, и уходят в землю к его концу;
+    /// • корни — EnemyActionImpact(SnarerSlam), тик 36: из треснувшей земли круга
+    ///   рвутся толстые узловатые корни — веером от центра по земле, горбами и
+    ///   арками, — летят комья и камни, встаёт кольцо пыли; держатся, пока моб
+    ///   прижат, и уходят в землю, когда он выдёргивает плиты (или раньше —
+    ///   оглушение, смерть);
+    /// • корни на ногах героя — не здесь: их рисует HeroControlView по событию
+    ///   HeroControl (корни легли на самом деле — не отбиты иммунитетом);
     /// • «Волна из корней» (лечение, кадр 1-mend-ring от 27.09): лапы в землю
     ///   (EnemyActionStarted SnarerMend) — у плит свечение и пылинки света всю
     ///   секунду сбора; волна (EnemyActionImpact SnarerMend) — золотисто-зелёное
@@ -35,7 +37,6 @@ namespace Game.View
         public const string PrefabFolder = "VFX/RootSnarer/Prefabs/";
         public const string SlamCracksName = "VFX_RootSnarer_SlamCracks";
         public const string RootsEruptName = "VFX_RootSnarer_RootsErupt";
-        public const string SnareName = "VFX_RootSnarer_SnareOnHero";
         public const string MendChannelName = "VFX_RootSnarer_MendChannel";
         public const string MendRingName = "VFX_RootSnarer_MendRing";
         public const string MendLeavesName = "VFX_RootSnarer_MendLeaves";
@@ -44,9 +45,9 @@ namespace Game.View
         public const int RunSegmentsPerSide = 8;
 
         /// <summary>
-        /// Растущая часть (корень, кольцо пут): прямой ребёнок корня префаба с именем
-        /// «Grow|задержка, мс|скрутка, °|подпись». Вид выдвигает её из земли вдоль
-        /// её оси +Y и уводит обратно.
+        /// Растущая часть (корень, кольцо корней на ногах): прямой ребёнок корня
+        /// префаба с именем «Grow|задержка, мс|скрутка, °|подпись». Вид выдвигает её
+        /// из земли вдоль её оси +Y и уводит обратно. Тот же разбор — у HeroControlView.
         /// </summary>
         public const char GrowSeparator = '|';
         public const string GrowPrefix = "Grow|";
@@ -56,10 +57,6 @@ namespace Game.View
 
         public const float SlamCracksLife = 2.5f, RootsEruptLife = 2.6f;
         public const float RootsRiseSeconds = .11f, RootsSinkSeconds = .28f;
-        public const float SnareRiseSeconds = .16f, SnareSinkSeconds = .22f;
-
-        /// <summary>Путы уходят за столько тиков до конца замедления: к его концу ног ничего не держит.</summary>
-        public const int SnareRetractTicks = 7;
 
         /// <summary>Корни уходят через 2 тика после начала выдёргивания плит (кадр 60 клипа Slam).</summary>
         private const int RootsSinkAfterReleaseTicks = 2;
@@ -70,7 +67,7 @@ namespace Game.View
 
         private const float SimulateStep = 1f / 30f;
 
-        private sealed class Grow
+        internal sealed class Grow
         {
             public Transform T;
             public Renderer R;
@@ -79,7 +76,8 @@ namespace Game.View
             public float Depth, Delay, Twist;
         }
 
-        private sealed class Fx
+        /// <summary>Экземпляр префаба в пуле: системы частиц с зёрнами и растущие части.</summary>
+        internal sealed class Fx
         {
             public GameObject Root;
             public ParticleSystem[] Particles;
@@ -90,7 +88,6 @@ namespace Game.View
             public Transform[] Segments, Cracks, Slabs;
             public int Tick = -1000, Entity = -1, Serial;
             public float Life, SinkAge = float.MaxValue, RiseSeconds, SinkSeconds;
-            public bool FollowHero;
             /// <summary>Держится за этим союзником (листья лечения); −1 — стоит на месте.</summary>
             public int FollowEntity = -1;
         }
@@ -107,7 +104,7 @@ namespace Game.View
         private ArenaView _arena;
         private Simulation _shown;
         private int _generation = -1, _depth = -1;
-        private Pool _slam, _roots, _snare, _mendChannel, _mendRing, _mendLeaves;
+        private Pool _slam, _roots, _mendChannel, _mendRing, _mendLeaves;
         private Pool[] _pools;
         private readonly float[] _segmentDelay = new float[RunSegmentsPerSide * 2];
 
@@ -128,15 +125,14 @@ namespace Game.View
                 enabled = false; return;
             }
             // Пулы — сразу: в бою ни одного Instantiate. Удар и корни — крупная атака
-            // по жетону, трёх мест хватает с запасом; путы на герое одни (вторые — на смену).
+            // по жетону, трёх мест хватает с запасом.
             _slam = MakePool(SlamCracksName, "Корнехват: удар плитами", 3, SlamCracksLife);
             _roots = MakePool(RootsEruptName, "Корнехват: корни", 3, RootsEruptLife);
-            _snare = MakePool(SnareName, "Корнехват: путы", 2, 2f);
             // Лечит разом один Корнехват: сбор и волна — по два, листья — на всю пачку.
             _mendChannel = MakePool(MendChannelName, "Корнехват: сбор волны", 2, 1.4f);
             _mendRing = MakePool(MendRingName, "Корнехват: волна лечения", 2, 1.4f);
             _mendLeaves = MakePool(MendLeavesName, "Корнехват: лечение союзника", 8, 1.3f);
-            _pools = new[] { _slam, _roots, _snare, _mendChannel, _mendRing, _mendLeaves };
+            _pools = new[] { _slam, _roots, _mendChannel, _mendRing, _mendLeaves };
         }
 
         private Pool MakePool(string prefabName, string title, int count, float life)
@@ -159,7 +155,7 @@ namespace Game.View
         }
 
         /// <summary>Разбирает экземпляр префаба: системы частиц, растущие корни, сегменты трещины.</summary>
-        private static Fx Prepare(GameObject go)
+        internal static Fx Prepare(GameObject go)
         {
             var fx = new Fx { Root = go, Particles = go.GetComponentsInChildren<ParticleSystem>(true) };
             int count = fx.Particles.Length;
@@ -242,7 +238,6 @@ namespace Game.View
         private void ConsumeEvents(Simulation sim)
         {
             var contexts = _driver.FrameEventContexts;
-            int caught = -1, caughtAt = int.MinValue;
             for (int i = 0; i < contexts.Count; i++)
             {
                 var c = contexts[i];
@@ -259,25 +254,14 @@ namespace Game.View
                         break;
                     case SimEventType.EnemyActionImpact:
                         if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) { MendRing(e, at); break; }
-                        if (e.ActionVariant != (int)EnemyActionKind.SnarerSlam) break;
-                        Roots(sim, e, at);
-                        if (e.Flag) { caught = e.Source; caughtAt = at; }
+                        if (e.ActionVariant == (int)EnemyActionKind.SnarerSlam) Roots(sim, e, at);
                         break;
                     case SimEventType.Heal:
                         if (IsSnarer(sim, e.Source)) MendLeaves(sim, e, at);
                         break;
-                    case SimEventType.Damage:
-                        // Урон по герою от того же удара в том же тике — замедление повешено
-                        // (уклонение, неуязвимость и отложенный урон его не вешают — и Damage нет).
-                        if (e.Target == Simulation.PlayerId && e.Source == caught && at == caughtAt && e.Amount > 0)
-                        { Snare(sim, at); caught = -1; }
-                        break;
                     case SimEventType.EnemyActionCancelled:
                         if (e.ActionVariant == (int)EnemyActionKind.SnarerSlam) SinkRootsOf(e.Source, at);
                         else if (e.ActionVariant == (int)EnemyActionKind.SnarerMend) StopMendOf(e.Source);
-                        break;
-                    case SimEventType.Death:
-                        if (e.Target == Simulation.PlayerId) RetractSnare(at);
                         break;
                 }
             }
@@ -352,7 +336,8 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Корни: корень префаба — в центре круга, +Z — от моба к кругу. Уходят в
+        /// Корни: корень префаба — в центре круга, +Z — от моба к кругу. Выходят
+        /// из земли веером с задержкой по номеру (от центра к кромке), уходят в
         /// землю, когда моб начинает выдёргивать плиты (конец стойки − 12 тиков).
         /// </summary>
         private void Roots(Simulation sim, in SimEvent e, int at)
@@ -435,32 +420,6 @@ namespace Game.View
             }
         }
 
-        /// <summary>
-        /// Путы: кольца корней вокруг ног героя на всё замедление; держатся за героем.
-        /// Срок — своё замедление удара (общий модификатор могут продлить другие мобы).
-        /// </summary>
-        private void Snare(Simulation sim, int at)
-        {
-            int slowTicks = Simulation.SnarerRoots ? Simulation.RootSnarerRootTicks : Simulation.RootSnarerSlowTicks;
-            int end = at + 1 + slowTicks;
-            RetractSnare(at);
-            var fx = Take(_snare, at, HeroGround(sim), Quaternion.identity, at);
-            if (fx == null) return;
-            fx.FollowHero = true;
-            fx.RiseSeconds = SnareRiseSeconds; fx.SinkSeconds = SnareSinkSeconds;
-            fx.SinkAge = Mathf.Max(SnareRiseSeconds, (end - SnareRetractTicks - at) / (float)Simulation.TicksPerSecond);
-            fx.Life = fx.SinkAge + SnareSinkSeconds + .8f;
-        }
-
-        private void RetractSnare(int at)
-        {
-            foreach (var fx in _snare.Items)
-            {
-                if (fx == null || !fx.Root.activeSelf || at < fx.Tick) continue;
-                fx.SinkAge = Mathf.Min(fx.SinkAge, (at - fx.Tick) / (float)Simulation.TicksPerSecond);
-            }
-        }
-
         // ------------------------------------------------------------- pool
 
         /// <summary>
@@ -471,9 +430,18 @@ namespace Game.View
         {
             if (pool.Items.Length == 0) return null;
             var fx = pool.Items[pool.Cursor++ % pool.Items.Length];
-            fx.Tick = tick; fx.Entity = -1; fx.Serial = 0; fx.Life = pool.Life;
+            Restart(fx, tick, position, rotation, serial, pool.Life);
+            return fx;
+        }
+
+        /// <summary>
+        /// Ставит экземпляр заново: тик старта, место, зерно систем от номера
+        /// удара, растущие части — под землёй. Общий для HeroControlView.
+        /// </summary>
+        internal static void Restart(Fx fx, int tick, Vector3 position, Quaternion rotation, int serial, float life)
+        {
+            fx.Tick = tick; fx.Entity = -1; fx.Serial = 0; fx.Life = life;
             fx.SinkAge = float.MaxValue; fx.RiseSeconds = RootsRiseSeconds; fx.SinkSeconds = RootsSinkSeconds;
-            fx.FollowHero = false;
             fx.FollowEntity = -1;
             fx.Root.transform.SetPositionAndRotation(position, rotation);
             fx.Root.SetActive(true);
@@ -491,13 +459,12 @@ namespace Game.View
                 g.T.localPosition = g.Pos - g.Axis * g.Depth;
                 g.T.localRotation = g.Rot;
             }
-            return fx;
         }
 
-        private static void Retire(Fx fx)
+        internal static void Retire(Fx fx)
         {
             if (fx == null) return;
-            fx.Tick = -1000; fx.Entity = -1; fx.FollowHero = false; fx.FollowEntity = -1;
+            fx.Tick = -1000; fx.Entity = -1; fx.FollowEntity = -1;
             if (fx.Root.activeSelf) fx.Root.SetActive(false);
         }
 
@@ -518,10 +485,19 @@ namespace Game.View
             float age = (tick - fx.Tick) / Simulation.TicksPerSecond;
             if (age > fx.Life) { Retire(fx); return; }
             age = Mathf.Max(0f, age);
-            if (fx.FollowHero) Follow(fx);
-            else if (fx.FollowEntity >= 0 && _driver.Sim != null && (uint)fx.FollowEntity < (uint)_driver.Sim.Entities.Count)
+            if (fx.FollowEntity >= 0 && _driver.Sim != null && (uint)fx.FollowEntity < (uint)_driver.Sim.Entities.Count)
                 fx.Root.transform.position = EntityGround(_driver.Sim, fx.FollowEntity);
             AnimateGrows(fx, age);
+            StepParticles(fx, age);
+        }
+
+        /// <summary>
+        /// Частицы экземпляра — на возраст age (с задержкой каждой системы):
+        /// вперёд догоняются шагами по 1/30 с, назад (перемотка) — перезапуском.
+        /// Общий для HeroControlView.
+        /// </summary>
+        internal static void StepParticles(Fx fx, float age)
+        {
             for (int k = 0; k < fx.Particles.Length; k++)
             {
                 var ps = fx.Particles[k];
@@ -550,9 +526,10 @@ namespace Game.View
 
         /// <summary>
         /// Растущие части: вылезают из земли вдоль своей оси с небольшим перелётом
-        /// (у колец пут — ещё и довинчиваются), стоят и уходят обратно с SinkAge.
+        /// (у колец на ногах героя — ещё и довинчиваются), стоят и уходят обратно
+        /// с SinkAge. Общий для HeroControlView.
         /// </summary>
-        private static void AnimateGrows(Fx fx, float age)
+        internal static void AnimateGrows(Fx fx, float age)
         {
             foreach (var g in fx.Grows)
             {
@@ -574,28 +551,12 @@ namespace Game.View
         }
 
         /// <summary>Выход из земли: быстрый, с перелётом ~6% и возвратом (ease-out back).</summary>
-        private static float Rise(float x)
+        internal static float Rise(float x)
         {
             if (x >= 1f) return 1f;
             const float c1 = 1.2f, c3 = c1 + 1f;
             float y = x - 1f;
             return 1f + c3 * y * y * y + c1 * y * y;
-        }
-
-        private void Follow(Fx fx)
-        {
-            var sim = _driver.Sim;
-            if (sim == null) return;
-            fx.Root.transform.position = HeroGround(sim);
-        }
-
-        private Vector3 HeroGround(Simulation sim)
-        {
-            Vector3 p;
-            if (_arena != null && _arena.TryGetEntityView(Simulation.PlayerId, out var hero) && hero != null) p = hero.position;
-            else if (sim.Entities.Count > Simulation.PlayerId) p = _driver.GetRenderPosition(Simulation.PlayerId);
-            else p = Vector3.zero;
-            return Ground(p.x, p.z);
         }
 
         private Vector3 FacingOf(Simulation sim, int id)

@@ -7,6 +7,12 @@ namespace Game.View
     [DefaultExecutionOrder(650)]
     public sealed class StonehoofCombatView : MonoBehaviour
     {
+        /// <summary>
+        /// Сколько живёт залп клыков VFX_Tusk, с. Самая долгая частица префаба —
+        /// 1,8 с (травинки); StonehoofBuilder не соберёт префаб с частицей дольше.
+        /// </summary>
+        public const float TuskBurstSeconds = 1.9f;
+
         private sealed class Lane
         {
             public GameObject Root;
@@ -24,14 +30,24 @@ namespace Game.View
             public GameObject Root;
             public ParticleSystem[] Particles;
             public float Tick = -1000;
+            /// <summary>До какого возраста системы уже досчитаны (догоняющий залп клыков); −1 — с нуля.</summary>
+            public float Simulated = -1f;
         }
+
+        /// <summary>
+        /// Шаг догоняющей симуляции залпа клыков: комья летят по баллистике и
+        /// отскакивают от плоскости земли. Один Simulate на весь возраст — это
+        /// один шаг Эйлера (двойная гравитация) и один отрезок до земли: к
+        /// середине жизни комья съезжали бы по отрезку обратно к морде.
+        /// </summary>
+        private const float SimulateStep = 1f / 30f;
         private TickDriver _driver;
         private LayoutView _layout;
         private ArenaView _arena;
         private Simulation _shown;
         private readonly Lane[] _lanes = new Lane[4];
-        private Burst[] _hooves, _impacts;
-        private int _hoofCursor, _impactCursor;
+        private Burst[] _hooves, _impacts, _tusks;
+        private int _hoofCursor, _impactCursor, _tuskCursor;
         private Material _laneMaterial;
         private static readonly int Progress = Shader.PropertyToID("_Progress"), Opacity = Shader.PropertyToID("_Opacity"),
             Length = Shader.PropertyToID("_Length"), Width = Shader.PropertyToID("_Width"), Consumed = Shader.PropertyToID("_Consumed");
@@ -56,6 +72,8 @@ namespace Game.View
             }
             _hooves = Pool("Characters/Forest_Stonehoof/VFX_Hoof", 20);
             _impacts = Pool("Characters/Forest_Stonehoof/VFX_Wall", 4);
+            // Взмах клыками: комья земли, камешки, травинки и пыль (StonehoofBuilder.BuildTuskBurst).
+            _tusks = Pool("Characters/Forest_Stonehoof/VFX_Tusk", 4);
         }
         private Burst[] Pool(string resource, int count)
         {
@@ -70,15 +88,51 @@ namespace Game.View
         }
         private Vector3 Ground(Vector3 p) { p.y = _layout != null ? _layout.WeaponGroundHeight(p.x, p.z) : 0; return p; }
         private void Emit(Burst[] pool, ref int cursor, Vector3 point, float tick, float scale)
+            => Emit(pool, ref cursor, point, Quaternion.identity, tick, scale);
+        private void Emit(Burst[] pool, ref int cursor, Vector3 point, Quaternion rotation, float tick, float scale)
         {
             var burst = pool[cursor++ % pool.Length]; if (burst == null) return;
-            burst.Tick = tick; burst.Root.transform.position = Ground(point) + Vector3.up * .025f;
+            burst.Tick = tick; burst.Simulated = -1f;
+            burst.Root.transform.SetPositionAndRotation(Ground(point) + Vector3.up * .025f, rotation);
             burst.Root.transform.localScale = Vector3.one * scale; burst.Root.SetActive(true);
         }
-        private void Hoof(Lane lane, int hoof, float tick, float scale)
+        private void Hoof(Lane lane, int hoof, float tick, float scale) => Hoof(lane.Body, hoof, tick, scale);
+        private void Hoof(StonehoofAnimatorView body, int hoof, float tick, float scale)
         {
-            if (lane.Body == null || lane.Body.Hooves[hoof] == null) return;
-            Emit(_hooves, ref _hoofCursor, lane.Body.Hooves[hoof].position, tick, scale);
+            if (body == null || body.Hooves[hoof] == null) return;
+            Emit(_hooves, ref _hoofCursor, body.Hooves[hoof].position, tick, scale);
+        }
+
+        /// <summary>
+        /// Взмах клыками: залп земли и пыли VFX_Tusk в точке удара. Спавн — из
+        /// события EnemyActionImpact (StonehoofTusk), не опросом состояния;
+        /// возраст — от тика удара (SimulationTick − 1), поэтому пауза, стоп-кадр
+        /// и съёмка переигрывают залп кадр в кадр. Точка — из события (перед
+        /// мордой на половине радиуса удара), направление — зафиксированное в
+        /// начале замаха; клип Stonehoof_Tusk в этот тик как раз проносит клыки
+        /// (контакт на 14-м кадре). Задел героя — залп полный, мимо — поменьше.
+        /// Выпад корпуса на контакте упирает передние копыта — у них своя пыль.
+        /// </summary>
+        private void TuskImpacts(Simulation sim)
+        {
+            var contexts = _driver.FrameEventContexts;
+            for (int i = 0; i < contexts.Count; i++)
+            {
+                var e = contexts[i].Event;
+                if (e.Type != SimEventType.EnemyActionImpact || e.ActionVariant != (int)EnemyActionKind.StonehoofTusk) continue;
+                int id = e.Source;
+                if ((uint)id >= (uint)sim.Entities.Count) continue;
+                float at = contexts[i].SimulationTick - 1;
+                Vector3 forward = sim.TryGetStonehoofTusk(id, out var tusk)
+                    ? new Vector3(tusk.Direction.X.ToFloat(), 0, tusk.Direction.Y.ToFloat())
+                    : _driver.GetRenderFacing(id);
+                forward.y = 0;
+                if (forward.sqrMagnitude < .0001f) forward = Vector3.forward;
+                var point = new Vector3(e.Position.X.ToFloat(), 0, e.Position.Y.ToFloat());
+                Emit(_tusks, ref _tuskCursor, point, Quaternion.LookRotation(forward.normalized, Vector3.up), at, e.Flag ? 1f : .8f);
+                var body = _arena != null && _arena.TryGetEntityView(id, out var view) ? view.GetComponent<StonehoofAnimatorView>() : null;
+                Hoof(body, 0, at, .7f); Hoof(body, 1, at, .7f);
+            }
         }
         private void LateUpdate()
         {
@@ -87,9 +141,10 @@ namespace Game.View
             {
                 _shown = sim;
                 foreach (var lane in _lanes) { lane.Entity = -1; lane.Root.SetActive(false); }
-                ResetPool(_hooves); ResetPool(_impacts);
+                ResetPool(_hooves); ResetPool(_impacts); ResetPool(_tusks);
             }
             float tick = sim.Tick - 1 + _driver.Alpha;
+            TuskImpacts(sim);
             foreach (var lane in _lanes)
             {
                 if (lane.Entity < 0) continue;
@@ -134,17 +189,48 @@ namespace Game.View
                 foreach (var lane in _lanes) { if (lane.Entity == id && lane.Serial == action.Serial) found = true; if (lane.Entity < 0) free = lane; }
                 if (!found && free != null) Build(free, id, action, tick);
             }
-            Advance(_hooves, tick); Advance(_impacts, tick);
+            Advance(_hooves, tick, 1.4f); Advance(_impacts, tick, 1.4f); AdvanceStepped(_tusks, tick, TuskBurstSeconds);
         }
         private static void ResetPool(Burst[] pool)
-        { foreach (var b in pool) if (b != null) { b.Tick = -1000; b.Root.SetActive(false); } }
-        private static void Advance(Burst[] pool, float tick)
+        { foreach (var b in pool) if (b != null) { b.Tick = -1000; b.Simulated = -1f; b.Root.SetActive(false); } }
+        /// <summary>
+        /// Залп с баллистикой и отскоком (клыки): возраст — от тика Sim, вперёд
+        /// системы догоняются шагами по SimulateStep, назад (перемотка, съёмка) —
+        /// перепрогоном с нуля; на паузе возраст стоит, и частицы стоят.
+        /// </summary>
+        private static void AdvanceStepped(Burst[] pool, float tick, float life)
         {
             foreach (var b in pool)
             {
                 if (b == null || !b.Root.activeSelf) continue;
                 float age = Mathf.Max(0, tick - b.Tick) / Simulation.TicksPerSecond;
-                if (age > 1.4f) { b.Root.SetActive(false); continue; }
+                if (age > life) { b.Simulated = -1f; b.Root.SetActive(false); continue; }
+                if (b.Simulated >= 0f && Mathf.Abs(age - b.Simulated) < 1e-5f) continue;
+                bool restart = b.Simulated < 0f || age < b.Simulated;
+                float from = restart ? 0f : b.Simulated;
+                foreach (var ps in b.Particles)
+                {
+                    float done = from;
+                    bool first = restart;
+                    do
+                    {
+                        float step = Mathf.Min(SimulateStep, age - done);
+                        ps.Simulate(step, false, first, false);
+                        first = false;
+                        done += step;
+                    } while (done < age - 1e-5f);
+                    ps.Pause(false);
+                }
+                b.Simulated = age;
+            }
+        }
+        private static void Advance(Burst[] pool, float tick, float life)
+        {
+            foreach (var b in pool)
+            {
+                if (b == null || !b.Root.activeSelf) continue;
+                float age = Mathf.Max(0, tick - b.Tick) / Simulation.TicksPerSecond;
+                if (age > life) { b.Root.SetActive(false); continue; }
                 foreach (var ps in b.Particles) { ps.Simulate(age, false, true, false); ps.Pause(false); }
             }
         }

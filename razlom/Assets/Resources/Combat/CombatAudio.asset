@@ -329,4 +329,305 @@ MonoBehaviour:
     PitchVariation: 0.025
     Priority: 20
     MaxPerFrame: 1
+  - Sound: 38
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 58
+    MaxPerFrame: 1
+  - Sound: 39
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 88
+    MaxPerFrame: 1
+  - Sound: 40
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 41
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 42
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 8
+    MaxPerFrame: 1
+  - Sound: 43
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 35
+    MaxPerFrame: 1
+  - Sound: 44
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 5
+    MaxPerFrame: 1
+  - Sound: 45
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 25
+    MaxPerFrame: 1
+  - Sound: 46
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 50
+    MaxPerFrame: 1
+  - Sound: 47
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 48
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 49
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 66
+    MaxPerFrame: 1
+  - Sound: 50
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 62
+    MaxPerFrame: 1
+  - Sound: 51
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 88
+    MaxPerFrame: 1
+  - Sound: 52
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 58
+    MaxPerFrame: 1
+  - Sound: 53
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 54
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 55
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 60
+    MaxPerFrame: 1
+  - Sound: 56
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 60
+    MaxPerFrame: 1
+  - Sound: 57
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 72
+    MaxPerFrame: 1
+  - Sound: 58
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 75
+    MaxPerFrame: 1
+  - Sound: 59
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 72
+    MaxPerFrame: 1
+  - Sound: 60
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 61
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 62
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 55
+    MaxPerFrame: 1
+  - Sound: 63
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 70
+    MaxPerFrame: 1
+  - Sound: 64
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 48
+    MaxPerFrame: 1
+  - Sound: 65
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 66
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 67
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 70
+    MaxPerFrame: 1
+  - Sound: 68
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 68
+    MaxPerFrame: 1
+  - Sound: 69
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 46
+    MaxPerFrame: 1
+  - Sound: 70
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 71
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 72
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 45
+    MaxPerFrame: 1
+  - Sound: 73
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 52
+    MaxPerFrame: 1
+  - Sound: 74
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 75
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 42
+    MaxPerFrame: 1
+  - Sound: 76
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 30
+    MaxPerFrame: 1
+  - Sound: 77
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 64
+    MaxPerFrame: 1
+  - Sound: 78
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 84
+    MaxPerFrame: 1
+  - Sound: 79
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 90
+    MaxPerFrame: 1
+  - Sound: 80
+    Clips: []
+    Gain: 1
+    Pitch: 1
+    PitchVariation: 0.025
+    Priority: 90
+    MaxPerFrame: 1
   PelagAudioRevision: 4

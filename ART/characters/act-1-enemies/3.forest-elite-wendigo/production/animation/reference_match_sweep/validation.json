@@ -1,0 +1,206 @@
+{
+ "clip": "Wendigo_Sweep",
+ "action_in_blend": "AN_ForestWendigo_Sweep_Baked",
+ "revision": "r01",
+ "frame_unit": "sim tick (1/30 s); package scene stays 24 fps, the view drives the clip by phase",
+ "frame_range": [
+  0,
+  39
+ ],
+ "contact_frame": 21,
+ "game_timing": {
+  "windup_ticks": 21,
+  "recovery_ticks": 18,
+  "ticks_per_second": 30,
+  "contact_phase": 0.5384615384615384
+ },
+ "spin": {
+  "direction": "left (counter-clockwise from above), right claw leads through the front as in Claw",
+  "feet_off_ground_frames": [
+   11.5,
+   24.5
+  ],
+  "degrees_at_contact": 345.0
+ },
+ "root_motion": false,
+ "samples_per_frame": 4,
+ "limits": {
+  "planted_sole_slip_mm_max": {
+   "value": 0.0007781883191171346,
+   "limit": 2.0,
+   "pass": true
+  },
+  "hand_ik_miss_m_max": {
+   "value": 3.64566488336565e-07,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "foot_ik_miss_m_max": {
+   "value": 8.382333818719551e-07,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "pelvis_auto_lower_m_max": {
+   "value": 0.0,
+   "limit": 1e-06,
+   "pass": true
+  },
+  "lowest_non_foot_vertex_m_min (>= 0)": {
+   "value": 0.17290754071357564,
+   "limit": 0.0,
+   "pass": true
+  },
+  "endpoint_vs_idle_max": {
+   "value": 0.0,
+   "limit": 1e-09,
+   "pass": true
+  },
+  "new_triangle_intersections_frames": {
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  },
+  "baked_action_vs_solve_m_max": {
+   "value": 1.0925711858167266e-06,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "exported_fbx_sweep_vs_solve_m_max": {
+   "value": 2.119948773834555e-06,
+   "limit": 0.0001,
+   "pass": true
+  },
+  "accepted_takes_changed_in_fbx": {
+   "value": 0,
+   "limit": 0,
+   "pass": true
+  }
+ },
+ "all_pass": true,
+ "numpy": {
+  "max_hand_ik_miss_m": 3.64566488336565e-07,
+  "max_foot_ik_miss_m": 8.382333818719551e-07,
+  "max_pelvis_auto_lower_m": 0.0,
+  "planted_sole_slip_mm": {
+   "L": 8.31885880042682e-05,
+   "R": 0.0007781883191171346
+  },
+  "lowest_non_foot_vertex_m": 0.17290754071357564,
+  "lowest_non_foot_frame": 1.5,
+  "lowest_foot_vertex_m": -0.00482423711537867,
+  "endpoints_vs_idle": {
+   "0": 0.0,
+   "39": 0.0
+  },
+  "spin_at_contact_deg": 345.0
+ },
+ "blender": {
+  "evaluated_bone_vs_solve_max_m": 1.0925711858167266e-06,
+  "idle_baseline_overlaps": {
+   "L_arm-L_leg": 0,
+   "R_arm-R_leg": 0,
+   "L_arm-R_leg": 0,
+   "R_arm-L_leg": 0,
+   "L_arm-head": 0,
+   "R_arm-head": 0,
+   "L_arm-torso": 0,
+   "R_arm-torso": 0,
+   "head-torso": 0,
+   "L_arm-R_arm": 0,
+   "L_leg-R_leg": 0,
+   "head-L_upper": 0,
+   "head-R_upper": 0,
+   "L_upper-L_leg": 0,
+   "R_upper-R_leg": 0
+  },
+  "samples_checked": 157,
+  "new_triangle_overlaps_by_frame": {},
+  "frames_with_new_overlaps": [],
+  "action": "AN_ForestWendigo_Sweep_Baked",
+  "action_frame_range": [
+   0.0,
+   39.0
+  ]
+ },
+ "fbx_sweep": {
+  "fbx": "C:/Users/DE06B~1.GRA/AppData/Local/Temp/claude/C--Users-d-grab-Desktop-the-game/b9a62d32-b302-4af1-9255-9c30476f872b/scratchpad/G-sweep/ForestWendigo_new.fbx",
+  "take": "ARM_ForestWendigo|ARM_ForestWendigo|Wendigo_Sweep",
+  "frame_range": [
+   1.0,
+   40.0
+  ],
+  "max_joint_error_m": 2.119948773834555e-06,
+  "worst": [
+   17.25,
+   "R_hand"
+  ]
+ },
+ "fbx_package": {
+  "method": "Both FBX files re-imported in Blender 5.2 (factory settings); every animation curve key of each take compared.",
+  "previous_fbx_sha256": "cdf0910e4a3cf2bc8b3bb173b060676c394b41c8315824a8ce6c12130de5e18d",
+  "new_fbx_sha256": "83c04827c362435acbe1e053bbe61e3206aa18d7eecafc085b0fcaf9e03ad454",
+  "takes": {
+   "Wendigo_Claw": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Death": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Hit": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Howl": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Idle": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Leap": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   },
+   "Wendigo_Walk": {
+    "curves": 229,
+    "max_key_difference": 0.0,
+    "unchanged": true
+   }
+  },
+  "new_takes": [
+   "Wendigo_Sweep"
+  ],
+  "mesh": {
+   "old": {
+    "verts": 12361,
+    "polys": 23725
+   },
+   "new": {
+    "verts": 12361,
+    "polys": 23725
+   }
+  }
+ },
+ "sources_sha256": {
+  "Sweep_r01.blend": "d45d1de4c708790e7fbb3b7daa240f239e9b6c568279d964df81236c0e64ac68",
+  "Sweep_Baked_r01.blend": "3604343fceeb7476e6f4f9f5145ac25b3c7e15238339f46e65e7bcfc42311a57",
+  "final_samples.json": "29a6a05e1629e3117f3b4a26705bb69f91a5343a4513e2b3b9bc14fc4ccd1fa1",
+  "sweep_keys.py": "2b0b878638f5a4dbe27714a5792fcf6789f6ce60cc841f2ad53d450bdf3ebf2d",
+  "sweep_pose.py": "7da1cee0004498039a98c03a5fa47cb0ac6f9ab356c770c2adb9ad74036b00af",
+  "build_sweep.py": "c90a51c63d5706bc12a975b1c281519b1f656ec44258d4e24d56d136f7aad112"
+ },
+ "notes": [
+  "Reference: refs/wendigo-sweep-360.mp4 (Higgsfield e5ee213d, approved 29.09). The reference spin lasts ~0.5 s; in game the turn is compressed to frames 11.5-24.5 so the circle closes at the impact tick 21.",
+  "Feet are planted (slip checked) on 0-11.5 and after landing; during the turn the right foot pivots under the pelvis and the left leg is lifted, so the whole pose turns about the Idle pelvis axis.",
+  "The windup twist (-22 deg) and the follow-through (+16 deg) are pelvis/chest yaw only - planted feet do not slide."
+ ]
+}

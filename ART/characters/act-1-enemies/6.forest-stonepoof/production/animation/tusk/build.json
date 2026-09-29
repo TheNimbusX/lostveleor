@@ -1,0 +1,721 @@
+{
+  "stage": "tusk_swipe_r01",
+  "owner_approved": false,
+  "fps": 30,
+  "frames": 26,
+  "frame_range": [
+    0,
+    26
+  ],
+  "contact_frame": 14,
+  "sim_contract": "Simulation.Stonehoof.cs: StonehoofTuskWindupTicks=14, StonehoofTuskRecoveryTicks=12",
+  "reference": "review/mobs-v2-concepts-2026-09-29/refs/stonehoof-tusk-swipe.mp4 (1.6-3.3 s)",
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend",
+  "source_sha256": {
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_r01.blend": "f10a5f0747be7adb1b598cdbbddd0bd080af3ddd49e9ef25f6340ebb5510960e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\windup_start\\Stonehoof_WindupStart_Baked_r01.blend": "34153a69ea6f37f7249127e931eb790ccf43264c9cbf9451b0208ec59668b5d2",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\charge_loop\\Stonehoof_ChargeLoop_Baked_r01.blend": "edf8bdb236f190f31c2886d218f68ea4ee3326b4a878af014d8b5e5901753367",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\brake\\Stonehoof_Brake_Baked_r01.blend": "df345221a035beeb4edf913799cb711c87d47ab93d9b20c8e05244407683d62a",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\collision\\Stonehoof_Collision_Baked_r01.blend": "9a9ce3640dc5d8549642b04e05bde8fc8ad9d4b2f237944e6e7a1433b1c1963e",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\death_r02\\Stonehoof_Death_Baked_r02.blend": "df1d2bac2a5b00b99dad22c170a7d486a2562464cfd73c767417f2852f1064bd",
+    "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\act-1-enemies\\6.forest-stonepoof\\production\\animation\\turn\\Stonehoof_Turn_Baked_r01.blend": "0061df4ef7a378429c1af2a3247376b0bcb74c403696cfc610f674ea867915f9"
+  },
+  "keys": [
+    [
+      0,
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "angles": {
+          "body": [
+            0,
+            0,
+            0
+          ],
+          "body_top0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            -0.0,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            0,
+            0,
+            0
+          ],
+          "head0": [
+            0,
+            0,
+            0
+          ],
+          "tail0": [
+            0,
+            0,
+            0.0
+          ]
+        }
+      }
+    ],
+    [
+      4,
+      {
+        "offset": [
+          -0.004,
+          0.028,
+          -0.012
+        ],
+        "angles": {
+          "body": [
+            -1.2,
+            -0.6,
+            0
+          ],
+          "body_top0": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            -0.35,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            0.3,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            -5,
+            0,
+            -7
+          ],
+          "head0": [
+            -7,
+            -2,
+            -6
+          ],
+          "tail0": [
+            4,
+            5,
+            2.5
+          ]
+        }
+      }
+    ],
+    [
+      8,
+      {
+        "offset": [
+          -0.018,
+          0.006,
+          -0.05
+        ],
+        "angles": {
+          "body": [
+            2.4,
+            -2.0,
+            -2.0
+          ],
+          "body_top0": [
+            2.2,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            0.77,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            -0.66,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            9,
+            0,
+            -13
+          ],
+          "head0": [
+            11,
+            8,
+            -16
+          ],
+          "tail0": [
+            -2,
+            -4,
+            -2.0
+          ]
+        }
+      }
+    ],
+    [
+      11,
+      {
+        "offset": [
+          -0.024,
+          -0.01,
+          -0.064
+        ],
+        "angles": {
+          "body": [
+            3.4,
+            -2.6,
+            -3.0
+          ],
+          "body_top0": [
+            3.0,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            1.0499999999999998,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            -0.8999999999999999,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            12,
+            1,
+            -16
+          ],
+          "head0": [
+            14,
+            12,
+            -21
+          ],
+          "tail0": [
+            -4,
+            -7,
+            -3.5
+          ]
+        }
+      }
+    ],
+    [
+      14,
+      {
+        "offset": [
+          0.008,
+          -0.058,
+          -0.04
+        ],
+        "angles": {
+          "body": [
+            -0.8,
+            1.0,
+            1.0
+          ],
+          "body_top0": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            -0.35,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            0.3,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            -7,
+            -1,
+            4
+          ],
+          "head0": [
+            -11,
+            -9,
+            5
+          ],
+          "tail0": [
+            2,
+            6,
+            3.0
+          ]
+        }
+      }
+    ],
+    [
+      17,
+      {
+        "offset": [
+          0.022,
+          -0.042,
+          -0.02
+        ],
+        "angles": {
+          "body": [
+            -1.6,
+            2.2,
+            4.0
+          ],
+          "body_top0": [
+            -1.8,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            -0.63,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            0.54,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            -15,
+            -3,
+            19
+          ],
+          "head0": [
+            -22,
+            -19,
+            21
+          ],
+          "tail0": [
+            5,
+            10,
+            5.0
+          ]
+        }
+      }
+    ],
+    [
+      20,
+      {
+        "offset": [
+          0.012,
+          -0.02,
+          -0.02
+        ],
+        "angles": {
+          "body": [
+            -0.9,
+            1.2,
+            2.2
+          ],
+          "body_top0": [
+            -0.9,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            -0.315,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            0.27,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            -8,
+            -2,
+            10
+          ],
+          "head0": [
+            -11,
+            -9,
+            11
+          ],
+          "tail0": [
+            2,
+            3,
+            1.5
+          ]
+        }
+      }
+    ],
+    [
+      23,
+      {
+        "offset": [
+          0.003,
+          -0.005,
+          -0.008
+        ],
+        "angles": {
+          "body": [
+            -0.25,
+            0.3,
+            0.5
+          ],
+          "body_top0": [
+            -0.25,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            -0.0875,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            0.075,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            -2,
+            0,
+            2.5
+          ],
+          "head0": [
+            -2.5,
+            -2.5,
+            2.5
+          ],
+          "tail0": [
+            -1,
+            -2,
+            -1.0
+          ]
+        }
+      }
+    ],
+    [
+      26,
+      {
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "angles": {
+          "body": [
+            0,
+            0,
+            0
+          ],
+          "body_top0": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "body_top1": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "body_bot": [
+            -0.0,
+            0.0,
+            0.0
+          ],
+          "pelvis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "neck0": [
+            0,
+            0,
+            0
+          ],
+          "head0": [
+            0,
+            0,
+            0
+          ],
+          "tail0": [
+            0,
+            0,
+            0.0
+          ]
+        }
+      }
+    ]
+  ],
+  "actions": {
+    "ARM_ForestStonehoof": "AN_Stonehoof_Tusk_Rig",
+    "CTRL_Hoof_front_left": "AN_Stonehoof_Tusk_CTRL_Hoof_front_left",
+    "CTRL_Hoof_front_right": "AN_Stonehoof_Tusk_CTRL_Hoof_front_right",
+    "CTRL_Hoof_hind_left": "AN_Stonehoof_Tusk_CTRL_Hoof_hind_left",
+    "CTRL_Hoof_hind_right": "AN_Stonehoof_Tusk_CTRL_Hoof_hind_right"
+  },
+  "crouch_m": {
+    "max": 0.025755266370879326
+  },
+  "raw_reach_deficit_max_m": 0.025755266370879326,
+  "max_ik_target_error_m": 4.4505418152044953e-05,
+  "max_ankle_world_slip_m": {
+    "front_left": 4.463939493427392e-05,
+    "front_right": 4.408434687549977e-05,
+    "hind_left": 3.865279641316433e-05,
+    "hind_right": 3.116355478281715e-05
+  },
+  "minimum_skin_z_m": -3.10922296193894e-05,
+  "stance_join_m": {
+    "f0": 2.4755668231600746e-07,
+    "f26": 2.4755668231600746e-07
+  },
+  "leading_tusk": {
+    "vertex": 516,
+    "positions": [
+      [
+        0.3093,
+        -0.8079,
+        0.58
+      ],
+      [
+        0.3011,
+        -0.8239,
+        0.5867
+      ],
+      [
+        0.277,
+        -0.858,
+        0.6346
+      ],
+      [
+        0.2392,
+        -0.8916,
+        0.6854
+      ],
+      [
+        0.1923,
+        -0.9137,
+        0.7085
+      ],
+      [
+        0.1444,
+        -0.9095,
+        0.6493
+      ],
+      [
+        0.102,
+        -0.8655,
+        0.5174
+      ],
+      [
+        0.0671,
+        -0.7846,
+        0.3714
+      ],
+      [
+        0.0357,
+        -0.6973,
+        0.2606
+      ],
+      [
+        0.0008,
+        -0.6427,
+        0.1985
+      ],
+      [
+        -0.0305,
+        -0.6216,
+        0.1709
+      ],
+      [
+        -0.0455,
+        -0.6218,
+        0.163
+      ],
+      [
+        0.0176,
+        -0.7409,
+        0.2573
+      ],
+      [
+        0.2071,
+        -0.9004,
+        0.5077
+      ],
+      [
+        0.4379,
+        -0.8902,
+        0.7552
+      ],
+      [
+        0.5965,
+        -0.7699,
+        0.8839
+      ],
+      [
+        0.677,
+        -0.658,
+        0.9452
+      ],
+      [
+        0.7011,
+        -0.6089,
+        0.9663
+      ],
+      [
+        0.6836,
+        -0.6337,
+        0.9356
+      ],
+      [
+        0.6317,
+        -0.695,
+        0.8589
+      ],
+      [
+        0.555,
+        -0.7544,
+        0.774
+      ],
+      [
+        0.4798,
+        -0.7901,
+        0.7095
+      ],
+      [
+        0.4174,
+        -0.8055,
+        0.6617
+      ],
+      [
+        0.3696,
+        -0.8099,
+        0.6247
+      ],
+      [
+        0.3358,
+        -0.8096,
+        0.5965
+      ],
+      [
+        0.3159,
+        -0.8084,
+        0.5798
+      ],
+      [
+        0.3093,
+        -0.8079,
+        0.58
+      ]
+    ],
+    "speed_m_s": [
+      0.0,
+      0.576,
+      1.904,
+      2.152,
+      1.703,
+      2.287,
+      4.361,
+      5.116,
+      4.336,
+      2.69,
+      1.405,
+      0.509,
+      4.936,
+      10.566,
+      10.156,
+      7.112,
+      4.526,
+      1.758,
+      1.294,
+      3.333,
+      3.868,
+      3.159,
+      2.403,
+      1.817,
+      1.32,
+      0.782,
+      0.197
+    ],
+    "fastest_frame": 13,
+    "apex_frame": 17,
+    "lowest_frame": 11,
+    "contact_frame": 14,
+    "contact_speed_share": 0.9611808946698813,
+    "contact_rise_m": 0.5922345221042633
+  },
+  "snout_yaw_deg": [
+    -0.0,
+    -0.81,
+    -3.02,
+    -6.33,
+    -10.51,
+    -15.65,
+    -22.99,
+    -35.92,
+    -58.69,
+    -81.52,
+    -93.06,
+    -95.87,
+    -58.02,
+    -10.81,
+    15.17,
+    33.47,
+    45.54,
+    50.01,
+    46.45,
+    37.99,
+    28.04,
+    19.47,
+    12.68,
+    7.37,
+    3.38,
+    0.86,
+    -0.0
+  ],
+  "snout_crosses_forward_frame": 13.416139771254114
+}

@@ -13,7 +13,8 @@ namespace Game.View
     /// слева круглый медальон с числом (тёмный диск, тонкое кремовое кольцо, мягкий тёплый свет за
     /// ним; огонь — едва заметной искрой: яркое красное кольцо «огня меньше» не прошло), справа
     /// подпись и одна строка прибавок через « · ». Круг — та же фигура, что портрет, способности и
-    /// значок уровня.
+    /// значок уровня. У нового уровня строки прибавок нет: с 29 сентября уровень статов не даёт
+    /// (Progression) — только число и подпись.
     ///
     /// Последовательность, секунды от начала:
     /// 0 — дым растекается от середины (своя UiInkGroup), плашка оседает из чуть большей;
@@ -83,6 +84,9 @@ namespace Game.View
         // Угасание под экраном выбора: доля 0…1, меньше нуля — не гаснет; с какой прозрачности и повторять ли.
         float _yield = -1f, _yieldFrom;
         bool _replay;
+        // Место подписи из префаба: без строки прибавок подпись опускается к середине плашки.
+        Vector2 _captionRest;
+        bool _captionKnown;
 
         struct Showing
         {
@@ -138,12 +142,8 @@ namespace Game.View
             Before = Mathf.Max(1, level - 1).ToString(),
             After = level.ToString(),
             Caption = "НОВЫЙ УРОВЕНЬ",
-            Lines = new[]
-            {
-                "<color=#FFD27A>+" + Progression.HealthPerLevel + "</color> здоровья",
-                "<color=#FFD27A>+" + Progression.DamagePerLevel + "</color> урона",
-                "<color=#FFD27A>+" + Progression.LavidiumPerLevel + "</color> лавидия",
-            },
+            // Строк про статы нет: уровень их больше не даёт (владелец, 29 сентября).
+            Lines = null,
             Hold = HoldTime,
             Level = true,
         };
@@ -217,7 +217,22 @@ namespace Game.View
             int count = GainLines.Length;
             for (int i = 0; i < count; i++)
                 if (GainLines[i] != null) GainLines[i].text = i < count - 1 ? LineAt(showing.Lines, i) : JoinFrom(showing.Lines, i);
+            PlaceCaption(!string.IsNullOrEmpty(JoinFrom(showing.Lines, 0)));
             Fit();
+        }
+
+        /// <summary>
+        /// Подпись над строкой прибавок; строки нет (новый уровень с 29 сентября статов не даёт) —
+        /// подпись встаёт посередине между своим местом и строкой, чтобы под ней не зияла пустота.
+        /// </summary>
+        void PlaceCaption(bool withLines)
+        {
+            if (Caption == null) return;
+            var rect = Caption.rectTransform;
+            if (!_captionKnown) { _captionRest = rect.anchoredPosition; _captionKnown = true; }
+            TMP_Text first = GainLines.Length > 0 ? GainLines[0] : null;
+            float drop = withLines || first == null ? 0f : (_captionRest.y - first.rectTransform.anchoredPosition.y) * .5f;
+            rect.anchoredPosition = _captionRest - new Vector2(0f, drop);
         }
 
         static string LineAt(string[] lines, int i) => lines != null && i < lines.Length && lines[i] != null ? lines[i] : string.Empty;

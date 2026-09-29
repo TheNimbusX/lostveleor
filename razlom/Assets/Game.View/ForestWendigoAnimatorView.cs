@@ -9,7 +9,18 @@ namespace Game.View
         private static readonly int Idle = Animator.StringToHash("Base Layer.Idle"), Walk = Animator.StringToHash("Base Layer.Walk"),
             Claw = Animator.StringToHash("Base Layer.Claw"), Leap = Animator.StringToHash("Base Layer.Leap"),
             Hit = Animator.StringToHash("Base Layer.Hit"), Death = Animator.StringToHash("Base Layer.Death"),
-            Howl = Animator.StringToHash("Base Layer.Howl");
+            Howl = Animator.StringToHash("Base Layer.Howl"), Sweep = Animator.StringToHash("Base Layer.Sweep");
+
+        // КРУГ КОГТЕЙ (reference_match_sweep, реф wendigo-sweep-360.mp4). Кадр
+        // клипа — тик Sim: 39 кадров, удар на 21-м. Замах и восстановление Sim
+        // (21 и 18 тиков) ложатся на клип один к одному; фаза держит контакт
+        // на тике удара, даже если числа Sim поменяются.
+        private const float SweepContactPhase = 21f / 39f;
+
+        // Пока клипа нет в контроллере: замах — кадры когтя до верха, на ударе
+        // всё тело делает оборот влево (как клип: правый коготь ведёт через
+        // перёд) и опадает. Оборот идёт за SweepSpinTicks до удара.
+        private const float SweepSpinTicks = 9f;
 
         // «ВОЙ ЧАЩИ» ДО СВОЕГО КЛИПА. Пока Howl не нарисован (сборщик пропускает
         // состояние), вой читается временной позой из кадров когтя: за замах
@@ -25,31 +36,33 @@ namespace Game.View
         private Animator _animator;
         private TickDriver _driver;
         private int _entity, _state, _health;
-        private bool _dead, _hasHowl;
-        private float _deathClock, _idleClock, _walkPhase, _hitClock, _rise;
+        private bool _dead, _hasHowl, _hasSweep;
+        private float _deathClock, _idleClock, _walkPhase, _hitClock, _rise, _spin;
         private Transform _body;
         private Vector3 _bodyPosition, _bodyScale;
+        private Quaternion _bodyRotation;
         private void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
             // Подъём временной позы двигает тело под корнем: корень ведёт ArenaView.
             _body = _animator.transform != transform ? _animator.transform : null;
-            if (_body != null) { _bodyPosition = _body.localPosition; _bodyScale = _body.localScale; }
+            if (_body != null) { _bodyPosition = _body.localPosition; _bodyScale = _body.localScale; _bodyRotation = _body.localRotation; }
         }
         public void Bind(TickDriver driver, int entity)
         {
             _driver = driver; _entity = entity; _state = Idle; _dead = false;
             _deathClock = _idleClock = _walkPhase = 0; _hitClock = 1f; _health = driver.Sim.Entities.Health[entity];
-            _rise = 0; ApplyRise();
+            _rise = 0; _spin = 0; ApplyRise();
             _animator.Rebind(); _animator.SetFloat("IdlePhase", 0); _animator.Play(Idle, 0, 0); _animator.Update(0);
             _hasHowl = _animator.HasState(0, Howl);
+            _hasSweep = _animator.HasState(0, Sweep);
         }
         private void Update()
         {
             if (_driver?.Sim == null || _entity >= _driver.Sim.Entities.Count) return;
             if (_driver.GameplayPaused) { _animator.speed = 0; return; }
             _animator.speed = 1; var sim = _driver.Sim; float dt = Time.deltaTime;
-            float rise = 0f;
+            float rise = 0f, spin = 0f;
             if (!sim.Entities.Alive[_entity]) PlayDeath();
             if (_dead)
             {
@@ -65,6 +78,7 @@ namespace Game.View
                 {
                     float time = Mathf.Max(0, sim.Tick - 1 + _driver.Alpha - a.StartTick);
                     if (a.Kind == WendigoAction.Howl) rise = SampleHowl(a, time);
+                    else if (a.Kind == WendigoAction.Sweep) spin = SampleSweep(a, time);
                     else
                     {
                         float frame;
@@ -88,7 +102,31 @@ namespace Game.View
             // Сглаживание: отменённый оглушением вой опадает, а не выпрыгивает из позы.
             float settled = Mathf.Lerp(_rise, rise, 1f - Mathf.Exp(-12f * dt));
             if (rise == 0f && settled < .001f) settled = 0f;
-            if (settled != _rise) { _rise = settled; ApplyRise(); }
+            // Оборот временной позы — без сглаживания: он весь внутри действия и
+            // кончается ровно на 360°, а снятый оглушением круг сразу стоит лицом по Sim.
+            if (settled != _rise || spin != _spin) { _rise = settled; _spin = spin; ApplyRise(); }
+        }
+
+        /// <summary>
+        /// Круг когтей: свой клип фазой (контакт — кадр 21 на тике удара), иначе
+        /// временная поза. Возвращает угол оборота временной позы, градусы.
+        /// </summary>
+        private float SampleSweep(WendigoActionState a, float time)
+        {
+            float windup = Mathf.Max(1, a.ImpactTick - a.StartTick), recovery = Mathf.Max(1, a.EndTick - a.ImpactTick);
+            float after = Mathf.Clamp01((time - windup) / recovery);
+            if (_hasSweep)
+            {
+                Sample(Sweep, time < windup ? Mathf.Lerp(0, SweepContactPhase, time / windup)
+                    : Mathf.Lerp(SweepContactPhase, 1, after), .05f);
+                return 0f;
+            }
+            // Запасная поза: замах — кадры когтя 19 -> 44 (верх), оборот к удару, опадание.
+            float frame = time < windup ? Mathf.Lerp(19f, 44f, Mathf.SmoothStep(0, 1, time / windup))
+                : Mathf.Lerp(44f, 19f, Mathf.SmoothStep(0, 1, after));
+            Sample(Claw, frame / 96f, .06f);
+            float turn = Mathf.Clamp01((time - (windup - SweepSpinTicks)) / SweepSpinTicks);
+            return 360f * Mathf.SmoothStep(0, 1, turn);
         }
 
         /// <summary>Вой: свой клип, если собран, иначе временная поза. Возвращает подъём 0..1.</summary>
@@ -127,12 +165,15 @@ namespace Game.View
             if (_body == null) return;
             _body.localPosition = _bodyPosition + Vector3.up * (HowlRiseMetres * _rise);
             _body.localScale = _bodyScale * (1f + HowlSwell * _rise);
+            // Поворот влево — против часовой сверху: в осях Unity это минус по Y.
+            _body.localRotation = Quaternion.AngleAxis(-_spin, Vector3.up) * _bodyRotation;
         }
 
         private void Sample(int state, float phase, float blend)
         {
             string parameter = state == Idle ? "IdlePhase" : state == Walk ? "WalkPhase" : state == Claw ? "ClawPhase"
-                : state == Leap ? "LeapPhase" : state == Hit ? "HitPhase" : state == Howl ? "HowlPhase" : "DeathPhase";
+                : state == Leap ? "LeapPhase" : state == Hit ? "HitPhase" : state == Howl ? "HowlPhase"
+                : state == Sweep ? "SweepPhase" : "DeathPhase";
             _animator.SetFloat(parameter, phase);
             if (_state == state) return;
             _state = state; _animator.CrossFadeInFixedTime(state, blend, 0, 0);

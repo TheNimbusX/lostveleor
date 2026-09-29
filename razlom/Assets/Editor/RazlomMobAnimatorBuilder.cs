@@ -82,9 +82,16 @@ public static class RazlomMobAnimatorBuilder
     // Реакция ~1.1 с ускоряется до ~0.44 с: справочник анимаций требует от
     // попадания 0.4 секунды — достаточно, чтобы прочитать, и мало, чтобы
     // следующее тоже прочиталось. Реакция Корнеполза нарисована сразу под
-    // эту длину (0.33 с, production/hit_build.json) и идёт своим темпом.
+    // эту длину (0.33 с, 11 кадров; v2 29.09 — production/rootswarm_v2_build.json)
+    // и идёт своим темпом.
     private const float HitSpeed = 2.5f;
     private const float RootSwarmHitSpeed = 1f;
+
+    // Смерть Корнеполза v2 нарисована с запасом кадров под ×2: 67 кадров, тело
+    // лежит неподвижно с кадра 50 — на экране 0.83 с до покоя. Та же пара чисел
+    // записана в Resources/Combat/EnemyPresentation.asset (RootSwarm: ClipSeconds
+    // 66/30, RestNormalized 50/66, StateSpeed 2); меняешь одно — меняй и другое.
+    private const float RootSwarmDeathSpeed = 2f;
 
     // СКОРОСТИ УДАРА БОЛЬШЕ НЕТ. Здесь стояло 1.6, а представление ускоряло
     // клип ещё раз — вместе ×2.3–2.7, и контакт всё равно съезжал. Теперь
@@ -351,7 +358,7 @@ public static class RazlomMobAnimatorBuilder
         {
             AnimatorState deathState = machine.AddState(DeathState);
             deathState.motion = death;
-            deathState.speed = mob == "Forest_RootSwarm" ? 2f : DeathSpeed;
+            deathState.speed = mob == "Forest_RootSwarm" ? RootSwarmDeathSpeed : DeathSpeed;
             AnimatorStateTransition enter = machine.AddAnyStateTransition(deathState);
             enter.AddCondition(AnimatorConditionMode.If, 0f, Death);
             enter.hasExitTime = false;

@@ -164,7 +164,8 @@ namespace Game.Sim
 
             Mode = GameMode.Camp;
             CampSim = new Simulation(sessionSeed, simCapacity);
-            CampSim.SetPlayerLevel(Camp.Level);
+            // Герой любого уровня — эталонный (владелец, 29 сентября): уровень статов не даёт.
+            CampSim.ApplyHeroBaseline();
             CampSim.SetupCamp(FixVec2.Zero, null);
             BindCampEquipment();
         }
@@ -249,20 +250,24 @@ namespace Game.Sim
 
             // Опыт уходит в лагерь каждый тик: уровень живёт в Camp и потому
             // переживает и уход с Полигона, и пересборку лагерной симуляции.
+            // Симуляциям повышение ничего не несёт: статов уровень не даёт.
             Simulation stepped = Ground != null ? Ground.Sim : CampSim;
-            if (Camp.GainExperience(stepped.TakePendingXp()) > 0) SyncPlayerLevel();
+            Camp.GainExperience(stepped.TakePendingXp());
         }
 
         /// <summary>
-        /// Раздаёт уровень лагеря всем живым симуляциям. Зовётся при повышении
-        /// посреди боя и после ручной смены уровня разработчиком: статы героя
-        /// обязаны вырасти сразу, а не со следующей расстановки.
+        /// Подтверждает всем живым симуляциям базу эталонного героя. До 29
+        /// сентября раздавал уровень лагеря и статы героя; теперь уровень
+        /// статов не даёт (Progression), и вызов после ручной смены уровня
+        /// разработчиком или в стенде баланса ничего не меняет — база уже стоит
+        /// с создания симуляции, повтор её не трогает. Оставлен ради этих
+        /// вызовов: уровень в меню разработчика должен оставаться безопасным.
         /// </summary>
         public void SyncPlayerLevel()
         {
-            CampSim.SetPlayerLevel(Camp.Level);
-            Ground?.Sim.SetPlayerLevel(Camp.Level);
-            Run?.Sim.SetPlayerLevel(Camp.Level);
+            CampSim.ApplyHeroBaseline();
+            Ground?.Sim.ApplyHeroBaseline();
+            Run?.Sim.ApplyHeroBaseline();
         }
 
         /// <summary>
@@ -277,7 +282,7 @@ namespace Game.Sim
             if (!Camp.Has(CampService.ProvingGround)) return;
 
             Ground = new ProvingGround();
-            Ground.Sim.SetPlayerLevel(Camp.Level);
+            Ground.Sim.ApplyHeroBaseline();
             Ground.Setup(dummyHealth, Fix64.Zero, Fix64.Zero);
             Camp.Worn.Bind(Ground.Sim.Entities.Stats[Simulation.PlayerId]);
             Ground.Sim.RefreshPlayerStats(true);
@@ -398,8 +403,8 @@ namespace Game.Sim
             IsDeveloperRun = developer;
 
             var sim = new Simulation(seed, _simCapacity);
-            // Уровень ДО расстановки: ConfigurePlayer вешает его прибавки.
-            sim.SetPlayerLevel(Camp.Level);
+            // База героя ДО расстановки: ConfigurePlayer вешает её прибавки.
+            sim.ApplyHeroBaseline();
 
             // Привязка ДО StartRun: расстановка первого Разлома уже позовёт
             // Reapply, и снаряжению к этому моменту нужен лист.
@@ -452,8 +457,9 @@ namespace Game.Sim
             // Опыт забега уходит в лагерь сразу, а не на экране итогов: смерть
             // не должна отнимать уровень. Разработческий забег опыта не даёт —
             // по тому же правилу, по которому его добыча не переезжает в сумку.
+            // Повышение посреди боя статов и лечения не даёт (владелец, 29 сентября).
             int xp = Run.Sim.TakePendingXp();
-            if (!IsDeveloperRun && Camp.GainExperience(xp) > 0) SyncPlayerLevel();
+            if (!IsDeveloperRun) Camp.GainExperience(xp);
 
             if (Run.Phase == RunPhase.Ended) FinishRun();
         }

@@ -1,0 +1,45 @@
+{
+  "section": "body-sign",
+  "gate": "G3",
+  "concept": "Shape of Dreams-style on-body attack sign, no ground mark",
+  "model": "gpt_image_2_5 (flare), quality high, 2k, 16:9, 2.75 credits each",
+  "bases": {
+    "guardian_windup": "artifacts/mobsv2-bases/guardian/shot_01_t2.50s.png, crop (520,150)-(1480,690), upscaled to 1920x1080",
+    "guardian_impact": "artifacts/mobsv2-bases/guardian/shot_03_t5.00s.png, crop (560,180)-(1520,720), upscaled to 1920x1080",
+    "swarm": "artifacts/mobsv2-bases/wendigo/shot_00_t1.50s.png, crop (620,300)-(1420,750), upscaled to 1920x1080. The swarm base run has no crawlers (no encounter, hero in the camp stone circle), so this uses the wendigo arena frame, where root crawlers are next to the hero. The red ground cone and the red bar near the Wendigo were removed in the prompt."
+  },
+  "items": [
+    {
+      "file": "01-a-claw-ember-windup.png",
+      "variant": "A windup",
+      "prompt_summary": "Upper-left guardian in the windup: a small red ember point glows mid-glow on its highest raised claw, with a warm halo and a few sparks. No ground mark.",
+      "job_id": "cfe606c5-34ee-482a-8afc-5610ab08a4bb"
+    },
+    {
+      "file": "02-a-three-claw-streaks-impact.png",
+      "variant": "A impact",
+      "prompt_summary": "The guardian nearest the hero hits him: three short curved claw streaks in red-orange along the swing, an ember flare at the claw tip, and a puff of bark and leaves on contact.",
+      "job_id": "8c016194-e56b-415f-b741-f8b4688126fb"
+    },
+    {
+      "file": "03-b-eye-point-red-outline-windup.png",
+      "variant": "B windup",
+      "prompt_summary": "Same windup: a red point glows at the eyes/head, and the thin outline flares red around the whole silhouette. The other guardian keeps its normal outline.",
+      "job_id": "0eaeea2f-f70b-4d4e-bdd4-fd6a951ddb7f"
+    },
+    {
+      "file": "04-b-single-wide-arc-impact.png",
+      "variant": "B impact",
+      "prompt_summary": "One wide crescent arc (about 120 degrees) in red-orange sweeps from the guardian's claw across the hero. The eye point and red outline stay on, with a small bark and dust puff.",
+      "job_id": "85ea546e-3235-4e00-828e-7e24b849656a"
+    },
+    {
+      "file": "05-swarm-crawler-bite-sign.png",
+      "variant": "swarm bite (sign A on a root crawler)",
+      "prompt_summary": "The ground cone and the Wendigo bar are removed. A red ember point sits on the head of the root crawler right of the hero, with a slight red outline flare. Two small red-orange bite crescents close on the hero's hip, with a puff of splinters.",
+      "job_id": "270d71c4-fde5-4a00-8926-05b8a5da808b",
+      "note": "Second try. The first try (job c16e4555-5585-438b-a611-a8f56cd9bfc7) put the ember on the hero's hand instead of the crawler, so it was discarded."
+    }
+  ],
+  "credits_spent": 16.5
+}

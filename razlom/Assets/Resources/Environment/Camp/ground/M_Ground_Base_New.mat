@@ -132,6 +132,7 @@ Material:
     - _GroundGlowFeather: 0.005
     - _HitFlash: 0
     - _IsPath: 0
+    - _IsRiverBank: 0
     - _IsSurface: 0
     - _LightFeather: 0.2
     - _LightThreshold: 0.65

@@ -5,47 +5,58 @@ namespace Game.Sim
     ///
     /// Опыт здесь только копится: уровень живёт в лагере, а симуляция
     /// одноразовая — забег умирает вместе с ней. GameSession каждый тик
-    /// забирает накопленное через TakePendingXp и отдаёт в Camp.
+    /// забирает накопленное через TakePendingXp и отдаёт в Camp. Сам уровень
+    /// симуляция не знает: с 29 сентября он статов не даёт (Progression).
     /// </summary>
     public sealed partial class Simulation
     {
         private int _pendingXp;
-        private int _playerLevel = 1;
+        private bool _heroBaseline;
 
-        /// <summary>Уровень героя, от которого считаются прибавки к статам. Приходит из лагеря.</summary>
-        public int PlayerLevel => _playerLevel;
+        /// <summary>Стоит ли на герое база эталонного героя (<see cref="ApplyHeroBaseline"/>).</summary>
+        public bool HasHeroBaseline => _heroBaseline;
 
         /// <summary>
-        /// Ставит уровень героя. Решение владельца от 15 сентября: уровень даёт
-        /// базовые статы, на первом уровне прибавка нулевая.
+        /// Ставит герою базу эталонного героя — прежний 5-й уровень лагеря:
+        /// +120 здоровья, +20 урона, +40 лавидия (Progression.HeroBaseline*).
+        /// Решение владельца от 29 сентября: уровень статов не даёт, герой
+        /// одинаков на 1-м и на 20-м уровне.
         ///
-        /// УРОВЕНЬ ХРАНИТСЯ В СИМУЛЯЦИИ, потому что Spawn стирает модификаторы:
-        /// ConfigurePlayer вешает прибавки заново при каждой расстановке.
+        /// Зовёт GameSession для каждой своей симуляции — лагеря, Полигона,
+        /// Разлома, стенда мобов. Голая симуляция тестов остаётся на базе
+        /// 34 урона и 200 лавидия: на её числах стоят сотни проверок боя.
         ///
-        /// Повышение не лечит до полного, но его прибавка к здоровью приходит
-        /// и в текущее (+30 за уровень): здоровье теперь переносится между
-        /// аренами, и уровень — один из трёх способов его вернуть, наравне с
-        /// зельями и наградами. Лавидий по-прежнему только растит потолок.
+        /// ФЛАГ ХРАНИТСЯ В СИМУЛЯЦИИ, потому что Spawn стирает модификаторы:
+        /// ConfigurePlayer вешает базу заново при каждой расстановке.
+        ///
+        /// Повтор ничего не меняет — лечения на повышении уровня больше нет.
+        /// Первая постановка на живого героя доводит и текущее здоровье на
+        /// прибавку, как было с уровнем: потолок и полоса растут вместе.
         /// </summary>
-        public void SetPlayerLevel(int level)
+        public void ApplyHeroBaseline()
         {
-            _playerLevel = level < 1 ? 1 : level;
+            if (_heroBaseline) return;
+            _heroBaseline = true;
             if (Entities.Count <= PlayerId) return;
             int before = Entities.MaxHealth[PlayerId];
-            ApplyLevelModifiers(Entities.Stats[PlayerId]);
+            ApplyHeroBaselineModifiers(Entities.Stats[PlayerId]);
             RefreshPlayerStats(heal: false);
             int gained = Entities.MaxHealth[PlayerId] - before;
             if (gained > 0 && Entities.Alive[PlayerId]) Entities.Health[PlayerId] += gained;
         }
 
-        private void ApplyLevelModifiers(StatSheet sheet)
+        /// <summary>
+        /// Вешает на лист героя прибавки базы. Источник — прежний
+        /// ModifierSource.Level: числа и порядок те же, что у 5-го уровня, так
+        /// что герой на базе не отличается от прежнего героя 5-го уровня.
+        /// </summary>
+        private void ApplyHeroBaselineModifiers(StatSheet sheet)
         {
             sheet.RemoveSource(ModifierSource.Level, 0);
-            int bonus = _playerLevel - 1;
-            if (bonus <= 0) return;
-            sheet.Add(StatModifier.Flat(StatType.MaxHealth, Fix64.FromInt(Progression.HealthPerLevel * bonus), ModifierSource.Level, 0));
-            sheet.Add(StatModifier.Flat(StatType.Damage, Fix64.FromInt(Progression.DamagePerLevel * bonus), ModifierSource.Level, 0));
-            sheet.Add(StatModifier.Flat(StatType.MaxLavidium, Fix64.FromInt(Progression.LavidiumPerLevel * bonus), ModifierSource.Level, 0));
+            if (!_heroBaseline) return;
+            sheet.Add(StatModifier.Flat(StatType.MaxHealth, Fix64.FromInt(Progression.HeroBaselineHealth), ModifierSource.Level, 0));
+            sheet.Add(StatModifier.Flat(StatType.Damage, Fix64.FromInt(Progression.HeroBaselineDamage), ModifierSource.Level, 0));
+            sheet.Add(StatModifier.Flat(StatType.MaxLavidium, Fix64.FromInt(Progression.HeroBaselineLavidium), ModifierSource.Level, 0));
         }
 
         /// <summary>Опыт, набранный с прошлого забора и ещё не отданный в лагерь.</summary>
@@ -105,8 +116,10 @@ namespace Game.Sim
         private void HashProgression(ref ulong hash)
         {
             Hashing.Mix(ref hash, _pendingXp);
-            // Первый уровень не подмешивается: хеши симуляций без лагеря не меняются.
-            if (_playerLevel > 1) Hashing.Mix(ref hash, _playerLevel);
+            // Уровня лагеря в хеше нет: статов он не даёт. База героя подмешивается,
+            // только если стоит (хеши голых симуляций тестов не меняются), и тем же
+            // числом, что прежний 5-й уровень: симуляция на базе хешируется как он.
+            if (_heroBaseline) Hashing.Mix(ref hash, Progression.ReferenceHeroLevel);
         }
     }
 }

@@ -47,12 +47,17 @@ Shader "Razlom/Texture Toon"
         _BlazeGlow ("Жёлтое свечение усиления", Range(0,1)) = 0
         _DeathFade ("Death Fade", Range(0,1)) = 0
 
+        // РАСПАД КУСКАМИ (поток I, 29.09): см. шапку RazlomDissolve.hlsl. В бою
+        // ArenaView пишет смертному телу свои цвет излома, ширину кромки и
+        // частоту кусков через MaterialPropertyBlock; значения ниже — для
+        // стенда и тел без профиля.
         [Header(Dissolve)]
-        _DissolveEdgeColor ("Цвет кромки растворения", Color) = (1,0.42,0.12,1)
-        _DissolveEdgeGlow ("Яркость кромки", Range(0,8)) = 2.6
-        _DissolveEdgeWidth ("Ширина кромки", Range(0.01,0.5)) = 0.14
-        _DissolveScale ("Частота шума", Range(2,40)) = 13
-        _DissolveVoronoi ("Облака (0) или Вороной (1)", Range(0,1)) = 1
+        _DissolveEdgeColor ("Цвет излома (сердцевина материала)", Color) = (1,0.42,0.12,1)
+        _DissolveEdgeGlow ("Угли на изломе", Range(0,8)) = 2.6
+        _DissolveEdgeWidth ("Ширина кромки излома", Range(0.01,0.5)) = 0.14
+        _DissolveScale ("Кусков на объектную единицу", Range(2,40)) = 13
+        // Не читается с 29.09: маска кусков заменила смесь облаков и Вороного.
+        _DissolveVoronoi ("(не используется)", Range(0,1)) = 1
         // СВИП ПО ВЫСОТЕ ВЫКЛЮЧЕН, И ЭТО НЕ ЗАБЫТАЯ НАСТРОЙКА.
         //
         // Он стоял на 0.35 — тело уходило снизу вверх, «как зола». На экране
@@ -336,12 +341,14 @@ Shader "Razlom/Texture Toon"
                 color += half3(1.0h, 0.78h, 0.08h) * _BlazeGlow * (0.16h + rimRaw * rimRaw * 0.65h);
                 color = lerp(color, half3(1.0h, 0.88h, 0.58h), saturate(_HitFlash));
 
-                // Угли кладутся ПОСЛЕ вспышки попадания и до тумана. После —
+                // Излом кладётся ПОСЛЕ вспышки попадания и до тумана. После —
                 // потому что вспышка это lerp в белое: положи кромку раньше, и
                 // добивающий удар её съест ровно в тот кадр, когда начинается
-                // растворение. До тумана — потому что дальние трупы должны
+                // распад. До тумана — потому что дальние трупы должны
                 // тухнуть вместе со сценой, а не гореть сквозь дымку.
-                color += RazlomDissolveEmber() * dissolveFront;
+                // Излом — цвет сердцевины материала под светом тела плюс угли
+                // (RazlomDissolve.hlsl): трещина читается корой, а не шумом.
+                color = RazlomDissolveBreak(color, tone + ambient * ambientAmount, dissolveFront);
                 // ===== FINAL CAST SHADOW =====
 
                 half castShadowMask =

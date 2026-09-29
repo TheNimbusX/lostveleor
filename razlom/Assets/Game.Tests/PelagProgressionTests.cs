@@ -6,11 +6,12 @@ using NUnit.Framework;
 namespace Game.Tests
 {
     /// <summary>
-    /// Основа постоянной прокачки: лавидий, опыт и уровень, дающий статы.
+    /// Основа постоянной прокачки: лавидий, опыт, уровень и база героя.
     ///
-    /// Числа ресурса, стоимостей и прибавок за уровень — решения владельца
-    /// (13 и 15 сентября), поэтому проверяются точно. Награды за убийство и
-    /// кривая уровня — заглушки баланса, и тесты держат только их правила.
+    /// Числа ресурса и стоимостей — решения владельца (13 и 15 сентября),
+    /// база героя — решение от 29 сентября (уровень статов не даёт, герой —
+    /// прежний 5-й уровень), поэтому проверяются точно. Награды за убийство
+    /// и кривая уровня — заглушки баланса, и тесты держат только их правила.
     /// </summary>
     public class PelagProgressionTests
     {
@@ -110,67 +111,173 @@ namespace Game.Tests
             Assert.AreEqual(10, camp.Experience);
         }
 
-        // ---- статы уровня ----
+        // ---- база героя вместо статов за уровень ----
 
-        /// <summary>Решение владельца: +30 жизни, +5 урона, +10 лавидия за уровень.</summary>
+        /// <summary>
+        /// Решение владельца от 29 сентября: герой всегда — прежний 5-й уровень,
+        /// то есть четыре прежних прибавки уровня: +120 жизни, +20 урона, +40 лавидия.
+        /// </summary>
         [Test]
-        public void EachLevelAddsHealthDamageAndLavidium()
+        public void HeroBaselineAddsTheFormerFifthLevel()
         {
+            Assert.AreEqual(5, Progression.ReferenceHeroLevel);
+            Assert.AreEqual(120, Progression.HeroBaselineHealth);
+            Assert.AreEqual(20, Progression.HeroBaselineDamage);
+            Assert.AreEqual(40, Progression.HeroBaselineLavidium);
+            Assert.AreEqual(270, Progression.ReferenceHeroHealth);
+            Assert.AreEqual(54, Progression.ReferenceHeroDamage);
+
             var sim = Arena(AbilityDefinition.Whirlwind());
+            Assert.IsFalse(sim.HasHeroBaseline, "голая симуляция тестов — без базы героя");
             int health = sim.Entities.MaxHealth[Player];
             int damage = sim.Entities.Damage[Player];
             int lavidium = sim.Entities.MaxLavidium[Player];
 
-            sim.SetPlayerLevel(3);
+            sim.ApplyHeroBaseline();
 
-            Assert.AreEqual(health + 60, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(damage + 10, sim.Entities.Damage[Player]);
-            Assert.AreEqual(lavidium + 20, sim.Entities.MaxLavidium[Player]);
+            Assert.IsTrue(sim.HasHeroBaseline);
+            Assert.AreEqual(health + 120, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(damage + 20, sim.Entities.Damage[Player]);
+            Assert.AreEqual(Progression.ReferenceHeroDamage, sim.Entities.Damage[Player]);
+            Assert.AreEqual(lavidium + 40, sim.Entities.MaxLavidium[Player]);
         }
 
         /// <summary>
-        /// Здоровье переносится между аренами, поэтому повышение уровня — один
-        /// из способов его вернуть: прибавка к максимуму приходит и в текущее,
-        /// но до полного не лечит. Повтор того же уровня ничего не меняет.
+        /// Первая постановка базы на живого героя доводит и текущее здоровье,
+        /// повтор ничего не меняет — лечения «за уровень» больше нет. Расстановка
+        /// стирает модификаторы, и база обязана вернуться вместе с героем.
         /// </summary>
         [Test]
-        public void LevelUpAddsItsHealthToCurrentWithoutFullHeal()
+        public void HeroBaselineIsAppliedOnceAndSurvivesRespawn()
         {
             var sim = Arena(AbilityDefinition.Whirlwind());
             int max = sim.Entities.MaxHealth[Player];
             sim.Entities.Health[Player] = max - 500;
 
-            sim.SetPlayerLevel(3);
-            Assert.AreEqual(max + 60, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "+30 за уровень — и в текущее");
+            sim.ApplyHeroBaseline();
+            Assert.AreEqual(max + 120, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(max - 500 + 120, sim.Entities.Health[Player], "прибавка к потолку — и в текущее");
 
-            sim.SetPlayerLevel(3);
-            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "тот же уровень — без лечения");
+            ulong hash = sim.StateHash();
+            sim.ApplyHeroBaseline();
+            Assert.AreEqual(max - 500 + 120, sim.Entities.Health[Player], "повтор — без лечения");
+            Assert.AreEqual(max + 120, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(hash, sim.StateHash(), "повтор не меняет состояние");
 
-            sim.SetPlayerLevel(2);
-            Assert.AreEqual(max + 30, sim.Entities.MaxHealth[Player]);
-            Assert.AreEqual(max - 500 + 60, sim.Entities.Health[Player], "понижение не отнимает здоровье сверх потолка");
+            sim.SetupTestArena(0);
+            Assert.AreEqual(max + 120, sim.Entities.MaxHealth[Player], "расстановка потеряла базу героя");
+            Assert.AreEqual(max + 120, sim.Entities.Health[Player]);
+            Assert.AreEqual(Progression.ReferenceHeroDamage, sim.Entities.Damage[Player]);
         }
 
-        [Test]
-        public void SessionGivesTheCampLevelToTheCampAndTheRift()
+        /// <summary>
+        /// Главное правило 29 сентября: статы героя не зависят от уровня лагеря.
+        /// Герой 1-го и 20-го уровня в Разломе леса одинаков — 270 здоровья и 54
+        /// урона, как прежний 5-й уровень, — и в лагере тоже.
+        /// </summary>
+        [TestCase(1)]
+        [TestCase(20)]
+        public void HeroStatsIndependentOfCampLevel(int level)
         {
-            var camp = new Camp(PrototypeContent.Items(), act: 3);
-            camp.DeveloperSetLevel(3);
-            var session = new GameSession(7, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
+            var location = ArenaEncounterTests.ForestLocation();
+            var camp = PrototypeContent.NewCamp();
+            camp.DeveloperSetLevel(level);
+            var session = new GameSession(7, camp, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
+            Assert.AreEqual(level, session.Camp.Level);
 
-            Assert.AreEqual(220, session.CampSim.Entities.MaxLavidium[Player], "лагерь без прибавок уровня");
-
-            camp.GainExperience(camp.ExperienceToNextLevel);
-            session.SyncPlayerLevel();
-            Assert.AreEqual(230, session.CampSim.Entities.MaxLavidium[Player], "повышение не дошло до лагеря");
+            Assert.IsTrue(session.CampSim.HasHeroBaseline, "лагерь без базы героя");
+            Assert.AreEqual(240, session.CampSim.Entities.MaxLavidium[Player], "лагерь: 200 + 40 базы героя");
 
             session.EnterRift();
-            Assert.AreEqual(4, session.Run.Sim.PlayerLevel);
-            Assert.AreEqual(230, session.Run.Sim.Entities.MaxLavidium[Player], "Разлом без прибавок уровня");
+            var sim = session.Run.Sim;
+            Assert.IsTrue(sim.HasHeroBaseline, "Разлом без базы героя");
+            Assert.AreEqual(Progression.ReferenceHeroHealth, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(270, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(270, sim.Entities.Health[Player], "в Разлом входят с полным здоровьем");
+            Assert.AreEqual(Progression.ReferenceHeroDamage, sim.Entities.Damage[Player]);
+            Assert.AreEqual(54, sim.Entities.Damage[Player]);
+            Assert.AreEqual(240, sim.Entities.MaxLavidium[Player]);
+        }
+
+        /// <summary>
+        /// Уровень лагеря не входит в хеш симуляции: лагерь и Разлом героя 1-го и
+        /// 20-го уровня с одним сидом — одно и то же состояние.
+        /// </summary>
+        [Test]
+        public void CampLevelIsNotInTheSimulationHash()
+        {
+            var location = ArenaEncounterTests.ForestLocation();
+            var low = PrototypeContent.NewCamp();
+            var high = PrototypeContent.NewCamp();
+            high.DeveloperSetLevel(20);
+            var lowSession = new GameSession(7, low, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
+            var highSession = new GameSession(7, high, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
+            Assert.AreEqual(lowSession.CampSim.StateHash(), highSession.CampSim.StateHash(), "лагерь");
+
+            lowSession.EnterRift();
+            highSession.EnterRift();
+            for (int tick = 0; tick < 60; tick++)
+            {
+                lowSession.Step(InputFrame.Empty);
+                highSession.Step(InputFrame.Empty);
+            }
+            Assert.AreEqual(lowSession.Run.Sim.StateHash(), highSession.Run.Sim.StateHash(), "Разлом");
+        }
+
+        /// <summary>
+        /// Повышение посреди боя ничего не даёт герою: ни потолка, ни лечения.
+        /// Путь кнопок разработчика — ручной уровень и SyncPlayerLevel — тоже
+        /// только меняет число уровня.
+        /// </summary>
+        [Test]
+        public void LevelUpMidRunChangesNeitherStatsNorHealth()
+        {
+            var location = ArenaEncounterTests.ForestLocation();
+            var camp = PrototypeContent.NewCamp();
+            var session = new GameSession(7, camp, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
+            session.EnterRift();
+            var sim = session.Run.Sim;
+            sim.Entities.Health[Player] = 100;
+            ulong hash = sim.StateHash();
+
+            Assert.AreEqual(1, camp.GainExperience(camp.ExperienceToNextLevel));
+            session.SyncPlayerLevel();
+            camp.DeveloperGrantLevel();
+            session.SyncPlayerLevel();
+            camp.DeveloperSetLevel(20);
+            session.SyncPlayerLevel();
+
+            Assert.AreEqual(20, camp.Level);
+            Assert.AreEqual(100, sim.Entities.Health[Player], "повышение больше не лечит");
+            Assert.AreEqual(270, sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(54, sim.Entities.Damage[Player]);
+            Assert.AreEqual(240, session.CampSim.Entities.MaxLavidium[Player]);
+            Assert.AreEqual(hash, sim.StateHash(), "уровень изменил состояние боя");
         }
 
         // ---- сохранение ----
+
+        /// <summary>
+        /// Сохранение героя высокого уровня (риск плана 29 сентября): уровень и опыт
+        /// переезжают как есть, а статы герой берёт от базы — тот же 270 / 54.
+        /// </summary>
+        [Test]
+        public void SavedHighLevelCampLoadsWithTheReferenceHero()
+        {
+            var camp = PrototypeContent.NewCamp();
+            camp.DeveloperSetLevel(12);
+            camp.GainExperience(40);
+
+            var restored = CampSaveCodec.Decode(CampSaveCodec.Encode(camp), PrototypeContent.Items());
+            Assert.AreEqual(12, restored.Level);
+            Assert.AreEqual(40, restored.Experience);
+
+            var location = ArenaEncounterTests.ForestLocation();
+            var session = new GameSession(7, restored, location.Modules, PrototypeContent.ItemBaseIds(), location: location);
+            session.EnterRift();
+            Assert.AreEqual(270, session.Run.Sim.Entities.MaxHealth[Player]);
+            Assert.AreEqual(54, session.Run.Sim.Entities.Damage[Player]);
+        }
 
         /// <summary>
         /// Сохранение версии 2 несло ранги постоянных талантов. Они больше не

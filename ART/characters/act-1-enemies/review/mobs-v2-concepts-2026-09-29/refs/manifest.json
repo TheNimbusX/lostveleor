@@ -1,0 +1,63 @@
+[
+ {
+  "file": "stonehoof-tusk-swipe.mp4",
+  "sheet": "stonehoof-tusk-swipe_sheet.jpg",
+  "start_frame": "start_stonehoof.png",
+  "prompt_summary": "Stonehoof close tusk swipe: brace, fast sideways-and-up goring head toss, recover; hooves planted, no charge; locked camera, no FX",
+  "job_id": "6d6a2eb3-4683-4f60-80da-d4f98992a322",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_011131_6d6a2eb3-4683-4f60-80da-d4f98992a322.mp4"
+ },
+ {
+  "file": "swarm-bite.mp4",
+  "sheet": "swarm-bite_sheet.jpg",
+  "start_frame": "start_swarm.png",
+  "prompt_summary": "Root Swarm bite: clear crouch/pull-back windup, fast forward lunging bite, recover to crouch; locked camera, no FX",
+  "job_id": "ec85398a-73cf-49a5-acd8-30510e16f260",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_010440_ec85398a-73cf-49a5-acd8-30510e16f260.mp4"
+ },
+ {
+  "file": "swarm-death.mp4",
+  "sheet": "swarm-death_sheet.jpg",
+  "start_frame": "start_swarm.png",
+  "prompt_summary": "Root Swarm death: struck, staggers, legs buckle, collapses into a still pile of roots; locked camera, no FX",
+  "job_id": "576e2411-315f-434c-8bba-1a6ed45b5c26",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_011042_576e2411-315f-434c-8bba-1a6ed45b5c26.mp4"
+ },
+ {
+  "file": "swarm-hit.mp4",
+  "sheet": "swarm-hit_sheet.jpg",
+  "start_frame": "start_swarm.png",
+  "prompt_summary": "Root Swarm hit reaction: flinch back/sideways from a frontal hit, short stagger, recover to stance; locked camera, no FX",
+  "job_id": "f1d85465-a768-4393-bbb0-540d7ba75749",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_010700_f1d85465-a768-4393-bbb0-540d7ba75749.mp4"
+ },
+ {
+  "file": "swarm-idle.mp4",
+  "sheet": "swarm-idle_sheet.jpg",
+  "start_frame": "start_swarm.png",
+  "prompt_summary": "Root Swarm idle: breathing, twitchy head jerks, claw flexes, back spikes quiver; stays in place; locked camera, no FX",
+  "job_id": "07ca6e38-af10-444b-873a-843b3eb52bf2",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_001244_07ca6e38-af10-444b-873a-843b3eb52bf2.mp4"
+ },
+ {
+  "file": "swarm-run.mp4",
+  "sheet": "swarm-run_sheet.jpg",
+  "start_frame": "start_swarm.png",
+  "prompt_summary": "Root Swarm run: fast low scuttle on all fours in a small circle, stays in frame; locked camera, no FX",
+  "job_id": "e34d8494-f384-4d86-aafb-1029af19e58a",
+  "model": "seedance_2_0 fast 720p 1:1 4s no audio",
+  "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_001244_e34d8494-f384-4d86-aafb-1029af19e58a.mp4"
+ },
+ {
+  "file": "wendigo-sweep-360.mp4",
+  "status": "SKIPPED - balance 18.3 would drop below 10",
+  "start_frame": "start_wendigo.png",
+  "start_media_id": "4ad36618-35fa-4bcd-83ca-b39decb9bca4",
+  "prompt_summary": "Wendigo 360 sweep: crouch, both claws out, full spin in place, recover; locked camera, no FX"
+ }
+]

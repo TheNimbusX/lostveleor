@@ -1,0 +1,17 @@
+{
+  "deforming_bones": 34,
+  "sample_step_frames": 0.0625,
+  "scale_curves": false,
+  "owner_approved": false,
+  "clips": {
+    "AN_Stonehoof_Tusk": {
+      "frames": 26,
+      "seconds": 0.8666666666666667,
+      "contact_frame": 14,
+      "max_joint_error_m": 8.690073079957565e-07,
+      "max_rotation_error_deg": 0.05595291023658669,
+      "start_end_position_m": 0.0,
+      "object_level_keys": []
+    }
+  }
+}

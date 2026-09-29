@@ -14,7 +14,12 @@ namespace Game.View
     /// UiInkGroup при включении (без огня: всплывают часто). Раньше это рисовал IMGUI в RunHud и
     /// PelagTargetAimView; они остаются запасным видом, пока префаба нет.
     /// Префаб Resources/UI/Prefabs/RunWorldWc, добавляет RunHud.
+    ///
+    /// Порядок 2050 — после камеры (CameraFollow 1000, тряска CombatCameraJuice 2000) и полосок
+    /// здоровья (HealthBars 950): метки проецируются той же камерой, что рисует кадр, и табличка
+    /// элиты стоит ровно над её полосой, а не догоняет её на кадр.
     /// </summary>
+    [DefaultExecutionOrder(2050)]
     public sealed class RunWorldView : MonoBehaviour
     {
         [Header("Метки")]
@@ -38,6 +43,7 @@ namespace Game.View
         public static bool AimHintShown { get; private set; }
 
         TickDriver _driver;
+        HealthBars _bars;
         readonly List<RunWorldMarker> _markers = new List<RunWorldMarker>();
         int _used;
         int _menuDrop = -1;
@@ -46,6 +52,7 @@ namespace Game.View
         public void Initialize(TickDriver driver)
         {
             _driver = driver;
+            _bars = driver != null ? driver.GetComponent<HealthBars>() : null;
             _canvas = GetComponent<Canvas>();
             if (MarkerTemplate != null) MarkerTemplate.gameObject.SetActive(false);
             if (DropMenu != null) DropMenu.gameObject.SetActive(false);
@@ -110,8 +117,12 @@ namespace Game.View
 
         /// <param name="art">Значок — цветной рисунок способности (метка кладёт его в круг), а не белый знак.</param>
         void Place(Camera camera, FixVec2 point, float height, Texture icon, string text, float health = -1f, bool elite = false, bool art = false)
+            => PlaceAt(camera, new Vector3(point.X.ToFloat(), height, point.Y.ToFloat()), icon, text, health, elite, art);
+
+        /// <summary>Метка низом по центру в точке мира <paramref name="world"/>.</summary>
+        void PlaceAt(Camera camera, Vector3 world, Texture icon, string text, float health = -1f, bool elite = false, bool art = false)
         {
-            Vector3 screen = camera.WorldToScreenPoint(new Vector3(point.X.ToFloat(), height, point.Y.ToFloat()));
+            Vector3 screen = camera.WorldToScreenPoint(world);
             if (screen.z <= 0f || screen.x < -60f || screen.x > Screen.width + 60f || screen.y < -40f || screen.y > Screen.height + 40f) return;
             if (MarkerTemplate == null) return;
             RunWorldMarker marker = Next();
@@ -139,7 +150,11 @@ namespace Game.View
                 // Босса ведёт полоса сверху экрана — над ним таблички нет. У элиты табличка только с
                 // именем: полоса здоровья одна — мировая (HealthBars), вторая в табличке её дублировала.
                 if (i == run.BossId || !sim.Entities.Alive[i] || !run.Encounters.IsElite(i)) continue;
-                Place(camera, sim.Entities.Position[i], 3.2f, EliteIcon, EnemyTexts.Name(sim.Entities.Kind[i]), -1f, true);
+                // Имя — прямо над полосой (HealthBars считает её место над макушкой модели в этом
+                // кадре); полосок нет — по-старому, на 3,2 м.
+                string name = EnemyTexts.Name(sim.Entities.Kind[i]);
+                if (_bars != null && _bars.TryGetNameAnchor(i, out Vector3 top)) PlaceAt(camera, top, EliteIcon, name, -1f, true);
+                else Place(camera, sim.Entities.Position[i], 3.2f, EliteIcon, name, -1f, true);
             }
         }
 

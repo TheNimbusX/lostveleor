@@ -33,7 +33,7 @@ namespace Game.Sim
         Buff = 2,
         RacePassive = 3,
 
-        /// <summary>Прибавки уровня героя. Вешает Simulation.SetPlayerLevel.</summary>
+        /// <summary>База героя (прежние прибавки 5-го уровня). Вешает Simulation.ApplyHeroBaseline.</summary>
         Level = 4,
     }
 

@@ -1,0 +1,17 @@
+{
+ "max_hand_ik_miss_m": 3.64566488336565e-07,
+ "max_foot_ik_miss_m": 8.382333818719551e-07,
+ "max_pelvis_auto_lower_m": 0.0,
+ "planted_sole_slip_mm": {
+  "L": 8.31885880042682e-05,
+  "R": 0.0007781883191171346
+ },
+ "lowest_non_foot_vertex_m": 0.17290754071357564,
+ "lowest_non_foot_frame": 1.5,
+ "lowest_foot_vertex_m": -0.00482423711537867,
+ "endpoints_vs_idle": {
+  "0": 0.0,
+  "39": 0.0
+ },
+ "spin_at_contact_deg": 345.0
+}

@@ -77,7 +77,9 @@ namespace Game.Sim
     /// EnemyActionStarted — им кормится звук EnemyWarning), метки на земле
     /// нет. На 15-м бьёт корнями: круг 1,5 м встаёт на месте героя в этот тик
     /// и больше не двигается. Через 21 тик контакт: герой в круге — урон и
-    /// замедление 40% на 45 тиков (общее, ApplyHeroSlow), мимо — ничего.
+    /// корни на 30 тиков (решение владельца 29.09, общий контроль героя
+    /// ApplyHeroRoot: не ходит и не кувыркается, но бьёт и кастует; в
+    /// иммунитете к контролю — только урон), мимо — ничего.
     /// Потом 36 тиков стоит открытым — окно наказания. Крупный жетон — от
     /// начала позы до контакта. Оглушение, волок и смерть снимают действие,
     /// и ещё не сработавший круг гаснет вместе с ним.
@@ -119,15 +121,18 @@ namespace Game.Sim
         public const int RootSnarerRecoveryTicks = 36;      // стоит после контакта
         public const int RootSnarerCooldownTicks = 150;     // от начала позы до следующей
 
-        /// <summary>Замедление при попадании: минус 40% на 45 шагов героя.</summary>
+        /// <summary>Замедление при попадании, если корни выключены: минус 40% на 45 шагов героя.</summary>
         public const int RootSnarerSlowPercent = 40, RootSnarerSlowTicks = 45;
 
         /// <summary>
-        /// Переключатель владельца: true — вместо замедления корни (100% на
-        /// RootSnarerRootTicks). По умолчанию — замедление.
+        /// Переключатель владельца: true — вместо замедления корни на
+        /// RootSnarerRootTicks (ApplyHeroRoot, с иммунитетом к контролю).
+        /// Решение 29.09 — корни.
         /// </summary>
-        public const bool SnarerRoots = false;
-        public const int RootSnarerRootTicks = 12;
+        public const bool SnarerRoots = true;
+
+        /// <summary>Корни при попадании: 1 с — 30 шагов героя.</summary>
+        public const int RootSnarerRootTicks = 30;
 
         public static readonly Fix64 RootSnarerCircleRadius = Fix64.Ratio(3, 2);
         public static readonly Fix64 RootSnarerMinDistance = Fix64.Ratio(3, 2);
@@ -578,7 +583,9 @@ namespace Game.Sim
 
         /// <summary>
         /// Контакт. Попадание — ровно по нарисованному кругу: та же фигура из
-        /// общего списка меток. Задел — урон и замедление; мимо — ничего.
+        /// общего списка меток. Задел — урон и корни (или замедление, если
+        /// переключатель выключен); мимо — ничего. Корни отбил иммунитет к
+        /// контролю — остаётся только урон, события HeroControl нет.
         /// </summary>
         private void ResolveRootSnarerImpact(int id)
         {
@@ -598,12 +605,13 @@ namespace Game.Sim
             if (!hit) return;
             int health = Entities.Health[PlayerId];
             ApplyAbilityDamage(id, PlayerId, RootSnarerDamageOf(id), -1, DamageType.Physical);
-            // Замедление — только если удар действительно достал: уклонение,
-            // неуязвимость и отложенный урон его не вешают (правило воя Вендиго).
+            // Корни — только если удар действительно достал: уклонение,
+            // неуязвимость и отложенный урон их не вешают (правило воя Вендиго).
             // Переключатель — тернарником: if по константе дал бы CS0162.
+            // 100% в ApplyHeroSlow — это корни (ApplyHeroRoot) от этого моба.
             if (Entities.Alive[PlayerId] && Entities.Health[PlayerId] < health)
                 ApplyHeroSlow(SnarerRoots ? HeroRootPercent : RootSnarerSlowPercent,
-                    SnarerRoots ? RootSnarerRootTicks : RootSnarerSlowTicks);
+                    SnarerRoots ? RootSnarerRootTicks : RootSnarerSlowTicks, id);
         }
 
         /// <summary>

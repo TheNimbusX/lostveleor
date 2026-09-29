@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Корнеполз · анимации v2</title>
+<style>
+:root { --bg:#151813; --panel:#1f241d; --ink:#ece2c4; --muted:#a8ad98; --accent:#d9a441; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Segoe UI",system-ui,sans-serif; }
+main { max-width:1500px; margin:0 auto; padding:24px 16px 64px; }
+h1 { font-size:28px; margin:0 0 6px; } h2 { font-size:20px; margin:0 0 6px; }
+code { color:var(--muted); font-size:13px; margin-left:8px; }
+.lead { color:var(--muted); max-width:1100px; }
+nav a { color:var(--accent); margin-right:14px; text-decoration:none; }
+.clip { background:var(--panel); border-radius:10px; padding:16px; margin:22px 0; }
+.qc { color:var(--muted); font-size:13px; }
+.row { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+.sheets { display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+figure { margin:0; } video, img { width:100%; border-radius:6px; background:#000; display:block; }
+figcaption { color:var(--muted); font-size:13px; margin-top:4px; }
+ul { max-width:1100px; }
+</style></head><body><main>
+<h1>Корнеполз — все анимации заново (v2)</h1>
+<p class="lead">По пяти рефам Higgsfield, принятым 29.09 (покой, суетливый бег, оттяг и укус, попадание, смерть).
+Модель, меш, веса и скелет прежние; клипы собраны в Blender скриптом
+<code>production/build_rootswarm_v2.py</code>, кадры сняты с выгруженных FBX
+(<code>render_rootswarm_v2_review.py</code>). 30 кадров/с, корень на месте — выпад укуса делает Sim.
+Кадры снимались в Blender: освещение условное, персонаж не высветлен.</p>
+<nav><a href="#Idle">Покой</a><a href="#Run">Бег</a><a href="#AttackA">Укус A</a><a href="#AttackB">Укус B</a><a href="#Hit">Попадание</a><a href="#Death">Смерть</a></nav>
+<ul class="lead">
+<li>Игровая камера на роликах приближена: в бою Корнеполз ростом около 55 пикселей на 1080p, читаются только оттяг, бросок и падение.</li>
+<li>У бега и смерти импортёр снимает проезд центра масс — на роликах он снят так же.</li>
+<li>Что смотреть в игре: оттяг перед укусом виден заранее, укус совпадает с уроном, стопы на бегу не скользят, после смерти тело лежит на земле, а не висит и не тонет.</li>
+</ul>
+
+<section class="clip" id="Idle">
+  <h2>Покой (петля) <code>Forest_RootSwarm@Idle.fbx</code></h2>
+  <p>120 кадров, 4 с, три вдоха. Рывки головы на 10, 42, 70, 94; когти сжимаются на 24 (левая) и 58 (правая); дрожь спинных шипов 80–92. Лапы и ноги стоят на месте, шов петли 0.</p>
+  <p class="qc">нижняя точка меша -2.7…+0.0 см игры; шов петли 0e+00</p>
+  <div class="row">
+    <figure><video src="game_Idle.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_Idle.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_Idle.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-idle.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-idle.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-idle_sheet.jpg" alt="Лист рефа swarm-idle"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_Idle_keys.jpg" alt="Ключевые кадры Idle, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_Idle_keys.jpg" alt="Ключевые кадры Idle, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+<section class="clip" id="Run">
+  <h2>Бег — суетливый галоп (петля) <code>Forest_RootSwarm@Run.fbx</code></h2>
+  <p>12 кадров. Опорная лапа проходит 0.60 единицы за цикл = 2.38 м/с при ×1; Sim 3,4 м/с → клип ×1.43, цикл 0,28 с (в ролике — этот темп). Задние касаются первыми, передние тянутся вперёд; две фазы полёта.</p>
+  <p class="qc">нижняя точка меша -3.0…+4.4 см игры; шов петли 0e+00; центр масс гуляет 2.7 см — импортёр снимает, съёмка тоже</p>
+  <div class="row">
+    <figure><video src="game_Run.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_Run.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_Run.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-run.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-run.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-run_sheet.jpg" alt="Лист рефа swarm-run"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_Run_keys.jpg" alt="Ключевые кадры Run, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_Run_keys.jpg" alt="Ключевые кадры Run, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+<section class="clip" id="AttackA">
+  <h2>Укус A (левая лапа) <code>Forest_RootSwarm@AttackA.fbx</code></h2>
+  <p>Окно импорта 8…24. Замах 12 тиков: оттяг назад-вниз 8→14, дрожь 14→16, бросок 16→18, контакт на 18 (12-й тик). Восстановление 8: полёт выпада 18→22 (Sim везёт тело 0,5 м за 4 тика — на ролике тоже), оседание 22→24. Ролик — по тикам, как в игре.</p>
+  <p class="qc">нижняя точка меша -3.2…+6.2 см игры; клюв дальше всего вперёд на кадре 18, пик скорости на 17</p>
+  <div class="row">
+    <figure><video src="game_AttackA.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_AttackA.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_AttackA.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-bite.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-bite.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-bite_sheet.jpg" alt="Лист рефа swarm-bite"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_AttackA_keys.jpg" alt="Ключевые кадры AttackA, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_AttackA_keys.jpg" alt="Ключевые кадры AttackA, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+<section class="clip" id="AttackB">
+  <h2>Укус B (правая лапа) <code>Forest_RootSwarm@AttackB.fbx</code></h2>
+  <p>Та же стойка на входе и выходе, тот же контакт на 18; тянется правой лапой и доворачивает вправо. Игра чередует A и B.</p>
+  <p class="qc">нижняя точка меша -3.2…+6.2 см игры; клюв дальше всего вперёд на кадре 18, пик скорости на 17</p>
+  <div class="row">
+    <figure><video src="game_AttackB.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_AttackB.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_AttackB.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-bite.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-bite.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-bite_sheet.jpg" alt="Лист рефа swarm-bite"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_AttackB_keys.jpg" alt="Ключевые кадры AttackB, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_AttackB_keys.jpg" alt="Ключевые кадры AttackB, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+<section class="clip" id="Hit">
+  <h2>Попадание <code>Forest_RootSwarm@Hit.fbx</code></h2>
+  <p>11 кадров, 0,33 с родным темпом (выход на 0,8 + смешивание 0,14 с = 0,43 с). Корпус встаёт на дыбы, лицо запрокидывается, лапы вскинуты; к 9 лапы снова на земле.</p>
+  <p class="qc">нижняя точка меша -2.6…+0.0 см игры</p>
+  <div class="row">
+    <figure><video src="game_Hit.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_Hit.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_Hit.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-hit.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-hit.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-hit_sheet.jpg" alt="Лист рефа swarm-hit"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_Hit_keys.jpg" alt="Ключевые кадры Hit, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_Hit_keys.jpg" alt="Ключевые кадры Hit, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+<section class="clip" id="Death">
+  <h2>Смерть <code>Forest_RootSwarm@Death.fbx</code></h2>
+  <p>67 кадров, играется ×2 (в ролике — этот темп): на дыбы с раскинутыми лапами 0→8, шатается 8→24, ноги подламываются и тело падает ничком 24→38, отскок и покой с 50 (0,83 с). Лежит брюхом на земле, лапы врозь, лицо видно.</p>
+  <p class="qc">нижняя точка меша -2.6…+0.0 см игры; центр масс гуляет 11.0 см — импортёр снимает, съёмка тоже</p>
+  <div class="row">
+    <figure><video src="game_Death.mp4" autoplay loop muted playsinline></video><figcaption>Игровая камера (орто 48°, вблизи)</figcaption></figure>
+    <figure><video src="side_Death.mp4" autoplay loop muted playsinline></video><figcaption>Сбоку (орто)</figcaption></figure>
+    <figure><video src="ref_Death.mp4" autoplay loop muted playsinline></video><figcaption>Ракурс рефа</figcaption></figure>
+    <figure><video src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-death.mp4" autoplay loop muted playsinline></video><figcaption>Реф Higgsfield swarm-death.mp4</figcaption></figure>
+  </div>
+  <div class="sheets">
+    <figure><img src="../../../../review/mobs-v2-concepts-2026-09-29/refs/swarm-death_sheet.jpg" alt="Лист рефа swarm-death"><figcaption>Реф: лист кадров</figcaption></figure>
+    <figure><img src="ref_Death_keys.jpg" alt="Ключевые кадры Death, ракурс рефа"><figcaption>Наш клип: ключевые кадры, ракурс рефа</figcaption></figure>
+    <figure><img src="game_Death_keys.jpg" alt="Ключевые кадры Death, игровая камера"><figcaption>Наш клип: те же кадры с игровой камеры</figcaption></figure>
+  </div>
+</section>
+</main></body></html>

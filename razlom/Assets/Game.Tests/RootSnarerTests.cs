@@ -9,10 +9,15 @@ namespace Game.Tests
     ///
     /// Приёмка: 15 тиков только поза, метки на земле нет; на 15-м круг 1,5 м
     /// встаёт на месте героя и дальше не двигается; через 21 тик контакт —
-    /// урон и замедление 40% на 45 тиков, мимо — ничего; замедление общее с
-    /// воем Вендиго, сильнейшее побеждает; оглушение, волок и смерть снимают
-    /// круг; 36 тиков стойки после контакта; крупный жетон — от начала позы
-    /// до контакта.
+    /// урон и корни на 30 тиков, мимо — ничего; оглушение, волок и смерть
+    /// снимают круг; 36 тиков стойки после контакта; крупный жетон — от
+    /// начала позы до контакта.
+    ///
+    /// Контроль героя (29.09, поток C «Корни и контроль героя»): корни — не
+    /// ходит и не кувыркается, но бьёт и кастует; с замедлением воя не
+    /// сливаются. Оглушение (ApplyHeroStun, разбег Камнекопыта) — ни шага,
+    /// ни удара, ни каста, ни кувырка, но отброс доезжает. После любого
+    /// контроля 45 тиков иммунитета: цепочки нет.
     ///
     /// «Волна из корней» (27.09): лечит 10% здоровья союзника (элите 5%), не
     /// выше недостающего; ни себя, ни других Корнехватов; одного союзника —
@@ -211,12 +216,16 @@ namespace Game.Tests
         }
 
         // Тело героя 0,45: круг 1,5 м задевает его, пока центр ближе 1,95 м.
-        [TestCase(0.0, true)]
-        [TestCase(1.9, true)]
-        [TestCase(2.0, false)]
-        [TestCase(3.5, false)]
-        public void HitSlowsTheHero_MissLeavesHimFree(double offset, bool hit)
+        // immune — герой в круге, но неуязвим: урона нет — нет и корней.
+        [TestCase(0.0, true, false)]
+        [TestCase(1.9, true, false)]
+        [TestCase(2.0, false, false)]
+        [TestCase(3.5, false, false)]
+        [TestCase(0.0, true, true)]
+        public void RootOnlyOnHit(double offset, bool inCircle, bool immune)
         {
+            Assert.IsTrue(Simulation.SnarerRoots, "решение владельца 29.09 — корни, не замедление");
+            Assert.AreEqual(30, Simulation.RootSnarerRootTicks);
             var sim = Arena();
             var full = sim.Entities.MoveStep[0];
             int health = sim.Entities.Health[0];
@@ -228,45 +237,74 @@ namespace Game.Tests
             var hero = a.Target + At(0, offset);
             sim.Entities.Position[0] = hero;
             Assert.IsTrue(CircleOf(sim, Snarer, out var circle));
-            Assert.AreEqual(hit, Simulation.TelegraphContains(circle, hero, sim.Entities.BodyRadius[0]));
+            Assert.AreEqual(inCircle, Simulation.TelegraphContains(circle, hero, sim.Entities.BodyRadius[0]));
+            sim.PlayerInvulnerable = immune;
 
             bool? flag = null;
+            var controls = new List<SimEvent>();
             while (sim.Tick <= a.ImpactTick)
             {
                 sim.Step(InputFrame.Empty);
-                Assert.AreEqual(full, sim.Entities.MoveStep[0], "до контакта замедления нет");
+                Assert.AreEqual(full, sim.Entities.MoveStep[0], "до контакта корней нет");
                 foreach (var e in sim.Events)
+                {
                     if (e.Type == SimEventType.EnemyActionImpact && e.Source == Snarer) flag = e.Flag;
+                    if (e.Type == SimEventType.HeroControl) controls.Add(e);
+                }
             }
             Assert.IsTrue(flag.HasValue, "контакта не было");
-            Assert.AreEqual(hit, flag.Value);
-            Assert.AreEqual(hit ? EnemyArchetypes.RootSnarerDamage : 0, health - sim.Entities.Health[0]);
+            Assert.AreEqual(inCircle, flag.Value);
+            bool rooted = inCircle && !immune;
+            Assert.AreEqual(rooted ? EnemyArchetypes.RootSnarerDamage : 0, health - sim.Entities.Health[0]);
+            Assert.AreEqual(rooted, sim.HeroRooted);
+            Assert.AreEqual(rooted ? 30 : 0, sim.HeroRootTicksLeft);
+            Assert.IsFalse(sim.HeroStunned);
+            Assert.AreEqual(0, sim.HeroSlowTicksLeft, "корни — не замедление");
+            Assert.AreEqual(0, sim.HeroSlowPercent);
 
-            // Переключатель владельца: замедление 40% на 45 тиков или корни 100% на 12.
-            int percent = Simulation.SnarerRoots ? Simulation.HeroRootPercent : Simulation.RootSnarerSlowPercent;
-            int ticks = Simulation.SnarerRoots ? Simulation.RootSnarerRootTicks : Simulation.RootSnarerSlowTicks;
-            Assert.AreEqual(40, Simulation.RootSnarerSlowPercent);
-            Assert.AreEqual(45, Simulation.RootSnarerSlowTicks);
-            Assert.AreEqual(12, Simulation.RootSnarerRootTicks);
-            Assert.AreEqual(hit ? percent : 0, sim.HeroSlowPercent);
-            Assert.AreEqual(hit ? ticks : 0, sim.HeroSlowTicksLeft);
-
-            int slowed = 0;
-            for (int k = 0; k < ticks + 15; k++)
+            // Вид узнаёт о корнях из события HeroControl — одного, в тик контакта.
+            Assert.AreEqual(rooted ? 1 : 0, controls.Count);
+            if (rooted)
             {
-                sim.Step(InputFrame.Empty);
-                if (sim.Entities.MoveStep[0] == full) continue;
-                slowed++;
-                Assert.That(sim.Entities.MoveStep[0].ToDouble(),
-                    Is.EqualTo(full.ToDouble() * (100 - percent) / 100).Within(1e-3));
+                var e = controls[0];
+                Assert.AreEqual(Snarer, e.Source);
+                Assert.AreEqual(Simulation.PlayerId, e.Target);
+                Assert.AreEqual(Simulation.RootSnarerRootTicks, e.Amount);
+                Assert.IsTrue(e.Flag, "корни, а не оглушение");
+                Assert.AreEqual(sim.Entities.Position[0], e.Position);
             }
-            Assert.AreEqual(hit ? ticks : 0, slowed, "замедление — ровно столько шагов героя");
+            for (int k = 0; k < 45; k++) sim.Step(InputFrame.Empty);
             Assert.AreEqual(full, sim.Entities.MoveStep[0]);
-            Assert.AreEqual(0, sim.HeroSlowTicksLeft);
+            Assert.IsFalse(sim.HeroRooted);
         }
 
         [Test]
-        public void SlowIsSharedWithTheWendigoHowl_StrongestAndLatestWin()
+        public void RootLasts30Ticks()
+        {
+            var sim = Arena();
+            var a = Start(sim);
+            Until(sim, a.ImpactTick + 1);
+            Assert.IsTrue(sim.HeroRooted, "герой стоял в круге");
+
+            // Герой всё это время рвётся в сторону — ни шага, пока держат корни.
+            var walk = InputFrame.Empty;
+            walk.Flags = (byte)InputFlags.MoveOrder;
+            walk.Aim = sim.Entities.Position[0] + At(0, -10);
+            var spot = sim.Entities.Position[0];
+            int held = 0;
+            for (int k = 0; k < 40 && sim.Entities.Position[0].Equals(spot); k++)
+            {
+                Assert.AreEqual(30 - k, sim.HeroRootTicksLeft, "шаг " + k);
+                sim.Step(walk);
+                if (sim.Entities.Position[0].Equals(spot)) held++;
+            }
+            Assert.AreEqual(Simulation.RootSnarerRootTicks, held, "корни — ровно 30 шагов героя");
+            Assert.IsFalse(sim.HeroRooted);
+            Assert.Less(sim.Entities.Position[0].Y.ToDouble(), spot.Y.ToDouble() - .05, "корни сошли — пошёл");
+        }
+
+        [Test]
+        public void RootsDoNotMergeWithTheWendigoHowlSlow()
         {
             var sim = Arena();
             sim.BigAttackTokenLimit = 2;
@@ -289,28 +327,259 @@ namespace Game.Tests
             Assert.AreEqual(Simulation.WendigoHowlSlowPercent, sim.HeroSlowPercent);
             Assert.AreEqual(Simulation.WendigoHowlSlowTicks, sim.HeroSlowTicksLeft);
 
-            // Корни поверх: сильнее и дольше — побеждают и процентом, и сроком.
-            Until(sim, a.ImpactTick + 1);
-            Assert.AreEqual(Simulation.RootSnarerSlowPercent, sim.HeroSlowPercent, "сильнейшее побеждает");
-            Assert.AreEqual(Simulation.RootSnarerSlowTicks, sim.HeroSlowTicksLeft, "срок — самый поздний");
-            Assert.AreEqual(sim.HeroSlowTicksLeft, sim.WendigoHowlSlowTicksLeft, "одно замедление на двоих");
+            // Корни поверх — своё состояние: ни процент, ни срок замедления не меняются.
+            Until(sim, a.ImpactTick);
+            int slowLeft = sim.HeroSlowTicksLeft, slowPercent = sim.HeroSlowPercent;
+            sim.Step(InputFrame.Empty);
+            Assert.IsTrue(sim.HeroRooted);
+            Assert.AreEqual(Simulation.RootSnarerRootTicks, sim.HeroRootTicksLeft);
+            Assert.AreEqual(System.Math.Max(0, slowLeft - 1), sim.HeroSlowTicksLeft, "срок замедления не тронут");
+            if (slowLeft > 1) Assert.AreEqual(slowPercent, sim.HeroSlowPercent);
 
-            // Вой поверх корней — слабее, но дольше: процент остаётся, срок растёт.
+            // Замедление длиннее корней: сначала герой стоит, потом идёт на 70%.
             sim.ApplyHeroSlow(Simulation.WendigoHowlSlowPercent, 60);
-            Assert.AreEqual(Simulation.RootSnarerSlowPercent, sim.HeroSlowPercent);
             Assert.AreEqual(61, sim.HeroSlowTicksLeft);
-
-            int slowed = 0;
+            Assert.AreEqual(Simulation.RootSnarerRootTicks, sim.HeroRootTicksLeft, "замедление корни не продлевает");
+            int held = 0, slowed = 0;
             for (int k = 0; k < 80; k++)
             {
                 sim.Step(InputFrame.Empty);
+                if (sim.Entities.MoveStep[0] == Fix64.Zero) { held++; continue; }
                 if (sim.Entities.MoveStep[0] == full) continue;
                 slowed++;
-                Assert.That(sim.Entities.MoveStep[0].ToDouble(), Is.EqualTo(full.ToDouble() * .6).Within(1e-3),
-                    "два замедления не перемножаются");
+                Assert.That(sim.Entities.MoveStep[0].ToDouble(), Is.EqualTo(full.ToDouble() * .7).Within(1e-3),
+                    "после корней — только замедление");
             }
-            Assert.AreEqual(61, slowed);
+            Assert.AreEqual(30, held, "корни — ровно 30 шагов");
+            Assert.AreEqual(31, slowed, "замедление — остаток после корней");
             Assert.AreEqual(full, sim.Entities.MoveStep[0]);
+        }
+
+        // ---------- контроль героя: корни, оглушение, иммунитет ----------
+
+        /// <summary>
+        /// Пустое поле с полным набором героя (Вихрь в слоте 0, кувырок в
+        /// PelagKit.DashSlot) и Выпадом в слоте 1; манекен в 1 м по +X — не
+        /// ходит, не бьёт, здоровья много.
+        /// </summary>
+        private static Simulation HeroArena(out int dummy)
+        {
+            var sim = new Simulation(1234, 64);
+            sim.SetupTestArena(0);
+            new RunLoadout().ApplyTo(sim);
+            sim.SetAbility(1, PelagKit.PoolDefinition(PelagKit.PoolIndexOf(AbilityDefinition.SkewerId)),
+                new AbilityNode[0], 0);
+            dummy = sim.Entities.Spawn(At(1, 0), 5000, Faction.Orvill);
+            sim.Entities.Stats[dummy].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.Stats[dummy].SetBase(StatType.Damage, Fix64.Zero);
+            sim.Entities.RefreshStats(dummy);
+            sim.Entities.NextAttackTick[dummy] = int.MaxValue;
+            return sim;
+        }
+
+        private static int Count(Simulation sim, SimEventType type)
+        {
+            int n = 0;
+            foreach (var e in sim.Events) if (e.Type == type) n++;
+            return n;
+        }
+
+        private static InputFrame Walk(FixVec2 to)
+        {
+            var walk = InputFrame.Empty;
+            walk.Flags = (byte)InputFlags.MoveOrder;
+            walk.Aim = to;
+            return walk;
+        }
+
+        private static InputFrame Press(int slot, FixVec2 aim)
+        {
+            var press = InputFrame.Empty;
+            press.AbilityMask = (byte)(1 << slot);
+            press.Aim = aim;
+            return press;
+        }
+
+        [Test]
+        public void RootedHeroCannotMoveOrDashButCanAttack()
+        {
+            var sim = HeroArena(out int dummy);
+            var away = At(-5, 0);
+            Assert.IsTrue(sim.ApplyHeroRoot(90));
+            Assert.AreEqual(1, Count(sim, SimEventType.HeroControl));
+
+            // Приказ идти — ни шага.
+            for (int k = 0; k < 5; k++) sim.Step(Walk(away));
+            Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "в корнях герой не идёт");
+
+            // Уходы — кувырок и Выпад — не начинаются: нажатие пропадает.
+            foreach (int slot in new[] { PelagKit.DashSlot, 1 })
+            {
+                sim.Step(Press(slot, away));
+                Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "уход в корнях, слот " + slot);
+                for (int k = 0; k < 8; k++) sim.Step(InputFrame.Empty);
+                Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "уход в корнях, слот " + slot);
+            }
+
+            // Удар — есть.
+            int health = sim.Entities.Health[dummy];
+            var attack = InputFrame.Empty;
+            attack.Flags = (byte)InputFlags.Attack;
+            attack.AttackTarget = dummy;
+            attack.Aim = At(1, 0);
+            for (int k = 0; k < 30 && sim.Entities.Health[dummy] == health; k++) sim.Step(attack);
+            Assert.Less(sim.Entities.Health[dummy], health, "в корнях герой бьёт");
+
+            // Каст — есть: Вихрь из слота 0.
+            int casts = 0;
+            for (int k = 0; k < 10 && casts == 0; k++)
+            {
+                sim.Step(Press(0, At(1, 0)));
+                casts = Count(sim, SimEventType.AbilityCast);
+            }
+            Assert.AreEqual(1, casts, "в корнях герой кастует");
+            Assert.IsTrue(sim.HeroRooted);
+            Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0]);
+
+            // Корни сошли — тот же Выпад уходит.
+            Until(sim, sim.Tick + sim.HeroRootTicksLeft);
+            for (int k = 0; k < 40; k++) sim.Step(InputFrame.Empty);
+            sim.Step(Press(1, away));
+            Assert.AreEqual(1, Count(sim, SimEventType.AbilityCast), "Выпад после корней");
+            Assert.AreEqual((byte)ForcedMotionKind.Skewer, sim.Entities.ForcedKind[0]);
+        }
+
+        [Test]
+        public void StunBlocksEverything()
+        {
+            var sim = HeroArena(out int dummy);
+            var attack = InputFrame.Empty;
+            attack.Flags = (byte)InputFlags.Attack;
+            attack.AttackTarget = dummy;
+            attack.Aim = At(1, 0);
+            sim.Step(attack);
+            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "замах начался");
+            int health = sim.Entities.Health[dummy];
+
+            Assert.IsTrue(sim.ApplyHeroStun(30));
+            Assert.IsTrue(sim.HeroStunned);
+            Assert.IsFalse(sim.HeroRooted);
+            // Событие для вида: оглушение (Flag = false) на 30 тиков.
+            Assert.AreEqual(1, Count(sim, SimEventType.HeroControl));
+            foreach (var e in sim.Events)
+            {
+                if (e.Type != SimEventType.HeroControl) continue;
+                Assert.AreEqual(-1, e.Source);
+                Assert.AreEqual(Simulation.PlayerId, e.Target);
+                Assert.AreEqual(30, e.Amount);
+                Assert.IsFalse(e.Flag, "оглушение, а не корни");
+                Assert.AreEqual(sim.Entities.Position[0], e.Position);
+            }
+
+            // Вызов между шагами держит и ближайший шаг — как ApplyHeroSlow.
+            int stunned = sim.HeroStunTicksLeft;
+            Assert.AreEqual(31, stunned);
+            var everything = attack;
+            everything.Aim = At(-5, 0);
+            everything.AbilityMask = (byte)(1 | 1 << 1 | 1 << PelagKit.DashSlot);
+            for (int k = 0; k < stunned; k++)
+            {
+                Assert.IsTrue(sim.HeroStunned, "шаг " + k);
+                sim.Step(k % 2 == 0 ? everything : Walk(At(-5, 0)));
+                Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "шаг в оглушении, шаг " + k);
+                Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "каст в оглушении, шаг " + k);
+                Assert.AreEqual(-1, sim.Entities.PendingAttackTarget[0], "замах в оглушении, шаг " + k);
+            }
+            Assert.AreEqual(health, sim.Entities.Health[dummy], "в оглушении герой не бьёт, начатый замах снят");
+            Assert.IsFalse(sim.HeroStunned);
+
+            // Оглушение сошло — то же нажатие работает: уход главнее.
+            sim.Step(everything);
+            Assert.AreEqual(1, Count(sim, SimEventType.AbilityCast), "после оглушения");
+            Assert.AreEqual((byte)ForcedMotionKind.Roll, sim.Entities.ForcedKind[0]);
+        }
+
+        [Test]
+        public void StunKeepsTheKnockbackItCameWith_ButCutsTheHerosOwnRoll()
+        {
+            // Разбег Камнекопыта: отброс и оглушение в один тик — отброс доезжает.
+            var sim = HeroArena(out _);
+            var to = At(0, -2);
+            Assert.IsTrue(ForcedMotion.Begin(sim.Entities, 0, to, 6, ForcedMotionKind.Knockback));
+            Assert.IsTrue(sim.ApplyHeroStun(30));
+            for (int k = 0; k < 6; k++) sim.Step(InputFrame.Empty);
+            Assert.AreEqual(to, sim.Entities.Position[0], "отброс доехал");
+            Assert.IsTrue(sim.HeroStunned);
+
+            // Свой кувырок оглушение обрывает, как и любое своё действие.
+            var rolled = HeroArena(out _);
+            rolled.Step(Press(PelagKit.DashSlot, At(-5, 0)));
+            Assert.AreEqual((byte)ForcedMotionKind.Roll, rolled.Entities.ForcedKind[0]);
+            Assert.IsTrue(rolled.ApplyHeroStun(30));
+            var at = rolled.Entities.Position[0];
+            for (int k = 0; k < 10; k++) rolled.Step(InputFrame.Empty);
+            Assert.AreEqual(at, rolled.Entities.Position[0], "кувырок в оглушении");
+            Assert.AreEqual(0, rolled.Entities.ForcedTicksLeft[0]);
+        }
+
+        [Test]
+        public void ControlImmunityPreventsChain()
+        {
+            Assert.AreEqual(45, Simulation.HeroControlImmunityTicks);
+            var sim = HeroArena(out _);
+            int t0 = sim.Tick;
+            Assert.IsTrue(sim.ApplyHeroRoot(30));
+
+            // Действующий контроль не продлевается и не сменяется.
+            Assert.IsFalse(sim.ApplyHeroStun(30), "оглушение поверх корней");
+            Assert.IsFalse(sim.ApplyHeroRoot(60), "корни поверх корней");
+            Assert.IsFalse(sim.HeroStunned);
+            Assert.AreEqual(31, sim.HeroRootTicksLeft);
+            Assert.AreEqual(31 + 45, sim.HeroControlImmuneTicksLeft);
+            Assert.AreEqual(1, Count(sim, SimEventType.HeroControl), "отбитый контроль события не даёт");
+
+            // Корни сошли — ещё 45 тиков иммунитета.
+            Until(sim, t0 + 31);
+            Assert.IsFalse(sim.HeroRooted);
+            while (sim.Tick < t0 + 31 + 45)
+            {
+                Assert.IsFalse(sim.ApplyHeroStun(30), "оглушение в иммунитете, тик " + sim.Tick);
+                Assert.IsFalse(sim.ApplyHeroRoot(30), "корни в иммунитете, тик " + sim.Tick);
+                Assert.AreEqual(0, Count(sim, SimEventType.HeroControl));
+                sim.Step(InputFrame.Empty);
+                Assert.IsFalse(sim.HeroStunned);
+                Assert.IsFalse(sim.HeroRooted);
+            }
+            Assert.AreEqual(0, sim.HeroControlImmuneTicksLeft);
+            Assert.IsTrue(sim.ApplyHeroStun(30), "иммунитет кончился");
+            Assert.IsTrue(sim.HeroStunned);
+
+            // После оглушения — те же 45 тиков.
+            Until(sim, sim.Tick + sim.HeroStunTicksLeft);
+            Assert.IsFalse(sim.HeroStunned);
+            Assert.AreEqual(45, sim.HeroControlImmuneTicksLeft);
+            Assert.IsFalse(sim.ApplyHeroRoot(30));
+            Until(sim, sim.Tick + 45);
+            Assert.IsTrue(sim.ApplyHeroRoot(30));
+        }
+
+        [Test]
+        public void SlamOnAHeroInControlImmunity_DamageOnly()
+        {
+            var sim = Arena();
+            int health = sim.Entities.Health[0];
+            var a = Start(sim);
+            // Героя только что оглушили (разбег Камнекопыта): корни удара ложатся в иммунитет.
+            Until(sim, a.ImpactTick - 5);
+            Assert.IsTrue(sim.ApplyHeroStun(3));
+            Until(sim, a.ImpactTick);
+            Assert.IsFalse(sim.HeroStunned, "оглушение сошло до контакта, остался иммунитет");
+            Assert.Greater(sim.HeroControlImmuneTicksLeft, 0);
+            sim.Step(InputFrame.Empty);
+            Assert.AreEqual(EnemyArchetypes.RootSnarerDamage, health - sim.Entities.Health[0], "урон проходит");
+            Assert.IsFalse(sim.HeroRooted);
+            Assert.AreEqual(0, Count(sim, SimEventType.HeroControl));
+            Assert.AreEqual(0, sim.HeroSlowTicksLeft, "вместо корней и замедления нет");
         }
 
         // ---------- отмена ----------
@@ -361,6 +630,7 @@ namespace Game.Tests
             }
             Assert.AreEqual(health, sim.Entities.Health[0]);
             Assert.AreEqual(0, sim.HeroSlowTicksLeft);
+            Assert.IsFalse(sim.HeroRooted);
         }
 
         [Test]
@@ -386,6 +656,7 @@ namespace Game.Tests
             Assert.AreEqual(0, impacts, "не нарисовано — не бьёт");
             Assert.AreEqual(health, sim.Entities.Health[0]);
             Assert.AreEqual(0, sim.HeroSlowTicksLeft);
+            Assert.IsFalse(sim.HeroRooted);
         }
 
         // ---------- стойка, дальность, перезарядка ----------
@@ -552,14 +823,18 @@ namespace Game.Tests
         }
 
         [Test]
-        public void RepeatSetupClearsTheActionTheSlowAndTheCooldown()
+        public void RepeatSetupClearsTheActionTheRootsAndTheCooldown()
         {
             var sim = Arena();
             var a = Start(sim);
             Until(sim, a.ImpactTick + 1);
-            Assert.Greater(sim.HeroSlowTicksLeft, 0);
+            Assert.IsTrue(sim.HeroRooted);
+            Assert.Greater(sim.HeroControlImmuneTicksLeft, 0);
             sim.SetupKindTestArena(EnemyKind.ForestRootSnarer);
             Assert.IsFalse(sim.TryGetRootSnarerAction(Snarer, out _));
+            Assert.IsFalse(sim.HeroRooted);
+            Assert.AreEqual(0, sim.HeroRootTicksLeft);
+            Assert.AreEqual(0, sim.HeroControlImmuneTicksLeft, "иммунитет прошлой расстановки не переходит");
             Assert.AreEqual(0, sim.HeroSlowTicksLeft);
             Assert.AreEqual(0, sim.HeroSlowPercent);
             Assert.AreEqual(2, sim.Entities.Count);

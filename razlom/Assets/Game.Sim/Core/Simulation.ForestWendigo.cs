@@ -4,8 +4,13 @@ using System.Collections.Generic;
 namespace Game.Sim
 {
     /// <summary>Атака Вендиго. Значение идёт в хеш и в ActionVariant событий — новые только в конец.</summary>
-    public enum WendigoAction : byte { None, Claw, Leap, Howl }
+    public enum WendigoAction : byte { None, Claw, Leap, Howl, Sweep }
 
+    /// <summary>
+    /// Действие Вендиго. У круга когтей (Sweep) Target совпадает с Origin —
+    /// круг бьёт вокруг самого зверя, — а Direction — взгляд на начало замаха:
+    /// к герою зверь не доворачивает, он крутится на месте.
+    /// </summary>
     public readonly struct WendigoActionState
     {
         public readonly int Serial, StartTick, LaunchTick, ImpactTick, EndTick;
@@ -17,14 +22,34 @@ namespace Game.Sim
         {
             Serial = serial; Kind = kind; StartTick = start; Origin = origin; Target = target;
             Direction = direction; HitResolved = hitResolved;
-            // У когтя и воя взлёта нет: LaunchTick совпадает с контактом.
-            ImpactTick = start + (kind == WendigoAction.Leap ? Simulation.WendigoLeapImpactTicks
-                : kind == WendigoAction.Howl ? Simulation.WendigoHowlWindupTicks : Simulation.WendigoClawWindupTicks);
+            // У когтя, воя и круга взлёта нет: LaunchTick совпадает с контактом.
+            ImpactTick = start + WindupOf(kind);
             LaunchTick = kind == WendigoAction.Leap ? start + Simulation.WendigoLeapLaunchTicks : ImpactTick;
-            EndTick = ImpactTick + (kind == WendigoAction.Leap ? Simulation.WendigoLeapRecoveryTicks
-                : kind == WendigoAction.Howl ? Simulation.WendigoHowlRecoveryTicks : Simulation.WendigoClawRecoveryTicks);
+            EndTick = ImpactTick + RecoveryOf(kind);
         }
         public WendigoActionState Resolve() => new WendigoActionState(Serial, Kind, StartTick, Origin, Target, Direction, true);
+
+        private static int WindupOf(WendigoAction kind)
+        {
+            switch (kind)
+            {
+                case WendigoAction.Leap: return Simulation.WendigoLeapImpactTicks;
+                case WendigoAction.Howl: return Simulation.WendigoHowlWindupTicks;
+                case WendigoAction.Sweep: return Simulation.WendigoSweepWindupTicks;
+                default: return Simulation.WendigoClawWindupTicks;
+            }
+        }
+
+        private static int RecoveryOf(WendigoAction kind)
+        {
+            switch (kind)
+            {
+                case WendigoAction.Leap: return Simulation.WendigoLeapRecoveryTicks;
+                case WendigoAction.Howl: return Simulation.WendigoHowlRecoveryTicks;
+                case WendigoAction.Sweep: return Simulation.WendigoSweepRecoveryTicks;
+                default: return Simulation.WendigoClawRecoveryTicks;
+            }
+        }
     }
 
     public sealed partial class Simulation
@@ -46,6 +71,29 @@ namespace Game.Sim
 
         /// <summary>Замедление воя: минус 30% скорости бега на 30 тиков (1 с).</summary>
         public const int WendigoHowlSlowPercent = 30, WendigoHowlSlowTicks = 30;
+
+        // «Круг когтей» (решение владельца от 29.09): ответ на кружение. Если
+        // из последних 45 тиков герой провёл 30 (1 с) в 3 м от зверя, но вне
+        // конуса когтя (±70° от взгляда), Вендиго 21 тик замахивается на месте —
+        // на земле заполняется круг 3,2 м — и бьёт когтями вокруг себя: урон
+        // когтя и отброс героя на 2 м от центра. Потом 18 тиков стоит
+        // открытым. Перезарядка 180 тиков от начала. Круг — крупная атака весом
+        // 1, как прыжок и вой: без жетона и места в бюджете меток не встаёт.
+        public const int WendigoSweepWindupTicks = 21, WendigoSweepRecoveryTicks = 18;
+        public const int WendigoSweepCooldownTicks = 180;
+
+        /// <summary>Окно слежки за кружением: из последних WendigoSweepWindowTicks тиков ≥ WendigoSweepFlankTicks сбоку или сзади.</summary>
+        public const int WendigoSweepWindowTicks = 45, WendigoSweepFlankTicks = 30;
+
+        /// <summary>Отброс круга: 2 м от центра Вендиго за 10 тиков (0,2 м за тик).</summary>
+        public const int WendigoSweepKnockbackTicks = 10;
+        public static readonly Fix64 WendigoSweepKnockbackDistance = Fix64.FromInt(2);
+
+        /// <summary>Радиус круга — одна фигура и для метки на земле, и для удара.</summary>
+        public static readonly Fix64 WendigoSweepRadius = Fix64.Ratio(16, 5);
+
+        /// <summary>Кружением считается только ближний бой: герой не дальше 3 м между центрами.</summary>
+        public static readonly Fix64 WendigoSweepWatchRange = Fix64.FromInt(3);
 
         public static readonly Fix64 WendigoBodyRadius = EnemyArchetypes.WendigoBodyRadius;
         public static readonly Fix64 WendigoClawRange = Fix64.Ratio(27, 10);
@@ -83,6 +131,16 @@ namespace Game.Sim
 
         private int[] WendigoNextHowl => _wendigoNextHowl ??= new int[Entities.Capacity];
 
+        // Круг когтей: перезарядка и окно слежки за кружением. Окно — 45 бит,
+        // младший — текущий тик: 1 — герой в этот тик был сбоку или сзади в
+        // WendigoSweepWatchRange. Заводятся так же лениво, как перезарядка воя.
+        private const ulong WendigoFlankMask = (1UL << WendigoSweepWindowTicks) - 1;
+        private int[] _wendigoNextSweep;
+        private ulong[] _wendigoFlank;
+
+        private int[] WendigoNextSweep => _wendigoNextSweep ??= new int[Entities.Capacity];
+        private ulong[] WendigoFlank => _wendigoFlank ??= new ulong[Entities.Capacity];
+
         /// <summary>
         /// Сколько ещё шагов герой пройдёт замедленным. Прежнее имя для HUD,
         /// вида героя и тестов воя: замедление теперь общее (Simulation.HeroSlow),
@@ -118,13 +176,21 @@ namespace Game.Sim
         public int WendigoHowlDamageOf(int id)
             => EnemyArchetypes.WendigoShare(Entities.Damage[id], EnemyArchetypes.WendigoHowlDamage);
 
+        /// <summary>Круг когтей бьёт уроном когтя: это тот же коготь, только вокруг себя.</summary>
+        public int WendigoSweepDamageOf(int id) => WendigoClawDamageOf(id);
+
         /// <summary>Кольцо воя с центром в center — одна фигура и для метки, и для удара.</summary>
         public static EnemyTelegraph WendigoHowlRing(FixVec2 center)
             => EnemyTelegraph.Ring(center, WendigoHowlInnerRadius, WendigoHowlOuterRadius);
 
+        /// <summary>Круг когтей с центром в center — одна фигура и для метки, и для удара.</summary>
+        public static EnemyTelegraph WendigoSweepCircle(FixVec2 center)
+            => EnemyTelegraph.Circle(center, WendigoSweepRadius);
+
         /// <summary>
-        /// Держит ли Вендиго крупный жетон: прыжок — до приземления, вой — до
-        /// удара. Коготь жетона не берёт. Для подсчёта в BigAttackTokenFree.
+        /// Держит ли Вендиго крупный жетон: прыжок — до приземления, вой и
+        /// круг когтей — до удара. Коготь жетона не берёт. Для подсчёта в
+        /// BigAttackTokenFree и в бюджете меток (вес 1).
         /// </summary>
         internal bool WendigoHoldsBigToken(int id)
         {
@@ -142,13 +208,44 @@ namespace Game.Sim
             _wendigoNextLeap[id] = leapReadyTick; WendigoNextHowl[id] = howlReadyTick;
         }
 
+        /// <summary>Сдвигает перезарядку круга когтей. Для стендов съёмки и тестов.</summary>
+        public void SetWendigoSweepCooldown(int id, int sweepReadyTick)
+        {
+            if ((uint)id >= (uint)Entities.Count || Entities.Kind[id] != EnemyKind.ForestWendigo) return;
+            WendigoNextSweep[id] = sweepReadyTick;
+        }
+
+        /// <summary>
+        /// Сколько из последних WendigoSweepWindowTicks тиков герой провёл сбоку
+        /// или сзади Вендиго id в WendigoSweepWatchRange. Круг встаёт с
+        /// WendigoSweepFlankTicks. Для стенда, отладки и тестов.
+        /// </summary>
+        public int WendigoFlankTicks(int id)
+            => (uint)id < (uint)Entities.Count && Entities.Kind[id] == EnemyKind.ForestWendigo
+                ? CountBits(WendigoFlank[id]) : 0;
+
         private void ResetWendigo()
         {
             Array.Clear(_wendigoActions, 0, _wendigoActions.Length);
             Array.Clear(_wendigoNextLeap, 0, _wendigoNextLeap.Length);
             Array.Clear(WendigoNextHowl, 0, WendigoNextHowl.Length); _wendigoSerial = 0;
+            Array.Clear(WendigoNextSweep, 0, WendigoNextSweep.Length);
+            Array.Clear(WendigoFlank, 0, WendigoFlank.Length);
             // Замедление героя воем — общее (ResetHeroSlow), здесь его нет.
         }
+
+        /// <summary>Число единичных бит — целочисленно, одинаково на всех машинах.</summary>
+        private static int CountBits(ulong v)
+        {
+            v -= (v >> 1) & 0x5555555555555555UL;
+            v = (v & 0x3333333333333333UL) + ((v >> 2) & 0x3333333333333333UL);
+            v = (v + (v >> 4)) & 0x0F0F0F0F0F0F0F0FUL;
+            return (int)((v * 0x0101010101010101UL) >> 56);
+        }
+
+        /// <summary>Сдвигает окно слежки на тик: flank — герой сейчас сбоку или сзади в 3 м.</summary>
+        private void RecordWendigoFlank(int id, bool flank)
+            => WendigoFlank[id] = ((WendigoFlank[id] << 1) | (flank ? 1UL : 0UL)) & WendigoFlankMask;
 
         /// <summary>
         /// Замедление героя воем: минус WendigoHowlSlowPercent на
@@ -161,7 +258,10 @@ namespace Game.Sim
         private void ConfigureWendigo(int id)
         {
             Entities.BodyRadius[id] = WendigoBodyRadius;
-            Entities.PushWeight[id] = Fix64.Ratio(1, 2);
+            // Решение владельца от 29.09: Вендиго нельзя толкать. Вес 0 — и
+            // расталкивание его не сдвигает (вся доля достаётся соседу), и
+            // волок (Подсечка вихря, волна Обета) не берёт: ForcedMotion.Begin.
+            Entities.PushWeight[id] = Fix64.Zero;
             var s = Entities.Stats[id];
             s.SetBase(StatType.MoveSpeed, Fix64.FromInt(3));
             // Урон листа — коготь; прыжок и вой считаются от него (WendigoLeapDamageOf).
@@ -176,6 +276,8 @@ namespace Game.Sim
             // И бесплатного воя тоже: первый — не раньше полной перезарядки,
             // то есть после первого прыжка. Так крупные атаки чередуются.
             WendigoNextHowl[id] = Tick + WendigoHowlCooldownTicks;
+            // Круг готов сразу: ему и так нужна секунда кружения героя.
+            WendigoNextSweep[id] = Tick; WendigoFlank[id] = 0;
         }
 
         private void MoveWendigo(int id, FixVec2 toPlayer)
@@ -251,24 +353,40 @@ namespace Game.Sim
                 if (!Entities.Alive[id] || !Entities.Alive[PlayerId] || Statuses.IsStunned(id, Tick)
                     || ForcedMotion.IsActive(Entities, id))
                 {
-                    if (a.Serial != 0) _events.Add(new SimEvent(SimEventType.WendigoCancelled, id, PlayerId,
+                    // Круг когтей говорит общими событиями действий мобов, остальное — своими.
+                    if (a.Serial != 0 && a.Kind == WendigoAction.Sweep)
+                        _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionCancelled, id, PlayerId,
+                            EnemyActionKind.WendigoSweep, Entities.Position[id]));
+                    else if (a.Serial != 0) _events.Add(new SimEvent(SimEventType.WendigoCancelled, id, PlayerId,
                         a.Serial, false, Entities.Position[id], actionVariant: (int)a.Kind));
                     _wendigoActions[id] = default;
                     CancelTelegraphsOf(id);
+                    // Оглушённый и сбитый зверь за героем не следит: окно кружения идёт нулями.
+                    RecordWendigoFlank(id, false);
                     continue;
                 }
+                var delta = Entities.Position[PlayerId] - Entities.Position[id];
+                // Слежка за кружением — каждый тик, и в позе атаки тоже: именно
+                // пока коготь заперт в замахе, герой и заходит за спину.
+                RecordWendigoFlank(id, Entities.Aggro[id] && delta.LengthSq <= WendigoSweepWatchRange * WendigoSweepWatchRange
+                    && !FixVec2.WithinArc(Entities.Facing[id], delta, WendigoClawCos));
                 if (a.Serial != 0 && Tick >= a.EndTick) { _wendigoActions[id] = default; a = default; }
                 if (a.Serial == 0)
                 {
                     if (!Entities.Aggro[id] || Tick < Entities.NextAttackTick[id]) continue;
-                    var delta = Entities.Position[PlayerId] - Entities.Position[id];
                     var distance = delta.Length;
                     if (distance < Fix64.Ratio(1, 100)) continue;
                     WendigoAction kind = WendigoAction.None;
+                    // Круг когтей — первым: он ответ на кружение, и герою, ушедшему
+                    // за спину, коготь всё равно не страшен. Крупная атака, как прыжок и вой.
+                    if (distance <= WendigoSweepWatchRange && Tick >= WendigoNextSweep[id]
+                        && CountBits(WendigoFlank[id]) >= WendigoSweepFlankTicks
+                        && BigAttackTokenFree(id, 1, Tick + WendigoSweepWindupTicks))
+                        kind = WendigoAction.Sweep;
                     // Прыжок и вой — крупные атаки: без жетона Вендиго идёт пешком или бьёт когтем.
                     // Вой — только пока прыжок перезаряжается: два крупных удара чередуются,
                     // и вой не отнимает у прыжка его дистанцию.
-                    if (distance >= Fix64.FromInt(3) && distance <= Fix64.FromInt(7)
+                    else if (distance >= Fix64.FromInt(3) && distance <= Fix64.FromInt(7)
                         && Tick >= _wendigoNextLeap[id] && BigAttackTokenFree(id, 1, Tick + WendigoLeapImpactTicks)
                         && WendigoLeapPathClear(id, Entities.Position[PlayerId]))
                         kind = WendigoAction.Leap;
@@ -277,20 +395,36 @@ namespace Game.Sim
                         kind = WendigoAction.Howl;
                     else if (distance <= WendigoClawRange) kind = WendigoAction.Claw;
                     if (kind == WendigoAction.None) continue;
+                    bool sweep = kind == WendigoAction.Sweep;
+                    // Круг бьёт вокруг себя: центр — сам зверь, а взгляд остаётся прежним,
+                    // без рывка к герою за спиной — дальше он крутится на месте.
+                    var facing = Entities.Facing[id];
                     a = new WendigoActionState(++_wendigoSerial, kind, Tick, Entities.Position[id],
-                        Entities.Position[PlayerId], delta.Normalized());
+                        sweep ? Entities.Position[id] : Entities.Position[PlayerId],
+                        sweep && facing.LengthSq.Raw > 0 ? facing : delta.Normalized());
                     _wendigoActions[id] = a; Entities.Facing[id] = a.Direction; Entities.Velocity[id] = FixVec2.Zero;
                     // Пауза не продлевает позу восстановления: в ней можно идти и разворачиваться.
                     Entities.NextAttackTick[id] = a.EndTick + (kind == WendigoAction.Claw ? WendigoClawRestTicks : 0);
                     if (kind == WendigoAction.Leap) _wendigoNextLeap[id] = Tick + WendigoLeapCooldownTicks;
                     if (kind == WendigoAction.Howl) WendigoNextHowl[id] = Tick + WendigoHowlCooldownTicks;
-                    _events.Add(new SimEvent(SimEventType.WendigoStarted, id, PlayerId, a.Serial,
-                        false, kind == WendigoAction.Leap ? a.Target : a.Origin, actionVariant: (int)kind));
+                    if (sweep)
+                    {
+                        // Окно кружения начинается заново: следующий круг — за новую секунду за спиной.
+                        WendigoNextSweep[id] = Tick + WendigoSweepCooldownTicks; WendigoFlank[id] = 0;
+                        _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
+                            EnemyActionKind.WendigoSweep, a.Origin));
+                    }
+                    else
+                        _events.Add(new SimEvent(SimEventType.WendigoStarted, id, PlayerId, a.Serial,
+                            false, kind == WendigoAction.Leap ? a.Target : a.Origin, actionVariant: (int)kind));
                     // Коготь и прыжок — в общем списке без SharedView: на земле их пока
-                    // рисует собственный вид Вендиго. Кольцо воя — первая метка Вендиго,
-                    // которую рисует общий GroundTelegraphView.
+                    // рисует собственный вид Вендиго. Кольцо воя и круг когтей рисует
+                    // общий GroundTelegraphView.
                     if (kind == WendigoAction.Howl)
                         OpenTelegraph(id, WendigoHowlRing(a.Origin), a.ImpactTick,
+                            a.ImpactTick + TelegraphLingerTicks, TelegraphFlags.SharedView);
+                    else if (sweep)
+                        OpenTelegraph(id, WendigoSweepCircle(a.Origin), a.ImpactTick,
                             a.ImpactTick + TelegraphLingerTicks, TelegraphFlags.SharedView);
                     else
                         OpenTelegraph(id, kind == WendigoAction.Leap
@@ -301,13 +435,16 @@ namespace Game.Sim
                 if (a.HitResolved || Tick < a.ImpactTick) continue;
                 _wendigoActions[id] = a.Resolve();
                 ResolveTelegraphsOf(id);
-                _events.Add(new SimEvent(SimEventType.WendigoImpact, id, PlayerId, a.Serial,
-                    false, a.Kind == WendigoAction.Leap ? a.Target : a.Origin, actionVariant: (int)a.Kind));
+                if (a.Kind != WendigoAction.Sweep)
+                    _events.Add(new SimEvent(SimEventType.WendigoImpact, id, PlayerId, a.Serial,
+                        false, a.Kind == WendigoAction.Leap ? a.Target : a.Origin, actionVariant: (int)a.Kind));
                 var offset = Entities.Position[PlayerId] - (a.Kind == WendigoAction.Leap ? a.Target : a.Origin);
                 var limit = (a.Kind == WendigoAction.Leap ? WendigoLeapRadius : WendigoClawRange) + Entities.BodyRadius[PlayerId];
-                // Вой бьёт ровно по нарисованному кольцу: та же фигура, что в общем списке.
+                // Вой и круг бьют ровно по нарисованному: та же фигура, что в общем списке.
                 bool hit = a.Kind == WendigoAction.Howl
                     ? TelegraphContains(WendigoHowlRing(a.Origin), Entities.Position[PlayerId], Entities.BodyRadius[PlayerId])
+                    : a.Kind == WendigoAction.Sweep
+                    ? TelegraphContains(WendigoSweepCircle(a.Origin), Entities.Position[PlayerId], Entities.BodyRadius[PlayerId])
                     : offset.LengthSq <= limit * limit && (a.Kind == WendigoAction.Leap
                         || FixVec2.WithinArc(a.Direction, offset, WendigoClawCos));
                 if (hit && _layout != null)
@@ -318,17 +455,46 @@ namespace Game.Sim
                     for (int step = 1; step <= steps && hit; step++)
                         hit = _layout.IsWalkable(from + ray * Fix64.Ratio(step, steps), Fix64.Ratio(1, 10));
                 }
+                if (a.Kind == WendigoAction.Sweep)
+                    _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
+                        EnemyActionKind.WendigoSweep, a.Origin, 0, hit));
                 if (!hit) continue;
                 int health = Entities.Health[PlayerId];
                 ApplyAbilityDamage(id, PlayerId, a.Kind == WendigoAction.Leap ? WendigoLeapDamageOf(id)
-                    : a.Kind == WendigoAction.Howl ? WendigoHowlDamageOf(id) : WendigoClawDamageOf(id),
+                    : a.Kind == WendigoAction.Howl ? WendigoHowlDamageOf(id)
+                    : a.Kind == WendigoAction.Sweep ? WendigoSweepDamageOf(id) : WendigoClawDamageOf(id),
                     -1, DamageType.Physical);
-                // Замедление — только если вой действительно достал: уклонение,
-                // неуязвимость и отложенный Песочными Часами урон его не вешают.
-                // То же правило, что у отброса Камнекопыта.
-                if (a.Kind == WendigoAction.Howl && Entities.Alive[PlayerId] && Entities.Health[PlayerId] < health)
-                    ApplyWendigoHowlSlow();
+                // Замедление и отброс — только если удар действительно достал:
+                // уклонение, неуязвимость и отложенный Песочными Часами урон их
+                // не вешают. То же правило, что у отброса Камнекопыта.
+                if (!Entities.Alive[PlayerId] || Entities.Health[PlayerId] >= health) continue;
+                if (a.Kind == WendigoAction.Howl) ApplyWendigoHowlSlow();
+                else if (a.Kind == WendigoAction.Sweep) ApplyWendigoSweepKnockback(in a);
             }
+        }
+
+        /// <summary>
+        /// Отброс круга когтей: герой уезжает на WendigoSweepKnockbackDistance
+        /// от центра круга, упираясь в стены, как отброс всплеска Шипомёта.
+        /// Неуязвимого и уже летящего (кувырок, другой отброс) не трогает.
+        /// </summary>
+        private void ApplyWendigoSweepKnockback(in WendigoActionState action)
+        {
+            if (PlayerImmune || ForcedMotion.IsActive(Entities, PlayerId)) return;
+            var hero = Entities.Position[PlayerId];
+            var away = hero - action.Origin;
+            var direction = away.LengthSq.Raw > 0 ? away.Normalized() : action.Direction;
+            var radius = Entities.BodyRadius[PlayerId];
+            var target = hero;
+            var piece = WendigoSweepKnockbackDistance / 20;
+            for (int step = 0; step < 20; step++)
+            {
+                var next = target + direction * piece;
+                if ((_layout != null || _campWalkMap != null) && !CanTravel(target, next, radius)) break;
+                target = next;
+            }
+            if (!target.Equals(hero))
+                ForcedMotion.Begin(Entities, PlayerId, target, WendigoSweepKnockbackTicks, ForcedMotionKind.Knockback);
         }
 
         public EncounterPlan SetupWendigoEncounter(LayoutMap map, ulong seed, bool withPack = false)
@@ -385,6 +551,7 @@ namespace Game.Sim
                 if (Entities.Kind[id] != EnemyKind.ForestWendigo) continue;
                 var a = _wendigoActions[id]; Hashing.Mix(ref hash, id); Hashing.Mix(ref hash, _wendigoNextLeap[id]);
                 Hashing.Mix(ref hash, WendigoNextHowl[id]);
+                Hashing.Mix(ref hash, WendigoNextSweep[id]); Hashing.Mix(ref hash, WendigoFlank[id]);
                 Hashing.Mix(ref hash, a.Serial); Hashing.Mix(ref hash, (int)a.Kind); Hashing.Mix(ref hash, a.StartTick);
                 Hashing.Mix(ref hash, a.Origin.X.Raw); Hashing.Mix(ref hash, a.Origin.Y.Raw);
                 Hashing.Mix(ref hash, a.Target.X.Raw); Hashing.Mix(ref hash, a.Target.Y.Raw);

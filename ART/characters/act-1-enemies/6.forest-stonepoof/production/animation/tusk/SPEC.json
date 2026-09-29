@@ -1,0 +1,37 @@
+{
+  "stage": "tusk_swipe_r01",
+  "written": "2026-09-29",
+  "status": "Клип собран и выгружен в ForestStonehoof.fbx (дубль Stonehoof_Tusk). Ждёт просмотра владельцем в игре.",
+  "owner_request": "Ревью 29.09: взмах клыками вплотную, только если герой уже рядом; отброс 1 м. Реф — review/mobs-v2-concepts-2026-09-29/refs/stonehoof-tusk-swipe.mp4 (+ _sheet.jpg), целевой кадр — abilities/01-stonehoof-tusk-swipe.png.",
+  "game_contract": {
+    "sim": "Simulation.Stonehoof.cs: StonehoofTuskWindupTicks = 14, StonehoofTuskRecoveryTicks = 12; StonehoofTuskState {StartTick, ImpactTick, RecoverUntil}; события EnemyActionStarted/Impact/Cancelled с EnemyActionKind.StonehoofTusk",
+    "clip": "Stonehoof_Tusk, 30 кадров/с, 0–26, контакт на кадре 14 = ImpactTick, кадр 26 = стойка (стык с Idle); на месте, корень не едет, копыта стоят",
+    "view": "StonehoofAnimatorView: состояние Tusk ведётся фазой по тику Sim кусками — [StartTick, ImpactTick] -> кадры 0–14, [ImpactTick, RecoverUntil] -> 14–26; вход смесью 0,06 с, выход — смесью Idle",
+    "unity_builder": "StonehoofBuilder.cs: роль Tusk (необязательная, без петли), клип ищется по окончанию имени 'Stonehoof_Tusk'",
+    "vfx": "StonehoofCombatView: VFX_Tusk (комья, камешки, травинки, пыль из CFXR) в точке события EnemyActionImpact, возраст от тика удара; пыль у передних копыт"
+  },
+  "motion": {
+    "reference_time_map": "реф 1,6–3,3 с сжат в 26 кадров: откат и подъём головы (реф 1,6–2,1) -> кадры 0–4; голова падает низко (2,2–2,33) -> 4–11; крюк вверх-вбок (2,4) -> 11–14; голова наверху (2,5–2,8) -> 14–19; успокоение (2,8–3,3) -> 19–26",
+    "side": "Голова заряжается к ПРАВОМУ боку кабана (Blender -X) и цепляет снизу вверх к ЛЕВОМУ (+X). Ведущий клык — левый (вершина 516). В Unity: локальный -X относительно направления удара",
+    "keys": "tusk_params.py KEYS: 0 стойка, 4 откат, 8 голова вниз-вправо, 11 сжатый край, 14 КОНТАКТ (клыки проходят перед мордой снизу вверх на полной скорости, выпад корпуса 5,8 см вперёд), 17 вершина проноса вверх-влево, 20 и 23 спад, 26 стойка",
+    "crouch": "выпад и крен выводят передние цели IK из досягаемости — тело опускается ровно настолько (build.json crouch_m, максимум 2.6 см)"
+  },
+  "files": {
+    "params": "tusk_params.py — позы, кадры, вершины клыков",
+    "build": "build_tusk.py -- build|all -> Stonehoof_Tusk_r01.blend (редактируемый мастер на IK-риге windup_start r01) + build.json (замеры)",
+    "bake": "bake_tusk.py -> Stonehoof_Tusk_Baked_r01.blend, действие AN_Stonehoof_Tusk + bake_validation.json",
+    "package": "unity_package/build_package.py: SOURCES['Tusk'] = ('tusk/Stonehoof_Tusk_Baked_r01.blend', 'AN_Stonehoof_Tusk'); '-- --out <папка>' — пробный экспорт мимо Unity",
+    "verify": "verify_fbx.py FBX OUT.json -> fbx_validation.json; unity_package/compare_fbx_actions.py OLD NEW -> unity_package/fbx_compare_tusk.json",
+    "review": "render_tusk.py -- master|baked [percent] -> review/animation_tusk/<вид>_frames; sheets.py -> sheet_*.jpg; видео tusk_<вид>_30fps.mp4 и _x4slow.mp4"
+  },
+  "validation_r01": {
+    "ik_target_error_m": 4.5e-05,
+    "ankle_world_slip_m": 4.5e-05,
+    "minimum_skin_z_m": -3.1e-05,
+    "stance_join_m": 2.5e-07,
+    "bake_joint_error_m": 8.69e-07,
+    "leading_tusk": "самый быстрый шаг кадр 12->13, на контакте 14 — 96% пиковой скорости; морда проходит линию «вперёд» на кадре 13.4; вершина проноса — кадр 17, нижняя точка — кадр 11",
+    "fbx": "12 прежних дублей совпадают ключ в ключ (unity_package/fbx_compare_tusk.json identical=true), добавлен Stonehoof_Tusk 1–27 (импорт FBX сдвигает на +1), ключи объекта постоянны, дрейф копыт 4e-05 м (fbx_validation.json ok=true)"
+  },
+  "run": "\"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe\" -b --factory-startup --python tusk/build_tusk.py -- all ; затем из unity_package: blender -b --factory-startup --python build_package.py"
+}

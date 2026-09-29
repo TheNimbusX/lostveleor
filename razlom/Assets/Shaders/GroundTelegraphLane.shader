@@ -28,12 +28,11 @@ Shader "Razlom/Ground Telegraph Lane"
             V Vert(A a){V o;o.world=TransformObjectToWorld(a.vertex.xyz);o.position=TransformWorldToHClip(o.world);o.uv=a.uv;return o;}
             half4 Frag(V i):SV_Target
             {
+                // uv.x — поперёк полосы, uv.y — вдоль, от моба. Стрелки больше
+                // нет: в стиле трещин направление показывает бегущая кромка.
                 float edge=min(min(i.uv.x,1-i.uv.x)*_Width,min(i.uv.y,1-i.uv.y)*_Length);
-                float arrowY=lerp(.14,.87,saturate(_Progress));
-                float arrow=1-smoothstep(.028,.048,abs(i.uv.y-arrowY+abs(i.uv.x-.5)*.25));
-                arrow*=1-smoothstep(.19,.23,abs(i.uv.x-.5));
                 float remaining=_Consumed<=0?1:smoothstep(_Consumed-.01,_Consumed+.01,i.uv.y);
-                return GroundTelegraph(i.world.xz,edge,i.uv.y,_Progress,_Opacity*remaining,1,arrow);
+                return GroundTelegraphCracks(i.world.xz,edge,i.uv.y,_Length,_Progress,_Opacity*remaining,1);
             }
             ENDHLSL
         }

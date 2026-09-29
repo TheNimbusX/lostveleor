@@ -1,5 +1,9 @@
-"""Производная сцена и семь клипов. Принятые источники не перезаписываются."""
-import bpy,json,math,shutil
+"""Производная сцена и восемь клипов. Принятые источники не перезаписываются.
+
+blender -b unity_package/ForestWendigo_Production.blend --python build_unity_package.py [-- --fbx <путь>]
+Без --fbx пакет пишется прямо в razlom/Assets/Resources/Characters/Forest_Wendigo/ForestWendigo.fbx;
+с --fbx — в указанный файл (сначала сверка старых дублей, потом копия в Unity)."""
+import bpy,json,math,shutil,sys
 from pathlib import Path
 from mathutils import Quaternion,Vector
 ROOT=Path(__file__).resolve().parent;ANIM=ROOT.parent
@@ -21,7 +25,9 @@ clips={
  'Death':load(ROOT/'death_work/Death_Final.blend','AN_ForestWendigo_Death_Final'),
  'Walk':load(ROOT/'walk_revision_r04/Walk_Final.blend','AN_ForestWendigo_Walk_Final'),
  # Вой чащи (Howl): контакт когтей на кадре 24 из 48, см. reference_match_howl/validation.json.
- 'Howl':load(ANIM/'reference_match_howl/Howl_Baked_r01.blend','AN_ForestWendigo_Howl_Baked')}
+ 'Howl':load(ANIM/'reference_match_howl/Howl_Baked_r01.blend','AN_ForestWendigo_Howl_Baked'),
+ # Круг когтей (Sweep): кадр = тик Sim, удар на кадре 21 из 39, см. reference_match_sweep/validation.json.
+ 'Sweep':load(ANIM/'reference_match_sweep/Sweep_Baked_r01.blend','AN_ForestWendigo_Sweep_Baked')}
 for role,a in clips.items():
  a.name='Wendigo_'+role;a.use_fake_user=True
  if role=='Idle':
@@ -94,9 +100,13 @@ if guide is None:guide=bpy.data.objects.new('FacingGuide',None);s.collection.obj
 guide.parent=r;guide.location=(.36,.35,0)
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'ForestWendigo_Production.blend'))
 bpy.ops.object.select_all(action='DESELECT');r.select_set(True);mesh.select_set(True);guide.select_set(True);bpy.context.view_layer.objects.active=r
-bpy.ops.export_scene.fbx(filepath=str(UNITY/'ForestWendigo.fbx'),use_selection=True,object_types={'ARMATURE','MESH','EMPTY'},
+argv=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
+FBX=Path(argv[argv.index('--fbx')+1]) if '--fbx' in argv else UNITY/'ForestWendigo.fbx'
+bpy.ops.export_scene.fbx(filepath=str(FBX),use_selection=True,object_types={'ARMATURE','MESH','EMPTY'},
  add_leaf_bones=False,use_armature_deform_only=True,axis_forward='-Z',axis_up='Y',apply_unit_scale=True,
  bake_anim=True,bake_anim_use_nla_strips=False,bake_anim_use_all_actions=True,bake_anim_force_startend_keying=True,
  bake_anim_step=.25,bake_anim_simplify_factor=0,mesh_smooth_type='FACE',use_mesh_modifiers=True,path_mode='AUTO')
-manifest={'triangles':sum(len(p.vertices)-2 for p in mesh.data.polygons),'fps':24,'clips':{k:list(a.frame_range) for k,a in clips.items()},'max_weights':4,'pruned_vertices':pruned,'maximum_pruned_weight':lost_max,'source':'reference-matched; Claw r02 immutable; Howl r01 added 2026-09-26','contact_frames':{'Howl':24},'root_motion':False}
+manifest={'triangles':sum(len(p.vertices)-2 for p in mesh.data.polygons),'fps':24,'clips':{k:list(a.frame_range) for k,a in clips.items()},'max_weights':4,'pruned_vertices':pruned,'maximum_pruned_weight':lost_max,'source':'reference-matched; Claw r02 immutable; Howl r01 added 2026-09-26; Sweep r01 added 2026-09-29','contact_frames':{'Howl':24,'Sweep':21},
+ # У Sweep кадр — тик Sim (30 в секунду): вид ведёт клип фазой, длина в секундах не важна.
+ 'frame_units':{'Sweep':'sim tick (1/30 s)'},'root_motion':False}
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2));result=manifest

@@ -29,7 +29,26 @@ namespace Game.Sim
 
         private int _entryCount;
 
+        // Ячейки с кем-то после прошлой пересборки лежат в [_usedLow, _usedHigh]:
+        // вне диапазона счётчики — нули, и пересборке не нужно трижды обходить
+        // все 4096 ячеек ради полусотни тел (поток D, 29.09). Ячейка каждого
+        // тела запоминается в первом проходе и не считается второй раз.
+        private int _usedLow, _usedHigh = -1;
+        private readonly int[] _entityCell;
+
         public int CellCount => _cellsX * _cellsY;
+
+        // Раскладка для обхода пар соседей по ячейкам (Simulation.SeparateBodies):
+        // массивы отдаются как есть, чтобы горячий цикл не звал метод на каждое
+        // тело. Только чтение. Начало пустой ячейки не значит ничего — смотреть
+        // сначала на счётчик.
+        internal int CellsX => _cellsX;
+        internal int CellsY => _cellsY;
+        internal int UsedLow => _usedLow;
+        internal int UsedHigh => _usedHigh;
+        internal int[] CellStarts => _cellStart;
+        internal int[] CellCounts => _cellCount;
+        internal int[] Entries => _entries;
 
         /// <param name="origin">Левый нижний угол сетки в мировых координатах.</param>
         /// <param name="cellSize">Сторона ячейки. Брать не меньше самого большого радиуса запроса.</param>
@@ -44,6 +63,7 @@ namespace Game.Sim
             _cellCount = new int[cellsX * cellsY];
             _cellStart = new int[cellsX * cellsY + 1];
             _entries = new int[capacity];
+            _entityCell = new int[capacity];
         }
 
         /// <summary>Ячейка точки. Координаты за пределами сетки прижимаются к краю:
@@ -63,19 +83,26 @@ namespace Game.Sim
         public void Rebuild(EntityStore entities)
         {
             int cells = _cellsX * _cellsY;
-            for (int i = 0; i < cells; i++) _cellCount[i] = 0;
+            // Вне прошлого занятого диапазона счётчики и так нули.
+            for (int c = _usedLow; c <= _usedHigh; c++) _cellCount[c] = 0;
 
             // 1. Счёт
+            int low = cells, high = -1;
             for (int i = 0; i < entities.Count; i++)
             {
                 if (!entities.Alive[i]) continue;
                 CellOf(entities.Position[i], out int cx, out int cy);
-                _cellCount[cy * _cellsX + cx]++;
+                int c = cy * _cellsX + cx;
+                _entityCell[i] = c;
+                _cellCount[c]++;
+                if (c < low) low = c;
+                if (c > high) high = c;
             }
 
-            // 2. Префиксные суммы
+            // 2. Префиксные суммы — по занятому диапазону. Начало пустой ячейки
+            // запросы не читают: при нулевом счётчике обход её не заходит.
             int running = 0;
-            for (int c = 0; c < cells; c++)
+            for (int c = low; c <= high; c++)
             {
                 _cellStart[c] = running;
                 running += _cellCount[c];
@@ -85,16 +112,17 @@ namespace Game.Sim
 
             // 3. Раскладка. Идём по возрастанию индекса сущности, поэтому
             // внутри каждой ячейки индексы тоже возрастают.
-            for (int c = 0; c < cells; c++) _cellCount[c] = 0;
+            for (int c = low; c <= high; c++) _cellCount[c] = 0;
 
             for (int i = 0; i < entities.Count; i++)
             {
                 if (!entities.Alive[i]) continue;
-                CellOf(entities.Position[i], out int cx, out int cy);
-                int c = cy * _cellsX + cx;
+                int c = _entityCell[i];
                 _entries[_cellStart[c] + _cellCount[c]] = i;
                 _cellCount[c]++;
             }
+            _usedLow = high >= 0 ? low : 0;
+            _usedHigh = high;
         }
 
         /// <summary>

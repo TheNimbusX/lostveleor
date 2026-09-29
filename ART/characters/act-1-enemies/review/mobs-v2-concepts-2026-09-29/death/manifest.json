@@ -1,0 +1,37 @@
+{
+  "section": "death",
+  "gate": "G7",
+  "model": "gpt_image_2_5",
+  "quality": "high",
+  "resolution": "2k",
+  "aspect_ratio": "16:9",
+  "credits_each": 2.75,
+  "date": "2026-09-29",
+  "note": "Bases are 2x crops (960x540 -> upscaled 1920x1080) of artifacts/mobsv2-bases. The swarm capture (mobsv2-bases/swarm) shows no root swarm on screen (hero stands in the stone portal ring), so item 02 uses the wendigo capture where two root swarms flank the hero.",
+  "items": [
+    {
+      "file": "01-guardian-bark-burst.png",
+      "base": "guardian/shot_02_t3.50s.png crop x620-1580 y190-730",
+      "job_id": "c9d312a8-a7ab-4848-8c7a-d63f788f88f9",
+      "prompt_summary": "Kill moment: the tree-warrior nearest the hero cracks along bark plates and bursts into bark chips, splinters, twigs and leaves radially; brief warm white-gold flash on the body; wood dust; 6-8 gold essence motes arc toward the hero. Second guardian untouched."
+    },
+    {
+      "file": "02-swarm-rot-crumble.png",
+      "base": "wendigo/shot_00_t1.50s.png crop x530-1490 y190-730 (root swarm right of hero)",
+      "job_id": "725ed94d-41db-4a7e-bb4b-ed484ffd387f",
+      "prompt_summary": "Kill moment: small root-swarm right of the hero crumbles into a low spray of rotten wood crumbs, root fibers, dry leaves and soil dust, sags into a heap; brief warm flash; 3-4 gold motes toward the hero. Wendigo, other swarm and red telegraph sector kept."
+    },
+    {
+      "file": "03-bud-spore-sap-burst.png",
+      "base": "bud/shot_03_t6.00s.png crop x820-1780 y230-770",
+      "job_id": "3b671edd-9a32-4e46-af2c-9391aa646e45",
+      "prompt_summary": "Kill moment: the lowest bud's red petal cap splits and bursts into golden pollen spores, amber-green sap droplets and splatter, torn petals and leaf bits; warm flash in the center; 3-4 gold motes drift to the hero. Other buds unchanged."
+    },
+    {
+      "file": "04-wendigo-antler-shatter.png",
+      "base": "wendigo/shot_00_t1.50s.png crop x590-1550 y110-650",
+      "job_id": "fbb52bb0-8644-48c3-a4d8-088484ed33e6",
+      "prompt_summary": "Elite kill moment: wendigo collapses into bone-white antler shards and splinters with clumps of moss and leaves, dust puff, warm flash, stream of 10-12 gold essence motes toward the hero. Red telegraph sector and the thin red line across its body removed (attack cancelled by death)."
+    }
+  ]
+}

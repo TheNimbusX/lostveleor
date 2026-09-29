@@ -83,3 +83,7 @@ Desktop.ini
 
 # Local compiled test tooling and downloaded runtime dependencies
 /tools/artifacts/
+
+# Исходники Epidemic Sound (29.09): лицензия не ясна, 464 МБ — в игру идёт только нарезка в Resources/Audio
+ART/SFX/epidemic-2026-09-29/raw/
+ART/SFX/epidemic-2026-09-29/board/*.mp3

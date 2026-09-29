@@ -14,6 +14,13 @@ namespace Game.View
     /// посадке, кончики корней на замахе воя и кольцо корней в коре на ударе. Префабы
     /// собирает ForestWendigoVfxSetup. Каждый эффект ведётся по возрасту от
     /// тика Sim через Simulate — пауза и съёмка держат кадр.
+    ///
+    /// Круг когтей (V13, 29.09) ставится только событиями Sim общего вида
+    /// действий мобов (EnemyActionKind.WendigoSweep): Started — ленты по
+    /// путям когтей, вихрь у опоры, пыль приземления (возраст от тика старта,
+    /// гаснет, если действие снято до удара); Impact — кольцо удара, пыль и
+    /// листья наружу; Cancelled — гасит ещё не ударивший круг. Круг на земле
+    /// рисует общий GroundTelegraphView (SharedView), здесь метки нет.
     /// </summary>
     [DefaultExecutionOrder(640)]
     public sealed class ForestWendigoCombatView : MonoBehaviour
@@ -57,7 +64,7 @@ namespace Game.View
         private Simulation _shown;
         private readonly Mark[] _marks = new Mark[4];
         private Material _material;
-        private Pool _claw, _takeoff, _landing, _howlWindup, _howl, _breath;
+        private Pool _claw, _takeoff, _landing, _howlWindup, _howl, _breath, _sweepSpin, _sweep;
         private Pool[] _pools;
         private readonly Dictionary<int, int> _clawFired = new Dictionary<int, int>();
         private readonly Dictionary<int, int> _launched = new Dictionary<int, int>();
@@ -108,7 +115,10 @@ namespace Game.View
             _howlWindup = MakePool("VFX_Wendigo_HowlWindup", "Вендиго: замах воя", 2, 1.15f);
             _howl = MakePool("VFX_Wendigo_Howl", "Вендиго: вой", 2, 2.3f);
             _breath = MakePool("VFX_Wendigo_HowlBreath", "Вендиго: дыхание воя", 2, 1.3f);
-            _pools = new[] { _claw, _takeoff, _landing, _howlWindup, _howl, _breath };
+            // Круг когтей: часть от старта — до конца листьев вихря (0,47 + 2,4 с), удар — до листьев и пятна.
+            _sweepSpin = MakePool("VFX_Wendigo_SweepSpin", "Вендиго: круг когтей", 2, 2.95f);
+            _sweep = MakePool("VFX_Wendigo_Sweep", "Вендиго: удар круга", 2, 2.5f);
+            _pools = new[] { _claw, _takeoff, _landing, _howlWindup, _howl, _breath, _sweepSpin, _sweep };
         }
 
         private Pool MakePool(string prefabName, string name, int count, float life)
@@ -146,10 +156,17 @@ namespace Game.View
                 _launched.Clear(); _clawFired.Clear(); _windupFired.Clear(); _bones.Clear();
             }
             float tick=sim.Tick-1+_driver.Alpha;
-            // Удары, пришедшие событием: посадка прыжка и удар воя.
+            // Удары, пришедшие событием: посадка прыжка, удар воя, круг когтей.
             foreach(var c in _driver.FrameEventContexts)
             {
                 var e = c.Event;
+                if (e.ActionVariant == (int)EnemyActionKind.WendigoSweep
+                    && (e.Type == SimEventType.EnemyActionStarted || e.Type == SimEventType.EnemyActionImpact
+                        || e.Type == SimEventType.EnemyActionCancelled))
+                {
+                    SweepEvent(sim, c);
+                    continue;
+                }
                 if (e.Type != SimEventType.WendigoImpact) continue;
                 bool known = sim.TryGetWendigoAction(e.Source, out var action) && action.Serial == e.Amount;
                 int at = known ? action.ImpactTick : c.SimulationTick;
@@ -198,8 +215,10 @@ namespace Game.View
             }
             for(int id=1;id<sim.Entities.Count;id++)
             {
-                // Кольцо воя рисует общий GroundTelegraphView (SharedView): здесь только клин и круг.
-                if(!sim.TryGetWendigoAction(id,out var a)||a.Kind==WendigoAction.Howl||tick>a.ImpactTick+9)continue;
+                // Кольцо воя и круг когтей рисует общий GroundTelegraphView (SharedView):
+                // здесь только клин когтя и круг посадки прыжка.
+                if(!sim.TryGetWendigoAction(id,out var a)||a.Kind==WendigoAction.Howl||a.Kind==WendigoAction.Sweep
+                    ||tick>a.ImpactTick+9)continue;
                 Mark free=null;bool exists=false;
                 foreach(var m in _marks){if(m.Entity==id&&m.Serial==a.Serial)exists=true;if(m.Entity<0)free=m;}
                 if(exists||free==null)continue;Build(free,id,a);
@@ -293,6 +312,41 @@ namespace Game.View
             Bones bones = BonesOf(entity);
             Vector3 head = bones?.Head != null ? bones.Head.position : origin + facing * HeadFallback;
             Take(_breath, tick, head, facing, tick);
+        }
+
+        /// <summary>
+        /// Круг когтей по событиям Sim. Тики и взгляд — из действия Sim, если оно
+        /// ещё идёт (событие пришло в этом кадре); иначе тик события (Tick
+        /// после шага минус один) и текущий взгляд зверя.
+        /// </summary>
+        private void SweepEvent(Simulation sim, FrameEventContext c)
+        {
+            var e = c.Event;
+            if (e.Type == SimEventType.EnemyActionCancelled)
+            {
+                // Снятый до удара круг гасит ленты и вихрь; удар уже не придёт. Снятие
+                // в восстановлении (после удара) эффект не трогает: круг уже был.
+                foreach (var b in _sweepSpin.Items)
+                    if (b != null && b.Entity == e.Source && b.Root.activeSelf && c.SimulationTick - 1 < b.CancelBefore) Retire(b);
+                return;
+            }
+            bool known = sim.TryGetWendigoAction(e.Source, out var a) && a.Kind == WendigoAction.Sweep;
+            FixVec2 facing = known ? a.Direction
+                : e.Source >= 0 && e.Source < sim.Entities.Count ? sim.Entities.Facing[e.Source] : default;
+            if (e.Type == SimEventType.EnemyActionStarted)
+            {
+                // Круга в Sim уже нет — его сняли тем же кадром (два тика за кадр:
+                // старт и оглушение). Без хозяина ленты не погасли бы ни снятием,
+                // ни сверкой с Sim и крутились бы все 2,95 с над несостоявшимся кругом.
+                if (!known) return;
+                var b = Take(_sweepSpin, a.StartTick, Ground(e.Position, 0f), Facing(facing), a.Serial);
+                if (b != null) { b.Entity = e.Source; b.Serial = a.Serial; b.CancelBefore = a.ImpactTick; }
+            }
+            else
+            {
+                int at = known ? a.ImpactTick : c.SimulationTick - 1;
+                Take(_sweep, at, Ground(e.Position, 0f), Facing(facing), at);
+            }
         }
 
         private Bones BonesOf(int entity)

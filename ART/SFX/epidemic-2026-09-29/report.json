@@ -1,0 +1,3693 @@
+{
+ "sample_rate": 48000,
+ "ceiling_dbfs": -1.0,
+ "targets_lufs_m_max": {
+  "oneshot": -18.0,
+  "voice": -18.0,
+  "big": -16.0,
+  "kill": -15.0,
+  "bed": -20.0
+ },
+ "clips": [
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/swing_01.wav",
+   "mob": "Guardian",
+   "slot": "swing",
+   "pick": "Forest Guardian: claw swing whoosh",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.55,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.15,
+   "onset_ms": 97.9,
+   "peak_s": 0.199,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Wood Stick, Heavy - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Wood Stick, Heavy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/0cbfed9f-c1f2-4f58-a53d-aeb3fdaeac78/",
+     "from_s": 0.05,
+     "to_s": 0.85,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/swing_02.wav",
+   "mob": "Guardian",
+   "slot": "swing",
+   "pick": "Forest Guardian: claw swing whoosh",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.55,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.21,
+   "onset_ms": 88.7,
+   "peak_s": 0.196,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Wood Stick, Heavy - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Wood Stick, Heavy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/0cbfed9f-c1f2-4f58-a53d-aeb3fdaeac78/",
+     "from_s": 1.0,
+     "to_s": 1.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/swing_03.wav",
+   "mob": "Guardian",
+   "slot": "swing",
+   "pick": "Forest Guardian: claw swing whoosh",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.55,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.2,
+   "onset_ms": 110.0,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Wood Stick, Heavy - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Wood Stick, Heavy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/0cbfed9f-c1f2-4f58-a53d-aeb3fdaeac78/",
+     "from_s": 1.95,
+     "to_s": 2.75,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/swing_04.wav",
+   "mob": "Guardian",
+   "slot": "swing",
+   "pick": "Forest Guardian: claw swing whoosh",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.55,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.42,
+   "onset_ms": 112.2,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Wood Stick, Heavy - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Wood Stick, Heavy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/0cbfed9f-c1f2-4f58-a53d-aeb3fdaeac78/",
+     "from_s": 2.85,
+     "to_s": 3.65,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/impact_01.wav",
+   "mob": "Guardian",
+   "slot": "impact",
+   "pick": "Forest Guardian: claw impact on hero",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.742,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.33,
+   "onset_ms": 0.0,
+   "peak_s": 0.192,
+   "sources": [
+    {
+     "file": "ES_Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01 - Epidemic Sound.wav",
+     "title": "Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/99d77cb4-6e6c-4d66-856f-d079138cf4b3/",
+     "from_s": 0.03,
+     "to_s": 1.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Wood, Impact, Hit, Thud, Heavy, Distant - Epidemic Sound.wav",
+     "title": "Wood, Impact, Hit, Thud, Heavy, Distant",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8ceb628f-83db-4df7-a176-534ac9fdd1e9/",
+     "from_s": 0.02,
+     "to_s": 0.9,
+     "gain_db": -5.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/impact_02.wav",
+   "mob": "Guardian",
+   "slot": "impact",
+   "pick": "Forest Guardian: claw impact on hero",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.75,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.16,
+   "onset_ms": 0.0,
+   "peak_s": 0.08,
+   "sources": [
+    {
+     "file": "ES_Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01 - Epidemic Sound.wav",
+     "title": "Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/99d77cb4-6e6c-4d66-856f-d079138cf4b3/",
+     "from_s": 1.26,
+     "to_s": 2.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Wood, Impact, Hit, Thud, Heavy, Distant - Epidemic Sound.wav",
+     "title": "Wood, Impact, Hit, Thud, Heavy, Distant",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8ceb628f-83db-4df7-a176-534ac9fdd1e9/",
+     "from_s": 0.02,
+     "to_s": 0.9,
+     "gain_db": -5.0,
+     "rate": 0.94
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/impact_03.wav",
+   "mob": "Guardian",
+   "slot": "impact",
+   "pick": "Forest Guardian: claw impact on hero",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.747,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.16,
+   "onset_ms": 0.0,
+   "peak_s": 0.182,
+   "sources": [
+    {
+     "file": "ES_Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01 - Epidemic Sound.wav",
+     "title": "Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/99d77cb4-6e6c-4d66-856f-d079138cf4b3/",
+     "from_s": 2.5,
+     "to_s": 3.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Wood, Impact, Hit, Thud, Heavy, Distant - Epidemic Sound.wav",
+     "title": "Wood, Impact, Hit, Thud, Heavy, Distant",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8ceb628f-83db-4df7-a176-534ac9fdd1e9/",
+     "from_s": 0.02,
+     "to_s": 0.9,
+     "gain_db": -5.0,
+     "rate": 1.06
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/impact_04.wav",
+   "mob": "Guardian",
+   "slot": "impact",
+   "pick": "Forest Guardian: claw impact on hero",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.75,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.19,
+   "onset_ms": 0.0,
+   "peak_s": 0.02,
+   "sources": [
+    {
+     "file": "ES_Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01 - Epidemic Sound.wav",
+     "title": "Fight, Impact, Claw Attack, Scratch, Slash, Video Game 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/99d77cb4-6e6c-4d66-856f-d079138cf4b3/",
+     "from_s": 3.74,
+     "to_s": 4.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Wood, Impact, Hit, Thud, Heavy, Distant - Epidemic Sound.wav",
+     "title": "Wood, Impact, Hit, Thud, Heavy, Distant",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8ceb628f-83db-4df7-a176-534ac9fdd1e9/",
+     "from_s": 0.02,
+     "to_s": 0.9,
+     "gain_db": -5.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/hurt_01.wav",
+   "mob": "Guardian",
+   "slot": "hurt",
+   "pick": "Forest Guardian: hurt (creak + growl)",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.475,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.62,
+   "onset_ms": 10.0,
+   "peak_s": 0.122,
+   "sources": [
+    {
+     "file": "ES_Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03 - Epidemic Sound.wav",
+     "title": "Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/04ec1b7a-ddcc-48b8-8e51-a02cc5c25247/",
+     "from_s": 0.02,
+     "to_s": 0.52,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/hurt_02.wav",
+   "mob": "Guardian",
+   "slot": "hurt",
+   "pick": "Forest Guardian: hurt (creak + growl)",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.372,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.66,
+   "onset_ms": 10.0,
+   "peak_s": 0.016,
+   "sources": [
+    {
+     "file": "ES_Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03 - Epidemic Sound.wav",
+     "title": "Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/04ec1b7a-ddcc-48b8-8e51-a02cc5c25247/",
+     "from_s": 0.5,
+     "to_s": 0.98,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/hurt_03.wav",
+   "mob": "Guardian",
+   "slot": "hurt",
+   "pick": "Forest Guardian: hurt (creak + growl)",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.5,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.33,
+   "onset_ms": 10.0,
+   "peak_s": 0.134,
+   "sources": [
+    {
+     "file": "ES_Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03 - Epidemic Sound.wav",
+     "title": "Wood, Friction, Creak, Old Wooden Furniture, Short, Dry 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/04ec1b7a-ddcc-48b8-8e51-a02cc5c25247/",
+     "from_s": 0.02,
+     "to_s": 0.52,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/death_01.wav",
+   "mob": "Guardian",
+   "slot": "death",
+   "pick": "Forest Guardian: death (crumble, creak, thud)",
+   "align": "onset",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.9,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.0,
+   "onset_ms": 9.4,
+   "peak_s": 0.263,
+   "sources": [
+    {
+     "file": "ES_Wood, Break, Tree Crack, Fall 04 - Epidemic Sound.wav",
+     "title": "Wood, Break, Tree Crack, Fall 04",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ce19e9fb-a06b-45b5-99ca-81a4f7ef8d1c/",
+     "from_s": 1.2,
+     "to_s": 3.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/death_02.wav",
+   "mob": "Guardian",
+   "slot": "death",
+   "pick": "Forest Guardian: death (crumble, creak, thud)",
+   "align": "onset",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.9,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.0,
+   "onset_ms": 9.4,
+   "peak_s": 1.036,
+   "sources": [
+    {
+     "file": "ES_Wood, Break, Tree Crack, Fall 04 - Epidemic Sound.wav",
+     "title": "Wood, Break, Tree Crack, Fall 04",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ce19e9fb-a06b-45b5-99ca-81a4f7ef8d1c/",
+     "from_s": 1.2,
+     "to_s": 3.2,
+     "gain_db": 0.0,
+     "rate": 0.93
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/step_01.wav",
+   "mob": "Guardian",
+   "slot": "step",
+   "pick": "Forest Guardian: footsteps (heavy wooden)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.5,
+   "onset_ms": 4.2,
+   "peak_s": 0.045,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS) - Epidemic Sound.wav",
+     "title": "Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/52580367-874f-45d8-8ef1-3021c776957c/",
+     "from_s": 3.05,
+     "to_s": 3.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/step_02.wav",
+   "mob": "Guardian",
+   "slot": "step",
+   "pick": "Forest Guardian: footsteps (heavy wooden)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.8,
+   "onset_ms": 3.5,
+   "peak_s": 0.01,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS) - Epidemic Sound.wav",
+     "title": "Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/52580367-874f-45d8-8ef1-3021c776957c/",
+     "from_s": 6.64,
+     "to_s": 7.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/step_03.wav",
+   "mob": "Guardian",
+   "slot": "step",
+   "pick": "Forest Guardian: footsteps (heavy wooden)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.61,
+   "onset_ms": 3.6,
+   "peak_s": 0.025,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS) - Epidemic Sound.wav",
+     "title": "Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/52580367-874f-45d8-8ef1-3021c776957c/",
+     "from_s": 8.62,
+     "to_s": 9.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Guardian/step_04.wav",
+   "mob": "Guardian",
+   "slot": "step",
+   "pick": "Forest Guardian: footsteps (heavy wooden)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.82,
+   "onset_ms": 2.6,
+   "peak_s": 0.04,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS) - Epidemic Sound.wav",
+     "title": "Footsteps, Human, Stomp, Moss, Twigs, Rotten Wood, Distant, Forest, Oslo 04 Schoeps (MS)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/52580367-874f-45d8-8ef1-3021c776957c/",
+     "from_s": 14.69,
+     "to_s": 15.25,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/bite_01.wav",
+   "mob": "RootSwarm",
+   "slot": "bite",
+   "pick": "Root Swarm: bite / snap",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.142,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.39,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Eating, Bite Carrot - Epidemic Sound.wav",
+     "title": "Food & Drink, Eating, Bite Carrot",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/008b8cd5-8cbc-408d-a1a8-d8d1fddd6d9c/",
+     "from_s": 0.02,
+     "to_s": 0.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/bite_02.wav",
+   "mob": "RootSwarm",
+   "slot": "bite",
+   "pick": "Root Swarm: bite / snap",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.206,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.18,
+   "onset_ms": 0.0,
+   "peak_s": 0.041,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Eating, Bite Carrot - Epidemic Sound.wav",
+     "title": "Food & Drink, Eating, Bite Carrot",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/008b8cd5-8cbc-408d-a1a8-d8d1fddd6d9c/",
+     "from_s": 0.58,
+     "to_s": 0.93,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/bite_03.wav",
+   "mob": "RootSwarm",
+   "slot": "bite",
+   "pick": "Root Swarm: bite / snap",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.13,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.77,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Eating, Bite Carrot - Epidemic Sound.wav",
+     "title": "Food & Drink, Eating, Bite Carrot",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/008b8cd5-8cbc-408d-a1a8-d8d1fddd6d9c/",
+     "from_s": 0.02,
+     "to_s": 0.4,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/scuttle_01.wav",
+   "mob": "RootSwarm",
+   "slot": "scuttle",
+   "pick": "Root Swarm: scuttle / skitter",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 0.75,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.02,
+   "onset_ms": 25.8,
+   "peak_s": 0.403,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02 - Epidemic Sound.wav",
+     "title": "Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/771ee8a0-9849-48db-be7c-a8cfb6b7bd0b/",
+     "from_s": 0.0,
+     "to_s": 0.75,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/scuttle_02.wav",
+   "mob": "RootSwarm",
+   "slot": "scuttle",
+   "pick": "Root Swarm: scuttle / skitter",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 0.75,
+   "peak_dbfs": -1.21,
+   "lufs_m_max": -20.0,
+   "onset_ms": 7.5,
+   "peak_s": 0.54,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02 - Epidemic Sound.wav",
+     "title": "Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/771ee8a0-9849-48db-be7c-a8cfb6b7bd0b/",
+     "from_s": 0.35,
+     "to_s": 1.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/scuttle_03.wav",
+   "mob": "RootSwarm",
+   "slot": "scuttle",
+   "pick": "Root Swarm: scuttle / skitter",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 0.75,
+   "peak_dbfs": -2.27,
+   "lufs_m_max": -20.0,
+   "onset_ms": 2.7,
+   "peak_s": 0.19,
+   "sources": [
+    {
+     "file": "ES_Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02 - Epidemic Sound.wav",
+     "title": "Footsteps, Animal, Insect, Movement, Scuttle, Leaves, Undergrowth 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/771ee8a0-9849-48db-be7c-a8cfb6b7bd0b/",
+     "from_s": 0.7,
+     "to_s": 1.45,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/hurt_01.wav",
+   "mob": "RootSwarm",
+   "slot": "hurt",
+   "pick": "Root Swarm: hurt squeak",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -2.68,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.281,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Sheitan's Baby, Voice 03 - Epidemic Sound.wav",
+     "title": "Creatures, Small, Sheitan's Baby, Voice 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/d89a7006-3e23-428b-b2d7-4986812b22e7/",
+     "from_s": 0.02,
+     "to_s": 0.47,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/hurt_02.wav",
+   "mob": "RootSwarm",
+   "slot": "hurt",
+   "pick": "Root Swarm: hurt squeak",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -3.13,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.3,
+   "peak_s": 0.096,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Sheitan's Baby, Voice 03 - Epidemic Sound.wav",
+     "title": "Creatures, Small, Sheitan's Baby, Voice 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/d89a7006-3e23-428b-b2d7-4986812b22e7/",
+     "from_s": 0.42,
+     "to_s": 0.87,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/hurt_03.wav",
+   "mob": "RootSwarm",
+   "slot": "hurt",
+   "pick": "Root Swarm: hurt squeak",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.409,
+   "peak_dbfs": -2.38,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.251,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Sheitan's Baby, Voice 03 - Epidemic Sound.wav",
+     "title": "Creatures, Small, Sheitan's Baby, Voice 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/d89a7006-3e23-428b-b2d7-4986812b22e7/",
+     "from_s": 0.02,
+     "to_s": 0.47,
+     "gain_db": 0.0,
+     "rate": 1.12
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/death_01.wav",
+   "mob": "RootSwarm",
+   "slot": "death",
+   "pick": "Root Swarm: death pop / crunch",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.372,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.47,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Tree, Stick, Thin, Snap, Break - Epidemic Sound.wav",
+     "title": "Vegetation, Tree, Stick, Thin, Snap, Break",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/901cb3c2-746b-42de-9fd7-5400c6e10973/",
+     "from_s": 0.56,
+     "to_s": 1.05,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/death_02.wav",
+   "mob": "RootSwarm",
+   "slot": "death",
+   "pick": "Root Swarm: death pop / crunch",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.335,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.86,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Tree, Stick, Thin, Snap, Break - Epidemic Sound.wav",
+     "title": "Vegetation, Tree, Stick, Thin, Snap, Break",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/901cb3c2-746b-42de-9fd7-5400c6e10973/",
+     "from_s": 0.56,
+     "to_s": 1.05,
+     "gain_db": 0.0,
+     "rate": 1.12
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSwarm/death_03.wav",
+   "mob": "RootSwarm",
+   "slot": "death",
+   "pick": "Root Swarm: death pop / crunch",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.4,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.44,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Tree, Stick, Thin, Snap, Break - Epidemic Sound.wav",
+     "title": "Vegetation, Tree, Stick, Thin, Snap, Break",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/901cb3c2-746b-42de-9fd7-5400c6e10973/",
+     "from_s": 0.56,
+     "to_s": 1.05,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/spit_01.wav",
+   "mob": "Bud",
+   "slot": "spit",
+   "pick": "Forest Bud: spit / pop volley",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.24,
+   "peak_dbfs": -6.63,
+   "lufs_m_max": -18.0,
+   "onset_ms": 2.9,
+   "peak_s": 0.081,
+   "sources": [
+    {
+     "file": "ES_Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single - Epidemic Sound.wav",
+     "title": "Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/53e5af8b-73bd-4935-ad06-306835adb7ea/",
+     "from_s": 0.0,
+     "to_s": 0.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/spit_02.wav",
+   "mob": "Bud",
+   "slot": "spit",
+   "pick": "Forest Bud: spit / pop volley",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.24,
+   "peak_dbfs": -6.42,
+   "lufs_m_max": -18.0,
+   "onset_ms": 3.0,
+   "peak_s": 0.077,
+   "sources": [
+    {
+     "file": "ES_Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single - Epidemic Sound.wav",
+     "title": "Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/53e5af8b-73bd-4935-ad06-306835adb7ea/",
+     "from_s": 0.0,
+     "to_s": 0.4,
+     "gain_db": 0.0,
+     "rate": 1.08
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/spit_03.wav",
+   "mob": "Bud",
+   "slot": "spit",
+   "pick": "Forest Bud: spit / pop volley",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.24,
+   "peak_dbfs": -6.67,
+   "lufs_m_max": -18.0,
+   "onset_ms": 2.8,
+   "peak_s": 0.087,
+   "sources": [
+    {
+     "file": "ES_Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single - Epidemic Sound.wav",
+     "title": "Toys, Misc, Pea Shooter, Shoot, Release, Deep, Single",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/53e5af8b-73bd-4935-ad06-306835adb7ea/",
+     "from_s": 0.0,
+     "to_s": 0.4,
+     "gain_db": 0.0,
+     "rate": 0.93
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/splat_01.wav",
+   "mob": "Bud",
+   "slot": "splat",
+   "pick": "Forest Bud: fruit splat on ground",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.305,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.1,
+   "onset_ms": 0.0,
+   "peak_s": 0.069,
+   "sources": [
+    {
+     "file": "ES_Cartoon, Splat, Wet - Epidemic Sound.wav",
+     "title": "Cartoon, Splat, Wet",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/5a13be98-0e64-43c8-97ff-c8f9a7d06f8e/",
+     "from_s": 0.0,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/splat_02.wav",
+   "mob": "Bud",
+   "slot": "splat",
+   "pick": "Forest Bud: fruit splat on ground",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.33,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.1,
+   "onset_ms": 0.0,
+   "peak_s": 0.075,
+   "sources": [
+    {
+     "file": "ES_Cartoon, Splat, Wet - Epidemic Sound.wav",
+     "title": "Cartoon, Splat, Wet",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/5a13be98-0e64-43c8-97ff-c8f9a7d06f8e/",
+     "from_s": 0.0,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 0.92
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/splat_03.wav",
+   "mob": "Bud",
+   "slot": "splat",
+   "pick": "Forest Bud: fruit splat on ground",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.281,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.1,
+   "onset_ms": 0.0,
+   "peak_s": 0.027,
+   "sources": [
+    {
+     "file": "ES_Cartoon, Splat, Wet - Epidemic Sound.wav",
+     "title": "Cartoon, Splat, Wet",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/5a13be98-0e64-43c8-97ff-c8f9a7d06f8e/",
+     "from_s": 0.0,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 1.09
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/puddle_01.wav",
+   "mob": "Bud",
+   "slot": "puddle",
+   "pick": "Forest Bud: acid puddle sizzle / bubbling",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 2.2,
+   "peak_dbfs": -7.56,
+   "lufs_m_max": -20.0,
+   "onset_ms": 3.0,
+   "peak_s": 1.338,
+   "sources": [
+    {
+     "file": "ES_Chemicals, Acid, Bubbling, Sizzling, Close - Epidemic Sound.wav",
+     "title": "Chemicals, Acid, Bubbling, Sizzling, Close",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90f6e064-b0ec-4073-92e2-fd68fd646747/",
+     "from_s": 1.0,
+     "to_s": 3.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/puddle_02.wav",
+   "mob": "Bud",
+   "slot": "puddle",
+   "pick": "Forest Bud: acid puddle sizzle / bubbling",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 2.2,
+   "peak_dbfs": -7.48,
+   "lufs_m_max": -20.0,
+   "onset_ms": 7.4,
+   "peak_s": 1.531,
+   "sources": [
+    {
+     "file": "ES_Chemicals, Acid, Bubbling, Sizzling, Close - Epidemic Sound.wav",
+     "title": "Chemicals, Acid, Bubbling, Sizzling, Close",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90f6e064-b0ec-4073-92e2-fd68fd646747/",
+     "from_s": 5.5,
+     "to_s": 7.7,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/puddle_03.wav",
+   "mob": "Bud",
+   "slot": "puddle",
+   "pick": "Forest Bud: acid puddle sizzle / bubbling",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 2.2,
+   "peak_dbfs": -6.36,
+   "lufs_m_max": -20.0,
+   "onset_ms": 8.2,
+   "peak_s": 0.53,
+   "sources": [
+    {
+     "file": "ES_Chemicals, Acid, Bubbling, Sizzling, Close - Epidemic Sound.wav",
+     "title": "Chemicals, Acid, Bubbling, Sizzling, Close",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90f6e064-b0ec-4073-92e2-fd68fd646747/",
+     "from_s": 10.0,
+     "to_s": 12.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/hurt_01.wav",
+   "mob": "Bud",
+   "slot": "hurt",
+   "pick": "Forest Bud: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.441,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.1,
+   "onset_ms": 9.9,
+   "peak_s": 0.083,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Gurgling, Bubble - Epidemic Sound.wav",
+     "title": "Creatures, Small, Gurgling, Bubble",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e8369e2d-8f84-4c28-99c1-91ca26cb91c3/",
+     "from_s": 0.02,
+     "to_s": 0.48,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/hurt_02.wav",
+   "mob": "Bud",
+   "slot": "hurt",
+   "pick": "Forest Bud: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.18,
+   "onset_ms": 9.6,
+   "peak_s": 0.163,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Gurgling, Bubble - Epidemic Sound.wav",
+     "title": "Creatures, Small, Gurgling, Bubble",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e8369e2d-8f84-4c28-99c1-91ca26cb91c3/",
+     "from_s": 0.55,
+     "to_s": 1.02,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/hurt_03.wav",
+   "mob": "Bud",
+   "slot": "hurt",
+   "pick": "Forest Bud: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.402,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.14,
+   "onset_ms": 9.9,
+   "peak_s": 0.071,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Gurgling, Bubble - Epidemic Sound.wav",
+     "title": "Creatures, Small, Gurgling, Bubble",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e8369e2d-8f84-4c28-99c1-91ca26cb91c3/",
+     "from_s": 0.02,
+     "to_s": 0.48,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/death_01.wav",
+   "mob": "Bud",
+   "slot": "death",
+   "pick": "Forest Bud: death (squelch / burst)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.272,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.2,
+   "onset_ms": 0.0,
+   "peak_s": 0.006,
+   "sources": [
+    {
+     "file": "ES_Slime, Movement, Fast 05 - Epidemic Sound.wav",
+     "title": "Slime, Movement, Fast 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1d92c9ea-e5ce-42a7-804b-a4e92dd6f532/",
+     "from_s": 0.54,
+     "to_s": 0.91,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/death_02.wav",
+   "mob": "Bud",
+   "slot": "death",
+   "pick": "Forest Bud: death (squelch / burst)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.301,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.48,
+   "onset_ms": 0.0,
+   "peak_s": 0.006,
+   "sources": [
+    {
+     "file": "ES_Slime, Movement, Fast 05 - Epidemic Sound.wav",
+     "title": "Slime, Movement, Fast 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1d92c9ea-e5ce-42a7-804b-a4e92dd6f532/",
+     "from_s": 0.54,
+     "to_s": 0.91,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Bud/death_03.wav",
+   "mob": "Bud",
+   "slot": "death",
+   "pick": "Forest Bud: death (squelch / burst)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.249,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.84,
+   "onset_ms": 0.0,
+   "peak_s": 0.006,
+   "sources": [
+    {
+     "file": "ES_Slime, Movement, Fast 05 - Epidemic Sound.wav",
+     "title": "Slime, Movement, Fast 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1d92c9ea-e5ce-42a7-804b-a4e92dd6f532/",
+     "from_s": 0.54,
+     "to_s": 0.91,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/snort_01.wav",
+   "mob": "Stonehoof",
+   "slot": "snort",
+   "pick": "Stonehoof: snort / paw windup",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.95,
+   "peak_dbfs": -8.14,
+   "lufs_m_max": -18.0,
+   "onset_ms": 9.9,
+   "peak_s": 0.73,
+   "sources": [
+    {
+     "file": "ES_Animals, Farm, Pig, Big, Snorts, Grunts - Epidemic Sound.wav",
+     "title": "Animals, Farm, Pig, Big, Snorts, Grunts",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/25c3f3b7-5661-4318-953a-2d3b0251805e/",
+     "from_s": 0.0,
+     "to_s": 0.98,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/snort_02.wav",
+   "mob": "Stonehoof",
+   "slot": "snort",
+   "pick": "Stonehoof: snort / paw windup",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.95,
+   "peak_dbfs": -5.88,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.6,
+   "peak_s": 0.528,
+   "sources": [
+    {
+     "file": "ES_Animals, Farm, Pig, Big, Snorts, Grunts - Epidemic Sound.wav",
+     "title": "Animals, Farm, Pig, Big, Snorts, Grunts",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/25c3f3b7-5661-4318-953a-2d3b0251805e/",
+     "from_s": 1.0,
+     "to_s": 1.95,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/charge_01.wav",
+   "mob": "Stonehoof",
+   "slot": "charge",
+   "pick": "Stonehoof: charge rumble / gallop",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.5,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.01,
+   "onset_ms": 3.0,
+   "peak_s": 0.253,
+   "sources": [
+    {
+     "file": "ES_Animals, Horse, Foley Stage, Horse Galloping Dirt 01 - Epidemic Sound.wav",
+     "title": "Animals, Horse, Foley Stage, Horse Galloping Dirt 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ea9585a3-59d8-4214-92f2-34e7a63f591c/",
+     "from_s": 1.0,
+     "to_s": 2.8,
+     "gain_db": 0.0,
+     "rate": 0.88
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/charge_02.wav",
+   "mob": "Stonehoof",
+   "slot": "charge",
+   "pick": "Stonehoof: charge rumble / gallop",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.5,
+   "peak_dbfs": -1.19,
+   "lufs_m_max": -20.0,
+   "onset_ms": 10.7,
+   "peak_s": 0.399,
+   "sources": [
+    {
+     "file": "ES_Animals, Horse, Foley Stage, Horse Galloping Dirt 01 - Epidemic Sound.wav",
+     "title": "Animals, Horse, Foley Stage, Horse Galloping Dirt 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ea9585a3-59d8-4214-92f2-34e7a63f591c/",
+     "from_s": 3.1,
+     "to_s": 4.9,
+     "gain_db": 0.0,
+     "rate": 0.88
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/charge_03.wav",
+   "mob": "Stonehoof",
+   "slot": "charge",
+   "pick": "Stonehoof: charge rumble / gallop",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.5,
+   "peak_dbfs": -1.92,
+   "lufs_m_max": -20.0,
+   "onset_ms": 5.7,
+   "peak_s": 0.357,
+   "sources": [
+    {
+     "file": "ES_Animals, Horse, Foley Stage, Horse Galloping Dirt 01 - Epidemic Sound.wav",
+     "title": "Animals, Horse, Foley Stage, Horse Galloping Dirt 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ea9585a3-59d8-4214-92f2-34e7a63f591c/",
+     "from_s": 6.9,
+     "to_s": 8.7,
+     "gain_db": 0.0,
+     "rate": 0.88
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/charge_04.wav",
+   "mob": "Stonehoof",
+   "slot": "charge",
+   "pick": "Stonehoof: charge rumble / gallop",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.5,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.06,
+   "onset_ms": 2.9,
+   "peak_s": 0.607,
+   "sources": [
+    {
+     "file": "ES_Animals, Horse, Foley Stage, Horse Galloping Dirt 01 - Epidemic Sound.wav",
+     "title": "Animals, Horse, Foley Stage, Horse Galloping Dirt 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ea9585a3-59d8-4214-92f2-34e7a63f591c/",
+     "from_s": 12.1,
+     "to_s": 13.9,
+     "gain_db": 0.0,
+     "rate": 0.88
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/collision_01.wav",
+   "mob": "Stonehoof",
+   "slot": "collision",
+   "pick": "Stonehoof: collision heavy thud",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.44,
+   "lufs_m_max": -16.0,
+   "onset_ms": 0.0,
+   "peak_s": 0.107,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Sudden, Heavy, Percussive Hit - Epidemic Sound.wav",
+     "title": "Designed, Impact, Sudden, Heavy, Percussive Hit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/13b7690c-9911-408b-ac38-ae607151a75b/",
+     "from_s": 0.0,
+     "to_s": 1.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/collision_02.wav",
+   "mob": "Stonehoof",
+   "slot": "collision",
+   "pick": "Stonehoof: collision heavy thud",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.25,
+   "lufs_m_max": -16.0,
+   "onset_ms": 0.0,
+   "peak_s": 0.118,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Sudden, Heavy, Percussive Hit - Epidemic Sound.wav",
+     "title": "Designed, Impact, Sudden, Heavy, Percussive Hit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/13b7690c-9911-408b-ac38-ae607151a75b/",
+     "from_s": 0.0,
+     "to_s": 1.2,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/collision_03.wav",
+   "mob": "Stonehoof",
+   "slot": "collision",
+   "pick": "Stonehoof: collision heavy thud",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.56,
+   "lufs_m_max": -16.0,
+   "onset_ms": 0.0,
+   "peak_s": 0.099,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Sudden, Heavy, Percussive Hit - Epidemic Sound.wav",
+     "title": "Designed, Impact, Sudden, Heavy, Percussive Hit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/13b7690c-9911-408b-ac38-ae607151a75b/",
+     "from_s": 0.0,
+     "to_s": 1.2,
+     "gain_db": 0.0,
+     "rate": 1.08
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/tusk_01.wav",
+   "mob": "Stonehoof",
+   "slot": "tusk",
+   "pick": "Stonehoof: tusk swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.381,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.16,
+   "onset_ms": 164.4,
+   "peak_s": 0.198,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/20150d73-0af1-4035-9dc7-0d9200994185/",
+     "from_s": 0.0,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/tusk_02.wav",
+   "mob": "Stonehoof",
+   "slot": "tusk",
+   "pick": "Stonehoof: tusk swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.364,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.89,
+   "onset_ms": 160.3,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/20150d73-0af1-4035-9dc7-0d9200994185/",
+     "from_s": 0.95,
+     "to_s": 1.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/tusk_03.wav",
+   "mob": "Stonehoof",
+   "slot": "tusk",
+   "pick": "Stonehoof: tusk swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.385,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.25,
+   "onset_ms": 166.7,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/20150d73-0af1-4035-9dc7-0d9200994185/",
+     "from_s": 1.9,
+     "to_s": 2.75,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/tusk_04.wav",
+   "mob": "Stonehoof",
+   "slot": "tusk",
+   "pick": "Stonehoof: tusk swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.361,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.83,
+   "onset_ms": 173.5,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Axe, Battle Axe, Large Object, Swing, Swoosh",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/20150d73-0af1-4035-9dc7-0d9200994185/",
+     "from_s": 2.9,
+     "to_s": 3.54,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/hurt_01.wav",
+   "mob": "Stonehoof",
+   "slot": "hurt",
+   "pick": "Stonehoof: hurt squeal-grunt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -4.73,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.399,
+   "sources": [
+    {
+     "file": "ES_Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05 - Epidemic Sound.wav",
+     "title": "Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/30f6ebb7-8d37-499a-8e88-4a7894a7fab8/",
+     "from_s": 0.84,
+     "to_s": 1.64,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/hurt_02.wav",
+   "mob": "Stonehoof",
+   "slot": "hurt",
+   "pick": "Stonehoof: hurt squeal-grunt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -4.9,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.433,
+   "sources": [
+    {
+     "file": "ES_Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05 - Epidemic Sound.wav",
+     "title": "Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/30f6ebb7-8d37-499a-8e88-4a7894a7fab8/",
+     "from_s": 0.84,
+     "to_s": 1.64,
+     "gain_db": 0.0,
+     "rate": 0.92
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/hurt_03.wav",
+   "mob": "Stonehoof",
+   "slot": "hurt",
+   "pick": "Stonehoof: hurt squeal-grunt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -4.62,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.37,
+   "sources": [
+    {
+     "file": "ES_Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05 - Epidemic Sound.wav",
+     "title": "Pig, Grunt, Squeal, Inside Barn, Wet, Sloppy, Mud 05",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/30f6ebb7-8d37-499a-8e88-4a7894a7fab8/",
+     "from_s": 0.84,
+     "to_s": 1.64,
+     "gain_db": 0.0,
+     "rate": 1.08
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/death_01.wav",
+   "mob": "Stonehoof",
+   "slot": "death",
+   "pick": "Stonehoof: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 1.4,
+   "peak_dbfs": -1.02,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.416,
+   "sources": [
+    {
+     "file": "ES_Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff - Epidemic Sound.wav",
+     "title": "Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/15acd806-0255-4bbe-b5b9-19c75d986ad1/",
+     "from_s": 1.22,
+     "to_s": 2.67,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Stonehoof/death_02.wav",
+   "mob": "Stonehoof",
+   "slot": "death",
+   "pick": "Stonehoof: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 1.025,
+   "peak_dbfs": -3.49,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.144,
+   "sources": [
+    {
+     "file": "ES_Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff - Epidemic Sound.wav",
+     "title": "Animals, Farm, Pig, Guttural Grunt, Vocalization, Sniff",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/15acd806-0255-4bbe-b5b9-19c75d986ad1/",
+     "from_s": 0.0,
+     "to_s": 1.05,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/claw_01.wav",
+   "mob": "Wendigo",
+   "slot": "claw",
+   "pick": "Wendigo: claw swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.449,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.09,
+   "onset_ms": 150.6,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Fast, Double Swish, Variations - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Fast, Double Swish, Variations",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90096082-5b88-452f-b763-d6ef234ce47f/",
+     "from_s": 0.0,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/claw_02.wav",
+   "mob": "Wendigo",
+   "slot": "claw",
+   "pick": "Wendigo: claw swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.429,
+   "peak_dbfs": -2.14,
+   "lufs_m_max": -18.0,
+   "onset_ms": 152.0,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Fast, Double Swish, Variations - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Fast, Double Swish, Variations",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90096082-5b88-452f-b763-d6ef234ce47f/",
+     "from_s": 1.35,
+     "to_s": 2.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/claw_03.wav",
+   "mob": "Wendigo",
+   "slot": "claw",
+   "pick": "Wendigo: claw swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.355,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.32,
+   "onset_ms": 97.2,
+   "peak_s": 0.195,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Fast, Double Swish, Variations - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Fast, Double Swish, Variations",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90096082-5b88-452f-b763-d6ef234ce47f/",
+     "from_s": 2.9,
+     "to_s": 3.7,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/claw_04.wav",
+   "mob": "Wendigo",
+   "slot": "claw",
+   "pick": "Wendigo: claw swipe",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.2,
+   "seconds": 0.342,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -21.39,
+   "onset_ms": 96.8,
+   "peak_s": 0.2,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Swish, Fast, Double Swish, Variations - Epidemic Sound.wav",
+     "title": "Swooshes, Swish, Fast, Double Swish, Variations",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/90096082-5b88-452f-b763-d6ef234ce47f/",
+     "from_s": 4.2,
+     "to_s": 4.74,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/leap_01.wav",
+   "mob": "Wendigo",
+   "slot": "leap",
+   "pick": "Wendigo: leap takeoff",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.25,
+   "seconds": 0.42,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.86,
+   "onset_ms": 17.4,
+   "peak_s": 0.25,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Short, Deep Reversed, Dry - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Short, Deep Reversed, Dry",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/14f0f3a4-cc2b-4d8b-b453-49fd070c591d/",
+     "from_s": 0.15,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/leap_02.wav",
+   "mob": "Wendigo",
+   "slot": "leap",
+   "pick": "Wendigo: leap takeoff",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.25,
+   "seconds": 0.42,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.91,
+   "onset_ms": 12.1,
+   "peak_s": 0.249,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Short, Deep Reversed, Dry - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Short, Deep Reversed, Dry",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/14f0f3a4-cc2b-4d8b-b453-49fd070c591d/",
+     "from_s": 0.15,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/leap_03.wav",
+   "mob": "Wendigo",
+   "slot": "leap",
+   "pick": "Wendigo: leap takeoff",
+   "align": "peak",
+   "category": "oneshot",
+   "lead_s": 0.25,
+   "seconds": 0.42,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.83,
+   "onset_ms": 25.5,
+   "peak_s": 0.25,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Short, Deep Reversed, Dry - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Short, Deep Reversed, Dry",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/14f0f3a4-cc2b-4d8b-b453-49fd070c591d/",
+     "from_s": 0.15,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/land_01.wav",
+   "mob": "Wendigo",
+   "slot": "land",
+   "pick": "Wendigo: heavy landing",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.301,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.46,
+   "onset_ms": 0.0,
+   "peak_s": 0.015,
+   "sources": [
+    {
+     "file": "ES_Rocks, Impact, Heavy, Drop On Ground, Grit - Epidemic Sound.wav",
+     "title": "Rocks, Impact, Heavy, Drop On Ground, Grit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/315b1ed5-cdb5-4043-b4ac-88fb0812f919/",
+     "from_s": 0.0,
+     "to_s": 0.7,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/land_02.wav",
+   "mob": "Wendigo",
+   "slot": "land",
+   "pick": "Wendigo: heavy landing",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.254,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.14,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Rocks, Impact, Heavy, Drop On Ground, Grit - Epidemic Sound.wav",
+     "title": "Rocks, Impact, Heavy, Drop On Ground, Grit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/315b1ed5-cdb5-4043-b4ac-88fb0812f919/",
+     "from_s": 0.95,
+     "to_s": 1.7,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/land_03.wav",
+   "mob": "Wendigo",
+   "slot": "land",
+   "pick": "Wendigo: heavy landing",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.257,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.71,
+   "onset_ms": 0.0,
+   "peak_s": 0.021,
+   "sources": [
+    {
+     "file": "ES_Rocks, Impact, Heavy, Drop On Ground, Grit - Epidemic Sound.wav",
+     "title": "Rocks, Impact, Heavy, Drop On Ground, Grit",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/315b1ed5-cdb5-4043-b4ac-88fb0812f919/",
+     "from_s": 1.8,
+     "to_s": 2.19,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/howl_01.wav",
+   "mob": "Wendigo",
+   "slot": "howl",
+   "pick": "Wendigo: howl / roar (eerie)",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.8,
+   "seconds": 1.986,
+   "peak_dbfs": -5.69,
+   "lufs_m_max": -16.0,
+   "onset_ms": 4.8,
+   "peak_s": 0.8,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 0.3,
+     "to_s": 2.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 0.3,
+     "to_s": 2.1,
+     "gain_db": -9.0,
+     "rate": 0.75
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/howl_02.wav",
+   "mob": "Wendigo",
+   "slot": "howl",
+   "pick": "Wendigo: howl / roar (eerie)",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.8,
+   "seconds": 2.0,
+   "peak_dbfs": -6.06,
+   "lufs_m_max": -16.0,
+   "onset_ms": 399.1,
+   "peak_s": 0.8,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 12.55,
+     "to_s": 14.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 12.55,
+     "to_s": 14.4,
+     "gain_db": -9.0,
+     "rate": 0.75
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/howl_03.wav",
+   "mob": "Wendigo",
+   "slot": "howl",
+   "pick": "Wendigo: howl / roar (eerie)",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.8,
+   "seconds": 2.0,
+   "peak_dbfs": -6.16,
+   "lufs_m_max": -16.0,
+   "onset_ms": 272.9,
+   "peak_s": 0.8,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 16.35,
+     "to_s": 18.5,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Vocalizations, Shriek, Scary, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/c6af4e18-3b9e-481b-9b64-609a92f179a7/",
+     "from_s": 16.35,
+     "to_s": 18.5,
+     "gain_db": -9.0,
+     "rate": 0.75
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/sweep_01.wav",
+   "mob": "Wendigo",
+   "slot": "sweep",
+   "pick": "Wendigo: 360 sweep",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.5,
+   "seconds": 1.1,
+   "peak_dbfs": -4.73,
+   "lufs_m_max": -16.0,
+   "onset_ms": 20.7,
+   "peak_s": 0.5,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Deep, Low, Cinematic - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Deep, Low, Cinematic",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/689b1489-8811-4963-a9af-28187d5c7486/",
+     "from_s": 0.1,
+     "to_s": 2.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/sweep_02.wav",
+   "mob": "Wendigo",
+   "slot": "sweep",
+   "pick": "Wendigo: 360 sweep",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.5,
+   "seconds": 1.1,
+   "peak_dbfs": -4.6,
+   "lufs_m_max": -16.0,
+   "onset_ms": 10.9,
+   "peak_s": 0.5,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Deep, Low, Cinematic - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Deep, Low, Cinematic",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/689b1489-8811-4963-a9af-28187d5c7486/",
+     "from_s": 0.1,
+     "to_s": 2.1,
+     "gain_db": 0.0,
+     "rate": 0.92
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/sweep_03.wav",
+   "mob": "Wendigo",
+   "slot": "sweep",
+   "pick": "Wendigo: 360 sweep",
+   "align": "peak",
+   "category": "big",
+   "lead_s": 0.5,
+   "seconds": 1.1,
+   "peak_dbfs": -4.84,
+   "lufs_m_max": -16.0,
+   "onset_ms": 6.1,
+   "peak_s": 0.5,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Deep, Low, Cinematic - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Deep, Low, Cinematic",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/689b1489-8811-4963-a9af-28187d5c7486/",
+     "from_s": 0.1,
+     "to_s": 2.1,
+     "gain_db": 0.0,
+     "rate": 1.08
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/hurt_01.wav",
+   "mob": "Wendigo",
+   "slot": "hurt",
+   "pick": "Wendigo: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -3.74,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.271,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/b58c251b-0e9a-41c8-9ae3-c8548ec42021/",
+     "from_s": 0.3,
+     "to_s": 1.05,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/hurt_02.wav",
+   "mob": "Wendigo",
+   "slot": "hurt",
+   "pick": "Wendigo: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -5.19,
+   "lufs_m_max": -18.0,
+   "onset_ms": 8.0,
+   "peak_s": 0.359,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/b58c251b-0e9a-41c8-9ae3-c8548ec42021/",
+     "from_s": 3.58,
+     "to_s": 4.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/hurt_03.wav",
+   "mob": "Wendigo",
+   "slot": "hurt",
+   "pick": "Wendigo: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -3.27,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.369,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/b58c251b-0e9a-41c8-9ae3-c8548ec42021/",
+     "from_s": 11.52,
+     "to_s": 12.3,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/hurt_04.wav",
+   "mob": "Wendigo",
+   "slot": "hurt",
+   "pick": "Wendigo: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.7,
+   "peak_dbfs": -2.85,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.188,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01 - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Wendigo, Spirit, Chuff, Etheral, Horror 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/b58c251b-0e9a-41c8-9ae3-c8548ec42021/",
+     "from_s": 14.44,
+     "to_s": 15.25,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/death_01.wav",
+   "mob": "Wendigo",
+   "slot": "death",
+   "pick": "Wendigo: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 2.0,
+   "peak_dbfs": -2.82,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.451,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Ill Or Dying, Moan - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Ill Or Dying, Moan",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/181cb08e-16ad-468f-a530-eb6065c5855d/",
+     "from_s": 0.06,
+     "to_s": 2.2,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Wendigo/death_02.wav",
+   "mob": "Wendigo",
+   "slot": "death",
+   "pick": "Wendigo: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 2.0,
+   "peak_dbfs": -2.69,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.483,
+   "sources": [
+    {
+     "file": "ES_Creatures, Monster, Ill Or Dying, Moan - Epidemic Sound.wav",
+     "title": "Creatures, Monster, Ill Or Dying, Moan",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/181cb08e-16ad-468f-a530-eb6065c5855d/",
+     "from_s": 0.06,
+     "to_s": 2.2,
+     "gain_db": 0.0,
+     "rate": 0.93
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/spike_01.wav",
+   "mob": "Thorncaster",
+   "slot": "spike",
+   "pick": "Thorncaster: thorn spikes erupting (sequential)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.326,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.36,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Tools, Hand, Shovel, Spade, Dig Into Ground x6 - Epidemic Sound.wav",
+     "title": "Tools, Hand, Shovel, Spade, Dig Into Ground x6",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/18280c24-5ed4-4284-8e49-c39d791c1294/",
+     "from_s": 0.0,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/spike_02.wav",
+   "mob": "Thorncaster",
+   "slot": "spike",
+   "pick": "Thorncaster: thorn spikes erupting (sequential)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.347,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.8,
+   "onset_ms": 0.0,
+   "peak_s": 0.009,
+   "sources": [
+    {
+     "file": "ES_Tools, Hand, Shovel, Spade, Dig Into Ground x6 - Epidemic Sound.wav",
+     "title": "Tools, Hand, Shovel, Spade, Dig Into Ground x6",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/18280c24-5ed4-4284-8e49-c39d791c1294/",
+     "from_s": 0.66,
+     "to_s": 1.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/spike_03.wav",
+   "mob": "Thorncaster",
+   "slot": "spike",
+   "pick": "Thorncaster: thorn spikes erupting (sequential)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.21,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.07,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Tools, Hand, Shovel, Spade, Dig Into Ground x6 - Epidemic Sound.wav",
+     "title": "Tools, Hand, Shovel, Spade, Dig Into Ground x6",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/18280c24-5ed4-4284-8e49-c39d791c1294/",
+     "from_s": 1.34,
+     "to_s": 1.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/spike_04.wav",
+   "mob": "Thorncaster",
+   "slot": "spike",
+   "pick": "Thorncaster: thorn spikes erupting (sequential)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.266,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.18,
+   "onset_ms": 0.0,
+   "peak_s": 0.013,
+   "sources": [
+    {
+     "file": "ES_Tools, Hand, Shovel, Spade, Dig Into Ground x6 - Epidemic Sound.wav",
+     "title": "Tools, Hand, Shovel, Spade, Dig Into Ground x6",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/18280c24-5ed4-4284-8e49-c39d791c1294/",
+     "from_s": 3.27,
+     "to_s": 3.75,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/burst_01.wav",
+   "mob": "Thorncaster",
+   "slot": "burst",
+   "pick": "Thorncaster: thorn burst",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.552,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.33,
+   "onset_ms": 0.0,
+   "peak_s": 0.011,
+   "sources": [
+    {
+     "file": "ES_Wood, Break, Ukulele, Thin, Smash 01 - Epidemic Sound.wav",
+     "title": "Wood, Break, Ukulele, Thin, Smash 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/cd635ed8-f9f8-4830-a5cb-ac003a1362e5/",
+     "from_s": 0.0,
+     "to_s": 0.65,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/burst_02.wav",
+   "mob": "Thorncaster",
+   "slot": "burst",
+   "pick": "Thorncaster: thorn burst",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.6,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.32,
+   "onset_ms": 0.0,
+   "peak_s": 0.04,
+   "sources": [
+    {
+     "file": "ES_Wood, Break, Ukulele, Thin, Smash 01 - Epidemic Sound.wav",
+     "title": "Wood, Break, Ukulele, Thin, Smash 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/cd635ed8-f9f8-4830-a5cb-ac003a1362e5/",
+     "from_s": 0.0,
+     "to_s": 0.65,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/burst_03.wav",
+   "mob": "Thorncaster",
+   "slot": "burst",
+   "pick": "Thorncaster: thorn burst",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 0.575,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.3,
+   "onset_ms": 1.5,
+   "peak_s": 0.152,
+   "sources": [
+    {
+     "file": "ES_Wood, Break, Ukulele, Thin, Smash 01 - Epidemic Sound.wav",
+     "title": "Wood, Break, Ukulele, Thin, Smash 01",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/cd635ed8-f9f8-4830-a5cb-ac003a1362e5/",
+     "from_s": 0.0,
+     "to_s": 0.65,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/shot_01.wav",
+   "mob": "Thorncaster",
+   "slot": "shot",
+   "pick": "Thorncaster: thorn projectile whoosh + wooden impact",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.11,
+   "onset_ms": 2.4,
+   "peak_s": 0.109,
+   "sources": [
+    {
+     "file": "ES_Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB) - Epidemic Sound.wav",
+     "title": "Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/419a57f1-c5ff-4d5b-be45-4fc0a9d6d445/",
+     "from_s": 0.15,
+     "to_s": 0.75,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/shot_02.wav",
+   "mob": "Thorncaster",
+   "slot": "shot",
+   "pick": "Thorncaster: thorn projectile whoosh + wooden impact",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.441,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.18,
+   "onset_ms": 2.5,
+   "peak_s": 0.098,
+   "sources": [
+    {
+     "file": "ES_Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB) - Epidemic Sound.wav",
+     "title": "Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/419a57f1-c5ff-4d5b-be45-4fc0a9d6d445/",
+     "from_s": 0.15,
+     "to_s": 0.75,
+     "gain_db": 0.0,
+     "rate": 1.08
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/shot_03.wav",
+   "mob": "Thorncaster",
+   "slot": "shot",
+   "pick": "Thorncaster: thorn projectile whoosh + wooden impact",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.12,
+   "onset_ms": 4.9,
+   "peak_s": 0.113,
+   "sources": [
+    {
+     "file": "ES_Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB) - Epidemic Sound.wav",
+     "title": "Weapons, Arrow, Arrows, Shot 05, Flyby, Swish, Sanken (Omni AB)",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/419a57f1-c5ff-4d5b-be45-4fc0a9d6d445/",
+     "from_s": 0.15,
+     "to_s": 0.75,
+     "gain_db": 0.0,
+     "rate": 0.93
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/hurt_01.wav",
+   "mob": "Thorncaster",
+   "slot": "hurt",
+   "pick": "Thorncaster: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.406,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -28.49,
+   "onset_ms": 1.4,
+   "peak_s": 0.036,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 4.22,
+     "to_s": 4.68,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 0.08,
+     "to_s": 0.55,
+     "gain_db": -2.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/hurt_02.wav",
+   "mob": "Thorncaster",
+   "slot": "hurt",
+   "pick": "Thorncaster: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -26.9,
+   "onset_ms": 7.1,
+   "peak_s": 0.079,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 4.62,
+     "to_s": 5.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 0.08,
+     "to_s": 0.55,
+     "gain_db": -2.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/hurt_03.wav",
+   "mob": "Thorncaster",
+   "slot": "hurt",
+   "pick": "Thorncaster: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -27.09,
+   "onset_ms": 1.4,
+   "peak_s": 0.055,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 4.22,
+     "to_s": 4.68,
+     "gain_db": 0.0,
+     "rate": 0.92
+    },
+    {
+     "file": "ES_Vegetation, Leaves, Bush, Twig Breaks - Epidemic Sound.wav",
+     "title": "Vegetation, Leaves, Bush, Twig Breaks",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/693a8fc8-edbd-4488-a337-e3da51cff1ce/",
+     "from_s": 4.62,
+     "to_s": 5.1,
+     "gain_db": -2.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/death_01.wav",
+   "mob": "Thorncaster",
+   "slot": "death",
+   "pick": "Thorncaster: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 1.6,
+   "peak_dbfs": -2.57,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.89,
+   "sources": [
+    {
+     "file": "ES_Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02 - Epidemic Sound.wav",
+     "title": "Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/27f51a8a-084b-479c-ae73-477b3c9db0c9/",
+     "from_s": 0.0,
+     "to_s": 1.95,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/death_02.wav",
+   "mob": "Thorncaster",
+   "slot": "death",
+   "pick": "Thorncaster: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.961,
+   "peak_dbfs": -7.95,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.238,
+   "sources": [
+    {
+     "file": "ES_Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02 - Epidemic Sound.wav",
+     "title": "Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/27f51a8a-084b-479c-ae73-477b3c9db0c9/",
+     "from_s": 2.93,
+     "to_s": 3.92,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Thorncaster/death_03.wav",
+   "mob": "Thorncaster",
+   "slot": "death",
+   "pick": "Thorncaster: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 1.6,
+   "peak_dbfs": -8.35,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.817,
+   "sources": [
+    {
+     "file": "ES_Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02 - Epidemic Sound.wav",
+     "title": "Creatures, Humanoid, Giant, Troll, Reactions, Pain, Dying, Hurt, Various 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/27f51a8a-084b-479c-ae73-477b3c9db0c9/",
+     "from_s": 4.68,
+     "to_s": 6.85,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/slam_01.wav",
+   "mob": "RootSnarer",
+   "slot": "slam",
+   "pick": "Root Snarer: heavy slam into ground",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.1,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.08,
+   "onset_ms": 0.0,
+   "peak_s": 0.119,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Troll, Fight, Impact Rock Ground 07 - Epidemic Sound.wav",
+     "title": "Designed, Impact, Troll, Fight, Impact Rock Ground 07",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f8a8d469-487a-4c17-9905-f43f4e0e362f/",
+     "from_s": 0.0,
+     "to_s": 1.3,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/slam_02.wav",
+   "mob": "RootSnarer",
+   "slot": "slam",
+   "pick": "Root Snarer: heavy slam into ground",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.1,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.09,
+   "onset_ms": 0.0,
+   "peak_s": 0.129,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Troll, Fight, Impact Rock Ground 07 - Epidemic Sound.wav",
+     "title": "Designed, Impact, Troll, Fight, Impact Rock Ground 07",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f8a8d469-487a-4c17-9905-f43f4e0e362f/",
+     "from_s": 0.0,
+     "to_s": 1.3,
+     "gain_db": 0.0,
+     "rate": 0.92
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/slam_03.wav",
+   "mob": "RootSnarer",
+   "slot": "slam",
+   "pick": "Root Snarer: heavy slam into ground",
+   "align": "attack",
+   "category": "big",
+   "lead_s": null,
+   "seconds": 1.1,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.19,
+   "onset_ms": 0.0,
+   "peak_s": 0.111,
+   "sources": [
+    {
+     "file": "ES_Designed, Impact, Troll, Fight, Impact Rock Ground 07 - Epidemic Sound.wav",
+     "title": "Designed, Impact, Troll, Fight, Impact Rock Ground 07",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f8a8d469-487a-4c17-9905-f43f4e0e362f/",
+     "from_s": 0.0,
+     "to_s": 1.3,
+     "gain_db": 0.0,
+     "rate": 1.07
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/roots_01.wav",
+   "mob": "RootSnarer",
+   "slot": "roots",
+   "pick": "Root Snarer: roots erupting from ground",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.07,
+   "onset_ms": 5.2,
+   "peak_s": 0.601,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02 - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/909c1327-5e16-44ba-a095-75e0c4296ae1/",
+     "from_s": 0.02,
+     "to_s": 1.02,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/roots_02.wav",
+   "mob": "RootSnarer",
+   "slot": "roots",
+   "pick": "Root Snarer: roots erupting from ground",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -2.89,
+   "lufs_m_max": -18.0,
+   "onset_ms": 3.4,
+   "peak_s": 0.041,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02 - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/909c1327-5e16-44ba-a095-75e0c4296ae1/",
+     "from_s": 0.9,
+     "to_s": 1.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/roots_03.wav",
+   "mob": "RootSnarer",
+   "slot": "roots",
+   "pick": "Root Snarer: roots erupting from ground",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -2.15,
+   "lufs_m_max": -18.0,
+   "onset_ms": 2.4,
+   "peak_s": 0.099,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02 - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Up From Ground, Crawling 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/909c1327-5e16-44ba-a095-75e0c4296ae1/",
+     "from_s": 5.9,
+     "to_s": 6.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/mend_01.wav",
+   "mob": "RootSnarer",
+   "slot": "mend",
+   "pick": "Root Snarer: healing channel / nature heal",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.6,
+   "peak_dbfs": -7.8,
+   "lufs_m_max": -20.0,
+   "onset_ms": 14.1,
+   "peak_s": 0.673,
+   "sources": [
+    {
+     "file": "ES_Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex - Epidemic Sound.wav",
+     "title": "Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/489fae51-2477-44d3-858d-b1059de6568e/",
+     "from_s": 2.0,
+     "to_s": 3.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/mend_02.wav",
+   "mob": "RootSnarer",
+   "slot": "mend",
+   "pick": "Root Snarer: healing channel / nature heal",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.6,
+   "peak_dbfs": -8.43,
+   "lufs_m_max": -20.0,
+   "onset_ms": 7.9,
+   "peak_s": 0.465,
+   "sources": [
+    {
+     "file": "ES_Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex - Epidemic Sound.wav",
+     "title": "Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/489fae51-2477-44d3-858d-b1059de6568e/",
+     "from_s": 10.0,
+     "to_s": 11.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/mend_03.wav",
+   "mob": "RootSnarer",
+   "slot": "mend",
+   "pick": "Root Snarer: healing channel / nature heal",
+   "align": "window",
+   "category": "bed",
+   "lead_s": null,
+   "seconds": 1.6,
+   "peak_dbfs": -8.05,
+   "lufs_m_max": -20.0,
+   "onset_ms": 14.6,
+   "peak_s": 0.493,
+   "sources": [
+    {
+     "file": "ES_Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex - Epidemic Sound.wav",
+     "title": "Magic, Shimmer, Spell, Pad, Ethereal, Nature Magic, Idle, Complex",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/489fae51-2477-44d3-858d-b1059de6568e/",
+     "from_s": 20.0,
+     "to_s": 21.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/hurt_01.wav",
+   "mob": "RootSnarer",
+   "slot": "hurt",
+   "pick": "Root Snarer: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.54,
+   "onset_ms": 10.4,
+   "peak_s": 0.15,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Grass, Foliage, Moss, Squish - Epidemic Sound.wav",
+     "title": "Vegetation, Grass, Foliage, Moss, Squish",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e41127e1-228e-443d-88b6-a5b6e82d2c0e/",
+     "from_s": 0.26,
+     "to_s": 0.74,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/hurt_02.wav",
+   "mob": "RootSnarer",
+   "slot": "hurt",
+   "pick": "Root Snarer: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.97,
+   "onset_ms": 9.0,
+   "peak_s": 0.133,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Grass, Foliage, Moss, Squish - Epidemic Sound.wav",
+     "title": "Vegetation, Grass, Foliage, Moss, Squish",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e41127e1-228e-443d-88b6-a5b6e82d2c0e/",
+     "from_s": 1.08,
+     "to_s": 1.56,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/hurt_03.wav",
+   "mob": "RootSnarer",
+   "slot": "hurt",
+   "pick": "Root Snarer: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.45,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.15,
+   "onset_ms": 10.4,
+   "peak_s": 0.313,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Grass, Foliage, Moss, Squish - Epidemic Sound.wav",
+     "title": "Vegetation, Grass, Foliage, Moss, Squish",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/e41127e1-228e-443d-88b6-a5b6e82d2c0e/",
+     "from_s": 1.92,
+     "to_s": 2.42,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/death_01.wav",
+   "mob": "RootSnarer",
+   "slot": "death",
+   "pick": "Root Snarer: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 2.2,
+   "peak_dbfs": -6.34,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.736,
+   "sources": [
+    {
+     "file": "ES_Creatures, Humanoid, Giant, Male, Groan - Epidemic Sound.wav",
+     "title": "Creatures, Humanoid, Giant, Male, Groan",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ef81c9f1-a66a-4f63-9e13-86e5cd268f7f/",
+     "from_s": 0.06,
+     "to_s": 2.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/RootSnarer/death_02.wav",
+   "mob": "RootSnarer",
+   "slot": "death",
+   "pick": "Root Snarer: death",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 2.2,
+   "peak_dbfs": -6.38,
+   "lufs_m_max": -18.0,
+   "onset_ms": 10.0,
+   "peak_s": 0.782,
+   "sources": [
+    {
+     "file": "ES_Creatures, Humanoid, Giant, Male, Groan - Epidemic Sound.wav",
+     "title": "Creatures, Humanoid, Giant, Male, Groan",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/ef81c9f1-a66a-4f63-9e13-86e5cd268f7f/",
+     "from_s": 0.06,
+     "to_s": 2.6,
+     "gain_db": 0.0,
+     "rate": 0.94
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/bite_01.wav",
+   "mob": "Splitter",
+   "slot": "bite",
+   "pick": "Splitter: bite",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.4,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.39,
+   "onset_ms": 0.0,
+   "peak_s": 0.115,
+   "sources": [
+    {
+     "file": "ES_Animals, Insect, Caterpillar, Bite, Eat Leaf 04 - Epidemic Sound.wav",
+     "title": "Animals, Insect, Caterpillar, Bite, Eat Leaf 04",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f35602f0-1007-4ae0-bfbb-79d81a2f08d7/",
+     "from_s": 0.1,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/bite_02.wav",
+   "mob": "Splitter",
+   "slot": "bite",
+   "pick": "Splitter: bite",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.4,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.48,
+   "onset_ms": 1.5,
+   "peak_s": 0.1,
+   "sources": [
+    {
+     "file": "ES_Animals, Insect, Caterpillar, Bite, Eat Leaf 04 - Epidemic Sound.wav",
+     "title": "Animals, Insect, Caterpillar, Bite, Eat Leaf 04",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f35602f0-1007-4ae0-bfbb-79d81a2f08d7/",
+     "from_s": 0.1,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 1.1
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/bite_03.wav",
+   "mob": "Splitter",
+   "slot": "bite",
+   "pick": "Splitter: bite",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.4,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.28,
+   "onset_ms": 0.0,
+   "peak_s": 0.124,
+   "sources": [
+    {
+     "file": "ES_Animals, Insect, Caterpillar, Bite, Eat Leaf 04 - Epidemic Sound.wav",
+     "title": "Animals, Insect, Caterpillar, Bite, Eat Leaf 04",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f35602f0-1007-4ae0-bfbb-79d81a2f08d7/",
+     "from_s": 0.1,
+     "to_s": 0.8,
+     "gain_db": 0.0,
+     "rate": 0.92
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/roll_01.wav",
+   "mob": "Splitter",
+   "slot": "roll",
+   "pick": "Splitter: rolling ball rumble",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.9,
+   "peak_dbfs": -5.97,
+   "lufs_m_max": -18.0,
+   "onset_ms": 3.3,
+   "peak_s": 0.192,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Wood, Roll Long - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Wood, Roll Long",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d154d5f-6736-4e90-a443-76bf283b91a6/",
+     "from_s": 0.25,
+     "to_s": 1.15,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/roll_02.wav",
+   "mob": "Splitter",
+   "slot": "roll",
+   "pick": "Splitter: rolling ball rumble",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.9,
+   "peak_dbfs": -7.74,
+   "lufs_m_max": -18.0,
+   "onset_ms": 9.9,
+   "peak_s": 0.177,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Wood, Roll Long - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Wood, Roll Long",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d154d5f-6736-4e90-a443-76bf283b91a6/",
+     "from_s": 2.35,
+     "to_s": 3.25,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/roll_03.wav",
+   "mob": "Splitter",
+   "slot": "roll",
+   "pick": "Splitter: rolling ball rumble",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.9,
+   "peak_dbfs": -2.49,
+   "lufs_m_max": -18.0,
+   "onset_ms": 1.4,
+   "peak_s": 0.131,
+   "sources": [
+    {
+     "file": "ES_Swooshes, Whoosh, Wood, Roll Long - Epidemic Sound.wav",
+     "title": "Swooshes, Whoosh, Wood, Roll Long",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d154d5f-6736-4e90-a443-76bf283b91a6/",
+     "from_s": 4.95,
+     "to_s": 5.85,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/crack_01.wav",
+   "mob": "Splitter",
+   "slot": "crack",
+   "pick": "Splitter: shell crack / split",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.278,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.38,
+   "onset_ms": 0.0,
+   "peak_s": 0.109,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8b546675-a0ee-4043-a071-4c9480a829d3/",
+     "from_s": 0.06,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/crack_02.wav",
+   "mob": "Splitter",
+   "slot": "crack",
+   "pick": "Splitter: shell crack / split",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.109,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.53,
+   "onset_ms": 0.0,
+   "peak_s": 0.007,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8b546675-a0ee-4043-a071-4c9480a829d3/",
+     "from_s": 0.54,
+     "to_s": 0.87,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/crack_03.wav",
+   "mob": "Splitter",
+   "slot": "crack",
+   "pick": "Splitter: shell crack / split",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.307,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.59,
+   "onset_ms": 0.0,
+   "peak_s": 0.119,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Nut, Peanut, Shell, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/8b546675-a0ee-4043-a071-4c9480a829d3/",
+     "from_s": 0.06,
+     "to_s": 0.45,
+     "gain_db": 0.0,
+     "rate": 0.9
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/pop_01.wav",
+   "mob": "Splitter",
+   "slot": "pop",
+   "pick": "Splitter: small creature pop / hop",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.244,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -22.05,
+   "onset_ms": 9.9,
+   "peak_s": 0.017,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Misc, Granular, Bouncing - Epidemic Sound.wav",
+     "title": "Creatures, Small, Misc, Granular, Bouncing",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/36e89017-6934-4d21-aa6c-da84134c1521/",
+     "from_s": 1.34,
+     "to_s": 1.64,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/pop_02.wav",
+   "mob": "Splitter",
+   "slot": "pop",
+   "pick": "Splitter: small creature pop / hop",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.268,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.27,
+   "onset_ms": 9.9,
+   "peak_s": 0.11,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Misc, Granular, Bouncing - Epidemic Sound.wav",
+     "title": "Creatures, Small, Misc, Granular, Bouncing",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/36e89017-6934-4d21-aa6c-da84134c1521/",
+     "from_s": 6.17,
+     "to_s": 6.47,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/pop_03.wav",
+   "mob": "Splitter",
+   "slot": "pop",
+   "pick": "Splitter: small creature pop / hop",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.28,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.35,
+   "onset_ms": 9.9,
+   "peak_s": 0.032,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Misc, Granular, Bouncing - Epidemic Sound.wav",
+     "title": "Creatures, Small, Misc, Granular, Bouncing",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/36e89017-6934-4d21-aa6c-da84134c1521/",
+     "from_s": 9.25,
+     "to_s": 9.57,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/pop_04.wav",
+   "mob": "Splitter",
+   "slot": "pop",
+   "pick": "Splitter: small creature pop / hop",
+   "align": "onset",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.262,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.29,
+   "onset_ms": 9.9,
+   "peak_s": 0.114,
+   "sources": [
+    {
+     "file": "ES_Creatures, Small, Misc, Granular, Bouncing - Epidemic Sound.wav",
+     "title": "Creatures, Small, Misc, Granular, Bouncing",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/36e89017-6934-4d21-aa6c-da84134c1521/",
+     "from_s": 3.16,
+     "to_s": 3.46,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/hurt_01.wav",
+   "mob": "Splitter",
+   "slot": "hurt",
+   "pick": "Splitter: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.37,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.86,
+   "onset_ms": 9.9,
+   "peak_s": 0.126,
+   "sources": [
+    {
+     "file": "ES_Creatures, Misc, Goblin's Pug, Voice 02 - Epidemic Sound.wav",
+     "title": "Creatures, Misc, Goblin's Pug, Voice 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d07d905-8532-4dda-8dea-6e539ba53ee9/",
+     "from_s": 0.2,
+     "to_s": 0.56,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/hurt_02.wav",
+   "mob": "Splitter",
+   "slot": "hurt",
+   "pick": "Splitter: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.387,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -19.11,
+   "onset_ms": 9.1,
+   "peak_s": 0.052,
+   "sources": [
+    {
+     "file": "ES_Creatures, Misc, Goblin's Pug, Voice 02 - Epidemic Sound.wav",
+     "title": "Creatures, Misc, Goblin's Pug, Voice 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d07d905-8532-4dda-8dea-6e539ba53ee9/",
+     "from_s": 0.52,
+     "to_s": 0.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/hurt_03.wav",
+   "mob": "Splitter",
+   "slot": "hurt",
+   "pick": "Splitter: hurt",
+   "align": "onset",
+   "category": "voice",
+   "lead_s": null,
+   "seconds": 0.331,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.63,
+   "onset_ms": 9.8,
+   "peak_s": 0.111,
+   "sources": [
+    {
+     "file": "ES_Creatures, Misc, Goblin's Pug, Voice 02 - Epidemic Sound.wav",
+     "title": "Creatures, Misc, Goblin's Pug, Voice 02",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/4d07d905-8532-4dda-8dea-6e539ba53ee9/",
+     "from_s": 0.2,
+     "to_s": 0.56,
+     "gain_db": 0.0,
+     "rate": 1.12
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/death_01.wav",
+   "mob": "Splitter",
+   "slot": "death",
+   "pick": "Splitter: death",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.441,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.17,
+   "onset_ms": 0.0,
+   "peak_s": 0.074,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/9044d452-a23f-4f72-818b-a9acaddc09c9/",
+     "from_s": 0.02,
+     "to_s": 0.55,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/death_02.wav",
+   "mob": "Splitter",
+   "slot": "death",
+   "pick": "Splitter: death",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.347,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -20.3,
+   "onset_ms": 0.0,
+   "peak_s": 0.152,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/9044d452-a23f-4f72-818b-a9acaddc09c9/",
+     "from_s": 1.16,
+     "to_s": 1.62,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Splitter/death_03.wav",
+   "mob": "Splitter",
+   "slot": "death",
+   "pick": "Splitter: death",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 0.322,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.19,
+   "onset_ms": 0.0,
+   "peak_s": 0.099,
+   "sources": [
+    {
+     "file": "ES_Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03 - Epidemic Sound.wav",
+     "title": "Food & Drink, Ingredients, Egg, Shell, Crack, Break, Crush 03",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/9044d452-a23f-4f72-818b-a9acaddc09c9/",
+     "from_s": 2.58,
+     "to_s": 3.05,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/kill_01.wav",
+   "mob": "Generic",
+   "slot": "kill",
+   "pick": "Generic: layered kill impact (crack + thump)",
+   "align": "attack",
+   "category": "kill",
+   "lead_s": null,
+   "seconds": 0.727,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -15.54,
+   "onset_ms": 0.0,
+   "peak_s": 0.022,
+   "sources": [
+    {
+     "file": "ES_Games, Video, Video Game, Wood Break, Fat, Log - Epidemic Sound.wav",
+     "title": "Games, Video, Video Game, Wood Break, Fat, Log",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f16a67b5-c1b3-4855-aab1-d7d4ab475be0/",
+     "from_s": 0.24,
+     "to_s": 1.1,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Fight, Impact, Magic Hits, Thick, Punchy - Epidemic Sound.wav",
+     "title": "Fight, Impact, Magic Hits, Thick, Punchy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/31e82b73-b086-4a1e-9ff2-9100d5f1041a/",
+     "from_s": 0.0,
+     "to_s": 0.95,
+     "gain_db": -3.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/kill_02.wav",
+   "mob": "Generic",
+   "slot": "kill",
+   "pick": "Generic: layered kill impact (crack + thump)",
+   "align": "attack",
+   "category": "kill",
+   "lead_s": null,
+   "seconds": 0.888,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.57,
+   "onset_ms": 0.0,
+   "peak_s": 0.174,
+   "sources": [
+    {
+     "file": "ES_Games, Video, Video Game, Wood Break, Fat, Log - Epidemic Sound.wav",
+     "title": "Games, Video, Video Game, Wood Break, Fat, Log",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f16a67b5-c1b3-4855-aab1-d7d4ab475be0/",
+     "from_s": 1.46,
+     "to_s": 2.4,
+     "gain_db": 0.0,
+     "rate": 1.0
+    },
+    {
+     "file": "ES_Fight, Impact, Magic Hits, Thick, Punchy - Epidemic Sound.wav",
+     "title": "Fight, Impact, Magic Hits, Thick, Punchy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/31e82b73-b086-4a1e-9ff2-9100d5f1041a/",
+     "from_s": 1.22,
+     "to_s": 2.2,
+     "gain_db": -3.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/kill_03.wav",
+   "mob": "Generic",
+   "slot": "kill",
+   "pick": "Generic: layered kill impact (crack + thump)",
+   "align": "attack",
+   "category": "kill",
+   "lead_s": null,
+   "seconds": 0.772,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -15.18,
+   "onset_ms": 0.0,
+   "peak_s": 0.021,
+   "sources": [
+    {
+     "file": "ES_Games, Video, Video Game, Wood Break, Fat, Log - Epidemic Sound.wav",
+     "title": "Games, Video, Video Game, Wood Break, Fat, Log",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f16a67b5-c1b3-4855-aab1-d7d4ab475be0/",
+     "from_s": 0.24,
+     "to_s": 1.1,
+     "gain_db": 0.0,
+     "rate": 0.94
+    },
+    {
+     "file": "ES_Fight, Impact, Magic Hits, Thick, Punchy - Epidemic Sound.wav",
+     "title": "Fight, Impact, Magic Hits, Thick, Punchy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/31e82b73-b086-4a1e-9ff2-9100d5f1041a/",
+     "from_s": 2.28,
+     "to_s": 3.35,
+     "gain_db": -3.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/kill_04.wav",
+   "mob": "Generic",
+   "slot": "kill",
+   "pick": "Generic: layered kill impact (crack + thump)",
+   "align": "attack",
+   "category": "kill",
+   "lead_s": null,
+   "seconds": 0.846,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -16.17,
+   "onset_ms": 0.0,
+   "peak_s": 0.166,
+   "sources": [
+    {
+     "file": "ES_Games, Video, Video Game, Wood Break, Fat, Log - Epidemic Sound.wav",
+     "title": "Games, Video, Video Game, Wood Break, Fat, Log",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/f16a67b5-c1b3-4855-aab1-d7d4ab475be0/",
+     "from_s": 1.46,
+     "to_s": 2.4,
+     "gain_db": 0.0,
+     "rate": 1.05
+    },
+    {
+     "file": "ES_Fight, Impact, Magic Hits, Thick, Punchy - Epidemic Sound.wav",
+     "title": "Fight, Impact, Magic Hits, Thick, Punchy",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/31e82b73-b086-4a1e-9ff2-9100d5f1041a/",
+     "from_s": 3.48,
+     "to_s": 4.6,
+     "gain_db": -3.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/stun_01.wav",
+   "mob": "Generic",
+   "slot": "stun",
+   "pick": "Generic: hero stunned (daze ring)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.3,
+   "peak_dbfs": -1.44,
+   "lufs_m_max": -18.0,
+   "onset_ms": 0.0,
+   "peak_s": 0.017,
+   "sources": [
+    {
+     "file": "ES_Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out - Epidemic Sound.wav",
+     "title": "Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/7fa9d070-9b7f-43cc-a9ed-588a8e44f5b3/",
+     "from_s": 0.08,
+     "to_s": 1.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/stun_02.wav",
+   "mob": "Generic",
+   "slot": "stun",
+   "pick": "Generic: hero stunned (daze ring)",
+   "align": "attack",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.3,
+   "peak_dbfs": -1.78,
+   "lufs_m_max": -18.0,
+   "onset_ms": 0.0,
+   "peak_s": 0.017,
+   "sources": [
+    {
+     "file": "ES_Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out - Epidemic Sound.wav",
+     "title": "Metal, Tonal, Impact, Metal Bowl, Bell Like, Ring Out",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/7fa9d070-9b7f-43cc-a9ed-588a8e44f5b3/",
+     "from_s": 0.08,
+     "to_s": 1.9,
+     "gain_db": 0.0,
+     "rate": 0.94
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/rooted_01.wav",
+   "mob": "Generic",
+   "slot": "rooted",
+   "pick": "Generic: hero rooted (roots wrapping)",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.19,
+   "onset_ms": 7.5,
+   "peak_s": 0.413,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1e468bba-ce14-43ea-9175-4403123a17b4/",
+     "from_s": 1.6,
+     "to_s": 2.6,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/rooted_02.wav",
+   "mob": "Generic",
+   "slot": "rooted",
+   "pick": "Generic: hero rooted (roots wrapping)",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.05,
+   "lufs_m_max": -18.0,
+   "onset_ms": 6.9,
+   "peak_s": 0.122,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1e468bba-ce14-43ea-9175-4403123a17b4/",
+     "from_s": 6.0,
+     "to_s": 7.0,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  },
+  {
+   "path": "razlom/Assets/Resources/Audio/Combat/Mobs/Generic/rooted_03.wav",
+   "mob": "Generic",
+   "slot": "rooted",
+   "pick": "Generic: hero rooted (roots wrapping)",
+   "align": "window",
+   "category": "oneshot",
+   "lead_s": null,
+   "seconds": 1.0,
+   "peak_dbfs": -1.0,
+   "lufs_m_max": -18.11,
+   "onset_ms": 3.2,
+   "peak_s": 0.22,
+   "sources": [
+    {
+     "file": "ES_Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines - Epidemic Sound.wav",
+     "title": "Vegetation, Misc, Plant, Vines, Growing, Movement, Creaks, Rubbery Vines",
+     "url": "https://www.epidemicsound.com/sound-effects/tracks/1e468bba-ce14-43ea-9175-4403123a17b4/",
+     "from_s": 7.9,
+     "to_s": 8.9,
+     "gain_db": 0.0,
+     "rate": 1.0
+    }
+   ]
+  }
+ ],
+ "unused_picks": [],
+ "silent_by_choice": [
+  "Generic: essence motes absorbed"
+ ]
+}

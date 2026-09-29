@@ -249,7 +249,7 @@ namespace Game.View
             if (run.Encounters != null)
                 for (int i = 1; i < run.Sim.Entities.Count; i++)
                     if (run.Encounters.IsElite(i) && run.Sim.Entities.Alive[i])
-                        DrawLandmark(run.Sim.Entities.Position[i], i == run.BossId ? "ХРАНИТЕЛЬ ЛУГОВ" : "УСИЛЕННЫЙ ХРАНИТЕЛЬ", camera, scale, 3.2f);
+                        DrawLandmark(run.Sim.Entities.Position[i], i == run.BossId ? "ХРАНИТЕЛЬ ЛУГОВ" : EnemyTexts.Name(run.Sim.Entities.Kind[i]).ToUpperInvariant(), camera, scale, 3.2f);
             for (int e = 0; e < run.Map.ExitCount; e++)
                 DrawLandmark(run.Map.ExitPoint(e), run.Phase == RunPhase.SeekingExit
                     ? "ВЫХОД · подойди" : "ВЫХОД · победи цели", camera, scale);

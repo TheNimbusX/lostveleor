@@ -1,10 +1,11 @@
 """Derived runtime package; accepted animation masters are read-only inputs."""
-import bpy,math,json,hashlib,ast
+import bpy,math,json,hashlib,ast,sys
 from pathlib import Path
 from mathutils import Vector,Quaternion,Matrix
 HERE=Path(__file__).resolve().parent;P=HERE.parents[1];A=HERE.parent
-UNITY=Path('C:/Users/d.grab/Desktop/the-game/razlom/Assets/Resources/Characters/Forest_Stonehoof');UNITY.mkdir(parents=True,exist_ok=True)
-SOURCES={'Windup':('windup_start/Stonehoof_WindupStart_Baked_r01.blend','AN_Stonehoof_Windup'),'Launch':('windup_start/Stonehoof_WindupStart_Baked_r01.blend','AN_Stonehoof_Launch'),'ChargeLoop':('charge_loop/Stonehoof_ChargeLoop_Baked_r01.blend','AN_Stonehoof_ChargeLoop'),'Brake':('brake/Stonehoof_Brake_Baked_r01.blend','AN_Stonehoof_Brake'),'WallBrace':('collision/Stonehoof_Collision_Baked_r01.blend','AN_Stonehoof_WallBrace'),'WallImpact':('collision/Stonehoof_Collision_Baked_r01.blend','AN_Stonehoof_WallImpact'),'Death':('death_r02/Stonehoof_Death_Baked_r02.blend','AN_Stonehoof_Death'),'TurnLeft':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnLeft'),'TurnRight':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnRight')}
+# -- --out <папка>: пробный экспорт мимо Unity (проверка до копирования в Resources).
+UNITY=Path(sys.argv[sys.argv.index('--out')+1]) if '--out' in sys.argv else Path('C:/Users/d.grab/Desktop/the-game/razlom/Assets/Resources/Characters/Forest_Stonehoof');UNITY.mkdir(parents=True,exist_ok=True)
+SOURCES={'Windup':('windup_start/Stonehoof_WindupStart_Baked_r01.blend','AN_Stonehoof_Windup'),'Launch':('windup_start/Stonehoof_WindupStart_Baked_r01.blend','AN_Stonehoof_Launch'),'ChargeLoop':('charge_loop/Stonehoof_ChargeLoop_Baked_r01.blend','AN_Stonehoof_ChargeLoop'),'Brake':('brake/Stonehoof_Brake_Baked_r01.blend','AN_Stonehoof_Brake'),'WallBrace':('collision/Stonehoof_Collision_Baked_r01.blend','AN_Stonehoof_WallBrace'),'WallImpact':('collision/Stonehoof_Collision_Baked_r01.blend','AN_Stonehoof_WallImpact'),'Death':('death_r02/Stonehoof_Death_Baked_r02.blend','AN_Stonehoof_Death'),'TurnLeft':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnLeft'),'TurnRight':('turn/Stonehoof_Turn_Baked_r01.blend','AN_Stonehoof_TurnRight'),'Tusk':('tusk/Stonehoof_Tusk_Baked_r01.blend','AN_Stonehoof_Tusk')}
 bpy.ops.wm.open_mainfile(filepath=str(A/'windup_start/Stonehoof_WindupStart_r01.blend'));bpy.context.preferences.filepaths.save_version=0
 scene=bpy.context.scene;arm=bpy.data.objects['ARM_ForestStonehoof'];mesh=bpy.data.objects['SM_ForestStonehoof_LOD0'];carrier=bpy.data.objects['CTRL_PreviewMotion_Only'];scene.frame_set(0)
 rest={b.name:b.matrix_local.copy() for b in arm.data.bones};names=[b.name for b in arm.data.bones if b.use_deform]

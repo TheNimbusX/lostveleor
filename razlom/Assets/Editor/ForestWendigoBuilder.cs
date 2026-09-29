@@ -12,6 +12,12 @@ public static class ForestWendigoBuilder
         if (EditorApplication.isPlayingOrWillChangePlaymode || !System.IO.File.Exists(Root + "ForestWendigo.fbx")) return;
         if (!System.IO.File.Exists(Root + "ForestWendigo_Runtime.prefab")) Build();
     };
+    /// <summary>
+    /// Пересобирает контроллер, клипы, материал и игровой prefab из ForestWendigo.fbx.
+    /// После нового дубля в FBX (29.09 — Sweep) нужен явный запуск: автосборка
+    /// срабатывает только без prefab. Следом — «VFX: пересобрать»: пути лент круга
+    /// когтей запекаются из клипа Sweep.
+    /// </summary>
     [MenuItem("Разлом/Лесной вендиго/Собрать представление")]
     public static void Build()
     {
@@ -33,13 +39,15 @@ public static class ForestWendigoBuilder
         controller.AddLayer("Base Layer");
         var machine = controller.layers[0].stateMachine;
         int built = 0;
-        foreach (string role in new[] { "Idle", "Walk", "Claw", "Leap", "Hit", "Death", "Howl" })
+        foreach (string role in new[] { "Idle", "Walk", "Claw", "Leap", "Hit", "Death", "Howl", "Sweep" })
         {
             var original = originalClips.FirstOrDefault(c => c.name.EndsWith("Wendigo_" + role));
-            // «Вой чащи» ещё без клипа (reference_match_howl). Без него состояния нет,
-            // и ForestWendigoAnimatorView играет временную позу из кадров когтя.
-            if (original == null && role == "Howl")
-            { Debug.LogWarning("[wendigo] Нет клипа Howl — состояние пропущено, вид играет временную позу."); continue; }
+            // Вой (reference_match_howl) и круг когтей (reference_match_sweep) — поздние
+            // клипы. Без клипа состояния нет, и ForestWendigoAnimatorView играет
+            // временную позу из кадров когтя. У Sweep кадр клипа — тик Sim, удар на
+            // кадре 21 из 39: вид ведёт его фазой, длина клипа в секундах не важна.
+            if (original == null && (role == "Howl" || role == "Sweep"))
+            { Debug.LogWarning("[wendigo] Нет клипа " + role + " — состояние пропущено, вид играет временную позу."); continue; }
             if (original == null) throw new InvalidOperationException("Нет клипа " + role + ": " + string.Join(",", originalClips.Select(c => c.name)));
             string path = Root + role + ".anim";
             var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);

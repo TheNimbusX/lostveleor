@@ -319,8 +319,11 @@ namespace Game.Tests
         [Test]
         public void RestingStonehoofBacksOffFacingTheHero()
         {
+            // 2,5 м: ближе порога отхода (3 м), но между телами 1,35 м — клыкам не
+            // достать (метр от тела, ревью 29.09). Ближе кабан сперва бьёт клыками и
+            // стоит до конца взмаха — это StonehoofTests.Tusk_*; здесь только отход.
             var sim = Sim(null, FixVec2.Zero);
-            int boar = Enemy(sim, At(2, 0), EnemyKind.ForestStonehoof);
+            int boar = Enemy(sim, At(2.5, 0), EnemyKind.ForestStonehoof);
             sim.Entities.NextAttackTick[boar] = 10000;
             sim.Entities.Facing[boar] = At(-1, 0);
             for (int t = 0; t < 45; t++)

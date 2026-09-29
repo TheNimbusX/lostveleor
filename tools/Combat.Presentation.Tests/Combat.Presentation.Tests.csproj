@@ -13,5 +13,7 @@
     <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="AnchorHeadDynamics.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/EliteBarLayout.cs" Link="EliteBarLayout.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/MobSoundBank.cs" Link="MobSoundBank.cs" />
   </ItemGroup>
 </Project>

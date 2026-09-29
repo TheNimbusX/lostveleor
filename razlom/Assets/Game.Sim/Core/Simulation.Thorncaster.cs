@@ -325,7 +325,7 @@ namespace Game.Sim
         {
             var archetype = EnemyArchetypes.Get(EnemyKind.ForestThorncaster);
             Entities.BodyRadius[id] = archetype.BodyRadius;
-            Entities.PushWeight[id] = Fix64.Ratio(1, 2);
+            Entities.PushWeight[id] = Fix64.Zero; // решение владельца 29.09: не толкается и не тянется (ForcedMotion.Begin)
             var s = Entities.Stats[id];
             s.SetBase(StatType.MoveSpeed, ThorncasterMoveSpeed);
             // Урон листа — шип; всплеск считается от него (ThornBurstDamageOf).

@@ -21,6 +21,9 @@ namespace Game.Tests
             var sim = new Simulation(777UL, 32);
             sim.SetupTestArena(0);
             sim.PlayerInvulnerable = true;
+            // Здесь жетоны проверяются сами по себе — несколько замахов в один
+            // тик. В игре их ещё разносит такт ударов (AttackRhythmTests).
+            sim.AttackRhythmEnabled = false;
             return sim;
         }
 
@@ -48,9 +51,10 @@ namespace Game.Tests
             Assert.IsTrue(InWindup(sim, b));
             Assert.IsFalse(sim.TryGetEnemySwing(c, out _), "третий замах поверх двух");
 
-            while (sim.Tick < 22) sim.Step(InputFrame.Empty);
+            while (sim.Tick <= Simulation.GuardianSwingWindupTicks) sim.Step(InputFrame.Empty);
             Assert.IsTrue(sim.TryGetEnemySwing(c, out var third));
-            Assert.AreEqual(21, third.StartTick, "жетон переходит в тот же тик, когда первый ударил");
+            Assert.AreEqual(Simulation.GuardianSwingWindupTicks, third.StartTick,
+                "жетон переходит в тот же тик, когда первый ударил");
 
             for (int t = 0; t < 300; t++)
             {
@@ -271,9 +275,10 @@ namespace Game.Tests
             Assert.IsTrue(InWindup(sim, b));
             Assert.IsFalse(sim.TryGetEnemySwing(splitter, out _), "Расщепень берёт ближний жетон, как третий Хранитель");
 
-            while (sim.Tick < 22) sim.Step(InputFrame.Empty);
+            while (sim.Tick <= Simulation.GuardianSwingWindupTicks) sim.Step(InputFrame.Empty);
             Assert.IsTrue(sim.TryGetEnemySwing(splitter, out var swing));
-            Assert.AreEqual(21, swing.StartTick, "жетон переходит в тот же тик, когда Хранитель ударил");
+            Assert.AreEqual(Simulation.GuardianSwingWindupTicks, swing.StartTick,
+                "жетон переходит в тот же тик, когда Хранитель ударил");
             Assert.AreEqual(18, swing.ImpactTick - swing.StartTick);
             Assert.AreEqual(12, swing.RecoverUntil - swing.ImpactTick);
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var sector));

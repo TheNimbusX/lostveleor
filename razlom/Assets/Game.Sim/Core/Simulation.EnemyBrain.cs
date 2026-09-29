@@ -52,6 +52,8 @@ namespace Game.Sim
             _rangedGoalUntil = new int[capacity];
             _rangedGoalMoving = new bool[capacity];
             _engaged = new bool[capacity];
+            _bearingFrom = new FixVec2[capacity];
+            _bearing = new FixVec2[capacity];
         }
 
         private void ResetEnemyBrain()
@@ -68,6 +70,7 @@ namespace Game.Sim
             Array.Clear(_rangedGoal, 0, _rangedGoal.Length);
             Array.Clear(_rangedGoalUntil, 0, _rangedGoalUntil.Length);
             Array.Clear(_rangedGoalMoving, 0, _rangedGoalMoving.Length);
+            _lastStandTick = int.MinValue;
             for (int i = 0; i < _surroundSlot.Length; i++)
             { _surroundSlot[i] = -1; _surroundWaitSince[i] = -1; }
             ResetSurround();
@@ -198,6 +201,41 @@ namespace Game.Sim
 
         /// <summary>Позвала ли пачка: срок подошёл — агро без обнаружения.</summary>
         private bool PackAlerted(int id) => _alertTick[id] > 0 && Tick >= _alertTick[id];
+
+        // ---- последние идут сами ----
+
+        /// <summary>
+        /// Последних врагов арены не ищут по всей поляне (поток D, 29.09): когда
+        /// живых врагов встречи столько или меньше, а бой уже идёт (кто-то
+        /// заметил героя или пал), оставшиеся замечают героя сами и идут к нему.
+        /// Стенд ощущения: последний Корнехват в 35–40 м так и не видел героя,
+        /// герой шёл к нему 8 с, пауза без атак — до 16,6 с.
+        /// </summary>
+        public const int LastStandEnemies = 2;
+
+        // Ответ на тик: живых врагов мало и бой идёт. Считается из состояния
+        // при первом вопросе в тике — не состояние, в хеш не идёт.
+        private int _lastStandTick = int.MinValue;
+        private bool _lastStand;
+
+        /// <summary>Встреча по шаблону, бой начался, живых врагов не больше LastStandEnemies.</summary>
+        private bool LastStandAlert()
+        {
+            if (_encounter == null) return false;
+            if (_lastStandTick == Tick) return _lastStand;
+            _lastStandTick = Tick;
+            int alive = 0;
+            bool fighting = false;
+            for (int i = 1; i < Entities.Count; i++)
+            {
+                if (Entities.Side[i] == Faction.Wole) continue;
+                if (!Entities.Alive[i]) { fighting = true; continue; }
+                alive++;
+                if (Entities.Aggro[i]) fighting = true;
+            }
+            _lastStand = fighting && alive <= LastStandEnemies;
+            return _lastStand;
+        }
 
         private void HashEnemyBrain(ref ulong hash)
         {

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Game.Sim;
 
 namespace Game.View
@@ -20,6 +22,24 @@ namespace Game.View
     /// поэтому дым и мазки заранее вырезаны из пака: Resources/UI/HUD/EnemyBar*.png
     /// (tools/ui-kit/make-enemy-bars.py). Нет их — прежний вид пака «Ночная акварель»
     /// из UiTheme (Resources), поэтому работает и в сборке.
+    ///
+    /// ПОЛОСА ЭЛИТЫ (владелец 29.09, выбор G8: три концепта новой полосы отвергнуты — «даже то
+    /// что щас лучше»). Вид прежний, только крупнее, чтобы влезли цифры: «1240 / 2000» внутри
+    /// полосы (Nunito, EliteBarLayout.Numbers) и маленький знак элиты у левого края — рогатый череп
+    /// сухой кистью в том же языке: чернильная подложка цвета дорожки, тёплый свет огонька, сияние
+    /// (Resources/UI/HUD/EliteBarMark*.png, tools/ui-kit/make-elite-bar-mark.py). Имя — табличкой
+    /// над полосой (RunWorldView берёт место из TryGetNameAnchor).
+    ///
+    /// ВСЕГДА НАД МОБОМ. Раньше полоска висела на постоянной высоте из таблицы вида и рисовалась с
+    /// обычным тестом глубины — у высоких (Вендиго, Шипомёт) и в позах замаха тонула в модели.
+    /// Теперь высота считается каждый кадр от макушки тела с зазором (MeasureTop, EliteBarLayout),
+    /// а все части рисуются поверх мира (материал с ZTest Always).
+    ///
+    /// ПРЯМО НАД ГОЛОВОЙ, А НЕ В ВОЗДУХЕ (29.09, кадр wendigo-tank: полоса элиты в 85–90 пикселях
+    /// над рогами). Макушку мерили по углам границ рендереров: камера смотрит сверху под 48°, и
+    /// глубина коробки тела × tg 48° добавляла ей до метра. Теперь макушка — самая высокая на экране
+    /// кость кожи плюс то, что торчит над ней у этого вида (BoneReach: рога над черепом, горб, панцирь),
+    /// а прежняя коробка осталась только потолком. Зазор до низа полоски — ≈19 пикселей при 1080p.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(950)]
@@ -30,18 +50,46 @@ namespace Game.View
         public float Height = 0.13f;
         [Tooltip("Зазор заливки внутри дорожки, метры")]
         public float Inset = 0.022f;
-        [Tooltip("Огонёк элиты, метры")]
-        public float EliteGem = 0.2f;
 
-        [Tooltip("На сколько метров полоска висит над центром тела.")]
-        public float Height3D = 2.15f;
-        public float RootSwarmHeight3D = 1.25f;
-        // Новые мобы леса — по росту моделей (27.09): Шипомёт 2,7 м, Корнехват 1,31 м,
-        // Расщепень 1,28 м, его детёныш — то же тело в 0,6. Над макушкой, как у стража.
-        public float ThorncasterHeight3D = 2.95f;
-        public float RootSnarerHeight3D = 1.65f;
-        public float SplitterHeight3D = 1.6f;
-        public float SplitlingHeight3D = 1.1f;
+        [Header("Элита")]
+        [Tooltip("Длина полосы элиты, метры: влезают цифры «1240 / 2000» и знак (≈165 пикселей при 1080p в бою)")]
+        public float EliteWidth = 1.9f;
+        [Tooltip("Высота полосы элиты, метры (≈26 пикселей при 1080p в бою)")]
+        public float EliteHeight = 0.3f;
+        [Tooltip("Огонёк на конце заливки элиты, метры")]
+        public float EliteGem = 0.34f;
+        [Tooltip("Знак элиты — рогатый череп у левого края полосы, метры")]
+        public float EliteMark = 0.44f;
+        [Tooltip("Кегль цифр элиты: высота em, метры (0,2 — цифры ≈12 пикселей при 1080p)")]
+        public float EliteNumbersSize = 0.2f;
+        [Tooltip("Цифры: тёплый светлый, как свет огонька")]
+        public Color NumbersColor = new Color(1f, .95f, .86f, 1f);
+        [Tooltip("Обводка цифр: чернила дорожки — читаются и на заливке, и на дыме")]
+        public Color NumbersOutline = new Color32(0x0B, 0x10, 0x16, 0xF2);
+
+        [Header("Над макушкой")]
+        [Tooltip("Зазор между макушкой модели на экране и низом полоски (у элиты — низом знака), метры в плоскости полоски, как Height: 0,22 — ≈19 пикселей при 1080p в бою")]
+        public float HeadGap = 0.22f;
+        [Tooltip("Как быстро полоска поднимается к выросшей макушке, 1/с")]
+        public float AnchorRise = 18f;
+        [Tooltip("Как быстро опускается, 1/с: медленно, чтобы не прыгать за каждым взмахом")]
+        public float AnchorFall = 3f;
+
+        // Середина обычной полоски, когда замерить модель нельзя (нет рендереров, тело ещё в земле),
+        // м над точкой сущности; вдвое выше — потолок замера (EliteBarLayout.Target). Замерено по FBX
+        // 29.09: макушка модели на экране в покое (среднее по разворотам, в метрах по вертикали) +
+        // зазор и полполоски — страж 2,56, корнеполз 1,25, бутон 1,49, вендиго 3,45 (рога),
+        // камнекопыт 1,63, Шипомёт 2,82, Корнехват 1,66, Расщепень 1,57, детёныш 0,94.
+        [Tooltip("Середина полоски над телом, когда замерить модель нельзя: страж и прочие.")]
+        public float Height3D = 3f;
+        public float RootSwarmHeight3D = 1.65f;
+        public float BudHeight3D = 1.9f;
+        public float WendigoHeight3D = 3.9f;
+        public float StonehoofHeight3D = 2.05f;
+        public float ThorncasterHeight3D = 3.25f;
+        public float RootSnarerHeight3D = 2.1f;
+        public float SplitterHeight3D = 2f;
+        public float SplitlingHeight3D = 1.35f;
 
         [Tooltip("Дорожка: чернильный дым, как у полос HUD (роль Smoke).")]
         public Color BackColor = new Color32(0x12, 0x19, 0x23, 0xEB);
@@ -80,10 +128,23 @@ namespace Game.View
         private const float OrbDisc = .6f, OrbSpan = OrbDisc * 64f / 44f, GlowSpan = 2f;
         // Ступеней обрезки мазка: доля здоровья выбирает готовый спрайт, в кадре ничего не создаётся.
         private const int FillSteps = 128;
+        // Знак элиты (make-elite-bar-mark.py): череп с рогами и чернильная подложка под ним.
+        private const string MarkPath = "UI/HUD/EliteBarMark";
+        private const string MarkInkPath = "UI/HUD/EliteBarMarkInk";
 
-        private static readonly Vector3 EliteScale = new Vector3(1.4f, 1.2f, 1f);
+        // Порядок частей внутри полоски. Части элиты сдвинуты на EliteOrder: её полоса ложится поверх
+        // обычных, если они пересеклись на экране. Цифры урона (6100) — поверх всех полосок.
+        private const int OrderTrack = 4000, OrderFill = 4001, OrderFrame = 4002, OrderGlow = 4003, OrderOrb = 4004;
+        private const int OrderMarkGlow = 4005, OrderMarkInk = 4006, OrderMark = 4007, OrderNumbers = 4008;
+        private const int EliteOrder = 20;
+        private const int NeverFrame = -100;
+
+        // Тест глубины UI/Default берётся из этого свойства; UGUI ставит его глобально, материал — перекрывает.
+        private static readonly int ZTestId = Shader.PropertyToID("unity_GUIZTestMode");
+        private static readonly int TextureSampleAddId = Shader.PropertyToID("_TextureSampleAdd");
 
         private TickDriver _driver;
+        private ArenaView _arena;
         private Transform _camera;
 
         private struct Bar
@@ -96,14 +157,26 @@ namespace Game.View
             public Transform Gem;
             public SpriteRenderer GemFill;
             public SpriteRenderer GemRim;
+
+            // Элита: знак у левого края и цифры (создаются при первой элите на этой полоске).
+            public Transform Mark;
+            public SpriteRenderer MarkGlow;
+            public SpriteRenderer MarkInk;
+            public SpriteRenderer MarkCore;
+            public TextMeshPro Numbers;
+            public int ShownHealth, ShownMax;
+            public float ShownAlpha;
+            // Порядок частей сейчас сдвинут под элиту.
+            public bool EliteOrdered;
         }
 
         private Bar[] _bars;
         private Sprite _quad;
+        private Material _overlay, _numbersMaterial;
 
         // «Дым и свет»: дорожка, ступени заливки (i — доля (i + 1) / FillSteps), огонёк и сияние.
         private bool _ink;
-        private Sprite _track, _orb, _glow;
+        private Sprite _track, _orb, _glow, _mark, _markInk;
         private Sprite[] _fillSteps;
 
         // Когда по кому в последний раз попали. Индекс — сущность.
@@ -111,23 +184,71 @@ namespace Game.View
         private int _focus = -1;
         private bool _ready;
 
+        // Высота середины полоски над землёй (сглаженная) и кадр, когда её считали. Индекс — сущность.
+        private float[] _anchor;
+        private int[] _anchorFrame;
+        // Тело, которое меряется: пул ArenaView переиспользует тела между сущностями.
+        private Transform[] _bodyView;
+        private BodyShape[] _bodyShape;
+        // Разбор тела — один на объект тела: тело из пула приходит к новой сущности уже разобранным.
+        private readonly Dictionary<Transform, BodyShape> _shapes = new Dictionary<Transform, BodyShape>();
+        private const int MaxShapes = 256;
+        // Низ таблички с именем элиты (RunWorldView) и кадр, когда его выставили.
+        private Vector3[] _nameAnchor;
+        private int[] _nameFrame;
+
         private void Awake()
         {
             _driver = GetComponent<TickDriver>();
+        }
+
+        private void OnDestroy()
+        {
+            if (_overlay != null) Destroy(_overlay);
+            if (_numbersMaterial != null) Destroy(_numbersMaterial);
+        }
+
+        /// <summary>Во сколько раз корень полоски элиты шире и выше обычной.</summary>
+        private Vector3 EliteScale => new Vector3(EliteWidth / Mathf.Max(.001f, Width), EliteHeight / Mathf.Max(.001f, Height), 1f);
+
+        /// <summary>
+        /// Где низ таблички с именем элиты: верх её полосы (над знаком), в мире. Полосы не видно (элита
+        /// далеко и её не били) — там, где полоса была бы. Считается в LateUpdate полосок (порядок 950):
+        /// RunWorldView (2050) читает в том же кадре, уже после камеры. false — элиту в этом кадре не
+        /// считали (мертва, не элита, нет симуляции).
+        /// </summary>
+        public bool TryGetNameAnchor(int entity, out Vector3 world)
+        {
+            world = default;
+            if (_nameFrame == null || (uint)entity >= (uint)_nameFrame.Length || _nameFrame[entity] != Time.frameCount) return false;
+            world = _nameAnchor[entity];
+            return true;
         }
 
         private void Build()
         {
             _ready = true;
             _camera = Camera.main != null ? Camera.main.transform : null;
+            _arena = GetComponent<ArenaView>();
             _quad = MakeQuadSprite();
+            _overlay = OverlayMaterial();
             _ink = LoadInk();
+            LoadMark();
 
             Transform root = new GameObject("Пул: полоски здоровья").transform;
             root.SetParent(transform, false);
 
-            _hitAt = new float[TickDriver.MaxSimCapacity];
+            int capacity = TickDriver.MaxSimCapacity;
+            _hitAt = new float[capacity];
             for (int i = 0; i < _hitAt.Length; i++) _hitAt[i] = -999f;
+            _anchor = new float[capacity];
+            _anchorFrame = new int[capacity];
+            _bodyView = new Transform[capacity];
+            _bodyShape = new BodyShape[capacity];
+            _nameAnchor = new Vector3[capacity];
+            _nameFrame = new int[capacity];
+            // Кадров «никогда»: -1 совпал бы с «прошлым кадром» на кадре 0.
+            for (int i = 0; i < capacity; i++) _anchorFrame[i] = _nameFrame[i] = NeverFrame;
 
             _bars = new Bar[Mathf.Max(1, MaxBars)];
             for (int i = 0; i < _bars.Length; i++) _bars[i] = MakeBar(root, i);
@@ -179,16 +300,25 @@ namespace Game.View
         {
             EntityStore entities = sim.Entities;
             float now = Time.unscaledTime;
+            float dt = Time.unscaledDeltaTime;
+            int frame = Time.frameCount;
             int used = 0;
             float inner = Width - Inset * 2f;
             // Сияние огонька дышит, как свет «Дыма и света» в HUD (пульс шейдера ≈ 0,14).
             float breath = .86f + .14f * Mathf.Sin(now * 2.1f);
+            // Верх экрана в мире: полоска повёрнута к камере, её «вверх» — вверх камеры.
+            Vector3 up = _camera != null ? _camera.up : Vector3.up;
+            Vector3 eliteScale = EliteScale;
 
-            for (int i = 0; i < entities.Count && used < _bars.Length; i++)
+            // Цикл идёт по всем: даже при полном пуле табличке элиты нужно место над её макушкой.
+            for (int i = 0; i < entities.Count; i++)
             {
                 if (i == Simulation.PlayerId) continue;
                 if (!entities.Alive[i]) continue;
                 if ((uint)i >= (uint)_hitAt.Length) continue;
+
+                int max = entities.MaxHealth[i];
+                if (max <= 0) continue;
 
                 float age = now - _hitAt[i];
                 var dummy = CampTrainingView.Find(i);
@@ -196,10 +326,19 @@ namespace Game.View
                     && CampTrainingView.IsNear(dummy, CampPlayerView.Instance.Position);
                 bool elite = _driver.Run?.Encounters?.IsElite(i) == true;
                 bool nearbyElite = elite && FixVec2.DistanceSq(entities.Position[i], entities.Position[Simulation.PlayerId]) < Fix64.FromInt(256);
-                if (age > ShowFor && !nearbyElite && !nearbyDummy) continue;
+                bool shown = (age <= ShowFor || nearbyElite || nearbyDummy) && used < _bars.Length;
+                if (!shown && !elite) continue;
 
-                int max = entities.MaxHealth[i];
-                if (max <= 0) continue;
+                // Середина полоски: над макушкой модели этого кадра (манекен знает своё место сам).
+                Vector3 center = dummy != null ? dummy.BarPosition : BarCenter(i, entities.Kind[i], elite, up, dt, frame);
+                if (elite)
+                {
+                    // Низ таблички имени — над полосой и над рогами знака.
+                    float lift = Mathf.Max(EliteHeight, EliteMark) * .5f + .03f;
+                    _nameAnchor[i] = center + up * lift;
+                    _nameFrame[i] = frame;
+                }
+                if (!shown) continue;
 
                 float fill = Mathf.Clamp01(entities.Health[i] / (float)max);
 
@@ -209,14 +348,12 @@ namespace Game.View
                     ? Mathf.InverseLerp(ShowFor, ShowFor - FadeFor, age)
                     : 1f;
 
-                Bar bar = _bars[used++];
+                ref Bar bar = ref _bars[used++];
                 bar.Root.gameObject.SetActive(true);
-                bar.Root.localScale = elite ? EliteScale : Vector3.one;
+                bar.Root.localScale = elite ? eliteScale : Vector3.one;
+                SetEliteOrder(ref bar, elite);
 
-                Vector3 at = _driver.GetRenderPosition(i);
-                float height = BarHeight(entities.Kind[i]);
-                bar.Root.position = new Vector3(at.x, at.y + height, at.z);
-                if (dummy != null) bar.Root.position = dummy.BarPosition;
+                bar.Root.position = center;
                 if (_camera != null) bar.Root.rotation = _camera.rotation;
 
                 bar.BackRenderer.color = Faded(BackColor, alpha);
@@ -248,6 +385,8 @@ namespace Game.View
                 bar.Gem.gameObject.SetActive(elite && fill > .001f);
                 if (elite)
                 {
+                    // Дети корня элиты живут в метрах: корень растянут неровно, они сжимаются обратно.
+                    bar.Gem.localScale = new Vector3(EliteGem / eliteScale.x, EliteGem / eliteScale.y, 1f);
                     bar.Gem.localPosition = new Vector3(end, 0f, -.003f);
                     if (_ink)
                     {
@@ -260,16 +399,317 @@ namespace Game.View
                         bar.GemRim.color = Faded(EliteColor, alpha);
                     }
                 }
+                DrawMark(ref bar, elite, alpha, breath, eliteScale);
+                DrawNumbers(ref bar, elite, entities.Health[i], max, alpha, eliteScale);
             }
 
             HideFrom(used);
         }
 
-        /// <summary>На какой высоте над телом висит полоска этого вида, м.</summary>
+        /// <summary>
+        /// Знак элиты у левого края полосы: сияние огонька, чернильная подложка цвета дорожки и сам
+        /// рогатый череп в тёплом свете. Сдвинут внутрь на десятую своего размера — торчит за край
+        /// полосы, как значок, приколотый к её началу.
+        /// </summary>
+        private void DrawMark(ref Bar bar, bool elite, float alpha, float breath, Vector3 eliteScale)
+        {
+            if (bar.Mark == null) return;
+            if (bar.Mark.gameObject.activeSelf != elite) bar.Mark.gameObject.SetActive(elite);
+            if (!elite) return;
+            bar.Mark.localScale = new Vector3(EliteMark / eliteScale.x, EliteMark / eliteScale.y, 1f);
+            bar.Mark.localPosition = new Vector3((-EliteWidth * .5f + EliteMark * .1f) / eliteScale.x, 0f, -.004f);
+            bar.MarkGlow.color = Faded(OrbGlowColor, alpha * breath * .8f);
+            bar.MarkInk.color = Faded(BackColor, alpha);
+            bar.MarkCore.color = Faded(OrbColor, alpha);
+        }
+
+        /// <summary>
+        /// Цифры «1240 / 2000» внутри полосы элиты (владелец 29.09). Текст пересобирается только когда
+        /// меняется здоровье; кегль ужимается сам, если число длиннее обычного.
+        /// </summary>
+        private void DrawNumbers(ref Bar bar, bool elite, int health, int max, float alpha, Vector3 eliteScale)
+        {
+            if (elite && bar.Numbers == null) bar.Numbers = MakeNumbers(bar.Root, OrderNumbers + (bar.EliteOrdered ? EliteOrder : 0));
+            TextMeshPro text = bar.Numbers;
+            if (text == null) return;
+            if (text.gameObject.activeSelf != elite) text.gameObject.SetActive(elite);
+            if (!elite) return;
+
+            text.transform.localScale = new Vector3(1f / eliteScale.x, 1f / eliteScale.y, 1f);
+            // Середина свободного места справа от знака.
+            text.transform.localPosition = new Vector3(EliteMark * .2f / eliteScale.x, 0f, -.005f);
+            text.rectTransform.sizeDelta = new Vector2(Mathf.Max(.2f, EliteWidth - EliteMark * 1.1f - .1f), EliteHeight * 1.6f);
+            text.fontSizeMax = EliteNumbersSize * 10f;
+            text.fontSizeMin = EliteNumbersSize * 6f;
+            if (health != bar.ShownHealth || max != bar.ShownMax)
+            {
+                bar.ShownHealth = health;
+                bar.ShownMax = max;
+                text.text = EliteBarLayout.Numbers(health, max);
+            }
+            if (!Mathf.Approximately(alpha, bar.ShownAlpha))
+            {
+                bar.ShownAlpha = alpha;
+                text.alpha = alpha;
+            }
+        }
+
+        /// <summary>
+        /// Середина полоски над макушкой тела в этом кадре. Высота сглажена по сущности: к выросшей
+        /// макушке — быстро, вниз — медленно (EliteBarLayout.Follow). Сущность в прошлом кадре не
+        /// считали (только появилась, полоска вернулась) — высота встаёт сразу, без подъезда.
+        /// </summary>
+        private Vector3 BarCenter(int entity, EnemyKind kind, bool elite, Vector3 up, float dt, int frame)
+        {
+            Vector3 at = _driver.GetRenderPosition(entity);
+            // Полоска повёрнута к камере: её высота и зазор лежат вдоль «вверх» камеры, а середина
+            // ставится по вертикали над сущностью. Метр вдоль «вверх» камеры — 1 / up.y метров по
+            // вертикали (камера боя 48° — полтора).
+            float rise = 1f / Mathf.Max(.05f, up.y);
+            // Нижний край полосы элиты — знак: он выше полосы и свисает под неё.
+            float half = elite ? Mathf.Max(EliteHeight, EliteMark) * .5f : Height * .5f;
+            // Высота из таблицы — середина обычной полоски; у элиты низ остаётся там же.
+            float fallback = BarHeight(kind) + (half - Height * .5f) * rise;
+            bool measured = MeasureTop(entity, kind, at, up, out float top);
+            float target = EliteBarLayout.Target(top, measured, fallback, HeadGap * rise, half * rise);
+
+            float height;
+            if (_anchorFrame[entity] == frame) height = _anchor[entity];
+            else if (_anchorFrame[entity] == frame - 1) height = EliteBarLayout.Follow(_anchor[entity], target, dt, AnchorRise, AnchorFall);
+            else height = target;
+            _anchor[entity] = height;
+            _anchorFrame[entity] = frame;
+            return new Vector3(at.x, at.y + height, at.z);
+        }
+
+        /// <summary>
+        /// Макушка тела: самая высокая на экране точка тела, пересчитанная в метры по вертикали над
+        /// точкой сущности. «На экране», а не в мире: камера смотрит сверху под углом, и рога,
+        /// отклонённые назад, на экране выше, чем их мировая высота над центром.
+        ///
+        /// Два замера, берётся меньший. Кости кожи: самая высокая на экране кость плюс то, что торчит
+        /// над ней у этого вида (BoneReach) — точки, а не коробки, поэтому глубина тела в них не
+        /// попадает. Границы видимых рендереров: для AABB максимум dot(угол, up) = dot(центр, up) +
+        /// dot(половины, |up|) — глубина коробки × tg 48° завышает его на 30–60 пикселей (у вендиго до
+        /// 100), зато он честный сверху и работает у тел без кожи (заглушка, спрайт) — поэтому он потолок.
+        /// Кости меряются, только пока видна хоть одна их кожа. Без выделений памяти в кадре.
+        /// false — тела нет или все его части скрыты.
+        /// </summary>
+        private bool MeasureTop(int entity, EnemyKind kind, Vector3 ground, Vector3 up, out float top)
+        {
+            top = 0f;
+            if (_arena == null || up.y < .05f || !_arena.TryGetEntityView(entity, out Transform view) || view == null) return false;
+            BodyShape body = _bodyShape[entity];
+            if (_bodyView[entity] != view || body == null)
+            {
+                body = ShapeOf(view);
+                _bodyView[entity] = view;
+                _bodyShape[entity] = body;
+                // Новое тело — прежняя сглаженная высота ему не принадлежит.
+                _anchorFrame[entity] = NeverFrame;
+            }
+
+            float groundUp = Vector3.Dot(ground, up);
+            Renderer[] renderers = body.Renderers;
+            Vector3 absUp = new Vector3(Mathf.Abs(up.x), Mathf.Abs(up.y), Mathf.Abs(up.z));
+            float box = float.NegativeInfinity;
+            int skins = 0;
+            for (int k = 0; k < renderers.Length; k++)
+            {
+                Renderer renderer = renderers[k];
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                Bounds b = renderer.bounds;
+                float reach = Vector3.Dot(b.center, up) + Vector3.Dot(b.extents, absUp);
+                if (reach > box) box = reach;
+                skins |= body.SkinBits[k];
+            }
+            if (float.IsNegativeInfinity(box)) return false;
+            top = (box - groundUp) / up.y;
+
+            if (skins == 0 || !BoneReach(kind, out float crown, out float limb, out string[] crownBones)) return true;
+            if (body.CrownKind != (int)kind) MarkCrown(body, kind, crownBones);
+            // Короны у тела не нашлось (кости переименовали при перевыгрузке) — всем костям запас короны:
+            // полоска выше, но не в рогах; сверху её держит коробка.
+            if (!body.HasCrown) limb = crown;
+            // Запасы — в метрах модели; тело растянуто масштабом корня (страж 2,4, детёныш 0,6) и
+            // сжатием удара. Вертикальный метр — up.y вдоль «вверх» камеры.
+            float scale = Mathf.Abs(view.lossyScale.y) * up.y;
+            float crownUp = crown * scale, limbUp = limb * scale;
+            Transform[] bones = body.Bones;
+            float best = float.NegativeInfinity;
+            for (int j = 0; j < bones.Length; j++)
+            {
+                if ((body.BoneSkins[j] & skins) == 0) continue;
+                Transform bone = bones[j];
+                if (bone == null) continue;
+                float reach = Vector3.Dot(bone.position, up) + (body.Crown[j] ? crownUp : limbUp);
+                if (reach > best) best = reach;
+            }
+            if (!float.IsNegativeInfinity(best)) top = Mathf.Min(top, (best - groundUp) / up.y);
+            return true;
+        }
+
+        /// <summary>
+        /// Разбор тела для замера макушки: части для потолка и кости кожи. Тело пула приходит к новой
+        /// сущности уже разобранным; уничтоженные тела (смена арены) выметаются, когда словарь разросся.
+        /// </summary>
+        private BodyShape ShapeOf(Transform view)
+        {
+            if (_shapes.TryGetValue(view, out BodyShape shape)) return shape;
+            if (_shapes.Count >= MaxShapes) _shapes.Clear();
+            shape = BuildShape(view);
+            _shapes.Add(view, shape);
+            return shape;
+        }
+
+        /// <summary>
+        /// Тело, по которому меряется макушка.
+        /// Части — сетки, кожа и спрайты тела. Без контактной тени, подписи заглушки, частиц, следов и
+        /// линий — они либо на земле, либо улетают от тела. Кости — уникальные кости всех кож тела;
+        /// маска у кости — какие кожи она двигает (бит кожи в SkinBits, первые 31 кожа).
+        /// </summary>
+        private sealed class BodyShape
+        {
+            public Renderer[] Renderers;
+            public int[] SkinBits;
+            public Transform[] Bones;
+            public string[] BoneNames;
+            public int[] BoneSkins;
+            // Кости «короны» вида CrownKind (BoneReach): над ними торчит выше всего. Одно тело на два
+            // вида только у Расщепеня и его детёныша, у них корона одна — разметка почти не меняется.
+            public bool[] Crown;
+            public int CrownKind = -1;
+            public bool HasCrown;
+        }
+
+        private static BodyShape BuildShape(Transform view)
+        {
+            Renderer[] all = view.GetComponentsInChildren<Renderer>(true);
+            var parts = new List<Renderer>(all.Length);
+            for (int i = 0; i < all.Length; i++)
+            {
+                Renderer renderer = all[i];
+                bool part = renderer is SkinnedMeshRenderer || renderer is MeshRenderer || renderer is SpriteRenderer;
+                if (!part) continue;
+                if (renderer.gameObject.name == "Contact Shadow") continue;
+                if (ForestMobPlaceholderView.IsLabel(renderer)) continue;
+                if (renderer is MeshRenderer && renderer.GetComponent<TMP_Text>() != null) continue;
+                parts.Add(renderer);
+            }
+
+            var shape = new BodyShape { Renderers = parts.ToArray() };
+            shape.SkinBits = new int[shape.Renderers.Length];
+            var bones = new List<Transform>();
+            var masks = new List<int>();
+            int skin = 0;
+            for (int r = 0; r < shape.Renderers.Length && skin < 31; r++)
+            {
+                if (!(shape.Renderers[r] is SkinnedMeshRenderer skinned)) continue;
+                int bit = 1 << skin++;
+                shape.SkinBits[r] = bit;
+                Transform[] own = skinned.bones;
+                for (int b = 0; b < own.Length; b++)
+                {
+                    Transform bone = own[b];
+                    if (bone == null) continue;
+                    int at = bones.IndexOf(bone);
+                    if (at < 0) { bones.Add(bone); masks.Add(bit); }
+                    else masks[at] |= bit;
+                }
+            }
+            shape.Bones = bones.ToArray();
+            shape.BoneSkins = masks.ToArray();
+            shape.BoneNames = new string[shape.Bones.Length];
+            for (int b = 0; b < shape.Bones.Length; b++) shape.BoneNames[b] = shape.Bones[b].name;
+            shape.Crown = new bool[shape.Bones.Length];
+            return shape;
+        }
+
+        private static void MarkCrown(BodyShape shape, EnemyKind kind, string[] crownBones)
+        {
+            shape.CrownKind = (int)kind;
+            shape.HasCrown = false;
+            for (int b = 0; b < shape.Bones.Length; b++)
+            {
+                bool crown = System.Array.IndexOf(crownBones, shape.BoneNames[b]) >= 0;
+                shape.Crown[b] = crown;
+                shape.HasCrown |= crown;
+            }
+        }
+
+        // Кости «короны» по видам — имена из FBX в Resources/Characters.
+        private static readonly string[] MixamoCrown = { "mixamorig:Head" };
+        private static readonly string[] WendigoCrown = { "head" };
+        private static readonly string[] StonehoofCrown = { "neck0", "head0", "body_top0", "body_top1" };
+        private static readonly string[] ThorncasterCrown = { "Head" };
+        private static readonly string[] RootSnarerCrown = { "head", "neck", "spine_02", "L_clavicle", "R_clavicle" };
+        private static readonly string[] SplitterCrown = { "body", "spine", "neck", "head", "shell_L", "shell_R" };
+        private static readonly string[] NoCrown = { };
+
+        /// <summary>
+        /// Сколько тела торчит над костями кожи, в метрах модели (при масштабе корня 1; в кадре
+        /// умножается на масштаб тела): над костями «короны» — рога с черепом, горб, панцирь, плечи;
+        /// над остальными — кисти, когти, лепестки, ноги. false — вид не размечен, меряется коробкой.
+        ///
+        /// Замерено 29.09 по FBX из Resources/Characters в Blender: все клипы, кроме смерти, по 12
+        /// разворотов моба под камерой боя (48°), макушка — по вершинам сетки. Запасы подобраны так,
+        /// чтобы в покое и ходьбе ошибка в среднем была нулевой. Разброс от разворота моба и поз
+        /// атаки (5–95 %, пиксели при 1080p): вендиго −14…+22 (рога широкие и откинуты назад),
+        /// Шипомёт −13…+18, Расщепень −10…+17, Корнехват −11…+12, страж −7…+10, корнеполз −8…+7,
+        /// камнекопыт −5…+4, бутон ±2 (в выстреле, пока лепестки переворачиваются, до −24).
+        /// </summary>
+        private static bool BoneReach(EnemyKind kind, out float crown, out float limb, out string[] crownBones)
+        {
+            switch (kind)
+            {
+                // Страж (и вид «None» на его теле): череп над костью головы; тело в игре ×2,4.
+                case EnemyKind.None:
+                case EnemyKind.ForestGuardian: crown = .24f; limb = .085f; crownBones = MixamoCrown; return true;
+                case EnemyKind.ForestRootSwarm: crown = .215f; limb = .025f; crownBones = MixamoCrown; return true;
+                // Бутон: над концами лепестков — только их кончики.
+                case EnemyKind.ForestBud: crown = .08f; limb = .08f; crownBones = NoCrown; return true;
+                // Вендиго: кость головы на 2,2 м, рога — до 3,1 м.
+                case EnemyKind.ForestWendigo: crown = 1.24f; limb = .58f; crownBones = WendigoCrown; return true;
+                case EnemyKind.ForestStonehoof: crown = .46f; limb = .16f; crownBones = StonehoofCrown; return true;
+                case EnemyKind.ForestThorncaster: crown = .68f; limb = .44f; crownBones = ThorncasterCrown; return true;
+                // Корнехват сгорблен: выше всего спина и плечи, голова ниже ключиц.
+                case EnemyKind.ForestRootSnarer: crown = .5f; limb = .42f; crownBones = RootSnarerCrown; return true;
+                // Расщепень: панцирь на 0,66 м выше хребта; детёныш — то же тело ×0,6.
+                case EnemyKind.ForestSplitter:
+                case EnemyKind.ForestSplitling: crown = .7f; limb = .05f; crownBones = SplitterCrown; return true;
+                default: crown = 0f; limb = 0f; crownBones = NoCrown; return false;
+            }
+        }
+
+        /// <summary>Сдвигает порядок всех частей полоски в блок элиты и обратно.</summary>
+        private static void SetEliteOrder(ref Bar bar, bool elite)
+        {
+            if (bar.EliteOrdered == elite) return;
+            bar.EliteOrdered = elite;
+            int shift = elite ? EliteOrder : -EliteOrder;
+            Shift(bar.BackRenderer, shift);
+            Shift(bar.FillRenderer, shift);
+            Shift(bar.FrameRenderer, shift);
+            Shift(bar.GemFill, shift);
+            Shift(bar.GemRim, shift);
+            Shift(bar.MarkGlow, shift);
+            Shift(bar.MarkInk, shift);
+            Shift(bar.MarkCore, shift);
+            if (bar.Numbers != null) bar.Numbers.GetComponent<MeshRenderer>().sortingOrder += shift;
+        }
+
+        private static void Shift(Renderer renderer, int shift)
+        {
+            if (renderer != null) renderer.sortingOrder += shift;
+        }
+
+        /// <summary>На какой высоте над телом висит полоска этого вида, когда замера нет, м.</summary>
         private float BarHeight(EnemyKind kind) => kind switch
         {
-            EnemyKind.ForestBud => 1.6f,
+            EnemyKind.ForestBud => BudHeight3D,
             EnemyKind.ForestRootSwarm => RootSwarmHeight3D,
+            EnemyKind.ForestWendigo => WendigoHeight3D,
+            EnemyKind.ForestStonehoof => StonehoofHeight3D,
             EnemyKind.ForestThorncaster => ThorncasterHeight3D,
             EnemyKind.ForestRootSnarer => RootSnarerHeight3D,
             EnemyKind.ForestSplitter => SplitterHeight3D,
@@ -300,6 +740,7 @@ namespace Game.View
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = sprite != null ? sprite : _quad;
             renderer.sortingOrder = order;
+            if (_overlay != null) renderer.sharedMaterial = _overlay;
             if (sliced && sprite != null) renderer.drawMode = SpriteDrawMode.Sliced;
             return renderer;
         }
@@ -309,7 +750,126 @@ namespace Game.View
             var rootGo = new GameObject("Полоска " + index);
             rootGo.transform.SetParent(root, false);
             rootGo.SetActive(false);
-            return _ink ? InkBar(rootGo.transform) : KitBar(rootGo.transform);
+            Bar bar = _ink ? InkBar(rootGo.transform) : KitBar(rootGo.transform);
+            AddMark(ref bar);
+            return bar;
+        }
+
+        /// <summary>
+        /// Материал «поверх всего» для частей полоски. Раньше они рисовались Sprites/Default с обычным
+        /// тестом глубины и тонули в высоких моделях и позах замаха. UI/Default берёт тест глубины из
+        /// unity_GUIZTestMode — на самом материале стоит Always. Шейдер всегда в сборке (Always
+        /// Included Shaders), смешивание и цвет вершин — как у Sprites/Default, так что вид прежний.
+        /// Нет шейдера — null: части остаются на материале по умолчанию.
+        /// </summary>
+        private static Material OverlayMaterial()
+        {
+            Shader shader = Shader.Find("UI/Default");
+            if (shader == null) return null;
+            var material = new Material(shader) { name = "Полоски здоровья · поверх мира" };
+            material.SetFloat(ZTestId, (float)CompareFunction.Always);
+            // UGUI ставит его глобально для текстур-масок шрифта; спрайтам полосы — ноль, иначе побелеют.
+            material.SetVector(TextureSampleAddId, Vector4.zero);
+            return material;
+        }
+
+        /// <summary>Знак элиты из Resources; нет спрайтов — полоса элиты без знака, но с цифрами.</summary>
+        private void LoadMark()
+        {
+            var mark = Resources.Load<Texture2D>(MarkPath);
+            var ink = Resources.Load<Texture2D>(MarkInkPath);
+            if (mark == null || ink == null) return;
+            _mark = Whole(mark);
+            _markInk = Whole(ink);
+        }
+
+        /// <summary>
+        /// Знак элиты на полоске: сияние огонька, чернильная подложка и череп. Части вписаны в 1 м —
+        /// размер задаёт масштаб узла (EliteMark), выставляемый каждый кадр.
+        /// </summary>
+        private void AddMark(ref Bar bar)
+        {
+            if (_mark == null || _markInk == null) return;
+            var mark = new GameObject("Знак элиты").transform;
+            mark.SetParent(bar.Root, false);
+            Sprite glowSprite = _glow != null ? _glow : _quad;
+            SpriteRenderer glow = Part(mark, "Сияние", glowSprite, OrderMarkGlow, false);
+            Fit(glow, 1.5f, 1.5f);
+            SpriteRenderer ink = Part(mark, "Подложка", _markInk, OrderMarkInk, false);
+            Fit(ink, 1f, 1f);
+            SpriteRenderer core = Part(mark, "Череп", _mark, OrderMark, false);
+            Fit(core, 1f, 1f);
+            // Без сияния из «Дыма и света» квадрат вместо пятна хуже, чем ничего.
+            if (_glow == null) glow.gameObject.SetActive(false);
+            mark.gameObject.SetActive(false);
+
+            bar.Mark = mark;
+            bar.MarkGlow = glow;
+            bar.MarkInk = ink;
+            bar.MarkCore = core;
+        }
+
+        /// <summary>
+        /// Цифры полосы элиты: Nunito из темы UI (роль Body), жирные, светлые, с чернильной обводкой и
+        /// мягкой тенью. Рисуются поверх мира, как и сама полоса. Нет шрифта — null, полоса без цифр.
+        /// </summary>
+        private TextMeshPro MakeNumbers(Transform root, int order)
+        {
+            TMP_FontAsset body = UiTheme.Current.Body;
+            if (body == null) return null;
+            // Жирное начертание берётся сразу шрифтом (Nunito-Bold SDF из таблицы весов Body), а не
+            // стилем Bold: со стилем TMP рисовал бы цифры запасным материалом того шрифта, и наш
+            // материал (обводка, ZTest Always) до них мог не доехать. Нет жирного — синтетический Bold.
+            TMP_FontAsset bold = BoldOf(body);
+            TMP_FontAsset font = bold != null ? bold : body;
+            if (_numbersMaterial == null) _numbersMaterial = NumbersMaterial(font);
+
+            var go = new GameObject("Цифры");
+            go.transform.SetParent(root, false);
+            var text = go.AddComponent<TextMeshPro>();
+            text.font = font;
+            text.fontSharedMaterial = _numbersMaterial;
+            text.fontStyle = bold != null ? FontStyles.Normal : FontStyles.Bold;
+            text.alignment = TextAlignmentOptions.Center;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.overflowMode = TextOverflowModes.Overflow;
+            text.enableAutoSizing = true;
+            text.fontSizeMax = EliteNumbersSize * 10f;
+            text.fontSizeMin = EliteNumbersSize * 6f;
+            text.fontSize = EliteNumbersSize * 10f;
+            text.color = NumbersColor;
+            text.text = string.Empty;
+            text.GetComponent<MeshRenderer>().sortingOrder = order;
+            go.SetActive(false);
+            return text;
+        }
+
+        private Material NumbersMaterial(TMP_FontAsset font)
+        {
+            var m = new Material(font.material) { name = font.name + " · полоса элиты" };
+            m.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            m.SetColor(ShaderUtilities.ID_OutlineColor, NumbersOutline);
+            m.SetFloat(ShaderUtilities.ID_OutlineWidth, .24f);
+            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            m.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0f, 0f, 0f, .55f));
+            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, .3f);
+            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, .6f);
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -.5f);
+            // Шейдеры TMP тоже берут тест глубины из unity_GUIZTestMode: цифры не тонут вместе с полосой.
+            m.SetFloat(ZTestId, (float)CompareFunction.Always);
+            ShaderUtilities.GetShaderPropertyIDs();
+            ShaderUtilities.UpdateShaderRatios(m);
+            return m;
+        }
+
+        /// <summary>Жирный (вес 700) из таблицы весов шрифта; null — его нет.</summary>
+        private static TMP_FontAsset BoldOf(TMP_FontAsset font)
+        {
+            TMP_FontWeightPair[] weights = font.fontWeightTable;
+            const int bold = 7;
+            if (weights == null || weights.Length <= bold) return null;
+            TMP_FontAsset typeface = weights[bold].regularTypeface;
+            return typeface != null && typeface != font ? typeface : null;
         }
 
         /// <summary>
@@ -360,22 +920,22 @@ namespace Game.View
         private Bar InkBar(Transform root)
         {
             float inner = Width - Inset * 2f;
-            SpriteRenderer back = Part(root, "Дорожка", _track, 4000, false);
+            SpriteRenderer back = Part(root, "Дорожка", _track, OrderTrack, false);
             Fit(back, Width * TrackSpanX, Height * TrackSpanY);
 
             // Масштаб — по полному мазку: короткая ступень той же высоты и плотности, просто обрезана.
-            SpriteRenderer fill = Part(root, "Заливка", _fillSteps[FillSteps - 1], 4001, false);
+            SpriteRenderer fill = Part(root, "Заливка", _fillSteps[FillSteps - 1], OrderFill, false);
             Fit(fill, inner, Height);
             fill.transform.localPosition = new Vector3(-inner * .5f, 0f, -.001f);
 
+            // Огонёк вписан в 1 м: размер (EliteGem) и обратное сжатие неровного корня элиты
+            // даёт масштаб узла, выставляемый каждый кадр.
             var gem = new GameObject("Элита").transform;
             gem.SetParent(root, false);
-            // Корень элиты растянут неровно (1,4 × 1,2): огонёк сжимается обратно в круг.
-            gem.localScale = new Vector3(EliteScale.y / EliteScale.x, 1f, 1f);
-            SpriteRenderer glow = Part(gem, "Сияние", _glow, 4003, false);
-            Fit(glow, EliteGem * GlowSpan, EliteGem * GlowSpan);
-            SpriteRenderer orb = Part(gem, "Огонёк", _orb, 4004, false);
-            Fit(orb, EliteGem * OrbSpan, EliteGem * OrbSpan);
+            SpriteRenderer glow = Part(gem, "Сияние", _glow, OrderGlow, false);
+            Fit(glow, GlowSpan, GlowSpan);
+            SpriteRenderer orb = Part(gem, "Огонёк", _orb, OrderOrb, false);
+            Fit(orb, OrbSpan, OrbSpan);
             gem.gameObject.SetActive(false);
 
             return new Bar
@@ -398,24 +958,25 @@ namespace Game.View
         {
             UiTheme theme = UiTheme.Current;
 
-            SpriteRenderer back = Part(root, "Дорожка", theme.BarFill, 4000, true);
+            SpriteRenderer back = Part(root, "Дорожка", theme.BarFill, OrderTrack, true);
             if (back.drawMode == SpriteDrawMode.Sliced) back.size = new Vector2(Width, Height);
             else back.transform.localScale = new Vector3(Width, Height, 1f);
 
-            SpriteRenderer fill = Part(root, "Заливка", theme.BarFill, 4001, true);
-            SpriteRenderer frame = Part(root, "Контур", theme.BarFrame, 4002, true);
+            SpriteRenderer fill = Part(root, "Заливка", theme.BarFill, OrderFill, true);
+            SpriteRenderer frame = Part(root, "Контур", theme.BarFrame, OrderFrame, true);
             if (frame.drawMode == SpriteDrawMode.Sliced) frame.size = new Vector2(Width, Height);
             else frame.gameObject.SetActive(false);
 
             // Ромб элиты: светлая заливка в оправе цвета здоровья, едет за концом заливки.
+            // Вписан в 1 м, как огонёк «Дыма и света»: размер даёт масштаб узла.
             var gem = new GameObject("Элита").transform;
             gem.SetParent(root, false);
-            SpriteRenderer gemFill = Part(gem, "Заливка", theme.DiamondFill, 4003, false);
-            SpriteRenderer gemRim = Part(gem, "Оправа", theme.DiamondFrameSmall, 4004, false);
+            SpriteRenderer gemFill = Part(gem, "Заливка", theme.DiamondFill, OrderGlow, false);
+            SpriteRenderer gemRim = Part(gem, "Оправа", theme.DiamondFrameSmall, OrderOrb, false);
             foreach (SpriteRenderer part in new[] { gemFill, gemRim })
             {
                 Vector2 size = part.sprite.bounds.size;
-                part.transform.localScale = new Vector3(EliteGem / Mathf.Max(.001f, size.x), EliteGem / Mathf.Max(.001f, size.y), 1f);
+                part.transform.localScale = new Vector3(1f / Mathf.Max(.001f, size.x), 1f / Mathf.Max(.001f, size.y), 1f);
             }
             gemFill.transform.localScale *= .82f;
             gem.gameObject.SetActive(false);

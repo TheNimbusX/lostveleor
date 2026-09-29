@@ -1,0 +1,77 @@
+{
+  "section": "abilities",
+  "date": "2026-09-29",
+  "model": "gpt_image_2_5 high 2k 16:9 (2.75 credits each)",
+  "items": [
+    {
+      "file": "01-stonehoof-tusk-swipe.png",
+      "gate": "G4",
+      "prompt_summary": "Stonehoof tusk swipe: boar jerks head sideways-up into hero, short ivory-gold tusk arc, dirt clods, hero knocked back ~1 m with scuff marks",
+      "job_id": "554ee8a8-ffc2-4b22-826f-8c59987b3055",
+      "base": "artifacts/mobsv2-bases/stonehoof/shot_01_t3.00s.png (2x crop; boar moved next to hero by PIL composite)"
+    },
+    {
+      "file": "02-stonehoof-stun-daze.png",
+      "gate": "G4",
+      "prompt_summary": "Hero stunned after charge hit: warm amber daze ring over head with orbiting leaves and bark-chip stars, torn-turf charge trail to boar",
+      "job_id": "fed89bcc-afb1-4e12-a9ea-0b2c93bcd6b7",
+      "base": "artifacts/mobsv2-bases/stonehoof/shot_03_t6.00s.png (2x crop)"
+    },
+    {
+      "file": "03-wendigo-360-sweep.png",
+      "gate": "G5",
+      "prompt_summary": "Wendigo 360 sweep: full-circle ivory/amber triple claw ring, dust ring, leaves and clods blown outward; red telegraph/bar removed",
+      "job_id": "58851b1f-34a3-4dc0-8a22-c6b59f459e07",
+      "base": "artifacts/mobsv2-bases/wendigo/shot_00_t1.50s.png (2x crop)"
+    },
+    {
+      "file": "04-wendigo-howl-a-glowing-sap.png",
+      "gate": "G5",
+      "prompt_summary": "Howl variant A: dark red-brown thorn roots ring 2-5.5 m with glowing amber sap veins and fissures, big soil burst, dust wall",
+      "job_id": "a9cd2166-92c2-4955-bc1e-98f0363e8d04",
+      "base": "artifacts/mobsv2-bases/wendigo/shot_00_t1.50s.png (1.6x crop) + prior howl frame job 38185125"
+    },
+    {
+      "file": "05-wendigo-howl-b-big-eruption.png",
+      "gate": "G5",
+      "prompt_summary": "Howl variant B: thicker clustered spikes with honey-gold sap tips, huge radial clod/pebble explosion, tan dust ring, calm bright centre",
+      "job_id": "8ebe3339-5c88-4df7-97b6-cb6be6f185e0",
+      "base": "artifacts/mobsv2-bases/wendigo/shot_00_t1.50s.png (1.6x crop) + prior howl frame job 38185125"
+    },
+    {
+      "file": "06-wendigo-howl-c-crisp-ring.png",
+      "gate": "G5",
+      "prompt_summary": "Howl variant C: crisp readable ring, golden sap rim on the inner safe edge, near-black spikes bleeding amber sap, leaves in calm centre",
+      "job_id": "c57571d9-f815-416d-b132-6d2a41ed01c8",
+      "base": "artifacts/mobsv2-bases/wendigo/shot_00_t1.50s.png (1.6x crop) + prior howl frame job 38185125"
+    },
+    {
+      "file": "07-snarer-roots-emerging-a-burst.png",
+      "gate": "G12",
+      "prompt_summary": "Roots emerging, eruption instant: thick gnarled roots burst from cracked soil and spiral around hero's legs, soil/pebbles/dust thrown up",
+      "job_id": "aa931dc4-e2a7-4491-9fe3-e4ad8ce586d8",
+      "base": "artifacts/mobsv2-bases/snarer/shot_00_t1.50s.png (2x crop)"
+    },
+    {
+      "file": "08-snarer-roots-emerging-b-hold.png",
+      "gate": "G12",
+      "prompt_summary": "Roots hold: thick roots coiled tight around shins, tips dug back in, tilted turf plates, radial cracks, falling clods (one snarer drifted closer to hero)",
+      "job_id": "a82e8069-1df3-4ca1-bfc2-376e52cbab7f",
+      "base": "artifacts/mobsv2-bases/snarer/shot_02_t4.50s.png (2x crop)"
+    },
+    {
+      "file": "09-bud-puddle-alive-a-splat.png",
+      "gate": "G10",
+      "prompt_summary": "Rotten fruit splat instant: burst fruit, acid-green crown splash frozen mid-air, puddle starting, grass darkening, first vapour",
+      "job_id": "784a3484-e44b-4d8d-a493-0eacc9a6929d",
+      "base": "artifacts/mobsv2-bases/bud/shot_00_t1.50s.png (2x crop)"
+    },
+    {
+      "file": "10-bud-puddle-alive-b-vapour-crust.png",
+      "gate": "G10",
+      "prompt_summary": "Puddle alive a second later: spread murky acid-green pool, bubbles and ripples, heavy green vapour, wilting brown grass, cracked dry crust at edge",
+      "job_id": "dca455f5-2808-4d97-90bc-f6301662045f",
+      "base": "artifacts/mobsv2-bases/bud/shot_03_t6.00s.png (2x crop)"
+    }
+  ]
+}

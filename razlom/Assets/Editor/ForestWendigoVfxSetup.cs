@@ -6,6 +6,26 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
+/// VFX лесного вендиго, ревизия V13 (29.09, план «Мобы леса v2», поток G).
+///
+/// V13 — вой по выбранному варианту 3 «чёткое кольцо»
+/// (review/mobs-v2-concepts-2026-09-29/abilities/06-wendigo-howl-c-crisp-ring.png)
+/// и новый круг когтей (03-wendigo-360-sweep.png):
+/// • Вой: шипы и побеги — тёмная кора с жилами светящегося сока (эмиссия по
+///   продольным трещинам Hovl Crack5), скрученные корни лежат по земле наружу,
+///   у внутреннего края кольца (2 м) — чёткая светящаяся трещина из рваных
+///   штрихов Hovl HandPaintedLightning2 и мягкого ореола Circle17, под шипами —
+///   светящиеся трещины и холмики вывернутой земли, выброс земли крупнее
+///   (комья, камни, тёмные клубы у подножий), капли сока-угольки CFXR ember,
+///   тёплое кольцо пыли плотнее. Свечение — только красный за порогом Bloom
+///   (1,05), как у контура врага: ореол остаётся янтарным, не жёлтым.
+/// • Круг когтей: на старте действия — ленты по настоящим путям обоих когтей
+///   из клипа Sweep (полный оборот), вихрь пыли у опоры и листья по кругу,
+///   пыль приземления; на ударе — светлое кольцо до края круга Sim (3,2 м),
+///   вытертая земля, кольцо пыли и листья, сорванные наружу по ходу вращения.
+///
+/// Ниже — описание V12, эффекты когтя, прыжка и дыхания воя не менялись.
+///
 /// VFX лесного вендиго, ревизия V12 (26.09, план «Мобы леса», стадия 4.4).
 ///
 /// V12 — доводка V11 по доскам «целевой кадр | V11»: ленты когтя идут по всему
@@ -52,7 +72,9 @@ using UnityEngine.Rendering;
 /// </summary>
 public static class ForestWendigoVfxSetup
 {
-    private const string Revision = "WendigoVfxV12";
+    // V14 (интеграция N, 29.09): ореол края воя и кольцо удара круга — по
+    // кольцу трещины и кругу Sim (поправка горизонтального билборда).
+    private const string Revision = "WendigoVfxV14";
     private const string Root = "Assets/Resources/VFX/Wendigo";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
@@ -70,6 +92,7 @@ public static class ForestWendigoVfxSetup
     private const string CfxrTrailMaskPlain = CfxrGraphics + "cfxr sword trail mask plain.png";
     private const string CfxrCloudBlur = CfxrGraphics + "cfxr cloud blur.png";
     private const string CfxrGroundHit = "Assets/JMO Assets/Cartoon FX Remaster/CFXR Prefabs/Impacts/CFXR2 Ground Hit.prefab";
+    private const string CfxrEmber = CfxrGraphics + "cfxr ember blur hdr ab.mat";
     private const string HovlTextures = "Assets/Hovl Studio/HSFiles/Textures/";
     private const string BarkTexture = "Assets/Fantasy Forest Environment Free Sample/Textures/bark01_bottom.tga";
     private const string WendigoFolder = "Assets/Resources/Characters/Forest_Wendigo/";
@@ -81,6 +104,8 @@ public static class ForestWendigoVfxSetup
     public const string HowlWindup = "VFX_Wendigo_HowlWindup";
     public const string Howl = "VFX_Wendigo_Howl";
     public const string HowlBreath = "VFX_Wendigo_HowlBreath";
+    public const string SweepSpin = "VFX_Wendigo_SweepSpin";
+    public const string SweepImpact = "VFX_Wendigo_Sweep";
 
     // Тона: земля и пыль луга, кость когтей, оливковые листья. Игра яркая —
     // земля тёплая, без чёрного.
@@ -93,12 +118,23 @@ public static class ForestWendigoVfxSetup
     private static readonly Color LeafDark = new Color(.42f, .52f, .20f);
     private static readonly Color Ivory = new Color(1.16f, 1.07f, .88f);
 
+    // Сок воя V13. Порог Bloom в CombatLook — 1,05, тон Neutral: за порог выходит
+    // только красный (как у контура врага), иначе ореол желтеет. Частицы CFXR
+    // несут цвет в 8 битах, яркость даёт _HdrMultiply материала: цвет × множитель.
+    private static readonly Color SapVein = new Color(2.1f, .9f, .16f);
+    private static readonly Color SapTint = new Color(1f, .55f, .13f);
+    private const float SapBoost = 1.75f;
+
     private sealed class Kit
     {
         public Material Clod, Bark, Leaf, Dust, Haze, Crater, Fissure, Splat, Crack, Ribbon, Groove, Wood, Moss;
         public Mesh LeafMesh, Flat;
         // Корни воя: высокие шипы-колючки, скрученные корни, короткие побеги.
         public Mesh[] Thorns, Roots, Shoots;
+        // V13: тёмная кора с жилами сока, капли-угольки, рваная трещина кольца,
+        // её ореол, светящиеся трещины под шипами; круг когтей — ленты и кольцо.
+        public Material SapWood, Sap, Crackle, SapHalo, SapCrack, SweepRibbon, SweepRing;
+        public Mesh FlatCentered;
     }
 
     [InitializeOnLoadMethod]
@@ -134,7 +170,9 @@ public static class ForestWendigoVfxSetup
     {
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + Howl + ".prefab");
         return importer != null && importer.userData == Revision
-            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + Claw + ".prefab") != null;
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + Claw + ".prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + SweepSpin + ".prefab") != null
+            && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/" + SweepImpact + ".prefab") != null;
     }
 
     private static void Build()
@@ -152,15 +190,22 @@ public static class ForestWendigoVfxSetup
         SaveHowlWindup(kit);
         SaveHowl(kit);
         SaveHowlBreath(kit);
+        SaveSweepSpin(kit, pose);
+        SaveSweep(kit);
         AssetDatabase.SaveAssets();
+        // Жилы сока: ключ _EMISSION включается уже после создания материала. 29.09 в
+        // пробах интеграции он дважды пропадал у материала в памяти (на диске был) —
+        // переимпорт выравнивает артефакт библиотеки с сохранённым файлом.
+        AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(kit.SapWood), ImportAssetOptions.ForceUpdate);
         var importer = AssetImporter.GetAtPath(PrefabFolder + "/" + Howl + ".prefab");
         if (importer != null && importer.userData != Revision)
         {
             importer.userData = Revision;
             importer.SaveAndReimport();
         }
-        Debug.Log("[wendigo-vfx] Коготь, взлёт, приземление и вой собраны из паков на земле, ревизия " + Revision
-            + (pose.FromClip ? "" : " (путь когтя — запасной, клип не найден)") + ".");
+        Debug.Log("[wendigo-vfx] Коготь, взлёт, приземление, вой и круг когтей собраны из паков на земле, ревизия " + Revision
+            + (pose.FromClip ? "" : " (путь когтя — запасной, клип не найден)")
+            + (pose.SweepFromClip ? "" : " (пути круга — замер 29.09, клипа Sweep нет: сначала «Собрать представление»)") + ".");
     }
 
     /// <summary>
@@ -225,10 +270,25 @@ public static class ForestWendigoVfxSetup
         // Дерево корней воя: URP Lit с корой — свет, тень и объём, как у пропсов
         // леса. Кора пака внизу уже мшистая: v = 0 у земли даёт мох у основания.
         // Шипы — тёмная тёплая кора, часть корней — с зелёным налётом мха.
-        kit.Wood = Wood("M_Wendigo_RootWood", new Color(.92f, .76f, .72f));
-        kit.Moss = Wood("M_Wendigo_RootMoss", new Color(.82f, .92f, .62f));
+        // V13: контраст сильнее — кора темнее, мох глуше; у шипов и побегов — жилы сока.
+        kit.Wood = Wood("M_Wendigo_RootWood", new Color(.74f, .60f, .55f));
+        kit.Moss = Wood("M_Wendigo_RootMoss", new Color(.64f, .74f, .48f));
+        kit.SapWood = Veins(Wood("M_Wendigo_RootSap", new Color(.56f, .44f, .40f)), SapVein);
+        // Капли сока: угольки CFXR (размытое пятно), яркость — множителем материала.
+        kit.Sap = Glow(Plain(PackCopy("M_Wendigo_Sap", CfxrEmber)), SapBoost);
+        // Рваная светящаяся трещина кольца: штрихи молний Hovl (3×3), красный канал — форма.
+        kit.Crackle = Glow(Textured(Plain(PackCopy("M_Wendigo_SapCrackle", CfxrSmokeBlurred)), HovlTextures + "HandPaintedLightning2.png", true), SapBoost);
+        // Мягкий ореол внутреннего края — кольцо Circle17; светящиеся трещины под шипами — Crack4.
+        kit.SapHalo = Glow(Textured(Plain(PackCopy("M_Wendigo_SapHalo", CfxrSmokeBlurred)), HovlTextures + "Circle17.png", true), 1.3f);
+        kit.SapCrack = Glow(Textured(NoDissolve(PackCopy("M_Wendigo_SapCrack", CfxrTrailMaterial)), HovlTextures + "Crack4.png", true), SapBoost);
+        // Круг когтей: те же ленты кости, что у когтя, ярче; кольцо удара — Circle93.
+        kit.SweepRibbon = Sweep("M_Wendigo_SweepRibbon", Ivory, new Color(1.0f, .84f, .55f), new Color(.86f, .62f, .32f), new Color(.44f, .29f, .14f), .3f,
+            CfxrTrailMaskPlain, .2f, 1.6f, .65f);
+        kit.SweepRibbon.SetVector("_Bands", new Vector4(.12f, .34f, .56f, .80f));
+        kit.SweepRing = Glow(Textured(Plain(PackCopy("M_Wendigo_SweepRing", CfxrSmokeBlurred)), HovlTextures + "Circle93.png", true), 1.2f);
         kit.LeafMesh = LoadMesh(CfxrLeafMesh);
         kit.Flat = FlatQuad("WendigoDustStreakQuad");
+        kit.FlatCentered = CenteredQuad("WendigoFlatCentered");
         // (длина 1, радиус основания, изгиб, скрутка, узлы, боковые колючки)
         kit.Thorns = new[]
         {
@@ -259,6 +319,34 @@ public static class ForestWendigoVfxSetup
         material.SetColor("_BaseColor", tint);
         material.SetFloat("_Smoothness", .18f);
         material.SetFloat("_Metallic", 0f);
+        // Жилы включает только Veins: пересборка не оставляет старую эмиссию.
+        material.DisableKeyword("_EMISSION");
+        material.SetColor("_EmissionColor", Color.black);
+        material.SetTexture("_EmissionMap", null);
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    /// <summary>
+    /// Жилы сока по коре: эмиссия URP Lit по маске Hovl Crack5 (продольные рваные
+    /// линии). Развёртка корня — v вдоль ствола, поэтому жилы идут вдоль шипа.
+    /// </summary>
+    private static Material Veins(Material material, Color emission)
+    {
+        var veins = AssetDatabase.LoadAssetAtPath<Texture2D>(HovlTextures + "Crack5.png");
+        if (veins == null) return material;
+        material.SetTexture("_EmissionMap", veins);
+        material.SetColor("_EmissionColor", emission);
+        material.EnableKeyword("_EMISSION");
+        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    /// <summary>Свечение частиц CFXR: цвет частицы × множитель (HDR Boost пака).</summary>
+    private static Material Glow(Material material, float boost)
+    {
+        if (material.HasProperty("_HdrMultiply")) material.SetFloat("_HdrMultiply", boost);
         EditorUtility.SetDirty(material);
         return material;
     }
@@ -466,6 +554,24 @@ public static class ForestWendigoVfxSetup
         return mesh;
     }
 
+    /// <summary>
+    /// Плоский квадрат 1×1 с центром в нуле, нормаль вверх; u — вдоль Z (длинная
+    /// ось штриха текстуры), v — поперёк. Цвет вершин 8-битный. С выравниванием
+    /// по направлению частица кладёт его вдоль касательной кольца.
+    /// </summary>
+    private static Mesh CenteredQuad(string name)
+    {
+        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
+        mesh.SetVertices(new List<Vector3> { new Vector3(-.5f, 0f, -.5f), new Vector3(.5f, 0f, -.5f), new Vector3(-.5f, 0f, .5f), new Vector3(.5f, 0f, .5f) });
+        mesh.SetUVs(0, new List<Vector2> { new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(1f, 0f), new Vector2(1f, 1f) });
+        mesh.SetColors(new List<Color32> { new Color32(255, 255, 255, 255), new Color32(255, 255, 255, 255), new Color32(255, 255, 255, 255), new Color32(255, 255, 255, 255) });
+        mesh.SetTriangles(new[] { 0, 2, 1, 1, 2, 3 }, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        EditorUtility.SetDirty(mesh);
+        return mesh;
+    }
+
     // ------------------------------------------------------------------ pose
 
     /// <summary>
@@ -478,11 +584,43 @@ public static class ForestWendigoVfxSetup
     /// </summary>
     private sealed class WendigoPose
     {
-        public bool FromClip;
+        public bool FromClip, SweepFromClip;
         public Vector3[] ClawPath;
         public Vector3 LeftFoot = new Vector3(-.78f, 0f, -.52f), RightFoot = new Vector3(1.10f, 0f, -.98f);
+        // Круг когтей: пути кончиков правого и левого когтя, кадры SweepFrom..SweepTo
+        // клипа Sweep с шагом SweepStep (кадр = тик Sim). Оборот влево: угол
+        // atan2(x, z) убывает, правый коготь идёт от правого бока через перёд.
+        public Vector3[] SweepRight = MeasuredSweepRight, SweepLeft = MeasuredSweepLeft;
 
         public const float ClawFrom = 49.5f, ClawTo = 54.5f, ClawStep = .25f;
+        public const float SweepFrom = 12f, SweepTo = 25f, SweepStep = .5f, SweepFrames = 39f;
+
+        // Замер 29.09 (reference_match_sweep/claw_paths.json, numpy-скиннинг того же рига).
+        private static readonly Vector3[] MeasuredSweepRight =
+        {
+            new Vector3(1.783f, 1.406f, -.309f), new Vector3(1.884f, 1.584f, .198f), new Vector3(1.793f, 1.693f, .699f),
+            new Vector3(1.553f, 1.730f, 1.143f), new Vector3(1.118f, 1.757f, 1.583f), new Vector3(.477f, 1.776f, 1.890f),
+            new Vector3(-.302f, 1.788f, 1.937f), new Vector3(-1.078f, 1.794f, 1.649f), new Vector3(-1.677f, 1.797f, 1.047f),
+            new Vector3(-1.965f, 1.798f, .249f), new Vector3(-1.892f, 1.800f, -.587f), new Vector3(-1.489f, 1.802f, -1.306f),
+            new Vector3(-.849f, 1.802f, -1.793f), new Vector3(-.091f, 1.799f, -1.987f), new Vector3(.656f, 1.794f, -1.886f),
+            new Vector3(1.237f, 1.787f, -1.578f), new Vector3(1.606f, 1.778f, -1.213f), new Vector3(1.831f, 1.766f, -.852f),
+            new Vector3(1.964f, 1.753f, -.498f), new Vector3(2.011f, 1.712f, -.204f), new Vector3(1.995f, 1.624f, -.011f),
+            new Vector3(1.945f, 1.501f, .129f), new Vector3(1.870f, 1.357f, .267f), new Vector3(1.765f, 1.186f, .409f),
+            new Vector3(1.638f, 1.003f, .524f), new Vector3(1.521f, .854f, .598f), new Vector3(1.450f, .772f, .622f)
+        };
+
+        private static readonly Vector3[] MeasuredSweepLeft =
+        {
+            new Vector3(-1.639f, 1.073f, .912f), new Vector3(-1.907f, 1.256f, .348f), new Vector3(-1.936f, 1.364f, -.236f),
+            new Vector3(-1.777f, 1.405f, -.772f), new Vector3(-1.392f, 1.447f, -1.317f), new Vector3(-.771f, 1.486f, -1.728f),
+            new Vector3(.009f, 1.520f, -1.866f), new Vector3(.797f, 1.548f, -1.662f), new Vector3(1.421f, 1.570f, -1.145f),
+            new Vector3(1.761f, 1.585f, -.433f), new Vector3(1.782f, 1.592f, .331f), new Vector3(1.502f, 1.594f, 1.022f),
+            new Vector3(.982f, 1.593f, 1.532f), new Vector3(.323f, 1.590f, 1.791f), new Vector3(-.362f, 1.584f, 1.783f),
+            new Vector3(-.918f, 1.577f, 1.570f), new Vector3(-1.291f, 1.567f, 1.281f), new Vector3(-1.533f, 1.555f, .978f),
+            new Vector3(-1.690f, 1.541f, .671f), new Vector3(-1.762f, 1.491f, .426f), new Vector3(-1.765f, 1.384f, .295f),
+            new Vector3(-1.725f, 1.245f, .232f), new Vector3(-1.655f, 1.100f, .187f), new Vector3(-1.560f, .941f, .158f),
+            new Vector3(-1.448f, .775f, .159f), new Vector3(-1.343f, .645f, .172f), new Vector3(-1.272f, .574f, .181f)
+        };
 
         private static readonly Vector3[] Measured =
         {
@@ -498,6 +636,7 @@ public static class ForestWendigoVfxSetup
         public static WendigoPose Sample()
         {
             var pose = new WendigoPose { ClawPath = Measured };
+            SampleSweep(pose);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(WendigoFolder + "ForestWendigo_Runtime.prefab");
             var claw = AssetDatabase.LoadAssetAtPath<AnimationClip>(WendigoFolder + "Claw.anim");
             var leap = AssetDatabase.LoadAssetAtPath<AnimationClip>(WendigoFolder + "Leap.anim");
@@ -558,6 +697,67 @@ public static class ForestWendigoVfxSetup
         }
 
         private static Vector3 Flat(Vector3 point) => new Vector3(point.x, 0f, point.z);
+
+        /// <summary>
+        /// Пути когтей круга из клипа Sweep (его собирает ForestWendigoBuilder):
+        /// кончик — вершина кисти дальше всех от запястья в стойке кадра 0, как у когтя.
+        /// Без клипа остаётся замер 29.09.
+        /// </summary>
+        private static void SampleSweep(WendigoPose pose)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(WendigoFolder + "ForestWendigo_Runtime.prefab");
+            var sweep = AssetDatabase.LoadAssetAtPath<AnimationClip>(WendigoFolder + "Sweep.anim");
+            if (prefab == null || sweep == null) return;
+            var scene = EditorSceneManager.NewPreviewScene();
+            Mesh baked = new Mesh();
+            try
+            {
+                var go = (GameObject)Object.Instantiate(prefab);
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
+                go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                var animator = go.GetComponentInChildren<Animator>();
+                var skin = go.GetComponentInChildren<SkinnedMeshRenderer>();
+                if (animator == null || skin == null) return;
+                var weights = skin.sharedMesh.boneWeights;
+                sweep.SampleAnimation(animator.gameObject, 0f);
+                skin.BakeMesh(baked, true);
+                var stance = baked.vertices;
+                var toWorld = skin.transform.localToWorldMatrix;
+                var paths = new Vector3[2][];
+                string[] hands = { "R_hand", "L_hand" };
+                for (int side = 0; side < 2; side++)
+                {
+                    Transform hand = null;
+                    foreach (var t in go.GetComponentsInChildren<Transform>(true)) if (t.name == hands[side]) { hand = t; break; }
+                    if (hand == null) return;
+                    int handIndex = System.Array.IndexOf(skin.bones, hand);
+                    int tip = -1; float best = -1f;
+                    for (int i = 0; i < weights.Length; i++)
+                    {
+                        if (weights[i].boneIndex0 != handIndex || weights[i].weight0 < .8f) continue;
+                        float distance = (toWorld.MultiplyPoint3x4(stance[i]) - hand.position).sqrMagnitude;
+                        if (distance > best) { best = distance; tip = i; }
+                    }
+                    if (tip < 0) return;
+                    var path = new List<Vector3>();
+                    for (float frame = SweepFrom; frame <= SweepTo + .001f; frame += SweepStep)
+                    {
+                        sweep.SampleAnimation(animator.gameObject, frame / SweepFrames * sweep.length);
+                        skin.BakeMesh(baked, true);
+                        path.Add(skin.transform.localToWorldMatrix.MultiplyPoint3x4(baked.vertices[tip]));
+                    }
+                    paths[side] = path.ToArray();
+                }
+                pose.SweepRight = paths[0];
+                pose.SweepLeft = paths[1];
+                pose.SweepFromClip = true;
+            }
+            finally
+            {
+                EditorSceneManager.ClosePreviewScene(scene);
+                Object.DestroyImmediate(baked);
+            }
+        }
     }
 
     // -------------------------------------------------------------- geometry
@@ -711,6 +911,134 @@ public static class ForestWendigoVfxSetup
                 directions.Add((Vector3.up * Mathf.Cos(tilt) + away * Mathf.Sin(tilt)).normalized);
             }
         return Points(name, positions, directions);
+    }
+
+    /// <summary>
+    /// Кольцо с вихрем: count мест в [inner, outer], направление — по ходу круга
+    /// когтей (поворот влево, против часовой сверху) tangent, наружу outward и
+    /// вверх up, с разбросом. Вершины лежат на lift над землёй корня и идут по
+    /// ходу вращения от угла startDegrees (atan2(x, z), 0 — перёд, 90 — правый
+    /// бок): эмиссия по порядку вершин бежит по кругу за когтем.
+    /// </summary>
+    private static Mesh SwirlPoints(string name, int count, float inner, float outer, float tangent, float outward, float up, float lift,
+        int salt, float startDegrees)
+    {
+        var positions = new List<Vector3>();
+        var directions = new List<Vector3>();
+        for (int i = 0; i < count; i++)
+        {
+            float angle = startDegrees * Mathf.Deg2Rad - (i + Hash01(i, salt) * .8f) / count * Mathf.PI * 2f;
+            float radius = Mathf.Lerp(inner, outer, Hash01(i, salt + 1));
+            var away = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            // Против часовой сверху угол atan2(x, z) убывает: касательная (-cos, 0, sin).
+            var along = new Vector3(-Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+            float jitter = Hash01(i, salt + 2) - .5f;
+            positions.Add(away * radius + Vector3.up * lift);
+            directions.Add((along * (tangent + jitter * .3f) + away * outward + Vector3.up * (up + jitter * .2f)).normalized);
+        }
+        return Points(name, positions, directions);
+    }
+
+    /// <summary>
+    /// Рваная трещина по окружности radius одним мешем: count плоских штрихов
+    /// вдоль касательной с малым изломом и разбросом радиуса, соседние внахлёст.
+    /// UV каждого штриха — случайный кадр листа 3×3 (штрих текстуры идёт по u,
+    /// u — вдоль касательной). Цвет вершин 8-битный, нормаль вверх.
+    /// </summary>
+    private static Mesh CrackleRing(string name, int count, float radius, float jitter, int salt)
+    {
+        var vertices = new List<Vector3>();
+        var uv = new List<Vector2>();
+        var colors = new List<Color32>();
+        var triangles = new List<int>();
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (i + (Hash01(i, salt) - .5f) * .4f) / count * Mathf.PI * 2f;
+            var away = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            var along = (new Vector3(Mathf.Cos(angle), 0f, -Mathf.Sin(angle)) + away * (Hash01(i, salt + 2) - .5f) * .35f).normalized;
+            var across = Vector3.Cross(Vector3.up, along);
+            Vector3 center = away * (radius + (Hash01(i, salt + 1) - .5f) * 2f * jitter);
+            // Длина чуть больше шага по окружности: штрихи смыкаются в сплошной край.
+            float length = 2f * Mathf.PI * radius / count * Mathf.Lerp(1.5f, 2.1f, Hash01(i, salt + 3));
+            float width = Mathf.Lerp(.24f, .36f, Hash01(i, salt + 4));
+            int cell = Mathf.Min(8, (int)(Hash01(i, salt + 5) * 9f));
+            float u0 = (cell % 3) / 3f, v0 = (cell / 3) / 3f;
+            int start = vertices.Count;
+            vertices.Add(center - along * length * .5f - across * width * .5f); uv.Add(new Vector2(u0, v0));
+            vertices.Add(center - along * length * .5f + across * width * .5f); uv.Add(new Vector2(u0, v0 + 1f / 3f));
+            vertices.Add(center + along * length * .5f - across * width * .5f); uv.Add(new Vector2(u0 + 1f / 3f, v0));
+            vertices.Add(center + along * length * .5f + across * width * .5f); uv.Add(new Vector2(u0 + 1f / 3f, v0 + 1f / 3f));
+            for (int k = 0; k < 4; k++) colors.Add(new Color32(255, 255, 255, 255));
+            triangles.AddRange(new[] { start, start + 2, start + 1, start + 1, start + 2, start + 3 });
+        }
+        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
+        mesh.Clear();
+        mesh.SetVertices(vertices);
+        mesh.SetUVs(0, uv);
+        mesh.SetColors(colors);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        EditorUtility.SetDirty(mesh);
+        return mesh;
+    }
+
+    /// <summary>
+    /// Ленты по пути, пройденному за равные доли времени (points — через равный
+    /// шаг кадров). Путь сглажен Катмулл-Ромом, u вершины — момент, когда голова
+    /// ленты шейдера (ease-out 1 − (1 − t)^2,2) доходит до этой точки: голова идёт
+    /// ровно за когтем весь оборот, а не убегает вперёд на старте. v — поперёк
+    /// (0 к телу, 1 наружу), полоса лежит плашмя; offset — сдвиг наружу, lift — вверх.
+    /// </summary>
+    private static Mesh TimedStrips(string name, Vector3[] points, (float offset, float lift, float width)[] strips)
+    {
+        const int sub = 6;
+        var dense = new List<Vector3>();
+        for (int i = 0; i < points.Length - 1; i++)
+        {
+            Vector3 p0 = points[Mathf.Max(0, i - 1)], p1 = points[i], p2 = points[i + 1], p3 = points[Mathf.Min(points.Length - 1, i + 2)];
+            for (int s = 0; s < sub; s++)
+            {
+                float t = s / (float)sub, t2 = t * t, t3 = t2 * t;
+                dense.Add(.5f * (2f * p1 + (-p0 + p2) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (-p0 + 3f * p1 - 3f * p2 + p3) * t3));
+            }
+        }
+        dense.Add(points[points.Length - 1]);
+        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
+        var vertices = new List<Vector3>();
+        var uv = new List<Vector2>();
+        var colors = new List<Color32>();
+        var triangles = new List<int>();
+        int n = dense.Count;
+        foreach (var strip in strips)
+        {
+            int start = vertices.Count;
+            for (int i = 0; i < n; i++)
+            {
+                float time = i / (float)(n - 1);
+                float u = 1f - Mathf.Pow(1f - time, 2.2f);
+                Vector3 tangent = dense[Mathf.Min(n - 1, i + 1)] - dense[Mathf.Max(0, i - 1)]; tangent.y = 0f;
+                if (tangent.sqrMagnitude < 1e-6f) tangent = Vector3.forward;
+                Vector3 side = Vector3.Cross(Vector3.up, tangent.normalized);
+                Vector3 outward = dense[i]; outward.y = 0f;
+                if (Vector3.Dot(side, outward) < 0f) side = -side;
+                Vector3 mid = dense[i] + side * strip.offset + Vector3.up * strip.lift;
+                vertices.Add(mid - side * strip.width * .5f); uv.Add(new Vector2(u, 0f));
+                vertices.Add(mid + side * strip.width * .5f); uv.Add(new Vector2(u, 1f));
+                colors.Add(new Color32(255, 255, 255, 255)); colors.Add(new Color32(255, 255, 255, 255));
+                if (i == n - 1) continue;
+                int v = start + i * 2;
+                triangles.AddRange(new[] { v, v + 1, v + 2, v + 1, v + 3, v + 2 });
+            }
+        }
+        mesh.SetVertices(vertices);
+        mesh.SetUVs(0, uv);
+        mesh.SetColors(colors);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        EditorUtility.SetDirty(mesh);
+        return mesh;
     }
 
     // ------------------------------------------------------------- particles
@@ -1198,10 +1526,46 @@ public static class ForestWendigoVfxSetup
     }
 
     /// <summary>
-    /// Замах воя (7-howl-windup): 30 тиков по кольцу 2–5,5 м из земли лезут
-    /// кончики корней — каждый в свой момент, — под ними трещинки земли. На
-    /// ударе (1 с) уходят, их сменяют корни удара. Метку кольца рисует общий
-    /// GroundTelegraphView.
+    /// Белый градиент с ключами прозрачности (время, альфа) — до восьми пар.
+    /// </summary>
+    private static Gradient Ramp(params float[] pairs)
+    {
+        var gradient = new Gradient();
+        var alpha = new GradientAlphaKey[pairs.Length / 2];
+        for (int i = 0; i < alpha.Length; i++) alpha[i] = new GradientAlphaKey(pairs[i * 2 + 1], pairs[i * 2]);
+        gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) }, alpha);
+        return gradient;
+    }
+
+    /// <summary>
+    /// Капли сока: угольки CFXR, баллистика, отскок от земли корня, гаснут к концу.
+    /// Цвет — янтарь SapTint, яркость — множитель материала kit.Sap.
+    /// </summary>
+    private static ParticleSystem SapDrops(GameObject root, Kit kit, string name, int count, Mesh points, float randomDirection,
+        float speedMin, float speedMax, float sizeMin, float sizeMax, float gravity, float delay)
+    {
+        var particles = Particles(root, name, count, .7f, 1.1f, speedMin, speedMax, sizeMin, sizeMax, delay);
+        var main = particles.main;
+        main.gravityModifier = gravity;
+        main.startColor = new ParticleSystem.MinMaxGradient(SapTint, new Color(1f, .44f, .10f));
+        FromPoints(particles, points, false, randomDirection);
+        Collide(particles, root.transform, .15f);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 1f, .6f, .85f, 1f, 0f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(0f, .55f);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sharedMaterial = kit.Sap;
+        return particles;
+    }
+
+    /// <summary>
+    /// Замах воя (7-howl-windup, V13): 30 тиков по кольцу 2–5,5 м из земли лезут
+    /// кончики корней в тёмной коре с жилами сока — каждый в свой момент, — под
+    /// ними трещинки земли, которые к удару наливаются янтарным светом, и
+    /// редкие искры сока. На ударе (1 с) всё уходит, его сменяют корни удара.
+    /// Метку кольца рисует общий GroundTelegraphView.
     /// </summary>
     private static void SaveHowlWindup(Kit kit)
     {
@@ -1211,7 +1575,7 @@ public static class ForestWendigoVfxSetup
         float impact = windup / life;
         var tips = RingPoints("WendigoHowlTipPoints", 24, inner + .15f, outer - .2f, 25f, 55f, depth, 101);
         var root = new GameObject(HowlWindup);
-        Spikes(root, "Tips", kit.Shoots, tips, kit.Wood, life, .26f, .42f, .55f, .75f,
+        Spikes(root, "Tips", kit.Shoots, tips, kit.SapWood, life, .26f, .42f, .55f, .75f,
             Curve(0f, 0f, .06f, 0f, .30f, 1f, impact - .02f, 1f, impact + .06f, 0f, 1f, 0f),
             Curve(0f, 0f, .48f, 0f, .75f, 1f, impact - .02f, 1f, impact + .06f, 0f, 1f, 0f));
         var cracks = Decal(root, "Cracks", kit.Crack, tips.vertexCount, Vector3.zero, .8f, 1.2f, life, .9f,
@@ -1219,6 +1583,12 @@ public static class ForestWendigoVfxSetup
         FromPoints(cracks, tips, false, 0f);
         var fade = cracks.colorOverLifetime;
         fade.color = new ParticleSystem.MinMaxGradient(Alpha(.28f, impact), Alpha(.7f, impact));
+        // Сок в трещинах: тлеет с середины замаха и вспыхивает к удару — кольцо заранее тёплое.
+        var glow = Decal(root, "SapCracks", kit.SapCrack, tips.vertexCount, Vector3.zero, .6f, .9f, life, .9f,
+            new Color(SapTint.r, SapTint.g, SapTint.b, .8f), 0f, .036f + depth);
+        FromPoints(glow, tips, false, 0f);
+        var glowFade = glow.colorOverLifetime;
+        glowFade.color = Ramp(0f, 0f, .3f, 0f, impact * .75f, .35f, impact - .02f, 1f, impact + .06f, 0f, 1f, 0f);
         var specks = Debris(root, "Specks", kit.Clod, 12, Vector3.up * (.05f + depth), Vector3.up, 0f, .1f, .8f, 1.6f, .05f, .10f, 1.4f, 0f, SoilLight, SoilDark);
         specks.transform.localRotation = Quaternion.identity;
         FromPoints(specks, tips, false, .4f);
@@ -1227,69 +1597,129 @@ public static class ForestWendigoVfxSetup
         var main = specks.main;
         main.duration = life;
         main.maxParticles = 12;
+        var motes = SapDrops(root, kit, "SapMotes", 10, tips, .5f, .5f, 1.2f, .05f, .08f, -.05f, 0f);
+        motes.transform.localPosition = Vector3.up * (.08f + depth);
+        var moteBursts = motes.emission;
+        moteBursts.SetBursts(new[] { new ParticleSystem.Burst(.45f, (short)4), new ParticleSystem.Burst(.75f, (short)6) });
+        var moteMain = motes.main;
+        moteMain.duration = life;
+        moteMain.maxParticles = 10;
         Save(root);
     }
 
     /// <summary>
-    /// Удар воя (5-howl-roots): кольцо корней 2–5,5 м, у ног — пустой круг.
-    /// Три слоя своих мешей в коре: высокие колючие шипы (над землёй ~0,85–1,4 м),
-    /// скрученные корни с мхом (~0,65–1 м) и короткие побеги у подножия шипов
-    /// (~0,35–0,7 м) — кольцо идёт кустами; наклон наружу 10–35°, толщина,
-    /// изгиб и поворот у каждого свои. Корни лезут из земли
-    /// за ~0,1 с с перелётом, стоят, пока зверь открыт (24 тика), и уходят
-    /// обратно. Под ними тёмная земля и трещины, низкое тёплое кольцо мягкой
-    /// пыли, комья, щепки и листья.
+    /// Удар воя V13 по варианту 3 «чёткое кольцо» (06-wendigo-howl-c-crisp-ring):
+    /// кольцо 2–5,5 м, у ног — пустой зелёный круг, по его краю — чёткая
+    /// светящаяся трещина (рваные штрихи молний Hovl + мягкий ореол Circle17).
+    /// Три слоя своих мешей: высокие шипы в тёмной коре с жилами сока
+    /// (~1–1,6 м над землёй), скрученные корни с мхом, лежащие по земле наружу, и
+    /// короткие побеги с соком у подножий — кольцо идёт кустами. Корни лезут
+    /// из земли за ~0,1 с с перелётом, стоят, пока зверь открыт (24 тика), и
+    /// уходят обратно. Под ними — вывороченная тёмная земля, холмики, светящиеся
+    /// трещины; выброс земли крупнее V12: тёмные клубы у подножий, комья, камни,
+    /// щепки, листья, капли сока-угольки; тёплое кольцо пыли плотнее.
     /// </summary>
     private static void SaveHowl(Kit kit)
     {
         float inner = Simulation.WendigoHowlInnerRadius.ToFloat(), outer = Simulation.WendigoHowlOuterRadius.ToFloat();
         const float life = 1.5f, depth = .12f;
-        var thorns = RingPoints("WendigoHowlThornPoints", 22, inner + .45f, outer - .45f, 10f, 26f, depth, 201);
-        var roots = RingPoints("WendigoHowlRootPoints", 14, inner + .45f, outer - .5f, 16f, 35f, depth, 251);
+        var thorns = RingPoints("WendigoHowlThornPoints", 24, inner + .45f, outer - .45f, 8f, 24f, depth, 201);
+        // Скрученные корни ложатся наружу почти по земле — как у цели между шипами.
+        var roots = RingPoints("WendigoHowlRootPoints", 16, inner + .35f, outer - .4f, 50f, 72f, depth, 251);
         // Побеги — у подножия шипов: кольцо идёт кустами с просветами, как у цели.
         var shoots = ClusterPoints("WendigoHowlShootPoints", thorns, 2, .6f, inner + .2f, 18f, 35f, depth, 301);
         // Пыль кольца катится наружу по земле от внешнего края.
-        var rim = RingPoints("WendigoHowlDustPoints", 22, outer - 1.1f, outer - .3f, 70f, 84f, depth, 401);
+        var rim = RingPoints("WendigoHowlDustPoints", 24, outer - 1.1f, outer - .2f, 70f, 84f, depth, 401);
         var root = new GameObject(Howl);
-        Spikes(root, "Thorns", kit.Thorns, thorns, kit.Wood, life, .95f, 1.5f, 1.2f, 1.6f,
-            Curve(0f, 0f, .012f, 0f, .045f, 1.12f, .075f, 1f, .64f, 1f, .86f, 0f, 1f, 0f),
-            Curve(0f, 0f, .035f, 0f, .075f, 1.12f, .105f, 1f, .68f, 1f, .92f, 0f, 1f, 0f));
-        Spikes(root, "Roots", kit.Roots, roots, kit.Moss, life, .75f, 1.1f, 1.0f, 1.3f,
+        var rise = Curve(0f, 0f, .012f, 0f, .045f, 1.12f, .075f, 1f, .64f, 1f, .86f, 0f, 1f, 0f);
+        Spikes(root, "Thorns", kit.Thorns, thorns, kit.SapWood, life, 1.05f, 1.65f, 1.3f, 1.8f,
+            rise, Curve(0f, 0f, .035f, 0f, .075f, 1.12f, .105f, 1f, .68f, 1f, .92f, 0f, 1f, 0f));
+        Spikes(root, "Roots", kit.Roots, roots, kit.Moss, life, .9f, 1.35f, 1.1f, 1.4f,
             Curve(0f, 0f, .02f, 0f, .06f, 1.1f, .09f, 1f, .62f, 1f, .84f, 0f, 1f, 0f),
             Curve(0f, 0f, .045f, 0f, .09f, 1.1f, .12f, 1f, .66f, 1f, .9f, 0f, 1f, 0f));
-        Spikes(root, "Shoots", kit.Shoots, shoots, kit.Wood, life, .45f, .8f, .6f, .85f,
+        Spikes(root, "Shoots", kit.Shoots, shoots, kit.SapWood, life, .5f, .85f, .65f, .9f,
             Curve(0f, 0f, .008f, 0f, .04f, 1.15f, .07f, 1f, .6f, 1f, .8f, 0f, 1f, 0f),
             Curve(0f, 0f, .05f, 0f, .09f, 1.15f, .12f, 1f, .7f, 1f, .9f, 0f, 1f, 0f));
-        var soil = Decal(root, "Soil", kit.Splat, thorns.vertexCount, Vector3.zero, 1.0f, 1.5f, 2.2f, .6f,
-            new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .6f), 0f, .03f + depth);
+        // Земля: крупные тёмные пятна, холмики вывороченной земли, тёмные трещины.
+        var soil = Decal(root, "Soil", kit.Splat, thorns.vertexCount, Vector3.zero, 1.6f, 2.3f, 2.2f, .6f,
+            new Color(SoilDark.r * .85f, SoilDark.g * .85f, SoilDark.b * .85f, .72f), 0f, .03f + depth);
         FromPoints(soil, thorns, false, 0f);
+        var mounds = Decal(root, "Mounds", kit.Crater, thorns.vertexCount, Vector3.zero, 1.1f, 1.5f, 2.2f, .6f,
+            new Color(.86f, .78f, .70f, .85f), 0f, .034f + depth);
+        FromPoints(mounds, thorns, false, 0f);
         var cracks = Decal(root, "Cracks", kit.Crack, roots.vertexCount, Vector3.zero, 1.1f, 1.6f, 2.2f, .6f,
             new Color(SoilDark.r, SoilDark.g, SoilDark.b, .9f), 0f, .04f + depth);
         FromPoints(cracks, roots, false, 0f);
-        // Пыль кольца: мягкое облако, тёплая охра, мало альфы, у самой земли —
-        // лежачие клубы, стоячих немного и они низкие.
-        var dust = Dust(root, kit, "Dust", 14, Vector3.up * depth, Vector3.up, 0f, .1f, .2f, .5f, .8f, 1.2f, 1.0f, 1.5f, .20f, .02f, false, kit.Haze);
+        // Сок: светящиеся трещины под шипами, ореол и рваная трещина внутреннего края.
+        // Всё гаснет вместе с уходом корней (доли жизни .62–.86).
+        var sapCracks = Decal(root, "SapCracks", kit.SapCrack, thorns.vertexCount, Vector3.zero, 1.0f, 1.5f, life, .6f,
+            new Color(SapTint.r, SapTint.g, SapTint.b, .7f), 0f, .045f + depth);
+        FromPoints(sapCracks, thorns, false, 0f);
+        // Circle17: яркий край кольца на 0,78 половины размера, свечение внутрь —
+        // слабое: у цели зелёный круг внутри остаётся зелёным, светится край.
+        // Горизонтальный билборд частицы выходит в 1/√2 от startSize (замер
+        // пробой 29.09: без поправки ореол лёг сплошным оранжевым диском на
+        // 1,45 м внутри трещины 2 м) — отсюда множитель √2.
+        float haloSize = 2f * inner / .78f * 1.4142f;
+        var halo = Decal(root, "EdgeHalo", kit.SapHalo, 1, Vector3.zero, haloSize, haloSize, life, .6f,
+            new Color(SapTint.r, SapTint.g, SapTint.b, .32f), 0f, .05f);
+        var haloGrow = halo.sizeOverLifetime;
+        haloGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .92f, .05f, 1.01f, .1f, 1f, 1f, 1f));
+        // Рваная трещина: один меш из штрихов вдоль окружности (кадр листа — в UV),
+        // одна частица: форма не зависит от поворота выравнивания по направлению.
+        var crackle = Particles(root, "EdgeCrackle", 1, life, life, 0f, 0f, 1f, 1f, 0f);
+        crackle.transform.localPosition = Vector3.up * .055f;
+        var crackleMain = crackle.main;
+        crackleMain.startRotation = 0f;
+        crackleMain.startColor = SapTint;
+        var crackleShape = crackle.shape; crackleShape.enabled = false;
+        // Трещина раскрывается по краю за 0,05 с и гаснет вместе с корнями.
+        var crackleSize = crackle.sizeOverLifetime; crackleSize.enabled = true;
+        crackleSize.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .94f, .035f, 1.01f, .07f, 1f, 1f, 1f));
+        var crackleFade = crackle.colorOverLifetime; crackleFade.enabled = true;
+        crackleFade.color = Ramp(0f, 1f, .6f, 1f, .84f, 0f, 1f, 0f);
+        var crackleRenderer = crackle.GetComponent<ParticleSystemRenderer>();
+        crackleRenderer.renderMode = ParticleSystemRenderMode.Mesh;
+        crackleRenderer.mesh = CrackleRing("WendigoHowlEdgeCrackle", 46, inner + .04f, .05f, 451);
+        crackleRenderer.alignment = ParticleSystemRenderSpace.Local;
+        crackleRenderer.sharedMaterial = kit.Crackle;
+        crackleRenderer.sortingFudge = 3f;
+        // Выброс земли: тёмные клубы у подножий шипов — «взрыв» земли на ударе.
+        var burst = Dust(root, kit, "SoilBurst", thorns.vertexCount, Vector3.up * depth, Vector3.up, 0f, .1f, 1.2f, 2.4f, .9f, 1.4f, .7f, 1.0f, .42f, 0f, false, kit.Haze);
+        burst.transform.localRotation = Quaternion.identity;
+        FromPoints(burst, thorns, false, .5f);
+        var burstTone = burst.main;
+        burstTone.startColor = new ParticleSystem.MinMaxGradient(new Color(.46f, .33f, .21f, .44f), new Color(.34f, .24f, .15f, .44f));
+        // Пыль кольца: мягкое облако, тёплая охра; плотнее и крупнее V12.
+        var dust = Dust(root, kit, "Dust", 18, Vector3.up * depth, Vector3.up, 0f, .1f, .3f, .7f, .9f, 1.4f, 1.0f, 1.5f, .26f, .02f, false, kit.Haze);
         dust.transform.localRotation = Quaternion.identity;
         FromPoints(dust, thorns, false, .7f);
-        var dustLow = Dust(root, kit, "DustLow", 22, Vector3.up * (depth + .03f), Vector3.up, 0f, .1f, .3f, .7f, 1.6f, 2.4f, 1.4f, 2.0f, .20f, .03f, true, kit.Haze);
+        var dustLow = Dust(root, kit, "DustLow", 26, Vector3.up * (depth + .03f), Vector3.up, 0f, .1f, .5f, 1.1f, 1.8f, 2.8f, 1.4f, 2.0f, .28f, .03f, true, kit.Haze);
         dustLow.transform.localRotation = Quaternion.identity;
         FromPoints(dustLow, rim, false, .3f);
         // Пыль кольца темнее и теплее общей: на траве светлая охра читалась серо-зелёной.
         foreach (var ps in new[] { dust, dustLow })
         {
             var tone = ps.main;
-            tone.startColor = new ParticleSystem.MinMaxGradient(new Color(.72f, .53f, .34f, ps == dust ? .22f : .20f),
-                new Color(.58f, .42f, .27f, ps == dust ? .22f : .20f));
+            tone.startColor = new ParticleSystem.MinMaxGradient(new Color(.72f, .53f, .34f, ps == dust ? .28f : .28f),
+                new Color(.56f, .40f, .25f, ps == dust ? .28f : .28f));
         }
-        var clods = Debris(root, "Clods", kit.Clod, 26, Vector3.up * (depth + .1f), Vector3.up, 0f, .1f, 3.0f, 5.5f, .12f, .25f, 1.6f, 0f, SoilLight, SoilDark);
+        var clods = Debris(root, "Clods", kit.Clod, 40, Vector3.up * (depth + .1f), Vector3.up, 0f, .1f, 3.5f, 7.0f, .13f, .30f, 1.6f, 0f, SoilLight, SoilDark);
         clods.transform.localRotation = Quaternion.identity;
         FromPoints(clods, thorns, false, .35f);
+        var rocks = Debris(root, "Rocks", kit.Clod, 10, Vector3.up * (depth + .1f), Vector3.up, 0f, .1f, 2.5f, 4.5f, .28f, .45f, 1.9f, 0f,
+            new Color(.44f, .33f, .23f), new Color(.30f, .22f, .15f));
+        rocks.transform.localRotation = Quaternion.identity;
+        FromPoints(rocks, thorns, false, .4f);
         var bark = Debris(root, "Bark", kit.Bark, 10, Vector3.up * (depth + .1f), Vector3.up, 0f, .1f, 3.0f, 5.0f, .12f, .22f, 1.3f, .01f, BarkLight, BarkDark);
         bark.transform.localRotation = Quaternion.identity;
         FromPoints(bark, roots, false, .5f);
         var leaves = Leaves(root, kit, "Leaves", 10, Vector3.up * (depth + .15f), Vector3.up, 0f, 2.0f, 3.5f, .03f);
         leaves.transform.localRotation = Quaternion.identity;
         FromPoints(leaves, roots, false, .6f);
+        // Капли сока летят из-под шипов вверх-наружу и гаснут на земле.
+        var sap = SapDrops(root, kit, "Sap", 36, thorns, .6f, 2.5f, 5.0f, .06f, .12f, 1.4f, 0f);
+        sap.transform.localPosition = Vector3.up * (depth + .2f);
         Save(root);
     }
 
@@ -1324,6 +1754,118 @@ public static class ForestWendigoVfxSetup
         var renderer = mist.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         renderer.sharedMaterial = kit.Dust;
+        Save(root);
+    }
+
+    /// <summary>
+    /// Круг когтей, часть от старта действия (03-wendigo-360-sweep). Корень — в
+    /// центре зверя на тике старта, +Z — взгляд. Вид ставит префаб событием
+    /// EnemyActionStarted и ведёт по возрасту от тика старта; кадр клипа = тик.
+    /// • Ленты кости по путям обоих когтей (кадры 12,5–23): голова идёт за
+    ///   когтем весь оборот, к тику удара (21) круг замкнут, хвосты тают
+    ///   ~0,3 с после. В плане пути раздвинуты ×1,2 к краю круга Sim (3,2 м), по
+    ///   высоте прижаты к земле — кольцо лежит у ног, как у цели.
+    /// • Вихрь пыли у опоры на толчке (тик 12), пыль из-под когтей бежит по
+    ///   кругу за правым когтем (тики 13–21), листья сорваны по ходу вращения.
+    /// • Пыль приземления левой стопы (тик 25) и шага правой (28,5).
+    /// Снятое оглушением до удара действие гасит префаб целиком (вид).
+    /// </summary>
+    private static void SaveSweepSpin(Kit kit, WendigoPose pose)
+    {
+        const float from = 12.5f, to = 23f, spread = 1.2f;
+        float tick = 1f / Simulation.TicksPerSecond;
+        float head = (to - from) * tick, life = head + .3f;
+        Vector3[] Arc(Vector3[] path)
+        {
+            var arc = new List<Vector3>();
+            for (int i = 0; i < path.Length; i++)
+            {
+                float frame = WendigoPose.SweepFrom + i * WendigoPose.SweepStep;
+                if (frame < from - .001f || frame > to + .001f) continue;
+                arc.Add(new Vector3(path[i].x * spread, .18f + .2f * path[i].y, path[i].z * spread));
+            }
+            return arc.ToArray();
+        }
+        var right = TimedStrips("WendigoSweepRibbonsRight", Arc(pose.SweepRight), new[] { (-.2f, .02f, .15f), (0f, 0f, .22f), (.2f, -.02f, .15f) });
+        var left = TimedStrips("WendigoSweepRibbonsLeft", Arc(pose.SweepLeft), new[] { (-.1f, .01f, .14f), (.12f, 0f, .18f) });
+        // Голова — весь путь за 0,35 с; хвост тает с тика удара, лента уходит к концу жизни.
+        Timing(kit.SweepRibbon, life, head, head * .75f, life - .04f, life - .16f, life);
+        var root = new GameObject(SweepSpin);
+        Strip(root, "RibbonsRight", right, kit.SweepRibbon, life, from * tick);
+        Strip(root, "RibbonsLeft", left, kit.SweepRibbon, life, from * tick);
+        // Вихрь у опоры: стопа разворачивается на носке, пыль и крошки по кругу.
+        var pivotPoints = SwirlPoints("WendigoSweepPivotPoints", 8, .25f, .6f, 1f, .5f, .05f, .03f, 561, 90f);
+        var pivot = Dust(root, kit, "PivotDust", 8, Vector3.zero, Vector3.up, 0f, .1f, .9f, 1.8f, .7f, 1.1f, .7f, 1.1f, .32f, 12f * tick, true, kit.Haze);
+        pivot.transform.localRotation = Quaternion.identity;
+        FromPoints(pivot, pivotPoints, false, .1f);
+        var grit = Debris(root, "PivotGrit", kit.Clod, 8, Vector3.zero, Vector3.up, 0f, .1f, 1.6f, 2.8f, .06f, .12f, 1.5f, 12f * tick, SoilLight, SoilDark);
+        grit.transform.localRotation = Quaternion.identity;
+        FromPoints(grit, pivotPoints, false, .3f);
+        // Пыль из-под когтей: вершины идут по ходу вращения от правого бока,
+        // эмиссия по порядку за 8 тиков — пыльный след бежит по кругу за когтем.
+        var trailPoints = SwirlPoints("WendigoSweepTrailPoints", 18, 1.7f, 2.4f, .8f, .5f, .08f, .05f, 551, 100f);
+        var trail = Dust(root, kit, "ClawDust", 18, Vector3.zero, Vector3.up, 0f, .1f, .8f, 1.8f, 1.0f, 1.6f, 1.0f, 1.4f, .26f, 13f * tick, true, kit.Haze);
+        trail.transform.localRotation = Quaternion.identity;
+        FromPoints(trail, trailPoints, false, .1f);
+        var trailMain = trail.main;
+        trailMain.duration = 8f * tick;
+        var trailEmission = trail.emission;
+        trailEmission.SetBursts(new ParticleSystem.Burst[0]);
+        trailEmission.rateOverTime = 18f / (8f * tick);
+        var leafPoints = SwirlPoints("WendigoSweepSwirlLeafPoints", 14, 1.2f, 2.2f, 1f, .6f, .7f, .2f, 571, 60f);
+        var leaves = Leaves(root, kit, "SwirlLeaves", 14, Vector3.zero, Vector3.up, 0f, 2.2f, 3.8f, 14f * tick);
+        leaves.transform.localRotation = Quaternion.identity;
+        FromPoints(leaves, leafPoints, false, .3f);
+        // Приземление: левая стопа (тик 25), шаг правой на место (28,5) — места стоп стойки Idle.
+        Dust(root, kit, "LandDust", 5, new Vector3(-.70f, .03f, -.15f), Vector3.up, 80f, .25f, .8f, 1.6f, .6f, .9f, .7f, 1.0f, .30f, 25f * tick, true, kit.Haze);
+        Dust(root, kit, "StepDust", 3, new Vector3(.70f, .03f, -.02f), Vector3.up, 80f, .2f, .6f, 1.2f, .5f, .8f, .6f, .9f, .26f, 28.5f * tick, true, kit.Haze);
+        Save(root);
+    }
+
+    /// <summary>
+    /// Удар круга когтей (03-wendigo-360-sweep). Корень — в центре зверя на тике
+    /// удара, +Z — взгляд. Светлое кольцо бежит от когтей к краю круга Sim
+    /// (WendigoSweepRadius) за ~0,13 с и гаснет — видно, докуда достал удар;
+    /// вытертая земля внутри, низкое кольцо тёплой пыли катится наружу по ходу
+    /// вращения, стоячие клубы у края, листья и комья сорваны наружу.
+    /// </summary>
+    private static void SaveSweep(Kit kit)
+    {
+        float radius = Simulation.WendigoSweepRadius.ToFloat();
+        var root = new GameObject(SweepImpact);
+        // Circle93: яркое кольцо на 0,88 половины размера.
+        // Горизонтальный билборд выходит меньше startSize: проба 29.09 с
+        // эталонной линией 3,2 м показала кольцо на 0,77 радиуса круга Sim —
+        // множитель 1,3 возвращает его на край, докуда достаёт удар.
+        float ringSize = 2f * (radius + .05f) / .88f * 1.3f;
+        var ring = Decal(root, "Ring", kit.SweepRing, 1, Vector3.zero, ringSize, ringSize, .42f, .3f,
+            new Color(1f, .84f, .52f, .8f), 0f, .06f);
+        var ringGrow = ring.sizeOverLifetime;
+        ringGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 2.1f / (radius + .05f), .3f, 1f, 1f, 1.02f));
+        Decal(root, "Scuff", kit.Splat, 1, Vector3.zero, 5.4f, 5.4f, 2.2f, .6f, new Color(.42f, .31f, .20f, .42f), 0f, .03f);
+        var lowPoints = SwirlPoints("WendigoSweepDustPoints", 20, 1.9f, 3.0f, .7f, .8f, .06f, .05f, 511, 0f);
+        var dustLow = Dust(root, kit, "DustLow", 20, Vector3.zero, Vector3.up, 0f, .1f, 1.6f, 3.2f, 1.3f, 2.1f, 1.1f, 1.6f, .32f, 0f, true, kit.Haze);
+        dustLow.transform.localRotation = Quaternion.identity;
+        FromPoints(dustLow, lowPoints, false, .15f);
+        var puffPoints = SwirlPoints("WendigoSweepPuffPoints", 12, 2.5f, 3.2f, .4f, .5f, .8f, .05f, 521, 0f);
+        var dust = Dust(root, kit, "Dust", 12, Vector3.zero, Vector3.up, 0f, .1f, .6f, 1.4f, .8f, 1.2f, .9f, 1.3f, .26f, .02f, false, kit.Haze);
+        dust.transform.localRotation = Quaternion.identity;
+        FromPoints(dust, puffPoints, false, .2f);
+        // Пыль круга — тёплая охра, как у кольца воя: на траве светлая читалась серой.
+        foreach (var ps in new[] { dust, dustLow })
+        {
+            var tone = ps.main;
+            tone.startColor = new ParticleSystem.MinMaxGradient(new Color(.74f, .55f, .35f, ps == dust ? .26f : .32f),
+                new Color(.58f, .42f, .27f, ps == dust ? .26f : .32f));
+        }
+        var leafPoints = SwirlPoints("WendigoSweepLeafPoints", 24, 1.6f, 2.6f, .7f, .7f, .5f, .15f, 531, 0f);
+        var leaves = Leaves(root, kit, "Leaves", 24, Vector3.zero, Vector3.up, 0f, 3.0f, 5.2f, 0f);
+        leaves.transform.localRotation = Quaternion.identity;
+        FromPoints(leaves, leafPoints, false, .2f);
+        var clodPoints = SwirlPoints("WendigoSweepClodPoints", 14, 1.7f, 2.5f, .5f, .8f, .55f, .1f, 541, 0f);
+        var clods = Debris(root, "Clods", kit.Clod, 14, Vector3.zero, Vector3.up, 0f, .1f, 3.0f, 5.5f, .10f, .22f, 1.6f, 0f, SoilLight, SoilDark);
+        clods.transform.localRotation = Quaternion.identity;
+        FromPoints(clods, clodPoints, false, .25f);
         Save(root);
     }
 }

@@ -23,6 +23,18 @@ namespace Game.Sim
     }
 
     /// <summary>
+    /// Взмах клыками Камнекопыта: короткий удар вплотную без метки на земле
+    /// (знак на теле рисует вид). Начало и направление зафиксированы в тик
+    /// замаха; ImpactTick — контакт, до RecoverUntil кабан стоит.
+    /// </summary>
+    public struct StonehoofTuskState
+    {
+        public int Serial, StartTick, ImpactTick, RecoverUntil;
+        public FixVec2 Origin, Direction;
+        public bool HitResolved;
+    }
+
+    /// <summary>
     /// КАМНЕКОПЫТ, ИИ v2 (27.09, «самый глупый — постоянно где-то застревает»).
     ///
     /// Что было не так: шагал, только глядя почти ровно на цель, и перед
@@ -38,6 +50,10 @@ namespace Game.Sim
     /// Таран кончается в пяти метрах за героем, а не у края поляны. На отдыхе
     /// герой ближе 3 м — пятится, глядя на него, до 5 м; разворота спиной нет.
     /// Толпа двигает его вдвое слабее прежнего.
+    ///
+    /// Ревью владельца 29.09: взмах клыками вплотную, когда герой сам пришёл
+    /// (кабан к нему не идёт), с отбросом на 1 м; удар тарана оглушает героя
+    /// на секунду. Числа — у констант StonehoofTusk*.
     /// </summary>
     public sealed partial class Simulation
     {
@@ -95,6 +111,64 @@ namespace Game.Sim
         private const int StonehoofLaneProbeTicks = 10;
         private static readonly Fix64 StonehoofLaneProbeStep = Fix64.Ratio(1, 4);
 
+        // ---- взмах клыками (ревью владельца 29.09) ----
+        //
+        // «Взмах клыками вплотную: только если герой уже рядом, сам к нему не
+        // идёт; отброс 1 м». Бьёт, только когда герой пришёл сам: тело героя
+        // не дальше метра от тела кабана (StonehoofTuskReach, от поверхностей:
+        // центры — не дальше 0,7 + 0,45 + 1 = 2,15 м) и спереди ±60°, а кабан
+        // отдыхает после тарана или целится (таран готов, полоса чиста). Идущий
+        // к герою или заходящий на точку кольца кабан клыками не бьёт — и ради
+        // взмаха не делает ни шага. Замах 14 тиков со знаком на теле вместо
+        // метки на полу; удар — сектор «тело + 1 м» (1,7 м) ±60° по направлению
+        // на героя, взятому в начале замаха; 60% урона тарана; отброс от кабана
+        // на 1 м. Держит ближний жетон, как замах Хранителя, — от начала замаха
+        // до контакта. Следующий взмах — не раньше чем через 60 тиков от начала
+        // прошлого; перезарядку тарана взмах не трогает.
+        //
+        // Съёмка 29.09 (stonehoof-hug): клыки не срабатывали ни разу. Порог
+        // мерился от центров (1,7 м), а отдыхающий кабан пятится на 5 см за тик,
+        // и прижавшийся или рубящий его герой (подход автоатаки — 1,875 м)
+        // держится в 1,87–1,94 м — всегда за порогом. Теперь порог — от
+        // поверхностей тел, и пока клыки готовы, а герой в их досягаемости
+        // спереди, кабан не пятится: огрызается, а не уступает. Шага к герою
+        // по-прежнему нет ни одного.
+
+        /// <summary>Взмах клыками включён. Тесты StonehoofTests спрашивают его же.</summary>
+        public const bool StonehoofTuskEnabled = true;
+
+        public const int StonehoofTuskWindupTicks = 14, StonehoofTuskRecoveryTicks = 12,
+            StonehoofTuskCooldownTicks = 60;
+
+        /// <summary>Урон клыков — доля урона тарана (строки таблицы видов), %.</summary>
+        public const int StonehoofTuskDamagePercent = 60;
+
+        /// <summary>Отброс героя клыками: 1 м за 6 тиков, от кабана.</summary>
+        public const int StonehoofTuskKnockbackTicks = 6;
+        public static readonly Fix64 StonehoofTuskKnockback = Fix64.One;
+
+        /// <summary>
+        /// «В теле + 1 м»: между поверхностями тел кабана и героя не больше
+        /// метра. От центров это тело кабана + тело героя + 1 м (2,15 м для
+        /// героя 0,45) — прижавшийся и рубящий кабана герой всегда внутри.
+        /// </summary>
+        public static readonly Fix64 StonehoofTuskReach = Fix64.One;
+
+        /// <summary>«Спереди»: герой в ±60° от взгляда кабана (cos 60° = 0,5).</summary>
+        public static readonly Fix64 StonehoofTuskFrontCos = Fix64.Ratio(1, 2);
+
+        /// <summary>
+        /// Фигура удара клыков: сектор «тело + 1 м» (1,7 м), ±60° от
+        /// зафиксированного направления. Проверка попадания прибавляет тело
+        /// героя, поэтому сектор кончается ровно там же, где порог взмаха:
+        /// стоящего на месте клыки задевают всегда, отступившего за край — нет.
+        /// </summary>
+        public static readonly Fix64 StonehoofTuskRadius = EnemyArchetypes.StonehoofBodyRadius + StonehoofTuskReach;
+        public static readonly Fix64 StonehoofTuskArcCos = Fix64.Ratio(1, 2);
+
+        /// <summary>Удар тарана оглушает героя на секунду (ревью владельца 29.09).</summary>
+        public const int StonehoofChargeStunTicks = 30;
+
         private readonly StonehoofActionState[] _stonehoofActions;
         private readonly int[] _stonehoofArena;
         private int _stonehoofSerial;
@@ -105,6 +179,11 @@ namespace Game.Sim
         private bool[] _stonehoofLaneOk, _stonehoofBackoff;
         private FixVec2[] _stonehoofPoint;
 
+        // Взмах клыками: состояние, тик, с которого можно следующий, и сквозной номер.
+        private StonehoofTuskState[] _stonehoofTusks;
+        private int[] _stonehoofTuskReadyTick;
+        private int _stonehoofTuskSerial;
+
         private void EnsureStonehoofBrain()
         {
             if (_stonehoofLaneTick != null && _stonehoofLaneTick.Length == Entities.Capacity) return;
@@ -113,6 +192,7 @@ namespace Game.Sim
             _stonehoofRepositionSince = new int[n]; _stonehoofPointUntil = new int[n];
             _stonehoofLaneOk = new bool[n]; _stonehoofBackoff = new bool[n];
             _stonehoofPoint = new FixVec2[n];
+            _stonehoofTusks = new StonehoofTuskState[n]; _stonehoofTuskReadyTick = new int[n];
         }
 
         public bool TryGetStonehoofAction(int id, out StonehoofActionState action)
@@ -136,6 +216,9 @@ namespace Game.Sim
             Array.Clear(_stonehoofPoint, 0, _stonehoofPoint.Length);
             Array.Clear(_stonehoofPointUntil, 0, _stonehoofPointUntil.Length);
             for (int i = 0; i < _stonehoofAimSince.Length; i++) { _stonehoofAimSince[i] = -1; _stonehoofRepositionSince[i] = -1; }
+            Array.Clear(_stonehoofTusks, 0, _stonehoofTusks.Length);
+            Array.Clear(_stonehoofTuskReadyTick, 0, _stonehoofTuskReadyTick.Length);
+            _stonehoofTuskSerial = 0;
         }
 
         private void ConfigureStonehoof(int id)
@@ -155,6 +238,7 @@ namespace Game.Sim
             _stonehoofLaneTick[id] = 0; _stonehoofLaneOk[id] = false; _stonehoofBackoff[id] = false;
             _stonehoofAimSince[id] = -1; _stonehoofRepositionSince[id] = -1; _stonehoofPointUntil[id] = 0;
             _stonehoofPoint[id] = Entities.Position[id];
+            _stonehoofTusks[id] = default; _stonehoofTuskReadyTick[id] = 0;
         }
 
         // Non-negative indices identify a clearing; negative ones identify a placed room.
@@ -309,6 +393,11 @@ namespace Game.Sim
             _stonehoofHeroBeforeMove = Entities.Position[PlayerId];
             for (int id = 1; id < Entities.Count; id++)
             {
+                // Взмах клыками снимают те же помехи, что таран, но любое оглушение.
+                if (Entities.Kind[id] == EnemyKind.ForestStonehoof && _stonehoofTusks[id].Serial != 0
+                    && (!Entities.Alive[id] || !Entities.Alive[PlayerId] || Statuses.IsStunned(id, Tick)
+                        || ForcedMotion.IsActive(Entities, id)))
+                    CancelStonehoofTusk(id);
                 var a = _stonehoofActions[id]; if (a.Serial == 0) continue;
                 bool externalStun = Statuses.IsStunned(id, Tick)
                     && (a.Phase != StonehoofPhase.WallImpact || Statuses.StunUntilTick[id] > a.EndTick);
@@ -371,7 +460,8 @@ namespace Game.Sim
         /// <summary>
         /// Ход кабана без тарана. Решение — одно из четырёх:
         /// отдых — пятиться от прижавшего героя (лицом к нему) или стоять и
-        /// следить; готов и далеко — идти к герою по пути; готов, рядом и
+        /// следить (и стоять, пока клыки готовы и достают героя спереди);
+        /// готов и далеко — идти к герою по пути; готов, рядом и
         /// полоса чиста — стоять и доворачиваться (таран начнёт UpdateStonehooves);
         /// готов, рядом, полосы нет — заходить на точку кольца с чистой полосой.
         /// </summary>
@@ -398,6 +488,14 @@ namespace Game.Sim
                 }
                 _stonehoofActions[id] = a; return;
             }
+            // Взмах клыками: стоит до конца восстановления — ни шага к герою, ни
+            // отхода; корпус доворачивает на направление, взятое в начале замаха.
+            if (_stonehoofTusks[id].Serial != 0)
+            {
+                Entities.Facing[id] = TurnToward(Entities.Facing[id], _stonehoofTusks[id].Direction,
+                    StonehoofTurnStepCos, StonehoofTurnStepSin);
+                return;
+            }
             if (!UpdateAggro(id, toPlayer))
             { Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, StonehoofTurnStepCos, StonehoofTurnStepSin); return; }
             var distance = toPlayer.Length;
@@ -413,7 +511,10 @@ namespace Game.Sim
                 if (distance > StonehoofEngageRange && !_stonehoofBackoff[id])
                 { WalkStonehoof(id, SteerHeading(id, toPlayer)); return; }
                 Entities.Facing[id] = TurnToward(Entities.Facing[id], toPlayer, StonehoofTurnStepCos, StonehoofTurnStepSin);
-                if (_stonehoofBackoff[id] && distance.Raw != 0)
+                // Клыки готовы, а герой в их досягаемости спереди — кабан не пятится,
+                // а ждёт своего такта и бьёт (UpdateStonehooves). Иначе отход в 5 см
+                // за тик уводил его из-под порога, и прижатый клыков не видел.
+                if (_stonehoofBackoff[id] && distance.Raw != 0 && !StonehoofTuskArmed(id, toPlayer))
                 {
                     var back = EnemyStep(id, from, -toPlayer / distance * StonehoofBackoffStep);
                     Entities.Position[id] = back; Entities.Velocity[id] = back - from;
@@ -479,7 +580,7 @@ namespace Game.Sim
                 var a = _stonehoofActions[id];
                 bool stunned = Statuses.IsStunned(id, Tick) && a.Phase != StonehoofPhase.WallImpact;
                 if (!Entities.Alive[id] || !Entities.Alive[PlayerId] || stunned || ForcedMotion.IsActive(Entities, id))
-                { CancelStonehoof(id); continue; }
+                { CancelStonehoof(id); CancelStonehoofTusk(id); continue; }
                 if (a.Serial != 0)
                 {
                     if (!a.HitResolved && Tick >= a.LaunchTick && Tick <= a.StopTick)
@@ -507,6 +608,9 @@ namespace Game.Sim
                                     target = next;
                                 }
                                 ForcedMotion.Begin(Entities, PlayerId, target, 6, ForcedMotionKind.Knockback);
+                                // Удар тарана оглушает героя на секунду (ревью 29.09). Отброс
+                                // уже начат и доезжает; иммунитет к контролю — в ApplyHeroStun.
+                                ApplyHeroStun(StonehoofChargeStunTicks, id);
                             }
                         }
                     }
@@ -521,6 +625,10 @@ namespace Game.Sim
                     _stonehoofActions[id] = Tick >= a.EndTick ? default : a;
                     continue;
                 }
+                // Взмах клыками идёт раньше тарана: до конца восстановления тарана нет,
+                // а герой вплотную спереди получает клыки, а не разбег в упор.
+                if (_stonehoofTusks[id].Serial != 0) { UpdateStonehoofTusk(id); continue; }
+                if (TryStartStonehoofTusk(id)) continue;
                 if (!Entities.Aggro[id] || Tick < Entities.NextAttackTick[id] || !_stonehoofLaneOk[id]) continue;
                 var offset = Entities.Position[PlayerId] - Entities.Position[id];
                 if (offset.LengthSq > StonehoofEngageRange * StonehoofEngageRange || offset.LengthSq < Fix64.Ratio(1, 10000)) continue;
@@ -534,6 +642,172 @@ namespace Game.Sim
                 bool relaxed = _stonehoofAimSince[id] >= 0 && Tick - _stonehoofAimSince[id] >= StonehoofAimRelaxTicks;
                 if (dot >= StonehoofTurnStepCos || (relaxed && dot >= StonehoofAimRelaxCos)) StartStonehoof(id, direction);
             }
+        }
+
+        // ---------- взмах клыками ----------
+
+        /// <summary>Взмах клыками кабана id: замах, контакт или восстановление. Для вида и тестов.</summary>
+        public bool TryGetStonehoofTusk(int id, out StonehoofTuskState tusk)
+        {
+            tusk = _stonehoofTusks != null && (uint)id < (uint)Entities.Count
+                && Entities.Kind[id] == EnemyKind.ForestStonehoof ? _stonehoofTusks[id] : default;
+            return tusk.Serial != 0;
+        }
+
+        /// <summary>
+        /// Фигура удара клыков из origin по direction. Метка на землю не
+        /// ложится (знак на теле рисует вид); фигура нужна проверке попадания
+        /// и боту стенда баланса, который читает угрозы из Sim.
+        /// </summary>
+        public static EnemyTelegraph StonehoofTuskShape(FixVec2 origin, FixVec2 direction)
+            => EnemyTelegraph.Sector(origin, direction, StonehoofTuskRadius, StonehoofTuskArcCos);
+
+        /// <summary>Урон клыков — урон листа (урон тарана) × 60%: глубина и «Сложно» приходят в него сами.</summary>
+        public int StonehoofTuskDamageOf(int id)
+            => EnemyArchetypes.Share(Entities.Damage[id], StonehoofTuskDamagePercent, 100);
+
+        /// <summary>Держит ли кабан id ближний жетон: взмах клыками — от начала замаха до контакта.</summary>
+        internal bool StonehoofTuskHoldsMeleeToken(int id)
+            => _stonehoofTusks != null && (uint)id < (uint)Entities.Count
+                && Entities.Kind[id] == EnemyKind.ForestStonehoof && Entities.Alive[id]
+                && _stonehoofTusks[id].Serial != 0 && !_stonehoofTusks[id].HitResolved;
+
+        /// <summary>
+        /// Сколько ближних жетонов занято, кроме самого self. Клыки входят в
+        /// общий счёт (CountMeleeAttackTokens, Simulation.EnemyMelee): кабан
+        /// уважает замахи Хранителей, Расщепеня и соседних кабанов, а они — его.
+        /// </summary>
+        private int StonehoofMeleeTokensHeld(int self) => CountMeleeAttackTokens(self);
+
+        /// <summary>
+        /// Клыки кабана id готовы и достают героя: взмах включён, моб не
+        /// пассивный и не выходит из-под земли, перезарядка прошла, герой
+        /// (offset — от кабана к нему) не дальше StonehoofTuskReach от тела
+        /// кабана, считая от поверхностей тел, и спереди ±60°. Жетон и такт
+        /// сюда не входят — их спрашивает TryStartStonehoofTusk.
+        /// </summary>
+        private bool StonehoofTuskArmed(int id, FixVec2 offset)
+        {
+            // Пассивный моб (NextAttackTick = MaxValue — съёмка, стенд) не бьёт и клыками.
+            if (!StonehoofTuskEnabled || !Entities.Aggro[id] || IsEmerging(id)
+                || Entities.NextAttackTick[id] == int.MaxValue || Tick < _stonehoofTuskReadyTick[id]) return false;
+            var distanceSq = offset.LengthSq;
+            var reach = Entities.BodyRadius[id] + Entities.BodyRadius[PlayerId] + StonehoofTuskReach;
+            if (distanceSq.Raw == 0 || distanceSq > reach * reach) return false;
+            return FixVec2.Dot(Entities.Facing[id], offset.Normalized()) >= StonehoofTuskFrontCos;
+        }
+
+        /// <summary>
+        /// Начать взмах клыками, если герой УЖЕ вплотную спереди, а кабан
+        /// отдыхает или целится. Ни шага к герою: всё решается по тому, где оба
+        /// стоят сейчас. Жетон — ближний, как у замаха Хранителя.
+        /// </summary>
+        private bool TryStartStonehoofTusk(int id)
+        {
+            var from = Entities.Position[id];
+            var offset = Entities.Position[PlayerId] - from;
+            if (!StonehoofTuskArmed(id, offset)) return false;
+            var direction = offset.Normalized();
+            // Отдых — любой; готовый к тарану — только прицел с чистой полосой.
+            // Без полосы он заходит на точку кольца: идёт, а не бьёт.
+            if (Tick >= Entities.NextAttackTick[id] && !_stonehoofLaneOk[id]) return false;
+            if (StonehoofMeleeTokensHeld(id) >= MeleeAttackTokenLimit) return false;
+
+            int impact = Tick + StonehoofTuskWindupTicks;
+            // Такт ударов по герою (Simulation.AttackRhythm): контакт клыков — не
+            // внахлёст с чужим и не по оглушённому или связанному герою. Ревью 29.09:
+            // кабан, чей таран оглушил героя и встал рядом, бил клыками в последний
+            // тик оглушения, и отброс продлевал беспомощность до 35 тиков.
+            if (!HeroContactAllowed(id, impact, impact)) return false;
+            _stonehoofTusks[id] = new StonehoofTuskState {
+                Serial = ++_stonehoofTuskSerial, StartTick = Tick, ImpactTick = impact,
+                RecoverUntil = impact + StonehoofTuskRecoveryTicks, Origin = from, Direction = direction
+            };
+            _stonehoofTuskReadyTick[id] = Tick + StonehoofTuskCooldownTicks;
+            Entities.Velocity[id] = FixVec2.Zero;
+            // Прицел после взмаха начинается заново: 1,5 с «ослабленного» довода не копятся под клыками.
+            _stonehoofAimSince[id] = -1;
+            _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
+                EnemyActionKind.StonehoofTusk, from));
+            return true;
+        }
+
+        /// <summary>Взмах идёт: контакт в ImpactTick, потом стоит до RecoverUntil.</summary>
+        private void UpdateStonehoofTusk(int id)
+        {
+            var tusk = _stonehoofTusks[id];
+            if (!tusk.HitResolved)
+            {
+                if (Tick < tusk.ImpactTick) return;
+                LandStonehoofTusk(id);
+                tusk = _stonehoofTusks[id];
+                if (tusk.Serial == 0) return;
+            }
+            if (Tick >= tusk.RecoverUntil) _stonehoofTusks[id] = default;
+        }
+
+        /// <summary>
+        /// Контакт клыков — ровно один на взмах. Сектор — от того места, где
+        /// тело сейчас (толпа могла его сдвинуть), по направлению, взятому в
+        /// начале замаха. Задел и урон прошёл — отброс на 1 м от кабана.
+        /// </summary>
+        private void LandStonehoofTusk(int id)
+        {
+            var tusk = _stonehoofTusks[id];
+            // Состояние пишется ДО урона: отражение может убить кабана внутри
+            // ApplyAbilityDamage, и запись после него воскресила бы снятый взмах.
+            tusk.HitResolved = true;
+            _stonehoofTusks[id] = tusk;
+            var at = Entities.Position[id];
+            var shape = StonehoofTuskShape(at, tusk.Direction);
+            bool touched = Entities.Alive[PlayerId]
+                && TelegraphContains(in shape, Entities.Position[PlayerId], Entities.BodyRadius[PlayerId]);
+            _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
+                EnemyActionKind.StonehoofTusk, at + tusk.Direction * (StonehoofTuskRadius / 2), 0, touched));
+            if (!touched) return;
+            int health = Entities.Health[PlayerId];
+            ApplyAbilityDamage(id, PlayerId, StonehoofTuskDamageOf(id), -1, DamageType.Physical);
+            if (Entities.Alive[PlayerId] && Entities.Health[PlayerId] < health)
+                ApplyStonehoofTuskKnockback(id, tusk.Direction);
+        }
+
+        /// <summary>
+        /// Отброс клыками: на 1 м прочь от кабана за 6 тиков, по шагам 5 см до
+        /// первого препятствия. Героя, которого уже несёт (кувырок, другой
+        /// отброс), не перехватывает — как всплеск Шипомёта.
+        /// </summary>
+        private void ApplyStonehoofTuskKnockback(int id, FixVec2 direction)
+        {
+            if (PlayerImmune || ForcedMotion.IsActive(Entities, PlayerId)) return;
+            var hero = Entities.Position[PlayerId];
+            var away = hero - Entities.Position[id];
+            var push = away.LengthSq.Raw > 0 ? away.Normalized() : direction;
+            var radius = Entities.BodyRadius[PlayerId];
+            var target = hero;
+            var piece = StonehoofTuskKnockback / 20;
+            for (int step = 0; step < 20; step++)
+            {
+                var next = target + push * piece;
+                if ((_layout != null || _campWalkMap != null) && !CanTravel(target, next, radius)) break;
+                target = next;
+            }
+            if (!target.Equals(hero))
+                ForcedMotion.Begin(Entities, PlayerId, target, StonehoofTuskKnockbackTicks, ForcedMotionKind.Knockback);
+        }
+
+        /// <summary>
+        /// Снимает взмах: оглушение, волок, смерть кабана или героя. До
+        /// контакта — событие Cancelled; снятое восстановление проходит молча
+        /// (контакт уже показан). Перезарядка взмаха остаётся.
+        /// </summary>
+        private void CancelStonehoofTusk(int id)
+        {
+            var tusk = _stonehoofTusks[id];
+            if (tusk.Serial == 0) return;
+            _stonehoofTusks[id] = default;
+            if (!tusk.HitResolved)
+                _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionCancelled, id, PlayerId,
+                    EnemyActionKind.StonehoofTusk, Entities.Position[id]));
         }
 
         public EncounterPlan SetupStonehoofEncounter(LayoutMap map, ulong seed, int count = 1, bool obstacle = false)
@@ -574,10 +848,11 @@ namespace Game.Sim
 
         private void HashStonehooves(ref ulong hash)
         {
-            bool present = _stonehoofSerial != 0;
+            bool present = _stonehoofSerial != 0 || _stonehoofTuskSerial != 0;
             for (int id = 1; id < Entities.Count && !present; id++) present = Entities.Kind[id] == EnemyKind.ForestStonehoof;
             if (!present) return;
             Hashing.Mix(ref hash, 0x53544F4E); Hashing.Mix(ref hash, _stonehoofSerial);
+            Hashing.Mix(ref hash, _stonehoofTuskSerial);
             for (int id = 1; id < Entities.Count; id++)
             {
                 if (Entities.Kind[id] != EnemyKind.ForestStonehoof) continue;
@@ -595,6 +870,13 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, _stonehoofAimSince[id]); Hashing.Mix(ref hash, _stonehoofRepositionSince[id]);
                 Hashing.Mix(ref hash, _stonehoofPointUntil[id]); Hashing.Mix(ref hash, _stonehoofBackoff[id] ? 1 : 0);
                 Hashing.Mix(ref hash, _stonehoofPoint[id].X); Hashing.Mix(ref hash, _stonehoofPoint[id].Y);
+                // Взмах клыками и его перезарядка.
+                var tusk = _stonehoofTusks[id];
+                Hashing.Mix(ref hash, _stonehoofTuskReadyTick[id]); Hashing.Mix(ref hash, tusk.Serial);
+                Hashing.Mix(ref hash, tusk.StartTick); Hashing.Mix(ref hash, tusk.ImpactTick);
+                Hashing.Mix(ref hash, tusk.RecoverUntil); Hashing.Mix(ref hash, tusk.HitResolved ? 1 : 0);
+                Hashing.Mix(ref hash, tusk.Origin.X.Raw); Hashing.Mix(ref hash, tusk.Origin.Y.Raw);
+                Hashing.Mix(ref hash, tusk.Direction.X.Raw); Hashing.Mix(ref hash, tusk.Direction.Y.Raw);
             }
         }
     }

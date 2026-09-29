@@ -44,15 +44,16 @@ namespace Game.Tests
             EntityStore e = sim.Entities;
 
             Assert.AreEqual(34, e.Damage[Simulation.PlayerId], "урон игрока");
-            // 14, а не 7: урон Хранителя теперь строка таблицы видов (баланс v1).
-            // Здоровье мишени тестовой арены — по-прежнему 100, оно не баланс.
-            Assert.AreEqual(14, e.Damage[1], "урон врага");
+            // 17, а не 7: урон Хранителя теперь строка таблицы видов (баланс v1:
+            // 14; подгонка «Мобов леса v2» 29.09: 17). Здоровье мишени тестовой
+            // арены — по-прежнему 100, оно не баланс.
+            Assert.AreEqual(17, e.Damage[1], "урон врага");
             Assert.AreEqual(EnemyArchetypes.Get(EnemyKind.ForestGuardian).BaseDamage, e.Damage[1]);
             Assert.AreEqual(0L, e.CritChance[1].Raw, "враги не критуют");
             Assert.AreEqual(20, e.AttackCooldown[Simulation.PlayerId], "кулдаун игрока в тиках");
-            // 48, а не 36: замах 21 + окно наказания 15 + свободные 12 тиков,
-            // см. Simulation.EnemyMelee.
-            Assert.AreEqual(48, e.AttackCooldown[1], "кулдаун врага в тиках");
+            // 53: замах 23 + окно наказания 17 + свободные 13 тиков — взмах
+            // Хранителя на 10% медленнее (29.09), см. Simulation.EnemyMelee.
+            Assert.AreEqual(53, e.AttackCooldown[1], "кулдаун врага в тиках");
             Assert.AreEqual(1000, e.MaxHealth[Simulation.PlayerId], "здоровье игрока");
             Assert.AreEqual(100, e.MaxHealth[1], "здоровье врага");
 

@@ -6,8 +6,9 @@ namespace Game.Tests
     /// <summary>
     /// Таблица видов и баланс v1 (стадия 2 плана «Мобы леса»).
     ///
-    /// Эталон — герой 5-го уровня лагеря: 150 базы локации + 4 × 30 = 270
-    /// здоровья, 34 + 4 × 5 = 54 урона, удар раз в 20 тиков. Время убийства
+    /// Эталон — герой на базе (с 29 сентября любой герой, прежний 5-й уровень
+    /// лагеря): 150 базы локации + 120 = 270 здоровья, 34 + 20 = 54 урона, удар
+    /// раз в 20 тиков. Время убийства
     /// считается ЦЕЛЫМИ базовыми ударами без критов и способностей: это
     /// верхняя оценка, настоящий бой быстрее. Живой ассет Meadow проверяет
     /// MeadowBalanceTests в редакторе; здесь — все виды таблицы, в том числе
@@ -15,16 +16,17 @@ namespace Game.Tests
     /// </summary>
     public sealed class EnemyArchetypeTests
     {
-        private const int ReferenceCampLevel = 5;
         private const int LocationPlayerHealth = 150;
-        private const int ReferenceHealth = LocationPlayerHealth + 4 * Progression.HealthPerLevel;
+        private const int ReferenceHealth = Progression.ReferenceHeroHealth;
 
         // Стенд баланса (26.09): укус роя 5 → 4 → 3, Хранитель 450 → 550 здоровья,
         // коготь Вендиго 32 → 26 (проход 2).
         [TestCase(EnemyKind.ForestRootSwarm, 130, 3, 1)]
-        [TestCase(EnemyKind.ForestGuardian, 550, 14, 2)]
+        // Подгонка «Мобов леса v2» (29.09): Хранитель 550/14 → 500/17, таран
+        // Камнекопыта 24 → 22.
+        [TestCase(EnemyKind.ForestGuardian, 500, 17, 2)]
         [TestCase(EnemyKind.ForestBud, 300, 11, 2)]
-        [TestCase(EnemyKind.ForestStonehoof, 650, 24, 3)]
+        [TestCase(EnemyKind.ForestStonehoof, 650, 22, 3)]
         [TestCase(EnemyKind.ForestWendigo, 2000, 26, 6)]
         // Новые мобы леса (план от 26.09). Угроза Расщепеня — вместе с детьми.
         // Стенд 27.09 (выход в игру): Шипомёт 1700 → 2000 (как Вендиго),
@@ -327,10 +329,10 @@ namespace Game.Tests
                 var map = new LayoutMap(modules, 64);
                 level.Generate(new LayoutGenerator(), modules, map, seeds.Layout);
                 var sim = new Simulation(seed, 512);
-                sim.SetPlayerLevel(ReferenceCampLevel);
+                sim.ApplyHeroBaseline();
                 var plan = level.Spawn(sim, map, seeds.Spawns);
                 Assert.That(sim.Entities.MaxHealth[0], Is.EqualTo(ReferenceHealth));
-                Assert.That(sim.Entities.Damage[0], Is.EqualTo(34 + 4 * Progression.DamagePerLevel));
+                Assert.That(sim.Entities.Damage[0], Is.EqualTo(Progression.ReferenceHeroDamage));
                 for (int i = 1; i < sim.Entities.Count; i++)
                 {
                     var kind = sim.Entities.Kind[i];
@@ -350,7 +352,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void InterimBoss_IsGuardianWithSixThousandEightHundredScaledByDepth()
+        public void InterimBoss_IsGuardianWithSixThousandScaledByDepth()
         {
             var modules = PrototypeContent.Modules();
             var level = new RiftLevelSettings(12, 1, 0, 0, 0, 0, EnemyArchetypes.DepthHealthPercent(10),
@@ -358,16 +360,17 @@ namespace Game.Tests
             var map = new LayoutMap(modules, 64);
             level.Generate(new LayoutGenerator(), modules, map, 42);
             var sim = new Simulation(42, 512);
-            sim.SetPlayerLevel(ReferenceCampLevel);
+            sim.ApplyHeroBaseline();
             var plan = level.Spawn(sim, map, 43);
             int boss = plan.BossId;
             Assert.That(boss, Is.GreaterThan(0));
             Assert.That(sim.Entities.Kind[boss], Is.EqualTo(EnemyKind.ForestGuardian));
-            // 6800 × 163% десятой арены.
-            Assert.That(EnemyArchetypes.InterimBossHealth, Is.EqualTo(6800));
-            Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(11084));
-            // Удар Хранителя ×1,25 × рост урона десятой арены (172%): 30.1.
-            Assert.That(sim.Entities.Damage[boss], Is.EqualTo(30));
+            // 6000 × 163% десятой арены (подгонка 29.09, было 6800).
+            Assert.That(EnemyArchetypes.InterimBossHealth, Is.EqualTo(6000));
+            Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(9780));
+            // Удар Хранителя 17 ×1,5 × рост урона десятой арены (172%): 43.9.
+            Assert.That(EnemyArchetypes.InterimBossDamagePercent, Is.EqualTo(150));
+            Assert.That(sim.Entities.Damage[boss], Is.EqualTo(44));
             Assert.That(sim.Entities.CritChance[boss], Is.EqualTo(Fix64.Zero));
             Assert.That(sim.Entities.XpReward[boss], Is.EqualTo(Progression.BossKillXp));
             // Эталонный герой одними базовыми ударами — две-три минуты; с

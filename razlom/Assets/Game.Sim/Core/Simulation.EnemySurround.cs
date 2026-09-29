@@ -34,6 +34,9 @@ namespace Game.Sim
         /// <summary>Ближе этого к кольцу моб правит ход по дуге вокруг героя, дальше — идёт к месту.</summary>
         private static readonly Fix64 SurroundNearBand = Fix64.Ratio(5, 2);
 
+        /// <summary>С такого зазора до своего места ход по дуге — полный; ближе — плавно тише.</summary>
+        private static readonly Fix64 SurroundArcFullGap = Fix64.Ratio(6, 5);
+
         private int[] _surroundSlot;
         private bool[] _engaged;
         private int[] _surroundNextPick;
@@ -43,6 +46,19 @@ namespace Game.Sim
         private bool[] _rangedGoalMoving;
         private readonly FixVec2[] _meleeSlotDirections = new FixVec2[MeleeSurroundSlots];
         private readonly FixVec2[] _swarmSlotDirections = new FixVec2[SwarmSurroundSlots];
+
+        // Сколько тел каждого класса (рой / прочие ближники) держат место k.
+        // Живёт только внутри AssignSurroundSlots и пересчитывается в его
+        // начале: не состояние, в хеш не идёт. Раньше «занято ли место»
+        // обходило всех мобов на каждое место каждого (поток D, 29.09).
+        private readonly int[] _meleeSlotHolders = new int[MeleeSurroundSlots];
+        private readonly int[] _swarmSlotHolders = new int[SwarmSurroundSlots];
+
+        // Направление от героя на моба j, нормированное, и вектор, из которого
+        // оно посчитано. Чистая функция вектора: совпал вектор — совпал ответ,
+        // поэтому это не состояние и в хеш не идёт. Девять оценок огневых
+        // позиций подряд нормировали одних и тех же соседей заново.
+        private FixVec2[] _bearingFrom, _bearing;
 
         private void ResetSurround()
         {
@@ -91,6 +107,14 @@ namespace Game.Sim
                 if (_surroundSlot[i] >= 0) _surroundWaitSince[i] = -1;
                 else if (_surroundWaitSince[i] < 0) _surroundWaitSince[i] = Tick;
             }
+            // После прохода выше место держат только те, кто может его держать
+            // (живы, заметили героя, бьют общим замахом), — ровно те, кого
+            // считал прежний обход в SurroundSlotOccupied.
+            Array.Clear(_meleeSlotHolders, 0, _meleeSlotHolders.Length);
+            Array.Clear(_swarmSlotHolders, 0, _swarmSlotHolders.Length);
+            for (int i = 1; i < Entities.Count; i++)
+                if (_surroundSlot[i] >= 0)
+                    (IsSwarmLike(Entities.Kind[i]) ? _swarmSlotHolders : _meleeSlotHolders)[_surroundSlot[i]]++;
             for (int i = 1; i < Entities.Count; i++)
             {
                 EnemyKind kind = Entities.Kind[i];
@@ -109,7 +133,7 @@ namespace Game.Sim
                 Fix64 bestCost = Fix64.MaxValue, keptCost = Fix64.MaxValue;
                 for (int k = 0; k < directions.Length; k++)
                 {
-                    if (SurroundSlotOccupied(i, k, swarm)) continue;
+                    if (SlotHeldByOther(i, k, swarm)) continue;
                     FixVec2 point = hero + directions[k] * radius;
                     if (!SurroundPointUsable(i, point)) continue;
                     Fix64 cost = FixVec2.Distance(point, Entities.Position[i]);
@@ -122,6 +146,12 @@ namespace Game.Sim
                 }
                 if (kept >= 0 && keptCost != Fix64.MaxValue && keptCost <= bestCost + SurroundKeepMargin)
                     best = kept;
+                if (best != kept)
+                {
+                    int[] holders = swarm ? _swarmSlotHolders : _meleeSlotHolders;
+                    if (kept >= 0) holders[kept]--;
+                    if (best >= 0) holders[best]++;
+                }
                 _surroundSlot[i] = best;
             }
         }
@@ -159,14 +189,13 @@ namespace Game.Sim
         private bool SurroundPointUsable(int id, FixVec2 point)
             => _layout == null || _layout.IsWalkable(point, Entities.BodyRadius[id]);
 
-        private bool SurroundSlotOccupied(int id, int slot, bool swarm)
-        {
-            for (int other = 1; other < Entities.Count; other++)
-                if (other != id && Entities.Alive[other] && Entities.Aggro[other]
-                    && UsesSurround(Entities.Kind[other]) && IsSwarmLike(Entities.Kind[other]) == swarm
-                    && _surroundSlot[other] == slot) return true;
-            return false;
-        }
+        /// <summary>
+        /// Держит ли место slot кто-то другой того же класса. Только внутри
+        /// AssignSurroundSlots: счётчики мест собраны в его начале и правятся
+        /// при каждой смене места.
+        /// </summary>
+        private bool SlotHeldByOther(int id, int slot, bool swarm)
+            => (swarm ? _swarmSlotHolders : _meleeSlotHolders)[slot] - (_surroundSlot[id] == slot ? 1 : 0) > 0;
 
         private Fix64 SlotRadius(int id, EnemyKind kind, bool swarm)
         {
@@ -213,11 +242,16 @@ namespace Game.Sim
             // У кольца: радиальная поправка плюс дуга к месту.
             Fix64 radial = Fix64.Clamp(distance - ring, -Fix64.One, Fix64.One);
             FixVec2 onRing = hero + bearing * ring;
-            Fix64 gap = FixVec2.Distance(onRing, goal);
             Fix64 cross = bearing.X * slotDirection.Y - bearing.Y * slotDirection.X;
             var tangent = new FixVec2(-bearing.Y, bearing.X);
             if (cross.Raw < 0) tangent = -tangent;
-            Fix64 along = Fix64.Min(Fix64.One, gap / Fix64.Ratio(6, 5)) * Fix64.Ratio(4, 5);
+            // Дальше SurroundArcFullGap от места ход по дуге полный: доля — ровно
+            // единица, и ни корень, ни деление не нужны (ответ тот же).
+            Fix64 gapSq = FixVec2.DistanceSq(onRing, goal);
+            Fix64 fullGap = SurroundArcFullGap + SqrtCompareSlack;
+            Fix64 arc = gapSq >= fullGap * fullGap ? Fix64.One
+                : Fix64.Min(Fix64.One, Fix64.Sqrt(gapSq) / SurroundArcFullGap);
+            Fix64 along = arc * Fix64.Ratio(4, 5);
             FixVec2 wanted = inward * (radial * speed) + tangent * (along * speed);
             wanted = wanted.ClampLength(speed);
             if (Tick < _unstickUntil[i] || NavActive(i))
@@ -247,7 +281,9 @@ namespace Game.Sim
             Fix64 body = Entities.BodyRadius[id];
             for (int slot = 0; slot < _telegraphHighWater; slot++)
             {
-                var t = _telegraphs[slot];
+                // По ссылке: метка — крупная структура, а обход идёт на каждого
+                // моба и на каждое место, которое он примеряет.
+                ref readonly EnemyTelegraph t = ref _telegraphs[slot];
                 if (t.Serial == 0 || !t.IsActive || t.Source == id || t.Shape == TelegraphShape.Sector) continue;
                 if (!TelegraphContains(in t, point, body)) continue;
                 FixVec2 offset = point - t.Origin;
@@ -285,9 +321,73 @@ namespace Game.Sim
 
         private static readonly Fix64 BigAttackerSpreadCos = Fix64.Ratio(1, 2);
 
+        // ---- стрелок не стоит столбом ----
+        //
+        // Стенд ощущения (29.09): Плюй-плод простаивал 30–34% своего времени и
+        // подряд до 18 с (стоит подряд p90 на А3 — 8,8 с), Корнехват — 20–40%:
+        // перезарядка залпа, а потом очередь — жетон крупной атаки, бюджет меток
+        // или такт ударов отданы другим. Теперь Плюй-плод между залпами, а
+        // Корнехват — дождавшись готовности удара и не получив очереди за
+        // RestlessAfterTicks, переходят на соседнюю огневую точку (45° вокруг
+        // героя, та же дальность): стоять на месте им дороже на
+        // RestlessStayPenalty. Дошёл — стоит RestlessRepickTicks и идёт дальше.
+        // Очередь пришла — бьёт с того места, где стоит.
+
+        /// <summary>Сколько тиков готовый Корнехват ждёт очереди на месте, прежде чем сменить точку.</summary>
+        public const int RestlessAfterTicks = 20;
+
+        /// <summary>Сколько тиков он стоит на новой точке до следующего перехода.</summary>
+        public const int RestlessRepickTicks = 30;
+
+        /// <summary>
+        /// Дольше этого после срока выбора точки непоседа к ней не идёт — выбирает
+        /// заново. Точка — место в мире, взятое от героя в тик выбора, а герой
+        /// уходит. Ревью 29.09: без предела Плюй-плод шёл к устаревшей точке до
+        /// 97 с подряд (стенд, сид 298, А8) и разнос по кругу не поправлял.
+        /// Переход на 45° на 8,5 м — 6,5 м: Плюй-плоду при 1,2 м/с это ~160 тиков.
+        /// </summary>
+        public const int RestlessWalkMaxTicks = 150;
+
+        /// <summary>
+        /// Цена «остаться» для непоседы, в единицах цены точки (путь стоит треть
+        /// своей длины): переход на 45° окупается до дальности ~13 м.
+        /// </summary>
+        private static readonly Fix64 RestlessStayPenalty = Fix64.FromInt(4);
+
+        /// <summary>
+        /// Меняет ли стрелок огневую точку: Плюй-плод — всё время между залпами,
+        /// Корнехват — готовый к удару корнями, но без очереди RestlessAfterTicks.
+        /// Шипомёт ищет точку только на перезарядке — его не трогаем.
+        /// </summary>
+        internal bool ShooterRestless(int id)
+        {
+            int ready = Entities.NextAttackTick[id];
+            if (ready == int.MaxValue) return false;
+            switch (Entities.Kind[id])
+            {
+                case EnemyKind.ForestBud:
+                    return _forestBudAttacks[id].Serial == 0;
+                case EnemyKind.ForestRootSnarer:
+                {
+                    var a = _rootSnarers[id];
+                    return (a.Serial == 0 || Tick > a.EndTick) && Tick >= Math.Max(ready, a.NextActionTick) + RestlessAfterTicks;
+                }
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Огневая точка стрелка id (в мире) и идёт ли он к ней сейчас. Для тестов.</summary>
+        internal bool TryGetRangedGoal(int id, out FixVec2 goal)
+        {
+            goal = _rangedGoal[id];
+            return _rangedGoalMoving[id];
+        }
+
         /// <summary>
         /// Выбираем свободную огневую позицию и держим её до следующей оценки.
         /// Угол к соседу влияет на цену, но не заставляет бесконечно кружить.
+        /// Непоседа точку меняет (ShooterRestless).
         /// </summary>
         private bool BigAttackerSpread(int id, out FixVec2 tangent)
         {
@@ -295,19 +395,30 @@ namespace Game.Sim
             FixVec2 hero = Entities.Position[PlayerId];
             FixVec2 at = Entities.Position[id], mine = at - hero;
             if (mine.LengthSq.Raw == 0) return false;
-            if (Tick >= _rangedGoalUntil[id] || !SurroundPointUsable(id, _rangedGoal[id]))
+            bool restless = ShooterRestless(id);
+            // Ждущий, который уже идёт к новой точке, не передумывает на полпути —
+            // но и не идёт к ней дольше RestlessWalkMaxTicks: дальше она устарела.
+            bool keepWalk = restless && _rangedGoalMoving[id] && Tick < _rangedGoalUntil[id] + RestlessWalkMaxTicks
+                && SurroundPointUsable(id, _rangedGoal[id]);
+            if (!keepWalk && (Tick >= _rangedGoalUntil[id] || !SurroundPointUsable(id, _rangedGoal[id])))
             {
                 Fix64 radius = mine.Length;
                 FixVec2 best = at;
                 Fix64 bestCost = RangedPositionCost(id, at, hero);
+                if (restless) bestCost += RestlessStayPenalty;
                 FixVec2 direction = mine / radius;
                 for (int k = 0; k < 8; k++)
                 {
                     FixVec2 point = hero + direction * radius;
-                    if (SurroundPointUsable(id, point)
+                    // Цена точки — путь плюс неотрицательные штрафы: если одного
+                    // пути хватает, чтобы проиграть лучшей, ни проход, ни штрафы
+                    // не считаем — выбор тот же (поток D, 29.09). Ждущему своя
+                    // точка (k = 0) не в счёт — он её и покидает.
+                    Fix64 travel = FixVec2.Distance(at, point) / 3;
+                    if ((!restless || k > 0) && travel + Fix64.Ratio(1, 2) < bestCost && SurroundPointUsable(id, point)
                         && (_layout == null || _layout.CanTravel(at, point, Entities.BodyRadius[id])))
                     {
-                        Fix64 cost = FixVec2.Distance(at, point) / 3 + RangedPositionCost(id, point, hero);
+                        Fix64 cost = travel + RangedPositionCost(id, point, hero);
                         if (cost + Fix64.Ratio(1, 2) < bestCost) { bestCost = cost; best = point; }
                     }
                     direction = new FixVec2(direction.X * Cos45 - direction.Y * Cos45,
@@ -319,7 +430,13 @@ namespace Game.Sim
             }
             if (!_rangedGoalMoving[id]) return false;
             FixVec2 delta = _rangedGoal[id] - at;
-            if (delta.LengthSq <= Fix64.Ratio(1, 25)) { _rangedGoalMoving[id] = false; return false; }
+            if (delta.LengthSq <= Fix64.Ratio(1, 25))
+            {
+                _rangedGoalMoving[id] = false;
+                // Дошёл, а очереди всё нет — постоит и пойдёт на следующую точку.
+                if (restless) _rangedGoalUntil[id] = Tick + RestlessRepickTicks;
+                return false;
+            }
             tangent = delta.Normalized();
             return true;
         }
@@ -335,7 +452,7 @@ namespace Game.Sim
                 if (j == id || !Entities.Alive[j] || !Entities.Aggro[j] || !IsBigAttacker(Entities.Kind[j])) continue;
                 FixVec2 other = Entities.Position[j] - hero;
                 if (other.LengthSq.Raw == 0) continue;
-                other = other.Normalized();
+                other = BearingFromHero(j, other);
                 Fix64 crowded = FixVec2.Dot(mine, other) - BigAttackerSpreadCos;
                 if (crowded > Fix64.Zero) cost += crowded * 8;
                 Fix64 clearance = Entities.BodyRadius[id] + Entities.BodyRadius[j] + Fix64.One;
@@ -360,9 +477,12 @@ namespace Game.Sim
                 for (int k = 0; k < 8; k++)
                 {
                     FixVec2 point = hero + direction * radius;
-                    if (SurroundPointUsable(id, point))
+                    // Как у BigAttackerSpread: штрафы неотрицательны, и точке,
+                    // которой не выиграть уже по пути, цену не считаем.
+                    Fix64 travel = FixVec2.Distance(at, point) / 3;
+                    if (travel + Fix64.Ratio(1, 2) < bestCost && SurroundPointUsable(id, point))
                     {
-                        Fix64 cost = ClosePositionCost(id, point, hero) + FixVec2.Distance(at, point) / 3;
+                        Fix64 cost = ClosePositionCost(id, point, hero) + travel;
                         if (_layout != null && !_layout.CanTravel(at, point, Entities.BodyRadius[id]))
                             cost += Fix64.FromInt(2);
                         if (cost + Fix64.Ratio(1, 2) < bestCost) { best = point; bestCost = cost; }
@@ -385,10 +505,35 @@ namespace Game.Sim
             {
                 if (other == id || !Entities.Alive[other] || !Entities.Aggro[other]) continue;
                 Fix64 clearance = Entities.BodyRadius[id] + Entities.BodyRadius[other] + Fix64.Ratio(3, 10);
-                Fix64 distance = FixVec2.Distance(point, Entities.Position[other]);
+                // Дальше зазора с запасом на округление корня — вклада нет,
+                // и корень не нужен: ответ тот же, что у прямого сравнения.
+                Fix64 distanceSq = FixVec2.DistanceSq(point, Entities.Position[other]);
+                Fix64 far = clearance + SqrtCompareSlack;
+                if (distanceSq >= far * far) continue;
+                Fix64 distance = Fix64.Sqrt(distanceSq);
                 if (distance < clearance) cost += (clearance - distance) * 6;
             }
             return cost;
+        }
+
+        /// <summary>
+        /// Запас сравнения «корень меньше порога» через квадраты: корень Fix64
+        /// ошибается не больше чем на 2^-32, запас шире на много порядков.
+        /// </summary>
+        private static readonly Fix64 SqrtCompareSlack = Fix64.Ratio(1, 1000);
+
+        /// <summary>
+        /// (Position[j] − герой), нормированный, с памятью на моба: тот же вектор —
+        /// тот же ответ. Нулевой вектор сюда не приходит, поэтому пустая память
+        /// (нули) не совпадёт ни с одним вопросом.
+        /// </summary>
+        private FixVec2 BearingFromHero(int j, FixVec2 offset)
+        {
+            if (_bearingFrom[j].Equals(offset)) return _bearing[j];
+            FixVec2 bearing = offset.Normalized();
+            _bearingFrom[j] = offset;
+            _bearing[j] = bearing;
+            return bearing;
         }
 
         private void HashSurround(ref ulong hash)

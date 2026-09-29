@@ -1,0 +1,13 @@
+{
+ "fbx": "C:/Users/DE06B~1.GRA/AppData/Local/Temp/claude/C--Users-d-grab-Desktop-the-game/b9a62d32-b302-4af1-9255-9c30476f872b/scratchpad/G-sweep/ForestWendigo_new.fbx",
+ "take": "ARM_ForestWendigo|ARM_ForestWendigo|Wendigo_Sweep",
+ "frame_range": [
+  1.0,
+  40.0
+ ],
+ "max_joint_error_m": 2.119948773834555e-06,
+ "worst": [
+  17.25,
+  "R_hand"
+ ]
+}

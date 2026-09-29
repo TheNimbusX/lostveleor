@@ -1,0 +1,6 @@
+00:02.062  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\tusk\Stonehoof_Tusk_r01.blend"
+Info: Saved as "Stonehoof_Tusk_Baked_r01.blend"
+TUSK_BAKED {"deforming_bones": 34, "sample_step_frames": 0.0625, "scale_curves": false, "owner_approved": false, "clips": {"AN_Stonehoof_Tusk": {"frames": 26, "seconds": 0.8666666666666667, "contact_frame": 14, "max_joint_error_m": 9.105877585061739e-07, "max_rotation_error_deg": 0.05595291023658669, "start_end_position_m": 0.0, "object_level_keys": []}}}
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

@@ -32,7 +32,8 @@ namespace Game.Sim
         public const int PlayerBaseAttackCycleTicks = 20;
 
         /// <summary>
-        /// От начала замаха до контакта у Лесного хранителя: 21 тик = 0,7 с.
+        /// От начала замаха до контакта у Лесного хранителя: 23 тика ≈ 0,77 с.
+        /// Число живёт в GuardianSwingWindupTicks (Simulation.EnemyMelee).
         /// </summary>
         // Не трогать заодно с геройской цифрой. Это единственное окно, в
         // которое игрок видит занесённый удар и может уйти; укоротишь — и
@@ -42,7 +43,7 @@ namespace Game.Sim
         // Было 12, и моб при этом доворачивался и шёл: уйти можно было только
         // угадав. Теперь направление фиксируется, на земле заполняется сектор,
         // а удар бьёт ровно по нарисованному — см. Simulation.EnemyMelee.
-        public const int EnemyAttackWindupTicks = 21;
+        public const int EnemyAttackWindupTicks = GuardianSwingWindupTicks;
 
         // Здоровье и урон Корнеполза — в EnemyArchetypes, как у всех видов.
         // 9 тиков читались только как дёрганье. 12 — ещё поза без метки на
@@ -58,7 +59,7 @@ namespace Game.Sim
         private static readonly Fix64 RootSwarmAttackRange = Fix64.Ratio(14, 10);
 
         // У моба окно и дистанция подхода — из профиля его замаха
-        // (Simulation.EnemyMelee): Хранитель 21 тик и 2 м, Корнеполз 12 и 1,4.
+        // (Simulation.EnemyMelee): Хранитель 23 тика и 2 м, Корнеполз 12 и 1,4.
         private int WindupTicksFor(int entityId)
             => entityId == PlayerId ? PlayerAttackWindupTicks
                 : MeleeProfileOf(Entities.Kind[entityId]).WindupTicks;
@@ -206,7 +207,7 @@ namespace Game.Sim
         // Скорость атаки — В АТАКАХ В СЕКУНДУ: только в этих единицах «+20%»
         // на предмете значит то, что игрок прочитает. В тики её переводит
         // CombatStats.AttackCooldownTicks, и делает это в единственном месте.
-        // Базовый цикл героя — 20 тиков, Хранителя — 48: замах, окно для
+        // Базовый цикл героя — 20 тиков, Хранителя — 53: замах, окно для
         // наказания и свободная пауза (см. Simulation.EnemyMelee).
         private static readonly Fix64 PlayerBaseAttackSpeed = Fix64.Ratio(TicksPerSecond, PlayerBaseAttackCycleTicks);
         private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, GuardianSwingCycleTicks);
@@ -377,6 +378,13 @@ namespace Game.Sim
         private readonly int[] _crowdScratch;
         private readonly FixVec2[] _separationPush;
 
+        /// <summary>
+        /// Кто в этом тике держит своё место сам и не расталкивается (Вендиго
+        /// в прыжке, кабан в действии, Расщепень в перекате). Считается раз на
+        /// тик в начале SeparateBodies — не состояние, в хеш не идёт.
+        /// </summary>
+        private readonly bool[] _separationExempt;
+
         private readonly List<SimEvent> _events = new List<SimEvent>(256);
         private LayoutMap _layout;
         private bool _navigationWaypoint;
@@ -512,6 +520,7 @@ namespace Game.Sim
             _separationScratch = new int[capacity];
             _crowdScratch = new int[capacity];
             _separationPush = new FixVec2[capacity];
+            _separationExempt = new bool[capacity];
             // ИИ мобов v2: путь, застревание, места вокруг героя; лужи гнилых плодов.
             AllocateEnemyBrain(capacity);
             AllocateForestPuddles(capacity);
@@ -849,8 +858,8 @@ namespace Game.Sim
             sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
             sheet.SetBase(StatType.MaxLavidium, PlayerBaseLavidium);
             sheet.SetBase(StatType.LavidiumRegen, PlayerBaseLavidiumRegen);
-            // Spawn стёр модификаторы — прибавки уровня вешаются заново.
-            ApplyLevelModifiers(sheet);
+            // Spawn стёр модификаторы — база героя (бывший 5-й уровень) вешается заново.
+            ApplyHeroBaselineModifiers(sheet);
 
             Entities.RefreshStats(id);
             Entities.Health[id] = Entities.MaxHealth[id];
@@ -1017,9 +1026,9 @@ namespace Game.Sim
         /// Сколько здоровья герою не хватает до максимума.
         ///
         /// Между аренами переезжает ИМЕННО НЕДОСТАЧА, а не само здоровье:
-        /// прибавка к максимуму за уровень или награду доходит и до текущего
-        /// (то же правило, что при повышении уровня), а полученный урон
-        /// остаётся полученным. Лечат зелья, уровень и награды — не дверь.
+        /// прибавка к максимуму от награды доходит и до текущего, а полученный
+        /// урон остаётся полученным. Лечат зелья и награды — не дверь; уровень
+        /// с 29 сентября статов не даёт и не лечит.
         /// </summary>
         public int PlayerMissingHealth
             => Entities.Count > PlayerId && Entities.Health[PlayerId] < Entities.MaxHealth[PlayerId]
@@ -1052,64 +1061,32 @@ namespace Game.Sim
         private void SeparateBodies()
         {
             int count = Entities.Count;
-            for (int i = 0; i < count; i++) _separationPush[i] = FixVec2.Zero;
-
+            // Исключения пар — чистые проверки состояния, которое расталкивание
+            // не трогает: раз на тело за тик, а не дважды на каждую пару
+            // соседей (поток D, 29.09: на 48 мобах это была заметная доля шага).
             for (int i = 0; i < count; i++)
             {
-                if (!Entities.Alive[i]) continue;
-
-                Fix64 reach = Entities.BodyRadius[i] + EntityStore.MaxBodyRadius;
-                int found = Grid.QueryRadius(Entities, Entities.Position[i], reach, i,
-                    _separationScratch);
-
-                for (int k = 0; k < found; k++)
-                {
-                    int j = _separationScratch[k];
-
-                    // Каждая пара обрабатывается ровно один раз, младшим индексом.
-                    if (j <= i) continue;
-                    if (IsWendigoAirborne(i) || IsWendigoAirborne(j) || StonehoofOwnsPosition(i) || StonehoofOwnsPosition(j)
-                        || SplitterOwnsPosition(i) || SplitterOwnsPosition(j)) continue;
-                    if ((i == PlayerId || j == PlayerId) && (VoidPhased || _mobilitySlot >= 0
-                        && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId)) continue;
-
-                    Fix64 wanted = Entities.BodyRadius[i] + Entities.BodyRadius[j];
-                    FixVec2 delta = Entities.Position[j] - Entities.Position[i];
-                    Fix64 distSq = delta.LengthSq;
-                    if (distSq >= wanted * wanted) continue;
-
-                    FixVec2 direction;
-                    Fix64 overlap;
-
-                    if (distSq.Raw <= 0)
-                    {
-                        // Тела ровно друг в друге. Направление берётся из индексов,
-                        // а не из случайности: расхождение обязано быть одинаковым
-                        // на всех машинах, а нормировать нулевой вектор нельзя.
-                        direction = ((i + j) & 1) == 0
-                            ? new FixVec2(Fix64.One, Fix64.Zero)
-                            : new FixVec2(Fix64.Zero, Fix64.One);
-                        overlap = wanted;
-                    }
-                    else
-                    {
-                        Fix64 distance = Fix64.Sqrt(distSq);
-                        direction = delta / distance;
-                        overlap = wanted - distance;
-                    }
-
-                    // Доли смещения нормируются по весам: неподвижное тело
-                    // не двигается вовсе, а его половину забирает второе.
-                    Fix64 total = Entities.PushWeight[i] + Entities.PushWeight[j];
-                    if (total.Raw <= 0) continue;
-
-                    Fix64 shareI = Entities.PushWeight[i] / total;
-                    Fix64 shareJ = Entities.PushWeight[j] / total;
-
-                    _separationPush[i] -= direction * (overlap * shareI);
-                    _separationPush[j] += direction * (overlap * shareJ);
-                }
+                _separationPush[i] = FixVec2.Zero;
+                _separationExempt[i] = Entities.Alive[i]
+                    && (IsWendigoAirborne(i) || StonehoofOwnsPosition(i) || SplitterOwnsPosition(i));
             }
+            bool heroPhased = VoidPhased || _mobilitySlot >= 0
+                && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId;
+            // Герой в фазе не расталкивается ни с кем — как тело-исключение.
+            if (heroPhased && PlayerId < count) _separationExempt[PlayerId] = true;
+
+            // Пара тел касается только ближе суммы радиусов, а она не больше
+            // двух MaxBodyRadius — меньше стороны ячейки. Значит, касаются
+            // только тела из одной или соседних ячеек, и пары обходятся по
+            // сетке: ячейка с собой и с четырьмя соседями «вперёд», каждая
+            // пара — один раз. Раньше каждое тело спрашивало QueryRadius, и
+            // каждая пара мерилась дважды (поток D, 29.09). Смещения копятся
+            // сложением, поэтому порядок пар ответа не меняет — меняется
+            // только скорость; прежний обход остаётся на случай мелкой сетки.
+            if (EntityStore.MaxBodyRadius * 2 + SeparationCellSlack <= Grid.CellSize)
+                SeparatePairsByCells();
+            else
+                SeparatePairsByQuery();
 
             for (int i = 0; i < count; i++)
             {
@@ -1122,6 +1099,133 @@ namespace Game.Sim
                 FixVec2 push = _separationPush[i].ClampLength(MaxSeparationStep);
                 Entities.Position[i] = MoveInsideLayout(i, Entities.Position[i], push);
             }
+        }
+
+        /// <summary>Запас на округление положения ячейки: пара ближе 1,9 м — в одной или соседних ячейках по 2 м.</summary>
+        private static readonly Fix64 SeparationCellSlack = Fix64.Ratio(1, 100);
+
+        /// <summary>Пары касающихся тел — обходом ячеек сетки (сетка только что пересобрана).</summary>
+        private void SeparatePairsByCells()
+        {
+            int[] starts = Grid.CellStarts, counts = Grid.CellCounts, entries = Grid.Entries;
+            int cellsX = Grid.CellsX, cellsY = Grid.CellsY;
+            for (int cell = Grid.UsedLow; cell <= Grid.UsedHigh; cell++)
+            {
+                int n = counts[cell];
+                if (n == 0) continue;
+                int first = starts[cell], end = first + n;
+                int cx = cell % cellsX, cy = cell / cellsX;
+                bool right = cx + 1 < cellsX, up = cy + 1 < cellsY, left = cx > 0;
+                for (int a = first; a < end; a++)
+                {
+                    int p = entries[a];
+                    if (_separationExempt[p]) continue;
+                    for (int b = a + 1; b < end; b++) SeparatePair(p, entries[b]);
+                    if (right) SeparateWithCell(p, cell + 1, starts, counts, entries);
+                    if (!up) continue;
+                    if (left) SeparateWithCell(p, cell + cellsX - 1, starts, counts, entries);
+                    SeparateWithCell(p, cell + cellsX, starts, counts, entries);
+                    if (right) SeparateWithCell(p, cell + cellsX + 1, starts, counts, entries);
+                }
+            }
+        }
+
+        private void SeparateWithCell(int p, int cell, int[] starts, int[] counts, int[] entries)
+        {
+            int n = counts[cell];
+            if (n == 0) return;
+            int first = starts[cell], end = first + n;
+            for (int b = first; b < end; b++) SeparatePair(p, entries[b]);
+        }
+
+        /// <summary>Прежний обход: каждое тело спрашивает соседей у сетки. Для сетки мельче двух тел.</summary>
+        private void SeparatePairsByQuery()
+        {
+            int count = Entities.Count;
+            for (int i = 0; i < count; i++)
+            {
+                if (!Entities.Alive[i] || _separationExempt[i]) continue;
+                Fix64 reach = Entities.BodyRadius[i] + EntityStore.MaxBodyRadius;
+                int found = Grid.QueryRadius(Entities, Entities.Position[i], reach, i,
+                    _separationScratch);
+                for (int k = 0; k < found; k++)
+                {
+                    // Каждая пара обрабатывается ровно один раз, младшим индексом.
+                    int j = _separationScratch[k];
+                    if (j > i) SeparatePair(i, j);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Одна пара тел p, q (в любом порядке): роли — по возрастанию индекса,
+        /// как всегда. Смещения копятся в буфер _separationPush.
+        /// </summary>
+        private void SeparatePair(int p, int q)
+        {
+            int i = p < q ? p : q, j = p < q ? q : p;
+            if (!Entities.Alive[i] || !Entities.Alive[j] || _separationExempt[i] || _separationExempt[j]) return;
+
+            Fix64 wanted = Entities.BodyRadius[i] + Entities.BodyRadius[j];
+            FixVec2 delta = Entities.Position[j] - Entities.Position[i];
+            // Дальше суммы радиусов по одной оси — дальше и по прямой: квадрат
+            // не нужен (dx² ≥ wanted², ответ тот же).
+            if (Fix64.Abs(delta.X) >= wanted || Fix64.Abs(delta.Y) >= wanted) return;
+            Fix64 distSq = delta.LengthSq;
+            if (distSq >= wanted * wanted) return;
+
+            FixVec2 direction;
+            Fix64 overlap;
+
+            if (distSq.Raw <= 0)
+            {
+                // Тела ровно друг в друге. Направление берётся из индексов,
+                // а не из случайности: расхождение обязано быть одинаковым
+                // на всех машинах, а нормировать нулевой вектор нельзя.
+                direction = ((i + j) & 1) == 0
+                    ? new FixVec2(Fix64.One, Fix64.Zero)
+                    : new FixVec2(Fix64.Zero, Fix64.One);
+                overlap = wanted;
+            }
+            else
+            {
+                Fix64 distance = Fix64.Sqrt(distSq);
+                direction = delta / distance;
+                overlap = wanted - distance;
+            }
+
+            // Доли смещения нормируются по весам: неподвижное тело
+            // не двигается вовсе, а его половину забирает второе.
+            Fix64 total = Entities.PushWeight[i] + Entities.PushWeight[j];
+            if (total.Raw <= 0) return;
+
+            PushShares(Entities.PushWeight[i], Entities.PushWeight[j], total, out Fix64 shareI, out Fix64 shareJ);
+
+            _separationPush[i] -= direction * (overlap * shareI);
+            _separationPush[j] += direction * (overlap * shareJ);
+        }
+
+        // Доли расталкивания по паре весов. Деление Fix64 дорогое, а разных
+        // пар весов в толпе единицы (рой с роем, рой с хранителем…): восемь
+        // последних пар помнятся. Чистая функция весов — не состояние, в хеш
+        // не идёт и ответа не меняет (поток D, 29.09).
+        private const int PushShareMemo = 8;
+        private readonly long[] _pushShareKeyI = new long[PushShareMemo], _pushShareKeyJ = new long[PushShareMemo];
+        private readonly Fix64[] _pushShareI = new Fix64[PushShareMemo], _pushShareJ = new Fix64[PushShareMemo];
+        private int _pushShareCount, _pushShareNext;
+
+        private void PushShares(Fix64 weightI, Fix64 weightJ, Fix64 total, out Fix64 shareI, out Fix64 shareJ)
+        {
+            for (int k = 0; k < _pushShareCount; k++)
+                if (_pushShareKeyI[k] == weightI.Raw && _pushShareKeyJ[k] == weightJ.Raw)
+                { shareI = _pushShareI[k]; shareJ = _pushShareJ[k]; return; }
+            shareI = weightI / total;
+            shareJ = weightJ / total;
+            int slot;
+            if (_pushShareCount < PushShareMemo) slot = _pushShareCount++;
+            else { slot = _pushShareNext; _pushShareNext = (_pushShareNext + 1) % PushShareMemo; }
+            _pushShareKeyI[slot] = weightI.Raw; _pushShareKeyJ[slot] = weightJ.Raw;
+            _pushShareI[slot] = shareI; _pushShareJ[slot] = shareJ;
         }
 
         /// <summary>
@@ -2301,7 +2405,8 @@ namespace Game.Sim
             if (Entities.Aggro[i]) return true;
 
             // Позвала пачка: сосед заметил героя — этот идёт следом, даже не видя его сам.
-            if (PackAlerted(i))
+            // Или он из последних на арене — идёт сам (LastStandAlert).
+            if (PackAlerted(i) || LastStandAlert())
             {
                 Entities.Aggro[i] = true;
                 AlertPack(i);

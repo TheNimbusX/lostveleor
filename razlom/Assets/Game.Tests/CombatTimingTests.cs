@@ -56,13 +56,15 @@ namespace Game.Tests
         /// <summary>
         /// Окна мобов по правилу бестиария: Хранитель (11–25 урона) — 18–21
         /// тик и фигура на земле; Корнеполз (до 10) — 9–12 и только поза.
+        /// Хранитель с 29.09 на 10% медленнее и вышел за полосу: 23 тика —
+        /// решение владельца (GuardianTempoTests).
         /// </summary>
         [Test]
         public void EnemyWindows_FollowTheBestiaryRule()
         {
-            Assert.AreEqual(21, Simulation.EnemyAttackWindupTicks, "замах Хранителя 0,7 с");
-            Assert.AreEqual(15, Simulation.GuardianSwingRecoveryTicks, "окно наказания 0,5 с");
-            Assert.AreEqual(48, Simulation.GuardianSwingCycleTicks);
+            Assert.AreEqual(23, Simulation.EnemyAttackWindupTicks, "замах Хранителя 0,77 с");
+            Assert.AreEqual(17, Simulation.GuardianSwingRecoveryTicks, "окно наказания 0,57 с");
+            Assert.AreEqual(53, Simulation.GuardianSwingCycleTicks);
             Assert.GreaterOrEqual(Simulation.GuardianSwingCycleTicks,
                 Simulation.EnemyAttackWindupTicks + Simulation.GuardianSwingRecoveryTicks);
             Assert.AreEqual(12, Simulation.RootSwarmAttackWindupTicks);

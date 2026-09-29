@@ -13,8 +13,9 @@ namespace Game.Tests
     /// Прежняя проверка «обычный моб умирает за ≤4 базовых удара» описывала
     /// ровно ту беду, от которой ушла стадия 2: мобы гибли в разы быстрее
     /// цели. Теперь здоровье и урон — строка вида в EnemyArchetypes × рост с
-    /// глубиной, а мерило — время убийства эталонным героем 5-го уровня
-    /// лагеря (270 здоровья, 54 урона, удар раз в 20 тиков) ЦЕЛЫМИ базовыми
+    /// глубиной, а мерило — время убийства эталонным героем (база героя,
+    /// прежний 5-й уровень лагеря; с 29 сентября таков любой герой: 270
+    /// здоровья, 54 урона, удар раз в 20 тиков) ЦЕЛЫМИ базовыми
     /// ударами, без критов и способностей. Все пять видов вне ассета
     /// проверяет EnemyArchetypeTests.
     ///
@@ -24,7 +25,6 @@ namespace Game.Tests
     /// </summary>
     public sealed class MeadowBalanceTests
     {
-        private const int ReferenceCampLevel = 5;
         private const int BossLevel = 9;
 
         private static LocationDefinition Meadow()
@@ -36,7 +36,7 @@ namespace Game.Tests
             switch (kind)
             {
                 case EnemyKind.ForestRootSwarm: min = 1; max = 3; break;
-                // 550 здоровья (стенд баланса, 26.09): 11 ударов на первой арене, 16 на восьмой.
+                // 500 здоровья (подгонка 29.09, было 550): 10 ударов на первой арене, 14 на восьмой.
                 case EnemyKind.ForestGuardian: min = 4; max = 12; break;
                 case EnemyKind.ForestBud: min = 3; max = 7; break;
                 case EnemyKind.ForestStonehoof: min = 6; max = 13; break;
@@ -53,11 +53,18 @@ namespace Game.Tests
         }
 
         private static double KillSeconds(Simulation sim, int enemy)
+            => HitSeconds(Hits(sim, sim.Entities.MaxHealth[enemy]));
+
+        /// <summary>Сколько целых базовых ударов героя sim уходит на здоровье health.</summary>
+        private static int Hits(Simulation sim, int health)
         {
             int damage = sim.Entities.Damage[Simulation.PlayerId];
-            int hits = (sim.Entities.MaxHealth[enemy] + damage - 1) / damage;
-            return hits * Simulation.PlayerBaseAttackCycleTicks / (double)Simulation.TicksPerSecond;
+            return (health + damage - 1) / damage;
         }
+
+        /// <summary>Секунды на hits базовых ударов: удар раз в PlayerBaseAttackCycleTicks.</summary>
+        private static double HitSeconds(int hits)
+            => hits * Simulation.PlayerBaseAttackCycleTicks / (double)Simulation.TicksPerSecond;
 
         /// <summary>Арена level по плану сида: карта уровня и стартовая волна его шаблона.</summary>
         private static EncounterPlan SpawnPlanned(LocationDefinition profile, int level, ulong seed, Simulation sim,
@@ -136,11 +143,11 @@ namespace Game.Tests
             for (ulong seed = 1; seed <= 20; seed++)
             {
                 var sim = new Simulation(seed, 512);
-                sim.SetPlayerLevel(ReferenceCampLevel);
+                sim.ApplyHeroBaseline();
                 var plan = SpawnPlanned(profile, level, seed, sim, out _, out _);
                 int heroHealth = sim.Entities.MaxHealth[0];
-                Assert.That(heroHealth, Is.EqualTo(150 + 4 * Progression.HealthPerLevel));
-                Assert.That(sim.Entities.Damage[0], Is.EqualTo(34 + 4 * Progression.DamagePerLevel));
+                Assert.That(heroHealth, Is.EqualTo(Progression.ReferenceHeroHealth));
+                Assert.That(sim.Entities.Damage[0], Is.EqualTo(Progression.ReferenceHeroDamage));
                 for (int i = 1; i < sim.Entities.Count; i++)
                 {
                     var kind = sim.Entities.Kind[i];
@@ -178,16 +185,39 @@ namespace Game.Tests
                 var map = new LayoutMap(profile.Modules, profile.MaxModules);
                 final.Generate(new LayoutGenerator(), profile.Modules, map, seeds.Layout);
                 var sim = new Simulation(seed, 512);
-                sim.SetPlayerLevel(ReferenceCampLevel);
+                sim.ApplyHeroBaseline();
                 var plan = final.Spawn(sim, map, seeds.Spawns);
                 int boss = plan.BossId;
                 Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(EnemyArchetypes.ScaleHealth(
                     EnemyArchetypes.InterimBossHealth, final.EnemyHealth)));
-                // 6800 × 156% девятого уровня.
-                Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(10608));
-                // Одними базовыми ударами — две-три минуты; с критами и
-                // способностями — в окно дока 2:30–3:15 и быстрее.
-                Assert.That(KillSeconds(sim, boss), Is.InRange(120.0, 240.0));
+                // 6000 × 156% девятого уровня (подгонка 29.09, было 6800).
+                Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(9360));
+
+                // Окно дока 150–195 с (MeadowBalance.md) — на ВЕСЬ бой: босс и две
+                // волны подмоги, на 66% и 33% его здоровья. Прежде тест мерил одного
+                // босса полосой 120–240 с. Подгонка 29.09 перенесла часть боя с босса
+                // на подмогу (босс 6800 → 6000, подмога 2–3 роя → 4–5 роя и хранитель):
+                // сам босс целыми базовыми ударами — 174 удара, 116 с (было 197, 131 с),
+                // а весь бой — 236–244 удара, 157–163 с (было 243–251, 162–167 с), и
+                // стенд с ботом держит его в окне (бессмертный p50 ≈ 175–179 с, с
+                // переносом ≈ 184 с: уходы от сектора и ходьба длиннее, чем криты и
+                // способности короче). Поэтому мерило теперь — весь бой одними
+                // базовыми ударами, при меньшей и при большей подмоге: он обязан
+                // лечь в окно дока. Босс при этом — больше половины боя: финал
+                // решает он, а не одна подмога.
+                int bossHits = Hits(sim, sim.Entities.MaxHealth[boss]);
+                int wave = 0, waveMax = 0;
+                var adds = ForestEncounterTemplates.BossAdds;
+                for (int g = 0; g < adds.GroupCount; g++)
+                {
+                    var group = adds.GetGroup(g);
+                    int hits = Hits(sim, EnemyArchetypes.ScaleHealth(sim.ArchetypeHealth(group.Kind), final.EnemyHealth));
+                    wave += hits * group.Min; waveMax += hits * group.Max;
+                }
+                const int waves = 2;   // подмога на 66% и на 33% — по разу
+                Assert.That(HitSeconds(bossHits + waves * wave), Is.InRange(150.0, 195.0), "весь бой, меньше подмоги");
+                Assert.That(HitSeconds(bossHits + waves * waveMax), Is.InRange(150.0, 195.0), "весь бой, больше подмоги");
+                Assert.That(bossHits * 2, Is.GreaterThan(bossHits + waves * waveMax), "босс — меньше половины боя");
             }
         }
 

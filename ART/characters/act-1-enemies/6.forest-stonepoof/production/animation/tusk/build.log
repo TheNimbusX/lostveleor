@@ -1,0 +1,10 @@
+00:02.610  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\windup_start\Stonehoof_WindupStart_r01.blend"
+Info: Saved as "Stonehoof_Tusk_r01.blend"
+TUSK_AUTHORED {"ik": 4.4505418152044953e-05, "slip": 4.463939493427392e-05, "ground": -3.10922296193894e-05, "joins": {"f0": 2.4755668231600746e-07, "f26": 2.4755668231600746e-07}, "crouch": {"max": 0.025755266370879326}, "fastest": 13, "apex": 17, "lowest": 11, "contact_share": 0.9611808946698813, "speed": [0.0, 0.576, 1.904, 2.152, 1.703, 2.287, 4.361, 5.116, 4.336, 2.69, 1.405, 0.509, 4.936, 10.566, 10.156, 7.112, 4.526, 1.758, 1.294, 3.333, 3.868, 3.159, 2.403, 1.817, 1.32, 0.782, 0.197], "crossing": 13.416139771254114, "yaw": [-0.0, -0.81, -3.02, -6.33, -10.51, -15.65, -22.99, -35.92, -58.69, -81.52, -93.06, -95.87, -58.02, -10.81, 15.17, 33.47, 45.54, 50.01, 46.45, 37.99, 28.04, 19.47, 12.68, 7.37, 3.38, 0.86, -0.0]}
+00:03.266  blend            | Read blend: "C:\Users\d.grab\Desktop\the-game\ART\characters\act-1-enemies\6.forest-stonepoof\production\animation\tusk\Stonehoof_Tusk_r01.blend"
+Info: Saved as "Stonehoof_Tusk_Baked_r01.blend"
+TUSK_BAKED {"deforming_bones": 34, "sample_step_frames": 0.0625, "scale_curves": false, "owner_approved": false, "clips": {"AN_Stonehoof_Tusk": {"frames": 26, "seconds": 0.8666666666666667, "contact_frame": 14, "max_joint_error_m": 8.690073079957565e-07, "max_rotation_error_deg": 0.05595291023658669, "start_end_position_m": 0.0, "object_level_keys": []}}}
+TUSK_BUILT all
+Blender 5.2.1 LTS (hash 9e2066aef7ef built 2026-08-25 02:38:20)
+
+Blender quit

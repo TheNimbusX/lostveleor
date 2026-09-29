@@ -90,10 +90,19 @@ namespace Game.View
         private const float OrvillHitPresentationDuration = 0.57f;
 
         /// <summary>
-        /// Нарисованная реакция Корнеполза: 11 кадров (0.33 с) родным темпом,
-        /// выход на 0.8 и смешивание 0.14 с — production/hit_build.json.
+        /// Нарисованная реакция Корнеполза (v2, 29.09): 11 кадров (0.33 с) родным темпом,
+        /// выход на 0.8 и смешивание 0.14 с — production/rootswarm_v2_build.json.
         /// </summary>
         private const float RootSwarmHitPresentationDuration = 0.43f;
+
+        /// <summary>
+        /// Скорость, с которой бег Корнеполза v2 «едет» по земле при ×1: опорная лапа
+        /// проходит 0.60 единицы за цикл в 12 кадров, ×30 к/с ×1.5868 (RootSwarmScale)
+        /// = 2.38 м/с (production/rootswarm_v2_build.json, run_ground_speed_mps).
+        /// Темп ног = скорость Sim / это число: при 3.4 м/с цикл идёт ×1.43 (0.28 с).
+        /// Меняешь клип бега или масштаб тела — пересчитай, иначе поедут стопы.
+        /// </summary>
+        private const float RootSwarmRunClipGroundSpeed = 2.38f;
 
         // GuardWalk covers about 0.387 m over a 0.20 s planted-foot phase:
         // 1.93 m/s at 1x versus Orvill's deterministic 3.5 m/s full speed.
@@ -642,9 +651,7 @@ namespace Game.View
                 // темп ног. Трасса показала пульсацию 0.67 ↔ 1.22 по нескольку
                 // раз в секунду: ноги то частят, то залипают.
                 float target = moving
-                    // Опорная стопа Run проходит 0.092 м за 3 кадра при
-                    // масштабе 1.5868: естественная скорость клипа 1.46 м/с.
-                    ? (IsRootSwarm ? Simulation.RootSwarmMoveSpeed.ToFloat() / 1.46f
+                    ? (IsRootSwarm ? Simulation.RootSwarmMoveSpeed.ToFloat() / RootSwarmRunClipGroundSpeed
                         : OrvillLocomotionBasePlaybackSpeed)
                       * Mathf.Clamp(normalizedSpeed, OrvillLocomotionMinPlaybackSpeed,
                           IsRootSwarm ? Simulation.RootSwarmRushSpeed.ToFloat()
@@ -830,15 +837,17 @@ namespace Game.View
             TailFrames = 12f, ReleaseSeconds = .30f,
         };
 
-        // Корнеполз @AttackA/B, окно импорта 8…24: кисть проходит перед телом на
-        // пике скорости на 17. После 22 в исходнике начинается второй мах — туда
-        // не заходим, выход в бег держит 22. Замах 12: разгон 8→13 за 8 тиков,
-        // мах 13→17 за 4; восстановление 8: 17→22 — выпад Sim идёт на этой позе.
+        // Корнеполз @AttackA/B v2 (29.09, укус по рефу Higgsfield), окно импорта 8…24,
+        // кадры и замер — ART/.../1.forest-rootswarm/production/rootswarm_v2_build.json.
+        // Замах 12: оттяг назад-вниз 8→14 за 6 тиков, дрожь сжатой пружины 14→16 за 4,
+        // бросок 16→18 за 2 — родной темп; контакт (лицо захлопнуто, лапы вперёд) — 18.
+        // Восстановление 8: полёт выпада 18→22 за 4 — ровно те 4 тика, что Sim везёт
+        // тело на 0,5 м (RootSwarmLungeTicks), — и оседание в стойку 22→24 за 4.
         private static readonly SwingClip RootSwarmSwing = new SwingClip
         {
             FirstFrame = 8f, Frames = 16f,
-            WindupTicks = new[] { 0f, 8f, 12f }, WindupFrames = new[] { 8f, 13f, 17f },
-            RecoveryTicks = new[] { 0f, 8f }, RecoveryFrames = new[] { 17f, 22f },
+            WindupTicks = new[] { 0f, 6f, 10f, 12f }, WindupFrames = new[] { 8f, 14f, 16f, 18f },
+            RecoveryTicks = new[] { 0f, 4f, 8f }, RecoveryFrames = new[] { 18f, 22f, 24f },
             TailFrames = 0f, ReleaseSeconds = .12f,
         };
 
