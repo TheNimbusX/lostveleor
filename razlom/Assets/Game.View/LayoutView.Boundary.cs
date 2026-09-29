@@ -141,16 +141,140 @@ namespace Game.View
                     }
                 }
             }
+            CloseOutlineGaps(bushes, rocks);
+        }
+
+        // Сухие отрезки проходимого контура с внешней нормалью. Берег воды виден сам по себе.
+        private List<(Vector2 Point, Vector2 Normal)> OutlineEdges()
+        {
+            var edges = new List<(Vector2, Vector2)>();
+            var occupied = new List<long>(_occupiedCells); occupied.Sort();
+            foreach (long key in occupied)
+            {
+                int x = (int)(key >> 32), z = (int)key;
+                for (int d = 0; d < 4; d++)
+                {
+                    Directions.Step((Direction)d, out int dx, out int dz);
+                    if (_occupiedCells.Contains(CellKey(x + dx, z + dz))) continue;
+                    var edge = new Vector2((x + .5f + dx * .5f) * .5f, (z + .5f + dz * .5f) * .5f);
+                    bool water = NearRiver(edge.x, edge.y, 1);
+                    for (int w = 0; w < _shownMap.WaterCount && !water; w++)
+                    {
+                        var pond = _shownMap.GetWater(w);
+                        water = Vector2.Distance(edge, TrailPoint(pond.Center)) < pond.Radius.ToFloat() + .8f;
+                    }
+                    if (!water) edges.Add((edge, new Vector2(dx, dz)));
+                }
+            }
+            return edges;
+        }
+
+        // Проходимый край должен читаться везде. Заросли выше оставляют просветы, и игрок упирался
+        // в невидимую стену посреди травы: замер 27 сентября — 83% края без единого куста рядом,
+        // открытые участки до 50 м. Каждый просвет закрывает куст или камень вплотную к краю, но не
+        // на полу. Колоски сюда не годятся: 15 тысяч треугольников на пучок. У точек появления врагов
+        // крупное не встаёт — там край отмечает высокая трава кромки (LayoutView.Grass).
+        private void CloseOutlineGaps(List<int> bushes, List<int> rocks)
+        {
+            var cover = new List<Vector3>();
+            for (int i = 0; i < _decorCount; i++)
+                if (_style.DecorVariants[_decorVariant[i]].Kind != DecorKind.GrassTuft)
+                    cover.Add(new Vector3(_decor[i].position.x, _decor[i].position.z, VisibleRadius(i)));
+            var character = _shownMap.GladeCount == 1 ? CharacterOf(_shownMap, 0) : GladeCharacter.Rocky;
+            float rockShare = rocks.Count == 0 ? 0 : bushes.Count == 0 ? 1 : character == GladeCharacter.Rocky ? .3f : .12f;
+            foreach (var (edge, normal) in OutlineEdges())
+            {
+                bool covered = false;
+                foreach (var c in cover)
+                    if ((edge - new Vector2(c.x, c.y)).sqrMagnitude < (c.z + .85f) * (c.z + .85f)) { covered = true; break; }
+                if (covered) continue;
+                var rng = DecorRandom(unchecked(Mathf.RoundToInt(edge.x * 4) * 486187739 + Mathf.RoundToInt(edge.y * 4) * 290797), 641);
+                bool rock = rng.NextDouble() < rockShare;
+                int variant = PickDetail(rock ? rocks : bushes, rng);
+                if (variant < 0) continue;
+                float scale = rock ? .85f + (float)rng.NextDouble() * .4f : 1f + (float)rng.NextDouble();
+                // Ставим по видимому радиусу, а на пол не пускает точный габарит (PlaceOffFloor):
+                // по габаритному кругу пула куст отъезжал так далеко, что не закрывал даже свою точку.
+                float visible = _decorRadii[variant] * scale / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * .7f;
+                var tangent = new Vector2(normal.y, -normal.x);
+                // Разная глубина от края: иначе заросли выстраивались шеренгой вдоль контура.
+                var point = edge + normal * (visible + .1f + (float)rng.NextDouble() * .45f)
+                    + tangent * ((float)rng.NextDouble() - .5f) * .5f;
+                if (BoundaryBlocksClearance(point, visible * .5f) || NearPond(point.x, point.y, visible)
+                    || NearLandmark(point.x, point.y, visible)) continue;
+                if (!PlaceOffFloor(variant, point, normal, scale, !rock, rng)) continue;
+                var placed = _decor[_decorCount - 1];
+                cover.Add(new Vector3(placed.position.x, placed.position.z, VisibleRadius(_decorCount - 1)));
+                // Спутники делают из метки куртину: ниже и глубже основного куста, по обе стороны.
+                for (int follower = rng.NextDouble() < .15 ? 2 : rng.NextDouble() < .55 ? 1 : 0; follower > 0; follower--)
+                {
+                    int companion = PickDetail(bushes, rng);
+                    if (companion < 0) break;
+                    var outer = new Vector2(placed.position.x, placed.position.z) + normal * (visible * (.4f + (float)rng.NextDouble() * .8f))
+                        + tangent * visible * (follower == 1 ? 1 : -1) * (.7f + (float)rng.NextDouble() * .5f);
+                    if (NearPond(outer.x, outer.y, visible * .6f) || NearLandmark(outer.x, outer.y, visible * .6f)) continue;
+                    if (PlaceOffFloor(companion, outer, normal, scale * (.5f + (float)rng.NextDouble() * .4f), true, rng))
+                        cover.Add(new Vector3(_decor[_decorCount - 1].position.x, _decor[_decorCount - 1].position.z, VisibleRadius(_decorCount - 1)));
+                }
+            }
+        }
+
+        // Объект встаёт в точку и отодвигается наружу, пока его настоящий габарит касается пола:
+        // граница не заходит на игровое поле ни одним углом повёрнутой модели.
+        private bool PlaceOffFloor(int variant, Vector2 point, Vector2 normal, float scale, bool squash, System.Random rng)
+        {
+            SpawnDecor(variant, point.x, point.y, rng);
+            var placed = _decor[_decorCount - 1];
+            placed.localScale *= scale;
+            if (squash)
+            {
+                var size = placed.localScale; size.y *= .6f + (float)rng.NextDouble() * .28f;
+                placed.localScale = size;
+            }
+            var renderers = placed.GetComponentsInChildren<Renderer>();
+            for (int step = 0; step <= 16; step++)
+            {
+                placed.position = new Vector3(point.x, BackgroundHeight(_shownMap, point.x, point.y) - .035f, point.y);
+                bool touches = false, crowds = false;
+                foreach (var renderer in renderers)
+                {
+                    var bounds = renderer.bounds;
+                    for (int z = Mathf.FloorToInt(bounds.min.z * 2); z <= Mathf.FloorToInt(bounds.max.z * 2) && !touches; z++)
+                        for (int x = Mathf.FloorToInt(bounds.min.x * 2); x <= Mathf.FloorToInt(bounds.max.x * 2) && !touches; x++)
+                            touches = _shownMap.Outline.ContainsCell(x, z);
+                    // Строй появления врагов виден целиком: габарит не заходит в его круг.
+                    crowds |= NearEncounter(new Vector2(bounds.center.x, bounds.center.z), Mathf.Max(bounds.extents.x, bounds.extents.z));
+                    if (touches) break;
+                }
+                if (!touches && !crowds) return true;
+                if (crowds) break;
+                point += normal * .1f;
+            }
+            // Места нет: объект возвращается в пул, в зарослях его заменит трава кромки.
+            _decorCount--;
+            _decorPools[variant].Release(placed.gameObject);
+            return false;
+        }
+
+        // Видимый радиус у земли: габаритный круг пула описывает ещё и углы повёрнутой модели.
+        private float VisibleRadius(int index)
+        {
+            int variant = _decorVariant[index];
+            return _decorRadii[variant] * _decor[index].localScale.x / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * .75f;
+        }
+
+        private bool NearEncounter(Vector2 point, float radius)
+        {
+            if (_shownEncounters == null) return false;
+            float clearance = _shownEncounters.FormationRadius.ToFloat() + radius + 1;
+            for (int e = 0; e < _shownEncounters.Count; e++)
+                if ((point - TrailPoint(_shownEncounters.Get(e).Center)).sqrMagnitude < clearance * clearance) return true;
+            return false;
         }
 
         private bool BoundaryBlocksClearance(Vector2 point, float radius)
         {
-            if (_shownEncounters != null)
-            {
-                float clearance = _shownEncounters.FormationRadius.ToFloat() + radius + 1;
-                for (int e = 0; e < _shownEncounters.Count; e++)
-                    if ((point - TrailPoint(_shownEncounters.Get(e).Center)).sqrMagnitude < clearance * clearance) return true;
-            }
+            if (NearEncounter(point, radius)) return true;
             int minX = Mathf.FloorToInt((point.x - radius) * 2), maxX = Mathf.FloorToInt((point.x + radius) * 2);
             int minZ = Mathf.FloorToInt((point.y - radius) * 2), maxZ = Mathf.FloorToInt((point.y + radius) * 2);
             for (int z = minZ; z <= maxZ; z++)

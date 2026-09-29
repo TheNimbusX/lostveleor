@@ -288,6 +288,52 @@ namespace Game.LocationTests
             Assert.That(checkedObjects, Is.GreaterThan(20));
         }
 
+        // Невидимые стены: край, у которого ничего не растёт, читался открытой травой, и игрок
+        // упирался в пустоту (27 сентября открыто было 83% края). Берег воды виден сам по себе,
+        // а у строя появления врагов крупное не ставится — там край отмечает трава кромки.
+        [TestCase(1UL)]
+        [TestCase(42UL)]
+        [TestCase(999UL)]
+        public void NaturalBoundary_MarksTheWholeWalkableEdge(ulong seed)
+        {
+            _theme.Style.DecorPerCell = 0;
+            _preview.Generate(_theme, seed, 1);
+            var map = _preview.Map;
+            var decor = _preview.Root.GetComponentsInChildren<Renderer>()
+                .Where(r => r.name.StartsWith("Декор:")).Select(r => r.bounds).ToArray();
+            var formations = Enumerable.Range(0, _preview.Encounters.Count).Select(e => _preview.Encounters.Get(e).Center)
+                .Select(c => new Vector2(c.X.ToFloat(), c.Y.ToFloat())).ToArray();
+            float formation = _preview.Encounters.FormationRadius.ToFloat() + 2;
+            int edges = 0, open = 0;
+            int[] dx = { 1, -1, 0, 0 }, dz = { 0, 0, 1, -1 };
+            for (int m = 0; m < map.PlacedCount; m++)
+            {
+                var p = map.GetPlaced(m);
+                for (int z = p.OriginY * 4; z < (p.OriginY + p.Height) * 4; z++)
+                    for (int x = p.OriginX * 4; x < (p.OriginX + p.Width) * 4; x++)
+                    {
+                        if (!map.Outline.ContainsCell(x, z)) continue;
+                        for (int d = 0; d < 4; d++)
+                        {
+                            if (map.Outline.ContainsCell(x + dx[d], z + dz[d])) continue;
+                            var edge = new Vector2((x + .5f + dx[d] * .5f) * .5f, (z + .5f + dz[d] * .5f) * .5f);
+                            var outside = new FixVec2(Fix64.FromDouble(edge.x + dx[d] * .4f), Fix64.FromDouble(edge.y + dz[d] * .4f));
+                            bool water = false;
+                            for (int r = 0; r < map.RiverCount && !water; r++) water = map.GetRiver(r).ContainsWater(outside, Fix64.One);
+                            for (int w = 0; w < map.WaterCount && !water; w++)
+                                water = FixVec2.Distance(outside, map.GetWater(w).Center).ToFloat() < map.GetWater(w).Radius.ToFloat() + 1;
+                            if (water || formations.Any(f => Vector2.Distance(f, edge) < formation)) continue;
+                            edges++;
+                            // Рядом с краем должно начинаться что-то видимое: не дальше 1,2 м от него.
+                            if (!decor.Any(b => Vector2.Distance(edge, new Vector2(b.center.x, b.center.z))
+                                    - Mathf.Min(b.extents.x, b.extents.z) < 1.2f)) open++;
+                        }
+                    }
+            }
+            Assert.That(edges, Is.GreaterThan(100));
+            Assert.That(open, Is.LessThan(edges * .12f), $"Сид {seed}: без декора {open} из {edges} отрезков края");
+        }
+
         [TestCase(42UL)]
         [TestCase(73UL)]
         public void EdgeCanopies_RebuildDeterministically_WithoutCoveringFloorOrChangingSim(ulong seed)
@@ -521,8 +567,11 @@ namespace Game.LocationTests
                     Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : evening ? look.EveningFillIntensity : look.FillIntensity));
                     Assert.That(fill.color, Is.EqualTo(evening ? look.EveningFillColor : Color.cyan));
                     Assert.That(sun.intensity, Is.EqualTo(evening ? 1.4f : 2).Within(.0001f));
-                    Assert.That(Quaternion.Angle(sun.transform.rotation, evening
-                        ? Quaternion.Euler(look.EveningSunPitch, rotation.eulerAngles.y, rotation.eulerAngles.z) : rotation), Is.LessThan(.01f));
+                    // Своя высота солнца у разлома (CampSunPitch) — поверх любого стиля лагеря, сторона света та же.
+                    float pitch = _theme.Style.CampSunPitch > 0 ? _theme.Style.CampSunPitch
+                        : evening ? look.EveningSunPitch : rotation.eulerAngles.x;
+                    Assert.That(Quaternion.Angle(sun.transform.rotation,
+                        Quaternion.Euler(pitch, rotation.eulerAngles.y, rotation.eulerAngles.z)), Is.LessThan(.01f));
                     if (evening) Assert.That(RenderSettings.fogColor, Is.EqualTo(look.EveningFogColor));
                     var volumes = Resources.FindObjectsOfTypeAll<UnityEngine.Rendering.Volume>()
                         .Where(v => v.isActiveAndEnabled && v.name == "Освещение разлома — профиль лагеря").ToArray();

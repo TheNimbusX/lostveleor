@@ -35,6 +35,12 @@ namespace Game.View
                 : CharacterOf(map, 0) == GladeCharacter.Rocky ? .75f : 1 : 1;
             var portals = new List<Vector2> { TrailPoint(map.EntryPoint) };
             for (int e = 0; e < map.ExitCount; e++) portals.Add(TrailPoint(map.ExitPoint(e)));
+            bool NearPortal(float px, float pz)
+            {
+                foreach (var portal in portals)
+                    if ((portal - new Vector2(px, pz)).sqrMagnitude < 6.25f) return true;
+                return false;
+            }
             for (float z = minZ - margin; z < maxZ + margin; z += step)
                 for (float x = minX - margin; x < maxX + margin; x += step)
                 {
@@ -45,18 +51,33 @@ namespace Game.View
                     // Пятна гуще и реже, чем ровный ковёр: шум крупного масштаба задаёт поляны травы.
                     float patch = Mathf.PerlinNoise(px * .08f + patchX, pz * .08f + patchZ);
                     bool floor = map.Outline.ContainsCell(Mathf.FloorToInt(px * 2), Mathf.FloorToInt(pz * 2));
-                    float density = floor ? .16f : Mathf.Lerp(.25f, .95f, Mathf.SmoothStep(0, 1, patch));
+                    // На утоптанной земле поляны трава почти не растёт, в травяной кайме — как раньше.
+                    float density = floor ? .16f * (1 - SurfaceEarth(px, pz) * .9f) : Mathf.Lerp(.25f, .95f, Mathf.SmoothStep(0, 1, patch));
                     if (roll > density * lushness) continue;
                     // Протоптанная тропа, вода, порталы и ориентиры остаются чистыми.
                     if (TrailWear(px, pz) > 60 || NearPond(px, pz, .5f) || NearLandmark(px, pz, .3f)) continue;
-                    bool nearPortal = false;
-                    foreach (var portal in portals)
-                        if ((portal - new Vector2(px, pz)).sqrMagnitude < 6.25f) { nearPortal = true; break; }
-                    if (nearPortal || InsideSolidDecor(px, pz)) continue;
+                    if (NearPortal(px, pz) || InsideSolidDecor(px, pz)) continue;
                     float y = floor ? 0 : BackgroundHeight(map, px, pz) - .02f;
                     _grassField.Add(Matrix4x4.TRS(new Vector3(px, y, pz), Quaternion.Euler(0, yaw, 0),
                         new Vector3(size, size * (.85f + (float)rng.NextDouble() * .3f), size)) * _grassPivot);
                 }
+            // Кромка: густая высокая трава сразу за краем пола. Вместе с зарослями она отмечает весь
+            // проходимый контур, а у точек появления врагов, где кусты не встают, край остаётся низким.
+            var fringe = DecorRandom(0, 997);
+            foreach (var (edge, normal) in OutlineEdges())
+            {
+                var tangent = new Vector2(normal.y, -normal.x);
+                for (int k = 0; k < 2; k++)
+                {
+                    var p = edge + normal * (.1f + (float)fringe.NextDouble() * 1.1f)
+                        + tangent * ((float)fringe.NextDouble() - .5f) * .5f;
+                    float yaw = (float)fringe.NextDouble() * 360, size = 1.2f + (float)fringe.NextDouble() * .55f;
+                    float stretch = 1.15f + (float)fringe.NextDouble() * .35f;
+                    if (NearPond(p.x, p.y, .3f) || NearLandmark(p.x, p.y, .2f) || NearPortal(p.x, p.y) || InsideSolidDecor(p.x, p.y)) continue;
+                    _grassField.Add(Matrix4x4.TRS(new Vector3(p.x, BackgroundHeight(map, p.x, p.y) - .02f, p.y),
+                        Quaternion.Euler(0, yaw, 0), new Vector3(size, size * stretch, size)) * _grassPivot);
+                }
+            }
             var center = new Vector3((minX + maxX) * .5f, 0, (minZ + maxZ) * .5f);
             _grassParams.worldBounds = new Bounds(center, new Vector3(maxX - minX + margin * 2 + 4, 6, maxZ - minZ + margin * 2 + 4));
         }

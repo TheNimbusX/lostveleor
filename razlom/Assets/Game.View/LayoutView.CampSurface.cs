@@ -17,7 +17,9 @@ namespace Game.View
             material.SetFloat("_IsSurface", 1);
             material.SetFloat("_IsPath", 0);
             material.SetFloat("_IsRiverBank", 0);
-            material.SetColor("_BaseColor", material.GetColor("_BaseColor") * new Color(.88f, .95f, .89f, 1));
+            // Трава арены зеленее и светлее лагерной: прежний серо-зелёный тон (.88/.95/.89) делал поле
+            // блёклым, а тёплый закатный свет и так добавляет желтизны.
+            material.SetColor("_BaseColor", material.GetColor("_BaseColor") * new Color(.86f, 1f, .84f, 1));
             if (material.HasProperty("_DetailSoftness")) material.SetFloat("_DetailSoftness", _style.GroundDetailSoftness);
             if (material.HasProperty("_TurfWeight")) material.SetFloat("_TurfWeight", _style.GroundTurfWeight);
             return material;
@@ -49,6 +51,7 @@ namespace Game.View
                     _campSurfacePixels[i] = new Color32(path, (byte)(stones * 255), 255, (byte)(turf * 255));
                 }
             StampForestFloor();
+            PaintEarthClearing();
             // Земля связывает предметы с окружением; на проходах не появляется новая геометрия.
             for (int i = 0; i < _decorCount; i++)
             {
@@ -83,6 +86,35 @@ namespace Game.View
             const int n = TrailResolution;
             if (_forestDistance == null) _forestDistance = new float[n * n];
             var dist = _forestDistance;
+            FloorDistance(dist, false);
+            for (int y = 1; y < n - 1; y++)
+                for (int x = 1; x < n - 1; x++)
+                {
+                    int i = y * n + x;
+                    if (dist[i] <= 0) continue;
+                    float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
+                    float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
+                    float wear = Mathf.Lerp(.4f, 1.1f, _style.ForestGroundWear);
+                    float patchy = Mathf.Lerp(.55f, 1.15f, Mathf.PerlinNoise(px * .18f + 311, pz * .18f + 97));
+                    // Тень и редкий дёрн начинаются сразу за краем, голая земля — только глубже:
+                    // на солнце грунт светлее травы и крупным пятном отвлекал бы от боя.
+                    float shade = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.5f, 5, dist[i])) * wear;
+                    float litter = Mathf.Clamp01(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(1.5f, 9, dist[i])) * patchy) * wear;
+                    if (shade <= 0) continue;
+                    var pixel = _campSurfacePixels[i];
+                    pixel.r = (byte)Mathf.Max(pixel.r, litter * 118);
+                    pixel.b = (byte)Mathf.Min(pixel.b, (1 - shade * .45f) * 255);
+                    pixel.a = (byte)(pixel.a * (1 - shade * .6f));
+                    _campSurfacePixels[i] = pixel;
+                }
+        }
+
+        // Расстояние в метрах от каждого пикселя маски до края пола: снаружи пола (inside = false)
+        // или внутри него (inside = true); по другую сторону края — ноль. Двухпроходная фаска
+        // с учётом неквадратного пикселя.
+        private void FloorDistance(float[] dist, bool inside)
+        {
+            const int n = TrailResolution;
             float dx = _trailBounds.z / n, dz = _trailBounds.w / n, dd = Mathf.Sqrt(dx * dx + dz * dz);
             for (int y = 0; y < n; y++)
             {
@@ -90,10 +122,10 @@ namespace Game.View
                 for (int x = 0; x < n; x++)
                 {
                     float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
-                    dist[y * n + x] = _shownMap.Outline.ContainsCell(Mathf.FloorToInt(px * 2), Mathf.FloorToInt(pz * 2)) ? 0 : 1e6f;
+                    bool floor = _shownMap.Outline.ContainsCell(Mathf.FloorToInt(px * 2), Mathf.FloorToInt(pz * 2));
+                    dist[y * n + x] = floor == inside ? 1e6f : 0;
                 }
             }
-            // Двухпроходная фаска: расстояние до пола в метрах с учётом неквадратного пикселя.
             for (int y = 0; y < n; y++)
                 for (int x = 0; x < n; x++)
                 {
@@ -119,26 +151,6 @@ namespace Game.View
                         if (x > 0) d = Mathf.Min(d, dist[i + n - 1] + dd);
                     }
                     dist[i] = d;
-                }
-            for (int y = 1; y < n - 1; y++)
-                for (int x = 1; x < n - 1; x++)
-                {
-                    int i = y * n + x;
-                    if (dist[i] <= 0) continue;
-                    float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
-                    float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
-                    float wear = Mathf.Lerp(.4f, 1.1f, _style.ForestGroundWear);
-                    float patchy = Mathf.Lerp(.55f, 1.15f, Mathf.PerlinNoise(px * .18f + 311, pz * .18f + 97));
-                    // Тень и редкий дёрн начинаются сразу за краем, голая земля — только глубже:
-                    // на солнце грунт светлее травы и крупным пятном отвлекал бы от боя.
-                    float shade = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.5f, 5, dist[i])) * wear;
-                    float litter = Mathf.Clamp01(Mathf.SmoothStep(0, 1, Mathf.InverseLerp(1.5f, 9, dist[i])) * patchy) * wear;
-                    if (shade <= 0) continue;
-                    var pixel = _campSurfacePixels[i];
-                    pixel.r = (byte)Mathf.Max(pixel.r, litter * 118);
-                    pixel.b = (byte)Mathf.Min(pixel.b, (1 - shade * .45f) * 255);
-                    pixel.a = (byte)(pixel.a * (1 - shade * .6f));
-                    _campSurfacePixels[i] = pixel;
                 }
         }
 

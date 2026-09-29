@@ -91,6 +91,12 @@ namespace Game.View
             _fog = RenderSettings.fog; _fogMode = RenderSettings.fogMode; _fogColor = RenderSettings.fogColor;
             _start = RenderSettings.fogStartDistance; _end = RenderSettings.fogEndDistance;
             look.ApplyDirectionalLighting(_sun, _fill);
+            // Сторона света та же, что в лагере; выше только само солнце — короче тени на поляне.
+            if (style.CampSunPitch > 0)
+            {
+                var angles = _sun.transform.rotation.eulerAngles;
+                _sun.transform.rotation = Quaternion.Euler(style.CampSunPitch, angles.y, angles.z);
+            }
             if (look.Style == CampLookStyle.GoldenEvening && look.EveningFog)
             {
                 RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear;
@@ -99,8 +105,9 @@ namespace Game.View
                 var camera = Camera.main;
                 float depth = camera != null && Mathf.Abs(camera.transform.forward.y) > .001f
                     ? Mathf.Max(0, -camera.transform.position.y / camera.transform.forward.y) : 0;
-                RenderSettings.fogStartDistance = depth + look.FogNear;
-                RenderSettings.fogEndDistance = depth + look.FogFar;
+                // Своя полоса дымки: лагерная выбрана для вечернего лагеря, а в бою глушила контраст.
+                RenderSettings.fogStartDistance = depth + style.CampHazeNear;
+                RenderSettings.fogEndDistance = depth + style.CampHazeFar;
             }
             SetVolume(style.PostProcessingOverride != null ? style.PostProcessingOverride : look.SelectedProfile,
                 look.Volume.gameObject.layer, look.Volume.priority, look.Volume.weight);

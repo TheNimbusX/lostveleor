@@ -179,12 +179,17 @@ namespace Game.Sim
                     Fix64 radius; FixVec2 point; bool clear;
                     if (lake)
                     {
-                        // Центр у самой кромки: половина озера уходит в лес, в арену вдаётся залив.
-                        radius = waterRng.NextFix(Fix64.FromInt(5), Fix64.Ratio(68, 10));
+                        // Озеро — край арены (владелец, 29 сентября): крупное, по размеру поляны. Центр за
+                        // настоящей кромкой пола (форма поляны уже её радиусов), вода заходит на пол на
+                        // 45–70% своего радиуса — берег забирает у поляны длинную дугу, остальное в лесу.
+                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(55, 100), Fix64.Ratio(70, 100));
                         var angle = waterRng.NextFix(Fix64.Zero, Fix64.TwoPi);
-                        var reach = waterRng.NextFix(Fix64.Ratio(95, 100), Fix64.Ratio(115, 100));
-                        point = region.Center + new FixVec2(Fix64.Cos(angle) * region.Radii.X,
-                            Fix64.Sin(angle) * region.Radii.Y) * reach;
+                        var outside = waterRng.NextFix(Fix64.Ratio(30, 100), Fix64.Ratio(55, 100));
+                        var direction = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle));
+                        var edge = Fix64.Zero;
+                        while (edge < region.Radii.X + region.Radii.Y && region.Field(region.Center + direction * edge) <= Fix64.One)
+                            edge += Fix64.Ratio(1, 4);
+                        point = region.Center + direction * (edge + radius * outside);
                         clear = true;
                     }
                     else

@@ -16,11 +16,9 @@ namespace Game.View
         private Vector2 _reliefOffset;
         private readonly List<Vector4> _ponds = new List<Vector4>();
         private int _arenaCharacter = -1;
-        private MeshRenderer _runeRenderer;
-        private Color _runeGlow;
         private MaterialPropertyBlock _runeBlock;
         // x, y — центр ориентира на земле (мировые x и z), z — радиус, который он реально занимает,
-        // w = 1 — ориентир виден только под открытым небом (круг рун, домик), кроны над ним не нависают.
+        // w = 1 — ориентир виден только под открытым небом (круг рун), кроны над ним не нависают.
         private readonly List<Vector4> _landmarkSpots = new List<Vector4>();
         private bool[] _landmarkVariants;
         private Mesh _waterMesh;
@@ -43,9 +41,11 @@ namespace Game.View
             foreach (var cache in _caches) _cachePool?.Release(cache.gameObject);
             foreach (var mark in _dropMarks) _dropPool?.Release(mark.gameObject);
             _portals.Clear(); _caches.Clear(); _dropMarks.Clear();
-            _runeRenderer = null;
+            _runes.Clear();
             _landmarkSpots.Clear();
             _grassField.Clear();
+            foreach (var list in _leafField) list?.Clear();
+            if (_wisps != null) _wisps.gameObject.SetActive(false);
             if (_banks != null) _banks.SetActive(false);
             if (_water != null) _water.SetActive(false);
             if (_shore != null) _shore.SetActive(false);
@@ -65,6 +65,8 @@ namespace Game.View
             _riverObject = _riverBanks = null; _bridgePool = null;
             _portalPool = _cachePool = _dropPool = null;
             _grassLookedUp = false; _grassMesh = null;
+            _leavesLookedUp = false; _leafMesh = null; _leafMaterials = null;
+            _wisps = null;
         }
 
         private void InitializeMeadow()
@@ -116,6 +118,7 @@ namespace Game.View
             BuildRivers(map);
             BuildReadableShores();
             ScatterForestDetails(map);
+            ScatterEdgeAccents(map);
             if (map.Routes != null)
             {
                 AddPortal(map.EntryPoint, map.Routes.EntryFacing, false);
@@ -126,6 +129,7 @@ namespace Game.View
                     var direction = parent >= 0 ? point - map.Routes.GetCell(parent).Center : map.Routes.EntryFacing;
                     AddPortal(point, direction, true);
                 }
+                PlacePortalLanterns(map);
                 for (int b = 0; b < map.RewardBranchCount; b++)
                 {
                     var cache = _cachePool.Acquire().transform;
@@ -137,6 +141,8 @@ namespace Game.View
             if (Application.isPlaying && _driver != null) _meadowLighting.Apply(_style);
             ApplyCampSurface();
             ScatterGrassField(map);
+            ScatterFallenLeaves(map);
+            BuildWisps(map);
             UpdateMeadow();
         }
 
@@ -174,12 +180,7 @@ namespace Game.View
                 SetGlow(_portals[i], run.Phase == RunPhase.SeekingExit ? new Color(.22f, .95f, .65f) : new Color(.8f, .42f, .1f));
             for (int b = 0; b < _caches.Count; b++) _caches[b].gameObject.SetActive(!run.IsBranchClaimed(b));
             UpdateDropMarks(run);
-            if (_runeRenderer != null)
-            {
-                // Руны медленно дышат, а не мигают: это ориентир, а не сигнал опасности.
-                _runeBlock.SetColor("_EmissionColor", _runeGlow * (.72f + .28f * Mathf.Sin(Time.time * .8f)));
-                _runeRenderer.SetPropertyBlock(_runeBlock);
-            }
+            UpdateRunes();
         }
 
         private void RestoreForestBreeze()
@@ -718,7 +719,10 @@ namespace Game.View
         }
 
         // Ориентиры встают сразу после рельефа, до опушки и леса: иначе заросли занимали
-        // плечо поляны, и на аренах домик, круг рун и изгородь почти не находили места.
+        // плечо поляны, и на аренах круг рун и изгородь почти не находили места.
+        // Домик на дереве не ставится: он должен стать уникальным местом, а не встречаться
+        // в каждом разломе (владелец, 28 сентября). Вариант остаётся в стиле и помечен
+        // ориентиром, чтобы не попасть во взвешенные пулы декора.
         private void PlaceLandmarks(LayoutMap map)
         {
             _landmarkSpots.Clear();
@@ -736,8 +740,8 @@ namespace Game.View
                 _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
-            if (treehouse >= 0) PlaceTreehouseLandmark(map, treehouse);
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
+            PlaceCenterCircle(map, runes);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
                 {
@@ -746,8 +750,8 @@ namespace Game.View
                 }
         }
 
-        // footprint — доля габаритного круга, которую ориентир занимает у земли: крона домика
-        // и углы квадрата вокруг круга камней не мешают траве и кустам подходить вплотную.
+        // footprint — доля габаритного круга, которую ориентир занимает у земли: углы квадрата
+        // вокруг круга камней и концы секций изгороди не мешают траве и кустам подходить вплотную.
         private void AddLandmark(float footprint, bool openSky)
         {
             var placed = _decor[_decorCount - 1]; int variant = _decorVariant[_decorCount - 1];
@@ -757,8 +761,8 @@ namespace Game.View
 
         private bool NearLandmark(float x, float z, float radius) => TouchesLandmark(x, z, radius, false);
 
-        // Камера смотрит сверху: плоский круг рун и крышу домика кроны прячут целиком,
-        // поэтому деревья держат над ними открытое небо, а не только место для ствола.
+        // Камера смотрит сверху: плоский круг рун кроны прячут целиком, поэтому деревья
+        // держат над ним открытое небо, а не только место для ствола.
         private bool ShadesLandmark(float x, float z, float canopy) => TouchesLandmark(x, z, canopy, true);
 
         private bool TouchesLandmark(float x, float z, float radius, bool openSkyOnly)
@@ -805,45 +809,18 @@ namespace Game.View
             }
         }
 
-        // Разовый ориентир: не более одного домика на карту, только на светлой поляне,
-        // подальше от воды и маршрутов. DecorRandom — визуальный поток, RNG симуляции не трогает.
-        private void PlaceTreehouseLandmark(LayoutMap map, int treehouse)
-        {
-            if (map.GladeCount == 0) return;
-            var rng = DecorRandom(0, 733);
-            // Арена — отдельный уровень: домик в каждом из них перестал бы быть ориентиром.
-            if (map.GladeCount == 1 && (CharacterOf(map, 0) != GladeCharacter.Sunny || rng.NextDouble() > .5)) return;
-            int start = rng.Next(map.GladeCount);
-            for (int offset = 0; offset < map.GladeCount; offset++)
-            {
-                int index = (start + offset) % map.GladeCount;
-                if (map.GladeCount >= 3 && CharacterOf(map, index) != GladeCharacter.Sunny) continue;
-                var glade = map.GetGlade(index);
-                for (int attempt = 0; attempt < 24; attempt++)
-                {
-                    float angle = (float)rng.NextDouble() * Mathf.PI * 2;
-                    // Домик крупнее боевой площадки: выбираем плечо поляны, не её свободный центр.
-                    float shoulder = _decorRadii[treehouse] + .6f + (float)rng.NextDouble() * 2;
-                    var point = new Vector2(
-                        glade.Center.X.ToFloat() + Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
-                        glade.Center.Y.ToFloat() + Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
-                    if (TryForestDetail(map, treehouse, point, rng)) { AddLandmark(.5f, true); return; }
-                }
-            }
-        }
-
-        // Рунное место — разовый ориентир: всегда у арены босса, у каменистой и береговой арены —
-        // в половине уровней (у светлой вместо него домик). У каменистой — кольцо-руина,
-        // утопленное в землю, у береговой и у босса — большой рунный камень-помост.
-        // Стоит на плече поляны, как домик: камни не заходят на боевой пол.
+        // Рунное место на плече поляны — разовый ориентир. У арены кольцо-руина лежит в центре поляны
+        // (PlaceCenterCircle), а на плечо встаёт большой рунный камень-помост: всегда у босса и
+        // в половине береговых арен. На картах из нескольких полян — кольцо у каменистой.
+        // Камни не заходят на боевой пол.
         private void PlaceRuneCircle(LayoutMap map, int ring, int stone)
         {
             if (map.GladeCount == 0) return;
             var rng = DecorRandom(0, 983);
             bool boss = _shownEncounters != null && _shownEncounters.BossId >= 0;
             var character = map.GladeCount == 1 ? CharacterOf(map, 0) : GladeCharacter.Rocky;
-            if (map.GladeCount == 1 && !boss && (character == GladeCharacter.Sunny || rng.NextDouble() > .5)) return;
-            int runes = ring < 0 ? stone : stone < 0 ? ring : boss || character == GladeCharacter.Waterside ? stone : ring;
+            if (map.GladeCount == 1 && !boss && (character != GladeCharacter.Waterside || rng.NextDouble() > .5)) return;
+            int runes = map.GladeCount == 1 ? stone >= 0 ? stone : ring : ring >= 0 ? ring : stone;
             int start = rng.Next(map.GladeCount);
             for (int offset = 0; offset < map.GladeCount; offset++)
             {
@@ -860,8 +837,8 @@ namespace Game.View
                     if (!TryForestDetail(map, runes, point, rng)) continue;
                     // Круг вписан в габаритный квадрат: у земли он занимает около 0,7 его радиуса.
                     AddLandmark(.7f, true);
-                    _runeRenderer = _decor[_decorCount - 1].GetComponentInChildren<MeshRenderer>();
-                    _runeGlow = _runeRenderer != null ? _runeRenderer.sharedMaterial.GetColor("_EmissionColor") : Color.black;
+                    var renderer = _decor[_decorCount - 1].GetComponentInChildren<MeshRenderer>();
+                    if (renderer != null) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
                     return;
                 }
             }
