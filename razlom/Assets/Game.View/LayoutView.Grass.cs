@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -14,10 +15,22 @@ namespace Game.View
         private RenderParams _grassParams;
         private bool _grassLookedUp;
 
-        private void ScatterGrassField(LayoutMap map)
+        // Камни, пни и стволы, сквозь которые трава не растёт: снимок на время травы (декор в ней не меняется),
+        // в том же порядке и с теми же числами, что у InsideSolidDecor, — без чтения Transform на каждый пучок.
+        private readonly List<Vector3> _solidScratch = new List<Vector3>();
+
+        private IEnumerator ScatterGrassFieldSteps(LayoutMap map)
         {
             _grassField.Clear();
-            if (map.Outline == null || map.PlacedCount == 0 || !FindGrassField()) return;
+            if (map.Outline == null || map.PlacedCount == 0 || !FindGrassField()) yield break;
+            _solidScratch.Clear();
+            for (int i = 0; i < _decorCount; i++)
+            {
+                var kind = _style.DecorVariants[_decorVariant[i]].Kind;
+                if (kind != DecorKind.Rock && kind != DecorKind.Tree) continue;
+                float reach = _decorRadii[_decorVariant[i]] * (kind == DecorKind.Tree ? .25f : .6f);
+                _solidScratch.Add(new Vector3(_decor[i].position.x, _decor[i].position.z, reach));
+            }
             float cell = LayoutMap.CellSize.ToFloat();
             var first = map.GetPlaced(0);
             float minX = first.OriginX * cell, maxX = (first.OriginX + first.Width) * cell;
@@ -42,6 +55,8 @@ namespace Game.View
                 return false;
             }
             for (float z = minZ - margin; z < maxZ + margin; z += step)
+            {
+                yield return null;
                 for (float x = minX - margin; x < maxX + margin; x += step)
                 {
                     float px = x + ((float)rng.NextDouble() - .5f) * step;
@@ -56,11 +71,13 @@ namespace Game.View
                     if (roll > density * lushness) continue;
                     // Протоптанная тропа, вода, порталы и ориентиры остаются чистыми.
                     if (TrailWear(px, pz) > 60 || NearPond(px, pz, .5f) || NearLandmark(px, pz, .3f)) continue;
-                    if (NearPortal(px, pz) || InsideSolidDecor(px, pz)) continue;
+                    if (NearPortal(px, pz) || InsideSolidScratch(px, pz)) continue;
                     float y = floor ? 0 : BackgroundHeight(map, px, pz) - .02f;
                     _grassField.Add(Matrix4x4.TRS(new Vector3(px, y, pz), Quaternion.Euler(0, yaw, 0),
                         new Vector3(size, size * (.85f + (float)rng.NextDouble() * .3f), size)) * _grassPivot);
                 }
+            }
+            yield return null;
             // Кромка: густая высокая трава сразу за краем пола. Вместе с зарослями она отмечает весь
             // проходимый контур, а у точек появления врагов, где кусты не встают, край остаётся низким.
             var fringe = DecorRandom(0, 997);
@@ -73,13 +90,25 @@ namespace Game.View
                         + tangent * ((float)fringe.NextDouble() - .5f) * .5f;
                     float yaw = (float)fringe.NextDouble() * 360, size = 1.2f + (float)fringe.NextDouble() * .55f;
                     float stretch = 1.15f + (float)fringe.NextDouble() * .35f;
-                    if (NearPond(p.x, p.y, .3f) || NearLandmark(p.x, p.y, .2f) || NearPortal(p.x, p.y) || InsideSolidDecor(p.x, p.y)) continue;
+                    if (NearPond(p.x, p.y, .3f) || NearLandmark(p.x, p.y, .2f) || NearPortal(p.x, p.y) || InsideSolidScratch(p.x, p.y)) continue;
                     _grassField.Add(Matrix4x4.TRS(new Vector3(p.x, BackgroundHeight(map, p.x, p.y) - .02f, p.y),
                         Quaternion.Euler(0, yaw, 0), new Vector3(size, size * stretch, size)) * _grassPivot);
                 }
             }
             var center = new Vector3((minX + maxX) * .5f, 0, (minZ + maxZ) * .5f);
             _grassParams.worldBounds = new Bounds(center, new Vector3(maxX - minX + margin * 2 + 4, 6, maxZ - minZ + margin * 2 + 4));
+            _solidScratch.Clear();
+        }
+
+        private bool InsideSolidScratch(float x, float z)
+        {
+            for (int i = 0; i < _solidScratch.Count; i++)
+            {
+                var solid = _solidScratch[i];
+                float dx = solid.x - x, dz = solid.y - z;
+                if (dx * dx + dz * dz < solid.z * solid.z) return true;
+            }
+            return false;
         }
 
         private bool FindGrassField()

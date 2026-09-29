@@ -43,14 +43,24 @@ namespace Game.EditorTools
             Build(true);
         }
 
+        /// <summary>
+        /// Собирает префаб, если его нет (или всегда при <paramref name="force"/>). Готовый префаб не
+        /// пересобирается, а доводится миграциями до <see cref="LayoutVersion"/> (RunHudWcBuilder.Migrations);
+        /// свежая сборка — раскладка 26 сентября и те же миграции.
+        /// </summary>
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             EnsurePrefabs();
             GameObject root = Layout();
             try
             {
+                Migrate(root, root.GetComponent<RunHudView>());
                 Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }

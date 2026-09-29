@@ -24,9 +24,10 @@ namespace Game.View
     {
         [Header("Герой")]
         public RectTransform HeroPanel;
+        [Tooltip("Портрет: один рисунок с мягкой маской (голова выходит за круг, 26 сентября; одна копия без шва — 29.09)")]
         public RawImage Portrait;
-        [Tooltip("Необязательно: верх того же портрета вне круга (голова выходит за кромку, 26 сентября); текстура — как у Portrait")]
-        public RawImage PortraitOuter;
+        [Tooltip("Необязательно: живой портрет — дыхание, удар, лечение, уровень, тревога (владелец 29.09)")]
+        public HudPortraitMotion PortraitMotion;
         public TMP_Text Level;
         public TMP_Text HeroName;
         public RectTransform HealthFill;
@@ -34,8 +35,6 @@ namespace Game.View
         public GameObject LavidiumRow;
         public RectTransform LavidiumFill;
         public TMP_Text LavidiumText;
-        [Tooltip("Необязательно: область героя; числа здоровья и лавидия видны внутри полос только под мышью (владелец, 23 сентября). Пусто — видны всегда")]
-        public RectTransform VitalsHit;
         [Tooltip("Необязательно: общая полоса-подложка HUD (вариант B) — ловит мышь, чтобы клик по ней не уходил в мир")]
         public RectTransform Strip;
 
@@ -48,10 +47,8 @@ namespace Game.View
         public HudSlotWidget Dash;
         public RectTransform ExperienceHit;
         public RectTransform ExperienceFill;
+        [Tooltip("Подпись опыта «Ур. N · X / Y» — видна всегда (владелец 29.09: полоса тонкая, числа мелко рядом)")]
         public TMP_Text ExperienceText;
-        [Tooltip("Высота полосы опыта под мышью, чтобы числа встали внутрь неё. 0 — полоса не растёт (старый префаб)")]
-        public float ExperienceHoverHeight;
-        [Tooltip("Секунд на рост полосы опыта")] public float ExperienceGrowTime = .12f;
 
         [Header("Зелья")]
         public RectTransform PotionPanel;
@@ -119,6 +116,11 @@ namespace Game.View
         public RectTransform MinimapCaptionPanel;
         public TMP_Text MinimapCaption;
 
+        [Header("Кошелёк лагеря (29.09): золото и осколки; показ и числа ведёт лагерь")]
+        [Tooltip("Узел кошелька; в префабе выключен")] public RectTransform CampWallet;
+        [Tooltip("Число золота в кошельке")] public TMP_Text WalletGold;
+        [Tooltip("Число осколков в кошельке")] public TMP_Text WalletShards;
+
         [Header("Иконки параметров: сердце, лавидий, время, урон, дальность, радиус, длительность")]
         public Sprite[] StatIcons = new Sprite[7];
 
@@ -130,9 +132,10 @@ namespace Game.View
         public Color ArtDimmed = new Color(.62f, .66f, .74f, 1f);
 
         /// <summary>
-        /// Версия раскладки сборщика, из которой сделан префаб. Сборщик
-        /// пересобирает префаб, только если его версия новее — поднимается
-        /// лишь с согласия владельца, потому что стирает ручные правки.
+        /// Версия раскладки сборщика, из которой сделан префаб. Старый CombatHud
+        /// (CombatHudBuilder) и CombatHudWc (CombatHudWcBuilder.Migrations) считают её
+        /// каждый своим счётом: новые версии доходят до префаба миграциями поверх
+        /// ручных правок, без пересборки.
         /// </summary>
         [HideInInspector] public int LayoutVersion;
 
@@ -144,9 +147,7 @@ namespace Game.View
         readonly PlayerHud.TooltipValue[] _values = new PlayerHud.TooltipValue[8];
         Canvas _canvas;
         Image _healthImage;
-        int _health = -1, _maxHealth = -1, _lavidium = -1, _maxLavidium = -1, _level = -1, _xp = -1, _xpMax = -1;
-        bool _xpHovered, _vitalsHovered;
-        float _xpRestHeight = -1f;
+        int _health = -1, _maxHealth = -1, _lavidium = -1, _maxLavidium = -1, _level = -1, _xp = -1, _xpMax = -1, _xpLevel = -1;
         int _feedbackSlot = -1;
         float _feedbackUntil;
         HudAbilityBlock _feedbackBlock;
@@ -237,8 +238,8 @@ namespace Game.View
                 _upgradeMasks[slot] = slot < DashSlot ? UpgradeMaskAt(driver, slot) : 0;
                 _upgrades[slot] = CountBits(_upgradeMasks[slot]);
             }
-            RefreshHero(sim, camp, pointer);
-            RefreshExperience(camp, pointer);
+            RefreshHero(sim, camp);
+            RefreshExperience(camp);
             HoverSlot = -1;
             for (int slot = 0; slot < DashSlot && slot < Slots.Length; slot++)
                 RefreshSlot(sim, slot, Slots[slot], pointer);
@@ -346,7 +347,7 @@ namespace Game.View
             return units == 1 ? one : units >= 2 && units <= 4 ? few : many;
         }
 
-        void RefreshHero(Simulation sim, Camp camp, Vector2 pointer)
+        void RefreshHero(Simulation sim, Camp camp)
         {
             RefreshPortrait();
             int level = camp != null ? camp.Level : 1;
@@ -359,36 +360,42 @@ namespace Game.View
                     if (LevelBanner != null) LevelBanner.Show(level);
                     if (LevelFlare != null) HudFx.Burst(LevelFlare, 1f, .6f, 1.6f, .7f);
                     HudFx.Punch(Level.transform, 1.6f, .45f);
+                    if (PortraitMotion != null) PortraitMotion.LevelUp();
                 }
                 _level = level;
                 Level.text = level.ToString();
             }
 
+            // Числа здоровья и лавидия видны всегда (владелец 29.09; с 23 сентября были только под мышью).
             int health = Mathf.Max(0, sim.Entities.Health[Simulation.PlayerId]);
             int max = Mathf.Max(1, sim.Entities.MaxHealth[Simulation.PlayerId]);
-            bool vitals = VitalsHit == null || (HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : Contains(VitalsHit, pointer));
-            bool hoverChanged = vitals != _vitalsHovered;
-            _vitalsHovered = vitals;
-            if (health != _health || max != _maxHealth || hoverChanged)
+            if (health != _health || max != _maxHealth)
             {
-                // Удар по герою: полоса вздрагивает и вспыхивает. Первый показ — не удар.
+                // Удар по герою: полоса вздрагивает и вспыхивает, портрет отскакивает и краснеет на пару
+                // кадров. Лечение — тёплый свет у портрета. Первый показ — ни то, ни другое.
                 if (_health > 0 && health < _health)
                 {
-                    HudFx.Flash(HealthFlash, .8f, .35f);
+                    HudFx.Flash(HealthFlash, .8f * GameUserSettings.FlashScale, .35f);
                     HudFx.Shake(HealthBar, 3f, .28f);
+                    if (PortraitMotion != null) PortraitMotion.Hit();
                 }
+                else if (_health > 0 && health > _health && PortraitMotion != null)
+                    PortraitMotion.Heal((health - _health) / (float)max);
                 _health = health; _maxHealth = max;
                 float ratio = Mathf.Clamp01(health / (float)max);
                 SetFill(HealthFill, ratio);
                 if (_healthImage != null) _healthImage.color = ratio <= .25f ? HealthLow : HealthNormal;
-                if (HealthText != null) HealthText.text = vitals ? health + " / " + max : string.Empty;
+                if (HealthText != null) HealthText.text = health + " / " + max;
             }
 
             // Сердцебиение на низком здоровье: петля включается и гаснет каждый кадр,
             // поэтому долю считаем здесь, а не внутри проверки «значение изменилось».
             float healthRatio = Mathf.Clamp01(health / (float)max);
-            GameSound.Loop(healthRatio > 0f && healthRatio <= .25f ? "low_health_loop" : null, .55f);
-            if (DangerPulse != null) DangerPulse.Active = healthRatio > 0f && healthRatio <= .25f;
+            bool danger = healthRatio > 0f && healthRatio <= .25f;
+            GameSound.Loop(danger ? "low_health_loop" : null, .55f);
+            if (DangerPulse != null) DangerPulse.Active = danger;
+            // Тревога портрета — в такт красной дымке (HudPortraitMotion.Danger).
+            if (PortraitMotion != null) PortraitMotion.Anxious = danger;
             if (HealthPotionPulse != null)
                 HealthPotionPulse.Active = healthRatio > 0f && healthRatio < .4f && camp != null && camp.PotionCount(camp.SelectedPotion(0)) > 0;
 
@@ -396,54 +403,41 @@ namespace Game.View
             if (LavidiumRow != null) LavidiumRow.SetActive(maxResource > 0);
             if (maxResource <= 0) return;
             int resource = Mathf.FloorToInt(sim.Entities.Lavidium[Simulation.PlayerId].ToFloat());
-            if (resource == _lavidium && maxResource == _maxLavidium && !hoverChanged) return;
+            if (resource == _lavidium && maxResource == _maxLavidium) return;
             _lavidium = resource; _maxLavidium = maxResource;
             if (LavidiumGlint != null) LavidiumGlint.Repeat = resource >= maxResource;
             SetFill(LavidiumFill, resource / (float)maxResource);
-            if (LavidiumText != null) LavidiumText.text = vitals ? resource + " / " + maxResource : string.Empty;
+            if (LavidiumText != null) LavidiumText.text = resource + " / " + maxResource;
         }
 
         /// <summary>
-        /// Портрет без текстуры (сборка до импорта арта) берёт запасной из Resources. С верхом вне круга
-        /// (<see cref="PortraitOuter"/>) годится только вырез без фона: у квадратной картинки над кругом
-        /// встал бы её фон — тогда верх прячется, портрет остаётся в круге.
+        /// Портрет без текстуры (сборка до импорта арта) берёт запасной из Resources. Портрету с мягкой
+        /// маской (голова выходит за круг) годится только вырез без фона: у квадратной картинки над
+        /// кругом встал бы её фон.
         /// </summary>
         void RefreshPortrait()
         {
-            if (Portrait == null) return;
-            if (Portrait.texture == null)
-                Portrait.texture = PortraitOuter != null
-                    ? Resources.Load<Texture2D>("UI/HUD/PelagPortraitPaintedCutout")
-                    : Resources.Load<Texture2D>("UI/HUD/PelagPortraitPainted") ?? Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
-            if (PortraitOuter == null || PortraitOuter.texture == Portrait.texture) return;
-            PortraitOuter.texture = Portrait.texture;
-            PortraitOuter.enabled = Portrait.texture != null;
+            if (Portrait == null || Portrait.texture != null) return;
+            bool cutout = PortraitMotion != null || Portrait.material != null && Portrait.material.IsKeywordEnabled("INK_SHAPE");
+            Portrait.texture = cutout
+                ? Resources.Load<Texture2D>("UI/HUD/PelagPortraitPaintedCutout")
+                : Resources.Load<Texture2D>("UI/HUD/PelagPortraitPainted") ?? Resources.Load<Texture2D>("UI/HUD/PelagPortraitCutout");
         }
 
-        void RefreshExperience(Camp camp, Vector2 pointer)
+        /// <summary>
+        /// Опыт: полоса остаётся тонкой, рядом всегда мелкая подпись «Ур. N · X / Y» (владелец 29.09;
+        /// раньше числа были внутри полосы, и она росла под мышью).
+        /// </summary>
+        void RefreshExperience(Camp camp)
         {
             int xp = camp != null ? camp.Experience : 0;
             int next = camp != null ? Mathf.Max(1, camp.ExperienceToNextLevel) : 1;
-            bool hovered = HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : Contains(ExperienceHit, pointer) || VitalsHit != null && Contains(VitalsHit, pointer);
-            GrowExperience(hovered);
-            if (xp == _xp && next == _xpMax && hovered == _xpHovered) return;
+            int level = camp != null ? camp.Level : 1;
+            if (xp == _xp && next == _xpMax && level == _xpLevel) return;
             if (_xp >= 0 && (xp > _xp || next != _xpMax) && ExperienceGlint != null) ExperienceGlint.Play();
-            _xp = xp; _xpMax = next; _xpHovered = hovered;
+            _xp = xp; _xpMax = next; _xpLevel = level;
             SetFill(ExperienceFill, Mathf.Clamp01(xp / (float)next));
-            // Подпись «XP» стоит в префабе отдельной плашкой; числа — только под мышью.
-            if (ExperienceText != null) ExperienceText.text = hovered && camp != null ? xp + " / " + next : string.Empty;
-        }
-
-        /// <summary>Полоса опыта под мышью плавно подрастает, чтобы числа поместились внутри.</summary>
-        void GrowExperience(bool hovered)
-        {
-            if (ExperienceHoverHeight <= 0f || ExperienceHit == null) return;
-            Vector2 size = ExperienceHit.sizeDelta;
-            if (_xpRestHeight < 0f) _xpRestHeight = size.y;
-            float target = hovered ? ExperienceHoverHeight : _xpRestHeight;
-            if (Mathf.Approximately(size.y, target)) return;
-            float speed = Mathf.Abs(ExperienceHoverHeight - _xpRestHeight) / Mathf.Max(.01f, ExperienceGrowTime);
-            ExperienceHit.sizeDelta = new Vector2(size.x, Mathf.MoveTowards(size.y, target, speed * Time.unscaledDeltaTime));
+            if (ExperienceText != null) ExperienceText.text = HudPortraitCurves.ExperienceLabel(level, xp, next);
         }
 
         void RefreshSlot(Simulation sim, int slot, HudSlotWidget widget, Vector2 pointer)

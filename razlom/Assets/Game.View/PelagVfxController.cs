@@ -253,7 +253,9 @@ namespace Game.View
                     || entry.Id == PelagVfxId.ChainStepDash || entry.Id == PelagVfxId.ChainStepHit
                     || entry.Id == PelagVfxId.ChainStepFinish
                     || entry.Id == PelagVfxId.CleaveHit || entry.Id == PelagVfxId.CleaveSlash
-                    || entry.Id == PelagVfxId.CleaveGround || entry.Id == PelagVfxId.AnchorSlamContact)
+                    || entry.Id == PelagVfxId.CleaveGround || entry.Id == PelagVfxId.AnchorSlamContact
+                    // Искры автоатаки: без прогрева первые удары в бою создавали объекты (лог переходов 29.09).
+                    || entry.Id == PelagVfxId.AutoAttackImpact || entry.Id == PelagVfxId.AutoAttackCriticalImpact)
                     _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 

@@ -6,7 +6,12 @@ namespace Game.View
     public sealed class CampTrainingView : MonoBehaviour
     {
         public static CampTrainingView Instance { get; private set; }
+        [Tooltip("Подписи «Манекен» над полосками — у каждого манекена в этом радиусе")]
         [Min(.5f)] public float ActivationDistance = 2.75f;
+        [Tooltip("Огороженный полигон: по его забору меряется зона, где в лагере можно бить и колдовать. Пусто — родитель манекенов")]
+        public Transform Ground;
+        [Tooltip("На сколько метров зона выходит за рамку забора")]
+        [Min(0f)] public float ZoneMargin = .5f;
         CampDummyView[] _dummies;
         TickDriver _driver;
         int _generation = -1;
@@ -14,10 +19,16 @@ namespace Game.View
         CampTrainingPanel _panel;
         float _shown;
         readonly long[] _values = { -1, -1, -1, -1, -1, -1 };
+        /// <summary>
+        /// Панель замера и подписи — там же, где боевой HUD и право бить: в зоне полигона.
+        /// Зону держит Sim (<see cref="CampTraining.InZone"/>); без неё — прежний радиус у манекенов.
+        /// </summary>
         bool Nearby()
         {
             var camp = CampPlayerView.Instance;
             if (camp == null || !camp.Active || camp.InputBlocked || _driver == null || _driver.GameplayPaused) return false;
+            var session = _driver.Session;
+            if (session?.Training != null) return session.Mode == GameMode.Camp && session.CampCombatAllowed;
             foreach (var dummy in _dummies) if (IsNear(dummy, camp.Position)) return true;
             return false;
         }
@@ -38,7 +49,14 @@ namespace Game.View
             _dummies = GetComponentsInChildren<CampDummyView>();
             var definitions = new CampDummyDefinition[_dummies.Length];
             for (int i = 0; i < definitions.Length; i++) definitions[i] = _dummies[i].Definition;
-            driver.Session.ConfigureCampTraining(definitions);
+            // Зона боя — весь огороженный полигон (владелец, 29 сентября), а не 2,75 м у манекена.
+            if (MeasureZone(_dummies, out Vector3 centre, out float radius))
+                driver.Session.ConfigureCampTraining(definitions, Flat(centre), Fix64.FromRaw((long)(radius * Fix64.One.Raw)));
+            else
+            {
+                Debug.LogWarning("[camp-training] забор полигона не найден — зона боя по манекенам.");
+                driver.Session.ConfigureCampTraining(definitions);
+            }
             SyncIds();
             var prefab = Resources.Load<GameObject>("UI/Prefabs/CampTrainingWc");
             if (prefab != null && _panel == null)
@@ -48,11 +66,82 @@ namespace Game.View
                 if (_panel != null)
                 {
                     _panel.name = "Тренировка — панель";
+                    SettleUnderMinimap(_panel.Card);
                     if (_panel.Group != null) { _panel.Group.alpha = 0f; _panel.Group.blocksRaycasts = false; }
                     if (_panel.Reset != null) _panel.Reset.onClick.AddListener(() => _driver?.Session?.Training.ResetCounters());
                 }
             }
         }
+        /// <summary>Верх карточки тренировки и потолок её дыма (над верхом) — в единицах холста 1920×1080.</summary>
+        public const float CardTop = -333f, CardSmokeAbove = 16f;
+        /// <summary>
+        /// Миникарта боевого HUD выросла 230 → 253 (29.09), низ её подписи опустился с −300 на −323 — а
+        /// карточка стояла на −318 и касалась подписи. Карточка опускается к <see cref="CardTop"/> (зазор 10),
+        /// дым над ней — не выше <see cref="CardSmokeAbove"/> (как было: заходит в подпись на 6). Холсты
+        /// карточки и HUD одинаковые (высота 1080 / масштаб), поэтому зазор держится при 80–120%; снизу при
+        /// 120% до плиток зелий остаётся ~19. Уже опущенную руками или сборщиком карточку не трогает.
+        /// </summary>
+        static void SettleUnderMinimap(RectTransform card)
+        {
+            if (card == null || card.anchorMin != Vector2.one || card.anchorMax != Vector2.one) return;
+            if (card.anchoredPosition.y > CardTop) card.anchoredPosition = new Vector2(card.anchoredPosition.x, CardTop);
+            foreach (string part in new[] { "Тень под текстом", "Дым", "Дым плотнее" })
+                if (card.Find(part) is RectTransform layer && layer.offsetMax.y > CardSmokeAbove)
+                    layer.offsetMax = new Vector2(layer.offsetMax.x, CardSmokeAbove);
+        }
+        /// <summary>
+        /// Круг зоны полигона в мире: центр — середина рамки забора (с манекенами), радиус — до её
+        /// дальнего угла плюс <see cref="ZoneMargin"/>, чтобы в круг вошёл весь забор. Деревья,
+        /// ящики и фонари полигона в рамку не идут: они стоят снаружи и раздули бы зону.
+        /// Забора нет — false, и зону строит Sim по самим манекенам.
+        /// </summary>
+        bool MeasureZone(CampDummyView[] dummies, out Vector3 centre, out float radius)
+        {
+            centre = Vector3.zero;
+            radius = 0f;
+            Transform ground = Ground != null ? Ground : dummies != null && dummies.Length > 0 ? dummies[0].transform.parent : null;
+            if (ground == null) return false;
+            bool any = false;
+            Bounds bounds = default;
+            foreach (var renderer in ground.GetComponentsInChildren<Renderer>())
+            {
+                if (!IsFence(renderer.transform, ground)) continue;
+                if (any) bounds.Encapsulate(renderer.bounds);
+                else { bounds = renderer.bounds; any = true; }
+            }
+            if (!any) return false;
+            foreach (var dummy in dummies) bounds.Encapsulate(dummy.TargetPosition);
+            centre = new Vector3(bounds.center.x, ground.position.y, bounds.center.z);
+            radius = new Vector2(bounds.extents.x, bounds.extents.z).magnitude + ZoneMargin;
+            return true;
+        }
+
+        static bool IsFence(Transform part, Transform ground)
+        {
+            for (; part != null && part != ground; part = part.parent)
+            {
+                string name = part.name.ToLowerInvariant();
+                if (name.Contains("fence") || name.Contains("забор") || name.Contains("ограда")) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Зона полигона в сцене — чтобы её было видно и можно было подогнать ZoneMargin.</summary>
+        void OnDrawGizmosSelected()
+        {
+            if (!MeasureZone(GetComponentsInChildren<CampDummyView>(), out Vector3 centre, out float radius)) return;
+            Gizmos.color = new Color(1f, .54f, .3f, .9f);
+            const int segments = 72;
+            Vector3 previous = centre + new Vector3(radius, .05f, 0f);
+            for (int i = 1; i <= segments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / segments;
+                Vector3 next = centre + new Vector3(Mathf.Cos(angle) * radius, .05f, Mathf.Sin(angle) * radius);
+                Gizmos.DrawLine(previous, next);
+                previous = next;
+            }
+        }
+
         void SyncIds()
         {
             if (_driver == null || _driver.Session.Generation == _generation) return;
@@ -140,11 +229,10 @@ namespace Game.View
             var camp = CampPlayerView.Instance;
             if (camp == null || !camp.Active || camp.InputBlocked || _driver?.Session == null || _dummies == null || _driver.GameplayPaused || Camera.main == null) return;
             SyncIds();
-            bool nearby = false;
+            bool nearby = Nearby();
             foreach (var dummy in _dummies)
             {
-                if (!IsNear(dummy, camp.Position)) continue;
-                nearby = true;
+                if (!nearby || !IsNear(dummy, camp.Position)) continue;
                 Vector3 p = Camera.main.WorldToScreenPoint(dummy.BarPosition);
                 if (p.z <= 0) continue;
                 var entities = _driver.Sim.Entities;

@@ -23,6 +23,12 @@ namespace Game.View
     /// «закрыто целиком» должен решать один хозяин.
     ///
     /// В покое холст выключен: полноэкранный дым не рисуется ни одного лишнего кадра.
+    ///
+    /// Карта тушью (выбор владельца 30.09, <see cref="SmokeRouteMap"/>): при смене арены, входе через арку и
+    /// «Повторить» на закрытом дыму проявляется путь забега — кисть рисует дорогу к выбранной арене, узел
+    /// загорается, подпись «Арена N · впереди …». Путь заказывает <see cref="BeginCover"/>, показ начинается на
+    /// <see cref="MapStart"/> наката, CampTransition держит завесу, пока карта не дочитана (<see cref="MapDone"/>),
+    /// на рассеивании карта растворяется вместе с дымом.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class SmokeTransition : MonoBehaviour
@@ -87,16 +93,32 @@ namespace Game.View
         [Tooltip("Искр в секунду, пока завеса закрыта: редкие, дым главный")] public float EmberRate = 1.5f;
         [Tooltip("Искр разом в миг полного закрытия")] public int EmberBurst = 4;
 
+        [Header("Карта тушью")]
+        [Tooltip("Путь забега на закрытом дыму (SmokeRouteMap); пусто — завеса без карты, как до 30.09")]
+        public SmokeRouteMap Map;
+        [Tooltip("Доля наката, с которой карта начинает проявляться: середину уже закрыл клуб-сердце, " +
+                 "а карта успевает прочитаться, не удлиняя переход")]
+        [Range(0f, 1f)] public float MapStart = .55f;
+
+        [Tooltip("Версия раскладки префаба (SmokeTransitionBuilder.Migrations)")]
+        public int LayoutVersion;
+
         Graphic _base, _glow;
         Graphic[] _puffGraphics = new Graphic[0];
         Vector2[] _home = new Vector2[0];
         float[] _offset = new float[0];
-        bool _remembered, _active, _burst;
+        bool _remembered, _active, _burst, _mapBegun;
+        SmokeRouteMap.Route _mapRoute;
         int _warmFrames;
         float _wander, _wanderLast = -1f;
 
         /// <summary>Завеса закрыла экран целиком: основа проявлена до конца.</summary>
         public bool Covered => _active && (Base == null || Base.Hidden <= 0f);
+
+        /// <summary>
+        /// Карта дочитана — можно раскрывать. Карты нет, путь не заказан или данных нет — сразу.
+        /// </summary>
+        public bool MapDone => Map == null || _mapRoute == SmokeRouteMap.Route.None || (_mapBegun && Map.Done);
 
         void Awake()
         {
@@ -135,6 +157,7 @@ namespace Game.View
             if (_active) return;
             Remember();
             SetAll(1f);
+            if (Map != null) Map.Hide();
             SetCanvas(true, false);
             _warmFrames = 2;
         }
@@ -151,12 +174,18 @@ namespace Game.View
             for (int i = 0; i < Puffs.Length; i++) Place(i, i < _offset.Length ? _offset[i] : 0f);
         }
 
-        /// <summary>Начало наката: всё скрыто, чернила готовы растекаться от центра.</summary>
-        public void BeginCover()
+        /// <summary>
+        /// Начало наката: всё скрыто, чернила готовы растекаться от центра. <paramref name="map"/> — какой путь
+        /// показать на закрытом дыму (None — без карты: возвращение в лагерь).
+        /// </summary>
+        public void BeginCover(SmokeRouteMap.Route map = SmokeRouteMap.Route.None)
         {
             Remember();
             _active = true;
             _burst = false;
+            _mapRoute = Map != null ? map : SmokeRouteMap.Route.None;
+            _mapBegun = false;
+            if (Map != null) Map.Hide();
             _warmFrames = 0;
             _wander = 0f;
             _wanderLast = -1f;
@@ -205,6 +234,12 @@ namespace Game.View
                 _burst = true;
                 if (Embers != null) Embers.Burst(EmberBurst);
             }
+            // Карта проявляется на дыму ещё до полного закрытия: середину уже закрыл клуб-сердце.
+            if (!_mapBegun && _mapRoute != SmokeRouteMap.Route.None && k >= MapStart)
+            {
+                _mapBegun = true;
+                Map.Begin(_mapRoute);
+            }
         }
 
         /// <summary>
@@ -248,6 +283,8 @@ namespace Game.View
                 Embers.Rate = 0f;
                 Alpha(Embers, 1f - Smooth(k));
             }
+            // Карта растворяется в расходящемся дыму первой, до того как откроется мир.
+            if (Map != null && _mapBegun) Map.SetOpen(k);
         }
 
         /// <summary>Всё скрыто, холст выключен, клубы на своих местах.</summary>
@@ -261,6 +298,9 @@ namespace Game.View
             SetAll(1f);
             for (int i = 0; i < Puffs.Length; i++) Place(i, 0f);
             if (Embers != null) Embers.Rate = 0f;
+            _mapRoute = SmokeRouteMap.Route.None;
+            _mapBegun = false;
+            if (Map != null) Map.Hide();
             SetCanvas(false, false);
         }
 

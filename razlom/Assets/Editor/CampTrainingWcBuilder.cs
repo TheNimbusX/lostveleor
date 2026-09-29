@@ -82,10 +82,12 @@ namespace Game.EditorTools
             // (как у подсказок боевого HUD: много текста прямо над травой) и огненная нить по низу.
             RectTransform card = Node("Тренировка", rect);
             card.anchorMin = card.anchorMax = card.pivot = new Vector2(1f, 1f);
-            card.anchoredPosition = new Vector2(-24f, -318f);
+            // Под подписью карты 253 (низ −323) с зазором 10; готовый префаб с −318 опускает сам вид
+            // (CampTrainingView.SettleUnderMinimap) — пересборка и старый префаб выглядят одинаково.
+            card.anchoredPosition = new Vector2(-24f, CampTrainingView.CardTop);
             card.sizeDelta = new Vector2(Width, 426f);
             UiInkKit.Plate(card);
-            TrimTop(card, 24f);
+            TrimTop(card, CampTrainingView.CardSmokeAbove);
             // Картинки «Дыма и света» мышь не ловят: без ловца клик по панели уходил бы в ходьбу по лагерю.
             UiInkKit.HitArea(card);
             // Панель встаёт каждый раз, когда герой подходит к манекенам: быстро и без огня по кромке.

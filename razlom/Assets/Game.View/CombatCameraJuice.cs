@@ -46,7 +46,9 @@ namespace Game.View
             _trauma = Mathf.MoveTowards(_trauma, 0f, dt * 3.8f);
             _zoomPunch = Mathf.MoveTowards(_zoomPunch, 0f, dt * 5.5f);
 
-            float strength = _trauma * _trauma;
+            // Сила тряски из настроек (0–100%): 0 — камера стоит, толчок зумом тоже гаснет.
+            float shake = GameUserSettings.ScreenShake;
+            float strength = _trauma * _trauma * shake;
             if (strength > 0.0001f)
             {
                 Vector2 n = new Vector2(SignedNoise(), SignedNoise());
@@ -59,7 +61,7 @@ namespace Game.View
                 transform.rotation = _restRotation;
             }
 
-            _camera.orthographicSize = _restSize * (1f - _zoomPunch * 0.055f);
+            _camera.orthographicSize = _restSize * (1f - _zoomPunch * 0.055f * shake);
         }
 
         private float SignedNoise()

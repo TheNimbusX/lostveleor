@@ -150,7 +150,9 @@ namespace Game.EditorTools
             {
                 view.StatusTitle.text = "Арена 2";
                 view.StatusLine.text = "Волна 2 / 3 · целей 14";
-                view.StatusExtra.text = "Тайники 0 / 2 · золото 36";
+                // Золото — в строке добычи под панелью (RunHud.FillStatus с v1).
+                view.StatusExtra.text = view.Loot != null ? "Тайники 1 / 2" : "Тайники 0 / 2 · золото 36";
+                PreviewLoot(view);
                 if (view.SurvivalLabel != null) view.SurvivalLabel.text = "Выстоять 0:42";
                 view.BossName.text = "Хранитель лугов";
                 view.BossBar.Set(.64f);
@@ -166,6 +168,38 @@ namespace Game.EditorTools
                 var hovered = view.Offers[1].GetComponent<UiHoverMotion>();
                 if (hovered != null && hovered.HighlightGroup != null) hovered.HighlightGroup.alpha = 1f;
             }
+        }
+
+        /// <summary>
+        /// Строка добычи на кадре состояния — как на выбранном кадре b1: золото 128, пять вещей разной
+        /// редкости и «+1» у последней. Раскладка — та же, что ставит RunHud.Loot.
+        /// </summary>
+        static void PreviewLoot(RunHudView view)
+        {
+            if (view.Loot == null) return;
+            view.Loot.gameObject.SetActive(true);
+            view.LootGold.text = "128";
+            float goldWidth = view.LootGold.GetPreferredValues("128").x;
+            string[] items = { "officer_sabre", "leather_jacket", "lavidium_ring", "woodland_talisman", "scout_jacket" };
+            int[] rarity = { 1, 0, 2, 1, 0 };
+            int shown = Mathf.Min(items.Length, view.LootSlots.Length);
+            for (int i = 0; i < view.LootSlots.Length; i++)
+            {
+                RunHudView.LootSlot slot = view.LootSlots[i];
+                if (slot?.Rect == null) continue;
+                slot.Rect.gameObject.SetActive(i < shown);
+                if (i >= shown) continue;
+                slot.Art.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/UI/Items/" + items[i] + ".png");
+                slot.Art.enabled = slot.Art.texture != null;
+                slot.State.Set(rarity[i], false);
+            }
+            view.LootDivider.gameObject.SetActive(true);
+            view.LootDivider.anchoredPosition = new Vector2(RunLootLedger.Layout.DividerX(goldWidth), view.LootDivider.anchoredPosition.y);
+            view.LootRow.anchoredPosition = new Vector2(RunLootLedger.Layout.RowStart(goldWidth), view.LootRow.anchoredPosition.y);
+            view.Loot.sizeDelta = new Vector2(RunLootLedger.Layout.Width(goldWidth, shown), view.Loot.sizeDelta.y);
+            view.LootArrival.gameObject.SetActive(true);
+            ((RectTransform)view.LootArrival.transform.parent).anchoredPosition =
+                new Vector2((shown - 1) * RunLootLedger.Layout.Pitch + RunLootLedger.Layout.Icon + 4f, 0f);
         }
 
         static void Offer(RunOfferCard card, string title, string kind, string body, string valueLabel, string value, string icon, bool rare, string key)

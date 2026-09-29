@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -28,30 +29,27 @@ namespace Game.View
 
         // Земля вместо газона: внутри поляны дальше одного-трёх метров от края — вытоптанный грунт,
         // у края — кайма травы, внутри — редкие травяные островки. Каменистая арена — с камнями в грунте.
-        private void PaintEarthClearing()
+        // Одна строка y ∈ [1, n − 2] после лесной подстилки; поле _clearingDistance уже посчитано
+        // (FloorDistance внутри пола), stones — по характеру арены (LayoutView.CampSurface).
+        private void EarthClearingRow(int y, float stones)
         {
-            if (_shownMap.Outline == null || _shownMap.GladeCount != 1) return;
             const int n = TrailResolution;
-            if (_clearingDistance == null) _clearingDistance = new float[n * n];
             var dist = _clearingDistance;
-            FloorDistance(dist, true);
-            float stones = CharacterOf(_shownMap, 0) == GladeCharacter.Rocky ? .85f : .45f;
-            for (int y = 1; y < n - 1; y++)
-                for (int x = 1; x < n - 1; x++)
-                {
-                    int i = y * n + x;
-                    if (dist[i] <= 0) continue;
-                    float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
-                    float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
-                    float rim = .7f + 1.3f * Mathf.PerlinNoise(px * .19f + 5, pz * .19f + 71);
-                    float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + 1.3f, dist[i]));
-                    earth *= 1 - .8f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.64f, .8f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
-                    if (earth <= .01f) continue;
-                    var pixel = _campSurfacePixels[i];
-                    pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
-                    pixel.g = (byte)(pixel.g * Mathf.Lerp(1, stones, earth));
-                    _campSurfacePixels[i] = pixel;
-                }
+            for (int x = 1; x < n - 1; x++)
+            {
+                int i = y * n + x;
+                if (dist[i] <= 0) continue;
+                float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
+                float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
+                float rim = .7f + 1.3f * Mathf.PerlinNoise(px * .19f + 5, pz * .19f + 71);
+                float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + 1.3f, dist[i]));
+                earth *= 1 - .8f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.64f, .8f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
+                if (earth <= .01f) continue;
+                var pixel = _campSurfacePixels[i];
+                pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
+                pixel.g = (byte)(pixel.g * Mathf.Lerp(1, stones, earth));
+                _campSurfacePixels[i] = pixel;
+            }
         }
 
         // Доля грунта в маске земли под точкой: 0 — трава, 1 — тропа или земля поляны.
@@ -104,11 +102,11 @@ namespace Game.View
         // Акценты кромки: куртины грибов и лиловых цветов в травяной кайме у самого края пола —
         // перед зарослями, где их видно с камеры, — и редкие друзы кристаллов, светящиеся из зарослей.
         // Грибы и цветы — мелкая трава, как пучки на полу: сквозь них проходят, бой они не закрывают.
-        private void ScatterEdgeAccents(LayoutMap map)
+        private IEnumerator ScatterEdgeAccentsSteps(LayoutMap map)
         {
-            if (map.Outline == null || map.GladeCount != 1) return;
+            if (map.Outline == null || map.GladeCount != 1) yield break;
             int mushrooms = VariantNamed("MeadowMushrooms"), flowers = VariantNamed("MeadowFlower"), crystals = VariantNamed("MeadowCrystals");
-            if (mushrooms < 0 && flowers < 0 && crystals < 0) return;
+            if (mushrooms < 0 && flowers < 0 && crystals < 0) yield break;
             var character = CharacterOf(map, 0);
             float crystalShare = character == GladeCharacter.Rocky ? .3f : .18f;
             var portals = new List<Vector2> { TrailPoint(map.EntryPoint) };
@@ -117,6 +115,7 @@ namespace Game.View
             int crystalCount = 0;
             foreach (var (edge, normal) in OutlineEdges())
             {
+                yield return null;
                 bool near = false;
                 foreach (var spot in taken)
                     if ((spot - edge).sqrMagnitude < 36) { near = true; break; }

@@ -143,7 +143,9 @@ namespace Game.View
                 string label = run.IsBranchClaimed(b) ? "Тайник пуст" : guards > 0 ? "Тайник · охрана " + guards : "Тайник · подойди";
                 Place(camera, run.Map.CenterOf(run.Map.GetRewardBranch(b)), .6f, CacheIcon, label);
             }
-            if (run.Encounters == null) return;
+            // Съёмка ролика без полосок (-capture-no-bars): и без таблички с именем элиты.
+            // Так же при настройке «Полоски здоровья врагов: Нет» — табличка без полосы висела бы в воздухе.
+            if (run.Encounters == null || CaptureRig.NoBars || !GameUserSettings.EnemyBarsVisible) return;
             Simulation sim = run.Sim;
             for (int i = 1; i < sim.Entities.Count; i++)
             {

@@ -60,56 +60,84 @@ namespace Game.EditorTools
                 s.Gold.text = "450";
                 s.Shards.text = "14";
                 s.ShardsGroup.SetActive(smith);
-                CampShopView.SetTab(s.Tabs[0], true);
-                CampShopView.SetTab(s.Tabs[1], false);
-                s.Tabs[0].GetComponentInChildren<TMPro.TMP_Text>().text = smith ? "Перековка" : "Товары";
-                s.Tabs[1].GetComponentInChildren<TMPro.TMP_Text>().text = smith ? "Разбор" : "Продать из сумки";
-                s.GridCaption.text = smith ? "Предметы в сумке" : "Товары";
-                int count = smith ? bag.Length : 8;
+                // С 29.09 одна страница: вкладки спрятаны миграцией v1.
+                foreach (var tab in s.Tabs) if (tab != null) tab.gameObject.SetActive(false);
+                if (s.Subtitle != null) s.Subtitle.text = smith ? "Перековка и разбор" : "Покупка и продажа";
+                s.GridCaption.text = "Сумка  ·  " + bag.Length + " / 48";
+                int chosenBag = smith ? 3 : 2;
                 for (int i = 0; i < s.Cells.Length; i++)
                 {
-                    bool has = i < count;
-                    s.Cells[i].gameObject.SetActive(smith || i < 8);
-                    s.Cells[i].Show(has ? Item(bag[(i + (smith ? 0 : 3)) % bag.Length]) : null, has ? (4 + i % 5).ToString() : "", has ? rare[(i + (smith ? 0 : 3)) % bag.Length] : 0, !smith && i == 2);
+                    bool has = i < bag.Length;
+                    s.Cells[i].gameObject.SetActive(true);
+                    s.Cells[i].Show(has ? Item(bag[i]) : null, has ? (4 + i % 5).ToString() : "", has ? rare[i] : 0, i == chosenBag);
+                    if (i < s.CellPrices.Length && s.CellPrices[i] != null) s.CellPrices[i].text = has ? (i == 5 ? "беречь" : "+" + (7 + i % 5 + rare[i] * 6)) : "";
                 }
-                // Ряд «Надето»: у кузнеца выбрано надетое оружие (перековка без палатки).
                 string[] worn = { "officer_sabre", "boarding_vest", "lavidium_ring", null };
                 int[] wornRarity = { 2, 1, 1, 0 };
                 for (int i = 0; i < s.Worn.Length; i++)
-                    s.Worn[i].Show(worn[i] != null ? Item(worn[i]) : null, worn[i] != null ? "9" : "", wornRarity[i], smith && i == 0);
-                if (!smith && s.Cells[4].State != null) s.Cells[4].State.SetHover(1f);
-                s.Info.text = smith ? "Надетое можно перековать прямо здесь.\nРазбирать — только из сумки." : "Шанс редкого товара при обновлении: 10%\nПосле босса — бесплатное обновление, шанс 25%.";
+                    s.Worn[i].Show(worn[i] != null ? Item(worn[i]) : null, worn[i] != null ? "9" : "", wornRarity[i], false);
+                s.Info.text = smith ? "Надетое можно перековать прямо здесь.\nРазбирать — только из сумки." : "Обновление — шанс редкого 10%\nПосле босса — бесплатно, шанс 25%";
                 if (smith)
                 {
-                    s.Item.Show(Item("officer_sabre"), "9", 2, false);
-                    s.ItemName.text = "Офицерская сабля";
-                    s.ItemMeta.text = "Уровень 9  ·  Перековки 1/3  ·  <color=#3BF0F5>надето</color>";
-                    string[] rows = { "Урон  <color=#C9D2E0>14</color>", "Шанс крита  <color=#C9D2E0>8%</color>", "Скорость атаки  <color=#C9D2E0>6%</color>" };
+                    // Выбрана вещь из сумки: обе кнопки рядом — перековка по строке «Урон», разбор с выходом.
+                    s.Item.Show(Item("fang_cord"), "7", 2, false);
+                    s.ItemName.text = "Клык на шнурке";
+                    s.ItemMeta.text = "<color=#A765FF>Эпический</color>  ·  Уровень 7";
+                    if (s.ReforgeCount != null) s.ReforgeCount.text = "1 / 3";
+                    for (int i = 0; i < s.ReforgePips.Length; i++)
+                        if (s.ReforgePips[i] != null && s.ReforgePips[i].GetComponent<ThemeColor>() is ThemeColor pip)
+                            pip.SetRole(i < 1 ? UiTheme.Role.Accent : UiTheme.Role.TextMuted, i < 1 ? 1f : .35f);
+                    string[] rows = { "Урон  <color=#F4F7FB>+3</color>  →  <color=#FD7442>+4…+6</color>", "Шанс крита  <color=#F4F7FB>8%</color>",
+                        "Скорость атаки  <color=#F4F7FB>6%</color>  <color=#93A2BC>· предел</color>" };
                     for (int i = 0; i < s.Rows.Length; i++)
                     {
                         s.Rows[i].gameObject.SetActive(i < rows.Length);
                         if (i < rows.Length) s.RowLabels[i].text = rows[i];
                         CampShopView.SetRow(s.Rows[i], i == 0);
                     }
-                    s.Preview.text = "Урон  14  →  <color=#FA883C>16…20</color>";
                     s.PriceGold.text = "60";
                     s.PriceShards.text = "6";
                     s.PriceShardsGroup.SetActive(true);
-                    s.Note.text = "Уровень +2";
-                    s.ActionLabel.text = "Перековка";
+                    s.Preview.text = "Уровень вещи 7 → 10";
+                    s.Note.text = "";
+                    s.ActionLabel.text = "Перековать";
+                    if (s.ExtraLabel != null) s.ExtraLabel.text = "Разобрать";
+                    if (s.YieldShards != null) s.YieldShards.text = "+9 осколков";
+                    if (s.ExtraNote != null) s.ExtraNote.text = "Предмет будет уничтожен";
+                    if (s.MainKeyLabel != null) s.MainKeyLabel.text = "Перековать";
+                    if (s.SecondKeyLabel != null) s.SecondKeyLabel.text = "Разобрать";
                 }
                 else
                 {
+                    // Товары рядом с сумкой; выбрана вещь из сумки — сравнение с надетым и «Продать · +N».
+                    string[] goods = { "rusty_sword", "boarding_cutlass", "quilted_jacket", "leather_jacket", "copper_ring", "smith_ring", "woodland_talisman", "fang_cord" };
+                    string[] names = { "Ржавая сабля", "Абордажный тесак", "Стёганая куртка", "Кожаная куртка", "Медное кольцо", "Кольцо кузнеца", "Лесной талисман", "Клык на шнурке" };
+                    int[] prices = { 21, 27, 21, 48, 21, 21, 21, 48 };
+                    for (int i = 0; i < s.Goods.Length; i++)
+                    {
+                        var good = s.Goods[i];
+                        if (good == null || good.Button == null) continue;
+                        good.Button.gameObject.SetActive(i < goods.Length);
+                        if (i >= goods.Length) continue;
+                        bool sold = i == 6;
+                        good.Cell.Show(sold ? null : Item(goods[i]), sold ? "" : "3", i == 3 || i == 7 ? 1 : 0, false);
+                        good.Name.text = sold ? "Продано" : names[i];
+                        good.Price.text = prices[i].ToString();
+                        if (good.PriceGroup != null) good.PriceGroup.SetActive(!sold);
+                        if (good.Chosen != null) good.Chosen.SetActive(false);
+                    }
                     s.Item.Show(Item("copper_ring"), "5", 0, false);
                     s.ItemName.text = "Медное кольцо";
-                    s.ItemMeta.text = "Обычный  ·  Уровень 5  ·  Перековки 0/3";
-                    s.Detail.text = "Здоровье  <color=#F4F7FB>+12</color>\nСопротивление огню  <color=#F4F7FB>8%</color>\n\n<size=90%><color=#F4F7FB>По сравнению с надетым:</color></size>\n<color=#8CE07A>Здоровье +12</color>\n<color=#FF7A66>Шанс крита −2%</color>";
+                    s.ItemMeta.text = "<color=#A6B3C8>Обычный</color>  ·  Уровень 5  ·  Перековки 0/3";
+                    s.Detail.text = "Здоровье  <color=#F4F7FB>+12</color>";
+                    if (s.Compare != null)
+                        s.Compare.text = "<color=#93A2BC>Вместо «Кольцо лавидия»:</color>\nЗдоровье   120 → 132  <color=#8FE3A8>+12</color>\nЗапас лавидия   115 → 100  <color=#FF6A5A>−15</color>";
                     s.Preview.text = "";
-                    s.PriceGold.text = "38";
-                    s.PriceShardsGroup.SetActive(false);
-                    s.Note.text = "";
-                    s.ActionLabel.text = "Купить";
-                    s.ExtraLabel.text = "Обновить товары  ·  25";
+                    s.Price.SetActive(false);
+                    s.Note.text = "Станет 457 золота";
+                    s.ActionLabel.text = "Продать · +7";
+                    s.ExtraLabel.text = "Обновить товары · 50";
+                    if (s.MainKeyLabel != null) s.MainKeyLabel.text = "Продать";
                 }
                 s.Title.text = smith ? "Эни" : "Вен";
                 s.Speaker.text = s.Title.text;

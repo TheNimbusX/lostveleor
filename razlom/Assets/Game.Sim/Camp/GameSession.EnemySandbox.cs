@@ -10,6 +10,7 @@ namespace Game.Sim
             LastRunSeed = seed;
             RunNumber++;
             IsDeveloperRun = true;
+            BeginRunStats();
             var sim = new Simulation(seed, _simCapacity);
             sim.ApplyHeroBaseline();
             Camp.Worn.Bind(sim.Entities.Stats[Simulation.PlayerId]);

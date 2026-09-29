@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
 namespace Game.View
@@ -7,6 +8,12 @@ namespace Game.View
     /// <summary>
     /// Единственный владелец пользовательских настроек. UI меняет значения
     /// здесь; звук и будущая музыка читают категорийные коэффициенты отсюда.
+    ///
+    /// Настройки окна «Настройки Б» (30.09: яркость, громкость интерфейса, звук в фоне, язык, пауза
+    /// при сворачивании, цифры урона, полоски врагов, тряска, вспышки) хранит <see cref="UserPreferences"/>
+    /// (без Unity, под тестами); здесь они применяются к движку. Окно читает сохранённое
+    /// (<see cref="Preferences"/>), игра — действующее: в съёмке (-razlom-capture) действуют
+    /// стандартные значения, кадры не зависят от вкуса того, кто играл последним.
     /// </summary>
     public static class GameUserSettings
     {
@@ -147,13 +154,97 @@ namespace Game.View
         /// <summary>Сменился масштаб интерфейса — Canvas'ы пересчитывают CanvasScaler.</summary>
         public static event Action UiScaleChanged;
 
+        // ---- настройки «Настройки Б» (30.09) ----
+
+        /// <summary>PlayerPrefs за интерфейсом хранилища <see cref="UserPreferences"/>.</summary>
+        private sealed class PlayerPrefsStore : ISettingsStore
+        {
+            public bool HasKey(string key) => PlayerPrefs.HasKey(key);
+            public int GetInt(string key, int fallback) => PlayerPrefs.GetInt(key, fallback);
+            public float GetFloat(string key, float fallback) => PlayerPrefs.GetFloat(key, fallback);
+            public string GetString(string key, string fallback) => PlayerPrefs.GetString(key, fallback);
+            public void SetInt(string key, int value) => PlayerPrefs.SetInt(key, value);
+            public void SetFloat(string key, float value) => PlayerPrefs.SetFloat(key, value);
+            public void SetString(string key, string value) => PlayerPrefs.SetString(key, value);
+            public void Save() => PlayerPrefs.Save();
+        }
+
+        private static readonly UserPreferences Prefs = new UserPreferences(new PlayerPrefsStore());
+        private static int _captureRun = -1;
+        private static bool _focusHooked;
+        private static Volume _brightnessVolume;
+        private static LiftGammaGain _brightnessGamma;
+
+        /// <summary>Сохранённые значения — их показывает окно настроек.</summary>
+        public static UserPreferences Preferences
+        {
+            get
+            {
+                Load();
+                return Prefs;
+            }
+        }
+
+        /// <summary>
+        /// Идёт съёмка (-razlom-capture, тот же флаг, что ставит CaptureRig): новые настройки удобства
+        /// действуют стандартными. Порядок BeforeSceneLoad не задан, поэтому флаг читается здесь, а не у CaptureRig.
+        /// </summary>
+        public static bool CaptureRun
+        {
+            get
+            {
+                if (_captureRun < 0)
+                    _captureRun = Array.IndexOf(Environment.GetCommandLineArgs(), "-razlom-capture") >= 0 ? 1 : 0;
+                return _captureRun == 1;
+            }
+        }
+
+        /// <summary>Яркость 0–1, стандартно 0,5 (картинка без изменений).</summary>
+        public static float Brightness => CaptureRun ? UserPreferences.DefaultBrightness : Preferences.Brightness;
+
+        /// <summary>Громкость звуков интерфейса (UiSound), до общей громкости слушателя.</summary>
+        public static float InterfaceVolume => Preferences.InterfaceVolume;
+
+        public static bool SoundInBackground => Preferences.SoundInBackground;
+        public static string Language => Preferences.Language;
+        public static bool PauseOnFocusLoss => !CaptureRun && Preferences.PauseOnFocusLoss;
+
+        /// <summary>Рисовать ли цифры урона (DamageNumbers).</summary>
+        public static bool ShowDamageNumbers => CaptureRun || Preferences.DamageNumbers;
+
+        /// <summary>Какие полоски здоровья врагов рисовать (HealthBars).</summary>
+        public static EnemyBarMode EnemyBars => CaptureRun ? UserPreferences.DefaultEnemyBars : Preferences.EnemyBars;
+
+        /// <summary>Полоски врагов вообще видны: «Нет» прячет и полосу элиты с табличкой имени.</summary>
+        public static bool EnemyBarsVisible => EnemyBars != EnemyBarMode.None;
+
+        /// <summary>Рисовать ли полоску этого врага: элиту — при «У всех» и «Элита», прочих — только при «У всех».</summary>
+        public static bool ShowsEnemyBar(bool elite)
+            => EnemyBars == EnemyBarMode.All || elite && EnemyBars == EnemyBarMode.EliteOnly;
+
+        /// <summary>Сила тряски камеры 0–1 (CombatCameraJuice).</summary>
+        public static float ScreenShake => CaptureRun ? UserPreferences.DefaultScreenShake : Preferences.ScreenShake;
+
+        /// <summary>Множитель вспышек и всполохов: 1 или 0,35 в режиме «Мягче».</summary>
+        public static float FlashScale => CaptureRun ? 1f : Preferences.FlashScale;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void RuntimeLoad() => Load();
+        private static void RuntimeLoad()
+        {
+            Load();
+            if (_focusHooked) return;
+            _focusHooked = true;
+            // «Звук в фоне»: окно потеряло фокус — слушатель молчит, вернулось — громкость обратно.
+            Application.focusChanged += _ => ApplyListenerVolume();
+            ApplyBrightness();
+        }
 
         public static void Load()
         {
             if (_loaded) return;
             _loaded = true;
+            Prefs.Load();
+            if (Prefs.Language != UserPreferences.DefaultLanguage) CampServiceText.SetLocale(Prefs.Language);
 
             WasdMovement = PlayerPrefs.GetInt(MovementKey, 0) == 1;
             FrameCap = PlayerPrefs.GetInt(FrameCapKey, 0);
@@ -180,7 +271,7 @@ namespace Game.View
             MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterKey, 1f));
             EffectsVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(EffectsKey, 1f));
             MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MusicKey, 0.75f));
-            AudioListener.volume = MasterVolume;
+            ApplyListenerVolume();
 
             DisplayWidth = Mathf.Max(640, PlayerPrefs.GetInt(WidthKey, Screen.width));
             DisplayHeight = Mathf.Max(360, PlayerPrefs.GetInt(HeightKey, Screen.height));
@@ -330,7 +421,10 @@ namespace Game.View
             UiScaleChanged?.Invoke();
         }
 
-        /// <summary>«Сбросить» на вкладке графики. Экран не трогает: его смена идёт через подтверждение.</summary>
+        /// <summary>
+        /// «Сбросить» на вкладке «Изображение». Экран не трогает: его смена идёт через подтверждение.
+        /// Масштаб интерфейса с 30.09 живёт на вкладке «Интерфейс и доступность» и сбрасывается там.
+        /// </summary>
         public static void ResetGraphics()
         {
             Load();
@@ -339,20 +433,155 @@ namespace Game.View
             FrameLimit = 144;
             PlayerPrefs.SetInt(FrameLimitKey, FrameLimit);
             SetFrameCap(0);
-            SetUiScale(1f);
+            Prefs.ResetDisplay();
+            ApplyBrightness();
             PlayerPrefs.Save();
         }
 
         public static void ResetAudio()
         {
+            Load();
             SetAudio(1f, 1f, 0.75f);
+            Prefs.ResetAudio();
             SaveAudio();
+            ApplyListenerVolume();
         }
 
+        /// <summary>«Сбросить» на вкладке «Игра».</summary>
+        public static void ResetGame()
+        {
+            Load();
+            string language = Prefs.Language;
+            Prefs.ResetGame();
+            if (Prefs.Language != language) CampServiceText.SetLocale(Prefs.Language);
+        }
+
+        /// <summary>«Сбросить» на вкладке «Интерфейс и доступность».</summary>
+        public static void ResetInterface()
+        {
+            Load();
+            SetUiScale(1f);
+            Prefs.ResetInterface();
+        }
+
+        /// <summary>Схема движения, ряд способностей и свои клавиши обеих схем — к стандартным.</summary>
         public static void ResetControls()
         {
+            Load();
+            SetWasdMovement(false);
             SetAbilityLayout(AbilityLayout.Qwer);
-            GameKeyBindings.ResetAll();
+            GameKeyBindings.ResetBothSchemes();
+        }
+
+        // ---- что уже стандартное: «Сбросить» тогда притухает и сбрасывать нечего ----
+
+        public static bool GraphicsIsDefault
+        {
+            get
+            {
+                Load();
+                return Quality == QualityLevel.High && Shadows == ShadowLevel.High && FrameCap == 0 && FrameLimit == 144
+                       && Prefs.DisplayIsDefault;
+            }
+        }
+
+        public static bool AudioIsDefault
+        {
+            get
+            {
+                Load();
+                return Mathf.Approximately(MasterVolume, 1f) && Mathf.Approximately(EffectsVolume, 1f)
+                       && Mathf.Approximately(MusicVolume, .75f) && Prefs.AudioIsDefault;
+            }
+        }
+
+        public static bool GameIsDefault => Preferences.GameIsDefault;
+
+        public static bool InterfaceIsDefault
+        {
+            get
+            {
+                Load();
+                return Mathf.Approximately(UiScale, 1f) && Prefs.InterfaceIsDefault;
+            }
+        }
+
+        public static bool ControlsIsDefault
+        {
+            get
+            {
+                Load();
+                return !WasdMovement && Abilities == AbilityLayout.Qwer && !GameKeyBindings.AnyCustomInEitherScheme();
+            }
+        }
+
+        // ---- сеттеры «Настройки Б»: сохраняют сразу и сразу применяют ----
+
+        public static void SetBrightness(float value)
+        {
+            if (Preferences.SetBrightness(value)) ApplyBrightness();
+        }
+
+        public static void SetInterfaceVolume(float value) => Preferences.SetInterfaceVolume(value);
+
+        public static void SetSoundInBackground(bool value)
+        {
+            if (Preferences.SetSoundInBackground(value)) ApplyListenerVolume();
+        }
+
+        /// <summary>false — у языка нет готового перевода, выбор не меняется.</summary>
+        public static bool SetLanguage(string code)
+        {
+            if (!Preferences.SetLanguage(code)) return false;
+            CampServiceText.SetLocale(code);
+            return true;
+        }
+
+        public static void SetPauseOnFocusLoss(bool value) => Preferences.SetPauseOnFocusLoss(value);
+        public static void SetDamageNumbers(bool value) => Preferences.SetDamageNumbers(value);
+        public static void SetEnemyBars(EnemyBarMode mode) => Preferences.SetEnemyBars(mode);
+        public static void SetScreenShake(float value) => Preferences.SetScreenShake(value);
+        public static void SetReduceFlashes(bool value) => Preferences.SetReduceFlashes(value);
+
+        /// <summary>
+        /// Громкость слушателя: общая, а без фокуса при выключенном «Звук в фоне» — ноль. Единственное
+        /// место, где пишется AudioListener.volume: общая громкость и фокус не перебивают друг друга.
+        /// </summary>
+        public static void ApplyListenerVolume()
+        {
+            bool muted = !Application.isFocused && !Prefs.SoundInBackground && !CaptureRun;
+            AudioListener.volume = muted ? 0f : MasterVolume;
+        }
+
+        /// <summary>
+        /// Яркость — глобальный Volume с LiftGammaGain (gamma.w) поверх всего: ни один профиль игры
+        /// LiftGammaGain не задаёт, так что сдвиг складывается с видом сцены, а не заменяет его.
+        /// При стандартной яркости Volume выключен — картинка ровно та, что настроена.
+        /// Без DontSave: объект живёт в сцене Play и уходит вместе с ней (голубой экран меню в редакторе).
+        /// </summary>
+        public static void ApplyBrightness()
+        {
+            float offset = UserPreferences.GammaOffset(Brightness);
+            if (Mathf.Abs(offset) < 1e-4f)
+            {
+                if (_brightnessVolume != null) _brightnessVolume.gameObject.SetActive(false);
+                return;
+            }
+            if (!Application.isPlaying) return;
+            if (_brightnessVolume == null)
+            {
+                var root = new GameObject("Яркость — настройки игрока");
+                UnityEngine.Object.DontDestroyOnLoad(root);
+                _brightnessVolume = root.AddComponent<Volume>();
+                _brightnessVolume.isGlobal = true;
+                _brightnessVolume.priority = 1000f;
+                var profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                profile.name = "Яркость игрока";
+                _brightnessGamma = profile.Add<LiftGammaGain>();
+                _brightnessVolume.sharedProfile = profile;
+            }
+            _brightnessGamma.gamma.Override(new Vector4(1f, 1f, 1f, offset));
+            _brightnessVolume.gameObject.SetActive(true);
         }
 
         public static void SetQuality(QualityLevel level)
@@ -458,7 +687,7 @@ namespace Game.View
             MasterVolume = Mathf.Clamp01(master);
             EffectsVolume = Mathf.Clamp01(effects);
             MusicVolume = Mathf.Clamp01(music);
-            AudioListener.volume = MasterVolume;
+            ApplyListenerVolume();
         }
 
         public static void SaveAudio()

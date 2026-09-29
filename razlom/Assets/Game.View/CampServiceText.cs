@@ -66,7 +66,7 @@ namespace Game.View
                 case "smith.error.InvalidItem":return "Выбери предмет";
                 case "smith.error.Protected":return "Предмет защищён от разбора";
                 case "smith.error.NoAffix":return "У этого предмета нет аффиксов.\nДля перековки нужна редкая вещь.";
-                case "smith.error.AtMaximum":return "Характеристика уже на максимуме";
+                case "smith.error.AtMaximum":return "Свойство уже на пределе.\nВыбери другое";
                 case "smith.error.Exhausted":return "Все три перековки использованы";
                 case "smith.error.InsufficientFunds":return "Не хватает золота или осколков";
                 // Характеристики: полное имя, строка листа героя (.short) и пояснение (.hint) — StatText.
@@ -148,7 +148,7 @@ namespace Game.View
                 case "potion.empty":return "Бутылки закончились";
                 case "potion.switch.hint":return "ПКМ · Сменить размер";
                 case "back":return "Назад";
-                case "smith.bag.caption":return "Предметы в сумке";
+                case "smith.bag.caption":return "Сумка";
                 case "shop.worn":return "Надето";
                 case "shop.worn.tag":return "надето";
                 case "trader.worn.note":return "Надетое не продаётся.\nЧтобы продать, сними в палатке.";
@@ -191,6 +191,51 @@ namespace Game.View
                 case "alchemy.tab.potions":return "Зелья";
                 case "alchemy.tab.recipes":return "Рецепты";
                 case "potion.recipe":return "Нужен рецепт · вкладка «Рецепты»";
+                // Одна страница кузнеца и торговца (ревью 29.09, кадры «Кузнец А» и «Торговец А»).
+                case "smith.subtitle":return "Перековка и разбор";
+                case "trader.subtitle":return "Покупка и продажа";
+                case "smith.reforge.action":return "Перековать";
+                case "smith.dismantle.action":return "Разобрать";
+                case "smith.dismantle.confirm":return "Точно разобрать?";
+                case "smith.confirm.note":return "Нажми ещё раз — вещь исчезнет.\nEsc — отмена";
+                case "smith.worn.nodismantle":return "Надетое не разбирается.\nСними его в палатке";
+                case "smith.protected.short":return "Помечен «беречь».\nОтметку снимают в палатке";
+                case "smith.level.change":return "Уровень вещи {0} → {1}";
+                case "smith.short":return "Не хватает: {0}";
+                case "smith.reforged":return "{0}: {1} → {2}";
+                case "smith.max":return "предел";
+                case "smith.choose.hint":return "Слева — сумка и надетое";
+                case "smith.dismantled":return "Получено: +{0}";
+                case "unit.gold":return "золота";
+                case "unit.shards.0":return "осколок";
+                case "unit.shards.1":return "осколка";
+                case "unit.shards.2":return "осколков";
+                case "trader.buy.action":return "Купить · {0}";
+                case "trader.sell.action":return "Продать · +{0}";
+                case "trader.sell.confirm.action":return "Подтвердить · +{0}";
+                case "trader.after.buy":return "Останется {0} золота";
+                case "trader.after.sell":return "Станет {0} золота";
+                case "trader.funds.short":return "Не хватает {0} золота";
+                case "trader.full.note":return "Сумка заполнена.\nПродай или разбери лишнее";
+                case "trader.protected.note":return "Помечена «беречь» — не продаётся.\nОтметку снимают в палатке";
+                case "trader.sell.confirm.note":return "Нажми ещё раз — выкупа нет.\nEsc — отмена";
+                case "trader.sold.out":return "Продано";
+                case "trader.sold.out.note":return "Новые товары — после обновления";
+                case "trader.compare.empty":return "Если надеть:";
+                case "trader.compare.instead":return "Вместо «{0}»:";
+                case "trader.worn.now":return "Надето сейчас.\nСравнение — у товаров и вещей из сумки";
+                case "trader.choose":return "Выбери вещь";
+                case "trader.choose.hint":return "Товары — купить, сумка — продать";
+                case "trader.kept.tag":return "беречь";
+                case "trader.refresh.label":return "Обновить товары · {0}";
+                case "trader.refresh.confirm.label":return "Точно обновить? · {0}";
+                case "trader.refresh.confirm.note":return "Нажми ещё раз — все товары сменятся.\nEsc — отмена";
+                case "trader.info":return "Обновление — шанс редкого {0}%\nПосле босса — бесплатно, шанс {1}%";
+                case "trader.sold.note":return "Продано: +{0} золота";
+                case "trader.bought.note":return "Куплено — вещь в сумке";
+                case "trader.bag.count":return "{0}  ·  {1} / {2}";
+                case "key.confirm":return "Подтвердить";
+                case "key.cancel":return "Отменить";
                 default:return key;
             }
         }

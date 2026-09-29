@@ -25,11 +25,26 @@ namespace Game.View
 
         public int Created => _created;
 
-        public ViewPool(Transform parent, System.Func<GameObject> factory, int prewarm, bool reportOverflow = true)
+        /// <summary>
+        /// Имя в предупреждении о расширении: по нему видно, какому пулу мало прогрева. Без своего —
+        /// имя корня пула («Пул: Камнекопыт»); у общих корней (декор) имя даёт владелец.
+        /// </summary>
+        public string Name { get; }
+
+        /// <summary>
+        /// Пул берут только в сборке арены (плиты и декор LayoutView: под завесой — по бюджету кадра, без неё —
+        /// разом), не в бою. Пока он не дорос до прогрева (в лагере не успели догреть — съёмка маршрута входит в
+        /// разлом в первом же кадре), новый объект — тот же прогрев, только раньше, и предупреждения нет.
+        /// Предупреждение — когда пул перерос свой прогрев, то есть прогрева правда мало.
+        /// </summary>
+        public bool BuildOnly { get; set; }
+
+        public ViewPool(Transform parent, System.Func<GameObject> factory, int prewarm, bool reportOverflow = true, string name = null)
         {
             _overflowReported = !reportOverflow;
             _parent = parent;
             _factory = factory;
+            Name = name ?? (parent != null ? parent.name : "без имени");
 
             int capacity = Mathf.Max(1, prewarm);
             _items = new GameObject[capacity];
@@ -45,6 +60,21 @@ namespace Game.View
 
         /// <summary>Прогрев ещё не закончен?</summary>
         public bool NeedsPrewarm => _created < _prewarmTarget;
+
+        /// <summary>Сколько объектов пул греет заранее.</summary>
+        public int PrewarmTarget => _prewarmTarget;
+
+        /// <summary>
+        /// Досоздаёт один объект, если их меньше <paramref name="count"/>, — и сверх прогрева (встреча
+        /// людней задуманного). Под завесой перехода так пул растёт по одному за шаг, а не в бою.
+        /// false — объектов уже не меньше.
+        /// </summary>
+        public bool GrowToward(int count)
+        {
+            if (_created >= count) return false;
+            Grow();
+            return true;
+        }
 
         /// <summary>
         /// Досоздаёт до <paramref name="perCall"/> объектов и возвращает,
@@ -91,10 +121,11 @@ namespace Game.View
         {
             if (_freeCount == 0)
             {
-                if (!_overflowReported)
+                if (!_overflowReported && (!BuildOnly || _created >= _prewarmTarget))
                 {
                     _overflowReported = true;
-                    Debug.LogWarning($"[Разлом] Пул исчерпан на {_created} объектах — увеличь прогрев.");
+                    // Начало строки прежнее — по нему считают предупреждения в журналах съёмки.
+                    Debug.LogWarning($"[Разлом] Пул исчерпан на {_created} объектах — увеличь прогрев: «{Name}» (прогрев {_prewarmTarget}).");
                 }
                 Grow();
             }

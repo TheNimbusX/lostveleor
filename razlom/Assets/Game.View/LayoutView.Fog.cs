@@ -1,3 +1,4 @@
+using System.Collections;
 using Game.Sim;
 using UnityEngine;
 
@@ -31,7 +32,9 @@ namespace Game.View
         private static readonly int MainTexStId = Shader.PropertyToID("_MainTex_ST");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
 
-        private void ResetFog(LayoutMap map)
+        // Шагами (сборка по кадрам, LayoutView.Build): узор маски — на рабочих потоках, включение и выключение
+        // сотен предметов декора — кусками. Итог прежний: тот же узор, та же активность.
+        private IEnumerator ResetFogSteps(LayoutMap map)
         {
             _fogActive = map != null && map.PlacedCount > 0 && _style.FogOfWar && _driver != null;
             _tileRevealed = _fogActive ? new bool[map.PlacedCount] : System.Array.Empty<bool>();
@@ -39,24 +42,31 @@ namespace Game.View
             // размер массива открытости берём по его текущей ёмкости.
             _decorRevealed = _fogActive && _decor != null ? new bool[_decor.Length] : System.Array.Empty<bool>();
             ClearFogPlane();
-            if (_fogActive) BuildFogMask(map);
-            SyncFogVisibility();
+            if (_fogActive) yield return BuildFogMaskSteps(map);
+            yield return SyncFogVisibilitySteps();
         }
 
         // Пол и декор уже расставлены до сброса тумана: явно приводим их
         // активность в соответствие со свежим (пустым) состоянием открытости,
         // а не полагаемся на то, что было выставлено в момент расстановки.
-        private void SyncFogVisibility()
+        // Выключение объекта с рендерерами не бесплатно: по 16 за шаг.
+        private IEnumerator SyncFogVisibilitySteps()
         {
             for (int i = 0; i < _tileCount; i++)
+            {
                 if (_tiles[i] != null)
                     _tiles[i].gameObject.SetActive(!_fogActive || _style.NaturalGround || (i < _tileRevealed.Length && _tileRevealed[i]));
+                if ((i & 15) == 15) yield return null;
+            }
             for (int i = 0; i < _decorCount; i++)
+            {
                 if (_decor[i] != null)
                     _decor[i].gameObject.SetActive(!_fogActive || (i < _decorRevealed.Length && _decorRevealed[i]));
+                if ((i & 15) == 15) yield return null;
+            }
         }
 
-        private void BuildFogMask(LayoutMap map)
+        private IEnumerator BuildFogMaskSteps(LayoutMap map)
         {
             float cell = LayoutMap.CellSize.ToFloat();
             float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
@@ -74,18 +84,8 @@ namespace Game.View
 
             EnsureFogResources();
             _fogPixels = new Color32[_fogResolution * _fogResolution];
-            // Целые частоты синуса — бесшовный узор для видимой фактуры дымки,
-            // не влияет на то, что уже открыто (это делает только альфа ниже).
-            for (int y = 0; y < _fogResolution; y++)
-                for (int x = 0; x < _fogResolution; x++)
-                {
-                    float u = x / (float)_fogResolution, v = y / (float)_fogResolution;
-                    float wave = Mathf.Sin((u * 9f + v * 3f) * Mathf.PI * 2f) * .35f
-                        + Mathf.Sin((v * 12f - u * 6f) * Mathf.PI * 2f) * .35f
-                        + Mathf.Sin((u * 17f + v * 17f) * Mathf.PI * 2f) * .3f;
-                    byte alpha = (byte)(Mathf.Lerp(.75f, 1f, Mathf.Clamp01(wave * .5f + .5f)) * 255);
-                    _fogPixels[y * _fogResolution + x] = new Color32(255, 255, 255, alpha);
-                }
+            // Узор — по строкам на рабочих потоках: пиксель зависит только от своих координат.
+            yield return Rows(_fogResolution, FogPatternRow);
             _fogMask.Reinitialize(_fogResolution, _fogResolution);
             _fogMask.SetPixels32(_fogPixels);
             _fogMask.Apply(false, false);
@@ -106,6 +106,21 @@ namespace Game.View
                 ? Color.Lerp(_style.FogColor, new Color(.34f, .43f, .30f), .55f) : _style.FogColor);
             renderer.SetPropertyBlock(_fogBlock);
             _fogPlane = go.transform;
+        }
+
+        // Целые частоты синуса — бесшовный узор для видимой фактуры дымки,
+        // не влияет на то, что уже открыто (это делает только альфа ниже).
+        private void FogPatternRow(int y)
+        {
+            for (int x = 0; x < _fogResolution; x++)
+            {
+                float u = x / (float)_fogResolution, v = y / (float)_fogResolution;
+                float wave = Mathf.Sin((u * 9f + v * 3f) * Mathf.PI * 2f) * .35f
+                    + Mathf.Sin((v * 12f - u * 6f) * Mathf.PI * 2f) * .35f
+                    + Mathf.Sin((u * 17f + v * 17f) * Mathf.PI * 2f) * .3f;
+                byte alpha = (byte)(Mathf.Lerp(.75f, 1f, Mathf.Clamp01(wave * .5f + .5f)) * 255);
+                _fogPixels[y * _fogResolution + x] = new Color32(255, 255, 255, alpha);
+            }
         }
 
         private Transform _fogRoot;

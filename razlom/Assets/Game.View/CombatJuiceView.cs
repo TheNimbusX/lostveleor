@@ -1138,6 +1138,8 @@ namespace Game.View
             float spin, float angle, float gravity)
         {
             if (_pool == null || _pool.Length == 0) return;
+            // «Вспышки и мерцание: Мягче» — белая вспышка контакта и послесвечение гаснут до трети.
+            if (kind == FxKind.Contact || kind == FxKind.Afterglow) color.a *= GameUserSettings.FlashScale;
             int index = _cursor++ % _pool.Length;
             ref FxSlot slot = ref _pool[index];
             if (slot.Transform == null || slot.Renderer == null) return;

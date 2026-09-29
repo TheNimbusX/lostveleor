@@ -24,7 +24,7 @@ namespace Game.View
         private const float DisplayConfirmationSeconds = 15f;
         private const string CaptureFlag = "-capture-pause-menu";
 
-        private enum Page : byte { Main, Graphics, Controls, Audio, ConfirmCamp, ConfirmDisplay, ConfirmQuit, Game }
+        private enum Page : byte { Main, Graphics, Controls, Audio, ConfirmCamp, ConfirmDisplay, ConfirmQuit, Game, Interface, ConfirmReset }
 
         private static readonly GameUserSettings.QualityLevel[] QualityLevels =
         {
@@ -126,9 +126,16 @@ namespace Game.View
             }
         }
 
-        private static bool IsSettingsPage(Page page) => page == Page.Graphics || page == Page.Audio || page == Page.Controls || page == Page.Game;
-        private static bool IsSettingsTab(Page page) => page == Page.Graphics || page == Page.Audio || page == Page.Game;
-        private static bool IsConfirmPage(Page page) => page == Page.ConfirmCamp || page == Page.ConfirmDisplay || page == Page.ConfirmQuit;
+        /// <summary>
+        /// Окно «Настройки Б» (30.09): пять вкладок столбцом, «Управление» — вкладка, а не своё окно.
+        /// Старый префаб без вкладки управления живёт по-прежнему.
+        /// </summary>
+        private bool ColumnLayout => _view != null && _view.ControlsPage != null;
+
+        private bool IsSettingsTab(Page page) => page == Page.Graphics || page == Page.Audio || page == Page.Game
+            || page == Page.Interface || page == Page.Controls && ColumnLayout;
+        private static bool IsConfirmPage(Page page) => page == Page.ConfirmCamp || page == Page.ConfirmDisplay || page == Page.ConfirmQuit
+            || page == Page.ConfirmReset;
 
         private void Start()
         {
@@ -151,6 +158,8 @@ namespace Game.View
                     page = Page.Audio;
                 else if (string.Equals(rawPage, "game", StringComparison.OrdinalIgnoreCase))
                     page = Page.Game;
+                else if (string.Equals(rawPage, "interface", StringComparison.OrdinalIgnoreCase))
+                    page = Page.Interface;
                 else if (string.Equals(rawPage, "tour", StringComparison.OrdinalIgnoreCase))
                 {
                     Debug.Log("[pause-menu] capture tour requested");
@@ -184,6 +193,8 @@ namespace Game.View
             ShowTab(Page.Audio); Step("audio");
             yield return Wait(1.4f);
             ShowTab(Page.Game); Step("game");
+            yield return Wait(1.4f);
+            ShowTab(Page.Interface); Step("interface");
             yield return Wait(1.4f);
             ShowTab(Page.Controls); Step("controls");
             yield return Wait(1.4f);
@@ -259,10 +270,15 @@ namespace Game.View
                 return;
             }
 
+            if (_open && _view != null && !_viewOpening) SettingsKeys();
+
             if (!EscapePressed()) return;
             if (!_open) Open(Page.Main);
             else if (_displayPreviewActive)
                 CancelDisplayPreview("Изменения экрана отменены.");
+            // Открытый список (разрешение, язык) Esc сначала закрывает — окно остаётся.
+            else if (CloseOpenList()) { }
+            else if (_page == Page.ConfirmReset) ConfirmNo();
             // Escape из окна настроек или управления возвращает к паузе
             // (окно уезжает), из подтверждения — туда, откуда пришли.
             else if (_page != Page.Main && !MainMenuView.IsOpen)
@@ -274,6 +290,97 @@ namespace Game.View
             // сразу. Промежуточная страница паузы предлагала бы «продолжить» и
             // «вернуться в лагерь» игре, которая ещё не началась.
             else Close();
+        }
+
+        /// <summary>
+        /// Клавиши окна настроек, как подписано в футере: Tab / Shift+Tab — вкладки, F — «Сбросить»
+        /// (с подтверждением), Enter — «Применить» экран. Пока ждём клавишу или открыто
+        /// подтверждение, окно клавиш не берёт.
+        /// </summary>
+        private void SettingsKeys()
+        {
+            if (_waitingBinding >= 0 || IsConfirmPage(_page) || !IsSettingsTab(_page)) return;
+            bool shift;
+            bool tab = KeyDown(out shift, KeyCode.Tab);
+            if (tab && ColumnLayout)
+            {
+                ShowTab(NextTab(_settingsTab, shift ? -1 : 1));
+                return;
+            }
+            if (KeyDown(out _, KeyCode.F) && ColumnLayout && _view.Reset != null && _view.Reset.gameObject.activeInHierarchy)
+            {
+                RequestReset();
+                return;
+            }
+            if ((KeyDown(out _, KeyCode.Return) || KeyDown(out _, KeyCode.KeypadEnter)) && _settingsTab == Page.Graphics && DisplayChanged())
+                ApplyDisplay();
+        }
+
+        private Page NextTab(Page from, int step)
+        {
+            Page[] order = { Page.Graphics, Page.Audio, Page.Game, Page.Interface, Page.Controls };
+            int index = Mathf.Max(0, Array.IndexOf(order, from));
+            return order[(index + step + order.Length) % order.Length];
+        }
+
+        private bool CloseOpenList()
+        {
+            if (_view == null) return false;
+            foreach (UiDropdown list in new[] { _view.Resolution, _view.Language })
+            {
+                if (list == null || !list.IsOpen) continue;
+                list.Close();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Открытый список (разрешение, язык) прячется сразу и молча перед вопросом «Сбросить?» и проверкой
+        /// экрана: список — свой Canvas поверх окна (sortingOrder 320) и иначе висел бы над подтверждением.
+        /// </summary>
+        private void HideOpenLists()
+        {
+            if (_view == null) return;
+            foreach (UiDropdown list in new[] { _view.Resolution, _view.Language })
+                if (list != null && list.List != null && list.List.gameObject.activeSelf) list.List.gameObject.SetActive(false);
+        }
+
+        private static bool KeyDown(out bool shift, KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            Keyboard keyboard = Keyboard.current;
+            shift = keyboard != null && keyboard.shiftKey.isPressed;
+            if (keyboard == null) return false;
+            switch (key)
+            {
+                case KeyCode.Tab: return keyboard.tabKey.wasPressedThisFrame;
+                case KeyCode.F: return keyboard.fKey.wasPressedThisFrame;
+                case KeyCode.Return: return keyboard.enterKey.wasPressedThisFrame;
+                case KeyCode.KeypadEnter: return keyboard.numpadEnterKey.wasPressedThisFrame;
+                default: return false;
+            }
+#else
+            shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+            return Input.GetKeyDown(key);
+#endif
+        }
+
+        /// <summary>
+        /// «Пауза при сворачивании»: окно игры потеряло фокус — пауза, как по Esc. Там, где Esc паузу
+        /// не открывает (главное меню, дым перехода, окна лагеря, вопрос артефакта), не открывает и фокус.
+        /// </summary>
+        private void OnApplicationFocus(bool focus)
+        {
+            if (focus || _open || !GameUserSettings.PauseOnFocusLoss || _driver == null) return;
+            if (CaptureRig.ForestBudShowcase || CampTransition.Covering || MainMenuView.IsOpen) return;
+            if (CampPlayerView.Instance?.EntranceOpen == true) return;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (DeveloperMenu.BlocksPause) return;
+#endif
+            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampServicesView.Instance?.IsOpen == true) return;
+            if (RunHud.ReplaceOpen) return;
+            Open(Page.Main);
         }
 
         private static bool EscapePressed()
@@ -309,6 +416,7 @@ namespace Game.View
             if (_view != null)
             {
                 if (IsSettingsTab(page)) _settingsTab = page;
+                _focused = null;
                 // Сначала снимок кадра для размытого фона (меню ещё не видно), потом появление.
                 _viewOpening = true;
                 StartCoroutine(PresentAfterSnapshot());
@@ -349,6 +457,7 @@ namespace Game.View
 
         private void OnDestroy()
         {
+            UiSettingRow.Clicked -= OnRowClicked;
             DestroyTexture(_white);
             DestroyTexture(_buttonTexture);
             DestroyTexture(_buttonHoverTexture);
@@ -373,6 +482,29 @@ namespace Game.View
         private bool _frameRowKnown;
 
         private bool _viewOpening;
+        // Опция, с которой игрок работал последней (щелчок по строке, смена значения): её описание
+        // держится справа, пока мышь не над другой строкой. null — первая опция вкладки.
+        private SettingId? _focused;
+        private string _resetStatus = string.Empty;
+        private string _languageStatus = string.Empty;
+        private float _resetCheckAt;
+        private bool _tabIsDefault;
+        private bool _resetKnown;
+        private bool _resetDimmed;
+        private bool _abilityRowKnown;
+        private bool _abilityRowDimmed;
+        private UiSettingRow[] _rows = Array.Empty<UiSettingRow>();
+
+        private static readonly string[] LanguageLabels = Array.ConvertAll(UserPreferences.Languages, language => language.Label);
+        private static readonly string[] EnemyBarLabels =
+        {
+            SettingsCatalog.EnemyBarsName(EnemyBarMode.All), SettingsCatalog.EnemyBarsName(EnemyBarMode.EliteOnly),
+            SettingsCatalog.EnemyBarsName(EnemyBarMode.None),
+        };
+        private static readonly string[] FlashLabels = { SettingsCatalog.FlashesName(false), SettingsCatalog.FlashesName(true) };
+
+        // Образец яркости: уровни sRGB кругов слева направо; левый при верной яркости едва различим.
+        private static readonly float[] SwatchLevels = { .035f, .06f, .1f, .15f, .23f };
 
         private void LateUpdate()
         {
@@ -415,15 +547,36 @@ namespace Game.View
             => control != null && control.transform.parent != null ? control.transform.parent : null;
 
         /// <summary>Какое окно рядом с паузой видно на странице.</summary>
-        private static PauseMenuView.Window WindowFor(Page page, bool fromMainMenu)
+        private PauseMenuView.Window WindowFor(Page page, bool fromMainMenu)
         {
-            if (page == Page.Controls) return PauseMenuView.Window.Controls;
-            if (IsSettingsTab(page) || page == Page.ConfirmDisplay || fromMainMenu) return PauseMenuView.Window.Settings;
+            if (page == Page.Controls && !ColumnLayout) return PauseMenuView.Window.Controls;
+            if (IsSettingsTab(page) || page == Page.ConfirmDisplay || page == Page.ConfirmReset || fromMainMenu) return PauseMenuView.Window.Settings;
             return PauseMenuView.Window.None;
         }
 
         private static PauseMenuView.Tab TabFor(Page tab)
-            => tab == Page.Audio ? PauseMenuView.Tab.Audio : tab == Page.Game ? PauseMenuView.Tab.Game : PauseMenuView.Tab.Graphics;
+        {
+            switch (tab)
+            {
+                case Page.Audio: return PauseMenuView.Tab.Audio;
+                case Page.Game: return PauseMenuView.Tab.Game;
+                case Page.Interface: return PauseMenuView.Tab.Interface;
+                case Page.Controls: return PauseMenuView.Tab.Controls;
+                default: return PauseMenuView.Tab.Graphics;
+            }
+        }
+
+        private static SettingsTab CatalogTab(Page tab)
+        {
+            switch (tab)
+            {
+                case Page.Audio: return SettingsTab.Audio;
+                case Page.Game: return SettingsTab.Game;
+                case Page.Interface: return SettingsTab.Interface;
+                case Page.Controls: return SettingsTab.Controls;
+                default: return SettingsTab.Display;
+            }
+        }
 
         /// <summary>Кнопки, слайдеры и переключатели префаба ведут в ту же логику, что и IMGUI.</summary>
         private void BindView()
@@ -438,9 +591,12 @@ namespace Game.View
             v.TabGraphics?.onClick.AddListener(() => ShowTab(Page.Graphics));
             v.TabAudio?.onClick.AddListener(() => ShowTab(Page.Audio));
             v.TabGame?.onClick.AddListener(() => ShowTab(Page.Game));
+            v.TabInterface?.onClick.AddListener(() => ShowTab(Page.Interface));
+            v.TabControls?.onClick.AddListener(() => ShowTab(Page.Controls));
             v.SettingsBack?.onClick.AddListener(() => { if (MainMenuView.IsOpen) Close(); else BackToPause(); });
             v.ControlsBack?.onClick.AddListener(BackToPause);
-            v.Reset?.onClick.AddListener(ResetTab);
+            // Окно столбцом сбрасывает через подтверждение: «Сбросить» трогает всю вкладку.
+            v.Reset?.onClick.AddListener(() => { if (ColumnLayout) RequestReset(); else ResetTab(); });
             v.ControlsReset?.onClick.AddListener(() =>
             {
                 UiSound.Play(UiSoundEvent.Reset);
@@ -449,10 +605,10 @@ namespace Game.View
                 _bindingStatus = "Клавиши возвращены к стандартным.";
             });
 
-            if (v.DisplayMode != null) v.DisplayMode.Chosen += index => _displayMode = DisplayModes[Mathf.Clamp(index, 0, DisplayModes.Length - 1)];
-            if (v.Resolution != null) v.Resolution.Chosen += index => _resolutionIndex = Mathf.Clamp(index, 0, _resolutions.Length - 1);
-            if (v.Quality != null) v.Quality.Chosen += index => GameUserSettings.SetQuality(QualityLevels[Mathf.Clamp(index, 0, QualityLevels.Length - 1)]);
-            if (v.VSync != null) v.VSync.Changed += GameUserSettings.SetVSync;
+            if (v.DisplayMode != null) v.DisplayMode.Chosen += index => { _focused = SettingId.DisplayMode; _displayMode = DisplayModes[Mathf.Clamp(index, 0, DisplayModes.Length - 1)]; };
+            if (v.Resolution != null) v.Resolution.Chosen += index => { _focused = SettingId.Resolution; _resolutionIndex = Mathf.Clamp(index, 0, _resolutions.Length - 1); };
+            if (v.Quality != null) v.Quality.Chosen += index => { _focused = SettingId.Quality; GameUserSettings.SetQuality(QualityLevels[Mathf.Clamp(index, 0, QualityLevels.Length - 1)]); };
+            if (v.VSync != null) v.VSync.Changed += on => { _focused = SettingId.VSync; GameUserSettings.SetVSync(on); };
             if (v.FrameLimit != null)
             {
                 v.FrameLimit.minValue = 0f;
@@ -464,7 +620,7 @@ namespace Game.View
                     GameUserSettings.SetFrameLimit(GameUserSettings.FrameLimits[Mathf.Clamp(Mathf.RoundToInt(value), 0, GameUserSettings.FrameLimits.Length - 1)]);
                 });
             }
-            if (v.Shadows != null) v.Shadows.Chosen += index => GameUserSettings.SetShadows((GameUserSettings.ShadowLevel)Mathf.Clamp(index, 0, 2));
+            if (v.Shadows != null) v.Shadows.Chosen += index => { _focused = SettingId.Shadows; GameUserSettings.SetShadows((GameUserSettings.ShadowLevel)Mathf.Clamp(index, 0, 2)); };
             if (v.UiScale != null)
             {
                 // Шаг 5%: 16..24 — это 80..120%.
@@ -477,20 +633,15 @@ namespace Game.View
                     GameUserSettings.SetUiScale(value / 20f);
                 });
             }
-            v.Apply?.onClick.AddListener(() =>
-            {
-                if (!DisplayChanged()) { UiSound.Play(UiSoundEvent.Denied); return; }
-                UiSound.Play(UiSoundEvent.Apply);
-                Vector2Int resolution = _resolutions[_resolutionIndex];
-                BeginDisplayPreview(resolution.x, resolution.y, _displayMode);
-            });
+            v.Apply?.onClick.AddListener(ApplyDisplay);
 
             v.Master?.onValueChanged.AddListener(value => { _master = value; ChangeAudio(); });
             v.Effects?.onValueChanged.AddListener(value => { _effects = value; ChangeAudio(); });
             v.Music?.onValueChanged.AddListener(value => { _music = value; ChangeAudio(); });
 
             if (v.AbilityLayout != null)
-                v.AbilityLayout.Chosen += index => GameUserSettings.SetWasdMovement(index == 1);
+                v.AbilityLayout.Chosen += index => { _focused = SettingId.Movement; GameUserSettings.SetWasdMovement(index == 1); };
+            BindColumnSettings(v);
             _bindingRows = v.BuildBindingRows(GameKeyBindings.Count, row =>
             {
                 UiSound.Play(UiSoundEvent.KeyWaiting);
@@ -502,12 +653,183 @@ namespace Game.View
             v.ConfirmNo?.onClick.AddListener(ConfirmNo);
         }
 
+        /// <summary>
+        /// Опции окна «Настройки Б» (30.09). Каждая применяется и сохраняется сразу (GameUserSettings),
+        /// кроме режима и разрешения экрана — они по-прежнему через «Применить» с проверкой.
+        /// Звуков здесь не добавлено: звук интерфейса — отдельным проходом (тумблер звучит сам, UiToggle).
+        /// </summary>
+        private void BindColumnSettings(PauseMenuView v)
+        {
+            _rows = v.GetComponentsInChildren<UiSettingRow>(true);
+            UiSettingRow.Clicked -= OnRowClicked;
+            UiSettingRow.Clicked += OnRowClicked;
+
+            StepSlider(v.Brightness, value => { _focused = SettingId.Brightness; GameUserSettings.SetBrightness(value); });
+            StepSlider(v.ScreenShake, value => { _focused = SettingId.ScreenShake; GameUserSettings.SetScreenShake(value); });
+            if (v.InterfaceVolume != null)
+            {
+                v.InterfaceVolume.minValue = 0f;
+                v.InterfaceVolume.maxValue = 1f;
+                v.InterfaceVolume.wholeNumbers = false;
+                // Пишется сразу, на диск — вместе с остальной громкостью при уходе со вкладки (SaveAudioIfNeeded).
+                v.InterfaceVolume.onValueChanged.AddListener(value => { _focused = SettingId.InterfaceVolume; _audioDirty = true; GameUserSettings.SetInterfaceVolume(value); });
+            }
+            if (v.SoundInBackground != null) v.SoundInBackground.Changed += on => { _focused = SettingId.SoundInBackground; GameUserSettings.SetSoundInBackground(on); };
+            if (v.PauseOnFocusLoss != null) v.PauseOnFocusLoss.Changed += on => { _focused = SettingId.PauseOnFocusLoss; GameUserSettings.SetPauseOnFocusLoss(on); };
+            if (v.DamageNumbers != null) v.DamageNumbers.Changed += on => { _focused = SettingId.DamageNumbers; GameUserSettings.SetDamageNumbers(on); };
+            if (v.EnemyBars != null) v.EnemyBars.Chosen += index => { _focused = SettingId.EnemyBars; GameUserSettings.SetEnemyBars((EnemyBarMode)Mathf.Clamp(index, 0, 2)); };
+            if (v.Flashes != null) v.Flashes.Chosen += index => { _focused = SettingId.Flashes; GameUserSettings.SetReduceFlashes(index == 1); };
+            if (v.AbilityRow != null)
+                v.AbilityRow.Chosen += index =>
+                {
+                    _focused = SettingId.AbilityRow;
+                    if (GameUserSettings.WasdMovement) return;
+                    GameUserSettings.SetAbilityLayout(index == 1 ? GameUserSettings.AbilityLayout.Digits : GameUserSettings.AbilityLayout.Qwer);
+                };
+            if (v.Language != null)
+                v.Language.Chosen += index =>
+                {
+                    _focused = SettingId.Language;
+                    LanguageOption option = UserPreferences.Languages[Mathf.Clamp(index, 0, UserPreferences.Languages.Length - 1)];
+                    // Неготовый перевод не выбирается: остаётся русский, и сказано почему.
+                    _languageStatus = GameUserSettings.SetLanguage(option.Code) || option.Ready ? string.Empty
+                        : option.Name + " — перевод ещё готовится. Остаётся " + UserPreferences.Languages[0].Name.ToLowerInvariant() + ".";
+                };
+            if (v.UiScale != null) v.UiScale.onValueChanged.AddListener(_ => _focused = SettingId.UiScale);
+            if (v.FrameLimit != null) v.FrameLimit.onValueChanged.AddListener(_ => _focused = SettingId.FrameLimit);
+            v.Master?.onValueChanged.AddListener(_ => _focused = SettingId.MasterVolume);
+            v.Effects?.onValueChanged.AddListener(_ => _focused = SettingId.EffectsVolume);
+            v.Music?.onValueChanged.AddListener(_ => _focused = SettingId.MusicVolume);
+        }
+
+        /// <summary>Ползунок с шагом 5%: 0–20 целыми, значение — доля 0–1.</summary>
+        private static void StepSlider(UnityEngine.UI.Slider slider, Action<float> changed)
+        {
+            if (slider == null) return;
+            slider.minValue = 0f;
+            slider.maxValue = 20f;
+            slider.wholeNumbers = true;
+            slider.onValueChanged.AddListener(value => changed(value / 20f));
+        }
+
+        private void OnRowClicked(UiSettingRow row)
+        {
+            if (row != null && _open) _focused = row.Setting;
+        }
+
+        /// <summary>
+        /// Общее окна столбцом: описание справа (наведённая строка, иначе последняя тронутая, иначе
+        /// первая во вкладке), огонёк у описываемой строки, строка состояния, заметка футера и
+        /// «Сбросить», притухшая, когда сбрасывать нечего.
+        /// </summary>
+        private void SyncColumnWindow(PauseMenuView v)
+        {
+            SettingsTab tab = CatalogTab(_settingsTab);
+            SettingId[] ids = SettingsCatalog.Ids(tab);
+            UiSettingRow hovered = UiSettingRow.Hovered;
+            SettingId described = hovered != null && SettingsCatalog.TabOf(hovered.Setting) == tab ? hovered.Setting
+                : _focused.HasValue && SettingsCatalog.TabOf(_focused.Value) == tab ? _focused.Value
+                : ids[0];
+            v.ShowDescription(SettingsCatalog.Title(described), SettingsCatalog.Description(described),
+                SettingsCatalog.DefaultLine(described), described == SettingId.Brightness);
+            if (described == SettingId.Brightness)
+            {
+                float brightness = GameUserSettings.Preferences.Brightness;
+                v.SetBrightnessSwatches(i =>
+                {
+                    float level = UserPreferences.ApplyToSrgb(SwatchLevels[Mathf.Clamp(i, 0, SwatchLevels.Length - 1)], brightness);
+                    return new Color(level, level, level, 1f);
+                });
+            }
+            foreach (UiSettingRow row in _rows)
+                if (row != null) row.SetSelected(row.Setting == described && row.isActiveAndEnabled);
+
+            PauseMenuView.SetText(v.DescriptionStatus, ColumnStatus());
+            PauseMenuView.SetText(v.FooterNote, UiHint.Current ?? (_settingsTab == Page.Graphics
+                ? "Экран — кнопкой «Применить», остальное сохраняется сразу"
+                : "Изменения сохраняются сразу"));
+
+            // Стандартные ли значения вкладки — раз в пятую долю секунды: проверка читает сохранённые клавиши.
+            if (Time.unscaledTime >= _resetCheckAt)
+            {
+                _resetCheckAt = Time.unscaledTime + .2f;
+                _tabIsDefault = TabIsDefault(_settingsTab);
+            }
+            if (v.Reset != null && (!_resetKnown || _resetDimmed != _tabIsDefault))
+            {
+                _resetKnown = true;
+                _resetDimmed = _tabIsDefault;
+                CanvasGroup group = v.Reset.GetComponent<CanvasGroup>();
+                if (group == null) group = v.Reset.gameObject.AddComponent<CanvasGroup>();
+                UiMotion.FadeTo(group, _tabIsDefault ? .5f : 1f, .15f);
+            }
+        }
+
+        /// <summary>Строка состояния под описанием: что ждёт действия игрока или чем кончилось последнее.</summary>
+        private string ColumnStatus()
+        {
+            if (_settingsTab == Page.Graphics)
+            {
+                if (DisplayChanged()) return "Режим или разрешение изменены — нажми «Применить» (Enter).";
+                if (!string.IsNullOrEmpty(_displayStatus)) return _displayStatus;
+            }
+            // У «Управления» ожидание клавиши и итог обмена пишет пояснение над колонками — у глаз, не дублируем.
+            if (_settingsTab == Page.Game && !string.IsNullOrEmpty(_languageStatus)) return _languageStatus;
+            return _resetStatus;
+        }
+
         private void ShowTab(Page tab)
         {
             if (_page == Page.Audio && tab != Page.Audio) SaveAudioIfNeeded();
-            if (IsSettingsTab(tab)) _settingsTab = tab;
+            if (IsSettingsTab(tab))
+            {
+                if (tab != _settingsTab)
+                {
+                    _focused = null;
+                    _resetStatus = string.Empty;
+                    _languageStatus = string.Empty;
+                    _resetCheckAt = 0f;
+                    // Список прежней вкладки не висит над новой, пока та проявляется.
+                    HideOpenLists();
+                }
+                _settingsTab = tab;
+            }
             _waitingBinding = -1;
             _page = tab;
+        }
+
+        private void ApplyDisplay()
+        {
+            if (!DisplayChanged()) { UiSound.Play(UiSoundEvent.Denied); return; }
+            UiSound.Play(UiSoundEvent.Apply);
+            HideOpenLists();
+            Vector2Int resolution = _resolutions[_resolutionIndex];
+            BeginDisplayPreview(resolution.x, resolution.y, _displayMode);
+        }
+
+        /// <summary>«Сбросить» (кнопка или F): сначала вопрос — сброс трогает всю вкладку. Сбрасывать нечего — только подсказка.</summary>
+        private void RequestReset()
+        {
+            if (TabIsDefault(_settingsTab))
+            {
+                _resetStatus = "Здесь уже всё стандартное.";
+                return;
+            }
+            _waitingBinding = -1;
+            HideOpenLists();
+            _page = Page.ConfirmReset;
+        }
+
+        private bool TabIsDefault(Page tab)
+        {
+            switch (tab)
+            {
+                case Page.Audio: return GameUserSettings.AudioIsDefault && Mathf.Approximately(_master, 1f) && Mathf.Approximately(_effects, 1f) && Mathf.Approximately(_music, .75f);
+                case Page.Game: return GameUserSettings.GameIsDefault;
+                case Page.Interface: return GameUserSettings.InterfaceIsDefault;
+                case Page.Controls: return GameUserSettings.ControlsIsDefault;
+                default: return GameUserSettings.GraphicsIsDefault;
+            }
         }
 
         private void BackToPause()
@@ -523,7 +845,9 @@ namespace Game.View
             if (_settingsTab == Page.Graphics)
             {
                 GameUserSettings.ResetGraphics();
-                _displayStatus = "Графика возвращена к стандартной. Экран не менялся.";
+                // В старом окне на вкладке графики был и масштаб интерфейса — там он сбрасывается вместе с ней.
+                if (!ColumnLayout) GameUserSettings.SetUiScale(1f);
+                _displayStatus = "Изображение возвращено к стандартному. Экран не менялся.";
             }
             else if (_settingsTab == Page.Audio)
             {
@@ -533,6 +857,17 @@ namespace Game.View
                 _music = GameUserSettings.MusicVolume;
                 _audioDirty = false;
             }
+            else if (_settingsTab == Page.Game) GameUserSettings.ResetGame();
+            else if (_settingsTab == Page.Interface) GameUserSettings.ResetInterface();
+            else if (_settingsTab == Page.Controls)
+            {
+                _waitingBinding = -1;
+                GameUserSettings.ResetControls();
+                _bindingStatus = "Клавиши и схема управления возвращены к стандартным.";
+            }
+            _languageStatus = string.Empty;
+            _resetStatus = "«" + SettingsCatalog.TabTitle(CatalogTab(_settingsTab)) + "» — стандартные значения.";
+            _resetCheckAt = 0f;
         }
 
         /// <summary>Ждём клавишу для строки назначения: любая поддерживаемая назначается, Escape отменяет.</summary>
@@ -587,6 +922,11 @@ namespace Game.View
                 Close();
             }
             else if (_page == Page.ConfirmDisplay) ConfirmDisplayPreview();
+            else if (_page == Page.ConfirmReset)
+            {
+                ResetTab();
+                _page = _settingsTab;
+            }
             else if (_page == Page.ConfirmQuit)
             {
                 SaveAudioIfNeeded();
@@ -601,6 +941,7 @@ namespace Game.View
         private void ConfirmNo()
         {
             if (_page == Page.ConfirmDisplay) CancelDisplayPreview("Предыдущие настройки экрана восстановлены.");
+            else if (_page == Page.ConfirmReset) _page = _settingsTab;
             else _page = Page.Main;
         }
 
@@ -620,7 +961,11 @@ namespace Game.View
             {
                 if (_settingsTab == Page.Graphics) SyncGraphics(v);
                 else if (_settingsTab == Page.Audio) SyncAudio(v);
+                else if (_settingsTab == Page.Interface) SyncInterface(v);
+                else if (_settingsTab == Page.Controls) SyncControls(v);
+                else if (ColumnLayout) SyncGame(v);
                 else PauseMenuView.SetText(v.GameText, "В разработке");
+                if (ColumnLayout) SyncColumnWindow(v);
             }
             else if (window == PauseMenuView.Window.Controls) SyncControls(v);
             if (confirming) SyncConfirmation(v);
@@ -683,9 +1028,8 @@ namespace Game.View
                 });
                 v.Shadows.SetSelected((int)GameUserSettings.Shadows);
             }
-            int scale = Mathf.RoundToInt(GameUserSettings.UiScale * 20f);
-            if (v.UiScale != null && Mathf.RoundToInt(v.UiScale.value) != scale) v.UiScale.SetValueWithoutNotify(scale);
-            PauseMenuView.SetText(v.UiScaleValue, Mathf.RoundToInt(GameUserSettings.UiScale * 100f) + "%");
+            SyncUiScale(v);
+            SyncStepSlider(v.Brightness, v.BrightnessValue, GameUserSettings.Preferences.Brightness);
 
             // «Применить» — только когда режим или разрешение действительно отличаются от экрана.
             bool pending = DisplayChanged();
@@ -701,12 +1045,59 @@ namespace Game.View
                 ?? (pending ? "Есть изменения экрана — нажмите «Применить»." : _displayStatus));
         }
 
+        private static void SyncUiScale(PauseMenuView v)
+        {
+            int scale = Mathf.RoundToInt(GameUserSettings.UiScale * 20f);
+            if (v.UiScale != null && Mathf.RoundToInt(v.UiScale.value) != scale) v.UiScale.SetValueWithoutNotify(scale);
+            PauseMenuView.SetText(v.UiScaleValue, Mathf.RoundToInt(GameUserSettings.UiScale * 100f) + "%");
+        }
+
+        /// <summary>Ползунок с шагом 5% (0–20): яркость, тряска.</summary>
+        private static void SyncStepSlider(UnityEngine.UI.Slider slider, TMPro.TMP_Text label, float value)
+        {
+            int steps = Mathf.RoundToInt(value * 20f);
+            if (slider != null && Mathf.RoundToInt(slider.value) != steps) slider.SetValueWithoutNotify(steps);
+            PauseMenuView.SetText(label, UserPreferences.Percent(value));
+        }
+
         private void SyncAudio(PauseMenuView v)
         {
             SyncSlider(v.Master, v.MasterValue, _master);
             SyncSlider(v.Effects, v.EffectsValue, _effects);
             SyncSlider(v.Music, v.MusicValue, _music);
+            SyncSlider(v.InterfaceVolume, v.InterfaceVolumeValue, GameUserSettings.Preferences.InterfaceVolume);
+            v.SoundInBackground?.SetValue(GameUserSettings.Preferences.SoundInBackground);
             PauseMenuView.SetText(v.Status, UiHint.Current ?? string.Empty);
+        }
+
+        private void SyncGame(PauseMenuView v)
+        {
+            UserPreferences prefs = GameUserSettings.Preferences;
+            if (v.Language != null)
+            {
+                v.Language.SetOptions(LanguageLabels);
+                int index = UserPreferences.LanguageIndex(prefs.Language);
+                v.Language.SetSelected(index, UserPreferences.Languages[index].Name);
+            }
+            v.PauseOnFocusLoss?.SetValue(prefs.PauseOnFocusLoss);
+            v.DamageNumbers?.SetValue(prefs.DamageNumbers);
+            if (v.EnemyBars != null)
+            {
+                v.EnemyBars.SetLabels(EnemyBarLabels);
+                v.EnemyBars.SetSelected((int)prefs.EnemyBars);
+            }
+        }
+
+        private void SyncInterface(PauseMenuView v)
+        {
+            UserPreferences prefs = GameUserSettings.Preferences;
+            SyncUiScale(v);
+            SyncStepSlider(v.ScreenShake, v.ScreenShakeValue, prefs.ScreenShake);
+            if (v.Flashes != null)
+            {
+                v.Flashes.SetLabels(FlashLabels);
+                v.Flashes.SetSelected(prefs.ReduceFlashes ? 1 : 0);
+            }
         }
 
         private static void SyncSlider(UnityEngine.UI.Slider slider, TMPro.TMP_Text label, float value)
@@ -721,6 +1112,21 @@ namespace Game.View
             {
                 v.AbilityLayout.SetLabels(new[] { "Мышь", "WASD" });
                 v.AbilityLayout.SetSelected(GameUserSettings.WasdMovement ? 1 : 0);
+            }
+            if (v.AbilityRow != null)
+            {
+                v.AbilityRow.SetLabels(new[] { "Q W E R", "1 2 3 4" });
+                // При WASD ряд всегда цифровой — показываем то, что действует, а строку притушаем.
+                bool wasd = GameUserSettings.WasdMovement;
+                v.AbilityRow.SetSelected(wasd || GameUserSettings.Abilities == GameUserSettings.AbilityLayout.Digits ? 1 : 0);
+                CanvasGroup row = v.AbilityRowGroup;
+                if (row != null && (!_abilityRowKnown || _abilityRowDimmed != wasd))
+                {
+                    _abilityRowKnown = true;
+                    _abilityRowDimmed = wasd;
+                    row.interactable = !wasd;
+                    UiMotion.FadeTo(row, wasd ? .45f : 1f, .18f);
+                }
             }
             PauseMenuView.SetText(v.ControlsHint, _waitingBinding >= 0
                 ? "Нажми клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "» · Esc — отмена"
@@ -742,6 +1148,15 @@ namespace Game.View
                 PauseMenuView.SetText(v.ConfirmText, "Текущий забег завершится. Невзятые награды будут потеряны.");
                 PauseMenuView.SetText(v.ConfirmCountdown, string.Empty);
                 PauseMenuView.SetText(v.ConfirmYesLabel, "В лагерь");
+                PauseMenuView.SetText(v.ConfirmNoLabel, "Отмена");
+            }
+            else if (_page == Page.ConfirmReset)
+            {
+                SettingsTab tab = CatalogTab(_settingsTab);
+                PauseMenuView.SetText(v.ConfirmTitle, "Сбросить «" + SettingsCatalog.TabTitle(tab) + "»?");
+                PauseMenuView.SetText(v.ConfirmText, SettingsCatalog.ResetSummary(tab));
+                PauseMenuView.SetText(v.ConfirmCountdown, "Остальные вкладки не изменятся.");
+                PauseMenuView.SetText(v.ConfirmYesLabel, "Сбросить");
                 PauseMenuView.SetText(v.ConfirmNoLabel, "Отмена");
             }
             else if (_page == Page.ConfirmQuit)

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -107,18 +108,30 @@ namespace Game.View
             _water.AddComponent<MeshRenderer>().sharedMaterial = waterMaterial;
         }
 
-        private void BuildMeadow(LayoutMap map, float cell)
+        // Шагами (сборка по кадрам, LayoutView.Build): порядок расстановки прежний, кадр может смениться
+        // только между шагами — на расстановку он не влияет.
+        private IEnumerator BuildMeadowSteps(LayoutMap map, float cell)
         {
-            if (map.PlacedCount == 0) return;
-            if (_portalPool == null) InitializeMeadow();
+            if (map.PlacedCount == 0) yield break;
+            if (_portalPool == null)
+            {
+                yield return Step("LayoutView/подготовка луга");
+                InitializeMeadow();
+                yield return null;
+            }
             ChoosePonds(map);
             BuildBanks(map.Outline != null ? .5f : cell);
-            ScatterForest(map, cell);
+            yield return Step("LayoutView/лес и опушка");
+            yield return null;
+            yield return ScatterForestSteps(map, cell);
             BuildPondWater();
+            yield return Step("LayoutView/реки");
             BuildRivers(map);
             BuildReadableShores();
-            ScatterForestDetails(map);
-            ScatterEdgeAccents(map);
+            yield return Step("LayoutView/детали леса");
+            yield return ScatterForestDetailsSteps(map);
+            yield return Step("LayoutView/акценты кромки");
+            yield return ScatterEdgeAccentsSteps(map);
             if (map.Routes != null)
             {
                 AddPortal(map.EntryPoint, map.Routes.EntryFacing, false);
@@ -139,8 +152,11 @@ namespace Game.View
                 }
             }
             if (Application.isPlaying && _driver != null) _meadowLighting.Apply(_style);
-            ApplyCampSurface();
-            ScatterGrassField(map);
+            yield return Step("LayoutView/маска земли");
+            yield return ApplyCampSurfaceSteps();
+            yield return Step("LayoutView/трава");
+            yield return ScatterGrassFieldSteps(map);
+            yield return Step("LayoutView/листья");
             ScatterFallenLeaves(map);
             BuildWisps(map);
             UpdateMeadow();
@@ -391,7 +407,7 @@ namespace Game.View
             return nearest;
         }
 
-        private void ScatterForest(LayoutMap map, float cell)
+        private IEnumerator ScatterForestSteps(LayoutMap map, float cell)
         {
             var trees = new List<int>();
             for (int i = 0; i < _style.DecorVariants.Length; i++)
@@ -404,11 +420,14 @@ namespace Game.View
                 var p=map.GetPlaced(m); minX=Mathf.Min(minX,p.OriginX*cell); maxX=Mathf.Max(maxX,(p.OriginX+p.Width)*cell);
                 minZ=Mathf.Min(minZ,p.OriginY*cell); maxZ=Mathf.Max(maxZ,(p.OriginY+p.Height)*cell);
             }
-            BuildBackgroundRelief(map, minX, maxX, minZ, maxZ);
+            yield return BuildBackgroundReliefSteps(map, minX, maxX, minZ, maxZ);
+            yield return null;
             PlaceLandmarks(map);
+            yield return null;
             // Вода и рельеф уже выбраны: опушка учитывает берег и высоту земли этой карты.
-            ScatterBoundaryDecor(map.Outline != null ? .5f : cell);
-            if (trees.Count==0 || _style.ForestBandWidth<=0) return;
+            yield return ScatterBoundaryDecorSteps(map.Outline != null ? .5f : cell);
+            yield return Step("LayoutView/лес");
+            if (trees.Count==0 || _style.ForestBandWidth<=0) yield break;
             // Ближние группы занимают часть общего бюджета, не увеличивая лимит деревьев.
             int created = map.Outline != null ? _edgeTreeCount : 0;
             var groveRng = DecorRandom(0, 193);
@@ -416,6 +435,8 @@ namespace Game.View
             float treeWeight = 0;
             foreach (int tree in trees) treeWeight += _style.DecorVariants[tree].Weight;
             for (float x=minX-_style.ForestBandWidth;x<maxX+_style.ForestBandWidth;x+=_style.ForestSpacing)
+            {
+                yield return null;
                 for (float z=minZ-_style.ForestBandWidth;z<maxZ+_style.ForestBandWidth;z+=_style.ForestSpacing)
                 {
                     var rng=DecorRandom(unchecked((int)(x*73)+(int)(z*997)),91);
@@ -462,8 +483,9 @@ namespace Game.View
                     var treePosition = _decor[_decorCount-1].position;
                     treePosition.y = BackgroundHeight(map, px, pz) - .08f;
                     _decor[_decorCount-1].position = treePosition;
-                    if (++created>=420) return;
+                    if (++created>=420) yield break;
                 }
+            }
         }
 
         public float WeaponGroundHeight(float x, float z)
@@ -594,10 +616,10 @@ namespace Game.View
             _water.SetActive(_ponds.Count > 0);
         }
 
-        private void ScatterForestDetails(LayoutMap map)
+        private IEnumerator ScatterForestDetailsSteps(LayoutMap map)
         {
             if (map.Outline == null || _style.ForestBandWidth <= 0
-                || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) return;
+                || (_style.DecorPerCell <= 0 && _style.BoundaryDecorChance <= 0)) yield break;
             var rocks = new List<int>(); var bushes = new List<int>(); var grass = new List<int>();
             int log = -1, stump = -1, bridge = -1, seeds = -1;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
@@ -631,6 +653,7 @@ namespace Game.View
                         DressDetail(map, point, _decorRadii[log] * .6f, bushes, grass, rng);
                         trunk--;
                     }
+                    yield return null;
                 }
             // Подлесок привязан к уже существующим кронам, а не к ещё одной сетке.
             // Ограниченный бюджет не увеличивает число объектов с площадью фонового леса.
@@ -645,10 +668,12 @@ namespace Game.View
                 DressDetail(map, new Vector2(tree.position.x, tree.position.z),
                     _decorRadii[variant] * .65f, bushes, grass, rng);
                 dressed++;
+                yield return null;
             }
             // У каждой композиции есть опорный объект; мелкие детали растут у его основания.
             for (int group = 0; group < map.GladeCount * 5; group++)
             {
+                yield return null;
                 var glade = map.GetGlade(group / 5); var rng = DecorRandom(group, 449);
                 var character = CharacterOf(map, group / 5);
                 int anchor = character == GladeCharacter.Sunny ? PickDetail(group % 3 == 0 ? bushes : grass, rng)
@@ -682,6 +707,7 @@ namespace Game.View
             // Короткие заросшие участки берега чередуются с открытой водой.
             for (int pondIndex = 0; pondIndex < _ponds.Count; pondIndex++)
             {
+                yield return null;
                 var pond = _ponds[pondIndex]; var rng = DecorRandom(pondIndex, 457);
                 float start = (float)rng.NextDouble() * Mathf.PI * 2;
                 for (int item = 0; item < 9; item++)
@@ -961,7 +987,9 @@ namespace Game.View
             return true;
         }
 
-        private void BuildBackgroundRelief(LayoutMap map, float minX, float maxX, float minZ, float maxZ)
+        // Высоты фона — по строкам сетки на рабочих потоках (каждая строка пишет только свои вершины и
+        // треугольники, рельеф — чистый счёт по карте, прудам и рекам); сетка собирается на главном.
+        private IEnumerator BuildBackgroundReliefSteps(LayoutMap map, float minX, float maxX, float minZ, float maxZ)
         {
             var rng = DecorRandom(0, 271);
             _reliefOffset = new Vector2((float)rng.NextDouble() * 1000, (float)rng.NextDouble() * 1000);
@@ -971,7 +999,8 @@ namespace Game.View
             int columns = Mathf.CeilToInt(width / 2), rows = Mathf.CeilToInt(depth / 2);
             var vertices = new Vector3[(columns + 1) * (rows + 1)];
             var triangles = new int[columns * rows * 6];
-            for (int z = 0; z <= rows; z++)
+            yield return Rows(rows + 1, z =>
+            {
                 for (int x = 0; x <= columns; x++)
                 {
                     float px = originX + x * width / columns, pz = originZ + z * depth / rows;
@@ -982,6 +1011,7 @@ namespace Game.View
                     triangles[t] = v; triangles[t + 1] = v + columns + 1; triangles[t + 2] = v + 1;
                     triangles[t + 3] = v + 1; triangles[t + 4] = v + columns + 1; triangles[t + 5] = v + columns + 2;
                 }
+            });
             _backgroundMesh.Clear(); _backgroundMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             _backgroundMesh.vertices = vertices; _backgroundMesh.triangles = triangles;
             _backgroundMesh.RecalculateNormals(); _backgroundMesh.RecalculateBounds();

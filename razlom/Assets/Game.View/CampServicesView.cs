@@ -48,7 +48,7 @@ namespace Game.View
             if(!Input.GetMouseButton(0) && !Input.GetMouseButton(1))PointerGesture=false;
 #endif
             if(CampServicesProbe.IsRunning && !CampServicesProbe.AllowInteractionInput){use=cancel=left=right=moving=false;}
-            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && _openGroup!=null && !_openGroup.interactable){_openGroup.interactable=true;if(_firstSelect!=null)_firstSelect.Select();}if(cancel)Close();return;}
+            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && _openGroup!=null && !_openGroup.interactable){_openGroup.interactable=true;if(_firstSelect!=null)_firstSelect.Select();}if(ShopKeys(cancel))return;if(cancel)Close();return;}
             if(ConsumedFrame==Time.frameCount)return;
             bool overUi=CampInventoryView.PointerOverUI() || _driver.PointerOverHud(pointer);
             CampServiceNpc nearest=null,hover=null;float distance=3f,hitDistance=float.MaxValue;

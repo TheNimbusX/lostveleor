@@ -10,15 +10,19 @@ namespace Game.EditorTools
 {
     public static partial class PauseMenuWcBuilder
     {
-        const float WindowW = 1000f, WindowH = 780f, RowW = 920f, RowH = 62f, RowStep = 72f;
+        // «Настройки Б» (выбор владельца 30.09, ART/UI/concepts-2026-09-30-hud-final/e2-settings-tabs-left.png):
+        // одно окно во всю ширину — вкладки столбцом слева со значками, опции в центре, описание справа.
+        // 1380 × 800 влезает в холст 1440 × 900 — это 16:10 при масштабе интерфейса 120%, самый тесный случай.
+        const float WindowW = 1380f, WindowH = 800f;
+        const float TabsX = 24f, TabsTop = 150f, TabStep = 82f, TabW = 300f, TabH = 70f;
+        const float PageX = 372f, PageTop = 36f, PageW = 640f, PageH = 650f;
+        const float RowH = 60f, RowStep = 74f, ControlW = 330f;
+        const float InfoX = 1056f, InfoW = 290f;
 
         /// <summary>
-        /// Окно «Дыма и света» справа от сдвинутой паузы (владелец 26 сентября: «перевести всё на новую
-        /// версию»): глубокий дым шире окна вместо панели пака, под ним мягкое глубокое пятно, прозрачный
-        /// ловец мыши, своя группа появления в темпе паузы. Дети кладутся в «Содержимое».
+        /// Окно «Дыма и света»: глубокий дым шире окна вместо панели пака, под ним мягкое глубокое пятно,
+        /// прозрачный ловец мыши, своя группа появления в темпе паузы. Дети кладутся в «Содержимое».
         /// </summary>
-        static RectTransform Window(RectTransform root, string name) => InkWindow(root, name, new Vector2(230f, 0f), new Vector2(WindowW, WindowH));
-
         static RectTransform InkWindow(RectTransform root, string name, Vector2 position, Vector2 size)
         {
             RectTransform panel = Box(Node(name, root), Center, Center, position, size);
@@ -26,9 +30,8 @@ namespace Game.EditorTools
             RectTransform content = Stretch(Node("Содержимое", panel));
             // Нить по низу подложки не нужна: у окна своя линия футера, лишний огонь владелец просил убрать.
             Object.DestroyImmediate(UiInkKit.Plate(panel).gameObject);
-            // Под рваным дымом подложки — мягкое глубокое пятно без краёв: плотное ядро подложки уже окна,
-            // и у краёв между клубами просвечивали мир (клавиши справа) и пункты паузы (под кнопками
-            // подтверждения, 26 сентября). Вбок шире мало — до колонны паузы слева не дотягивается.
+            // Под рваным дымом подложки — мягкое глубокое пятно без краёв: у краёв между клубами иначе
+            // просвечивал мир.
             UiInkKit.SmokeLayer(panel, "Глубина", "soft_blot", .85f, size.x * .2f, size.y * .28f, deep: true).transform.SetAsFirstSibling();
             UiInkKit.HitArea(panel);
             Pace(UiInkKit.Group(panel, UiInkGroup.Sweep.TopToBottom));
@@ -61,58 +64,139 @@ namespace Game.EditorTools
             return image;
         }
 
-        // ---------------------------------------------------------------- настройки
-        static void BuildSettings(RectTransform root, PauseMenuView view)
+        /// <summary>Узел от левого верхнего угла родителя.</summary>
+        static RectTransform Corner(RectTransform parent, string name, float x, float y, float w, float h) => TopLeft(Node(name, parent), x, y, w, h);
+
+        /// <summary>Тонкая вертикальная нить-разделитель колонок, как на кадре «Настройки Б».</summary>
+        static void ColumnLine(RectTransform content, string name, float x)
         {
-            RectTransform content = Window(root, "Настройки");
-            view.SettingsPanel = (RectTransform)content.parent;
-
-            // Вкладки: подпись антиквой; выбранную отмечает переезжающая полоса дыма с нитью света.
-            RectTransform indicator = Box(Node("Выбранная вкладка", content), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -30f), new Vector2(200f, 52f));
-            UiInkKit.SmokeLayer(indicator, "Подложка", "smoke_plate", .9f, 26f, 8f);
-            Thread(indicator, "Черта", 10f, 2f, 26f, .85f);
-            view.TabIndicator = indicator;
-            view.TabGraphics = TabButton(content, "Графика", 40f);
-            view.TabAudio = TabButton(content, "Звук", 250f);
-            view.TabGame = TabButton(content, "Игра", 460f);
-            Box(UiInkKit.Divider(content, "Линия под вкладками", RowW, false, .22f), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -88f), new Vector2(RowW, 16f));
-
-            view.GraphicsPage = Page(content, "Графика");
-            RectTransform graphics = (RectTransform)view.GraphicsPage.transform;
-            view.DisplayMode = Segmented(Control(Row(graphics, 0, "Режим экрана", "Весь экран — эксклюзивный режим; Окно — с рамкой; Без рамок — окно размером с монитор."), 420f), 3);
-            view.Resolution = Dropdown(Control(Row(graphics, 1, "Разрешение", "Размер кадра. В режиме «Без рамок» всегда равен монитору."), 420f));
-            view.Quality = Segmented(Control(Row(graphics, 2, "Качество", "Пресет: масштаб рендера, сглаживание и тени. Низкое — для слабых видеокарт."), 420f), 3);
-            view.VSync = Toggle(Row(graphics, 3, "Вертикальная синхронизация", "Кадры в такт монитору, без разрывов. Пока включена, ограничение кадров не действует."));
-            RectTransform limitRow = Row(graphics, 4, "Ограничение кадров", "Верхний предел кадров, когда синхронизация выключена.");
-            view.FrameLimitRow = limitRow.gameObject.AddComponent<CanvasGroup>();
-            view.FrameLimit = SliderControl(limitRow, out view.FrameLimitValue);
-            view.Shadows = Segmented(Control(Row(graphics, 5, "Тени", "Дальность и чёткость теней. На слабой видеокарте — Низкие."), 420f), 3);
-            view.UiScale = SliderControl(Row(graphics, 6, "Масштаб интерфейса", "Размер HUD и меню, 80–120%."), out view.UiScaleValue);
-            // Список разрешений рисуется поверх нижних строк.
-            view.Resolution.transform.parent.SetAsLastSibling();
-
-            view.AudioPage = Page(content, "Звук");
-            RectTransform audio = (RectTransform)view.AudioPage.transform;
-            view.Master = SliderControl(Row(audio, 0, "Общая громкость", "Громкость всей игры."), out view.MasterValue);
-            view.Effects = SliderControl(Row(audio, 1, "Эффекты", "Бой, шаги и интерфейс."), out view.EffectsValue);
-            view.Music = SliderControl(Row(audio, 2, "Музыка", "Музыка лагеря и Разлома."), out view.MusicValue);
-
-            view.GamePage = Page(content, "Игра");
-            view.GameText = UiInkKit.Label((RectTransform)view.GamePage.transform, "Надпись", "В разработке", FontRole.Heading, 32f, Role.TextMuted, TextAlignmentOptions.Center, 2f);
-
-            Footer(content, true, out view.Reset, out view.Apply, out view.Status, out view.SettingsBack);
-            view.Reset.gameObject.AddComponent<UiHint>().Text = "Вернуть стандартные значения этой вкладки. Экран не меняется.";
-            view.Apply.gameObject.AddComponent<UiHint>().Text = "Применить режим экрана и разрешение — с проверкой 15 секунд.";
-            view.SettingsPanel.gameObject.SetActive(false);
+            RectTransform line = UiInkKit.Divider(content, name, PageH - 10f, false, .3f);
+            line.anchorMin = line.anchorMax = new Vector2(0f, 1f);
+            line.pivot = new Vector2(.5f, .5f);
+            line.anchoredPosition = new Vector2(x, -(PageTop + PageH * .5f));
+            line.localEulerAngles = new Vector3(0f, 0f, 90f);
         }
 
-        static Button TabButton(RectTransform content, string text, float left)
+        // ---------------------------------------------------------------- настройки
+
+        /// <summary>
+        /// Окно настроек «Настройки Б»: столбец вкладок, опции, описание, футер «Esc Назад · F Сбросить ·
+        /// Enter Применить». Строки подписаны из SettingsCatalog — одно место для названий и описаний.
+        /// </summary>
+        static RectTransform BuildSettings(RectTransform root, PauseMenuView view)
         {
-            RectTransform tab = Box(Node("Вкладка " + text, content), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, -30f), new Vector2(200f, 52f));
+            RectTransform content = InkWindow(root, "Настройки", Vector2.zero, new Vector2(WindowW, WindowH));
+            view.SettingsPanel = (RectTransform)content.parent;
+            view.HidePauseUnderWindow = true;
+
+            // Заголовок окна и линия под ним — как на кадре.
+            TMP_Text title = UiInkKit.Label(Corner(content, "Заголовок", 40f, 30f, 300f, 76f), "Надпись", "Настройки", FontRole.Heading, 58f, Role.Text,
+                TextAlignmentOptions.MidlineLeft, 1f, 1f, .05f);
+            title.textWrappingMode = TextWrappingModes.NoWrap;
+            Box(UiInkKit.Divider(content, "Линия под заголовком", 280f, true, .6f), new Vector2(0f, 1f), new Vector2(0f, .5f), new Vector2(44f, -120f), new Vector2(280f, 16f));
+
+            // Вкладки столбцом: выбранную отмечает переезжающая полоса дыма, огненное кольцо вокруг значка и огонёк слева.
+            RectTransform indicator = Corner(content, "Выбранная вкладка", TabsX, TabsTop, TabW, TabH);
+            UiInkKit.SmokeLayer(indicator, "Подложка", "smoke_plate", .85f, 22f, 6f);
+            UiInkKit.LightAt(indicator, "Кольцо", "light_ring", new Vector2(0f, .5f), new Vector2(40f, 0f), new Vector2(78f, 78f), .9f);
+            UiInkKit.LightAt(indicator, "Свет огонька", "light_glow", new Vector2(0f, .5f), new Vector2(2f, 0f), new Vector2(30f, 30f), .8f);
+            Plain(Mark(indicator, "Огонёк", T.CircleFill, Role.Accent, 1f, new Vector2(0f, .5f), new Vector2(2f, 0f), 10f));
+            view.TabIndicator = indicator;
+            view.TabGraphics = TabButton(content, 0, CombatHudBuilder.Icon("menu_screen"));
+            view.TabAudio = TabButton(content, 1, CombatHudBuilder.Icon("menu_sound"));
+            view.TabGame = TabButton(content, 2, CombatHudBuilder.Icon("menu_play"));
+            view.TabInterface = TabButton(content, 3, CombatHudBuilder.Icon("menu_ui_scale"));
+            view.TabControls = TabButton(content, 4, CombatHudBuilder.Icon("menu_settings"));
+            TMP_Text tabsHint = UiInkKit.Label(Corner(content, "Подсказка вкладок", 40f, TabsTop + 5f * TabStep + 4f, 290f, 30f), "Надпись",
+                "Tab · Shift+Tab — вкладки", FontRole.Body, 16f, Role.TextMuted, TextAlignmentOptions.MidlineLeft, 0f, .8f);
+            tabsHint.textWrappingMode = TextWrappingModes.NoWrap;
+            // Заметка футера — в столбце вкладок: справа ей тесно рядом с тремя кнопками.
+            view.FooterNote = UiInkKit.Label(Corner(content, "Заметка", 40f, WindowH - 104f, 290f, 70f), "Надпись", "Изменения сохраняются сразу",
+                FontRole.Body, 15f, Role.TextMuted, TextAlignmentOptions.BottomLeft);
+
+            ColumnLine(content, "Линия слева", PageX - 20f);
+            ColumnLine(content, "Линия справа", InfoX - 22f);
+
+            RectTransform options = Corner(content, "Опции", PageX, PageTop, PageW, PageH);
+            BuildDisplayPage(options, view);
+            BuildAudioPage(options, view);
+            BuildGamePage(options, view);
+            BuildInterfacePage(options, view);
+            BuildControlsPage(options, view);
+
+            BuildDescription(content, view);
+            BuildFooter(content, view);
+            view.SettingsPanel.gameObject.SetActive(false);
+            return view.SettingsPanel;
+        }
+
+        static void BuildDisplayPage(RectTransform options, PauseMenuView view)
+        {
+            view.GraphicsPage = Page(options, "Изображение");
+            RectTransform page = (RectTransform)view.GraphicsPage.transform;
+            view.DisplayMode = Segmented(Control(Row(page, 0, SettingId.DisplayMode, ControlW), ControlW), 3);
+            view.Resolution = Dropdown(Control(Row(page, 1, SettingId.Resolution, ControlW), ControlW));
+            view.Quality = Segmented(Control(Row(page, 2, SettingId.Quality, ControlW), ControlW), 3);
+            view.VSync = Toggle(Row(page, 3, SettingId.VSync, 48f));
+            RectTransform limitRow = Row(page, 4, SettingId.FrameLimit, ControlW);
+            view.FrameLimitRow = limitRow.gameObject.AddComponent<CanvasGroup>();
+            view.FrameLimit = SliderControl(limitRow, out view.FrameLimitValue);
+            view.Shadows = Segmented(Control(Row(page, 5, SettingId.Shadows, ControlW), ControlW), 3);
+            view.Brightness = SliderControl(Row(page, 6, SettingId.Brightness, ControlW), out view.BrightnessValue);
+        }
+
+        static void BuildAudioPage(RectTransform options, PauseMenuView view)
+        {
+            view.AudioPage = Page(options, "Звук");
+            RectTransform page = (RectTransform)view.AudioPage.transform;
+            view.Master = SliderControl(Row(page, 0, SettingId.MasterVolume, ControlW), out view.MasterValue);
+            view.Effects = SliderControl(Row(page, 1, SettingId.EffectsVolume, ControlW), out view.EffectsValue);
+            view.Music = SliderControl(Row(page, 2, SettingId.MusicVolume, ControlW), out view.MusicValue);
+            view.InterfaceVolume = SliderControl(Row(page, 3, SettingId.InterfaceVolume, ControlW), out view.InterfaceVolumeValue);
+            view.SoundInBackground = Toggle(Row(page, 4, SettingId.SoundInBackground, 48f));
+        }
+
+        static void BuildGamePage(RectTransform options, PauseMenuView view)
+        {
+            view.GamePage = Page(options, "Игра");
+            RectTransform page = (RectTransform)view.GamePage.transform;
+            view.Language = Dropdown(Control(Row(page, 0, SettingId.Language, ControlW), ControlW));
+            view.PauseOnFocusLoss = Toggle(Row(page, 1, SettingId.PauseOnFocusLoss, 48f));
+            view.DamageNumbers = Toggle(Row(page, 2, SettingId.DamageNumbers, 48f));
+            view.EnemyBars = Segmented(Control(Row(page, 3, SettingId.EnemyBars, ControlW), ControlW), 3);
+        }
+
+        static void BuildInterfacePage(RectTransform options, PauseMenuView view)
+        {
+            view.InterfacePage = Page(options, "Интерфейс и доступность");
+            RectTransform page = (RectTransform)view.InterfacePage.transform;
+            view.UiScale = SliderControl(Row(page, 0, SettingId.UiScale, ControlW), out view.UiScaleValue);
+            view.ScreenShake = SliderControl(Row(page, 1, SettingId.ScreenShake, ControlW), out view.ScreenShakeValue);
+            view.Flashes = Segmented(Control(Row(page, 2, SettingId.Flashes, ControlW), ControlW), 2);
+        }
+
+        /// <summary>
+        /// Вкладка столбца: значок в круге дыма с тонким кольцом и подпись антиквой (длинная — в две строки).
+        /// Цвет подписи и значка ведёт PauseMenuView (TabTextOn/Off); тема его не перебивает.
+        /// </summary>
+        static Button TabButton(RectTransform content, int index, Sprite icon)
+        {
+            string text = SettingsCatalog.TabTitle((SettingsTab)index);
+            RectTransform tab = Corner(content, "Вкладка " + text, TabsX, TabsTop + index * TabStep, TabW, TabH);
             Button button = HitButton(tab);
-            TMP_Text label = UiInkKit.Label(tab, "Надпись", text, FontRole.Heading, 26f, Role.TextMuted, TextAlignmentOptions.Center, 1f, 1f, .1f);
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            // Цвет подписи ведёт PauseMenuView (TabTextOn/Off); тема его не перебивает при каждом включении окна.
+            RectTransform circle = At(Node("Круг", tab), new Vector2(0f, .5f), new Vector2(40f, 0f), new Vector2(58f, 58f));
+            UiInkKit.SmokeLayer(circle, "Дым", "smoke_blot_2", 1f, 8f, 8f);
+            Plain(Layer(circle, "Кольцо", T.CircleFrame, Role.PanelLine, .5f));
+            Image mark = Plain(Mark(tab, PauseMenuView.TabIconName, icon, Role.TextMuted, 1f, new Vector2(0f, .5f), new Vector2(40f, 0f), 30f));
+            Object.DestroyImmediate(mark.GetComponent<ThemeColor>());
+            mark.color = T.TextMuted;
+
+            RectTransform caption = Corner(tab, "Подпись", 84f, 0f, TabW - 88f, TabH);
+            TMP_Text label = UiInkKit.Label(caption, "Надпись", text, FontRole.Heading, 26f, Role.TextMuted, TextAlignmentOptions.MidlineLeft, .5f, 1f, .1f);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 20f;
+            label.fontSizeMax = 26f;
+            label.lineSpacing = -12f;
             Object.DestroyImmediate(label.GetComponent<ThemeColor>());
             label.color = T.TextMuted;
             var motion = tab.gameObject.AddComponent<UiHoverMotion>();
@@ -121,28 +205,29 @@ namespace Game.EditorTools
             return button;
         }
 
-        static CanvasGroup Page(RectTransform content, string name)
+        static CanvasGroup Page(RectTransform area, string name)
         {
-            RectTransform page = Stretch(Node("Страница " + name, content));
+            RectTransform page = Stretch(Node("Страница " + name, area));
             return page.gameObject.AddComponent<CanvasGroup>();
         }
 
         /// <summary>
-        /// Строка настройки: подпись слева, элемент справа; в покое без подложки. Наведение — полоса дыма
-        /// светлее окна, нить света по низу и огонёк у подписи (одна группа, её проявляет UiHoverMotion);
-        /// описание строки — внизу окна.
+        /// Строка опции: подпись слева, элемент справа (<paramref name="controlWidth"/>); в покое без подложки.
+        /// Наведение — полоса дыма светлее окна и нить света по низу (UiHoverMotion); выбранную строку —
+        /// ту, что описана справа, — отмечает огонёк-круг слева (UiSettingRow.Selected). Подпись и описание —
+        /// из SettingsCatalog.
         /// </summary>
-        static RectTransform Row(RectTransform page, int index, string title, string hint)
+        static RectTransform Row(RectTransform page, int index, SettingId id, float controlWidth)
         {
-            RectTransform row = Box(Node(title, page), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -110f - index * RowStep), new Vector2(RowW, RowH));
+            string title = SettingsCatalog.Title(id);
+            RectTransform row = Box(Node(title, page), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -index * RowStep), new Vector2(PageW, RowH));
             UiInkKit.HitArea(row);
             RectTransform hover = Stretch(Node("Наведение", row));
             var group = hover.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = false;
-            UiInkKit.SmokeLayer(hover, "Дым", "smoke_plate", .85f, 30f, 6f);
-            Thread(hover, "Нить", 60f, 0f, 26f, .5f);
-            UiInkKit.LightAt(hover, "Огонёк", "light_gem", new Vector2(0f, .5f), new Vector2(18f, 0f), new Vector2(14f, 16f), .9f);
+            UiInkKit.SmokeLayer(hover, "Дым", "smoke_plate", .85f, 24f, 6f);
+            Thread(hover, "Нить", 50f, 0f, 26f, .5f);
             var motion = row.gameObject.AddComponent<UiHoverMotion>();
             motion.HighlightGroup = group;
             motion.PulseMin = .7f;
@@ -150,14 +235,132 @@ namespace Game.EditorTools
             motion.PressScale = 1f;
             motion.HoverSound = false;
             motion.SilentClick = true;
-            RectTransform label = Box(Node("Подпись", row), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(40f, 0f), new Vector2(420f, 40f));
-            UiInkKit.Label(label, "Надпись", title, FontRole.Body, 21f, Role.Text).textWrappingMode = TextWrappingModes.NoWrap;
-            row.gameObject.AddComponent<UiHint>().Text = hint;
+
+            RectTransform selected = Node("Выбрано", row);
+            selected.anchorMin = selected.anchorMax = new Vector2(0f, .5f);
+            selected.sizeDelta = new Vector2(30f, 30f);
+            selected.anchoredPosition = new Vector2(16f, 0f);
+            UiInkKit.LightAt(selected, "Свет", "light_glow", Center, Vector2.zero, new Vector2(30f, 30f), .8f, delay: .05f);
+            Plain(Mark(selected, "Огонёк", T.CircleFill, Role.Accent, 1f, Center, Vector2.zero, 10f));
+            selected.gameObject.SetActive(false);
+
+            float labelWidth = PageW - 40f - controlWidth - 28f;
+            RectTransform label = Box(Node("Подпись", row), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(40f, 0f), new Vector2(labelWidth, 40f));
+            TMP_Text text = UiInkKit.Label(label, "Надпись", title, FontRole.Body, 21f, Role.Text);
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 15f;
+            text.fontSizeMax = 21f;
+
+            var setting = row.gameObject.AddComponent<UiSettingRow>();
+            setting.Setting = id;
+            setting.Selected = selected.gameObject;
             return row;
         }
 
         static RectTransform Control(RectTransform row, float width)
-            => Box(Node("Элемент", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-20f, 0f), new Vector2(width, 42f));
+            => Box(Node("Элемент", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-16f, 0f), new Vector2(width, 42f));
+
+        // ---------------------------------------------------------------- описание и футер
+
+        /// <summary>
+        /// Панель описания справа: заголовок опции антиквой, линия с огоньком, одна мысль про опцию,
+        /// «Стандартно: …», образец яркости (только у «Яркости») и строка состояния — она вне группы
+        /// описания, чтобы не мигать при каждой смене опции.
+        /// </summary>
+        static void BuildDescription(RectTransform content, PauseMenuView view)
+        {
+            RectTransform info = Corner(content, "Описание", InfoX, PageTop, InfoW, 480f);
+            view.Description = info.gameObject.AddComponent<CanvasGroup>();
+            view.Description.blocksRaycasts = false;
+            view.DescriptionTitle = UiInkKit.Label(Corner(info, "Заголовок", 0f, 0f, InfoW, 88f), "Надпись", "Качество графики", FontRole.Heading, 34f, Role.Text,
+                TextAlignmentOptions.BottomLeft, .5f, 1f, .1f);
+            view.DescriptionTitle.enableAutoSizing = true;
+            view.DescriptionTitle.fontSizeMin = 24f;
+            view.DescriptionTitle.fontSizeMax = 34f;
+            Box(UiInkKit.Divider(info, "Линия", InfoW, true, .55f), new Vector2(0f, 1f), new Vector2(0f, .5f), new Vector2(0f, -104f), new Vector2(InfoW, 16f));
+            view.DescriptionText = UiInkKit.Label(Corner(info, "Текст", 0f, 124f, InfoW, 196f), "Надпись", "", FontRole.Body, 19f, Role.TextMuted,
+                TextAlignmentOptions.TopLeft);
+            view.DescriptionText.enableAutoSizing = true;
+            view.DescriptionText.fontSizeMin = 15f;
+            view.DescriptionText.fontSizeMax = 19f;
+            view.DescriptionDefault = UiInkKit.Label(Corner(info, "Стандартно", 0f, 328f, InfoW, 30f), "Надпись", "", FontRole.Body, 16f, Role.TextMuted,
+                TextAlignmentOptions.MidlineLeft, 0f, .75f);
+            view.DescriptionDefault.textWrappingMode = TextWrappingModes.NoWrap;
+
+            // Образец яркости: круги на чёрном — от почти чёрного к тёмно-серому. Цвет ставит PauseMenu
+            // по выбранной яркости (интерфейс рисуется после постобработки, сам образец она не трогает).
+            RectTransform sample = Corner(info, "Образец яркости", 0f, 372f, InfoW, 100f);
+            RectTransform plate = Corner(sample, "Подложка", 0f, 0f, InfoW, 64f);
+            var back = plate.gameObject.AddComponent<Image>();
+            back.sprite = T.PillFill;
+            back.type = T.PillFill != null && T.PillFill.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple;
+            back.color = Color.black;
+            back.raycastTarget = false;
+            view.BrightnessSwatches = new Image[5];
+            for (int i = 0; i < view.BrightnessSwatches.Length; i++)
+            {
+                Image swatch = Mark(plate, "Круг " + (i + 1), T.CircleFill, Role.Text, 1f, new Vector2(0f, .5f), new Vector2(37f + i * 54f, 0f), 40f);
+                Object.DestroyImmediate(swatch.GetComponent<ThemeColor>());
+                float level = new[] { .035f, .06f, .1f, .15f, .23f }[i];
+                swatch.color = new Color(level, level, level, 1f);
+                view.BrightnessSwatches[i] = swatch;
+            }
+            TMP_Text caption = UiInkKit.Label(Corner(sample, "Подпись", 0f, 70f, InfoW, 26f), "Надпись", "Левый круг — едва различим", FontRole.Body, 15f,
+                Role.TextMuted, TextAlignmentOptions.MidlineLeft, 0f, .8f);
+            caption.textWrappingMode = TextWrappingModes.NoWrap;
+            view.BrightnessSample = sample;
+            sample.gameObject.SetActive(false);
+
+            view.DescriptionStatus = UiInkKit.Label(Corner(content, "Состояние", InfoX, PageTop + 500f, InfoW, 140f), "Надпись", "", FontRole.Body, 17f, Role.Accent,
+                TextAlignmentOptions.TopLeft);
+            view.DescriptionStatus.enableAutoSizing = true;
+            view.DescriptionStatus.fontSizeMin = 14f;
+            view.DescriptionStatus.fontSizeMax = 17f;
+        }
+
+        /// <summary>
+        /// Футер как на кадре и как подсказки паузы: «Esc Назад», «F Сбросить», «Enter Применить» —
+        /// клавиша капсулой прямо в кнопке. «Назад» видна всегда: паузы рядом нет.
+        /// </summary>
+        static void BuildFooter(RectTransform content, PauseMenuView view)
+        {
+            float lineWidth = WindowW - PageX - 40f;
+            Box(UiInkKit.Divider(content, "Линия футера", lineWidth, false, .35f), new Vector2(0f, 0f), new Vector2(0f, .5f), new Vector2(PageX, 106f), new Vector2(lineWidth, 16f));
+
+            RectTransform footer = Box(Node("Кнопки", content), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 26f), new Vector2(WindowW - PageX - 40f, 56f));
+            var row = footer.gameObject.AddComponent<HorizontalLayoutGroup>();
+            row.childAlignment = TextAnchor.MiddleRight;
+            // Мазки кнопок шире самих кнопок: зазор, чтобы соседние мазки не слипались.
+            row.spacing = 44f;
+            row.childControlWidth = row.childControlHeight = true;
+            row.childForceExpandWidth = row.childForceExpandHeight = false;
+            view.SettingsBack = FooterButton(footer, false, "Назад", "Esc", 210f);
+            view.SettingsBack.GetComponent<UiHoverMotion>().ClickSound = UiSoundEvent.Back;
+            view.SettingsBack.gameObject.AddComponent<UiHint>().Text = "Назад к паузе, из главного меню — в меню. Клавиша Esc.";
+            view.Reset = FooterButton(footer, false, "Сбросить", "F", 230f);
+            view.Reset.gameObject.AddComponent<UiHint>().Text = "Вернуть стандартные значения этой вкладки — после вопроса. Клавиша F.";
+            view.Apply = FooterButton(footer, true, "Применить", "Enter", 260f);
+            view.Apply.gameObject.AddComponent<UiHint>().Text = "Применить режим экрана и разрешение — с проверкой 15 секунд. Клавиша Enter.";
+        }
+
+        /// <summary>Кнопка футера с клавишей-капсулой слева от подписи; подпись центрируется в оставшемся месте.</summary>
+        static Button FooterButton(RectTransform footer, bool primary, string text, string key, float width)
+        {
+            RectTransform button = UiInkKit.Button(footer, text, text, primary, new Vector2(width, 56f), 24f);
+            var element = button.gameObject.AddComponent<LayoutElement>();
+            element.preferredWidth = width;
+            element.preferredHeight = 56f;
+            RectTransform keycap = UiInkKit.Keycap(button, "Клавиша", key, 30f);
+            keycap.anchorMin = keycap.anchorMax = new Vector2(0f, .5f);
+            keycap.pivot = new Vector2(0f, .5f);
+            keycap.anchoredPosition = new Vector2(20f, 0f);
+            TMP_Text label = button.Find("Надпись").GetComponent<TMP_Text>();
+            label.margin = new Vector4(keycap.sizeDelta.x + 26f, 0f, 12f, 0f);
+            var result = button.GetComponent<Button>();
+            NoNavigation(result);
+            return result;
+        }
 
         // ---------------------------------------------------------------- элементы
 
@@ -195,6 +398,9 @@ namespace Game.EditorTools
                 segmented.Options[i] = HitButton(option);
                 segmented.Labels[i] = UiInkKit.Label(option, "Надпись", "—", FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.Center, 0f, 1f, .15f);
                 segmented.Labels[i].textWrappingMode = TextWrappingModes.NoWrap;
+                segmented.Labels[i].enableAutoSizing = true;
+                segmented.Labels[i].fontSizeMin = 13f;
+                segmented.Labels[i].fontSizeMax = 17f;
                 // Цвет подписи ведёт UiSegmented; тема его не перебивает.
                 Object.DestroyImmediate(segmented.Labels[i].GetComponent<ThemeColor>());
             }
@@ -204,11 +410,11 @@ namespace Game.EditorTools
         /// <summary>
         /// Выпадающий список: поле — тёмный дым с шевроном, наведение — нить света по низу. Список —
         /// вложенный Canvas поверх строк ниже: глубокий дым (UiInkKit.Plate) и своя быстрая группа
-        /// появления — дым списка растекается при каждом открытии. Выбранный пункт — полоса дыма
-        /// и огонёк («Выбрано», его включает UiDropdown), наведённый — нить света.
+        /// появления. Выбранный пункт — полоса дыма и огонёк («Выбрано», его включает UiDropdown).
         /// </summary>
         static UiDropdown Dropdown(RectTransform control)
         {
+            float width = control.sizeDelta.x;
             var dropdown = control.gameObject.AddComponent<UiDropdown>();
             Image hit = UiInkKit.HitArea(control);
             UiInkKit.SmokeLayer(control, "Поле", "smoke_plate", .95f, 40f, 16f, Role.Track);
@@ -226,9 +432,8 @@ namespace Game.EditorTools
             Plain(Mark(control, "Шеврон", T.ChevronDown, Role.Text, .8f, new Vector2(1f, .5f), new Vector2(-22f, 0f), 16f));
 
             // Список — вложенный Canvas: рисуется поверх строк ниже. Каналы uv1/uv2 — и ему: шейдер дыма
-            // берёт из них данные элемента.
-            // Ниже поля на 30: дым списка шире его самого и иначе лёг бы на поле (список на холсте поверх).
-            RectTransform list = Box(Node("Список", control), new Vector2(.5f, 0f), new Vector2(.5f, 1f), new Vector2(0f, -30f), new Vector2(420f, 280f));
+            // берёт из них данные элемента. Ниже поля на 30: дым списка шире его самого.
+            RectTransform list = Box(Node("Список", control), new Vector2(.5f, 0f), new Vector2(.5f, 1f), new Vector2(0f, -30f), new Vector2(width, 280f));
             var listCanvas = list.gameObject.AddComponent<Canvas>();
             listCanvas.overrideSorting = true;
             listCanvas.sortingOrder = 320;
@@ -278,7 +483,7 @@ namespace Game.EditorTools
             // Внутри маски прокрутки дым не шире пункта: клубы соседних пунктов не должны резаться краем.
             RectTransform chosen = Stretch(Node("Выбрано", template));
             UiInkKit.SmokeLayer(chosen, "Дым", "smoke_plate", .9f, 0f, 2f);
-            UiInkKit.LightAt(chosen, "Огонёк", "light_gem", new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(12f, 14f), .9f, delay: .1f);
+            UiInkKit.LightAt(chosen, "Огонёк", "light_glow", new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(22f, 22f), .9f, delay: .1f);
             chosen.gameObject.SetActive(false);
             UiInkKit.Label(template, "Надпись", "1920 × 1080", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.Center, 0f, 1f, .08f);
             var optionMotion = template.gameObject.AddComponent<UiHoverMotion>();
@@ -295,6 +500,7 @@ namespace Game.EditorTools
         /// <summary>
         /// Тумблер — круг (владелец 26 сентября: одна фигура — круг): тонкое кольцо в клубе дыма; включённый —
         /// внутри разгорается тёплый огонёк со светом (группа «Вкл», её ведёт UiToggle), выключенный — тёмная точка.
+        /// Щелчок по всей строке тоже переключает (UiSettingRow.Toggle).
         /// </summary>
         static UiToggle Toggle(RectTransform row)
         {
@@ -316,16 +522,19 @@ namespace Game.EditorTools
             toggle.On = dot;
             toggle.OnGroup = onGroup;
             toggle.Knob = null;
+            UiSettingRow setting = row.GetComponent<UiSettingRow>();
+            if (setting != null) setting.Toggle = toggle;
             return toggle;
         }
 
         /// <summary>
         /// Ползунок: дорожка — тёмный мазок кистью, заливка — тот же мазок оранжевой краской, обрезанный по
         /// значению (Filled: мазок не сжимается), ручка — маленький светлый огонёк в тёплом свечении.
+        /// Число справа — в своей капсуле места, как «50%» на кадре.
         /// </summary>
         static Slider SliderControl(RectTransform row, out TMP_Text value)
         {
-            RectTransform rect = Box(Node("Ползунок", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-120f, 0f), new Vector2(320f, 40f));
+            RectTransform rect = Box(Node("Ползунок", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-100f, 0f), new Vector2(230f, 40f));
             // Ловец на весь ползунок: клик в любом месте дорожки двигает значение.
             UiInkKit.HitArea(rect);
             Image track = UiInkKit.StrokeLayer(rect, "Дорожка", "brush_stroke_1", Role.Track, .95f);
@@ -365,55 +574,10 @@ namespace Game.EditorTools
             grow.HoverScale = 1.2f;
             grow.PressScale = 1.3f;
 
-            RectTransform number = Box(Node("Значение", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-20f, 0f), new Vector2(84f, 40f));
+            RectTransform number = Box(Node("Значение", row), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-14f, 0f), new Vector2(70f, 40f));
             value = UiInkKit.Label(number, "Надпись", "100%", FontRole.Body, 19f, Role.Text, TextAlignmentOptions.MidlineRight);
+            value.textWrappingMode = TextWrappingModes.NoWrap;
             return slider;
-        }
-
-        /// <summary>Нижняя кромка окна: «Назад» слева (только из главного меню), описание наведённой строки, кнопки справа.</summary>
-        static void Footer(RectTransform content, bool withApply, out Button reset, out Button apply, out TMP_Text status, out Button back)
-        {
-            Box(UiInkKit.Divider(content, "Линия футера", RowW, false, .35f), new Vector2(.5f, 0f), new Vector2(.5f, .5f), new Vector2(0f, 102f), new Vector2(RowW, 16f));
-            // Описание наведённой строки — своей строкой над линией: рядом с кнопками ему тесно.
-            RectTransform statusBox = Box(Node("Описание", content), new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(0f, 116f), new Vector2(RowW, 40f));
-            status = UiInkKit.Label(statusBox, "Надпись", "", FontRole.Body, 16f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
-            status.textWrappingMode = TextWrappingModes.NoWrap;
-            status.enableAutoSizing = true;
-            status.fontSizeMin = 13f;
-            status.fontSizeMax = 16f;
-
-            RectTransform footer = Box(Node("Кнопки", content), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-40f, 28f), new Vector2(560f, 56f));
-            var row = footer.gameObject.AddComponent<HorizontalLayoutGroup>();
-            row.childAlignment = TextAnchor.MiddleRight;
-            // Мазки кнопок шире самих кнопок: зазор, чтобы соседние мазки не слипались.
-            row.spacing = 44f;
-            row.childControlWidth = row.childControlHeight = true;
-            row.childForceExpandWidth = row.childForceExpandHeight = false;
-            reset = FooterButton(footer, false, "Сбросить");
-            apply = withApply ? FooterButton(footer, true, "Применить") : null;
-            back = BackButton(content);
-        }
-
-        static Button FooterButton(RectTransform footer, bool primary, string text)
-        {
-            RectTransform button = UiInkKit.Button(footer, text, text, primary, new Vector2(220f, 56f), 24f);
-            var element = button.gameObject.AddComponent<LayoutElement>();
-            element.preferredWidth = 220f;
-            element.preferredHeight = 56f;
-            var result = button.GetComponent<Button>();
-            NoNavigation(result);
-            return result;
-        }
-
-        static Button BackButton(RectTransform content)
-        {
-            RectTransform button = UiInkKit.Button(content, "Назад", "Назад", false, new Vector2(180f, 56f), 24f);
-            Box(button, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(60f, 28f), new Vector2(180f, 56f));
-            button.GetComponent<UiHoverMotion>().ClickSound = UiSoundEvent.Back;
-            var result = button.GetComponent<Button>();
-            NoNavigation(result);
-            button.gameObject.SetActive(false);
-            return result;
         }
     }
 }

@@ -28,8 +28,17 @@ namespace Game.Sim
         /// <summary>Сколько золота осталось в Разломе после смерти.</summary>
         public readonly int GoldLeftBehind;
 
+        private readonly RunStats _stats;
+
+        /// <summary>
+        /// Статистика забега для экрана итогов: время, убийства, урон, лучший
+        /// удар, зелья, уровни. Заморожена концом забега; до первого забега —
+        /// RunStats.Empty, не null.
+        /// </summary>
+        public RunStats Stats => _stats ?? RunStats.Empty;
+
         public RunSummary(RunOutcome outcome, int depth, int riftsCleared, int itemsKept, int itemsLost,
-            int goldKept = 0, int itemsLeftBehind = 0, int goldLeftBehind = 0)
+            int goldKept = 0, int itemsLeftBehind = 0, int goldLeftBehind = 0, RunStats stats = null)
         {
             Outcome = outcome;
             Depth = depth;
@@ -39,8 +48,13 @@ namespace Game.Sim
             GoldKept = goldKept;
             ItemsLeftBehind = itemsLeftBehind;
             GoldLeftBehind = goldLeftBehind;
+            _stats = stats;
         }
 
+        /// <summary>
+        /// Статистики в хеше нет намеренно: она не решает ничего в бою и в
+        /// лагере, а только рассказывает забег (RunStats).
+        /// </summary>
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, (int)Outcome);
@@ -131,6 +145,16 @@ namespace Game.Sim
         public ulong LastRunSeed { get; private set; }
         public int RunNumber { get; private set; }
         public RunSummary LastRun { get; private set; }
+
+        private RunStats _runStats;
+
+        /// <summary>
+        /// Статистика идущего забега — живые числа для HUD. После конца забега
+        /// это она же в LastRun.Stats, уже замороженная; до первого забега —
+        /// RunStats.Empty. Сессия считает её сама и в хеш не кладёт.
+        /// </summary>
+        public RunStats CurrentRunStats => _runStats ?? RunStats.Empty;
+
         public bool IsDeveloperRun { get; private set; }
         public bool DeveloperInvulnerable => IsDeveloperRun && Run != null && Run.Sim.PlayerInvulnerable;
 
@@ -178,14 +202,30 @@ namespace Game.Sim
         }
 
         public void ConfigureCampTraining(CampDummyDefinition[] definitions)
+            => ConfigureCampTraining(definitions, FixVec2.Zero, Fix64.Zero);
+
+        /// <summary>
+        /// Манекены лагеря и зона полигона вокруг них: только там герой бьёт и колдует
+        /// (владелец, 29 сентября). Зону меряет представление по забору полигона; нулевой
+        /// радиус — зона по самим манекенам (<see cref="CampTraining.FallbackZoneMargin"/>).
+        /// </summary>
+        public void ConfigureCampTraining(CampDummyDefinition[] definitions, FixVec2 zoneCenter, Fix64 zoneRadius)
         {
             if (definitions == null || definitions.Length >= _simCapacity)
                 throw new System.ArgumentException("Число мишеней превышает вместимость лагеря.");
             Ground = null;
-            Training = new CampTraining(definitions);
+            Training = new CampTraining(definitions, zoneCenter, zoneRadius);
             BindCampEquipment();
             Generation++;
         }
+
+        /// <summary>
+        /// Можно ли сейчас бить и колдовать: в Разломе и на старом Полигоне — всегда, в лагере
+        /// с манекенами — только в зоне полигона. Кувырок и зелья от этого не зависят. По этому
+        /// же флагу HUD лагеря прячет и возвращает свою боевую часть.
+        /// </summary>
+        public bool CampCombatAllowed => Mode != GameMode.Camp || Ground != null || Training == null
+            || Training.InZone(CampSim.Entities.Position[Simulation.PlayerId]);
 
         private void BindCampEquipment()
         {
@@ -211,7 +251,10 @@ namespace Game.Sim
                 for(int kind=0;kind<Camp.PotionKindCount;kind++)
                     if((input.PotionMask&Camp.PotionInputBit((PotionKind)kind))!=0
                         && Camp.ConsumePotion((PotionKind)kind,ActiveSim) && Mode==GameMode.Rift)
+                    {
                         _alchemyLevelWithoutPotion=false;
+                        _runStats?.CountPotion((PotionKind)kind);
+                    }
             }
             switch (Mode)
             {
@@ -244,7 +287,11 @@ namespace Game.Sim
             if (Ground != null) Ground.Step(in input);
             else
             {
-                CampSim.Step(in input);
+                // Вне полигона удар и способности снимаются, кувырок проходит, ЛКМ ведёт героя.
+                // Решает позиция до шага: та же, что видел игрок, когда нажимал.
+                InputFrame gated = input;
+                Training?.GateInput(ref gated, CampSim.Entities.Position[Simulation.PlayerId]);
+                CampSim.Step(in gated);
                 Training?.AfterStep(CampSim);
             }
 
@@ -401,6 +448,7 @@ namespace Game.Sim
             LastRunSeed = seed;
             RunNumber++;
             IsDeveloperRun = developer;
+            BeginRunStats();
 
             var sim = new Simulation(seed, _simCapacity);
             // База героя ДО расстановки: ConfigurePlayer вешает её прибавки.
@@ -438,7 +486,9 @@ namespace Game.Sim
             int boss=Run.BossId;
             bool bossWasAlive=boss>=0 && Run.Sim.Entities.Alive[boss];
             RunPhase beforePhase=Run.Phase;
+            int tickBefore = Run.Sim.Tick;
             Run.Step(in input);
+            RecordRunStats(Run.Sim.Tick != tickBefore, boss);
             if(!IsDeveloperRun)
             {
                 if(beforePhase==RunPhase.Clearing || beforePhase==RunPhase.SeekingExit)
@@ -459,9 +509,34 @@ namespace Game.Sim
             // по тому же правилу, по которому его добыча не переезжает в сумку.
             // Повышение посреди боя статов и лечения не даёт (владелец, 29 сентября).
             int xp = Run.Sim.TakePendingXp();
-            if (!IsDeveloperRun) Camp.GainExperience(xp);
+            if (!IsDeveloperRun)
+            {
+                int levels = Camp.GainExperience(xp);
+                _runStats?.CountExperience(xp, levels);
+            }
 
             if (Run.Phase == RunPhase.Ended) FinishRun();
+        }
+
+        // ---- статистика забега ----
+
+        /// <summary>
+        /// Новый забег — новая статистика с нуля и снимок уровня лагеря на входе.
+        /// Прежний объект остаётся в LastRun.Stats нетронутым.
+        /// </summary>
+        private void BeginRunStats() => _runStats = new RunStats(Camp.Level, Camp.Experience);
+
+        /// <summary>
+        /// Один шаг сессии в Разломе. События читаются только в тик, когда бой
+        /// шагнул: на экранах награды, замены и пути симуляция стоит, а её
+        /// список событий хранит прошлый тик — второй проход посчитал бы его
+        /// дважды. Бой статистика не трогает: только читает события.
+        /// </summary>
+        private void RecordRunStats(bool simStepped, int bossId)
+        {
+            if (_runStats == null) return;
+            _runStats.CountStep(simStepped);
+            if (simStepped) _runStats.Record(Run.Sim.Events, Run.Sim, bossId);
         }
 
         internal void RecordAlchemyDeaths(System.Collections.Generic.IReadOnlyList<SimEvent> events, Simulation sim)
@@ -500,8 +575,9 @@ namespace Game.Sim
             int gold = IsDeveloperRun ? 0 : Run.Gold;
             if (keeps) Camp.Earn(CurrencyType.Gold, gold);
 
+            _runStats?.Finish(Camp.Level, Camp.Experience);
             LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost,
-                keeps ? gold : 0, behind, keeps ? 0 : gold);
+                keeps ? gold : 0, behind, keeps ? 0 : gold, _runStats);
             Mode = GameMode.Summary;
         }
 

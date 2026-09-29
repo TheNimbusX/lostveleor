@@ -58,8 +58,8 @@ namespace Game.View
         private float _screenHudScale = 1f;
         private GUIStyle _xpLabel, _tooltipKey, _tooltipMetric, _tooltipCaption;
         private Vector2 _pointer;
-        private bool _xpHovered;
         private Rect _xpAnchor;
+        private readonly GUIContent _xpContent = new GUIContent();
         private GUIStyle _heroName, _healthValue, _resourceValue, _resourceName;
         private Texture2D _white;
         // Иконка на каждую способность, а не одна на Вихрь. Нарезаны с
@@ -141,6 +141,8 @@ namespace Game.View
             SetHudShown(visible);
             if (!visible) return;
             _view.Refresh(sim, session.Camp, _driver);
+            // Лагерь (владелец, 29 сентября): вне полигона боевая часть уходит, кошелёк лагеря виден.
+            _view.RefreshCamp(session);
             RefreshMinimap(sim, session, _driver.Run);
         }
 
@@ -202,7 +204,8 @@ namespace Game.View
             if (_view == null) return;
             _rangePreview.Hide();
             Simulation sim = _driver.Sim;
-            if (!_hudShown || sim == null) return;
+            // Боевая часть спрятана (лагерь вне полигона): досягаемость показывать не у чего.
+            if (!_hudShown || sim == null || _view.CampCombatHidden) return;
             _tooltipSlot = _view.HoverSlot;
             int reachSlot = _tooltipSlot >= 0 ? _tooltipSlot : _driver.AimingAbilityTarget ? _driver.AbilityTargetAimSlot : -1;
             AbilityBuild reach = reachSlot >= 0 ? sim.GetAbility(reachSlot) : null;
@@ -249,7 +252,6 @@ namespace Game.View
 
             EnsureStyles();
             _tooltipSlot = -1;
-            _xpHovered = false;
             Vector2 screenPointer = Event.current.mousePosition;
             Matrix4x4 previousMatrix = GUI.matrix;
             float scale = Mathf.Min(Mathf.Clamp(Screen.height / 1080f, 1f, 2f), Screen.safeArea.width / 940f);
@@ -284,9 +286,13 @@ namespace Game.View
                 GUI.matrix = Matrix4x4.Scale(new Vector3(hudScale, hudScale, 1f));
                 _pointer = screenPointer / hudScale;
                 DrawHero(sim, session.Camp);
-                DrawAbilities(sim);
+                // Лагерь вне полигона — без боевой части, но с кошельком (как HUD на Canvas).
+                bool combat = session.CampCombatAllowed;
+                if (combat) DrawAbilities(sim);
                 DrawExperience(sim, session.Camp);
                 DrawPotions(sim);
+                if (session.Mode == GameMode.Camp) DrawCampWallet(sim, session.Camp);
+                if (!combat) return;
                 DrawAbilityTooltip(sim);
                 DrawAbilityFeedback(sim);
             }
@@ -304,7 +310,10 @@ namespace Game.View
                 _driver.Session.Mode == GameMode.Summary || CampWindowOpen) return false;
             Simulation sim = _driver.Sim;
             if (sim == null || sim.Entities.Count == 0) return false;
-            if (_view != null) return _view.HitTest(screenPosition, sim, out slot);
+            if (_view != null)
+                return _view.CampCombatHidden ? _view.HitTestCampCalm(screenPosition) : _view.HitTest(screenPosition, sim, out slot);
+            // Запасной HUD в лагере вне полигона плиток не рисует — и мышь по их месту идёт в мир.
+            bool combat = _driver.Session.CampCombatAllowed;
             float baseScale = Mathf.Min(Mathf.Clamp(Screen.height / 1080f, 1f, 2f), Screen.safeArea.width / 940f);
             float scale = baseScale * .9f;
             Rect safe = Screen.safeArea;
@@ -312,15 +321,15 @@ namespace Game.View
             _safeLeft = safe.xMin / scale; _safeRight = (Screen.width - safe.xMax) / scale; _safeBottom = safe.yMin / scale;
             Vector2 point = new Vector2(screenPosition.x / scale, (Screen.height - screenPosition.y) / scale);
             BottomBar bar = MeasureBottomBar(sim);
-            for (int i = 0; i < DashSlot; i++)
+            for (int i = 0; combat && i < DashSlot; i++)
             {
                 Rect tile = new Rect(bar.RowX + i * (SlotSize + SlotGap), bar.Y, SlotSize, SlotSize + 14f);
                 // Пустая рамка ловит мышь, но слота не даёт: нажимать нечего.
                 if (tile.Contains(point)) { if (sim.GetAbility(i) != null) slot = i; return true; }
             }
-            if (bar.HasDash && new Rect(bar.DashX, bar.Bottom - bar.DashSize, bar.DashSize, bar.DashSize + 14f).Contains(point))
+            if (combat && bar.HasDash && new Rect(bar.DashX, bar.Bottom - bar.DashSize, bar.DashSize, bar.DashSize + 14f).Contains(point))
             { slot = DashSlot; return true; }
-            float right = bar.HasDash ? bar.DashX + bar.DashSize + 46f : bar.RowX + bar.RowWidth + 52f;
+            float right = !combat ? bar.ColumnX + BarWidth : bar.HasDash ? bar.DashX + bar.DashSize + 46f : bar.RowX + bar.RowWidth + 52f;
             if (new Rect(bar.GroupX, bar.Bottom - PortraitSize, right - bar.GroupX, PortraitSize + 36f).Contains(point)) return true;
             float mapScale = baseScale * .85f;
             Vector2 mapPoint = new Vector2(screenPosition.x / mapScale, (Screen.height - screenPosition.y) / mapScale);
@@ -456,16 +465,28 @@ namespace Game.View
             float value = camp != null ? Mathf.Clamp01(camp.Experience / (float)Mathf.Max(1, camp.ExperienceToNextLevel)) : 0f;
             Rect track = new Rect(bar.RowX, bar.Bottom + 18f, bar.RowWidth, ExperienceBarHeight);
             _chrome.Meter(track, value, Paper, 7f);
-            _xpHovered = HudReviewCapture.Enabled ? HudReviewCapture.HoverXp : track.Contains(_pointer);
             _xpAnchor = track;
-            string text = _xpHovered && camp != null ? camp.Experience + "\\" + camp.ExperienceToNextLevel : "XP";
-            float textWidth = Mathf.Min(track.width - 6f, 94f);
+            // Числа видны всегда, без наведения, как у HUD на Canvas (владелец, 29 сентября): «Ур. N · 120 / 300».
+            string text = camp != null ? "Ур. " + camp.Level + " · " + camp.Experience + " / " + camp.ExperienceToNextLevel : "XP";
+            // Вставка по ширине подписи: широкая постоянная закрывала бы две трети заливки опыта.
+            _xpContent.text = text;
+            float textWidth = Mathf.Min(track.width - 6f, _xpLabel.CalcSize(_xpContent).x + 14f);
             Rect label = new Rect(track.center.x - textWidth * .5f,
                 track.y + 2f, textWidth, track.height - 4f);
             // Непрозрачная вставка внутри полосы не зависит от процента светлой заливки.
             _chrome.Shape(label, new Color(.98f, .95f, .85f), 4f);
             _xpLabel.normal.textColor = new Color(.20f, .17f, .11f);
             GUI.Label(label, text, _xpLabel);
+        }
+
+        /// <summary>Кошелёк лагеря над портретом — запасной вид кошелька HUD на Canvas.</summary>
+        private void DrawCampWallet(Simulation sim, Camp camp)
+        {
+            if (camp == null) return;
+            BottomBar bar = MeasureBottomBar(sim);
+            Rect plate = new Rect(bar.GroupX, bar.Bottom - PortraitSize - 40f, 240f, 26f);
+            _chrome.Shape(plate, Plate, 8f);
+            GUI.Label(Inset(plate, 8f), "Золото " + camp.Money(CurrencyType.Gold) + " · Осколки " + camp.Money(CurrencyType.Shards), _label);
         }
 
         private void DrawPotions(Simulation sim)

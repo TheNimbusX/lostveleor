@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Game.Sim;
 using UnityEngine;
@@ -10,10 +11,10 @@ namespace Game.View
         private GameObject _shore;
         private int _edgeTreeCount;
 
-        private void ScatterOutlinedBoundary(float cell)
+        private IEnumerator ScatterOutlinedBoundarySteps(float cell)
         {
             _edgeTreeCount = 0;
-            if (_style.BoundaryDecorChance <= 0) return;
+            if (_style.BoundaryDecorChance <= 0) yield break;
             var bushes = new List<int>(); var rocks = new List<int>(); var trees = new List<int>();
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
@@ -25,7 +26,7 @@ namespace Game.View
                 else if (variant.Kind == DecorKind.Rock) rocks.Add(i);
                 else if (variant.Kind == DecorKind.Tree) trees.Add(i);
             }
-            if (bushes.Count == 0 && rocks.Count == 0) return;
+            if (bushes.Count == 0 && rocks.Count == 0) yield break;
             var occupied = new List<long>(_occupiedCells); occupied.Sort();
             var placed = new List<Vector3>();
             var copses = new List<Vector2>();
@@ -33,6 +34,7 @@ namespace Game.View
                 * Mathf.Clamp(Mathf.Sqrt(.36f / _style.BoundaryDecorChance), .85f, 2);
             foreach (long key in occupied)
             {
+                yield return null;
                 int x = (int)(key >> 32), z = (int)key;
                 for (int d = 0; d < 4; d++)
                 {
@@ -141,7 +143,8 @@ namespace Game.View
                     }
                 }
             }
-            CloseOutlineGaps(bushes, rocks);
+            yield return Step("LayoutView/просветы опушки");
+            yield return CloseOutlineGapsSteps(bushes, rocks);
         }
 
         // Сухие отрезки проходимого контура с внешней нормалью. Берег воды виден сам по себе.
@@ -174,7 +177,7 @@ namespace Game.View
         // открытые участки до 50 м. Каждый просвет закрывает куст или камень вплотную к краю, но не
         // на полу. Колоски сюда не годятся: 15 тысяч треугольников на пучок. У точек появления врагов
         // крупное не встаёт — там край отмечает высокая трава кромки (LayoutView.Grass).
-        private void CloseOutlineGaps(List<int> bushes, List<int> rocks)
+        private IEnumerator CloseOutlineGapsSteps(List<int> bushes, List<int> rocks)
         {
             var cover = new List<Vector3>();
             for (int i = 0; i < _decorCount; i++)
@@ -184,6 +187,7 @@ namespace Game.View
             float rockShare = rocks.Count == 0 ? 0 : bushes.Count == 0 ? 1 : character == GladeCharacter.Rocky ? .3f : .12f;
             foreach (var (edge, normal) in OutlineEdges())
             {
+                yield return null;
                 bool covered = false;
                 foreach (var c in cover)
                     if ((edge - new Vector2(c.x, c.y)).sqrMagnitude < (c.z + .85f) * (c.z + .85f)) { covered = true; break; }

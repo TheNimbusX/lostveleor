@@ -10,7 +10,10 @@ namespace Game.EditorTools
 {
     public static partial class CombatHudWcBuilder
     {
-        const float MapSize = 230f, MapMargin = 24f;
+        /// <summary>Сторона карты: 29.09 владелец — +10 % (было 230), только карта, остальной HUD как был.</summary>
+        const float MapSize = 253f, MapMargin = 24f;
+        const string MapVeilName = "Затемнение края";
+        const string MapVeilMaterialPath = "Assets/UI/Shaders/UiInkMapVeil.mat";
 
         /// <summary>
         /// Карта справа сверху в материале «Дым и свет» (владелец 25 сентября): рамки нет — карта
@@ -23,6 +26,9 @@ namespace Game.EditorTools
         /// кистью по полю расстояний (шейдер Resources/UI/HUD/MinimapInk), а не серебряная лесенка.
         /// Картинка карты — RenderTexture с мипами под ширину карты на экране; префаб её не хранит,
         /// в кадре редактора (Preview) по-прежнему статичный образец wc_map_sample.
+        ///
+        /// 29 сентября (владелец): карта на 10 % крупнее (230 → 253), подпись под ней сдвинута;
+        /// затемнение края — по округлой форме карты, без квадратных углов (<see cref="ShapedVeil"/>).
         /// </summary>
         static void BuildMinimap(RectTransform root, CombatHudView view)
         {
@@ -46,7 +52,7 @@ namespace Game.EditorTools
             fog.material = UiInkKit.Map;
             UiInkKit.Inked(fog);
             Tint(fog, Role.Smoke, 1f);
-            Layer(area, "Затемнение края", T.VeilRadial, Role.Veil, .32f);
+            ShapedVeil(Layer(area, MapVeilName, T.VeilRadial, Role.Veil, .32f));
 
             RectTransform plate = Box(Node("Подпись карты", root), topRight, new Vector2(.5f, 1f),
                 new Vector2(-MapMargin - MapSize * .5f, -MapMargin - MapSize - 12f), new Vector2(190f, 34f));
@@ -62,6 +68,21 @@ namespace Game.EditorTools
             view.MinimapCaption.fontSizeMax = 18f;
 
             BuildMinimapMarks(root, area, fog, view);
+        }
+
+        /// <summary>
+        /// Затемнение края карты по её округлой форме (владелец 29.09: «квадратная тень»). Радиальная
+        /// вуаль пака непрозрачна в углах квадрата, а сама карта тает по мягкой форме map_shape —
+        /// тёмные углы торчали за клубом квадратом. Теперь вуаль режет та же форма (материал как
+        /// UiInkMap, но без светлой дымки по краям — вуаль должна темнить, а не светлеть): остаётся
+        /// мягкое затемнение внутри клуба у его края. Форма ложится по uv2 элемента (UiInkReveal).
+        /// </summary>
+        static void ShapedVeil(Image veil)
+        {
+            if (veil == null) return;
+            veil.material = InkMaterial(UiInkKit.Map, MapVeilMaterialPath, "UiInkMapVeil", m => m.SetFloat("_WispAmount", 0f));
+            veil.raycastTarget = false;
+            if (veil.GetComponent<UiInkReveal>() == null) UiInkKit.Inked(veil);
         }
 
         /// <summary>

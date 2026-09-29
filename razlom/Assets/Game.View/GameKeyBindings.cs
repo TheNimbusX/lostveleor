@@ -145,6 +145,34 @@ namespace Game.View
             Changed?.Invoke();
         }
 
+        /// <summary>
+        /// Свои клавиши обеих схем (мышь и WASD) — к стандартным: «Сбросить» во вкладке «Управление»
+        /// обещает вернуть все назначенные клавиши, а не только клавиши схемы, выбранной сейчас.
+        /// </summary>
+        public static void ResetBothSchemes()
+        {
+            Load();
+            for (int i = 0; i < Count; i++)
+            {
+                Custom[i] = KeyCode.None;
+                PlayerPrefs.DeleteKey("settings.keys." + i);
+                PlayerPrefs.DeleteKey("settings.keys.wasd." + i);
+            }
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+        }
+
+        /// <summary>Есть ли своя клавиша хоть в одной схеме: иначе сбрасывать во вкладке «Управление» нечего.</summary>
+        public static bool AnyCustomInEitherScheme()
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                if (IsSupported((KeyCode)PlayerPrefs.GetInt("settings.keys." + i, (int)KeyCode.None))) return true;
+                if (IsSupported((KeyCode)PlayerPrefs.GetInt("settings.keys.wasd." + i, (int)KeyCode.None))) return true;
+            }
+            return false;
+        }
+
         /// <summary>Раскладка ряда сменилась: подписи зависят от неё, свои клавиши остаются.</summary>
         internal static void NotifyLayoutChanged() => Changed?.Invoke();
 

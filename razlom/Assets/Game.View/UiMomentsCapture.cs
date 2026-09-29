@@ -38,7 +38,11 @@ namespace Game.View
             (.15f, "m1-open"), (.45f, "m2-crack"), (.8f, "m3-crack"), (1.2f, "m4-logo"), (1.8f, "m5-menu"), (2.6f, "m6-rest"), (3.6f, "m7-rest"),
             (4.25f, "m8-hover"), (4.6f, "m9-hover"),
         };
-        bool _menu, _film, _route;
+        bool _menu, _film, _route, _noSmokeFilm, _loot;
+        // -capture-loot: обход тайников первой арены до выхода — какой тайник, часы у него, всё ли обошли.
+        int _lootBranch = -1;
+        float _lootAt;
+        bool _lootDone;
         // Шаги сценария маршрута: когда увидели фазу и что уже сделали.
         float _routeClock = -1f, _phaseAt, _smokeNext, _arenaAt = -1f;
         RunPhase _seenPhase = RunPhase.Idle;
@@ -68,6 +72,10 @@ namespace Game.View
             capture._menu = _menuCapture = Array.IndexOf(args, "-capture-ui-menu") >= 0;
             capture._film = Array.IndexOf(args, "-capture-ui-film") >= 0;
             capture._route = Array.IndexOf(args, "-capture-ui-route") >= 0;
+            // Замер перехода (-capture-frame-log): без плёнки завесы — снимок на каждом кадре сам стоит ~150 мс.
+            capture._noSmokeFilm = Array.IndexOf(args, "-capture-no-film") >= 0;
+            // Строка добычи: вещи в бою берутся только из тайников — с -capture-ui-route герой обходит их до выхода.
+            capture._loot = Array.IndexOf(args, "-capture-loot") >= 0;
             int output = Array.IndexOf(args, "-capture-out");
             capture._directory = output >= 0 && output + 1 < args.Length ? args[output + 1] : Application.temporaryCachePath;
         }
@@ -98,6 +106,7 @@ namespace Game.View
             }
             if (_film && t >= _hudNext && t <= FilmHudEnd)
             {
+                FrameCost.Note("снимок");
                 ScreenCapture.CaptureScreenshot(Path.Combine(_directory, "film-hud-" + _hudFrame.ToString("000") + ".png"));
                 _hudFrame++;
                 _hudNext += FilmStep;
@@ -187,7 +196,8 @@ namespace Game.View
             if (run.Phase != _seenPhase) { _seenPhase = run.Phase; _phaseAt = 0f; Log("phase " + run.Phase + " depth=" + run.Depth); }
             else _phaseAt += step;
 
-            if (!_atExit && t >= 5f && run.Phase == RunPhase.SeekingExit && run.Map.ExitCount > 0)
+            if (_loot && !_lootDone && t >= 4.6f && run.Phase == RunPhase.SeekingExit) VisitCaches(run, step);
+            if (!_atExit && (!_loot || _lootDone) && t >= 5f && run.Phase == RunPhase.SeekingExit && run.Map.ExitCount > 0)
             {
                 _atExit = true;
                 run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
@@ -219,8 +229,9 @@ namespace Game.View
             if (_routeClock >= 0f && _routeClock <= 4.5f)
             {
                 _routeClock += step;
-                if (_routeClock >= _smokeNext)
+                if (_routeClock >= _smokeNext && !_noSmokeFilm)
                 {
+                    FrameCost.Note("снимок");
                     ScreenCapture.CaptureScreenshot(Path.Combine(_directory, "film-smoke-" + _smokeFrame.ToString("000") + ".png"));
                     _smokeFrame++;
                     _smokeNext += FilmStep;
@@ -242,6 +253,79 @@ namespace Game.View
             if (_routeStep == 11 && a >= 5.8f) { Shot("11-pause"); _routeStep = 12; }
             if (_routeStep == 12 && a >= 6.3f) { Pause(false); _routeStep = 13; }
             return _routeStep == 13 && a >= 7f;
+        }
+
+        /// <summary>
+        /// -capture-loot: герой встаёт в каждый тайник первой арены по очереди (стражи уже сгорели) — вещь
+        /// уходит в строку добычи. Тайников нет (первая арена забега обычно без них) — съёмка сама кладёт в
+        /// забег десять вещей разной редкости по одной (и золото на каждой третьей): видно проявление, «+1»,
+        /// уход старых в «+K» и досчёт золота. Кадры: 08l-loot-N через 0,3 с после вещи (у подложенных —
+        /// первая и последняя), 08m-loot — строка в покое после обхода.
+        /// </summary>
+        void VisitCaches(RiftRun run, float step)
+        {
+            const float Stay = 1.1f, InjectStep = .35f, ShotAfter = .3f, RestShot = .8f;
+            const int Injected = 10;
+            int count = run.Map.RewardBranchCount;
+            bool inject = count == 0;
+            int steps = inject ? Injected : count;
+            bool shotDue = false;
+            if (_lootBranch < 0)
+            {
+                Log("loot: caches=" + count + " taken=" + run.TakenRewardCount + " gold=" + run.Gold + (inject ? " — вещи подкладывает съёмка" : ""));
+                Enter(0);
+            }
+            else
+            {
+                float before = _lootAt;
+                _lootAt += step;
+                shotDue = before < ShotAfter && _lootAt >= ShotAfter;
+            }
+            if (_lootBranch < steps)
+            {
+                if (shotDue && (!inject || _lootBranch == 0 || _lootBranch == steps - 1))
+                {
+                    Shot("08l-loot-" + (_lootBranch + 1));
+                    Log("loot: step " + (_lootBranch + 1) + " taken=" + run.TakenRewardCount + " claimed=" + run.BranchesClaimed + " gold=" + run.Gold);
+                }
+                else if (_lootAt >= (inject ? InjectStep : Stay)) Enter(_lootBranch + 1);
+                return;
+            }
+            if (_lootAt >= RestShot)
+            {
+                Shot("08m-loot");
+                Log("loot: done taken=" + run.TakenRewardCount + " gold=" + run.Gold);
+                _lootDone = true;
+            }
+
+            void Enter(int branch)
+            {
+                _lootBranch = branch;
+                _lootAt = 0f;
+                if (branch >= steps) return;
+                if (inject) GiveItem(run, branch);
+                else run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.CenterOf(run.Map.GetRewardBranch(branch));
+            }
+        }
+
+        /// <summary>
+        /// Вещь в список взятых наград забега — мимо боя, только под съёмкой (закрытые поля забега, как пауза
+        /// через закрытые методы меню). Редкость по кругу, на каждой третьей — ещё 35 золота.
+        /// </summary>
+        static void GiveItem(RiftRun run, int index)
+        {
+            const System.Reflection.BindingFlags Private = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var taken = typeof(RiftRun).GetField("_taken", Private)?.GetValue(run) as RewardOffer[];
+            var countField = typeof(RiftRun).GetField("_takenCount", Private);
+            var bases = typeof(RiftRun).GetField("_itemBaseIds", Private)?.GetValue(run) as int[];
+            if (taken == null || countField == null || bases == null || bases.Length == 0) { Log("loot: поля забега не найдены"); return; }
+            int count = (int)countField.GetValue(run);
+            if (count >= taken.Length) return;
+            var rng = new Pcg32(0x4C4F4F54UL + (ulong)index, 7UL);
+            ItemInstance item = ItemDrop.RollOfRarity(ref rng, bases[(index * 7) % bases.Length], (short)(4 + index), (ItemRarity)(index % 4));
+            taken[count] = RewardOffer.OfItem(in item);
+            countField.SetValue(run, count + 1);
+            if (index % 3 == 2) typeof(RiftRun).GetProperty("Gold")?.SetValue(run, run.Gold + 35);
         }
 
         /// <summary>Пауза как по Esc: закрытые методы меню — съёмке можно, игроку это не нужно.</summary>
@@ -274,6 +358,7 @@ namespace Game.View
                 if (_hovered == null && t >= FilmHover) Hover();
                 if (t >= _filmNext && t <= FilmMenuEnd)
                 {
+                    FrameCost.Note("снимок");
                     ScreenCapture.CaptureScreenshot(Path.Combine(_directory, "film-menu-" + _filmFrame.ToString("000") + ".png"));
                     _filmFrame++;
                     _filmNext += FilmStep;
@@ -287,6 +372,7 @@ namespace Game.View
             }
             if (_menuShot >= MenuShots.Length || t < MenuShots[_menuShot].at) return;
             string path = Path.Combine(_directory, "ui-" + MenuShots[_menuShot].name + ".png");
+            FrameCost.Note("снимок");
             ScreenCapture.CaptureScreenshot(path);
             Log("shot " + MenuShots[_menuShot].name + " t=" + t.ToString("0.00"));
             _menuShot++;
@@ -304,6 +390,7 @@ namespace Game.View
         void Shot(string name)
         {
             string path = Path.Combine(_directory, "ui-" + name + ".png");
+            FrameCost.Note("снимок");
             ScreenCapture.CaptureScreenshot(path);
             var banner = FindAnyObjectByType<HudLevelBanner>(FindObjectsInactive.Include);
             string lines = string.Empty;

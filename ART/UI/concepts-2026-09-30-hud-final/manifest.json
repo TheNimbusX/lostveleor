@@ -1,0 +1,352 @@
+{
+ "date": "2026-09-30",
+ "stream": "R",
+ "model": "gpt_image_2_5 (Higgsfield), quality high, 2k, 16:9, image-to-image",
+ "credits_per_image": 2.75,
+ "images": [
+  {
+   "section": "a",
+   "file": "a1-crack-start.png",
+   "preview": "a1-crack-start.jpg",
+   "caption": "Трещина · 1/2: дым закрыл экран, по центру еле открылась тонкая щель тёплого света, сквозь неё — трава",
+   "higgsfield_job": "3188a966-c1cf-4d57-aacf-4fc7318e2782",
+   "references": [
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "(кадр a2, job 59a40f83 — для формы щели)"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a2-crack-dive.png",
+   "preview": "a2-crack-dive.jpg",
+   "caption": "Трещина · 2/2: щель раскрылась, камера ныряет, внизу следующая арена; «Арена 3 · Впереди — Шипомёт»",
+   "higgsfield_job": "59a40f83-4e3f-4fdc-8b91-77e2e8df767e",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a3-window-6b.png",
+   "preview": "a3-window-6b.jpg",
+   "caption": "Окно 6Б · 1/2: круг с живым видом следующей арены, «Арена 3 · Впереди — Шипомёт», путь из 10 кругов, совет",
+   "higgsfield_job": "35ce2395-ee92-4f37-894f-544601e93adc",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/6-loading-B.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a4-window-6b-open.png",
+   "preview": "a4-window-6b-open.jpg",
+   "caption": "Окно 6Б · 2/2: круг расширяется до краёв, дым отслаивается, вход в арену",
+   "higgsfield_job": "7b435313-9ea5-4984-87c1-733bf68e7f08",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/6-loading-B.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a5-inkmap-draw.png",
+   "preview": "a5-inkmap-draw.jpg",
+   "caption": "Карта тушью · 1/2: кисть дорисовывает дорогу от «Арены 2», впереди развилка пустых кругов",
+   "higgsfield_job": "db01c6ed-5de4-4c26-a959-7bd744a053a3",
+   "references": [
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-000.png",
+    "ART/UI/concepts-2026-09-26-pass/icons-B-ink.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a6-inkmap-node.png",
+   "preview": "a6-inkmap-node.jpg",
+   "caption": "Карта тушью · 2/2: кисть дошла, узел «Арена 3» загорается, «Впереди — Шипомёт»",
+   "higgsfield_job": "0cfbfc66-229b-4313-95fc-ae5119f748a5",
+   "references": [
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-000.png",
+    "ART/UI/concepts-2026-09-26-pass/icons-B-ink.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a7-light-walk.png",
+   "preview": "a7-light-walk.jpg",
+   "caption": "Шаг в свет · 1/2: Пелаг со спины идёт к щели света в дыму, летит пепел, «Арена 3» слева внизу",
+   "higgsfield_job": "428c15bc-422c-4d7a-bab5-296fc1f68b20",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "a",
+   "file": "a8-light-gate.png",
+   "preview": "a8-light-gate.jpg",
+   "caption": "Шаг в свет · 2/2: щель стала проходом, в нём сверху видна арена, свет спокойный",
+   "higgsfield_job": "03d224b1-9052-49b2-9cc3-bccedeb91a1e",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png"
+   ]
+  },
+  {
+   "section": "b",
+   "file": "b1-loot-strip-under-panel.png",
+   "preview": "b1-loot-strip-under-panel.jpg",
+   "caption": "Строка А: отдельной строкой под плашкой забега — золото 128 | круглые значки вещей с кольцом редкости, новая вещь влетает с «+1»",
+   "higgsfield_job": "44a72f15-db73-4d2b-88af-a7202b07c716",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-23/camp-prod/smith-worn.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "b",
+   "file": "b2-loot-inside-panel.png",
+   "preview": "b2-loot-inside-panel.jpg",
+   "caption": "Строка Б: «Добыча» третьей строкой внутри плашки + всплывашка «Кожаная куртка · Редкая», искры летят в строку",
+   "higgsfield_job": "71bb8477-8373-4450-84b5-7c8281330a73",
+   "references": [
+    "(правка кадра b2 первого дубля, job 5ab48731)",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ],
+   "note": "имя «Пелаг» в нижнем HUD вернули из кадра-основы: генерация исказила его в «Пелат»"
+  },
+  {
+   "section": "c",
+   "file": "c1-smith-two-actions.png",
+   "preview": "c1-smith-two-actions.jpg",
+   "caption": "Кузнец А: сумка слева, у выбранной вещи две кнопки рядом — «Перековать» (цена) и «Разобрать» (что получишь + «Предмет будет уничтожен»)",
+   "higgsfield_job": "e46343c3-68a3-4afa-8906-6576c0b88eee",
+   "references": [
+    "ART/UI/concepts-2026-09-23/camp-prod/smith-worn.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "c",
+   "file": "c2-smith-forge-and-scrap.png",
+   "preview": "c2-smith-forge-and-scrap.jpg",
+   "caption": "Кузнец Б: справа две зоны — «Перековка» сверху, «Разбор» снизу: вещи с молотком, «Все обычные / Все редкие», «Получишь», «Разобрать отмеченное (3)»",
+   "higgsfield_job": "f306dd3c-a7b6-4707-aef7-7c695d4d3866",
+   "references": [
+    "ART/UI/concepts-2026-09-23/camp-prod/smith-worn.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "c",
+   "file": "c3-smith-list-hammers.png",
+   "preview": "c3-smith-list-hammers.jpg",
+   "caption": "Кузнец В: вещи списком строками, у каждой круглый молоток разбора с подсказкой «Разобрать +12 золота»; справа перековка выбранной",
+   "higgsfield_job": "f2998e33-44ee-4058-b993-d0e45f8ce0f3",
+   "references": [
+    "ART/UI/concepts-2026-09-23/camp-prod/smith-worn.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "d",
+   "file": "d1-trader-goods-and-bag.png",
+   "preview": "d1-trader-goods-and-bag.jpg",
+   "caption": "Торговец А: «Товары» и «Сумка» рядом, снизу выбранная вещь со сравнением с надетым и одной кнопкой «Продать · +24»",
+   "higgsfield_job": "effbaa1c-61f5-4077-a28c-2df395b1a8f6",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/8-trader.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "d",
+   "file": "d2-trader-deal.png",
+   "preview": "d2-trader-deal.jpg",
+   "caption": "Торговец Б: «Прилавок» + «Твоя сумка», отмечаешь что купить и что продать, справа «Сделка: итого −124» и «Заключить сделку»",
+   "higgsfield_job": "939ac78a-e696-45b9-912b-f52b6836c739",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/8-trader.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "d",
+   "file": "d3-trader-mirrored-lists.png",
+   "preview": "d3-trader-mirrored-lists.jpg",
+   "caption": "Торговец В: портрет-медальон сверху, два зеркальных списка «Его товары | Твоя сумка», цена, свойство и действие прямо в строке",
+   "higgsfield_job": "495e1fee-7400-4315-9712-b79cbe74f90e",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/8-trader.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  },
+  {
+   "section": "e",
+   "file": "e1-settings-tabs-top.png",
+   "preview": "e1-settings-tabs-top.jpg",
+   "caption": "Настройки А: пять вкладок сверху, список с разделами, справа панель описания с картинкой; открыта «Интерфейс и доступность»",
+   "higgsfield_job": "f90f97cf-3072-421c-838d-9f03a96fc014",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/7-settings.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/ui-11-pause.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "e",
+   "file": "e2-settings-tabs-left.png",
+   "preview": "e2-settings-tabs-left.jpg",
+   "caption": "Настройки Б: вкладки столбцом слева со значками, опции в центре, описание справа; открыта «Изображение»",
+   "higgsfield_job": "52afa751-189c-402f-b11c-b015fee9a86b",
+   "references": [
+    "ART/UI/concepts-2026-09-25-audit/7-settings.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/ui-11-pause.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-25-audit/7-controls.png"
+   ]
+  },
+  {
+   "section": "x",
+   "file": "x-a1-crack-start-lava.png",
+   "preview": "x-a1-crack-start-lava.jpg",
+   "caption": "Отбраковка: первый дубль «Трещины 1/2» — лава по краям, огонь громкий, против «спокойного огня»",
+   "higgsfield_job": "3f0da9d4-b238-457a-b439-659eeb761c5d",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "x",
+   "file": "x-a2-crack-dive-fiery.png",
+   "preview": "x-a2-crack-dive-fiery.jpg",
+   "caption": "Отбраковка: первый дубль «Трещины 2/2» — края как лава",
+   "higgsfield_job": "4fa21728-8771-4add-9a84-f39347971b69",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png"
+   ]
+  },
+  {
+   "section": "x",
+   "file": "x-a8-light-gate-fiery.png",
+   "preview": "x-a8-light-gate-fiery.jpg",
+   "caption": "Отбраковка: первый дубль «Шага в свет 2/2» — герой горит и засвечен, так нельзя",
+   "higgsfield_job": "176b43ba-6956-4514-b7f1-ac52450731fb",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "artifacts/mobsv2-check/r2-audiolog-route/film-smoke-006.png",
+    "ART/UI/concepts-2026-09-26-pass/menu-bg/6-smoke.png"
+   ]
+  },
+  {
+   "section": "x",
+   "file": "x-b2-loot-diamonds.png",
+   "preview": "x-b2-loot-diamonds.jpg",
+   "caption": "Отбраковка: первый дубль строки Б — ромбы за значками и жёсткая рамка плашки",
+   "higgsfield_job": "5ab48731-796c-470f-8a25-eddfa91b3bbe",
+   "references": [
+    "artifacts/mobsv2-check/r2-snarer-tank/shot_01_t6.00s.png",
+    "ART/UI/concepts-2026-09-25-material/6-summary-C-smoke.png",
+    "ART/UI/concepts-2026-09-23/camp-prod/smith-worn.png",
+    "ART/UI/concepts-2026-09-22/final-2/kit-sheet-2.png"
+   ]
+  }
+ ],
+ "recommendations": {
+  "a": "Советую Окно 6Б (a3→a4) как основной переход: оно уже выбрано, сообщает номер арены, угрозу и путь, и строится поверх существующего дыма. Момент входа можно взять из Трещины (a1→a2): круг 6Б не расширяется, а рвётся тонкой спокойной щелью. «Карта тушью» красивая, но дублирует экран маршрута и дороже в анимации. «Шаг в свет» требует рисованного героя в полный рост — риск «засветить» персонажа.",
+  "b": "Советую строку А (b1): отдельная строка под плашкой, плашка не растёт, золото первым, значки круглые. Из Б взять только короткую всплывашку «Кожаная куртка · Редкая» — она живёт 1,5 с и улетает искрами в строку.",
+  "c": "Советую Кузнеца Б (c2): как у Diablo 4 и Last Epoch — одна выбранная вещь, перековка сверху, разбор снизу, пометка молотком и массовые кнопки «Все обычные / Все редкие», итог «Получишь» до нажатия. Кузнец А (c1) — самый дешёвый запасной вариант.",
+  "d": "Советую Торговца В (d3): два зеркальных списка «Его товары | Твоя сумка», цена и действие в строке, как у Diablo 4 (товары слева, сумка справа) и у Брокера в Hades 2 (цена прямо в строке). «Сделка» (d2) — лишний шаг подтверждения для нашего темпа. Добавить «Выкуп» последних проданных вещей.",
+  "e": "Советую Настройки Б (e2) по раскладке: длинное «Интерфейс и доступность» лучше читается в левом столбце, а панель описания взять из А (e1) — с картинкой. Значок вкладки «Игра» (перечёркнутый человек) заменить."
+ },
+ "sources": [
+  {
+   "title": "Maxroll — Diablo 4: кузнец, улучшение и разбор",
+   "url": "https://maxroll.gg/d4/resources/blacksmith-upgrade-salvage"
+  },
+  {
+   "title": "Twinfinite — разбор в Diablo 4 (кнопки по редкости)",
+   "url": "https://twinfinite.net/diablo-4/how-to-salvage-items-in-diablo-4/"
+  },
+  {
+   "title": "GGRecon — выкуп проданного в Diablo 4",
+   "url": "https://www.ggrecon.com/guides/diablo-4-how-to-get-back-sold-items/"
+  },
+  {
+   "title": "Last Epoch Wiki — Crafting (устройство кузни)",
+   "url": "https://lastepoch.fandom.com/wiki/Crafting"
+  },
+  {
+   "title": "Last Epoch Wiki — Rune of Shattering",
+   "url": "https://lastepoch.fandom.com/wiki/Rune_of_Shattering"
+  },
+  {
+   "title": "Hell Clock Wiki — Reliquary",
+   "url": "https://hellclock.wiki.gg/wiki/Reliquary"
+  },
+  {
+   "title": "Maxroll — Hell Clock, гайд для новичков (магазин, реликварий)",
+   "url": "https://maxroll.gg/hell-clock/getting-started/hell-clock-beginners-guide"
+  },
+  {
+   "title": "PoE 2 Wiki (Fextralife) — Merchants",
+   "url": "https://pathofexile2.wiki.fextralife.com/Merchants"
+  },
+  {
+   "title": "PoE Wiki — Vendor",
+   "url": "https://pathofexile.fandom.com/wiki/Vendor"
+  },
+  {
+   "title": "Game8 — Hades 2, обмены Брокера",
+   "url": "https://game8.co/games/Hades-2/archives/453739"
+  },
+  {
+   "title": "Hades Wiki — Wretched Broker (Hades II)",
+   "url": "https://hades.fandom.com/wiki/Wretched_Broker/Hades_II"
+  },
+  {
+   "title": "Kotaku — настройки Hades 2",
+   "url": "https://kotaku.com/hades-2-early-access-god-mode-autofire-timer-1851461987"
+  },
+  {
+   "title": "PCGamesN — лучшие настройки Hades 2",
+   "url": "https://www.pcgamesn.com/hades-2/best-settings"
+  },
+  {
+   "title": "Supergiant — Hades II Technical Support (пути меню)",
+   "url": "https://www.supergiantgames.com/faqs/hades-ii/"
+  },
+  {
+   "title": "Access-Ability — превью доступности Hades 2",
+   "url": "https://access-ability.uk/2024/05/03/hades-2-accessibility-preview/"
+  }
+ ],
+ "total_images": 22,
+ "credits_used": 60.5
+}

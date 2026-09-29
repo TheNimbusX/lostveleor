@@ -168,6 +168,8 @@ namespace Game.View
             bool status = phase == RunPhase.Clearing || phase == RunPhase.SeekingExit;
             RunHudView.SetActive(_view.Status, status);
             if (status) FillStatus(run);
+            // Строка добычи — под панелью и вместе с ней (RunHud.Loot).
+            RefreshLoot(live ? run : null, status);
             RefreshSurvival(run, status);
             if (live) AnnounceWaves(run);
             bool boss = status && run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId];
@@ -237,7 +239,9 @@ namespace Game.View
                 int survival = _view.Survival == null ? run.Sim.SurvivalTicksLeft : 0;
                 text = "Арена " + run.Depth + "\n"
                        + (survival > 0 ? SurvivalText(survival) + " · " : "") + FightsLine(run) + "\n"
-                       + "Тайники " + run.BranchesClaimed + " / " + run.Map.RewardBranchCount + " · золото " + run.Gold;
+                       + "Тайники " + run.BranchesClaimed + " / " + run.Map.RewardBranchCount
+                       // Золото — в строке добычи под панелью; у префаба до v2 её нет (или она не подключена) — золото здесь.
+                       + (_view.Loot == null ? " · золото " + run.Gold : "");
             }
             if (text == _statusShown) return;
             // Новый заголовок («Путь открыт», следующий разлом) — дым и буквы проявляются заново;

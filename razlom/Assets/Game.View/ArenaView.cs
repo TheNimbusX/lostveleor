@@ -378,8 +378,12 @@ namespace Game.View
         private bool[] _burrowing;
         // Начало ухода в землю на часах отрисовки (тик симуляции + Alpha).
         private float[] _burrowTick;
-        private static readonly System.Collections.Generic.List<GameObject> PrewarmScratch
-            = new System.Collections.Generic.List<GameObject>(32);
+        // Прогрев тел под завесой перехода (поток T1, 29.09): пулы встречи догреваются по одному телу за шаг
+        // из общего бюджета кадра (VeilBudget), а не одним кадром в миг смены арены. Завеса ждёт (AnyWarming).
+        private readonly System.Collections.Generic.List<(ViewPool pool, int need)> _warmQueue
+            = new System.Collections.Generic.List<(ViewPool pool, int need)>();
+        // Кадр, в котором у вида последний раз оставался недогретый пул под завесой.
+        private static int _warmPendingFrame = -10;
         private static Sprite _contactShadowSprite;
         private const string ContactShadowName = "Contact Shadow";
         private const float WoleSpriteScaleMultiplier = 0.78f;
@@ -538,13 +542,101 @@ namespace Game.View
         /// Прогрев остаётся прогревом — он просто перестал занимать треть
         /// секунды одним куском. Четыре за кадр это около 20 мс на шестьдесят
         /// объектов, размазанных по шестнадцати кадрам.
+        ///
+        /// Под дымной завесой (поток T1, 29.09) — сначала пулы встречи, потом общий догрев, по одному телу
+        /// за шаг, пока хватает бюджета кадра; завеса держится, пока не кончится (<see cref="AnyWarming"/>),
+        /// и в бою после рассеивания догревать уже нечего. Без завесы (съёмка, стенды) — как раньше.
         /// </summary>
         private void StepPrewarm()
         {
+            if (Application.isPlaying && CampTransition.Covering)
+            {
+                PumpWarm(VeilBudget.Remaining);
+                return;
+            }
+            FinishWarmQueue();
             const int PerFrame = 4;
             if (_orvillPool != null && _orvillPool.NeedsPrewarm) _orvillPool.PrewarmStep(PerFrame);
             else if (_rootSwarmPool != null && _rootSwarmPool.NeedsPrewarm) _rootSwarmPool.PrewarmStep(PerFrame);
             else if (_wolePool != null && _wolePool.NeedsPrewarm) _wolePool.PrewarmStep(PerFrame);
+        }
+
+        /// <summary>Под завесой ещё греются тела встречи: завеса перехода держится.</summary>
+        public static bool AnyWarming => _warmPendingFrame >= Time.frameCount - 1;
+
+        /// <summary>Догреть всё сразу (запасной выход завесы: не уложились в отведённое время).</summary>
+        public static void FinishAllWarming()
+        {
+            foreach (var view in FindObjectsByType<ArenaView>(FindObjectsInactive.Include)) view.PumpWarm(-1);
+            _warmPendingFrame = -10;
+        }
+
+        /// <summary>
+        /// Пул должен вмещать <paramref name="need"/> тел до боя. Под завесой — в очередь прогрева по кадрам,
+        /// иначе сразу, как раньше.
+        /// </summary>
+        private void QueueWarm(ViewPool pool, int need)
+        {
+            if (pool == null || pool.Created >= need) return;
+            if (!Application.isPlaying || !CampTransition.Covering)
+            {
+                EnsurePool(pool, need);
+                return;
+            }
+            _warmQueue.Add((pool, need));
+            _warmPendingFrame = Time.frameCount;
+        }
+
+        private void FinishWarmQueue()
+        {
+            if (_warmQueue.Count == 0) return;
+            foreach (var (pool, need) in _warmQueue) EnsurePool(pool, need);
+            _warmQueue.Clear();
+        }
+
+        /// <summary>Тела по одному, пока не кончится бюджет (budgetMs &lt; 0 — всё сразу).</summary>
+        private void PumpWarm(double budgetMs)
+        {
+            bool all = budgetMs < 0;
+            if (!all && budgetMs <= 0)
+            {
+                if (WarmPending) _warmPendingFrame = Time.frameCount;
+                return;
+            }
+            long start = System.Diagnostics.Stopwatch.GetTimestamp();
+            double spent = 0;
+            while (WarmOne())
+            {
+                spent = (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                if (!all && spent >= budgetMs) break;
+            }
+            if (!all) VeilBudget.Spend(spent);
+            if (WarmPending) _warmPendingFrame = Time.frameCount;
+        }
+
+        private bool WarmPending => _warmQueue.Count > 0 || NextStepPool() != null;
+
+        private ViewPool NextStepPool()
+        {
+            if (_orvillPool != null && _orvillPool.NeedsPrewarm) return _orvillPool;
+            if (_rootSwarmPool != null && _rootSwarmPool.NeedsPrewarm) return _rootSwarmPool;
+            if (_wolePool != null && _wolePool.NeedsPrewarm) return _wolePool;
+            return null;
+        }
+
+        /// <summary>Одно тело: сначала пулы встречи по очереди, потом общий догрев. false — греть нечего.</summary>
+        private bool WarmOne()
+        {
+            while (_warmQueue.Count > 0)
+            {
+                var (pool, need) = _warmQueue[0];
+                if (pool.GrowToward(need)) return true;
+                _warmQueue.RemoveAt(0);
+            }
+            ViewPool step = NextStepPool();
+            if (step == null) return false;
+            step.PrewarmStep(1);
+            return true;
         }
 
         /// <summary>
@@ -584,7 +676,7 @@ namespace Game.View
                     : kinds[k] == EnemyKind.ForestWendigo ? _wendigoPool
                     : kinds[k] == EnemyKind.ForestStonehoof ? _stonehoofPool
                     : ForestMobFamily(kinds[k]) >= 0 ? ForestMobPool(kinds[k]) : _orvillPool;
-                EnsurePool(pool, need);
+                QueueWarm(pool, need);
             }
         }
 
@@ -631,26 +723,20 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Не меньше <paramref name="need"/> готовых тел в пуле. Прогрев добирается
-        /// сразу; если нужно больше, чем пул собирался греть (встреча не из таблицы
-        /// леса), тела достаются и тут же возвращаются — пул растёт сейчас, а не в бою.
+        /// Не меньше <paramref name="need"/> готовых тел в пуле, сразу. Если нужно больше, чем пул собирался
+        /// греть (встреча не из таблицы леса), пул растёт и сверх прогрева — сейчас, а не в бою.
         /// </summary>
         private static void EnsurePool(ViewPool pool, int need)
         {
             if (pool == null) return;
-            while (pool.Created < need && pool.NeedsPrewarm) pool.PrewarmStep(1);
-            if (pool.Created >= need) return;
-            PrewarmScratch.Clear();
-            for (int i = 0; i < need; i++) PrewarmScratch.Add(pool.Acquire());
-            for (int i = 0; i < PrewarmScratch.Count; i++) pool.Release(PrewarmScratch[i]);
-            PrewarmScratch.Clear();
+            while (pool.GrowToward(need)) { }
         }
 
         private void LateUpdate()
         {
             // LateUpdate, а не Update: к этому моменту TickDriver уже сделал все
             // шаги кадра и выставил Alpha, по которой интерполируется отрисовка.
-            StepPrewarm();
+            using (FrameCost.Measure("ArenaView: догрев пулов")) StepPrewarm();
 
             Simulation sim = _driver.Sim;
             if (sim == null)
@@ -663,7 +749,8 @@ namespace Game.View
                 return;
             }
 
-            if (!_initialized) Initialize();
+            if (!_initialized)
+                using (FrameCost.Measure("ArenaView: подготовка")) Initialize();
 
             // Три случая, когда старые привязки становятся ложью: другая
             // симуляция, вход в следующий Разлом и упавшее число сущностей.
@@ -680,14 +767,14 @@ namespace Game.View
                 || depth != _depthShown
                 || _driver.Sim.Entities.Count < _boundCount)
             {
-                ReleaseEverything();
+                using (FrameCost.Measure("ArenaView: уборка тел")) ReleaseEverything();
                 _depthShown = depth;
                 // Все тела только что вернулись в пулы — самое время догреть их под
                 // встречу этой арены, пока бой не начался.
-                PrewarmEncounter();
+                using (FrameCost.Measure("ArenaView: прогрев встречи")) PrewarmEncounter();
             }
 
-            BindNewEntities();
+            using (FrameCost.Measure("ArenaView: привязка тел")) BindNewEntities();
             if (_driver.GameplayPaused)
                 for (int i = 1; i < _boundCount; i++)
                     if (_deathStarted[i] && (sim.Entities.Kind[i] == EnemyKind.ForestBud || sim.Entities.Kind[i] == EnemyKind.ForestWendigo || sim.Entities.Kind[i] == EnemyKind.ForestStonehoof
@@ -1669,7 +1756,9 @@ namespace Game.View
                 MaterialPropertyBlock block = _materialBlocks[i];
                 if (bodyRenderers != null && block != null)
                 {
-                    block.SetFloat(HitFlashId, _hitFlash[i]);
+                    // «Вспышки и мерцание: Мягче» приглушает вспышку тела целиком — попадание, смерть
+                    // и добивание (три источника берут максимум, поэтому множитель — здесь, на выходе).
+                    block.SetFloat(HitFlashId, _hitFlash[i] * GameUserSettings.FlashScale);
                     block.SetFloat(DeathFadeId, deathFade);
                     if (orvill)
                     {
@@ -2087,7 +2176,7 @@ namespace Game.View
                 SetLayerRecursively(body, LayerMask.NameToLayer("EnemyOutline"));
                 CreateContactShadow(body.transform, Faction.Orvill, 1f); return body;
             }, 4);
-            while (_stonehoofPool.NeedsPrewarm) _stonehoofPool.PrewarmStep(4);
+            QueueWarm(_stonehoofPool, _stonehoofPool.PrewarmTarget);
             if (GetComponent<StonehoofCombatView>() == null) gameObject.AddComponent<StonehoofCombatView>();
         }
 
@@ -2103,7 +2192,7 @@ namespace Game.View
                 CreateContactShadow(body.transform, Faction.Orvill, 1.4f);
                 return body;
             }, 4);
-            while (_wendigoPool.NeedsPrewarm) _wendigoPool.PrewarmStep(4);
+            QueueWarm(_wendigoPool, _wendigoPool.PrewarmTarget);
             if (GetComponent<ForestWendigoCombatView>() == null) gameObject.AddComponent<ForestWendigoCombatView>();
         }
 
@@ -2185,7 +2274,7 @@ namespace Game.View
             var root = new GameObject("Пул: " + title).transform;
             root.SetParent(transform, false);
             var pool = new ViewPool(root, factory, 4);
-            while (pool.NeedsPrewarm) pool.PrewarmStep(4);
+            QueueWarm(pool, pool.PrewarmTarget);
             _forestMobPools[family] = pool;
         }
 
@@ -2196,7 +2285,7 @@ namespace Game.View
             root.SetParent(transform, false);
             _forestBudPool = new ViewPool(root, ForestBudFactory(),
                 _driver.EnemySandbox != null ? Mathf.Max(1, PrewarmForestBud) : Mathf.Max(40, PrewarmForestBud));
-            while (_forestBudPool.NeedsPrewarm) _forestBudPool.PrewarmStep(40);
+            QueueWarm(_forestBudPool, _forestBudPool.PrewarmTarget);
             if (GetComponent<ForestBudCombatView>() == null) gameObject.AddComponent<ForestBudCombatView>();
             if (GetComponent<ForestBudImpactView>() == null) gameObject.AddComponent<ForestBudImpactView>();
             // Кислые лужи гнилых плодов (27.09): живут по слотам Sim, переживают стрелка.

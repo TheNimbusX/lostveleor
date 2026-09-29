@@ -59,10 +59,15 @@ namespace Game.View
         }
         void Update()
         {
-            float dt=CombatAudioCapture.Recording?Time.deltaTime:Time.unscaledDeltaTime;
+            // Шаг не больше 0,1 с: после долгого кадра (сборка арены, загрузка) смесь не должна
+            // обрываться за один кадр — звук гаснет и входит плавно, как у завесы и углей.
+            float dt=Mathf.Min(CombatAudioCapture.Recording?Time.deltaTime:Time.unscaledDeltaTime,.1f);
             _clock+=dt;
             var player=CampPlayerView.Instance;
-            bool audible=CampRoot!=null && CampRoot.activeInHierarchy && !MainMenuView.IsOpen && player!=null && player.Active;
+            // Уход в разлом: лагерь затихает, пока камера подаётся к арке и накатывает дым (FadeOut),
+            // а не обрывается после смены, когда лагерь уже выключен.
+            bool audible=CampRoot!=null && CampRoot.activeInHierarchy && !MainMenuView.IsOpen && player!=null && player.Active
+                && !CampTransition.LeavingCamp;
             if(audible)
             {
                 _listener=player.Position;

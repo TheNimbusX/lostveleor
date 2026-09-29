@@ -33,23 +33,44 @@ namespace Game.EditorTools
                 back.transform.SetSiblingIndex(0);
             }
 
+            // «Настройки Б»: и «Настройки», и «Управление» — одно окно во всю ширину, пауза под ним спрятана.
             bool window = shot == Shot.Settings || shot == Shot.Controls;
-            view.PausePanel.anchoredPosition = new Vector2(window ? view.PauseShiftedX : view.PauseCenterX, 0f);
-            view.SettingsPanel.gameObject.SetActive(shot == Shot.Settings);
-            view.ControlsPanel.gameObject.SetActive(shot == Shot.Controls);
+            view.PausePanel.gameObject.SetActive(!window);
+            view.PausePanel.anchoredPosition = new Vector2(view.PauseCenterX, 0f);
+            view.SettingsPanel.gameObject.SetActive(window);
             view.ConfirmPanel.gameObject.SetActive(shot == Shot.Confirm);
-            view.SettingsGlow.SetActive(shot == Shot.Settings);
-            view.ControlsGlow.SetActive(shot == Shot.Controls);
-            view.Hint.text = window ? "Esc — назад к паузе" : "Esc — продолжить игру";
+            view.Hint.text = "Esc — продолжить игру";
+
+            if (window)
+            {
+                bool controls = shot == Shot.Controls;
+                var tab = controls ? PauseMenuView.Tab.Controls : PauseMenuView.Tab.Graphics;
+                foreach (PauseMenuView.Tab each in new[] { PauseMenuView.Tab.Graphics, PauseMenuView.Tab.Audio, PauseMenuView.Tab.Game,
+                             PauseMenuView.Tab.Interface, PauseMenuView.Tab.Controls })
+                {
+                    CanvasGroup page = view.PageOf(each);
+                    if (page != null) page.gameObject.SetActive(each == tab);
+                    Button button = view.TabButton(each);
+                    if (button == null) continue;
+                    Color colour = each == tab ? view.TabTextOn : view.TabTextOff;
+                    button.GetComponentInChildren<TMPro.TMP_Text>().color = colour;
+                    if (button.transform.Find(PauseMenuView.TabIconName) is Transform icon) icon.GetComponent<Graphic>().color = colour;
+                }
+                var selected = (RectTransform)view.TabButton(tab).transform;
+                view.TabIndicator.anchoredPosition = selected.anchoredPosition;
+                view.TabIndicator.sizeDelta = selected.sizeDelta;
+                view.Apply.gameObject.SetActive(!controls);
+                SettingId described = controls ? SettingId.KeyBindings : SettingId.Quality;
+                view.DescriptionTitle.text = SettingsCatalog.Title(described);
+                view.DescriptionText.text = SettingsCatalog.Description(described);
+                view.DescriptionDefault.text = "Стандартно: " + SettingsCatalog.DefaultText(described);
+                view.FooterNote.text = controls ? "Изменения сохраняются сразу" : "Экран — кнопкой «Применить», остальное сохраняется сразу";
+                foreach (UiSettingRow row in view.GetComponentsInChildren<UiSettingRow>(true))
+                    if (row.Selected != null) row.Selected.SetActive(row.Setting == described);
+            }
 
             if (shot == Shot.Settings)
             {
-                view.AudioPage.gameObject.SetActive(false);
-                view.GamePage.gameObject.SetActive(false);
-                view.TabGraphics.GetComponentInChildren<TMPro.TMP_Text>().color = view.TabTextOn;
-                var tab = (RectTransform)view.TabGraphics.transform;
-                view.TabIndicator.anchoredPosition = tab.anchoredPosition;
-                view.TabIndicator.sizeDelta = tab.sizeDelta;
                 Choose(view.DisplayMode, new[] { "Весь экран", "Окно", "Без рамок" }, 2);
                 Choose(view.Quality, new[] { "Низкое", "Среднее", "Высокое" }, 2);
                 Choose(view.Shadows, new[] { "Низкие", "Средние", "Высокие" }, 1);
@@ -57,17 +78,17 @@ namespace Game.EditorTools
                 view.VSync.SetValue(true);
                 view.FrameLimit.value = .6f; view.FrameLimitValue.text = "120";
                 view.FrameLimitRow.alpha = .45f;
-                view.UiScale.value = .5f; view.UiScaleValue.text = "100%";
-                view.Status.text = "Кадры в такт монитору, без разрывов. Пока включена, ограничение кадров не действует.";
+                view.Brightness.value = .5f; view.BrightnessValue.text = "50%";
             }
             if (shot == Shot.Controls)
             {
                 Choose(view.AbilityLayout, new[] { "Мышь", "WASD" }, 0);
+                Choose(view.AbilityRow, new[] { "Q W E R", "1 2 3 4" }, 0);
                 view.ControlsHint.text = "Нажми на клавишу, чтобы переназначить. Esc — отмена.";
                 string[] combat = { "Способность 1", "Способность 2", "Способность 3", "Способность 4", "Кувырок" };
-                string[] combatKeys = { "Q", "W", "E", "R", "Пробел" };
-                string[] world = { "Взаимодействие", "Войти в Разлом", "Покинуть Разлом", "Повторить забег", "Вернуться в лагерь", "Зелье здоровья", "Зелье лавидия" };
-                string[] worldKeys = { "E", "E", "Esc", "R", "H", "5", "6" };
+                string[] combatKeys = { "Q", "W", "E", "R", "Space" };
+                string[] world = { "Взаимодействие · сумка", "Войти в Разлом", "Уйти из Разлома с добычей", "Повторить забег", "Вернуться в лагерь", "Зелье здоровья", "Зелье лавидия", "Артефакт забега" };
+                string[] worldKeys = { "I", "E", "L", "R", "C", "5", "6", "F" };
                 for (int i = 0; i < combat.Length; i++) Row(view, view.BindingsCombat, combat[i], combatKeys[i], i == 3);
                 for (int i = 0; i < world.Length; i++) Row(view, view.BindingsWorld, world[i], worldKeys[i], false);
             }

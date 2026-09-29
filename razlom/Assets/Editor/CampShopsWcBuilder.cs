@@ -16,7 +16,9 @@ namespace Game.EditorTools
     /// Раскладка по концепту final-P4/4-smith.png: рисованный портрет NPC слева поверх
     /// лагеря, справа заголовок с линией, вкладки, сетка вещей и карточка выбранной вещи.
     /// Портреты и значки — ART/UI/camp-shops-2026-09-23 → Assets/UI/CampShops.
-    /// Префаб создаётся, только если его нет: ручные правки не затираются.
+    /// Префаб создаётся, только если его нет: ручные правки не затираются. Дальше вид меняют только
+    /// миграции (CampShopsWcBuilder.Migrations): с v1 (29.09) кузнец и торговец — одна страница без
+    /// вкладок, всё окно — в «Раскладке», которая помещается в холст при любом масштабе интерфейса.
     ///
     /// Материал — «Дым и свет», как у боевого HUD (владелец 26 сентября: «перевести вообще всё
     /// на новую версию»). Раскладка прежняя, сменился материал: вместо серебряных плашек пака —
@@ -48,13 +50,23 @@ namespace Game.EditorTools
             Build(true);
         }
 
+        /// <summary>
+        /// Собирает префаб, если его нет (или всегда при <paramref name="force"/>). Готовый префаб не
+        /// пересобирается, а доводится миграциями до <see cref="LayoutVersion"/> (CampShopsWcBuilder.Migrations);
+        /// свежая сборка — раскладка 23 сентября и те же миграции, так что вид у обоих путей один.
+        /// </summary>
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             GameObject root = Layout();
             try
             {
+                Migrate(root, root.GetComponent<CampShopView>());
                 Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }

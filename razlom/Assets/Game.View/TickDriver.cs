@@ -1102,6 +1102,9 @@ namespace Game.View
                 }
                 else if (abilitiesLive)
                 {
+                    // Лагерь вне полигона: нажимается только кувырок. Остальное молчит целиком —
+                    // без отказа на плитке, прицела и обрыва маршрута героя (владелец, 29 сентября).
+                    if (i != PelagKit.DashSlot && CampWalkOnly) continue;
                     AbilityBuild build = Sim.GetAbility(i);
                     if (build == null) continue;
                     var availability = HudAbilityAvailability.Of(Sim, i, build);
@@ -1154,6 +1157,9 @@ namespace Game.View
             _hudSlotPressed[slot] = false;
         }
 
+        /// <summary>Лагерь, а герой вне полигона: бить и колдовать нельзя, ЛКМ ведёт героя.</summary>
+        bool CampWalkOnly => Session != null && Session.Mode == GameMode.Camp && !Session.CampCombatAllowed;
+
         internal bool PointerOverHud(Vector2 pointer)
         {
             if (_hud == null) _hud = GetComponent<PlayerHud>();
@@ -1164,6 +1170,20 @@ namespace Game.View
             bool attackHeld, bool attackPressed = false)
         {
             if (GameUserSettings.WasdMovement) moveHeld = movePressed = false;
+            // Лагерь вне полигона (владелец, 29 сентября): бить можно только у манекенов, а ЛКМ
+            // здесь — просто ходьба, как ПКМ. Граница та же, по которой Sim снимает удар
+            // (GameSession.CampCombatAllowed). При ходьбе с клавиатуры ЛКМ вне полигона молчит.
+            bool walkClick = false;
+            if (CampWalkOnly)
+            {
+                if (!GameUserSettings.WasdMovement)
+                {
+                    walkClick = attackPressed;
+                    moveHeld |= attackHeld;
+                    movePressed |= attackPressed;
+                }
+                attackHeld = attackPressed = false;
+            }
             if(CampPlayerView.Instance?.Active==true && CampServicesView.PointerGesture){ClearWorldControls();return;}
             if (_hud == null) _hud = GetComponent<PlayerHud>();
             int hudSlot = -1;
@@ -1256,8 +1276,9 @@ namespace Game.View
                 // Проверка на конкретный Шаг по цепи отменяла прицел Броска
                 // якоря в том же кадре, в котором он включался, и вторая
                 // способность переставала срабатывать вовсе.
+                // Вышел с полигона лагеря с прицелом — прицел снимается: колдовать тут нельзя.
                 bool valid = Sim != null && Sim.Entities.Alive[Simulation.PlayerId]
-                    && TargetedSlot(_targetAimSlot);
+                    && TargetedSlot(_targetAimSlot) && !CampWalkOnly;
 #if ENABLE_INPUT_SYSTEM
                 bool confirm = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
                 bool cancel = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
@@ -1276,6 +1297,12 @@ namespace Game.View
             AttackHeld = attackHeld;
             MoveOrderHeld = moveHeld;
             MoveOrderPressedThisFrame = movePressed;
+
+            // Клик ЛКМ вне полигона прокладывает тот же маршрут в обход палаток, что клик ПКМ.
+            CampPlayerView campPlayer = CampPlayerView.Instance;
+            if (walkClick && campPlayer != null && campPlayer.Active && !campPlayer.InputBlocked && !GameplayPaused
+                && Camera.main != null && !CampInventoryView.PointerOverUI())
+                campPlayer.HandleWorldPress(screenPosition);
 
             // Флаги собираются независимо и могут стоять оба сразу: отходить,
             // продолжая махать, — обычное поведение, а не исключение.

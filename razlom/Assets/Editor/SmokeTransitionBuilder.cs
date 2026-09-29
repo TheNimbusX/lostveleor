@@ -19,6 +19,8 @@ namespace Game.EditorTools
     ///  - «Клубы» — крупный дым: сердце в центре, кольцо вокруг, края и полосы сверху и снизу. Якоря в долях
     ///    холста, так что на широком экране (21:9, 32:9) клубы расходятся вместе с краями, а основа тянется;
     ///  - «Отсвет» — едва заметная холодная кремовая дымка в глубине, формой клуба, а не круглое пятно;
+    ///  - «Карта тушью» — путь забега на закрытом дыму (<see cref="SmokeRouteMap"/>, выбор владельца 30.09):
+    ///    SmokeTransitionBuilder.Map, в готовый префаб — миграцией v1 (SmokeTransitionBuilder.Migrations);
     ///  - «Угли» — редкие мелкие искры у нижнего края.
     /// Огня в завесе нет (владелец 26 сентября, «успокоить огонь»): кромки не тлеют, фронт широкий и мягкий —
     /// на первом кадре тлеющая кромка основы шла по всему экрану ржавой сыпью, а тёплый отсвет стоял
@@ -28,7 +30,7 @@ namespace Game.EditorTools
     ///
     /// Время ведёт CampTransition; префаб только хранит детали и очередь клубов.
     /// </summary>
-    public static class SmokeTransitionBuilder
+    public static partial class SmokeTransitionBuilder
     {
         public const string PrefabPath = "Assets/Resources/UI/Prefabs/SmokeTransition.prefab";
         static UiTheme T => UiTheme.Current;
@@ -46,10 +48,17 @@ namespace Game.EditorTools
             Build(true);
         }
 
-        /// <summary>Собрать префаб; без <paramref name="force"/> — только если его ещё нет.</summary>
+        /// <summary>
+        /// Собрать префаб; без <paramref name="force"/> — только если его ещё нет. Готовый не пересобирается,
+        /// а доводится миграциями до <see cref="LayoutVersion"/>: ручные правки владельца остаются.
+        /// </summary>
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             GameObject root = Layout();
             try
@@ -126,6 +135,9 @@ namespace Game.EditorTools
             veil.Glow.Burn = 0f;
             veil.Glow.EdgeScale = 3f;
 
+            // Карта тушью — над дымом, под углями: искры завесы плывут поверх карты.
+            BuildMap(rect, veil);
+
             // Угли у нижнего края: редкие и мелкие, пока завеса закрыта, пара — в миг полного закрытия.
             UiEmbers embers = UiInkKit.Embers(rect, "Угли", new Vector2(.5f, 0f), Vector2.zero, new Vector2(100f, 420f), 0f);
             RectTransform emberRect = embers.rectTransform;
@@ -141,6 +153,7 @@ namespace Game.EditorTools
             embers.Speed = new Vector2(30f, 80f);
             embers.Sway = 14f;
             veil.Embers = embers;
+            veil.LayoutVersion = LayoutVersion;
 
             return root;
         }

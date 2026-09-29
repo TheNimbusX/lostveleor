@@ -14,7 +14,7 @@ namespace Game.View
     /// включает части и получает клики. Подписи в мире и меню над добычей остаются
     /// в RunHud (IMGUI) — они привязаны к точкам сцены.
     /// </summary>
-    public sealed class RunHudView : MonoBehaviour
+    public sealed partial class RunHudView : MonoBehaviour
     {
         [Header("Выбор награды")]
         public CanvasGroup Choice;
@@ -119,6 +119,9 @@ namespace Game.View
             SetShown(Summary, false, true);
             SetActive(SummaryCampTitle, false);
             SetActive(SummaryCamp, false);
+            // Подсказка и «+1» строки добычи появляются только по делу (RunHud.Loot).
+            SetActive(LootTip, false);
+            SetActive(LootArrival, false);
             if (GetComponent<CanvasScaler>() != null && GetComponent<UiScaleFollower>() == null) gameObject.AddComponent<UiScaleFollower>();
             PauseMenuView.EnsureEventSystem();
             SetShown(Choice, false, true);

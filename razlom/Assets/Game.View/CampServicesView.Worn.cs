@@ -6,12 +6,13 @@ namespace Game.View
     /// <summary>
     /// Ряд «Надето» в окнах кузнеца и торговца (владелец 23 сентября: «чтоб было видно
     /// надетые вещи и чтоб можно было их перековать прям у них в окне»). Кузнец перековывает
-    /// надетое, разбирает только из сумки; торговец показывает надетое для сравнения,
-    /// продаёт только из сумки. Отдельный файл: реплики в Smith/Trader правит другой автор.
+    /// надетое, разбирает только из сумки (кнопка «Разобрать» объясняет запрет); торговец
+    /// показывает надетое для сравнения, продаёт только из сумки. Отдельный файл: реплики в
+    /// Smith/Trader правит другой автор.
     /// </summary>
     public sealed partial class CampServicesView
     {
-        bool _smithWorn, _traderWorn;
+        bool _smithWorn;
 
         void WireWorn(CampShopScreen s, System.Action<int> pick)
         {
@@ -23,7 +24,7 @@ namespace Game.View
             }
         }
 
-        /// <summary>selected — выбранный слот надетого или -1; locked — надетое сейчас недоступно (разбор).</summary>
+        /// <summary>selected — выбранный слот надетого или -1; locked — надетое сейчас недоступно.</summary>
         void ShowWorn(CampShopScreen s, Camp camp, int selected, bool locked)
         {
             var inventory = GetComponent<CampInventoryView>();
@@ -41,12 +42,12 @@ namespace Game.View
         static ItemInstance WornOrBag(Camp camp, int slot, bool worn) =>
             slot < 0 ? default : worn ? (slot < (int)EquipSlot.Count ? camp.Worn.Worn((EquipSlot)slot) : default) : camp.Bag.At(slot);
 
-        static string WornTag => "  ·  <color=#3BF0F5>" + CampServiceText.Get("shop.worn.tag") + "</color>";
+        static string WornTag => "  ·  " + Paint(CampServiceText.Get("shop.worn.tag"), UiTheme.Role.Rare);
 
         /// <summary>
         /// Проверка без прогресса (CampServicesProbe): надетая вещь выбирается в ряду «Надето»,
-        /// перековывается кнопкой окна, остаётся надетой; на «Разборе» ряд недоступен;
-        /// торговец показывает надетое без цены и не продаёт его.
+        /// перековывается кнопкой окна и остаётся надетой; «Разобрать» у надетой спит и ничего не
+        /// делает; торговец показывает надетое без цены и не продаёт его.
         /// </summary>
         internal bool ProbeWornTransactions()
         {
@@ -59,32 +60,33 @@ namespace Game.View
                 var camp = new Camp(PrototypeContent.Items());
                 camp.Earn(CurrencyType.Gold, 200); camp.Earn(CurrencyType.Shards, 20);
                 camp.Bag.Add(new ItemInstance(StableId.Of("base.rusty_sword"), 10, ItemRarity.Magic, 123));
-                if (!camp.EquipFromBag(0) || smith.Worn.Length == 0) return false;
+                if (!camp.EquipFromBag(0) || smith.Worn.Length == 0 || smith.Extra == null) return false;
                 _smithCamp = camp;
-                _dismantling = false; _confirmDismantle = false;
+                _smithSlot = -1; _smithWorn = false; _confirmDismantle = false;
                 smith.Worn[0].Button.onClick.Invoke();
                 if (!_smithWorn || _smithSlot != 0 || !smith.Action.interactable) return false;
+                // Надетое не разбирается: кнопка спит, нажатие не ставит подтверждение.
+                if (smith.Extra.interactable) return false;
+                smith.Extra.onClick.Invoke();
+                if (_confirmDismantle || camp.Worn.Worn(EquipSlot.Weapon).IsEmpty) return false;
                 smith.Action.onClick.Invoke();
                 var worn = camp.Worn.Worn(EquipSlot.Weapon);
                 if (worn.ReforgeCount != 1 || !camp.Bag.IsEmpty(0) || camp.Money(CurrencyType.Gold) != 170) return false;
-                smith.Tabs[1].onClick.Invoke();
-                if (_smithWorn || smith.Worn[0].Button.interactable) return false;
-                smith.Tabs[0].onClick.Invoke();
 
                 var trader = _view.Trader;
                 if (trader.Worn.Length == 0) return false;
                 _traderCamp = camp;
-                SetTradeMode(true);
+                _tradePick = TradePick.None; _traderSlot = -1;
                 trader.Worn[0].Button.onClick.Invoke();
-                bool shown = _traderWorn && !trader.Action.interactable && !trader.Price.activeSelf;
+                bool shown = _tradePick == TradePick.Worn && !trader.Action.interactable && !trader.Price.activeSelf;
                 trader.Action.onClick.Invoke();
                 return shown && !camp.Worn.Worn(EquipSlot.Weapon).IsEmpty && camp.Money(CurrencyType.Gold) == 170;
             }
             finally
             {
-                _smithCamp = original; _smithSlot = -1; _smithWorn = false; _dismantling = false; _confirmDismantle = false;
+                _smithCamp = original; _smithSlot = -1; _smithWorn = false; _confirmDismantle = false;
                 if (_smithCamp != null) RefreshSmith();
-                _traderCamp = traderOriginal; _traderSlot = -1; _traderWorn = false; _selling = false;
+                _traderCamp = traderOriginal; _traderSlot = -1; _tradePick = TradePick.None; _confirmSale = _confirmRefresh = false;
                 if (_traderCamp != null) RefreshTraderPanel();
                 _view.Smith.Message.text = "";
             }

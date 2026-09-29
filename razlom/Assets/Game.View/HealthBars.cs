@@ -280,6 +280,15 @@ namespace Game.View
 
             if (!_ready) Build();
             if (_camera == null && Camera.main != null) _camera = Camera.main.transform;
+            // Съёмка ролика без полосок (-capture-no-bars): пул спрятан, место таблички элиты
+            // не считается — RunWorldView под тем же флагом табличку не ставит.
+            // Настройка «Полоски здоровья врагов» режет врагов поштучно в Draw: при «Нет» остаются
+            // только манекены лагеря (это тренировка, не враги), табличку элиты RunWorldView прячет сам.
+            if (CaptureRig.NoBars)
+            {
+                HideFrom(0);
+                return;
+            }
 
             TrackHits();
             Draw(sim);
@@ -340,6 +349,9 @@ namespace Game.View
                 bool nearbyDummy = dummy != null && CampPlayerView.Instance != null
                     && CampTrainingView.IsNear(dummy, CampPlayerView.Instance.Position);
                 bool elite = _driver.Run?.Encounters?.IsElite(i) == true;
+                // Настройка: «Элита» — полоски только у элиты, «Нет» — ни у кого (и табличке
+                // элиты место не считается). Манекен лагеря — тренировка, его полоска остаётся всегда.
+                if (dummy == null && !GameUserSettings.ShowsEnemyBar(elite)) continue;
                 bool nearbyElite = elite && FixVec2.DistanceSq(entities.Position[i], entities.Position[Simulation.PlayerId]) < Fix64.FromInt(256);
                 bool shown = (age <= ShowFor || nearbyElite || nearbyDummy) && used < _bars.Length;
                 if (!shown && !elite) continue;

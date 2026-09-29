@@ -5,8 +5,8 @@ namespace Game.View
 {
     /// <summary>
     /// Проигрывает звуки интерфейса из <see cref="UiSoundBank"/>. Работает в паузе
-    /// (игнорирует паузу слушателя и Time.timeScale), громкость — «Эффекты» из
-    /// настроек. Нет банка или клипов у события — тишина, без ошибок.
+    /// (игнорирует паузу слушателя и Time.timeScale), громкость — «Интерфейс» из
+    /// настроек (до 30.09 — «Эффекты»). Нет банка или клипов у события — тишина, без ошибок.
     /// </summary>
     public static class UiSound
     {
@@ -35,7 +35,7 @@ namespace Game.View
 
             AudioSource source = Source;
             source.pitch = 1f + Random.Range(-entry.PitchJitter, entry.PitchJitter);
-            source.PlayOneShot(clip, entry.Volume * GameUserSettings.EffectsVolume);
+            source.PlayOneShot(clip, entry.Volume * GameUserSettings.InterfaceVolume);
         }
 
         static AudioSource Source

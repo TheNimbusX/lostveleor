@@ -13,41 +13,44 @@ namespace Game.EditorTools
         const float KeySize = 34f;
 
         // ---------------------------------------------------------------- управление
-        static void BuildControls(RectTransform root, PauseMenuView view)
+
+        /// <summary>
+        /// Вкладка «Управление» (раньше — своё окно): схема движения, ряд способностей, подсказка и две
+        /// колонки клавиш «Бой» и «Мир». Колонки — по группам обмена клавиш (GameKeyBindings).
+        /// </summary>
+        static void BuildControlsPage(RectTransform options, PauseMenuView view)
         {
-            RectTransform content = Window(root, "Управление");
-            view.ControlsPanel = (RectTransform)content.parent;
+            view.ControlsPage = Page(options, "Управление");
+            RectTransform page = (RectTransform)view.ControlsPage.transform;
+            view.AbilityLayout = Segmented(Control(Row(page, 0, SettingId.Movement, ControlW), ControlW), 2);
+            RectTransform abilityRow = Row(page, 1, SettingId.AbilityRow, ControlW);
+            view.AbilityRowGroup = abilityRow.gameObject.AddComponent<CanvasGroup>();
+            view.AbilityRow = Segmented(Control(abilityRow, ControlW), 2);
 
-            RectTransform title = Box(Node("Заголовок", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -26f), new Vector2(600f, 56f));
-            UiInkKit.Label(title, "Надпись", "Управление", FontRole.Heading, 38f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
-            Box(UiInkKit.Divider(content, "Линия", 420f, true, .6f), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -94f), new Vector2(420f, 16f));
+            view.ControlsHint = UiInkKit.Label(Corner(page, "Пояснение", 16f, 2f * RowStep + 4f, PageW - 16f, 34f), "Надпись", "", FontRole.Body, 16f, Role.TextMuted);
+            view.ControlsHint.textWrappingMode = TextWrappingModes.NoWrap;
+            view.ControlsHint.enableAutoSizing = true;
+            view.ControlsHint.fontSizeMin = 12f;
+            view.ControlsHint.fontSizeMax = 16f;
 
-            view.AbilityLayout = Segmented(Control(Row(content, 0, "Движение", "Как ходить: мышью или клавишами."), 320f), 2);
-            RectTransform hint = Box(Node("Пояснение", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -182f), new Vector2(RowW, 40f));
-            view.ControlsHint = UiInkKit.Label(hint, "Надпись", "", FontRole.Body, 17f, Role.TextMuted);
-
-            RectTransform columns = Box(Node("Колонки", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -226f), new Vector2(RowW, 410f));
-            view.BindingsCombat = Column(columns, "Бой", 0f);
-            view.BindingsWorld = Column(columns, "Мир", 470f);
+            const float columnsTop = 2f * RowStep + 44f, columnW = 310f, columnH = PageH - columnsTop;
+            RectTransform columns = Corner(page, "Колонки", 0f, columnsTop, PageW, columnH);
+            view.BindingsCombat = Column(columns, "Бой", 0f, columnW, columnH);
+            view.BindingsWorld = Column(columns, "Мир", PageW - columnW, columnW, columnH);
             view.BindingTemplate = BindingRow(view.BindingsCombat);
 
             // Мышь не переназначается — притушенная строка-напоминание под пятью строками «Боя»
-            // (в «Мире» строк семь, там места нет). Клавиши — те же капсулы, что у строк.
-            RectTransform mouse = Box(Node("Мышь", (RectTransform)view.BindingsCombat.parent), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, -40f - 5f * 52f - 10f), new Vector2(450f, 46f));
+            // (в «Мире» строк восемь, там места нет). Клавиши — те же капсулы, что у строк.
+            RectTransform mouse = Box(Node("Мышь", (RectTransform)view.BindingsCombat.parent), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(0f, -40f - 5f * 48f - 10f), new Vector2(columnW, 44f));
             mouse.gameObject.AddComponent<CanvasGroup>().alpha = .8f;
-            RectTransform action = Box(Node("Действие", mouse), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(260f, 34f));
-            UiInkKit.Label(action, "Надпись", "Идти · атаковать", FontRole.Body, 18f, Role.TextMuted);
-            RectTransform keys = Box(Node("Клавиши", mouse), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-12f, 0f), new Vector2(200f, KeySize));
+            RectTransform action = Box(Node("Действие", mouse), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(16f, 0f), new Vector2(160f, 34f));
+            UiInkKit.Label(action, "Надпись", "Идти · атаковать", FontRole.Body, 17f, Role.TextMuted).textWrappingMode = TextWrappingModes.NoWrap;
+            RectTransform keys = Box(Node("Клавиши", mouse), new Vector2(1f, .5f), new Vector2(1f, .5f), new Vector2(-8f, 0f), new Vector2(130f, KeySize));
             RectTransform attack = UiInkKit.Keycap(keys, "ЛКМ", "ЛКМ", KeySize);
             RightAt(attack, 0f);
             RectTransform walk = UiInkKit.Keycap(keys, "ПКМ", "ПКМ", KeySize);
             RightAt(walk, -attack.sizeDelta.x - 10f);
-
-            Footer(content, false, out view.ControlsReset, out _, out TMP_Text status, out view.ControlsBack);
-            view.ControlsBack.gameObject.SetActive(true);
-            // Строки клавиш свою подсказку пишут в ControlsHint; описание футера у управления не нужно.
-            Object.DestroyImmediate(status.transform.parent.gameObject);
-            view.ControlsPanel.gameObject.SetActive(false);
         }
 
         /// <summary>Правый край узла — у правого края родителя со сдвигом <paramref name="x"/>.</summary>
@@ -59,24 +62,24 @@ namespace Game.EditorTools
         }
 
         /// <summary>Колонка клавиш: заголовок капителью и тусклая нить до края, под ними строки раскладкой.</summary>
-        static RectTransform Column(RectTransform parent, string title, float left)
+        static RectTransform Column(RectTransform parent, string title, float left, float width, float height)
         {
-            RectTransform column = Box(Node(title, parent), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, 0f), new Vector2(450f, 410f));
-            RectTransform head = Box(Node("Заголовок", column), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(8f, 0f), new Vector2(440f, 32f));
+            RectTransform column = Box(Node(title, parent), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(left, 0f), new Vector2(width, height));
+            RectTransform head = Box(Node("Заголовок", column), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(8f, 0f), new Vector2(width - 10f, 32f));
             TMP_Text label = UiInkKit.Label(head, "Надпись", title, FontRole.Heading, 22f, Role.TextMuted, TextAlignmentOptions.MidlineLeft, 3f);
             label.fontStyle = FontStyles.UpperCase;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             float text = label.GetPreferredValues(title.ToUpperInvariant()).x;
-            float from = 8f + text + 22f, width = 440f - from;
-            Box(UiInkKit.Divider(column, "Линия", width, false, .25f), new Vector2(0f, 1f), new Vector2(0f, .5f), new Vector2(from, -16f), new Vector2(width, 16f));
+            float from = 8f + text + 22f, line = width - 10f - from;
+            Box(UiInkKit.Divider(column, "Линия", line, false, .25f), new Vector2(0f, 1f), new Vector2(0f, .5f), new Vector2(from, -16f), new Vector2(line, 16f));
             RectTransform rows = Node("Строки", column);
             rows.anchorMin = new Vector2(0f, 1f);
             rows.anchorMax = new Vector2(1f, 1f);
             rows.pivot = new Vector2(.5f, 1f);
             rows.anchoredPosition = new Vector2(0f, -40f);
-            rows.sizeDelta = new Vector2(0f, 370f);
+            rows.sizeDelta = new Vector2(0f, height - 40f);
             var list = rows.gameObject.AddComponent<VerticalLayoutGroup>();
-            list.spacing = 6f;
+            list.spacing = 4f;
             list.childControlWidth = list.childControlHeight = true;
             list.childForceExpandWidth = true;
             list.childForceExpandHeight = false;
@@ -87,26 +90,29 @@ namespace Game.EditorTools
         /// Строка клавиши: действие слева, клавиша «Дыма и света» справа — круг под одну букву, капсула
         /// под длинную подпись (ширину после переназначения подгоняет UiKeyBindingRow). Наведение — кольцо
         /// разгорается и за клавишей встаёт свет; ожидание — пульсирующее тёплое свечение; обмен — вспышка
-        /// оранжевого дыма по строке.
+        /// оранжевого дыма по строке. Наведение на строку описывает справа «Клавиши» (UiSettingRow).
         /// </summary>
         static UiKeyBindingRow BindingRow(RectTransform column)
         {
             RectTransform row = Node("Шаблон клавиши", column);
             var element = row.gameObject.AddComponent<LayoutElement>();
-            element.preferredHeight = element.minHeight = 46f;
+            element.preferredHeight = element.minHeight = 44f;
+            UiInkKit.HitArea(row);
+            row.gameObject.AddComponent<UiSettingRow>().Setting = SettingId.KeyBindings;
             var binding = row.gameObject.AddComponent<UiKeyBindingRow>();
             Image flash = UiInkKit.SmokeLayer(row, "Вспышка", "smoke_plate", .45f, 16f, 6f, Role.Accent);
             binding.FlashGraphic = flash;
             flash.gameObject.SetActive(false);
-            RectTransform action = Box(Node("Действие", row), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(260f, 36f));
+            // Колонка в 310: подпись до 180, капсула клавиши не шире 3,2 высоты — длинные подписи ужимаются, а не наезжают.
+            RectTransform action = Box(Node("Действие", row), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(16f, 0f), new Vector2(180f, 36f));
             binding.Action = UiInkKit.Label(action, "Надпись", "Действие", FontRole.Body, 18f, Role.Text);
             binding.Action.enableAutoSizing = true;
-            binding.Action.fontSizeMin = 13f;
+            binding.Action.fontSizeMin = 12f;
             binding.Action.fontSizeMax = 18f;
             binding.Action.textWrappingMode = TextWrappingModes.NoWrap;
 
             RectTransform key = UiInkKit.Keycap(row, "Клавиша", "Q", KeySize);
-            RightAt(key, -12f);
+            RightAt(key, -8f);
             // Свет — поверх дыма клавиши и под кольцом с буквой: под дымом его почти не видно.
             RectTransform waiting = Stretch(Node("Ожидание", key), -14f);
             waiting.SetSiblingIndex(1);
@@ -138,6 +144,7 @@ namespace Game.EditorTools
             binding.KeyDefault = T.Text;
             binding.KeyCustom = T.Accent;
             binding.KeySize = KeySize;
+            binding.KeyMaxWidth = 3.2f;
             row.gameObject.SetActive(false);
             return binding;
         }

@@ -1,4 +1,6 @@
-﻿using Game.Sim;
+﻿using System.Collections;
+using System.Threading.Tasks;
+using Game.Sim;
 using UnityEngine;
 
 namespace Game.View
@@ -10,21 +12,28 @@ namespace Game.View
         private readonly byte[] _wearPixels = new byte[TrailResolution * TrailResolution];
         private readonly byte[] _clearingPixels = new byte[TrailResolution * TrailResolution];
 
-        private void BuildClearings(LayoutMap map)
+        private IEnumerator BuildClearingsSteps(LayoutMap map)
         {
-            BuildGroundWear(map);
+            UploadGroundWear();
             if (!_style.ForestClearings)
             {
                 _roomMaterial.SetTexture("_ClearingMask", Texture2D.blackTexture);
-                return;
+                yield break;
             }
             if (_clearingMask == null)
                 _clearingMask = new Texture2D(TrailResolution, TrailResolution, TextureFormat.R8, false, true)
                 { name = "Лесные поляны", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
             System.Array.Clear(_clearingPixels, 0, _clearingPixels.Length);
-            if (map.Outline != null) PaintWholeGlade(map);
+            if (map.Outline != null)
+            {
+                // Самый тяжёлый проход сборки: проходимость и поле поляны в Fix64 на каждый пиксель 1024².
+                yield return Step("LayoutView/маска полян");
+                yield return PaintWholeGlade(map);
+                yield return Step("LayoutView/тропа и поляны");
+            }
             for (int m = 1; map.Outline == null && m < map.PlacedCount; m++)
             {
+                yield return null;
                 var module = map.GetPlaced(m);
                 float width = module.Width * LayoutMap.CellSize.ToFloat();
                 float height = module.Height * LayoutMap.CellSize.ToFloat();
@@ -76,47 +85,52 @@ namespace Game.View
             _roomMaterial.SetTexture("_ClearingMask", _clearingMask);
         }
 
-        private void PaintWholeGlade(LayoutMap map)
+        // По строкам на рабочих потоках: пиксель зависит только от карты и своих координат, пишет только себя.
+        // Карта, контур и поляны за время прохода не меняются (сборка идёт под завесой, тики стоят).
+        private Task PaintWholeGlade(LayoutMap map)
         {
             var entry = TrailPoint(map.EntryPoint); var exit = TrailPoint(map.ExitPoint(0));
-            for (int y = 0; y < TrailResolution; y++)
-                for (int x = 0; x < TrailResolution; x++)
-                {
-                    var p = new Vector2(_trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z,
-                        _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w);
-                    var point = new FixVec2(Fix64.FromDouble(p.x), Fix64.FromDouble(p.y));
-                    if (!map.IsWalkable(point, Fix64.Ratio(15, 100))) continue;
-                    float clearing = 0;
-                    for (int g = 0; g < map.GladeCount; g++)
-                    {
-                        var glade = map.GetGlade(g);
-                        clearing = Mathf.Max(clearing, Mathf.Clamp01((1 - glade.Field(point).ToFloat()) / .4f));
-                    }
-                    for (int b = 0; b < map.RewardBranchCount; b++)
-                    {
-                        var glade = GladeRegion.ForBranch(map, map.GetRewardBranch(b));
-                        clearing = Mathf.Max(clearing, Mathf.Clamp01((1 - glade.Field(point).ToFloat()) / .4f));
-                    }
-                    if (clearing <= 0) continue;
-                    float approach = Mathf.Clamp01((Mathf.Min(Vector2.Distance(p, entry), Vector2.Distance(p, exit)) - 3) / 8);
-                    // Leave a grassy rim, with open mixed ground covering the connected interior.
-                    bool interior = true;
-                    for (int direction = 0; direction < 8; direction++)
-                    {
-                        float angle = direction * Mathf.PI / 4;
-                        var offset = new FixVec2(Fix64.FromDouble(Mathf.Cos(angle) * 2), Fix64.FromDouble(Mathf.Sin(angle) * 2));
-                        if (!map.Outline.Contains(point + offset)) { interior = false; break; }
-                    }
-                    float rim = interior ? 1 : .2f;
-                    _clearingPixels[y * TrailResolution + x] = (byte)Mathf.RoundToInt(255 * approach * rim * clearing);
-                }
+            return Rows(TrailResolution, y => PaintWholeGladeRow(map, entry, exit, y), "маска полян");
         }
 
-        private void BuildGroundWear(LayoutMap map)
+        private void PaintWholeGladeRow(LayoutMap map, Vector2 entry, Vector2 exit, int y)
         {
-            if (_wearMask == null)
-                _wearMask = new Texture2D(TrailResolution, TrailResolution, TextureFormat.R8, false, true)
-                { name = "Вытоптанный грунт", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            for (int x = 0; x < TrailResolution; x++)
+            {
+                var p = new Vector2(_trailBounds.x + (x + .5f) / TrailResolution * _trailBounds.z,
+                    _trailBounds.y + (y + .5f) / TrailResolution * _trailBounds.w);
+                var point = new FixVec2(Fix64.FromDouble(p.x), Fix64.FromDouble(p.y));
+                if (!map.IsWalkable(point, Fix64.Ratio(15, 100))) continue;
+                float clearing = 0;
+                for (int g = 0; g < map.GladeCount; g++)
+                {
+                    var glade = map.GetGlade(g);
+                    clearing = Mathf.Max(clearing, Mathf.Clamp01((1 - glade.Field(point).ToFloat()) / .4f));
+                }
+                for (int b = 0; b < map.RewardBranchCount; b++)
+                {
+                    var glade = GladeRegion.ForBranch(map, map.GetRewardBranch(b));
+                    clearing = Mathf.Max(clearing, Mathf.Clamp01((1 - glade.Field(point).ToFloat()) / .4f));
+                }
+                if (clearing <= 0) continue;
+                float approach = Mathf.Clamp01((Mathf.Min(Vector2.Distance(p, entry), Vector2.Distance(p, exit)) - 3) / 8);
+                // Leave a grassy rim, with open mixed ground covering the connected interior.
+                bool interior = true;
+                for (int direction = 0; direction < 8; direction++)
+                {
+                    float angle = direction * Mathf.PI / 4;
+                    var offset = new FixVec2(Fix64.FromDouble(Mathf.Cos(angle) * 2), Fix64.FromDouble(Mathf.Sin(angle) * 2));
+                    if (!map.Outline.Contains(point + offset)) { interior = false; break; }
+                }
+                float rim = interior ? 1 : .2f;
+                _clearingPixels[y * TrailResolution + x] = (byte)Mathf.RoundToInt(255 * approach * rim * clearing);
+            }
+        }
+
+        // Вытоптанный грунт в массив маски — на рабочем потоке сразу после тропы (LayoutView.Trail);
+        // характер арены к этому моменту уже посчитан на главном.
+        private void PaintGroundWear(LayoutMap map)
+        {
             System.Array.Clear(_wearPixels, 0, _wearPixels.Length);
             StampGroundWear(map, TrailPoint(map.EntryPoint), 3.8f);
             for (int e = 0; e < map.ExitCount; e++) StampGroundWear(map, TrailPoint(map.ExitPoint(e)), 3.8f);
@@ -142,6 +156,13 @@ namespace Game.View
                     StampGroundWear(map, center, 1.8f + (float)rng.NextDouble() * 1.2f);
                 }
             }
+        }
+
+        private void UploadGroundWear()
+        {
+            if (_wearMask == null)
+                _wearMask = new Texture2D(TrailResolution, TrailResolution, TextureFormat.R8, false, true)
+                { name = "Вытоптанный грунт", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
             _wearMask.SetPixelData(_wearPixels, 0);
             _wearMask.Apply(false, false);
             _roomMaterial.SetTexture("_WearMask", _wearMask);

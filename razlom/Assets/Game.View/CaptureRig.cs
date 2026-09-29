@@ -223,6 +223,14 @@ namespace Game.View
         /// по умолчанию 0,8. Меньше — ближе; 1 — прежний масштаб, только кадр вертикальный.
         /// </summary>
         public static float ReelsZoom { get; private set; } = DefaultReelsZoom;
+
+        /// <summary>
+        /// -capture-no-bars: кадр для рекламы без полосок здоровья врагов, полосы элиты с цифрами
+        /// и таблички с именем элиты (29.09: цифры стенда «5000 / 5000», «1 / 2000» в ролике
+        /// выдают тестовую арену). Цифры урона остаются — они продают удар. Вне -razlom-capture
+        /// флаг не читается и всегда false.
+        /// </summary>
+        public static bool NoBars { get; private set; }
         private static float _reelsSize;
         private static float _reelsAspect = 9f / 16f;
 
@@ -302,6 +310,7 @@ namespace Game.View
             Reels = Array.IndexOf(args, ReelsFlag) >= 0;
             ReelsZoom = Mathf.Clamp(ReadFloat(args, ReelsZoomFlag, DefaultReelsZoom), .3f, 2f);
             _reelsSize = 0f;
+            NoBars = Array.IndexOf(args, "-capture-no-bars") >= 0;
             EquipmentShowcase = Array.IndexOf(args, EquipmentFlag) >= 0;
             LocomotionShowcase = Array.IndexOf(args, LocomotionFlag) >= 0;
             MovingCombatShowcase = Array.IndexOf(args, MovingCombatFlag) >= 0;

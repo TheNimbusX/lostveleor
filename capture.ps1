@@ -98,6 +98,8 @@ param(
     # HUD скрыт (вернуть: -Hud). То же включает -ExtraArgs '-capture-reels'.
     [switch] $Reels,
     [ValidateRange(0.3,2)] [double] $ReelsZoom = 0.8,
+    # Без полосок здоровья врагов, полосы элиты с цифрами и таблички с именем (цифры урона остаются).
+    [switch] $NoBars,
     [switch] $Rebuild,
     [switch] $NoRebuild,
     # Дополнительные ключи плееру как есть (диагностика: -ExtraArgs '-cleave-debug').
@@ -275,6 +277,7 @@ if ($Reels -and -not ($ExtraArgs -contains '-capture-reels')) { $playerArgs += '
 if ($Reels -and $PSBoundParameters.ContainsKey('ReelsZoom')) {
     $playerArgs += @('-capture-reels-zoom', $ReelsZoom.ToString([Globalization.CultureInfo]::InvariantCulture))
 }
+if ($NoBars) { $playerArgs += '-capture-no-bars' }
 if ($SilentVideo) { $playerArgs += '-capture-silent-video' }
 if ($AudioProbe) { $playerArgs += '-capture-audio-probe' }
 if ($HudReview) { $playerArgs += '-capture-hud-review'; $playerArgs += '-capture-hud' }

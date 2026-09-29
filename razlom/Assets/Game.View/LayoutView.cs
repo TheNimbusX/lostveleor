@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Game.Sim;
 
@@ -113,6 +114,10 @@ namespace Game.View
 
         private void DisposeVisuals()
         {
+            AbortBuild();
+            _initSteps = null;
+            _campWarm = null;
+            _campWarmDone = false;
             DisposeOutline();
             DestroyOwned(_trailMask);
             _trailMask = null;
@@ -195,8 +200,38 @@ namespace Game.View
 
         /// <summary>
         /// Плиты собираются лениво: игра начинается в лагере, где карты нет.
+        /// Сразу, одним вызовом — редакторские пути; в игре подготовка идёт шагами в лагере
+        /// (<see cref="WarmInCamp"/>) или в начале сборки под завесой (<see cref="EnsureInitialized"/>).
         /// </summary>
         private void Initialize()
+        {
+            if (_initSteps == null) _initSteps = InitializeSteps();
+            var steps = _initSteps;
+            RunNow(steps);
+            if (_initSteps == steps) _initSteps = null;
+        }
+
+        // Подготовка, начатая в лагере или сборкой: одна и та же цепочка, её продолжают, а не начинают заново.
+        private IEnumerator _initSteps;
+
+        /// <summary>Подготовка до сборки: продолжить начатую в лагере или начать, если пулов ещё нет.</summary>
+        private IEnumerator EnsureInitialized()
+        {
+            if (_initSteps == null && (_pool == null || _tiles == null))
+            {
+                _initialized = false;
+                _initSteps = InitializeSteps();
+            }
+            if (_initSteps == null) yield break;
+            yield return Step("LayoutView/подготовка");
+            var steps = _initSteps;
+            // Лагерь мог оставить цепочку на фоновой загрузке префаба: дождаться её по кадрам, а не разом.
+            if (steps.Current is AsyncOperation pending) yield return pending;
+            yield return steps;
+            if (_initSteps == steps) _initSteps = null;
+        }
+
+        private IEnumerator InitializeSteps()
         {
             _initialized = true;
 
@@ -230,7 +265,9 @@ namespace Game.View
             _ownedMaterials.Add(_roomMaterial);
             _ownedMaterials.Add(_entranceMaterial);
             _ownedMaterials.Add(_exitMaterial);
-            _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72, Application.isPlaying);
+            // Плиты и декор берутся только в сборке арены: догрев до прогрева — в лагере (CampWarmSteps), а если в
+            // разлом вошли раньше, сборка добирает сама и молчит; предупреждение — только сверх прогрева.
+            _pool = new ViewPool(root, () => CreateTile(_roomMaterial), 72, Application.isPlaying, "плиты пола") { BuildOnly = true };
             _tiles = new Transform[64];
 
             // Narrow ground strips follow the walkable route and share its lifecycle.
@@ -249,7 +286,28 @@ namespace Game.View
             _groundFill.transform.position = new Vector3(0f, -_style.Thickness * 0.5f - _style.GroundFillDepthOffset, 0f);
             _groundFill.SetActive(false);
 
-            InitializeDecor();
+            // Плоской цепочкой, без вложенного шага: её могут продолжать и лагерь, и сборка, по очереди.
+            var decor = InitializeDecorSteps();
+            while (decor.MoveNext()) yield return decor.Current;
+        }
+
+        /// <summary>
+        /// Прогрев пула одного варианта декора. Обычно 48; варианты, которых в одной арене больше, — по замеру
+        /// маршрута съёмкой 29–30.09 (-capture-frame-log, «пулы сборки сверх прогрева»): CampBush до 356,
+        /// CreatingBush до 85, MeadowBroadleaf до 53, CreatingGrass до 50 — с запасом. Иначе первая сборка
+        /// арены за сессию досоздавала их сотнями под завесой и писала «Пул исчерпан». Лагерь греет их по
+        /// объекту за шаг (CampWarmSteps); ничего лишнего: пул и так дорастает до этого в первой же арене.
+        /// </summary>
+        private static int DecorPrewarm(DecorVariant variant)
+        {
+            switch (variant.Prefab != null ? variant.Prefab.name : null)
+            {
+                case "CampBush": return 420;
+                case "CreatingBush": return 112;
+                case "MeadowBroadleaf":
+                case "CreatingGrass": return 72;
+                default: return 48;
+            }
         }
 
         /// <summary>
@@ -258,14 +316,22 @@ namespace Game.View
         /// здесь же и ровно один раз за игровую сессию — не на каждый куст,
         /// который мог бы заметно тормознуть вход в Разлом.
         /// </summary>
-        private void InitializeDecor()
+        private IEnumerator InitializeDecorSteps()
         {
             for (int i = 0; i < _style.DecorVariants.Length; i++)
             {
                 if (_style.DecorVariants[i].Prefab != null) continue;
                 if (string.IsNullOrEmpty(_style.DecorVariants[i].ResourcePath)) continue;
 
-                _style.DecorVariants[i].Prefab = Resources.Load<GameObject>(_style.DecorVariants[i].ResourcePath);
+                // В игре — загрузка в фоне, по кадрам; тот же ассет, что у Resources.Load.
+                if (!Application.isPlaying)
+                {
+                    _style.DecorVariants[i].Prefab = Resources.Load<GameObject>(_style.DecorVariants[i].ResourcePath);
+                    continue;
+                }
+                var request = Resources.LoadAsync<GameObject>(_style.DecorVariants[i].ResourcePath);
+                yield return request;
+                _style.DecorVariants[i].Prefab = request.asset as GameObject;
             }
 
             Transform decorRoot = CreateRoot("Пул: декор");
@@ -277,7 +343,8 @@ namespace Game.View
                 DecorVariant variant = _style.DecorVariants[i];
                 Material placeholderMaterial = variant.Prefab == null ? PlaceholderMaterial(variant.Kind) : null;
                 if (placeholderMaterial != null) _ownedMaterials.Add(placeholderMaterial);
-                _decorPools[i] = new ViewPool(decorRoot, () => CreateDecorInstance(variant, placeholderMaterial), 48, Application.isPlaying);
+                _decorPools[i] = new ViewPool(decorRoot, () => CreateDecorInstance(variant, placeholderMaterial), DecorPrewarm(variant), Application.isPlaying,
+                    "декор " + i + ": " + (variant.Prefab != null ? variant.Prefab.name : variant.Kind.ToString())) { BuildOnly = true };
                 // Measure the pooled model once, including off-centre meshes and foliage.
                 var sample = _decorPools[i].Acquire();
                 sample.transform.localScale = variant.Prefab != null ? Vector3.one : PlaceholderBaseScale(variant.Kind);
@@ -292,6 +359,7 @@ namespace Game.View
                 }
                 _decorRadii[i] = radius * variant.ScaleRange.y;
                 _decorPools[i].Release(sample);
+                yield return null;
             }
 
             _decor = new Transform[256];
@@ -312,6 +380,15 @@ namespace Game.View
 
         private void LateUpdate()
         {
+            if (Building)
+            {
+                // Арена собирается по кадрам под завесой: луг, трава и туман ждут конца сборки.
+                // Сменилось то, что собирается (выход в лагерь, другой забег), — дособрать сразу.
+                bool current = Application.isPlaying && _driver != null && _driver.Run != null && _driver.Sim != null
+                    && _generation == _driver.Generation && _depthShown == _driver.Run.Depth;
+                if (!current) CompleteBuild();
+                else if (!PumpBuild(CampTransition.Covering ? VeilBudget.Remaining : -1)) return;
+            }
             UpdateMeadow();
             DrawGrassField();
             DrawFallenLeaves();
@@ -320,12 +397,9 @@ namespace Game.View
             {
                 // В лагере пола Разлома быть не должно.
                 if (_initialized && _tileCount > 0) Rebuild(null);
+                else WarmInCamp();
                 return;
             }
-
-            if (!_initialized) Initialize();
-
-            if (_style.FogOfWar) UpdateFog(_driver.Sim.Entities.Position[Simulation.PlayerId]);
 
             // Карта меняется только при входе в новый Разлом, поэтому плиты
             // перекладываются не каждый кадр.
@@ -333,11 +407,18 @@ namespace Game.View
             // Признак — ГЛУБИНА, а не число комнат: два соседних Разлома могут
             // случайно собраться из одинакового числа модулей, и тогда пол
             // остался бы от предыдущего.
-            if (_generation == _driver.Generation && _depthShown == _driver.Run.Depth) return;
+            bool rebuild = _generation != _driver.Generation || _depthShown != _driver.Run.Depth;
 
-            Show(_driver.Run.Map, _driver.Run.LayoutSeed, _driver.Run.Encounters);
+            // Подготовку новой арены ведёт сама сборка (EnsureInitialized), по кадрам под завесой.
+            if (!_initialized && !rebuild) Initialize();
+
+            if (_style.FogOfWar) UpdateFog(_driver.Sim.Entities.Position[Simulation.PlayerId]);
+
+            if (!rebuild) return;
+
             _generation = _driver.Generation;
             _depthShown = _driver.Run.Depth;
+            Show(_driver.Run.Map, _driver.Run.LayoutSeed, _driver.Run.Encounters);
         }
 
         /// <summary>
@@ -346,6 +427,14 @@ namespace Game.View
         /// </summary>
         private void Rebuild(LayoutMap map)
         {
+            // Под дымной завесой — по кадрам (LayoutView.Build); лагерь, редактор и съёмка без дыма — сразу.
+            bool sliced = map != null && Application.isPlaying && CampTransition.Covering;
+            StartBuild(RebuildSteps(map), sliced);
+        }
+
+        private IEnumerator RebuildSteps(LayoutMap map)
+        {
+            yield return Step("LayoutView/уборка");
             ClearSolids();
             ClearMeadow();
             _shownMap = map;
@@ -389,14 +478,11 @@ namespace Game.View
                 _fogActive = false;
                 _tileRevealed = System.Array.Empty<bool>();
                 _decorRevealed = System.Array.Empty<bool>();
-                return;
+                yield break;
             }
+            yield return null;
 
-            if (_pool == null || _tiles == null)
-            {
-                _initialized = false;
-                Initialize();
-            }
+            yield return EnsureInitialized();
 
             if (_groundFill != null) _groundFill.SetActive(true);
 
@@ -404,7 +490,15 @@ namespace Game.View
 
             float cell = LayoutMap.CellSize.ToFloat();
 
-            if (_style.NaturalGround) BuildNaturalTrail(map);
+            if (_style.NaturalGround)
+            {
+                yield return Step("LayoutView/тропа и поляны");
+                yield return BuildNaturalTrailSteps(map);
+            }
+            // Маски тропы и вытоптанного грунта готовы: земля под лугом считается на рабочих потоках,
+            // пока главный поток расставляет декор (LayoutView.CampSurface).
+            StartSurfaceWork(map);
+            yield return Step("LayoutView/плиты и декор модулей");
             for (int i = 0; i < map.PlacedCount; i++)
             {
                 PlacedModule placed = map.GetPlaced(i);
@@ -429,13 +523,17 @@ namespace Game.View
                         if (map.Outline == null) _occupiedCells.Add(CellKey(x, y));
 
                 PlaceModuleDecor(map, placed, i, cell);
+                yield return null;
             }
 
             BuildRouteTrails(map);
-            BuildMeadow(map, cell);
+            yield return Step("LayoutView/луг");
+            yield return BuildMeadowSteps(map, cell);
+            yield return Step("LayoutView/препятствия");
             BuildSolids(map);
-
-            ResetFog(map);
+            yield return Step("LayoutView/туман");
+            yield return ResetFogSteps(map);
+            using (FrameCost.Measure("LayoutView/отпечаток съёмки")) DumpLayoutHash();
         }
 
         // ---- декор внутри комнат ----
@@ -735,17 +833,18 @@ namespace Game.View
         /// Не 100%: сплошная шеренга кустов через клетку читалась бы забором,
         /// то есть тем же самым, от чего мы уходим, просто из другого меша.
         /// </summary>
-        private void ScatterBoundaryDecor(float cell)
+        private IEnumerator ScatterBoundaryDecorSteps(float cell)
         {
+            yield return Step("LayoutView/опушка");
             if (_style.NaturalGround && _shownMap.Outline != null)
             {
-                ScatterOutlinedBoundary(cell);
-                return;
+                yield return ScatterOutlinedBoundarySteps(cell);
+                yield break;
             }
             float totalWeight = 0f;
             for (int i = 0; i < _style.DecorVariants.Length; i++)
                 if (_style.DecorVariants[i].UseAsBoundary) totalWeight += Mathf.Max(0f, _style.DecorVariants[i].Weight);
-            if (totalWeight <= 0f) return;
+            if (totalWeight <= 0f) yield break;
 
             var orderedCells = new List<long>(_occupiedCells);
             orderedCells.Sort();
@@ -758,6 +857,7 @@ namespace Game.View
                 TryScatterBoundaryEdge(x, y, x, y - 1, cell, totalWeight);
                 TryScatterBoundaryEdge(x, y, x + 1, y, cell, totalWeight);
                 TryScatterBoundaryEdge(x, y, x - 1, y, cell, totalWeight);
+                yield return null;
             }
         }
 

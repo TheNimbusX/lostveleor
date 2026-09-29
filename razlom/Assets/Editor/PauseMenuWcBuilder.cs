@@ -20,7 +20,11 @@ namespace Game.EditorTools
     /// и открытое окно — оранжевая надпись с ромбами по бокам. Окна настроек,
     /// управления и подтверждения — «Дым и свет» (26 сентября): глубокий дым вместо
     /// панелей пака, нити света вместо серебряных линий. Смысл — в PauseMenu и
-    /// PauseMenuView, вид — здесь. Префаб создаётся, только если его нет.
+    /// PauseMenuView, вид — здесь. Префаб создаётся, только если его нет; дальше — только миграции
+    /// (PauseMenuWcBuilder.Migrations.cs): владелец правит префаб руками.
+    ///
+    /// С 30.09 настройки — «Настройки Б» (ART/UI/concepts-2026-09-30-hud-final/e2-settings-tabs-left.png):
+    /// одно окно во всю ширину, вкладки столбцом слева, «Управление» — вкладка, отдельного окна нет.
     /// </summary>
     public static partial class PauseMenuWcBuilder
     {
@@ -40,7 +44,12 @@ namespace Game.EditorTools
 
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                // Готовый префаб не пересобирается — только доводится миграциями до текущей версии.
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             EnsurePrefabs();
             GameObject root = Layout();
@@ -73,6 +82,8 @@ namespace Game.EditorTools
             root.AddComponent<GraphicRaycaster>();
             root.AddComponent<UiScaleFollower>();
             var view = root.AddComponent<PauseMenuView>();
+            // Чистая сборка — сразу последняя раскладка: миграции нужны только готовым префабам.
+            view.LayoutVersion = LayoutVersion;
             // Выбранная вкладка — акцент, как у вкладок «Дыма и света» в окнах лагеря (UiInkKit.Tab).
             view.TabTextOn = T.Accent;
             view.TabTextOff = T.TextMuted;
@@ -96,7 +107,6 @@ namespace Game.EditorTools
 
             BuildPause(rect, view);
             BuildSettings(rect, view);
-            BuildControls(rect, view);
             BuildConfirm(rect, view);
             return root;
         }

@@ -130,10 +130,8 @@ namespace Game.EditorTools
                 (view.GoldIcon, Role.Coins, "+45 золота", null, Role.TextMuted, true),
                 (view.OrderIcons[0], Role.Epic, "Заказ Лео выполнен", "Живица", Role.TextMuted, false));
             view.Announce.Preview("РАЗЛОМ ЗАЧИЩЕН", "Путь к выходу открыт");
-            // Под мышью над героем числа видны внутри полос.
-            view.ExperienceText.text = "140 / 300";
-            var xpBar = (RectTransform)view.ExperienceFill.parent;
-            xpBar.sizeDelta = new Vector2(xpBar.sizeDelta.x, view.ExperienceHoverHeight);
+            // Опыт — подпись под тонкой полосой, видна всегда (29.09).
+            view.ExperienceText.text = HudPortraitCurves.ExperienceLabel(3, 105, 300);
 
             foreach (string potion in new[] { "Health Potion", "Lavidium Potion" })
             {

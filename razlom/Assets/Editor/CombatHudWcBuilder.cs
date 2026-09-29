@@ -17,7 +17,8 @@ namespace Game.EditorTools
     ///
     /// РАСКЛАДКА — ВАРИАНТ B ВЛАДЕЛЬЦА (23 СЕНТЯБРЯ), ВИД — ПАК. Одна тёмная полоса внизу
     /// по центру: портрет, заходящий за её левый край, имя и полосы здоровья, лавидия и
-    /// опыта (числа — внутри полос и только под мышью), четыре способности, кувырок того же
+    /// опыта (с 29.09 числа здоровья и лавидия внутри полос видны всегда, опыт — подписью
+    /// «Ур. N · X / Y» под тонкой полосой), четыре способности, кувырок того же
     /// размера, разделитель, два зелья размером со способность. Готовность — огненное кольцо
     /// плитки и огонёк усилений на её верхней кромке (HudReadyGem). Карта справа сверху.
     /// Единицы Canvas 1920×1080.
@@ -28,6 +29,9 @@ namespace Game.EditorTools
     ///
     /// Смысл — в CombatHudView, вид — в префабе. Сборщик создаёт префаб только
     /// если его нет; пересборка из меню спрашивает, потому что стирает ручные правки.
+    /// С 29 сентября новое доходит до готового префаба миграциями поверх ручных правок
+    /// (CombatHudWcBuilder.Migrations, <see cref="LayoutVersion"/>); свежая сборка сразу
+    /// строит последнюю версию.
     /// </summary>
     public static partial class CombatHudWcBuilder
     {
@@ -63,10 +67,17 @@ namespace Game.EditorTools
             Build(true);
         }
 
-        /// <summary>Собирает префаб, если его нет (или всегда при <paramref name="force"/>).</summary>
+        /// <summary>
+        /// Собирает префаб, если его нет (или всегда при <paramref name="force"/>). Готовый префаб не
+        /// пересобирается, а доводится миграциями до <see cref="LayoutVersion"/>.
+        /// </summary>
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             EnsurePrefabs();
             GameObject root = Layout();
@@ -152,6 +163,7 @@ namespace Game.EditorTools
             view.OrderIcons = new[] { Kit("wc_buff_resin").texture, Kit("wc_buff_surge").texture };
             view.GoldIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/UI/RunIcons/gold.png");
             BuildMinimap(rect, view);
+            BuildCampWallet(rect, view);
             view.StatIcons = new[]
             {
                 Kit("wc_stat_heart"), Kit("wc_stat_lavidium"), Kit("wc_stat_cooldown"), Kit("wc_stat_damage"),
@@ -170,6 +182,8 @@ namespace Game.EditorTools
             // Только при первой загрузке (владелец 25 сентября): выход из паузы, палатки, лавок
             // возвращает HUD сразу, без повторного проявления.
             appear.FirstTimeOnly = true;
+            // Свежая сборка — сразу последняя раскладка: миграции ей не нужны.
+            view.LayoutVersion = LayoutVersion;
             return root;
         }
 
@@ -249,8 +263,8 @@ namespace Game.EditorTools
             RectTransform hero = Box(Node("Герой", root), BottomCenter, Vector2.zero, new Vector2(left, bottom),
                 new Vector2(AbilitiesX - 16f - left, StripHeight + 26f));
             view.HeroPanel = hero;
-            // Под мышью над героем — числа внутри полос здоровья, лавидия и опыта.
-            view.VitalsHit = hero;
+            // Числа здоровья и лавидия внутри полос видны всегда (владелец 29.09; с 23 сентября были
+            // только под мышью над героем), опыт — подписью под полосой.
 
             // Красная дымка за портретом и полосами: пульсирует, пока здоровья ≤ 25% (HudPulse).
             Image danger = Mark(hero, "Опасность", Kit("wc_fx_glow"), Role.Text, 0f, Vector2.zero, new Vector2(Portrait * .5f + 30f, Portrait * .5f + 6f), 330f);
@@ -348,28 +362,54 @@ namespace Game.EditorTools
             view.ExperienceFill = fill;
             // Опыт прибавился — проблеск по полосе.
             view.ExperienceGlint = Glint(Stretch(Node("Проблеск", xp)), 30f, 50f, .6f);
-            // Числа опыта — внутри полосы (владелец 24 сентября): под мышью она подрастает до 16 ед.
-            view.ExperienceText = Label(xp, "Числа", "", FontRole.Body, 12f, Role.Text, TextAlignmentOptions.Center);
-            view.ExperienceText.textWrappingMode = TextWrappingModes.NoWrap;
-            view.ExperienceText.fontStyle = FontStyles.Bold;
-            Shadowed(view.ExperienceText);
-            view.ExperienceHoverHeight = 16f;
+            // Опыт — мелкая подпись «Ур. N · X / Y» под тонкой полосой, видна всегда (владелец 29.09;
+            // с 24 сентября числа были внутри полосы, и она росла под мышью).
+            view.ExperienceText = Label(xp, "Числа", "", FontRole.Body, XpCaptionSize, Role.Text, TextAlignmentOptions.MidlineLeft);
+            ExperienceCaption(view.ExperienceText);
         }
 
-        const string PortraitCutoutPath = "Assets/Resources/UI/HUD/PelagPortraitPaintedCutout.png";
-        /// <summary>Вырез портрета крупнее круга и приподнят: голова пересекает верхнюю кромку.</summary>
-        const float PortraitArtScale = 1.18f, PortraitArtLift = 16f;
-        /// <summary>Насколько выше круга ещё видна голова (маска верха).</summary>
-        const float PortraitHeadroom = 40f;
+        /// <summary>Подпись опыта: размер шрифта, зазор под полосой и высота строки, единицы холста.</summary>
+        const float XpCaptionSize = 12f, XpCaptionGap = 3f, XpCaptionHeight = 14f;
+        /// <summary>Числа полос появляются после мазков полос.</summary>
+        const float VitalsTextDelay = .22f;
+
+        /// <summary>
+        /// Подпись опыта «Ур. N · X / Y» под тонкой полосой (владелец 29.09): Nunito мелко, без жирного,
+        /// слева по началу полосы, в раскладке героя (под полосой до низа панели героя ничего нет).
+        /// Та же правка — у готового префаба (миграция v1).
+        /// </summary>
+        static void ExperienceCaption(TMP_Text label)
+        {
+            if (label == null) return;
+            RectTransform rect = label.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.offsetMin = new Vector2(0f, -XpCaptionGap - XpCaptionHeight);
+            rect.offsetMax = new Vector2(0f, -XpCaptionGap);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.fontSize = XpCaptionSize;
+            label.enableAutoSizing = false;
+            label.fontStyle = FontStyles.Normal;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.raycastTarget = false;
+            label.text = string.Empty;
+            // Спокойнее чисел здоровья: кремовый чуть приглушён, тень — та же, что у всех надписей над игрой.
+            Tint(label, Role.Text, .82f);
+            Shadowed(label);
+            UiInkKit.Revealed(label, VitalsTextDelay + .08f);
+        }
+
         const float LevelBadgeSize = 38f;
 
         /// <summary>
         /// Портрет, выходящий за круг (владелец 26 сентября: «чтобы выходил немного за рамки обложки»).
-        /// Строится на месте, без префаба пака. Тёмный диск — маска: в его нижней половине вырез Пелага,
-        /// плечи обрезаны кругом. Выше середины — тот же вырез тем же прямоугольником под RectMask2D до
-        /// 40 единиц над кругом, без круглой маски: голова и волосы переходят кромку без шва. Красный
-        /// ореол старой картинки был нарисован в её фоне — вместо него мягкий тёплый свет за головой.
-        /// Уровень — кружок на кромке справа снизу (ромб ушёл: контейнеры только круглые).
+        /// Строится на месте, без префаба пака. Тёмный диск, за головой мягкий тёплый свет (красный
+        /// ореол старой картинки был нарисован в её фоне), поверх — один вырез Пелага с мягкой маской
+        /// (<see cref="SoftPortrait"/>, 29.09): ниже середины круга плечи обрезаны сглаженным кругом, выше
+        /// голова и волосы переходят кромку. Живость — <see cref="LivePortrait"/>. Уровень — кружок на
+        /// кромке справа снизу (ромб ушёл: контейнеры только круглые).
         /// </summary>
         static void BuildPortrait(RectTransform hero, CombatHudView view)
         {
@@ -378,31 +418,13 @@ namespace Game.EditorTools
             var cutout = AssetDatabase.LoadAssetAtPath<Texture2D>(PortraitCutoutPath);
             if (cutout == null) Debug.LogWarning("Нет выреза портрета " + PortraitCutoutPath + ": HUD возьмёт его из Resources при запуске");
 
+            // Диск больше не стенсил-маска (край без сглаживания): рисунок режет своя мягкая маска.
             Image disk = Layer(portrait, "Диск", T.CircleFill, Role.SmokeDeep, 1f);
-            disk.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             UiInkKit.LightAt(disk.rectTransform, "Свет за головой", "light_glow", Vector2.zero, new Vector2(Portrait * .6f, Portrait * .62f),
                 new Vector2(Portrait * 1.1f, Portrait * 1.1f), .28f, delay: .25f);
-            float size = Portrait * PortraitArtScale;
-            var centre = new Vector2(Portrait * .5f, Portrait * .5f + PortraitArtLift);
-            // Низ — только нижняя половина круга: верх рисует одна копия, полупрозрачные края волос
-            // не ложатся дважды и не темнеют выше середины.
-            RectTransform lower = Node("Низ", disk.rectTransform);
-            lower.anchorMin = Vector2.zero;
-            lower.anchorMax = new Vector2(1f, .5f);
-            lower.offsetMin = lower.offsetMax = Vector2.zero;
-            lower.gameObject.AddComponent<RectMask2D>();
-            view.Portrait = PortraitArt(lower, cutout, centre, size);
-
-            // Верх: от середины круга вверх, по бокам с запасом — волосы шире круга тоже видны.
-            RectTransform top = Node("Над кругом", portrait);
-            top.anchorMin = new Vector2(0f, .5f);
-            top.anchorMax = Vector2.one;
-            top.pivot = new Vector2(.5f, .5f);
-            top.offsetMin = new Vector2(-PortraitHeadroom, 0f);
-            top.offsetMax = new Vector2(PortraitHeadroom, PortraitHeadroom);
-            top.gameObject.AddComponent<RectMask2D>();
-            // Тот же прямоугольник в координатах маски верха: её начало — (−40, середина круга).
-            view.PortraitOuter = PortraitArt(top, cutout, centre - new Vector2(-PortraitHeadroom, Portrait * .5f), size);
+            RawImage art = PortraitArt(portrait, cutout, PortraitArtCentre, PortraitArtSize);
+            art.transform.SetSiblingIndex(disk.transform.GetSiblingIndex() + 1);
+            view.Portrait = SoftPortrait(art);
 
             // Уровень: клуб дыма, тёмный диск, тонкое кремовое кольцо и число антиквой.
             RectTransform badge = Box(Node("Уровень", portrait), Vector2.zero, new Vector2(.5f, .5f), new Vector2(Portrait - 18f, 20f),
@@ -423,6 +445,9 @@ namespace Game.EditorTools
             Additive(flare, new Color(1f, .78f, .4f, 0f));
             flare.enabled = false;
             view.LevelFlare = flare;
+
+            // Живой портрет (29.09): дыхание, удар, тёплый свет лечения и уровня, тревога в такт дымке.
+            view.PortraitMotion = LivePortrait(portrait, disk.rectTransform, view.Portrait, view.DangerPulse);
         }
 
         /// <summary>Вырез портрета размером <paramref name="size"/> с центром <paramref name="centre"/> от угла родителя.</summary>
@@ -456,7 +481,7 @@ namespace Game.EditorTools
 
         /// <summary>
         /// Полоса ресурса (вариант B): тёмная дорожка-капсула, заливка цветом ресурса, светлый
-        /// след потери; числа внутри, только под мышью.
+        /// след потери; числа внутри, видны всегда (владелец 29.09; раньше — только под мышью).
         /// Долю ставит CombatHudView через HudBarAnim (anchorMax.x заливки).
         /// </summary>
         static RectTransform Vital(RectTransform hero, string name, Role role, float x, float centerY, float height, float font,
@@ -488,6 +513,8 @@ namespace Game.EditorTools
             value.textWrappingMode = TextWrappingModes.NoWrap;
             value.fontStyle = FontStyles.Bold;
             Shadowed(value);
+            // Числа видны всегда (29.09) — и появляются вместе с полосой, по буквам.
+            UiInkKit.Revealed(value, VitalsTextDelay);
             return fill;
         }
 

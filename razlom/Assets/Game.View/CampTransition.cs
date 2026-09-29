@@ -12,10 +12,14 @@ namespace Game.View
     ///
     /// Вместо тёплой вспышки — дымная завеса <see cref="SmokeTransition"/>. Порядок у всех путей один:
     ///  1. накат: дым растекается от центра, мир стоит (<see cref="Busy"/>: ни ввода, ни тиков);
-    ///  2. экран закрыт целиком — и ещё один кадр показан закрытым: кадр сборки арены длится секунды
+    ///  2. экран закрыт целиком — и ещё один кадр показан закрытым: кадр самой смены может быть долгим
     ///     и застывает на последнем показанном кадре, а в нём дым должен быть уже сплошным;
-    ///  3. смена — из корутины, после Update: сборка идёт в LateUpdate этого же кадра, под завесой;
-    ///  4. завеса держится хотя бы кадр после смены и пока камера не встанет;
+    ///  3. смена — из корутины, после Update: сборка арены начинается в LateUpdate этого же кадра и идёт
+    ///     по кадрам, кусками из общего бюджета кадра (VeilBudget), — дым всё это время течёт (поток T1);
+    ///  4. завеса держится не меньше <see cref="HoldTime"/>, пока камера не встанет, пока арена не собрана
+    ///     (пол, декор и тела встречи) и пока карта тушью на дыму не дочитана (<see cref="SmokeRouteMap"/>,
+    ///     выбор владельца 30.09: смена арены, вход через арку, «Повторить»). Карта начинает проявляться ещё на
+    ///     накате и идёт вместе со сборкой: арена → арена ≈ 2,7 с вместо 2,2 с, из них карта видна ≈ 1,8 с;
     ///  5. рассеивание от центра к краям; с <see cref="ReleaseAt"/> мир снова живой.
     ///
     /// Пути: арка (<see cref="EnterRift"/>: сначала камера подаётся к арке, дым накатывает к концу подачи),
@@ -38,6 +42,15 @@ namespace Game.View
         /// <summary>Идёт переход (от начала наката до конца рассеивания).</summary>
         public static bool Running => _instance != null && _instance._running;
 
+        /// <summary>Стадия перехода для журнала кадров (<see cref="FrameLog"/>): «—» вне перехода.</summary>
+        public static string Stage => Running ? _instance._stage : "—";
+
+        /// <summary>
+        /// Уходим из лагеря в разлом: от начала подачи к арке до смены. Звук лагеря гаснет на накате дыма,
+        /// а не обрывается после смены (<see cref="CampSoundscape"/>).
+        /// </summary>
+        public static bool LeavingCamp => Running && _instance._leavingCamp;
+
         [Header("Подача к арке")]
         [Tooltip("Секунд на подачу камеры к арке")] public float PushTime = .95f;
         [Tooltip("Во сколько раз приближается камера у арки")] public float PushZoom = .7f;
@@ -48,6 +61,10 @@ namespace Game.View
         [Tooltip("Дольше не ждём под завесой, пока камера встанет, с (между аренами она едет со старого места)")]
         public float SettleMax = 1f;
         [Tooltip("Дольше не ждём новую арену после выбора маршрута, с")] public float ArriveMax = 3f;
+        [Tooltip("Дольше не ждём под завесой сборку арены и прогрев тел по кадрам, с (остаток — разом)")]
+        public float BuildMax = 6f;
+        [Tooltip("Дольше не держим завесу ради карты тушью, с (карта сама сдаётся, если путь не пришёл)")]
+        public float MapMax = 3f;
         [Tooltip("Секунд на рассеивание")] public float OpenTime = .85f;
         [Tooltip("Доля рассеивания, после которой мир оживает: ввод, тики, пауза")]
         [Range(0f, 1f)] public float ReleaseAt = .45f;
@@ -76,6 +93,8 @@ namespace Game.View
         SmokeTransition _smoke;
         bool _smokeLoaded, _running;
         float _lastNow;
+        string _stage = "—";
+        bool _leavingCamp;
 
         static CampTransition Instance
         {
@@ -242,6 +261,7 @@ namespace Game.View
             _running = true;
             Busy = true;
             Covering = true;
+            _stage = "накат";
             _lastNow = UiMotion.Now;
         }
 
@@ -250,6 +270,8 @@ namespace Game.View
             _running = false;
             Busy = false;
             Covering = false;
+            _stage = "—";
+            _leavingCamp = false;
         }
 
         /// <summary>Смена не должна оставить мир навсегда стоящим: исключение пишется в лог, переход доходит до конца.</summary>
@@ -268,6 +290,7 @@ namespace Game.View
         IEnumerator Enter(CampRiftEntrance arch, Vector3 archPosition, Action enter, SmokeTransition veil)
         {
             Begin();
+            _leavingCamp = true;
             var hero = CampPlayerView.Instance;
             Vector3 toArch = hero != null ? archPosition - hero.Position : Vector3.zero;
             toArch.y = 0f;
@@ -286,7 +309,7 @@ namespace Game.View
                 if (arch != null) arch.Surge = k;
                 if (veil != null)
                 {
-                    if (!rolling && t >= rollFrom) { rolling = true; veil.BeginCover(); }
+                    if (!rolling && t >= rollFrom) { rolling = true; veil.BeginCover(SmokeRouteMap.Route.FromCamp); }
                     if (rolling) veil.SetCover((t - rollFrom) / rollTime);
                 }
                 else SetFlash(Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.55f, 1f, t / PushTime)));
@@ -295,20 +318,22 @@ namespace Game.View
             }
             if (veil != null)
             {
-                if (!rolling) veil.BeginCover();
+                if (!rolling) veil.BeginCover(SmokeRouteMap.Route.FromCamp);
                 veil.SetCover(1f);
             }
             else SetFlash(1f);
             // Кадр сборки застывает на последнем показанном кадре: сначала показать экран закрытым целиком.
             yield return null;
-            Call(() => { enter?.Invoke(); return true; });
+            _stage = "смена";
+            using (FrameCost.Measure("Переход: смена")) Call(() => { enter?.Invoke(); return true; });
+            _leavingCamp = false;
             CameraFollow.CampZoom = 1f;
             CameraFollow.CampFocus = Vector3.zero;
             if (arch != null) arch.Surge = 0f;
             GameSound.Play("rift_portal", .9f);
             if (veil != null)
             {
-                yield return Hold();
+                yield return Hold(veil);
                 yield return Open(veil, false);
             }
             else
@@ -332,7 +357,8 @@ namespace Game.View
             bool arena = arrived != null;
             // Между аренами — один мягкий звук портала под дымом, без свиста (владелец, 29.09).
             if (!arena) GameSound.Play("rift_whoosh", .75f);
-            veil.BeginCover();
+            // Карта тушью: к выбранной арене; «Повторить» — новый забег от начала; в лагерь — без карты.
+            veil.BeginCover(arena ? SmokeRouteMap.Route.Advance : toCamp ? SmokeRouteMap.Route.None : SmokeRouteMap.Route.FromRepeat);
             float t = 0f;
             while (true)
             {
@@ -344,7 +370,9 @@ namespace Game.View
             }
             // Кадр сборки застывает на последнем показанном кадре: сначала показать экран закрытым целиком.
             yield return null;
-            bool swapped = Call(swap);
+            _stage = "смена";
+            bool swapped;
+            using (FrameCost.Measure("Переход: смена")) swapped = Call(swap);
             if (!arena)
             {
                 if (toCamp) CameraFollow.CampZoom = ReturnZoom;
@@ -354,6 +382,7 @@ namespace Game.View
             {
                 // Команда маршрута идёт обычным тиком: тики пускаем, ввод — нет (Covering).
                 Busy = false;
+                _stage = "ждём арену";
                 float waited = 0f;
                 while (!Arrived(arrived) && waited < ArriveMax)
                 {
@@ -365,17 +394,21 @@ namespace Game.View
                 Busy = true;
                 GameSound.Play("rift_portal", .5f);
             }
-            yield return Hold();
+            yield return Hold(veil);
             yield return Open(veil, toCamp);
             Finish();
         }
 
         /// <summary>
-        /// Держим закрытым: кадр сборки уже прошёл под завесой; дальше не меньше <see cref="HoldTime"/> и
-        /// пока камера не встанет (на смене арены CameraFollow не прыгает, а едет со старого места).
+        /// Держим закрытым: не меньше <see cref="HoldTime"/>, пока камера не встанет (на смене арены
+        /// CameraFollow не прыгает, а едет со старого места) и пока арена собирается по кадрам — пол и декор
+        /// (<see cref="LayoutView.AnyBuilding"/>), тела встречи (<see cref="ArenaView.AnyWarming"/>). Дым всё
+        /// это время течёт: сборка идёт кусками между кадрами (поток T1, 29.09). И пока карта тушью не дочитана
+        /// (<see cref="SmokeTransition.MapDone"/>) — она идёт одновременно со сборкой и почти всегда дольше неё.
         /// </summary>
-        IEnumerator Hold()
+        IEnumerator Hold(SmokeTransition veil)
         {
+            _stage = "держим";
             float held = 0f;
             int still = 0;
             Vector3 last = CameraPosition();
@@ -386,9 +419,21 @@ namespace Game.View
                 Vector3 now = CameraPosition();
                 still = (now - last).sqrMagnitude < .0004f ? still + 1 : 0;
                 last = now;
+                // Для журнала кадров: арена уже собрана, завесу держит только карта.
+                if (!Assembling && veil != null && !veil.MapDone) _stage = "карта";
             }
-            while (held < HoldTime || (still < 2 && held < SettleMax));
+            while (held < HoldTime || (still < 2 && held < SettleMax) || (Assembling && held < BuildMax)
+                   || (veil != null && !veil.MapDone && held < MapMax));
+            if (Assembling)
+            {
+                // Запасной выход: не держать игрока под дымом дольше BuildMax — остаток сборки одним кадром.
+                Debug.LogWarning($"[Разлом] Сборка арены под завесой не уложилась в {BuildMax:0.#} с — доделывается разом.");
+                LayoutView.FinishAllBuilds();
+                ArenaView.FinishAllWarming();
+            }
         }
+
+        static bool Assembling => LayoutView.AnyBuilding || ArenaView.AnyWarming;
 
         static Vector3 CameraPosition()
         {
@@ -398,6 +443,7 @@ namespace Game.View
 
         IEnumerator Open(SmokeTransition veil, bool toCamp)
         {
+            _stage = "рассеивание";
             veil.BeginOpen();
             float length = Mathf.Max(OpenTime, toCamp ? ReturnTime : 0f);
             float t = 0f;

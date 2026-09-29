@@ -19,6 +19,9 @@ namespace Game.View
         [Tooltip("Плашка клавиши (E, ПКМ); ширина подгоняется под подпись")] public RectTransform HintKeyCap;
         public TMP_Text HintKey;
 
+        [Tooltip("Версия раскладки префаба: миграции CampShopsWcBuilder доводят ручные правки до неё")]
+        [HideInInspector] public int LayoutVersion;
+
         [Header("Окна")]
         public CampShopScreen Smith;
         public CampShopScreen Trader;
@@ -70,30 +73,45 @@ namespace Game.View
         }
     }
 
-    /// <summary>Окно кузнеца или торговца: портрет, кошелёк, вкладки, сетка вещей, карточка выбранной вещи.</summary>
+    /// <summary>
+    /// Окно кузнеца или торговца: портрет, кошелёк, сетка вещей, карточка выбранной вещи.
+    /// С 29.09 (кадры «Кузнец А», «Торговец А») — одна страница без вкладок: у кузнеца две кнопки
+    /// рядом, у торговца товары и сумка рядом и одна кнопка по выбранной вещи.
+    /// </summary>
     [Serializable]
     public sealed class CampShopScreen
     {
         public CanvasGroup Group;
         public RawImage Portrait;
         public TMP_Text Title;
+        [Tooltip("Что делает NPC — под заголовком (вместо вкладок)")] public TMP_Text Subtitle;
         public TMP_Text Gold, Shards;
         public GameObject ShardsGroup;
-        public Button[] Tabs = new Button[2];
+        [Tooltip("Старое: вкладки до одной страницы (29.09); миграция их прячет")] public Button[] Tabs = new Button[2];
         public TMP_Text GridCaption;
-        public CampShopCell[] Cells = new CampShopCell[0];
+        [Tooltip("Сумка: 48 ячеек")] public CampShopCell[] Cells = new CampShopCell[0];
+        [Tooltip("Цена продажи под ячейкой сумки (торговец)")] public TMP_Text[] CellPrices = new TMP_Text[0];
         [Tooltip("Надетые вещи: оружие, броня, кольцо, талисман")] public CampShopCell[] Worn = new CampShopCell[0];
         public TMP_Text WornCaption;
+        [Tooltip("Товары прилавка рядом с сумкой (торговец)")] public CampShopGood[] Goods = new CampShopGood[0];
+        public TMP_Text GoodsCaption;
         public TMP_Text Info;
-        [Tooltip("Кнопка под сеткой (обновить товар у торговца)")] public Button Extra;
+        [Tooltip("Вторая кнопка: «Обновить товары» у торговца, «Разобрать» у кузнеца")] public Button Extra;
         public TMP_Text ExtraLabel;
+        [Tooltip("Что даст разбор: осколки (кузнец)")] public GameObject Yield;
+        public TMP_Text YieldShards;
+        [Tooltip("Под второй кнопкой: «Предмет будет уничтожен», запрет или подтверждение")] public TMP_Text ExtraNote;
 
         [Header("Выбранная вещь")]
         public CampShopCell Item;
         public TMP_Text ItemName, ItemMeta;
+        [Tooltip("Перековки: «1 / 3» и три отметки (кузнец)")] public TMP_Text ReforgeCount;
+        public Image[] ReforgePips = new Image[0];
+        [Tooltip("Заголовок «Что перековать»")] public TMP_Text AffixCaption;
         [Tooltip("Строки аффиксов (кузнец)")] public Button[] Rows = new Button[0];
         public TMP_Text[] RowLabels = new TMP_Text[0];
-        [Tooltip("Свойства и сравнение (торговец)")] public TMP_Text Detail;
+        [Tooltip("Свойства (торговец)")] public TMP_Text Detail;
+        [Tooltip("Сравнение с надетым (торговец)")] public TMP_Text Compare;
         public TMP_Text Preview;
         public GameObject Price;
         public TMP_Text PriceGold, PriceShards;
@@ -104,6 +122,24 @@ namespace Game.View
         public Button Back;
         [Tooltip("Реплика NPC в облачке под портретом (пустая строка прячет облачко)")] public TMP_Text Message;
         [Tooltip("Имя в облачке реплики")] public TMP_Text Speaker;
+
+        [Header("Клавиши внизу")]
+        [Tooltip("Enter — основная кнопка")] public GameObject MainKey;
+        public TMP_Text MainKeyLabel;
+        [Tooltip("Del — вторая кнопка (разбор)")] public GameObject SecondKey;
+        public TMP_Text SecondKeyLabel;
+        [Tooltip("Подпись у Esc: «Закрыть» или «Отменить», пока ждёт подтверждение")] public TMP_Text CloseKeyLabel;
+    }
+
+    /// <summary>Товар на прилавке торговца: вещь, название и цена; нажимается весь.</summary>
+    [Serializable]
+    public sealed class CampShopGood
+    {
+        public Button Button;
+        public CampShopCell Cell;
+        public TMP_Text Name, Price;
+        [Tooltip("Значок и число цены: у проданного прячутся")] public GameObject PriceGroup;
+        [Tooltip("Подложка выбранного товара")] public GameObject Chosen;
     }
 
     /// <summary>Окно алхимика: портрет, кошелёк, шесть карточек зелий.</summary>

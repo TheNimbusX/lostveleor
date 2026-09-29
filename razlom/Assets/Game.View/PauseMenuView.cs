@@ -20,11 +20,16 @@ namespace Game.View
     /// Состояния: одна пауза по центру → «Настройки»/«Управление»: пауза
     /// уезжает влево, окно выезжает справа → подтверждение поверх всего,
     /// окна под ним гаснут.
+    ///
+    /// «Настройки Б» (выбор владельца 30.09, ART/UI/concepts-2026-09-30-hud-final/e2-settings-tabs-left.png):
+    /// окно во всю ширину — вкладки столбцом слева со значками, опции в центре, описание справа.
+    /// Пауза под ним прячется (<see cref="HidePauseUnderWindow"/>), «Управление» — пятая вкладка
+    /// (<see cref="ControlsPage"/>); без этих частей (старый префаб) всё работает по-прежнему.
     /// </summary>
     public sealed class PauseMenuView : MonoBehaviour
     {
         public enum Window { None = 0, Settings = 1, Controls = 2 }
-        public enum Tab { Graphics = 0, Audio = 1, Game = 2 }
+        public enum Tab { Graphics = 0, Audio = 1, Game = 2, Interface = 3, Controls = 4 }
 
         /// <summary>Версия раскладки сборщика; см. PauseMenuBuilder.LayoutVersion.</summary>
         [HideInInspector] public int LayoutVersion;
@@ -73,7 +78,7 @@ namespace Game.View
         public Button Reset;
         public Button Apply;
         public TMP_Text Status;
-        [Tooltip("«Назад» — только когда настройки открыты из главного меню")] public Button SettingsBack;
+        [Tooltip("«Назад» — когда настройки открыты из главного меню или окно во всю ширину")] public Button SettingsBack;
 
         [Header("Графика")]
         public UiSegmented DisplayMode;
@@ -97,6 +102,37 @@ namespace Game.View
 
         [Header("Игра")]
         public TMP_Text GameText;
+
+        [Header("Настройки Б: столбец вкладок, описание справа (30.09)")]
+        [Tooltip("Окно настроек во всю ширину: пауза под ним прячется, а не сдвигается")] public bool HidePauseUnderWindow;
+        public Button TabInterface;
+        public Button TabControls;
+        public CanvasGroup InterfacePage;
+        [Tooltip("Вкладка «Управление» внутри настроек; есть — отдельное окно управления не открывается")] public CanvasGroup ControlsPage;
+        [Tooltip("Панель описания справа: проявляется заново при смене опции")] public CanvasGroup Description;
+        public TMP_Text DescriptionTitle;
+        public TMP_Text DescriptionText;
+        [Tooltip("«Стандартно: …» — что вернёт «Сбросить»")] public TMP_Text DescriptionDefault;
+        [Tooltip("Строка состояния под описанием: изменения экрана, итог сброса, ожидание клавиши")] public TMP_Text DescriptionStatus;
+        [Tooltip("Образец яркости: круги от почти чёрного к тёмно-серому; виден только у опции «Яркость»")] public RectTransform BrightnessSample;
+        public Image[] BrightnessSwatches = Array.Empty<Image>();
+        [Tooltip("Заметка слева в футере: «Сохраняется сразу» или про «Применить»")] public TMP_Text FooterNote;
+
+        [Header("Изображение · Звук · Игра · Интерфейс (30.09)")]
+        public Slider Brightness;
+        public TMP_Text BrightnessValue;
+        public Slider InterfaceVolume;
+        public TMP_Text InterfaceVolumeValue;
+        public UiToggle SoundInBackground;
+        public UiDropdown Language;
+        public UiToggle PauseOnFocusLoss;
+        public UiToggle DamageNumbers;
+        public UiSegmented EnemyBars;
+        public Slider ScreenShake;
+        public TMP_Text ScreenShakeValue;
+        public UiSegmented Flashes;
+        [Tooltip("Ряд способностей Q W E R / 1 2 3 4 (вкладка «Управление»)")] public UiSegmented AbilityRow;
+        [Tooltip("Строка ряда способностей: притухает при WASD (ряд тогда всегда цифровой)")] public CanvasGroup AbilityRowGroup;
 
         [Header("Управление")]
         public RectTransform ControlsPanel;
@@ -159,7 +195,7 @@ namespace Game.View
             _presented = false;
             Present(window, tab, false, fromMainMenu);
             if (Backdrop != null) { Backdrop.alpha = 0f; UiMotion.FadeTo(Backdrop, 1f, OpenDuration); }
-            PopIn(PausePanel);
+            if (PausePanel != null && PausePanel.gameObject.activeSelf) PopIn(PausePanel);
             if (window != Window.None) { PopIn(Panel(window)); StaggerRows(ActivePage(window, tab)); }
             // Кнопки паузы приезжают по очереди снизу вверх.
             Button[] buttons = { Continue, Settings, Controls, Camp, Quit };
@@ -237,8 +273,7 @@ namespace Game.View
             if (!TickDriver.GamepadLastUsed || EventSystem.current == null) return;
             Selectable preferred = confirming ? ConfirmYes
                 : window == Window.None ? Continue
-                : window == Window.Settings
-                    ? tab == Tab.Graphics ? TabGraphics : tab == Tab.Audio ? TabAudio : TabGame
+                : window == Window.Settings ? TabButton(tab)
                     : ControlsBack;
             if (preferred != null && preferred.gameObject.activeInHierarchy && preferred.IsInteractable())
                 EventSystem.current.SetSelectedGameObject(preferred.gameObject);
@@ -249,9 +284,10 @@ namespace Game.View
             float duration = instant ? 0f : WindowDuration;
 
             // Пауза: из главного меню её нет; иначе по центру или сдвинута к окну.
+            // Окно во всю ширину (Настройки Б) паузу прячет: две колонки пунктов рядом путают.
             if (PausePanel != null)
             {
-                bool shown = !fromMainMenu;
+                bool shown = !fromMainMenu && (window == Window.None || !HidePauseUnderWindow);
                 SetShown(PausePanel, shown, instant);
                 if (shown)
                 {
@@ -263,7 +299,8 @@ namespace Game.View
             Slide(ControlsPanel, _controlsRest, window == Window.Controls, instant);
             SetGlow(SettingsGlow, window == Window.Settings);
             SetGlow(ControlsGlow, window == Window.Controls);
-            Show(SettingsBack, fromMainMenu);
+            // В окне во всю ширину «Esc Назад» есть всегда: паузы рядом нет, путь назад должен быть виден.
+            Show(SettingsBack, fromMainMenu || HidePauseUnderWindow);
             if (Hint != null) Hint.text = fromMainMenu ? "Esc — назад" : window == Window.None ? "Esc — продолжить игру" : "Esc — назад к паузе";
         }
 
@@ -309,8 +346,8 @@ namespace Game.View
 
         void ShowTab(Tab tab, bool instant)
         {
-            Button[] tabs = { TabGraphics, TabAudio, TabGame };
-            CanvasGroup[] pages = { GraphicsPage, AudioPage, GamePage };
+            Button[] tabs = { TabGraphics, TabAudio, TabGame, TabInterface, TabControls };
+            CanvasGroup[] pages = { GraphicsPage, AudioPage, GamePage, InterfacePage, ControlsPage };
             for (int i = 0; i < tabs.Length; i++)
             {
                 bool on = i == (int)tab;
@@ -318,6 +355,9 @@ namespace Game.View
                 if (tabs[i] != null && tabs[i].image != null) tabs[i].image.CrossFadeAlpha(on ? 0f : 1f, instant ? 0f : TabDuration, true);
                 var label = tabs[i] != null ? tabs[i].GetComponentInChildren<TMP_Text>(true) : null;
                 if (label != null) { if (instant) label.color = on ? TabTextOn : TabTextOff; else UiMotion.ColorTo(label, on ? TabTextOn : TabTextOff, TabDuration); }
+                // Значок вкладки (Настройки Б) красится вместе с подписью.
+                Graphic icon = tabs[i] != null && tabs[i].transform.Find(TabIconName) is Transform iconNode ? iconNode.GetComponent<Graphic>() : null;
+                if (icon != null) { if (instant) icon.color = on ? TabTextOn : TabTextOff; else UiMotion.ColorTo(icon, on ? TabTextOn : TabTextOff, TabDuration); }
 
                 CanvasGroup page = pages[i];
                 if (page == null) continue;
@@ -339,9 +379,10 @@ namespace Game.View
                 else page.gameObject.SetActive(false);
             }
             Show(Apply, tab == Tab.Graphics);
-            Show(Reset, tab != Tab.Game);
+            // В столбце вкладок «Сбросить» есть у всех пяти; в старом окне у «Игры» сбрасывать было нечего.
+            Show(Reset, ControlsPage != null || tab != Tab.Game);
 
-            Button selected = tabs[(int)tab];
+            Button selected = (uint)tab < (uint)tabs.Length ? tabs[(int)tab] : null;
             if (TabIndicator == null || selected == null) return;
             var target = (RectTransform)selected.transform;
             Vector2 position = target.anchoredPosition, size = target.sizeDelta;
@@ -398,13 +439,79 @@ namespace Game.View
 
         RectTransform Panel(Window window) => window == Window.Settings ? SettingsPanel : window == Window.Controls ? ControlsPanel : null;
 
+        /// <summary>Строки, которые PauseMenu притушает сам: проявление их прозрачность не трогает.</summary>
+        bool IsDimmable(Component row)
+        {
+            CanvasGroup group = row.GetComponent<CanvasGroup>();
+            return group != null && (group == FrameLimitRow || group == AbilityRowGroup);
+        }
+
+        /// <summary>Имя узла значка во вкладке столбца (сборщик PauseMenuWcBuilder).</summary>
+        public const string TabIconName = "Значок";
+
+        public Button TabButton(Tab tab)
+        {
+            switch (tab)
+            {
+                case Tab.Audio: return TabAudio;
+                case Tab.Game: return TabGame;
+                case Tab.Interface: return TabInterface;
+                case Tab.Controls: return TabControls;
+                default: return TabGraphics;
+            }
+        }
+
+        public CanvasGroup PageOf(Tab tab)
+        {
+            switch (tab)
+            {
+                case Tab.Audio: return AudioPage;
+                case Tab.Game: return GamePage;
+                case Tab.Interface: return InterfacePage;
+                case Tab.Controls: return ControlsPage;
+                default: return GraphicsPage;
+            }
+        }
+
+        // ---- панель описания ----
+        string _descriptionTitle;
+
+        /// <summary>
+        /// Панель справа: заголовок, одна мысль про опцию, строка «Стандартно: …». Смена опции — текст
+        /// проявляется заново с лёгким подъёмом; тот же заголовок — меняются только строки.
+        /// </summary>
+        internal void ShowDescription(string title, string text, string defaultLine, bool brightnessSample)
+        {
+            bool changed = title != _descriptionTitle;
+            _descriptionTitle = title;
+            SetText(DescriptionTitle, title ?? string.Empty);
+            SetText(DescriptionText, text ?? string.Empty);
+            SetText(DescriptionDefault, defaultLine ?? string.Empty);
+            Show(BrightnessSample, brightnessSample);
+            if (!changed || Description == null) return;
+            var rect = (RectTransform)Description.transform;
+            if (!_rest.TryGetValue(rect, out Vector2 rest)) _rest[rect] = rest = rect.anchoredPosition;
+            Vector2 from = rest + new Vector2(0f, -8f);
+            rect.anchoredPosition = from;
+            Description.alpha = 0f;
+            UiMotion.Play(rect, 3, TabDuration, t => rect.anchoredPosition = Vector2.LerpUnclamped(from, rest, t));
+            UiMotion.FadeTo(Description, 1f, TabDuration);
+        }
+
+        /// <summary>Круги образца яркости: цвет уже пересчитан по выбранной яркости.</summary>
+        internal void SetBrightnessSwatches(Func<int, Color> colour)
+        {
+            for (int i = 0; i < BrightnessSwatches.Length; i++)
+                if (BrightnessSwatches[i] != null) BrightnessSwatches[i].color = colour(i);
+        }
+
         // ---- появление лесенкой ----
         readonly System.Collections.Generic.Dictionary<RectTransform, Vector2> _rest = new System.Collections.Generic.Dictionary<RectTransform, Vector2>();
 
         Transform ActivePage(Window window, Tab tab)
         {
             if (window == Window.Controls) return ControlsPanel;
-            CanvasGroup page = tab == Tab.Audio ? AudioPage : tab == Tab.Game ? GamePage : GraphicsPage;
+            CanvasGroup page = PageOf(tab);
             return page != null ? page.transform : null;
         }
 
@@ -416,11 +523,19 @@ namespace Game.View
             foreach (Transform child in page)
             {
                 if (!child.gameObject.activeSelf || !(child is RectTransform rect)) continue;
-                if (child.GetComponent<UiHoverMotion>() != null) Arrive(rect, WindowDuration * 0.25f + index++ * RowStagger, rect.GetComponent<CanvasGroup>() != FrameLimitRow);
+                if (child.GetComponent<UiHoverMotion>() != null) Arrive(rect, WindowDuration * 0.25f + index++ * RowStagger, !IsDimmable(rect));
                 else if (rect == BindingsCombat || rect == BindingsWorld)
                     foreach (Transform binding in rect)
                         if (binding.gameObject.activeSelf && binding is RectTransform row)
                             FadeIn(row, WindowDuration * 0.25f + index++ * RowStagger);
+            }
+            // Вкладка «Управление»: колонки клавиш лежат глубже, в своём узле — строки проявляются так же.
+            foreach (RectTransform column in new[] { BindingsCombat, BindingsWorld })
+            {
+                if (column == null || column.parent == page || !column.IsChildOf(page)) continue;
+                foreach (Transform binding in column)
+                    if (binding.gameObject.activeSelf && binding is RectTransform row)
+                        FadeIn(row, WindowDuration * 0.25f + index++ * RowStagger);
             }
         }
 

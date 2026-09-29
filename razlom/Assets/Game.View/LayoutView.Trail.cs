@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Game.Sim;
 using UnityEngine;
 
@@ -11,11 +13,32 @@ namespace Game.View
         private readonly byte[] _trailPixels = new byte[TrailResolution * TrailResolution];
         private Vector4 _trailBounds;
 
-        private void BuildNaturalTrail(LayoutMap map)
+        // Тропа и вытоптанный грунт — чистый счёт по карте в массивы масок: оба прохода идут на рабочем потоке
+        // одним куском, в прежнем порядке, пока кадры рисуются (сборка по кадрам, LayoutView.Build). На главном —
+        // только выгрузка текстур.
+        private IEnumerator BuildNaturalTrailSteps(LayoutMap map)
         {
             if (_trailMask == null)
                 _trailMask = new Texture2D(TrailResolution, TrailResolution, TextureFormat.R8, false, true)
                 { name = "Плавная тропа", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            // Характер арены кэшируется в поле: считается здесь, на главном потоке, рабочий его только читает.
+            if (map.GladeCount > 0) CharacterOf(map, 0);
+            yield return Task.Run(() =>
+            {
+                long start = System.Diagnostics.Stopwatch.GetTimestamp();
+                PaintNaturalTrail(map);
+                PaintGroundWear(map);
+                FrameCost.Worker("тропа и грунт", start);
+            });
+            _trailMask.SetPixelData(_trailPixels, 0);
+            _trailMask.Apply(false, false);
+            _roomMaterial.SetTexture("_TrailMask", _trailMask);
+            _roomMaterial.SetVector("_TrailBounds", _trailBounds);
+            yield return BuildClearingsSteps(map);
+        }
+
+        private void PaintNaturalTrail(LayoutMap map)
+        {
             System.Array.Clear(_trailPixels, 0, _trailPixels.Length);
             float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
             for (int m = 0; m < map.PlacedCount; m++)
@@ -82,11 +105,6 @@ namespace Game.View
                 PaintTrailCurve(map, start, (start + end) * .5f, end, .7f);
                 PaintTrailDisc(map, end, .75f);
             }
-            _trailMask.SetPixelData(_trailPixels, 0);
-            _trailMask.Apply(false, false);
-            _roomMaterial.SetTexture("_TrailMask", _trailMask);
-            _roomMaterial.SetVector("_TrailBounds", _trailBounds);
-            BuildClearings(map);
         }
 
         private static Vector2 TrailPoint(FixVec2 point) => new Vector2(point.X.ToFloat(), point.Y.ToFloat());

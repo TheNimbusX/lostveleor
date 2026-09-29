@@ -175,6 +175,8 @@ namespace Game.View
                     continue;
                 }
                 if (e.Type != SimEventType.Damage && e.Type != SimEventType.DamageOverTime) continue;
+                // «Цифры урона: Выкл» в настройках: урон без цифр, отклик уклонения выше остаётся.
+                if (!GameUserSettings.ShowDamageNumbers) continue;
 
                 Spawn(e);
             }

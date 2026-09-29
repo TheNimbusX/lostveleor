@@ -36,6 +36,8 @@ namespace Game.View
         public static void Burst(Graphic graphic, float peak, float fromScale, float toScale, float duration)
         {
             if (graphic == null) return;
+            // «Вспышки и мерцание: Мягче» — всполох слабее; сам факт события виден.
+            peak *= GameUserSettings.FlashScale;
             graphic.enabled = true;
             Transform t = graphic.transform;
             UiMotion.Play(graphic, ChannelBurst, duration, k =>
