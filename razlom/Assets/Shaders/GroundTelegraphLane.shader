@@ -7,6 +7,7 @@ Shader "Razlom/Ground Telegraph Lane"
         _Length("Длина, м",Float)=8
         _Width("Ширина, м",Float)=1.9
         _Consumed("Пройденная часть полосы",Range(0,1))=0
+        _Flash("Вспышка контакта",Range(0,1))=0
     }
     SubShader
     {
@@ -23,16 +24,16 @@ Shader "Razlom/Ground Telegraph Lane"
             struct A {float4 vertex:POSITION;float2 uv:TEXCOORD0;};
             struct V {float4 position:SV_POSITION;float2 uv:TEXCOORD0;float3 world:TEXCOORD1;};
             CBUFFER_START(UnityPerMaterial)
-            float _Progress,_Opacity,_Length,_Width,_Consumed;
+            float _Progress,_Opacity,_Length,_Width,_Consumed,_Flash;
             CBUFFER_END
             V Vert(A a){V o;o.world=TransformObjectToWorld(a.vertex.xyz);o.position=TransformWorldToHClip(o.world);o.uv=a.uv;return o;}
             half4 Frag(V i):SV_Target
             {
-                // uv.x — поперёк полосы, uv.y — вдоль, от моба. Стрелки больше
-                // нет: в стиле трещин направление показывает бегущая кромка.
-                float edge=min(min(i.uv.x,1-i.uv.x)*_Width,min(i.uv.y,1-i.uv.y)*_Length);
+                // uv.x — поперёк полосы, uv.y — вдоль, от моба. Шевроны по оси
+                // остриём по ходу удара загораются, когда до них дошла заливка.
+                // Пройденная тараном часть (_Consumed) гаснет целиком.
                 float remaining=_Consumed<=0?1:smoothstep(_Consumed-.01,_Consumed+.01,i.uv.y);
-                return GroundTelegraphCracks(i.world.xz,edge,i.uv.y,_Length,_Progress,_Opacity*remaining,1);
+                return GroundTelegraphLane(i.uv,i.world.xz,_Length,_Width,_Progress,_Opacity*remaining,_Flash);
             }
             ENDHLSL
         }

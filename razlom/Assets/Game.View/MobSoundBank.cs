@@ -1,3 +1,5 @@
+using Game.Sim;
+
 namespace Game.View
 {
     /// <summary>
@@ -126,5 +128,165 @@ namespace Game.View
             new Slot("Generic", "stun", Align.Attack, OneShot, 1.30f),
             new Slot("Generic", "rooted", Align.Window, OneShot, 1.0f),
         };
+    }
+
+    /// <summary>
+    /// Фон топота роя (CombatAudio.UpdateSwarmScuttle): когда шорох звучит и под
+    /// сколько бегущих. Чистый C#, как и таблица выше, — его гоняют тесты.
+    ///
+    /// Баг 29.09 («иногда включается звук, который не должен тут быть — при входе
+    /// на арену»): топот смотрел только на скорость корнеползов, а звук не
+    /// пространственный. Поэтому его было слышно
+    ///  1) от роя за краем кадра — стартовая волна бежит к входу с 12–20 м (замер
+    ///     на стенде, 107 арен: каждый четвёртый шорох первых 3 с арены — от роя за
+    ///     краем кадра, все в выживании E12, где волна бодрствует с первого тика);
+    ///  2) над стоящей симуляцией — итоги после смерти или ухода, награда, маршрут,
+    ///     дымная завеса: Sim не шагает, скорость у бегущих так и остаётся, и шорох
+    ///     шёл раз в 0,55 с, пока игрок не уйдёт с экрана.
+    /// </summary>
+    public sealed class SwarmScuttleClock
+    {
+        /// <summary>Шорох не чаще, с.</summary>
+        public const float Spacing = .55f;
+
+        /// <summary>Никто не бежит или мир стоит — снова смотрим через, с.</summary>
+        public const float IdleRecheck = .2f;
+
+        /// <summary>
+        /// Тик Sim не менялся дольше этого по часам кадра (Time.time, как у TickDriver) —
+        /// мир стоит. Тик — 1/30 с; запас на просевший кадр.
+        /// </summary>
+        public const float FrozenSeconds = .2f;
+
+        /// <summary>
+        /// Бегущих слышно не дальше, м: край кадра боевой камеры (ортографический
+        /// размер 6,2 при 16:9 — ±11 м вбок, ±8,3 м вглубь). Рой за кадром молчит.
+        /// </summary>
+        public const float HearingRadius = 11f;
+
+        private float _readyAt, _tickSeenAt;
+        private int _tickSeen = int.MinValue;
+
+        /// <summary>
+        /// Новый бой: срок шороха снимается. Когда Sim шагала последний раз, помним —
+        /// новая симуляция, ещё не шагнувшая, для топота тоже стоит.
+        /// </summary>
+        public void Reset() => _readyAt = 0f;
+
+        /// <summary>
+        /// Звать каждый кадр: здесь же отмечается, шагает ли Sim. true — пора сосчитать
+        /// бегущих (CountRunning) и отдать счёт в Counted.
+        /// </summary>
+        public bool Due(int simTick, float now)
+        {
+            if (simTick != _tickSeen) { _tickSeen = simTick; _tickSeenAt = now; }
+            if (now < _readyAt) return false;
+            if (Frozen(now)) { _readyAt = now + IdleRecheck; return false; }
+            return true;
+        }
+
+        /// <summary>Sim не шагает дольше FrozenSeconds.</summary>
+        public bool Frozen(float now) => now - _tickSeenAt > FrozenSeconds;
+
+        /// <summary>Сосчитали бегущих в пределах слышимости. true — играть шорох под running.</summary>
+        public bool Counted(int running, float now)
+        {
+            _readyAt = now + (running > 0 ? Spacing : IdleRecheck);
+            return running > 0;
+        }
+
+        /// <summary>
+        /// Живые корнеползы в движении не дальше radius от героя. radius &lt; 0 — на
+        /// любом расстоянии (журнал съёмки: сколько бегущих отсекла дальность).
+        /// </summary>
+        public static int CountRunning(EntityStore e, int hero, float radius)
+        {
+            if (e == null || (uint)hero >= (uint)e.Count) return 0;
+            float hx = e.Position[hero].X.ToFloat(), hy = e.Position[hero].Y.ToFloat();
+            float limit = radius * radius;
+            int running = 0;
+            for (int i = 0; i < e.Count; i++)
+            {
+                if (i == hero || !e.Alive[i] || e.Kind[i] != EnemyKind.ForestRootSwarm
+                    || e.Velocity[i].LengthSq.Raw == 0) continue;
+                float dx = e.Position[i].X.ToFloat() - hx, dy = e.Position[i].Y.ToFloat() - hy;
+                if (radius >= 0f && dx * dx + dy * dy > limit) continue;
+                running++;
+            }
+            return running;
+        }
+    }
+
+    /// <summary>
+    /// Чей сейчас бой у CombatAudio: режим игры, симуляция (поколение сессии) и арена
+    /// забега. Звать раз в кадр до событий кадра; ответ — что сменилось. Чистый C# —
+    /// его гоняют тесты.
+    ///
+    /// Баг 29.09 («звук, которого тут быть не должно»):
+    ///  1) кадр смены симуляции звучал событиями, которые новой Sim не принадлежат:
+    ///     TickDriver.SyncGeneration кладёт в кадр список событий новой Sim как есть, а
+    ///     у лагерной Sim он не чистился с её последнего шага перед забегом — на
+    ///     возврате в лагерь звучали удары и замахи, которых давно нет;
+    ///  2) следующая арена — та же Sim и то же поколение (RiftRun.EnterNextRift), и её
+    ///     смену никто не замечал: ожидания мобов, хозяева длинных звуков и отложенные
+    ///     звуки прошлой арены доживали до новой, где номера сущностей и действий
+    ///     начинаются заново.
+    /// </summary>
+    public sealed class CombatSoundScope
+    {
+        public enum Change : byte
+        {
+            /// <summary>Тот же бой.</summary>
+            None,
+
+            /// <summary>
+            /// Следующая арена забега: Sim та же, сущности расставлены заново. Ожидания,
+            /// хозяева голосов и отложенное — прочь; голоса доигрывают под дымной завесой.
+            /// </summary>
+            Arena,
+
+            /// <summary>
+            /// Сменился режим при той же Sim (смерть или конец забега — итоги): бой оборван,
+            /// голоса гаснут. События кадра — этой же Sim (последний удар) и звучат.
+            /// </summary>
+            Mode,
+
+            /// <summary>
+            /// Сменилась сама Sim: вход в Разлом, «повторить», возврат в лагерь, Полигон.
+            /// Всё гаснет, а события кадра смены не звучат — они прежней Sim или повтор
+            /// давнего списка новой.
+            /// </summary>
+            Simulation,
+        }
+
+        private GameMode _mode = GameMode.Camp;
+        private int _generation = -1, _depth = -1;
+
+        /// <summary>depth — глубина забега (RiftRun.Depth), −1 — забега нет.</summary>
+        public Change Update(GameMode mode, int generation, int depth)
+        {
+            if (generation != _generation)
+            {
+                _generation = generation; _mode = mode; _depth = depth;
+                return Change.Simulation;
+            }
+            if (mode != _mode)
+            {
+                _mode = mode; _depth = depth;
+                return Change.Mode;
+            }
+            if (depth != _depth)
+            {
+                _depth = depth;
+                return Change.Arena;
+            }
+            return Change.None;
+        }
+
+        /// <summary>Звучат ли события кадра с этой сменой.</summary>
+        public static bool HearsFrameEvents(Change change) => change != Change.Simulation;
+
+        /// <summary>Бой оборван целиком: голоса гаснут, сердцебиение низкого здоровья тоже.</summary>
+        public static bool EndsFight(Change change) => change == Change.Mode || change == Change.Simulation;
     }
 }

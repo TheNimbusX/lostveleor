@@ -527,6 +527,7 @@ namespace Game.View
             EssenceMotesView.EnsureOn(gameObject);
             HeroControlView.EnsureOn(gameObject);
             EliteBarView.EnsureOn(gameObject);
+            CombatMusicView.EnsureOn(gameObject);
 
             BindNewEntities();
         }

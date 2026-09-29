@@ -423,7 +423,9 @@ namespace Game.Tests
             for (int slot = 0; slot < PelagKit.MainSlots; slot++)
             {
                 AbilityBuild build = sim.GetAbility(slot);
-                if (build == null) continue;
+                // В корнях Абордаж и Шаг по цепи не начинаются: живой игрок
+                // жмёт то, что бьёт с места, а не держит мёртвую кнопку.
+                if (build == null || sim.AbilityHeldByRoots(slot)) continue;
                 int id = build.DefinitionId;
                 bool combo = id == AbilityDefinition.WreckId && sim.WreckComboOpen;
                 if (!combo && (sim.Tick < sim.AbilityReadyTick(slot)

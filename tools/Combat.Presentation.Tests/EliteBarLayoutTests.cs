@@ -1,7 +1,8 @@
 using NUnit.Framework;
 using Game.View;
 
-// Полоса элиты (поток J «Мобов леса v2», владелец 29.09): цифры в полосе и высота полоски над макушкой.
+// Полоса элиты (поток J «Мобов леса v2», владелец 29.09; рога на концах — выбор «5 — Рога»): цифры в
+// полосе, низ полосы с рогами и высота полоски над макушкой.
 public sealed class EliteBarLayoutTests
 {
     [Test]
@@ -24,6 +25,43 @@ public sealed class EliteBarLayoutTests
         float center = EliteBarLayout.Target(3.1f, true, 2.235f, .12f, .15f);
         Assert.That(center - .15f, Is.GreaterThan(3.1f));
         Assert.That(center, Is.EqualTo(3.37f).Within(1e-4f));
+    }
+
+    [Test]
+    public void AntlersAboveTheBarBottomKeepTheBarHalf()
+    {
+        // Раскладка игры (HealthBars): полоса 0,3 м, холст рога 1,95 × 0,3, основание на 0,03 м ниже
+        // середины, рога ниже точки крепления 0,153 холста — рог кончается выше низа полосы.
+        float below = EliteBarLayout.EliteBelow(.3f, 1.95f * .3f, -.1f * .3f, .153f);
+        Assert.That(below, Is.EqualTo(.15f).Within(1e-5f));
+    }
+
+    [Test]
+    public void AntlerHangingBelowTheBarLowersItsBottom()
+    {
+        // Основание на 0,1 м ниже середины и 0,1 м рога под ним: низ — на 0,2 м, а не на половине полосы.
+        Assert.That(EliteBarLayout.EliteBelow(.3f, .5f, -.1f, .2f), Is.EqualTo(.2f).Within(1e-5f));
+        // Поднятое основание прячет тот же рог обратно в полосу.
+        Assert.That(EliteBarLayout.EliteBelow(.3f, .5f, .1f, .2f), Is.EqualTo(.15f).Within(1e-5f));
+    }
+
+    [Test]
+    public void WithoutAntlerOnlyTheBarCounts()
+    {
+        Assert.That(EliteBarLayout.EliteBelow(.3f, 0f, -.5f, .5f), Is.EqualTo(.15f));
+        Assert.That(EliteBarLayout.EliteBelow(.3f, float.NaN, -.5f, .5f), Is.EqualTo(.15f));
+        Assert.That(EliteBarLayout.EliteBelow(.3f, .5f, -.5f, float.NaN), Is.EqualTo(.15f));
+    }
+
+    [Test]
+    public void AntleredBarStillClearsTheHeadByTheGap()
+    {
+        // Рог свисает под полосу: весь низ полосы с рогами — ровно на зазор выше макушки, не в голове.
+        const float top = 3.1f, gap = .12f;
+        float below = EliteBarLayout.EliteBelow(.3f, .5f, -.1f, .2f);
+        float center = EliteBarLayout.Target(top, true, 2.235f, gap, below);
+        Assert.That(center - below, Is.EqualTo(top + gap).Within(1e-4f));
+        Assert.That(center - .15f, Is.GreaterThan(top + gap));
     }
 
     [Test]

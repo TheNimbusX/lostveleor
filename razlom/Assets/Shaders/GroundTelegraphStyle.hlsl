@@ -1,223 +1,229 @@
 #ifndef RAZLOM_GROUND_TELEGRAPH_STYLE
 #define RAZLOM_GROUND_TELEGRAPH_STYLE
-// ОБЩИЙ СТИЛЬ МЕТОК НА ЗЕМЛЕ: «трещины со светом изнутри».
-// Выбор владельца G6, 29.09: ART/characters/act-1-enemies/review/
-// mobs-v2-concepts-2026-09-29/telegraphs/02-cracks-inner-light.png.
-// Прежний стиль 25.09 (коралловая кромка + ровная заливка) заменён целиком.
+// Общий вид меток на земле — «B — пунктир и шевроны» (выбор владельца 29.09,
+// кадры 02a–02c в ART/characters/act-1-enemies/review/mobs-v2-round2-2026-09-29/
+// telegraphs). Действует на все метки: полосы (таран Камнекопыта, линия
+// Шипомёта), круги (корни Корнехвата, всплеск Шипомёта, прыжок и круг когтей
+// Вендиго, посадка плода), кольцо воя, секторы (коготь Вендиго и общий вид).
 //
-// Что видно:
-//  - земля внутри фигуры расходится плитами; сеть трещин привязана к миру
-//    (ячейки Вороного по XZ), поэтому метка — окно в треснувший грунт, а не
-//    наклейка, которая ездит за мобом;
-//  - впереди заливки трещины закрыты: тонкие тёмно-багровые волоски;
-//  - за бегущей кромкой трещины раскрываются на ~0,35 длины заливки и
-//    светятся изнутри: красный край → оранжевый → жёлтая сердцевина,
-//    плиты становятся красно-бурой коркой (темнее у трещин, светлее к
-//    середине), свет подтекает на их края узким красным ореолом;
-//  - по фронту заливки бежит яркая жёлто-оранжевая кромка;
-//  - контур фигуры — тоже трещина: снаружи почти чёрная губа, в середине
-//    горячий шов, внутри тонкая губа. Пара «тёмное + яркое» держит контраст
-//    ≥3:1 с любой землёй: на тёмной вечерней траве работает свет, на
-//    светлой — губа.
+// Кромка — светящийся пунктир из коротких оранжево-красных штрихов (горячая
+// середина, красные края) поверх тонкой тёмной обводки по самой границе удара:
+// на тёмной траве край держат штрихи, на светлой земле — обводка. Внутри —
+// мягкая полупрозрачная тёплая заливка, трава видна. Время: заливка растёт от
+// источника (полоса — от моба, круг — из центра, кольцо — от внутреннего края,
+// сектор — от вершины), а знаки внутри загораются, когда она до них дошла, —
+// до того они тусклый контур. Знаки: шевроны остриём по ходу удара (в полосе
+// вдоль, в секторе и кольце воя — наружу, «беги отсюда») и засечки у кромки
+// круга.
 //
-// ЦВЕТА ПОДОБРАНЫ В HDR, А НЕ «НА ГЛАЗ В sRGB». Метка смешивается в HDR-буфере,
-// дальше CombatLook: экспозиция +0,4 EV, Neutral, блум (порог 1,05,
-// интенсивность 0,22). Neutral давит яркое и обесцвечивает: оранжевый с
-// зелёным 0,5 выходит кремовым. Поэтому русло и шов — красный 1,2–2,2 при
-// зелёном ≤0,46, и цвета на выходе совпадают с реф-кадром (обратный ход через
-// кривую Neutral от пикселей рефа). Прототип на numpy с этой же цепочкой на
-// кадре Шипомёта (земля как есть, ×2 и ×3,5 по яркости): худшая кромка по
-// всем фигурам и долям заливки — 3,15:1. Проверка в редакторе —
-// GroundTelegraphSetup.RenderReview (кадры + замер по пикселям).
-//
-// Правила (утверждены вместе со старым стилем и не меняются):
-//  - граница опасности считается в метрах от настоящей фигуры и ничем не
-//    искажается: шум трогает только внутреннюю сторону кромки;
-//  - один проход, без grab pass и без текстур: всё процедурно, поэтому стиль
-//    подхватывает любой шейдер, который включает этот файл (сектор, полоса,
-//    Вендиго, посадка плода) — без правки материалов;
-//  - нет _Time: вид зависит только от заливки, которую вид считает по тику
-//    Sim, поэтому пауза и повтор съёмки дают тот же кадр;
-//  - за единицу выходит только красный канал (порог Bloom в CombatLook —
-//    1.05, см. ArenaView): ореол трещин остаётся красно-оранжевым, а не жёлтым.
+// Все размеры — метры мира, одни у любой фигуры: штрихи и шевроны не
+// растягиваются по размеру метки. Число штрихов на ребре целое, штрих — на
+// каждом конце (углы полосы и сектора — уголками, шов круга не виден).
+// Анимации сверх таймера нет: ни бегущего пунктира, ни пульса; вспышка
+// контакта — только по флагу вида. Один проход, без текстур.
+// Прежние стили (25.09 и трещины 44111e2b) лежат в истории git.
 
-// Плита растрескавшейся земли, м: на реф-кадре на полосе 1,4 м помещается
-// две-три плиты поперёк.
-#define GT_CELL 0.55
-// Разброс центров плит внутри ячейки: 0 — сетка, 1 — полный хаос.
-// 0,70 — не больше: при нём второй обход 3×3 даёт то же расстояние до
-// трещины, что и точный 5×5 (замер на 15×15 м с шагом 1 см: расхождение
-// в 2 точках из 2,25 млн, до 5 мм). При 0,76 — уже 113 точек до 2,7 см.
-#define GT_JITTER 0.70
+static const float GTDashPeriod=.36;   // штрих + просвет: ~0,22 + ~0,14 м
+static const float GTDashDuty=.6;
+static const float GTOutline=.018;     // тёмная обводка, не тоньше двух пикселей
+static const float GTDashWidth=.055;   // толщина штриха, не тоньше трёх пикселей
+static const float GTChevronWidth=.6;
+static const float GTChevronDrop=.36;  // насколько концы плеч отстают от острия
+static const float GTChevronThick=.24; // толщина плеча по оси удара
+static const float GTChevronDepth=GTChevronDrop+GTChevronThick;
+static const float GTChevronStep=1.2;  // шаг шевронов вдоль полосы и в ряду
+static const float GTRowStep=1.1;      // шаг рядов в секторе и кольце
+static const float GTRimClear=.4;      // от кромки до шеврона
+static const float GTSideClear=.3;     // от луча сектора до шеврона
+static const float GTTickNear=.2, GTTickFar=.38, GTTickWidth=.045, GTTickStep=.55;
 
-// Хэш без синуса (Hoskins): одинаков на всех GPU и не плывёт на больших координатах.
-float2 GtHash22(float2 p)
+// Пиксель в метрах — для сглаживания координат без гладкой производной (угол
+// у шва круга).
+float GTPixel(float2 worldXZ)
 {
-    float3 p3 = frac(float3(p.x, p.y, p.x) * float3(.1031, .1030, .0973));
-    p3 += dot(p3, p3.yzx + 33.33);
-    return frac((p3.xx + p3.yz) * p3.zy);
+    return max(1e-4,.5*(length(ddx(worldXZ))+length(ddy(worldXZ))));
 }
 
-// Сеть трещин. .x — расстояние до ближайшей трещины (ребра Вороного), м;
-// .y — случайное число плиты 0..1 (оттенок плиты).
-// Точное расстояние до ребра: ближайший центр, потом проекция на
-// серединные перпендикуляры соседей вокруг найденной ячейки (3×3, см. GT_JITTER).
-float2 GtCrackField(float2 worldXZ)
+// Штрихи вдоль ребра длиной len, s — метры вдоль него от начала. x — штрих,
+// y — его мягкий ореол.
+float2 GTDash(float s,float len,float px)
 {
-    float2 x = worldXZ / GT_CELL;
-    // Лёгкий изгиб и мелкий излом: рёбра не должны быть линейкой.
-    x += .07 * float2(sin(x.y * 2.1 + 1.3 * sin(x.x * 1.7)), sin(x.x * 2.3 + 1.1 * sin(x.y * 1.9)))
-       + .03 * float2(sin(x.y * 9.7 + x.x * 3.1), sin(x.x * 10.3 - x.y * 2.9));
-    float2 n = floor(x), f = x - n;
-    const float lo = .5 - .5 * GT_JITTER;
-    float2 mg = 0, mr = 0;
-    float md = 8;
-    [unroll] for (int j = -1; j <= 1; j++)
+    float period=max(len,1e-3)/max(1,round(len/GTDashPeriod));
+    float t=abs(frac(s/period+.5)-.5)*period;
+    float h=.5*GTDashDuty*period;
+    return float2(saturate((h-t)/px+.5),saturate((h+.03-t)/.06));
+}
+
+// Шеврон остриём по +y, центр его рамки — 0. Знаковое расстояние, м (<0 внутри).
+float GTChevron(float2 q)
+{
+    const float k=2*GTChevronDrop/GTChevronWidth;
+    const float c=rsqrt(1+k*k);
+    float top=.5*GTChevronDepth-k*abs(q.x);
+    return max(max((q.y-top)*c,(top-GTChevronThick-q.y)*c),abs(q.x)-.5*GTChevronWidth);
+}
+
+// Знак для сборки: x — тусклый контур, y — тело, z — насколько зажжён, w —
+// близость к середине штриха (там он горячий).
+float4 GTChevronMark(float sdf,float px,float lit)
+{
+    const float k=2*GTChevronDrop/GTChevronWidth;
+    float w=max(.02,1.3*px);
+    return float4(saturate(.5-(abs(sdf+.5*w)-.5*w)/px),saturate(.5-sdf/px),lit,
+        saturate(-sdf*2*sqrt(1+k*k)/GTChevronThick));
+}
+
+void GTOver(inout float3 pm,inout float a,float3 c,float k)
+{
+    k=saturate(k);
+    pm=c*k+pm*(1-k);
+    a=k+a*(1-k);
+}
+
+// Сборка метки. d — метры от границы внутрь; dash — штрих и ореол ближнего
+// ребра (GTDash); fill — заливка 0..1 от источника, fillLength — её длина в
+// метрах; mark — знак внутри (GTChevronMark); exposed — видна ли кромка
+// (соседние круги плода её прячут); flash — вспышка контакта (0..1).
+half4 GroundTelegraph(float d,float2 dash,float fill,float fillLength,float4 mark,
+    float progress,float opacity,float exposed,float flash)
+{
+    float pxD=max(length(float2(ddx(d),ddy(d))),1e-4);
+    float p=saturate(progress);
+    float inside=saturate(d/pxD+.5);
+    float urgency=smoothstep(.8,1,p);
+    float front=(fill-p)*fillLength;             // м: + ещё впереди, − уже позади
+    float started=saturate(p*60);
+    float filled=(1-smoothstep(-.1,.1,front))*started;
+    float behind=max(-front,0);
+    float nearFront=exp(-behind/.7)*filled;
+    float3 pm=0;
+    float a=0;
+    // Заливка: слабый тон на всей фигуре, плотнее и теплее — где время прошло.
+    float3 fc=lerp(float3(.30,.008,.002),lerp(float3(.40,.010,.002),float3(.80,.035,.007),nearFront*.45),filled);
+    fc=lerp(fc,float3(.80,.035,.007),.6*flash);
+    GTOver(pm,a,fc,(.11+filled*(.22+.07*nearFront+.06*urgency)+.25*flash)*inside);
+    // Мягкий свет у кромки изнутри.
+    GTOver(pm,a,float3(.95,.035,.007),exp(-max(d-GTOutline,0)/.2)*(.10+.06*filled)*exposed*inside);
+    // Фронт заливки — тонкая светлая черта; у коротких фигур гаснет, там время
+    // видно по знакам.
+    float gate=started*(1-smoothstep(.97,1,p))*saturate((fillLength-1.2)/1.8);
+    float ft=(front+.04)/.04;
+    GTOver(pm,a,float3(1.6,.09,.015),(exp(-ft*ft)*.28+exp(-behind/.3)*filled*.06)*gate*inside);
+    // Знак: зажжённый — горячая середина и красные края, тусклый — контур.
+    float3 sc=lerp(float3(1.4,.06,.013),lerp(float3(1.35,.04,.008),float3(2.6,.5,.15),smoothstep(.1,.8,mark.w)),mark.z);
+    GTOver(pm,a,sc*(1+.3*flash),(mark.x*.7*(1-mark.z)+mark.y*.96*mark.z)*inside);
+    // Кромка: тёмная обводка по самой границе, за ней штрих, внутрь — его ореол.
+    float ow=max(GTOutline,2*pxD), dw=max(GTDashWidth,3*pxD);
+    float outline=inside*saturate((ow-d)/pxD+.5);
+    float band=saturate((d-ow)/pxD+.5)*saturate((ow+dw-d)/pxD+.5);
+    float t=saturate(abs(d-ow-.5*dw)/(.5*dw));
+    float3 dc=lerp(float3(2.6,.75,.25),float3(1.8,.05,.010),smoothstep(.15,.8,t))*(1+.15*urgency+.3*flash);
+    float halo=exp(-max(d-ow-dw,0)/.045)*saturate((d-ow-dw)/pxD+.5);
+    GTOver(pm,a,float3(1.2,.04,.008),halo*dash.y*.45*exposed);
+    GTOver(pm,a,float3(.010,.003,.002),outline*.94*exposed);
+    GTOver(pm,a,dc,band*dash.x*.97*exposed);
+    return half4(pm/max(a,1e-4),a*saturate(opacity));
+}
+
+// Полоса: uv.x — поперёк (0..1), uv.y — вдоль от источника (0..1). Шевроны по
+// оси остриём по ходу удара, шаг около 1,2 м (сегменту Шипомёта 1,75 м — один).
+half4 GroundTelegraphLane(float2 uv,float2 worldXZ,float laneLength,float laneWidth,
+    float progress,float opacity,float flash)
+{
+    float px=GTPixel(worldXZ);
+    float x=(uv.x-.5)*laneWidth, y=uv.y*laneLength;
+    float side=.5*laneWidth-abs(x), ends=min(y,laneLength-y);
+    float2 dash=side<ends?GTDash(y,laneLength,px):GTDash(x+.5*laneWidth,laneWidth,px);
+    float n=max(1,floor(laneLength/GTChevronStep)), pitch=laneLength/n;
+    float centre=(min(floor(y/pitch),n-1)+.5)*pitch;
+    float lit=smoothstep(centre-.5*GTChevronDepth,centre+.5*GTChevronDepth,saturate(progress)*laneLength);
+    float4 mark=GTChevronMark(GTChevron(float2(x,y-centre)),px,lit);
+    // Узкой полосе шеврон не по размеру.
+    if(laneWidth<GTChevronWidth+.3)mark.xy=0;
+    return GroundTelegraph(min(side,ends),dash,uv.y,laneLength,mark,progress,opacity,1,flash);
+}
+
+// Дуга: uv.x — доля раствора (0,5 — взгляд), uv.y — радиус в долях внешнего.
+// Полный раствор без внутреннего радиуса — круг, у него засечки у кромки;
+// кольцо и сектор — ряды шевронов остриём от центра.
+half4 GroundTelegraphArc(float2 uv,float2 worldXZ,float radius,float inner,float span,
+    float progress,float opacity,float exposed,float flash)
+{
+    float px=GTPixel(worldXZ);
+    bool full=span>6.27;
+    float r=uv.y*radius, a=(uv.x-.5)*span, outer=radius-r;
+    float d=outer;
+    float2 dash=GTDash(uv.x*span*radius,span*radius,px);
+    if(inner>0&&r-inner<d)
     {
-        [unroll] for (int i = -1; i <= 1; i++)
+        d=r-inner;
+        dash=GTDash(uv.x*span*inner,span*inner,px);
+    }
+    if(!full)
+    {
+        // До ближнего луча; дальше прямого угла от него ближайшая точка — вершина.
+        float toSide=min(min(uv.x,1-uv.x)*span,1.5707963);
+        float e=sin(toSide)*r;
+        if(e<d)
         {
-            float2 g = float2(i, j);
-            float2 r = g + lo + GT_JITTER * GtHash22(n + g) - f;
-            float d = dot(r, r);
-            if (d < md) { md = d; mr = r; mg = g; }
+            d=e;
+            dash=GTDash(r*cos(toSide)-inner,radius-inner,px);
         }
     }
-    md = 8;
-    [unroll] for (int b = -1; b <= 1; b++)
+    float fillLength=max(.01,radius-inner);
+    float p=saturate(progress);
+    float4 mark=0;
+    if(full&&inner<=0)
     {
-        [unroll] for (int a = -1; a <= 1; a++)
-        {
-            float2 g = mg + float2(a, b);
-            float2 r = g + lo + GT_JITTER * GtHash22(n + g) - f;
-            float2 dr = r - mr;
-            float l2 = dot(dr, dr);
-            if (l2 > 1e-5) md = min(md, dot(.5 * (mr + r), dr * rsqrt(l2)));
-        }
+        // Засечки — короткие радиальные штрихи у кромки, число кратно четырём.
+        float n=max(8,4*round(6.2831853*(radius-.5*(GTTickNear+GTTickFar))/(4*GTTickStep)));
+        float lateral=abs(frac(uv.x*n+.5)-.5)*6.2831853*r/n;
+        float body=saturate((.5*GTTickWidth-lateral)/px+.5)*saturate((outer-GTTickNear)/px+.5)
+            *saturate((GTTickFar-outer)/px+.5);
+        mark=float4(body,body,smoothstep(radius-GTTickFar,radius-GTTickNear,p*radius),
+            saturate(1-lateral/(.5*GTTickWidth)));
     }
-    return float2(md * GT_CELL, GtHash22(n + mg).x);
-}
-
-// Слой поверх накопленного (премультиплицированный «over»).
-void GtOver(inout float3 premul, inout float alpha, float3 color, float a)
-{
-    a = saturate(a);
-    premul = color * a + premul * (1 - a);
-    alpha = a + alpha * (1 - a);
-}
-
-// Линейная ступень на ширину пикселя: кромки ровно в пиксель, без мыла.
-float GtRamp(float a, float b, float x) { return saturate((x - a) / max(b - a, 1e-6)); }
-
-// distanceInside  — метры до границы фигуры (>0 внутри);
-// fillCoordinate  — 0..1 вдоль заливки (от моба/центра к краю);
-// fillMetres      — сколько метров проходит заливка от 0 до 1;
-// progress        — доля до удара по тикам Sim; opacity — видимость;
-// exposedBoundary — 0 там, где кромку закрывает соседняя фигура (посадка плода).
-half4 GroundTelegraphCracks(float2 worldXZ, float distanceInside, float fillCoordinate, float fillMetres,
-    float progress, float opacity, float exposedBoundary)
-{
-    // Метры в пикселе: по земле в среднем (ортокамера сжимает глубину) и
-    // поперёк кромки — по ней считаются толщины линий, чтобы на 1080p ни одна
-    // не стала тоньше пикселя и не мерцала.
-    float px = max(.5 * (length(ddx(worldXZ)) + length(ddy(worldXZ))), 1e-4);
-    float pxD = max(length(float2(ddx(distanceInside), ddy(distanceInside))), 1e-4);
-    float h = .5 * pxD;
-    float inside = GtRamp(-h, h, distanceInside);
-
-    float p = saturate(progress);
-    float fm = max(fillMetres, .05);
-    // Метры до фронта: плюс — впереди (ещё не залито), минус — позади.
-    float front = (fillCoordinate - p) * fm;
-    float hF = .5 * max(length(float2(ddx(fillCoordinate), ddy(fillCoordinate))) * fm, 1e-4);
-    float started = saturate(p * 50);
-    float filled = (1 - GtRamp(-hF, hF, front)) * started;
-    // Трещина раскрывается не сразу за фронтом, а на отрезке позади него.
-    float opened = filled * smoothstep(0, 1, saturate(-front / clamp(.35 * fm, .15, .7)));
-    // Жар у самого фронта: свежие трещины ярче.
-    float heat = filled * exp(-max(-front, 0) / .45);
-    float urgency = smoothstep(.75, 1, p);
-
-    // ---- трещины внутри
-    float2 crack = GtCrackField(worldXZ);
-    float e = crack.x;
-    float wob = .5 + .5 * sin(worldXZ.x * 3.7 + 2.1 * sin(worldXZ.y * 2.3)) * sin(worldXZ.y * 4.1 - 1.7 * sin(worldXZ.x * 1.9));
-    // Полуширина: закрытая — волосок в полпикселя, открытая — 2,6–6 см
-    // (на реф-кадре раскрытая трещина — русло в 5–8 см).
-    float w = lerp(max(.005, .5 * px), max(.026 + .034 * wob, .9 * px), opened);
-    float hp = .5 * px;
-    float core = 1 - GtRamp(w - hp, w + hp, e);
-    float lipEdge = w + .005 + .008 * opened + .6 * px;
-    float lip = 1 - GtRamp(lipEdge - hp, lipEdge + hp, e);
-    float halo = exp(-max(e - w, 0) / (.008 + .015 * opened + .010 * heat));
-
-    float3 premul = 0;
-    float alpha = 0;
-    // Плиты: чуть тронуты впереди, обожжённая красно-бурая корка позади
-    // фронта. У трещины плита темнее, к середине светлее — приподнятая корка,
-    // как на реф-кадре, а не ровная заливка. Цвета подобраны обратным ходом
-    // через тонмаппинг: плита на выходе ≈ (109, 56, 26) в sRGB, как на рефе.
-    float bevel = smoothstep(0, 1, saturate((e - w) / .16)) * (.75 + .5 * crack.y);
-    float3 plate = lerp(float3(.040, .011, .004), float3(.110, .030, .008), min(bevel, 1.2));
-    GtOver(premul, alpha, plate, inside * (.10 + .62 * filled) * (.85 + .3 * crack.y));
-    // Свет из трещины на краях плит: узкий красный ореол. Жёлтым он быть не
-    // должен — после Neutral жёлтый ореол на траве выходит кремовым пятном.
-    GtOver(premul, alpha, float3(1, .10, .012), halo * inside * filled * (.55 + .12 * urgency + .10 * heat));
-    GtOver(premul, alpha, float3(.03, .008, .004), lip * inside * opened * .30);
-    // Русло: красный край → оранжевый → жёлтая сердцевина. За единицу выходит
-    // только красный: так после экспозиции и Neutral русло остаётся
-    // насыщенным (на рефе край ≈ (244, 53, 17), сердцевина ≈ (254, 199, 59)),
-    // а не выцветает в кремовый, как при зелёном за 0,5.
-    float t = saturate(1 - e / max(w, 1e-4));
-    float3 lava = lerp(float3(1.20, .03, .006), float3(1.80, .10, .008), saturate(t * 2));
-    float t2 = saturate(t * 2 - 1);
-    lava = lerp(lava, float3(2.20, .46, .02), t2 * t2);
-    lava *= 1 + .10 * urgency + .08 * heat;
-    lava.gb = min(lava.gb, .98);
-    GtOver(premul, alpha, lerp(float3(.30, .020, .008), lava, filled), core * inside * (.55 + .42 * filled));
-
-    // ---- кромка фигуры: тёмная губа | горячая середина | тонкая губа
-    float wob2 = .5 + .5 * sin(worldXZ.x * 5.3 + 1.7 * sin(worldXZ.y * 3.1)) * sin(worldXZ.y * 5.9 - 1.3 * sin(worldXZ.x * 2.7));
-    // Тёмная губа — почти чёрная и непрозрачная: на средне-светлой земле
-    // (яркость 0,12–0,2) яркая сердцевина после Neutral до 3:1 не дотягивает,
-    // и кромку держит только губа. 3 см, чтобы блум соседней сердцевины не
-    // высветлял её целиком.
-    float outer = max(.030, 2.4 * pxD);
-    float bcore = max(.030, 2.3 * pxD) * (1 + (wob2 - .5) * .5 * filled) + .018 * opened;
-    float bandEnd = outer + bcore + max(.014, pxD);
-    float band = (1 - GtRamp(bandEnd - h, bandEnd + h, distanceInside)) * inside;
-    float bc = GtRamp(outer - h, outer + h, distanceInside) * (1 - GtRamp(outer + bcore - h, outer + bcore + h, distanceInside));
-    float bhalo = exp(-max(distanceInside - outer - bcore, 0) / .06) * inside;
-    GtOver(premul, alpha, float3(1, .10, .012), bhalo * exposedBoundary * filled * (.30 + .12 * urgency));
-    GtOver(premul, alpha, float3(.006, .002, .0015), band * exposedBoundary);
-    // Середина кромки — жёлто-горячий шов с красными боками, как русло
-    // трещины. Шов нужен ради яркости (зелёный ≈ 0,4 даёт светлоту), бока —
-    // ради цвета опасности. Плоская вершина профиля: хотя бы один пиксель
-    // кромки — полного цвета.
-    float tb = smoothstep(0, 1, saturate(2.0 * (1 - abs(distanceInside - outer - bcore * .5) / (bcore * .5))));
-    float3 edgeAhead = lerp(float3(1.10, .05, .010), float3(2.00, .40, .020), tb);
-    float3 edgeBehind = lerp(float3(1.50, .10, .010), float3(2.20, .46, .020), tb);
-    GtOver(premul, alpha, lerp(edgeAhead, edgeBehind, filled), bc * exposedBoundary * .96);
-
-    // ---- бегущая кромка заливки (нет в начале и после удара)
-    float gate = started * saturate((1 - p) * 50);
-    float rimW = max(.032, 2.2 * px);
-    float rim = 1 - GtRamp(rimW * .5 - hF, rimW * .5 + hF, abs(front + rimW * .5));
-    GtOver(premul, alpha, float3(1, .10, .012), exp(-max(-front, 0) / .20) * filled * inside * gate * .34);
-    GtOver(premul, alpha, float3(2.20, .44, .020), rim * inside * gate * .96);
-
-    return half4(premul / max(alpha, 1e-4), alpha * saturate(opacity));
-}
-
-// Старый вход (25.09) для шейдеров, которые не знают длину заливки в метрах
-// (Razlom/Forest Bud Landing). Длина берётся из производных: |∇d| / |∇fill|.
-// Точна, когда заливка идёт поперёк кромки (круг: заливка по радиусу).
-// directionMark больше не рисуется: направление читается по бегущей кромке.
-half4 GroundTelegraph(float2 worldXZ, float distanceInside, float fillCoordinate,
-    float progress, float opacity, float exposedBoundary, float directionMark)
-{
-    float gF = length(float2(ddx(fillCoordinate), ddy(fillCoordinate)));
-    float gD = length(float2(ddx(distanceInside), ddy(distanceInside)));
-    return GroundTelegraphCracks(worldXZ, distanceInside, fillCoordinate, gD / max(gF, 1e-6),
-        progress, opacity, exposedBoundary);
+    else
+    {
+        // Ряды шевронов между кромками; у сектора — от 0,85 м, там тело моба.
+        float lo=inner>0?inner+GTRimClear+.5*GTChevronDepth:.85;
+        float hi=radius-GTRimClear-.5*GTChevronDepth;
+        float rows=floor((hi-lo)/GTRowStep)+1;
+        if(hi<lo)
+        {
+            // Узкое кольцо: один ряд посередине, если шеврон в него влезает.
+            rows=radius-inner>=GTChevronDepth+.24?1:0;
+            lo=.5*(inner+radius);
+            hi=lo;
+        }
+        if(rows<1.5)
+        {
+            lo=.5*(lo+hi);
+            hi=lo;
+        }
+        float rowStep=rows>1.5?(hi-lo)/(rows-1):1;
+        float rk=lo+(rows>1.5?clamp(round((r-lo)/rowStep),0,rows-1)*rowStep:0);
+        float n, ak;
+        if(full)
+        {
+            // Кольцо: по всему кругу с шагом около GTChevronStep.
+            n=max(3,floor(6.2831853*rk/GTChevronStep));
+            float stepA=6.2831853/n;
+            ak=round(a/stepA)*stepA;
+        }
+        else
+        {
+            // Сектор: шаг ровно GTChevronStep, ряд по центру, не ближе GTSideClear к лучам.
+            float room=span*rk-(GTChevronWidth+2*GTSideClear);
+            n=room>=0?floor(room/GTChevronStep)+1:0;
+            float stepA=GTChevronStep/max(rk,1e-3);
+            ak=(clamp(round(a/stepA+.5*(n-1)),0,max(n-1,0))-.5*(n-1))*stepA;
+        }
+        float da=a-ak;
+        float lit=smoothstep(rk-.5*GTChevronDepth,rk+.5*GTChevronDepth,inner+p*fillLength);
+        mark=GTChevronMark(GTChevron(float2(r*sin(da),r*cos(da)-rk)),px,lit);
+        if(rows<.5||n<.5)mark.xy=0;
+    }
+    return GroundTelegraph(d,dash,saturate((r-inner)/fillLength),fillLength,mark,progress,opacity,exposed,flash);
 }
 #endif

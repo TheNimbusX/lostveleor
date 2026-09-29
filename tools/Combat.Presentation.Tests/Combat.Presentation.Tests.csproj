@@ -15,5 +15,8 @@
     <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
     <Compile Include="../../razlom/Assets/Game.View/EliteBarLayout.cs" Link="EliteBarLayout.cs" />
     <Compile Include="../../razlom/Assets/Game.View/MobSoundBank.cs" Link="MobSoundBank.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/CombatMusicDirector.cs" Link="CombatMusicDirector.cs" />
+    <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
+    <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

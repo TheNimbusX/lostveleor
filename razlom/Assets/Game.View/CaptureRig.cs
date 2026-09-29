@@ -53,6 +53,17 @@ namespace Game.View
         private const string QualityFlag = "-capture-quality";
         private const string FrameCapFlag = "-capture-frame-cap";
         private const string WatchTeleportsFlag = "-capture-watch-teleports";
+        private const string ReelsFlag = "-capture-reels";
+        private const string ReelsZoomFlag = "-capture-reels-zoom";
+        /// <summary>Во сколько раз ролик ближе обычного плана: доля обычного ортографического размера.</summary>
+        private const float DefaultReelsZoom = .8f;
+        /// <summary>Сглаживание камеры ролика (у игры 8): центр схватки скачет на смертях, а не только на шагах героя.</summary>
+        private const float ReelsSmoothing = 5f;
+        /// <summary>Враги дальше этого радиуса от героя в центр схватки не входят, метры.</summary>
+        private const float ReelsFightRadius = 8f;
+        private const float ReelsHeroWeight = 2f;
+        /// <summary>Насколько центр кадра может уйти от героя: доля половины кадра по каждой оси.</summary>
+        private const float ReelsHeroRoom = .45f;
 
         /// <summary>
         /// Переопределения для <see cref="Bootstrap"/>. Считываются ДО загрузки
@@ -188,6 +199,33 @@ namespace Game.View
         /// <summary>Съёмка просит TickDriver жаловаться на скачки тел.</summary>
         public static bool WatchTeleports { get; private set; }
 
+        /// <summary>
+        /// -capture-audio-log: CombatAudio пишет в журнал плеера каждый сыгранный боевой звук
+        /// с причиной (строки [audio-log]: событие Sim, кто, на ком, тик; ожидание моба;
+        /// отложенный звук; фон), несыгранный за нехваткой голоса (drop), сбросы на смене
+        /// режима, симуляции и арены, заглушённый топот роя, выключенное сердцебиение и
+        /// прочие источники звука сцены — GameSound, лагерь, музыка (source-start/stop).
+        /// Проверка «звука, которого тут быть не должно» (владелец, 29.09) без редактора.
+        /// </summary>
+        public static bool AudioLog { get; private set; }
+
+        /// <summary>
+        /// -capture-reels: вертикальный ролик для соцсетей (владелец, 29.09). Кадр 1080×1920
+        /// (альбомные -capture-width/-capture-height переворачиваются), окно плеера того же размера,
+        /// камера ближе в ReelsZoom раз и ведёт центр схватки, а не одного героя (ReelsFightFocus
+        /// в CameraFollow). HUD скрыт, пока нет -capture-hud. Рецепты -capture-encounter,
+        /// -capture-enemy-case, -capture-hit-tier работают как в обычной съёмке.
+        /// </summary>
+        public static bool Reels { get; private set; }
+
+        /// <summary>
+        /// -capture-reels-zoom: доля обычного ортографического размера (или -capture-camera-size),
+        /// по умолчанию 0,8. Меньше — ближе; 1 — прежний масштаб, только кадр вертикальный.
+        /// </summary>
+        public static float ReelsZoom { get; private set; } = DefaultReelsZoom;
+        private static float _reelsSize;
+        private static float _reelsAspect = 9f / 16f;
+
         /// <summary>Служебный запуск UI-QA: открыть системное меню после кадра.</summary>
         public static bool PauseMenuCaptureRequested { get; private set; }
         public static string PauseMenuCapturePage { get; private set; }
@@ -260,6 +298,10 @@ namespace Game.View
             PoseShowcase = ReadValue(args, "-capture-pose");
             RunShowcase = Array.IndexOf(args, RunFlag) >= 0;
             WatchTeleports = Array.IndexOf(args, WatchTeleportsFlag) >= 0;
+            AudioLog = Array.IndexOf(args, "-capture-audio-log") >= 0;
+            Reels = Array.IndexOf(args, ReelsFlag) >= 0;
+            ReelsZoom = Mathf.Clamp(ReadFloat(args, ReelsZoomFlag, DefaultReelsZoom), .3f, 2f);
+            _reelsSize = 0f;
             EquipmentShowcase = Array.IndexOf(args, EquipmentFlag) >= 0;
             LocomotionShowcase = Array.IndexOf(args, LocomotionFlag) >= 0;
             MovingCombatShowcase = Array.IndexOf(args, MovingCombatFlag) >= 0;
@@ -332,6 +374,11 @@ namespace Game.View
             rig._cameraYaw = ReadFloat(args, "-capture-camera-yaw", 0f);
             rig._captureWidth = Mathf.Max(1, ReadInt(args, CaptureWidthFlag, 1920));
             rig._captureHeight = Mathf.Max(1, ReadInt(args, CaptureHeightFlag, 1080));
+            // Ролик вертикальный: альбомный размер (в том числе 1920×1080 по умолчанию у
+            // capture.ps1 при -ExtraArgs '-capture-reels') переворачивается в 1080×1920.
+            if (Reels && rig._captureWidth > rig._captureHeight)
+                (rig._captureWidth, rig._captureHeight) = (rig._captureHeight, rig._captureWidth);
+            _reelsAspect = rig._captureWidth / (float)rig._captureHeight;
             rig._perfSeconds = Mathf.Max(0f, ReadFloat(args, PerfFlag, 0f));
             rig._perfWarmupFrames = Mathf.Max(0, ReadInt(args, PerfWarmupFlag, 240));
             rig._perfNoHud = Array.IndexOf(args, PerfNoHudFlag) >= 0;
@@ -568,13 +615,14 @@ namespace Game.View
             float lastMark = _marks.Length > 0 ? _marks[_marks.Length - 1] : 0f;
             float finish = Mathf.Max(lastMark, _recordVideo ? _videoEnd : 0f);
 
-            if (_showHud || _screenVideo)
+            if (_showHud || _screenVideo || Reels)
             {
                 // Настройки игрока могут переопределить параметры запуска окна;
                 // для IMGUI и съёмки с экрана нужен framebuffer именно запрошенного размера.
                 Screen.SetResolution(_captureWidth, _captureHeight, FullScreenMode.Windowed);
                 yield return null;
             }
+            if (Reels) yield return FitReelsWindow();
             if (_showHud)
             {
                 // Нативная консоль перекрывает HUD на снимке; сами ошибки
@@ -842,7 +890,8 @@ namespace Game.View
                     Camera.main.transform.LookAt(pivot, Vector3.up);
                 }
             }
-            if (_cameraSize > 0f && Camera.main != null && Camera.main.orthographic)
+            // В ролике -capture-camera-size — только основа масштаба, её умножает ReelsZoom ниже.
+            if (_cameraSize > 0f && !Reels && Camera.main != null && Camera.main.orthographic)
             {
                 Camera.main.orthographicSize = _cameraSize;
                 // CombatCameraJuice restores its cached base size every
@@ -851,8 +900,27 @@ namespace Game.View
                 CombatCameraJuice juice = Camera.main.GetComponent<CombatCameraJuice>();
                 if (juice != null) juice.SetBaseOrthographicSize(_cameraSize);
             }
+            if (Reels && _reelsSize <= 0f && Camera.main != null && Camera.main.orthographic)
+            {
+                // Один раз: размер уходит и в CameraFollow.CombatSize, поэтому повторная
+                // привязка камеры на тестовой арене берёт его же. Каждый кадр base size
+                // не трогаем — SetBaseOrthographicSize запоминает поворот, а посреди тряски
+                // это вшило бы крен в покой камеры.
+                CameraFollow follow = FindAnyObjectByType<CameraFollow>();
+                float normal = _cameraSize > 0f ? _cameraSize
+                    : follow != null ? follow.CombatSize : Camera.main.orthographicSize;
+                _reelsSize = normal * ReelsZoom;
+                if (follow != null)
+                {
+                    follow.CombatSize = _reelsSize;
+                    follow.Smoothing = ReelsSmoothing;
+                }
+                Camera.main.orthographicSize = _reelsSize;
+                CombatCameraJuice juice = Camera.main.GetComponent<CombatCameraJuice>();
+                if (juice != null) juice.SetBaseOrthographicSize(_reelsSize);
+            }
 
-            if (IsCombatFeelShowcase && !IsPerfRun && !_showHud)
+            if ((IsCombatFeelShowcase || Reels) && !IsPerfRun && !_showHud)
             {
                 PlayerHud playerHud = FindAnyObjectByType<PlayerHud>();
                 RunHud runHud = FindAnyObjectByType<RunHud>();
@@ -995,7 +1063,7 @@ namespace Game.View
             string path = Path.Combine(_outputDirectory, "video_frames",
                 string.Format(CultureInfo.InvariantCulture, "frame_{0:0000}.jpg", _videoFrame++));
             // Контрольные снимки идут прежним путём (Camera.Render): по ним видно, расходится ли он с экраном.
-            Texture2D frame = _screenVideo ? ScreenCapture.CaptureScreenshotAsTexture() : CaptureFrame();
+            Texture2D frame = _screenVideo ? FitReelsShot(ScreenCapture.CaptureScreenshotAsTexture()) : CaptureFrame();
             try
             {
                 File.WriteAllBytes(path, frame.EncodeToJPG(92));
@@ -1020,7 +1088,7 @@ namespace Game.View
             // открытие экрана, а снимок покажет только арену под ним.
             PauseMenu pauseMenu = FindAnyObjectByType<PauseMenu>();
             if (_showHud || (pauseMenu != null && pauseMenu.IsOpen))
-                return ScreenCapture.CaptureScreenshotAsTexture();
+                return FitReelsShot(ScreenCapture.CaptureScreenshotAsTexture());
 
             Camera camera = Camera.main;
             if (camera == null) return ScreenCapture.CaptureScreenshotAsTexture();
@@ -1032,6 +1100,8 @@ namespace Game.View
             try
             {
                 camera.targetTexture = target;
+                // Ролик: пропорции кадра, а не окна — окно выше монитора Windows может урезать.
+                if (Reels) camera.aspect = _reelsAspect;
                 camera.Render();
                 RenderTexture.active = target;
                 var frame = new Texture2D(_captureWidth, _captureHeight,
@@ -1043,8 +1113,95 @@ namespace Game.View
             finally
             {
                 camera.targetTexture = previousTarget;
+                if (Reels) camera.ResetAspect();
                 RenderTexture.active = previousActive;
                 RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
+        /// <summary>
+        /// Центр схватки, за которым камера ролика едет вместо героя (CameraFollow под
+        /// -capture-reels): герой с весом 2 и живые враги ближе 8 м с весом, спадающим к краю
+        /// круга, — в узкий кадр телефона попадает сама драка, а не пустая земля за спиной.
+        /// Уход центра от героя ограничен средней частью кадра: ради дальнего моба герой
+        /// к краю не уезжает.
+        /// </summary>
+        public static Vector3 ReelsFightFocus(TickDriver driver, Vector3 hero, Camera camera)
+        {
+            Simulation sim = driver.Sim;
+            if (sim == null || camera == null) return hero;
+            EntityStore entities = sim.Entities;
+            Vector3 sum = hero * ReelsHeroWeight;
+            float weight = ReelsHeroWeight;
+            for (int id = 0; id < entities.Count; id++)
+            {
+                if (id == Simulation.PlayerId || !entities.Alive[id] || entities.Side[id] == Faction.Wole) continue;
+                Vector3 enemy = driver.GetRenderPosition(id);
+                float distance = new Vector2(enemy.x - hero.x, enemy.z - hero.z).magnitude;
+                if (distance >= ReelsFightRadius) continue;
+                float w = 1f - distance / ReelsFightRadius;
+                sum += enemy * w;
+                weight += w;
+            }
+            Vector3 offset = sum / weight - hero;
+            // Оси кадра на земле: поперёк — right камеры, вглубь — её forward без наклона;
+            // шаг вглубь ложится на экран с множителем sin наклона (≈0,74 при 48°).
+            Transform view = camera.transform;
+            Vector3 across = view.right; across.y = 0f; across.Normalize();
+            Vector3 depth = view.forward; depth.y = 0f; depth.Normalize();
+            float tilt = Mathf.Max(.3f, Vector3.Dot(depth, view.up));
+            float halfHeight = camera.orthographic ? camera.orthographicSize : 6f;
+            float roomAcross = ReelsHeroRoom * halfHeight * _reelsAspect;
+            float roomDepth = ReelsHeroRoom * halfHeight / tilt;
+            return hero + across * Mathf.Clamp(Vector3.Dot(offset, across), -roomAcross, roomAcross)
+                        + depth * Mathf.Clamp(Vector3.Dot(offset, depth), -roomDepth, roomDepth);
+        }
+
+        /// <summary>
+        /// Окно ролика. Кадр без HUD камера рендерит прямо в текстуру 1080×1920, и ему размер
+        /// окна не важен. С -capture-hud / -capture-screen кадр берётся с экрана, а окно выше
+        /// монитора Windows урезает: тогда окно — наибольшее 9:16, что влезает, а снимок
+        /// растягивается до размера ролика (FitReelsShot).
+        /// </summary>
+        private IEnumerator FitReelsWindow()
+        {
+            yield return null;
+            bool fromScreen = _showHud || _screenVideo;
+            if (fromScreen && (Screen.width != _captureWidth || Screen.height != _captureHeight))
+            {
+                int height = Mathf.Min(_captureHeight, Display.main.systemHeight - 96) & ~1;
+                int width = Mathf.RoundToInt(height * _reelsAspect) & ~1;
+                Debug.LogWarning($"[capture-reels] Окно {Screen.width}x{Screen.height} вместо {_captureWidth}x{_captureHeight}: "
+                                 + $"снимаем с экрана в окне {width}x{height} и растягиваем до кадра.");
+                Screen.SetResolution(width, height, FullScreenMode.Windowed);
+                yield return null;
+                yield return null;
+            }
+            Debug.Log($"[capture-reels] окно {Screen.width}x{Screen.height}, кадр {_captureWidth}x{_captureHeight}, "
+                      + $"с экрана={fromScreen}, zoom={ReelsZoom.ToString("0.00", CultureInfo.InvariantCulture)}, "
+                      + $"ортографический размер={_reelsSize.ToString("0.00", CultureInfo.InvariantCulture)}");
+        }
+
+        /// <summary>Снимок экрана ролика — в размер кадра, если окно пришлось уменьшить (FitReelsWindow).</summary>
+        private Texture2D FitReelsShot(Texture2D shot)
+        {
+            if (!Reels || (shot.width == _captureWidth && shot.height == _captureHeight)) return shot;
+            RenderTexture previousActive = RenderTexture.active;
+            RenderTexture scaled = RenderTexture.GetTemporary(_captureWidth, _captureHeight, 0, RenderTextureFormat.ARGB32);
+            try
+            {
+                Graphics.Blit(shot, scaled);
+                RenderTexture.active = scaled;
+                var frame = new Texture2D(_captureWidth, _captureHeight, TextureFormat.RGB24, false);
+                frame.ReadPixels(new Rect(0f, 0f, _captureWidth, _captureHeight), 0, 0, false);
+                frame.Apply(false, false);
+                return frame;
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(scaled);
+                Destroy(shot);
             }
         }
 

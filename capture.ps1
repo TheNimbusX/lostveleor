@@ -93,6 +93,11 @@ param(
     [double] $CameraSize = 0,
     [double] $CameraYaw = 0,
     [double] $CameraPitch = -1,
+    # Вертикальный ролик для соцсетей: кадр и окно 1080x1920 (если -Width/-Height не заданы),
+    # камера ближе в ReelsZoom раз (доля обычного размера или -CameraSize) и ведёт центр схватки,
+    # HUD скрыт (вернуть: -Hud). То же включает -ExtraArgs '-capture-reels'.
+    [switch] $Reels,
+    [ValidateRange(0.3,2)] [double] $ReelsZoom = 0.8,
     [switch] $Rebuild,
     [switch] $NoRebuild,
     # Дополнительные ключи плееру как есть (диагностика: -ExtraArgs '-cleave-debug').
@@ -113,6 +118,13 @@ if ($CampMagic) { $Camp = $true }
 if ($CampFinish) { $Camp = $true; $CampAmbience = $true }
 if ($CampDetail -ne '') { $CampFinish = $true; $Camp = $true; $CampAmbience = $true }
 if ($Video -and $Realtime) { throw 'Для Video со звуком требуется фиксированная частота кадров: уберите Realtime.' }
+if ($ExtraArgs -contains '-capture-reels') { $Reels = $true }
+if ($Reels) {
+    # Портрет: без явных -Width/-Height — 1080x1920; альбомный размер переворачивается.
+    if (-not $PSBoundParameters.ContainsKey('Width'))  { $Width  = 1080 }
+    if (-not $PSBoundParameters.ContainsKey('Height')) { $Height = 1920 }
+    if ($Width -gt $Height) { $Width, $Height = $Height, $Width }
+}
 $root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $project = Join-Path $root 'razlom'
 $unity   = 'C:\Program Files\Unity\Hub\Editor\6000.5.10f1\Editor\Unity.exe'
@@ -242,6 +254,7 @@ if ($needsBuild) {
 # --- съёмка --------------------------------------------------------------
 New-Item -ItemType Directory -Path $OutDir -Force | Out-Null
 Write-Host "Съёмка: врагов $Enemies, сид $Seed, кадры на $Times с -> $OutDir"
+if ($Reels) { Write-Host "Вертикальный ролик: ${Width}x${Height}, HUD $(if ($Hud) { 'виден' } else { 'скрыт' })" }
 
 $playerLog = Join-Path $OutDir 'player.log'
 $playerArgs = @(
@@ -257,6 +270,11 @@ $playerArgs = @(
     '-capture-width',   $Width
     '-capture-height',  $Height
 )
+if ($Reels -and -not ($ExtraArgs -contains '-capture-reels')) { $playerArgs += '-capture-reels' }
+# Без явного -ReelsZoom не передаём: действует умолчание плеера или -capture-reels-zoom из ExtraArgs.
+if ($Reels -and $PSBoundParameters.ContainsKey('ReelsZoom')) {
+    $playerArgs += @('-capture-reels-zoom', $ReelsZoom.ToString([Globalization.CultureInfo]::InvariantCulture))
+}
 if ($SilentVideo) { $playerArgs += '-capture-silent-video' }
 if ($AudioProbe) { $playerArgs += '-capture-audio-probe' }
 if ($HudReview) { $playerArgs += '-capture-hud-review'; $playerArgs += '-capture-hud' }
@@ -384,6 +402,10 @@ if ($Video) {
         "pelag_${Skill}_1080p60.mp4"
     } else {
         'pelag_whirlwind_1080p60.mp4'
+    }
+    if ($Reels) {
+        # Вертикальный ролик не путать с обычной записью той же сцены.
+        $movieName = ($movieName -replace '(_\d+p\d+)?\.mp4$', '') + "_reels_${Width}x${Height}_${VideoFps}fps.mp4"
     }
     $movie = Join-Path $OutDir $movieName
     $tools = Join-Path $root 'artifacts\tools\python'

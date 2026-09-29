@@ -1,15 +1,26 @@
-"""Знак элиты на полосе здоровья над врагом (владелец 29.09, G8: концепты новой полосы отвергнуты —
-«даже то что щас лучше»; остаётся нынешний вид «Дыма и света», в полосу — цифры и маленький понятный
-знак элиты в том же языке). Знак — рогатый череп сухой кистью, как белые знаки забега
-(Assets/UI/RunIcons): рваный край, штрихи вдоль мазка.
+"""Рога на концах полосы элиты (владелец 29.09, выбор «5 — Рога»: полоса прежняя, мазок «Дыма и
+света», но у ЭЛИТЫ оба конца вырастают в костяные рога, загнутые вверх; заливка тёмно-алая; огонёк на
+конце заливки; цифры «1240 / 2000»; маленький рогатый череп слева убран — владелец его отверг).
+Концепт: ART/characters/act-1-enemies/review/mobs-v2-round2-2026-09-29/elite-bar/05-elite-bar-antler-ends*.
 
-  EliteBarMark.png    — сам знак: белая маска 128×128 (цвет — тёплый свет огонька, HealthBars.OrbColor);
-  EliteBarMarkInk.png — чернильная подложка под знаком: тот же силуэт, раздутый и размытый
-                        (цвет — дым дорожки, HealthBars.BackColor), чтобы знак читался и на красной
-                        заливке, и на светлой траве.
+  EliteBarAntler.png — левый рог: цветной рисунок с альфой. Правый — тот же спрайт, отражённый
+                       в HealthBars (отрицательный масштаб по x вокруг точки крепления).
 
-Сияние вокруг знака — готовый EnemyBarGlow.png (make-enemy-bars.py). Все — белые маски, стороны —
-степени двойки, края прозрачные (как у остальных EnemyBar*).
+Исходник — ART/UI/elite-bar-2026-09-29/antler-left-magenta.png: Higgsfield, gpt_image_2_5 high 2k,
+image-to-image по вырезу левого рога из концепта 5 (ref-concept-05-left-antler.png), рог отдельно на
+ровном пурпурном фоне (задание 29.09 e650b9db-e89d-4d2d-822b-9a01246cb3d3). Там же два отвергнутых
+варианта (alt-*): на зелёном — рог плоский и бурый, «прозрачный» — тонкий контур, в 45 пикселях теряется.
+
+Что делает скрипт:
+  * вырезает рог из пурпурного фона: альфа по «пурпурности» min(R, B) − G, цвет краёв — обратным
+    смешиванием с цветом фона (без пурпурной каймы); отдельные крошки фона выкидываются;
+  * чуть высветляет кость к «костяному белому» (кадр игры приглушает светлое на ~8 %);
+  * обводит рог чернильной каймой цвета дорожки: в бою рог ≈ 45 пикселей при 1080p, нарисованный
+    контур там тоньше пикселя — без каймы рог тает на светлой траве и земле;
+  * уменьшает до TEXTURE_HEIGHT (≈ вдвое больше, чем на экране при 1080p: без мип-карт это ещё чисто,
+    а при 4K — один к одному), под прозрачным — цвет ближайшего края (билинейный фильтр не тянет чёрное);
+  * печатает раскладку для HealthBars: точку крепления (центр основания рога, туда упирается конец
+    полосы) и сколько рога ниже неё — числа повторены в HealthBars (AntlerPivot, AntlerBelow).
 
 Запуск: python tools/ui-kit/make-elite-bar-mark.py [папка]  (без папки — прямо в Resources/UI/HUD)
 """
@@ -21,109 +32,136 @@ from PIL import Image
 from scipy import ndimage
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+SRC = os.path.join(ROOT, "ART", "UI", "elite-bar-2026-09-29", "antler-left-magenta.png")
 OUT = os.path.join(ROOT, "razlom", "Assets", "Resources", "UI", "HUD")
 
-SIZE = 128
-SS = 4  # рисуем вчетверо крупнее и уменьшаем: гладкий край без лесенки
-N = SIZE * SS
+# Высота холста в пикселях (кратна 4 — сжатие BC7/DXT5 без запасного RGBA32). На экране при 1080p
+# рог ≈ 45 пикселей (HealthBars.EliteAntler 0,52 м ≈ 87 пикселей на метр).
+TEXTURE_HEIGHT = 96
+PAD = 3  # прозрачная рамка итогового холста, пиксели
+# К «костяному белому»: насыщенность (доля цвета против серого той же яркости) и высветление 1 − (1 − c)·LIFT.
+# У исходника кость жёлто-охристая, в концепте — бледная, почти белая.
+SATURATION = .72
+LIFT = .84
+# Чернильная кайма: толщина и мягкость в пикселях ИТОГОВОГО холста, цвет — дым дорожки (BackColor).
+RIM = 1.3
+RIM_SOFT = .7
+INK = np.array([0x12, 0x10, 0x12], np.float32) / 255.0
+INK_ALPHA = .92
 
 
-def grid():
-    y, x = np.mgrid[0:N, 0:N].astype(np.float32)
-    return x / SS, y / SS  # координаты в пикселях итогового холста
+def key_magenta(rgb):
+    """Альфа и чистый цвет рога на ровном пурпурном фоне."""
+    h, w, _ = rgb.shape
+    corners = np.concatenate([rgb[:16, :16].reshape(-1, 3), rgb[:16, -16:].reshape(-1, 3),
+                              rgb[-16:, :16].reshape(-1, 3), rgb[-16:, -16:].reshape(-1, 3)])
+    back = np.median(corners, 0)
+    key = np.minimum(rgb[:, :, 0], rgb[:, :, 2]) - rgb[:, :, 1]
+    back_key = min(back[0], back[2]) - back[1]
+    # Контур рога — тёмно-бурый, его «пурпурность» около −0,05: между ним и фоном альфа линейна.
+    # Фон не совсем ровный (к углам темнее, «пурпурность» до 0,8 от фоновой) — он весь прозрачный.
+    edge = back_key * .85
+    alpha = np.clip((edge - key) / (edge + .05), 0.0, 1.0)
+    # Только сам рог: самая большая плотная связная часть и её мягкий край.
+    labels, count = ndimage.label(alpha > .5)
+    sizes = ndimage.sum(np.ones_like(alpha), labels, np.arange(1, count + 1))
+    body = labels == (np.argmax(sizes) + 1)
+    alpha *= ndimage.binary_dilation(body, iterations=4)
+    # Цвет без фона: пиксель = цвет·a + фон·(1 − a).
+    a = alpha[:, :, None]
+    color = np.clip((rgb - (1.0 - a) * back) / np.maximum(a, 1e-3), 0.0, 1.0)
+    return color, alpha
 
 
-def ellipse(x, y, cx, cy, rx, ry):
-    """Мягкая эллиптическая маска: 1 внутри, 0 снаружи, край — полпикселя итогового холста."""
-    d = np.sqrt(((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2)
-    return np.clip((1.0 - d) * min(rx, ry) + .5, 0.0, 1.0)
+def attach_point(alpha):
+    """
+    Точка крепления: центр основания (тупой срез рога справа внизу) — средняя точка плотных пикселей
+    в правых 5 % рога по высоте.
+    """
+    ys, xs = np.nonzero(alpha > .5)
+    height = ys.max() - ys.min()
+    sel = xs >= xs.max() - .05 * height
+    return float(xs[sel].mean()), float(ys[sel].mean())
 
 
-def slanted(x, y, cx, cy, rx, ry, angle):
-    """Эллипс, повёрнутый на angle радиан: глазницы сведены к носу — череп хмурится, а не удивляется."""
-    ca, sa = np.cos(angle), np.sin(angle)
-    u = (x - cx) * ca + (y - cy) * sa
-    v = -(x - cx) * sa + (y - cy) * ca
-    return ellipse(u, v, 0.0, 0.0, rx, ry)
+def rim(alpha, width, soft):
+    """Кайма: силуэт, раздутый на width и размытый на soft (в пикселях этого холста)."""
+    grown = ndimage.distance_transform_edt(alpha < .5)
+    ring = np.clip(width + .5 - grown, 0.0, 1.0)
+    return np.clip(ndimage.gaussian_filter(np.maximum(ring, alpha), soft), 0.0, 1.0)
 
 
-def horn(x, y, p0, p1, p2, w0, w1, steps=90):
-    """Рог: квадратичная кривая Безье с сужением от w0 у черепа до w1 на острие."""
-    out = np.zeros_like(x)
-    for t in np.linspace(0.0, 1.0, steps):
-        px = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t ** 2 * p2[0]
-        py = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t ** 2 * p2[1]
-        r = (w0 + (w1 - w0) * t ** .8) * .5
-        out = np.maximum(out, ellipse(x, y, px, py, r, r))
+def resize(rgb, alpha, width, height):
+    """Уменьшение с домноженной альфой: светлый край не тянет за собой цвет прозрачного."""
+    pre = rgb * alpha[:, :, None]
+    planes = [np.asarray(Image.fromarray(p.astype(np.float32), "F").resize((width, height), Image.LANCZOS))
+              for p in [pre[:, :, 0], pre[:, :, 1], pre[:, :, 2], alpha]]
+    a = np.clip(planes[3], 0.0, 1.0)
+    rgb = np.clip(np.dstack(planes[:3]) / np.maximum(a, 1e-4)[:, :, None], 0.0, 1.0)
+    return rgb, a
+
+
+def bleed(rgb, alpha):
+    """Под прозрачным — цвет ближайшего видимого пикселя."""
+    empty = alpha < 1.0 / 255.0
+    if empty.all() or not empty.any():
+        return rgb
+    _, (iy, ix) = ndimage.distance_transform_edt(empty, return_indices=True)
+    out = rgb.copy()
+    out[empty] = rgb[iy[empty], ix[empty]]
     return out
-
-
-def skull():
-    x, y = grid()
-    c = SIZE * .5
-    # Череп: свод и челюсть, чуть уже книзу.
-    head = np.maximum(ellipse(x, y, c, 74, 23, 21), ellipse(x, y, c, 90, 15, 12))
-    # Рога: от висков вбок и вверх, острия расходятся — силуэт читается и в 30 пикселях.
-    left = horn(x, y, (c - 16, 66), (c - 50, 64), (c - 44, 20), 17, 3)
-    right = horn(x, y, (c + 16, 66), (c + 50, 64), (c + 44, 20), 17, 3)
-    shape = np.maximum(head, np.maximum(left, right))
-    # Глазницы и нос — дырки насквозь: у знака должно быть лицо, а не пятно.
-    eyes = np.maximum(slanted(x, y, c - 9, 76, 7.0, 4.6, .45), slanted(x, y, c + 9, 76, 7.0, 4.6, -.45))
-    nose = ellipse(x, y, c, 87, 2.6, 3.6)
-    shape = shape * (1.0 - np.maximum(eyes, nose))
-    return shape
-
-
-def dry_brush(alpha, seed):
-    """
-    Сухая кисть: край рвётся шумом, внутри — редкие просветы-штрихи вдоль мазка (горизонтальные,
-    как у знаков забега). Силуэт при этом остаётся целым — знак маленький.
-    """
-    rng = np.random.default_rng(seed)
-    h, w = alpha.shape
-    # Рваный край: сдвигаем порог альфы шумом, вытянутым вдоль x.
-    edge_noise = ndimage.gaussian_filter(rng.standard_normal((h, w)), (.8 * SS, 3.0 * SS))
-    edge_noise /= np.abs(edge_noise).max() + 1e-6
-    soft = ndimage.gaussian_filter(alpha, .9 * SS)
-    ragged = np.clip((soft - .5 + edge_noise * .38) * 6.0 + .5, 0.0, 1.0)
-    # Просветы щетины внутри: тонкие горизонтальные нити пониже плотности.
-    streak = ndimage.gaussian_filter(rng.standard_normal((h, w)), (.35 * SS, 9.0 * SS))
-    streak = (streak - streak.mean()) / (streak.std() + 1e-6)
-    gaps = np.clip((streak - 1.15) * 1.1, 0.0, .7)
-    return np.clip(ragged * (1.0 - gaps), 0.0, 1.0)
-
-
-def down(alpha):
-    image = Image.fromarray(alpha.astype(np.float32), "F").resize((SIZE, SIZE), Image.LANCZOS)
-    return np.clip(np.asarray(image), 0.0, 1.0)
-
-
-def edge_fade(alpha, width=3):
-    h, w = alpha.shape
-    ry = np.clip(np.minimum(np.arange(h), np.arange(h)[::-1]) / float(width), 0.0, 1.0)
-    rx = np.clip(np.minimum(np.arange(w), np.arange(w)[::-1]) / float(width), 0.0, 1.0)
-    return alpha * ry[:, None] * rx[None, :]
-
-
-def save(alpha, name, out):
-    rgba = np.dstack([np.ones(alpha.shape + (3,), np.float32), alpha])
-    path = os.path.join(out, name + ".png")
-    Image.fromarray((np.clip(rgba, 0.0, 1.0) * 255 + .5).astype(np.uint8), "RGBA").save(path)
-    print(path)
 
 
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else OUT
     os.makedirs(out, exist_ok=True)
-    shape = skull()
-    mark = edge_fade(down(dry_brush(shape, seed=2909)))
-    # Подложка: силуэт без дырок, раздут на ~4 пикселя и размыт — чернильное пятно под знаком.
-    solid = np.maximum(shape, ndimage.binary_fill_holes(shape > .5).astype(np.float32))
-    ink = ndimage.grey_dilation(solid, size=(9 * SS, 9 * SS))
-    ink = ndimage.gaussian_filter(ink, 2.6 * SS)
-    ink = edge_fade(down(np.clip(ink * 1.25, 0.0, 1.0)), 6)
-    save(mark, "EliteBarMark", out)
-    save(ink, "EliteBarMarkInk", out)
+    rgb = np.asarray(Image.open(SRC).convert("RGB")).astype(np.float32) / 255.0
+    color, alpha = key_magenta(rgb)
+    grey = (color * np.array([.299, .587, .114], np.float32)).sum(2, keepdims=True)
+    color = grey + (color - grey) * SATURATION
+    color = 1.0 - (1.0 - color) * LIFT
+    ax, ay = attach_point(alpha)
+
+    # Рамка рисунка в исходнике и масштаб до итогового холста.
+    ys, xs = np.nonzero(alpha > .02)
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    inner = TEXTURE_HEIGHT - 2 * PAD - 2 * int(np.ceil(RIM + 2 * RIM_SOFT))
+    scale = inner / float(y1 - y0)
+    margin = int(np.ceil((PAD + RIM + 2 * RIM_SOFT) / scale))
+    x0, y0 = max(0, x0 - margin), max(0, y0 - margin)
+    x1, y1 = min(rgb.shape[1], x1 + margin), min(rgb.shape[0], y1 + margin)
+    height = TEXTURE_HEIGHT
+    width = int(np.ceil((x1 - x0) * height / float(y1 - y0) / 4.0)) * 4
+    # Холст шире рисунка на округление: рисунок — по центру.
+    extra = int(round((width * (y1 - y0) / float(height) - (x1 - x0)) * .5))
+    x0 -= extra
+    x1 = x0 + int(round(width * (y1 - y0) / float(height)))
+    pad_l, pad_r = max(0, -x0), max(0, x1 - rgb.shape[1])
+    color = np.pad(color, ((0, 0), (pad_l, pad_r), (0, 0)), mode="edge")
+    alpha = np.pad(alpha, ((0, 0), (pad_l, pad_r)))
+    x0, x1, ax = x0 + pad_l, x1 + pad_l, ax + pad_l
+    color, alpha = resize(color[y0:y1, x0:x1], alpha[y0:y1, x0:x1], width, height)
+    ax, ay = (ax - x0) * width / float(x1 - x0), (ay - y0) * height / float(y1 - y0)
+
+    # Кайма под рогом, рог поверх неё.
+    ring = rim(alpha, RIM, RIM_SOFT) * INK_ALPHA
+    total = alpha + ring * (1.0 - alpha)
+    rgb_out = (color * alpha[:, :, None] + INK * (ring * (1.0 - alpha))[:, :, None]) / np.maximum(total, 1e-4)[:, :, None]
+    rgb_out = bleed(np.clip(rgb_out, 0.0, 1.0), total)
+
+    path = os.path.join(out, "EliteBarAntler.png")
+    rgba = np.dstack([rgb_out, total])
+    Image.fromarray((np.clip(rgba, 0.0, 1.0) * 255 + .5).astype(np.uint8), "RGBA").save(path)
+    print(path, width, "x", height)
+
+    # Раскладка для HealthBars: всё — доли холста, y — снизу (как pivot спрайта в Unity).
+    solid = np.nonzero(total > .35)
+    pivot = (ax / width, 1.0 - ay / height)
+    below = (solid[0].max() + 1 - ay) / height
+    above = (ay - solid[0].min()) / height
+    outward = (ax - solid[1].min()) / height
+    print("AntlerPivot = (%.3f, %.3f); AntlerBelow = %.3f; выше точки %.3f; наружу %.3f (доли высоты); стороны %.3f"
+          % (pivot[0], pivot[1], below, above, outward, width / float(height)))
 
 
 if __name__ == "__main__":

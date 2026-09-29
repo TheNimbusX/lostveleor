@@ -284,8 +284,8 @@ namespace Game.View
         void ArenaIntro(RiftRun run, bool next)
         {
             // Арены открывает дымная завеса (CampTransition); без неё следующие — выход из темноты.
+            // Свист портала под надписью убран (владелец, 29.09): звук перехода уже дала завеса.
             if (next && ArenaFade != null && !CampTransition.Running) HudFx.Flash(ArenaFade, .92f, .55f);
-            GameSound.Play("rift_whoosh", .55f, .03f, .5f);
             if (LevelBanner == null) return;
             int fights = 0;
             if (run.Encounters != null)

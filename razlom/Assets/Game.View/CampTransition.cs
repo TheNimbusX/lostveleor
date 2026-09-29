@@ -330,7 +330,8 @@ namespace Game.View
         {
             Begin();
             bool arena = arrived != null;
-            GameSound.Play("rift_whoosh", arena ? .55f : .75f);
+            // Между аренами — один мягкий звук портала под дымом, без свиста (владелец, 29.09).
+            if (!arena) GameSound.Play("rift_whoosh", .75f);
             veil.BeginCover();
             float t = 0f;
             while (true)
@@ -362,7 +363,7 @@ namespace Game.View
                 // Новая арена уже в симуляции, её сборка — в LateUpdate этого кадра. Мир снова стоит,
                 // пока завеса: иначе бой начался бы до того, как игрок его увидел.
                 Busy = true;
-                GameSound.Play("rift_portal", .6f);
+                GameSound.Play("rift_portal", .5f);
             }
             yield return Hold();
             yield return Open(veil, toCamp);

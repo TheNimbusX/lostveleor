@@ -590,9 +590,7 @@ namespace Game.View
         }
 
         internal static HudAbilityAvailability Availability(Simulation sim, int slot, AbilityBuild build)
-            => HudAbilityAvailability.Evaluate(sim.Entities.Alive[Simulation.PlayerId],
-                build.DefinitionId == AbilityDefinition.WreckId && sim.WreckComboOpen,
-                sim.AbilityReadyTick(slot)-sim.Tick,sim.Entities.Lavidium[Simulation.PlayerId].ToInt(),Simulation.LavidiumCostOf(build));
+            => HudAbilityAvailability.Of(sim, slot, build);
 
         internal void NotifyAbilityPress(int slot, HudAbilityAvailability state)
         {
@@ -620,13 +618,7 @@ namespace Game.View
             return new Vector2(point.x*scale,Screen.height-point.y*scale);
         }
 
-        internal static string AvailabilityText(HudAbilityAvailability state)
-        {
-            if (state.Block == HudAbilityBlock.Cooldown) return "Перезарядка · " + (state.RemainingTicks/(float)Simulation.TicksPerSecond).ToString("0.0") + " с";
-            if (state.Block == HudAbilityBlock.Resource) return "Не хватает лавидия: " + state.MissingResource;
-            if (state.Block == HudAbilityBlock.Dead) return "Герой без сознания";
-            return string.Empty;
-        }
+        internal static string AvailabilityText(HudAbilityAvailability state) => state.Text;
 
         private void DrawAbilityFeedback(Simulation sim)
         {

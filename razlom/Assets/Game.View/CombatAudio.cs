@@ -64,7 +64,8 @@ namespace Game.View
 
         public CombatAudioProfile Profile;
         // Volume < 0 — звук смерти по старому правилу (громкость по банку, высота 1).
-        private struct DelayedCue { public float Due; public Sound Sound; public float Volume, Pitch, Spread; }
+        // Cause — чем звук поставлен в очередь (журнал съёмки -capture-audio-log).
+        private struct DelayedCue { public float Due; public Sound Sound; public float Volume, Pitch, Spread; public CauseInfo Cause; }
         private readonly DelayedCue[] _deathCues = new DelayedCue[64];
         private int _deathCueCount;
         private float _anchorImpactAt = -1f, _anchorLandAt = -1f;
@@ -79,11 +80,13 @@ namespace Game.View
         public void PlayWhirlwindPulse()
         {
             if (Profile == null) return;
+            SetCause(Cause.WhirlwindPulse);
             Play(Sound.WhirlwindPulse, WhirlwindVolume * .9f, 1f, .03f, 0f);
             _whirlwindEndAt = Time.time + Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond + .18f;
         }
         private bool _chainSoundActive;
-        private int _generationShown = -1;
+        // Чей бой звучит: режим, симуляция и арена забега (баг 29.09 — см. CombatSoundScope).
+        private readonly CombatSoundScope _scope = new CombatSoundScope();
         private readonly CombatSoundEntry[] _entries = new CombatSoundEntry[(int)Sound.Count];
 
         private TickDriver _driver;
@@ -93,7 +96,6 @@ namespace Game.View
         private readonly int[] _lastVariant = new int[(int)Sound.Count];
         private readonly int[] _playedThisFrame = new int[(int)Sound.Count];
         private uint _random = 0x2545F491u;
-        private GameMode _modeShown = GameMode.Camp;
         private float _whooshDelay = -1f;
         private int _whooshAttackVariant;
         private float[] _voiceGains, _fadeLeft;
@@ -121,6 +123,7 @@ namespace Game.View
             public float Tick, Volume, Pitch;
             public Sound Sound;
             public bool Owned;
+            public CauseInfo Cause;
         }
         private readonly MobCue[] _mobCues = new MobCue[32];
         private int _mobCueCount;
@@ -132,10 +135,40 @@ namespace Game.View
         private int _ownedCount;
 
         private float[] _hurtReadyAt = new float[64];
-        private float _hurtAnyReadyAt, _scuttleReadyAt, _swarmDeathReadyAt, _killImpactReadyAt;
+        private float _hurtAnyReadyAt, _swarmDeathReadyAt, _killImpactReadyAt;
+        // Топот роя: только пока Sim шагает и только от бегущих в кадре (баг 29.09, SwarmScuttleClock).
+        private readonly SwarmScuttleClock _scuttle = new SwarmScuttleClock();
         // Удар убийства этого кадра: 0 — нет, 1 — мелкий моб, 2 — крупный. Один на кадр, крупный важнее.
         private int _killImpactThisFrame;
-        private const float HurtSpacing = .35f, HurtAnySpacing = .06f, ScuttleSpacing = .55f, KillImpactSpacing = .09f;
+        private CauseInfo _killImpactCause;
+        private const float HurtSpacing = .35f, HurtAnySpacing = .06f, KillImpactSpacing = .09f;
+
+        // ---- журнал съёмки (-capture-audio-log) ----
+        //
+        // Каждый сыгранный боевой звук — строкой [audio-log] в журнал плеера с причиной:
+        // событие Sim (тип, кто, на ком, тик), ожидание моба, отложенный звук, фон или
+        // шаг. Причина ставится перед Play и едет вместе с отложенными звуками. Звук, для
+        // которого не нашлось голоса, — строкой drop; сбросы на смене боя, отброшенные
+        // события кадра смены, заглушённый топот и прочие источники звука сцены
+        // (source-start/stop, LogOtherSources) — своими строками. Без флага строк нет;
+        // копия причины — пара присваиваний структуры на событие.
+        private enum Cause : byte
+        {
+            None, Event, MobCue, Scuttle, Footstep, Whoosh, Cleave, Anchor, WhirlwindPulse, WhirlwindEnd, ChainEnd,
+        }
+        private struct CauseInfo
+        {
+            public Cause Kind;
+            public SimEvent Event;
+            // Тик события (FrameEventContext.SimulationTick).
+            public int Tick;
+            // Ожидание моба: вид ожидания, номер действия и тик, к которому звук ждал; фон: сколько бегущих.
+            public int Detail, Serial, DueTick;
+            // Отложенный звук: когда поставлен (Time.time), -1 — не откладывался.
+            public float QueuedAt;
+        }
+        private CauseInfo _cause;
+        private float _scuttleLogAt;
 
         // ---- шаги ----
         //
@@ -158,11 +191,13 @@ namespace Game.View
             if (Profile == null) Profile = Resources.Load<CombatAudioProfile>("Combat/CombatAudio");
             LoadClips();
             BuildVoices();
+            if (CaptureRig.AudioLog) LogLine("on voices=" + _voices.Length + " profile=" + (Profile != null ? Profile.name : "-"));
         }
 
         private void LateUpdate()
         {
             if (_voices == null) return;
+            if (CaptureRig.AudioLog) LogOtherSources();
             bool paused = _driver.GameplayPaused || Time.timeScale == 0f;
             if (paused != _paused)
             {
@@ -170,16 +205,24 @@ namespace Game.View
                 if (paused) _pausedAt = AudioSettings.dspTime;
                 else _voiceBudget.Shift(AudioSettings.dspTime - _pausedAt);
                 foreach (var voice in _voices) { if (paused) voice.Pause(); else voice.UnPause(); }
+                // Голоса боя на паузе стоят — и сердцебиение с ними (StopHeartbeat).
+                if (paused) StopHeartbeat("pause");
             }
             UpdateVoiceMix();
             if (paused) return;
             for (int i = 0; i < _playedThisFrame.Length; i++) _playedThisFrame[i] = 0;
 
-            PlayModeChange();
+            CombatSoundScope.Change change = ScopeChange();
             UpdateWhoosh();
             if (_driver.Sim != null)
             {
-            ConsumeEvents();
+            // Кадр смены симуляции: его события — прежней Sim (тики до смены внутри цикла
+            // TickDriver) или повтор давнего списка новой (SyncGeneration на возврате в лагерь:
+            // SetupTestArena список лагерной Sim не чистит, и в нём лежит её последний шаг
+            // перед забегом). У новой Sim в этом кадре — только расстановка, ей звучать нечем.
+            if (CombatSoundScope.HearsFrameEvents(change)) ConsumeEvents();
+            else if (CaptureRig.AudioLog && _driver.FrameEvents.Count > 0)
+                LogLine("dropped " + _driver.FrameEvents.Count + " events of the simulation swap frame");
             FlushKillImpact();
             UpdateMobCues();
             UpdateSwarmScuttle();
@@ -188,12 +231,14 @@ namespace Game.View
             if (_anchorImpactAt >= 0f && Time.time >= _anchorImpactAt)
             {
                 _anchorImpactAt = -1f;
+                SetCause(Cause.Anchor);
                 Play(Sound.HitMetal, MetalVolume * .85f, .78f, .02f);
                 Play(Sound.HitBody, BodyVolume * .55f, .82f, .02f);
             }
             if (_anchorLandAt >= 0f && Time.time >= _anchorLandAt)
             {
                 _anchorLandAt = -1f;
+                SetCause(Cause.Anchor);
                 PlayFootstepPart();
             }
                 UpdateFootsteps();
@@ -207,12 +252,14 @@ namespace Game.View
             if (_whirlwindEndAt >= 0f && Time.time >= _whirlwindEndAt)
             {
                 _whirlwindEndAt = -1f;
+                SetCause(Cause.WhirlwindEnd);
                 Play(Sound.WhirlwindEnd, AbilityVolume * .5f, 1f, .01f);
             }
             bool chain = _driver.Sim != null && _driver.Sim.ChainTargetId >= 0;
             if (_chainSoundActive && !chain)
             {
                 StopKind(Sound.ChainStep);
+                SetCause(Cause.ChainEnd);
                 Play(Sound.ChainStepEnd, AbilityVolume * .5f, 1f, .01f);
             }
             _chainSoundActive = chain;
@@ -231,20 +278,35 @@ namespace Game.View
                 sim.CleaveContactTick - .25f * Simulation.TicksPerSecond))
             {
                 _cleaveSoundPlayed = true;
+                SetCause(Cause.Cleave);
                 Play(Sound.Cleave, AbilityVolume, 1f, .01f);
             }
         }
 
-        private void PlayModeChange()
+        /// <summary>
+        /// Сменился ли бой: режим, симуляция или арена забега (CombatSoundScope). Сброс —
+        /// по виду смены; ответ решает, звучат ли события этого кадра.
+        /// </summary>
+        private CombatSoundScope.Change ScopeChange()
         {
             GameSession session = _driver.Session;
-            if (session == null || (session.Mode == _modeShown && session.Generation == _generationShown)) return;
-            _generationShown = session.Generation;
-            _modeShown = session.Mode;
+            if (session == null) return CombatSoundScope.Change.None;
+            RiftRun run = session.Run;
+            CombatSoundScope.Change change = _scope.Update(session.Mode, session.Generation, run != null ? run.Depth : -1);
+            if (change == CombatSoundScope.Change.None) return change;
+            if (CaptureRig.AudioLog)
+                LogLine("reset " + change + " delayed dropped=" + _deathCueCount + " mob cues dropped=" + _mobCueCount
+                    + " playing=" + PlayingVoices());
+            if (CombatSoundScope.EndsFight(change)) ResetFight();
+            else ResetArena();
+            return change;
+        }
 
-            // Смена режима обрывает бой на середине. Осыпание, поставленное в
-            // очередь за долю секунды до выхода из Разлома, прозвучало бы уже
-            // в лагере — над пустой поляной, без тела.
+        /// <summary>Смена режима или симуляции обрывает бой на середине.</summary>
+        private void ResetFight()
+        {
+            // Осыпание, поставленное в очередь за долю секунды до выхода из Разлома,
+            // прозвучало бы уже в лагере — над пустой поляной, без тела.
             _deathCueCount = 0;
             _whirlwindEndAt = -1f;
             _chainSoundActive = false;
@@ -256,15 +318,53 @@ namespace Game.View
             _voiceBudget.Clear();
             _anchorImpactAt = _anchorLandAt = -1f;
             ResetMobState();
+            StopHeartbeat("fight ended");
             // Конец забега звучит в RunEndBeat: у смерти, победы и ухода свои фразы, а не общий звон награды.
+        }
+
+        /// <summary>
+        /// Следующая арена забега — та же Sim и то же поколение (RiftRun.EnterNextRift
+        /// расставляет сущности заново). Номера сущностей и действий на новой арене
+        /// начинаются заново: ожидания мобов, хозяева длинных звуков и отложенные звуки
+        /// прошлой арены к ней не относятся. Голоса не гасим: смена идёт под дымной
+        /// завесой, и прошлая арена к ней уже отзвучала.
+        /// </summary>
+        private void ResetArena()
+        {
+            _deathCueCount = 0;
+            _whooshDelay = -1f;
+            _anchorImpactAt = _anchorLandAt = -1f;
+            _stepAnchorSet = false;
+            ResetMobState();
+        }
+
+        /// <summary>
+        /// Сердцебиение низкого здоровья — петля GameSound, её каждый кадр ставит и снимает
+        /// боевой HUD (CombatHudView.RefreshHero), пока он виден. Спрятанный HUD её не
+        /// снимает, а прячется он как раз там, где боя нет: смерть в тот же тик кончает
+        /// забег — итоги прячут HUD, и стук шёл весь экран итогов (баг 29.09); уход и
+        /// победа на низком здоровье — так же; на паузе — поверх стоящих голосов боя.
+        /// Гасим вместе с голосами боя: если HUD виден и здоровья всё ещё мало, он
+        /// включит петлю снова со следующего кадра.
+        /// </summary>
+        private void StopHeartbeat(string why)
+        {
+            GameSound.Loop(null);
+            if (CaptureRig.AudioLog) LogLine("heartbeat loop off: " + why);
         }
 
         private void ConsumeEvents()
         {
             IReadOnlyList<SimEvent> events = _driver.FrameEvents;
+            IReadOnlyList<FrameEventContext> contexts = _driver.FrameEventContexts;
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
+                _cause = new CauseInfo
+                {
+                    Kind = Cause.Event, Event = e, QueuedAt = -1f,
+                    Tick = i < contexts.Count ? contexts[i].SimulationTick : _driver.Sim.Tick,
+                };
                 switch (e.Type)
                 {
                     case SimEventType.Attack:
@@ -401,7 +501,9 @@ namespace Game.View
                                 _finisherReadyAt = Time.time + .10f;
                             }
                             // Слоёный удар убийства — один на кадр, крупный моб важнее (FlushKillImpact).
-                            _killImpactThisFrame = Mathf.Max(_killImpactThisFrame, IsBigMob(kind) ? 2 : 1);
+                            int size = IsBigMob(kind) ? 2 : 1;
+                            if (size > _killImpactThisFrame) _killImpactCause = _cause;
+                            _killImpactThisFrame = Mathf.Max(_killImpactThisFrame, size);
                             QueueDeathSounds(kind, e.Target);
                         }
                         break;
@@ -511,6 +613,7 @@ namespace Game.View
             if ((here - _stepAnchor).sqrMagnitude < step * step) return;
 
             _stepAnchor = here;
+            SetCause(Cause.Footstep);
             PlayFootstepPart();
         }
 
@@ -538,6 +641,7 @@ namespace Game.View
 
             _whooshDelay = -1f;
             bool heavy = _whooshAttackVariant == 1;
+            SetCause(Cause.Whoosh);
             Play(Sound.PelagAttack, WhooshVolume * (heavy ? 1.10f : 1f),
                 heavy ? .96f : 1.03f, .025f);
         }
@@ -929,6 +1033,7 @@ namespace Game.View
             _killImpactThisFrame = 0;
             if (size == 0 || (size == 1 && Time.time < _killImpactReadyAt)) return;
             bool big = size == 2;
+            _cause = _killImpactCause;
             if (Play(Sound.KillImpact, KillImpactVolume * (big ? 1f : .55f), big ? .94f : 1.1f, .03f) >= 0)
                 _killImpactReadyAt = Time.time + KillImpactSpacing;
         }
@@ -940,7 +1045,7 @@ namespace Game.View
             _mobCues[_mobCueCount++] = new MobCue
             {
                 Kind = kind, Entity = entity, Serial = serial, Tick = tick, Sound = sound,
-                Volume = volume, Pitch = pitch, Owned = owned
+                Volume = volume, Pitch = pitch, Owned = owned, Cause = _cause,
             };
         }
 
@@ -970,6 +1075,12 @@ namespace Game.View
                 var cue = _mobCues[i];
                 if (!MobCueAlive(in cue)) continue;
                 if (now < cue.Tick) { _mobCues[write++] = cue; continue; }
+                // Причина — событие, поставившее ожидание; вид ожидания и номер действия — к нему.
+                _cause = cue.Cause;
+                _cause.Kind = Cause.MobCue;
+                _cause.Detail = (int)cue.Kind;
+                _cause.Serial = cue.Serial;
+                _cause.DueTick = Mathf.CeilToInt(cue.Tick);
                 int slot = Play(cue.Sound, cue.Volume, cue.Pitch, .04f);
                 if (cue.Owned && slot >= 0) Own(cue.Entity, cue.Sound, slot);
             }
@@ -1008,20 +1119,36 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Топот роя: пока корнеползы бегут, раз в ScuttleSpacing — один шорох, громче
-        /// с числом бегущих. Двадцать корнеползов — всё равно один голос, и тот берёт
+        /// Топот роя: пока корнеползы бегут, раз в SwarmScuttleClock.Spacing — один шорох,
+        /// громче с числом бегущих. Двадцать корнеползов — всё равно один голос, и тот берёт
         /// только свободный (приоритет 5).
+        ///
+        /// Только в бою арены (зачистка и путь к выходу), только пока Sim шагает и только
+        /// от бегущих в кадре (баг 29.09): на итогах после смерти или ухода, на награде и
+        /// маршруте, под завесой Sim стоит, а скорость у бегущих остаётся — шорох шёл без
+        /// конца; стартовая волна бежит к входу из-за края кадра — шорох был «ни от кого».
         /// </summary>
         private void UpdateSwarmScuttle()
         {
-            if (Time.time < _scuttleReadyAt) return;
-            EntityStore e = _driver.Sim.Entities;
-            int moving = 0;
-            for (int i = 1; i < e.Count; i++)
-                if (e.Alive[i] && e.Kind[i] == EnemyKind.ForestRootSwarm && e.Velocity[i].LengthSq.Raw != 0) moving++;
-            if (moving == 0) { _scuttleReadyAt = Time.time + .2f; return; }
-            Play(Sound.RootSwarmScuttle, MobBedVolume * Mathf.Min(1f, .4f + .12f * moving), 1f, .06f);
-            _scuttleReadyAt = Time.time + ScuttleSpacing;
+            var sim = _driver.Sim;
+            float now = Time.time;
+            if (!_scuttle.Due(sim.Tick, now))
+            {
+                if (CaptureRig.AudioLog && _scuttle.Frozen(now)) LogScuttleMuted("frozen", 0);
+                return;
+            }
+            GameSession session = _driver.Session;
+            RiftRun run = _driver.Run;
+            bool fighting = session != null && session.Mode == GameMode.Rift && run != null
+                            && (run.Phase == RunPhase.Clearing || run.Phase == RunPhase.SeekingExit);
+            int running = fighting
+                ? SwarmScuttleClock.CountRunning(sim.Entities, Simulation.PlayerId, SwarmScuttleClock.HearingRadius)
+                : 0;
+            if (CaptureRig.AudioLog) LogScuttleMuted(fighting ? "far" : "not-fighting", running);
+            if (!_scuttle.Counted(running, now)) return;
+            SetCause(Cause.Scuttle);
+            _cause.Detail = running;
+            Play(Sound.RootSwarmScuttle, MobBedVolume * Mathf.Min(1f, .4f + .12f * running), 1f, .06f);
         }
 
         private void QueueDeathSounds(EnemyKind kind, int entity)
@@ -1081,7 +1208,15 @@ namespace Game.View
         private void Queue(Sound sound, float delay)
         {
             if (_deathCueCount >= _deathCues.Length) return;
-            _deathCues[_deathCueCount++] = new DelayedCue { Sound = sound, Due = Time.time + delay, Volume = -1f };
+            _deathCues[_deathCueCount++] = new DelayedCue { Sound = sound, Due = Time.time + delay, Volume = -1f, Cause = Queued() };
+        }
+
+        /// <summary>Текущая причина с отметкой, когда звук отложен.</summary>
+        private CauseInfo Queued()
+        {
+            CauseInfo cause = _cause;
+            cause.QueuedAt = Time.time;
+            return cause;
         }
 
         /// <summary>
@@ -1092,7 +1227,7 @@ namespace Game.View
         {
             if (_deathCueCount >= _deathCues.Length) return;
             _deathCues[_deathCueCount++] = new DelayedCue
-                { Sound = sound, Due = Time.time + delay, Volume = volume, Pitch = pitch, Spread = spread };
+                { Sound = sound, Due = Time.time + delay, Volume = volume, Pitch = pitch, Spread = spread, Cause = Queued() };
         }
 
         private void FlushDissolves()
@@ -1102,6 +1237,7 @@ namespace Game.View
             {
                 var cue = _deathCues[i];
                 if (cue.Due > Time.time) { _deathCues[write++] = cue; continue; }
+                _cause = cue.Cause;
                 if (cue.Volume >= 0f) { Play(cue.Sound, cue.Volume, cue.Pitch, cue.Spread); continue; }
                 bool dissolve = cue.Sound == Sound.Dissolve || cue.Sound == Sound.RootSwarmDissolve;
                 Play(cue.Sound, dissolve ? DissolveVolume : BodyVolume * 0.7f, 1f, 0f);
@@ -1125,7 +1261,12 @@ namespace Game.View
                 + (Random01() - 0.5f) * spread * 2f, 0.5f, 2f);
             int priority = entry != null ? entry.Priority : CombatAudioProfile.DefaultPriority(sound);
             int slot = _voiceBudget.Acquire(AudioSettings.dspTime, delay + clip.length / pitch, priority);
-            if (slot < 0) return -1;
+            if (slot < 0)
+            {
+                // Все голоса заняты звуками важнее: в журнале съёмки это видно («drop»).
+                if (CaptureRig.AudioLog) LogPlayed(sound, clip, -1f, delay);
+                return -1;
+            }
             _playedThisFrame[index]++;
             AudioSource voice = _voices[slot];
             voice.Stop();
@@ -1141,7 +1282,169 @@ namespace Game.View
             else voice.Play();
             if (CombatAudioCapture.Recording)
                 Debug.Log($"[capture-cue] {sound} clip={clip.name} load={clip.loadState} volume={voice.volume} playing={voice.isPlaying} dsp={AudioSettings.dspTime}");
+            if (CaptureRig.AudioLog) LogPlayed(sound, clip, voice.volume, delay);
             return slot;
+        }
+
+        // ================= журнал съёмки (-capture-audio-log) =================
+
+        private void SetCause(Cause kind) => _cause = new CauseInfo { Kind = kind, QueuedAt = -1f };
+
+        private static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+
+        /// <summary>Служебная строка журнала: сброс боя, отброшенные события, заглушённый топот, прочие источники.</summary>
+        private void LogLine(string text) => Debug.Log(LogHead(new System.Text.StringBuilder(192)).Append(text).ToString());
+
+        private System.Text.StringBuilder LogHead(System.Text.StringBuilder line)
+        {
+            var sim = _driver != null ? _driver.Sim : null;
+            GameSession session = _driver != null ? _driver.Session : null;
+            RiftRun run = session != null ? session.Run : null;
+            return line.Append("[audio-log] f=").Append(Time.frameCount)
+                .Append(" t=").Append(Time.time.ToString("0.000", Inv))
+                .Append(" tick=").Append(sim != null ? sim.Tick : -1)
+                .Append(" mode=").Append(session != null ? session.Mode.ToString() : "-")
+                .Append(" gen=").Append(session != null ? session.Generation : -1)
+                .Append(" depth=").Append(run != null ? run.Depth : 0)
+                .Append(" phase=").Append(run != null ? run.Phase.ToString() : "-")
+                .Append(' ');
+        }
+
+        /// <summary>Сыгранный звук с причиной; volume &lt; 0 — не сыгран: голоса заняты звуками важнее («drop»).</summary>
+        private void LogPlayed(Sound sound, AudioClip clip, float volume, float delay)
+        {
+            var line = LogHead(new System.Text.StringBuilder(256))
+                .Append(volume >= 0f ? "play " : "drop ").Append(sound).Append(" clip=").Append(clip.name);
+            if (volume >= 0f) line.Append(" vol=").Append(volume.ToString("0.000", Inv));
+            else line.Append(" budget-full");
+            if (delay > 0f) line.Append(" delay=").Append(delay.ToString("0.000", Inv));
+            line.Append(" cause=");
+            CauseInfo c = _cause;
+            switch (c.Kind)
+            {
+                case Cause.Event:
+                    AppendEvent(line, in c);
+                    break;
+                case Cause.MobCue:
+                    line.Append("mob-cue:").Append((MobCueKind)c.Detail).Append(" serial=").Append(c.Serial)
+                        .Append(" due=").Append(c.DueTick).Append(" from ");
+                    AppendEvent(line, in c);
+                    break;
+                case Cause.Scuttle:
+                    line.Append("scuttle running=").Append(c.Detail).Append(" within=")
+                        .Append(SwarmScuttleClock.HearingRadius.ToString("0", Inv)).Append('m');
+                    break;
+                default:
+                    line.Append(c.Kind);
+                    break;
+            }
+            if (c.QueuedAt >= 0f) line.Append(" queued=").Append((Time.time - c.QueuedAt).ToString("0.000", Inv)).Append("s-ago");
+            Debug.Log(line.ToString());
+        }
+
+        private void AppendEvent(System.Text.StringBuilder line, in CauseInfo c)
+        {
+            SimEvent e = c.Event;
+            line.Append(e.Type).Append(" src=");
+            AppendWho(line, e.Source);
+            line.Append(" tgt=");
+            AppendWho(line, e.Target);
+            line.Append(" amt=").Append(e.Amount).Append(" var=").Append(e.ActionVariant);
+            if (e.Flag) line.Append(" flag");
+            line.Append(" evtick=").Append(c.Tick);
+        }
+
+        private void AppendWho(System.Text.StringBuilder line, int id)
+        {
+            var sim = _driver.Sim;
+            if (id < 0) { line.Append('-'); return; }
+            if (id == Simulation.PlayerId) { line.Append("hero"); return; }
+            line.Append('#').Append(id);
+            if (sim == null || id >= sim.Entities.Count) { line.Append(":?"); return; }
+            line.Append(':').Append(sim.Entities.Kind[id]);
+            if (!sim.Entities.Alive[id]) line.Append("(dead)");
+        }
+
+        /// <summary>
+        /// Топот, который до правки 29.09 прозвучал бы: бегущие корнеползы есть, но Sim
+        /// стоит, бой кончился или они за краем кадра. Не чаще раза в секунду.
+        /// </summary>
+        private void LogScuttleMuted(string reason, int heard)
+        {
+            if (Time.time < _scuttleLogAt || _driver.Sim == null) return;
+            int all = SwarmScuttleClock.CountRunning(_driver.Sim.Entities, Simulation.PlayerId, -1f);
+            if (all <= heard) return;
+            _scuttleLogAt = Time.time + 1f;
+            LogLine("scuttle-muted reason=" + reason + " running=" + all + " heard=" + heard);
+        }
+
+        private int PlayingVoices()
+        {
+            int playing = 0;
+            if (_voices != null)
+                for (int i = 0; i < _voices.Length; i++)
+                    if (_voices[i] != null && _voices[i].isPlaying) playing++;
+            return playing;
+        }
+
+        // Прочие источники звука сцены: GameSound (переходы, награды, сердцебиение), лагерь,
+        // музыка. «Лишний звук» мог быть и не боевым — журнал ловит каждый, что стал
+        // слышен (играет, не заглушён, громкость больше нуля), сменил клип или начался
+        // заново, и каждый, что замолк. Разовые PlayOneShot поверх уже звучащего
+        // источника не видны: у них нет своего клипа в источнике.
+        private struct OtherSource { public bool Audible; public AudioClip Clip; public float Time; }
+        private Dictionary<AudioSource, OtherSource> _others = new Dictionary<AudioSource, OtherSource>(),
+            _othersNext = new Dictionary<AudioSource, OtherSource>();
+        private Transform _voiceRoot;
+        private double _dspSeen = -1d;
+        private float _dspSeenAt;
+        private bool _dspStandLogged;
+
+        private void LogOtherSources()
+        {
+            // Съёмочный плеер без звукового устройства: dspTime стоит, бюджет голосов
+            // считает по нему и, раз заполнившись, больше их не отдаёт — дальше в журнале
+            // «drop» вместо «play». Решение звука от этого не меняется, только голос.
+            double dsp = AudioSettings.dspTime;
+            if (dsp != _dspSeen) { _dspSeen = dsp; _dspSeenAt = Time.unscaledTime; }
+            else if (!_dspStandLogged && Time.unscaledTime - _dspSeenAt > 1f)
+            {
+                _dspStandLogged = true;
+                LogLine("dsp-clock stands at " + dsp.ToString("0.000", Inv)
+                    + ": no audio device? the voice budget stops freeing voices, later sounds log as drop");
+            }
+
+            foreach (AudioSource source in FindObjectsByType<AudioSource>())
+            {
+                if (source == null || source.transform.parent == _voiceRoot) continue;
+                bool audible = source.isPlaying && !source.mute && source.volume > .001f;
+                AudioClip clip = source.clip;
+                float time = audible ? source.time : 0f;
+                _others.TryGetValue(source, out OtherSource was);
+                bool restarted = audible && was.Audible
+                                 && (clip != was.Clip || (!source.loop && clip != null && time + .05f < was.Time));
+                if (audible && (!was.Audible || restarted))
+                    LogLine("source-start " + SourceName(source) + " clip=" + (clip != null ? clip.name : "one-shot")
+                        + " loop=" + (source.loop ? 1 : 0) + " vol=" + source.volume.ToString("0.00", Inv)
+                        + " spatial=" + source.spatialBlend.ToString("0.##", Inv));
+                else if (!audible && was.Audible)
+                    LogLine("source-stop " + SourceName(source));
+                _othersNext[source] = new OtherSource { Audible = audible, Clip = clip, Time = time };
+            }
+            // Выключенные вместе с объектом и удалённые: были слышны — значит, замолкли.
+            foreach (var pair in _others)
+                if (pair.Value.Audible && !_othersNext.ContainsKey(pair.Key))
+                    LogLine("source-gone " + (pair.Key != null ? SourceName(pair.Key) : "(destroyed)"));
+            var swap = _others;
+            _others = _othersNext;
+            _othersNext = swap;
+            _othersNext.Clear();
+        }
+
+        private static string SourceName(AudioSource source)
+        {
+            Transform parent = source.transform.parent;
+            return parent != null ? parent.name + "/" + source.name : source.name;
         }
 
         private void OnDisable()
@@ -1160,7 +1463,8 @@ namespace Game.View
         private void ResetMobState()
         {
             _mobCueCount = _ownedCount = _killImpactThisFrame = 0;
-            _hurtAnyReadyAt = _scuttleReadyAt = _swarmDeathReadyAt = _killImpactReadyAt = 0f;
+            _hurtAnyReadyAt = _swarmDeathReadyAt = _killImpactReadyAt = 0f;
+            _scuttle.Reset();
             System.Array.Clear(_hurtReadyAt, 0, _hurtReadyAt.Length);
         }
 
@@ -1223,6 +1527,7 @@ namespace Game.View
         {
             Transform root = new GameObject("Combat audio voices").transform;
             root.SetParent(transform, false);
+            _voiceRoot = root;
             _voices = new AudioSource[Mathf.Max(4, Voices)];
             _voiceBudget = new CombatVoiceBudget(_voices.Length);
             _voiceSounds = new Sound[_voices.Length];

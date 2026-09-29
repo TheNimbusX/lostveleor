@@ -12,16 +12,24 @@ using UnityEngine.Rendering.Universal;
 /// Материалы лежат в Resources не ради удобства: шейдер, на который не
 /// ссылается ни один материал сборки, в плеер не попадает, и Shader.Find там
 /// вернёт null — метки молча пропали бы из съёмки capture.ps1. Создаются один
-/// раз, если их нет; руками не правятся. Вид целиком в шейдерах: стиль
-/// «трещины со светом изнутри» (GroundTelegraphStyle.hlsl, выбор G6 29.09)
-/// процедурный, без текстур, поэтому материалы при смене стиля не меняются.
+/// раз, если их нет; руками не правятся. Вид целиком в шейдерах
+/// (GroundTelegraphStyle.hlsl), процедурный, без текстур, поэтому материалы
+/// при смене стиля не меняются — меняется Revision, и Ensure переимпортирует
+/// шейдеры меток. 29.09 владелец отверг «трещины со светом изнутри» и выбрал
+/// «B — пунктир и шевроны»: светящийся пунктир по тонкой тёмной обводке,
+/// мягкая заливка, шевроны по ходу удара и засечки круга, загорающиеся по
+/// мере заливки.
 ///
-/// Стенд: образцы всех фигур (полосы, сектор, круг, кольцо, коготь Вендиго)
-/// кладутся на землю открытой сцены объектами HideAndDontSave — в сцену не
-/// сохраняются и убираются перед входом в Play (DontSave-объекты иначе
-/// переживают выход из Play). RenderReview снимает их ортокамерой игры
-/// (размер 6,2, наклон 48°) на четырёх долях заливки и меряет контраст кромки
-/// с землёй прямо по пикселям кадра — приёмка потока H: ≥3:1.
+/// Стенд: образцы всех фигур (полосы, сектор, круг, кольцо, коготь и круг
+/// когтей Вендиго) кладутся на землю открытой сцены объектами
+/// HideAndDontSave — в сцену не сохраняются и убираются перед входом в Play
+/// (DontSave-объекты иначе переживают выход из Play). RenderReview снимает их
+/// ортокамерой игры (размер 6,2, наклон 48°) на четырёх долях заливки и меряет
+/// контраст кромки с землёй прямо по пикселям кадра. Кромка пунктирная, и
+/// проба — лучший из пяти разрезов на одном шаге пунктира вдоль ребра: в
+/// просвете между штрихами видна земля, край держит соседний штрих. Строгий
+/// замер одним разрезом пишется рядом. Сплошной кромке окно не мешает, так
+/// что стенду стиль по-прежнему не важен: им же сравнивать варианты.
 /// </summary>
 public static class GroundTelegraphSetup
 {
@@ -37,8 +45,39 @@ public static class GroundTelegraphSetup
     /// <summary>Подъём над землёй — как у GroundTelegraphView.</summary>
     private const float GroundLift = .055f;
 
-    /// <summary>Порог приёмки: контраст кромки с землёй.</summary>
+    /// <summary>Порог замера: контраст кромки с землёй (цель ревью 29.09).</summary>
     private const float ContrastGoal = 3f;
+
+    /// <summary>Шаг пунктира кромки, м — GTDashPeriod в GroundTelegraphStyle.hlsl.</summary>
+    private const float DashPeriod = .36f;
+
+    /// <summary>Разрезов на пробу вдоль ребра в пределах шага пунктира; средний — в самой точке.</summary>
+    private const int DashCuts = 5;
+
+    /// <summary>
+    /// Ревизия вида меток: меняется при каждой смене стиля в
+    /// GroundTelegraphStyle.hlsl. Ensure сверяет её с userData импортёра
+    /// EnemySector.mat и при расхождении переимпортирует шейдеры меток
+    /// (StyleShaders) и заново назначает материалам их шейдеры. Материалы не
+    /// пересоздаются — GUID и ссылки на них целы. 29.09: трещины отвергнуты,
+    /// выбран «B — пунктир и шевроны» (у сектора и полосы новое свойство
+    /// _Flash — вспышка контакта, по умолчанию 0).
+    /// </summary>
+    private const string Revision = "GroundTelegraphStyleB0929";
+
+    /// <summary>
+    /// Все шейдеры, которые включают GroundTelegraphStyle.hlsl: сектор, круг и
+    /// кольцо общих меток, полосы (и таран Камнекопыта), коготь и прыжок
+    /// Вендиго, посадка плода.
+    /// </summary>
+    private static readonly string[] StyleShaders =
+    {
+        "Assets/Shaders/GroundTelegraphStyle.hlsl",
+        "Assets/Shaders/GroundTelegraphSector.shader",
+        "Assets/Shaders/GroundTelegraphLane.shader",
+        "Assets/Shaders/WendigoWarning.shader",
+        "Assets/Shaders/ForestBudLanding.shader",
+    };
 
     [InitializeOnLoadMethod]
     private static void Schedule()
@@ -56,6 +95,45 @@ public static class GroundTelegraphSetup
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
         EnsureMaterial(SectorPath, SectorShader, "EnemySector");
         EnsureMaterial(LanePath, LaneShader, "EnemyLane");
+        EnsureRevision(false);
+    }
+
+    /// <summary>То же, что Ensure, но шейдеры переимпортируются и при совпавшей ревизии.</summary>
+    [MenuItem("Разлом/Телеграфы/Пересобрать вид меток")]
+    public static void Rebuild()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+        EnsureMaterial(SectorPath, SectorShader, "EnemySector");
+        EnsureMaterial(LanePath, LaneShader, "EnemyLane");
+        EnsureRevision(true);
+    }
+
+    private static void EnsureRevision(bool force)
+    {
+        var importer = AssetImporter.GetAtPath(SectorPath);
+        // Материала ещё нет (шейдер не импортирован) — повторится на следующей перезагрузке домена.
+        if (importer == null) return;
+        if (!force && importer.userData == Revision) return;
+        foreach (string path in StyleShaders)
+            if (File.Exists(path)) AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        Rebind(SectorPath, SectorShader);
+        Rebind(LanePath, LaneShader);
+        if (importer.userData != Revision)
+        {
+            importer.userData = Revision;
+            importer.SaveAndReimport();
+        }
+        Debug.Log("[Разлом] Метки на земле: шейдеры стиля переимпортированы, ревизия " + Revision + ".");
+    }
+
+    private static void Rebind(string path, string shaderName)
+    {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        var shader = Shader.Find(shaderName);
+        if (material == null || shader == null || material.shader == shader) return;
+        material.shader = shader;
+        EditorUtility.SetDirty(material);
+        AssetDatabase.SaveAssetIfDirty(material);
     }
 
     private static void EnsureMaterial(string path, string shaderName, string name)
@@ -122,13 +200,14 @@ public static class GroundTelegraphSetup
 
         // Размеры — из настоящих меток: сегмент Шипомёта 1,75 × 1,4; таран;
         // сектор Хранителя 120° на 2,4 м; круг плода 1,25; кольцо воя; коготь
-        // Вендиго 140° на 2,7 м.
+        // Вендиго 140° на 2,7 м; круг когтей Вендиго 3,2 м (общий вид, как в игре).
         AddLane(lane, "полоса 4,5 × 1,4 м", At(-8f, 4.5f), Dir(1f, 0f), 4.5f, 1.4f, .6f, center.y);
         AddLane(lane, "полоса 7 × 1,5 м", At(-8f, 1.8f), Dir(1f, 0f), 7f, 1.5f, .05f, center.y);
         AddArc(sector, "сектор 120° × 2,4 м", At(-5.5f, -5f), Dir(0f, 1f), 2.4f, 0f, 2.0943951f, .45f, false, center.y);
         AddArc(sector, "круг 1,25 м", At(-.5f, -3.2f), Dir(0f, 1f), 1.25f, 0f, Mathf.PI * 2f, .85f, false, center.y);
         AddArc(sector, "кольцо 1,7–2,4 м", At(5.5f, -2.5f), Dir(0f, 1f), 2.4f, 1.7f, Mathf.PI * 2f, .3f, false, center.y);
         AddArc(wendigo, "Вендиго: коготь 140° × 2,7 м", At(2.5f, 1f), Dir(0f, 1f), 2.7f, 0f, 140f * Mathf.Deg2Rad, .7f, true, center.y);
+        AddArc(sector, "Вендиго: круг когтей 3,2 м", At(7.6f, 4.6f), Dir(0f, 1f), 3.2f, 0f, Mathf.PI * 2f, .55f, false, center.y);
         if (progress >= 0f) SetPreviewProgress(progress);
     }
 
@@ -261,14 +340,16 @@ public static class GroundTelegraphSetup
     private static string Repo => Path.GetFullPath(Path.Combine(Application.dataPath, "../.."));
 
     [MenuItem("Разлом/Телеграфы/Снять образцы меток и замерить контраст")]
-    private static void RenderReviewMenu() => Debug.Log(RenderReview(Path.Combine(Repo, "artifacts", "telegraph-cracks")));
+    private static void RenderReviewMenu() => Debug.Log(RenderReview(Path.Combine(Repo, "artifacts", "telegraph-review")));
 
     /// <summary>
     /// Кадры 1920×1080 образцов на долях заливки 5/35/65/95 % в outDir
-    /// (cracks_pNN.png) и check.txt с контрастом кромки по каждой фигуре.
-    /// Кромка на пробе — лучшее из двух: яркая середина против земли или
-    /// тёмная губа против земли (WCAG, относительная яркость). По фигуре —
-    /// 10-й перцентиль проб, чтобы куст или камень под одной пробой не решал.
+    /// (marks_pNN.png) и check.txt с контрастом кромки по каждой фигуре.
+    /// Кромка на разрезе — лучшее из двух: светлая кромка против земли или
+    /// тёмная обводка против земли (WCAG, относительная яркость); проба —
+    /// лучший из DashCuts разрезов на шаге пунктира. По фигуре — 10-й
+    /// перцентиль проб, чтобы куст или камень под одной пробой не решал; рядом —
+    /// тот же перцентиль одним разрезом в точке, для справки.
     /// Сцена не меняется: образцы и камера — HideAndDontSave и удаляются.
     /// </summary>
     public static string RenderReview(string outDir)
@@ -294,6 +375,8 @@ public static class GroundTelegraphSetup
         bool pass = true;
         var probes = new List<(Vector3 point, Vector3 inward)>();
         var values = new List<float>();
+        var strict = new List<float>();
+        var best = new List<float>();
         try
         {
             SpawnPreview(center, yaw, -1f);
@@ -305,28 +388,33 @@ public static class GroundTelegraphSetup
                 RenderTexture.active = target;
                 pixels.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                 pixels.Apply();
-                string file = $"cracks_p{Mathf.RoundToInt(p * 100f):00}.png";
+                string file = $"marks_p{Mathf.RoundToInt(p * 100f):00}.png";
                 File.WriteAllBytes(Path.Combine(outDir, file), pixels.EncodeToPNG());
                 var colors = pixels.GetPixels32();
                 report.AppendLine($"{file} (заливка {p:0.00}):");
                 foreach (var s in Samples)
                 {
-                    Probes(s, probes);
-                    values.Clear();
+                    values.Clear(); strict.Clear(); best.Clear();
                     float groundSum = 0f;
-                    foreach (var (point, inward) in probes)
+                    for (int cut = 0; cut < DashCuts; cut++)
                     {
-                        float c = ProbeContrast(camera, colors, width, height, point, inward, out float ground);
-                        if (c <= 0f) continue;
-                        values.Add(c); groundSum += ground;
+                        Probes(s, DashPeriod * (cut / (float)(DashCuts - 1) - .5f), probes);
+                        while (best.Count < probes.Count) best.Add(-1f);
+                        for (int k = 0; k < probes.Count; k++)
+                        {
+                            float c = ProbeContrast(camera, colors, width, height, probes[k].point, probes[k].inward, out float ground);
+                            best[k] = Mathf.Max(best[k], c);
+                            if (cut == DashCuts / 2 && c > 0f) { strict.Add(c); groundSum += ground; }
+                        }
                     }
-                    if (values.Count == 0) { report.AppendLine($"  {s.Name}: вне кадра"); continue; }
-                    values.Sort();
+                    foreach (float c in best) if (c > 0f) values.Add(c);
+                    if (values.Count == 0 || strict.Count == 0) { report.AppendLine($"  {s.Name}: вне кадра"); continue; }
+                    values.Sort(); strict.Sort();
                     float p10 = values[values.Count / 10], median = values[values.Count / 2];
                     bool ok = p10 >= ContrastGoal;
                     pass &= ok;
-                    report.AppendLine($"  {(ok ? "ok  " : "НИЗ ")}{s.Name}: p10 {p10:0.00}:1, медиана {median:0.00}:1, минимум {values[0]:0.00}:1, "
-                        + $"яркость земли {groundSum / values.Count:0.000} ({values.Count} проб)");
+                    report.AppendLine($"  {(ok ? "ok  " : "НИЗ ")}{s.Name}: p10 {p10:0.00}:1, медиана {median:0.00}:1, минимум {values[0]:0.00}:1; "
+                        + $"одним разрезом p10 {strict[strict.Count / 10]:0.00}:1; яркость земли {groundSum / strict.Count:0.000} ({values.Count} проб)");
                 }
             }
         }
@@ -340,7 +428,8 @@ public static class GroundTelegraphSetup
             ClearPreview();
             SceneView.RepaintAll();
         }
-        string verdict = (pass ? "PASS" : "FAIL") + $": контраст кромки с землёй ≥{ContrastGoal:0}:1 по 10-му перцентилю проб";
+        string verdict = (pass ? "PASS" : "FAIL") + $": контраст кромки с землёй ≥{ContrastGoal:0}:1 по 10-му перцентилю проб "
+            + "(проба — лучший разрез на шаге пунктира)";
         File.WriteAllText(Path.Combine(outDir, "check.txt"), verdict + "\n" + report);
         return $"[Разлом] Съёмка меток → {outDir}\n{verdict}\n{report}";
     }
@@ -354,8 +443,11 @@ public static class GroundTelegraphSetup
         return view != null ? view.pivot : Vector3.zero;
     }
 
-    /// <summary>Точки на внешней кромке фигуры и направление внутрь.</summary>
-    private static void Probes(Sample s, List<(Vector3 point, Vector3 inward)> list)
+    /// <summary>
+    /// Точки на внешней кромке фигуры и направление внутрь; along — сдвиг
+    /// вдоль ребра, м (разрезы одной пробы на шаге пунктира).
+    /// </summary>
+    private static void Probes(Sample s, float along, List<(Vector3 point, Vector3 inward)> list)
     {
         list.Clear();
         if (s.Lane)
@@ -364,7 +456,7 @@ public static class GroundTelegraphSetup
             for (int k = 1; k <= 8; k++)
                 for (int side = -1; side <= 1; side += 2)
                 {
-                    Vector2 p = s.Origin + s.Direction * (k / 9f * s.Length) + right * (side * s.Width * .5f);
+                    Vector2 p = s.Origin + s.Direction * (k / 9f * s.Length + along) + right * (side * s.Width * .5f);
                     list.Add((OnGround(p, s.BaseY), new Vector3(-right.x * side, 0f, -right.y * side)));
                 }
             return;
@@ -376,7 +468,7 @@ public static class GroundTelegraphSetup
         {
             // У сектора пробы не лезут в углы: там кромка двух сторон сходится.
             float u = full ? k / (float)count : Mathf.Lerp(.12f, .88f, k / (float)(count - 1));
-            float angle = facing + (u - .5f) * s.Span;
+            float angle = facing + (u - .5f) * s.Span + along / s.Radius;
             var radial = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
             list.Add((OnGround(s.Origin + radial * s.Radius, s.BaseY), new Vector3(-radial.x, 0f, -radial.y)));
         }

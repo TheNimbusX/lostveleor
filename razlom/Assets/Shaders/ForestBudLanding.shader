@@ -22,13 +22,17 @@ Shader "Razlom/Forest Bud Landing"
  float4 _NearbyDisks[8];
  CBUFFER_END
  V Vert(A a){V o;o.world=TransformObjectToWorld(a.vertex.xyz);o.position=TransformWorldToHClip(o.world);o.uv=a.uv;return o;}
- half4 Frag(V i):SV_Target { float r=length(i.uv*2-1);
+ // Круг посадки плода — общий стиль «пунктир и шевроны» (засечки у кромки).
+ // Квад: угол — atan2, доля круга 0..1; шов сзади штрихам и засечкам не виден
+ // (их сглаживание — по пикселю мира, не по производной угла).
+ half4 Frag(V i):SV_Target { float2 c=i.uv*2-1;
  float exposed=1, coverage=1;
  for(int n=0;n<(int)_NeighborCount;n++) {
  float d=length(i.world.xz-_NearbyDisks[n].xy)-_NearbyDisks[n].z;
  exposed*=smoothstep(-.03,.03,d);
  if(_NearbyDisks[n].w>.5)coverage*=smoothstep(-.01,.01,d); }
- return GroundTelegraph(i.world.xz,(1-r)*_Radius,r,_Progress,_Opacity*coverage,exposed,0); }
+ return GroundTelegraphArc(float2(atan2(c.x,c.y)*.15915494+.5,length(c)),i.world.xz,_Radius,0,6.2831853,
+ _Progress,_Opacity*coverage,exposed,0); }
  ENDHLSL
  }
  }

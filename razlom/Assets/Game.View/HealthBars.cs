@@ -23,12 +23,14 @@ namespace Game.View
     /// (tools/ui-kit/make-enemy-bars.py). Нет их — прежний вид пака «Ночная акварель»
     /// из UiTheme (Resources), поэтому работает и в сборке.
     ///
-    /// ПОЛОСА ЭЛИТЫ (владелец 29.09, выбор G8: три концепта новой полосы отвергнуты — «даже то
-    /// что щас лучше»). Вид прежний, только крупнее, чтобы влезли цифры: «1240 / 2000» внутри
-    /// полосы (Nunito, EliteBarLayout.Numbers) и маленький знак элиты у левого края — рогатый череп
-    /// сухой кистью в том же языке: чернильная подложка цвета дорожки, тёплый свет огонька, сияние
-    /// (Resources/UI/HUD/EliteBarMark*.png, tools/ui-kit/make-elite-bar-mark.py). Имя — табличкой
-    /// над полосой (RunWorldView берёт место из TryGetNameAnchor).
+    /// ПОЛОСА ЭЛИТЫ — «РОГА» (владелец 29.09, выбор «5 — Рога» из второго круга концептов,
+    /// ART/characters/act-1-enemies/review/mobs-v2-round2-2026-09-29/elite-bar/05-*). Мазок и дымная
+    /// дорожка прежние, только длиннее и выше обычной полосы; оба конца вырастают в костяные рога,
+    /// загнутые вверх (Resources/UI/HUD/EliteBarAntler.png, левый; правый — он же, отражённый;
+    /// tools/ui-kit/make-elite-bar-mark.py); заливка тёмно-алая; огонёк — ровно на конце заливки;
+    /// внутри — цифры «1240 / 2000» (Nunito, EliteBarLayout.Numbers). Рогатый череп у левого края
+    /// владелец отверг — его больше нет. Имя — табличкой над полосой, между рогами (RunWorldView берёт
+    /// место из TryGetNameAnchor).
     ///
     /// ВСЕГДА НАД МОБОМ. Раньше полоска висела на постоянной высоте из таблицы вида и рисовалась с
     /// обычным тестом глубины — у высоких (Вендиго, Шипомёт) и в позах замаха тонула в модели.
@@ -52,14 +54,18 @@ namespace Game.View
         public float Inset = 0.022f;
 
         [Header("Элита")]
-        [Tooltip("Длина полосы элиты, метры: влезают цифры «1240 / 2000» и знак (≈165 пикселей при 1080p в бою)")]
-        public float EliteWidth = 1.9f;
+        [Tooltip("Длина полосы элиты (плотная часть дорожки), метры: ≈190 пикселей при 1080p в бою, как в концепте «Рога»; с рогами ≈235")]
+        public float EliteWidth = 2.2f;
         [Tooltip("Высота полосы элиты, метры (≈26 пикселей при 1080p в бою)")]
         public float EliteHeight = 0.3f;
         [Tooltip("Огонёк на конце заливки элиты, метры")]
         public float EliteGem = 0.34f;
-        [Tooltip("Знак элиты — рогатый череп у левого края полосы, метры")]
-        public float EliteMark = 0.44f;
+        [Tooltip("Рог на конце полосы элиты: высота холста рога в высотах полосы (1,95 — ≈50 пикселей при 1080p, сам рог ≈45)")]
+        public float EliteAntler = 1.95f;
+        [Tooltip("Насколько основание рога заходит внутрь полосы от её конца, в высотах полосы: срез рога закрывает начало мазка")]
+        public float AntlerTuck = .33f;
+        [Tooltip("Высота основания рога над серединой полосы, в высотах полосы (минус — ниже): рог растёт из нижней половины конца, как в концепте")]
+        public float AntlerLift = -.1f;
         [Tooltip("Кегль цифр элиты: высота em, метры (0,2 — цифры ≈12 пикселей при 1080p)")]
         public float EliteNumbersSize = 0.2f;
         [Tooltip("Цифры: тёплый светлый, как свет огонька")]
@@ -68,7 +74,7 @@ namespace Game.View
         public Color NumbersOutline = new Color32(0x0B, 0x10, 0x16, 0xF2);
 
         [Header("Над макушкой")]
-        [Tooltip("Зазор между макушкой модели на экране и низом полоски (у элиты — низом знака), метры в плоскости полоски, как Height: 0,22 — ≈19 пикселей при 1080p в бою")]
+        [Tooltip("Зазор между макушкой модели на экране и низом полоски (у элиты — низом полосы или рогов, что ниже), метры в плоскости полоски, как Height: 0,22 — ≈19 пикселей при 1080p в бою")]
         public float HeadGap = 0.22f;
         [Tooltip("Как быстро полоска поднимается к выросшей макушке, 1/с")]
         public float AnchorRise = 18f;
@@ -94,8 +100,8 @@ namespace Game.View
         [Tooltip("Дорожка: чернильный дым, как у полос HUD (роль Smoke).")]
         public Color BackColor = new Color32(0x12, 0x19, 0x23, 0xEB);
         public Color FillColor = new Color32(0xE0, 0x46, 0x34, 0xF2);
-        [Tooltip("Заливка элиты; саму элиту выделяет огонёк на конце.")]
-        public Color EliteColor = new Color32(0xF3, 0x4F, 0x37, 0xFF);
+        [Tooltip("Заливка элиты: тёмно-алая, как в концепте «Рога» (в кадре после цветокоррекции ≈ #941C1E).")]
+        public Color EliteColor = new Color32(0xA6, 0x1C, 0x2B, 0xFF);
         [Tooltip("Серебряный контур прежнего вида (только без спрайтов «Дыма и света»).")]
         public Color FrameColor = new Color32(0xD8, 0xE1, 0xEE, 0x90);
 
@@ -128,14 +134,18 @@ namespace Game.View
         private const float OrbDisc = .6f, OrbSpan = OrbDisc * 64f / 44f, GlowSpan = 2f;
         // Ступеней обрезки мазка: доля здоровья выбирает готовый спрайт, в кадре ничего не создаётся.
         private const int FillSteps = 128;
-        // Знак элиты (make-elite-bar-mark.py): череп с рогами и чернильная подложка под ним.
-        private const string MarkPath = "UI/HUD/EliteBarMark";
-        private const string MarkInkPath = "UI/HUD/EliteBarMarkInk";
+        // Рог элиты (make-elite-bar-mark.py печатает эти числа): точка крепления — центр среза основания,
+        // в долях холста от левого нижнего угла; сколько рога ниже неё — в долях высоты холста.
+        private const string AntlerPath = "UI/HUD/EliteBarAntler";
+        private static readonly Vector2 AntlerPivot = new Vector2(.856f, .205f);
+        private const float AntlerBelow = .153f;
 
-        // Порядок частей внутри полоски. Части элиты сдвинуты на EliteOrder: её полоса ложится поверх
-        // обычных, если они пересеклись на экране. Цифры урона (6100) — поверх всех полосок.
-        private const int OrderTrack = 4000, OrderFill = 4001, OrderFrame = 4002, OrderGlow = 4003, OrderOrb = 4004;
-        private const int OrderMarkGlow = 4005, OrderMarkInk = 4006, OrderMark = 4007, OrderNumbers = 4008;
+        // Порядок частей внутри полоски. Рога — над мазком (их срез закрывает начало заливки), но под
+        // огоньком: при почти пустой полосе огонёк у левого рога виден. Части элиты сдвинуты на
+        // EliteOrder: её полоса ложится поверх обычных, если они пересеклись на экране. Цифры урона
+        // (6100) — поверх всех полосок.
+        private const int OrderTrack = 4000, OrderFill = 4001, OrderFrame = 4002, OrderAntler = 4003;
+        private const int OrderGlow = 4004, OrderOrb = 4005, OrderNumbers = 4006;
         private const int EliteOrder = 20;
         private const int NeverFrame = -100;
 
@@ -158,11 +168,9 @@ namespace Game.View
             public SpriteRenderer GemFill;
             public SpriteRenderer GemRim;
 
-            // Элита: знак у левого края и цифры (создаются при первой элите на этой полоске).
-            public Transform Mark;
-            public SpriteRenderer MarkGlow;
-            public SpriteRenderer MarkInk;
-            public SpriteRenderer MarkCore;
+            // Элита: рога на концах и цифры (цифры создаются при первой элите на этой полоске).
+            public SpriteRenderer AntlerLeft;
+            public SpriteRenderer AntlerRight;
             public TextMeshPro Numbers;
             public int ShownHealth, ShownMax;
             public float ShownAlpha;
@@ -176,7 +184,7 @@ namespace Game.View
 
         // «Дым и свет»: дорожка, ступени заливки (i — доля (i + 1) / FillSteps), огонёк и сияние.
         private bool _ink;
-        private Sprite _track, _orb, _glow, _mark, _markInk;
+        private Sprite _track, _orb, _glow, _antler;
         private Sprite[] _fillSteps;
 
         // Когда по кому в последний раз попали. Индекс — сущность.
@@ -212,8 +220,15 @@ namespace Game.View
         private Vector3 EliteScale => new Vector3(EliteWidth / Mathf.Max(.001f, Width), EliteHeight / Mathf.Max(.001f, Height), 1f);
 
         /// <summary>
-        /// Где низ таблички с именем элиты: верх её полосы (над знаком), в мире. Полосы не видно (элита
-        /// далеко и её не били) — там, где полоса была бы. Считается в LateUpdate полосок (порядок 950):
+        /// Сколько полосы элиты ниже её середины, м: половина полосы или основание рога, что ниже
+        /// (EliteBarLayout.EliteBelow). По этому низу полоса встаёт над макушкой.
+        /// </summary>
+        private float EliteBelowCenter => EliteBarLayout.EliteBelow(EliteHeight, EliteAntler * EliteHeight, AntlerLift * EliteHeight, AntlerBelow);
+
+        /// <summary>
+        /// Где низ таблички с именем элиты: верх её полосы, в мире — табличка встаёт между рогами.
+        /// Полосы не видно (элита далеко и её не били) — там, где полоса была бы. Считается в
+        /// LateUpdate полосок (порядок 950):
         /// RunWorldView (2050) читает в том же кадре, уже после камеры. false — элиту в этом кадре не
         /// считали (мертва, не элита, нет симуляции).
         /// </summary>
@@ -233,7 +248,7 @@ namespace Game.View
             _quad = MakeQuadSprite();
             _overlay = OverlayMaterial();
             _ink = LoadInk();
-            LoadMark();
+            LoadAntler();
 
             Transform root = new GameObject("Пул: полоски здоровья").transform;
             root.SetParent(transform, false);
@@ -333,8 +348,8 @@ namespace Game.View
                 Vector3 center = dummy != null ? dummy.BarPosition : BarCenter(i, entities.Kind[i], elite, up, dt, frame);
                 if (elite)
                 {
-                    // Низ таблички имени — над полосой и над рогами знака.
-                    float lift = Mathf.Max(EliteHeight, EliteMark) * .5f + .03f;
+                    // Низ таблички имени — сразу над полосой: рога стоят по краям, табличка — между ними.
+                    float lift = EliteHeight * .5f + .03f;
                     _nameAnchor[i] = center + up * lift;
                     _nameFrame[i] = frame;
                 }
@@ -399,7 +414,7 @@ namespace Game.View
                         bar.GemRim.color = Faded(EliteColor, alpha);
                     }
                 }
-                DrawMark(ref bar, elite, alpha, breath, eliteScale);
+                DrawAntlers(ref bar, elite, alpha, eliteScale);
                 DrawNumbers(ref bar, elite, entities.Health[i], max, alpha, eliteScale);
             }
 
@@ -407,20 +422,33 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Знак элиты у левого края полосы: сияние огонька, чернильная подложка цвета дорожки и сам
-        /// рогатый череп в тёплом свете. Сдвинут внутрь на десятую своего размера — торчит за край
-        /// полосы, как значок, приколотый к её началу.
+        /// Рога на концах полосы элиты: основание — на AntlerTuck внутрь от конца полосы и на AntlerLift
+        /// от её середины, рог уходит наружу и вверх. Правый — тот же спрайт, отражённый вокруг точки
+        /// крепления (отрицательный масштаб; UI/Default рисует обе стороны). Размеры — в высотах полосы:
+        /// рога растут и сжимаются вместе с ней. Корень растянут неровно — масштаб делится обратно.
         /// </summary>
-        private void DrawMark(ref Bar bar, bool elite, float alpha, float breath, Vector3 eliteScale)
+        private void DrawAntlers(ref Bar bar, bool elite, float alpha, Vector3 eliteScale)
         {
-            if (bar.Mark == null) return;
-            if (bar.Mark.gameObject.activeSelf != elite) bar.Mark.gameObject.SetActive(elite);
+            if (bar.AntlerLeft == null) return;
+            if (bar.AntlerLeft.gameObject.activeSelf != elite)
+            {
+                bar.AntlerLeft.gameObject.SetActive(elite);
+                bar.AntlerRight.gameObject.SetActive(elite);
+            }
             if (!elite) return;
-            bar.Mark.localScale = new Vector3(EliteMark / eliteScale.x, EliteMark / eliteScale.y, 1f);
-            bar.Mark.localPosition = new Vector3((-EliteWidth * .5f + EliteMark * .1f) / eliteScale.x, 0f, -.004f);
-            bar.MarkGlow.color = Faded(OrbGlowColor, alpha * breath * .8f);
-            bar.MarkInk.color = Faded(BackColor, alpha);
-            bar.MarkCore.color = Faded(OrbColor, alpha);
+            // Холст рога ложится на EliteAntler высот полосы.
+            float size = EliteAntler * EliteHeight / Mathf.Max(.001f, _antler.bounds.size.y);
+            float x = (EliteWidth * .5f - AntlerTuck * EliteHeight) / eliteScale.x;
+            float y = AntlerLift * EliteHeight / eliteScale.y;
+            Vector3 scale = new Vector3(size / eliteScale.x, size / eliteScale.y, 1f);
+            bar.AntlerLeft.transform.localScale = scale;
+            bar.AntlerLeft.transform.localPosition = new Vector3(-x, y, -.002f);
+            scale.x = -scale.x;
+            bar.AntlerRight.transform.localScale = scale;
+            bar.AntlerRight.transform.localPosition = new Vector3(x, y, -.002f);
+            Color color = Faded(Color.white, alpha);
+            bar.AntlerLeft.color = color;
+            bar.AntlerRight.color = color;
         }
 
         /// <summary>
@@ -436,9 +464,10 @@ namespace Game.View
             if (!elite) return;
 
             text.transform.localScale = new Vector3(1f / eliteScale.x, 1f / eliteScale.y, 1f);
-            // Середина свободного места справа от знака.
-            text.transform.localPosition = new Vector3(EliteMark * .2f / eliteScale.x, 0f, -.005f);
-            text.rectTransform.sizeDelta = new Vector2(Mathf.Max(.2f, EliteWidth - EliteMark * 1.1f - .1f), EliteHeight * 1.6f);
+            // По середине полосы, между основаниями рогов.
+            text.transform.localPosition = new Vector3(0f, 0f, -.005f);
+            float free = EliteWidth - 2f * (AntlerTuck + .5f) * EliteHeight;
+            text.rectTransform.sizeDelta = new Vector2(Mathf.Max(.2f, free), EliteHeight * 1.6f);
             text.fontSizeMax = EliteNumbersSize * 10f;
             text.fontSizeMin = EliteNumbersSize * 6f;
             if (health != bar.ShownHealth || max != bar.ShownMax)
@@ -466,8 +495,8 @@ namespace Game.View
             // ставится по вертикали над сущностью. Метр вдоль «вверх» камеры — 1 / up.y метров по
             // вертикали (камера боя 48° — полтора).
             float rise = 1f / Mathf.Max(.05f, up.y);
-            // Нижний край полосы элиты — знак: он выше полосы и свисает под неё.
-            float half = elite ? Mathf.Max(EliteHeight, EliteMark) * .5f : Height * .5f;
+            // Нижний край полосы элиты — низ полосы или основания рогов, что ниже: рога не ложатся на голову.
+            float half = elite ? EliteBelowCenter : Height * .5f;
             // Высота из таблицы — середина обычной полоски; у элиты низ остаётся там же.
             float fallback = BarHeight(kind) + (half - Height * .5f) * rise;
             bool measured = MeasureTop(entity, kind, at, up, out float top);
@@ -692,9 +721,8 @@ namespace Game.View
             Shift(bar.FrameRenderer, shift);
             Shift(bar.GemFill, shift);
             Shift(bar.GemRim, shift);
-            Shift(bar.MarkGlow, shift);
-            Shift(bar.MarkInk, shift);
-            Shift(bar.MarkCore, shift);
+            Shift(bar.AntlerLeft, shift);
+            Shift(bar.AntlerRight, shift);
             if (bar.Numbers != null) bar.Numbers.GetComponent<MeshRenderer>().sortingOrder += shift;
         }
 
@@ -751,7 +779,7 @@ namespace Game.View
             rootGo.transform.SetParent(root, false);
             rootGo.SetActive(false);
             Bar bar = _ink ? InkBar(rootGo.transform) : KitBar(rootGo.transform);
-            AddMark(ref bar);
+            AddAntlers(ref bar);
             return bar;
         }
 
@@ -773,40 +801,30 @@ namespace Game.View
             return material;
         }
 
-        /// <summary>Знак элиты из Resources; нет спрайтов — полоса элиты без знака, но с цифрами.</summary>
-        private void LoadMark()
+        /// <summary>
+        /// Рог элиты из Resources (импорт любой: спрайт или обычная текстура). Якорь спрайта — точка
+        /// крепления рога (AntlerPivot): вокруг неё рог ставится к концу полосы и отражается. Нет
+        /// спрайта — полоса элиты без рогов, но с цифрами.
+        /// </summary>
+        private void LoadAntler()
         {
-            var mark = Resources.Load<Texture2D>(MarkPath);
-            var ink = Resources.Load<Texture2D>(MarkInkPath);
-            if (mark == null || ink == null) return;
-            _mark = Whole(mark);
-            _markInk = Whole(ink);
+            var texture = Resources.Load<Texture2D>(AntlerPath);
+            if (texture == null) return;
+            _antler = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), AntlerPivot, 100f, 0, SpriteMeshType.FullRect);
+            _antler.name = texture.name;
         }
 
         /// <summary>
-        /// Знак элиты на полоске: сияние огонька, чернильная подложка и череп. Части вписаны в 1 м —
-        /// размер задаёт масштаб узла (EliteMark), выставляемый каждый кадр.
+        /// Рога элиты на полоске: левый и правый, тем же материалом поверх мира, что и вся полоска.
+        /// Место и размер выставляет DrawAntlers каждый кадр.
         /// </summary>
-        private void AddMark(ref Bar bar)
+        private void AddAntlers(ref Bar bar)
         {
-            if (_mark == null || _markInk == null) return;
-            var mark = new GameObject("Знак элиты").transform;
-            mark.SetParent(bar.Root, false);
-            Sprite glowSprite = _glow != null ? _glow : _quad;
-            SpriteRenderer glow = Part(mark, "Сияние", glowSprite, OrderMarkGlow, false);
-            Fit(glow, 1.5f, 1.5f);
-            SpriteRenderer ink = Part(mark, "Подложка", _markInk, OrderMarkInk, false);
-            Fit(ink, 1f, 1f);
-            SpriteRenderer core = Part(mark, "Череп", _mark, OrderMark, false);
-            Fit(core, 1f, 1f);
-            // Без сияния из «Дыма и света» квадрат вместо пятна хуже, чем ничего.
-            if (_glow == null) glow.gameObject.SetActive(false);
-            mark.gameObject.SetActive(false);
-
-            bar.Mark = mark;
-            bar.MarkGlow = glow;
-            bar.MarkInk = ink;
-            bar.MarkCore = core;
+            if (_antler == null) return;
+            bar.AntlerLeft = Part(bar.Root, "Рог слева", _antler, OrderAntler, false);
+            bar.AntlerRight = Part(bar.Root, "Рог справа", _antler, OrderAntler, false);
+            bar.AntlerLeft.gameObject.SetActive(false);
+            bar.AntlerRight.gameObject.SetActive(false);
         }
 
         /// <summary>

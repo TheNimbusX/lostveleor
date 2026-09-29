@@ -24,13 +24,35 @@ namespace Game.Sim
         private static bool IsEvade(int id) => id == AbilityDefinition.DashId
             || id == AbilityDefinition.SkewerId || id == AbilityDefinition.BackblastId;
 
+        /// <summary>
+        /// Способность переставляет самого героя: уходы (кувырок, Выпад,
+        /// Отскок — IsEvade), Абордаж (AnchorLeap тянет героя к якорю) и Шаг
+        /// по цепи (прыжки от врага к врагу, с «Возвратом» — и обратно).
+        /// Остальные — Вихрь, Рассекающий удар, Смазка, Удар якорем,
+        /// Крушение, Взрывная смесь — героя с места не сдвигают: шаг под ними
+        /// идёт обычной ходьбой, а её корни и так держат.
+        /// </summary>
+        public static bool MovesHero(int definitionId) => IsEvade(definitionId)
+            || definitionId == AbilityDefinition.AnchorLeapId || definitionId == AbilityDefinition.ChainStepId;
+
+        /// <summary>
+        /// Кнопку слота держат корни: способность двигает героя (MovesHero), а
+        /// он в корнях. Каст не начнётся, пока корни не сойдут, — HUD
+        /// показывает кнопку недоступной тем же вопросом.
+        /// </summary>
+        public bool AbilityHeldByRoots(int slot)
+            => HeroRooted && (uint)slot < (uint)AbilitySlots && _abilityBuilds[slot] != null
+               && MovesHero(_abilityBuilds[slot].DefinitionId);
+
         private bool CastAvailable(int slot, in InputFrame input)
         {
             var build = _abilityBuilds[slot];
             if (build == null) return false;
-            // Корни: уходы (кувырок, Выпад, Отскок) не начинаются, нажатие
-            // пропадает и не сбивает начатый удар. Удары и касты — как обычно.
-            if (HeroRooted && IsEvade(build.DefinitionId)) return false;
+            // Корни (решение владельца 29.09): герой не двигается никак —
+            // ни уходом (кувырок, Выпад, Отскок), ни Абордажем, ни Шагом по
+            // цепи. Нажатие не проходит и не сбивает начатый удар. Удары и
+            // касты на месте — как обычно; начатое до корней доезжает.
+            if (AbilityHeldByRoots(slot)) return false;
             if (build.DefinitionId == AbilityDefinition.WreckId && _wreckSlot == slot && WreckComboOpen) return true;
             return Tick >= _abilityReadyTick[slot] && CanAffordAbility(build)
                 && (build.DefinitionId != AbilityDefinition.ChainStepId || ValidAbilityTarget(input.AbilityTarget, build));

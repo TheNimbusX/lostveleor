@@ -128,6 +128,8 @@ namespace Game.View
             else
             {
                 player = Driver.GetRenderPosition(Simulation.PlayerId);
+                // Вертикальный ролик (-capture-reels, только съёмка): кадр ведёт центр схватки, а не одного героя.
+                if (CaptureRig.Reels) player = CaptureRig.ReelsFightFocus(Driver, player, GetComponent<Camera>());
             }
 
             // Смещаем именно кадр, а не игрока: одинаковое кадрирование в
@@ -162,7 +164,13 @@ namespace Game.View
             // сколько длился кадр. Разность экранных позиций даёт то же число
             // с шумом, и этот шум ушёл бы прямо в камеру.
             Vector3 velocity = Driver.GetSimVelocity(Simulation.PlayerId);
-            if (velocity.sqrMagnitude > 0.0001f)
+            if (!camp && CaptureRig.Reels)
+            {
+                // Ролик ведёт центр схватки: упреждение по скорости героя уводило бы кадр вперёд
+                // центра, а по скорости самого центра — дёргало бы на каждой смерти моба.
+                _leadVelocity = Vector3.zero;
+            }
+            else if (velocity.sqrMagnitude > 0.0001f)
             {
                 // ТОЧНУЮ СКОРОСТЬ СГЛАЖИВАТЬ НЕЛЬЗЯ, и это не мелочь.
                 //

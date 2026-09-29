@@ -1,0 +1,88 @@
+{
+  "section": "elite-bar",
+  "round": 2,
+  "date": "2026-09-29",
+  "direction": "сама полоса: полоса элиты сама отличается от обычной (толще, шипы/корни, цвет), значок-череп убран",
+  "model": "gpt_image_2_5",
+  "quality": "high",
+  "resolution": "2k",
+  "aspect_ratio": "16:9",
+  "output_size": "2688x1520 (кадр 2.8x от масштаба игры 1080p; крупные планы — вырез 940x530 из того же кадра, без догенерации)",
+  "images_spent": 12,
+  "budget": 14,
+  "base": {
+    "file": "00-base-current-bar.png",
+    "higgsfield_media_id": "61eb440c-369e-443e-8e7c-46017b64ce9e",
+    "description": "Наш кадр artifacts/mobsv2-check/final-wendigo-tank/shot_02_t8.50s.png, вырез x700-1660 y150-690, увеличен x2. Справа вклеен Плюй-плод из bud-puddle/shot_00_t3.00s.png (та же арена и свет, маска по контуру) и над ним обычная полоса, собранная из спрайтов игры EnemyBarTrack/EnemyBarFill с цветами HealthBars (1,05 x 0,13 м, 58%) — для сравнения обычный/элита."
+  },
+  "references": [
+    {"media_id": "10c0e3dc-541e-4454-a48a-eb6e7e427edb", "what": "вырезы из игры x5: сверху текущая полоса элиты (final-wendigo-tank shot_02), снизу обычные полосы (swarm-bite shot_01)"},
+    {"media_id": "5e828616-fd77-42b5-8c7f-35b689f78c68", "what": "ART/UI/concepts-2026-09-25-material/3-hud-C-smoke.png — утверждённый материал «Дым и свет»"}
+  ],
+  "common_prompt": "Image 1 = our gameplay screenshot (The War Remains, bright painterly forest; hero left, ELITE Wendigo centre, ORDINARY flower creature right). Edit only the world-space bar above the Wendigo; everything else identical, no brightening/relighting of characters; keep the ordinary coral bar exactly as is. Image 2 = current in-game bars, image 3 = approved 'Smoke and Light' HUD material. Keep dry-brush stroke over smoky dark ink track with torn smoke edges and the warm glowing orb at the end of the fill; NOT a clean vector bar, NOT a metal/stone/ornate frame; no gems, plaque, name, icon, skull, no text but numbers. Skull removed; health 62%; numbers \"1240 / 2000\" centred, rounded bold sans (Nunito-like), cream with thin dark outline; bar just above the antlers, about as wide as the current one. SHAPE OF THIS VERSION: ...",
+  "items": [
+    {
+      "file": "01-elite-bar-heavy-ember.png",
+      "closeup": "01-elite-bar-heavy-ember-closeup.png",
+      "name": "Тяжёлый уголь",
+      "description": "Тот же мазок, но в полтора раза толще, заливка тёмно-алая с углём внутри, по краям мазка тонкий золотой свет.",
+      "prompt": "common_prompt + 'heavy ember: same brush-stroke bar, about 1.6x thicker; fill deep crimson-to-ember gradient (dark blood crimson at the edges, hot glowing ember orange core); thin warm gold LIGHT along top and bottom edges like a painted rim light (light, not metal); darker, slightly wider smoky track.' Then edit of that result (+ base as image 2): 'fill ends clearly at 62% with the orb exactly at its tip, right 38% empty dark track; whole bar ~1.5x thicker; numbers slightly larger; keep the gold rim light and smoky torn edges.'",
+      "job_id": "e7fba48b-9743-422e-84f9-024178a19b46",
+      "superseded": ["a099f3db-4105-486b-abf7-255bb6ddd4f2 (заливка расплывалась, огонёк в самом конце — уровень здоровья не читался)"]
+    },
+    {
+      "file": "02-elite-bar-thorn-roots.png",
+      "closeup": "02-elite-bar-thorn-roots-closeup.png",
+      "name": "Терновые корни",
+      "description": "Полосу по кругу обвивают тёмные корни с мелкими шипами, как кора самого Вендиго; заливка тёмно-красная.",
+      "prompt": "common_prompt + 'thorn roots: dark twisted forest roots with small sharp thorns coil around both ends and creep along the top and bottom edges, dark bark brown-black like the Wendigo wood, faint warm rim light, never covering the numbers; bar a little thicker; fill deep blood-red.' Then edit of that result (+ base): 'fill ends clearly at 62% with the orb exactly at its tip, not outside the bar; rest is empty dark track.'",
+      "job_id": "8b12c8e3-0c3c-4c91-aa01-c3519b61e75e",
+      "superseded": ["fbe3b040-d5a6-4dc4-a634-f7cf42188a2d (огонёк стоял за пределами полосы справа)"]
+    },
+    {
+      "file": "03-elite-bar-thorn-crown.png",
+      "closeup": "03-elite-bar-thorn-crown-closeup.png",
+      "name": "Корона шипов",
+      "description": "Над мазком по всей длине — ветка терна с золотыми светящимися шипами, в середине выше; заливка насыщенно-алая.",
+      "prompt": "common_prompt + 'crown of thorns: a row of small sharp thorn teeth rises from the TOP edge along the whole length, a bramble-twig crown, taller in the middle, warm glowing gold-amber light with dark ink shading, dry-brush, not metal; bar slightly thicker; fill rich crimson.' Then edit of that result (+ base): 'fill ends clearly at 62% with the orb exactly at its tip, not at the far end.'",
+      "job_id": "f7fd7ec2-0951-4180-abff-702acd19b6e9",
+      "superseded": ["5df0cc38-8b1c-49d3-ae6d-c0a6812bdf2c (огонёк в самом конце полосы)"]
+    },
+    {
+      "file": "04-elite-bar-burnt-edge.png",
+      "closeup": "04-elite-bar-burnt-edge-closeup.png",
+      "name": "Выжженный край",
+      "description": "Края дорожки обгорелые и рваные, по кромке тлеет тонкая линия углей и поднимаются искры; заливка — расплавленный уголь.",
+      "prompt": "Fresh generation from the base with images: base, current bars, and the first burnt-edge result (ef4188fd) as design reference: 'burnt edge: smoky track with torn charred edges like scorched paper, thin line of glowing embers smouldering along the rim, a few sparks drifting up; fill molten ember gradient deep red to orange; slightly thicker. Health 62%: fill stops at 62% and the glowing orb is ATTACHED to that tip; no fill after the orb; numbers centred on top of everything.'",
+      "job_id": "5925d020-0ec9-4527-84b1-24076a0ae9c2",
+      "superseded": [
+        "ef4188fd-1c78-48a5-916c-0cbd8524a83d (первый вариант: огонёк в самом конце полосы)",
+        "a81885e6-2c58-496d-b4de-1bc333b66df3 (правка: огонёк налез на последнюю цифру)",
+        "656f8d15-8ce4-4f7a-9fa4-2bf0dc23af5a (правка: огонёк оторван от конца заливки)"
+      ],
+      "note": "Огонёк всё ещё стоит чуть правее конца заливки (~25-30 px в масштабе игры); в игре его ставит код точно на конец заливки."
+    },
+    {
+      "file": "05-elite-bar-antler-ends.png",
+      "closeup": "05-elite-bar-antler-ends-closeup.png",
+      "name": "Рога",
+      "description": "Концы полосы вырастают в костяные рога, загнутые вверх, того же цвета, что рога Вендиго; заливка тёмно-алая.",
+      "prompt": "common_prompt + 'antler ends: both ends of the bar grow into curved bone-white antlers sweeping upward and outward, matching the pale bone of the Wendigo antlers, dry-brush texture with dark ink shading (not a clean icon, not a skull); bar spans between the antler bases, slightly thicker; fill deep crimson.'",
+      "job_id": "88590bc1-4a9f-4dea-9473-857692286dc0",
+      "superseded": []
+    },
+    {
+      "file": "06-bonus-elite-bar-gold-stroke.png",
+      "closeup": "06-bonus-elite-bar-gold-stroke-closeup.png",
+      "name": "Золотой мазок (бонус)",
+      "description": "Без украшений: элиту выделяют только цвет и вес — толстый мазок расплавленного золота вместо кораллового, цифры с тёмной обводкой.",
+      "prompt": "common_prompt + 'gold stroke: elite marked by COLOUR and WEIGHT only; bar ~1.5x thicker; dry-brush fill deep molten gold-amber with burnt-amber edges instead of coral; fill stops at 62% with a white-hot orb on the tip; numbers cream with strong dark ink outline.'",
+      "job_id": "badb0491-f495-4934-a6a1-b548f510310a",
+      "superseded": []
+    }
+  ],
+  "extra_files": {
+    "00-base-current-bar-closeup.png": "текущая полоса в том же вырезе, для сравнения",
+    "00-sheet-closeups.jpg": "все крупные планы на одном листе: 0 — сейчас, 1-5 — формы, 6 — бонус"
+  }
+}

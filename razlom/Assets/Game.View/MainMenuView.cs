@@ -21,6 +21,11 @@ namespace Game.View
         private const float CanvasWidth = MainMenuScene.CanvasWidth;
         private const float CanvasHeight = MainMenuScene.CanvasHeight;
         private const float MusicFadeSeconds = 0.6f;
+        /// <summary>
+        /// Запас до старта темы по звуковым часам: вступление и петля ставятся в очередь
+        /// одним кадром, и первый блок микшера должен успеть их подхватить.
+        /// </summary>
+        private const double MusicLeadSeconds = 0.1;
         /// <summary>Сглаживание курсора, 1/с: сцена догоняет мышь, а не прилипает к ней.</summary>
         private const float PointerSmoothing = 4f;
 
@@ -39,7 +44,9 @@ namespace Game.View
 
         private TickDriver _driver;
         private PauseMenu _pause;
-        private AudioSource _music;
+        /// <summary>Тема меню: вступление звучит один раз, петля встаёт за ним встык.</summary>
+        private AudioSource _musicIntro;
+        private AudioSource _musicLoop;
         private MainMenuScene _scene;
         private Texture2D _flatBackground;
         private Texture2D[] _play;
@@ -94,17 +101,73 @@ namespace Game.View
             _exit = LoadStates("exit");
             _focus = Load("UI/MainMenu/focus_primary");
 
-            AudioClip theme = Resources.Load<AudioClip>("Audio/Music/MainMenuTheme");
-            if (theme != null)
+            // Тема владельца (29.09): соло-вступление один раз, дальше петля. Кроссфейд шва
+            // запечён в конец файла петли, поэтому её крутит сам AudioSource.loop.
+            _musicIntro = AddMusicSource("Audio/Music/MainMenuTheme_Intro", false);
+            _musicLoop = AddMusicSource("Audio/Music/MainMenuTheme_Loop", true);
+        }
+
+        private AudioSource AddMusicSource(string path, bool loop)
+        {
+            AudioClip clip = Resources.Load<AudioClip>(path);
+            if (clip == null)
             {
-                _music = gameObject.AddComponent<AudioSource>();
-                _music.clip = theme;
-                _music.loop = true;
-                _music.playOnAwake = false;
-                _music.spatialBlend = 0f;
-                // Мастер-громкость живёт на AudioListener, здесь только музыка.
-                _music.volume = GameUserSettings.MusicGain;
+                Debug.LogWarning($"[Разлом] Главное меню: нет музыки {path}.");
+                return null;
             }
+            // Сжатые в памяти и загруженные заранее: PlayScheduled встаёт точно в отсчёт,
+            // а поток с диска мог бы опоздать к стыку вступления с петлёй.
+            if (clip.loadState == AudioDataLoadState.Unloaded) clip.LoadAudioData();
+            AudioSource source = gameObject.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.loop = loop;
+            source.playOnAwake = false;
+            source.spatialBlend = 0f;
+            // Высший приоритет: виртуализированный голос сорвал бы стык по времени.
+            source.priority = 0;
+            // Мастер-громкость живёт на AudioListener, здесь только музыка.
+            source.volume = GameUserSettings.MusicGain;
+            return source;
+        }
+
+        /// <summary>
+        /// Вступление и петля ставятся в очередь по звуковым часам одним вызовом:
+        /// петля начинается ровно в отсчёт, где кончается вступление, без зазора и наложения.
+        /// </summary>
+        private void StartMusic()
+        {
+            double at = AudioSettings.dspTime + MusicLeadSeconds;
+            if (_musicIntro != null)
+            {
+                _musicIntro.PlayScheduled(at);
+                AudioClip intro = _musicIntro.clip;
+                at += (double)intro.samples / intro.frequency;
+            }
+            if (_musicLoop != null) _musicLoop.PlayScheduled(at);
+        }
+
+        private void SetMusicVolume(float volume)
+        {
+            if (_musicIntro != null) _musicIntro.volume = volume;
+            if (_musicLoop != null) _musicLoop.volume = volume;
+        }
+
+        private void StopMusic()
+        {
+            // Stop снимает и ещё не начавшийся PlayScheduled — петля не вступит после PLAY.
+            if (_musicIntro != null) _musicIntro.Stop();
+            if (_musicLoop != null) _musicLoop.Stop();
+        }
+
+        private static void ReleaseMusic(ref AudioSource source)
+        {
+            if (source == null) return;
+            AudioClip clip = source.clip;
+            source.Stop();
+            source.clip = null;
+            Destroy(source);
+            if (clip != null) Resources.UnloadAsset(clip);
+            source = null;
         }
 
         /// <summary>
@@ -172,7 +235,8 @@ namespace Game.View
             Cursor.visible = true;
             Time.timeScale = 0f;
             if (_driver != null) _driver.SetGameplayPaused(true);
-            if (_music != null) _music.Play();
+            // После «Новой игры» меню пропускается сразу — тема бы только вспыхнула и погасла.
+            if (!_skipOnce) StartMusic();
             // Строка о сохранении — здесь, а не в Awake: сессию лагеря TickDriver создаёт после меню.
             if (_panel != null && CampSaveStore.HasSave && _driver != null && _driver.Session != null)
                 _panel.SetContinueLine("Пелаг · уровень " + _driver.Session.Camp.Level);
@@ -254,21 +318,22 @@ namespace Game.View
                 _scene = null;
             }
 
-            if (_musicFade > 0f && _music != null)
+            // Затухание идёт и без музыки: по его концу меню отпускает арт.
+            if (_musicFade > 0f)
             {
                 _musicFade -= dt;
-                _music.volume = GameUserSettings.MusicGain * Mathf.Clamp01(_musicFade / MusicFadeSeconds);
+                SetMusicVolume(GameUserSettings.MusicGain * Mathf.Clamp01(_musicFade / MusicFadeSeconds));
                 if (_musicFade <= 0f)
                 {
-                    _music.Stop();
+                    StopMusic();
                     _musicFade = -1f;
                 }
             }
-            else if (IsOpen && _music != null && !_started)
+            else if (IsOpen && !_started)
             {
                 // Ползунок музыки в настройках слышен сразу: меню — единственное
                 // место, где эту громкость и проверяют на слух.
-                _music.volume = GameUserSettings.MusicGain;
+                SetMusicVolume(GameUserSettings.MusicGain);
             }
 
             if (_started && !_released && _musicFade < 0f) ReleaseArt();
@@ -420,6 +485,9 @@ namespace Game.View
         private void ReleaseArt()
         {
             _released = true;
+            // Тема отзвучала (затухание кончилось) — клипы из памяти, источники с объекта.
+            ReleaseMusic(ref _musicIntro);
+            ReleaseMusic(ref _musicLoop);
             Unload(_flatBackground);
             Unload(_focus);
             foreach (Texture2D[] states in new[] { _play, _settings, _exit })

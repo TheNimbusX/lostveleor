@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мобы v2 · раунд 2</title>
+<style>
+:root{color-scheme:dark;--bg:#151515;--panel:#1f1f1f;--line:#353535;--ink:#ecebe6;--muted:#a9a9a3;--accent:#e0b77e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Segoe UI",system-ui,sans-serif}
+main{max-width:1900px;margin:auto;padding:32px 24px 70px}
+h1{font-size:36px;line-height:1.1;margin:6px 0 10px;font-weight:650}
+h2{font-size:30px;margin:52px 0 6px;padding-top:24px;border-top:1px solid var(--line);font-weight:620}
+h3{font-size:21px;margin:34px 0 10px;font-weight:620;display:flex;align-items:baseline;gap:10px}
+p{margin:6px 0;color:var(--muted);max-width:95ch}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0}
+nav{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+nav a{color:var(--ink);border:1px solid var(--line);border-radius:30px;padding:6px 14px;text-decoration:none}
+nav a:hover,nav a:focus-visible{border-color:var(--accent);outline:none}
+.ask{color:var(--ink);background:var(--panel);border-left:3px solid var(--accent);border-radius:6px;padding:8px 12px;margin:12px 0 16px}
+.desc{margin:0 0 12px}
+.grid{display:grid;gap:14px}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.card a{display:block}
+.card img{display:block;width:100%;height:auto;background:#101010}
+figcaption{padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:14px}
+figcaption strong{font-weight:600;color:var(--ink)}
+figcaption span{color:var(--muted)}
+.empty{display:flex;align-items:center;justify-content:center;min-height:200px;padding:20px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:10px}
+.num{display:inline-block;min-width:1.9em;padding:0 8px;border:1px solid var(--accent);border-radius:20px;color:var(--accent);font-weight:650;text-align:center;font-size:17px}
+.old{border-color:#6a6a6a}.now{border-color:#b0603a}
+ol.rank,ul.notes{color:var(--muted);max-width:110ch;padding-left:22px;margin:6px 0}
+ol.rank li,ul.notes li{margin:5px 0;overflow-wrap:anywhere}
+p{overflow-wrap:anywhere}
+ol.rank b,ul.notes b{color:var(--ink);font-weight:600}
+details{margin:18px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:10px 14px}
+summary{cursor:pointer;color:var(--ink);font-weight:600}
+.links a{color:var(--accent)}
+#lb{position:fixed;inset:0;background:rgba(8,8,8,.96);display:none;z-index:10;flex-direction:column}
+#lb.open{display:flex}
+#lb .stage{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
+#lb .stage img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#lb.full .stage{display:block;cursor:zoom-out}
+#lb.full .stage img{max-width:none;max-height:none;margin:auto}
+#lb .bar{display:flex;gap:14px;align-items:center;padding:8px 16px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+#lb .bar span{flex:1;min-width:0}
+#lb button{background:none;border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:4px 12px;font:inherit;cursor:pointer}
+#lb button:hover{border-color:var(--accent)}
+@media (max-width:1100px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){main{padding:22px 16px 50px}.g3,.g2{grid-template-columns:1fr}h1{font-size:28px}h2{font-size:24px}}
+</style>
+<main>
+<p class="eyebrow">Лес · мобы v2 · раунд 2 · 29 сентября 2026</p>
+<h1>Метки на полу и полоса элиты</h1>
+<p>Все кадры — правка наших скриншотов игры. Клик по кадру открывает его в полном размере, повторный клик — 1:1, стрелки ← → листают, Esc закрывает.</p>
+<p class="ask">Ответ одной строкой, например: «Метки: B» (или гибрид «B + E»), «Полоса: 5».</p>
+<nav><a href="#tg">Метки на полу</a><a href="#eb">Полоса элиты</a></nav>
+
+<section id="tg"><h2>Метки на полу — новый стиль</h2>
+<p>Пять направлений, каждое на одних и тех же основах: полоса Каменного копыта с кругом Корнехвата, вой Вендиго, линия Шипомёта. Мой порядок: <b>B, E, D, A, C</b> — подробно внизу раздела. Все варианты одним листом: <span class="links"><a class="zoom" href="telegraphs/00-overview.jpg" data-cap="Сводка всех вариантов">00-overview.jpg</a></span>.</p>
+<p class="ask">Выбери одно направление или гибрид. Ответ: «Метки: B» или «Метки: B + E».</p>
+
+<h3>Сейчас в игре</h3>
+<p class="desc">Для сравнения: плоская метка до трещин и метка с трещинами из сегодняшних съёмок. Кадры без правок, только вырез.</p>
+<div class="grid g3">
+<figure class="card old"><a class="zoom" href="compare/01-old-flat-stonehoof-lane.jpg" data-cap="Было до трещин: полоса Каменного копыта"><img src="compare/01-old-flat-stonehoof-lane.jpg" width="1360" height="765" alt="Было до трещин: полоса Каменного копыта" loading="lazy"></a><figcaption><strong>Было до трещин · полоса Каменного копыта</strong><span>Плоская терракота, коралловая кромка, шеврон. Съёмка mobsv2-bases/stonehoof, 4,5 с.</span></figcaption></figure>
+<figure class="card now"><a class="zoom" href="compare/02-cracks-stonehoof-lane.jpg" data-cap="Сейчас, трещины: полоса Каменного копыта"><img src="compare/02-cracks-stonehoof-lane.jpg" width="1360" height="765" alt="Сейчас, трещины: полоса Каменного копыта" loading="lazy"></a><figcaption><strong>Сейчас, трещины · полоса Каменного копыта</strong><span>Тот же удар и тот же ракурс. Съёмка mobsv2-check/stonehoof-dodge, кадр 241.</span></figcaption></figure>
+<figure class="card now"><a class="zoom" href="compare/03-cracks-wendigo-howl-ring.jpg" data-cap="Сейчас, трещины: вой Вендиго"><img src="compare/03-cracks-wendigo-howl-ring.jpg" width="1387" height="780" alt="Сейчас, трещины: вой Вендиго" loading="lazy"></a><figcaption><strong>Сейчас, трещины · вой Вендиго</strong><span>Кольцо 2–5,5 м. Съёмка mobsv2-check/v2-wendigo-howl, кадр 80 — основа всех вариантов кольца ниже.</span></figcaption></figure>
+</div>
+
+<h3 id="tg-a"><span class="num">A</span>Чистая кромка (в духе Hades II)</h3>
+<p class="desc">Ровная красно-оранжевая заливка без фактуры, по краю тонкая яркая кремово-оранжевая кромка с тёмной волосяной линией снаружи. Таймер — более плотный слой, который растёт от моба с резкой светлой линией фронта. Читается мгновенно за счёт простоты и контраста кромки, но генератор сделал заливку почти непрозрачной, поэтому выглядит как пластиковая наклейка. В игре её стоит сделать заметно прозрачнее.</p>
+<div class="grid g3">
+<figure class="card"><a class="zoom" href="telegraphs/01a-A-clean-rim-stonehoof-lane-snarer-circle.png" data-cap="A · Полоса Каменного копыта + круг Корнехвата"><img src="telegraphs/01a-A-clean-rim-stonehoof-lane-snarer-circle.jpg" width="1600" height="905" alt="A · Полоса Каменного копыта + круг Корнехвата" loading="lazy"></a><figcaption><strong>Полоса Каменного копыта + круг Корнехвата</strong><span>Полоса Каменного копыта и круг Корнехвата: ровная красно-оранжевая заливка, тонкая яркая кремовая кромка, фронт заливки — резкая светлая линия.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/01b-A-clean-rim-wendigo-howl-ring.png" data-cap="A · Вой Вендиго"><img src="telegraphs/01b-A-clean-rim-wendigo-howl-ring.jpg" width="1600" height="905" alt="A · Вой Вендиго" loading="lazy"></a><figcaption><strong>Вой Вендиго</strong><span>Кольцо воя Вендиго 2–5,5 м: плоская полоса заливки с яркими кромками по дыре и по внешней границе, фронт на ~75%.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/01c-A-clean-rim-thorncaster-line.png" data-cap="A · Линия Шипомёта"><img src="telegraphs/01c-A-clean-rim-thorncaster-line.jpg" width="1600" height="905" alt="A · Линия Шипомёта" loading="lazy"></a><figcaption><strong>Линия Шипомёта</strong><span>Линия Шипомёта из 4 квадратов: ближний к мобу залит, второй с линией фронта, дальние — лёгкий тинт и кромка.</span></figcaption></figure>
+</div>
+<h3 id="tg-b"><span class="num">B</span>Пунктир и шевроны (в духе Shape of Dreams)</h3>
+<p class="desc">Край — светящийся пунктир из коротких штрихов, внутри мягкий полупрозрачный градиент (трава видна), вдоль удара идут шевроны: пройденные таймером горят, остальные — тусклые контуры. На вое Вендиго шевроны смотрят наружу, то есть подсказывают «беги отсюда». Лучше всех сразу отвечает, где край, куда бьёт и сколько осталось.</p>
+<div class="grid g3">
+<figure class="card"><a class="zoom" href="telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png" data-cap="B · Полоса Каменного копыта + круг Корнехвата"><img src="telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.jpg" width="1600" height="905" alt="B · Полоса Каменного копыта + круг Корнехвата" loading="lazy"></a><figcaption><strong>Полоса Каменного копыта + круг Корнехвата</strong><span>Полоса: пунктирная светящаяся кромка, 5 шевронов вниз — пройденные горят, остальные тусклые; круг: пунктир, засечки внутрь, светящийся диск растёт из центра.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/02b-B-dashed-chevrons-wendigo-howl-ring.png" data-cap="B · Вой Вендиго"><img src="telegraphs/02b-B-dashed-chevrons-wendigo-howl-ring.jpg" width="1600" height="905" alt="B · Вой Вендиго" loading="lazy"></a><figcaption><strong>Вой Вендиго</strong><span>Кольцо воя: пунктир по дыре и по внешней границе, радиальные шевроны смотрят наружу («беги»), горят до фронта, дальше — тусклые контуры.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/02c-B-dashed-chevrons-thorncaster-line.png" data-cap="B · Линия Шипомёта"><img src="telegraphs/02c-B-dashed-chevrons-thorncaster-line.jpg" width="1600" height="905" alt="B · Линия Шипомёта" loading="lazy"></a><figcaption><strong>Линия Шипомёта</strong><span>Линия Шипомёта: пунктирные квадраты, в каждом шеврон влево (куда идут шипы); два ближних к мобу горят, два дальних тусклые.</span></figcaption></figure>
+</div>
+<h3 id="tg-c"><span class="num">C</span>Акварель впитывается в землю</h3>
+<p class="desc">Киноварный пигмент впитывается в траву и землю: тёмный рваный акварельный край, насыщенное пятно растёт от источника, а ещё не залитая часть — бледная сухая подмывка. Ближе всех к языку UI «Ночная акварель», но край мягче остальных. Пятно легко спутать с лужей Почки или кровью, а не залитый конец полосы похож на бумажную заплатку.</p>
+<div class="grid g3">
+<figure class="card"><a class="zoom" href="telegraphs/03a-C-watercolour-soak-stonehoof-lane-snarer-circle.png" data-cap="C · Полоса Каменного копыта + круг Корнехвата"><img src="telegraphs/03a-C-watercolour-soak-stonehoof-lane-snarer-circle.jpg" width="1600" height="905" alt="C · Полоса Каменного копыта + круг Корнехвата" loading="lazy"></a><figcaption><strong>Полоса Каменного копыта + круг Корнехвата</strong><span>Полоса и круг: пигмент киновари впитался в землю, тёмный рваный акварельный край, не залитое — бледная сухая подмывка.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/03b-C-watercolour-soak-wendigo-howl-ring.png" data-cap="C · Вой Вендиго"><img src="telegraphs/03b-C-watercolour-soak-wendigo-howl-ring.jpg" width="1600" height="905" alt="C · Вой Вендиго" loading="lazy"></a><figcaption><strong>Вой Вендиго</strong><span>Кольцо воя: насыщенная акварельная заливка растёт от дыры с рваным фронтом, внешняя полоса — бледная подмывка и тонкая тёмная линия границы.</span></figcaption></figure>
+<div class="empty">Линия Шипомёта — кадра нет: на него не хватило бюджета генераций.</div>
+</div>
+<h3 id="tg-d"><span class="num">D</span>Прежние метки, усиленные</h3>
+<p class="desc">Те же плоские терракотовые метки, что были до трещин, но с двойной кромкой (коралловая линия и тёмная обводка) и светлой линией фронта заливки. Ещё не залитая часть заштрихована, шевроны остались. Штриховка сразу показывает всю зону и сколько осталось до удара. Это самый безопасный шаг от того, что нравилось, хотя заливка вышла плотной.</p>
+<div class="grid g3">
+<figure class="card"><a class="zoom" href="telegraphs/04a-D-old-flat-refined-stonehoof-lane-snarer-circle.png" data-cap="D · Полоса Каменного копыта + круг Корнехвата"><img src="telegraphs/04a-D-old-flat-refined-stonehoof-lane-snarer-circle.jpg" width="1600" height="905" alt="D · Полоса Каменного копыта + круг Корнехвата" loading="lazy"></a><figcaption><strong>Полоса Каменного копыта + круг Корнехвата</strong><span>Старая плоская терракота с двойной кромкой, штриховкой не залитой части, светлой линией фронта и шевроном.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/04b-D-old-flat-refined-wendigo-howl-ring.png" data-cap="D · Вой Вендиго"><img src="telegraphs/04b-D-old-flat-refined-wendigo-howl-ring.jpg" width="1600" height="905" alt="D · Вой Вендиго" loading="lazy"></a><figcaption><strong>Вой Вендиго</strong><span>Кольцо воя в старом стиле: терракотовая заливка от дыры, штрихованная внешняя полоса, двойные кромки, шевроны наружу.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/04c-D-old-flat-refined-thorncaster-line.png" data-cap="D · Линия Шипомёта"><img src="telegraphs/04c-D-old-flat-refined-thorncaster-line.jpg" width="1600" height="905" alt="D · Линия Шипомёта" loading="lazy"></a><figcaption><strong>Линия Шипомёта</strong><span>Линия Шипомёта в старом стиле: двойные кромки квадратов, штриховка не залитого, светлая линия фронта, маленькие шевроны влево.</span></figcaption></figure>
+</div>
+<h3 id="tg-e"><span class="num">E</span>Пыльца и примятая трава</h3>
+<p class="desc">Край обведён плотной цепочкой светящихся огоньков пыльцы. Внутри трава примята и отогнута от источника, земля чуть подкрашена, а фронт таймера — полоса ярких искр. На вое Вендиго трава прижата радиально наружу, как ударной волной. Это самый «живой» и лесной вариант, край читается за счёт плотности огоньков. Но внутри шумно, таймер в круге Корнехвата слабый, а собирать дороже (частицы плюс сгибание травы).</p>
+<div class="grid g3">
+<figure class="card"><a class="zoom" href="telegraphs/05a-E-pollen-pressed-grass-stonehoof-lane-snarer-circle.png" data-cap="E · Полоса Каменного копыта + круг Корнехвата"><img src="telegraphs/05a-E-pollen-pressed-grass-stonehoof-lane-snarer-circle.jpg" width="1600" height="905" alt="E · Полоса Каменного копыта + круг Корнехвата" loading="lazy"></a><figcaption><strong>Полоса Каменного копыта + круг Корнехвата</strong><span>Кромку обводит плотная цепочка светящейся пыльцы; внутри трава примята по направлению рывка, фронт таймера — полоса искр; круг закручен из центра.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/05b-E-pollen-pressed-grass-wendigo-howl-ring.png" data-cap="E · Вой Вендиго"><img src="telegraphs/05b-E-pollen-pressed-grass-wendigo-howl-ring.jpg" width="1600" height="905" alt="E · Вой Вендиго" loading="lazy"></a><figcaption><strong>Вой Вендиго</strong><span>Кольцо воя: дыра и граница обведены огоньками пыльцы, трава в полосе прижата радиально наружу, как ударной волной.</span></figcaption></figure>
+<figure class="card"><a class="zoom" href="telegraphs/05c-E-pollen-pressed-grass-thorncaster-line.png" data-cap="E · Линия Шипомёта"><img src="telegraphs/05c-E-pollen-pressed-grass-thorncaster-line.jpg" width="1600" height="905" alt="E · Линия Шипомёта" loading="lazy"></a><figcaption><strong>Линия Шипомёта</strong><span>Линия Шипомёта: квадраты обведены огоньками, в залитой части трава примята и подкрашена, фронт идёт от моба.</span></figcaption></figure>
+</div>
+
+<h3>Мой порядок</h3>
+<ol class="rank">
+<li><b>B «Пунктир и шевроны»</b> — лучше всех читается. Пунктирный край, внутри видна трава, а шевроны сразу говорят, куда бьёт и сколько осталось. На вое Вендиго шевроны наружу подсказывают, куда бежать. Риск: светящийся «интерфейсный» вид может показаться чужим для рисованного леса.</li>
+<li><b>E «Пыльца и примятая трава»</b> — самый красивый и лесной, край из огоньков читается хорошо, а вой как ударная волна по траве — лучший из всех вариантов кольца. Минусы: внутри шумно, в круге Корнехвата плохо видно, сколько осталось, и в производстве это самый дорогой вариант.</li>
+<li><b>D «Прежние, усиленные»</b> — надёжный запасной вариант. Штриховка незалитой части — реальное улучшение читаемости, но стиль почти старый, а просили новое.</li>
+<li><b>A «Чистая кромка»</b> — чисто и понятно, но почти непрозрачная оранжевая заливка выглядит наклейкой и мало отличается от старых меток.</li>
+<li><b>C «Акварель»</b> — подходит к UI, но край самый мягкий, пятно путается с лужей Почки и кровью, а незалитый конец полосы похож на бумажную заплатку.</li>
+</ol>
+<p>Если выбирать с прицелом на гибрид: край и шевроны из B, а в конце таймера лёгкая волна примятой травы из E.</p>
+<details><summary>Как сделаны кадры и что в них заметно</summary>
+<ul class="notes">
+<li>Все кадры — правка наших скриншотов, у каждого варианта одни и те же основы (лежат в <span class="links"><a href="telegraphs/_bases/">telegraphs/_bases/</a></span>).</li>
+<li><b>Полоса Каменного копыта:</b> старый кадр mobsv2-bases/stonehoof, 4,5 с; круг Корнехвата дорисован в старом стиле, в кадре его не было.</li>
+<li><b>Вой Вендиго:</b> кадр 80 из v2-wendigo-howl; трещины в кольце перед отправкой залиты плоским цветом, чтобы генератор не цеплялся за стиль с трещинами.</li>
+<li><b>Шипомёт:</b> кадр 320 из ролика thorncaster-dodge, там только контуры четырёх квадратов.</li>
+<li>Камера, позы и цвета сверены с основами, персонажи не высветлены, полоска «5000 / 5000» на месте.</li>
+<li>У A и D заливка плотнее, чем просил. В E генератор местами заменил траву на более реалистичную, а в кольце E трава нарисована поверх тропы.</li>
+</ul></details>
+
+</section>
+
+<section id="eb"><h2>Полоса элиты — новая форма</h2>
+<p>Полоса элиты сама отличается от обычной — толщиной, шипами, рогами или цветом; значок-череп убран. Везде 62% здоровья и «1240 / 2000». Слева кадр целиком, справа крупный план того же кадра (вырез, без отдельной генерации). Мой порядок: <b>5, 3, 6, 1, 2, 4</b> — подробно внизу раздела. Все крупные планы одним листом: <span class="links"><a class="zoom" href="elite-bar/00-sheet-closeups.jpg" data-cap="Лист крупных планов: 0 — сейчас, 1–5 — формы, 6 — бонус">00-sheet-closeups.jpg</a></span>.</p>
+<p class="ask">Выбери одну форму. Ответ: «Полоса: 1…6».</p>
+<h3 id="eb-0"><span class="num">0</span>Сейчас (база)</h3>
+<p class="desc">Наш кадр с нынешней полосой элиты: с него начинались все генерации. Справа вклеен Плюй-плод с обычной полосой из спрайтов игры — для сравнения обычный/элита.</p>
+<div class="grid g2">
+<figure class="card old"><a class="zoom" href="elite-bar/00-base-current-bar.png" data-cap="0 · Сейчас (база) · кадр"><img src="elite-bar/00-base-current-bar.jpg" width="1600" height="900" alt="0 · Сейчас (база) · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card old"><a class="zoom" href="elite-bar/00-base-current-bar-closeup.png" data-cap="0 · Сейчас (база) · крупно"><img src="elite-bar/00-base-current-bar-closeup.jpg" width="1600" height="902" alt="0 · Сейчас (база) · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-1"><span class="num">1</span>Тяжёлый уголь</h3>
+<p class="desc">Тот же мазок, только в полтора раза толще. Заливка тёмно-алая, внутри тлеет уголь, по краю заливки идёт тонкий золотой свет, а огонёк сидит на конце заливки (62%).</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/01-elite-bar-heavy-ember.png" data-cap="1 · Тяжёлый уголь · кадр"><img src="elite-bar/01-elite-bar-heavy-ember.jpg" width="1600" height="905" alt="1 · Тяжёлый уголь · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/01-elite-bar-heavy-ember-closeup.png" data-cap="1 · Тяжёлый уголь · крупно"><img src="elite-bar/01-elite-bar-heavy-ember-closeup.jpg" width="1600" height="902" alt="1 · Тяжёлый уголь · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-2"><span class="num">2</span>Терновые корни</h3>
+<p class="desc">Полосу по кругу обвивают тёмные корни с мелкими шипами, по цвету как кора самого Вендиго. Заливка тёмно-красная.</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/02-elite-bar-thorn-roots.png" data-cap="2 · Терновые корни · кадр"><img src="elite-bar/02-elite-bar-thorn-roots.jpg" width="1600" height="905" alt="2 · Терновые корни · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/02-elite-bar-thorn-roots-closeup.png" data-cap="2 · Терновые корни · крупно"><img src="elite-bar/02-elite-bar-thorn-roots-closeup.jpg" width="1600" height="902" alt="2 · Терновые корни · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-3"><span class="num">3</span>Корона шипов</h3>
+<p class="desc">По всему верху мазка тянется ветка терна со светящимися золотыми шипами, в середине они выше. Заливка насыщенно-алая, мазок немного толще нынешнего.</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/03-elite-bar-thorn-crown.png" data-cap="3 · Корона шипов · кадр"><img src="elite-bar/03-elite-bar-thorn-crown.jpg" width="1600" height="905" alt="3 · Корона шипов · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/03-elite-bar-thorn-crown-closeup.png" data-cap="3 · Корона шипов · крупно"><img src="elite-bar/03-elite-bar-thorn-crown-closeup.jpg" width="1600" height="902" alt="3 · Корона шипов · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-4"><span class="num">4</span>Выжженный край</h3>
+<p class="desc">Края дорожки обгорелые и рваные, по ним тлеет тонкая линия углей и вверх летят искры. Заливка похожа на расплавленный уголь. Огонёк всё ещё стоит чуть правее конца заливки (~25–30 px в масштабе игры); в игре его ставит код точно на конец.</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/04-elite-bar-burnt-edge.png" data-cap="4 · Выжженный край · кадр"><img src="elite-bar/04-elite-bar-burnt-edge.jpg" width="1600" height="905" alt="4 · Выжженный край · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/04-elite-bar-burnt-edge-closeup.png" data-cap="4 · Выжженный край · крупно"><img src="elite-bar/04-elite-bar-burnt-edge-closeup.jpg" width="1600" height="902" alt="4 · Выжженный край · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-5"><span class="num">5</span>Рога</h3>
+<p class="desc">Концы полосы вырастают в костяные рога, загнутые вверх, того же цвета, что рога Вендиго. Между ними знакомый мазок с тёмно-алой заливкой, огонёк на конце заливки.</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/05-elite-bar-antler-ends.png" data-cap="5 · Рога · кадр"><img src="elite-bar/05-elite-bar-antler-ends.jpg" width="1600" height="905" alt="5 · Рога · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/05-elite-bar-antler-ends-closeup.png" data-cap="5 · Рога · крупно"><img src="elite-bar/05-elite-bar-antler-ends-closeup.jpg" width="1600" height="902" alt="5 · Рога · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+<h3 id="eb-6"><span class="num">6</span>Золотой мазок (бонус)</h3>
+<p class="desc">Украшений нет, элиту выделяют только цвет и вес: толстый мазок расплавленного золота вместо кораллового. Цифры с тёмной обводкой, чтобы читались на золоте.</p>
+<div class="grid g2">
+<figure class="card"><a class="zoom" href="elite-bar/06-bonus-elite-bar-gold-stroke.png" data-cap="6 · Золотой мазок (бонус) · кадр"><img src="elite-bar/06-bonus-elite-bar-gold-stroke.jpg" width="1600" height="905" alt="6 · Золотой мазок (бонус) · кадр" loading="lazy"></a><figcaption><strong>Кадр</strong></figcaption></figure>
+<figure class="card"><a class="zoom" href="elite-bar/06-bonus-elite-bar-gold-stroke-closeup.png" data-cap="6 · Золотой мазок (бонус) · крупно"><img src="elite-bar/06-bonus-elite-bar-gold-stroke-closeup.jpg" width="1600" height="902" alt="6 · Золотой мазок (бонус) · крупно" loading="lazy"></a><figcaption><strong>Крупно</strong></figcaption></figure>
+</div>
+
+<h3>Мой порядок</h3>
+<ol class="rank">
+<li><b>5 · Рога</b> — самая «наша»: мазок почти как сейчас, а костяные рога повторяют рога лесных элит. Силуэт с первого взгляда отличается от обычной полосы, и только здесь огонёк с первой попытки встал точно на конец заливки.</li>
+<li><b>3 · Корона шипов</b> — очень хорошо читается и остаётся в материале «Дым и свет». Риск: золотой блеск уходит в «вычурность», которую уже отвергли.</li>
+<li><b>6 · Золотой мазок</b> — самый сильный контраст без украшений, прямой ответ на идею «другой цвет». Но золото ломает «красный = здоровье», немного похоже на пламя или комету, а цифрам нужна жирная обводка.</li>
+<li><b>1 · Тяжёлый уголь</b> — явно тяжелее, но золотая кромка вокруг заливки читается как светящаяся капсула или рамка — ближе всего к отвергнутому в первом раунде.</li>
+<li><b>2 · Терновые корни</b> — замкнутое кольцо корней по сути рамка; в масштабе игры читается как коричневый овал, шумно и тяжело.</li>
+<li><b>4 · Выжженный край</b> — в масштабе игры почти как нынешняя полоса, поэтому хуже всех отличает элиту от обычного моба. Огонёк стоит чуть правее конца заливки.</li>
+</ol>
+<details><summary>Как сделаны кадры и что учесть в игре</summary>
+<ul class="notes">
+<li><b>Основа:</b> наш кадр final-wendigo-tank, 8,5 с, вырез и увеличение ×2. Обычного моба рядом с Вендиго ни в одной съёмке не было, поэтому вклеен Плюй-плод из bud-puddle (та же арена и свет) и над ним собрана обычная полоса из спрайтов игры EnemyBarTrack/EnemyBarFill в цветах HealthBars.</li>
+<li><b>Рефы для генератора:</b> вырезы нынешних полос из игры и утверждённый концепт HUD «Дым и свет» (ART/UI/concepts-2026-09-25-material/3-hud-C-smoke.png). Лист набора kit-sheet-2 не использовался: его чистые капсулы — как раз то, что не прошло в первом раунде.</li>
+<li><b>Огонёк:</b> в вариантах 1–4 генератор сначала ставил его на правый край полосы; исправлено правками по тем же кадрам, 4 пересобран с нуля. Заменённые job id — в <span class="links"><a href="elite-bar/manifest.json">manifest.json</a></span>.</li>
+<li><b>Персонажи:</b> яркость героя, Вендиго и Плюй-плода в пределах ~3% от основы — никого не высветлило.</li>
+<li><b>Цифры и огонёк в игре:</b> при «1240 / 2000» по центру огонёк наезжает на цифры примерно на 55–75% здоровья. Цифры в коде уже рисуются поверх огонька, но какую бы форму ни выбрали, стоит решить: сдвинуть цифры или приглушить огонёк на этом участке.</li>
+<li><b>Положение полосы:</b> в кадрах оно немного гуляет (1 чуть правее головы); в игре его задаёт код (EliteBarLayout).</li>
+</ul></details>
+</section>
+
+</main>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Кадр в полном размере">
+  <div class="stage"><img alt=""></div>
+  <div class="bar"><button data-go="-1" aria-label="Предыдущий">←</button><span></span><button data-go="1" aria-label="Следующий">→</button><button data-close>Закрыть</button></div>
+</div>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('a.zoom'));
+  var lb=document.getElementById('lb'),img=lb.querySelector('img'),cap=lb.querySelector('.bar span'),i=0;
+  function show(n){i=(n+links.length)%links.length;var a=links[i];lb.classList.remove('full');img.src=a.getAttribute('href');img.alt=a.dataset.cap||'';cap.textContent=(i+1)+' / '+links.length+' · '+(a.dataset.cap||'');}
+  links.forEach(function(a,n){a.addEventListener('click',function(e){if(e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;e.preventDefault();show(n);lb.classList.add('open');document.body.style.overflow='hidden';});});
+  function close(){lb.classList.remove('open','full');img.removeAttribute('src');document.body.style.overflow='';}
+  lb.querySelector('.stage').addEventListener('click',function(){lb.classList.toggle('full');});
+  lb.querySelector('[data-close]').addEventListener('click',close);
+  [].forEach.call(lb.querySelectorAll('[data-go]'),function(b){b.addEventListener('click',function(){show(i+(+b.dataset.go));});});
+  document.addEventListener('keydown',function(e){if(!lb.classList.contains('open'))return;if(e.key==='Escape')close();else if(e.key==='ArrowRight')show(i+1);else if(e.key==='ArrowLeft')show(i-1);});
+})();
+</script>
+</html>

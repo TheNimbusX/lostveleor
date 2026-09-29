@@ -449,6 +449,161 @@ namespace Game.Tests
             Assert.AreEqual((byte)ForcedMotionKind.Skewer, sim.Entities.ForcedKind[0]);
         }
 
+        /// <summary>Манекен, который не ходит, не бьёт и не умирает от пары ударов.</summary>
+        private static int Dummy(Simulation sim, FixVec2 at)
+        {
+            int id = sim.Entities.Spawn(at, 5000, Faction.Orvill);
+            sim.Entities.Stats[id].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            sim.Entities.Stats[id].SetBase(StatType.Damage, Fix64.Zero);
+            sim.Entities.RefreshStats(id);
+            sim.Entities.NextAttackTick[id] = int.MaxValue;
+            return id;
+        }
+
+        private static void FillLavidium(Simulation sim)
+            => sim.Entities.Lavidium[0] = Fix64.FromInt(sim.Entities.MaxLavidium[0]);
+
+        [Test]
+        public void OnlyAbilitiesThatMoveTheHeroAreHeldByRoots()
+        {
+            // Аудит 29.09: героя переставляют только эти пять — все через
+            // ForcedMotion героя (CastDash, BeginMobility, CastBoarding,
+            // BeginChainStep и «Возврат» Шага по цепи).
+            var moving = new[]
+            {
+                AbilityDefinition.DashId, AbilityDefinition.SkewerId, AbilityDefinition.BackblastId,
+                AbilityDefinition.AnchorLeapId, AbilityDefinition.ChainStepId,
+            };
+            Assert.IsTrue(Simulation.MovesHero(AbilityDefinition.DashId), "кувырок");
+            for (int i = 0; i < PelagKit.PoolSize; i++)
+            {
+                int id = PelagKit.PoolDefinition(i).Id;
+                Assert.AreEqual(System.Array.IndexOf(moving, id) >= 0, Simulation.MovesHero(id), "пул " + i);
+            }
+        }
+
+        /// <summary>
+        /// Решение владельца 29.09: в корнях герой не двигается НИКАК. Кроме
+        /// шага и кувырка не начинаются Выпад, Отскок, Абордаж и Шаг по цепи:
+        /// ни каста, ни шага, ни перезарядки, ни лавидия, начатый удар цел.
+        /// Удар и Вихрь на месте — есть. Корни сошли — то же нажатие уходит в
+        /// первый же тик. poolIndex — индекс пула; −1 — кувырок.
+        /// </summary>
+        [TestCase(-1)]  // кувырок
+        [TestCase(8)]   // Выпад
+        [TestCase(9)]   // Отскок
+        [TestCase(6)]   // Абордаж
+        [TestCase(3)]   // Шаг по цепи
+        public void RootedHeroStartsNothingThatMovesHim_ThenGoesTheTickTheRootEnds(int poolIndex)
+        {
+            var sim = HeroArena(out int dummy);
+            int slot = poolIndex < 0 ? PelagKit.DashSlot : 1;
+            if (poolIndex >= 0) sim.SetAbility(slot, PelagKit.PoolDefinition(poolIndex), new AbilityNode[0], 0);
+            // Дальняя цель: Абордажу и Шагу по цепи есть к кому лететь.
+            int far = Dummy(sim, At(0, 4));
+            Assert.IsTrue(Simulation.MovesHero(sim.GetAbility(slot).DefinitionId));
+            Assert.IsFalse(sim.AbilityHeldByRoots(slot), "без корней кнопка свободна");
+
+            var press = Press(slot, At(0, 4));
+            press.AbilityTarget = far;
+            if (poolIndex == 3) Assert.IsTrue(sim.ValidAbilityTarget(far, sim.GetAbility(slot)), "Шагу по цепи нужна цель");
+
+            Assert.IsTrue(sim.ApplyHeroRoot(150));
+            Assert.IsTrue(sim.AbilityHeldByRoots(slot), "HUD: кнопку держат корни");
+            Assert.IsFalse(sim.AbilityHeldByRoots(0), "Вихрь корни не держат");
+            Assert.IsFalse(sim.AbilityHeldByRoots(-1));
+
+            // Замах по ближнему манекену — нажатие в корнях его не сбивает.
+            int health = sim.Entities.Health[dummy];
+            var attack = InputFrame.Empty;
+            attack.Flags = (byte)InputFlags.Attack;
+            attack.AttackTarget = dummy;
+            attack.Aim = At(1, 0);
+            for (int k = 0; k < 10 && sim.Entities.PendingAttackTarget[0] != dummy; k++) sim.Step(attack);
+            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "замах начался");
+            int impact = sim.Entities.AttackImpactTick[0];
+            Assert.Greater(impact, sim.Tick);
+            sim.Step(press);
+            Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "каст в корнях");
+            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "нажатие в корнях сбило замах");
+            Assert.AreEqual(impact, sim.Entities.AttackImpactTick[0]);
+
+            // Жмёт без остановки дольше замаха Абордажа — ни каста, ни шага.
+            FillLavidium(sim);
+            Fix64 full = sim.Entities.Lavidium[0];
+            int ready = sim.AbilityReadyTick(slot);
+            for (int k = 0; k < 30; k++)
+            {
+                sim.Step(press);
+                Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "каст в корнях, шаг " + k);
+                Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "герой сдвинулся в корнях, шаг " + k);
+                Assert.AreEqual(0, sim.Entities.ForcedTicksLeft[0], "перемещение в корнях, шаг " + k);
+            }
+            Assert.AreEqual(ready, sim.AbilityReadyTick(slot), "перезарядка не пошла");
+            Assert.AreEqual(full, sim.Entities.Lavidium[0], "лавидий не списан");
+            Assert.Less(sim.Entities.Health[dummy], health, "в корнях герой бьёт");
+
+            // Каст на месте — есть: Вихрь из слота 0.
+            int casts = 0;
+            for (int k = 0; k < 30 && casts == 0; k++)
+            {
+                sim.Step(Press(0, At(1, 0)));
+                casts = Count(sim, SimEventType.AbilityCast);
+            }
+            Assert.AreEqual(1, casts, "в корнях герой кастует на месте");
+            // Приказ стоять на месте снимает автоатаку: к концу корней герой свободен.
+            sim.Step(Walk(FixVec2.Zero));
+            Assert.IsTrue(sim.HeroRooted);
+            Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0]);
+
+            // Корни сошли — в тот же тик нажатие уходит, и герой едет.
+            Until(sim, sim.Tick + sim.HeroRootTicksLeft);
+            Assert.IsFalse(sim.HeroRooted);
+            Assert.IsFalse(sim.AbilityHeldByRoots(slot), "корни сошли — кнопка свободна");
+            FillLavidium(sim);
+            sim.Step(press);
+            Assert.AreEqual(1, Count(sim, SimEventType.AbilityCast), "первый тик без корней");
+            Assert.Greater(sim.AbilityReadyTick(slot), sim.Tick, "перезарядка пошла");
+            for (int k = 0; k < 40 && sim.Entities.Position[0].Equals(FixVec2.Zero); k++) sim.Step(InputFrame.Empty);
+            Assert.Greater(sim.Entities.Position[0].Length.ToDouble(), .05, "после корней способность двигает героя");
+        }
+
+        /// <summary>
+        /// Остальные способности пула героя с места не сдвигают — в корнях
+        /// они кастуются как обычно, и герой стоит всё их действие.
+        /// </summary>
+        [TestCase(0)]   // Вихрь
+        [TestCase(1)]   // Рассекающий удар
+        [TestCase(2)]   // Смазка
+        [TestCase(4)]   // Удар якорем
+        [TestCase(5)]   // Крушение
+        [TestCase(7)]   // Взрывная смесь
+        public void RootedHeroCastsInPlace(int poolIndex)
+        {
+            var sim = HeroArena(out int dummy);
+            sim.SetAbility(1, PelagKit.PoolDefinition(poolIndex), new AbilityNode[0], 0);
+            Assert.IsFalse(Simulation.MovesHero(sim.GetAbility(1).DefinitionId));
+            Assert.IsTrue(sim.ApplyHeroRoot(150));
+            Assert.IsFalse(sim.AbilityHeldByRoots(1));
+            FillLavidium(sim);
+
+            var press = Press(1, At(1, 0));
+            press.AbilityTarget = dummy;
+            int casts = 0;
+            for (int k = 0; k < 10 && casts == 0; k++)
+            {
+                sim.Step(press);
+                casts = Count(sim, SimEventType.AbilityCast);
+            }
+            Assert.AreEqual(1, casts, "в корнях каст на месте проходит");
+            for (int k = 0; k < 90; k++)
+            {
+                sim.Step(k % 2 == 0 ? press : InputFrame.Empty);
+                Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "шаг " + k);
+            }
+            Assert.IsTrue(sim.HeroRooted);
+        }
+
         [Test]
         public void StunBlocksEverything()
         {

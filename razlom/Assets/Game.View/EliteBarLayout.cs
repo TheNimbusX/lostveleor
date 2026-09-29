@@ -4,8 +4,8 @@ using System.Globalization;
 namespace Game.View
 {
     /// <summary>
-    /// Числа полоски здоровья над врагом без UnityEngine: надпись в полосе элиты и высота полоски над
-    /// макушкой. Отдельно от HealthBars, чтобы их проверяли тесты вне Unity
+    /// Числа полоски здоровья над врагом без UnityEngine: надпись в полосе элиты, низ полосы элиты с
+    /// рогами и высота полоски над макушкой. Отдельно от HealthBars, чтобы их проверяли тесты вне Unity
     /// (tools/Combat.Presentation.Tests/EliteBarLayoutTests.cs); HealthBars только рисует по ним.
     /// </summary>
     public static class EliteBarLayout
@@ -23,6 +23,26 @@ namespace Game.View
             return health.ToString(CultureInfo.InvariantCulture) + " / " + max.ToString(CultureInfo.InvariantCulture);
         }
 
+        /// <summary>
+        /// Сколько полосы элиты ниже её середины, м — по этому низу полоса встаёт над макушкой
+        /// (<see cref="Target"/>, halfHeight): половина полосы или основание рога, что ниже. Рога на
+        /// концах полосы (выбор владельца 29.09 «5 — Рога») растут вверх, но их срез может свисать под
+        /// полосу — тогда полоса поднимается, чтобы рог не лёг на голову моба.
+        /// </summary>
+        /// <param name="barHeight">Высота полосы, м.</param>
+        /// <param name="antlerHeight">Высота холста рога, м.</param>
+        /// <param name="antlerLift">Точка крепления рога над серединой полосы, м (минус — ниже).</param>
+        /// <param name="antlerBelow">Сколько рога ниже точки крепления, в долях высоты холста
+        /// (make-elite-bar-mark.py печатает это число).</param>
+        public static float EliteBelow(float barHeight, float antlerHeight, float antlerLift, float antlerBelow)
+        {
+            float half = Math.Max(0f, barHeight) * .5f;
+            // Рога нет (высота 0) — только полоса; !(… > …) ловит и NaN.
+            if (!(antlerHeight > 0f) || !(antlerBelow > 0f)) return half;
+            float antler = antlerBelow * antlerHeight - antlerLift;
+            return antler > half ? antler : half;
+        }
+
         /// <summary>Ниже этой макушки (м) замер не верится: тело ещё в земле или его рендереры скрыты.</summary>
         public const float MinTop = .3f;
 
@@ -36,7 +56,8 @@ namespace Game.View
         /// <param name="fallback">Прежняя высота середины полоски из таблицы вида — по ней, когда замера
         /// нет; она же ограничивает замер сверху: вдвое выше таблицы бывают только раздутые границы
         /// кожи (у рантайм-префабов мобов они 4,5 м), а не рога.</param>
-        /// <param name="halfHeight">Половина высоты полоски, м.</param>
+        /// <param name="halfHeight">Сколько полоски ниже её середины, м: половина высоты (у элиты —
+        /// <see cref="EliteBelow"/>).</param>
         public static float Target(float top, bool measured, float fallback, float gap, float halfHeight)
         {
             // !(top > …) ловит и NaN.

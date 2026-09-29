@@ -10,14 +10,13 @@ namespace Game.View
     /// симуляции для жетонов и проверок, а на земле их пока рисуют
     /// собственные виды Вендиго и Камнекопыта — дважды одну метку не рисуем.
     ///
-    /// Стиль один на всех — GroundTelegraphStyle.hlsl, «трещины со светом
-    /// изнутри» (выбор владельца 29.09): земля в фигуре трескается, за бегущей
-    /// кромкой трещины раскрываются и светятся. Весь вид в шейдере, отсюда
-    /// идут только фигура, заливка и видимость. Заливка — обратный
-    /// отсчёт по тикам Sim: (тик − StartTick) / (ImpactTick − StartTick) с
-    /// подкадром драйвера, поэтому пауза и съёмка держат кадр сами. Сеть
-    /// трещин привязана к миру, а не к мешу, — её тоже не надо ни хранить,
-    /// ни сбрасывать.
+    /// Стиль один на всех — GroundTelegraphStyle.hlsl, «пунктир и шевроны»
+    /// (выбор владельца 29.09): светящийся пунктир по тёмной обводке, мягкая
+    /// заливка, шевроны по ходу удара и засечки круга загораются по мере
+    /// заливки. Весь вид в шейдере, отсюда идут только фигура, заливка,
+    /// видимость и вспышка контакта. Заливка — обратный отсчёт по тикам Sim:
+    /// (тик − StartTick) / (ImpactTick − StartTick) с подкадром драйвера,
+    /// поэтому пауза и съёмка держат кадр сами.
     ///
     /// ФИГУРА БЕРЁТСЯ ИЗ МЕТКИ, А НЕ ИЗ МОБА. Урон считается по тем же полям
     /// (Simulation.TelegraphContains), и нарисованное с настоящим разъехаться
@@ -73,7 +72,8 @@ namespace Game.View
 
         private static readonly int Progress = Shader.PropertyToID("_Progress"), Opacity = Shader.PropertyToID("_Opacity"),
             Radius = Shader.PropertyToID("_Radius"), InnerRadius = Shader.PropertyToID("_InnerRadius"), Span = Shader.PropertyToID("_Span"),
-            Length = Shader.PropertyToID("_Length"), Width = Shader.PropertyToID("_Width"), Consumed = Shader.PropertyToID("_Consumed");
+            Length = Shader.PropertyToID("_Length"), Width = Shader.PropertyToID("_Width"), Consumed = Shader.PropertyToID("_Consumed"),
+            Flash = Shader.PropertyToID("_Flash");
 
         private TickDriver _driver;
         private LayoutView _layout;
@@ -202,13 +202,14 @@ namespace Game.View
 
         /// <summary>
         /// Заливка и видимость по тикам. Пока метка открыта — обратный отсчёт до
-        /// контакта. Сработала — полная и гаснет за три тика. Снята — заливка
-        /// замирает там, где её оборвали, и гаснет за остаток задержки.
+        /// контакта. Сработала — полная, вспыхивает и гаснет за три тика. Снята —
+        /// заливка замирает там, где её оборвали, и гаснет за остаток задержки
+        /// без вспышки: удара не было.
         /// </summary>
         private static void Drive(Mark m, in EnemyTelegraph t, float tick)
         {
             float span = Mathf.Max(1, t.ImpactTick - t.StartTick);
-            float progress, opacity;
+            float progress, opacity, flash = 0f;
             if (t.State == TelegraphState.Active)
             {
                 progress = Mathf.Clamp01((tick - t.StartTick) / span);
@@ -223,6 +224,7 @@ namespace Game.View
                 {
                     progress = 1f;
                     opacity = Mathf.Clamp01(1f - age / ResolvedFadeTicks);
+                    flash = 1f;
                 }
                 else
                 {
@@ -232,6 +234,7 @@ namespace Game.View
             }
             m.Block.SetFloat(Progress, progress);
             m.Block.SetFloat(Opacity, opacity);
+            m.Block.SetFloat(Flash, flash);
             m.Renderer.SetPropertyBlock(m.Block);
         }
 

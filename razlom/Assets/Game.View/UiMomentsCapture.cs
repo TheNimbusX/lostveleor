@@ -54,7 +54,7 @@ namespace Game.View
 
         TickDriver _driver;
         string _directory;
-        float _riftAt = -1f, _deathAt = -1f, _clock;
+        float _riftAt = -1f, _deathAt = -1f, _clock, _nextWaveBurn;
         int _shot;
         bool _singed, _cleared, _killed, _deathShots, _toasts;
         int _deathStep;
@@ -131,6 +131,23 @@ namespace Game.View
                 for (int id = 1; id < run.Sim.Entities.Count; id++)
                     if (run.Sim.Entities.Alive[id]) { run.Sim.Statuses.ApplyBurn(id, Fix64.FromInt(1000000), 1, 0, 0); burned++; }
                 Log("burned " + burned + " enemies");
+            }
+            // Маршрут: арены теперь из нескольких волн (шаблоны арен), и одно выжигание на ClearAt
+            // снимало только первую волну — зачистка не наступала, сценарий не доходил до награды,
+            // а герой погибал в первой арене. Пока первая арена не зачищена, каждая следующая волна
+            // сгорает. Вторую не трогаем: там по сценарию бой, пауза и смерть героя.
+            if (_route && _cleared && !_killed && t >= _nextWaveBurn && session.Mode == GameMode.Rift
+                && run != null && run.Phase == RunPhase.Clearing && run.Depth == _firstDepth)
+            {
+                _nextWaveBurn = t + .5f;
+                int burned = 0;
+                for (int id = 1; id < run.Sim.Entities.Count; id++)
+                    if (run.Sim.Entities.Alive[id] && run.Sim.Entities.Side[id] != Faction.Wole)
+                    {
+                        run.Sim.Statuses.ApplyBurn(id, Fix64.FromInt(1000000), 1, 0, 0);
+                        burned++;
+                    }
+                if (burned > 0) Log("burned " + burned + " enemies of the next wave");
             }
             if (_route && !_killed && session.Mode == GameMode.Rift && run != null && !Route(run, t)) return;
             if (!_killed && (_route || t >= DieAt) && session.Mode == GameMode.Rift && run != null)

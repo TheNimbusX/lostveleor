@@ -23,11 +23,12 @@ Shader "Razlom/Wendigo Warning"
  float _IsSector,_Impact,_Ring;
  CBUFFER_END
  V Vert(A a){V o;o.world=TransformObjectToWorld(a.vertex.xyz);o.position=TransformWorldToHClip(o.world);o.uv=a.uv;return o;}
- // Коготь (сектор 140°) и посадка прыжка (круг) — общим стилем трещин.
- half4 Frag(V i):SV_Target { float r=i.uv.y/max(.01,_Ring);
- float edge=(1-r)*_Radius;
- if(_IsSector>.5)edge=min(edge,sin(min(i.uv.x,1-i.uv.x)*2.44346095)*r*_Radius);
- return GroundTelegraphCracks(i.world.xz,edge,r,_Radius,_Progress,_Opacity,1); }
+ // Коготь — сектор 140° (шевроны наружу), посадка прыжка — круг (засечки);
+ // общий стиль «пунктир и шевроны». _Ring — доля радиуса, _Impact > 0 — после
+ // контакта: метка гаснет со вспышкой.
+ half4 Frag(V i):SV_Target {
+ return GroundTelegraphArc(float2(i.uv.x,i.uv.y/max(.01,_Ring)),i.world.xz,_Radius,0,
+ _IsSector>.5?2.44346095:6.2831853,_Progress,_Opacity,1,_Impact>0?1:0); }
  ENDHLSL
  }
  }

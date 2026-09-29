@@ -1104,9 +1104,7 @@ namespace Game.View
                 {
                     AbilityBuild build = Sim.GetAbility(i);
                     if (build == null) continue;
-                    var availability = HudAbilityAvailability.Evaluate(Sim.Entities.Alive[Simulation.PlayerId],
-                        build.DefinitionId == AbilityDefinition.WreckId && Sim.WreckComboOpen,
-                        Sim.AbilityReadyTick(i) - Sim.Tick, Sim.Entities.Lavidium[Simulation.PlayerId].ToInt(), Simulation.LavidiumCostOf(build));
+                    var availability = HudAbilityAvailability.Of(Sim, i, build);
                     if (_hud == null) _hud = GetComponent<PlayerHud>();
                     _hud?.NotifyAbilityPress(i, availability);
                     if (!availability.Ready) continue;
