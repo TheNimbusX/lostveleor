@@ -315,6 +315,7 @@ namespace Game.View
             UpdateMeadow();
             DrawGrassField();
             DrawFallenLeaves();
+            DrawPebbles();
             if (!Application.isPlaying || _driver == null) return;
             if (_driver.Run == null || _driver.Sim == null)
             {

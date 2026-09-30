@@ -11,7 +11,14 @@ namespace Game.View
     public sealed partial class LayoutView
     {
         private const string LeavesPath = "Environment/Camp/GroundDetails/";
+        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles";
         private float[] _clearingDistance;
+        private readonly List<Matrix4x4>[] _pebbleField = { new List<Matrix4x4>(), new List<Matrix4x4>() };
+        private Mesh[] _pebbleMeshes;
+        private Material[] _pebbleMaterials;
+        private Matrix4x4[] _pebblePivots;
+        private Bounds _pebbleBounds;
+        private bool _pebblesLookedUp;
         private readonly List<Matrix4x4>[] _leafField = new List<Matrix4x4>[6];
         private Material[] _leafMaterials;
         private Mesh _leafMesh;
@@ -27,7 +34,8 @@ namespace Game.View
         }
 
         // Земля вместо газона: внутри поляны дальше одного-трёх метров от края — вытоптанный грунт,
-        // у края — кайма травы, внутри — редкие травяные островки. Каменистая арена — с камнями в грунте.
+        // у края — кайма травы, внутри — редкие травяные островки. В грунте — вросшие камни:
+        // редкие по всей земле и россыпями, гуще у каменистой арены (владелец, 29 сентября).
         private void PaintEarthClearing()
         {
             if (_shownMap.Outline == null || _shownMap.GladeCount != 1) return;
@@ -35,7 +43,7 @@ namespace Game.View
             if (_clearingDistance == null) _clearingDistance = new float[n * n];
             var dist = _clearingDistance;
             FloorDistance(dist, true);
-            float stones = CharacterOf(_shownMap, 0) == GladeCharacter.Rocky ? .85f : .45f;
+            float stones = CharacterOf(_shownMap, 0) == GladeCharacter.Rocky ? .7f : .45f;
             for (int y = 1; y < n - 1; y++)
                 for (int x = 1; x < n - 1; x++)
                 {
@@ -49,7 +57,8 @@ namespace Game.View
                     if (earth <= .01f) continue;
                     var pixel = _campSurfacePixels[i];
                     pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
-                    pixel.g = (byte)(pixel.g * Mathf.Lerp(1, stones, earth));
+                    float bed = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.42f, .72f, Mathf.PerlinNoise(px * .21f + 17, pz * .21f + 41)));
+                    pixel.g = (byte)Mathf.Lerp(pixel.g, Mathf.Lerp(.1f, stones, bed) * 255, earth);
                     _campSurfacePixels[i] = pixel;
                 }
         }
@@ -99,6 +108,111 @@ namespace Game.View
             AddLandmark(.72f, false);
             var renderer = placed.GetComponentInChildren<MeshRenderer>();
             if (renderer != null) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
+        }
+
+        // Каменный алтарь из Creating (владелец, 29 сентября) — разовый ориентир на плече поляны,
+        // на северной, дальней от камеры дуге: оттуда он виден целиком, кроны его не закрывают.
+        // Стоит лицом к середине поляны и на боевой пол не заходит.
+        private void PlaceAltar(LayoutMap map)
+        {
+            int altar = VariantNamed(AltarPrefab);
+            if (altar < 0 || map.GladeCount == 0) return;
+            var rng = DecorRandom(0, 1063);
+            var glade = map.GetGlade(map.GladeCount == 1 ? 0 : rng.Next(map.GladeCount));
+            var center = TrailPoint(glade.Center);
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                // Сначала узкая дуга напротив камеры, потом — вся верхняя половина края.
+                float spread = attempt < 24 ? .55f : 1.3f;
+                float angle = Mathf.PI * (.5f + ((float)rng.NextDouble() - .5f) * spread);
+                float shoulder = _decorRadii[altar] * .6f + .4f + (float)rng.NextDouble() * 1.8f;
+                var point = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                    Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                if (!TryForestDetail(map, altar, point, rng)) continue;
+                var toward = center - point;
+                _decor[_decorCount - 1].rotation = Quaternion.LookRotation(new Vector3(toward.x, 0, toward.y));
+                AddLandmark(.75f, true);
+                return;
+            }
+        }
+
+        private bool FindPebbles()
+        {
+            if (_pebblesLookedUp) return _pebbleMeshes != null;
+            _pebblesLookedUp = true;
+            int variant = VariantNamed(PebblesPrefab);
+            if (variant < 0) return false;
+            var prefab = _style.DecorVariants[variant].Prefab;
+            var filters = prefab.GetComponentsInChildren<MeshFilter>(true);
+            int count = Mathf.Min(filters.Length, _pebbleField.Length);
+            if (count == 0) return false;
+            var meshes = new Mesh[count]; var materials = new Material[count]; var pivots = new Matrix4x4[count];
+            for (int i = 0; i < count; i++)
+            {
+                var renderer = filters[i].GetComponent<MeshRenderer>();
+                if (filters[i].sharedMesh == null || renderer == null || renderer.sharedMaterial == null) return false;
+                meshes[i] = filters[i].sharedMesh;
+                // Своя копия с инстансингом: материал камней декора не меняется.
+                materials[i] = new Material(renderer.sharedMaterial) { name = renderer.sharedMaterial.name + " — галька", enableInstancing = true };
+                _ownedMaterials.Add(materials[i]);
+                pivots[i] = prefab.transform.worldToLocalMatrix * filters[i].transform.localToWorldMatrix;
+            }
+            _pebbleMeshes = meshes; _pebbleMaterials = materials; _pebblePivots = pivots;
+            return true;
+        }
+
+        // Галька на утоптанной земле: мелкие камни кучками по одному-четыре, у каменистой арены гуще.
+        // Рисуется инстансингом, как трава и листья: не декор и не препятствие, бой не закрывает.
+        private void ScatterPebbles(LayoutMap map)
+        {
+            foreach (var list in _pebbleField) list.Clear();
+            if (map.Outline == null || map.GladeCount != 1 || !FindPebbles()) return;
+            var glade = map.GetGlade(0);
+            var rng = DecorRandom(0, 1061);
+            float rx = glade.Radii.X.ToFloat() + 2, rz = glade.Radii.Y.ToFloat() + 2;
+            var center = TrailPoint(glade.Center);
+            _pebbleBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            int clusters = CharacterOf(map, 0) == GladeCharacter.Rocky ? 70 : 45;
+            for (int attempt = 0; attempt < 600 && clusters > 0; attempt++)
+            {
+                var p = center + new Vector2(((float)rng.NextDouble() * 2 - 1) * rx, ((float)rng.NextDouble() * 2 - 1) * rz);
+                int count = rng.Next(1, 5);
+                double roll = rng.NextDouble();
+                float earth = SurfaceEarth(p.x, p.y);
+                if (earth < .45f || roll > .3f + earth * .4f) continue;
+                if (NearPond(p.x, p.y, .5f) || NearLandmark(p.x, p.y, .3f) || InsideSolidDecor(p.x, p.y)) continue;
+                clusters--;
+                for (int k = 0; k < count; k++)
+                {
+                    var q = p + new Vector2((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f) * .9f;
+                    float size = k == 0 ? .2f + (float)rng.NextDouble() * .18f : .09f + (float)rng.NextDouble() * .12f;
+                    int mesh = rng.Next(_pebbleMeshes.Length);
+                    var rotation = Quaternion.Euler(((float)rng.NextDouble() - .5f) * 30, (float)rng.NextDouble() * 360,
+                        ((float)rng.NextDouble() - .5f) * 30);
+                    var scale = new Vector3(size, size * (.55f + (float)rng.NextDouble() * .35f), size);
+                    if (SurfaceEarth(q.x, q.y) < .3f) continue;
+                    // Камень наполовину в земле: торчит только верх, как у вросшей гальки.
+                    _pebbleField[mesh].Add(Matrix4x4.TRS(new Vector3(q.x, -scale.y * .3f, q.y), rotation, scale) * _pebblePivots[mesh]);
+                }
+            }
+        }
+
+        private void DrawPebbles()
+        {
+            if (_pebbleMeshes == null) return;
+            for (int m = 0; m < _pebbleMeshes.Length; m++)
+            {
+                var list = _pebbleField[m];
+                if (list.Count == 0) continue;
+                var parameters = new RenderParams(_pebbleMaterials[m])
+                {
+                    shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On,
+                    receiveShadows = true,
+                    worldBounds = _pebbleBounds,
+                };
+                for (int start = 0; start < list.Count; start += 1023)
+                    Graphics.RenderMeshInstanced(parameters, _pebbleMeshes[m], 0, list, Mathf.Min(1023, list.Count - start), start);
+            }
         }
 
         // Акценты кромки: куртины грибов и лиловых цветов в травяной кайме у самого края пола —

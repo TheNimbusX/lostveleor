@@ -465,6 +465,8 @@ namespace Game.LocationTests
             var source = _theme.Style.CampSurfaceMaterial;
             float sourceSoftness = source != null ? source.GetFloat("_DetailSoftness") : 0;
             float sourceTurf = source != null ? source.GetFloat("_TurfWeight") : 0;
+            var sourceEarth = source != null ? source.GetTexture("_DirtTex") : null;
+            float sourceTile = source != null ? source.GetFloat("_TileMeters") : 0;
             _preview.Generate(_theme, 42, 1);
             var meshes = _preview.Root.GetComponentsInChildren<MeshFilter>(true).Select(f => f.sharedMesh)
                 .Where(m => m != null && (m.name == "Мягкий рельеф фона" || m.name == "Свечение ориентира")).Distinct().ToArray();
@@ -487,6 +489,13 @@ namespace Game.LocationTests
                 Assert.That(material, Is.Not.SameAs(source));
                 Assert.That(material.GetFloat("_DetailSoftness"), Is.EqualTo(_theme.Style.GroundDetailSoftness));
                 Assert.That(material.GetFloat("_TurfWeight"), Is.EqualTo(_theme.Style.GroundTurfWeight));
+                // Своя земля разлома — только в его экземплярах материала.
+                if (_theme.Style.EarthTexture != null)
+                {
+                    Assert.That(material.GetTexture("_DirtTex"), Is.SameAs(_theme.Style.EarthTexture));
+                    Assert.That(material.GetFloat("_TileMeters"), Is.EqualTo(_theme.Style.EarthTileMeters));
+                    Assert.That(material.GetFloat("_DirtGain"), Is.EqualTo(_theme.Style.EarthBrightness));
+                }
                 generatedSurface = material.GetTexture("_SurfaceMap");
                 Assert.That(generatedSurface, Is.Not.Null);
                 Assert.That(generatedSurface, Is.Not.SameAs(source.GetTexture("_SurfaceMap")));
@@ -498,6 +507,8 @@ namespace Game.LocationTests
             {
                 Assert.That(source.GetFloat("_DetailSoftness"), Is.EqualTo(sourceSoftness), "Материал лагеря изменён");
                 Assert.That(source.GetFloat("_TurfWeight"), Is.EqualTo(sourceTurf), "Материал лагеря изменён");
+                Assert.That(source.GetTexture("_DirtTex"), Is.SameAs(sourceEarth), "Грунт лагеря изменён");
+                Assert.That(source.GetFloat("_TileMeters"), Is.EqualTo(sourceTile), "Материал лагеря изменён");
             }
         }
 
@@ -566,7 +577,7 @@ namespace Game.LocationTests
                     Assert.That(sun.color, Is.EqualTo(style == CampLookStyle.Original ? Color.white : evening ? look.EveningSunColor : look.SunColor));
                     Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : evening ? look.EveningFillIntensity : look.FillIntensity));
                     Assert.That(fill.color, Is.EqualTo(evening ? look.EveningFillColor : Color.cyan));
-                    Assert.That(sun.intensity, Is.EqualTo(evening ? 1.4f : 2).Within(.0001f));
+                    Assert.That(sun.intensity, Is.EqualTo((evening ? 1.4f : 2) * _theme.Style.CampSunScale).Within(.0001f));
                     // Своя высота солнца у разлома (CampSunPitch) — поверх любого стиля лагеря, сторона света та же.
                     float pitch = _theme.Style.CampSunPitch > 0 ? _theme.Style.CampSunPitch
                         : evening ? look.EveningSunPitch : rotation.eulerAngles.x;

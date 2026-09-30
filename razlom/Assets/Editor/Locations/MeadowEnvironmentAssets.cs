@@ -12,13 +12,24 @@ namespace Game.LocationEditor
     {
         private const string Folder = "Assets/Resources/Environment/Meadow";
         static MeadowEnvironmentAssets() { EditorApplication.update += Poll; }
+        // Отдельный файл запроса для шага поляны: прежняя сборка Poll приняла бы незнакомое
+        // действие в общем файле за полную пересборку окружения (Configure).
+        private const string GladeRequest = "Library/MeadowGlade.request";
+
         private static void Poll()
         {
             const string request = "Library/MeadowEnvironment.request";
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(request)) return;
-            string action = File.ReadAllText(request).Trim();
-            File.Delete(request);
-            try { if (action == "trees") ConfigureTrees(); else if (action == "camp") UseCampAppearance(); else Configure(); File.WriteAllText(LocationTestRunner.RequestPath, "refresh"); }
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            string action;
+            if (File.Exists(GladeRequest)) { action = "glade"; File.Delete(GladeRequest); }
+            else if (File.Exists(request)) { action = File.ReadAllText(request).Trim(); File.Delete(request); }
+            else return;
+            try
+            {
+                if (action == "glade") ApplyGladeUpdate();
+                else if (action == "trees") ConfigureTrees(); else if (action == "camp") UseCampAppearance(); else Configure();
+                File.WriteAllText(LocationTestRunner.RequestPath, "refresh");
+            }
             catch (Exception e) { Debug.LogException(e); }
         }
 
@@ -568,40 +579,247 @@ namespace Game.LocationEditor
             Debug.Log("[Луга] Подключены рунный камень и трава по карте, кольцо-руина утоплено в землю.");
         }
 
-        // Пучок для травяного ковра по всей карте: 970 треугольников упрощаются штатным Mesh LOD
-        // примерно до 300 — тысяча экземпляров на арену не должна весить как лес.
+        // Ковёр травы по всей карте — кочка arena_grass_v3 (владелец, 29 сентября): густая трава метр
+        // на метр вместо редкого пучка arena_grass_field, который остаётся в Creating. 4 579 треугольников
+        // упрощаются штатным Mesh LOD примерно до тысячи: пара тысяч кочек на арену не должна весить как лес.
         private static GameObject PrepareGrassField()
         {
-            var prefab = PrepareImported("CreatingGrassField", "arena_grass_field", .36f, false);
+            const string folder = "Assets/Art/Meadow/Creating/arena_grass_v3/";
+            var model = AssetDatabase.LoadAssetAtPath<GameObject>(folder + "arena_grass_v3.glb");
+            if (model == null) throw new InvalidOperationException("Missing environment asset: " + folder + "arena_grass_v3.glb");
+            var source = model.GetComponentInChildren<MeshFilter>(true);
+            var mesh = LodCopy(source.sharedMesh, Folder + "/CreatingGrassField_Mesh.asset", 1200, "CreatingGrassField");
+            // Стебли почти вертикальны: со своими нормалями сторона от солнца уходила в серо-синий
+            // под холодным заполнением. Нормали клонятся к небу — кочка освещена вровень с землёй.
+            var sky = Quaternion.Inverse(source.transform.rotation) * Vector3.up;
+            var normals = mesh.normals;
+            for (int i = 0; i < normals.Length; i++) normals[i] = Vector3.Lerp(normals[i], sky, .7f).normalized;
+            mesh.normals = normals;
+            mesh.RecalculateTangents();
+            var material = SurfaceMaterial(Folder + "/CreatingGrassField_Surface.mat", "Game/Camp Breeze Lit");
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "arena_grass_v3_basecolor.jpg"));
+            material.SetColor("_BaseColor", GrassFieldTint);
+            SetNormalMap(material, folder + "arena_grass_v3_normal.jpg", .5f);
+            material.SetFloat("_Smoothness", .1f); material.SetFloat("_Cull", 0);
+            material.enableInstancing = true;
+            EditorUtility.SetDirty(material);
+            var root = new GameObject("CreatingGrassField");
+            try
+            {
+                var body = new GameObject("Кочка травы").transform;
+                body.SetParent(root.transform, false);
+                // Поворот и масштаб узла glb остаются: меш лежит в его пространстве.
+                body.localRotation = source.transform.rotation; body.localScale = source.transform.lossyScale;
+                body.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = body.gameObject.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = material;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                var bounds = renderer.bounds;
+                float factor = GrassFieldHeight / Mathf.Max(.01f, bounds.size.y);
+                body.localScale *= factor;
+                body.localPosition = -new Vector3(bounds.center.x, bounds.min.y, bounds.center.z) * factor;
+                Debug.Log($"[Луга] CreatingGrassField: кочка {bounds.size * factor} м");
+                PrefabUtility.SaveAsPrefabAsset(root, Folder + "/CreatingGrassField.prefab");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+            return AddBreeze(AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/CreatingGrassField.prefab"), .12f);
+        }
+
+        private const float GrassFieldHeight = .34f;
+
+        // Кочка arena_grass_v3 — приглушённая шалфейная зелень; оттенок почти нейтральный, без срезанного
+        // синего, иначе закатный свет снова уводит ковёр в жёлтое (прежний тон .82/.9/.72).
+        private static readonly Color GrassFieldTint = new Color(.88f, .94f, .9f);
+
+        // Уровень штатного Mesh LOD не больше maxTriangles — в собственный меш рядом с префабом.
+        // Касательные пересчитываются: у кочки и алтаря карты нормалей.
+        private static Mesh LodCopy(Mesh source, string path, int maxTriangles, string label)
+        {
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, path); }
+            var work = UnityEngine.Object.Instantiate(source);
+            try
+            {
+                MeshLodUtility.GenerateMeshLods(work, (MeshLodUtility.LodGenerationFlags)0, -1);
+                int level = 0;
+                while (level + 1 < work.lodCount && LodTriangles(work, level) > maxTriangles) level++;
+                ExtractLod(work, level, mesh);
+                mesh.RecalculateTangents();
+                mesh.name = Path.GetFileNameWithoutExtension(path);
+                Debug.Log($"[Луга] {label}: LOD {level}, {LodTriangles(work, level)} из {LodTriangles(work, 0)} треугольников");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(work); }
+            return mesh;
+        }
+
+        private static Material SurfaceMaterial(string path, string shaderName)
+        {
+            var shader = Shader.Find(shaderName);
+            if (shader == null) throw new InvalidOperationException("Не найден шейдер " + shaderName);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null) { material = new Material(shader); AssetDatabase.CreateAsset(material, path); }
+            else if (material.shader != shader) material.shader = shader;
+            return material;
+        }
+
+        private static void SetNormalMap(Material material, string path, float scale)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("Нет карты нормалей " + path);
+            if (importer.textureType != TextureImporterType.NormalMap)
+            {
+                importer.textureType = TextureImporterType.NormalMap;
+                importer.SaveAndReimport();
+            }
+            material.SetTexture("_BumpMap", AssetDatabase.LoadAssetAtPath<Texture2D>(path));
+            material.SetFloat("_BumpScale", scale);
+            material.EnableKeyword("_NORMALMAP");
+        }
+
+        // Шаг поляны 29 сентября целиком: из меню пункты идут по отдельности, из файла запроса
+        // и пакетного запуска (-executeMethod) — вместе.
+        public static void ApplyGladeUpdate() { AddGrassAltarAndPebbles(); MatchCampPalette(); }
+
+        // Новая трава, алтарь и галька из Creating (владелец, 29 сентября). Нулевой вес: ковёр травы
+        // и галька рисуются инстансингом в LayoutView, алтарь ставится ориентиром на плече поляны.
+        [MenuItem("Разлом/Локации/Новая трава, алтарь и галька из Creating", priority = 32)]
+        public static void AddGrassAltarAndPebbles()
+        {
+            AssetDatabase.Refresh();
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var variants = new List<DecorVariant>(theme.Style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingGrassField"
+                || v.Prefab.name == "CreatingAltar" || v.Prefab.name == "MeadowPebbles"));
+            variants.Add(Variant(PrepareGrassField(), DecorKind.GrassTuft, 0f, false, .9f, 1.1f));
+            variants.Add(Variant(PrepareAltar(), DecorKind.Rock, 0f, false, .95f, 1.05f));
+            variants.Add(Variant(PreparePebbles(), DecorKind.Rock, 0f, false, 1f, 1f));
+            theme.Style.DecorVariants = variants.ToArray();
+            theme.Style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Подключены новая трава по карте, алтарь и галька из Creating.");
+        }
+
+        // Каменный алтарь из Creating: постамент в корнях и мху с бирюзовыми кристаллами. Кристаллы
+        // светятся по собственной карте из текстуры, рядом — холодный точечный свет.
+        private static GameObject PrepareAltar()
+        {
+            const string category = "arena_altar";
+            string folder = "Assets/Art/Meadow/Creating/" + category + "/";
+            var prefab = PrepareImported("CreatingAltar", category, AltarHeight, false);
+            string baseColor = null, normals = null;
+            foreach (string file in Directory.GetFiles(folder, "*.jpg", SearchOption.AllDirectories))
+            {
+                // Tripo: *_0_0 — цвет, *_0_3 — нормали.
+                if (file.EndsWith("_0_0.jpg")) baseColor = file.Replace('\\', '/');
+                else if (file.EndsWith("_0_3.jpg")) normals = file.Replace('\\', '/');
+            }
+            if (baseColor == null || normals == null) throw new InvalidOperationException("Нет текстур алтаря в " + folder);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingAltar_Surface.mat");
+            material.SetColor("_BaseColor", new Color(.9f, .9f, .86f));
+            SetNormalMap(material, normals, 1);
+            var glow = BuildGlowMap(baseColor, Folder + "/CreatingAltar_Glow.png",
+                // Кристаллы — яркий бирюзовый (около 90/230/220); мох жёлто-зелёный, камень серый.
+                p => p.g > 170 && p.b > 150 && p.r + 60 < p.g ? Mathf.InverseLerp(170, 225, Mathf.Min(p.g, p.b)) : 0);
+            material.SetTexture("_EmissionMap", glow);
+            material.SetColor("_EmissionColor", new Color(.35f, .95f, 1f) * .9f);
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            EditorUtility.SetDirty(material);
             string path = AssetDatabase.GetAssetPath(prefab);
             var root = PrefabUtility.LoadPrefabContents(path);
             try
             {
                 var filter = root.GetComponentInChildren<MeshFilter>(true);
-                var work = UnityEngine.Object.Instantiate(filter.sharedMesh);
-                string meshPath = Folder + "/CreatingGrassField_Mesh.asset";
-                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(meshPath);
-                if (mesh == null) { mesh = new Mesh(); AssetDatabase.CreateAsset(mesh, meshPath); }
-                try
-                {
-                    MeshLodUtility.GenerateMeshLods(work, (MeshLodUtility.LodGenerationFlags)0, -1);
-                    int level = 0;
-                    while (level + 1 < work.lodCount && LodTriangles(work, level) > 320) level++;
-                    ExtractLod(work, level, mesh);
-                    mesh.name = "CreatingGrassField_Mesh";
-                    Debug.Log($"[Луга] CreatingGrassField: LOD {level}, {LodTriangles(work, level)} из {LodTriangles(work, 0)} треугольников");
-                }
-                finally { UnityEngine.Object.DestroyImmediate(work); }
-                filter.sharedMesh = mesh;
+                long indices = 0;
+                for (int s = 0; s < filter.sharedMesh.subMeshCount; s++) indices += filter.sharedMesh.GetIndexCount(s);
+                Debug.Log($"[Луга] CreatingAltar: {indices / 3} треугольников в исходной модели");
+                if (indices / 3 > 20000)
+                    filter.sharedMesh = LodCopy(filter.sharedMesh, Folder + "/CreatingAltar_Mesh.asset", 16000, "CreatingAltar");
+                var light = new GameObject("Свет кристаллов").AddComponent<Light>();
+                light.transform.SetParent(root.transform, false);
+                light.transform.position = filter.transform.TransformPoint(GlowCentre(filter.sharedMesh, glow, filter.sharedMesh.bounds.center))
+                    + Vector3.up * .25f;
+                light.type = LightType.Point; light.range = 3.2f; light.intensity = .7f;
+                light.color = new Color(.45f, .9f, 1f); light.shadows = LightShadows.None;
+                Debug.Log($"[Луга] CreatingAltar: высота {AltarHeight} м, свет кристаллов на {light.transform.localPosition}");
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
-            TintPrefab("CreatingGrassField", GrassFieldTint);
-            return AddBreeze(prefab, .12f);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
-        // Модель ядовито-зелёная, прежний тон .7/.78/.64 вместе с дымкой делал ковёр блёклым.
-        private static readonly Color GrassFieldTint = new Color(.82f, .9f, .72f);
+        private const float AltarHeight = 1.8f;
+
+        // Галька утоптанной земли — два маленьких камня из Creating, упрощённые примерно до двухсот
+        // треугольников. У каждой модели метровый охват, размер задаёт раскладка (LayoutView.Glade).
+        private static GameObject PreparePebbles()
+        {
+            string[] sources = { "arena_smallRock_v1", "arena_smallRock_v2" };
+            var root = new GameObject("MeadowPebbles");
+            try
+            {
+                for (int i = 0; i < sources.Length; i++)
+                {
+                    string folder = "Assets/Art/Meadow/Creating/" + sources[i];
+                    var models = Directory.GetFiles(folder, "*.fbx", SearchOption.AllDirectories);
+                    var textures = Directory.GetFiles(folder, "*.jpg", SearchOption.AllDirectories);
+                    Array.Sort(models, StringComparer.Ordinal); Array.Sort(textures, StringComparer.Ordinal);
+                    var model = AssetDatabase.LoadAssetAtPath<GameObject>(models[0].Replace('\\', '/'));
+                    var source = model.GetComponentInChildren<MeshFilter>(true);
+                    var mesh = LodCopy(source.sharedMesh, Folder + "/MeadowPebble" + i + "_Mesh.asset", 240, "MeadowPebble" + i);
+                    var material = SurfaceMaterial(Folder + "/MeadowPebble" + i + "_Surface.mat", "Universal Render Pipeline/Lit");
+                    material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(textures[0].Replace('\\', '/')));
+                    // Чуть темнее камней опушки: галька сидит в сырой земле.
+                    material.SetColor("_BaseColor", new Color(.74f, .74f, .72f));
+                    material.SetFloat("_Smoothness", .12f);
+                    material.enableInstancing = true;
+                    EditorUtility.SetDirty(material);
+                    var body = new GameObject("Галька " + i).transform;
+                    body.SetParent(root.transform, false);
+                    body.localRotation = source.transform.rotation; body.localScale = source.transform.lossyScale;
+                    body.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                    var renderer = body.gameObject.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterial = material;
+                    var bounds = renderer.bounds;
+                    float factor = 1 / Mathf.Max(.01f, Mathf.Max(bounds.size.x, bounds.size.z));
+                    body.localScale *= factor;
+                    body.localPosition = -new Vector3(bounds.center.x, bounds.min.y, bounds.center.z) * factor;
+                }
+                return PrefabUtility.SaveAsPrefabAsset(root, Folder + "/MeadowPebbles.prefab");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        // Владелец (29 сентября): выровнять гамму арены по лагерю — земля была оранжевой. Своя «сочная»
+        // обработка (контраст и насыщенность 20) вместе с тёплыми светами заката выжигала синий почти
+        // в ноль: земля на кадре R136 G94 B8. Теперь у арены обработка лагеря, солнце вечерней
+        // яркости, но выше лагерного (тени короче), фактура травы — лагерная, грунт — природный.
+        [MenuItem("Разлом/Локации/Цвет арены как в лагере, природная земля", priority = 33)]
+        public static void MatchCampPalette()
+        {
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var style = theme.Style;
+            var camp = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Environment/Camp/Unified/Camp Study CampSurface.mat");
+            if (camp == null) throw new InvalidOperationException("Не найден материал земли лагеря");
+            style.EarthTexture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Resources/Terrain/TCom_Sand_Muddy2_2x2_1K_albedo.tif");
+            if (style.EarthTexture == null) throw new InvalidOperationException("Не найдена фактура земли TCom_Sand_Muddy2");
+            style.EarthTileMeters = 3;
+            // Фото-грязь (в среднем 73/59/42) темнее нарисованных камней лагеря в 2,4 раза: без
+            // подъёма середина арены читалась тёмными дырами с угловатыми краями маски камней.
+            style.EarthBrightness = 1.9f;
+            style.PostProcessingOverride = null;
+            // Ниже 40° ели и дубы опушки (8–12 м) клали через всю арену тени по 15–20 м с прямыми
+            // краями конусов. Солнце высокое, но слабее: на земле та же яркость, что при 30°.
+            style.CampSunPitch = 42;
+            style.CampSunScale = .76f;
+            style.GroundDetailSoftness = camp.GetFloat("_DetailSoftness");
+            // Лагерь почти весь в тени леса и под холодным заполнением, поэтому его трава зелёная;
+            // открытая поляна под оранжевым солнцем с той же долей дерна желтеет. Больше тёмного
+            // листового дерна — та же зелень лагеря на свету.
+            style.GroundTurfWeight = .85f;
+            TintPrefab("CreatingGrassField", GrassFieldTint);
+            style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Арена в гамме лагеря: его обработка, солнце 42° на 0,76 яркости, больше дерна, природная земля.");
+        }
 
         // Арена выглядела блёклой: вечерняя дымка лагеря ложилась на весь кадр, постобработка
         // заката грела и гасила цвет, фактура земли была размыта. У арены свой профиль цвета

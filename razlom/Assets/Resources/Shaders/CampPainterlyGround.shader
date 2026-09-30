@@ -9,6 +9,7 @@ Shader "Game/Studies/Painterly Ground"
         _DetailSoftness ("Texture mip softness", Range(0,3)) = 1.25
         _BaseColor ("Tint", Color) = (1,1,1,1)
         _TileMeters ("Texture size in metres", Float) = 3
+        _DirtGain ("Worn earth brightness", Range(0.5,3)) = 1
         _AmbientStrength ("Ground ambient light", Range(0,1)) = 0.55
         _StoneRelief ("Embedded stone relief metres", Range(0,0.04)) = 0.018
         _IsPath ("Path overlay", Float) = 0
@@ -56,7 +57,7 @@ Shader "Game/Studies/Painterly Ground"
                 half4 _BaseColor;
                 float _TileMeters, _IsPath, _SrcBlend, _DstBlend, _ZWrite;
                 float _IsSurface,_IsRiverBank;float4 _SurfaceBounds;
-                half _AmbientStrength;float _StoneRelief; half _TurfWeight; float _DetailSoftness;
+                half _AmbientStrength;float _StoneRelief; half _TurfWeight; float _DetailSoftness; half _DirtGain;
             CBUFFER_END
             float4 _CampStudyArea;
             float _CampShadowDiagnostic;
@@ -86,7 +87,7 @@ Shader "Game/Studies/Painterly Ground"
                 float2 p=i.positionWS.xz;
                 float2 uv=p/max(_TileMeters,.1);
                 half3 grass=SAMPLE_TEXTURE2D_BIAS(_GrassTex,sampler_GrassTex,p/8,_DetailSoftness).rgb;
-                half3 dirt=SAMPLE_TEXTURE2D(_DirtTex,sampler_DirtTex,uv).rgb;
+                half3 dirt=SAMPLE_TEXTURE2D(_DirtTex,sampler_DirtTex,uv).rgb*_DirtGain;
                 grass=lerp(dot(grass,half3(.2126,.7152,.0722)).xxx,grass,.90)*half3(.60,.82,.68);
                 dirt=lerp(dot(dirt,half3(.2126,.7152,.0722)).xxx,dirt,.70)*half3(.92,.86,.78);
                 float macro=Noise(p*.28);

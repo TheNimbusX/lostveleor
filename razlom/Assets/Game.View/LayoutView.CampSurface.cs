@@ -17,11 +17,18 @@ namespace Game.View
             material.SetFloat("_IsSurface", 1);
             material.SetFloat("_IsPath", 0);
             material.SetFloat("_IsRiverBank", 0);
-            // Трава арены зеленее и светлее лагерной: прежний серо-зелёный тон (.88/.95/.89) делал поле
-            // блёклым, а тёплый закатный свет и так добавляет желтизны.
-            material.SetColor("_BaseColor", material.GetColor("_BaseColor") * new Color(.86f, 1f, .84f, 1));
+            // Цвет травы — лагерный: прежний множитель (.86, 1, .84) вместе с закатом выжигал синий,
+            // и поле арены уходило в жёлто-оранжевое (владелец, 29 сентября).
             if (material.HasProperty("_DetailSoftness")) material.SetFloat("_DetailSoftness", _style.GroundDetailSoftness);
             if (material.HasProperty("_TurfWeight")) material.SetFloat("_TurfWeight", _style.GroundTurfWeight);
+            // Охристый грунт лагеря хорош под камнями его дорожек, а утоптанная середина арены
+            // из него — сплошное оранжевое пятно. У разлома своя, природная земля.
+            if (_style.EarthTexture != null && material.HasProperty("_DirtTex"))
+            {
+                material.SetTexture("_DirtTex", _style.EarthTexture);
+                material.SetFloat("_TileMeters", _style.EarthTileMeters);
+                if (material.HasProperty("_DirtGain")) material.SetFloat("_DirtGain", _style.EarthBrightness);
+            }
             return material;
         }
 
@@ -87,14 +94,19 @@ namespace Game.View
             if (_forestDistance == null) _forestDistance = new float[n * n];
             var dist = _forestDistance;
             FloorDistance(dist, false);
-            for (int y = 1; y < n - 1; y++)
-                for (int x = 1; x < n - 1; x++)
+            float wear = Mathf.Lerp(.4f, 1.1f, _style.ForestGroundWear);
+            // Маска кончается в двух метрах за модулями, дальше земля берёт её крайний пиксель.
+            // Край маски — ровная глубокая подстилка: фон за лесом раньше тянул оттуда светлый
+            // газон без тени на весь кадр, а пёстрый край растянулся бы полосами.
+            var deep = new Color32((byte)(wear * 110), 0, (byte)((1 - wear * .45f) * 255), (byte)(128 * (1 - wear * .6f)));
+            float blend = 48f / n;
+            for (int y = 0; y < n; y++)
+                for (int x = 0; x < n; x++)
                 {
                     int i = y * n + x;
                     if (dist[i] <= 0) continue;
                     float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
                     float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
-                    float wear = Mathf.Lerp(.4f, 1.1f, _style.ForestGroundWear);
                     float patchy = Mathf.Lerp(.55f, 1.15f, Mathf.PerlinNoise(px * .18f + 311, pz * .18f + 97));
                     // Тень и редкий дёрн начинаются сразу за краем, голая земля — только глубже:
                     // на солнце грунт светлее травы и крупным пятном отвлекал бы от боя.
@@ -105,7 +117,9 @@ namespace Game.View
                     pixel.r = (byte)Mathf.Max(pixel.r, litter * 118);
                     pixel.b = (byte)Mathf.Min(pixel.b, (1 - shade * .45f) * 255);
                     pixel.a = (byte)(pixel.a * (1 - shade * .6f));
-                    _campSurfacePixels[i] = pixel;
+                    float rim = Mathf.Min(Mathf.Min(x, n - 1 - x), Mathf.Min(y, n - 1 - y)) / (float)n;
+                    float toDeep = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(blend, 0, rim)) * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(3, 8, dist[i]));
+                    _campSurfacePixels[i] = Color32.Lerp(pixel, deep, toDeep);
                 }
         }
 
