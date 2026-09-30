@@ -25,9 +25,9 @@ namespace Game.View
         public Layer[] Layers;
         [Header("Плавность и паузы")]
         [Min(.1f)] public float FadeIn=2.3f, FadeOut=.75f;
-        public Vector2 SmithRestSeconds=new Vector2(6,14);
+        [HideInInspector] public Vector2 SmithRestSeconds=new Vector2(6,14); // Только совместимость старой сериализации сцены.
         [Range(0,1)] public float MenuDuck=.55f;
-        float _blend, _nextSmith, _spatialClock, _clock;
+        float _blend, _spatialClock;
         bool _wasAudible;
         Vector3 _listener;
         Camera _camera;
@@ -43,7 +43,7 @@ namespace Game.View
             _camera=Camera.main;
             _pause=FindAnyObjectByType<PauseMenu>();
             _driver=FindAnyObjectByType<TickDriver>();
-            foreach(var npc in FindObjectsByType<CampServiceNpc>())
+            foreach(var npc in FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Include))
                 if(npc.Kind==CampServiceKind.Alchemist){_alchemist=npc;break;}
             if(Layers==null)Layers=System.Array.Empty<Layer>();
             foreach(var layer in Layers)
@@ -54,7 +54,11 @@ namespace Game.View
                 layer.Source.playOnAwake=false;
                 layer.Source.dopplerLevel=0;
                 layer.Source.volume=0;
-                layer.Source.loop=layer.Place!=Place.Smith;
+                // В Idle нет контакта молота. В кузнице остаётся тихий очаг;
+                // настоящие звуки работы вызывает CampNpcLife.CampWorkContact.
+                if (layer.Place == Place.Smith)
+                    layer.Source.clip = Resources.Load<AudioClip>("Audio/Camp/Prepared/Camp_Fire");
+                layer.Source.loop=true;
             }
         }
         void Update()
@@ -62,7 +66,6 @@ namespace Game.View
             // Шаг не больше 0,1 с: после долгого кадра (сборка арены, загрузка) смесь не должна
             // обрываться за один кадр — звук гаснет и входит плавно, как у завесы и углей.
             float dt=Mathf.Min(CombatAudioCapture.Recording?Time.deltaTime:Time.unscaledDeltaTime,.1f);
-            _clock+=dt;
             var player=CampPlayerView.Instance;
             // Уход в разлом: лагерь затихает, пока камера подаётся к арке и накатывает дым (FadeOut),
             // а не обрывается после смены, когда лагерь уже выключен.
@@ -73,11 +76,10 @@ namespace Game.View
                 _listener=player.Position;
                 if(!_wasAudible)
                 {
-                    _nextSmith=_clock+2.5f;
                     foreach(var layer in Layers)
                     {
                         var source=layer.Source;
-                        if(source==null || source.clip==null || source.isPlaying || layer.Place==Place.Smith)continue;
+                        if(source==null || source.clip==null || source.isPlaying)continue;
                         if(layer.Place!=Place.Music)source.time=(float)_variation.NextDouble()*Mathf.Max(0,source.clip.length-1);
                         source.Play();
                     }
@@ -87,8 +89,7 @@ namespace Game.View
             _blend=Mathf.MoveTowards(_blend,audible?1:0,dt/(audible?FadeIn:FadeOut));
             _spatialClock-=dt;
             if(_spatialClock<=0){_spatialClock=.05f;RefreshDistances();}
-            bool panel=player!=null && (player.InventoryOpen || player.EntranceOpen);
-            float duck=panel || CampServicesView.Instance?.IsOpen==true ||
+            float duck=CampAudioSpatial.PanelOpen ||
                 (_pause!=null && _pause.IsOpen) || (_driver!=null && _driver.GameplayPaused) ? MenuDuck : 1;
             foreach(var layer in Layers)
             {
@@ -97,16 +98,11 @@ namespace Game.View
                 bool global=layer.Place==Place.Forest || layer.Place==Place.Music;
                 float attenuation=global?1:1-Mathf.SmoothStep(0,1,Mathf.InverseLerp(layer.Near,layer.Far,layer.Distance));
                 float settings=layer.Place==Place.Music?GameUserSettings.MusicGain:GameUserSettings.EffectsVolume;
-                float wanted=layer.Gain*attenuation*_blend*duck*settings;
+                float bed = layer.Place == Place.Smith ? .35f : layer.Place == Place.Forest ? .45f : 1f;
+                float wanted=layer.Gain*attenuation*_blend*duck*settings*bed;
                 layer.AppliedGain=Mathf.Lerp(layer.AppliedGain,wanted,1-Mathf.Exp(-dt*7));
                 source.volume=layer.AppliedGain;
                 source.panStereo=Mathf.Lerp(source.panStereo,layer.Pan,1-Mathf.Exp(-dt*4));
-                if(layer.Place==Place.Smith && audible && !source.isPlaying && _clock>=_nextSmith && attenuation>.08f)
-                {
-                    source.pitch=.98f+(float)_variation.NextDouble()*.04f;
-                    source.Play();
-                    _nextSmith=_clock+source.clip.length/source.pitch+Mathf.Lerp(SmithRestSeconds.x,SmithRestSeconds.y,(float)_variation.NextDouble());
-                }
                 if(!audible && _blend<=0 && layer.AppliedGain<.0005f && source.isPlaying)source.Stop();
             }
         }

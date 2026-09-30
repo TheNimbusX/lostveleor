@@ -124,13 +124,5 @@ namespace Game.Tests
             Assert.That(position.X, Is.LessThanOrEqualTo(firstRoomMaxX),
                 "герой пересёк закрытую стену и попал во вторую комнату");
         }
-
-        private static ulong RunScript(InputFrame[] script)
-        {
-            var sim = new Simulation(0xFEEDUL);
-            sim.SetupTestArena(30);
-            for (int t = 0; t < script.Length; t++) sim.Step(in script[t]);
-            return sim.StateHash();
-        }
     }
 }

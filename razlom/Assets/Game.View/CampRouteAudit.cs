@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Game.View
 {
-    // Read-only diagnosis against the walk map actually baked by CampPlayerView in Play mode.
+    // Диагностика без изменений мира, по настоящей карте CampPlayerView в игре.
     public static class CampRouteAudit
     {
-        public static string Report()
+        public static string Report(bool includeMap = false)
         {
             var camp = CampPlayerView.Instance;
             if (camp == null || camp.WalkMap == null) return "Camp walk map is not ready";
@@ -17,6 +17,15 @@ namespace Game.View
             var text = new StringBuilder();
             var start = CampTrainingView.Flat(camp.InteractionPosition);
             text.AppendLine("start=" + camp.InteractionPosition.ToString("F2") + " map=" + map.Contains(start));
+            text.AppendLine("walkableCells=" + map.WalkableCellCount + " connectedAreas=" + map.ComponentCount
+                + " footprintCount=" + (camp.NavigationFootprints?.Count ?? 0));
+            if (camp.NavigationFootprints != null)
+                foreach (var footprint in camp.NavigationFootprints)
+                {
+                    var source = CampNavigationGeometry.Source(footprint, camp.GroundHeight);
+                    text.AppendLine("obstacle " + footprint.Role + " " + footprint.Root.name
+                        + " at=" + source.transform.GetColumn(3).ToString("F2") + " size=" + source.size.ToString("F2"));
+                }
             if (passage != null)
             {
                 Bounds b = passage.BridgeBounds;
@@ -51,6 +60,8 @@ namespace Game.View
             var world = Object.FindAnyObjectByType<SceneWorldView>();
             Transform fire = world != null && world.CampRoot != null
                 ? world.CampRoot.transform.Find("Campfire") : null;
+            Vector3 fireSeed = Vector3.zero;
+            bool fireSeedValid = false;
             if (fire != null)
             {
                 text.AppendLine("fire=" + fire.position.ToString("F2"));
@@ -70,15 +81,25 @@ namespace Game.View
                 }
                 foreach (var collider in Physics.OverlapSphere(fire.position, 3f))
                     text.AppendLine("fire-collider " + collider.name + " " + collider.bounds);
-                Route(text, map, "spawn-fire", camp.InteractionPosition,
-                    fire.position + new Vector3(-1.8f, 0, -1f));
+                Vector3 preferred = fire.position + new Vector3(-1.8f, 0, -1f);
+                if (map.TryNearestReachable(start, CampTrainingView.Flat(preferred), out var resolved))
+                {
+                    fireSeed = new Vector3(resolved.X.ToFloat(), camp.GroundHeight, resolved.Y.ToFloat());
+                    float snap = Vector2.Distance(new Vector2(preferred.x, preferred.z), new Vector2(fireSeed.x, fireSeed.z));
+                    fireSeedValid = snap <= .75f && map.Contains(resolved);
+                    text.AppendLine("fire-seed preferred=" + preferred.ToString("F2") + " valid=" + fireSeedValid
+                        + " resolved=" + fireSeed.ToString("F2") + " snap=" + snap.ToString("0.00"));
+                }
+                if (fireSeedValid) Route(text, map, "spawn-fire", camp.InteractionPosition, fireSeed);
                 Walk(text, map, "around-fire", camp.InteractionPosition,
                     fire.position + new Vector3(0, 0, 2.8f));
             }
-            foreach (var npc in Object.FindObjectsByType<CampServiceNpc>())
+            foreach (var npc in Object.FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Include))
             {
-                if (npc.Kind == CampServiceKind.Tent) continue;
-                var target = npc.Approach;
+                bool foundApproach = camp.TryServiceApproach(npc, camp.InteractionPosition, out var target);
+                text.AppendLine("service " + npc.Kind + " active=" + npc.isActiveAndEnabled
+                    + " reachableApproach=" + foundApproach + " target=" + target.ToString("F2"));
+                if (!foundApproach) continue;
                 var path = map.FindPath(start, CampTrainingView.Flat(target));
                 var end = path.Length == 0 ? FixVec2.Zero : path[path.Length - 1];
                 var endWorld = new Vector3(end.X.ToFloat(), camp.GroundHeight, end.Y.ToFloat());
@@ -87,11 +108,16 @@ namespace Game.View
                     + map.Contains(CampTrainingView.Flat(target)) + " pathCorners=" + path.Length
                     + " routeEndsNear=" + (path.Length > 0 && npc.Near(endWorld))
                     + " routeEnd=" + endWorld.ToString("F2"));
-                if (npc.Kind == CampServiceKind.Trader && fire != null)
+                Walk(text, map, "spawn-" + npc.Kind, camp.InteractionPosition, target, npc);
+                if (fireSeedValid)
                 {
-                    Route(text, map, "fire-trader", fire.position + new Vector3(-1.8f, 0, -1f), target);
-                    Walk(text, map, "spawn-trader-walk", camp.InteractionPosition, target);
-                    Walk(text, map, "fire-trader-walk", fire.position + new Vector3(-1.8f, 0, -1f), target);
+                    if (camp.TryServiceApproach(npc, fireSeed, out var fireTarget))
+                        Walk(text, map, "fire-" + npc.Kind + "-walk", fireSeed, fireTarget, npc);
+                    else text.AppendLine("fire-" + npc.Kind + "-walk no interaction approach");
+                }
+                if (npc.Kind == CampServiceKind.Trader && fireSeedValid)
+                {
+                    Route(text, map, "fire-trader", fireSeed, target);
                     for (int i = 0; i < 12; i++)
                     {
                         float angle = i * Mathf.PI / 6;
@@ -99,7 +125,7 @@ namespace Game.View
                         var point = CampTrainingView.Flat(candidate);
                         if (!map.Contains(point)) continue;
                         var candidatePath = map.FindPath(start, point);
-                        var firePath = map.FindPath(CampTrainingView.Flat(fire.position + new Vector3(-1.8f, 0, -1f)), point);
+                        var firePath = map.FindPath(CampTrainingView.Flat(fireSeed), point);
                         text.AppendLine("trader-candidate " + i + " at=" + candidate.ToString("F2")
                             + " spawn=" + Length(candidatePath).ToString("0.00")
                             + " fire=" + Length(firePath).ToString("0.00"));
@@ -107,8 +133,8 @@ namespace Game.View
                 }
             }
             // Карта проходимости целиком, шаг 0,5 м: по ней расставляется стена леса по краю лагеря.
-            text.AppendLine("walkmap x=-50..40 z=-50..40 step=0.5 (строки сверху вниз, # — проходимо)");
-            for (float z = 40f; z >= -50f; z -= .5f)
+            if (includeMap) text.AppendLine("walkmap x=-50..40 z=-50..40 step=0.5 (строки сверху вниз, # — проходимо)");
+            for (float z = 40f; includeMap && z >= -50f; z -= .5f)
             {
                 var row = new StringBuilder(181);
                 for (float x = -50f; x <= 40f; x += .5f)
@@ -136,10 +162,17 @@ namespace Game.View
             return distance;
         }
 
-        static void Walk(StringBuilder text, CampWalkMap map, string name, Vector3 from, Vector3 to)
+        static void Walk(StringBuilder text, CampWalkMap map, string name, Vector3 from, Vector3 to, CampServiceNpc npc = null)
         {
             var start = CampTrainingView.Flat(from);
             var goal = CampTrainingView.Flat(to);
+            if (!map.Contains(start))
+            { text.AppendLine(name + " invalid start=" + from.ToString("F2")); return; }
+            if (!map.TryNearestReachable(start, goal, out var reachable))
+            { text.AppendLine(name + " no reachable cell"); return; }
+            float snap = FixVec2.Distance(goal, reachable).ToFloat();
+            if (snap > .75f)
+            { text.AppendLine(name + " target too far from reachable cell targetSnap=" + snap.ToString("0.00")); return; }
             var clock = System.Diagnostics.Stopwatch.StartNew();
             var route = new CampRoute(map);
             bool found = route.To(start, goal);
@@ -152,7 +185,7 @@ namespace Game.View
             for (; ticks < 600; ticks++)
             {
                 var before = sim.Entities.Position[Simulation.PlayerId];
-                if (FixVec2.DistanceSq(before, goal) < Fix64.Ratio(7, 20) * Fix64.Ratio(7, 20)) break;
+                if (FixVec2.DistanceSq(before, reachable) < Fix64.Ratio(7, 20) * Fix64.Ratio(7, 20)) break;
                 var input = InputFrame.Empty;
                 if (route.Advance(before, out var aim, out bool final))
                 {
@@ -165,8 +198,13 @@ namespace Game.View
                 still = stopped ? still + 1 : 0;
                 maxStill = System.Math.Max(maxStill, still);
             }
-            text.AppendLine(name + " arrived=" + (ticks < 600) + " ticks=" + ticks
-                + " longestStop=" + maxStill + " routeMs=" + clock.Elapsed.TotalMilliseconds.ToString("0.00"));
+            FixVec2 finalPosition = sim.Entities.Position[Simulation.PlayerId];
+            Vector3 finalWorld = new Vector3(finalPosition.X.ToFloat(), from.y, finalPosition.Y.ToFloat());
+            bool near = npc == null || npc.Near(finalWorld);
+            text.AppendLine(name + " arrived=" + (ticks < 600 && near) + " ticks=" + ticks
+                + " longestStop=" + maxStill + " targetSnap=" + snap.ToString("0.00")
+                + " interactionNear=" + near + " actualEnd=" + finalWorld.ToString("F2")
+                + " routeMs=" + clock.Elapsed.TotalMilliseconds.ToString("0.00"));
         }
     }
 }

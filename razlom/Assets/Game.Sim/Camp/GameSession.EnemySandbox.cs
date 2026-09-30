@@ -7,6 +7,8 @@ namespace Game.Sim
             bool immortal = DeveloperInvulnerable;
             var previousLoadout = ActiveLoadout;
             LeaveProvingGround();
+            CancelRiftEntryRequest();
+            ResetRunProgressTracking();
             LastRunSeed = seed;
             RunNumber++;
             IsDeveloperRun = true;

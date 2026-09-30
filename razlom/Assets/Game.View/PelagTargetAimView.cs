@@ -23,8 +23,8 @@ namespace Game.View
             bool ground = _driver != null && _driver.GroundTargetedSlot(_driver.AbilityTargetAimSlot);
             string text = (ground ? "Выбери точку" : "Выбери врага")
                 + (_driver != null && _driver.UsingGamepad
-                    ? "\nПравый стик — прицел · RT/A — применить · B — отмена"
-                    : "\nЛКМ — применить · ПКМ / Esc — отмена");
+                    ? "\n" + UiKeyHint.AimPad
+                    : "\n" + UiKeyHint.AimMouse);
             Color previousColor = GUI.color;
             GUI.color = Color.black;
             GUI.Label(new Rect(point.x + 24, point.y + 20, 290, 52), text, _hint);

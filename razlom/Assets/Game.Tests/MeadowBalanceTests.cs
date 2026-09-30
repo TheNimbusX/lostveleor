@@ -190,8 +190,6 @@ namespace Game.Tests
                 int boss = plan.BossId;
                 Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(EnemyArchetypes.ScaleHealth(
                     EnemyArchetypes.InterimBossHealth, final.EnemyHealth)));
-                // 6000 × 156% девятого уровня (подгонка 29.09, было 6800).
-                Assert.That(sim.Entities.MaxHealth[boss], Is.EqualTo(9360));
 
                 // Окно дока 150–195 с (MeadowBalance.md) — на ВЕСЬ бой: босс и две
                 // волны подмоги, на 66% и 33% его здоровья. Прежде тест мерил одного

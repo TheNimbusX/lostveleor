@@ -280,7 +280,7 @@ namespace Game.Tests
             Assert.AreSame(RunStats.Empty, session.LastRun.Stats, "до первого забега итоги пусты");
             Assert.AreSame(RunStats.Empty, session.CurrentRunStats);
 
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
             Assert.AreEqual(GameMode.Rift, session.Mode);
             Simulation sim = session.Run.Sim;
             RunStats stats = session.CurrentRunStats;
@@ -290,6 +290,7 @@ namespace Game.Tests
             int steps = 0;
 
             // 1. Зелье в бою.
+            sim.Entities.Health[0]--;
             session.Step(Potion(PotionKind.SmallHealth));
             steps++;
             Assert.AreEqual(1, stats.PotionsUsed);
@@ -368,7 +369,7 @@ namespace Game.Tests
         public void ScriptedWhirlwindHit_IsTheBestHit()
         {
             GameSession session = Session(out _);
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
             Simulation sim = session.Run.Sim;
             EntityStore e = sim.Entities;
 
@@ -424,8 +425,9 @@ namespace Game.Tests
         public void StatsResetPerRun()
         {
             GameSession session = Session(out Camp camp);
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
             SetAllFoesOnFire(session.Run.Sim, out int foes, out _);
+            session.Run.Sim.Entities.Health[0]--;
             session.Step(Potion(PotionKind.SmallHealth));
             session.Step(RunInput(RunCommand.Leave));
 
@@ -438,6 +440,8 @@ namespace Game.Tests
             long firstDamage = first.DamageDealt;
 
             session.Step(Command(CampCommand.RepeatRift));
+            Assert.True(session.PreparationRequested);
+            session.EnterRift();
             Assert.AreEqual(GameMode.Rift, session.Mode);
             RunStats second = session.CurrentRunStats;
             Assert.AreNotSame(first, second);
@@ -453,6 +457,7 @@ namespace Game.Tests
             Assert.AreEqual(camp.Experience, second.StartExperience);
 
             SetAllFoesOnFire(session.Run.Sim, out _, out _);
+            session.Run.Sim.Entities.Health[0]--;
             session.Step(Potion(PotionKind.SmallHealth));
             for (int i = 0; i < 9; i++) session.Step(InputFrame.Empty);
             Assert.AreEqual(10, second.TotalTicks);

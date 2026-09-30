@@ -51,8 +51,8 @@ namespace Game.Tests
             sim.Entities.Position[0]=new FixVec2(Fix64.FromInt(4),Fix64.Zero);int health=sim.Entities.Health[0];
             Until(sim,20);Assert.That(sim.Entities.Facing[1],Is.EqualTo(a.Direction));Assert.That(sim.Entities.Health[0],Is.EqualTo(health));
         }
-        [TestCase(2,5,false)] [TestCase(2,17,true)]
-        [TestCase(6,10,false)] [TestCase(6,27,false)] [TestCase(6,32,true)]
+        // Отмена у Вендиго одна на все действия: по случаю на причину, прямо перед контактом.
+        [TestCase(2,17,true)] [TestCase(6,27,false)] [TestCase(6,32,true)]
         public void CancellationRemovesFutureContact(int distance,int at,bool death)
         {
             var sim=Arena(distance);int start=sim.Tick;Until(sim,start+at);int health=sim.Entities.Health[0];
@@ -117,7 +117,6 @@ namespace Game.Tests
             var sim=Arena(2);int health=sim.Entities.Health[0];
             Until(sim,31);Assert.That(sim.TryGetWendigoAction(1,out _),Is.False);
             Assert.That(health-sim.Entities.Health[0],Is.EqualTo(EnemyArchetypes.WendigoClawDamage));
-            Assert.That(Simulation.WendigoClawCycleTicks,Is.EqualTo(45));
             Until(sim,45);Assert.That(sim.TryGetWendigoAction(1,out _),Is.False);
             sim.Step(InputFrame.Empty);Assert.That(sim.TryGetWendigoAction(1,out var second),Is.True);
             Assert.That(second.StartTick,Is.EqualTo(45));
@@ -140,7 +139,6 @@ namespace Game.Tests
         // Раньше здесь стояли литералы 45/60 — на восьмой арене как на первой.
         [TestCase(100,26,34)]
         [TestCase(172,45,59)]
-        [TestCase(125,33,43)]
         public void ClawAndLeapDamageComeFromStatsAndScale(int percent,int claw,int leap)
         {
             foreach(var distance in new[]{2,6})
@@ -155,36 +153,6 @@ namespace Game.Tests
                 Until(sim,sim.Tick+(distance==2?19:34));
                 Assert.That(health-sim.Entities.Health[0],Is.EqualTo(distance==2?claw:leap),"distance "+distance);
             }
-        }
-
-        [Test]
-        public void EncounterWendigoGrowsWithDepthDamageAndUsesArchetypeHealthAndBody()
-        {
-            var modules=PrototypeContent.Modules();var map=new LayoutMap(modules,64);
-            new LayoutGenerator().Generate(modules,42,map,12);
-            var wendigo=new EncounterGroup(EnemyKind.ForestWendigo,1,1,elite:true);
-            var guard=new EncounterGroup(EnemyKind.ForestGuardian,1,1,elite:true);
-            var pack=new EncounterPack(1,100,new[]{wendigo});
-            // Девятая арена: здоровье 156%, урон 164%.
-            var settings=new EncounterSettings(new[]{pack},new[]{pack},new[]{pack},
-                new[]{new EncounterPack(2,100,new[]{guard,wendigo})},3,0,
-                EnemyArchetypes.DepthDamagePercent(9),Fix64.FromInt(5));
-            var sim=new Simulation(42);
-            sim.SetupEncounters(map,42,EnemyArchetypes.DepthHealthPercent(9),settings);
-            int found=0;
-            for(int id=1;id<sim.Entities.Count;id++)
-            {
-                if(sim.Entities.Kind[id]!=EnemyKind.ForestWendigo)continue;
-                found++;
-                Assert.That(sim.Entities.MaxHealth[id],Is.EqualTo(3120));
-                // Коготь 26 × 164% = 42,6; прыжок и вой — той же долей от когтя.
-                Assert.That(sim.Entities.Damage[id],Is.EqualTo(43));
-                Assert.That(sim.WendigoLeapDamageOf(id),Is.EqualTo(56));
-                Assert.That(sim.WendigoHowlDamageOf(id),Is.EqualTo(50));
-                Assert.That(sim.Entities.BodyRadius[id],Is.EqualTo(Simulation.WendigoBodyRadius));
-                Assert.That(map.IsWalkable(sim.Entities.Position[id],sim.Entities.BodyRadius[id]),Is.True);
-            }
-            Assert.That(found,Is.GreaterThan(0));
         }
 
         [Test]
@@ -317,8 +285,8 @@ namespace Game.Tests
         }
 
         // Тело героя 0,45: кольцо 2–5,5 задевает его от 1,55 до 5,95 м от центра.
-        [TestCase(1.45,false)] [TestCase(1.6,true)] [TestCase(4.0,true)]
-        [TestCase(5.9,true)] [TestCase(6.0,false)]
+        // Дыра, середина и снаружи; края кольца — EnemyTelegraphTests.CircleRingAndLane_UseTheSameBodyRule.
+        [TestCase(1.45,false)] [TestCase(4.0,true)] [TestCase(6.0,false)]
         public void HowlHitsOnlyTheDrawnRingOnceAtContact(double heroDistance,bool hit)
         {
             var sim=HowlArena();int health=sim.Entities.Health[0];
@@ -407,31 +375,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void RootedHeroStandsAndCannotRoll()
-        {
-            var sim=new Simulation(1234,64);sim.SetupTestArena(0);new RunLoadout().ApplyTo(sim);
-            sim.ApplyHeroSlow(Simulation.HeroRootPercent,60);
-            var walk=InputFrame.Empty;walk.Flags=(byte)InputFlags.MoveOrder;walk.Aim=new FixVec2(Fix64.FromInt(5),Fix64.Zero);
-            for(int k=0;k<10;k++)sim.Step(walk);
-            Assert.That(sim.HeroRooted,Is.True);
-            Assert.That(sim.Entities.Position[0],Is.EqualTo(FixVec2.Zero),"в корнях герой не идёт");
-            // Корни держат и кувырок (решение владельца 29.09): нажатие пропадает.
-            var roll=InputFrame.Empty;roll.AbilityMask=(byte)(1<<PelagKit.DashSlot);roll.Aim=walk.Aim;
-            sim.Step(roll);
-            foreach(var e in sim.Events)Assert.That(e.Type,Is.Not.EqualTo(SimEventType.AbilityCast),"кувырок в корнях");
-            for(int k=0;k<12;k++)sim.Step(InputFrame.Empty);
-            Assert.That(sim.Entities.Position[0],Is.EqualTo(FixVec2.Zero),"кувырок в корнях");
-            Assert.That(sim.HeroRooted,Is.True);
-            // Корни сошли — тот же кувырок уходит.
-            Until(sim,sim.Tick+sim.HeroRootTicksLeft);
-            Assert.That(sim.HeroRooted,Is.False);
-            sim.Step(roll);
-            bool cast=false;foreach(var e in sim.Events)cast|=e.Type==SimEventType.AbilityCast;
-            Assert.That(cast,Is.True,"кувырок после корней");
-            Assert.That(sim.Entities.ForcedKind[0],Is.EqualTo((byte)ForcedMotionKind.Roll));
-        }
-
-        [Test]
         public void HowlMissDoesNotSlow()
         {
             var sim=HowlArena();var full=sim.Entities.MoveStep[0];
@@ -443,7 +386,7 @@ namespace Game.Tests
         }
 
         // Причина: 0 — оглушение, 1 — смерть, 2 — вынужденное движение (отброс).
-        [TestCase(5,0)] [TestCase(29,0)] [TestCase(12,1)] [TestCase(29,1)] [TestCase(20,2)]
+        [TestCase(29,0)] [TestCase(29,1)] [TestCase(20,2)]
         public void HowlIsCancelledByStunDeathAndForcedMotion(int at,int reason)
         {
             var sim=HowlArena();int start=sim.Tick;

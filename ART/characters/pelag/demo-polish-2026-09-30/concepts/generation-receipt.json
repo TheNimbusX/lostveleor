@@ -1,0 +1,150 @@
+{
+  "submitted_utc": "2026-09-29T22:11:04Z",
+  "approved_budget_credits": 4,
+  "project": {
+    "project_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+    "default_folder_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+    "workspace_id": "5c395cd9-3c01-4f6c-abaf-2c5bc7a46c6f",
+    "name": "The War Remains — Pelag demo 2026-09-30"
+  },
+  "references": [
+    {
+      "media_id": "5a742144-992c-4637-a70a-f40168b3e510",
+      "status": "uploaded"
+    },
+    {
+      "media_id": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+      "status": "uploaded"
+    },
+    {
+      "media_id": "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+      "status": "uploaded"
+    },
+    {
+      "media_id": "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+      "status": "uploaded"
+    },
+    {
+      "media_id": "d4c95bbb-e589-4268-9983-2215e292e2ba",
+      "status": "uploaded"
+    }
+  ],
+  "requests": [
+    {
+      "index": 0,
+      "params": {
+        "model": "nano_banana_pro",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT A: short thick windswept hair swept back, darker brown roots and a few broad chestnut highlights. Preserve the current recognizable hairline; less spiky juvenile anime hair. The current collar reads as one broad coral band, the sash as one clear substantial knot, the bracers as firm leather volumes. Keep the original costume silhouette particularly close.",
+        "folder_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+        "use_unlim": false,
+        "medias": [
+          {
+            "role": "image",
+            "value": "5a742144-992c-4637-a70a-f40168b3e510"
+          },
+          {
+            "role": "image",
+            "value": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9"
+          },
+          {
+            "role": "image",
+            "value": "03019c7a-94a6-43c6-9a82-2b6f331c3b34"
+          },
+          {
+            "role": "image",
+            "value": "0eaeee50-c75f-4da4-acf0-f263330ddaa5"
+          },
+          {
+            "role": "image",
+            "value": "d4c95bbb-e589-4268-9983-2215e292e2ba"
+          }
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "params": {
+        "model": "nano_banana_pro",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT B: medium-short thick hair swept back in three or four large sculpted locks, slight asymmetric wave, sides tidier but not shaved, no ponytail or mohawk. Keep his mature facial refinement restrained and recognizable from the original hero reference. Preserve the same costume cut; emphasize broad diagonal wrap folds, the substantial coral sash and warm rust-ochre highlights on brown leather. Turquoise trim is a coherent large accent rather than tiny checkerboard noise.",
+        "folder_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+        "use_unlim": false,
+        "medias": [
+          {
+            "role": "image",
+            "value": "5a742144-992c-4637-a70a-f40168b3e510"
+          },
+          {
+            "role": "image",
+            "value": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9"
+          },
+          {
+            "role": "image",
+            "value": "03019c7a-94a6-43c6-9a82-2b6f331c3b34"
+          },
+          {
+            "role": "image",
+            "value": "0eaeee50-c75f-4da4-acf0-f263330ddaa5"
+          },
+          {
+            "role": "image",
+            "value": "d4c95bbb-e589-4268-9983-2215e292e2ba"
+          }
+        ]
+      }
+    }
+  ],
+  "submission": {
+    "submitted_count": 2,
+    "failed_count": 0,
+    "jobs": [
+      {
+        "index": 0,
+        "job_id": "15df8545-3250-413d-8f72-420a890fdd90"
+      },
+      {
+        "index": 1,
+        "job_id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b"
+      }
+    ]
+  },
+  "reconciliation": {
+    "reason": "Submission returned no parsed payload; exact new project had exactly two jobs. No generation was repeated.",
+    "items": [
+      {
+        "item_id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b",
+        "type": "job",
+        "folder_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+        "model_id": "nano_banana_pro",
+        "output_kind": "image",
+        "status": "in_progress",
+        "created_at": "2026-09-29T22:11:04.150986Z",
+        "added_at": "2026-09-29T22:11:04.636024Z",
+        "liked_at": null,
+        "is_favourite": false,
+        "placement_id": "82a68510-6e89-45b5-bd34-f4a0daad721c",
+        "workspace_id": "5c395cd9-3c01-4f6c-abaf-2c5bc7a46c6f"
+      },
+      {
+        "item_id": "15df8545-3250-413d-8f72-420a890fdd90",
+        "type": "job",
+        "folder_id": "33215a09-4f6a-469e-84dc-2cd8bbbd23fa",
+        "model_id": "nano_banana_pro",
+        "output_kind": "image",
+        "status": "completed",
+        "created_at": "2026-09-29T22:11:04.107760Z",
+        "added_at": "2026-09-29T22:11:04.412792Z",
+        "liked_at": null,
+        "is_favourite": false,
+        "placement_id": "30e45ccd-d9dc-4b4d-bbe0-a10d6cdeaa76",
+        "workspace_id": "5c395cd9-3c01-4f6c-abaf-2c5bc7a46c6f"
+      }
+    ],
+    "index_order": "creation time, verify prompt mapping on final display"
+  }
+}

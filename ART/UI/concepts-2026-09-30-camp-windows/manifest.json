@@ -1,0 +1,123 @@
+{
+ "date": "2026-09-30",
+ "batch": "Новые окна прокачки лагеря — целевые кадры (кузница, перед походом, житель)",
+ "model": "gpt_image_2_5 (Higgsfield), quality high, 2k, 16:9, image-to-image",
+ "credits_per_image": 2.75,
+ "code_sources_read_only": [
+  "razlom/Assets/Game.View/CampForgePanel.cs",
+  "razlom/Assets/Game.View/CampForgeView.cs",
+  "razlom/Assets/Game.View/CampPreparationPanel.cs",
+  "razlom/Assets/Game.View/CampPreparationView.cs",
+  "razlom/Assets/Game.View/CampResidentPanel.cs",
+  "razlom/Assets/Game.View/CampServicesView.Progression.cs",
+  "razlom/Assets/Game.View/CampFeatureText.cs",
+  "razlom/Assets/Editor/CampForgeUiBuilder.cs",
+  "razlom/Assets/Editor/CampPolishUiBuilder.cs"
+ ],
+ "current_state_frames_looked_at": [
+  "ART/CAMP/polish-2026-09-30/forge-refine/shot_01_t13.00s.png",
+  "ART/CAMP/polish-2026-09-30/forge-transfer/shot_01_t13.00s.png",
+  "ART/CAMP/polish-2026-09-30/preparation-final/shot_00_t8.00s.png",
+  "ART/CAMP/polish-2026-09-30/resident/shot_00_t8.00s.png",
+  "ART/CAMP/polish-2026-09-30/alchemist/shot_00_t8.00s.png"
+ ],
+ "images": [
+  {
+   "window": "Кузница Эни (CampForgePanel)",
+   "variant": "А",
+   "file": "1a-forge-portrait-refine.png",
+   "preview": "1a-forge-portrait-refine.jpg",
+   "caption": "Кузница · А: как принятый кузнец c1 — Эни слева, четыре круглых действия (Усилить выбрано, Перенести закрыто «Улучшение Эни 3»), цель с выбором свойства, справа результат «Уровень 12 → 15», сравнение и цена под «Подтвердить».",
+   "notes": "Сильная сторона: один язык с c1, всё на одной странице. Дефекты: маркер выбранного свойства — оранжевая звёздочка-ромб внутри круга (в сборке заменить на точку/круг); ромбики на концах линий заголовков как в листе 5. В коде кузница прячет портрет («место портрета занимает сравнение вещи») — этот вариант требует оставить портрет.",
+   "higgsfield_job": "d949e3d2-32bd-40bb-b647-51010fb23733",
+   "references": [
+    "размытый кадр лагеря у кузницы: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 480,21 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/UI/concepts-2026-09-30-hud-final/c1-smith-two-actions.png (принятый кузнец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 3 our approved smith window: copy their exact material and layout family - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current selection; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: the new forge 'Кузница Эни', one page, same composition as Image 3. LEFT: the smith Эни exactly as in Image 3 - same stocky woman, dark curly hair with orange headband, cream shirt, big hammer on shoulder, natural colours and lighting, no white rim light. Speech bubble top-left with name tag 'Эни' and line 'Ну, что тебе сковать?'. TOP CENTER heading 'Кузница Эни', thin line, subtitle 'Улучшение вещи'. TOP RIGHT: coin icon '450' and orange shard icon '14'.\nCENTER COLUMN, heading with small dot 'Цель': a big round slot with a purple (epic) sabre, name 'Офицерская сабля', under it 'Уровень 12'. Caption 'Выбери свойство' and three list rows (kit list-row style): 'Скорость приёмов +20,6%' (selected, orange rim), 'Скорость атаки +16,7%', 'Здоровье +19,58'.\nAbove it a row of FOUR round action buttons with icons and labels under them, heading 'Действие': 'Усилить' (selected, glowing orange ring, hammer icon), 'Перенастроить' (circular arrows), 'Дополнить' (plus), 'Перенести' (dim and locked with a small lock, caption under it 'Улучшение Эни 3').\nRIGHT COLUMN, heading 'Результат': the same sabre in a round slot, 'Офицерская сабля', 'Уровень 12 → 15' with 15 in orange; row 'Скорость приёмов  +20,6% → +22,3%' with the new value in orange; grey line 'Остальные свойства сохранятся'; thin divider; 'Характеристики, если надеть' and 'Скорость приёмов  21% → 22%' with 22% in green.\nBOTTOM RIGHT: big fiery orange painted button 'Подтвердить', under it the price with coin and shard icons '30 золота · 5 осколков' and grey note 'Ресурсы списываются после подтверждения.' BOTTOM LEFT: keycap 'Esc' + 'Закрыть'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  },
+  {
+   "window": "Кузница Эни (CampForgePanel)",
+   "variant": "Б",
+   "file": "1b-forge-wide-transfer.png",
+   "preview": "1b-forge-wide-transfer.jpg",
+   "caption": "Кузница · Б: без портрета (как задумано в коде), действия вкладками, три колонки «Цель → Донор → Результат» в режиме «Перенести»: доноры кругами с листанием 1 / 3, свойство донора, снизу полоса «Донор будет израсходован», цена и «Подтвердить».",
+   "notes": "Показан самый сложный режим (перенос); остальные три режима — та же сетка, где средняя колонка = варианты свойств. Дефекты: в сетке доноров кольца с синим и зелёным камнем — это просто пример вещей; значки свойств (звёздочки) в сборке брать из нашего набора. Проверить, влезет ли 6 доноров + 2 свойства по высоте 1080.",
+   "higgsfield_job": "f0e7140a-6348-4221-b4eb-064082eb3f59",
+   "references": [
+    "размытый кадр лагеря у кузницы: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 480,21 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/UI/concepts-2026-09-30-hud-final/c1-smith-two-actions.png (принятый кузнец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 3 our approved smith window: copy their exact material - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current selection; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No character portrait in this window. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: the new forge 'Кузница Эни' as ONE wide centered page without a portrait, showing the 'transfer a property' action. TOP CENTER heading 'Кузница Эни'. Under it a tab row in the kit tab style: 'Усилить', 'Перенастроить', 'Дополнить', 'Перенести' - 'Перенести' is active (orange underline with a small dot).\nThree columns connected left-to-right by thin hairline arrows:\nLEFT 'Цель': big round slot with a purple epic sabre, 'Офицерская сабля', 'Уровень 12'; three list rows 'Скорость приёмов +20,6%' (selected, orange rim), 'Скорость атаки +16,7%', 'Здоровье +19,58'.\nCENTER 'Донор': caption 'Совместимые доноры · 1 / 3' with small round arrow buttons left and right; a 3x2 grid of round item slots (sabres and rings), one sabre selected with an orange ring, small caption under it 'Офицерская сабля · ур. 10'; below, two property rows of the donor: 'Восстановление лавидия +1,73' (selected) and 'Скорость атаки +11,6%' (dim).\nRIGHT 'Результат': the sabre in a round slot, 'Офицерская сабля', 'Уровень 12'; line 'Скорость приёмов +20,6%' in muted red, struck through, and under it 'Восстановление лавидия +1,73' in green; grey 'Остальные свойства сохранятся'; divider; 'Характеристики, если надеть': 'Восстановление лавидия  3/с → 4,7/с' (green) and 'Скорость приёмов  21% → 0%' (red).\nBOTTOM BAND across the page: left a small warning triangle and 'Донор будет израсходован · Офицерская сабля'; center price with coin, shard and core icons '180 золота · 20 осколков · 1 сердечник'; right a big fiery orange painted button 'Подтвердить'. Bottom-left corner keycap 'Esc' + 'Закрыть'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  },
+  {
+   "window": "Перед походом (CampPreparationPanel)",
+   "variant": "А",
+   "file": "2a-prep-three-panels.png",
+   "preview": "2a-prep-three-panels.jpg",
+   "caption": "Перед походом · А: три панели как в коде — навык (4 круга, «Ладно смазал» закрыт «Эни · улучшение 3»), дар (3 варианта + действие оранжевым), зелья (две позиции 1 и 2 сверху, сетка из 8 видов, закрытые «Нужно улучшение Лео»), правило внизу, «Отправиться».",
+   "notes": "Ближе всего к текущему префабу — можно переносить почти один в один. Дефект: зелья лавидия нарисованы синими и фиолетовыми, а у нас лавидий оранжевый (как в окне Лео) — в сборке брать наши иконки зелий. Строка «На манекенах зелья можно пробовать бесплатно» не попала — вернуть второй строкой.",
+   "higgsfield_job": "7238cc9f-0cc0-4605-b74d-8e2d4046e24d",
+   "references": [
+    "размытый кадр лагеря у арки/стола: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 270,0 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/UI/concepts-2026-09-30-hud-final/d1-trader-goods-and-bag.png (принятый торговец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 3 our approved trader window: copy their exact material - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current selection; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No character portrait. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: pre-run preparation at the travel table, one page. TOP CENTER heading 'Перед походом', small caps subtitle 'ПОХОДНЫЙ СТОЛ'. Three smoky framed panels side by side, like the two panels in Image 3:\nPANEL 1 'Стартовый навык': four list rows with round skill icons: 'Вихрь' (spinning blade), 'Рассекающий' (selected, orange rim), 'Шквал', 'Ладно смазал' (dim, small lock, grey caption 'Эни · улучшение 3').\nPANEL 2 'Дар на этот поход': three list rows with round icons: 'Лёгкая поклажа Вена' (selected, orange rim, backpack icon), 'Морской узел' (rope knot), 'Сухой паёк' (bread); under them the effect in orange: '+10% движения, −8% урона на этот поход.'\nPANEL 3 'Зелья в поход': on top two big round potion slots with small keycaps '1' and '2': slot 1 red flask 'Малое зелье здоровья', slot 2 orange-red flask 'Живица' (active, glowing orange ring). Below a 4x2 grid of smaller round flask icons with short names and grey 'Запас: 8': 'Малое зелье здоровья', 'Большое зелье здоровья', 'Малое зелье лавидия', 'Большое зелье лавидия', 'Живица' (selected), 'Лавидиевый порыв', 'Смешанный отвар' and 'Ясный настой' (both dim with a lock and 'Нужно улучшение Лео'). Under the grid in orange: '20% здоровья и −25% входящего урона на шесть секунд.'\nBELOW the panels grey text: 'Один навык без талантов · два разных вида зелий · общий интервал 8 с'.\nBOTTOM RIGHT big fiery orange painted button 'Отправиться'. BOTTOM LEFT keycap 'Esc' + 'Остаться'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  },
+  {
+   "window": "Перед походом (CampPreparationPanel)",
+   "variant": "Б",
+   "file": "2b-prep-loadout.png",
+   "preview": "2b-prep-loadout.jpg",
+   "caption": "Перед походом · Б: «снаряжение» — слева цепочка из четырёх больших кругов (навык, дар, зелье 1, зелье 2), справа выбор для редактируемого круга: 8 карточек зелий, уже взятое в позицию 1 помечено «Уже в позиции 1», описание снизу.",
+   "notes": "Сразу видно, с чем идёшь; справа всегда один выбор — удобно с клавиатуры. Минус: навык и дар выбираются за лишний шаг (клик по кругу слева). Дефекты: лавидий и Живица синие, Смешанный отвар зелёный — цвета зелий брать наши (здоровье красное, лавидий оранжевый); у «Малого зелья здоровья» плашка не затемнена, хотя оно недоступно.",
+   "higgsfield_job": "2ecc116a-009b-4bf2-abc8-180d0a565db1",
+   "references": [
+    "размытый кадр лагеря у арки/стола: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 270,0 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/UI/concepts-2026-09-30-hud-final/d1-trader-goods-and-bag.png (принятый торговец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 3 our approved trader window: copy their exact material - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current selection; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No character portrait. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: pre-run preparation as a LOADOUT page. TOP CENTER heading 'Перед походом'.\nLEFT COLUMN, heading 'В поход': a vertical chain of four BIG round slots joined by a thin hairline, each with a small caps label and the chosen name to the right: 'НАВЫК' - 'Рассекающий' (slash icon); 'ДАР' - 'Лёгкая поклажа Вена' (backpack icon); 'ЗЕЛЬЕ 1' - 'Малое зелье здоровья' (red flask); 'ЗЕЛЬЕ 2' - 'Живица' (flask) - this last slot is the one being edited: glowing orange ring and a small orange pointer toward the right side.\nRIGHT AREA, heading 'Зелье 2 · выбери вид': a 4x2 grid of potion cards in the kit list-card style, each with a big round flask icon, name and grey 'Запас: 8': 'Малое зелье здоровья' (dim, grey note 'Уже в позиции 1'), 'Большое зелье здоровья', 'Малое зелье лавидия', 'Большое зелье лавидия', 'Живица' (selected, orange rim), 'Лавидиевый порыв', 'Смешанный отвар' and 'Ясный настой' (both dim with a small lock and 'Нужно улучшение Лео').\nUnder the grid a description line: flask icon, 'Живица' and '20% здоровья и −25% входящего урона на шесть секунд.'\nBOTTOM grey text: 'Один навык без талантов · два разных вида зелий · общий интервал 8 с'. BOTTOM RIGHT big fiery orange painted button 'Отправиться'. BOTTOM LEFT keycap 'Esc' + 'Остаться'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  },
+  {
+   "window": "Житель · развитие лагеря (CampResidentPanel)",
+   "variant": "А",
+   "file": "3a-resident-ven-ladder.png",
+   "preview": "3a-resident-ven-ladder.jpg",
+   "caption": "Житель · А (Вен): портрет слева как в d1, справа «Рабочее место · 1 / 3» лесенкой из трёх кругов (I открыт, II следующий с ценой «1 очко лагеря · уровень 5» и кнопкой «Улучшить рабочее место», III закрыт), ниже глава «Наладить жизнь» с наградой и «Завершить главу».",
+   "notes": "Те же поля, что в CampResidentPanel (Title, Upgrade, Improve, Status, Chapter, TurnIn, Back), но уровни видны все сразу, а не одной строкой. Вен похож на d1. Дефекты: малые заголовки и строка цены ушли в сиренево-голубой — в сборке кремово-серый из листа 5; между наградами стоит стрелка вместо точки.",
+   "higgsfield_job": "3813be8d-815a-4434-8ae9-72ad5c090527",
+   "references": [
+    "размытый кадр лагеря у торговца/реки: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 710,211 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/UI/concepts-2026-09-30-hud-final/d1-trader-goods-and-bag.png (принятый торговец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 3 our approved trader window: copy their exact material and composition - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current selection; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: the resident development page of the trader. LEFT: the trader Вен exactly as in Image 3 - same young man with green cap, green coat, satchel, coin in hand, natural colours and lighting, no white rim light. Speech bubble top-left: 'Ну, чего тебе?'.\nRIGHT PAGE: heading 'Вен', thin line, subtitle 'Развитие лагеря'. TOP RIGHT: small round ember icon and 'Очки лагеря: 1'.\nPANEL 1, small caps heading 'РАБОЧЕЕ МЕСТО · 1 / 3': a vertical ladder of three circles joined by a thin line, each with text to the right:\n circle I filled cream with a check: 'Шесть товаров · дар Резервный план';\n circle II glowing orange ring (next step): 'Сохранение одного товара при обновлении', grey under it '1 очко лагеря · уровень 5';\n circle III dim with a small lock: 'Выбор категории одного следующего товара', grey 'уровень 8'.\n Next to step II a fiery orange painted button 'Улучшить рабочее место'.\nPANEL 2, small caps heading 'ГЛАВА · НАЛАДИТЬ ЖИЗНЬ': text 'Добраться до третьей арены. Поражение после этого учитывается.'; a reward row with round icons 'Награда: 1 сталь · 50 золота'; orange status 'Можно завершить разговором'; an outlined smoky button 'Завершить главу'.\nBOTTOM RIGHT keycap 'Esc' + 'Закрыть'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  },
+  {
+   "window": "Житель · развитие лагеря (CampResidentPanel)",
+   "variant": "Б",
+   "file": "3b-resident-leo-track.png",
+   "preview": "3b-resident-leo-track.jpg",
+   "caption": "Житель · Б (Лео): уровни рабочего места — три больших круга в строку («Рабочее место · 2 / 3», III следующий), под ними «Улучшить рабочее место»; ниже глава «Наладить жизнь» цепочкой Эни → Вен → Лео, прогресс «1 / 2» и награда.",
+   "notes": "Круги уровней крупные — видно, что откроет каждый уровень; цепочка жителей объясняет, почему часть главы закрыта («откроется после разговора с предыдущим жителем»). Полосы прогресса в коде сейчас нет — нужен счётчик «1 / 2» из Camp. Лео похож на кадр игры. Дефекты: цена «1 очко лагеря · уровень 8» сиренево-голубая (в сборке кремово-серый); награда нарисована красным и синим флаконом, лавидий у нас оранжевый; «перешел» без «ё», как в игре.",
+   "higgsfield_job": "c69a3fbb-76c9-4b64-a1d2-5f7e91604ff6",
+   "references": [
+    "размытый кадр лагеря у кузницы: ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (кроп 480,21 1100×618, blur 16)",
+    "ART/UI/concepts-2026-09-30-hud-polish/5-kit-one-language.png (лист 5, эталон)",
+    "ART/CAMP/polish-2026-09-30/alchemist/shot_00_t8.00s.png (кроп портрета Лео 0,0 760×1080)",
+    "ART/UI/concepts-2026-09-30-hud-final/c1-smith-two-actions.png (принятый кузнец)"
+   ],
+   "prompt": "Painted in-game UI target frame (a finished game screenshot, 16:9) for the bright stylized isometric ARPG 'The War Remains' (Hades 2 / Moonlighter 2 quality). Image 1 is our real camp, blurred: use it as the full-screen background, keep it bright, warm and saturated, only a soft charcoal smoke haze under the window. Image 2 is our approved UI kit and Image 4 our approved smith window: copy their exact material - 'smoke and light': near-black translucent smoky panels with ragged painted edges, thin warm off-white hairlines with tiny dots, faint embers; ONE orange accent (#FD7442) only for the primary button and the current step; everything else cream, warm white and grey; all slots are CIRCLES with thin rims (never diamonds); headings in the serif Philosopher, body in the rounded sans Nunito; keycaps like the kit. No metal, no carved wood, no parchment, no chunky bevels, no emblems, no flags.\n\nWINDOW: the resident development page of the alchemist, with a HORIZONTAL track. LEFT: the alchemist Лео exactly as in Image 3 - same bearded man with round glasses, curly brown hair, leather apron, holding an orange potion flask, natural colours and lighting, no white rim light. Speech bubble top-left with name tag 'Лео': 'Ты ради меня даже реку перешёл?'.\nRIGHT PAGE: heading 'Лео', thin line, subtitle 'Развитие лагеря'. TOP RIGHT: small round ember icon and 'Очки лагеря: 1'.\nUPPER BAND, small caps heading 'РАБОЧЕЕ МЕСТО · 2 / 3': three LARGE circles in a horizontal row joined by a thin glowing thread, each with a flask icon inside and a roman numeral above, text centered under each:\n I (filled cream, check): 'Большие зелья · Запасная фляга';\n II (filled cream, check): 'Живица и Лавидиевый порыв';\n III (glowing orange ring, next): 'Смешанный отвар и Ясный настой', grey '1 очко лагеря · уровень 8'.\n Under the row a fiery orange painted button 'Улучшить рабочее место'.\nLOWER BAND, small caps heading 'ГЛАВА · НАЛАДИТЬ ЖИЗНЬ': a small chain of three circles with names 'Эни', 'Вен', 'Лео' - the first two checked, 'Лео' current; text 'Применить два разных вида зелий в настоящих походах.' with a thin progress bar '1 / 2'; reward row with two round flask icons 'Награда: по две бутылки выбранных открытых видов'; a dim outlined button 'Завершить главу'.\nBOTTOM RIGHT keycap 'Esc' + 'Закрыть'.\nAll text in Russian, spelled exactly as given, crisp and readable, nothing else written."
+  }
+ ],
+ "total_images": 6,
+ "credits_used": 16.5,
+ "balance_before_shared": 109.3,
+ "balance_after_shared": 7.55,
+ "balance_note": "Баланс общий на 5 параллельных агентов; этот пакет — 6 картинок × 2,75 = 16,5 кредита. Сбои 429 (rate limit) при отправке задач не создавали и не списывались.",
+ "not_captured": "Новых кадров не снималось: фон — размытый кроп существующего кадра environment-after, текущее состояние окон смотрел по готовым кадрам polish-2026-09-30."
+}

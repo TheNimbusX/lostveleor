@@ -23,6 +23,10 @@ namespace Game.View
         [Tooltip("Клавиша выбора в углу карточки (ставить через RunHudView.SetKey: длинная подпись — капсула)")] public TMP_Text Key;
         public WcRarity Rarity;
 
+        [Header("Полировка (v3, кадр 3a)")]
+        [Tooltip("Перелив редкости по карточке под мышью: полоса света цвета редкости")] public HudGlint Glint;
+        [Tooltip("Кейкап набора в углу и кольцо блокировки ввода на нём")] public RunHudView.KeyLock KeyLock;
+
         /// <summary>Белый знак в круге меньше цветной картинки награды: вокруг поле, как у значков HUD.</summary>
         public const float GlyphScale = .62f;
 

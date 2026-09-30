@@ -8,6 +8,7 @@ float _CampFlagStrength;
 TEXTURE2D(_CampPaintedPaths); SAMPLER(sampler_CampPaintedPaths);
 float4 _CampPaintedPathBounds;
 float _CampPathFoliage;
+float _CampDepthOn; float4 _CampDepthControls;
 float4x4 _CampRiverWorldToLocal;
 TEXTURE2D(_CampRiverBoundary); SAMPLER(sampler_CampRiverBoundary);
 float4 _CampRiverBoundaryRange;
@@ -32,6 +33,11 @@ float CampBreezeHash(float2 p)
 {
     return frac(sin(dot(p, float2(41.37, 289.13))) * 43758.5453);
 }
+float CampDepthFoliagePatch(float2 p)
+{
+    float2 i=floor(p),f=frac(p); f=f*f*(3-2*f);
+    return lerp(lerp(CampBreezeHash(i),CampBreezeHash(i+float2(1,0)),f.x),lerp(CampBreezeHash(i+float2(0,1)),CampBreezeHash(i+1),f.x),f.y);
+}
 
 float3 CampBreezePosition(float3 positionOS, float4 bend, float time)
 {
@@ -50,6 +56,14 @@ float3 CampBreezePosition(float3 positionOS, float4 bend, float time)
     // Все вершины одного растения сходятся к его корню: одинаково в цвете,
     // тенях, depth и motion vectors. Исходный меш остаётся целым для ластика/Undo.
     float shrink = 1;
+    if(_CampDepthOn>.5 && _CampPathFoliage>.5)
+    {
+        // Только уже размещённые низкие растения: пятна 4–6 м без добавления новых мешей.
+        float patch=CampDepthFoliagePatch(root.xz*.21+float2(13,29));
+        float grouping=_CampDepthControls.w;
+        if(patch<.40 && CampBreezeHash(root.xz+23)>lerp(1,.27,grouping)) return bend.xyz;
+        shrink*=lerp(1,lerp(.52,1.03,smoothstep(.25,.68,patch)),grouping);
+    }
     if (_CampPathFoliage > .5 && _CampPaintedPathBounds.z > 0 && _CampPaintedPathBounds.w > 0)
     {
         float2 uv = (root.xz - _CampPaintedPathBounds.xy) / _CampPaintedPathBounds.zw;
@@ -65,7 +79,7 @@ float3 CampBreezePosition(float3 positionOS, float4 bend, float time)
                 + SAMPLE_TEXTURE2D_LOD(_CampPaintedPaths, sampler_CampPaintedPaths, uv - float2(0, tap.y), 0).r) * .25;
             if (centre > lerp(.46, .84, CampBreezeHash(root.xz))) return bend.xyz;
             if (soft > lerp(.3, 1.05, CampBreezeHash(root.zx + 17.1))) return bend.xyz;
-            shrink = lerp(1, .6, saturate(max(soft, centre) * 1.6));
+            shrink *= lerp(1, .6, saturate(max(soft, centre) * 1.6));
         }
     }
     UNITY_BRANCH

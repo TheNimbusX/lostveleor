@@ -1,0 +1,17 @@
+{
+  "status": "rejected-primitive-prototype-never-imported-into-unity",
+  "replacement": "../anchor-imagegen-tripo/manifest.json",
+  "purpose": "Archived rejected prototype. Owner requires imagegen or Higgsfield + Tripo for new models; this primitive-based draft must never be used in production.",
+  "reference": "../references/anchor_identity.jpg",
+  "geometry": {
+    "new_head": "curved heavy crescent arms, broad flukes, central diamond, rounded forged edges; original silhouette",
+    "height_m": 0.78,
+    "width_m": 0.74,
+    "depth_m": 0.14,
+    "target_triangles": 5500
+  },
+  "body": "Existing skeleton, mesh, atlas and saber geometry preserved. Editable palette material; stronger coral/turquoise, restrained white cloth lift.",
+  "storage": "Chest bone, close to back, integrated head/grip/short chain and visible carrier; same stored head restores after actions.",
+  "acceptance": "Owner examines continuous Unity view and actual gameplay. This task drops the unaccepted concept redesign.",
+  "created_local_date": "2026-09-30"
+}

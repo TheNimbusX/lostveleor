@@ -2352,6 +2352,8 @@ namespace Game.View
             Material material = string.IsNullOrEmpty(materialPath)
                 ? null
                 : Resources.Load<Material>(materialPath);
+            var pelagAppearance = faction == Faction.Wole ? PelagAppearanceProfile.Load() : null;
+            if (material == null && pelagAppearance != null) material = pelagAppearance.BodyMaterial;
 
             GameObject weaponPrefab = faction == Faction.Wole &&
                                       !string.IsNullOrEmpty(WoleWeaponPrefab)
@@ -2385,9 +2387,12 @@ namespace Game.View
                 // Цвет ткани принадлежит телу героя; общий материал оружия и материалы врагов не меняются.
                 if (!ownsMaterial) material = new Material(material);
                 material.name = "Runtime_Pelag_Cloth";
-                if (material.HasProperty("_WhiteClothLift")) material.SetFloat("_WhiteClothLift", .72f);
-                if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", .14f);
-                if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", new Color(1.04f, 1.04f, 1.04f, 1f));
+                if (pelagAppearance == null || ownsMaterial)
+                {
+                    if (material.HasProperty("_WhiteClothLift")) material.SetFloat("_WhiteClothLift", .72f);
+                    if (material.HasProperty("_LightFeather")) material.SetFloat("_LightFeather", .14f);
+                    if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", new Color(1.04f, 1.04f, 1.04f, 1f));
+                }
                 if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0f);
             }
 
@@ -2607,10 +2612,13 @@ namespace Game.View
             Transform saberEquippedSocket = FindChild(root, WoleWeaponSocket);
             Transform anchorStoredSocket = FindChild(root, WoleAnchorSocket);
             Transform anchorEquippedSocket = FindChild(root, WoleAnchorEquippedSocket);
+            var appearance = PelagAppearanceProfile.Load();
+            bool backMount = appearance != null && appearance.AnchorHeadPrefab != null;
+            if (backMount) anchorStoredSocket = FindChild(root, appearance.BackSocket);
             // Older scenes serialized both weapons on the same hip. Keep the
             // authored height/depth but put the anchor opposite the saber.
             Vector3 anchorBeltPosition = WoleAnchorLocalPosition;
-            if (anchorStoredSocket == saberStoredSocket)
+            if (!backMount && anchorStoredSocket == saberStoredSocket)
                 anchorBeltPosition.x = -Mathf.Sign(WoleWeaponStoredLocalPosition.x)
                     * Mathf.Max(0.114f, Mathf.Abs(anchorBeltPosition.x));
 
@@ -2643,11 +2651,12 @@ namespace Game.View
                     WoleWeaponLocalScale),
                 anchor,
                 new PelagEquipmentView.MountPoint(anchorStoredSocket,
-                    anchorBeltPosition, WoleAnchorLocalRotation,
-                    WoleAnchorLocalScale),
+                    backMount ? appearance.GripPosition : anchorBeltPosition,
+                    backMount ? appearance.GripRotation : WoleAnchorLocalRotation,
+                    backMount ? appearance.GripScale : WoleAnchorLocalScale),
                 new PelagEquipmentView.MountPoint(anchorEquippedSocket,
                     WoleAnchorEquippedLocalPosition, WoleAnchorEquippedLocalRotation,
-                    WoleAnchorEquippedLocalScale));
+                    WoleAnchorEquippedLocalScale), appearance);
         }
 
         private static Transform InstantiateEquipmentProp(Transform body, GameObject prefab,

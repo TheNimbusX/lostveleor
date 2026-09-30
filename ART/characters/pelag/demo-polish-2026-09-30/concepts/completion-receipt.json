@@ -1,0 +1,131 @@
+{
+  "completed_utc": "2026-09-29T22:16:18.168Z",
+  "requested_model": "nano_banana_pro",
+  "returned_model": "nano_banana_2",
+  "model_note": "Backend result uses nano_banana_2 identifier; stored requested and returned identifiers separately.",
+  "cost": {
+    "approved_credits": 4,
+    "balance_before": 113.3,
+    "balance_after": 109.3,
+    "observed_balance_delta": 4
+  },
+  "jobs": [
+    {
+      "index": 0,
+      "job_id": "15df8545-3250-413d-8f72-420a890fdd90",
+      "status": "completed",
+      "type": "image",
+      "model": "nano_banana_2",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_15df8545-3250-413d-8f72-420a890fdd90.png"
+    },
+    {
+      "index": 1,
+      "job_id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b",
+      "status": "completed",
+      "type": "image",
+      "model": "nano_banana_2",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b.png"
+    }
+  ],
+  "prompt_and_reference_mapping_verified": true,
+  "items": [
+    {
+      "id": "15df8545-3250-413d-8f72-420a890fdd90",
+      "type": "image",
+      "status": "completed",
+      "model": "nano_banana_2",
+      "params": {
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT A: short thick windswept hair swept back, darker brown roots and a few broad chestnut highlights. Preserve the current recognizable hairline; less spiky juvenile anime hair. The current collar reads as one broad coral band, the sash as one clear substantial knot, the bracers as firm leather volumes. Keep the original costume silhouette particularly close.",
+        "aspect_ratio": "16:9",
+        "input_images": [
+          {
+            "id": "5a742144-992c-4637-a70a-f40168b3e510",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/5a742144-992c-4637-a70a-f40168b3e510.jpg"
+          },
+          {
+            "id": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/55ada286-2d04-47b2-9e1a-cbddf4ff41b9.jpg"
+          },
+          {
+            "id": "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/03019c7a-94a6-43c6-9a82-2b6f331c3b34.jpg"
+          },
+          {
+            "id": "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/0eaeee50-c75f-4da4-acf0-f263330ddaa5.jpg"
+          },
+          {
+            "id": "d4c95bbb-e589-4268-9983-2215e292e2ba",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/d4c95bbb-e589-4268-9983-2215e292e2ba.jpg"
+          }
+        ],
+        "width": 2752,
+        "height": 1536,
+        "resolution": "2k",
+        "batch_size": 1,
+        "input_image": null,
+        "application": null,
+        "surface": null
+      },
+      "results": {
+        "rawUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_15df8545-3250-413d-8f72-420a890fdd90.png",
+        "minUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_15df8545-3250-413d-8f72-420a890fdd90_min.webp"
+      },
+      "createdAt": 1790719864.10776
+    },
+    {
+      "id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b",
+      "type": "image",
+      "status": "completed",
+      "model": "nano_banana_2",
+      "params": {
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT B: medium-short thick hair swept back in three or four large sculpted locks, slight asymmetric wave, sides tidier but not shaved, no ponytail or mohawk. Keep his mature facial refinement restrained and recognizable from the original hero reference. Preserve the same costume cut; emphasize broad diagonal wrap folds, the substantial coral sash and warm rust-ochre highlights on brown leather. Turquoise trim is a coherent large accent rather than tiny checkerboard noise.",
+        "aspect_ratio": "16:9",
+        "input_images": [
+          {
+            "id": "5a742144-992c-4637-a70a-f40168b3e510",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/5a742144-992c-4637-a70a-f40168b3e510.jpg"
+          },
+          {
+            "id": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/55ada286-2d04-47b2-9e1a-cbddf4ff41b9.jpg"
+          },
+          {
+            "id": "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/03019c7a-94a6-43c6-9a82-2b6f331c3b34.jpg"
+          },
+          {
+            "id": "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/0eaeee50-c75f-4da4-acf0-f263330ddaa5.jpg"
+          },
+          {
+            "id": "d4c95bbb-e589-4268-9983-2215e292e2ba",
+            "type": "media_input",
+            "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/d4c95bbb-e589-4268-9983-2215e292e2ba.jpg"
+          }
+        ],
+        "width": 2752,
+        "height": 1536,
+        "resolution": "2k",
+        "batch_size": 1,
+        "input_image": null,
+        "application": null,
+        "surface": null
+      },
+      "results": {
+        "rawUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b.png",
+        "minUrl": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b_min.webp"
+      },
+      "createdAt": 1790719864.150986
+    }
+  ]
+}

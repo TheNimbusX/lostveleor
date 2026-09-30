@@ -442,6 +442,9 @@ namespace Game.View
             //
             // Тряска, зум и толчок от чужого удара остаются: hit-stop — это
             // подтверждение ТВОЕГО удара, а не наказание за чужой.
+            // Исключение (этап 4) — сильный удар по герою (≥ 15 % здоровья) и
+            // оглушение: микростоп 60 мс в HeroHitFeedback, не чаще раза в 0,6 с,
+            // и тоже без времени — бьющий держит позу, камера держит толчок.
             bool stopsTime = (!playerHit || e.Flag) && !IsSlashContact(in e);
             Accumulate(
                 trauma: e.Flag ? 0.52f : whirlwindContact ? 0.55f : playerHit ? 0.33f

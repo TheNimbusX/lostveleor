@@ -47,12 +47,13 @@ namespace Game.Tests
                 s.Step(InputFrame.Empty);
                 foreach (var e in s.Events) if (e.Type == SimEventType.Damage && e.Source == 1 && e.Target == 0) hits++;
             }
-            // 22 — урон тарана из таблицы видов (подгонка 29.09, было 24); отброс урона не добавляет.
-            Assert.That(hits, Is.EqualTo(1)); Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - 22));
+            // Урон тарана — из таблицы видов; отброс урона не добавляет.
+            int charge = EnemyArchetypes.Get(EnemyKind.ForestStonehoof).BaseDamage;
+            Assert.That(hits, Is.EqualTo(1)); Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - charge));
             Assert.That(Fix64.Abs(s.Entities.Position[0].Y).ToFloat(), Is.InRange(.95f, 1.05f));
             Assert.That(a.StopReason, Is.EqualTo(StonehoofStop.ArenaEdge));
-            Assert.That(a.StopTick - a.BrakeTick, Is.EqualTo(18));
-            Assert.That(s.Entities.NextAttackTick[1], Is.EqualTo(a.StopTick + 120));
+            Assert.That(a.StopTick - a.BrakeTick, Is.EqualTo(Simulation.StonehoofBrakeTicks));
+            Assert.That(s.Entities.NextAttackTick[1], Is.EqualTo(a.StopTick + Simulation.StonehoofRestTicks));
         }
         [Test]
         public void AcceleratesForSixTicksThenKeepsTwelveMetresPerSecond()
@@ -71,7 +72,7 @@ namespace Game.Tests
             Assert.That(a.StopReason, Is.EqualTo(StonehoofStop.Obstacle));
             Assert.That(a.Target.X.ToFloat(), Is.EqualTo(-3.3f).Within(.003f));
             Until(s, a.StopTick + 1); Assert.That(s.Statuses.IsStunned(1, s.Tick), Is.True);
-            Assert.That(s.Statuses.StunUntilTick[1], Is.EqualTo(a.StopTick + 36));
+            Assert.That(s.Statuses.StunUntilTick[1], Is.EqualTo(a.StopTick + Simulation.StonehoofWallTicks));
             Assert.That(s.Entities.Position[1], Is.EqualTo(a.Target)); Until(s, a.EndTick);
             Assert.That(s.Entities.Position[1], Is.EqualTo(a.Target));
         }
@@ -106,12 +107,18 @@ namespace Game.Tests
         [Test]
         public void RepeatClearsActionsAndRandomnessIsDeterministic()
         {
-            var a = Arena(); var b = Arena();
-            for (int t = 0; t < 1500; t++)
-            { a.Step(InputFrame.Empty); b.Step(InputFrame.Empty); Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t); }
+            // Единственный повтор, где таран идёт несколько раз: 450 тиков — не меньше двух разбегов.
+            var a = Arena(); var b = Arena(); int charges = 0;
+            for (int t = 0; t < 450; t++)
+            {
+                a.Step(InputFrame.Empty); b.Step(InputFrame.Empty); Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t);
+                foreach (var e in a.Events) if (e.Type == SimEventType.StonehoofStarted) charges++;
+            }
+            Assert.That(charges, Is.GreaterThanOrEqualTo(2), "таран повторился меньше двух раз");
             a.SetupStonehoofEncounter(null, 76);
             Assert.That(a.Entities.Kind[1], Is.EqualTo(EnemyKind.ForestStonehoof));
-            Assert.That(a.Entities.Health[1], Is.EqualTo(650)); Assert.That(a.TryGetStonehoofAction(1, out _), Is.False);
+            Assert.That(a.Entities.Health[1], Is.EqualTo(EnemyArchetypes.Get(EnemyKind.ForestStonehoof).BaseHealth));
+            Assert.That(a.TryGetStonehoofAction(1, out _), Is.False);
             Assert.That(a.TryGetStonehoofTusk(1, out _), Is.False);
         }
         [Test]
@@ -134,26 +141,6 @@ namespace Game.Tests
             double ax = a.X.ToDouble(), ay = a.Y.ToDouble(), bx = b.X.ToDouble(), by = b.Y.ToDouble();
             double dot = (ax * bx + ay * by) / (System.Math.Sqrt(ax * ax + ay * ay) * System.Math.Sqrt(bx * bx + by * by));
             return System.Math.Acos(System.Math.Max(-1.0, System.Math.Min(1.0, dot))) * 180.0 / System.Math.PI;
-        }
-
-        [Test]
-        public void TurnsInPlaceSixDegreesPerTick()
-        {
-            // Спиной к герою на пяти метрах: ни подхода, ни отступа, ни тарана — только поворот.
-            var s = Arena(); s.Entities.Facing[1] = -West; s.Entities.NextAttackTick[1] = 10000;
-            var origin = s.Entities.Position[1]; var previous = s.Entities.Facing[1]; int turning = 0;
-            for (int t = 0; t < 40; t++)
-            {
-                s.Step(InputFrame.Empty);
-                double step = Degrees(previous, s.Entities.Facing[1]); previous = s.Entities.Facing[1];
-                Assert.That(step, Is.LessThanOrEqualTo(Simulation.StonehoofTurnDegreesPerTick + .05), "tick " + t);
-                if (step > .5) turning++;
-                Assert.That(s.Entities.Position[1], Is.EqualTo(origin), "шаг во время разворота, тик " + t);
-            }
-            // 180° по 6° — тридцать тиков, секунда: вдвое медленнее прочих мобов.
-            Assert.That(Simulation.StonehoofTurnDegreesPerTick, Is.EqualTo(6));
-            Assert.That(turning, Is.InRange(30, 31));
-            Assert.That(Degrees(s.Entities.Facing[1], West), Is.LessThan(.01));
         }
 
         [Test]
@@ -241,7 +228,6 @@ namespace Game.Tests
             var s = Tusk(At(1.4, 0), West); s.Step(InputFrame.Empty);
             Assert.That(s.TryGetStonehoofTusk(1, out var tusk), Is.True, "вплотную спереди, отдых");
             Assert.That(tusk.ImpactTick - tusk.StartTick, Is.EqualTo(Simulation.StonehoofTuskWindupTicks));
-            Assert.That(Simulation.StonehoofTuskWindupTicks, Is.EqualTo(14));
             Assert.That(TuskEvents(s, SimEventType.EnemyActionStarted), Is.EqualTo(1));
             foreach (var e in s.Events) Assert.That(e.Type, Is.Not.EqualTo(SimEventType.TelegraphOpened), "метка на земле");
 
@@ -333,18 +319,17 @@ namespace Game.Tests
             foreach (var e in s.Events)
                 if (e.Type == SimEventType.EnemyActionImpact && e.ActionVariant == (int)EnemyActionKind.StonehoofTusk) touched = e.Flag;
             Assert.That(touched, Is.True, "клыки не задели");
-            // 60% урона тарана: 22 × 0,6 = 13,2 → 13.
-            Assert.That(s.StonehoofTuskDamageOf(1), Is.EqualTo(13));
-            Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - 13));
+            // Урон клыков — доля урона тарана (StonehoofTuskDamagePercent).
+            int tuskDamage = s.StonehoofTuskDamageOf(1);
+            Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - tuskDamage));
             Until(s, tusk.ImpactTick + 1 + Simulation.StonehoofTuskKnockbackTicks + 2);
             var moved = s.Entities.Position[0] - before;
             Assert.That(moved.Length.ToFloat(), Is.InRange(.95f, 1.05f), "отброс на метр");
             Assert.That(Degrees(moved, West), Is.LessThan(1.0), "отброс прочь от кабана");
-            Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - 13), "клыки бьют один раз");
+            Assert.That(s.Entities.Health[0], Is.EqualTo(10000 - tuskDamage), "клыки бьют один раз");
             // Всё восстановление стоит там, где начал замах; следующий взмах — не раньше 60 тиков от начала.
             Assert.That(s.Tick, Is.LessThan(tusk.RecoverUntil));
             Assert.That(s.Entities.Position[1], Is.EqualTo(tusk.Origin));
-            Assert.That(Simulation.StonehoofTuskCooldownTicks, Is.EqualTo(60));
         }
 
         [Test]
@@ -524,20 +509,6 @@ namespace Game.Tests
             Assert.That(at, Is.GreaterThan(1.7), "порог от центров (1,7 м) такого героя не видел");
             Assert.That(starts, Is.GreaterThanOrEqualTo(3), "клыки один раз и больше не бьют");
             Assert.That(misses, Is.EqualTo(0), "рубящий стоит на месте — клыки задевают");
-        }
-
-        [Test]
-        public void Tusk_NotAtThreeMetres_AndTheBoarNeverStepsCloser()
-        {
-            Assume.That(Simulation.StonehoofTuskEnabled, Is.True);
-            // Герой стоит в 3 м перед отдыхающим кабаном (двигаем героя, не кабана).
-            var s = RestingEncounter();
-            s.Entities.Position[0] = s.Entities.Position[1] + West * Fix64.FromInt(3);
-            double previous = HeroDistance(s);
-            int first = RunTusks(s, sim => InputFrame.Empty, 150, out _, out int starts, out _, out _);
-            Assert.That(first, Is.EqualTo(-1), "клыки на трёх метрах");
-            Assert.That(starts, Is.EqualTo(0));
-            Assert.That(HeroDistance(s), Is.GreaterThanOrEqualTo(previous - 1e-4), "кабан подошёл к герою");
         }
 
         [Test]

@@ -64,6 +64,11 @@ CBUFFER_START(UnityPerMaterial)
     half4 _OutlineColor;
     half _OutlineWidth;
     half _WhiteClothLift;
+    half _ArtSaturation;
+    half _ArtContrast;
+    half _SkinToneStrength;
+    half _SkinSaturation;
+    float4 _SkinToneScale;
     half _OutlineDepthBias;
     half _HitFlash;
     half _BlazeGlow;

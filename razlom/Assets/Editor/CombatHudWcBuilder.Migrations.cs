@@ -27,8 +27,12 @@ namespace Game.EditorTools
         /// стенсил-маски и двух копий, живой портрет; числа здоровья и лавидия всегда видны, опыт —
         /// подписью «Ур. N · X / Y» под тонкой полосой; карта 230 → 253, подпись сдвинута, затемнение
         /// края по округлой форме карты; кошелёк лагеря.
+        /// v2 (30.09, этап 4 — кадр 1a): строка эффектов героя над портретом (круги с кольцом-таймером,
+        /// секунды и «×2» в углу значка, «+N», подсказка) вместо ряда значков зелий «Эффекты зелий».
+        /// v3 (30.09, единый набор — лист 5): кейкапы — тёмный скруглённый квадрат вместо круга в дыме,
+        /// «[Alt] Подробнее», вложенная подсказка ключевого слова у подсказки способности и артефакта.
         /// </summary>
-        public const int LayoutVersion = 1;
+        public const int LayoutVersion = 3;
         const float OldMapSize = 230f;
 
         static bool _waiting;
@@ -134,6 +138,8 @@ namespace Game.EditorTools
         static void Migrate(GameObject root, CombatHudView view)
         {
             if (view.LayoutVersion < 1) MigrateTo1(root, view);
+            if (view.LayoutVersion < 2) MigrateTo2(root, view);
+            if (view.LayoutVersion < 3) MigrateTo3(root, view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }

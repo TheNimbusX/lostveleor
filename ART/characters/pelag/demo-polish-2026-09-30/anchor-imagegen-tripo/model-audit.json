@@ -1,0 +1,24 @@
+{
+  "source": "Tripo task 313b5f0a-278d-4bcb-bacd-6c7ef17454d6",
+  "triangles": 5872,
+  "dimensions_blender_m": [
+    0.8022490739822388,
+    0.2299085259437561,
+    1.0
+  ],
+  "chain_socket_blender_local_m": [
+    0.0,
+    -0.009999999776482582,
+    0.4050000011920929
+  ],
+  "fbx_axes": "-Z forward, Y up",
+  "exported_objects": [
+    "Pelag_AnchorHead_Tripo",
+    "Anchor_Attachment"
+  ],
+  "textures": [
+    "Anchor_BaseColor.png",
+    "Anchor_NormalGL.png",
+    "Anchor_ORM.png"
+  ]
+}

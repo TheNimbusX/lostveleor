@@ -105,7 +105,7 @@ namespace Game.EditorTools
             flash.gameObject.SetActive(false);
             // Колонка в 310: подпись до 180, капсула клавиши не шире 3,2 высоты — длинные подписи ужимаются, а не наезжают.
             RectTransform action = Box(Node("Действие", row), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(16f, 0f), new Vector2(180f, 36f));
-            binding.Action = UiInkKit.Label(action, "Надпись", "Действие", FontRole.Body, 18f, Role.Text);
+            binding.Action = UiInkKit.Label(action, "Надпись", "Действие", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text);
             binding.Action.enableAutoSizing = true;
             binding.Action.fontSizeMin = 12f;
             binding.Action.fontSizeMax = 18f;
@@ -113,15 +113,15 @@ namespace Game.EditorTools
 
             RectTransform key = UiInkKit.Keycap(row, "Клавиша", "Q", KeySize);
             RightAt(key, -8f);
-            // Свет — поверх дыма клавиши и под кольцом с буквой: под дымом его почти не видно.
+            // Свет — поверх дыма и тёмной подложки клавиши, под кромкой с буквой: под дымом его почти не видно.
             RectTransform waiting = Stretch(Node("Ожидание", key), -14f);
-            waiting.SetSiblingIndex(1);
+            waiting.SetSiblingIndex(UiInkKit.KeycapInnerIndex(key));
             Image glow = UiInkKit.LightLayer(waiting, "Свечение", "light_glow", .9f, 6f, delay: 0f);
             waiting.gameObject.AddComponent<UiPulse>().Graphic = glow;
             waiting.gameObject.SetActive(false);
             binding.Waiting = waiting.gameObject;
             Image hover = UiInkKit.LightLayer(key, "Наведение", "light_glow", .5f, 10f, delay: .15f);
-            hover.transform.SetSiblingIndex(2);
+            hover.transform.SetSiblingIndex(waiting.GetSiblingIndex() + 1);
             Image hit = UiInkKit.HitArea(key);
             var button = key.gameObject.AddComponent<UnityEngine.UI.Button>();
             button.targetGraphic = hit;
@@ -161,30 +161,34 @@ namespace Game.EditorTools
             view.UnderConfirmAlpha = 0f;
 
             RectTransform title = Box(Node("Заголовок", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -28f), new Vector2(560f, 50f));
-            view.ConfirmTitle = UiInkKit.Label(title, "Надпись", "Выйти из игры?", FontRole.Heading, 36f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
+            // Окно подтверждения листа 5: заголовок — ступень Title, пояснение — Body, отсчёт — Caption.
+            view.ConfirmTitle = UiInkKit.Label(title, "Надпись", "Выйти из игры?", FontRole.Heading, T.Size(UiTheme.TextStep.Title), Role.Text,
+                TextAlignmentOptions.Center, 1f, 1f, .05f);
             view.ConfirmTitle.enableAutoSizing = true;
             view.ConfirmTitle.fontSizeMin = 20f;
-            view.ConfirmTitle.fontSizeMax = 36f;
+            view.ConfirmTitle.fontSizeMax = T.Size(UiTheme.TextStep.Title);
             Box(UiInkKit.Divider(content, "Линия", 360f, true, .6f), new Vector2(.5f, 1f), new Vector2(.5f, .5f), new Vector2(0f, -92f), new Vector2(360f, 16f));
             RectTransform text = Box(Node("Текст", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -112f), new Vector2(540f, 84f));
-            view.ConfirmText = UiInkKit.Label(text, "Надпись", "", FontRole.Body, 20f, Role.Text, TextAlignmentOptions.Center);
+            view.ConfirmText = UiInkKit.Label(text, "Надпись", "", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.Center);
             RectTransform countdown = Box(Node("Отсчёт", content), new Vector2(.5f, 1f), new Vector2(.5f, 1f), new Vector2(0f, -198f), new Vector2(540f, 30f));
-            view.ConfirmCountdown = UiInkKit.Label(countdown, "Надпись", "", FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.Center);
+            view.ConfirmCountdown = UiInkKit.Label(countdown, "Надпись", "", FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.TextMuted, TextAlignmentOptions.Center);
 
             view.ConfirmYes = ConfirmButton(content, true, "Выйти", -150f, out view.ConfirmYesLabel);
             view.ConfirmNo = ConfirmButton(content, false, "Отмена", 150f, out view.ConfirmNoLabel);
             view.ConfirmNo.GetComponent<UiHoverMotion>().ClickSound = UiSoundEvent.Back;
+            // Отмена подтверждения — Esc (PauseMenu): кейкап на кнопке, как в окне листа 5.
+            UiInkKit.ButtonKey((RectTransform)view.ConfirmNo.transform, "Esc", 30f);
             panel.gameObject.SetActive(false);
         }
 
         static Button ConfirmButton(RectTransform content, bool primary, string text, float x, out TMP_Text label)
         {
-            RectTransform button = UiInkKit.Button(content, text, text, primary, new Vector2(240f, 56f), 26f);
-            Box(button, new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(x, 34f), new Vector2(240f, 56f));
+            RectTransform button = UiInkKit.Button(content, text, text, primary, new Vector2(240f, T.ButtonHeight), T.Size(UiTheme.TextStep.Heading));
+            Box(button, new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(x, 34f), new Vector2(240f, T.ButtonHeight));
             label = button.Find("Надпись").GetComponent<TMP_Text>();
             label.enableAutoSizing = true;
             label.fontSizeMin = 16f;
-            label.fontSizeMax = 26f;
+            label.fontSizeMax = T.Size(UiTheme.TextStep.Heading);
             var result = button.GetComponent<Button>();
             NoNavigation(result);
             return result;

@@ -230,6 +230,7 @@ namespace Game.View
             }
 
             _pools = new PoolRecord[(int)PelagVfxId.Count];
+            var weaponAppearance = PelagAppearanceProfile.Load();
             Transform root = new GameObject("Пул: Pelag VFX").transform;
             root.SetParent(transform, false);
 
@@ -244,7 +245,8 @@ namespace Game.View
                 _pools[id] = new PoolRecord
                 {
                     AuthoredRotation = prefab.transform.localRotation,
-                    Pool = new ViewPool(parent, () => Instantiate(prefab), Mathf.Max(1, entry.Prewarm))
+                    Pool = new ViewPool(parent, () => CreatePooledEffect(prefab, entry.Id, weaponAppearance),
+                        Mathf.Max(1, entry.Prewarm))
                 };
                 // Блики перекрываются уже в первом броске; ViewPool сам создаёт только один экземпляр.
                 if(entry.Id == PelagVfxId.AnchorLeapFlight || entry.Id == PelagVfxId.AnchorLeapLanding
@@ -260,6 +262,57 @@ namespace Game.View
             }
 
             PoolsReady = true;
+        }
+
+        private static GameObject CreatePooledEffect(GameObject prefab, PelagVfxId id,
+            PelagAppearanceProfile appearance)
+        {
+            var effect = Instantiate(prefab);
+            if (appearance == null || appearance.AnchorHeadPrefab == null
+                || (id != PelagVfxId.AnchorLeapThrow && id != PelagVfxId.CycloneHook)) return effect;
+            var original = System.Array.Find(effect.GetComponentsInChildren<Transform>(true),
+                t => t.name == "Physical Anchor");
+            if (original == null) return effect;
+            var head = Instantiate(appearance.AnchorHeadPrefab, original.parent, false);
+            head.name = "Physical Anchor";
+            head.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+            var renderers = head.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length > 0)
+            {
+                // Fit in the prefab parent's coordinates. World bounds include the
+                // pool's position/rotation and must not become a local offset.
+                var bounds = new Bounds();
+                bool first = true;
+                foreach (var filter in head.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    var meshBounds = filter.sharedMesh.bounds;
+                    for (int c = 0; c < 8; c++)
+                    {
+                        var corner = meshBounds.center + Vector3.Scale(meshBounds.extents,
+                            new Vector3((c & 1) == 0 ? -1 : 1,
+                                (c & 2) == 0 ? -1 : 1, (c & 4) == 0 ? -1 : 1));
+                        var point = head.transform.parent.InverseTransformPoint(
+                            filter.transform.TransformPoint(corner));
+                        if (first) { bounds = new Bounds(point, Vector3.zero); first = false; }
+                        else bounds.Encapsulate(point);
+                    }
+                }
+                float fit = appearance.HeadSize / Mathf.Max(.001f,
+                    Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z)));
+                head.transform.localScale = Vector3.one * fit;
+                head.transform.localPosition = -bounds.center * fit;
+                if (appearance.AnchorHeadMaterial != null)
+                    foreach (var r in renderers)
+                    {
+                        var materials = r.sharedMaterials;
+                        for (int i = 0; i < materials.Length; i++) materials[i] = appearance.AnchorHeadMaterial;
+                        r.sharedMaterials = materials;
+                    }
+            }
+            original.gameObject.SetActive(false);
+            Destroy(original.gameObject);
+            effect.GetComponent<PelagVfxElement>()?.SetAnchorModel(head.transform);
+            return effect;
         }
 
         private void BuildHeroLight()

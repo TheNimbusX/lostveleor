@@ -1,0 +1,211 @@
+{
+  "batch": "Хозяин Чащи — концепты босса, 30.09.2026",
+  "model": "gpt_image_2_5, quality high, 2k (3:2 для листов, 16:9 для кадров)",
+  "references": {
+    "r01": "ART/characters/act-1-enemies/forest-BOSS-ownerofforest/art.png (старый концепт Хозяина, media 202474f7)",
+    "r02": "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+    "r03": "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)",
+    "r04": "ART/UI/concepts-2026-09-30-hud-polish/bases/base-fight.jpg (кадр игры с полосой элиты, media 1db7c583)",
+    "r05": "ART/UI/concepts-2026-09-30-hud-polish/1a-fight-rings-notches.jpg (выбранный HUD 1a с полосой босса, media a643d12e)",
+    "r06": "artifacts/capture/polish-hit/shot_00_t3.00s.png (кадр игры, рунный круг арены, media 8a170a22)",
+    "r07": "review/mobs-v2-round2-2026-09-29/telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png (телеграф B, media 01ad627c)",
+    "r08": "review/mobs-v2-round2-2026-09-29/telegraphs/02b-B-dashed-chevrons-wendigo-howl-ring.png (телеграф B, кольцо, media 37918bdc)",
+    "r09": "review/mobs-v2-concepts-2026-09-29/abilities/07-snarer-roots-emerging-a-burst.png (принятые корни из земли, media 67bd21e1)"
+  },
+  "credits": {
+    "balance_before_batch": 109.3,
+    "balance_after_all_agents": 7.55,
+    "this_batch_images": 13,
+    "cost_per_image": 2.75,
+    "this_batch_spent": 35.75,
+    "failed_submissions_429_not_charged": true
+  },
+  "images": [
+    {
+      "file": "01-A-crown-beast-phase1-rooted.png",
+      "preview": "01-A-crown-beast-phase1-rooted.jpg",
+      "group": "Направление A «Зверь-крона» — три фазы",
+      "job_id": "8fa06e51-38bd-44ec-a057-b85dd1d39d95",
+      "prompt": "[style sheet] The boss: MASTER OF THE THICKET, the embodied will of the forest itself. Direction A 'Crown Beast': a huge ancient four-legged beast (4.2 m tall), front half high and back low, always leaning forward; on its head NOT antlers but one single wide wooden crown shaped like the canopy of an old tree; big simple bark surfaces with cream carved spiral-rune plates, large leaves, huge clawed paws, two glowing amber eyes; in its chest grows a red berry bush that works as its health indicator. PHASE 1 - GUARDED, ROOTED: the beast stands low and heavy, planted like an ancient oak: its paws have sent thick roots deep into the earth, moss, ferns and small mushrooms grow over its back, the crown is compact and dense with green leaves, eyes half-lidded calm amber, the chest bush is green with only a few red berries. Mood: a calm ancient guardian that has not yet decided to fight. [layout + inset]",
+      "references": [
+        "ART/characters/act-1-enemies/forest-BOSS-ownerofforest/art.png (старый концепт Хозяина, media 202474f7)",
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "A · Фаза 1 «Укоренённый». Древний четвероногий зверь из коры, крона дерева вместо рогов, лапы пустили корни, ягодный куст в груди зелёный с редкими ягодами. Врезка — вид из игровой камеры рядом с Пелагом.",
+      "defects_ru": "Во врезке босс мельче канона (≈2× Пелага вместо 2,4×). Силуэт близок к старому art.png — это плюс для преемственности."
+    },
+    {
+      "file": "02-A-crown-beast-phase2-awakened.png",
+      "preview": "02-A-crown-beast-phase2-awakened.jpg",
+      "group": "Направление A «Зверь-крона» — три фазы",
+      "job_id": "bd661548-3a39-47c0-a431-e3cbfd2b2bdd",
+      "prompt": "[style sheet] The boss: MASTER OF THE THICKET, Direction A 'Crown Beast' (same description as A1). PHASE 2 - AWAKENED AND ENRAGED: the same beast (clearly the same design) rears up on its hind legs in a roar, the most readable pose of the fight, thick roots torn out of the ground trailing from its front paws with clods of soil flying, the crown flared wide open and lifted like raised hackles, the carved spiral runes on its bark plates glowing warm amber-gold, eyes blazing, the chest berry bush now fully red with swollen berries, leaves whirling around. Angry, powerful, but still a natural forest beast, not a demon. [layout + inset]",
+      "references": [
+        "ART/characters/act-1-enemies/forest-BOSS-ownerofforest/art.png (старый концепт Хозяина, media 202474f7)",
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "A · Фаза 2 «Пробуждение». Тот же зверь вырывает корни из земли и встаёт на дыбы, крона распахнута, руны на коре горят янтарём, куст полностью красный. Слева — стойка, справа — дыбом.",
+      "defects_ru": "Сделано без ссылки на кадр фазы 1 (шли параллельно) — голова уже острее, крона «перьями». Поза «дыбом» не такая высокая, как просит диздок; во врезке босс мелкий."
+    },
+    {
+      "file": "03-A-crown-beast-phase3-forest.png",
+      "preview": "03-A-crown-beast-phase3-forest.jpg",
+      "group": "Направление A «Зверь-крона» — три фазы",
+      "job_id": "d13929a1-aa53-4f7e-852a-913d9586a701",
+      "prompt": "[style sheet] This is the SAME boss as in image 1 (A1 job). Direction A 'Crown Beast'. PHASE 3 - THE FOREST ITSELF: the same beast has become the forest: its crown has grown into a huge living tree canopy full of white-pink blossoms and red fruits, young trees and thorny branches sprout from its back and shoulders like a moving grove, thick roots spread from its paws far across the ground like the forest's veins, warm glowing amber sap shows in the cracks of the bark and the carved runes glow gold, eyes blazing, the chest bush has burst into full bloom with big red flowers and bright red fruits, berries and petals scattering, fireflies and falling leaves around. Head low and lunging forward in fury. The biggest, most overwhelming silhouette of the three phases, still bright and colourful, blossoming and furious rather than evil or demonic. [layout + inset, boss about 2.5x the hero]",
+      "references": [
+        "A1 (job 8fa06e51)",
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "A · Фаза 3 «Сам лес». Крона стала цветущим деревом, на спине растут молодые деревца, корни расползаются по земле, в трещинах коры светится смола, куст в груди расцвёл красными цветами и плодами.",
+      "defects_ru": "Цвет и объём хороши, но силуэт сверху (врезка) превращается в «куст на ножках» — голову и перед нужно держать читаемыми. Во врезке босс мельче канона."
+    },
+    {
+      "file": "04-B-walking-grove-phase1-rooted.png",
+      "preview": "04-B-walking-grove-phase1-rooted.jpg",
+      "group": "Направление B «Ходячая роща» — три фазы",
+      "job_id": "35f987ae-63b3-4828-bf08-0655ddb654e3",
+      "prompt": "[style sheet] The boss: MASTER OF THE THICKET, the embodied will of the forest itself. Direction B 'Walking Grove': a colossal ancient tree-spirit, NOT a humanoid: an enormous gnarled trunk-body crowned with a huge round leafy canopy; a big carved pale-cream wooden mask-face with engraved spiral runes and two amber eye holes is set into the front of the trunk; long heavy branch-arms ending in root claws; a hollow in its chest holds a red berry bush that works as its health indicator. PHASE 1 - GUARDED, ROOTED: it stands as a sacred ancient tree firmly rooted into the ground with a massive root flare, its mask-face asleep (eyes closed, dim), the long branch-arms folded around the trunk like a shield of bark, moss, ferns and orange shelf mushrooms growing on it, the chest bush green with only a few red berries. It reads as a beautiful old tree until you notice the mask. [layout + inset, boss about 4.5 m]",
+      "references": [
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "B · Фаза 1 «Спящее древо». Огромное старое дерево с резной маской на стволе, ветви-руки обнимают ствол как щит, куст с ягодами в дупле. Похоже на священное дерево, пока не заметишь маску.",
+      "defects_ru": "Лучший лист по чистоте силуэта сверху. Маска «клювом» близка к Вендиго — возможна путаница с элитой."
+    },
+    {
+      "file": "05-B-walking-grove-phase2-awakened.png",
+      "preview": "05-B-walking-grove-phase2-awakened.jpg",
+      "group": "Направление B «Ходячая роща» — три фазы",
+      "job_id": "fc4f02e8-9923-48ed-a846-4cbf4d14b51e",
+      "prompt": "[style sheet] Direction B 'Walking Grove' (same description as B1). PHASE 2 - AWAKENED AND ENRAGED: the same tree-spirit has ripped itself out of the ground and now stands on six thick arching root-legs like a giant walking tree, soil clods and pebbles raining from the roots, the mask-face awake with blazing amber eyes and a cracked-open mouth, the long branch-arms spread wide and raised ready for a huge sweep, the carved spiral runes glowing warm gold, the chest berry bush fully red with swollen berries, leaves whirling. Angry and powerful, a natural forest spirit, not a demon. [layout + inset]",
+      "references": [
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "B · Фаза 2 «Вырвался из земли». Дерево встало на корни-ноги, маска открыла пасть и глаза, руки-ветви разведены для размаха, руны горят золотом.",
+      "defects_ru": "Получилось ближе к гуманоиду (две руки, стойка на ногах), чем просили; в диздоке пятого древесного гуманоида решено не делать — нужно больше корней-ног и меньше «человека». Сделано без ссылки на лист фазы 1."
+    },
+    {
+      "file": "06-B-walking-grove-phase3-forest.png",
+      "preview": "06-B-walking-grove-phase3-forest.jpg",
+      "group": "Направление B «Ходячая роща» — три фазы",
+      "job_id": "1547f93b-6d21-4ac2-bae2-eff7d108fba5",
+      "prompt": "[style sheet] This is the SAME boss as in image 1 (B1 job). Direction B 'Walking Grove'. PHASE 3 - THE FOREST ITSELF: it has risen up on its thick roots, its canopy has spread enormous and wide like a forest roof full of white-pink blossoms and bright red fruits, dozens of roots fan out across the ground in every direction, young trees and thorn sprouts rise around its feet, the carved mask has split open along a vertical seam revealing warm amber light inside, glowing warm sap veins run down the trunk, the branch-arms spread wide, the chest bush in full red bloom scattering berries and petals, fireflies and falling leaves. The biggest, most overwhelming silhouette of the three phases, still bright and colourful, blossoming and furious rather than evil or demonic. [layout + inset, boss about 2.5x the hero]",
+      "references": [
+        "B1 (job 35f987ae)",
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "B · Фаза 3 «Сам лес». Крона раскрылась цветущим пологом с плодами, вокруг прорастают молодые деревья, маска треснула по шву и светится изнутри, по стволу бегут янтарные жилы смолы.",
+      "defects_ru": "Самый эффектный лист; сверху это «цветущее дерево», читаемость атак рук под кроной надо проверять."
+    },
+    {
+      "file": "07-intro-A-rune-circle.png",
+      "preview": "07-intro-A-rune-circle.jpg",
+      "group": "Появление босса — установочные кадры",
+      "job_id": "b0e60626-e92d-4ffa-9bf3-6babde3f5765",
+      "prompt": "Paint a target frame over our real game screenshot (image 1, rune circle arena): keep the exact same high top-down isometric game camera, arena layout, HUD layout and bright stylized look, BUT repaint the ground from yellow-orange to the lush green grass of image 4. Moment: BOSS INTRO. The boss from image 2 (A1) rises out of the ground in the middle of the rune stone circle: runes glow warm amber, roots and soil burst up, leaves swirl, its crown unfolds; about 2.5x taller than the hero Pelag in the lower left. HUD boss bar at top centre in the exact style of image 3 (HUD 1a): name 'Хозяин Чащи' above, '3000 / 3000' below, full bar, notches at 66%, 50% (bigger ember-diamond) and 33%, smoky ember reveal of the name.",
+      "references": [
+        "artifacts/capture/polish-hit/shot_00_t3.00s.png (кадр игры, рунный круг арены, media 8a170a22) — основа кадра",
+        "A1 (job 8fa06e51)",
+        "ART/UI/concepts-2026-09-30-hud-polish/1a-fight-rings-notches.jpg (выбранный HUD 1a с полосой босса, media a643d12e)",
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7)"
+      ],
+      "caption_ru": "Появление A. Зверь-крона поднимается из рунного круга арены, руны горят, корни и земля взлетают. Сверху — полоса босса «Хозяин Чащи 3000 / 3000» в стиле выбранного HUD 1a.",
+      "defects_ru": "Трава перекрашена в зелёную по просьбе (исходный кадр жёлтый). Засечки 66/50/33 на полосе почти не видны — только ромб по центру. HP героя из тестового забега (10120)."
+    },
+    {
+      "file": "08-intro-B-glade-edge.png",
+      "preview": "08-intro-B-glade-edge.jpg",
+      "group": "Появление босса — установочные кадры",
+      "job_id": "d125d3b1-fc4f-4404-a07a-811cad4f1b15",
+      "prompt": "Paint a target frame over our real game screenshot (image 1, green glade with path and pond): same camera, HUD layout and look. Moment: BOSS INTRO. At the top edge of the glade where the path enters the forest stands the boss from image 2 (B1), waking up: mask eyes open and glow, roots lift from the soil, leaves and petals spill, treetops bend toward it; about 2.5x taller than Pelag who looks up at it. Boss bar in the style of image 3: 'Хозяин Чащи', '3000 / 3000', notches 66/50/33.",
+      "references": [
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7) — основа кадра",
+        "B1 (job 35f987ae)",
+        "ART/UI/concepts-2026-09-30-hud-polish/1a-fight-rings-notches.jpg (выбранный HUD 1a с полосой босса, media a643d12e)"
+      ],
+      "caption_ru": "Появление B. У кромки поляны, там где тропа уходит в лес, просыпается древо-хозяин: открываются глаза маски, деревья вокруг клонятся к нему. Полоса босса сверху.",
+      "defects_ru": "Полоса босса наезжает на крону; справа на тропе остался Корнехват из исходного кадра (его можно считать «свитой»)."
+    },
+    {
+      "file": "09-fight-roots-eruption-A.png",
+      "preview": "09-fight-roots-eruption-A.jpg",
+      "group": "Ключевые атаки в бою — телеграф B",
+      "job_id": "b76da861-a8b8-4c36-a8f5-5f25ce53d0f9",
+      "prompt": "In-fight target frame over our game screenshot (image 1). Boss from image 2 (A2) in the upper right has just slammed its paws. Signature attack ROOTS ERUPTION (phase 2): a rolling wave of 6 root eruptions with individual delays, each marked in telegraph style B from image 3 (glowing dashed orange-red rim with thin dark outline, tick marks, soft transparent warm fill growing from the centre). Stages: two just appeared, two half filled, one full, one where a thick root spike bursts vertically with clods and dust like image 4. Pelag dodge-rolls toward a safe gap. Boss bar 'Хозяин Чащи' '1740 / 3000', notches 66/50/33, ~58%.",
+      "references": [
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7) — основа кадра",
+        "A2 (job bd661548)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png (телеграф B, media 01ad627c)",
+        "review/mobs-v2-concepts-2026-09-29/abilities/07-snarer-roots-emerging-a-burst.png (принятые корни из земли, media 67bd21e1)"
+      ],
+      "caption_ru": "Прорастание (фаза 2, A). Волна из 6 корней с разной задержкой: круги с пунктирной кромкой и засечками заполняются от центра, в одном корень уже бьёт вверх. Пелаг кувыркается в щель.",
+      "defects_ru": "Под полосой появились подписи «66% 50% 33%» — в игре их не будет, это пометка засечек. Корень в правом круге визуально слился с лапой босса. Босс частично уходит под миникарту."
+    },
+    {
+      "file": "10-fight-sweeping-branch-B.png",
+      "preview": "10-fight-sweeping-branch-B.jpg",
+      "group": "Ключевые атаки в бою — телеграф B",
+      "job_id": "0658f9a1-5dda-4b3f-ab3c-a1a4e21d61d0",
+      "prompt": "In-fight target frame over our game screenshot (image 1, base-fight; remove the small monster, thorns and old ring). Boss from image 2 (B2) in the centre-top winds up a huge horizontal sweep, one branch-arm pulled far back. Signature attack SWEEPING BRANCH: a 150-degree fan-shaped sector (~7 m) in telegraph style B from images 3-4: dashed orange-red rim, soft transparent fill, rows of chevrons along the arc lighting up in order from the start side. Pelag dashes out of it behind the boss. Boss bar 'Хозяин Чащи' '2310 / 3000', notches 66/50/33, ~77%.",
+      "references": [
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-fight.jpg (кадр игры с полосой элиты, media 1db7c583) — основа кадра",
+        "B2 (job fc4f02e8)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png (телеграф B, media 01ad627c)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02b-B-dashed-chevrons-wendigo-howl-ring.png (телеграф B, кольцо, media 37918bdc)"
+      ],
+      "caption_ru": "Размах ветвью (B). Широкий сектор ~150° перед боссом: пунктирная кромка, мягкая заливка, шевроны загораются по ходу удара слева направо. Пелаг уходит рывком за спину.",
+      "defects_ru": "Шевроны смотрят к краю, а не вдоль дуги — направление размаха читается только по порядку зажигания. Босс здесь гуманоидный (наследует лист B2)."
+    },
+    {
+      "file": "11-fight-summon-66-A.png",
+      "preview": "11-fight-summon-66-A.jpg",
+      "group": "Ключевые атаки в бою — телеграф B",
+      "job_id": "5263056c-d661-4a18-a428-72f3be408b9b",
+      "prompt": "In-fight target frame over our game screenshot (image 1, rune circle arena, repaint the ground green, remove the boar). Boss from image 2 (A2) in the rune circle raises its head in a calling roar, runes glow. SUMMON AT 66%: at three points the ground cracks and adds rise — two Forest Guardians and a pack of root-swarm crawlers from the family board (image 3); each spawn point marked with a telegraph B circle (image 4). Pelag between them. Boss bar in the style of image 5: 'Хозяин Чащи' '1980 / 3000', the 66% notch just reached and flashing, 50%/33% dim.",
+      "references": [
+        "artifacts/capture/polish-hit/shot_00_t3.00s.png (кадр игры, рунный круг арены, media 8a170a22) — основа кадра",
+        "A2 (job bd661548)",
+        "доска семьи: 2.forest-guardian, 3.forest-elite-wendigo, 5.forest-elite-shipomet, 6.forest-stonepoof, 7.forest-root-snarer, 8.forest-splitbark art.png (media 18dfd9f8)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png (телеграф B, media 01ad627c)",
+        "ART/UI/concepts-2026-09-30-hud-polish/1a-fight-rings-notches.jpg (выбранный HUD 1a с полосой босса, media a643d12e)"
+      ],
+      "caption_ru": "Призыв на 66% (A). Босс ревёт в рунном круге, в трёх точках земля трескается и встают Хранители и Корнеползы; точки появления отмечены кругами телеграфа B. Засечка 66% на полосе вспыхивает.",
+      "defects_ru": "Голова босса стала медвежье-волчьей, отличается от листа A1. Хранители вышли похожими на Вендиго (тонкие, с рогами). Вспышка засечки 66% почти не видна. Пелаг стоит вплотную к боссу; HP героя из тестового забега (10120). Внимание: старый диздок бестиария говорит «свиты нет», а в коде сейчас призыв на 66/33 — кадр показывает текущий код."
+    },
+    {
+      "file": "12-fight-rage-50-B.png",
+      "preview": "12-fight-rage-50-B.jpg",
+      "group": "Ключевые атаки в бою — телеграф B",
+      "job_id": "4cbb2ad7-a1fb-4ebd-b4d8-5c7bc303e2a9",
+      "prompt": "In-fight target frame over our game screenshot (image 1, green glade). Boss from image 2 (B3) in the centre. RAGE AT 50%: it roars and blooms in fury, petals, berries and leaves burst outward, treetops at the screen edges bend inward. A shockwave ring in telegraph style from image 3: two concentric dashed orange-red rims, soft fill, bright chevrons pointing OUTWARD. Roots crawl out across the grass. Pelag dashes out of the ring. Boss bar 'Хозяин Чащи' '1500 / 3000', the bigger 50% notch just reached and blazing.",
+      "references": [
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg (кадр игры, media cda402f7) — основа кадра",
+        "B3 (job 1547f93b)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02b-B-dashed-chevrons-wendigo-howl-ring.png (телеграф B, кольцо, media 37918bdc)"
+      ],
+      "caption_ru": "Ярость на 50% (B). Древо расцветает в ярости, лепестки и ягоды разлетаются, деревья по краям клонятся внутрь; ударное кольцо с шевронами НАРУЖУ («беги отсюда»). Пелаг выбегает из кольца.",
+      "defects_ru": "Босс слишком огромный для арены (≈5× Пелага) и закрывает половину экрана — для игры масштаб нужно уменьшить. Полоса наезжает на крону."
+    },
+    {
+      "file": "13-fight-berry-rain-A.png",
+      "preview": "13-fight-berry-rain-A.jpg",
+      "group": "Ключевые атаки в бою — телеграф B",
+      "job_id": "56e6b633-6bde-4686-997d-c16d5d20c0f4",
+      "prompt": "In-fight target frame over our game screenshot (image 1, base-fight; remove the small monster, thorns and old ring). Boss from image 2 (A3) at the top, chest thrust forward. BERRY RAIN (ranged volley, phase 3): the chest bush fires a wide fan of 12 glossy red berry-fruits in arcs with short warm trails; each landing point is a small telegraph B circle (~1.5 m, dashed rim, ticks, soft fill growing from the centre); circles spread wide but with obvious safe grass gaps; two fruits already burst into red juice, petals and leaves. Pelag weaves through a safe gap. Boss bar 'Хозяин Чащи' '640 / 3000', all notches passed, ~21%.",
+      "references": [
+        "ART/UI/concepts-2026-09-30-hud-polish/bases/base-fight.jpg (кадр игры с полосой элиты, media 1db7c583) — основа кадра",
+        "A3 (job d13929a1)",
+        "review/mobs-v2-round2-2026-09-29/telegraphs/02a-B-dashed-chevrons-stonehoof-lane-snarer-circle.png (телеграф B, media 01ad627c)"
+      ],
+      "caption_ru": "Ягодный ливень (фаза 3, A). Куст в груди выстреливает веером 12 плодов, у каждого — круг точки падения с пунктиром; между кругами явно видны безопасные клетки. Два плода уже лопнули соком.",
+      "defects_ru": "Плоды похожи на клубнику — лучше круглые ягоды. Полоса босса получила «рога» элиты и наезжает на босса."
+    }
+  ],
+  "references_local_copies": "refs/*.jpg (то, что загружено в Higgsfield)"
+}

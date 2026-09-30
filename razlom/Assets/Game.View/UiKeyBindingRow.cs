@@ -68,19 +68,11 @@ namespace Game.View
             }
         }
 
-        /// <summary>Круг под одну букву, капсула под длинную подпись — как у UiInkKit.Keycap при сборке.</summary>
+        /// <summary>Квадрат под одну букву, шире под длинную подпись — одно правило кейкапа на все окна (UiKeyHint).</summary>
         void FitKey(string label)
         {
             if (KeySize <= 0f || Key == null || KeyLabel == null) return;
-            var rect = (RectTransform)Key.transform;
-            float width = KeySize;
-            if (label.Length > 1)
-            {
-                // Ширина самой подписи, без полей (поля не дают буквам наезжать на круглые концы).
-                float text = KeyLabel.GetPreferredValues(label).x - KeyLabel.margin.x - KeyLabel.margin.z;
-                width = Mathf.Clamp(text + KeySize * 0.7f, KeySize, KeySize * KeyMaxWidth);
-            }
-            if (!Mathf.Approximately(rect.sizeDelta.x, width)) rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
+            UiKeyHint.FitKeycap((RectTransform)Key.transform, KeyLabel, KeySize, KeyMaxWidth);
         }
     }
 }

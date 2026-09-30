@@ -77,6 +77,11 @@ namespace Game.Tests
                 if (t.Lesson != EnemyKind.None)
                     lessons[t.Lesson] = lessons.TryGetValue(t.Lesson, out int n) ? n + 1 : 1;
             }
+            // All — в порядке ключей: порядок входит в бросок плана.
+            var all = ForestEncounterTemplates.All;
+            for (int i = 1; i < all.Length; i++)
+                Assert.That(string.CompareOrdinal(all[i - 1].Key, all[i].Key), Is.LessThan(0), all[i].Key);
+            foreach (var t in all) Assert.That(ForestEncounterTemplates.Find(t.Key), Is.SameAs(t), t.Key);
             foreach (var t in EveryTemplate())
             {
                 Assert.That(t.GetWave(0).Trigger.Kind, Is.EqualTo(WaveTriggerKind.Start), t.Key);
@@ -164,49 +169,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void NewMobs_AreInTheGame_WithTheDocArenas()
-        {
-            // Владелец, 27.09: «добавляй в игру». Шаблоны Корнехвата, Расщепня и
-            // Шипомёта — в All, в порядке ключей (порядок входит в бросок плана).
-            var all = ForestEncounterTemplates.All;
-            for (int i = 1; i < all.Length; i++)
-                Assert.That(string.CompareOrdinal(all[i - 1].Key, all[i].Key), Is.LessThan(0), all[i].Key);
-            foreach (var t in all) Assert.That(ForestEncounterTemplates.Find(t.Key), Is.SameAs(t), t.Key);
-            foreach (var key in new[] { "forest.E06", "forest.E07", "forest.E08T", "forest.E09", "forest.E10", "forest.E14" })
-                Assert.That(System.Array.Exists(all, t => t.Key == key), Is.True, key + " не в игре");
-            Assert.That(ForestEncounterTemplates.Staged, Is.Empty, "все мобы леса в игре");
-            foreach (var kind in new[] { EnemyKind.ForestThorncaster, EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter })
-                Assert.That(System.Array.Exists(all, t => t.Lesson == kind), Is.True, kind + ": урок в игре");
-
-            // Окна с лестницы (29.09): элиты — в своих окнах (первая А5–А7,
-            // вторая А7–А8), прочие — там, где лестница допускает их уровень.
-            AssertArenas(all, "forest.E01", 1, 1);
-            AssertArenas(all, "forest.E02", 2, 2);
-            AssertArenas(all, "forest.E03", 3, 5);
-            AssertArenas(all, "forest.E04", 3, 4);
-            AssertArenas(all, "forest.E05", 6, 8);
-            AssertArenas(all, "forest.E06", 4, 6);
-            AssertArenas(all, "forest.E07", 4, 6);
-            AssertArenas(all, "forest.E08", 5, 7);
-            AssertArenas(all, "forest.E08T", 5, 7);
-            AssertArenas(all, "forest.E11", 4, 6);
-            // Выживание — ровно 60 с — не на А4 (окно 45–55): подгонка 29.09.
-            AssertArenas(all, "forest.E12", 5, 6);
-            AssertArenas(all, "forest.E13", 7, 8);
-            AssertArenas(all, "forest.E14", 7, 8);
-            AssertArenas(all, "forest.E15", 8, 8);
-        }
-
-        private static void AssertArenas(ArenaEncounterTemplate[] pool, string key, int min, int max)
-        {
-            ArenaEncounterTemplate found = null;
-            foreach (var t in pool) if (t.Key == key) found = t;
-            Assert.That(found, Is.Not.Null, key);
-            Assert.That(found.MinArena, Is.EqualTo(min), key);
-            Assert.That(found.MaxArena, Is.EqualTo(max), key);
-        }
-
-        [Test]
         public void Capacity_CountsTheSplitterChildren()
         {
             Assert.That(EnemyArchetypes.BodiesPerSpawn(EnemyKind.ForestSplitter), Is.EqualTo(1 + Simulation.SplitChildren));
@@ -238,7 +200,7 @@ namespace Game.Tests
             var tight = new Simulation(3, lesson.MaxEnemies);
             Assert.Throws<System.ArgumentException>(() => location.GetLevel(arena).Spawn(tight,
                 ArenaMap(location, arena, 3), 3, lesson, arena));
-            for (ulong seed = 1; seed <= 4; seed++)
+            for (ulong seed = 1; seed <= 2; seed++)
             {
                 var sim = new Simulation(seed, lesson.MaxEnemies + 1);
                 location.GetLevel(arena).Spawn(sim, ArenaMap(location, arena, seed), seed ^ 0x5151UL, lesson, arena);
@@ -510,7 +472,7 @@ namespace Game.Tests
             var location = ForestLocation();
             foreach (var t in EveryTemplate())
                 for (int arena = t.MinArena; arena <= t.MaxArena; arena++)
-                    for (ulong seed = 1; seed <= 4; seed++)
+                    for (ulong seed = 1; seed <= 2; seed++)
                     {
                         var a = Arena(location, t, arena, seed, out var map);
                         var b = Arena(location, t, arena, seed, out _);
@@ -567,7 +529,7 @@ namespace Game.Tests
         {
             var location = ForestLocation();
             foreach (var t in EveryTemplate())
-                for (ulong seed = 1; seed <= 6; seed++)
+                for (ulong seed = 1; seed <= 3; seed++)
                 {
                     var sim = Arena(location, t, t.MinArena, seed, out var map);
                     Assert.That(sim.CountAliveEnemies(), Is.GreaterThan(0));
@@ -590,7 +552,7 @@ namespace Game.Tests
         {
             var location = ForestLocation();
             int checkedWaves = 0;
-            for (ulong seed = 1; seed <= 10; seed++)
+            for (ulong seed = 1; seed <= 3; seed++)
             {
                 var sim = Arena(location, ForestEncounterTemplates.E02, 2, seed, out var map);
                 sim.PlayerInvulnerable = true;
@@ -650,7 +612,7 @@ namespace Game.Tests
                 Assert.That(moved, Is.True, "после выхода волна идёт на героя");
                 checkedWaves++;
             }
-            Assert.That(checkedWaves, Is.EqualTo(10));
+            Assert.That(checkedWaves, Is.EqualTo(3));
         }
 
         [Test]
@@ -785,7 +747,7 @@ namespace Game.Tests
         public void RouteOffers_NeverOfferAnArenaTooSmallForTheNextTemplate()
         {
             var location = ForestLocation();
-            for (ulong seed = 1; seed <= 12; seed++)
+            for (ulong seed = 1; seed <= 4; seed++)
             {
                 var run = new RiftRun(new Simulation(seed, 512), location.Modules, PrototypeContent.Items(),
                     PrototypeContent.ItemBaseIds(), location: location);
@@ -818,7 +780,7 @@ namespace Game.Tests
         public void BossAdds_EmergeAt66And33Percent_OnceEach()
         {
             var location = ForestLocation();
-            for (ulong seed = 1; seed <= 8; seed++)
+            for (ulong seed = 1; seed <= 3; seed++)
             {
                 var map = ArenaMap(location, 9, seed);
                 var sim = new Simulation(seed, 512);

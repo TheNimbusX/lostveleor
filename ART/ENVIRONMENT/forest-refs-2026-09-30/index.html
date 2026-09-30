@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Референсы Чащи</title>
+<style>
+  :root { --bg:#1b1c1e; --card:#242528; --text:#e8e6e1; --muted:#9b988f; --line:#34363a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding:24px 16px 48px; }
+  header { max-width:1400px; margin:0 auto 24px; }
+  h1 { font-size:22px; margin:0 0 6px; font-weight:600; }
+  header p { margin:0; color:var(--muted); max-width:900px; }
+  .grid { max-width:1400px; margin:0 auto; display:grid; gap:20px; }
+  figure { margin:0; background:var(--card); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  figure a { display:block; }
+  figure img { width:100%; height:auto; display:block; }
+  figcaption { padding:12px 14px 14px; }
+  figcaption b { display:block; margin-bottom:4px; }
+  figcaption .note { color:var(--muted); font-size:13px; margin-top:6px; }
+  h2 { max-width:1400px; margin:36px auto 12px; font-size:16px; font-weight:600; color:var(--muted); }
+  .refs { max-width:1400px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
+  .refs figure figcaption { font-size:13px; color:var(--muted); padding:8px 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Чаща, акт I — референсы арен</h1>
+  <p>Для Кости: цветовая гамма и читаемость арены. Пять кадров в игровой камере, сделаны в Higgsfield (gpt_image_2_5) поверх наших кадров из игры. Главное в каждом: пол светлее и спокойнее стен, чтобы мобы и красные метки читались. Клик по картинке открывает PNG 2688×1520.</p>
+</header>
+<div class="grid">
+  <figure><a href="1-arena-glade-full.png"><img src="1-arena-glade-full.jpg" alt=""></a>
+    <figcaption><b>1. Арена-поляна целиком</b>Тёплый вытоптанный грунт, рунный круг вровень с землёй, три стоячих камня с кристаллами, грибы и лиловые цветы по кайме, озеро краем справа, вход и выход с фонарями.
+    <div class="note">Лучший кадр на гамму. Камера чуть выше игровой; грунта больше, чем травы.</div></figcaption></figure>
+  <figure><a href="2-arena-edge-variety.png"><img src="2-arena-edge-variety.jpg" alt=""></a>
+    <figcaption><b>2. Типы края арены</b>Стена деревьев и папоротников, стоячие камни с зелёными кристаллами, корни аркой с грибами, берег озера с рогозом и кувшинками. Между ними высокая трава, без просветов.
+    <div class="note">Камера ближе игровой, чтобы видеть материалы. Тень деревьев на полу слева мешала бы меткам.</div></figcaption></figure>
+  <figure><a href="3-deep-thicket-arena.png"><img src="3-deep-thicket-arena.jpg" alt=""></a>
+    <figcaption><b>3. Глубокая Чаща — поздние арены</b>Гигантские замшелые стволы, изумрудно-бирюзовая тень, столбы солнца, руины и арка-проход, светящиеся бирюзовые грибы. Глубже, но не мрачно.
+    <div class="note">Пятна света на полу пестрят — для боя пятна нужны крупнее и мягче.</div></figcaption></figure>
+  <figure><a href="4-boss-arena-master.png"><img src="4-boss-arena-master.jpg" alt=""></a>
+    <figcaption><b>4. Арена босса «Хозяин Чащи»</b>Большая круглая поляна в кольце древних деревьев, корни амфитеатром, наверху логово-дупло из корней и рогов-ветвей в красных цветах, рунное кольцо в центре, красные лепестки.
+    <div class="note">Мотивы босса перенесены на логово, сам зверь не нарисован. Знак в кольце — корень, не знак Пелага.</div></figcaption></figure>
+  <figure><a href="5-transition-path.png"><img src="5-transition-path.jpg" alt=""></a>
+    <figcaption><b>5. Переход между аренами</b>Выход — фонари и два замшелых камня как ворота, тропа с плоскими камнями, мостик через ручей, бревно, голубые огоньки, наверху светится следующая поляна.
+    <div class="note">Внизу лишняя круглая чаша в бордюре вместо края поляны.</div></figcaption></figure>
+</div>
+<h2>Наши кадры, которые шли референсами</h2>
+<div class="refs">
+  <figure><img src="refs/ref-glade-fight02.jpg" alt=""><figcaption>Арена 2, кадр боя (без HUD)</figcaption></figure>
+  <figure><img src="refs/ref-path-exit.jpg" alt=""><figcaption>Тропа к выходу (без HUD)</figcaption></figure>
+  <figure><img src="refs/ref-world.jpg" alt=""><figcaption>Открытый пол, озеро, тропа (без HUD)</figcaption></figure>
+  <figure><img src="refs/ref-boss-art.jpg" alt=""><figcaption>Хозяин Чащи — только мотивы для арены 4</figcaption></figure>
+</div>
+</body>
+</html>

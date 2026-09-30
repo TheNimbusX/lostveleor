@@ -1,5 +1,6 @@
 using System;
 using Game.View;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -27,8 +28,11 @@ namespace Game.EditorTools
         /// в центре, описание справа, футер «Esc Назад · F Сбросить · Enter Применить». Окно
         /// «Управление» стало вкладкой. Новые опции: яркость, громкость интерфейса, звук в фоне, язык,
         /// пауза при сворачивании, цифры урона, полоски врагов, тряска экрана, вспышки, ряд способностей.
+        /// v2 (30.09, единый набор — лист 5): кейкапы футера и вкладки «Управление» — тёмный скруглённый квадрат вместо
+        /// круга в дыме; подсказка под вкладками — «[Tab] [Shift+Tab] Вкладки» (один формат подсказки клавиши); окно
+        /// подтверждения — шкала листа 5 (32 / 18 / 14, кнопки 24) и кейкап Esc на «Отмене».
         /// </summary>
-        public const int LayoutVersion = 1;
+        public const int LayoutVersion = 2;
 
         static bool _waiting;
 
@@ -141,8 +145,62 @@ namespace Game.EditorTools
         static void Migrate(PauseMenuView view)
         {
             if (view.LayoutVersion < 1) MigrateTo1(view);
+            if (view.LayoutVersion < 2) MigrateTo2(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
+        }
+
+        /// <summary>
+        /// v2 — единый набор: кейкапы листа 5 на месте (узлы, ширины и ссылки строк назначения не меняются) и подсказка
+        /// вкладок в формате «[Клавиша] Действие». Руками переписанную подсказку не трогаем.
+        /// </summary>
+        static void MigrateTo2(PauseMenuView view)
+        {
+            int caps = UiInkKit.RestyleKeycaps(view.transform);
+            Debug.Log("[ui-kit] Меню паузы: кейкапов листа 5 — " + caps + ".");
+            Transform hint = view.SettingsPanel != null ? FindDeep(view.SettingsPanel, "Подсказка вкладок") : null;
+            TMP_Text label = hint != null ? hint.GetComponentInChildren<TMP_Text>(true) : null;
+            if (label == null) Debug.LogWarning("[ui-kit] В окне настроек нет «Подсказка вкладок» — подсказка не приведена к «[Tab] Вкладки»");
+            else if (label.text == "Tab · Shift+Tab — вкладки")
+            {
+                label.text = TabsHintText;
+                label.fontSize = T.Size(UiTheme.TextStep.Caption);
+            }
+            ConfirmToSheet(view);
+        }
+
+        /// <summary>
+        /// Окно подтверждения по листу 5: заголовок — ступень Title, пояснение — Body, отсчёт — Caption, подписи кнопок —
+        /// Heading; на «Отмене» — кейкап Esc (Esc отменяет подтверждение, PauseMenu). Место и размер окна не меняются.
+        /// </summary>
+        static void ConfirmToSheet(PauseMenuView view)
+        {
+            if (view.ConfirmPanel == null)
+            {
+                Debug.LogWarning("[ui-kit] В меню паузы нет окна подтверждения — к листу 5 не приведено");
+                return;
+            }
+            if (view.ConfirmTitle != null)
+            {
+                view.ConfirmTitle.fontSize = T.Size(UiTheme.TextStep.Title);
+                if (view.ConfirmTitle.enableAutoSizing) view.ConfirmTitle.fontSizeMax = T.Size(UiTheme.TextStep.Title);
+            }
+            if (view.ConfirmText != null) view.ConfirmText.fontSize = T.Size(UiTheme.TextStep.Body);
+            if (view.ConfirmCountdown != null) view.ConfirmCountdown.fontSize = T.Size(UiTheme.TextStep.Caption);
+            foreach (TMP_Text label in new[] { view.ConfirmYesLabel, view.ConfirmNoLabel })
+                if (label != null)
+                {
+                    label.fontSize = T.Size(UiTheme.TextStep.Heading);
+                    if (label.enableAutoSizing) label.fontSizeMax = T.Size(UiTheme.TextStep.Heading);
+                }
+            if (view.ConfirmNo != null) UiInkKit.ButtonKey((RectTransform)view.ConfirmNo.transform, "Esc", 30f);
+        }
+
+        static Transform FindDeep(Transform root, string name)
+        {
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+                if (child.name == name) return child;
+            return null;
         }
 
         /// <summary>

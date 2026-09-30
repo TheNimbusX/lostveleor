@@ -30,12 +30,13 @@ namespace Game.Sim
         public int Act { get; private set; }
         public CampService Services { get; private set; }
 
-        public Camp(ItemDatabase items, int act = 1, int bagSlots = DefaultBagSlots)
+        public Camp(ItemDatabase items, int act = 1, int bagSlots = DefaultBagSlots, bool progressive = false)
         {
             Items = items;
             Bag = new Inventory(bagSlots);
             Bag.Placed = Discover;
             Worn = new Equipment(items);
+            _usesCampProgression = progressive;
 
             Act = 0;
             AdvanceToAct(act);
@@ -60,7 +61,8 @@ namespace Game.Sim
             // потому что без него она — лотерея.
             Services |= CampService.ProvingGround;
 
-            if (act >= 1) Services |= CampService.Smith | CampService.Trader | CampService.Alchemist;
+            if (_usesCampProgression) Services |= CampService.Smith | CampService.RiftPortal;
+            else if (act >= 1) Services |= CampService.Smith | CampService.Trader | CampService.Alchemist;
             if (act >= 2) Services |= CampService.Chronicler | CampService.Stash;
             if (act >= 3) Services |= CampService.Founder | CampService.RiftPortal;
         }
@@ -72,7 +74,7 @@ namespace Game.Sim
         public void Earn(CurrencyType currency, int amount)
         {
             if (amount <= 0) return;
-            _wallet[(int)currency] += amount;
+            _wallet[(int)currency] = (int)System.Math.Min(int.MaxValue, (long)_wallet[(int)currency] + amount);
         }
 
         /// <summary>Тратит, если хватает. Возвращает false и не трогает кошелёк, если нет.</summary>
@@ -200,6 +202,7 @@ namespace Game.Sim
             }
 
             _traderStock[stockIndex]=default;
+            if (TraderReservedSlot == stockIndex) TraderReservedSlot = -1;
             return price;
         }
 
@@ -286,6 +289,9 @@ namespace Game.Sim
 
             Hashing.Mix(ref hash, Level);
             Hashing.Mix(ref hash, Experience);
+            HashCampProgression(ref hash);
+            HashTraderChoices(ref hash);
+            HashPreparation(ref hash);
         }
     }
 }

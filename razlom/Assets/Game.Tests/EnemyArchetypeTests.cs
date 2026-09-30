@@ -19,40 +19,20 @@ namespace Game.Tests
         private const int LocationPlayerHealth = 150;
         private const int ReferenceHealth = Progression.ReferenceHeroHealth;
 
-        // Стенд баланса (26.09): укус роя 5 → 4 → 3, Хранитель 450 → 550 здоровья,
-        // коготь Вендиго 32 → 26 (проход 2).
-        [TestCase(EnemyKind.ForestRootSwarm, 130, 3, 1)]
-        // Подгонка «Мобов леса v2» (29.09): Хранитель 550/14 → 500/17, таран
-        // Камнекопыта 24 → 22.
-        [TestCase(EnemyKind.ForestGuardian, 500, 17, 2)]
-        [TestCase(EnemyKind.ForestBud, 300, 11, 2)]
-        [TestCase(EnemyKind.ForestStonehoof, 650, 22, 3)]
-        [TestCase(EnemyKind.ForestWendigo, 2000, 26, 6)]
-        // Новые мобы леса (план от 26.09). Угроза Расщепеня — вместе с детьми.
-        // Стенд 27.09 (выход в игру): Шипомёт 1700 → 2000 (как Вендиго),
-        // Корнехват 520 → 650 (как Камнекопыт той же угрозы), Расщепень
-        // 420/120 → 560/160 (доля детёныша та же, 2/7).
-        [TestCase(EnemyKind.ForestThorncaster, 2000, 30, 6)]
-        [TestCase(EnemyKind.ForestRootSnarer, 650, 20, 3)]
-        [TestCase(EnemyKind.ForestSplitter, 560, 12, 4)]
-        [TestCase(EnemyKind.ForestSplitling, 160, 4, 1)]
-        public void Table_HoldsBalanceV1(EnemyKind kind, int health, int damage, int threat)
-        {
-            var a = EnemyArchetypes.Get(kind);
-            Assert.That(a.Kind, Is.EqualTo(kind));
-            Assert.That(a.BaseHealth, Is.EqualTo(health));
-            Assert.That(a.BaseDamage, Is.EqualTo(damage));
-            Assert.That(a.Threat, Is.EqualTo(threat));
-            Assert.That(a.BodyRadius, Is.LessThanOrEqualTo(EntityStore.MaxBodyRadius));
-            Assert.That(a.CycleTicks, Is.GreaterThanOrEqualTo(a.WindupTicks + a.RecoveryTicks));
-        }
-
         [Test]
         public void Table_MirrorsSimulationWindowsAndBodies_InEnemyKindOrder()
         {
             Assert.That(EnemyArchetypes.Count, Is.EqualTo(9));
             for (int i = 0; i < EnemyArchetypes.Count; i++)
-                Assert.That((int)EnemyArchetypes.At(i).Kind, Is.EqualTo(i + 1));
+            {
+                var row = EnemyArchetypes.At(i);
+                Assert.That((int)row.Kind, Is.EqualTo(i + 1));
+                Assert.That(EnemyArchetypes.Get(row.Kind).Kind, Is.EqualTo(row.Kind));
+                // Числа строк — баланс (их источник — код); правила строки — здесь:
+                // тело не шире предела, цикл вмещает замах и стойку.
+                Assert.That(row.BodyRadius, Is.LessThanOrEqualTo(EntityStore.MaxBodyRadius), row.Kind.ToString());
+                Assert.That(row.CycleTicks, Is.GreaterThanOrEqualTo(row.WindupTicks + row.RecoveryTicks), row.Kind.ToString());
+            }
             // Значения видов сериализованы: новые только в конец, без перенумерации.
             Assert.That((int)EnemyKind.ForestThorncaster, Is.EqualTo(6));
             Assert.That((int)EnemyKind.ForestRootSnarer, Is.EqualTo(7));
@@ -184,9 +164,7 @@ namespace Game.Tests
 
         // Стенд одного вида — для тестов мобов и съёмки: строка таблицы, выросшая до арены.
         [TestCase(EnemyKind.ForestThorncaster, 1, 1, 100)]
-        [TestCase(EnemyKind.ForestRootSnarer, 3, 8, 100)]
         [TestCase(EnemyKind.ForestSplitter, 3, 8, EnemyArchetypes.HardRoutePercent)]
-        [TestCase(EnemyKind.ForestGuardian, 2, 5, 100)]
         public void KindTestArena_SpawnsTheArchetypeScaledToTheArena(EnemyKind kind, int count, int arena, int hard)
         {
             var sim = new Simulation(5, 32);

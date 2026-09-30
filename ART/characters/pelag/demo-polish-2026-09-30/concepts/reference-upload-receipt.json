@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "reference_index": 1,
+      "media_id": "5a742144-992c-4637-a70a-f40168b3e510",
+      "status": 200,
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/5a742144-992c-4637-a70a-f40168b3e510.jpg",
+      "bytes": 123242
+    },
+    {
+      "reference_index": 2,
+      "media_id": "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+      "status": 200,
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/55ada286-2d04-47b2-9e1a-cbddf4ff41b9.jpg",
+      "bytes": 74712
+    },
+    {
+      "reference_index": 3,
+      "media_id": "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+      "status": 200,
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/03019c7a-94a6-43c6-9a82-2b6f331c3b34.jpg",
+      "bytes": 141290
+    },
+    {
+      "reference_index": 4,
+      "media_id": "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+      "status": 200,
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/0eaeee50-c75f-4da4-acf0-f263330ddaa5.jpg",
+      "bytes": 222105
+    },
+    {
+      "reference_index": 5,
+      "media_id": "d4c95bbb-e589-4268-9983-2215e292e2ba",
+      "status": 200,
+      "url": "https://d2ol7oe51mr4n9.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/d4c95bbb-e589-4268-9983-2215e292e2ba.jpg",
+      "bytes": 194792
+    }
+  ]
+}

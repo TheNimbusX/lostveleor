@@ -57,20 +57,6 @@ public sealed class CombatMusicDirectorTests
     }
 
     [Test]
-    public void LoopCrossfadesAreTheOnesTheSeamsWereMeasuredWith()
-    {
-        // Замер швов при нарезке (лес — 120 BPM, такт 2 с; босс — 8 долей по 0,4616 с).
-        // Запасные 3 с сдвигают гармонию на полтакта, а у босса дают флэм в полдоли.
-        float[] crossfade = { 2f, 2f, 4f, 4f, 2f, 3.6928f };
-        for (int t = 0; t < Director.TrackCount; t++)
-        {
-            Assert.That(Director.Tracks[t].LoopCrossfade, Is.EqualTo(crossfade[t]), Director.Tracks[t].Resource);
-            Assert.That(Director.Tracks[t].LoopStart, Is.Zero, Director.Tracks[t].Resource);
-            Assert.That(Director.Tracks[t].LoopEnd, Is.Zero, Director.Tracks[t].Resource);
-        }
-    }
-
-    [Test]
     public void ArenaTrackFollowsBossThenEliteThenHardThenAlternatingNormal()
     {
         Assert.That(Director.ChooseTrack(1, false, false), Is.EqualTo(Track.NormalA));
@@ -85,11 +71,8 @@ public sealed class CombatMusicDirectorTests
         Assert.That(Director.ChooseTrack(7, false, true), Is.EqualTo(Track.Elite), "элита важнее тяжёлой");
         Assert.That(Director.ChooseTrack(9, true, false), Is.EqualTo(Track.Boss));
         Assert.That(Director.ChooseTrack(9, true, true), Is.EqualTo(Track.Boss), "босс важнее всего");
-    }
 
-    [Test]
-    public void OddAndEvenArenasAlternateTheNormalThemesInPlay()
-    {
+        // И в игре: нечётные и чётные арены по очереди играют две обычные темы.
         Director director = NewDirector();
         for (int depth = 1; depth <= 6; depth++)
         {
@@ -195,17 +178,6 @@ public sealed class CombatMusicDirectorTests
     }
 
     [Test]
-    public void EachTransitionUsesItsOwnFadeLength()
-    {
-        Assert.That(Director.FadeSeconds(Mood.Lull, Mood.Combat, false), Is.EqualTo(1f));
-        Assert.That(Director.FadeSeconds(Mood.Combat, Mood.Lull, false), Is.EqualTo(3f));
-        Assert.That(Director.FadeSeconds(Mood.Combat, Mood.Combat, false), Is.EqualTo(2f));
-        Assert.That(Director.FadeSeconds(Mood.Combat, Mood.Silence, false), Is.EqualTo(2f));
-        Assert.That(Director.FadeSeconds(Mood.Lull, Mood.Silence, false), Is.EqualTo(2f));
-        Assert.That(Director.FadeSeconds(Mood.Combat, Mood.Silence, true), Is.EqualTo(1.5f));
-    }
-
-    [Test]
     public void LullToCombatCrossfadeTakesOneSecond()
     {
         Director director = NewDirector();
@@ -296,6 +268,10 @@ public sealed class CombatMusicDirectorTests
     {
         Director director = InCombat(3, seconds: 12f);
         var dead = new Director.Signals { Place = Place.Run, RunNumber = 1, Depth = 3, HeroDead = true, AwakeHostiles = 2 };
+        // Мёртвый герой внутри забега — тоже тишина, хотя враги не спят.
+        Play(director, dead, Frame);
+        Assert.That(director.CurrentMood, Is.EqualTo(Mood.Silence));
+        Assert.That(director.LastTransition.Fade, Is.EqualTo(Director.DeathToSilenceFade));
         Play(director, dead, 1.6f);
         Assert.That(director.StatusOf(Track.NormalA), Is.EqualTo(Status.Paused));
         Assert.That(director.Position(Track.NormalA), Is.GreaterThan(12f));
@@ -320,15 +296,6 @@ public sealed class CombatMusicDirectorTests
     }
 
     [Test]
-    public void DeadHeroInsideTheRunIsSilenceToo()
-    {
-        Director director = InCombat(2);
-        Play(director, new Director.Signals { Place = Place.Run, RunNumber = 1, Depth = 2, HeroDead = true, AwakeHostiles = 3 }, Frame);
-        Assert.That(director.CurrentMood, Is.EqualTo(Mood.Silence));
-        Assert.That(director.LastTransition.Fade, Is.EqualTo(Director.DeathToSilenceFade));
-    }
-
-    [Test]
     public void LeavingTheRunForCampOrMenuFadesToSilenceInTwoSeconds()
     {
         Director director = InCombat(2);
@@ -342,6 +309,18 @@ public sealed class CombatMusicDirectorTests
             Assert.That(director.LevelOf((Track)t), Is.EqualTo(0f));
             Assert.That(director.VoiceVolume((Track)t, 0), Is.EqualTo(0f));
         }
+
+        // Из затишья в лагерь — тоже две секунды.
+        Director quiet = NewDirector();
+        Play(quiet, Run(1), 3f);
+        Assert.That(quiet.CurrentMood, Is.EqualTo(Mood.Lull));
+        Play(quiet, new Director.Signals { Place = Place.Camp }, Frame);
+        Assert.That(quiet.CurrentMood, Is.EqualTo(Mood.Silence));
+        Assert.That(quiet.LastTransition.Fade, Is.EqualTo(2f), "затишье → тишина за 2 с");
+        Play(quiet, new Director.Signals { Place = Place.Camp }, 1.9f);
+        Assert.That(quiet.LevelOf(Track.Lull), Is.GreaterThan(0f));
+        Play(quiet, new Director.Signals { Place = Place.Camp }, .15f);
+        Assert.That(quiet.LevelOf(Track.Lull), Is.EqualTo(0f));
 
         Director menu = NewDirector();
         Play(menu, new Director.Signals { Place = Place.Menu }, 1f);

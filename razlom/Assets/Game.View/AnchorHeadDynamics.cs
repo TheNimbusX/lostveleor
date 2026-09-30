@@ -141,6 +141,32 @@ namespace Game.View
             else _restTime=0;
         }
 
+        /// <summary>The upper ring is a real contact point, not just the mass center.</summary>
+        public void CollideEyeBody(Vector3 bottom, Vector3 top, float radius)
+        {
+            Vector3 axis = top - bottom;
+            float inverseAxis = 1f / Math.Max(.00001f, axis.LengthSquared());
+            for (int pass = 0; pass < 12; pass++)
+            {
+                Vector3 eye = Eye;
+                float u = Math.Clamp(Vector3.Dot(eye - bottom, axis) * inverseAxis, 0, 1);
+                Vector3 delta = eye - (bottom + axis * u);
+                float distance = delta.Length();
+                if (distance >= radius - .00001f) return;
+                Vector3 n = distance > .00001f ? delta / distance : Vector3.UnitX;
+                Vector3 r = eye - Position, lever = Vector3.Cross(r, n);
+                float inverseMass = 1f / Mass + Vector3.Dot(lever, InverseInertia(lever));
+                float correction = (radius - distance) / inverseMass;
+                Position += n * (correction / Mass);
+                Vector3 turn = InverseInertia(lever) * correction;
+                float angle = turn.Length();
+                if (angle > .12f) turn *= .12f / angle;
+                Rotate(turn);
+                float inward = Vector3.Dot(Velocity + Vector3.Cross(AngularVelocity, r), n);
+                if (inward < 0) Impulse(n * (-inward / inverseMass), Eye);
+            }
+        }
+
         public void CollideBody(Vector3 bottom, Vector3 top, float radius)
         {
             Vector3 axis=top-bottom;

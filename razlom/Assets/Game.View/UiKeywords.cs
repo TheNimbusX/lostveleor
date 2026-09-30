@@ -335,12 +335,13 @@ namespace Game.View
         {
             switch (tone)
             {
-                case Tone.Control: return "#3BF0F5";
-                case Tone.Defense: return "#8FE3A8";
-                case Tone.Fire: return "#FF5236";
-                case Tone.Resource: return "#FA883C";
-                case Tone.Offense: return "#A765FF";
-                default: return "#FF6A5A";
+                // Умолчания темы — одно место (UiTheme.Tokens.cs), не копия чисел.
+                case Tone.Control: return "#" + UiTheme.RareHex;
+                case Tone.Defense: return "#" + UiTheme.GoodHex;
+                case Tone.Fire: return "#" + UiTheme.UniqueHex;
+                case Tone.Resource: return "#" + UiTheme.LavidiumHex;
+                case Tone.Offense: return "#" + UiTheme.EpicHex;
+                default: return "#" + UiTheme.BadHex;
             }
         }
 

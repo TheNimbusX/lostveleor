@@ -46,11 +46,20 @@ namespace Game.View
         private float _anchorStartedAt;
         private bool _anchorLeap;
         private bool _slamOwned;
+        private Vector3 _headRestPosition = new Vector3(.09f, -.083f, .002f);
+        private Quaternion _headRestRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+        private GameObject _headSource;
+        private Material _headMaterial;
+        private float _headSize = .94f;
+        public AnchorHeadShape AnchorShape { get; private set; }
+        public bool BackMountedAnchor { get; private set; }
+        public float StowedChainPayout { get; private set; } = .75f;
+        public float AnchorRingAllowance { get; private set; }
         public Transform SlamHead => _storedAnchorHead;
         public Vector3 ChainGripPosition => _leftHand.TransformPoint(new Vector3(0f, .045f, .012f));
         public Vector3 ChainSupportPosition => _hand.TransformPoint(new Vector3(0f, .045f, .012f));
-        public Vector3 SlamBeltPosition => _anchorStored.Socket.TransformPoint(new Vector3(.09f, -.083f, .002f));
-        public Quaternion SlamBeltRotation => _anchorStored.Socket.rotation * Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+        public Vector3 SlamBeltPosition => _anchorStored.Socket.TransformPoint(_headRestPosition);
+        public Quaternion SlamBeltRotation => _anchorStored.Socket.rotation * _headRestRotation;
         private Material _anchorMetal;
         public Material AnchorMaterial => _anchorMetal != null ? _anchorMetal
             : (_anchorMetal = Resources.Load<Material>("VFX/Pelag/Materials/M_AnchorMetal"));
@@ -73,8 +82,8 @@ namespace Game.View
             }
             else
             {
-                _storedAnchorHead.localPosition = new Vector3(.09f, -.083f, .002f);
-                _storedAnchorHead.localRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+                _storedAnchorHead.localPosition = _headRestPosition;
+                _storedAnchorHead.localRotation = _headRestRotation;
                 EndAnchorUse();
                 PlaceAnchorHead();
             }
@@ -103,7 +112,7 @@ namespace Game.View
 
         public void Configure(Transform saber, MountPoint saberStored,
             MountPoint saberEquipped, Transform anchor, MountPoint anchorStored,
-            MountPoint anchorEquipped)
+            MountPoint anchorEquipped, PelagAppearanceProfile appearance = null)
         {
             _saber = saber;
             _anchor = anchor;
@@ -111,6 +120,20 @@ namespace Game.View
             _saberEquipped = saberEquipped;
             _anchorStored = anchorStored;
             _anchorEquipped = anchorEquipped;
+            _headSource = appearance != null && appearance.AnchorHeadPrefab != null
+                ? appearance.AnchorHeadPrefab : Resources.Load<GameObject>("Weapons/Pelag/AnchorChain/Pelag_AnchorHead");
+            if (appearance != null && appearance.AnchorHeadPrefab != null)
+            {
+                _headRestPosition = appearance.HeadPosition;
+                _headRestRotation = Quaternion.Euler(appearance.HeadRotation);
+                _headMaterial = appearance.AnchorHeadMaterial;
+                _headSize = appearance.HeadSize;
+                AnchorShape = appearance.AnchorShape;
+                BackMountedAnchor = true;
+                // Fixed stock for this model's larger head and upper ring.
+                StowedChainPayout = .75f + _headSize * .6f;
+                AnchorRingAllowance = _headSize * .45f;
+            }
             _presentation = GetComponent<CharacterAnimatorView>();
             _vfx = FindFirstObjectByType<PelagVfxController>();
             _hand = saberEquipped.Socket;
@@ -121,10 +144,10 @@ namespace Game.View
             _leftHand = anchorEquipped.Socket;
             _leftForearm = _leftHand != null ? _leftHand.parent : null;
             _leftUpperArm = _leftForearm != null ? _leftForearm.parent : null;
-            // The owner fitted the grip and stored head independently under Hips.
+            // Storage and the action return share the same authored mount.
             if (_anchor != null && _anchorStored.Socket != null)
             {
-                var source = Resources.Load<GameObject>("Weapons/Pelag/AnchorChain/Pelag_AnchorHead");
+                var source = _headSource;
                 var gripRenderer = _anchor.GetComponentInChildren<Renderer>(true);
                 _storedAnchorHead = _anchorStored.Socket.Find("Stored anchor head")
                     ?? _anchor.Find("Stored anchor head");
@@ -137,8 +160,8 @@ namespace Game.View
                 if (_storedAnchorHead != null)
                 {
                     _storedAnchorHead.SetParent(_anchorStored.Socket, false);
-                    _storedAnchorHead.localPosition = new Vector3(.09f, -.083f, .002f);
-                    _storedAnchorHead.localRotation = Quaternion.Euler(-53.138f, -49.8f, -12.792f);
+                    _storedAnchorHead.localPosition = _headRestPosition;
+                    _storedAnchorHead.localRotation = _headRestRotation;
                     FitAnchorHead(_storedAnchorHead);
                 }
                 var gripRenderers = _anchor.GetComponentsInChildren<Renderer>(true);
@@ -348,7 +371,7 @@ namespace Game.View
         private void CreateHeldAnchorHead()
         {
             if (_anchorHead != null || _anchor == null) return;
-            var source = Resources.Load<GameObject>("Weapons/Pelag/AnchorChain/Pelag_AnchorHead");
+            var source = _headSource;
             if (source == null) return;
             var root = new GameObject("Pelag held anchor head");
             var model = Instantiate(source, root.transform, false);
@@ -359,7 +382,7 @@ namespace Game.View
                 Bounds bounds = renderers[0].bounds;
                 foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
                 float size = Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z));
-                float scale = 0.94f / Mathf.Max(0.001f, size);
+                float scale = _headSize / Mathf.Max(0.001f, size);
                 model.transform.localScale = Vector3.one * scale;
                 model.transform.localPosition = -bounds.center * scale;
                 ApplyAnchorMaterial(renderers);
@@ -393,14 +416,14 @@ namespace Game.View
             // До первого Animator.Update импортный Hips ещё имеет служебный FBX scale .01.
             // Производные клипы нормализуют его, поэтому размер задаётся относительно тела.
             float parentScale = transform.lossyScale.x;
-            head.localScale = Vector3.one * (.94f / Mathf.Max(.001f,
+            head.localScale = Vector3.one * (_headSize / Mathf.Max(.001f,
                 Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z)) * parentScale));
             ApplyAnchorMaterial(renderers);
         }
 
         private void ApplyAnchorMaterial(Renderer[] renderers)
         {
-            var metal = AnchorMaterial;
+            var metal = _headMaterial != null ? _headMaterial : AnchorMaterial;
             foreach (var renderer in renderers)
             {
                 var materials = renderer.sharedMaterials;

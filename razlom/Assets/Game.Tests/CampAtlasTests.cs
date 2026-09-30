@@ -24,6 +24,7 @@ namespace Game.Tests
         [Test] public void TraderPurchaseOpensTheBase()
         {
             var camp=PrototypeContent.NewCamp();camp.Earn(CurrencyType.Gold,100000);
+            camp.RecordRealAttemptEnded(1,0);
             var item=camp.TraderStock(0);
             Assert.AreNotEqual(0,camp.BuyFromTrader(0));
             Assert.True(camp.Discovered(item.BaseId));

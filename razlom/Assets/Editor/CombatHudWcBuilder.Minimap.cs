@@ -60,7 +60,7 @@ namespace Game.EditorTools
             UiInkKit.SmokeLayer(plate, "Дым", "smoke_band_2", 1f, 50f, 24f);
             UiInkKit.LightAt(plate, "Ромб слева", "light_gem", new Vector2(0f, .5f), new Vector2(16f, 0f), new Vector2(14f, 16f), .9f, delay: .3f);
             UiInkKit.LightAt(plate, "Ромб справа", "light_gem", new Vector2(1f, .5f), new Vector2(-16f, 0f), new Vector2(14f, 16f), .9f, delay: .3f);
-            view.MinimapCaption = UiInkKit.Label(plate, "Надпись", "Лагерь", FontRole.Heading, 18f, Role.Text, TextAlignmentOptions.Center, 3f);
+            view.MinimapCaption = UiInkKit.Label(plate, "Надпись", "Лагерь", FontRole.Heading, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.Center, 3f);
             view.MinimapCaption.fontStyle = FontStyles.UpperCase;
             view.MinimapCaption.margin = new Vector4(28f, 0f, 28f, 0f);
             view.MinimapCaption.enableAutoSizing = true;

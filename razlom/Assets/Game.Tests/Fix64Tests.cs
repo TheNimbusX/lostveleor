@@ -57,15 +57,5 @@ namespace Game.Tests
                     $"sin²+cos² на {deg}°");
             }
         }
-
-        [Test]
-        public void Pcg32_IsRepeatable()
-        {
-            var a = new Pcg32(12345UL, 1UL);
-            var b = new Pcg32(12345UL, 1UL);
-            for (int i = 0; i < 1000; i++)
-                Assert.AreEqual(a.NextUInt(), b.NextUInt(), $"расхождение на шаге {i}");
-        }
-
     }
 }

@@ -67,15 +67,12 @@ namespace Game.Tests
                 - Simulation.GuardianSwingRecoveryTicks, "свободных тиков в цикле");
             Assert.AreEqual(Simulation.GuardianSwingWindupTicks, Simulation.EnemyAttackWindupTicks,
                 "EnemyAttackWindupTicks — прежнее имя того же замаха, а не второе число");
-        }
 
-        [Test]
-        public void GuardianRowOfTheKindTable_RepeatsTheTempo()
-        {
+            // Строка Хранителя в таблице видов повторяет тот же темп.
             var row = EnemyArchetypes.Get(EnemyKind.ForestGuardian);
-            Assert.AreEqual(23, row.WindupTicks);
-            Assert.AreEqual(17, row.RecoveryTicks);
-            Assert.AreEqual(53, row.CycleTicks);
+            Assert.AreEqual(23, row.WindupTicks, "таблица видов: замах");
+            Assert.AreEqual(17, row.RecoveryTicks, "таблица видов: стойка");
+            Assert.AreEqual(53, row.CycleTicks, "таблица видов: цикл");
         }
 
         [TestCase(EnemyKind.ForestGuardian)]
@@ -107,6 +104,9 @@ namespace Game.Tests
             Assert.AreEqual(23, swing.ImpactTick);
             Assert.AreEqual(40, swing.RecoverUntil);
             Assert.AreEqual(53, sim.Entities.NextAttackTick[g]);
+            // AttackImpactTick врага читает TickDriver.Stonehoof (уворот в съёмке).
+            Assert.AreEqual(swing.ImpactTick, sim.Entities.AttackImpactTick[g],
+                "контакт в сущности совпадает с замахом");
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var mark));
             Assert.AreEqual(23, mark.ImpactTick, "метка гаснет в контакт, а не по старому окну");
 
@@ -154,17 +154,16 @@ namespace Game.Tests
                 sim.Entities.AttackCooldown[sim.SpawnEnemy(At(4, 0), 100, EnemyKind.ForestRootSwarm)]);
             Assert.AreEqual(Simulation.SplitterSwingCycleTicks,
                 sim.Entities.AttackCooldown[sim.SpawnEnemy(At(-4, 0), 100, EnemyKind.ForestSplitter)]);
-        }
 
-        [Test]
-        public void RootSwarmBite_StillLandsOnItsOwnWindup()
-        {
-            var sim = Arena();
-            int s = Enemy(sim, At(1.2, 0), EnemyKind.ForestRootSwarm);
-            sim.Step(InputFrame.Empty);
-            Assert.IsTrue(sim.TryGetEnemySwing(s, out var bite));
+            // Живой укус Корнеполза: контакт на его собственном замахе, не на замахе Хранителя.
+            var live = Arena();
+            int s = Enemy(live, At(1.2, 0), EnemyKind.ForestRootSwarm);
+            live.Step(InputFrame.Empty);
+            Assert.IsTrue(live.TryGetEnemySwing(s, out var bite));
             Assert.AreEqual(Simulation.RootSwarmAttackWindupTicks, bite.ImpactTick - bite.StartTick);
             Assert.AreEqual(Simulation.RootSwarmRecoveryTicks, bite.RecoverUntil - bite.ImpactTick);
+            Assert.AreEqual(bite.ImpactTick, live.Entities.AttackImpactTick[s],
+                "контакт укуса в сущности совпадает с замахом");
         }
     }
 }

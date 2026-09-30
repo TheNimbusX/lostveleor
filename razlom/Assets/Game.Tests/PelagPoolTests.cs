@@ -8,7 +8,8 @@ namespace Game.Tests
     ///
     /// Решение владельца от 15 сентября: веток нет, забег начинается с
     /// автоатаки и Вихря, остальное находится по пути из пула в восемь
-    /// способностей; таланты берутся в забеге строго по порядку.
+    /// способностей. Порядок и потолок усилений — в UpgradeOrderTests
+    /// (владелец, 24.09: любое усиление может быть первым).
     /// </summary>
     public class PelagPoolTests
     {
@@ -88,17 +89,6 @@ namespace Game.Tests
         }
 
         // ---- таланты ----
-
-        [Test]
-        public void TalentsAreTakenInOrderUpToFive()
-        {
-            var loadout = new RunLoadout();
-            for (int i = 0; i < SabreTalents.TalentsPerLine; i++)
-                Assert.IsTrue(loadout.TakeTalent(0), $"талант {i + 1}");
-            Assert.IsFalse(loadout.TakeTalent(0), "шестой талант");
-            Assert.AreEqual(SabreTalents.TalentsPerLine, loadout.TalentRank(0));
-            Assert.IsFalse(loadout.HasTalentToTake, "все таланты взяты, а доступный остался");
-        }
 
         [Test]
         public void ReplacedAbilityLosesItsTalents()

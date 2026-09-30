@@ -92,7 +92,7 @@ namespace Game.Sim
 
             // Рецепт повторяет улучшения поверх исходного ролла: остальные аффиксы не меняются.
             var forgeRng=new Pcg32(item.Seed,0x534D495448UL);
-            for(int attempt=0;attempt<item.ReforgeCount;attempt++)
+            for(int attempt=0;attempt<item.LegacyReforgeCount;attempt++)
             {
                 int slot=((item.ForgeRecipe>>(attempt*4))&15)-1;
                 Fix64 fraction=forgeRng.NextFix(Fix64.Ratio(1,4),Fix64.One);
@@ -101,6 +101,40 @@ namespace Game.Sim
                 for(int i=0;i<db.AffixCount;i++)if(db.GetAffix(i).Id==old.AffixId)max=Fix64.Max(max,db.GetAffix(i).MaxValue);
                 into.Replace(slot,new RolledAffix(old.AffixId,old.Stat,old.Op,old.Value+(max-old.Value)*fraction));
             }
+
+            int craftLevel = item.OriginalLevel + item.LegacyReforgeCount * (1 + (int)item.Rarity);
+            if (item.Crafting != null)
+                for (int i = 0; i < item.Crafting.Count; i++)
+                {
+                    var step = item.Crafting.Step(i);
+                    if (step.Operation == ForgeOperation.Refine)
+                    {
+                        if (step.Slot >= into.AffixCount || step.Fraction < Fix64.Ratio(1,4) || step.Fraction > Fix64.One) return false;
+                        var old = into.GetAffix(step.Slot); int definition = db.IndexOfAffix(old.AffixId);
+                        if (definition < 0) return false;
+                        Fix64 max = Fix64.Max(old.Value, db.GetAffix(definition).MaxValue);
+                        into.Replace(step.Slot, new RolledAffix(old.AffixId, old.Stat, old.Op, old.Value + (max - old.Value) * step.Fraction));
+                        craftLevel += 1 + (int)item.Rarity;
+                    }
+                    else
+                    {
+                        int definition = db.IndexOfAffix(step.AffixId);
+                        if (definition < 0) return false;
+                        var affix = db.GetAffix(definition);
+                        if (!affix.AllowedOn(baseDef.Category) || affix.MinItemLevel > craftLevel || step.Fraction < Fix64.Zero || step.Fraction > Fix64.One) return false;
+                        for (int existing = 0; existing < into.AffixCount; existing++)
+                        {
+                            if (step.Operation != ForgeOperation.Add && existing == step.Slot) continue;
+                            int existingDefinition = db.IndexOfAffix(into.GetAffix(existing).AffixId);
+                            if (existingDefinition >= 0 && db.GetAffix(existingDefinition).Group == affix.Group) return false;
+                        }
+                        var rolled = new RolledAffix(affix.Id, affix.Stat, affix.Op, affix.MinValue + (affix.MaxValue - affix.MinValue) * step.Fraction);
+                        if (step.Operation == ForgeOperation.Add)
+                        { int cap = item.Rarity == ItemRarity.Magic ? 2 : item.Rarity == ItemRarity.Rare ? 4 : 0;
+                            if (step.Slot != into.AffixCount || into.AffixCount >= cap) return false; into.Add(rolled); }
+                        else { if (step.Slot >= into.AffixCount) return false; into.Replace(step.Slot, rolled); }
+                    }
+                }
 
             return true;
         }

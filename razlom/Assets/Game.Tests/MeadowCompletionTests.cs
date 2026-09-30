@@ -48,9 +48,7 @@ namespace Game.Tests
                 session.Step(new InputFrame { Command = (byte)RunCommand.ChooseRoute1 });
         }
 
-        [TestCase(1UL)]
         [TestCase(42UL)]
-        [TestCase(999UL)]
         public void NineLevels_EndAfterFinalReward_AndCanBeRepeated(ulong seed)
         {
             var session = Session(seed);

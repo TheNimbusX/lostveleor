@@ -1,0 +1,285 @@
+{
+  "status": "technical-verification-passed-owner-visual-review-pending",
+  "body_sha256_unchanged": "cffa80a0d3aca6a601047dfead1eba7b1430b53460f1b143da14423f765a51b6",
+  "anchor_triangles": 5872,
+  "build": "artifacts/pelag-colour-final-build.log",
+  "presentation_tests": {
+    "total": "379",
+    "executed": "379",
+    "passed": "379",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "captures": {
+    "game/basic-roll-r02": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_dash_1080p60.mp4"
+      ]
+    },
+    "game/camp-after": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": []
+    },
+    "game/camp-before": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": []
+    },
+    "game/forest-after": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": []
+    },
+    "game/forest-before": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": []
+    },
+    "game/leap-after": {
+      "chain_samples": 71,
+      "max_segment_strain": 0.00737,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.0
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-leap_1080p60.mp4"
+      ]
+    },
+    "game/run-after": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_locomotion.mp4"
+      ]
+    },
+    "game/wreck-after": {
+      "chain_samples": 98,
+      "max_segment_strain": 0.00785,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_wreck_1080p60.mp4"
+      ]
+    },
+    "game-verified/basic-attack-handoff-r02": {
+      "chain_samples": 72,
+      "max_segment_strain": 0.00789,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.00673
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "game-verified/death-after": {
+      "chain_samples": 46,
+      "max_segment_strain": 0.0078,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.83986
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "game-verified/roll-after": {
+      "chain_samples": 52,
+      "max_segment_strain": 0.0078,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.01668
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "game-verified/slam-after": {
+      "chain_samples": 64,
+      "max_segment_strain": 0.0078,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.01472
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "fps/wreck-120": {
+      "chain_samples": 196,
+      "max_segment_strain": 0.00791,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_wreck_1080p60.mp4"
+      ]
+    },
+    "fps/wreck-30": {
+      "chain_samples": 49,
+      "max_segment_strain": 0.00789,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_wreck_1080p60.mp4"
+      ]
+    },
+    "fps-verified/roll-120": {
+      "chain_samples": 103,
+      "max_segment_strain": 0.00658,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.01587
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "fps-verified/roll-30": {
+      "chain_samples": 27,
+      "max_segment_strain": 0.00295,
+      "max_attachment_gap_m": 0.0,
+      "final_handoff_distance_m": [
+        0.01331
+      ],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_anchor-slam_1080p60.mp4"
+      ]
+    },
+    "poses-r02/backblast": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_backblast_1080p60.mp4"
+      ]
+    },
+    "poses-r02/blaze": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_blaze_1080p60.mp4"
+      ]
+    },
+    "poses-r02/chain-step": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_chain-step_1080p60.mp4"
+      ]
+    },
+    "poses-r02/cleave": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_cleave_1080p60.mp4"
+      ]
+    },
+    "poses-r02/fire-flask": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_fire-flask_1080p60.mp4"
+      ]
+    },
+    "poses-r02/skewer": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_skewer_1080p60.mp4"
+      ]
+    },
+    "poses-r02/whirlwind": {
+      "chain_samples": 0,
+      "max_segment_strain": null,
+      "max_attachment_gap_m": null,
+      "final_handoff_distance_m": [],
+      "runtime_errors": [],
+      "videos": [
+        "pelag_whirlwind_1080p60.mp4"
+      ]
+    }
+  },
+  "limits": [
+    "These are fixed-frame capture runs, not a low-end PC performance measurement.",
+    "Current animation/VFX quality is unchanged; owner visual approval is pending.",
+    "Death still releases weapon ownership immediately: recorded root handoff distance 0.83986 m. Chain endpoint gap 0 does not imply a smooth death handoff; that is a future animation task.",
+    "Original body and high-poly saber are preserved; whole-hero 40k triangle target is not achieved."
+  ],
+  "capture_clock": "Video and shot times are relative to the end of capture warmup. CSV Time.time is absolute; compare with the offset, not by matching numeric timestamps.",
+  "archived_diagnostics": "colour/poses was recorded too late for several skills. CPU/screen/BakeMesh probes are excluded from review; no skinning or animation changes were made to the owner project.",
+  "superseded_failure": "The first ordinary-attack handoff exposed 14.327% strain. Recorded coordinates showed the upper eye inside the torso capsule. Eye/body contact alone cleared that but exposed an insufficient curved route around the body (29.891%). Final contact plus fixed stock solved both; the chain solver is unchanged. Some game-final/fps-final captures then hit the 94 s harness timeout. game-verified/fps-verified repeat the full cases with a local 480 s budget; old diagnostics are excluded.",
+  "browser_render_verified": false,
+  "browser_limit": "Browser Use rejected file://; no server or other surface was used to bypass it."
+}

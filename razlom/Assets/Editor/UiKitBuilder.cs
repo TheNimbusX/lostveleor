@@ -254,12 +254,15 @@ namespace Game.EditorTools
             return root;
         }
 
-        /// <summary>Вкладка: подпись и оранжевое подчёркивание у выбранной.</summary>
+        /// <summary>
+        /// Вкладка: подпись и оранжевое подчёркивание у выбранной. Подпись — шрифт заголовков, как у <see cref="Button"/>
+        /// (владелец 30.09: у кнопок и вкладок шрифт «как в главном меню»).
+        /// </summary>
         public static RectTransform Tab(Transform parent, string name, string text, bool selected, float w = 150f, float h = 48f)
         {
             UiTheme t = Theme;
             RectTransform root = Root(parent, name, w, h);
-            Label(root, "Надпись", text, FontRole.Body, 20f, selected ? Role.Accent : Role.Text, TextAlignmentOptions.Center, 0f, selected ? 1f : .85f)
+            Label(root, "Надпись", text, FontRole.Heading, 20f, selected ? Role.Accent : Role.Text, TextAlignmentOptions.Center, 0f, selected ? 1f : .85f)
                 .textWrappingMode = TextWrappingModes.NoWrap;
             RectTransform line = Node("Подчёркивание", root);
             line.anchorMin = new Vector2(0f, 0f);

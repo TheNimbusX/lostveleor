@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5412f0e200e936949aaacb5f3a796703, type: 3}
+  m_Name: PelagAppearance
+  m_EditorClassIdentifier: Game.View::Game.View.PelagAppearanceProfile
+  BodyMaterial: {fileID: 2100000, guid: 41aa684c68847204d94ce56a8dcc5971, type: 2}
+  AnchorHeadPrefab: {fileID: 919132149155446097, guid: 6cee34b37d9c98d4ca8448adc1d6319b, type: 3}
+  AnchorHeadMaterial: {fileID: 2100000, guid: 47c941a598ae69447927327850317808, type: 2}
+  AnchorShape: {fileID: 11400000, guid: 6ed29d80f57b48541a246886243e59db, type: 2}
+  BackSocket: mixamorig:Spine2
+  HeadPosition: {x: 0.008, y: -0.031, z: -0.075}
+  HeadRotation: {x: 0, y: 0, z: -25}
+  HeadSize: 0.94
+  GripPosition: {x: 0.103, y: 0.144, z: -0.105}
+  GripRotation: {x: -90, y: 0, z: 90}
+  GripScale: {x: 0.55, y: 0.55, z: 0.55}

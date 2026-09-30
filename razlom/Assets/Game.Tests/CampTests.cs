@@ -90,18 +90,6 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Session_StartsInCamp()
-        {
-            GameSession session = Session();
-
-            Assert.AreEqual(GameMode.Camp, session.Mode);
-            Assert.IsNull(session.Run, "в лагере забега нет");
-            Assert.AreSame(session.CampSim, session.ActiveSim);
-            Assert.AreEqual(1, session.ActiveSim.Entities.Count);
-            Assert.IsTrue(session.ActiveSim.Entities.Alive[Simulation.PlayerId]);
-        }
-
-        [Test]
         public void Portal_TakesThePlayerIntoTheRift()
         {
             GameSession session = Session();
@@ -118,7 +106,7 @@ namespace Game.Tests
         public void PauseMenu_ReturnToCamp_AbandonsTheActiveRiftImmediately()
         {
             GameSession session = Session();
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
             int generationBefore = session.Generation;
 
             session.ReturnToCamp();
@@ -135,7 +123,7 @@ namespace Game.Tests
         public void RunEnd_LeadsToTheSummaryScreen()
         {
             GameSession session = Session();
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
             PlayOneRift(session);
 
             Assert.AreEqual(GameMode.Summary, session.Mode);
@@ -151,13 +139,18 @@ namespace Game.Tests
                 GameSession session = Session(seed);
                 var seeds = new ulong[3];
 
-                session.Step(Command(CampCommand.EnterRift));
+                session.EnterRift();
                 seeds[0] = session.LastRunSeed;
 
                 for (int i = 1; i < seeds.Length; i++)
                 {
                     PlayOneRift(session);
                     session.Step(Command(CampCommand.RepeatRift));
+                    if (session.PreparationRequested)
+                    {
+                        session.SetPreparedGift(session.Camp.GiftOfferAt(0));
+                        session.EnterRift();
+                    }
                     seeds[i] = session.LastRunSeed;
                 }
                 return seeds;
@@ -178,7 +171,7 @@ namespace Game.Tests
             Assert.AreEqual(0, session.Camp.Bag.Used, "сумка начинается пустой");
 
             int items = 0;
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
 
             // Несколько Разломов подряд: награда роллится случайно, и предмет
             // выпадает не в каждой тройке.
@@ -223,7 +216,7 @@ namespace Game.Tests
             var session = new GameSession(Seed, camp, PrototypeContent.Modules(),
                 PrototypeContent.ItemBaseIds());
 
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
 
             // Идём по Разломам, пока в тройке не окажется предмет: вид награды
             // роллится, и ждать его в первой же тройке нечестно.
@@ -270,14 +263,21 @@ namespace Game.Tests
 
             var session = new GameSession(Seed, camp, PrototypeContent.Modules(),
                 PrototypeContent.ItemBaseIds());
-            session.Step(Command(CampCommand.EnterRift));
+            session.EnterRift();
+
+            // Сравнение с тем же забегом без меча: голый герой с 29.09 бьёт на 54,
+            // и порог числом прошёл бы и без снаряжения.
+            var bare = new GameSession(Seed, PrototypeContent.NewCamp(), PrototypeContent.Modules(),
+                PrototypeContent.ItemBaseIds());
+            bare.EnterRift();
+            int unarmed = bare.Run.Sim.Entities.Damage[Simulation.PlayerId];
 
             int armed = session.Run.Sim.Entities.Damage[Simulation.PlayerId];
-            Assert.Greater(armed, 34, "надетое в лагере работает в Разломе");
+            Assert.Greater(armed, unarmed, "надетое в лагере работает в Разломе");
 
             // И переживает вход в следующий забег: симуляция там новая.
             PlayOneRift(session);
-            session.Step(Command(CampCommand.RepeatRift));
+            session.EnterRift();
 
             Assert.AreEqual(armed, session.Run.Sim.Entities.Damage[Simulation.PlayerId],
                 "снаряжение принадлежит персонажу, а не симуляции");

@@ -125,7 +125,7 @@ namespace Game.EditorTools
 
             // Нехватка лавидия: недостача капсулой на нижней кромке — клуб дыма и тонкое кольцо цвета лавидия.
             RectTransform lacking = Stretch(Node("Нет лавидия", body));
-            RectTransform pill = UiInkKit.Keycap(lacking, "Плашка", "−00", 20f);
+            RectTransform pill = UiInkKit.Keycap(lacking, "Плашка", "−00", 20f, capsule: true);
             pill.anchorMin = pill.anchorMax = new Vector2(.5f, 0f);
             pill.pivot = new Vector2(.5f, 0f);
             pill.anchoredPosition = new Vector2(0f, 16f);

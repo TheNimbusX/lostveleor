@@ -339,9 +339,11 @@ namespace Game.Tests
         public void TestStageKeepsPlayerAndBudWalkableWithRetreatAndSideRoomAcrossSeeds(bool naturalGlade)
         {
             var modules = PrototypeContent.Modules();
-            for (int sample = 0; sample <= 64; sample++)
+            // Десять сидов подряд и закреплённый 20260829 (на нём проверяется подход).
+            const int samples = 10;
+            for (int sample = 0; sample <= samples; sample++)
             {
-                ulong seed = sample == 64 ? 20260829UL : (ulong)sample + 1;
+                ulong seed = sample == samples ? 20260829UL : (ulong)sample + 1;
                 var map = new LayoutMap(modules, 64);
                 var settings = new RiftLevelSettings(11, 1, 1, 2, 1, 3, 60,
                     solidEnvironment: naturalGlade, naturalGlade: naturalGlade);

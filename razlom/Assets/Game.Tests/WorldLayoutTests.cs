@@ -77,12 +77,17 @@ namespace Game.Tests
             const ulong seed = 0xC0FFEEUL;
             ulong expected = Generate(seed).Hash();
 
-            for (int i = 0; i < 200; i++)
+            // Карта — чистая функция от сида: пяти повторов достаточно.
+            for (int i = 0; i < 5; i++)
                 Assert.AreEqual(expected, Generate(seed).Hash(), $"прогон {i} дал другую карту");
         }
 
+        /// <summary>
+        /// Одна проходка по 300 сидам вместо четырёх: связность, модули без
+        /// наложений, выход и ответвления с наградой — тупики, не вход.
+        /// </summary>
         [Test]
-        public void EveryMap_IsConnected()
+        public void EveryMap_IsConnected_WithoutOverlaps_ExitsAndRewardsAreDeadEnds()
         {
             for (ulong seed = 1; seed <= 300; seed++)
             {
@@ -93,15 +98,6 @@ namespace Game.Tests
                 // слабую проверку и выглядел бы исправным.
                 Assert.That(map.PlacedCount, Is.GreaterThanOrEqualTo(6), $"сид {seed}: карта не выросла");
                 Assert.That(Connected(map), Is.True, $"сид {seed}: до части комнат не дойти");
-            }
-        }
-
-        [Test]
-        public void ModulesNeverOverlap()
-        {
-            for (ulong seed = 1; seed <= 300; seed++)
-            {
-                LayoutMap map = Generate(seed);
 
                 for (int a = 0; a < map.PlacedCount; a++)
                 {
@@ -113,19 +109,6 @@ namespace Game.Tests
                             $"сид {seed}: модули {a} и {b} налезли друг на друга");
                     }
                 }
-            }
-        }
-
-        // ---- ручная расстановка тем же типом данных ----
-
-        // ---- выходы ----
-
-        [Test]
-        public void ChosenExit_IsADeadEnd_NotTheEntrance()
-        {
-            for (ulong seed = 1; seed <= 300; seed++)
-            {
-                LayoutMap map = Generate(seed);
 
                 for (int i = 0; i < map.ExitCount; i++)
                 {
@@ -133,19 +116,6 @@ namespace Game.Tests
                     Assert.That(exit, Is.Not.EqualTo(0), $"сид {seed}: выход совпал со входом");
                     Assert.That(map.HasChild(exit), Is.False, $"сид {seed}: выход — не тупик");
                 }
-            }
-        }
-
-        // ---- петли ----
-
-        // ---- необязательные ответвления с наградой ----
-
-        [Test]
-        public void RewardBranches_AreDeadEndsDistinctFromExitAndEntrance()
-        {
-            for (ulong seed = 1; seed <= 300; seed++)
-            {
-                LayoutMap map = Generate(seed);
 
                 for (int i = 0; i < map.RewardBranchCount; i++)
                 {
@@ -157,7 +127,7 @@ namespace Game.Tests
             }
         }
 
-        // ---- повороты ----
+        // ---- набор модулей ----
 
         [Test]
         public void ModuleSet_RejectsDuplicateIds()

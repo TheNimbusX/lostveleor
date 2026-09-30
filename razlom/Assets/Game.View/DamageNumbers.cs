@@ -14,10 +14,20 @@ namespace Game.View
     /// стоить аллокации. Когда все слоты заняты, переиспользуется самый старый —
     /// потерять цифру в мясорубке лучше, чем создать объект в бою.
     ///
-    /// ВИД — ПАК «НОЧНАЯ АКВАРЕЛЬ», лист HUD `kit-sheet-4` (владелец 25 сентября: «менять под лист»):
-    /// TextMeshPro шрифтом UiTheme.Numbers (Philosopher Bold — светлая антиква листа), у каждого
-    /// числа минус-тире, мягкая тёмная обводка; крит — оранжевый с тёплым свечением и искрой, без «!».
-    /// Урон по герою отличает цвет и размер (красный, крупнее).
+    /// ВИД — КАДР 1a ДОСКИ ПОЛИРОВКИ (выбор владельца 30.09, ART/UI/concepts-2026-09-30-hud-polish:
+    /// «42 · 37 · крит 126 · слитое 211 · по герою −38»):
+    /// <list type="bullet">
+    /// <item>обычная — светло-кремовая, Nunito Bold (шрифт текста UI, UiTheme.Body), без минуса, тёмная
+    /// обводка и мягкая тень;</item>
+    /// <item>крит — крупнее, акцентный оранжевый #FF8A4C с тёплым свечением и искрой, появляется коротким
+    /// «хлопком» (перелёт масштаба) и всегда своей цифрой — в сумму не растворяется;</item>
+    /// <item>быстрые попадания по одной цели сливаются в одну растущую цифру: каждое новое толкает её,
+    /// она крупнеет и теплеет к акценту (DamageNumberRules);</item>
+    /// <item>урон по герою — красный «−38», крупнее своего: это потеря;</item>
+    /// <item>цифры одной цели встают короткой лесенкой, а не друг на друга.</item>
+    /// </list>
+    /// Настройка «Цифры урона» (GameUserSettings.ShowDamageNumbers) выключает всё, кроме отклика
+    /// уклонения. Текст пишется через SetText с числом — без строк в куче на каждое попадание.
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     public sealed class DamageNumbers : MonoBehaviour
@@ -26,14 +36,13 @@ namespace Game.View
         public int PoolSize = 64;
 
         [Header("Вид")]
-        // Цвета пака «Ночная акварель» (23 сентября 2026): светлая обычная,
-        // оранжевый крит с искрой, как на листе HUD.
-        public Color NormalColor = new Color32(0xE6, 0xEA, 0xF5, 0xFF);
-        [Tooltip("Крит: верх цифры; к низу градиент густеет (CritBottom)")]
-        public Color CritColor = new Color32(0xFF, 0x9C, 0x58, 0xFF);
+        [Tooltip("Обычная цифра: светло-кремовая, как в кадре 1a")]
+        public Color NormalColor = new Color32(0xF6, 0xEE, 0xDF, 0xFF);
+        [Tooltip("Крит: единственный акцент интерфейса #FF8A4C; к низу градиент густеет (CritBottom)")]
+        public Color CritColor = new Color32(0xFF, 0x8A, 0x4C, 0xFF);
         [Tooltip("Множитель цвета крита у низа цифры")]
         public Color CritBottom = new Color(1f, .8f, .72f, 1f);
-        [Tooltip("Размер шрифта на единицу прежнего characterSize: 0,036 × 96 ≈ 3,5")]
+        [Tooltip("Размер шрифта на единицу прежнего characterSize: 0,036 × 112 ≈ 4 (em ≈ 0,4 м)")]
         public float FontScale = 112f;
         [Tooltip("Искра у крита, метры")]
         public float SparkSize = 0.34f;
@@ -45,10 +54,11 @@ namespace Game.View
         public Color BurnColor = new Color(0.95f, 0.55f, 0.25f, 0.75f);
 
         public float NormalSize = 0.036f;
+        [Tooltip("Крит: в полтора раза крупнее обычной (126 против 42 в кадре 1a)")]
         public float CritSize = 0.054f;
 
         [Tooltip("Урон по герою рисуется крупнее своего: это потеря, и она важнее.")]
-        public float PlayerHitSize = 0.052f;
+        public float PlayerHitSize = 0.048f;
 
         [Tooltip("Тик урона по времени — самый мелкий: он фон, а не событие.")]
         public float BurnSize = 0.029f;
@@ -58,16 +68,30 @@ namespace Game.View
                  "не должен превращать экран в таблицу.")]
         public int MaxVisible = 18;
 
-        [Tooltip("Пока цифра моложе этого возраста, следующее попадание по той же " +
-                 "цели вливается в неё, а не порождает вторую.")]
-        public float MergeWindow = 0.28f;
+        [Tooltip("Если с прошлого попадания по цели прошло меньше, новое вливается в её цифру, " +
+                 "а не порождает вторую. Крит всегда встаёт отдельно.")]
+        public float MergeWindow = 0.3f;
+        [Tooltip("На сколько слитая цифра крупнеет с каждым попаданием (до ×1,6)")]
+        public float MergeGrow = .14f;
+        [Tooltip("Толчок слитой цифры от нового попадания: +доля размера, гаснет за 0,14 с")]
+        public float MergeBump = .22f;
 
         [Header("Полёт")]
         public float Lifetime = 0.62f;
+        [Tooltip("Последние секунды жизни цифра гаснет")]
+        public float FadeTime = 0.26f;
+        [Tooltip("Появление: секунд на рост из нуля с перелётом")]
+        public float AppearTime = 0.11f;
+        [Tooltip("Перелёт появления крита: 3,2 — короткий «хлопок» (пик ≈ ×1,28), у обычной 1,7 (≈ ×1,1)")]
+        public float CritPop = 3.2f;
         public float RiseSpeed = 1.05f;
         public float SpawnHeight = 1.48f;
         [Tooltip("Разброс по горизонтали, чтобы цифры по одной цели не слипались.")]
         public float Jitter = 0.30f;
+        [Tooltip("Ступень лесенки цифр одной цели, метры вдоль «вверх» экрана")]
+        public float StackStep = 0.36f;
+
+        private const float BumpTime = .14f;
 
         private TickDriver _driver;
         private Transform _camera;
@@ -87,6 +111,15 @@ namespace Game.View
             /// <summary>Накопленный урон. Слитые попадания складываются сюда.</summary>
             public int Value;
 
+            /// <summary>Сколько попаданий слито в цифру: от этого она крупнеет и теплеет.</summary>
+            public int Hits;
+
+            /// <summary>Секунд с последнего попадания: окно слияния считается от него.</summary>
+            public float SinceHit;
+
+            /// <summary>Возраст толчка от последнего слитого попадания.</summary>
+            public float BumpAge;
+
             public bool Crit;
 
             /// <summary>Урон ПО ГЕРОЮ. Рисуется с минусом и крупнее: это потеря.</summary>
@@ -105,6 +138,7 @@ namespace Game.View
         //
         // Так это и работает в жанре: игрок читает не каждый удар, а сумму,
         // которую он снял с этой цели. Столбик мелких цифр не читается вообще.
+        // Крит в эту привязку не встаёт: он своя цифра, а серия идёт мимо него.
         private int[] _slotOfTarget;
         private int[] _targetOfSlot;
         private int _visible;
@@ -121,13 +155,19 @@ namespace Game.View
             if (_camera == null)
                 Debug.LogWarning("[Разлом] DamageNumbers: не найдена основная камера, цифры не будут развёрнуты к зрителю.");
 
-            TMP_FontAsset font = UiTheme.Current.Numbers != null ? UiTheme.Current.Numbers : UiTheme.Current.Body;
+            // Цифры — Nunito, шрифт текста UI (кадр 1a, правило «Philosopher — заголовки, Nunito — текст»).
+            // Жирное начертание берётся шрифтом из таблицы весов, а не стилем Bold: так наш материал с
+            // обводкой доезжает до цифр. Нет Nunito в теме — прежний шрифт цифр.
+            TMP_FontAsset body = UiTheme.Current.Body;
+            TMP_FontAsset bold = body != null ? BoldOf(body) : null;
+            TMP_FontAsset font = bold != null ? bold : body != null ? body : UiTheme.Current.Numbers;
             if (font == null)
             {
                 Debug.LogError("[Разлом] DamageNumbers: в теме UI нет шрифта цифр, цифры отключены.");
                 enabled = false;
                 return;
             }
+            _syntheticBold = bold == null;
             // Обычная: тёмная обводка и мягкая тень снизу. Крит: тёплое свечение вокруг.
             _normalMaterial = Styled(font, new Color(.03f, .04f, .07f, 1f), .26f, new Color(0f, 0f, 0f, .7f), .35f, .6f, -.6f);
             _critMaterial = Styled(font, new Color(.28f, .08f, .02f, 1f), .2f, new Color(1f, .42f, .1f, .6f), .55f, 1f, 0f);
@@ -187,20 +227,24 @@ namespace Game.View
             bool crit = e.Flag;
             bool playerHit = e.Target == Simulation.PlayerId;
             bool overTime = e.Type == SimEventType.DamageOverTime;
+            bool evaded = e.Type == SimEventType.Evaded;
+            bool tracked = (uint)e.Target < (uint)_slotOfTarget.Length;
 
-            // Свежая цифра по той же цели — доливаем в неё и бьём по ней
-            // ещё раз масштабом. Новую не заводим.
-            int existing = (uint)e.Target < (uint)_slotOfTarget.Length ? _slotOfTarget[e.Target] : -1;
-            // Горение сливается вдвое дольше обычного: тридцать тиков в секунду
+            // Свежая цифра по той же цели — доливаем в неё и толкаем её.
+            // Новую не заводим. Крит и уклонение всегда встают своей цифрой.
+            int existing = tracked ? _slotOfTarget[e.Target] : -1;
+            // Горение сливается втрое дольше обычного: тридцать тиков в секунду
             // иначе дадут тридцать цифр в секунду на одной цели.
             float window = overTime ? MergeWindow * 3f : MergeWindow;
 
-            if (existing >= 0
+            if (!evaded
+                && existing >= 0
                 && _slots[existing].Remaining > 0f
-                && _slots[existing].Age < window
-                && _targetOfSlot[existing] == e.Target)
+                && _targetOfSlot[existing] == e.Target
+                && !_slots[existing].Evaded
+                && DamageNumberRules.Merges(_slots[existing].SinceHit, window, crit))
             {
-                Merge(existing, in e, crit, playerHit);
+                Merge(existing, in e, playerHit);
                 return;
             }
 
@@ -218,6 +262,7 @@ namespace Game.View
                 && (uint)previousOwner < (uint)_slotOfTarget.Length
                 && _slotOfTarget[previousOwner] == slot)
                 _slotOfTarget[previousOwner] = -1;
+            _targetOfSlot[slot] = -1;
 
             // Позиция берётся из события, а не из текущей позиции цели: цель могла
             // умереть на этом же тике, и её объект уже спрятан.
@@ -233,64 +278,84 @@ namespace Game.View
             }
             at += HorizontalJitter(e.Target, _driver.Sim.Tick);
 
+            // Лесенка: цифра по цели, у которой уже висят другие (крит посреди серии,
+            // серия после окна), встаёт ступенью выше и чуть в сторону.
+            if (_camera != null && e.Target >= 0)
+            {
+                DamageNumberRules.Stack(LiveCountFor(e.Target), StackStep, out float sx, out float sy);
+                at += _camera.up * sy + _camera.right * sx;
+            }
+
             ref Slot s = ref _slots[slot];
             s.Transform.gameObject.SetActive(true);
             s.Transform.position = at;
             if (_camera != null) s.Transform.rotation = _camera.rotation;
 
             s.Value = e.Amount;
+            s.Hits = 1;
             s.Crit = crit;
             s.PlayerHit = playerHit;
             s.OverTime = overTime;
-            s.Evaded = e.Type == SimEventType.Evaded;
-            s.BaseColor = s.Evaded ? EvadeColor : ColorFor(in e, crit, playerHit, overTime);
+            s.Evaded = evaded;
+            s.BaseColor = evaded ? EvadeColor : ColorFor(in e, crit, playerHit, overTime);
             WriteValue(ref s);
 
             s.Remaining = Lifetime;
             s.Age = 0f;
+            s.SinceHit = 0f;
+            s.BumpAge = BumpTime;
             s.Velocity = Vector3.up * RiseSpeed;
             s.Angle = JitterAngle(e.Target, _driver.Sim.Tick);
-            s.Transform.localScale = Vector3.one * 0.15f;
+            s.Transform.localScale = Vector3.zero;
 
-            if ((uint)e.Target < (uint)_slotOfTarget.Length) _slotOfTarget[e.Target] = slot;
+            // Крит и уклонение в серию не встают: следующие удары льются мимо них.
+            if (tracked && !crit && !evaded) _slotOfTarget[e.Target] = slot;
             _targetOfSlot[slot] = e.Target;
             _visible++;
         }
 
+        /// <summary>Сколько живых цифр уже висит над этой целью (для лесенки). Пул маленький — проход дешёвый.</summary>
+        private int LiveCountFor(int target)
+        {
+            int count = 0;
+            for (int i = 0; i < _slots.Length; i++)
+                if (_targetOfSlot[i] == target && _slots[i].Remaining > 0f) count++;
+            return count;
+        }
+
         /// <summary>
-        /// Доливает попадание в уже висящую цифру и повторяет удар масштабом.
-        /// Возраст сбрасывается не в ноль, а в начало анимации появления —
-        /// цифра должна дёрнуться, а не начать жизнь заново.
+        /// Доливает попадание в уже висящую цифру: сумма растёт, цифра крупнеет и
+        /// толкается, жизнь продлевается. Появление не повторяется — цифра должна
+        /// дёрнуться, а не начать жизнь заново.
         /// </summary>
-        private void Merge(int slot, in SimEvent e, bool crit, bool playerHit)
+        private void Merge(int slot, in SimEvent e, bool playerHit)
         {
             ref Slot s = ref _slots[slot];
 
             s.Value += e.Amount;
-            if (crit) s.Crit = true;
+            s.Hits++;
 
             // Долив ударом снимает пометку «это горение»: серия, в которой
             // был настоящий удар, обязана выглядеть как удар.
             if (e.Type != SimEventType.DamageOverTime) s.OverTime = false;
-
-            // Цвет крита забирает верх: серия, в которой был крит, обязана
-            // выглядеть как крит.
-            if (crit || !s.Crit) s.BaseColor = ColorFor(in e, s.Crit, playerHit, s.OverTime);
+            if (!s.Crit) s.BaseColor = ColorFor(in e, false, playerHit, s.OverTime);
 
             WriteValue(ref s);
 
             s.Remaining = Lifetime;
-            s.Age = 0f;
-            s.Velocity = Vector3.up * RiseSpeed;
+            s.SinceHit = 0f;
+            s.BumpAge = 0f;
+            // Небольшой подскок, а не новый взлёт: длинная серия не должна улетать вверх.
+            s.Velocity = Vector3.up * (RiseSpeed * .45f);
         }
 
         private void WriteValue(ref Slot s)
         {
-            // По листу HUD минус у каждого числа; урон по герою отличают красный цвет и
-            // размер. Минус — короткое тире: знака U+2212 в Philosopher нет.
-            string value = s.Evaded ? "УКЛОНЕНИЕ" : "–" + s.Value.ToString();
-
-            s.Text.text = value;
+            // Кадр 1a: у урона по врагам минуса нет, у урона по герою — «−38» (настоящий минус
+            // U+2212 есть в Nunito). SetText с числом не создаёт строку на каждое попадание.
+            if (s.Evaded) s.Text.SetText("УКЛОНЕНИЕ");
+            else if (s.PlayerHit) s.Text.SetText("−{0}", s.Value);
+            else s.Text.SetText("{0}", s.Value);
 
             s.Size = s.Evaded ? NormalSize * .8f : s.PlayerHit ? PlayerHitSize
                 : s.Crit ? CritSize
@@ -301,7 +366,7 @@ namespace Game.View
             s.Text.fontSharedMaterial = warm ? _critMaterial : _normalMaterial;
             s.Text.enableVertexGradient = warm;
             if (warm) s.Text.colorGradient = new VertexGradient(Color.white, Color.white, CritBottom, CritBottom);
-            s.Text.color = s.BaseColor;
+            s.Text.color = DisplayColor(in s);
 
             // Искра крита — у правого верхнего угла числа.
             bool spark = s.Crit && !s.PlayerHit && !s.Evaded && s.Spark != null;
@@ -311,12 +376,23 @@ namespace Game.View
                 if (spark)
                 {
                     float k = s.Size / CritSize;
-                    Vector2 size = s.Text.GetPreferredValues(value);
+                    Vector2 size = s.Text.GetPreferredValues();
                     s.Spark.transform.localPosition = new Vector3(size.x * .5f + .02f, size.y * .32f, -.01f);
                     s.Spark.transform.localScale = Vector3.one * (SparkSize / Mathf.Max(.001f, s.Spark.sprite.bounds.size.x) * k);
                     s.Spark.color = s.BaseColor;
                 }
             }
+        }
+
+        /// <summary>
+        /// Цвет цифры с учётом слияния: обычная серия теплеет к акценту по мере роста
+        /// (слитое «211» в кадре 1a тёплое). Урон по герою, крит, горение, уклонение — свои цвета.
+        /// </summary>
+        private Color DisplayColor(in Slot s)
+        {
+            if (s.PlayerHit || s.Crit || s.Evaded || s.OverTime) return s.BaseColor;
+            float warmth = DamageNumberRules.MergedWarmth(s.Hits);
+            return warmth > 0f ? Color.Lerp(s.BaseColor, CritColor, warmth) : s.BaseColor;
         }
 
         /// <summary>
@@ -345,6 +421,8 @@ namespace Game.View
 
                 s.Remaining -= dt;
                 s.Age += dt;
+                s.SinceHit += dt;
+                s.BumpAge += dt;
                 if (s.Remaining <= 0f)
                 {
                     s.Transform.gameObject.SetActive(false);
@@ -363,16 +441,19 @@ namespace Game.View
                 s.Transform.position += s.Velocity * dt;
                 s.Velocity += Vector3.down * (1.4f * dt);
 
-                float t = Mathf.Clamp01(s.Age / Lifetime);
-                float punch = t < 0.18f
-                    ? EaseOutBack(t / 0.18f)
-                    : Mathf.Lerp(1f, 0.86f, (t - 0.18f) / 0.82f);
-                s.Transform.localScale = Vector3.one * punch;
+                // Появление с перелётом (у крита — «хлопок»), рост от слияния, толчок от
+                // нового попадания и лёгкое сжатие к концу жизни.
+                float pop = DamageNumberRules.Pop(s.Age, AppearTime, s.Crit && !s.PlayerHit ? CritPop : 1.70158f);
+                float grow = DamageNumberRules.MergedScale(s.Hits, MergeGrow);
+                float bump = 1f + DamageNumberRules.Bump(s.BumpAge, BumpTime, MergeBump);
+                float settle = Mathf.Lerp(.86f, 1f, s.Remaining / Mathf.Max(.01f, Lifetime));
+                s.Transform.localScale = Vector3.one * (pop * grow * bump * settle);
+                float spin = 1f - Mathf.Clamp01(s.Age / Mathf.Max(.01f, Lifetime));
                 if (_camera != null)
-                    s.Transform.rotation = _camera.rotation * Quaternion.Euler(0f, 0f, s.Angle * (1f - t));
+                    s.Transform.rotation = _camera.rotation * Quaternion.Euler(0f, 0f, s.Angle * spin);
 
-                Color c = s.BaseColor;
-                c.a = 1f - Mathf.SmoothStep(0.58f, 1f, t);
+                Color c = DisplayColor(in s);
+                c.a *= DamageNumberRules.Fade(s.Remaining, FadeTime);
                 s.Text.color = c;
                 if (s.Spark != null && s.Spark.gameObject.activeSelf)
                 {
@@ -402,6 +483,17 @@ namespace Game.View
         }
 
         private Material _normalMaterial, _critMaterial;
+        private bool _syntheticBold;
+
+        /// <summary>Жирный (вес 700) из таблицы весов шрифта; null — его нет.</summary>
+        private static TMP_FontAsset BoldOf(TMP_FontAsset font)
+        {
+            TMP_FontWeightPair[] weights = font.fontWeightTable;
+            const int bold = 7;
+            if (weights == null || weights.Length <= bold) return null;
+            TMP_FontAsset typeface = weights[bold].regularTypeface;
+            return typeface != null && typeface != font ? typeface : null;
+        }
 
         /// <summary>Стиль шрифта: обводка и подложка (тень или свечение). Создаётся один раз на запуск.</summary>
         private static Material Styled(TMP_FontAsset font, Color outline, float outlineWidth,
@@ -431,7 +523,7 @@ namespace Game.View
             text.fontSharedMaterial = _normalMaterial;
             text.fontSize = NormalSize * FontScale;
             text.alignment = TextAlignmentOptions.Center;
-            text.fontStyle = FontStyles.Bold;
+            text.fontStyle = _syntheticBold ? FontStyles.Bold : FontStyles.Normal;
             text.textWrappingMode = TextWrappingModes.NoWrap;
             text.overflowMode = TextOverflowModes.Overflow;
             text.rectTransform.sizeDelta = new Vector2(4f, 1f);
@@ -461,14 +553,6 @@ namespace Game.View
                 Remaining = 0f,
                 BaseColor = NormalColor
             };
-        }
-
-        private static float EaseOutBack(float t)
-        {
-            const float c1 = 1.70158f;
-            const float c3 = c1 + 1f;
-            float u = t - 1f;
-            return 1f + c3 * u * u * u + c1 * u * u;
         }
 
         private static float JitterAngle(int target, int tick)

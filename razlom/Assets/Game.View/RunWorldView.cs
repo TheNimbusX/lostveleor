@@ -69,9 +69,17 @@ namespace Game.View
                     DropReplace[i].onClick.AddListener(() => _driver.QueueRunCommand((RunCommand)((int)RunCommand.PickupReplaceSlot1 + slot)));
             }
             PauseMenuView.EnsureEventSystem();
+            // Тлеющие метки у края экрана (2a, 30.09) — соседний холст рядом с метками мира.
+            WorldEdgeMarks.Attach(transform.parent, driver);
         }
 
         void OnDestroy() => AimHintShown = false;
+
+        // Подсказка прицела — формат листа 5 «[Клавиша] Действие» (UiKeyHint); константы — без строки на кадр.
+        const string AimPointMouse = "Выбери точку\n<size=80%>" + UiKeyHint.AimMouse + "</size>";
+        const string AimFoeMouse = "Выбери врага\n<size=80%>" + UiKeyHint.AimMouse + "</size>";
+        const string AimPointPad = "Выбери точку\n<size=80%>" + UiKeyHint.AimPad + "</size>";
+        const string AimFoePad = "Выбери врага\n<size=80%>" + UiKeyHint.AimPad + "</size>";
 
         float Scale => _canvas != null ? _canvas.scaleFactor : 1f;
 
@@ -232,9 +240,7 @@ namespace Game.View
             if (!aiming) return;
             bool pad = _driver.UsingGamepad;
             bool ground = _driver.GroundTargetedSlot(_driver.AbilityTargetAimSlot);
-            RunHudView.SetText(AimHintText, (ground ? "Выбери точку" : "Выбери врага")
-                + (pad ? "\n<size=80%>Правый стик — прицел · RT/A — применить · B — отмена</size>"
-                       : "\n<size=80%>ЛКМ — применить · ПКМ / Esc — отмена</size>"));
+            RunHudView.SetText(AimHintText, ground ? (pad ? AimPointPad : AimPointMouse) : (pad ? AimFoePad : AimFoeMouse));
             Vector2 point = pad ? new Vector2(Screen.width * .5f, Screen.height * .27f) : (Vector2)PointerPosition();
             AimHint.position = new Vector3(point.x + 26f * Scale, point.y - 18f * Scale, 0f);
         }

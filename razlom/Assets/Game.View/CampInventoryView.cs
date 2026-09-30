@@ -138,7 +138,7 @@ namespace Game.View
             Label(page,"Двойной клик — надеть  ·  Перетащите предмет",1080,751,510,30,18);
             _feedback=Label(page,"",714,846,882,40,19);
 
-            Label(_board,"I / Esc — закрыть",70,890,400,30,17);
+            Label(_board,UiKeyHint.Hint("закрыть","I","Esc"),70,890,400,30,17);
             SyncPortraitStage();
             Refresh();
         }

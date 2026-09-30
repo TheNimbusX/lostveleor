@@ -156,19 +156,15 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Буква клавиши «Дыма и света» (UiInkKit.Keycap: «Буква» внутри узла с «Кольцом»): одна буква —
-        /// круг, длинная подпись после смены клавиш («Space», «Mouse4») — капсула по ширине текста.
-        /// Кольцо — капсула 9-slice, растягивается без овала. У клавиши пака (префаб до пересборки) — только текст.
+        /// Буква кейкапа (UiInkKit.Keycap: «Буква» внутри узла с «Кольцом»-кромкой): одна буква — квадрат, длинная
+        /// подпись после смены клавиш («Space», «Mouse4») — шире по тексту. Правило одно на все окна —
+        /// UiKeyHint.FitKeycap. У клавиши пака (префаб до пересборки) — только текст.
         /// </summary>
         public static void SetKey(TMP_Text label, string text)
         {
-            if (label == null) return;
-            SetText(label, text);
-            if (!(label.transform.parent is RectTransform cap) || cap.Find("Кольцо") == null) return;
-            float height = cap.sizeDelta.y;
-            float width = string.IsNullOrEmpty(text) || text.Length < 2 ? height
-                : Mathf.Max(height, label.GetPreferredValues(text).x + height * .5f);
-            if (!Mathf.Approximately(cap.sizeDelta.x, width)) cap.sizeDelta = new Vector2(width, height);
+            if (label == null || label.text == text) return;
+            label.text = text;
+            UiKeyHint.FitKeycap(label);
         }
     }
 }

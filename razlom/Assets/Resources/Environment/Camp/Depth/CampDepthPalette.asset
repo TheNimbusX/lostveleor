@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5797db5d239c48099ba5152f64599c09, type: 3}
+  m_Name: CampDepthPalette
+  m_EditorClassIdentifier: Game.View::Game.View.CampDepthPalette
+  PathTextureScale: 1.38
+  TextureSoftness: 0.75
+  ContactStrength: 0.12
+  DryStrength: 0.32
+  WetStrength: 0.46
+  AshStrength: 0.36
+  WetBandMeters: 3.1
+  DryTint: {r: 1.04, g: 0.94, b: 0.8, a: 1}
+  WetTint: {r: 0.67, g: 0.79, b: 0.72, a: 1}
+  AshTint: {r: 0.66, g: 0.64, b: 0.58, a: 1}
+  FoliageGrouping: 0.65
+  ForestTintStrength: 0.38
+  ForestTint: {r: 0.79, g: 0.93, b: 1.02, a: 1}
+  WarmCentreTint: {r: 1.03, g: 1.005, b: 0.95, a: 1}
+  ShoreBreakup: 0.8
+  ShoreFoamStrength: 0.64

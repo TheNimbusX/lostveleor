@@ -226,10 +226,10 @@ namespace Game.EditorTools
             UiInkKit.SmokeLayer(plate, "Тень", "soft_blot", .9f, 34f, 16f, deep: true);
             UiInkKit.SmokeLayer(plate, "Дым", "smoke_plate", 1f, 56f, 22f, deep: true);
             UiInkKit.LightAt(plate, "Нить", "light_thread", new Vector2(.5f, 0f), new Vector2(0f, 2f), new Vector2(210f, 28f), .5f);
-            view.HintTitle = Text(plate, "Имя", "Эни", 0f, 5f, 200f, 30f, FontRole.Heading, 24f, Role.Text, TextAlignmentOptions.Center);
+            view.HintTitle = Text(plate, "Имя", "Эни", 0f, 5f, 200f, 30f, FontRole.Heading, T.Size(UiTheme.TextStep.Heading), Role.Text, TextAlignmentOptions.Center);
             view.HintTitle.textWrappingMode = TextWrappingModes.NoWrap;
             view.HintTitle.characterSpacing = 2f;
-            view.HintRole = Text(plate, "Кто это", "Кузнец", 0f, 34f, 200f, 18f, FontRole.Body, 14f, Role.Accent, TextAlignmentOptions.Center);
+            view.HintRole = Text(plate, "Кто это", "Кузнец", 0f, 34f, 200f, 18f, FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.Accent, TextAlignmentOptions.Center);
 
             // Действие — малая дымная капсула: клавиша «Дыма и света» и подпись. Ширина — по содержимому
             // (клавиша E — круг, ПКМ — капсула; её ширину подгоняет CampServicesView).
@@ -340,7 +340,7 @@ namespace Game.EditorTools
             // Клавиша сама берёт ширину по подписи (Esc — капсула); правый край — там же, где был.
             RectTransform cap = UiInkKit.Keycap(row, "Клавиша", "Esc", 32f);
             TopLeft(cap, 90f - cap.sizeDelta.x, 2f, cap.sizeDelta.x, 32f);
-            Text(row, "Подпись", CampServiceText.Get("close.action"), 100f, 0f, 100f, 36f, FontRole.Body, 18f, Role.TextMuted);
+            Text(row, "Подпись", CampServiceText.Get("close.action"), 100f, 0f, 100f, 36f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.TextMuted);
         }
 
         /// <summary>Облачко реплики под портретом: имя NPC и текст; пустой текст прячет облачко.</summary>
@@ -511,7 +511,7 @@ namespace Game.EditorTools
             s.ItemName.enableAutoSizing = true;
             s.ItemName.fontSizeMin = 22f;
             s.ItemName.fontSizeMax = 34f;
-            s.ItemMeta = Text(screen, "Уровень и перековки", "", DetailX + 152f, 270f, DetailW - 152f, 56f, FontRole.Body, 18f, Role.TextMuted, TextAlignmentOptions.TopLeft);
+            s.ItemMeta = Text(screen, "Уровень и перековки", "", DetailX + 152f, 270f, DetailW - 152f, 56f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.TextMuted, TextAlignmentOptions.TopLeft);
             TopLeft(UiInkKit.Divider(screen, "Линия под вещью", DetailW, false, .5f), DetailX, 356f, DetailW, 16f);
 
             if (smith)
@@ -591,7 +591,7 @@ namespace Game.EditorTools
             recipes.gameObject.SetActive(false);
 
             // Отказ — системной строкой под карточками, не репликой (AGENTS/CAMP-NPC-DIALOGUE.md).
-            s.Status = Text(screen, "Состояние", "", Left + 10f, 928f, Right - Left - 20f, 34f, FontRole.Body, 18f, Role.Bad, TextAlignmentOptions.Center);
+            s.Status = Text(screen, "Состояние", "", Left + 10f, 928f, Right - Left - 20f, 34f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Bad, TextAlignmentOptions.Center);
             s.Message = Speech(screen, "Алхимик");
             s.Speaker = s.Message.transform.parent.parent.Find("Имя/Надпись").GetComponent<TMP_Text>();
             CloseHint(screen);
@@ -668,9 +668,9 @@ namespace Game.EditorTools
             recipe.Art = Bottle(bottle, "potion_" + (health ? "health" : "lavidium") + "_large");
 
             const float tx = 250f;
-            recipe.Name = Text(card, "Название", "Рецепт", tx, 22f, 560f, 40f, FontRole.Heading, 32f, Role.Text);
+            recipe.Name = Text(card, "Название", "Рецепт", tx, 22f, 560f, 40f, FontRole.Heading, T.Size(UiTheme.TextStep.Title), Role.Text);
             recipe.Name.textWrappingMode = TextWrappingModes.NoWrap;
-            recipe.Effect = Text(card, "Действие", "", tx, 66f, 560f, 30f, FontRole.Body, 18f, Role.TextMuted);
+            recipe.Effect = Text(card, "Действие", "", tx, 66f, 560f, 30f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.TextMuted);
             TopLeft(UiInkKit.Divider(card, "Линия", w - tx - 30f, false, .45f), tx, 104f, w - tx - 30f, 16f);
             recipe.LockedLabel = Text(card, "Условие", "", tx, 128f, 520f, 84f, FontRole.Body, 19f, Role.Text, TextAlignmentOptions.TopLeft);
             recipe.Stock = Text(card, "Состояние", "", w - 330f, 26f, 300f, 34f, FontRole.Heading, 22f, Role.Accent, TextAlignmentOptions.MidlineRight);
@@ -699,7 +699,7 @@ namespace Game.EditorTools
             potion.Name = Text(card, "Название", "Зелье", tx, 20f, w - tx - 20f, 38f, FontRole.Heading, 27f, Role.Text);
             potion.Name.textWrappingMode = TextWrappingModes.NoWrap;
             potion.Effect = Text(card, "Действие", "", tx, 60f, w - tx - 20f, 48f, FontRole.Body, 17f, Role.TextMuted, TextAlignmentOptions.TopLeft);
-            potion.Stock = Text(card, "Запас", "", tx, 110f, w - tx - 20f, 28f, FontRole.Body, 18f, Role.TextMuted);
+            potion.Stock = Text(card, "Запас", "", tx, 110f, w - tx - 20f, 28f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.TextMuted);
             potion.Buy = InkButton(card, true, "Купить", "Купить", tx, 150f, 190f, 52f, 20f, out potion.BuyLabel);
             ButtonArt(potion.Buy, "gold", 34f);
             potion.Select = InkButton(card, false, "Выбрать", "В быстрый слот", tx + 200f, 150f, w - tx - 220f, 52f, 18f, out potion.SelectLabel);
@@ -709,7 +709,7 @@ namespace Game.EditorTools
             // Закрытое — под тёмной дымкой (мягкое пятно без краёв, как тень под текстом).
             UiInkKit.SmokeLayer(locked, "Вуаль", "soft_blot", .7f, 16f, 10f, deep: true);
             // Закрытое зелье отсылает к вкладке «Рецепты», где живёт заказ Лео.
-            potion.LockedLabel = Text(locked, "Рецепт", "Нужен рецепт · вкладка «Рецепты»", tx, 150f, w - tx - 20f, 52f, FontRole.Body, 18f, Role.Accent);
+            potion.LockedLabel = Text(locked, "Рецепт", "Нужен рецепт · вкладка «Рецепты»", tx, 150f, w - tx - 20f, 52f, FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Accent);
             locked.gameObject.SetActive(false);
             return potion;
         }

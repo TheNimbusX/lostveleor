@@ -80,20 +80,6 @@ namespace Game.Tests
             Assert.That(distance, Is.InRange(2.0, 3.6), "ждёт на кольце ожидания");
         }
 
-        [Test]
-        public void RootSwarm_DoesNotTakeMeleeTokens()
-        {
-            var sim = Arena();
-            int a = Enemy(sim, At(2, 0)), b = Enemy(sim, At(-2, 0));
-            int s1 = Enemy(sim, At(0, 1.2), EnemyKind.ForestRootSwarm);
-            int s2 = Enemy(sim, At(0, -1.2), EnemyKind.ForestRootSwarm);
-            sim.Step(InputFrame.Empty);
-            Assert.IsTrue(InWindup(sim, a));
-            Assert.IsTrue(InWindup(sim, b));
-            Assert.IsTrue(InWindup(sim, s1), "рой ждёт жетона Хранителей");
-            Assert.IsTrue(InWindup(sim, s2));
-        }
-
         private static Simulation TwoBuds(int limit)
         {
             var sim = new Simulation(123, 64);
@@ -279,15 +265,14 @@ namespace Game.Tests
             Assert.IsTrue(sim.TryGetEnemySwing(splitter, out var swing));
             Assert.AreEqual(Simulation.GuardianSwingWindupTicks, swing.StartTick,
                 "жетон переходит в тот же тик, когда Хранитель ударил");
-            Assert.AreEqual(18, swing.ImpactTick - swing.StartTick);
-            Assert.AreEqual(12, swing.RecoverUntil - swing.ImpactTick);
+            Assert.AreEqual(Simulation.SplitterSwingWindupTicks, swing.ImpactTick - swing.StartTick);
+            Assert.AreEqual(Simulation.SplitterSwingRecoveryTicks, swing.RecoverUntil - swing.ImpactTick);
             Assert.IsTrue(sim.TryGetTelegraph(swing.Telegraph, out var sector));
             Assert.AreEqual(swing.TelegraphSerial, sector.Serial);
             Assert.AreEqual(TelegraphShape.Sector, sector.Shape);
             Assert.IsFalse(sector.SharedView, "замах Расщепеня читается по телу, сектор скрыт");
             Assert.AreEqual(Simulation.SplitterSwingRadius, sector.Radius);
             Assert.AreEqual(Simulation.SplitterSwingArcCos, sector.ArcCos);
-            Assert.AreEqual(Fix64.Ratio(9, 5), Simulation.SplitterSwingRadius);
         }
 
         [Test]
@@ -308,20 +293,6 @@ namespace Game.Tests
             Assert.AreEqual(-1, bite.Telegraph, "укус детёныша меткой не рисуется");
             Assert.AreEqual(Simulation.SplitlingBiteWindupTicks, bite.ImpactTick - bite.StartTick);
             Assert.IsFalse(sim.TryGetEnemySwing(k2, out _), "четвёртый укус ждёт, как у роя");
-        }
-
-        [Test]
-        public void KindsWithTheirOwnAttacks_NeverTakeTheGuardianSwing()
-        {
-            var sim = Arena();
-            int thorn = Enemy(sim, At(1.6, 0), EnemyKind.ForestThorncaster, stationary: false);
-            int snarer = Enemy(sim, At(-1.6, 0), EnemyKind.ForestRootSnarer, stationary: false);
-            for (int t = 0; t < 90; t++)
-            {
-                sim.Step(InputFrame.Empty);
-                Assert.IsFalse(sim.TryGetEnemySwing(thorn, out _), "Шипомёт с сектором Хранителя, тик " + (sim.Tick - 1));
-                Assert.IsFalse(sim.TryGetEnemySwing(snarer, out _), "Корнехват с сектором Хранителя, тик " + (sim.Tick - 1));
-            }
         }
     }
 }

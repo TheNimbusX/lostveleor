@@ -41,6 +41,10 @@ namespace Game.View
             _peakStrain=_peakSolveMilliseconds=0;_solveTotal=0;_solveFrames=0;
         }
         private float WreckPayout(float t)
+            => Mathf.Max(_equipment.StowedChainPayout,
+                AuthoredWreckPayout(t) + _equipment.AnchorRingAllowance);
+
+        private float AuthoredWreckPayout(float t)
         {
             // Выдача задаётся постановкой, а не текущим расстоянием между руками и головой.
             if (_wreckVariant >= 2)

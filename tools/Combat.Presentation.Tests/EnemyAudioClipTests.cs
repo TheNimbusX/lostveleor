@@ -4,8 +4,7 @@ using NUnit.Framework;
 
 /// <summary>
 /// Звуки Плюй-плода и сигналов врагов (26.09): игровые клипы лежат в Resources под
-/// именами, которые читает CombatAudio, а кандидаты для выбора на слух — в
-/// ART/SFX/candidates-2026-09-26. Проверяем то, что ломается незаметно на слух в
+/// именами, которые читает CombatAudio. Проверяем то, что ломается незаметно на слух в
 /// редакторе: формат, клиппинг, длину и то, что удар стоит в начале клипа — иначе
 /// звук отстаёт от события симуляции, по которому играет.
 /// </summary>
@@ -15,9 +14,6 @@ public sealed class EnemyAudioClipTests
     private const int BudShots = 5;
     // Замах залпа 24 тика: раскрытие должно уложиться до первого плода с небольшим хвостом.
     private const double BudWindupSeconds = 24 / 30.0;
-
-    private static readonly string[] CandidateSlots =
-        { "bud_volley", "bud_fruit", "bud_hurt", "bud_death", "enemy_warning", "guardian_swing" };
 
     [Test]
     public void BudClipsAreInstalledUnderTheNamesCombatAudioLoads()
@@ -69,27 +65,6 @@ public sealed class EnemyAudioClipTests
         if (Directory.Exists(swing))
             foreach (string clip in Directory.GetFiles(swing, "*.wav"))
                 Assert.That(Wav.Read(clip).Seconds, Is.LessThan(1.0), clip);
-    }
-
-    [Test]
-    public void ListeningPageOffersThreeCandidatesPerSlot()
-    {
-        string folder = Path.Combine(Root, "ART", "SFX", "candidates-2026-09-26");
-        string page = File.ReadAllText(Path.Combine(folder, "index.html"));
-        foreach (string slot in CandidateSlots)
-            foreach (char kind in "abc")
-            {
-                string file = $"{slot}_{kind}.wav";
-                Assert.That(File.Exists(Path.Combine(folder, file)), Is.True, file);
-                Assert.That(page, Does.Contain($"src=\"{file}\""), file);
-            }
-        // Кандидаты залпа по частям — то, что ставится в игру.
-        foreach (char kind in "abc")
-        {
-            Assert.That(File.Exists(Path.Combine(folder, "parts", $"bud_volley_{kind}_open.wav")), Is.True);
-            for (int i = 1; i <= BudShots; i++)
-                Assert.That(File.Exists(Path.Combine(folder, "parts", $"bud_volley_{kind}_pop{i}.wav")), Is.True);
-        }
     }
 
     private static string[] InstalledClips()

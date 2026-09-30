@@ -1,0 +1,88 @@
+{
+ "date": "2026-09-30",
+ "task": "Развёртки (turnaround) будущих мобов леса для 3D (Tripo)",
+ "budget_images": 5,
+ "images_made": 5,
+ "credits": "≈2.75 × 5 = 13.75; общий баланс 109.3 до запуска (на все 5 агентов) → 15.8 после",
+ "notes": "Все пять мобов из бестиария имеют концепты в ART/characters/act-1-enemies/, новых дизайнов не выдумывалось. Три отправки упали с 429 rate_limit до создания задач — повторены, задач ровно 5.",
+ "items": [
+  {
+   "file": "1-forest-mage.png",
+   "preview": "1-forest-mage.jpg",
+   "mob": "Лесной маг",
+   "job_id": "090fa749-0f4f-4483-96b1-cef38c20255a",
+   "references": [
+    "refs/wizard_art.jpg (forest-wizzard/art.png)",
+    "refs/wizard_tpose.jpg (forest-wizzard/t-pose.png)",
+    "refs/style_snarer_model_input.jpg (одобренный Корнехват, вход для Tripo 26.09)",
+    "refs/game_fight_wendigo.jpg (кадр игры, Вендиго на арене — только яркость/насыщенность)"
+   ],
+   "caption": "Лесной маг — развёртка: спереди, сбоку, сзади, 3/4. Дизайн из forest-wizzard 1:1, свет в руке убран (это VFX).",
+   "defects": "«Сбоку» — скорее полуоборот, чем чистый профиль. Руки опущены почти вдоль тела (градусов 15–20, а не A-поза 35°) — Tripo может склеить кисть с юбкой. Чуть шире в плечах, чем «вдвое тоньше хранителя».",
+   "prompt": "Character turnaround model sheet for 3D modelling (image-to-3D). Game: The War Remains, a bright, saturated, stylized hand-painted 3D action roguelike (Hades 2 / Shape of Dreams tier). Show the character four times in one row, left to right: FRONT view, SIDE view (left profile), BACK view, 3/4 FRONT view. Same character, same scale, feet on one shared ground line, evenly spaced, nothing overlapping or cropped. Neutral model-sheet pose: relaxed A-pose, arms about 35 degrees away from the body, hands open and relaxed, legs straight and shoulder-width apart, mouth closed. No action, no magic, no glow effects, no particles, no floating leaves or petals. Plain flat light warm-grey background (#ECEAE5), flat even studio light from the front, no dramatic shadows, no rim light, only a faint soft contact shadow under the feet. Clean readable silhouette, crisp edges, every part attached to the body and thick enough to model. Colours warm and saturated like our game: not washed out, not whitened, not grimdark. Small plain labels under the figures: FRONT, SIDE, BACK, 3/4. No other text, no logos, no frames, no UI. Images 1 and 2 are the character design of the Forest Mage: follow them exactly (face, proportions, costume, materials, colour placement). A lean elf-like forest caster, 2.25 m tall, half as wide as a guardian: spiky leaf hair, pointed ears, cream face markings, small goatee, green scarf, big cream feather-leaf fur collar, sleeveless green tunic with cream sash and a green gem pendant, rope belt with a wooden hexagonal leaf buckle, green tabard with cream diamond pattern, layered green-and-cream leaf skirt, rope-wrapped forearms and shins, his left leg overgrown by a mossy vine-root with pink and orange flowers (the one bright accent), root-foot on that leg, bare foot on the other. Hands empty, no spell light. Image 3 is an approved mob from the same game: match its rendering exactly (chunky hand-painted bark and moss texture, big clear shapes, warm saturated colours, soft painterly shading). Image 4 is our in-game screenshot: use it only for colour brightness and saturation; do not copy its scene, camera, UI or characters.",
+   "model": "gpt_image_2_5 (quality high, 2k, 16:9, 2688×1520)"
+  },
+  {
+   "file": "2-forest-wolf.png",
+   "preview": "2-forest-wolf.jpg",
+   "mob": "Лесной волк",
+   "job_id": "d6cab66b-b98d-4a46-9082-4a5e5b029768",
+   "references": [
+    "refs/wolf_art.jpg (forest-deadwolf/art.png)",
+    "refs/wolf_tpose.jpg (forest-deadwolf/t-pose.png)",
+    "refs/style_snarer_model_input.jpg (одобренный Корнехват, вход для Tripo 26.09)",
+    "refs/game_fight_wendigo.jpg (кадр игры, Вендиго на арене — только яркость/насыщенность)"
+   ],
+   "caption": "Лесной волк — развёртка сеткой 2×2: профиль, спереди, сзади, 3/4. Серая кора чуть утеплена, мох ярче, чем в концепте.",
+   "defects": "Веток-гривы больше 7 и они тонкие, с листиками — для Tripo лучше проредить до 5–7 толстых. Цвет всё ещё серовато-бурый, заметно спокойнее Корнехвата. Лапы в профиле и 3/4 стоят чуть по-разному.",
+   "prompt": "Character turnaround model sheet for 3D modelling (image-to-3D). Game: The War Remains, a bright, saturated, stylized hand-painted 3D action roguelike (Hades 2 / Shape of Dreams tier). Layout 2x2 grid: top-left SIDE view (left profile, full length), top-right FRONT view, bottom-left BACK view, bottom-right 3/4 FRONT view. Same character, same scale, feet on one shared ground line, evenly spaced, nothing overlapping or cropped. Neutral model-sheet pose: standing calmly on four straight legs, head level looking forward, tail relaxed and slightly raised, mouth closed. No action, no magic, no glow effects, no particles, no floating leaves or petals. Plain flat light warm-grey background (#ECEAE5), flat even studio light from the front, no dramatic shadows, no rim light, only a faint soft contact shadow under the feet. Clean readable silhouette, crisp edges, every part attached to the body and thick enough to model. Colours warm and saturated like our game: not washed out, not whitened, not grimdark. Small plain labels under the figures: FRONT, SIDE, BACK, 3/4. No other text, no logos, no frames, no UI. Images 1 and 2 are the character design of the Forest Wolf: follow them exactly. A long, low, lean predator wolf, 1.35 m tall, whose fur is made of layered grey bark plates, with moss patches on the back and haunches, 5 to 7 chunky dry branches instead of a mane growing up and back from the neck and shoulders, a bushy bark tail ending in a branch, cream diamond mark on the forehead, pale green eyes, a rope and bead necklace with small wooden leaf charms and a cream diamond pendant, bark-wrapped forelegs, big claws. Keep him grey-bark but warm the greys slightly toward living wood so he sits in our bright forest; bright moss green. Image 3 is an approved mob from the same game: match its rendering exactly (chunky hand-painted bark and moss texture, big clear shapes, warm saturated colours, soft painterly shading). Image 4 is our in-game screenshot: use it only for colour brightness and saturation; do not copy its scene, camera, UI or characters.",
+   "model": "gpt_image_2_5 (quality high, 2k, 16:9, 2688×1520)"
+  },
+  {
+   "file": "3-tree-brute.png",
+   "preview": "3-tree-brute.jpg",
+   "mob": "Древесный громила",
+   "job_id": "1d168562-7e87-44fe-8c43-ea6737f852dd",
+   "references": [
+    "refs/brute_art.jpg (forest-elite-hunter/237e62c1-….png, маленький концепт 475 px, увеличен ×2)",
+    "refs/style_snarer_model_input.jpg (одобренный Корнехват, вход для Tripo 26.09)",
+    "refs/game_fight_wendigo.jpg (кадр игры, Вендиго на арене — только яркость/насыщенность)"
+   ],
+   "caption": "Древесный громила (элита) — развёртка. Концепт был только спереди и маленький: спину (моховая мантия, пластины по хребту) и бок дорисовала модель.",
+   "defects": "«3/4» почти не повёрнут — читается как второй вид спереди. Руки висят близко к ногам, щели узкие. Спина и бок — придуманы, в концепте их не было.",
+   "prompt": "Character turnaround model sheet for 3D modelling (image-to-3D). Game: The War Remains, a bright, saturated, stylized hand-painted 3D action roguelike (Hades 2 / Shape of Dreams tier). Show the character four times in one row, left to right: FRONT view, SIDE view (left profile), BACK view, 3/4 FRONT view. Same character, same scale, feet on one shared ground line, evenly spaced, nothing overlapping or cropped. Neutral model-sheet pose: standing upright, long arms hanging straight down beside the body with the huge fists near the ground and slightly away from the legs so the gaps are visible, legs apart. No action, no magic, no glow effects, no particles, no floating leaves or petals. Plain flat light warm-grey background (#ECEAE5), flat even studio light from the front, no dramatic shadows, no rim light, only a faint soft contact shadow under the feet. Clean readable silhouette, crisp edges, every part attached to the body and thick enough to model. Colours warm and saturated like our game: not washed out, not whitened, not grimdark. Small plain labels under the figures: FRONT, SIDE, BACK, 3/4. No other text, no logos, no frames, no UI. Image 1 is the character design of the Tree Brute (elite): follow it exactly. A massive wooden brute, 2.90 m tall and wider than tall: tiny head with a pale bone-like beak mask and small eyes, huge plate shoulders of layered bark with thick moss on top, two antler-like branches rising from each shoulder, a cream diamond emblem plate on the chest, arms longer than the legs that reach the ground and end in huge bark-slab fists with claws, short thick stump legs with bark feet, jagged bark plates on forearms and shins. Warm brown bark and bright moss green. The only design reference is small: invent the back and side consistently (moss mantle over the back, bark plates along the spine). Image 2 is an approved mob from the same game: match its rendering exactly (chunky hand-painted bark and moss texture, big clear shapes, warm saturated colours, soft painterly shading). Image 3 is our in-game screenshot: use it only for colour brightness and saturation; do not copy its scene, camera, UI or characters.",
+   "model": "gpt_image_2_5 (quality high, 2k, 16:9, 2688×1520)"
+  },
+  {
+   "file": "4-elder-guardian.png",
+   "preview": "4-elder-guardian.jpg",
+   "mob": "Старший хранитель",
+   "job_id": "f09b8026-d4fd-4b13-9db3-18966c530517",
+   "references": [
+    "refs/elder_art.jpg (forest-tree-ent/art.png)",
+    "refs/style_snarer_model_input.jpg (одобренный Корнехват, вход для Tripo 26.09)",
+    "refs/game_fight_wendigo.jpg (кадр игры, Вендиго на арене — только яркость/насыщенность)"
+   ],
+   "caption": "Старший хранитель (элита) — развёртка по forest-tree-ent: крона-рога, лицо, пояс с шестигранной пряжкой, ноги-стволы. Зелёные «искры» убраны.",
+   "defects": "Глаза всё равно чуть светятся зелёным. Крона из тонких веточек с почками — для Tripo тонко, стоит упростить. «3/4» почти фронтальный. Взята папка forest-tree-ent: в диздоке она подписана как рядовой хранитель, а в памяти — как Старший (антлерный из 2.forest-guardian уже в игре рядовым).",
+   "prompt": "Character turnaround model sheet for 3D modelling (image-to-3D). Game: The War Remains, a bright, saturated, stylized hand-painted 3D action roguelike (Hades 2 / Shape of Dreams tier). Show the character four times in one row, left to right: FRONT view, SIDE view (left profile), BACK view, 3/4 FRONT view. Same character, same scale, feet on one shared ground line, evenly spaced, nothing overlapping or cropped. Neutral model-sheet pose: relaxed A-pose, arms about 35 degrees away from the body, hands open and relaxed, legs straight and shoulder-width apart, mouth closed. No action, no magic, no glow effects, no particles, no floating leaves or petals. Plain flat light warm-grey background (#ECEAE5), flat even studio light from the front, no dramatic shadows, no rim light, only a faint soft contact shadow under the feet. Clean readable silhouette, crisp edges, every part attached to the body and thick enough to model. Colours warm and saturated like our game: not washed out, not whitened, not grimdark. Small plain labels under the figures: FRONT, SIDE, BACK, 3/4. No other text, no logos, no frames, no UI. Image 1 is the character design of the Elder Guardian (elite): follow it exactly. A tall horned warrior-tree, 2.75 m: a large crown of branch-antlers with small green leaves, stern wooden face with a beard of bark and pale green eyes (painted, no glow), cream diamond mark on the forehead, broad shoulders with bark-and-leaf pauldrons, long bark arms with clawed wooden hands, rope bindings on wrists and ankles, cream sash over the chest, green-and-cream cloth tabard with diamond pattern and a wooden hexagonal leaf buckle with a hanging wooden tag, torn cream leaf skirt, tree-trunk legs with spreading root feet. No green magic wisps. Image 2 is an approved mob from the same game: match its rendering exactly (chunky hand-painted bark and moss texture, big clear shapes, warm saturated colours, soft painterly shading). Image 3 is our in-game screenshot: use it only for colour brightness and saturation; do not copy its scene, camera, UI or characters.",
+   "model": "gpt_image_2_5 (quality high, 2k, 16:9, 2688×1520)"
+  },
+  {
+   "file": "5-flowerkeeper.png",
+   "preview": "5-flowerkeeper.jpg",
+   "mob": "Цветонос",
+   "job_id": "f3196f2f-d56e-4c59-9382-941ec1985e7b",
+   "references": [
+    "refs/flower_closed.jpg (forest-elite-flowerkeeper/art.png)",
+    "refs/flower_open.jpg (forest-elite-flowerkeeper/art in combat.png)",
+    "refs/style_snarer_model_input.jpg (одобренный Корнехват, вход для Tripo 26.09)",
+    "refs/game_fight_wendigo.jpg (кадр игры, Вендиго на арене — только яркость/насыщенность)"
+   ],
+   "caption": "Цветонос (элита) — развёртка с ЗАКРЫТЫМ бутоном (базовая модель); раскрытие — отдельными лепестками по «art in combat».",
+   "defects": "«Сбоку» — тоже полуоборот, чистого профиля нет. На виде сбоку дальняя кисть розоватая. Бутон сидит прямо над головой, а не на стебле из спины. Усики тонкие и висят в воздухе — для Tripo их лучше прижать или сделать отдельной моделью.",
+   "prompt": "Character turnaround model sheet for 3D modelling (image-to-3D). Game: The War Remains, a bright, saturated, stylized hand-painted 3D action roguelike (Hades 2 / Shape of Dreams tier). Show the character four times in one row, left to right: FRONT view, SIDE view (left profile), BACK view, 3/4 FRONT view. Same character, same scale, feet on one shared ground line, evenly spaced, nothing overlapping or cropped. Neutral model-sheet pose: relaxed A-pose, arms about 35 degrees away from the body, long claw fingers relaxed, legs straight and shoulder-width apart, mouth closed. No action, no magic, no glow effects, no particles, no floating leaves or petals. Plain flat light warm-grey background (#ECEAE5), flat even studio light from the front, no dramatic shadows, no rim light, only a faint soft contact shadow under the feet. Clean readable silhouette, crisp edges, every part attached to the body and thick enough to model. Colours warm and saturated like our game: not washed out, not whitened, not grimdark. Small plain labels under the figures: FRONT, SIDE, BACK, 3/4. No other text, no logos, no frames, no UI. Images 1 and 2 are the character design of the Flowerkeeper (elite): follow them exactly. A tall thin humanoid of pale bark, 2.85 m with the flower: pointed cream leaf-mask face with yellow-green eyes, green leaf mane and collar, small pink blossoms on the shoulders and wrists, leaf skirt with a cream diamond pattern and a golden leaf clasp, long thin arms with long claw fingers, bent root legs with claw toes, two curling vine tendrils growing from the upper back, kept close to the body. Above and behind the head, attached to the upper back by a thick green stem: ONE giant CLOSED flower bud with layered crimson-pink petals and cream tips, exactly as in image 1. Image 2 shows how the bud opens in combat: use it only to understand the petal structure; draw the bud CLOSED, with each petal a clear separate layer. Image 3 is an approved mob from the same game: match its rendering exactly (chunky hand-painted bark and moss texture, big clear shapes, warm saturated colours, soft painterly shading). Image 4 is our in-game screenshot: use it only for colour brightness and saturation; do not copy its scene, camera, UI or characters.",
+   "model": "gpt_image_2_5 (quality high, 2k, 16:9, 2688×1520)"
+  }
+ ]
+}

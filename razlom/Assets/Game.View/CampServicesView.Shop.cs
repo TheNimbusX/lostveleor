@@ -39,6 +39,10 @@ namespace Game.View
             delete = Input.GetKeyDown(KeyCode.Delete);
 #endif
             CampShopScreen s = smith ? _view.Smith : _view.Trader;
+            var selected=EventSystem.current?.currentSelectedGameObject;
+            var auxiliary=selected!=null?selected.GetComponent<Button>():null;
+            if(enter && auxiliary!=null && (auxiliary==s.Back || auxiliary==s.Extra || auxiliary.name=="Развитие лагеря" || auxiliary.name=="Резерв и заказ"))
+            {Press(auxiliary);return true;}
             // Пока ждёт подтверждение разбора или обновления товаров, Enter основную кнопку не жмёт: он
             // перековал бы или купил вместо ответа на вопрос. Отвечают тем же — Del или вторым щелчком, Esc — отмена.
             // Продажа подтверждается Enter: её и начали основной кнопкой.

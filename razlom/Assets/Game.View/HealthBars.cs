@@ -42,6 +42,11 @@ namespace Game.View
     /// глубина коробки тела × tg 48° добавляла ей до метра. Теперь макушка — самая высокая на экране
     /// кость кожи плюс то, что торчит над ней у этого вида (BoneReach: рога над черепом, горб, панцирь),
     /// а прежняя коробка осталась только потолком. Зазор до низа полоски — ≈19 пикселей при 1080p.
+    ///
+    /// СЛЕД УРОНА (этап 4, п. 1; кадр 1a, 30.09): как у полосы героя (HudBarAnim) и босса (WcBar.Trail) —
+    /// светлый отрезок держит здоровье до удара ~0,35 с и стекает к новому; лечение следа не даёт.
+    /// Здоровье каждой живой сущности отслеживается и без полоски: первый же удар, который её показал,
+    /// уже со следом. Логика шага — HealthBarTrail (тесты вне Unity).
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(950)]
@@ -113,6 +118,14 @@ namespace Game.View
         [Tooltip("Сияние вокруг огонька; альфа — сила, свет дышит вокруг неё.")]
         public Color OrbGlowColor = new Color(1f, .5f, .2f, .7f);
 
+        [Header("След урона")]
+        [Tooltip("Сколько секунд светлый след держит здоровье до удара, прежде чем стечь (как у полосы героя и босса)")]
+        public float TrailDelay = .35f;
+        [Tooltip("Скорость стекания следа, долей полоски в секунду")]
+        public float TrailSpeed = 1.2f;
+        [Tooltip("След: тёплый светлый, как след полосы героя; прозрачность — его сила")]
+        public Color TrailColor = new Color(1f, .9f, .76f, .82f);
+
         [Header("Время")]
         [Tooltip("Сколько секунд полоска висит после последнего попадания.")]
         public float ShowFor = 2.4f;
@@ -140,12 +153,16 @@ namespace Game.View
         private static readonly Vector2 AntlerPivot = new Vector2(.856f, .205f);
         private const float AntlerBelow = .153f;
 
-        // Порядок частей внутри полоски. Рога — над мазком (их срез закрывает начало заливки), но под
+        // Порядок частей внутри полоски. След урона — между дорожкой и мазком: начинается у конца
+        // заливки. Рога — над мазком (их срез закрывает начало заливки), но под
         // огоньком: при почти пустой полосе огонёк у левого рога виден. Части элиты сдвинуты на
         // EliteOrder: её полоса ложится поверх обычных, если они пересеклись на экране. Цифры урона
         // (6100) — поверх всех полосок.
-        private const int OrderTrack = 4000, OrderFill = 4001, OrderFrame = 4002, OrderAntler = 4003;
-        private const int OrderGlow = 4004, OrderOrb = 4005, OrderNumbers = 4006;
+        private const int OrderTrack = 4000, OrderTrail = 4001, OrderFill = 4002, OrderFrame = 4003, OrderAntler = 4004;
+        private const int OrderGlow = 4005, OrderOrb = 4006, OrderNumbers = 4007;
+        // Отрезок следа — кусок середины мазка заливки (доли ширины холста), растянутый от конца
+        // заливки до конца следа; чуть заходит под заливку, чтобы на срезе мазка не было щели.
+        private const float TrailSliceFrom = .45f, TrailSliceWidth = .1f, TrailTuck = .012f;
         private const int EliteOrder = 20;
         private const int NeverFrame = -100;
 
@@ -163,6 +180,8 @@ namespace Game.View
             public Transform Fill;
             public SpriteRenderer BackRenderer;
             public SpriteRenderer FillRenderer;
+            // След урона: отрезок от конца заливки до конца следа.
+            public SpriteRenderer TrailRenderer;
             public SpriteRenderer FrameRenderer;
             public Transform Gem;
             public SpriteRenderer GemFill;
@@ -184,8 +203,12 @@ namespace Game.View
 
         // «Дым и свет»: дорожка, ступени заливки (i — доля (i + 1) / FillSteps), огонёк и сияние.
         private bool _ink;
-        private Sprite _track, _orb, _glow, _antler;
+        private Sprite _track, _orb, _glow, _antler, _trailSlice;
         private Sprite[] _fillSteps;
+
+        // След урона по сущностям; сбрасывается, когда меняется симуляция (новая арена, забег).
+        private BarTrailState[] _trail;
+        private Simulation _trailSim;
 
         // Когда по кому в последний раз попали. Индекс — сущность.
         private float[] _hitAt;
@@ -262,6 +285,7 @@ namespace Game.View
             _bodyShape = new BodyShape[capacity];
             _nameAnchor = new Vector3[capacity];
             _nameFrame = new int[capacity];
+            _trail = new BarTrailState[capacity];
             // Кадров «никогда»: -1 совпал бы с «прошлым кадром» на кадре 0.
             for (int i = 0; i < capacity; i++) _anchorFrame[i] = _nameFrame[i] = NeverFrame;
 
@@ -334,15 +358,26 @@ namespace Game.View
             Vector3 up = _camera != null ? _camera.up : Vector3.up;
             Vector3 eliteScale = EliteScale;
 
+            // Другая симуляция — индексы сущностей принадлежат другим телам: следы с нуля.
+            if (_trailSim != sim)
+            {
+                _trailSim = sim;
+                System.Array.Clear(_trail, 0, _trail.Length);
+            }
+
             // Цикл идёт по всем: даже при полном пуле табличке элиты нужно место над её макушкой.
             for (int i = 0; i < entities.Count; i++)
             {
                 if (i == Simulation.PlayerId) continue;
-                if (!entities.Alive[i]) continue;
                 if ((uint)i >= (uint)_hitAt.Length) continue;
+                // Мёртвый — след забывается: место в пуле сущностей займёт новое тело.
+                if (!entities.Alive[i]) { _trail[i].Ready = false; continue; }
 
                 int max = entities.MaxHealth[i];
                 if (max <= 0) continue;
+
+                // След урона ведётся и без полоски: удар, который её покажет, уже со следом.
+                HealthBarTrail.Step(ref _trail[i], entities.Health[i] / (float)max, dt, TrailDelay, TrailSpeed);
 
                 float age = now - _hitAt[i];
                 var dummy = CampTrainingView.Find(i);
@@ -408,6 +443,7 @@ namespace Game.View
                     bar.Fill.localPosition = new Vector3(-inner * .5f + w * .5f, 0f, -.001f);
                     end = -inner * .5f + w;
                 }
+                DrawTrail(ref bar, in _trail[i], fill, end, inner, alpha);
 
                 bar.Gem.gameObject.SetActive(elite && fill > .001f);
                 if (elite)
@@ -461,6 +497,41 @@ namespace Game.View
             Color color = Faded(Color.white, alpha);
             bar.AntlerLeft.color = color;
             bar.AntlerRight.color = color;
+        }
+
+        /// <summary>
+        /// След урона: светлый отрезок от конца заливки до доли следа (HealthBarTrail). «Дым и свет» — кусок
+        /// середины мазка заливки, растянутый по длине (та же высота и плотность, что у мазка); прежний
+        /// вид — капсула пака. Следа нет (не били, стёк, лечение) — отрезок спрятан.
+        /// </summary>
+        private void DrawTrail(ref Bar bar, in BarTrailState trail, float fill, float end, float inner, float alpha)
+        {
+            SpriteRenderer renderer = bar.TrailRenderer;
+            if (renderer == null) return;
+            float stop = _ink
+                ? -inner * .5f + inner * Mathf.Clamp(Mathf.CeilToInt(trail.Trail * FillSteps), 1, FillSteps) / FillSteps
+                : -inner * .5f + Mathf.Max(Height - Inset * 2f, inner * trail.Trail);
+            bool on = HealthBarTrail.Visible(in trail) && trail.Trail > fill && stop - end > .004f;
+            if (renderer.gameObject.activeSelf != on) renderer.gameObject.SetActive(on);
+            if (!on) return;
+
+            float start = end - TrailTuck;
+            float length = stop - start;
+            Transform t = renderer.transform;
+            if (_ink)
+            {
+                Vector2 size = _trailSlice.bounds.size;
+                t.localScale = new Vector3(length / Mathf.Max(.0001f, size.x), Height / Mathf.Max(.0001f, size.y), 1f);
+                t.localPosition = new Vector3(start, 0f, -.0005f);
+            }
+            else
+            {
+                float h = Height - Inset * 2f;
+                float w = Mathf.Max(h, length);
+                renderer.size = new Vector2(w, h);
+                t.localPosition = new Vector3(start + w * .5f, 0f, -.0005f);
+            }
+            renderer.color = Faded(TrailColor, alpha);
         }
 
         /// <summary>
@@ -729,6 +800,7 @@ namespace Game.View
             bar.EliteOrdered = elite;
             int shift = elite ? EliteOrder : -EliteOrder;
             Shift(bar.BackRenderer, shift);
+            Shift(bar.TrailRenderer, shift);
             Shift(bar.FillRenderer, shift);
             Shift(bar.FrameRenderer, shift);
             Shift(bar.GemFill, shift);
@@ -925,6 +997,11 @@ namespace Game.View
                 _fillSteps[i] = Sprite.Create(fill, new Rect(0f, 0f, width, fill.height), new Vector2(0f, .5f), 100f, 0, SpriteMeshType.FullRect);
                 _fillSteps[i].name = "Мазок " + (i + 1);
             }
+            // След урона — кусок середины того же мазка: растягивается по длине, якорь — левый край.
+            float sliceFrom = Mathf.Round(fill.width * TrailSliceFrom);
+            float sliceWidth = Mathf.Clamp(Mathf.Round(fill.width * TrailSliceWidth), 1f, fill.width - sliceFrom);
+            _trailSlice = Sprite.Create(fill, new Rect(sliceFrom, 0f, sliceWidth, fill.height), new Vector2(0f, .5f), 100f, 0, SpriteMeshType.FullRect);
+            _trailSlice.name = "След урона";
             return true;
         }
 
@@ -953,6 +1030,10 @@ namespace Game.View
             SpriteRenderer back = Part(root, "Дорожка", _track, OrderTrack, false);
             Fit(back, Width * TrackSpanX, Height * TrackSpanY);
 
+            // След урона: место и длину ставит DrawTrail каждый кадр.
+            SpriteRenderer trail = Part(root, "След урона", _trailSlice, OrderTrail, false);
+            trail.gameObject.SetActive(false);
+
             // Масштаб — по полному мазку: короткая ступень той же высоты и плотности, просто обрезана.
             SpriteRenderer fill = Part(root, "Заливка", _fillSteps[FillSteps - 1], OrderFill, false);
             Fit(fill, inner, Height);
@@ -974,6 +1055,7 @@ namespace Game.View
                 Fill = fill.transform,
                 BackRenderer = back,
                 FillRenderer = fill,
+                TrailRenderer = trail,
                 Gem = gem,
                 GemFill = orb,
                 GemRim = glow,
@@ -992,6 +1074,8 @@ namespace Game.View
             if (back.drawMode == SpriteDrawMode.Sliced) back.size = new Vector2(Width, Height);
             else back.transform.localScale = new Vector3(Width, Height, 1f);
 
+            SpriteRenderer trail = Part(root, "След урона", theme.BarFill, OrderTrail, true);
+            trail.gameObject.SetActive(false);
             SpriteRenderer fill = Part(root, "Заливка", theme.BarFill, OrderFill, true);
             SpriteRenderer frame = Part(root, "Контур", theme.BarFrame, OrderFrame, true);
             if (frame.drawMode == SpriteDrawMode.Sliced) frame.size = new Vector2(Width, Height);
@@ -1017,6 +1101,7 @@ namespace Game.View
                 Fill = fill.transform,
                 BackRenderer = back,
                 FillRenderer = fill,
+                TrailRenderer = trail,
                 FrameRenderer = frame,
                 Gem = gem,
                 GemFill = gemFill,

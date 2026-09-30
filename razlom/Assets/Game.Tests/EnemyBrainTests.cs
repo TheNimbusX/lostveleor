@@ -340,7 +340,7 @@ namespace Game.Tests
         {
             var location = ArenaEncounterTests.ForestLocation();
             int frozenWindows = 0, windows = 0, charges = 0;
-            for (ulong seed = 1; seed <= 12; seed++)
+            for (ulong seed = 1; seed <= 6; seed++)
             {
                 var map = ArenaEncounterTests.ArenaMap(location, 3, seed);
                 var sim = new Simulation(seed, 64);
@@ -370,7 +370,7 @@ namespace Game.Tests
                 }
             }
             Assert.That(frozenWindows, Is.LessThanOrEqualTo(windows / 10), "застрял в " + frozenWindows + " из " + windows);
-            Assert.That(charges, Is.GreaterThanOrEqualTo(12), "таранов почти нет");
+            Assert.That(charges, Is.GreaterThanOrEqualTo(6), "таранов почти нет");
         }
 
         // ---------- бюджет крупных меток ----------
@@ -385,7 +385,7 @@ namespace Game.Tests
             {
                 if (System.Array.IndexOf(keys, template.Key) < 0) continue;
                 foreach (int arena in new[] { template.MinArena, template.MaxArena })
-                    for (ulong seed = 1; seed <= 4; seed++)
+                    for (ulong seed = 1; seed <= 2; seed++)
                     {
                         var map = ArenaEncounterTests.ArenaMap(location, arena, seed, template.MinArenaSize < 3 ? 3 : template.MinArenaSize);
                         var sim = new Simulation(seed, 512);

@@ -55,7 +55,13 @@ namespace Game.View
             _lootClockLast = now;
             bool shown = status && run != null;
             RunHudView.SetActive(_view.Loot, shown);
-            if (!shown) { LootHover(HoverNone); return; }
+            if (!shown)
+            {
+                LootHover(HoverNone);
+                // Строки нет (пауза, экран выбора, итоги) — монеты садятся разом, над меню не висят.
+                SettleCoins();
+                return;
+            }
 
             GameSession session = _driver.Session;
             if (run != _lootRun || run.TakenRewardCount < _loot.Scanned || run.Gold < _lootGold.Target) StartLoot(run, session);
@@ -63,7 +69,15 @@ namespace Game.View
             if (!CampTransition.Covering)
             {
                 while (_loot.Scanned < run.TakenRewardCount) _loot.Take(run.GetTaken(_loot.Scanned));
-                if (_lootGold.Retarget(run.Gold) && _view.LootCoin != null) HudFx.Punch(_view.LootCoin.transform, 1.18f, .4f);
+                // Золото — горстью монет из места, где взялось (RunHud.Coins): число досчитывает по мере посадки,
+                // знак толкается на каждой севшей монете.
+                if (_lootGold.Retarget(CoinGold(run)) && _view.LootCoin != null) HudFx.Punch(_view.LootCoin.transform, 1.18f, .4f);
+            }
+            else
+            {
+                // Под завесой монеты не летят: пришедшее золото досчитает само, когда мир откроется.
+                SettleCoins();
+                _coinSeen = run.Gold;
             }
             int gold = _lootGold.Advance(dt);
             if (gold != _lootGoldText)
@@ -84,6 +98,7 @@ namespace Game.View
             while (_loot.Scanned < run.TakenRewardCount) _loot.Take(run.GetTaken(_loot.Scanned));
             _lootRevealed = _loot.Count;
             _lootGold.Snap(run.Gold);
+            ResetCoins(run.Gold);
             _lootGoldText = int.MinValue;
             _lootDeveloper = session != null && session.IsDeveloperRun;
             // Сумка лагеря за забег не меняется: FinishRun кладёт вещи по порядку взятия, лишнее теряется.

@@ -50,12 +50,27 @@ namespace Game.Tests
                 if (sim.TryGetThorncasterAction(1, out var a))
                     Assert.That(a.NextShotTick, Is.EqualTo(a.StartTick + 60));
             }
-            Assert.That(releases, Is.EqualTo(new[] { 21, 81, 141, 171, 204, 264, 324, 354 }));
-            Assert.That(starts, Is.EqualTo(new[] { 0, 60, 120, 183, 243, 303, 366 }));
+            // Раскладка 1-1-2 из констант: выпуск через замах от начала, следующий выстрел —
+            // через перезарядку; у каждого третьего второй выпуск через шаг двойного, стойка
+            // после него, и следующее начало не раньше конца этой стойки.
+            var expectedStarts = new List<int>(); var expectedReleases = new List<int>();
+            for (int start = 0, n = 0; start < 370; n++)
+            {
+                expectedStarts.Add(start);
+                int release = start + Simulation.ThornShotWindupTicks;
+                if (release < 370) expectedReleases.Add(release);
+                if (n % 3 == 2)
+                {
+                    release += Simulation.ThornDoubleShotReleaseSpacingTicks;
+                    if (release < 370) expectedReleases.Add(release);
+                }
+                start = System.Math.Max(start + Simulation.ThornShotCooldownTicks, release + Simulation.ThornShotRecoveryTicks);
+            }
+            Assert.That(releases, Is.EqualTo(expectedReleases));
+            Assert.That(starts, Is.EqualTo(expectedStarts));
             Assert.That(new HashSet<int>(ids).Count, Is.EqualTo(ids.Count));
             Assert.That(impacts, Is.EqualTo(ids));
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 8 * 14));
-            Assert.That(Simulation.ThornShotRadius, Is.EqualTo(Fix64.Ratio(1, 10)));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - releases.Count * sim.ThornShotDamageOf(1)));
         }
 
         [Test]
@@ -100,9 +115,8 @@ namespace Game.Tests
             Assert.That(releases, Is.EqualTo(new[] { 81, 141, 201, 231 }));
         }
 
+        // Оглушение и смерть — по разу, в два разных тика.
         [TestCase(146, false)]
-        [TestCase(160, false)]
-        [TestCase(146, true)]
         [TestCase(160, true)]
         public void StunOrDeathCancelsUnreleasedSecond_ButLaunchedFirstKeepsFlying(int cancelTick, bool kill)
         {

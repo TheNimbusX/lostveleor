@@ -22,8 +22,8 @@ namespace Game.View
             for(int i=0;i<s.Potions.Length && i<Camp.PotionKindCount;i++)
             {
                 var kind=(PotionKind)i;var card=s.Potions[i];
-                card.Name.text=PotionText(kind.ToString());
-                card.Effect.text=i<4?PotionText("restore")+" "+Camp.PotionPercent(kind)+"% "+PotionText(Camp.PotionSlot(kind)==0?"health":"lavidium"):PotionText(kind+".effect");
+                card.Name.text=CampFeatureText.PotionName(kind);
+                card.Effect.text=CampFeatureText.PotionEffect(kind);
                 card.BuyLabel.text=PotionText("buy")+"  ·  "+Camp.PotionPrice(kind);
                 card.LockedLabel.text=PotionText("recipe");
                 card.Buy.onClick.AddListener(()=>BuyAlchemy(kind));
@@ -31,7 +31,7 @@ namespace Game.View
                     // Пробка, переливание и под ними тихое бурление — магия только вторым слоем.
                     GameSound.Sequence(("alch_cork",0f,.65f),("alch_pour",.14f,.55f),("alch_bubble",.45f,.3f));});
                 // Закрытые зелья открывает заказ Лео: он живёт прямо в карточке своего зелья.
-                if(i>=4 && card.OrderMain!=null)
+                if(i>=4 && i<6 && card.OrderMain!=null)
                 {
                     var order=i==4?AlchemistOrder.Resin:AlchemistOrder.Surge;
                     card.OrderMain.onClick.AddListener(()=>AdvanceOrder(order));
@@ -75,23 +75,30 @@ namespace Game.View
             s.Gold.text=_alchemyCamp.Money(CurrencyType.Gold).ToString();
             if(s.PotionsPage!=null)
             {
+                if(!_alchemyCamp.UsesLegacyAlchemyOrders)_alchemyRecipes=false;
                 s.PotionsPage.SetActive(!_alchemyRecipes);s.RecipesPage.SetActive(_alchemyRecipes);
                 CampShopView.SetTab(s.Tabs[0],!_alchemyRecipes);CampShopView.SetTab(s.Tabs[1],_alchemyRecipes);
+                foreach(var tab in s.Tabs)if(tab!=null)tab.gameObject.SetActive(_alchemyCamp.UsesLegacyAlchemyOrders);
             }
             for(int i=0;i<s.Recipes.Length;i++)RefreshRecipe(s.Recipes[i],i==0?AlchemistOrder.Resin:AlchemistOrder.Surge);
             for(int i=0;i<s.Potions.Length && i<Camp.PotionKindCount;i++)
             {
                 var kind=(PotionKind)i;var card=s.Potions[i];
                 bool unlocked=_alchemyCamp.PotionUnlocked(kind);int count=_alchemyCamp.PotionCount(kind);
-                bool selected=_alchemyCamp.SelectedPotion(Camp.PotionSlot(kind))==kind;
+                bool selected=_alchemyCamp.SelectedPotion(0)==kind || _alchemyCamp.SelectedPotion(1)==kind;
                 card.Stock.text=PotionText("stock")+":  <color=#F4F7FB>"+count+"</color>";
                 card.Locked.SetActive(!unlocked);
-                card.Buy.gameObject.SetActive(unlocked);card.Select.gameObject.SetActive(unlocked);
+                card.Buy.gameObject.SetActive(unlocked);card.Select.gameObject.SetActive(false);
                 card.Buy.interactable=unlocked && count<Camp.PotionLimit && _alchemyCamp.Money(CurrencyType.Gold)>=Camp.PotionPrice(kind);
                 card.SelectLabel.text=PotionText(selected?"selected":"select");card.Select.interactable=unlocked && !selected;
                 card.Chosen.SetActive(unlocked && selected);
                 card.Stock.gameObject.SetActive(unlocked);
-                if(!unlocked && i>=4 && card.OrderMain!=null)RefreshOrder(card,i==4?AlchemistOrder.Resin:AlchemistOrder.Surge);
+                if(_alchemyCamp.UsesLegacyAlchemyOrders && !unlocked && i>=4 && i<6 && card.OrderMain!=null)RefreshOrder(card,i==4?AlchemistOrder.Resin:AlchemistOrder.Surge);
+                else
+                {
+                    if(card.OrderMain!=null)card.OrderMain.gameObject.SetActive(false);if(card.OrderAlt!=null)card.OrderAlt.gameObject.SetActive(false);
+                    if(!unlocked)card.LockedLabel.text="Лео · улучшение "+(i<4?1:i<6?2:3);
+                }
             }
         }
         static string OrderText(string key)=>CampServiceText.Get("order."+key);
@@ -145,18 +152,35 @@ namespace Game.View
             var original=_alchemyCamp;var potions=_view.Alchemist.Potions;
             try
             {
-                _alchemyCamp=new Camp(PrototypeContent.Items());_alchemyCamp.Earn(CurrencyType.Gold,200);RefreshAlchemy();
+                // Isolated legacy camp opens all basic bottles; this never writes the owner's camp.
+                _alchemyCamp=new Camp(PrototypeContent.Items(),act:3);_alchemyCamp.Earn(CurrencyType.Gold,200);RefreshAlchemy();
                 for(int i=0;i<4;i++)potions[i].Buy.onClick.Invoke();
                 if(_alchemyCamp.Money(CurrencyType.Gold)!=90)return false;
                 for(int i=0;i<4;i++)if(_alchemyCamp.PotionCount((PotionKind)i)!=1)return false;
-                potions[1].Select.onClick.Invoke();potions[3].Select.onClick.Invoke();
-                if(_alchemyCamp.PotionSelection!=3)return false;
                 var session=new GameSession(17,_alchemyCamp,PrototypeContent.Modules(),PrototypeContent.ItemBaseIds());
-                session.ActiveSim.Entities.Health[0]=1;session.ActiveSim.Entities.Lavidium[0]=Fix64.Zero;
-                session.Step(new InputFrame{PotionMask=10});
-                if(_alchemyCamp.PotionCount(PotionKind.LargeHealth)!=0 || _alchemyCamp.PotionCount(PotionKind.LargeLavidium)!=0 || session.ActiveSim.Entities.Health[0]<=1 || session.ActiveSim.Entities.Lavidium[0]<=Fix64.One)return false;
+                if(!session.SetPreparedPotion(0,PotionKind.LargeHealth) || !session.SetPreparedPotion(1,PotionKind.LargeLavidium)
+                    || _alchemyCamp.SelectedPotion(0)!=PotionKind.LargeHealth || _alchemyCamp.SelectedPotion(1)!=PotionKind.LargeLavidium)return false;
+                session.EnterRift();
+                var entities=session.ActiveSim.Entities;
+                entities.Health[0]=1;entities.Lavidium[0]=Fix64.Zero;
+                entities.Stats[0].SetBase(StatType.LavidiumRegen,Fix64.Zero);
+                // Combat is irrelevant to this UI transaction probe, but consumption runs in a real Rift.
+                void DisableFoes(){for(int id=1;id<entities.Count;id++)entities.Alive[id]=false;}
+                DisableFoes();session.Step(new InputFrame{PotionSlotMask=3});
+                int interval=8*Simulation.TicksPerSecond;
+                if(_alchemyCamp.PotionCount(PotionKind.LargeHealth)!=0 || _alchemyCamp.PotionCount(PotionKind.LargeLavidium)!=1
+                    || entities.Health[0]<=1 || entities.Lavidium[0]!=Fix64.Zero || session.PotionCooldownTicksLeft!=interval-1)return false;
+                for(int tick=1;tick<interval;tick++)
+                {
+                    DisableFoes();session.Step(new InputFrame{PotionSlotMask=2});
+                    if(_alchemyCamp.PotionCount(PotionKind.LargeLavidium)!=1 || entities.Lavidium[0]!=Fix64.Zero)return false;
+                }
+                if(session.PotionCooldownTicksLeft!=0)return false;
+                DisableFoes();session.Step(new InputFrame{PotionSlotMask=2});
+                if(_alchemyCamp.PotionCount(PotionKind.LargeLavidium)!=0 || entities.Lavidium[0]<=Fix64.One
+                    || session.PotionCooldownTicksLeft!=interval-1)return false;
                 var hud=FindAnyObjectByType<CombatHudView>();
-                if(hud!=null){bool valid=hud.ProbePotionDisplay(_alchemyCamp,_driver);hud.ProbePotionDisplay(_driver.Session.Camp,_driver);if(!valid)return false;}
+                if(hud!=null && !hud.ProbePotionDisplay(_driver.Session.Camp,_driver))return false;
                 return true;
             }
             finally{_alchemyCamp=original;RefreshAlchemy();_view.Alchemist.Message.text="";}

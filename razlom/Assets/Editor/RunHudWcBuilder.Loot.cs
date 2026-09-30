@@ -108,7 +108,7 @@ namespace Game.EditorTools
             arrival.pivot = MiddleLeft;
             arrival.anchoredPosition = new Vector2(LootLayout.Icon + 4f, 0f);
             arrival.sizeDelta = new Vector2(LootLayout.ArrivalReserve + 14f, 28f);
-            view.LootArrival = Label(arrival, "Надпись", "+1", FontRole.Body, 18f, Role.Accent, TextAlignmentOptions.MidlineLeft);
+            view.LootArrival = Label(arrival, "Надпись", "+1", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Accent, TextAlignmentOptions.MidlineLeft);
             view.LootArrival.fontStyle = FontStyles.Bold;
             view.LootArrival.textWrappingMode = TextWrappingModes.NoWrap;
             view.LootArrival.gameObject.SetActive(false);
@@ -195,7 +195,7 @@ namespace Game.EditorTools
 
             view.LootTipTitle = TipLabel(tip, "Название", "Кожаная куртка", FontRole.Heading, 20f, Role.Text, .04f);
             view.LootTipLine = TipLabel(tip, "Строка", "Редкая · ур. 4", FontRole.Body, 15f, Role.TextMuted, .1f);
-            view.LootTipNote = TipLabel(tip, "Примечание", "В сумке лагеря нет места — вещь пропадёт", FontRole.Body, 14f, Role.Bad, .14f);
+            view.LootTipNote = TipLabel(tip, "Примечание", "В сумке лагеря нет места — вещь пропадёт", FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.Bad, .14f);
             view.LootTipNote.gameObject.SetActive(false);
             view.LootTip = tip;
             tip.gameObject.SetActive(false);

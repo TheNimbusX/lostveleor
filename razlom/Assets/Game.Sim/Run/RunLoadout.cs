@@ -39,11 +39,11 @@ namespace Game.Sim
         public RunLoadout() => ResetToStarter();
 
         /// <summary>Стартовый набор: Вихрь в первом слоте, остальное пусто, талантов нет.</summary>
-        public void ResetToStarter()
+        public void ResetToStarter(int starterPoolIndex = PelagKit.StarterPoolIndex)
         {
             for (int i = 0; i < Slots; i++) _slots[i] = EmptySlot;
             System.Array.Clear(_taken, 0, _taken.Length);
-            _slots[0] = PelagKit.StarterPoolIndex;
+            _slots[0] = (uint)starterPoolIndex < PelagKit.PoolSize ? starterPoolIndex : PelagKit.StarterPoolIndex;
             Version++;
         }
 

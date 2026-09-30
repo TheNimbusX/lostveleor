@@ -1,0 +1,72 @@
+{
+  "title": "Референсы локации «Чаща» (акт I) для арен",
+  "date": "2026-09-30",
+  "for": "Костя: переделка арены, цветовая гамма леса",
+  "model": "higgsfield gpt_image_2_5, quality high, 2k, 16:9 (2688x1520), image-to-image с нашими кадрами",
+  "credits": {
+    "balance_before": 109.3,
+    "balance_after_shared": 59.8,
+    "this_batch_estimate": 13.75,
+    "note": "5 картинок по ~2,75. Баланс после включает траты параллельных агентов этого же прогона."
+  },
+  "owner_reference_note": "Референс поляны, который владелец присылал для коммита 5552c4b2, в репозитории не найден (нет ни в ART/, ни в artifacts/, ни в добавленных картинках веток). Вместо него — наши кадры арены после того коммита.",
+  "shared_references": {
+    "refs/ref-glade-fight02.jpg": "artifacts/capture/polish-route/ui-10h-fight-02.png, вырезано без HUD (x300-1540, y110-808): поляна арены 2, портал, красные грибы, стена деревьев",
+    "refs/ref-path-exit.jpg": "artifacts/capture/polish-route/ui-03b-exit-mark.png, вырезано без HUD (x200-1500, y330-930): тропа к выходу, фонари, цветы",
+    "refs/ref-world.jpg": "ART/UI/concepts-2026-09-30-hud-polish/bases/base-world.jpg, вырезано без HUD: открытый пол, озеро, тропа, камни",
+    "refs/ref-boss-art.jpg": "ART/characters/act-1-enemies/forest-BOSS-ownerofforest/art.png: только мотивы материалов для арены босса"
+  },
+  "media_ids": {
+    "ref-glade-fight02.jpg": "bcbc3e90-8960-4855-9052-3388cdfabff3",
+    "ref-path-exit.jpg": "da24254e-c232-4fef-b28f-68c66698bc41",
+    "ref-world.jpg": "a7a00ba9-02f1-4408-b97f-c7281bda331b",
+    "ref-boss-art.jpg": "88dcc540-0700-4ed0-847e-5a4773426ac5"
+  },
+  "images": [
+    {
+      "file": "1-arena-glade-full.png",
+      "preview": "1-arena-glade-full.jpg",
+      "job_id": "5609012d-fef1-442f-9159-0f8d4992303c",
+      "references": ["refs/ref-glade-fight02.jpg", "refs/ref-world.jpg", "refs/ref-path-exit.jpg"],
+      "caption": "1. Арена-поляна целиком: тёплый вытоптанный грунт, рунный круг вровень с землёй, три стоячих камня с кристаллами, грибы и лиловые цветы по кайме, озеро краем справа, вход и выход с фонарями. Пол светлый и спокойный, стена леса тёмная и сплошная.",
+      "notes": "Лучший кадр на гамму. Камера чуть более сверху, чем в игре. Грунт занимает почти весь пол; у нас сейчас больше травы — это вопрос выбора. Герой крошечный, для масштаба.",
+      "prompt": "Environment reference frame for the video game THE WAR REMAINS, forest act 'The Thicket'. Match the attached in-game screenshots exactly: same high top-down game camera (about 55-60 degrees pitch, slight perspective), same stylized 3D look (rounded clumpy hand-painted bushes and trees, chunky faceted rocks, broadleaf plants), same warm golden sunlight from the upper left with soft shadows, vivid saturated greens and warm ochre trodden earth. Bright and colourful, not dark.\n\nSHOT: one complete combat arena seen whole. An oval forest glade about 30 m across. The walkable floor is calm warm trodden earth with a soft short-grass rim, a few low grass islands, fallen leaves scattered near the edge. In the centre an ancient carved stone rune circle lies flush with the ground. Two or three tall mossy standing stones inside the glade as obstacles, some with small glowing green crystal clusters at their feet. Along the rim: clusters of red-capped mushrooms and purple flowers. The border is a continuous, readable wall of dense rounded trees and bushes, taller and darker than the floor, with glowing green crystal clusters tucked in the thickets and a few tiny blue wisps floating over the edge. A calm small lake bites into the right side of the glade and forms part of its border. At the bottom an entrance trail and at the top an exit trail, each marked by two wooden lantern posts with warm glowing lanterns.\n\nREADABILITY: the floor must be clearly lighter, flatter and calmer than the walls, with low detail, so enemies and red ground attack markers would read instantly. Clear value contrast between floor and edge. One tiny hero figure (white shirt, dark hair, sabre) near the centre only for scale. No enemies, no UI, no HUD, no text, no watermark."
+    },
+    {
+      "file": "2-arena-edge-variety.png",
+      "preview": "2-arena-edge-variety.jpg",
+      "job_id": "5088859c-f182-4036-8e2c-94a48750230a",
+      "references": ["refs/ref-glade-fight02.jpg", "refs/ref-path-exit.jpg", "refs/ref-world.jpg"],
+      "caption": "2. Типы края арены крупнее: стена деревьев и папоротников, стоячие камни с зелёными кристаллами, огромные корни аркой с грибами, берег озера с галькой, рогозом и кувшинками. Между типами — высокая трава, без просветов.",
+      "notes": "Камера ближе, чем в игре (намеренно, чтобы видеть материалы). У героя в руках скорее лук, чем сабля — неважно, он только для масштаба. Тень от деревьев слева ложится на пол — в игре такие тени мешали бы меткам.",
+      "prompt": "Environment reference frame for the video game THE WAR REMAINS, forest act 'The Thicket'. Match the attached in-game screenshots exactly: same high top-down game camera (about 55-60 degrees pitch, slight perspective, a little closer than the screenshots), same stylized 3D look (rounded clumpy hand-painted bushes and trees, chunky faceted rocks, broadleaf plants), same warm golden sunlight from the upper left with soft shadows, vivid saturated greens and warm ochre trodden earth. Bright and colourful.\n\nSHOT: an edge-variety sheet in one continuous frame. The walkable arena floor of warm trodden earth with a short-grass rim runs along the bottom half of the frame. Its curved border along the top half changes type four times from left to right, each segment clearly impassable and taller than the floor: (1) a dense wall of rounded stylized trees and bushes with ferns in front; (2) chunky mossy boulders and tall standing stones with small glowing green crystal clusters; (3) huge gnarled tree roots arching out of the ground into a low natural wall, with moss and red mushrooms; (4) a calm water edge - small lake with a pebble shore, reeds, lily pads and purple flowers. Short transitions of tall grass between segments so there are no gaps in the border.\n\nREADABILITY: floor lighter, flatter and calmer than the border, low detail, so enemies and red ground attack markers would read. One tiny hero figure (white shirt, dark hair) on the floor only for scale. No enemies, no UI, no HUD, no text, no labels, no watermark."
+    },
+    {
+      "file": "3-deep-thicket-arena.png",
+      "preview": "3-deep-thicket-arena.jpg",
+      "job_id": "f54069fb-f4c9-49b0-a08e-655e07337c25",
+      "references": ["refs/ref-glade-fight02.jpg", "refs/ref-world.jpg", "refs/ref-path-exit.jpg"],
+      "caption": "3. Глубокая Чаща, поздние арены акта: гигантские замшелые стволы и корни, изумрудно-бирюзовая тень, столбы тёплого солнца на полу, руины с резьбой и арка-проход, светящиеся бирюзовые грибы. Глубже и насыщеннее, но не мрачно.",
+      "notes": "Пятнистый свет на полу красивый, но пестрит: красные метки на таком полу читались бы хуже — если брать, то пятна крупнее и мягче. Камера чуть ближе и положе, чем в игре. Пол мох/трава, а не грунт — хороший контраст к светлым аренам начала акта.",
+      "prompt": "Environment reference frame for the video game THE WAR REMAINS, forest act 'The Thicket'. Match the attached in-game screenshots: same high top-down game camera (about 55-60 degrees pitch, slight perspective), same stylized 3D look (rounded clumpy hand-painted foliage, chunky faceted rocks), same rendering quality.\n\nSHOT: a combat arena deeper in the Thicket, later in the act - an older, denser forest. A round clearing ringed by giant mossy tree trunks and thick roots, emerald and teal-green shade under a tall canopy, broad shafts of warm golden sunlight falling through gaps in the canopy onto the clearing floor. Moss-covered ruins of carved stone blocks and a broken stone archway at the rim, big ferns, glowing cyan-green bioluminescent mushrooms and floating spore motes in the shaded edges, a few red mushrooms as warm accents. The walkable floor is mossy earth and short grass with warm sunlit patches.\n\nMOOD: deeper and richer than the bright meadow arenas, but still BRIGHT, vivid and saturated - jewel-like greens and teals with warm gold light. NOT grimdark, not desaturated, not night, not murky.\n\nREADABILITY: the walkable floor stays clearly lighter and calmer than the dark-green walls around it, low detail in the middle, so enemies and red ground attack markers would read. Clear continuous impassable border. No characters, no enemies, no UI, no HUD, no text, no watermark."
+    },
+    {
+      "file": "4-boss-arena-master.png",
+      "preview": "4-boss-arena-master.jpg",
+      "job_id": "c6515234-7b22-4190-a6db-91b591492bc5",
+      "references": ["refs/ref-glade-fight02.jpg", "refs/ref-world.jpg", "refs/ref-boss-art.jpg"],
+      "caption": "4. Арена босса «Хозяин Чащи»: большая круглая поляна в кольце древних деревьев, корни стеной-амфитеатром, наверху логово — дупло-трон из корней и рогов-ветвей в красных цветах. Пол огромный и открытый, каменное рунное кольцо в центре, красные лепестки.",
+      "notes": "Мотивы босса (кора пластинами, мох, красные цветы) перенесены на логово, сам зверь не нарисован. Знак в кольце — трёхзубый корень, это не знак Пелага. Тени крон лежат на краях пола. Логово-дупло тёмное — хорошее место для выхода босса.",
+      "prompt": "Environment reference frame for the video game THE WAR REMAINS, forest act 'The Thicket'. Match the first two attached in-game screenshots: same high top-down game camera (about 55-60 degrees pitch, slight perspective, pulled back to show a larger area), same stylized 3D look (rounded clumpy hand-painted foliage, chunky faceted rocks), same warm golden sunlight, vivid saturated greens and warm ochre earth. The third attachment is the boss creature 'Master of the Thicket' - use it ONLY for material and colour motifs (bark plates, moss drips, big green leaves, red flowers and berries, antler-like branches). Do NOT draw the creature; the arena is empty.\n\nSHOT: the boss arena of the Master of the Thicket. A large round clearing, clearly bigger than a normal arena, enclosed by a ring of colossal ancient trees whose huge roots rise into a natural amphitheatre wall. At the top of the frame, the boss lair: a great hollow throne of massive twisted roots and antler-like branches, draped with moss and blooming with red flowers and berries, with a dark hollow in the middle. The floor is wide, open, calm warm trodden earth with short grass at the rim and a large carved stone rune ring lying flush in the centre; red petals and a few leaves scattered. A few low root ridges only at the very edge. Warm golden light, red petals drifting. Epic and ominous but BRIGHT and saturated, not grimdark, not night.\n\nREADABILITY: huge open floor clearly lighter and calmer than the root walls, so a big boss, adds and large red ground attack markers would read. No characters, no creature, no UI, no HUD, no text, no watermark."
+    },
+    {
+      "file": "5-transition-path.png",
+      "preview": "5-transition-path.jpg",
+      "job_id": "17e2e997-57a0-4b3a-ae3a-221f24653586",
+      "references": ["refs/ref-path-exit.jpg", "refs/ref-glade-fight02.jpg", "refs/ref-world.jpg"],
+      "caption": "5. Переход между аренами: выход — два фонаря и два замшелых камня как ворота, дальше вьющаяся тропа с плоскими камнями, мостик через ручей, поваленное бревно, голубые огоньки вдоль тропы, наверху светится следующая поляна.",
+      "notes": "Внизу вместо края поляны вышла круглая чаша в каменном бордюре (похоже на наш портал) — лишнее. Тропа читается отлично: светлая дорожка в тёмном лесу. Герой крошечный, для масштаба.",
+      "prompt": "Environment reference frame for the video game THE WAR REMAINS, forest act 'The Thicket'. Match the attached in-game screenshots exactly: same high top-down game camera (about 55-60 degrees pitch, slight perspective), same stylized 3D look (rounded clumpy hand-painted bushes and trees, chunky faceted rocks, broadleaf plants), same warm golden sunlight from the upper left with soft shadows, vivid saturated greens and warm ochre trodden earth. Bright and colourful.\n\nSHOT: the transition path between two arenas. At the bottom of the frame the edge of a cleared arena glade; the exit is a gap in the tree wall framed by two wooden lantern posts with warm glowing lanterns and two mossy standing stones like a gate. From it a winding trodden-earth forest trail, about 4 m wide, with a few flat stepping stones, runs diagonally up through the forest: past ferns, purple flowers and red mushrooms, over a small wooden plank footbridge across a clear shallow stream, past a fallen mossy log. A few small glowing blue-white wisps float along the trail, guiding the way. At the top of the frame the trail opens into the next sunlit glade, glowing warmly through the trees.\n\nREADABILITY: the trail is clearly lighter and calmer than the dense darker forest on both sides, a readable one-way route. One tiny hero figure (white shirt, dark hair) walking on the trail only for scale. No enemies, no UI, no HUD, no text, no arrows, no watermark."
+    }
+  ]
+}

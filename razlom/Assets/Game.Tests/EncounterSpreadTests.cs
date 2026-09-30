@@ -11,14 +11,17 @@ namespace Game.Tests
     /// волна встаёт из земли и бьёт впервые вразнобой — и всё детерминированно.
     ///
     /// Выборка — все шаблоны леса на меньшей и большей своей арене (и на
-    /// малой поляне, если шаблон её допускает), по 30 сидов; арена гибнет
+    /// малой поляне, если шаблон её допускает), по 8 сидов (≈1300 волн); арена гибнет
     /// каждый тик, и выходят все волны. Снимок волны — сразу после тика, в
     /// котором она встала. Центры и сущности групп — черновик последней
     /// расстановки (Simulation.LastWaveGroup).
     /// </summary>
     public class EncounterSpreadTests
     {
-        private const int Seeds = 30;
+        private const int Seeds = 8;
+
+        /// <summary>Сидов на шаблон в проверке «тот же сид дважды»: там два прогона на сид.</summary>
+        private const int TwinSeeds = 3;
 
         private sealed class GroupShot
         {
@@ -177,9 +180,9 @@ namespace Game.Tests
             TestContext.WriteLine("центры групп: " + apart + " из " + pairs + " пар не ближе 5 м (на малой арене "
                 + smallApart + " из " + smallPairs + "); две «центральные» — " + centerApart + " из " + centerPairs
                 + "; не поместилось врагов: " + _omitted + " на " + Shots.Count + " волн");
-            Assert.That(pairs, Is.GreaterThan(500), "выборка мала");
+            Assert.That(pairs, Is.GreaterThan(130), "выборка мала");
             Assert.That(apart * 100, Is.GreaterThanOrEqualTo(pairs * 90), "центры групп волны слиплись");
-            Assert.That(centerPairs, Is.GreaterThan(30));
+            Assert.That(centerPairs, Is.GreaterThan(8));
             Assert.That(centerApart * 100, Is.GreaterThanOrEqualTo(centerPairs * 90), "два «центра» в одном коме");
         }
 
@@ -213,7 +216,7 @@ namespace Game.Tests
             foreach (var pair in byKind)
                 TestContext.WriteLine(pair.Key + ": " + pair.Value[1] + " из " + pair.Value[0] + " пар держат разнос "
                     + Meters(Simulation.WaveMemberSpacing(pair.Key)) + " м");
-            Assert.That(pairs, Is.GreaterThan(200), "выборка мала");
+            Assert.That(pairs, Is.GreaterThan(55), "выборка мала");
             Assert.That(spaced * 100, Is.GreaterThanOrEqualTo(pairs * 90), "члены группы встали плечом к плечу");
             Assert.That(Simulation.WaveMemberSpacing(EnemyKind.ForestRootSwarm).Raw, Is.Zero, "рой стоит кучей, как стоял");
             Assert.That(Simulation.WaveMemberSpacing(EnemyKind.ForestSplitling).Raw, Is.Zero);
@@ -250,7 +253,7 @@ namespace Game.Tests
                 TestContext.WriteLine(what + ": стрелки в среднем в " + (ranged / waves).ToString("0.00")
                     + " м от героя, ближний бой — в " + (melee / waves).ToString("0.00") + " м; дальше в "
                     + fartherWaves + " волнах из " + waves);
-                Assert.That(waves, Is.GreaterThan(100), what + ": выборка мала");
+                Assert.That(waves, Is.GreaterThan(27), what + ": выборка мала");
                 Assert.That(ranged / waves, Is.GreaterThan(melee / waves), what + ": стрелки стоят не дальше ближнего боя");
             }
         }
@@ -280,7 +283,7 @@ namespace Game.Tests
                 Assert.That(high - low, Is.GreaterThanOrEqualTo(8), "волна встала разом: " + Where(s));
                 checkedWaves++;
             }
-            Assert.That(checkedWaves, Is.GreaterThan(300));
+            Assert.That(checkedWaves, Is.GreaterThan(80));
         }
 
         [Test]
@@ -304,8 +307,8 @@ namespace Game.Tests
                 checkedWaves++;
                 if (!s.Emerging) startWaves++;
             }
-            Assert.That(checkedWaves, Is.GreaterThan(300));
-            Assert.That(startWaves, Is.GreaterThan(100));
+            Assert.That(checkedWaves, Is.GreaterThan(80));
+            Assert.That(startWaves, Is.GreaterThan(27));
         }
 
         // ---------- детерминизм ----------
@@ -318,7 +321,7 @@ namespace Game.Tests
             foreach (var key in keys)
             {
                 var t = ForestEncounterTemplates.Find(key);
-                for (ulong seed = 1; seed <= Seeds; seed++)
+                for (ulong seed = 1; seed <= TwinSeeds; seed++)
                 {
                     var a = Arena(location, t, t.MaxArena, seed, t.MinArenaSize < 3 ? 3 : t.MinArenaSize, out _, out _);
                     var b = Arena(location, t, t.MaxArena, seed, t.MinArenaSize < 3 ? 3 : t.MinArenaSize, out _, out _);

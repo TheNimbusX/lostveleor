@@ -75,8 +75,10 @@ namespace Game.View
             UiInkGroup root = GetComponent<UiInkGroup>();
             AddCampPart(parts, AbilityPanel, root, AbilityPanel != null ? AbilityPanel.gameObject : null, true);
             AddCampPart(parts, DashPanel, root, Dash != null && Dash.Hit != null && Dash.Hit != DashPanel ? Dash.Hit.gameObject : null, true);
-            // Значки эффектов зелий гаснут рядом целиком: у каждого значка своя прозрачность, её ведёт он сам.
-            Transform buffs = ResinChip != null ? ResinChip.transform.parent : SurgeChip != null ? SurgeChip.transform.parent : null;
+            // Строка эффектов над портретом (с 30.09; раньше — ряд значков зелий) гаснет целиком: у каждого
+            // круга своя прозрачность, её ведёт он сам.
+            Transform buffs = EffectRow != null ? EffectRow.transform
+                : ResinChip != null ? ResinChip.transform.parent : SurgeChip != null ? SurgeChip.transform.parent : null;
             if (buffs != null && buffs != transform) AddCampPart(parts, buffs as RectTransform, root, null, false);
             // Дым под способностями и огонёк-разделитель у кувырка без самих плиток — пустая подложка.
             if (Strip != null)

@@ -71,18 +71,21 @@ namespace Game.View
                 return bounds;
             }
         }
-        // The river's quarter-metre modifier boxes and NavMesh agent erosion
-        // leave a different, sometimes interrupted strip on each bridge row.
-        // Sim movement uses the sampled cells, so give the deck one continuous
-        // lane with a clearance from the authored rails on both sides.
+        // Объёмы воды с шагом четверть метра и отступ NavMesh от препятствий
+        // оставляют разные, иногда прерывистые полосы на рядах моста.
+        // Симуляция ходит по клеткам: настилу нужна непрерывная полоса
+        // с запасом от авторских перил с обеих сторон.
         public void StraightenWalkCells(bool[] cells, Vector3 origin, float cellSize, int width, int height)
         {
             if (Bridge == null || cells == null) return;
             Bounds deck = BridgeBounds;
             float halfLane = Mathf.Min(.78f, CrossingSize.x * .5f - .35f);
             if (halfLane <= 0f) return;
-            float minZ = deck.min.z + .15f;
-            float maxZ = deck.max.z - .15f;
+            // Включаем оба стыка с берегом: у первой доски раньше оставались
+            // отдельные клетки между маской воды, отступом агента и настилом.
+            float centreZ = Bridge.position.z;
+            float minZ = Mathf.Min(deck.min.z, centreZ - CrossingSize.y * .5f) - .35f;
+            float maxZ = Mathf.Max(deck.max.z, centreZ + CrossingSize.y * .5f) + .35f;
             for (int z = 0; z < height; z++)
             {
                 float worldZ = origin.z + (z + .5f) * cellSize;
@@ -91,7 +94,8 @@ namespace Game.View
                 {
                     float worldX = origin.x + (x + .5f) * cellSize;
                     if (Mathf.Abs(worldX - deck.center.x) > CrossingSize.x * .5f + cellSize) continue;
-                    cells[z * width + x] = Mathf.Abs(worldX - deck.center.x) <= halfLane;
+                    if (Mathf.Abs(worldX - deck.center.x) <= halfLane) cells[z * width + x] = true;
+                    else if (worldZ >= deck.min.z && worldZ <= deck.max.z) cells[z * width + x] = false;
                 }
             }
         }

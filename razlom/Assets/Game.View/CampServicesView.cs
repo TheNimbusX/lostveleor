@@ -28,11 +28,22 @@ namespace Game.View
         int _openedFrame;
         public void Initialize(CampPlayerView player,TickDriver driver)
         {
-            Instance=this;_player=player;_driver=driver;_npcs=FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Include);Build();
+            Instance=this;_player=player;_driver=driver;
+            EnsureTravelTable();
+            _npcs=FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Include);Build();
+            gameObject.AddComponent<CampPreparationView>().Initialize(driver);
+            gameObject.AddComponent<CampForgeView>().Initialize(driver);
+            BuildResidentProgress();
+            BuildTraderProgression();
         }
         void Update()
         {
             if(_player==null)return;
+            _driver.RefreshCampInputDeviceHint();
+            RefreshResidentPresence();
+            TickResidentProgress();
+            TickTraderProgression();
+            if(CampPreparationView.Instance?.IsOpen==true || CampForgeView.Instance?.IsOpen==true || ResidentProgressOpen || TraderProgressionOpen)return;
             if(!_player.Active || _driver.GameplayPaused || _player.InventoryOpen || _player.EntranceOpen){Close();Pending=null;HideHints();return;}
             bool use=false,cancel=false,left=false,right=false,moving=false;Vector2 pointer=Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
@@ -48,14 +59,14 @@ namespace Game.View
             if(!Input.GetMouseButton(0) && !Input.GetMouseButton(1))PointerGesture=false;
 #endif
             if(CampServicesProbe.IsRunning && !CampServicesProbe.AllowInteractionInput){use=cancel=left=right=moving=false;}
-            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && _openGroup!=null && !_openGroup.interactable){_openGroup.interactable=true;if(_firstSelect!=null)_firstSelect.Select();}if(ShopKeys(cancel))return;if(cancel)Close();return;}
             if(ConsumedFrame==Time.frameCount)return;
+            if(IsOpen){HideHints();if(Time.frameCount>_openedFrame && _openGroup!=null){_openGroup.interactable=true;CampUiFocus.Ensure(_openGroup,_firstSelect);}if(ShopKeys(cancel))return;if(cancel)Close();return;}
             bool overUi=CampInventoryView.PointerOverUI() || _driver.PointerOverHud(pointer);
             CampServiceNpc nearest=null,hover=null;float distance=3f,hitDistance=float.MaxValue;
             var camera=Camera.main;Ray ray=camera!=null?camera.ScreenPointToRay(pointer):default;
             foreach(var npc in _npcs)
             {
-                if(npc==null || !npc.isActiveAndEnabled)continue;
+                if(npc==null || !npc.isActiveAndEnabled || !ServiceAvailable(npc.Kind))continue;
                 float d=npc.Distance(_player.InteractionPosition);
                 if(npc.Near(_player.InteractionPosition) && d<distance){nearest=npc;distance=d;}
                 if(!overUi && camera!=null && npc.Shape.IntersectRay(ray,out float t) && t<hitDistance){hover=npc;hitDistance=t;}
@@ -83,7 +94,13 @@ namespace Game.View
             bool near=focus.Near(_player.InteractionPosition);
             string action=CampServiceText.Get(near?(focus.Kind==CampServiceKind.Tent?"action.open":"action.talk"):"action.approach");
             string key=TickDriver.GamepadLastUsed?(near?"A":"подойти"):(near?"E":"ПКМ");
-            SetHint(focus.Title,CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant()),key,action);
+            string role=CampServiceText.Get("role."+focus.Kind.ToString().ToLowerInvariant());
+            if(near && TickDriver.GamepadLastUsed && (focus.Kind==CampServiceKind.Smith || focus.Kind==CampServiceKind.Trader || focus.Kind==CampServiceKind.Alchemist))
+            {
+                var resident=focus.Kind==CampServiceKind.Smith?Game.Sim.CampResident.Smith:focus.Kind==CampServiceKind.Trader?Game.Sim.CampResident.Trader:Game.Sim.CampResident.Alchemist;
+                string task=CampGuideView.TaskHint(_driver.Session.Camp,resident);if(!string.IsNullOrEmpty(task))role=task;
+            }
+            SetHint(focus.Title,role,key,action);
         }
         void SetHint(string title,string note)=>SetHint(title,"","",note);
         void SetHint(string title,string role,string key,string action)
@@ -109,36 +126,31 @@ namespace Game.View
             if(!key.enableAutoSizing){key.fontSize=text.Length>1?16f:26f;return;}
             var cap=_view.HintKeyCap;var layout=cap.GetComponent<LayoutElement>();
             float size=layout!=null && layout.preferredHeight>0f?layout.preferredHeight:cap.rect.height;
-            if(size<=0f)return;
-            float width=text.Length>1?Mathf.Max(size,key.GetPreferredValues(text).x+size*.7f):size;
-            if(layout!=null)layout.preferredWidth=layout.minWidth=width;else cap.sizeDelta=new Vector2(width,cap.sizeDelta.y);
+            // Ширина кейкапа — одно правило на все окна (UiKeyHint, лист 5).
+            UiKeyHint.FitKeycap(cap,key,size);
         }
         void HideHints(){SetHint("","");if(_npcs!=null)foreach(var npc in _npcs)if(npc!=null)npc.Highlight(false);}
         public bool Begin(CampServiceNpc npc)
         {
-            if(npc==null || _player==null || !_player.Active || _driver.GameplayPaused || IsOpen)return false;
+            if(npc==null || !ServiceAvailable(npc.Kind) || _player==null || !_player.Active || _driver.GameplayPaused || IsOpen)return false;
             Pending=npc;
             if(npc.Near(_player.InteractionPosition)){Open(npc);return true;}
             // PointerGesture already keeps this click out of world movement.
             // Do not set ConsumedFrame here: that would pause the whole tick.
-            var approach=npc.Kind==CampServiceKind.Tent?npc.Target(_player.InteractionPosition):npc.Approach;
-            // Достижимую клетку выбираем у подхода, не внутри геометрии персонажа или верстака.
-            for(float radius=0;radius<=1.5f;radius+=.25f)
-                for(int i=0;i<(radius==0?1:16);i++)
-                {
-                    var p=approach+new Vector3(Mathf.Cos(i*Mathf.PI/8),0,Mathf.Sin(i*Mathf.PI/8))*radius;
-                    if(npc.Near(p) && _player.WalkMap.Contains(CampTrainingView.Flat(p)) && _player.RouteTo(p))return true;
-                }
+            // Один выбор подхода для настоящего ввода и маршрутной проверки.
+            if(_player.TryServiceApproach(npc,_player.InteractionPosition,out var reachable) && _player.RouteTo(reachable))return true;
             Pending=null;_errorUntil=Time.unscaledTime+2;SetHint("",CampServiceText.Get("unreachable"));return false;
         }
         public void CancelPending(){Pending=null;}
         public void CancelApproach(){Pending=null;_driver.ClearCapturedInput();_player.StopForService();}
         public void Open(CampServiceNpc npc)
         {
-            if(npc==null || !npc.Near(_player.InteractionPosition))return;
+            if(npc==null || !ServiceAvailable(npc.Kind) || !npc.Near(_player.InteractionPosition))return;
             _player.StopForService();Pending=null;Current=npc;Consume();
             if(npc.Kind==CampServiceKind.Tent){Current=null;HideHints();_player.OpenTent();return;}
+            if(npc.Kind==CampServiceKind.TravelTable){Current=null;HideHints();CampPreparationView.Instance?.Open();return;}
             ShowSmith(npc.Kind==CampServiceKind.Smith);ShowTrader(npc.Kind==CampServiceKind.Trader);ShowAlchemist(npc.Kind==CampServiceKind.Alchemist);
+            if(npc.Kind==CampServiceKind.Smith)_driver.Session.Camp.DiscussSmithFind();
             _previousSelection=EventSystem.current!=null?EventSystem.current.currentSelectedGameObject:null;
             // Подтверждение открытия с геймпада не должно тем же нажатием отправить Submit кнопке закрытия.
             _openedFrame=Time.frameCount;if(_openGroup!=null)_openGroup.interactable=false;
@@ -149,6 +161,9 @@ namespace Game.View
         void Consume(){ConsumedFrame=Time.frameCount;_driver.ClearCapturedInput();}
         public void Close()
         {
+            CloseResidentProgress();
+            CloseTraderProgression();
+            SetShopModalContent(false);
             if(!IsOpen)return;Current=null;Pending=null;Consume();
             var group=PanelGroup;UiMotion.Stop(group);if(_openGroup!=null)_openGroup.interactable=false;
             // Выключение лагеря (OnDisable) закрывает сразу и молча.
@@ -169,10 +184,19 @@ namespace Game.View
             _view=Instantiate(prefab,transform).GetComponent<CampShopView>();_view.name="Camp shops";UiScaleFollower.Attach(_view.gameObject);
             _panel=_view.transform.Find("Окна").gameObject;_panel.SetActive(false);
             _view.Smith.Group.gameObject.SetActive(false);_view.Trader.Group.gameObject.SetActive(false);_view.Alchemist.Group.gameObject.SetActive(false);
+            foreach(var control in _view.GetComponentsInChildren<Selectable>(true))
+            {var navigation=control.navigation;navigation.mode=Navigation.Mode.Automatic;control.navigation=navigation;}
             HideHints();
         }
         /// <summary>Открытое окно: ввод включается кадром позже (нажатие открытия не жмёт кнопку), первой выбирается кнопка действия.</summary>
         void Present(CanvasGroup group,Selectable first){_openGroup=group;_firstSelect=first;group.gameObject.SetActive(true);group.interactable=false;}
+        internal void SetShopModal(bool open,bool keepPortrait=true)
+        {
+            SetShopModalContent(open,keepPortrait);
+            if(_openGroup==null)return;
+            _openGroup.interactable=!open;
+            if(!open)_openedFrame=Time.frameCount;
+        }
         void OnDisable(){Close();CancelPending();HideHints();PointerGesture=false;HoveredService=false;}
         void OnDestroy(){if(Instance==this)Instance=null;}
     }

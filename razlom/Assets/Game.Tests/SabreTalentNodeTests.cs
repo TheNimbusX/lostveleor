@@ -19,20 +19,34 @@ namespace Game.Tests
             return sim.GetAbility(0);
         }
 
-        private static float Stat(AbilityBuild build, AbilityStatType stat) => build.Get(stat).ToFloat();
-
-        [Test]
-        public void WhirlwindWiderCircleAddsAQuarterRadius()
+        /// <summary>Способность линии с одним усилением index, без остальных.</summary>
+        private static AbilityBuild One(SabreTalentLine line, int index)
         {
-            Assert.AreEqual(2.3f, Stat(Build(SabreTalentLine.Whirlwind, 0), AbilityStatType.Radius), 0.001f);
-            Assert.AreEqual(2.875f, Stat(Build(SabreTalentLine.Whirlwind, 1), AbilityStatType.Radius), 0.001f);
+            var sim = new Simulation(1234, 64);
+            sim.SetupTestArena(0);
+            var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
+            int count = SabreTalents.AppendNode(line, index, buffer, 0);
+            sim.SetAbility(0, PelagKit.PoolDefinition(SabreTalents.PoolIndexOf(line)), buffer, count);
+            return sim.GetAbility(0);
         }
 
+        private static float Stat(AbilityBuild build, AbilityStatType stat) => build.Get(stat).ToFloat();
+
+        /// <summary>
+        /// Все числовые усиления одним тестом: Вихрь «Шире круг» (+четверть радиуса),
+        /// Шквал «Дешевле» (40 → 28), «Дальний удар» и «Дальний бросок» (усиления 6–8, 24.09).
+        /// </summary>
         [Test]
-        public void SquallCheaperCostsTwentyEight()
+        public void NumericUpgrades_ChangeTheirOwnNumber()
         {
+            Assert.AreEqual(2.3f, Stat(Build(SabreTalentLine.Whirlwind, 0), AbilityStatType.Radius), 0.001f);
+            Assert.AreEqual(2.875f, Stat(Build(SabreTalentLine.Whirlwind, 1), AbilityStatType.Radius), 0.001f, "Шире круг");
+
             Assert.AreEqual(40, Simulation.LavidiumCostOf(Build(SabreTalentLine.Squall, 1)));
-            Assert.AreEqual(28, Simulation.LavidiumCostOf(Build(SabreTalentLine.Squall, 2)));
+            Assert.AreEqual(28, Simulation.LavidiumCostOf(Build(SabreTalentLine.Squall, 2)), "Дешевле");
+
+            Assert.AreEqual(6f, Stat(One(SabreTalentLine.AnchorSlam, 6), AbilityStatType.Radius), .001f, "Дальний удар");
+            Assert.AreEqual(10f, Stat(One(SabreTalentLine.Flask, 6), AbilityStatType.Radius), .001f, "Дальний бросок");
         }
 
         /// <summary>

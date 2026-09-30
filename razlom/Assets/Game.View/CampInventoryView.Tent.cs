@@ -67,7 +67,7 @@ namespace Game.View
             {
                 if(_tent.Potions[i]==null)continue;
                 int potion=i;
-                _tent.Potions[i].onClick.AddListener(()=>{_driver.Session.Camp.SelectPotion((PotionKind)potion);UiSound.Play(UiSoundEvent.Toggle);Refresh();ShowPotionTooltip(potion);});
+                _tent.Potions[i].onClick.AddListener(()=>ShowPotionTooltip(potion));
                 var relay=_tent.Potions[i].gameObject.AddComponent<CampHoverRelay>();
                 relay.Hover=on=>{if(on)ShowPotionTooltip(potion);else _tent.ShowTooltip(false);};
                 var tex=Resources.Load<Texture2D>("UI/Items/"+PotionFiles[i]);
@@ -336,7 +336,7 @@ namespace Game.View
         {
             var camp=_driver.Session.Camp;var kind=(PotionKind)potion;
             string title=(potion%2==0?"Малое":"Большое")+" зелье "+(potion<2?"здоровья":"лавидия");
-            string body="Запас: "+camp.PotionCount(kind)+(camp.SelectedPotion(potion/2)==kind?"\n<color=#8CE07A>Стоит в HUD</color>":"\n<color=#9DB6CB>Клик — поставить в HUD</color>")
+            string body="Запас: "+camp.PotionCount(kind)+"\nВыбор двух видов — у походного стола"
                 +"\n<color=#9DB6CB>Купить — у алхимика</color>";
             _hoverIndex=-1;
             FillTooltip(title,"",Color.white,"Восстанавливает "+Camp.PotionPercent(kind)+"% "+(potion<2?"здоровья":"лавидия"),body,-1,_potionSprites[potion]);

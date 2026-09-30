@@ -6017,8 +6017,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u0412\u0441\u0435"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6099,7 +6099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &6258116677664806738
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8979,8 +8979,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u041A\u043E\u043B\u044C\u0446\u0430"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9061,7 +9061,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &5122458784416213583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14097,8 +14097,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u0421\u0443\u043C\u043A\u0430"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14179,7 +14179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &5568858294133683761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14889,7 +14889,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d1c241925be0c14dba1e7e5129925bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.CampTentView
-  LayoutVersion: 100
+  LayoutVersion: 101
   Backdrop: {fileID: 3419889581482678240}
   Close: {fileID: 2934762404618014678}
   Feedback: {fileID: 2296996789166782298}
@@ -15868,8 +15868,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u0410\u0442\u043B\u0430\u0441"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -15950,7 +15950,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &3652769477314880709
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24543,8 +24543,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u0422\u0430\u043B\u0438\u0441\u043C\u0430\u043D\u044B"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -24625,7 +24625,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &3265105552037621568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32871,8 +32871,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u041E\u0440\u0443\u0436\u0438\u0435"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -32953,7 +32953,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &5911217631554321707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33089,8 +33089,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u0411\u0440\u043E\u043D\u044F"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
-  m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
+  m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -33171,7 +33171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3466ddac1acf83444aa20d874379b6dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThemeFont
-  Role: 1
+  Role: 0
 --- !u!114 &4349812957453168950
 MonoBehaviour:
   m_ObjectHideFlags: 0

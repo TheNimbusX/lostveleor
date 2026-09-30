@@ -9,9 +9,9 @@ namespace Game.Tests
     /// Приёмка задачи: надетый предмет меняет числа в бою, снятый возвращает их
     /// ровно назад, а порядок надевания на результат не влияет.
     ///
-    /// Первый тест здесь — сторожевой. Перенос боевых констант в базы статов
-    /// не имел права поменять ни одной цифры, и если он что-то поменял, узнать
-    /// об этом надо здесь, а не по ощущению «враги стали дохлее».
+    /// Базовые числа боя здесь не закрепляются: урон героя —
+    /// PelagProgressionTests, темп Хранителя — GuardianTempoTests, шаг толпы
+    /// (3,1 м/с) — хеши CrowdStepHashPinTests.
     /// </summary>
     public class CombatStatsTests
     {
@@ -35,41 +35,6 @@ namespace Game.Tests
             return sim;
         }
 
-        // ---- сторож ----
-
-        [Test]
-        public void BaseCombatStats_MatchCurrentTuning()
-        {
-            Simulation sim = Arena();
-            EntityStore e = sim.Entities;
-
-            Assert.AreEqual(34, e.Damage[Simulation.PlayerId], "урон игрока");
-            // 17, а не 7: урон Хранителя теперь строка таблицы видов (баланс v1:
-            // 14; подгонка «Мобов леса v2» 29.09: 17). Здоровье мишени тестовой
-            // арены — по-прежнему 100, оно не баланс.
-            Assert.AreEqual(17, e.Damage[1], "урон врага");
-            Assert.AreEqual(EnemyArchetypes.Get(EnemyKind.ForestGuardian).BaseDamage, e.Damage[1]);
-            Assert.AreEqual(0L, e.CritChance[1].Raw, "враги не критуют");
-            Assert.AreEqual(20, e.AttackCooldown[Simulation.PlayerId], "кулдаун игрока в тиках");
-            // 53: замах 23 + окно наказания 17 + свободные 13 тиков — взмах
-            // Хранителя на 10% медленнее (29.09), см. Simulation.EnemyMelee.
-            Assert.AreEqual(53, e.AttackCooldown[1], "кулдаун врага в тиках");
-            Assert.AreEqual(1000, e.MaxHealth[Simulation.PlayerId], "здоровье игрока");
-            Assert.AreEqual(100, e.MaxHealth[1], "здоровье врага");
-
-            // Побитово, а не «примерно»: шаг за тик участвует в позициях, а те —
-            // в хеше состояния. Разойдись он в младшем разряде, реплеи бы поехали.
-            Assert.AreEqual(Fix64.Ratio(9, 60).Raw, e.MoveStep[Simulation.PlayerId].Raw,
-                "шаг игрока за тик");
-            // 31/300 — это 3.1 м/с на 30 тиках. Было 35/300: владелец попросил
-            // замедлить толпу, см. Simulation.EnemyBaseMoveSpeed.
-            Assert.AreEqual(Fix64.Ratio(31, 300).Raw, e.MoveStep[1].Raw, "шаг врага за тик");
-
-            Assert.AreEqual(Fix64.Ratio(15, 100).Raw, e.CritChance[Simulation.PlayerId].Raw, "шанс крита");
-            Assert.AreEqual(Fix64.FromInt(2).Raw, e.CritMultiplier[Simulation.PlayerId].Raw,
-                "множитель крита");
-        }
-
         // ---- перевод статов в числа тика ----
 
         [Test]
@@ -84,25 +49,6 @@ namespace Game.Tests
         // ---- снаряжение ----
 
         [Test]
-        public void EquippedItem_ChangesCombatNumbers()
-        {
-            Simulation sim = Arena();
-            var equipment = Bound(PrototypeContent.Items(),
-                sim.Entities.Stats[Simulation.PlayerId]);
-
-            int bare = sim.Entities.Damage[Simulation.PlayerId];
-
-            ItemInstance replaced;
-            Assert.IsTrue(equipment.Equip(Sword(0xABCDEF01UL), out replaced), "меч должен надеться");
-            Assert.IsTrue(replaced.IsEmpty, "в пустом слоте нечего было менять");
-
-            sim.RefreshPlayerStats(false);
-
-            Assert.Greater(sim.Entities.Damage[Simulation.PlayerId], bare,
-                "надетое оружие обязано менять урон, иначе весь лут — украшение");
-        }
-
-        [Test]
         public void Unequip_RestoresTheSheetExactly()
         {
             Simulation sim = Arena();
@@ -114,8 +60,11 @@ namespace Game.Tests
             sheet.HashInto(ref bareHash);
 
             ItemInstance replaced;
-            equipment.Equip(Sword(7UL), out replaced);
+            Assert.IsTrue(equipment.Equip(Sword(7UL), out replaced), "меч должен надеться");
+            Assert.IsTrue(replaced.IsEmpty, "в пустом слоте нечего было менять");
             sim.RefreshPlayerStats(false);
+            Assert.Greater(sim.Entities.Damage[Simulation.PlayerId], bareDamage,
+                "надетое оружие обязано менять урон, иначе весь лут — украшение");
 
             equipment.Unequip(EquipSlot.Weapon);
             sim.RefreshPlayerStats(false);
@@ -127,8 +76,6 @@ namespace Game.Tests
             Assert.AreEqual(bareHash, afterHash,
                 "снятие обязано убирать ровно свои прибавки и ничего кроме них");
         }
-
-        // ---- здоровье ----
 
         // ---- атака по приказу ----
 
@@ -182,8 +129,6 @@ namespace Game.Tests
             Assert.AreEqual(victim, sim.AttackTarget, "и цель всё ещё назначена");
         }
 
-        // ---- вес движения ----
-
         // ---- расталкивание тел ----
 
         [Test]
@@ -213,8 +158,6 @@ namespace Game.Tests
                 "два тела в одной точке обязаны разъехаться, иначе толпа не читается");
         }
 
-        // ---- приказ на движение ----
-
         // ---- защита ----
 
         [Test]
@@ -238,8 +181,6 @@ namespace Game.Tests
             Assert.AreEqual(25, CombatStats.MitigateByResistance(100, Fix64.FromInt(4)),
                 "выше потолка не пускает никакая сумма аффиксов");
         }
-
-        // ---- цена пересчёта ----
 
         // ---- забег ----
 

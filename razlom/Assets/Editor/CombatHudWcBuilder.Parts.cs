@@ -70,7 +70,7 @@ namespace Game.EditorTools
             column.childForceExpandHeight = false;
             tip.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             RectTransform text = Node("Текст", tip);
-            view.PotionTooltipText = LabelOn(text, "Зелье здоровья · 10%\nЛКМ — выпить\nПКМ — сменить размер", FontRole.Body, 16f, Role.Text, TextAlignmentOptions.Center);
+            view.PotionTooltipText = LabelOn(text, "Зелье здоровья · 10%\n" + UiKeyHint.Hint("выпить", "ЛКМ") + "\n" + UiKeyHint.Hint("сменить размер", "ПКМ"), FontRole.Body, 16f, Role.Text, TextAlignmentOptions.Center);
             UiInkKit.Revealed(view.PotionTooltipText, .08f);
             view.PotionTooltip = tip;
             tip.gameObject.SetActive(false);
@@ -192,7 +192,7 @@ namespace Game.EditorTools
             Size(divider, -1f, 16f);
 
             RectTransform body = Node("Описание", tip);
-            view.TooltipBody = LabelOn(body, "Описание способности.", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.TopLeft);
+            view.TooltipBody = LabelOn(body, "Описание способности.", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.TopLeft);
             UiInkKit.Revealed(view.TooltipBody, .08f).Softness = .6f;
             view.TooltipBody.lineSpacing = 2f;
 
@@ -217,7 +217,7 @@ namespace Game.EditorTools
                 metric.Separator = sep.gameObject;
                 metric.Icon = Mark(item, "Значок", T.Pixel, Role.TextMuted, 1f, new Vector2(0f, .5f), new Vector2(24f, 0f), 22f);
                 RectTransform value = Box(Node("Значение", item), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(42f, 0f), new Vector2(80f, 30f));
-                metric.Value = Label(value, "Надпись", "0", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.MidlineLeft);
+                metric.Value = Label(value, "Надпись", "0", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.MidlineLeft);
                 metric.Value.textWrappingMode = TextWrappingModes.NoWrap;
                 metric.Value.enableAutoSizing = true;
                 metric.Value.fontSizeMin = 12f;
@@ -238,25 +238,21 @@ namespace Game.EditorTools
             tail.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
             UiInkKit.LightLayer(tail, "Огненный ромб", "light_gem", .95f, 4f, delay: .15f);
             view.TooltipTail = tail;
+            // Вложенная подсказка ключевого слова описания (единый набор, 30.09) — рядом с карточкой.
+            BuildKeywordTip(tip, view);
             tip.gameObject.SetActive(false);
         }
 
-        /// <summary>«[Alt] подробнее» справа в строке усилений: клавиша-капсула и приглушённая подпись.</summary>
+        /// <summary>
+        /// «[Alt] Подробнее» справа в строке усилений: общая подсказка клавиши листа 5 (UiInkKit.KeyHint) — кейкап
+        /// и приглушённый глагол ступени Caption.
+        /// </summary>
         static RectTransform DetailHint(RectTransform row)
         {
-            RectTransform hint = Node("Подсказка Alt", row);
-            var layout = hint.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 5f;
-            layout.childAlignment = TextAnchor.MiddleRight;
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            RectTransform cap = UiInkKit.Keycap(hint, "Клавиша", "Alt", 20f);
-            Size(cap, cap.sizeDelta.x, cap.sizeDelta.y);
-            RectTransform text = Node("Надпись", hint);
-            TMP_Text label = LabelOn(text, "подробнее", FontRole.Body, 13f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
-            label.textWrappingMode = TextWrappingModes.NoWrap;
-            UiInkKit.Revealed(label, .15f);
-            Size(text, label.GetPreferredValues("подробнее").x + 2f, 20f);
+            RectTransform hint = UiInkKit.KeyHint(row, "Alt", "подробнее", out _, 20f, T.Size(UiTheme.TextStep.Caption));
+            hint.name = "Подсказка Alt";
+            hint.GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleRight;
+            hint.GetComponent<HorizontalLayoutGroup>().spacing = 5f;
             Size(hint, -1f, 22f);
             hint.gameObject.SetActive(false);
             return hint;
@@ -280,7 +276,7 @@ namespace Game.EditorTools
             Size(line, -1f, 12f);
             RectTransform caption = Node("Заголовок", detail);
             Size(caption, -1f, 20f);
-            TMP_Text captionText = LabelOn(caption, "ВЗЯТО", FontRole.Heading, 14f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
+            TMP_Text captionText = LabelOn(caption, "ВЗЯТО", FontRole.Heading, T.Size(UiTheme.TextStep.Caption), Role.TextMuted, TextAlignmentOptions.MidlineLeft);
             captionText.characterSpacing = 4f;
             UiInkKit.Revealed(captionText, .02f);
             RectTransform text = Node("Текст", detail);
@@ -363,7 +359,7 @@ namespace Game.EditorTools
 
             // Число: тёплый крем в золото, мягкая тень шрифта; без оранжевой обводки и свечения старой плашки.
             RectTransform number = Box(Node("Число", medal), centre, centre, new Vector2(0f, 2f), new Vector2(BannerMedal - 16f, BannerMedal - 20f));
-            TMP_Text digits = LabelOn(number, "4", FontRole.Heading, 56f, Role.Text, TextAlignmentOptions.Center);
+            TMP_Text digits = LabelOn(number, "4", FontRole.Heading, T.Size(UiTheme.TextStep.Display), Role.Text, TextAlignmentOptions.Center);
             Object.DestroyImmediate(digits.GetComponent<ThemeColor>());
             digits.color = Color.white;
             digits.enableVertexGradient = true;
@@ -386,7 +382,7 @@ namespace Game.EditorTools
             // проявления по буквам у неё нет — выезд и прозрачность ведёт баннер, второе легло бы поверх.
             RectTransform gainBox = Box(Node("Прибавки", plate), left, left, new Vector2(BannerTextX, -14f), new Vector2(500f, 30f));
             TMP_Text gain = LabelOn(gainBox, "<color=#FFD27A>+30</color> здоровья · <color=#FFD27A>+5</color> урона · <color=#FFD27A>+10</color> лавидия",
-                FontRole.Body, 18f, Role.Text, TextAlignmentOptions.MidlineLeft);
+                FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.MidlineLeft);
             gain.textWrappingMode = TextWrappingModes.NoWrap;
             gain.richText = true;
             bannerView.GainLines = new[] { gain };
@@ -442,74 +438,6 @@ namespace Game.EditorTools
             banner.gameObject.SetActive(false);
         }
 
-        // ---------------------------------------------------------------- эффекты зелий
-        /// <summary>
-        /// Ряд значков действующих эффектов зелий над панелью героя (концепт 4-buffs-level-ingame).
-        /// У каждого — круг с кольцом-таймером и подпись, что эффект даёт: без наведения понятно.
-        /// Значки — временные, из концепта; финальные бутылки-иконки готовит владелец.
-        /// </summary>
-        static void BuildBuffs(RectTransform root, CombatHudView view)
-        {
-            RectTransform row = Box(Node("Эффекты зелий", root), BottomCenter, new Vector2(0f, 0f), new Vector2(HeroX - 12f, Bottom + StripHeight + 44f), new Vector2(500f, 48f));
-            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 10f;
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.childControlWidth = layout.childControlHeight = false;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            view.ResinChip = BuffChip(row, "Живица", "wc_buff_resin", "Живица", "−25% получаемого урона");
-            view.SurgeChip = BuffChip(row, "Порыв", "wc_buff_surge", "Порыв", "+20% к бегу и приёмам");
-        }
-
-        static HudBuffChip BuffChip(RectTransform row, string name, string icon, string title, string effect)
-        {
-            RectTransform chip = Node(name, row);
-            chip.sizeDelta = new Vector2(244f, 48f);
-            var buff = chip.gameObject.AddComponent<HudBuffChip>();
-            buff.Group = chip.gameObject.AddComponent<CanvasGroup>();
-            buff.Group.blocksRaycasts = false;
-            buff.Group.interactable = false;
-            buff.Name = title;
-            buff.EffectText = effect;
-
-            // Подложка под текстом — светлая земля не съедает подпись.
-            RectTransform plate = Box(Node("Подложка", chip), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(222f, 40f));
-            UiInkKit.SmokeLayer(plate, "Дым", "smoke_band_2", .95f, 36f, 22f, origin: new Vector2(0f, .5f));
-            // Частая всплывашка (каждое зелье) — без тлеющей кромки: огонь на ней читался красной вспышкой.
-            UiInkKit.Group(chip, UiInkGroup.Sweep.LeftToRight, .4f, .12f).Burn = 0f;
-
-            RectTransform circle = Box(Node("Круг", chip), new Vector2(0f, .5f), new Vector2(.5f, .5f), new Vector2(24f, 0f), new Vector2(46f, 46f));
-            Layer(circle, "Тень", T.CircleFill, Role.Panel, 1f);
-            Image art = Mark(circle, "Значок", Kit(icon), Role.Text, 1f, new Vector2(.5f, .5f), Vector2.zero, 38f);
-            Object.DestroyImmediate(art.GetComponent<ThemeColor>());
-            art.color = Color.white;
-            Layer(circle, "Ободок", T.CircleFrame, Role.PanelLine, .5f);
-            Image pop = Mark(circle, "Вспышка", Kit("wc_fx_glow"), Role.Text, 0f, new Vector2(.5f, .5f), Vector2.zero, 110f);
-            Additive(pop, new Color(1f, .7f, .35f, 0f));
-            pop.enabled = false;
-            buff.Glow = pop;
-            buff.Circle = circle;
-            Image ring = Layer(circle, "Кольцо", T.CircleFrame, Role.Accent, 1f);
-            ring.type = Image.Type.Filled;
-            ring.fillMethod = Image.FillMethod.Radial360;
-            ring.fillOrigin = (int)Image.Origin360.Top;
-            ring.fillClockwise = false;
-            ring.fillAmount = .7f;
-            buff.Ring = ring;
-
-            RectTransform effectBox = Box(Node("Эффект", chip), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, 8f), new Vector2(186f, 22f));
-            buff.Effect = LabelOn(effectBox, effect, FontRole.Body, 15f, Role.Text, TextAlignmentOptions.MidlineLeft);
-            UiInkKit.Revealed(buff.Effect);
-            buff.Effect.fontStyle = FontStyles.Bold;
-            buff.Effect.textWrappingMode = TextWrappingModes.NoWrap;
-            buff.Effect.enableAutoSizing = true;
-            buff.Effect.fontSizeMin = 13f;
-            buff.Effect.fontSizeMax = 15f;
-            RectTransform titleBox = Box(Node("Название", chip), new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(54f, -10f), new Vector2(186f, 18f));
-            buff.Title = LabelOn(titleBox, title + " · 4 с", FontRole.Body, 13f, Role.TextMuted, TextAlignmentOptions.MidlineLeft);
-            chip.gameObject.SetActive(false);
-            return buff;
-        }
-
         static void BuildFeedback(RectTransform root, CombatHudView view)
         {
             RectTransform pill = Box(Node("Отказ", root), BottomCenter, new Vector2(.5f, 0f), new Vector2(0f, Bottom + StripHeight + 22f), new Vector2(240f, 40f));
@@ -522,7 +450,7 @@ namespace Game.EditorTools
             row.childControlWidth = row.childControlHeight = true;
             pill.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             RectTransform text = Node("Сообщение", pill);
-            view.FeedbackText = LabelOn(text, "Перезарядка", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.Center);
+            view.FeedbackText = LabelOn(text, "Перезарядка", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.Center);
             UiInkKit.Revealed(view.FeedbackText, .05f);
             UiInkKit.Group(pill, UiInkGroup.Sweep.FromCenter, .3f, .08f).Burn = 0f;
             view.FeedbackText.textWrappingMode = TextWrappingModes.NoWrap;

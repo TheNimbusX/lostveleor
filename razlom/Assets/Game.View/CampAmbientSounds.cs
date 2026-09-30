@@ -49,6 +49,10 @@ namespace Game.View
         [Tooltip("Далёкий гул Разлома")]
         public string DroneLoop = "camp_rift_drone";
         [Range(0f, 1f)] public float DroneGain = .12f;
+        [Tooltip("Якорь арки; без него гул молчит. При замене модели сохраняется этот функциональный якорь.")]
+        public Transform DroneAnchor;
+        [Min(0)] public float DroneNear = 2f;
+        [Min(.1f)] public float DroneFar = 18f;
 
         [Header("Порывы ветра")]
         public string GustPrefix = "camp_wind_gust";
@@ -71,6 +75,9 @@ namespace Game.View
 
         AudioSource _forest, _drone;
         AudioSource[] _shots;
+        float[] _shotGains;
+        float _blend, _currentGain;
+        Camera _camera;
         int _shot;
         AudioClip[] _gusts, _leaves;
         float _clock, _nextGust, _gustStarted = -99f, _baseBreeze = 1f;
@@ -88,8 +95,12 @@ namespace Game.View
 
         void OnDisable()
         {
-            if (_forest != null) _forest.Stop();
-            if (_drone != null) _drone.Stop();
+            // Выключенный лагерь не сохраняет старую громкость для первого кадра возвращения.
+            if (_forest != null) { _forest.Stop(); _forest.volume = 0; }
+            if (_drone != null) { _drone.Stop(); _drone.volume = 0; }
+            if (_shots != null) foreach (var source in _shots) if (source != null) { source.Stop(); source.volume = 0; }
+            if (_shotGains != null) Array.Clear(_shotGains,0,_shotGains.Length);
+            _blend = _currentGain = 0;
             if (Ambience != null && _baseBreezeCaptured) Ambience.BreezeStrength = _baseBreeze;
         }
 
@@ -97,6 +108,8 @@ namespace Game.View
         {
             _loaded = true;
             _driver = FindAnyObjectByType<TickDriver>();
+            _camera = Camera.main;
+            FindDroneAnchor();
             AudioClip[] all = Resources.LoadAll<AudioClip>(Folder);
             AudioClip[] Pick(string prefix) => string.IsNullOrEmpty(prefix)
                 ? Array.Empty<AudioClip>()
@@ -115,6 +128,7 @@ namespace Game.View
 
             // Три источника по кругу: редкие звуки не обрывают друг друга.
             _shots = new AudioSource[3];
+            _shotGains = new float[_shots.Length];
             for (int i = 0; i < _shots.Length; i++) _shots[i] = MakeSource("Одиночный звук " + (i + 1), false);
             CaptureBaseBreeze();
         }
@@ -137,21 +151,32 @@ namespace Game.View
             // CampAmbience присваивает ссылку после AddComponent, когда OnEnable уже прошёл.
             CaptureBaseBreeze();
             // При записи звука съёмка идёт по игровому времени кадра, иначе — по реальному.
-            float dt = CombatAudioCapture.Recording ? Time.deltaTime : Time.unscaledDeltaTime;
+            float dt = Mathf.Min(CombatAudioCapture.Recording ? Time.deltaTime : Time.unscaledDeltaTime, .1f);
             _clock += dt;
 
             CampPlayerView player = CampPlayerView.Instance;
-            bool audible = player != null && player.Active && !MainMenuView.IsOpen;
-            bool panel = player != null && (player.InventoryOpen || player.EntranceOpen);
-            panel |= CampServicesView.Instance?.IsOpen == true || _driver != null && _driver.GameplayPaused;
+            bool audible = player != null && player.Active && !MainMenuView.IsOpen && !CampTransition.LeavingCamp;
+            bool panel = CampAudioSpatial.PanelOpen || _driver != null && _driver.GameplayPaused;
             float duck = panel ? MenuDuck : 1f;
-            float gain = MasterGain * GameUserSettings.EffectsVolume * duck * (audible ? 1f : 0f);
+            _blend = Mathf.MoveTowards(_blend, audible ? 1 : 0, dt / (audible ? 2.3f : .75f));
+            float gain = MasterGain * GameUserSettings.EffectsVolume * duck * _blend;
+            _currentGain = gain;
+            for (int i = 0; i < _shots.Length; i++) _shots[i].volume = _shotGains[i] * gain;
 
             Loop(_forest, ForestGain * gain, audible, dt);
-            Loop(_drone, DroneGain * gain, audible, dt);
+            if (DroneAnchor == null) FindDroneAnchor();
+            float droneDistance = DroneAnchor != null && player != null
+                ? CampAudioSpatial.Attenuation(player.Position, DroneAnchor.position, DroneNear, DroneFar) : 0;
+            Loop(_drone, DroneGain * gain * droneDistance, audible && DroneAnchor != null, dt);
+            if (DroneAnchor != null && player != null)
+            {
+                if (_camera == null) _camera = Camera.main;
+                _drone.panStereo = Mathf.Lerp(_drone.panStereo,
+                    CampAudioSpatial.Pan(player.Position, DroneAnchor.position, _camera), 1 - Mathf.Exp(-dt * 4));
+            }
             if (!audible) { ReleaseGust(); return; }
 
-            if (_clock >= _nextGust) Gust(gain);
+            if (_clock >= _nextGust) Gust();
             UpdateGust();
 
             foreach (Group group in Groups)
@@ -159,7 +184,7 @@ namespace Game.View
                 if (group.Clips == null || group.Clips.Length == 0) continue;
                 if (_clock < group.Next) continue;
                 group.Next = _clock + Random.Range(group.Interval.x, group.Interval.y);
-                PlayAround(group.Clips[Random.Range(0, group.Clips.Length)], group.Gain * gain, group.PitchJitter, group.Spread);
+                PlayAround(group.Clips[Random.Range(0, group.Clips.Length)], group.Gain, group.PitchJitter, group.Spread);
             }
         }
 
@@ -171,12 +196,12 @@ namespace Game.View
             if (!audible && source.volume < .001f && source.isPlaying) source.Stop();
         }
 
-        void Gust(float gain)
+        void Gust()
         {
             _nextGust = _clock + Random.Range(GustInterval.x, GustInterval.y);
             _gustStarted = _clock;
-            if (_gusts != null && _gusts.Length > 0) PlayAround(_gusts[Random.Range(0, _gusts.Length)], GustGain * gain, .05f, 6f);
-            if (_leaves != null && _leaves.Length > 0) PlayAround(_leaves[Random.Range(0, _leaves.Length)], GustGain * .8f * gain, .07f, 8f);
+            if (_gusts != null && _gusts.Length > 0) PlayAround(_gusts[Random.Range(0, _gusts.Length)], GustGain, .05f, 6f);
+            if (_leaves != null && _leaves.Length > 0) PlayAround(_leaves[Random.Range(0, _leaves.Length)], GustGain * .8f, .07f, 8f);
         }
 
         /// <summary>Листва качается вместе со звуком: порыв нарастает и стихает, а не включается ступенькой.</summary>
@@ -205,13 +230,25 @@ namespace Game.View
         {
             if (clip == null || _shots == null || volume <= .0005f) return;
             AudioSource source = _shots[_shot];
+            _shotGains[_shot] = volume;
             _shot = (_shot + 1) % _shots.Length;
             source.clip = clip;
-            source.volume = volume;
+            source.volume = volume * _currentGain;
             source.pitch = 1f + Random.Range(-jitter, jitter);
             // Панорама вместо трёхмерного звука: камера лагеря стоит высоко, и расстояние считается от героя.
             source.panStereo = Mathf.Clamp(Random.Range(-spread, spread) / 12f, -.6f, .6f);
             source.Play();
+        }
+
+        void FindDroneAnchor()
+        {
+            if (DroneAnchor != null) return;
+            var root = GetComponentInParent<CampAmbience>();
+            if (root == null) return;
+            foreach (Transform at in root.GetComponentsInChildren<Transform>(true))
+                if (at.name == "Anchor - Rift Portal") { DroneAnchor = at; return; }
+            var entrance = root.GetComponentInChildren<CampRiftEntrance>(true);
+            if (entrance != null) DroneAnchor = entrance.transform;
         }
     }
 }

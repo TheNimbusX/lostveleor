@@ -65,8 +65,9 @@ namespace Game.View
             if(camp==null)return;BindPotions();SoundPotions(camp);
             for(int i=0;i<2;i++)
             {
-                var kind=camp.SelectedPotion(i);int count=camp.PotionCount(kind);
-                if(_potionCounts[i]!=null)_potionCounts[i].text=count.ToString();
+                var kind=driver.Session.Mode==GameMode.Rift?driver.Session.Run.Preparation.PotionAt(i):camp.SelectedPotion(i);int count=camp.PotionCount(kind);
+                int cooldown=driver.Session.PotionCooldownTicksLeft;
+                if(_potionCounts[i]!=null)_potionCounts[i].text=cooldown>0?((cooldown+29)/30)+"с":count.ToString();
                 if(_potionKeys[i]!=null)
                 {
                     string key=TickDriver.GamepadLastUsed
@@ -80,14 +81,14 @@ namespace Game.View
                     // Бутылка по выбранному зелью: малая или большая (набор предметов 21 сентября).
                     var art=PotionArt(kind);
                     if(art!=null && art!=_potionOriginal[i]){_potionOriginal[i]=art;_potionGrey[i]=GreyCached(art);}
-                    _potionArts[i].texture=count>0?_potionOriginal[i]:_potionGrey[i];_potionArts[i].color=Color.white;
+                    _potionArts[i].texture=count>0?_potionOriginal[i]:_potionGrey[i];_potionArts[i].color=cooldown>0?new Color(.6f,.6f,.6f,1):Color.white;
                 }
             }
             if(_potionTip==null)return;int hover=PotionHit(Pointer);
             _potionTip.SetActive(hover>=0 && !driver.GameplayPaused && CampPlayerView.Instance?.InputBlocked!=true);
             if(!_potionTip.activeSelf)return;
-            var selected=camp.SelectedPotion(hover);
-            _potionTipText.text=CampServiceText.Get("potion."+selected)+" · "+Camp.PotionPercent(selected)+"%\n"+CampServiceText.Get(camp.PotionCount(selected)>0?"potion.use.hint":"potion.empty")+"\n"+CampServiceText.Get("potion.switch.hint");
+            var selected=driver.Session.Mode==GameMode.Rift?driver.Session.Run.Preparation.PotionAt(hover):camp.SelectedPotion(hover);
+            _potionTipText.text=CampFeatureText.PotionName(selected)+"\n"+CampFeatureText.PotionEffect(selected)+"\n"+(driver.Session.PotionCooldownTicksLeft>0?"Общий интервал: "+((driver.Session.PotionCooldownTicksLeft+29)/30)+" с":"Запас: "+camp.PotionCount(selected));
             var corners=new Vector3[4];_potionTiles[hover].GetWorldCorners(corners);
             if(PotionTooltip!=null)
             {

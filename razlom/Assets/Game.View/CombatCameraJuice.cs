@@ -15,6 +15,13 @@ namespace Game.View
         private float _zoomPunch;
         private uint _noise = 0xA341316Cu;
 
+        // Микростоп (HeroHitFeedback, этап 4): до этого момента толчок не гаснет и не дрожит —
+        // камера стоит в том сдвиге, куда её бросил удар. Часы — неигровые, как у затухания толчка.
+        private float _holdUntil = -1f;
+        private bool _holdCaptured;
+        private Vector2 _heldNoise;
+        private float _heldRoll;
+
         private void Awake()
         {
             _camera = GetComponent<Camera>();
@@ -26,6 +33,21 @@ namespace Game.View
         {
             _trauma = Mathf.Clamp01(Mathf.Max(_trauma, trauma));
             _zoomPunch = Mathf.Max(_zoomPunch, zoomPunch);
+        }
+
+        /// <summary>
+        /// Микростоп камеры на <paramref name="seconds"/>: толчок этого кадра замирает на месте (не гаснет
+        /// и не дрожит), потом идёт дальше как обычно. Только картинка: Sim, ввод и время не трогаются.
+        /// При тряске 0 % в настройках камера стоит и так — держать нечего.
+        /// </summary>
+        public void Hold(float seconds)
+        {
+            if (seconds <= 0f) return;
+            float until = Time.unscaledTime + seconds;
+            if (until <= _holdUntil) return;
+            // Новый стоп поверх идущего продолжает держать тот же сдвиг, а не прыгает в новый.
+            if (Time.unscaledTime >= _holdUntil) _holdCaptured = false;
+            _holdUntil = until;
         }
 
         /// <summary>Capture-only framing hook; normal gameplay never calls it.</summary>
@@ -43,18 +65,39 @@ namespace Game.View
             _appliedOffset = Vector3.zero;
 
             float dt = Time.unscaledDeltaTime;
-            _trauma = Mathf.MoveTowards(_trauma, 0f, dt * 3.8f);
-            _zoomPunch = Mathf.MoveTowards(_zoomPunch, 0f, dt * 5.5f);
+            bool holding = Time.unscaledTime < _holdUntil;
+            if (!holding)
+            {
+                _trauma = Mathf.MoveTowards(_trauma, 0f, dt * 3.8f);
+                _zoomPunch = Mathf.MoveTowards(_zoomPunch, 0f, dt * 5.5f);
+            }
 
             // Сила тряски из настроек (0–100%): 0 — камера стоит, толчок зумом тоже гаснет.
             float shake = GameUserSettings.ScreenShake;
             float strength = _trauma * _trauma * shake;
             if (strength > 0.0001f)
             {
-                Vector2 n = new Vector2(SignedNoise(), SignedNoise());
+                Vector2 n;
+                float roll;
+                if (holding && _holdCaptured)
+                {
+                    n = _heldNoise;
+                    roll = _heldRoll;
+                }
+                else
+                {
+                    n = new Vector2(SignedNoise(), SignedNoise());
+                    roll = SignedNoise();
+                    if (holding)
+                    {
+                        _heldNoise = n;
+                        _heldRoll = roll;
+                        _holdCaptured = true;
+                    }
+                }
                 _appliedOffset = (transform.right * n.x + transform.up * n.y) * (0.24f * strength);
                 transform.position += _appliedOffset;
-                transform.rotation = _restRotation * Quaternion.Euler(0f, 0f, SignedNoise() * strength * 0.65f);
+                transform.rotation = _restRotation * Quaternion.Euler(0f, 0f, roll * strength * 0.65f);
             }
             else
             {

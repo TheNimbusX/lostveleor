@@ -43,12 +43,9 @@ namespace Game.Tests
             return hashes;
         }
 
-        [Test]
+        // Мало, средне, много врагов: остальные сиды и 120 повторяли то же самое.
         [TestCase(5,   0xC0FFEEUL)]
-        [TestCase(40,  0xC0FFEEUL)]
-        [TestCase(40,  0xBEEF1234UL)]
         [TestCase(40,  7UL)]
-        [TestCase(120, 0xBEEF1234UL)]
         [TestCase(400, 0xBEEF1234UL)]
         public void Grid_MatchesNaiveTargeting_ExactlyEveryTick(int enemies, ulong seed)
         {

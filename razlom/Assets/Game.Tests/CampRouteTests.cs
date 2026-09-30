@@ -79,20 +79,10 @@ namespace Game.Tests
             return -1;
         }
 
-        [Test]
-        public void RouteWalksAroundWallThroughGap()
-        {
-            CampWalkMap map = Map(withGap: true);
-            GameSession session = Session(map);
-            var goal = new FixVec2(Fix64.FromInt(5), Fix64.Zero);
-
-            var route = new CampRoute(map);
-            Assert.IsTrue(route.To(FixVec2.Zero, goal), "маршрут не проложен");
-
-            int ticks = Walk(session, route, goal, 900);
-            Assert.Greater(ticks, 0, "герой не дошёл до цели за 30 секунд");
-        }
-
+        /// <summary>
+        /// Герой обходит стену через проход туда и обратно; первый маршрут —
+        /// самый простой случай «дойти через проход за 30 секунд».
+        /// </summary>
         [Test]
         public void RepeatedRoutesAcrossTheSameWallReachBothSides()
         {

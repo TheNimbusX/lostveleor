@@ -48,6 +48,9 @@ namespace Game.View
         RunPhase _seenPhase = RunPhase.Idle;
         int _routeStep, _smokeFrame, _firstDepth = -1;
         bool _atExit, _routeChosen;
+        // Полировка 30.09: блок ввода и наведение на экране награды, бой второй арены, низкое здоровье.
+        bool _rewardLockShot, _rewardHoverShot, _lowHp, _lowShot, _exitMarkShot;
+        int _hitShot;
         const float FilmStep = 1f / 15f, FilmMenuEnd = 5.2f, FilmHover = 3.4f, FilmHudEnd = 2f;
         float _filmNext;
         int _filmFrame, _hudFrame;
@@ -78,6 +81,23 @@ namespace Game.View
             capture._loot = Array.IndexOf(args, "-capture-loot") >= 0;
             int output = Array.IndexOf(args, "-capture-out");
             capture._directory = output >= 0 && output + 1 < args.Length ? args[output + 1] : Application.temporaryCachePath;
+            // -capture-ui-scale 0.8|1.2: масштаб интерфейса на этот запуск — только в памяти, настройки игрока
+            // (PlayerPrefs) не пишутся: SetUiScale сохранил бы его в реестр.
+            int scaleAt = Array.IndexOf(args, "-capture-ui-scale");
+            if (scaleAt >= 0 && scaleAt + 1 < args.Length && float.TryParse(args[scaleAt + 1],
+                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float scale))
+                OverrideUiScale(scale);
+        }
+
+        static void OverrideUiScale(float scale)
+        {
+            const System.Reflection.BindingFlags any = System.Reflection.BindingFlags.Static
+                | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+            GameUserSettings.Load();
+            scale = Mathf.Clamp(scale, GameUserSettings.UiScaleMin, GameUserSettings.UiScaleMax);
+            typeof(GameUserSettings).GetProperty(nameof(GameUserSettings.UiScale), any)?.GetSetMethod(true)?.Invoke(null, new object[] { scale });
+            (typeof(GameUserSettings).GetField(nameof(GameUserSettings.UiScaleChanged), any)?.GetValue(null) as Action)?.Invoke();
+            Log("ui scale " + GameUserSettings.UiScale.ToString("0.00"));
         }
 
         void Update()
@@ -175,8 +195,9 @@ namespace Game.View
             float d = Time.unscaledTime - _deathAt;
             // Итоги встают через 1,2 с после смерти (RunEndBeat) и тлеют медленно (26 сентября): дым — 1,2 с,
             // счёт — с 0,9 с после показа, до ~1,9 с. 06 — дым в пути, 06b — буквы и счёт, 07 — всё встало.
-            float[] at = { .35f, 1f, 1.7f, 2.3f, 3.4f };
-            string[] names = { "04-death-beat", "05-death-hold", "06-summary", "06b-summary-smolder", "07-summary-counted" };
+            // 07c — итоги со статистикой (полировка 30.09): строки досчитываются по очереди, «Убито», полосы, кольца на R и C.
+            float[] at = { .35f, 1f, 1.7f, 2.3f, 3.4f, 6f };
+            string[] names = { "04-death-beat", "05-death-hold", "06-summary", "06b-summary-smolder", "07-summary-counted", "07c-summary-final" };
             if (_deathStep < at.Length && d >= at[_deathStep])
             {
                 Log(names[_deathStep] + ": holding=" + RunEndBeat.Holding + " timeScale=" + Time.timeScale.ToString("0.00"));
@@ -197,7 +218,9 @@ namespace Game.View
             else _phaseAt += step;
 
             if (_loot && !_lootDone && t >= 4.6f && run.Phase == RunPhase.SeekingExit) VisitCaches(run, step);
-            if (!_atExit && (!_loot || _lootDone) && t >= 5f && run.Phase == RunPhase.SeekingExit && run.Map.ExitCount > 0)
+            // Полировка 30.09: после зачистки выход за кадром — спокойная метка у края (2a); кадр до переноса героя.
+            if (!_exitMarkShot && run.Phase == RunPhase.SeekingExit && _phaseAt >= .9f) { Shot("03b-exit-mark"); _exitMarkShot = true; }
+            if (!_atExit && (!_loot || _lootDone) && t >= 5f && run.Phase == RunPhase.SeekingExit && _exitMarkShot && run.Map.ExitCount > 0)
             {
                 _atExit = true;
                 run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
@@ -205,8 +228,19 @@ namespace Game.View
             }
             if (run.Phase == RunPhase.ChoosingReward)
             {
+                // Полировка 30.09: 08a — блок ввода (кольцо на кейкапах наполняется), 08c — наведённая вторая карточка
+                // (наклон, перелив, подсказка справа с вложенной); наведение — RunHud.CaptureHover, без мыши.
+                if (!_rewardLockShot && _phaseAt >= .5f) { Shot("08a-reward-lock"); _rewardLockShot = true; }
                 if (_routeStep == 0 && _phaseAt >= 1.1f) { Shot("08-reward"); _routeStep = 1; }
-                if (_routeStep == 1 && _phaseAt >= 1.6f) { _driver.QueueRunCommand(RunCommand.ChooseReward1); _routeStep = 2; Log("reward 1 taken"); }
+                if (_routeStep == 1 && _phaseAt >= 1.8f && RunHud.CaptureHover < 0 && !_rewardHoverShot) RunHud.CaptureHover = 1;
+                if (_routeStep == 1 && !_rewardHoverShot && _phaseAt >= 2.6f) { Shot("08c-reward-hover"); _rewardHoverShot = true; }
+                if (_routeStep == 1 && _rewardHoverShot && _phaseAt >= 2.9f)
+                {
+                    RunHud.CaptureHover = -1;
+                    _driver.QueueRunCommand(RunCommand.ChooseReward1);
+                    _routeStep = 2;
+                    Log("reward 1 taken");
+                }
             }
             if (run.Phase == RunPhase.ReplacingAbility)
             {
@@ -247,12 +281,24 @@ namespace Game.View
             float a = _arenaAt;
             if (_routeStep == 6 && a >= .6f) { Shot("10a-arena2"); _routeStep = 7; }
             if (_routeStep == 7 && a >= 1.4f) { Shot("10-arena2"); _routeStep = 8; }
+            // Полировка 30.09: пока враги второй арены подходят и бьют — кадры каждые 0,25 с (метки у края, кромка
+            // удара, цифры по герою); после паузы — низкое здоровье (виньетка) перед гибелью.
+            if (_routeStep == 8 && a >= 1.6f + _hitShot * .25f && a < 4.6f) { Shot("10h-fight-" + _hitShot.ToString("00")); _hitShot++; }
+            if (_routeStep == 13 && !_lowHp && a >= 6.35f)
+            {
+                _lowHp = true;
+                EntityStore entities = run.Sim.Entities;
+                if (entities.Alive[Simulation.PlayerId])
+                    entities.Health[Simulation.PlayerId] = Mathf.Max(1, entities.MaxHealth[Simulation.PlayerId] / 7);
+                Log("hero at low health " + entities.Health[Simulation.PlayerId] + "/" + entities.MaxHealth[Simulation.PlayerId]);
+            }
+            if (_routeStep == 13 && _lowHp && !_lowShot && a >= 7.1f) { Shot("10v-low-health"); _lowShot = true; }
             if (_routeStep == 8 && a >= 5f) { Pause(true); _routeStep = 9; }
             if (_routeStep == 9 && a >= 5.12f) { Shot("11a-pause"); _routeStep = 10; }
             if (_routeStep == 10 && a >= 5.3f) { Shot("11b-pause"); _routeStep = 11; }
             if (_routeStep == 11 && a >= 5.8f) { Shot("11-pause"); _routeStep = 12; }
             if (_routeStep == 12 && a >= 6.3f) { Pause(false); _routeStep = 13; }
-            return _routeStep == 13 && a >= 7f;
+            return _routeStep == 13 && a >= 7.3f;
         }
 
         /// <summary>

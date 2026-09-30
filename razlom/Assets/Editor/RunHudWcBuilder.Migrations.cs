@@ -26,8 +26,16 @@ namespace Game.EditorTools
         /// таймер выживания опускается под строку.
         /// v2 (30.09): v1 собирала строку, но не записывала ссылку RunHudView.Loot — строка лежала в
         /// префабе невидимой, а золото оставалось в панели. v2 находит собранную строку и подключает её.
+        /// v3 (30.09, доска concepts-2026-09-30-hud-polish — 1a с подписью фазы из 1b, 3a, 4): засечки, круглая
+        /// голова, подпись фазы и числа полосы босса; пул монет строки добычи; перелив, кейкап набора с кольцом
+        /// блокировки и подсказки справа на экране награды; «Улучшение» — свиток вместо ромба; значок тайников
+        /// панели; итоги со статистикой, стоп-кадром, «Убито» и полосами «Потеряно» / «Остаётся»
+        /// (RunHudWcBuilder.Polish, RunHudWcBuilder.SummaryStats).
+        /// v4 (30.09, единый набор — лист 5): остальные кейкапы (слоты замены способности и прочие круглые клавиши
+        /// «Дыма и света») — тёмный скруглённый квадрат, как у карточек награды; подсказки клавиш пишет вид в формате
+        /// «[1] [2] [3] Выбрать   ·   [L] Уйти с добычей».
         /// </summary>
-        public const int LayoutVersion = 2;
+        public const int LayoutVersion = 4;
 
         static bool _waiting;
 
@@ -133,8 +141,17 @@ namespace Game.EditorTools
         {
             if (view.LayoutVersion < 1) MigrateTo1(view);
             if (view.LayoutVersion < 2) MigrateTo2(view);
+            if (view.LayoutVersion < 3) MigrateTo3(view);
+            if (view.LayoutVersion < 4) MigrateTo4(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
+        }
+
+        /// <summary>v4 — единый набор: все оставшиеся круглые кейкапы экранов забега → кейкап листа 5 на месте.</summary>
+        static void MigrateTo4(RunHudView view)
+        {
+            int caps = UiInkKit.RestyleKeycaps(view.transform);
+            Debug.Log("[ui-kit] Экраны забега: кейкапов листа 5 — " + caps + ".");
         }
 
         /// <summary>v1 — строка добычи под панелью состояния (выбор владельца 30.09).</summary>

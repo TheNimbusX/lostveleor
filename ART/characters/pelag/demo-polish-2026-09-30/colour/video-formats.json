@@ -1,0 +1,116 @@
+[
+  {
+    "file": "game/basic-roll-r02/pelag_dash_1080p60.mp4",
+    "duration": "00:00:01.72",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 12101 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game/leap-after/pelag_anchor-leap_1080p60.mp4",
+    "duration": "00:00:03.90",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 9649 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game/run-after/pelag_locomotion.mp4",
+    "duration": "00:00:03.90",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 12795 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game/wreck-after/pelag_wreck_1080p60.mp4",
+    "duration": "00:00:03.90",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 8959 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game-verified/basic-attack-handoff-r02/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 6857 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game-verified/death-after/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 4948 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game-verified/roll-after/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 5448 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "game-verified/slam-after/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 4904 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "fps/wreck-120/pelag_wreck_1080p60.mp4",
+    "duration": "00:00:03.90",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 11111 kb/s, 120 fps, 120 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "fps/wreck-30/pelag_wreck_1080p60.mp4",
+    "duration": "00:00:03.90",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 7555 kb/s, 30 fps, 30 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "fps-verified/roll-120/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 6859 kb/s, 120 fps, 120 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "fps-verified/roll-30/pelag_anchor-slam_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 960x540 [SAR 1:1 DAR 16:9], 5129 kb/s, 30 fps, 30 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/backblast/pelag_backblast_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 8828 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/blaze/pelag_blaze_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 2505 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/chain-step/pelag_chain-step_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 9512 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/cleave/pelag_cleave_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 8416 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/fire-flask/pelag_fire-flask_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 8569 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/skewer/pelag_skewer_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 7975 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  },
+  {
+    "file": "poses-r02/whirlwind/pelag_whirlwind_1080p60.mp4",
+    "duration": "00:00:02.20",
+    "stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 8961 kb/s, 60 fps, 60 tbr, 15360 tbn (default)",
+    "full_decode_passed": true
+  }
+]

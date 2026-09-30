@@ -5,15 +5,12 @@ using Game.View;
 // полосе, низ полосы с рогами и высота полоски над макушкой.
 public sealed class EliteBarLayoutTests
 {
+    // Формат владельца «1240 / 2000»: без разделителя тысяч, здоровье зажато в полосу.
     [Test]
-    public void NumbersShowCurrentOverMax() => Assert.That(EliteBarLayout.Numbers(1234, 2000), Is.EqualTo("1234 / 2000"));
-
-    [Test]
-    public void NumbersHaveNoThousandsSeparator() => Assert.That(EliteBarLayout.Numbers(12400, 20000), Is.EqualTo("12400 / 20000"));
-
-    [Test]
-    public void NumbersClampHealthIntoBar()
+    public void NumbersShowCurrentOverMax()
     {
+        Assert.That(EliteBarLayout.Numbers(1234, 2000), Is.EqualTo("1234 / 2000"));
+        Assert.That(EliteBarLayout.Numbers(12400, 20000), Is.EqualTo("12400 / 20000"), "без разделителя тысяч");
         Assert.That(EliteBarLayout.Numbers(-5, 2000), Is.EqualTo("0 / 2000"));
         Assert.That(EliteBarLayout.Numbers(2500, 2000), Is.EqualTo("2000 / 2000"));
     }

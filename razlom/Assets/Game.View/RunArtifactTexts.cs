@@ -43,12 +43,12 @@ namespace Game.View
             }
         }
 
-        /// <summary>Как включается: «F · перезарядка 60 с» или «Срабатывает сам».</summary>
+        /// <summary>Как включается: «[F] Включить · перезарядка 60 с» (формат подсказки клавиши листа 5) или «Срабатывает сам».</summary>
         public static string Use(RunArtifact artifact)
         {
             int cooldown = Simulation.ArtifactCooldownTicks(artifact);
             return cooldown > 0
-                ? GameKeyBindings.Label(GameAction.UseArtifact) + " — включить · перезарядка " + cooldown / Simulation.TicksPerSecond + " с"
+                ? UiKeyHint.Hint("включить", GameKeyBindings.Label(GameAction.UseArtifact)) + " · перезарядка " + cooldown / Simulation.TicksPerSecond + " с"
                 : "Срабатывает сам";
         }
 

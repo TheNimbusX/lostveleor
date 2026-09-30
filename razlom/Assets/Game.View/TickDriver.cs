@@ -145,7 +145,8 @@ namespace Game.View
 
             bool validChoice = Run.Phase == RunPhase.ChoosingReward
                                && (command >= RunCommand.ChooseReward1 && command <= RunCommand.ChooseReward3
-                                   || command == RunCommand.SkipReward && Run.ChoosingArtifact);
+                                   || command == RunCommand.SkipReward && Run.ChoosingArtifact
+                                   || command == RunCommand.RerollReward && Run.CanRerollReward);
             bool validRoute = Run.Phase == RunPhase.ChoosingRoute && command >= RunCommand.ChooseRoute1 && command <= RunCommand.ChooseRoute3;
             bool validReplace = Run.Phase == RunPhase.ReplacingAbility
                                 && command >= RunCommand.ReplaceSlot1 && command <= RunCommand.SalvageAbility;
@@ -318,6 +319,8 @@ namespace Game.View
 
             StartForestBudPlaytestIfRequested();
             StartTempoPlaytestIfRequested();
+            if(Session.PreparationRequested && !GameplayPaused && !CampTransition.Busy && CampPlayerView.Instance?.Active==true)
+                CampPreparationView.Instance?.Open();
             if (GameplayPaused || CampTransition.Busy || CampPlayerView.Instance?.InputBlocked == true)
             {
                 _frameEvents.Clear();
@@ -515,6 +518,12 @@ namespace Game.View
         /// </summary>
         private void LeaveSummary(bool repeat)
         {
+            if(repeat && Session.Camp.HasTravelTable)
+            {
+                System.Action prepare=()=>{if(Session.Mode!=GameMode.Summary)return;Session.RequestRiftEntry();SyncAfterSwitch();};
+                if(!CampTransition.Swap(prepare,true))prepare();
+                ClearCapturedInput();return;
+            }
             if (CampTransition.Swap(() =>
                 {
                     if (Session.Mode != GameMode.Summary) return;
@@ -1092,6 +1101,9 @@ namespace Game.View
                     }
                     else if (i < RiftRun.RewardChoices)
                     {
+                        // Экран награды или арены только открылся — удар, пришедшийся на открытие, карточку
+                        // не берёт (блок ввода RunHud.ChoiceLocked, владелец 29.09).
+                        if (RunHud.ChoiceLocked) continue;
                         // Артефакт при уже занятом слоте — сначала вопрос «Заменить артефакт?».
                         RunHud runHud = Run.ChoosingArtifact ? GetComponent<RunHud>() : null;
                         if (runHud != null) runHud.RequestOffer(i);
@@ -1496,7 +1508,7 @@ namespace Game.View
                 frame.AbilityTarget = _abilityPressFrame.AbilityTarget;
             }
             _abilityPressLatched = false;
-            frame.PotionMask=_potionLatch;_potionLatch=0;
+            frame.PotionSlotMask=_potionLatch;_potionLatch=0;
             if(_artifactLatch)frame.Flags|=(byte)InputFlags.UseArtifact;
             _artifactLatch=false;
             frame.AbilityMask = _abilityLatch;

@@ -13,6 +13,7 @@ namespace Game.Sim
         public const int SurgeUnlockShards = 12;
         readonly AlchemistOrderStatus[] _alchemyOrders = new AlchemistOrderStatus[2];
         public bool HasMetAlchemist { get; private set; }
+        public bool UsesLegacyAlchemyOrders => !UsesCampProgression;
         public AlchemistOrderStatus AlchemyStatus(AlchemistOrder order)
             => (uint)order < 2 ? _alchemyOrders[(int)order] : AlchemistOrderStatus.Hidden;
 
@@ -25,6 +26,7 @@ namespace Game.Sim
         }
         public AlchemistActionResult AcceptAlchemyOrder(AlchemistOrder order)
         {
+            if (!UsesLegacyAlchemyOrders) return AlchemistActionResult.InvalidOrder;
             if ((uint)order >= 2) return AlchemistActionResult.InvalidOrder;
             if (!HasMetAlchemist) return AlchemistActionResult.NotMet;
             var state = AlchemyStatus(order);
@@ -40,6 +42,7 @@ namespace Game.Sim
         }
         public AlchemistActionResult TurnInAlchemyOrder(AlchemistOrder order)
         {
+            if (!UsesLegacyAlchemyOrders) return AlchemistActionResult.InvalidOrder;
             if ((uint)order >= 2) return AlchemistActionResult.InvalidOrder;
             if (!HasMetAlchemist) return AlchemistActionResult.NotMet;
             var state = AlchemyStatus(order);
@@ -50,6 +53,7 @@ namespace Game.Sim
         }
         public AlchemistActionResult ExchangeRareForResin(int bagSlot)
         {
+            if (!UsesLegacyAlchemyOrders) return AlchemistActionResult.InvalidOrder;
             if (!HasMetAlchemist) return AlchemistActionResult.NotMet;
             var state = AlchemyStatus(AlchemistOrder.Resin);
             if (state == AlchemistOrderStatus.Unlocked) return AlchemistActionResult.AlreadyUnlocked;
@@ -63,6 +67,7 @@ namespace Game.Sim
         }
         public AlchemistActionResult ExchangeShardsForSurge()
         {
+            if (!UsesLegacyAlchemyOrders) return AlchemistActionResult.InvalidOrder;
             if (!HasMetAlchemist) return AlchemistActionResult.NotMet;
             var state = AlchemyStatus(AlchemistOrder.Surge);
             if (state == AlchemistOrderStatus.Unlocked) return AlchemistActionResult.AlreadyUnlocked;
@@ -78,11 +83,6 @@ namespace Game.Sim
                 throw new System.IO.InvalidDataException("Некорректные заказы алхимика");
             HasMetAlchemist = met;
             _alchemyOrders[0] = resin; _alchemyOrders[1] = surge;
-            if (!PotionUnlocked(_selectedPotions[0]) || !PotionUnlocked(_selectedPotions[1]))
-                throw new System.IO.InvalidDataException("Выбрано закрытое зелье");
-            if (_potions[4] > 0 && resin != AlchemistOrderStatus.Unlocked ||
-                _potions[5] > 0 && surge != AlchemistOrderStatus.Unlocked)
-                throw new System.IO.InvalidDataException("Запас закрытого зелья");
         }
         void HashAlchemy(ref ulong hash)
         {

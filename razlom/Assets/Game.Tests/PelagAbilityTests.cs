@@ -112,17 +112,55 @@ namespace Game.Tests
             var sim = Arena(AbilityDefinition.Blaze());
             sim.Step(Press(0, 20));
             Assert.IsFalse(sim.BlazeActive, "усиление началось до поливания");
-            Idle(sim, Simulation.BlazeIgnitionDelayTicks);
+
+            // Событие начала усиления приходит ровно один раз, в тик поджога,
+            // и несёт длительность окна.
+            int begins = 0, beganAt = -1, waited = 0;
+            void Wait(int ticks)
+            {
+                for (int i = 0; i < ticks; i++)
+                {
+                    sim.Step(InputFrame.Empty);
+                    waited++;
+                    if (waited < Simulation.BlazeIgnitionDelayTicks)
+                        Assert.IsFalse(sim.BlazeActive, "усиление началось до поджога, тик " + waited);
+                    foreach (var e in sim.Events)
+                        if (e.Type == SimEventType.BlazeBegin)
+                        {
+                            begins++;
+                            beganAt = waited;
+                            Assert.AreEqual(90, e.Amount, "окно усиления — три секунды");
+                        }
+                }
+            }
+
+            Wait(Simulation.BlazeIgnitionDelayTicks);
             Assert.IsTrue(sim.BlazeActive, "усиление не включилось");
+            Assert.AreEqual(Simulation.BlazeIgnitionDelayTicks, beganAt, "поджог не в свой тик");
 
             // Каст занял тик, поэтому дожить усиление должно ещё 88 тиков:
             // 90 тиков всего минус тик нажатия и минус тик, на котором окно
             // уже закрыто.
-            Idle(sim, 88);
+            Wait(88);
             Assert.IsTrue(sim.BlazeActive, "усиление кончилось раньше трёх секунд");
 
-            Idle(sim, 2);
+            Wait(2);
             Assert.IsFalse(sim.BlazeActive, "усиление не кончилось");
+            Assert.AreEqual(1, begins, "начало усиления объявляется один раз");
+        }
+
+        /// <summary>Уворот до поджога отменяет отложенное усиление.</summary>
+        [Test]
+        public void RollBeforeIgnitionCancelsPendingBuff()
+        {
+            var sim = Arena(AbilityDefinition.Blaze());
+            sim.SetAbility(1, AbilityDefinition.Dash(), new AbilityNode[0], 0);
+            sim.Step(Press(0, 80));
+            Idle(sim, 10);
+            sim.Step(Press(1, 80));
+            Idle(sim, 100);
+            Assert.IsFalse(sim.BlazeActive);
+            Assert.IsFalse(sim.BlazeCasting);
         }
 
         /// <summary>
@@ -222,19 +260,6 @@ namespace Game.Tests
             Assert.Less(Health(sim, victim), afterSecond, "завершающий удар не прошёл");
         }
 
-        // ---- Общий деш ----
-
-        [Test]
-        public void DashMovesPlayerWithoutATarget()
-        {
-            var sim = Arena(AbilityDefinition.Dash());
-            sim.Step(Press(0, 20));
-            Idle(sim, 12);
-
-            Assert.IsTrue(sim.Entities.Position[Simulation.PlayerId].X > Fix64.FromInt(2),
-                "деш не сдвинул героя");
-        }
-
         // ---- Протяжка к врагу ----
 
         [Test]
@@ -242,6 +267,8 @@ namespace Game.Tests
         {
             var sim = Arena(AbilityDefinition.AnchorLeap());
             int victim = Enemy(sim, 50);
+            // До броска герой смотрит от цели: разворот обязан сделать сам полёт.
+            sim.Entities.Facing[Simulation.PlayerId] = new FixVec2(-Fix64.One, Fix64.Zero);
 
             sim.Step(Press(0, 50, 0, victim));
             Idle(sim, 40);
@@ -249,6 +276,41 @@ namespace Game.Tests
             Assert.Less(Health(sim, victim), 10000, "удара по прибытии не было");
             Assert.IsTrue(sim.Entities.Position[Simulation.PlayerId].X > Fix64.FromInt(3),
                 "герой не подтянулся к цели");
+            Assert.Greater(sim.Entities.Facing[Simulation.PlayerId].X.ToFloat(), 0.99f,
+                "после посадки герой смотрит по направлению полёта");
+        }
+
+        // ---- Шаг по цепи ----
+
+        [Test]
+        public void ChainStep_HopsBetweenTargetsAndHurtsThemOnTheWay()
+        {
+            var sim = new Simulation(0xA9C40BEEUL, 32);
+            sim.SetupTestArena(0);
+            sim.SetAbility(3, AbilityDefinition.ChainStep(), new AbilityNode[0], 0);
+
+            int[] mobs = new int[3];
+            for (int i = 0; i < mobs.Length; i++)
+            {
+                mobs[i] = sim.Entities.Spawn(
+                    new FixVec2(Fix64.FromInt(2 + i), Fix64.FromInt(i)), 9000, Faction.Orvill);
+                sim.Entities.Stats[mobs[i]].SetBase(StatType.MoveSpeed, Fix64.Zero);
+                sim.Entities.RefreshStats(mobs[i]);
+                sim.Entities.NextAttackTick[mobs[i]] = int.MaxValue;
+            }
+
+            FixVec2 start = sim.Entities.Position[Simulation.PlayerId];
+            sim.Step(Press(3, 0, 0, 1));
+            Idle(sim, AnchorKit.ChainTicksPerHop * AnchorKit.ChainMaxHops + 8);
+
+            int hurt = 0;
+            for (int i = 0; i < mobs.Length; i++)
+                if (sim.Entities.Health[mobs[i]] < 9000) hurt++;
+
+            Assert.AreEqual(3, hurt,
+                "цепочка обязана задеть больше одной цели: в этом весь смысл");
+            Assert.Greater((sim.Entities.Position[Simulation.PlayerId] - start).Length.ToFloat(),
+                0.5f, "и переставить игрока внутрь пачки");
         }
     }
 }

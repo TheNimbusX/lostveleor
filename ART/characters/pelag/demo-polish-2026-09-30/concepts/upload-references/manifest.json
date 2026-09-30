@@ -1,0 +1,67 @@
+[
+  {
+    "index": 1,
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\references\\pelag_identity.jpg",
+    "source_sha256": "a9418de608a9a66fe220085a249cf251536ee6da83a6e31a37f269aea5888308",
+    "transport": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\concepts\\upload-references\\ref_01.jpg",
+    "transport_sha256": "2487ce24e434d89da2a39a0d29a77143855e18f7e8105c8e07b8f651990a81f1",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "bytes": 123242,
+    "role": "Existing hero identity and original costume"
+  },
+  {
+    "index": 2,
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\references\\saber_identity.jpg",
+    "source_sha256": "26204d50aa6721d241cbf4fa91692219b3b79c00a610a432e6ed2418a25438d1",
+    "transport": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\concepts\\upload-references\\ref_02.jpg",
+    "transport_sha256": "2211f74f18abc7958fabd81857a5190fe522a11448062593ade0ea6a12dcca41",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "bytes": 74712,
+    "role": "Existing saber design"
+  },
+  {
+    "index": 3,
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\references\\anchor_identity.jpg",
+    "source_sha256": "ffb8781d250ce4fa5b141d35ea02ea957dc98d372895b7894f909c5d6698806a",
+    "transport": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\concepts\\upload-references\\ref_03.jpg",
+    "transport_sha256": "8a4d3725b953184d259f24d8ea9ca85c632918c1f382ec966bf7c24f7b678396",
+    "dimensions": [
+      1024,
+      1536
+    ],
+    "bytes": 141290,
+    "role": "Existing anchor and chain design"
+  },
+  {
+    "index": 4,
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\baseline\\camp\\shot_00_t3.00s.png",
+    "source_sha256": "35a321ae8e609dd653f820b1a1e4a6e3616f56055a409ef778132e9a1e85722c",
+    "transport": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\concepts\\upload-references\\ref_04.jpg",
+    "transport_sha256": "4676378f6d1cd1dcd57855ab2eaed5e87699fd1cbb8ad383b4c6f1621d769c3f",
+    "dimensions": [
+      1536,
+      864
+    ],
+    "bytes": 222105,
+    "role": "Actual game camp rendering"
+  },
+  {
+    "index": 5,
+    "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\baseline\\forest-combat\\shot_01_t0.50s.png",
+    "source_sha256": "704a9ed338cd7f3a6f01efd61761cf9f04d106ead734d44efbdfcfa8e381d8a3",
+    "transport": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\concepts\\upload-references\\ref_05.jpg",
+    "transport_sha256": "e13e44698c8cf6a19529089dc64bd681061e6100b775681fd478467d9a66604d",
+    "dimensions": [
+      1536,
+      864
+    ],
+    "bytes": 194792,
+    "role": "Actual forest combat rendering"
+  }
+]

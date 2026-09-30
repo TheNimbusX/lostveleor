@@ -341,7 +341,7 @@ namespace Game.EditorTools
             Box(UiInkKit.Divider(screen, "Линия", 860f, true, .35f), new Vector2(.5f, 1f), Center, new Vector2(0f, -212f), new Vector2(860f, 16f));
             view.ChoiceSubtitle = Line(screen, "Пояснение", "Арена зачищена", 242f, 19f, Role.TextMuted);
             // Клавиши — сразу под пояснением: внизу строка ложилась на полосу способностей HUD.
-            view.ChoiceHint = Hint(screen, "1  2  3 — выбрать    ·    L — уйти с добычей", 268f);
+            view.ChoiceHint = Hint(screen, UiKeyHint.Join(UiKeyHint.Hint("выбрать", "1", "2", "3"), UiKeyHint.Hint("уйти с добычей", "L")), 268f);
             view.KindIcons = new[] { Icon("ability"), Icon("talent"), Icon("items"), Icon("rift") };
             // Родник (лечение сразу): белый знак здоровья — краску здоровья даёт RunHud.
             view.SpringIcon = Icon("health") as Texture2D;
@@ -393,7 +393,7 @@ namespace Game.EditorTools
             UiInkGroup appear = UiInkKit.Group(card, UiInkGroup.Sweep.FromCenter, .35f, .12f);
             appear.Burn = 0f;
             RectTransform titleBox = Box(Node("Заголовок", card), new Vector2(.5f, 1f), Center, new Vector2(0f, -46f), new Vector2(560f, 50f));
-            UiInkKit.Label(titleBox, "Надпись", "Заменить артефакт?", FontRole.Heading, 32f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
+            UiInkKit.Label(titleBox, "Надпись", "Заменить артефакт?", FontRole.Heading, T.Size(UiTheme.TextStep.Title), Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
 
             view.ArtifactOld = Medallion(card, "Прежний", new Vector2(.5f, 1f), new Vector2(-120f, -150f), 112f, Role.Unique, .5f, out _, out _);
             view.ArtifactNew = Medallion(card, "Новый", new Vector2(.5f, 1f), new Vector2(120f, -150f), 112f, Role.Unique, .95f, out _, out _);
@@ -472,7 +472,7 @@ namespace Game.EditorTools
             offer.Value.textWrappingMode = TextWrappingModes.NoWrap;
             offer.Value.rectTransform.offsetMin = new Vector2(150f, 0f);
 
-            offer.Key = CornerKey(card, (index + 1).ToString(), 38f, new Vector2(-24f, -22f));
+            offer.Key = CornerKey(card, (index + 1).ToString(), T.KeycapSize, new Vector2(-24f, -22f));
 
             var rarity = card.gameObject.AddComponent<WcRarity>();
             rarity.Tinted = new[]
@@ -496,7 +496,7 @@ namespace Game.EditorTools
             Box(UiInkKit.Divider(screen, "Линия", 860f, true, .35f), new Vector2(.5f, 1f), Center, new Vector2(0f, -284f), new Vector2(860f, 16f));
             view.ReplaceSubtitle = Line(screen, "Пояснение", "Панель полна.", 320f, 19f, Role.TextMuted);
             // Клавиши — под пояснением, как на выборе награды: внизу их закрывал боевой HUD.
-            view.ReplaceHint = Hint(screen, "1  2  3  4 — заменить слот    ·    L — уйти с добычей", 348f);
+            view.ReplaceHint = Hint(screen, UiKeyHint.Join(UiKeyHint.Hint("заменить слот", "1", "2", "3", "4"), UiKeyHint.Hint("уйти с добычей", "L")), 348f);
 
             view.Slots = new RunSlotTile[4];
             for (int i = 0; i < 4; i++) view.Slots[i] = SlotTile(screen, i);

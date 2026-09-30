@@ -111,14 +111,8 @@ namespace Game.EditorTools
             for (int slot = 0; slot < view.Slots.Length && slot < upgrades.Length; slot++)
                 view.Slots[slot].ReadyGem.Preview(upgrades[slot], slot < 2, slot == 1, slot == 0 ? .6f : 0f);
             view.Dash.ReadyGem.Preview(0, true);
-            // Эффекты зелий над героем: Живица на 4 с, Порыв на 2 с.
-            foreach (var (chip, fill, title) in new[] { (view.ResinChip, .66f, "Живица · 4 с"), (view.SurgeChip, .33f, "Порыв · 2 с") })
-            {
-                chip.gameObject.SetActive(true);
-                chip.Group.alpha = 1f;
-                chip.Ring.fillAmount = fill;
-                chip.Title.text = title;
-            }
+            // Строка эффектов над портретом (этап 4): корни, Живица, Порыв, артефакт и Blaze «×2».
+            PreviewEffects(view);
             // Артефакт забега: медальон у портрета.
             view.ArtifactSlot.SetActive(true);
             view.ArtifactIcon.texture = RunArtifactTexts.Icon(Game.Sim.RunArtifact.SunSeal);

@@ -17,9 +17,12 @@ namespace Game.View
     /// поэтому смена оранжевого или цвета редкости не требует перерисовки.
     /// Форма общая — скругление 14 у окон и 8 у ячеек, проволока 1,5 единицы Canvas; менять её
     /// надо в скрипте пака, а не здесь, иначе рамки и заливки разойдутся.
+    ///
+    /// Единый набор (лист 5, 30 сентября): шкала текста 56/32/24/18/14, кейкап, кнопки и отступы — поля ниже,
+    /// умолчания и правила без Unity — UiTheme.Tokens.cs. Размер текста в коде — <see cref="Size"/>, не числом.
     /// </summary>
     [CreateAssetMenu(menuName = "Разлом/UI/Тема", fileName = "UiTheme")]
-    public sealed class UiTheme : ScriptableObject
+    public sealed partial class UiTheme : ScriptableObject
     {
         public enum Role
         {
@@ -43,50 +46,61 @@ namespace Game.View
         [Tooltip("Пустая часть полос и слайдеров")] public Color Track = Hex("1B2029", .95f);
 
         [Header("Текст")]
-        public Color Text = Hex("F4F7FB");
-        public Color TextMuted = Hex("93A2BC");
-        [Tooltip("Текст на оранжевой кнопке")] public Color TextOnAccent = Hex("FFF6EE");
+        public Color Text = Hex(TextHex);
+        public Color TextMuted = Hex(TextMutedHex);
+        [Tooltip("Текст на оранжевой кнопке")] public Color TextOnAccent = Hex(TextOnAccentHex);
 
         [Tooltip("Чернильный дым материала «Дым и свет» (владелец 25 сентября): подложка текста и значков прямо над миром")] public Color Smoke = Hex("121923", .93f);
         [Tooltip("Глубокий дым: колонны окон поверх притемнённого мира (итоги, пауза) — почти чёрный и плотный")] public Color SmokeDeep = Hex("04060A", 1f);
 
         [Header("Акцент и состояния")]
-        [Tooltip("Единственный акцент: выбранное, основная кнопка, маркер пункта")] public Color Accent = Hex("FD7442");
-        public Color AccentHover = Hex("FF8C5E");
-        public Color AccentPressed = Hex("DF5E30");
+        [Tooltip("Единственный акцент: выбранное, основная кнопка, маркер пункта")] public Color Accent = Hex(AccentHex);
+        public Color AccentHover = Hex(AccentHoverHex);
+        public Color AccentPressed = Hex(AccentPressedHex);
         public Color Disabled = Hex("3C4048", .6f);
 
         [Header("Редкость")]
-        public Color Common = Hex("A6B3C8");
-        public Color Rare = Hex("3BF0F5");
-        [Tooltip("Эпическая: фиолет")] public Color Epic = Hex("A765FF");
-        [Tooltip("Уникальная: огненно-красная, не путать с оранжевым акцентом выбора")] public Color Unique = Hex("FF5236");
+        public Color Common = Hex(CommonHex);
+        public Color Rare = Hex(RareHex);
+        [Tooltip("Эпическая: фиолет")] public Color Epic = Hex(EpicHex);
+        [Tooltip("Уникальная: огненно-красная, не путать с оранжевым акцентом выбора")] public Color Unique = Hex(UniqueHex);
 
         [Header("Ресурсы")]
-        public Color Lavidium = Hex("FA883C");
-        public Color Health = Hex("F34F37");
+        public Color Lavidium = Hex(LavidiumHex);
+        public Color Health = Hex(HealthHex);
         public Color Experience = Hex("E6EBF2");
-        [Tooltip("Медь, не золото: рядом синий нельзя сочетать с жёлтым")] public Color Coins = Hex("D98A5A");
+        [Tooltip("Медь, не золото: рядом синий нельзя сочетать с жёлтым")] public Color Coins = Hex(CoinsHex);
 
         [Header("Сравнение статов")]
-        public Color Good = Hex("8FE3A8");
-        public Color Bad = Hex("FF6A5A");
+        public Color Good = Hex(GoodHex);
+        public Color Bad = Hex(BadHex);
 
         [Header("Шрифты")]
         [Tooltip("Заголовки, меню, названия — Philosopher")] public TMP_FontAsset Heading;
         [Tooltip("Текст, цифры, подписи — Nunito")] public TMP_FontAsset Body;
         [Tooltip("Цифры урона над врагами — Philosopher Bold, светлая антиква листа HUD")] public TMP_FontAsset Numbers;
 
-        [Header("Размеры текста, единицы Canvas (1920×1080)")]
-        public float TitleSize = 44f;
-        public float HeadingSize = 28f;
-        public float BodySize = 20f;
-        public float CaptionSize = 16f;
+        // Прежние TitleSize 44 / HeadingSize 28 / BodySize 20 / CaptionSize 16 нигде не читались; шкала листа 5 —
+        // под новыми именами, чтобы старые числа из ассета её не перебили.
+        [Header("Шкала текста листа 5, единицы Canvas (1920×1080)")]
+        [Tooltip("Заголовок экрана — Philosopher")] public float TextDisplay = DisplaySizeDefault;
+        [Tooltip("Раздел, заголовок окна подтверждения — Philosopher")] public float TextTitle = TitleSizeDefault;
+        [Tooltip("Название карточки, подсказки, кнопки — Philosopher")] public float TextHeading = HeadingSizeDefault;
+        [Tooltip("Основной текст, подписи клавиш — Nunito")] public float TextBody = BodySizeDefault;
+        [Tooltip("Мелкие подписи — Nunito")] public float TextCaption = CaptionSizeDefault;
+
+        [Header("Клавиша и кнопки, единицы Canvas")]
+        [Tooltip("Кейкап листа 5: тёмный скруглённый квадрат, кремовая буква, тонкая кромка")] public float KeycapSize = KeycapSizeDefault;
+        [Tooltip("Малый кейкап: строка подсказки, кнопка футера")] public float KeycapSmall = KeycapSmallDefault;
+        [Tooltip("Основная и вторичная кнопка, большая")] public float ButtonHeight = ButtonHeightDefault;
+        [Tooltip("Основная и вторичная кнопка, малая")] public float ButtonHeightSmall = ButtonHeightSmallDefault;
 
         [Header("Отступы, единицы Canvas")]
-        public float SpaceS = 8f;
-        public float SpaceM = 16f;
-        public float SpaceL = 24f;
+        public float SpaceXS = SpaceXSDefault;
+        public float SpaceS = SpaceSDefault;
+        public float SpaceM = SpaceMDefault;
+        public float SpaceL = SpaceLDefault;
+        public float SpaceXL = SpaceXLDefault;
 
         [Header("Спрайты пака (Assets/UI/Kit/Watercolor)")]
         public Sprite Fill;
@@ -200,6 +214,25 @@ namespace Game.View
         };
 
         public TMP_FontAsset Get(FontRole role) => role == FontRole.Heading ? Heading : Body;
+
+        /// <summary>Живой размер ступени шкалы текста (правка в ассете темы).</summary>
+        public float Size(TextStep step)
+        {
+            switch (step)
+            {
+                case TextStep.Display: return TextDisplay;
+                case TextStep.Title: return TextTitle;
+                case TextStep.Heading: return TextHeading;
+                case TextStep.Body: return TextBody;
+                default: return TextCaption;
+            }
+        }
+
+        /// <summary>Шрифт ступени: 56/32/24 — Philosopher, 18/14 — Nunito (лист 5, «правило регистра»).</summary>
+        public static FontRole FontFor(TextStep step) => step <= TextStep.Heading ? FontRole.Heading : FontRole.Body;
+
+        /// <summary>«#RRGGBB» роли — для rich text подписей.</summary>
+        public string HexOf(Role role) => "#" + ColorUtility.ToHtmlStringRGB(Get(role));
 
         void OnValidate()
         {

@@ -27,6 +27,7 @@ Shader "Razlom/Camp Contact Shadow"
                 half _Strength;
                 half _Softness;
             CBUFFER_END
+            float _CampDepthOn;
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
             Varyings Vert(Attributes input)
@@ -40,6 +41,7 @@ Shader "Razlom/Camp Contact Shadow"
             {
                 float d = length(input.uv * 2.0 - 1.0);
                 half a = (1.0h - smoothstep(1.0h - _Softness, 1.0h, d)) * _Strength;
+                if(_CampDepthOn>.5) a*=lerp(1.04,.82,smoothstep(.22,.8,d));
                 return half4(lerp(half3(1, 1, 1), _ShadowColor.rgb, a), 1);
             }
             ENDHLSL

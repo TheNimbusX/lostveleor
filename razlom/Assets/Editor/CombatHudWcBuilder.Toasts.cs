@@ -87,7 +87,7 @@ namespace Game.EditorTools
                 delay: .25f);
 
             RectTransform titleBox = Box(Node("Надпись", banner), new Vector2(.5f, .5f), new Vector2(.5f, 0f), new Vector2(0f, -2f), new Vector2(440f, 34f));
-            TMP_Text title = LabelOn(titleBox, "РАЗЛОМ ЗАЧИЩЕН", FontRole.Heading, 24f, Role.Text, TextAlignmentOptions.Bottom);
+            TMP_Text title = LabelOn(titleBox, "РАЗЛОМ ЗАЧИЩЕН", FontRole.Heading, T.Size(UiTheme.TextStep.Heading), Role.Text, TextAlignmentOptions.Bottom);
             UiInkKit.Revealed(title, .08f);
             title.characterSpacing = 4f;
             title.textWrappingMode = TextWrappingModes.NoWrap;

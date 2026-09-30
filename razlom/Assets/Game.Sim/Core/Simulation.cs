@@ -973,6 +973,8 @@ namespace Game.Sim
         /// </summary>
         private void ConfigureDummy(int id, Fix64 armor, Fix64 fireResist)
         {
+            // Бесконечно восстанавливаемая мишень измеряет билд, а не выдаёт опыт лагеря.
+            Entities.XpReward[id] = 0;
             // Ноль веса: мишень не должна отъезжать от ударов. Полигон меряет
             // урон, а не то, как далеко игрок укатил манекен.
             Entities.PushWeight[id] = Fix64.Zero;
@@ -1246,6 +1248,7 @@ namespace Game.Sim
         private void ResetAbilityState()
         {
             ResetPotionEffects();
+            ResetPreparedGiftTiming();
             ResetUpgrades();
             EndArtifactEffects();
             ResetTempo();
@@ -2493,6 +2496,7 @@ namespace Game.Sim
         private FixVec2 MoveInsideLayout(int entity, FixVec2 from, FixVec2 delta)
         {
             if ((_layout == null && _campWalkMap == null) || delta.LengthSq.Raw == 0) return from + delta;
+            if (_campWalkMap != null) return _campWalkMap.Slide(from, delta);
 
             Fix64 radius = Entities.BodyRadius[entity];
             FixVec2 full = from + delta;
@@ -2611,6 +2615,7 @@ namespace Game.Sim
                     CancelPlayerAction();
                     _nextPlayerAttackVariant ^= 1;
                     SetActionClock(-1, 0, Tick + PlayerAttackWindupTicks, Tick + Entities.AttackCooldown[i]);
+                    PreparedGiftOrdinaryAttackStarted();
                 }
                 _events.Add(SimEvent.Attack(i, target, Entities.Position[i], attackVariant));
                 Entities.NextAttackTick[i] = Tick + Entities.AttackCooldown[i];
@@ -2784,6 +2789,7 @@ namespace Game.Sim
             if (source == PlayerId && InFuelledPool(target)) damage = damage * 120 / 100;
             if (source == PlayerId) damage = ApplySunder(target, damage);
             damage = ArtifactOutgoing(source, target, damage, ability: false);
+            damage = PreparedGiftAttackDamage(source, damage);
 
             // Броня гасит удар ПОСЛЕ крита: крит увеличивает сам удар, а кривая
             // брони зависит от его размера — значит и считать её надо от того,
@@ -2834,6 +2840,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, Tick);
             HashTempo(ref hash);
             HashPotionEffects(ref hash);
+            HashPreparedGift(ref hash);
             HashArtifact(ref hash);
             HashAnchorSlam(ref hash);
             HashWreck(ref hash);

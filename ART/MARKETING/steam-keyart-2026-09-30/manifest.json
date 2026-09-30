@@ -1,0 +1,134 @@
+{
+  "batch": "Steam key art — черновые варианты",
+  "date": "2026-09-30",
+  "placeholder_note": "ЗАГЛУШКА: это ИИ-арт (Higgsfield GPT Image 2.5) для примерки композиций и зон под лого. По плану владельца все ИИ-арты перерисует художник; в Steam как финал не заливать.",
+  "logo_note": "Лого и текст в генерацию не входили. Лого B «расписной камень» (ART/UI/logo-final/TWR-logo-painted-stone.png) наложено только локально в logo-check/*.jpg, чтобы проверить свободное место.",
+  "generation": {
+    "model": "gpt_image_2_5",
+    "variant": "flare (default)",
+    "quality": "high",
+    "resolution": "2k",
+    "references_order": [
+      "refs/ref-pelag-sheet.jpg",
+      "refs/ref-pelag-model.jpg",
+      "refs/ref-pelag-portrait.jpg",
+      "refs/ref-game-forest.jpg",
+      "refs/ref-mobs.jpg"
+    ]
+  },
+  "references": [
+    {
+      "file": "refs/ref-pelag-sheet.jpg",
+      "source": "ART/characters/pelag/demo-polish-2026-09-30/concepts/A.png",
+      "media_id": "3c867652-fe27-411d-9c77-65ff8e874bb0",
+      "role": "Пелаг: лист персонажа (перед/спина/голова, сабля, якорь)"
+    },
+    {
+      "file": "refs/ref-pelag-model.jpg",
+      "source": "ART/characters/pelag/demo-polish-2026-09-30/colour/after-front|after-side|after-back.png",
+      "media_id": "eb882fe5-3e7f-4a14-aca1-41d81a439be9",
+      "role": "Пелаг: рендеры 3D-модели из игры"
+    },
+    {
+      "file": "refs/ref-pelag-portrait.jpg",
+      "source": "razlom/Assets/Resources/UI/HUD/PelagPortraitPaintedCutout.png",
+      "media_id": "5bd07485-d6d4-41bf-b1f1-50f4aaecd5fe",
+      "role": "Пелаг: портрет из HUD (лицо, причёска, повязка)"
+    },
+    {
+      "file": "refs/ref-game-forest.jpg",
+      "source": "artifacts/capture/polish-effects/shot_05_t10.30s.png (обрезан HUD)",
+      "media_id": "614a208a-d09b-440a-a59b-f85ae9781b21",
+      "role": "Кадр игры: яркая Чаща"
+    },
+    {
+      "file": "refs/ref-mobs.jpg",
+      "source": "ART/characters/act-1-enemies/{3.forest-elite-wendigo,2.forest-guardian,8.forest-splitbark,4.forest-butonranged,6.forest-stonepoof}/art.png",
+      "media_id": "e9de3611-d1cd-44e8-909f-3c17a4082d95",
+      "role": "Мобы леса: Вендиго, хранитель, Расщепень, Плюй-плод, Камнекопыт"
+    }
+  ],
+  "credits": {
+    "balance_before": 109.3,
+    "balance_after": 101.05,
+    "spent": 8.25,
+    "per_image": 2.75,
+    "images": 3
+  },
+  "items": [
+    {
+      "id": 1,
+      "file": "01-keyart-16x9.png",
+      "preview": "01-keyart-16x9.jpg",
+      "size": [
+        2688,
+        1520
+      ],
+      "aspect_ratio": "16:9",
+      "purpose": "Key art / library hero (широкий баннер); кроп 3840x1240 — steam-crops/01-library-hero-crop-1920x620.jpg",
+      "job_id": "309ac633-6382-4e1a-b4a8-f0952fc0dc6a",
+      "prompt": "Steam key art (library hero / wide banner) for a stylized 3D isometric action roguelike. Wide 16:9 cinematic illustration in the exact look of the references: polished stylized 3D game render with soft painterly texture, like image 4 (our in-game forest frame) and images 1-3 (our hero). The world is BRIGHT and SATURATED: sunny forest glade, lush yellow-green grass, round bushy deciduous trees, a few dark pines at the edges, mossy grey boulders, a warm dirt path, small red and purple wildflowers, warm golden sunlight with soft blue-green shadows. Cheerful vivid colours, never dark or grimdark.\n\nHERO: Pelag, matching images 1-3 exactly: young tan-skinned islander man, spiky dark-brown hair, red headband with a small gold diamond on the forehead and long red tails, white short-sleeve wrap shirt with a red lapel and teal stepped trim, red sash belt, white knee-length shorts with red and teal cuffs, dark leather bracers, leather sandals. Keep his natural warm skin tone and saturated costume colours: no white glow, no rim-light halo, no bleaching, not washed out. Weapons: a curved steel sabre with a red-wrapped hilt in one hand, and a heavy dark-iron anchor on a long chain with small red cloth ties, swung in a wide arc with the other hand.\n\nACTION: Pelag mid-fight in a dynamic lunge, camera slightly above in a heroic three-quarter view (a nod to the isometric game camera), hero placed left of centre in the lower two thirds and clearly the largest, most contrasted figure. The anchor whips through the air trailing a crisp cream-core, orange-edged motion arc; the sabre slash leaves a cream-to-orange arc with a thin dark outline. Around him the forest enemies from image 5 attack: the tall antlered wood-skeleton Wendigo looming on the right side, the muscular antlered forest guardian, a bark-armoured seed-shell creature, a mossy tusked boar charging in, and the red flower-bulb spitter in the mid-ground. Leaves, bark splinters and dust fly from the impact.\n\nCOMPOSITION: keep the upper-centre area calm and uncluttered (a bright opening in the canopy with soft sunlit haze) as clean empty space for a game logo that will be added later. Strong readable silhouettes, clear value separation between hero, enemies and background, readable at small thumbnail size.\n\nABSOLUTELY NO text, no letters, no logo, no title, no UI, no HUD, no health bars, no watermark, no emblems or symbols on cloth.",
+      "caption_ru": "Кей-арт 16:9: Пелаг в выпаде посреди боя в яркой Чаще — сабля и якорь на цепи с оранжево-кремовыми дугами, вокруг Вендиго, хранитель, Расщепень, Плюй-плод и Камнекопыт.",
+      "defects": [
+        "Якорь читается как крюк/коса с одной лапой, а не как якорь Пелага.",
+        "Вендиго смешан с Лесным хранителем (тело хранителя, череп и рога Вендиго); хранитель слева тоже рогатый.",
+        "Место под лого сверху по центру тесное: там крона, хранитель и Плюй-плод, фон светло-жёлтый; кремовое лого B на нём теряет контраст (см. logo-check/01).",
+        "Кадр плотный; на маленьком размере мобы сливаются в одну зелёно-бежевую массу."
+      ]
+    },
+    {
+      "id": 2,
+      "file": "02-main-capsule-16x9.png",
+      "preview": "02-main-capsule-16x9.jpg",
+      "size": [
+        2688,
+        1520
+      ],
+      "aspect_ratio": "16:9",
+      "purpose": "Main capsule (1232x706) / header (920x430) / small (462x174) — кропы в steam-crops/",
+      "job_id": "ba3b9982-3264-4d63-bc5d-9e588f64404e",
+      "prompt": "Steam main capsule artwork, horizontal, for a stylized 3D action roguelike. Must read instantly at a tiny 460x215 thumbnail: few big shapes, bold silhouettes, strong colour contrast. Style exactly like the references: polished stylized 3D game render with soft painterly texture (images 1-3 our hero, image 4 our in-game forest, image 5 our forest enemies). BRIGHT and SATURATED, sunny, never dark or grimdark.\n\nHERO: Pelag, matching images 1-3 exactly: young tan-skinned islander man, spiky dark-brown hair, red headband with a small gold diamond on the forehead and long red tails flowing, white short-sleeve wrap shirt with red lapel and teal stepped trim, red sash belt, white shorts with red and teal cuffs, dark leather bracers. Keep his natural warm skin tone and saturated costume colours: no white glow, no rim-light halo, no bleaching. He fills the RIGHT half of the frame, framed from the knees up, turned three-quarters toward the viewer with a confident fierce grin, curved steel sabre raised ready to strike, and his heavy dark-iron anchor on a chain swinging behind him in a big circular arc that frames his figure, the chain with small red cloth ties, a crisp cream-and-orange motion trail following the anchor.\n\nBEHIND HIM on the far right: the tall antlered wood-skeleton Wendigo from image 5 rearing up with long claws, big but secondary, in slightly cooler green light so Pelag pops in front of it.\n\nLEFT HALF: a bright sunlit forest glade from image 4 — yellow-green grass, round bushy trees, mossy boulders, golden light shafts, soft depth of field — calm, simple and uncluttered: keep the left 45 percent as clean empty space for a game logo that will be overlaid later.\n\nABSOLUTELY NO text, no letters, no logo, no title, no UI, no HUD, no watermark, no emblems or symbols on cloth.",
+      "caption_ru": "Главная капсула: Пелаг крупно справа, с улыбкой, сабля вперёд, якорь на цепи описывает дугу; за ним Вендиго; слева светлая поляна под лого.",
+      "defects": [
+        "Якорь странной формы: изогнутый, лапы вывернуты, звенья крепятся к нему не по-якорному.",
+        "Якорь и дуга заходят в левую половину, и лого слева перекрывает якорь (logo-check/02); чистая зона только левая треть.",
+        "Вендиго снова гибрид с хранителем.",
+        "Стиль ближе к рисованному аниме (Genshin), чем к нашему 3D-рендеру; лицо моложе и мультяшнее модели."
+      ]
+    },
+    {
+      "id": 3,
+      "file": "03-capsule-vertical-2x3.png",
+      "preview": "03-capsule-vertical-2x3.jpg",
+      "size": [
+        1360,
+        2048
+      ],
+      "aspect_ratio": "2:3",
+      "purpose": "Library capsule 600x900 / vertical capsule 748x896 — кропы в steam-crops/",
+      "job_id": "9ce423db-ceb0-4a4e-89e6-f729d5d82526",
+      "prompt": "Vertical 2:3 Steam library capsule artwork for a stylized 3D action roguelike. Must read at small size: one hero, bold silhouette, strong colour contrast. Style exactly like the references: polished stylized 3D game render with soft painterly texture (images 1-3 our hero, image 4 our in-game forest, image 5 our forest enemies). BRIGHT and SATURATED, sunny, never dark or grimdark.\n\nHERO: Pelag, matching images 1-3 exactly: young tan-skinned islander man, spiky dark-brown hair, red headband with a small gold diamond on the forehead and long red tails, white short-sleeve wrap shirt with red lapel and teal stepped trim, red sash belt, white knee-length shorts with red and teal cuffs, dark leather bracers, leather sandals. Keep his natural warm skin tone and saturated costume colours: no white glow, no rim-light halo, no bleaching. Full body, heroic slightly-high three-quarter camera (a nod to the isometric game camera), placed in the middle and lower part of the frame: he plants his feet and swings his heavy dark-iron anchor on a chain in a big spiral around himself, curved steel sabre in the other hand, the chain with small red cloth ties, a crisp cream-core orange-edged motion arc following the anchor.\n\nAROUND AND BELOW HIM: forest enemies from image 5 closing in on a sunlit grass glade from image 4 — the antlered wood-skeleton Wendigo lunging from behind on one side, a mossy tusked boar and a bark seed-shell creature at the bottom edge, leaves and bark splinters flying from the anchor's hit.\n\nTOP THIRD: a bright opening in the green canopy with warm golden sunlight and soft haze — calm, simple and uncluttered, kept as clean empty space for a game logo that will be overlaid later.\n\nABSOLUTELY NO text, no letters, no logo, no title, no UI, no HUD, no watermark, no emblems or symbols on cloth.",
+      "caption_ru": "Вертикальная капсула 2:3: Пелаг в полный рост раскручивает якорь на цепи вокруг себя; сверху светлый просвет в кроне под лого, снизу Расщепень и Камнекопыт, слева Вендиго.",
+      "defects": [
+        "Якорь держит в руке за веретено, а цепь идёт по кругу от якоря в никуда: по смыслу приём не читается.",
+        "Вендиго снова гибрид с хранителем; рога заходят в левый край зоны под лого.",
+        "Зона под лого лучшая из трёх, но за ней яркое солнце: кремовому лого нужна тень или затемнение неба (logo-check/03)."
+      ]
+    }
+  ],
+  "extras": {
+    "logo-check": [
+      "logo-check/01-keyart-logo-check.jpg",
+      "logo-check/02-capsule-logo-check.jpg",
+      "logo-check/03-vertical-logo-check.jpg"
+    ],
+    "steam-crops": [
+      "steam-crops/01-library-hero-crop-1920x620.jpg",
+      "steam-crops/02-header-capsule-920x430.jpg",
+      "steam-crops/02-main-capsule-1232x706.jpg",
+      "steam-crops/02-small-capsule-462x174.jpg",
+      "steam-crops/03-library-capsule-600x900.jpg",
+      "steam-crops/03-vertical-capsule-748x896.jpg"
+    ]
+  }
+}

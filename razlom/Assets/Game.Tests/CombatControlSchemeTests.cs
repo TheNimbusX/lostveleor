@@ -154,5 +154,29 @@ namespace Game.Tests
                 "первая тычка должна попасть раньше, чем истёк бы кулдаун пустого взмаха");
         }
 
+        /// <summary>
+        /// Прямое управление (стик): удержание атаки бьёт по прицелу, а враг за
+        /// спиной не перехватывает взмах. Это другой режим, чем доворот ЛКМ выше.
+        /// </summary>
+        [Test]
+        public void DirectAimDoesNotSilenceAttackForEnemyBehindCursor()
+        {
+            Simulation sim = ArenaWithDummy(
+                new FixVec2(Fix64.FromInt(-2), Fix64.Zero), out int enemy);
+
+            var input = InputFrame.Empty;
+            input.Flags = (byte)(InputFlags.DirectMovement | InputFlags.Attack);
+            input.Aim = new FixVec2(Fix64.FromInt(8), Fix64.Zero);
+            int emptySwings = 0;
+            for (int tick = 0; tick < 45; tick++)
+            {
+                sim.Step(in input);
+                foreach (SimEvent e in sim.Events)
+                    if (e.Type == SimEventType.Attack && e.Source == Simulation.PlayerId && e.Target < 0)
+                        emptySwings++;
+            }
+            Assert.Greater(emptySwings, 0, "Удержание атаки отвечает взмахом даже без цели по направлению прицела.");
+            Assert.AreEqual(5000, sim.Entities.Health[enemy], "Враг за спиной не перехватывает прямое прицеливание.");
+        }
     }
 }

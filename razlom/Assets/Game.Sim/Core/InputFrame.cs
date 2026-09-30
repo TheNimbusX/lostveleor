@@ -90,6 +90,8 @@ namespace Game.Sim
         public byte Command;
         // Биты 0–3 — конкретная бутылка, 4–5 — смена размера двух слотов HUD.
         public byte PotionMask;
+        // Два действия слотов: виды бутылок закреплены в RunPreparation.
+        public byte PotionSlotMask;
 
         public bool Ability(int index) => (AbilityMask & (1 << index)) != 0;
         public bool Has(InputFlags flag) => (Flags & (byte)flag) != 0;
@@ -123,6 +125,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, (int)Flags);
             Hashing.Mix(ref hash, (int)Command);
             if(PotionMask!=0)Hashing.Mix(ref hash,(int)PotionMask);
+            if(PotionSlotMask!=0) { Hashing.Mix(ref hash, 0x50534C54); Hashing.Mix(ref hash,(int)PotionSlotMask); }
             Hashing.Mix(ref hash, AttackTarget);
         }
     }

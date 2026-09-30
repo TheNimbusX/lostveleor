@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Game.View
 {
-    public enum CampServiceKind { Smith, Trader, Alchemist, Tent }
+    public enum CampServiceKind { Smith, Trader, Alchemist, Tent, TravelTable }
     public sealed class CampServiceNpc : MonoBehaviour
     {
         public CampServiceKind Kind;

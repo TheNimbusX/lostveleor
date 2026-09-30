@@ -301,8 +301,11 @@ namespace Game.View
             SetGlow(ControlsGlow, window == Window.Controls);
             // В окне во всю ширину «Esc Назад» есть всегда: паузы рядом нет, путь назад должен быть виден.
             Show(SettingsBack, fromMainMenu || HidePauseUnderWindow);
-            if (Hint != null) Hint.text = fromMainMenu ? "Esc — назад" : window == Window.None ? "Esc — продолжить игру" : "Esc — назад к паузе";
+            if (Hint != null) Hint.text = fromMainMenu ? UiKeyHint.EscBack : window == Window.None ? HintResume : HintBackToPause;
         }
+
+        // Один формат подсказки клавиши на все окна — «[Esc] Закрыть» (лист 5, UiKeyHint).
+        const string HintResume = "[Esc] Продолжить игру", HintBackToPause = "[Esc] Назад к паузе";
 
         void Slide(RectTransform panel, Vector2 rest, bool shown, bool instant)
         {

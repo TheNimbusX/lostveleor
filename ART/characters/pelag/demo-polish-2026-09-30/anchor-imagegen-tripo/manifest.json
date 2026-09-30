@@ -1,0 +1,43 @@
+{
+  "status": "unity-candidate-technical-checks-passed-owner-visual-review-pending",
+  "source": "imagegen + Tripo; owner's explicit instruction: never build new models from primitives",
+  "task_id": "313b5f0a-278d-4bcb-bacd-6c7ef17454d6",
+  "model_alias": "tripo-v3.1",
+  "wire_model": "v3.1-20260211",
+  "cost": {
+    "steps": [
+      {
+        "type": "image_to_model",
+        "credits": 30
+      }
+    ],
+    "total_credits": 30
+  },
+  "triangles": 5872,
+  "review": "../review/index.html",
+  "old_primitive_model": "rejected; never imported into Unity; no longer a production candidate",
+  "source_blend": "Pelag_Anchor_Tripo_Work.blend",
+  "export_recipe": "export_anchor.py",
+  "unity_profile": "Assets/Resources/Characters/Pelag_v6/PelagAppearance.asset",
+  "body_mesh_changed": false,
+  "saber_changed": false,
+  "owner_visual_approval": false,
+  "verification": "../colour/verification.json",
+  "capture_player": "../../../../../artifacts/pelag-colour-build/Razlom.exe",
+  "back_socket": "mixamorig:Spine2",
+  "head_height_in_game_m": 0.94,
+  "textures_unity_max_size": 1024,
+  "whole_hero_optimized_to_40k": false,
+  "build": "artifacts/pelag-colour-final-build.log",
+  "presentation_tests_passed": 379,
+  "capture_cases_verified": 23,
+  "decoded_videos": 19,
+  "max_recorded_chain_strain": 0.00791,
+  "chain_attachment_gap_m": 0,
+  "death_handoff_is_immediate": true,
+  "full_capture_directories": [
+    "../colour/game-verified",
+    "../colour/fps-verified",
+    "../colour/poses-r02"
+  ]
+}

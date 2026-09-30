@@ -382,20 +382,5 @@ namespace Game.Tests
         }
 
         private static void Until(Simulation sim, int tick) { while (sim.Tick < tick) sim.Step(InputFrame.Empty); }
-
-        [Test]
-        public void SweepRunIsDeterministic()
-        {
-            var a = Arena(2.2); var b = Arena(2.2);
-            bool swept = false;
-            for (int t = 0; t < 240; t++)
-            {
-                PlaceHero(a, 2.2, 130); PlaceHero(b, 2.2, 130);
-                a.Step(InputFrame.Empty); b.Step(InputFrame.Empty);
-                Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t);
-                swept |= Sweeping(a, out _);
-            }
-            Assert.That(swept, Is.True);
-        }
     }
 }

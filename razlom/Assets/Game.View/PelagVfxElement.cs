@@ -64,6 +64,15 @@ namespace Game.View
         public PelagCleaveSplitView Crack { get; private set; }
 
         private Transform _spinner;
+        private Transform _anchorAttachment;
+
+        public void SetAnchorModel(Transform model)
+        {
+            _spinner = model;
+            _anchorAttachment = model != null
+                ? System.Array.Find(model.GetComponentsInChildren<Transform>(true),
+                    t => t.name == "Anchor_Attachment") : null;
+        }
 
         /// <summary>
         /// Сам якорь внутри эффекта — то, что можно крутить.
@@ -162,7 +171,7 @@ namespace Game.View
         }
 
         // Pivot исходной головы находится у проушины, а корень эффекта — в центре меша.
-        public Vector3 AnchorRingPosition => Spinner != null
+        public Vector3 AnchorRingPosition => _anchorAttachment != null ? _anchorAttachment.position : Spinner != null
             ? Spinner.position + Spinner.up * .035f : transform.position;
 
         public void SetOpacity(float opacity)

@@ -109,7 +109,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void OutsideZonePotionStillHeals()
+        public void OutsideZonePotionDoesNotDrinkOrSpendStock()
         {
             var camp = new Camp(PrototypeContent.Items());
             camp.Earn(CurrencyType.Gold, 500);
@@ -120,8 +120,8 @@ namespace Game.Tests
             Assert.That(session.CampCombatAllowed, Is.False);
             sim.Entities.Health[Player] = 1;
             session.Step(new InputFrame { AttackTarget = -1, AbilityTarget = -1, PotionMask = Camp.PotionInputBit(PotionKind.SmallHealth) });
-            Assert.That(sim.Entities.Health[Player], Is.GreaterThan(1));
-            Assert.That(camp.PotionCount(PotionKind.SmallHealth), Is.Zero);
+            Assert.That(sim.Entities.Health[Player], Is.EqualTo(1));
+            Assert.That(camp.PotionCount(PotionKind.SmallHealth), Is.EqualTo(1));
         }
 
         [Test]

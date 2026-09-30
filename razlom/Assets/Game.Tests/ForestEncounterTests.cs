@@ -21,6 +21,10 @@ namespace Game.Tests
             // авторские уровни: 100 на первой арене, 107 на второй.
             int percent = EnemyArchetypes.DepthHealthPercent(run.Depth);
             Assert.That(run.LevelSettings.EnemyHealth, Is.EqualTo(percent));
+            // Числа — строки таблицы видов: здесь проверяется расстановка пачки,
+            // а баланс живёт в коде таблицы и меняется без правки теста.
+            var guardianRow = EnemyArchetypes.Get(EnemyKind.ForestGuardian);
+            var swarmRow = EnemyArchetypes.Get(EnemyKind.ForestRootSwarm);
             for (int i = 1; i < entities.Count; i++)
             {
                 Assert.That(entities.Alive[i], Is.True);
@@ -28,17 +32,15 @@ namespace Game.Tests
                 if (entities.Kind[i] == EnemyKind.ForestGuardian)
                 {
                     guardians++;
-                    // 500/17 — подгонка «Мобов леса v2» (29.09), было 550/14.
-                    Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(500, percent)));
-                    Assert.That(entities.Damage[i], Is.EqualTo(17));
+                    Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(guardianRow.BaseHealth, percent)));
+                    Assert.That(entities.Damage[i], Is.EqualTo(guardianRow.BaseDamage));
                 }
                 if (entities.Kind[i] != EnemyKind.ForestRootSwarm) continue;
                 swarm++;
-                Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(130, percent)));
-                // Укус 3, цикл 30 тиков (стенд баланса, 26.09, проход 2).
-                Assert.That(entities.Damage[i], Is.EqualTo(3));
-                Assert.That(entities.AttackCooldown[i], Is.EqualTo(30));
-                Assert.That(entities.BodyRadius[i], Is.EqualTo(Fix64.Ratio(45, 100)));
+                Assert.That(entities.Health[i], Is.EqualTo(EnemyArchetypes.ScaleHealth(swarmRow.BaseHealth, percent)));
+                Assert.That(entities.Damage[i], Is.EqualTo(swarmRow.BaseDamage));
+                Assert.That(entities.AttackCooldown[i], Is.EqualTo(swarmRow.CycleTicks));
+                Assert.That(entities.BodyRadius[i], Is.EqualTo(swarmRow.BodyRadius));
                 for (int j = 4; j < i; j++)
                 {
                     Fix64 spacing = Fix64.Sqrt((entities.Position[i] - entities.Position[j]).LengthSq);
@@ -68,14 +70,6 @@ namespace Game.Tests
                 run.StartRun();
                 AssertPack(run);
             }
-        }
-
-        private static Simulation IsolatedSwarm()
-        {
-            Simulation sim = NewRun(123UL).Sim;
-            for (int i = 1; i < sim.Entities.Count; i++) sim.Entities.Alive[i] = i == 4;
-            sim.Entities.Facing[4] = new FixVec2(-Fix64.One, Fix64.Zero);
-            return sim;
         }
 
         [Test]

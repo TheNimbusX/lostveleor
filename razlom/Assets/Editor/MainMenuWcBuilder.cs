@@ -431,7 +431,7 @@ namespace Game.EditorTools
             UiInkKit.Plate(card);
 
             RectTransform title = Box(Node("Заголовок", card), new Vector2(.5f, 1f), center, new Vector2(0f, -52f), new Vector2(600f, 50f));
-            TMP_Text titleLabel = UiInkKit.Label(title, "Надпись", "Начать новую игру?", FontRole.Heading, 32f, Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
+            TMP_Text titleLabel = UiInkKit.Label(title, "Надпись", "Начать новую игру?", FontRole.Heading, T.Size(UiTheme.TextStep.Title), Role.Text, TextAlignmentOptions.Center, 1f, 1f, .05f);
             titleLabel.textWrappingMode = TextWrappingModes.NoWrap;
             RectTransform divider = UiInkKit.Divider(card, "Разделитель", 380f);
             Box(divider, new Vector2(.5f, 1f), center, new Vector2(0f, -92f), new Vector2(380f, 16f));

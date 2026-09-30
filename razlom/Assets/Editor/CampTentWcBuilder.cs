@@ -53,11 +53,17 @@ namespace Game.EditorTools
 
         public static string Build(bool force)
         {
-            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null) return PrefabPath;
+            if (!force && AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null)
+            {
+                // Готовый префаб не пересобирается — доводится миграциями (CampTentWcBuilder.Migrations).
+                EnsureMigrated();
+                return PrefabPath;
+            }
             UiThemeBuilder.Ensure(false);
             GameObject root = Layout();
             try
             {
+                Migrate(root.GetComponent<CampTentView>());
                 Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             }
@@ -145,7 +151,7 @@ namespace Game.EditorTools
             root.AddComponent<GraphicRaycaster>();
             root.AddComponent<UiScaleFollower>();
             var view = root.AddComponent<CampTentView>();
-            view.LayoutVersion = 100;
+            view.LayoutVersion = BuiltVersion;
             view.TabOn = view.TabOff = null;
             // Рамок-спрайтов редкости у ячеек «Дыма и света» нет: рамка одна, цвет редкости ставит WcSlotState.
             view.EmptyFrame = null;

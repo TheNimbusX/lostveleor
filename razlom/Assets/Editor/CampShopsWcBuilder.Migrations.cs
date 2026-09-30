@@ -32,8 +32,12 @@ namespace Game.EditorTools
         /// 80–120% и 16:10; кузнец и торговец — одна страница без вкладок: у кузнеца «Перековать» и
         /// «Разобрать» рядом (цена, выход, «Предмет будет уничтожен»), у торговца товары и сумка рядом,
         /// под ними вещь со сравнением и одна кнопка; внизу — клавиши Enter, Del и Esc.
+        /// v2 (30.09, единый набор — лист 5): кейкапы (E над NPC, Enter, Del, Esc) — тёмный скруглённый квадрат вместо
+        /// круга в дыме. Только форма клавиш: узлы, раскладка и ссылки окон не меняются.
+        /// v3 (30.09, владелец: шрифт кнопок и вкладок «как в главном меню»): подписи вкладок («Зелья», «Рецепты» и
+        /// спрятанные вкладки кузнеца и торговца) — Philosopher, как у кнопок. Только шрифт: размер и раскладка те же.
         /// </summary>
-        public const int LayoutVersion = 1;
+        public const int LayoutVersion = 3;
 
         const string FrameName = "Раскладка";
         const string SmokeFrameName = "Раскладка дыма";
@@ -151,8 +155,25 @@ namespace Game.EditorTools
         static void Migrate(GameObject root, CampShopView view)
         {
             if (view.LayoutVersion < 1) MigrateTo1(view);
+            if (view.LayoutVersion < 2) Debug.Log("[ui-kit] Окна лагеря: кейкапов листа 5 — " + UiInkKit.RestyleKeycaps(view.transform) + ".");
+            if (view.LayoutVersion < 3) MigrateTo3(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
+        }
+
+        /// <summary>
+        /// v3 — подписи вкладок → Philosopher (кнопки окон уже на нём: UiInkKit.Button). Вкладки берутся по ссылкам вида
+        /// (CampShopScreen.Tabs, CampAlchemyScreen.Tabs), подпись — по самой кнопке (UiInkKit.HeadingLabels), так что
+        /// переименованные руками узлы не мешают.
+        /// </summary>
+        static void MigrateTo3(CampShopView view)
+        {
+            var tabs = new List<Selectable>();
+            foreach (Button[] group in new[] { view.Smith?.Tabs, view.Trader?.Tabs, view.Alchemist?.Tabs })
+                if (group != null)
+                    foreach (Button tab in group)
+                        if (tab != null) tabs.Add(tab);
+            Debug.Log("[ui-kit] Окна лагеря: подписей вкладок на Philosopher — " + UiInkKit.HeadingLabels(tabs) + " из " + tabs.Count + ".");
         }
 
         /// <summary>v1 — ревью владельца 29.09: раскладка в холст, кузнец и торговец на одной странице.</summary>
@@ -297,21 +318,9 @@ namespace Game.EditorTools
             if (second != null) s.SecondKey = KeyPair(row, "Del", second, out s.SecondKeyLabel);
         }
 
+        /// <summary>Пара «клавиша + подпись» — общая подсказка листа 5 «[Enter] Перековать» (UiInkKit.KeyHint).</summary>
         static GameObject KeyPair(RectTransform row, string key, string text, out TMP_Text label)
-        {
-            RectTransform pair = Node("Клавиша " + key, row);
-            var layout = pair.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.spacing = 9f;
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            RectTransform cap = UiInkKit.Keycap(pair, "Клавиша", key, 32f);
-            var size = cap.gameObject.AddComponent<LayoutElement>();
-            size.preferredWidth = size.minWidth = cap.sizeDelta.x;
-            size.preferredHeight = size.minHeight = 32f;
-            label = TextOn(Node("Подпись", pair), text, FontRole.Body, 18f, Role.TextMuted);
-            return pair.gameObject;
-        }
+            => UiInkKit.KeyHint(row, key, text, out label, 32f, 18f).gameObject;
 
         /// <summary>Отметка «сколько за неё дадут» под ячейкой сумки торговца; ячейка несёт её с собой.</summary>
         static TMP_Text CellPrice(CampShopCell cell)
@@ -323,7 +332,7 @@ namespace Game.EditorTools
             box.pivot = new Vector2(.5f, 1f);
             box.anchoredPosition = new Vector2(0f, -1f);
             box.sizeDelta = new Vector2(BagStepX, 16f);
-            TMP_Text label = UiInkKit.Label(box, "Надпись", "", FontRole.Body, 14f, Role.Coins, TextAlignmentOptions.Center, 0f, 1f, .15f);
+            TMP_Text label = UiInkKit.Label(box, "Надпись", "", FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.Coins, TextAlignmentOptions.Center, 0f, 1f, .15f);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             return label;
         }

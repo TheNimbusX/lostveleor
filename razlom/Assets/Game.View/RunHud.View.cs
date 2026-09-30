@@ -34,8 +34,10 @@ namespace Game.View
             if (prefab == null) return;
             _view = Instantiate(prefab, transform).GetComponentInChildren<RunHudView>(true);
             if (_view == null) return;
+            // Блок ввода экранов выбора (RunHud.Reward) спрашивает этот экземпляр: с первого экрана сессии.
+            _choiceOwner = this;
             _view.OfferClicked += RequestOffer;
-            _view.SkipClicked += () => { _replaceOffer = -1; _driver.QueueRunCommand(RunCommand.SkipReward); };
+            _view.SkipClicked += () => { if (ChoiceLocked) return; _replaceOffer = -1; _driver.QueueRunCommand(_driver.Run.ChoosingArtifact?RunCommand.SkipReward:RunCommand.RerollReward); };
             _view.ArtifactConfirmClicked += () =>
             {
                 int offer = _replaceOffer;
@@ -56,71 +58,7 @@ namespace Game.View
         /// <summary>Итог забега рисует Canvas — CampHud свой текстовый итог не показывает.</summary>
         public bool CanvasSummary => _view != null && _view.Summary != null;
 
-        private bool _summaryFilled;
-
-        // Числа итогов досчитываются от нуля, по очереди — как в концепте итогов (аудит UI, этап 2).
-        // Счёт — когда цифры уже проявились из дыма (владелец 26 сентября: итоги тлеют медленно,
-        // и счёт, начатый с показа, кончался раньше, чем цифры становились видны).
-        private readonly int[] _summaryTargets = new int[4];
-        /// <summary>Часы итогов с показа, шагом не больше 0,1 с (как у UiInkGroup); меньше нуля — счёт не идёт.</summary>
-        private float _summaryClock = -1f, _summaryLast;
-        private const float CountDelay = .9f, CountDuration = .6f, CountStagger = .12f;
-
-        private void RefreshSummary()
-        {
-            GameSession session = _driver.Session;
-            // Итоги — после паузы конца забега (RunEndBeat): смерть и победа успевают прозвучать.
-            bool shown = !_driver.GameplayPaused && session != null && session.Mode == GameMode.Summary && !RunEndBeat.Holding;
-            _view.SetShown(_view.Summary, shown);
-            if (!shown) { _summaryFilled = false; _summaryClock = -1f; return; }
-            if (_summaryFilled) { CountSummary(); return; }
-            _summaryFilled = true;
-
-            RunSummary summary = session.LastRun;
-            bool died = summary.Outcome == RunOutcome.Died, won = summary.Outcome == RunOutcome.Completed;
-            RunHudView.SetText(_view.SummaryTitle, died ? "Гибель" : won ? "Победа" : "Ушёл с добычей");
-            int outcome = died ? 0 : won ? 1 : 2;
-            if (_view.OutcomeIcon != null && outcome < _view.OutcomeIcons.Length) _view.OutcomeIcon.texture = _view.OutcomeIcons[outcome];
-            // Знаки исхода белые: гибель — приглушённый красный, победа и уход — тёплые.
-            Paint(_view.OutcomeIcon, died ? UiTheme.Role.Health : won ? UiTheme.Role.Accent : UiTheme.Role.Coins, died ? .78f : 1f);
-            Paint(_view.OutcomeHalo, died ? UiTheme.Role.Health : UiTheme.Role.Accent, died ? .12f : .18f);
-            _view.SummaryTitle.GetComponent<ThemeColor>()?.SetRole(died ? UiTheme.Role.Health : won ? UiTheme.Role.Accent : UiTheme.Role.Text);
-            RunHudView.SetText(_view.SummarySubtitle, died ? "Всё найденное в забеге осталось в Разломе"
-                : won ? "Локация пройдена" : "Разлом отпустил тебя с тем, что ты унёс");
-            int[] values = { summary.RiftsCleared, summary.Depth, summary.ItemsKept, summary.GoldKept };
-            for (int i = 0; i < _summaryTargets.Length; i++) _summaryTargets[i] = i < values.Length ? values[i] : 0;
-            _summaryClock = 0f;
-            _summaryLast = UiMotion.Now;
-            CountSummary();
-
-            string loss = string.Empty;
-            if (summary.ItemsLeftBehind > 0 || summary.GoldLeftBehind > 0)
-                loss = "Потеряно со смертью: предметов " + summary.ItemsLeftBehind + ", золота " + summary.GoldLeftBehind;
-            if (summary.ItemsLost > 0)
-                loss += (loss.Length > 0 ? "    ·    " : "") + "Не влезло в сумку: " + summary.ItemsLost;
-            RunHudView.SetText(_view.SummaryLoss, loss);
-            RunHudView.SetText(_view.RepeatLabel, "Повторить · " + GameKeyBindings.Label(GameAction.RepeatRun));
-            RunHudView.SetText(_view.ToCampLabel, "В лагерь · " + GameKeyBindings.Label(GameAction.ReturnToCamp));
-        }
-
-        private void CountSummary()
-        {
-            if (_summaryClock < 0f) return;
-            float now = UiMotion.Now;
-            _summaryClock += Mathf.Clamp(now - _summaryLast, 0f, .1f);
-            _summaryLast = now;
-            // До CountDelay — нули: цифры проявляются вместе с подписями.
-            float since = _summaryClock - CountDelay;
-            bool done = true;
-            for (int i = 0; i < _view.SummaryValues.Length && i < _summaryTargets.Length; i++)
-            {
-                float k = Mathf.Clamp01((since - i * CountStagger) / CountDuration);
-                if (k < 1f) done = false;
-                float eased = 1f - (1f - k) * (1f - k) * (1f - k);
-                RunHudView.SetText(_view.SummaryValues[i], Mathf.RoundToInt(_summaryTargets[i] * eased).ToString());
-            }
-            if (done) _summaryClock = -1f;
-        }
+        // Итоги забега — RunHud.Summary (статистика, стоп-кадр, «Убито», «Потеряно» / «Остаётся», блок ввода).
 
         /// <summary>Цвет белого знака по роли темы; у префаба без ThemeColor на детали — прямо в цвет.</summary>
         private static void Paint(UnityEngine.UI.Graphic graphic, UiTheme.Role role, float alpha)
@@ -146,15 +84,21 @@ namespace Game.View
             bool choosing = reward || route, replacing = phase == RunPhase.ReplacingAbility;
             int letters = TickDriver.GamepadLastUsed ? 2 : GameUserSettings.WasdMovement ? 3
                 : GameUserSettings.AbilityRowUsesLetters ? 1 : 0;
-            if (live && (phase != _shownPhase || run.Depth != _shownDepth || letters != _shownLetters))
+            // Карточки сменились без смены фазы — «Резервный план» перебросил награду: заполнить заново.
+            bool rerolled = live && reward && phase == _shownPhase && OffersSignature(run) != _shownOffers;
+            if (live && (phase != _shownPhase || run.Depth != _shownDepth || letters != _shownLetters || rerolled))
             {
                 // Награда взята — сразу выбор арены: экран тот же, но вопрос новый, и карточки
                 // проявляются заново, а не меняют текст под рукой.
                 if (route && _shownPhase == RunPhase.ChoosingReward) _view.SetShown(_view.Choice, false, true);
+                // Блок ввода — только когда экран открылся или карточки сменились, не на смене раскладки клавиш.
+                bool opened = phase != _shownPhase || run.Depth != _shownDepth || rerolled;
                 _shownPhase = phase; _shownDepth = run.Depth; _shownLetters = letters;
                 if (reward) FillChoice(run, letters == 1);
                 if (route) FillRoute(run, letters == 1);
                 if (replacing) FillReplace(run, letters == 1);
+                if (reward) _shownOffers = OffersSignature(run);
+                if (choosing && opened) OpenChoice(rerolled);
             }
             if (!live) _shownPhase = (RunPhase)255;
             _view.SetShown(_view.Choice, choosing);
@@ -164,70 +108,22 @@ namespace Game.View
             ReplaceOpen = reward && _replaceOffer >= 0;
             _view.SetShown(_view.Replace, replacing);
             ModalOpen = live && (choosing || replacing);
+            // Наклон, перелив, подсказка справа и кольцо блокировки на кейкапах (RunHud.Reward).
+            UpdateChoice(choosing);
 
             bool status = phase == RunPhase.Clearing || phase == RunPhase.SeekingExit;
             RunHudView.SetActive(_view.Status, status);
             if (status) FillStatus(run);
+            // Источник монет и портреты убитых для итогов — по событиям кадра (RunHud.Coins, RunHud.Portraits).
+            if (live) TrackFrameEvents(run);
             // Строка добычи — под панелью и вместе с ней (RunHud.Loot).
             RefreshLoot(live ? run : null, status);
             RefreshSurvival(run, status);
             if (live) AnnounceWaves(run);
-            bool boss = status && run.BossId >= 0 && run.Sim.Entities.Alive[run.BossId];
-            if (!live) _bossMet = -1;
-            if (boss && _bossMet != run.Depth)
-            {
-                // Появление босса: полоса встаёт, когда босс вышел из тумана, — толчком и своим звуком,
-                // а не с первого кадра арены за пеленой (аудит UI, этап 2).
-                var at = run.Sim.Entities.Position[run.BossId];
-                if (_layout == null) _layout = FindAnyObjectByType<LayoutView>();
-                boss = _layout == null || _layout.IsRevealed(at.X.ToFloat(), at.Y.ToFloat())
-                    || run.Sim.Entities.Health[run.BossId] < run.Sim.Entities.MaxHealth[run.BossId];
-                if (boss)
-                {
-                    _bossMet = run.Depth;
-                    RunHudView.SetActive(_view.Boss, true);
-                    HudFx.Punch(_view.Boss, 1.22f, .55f);
-                    GameSound.Play("boss_intro", .85f, 0f, 1f);
-                }
-            }
-            RunHudView.SetActive(_view.Boss, boss);
-            if (boss)
-            {
-                int id = run.BossId;
-                RunHudView.SetText(_view.BossName, EnemyTexts.BossName(run.Sim.Entities.Kind[id]));
-                if (_view.BossBar != null) BossBar(run.Sim.Entities.Health[id] / (float)Mathf.Max(1, run.Sim.Entities.MaxHealth[id]), run.BossEnraged);
-            }
-            else _bossTrail = -1f;
+            // Полоса босса: появление, засечки, фаза, след (RunHud.Boss). Забег — и в паузе: пауза не делает
+            // босса «новым», появление не повторяется.
+            RefreshBoss(run, status);
         }
-
-        private float _bossTrail = -1f, _bossTrailHoldUntil;
-        /// <summary>Глубина, на которой босс уже показан; −1 — ещё нет.</summary>
-        private int _bossMet = -1;
-        private LayoutView _layout;
-
-        /// <summary>
-        /// Полоса босса: светлый след недавнего урона догоняет заполнение с задержкой, ярость —
-        /// горячим цветом заливки и пульсом, а не словом в имени.
-        /// </summary>
-        private void BossBar(float value, bool enraged)
-        {
-            WcBar bar = _view.BossBar;
-            if (_bossTrail < 0f || value > _bossTrail) _bossTrail = value;
-            else if (value < bar.Value) _bossTrailHoldUntil = Time.unscaledTime + .45f;
-            if (Time.unscaledTime >= _bossTrailHoldUntil)
-                _bossTrail = Mathf.MoveTowards(_bossTrail, value, Time.unscaledDeltaTime * .7f);
-            bar.TrailValue = _bossTrail;
-            bar.Set(value);
-            // Заливка «Дыма и света» — маска с мазком внутри: красится первый мазок; у полосы пака — сама заливка.
-            var fill = bar.Fill != null ? bar.Fill.GetComponentInChildren<UnityEngine.UI.Graphic>(true) : null;
-            if (fill == null) return;
-            if (_bossBaseColour.a <= 0f) _bossBaseColour = fill.color;
-            float pulse = enraged ? .5f + .5f * Mathf.Sin(Time.unscaledTime * 6f) : 0f;
-            fill.color = enraged ? Color.Lerp(RageColour, Color.white, pulse * .25f) : _bossBaseColour;
-        }
-
-        private Color _bossBaseColour;
-        private static readonly Color RageColour = new Color(1f, .36f, .16f, 1f);
 
         private void FillStatus(RiftRun run)
         {
@@ -256,7 +152,25 @@ namespace Game.View
             }
             RunHudView.SetText(_view.StatusTitle, lines[0]);
             RunHudView.SetText(_view.StatusLine, lines.Length > 1 ? lines[1] : string.Empty);
-            RunHudView.SetText(_view.StatusExtra, lines.Length > 2 ? lines[2] : string.Empty);
+            string extra = lines.Length > 2 ? lines[2] : string.Empty;
+            RunHudView.SetText(_view.StatusExtra, extra);
+            // «Путь открыт»: третьей строки нет — и значка тайников без неё тоже (одинокий сундук под двумя строками).
+            UnityEngine.UI.Graphic extraIcon = StatusExtraIcon();
+            if (extraIcon != null) RunHudView.SetActive(extraIcon, extra.Length > 0);
+        }
+
+        private UnityEngine.UI.Graphic _statusExtraIcon;
+        private bool _statusExtraIconSought;
+
+        /// <summary>Значок третьей строки: ссылка миграции v3, у префаба до неё — узел «Значок тайников» по имени.</summary>
+        private UnityEngine.UI.Graphic StatusExtraIcon()
+        {
+            if (_view.StatusExtraIcon != null) return _view.StatusExtraIcon;
+            if (_statusExtraIconSought || _view.Status == null) return _statusExtraIcon;
+            _statusExtraIconSought = true;
+            Transform node = _view.Status.Find("Значок тайников");
+            _statusExtraIcon = node != null ? node.GetComponent<UnityEngine.UI.Graphic>() : null;
+            return _statusExtraIcon;
         }
 
         /// <summary>
@@ -395,6 +309,8 @@ namespace Game.View
         {
             RiftRun run = _driver != null ? _driver.Run : null;
             if (run == null || index < 0) return;
+            // Экран только открылся: клик или клавиша, пришедшие вместе с последним ударом, карточку не берут.
+            if (ChoiceLocked) return;
             // Те же карточки на выборе арены: клик — путь, без вопросов.
             if (run.Phase == RunPhase.ChoosingRoute)
             {
@@ -418,14 +334,16 @@ namespace Game.View
         private void FillChoice(RiftRun run, bool letters)
         {
             if (run.ChoosingArtifact) { FillArtifactChoice(run, letters); return; }
-            RunHudView.SetActive(_view.Skip, false);
+            RunHudView.SetActive(_view.Skip, run.CanRerollReward);
+            if(_view.Skip!=null && run.CanRerollReward)_view.Skip.GetComponentInChildren<TMPro.TMP_Text>().text="Резервный план · перебросить";
             RunHudView.SetText(_view.ChoiceTitle, "Выбери награду");
             RunHudView.SetText(_view.ChoiceSubtitle, run.IsFinalLevel
                 ? "Локация пройдена — последняя награда, дальше итоги"
                 : "Арена зачищена · дальше арена " + (run.Depth + 1));
-            RunHudView.SetText(_view.ChoiceHint,
-                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
-                + " — выбрать    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
+            // Подсказки клавиш — один формат на все окна: «[1] [2] [3] Выбрать   ·   [L] Уйти с добычей» (лист 5, UiKeyHint).
+            RunHudView.SetText(_view.ChoiceHint, UiKeyHint.Join(
+                UiKeyHint.Hint("выбрать", KeyLabel(0, letters), KeyLabel(1, letters), KeyLabel(2, letters)),
+                UiKeyHint.Hint("уйти с добычей", GameKeyBindings.Label(GameAction.LeaveRift))));
             for (int i = 0; i < _view.Offers.Length; i++)
             {
                 RunOfferCard card = _view.Offers[i];
@@ -459,6 +377,8 @@ namespace Game.View
                 WcRarity.Tier tier = run.GetOffer(i).Kind == RewardKind.Item ? WcRarity.FromItem((int)run.GetOffer(i).Item.Rarity)
                     : rare ? WcRarity.Tier.Rare : WcRarity.Tier.Common;
                 if (card.Rarity != null) card.Rarity.Set(tier);
+                // Сравнение «было → станет» на карточке и подсказка справа с ключевыми словами (RunHud.Reward).
+                PolishOffer(i, card, run.GetOffer(i), run, body);
             }
         }
 
@@ -469,9 +389,10 @@ namespace Game.View
             RunHudView.SetText(_view.ChoiceSubtitle, run.Artifact == RunArtifact.None
                 ? "Награда босса · действует только в этом забеге"
                 : "Награда босса · сейчас у тебя «" + RunArtifactTexts.Name(run.Artifact) + "» — слот один");
-            RunHudView.SetText(_view.ChoiceHint, KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
-                + " — выбрать    ·    «Отказаться» — оставить как есть");
+            RunHudView.SetText(_view.ChoiceHint, UiKeyHint.Join(
+                UiKeyHint.Hint("выбрать", KeyLabel(0, letters), KeyLabel(1, letters), KeyLabel(2, letters)), "«Отказаться» — оставить как есть"));
             RunHudView.SetActive(_view.Skip, true);
+            if(_view.Skip!=null)_view.Skip.GetComponentInChildren<TMPro.TMP_Text>().text="Отказаться";
             for (int i = 0; i < _view.Offers.Length; i++)
             {
                 RunOfferCard card = _view.Offers[i];
@@ -495,6 +416,7 @@ namespace Game.View
                 RunHudView.SetKey(card.Key, KeyLabel(i, letters));
                 card.SetIcon(RunArtifactTexts.Icon(artifact), false);
                 if (card.Rarity != null) card.Rarity.Set(WcRarity.Tier.Unique);
+                PolishArtifact(i, card, RunArtifactTexts.Effect(artifact));
             }
         }
 
@@ -506,12 +428,13 @@ namespace Game.View
         /// </summary>
         private void FillRoute(RiftRun run, bool letters)
         {
+            PolishRoute();
             RunHudView.SetActive(_view.Skip, false);
             RunHudView.SetText(_view.ChoiceTitle, "Выбери следующую арену");
             RunHudView.SetText(_view.ChoiceSubtitle, RouteSubtitle(run));
-            RunHudView.SetText(_view.ChoiceHint,
-                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
-                + " — выбрать путь    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
+            RunHudView.SetText(_view.ChoiceHint, UiKeyHint.Join(
+                UiKeyHint.Hint("выбрать путь", KeyLabel(0, letters), KeyLabel(1, letters), KeyLabel(2, letters)),
+                UiKeyHint.Hint("уйти с добычей", GameKeyBindings.Label(GameAction.LeaveRift))));
             for (int i = 0; i < _view.Offers.Length; i++)
             {
                 RunOfferCard card = _view.Offers[i];
@@ -544,7 +467,8 @@ namespace Game.View
         {
             if (_view.RouteIcons != null && index < _view.RouteIcons.Length && _view.RouteIcons[index] != null)
                 return _view.RouteIcons[index];
-            int kind = index == 0 ? 1 : index == 1 ? 2 : 3;
+            // «Улучшение» — свиток способности, не ромб кристалла усиления (контейнеры и знаки — не ромбы).
+            int kind = index == 0 ? 0 : index == 1 ? 2 : 3;
             return kind < _view.KindIcons.Length ? _view.KindIcons[kind] : null;
         }
 
@@ -553,9 +477,9 @@ namespace Game.View
             AbilityDefinition pending = PelagKit.PoolDefinition(run.PendingAbility);
             RunHudView.SetText(_view.ReplaceTitle, "Новая способность: " + (pending != null ? Capitalized(PlayerHud.AbilityName(pending.Id)) : "—"));
             RunHudView.SetText(_view.ReplaceSubtitle, "Панель полна. Замени одну из четырёх — её усиления пропадут — или разбери новую на золото.");
-            RunHudView.SetText(_view.ReplaceHint,
-                KeyLabel(0, letters) + "  " + KeyLabel(1, letters) + "  " + KeyLabel(2, letters)
-                + "  " + KeyLabel(3, letters) + " — заменить слот    ·    " + GameKeyBindings.Label(GameAction.LeaveRift) + " — уйти с добычей");
+            RunHudView.SetText(_view.ReplaceHint, UiKeyHint.Join(
+                UiKeyHint.Hint("заменить слот", KeyLabel(0, letters), KeyLabel(1, letters), KeyLabel(2, letters), KeyLabel(3, letters)),
+                UiKeyHint.Hint("уйти с добычей", GameKeyBindings.Label(GameAction.LeaveRift))));
             RunHudView.SetText(_view.SalvageLabel, "Разобрать на " + run.SalvageGold + " золота");
             for (int slot = 0; slot < _view.Slots.Length; slot++)
             {

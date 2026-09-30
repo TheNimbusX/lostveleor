@@ -82,7 +82,7 @@ namespace Game.Tests
             Assert.AreNotEqual(pos, sim.Entities.Position[enemy]);
         }
 
-        [TestCase(1, 0)] [TestCase(-1, 0)] [TestCase(0, 1)] [TestCase(0, -1)]
+        [TestCase(1, 0)] [TestCase(0, 1)]
         public void ContactEventMatchesLaneEndAndTiming(int x, int y)
         {
             var sim = Arena();

@@ -65,11 +65,18 @@ namespace Game.View
             var mesh = Resources.Load<Mesh>("VFX/Pelag/Geometry/Pelag_ChainLink_Centered");
             _ring = new GameObject("Anchor chain ring").transform;
             _ring.SetParent(_equipment.SlamHead, false);
-            _ring.localPosition = Vector3.up * (.035f / _equipment.SlamHead.lossyScale.x);
-            _ring.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
-            _ring.gameObject.AddComponent<MeshRenderer>().sharedMaterial = _equipment.AnchorMaterial;
-            _ring.localRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
-            _ring.localScale = Vector3.one * (.72f / _equipment.SlamHead.lossyScale.x);
+            var attachment = System.Array.Find(_equipment.SlamHead.GetComponentsInChildren<Transform>(true),
+                t => t.name == "Anchor_Attachment");
+            if (attachment != null)
+                _ring.localPosition = _equipment.SlamHead.InverseTransformPoint(attachment.position);
+            else
+            {
+                _ring.localPosition = Vector3.up * (.035f / _equipment.SlamHead.lossyScale.x);
+                _ring.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                _ring.gameObject.AddComponent<MeshRenderer>().sharedMaterial = _equipment.AnchorMaterial;
+                _ring.localRotation = Quaternion.FromToRotation(Vector3.forward, Vector3.up);
+                _ring.localScale = Vector3.one * (.72f / _equipment.SlamHead.lossyScale.x);
+            }
             _ring.gameObject.SetActive(false);
             for (int i = 0; i < _links.Length; i++)
             {
@@ -149,7 +156,7 @@ namespace Game.View
             _solveTotal = 0; _solveFrames = 0;
             _previousGrip = _equipment.ChainGripPosition;
             _previousRing = _ring.position;
-            _previousPayout = 1.05f;
+            _previousPayout = PhysicalPayout(0f);
             BeginHeadPhysics();
             if (CaptureRig.LiveSkill)
                 foreach (var renderer in _equipment.SlamHead.GetComponentsInChildren<Renderer>(true))
@@ -185,9 +192,9 @@ namespace Game.View
                 else
                 {
                 float blend = Smooth(_returnAge / .14f);
-                _equipment.SlamHead.SetPositionAndRotation(Vector3.Lerp(_returnPosition, _equipment.SlamBeltPosition, blend),
+                _equipment.SlamHead.SetPositionAndRotation(Vector3.Lerp(_returnPosition, ReturnMountPosition(), blend),
                     Quaternion.Slerp(_returnRotation, _equipment.SlamBeltRotation, blend));
-                if (_returnAge >= .14f) { Release(true); return; }
+                if (_returnAge >= .14f && ReturnMountClear()) { Release(true); return; }
                 }
             }
             else ClipTime = SampleClipTime();
@@ -199,7 +206,7 @@ namespace Game.View
             if (!_contact) ClipTime = Mathf.Min(.5f, ClipTime);
             if (!_returning) { if (_wreck) PoseWreck(ClipTime); else PosePhysicalHead(ClipTime); }
             UpdateWeightTrail();
-            Vector3 grip = _returning ? _equipment.SlamBeltPosition : _equipment.ChainGripPosition;
+            Vector3 grip = _returning ? ReturnChainGrip() : _equipment.ChainGripPosition;
             Vector3 ring = _ring.position;
             Vector3 support = _equipment.ChainSupportPosition;
             float bridgePayout = _physicalSlam ? 1.05f : ClipTime < .32f
@@ -207,7 +214,7 @@ namespace Game.View
                 : Mathf.Lerp(.80f, .52f, Smooth((ClipTime - .32f) / .16f));
             float feedPayout = _physicalSlam ? Mathf.Lerp(1.30f,1.18f,Smooth(ClipTime/.2f))
                 : Mathf.Lerp(1.05f, 1.15f, Smooth(ClipTime / .3f));
-            float payout = _returning ? Mathf.Lerp(_returnPayout, .75f, Smooth(_returnAge / (_physicalSlam ? .5f : .14f)))
+            float payout = _returning ? Mathf.Lerp(_returnPayout, _equipment.StowedChainPayout, Smooth(_returnAge / (_physicalSlam ? .5f : .14f)))
                 : _wreck ? WreckPayout(ClipTime) : PhysicalPayout(ClipTime);
             float floor = Mathf.Min(transform.position.y, _impact.y);
             Vector3 bottom = _bodyHips != null ? _bodyHips.position + Vector3.up*.03f : transform.position + Vector3.up*.91f;
@@ -264,7 +271,16 @@ namespace Game.View
                 _feedLinks[i].localScale = Vector3.one / transform.lossyScale.x;
             }
             if (CaptureRig.LiveSkill)
+            {
                 Debug.Log($"[anchor-slam] tick={sim.Tick} time={ClipTime:F4} strain={MaxStrain:F5} flight={_chain.MaxStrain:F5} feed={_feed.MaxStrain:F5} bridge={_bridge.MaxStrain:F5} feedSpan={Vector3.Distance(belt,support):F3} feedLength={feedPayout:F3} grip={AttachmentError:F6} span={Vector3.Distance(grip,ring):F3} payout={payout:F3} head={ring.ToString("F3")} hand={grip.ToString("F3")} solveMs={solveMilliseconds:F3}");
+                if (_chain.MaxStrain > .02f)
+                {
+                    var nodes = new System.Text.StringBuilder();
+                    for (int n = 0; n < _chain.Count; n++)
+                        nodes.Append($" {n}:{U(_chain[n]).ToString("F6")}");
+                    Debug.Log($"[anchor-constraint] bottom={bottom.ToString("F6")} top={top.ToString("F6")} floor={floor:F6} payout={payout:F6} partial={_chain.SegmentLength(0):F6} nodes={nodes}");
+                }
+            }
             DrawBridge();
         }
 
@@ -294,8 +310,8 @@ namespace Game.View
                     _returnPosition = _equipment.SlamHead.position; _returnRotation = _equipment.SlamHead.rotation;
                     // При передаче из ладони к поясу используем запас уже выданной цепи.
                     // Длину выбираем однократно: новый наклон корпуса при уходе не растягивает звенья.
-                    _returnPayout = Mathf.Min(7.5f, Mathf.Max(_previousPayout,
-                        Vector3.Distance(_equipment.SlamBeltPosition, _ring.position) + .65f));
+                    _returnPayout = Mathf.Min(7.5f, Mathf.Max(_equipment.StowedChainPayout, Mathf.Max(_previousPayout,
+                        Vector3.Distance(ReturnChainGrip(), _ring.position) + .65f)));
                     _equipment.ReleaseSlamHands();
                 }
                 return;

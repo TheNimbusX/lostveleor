@@ -157,7 +157,8 @@ namespace Game.EditorTools
             BuildTooltip(rect, view);
             BuildFeedback(rect, view);
             BuildLevelBanner(rect, view);
-            BuildBuffs(rect, view);
+            // Эффекты героя — строка кругов над портретом (этап 4, 30.09; раньше — ряд значков зелий).
+            BuildEffects(rect, view);
             BuildToasts(rect, view);
             BuildAnnounce(rect, view);
             view.OrderIcons = new[] { Kit("wc_buff_resin").texture, Kit("wc_buff_surge").texture };
@@ -172,6 +173,7 @@ namespace Game.EditorTools
             // Подсказки — последними, поверх всего HUD: значки зелий, всплывашки, объявление и карта собраны
             // позже и рисовались поверх них (26 сентября «−25% получаемого урона» лежало на подсказке
             // способности). CombatHudView ещё раз поднимает подсказку наверх при каждом появлении.
+            view.EffectRow.Tooltip.SetAsLastSibling();
             view.PotionTooltip.SetAsLastSibling();
             view.Tooltip.SetAsLastSibling();
             // Появление HUD (владелец 25 сентября: «всё появляется анимированно»): дым растекается

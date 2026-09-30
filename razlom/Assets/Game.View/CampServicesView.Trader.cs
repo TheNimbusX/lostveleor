@@ -54,6 +54,7 @@ namespace Game.View
         void RefreshTraderPanel()
         {
             var s=_view.Trader;var camp=_traderCamp;var inventory=GetComponent<CampInventoryView>();int gold=camp.Money(CurrencyType.Gold);
+            RefreshTraderProgression();
             s.Gold.text=gold.ToString();s.ShardsGroup.SetActive(false);
             HideTabs(s);
             Say(s.Subtitle,TradeText("subtitle"));Say(s.GoodsCaption,TradeText("stock.caption"));

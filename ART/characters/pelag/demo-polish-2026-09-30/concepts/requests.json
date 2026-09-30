@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "stage": "rejected_by_owner",
+  "owner_approval_required": "Choose concept direction before any 3D candidate edits",
+  "created_local_date": "2026-09-30",
+  "generation_jobs_submitted": 2,
+  "total_estimated_credits": 4,
+  "estimate_note": "Two different prompts, each count=1. Each single-image preflight returned 2 credits. Earlier generic count=2 preflight is not used as batch pricing.",
+  "requests": [
+    {
+      "id": "A",
+      "title": "Собранный абордажник",
+      "summary_ru": "Короткие крупные пряди назад, чётче линия лица; широкий коралловый ворот, плотные кожаные наручи.",
+      "params": {
+        "model": "nano_banana_pro",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT A: short thick windswept hair swept back, darker brown roots and a few broad chestnut highlights. Preserve the current recognizable hairline; less spiky juvenile anime hair. The current collar reads as one broad coral band, the sash as one clear substantial knot, the bracers as firm leather volumes. Keep the original costume silhouette particularly close."
+      },
+      "references": [
+        {
+          "path": "../references/pelag_identity.jpg",
+          "role": "Existing hero identity and original costume",
+          "kind": "existing approved source artwork"
+        },
+        {
+          "path": "../references/saber_identity.jpg",
+          "role": "Existing saber design",
+          "kind": "existing source artwork"
+        },
+        {
+          "path": "../references/anchor_identity.jpg",
+          "role": "Existing anchor and chain design",
+          "kind": "existing source artwork"
+        },
+        {
+          "path": "../baseline/camp/shot_00_t3.00s.png",
+          "role": "Actual game camp rendering",
+          "kind": "isolated existing player capture; close camera"
+        },
+        {
+          "path": "../baseline/forest-combat/shot_01_t0.50s.png",
+          "role": "Actual forest combat rendering",
+          "kind": "isolated existing player capture; gameplay camera"
+        }
+      ],
+      "status": "completed_awaiting_owner_review",
+      "estimated_credits": 2,
+      "job_id": "15df8545-3250-413d-8f72-420a890fdd90",
+      "result_file": "A.png"
+    },
+    {
+      "id": "B",
+      "title": "Южный моряк",
+      "summary_ru": "Более длинный собранный объём волос назад; мягче ткань, крупнее читаемые складки и охристые акценты кожи.",
+      "params": {
+        "model": "nano_banana_pro",
+        "resolution": "2k",
+        "aspect_ratio": "16:9",
+        "count": 1,
+        "prompt": "Create one coherent character refinement sheet for PELAG, the existing playable hero of THE WAR REMAINS. Use the supplied reference images, not a generic pirate. Reference 1 establishes his face, body proportions, southern-island wrap tunic, knee-length trousers, coral headband and sash, turquoise trim, leather bracers and sandals. Reference 2 establishes the exact curved silver saber, guard, leather grip and colored ties. Reference 3 establishes the original heavy anchor head, ring, grip and chain. References 4 and 5 establish the actual camp and forest game rendering.\n\nRefine the SAME character, preserving his height, limb proportions, recognizable facial identity and animation-compatible clothing cut. He is a fast, agile but sturdy adult boarding fighter, confident and appealing to play. Make his face subtly more mature: firmer jaw and brow, determined calm expression, the same dark eyes, warm ochre skin, no beard, no photorealism. Preserve the forehead band and its simple diamond emblem.\n\nKeep the established palette: coral pink sash and collar, turquoise edges, warm ochre-beige skin, ivory cloth, brown leather. Give the clothing and bracers strong broad planes and restrained hand-painted gradients. Readable cloth folds and material separation, not tiny decorative noise or an overall color grade. Preserve the wrap tunic, exposed forearms, knee-length trousers and sandals. No armor, hats, coats, extra buckles, additional weapons or invented symbols.\n\nShow the recognizable existing saber with correct fingers wrapped around its grip. Carry the SAME heavy anchor diagonally close against the back on a simple functional carrier; clear substantial silhouette, ring near a shoulder, flukes near the hip, no floating weapon, no giant chain stretched between random points. Show real connected chain links.\n\nUse a restrained stylized painted 3D game-asset finish, with broad directional form shading, matte cloth and leather and crisp silver-metal highlights. No bloom, glowing outlines or cinematic fog. Plain neutral warm-grey background and identical neutral daylight across the panels, no elaborate menu background.\n\nSheet layout: large full-body front three-quarter view on the left; full-body rear three-quarter view beside it showing the anchor carrier; face close-up upper right; smaller overhead isometric gameplay-scale figure lower right, preserving the same design and readable color blocks. All panels show one consistent character and weapons. Entire feet and weapons visible, no explanatory text, no comparison to a different character.\n\nVARIANT B: medium-short thick hair swept back in three or four large sculpted locks, slight asymmetric wave, sides tidier but not shaved, no ponytail or mohawk. Keep his mature facial refinement restrained and recognizable from the original hero reference. Preserve the same costume cut; emphasize broad diagonal wrap folds, the substantial coral sash and warm rust-ochre highlights on brown leather. Turquoise trim is a coherent large accent rather than tiny checkerboard noise."
+      },
+      "references": [
+        {
+          "path": "../references/pelag_identity.jpg",
+          "role": "Existing hero identity and original costume",
+          "kind": "existing approved source artwork"
+        },
+        {
+          "path": "../references/saber_identity.jpg",
+          "role": "Existing saber design",
+          "kind": "existing source artwork"
+        },
+        {
+          "path": "../references/anchor_identity.jpg",
+          "role": "Existing anchor and chain design",
+          "kind": "existing source artwork"
+        },
+        {
+          "path": "../baseline/camp/shot_00_t3.00s.png",
+          "role": "Actual game camp rendering",
+          "kind": "isolated existing player capture; close camera"
+        },
+        {
+          "path": "../baseline/forest-combat/shot_01_t0.50s.png",
+          "role": "Actual forest combat rendering",
+          "kind": "isolated existing player capture; gameplay camera"
+        }
+      ],
+      "status": "completed_awaiting_owner_review",
+      "estimated_credits": 2,
+      "job_id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b",
+      "result_file": "B.png"
+    }
+  ],
+  "baseline": {
+    "live_unity_audit": "../baseline/unity-live-audit.json",
+    "blender_audit": "../baseline/blender-source-audit.json",
+    "blender_source": "../baseline/Pelag_v6_Baseline.blend",
+    "owner_game_observation": "../baseline/owner-game-observation.png",
+    "player": "artifacts/mobsv2-build/Razlom.exe",
+    "player_note": "Existing isolated player, not rebuilt and not treated as today's source build. Live model path/hash/mesh count verified separately through Unity MCP.",
+    "seed": 20260829,
+    "camp_camera_size": 4.5,
+    "forest_camera": "player default"
+  },
+  "tools": {
+    "unity_mcp": "connected; live read-only inspection and screenshot complete",
+    "blender_mcp": "connected; isolated background worker localhost:9876",
+    "higgsfield": "Five references uploaded, two paid jobs completed; owner rejected both. No further paid jobs in Imagegen revision.",
+    "tripo": "not needed at this stage",
+    "to3d": "not needed at this stage",
+    "game_development_studio": "plugin skill available; local game-dev CLI not found, its CLI audit/package checks not run"
+  },
+  "cost_observed_balance_delta": 4,
+  "owner_selection": null,
+  "owner_review": "Nano Banana quality rejected; new current candidates in imagegen-revision/manifest.json"
+}

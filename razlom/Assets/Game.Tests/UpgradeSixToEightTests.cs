@@ -55,23 +55,7 @@ namespace Game.Tests
 
         private static int Lost(Simulation sim, int id, int health = 10000) => health - sim.Entities.Health[id];
 
-        // ---- числа ----
-
-        [Test]
-        public void NumericUpgrades()
-        {
-            Assert.AreEqual(6f, With(SabreTalentLine.AnchorSlam, 6, true).GetAbility(0).Get(AbilityStatType.Radius).ToFloat(), .001f, "Дальний удар");
-            Assert.AreEqual(10f, With(SabreTalentLine.Flask, 6, true).GetAbility(0).Get(AbilityStatType.Radius).ToFloat(), .001f, "Дальний бросок");
-        }
-
-        [Test]
-        public void EveryLineHasEightUpgrades()
-        {
-            var buffer = new AbilityNode[SabreTalents.TalentsPerLine];
-            for (int line = 0; line < SabreTalents.LineCount; line++)
-                for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
-                    Assert.AreEqual(1, SabreTalents.AppendNode((SabreTalentLine)line, index, buffer, 0), "у линии " + line + " нет усиления " + (index + 1));
-        }
+        // Числовые усиления (Дальний удар, Дальний бросок) — в SabreTalentNodeTests.NumericUpgrades_ChangeTheirOwnNumber.
 
         // ---- Вихрь ----
 

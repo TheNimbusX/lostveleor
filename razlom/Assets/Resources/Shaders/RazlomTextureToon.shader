@@ -14,6 +14,12 @@ Shader "Razlom/Texture Toon"
         _OutlineColor ("Outline Color", Color) = (0.09,0.025,0.075,1)
         _OutlineWidth ("Outline Pixels", Range(0,3)) = 0
         _WhiteClothLift ("White cloth light retention", Range(0,1)) = 0
+        _ArtSaturation ("Painted colour saturation", Range(0.5,1.5)) = 1
+        _ArtContrast ("Painted colour contrast", Range(0.8,1.2)) = 1
+        _SkinMask ("Skin tone mask (linear)", 2D) = "black" {}
+        _SkinToneStrength ("Skin tone correction", Range(0,1)) = 0
+        _SkinSaturation ("Skin saturation", Range(0,1)) = 1
+        _SkinToneScale ("Skin RGB scale / lightening", Vector) = (1,1,1,0)
         // ГЛУБИННЫЙ ОТСТУП ОБВОДКИ — ЭТО НЕ ТОНКАЯ НАСТРОЙКА, А ЕЁ СМЫСЛ.
         //
         // Обводка рисуется вывернутой оболочкой: Cull Front поверх уже
@@ -134,6 +140,8 @@ Shader "Razlom/Texture Toon"
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_SkinMask);
+            SAMPLER(sampler_SkinMask);
 
             float4 _RazlomHeroLightPosition;
             half4 _RazlomHeroLightColor;
@@ -156,6 +164,21 @@ Shader "Razlom/Texture Toon"
             {
                 half dissolveFront = RazlomDissolveFront(input.positionOS);
                 half4 texel = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
+                half3 originalAlbedo = texel.rgb;
+                half skinCoverage = 0.0h;
+                // Defaults preserve every existing material. Pelag's palette is an editable .mat.
+                half luminance = dot(texel.rgb, half3(0.2126h, 0.7152h, 0.0722h));
+                texel.rgb = max(0.0h, lerp(luminance.xxx, texel.rgb, _ArtSaturation));
+                texel.rgb = max(0.0h, (texel.rgb - 0.18h) * _ArtContrast + 0.18h);
+                // Optional atlas mask isolates Pelag's skin from his leather, cloth and metal.
+                // Use the original painted shading, avoiding the costume's saturation boost.
+                if (_SkinToneStrength > 0.001h)
+                {
+                    skinCoverage = SAMPLE_TEXTURE2D(_SkinMask, sampler_SkinMask, input.uv).r * _SkinToneStrength;
+                    half3 skin = lerp(luminance.xxx, originalAlbedo, _SkinSaturation);
+                    skin = max(0.0h, skin * _SkinToneScale.rgb + _SkinToneScale.w);
+                    texel.rgb = lerp(texel.rgb, skin, skinCoverage);
+                }
                 half3 normal = normalize(input.normalWS);
                 Light mainLight = GetMainLight(input.shadowCoord);
 
@@ -220,7 +243,7 @@ Shader "Razlom/Texture Toon"
                     (1.0h - smoothstep(0.12h, 0.32h, (brightest - darkest) / max(brightest, 0.001h)));
                 half3 clothTone = lerp(half3(0.82h, 0.88h, 0.97h),
                     half3(1.25h, 1.23h, 1.18h), smoothstep(0.0h, 0.85h, shadeInput));
-                tone = lerp(tone, clothTone, clothMask * _WhiteClothLift);
+                tone = lerp(tone, clothTone, clothMask * (1.0h - skinCoverage) * _WhiteClothLift);
 
                 // REALTIME CAST SHADOW
                 /*

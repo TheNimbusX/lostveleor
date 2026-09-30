@@ -261,6 +261,7 @@ namespace Game.View
 
         private string _outputDirectory;
         private float[] _marks;
+        private CampInputCapture _campInputCapture;
         private bool _recordVideo;
         private float _videoStart;
         private float _videoEnd;
@@ -451,7 +452,14 @@ namespace Game.View
             if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp") >= 0)
             {
                 while (CampPlayerView.Instance == null || CampPlayerView.Instance.Body == null) yield return null;
-                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-look") >= 0)
+                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-input") >= 0)
+                {
+                    _campInputCapture = gameObject.AddComponent<CampInputCapture>();
+                    _campInputCapture.Initialize(_outputDirectory);
+                }
+                else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-polish") >= 0)
+                    gameObject.AddComponent<CampPolishCapture>().Initialize(_outputDirectory);
+                else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-look") >= 0)
                     gameObject.AddComponent<CampLookCapture>().Initialize(_outputDirectory);
                 else if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-camp-sound") >= 0)
                     gameObject.AddComponent<CampSoundCapture>().Initialize(_outputDirectory);
@@ -645,7 +653,7 @@ namespace Game.View
             while ((_recordVideo
                         ? _timelineFrame / (float)_videoFps
                         : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt) < finish
-                   || mark < _marks.Length)
+                   || mark < _marks.Length || (_campInputCapture != null && !_campInputCapture.Finished))
             {
                 // Тестовая арена пересоздаёт привязку камеры после прогрева.
                 // Обзорный ракурс удерживается и после этого перехода.

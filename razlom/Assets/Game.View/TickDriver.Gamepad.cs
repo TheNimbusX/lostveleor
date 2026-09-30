@@ -27,7 +27,13 @@ namespace Game.View
 #endif
         }
 
-        private void CaptureGamepad(bool choosing)
+        // Окна лагеря читают устройство до открытия: A может быть первым вводом после мыши.
+        internal void RefreshCampInputDeviceHint()
+        {
+            if (Session != null && Session.Mode == GameMode.Camp) RefreshLastInputDevice();
+        }
+
+        private void RefreshLastInputDevice()
         {
 #if ENABLE_INPUT_SYSTEM
             var pad = Gamepad.current;
@@ -46,7 +52,18 @@ namespace Game.View
             if (pointerActivity || keyActivity) _usingGamepad = false;
             else if (padActivity) _usingGamepad = true;
             GamepadLastUsed = _usingGamepad;
+#endif
+        }
+
+        private void CaptureGamepad(bool choosing)
+        {
+#if ENABLE_INPUT_SYSTEM
+            RefreshLastInputDevice();
+            var pad = Gamepad.current;
+            if (pad == null) return;
             if (!_usingGamepad) return;
+            Vector2 move = GamepadMovement();
+            Vector2 look = pad.rightStick.ReadValue();
 
             // Ни старое положение мыши, ни её незавершённый клик не могут
             // подменить прицел или атаку контроллера на следующем тике.

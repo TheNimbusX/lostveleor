@@ -244,7 +244,8 @@ namespace Game.Sim
             Outcome = RunOutcome.None;
             Gold = 0;
             PendingAbility = -1;
-            Loadout.ResetToStarter();
+            ResetPreparationUsage();
+            Loadout.ResetToStarter(Preparation.StarterPoolIndex);
             CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
             RollPlan();
 
@@ -414,6 +415,7 @@ namespace Game.Sim
             // персонажу. Значит всё нажитое вешается обратно здесь — и здесь же
             // задан порядок, в котором это происходит.
             PlayerEquipment?.Reapply();
+            _sim.ApplyPreparedGift(Preparation.Gift, Depth);
             ApplyStatRewards(_sim.Entities.Stats[Simulation.PlayerId]);
             _sim.RefreshPlayerStats(heal: true);
             _sim.ApplyPlayerMissingHealth(missingHealth);
@@ -694,6 +696,7 @@ namespace Game.Sim
 
         private void StepChoosing(RunCommand command)
         {
+            if (command == RunCommand.RerollReward) { TryRerollReward(); return; }
             if (command == RunCommand.Leave)
             {
                 End(RunOutcome.Left);
@@ -1042,6 +1045,7 @@ namespace Game.Sim
             for (int i = 0; i < _sim.Entities.Count; i++) Hashing.Mix(ref hash, _enemyBranch[i]);
 
             Loadout.HashInto(ref hash);
+            HashRunPreparation(ref hash);
             Hashing.Mix(ref hash, Gold);
             Hashing.Mix(ref hash, (int)Artifact);
             Hashing.Mix(ref hash, PendingAbility);

@@ -397,35 +397,311 @@ namespace Game.EditorTools
         }
 
         /// <summary>
-        /// Клавиша «Дыма и света»: буква в клубе дыма с тонким кольцом. Одна буква — круг
-        /// <paramref name="size"/>, длинная подпись (Space, ЛКМ, Shift) — капсула по ширине текста.
-        /// Кольцо — капсула 9-slice с радиусом в полвысоты: круг, который вид растянет под длинную
-        /// подпись после смены клавиши, становится капсулой, а не овалом. Ребёнок «Буква» — тот, что
-        /// ищут виды: одна строка, размер сам уменьшается, если подпись не влезает.
+        /// ОДИН КЕЙКАП (лист 5 единого набора, 30 сентября): тёмный скруглённый квадрат, кремовая буква Nunito, тонкая
+        /// кромка; под ним — клуб дыма «Дыма и света». Одна буква — квадрат <paramref name="size"/>, длинная подпись
+        /// (Esc, Space, ЛКМ) — шире по тексту, скругление то же (UiTheme.KeycapWidth, UiTheme.KeycapCorner).
+        /// Дети по порядку: «Дым», «Подложка», «Кольцо» (кромка, 9-slice: растягивается без искажения угла), «Буква»
+        /// (одна строка, размер сам уменьшается, если подпись не влезает). Имена «Кольцо» и «Буква» ищут виды
+        /// (UiKeyHint.FitKeycap подгоняет ширину после смены клавиши). Свой свет между подложкой и кромкой —
+        /// на номер <see cref="KeycapInnerIndex"/>.
         /// </summary>
-        public static RectTransform Keycap(RectTransform parent, string name, string key, float size = 34f)
+        /// <param name="capsule">Не клавиша, а плашка-капсула с числом (недостача лавидия на плитке): круглые концы,
+        /// без тёмной подложки.</param>
+        public static RectTransform Keycap(RectTransform parent, string name, string key, float size = UiTheme.KeycapSizeDefault, bool capsule = false)
         {
             UiTheme t = UiTheme.Current;
             RectTransform root = UiKitBuilder.Node(name, parent);
             root.sizeDelta = new Vector2(size, size);
             SmokeLayer(root, "Дым", "smoke_blot_2", 1f, size * .35f, size * .3f);
-            Image ring = UiKitBuilder.Layer(root, "Кольцо", t.PillFrame, Role.PanelLine, .4f);
-            Capsule(ring, size);
+            if (!capsule) KeycapFill(root, size);
+            Image ring = UiKitBuilder.Layer(root, "Кольцо", capsule ? t.PillFrame : t.FrameSmall, Role.PanelLine, UiTheme.KeycapEdgeAlpha);
+            if (capsule) Capsule(ring, size);
+            else Rounded(ring, UiTheme.KeycapCorner(size));
             ring.material = Plain;
             Reveal(ring, new Vector2(.5f, .5f), .1f);
 
-            TMP_Text label = Label(root, "Буква", key, FontRole.Body, size * .56f, Role.Text, TextAlignmentOptions.Center, 0f, 1f, .2f);
+            float letter = size * (capsule ? .56f : UiTheme.KeycapLetterRatio);
+            TMP_Text label = Label(root, "Буква", key, FontRole.Body, letter, Role.Text, TextAlignmentOptions.Center, 0f, 1f, .2f);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             // Ширина текста — до полей и автоподбора: так мерится сама подпись.
             float text = string.IsNullOrEmpty(key) ? 0f : label.GetPreferredValues(key).x;
-            if (key != null && key.Length > 1) root.sizeDelta = new Vector2(Mathf.Max(size, text + size * .7f), size);
-            // Поля — чтобы буквы не наезжали на кольцо и круглые концы капсулы.
+            root.sizeDelta = new Vector2(UiTheme.KeycapWidth(text, size, key != null ? key.Length : 0), size);
+            // Поля — чтобы буквы не наезжали на кромку и скруглённые углы.
             float pad = size * .12f;
             label.margin = new Vector4(pad, 0f, pad, 0f);
             label.enableAutoSizing = true;
             label.fontSizeMin = Mathf.Max(8f, size * .26f);
-            label.fontSizeMax = size * .56f;
+            label.fontSizeMax = letter;
             return root;
+        }
+
+        /// <summary>Тёмная подложка кейкапа «Подложка»: скруглённый квадрат цвета SmokeDeep, сразу над дымом.</summary>
+        static Image KeycapFill(RectTransform cap, float size)
+        {
+            UiTheme t = UiTheme.Current;
+            Image back = UiKitBuilder.Layer(cap, "Подложка", t.FillSmall, Role.SmokeDeep, UiTheme.KeycapFillAlpha);
+            back.material = Plain;
+            Reveal(back, new Vector2(.5f, .5f), .08f);
+            Rounded(back, UiTheme.KeycapCorner(size));
+            Transform smoke = cap.Find("Дым");
+            back.transform.SetSiblingIndex(smoke != null ? smoke.GetSiblingIndex() + 1 : 0);
+            return back;
+        }
+
+        /// <summary>Номер среди детей кейкапа над тёмной подложкой и под кромкой: сюда кладётся свой свет или рисунок.</summary>
+        public static int KeycapInnerIndex(RectTransform cap)
+        {
+            Transform edge = cap != null ? cap.Find("Кольцо") : null;
+            return edge != null ? edge.GetSiblingIndex() : 1;
+        }
+
+        /// <summary>
+        /// Круглый кейкап «Дыма и света» прежней сборки (дым, кольцо-капсула, буква) → кейкап листа 5 на месте: кромка
+        /// становится скруглённым квадратом, под буквой — тёмная подложка. Узел, его размер, буква и ссылки видов не
+        /// меняются; краска кромки (ThemeColor, ThemeStates наведения) остаётся. Уже переделанный — false.
+        /// </summary>
+        public static bool KitKeycap(RectTransform cap)
+        {
+            if (cap == null || cap.Find("Подложка") != null || cap.Find("Буква") == null) return false;
+            var edge = cap.Find("Кольцо") != null ? cap.Find("Кольцо").GetComponent<Image>() : null;
+            if (edge == null) return false;
+            float height = cap.rect.height > 0f ? cap.rect.height : cap.sizeDelta.y;
+            // Сравнение через оператор Unity: в редакторе GetComponent без компонента отдаёт «ненастоящий null».
+            LayoutElement box = height <= 0f && cap.parent != null ? cap.parent.GetComponent<LayoutElement>() : null;
+            if (box != null) height = box.preferredHeight;
+            edge.sprite = UiTheme.Current.FrameSmall;
+            Rounded(edge, UiTheme.KeycapCorner(height));
+            KeycapFill(cap, height);
+            return true;
+        }
+
+        /// <summary>
+        /// Все кейкапы «Дыма и света» под <paramref name="root"/> (узлы с «Дымом», «Кольцом» и «Буквой») → кейкап листа 5
+        /// (<see cref="KitKeycap"/>). Для миграций префабов: узлы, ссылки и раскладка не меняются. Плашки-капсулы с
+        /// числом (родитель <paramref name="skipParent"/>, например «Нет лавидия») остаются капсулами.
+        /// </summary>
+        /// <returns>Сколько кейкапов переделано.</returns>
+        public static int RestyleKeycaps(Transform root, string skipParent = null)
+        {
+            if (root == null) return 0;
+            var caps = new System.Collections.Generic.List<RectTransform>();
+            foreach (RectTransform node in root.GetComponentsInChildren<RectTransform>(true))
+            {
+                if (node.Find("Дым") == null || node.Find("Кольцо") == null || node.Find("Подложка") != null) continue;
+                Transform letter = node.Find("Буква");
+                if (letter == null || letter.GetComponent<TMP_Text>() == null) continue;
+                if (skipParent != null && node.parent != null && node.parent.name == skipParent) continue;
+                caps.Add(node);
+            }
+            int done = 0;
+            foreach (RectTransform cap in caps)
+                if (KitKeycap(cap)) done++;
+            return done;
+        }
+
+        /// <summary>
+        /// Подписи кнопок и вкладок <paramref name="controls"/> → шрифт заголовков (Philosopher), как у кнопок главного
+        /// меню (владелец 30.09: «шрифт ну как в главном меню»). Для миграций префабов: подпись ищется по самой кнопке,
+        /// а не по имени узла (владелец переименовывает узлы руками) — это единственный текст под кнопкой вне вложенных
+        /// кнопок и кейкапов; текстов несколько (подпись и её копии состояний) — те, что зовутся «Надпись», как их ищет
+        /// CampShopView.SetTab. Меняются только роль шрифта (ThemeFont), сам шрифт и его материал: размер, цвет,
+        /// отступы и раскладка остаются. Буквы кейкапов («Esc», «1», «R») остаются Nunito.
+        /// </summary>
+        /// <returns>Сколько подписей переведено (уже Philosopher — не считаются).</returns>
+        public static int HeadingLabels(System.Collections.Generic.IEnumerable<Selectable> controls)
+        {
+            int done = 0;
+            if (controls == null) return 0;
+            foreach (Selectable control in controls)
+                done += HeadingLabel(control);
+            return done;
+        }
+
+        /// <summary>Подпись одной кнопки или вкладки → Philosopher (см. <see cref="HeadingLabels"/>).</summary>
+        /// <returns>Сколько текстов переведено.</returns>
+        public static int HeadingLabel(Selectable control)
+        {
+            if (control == null) return 0;
+            var own = new System.Collections.Generic.List<TMP_Text>();
+            foreach (TMP_Text text in control.GetComponentsInChildren<TMP_Text>(true))
+                if (OwnLabel(control.transform, text.transform)) own.Add(text);
+            if (own.Count > 1) own.RemoveAll(text => text.name != "Надпись");
+            if (own.Count == 0)
+            {
+                Debug.LogWarning("[ui-kit] У «" + control.name + "» не нашлось подписи — шрифт не тронут");
+                return 0;
+            }
+            int done = 0;
+            foreach (TMP_Text label in own)
+                if (ToHeading(label)) done++;
+            return done;
+        }
+
+        /// <summary>Текст — подпись самой кнопки: между ним и кнопкой нет другой кнопки и кейкапа (узла с «Кольцом» и «Буквой»).</summary>
+        static bool OwnLabel(Transform control, Transform text)
+        {
+            for (Transform node = text; node != null && node != control; node = node.parent)
+            {
+                if (node.GetComponent<Selectable>() != null) return false;
+                if (node != text && node.Find("Кольцо") != null && node.Find("Буква") != null) return false;
+            }
+            return true;
+        }
+
+        /// <summary>Роль шрифта «заголовок», шрифт темы и его материал; true — что-то поменялось.</summary>
+        static bool ToHeading(TMP_Text label)
+        {
+            TMP_FontAsset heading = UiTheme.Current.Get(FontRole.Heading);
+            if (heading == null)
+            {
+                Debug.LogWarning("[ui-kit] В теме нет шрифта заголовков — подпись «" + label.name + "» не тронута");
+                return false;
+            }
+            var theme = label.GetComponent<ThemeFont>();
+            if (theme == null) theme = label.gameObject.AddComponent<ThemeFont>();
+            if (theme.Role == FontRole.Heading && label.font == heading) return false;
+            TMP_FontAsset was = label.font;
+            Material material = label.fontSharedMaterial;
+            // Сначала роль: ThemeFont при включении вернул бы шрифт роли Body.
+            theme.Role = FontRole.Heading;
+            label.font = heading;
+            label.fontSharedMaterial = HeadingMaterial(was, material, heading);
+            EditorUtility.SetDirty(theme);
+            EditorUtility.SetDirty(label);
+            return true;
+        }
+
+        /// <summary>
+        /// Материал подписи после смены шрифта: был материал шрифта по умолчанию — материал Philosopher по умолчанию;
+        /// был пресет («Nunito-Regular SDF Shadow») — пресет Philosopher с тем же хвостом имени рядом с его шрифтом, если есть.
+        /// </summary>
+        static Material HeadingMaterial(TMP_FontAsset was, Material material, TMP_FontAsset heading)
+        {
+            if (material == null || was == null || material == was.material || !material.name.StartsWith(was.name)) return heading.material;
+            string folder = System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(heading)).Replace('\\', '/');
+            string preset = folder + "/" + heading.name + material.name.Substring(was.name.Length) + ".mat";
+            var found = AssetDatabase.LoadAssetAtPath<Material>(preset);
+            if (found != null) return found;
+            Debug.LogWarning("[ui-kit] Нет пресета " + preset + " — у подписи материал Philosopher по умолчанию вместо «" + material.name + "»");
+            return heading.material;
+        }
+
+        /// <summary>
+        /// Подсказка клавиши листа 5 — «[Esc] Закрыть»: кейкап и глагол с большой буквы (UiKeyHint.Verb) одной строкой.
+        /// Узел «Клавиша …» с раскладкой по ширине содержимого; кейкап — «Клавиша» с LayoutElement (ширину подгоняет
+        /// UiKeyHint.FitKeycap), подпись — «Подпись». Шрифт подписи — Nunito ступени Body темы, цвет — приглушённый.
+        /// </summary>
+        public static RectTransform KeyHint(RectTransform parent, string key, string verb, out TMP_Text label, float keySize = 0f,
+            float textSize = 0f, Role role = Role.TextMuted)
+        {
+            UiTheme t = UiTheme.Current;
+            if (keySize <= 0f) keySize = t.KeycapSmall;
+            if (textSize <= 0f) textSize = t.Size(UiTheme.TextStep.Body);
+            RectTransform pair = UiKitBuilder.Node("Клавиша " + key, parent);
+            var layout = pair.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.spacing = t.SpaceS;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            RectTransform cap = Keycap(pair, "Клавиша", key, keySize);
+            var size = cap.gameObject.AddComponent<LayoutElement>();
+            size.preferredWidth = size.minWidth = cap.sizeDelta.x;
+            size.preferredHeight = size.minHeight = keySize;
+            RectTransform caption = UiKitBuilder.Node("Подпись", pair);
+            label = caption.gameObject.AddComponent<TextMeshProUGUI>();
+            label.text = UiKeyHint.Verb(verb);
+            label.fontSize = textSize;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.raycastTarget = false;
+            var font = caption.gameObject.AddComponent<ThemeFont>();
+            font.Role = FontRole.Body;
+            font.Apply();
+            UiKitBuilder.Tint(label, role);
+            Revealed(label, .15f);
+            return pair;
+        }
+
+        /// <summary>
+        /// Кейкап на кнопке (лист 5: кнопка окна подтверждения и футера — «[Esc] Отмена»): клавиша слева внутри мазка,
+        /// подпись центрируется в оставшемся месте. Уже есть «Клавиша» — её и отдаёт.
+        /// </summary>
+        public static RectTransform ButtonKey(RectTransform button, string key, float size = 0f)
+        {
+            if (button == null) return null;
+            if (button.Find("Клавиша") is RectTransform existing) return existing;
+            if (size <= 0f) size = UiTheme.Current.KeycapSmall;
+            RectTransform keycap = Keycap(button, "Клавиша", key, size);
+            keycap.anchorMin = keycap.anchorMax = new Vector2(0f, .5f);
+            keycap.pivot = new Vector2(0f, .5f);
+            keycap.anchoredPosition = new Vector2(20f, 0f);
+            Transform caption = button.Find("Надпись");
+            TMP_Text label = caption != null ? caption.GetComponent<TMP_Text>() : null;
+            if (label != null) label.margin = new Vector4(keycap.sizeDelta.x + 26f, 0f, 12f, 0f);
+            return keycap;
+        }
+
+        // ---------------------------------------------------------------- подсказки
+
+        /// <summary>
+        /// Подложка всплывающей подсказки (экран награды, вложенная подсказка слова, подсказка способности): малая
+        /// подложка «Дыма и света» БЕЗ огненной нити и огня по кромке (владелец: подсказки без кромки), своя быстрая
+        /// группа проявления без тлеющей кромки, столбец с полями <paramref name="padding"/>, высота по тексту.
+        /// Опора — левый верхний угол (якорь сверху по центру родителя); место ставит вид. Узел выключен.
+        /// </summary>
+        public static RectTransform TipPlate(RectTransform parent, string name, float width, RectOffset padding)
+        {
+            RectTransform tip = UiKitBuilder.Node(name, parent);
+            tip.anchorMin = tip.anchorMax = new Vector2(.5f, 1f);
+            tip.pivot = new Vector2(0f, 1f);
+            tip.sizeDelta = new Vector2(width, 120f);
+            Image thread = Plate(tip, small: true);
+            // Подсказки без кромки: огненной нити под подложкой нет.
+            if (thread != null) Object.DestroyImmediate(thread.gameObject);
+            Group(tip, UiInkGroup.Sweep.FromCenter, .28f, .06f).Burn = 0f;
+            var column = tip.gameObject.AddComponent<VerticalLayoutGroup>();
+            column.padding = padding;
+            column.spacing = 6f;
+            column.childControlWidth = column.childControlHeight = true;
+            column.childForceExpandWidth = true;
+            column.childForceExpandHeight = false;
+            tip.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            tip.gameObject.SetActive(false);
+            return tip;
+        }
+
+        /// <summary>Строка подсказки в столбце <see cref="TipPlate"/>: перенос по словам, rich text (ссылки слов).</summary>
+        public static TMP_Text TipText(RectTransform tip, string name, string text, FontRole font, float size, Role role, float delay)
+        {
+            RectTransform rect = UiKitBuilder.Node(name, tip);
+            var label = rect.gameObject.AddComponent<TextMeshProUGUI>();
+            label.text = text;
+            label.fontSize = size;
+            label.alignment = TextAlignmentOptions.TopLeft;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.richText = true;
+            label.raycastTarget = false;
+            var themeFont = rect.gameObject.AddComponent<ThemeFont>();
+            themeFont.Role = font;
+            themeFont.Apply();
+            UiKitBuilder.Tint(label, role);
+            Revealed(label, delay);
+            return label;
+        }
+
+        /// <summary>
+        /// Вложенная подсказка ключевого слова (показывает Game.View.UiKeywordTip): «Название» — Philosopher ступени
+        /// Body, цвет ставит вид (цвет слова — краска темы с него снята); «Определение» — Nunito ступени Caption,
+        /// приглушённое. Узел выключен.
+        /// </summary>
+        public static RectTransform KeywordTip(RectTransform parent, string name, float width, out TMP_Text title, out TMP_Text body)
+        {
+            UiTheme t = UiTheme.Current;
+            RectTransform tip = TipPlate(parent, name, width, new RectOffset(20, 20, 12, 14));
+            title = TipText(tip, "Название", "Корни", FontRole.Heading, t.Size(UiTheme.TextStep.Body), Role.Rare, .04f);
+            Object.DestroyImmediate(title.GetComponent<ThemeColor>());
+            body = TipText(tip, "Определение", "Пелаг не ходит.", FontRole.Body, t.Size(UiTheme.TextStep.Caption), Role.TextMuted, .1f);
+            return tip;
         }
 
         /// <summary>
@@ -517,12 +793,14 @@ namespace Game.EditorTools
         /// CampShopView.SetTab: «Надпись» (ThemeColor: акцент у выбранной, текст у остальных) и
         /// «Подчёркивание» (включено только у выбранной). Кнопку и ловца мыши добавляет окно
         /// (как с вкладкой пака) — например <see cref="HitArea"/> и Button.
+        /// Подпись — шрифт заголовков (Philosopher), как у кнопок главного меню и <see cref="Button"/>
+        /// (владелец 30.09: «шрифт ну как в главном меню»); готовые префабы переводит <see cref="HeadingLabel"/>.
         /// </summary>
         public static RectTransform Tab(RectTransform parent, string name, string text, bool selected, float w = 150f, float h = 48f, float fontSize = 20f)
         {
             RectTransform root = UiKitBuilder.Node(name, parent);
             root.sizeDelta = new Vector2(w, h);
-            TMP_Text label = Label(root, "Надпись", text, FontRole.Body, fontSize, selected ? Role.Accent : Role.Text, TextAlignmentOptions.Center,
+            TMP_Text label = Label(root, "Надпись", text, FontRole.Heading, fontSize, selected ? Role.Accent : Role.Text, TextAlignmentOptions.Center,
                 0f, selected ? 1f : .85f, .1f);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             Image line = LightStrip(root, "Подчёркивание", "light_thread", 0f, 2f, 26f, 4f, .85f, .15f);

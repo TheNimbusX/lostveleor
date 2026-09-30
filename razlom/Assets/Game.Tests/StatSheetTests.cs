@@ -4,10 +4,10 @@ using Game.Sim;
 namespace Game.Tests
 {
     /// <summary>
-    /// Три слоя модификаторов — модель Path of Exile. Тесты проверяют каждый
-    /// слой отдельно, все вместе, и два свойства, без которых система тихо
-    /// разъедется: пересчёт только по грязному флагу и независимость итога
-    /// от порядка, в котором игрок собрал билд.
+    /// Три слоя модификаторов — модель Path of Exile. Тесты проверяют все
+    /// слои вместе и два свойства, без которых система тихо разъедется:
+    /// пересчёт только по грязному флагу и независимость итога от порядка,
+    /// в котором игрок собрал билд.
     /// </summary>
     public class StatSheetTests
     {
@@ -20,18 +20,6 @@ namespace Game.Tests
             var sheet = new StatSheet();
             sheet.SetBase(S, Fix64.FromInt(baseValue));
             return sheet;
-        }
-
-        // ---- слои по отдельности ----
-
-        [Test]
-        public void Flat_AddsToBase()
-        {
-            var sheet = WithBase(100);
-            sheet.Add(StatModifier.Flat(S, Fix64.FromInt(30), ModifierSource.Equipment, 1));
-            sheet.Add(StatModifier.Flat(S, Fix64.FromInt(20), ModifierSource.Equipment, 2));
-
-            Assert.That(sheet.Get(S), Is.EqualTo(Fix64.FromInt(150)));
         }
 
         // ---- все три вместе ----

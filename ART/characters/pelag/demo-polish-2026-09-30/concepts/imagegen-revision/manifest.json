@@ -1,0 +1,42 @@
+{
+  "stage": "concept_review",
+  "tool": "image_gen.imagegen",
+  "mode": "built-in",
+  "created_local_date": "2026-09-30",
+  "owner_selection": null,
+  "paid_higgsfield_jobs_this_revision": 0,
+  "previous_higgsfield_concepts": "rejected by owner",
+  "references": [
+    "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/demo-polish-2026-09-30/references/pelag_identity.jpg",
+    "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/demo-polish-2026-09-30/references/saber_identity.jpg",
+    "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/demo-polish-2026-09-30/references/anchor_identity.jpg",
+    "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/demo-polish-2026-09-30/baseline/camp/shot_00_t3.00s.png",
+    "C:/Users/d.grab/Desktop/the-game/ART/characters/pelag/demo-polish-2026-09-30/baseline/forest-combat/shot_01_t0.50s.png"
+  ],
+  "outputs": [
+    {
+      "id": "A",
+      "source": "C:/Users/d.grab/.codex/generated_images/01a0cb3a-f13f-75f2-82d3-0a23dc4c447c/exec-62f9f534-5fe2-4ef2-a859-69ddb34e551c.png",
+      "file": "A.png",
+      "prompt_file": "A.prompt.txt",
+      "accepted": false,
+      "sha256": "06da3952899ba4301814380fbf9a3f984448e3cd023d22f73ba79cc6d76933c9",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "id": "B",
+      "source": "C:/Users/d.grab/.codex/generated_images/01a0cb3a-f13f-75f2-82d3-0a23dc4c447c/exec-756f9e77-06df-4e14-b02a-b32350141ddc.png",
+      "file": "B.png",
+      "prompt_file": "B.prompt.txt",
+      "accepted": false,
+      "sha256": "cd9db7ddf8f96b1c11259be1a67a9f08e3946d9efcdb942bbe3b5c4ac1b4d421",
+      "size": [
+        1536,
+        1024
+      ]
+    }
+  ]
+}

@@ -108,9 +108,8 @@ namespace Game.Sim
         public CampTraining Training { get; private set; }
 
         /// <summary>
-        /// Набор способностей в лагере и на Полигоне: автоатака и Вихрь. Меню
-        /// разработчика и съёмки меняют его для проверки. Не сохраняется —
-        /// способности живут в забеге, а лагерный набор только инструмент.
+        /// Набор способностей в лагере и на Полигоне: выбранное у стола
+        /// стартовое умение. Меню разработчика и съёмки меняют его для проверки.
         /// </summary>
         public RunLoadout CampLoadout { get; } = new RunLoadout();
 
@@ -176,6 +175,8 @@ namespace Game.Sim
             int simCapacity = 512, LocationDefinition location = null)
         {
             Camp = camp;
+            Camp.InitializePreparationSeed(sessionSeed);
+            CampLoadout.ResetToStarter(Camp.PreparedStarterPoolIndex);
             _location = location;
             _location?.ValidateCapacity(simCapacity);
             _modules = location?.Modules ?? modules;
@@ -221,7 +222,7 @@ namespace Game.Sim
 
         /// <summary>
         /// Можно ли сейчас бить и колдовать: в Разломе и на старом Полигоне — всегда, в лагере
-        /// с манекенами — только в зоне полигона. Кувырок и зелья от этого не зависят. По этому
+        /// с манекенами — только в зоне полигона. Кувырок доступен по всему лагерю. По этому
         /// же флагу HUD лагеря прячет и возвращает свою боевую часть.
         /// </summary>
         public bool CampCombatAllowed => Mode != GameMode.Camp || Ground != null || Training == null
@@ -244,18 +245,7 @@ namespace Game.Sim
         /// </summary>
         public void Step(in InputFrame input)
         {
-            bool potionAllowed=Mode==GameMode.Camp || (Mode==GameMode.Rift && !IsDeveloperRun && (Run.Phase==RunPhase.Clearing || Run.Phase==RunPhase.SeekingExit));
-            if(potionAllowed && ActiveSim.Entities.Alive[0])
-            {
-                for(int slot=0;slot<2;slot++)if((input.PotionMask&(16<<slot))!=0)Camp.CyclePotion(slot);
-                for(int kind=0;kind<Camp.PotionKindCount;kind++)
-                    if((input.PotionMask&Camp.PotionInputBit((PotionKind)kind))!=0
-                        && Camp.ConsumePotion((PotionKind)kind,ActiveSim) && Mode==GameMode.Rift)
-                    {
-                        _alchemyLevelWithoutPotion=false;
-                        _runStats?.CountPotion((PotionKind)kind);
-                    }
-            }
+            HandlePotionInput(in input);
             switch (Mode)
             {
                 case GameMode.Camp: StepCamp(in input); break;
@@ -271,7 +261,7 @@ namespace Game.Sim
             switch ((CampCommand)input.Command)
             {
                 case CampCommand.EnterRift:
-                    if (Camp.Has(CampService.RiftPortal)) EnterRift();
+                    RequestRiftEntry();
                     return;
 
                 case CampCommand.SalvageJunk:
@@ -300,6 +290,7 @@ namespace Game.Sim
             // Симуляциям повышение ничего не несёт: статов уровень не даёт.
             Simulation stepped = Ground != null ? Ground.Sim : CampSim;
             Camp.GainExperience(stepped.TakePendingXp());
+            if (_campPotionCooldownTicksLeft > 0) _campPotionCooldownTicksLeft--;
         }
 
         /// <summary>
@@ -370,6 +361,7 @@ namespace Game.Sim
         /// </summary>
         public void ReturnToCamp()
         {
+            PreparationRequested = false;
             if (Mode == GameMode.Camp)
             {
                 LeaveProvingGround();
@@ -377,6 +369,7 @@ namespace Game.Sim
             }
 
             Run = null;
+            ResetRunProgressTracking();
             IsDeveloperRun = false;
             Ground = null;
             Mode = GameMode.Camp;
@@ -393,6 +386,7 @@ namespace Game.Sim
         /// </summary>
         public void EnterRift()
         {
+            PreparationRequested = false;
             LeaveProvingGround();
 
             ulong seed = LayoutGenerator.RollSeed(ref _runSeeds);
@@ -444,10 +438,12 @@ namespace Game.Sim
         private void BeginRift(LocationDefinition location, ulong seed, int level, bool nearBoss, bool developer,
             int forestBudCount = 0, int wendigoShowcase = 0, int stonehoofCount = 0, bool stonehoofObstacle = false)
         {
+            PreparationRequested = false;
             bool invulnerable = developer && DeveloperInvulnerable;
             LastRunSeed = seed;
             RunNumber++;
             IsDeveloperRun = developer;
+            ResetRunProgressTracking();
             BeginRunStats();
 
             var sim = new Simulation(seed, _simCapacity);
@@ -460,6 +456,7 @@ namespace Game.Sim
 
             Run = new RiftRun(sim, location?.Modules ?? _modules, Camp.Items, _itemBaseIds, location: location);
             Run.PlayerEquipment = Camp.Worn;
+            if (!developer) { var preparation = Camp.CreateRunPreparation(); Run.SetPreparation(in preparation); }
             Run.WhirlwindShowcase = !developer && WhirlwindShowcase;
             Run.CombatFeelShowcase = developer ? CombatFeelCaptureTier.None : CombatFeelShowcase;
             Run.CombatFeelEnemyCount = CombatFeelEnemyCount;
@@ -486,9 +483,13 @@ namespace Game.Sim
             int boss=Run.BossId;
             bool bossWasAlive=boss>=0 && Run.Sim.Entities.Alive[boss];
             RunPhase beforePhase=Run.Phase;
+            int depthBefore = Run.Depth;
             int tickBefore = Run.Sim.Tick;
             Run.Step(in input);
-            RecordRunStats(Run.Sim.Tick != tickBefore, boss);
+            bool simStepped = (beforePhase == RunPhase.Clearing || beforePhase == RunPhase.SeekingExit)
+                && Run.Depth == depthBefore && Run.Sim.Tick != tickBefore;
+            RecordRunStats(simStepped, boss);
+            if (simStepped) { Run.AdvancePotionCooldown(); RecordMaterialDeaths(); }
             if(!IsDeveloperRun)
             {
                 if(beforePhase==RunPhase.Clearing || beforePhase==RunPhase.SeekingExit)
@@ -578,6 +579,7 @@ namespace Game.Sim
             _runStats?.Finish(Camp.Level, Camp.Experience);
             LastRun = new RunSummary(Run.Outcome, Run.Depth, Run.RiftsCleared, kept, lost,
                 keeps ? gold : 0, behind, keeps ? 0 : gold, _runStats);
+            CompleteRealAttempt(kept, keeps);
             Mode = GameMode.Summary;
         }
 
@@ -597,7 +599,7 @@ namespace Game.Sim
             switch (command)
             {
                 case CampCommand.RepeatRift:
-                    EnterRift();
+                    RequestRiftEntry();
                     break;
 
                 case CampCommand.ReturnToCamp:
@@ -630,6 +632,7 @@ namespace Game.Sim
             LastRun.HashInto(ref hash);
 
             Camp.HashInto(ref hash);
+            HashSessionPreparation(ref hash);
             if (Run != null) Hashing.Mix(ref hash, Run.Hash());
             return hash;
         }

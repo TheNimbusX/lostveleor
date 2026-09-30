@@ -5,7 +5,12 @@ using Game.View;
 public sealed class HudAbilityAvailabilityTests
 {
     [Test]
-    public void ExactCostIsAvailable() => Assert.That(HudAbilityAvailability.Evaluate(true,false,0,30,30,false).Ready,Is.True);
+    public void ExactCostIsAvailable()
+    {
+        var state=HudAbilityAvailability.Evaluate(true,false,0,30,30,false);
+        Assert.That(state.Ready,Is.True);
+        Assert.That(state.Text,Is.Empty,"у готовой способности нет текста отказа");
+    }
     [Test]
     public void ResourceDenialReportsTheMissingAmount()
     {
@@ -54,8 +59,6 @@ public sealed class HudAbilityAvailabilityTests
     public void DeadHeroOutranksRoots() => Assert.That(HudAbilityAvailability.Evaluate(false,false,0,100,30,true).Block,Is.EqualTo(HudAbilityBlock.Dead));
     [Test]
     public void RootsHoldComboContinuationToo() => Assert.That(HudAbilityAvailability.Evaluate(true,true,60,0,30,true).Block,Is.EqualTo(HudAbilityBlock.Rooted));
-    [Test]
-    public void ReadyAbilityHasNoDenialText() => Assert.That(HudAbilityAvailability.Evaluate(true,false,0,30,30,false).Text,Is.Empty);
 
     // Флаг берётся из Sim.AbilityHeldByRoots: кувырок в корнях — «Корни держат», Вихрь на месте — нет.
     [Test]

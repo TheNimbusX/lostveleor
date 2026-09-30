@@ -20,6 +20,7 @@
     <Compile Include="../../razlom/Assets/Game.View/HudPortraitCurves.cs" Link="HudPortraitCurves.cs" />
     <!-- Кузнец и торговец на одной странице: цена, выход и запреты до нажатия, раскладка в холст (29.09). -->
     <Compile Include="../../razlom/Assets/Game.View/CampShopDeals.cs" Link="CampShopDeals.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/CampNavigationRules.cs" Link="CampNavigationRules.cs" />
     <!-- Окно «Настройки Б» (30.09): новые настройки, умолчания, сохранение, описания опций. -->
     <Compile Include="../../razlom/Assets/Game.View/SettingsModel.cs" Link="SettingsModel.cs" />
     <!-- Строка добычи под панелью забега (выбор владельца 30.09, кадр b1): что уносится, окно ряда, «+K», сумка, счёт золота. -->
@@ -28,7 +29,23 @@
     <Compile Include="../../razlom/Assets/Game.View/SmokeRouteMapLayout.cs" Link="SmokeRouteMapLayout.cs" />
     <!-- Ключевые слова описаний (этап 4, п. 6): словарь, разметка {kw:…}, автопометка; тексты усилений — живые строки для проверки. -->
     <Compile Include="../../razlom/Assets/Game.View/UiKeywords.cs" Link="UiKeywords.cs" />
+    <!-- Единый набор (этап 4, лист 5): шкала текста 56/32/24/18/14, кейкап, кнопки, цвета темы по умолчанию; формат «[Esc] Закрыть». -->
+    <Compile Include="../../razlom/Assets/Game.View/UiTheme.Tokens.cs" Link="UiTheme.Tokens.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/UiKeyHint.cs" Link="UiKeyHint.cs" />
     <Compile Include="../../razlom/Assets/Game.View/SabreTalentTexts.cs" Link="SabreTalentTexts.cs" />
+    <!-- Урон и отклик удара (этап 4, кадр 1a): кромка со стороны удара, виньетка, микростоп, след урона полосок, слияние и лесенка цифр. -->
+    <Compile Include="../../razlom/Assets/Game.View/HeroHitFeedbackRules.cs" Link="HeroHitFeedbackRules.cs" />
+    <!-- Экраны забега (этап 4, кадры 1a/3a/4): засечки босса, монеты в строку добычи, блок ввода, сравнение «было → станет», итоги. -->
+    <Compile Include="../../razlom/Assets/Game.View/RunHudBossMarks.cs" Link="RunHudBossMarks.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudCoins.cs" Link="RunHudCoins.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudChoiceLock.cs" Link="RunHudChoiceLock.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudCompare.cs" Link="RunHudCompare.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudSummary.cs" Link="RunHudSummary.cs" />
+    <!-- Строка эффектов над портретом (этап 4, кадр 1a): порядок, секунды, стаки, «+N», движение строки. -->
+    <Compile Include="../../razlom/Assets/Game.View/HudEffectList.cs" Link="HudEffectList.cs" />
+    <!-- Тлеющие метки у края экрана и пунктир дуги превью (этап 4, кадр 2a): проекция на край, панели HUD, слияние, подпись. -->
+    <Compile Include="../../razlom/Assets/Game.View/WorldEdgeMarksLayout.cs" Link="WorldEdgeMarksLayout.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/HudRangePreviewArc.cs" Link="HudRangePreviewArc.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

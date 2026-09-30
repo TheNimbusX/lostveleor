@@ -124,10 +124,17 @@ namespace Game.Tests
             var input = InputFrame.Empty; input.Flags = (byte)(InputFlags.DirectMovement | InputFlags.Attack);
             input.AttackTarget = target; input.Aim = s.Entities.Position[target];
             input.MoveDirection = new FixVec2(Fix64.One, Fix64.One);
-            for (int i = 0; i < 5; i++) s.Step(input);
+            s.Step(input);
+            double firstTick = (s.Entities.MoveStep[0] * Fix64.Ratio(3, 4)).ToDouble();
+            Assert.That(s.Entities.Velocity[0].LengthSq.ToDouble(), Is.GreaterThanOrEqualTo(firstTick * firstTick * .99),
+                "прямое движение набирает не меньше 3/4 шага уже в первом тике");
+            for (int i = 1; i < 5; i++) s.Step(input);
             Assert.That(s.Entities.Velocity[0].Length.ToDouble(), Is.LessThanOrEqualTo(s.Entities.MoveStep[0].ToDouble() + .00001));
             Assert.That(s.AttackTarget, Is.EqualTo(-1));
-            input.MoveDirection = FixVec2.Zero; for (int i = 0; i < 5; i++) s.Step(input);
+            input.MoveDirection = FixVec2.Zero; s.Step(input);
+            Assert.That(s.Entities.Velocity[0], Is.EqualTo(FixVec2.Zero),
+                "после отпускания стика герой не должен докатываться к опасности");
+            for (int i = 1; i < 5; i++) s.Step(input);
             Assert.That(s.Entities.Velocity[0], Is.EqualTo(FixVec2.Zero));
         }
         [Test]
@@ -201,37 +208,33 @@ namespace Game.Tests
             for(int i=0;i<12;i++)s.Step(InputFrame.Empty);
             Assert.That(s.PlayerAction.Serial,Is.Zero);
         }
-        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)] [TestCase(4)]
-        [TestCase(5)] [TestCase(6)] [TestCase(7)] [TestCase(8)] [TestCase(9)]
-        public void TenSkillsAndTheirTalentRanksReplayIdenticallyAtThirtySixtyAndOneTwentyFrames(int pool)
+        // Ввод зависит только от тика, поэтому частота кадров ничего не меняет:
+        // проверяется повтор и то, что каждый навык с полной линией талантов
+        // (ранги накопительные) проживает 6 секунд боя.
+        [Test]
+        public void TenSkillsAndTheirTalentRanksReplayIdentically()
         {
-            for(int rank=0;rank<=SabreTalents.TalentsPerLine;rank++)
+            for(int pool=0;pool<10;pool++)
+            foreach(int rank in new[]{0,SabreTalents.TalentsPerLine})
             {
                 if(pool>=8&&rank>0)break;
-                ulong expected=Replay(pool,rank,30);
-                Assert.That(Replay(pool,rank,60),Is.EqualTo(expected),$"pool {pool} rank {rank} at 60");
-                Assert.That(Replay(pool,rank,120),Is.EqualTo(expected),$"pool {pool} rank {rank} at 120");
+                Assert.That(Replay(pool,rank),Is.EqualTo(Replay(pool,rank)),$"pool {pool} rank {rank}");
             }
         }
-        static ulong Replay(int pool,int rank,int fps)
+        static ulong Replay(int pool,int rank)
         {
             var s=Arena();Target(s,4);var nodes=new AbilityNode[SabreTalents.TalentsPerLine];int count=0;
             if(SabreTalents.TryLineOf(pool,out var line))count=SabreTalents.AppendNodes(line,rank,nodes,0);
             s.SetAbility(0,PelagKit.PoolDefinition(pool),nodes,count);CombatTempoPreset.Apply(s,2);
-            int credit=0;
-            for(int frame=0;frame<fps*6;frame++)
+            for(int step=0;step<Simulation.TicksPerSecond*6;step++)
             {
-                credit+=Simulation.TicksPerSecond;
-                while(credit>=fps)
-                {
-                    credit-=fps;int tick=s.Tick;
-                    var input=tick%30==0?Cast(0):InputFrame.Empty;
-                    input.AbilityTarget=1;input.Aim=s.Entities.Position[1];
-                    input.Flags=(byte)InputFlags.DirectMovement;
-                    input.MoveDirection=tick%60<20?new FixVec2(Fix64.Zero,Fix64.One):FixVec2.Zero;
-                    if(tick==47)input=Cast(4);
-                    s.Step(input);
-                }
+                int tick=s.Tick;
+                var input=tick%30==0?Cast(0):InputFrame.Empty;
+                input.AbilityTarget=1;input.Aim=s.Entities.Position[1];
+                input.Flags=(byte)InputFlags.DirectMovement;
+                input.MoveDirection=tick%60<20?new FixVec2(Fix64.Zero,Fix64.One):FixVec2.Zero;
+                if(tick==47)input=Cast(4);
+                s.Step(input);
             }
             return s.StateHash();
         }

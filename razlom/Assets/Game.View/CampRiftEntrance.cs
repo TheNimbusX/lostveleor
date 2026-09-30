@@ -63,6 +63,8 @@ namespace Game.View
             if (!inside) _armed = true;
             if (inside && _armed && !IsOpen && !driver.GameplayPaused)
             {
+                if(driver.Session.Camp.HasTravelTable && !CampTransition.Bypass)
+                { _armed=false;CampPreparationView.Instance?.Open();return; }
                 _armed = false; IsOpen = true;
                 // Арка просыпается, пока игрок решает, входить ли.
                 GameSound.Play("rift_awaken", .5f, .02f, 2f);
@@ -90,6 +92,13 @@ namespace Game.View
             if (_confirm != null) _confirm.Show(false);
             _driver.ClearCapturedInput();
             if (!enter) return;
+            if (_driver.Session.Camp.HasTravelTable && !CampTransition.Bypass)
+            { CampPreparationView.Instance?.Open(); return; }
+            DepartPrepared(_driver);
+        }
+        public void DepartPrepared(TickDriver driver)
+        {
+            _driver=driver;
             // Съёмочные сценарии входят сразу: им нужен предсказуемый кадр, а не переход
             // (кроме съёмки самого перехода, -capture-smoke).
             if (CampTransition.Bypass)
@@ -100,7 +109,6 @@ namespace Game.View
             }
             // Момент входа (владелец 24 сентября): камера к арке, разгорание; 26 сентября — дымная
             // завеса вместо вспышки: дым накатывает к концу подачи камеры, под ним — забег.
-            var driver = _driver;
             CampTransition.EnterRift(this, transform.TransformPoint(TriggerCenter), () =>
             {
                 driver.Session.EnterRift();

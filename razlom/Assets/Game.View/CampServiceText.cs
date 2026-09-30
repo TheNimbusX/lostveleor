@@ -26,6 +26,8 @@ namespace Game.View
                 case "npc.trader":return "Вен";
                 case "npc.alchemist":return "Лео";
                 case "npc.tent":return "Палатка";
+                case "npc.traveltable":return "Походный стол";
+                case "role.traveltable":return "Подготовка к походу";
                 case "dialogue.smith.open":return "Ну, что тебе сковать?";
                 case "dialogue.smith.reforge":return "Так то лучше...!";
                 case "dialogue.smith.dismantle":return "Туда его, в металлолом";
@@ -40,7 +42,7 @@ namespace Game.View
                 case "dialogue.alchemist.recipe.unlock":return "Теперь смогу варить это постоянно.";
                 case "open.hint":return "E / A · Открыть";
                 case "talk.hint":return "E / A · Поговорить";
-                case "approach.hint":return "ПКМ · Подойти";
+                case "approach.hint":return "[ПКМ] Подойти";
                 case "service.smith":return "Перековка и разбор снаряжения";
                 case "service.trader":return "Покупка и продажа снаряжения";
                 case "service.alchemist":return "Зелья здоровья и лавидия";
@@ -48,7 +50,7 @@ namespace Game.View
                 case "approach":return "Подойти";
                 case "unreachable":return "Нет прохода к собеседнику";
                 case "close":return "Завершить разговор";
-                case "close.hint":return "Esc / B — закрыть";
+                case "close.hint":return UiKeyHint.EscClose;
                 case "smith.reforge":return "Перековка";
                 case "smith.dismantle":return "Разбор";
                 case "smith.gold":return "золото";
@@ -144,9 +146,9 @@ namespace Game.View
                 case "potion.select":return "В быстрый слот";
                 case "potion.bought":return "Не тряси. Я серьёзно.";
                 case "potion.failed":return "Не хватает золота или запас заполнен";
-                case "potion.use.hint":return "ЛКМ · Выпить одну бутылку";
+                case "potion.use.hint":return "[ЛКМ] Выпить одну бутылку";
                 case "potion.empty":return "Бутылки закончились";
-                case "potion.switch.hint":return "ПКМ · Сменить размер";
+                case "potion.switch.hint":return "[ПКМ] Сменить размер";
                 case "back":return "Назад";
                 case "smith.bag.caption":return "Сумка";
                 case "shop.worn":return "Надето";
@@ -197,7 +199,7 @@ namespace Game.View
                 case "smith.reforge.action":return "Перековать";
                 case "smith.dismantle.action":return "Разобрать";
                 case "smith.dismantle.confirm":return "Точно разобрать?";
-                case "smith.confirm.note":return "Нажми ещё раз — вещь исчезнет.\nEsc — отмена";
+                case "smith.confirm.note":return "Нажми ещё раз — вещь исчезнет.\n" + UiKeyHint.EscCancel;
                 case "smith.worn.nodismantle":return "Надетое не разбирается.\nСними его в палатке";
                 case "smith.protected.short":return "Помечен «беречь».\nОтметку снимают в палатке";
                 case "smith.level.change":return "Уровень вещи {0} → {1}";
@@ -218,7 +220,7 @@ namespace Game.View
                 case "trader.funds.short":return "Не хватает {0} золота";
                 case "trader.full.note":return "Сумка заполнена.\nПродай или разбери лишнее";
                 case "trader.protected.note":return "Помечена «беречь» — не продаётся.\nОтметку снимают в палатке";
-                case "trader.sell.confirm.note":return "Нажми ещё раз — выкупа нет.\nEsc — отмена";
+                case "trader.sell.confirm.note":return "Нажми ещё раз — выкупа нет.\n" + UiKeyHint.EscCancel;
                 case "trader.sold.out":return "Продано";
                 case "trader.sold.out.note":return "Новые товары — после обновления";
                 case "trader.compare.empty":return "Если надеть:";
@@ -229,7 +231,7 @@ namespace Game.View
                 case "trader.kept.tag":return "беречь";
                 case "trader.refresh.label":return "Обновить товары · {0}";
                 case "trader.refresh.confirm.label":return "Точно обновить? · {0}";
-                case "trader.refresh.confirm.note":return "Нажми ещё раз — все товары сменятся.\nEsc — отмена";
+                case "trader.refresh.confirm.note":return "Нажми ещё раз — все товары сменятся.\n" + UiKeyHint.EscCancel;
                 case "trader.info":return "Обновление — шанс редкого {0}%\nПосле босса — бесплатно, шанс {1}%";
                 case "trader.sold.note":return "Продано: +{0} золота";
                 case "trader.bought.note":return "Куплено — вещь в сумке";

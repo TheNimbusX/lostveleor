@@ -77,13 +77,21 @@ namespace Game.View
         public int TooltipMetricColumns = 3;
         [Tooltip("Отступ подсказки над панелью способностей, в единицах Canvas")]
         public float TooltipGap = 14f;
+        [Tooltip("Необязательно: вложенная подсказка ключевого слова рядом с подсказкой способности или артефакта (UiKeywordTip; " +
+                 "единый набор 30.09 — как на экране награды). Ребёнок подсказки: прячется вместе с ней")]
+        public RectTransform KeywordTip;
+        public TMP_Text KeywordTipTitle;
+        public TMP_Text KeywordTipBody;
+        [Tooltip("Зазор между подсказкой и вложенной подсказкой слова, в единицах Canvas")]
+        public float KeywordTipGap = 12f;
 
         [Header("Отказ при нажатии")]
         public RectTransform Feedback;
         public TMP_Text FeedbackText;
         [Tooltip("Необязательно: большой баннер «Новый уровень» сверху по центру")] public HudLevelBanner LevelBanner;
         [Tooltip("Затемнение мира на смене арены: новая арена проявляется из темноты")] public Image ArenaFade;
-        [Tooltip("Необязательно: значки действующих эффектов зелий над героем — Живица и Порыв")]
+        [Tooltip("Необязательно: прежние значки эффектов зелий над героем — Живица и Порыв. С 30.09 их место заняла " +
+                 "строка эффектов над портретом (EffectRow); значки работают только в префабе без неё")]
         public HudBuffChip ResinChip, SurgeChip;
         [Tooltip("Необязательно: медальон артефакта забега на рамке портрета — виден, только пока артефакт есть")]
         public GameObject ArtifactSlot;
@@ -200,6 +208,10 @@ namespace Game.View
         readonly PlayerHud.TooltipValue[] _baseValues = new PlayerHud.TooltipValue[8];
         readonly System.Text.StringBuilder _detail = new System.Text.StringBuilder(512);
 
+        // Ключевые слова описаний (UiKeywords): первое слово описания — во вложенной подсказке рядом.
+        readonly System.Collections.Generic.List<UiKeywords.Id> _keywordsFound = new System.Collections.Generic.List<UiKeywords.Id>(8);
+        UiKeywords.Id _tooltipKeyword, _keywordShown;
+
         /// <summary>Alt зажат (или съёмка -capture-hud-tooltip-detail): подсказка способности показывает взятые усиления.</summary>
         static bool DetailHeld => GameKeyBindings.HeldKey(KeyCode.LeftAlt) || GameKeyBindings.HeldKey(KeyCode.RightAlt) || CaptureRig.HudTooltipDetail;
 
@@ -251,8 +263,9 @@ namespace Game.View
             RefreshPotions(camp,driver);
             RefreshArtifact(driver, Pointer);
             RefreshToasts(driver);
-            if (ResinChip != null) ResinChip.Set(sim.ResinTicksLeft, Simulation.PotionEffectTicks, Simulation.TicksPerSecond);
-            if (SurgeChip != null) SurgeChip.Set(sim.SurgeTicksLeft, Simulation.PotionEffectTicks, Simulation.TicksPerSecond);
+            // Эффекты героя — строка кругов над портретом (этап 4, CombatHudView.Effects); в старом
+            // префабе без неё — прежние значки зелий.
+            RefreshEffects(sim, driver, pointer);
         }
 
         int _momentDepth = -1;
@@ -587,7 +600,7 @@ namespace Game.View
                 if (TooltipTitle != null) TooltipTitle.text = RunArtifactTexts.Name(_artifact);
                 Transform keyBox = TooltipKeyBox;
                 if (keyBox != null) keyBox.gameObject.SetActive(false);
-                if (TooltipBody != null) TooltipBody.text = RunArtifactTexts.Effect(_artifact);
+                if (TooltipBody != null) TooltipBody.text = UiKeywordTip.Markup(RunArtifactTexts.Effect(_artifact), _keywordsFound, out _tooltipKeyword);
                 foreach (HudTooltipMetric metric in TooltipMetrics) if (metric != null) metric.gameObject.SetActive(false);
                 if (TooltipUpgradeRow != null) TooltipUpgradeRow.SetActive(false);
                 if (TooltipDetail != null) TooltipDetail.SetActive(false);
@@ -598,6 +611,7 @@ namespace Game.View
                     TooltipStatus.gameObject.SetActive(true);
                 }
                 _tooltipStatusShown = null;
+                UiKeywordTip.Show(KeywordTip, KeywordTipTitle, KeywordTipBody, _tooltipKeyword, ref _keywordShown);
                 LayoutRebuilder.ForceRebuildLayoutImmediate(Tooltip);
             }
             Vector3 center = Center(ArtifactHit);
@@ -612,6 +626,7 @@ namespace Game.View
                 float limit = half - 24f * scale;
                 TooltipTail.position = new Vector3(Mathf.Clamp(center.x, x - limit, x + limit), TooltipTail.position.y, 0f);
             }
+            PlaceKeywordTip(x + half, scale);
         }
 
         void RefreshTooltip(Simulation sim, TickDriver driver)
@@ -623,12 +638,17 @@ namespace Game.View
             AbilityBuild build = slot >= 0 ? sim.GetAbility(slot) : null;
             if (build == null)
             {
-                if (_tooltipShown != -1) { Tooltip.gameObject.SetActive(false); _tooltipShown = -1; }
+                if (_tooltipShown != -1)
+                {
+                    Tooltip.gameObject.SetActive(false);
+                    _tooltipShown = -1;
+                    UiKeywordTip.Hide(KeywordTip, ref _keywordShown);
+                }
                 return;
             }
 
             HudAbilityAvailability state = PlayerHud.Availability(sim, slot, build);
-            string status = driver.AbilityTargetAimSlot == slot ? "Выбери цель · ПКМ — отмена"
+            string status = driver.AbilityTargetAimSlot == slot ? UiKeyHint.AimStatus
                 : !state.Ready ? PlayerHud.AvailabilityText(state) : string.Empty;
             int upgrades = slot < _upgrades.Length ? _upgrades[slot] : 0;
             int mask = slot < _upgradeMasks.Length ? _upgradeMasks[slot] : 0;
@@ -655,7 +675,9 @@ namespace Game.View
                     TooltipKey.text = PlayerHud.SlotKey(slot);
                     FitKeycap(TooltipKey);
                 }
-                if (TooltipBody != null) TooltipBody.text = PlayerHud.AbilityDescription(build.DefinitionId);
+                if (TooltipBody != null)
+                    TooltipBody.text = UiKeywordTip.Markup(PlayerHud.AbilityDescription(build.DefinitionId), _keywordsFound, out _tooltipKeyword);
+                UiKeywordTip.Show(KeywordTip, KeywordTipTitle, KeywordTipBody, _tooltipKeyword, ref _keywordShown);
                 int count = PlayerHud.CollectTooltipValues(build, _values, sim);
                 // Та же способность без усилений: изменённое усилениями число — цветом «хорошо».
                 int baseCount = mask != 0 ? CollectBaseValues(slot, driver, sim) : -1;
@@ -729,25 +751,11 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Клавиша «Дыма и света» по ширине подписи: одна буква — круг, длинная (Space, Alt, ЛКМ) —
-        /// капсула. Подпись меняется, когда игрок переназначает клавиши. Трогает только узлы
-        /// «Клавиша» (клавиша плитки и шапка подсказки): у запасных префабов другие имена — их не трогаем.
+        /// Кейкап по ширине подписи: одна буква — квадрат, длинная (Space, Alt, ЛКМ) — шире. Подпись меняется, когда
+        /// игрок переназначает клавиши. Правило одно на все окна — UiKeyHint.FitKeycap (узлы «Клавиша»; у запасных
+        /// префабов другие имена — их не трогает).
         /// </summary>
-        static void FitKeycap(TMP_Text key)
-        {
-            if (key == null || key.transform.parent == null) return;
-            Transform cap = key.transform.parent;
-            Transform box = cap.name == "Клавиша" ? cap : cap.parent != null && cap.parent.name == "Клавиша" ? cap.parent : null;
-            if (box == null) return;
-            var rect = (RectTransform)box;
-            var layout = box.GetComponent<LayoutElement>();
-            float size = layout != null && layout.preferredHeight > 0f ? layout.preferredHeight : rect.rect.height;
-            if (size <= 0f) return;
-            string text = key.text ?? string.Empty;
-            float width = text.Length > 1 ? Mathf.Max(size, key.GetPreferredValues(text).x + size * .7f) : size;
-            if (layout != null) layout.preferredWidth = layout.minWidth = width;
-            else rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
-        }
+        static void FitKeycap(TMP_Text key) => UiKeyHint.FitKeycap(key);
 
         /// <summary>
         /// Параметры той же способности без усилений в <see cref="_baseValues"/>; −1 — не вышло
@@ -803,7 +811,7 @@ namespace Game.View
                     if ((mask & (1 << i)) == 0) continue;
                     if (_detail.Length > 0) _detail.Append('\n');
                     _detail.Append("<b>").Append(SabreTalentTexts.Name(line, i)).Append("</b>  <color=#").Append(muted).Append('>')
-                        .Append(SabreTalentTexts.Description(line, i)).Append("</color>");
+                        .Append(UiKeywords.Themed(SabreTalentTexts.Description(line, i))).Append("</color>");
                 }
 
             bool gap = false;
@@ -859,6 +867,23 @@ namespace Game.View
                 float limit = half - 24f * scale;
                 TooltipTail.position = new Vector3(Mathf.Clamp(center.x, x - limit, x + limit), TooltipTail.position.y, 0f);
             }
+            PlaceKeywordTip(x + half, scale);
+        }
+
+        /// <summary>
+        /// Вложенная подсказка слова — справа от подсказки, верхом вровень; справа не влезает (подсказка у края экрана,
+        /// масштаб 120%, 16:10) — слева. Узел — ребёнок подсказки: переставляется только при смене стороны.
+        /// </summary>
+        void PlaceKeywordTip(float tooltipRight, float scale)
+        {
+            if (KeywordTip == null || !KeywordTip.gameObject.activeSelf) return;
+            float width = KeywordTip.rect.width * scale;
+            bool left = tooltipRight + (KeywordTipGap * scale) + width > Screen.width - 16f * scale;
+            Vector2 anchor = new Vector2(left ? 0f : 1f, 1f);
+            if (KeywordTip.anchorMin == anchor && KeywordTip.pivot.x == (left ? 1f : 0f)) return;
+            KeywordTip.anchorMin = KeywordTip.anchorMax = anchor;
+            KeywordTip.pivot = new Vector2(left ? 1f : 0f, 1f);
+            KeywordTip.anchoredPosition = new Vector2(left ? -KeywordTipGap : KeywordTipGap, 0f);
         }
 
         void RefreshFeedback()

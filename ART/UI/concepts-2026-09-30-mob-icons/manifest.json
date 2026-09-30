@@ -1,0 +1,80 @@
+{
+  "date": "2026-09-30",
+  "model": "gpt_image_2_5 (flare), quality high, 2k, 1:1, image-to-image, 2.75 кредита за картинку",
+  "purpose": "Круглые иконки мобов леса: метки у края экрана, блок «Убито» в итогах, атлас.",
+  "grid_order": [
+    "Корнеполз",
+    "Лесной хранитель",
+    "Плюй-плод",
+    "Камнекопыт",
+    "Корнехват",
+    "Расщепень",
+    "Шипомёт (элита)",
+    "Лесной вендиго (элита)",
+    "Хозяин Чащи (босс)"
+  ],
+  "reference_sources": {
+    "refs/mob-lineup-numbered.jpg": "сборка ART/characters/act-1-enemies/*/art.png всех 9 мобов, цифры = порядок в сетке",
+    "refs/effect-icons-kit.jpg": "razlom/Assets/UI/Kit/Watercolor/wc_effect_*.png на тёмном фоне",
+    "refs/icons-B-ink.jpg": "ART/UI/concepts-2026-09-26-pass/icons-B-ink.png",
+    "refs/hud-2b-edge-marks.jpg": "ART/UI/concepts-2026-09-30-hud-polish/2b-world-ink-arrows.jpg",
+    "refs/hud-4-summary-killed.jpg": "ART/UI/concepts-2026-09-30-hud-polish/4-summary-stats.jpg"
+  },
+  "items": [
+    {
+      "file": "a-ink-mob-icons.png",
+      "preview": "a-ink-mob-icons.jpg",
+      "check_40px": "a-ink-mob-icons-40px-check.png",
+      "cut_dir": "cut/a-ink/",
+      "cut_files": [
+        "01-kornepolz.png",
+        "02-lesnoy-hranitel.png",
+        "03-plyuy-plod.png",
+        "04-kamnekopyt.png",
+        "05-kornehvat.png",
+        "06-rasshchepen.png",
+        "07-shipomet.png",
+        "08-lesnoy-vendigo.png",
+        "09-hozyain-chashchi.png"
+      ],
+      "job_id": "88e081e4-d75f-424c-b5f5-32e9c150ac77",
+      "references": [
+        "refs/mob-lineup-numbered.jpg",
+        "refs/icons-B-ink.jpg",
+        "refs/hud-2b-edge-marks.jpg",
+        "refs/effect-icons-kit.jpg"
+      ],
+      "caption": "A «Тушь»: кремовая кисть на чёрном, как значки набора и метки у края экрана. Кольцо — ранг: кремовое у обычных, оранжевое у элиты, двойное красное у босса.",
+      "defects": "Лесной хранитель вышел звериной мордой с рогами вместо человеческого лица — на 40 px похож на Вендиго, отличает только цвет кольца. Корнехват читается как лохматый холм. Хозяин Чащи перегружен листьями. У Камнекопыта «коровий» пятачок. После вырезки внутренность круга прозрачная — в игре под значок нужен тёмный диск.",
+      "prompt": "Game UI icon sheet for the bright stylized isometric action roguelike THE WAR REMAINS. Draw 9 round enemy icons in a clean 3x3 grid, one icon per enemy from image 1, in the same order (top-left = enemy 1, reading left to right, bottom-right = enemy 9). The numbers in image 1 are only for order: do not draw numbers, letters or any text.\n\nStyle: exactly the hand-inked brush style of image 2 - warm off-white cream ink (#F1E8D6) with dry-brush ragged edges, bold simple shapes - like the enemy markers at the screen edges in image 3 (the antler Wendigo mark). Each icon is a round medallion: a thin hand-drawn cream hairline circle, near-black inside, and the enemy's HEAD / FRONT BUST drawn as a bold cream ink silhouette with at most 2-3 inner lines, filling about 70% of the circle. It must stay readable when shrunk to 40 px: big recognizable silhouette, no fine detail, no thin hatching.\n\nEnemies and what makes each one recognizable:\n1 Root Crawler - carved wooden mask with a spiral mark and two glowing eyes, twisted root claws curling around the mask.\n2 Forest Guardian - calm bearded face with wide branching deer antlers and a leaf collar.\n3 Spit-Fruit - a half-open tulip-like fruit bud full of seeds on top of a small round mossy beast head, spitting one seed.\n4 Stonehoof - boar head from the front with big curved tusks, a spiral on the forehead, one leaf on top.\n5 Root Snarer - low wide mound with mushroom caps on its back and two heavy bark claw-slabs raised.\n6 Splitter - round nut-like shell split into two halves with spiral marks, a small head peeking out from the gap.\n7 Thorncaster - narrow diamond-shaped bark head with long thorn spikes radiating out.\n8 Forest Wendigo - long gaunt skull-like wooden snout with huge jagged antlers.\n9 Master of the Thicket (boss) - broad heavy horned head with a crown of bark spikes and leaves, a blossom on the chest.\n\nRank coding: regular enemies 1-6 have a plain cream ring. Elites 7 and 8 have their ring in the single orange accent #FF8A4C. Boss 9 has a double ring in red #E2544A with two tiny diamonds at top and bottom. Only cream plus that one accent color per icon, no other colors.\n\nLayout: square sheet, flat plain pure black background (#000000), no texture, no vignette, no glow, generous empty space between icons (at least one icon radius) so each can be cut out cleanly. All icons the same size and aligned on the grid. No emblems, no stars, no extra frames, no labels."
+    },
+    {
+      "file": "b-watercolor-mob-icons.png",
+      "preview": "b-watercolor-mob-icons.jpg",
+      "check_40px": "b-watercolor-mob-icons-40px-check.png",
+      "cut_dir": "cut/b-watercolor/",
+      "cut_files": [
+        "01-kornepolz.png",
+        "02-lesnoy-hranitel.png",
+        "03-plyuy-plod.png",
+        "04-kamnekopyt.png",
+        "05-kornehvat.png",
+        "06-rasshchepen.png",
+        "07-shipomet.png",
+        "08-lesnoy-vendigo.png",
+        "09-hozyain-chashchi.png"
+      ],
+      "job_id": "676a6c61-0841-4b92-a336-3c4715f0473b",
+      "references": [
+        "refs/mob-lineup-numbered.jpg",
+        "refs/hud-4-summary-killed.jpg",
+        "refs/effect-icons-kit.jpg",
+        "refs/icons-B-ink.jpg"
+      ],
+      "caption": "B «Акварельный медальон»: цветные портреты мобов в тёмном круге с кремовой каймой. Ранг — цвет каймы и ромбики.",
+      "defects": "Сразу узнаются Хранитель, Плюй-плод, Камнекопыт. На 40 px Корнеполз, Корнехват, Расщепень, Шипомёт и Вендиго сливаются в коричнево-зелёную массу. Много фактуры коры. Годится для атласа и итогов (64 px и крупнее); для меток у края слабее варианта A.",
+      "prompt": "Game UI icon sheet for THE WAR REMAINS, a bright, saturated stylized isometric action roguelike. Paint 9 round enemy portrait icons in a clean 3x3 grid, one per enemy from image 1, in the same order (top-left = 1, reading left to right, bottom-right = 9). The numbers in image 1 are only for order: no numbers, letters or text in the result.\n\nStyle: small hand-painted watercolor / gouache portraits like the painted effect icons in image 3 and the kill-count circles in image 2, but clearer and brighter. Each icon is a round medallion: a deep ink blue-black disc with a soft painterly inner vignette, a thin warm off-white hairline rim (like the hairlines in image 4), and the enemy's head and shoulders painted in its real colors from image 1 - warm bark tan, moss green, orange glowing eyes, the pink-red fruit bud, red thorn tips - in a 3/4 front view, big and centered, the head filling about 75% of the disc, with a crisp dark silhouette edge and a thin light rim light so it reads against the dark disc. Keep the creatures' own saturated colors; do not bleach, whiten or desaturate them. Readable at 40 px: one big head shape, strong value contrast, minimal detail.\n\nEnemies (keep each one's recognizable features from image 1):\n1 Root Crawler - carved wooden spiral mask, orange eyes, twisted root claws.\n2 Forest Guardian - antlered man with green leaf hair and beard, calm face.\n3 Spit-Fruit - mossy beast with a big open pink-red bud full of seeds on its back.\n4 Stonehoof - wooden boar head with tusks and a spiral on the forehead.\n5 Root Snarer - mossy mound with orange mushroom caps and bark claw-slabs.\n6 Splitter - split nut-shell halves with spirals, a small head in the gap.\n7 Thorncaster - thin diamond-shaped bark head with red-tipped thorns.\n8 Forest Wendigo - long skull-like wooden snout with big jagged antlers, dripping moss.\n9 Master of the Thicket (boss) - massive head with a crown of bark spikes and leaves, red blossom on the chest.\n\nRank coding by the rim only: regular 1-6 cream hairline rim; elites 7-8 rim in orange #FF8A4C with one tiny diamond at the top; boss 9 a thicker double rim in red #E2544A with small diamonds at top and bottom. No other decoration, no emblems.\n\nLayout: square sheet, flat plain neutral mid-grey background (#808080), completely uniform, no texture, no shadow under the medallions, generous empty space between icons for clean cutting, all medallions identical size and aligned on the grid."
+    }
+  ],
+  "notes": "Вырезки 256×256 с альфой лежат в cut/ (A: альфа по яркости с чёрного, B: ключ по серому фону). Это черновая нарезка для примерки, не финальные спрайты."
+}

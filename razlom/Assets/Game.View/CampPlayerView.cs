@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 
 namespace Game.View
 {
-    // Camp scene interactions and navigation baking; the normal combat simulation owns Pelag.
+    // Взаимодействия сцены и карта ходьбы лагеря; Пелагом управляет обычная боевая симуляция.
     [DefaultExecutionOrder(-20)]
     public sealed class CampPlayerView : MonoBehaviour
     {
@@ -19,8 +19,10 @@ namespace Game.View
         public bool Active => _driver != null && _driver.Session != null && _driver.Session.Mode == GameMode.Camp && !_driver.Session.OnProvingGround;
         public bool InventoryOpen => _inventory != null && _inventory.IsOpen;
         public bool EntranceOpen => _entrance != null && _entrance.IsOpen;
-        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampTransition.Busy || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame == Time.frameCount || CampRiftEntrance.ClosedFrame == Time.frameCount;
+        public bool InputBlocked => _walkMap == null || InventoryOpen || EntranceOpen || CampTransition.Busy || CampServicesView.Instance?.IsOpen == true || CampPreparationView.Instance?.IsOpen == true || CampForgeView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame == Time.frameCount || CampRiftEntrance.ClosedFrame == Time.frameCount || CampPreparationView.ClosedFrame == Time.frameCount || CampForgeView.ClosedFrame == Time.frameCount;
         internal CampWalkMap WalkMap => _walkMap;
+        internal IReadOnlyList<CampNavigationGeometry.Footprint> NavigationFootprints => _navigationFootprints;
+        List<CampNavigationGeometry.Footprint> _navigationFootprints;
         internal Bounds MapBounds { get; private set; }
         public Transform Tent { get; private set; }
         TickDriver _driver; ArenaView _arena;
@@ -33,7 +35,6 @@ namespace Game.View
         }
         CampWalkMap _walkMap;
         public float GroundHeight => _height;
-        NavMeshPath _path;
         CampRoute _routing;
         CampInventoryView _inventory;
         NavMeshDataInstance _navigation; bool _approach;
@@ -49,7 +50,6 @@ namespace Game.View
 
         void Start()
         {
-            _path = new NavMeshPath();
             Instance = this; _driver = GetComponent<TickDriver>();
             var world = FindAnyObjectByType<SceneWorldView>();
             if (world == null || world.CampRoot == null) { enabled = false; return; }
@@ -93,19 +93,17 @@ namespace Game.View
                 Vector3 point = origin + new Vector3((x+.5f)*cell,0,(z+.5f)*cell);
                 cells[z*width+x] = NavMesh.SamplePosition(point,out var floor,.35f,NavMesh.AllAreas)
                     && Mathf.Abs(floor.position.y-_height)<.3f
-                    // The baked floor sits 5 cm below the spawn height. Check the
-                    // horizontal snap separately; a vertical offset is not a wall.
+                    // Построенный пол на 5 см ниже точки появления. Горизонтальное
+                    // смещение проверяется отдельно: разница высоты не является стеной.
                     && (new Vector2(floor.position.x-point.x,floor.position.z-point.z)).sqrMagnitude < .0025f;
             }
             _riverPassage?.StraightenWalkCells(cells, origin, cell, width, height);
             var map = new CampWalkMap(Flat(origin), Fix64.Ratio(1,8), width,height,cells);
             _walkMap = map;
             _routing = new CampRoute(map);
-            // Pick a valid snapshot cell, avoiding a spawn inside a rounded boundary cell.
-            if (!map.Contains(Flat(_start)))
-                for(int z=0;z<height;z++) for(int x=0;x<width;x++)
-                { var candidate=origin+new Vector3((x+.5f)*cell,0,(z+.5f)*cell);
-                  if(cells[z*width+x] && Vector3.Distance(candidate,_start)<.3f) _start=candidate; }
+            // Выбираем проходимую клетку, чтобы округление у края не заперло точку появления.
+            if (!map.Contains(Flat(_start)) && map.TryNearestReachable(Flat(_start), Flat(_start), out var nearestSpawn))
+                _start = new Vector3(nearestSpawn.X.ToFloat(), _height, nearestSpawn.Y.ToFloat());
             _driver.Session.ConfigureCampWorld(Flat(_start),map);
             root.GetComponent<CampTrainingView>()?.Initialize(_driver);
             _scenePelagPreview = GameObject.Find("Pelag_MX_Idle");
@@ -118,6 +116,7 @@ namespace Game.View
                 interaction.Kind=CampServiceKind.Tent;interaction.Reach=TentReach;interaction.Entrance=_tentEntrance;
             }
             gameObject.AddComponent<CampServicesView>().Initialize(this,_driver);
+            CampNpcLife.Install(root);
             if (GetComponent<CampGuideView>() == null) gameObject.AddComponent<CampGuideView>();
             if (GetComponent<CampCharacterShadows>() == null) gameObject.AddComponent<CampCharacterShadows>();
             // Дымная завеса перехода создаётся и прогревается сейчас, а не в миг входа в арку.
@@ -125,138 +124,24 @@ namespace Game.View
             Debug.Log($"[camp] spawn={_start} sharedCombat=True tent={Tent} cells={width*height}");
         }
 
-        /// <summary>
-        /// Меш числится в LODGroup уровнем ДАЛЬШЕ нулевого.
-        ///
-        /// LODGroup выключает Renderer, но не сам объект, поэтому
-        /// GetComponentsInChildren&lt;MeshFilter&gt; возвращает все четыре уровня ели.
-        /// Раньше коллайдер вешался на каждый, и в NavMesh уходило объединение
-        /// LOD0..LOD3. Дальние уровни — огрублённые силуэты, они ШИРЕ того, что
-        /// игрок видит на экране, и перекрывали проходы там, где визуально
-        /// пусто. Это и есть «невидимые препятствия» в лагере.
-        ///
-        /// Навигацию строит только LOD0: он совпадает с картинкой вблизи.
-        /// </summary>
-        static bool IsDistantLod(MeshFilter mesh)
-        {
-            LODGroup group = mesh.GetComponentInParent<LODGroup>();
-            if (group == null) return false;
-            LOD[] levels = group.GetLODs();
-            if (levels.Length == 0) return false;
-
-            Renderer own = mesh.GetComponent<Renderer>();
-            if (own == null) return false;
-
-            foreach (Renderer renderer in levels[0].renderers)
-                if (renderer == own) return false;
-
-            return true;
-        }
-
-        /// <summary>
-        /// Пойдёт ли этот меш в навигацию лагеря.
-        ///
-        /// Отбор живёт в одном месте, потому что им пользуется ещё и редакторный
-        /// инструмент, разрешающий чтение мешей. Разъехавшись, они дали бы
-        /// худший из возможных результатов: чтение включено не тем мешам, а
-        /// навигация в сборке всё равно другая.
-        /// </summary>
+        // Проверка импорта в редакторе использует тот же каталог оснований, что игра.
         public static bool UsedByNavigation(MeshFilter mesh)
-            => mesh.sharedMesh != null
-               && mesh.GetComponent<Collider>() == null
-               && mesh.GetComponentInParent<CampGroundStudy>() == null
-               // Плоскость огня поворачивается к камере и не является физической стеной.
-               && mesh.GetComponentInParent<CampFlameProView>() == null
-               // Мишень — боевое тело. Её собственный меш не должен закрывать луч проверки удара.
-               && mesh.GetComponentInParent<CampDummyView>() == null
-               && mesh.GetComponentInParent<CampMagicDecoration>() == null
-               && mesh.GetComponentInParent<CampRiver>() == null
-               && mesh.GetComponentInParent<CampSceneryDecoration>() == null
-               && mesh.sharedMesh.name != "Объём луча арки"
-               && !IsDistantLod(mesh);
-
-        /// <summary>
-        /// Высота, ниже которой объект считается декором и перешагивается: трава, цветы,
-        /// мелкие камешки. Кусты в этот порог не попадают намеренно — владелец 16 сентября:
-        /// «куст и должен быть препятствием».
-        /// </summary>
-        const float StepOverHeight = .35f;
-        /// <summary>С этой высоты объект считается деревом и держит навигацию только стволом.</summary>
-        const float TrunkFromHeight = 2.5f;
-
-        static bool StepsOver(MeshFilter mesh, Bounds shape) => shape.size.y < StepOverHeight;
-
-        /// <summary>Ставит навигационный ствол вместо меша кроны. Вернёт false, если это не дерево.</summary>
-        static bool AddTrunk(MeshFilter mesh, Bounds shape, Transform root)
         {
-            string name = mesh.name.ToLowerInvariant();
-            bool tree = name.Contains("tree") || name.Contains("spruce") || name.Contains("pine");
-            if (!tree || shape.size.y < TrunkFromHeight) return false;
-
-            var trunk = new GameObject("Ствол для навигации — " + mesh.name);
-            trunk.transform.SetParent(root, false);
-            trunk.transform.position = new Vector3(shape.center.x, shape.min.y + shape.size.y * .5f, shape.center.z);
-            trunk.transform.rotation = Quaternion.identity;
-            trunk.transform.localScale = Vector3.one;
-            CapsuleCollider capsule = trunk.AddComponent<CapsuleCollider>();
-            capsule.height = shape.size.y;
-            capsule.radius = Mathf.Clamp(Mathf.Min(shape.extents.x, shape.extents.z) * .22f, .18f, .6f);
-            return true;
+            if (mesh == null) return false;
+            var world = FindAnyObjectByType<SceneWorldView>();
+            Transform root = world != null && world.CampRoot != null ? world.CampRoot.transform : mesh.transform.root;
+            return CampNavigationGeometry.TryDescribe(mesh, root, 0, out _);
         }
 
         void BuildNavigation(Transform root)
         {
             if (_entrance != null) _entrance.BuildNavigationBarrier();
-            // Добавляем недостающие коллизии только runtime: сохранённые трансформы не затрагиваются.
-            var unreadable = new List<string>();
-            // Мост к алхимику проходим: настил и перила задаёт CampRiverPassage, а не меш.
-            // 21 сентября мост переложили внутрь CampRoot, и его модель стала сплошной стеной.
             var passage = FindAnyObjectByType<CampRiverPassage>();
             Transform bridge = passage != null ? passage.Bridge : null;
-            foreach (MeshFilter mesh in root.GetComponentsInChildren<MeshFilter>())
-            {
-                if (!UsedByNavigation(mesh)) continue;
-                if (bridge != null && mesh.transform.IsChildOf(bridge)) continue;
-
-                // Нечитаемый меш строит коллайдер в редакторе и НЕ строит в
-                // плеере: данные выгружены из памяти после загрузки на карту.
-                // Молча это пропустить нельзя — навигация в сборке отличалась
-                // бы от того, что видно в Play mode.
-                if (!mesh.sharedMesh.isReadable) unreadable.Add(mesh.sharedMesh.name);
-
-                Renderer renderer = mesh.GetComponent<Renderer>();
-                Bounds shape = renderer != null ? renderer.bounds : new Bounds(mesh.transform.position, Vector3.one * .5f);
-                // Трава и цветы: герой их перешагивает. Кусты остаются препятствием.
-                if (StepsOver(mesh, shape)) continue;
-                // Дерево держит навигацию стволом. Меш кроны с нижними ветками
-                // перекрывал до 45 м² вокруг — это и есть «невидимое препятствие».
-                if (AddTrunk(mesh, shape, root)) continue;
-
-                // Кострище — кольцо камней с огнём внутри. Меш-коллайдер кольца оставлял проходимой
-                // середину (и склеенный статикой меш давал неверную форму): через огонь можно было
-                // пройти. Держим его целиком сплошным цилиндром по габаритам.
-                if (mesh.name.ToLowerInvariant().Contains("fire+pit") || mesh.name.ToLowerInvariant().Contains("firepit"))
-                {
-                    var pit = new GameObject("Кострище для навигации — " + mesh.name);
-                    pit.transform.SetParent(root, false);
-                    pit.transform.SetPositionAndRotation(new Vector3(shape.center.x, shape.min.y + 1f, shape.center.z), Quaternion.identity);
-                    CapsuleCollider solid = pit.AddComponent<CapsuleCollider>();
-                    solid.height = 2f;
-                    solid.radius = Mathf.Max(shape.extents.x, shape.extents.z) * .92f;
-                    continue;
-                }
-
-                var collider = mesh.gameObject.AddComponent<MeshCollider>(); collider.sharedMesh = mesh.sharedMesh;
-            }
-            if (unreadable.Count > 0)
-            {
-                // Одна строка вместо два десятка одинаковых предупреждений от
-                // самой Unity, и сразу с тем, что нажать.
-                unreadable.Sort();
-                Debug.LogWarning($"[camp] Навигация собрана из {unreadable.Count} нечитаемых мешей "
-                    + "— в собранной игре их не будет. Меню «Разлом → Лагерь → "
-                    + $"Разрешить чтение мешей навигации». Список: {string.Join(", ", unreadable)}");
-            }
+            // Видимый меш не становится коллайдером. Старым и новым моделям задаётся
+            // простое основание; листва и ткань не могут молча превратиться в стены.
+            var footprints = CampNavigationGeometry.Collect(root, bridge, _start.y);
+            _navigationFootprints = footprints;
 
             // В текущем blockout якорь Пелага лежит чуть за краем единственного
             // декоративного Floor. Без этой площадки SamplePosition выбирает
@@ -308,14 +193,32 @@ namespace Game.View
             Physics.SyncTransforms();
             var sources = new List<NavMeshBuildSource>();
             var markups = new List<NavMeshBuildMarkup>();
-            foreach (var dummy in root.GetComponentsInChildren<CampDummyView>(true))
-                markups.Add(new NavMeshBuildMarkup { root = dummy.transform, ignoreFromBuild = true });
-            NavMeshBuilder.CollectSources(root, ~0, NavMeshCollectGeometry.PhysicsColliders, 0,
-                markups, sources);
+            // Из физических коллайдеров берём только временный плоский пол и явную
+            // границу за аркой. Коллайдеры декора не возвращаются в карту незаметно.
+            NavMeshBuilder.CollectSources(_navigationGround.transform, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, markups, sources);
+            if (_entrance != null)
+            {
+                var gateSources = new List<NavMeshBuildSource>();
+                var barrier = _entrance.transform.Find("Граница лагеря за аркой");
+                if (barrier != null)
+                {
+                    NavMeshBuilder.CollectSources(barrier, ~0, NavMeshCollectGeometry.PhysicsColliders, 0, markups, gateSources);
+                    sources.AddRange(gateSources);
+                }
+            }
+            CampNavigationGeometry.AddSources(sources, footprints, groundY);
             // Новые NPC стоят в корне сцены: их маленькие опорные области тоже участвуют в обходе.
             foreach(var npc in FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Exclude))
+            {
+                // ServicesView обновляет присутствие после построения. Закрытый житель
+                // не должен оставлять невидимое тело в неизменяемой карте.
+                var camp = _driver.Session.Camp;
+                if (npc.Kind == CampServiceKind.Trader && !camp.HasResident(CampResident.Trader)
+                    || npc.Kind == CampServiceKind.Alchemist && !camp.HasResident(CampResident.Alchemist)
+                    || npc.Kind == CampServiceKind.Tent || npc.Kind == CampServiceKind.TravelTable) continue;
                 sources.Add(new NavMeshBuildSource{shape=NavMeshBuildSourceShape.ModifierBox,area=1,
                     transform=Matrix4x4.TRS(npc.transform.position+Vector3.up,Quaternion.identity,Vector3.one),size=new Vector3(.65f,3,.65f)});
+            }
             foreach(var river in root.GetComponentsInChildren<CampRiver>())river.AddNavigationSources(sources);
             var settings = NavMesh.GetSettingsByIndex(0);
             settings.agentRadius = .3f; settings.agentHeight = 1.7f; settings.agentClimb = .25f;
@@ -324,6 +227,7 @@ namespace Game.View
             if (data != null) _navigation = NavMesh.AddNavMeshData(data);
             Destroy(_navigationGround);
             _navigationGround = null;
+            Debug.Log($"[camp-navigation] simpleFootprints={footprints.Count} sources={sources.Count} visualMeshCollidersAdded=0");
         }
 
         bool _wasActive, _sawRift;
@@ -354,8 +258,8 @@ namespace Game.View
             click = Input.GetMouseButtonDown(1); held = Input.GetMouseButton(1);
             pointer = Input.mousePosition;
 #endif
-            // A right click claimed by a service starts its route in
-            // CampServicesView. Do not reinterpret it as a ground click.
+            // Клик по сервису уже запускает маршрут в CampServicesView;
+            // повторно превращать его в клик по земле нельзя.
             if (CampServicesView.PointerGesture) { click = false; held = false; }
             if (GameUserSettings.WasdMovement) { click = held = false; if(CampServicesView.Instance?.Pending==null)CancelRoute(); }
 
@@ -390,16 +294,21 @@ namespace Game.View
                     return;
                 }
                 Ray ray = Camera.main.ScreenPointToRay(pointer);
-                if (!Physics.Raycast(ray, out var hit, 300f)) { CancelRoute(); return; }
+                bool hitWorld = Physics.Raycast(ray, out var hit, 300f);
+                var floor = new Plane(Vector3.up, new Vector3(0, _height, 0));
+                if (!hitWorld && !floor.Raycast(ray, out _)) { CancelRoute(); return; }
 
-                _approach = Tent != null && hit.transform.IsChildOf(Tent);
+                _approach = hitWorld && Tent != null && hit.transform.IsChildOf(Tent);
 
                 _pressPointer = pointer;
 
                 // В палатку идём к её краю, в остальных случаях — ровно туда,
                 // куда ткнули. Непроходимую точку разберёт сам поиск: он
                 // приводит цель к ближайшей достижимой клетке.
-                RouteTo(_approach ? TentDoor : hit.point);
+                Vector3 target;
+                if (hitWorld) target = hit.point;
+                else { floor.Raycast(ray, out float distance); target = ray.GetPoint(distance); }
+                RouteTo(_approach ? TentDoor : target);
             }
 
         /// <summary>
@@ -438,6 +347,25 @@ namespace Game.View
                 + $" углов={_routing.CornerCount} маршрут={routed}");
 
             return routed;
+        }
+
+        /// <summary>Достижимый подход, с запасом для остановки маршрута внутри радиуса разговора.</summary>
+        public bool TryServiceApproach(CampServiceNpc npc, Vector3 from, out Vector3 reachable)
+        {
+            reachable = from;
+            if (npc == null || _walkMap == null || !_walkMap.Contains(Flat(from))) return false;
+            Vector3 approach = npc.Kind == CampServiceKind.Tent ? npc.Target(from) : npc.Approach;
+            float reach = Mathf.Max(.05f, npc.Reach - .4f);
+            for (float radius = 0; radius <= 1.5f; radius += .25f)
+            for (int i = 0; i < (radius == 0 ? 1 : 16); i++)
+            {
+                Vector3 point = approach + new Vector3(Mathf.Cos(i * Mathf.PI / 8), 0, Mathf.Sin(i * Mathf.PI / 8)) * radius;
+                if (npc.Distance(point) > reach || !_walkMap.TryNearestReachable(Flat(from), Flat(point), out var at)) continue;
+                Vector3 resolved = World(at);
+                if (npc.Distance(resolved) > reach) continue;
+                reachable = resolved; return true;
+            }
+            return false;
         }
 
         void CancelRoute()

@@ -472,6 +472,38 @@ namespace Game.Tests
             a.SetupKindTestArena(EnemyKind.ForestSplitter);
             Assert.That(a.Entities.Count, Is.EqualTo(2));
             Assert.That(a.SplitParentOf(1), Is.EqualTo(-1));
+
+            // Перекаты клубком — своим стендом: поляна с камнем, герой ходит между
+            // четырьмя точками, то под перекатом, то в стороне; Расщепни катятся и в
+            // камень. Здесь родителей не убивают, иначе до первого переката не дойдёт.
+            Simulation Rolling()
+            {
+                var s = new Simulation(33, 64);
+                s.SetupKindTestArena(EnemyKind.ForestSplitter, 3, Glade(-2.5), 33, 2, 100, Fix64.FromInt(7));
+                s.Entities.Stats[0].SetBase(StatType.MaxHealth, Fix64.FromInt(100000));
+                s.Entities.RefreshStats(0); s.Entities.Health[0] = 100000;
+                return s;
+            }
+            var ra = Rolling();
+            var rb = Rolling();
+            int started = 0, stops = 0, hits = 0;
+            for (int t = 0; t < 600; t++)
+            {
+                int leg = (t / 40) % 4;
+                var input = MoveTo(At(leg == 1 || leg == 2 ? -4 : 3, leg >= 2 ? -4 : 4));
+                ra.Step(input);
+                rb.Step(input);
+                Assert.That(ra.StateHash(), Is.EqualTo(rb.StateHash()), "перекаты, tick " + t);
+                foreach (var e in ra.Events)
+                {
+                    if (e.ActionVariant != (int)EnemyActionKind.SplitterRoll) continue;
+                    if (e.Type == SimEventType.EnemyActionStarted) started++;
+                    if (e.Type == SimEventType.EnemyActionImpact && e.Amount == 1) { stops++; if (e.Flag) hits++; }
+                }
+            }
+            Assert.That(started, Is.GreaterThan(0), "катались");
+            Assert.That(stops, Is.GreaterThan(0));
+            TestContext.WriteLine("rolls " + started + ", stops " + stops + ", hits " + hits);
         }
 
         // ---------- перекат клубком ----------
@@ -597,7 +629,6 @@ namespace Game.Tests
             Assert.That(lane.StartTick, Is.EqualTo(RollT0 + 12));
             Assert.That(lane.ImpactTick, Is.EqualTo(RollT0 + 30));
             Assert.That(lane.Width, Is.EqualTo(Simulation.SplitterRollLaneWidth));
-            Assert.That(lane.Width.ToDouble(), Is.EqualTo(1.6).Within(1e-6));
             Assert.That(lane.Serial, Is.EqualTo(locked.TelegraphSerial));
             Assert.That(lane.Origin, Is.EqualTo(locked.Origin));
             Assert.That(lane.Direction, Is.EqualTo(locked.Direction));
@@ -627,8 +658,10 @@ namespace Game.Tests
             Assert.That(log.Stages, Is.EqualTo(new[] { 0, 1 }));
             Assert.That(log.Hits, Is.EqualTo(new[] { false, true }), "стоп говорит, что задел");
             Assert.That(log.Damage.Count, Is.EqualTo(1), "удар один на перекат");
-            Assert.That(log.DamageAmounts, Is.EqualTo(new[] { 18 }), "18/12 урона листа");
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 18));
+            int rollDamage = sim.SplitterRollDamageOf(1);
+            Assert.That(rollDamage, Is.EqualTo(Simulation.SplitterRollDamage), "первая арена — урон листа");
+            Assert.That(log.DamageAmounts, Is.EqualTo(new[] { rollDamage }));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - rollDamage));
             var end = locked.Origin + locked.Direction * lane.Length;
             Assert.That(FixVec2.Distance(sim.Entities.Position[1], end).ToDouble(), Is.LessThan(1e-3), "встал в конце полосы");
             Assert.That(log.ImpactAt[1], Is.EqualTo(sim.Entities.Position[1]));
@@ -855,40 +888,6 @@ namespace Game.Tests
             RunRoll(sim, RollT0 + 150, log);
             Assert.That(log.Started.Count, Is.GreaterThanOrEqualTo(1), "перекат так и не начался");
             Assert.That(log.Started[0], Is.GreaterThanOrEqualTo(RollT0));
-        }
-
-        [Test]
-        public void Roll_IsDeterministic()
-        {
-            Simulation Make()
-            {
-                var s = new Simulation(33, 64);
-                s.SetupKindTestArena(EnemyKind.ForestSplitter, 3, Glade(-2.5), 33, 2, 100, Fix64.FromInt(7));
-                s.Entities.Stats[0].SetBase(StatType.MaxHealth, Fix64.FromInt(100000));
-                s.Entities.RefreshStats(0); s.Entities.Health[0] = 100000;
-                return s;
-            }
-            var a = Make();
-            var b = Make();
-            int started = 0, stops = 0, hits = 0;
-            for (int t = 0; t < 600; t++)
-            {
-                // Герой ходит между четырьмя точками: то под перекатом, то в стороне.
-                int leg = (t / 40) % 4;
-                var input = MoveTo(At(leg == 1 || leg == 2 ? -4 : 3, leg >= 2 ? -4 : 4));
-                a.Step(input);
-                b.Step(input);
-                Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "tick " + t);
-                foreach (var e in a.Events)
-                {
-                    if (e.ActionVariant != (int)EnemyActionKind.SplitterRoll) continue;
-                    if (e.Type == SimEventType.EnemyActionStarted) started++;
-                    if (e.Type == SimEventType.EnemyActionImpact && e.Amount == 1) { stops++; if (e.Flag) hits++; }
-                }
-            }
-            Assert.That(started, Is.GreaterThan(0), "катались");
-            Assert.That(stops, Is.GreaterThan(0));
-            TestContext.WriteLine("rolls " + started + ", stops " + stops + ", hits " + hits);
         }
     }
 }

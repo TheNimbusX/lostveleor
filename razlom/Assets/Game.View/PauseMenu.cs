@@ -24,6 +24,10 @@ namespace Game.View
         private const float DisplayConfirmationSeconds = 15f;
         private const string CaptureFlag = "-capture-pause-menu";
 
+        // Подсказки вкладки «Управление» в формате листа 5 «[Клавиша] Действие» (UiKeyHint); константы — без строки на кадр.
+        private const string WasdControlsHint = "[WASD] Движение" + UiKeyHint.Separator + "[Мышь] Прицел" + UiKeyHint.Separator + "[1–4] Способности";
+        private const string MouseControlsHint = "[ПКМ] Движение" + UiKeyHint.Separator + "[ЛКМ] Атака. Нажми на клавишу справа, чтобы переназначить.";
+
         private enum Page : byte { Main, Graphics, Controls, Audio, ConfirmCamp, ConfirmDisplay, ConfirmQuit, Game, Interface, ConfirmReset }
 
         private static readonly GameUserSettings.QualityLevel[] QualityLevels =
@@ -257,7 +261,7 @@ namespace Game.View
             // Escape в главном меню не открывает паузу: паузить нечего, а
             // закрытие этой паузы сняло бы паузу самого меню.
             if (MainMenuView.IsOpen && !_open) return;
-            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame==Time.frameCount) return;
+            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampInventoryView.ClosedFrame == Time.frameCount || CampServicesView.Instance?.IsOpen == true || CampServicesView.ConsumedFrame==Time.frameCount || CampPreparationView.Instance?.IsOpen==true || CampForgeView.Instance?.IsOpen==true || CampPreparationView.ClosedFrame==Time.frameCount || CampForgeView.ClosedFrame==Time.frameCount) return;
             // Escape в вопросе «Заменить артефакт?» — «Оставить», а не пауза.
             if (!_open && (RunHud.ReplaceOpen || RunHud.ReplaceClosedFrame == Time.frameCount)) return;
             if (_displayPreviewActive && Time.unscaledTime >= _displayConfirmationDeadline)
@@ -378,7 +382,7 @@ namespace Game.View
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (DeveloperMenu.BlocksPause) return;
 #endif
-            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampServicesView.Instance?.IsOpen == true) return;
+            if ((CampPlayerView.Instance != null && CampPlayerView.Instance.InventoryOpen) || CampServicesView.Instance?.IsOpen == true || CampPreparationView.Instance?.IsOpen==true || CampForgeView.Instance?.IsOpen==true) return;
             if (RunHud.ReplaceOpen) return;
             Open(Page.Main);
         }
@@ -1128,10 +1132,11 @@ namespace Game.View
                     UiMotion.FadeTo(row, wasd ? .45f : 1f, .18f);
                 }
             }
+            // Подсказки клавиш — один формат на все окна: «[Esc] Отмена» (лист 5, UiKeyHint).
             PauseMenuView.SetText(v.ControlsHint, _waitingBinding >= 0
-                ? "Нажми клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "» · Esc — отмена"
+                ? "Нажми клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "»" + UiKeyHint.Separator + UiKeyHint.EscCancel
                 : UiHint.Current ?? (!string.IsNullOrEmpty(_bindingStatus) ? _bindingStatus
-                : (GameUserSettings.WasdMovement ? "WASD — движение · мышь — прицел · 1–4 — способности · " + GameKeyBindings.Label(GameAction.Dash) + " — кувырок. Нажми на клавишу, чтобы переназначить." : "ПКМ — движение · ЛКМ — атака. Нажми на клавишу справа, чтобы переназначить.")));
+                : (GameUserSettings.WasdMovement ? WasdControlsHint + UiKeyHint.Separator + UiKeyHint.Hint("кувырок", GameKeyBindings.Label(GameAction.Dash)) + ". Нажми на клавишу, чтобы переназначить." : MouseControlsHint)));
             for (int i = 0; i < _bindingRows.Length; i++)
             {
                 var action = (GameAction)i;
@@ -1235,7 +1240,7 @@ namespace Game.View
             }
 
             GUI.Label(new Rect(panel.x + 56f, panel.yMax - 70f, 450f, 30f),
-                "ESC — продолжить игру", _subtitle);
+                "[Esc] Продолжить игру", _subtitle);
         }
 
         private void DrawCampConfirmation()

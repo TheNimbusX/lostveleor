@@ -70,6 +70,50 @@ public sealed class AnchorHeadDynamicsTests
     }
 
     [Test]
+    public void UpperRingBodyContactDoesNotForceTheAttachedChainToStretch()
+    {
+        // Captured ordinary-attack -> new back-mounted anchor draw, at 0.0667 s.
+        var bottom = new Vector3(22.590550f, .870703f, -1.993831f);
+        var top = new Vector3(22.622040f, 1.237718f, -1.982745f);
+        var ring = new Vector3(22.575390f, .886861f, -2.041343f);
+        var grip = new Vector3(22.710360f, .924587f, -1.511662f);
+        var body = new AnchorHeadDynamics { EyeLocal = new Vector3(0, .405f, 0) };
+        body.Reset(ring - body.EyeLocal, Quaternion.Identity);
+        body.Velocity = new Vector3(2, 0, 2);
+        var rotation = body.Rotation;
+        body.CollideEyeBody(bottom, top, .22f);
+        var axis = top - bottom;
+        var center = bottom + axis * Math.Clamp(Vector3.Dot(body.Eye - bottom, axis) / axis.LengthSquared(), 0, 1);
+        Assert.That(Vector3.Distance(body.Eye, center), Is.GreaterThanOrEqualTo(.2199f));
+        Assert.That(Quaternion.Dot(rotation, body.Rotation), Is.LessThan(.9999f), "Contact at the ring must turn the mass.");
+        var chain = new AnchorChainSolver();
+        chain.Advance(grip, body.Eye, .920370f, 0, bottom, top, .2f, true);
+        Assert.That(chain.MaxStrain, Is.LessThanOrEqualTo(.02f));
+        Assert.That(chain.AttachmentError, Is.Zero);
+    }
+
+    [Test]
+    public void BackDrawStockAllowsChainToRouteAroundTorsoWithBothEndsOutside()
+    {
+        // Following captured frame: the ring is outside, but the straight line
+        // crosses the torso. Constant stock must cover the curved route too.
+        var bottom = new Vector3(22.600950f, .872362f, -1.992010f);
+        var top = new Vector3(22.607580f, 1.239762f, -1.961046f);
+        var grip = new Vector3(22.515210f, 1.037196f, -1.445144f);
+        var ring = new Vector3(22.622580f, 1.009935f, -2.200665f);
+        var chain = new AnchorChainSolver();
+        chain.Advance(grip, ring, 1.284921f, 0, bottom, top, .2f, true);
+        Assert.That(chain.MaxStrain, Is.LessThanOrEqualTo(.02f));
+        Assert.That(chain.AttachmentError, Is.Zero);
+        for (int i = 1; i < chain.Count - 1; i++)
+        {
+            var axis = top - bottom;
+            var center = bottom + axis * Math.Clamp(Vector3.Dot(chain[i] - bottom, axis) / axis.LengthSquared(), 0, 1);
+            Assert.That(Vector3.Distance(chain[i], center), Is.GreaterThanOrEqualTo(.1999f));
+        }
+    }
+
+    [Test]
     public void CatchTracksMovingHolsterWithoutPositionSnap()
     {
         var body=new AnchorHeadDynamics();

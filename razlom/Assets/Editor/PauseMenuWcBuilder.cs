@@ -183,7 +183,7 @@ namespace Game.EditorTools
 
             UiInkKit.LightAt(panel, "Линия снизу", "light_thread", new Vector2(.5f, 1f), new Vector2(0f, -596f), new Vector2(380f, 34f), .55f);
             RectTransform hint = Box(Node("Подсказка", panel), new Vector2(.5f, 0f), new Vector2(.5f, 0f), new Vector2(0f, 20f), new Vector2(460f, 30f));
-            view.Hint = UiInkKit.Label(hint, "Надпись", "Esc — продолжить игру", FontRole.Body, 18f, Role.TextMuted, TextAlignmentOptions.Center, 1f, 1f, .2f);
+            view.Hint = UiInkKit.Label(hint, "Надпись", UiKeyHint.Hint("продолжить игру", "Esc"), FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.TextMuted, TextAlignmentOptions.Center, 1f, 1f, .2f);
         }
 
         /// <summary>

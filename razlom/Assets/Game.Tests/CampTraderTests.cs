@@ -9,6 +9,20 @@ namespace Game.Tests
     /// </summary>
     public class CampTraderTests
     {
+        [Test] public void RanksExpandWithoutResettingSoldSlotsAndReserveSurvivesRefresh()
+        {
+            var camp = PrototypeContent.NewCamp(); camp.RecordRealAttemptEnded(1, 0); camp.DeveloperSetLevel(10); camp.Earn(CurrencyType.Gold, 10000);
+            Assert.AreEqual(4, camp.TraderStockCount); var retained = camp.TraderStock(1); Assert.Greater(camp.BuyFromTrader(0), 0);
+            Assert.AreEqual(CampUpgradeResult.Success, camp.TryUpgradeResident(CampResident.Trader));
+            Assert.AreEqual(6, camp.TraderStockCount); Assert.True(camp.TraderStock(0).IsEmpty); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
+            Assert.False(camp.ReserveTraderStock(1)); camp.TryUpgradeResident(CampResident.Trader); Assert.True(camp.ReserveTraderStock(1));
+            Assert.False(camp.ChooseTraderCategory(ItemCategory.Armor)); camp.TryUpgradeResident(CampResident.Trader); Assert.True(camp.ChooseTraderCategory(ItemCategory.Armor));
+            Assert.True(camp.RefreshTrader()); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
+            Assert.AreEqual(ItemCategory.Armor, camp.Items.GetBase(camp.Items.IndexOfBase(camp.TraderStock(0).BaseId)).Category);
+            camp.RefreshTraderAfterBoss(); Assert.True(retained.SameRecipe(camp.TraderStock(1)));
+            var bytes = CampSaveCodec.Encode(camp); camp = CampSaveCodec.Decode(bytes, camp.Items); Assert.AreEqual(1, camp.TraderReservedSlot);
+            Assert.Greater(camp.BuyFromTrader(1), 0); Assert.AreEqual(-1, camp.TraderReservedSlot);
+        }
         [Test] public void SoldStockAndRefreshSurviveSaveWithoutReroll()
         {
             var c=Rich();var first=c.TraderStock(0);c.BuyFromTrader(0);
@@ -50,7 +64,7 @@ namespace Game.Tests
         }
         static Camp Rich(int gold = 10000)
         {
-            var c = PrototypeContent.NewCamp();
+            var c = new Camp(PrototypeContent.Items());
             c.Earn(CurrencyType.Gold, gold);
             return c;
         }

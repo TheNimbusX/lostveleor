@@ -175,7 +175,7 @@ namespace Game.Tests
         /// Герой 1-го и 20-го уровня в Разломе леса одинаков — 270 здоровья и 54
         /// урона, как прежний 5-й уровень, — и в лагере тоже.
         /// </summary>
-        [TestCase(1)]
+        // Уровень 1 против 20 — в CampLevelIsNotInTheSimulationHash; здесь достаточно 20.
         [TestCase(20)]
         public void HeroStatsIndependentOfCampLevel(int level)
         {

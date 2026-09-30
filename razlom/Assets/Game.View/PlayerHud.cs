@@ -740,7 +740,7 @@ namespace Game.View
             Fill(new Rect(x + padding, metricsY - 5f, inner, .7f), new Color(.43f, .37f, .25f, .18f));
             LayoutTooltipMetrics(new Vector2(x + padding, metricsY), inner, true);
             if (aiming)
-                GUI.Label(new Rect(x + padding, panel.yMax - padding - 17f, inner, 17f), "Выбери цель · ПКМ — отмена", _tooltipCaption);
+                GUI.Label(new Rect(x + padding, panel.yMax - padding - 17f, inner, 17f), UiKeyHint.AimStatus, _tooltipCaption);
             else if (!availability.Ready)
                 GUI.Label(new Rect(x+padding,panel.yMax-padding-19f,inner,20f),AvailabilityText(availability),_feedbackLabel);
         }
@@ -830,9 +830,12 @@ namespace Game.View
                 _rangePreview.Capsule(center, forward, radius, width * .5f);
             else if (id == AbilityDefinition.BackblastId)
             {
-                // Огненный выброс радиусом Width остаётся на месте каста; метка — куда отскочит герой.
+                // Огненный выброс радиусом Width остаётся на месте каста; метка — куда отскочит герой,
+                // к ней — короткий кремовый пунктир отскока (тот же язык, что у прыжка «Абордажа»).
+                Vector3 hop = center - forward * radius;
                 _rangePreview.Disc(center, width);
-                _rangePreview.Disc(center - forward * radius, ReachMark);
+                _rangePreview.Disc(hop, ReachMark);
+                _rangePreview.JumpArc(center, hop, ReachMark);
             }
             else if (id == AbilityDefinition.DashId)
                 // Рывок всегда проходит всю дальность к курсору: кольцо на этой дальности вокруг героя.
@@ -840,9 +843,14 @@ namespace Game.View
             else if (id == AbilityDefinition.AnchorLeapId)
             {
                 // Дальность из сборки: талант «Длинная цепь» её удлиняет. «На абордаж!» бьёт в 2 м вокруг прибытия.
+                // 2a (владелец 30.09): кольцо дальности — вокруг ГЕРОЯ, не вокруг места приземления; от героя
+                // к месту — пунктир прыжка, на диске приземления — якорь тушью.
                 Vector3 landing = center + forward * Mathf.Min(cursor, radius);
+                float land = build.Has(AbilityFlag.BoardingSweep) ? 2f : ReachMark;
                 _rangePreview.Ring(center, radius, ReachLimitStrength);
-                _rangePreview.Disc(landing, build.Has(AbilityFlag.BoardingSweep) ? 2f : ReachMark);
+                _rangePreview.Disc(landing, land);
+                _rangePreview.JumpArc(center, landing, land);
+                _rangePreview.Anchor(landing);
             }
             else if (id == AbilityDefinition.FireFlaskId)
             {
@@ -852,6 +860,8 @@ namespace Game.View
                 float pool = width * .5f;
                 _rangePreview.Ring(center, radius, ReachLimitStrength);
                 _rangePreview.Disc(landing, pool);
+                // Бросок — тем же кремовым пунктиром дуги, что прыжок «Абордажа».
+                _rangePreview.JumpArc(center, landing, pool);
                 // «Огненное кольцо»: три малые лужи на 90°, 210° и 330° мира (FireFlask.RingDirections).
                 if (build.Has(AbilityFlag.FlaskRing))
                     for (int k = 0; k < 3; k++)
@@ -862,7 +872,8 @@ namespace Game.View
                     }
             }
             else if (id == AbilityDefinition.WhirlwindId)
-                _rangePreview.Disc(center, radius);
+                // 2a: кремовый диск с мягкой кромкой и едва заметными завитками.
+                _rangePreview.Whirl(center, radius);
             else if (id == AbilityDefinition.ChainStepId)
                 // Первая цель ищется в этом радиусе — предел, а не область удара.
                 _rangePreview.Ring(center, radius);

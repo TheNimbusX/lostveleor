@@ -62,6 +62,9 @@ namespace Game.Tests
         [Test]
         public void SameSeedSameInput_ProducesIdenticalStateEveryTick()
         {
+            // Модель проверки топ-100: сервер получает сид и поток вводов
+            // и обязан прийти ровно в то же состояние, что и клиент, — здесь
+            // не только в конце, а на каждом тике.
             var script = BuildInputScript(TickCount);
 
             var runA = RunAndHash(Seed, script);
@@ -102,24 +105,6 @@ namespace Game.Tests
                 Assert.AreEqual(b.Loot.NextUInt(), a.Loot.NextUInt(),
                     "Потоки случайности не независимы: расход одного сдвинул другой.");
             }
-        }
-
-        [Test]
-        public void Replay_FromSeedAndInputs_ReproducesFinalState()
-        {
-            // Модель проверки топ-100: сервер получает сид и поток вводов
-            // и обязан прийти ровно в то же состояние, что и клиент.
-            var script = BuildInputScript(TickCount);
-
-            var live = new Simulation(Seed);
-            live.SetupTestArena(40);
-            for (int t = 0; t < script.Count; t++) { var f = script[t]; live.Step(in f); }
-
-            var replay = new Simulation(Seed);
-            replay.SetupTestArena(40);
-            for (int t = 0; t < script.Count; t++) { var f = script[t]; replay.Step(in f); }
-
-            Assert.AreEqual(live.StateHash(), replay.StateHash());
         }
 
         // ---- смешанная лесная арена (план новых мобов от 26.09) ----

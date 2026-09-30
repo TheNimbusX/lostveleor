@@ -59,6 +59,10 @@ namespace Game.View
         }
         void RefreshSmith()
         {
+            RefreshBehindShopModal(RefreshSmithContents);
+        }
+        void RefreshSmithContents()
+        {
             var s=_view.Smith;var camp=_smithCamp;var inventory=GetComponent<CampInventoryView>();
             s.Gold.text=camp.Money(CurrencyType.Gold).ToString();s.Shards.text=camp.Money(CurrencyType.Shards).ToString();s.ShardsGroup.SetActive(true);
             HideTabs(s);
@@ -73,7 +77,7 @@ namespace Game.View
             // Надетое выбирается всегда: перековка прямо здесь, разбор объяснит запрет.
             ShowWorn(s,camp,_smithWorn?_smithSlot:-1,false);
             foreach(var row in s.Rows)row.gameObject.SetActive(false);
-            s.ActionLabel.text=SmithText("reforge.action");
+            s.ActionLabel.text="Кузница";
             if(s.ExtraLabel!=null)s.ExtraLabel.text=SmithText(_confirmDismantle?"dismantle.confirm":"dismantle.action");
             s.Preview.text="";s.Note.text="";Tone(s.Note,UiTheme.Role.TextMuted);
             var item=WornOrBag(camp,_smithSlot,_smithWorn);
@@ -112,7 +116,7 @@ namespace Game.View
             Tone(s.PriceGold,reforge.GoldShort>0?UiTheme.Role.Bad:UiTheme.Role.Coins);Tone(s.PriceShards,reforge.ShardsShort>0?UiTheme.Role.Bad:UiTheme.Role.Text);
             if(reforge.Allowed || reforge.Block==CampShopDeals.Block.Funds)s.Preview.text=Format("smith.level.change",reforge.LevelFrom,reforge.LevelTo);
             s.Note.text=ReforgeReason(reforge);Tone(s.Note,reforge.Block==CampShopDeals.Block.Funds?UiTheme.Role.Bad:UiTheme.Role.TextMuted);
-            s.Action.interactable=reforge.Allowed;
+            s.Action.interactable=true;
 
             // Разбор: что получишь и что вещь исчезнет — до нажатия; надетое и «беречь» — с причиной.
             if(s.Extra!=null)s.Extra.interactable=scrap.Allowed;
@@ -122,7 +126,7 @@ namespace Game.View
                 :SmithText(_confirmDismantle?"confirm.note":"destroy.warning"));
             Tone(s.ExtraNote,_confirmDismantle?UiTheme.Role.Bad:UiTheme.Role.TextMuted);
             // Пока ждёт подтверждение разбора, Enter не подписан: он не перекуёт вместо ответа (ShopKeys).
-            KeyHints(s,reforge.Allowed && !_confirmDismantle?SmithText("reforge.action"):"",scrap.Allowed?(_confirmDismantle?CampServiceText.Get("key.confirm"):SmithText("dismantle.action")):"",_confirmDismantle);
+            KeyHints(s,!_confirmDismantle?"Открыть кузницу":"",scrap.Allowed?(_confirmDismantle?CampServiceText.Get("key.confirm"):SmithText("dismantle.action")):"",_confirmDismantle);
         }
         /// <summary>Узел заголовка раздела (надпись лежит в нём): прячется целиком, с нитью света.</summary>
         static GameObject Header(TMPro.TMP_Text label)=>label!=null && label.transform.parent!=null?label.transform.parent.gameObject:null;
@@ -153,6 +157,12 @@ namespace Game.View
             }
         }
         void ApplySmith()
+        {
+            if(_smithSlot<0)return;
+            var target=_smithWorn?ForgeTarget.Worn((EquipSlot)_smithSlot):ForgeTarget.Bag(_smithSlot);
+            CampForgeView.Instance?.Open(_smithCamp,target,_smithAffix,RefreshSmith);
+        }
+        void ApplyLegacySmith()
         {
             var s=_view.Smith;var camp=_smithCamp;
             if(!s.Action.interactable)return;
@@ -222,8 +232,8 @@ namespace Game.View
                 if(action.interactable || scrap.interactable)return false;
                 s.Cells[0].Button.onClick.Invoke();
                 if(_smithSlot!=0 || _smithWorn || !scrap.interactable || !s.Price.activeSelf)return false;
-                for(int i=0;i<3;i++){if(!action.interactable)return false;action.onClick.Invoke();}
-                if(action.interactable || _smithCamp.Bag.At(0).ReforgeCount!=3 || _smithCamp.Money(CurrencyType.Gold)!=20 || _smithCamp.Money(CurrencyType.Shards)!=2)return false;
+                for(int i=0;i<3;i++)ApplyLegacySmith();
+                if(_smithCamp.Bag.At(0).ReforgeCount!=3 || _smithCamp.Money(CurrencyType.Gold)!=20 || _smithCamp.Money(CurrencyType.Shards)!=2)return false;
                 scrap.onClick.Invoke();
                 if(_smithCamp.Bag.IsEmpty(0) || !_confirmDismantle)return false;
                 // Повторный выбор той же вещи (Submit по Enter) не снимает подтверждение, Esc — снимает.

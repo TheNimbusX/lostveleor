@@ -126,6 +126,7 @@ namespace Game.Sim
             else if (id == AbilityDefinition.SkewerId) { contact = _mobilityEndTick; end = contact; }
             else if (id == AbilityDefinition.BackblastId) { contact = _backblastTick; end = _mobilityEndTick; }
             SetActionClock(slot, id, contact, end);
+            if (id == AbilityDefinition.DashId) PreparedGiftRollStarted(contact);
         }
         /// <param name="keepKnockback">
         /// true — чужой отброс или волок героя не снимается: снимается только
@@ -133,6 +134,7 @@ namespace Game.Sim
         /// </param>
         private void CancelPlayerAction(bool keepKnockback = false)
         {
+            PreparedGiftActionCancelled();
             StopAnchorSlam(); StopWreck(); StopCleave(); StopFlask();
             CancelBlazeGesture(); StopWhirlwindChannel();
             _leapLaunchTick = _leapPunchTick = -1;

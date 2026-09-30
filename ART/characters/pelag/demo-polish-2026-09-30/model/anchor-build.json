@@ -1,0 +1,17 @@
+{
+  "head_triangles": 3456,
+  "vertices": 1744,
+  "dimensions_m": [
+    0.8842580914497375,
+    0.25126057863235474,
+    0.9446582198143005
+  ],
+  "attachment_blender": [
+    0.0,
+    0.0,
+    0.46000000834465027
+  ],
+  "fbx": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\model\\export\\Pelag_AnchorHead_Demo.fbx",
+  "atlas": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\model\\export\\Anchor_Demo_BaseColor.png",
+  "body_source_unmodified": true
+}

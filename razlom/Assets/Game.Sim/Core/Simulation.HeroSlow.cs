@@ -117,6 +117,7 @@ namespace Game.Sim
         /// </summary>
         public void ApplyHeroSlow(int percent, int ticks, int source = -1)
         {
+            if (ClearTicksLeft > 0) return;
             if (percent >= HeroRootPercent) { ApplyHeroRoot(ticks, source); return; }
             if (percent <= 0 || ticks <= 0 || Entities.Count <= PlayerId || !Entities.Alive[PlayerId]) return;
             int until = Tick + 1 + ticks;
@@ -158,6 +159,7 @@ namespace Game.Sim
         /// </summary>
         private bool ApplyHeroControl(int ticks, bool rooted, int source)
         {
+            if (rooted && ClearTicksLeft > 0) return false;
             if (ticks <= 0 || Entities.Count <= PlayerId || !Entities.Alive[PlayerId]) return false;
             if (Tick < _heroControlImmuneUntil) return false;
             int until = Tick + 1 + ticks;

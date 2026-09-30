@@ -42,6 +42,14 @@ namespace Game.Tests
             Assert.IsFalse(loadout.TakeTalent(0, 3), "одно усиление взято дважды");
             Assert.IsTrue(loadout.TakeTalent(0, 1));
             Assert.AreEqual(2, loadout.TalentCount(0));
+
+            // Потолок: взяв все усиления линии в любом порядке, следующее уже не взять,
+            // и доступных усилений у набора не остаётся.
+            for (int index = 0; index < SabreTalents.TalentsPerLine; index++)
+                loadout.TakeTalent(0, index);
+            Assert.AreEqual(SabreTalents.TalentsPerLine, loadout.TalentCount(0));
+            Assert.IsFalse(loadout.TakeTalent(0), "усиление сверх линии");
+            Assert.IsFalse(loadout.HasTalentToTake, "все усиления взяты, а доступное осталось");
         }
 
         [Test]
@@ -100,7 +108,10 @@ namespace Game.Tests
         [Test]
         public void TakenUpgradesAreNeverOfferedAgain()
         {
-            for (ulong seed = 1; seed <= 200; seed++)
+            // Фильтр взятых систематический, а не редкий ролл: 40 сидов хватает,
+            // но хотя бы одну карточку усиления цикл обязан увидеть.
+            int talentCards = 0;
+            for (ulong seed = 1; seed <= 40; seed++)
             {
                 var run = NewRun(seed);
                 for (int index = 0; index < SabreTalents.TalentsPerLine - 1; index++)
@@ -109,10 +120,12 @@ namespace Game.Tests
                 for (int c = 0; c < RiftRun.RewardChoices; c++)
                 {
                     RewardOffer offer = run.GetOffer(c);
-                    if (offer.Kind == RewardKind.Talent)
-                        Assert.AreEqual(SabreTalents.TalentsPerLine - 1, offer.TalentIndex, "предложено уже взятое усиление");
+                    if (offer.Kind != RewardKind.Talent) continue;
+                    talentCards++;
+                    Assert.AreEqual(SabreTalents.TalentsPerLine - 1, offer.TalentIndex, "предложено уже взятое усиление");
                 }
             }
+            Assert.Greater(talentCards, 0, "за 40 сидов не выпало ни одной карточки усиления");
         }
     }
 }

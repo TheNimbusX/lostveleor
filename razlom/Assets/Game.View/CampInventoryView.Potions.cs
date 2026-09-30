@@ -19,7 +19,7 @@ namespace Game.View
                     rect.anchorMin=rect.anchorMax=new Vector2(.5f,0);rect.pivot=new Vector2(.5f,0);
                     rect.anchoredPosition=new Vector2(-100+i*190,10);rect.sizeDelta=new Vector2(180,42);
                     tile.GetComponent<Image>().color=new Color(.19f,.24f,.20f,.96f);
-                    tile.GetComponent<Button>().onClick.AddListener(()=>{camp.SelectPotion(kind);RefreshPotionStock();});
+                    tile.GetComponent<Button>().interactable=false;
                     var label=new GameObject("Label",typeof(RectTransform),typeof(Text));label.transform.SetParent(tile.transform,false);
                     var lr=(RectTransform)label.transform;lr.anchorMin=Vector2.zero;lr.anchorMax=Vector2.one;lr.sizeDelta=Vector2.zero;
                     var text=label.GetComponent<Text>();text.font=GameTypography.Regular;text.fontSize=15;text.alignment=TextAnchor.MiddleCenter;text.raycastTarget=false;_stockLabels[i]=text;

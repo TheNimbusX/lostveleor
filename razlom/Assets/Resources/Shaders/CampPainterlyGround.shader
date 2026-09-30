@@ -45,6 +45,7 @@ Shader "Game/Studies/Painterly Ground"
             #pragma multi_compile_fog
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Assets/Resources/Shaders/CampDepthGround.hlsl"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_GrassTex); SAMPLER(sampler_GrassTex);
             TEXTURE2D(_DirtTex); SAMPLER(sampler_DirtTex);
@@ -84,9 +85,11 @@ Shader "Game/Studies/Painterly Ground"
             {
                 // Мировые координаты связывают повёрнутые пятна в одну тропу.
                 float2 p=i.positionWS.xz;
-                float2 uv=p/max(_TileMeters,.1);
+                float detailScale=lerp(1,_CampDepthControls.x,_CampDepthOn);
+                float detailBias=_CampDepthControls.y*_CampDepthOn;
+                float2 uv=p/max(_TileMeters*detailScale,.1);
                 half3 grass=SAMPLE_TEXTURE2D_BIAS(_GrassTex,sampler_GrassTex,p/8,_DetailSoftness).rgb;
-                half3 dirt=SAMPLE_TEXTURE2D(_DirtTex,sampler_DirtTex,uv).rgb;
+                half3 dirt=SAMPLE_TEXTURE2D_BIAS(_DirtTex,sampler_DirtTex,uv,detailBias).rgb;
                 grass=lerp(dot(grass,half3(.2126,.7152,.0722)).xxx,grass,.90)*half3(.60,.82,.68);
                 dirt=lerp(dot(dirt,half3(.2126,.7152,.0722)).xxx,dirt,.70)*half3(.92,.86,.78);
                 float macro=Noise(p*.28);
@@ -126,8 +129,8 @@ Shader "Game/Studies/Painterly Ground"
                     half3 turfB=SAMPLE_TEXTURE2D_BIAS(_TurfTex,sampler_TurfTex,rotated/4.7+float2(.37,.61),_DetailSoftness).rgb;
                     half3 turf=lerp(turfA,turfB,variant)*half3(.89,.97,.86);
                     grass=lerp(grass,turf,lerp(.64,.92,layers.a)*_TurfWeight);
-                    half3 stoneA=SAMPLE_TEXTURE2D(_StonyTex,sampler_StonyTex,p/3.4).rgb;
-                    half3 stoneB=SAMPLE_TEXTURE2D(_StonyTex,sampler_StonyTex,rotated/3.1+float2(.21,.46)).rgb;
+                    half3 stoneA=SAMPLE_TEXTURE2D_BIAS(_StonyTex,sampler_StonyTex,p/(3.4*detailScale),detailBias).rgb;
+                    half3 stoneB=SAMPLE_TEXTURE2D_BIAS(_StonyTex,sampler_StonyTex,rotated/(3.1*detailScale)+float2(.21,.46),detailBias).rgb;
                     // Узкая переходная зона сохраняет нарисованные грани камней без двойного изображения.
                     half3 stony=lerp(stoneA,stoneB,smoothstep(.46,.54,Noise(p*.32+11)));
                     // Нейтральные плоскости камня отделяются от коричневой почвы по цвету, а не по яркости света.
@@ -149,6 +152,7 @@ Shader "Game/Studies/Painterly Ground"
                     occlusion=lerp(occlusion,1,shore);reliefHeight*=1-shore;
                 }
                 InputData data=(InputData)0;
+                CampDepthEarth(i.positionWS,dirt,albedo,occlusion);
                 data.positionWS=i.positionWS;
                 // Ground_Base имеет нулевой масштаб Y, поэтому нормаль задаётся явно.
                 data.normalWS=normalize(i.normalWS);

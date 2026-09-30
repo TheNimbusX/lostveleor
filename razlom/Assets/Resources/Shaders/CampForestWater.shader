@@ -29,6 +29,7 @@ Shader "Game/Camp Forest Water"
                 float _FlowSpeed;
             CBUFFER_END
             float4 _CampBreeze;
+            float _CampDepthOn; float4 _CampDepthShore;
             struct A {float4 p:POSITION;float2 uv:TEXCOORD0;};
             struct V {float4 p:SV_POSITION;float2 uv:TEXCOORD0;float3 world:TEXCOORD1;float4 shadow:TEXCOORD2;half fog:TEXCOORD3;};
             V Vert(A v){V o;VertexPositionInputs p=GetVertexPositionInputs(v.p.xyz);o.p=p.positionCS;o.uv=v.uv;o.world=p.positionWS;o.shadow=GetShadowCoord(p);o.fog=ComputeFogFactor(o.p.z);return o;}
@@ -45,6 +46,14 @@ Shader "Game/Camp Forest Water"
                 // Короткие широкие мазки дают читаемое течение без мелкого фотографического шума.
                 float crest=smoothstep(.34,.52,normal.y)*smoothstep(.08,.29,second.x)*.25;
                 float shore=(1-smoothstep(.006,.05,edge+normal.x*.003))*(.32+.10*normal.y);
+                // Разрывы привязаны к берегу; течение и пена у опор сохраняют прежний рисунок.
+                if(_CampDepthOn>.5)
+                {
+                    float patches=sin(v.world.x*.51+v.world.z*.33)*.5+.5;
+                    float fine=sin(v.world.x*1.17-v.world.z*.71)*.5+.5;
+                    float broken=smoothstep(.26,.72,patches*.75+fine*.25);
+                    shore*=lerp(1,lerp(.12,1,broken),_CampDepthShore.x)*_CampDepthShore.y;
+                }
                 color=lerp(color,_FoamColor.rgb,saturate(crest+shore));
                 Light light=GetMainLight(v.shadow);
                 color*=lerp(.74,1,light.shadowAttenuation);

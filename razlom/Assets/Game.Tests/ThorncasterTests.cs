@@ -162,7 +162,8 @@ namespace Game.Tests
             Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - EnemyArchetypes.ThorncasterSpikeDamage));
         }
 
-        [TestCase(0)] [TestCase(1)] [TestCase(2)] [TestCase(3)]
+        // Первый и последний сегмент: средние повторяли их.
+        [TestCase(0)] [TestCase(3)]
         public void HitsOnlyWhereTheDrawnSegmentStands(int segment)
         {
             var sim = Arena();
@@ -346,7 +347,7 @@ namespace Game.Tests
             Assert.That(damage[0], Is.GreaterThan(lines[0].EndTick), "первая линия героя не задела");
         }
 
-        [TestCase(2.65)] [TestCase(2.8)] [TestCase(2.95)]
+        [TestCase(2.65)] [TestCase(2.95)]   // по обе стороны шва
         public void NoDeadBandBetweenBurstAndLine(double distance)
         {
             // Между всплеском (до 2,6 м) и линией нет полосы, где Шипомёт стоит
@@ -514,6 +515,7 @@ namespace Game.Tests
             Assert.That(line.Action, Is.EqualTo(ThornAction.Line));
         }
 
+        /// <summary>Глубина и «Сложно» растят все три атаки: шип линии, всплеск и выстрел.</summary>
         [Test]
         public void DepthAndHardRouteScaleTheSpikeAndTheBurst()
         {
@@ -522,17 +524,34 @@ namespace Game.Tests
             Assert.That(sim.Entities.MaxHealth[1], Is.EqualTo(EnemyArchetypes.ScaleHealth(EnemyArchetypes.ThorncasterHealth,
                 EnemyArchetypes.DepthHealthPercent(8), hard)));
             int spike = sim.ThornSpikeDamageOf(1);
-            double expected = 30.0 * EnemyArchetypes.DepthDamagePercent(8) * hard / 10000.0;
+            double expected = (double)EnemyArchetypes.ThorncasterSpikeDamage * EnemyArchetypes.DepthDamagePercent(8) * hard / 10000.0;
             Assert.That(spike, Is.EqualTo(sim.Entities.Damage[1]));
             Assert.That(spike, Is.EqualTo(expected).Within(0.51));
-            Assert.That(spike, Is.GreaterThan(30));
-            Assert.That(sim.ThornBurstDamageOf(1), Is.EqualTo(EnemyArchetypes.Share(spike, 22, 30)));
+            Assert.That(spike, Is.GreaterThan(EnemyArchetypes.ThorncasterSpikeDamage));
+            Assert.That(sim.ThornBurstDamageOf(1), Is.EqualTo(EnemyArchetypes.Share(spike,
+                EnemyArchetypes.ThorncasterBurstDamage, EnemyArchetypes.ThorncasterSpikeDamage)));
+
+            // Выстрел — та же доля урона листа, что на первой арене.
+            var shooter = ShotArena(arena: 8, hard: hard);
+            int shot = shooter.ThornShotDamageOf(1);
+            double expectedShot = (double)EnemyArchetypes.ThorncasterShotDamage * EnemyArchetypes.DepthDamagePercent(8) * hard / 10000.0;
+            Assert.That(shot, Is.EqualTo(EnemyArchetypes.Share(shooter.ThornSpikeDamageOf(1),
+                EnemyArchetypes.ThorncasterShotDamage, EnemyArchetypes.ThorncasterSpikeDamage)));
+            Assert.That(shot, Is.EqualTo(expectedShot).Within(1.0));
+            Assert.That(shot, Is.GreaterThan(EnemyArchetypes.ThorncasterShotDamage));
+            Assert.That(ShotArena().ThornShotDamageOf(1), Is.EqualTo(EnemyArchetypes.ThorncasterShotDamage), "на А1 — число листа");
 
             // Настоящий шип бьёт ровно уроном листа: герой в нуле — третий шип.
             var damage = new List<int>();
             Run(sim, 60, null, null, null, damage);
-            Assert.That(damage, Is.EqualTo(new[] { 39 }));
+            Assert.That(damage, Is.EqualTo(new[] { Simulation.ThornLineWindupTicks + 2 * Simulation.ThornLineSpikeStepTicks }));
             Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - spike));
+
+            // И настоящий шип выстрела — ровно этим уроном.
+            var log = RunShot(shooter, ShotOver);
+            Assert.That(log.Hits, Is.EqualTo(new[] { true }));
+            Assert.That(log.Amounts, Is.EqualTo(new[] { shot }), "настоящий шип бьёт ровно этим уроном");
+            Assert.That(shooter.Entities.Health[0], Is.EqualTo(10000 - shot));
         }
 
         private static double Degrees(FixVec2 a, FixVec2 b)
@@ -595,6 +614,62 @@ namespace Game.Tests
             a.Step(InputFrame.Empty);
             Assert.That(a.TryGetThorncasterAction(1, out var fresh), Is.True);
             Assert.That(fresh.Action, Is.EqualTo(ThornAction.Line));
+
+            // Выстрелы: герой в 9 м, шипы в воздухе, один стрелок гибнет с шипом в полёте.
+            spots = new[] { At(-3, 0), At(0, 0), At(-1, 2), At(2, -1), At(-2, -3) };
+            var sa = Arena(2, distance: 9); var sb = Arena(2, distance: 9);
+            Assert.That(sa.StateHash(), Is.EqualTo(sb.StateHash()));
+            int shotsInFlight = 0;
+            for (int t = 0; t < 600; t++)
+            {
+                if (t % 45 == 0)
+                {
+                    sa.Entities.Position[0] = spots[t / 45 % spots.Length];
+                    sb.Entities.Position[0] = spots[t / 45 % spots.Length];
+                }
+                // Шипомёт 2 гибнет с шипом в воздухе: шип живёт дальше и тоже в хеше.
+                if (sa.TryGetThornShot(2, out _) && sa.Entities.Alive[2] && t > 100)
+                {
+                    sa.ApplyAbilityDamage(Simulation.PlayerId, 2, 1000000, -1, DamageType.Physical);
+                    sb.ApplyAbilityDamage(Simulation.PlayerId, 2, 1000000, -1, DamageType.Physical);
+                }
+                sa.Step(InputFrame.Empty); sb.Step(InputFrame.Empty);
+                Assert.That(sa.StateHash(), Is.EqualTo(sb.StateHash()), "выстрелы, тик " + t);
+                if (sa.TryGetThornShot(1, out _) || sa.TryGetThornShot(2, out _)) shotsInFlight++;
+            }
+            Assert.That(shotsInFlight, Is.GreaterThan(0), "шипы летали");
+            Assert.That(sa.Entities.Alive[2], Is.False, "стрелок погиб с шипом в воздухе");
+
+            // Одинаковый хеш двух прогонов ещё не значит, что шип в нём есть: поля
+            // шипа мёртвого стрелка правятся по одному, и хеш обязан это заметить.
+            var d = ShotArena();
+            Until(d, Simulation.ThornShotWindupTicks + 2);
+            Assert.That(d.TryGetThornShot(1, out _), Is.True);
+            d.ApplyAbilityDamage(Simulation.PlayerId, 1, 1000000, -1, DamageType.Physical);
+            Assert.That(d.Entities.Alive[1], Is.False);
+            var shots = (ThornShotState[])typeof(Simulation).GetField("_thornShots",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(d);
+            ulong clean = d.StateHash();
+            shots[1].Travelled += Fix64.Ratio(1, 100);
+            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "пройденное шипа — в хеше");
+            shots[1].Travelled -= Fix64.Ratio(1, 100);
+            shots[1].ReleaseTick++;
+            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "тик выпуска — в хеше");
+            shots[1].ReleaseTick--;
+            shots[1].Damage++;
+            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "урон шипа — в хеше");
+            shots[1].Damage--;
+            Assert.That(d.StateHash(), Is.EqualTo(clean));
+
+            // Сброс посреди полёта: ни шипа, ни меток.
+            var c = ShotArena();
+            Until(c, 24);
+            Assert.That(c.TryGetThornShot(1, out _), Is.True);
+            c.SetupKindTestArena(EnemyKind.ForestThorncaster);
+            Assert.That(c.TryGetThornShot(1, out _), Is.False);
+            Assert.That(Marks(c, 1), Is.Empty);
+            c.Step(InputFrame.Empty);
+            Assert.That(c.TryGetThornShot(1, out _), Is.False);
         }
 
         // ---- выстрел шипом ----
@@ -818,7 +893,7 @@ namespace Game.Tests
             Assert.That(log.Damage, Is.Empty);
         }
 
-        [TestCase(0.5)] [TestCase(2.3)] [TestCase(5.1)] [TestCase(8.2)]
+        [TestCase(0.5)] [TestCase(8.2)]   // ближний и дальний конец пути
         public void HeroOnThePath_IsHitWhenTheThornReachesHim(double along)
         {
             var sim = ShotArena();
@@ -1140,81 +1215,5 @@ namespace Game.Tests
             Assert.That(lines[1], Is.EqualTo(shots[1] + Simulation.ThornShotWindupTicks + Simulation.ThornShotRecoveryTicks));
         }
 
-        [Test]
-        public void ShotDamageScalesWithDepthAndHardRoute()
-        {
-            int hard = EnemyArchetypes.HardRoutePercent;
-            var sim = ShotArena(arena: 8, hard: hard);
-            int shot = sim.ThornShotDamageOf(1);
-            double expected = 14.0 * EnemyArchetypes.DepthDamagePercent(8) * hard / 10000.0;
-            Assert.That(shot, Is.EqualTo(EnemyArchetypes.Share(sim.ThornSpikeDamageOf(1), 14, 30)));
-            Assert.That(shot, Is.EqualTo(expected).Within(1.0));
-            Assert.That(shot, Is.GreaterThan(14));
-            Assert.That(ShotArena().ThornShotDamageOf(1), Is.EqualTo(14), "14 на А1");
-
-            var log = RunShot(sim, ShotOver);
-            Assert.That(log.Hits, Is.EqualTo(new[] { true }));
-            Assert.That(log.Amounts, Is.EqualTo(new[] { shot }), "настоящий шип бьёт ровно этим уроном");
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - shot));
-        }
-
-        [Test]
-        public void ShotStateHashIsIdenticalRunToRun_AndSetupClearsAThornInFlight()
-        {
-            var spots = new[] { At(-3, 0), At(0, 0), At(-1, 2), At(2, -1), At(-2, -3) };
-            var a = Arena(2, distance: 9); var b = Arena(2, distance: 9);
-            Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()));
-            int shotsInFlight = 0;
-            for (int t = 0; t < 600; t++)
-            {
-                if (t % 45 == 0)
-                {
-                    a.Entities.Position[0] = spots[t / 45 % spots.Length];
-                    b.Entities.Position[0] = spots[t / 45 % spots.Length];
-                }
-                // Шипомёт 2 гибнет с шипом в воздухе: шип живёт дальше и тоже в хеше.
-                if (a.TryGetThornShot(2, out _) && a.Entities.Alive[2] && t > 100)
-                {
-                    a.ApplyAbilityDamage(Simulation.PlayerId, 2, 1000000, -1, DamageType.Physical);
-                    b.ApplyAbilityDamage(Simulation.PlayerId, 2, 1000000, -1, DamageType.Physical);
-                }
-                a.Step(InputFrame.Empty); b.Step(InputFrame.Empty);
-                Assert.That(a.StateHash(), Is.EqualTo(b.StateHash()), "тик " + t);
-                if (a.TryGetThornShot(1, out _) || a.TryGetThornShot(2, out _)) shotsInFlight++;
-            }
-            Assert.That(shotsInFlight, Is.GreaterThan(0), "шипы летали");
-            Assert.That(a.Entities.Alive[2], Is.False, "стрелок погиб с шипом в воздухе");
-
-            // Одинаковый хеш двух прогонов ещё не значит, что шип в нём есть: поля
-            // шипа мёртвого стрелка правятся по одному, и хеш обязан это заметить.
-            var d = ShotArena();
-            Until(d, Simulation.ThornShotWindupTicks + 2);
-            Assert.That(d.TryGetThornShot(1, out _), Is.True);
-            d.ApplyAbilityDamage(Simulation.PlayerId, 1, 1000000, -1, DamageType.Physical);
-            Assert.That(d.Entities.Alive[1], Is.False);
-            var shots = (ThornShotState[])typeof(Simulation).GetField("_thornShots",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(d);
-            ulong clean = d.StateHash();
-            shots[1].Travelled += Fix64.Ratio(1, 100);
-            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "пройденное шипа — в хеше");
-            shots[1].Travelled -= Fix64.Ratio(1, 100);
-            shots[1].ReleaseTick++;
-            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "тик выпуска — в хеше");
-            shots[1].ReleaseTick--;
-            shots[1].Damage++;
-            Assert.That(d.StateHash(), Is.Not.EqualTo(clean), "урон шипа — в хеше");
-            shots[1].Damage--;
-            Assert.That(d.StateHash(), Is.EqualTo(clean));
-
-            // Сброс посреди полёта: ни шипа, ни меток.
-            var c = ShotArena();
-            Until(c, 24);
-            Assert.That(c.TryGetThornShot(1, out _), Is.True);
-            c.SetupKindTestArena(EnemyKind.ForestThorncaster);
-            Assert.That(c.TryGetThornShot(1, out _), Is.False);
-            Assert.That(Marks(c, 1), Is.Empty);
-            c.Step(InputFrame.Empty);
-            Assert.That(c.TryGetThornShot(1, out _), Is.False);
-        }
     }
 }

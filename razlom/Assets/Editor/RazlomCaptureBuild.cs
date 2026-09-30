@@ -75,12 +75,15 @@ namespace Game.EditorTools
             // осталась бы раскладка v0 (у торговца v0 нет плиток товара — только продажа).
             PauseMenuWcBuilder.Build(false);
             CampShopsWcBuilder.Build(false);
+            CampPolishUiBuilder.BuildAll();
             // HUD забега (строка добычи — миграция v1): Build(false) на готовом префабе зовёт EnsureMigrated.
             RunHudWcBuilder.Build(false);
             PauseMenuBuilder.EnsureBuilt(false);
             CampTentBuilder.EnsureBuilt(false);
             // Дымная завеса («Карта тушью» — миграция v1): Build(false) на готовом префабе тоже зовёт EnsureMigrated.
             SmokeTransitionBuilder.Build(false);
+            // Тлеющие метки у края экрана (2a, 30.09): нет префаба — собирается, есть — доводится миграциями.
+            WorldEdgeMarksBuilder.Build(false);
             // Проверка нового UI в зеркале, пока общий редактор занят: RAZLOM_REBUILD_UI=1 пересобирает
             // префабы боевого HUD, забега, меню, паузы, меток мира и окон лагеря из сборщиков (в живом проекте они не меняются).
             if (Environment.GetEnvironmentVariable("RAZLOM_REBUILD_UI") == "1")
@@ -144,6 +147,17 @@ namespace Game.EditorTools
             }
 
             Directory.CreateDirectory(outputDirectory);
+            if(Application.isBatchMode)
+            {
+                // Только теневая сцена съёмки: авторский редактор сохраняет свою открытую работу.
+                foreach(string path in scenes)
+                {
+                    var captureScene=UnityEditor.SceneManagement.EditorSceneManager.OpenScene(path);
+                    Debug.Log(CampDepthAuthoring.LoadedSceneInstall());
+                    Debug.Log(CampNavigationAuthoring.InstallLoadedScene());
+                    UnityEditor.SceneManagement.EditorSceneManager.SaveScene(captureScene);
+                }
+            }
 
             var options = new BuildPlayerOptions
             {

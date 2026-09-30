@@ -216,7 +216,7 @@ namespace Game.EditorTools
             view.DropSalvageLabel.fontSizeMax = 15f;
 
             RectTransform replaceCaption = TopLeft(Node("Заменить", card), 156f, 76f, 70f, 42f);
-            UiInkKit.Label(replaceCaption, "Надпись", "Заменить", FontRole.Body, 14f, Role.TextMuted, TextAlignmentOptions.MidlineLeft, delay: .15f);
+            UiInkKit.Label(replaceCaption, "Надпись", "Заменить", FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.TextMuted, TextAlignmentOptions.MidlineLeft, delay: .15f);
             view.DropReplace = new Button[4];
             view.DropReplaceIcons = new RawImage[4];
             for (int slot = 0; slot < 4; slot++)
@@ -228,7 +228,8 @@ namespace Game.EditorTools
                 RectTransform cap = UiInkKit.Keycap(key, "Клавиша", (slot + 1).ToString(), 33f);
                 // На клавише — способность, которая уйдёт: бледный рисунок в круге под цифрой.
                 RawImage gone = RoundArt(cap, "Уйдёт", 3f);
-                gone.transform.parent.SetSiblingIndex(1);
+                // Над тёмной подложкой кейкапа, под кромкой и цифрой.
+                gone.transform.parent.SetSiblingIndex(UiInkKit.KeycapInnerIndex(cap));
                 gone.color = new Color(1f, 1f, 1f, .32f);
                 view.DropReplaceIcons[slot] = gone;
                 cap.Find("Буква").GetComponent<TMP_Text>().fontStyle = FontStyles.Bold;
@@ -308,7 +309,7 @@ namespace Game.EditorTools
 
             RectTransform textBox = Node("Надпись", pill);
             view.AimHintText = textBox.gameObject.AddComponent<TextMeshProUGUI>();
-            view.AimHintText.text = "Выбери врага\n<size=80%>ЛКМ — применить · ПКМ / Esc — отмена</size>";
+            view.AimHintText.text = "Выбери врага\n<size=80%>" + UiKeyHint.AimMouse + "</size>";
             view.AimHintText.fontSize = 17f;
             view.AimHintText.alignment = TextAlignmentOptions.MidlineLeft;
             view.AimHintText.textWrappingMode = TextWrappingModes.NoWrap;

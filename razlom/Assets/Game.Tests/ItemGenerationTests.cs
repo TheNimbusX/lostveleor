@@ -85,8 +85,9 @@ namespace Game.Tests
             ItemDatabase db = Standard();
             var item = new ItemInstance(Sword, 50, ItemRarity.Rare, 0xDEADBEEFCAFEUL);
 
+            // Чистая функция от сида: трёх повторов достаточно, тысяча ничего не добавляла.
             ulong expected = HashOf(in item, db);
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 3; i++)
                 Assert.AreEqual(expected, HashOf(in item, db), $"прогон {i} дал другой предмет");
         }
 
@@ -111,24 +112,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void AffixGroups_NeverRepeatOnOneItem()
-        {
-            ItemDatabase db = Standard();
-            var buffer = new GeneratedItem();
-
-            for (ulong seed = 1; seed <= 500; seed++)
-            {
-                ItemGenerator.Generate(new ItemInstance(Sword, 90, ItemRarity.Rare, seed), db, buffer);
-
-                for (int a = 0; a < buffer.AffixCount; a++)
-                    for (int b = a + 1; b < buffer.AffixCount; b++)
-                        Assert.AreNotEqual(buffer.GetAffix(a).AffixId, buffer.GetAffix(b).AffixId,
-                            $"сид {seed}: один аффикс дважды");
-            }
-        }
-
-        [Test]
-        public void RolledValues_StayInsideDeclaredRange()
+        public void RolledValues_StayInsideDeclaredRange_AndAffixGroupsNeverRepeat()
         {
             ItemDatabase db = Standard();
             var buffer = new GeneratedItem();
@@ -144,6 +128,14 @@ namespace Game.Tests
 
                     Assert.That(rolled.Value.Raw, Is.GreaterThanOrEqualTo(def.MinValue.Raw));
                     Assert.That(rolled.Value.Raw, Is.LessThanOrEqualTo(def.MaxValue.Raw));
+
+                    // Группа взаимоисключения: тиры t1 и t2 одной group.flat_damage
+                    // вместе на предмет не встают (сравниваем группу, а не id аффикса).
+                    for (int j = i + 1; j < buffer.AffixCount; j++)
+                    {
+                        AffixDefinition other = db.GetAffix(db.IndexOfAffix(buffer.GetAffix(j).AffixId));
+                        Assert.AreNotEqual(def.Group, other.Group, $"сид {seed}: одна группа аффиксов дважды");
+                    }
                 }
             }
         }

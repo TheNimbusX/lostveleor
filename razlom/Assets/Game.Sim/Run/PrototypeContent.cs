@@ -55,13 +55,17 @@ namespace Game.Sim
             return new ModuleSet(new[] { entrance, hall, corridor, junction, chamber, corner });        }
 
         /// <summary>
-        /// Лагерь прототипа.
-        ///
-        /// Третий акт, потому что кампании ещё нет, а без третьего акта закрыт
-        /// портал в Разлом — то есть закрыто всё, что сейчас можно потрогать.
-        /// Когда появятся акты, стартовым станет первый.
+        /// Новый профиль: первый акт, Эни, портал и малый запас для первых походов.
+        /// Загрузка сохранения не вызывает этот метод и не пополняет бутылки.
         /// </summary>
-        public static Camp NewCamp() => new Camp(Items(), act: 3);
+        public const int StartingPotionStockPerKind = 3;
+        public static Camp NewCamp()
+        {
+            var camp = new Camp(Items(), act: 1, progressive: true);
+            camp.GrantPotions(PotionKind.SmallHealth, StartingPotionStockPerKind);
+            camp.GrantPotions(PotionKind.SmallLavidium, StartingPotionStockPerKind);
+            return camp;
+        }
 
         /// <summary>Игра целиком на данных прототипа: лагерь, портал, забег.</summary>
         public static GameSession NewSession(ulong sessionSeed)

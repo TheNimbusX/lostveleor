@@ -20,13 +20,14 @@ namespace Game.View
             foreach(var p in _headBounds) _headCenterLocal += Vector3.Scale(p,scale);
             _headCenterLocal /= Mathf.Max(1,_headBounds.Length);
             _headEyeLocal = Vector3.Scale(_ring.localPosition,scale);
-            if(_headShape==null)_headShape=Resources.Load<AnchorHeadShape>("Weapons/Pelag/AnchorChain/AnchorHeadShape");
+            if(_headShape==null)_headShape=_equipment.AnchorShape != null ? _equipment.AnchorShape
+                : Resources.Load<AnchorHeadShape>("Weapons/Pelag/AnchorChain/AnchorHeadShape");
             Vector3[] points=_headShape!=null?_headShape.Points:_headBounds;
             _headBody.Hull = new System.Numerics.Vector3[points.Length];
             for(int i=0;i<points.Length;i++) _headBody.Hull[i]=N(Vector3.Scale(points[i],scale)-_headCenterLocal);
             _headBody.EyeLocal = N(_headEyeLocal-_headCenterLocal);
             _headBody.Reset(N(_startPosition+_startRotation*_headCenterLocal),NQ(_startRotation));
-            _physicalSlam=true;_headLaunched=_headPlanted=false;_headTime=0;_headCable=1.05f;
+            _physicalSlam=true;_headLaunched=_headPlanted=false;_headTime=0;_headCable=PhysicalPayout(0f);
             _headPreviousGrip=_equipment.ChainGripPosition;_headPreviousBelt=_equipment.SlamBeltPosition;
         }
 
@@ -97,6 +98,16 @@ namespace Game.View
                     if(CaptureRig.LiveSkill)Debug.Log($"[anchor-physical-contact] phase={next:F5} velocity={_headBody.Velocity.Length():F3} position={U(_headBody.Position)}");
                 }
                 if(!caught)_headBody.CollideBody(N(transform.position+Vector3.up*.65f),N(transform.position+Vector3.up*1.35f),.38f);
+                if (_equipment.BackMountedAnchor && !caught)
+                {
+                    // A larger upper ring can enter the torso even when the
+                    // center is outside. Resolve that contact with translation
+                    // and torque; never stretch the last chain link to escape it.
+                    Vector3 bottom = _bodyHips != null ? _bodyHips.position + Vector3.up * .03f : transform.position + Vector3.up * .91f;
+                    Vector3 top = _bodyChest != null ? _bodyChest.position : transform.position + Vector3.up * 1.28f;
+                    _headBody.CollideEyeBody(N(bottom), N(top), .22f);
+                    _headBody.CollideGround(SampleFloor, dt);
+                }
                 _headCable=cable;_headTime=next;
             }
             _headPreviousGrip=grip;_headPreviousBelt=belt;
@@ -105,18 +116,24 @@ namespace Game.View
 
         private float PhysicalPayout(float time)
         {
-            if(time<.32f)return Mathf.Lerp(1.05f,.55f,Smooth(time/.20f));
-            if(time<.50f)return Mathf.Lerp(.55f,4.20f,(time-.32f)/.18f);
-            if(time<.56f)return Mathf.Lerp(4.20f,4.35f,Smooth((time-.50f)/.06f));
-            return Mathf.Lerp(4.35f,.78f,Smooth((time-.56f)/.29f));
+            // Fixed model stock also covers the longer route around the torso
+            // while drawing the larger upper ring from the back. Never derive
+            // chain length from frame-by-frame endpoint distance.
+            float allowance = _equipment.BackMountedAnchor ? _equipment.AnchorRingAllowance : 0f;
+            float authored;
+            if(time<.32f) authored=Mathf.Lerp(1.05f,.55f,Smooth(time/.20f));
+            else if(time<.50f) authored=Mathf.Lerp(.55f,4.20f,(time-.32f)/.18f);
+            else if(time<.56f) authored=Mathf.Lerp(4.20f,4.35f,Smooth((time-.50f)/.06f));
+            else authored=Mathf.Lerp(4.35f,.78f,Smooth((time-.56f)/.29f));
+            return authored + allowance;
         }
 
         private bool ReturnPhysicalHead()
         {
             float remaining=Mathf.Min(Time.deltaTime,.05f),duration=Mathf.Max(.0001f,remaining);
-            Vector3 belt=_equipment.SlamBeltPosition;
+            Vector3 belt=ReturnMountPosition();
             Vector3 beltVelocity=(belt-_headPreviousBelt)/Mathf.Max(.001f,Time.deltaTime);
-            float cable=Mathf.Lerp(_returnPayout,.75f,Smooth(_returnAge/.5f));
+            float cable=Mathf.Lerp(_returnPayout,_equipment.StowedChainPayout,Smooth(_returnAge/.5f));
             while(remaining>.000001f)
             {
                 float dt=Mathf.Min(1f/240f,remaining);remaining-=dt;
@@ -132,16 +149,41 @@ namespace Game.View
                     _headBody.TurnTowards(NQ(_equipment.SlamBeltRotation),24f,dt);
                 }
                 _headBody.Advance(dt,System.Numerics.Vector3.Zero);
-                _headBody.ConstrainCable(N(atBelt),N(beltVelocity),Mathf.Lerp(_previousPayout,cable,blend)-.06f,
+                Vector3 cableGrip = _equipment.BackMountedAnchor ? eye : atBelt;
+                _headBody.ConstrainCable(N(cableGrip),N(beltVelocity),Mathf.Lerp(_previousPayout,cable,blend)-.06f,
                     (cable-_previousPayout)/duration,dt);
-                // После захвата управляет крепление: контакт свободного тела не должен мешать подвесу.
-                if(!caught)_headBody.CollideGround(SampleFloor,dt);
+                // The back target is ground-safe, but the rotating head still
+                // collides until it reaches that pose; the original hip mount is unchanged.
+                if(!caught || _equipment.BackMountedAnchor)_headBody.CollideGround(SampleFloor,dt);
             }
             ApplyHeadBody();
-            _headPreviousBelt=_equipment.SlamBeltPosition;
-            return _returnAge>.08f && Vector3.Distance(_equipment.SlamHead.position,_equipment.SlamBeltPosition)<.025f
+            _headPreviousBelt=belt;
+            return _returnAge>.08f && ReturnMountClear() && Vector3.Distance(_equipment.SlamHead.position,_equipment.SlamBeltPosition)<.025f
                 && Quaternion.Angle(_equipment.SlamHead.rotation,_equipment.SlamBeltRotation)<4f;
         }
+
+        // Spine2 briefly dips during a roll. Keep a returning loose weapon above
+        // ground and finish the handoff only when the storage pose clears it.
+        private Vector3 ReturnMountPosition()
+        {
+            Vector3 position = _equipment.SlamBeltPosition;
+            if (!_equipment.BackMountedAnchor) return position;
+            Quaternion rotation = _equipment.SlamBeltRotation;
+            float lift = 0f;
+            foreach (var point in _headBounds)
+            {
+                Vector3 world = position + rotation * Vector3.Scale(point, _equipment.SlamHead.lossyScale);
+                lift = Mathf.Max(lift, SampleFloor(N(world)) + .025f - world.y);
+            }
+            return position + Vector3.up * lift;
+        }
+
+        private bool ReturnMountClear() => !_equipment.BackMountedAnchor
+            || (ReturnMountPosition() - _equipment.SlamBeltPosition).sqrMagnitude < .0001f;
+
+        private Vector3 ReturnChainGrip() => !_equipment.BackMountedAnchor ? _equipment.SlamBeltPosition
+            : ReturnMountPosition() + _equipment.SlamBeltRotation
+                * Vector3.Scale(_ring.localPosition, _equipment.SlamHead.lossyScale);
 
         private void ApplyHeadBody()
         {

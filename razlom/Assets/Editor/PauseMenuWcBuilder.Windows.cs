@@ -18,6 +18,8 @@ namespace Game.EditorTools
         const float PageX = 372f, PageTop = 36f, PageW = 640f, PageH = 650f;
         const float RowH = 60f, RowStep = 74f, ControlW = 330f;
         const float InfoX = 1056f, InfoW = 290f;
+        /// <summary>Подсказка под вкладками — формат листа 5 «[Клавиша] Действие» (UiKeyHint).</summary>
+        const string TabsHintText = "[Tab] [Shift+Tab] Вкладки";
 
         /// <summary>
         /// Окно «Дыма и света»: глубокий дым шире окна вместо панели пака, под ним мягкое глубокое пятно,
@@ -108,7 +110,7 @@ namespace Game.EditorTools
             view.TabInterface = TabButton(content, 3, CombatHudBuilder.Icon("menu_ui_scale"));
             view.TabControls = TabButton(content, 4, CombatHudBuilder.Icon("menu_settings"));
             TMP_Text tabsHint = UiInkKit.Label(Corner(content, "Подсказка вкладок", 40f, TabsTop + 5f * TabStep + 4f, 290f, 30f), "Надпись",
-                "Tab · Shift+Tab — вкладки", FontRole.Body, 16f, Role.TextMuted, TextAlignmentOptions.MidlineLeft, 0f, .8f);
+                TabsHintText, FontRole.Body, T.Size(UiTheme.TextStep.Caption), Role.TextMuted, TextAlignmentOptions.MidlineLeft, 0f, .8f);
             tabsHint.textWrappingMode = TextWrappingModes.NoWrap;
             // Заметка футера — в столбце вкладок: справа ей тесно рядом с тремя кнопками.
             view.FooterNote = UiInkKit.Label(Corner(content, "Заметка", 40f, WindowH - 104f, 290f, 70f), "Надпись", "Изменения сохраняются сразу",
@@ -347,16 +349,12 @@ namespace Game.EditorTools
         /// <summary>Кнопка футера с клавишей-капсулой слева от подписи; подпись центрируется в оставшемся месте.</summary>
         static Button FooterButton(RectTransform footer, bool primary, string text, string key, float width)
         {
-            RectTransform button = UiInkKit.Button(footer, text, text, primary, new Vector2(width, 56f), 24f);
+            RectTransform button = UiInkKit.Button(footer, text, text, primary, new Vector2(width, T.ButtonHeight), T.Size(UiTheme.TextStep.Heading));
             var element = button.gameObject.AddComponent<LayoutElement>();
             element.preferredWidth = width;
-            element.preferredHeight = 56f;
-            RectTransform keycap = UiInkKit.Keycap(button, "Клавиша", key, 30f);
-            keycap.anchorMin = keycap.anchorMax = new Vector2(0f, .5f);
-            keycap.pivot = new Vector2(0f, .5f);
-            keycap.anchoredPosition = new Vector2(20f, 0f);
-            TMP_Text label = button.Find("Надпись").GetComponent<TMP_Text>();
-            label.margin = new Vector4(keycap.sizeDelta.x + 26f, 0f, 12f, 0f);
+            element.preferredHeight = T.ButtonHeight;
+            // Кейкап на кнопке — общий (лист 5): «[Esc] Назад».
+            UiInkKit.ButtonKey(button, key, 30f);
             var result = button.GetComponent<Button>();
             NoNavigation(result);
             return result;
@@ -485,7 +483,7 @@ namespace Game.EditorTools
             UiInkKit.SmokeLayer(chosen, "Дым", "smoke_plate", .9f, 0f, 2f);
             UiInkKit.LightAt(chosen, "Огонёк", "light_glow", new Vector2(0f, .5f), new Vector2(22f, 0f), new Vector2(22f, 22f), .9f, delay: .1f);
             chosen.gameObject.SetActive(false);
-            UiInkKit.Label(template, "Надпись", "1920 × 1080", FontRole.Body, 18f, Role.Text, TextAlignmentOptions.Center, 0f, 1f, .08f);
+            UiInkKit.Label(template, "Надпись", "1920 × 1080", FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.Center, 0f, 1f, .08f);
             var optionMotion = template.gameObject.AddComponent<UiHoverMotion>();
             optionMotion.Highlight = Thread(template, "Наведение", 40f, 0f, 22f, .6f, .1f);
             optionMotion.HoverScale = 1f;

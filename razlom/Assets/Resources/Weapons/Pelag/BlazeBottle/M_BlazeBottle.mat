@@ -27,8 +27,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: a3cebc6a450103149bf4a996392d5f27, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SkinMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _ArtContrast: 1
+    - _ArtSaturation: 1
     - _BlazeGlow: 0
     - _DeathFade: 0
     - _DissolveEdgeGlow: 2.6
@@ -45,6 +51,8 @@ Material:
     - _OutlineDepthBias: 0
     - _OutlineWidth: 0
     - _RimPower: 4
+    - _SkinSaturation: 1
+    - _SkinToneStrength: 0
     - _WhiteClothLift: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
@@ -54,5 +62,6 @@ Material:
     - _OutlineColor: {r: 0.089999996, g: 0.025, b: 0.07499998, a: 1}
     - _RimColor: {r: 1, g: 0.86, b: 0.65999997, a: 1}
     - _ShadowColor: {r: 0.58, g: 0.65999997, b: 0.88, a: 1}
+    - _SkinToneScale: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -1,15 +1,18 @@
 using System.Collections.Generic;
 using Game.Sim;
+using TMPro;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Game.View
 {
     /// <summary>
-    /// Значки «здесь есть дело» (владелец 24 сентября: «нужен ненавязчивый указатель: у Лео есть
-    /// заказ, у кузнеца можно перековать»). Значок висит над жителем, только пока у него есть дело:
-    /// у Лео новый или готовый к сдаче заказ, Эни может что-то перековать на имеющиеся деньги,
-    /// у Вена свежий товар после босса. Прячется, когда герой рядом или открыто окно.
-    /// Знакомства с лагерем нет — владелец его отверг. Добавляется CampPlayerView сам.
+    /// Ненавязчивые значки текущего дела: готовая часть главы или доступное улучшение места.
+    /// Старые профили сохраняют указатели заказов Лео и свежего товара Вена.
+    /// При наведении короткая подпись поясняет дело; значок скрывается рядом с NPC или окном.
+    /// Добавляется CampPlayerView; представление новых прибытий ведёт CampArrivalPresentation.
     /// </summary>
     public sealed class CampGuideView : MonoBehaviour
     {
@@ -23,10 +26,12 @@ namespace Game.View
         CampGuidePanel _panel;
         TickDriver _driver;
         float _checkAt;
-        bool _smithWork, _alchemistWork, _traderWork;
+        readonly string[] _tasks = new string[3];
+        Camp _checkedCamp;
         readonly List<RectTransform> _markers = new List<RectTransform>();
+        readonly List<TMP_Text> _labels = new List<TMP_Text>();
         readonly List<float> _markerAlpha = new List<float>();
-        readonly List<(Vector3 at, Icon icon)> _targets = new List<(Vector3, Icon)>();
+        readonly List<(Vector3 at, Icon icon, string note)> _targets = new List<(Vector3, Icon, string)>();
         CampServiceNpc[] _npcs;
 
         void Start()
@@ -51,7 +56,7 @@ namespace Game.View
             _targets.Clear();
             if (active)
             {
-                if (_npcs == null) _npcs = FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Exclude);
+                if (_npcs == null) _npcs = FindObjectsByType<CampServiceNpc>(FindObjectsInactive.Include);
                 WorkTargets();
             }
             UpdateMarkers(player, busy);
@@ -59,47 +64,45 @@ namespace Game.View
 
         void WorkTargets()
         {
-            if (Time.unscaledTime >= _checkAt)
+            var camp = _driver.Session.Camp;
+            if (Time.unscaledTime >= _checkAt || !ReferenceEquals(camp, _checkedCamp))
             {
                 _checkAt = Time.unscaledTime + 1f;
-                var camp = _driver.Session.Camp;
-                _alchemistWork = camp.Has(CampService.Alchemist) && (Pending(camp, AlchemistOrder.Resin) || Pending(camp, AlchemistOrder.Surge));
-                _traderWork = camp.Has(CampService.Trader) && camp.TraderBossStock;
-                _smithWork = camp.Has(CampService.Smith) && CanReforge(camp);
+                _checkedCamp = camp;
+                for (int i = 0; i < _tasks.Length; i++) _tasks[i] = TaskHint(camp, (CampResident)i);
             }
             foreach (var npc in _npcs)
             {
-                if (npc == null) continue;
-                if (npc.Kind == CampServiceKind.Smith && _smithWork) _targets.Add((Head(npc), Icon.Smith));
-                else if (npc.Kind == CampServiceKind.Trader && _traderWork) _targets.Add((Head(npc), Icon.Trader));
-                else if (npc.Kind == CampServiceKind.Alchemist && _alchemistWork) _targets.Add((Head(npc), Icon.Alchemist));
+                if (npc == null || !npc.isActiveAndEnabled) continue;
+                int index = npc.Kind == CampServiceKind.Smith ? 0 : npc.Kind == CampServiceKind.Trader ? 1
+                    : npc.Kind == CampServiceKind.Alchemist ? 2 : -1;
+                if (index < 0 || !camp.HasResident((CampResident)index) || string.IsNullOrEmpty(_tasks[index])) continue;
+                _targets.Add((Head(npc), (Icon)index, _tasks[index]));
             }
         }
 
-        static bool Pending(Camp camp, AlchemistOrder order)
+        /// <summary>Настоящее доступное дело, без проверки старой перековки за золото и осколки.</summary>
+        public static string TaskHint(Camp camp, CampResident resident)
         {
-            var status = camp.AlchemyStatus(order);
-            return status == AlchemistOrderStatus.Available || status == AlchemistOrderStatus.Ready;
-        }
-
-        /// <summary>Есть ли вещь (надетая или в сумке), которую Эни перекуёт на имеющиеся деньги.</summary>
-        static bool CanReforge(Camp camp)
-        {
-            int gold = camp.Money(CurrencyType.Gold), shards = camp.Money(CurrencyType.Shards);
-            for (int s = 0; s < (int)EquipSlot.Count; s++)
+            if (camp == null || !camp.HasResident(resident)) return null;
+            if (camp.ChapterStatus(resident) == CampChapterStatus.Ready)
+                return resident == CampResident.Smith ? "Завершить первую часть главы «Наладить жизнь»"
+                    : resident == CampResident.Trader ? "Завершить вторую часть главы «Наладить жизнь»"
+                    : "Завершить главу «Наладить жизнь»";
+            if (camp.CanUpgradeResident(resident) == CampUpgradeResult.Success)
+                return "Улучшить рабочее место · ранг " + (camp.Rank(resident) + 1);
+            if (!camp.UsesCampProgression)
             {
-                var item = camp.Worn.Worn((EquipSlot)s);
-                if (!item.IsEmpty && camp.ReforgeRange((EquipSlot)s, 0, out _, out _) == SmithResult.Success
-                    && gold >= Camp.ReforgeGold(item) && shards >= Camp.ReforgeShards(item)) return true;
+                if (resident == CampResident.Trader && camp.TraderBossStock) return "В лавке появился свежий товар";
+                if (resident == CampResident.Alchemist)
+                {
+                    var resin = camp.AlchemyStatus(AlchemistOrder.Resin);
+                    var surge = camp.AlchemyStatus(AlchemistOrder.Surge);
+                    if (resin == AlchemistOrderStatus.Ready || surge == AlchemistOrderStatus.Ready) return "Заказ Лео готов — можно забрать награду";
+                    if (resin == AlchemistOrderStatus.Available || surge == AlchemistOrderStatus.Available) return "Лео предлагает новый заказ";
+                }
             }
-            for (int i = 0; i < camp.Bag.Capacity; i++)
-            {
-                if (camp.Bag.IsEmpty(i)) continue;
-                var item = camp.Bag.At(i);
-                if (camp.ReforgeRange(i, 0, out _, out _) == SmithResult.Success
-                    && gold >= Camp.ReforgeGold(item) && shards >= Camp.ReforgeShards(item)) return true;
-            }
-            return false;
+            return null;
         }
 
         Vector3 Head(CampServiceNpc npc)
@@ -120,6 +123,7 @@ namespace Game.View
                 var marker = Instantiate(_panel.MarkerTemplate, _panel.MarkerTemplate.parent);
                 marker.name = "Значок дела " + (_markers.Count + 1);
                 _markers.Add(marker);
+                _labels.Add(null);
                 _markerAlpha.Add(0f);
             }
             for (int i = 0; i < _markers.Count; i++)
@@ -129,7 +133,7 @@ namespace Game.View
                 Vector3 screen = Vector3.zero;
                 if (show)
                 {
-                    var (at, icon) = _targets[i];
+                    var (at, icon, note) = _targets[i];
                     Vector3 flat = at - player.Position; flat.y = 0f;
                     show = flat.sqrMagnitude > HideNear * HideNear;
                     screen = camera.WorldToScreenPoint(at);
@@ -137,6 +141,8 @@ namespace Game.View
                     var art = marker.GetComponentInChildren<UnityEngine.UI.RawImage>();
                     int index = (int)icon;
                     if (art != null && index < _panel.Icons.Length && art.texture != _panel.Icons[index]) art.texture = _panel.Icons[index];
+                    EnsureLabel(i);
+                    if (_labels[i] != null) _labels[i].text = note;
                 }
                 _markerAlpha[i] = Mathf.MoveTowards(_markerAlpha[i], show ? 1f : 0f, Time.unscaledDeltaTime / Mathf.Max(.05f, Fade));
                 bool visible = _markerAlpha[i] > 0f;
@@ -144,6 +150,7 @@ namespace Game.View
                 if (!visible) continue;
                 var group = marker.GetComponent<CanvasGroup>();
                 if (group != null) group.alpha = _markerAlpha[i];
+                if (_labels[i] != null) _labels[i].gameObject.SetActive(show && Hovering(marker));
                 if (show)
                 {
                     float scale = marker.lossyScale.y > 0f ? marker.lossyScale.y : 1f;
@@ -151,6 +158,34 @@ namespace Game.View
                     marker.position = new Vector3(screen.x, screen.y + bob, 0f);
                 }
             }
+        }
+
+        void EnsureLabel(int index)
+        {
+            if (_labels[index] != null) return;
+            var shop = FindAnyObjectByType<CampShopView>(FindObjectsInactive.Include);
+            if (shop == null || shop.HintNote == null) return;
+            // Берём шрифт, материал и цвет из действующей подсказки лагеря.
+            TMP_Text label = Instantiate(shop.HintNote, _markers[index]);
+            label.name = "Пояснение дела"; label.raycastTarget = false;
+            label.alignment = TextAlignmentOptions.Center;
+            label.enableAutoSizing = true; label.fontSizeMin = 14; label.fontSizeMax = 16;
+            var rect = label.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0);
+            rect.pivot = new Vector2(.5f, 1); rect.anchoredPosition = new Vector2(0, -8);
+            rect.sizeDelta = new Vector2(320, 44); rect.localScale = Vector3.one;
+            label.gameObject.SetActive(false); _labels[index] = label;
+        }
+
+        static bool Hovering(RectTransform marker)
+        {
+            if (TickDriver.GamepadLastUsed) return false;
+#if ENABLE_INPUT_SYSTEM
+            Vector2 pointer = Mouse.current != null ? Mouse.current.position.ReadValue() : new Vector2(-1, -1);
+#else
+            Vector2 pointer = Input.mousePosition;
+#endif
+            return RectTransformUtility.RectangleContainsScreenPoint(marker, pointer, null);
         }
     }
 }

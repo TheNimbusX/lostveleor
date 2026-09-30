@@ -1,0 +1,44 @@
+{
+ "batch": "Steam — перерисовка v2 «проще, менее ИИшно»",
+ "date": "2026-09-30",
+ "why": "Владелец: v1 «ублюдошно иишные». Просил перерисовать, убрать мелкие детали. Черновик до решения; финал — художник или кадры игры.",
+ "model": "gpt_image_2_5 high 2k",
+ "references": [
+  "refs/ref-pelag-model.jpg (рендеры 3D-модели)",
+  "refs/ref-game-forest.jpg (кадр игры)",
+  "refs/ref-pelag-portrait.jpg"
+ ],
+ "items": [
+  {
+   "file": "02-main-capsule-v2.png",
+   "job": "2327305a-1902-40a5-a72d-c8098253e973",
+   "caption": "Главная капсула: Пелаг по колено, якорь на плече, слева пусто под лого",
+   "defects": "якорь странной формы (цепь похожа на клешню), сабля сливается с якорем; нет действия"
+  },
+  {
+   "file": "03-capsule-vertical-v2.png",
+   "job": "7fad2c24-0368-4e6a-8a3d-cadf9f8f50f8",
+   "caption": "Вертикальная капсула: Пелаг в полный рост на тропе, вид чуть сверху, якорь стоит рядом, верх пустой под лого",
+   "defects": "поза статичная"
+  },
+  {
+   "file": "03-capsule-vertical-v3-anchor.png",
+   "job": "50ee493f-66ad-4fc3-b34b-7119298ddd79",
+   "caption": "Вертикальная капсула v3: якорь заменён по утверждённому листу anchor_identity (кольцо, воротник с ромбом, два зазубренных рога, пятка-ромб, цепь, красная повязка)",
+   "defects": "—",
+   "quality": "medium 2k, 1 кредит"
+  },
+  {
+   "file": "02-main-capsule-v3-anchor.png",
+   "job": "bc5b8518-fdbf-4c95-bfd1-a1369f584b88",
+   "caption": "Горизонтальная v3: попытка заменить якорь",
+   "defects": "якорь всё ещё неверный: один рог, сливается с саблей, цепь на плече странная",
+   "quality": "medium 2k, 1 кредит"
+  }
+ ],
+ "credits": {
+  "spent_total_v2_v3": 7.5,
+  "balance_after": 0.05
+ },
+ "anchor_reference": "ART/characters/pelag/demo-polish-2026-09-30/references/anchor_identity.jpg (media 8c912a35-1374-4a10-be0e-4c3c594503f4)"
+}

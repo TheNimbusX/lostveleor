@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-30",
+  "model": "gpt_image_2_5 (flare), quality high, 2k, 16:9, image-to-image, 2.75 кредита за картинку",
+  "purpose": "Рост лагеря по канону DESIGN.md («Хаб ровно один… палатки → навесы и кузня → укреплённая застава»), та же камера, яркий вечер. Новых кадров не снимали — основа существующий общий план 30.09.",
+  "reference_sources": {
+    "refs/camp-overview-2026-09-30.jpg": "ART/CAMP/polish-2026-09-30/environment-after/shot_00_t1.50s.png (основа композиции)",
+    "refs/camp-golden-hour-2026-09-16.jpg": "ART/CAMP/visual-direction-2026-09-16/01-golden-hour.png (свет и материалы)",
+    "refs/camp-smith-2026-09-30.jpg": "ART/CAMP/polish-2026-09-30/camp-sound-final/02-smith.png (кузня)",
+    "refs/camp-arch-2026-09-30.jpg": "ART/CAMP/polish-2026-09-30/camp-sound-final/05-arch.png (арка к Разлому)"
+  },
+  "items": [
+    {
+      "file": "1-tents.png",
+      "preview": "1-tents.jpg",
+      "job_id": "18b4912c-84a9-4ead-815d-c5532f2801be",
+      "references": [
+        "refs/camp-overview-2026-09-30.jpg",
+        "refs/camp-golden-hour-2026-09-16.jpg",
+        "refs/camp-smith-2026-09-30.jpg",
+        "refs/camp-arch-2026-09-30.jpg"
+      ],
+      "caption": "Стадия 1 «Палатки»: четыре палатки у кострища, кузнец под тентом с наковальней на пне, торговец с тележки, вместо арки две жерди с красной тряпкой, бревенчатый мостик.",
+      "defects": "Кузнец и торговец поменялись местами относительно нашего лагеря (тележка стоит на месте кузни, кузнец — на месте лавки). Поляна скадрирована чуть ближе, чем основа. Три палатки из четырёх с баннерами — многовато для «первых дней».",
+      "prompt": "Concept art painted over our game frame: repaint image 1 - the real in-game camp of THE WAR REMAINS, a bright stylized 3D isometric action roguelike - keeping EXACTLY the same high isometric camera, framing, forest clearing shape, winding turquoise river with the bridge at the bottom right, big leafy trees and pine forest around, the path layout and the central campfire position. Render it in our game's style: stylized hand-painted 3D, chunky readable shapes, warm red-and-cream canvas, dark timber, bright saturated greens and turquoise water (see images 2-4). Lighting: bright golden evening - low warm sun from the left with long soft shadows, cool blue-green shade under the trees, the campfire and lanterns glowing; brighter and more saturated than image 1, never grim or murky. No UI, no text, no labels; no characters except one small hero figure (white shirt, red headband) by the campfire for scale. Banners keep the simple white diamond mark from the frames; no new emblems.\n\nThis is stage 1 of 3 of one camp that grows through the story (tents -> awnings and forge -> fortified outpost): same place, same camera, only the buildings change.\n\nStage 1 - TENTS, the first days after arriving: the clearing is wilder, with more tall grass, ferns and bushes, and no paved stones - only trampled dirt paths. Just 4 small canvas tents with bedrolls around a simple stone campfire ring, crates, barrels and sacks unloaded next to a handcart. The smith works in the open: an anvil on a tree stump, a small clay hearth and a single canvas tarp on two poles, standing where the big forge is in image 1. The trader sells from a two-wheeled handcart with a tarp roof where his stall is in image 1. At the top of the path, where the gate is in image 1, there is no gate yet - just two tall stakes with a rope and a torn red cloth. The bridge is a narrow rough log footbridge. No fences, no towers, no solid buildings."
+    },
+    {
+      "file": "2-awnings-forge.png",
+      "preview": "2-awnings-forge.jpg",
+      "job_id": "8cc80198-8516-40cc-9919-bc94c70ca1cd",
+      "references": [
+        "refs/camp-overview-2026-09-30.jpg",
+        "refs/camp-golden-hour-2026-09-16.jpg",
+        "refs/camp-smith-2026-09-30.jpg",
+        "refs/camp-arch-2026-09-30.jpg"
+      ],
+      "caption": "Стадия 2 «Навесы и кузня»: кузня с каменной трубой и дымом, лавка с весами и крытой повозкой, склад с общим сундуком, навес летописца с картой, полигон с чучелами, арка с баннерами, мост с перилами.",
+      "defects": "Ближе всего к нашему лагерю по раскладке (кузня сверху по центру, лавка справа). Полигон переехал в центр-слева. Навесов стало много и они однотипные — полосатый красно-кремовый тент везде.",
+      "prompt": "Concept art painted over our game frame: repaint image 1 - the real in-game camp of THE WAR REMAINS, a bright stylized 3D isometric action roguelike - keeping EXACTLY the same high isometric camera, framing, forest clearing shape, winding turquoise river with the bridge at the bottom right, big leafy trees and pine forest around, the path layout and the central campfire position. Render it in our game's style: stylized hand-painted 3D, chunky readable shapes, warm red-and-cream canvas, dark timber, bright saturated greens and turquoise water (see images 2-4). Lighting: bright golden evening - low warm sun from the left with long soft shadows, cool blue-green shade under the trees, the campfire and lanterns glowing; brighter and more saturated than image 1, never grim or murky. No UI, no text, no labels; no characters except one small hero figure (white shirt, red headband) by the campfire for scale. Banners keep the simple white diamond mark from the frames; no new emblems.\n\nThis is stage 2 of 3 of one camp that grows through the story (tents -> awnings and forge -> fortified outpost): same place, same camera, only the buildings change.\n\nStage 2 - AWNINGS AND FORGE, the camp has settled in: every workplace gets a timber awning on posts with red-and-cream striped canvas. The smith has a real forge with a stone chimney pouring light smoke, bellows, a grinding wheel, a weapon rack and a second anvil under a big awning (like image 3). The trader has a proper stall with crates, scales and a covered cart. New: a storage shed with a big shared chest, and a chronicler's awning with a writing desk, shelves of scrolls and a map board. Paths paved with flat stones, wooden fences, lantern posts, a small training ground with straw dummies. The wooden gate arch with red banners stands at the top path (like image 4). The bridge has railings and lanterns. Tents are still canvas but bigger, on wooden floors."
+    },
+    {
+      "file": "3-fortified-outpost.png",
+      "preview": "3-fortified-outpost.jpg",
+      "job_id": "063e7541-9dfc-421f-9274-1ce2aca51f1e",
+      "references": [
+        "refs/camp-overview-2026-09-30.jpg",
+        "refs/camp-golden-hour-2026-09-16.jpg",
+        "refs/camp-smith-2026-09-30.jpg",
+        "refs/camp-arch-2026-09-30.jpg"
+      ],
+      "caption": "Стадия 3 «Укреплённая застава»: частокол вокруг поляны, две вышки и надвратная башня к каменному мосту, срубы с черепицей, каменная кузня, мастерская основателя с оранжевыми кристаллами лавидия, каменная арка с трещиной Разлома.",
+      "defects": "Частокол отрезал нижнюю палатку и полигон — лагерь стал теснее. Лавидий стоит на месте лавки торговца (сама лавка пропала). Трещина Разлома в арке мелкая, почти не читается на общем плане.",
+      "prompt": "Concept art painted over our game frame: repaint image 1 - the real in-game camp of THE WAR REMAINS, a bright stylized 3D isometric action roguelike - keeping EXACTLY the same high isometric camera, framing, forest clearing shape, winding turquoise river with the bridge at the bottom right, big leafy trees and pine forest around, the path layout and the central campfire position. Render it in our game's style: stylized hand-painted 3D, chunky readable shapes, warm red-and-cream canvas, dark timber, bright saturated greens and turquoise water (see images 2-4). Lighting: bright golden evening - low warm sun from the left with long soft shadows, cool blue-green shade under the trees, the campfire and lanterns glowing; brighter and more saturated than image 1, never grim or murky. No UI, no text, no labels; no characters except one small hero figure (white shirt, red headband) by the campfire for scale. Banners keep the simple white diamond mark from the frames; no new emblems.\n\nThis is stage 3 of 3 of one camp that grows through the story (tents -> awnings and forge -> fortified outpost): same place, same camera, only the buildings change.\n\nStage 3 - FORTIFIED OUTPOST, the end of the story: a tall palisade of sharpened logs rings the whole clearing, with a timber gatehouse facing the bridge and two wooden watchtowers with red banners and lanterns. The tents are replaced by timber-framed houses on stone foundations with shingle roofs. The forge is now a stone smithy with a big chimney and a glowing hearth. A founder's workshop displays large glowing orange lavidium crystals (#FF9A3C) in wooden racks. The bridge is rebuilt in stone with lanterns. The path at the top ends in a stone portal arch holding a vertical glowing orange-red crack of light - the Rift - with drifting sparks. The campfire became a big stone fire pit with benches around it. Many lanterns and warm lit windows. Still inside the same forest and river, same camera, and the camp stays cosy and bright, not a grim fortress."
+    }
+  ]
+}

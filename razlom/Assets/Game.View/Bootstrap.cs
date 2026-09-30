@@ -83,6 +83,8 @@ namespace Game.View
             if (!CaptureRig.IsVfxShowcase)
             {
                 sim.AddComponent<DamageNumbers>();
+                // Урон по герою: кромка со стороны удара, виньетка низкого здоровья, микростоп (этап 4).
+                sim.AddComponent<HeroHitFeedback>();
             }
             sim.AddComponent<PelagVfxController>();
             if (CombatSound) sim.AddComponent<CombatAudio>();

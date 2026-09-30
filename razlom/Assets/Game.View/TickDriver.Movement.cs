@@ -5,9 +5,16 @@ namespace Game.View
 {
     public sealed partial class TickDriver
     {
+        // Изолированный input QA возвращает подсказки устройства вместе с удалением виртуальных устройств.
+        internal void RestoreCampInputCaptureDeviceHints(bool usingGamepad, bool padLastUsed)
+        {
+            _usingGamepad = usingGamepad;
+            GamepadLastUsed = padLastUsed;
+        }
+
         private void CaptureDirectionalMovement(ref InputFrame frame)
         {
-            if (CaptureRig.Installed || CampIntegrationCapture.IsRunning ||
+            if ((CaptureRig.Installed && !CampInputCapture.IsRunning) || CampIntegrationCapture.IsRunning ||
                 (!_usingGamepad && !GameUserSettings.WasdMovement)) return;
             float x, y;
             if (_usingGamepad)

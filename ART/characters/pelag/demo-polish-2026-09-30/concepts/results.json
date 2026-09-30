@@ -1,0 +1,52 @@
+{
+  "stage": "rejected_by_owner",
+  "owner_selection": null,
+  "approved_budget_credits": 4,
+  "results": [
+    {
+      "id": "A",
+      "title": "Собранный абордажник",
+      "job_id": "15df8545-3250-413d-8f72-420a890fdd90",
+      "status": "completed",
+      "requested_model": "nano_banana_pro",
+      "returned_model": "nano_banana_2",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_15df8545-3250-413d-8f72-420a890fdd90.png",
+      "file": "A.png",
+      "width": 2752,
+      "height": 1536,
+      "reference_media_ids": [
+        "5a742144-992c-4637-a70a-f40168b3e510",
+        "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+        "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+        "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+        "d4c95bbb-e589-4268-9983-2215e292e2ba"
+      ],
+      "accepted": false,
+      "sha256": "11ae07002ab13f936d193e9f21ccbeeba953dc651d5511e06330acb89ba0490a",
+      "bytes": 6086865
+    },
+    {
+      "id": "B",
+      "title": "Южный моряк",
+      "job_id": "1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b",
+      "status": "completed",
+      "requested_model": "nano_banana_pro",
+      "returned_model": "nano_banana_2",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260929_221104_1b72a8f7-0729-4eb2-a21f-c7b84ac27c7b.png",
+      "file": "B.png",
+      "width": 2752,
+      "height": 1536,
+      "reference_media_ids": [
+        "5a742144-992c-4637-a70a-f40168b3e510",
+        "55ada286-2d04-47b2-9e1a-cbddf4ff41b9",
+        "03019c7a-94a6-43c6-9a82-2b6f331c3b34",
+        "0eaeee50-c75f-4da4-acf0-f263330ddaa5",
+        "d4c95bbb-e589-4268-9983-2215e292e2ba"
+      ],
+      "accepted": false,
+      "sha256": "27256183266a83ce6524f4dd90b9b407d0ae7208a50f6699ec6f6b234b804786",
+      "bytes": 6533385
+    }
+  ],
+  "owner_review": "Nano Banana quality rejected; new current candidates in imagegen-revision/manifest.json"
+}

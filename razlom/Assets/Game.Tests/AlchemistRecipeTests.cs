@@ -58,13 +58,14 @@ namespace Game.Tests
                 Assert.That(camp.BuyPotion(PotionKind.LivingResin), Is.True);
                 Assert.That(camp.BuyPotion(PotionKind.LavidiumSurge), Is.True);
             }
-            var session = new GameSession(71, camp, PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
-            var sim = session.ActiveSim;
+            var sim = new Simulation(71); sim.SetupTestArena(1);
+            sim.Entities.NextAttackTick[1] = int.MaxValue;
             var baseMoveSpeed = sim.Entities.Stats[0].Get(StatType.MoveSpeed);
             sim.Entities.Health[0] = 1;
             sim.Entities.Lavidium[0] = Fix64.Zero;
-            session.Step(new InputFrame { PotionMask = (byte)(Camp.PotionInputBit(PotionKind.LivingResin) |
-                Camp.PotionInputBit(PotionKind.LavidiumSurge)) });
+            Assert.That(camp.ConsumePotion(PotionKind.LivingResin, sim), Is.True);
+            Assert.That(camp.ConsumePotion(PotionKind.LavidiumSurge, sim), Is.True);
+            sim.Step(InputFrame.Empty);
             Assert.That(sim.ResinTicksLeft, Is.GreaterThan(0));
             Assert.That(sim.SurgeTicksLeft, Is.GreaterThan(0));
             Assert.That(sim.Entities.Stats[0].Get(StatType.AbilitySpeed), Is.EqualTo(Fix64.Ratio(20, 100)));
@@ -75,11 +76,12 @@ namespace Game.Tests
             int before = sim.Entities.Health[0];
             sim.ApplyAbilityDamage(1, 0, 40, -1, DamageType.Physical);
             Assert.That(before - sim.Entities.Health[0], Is.EqualTo(30));
-            for (int i = 0; i < 30; i++) session.Step(InputFrame.Empty);
-            session.Step(new InputFrame { PotionMask = Camp.PotionInputBit(PotionKind.LavidiumSurge) });
+            for (int i = 0; i < 30; i++) sim.Step(InputFrame.Empty);
+            Assert.That(camp.ConsumePotion(PotionKind.LavidiumSurge, sim), Is.True);
+            sim.Step(InputFrame.Empty);
             Assert.That(sim.Entities.Stats[0].Get(StatType.AbilitySpeed), Is.EqualTo(Fix64.Ratio(20, 100)));
             Assert.That(sim.SurgeTicksLeft, Is.GreaterThan(170));
-            for (int i = 0; i < Simulation.PotionEffectTicks; i++) session.Step(InputFrame.Empty);
+            for (int i = 0; i < Simulation.PotionEffectTicks; i++) sim.Step(InputFrame.Empty);
             Assert.That(sim.SurgeTicksLeft, Is.Zero);
             Assert.That(sim.Entities.Stats[0].Get(StatType.AbilitySpeed), Is.EqualTo(Fix64.Zero));
             Assert.That(camp.PotionCount(PotionKind.LavidiumSurge), Is.Zero);
@@ -116,6 +118,7 @@ namespace Game.Tests
             for (int i = 1; i < session.Run.Sim.Entities.Count; i++) session.Run.Sim.Entities.Alive[i] = false;
             session.Step(InputFrame.Empty);
             Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.SeekingExit));
+            session.Run.Sim.Entities.Health[0] = 1;
             session.Step(new InputFrame { PotionMask = Camp.PotionInputBit(PotionKind.SmallHealth) });
             Assert.That(session.AlchemyCleanLevelInProgress, Is.False);
             session.Run.Sim.Entities.Position[0] = session.Run.Map.ExitPoint(0);
@@ -188,17 +191,7 @@ namespace Game.Tests
             var camp = CampWithFunds();
             camp.BuyPotion(PotionKind.LargeHealth);
             camp.SelectPotion(PotionKind.LargeHealth);
-            var current = CampSaveCodec.Encode(camp);
-            int atlasBytes = 4 + 4 * camp.DiscoveredCount;
-            int potionStart = current.Length - 4 - 3 - atlasBytes - 26;
-            var old = new byte[current.Length - 12];
-            Array.Copy(current, 0, old, 0, potionStart + 16);
-            old[potionStart + 16] = camp.PotionSelection;
-            Array.Copy(current, potionStart + 26, old, potionStart + 17, atlasBytes);
-            BitConverter.GetBytes(7).CopyTo(old, 4);
-            uint hash = 2166136261;
-            for (int i = 0; i < old.Length - 4; i++) { hash ^= old[i]; hash = unchecked(hash * 16777619); }
-            BitConverter.GetBytes(hash).CopyTo(old, old.Length - 4);
+            var old = LegacyCampSaveFixture.Encode(camp, 7);
             var restored = CampSaveCodec.Decode(old, camp.Items);
             Assert.That(restored.PotionCount(PotionKind.LargeHealth), Is.EqualTo(1));
             Assert.That(restored.SelectedPotion(0), Is.EqualTo(PotionKind.LargeHealth));

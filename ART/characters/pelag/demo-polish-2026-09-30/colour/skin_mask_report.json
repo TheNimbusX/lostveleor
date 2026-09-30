@@ -1,0 +1,14 @@
+{
+  "source": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Characters\\Pelag_v6\\Pelag_v6_BaseColor.jpg",
+  "dimensions": [
+    4096,
+    4096
+  ],
+  "mask_dimensions": [
+    1024,
+    1024
+  ],
+  "skin_coverage": 0.2292194962501526,
+  "accepted_components": 60,
+  "mask_guid": "dd03fddc03684345be9f0e2d843e1ea0"
+}

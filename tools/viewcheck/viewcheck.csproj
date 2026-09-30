@@ -67,6 +67,8 @@
            Лечится одним открытием редактора. -->
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.RenderPipelines.*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.*.dll" />
+      <!-- Настоящий ввод: -p:DefineConstants=UNITY_EDITOR%3BENABLE_INPUT_SYSTEM. -->
+      <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.InputSystem*.dll" />
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\UnityEngine.UI.dll" />
       <!-- TextMeshPro входит в пакет uGUI и собирается в проект так же. -->
       <UnityModuleDll Include="$(RazlomAssets)\..\Library\ScriptAssemblies\Unity.TextMeshPro.dll" />
