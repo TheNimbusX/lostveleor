@@ -46,6 +46,7 @@ namespace Game.View
             _landmarkSpots.Clear();
             _grassField.Clear();
             foreach (var list in _leafField) list?.Clear();
+            foreach (var list in _pebbleField) list.Clear();
             if (_wisps != null) _wisps.gameObject.SetActive(false);
             if (_banks != null) _banks.SetActive(false);
             if (_water != null) _water.SetActive(false);
@@ -67,6 +68,7 @@ namespace Game.View
             _portalPool = _cachePool = _dropPool = null;
             _grassLookedUp = false; _grassMesh = null;
             _leavesLookedUp = false; _leafMesh = null; _leafMaterials = null;
+            _pebblesLookedUp = false; _pebbleMeshes = null; _pebbleMaterials = null; _pebblePivots = null;
             _wisps = null;
         }
 
@@ -158,6 +160,7 @@ namespace Game.View
             yield return ScatterGrassFieldSteps(map);
             yield return Step("LayoutView/листья");
             ScatterFallenLeaves(map);
+            ScatterPebbles(map);
             BuildWisps(map);
             UpdateMeadow();
         }
@@ -763,11 +766,12 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             PlaceCenterCircle(map, runes);
+            PlaceAltar(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
                 {
