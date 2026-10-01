@@ -100,6 +100,8 @@ namespace Game.View
             // Высокое солнце заливает открытую поляну ярче лагеря в тени леса; доля яркости
             // возвращает вечер лагеря, а тени остаются короткими. Restore вернёт прежнюю яркость.
             _sun.intensity *= style.CampSunScale;
+            _sun.color = Color.Lerp(_sun.color, style.SunColor, style.CampSunColorBlend);
+            _fill.intensity *= style.CampFillScale;
             if (look.Style == CampLookStyle.GoldenEvening && look.EveningFog)
             {
                 RenderSettings.fog = true; RenderSettings.fogMode = FogMode.Linear;

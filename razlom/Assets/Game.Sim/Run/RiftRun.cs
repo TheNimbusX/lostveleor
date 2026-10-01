@@ -217,6 +217,18 @@ namespace Game.Sim
         public int DropCount => _dropCount;
         public RunDrop GetDrop(int index) => _drops[index];
 
+        /// <summary>Индекс сундука арены среди дропов или −1, пока арена не зачищена.</summary>
+        public int ChestDrop { get; private set; } = -1;
+
+        /// <summary>
+        /// Редкость вещи в сундуке, проценты: обычная, редкая, эпическая, уникальная.
+        /// Заглушка владельца от 1 октября («потом подумаем, как лучше»).
+        /// </summary>
+        public static readonly int[] ChestRarityPercent = { 50, 30, 15, 5 };
+
+        /// <summary>Сундук стоит на столько метров ближе к поляне, чем выход.</summary>
+        private static readonly Fix64 ChestBeforeExit = Fix64.FromInt(3);
+
         public RiftRun(Simulation sim, ModuleSet modules, ItemDatabase items, int[] itemBaseIds,
             int maxModules = 64, LocationDefinition location = null)
         {
@@ -337,6 +349,7 @@ namespace Game.Sim
             BossEnraged = false;
             // Не подобранное на прошлой арене осталось там.
             _dropCount = 0;
+            ChestDrop = -1;
             System.Array.Clear(_eliteDropped, 0, _eliteDropped.Length);
 
             LevelSettings = _location?.GetLevel(Depth) ?? RiftLevelSettings.Prototype(Depth);
@@ -495,6 +508,7 @@ namespace Game.Sim
             {
                 RiftsCleared++;
                 if (ArenaFlow) Gold += CurrentRoute.BonusGold;
+                SpawnChest();
                 Phase = RunPhase.SeekingExit;
             }
         }
@@ -557,6 +571,41 @@ namespace Game.Sim
                 _taken[_takenCount++] = RewardOffer.OfItem(in item);
                 BranchesClaimed++;
             }
+        }
+
+        /// <summary>
+        /// Награда за зачистку (владелец, 1 октября): сундук с вещью перед выходом. Лежит как обычный
+        /// дроп и поднимается, когда герой подходит; не подобранный пропадает вместе с ареной.
+        /// Розыгрыш — отдельным потоком от сида расстановки: общие потоки лута и аффиксов не сдвигаются.
+        /// </summary>
+        private void SpawnChest()
+        {
+            if (_itemBaseIds.Length == 0 || _dropCount >= MaxDrops) return;
+            var rng = new Pcg32(LayoutSeed ^ 0x43484553545F5257UL, 0x4348455354UL);
+            int baseId = _itemBaseIds[rng.NextInt(0, _itemBaseIds.Length)];
+            int roll = rng.NextInt(0, 100);
+            ItemRarity rarity = ItemRarity.Normal;
+            for (int r = 0, edge = 0; r < ChestRarityPercent.Length; r++)
+                if (roll < (edge += ChestRarityPercent[r])) { rarity = (ItemRarity)r; break; }
+            ItemInstance item = Tier(ItemDrop.RollOfRarity(ref rng, baseId, (short)(Depth * 5), rarity));
+            _drops[_dropCount] = new RunDrop(ChestPosition(), RewardOffer.OfItem(in item));
+            ChestDrop = _dropCount++;
+        }
+
+        /// <summary>У ближайшего к поляне выхода, на ChestBeforeExit метров ближе к поляне.</summary>
+        private FixVec2 ChestPosition()
+        {
+            FixVec2 player = _sim.Entities.Position[Simulation.PlayerId];
+            if (_map.ExitCount == 0) return player;
+            FixVec2 center = _map.GladeCount > 0 ? _map.GetGlade(0).Center : player;
+            int best = 0;
+            for (int i = 1; i < _map.ExitCount; i++)
+                if (FixVec2.DistanceSq(center, _map.ExitPoint(i)) < FixVec2.DistanceSq(center, _map.ExitPoint(best))) best = i;
+            FixVec2 exit = _map.ExitPoint(best);
+            FixVec2 inward = center - exit;
+            Fix64 length = inward.Length;
+            if (length <= ChestBeforeExit) return exit;
+            return exit + inward * (ChestBeforeExit / length);
         }
 
         /// <summary>Дропы с только что погибших элит, подбор рядом стоящих и команда мини-меню.</summary>
@@ -1050,6 +1099,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, (int)Artifact);
             Hashing.Mix(ref hash, PendingAbility);
             Hashing.Mix(ref hash, _dropCount);
+            Hashing.Mix(ref hash, ChestDrop);
             for (int d = 0; d < _dropCount; d++) _drops[d].HashInto(ref hash);
             Hashing.Mix(ref hash, _takenCount);
             for (int i = 0; i < _takenCount; i++) _taken[i].HashInto(ref hash);

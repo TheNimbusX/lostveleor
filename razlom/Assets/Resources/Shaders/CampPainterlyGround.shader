@@ -10,6 +10,9 @@ Shader "Game/Studies/Painterly Ground"
         _BaseColor ("Tint", Color) = (1,1,1,1)
         _TileMeters ("Texture size in metres", Float) = 3
         _DirtGain ("Worn earth brightness", Range(0.5,3)) = 1
+        _DirtTint ("Worn earth tint", Color) = (1,1,1,1)
+        _EarthCracks ("Dry earth cracks", Range(0,1)) = 0
+        _CrackMeters ("Crack plate size in metres", Range(0.3,3)) = 1.1
         _AmbientStrength ("Ground ambient light", Range(0,1)) = 0.55
         _StoneRelief ("Embedded stone relief metres", Range(0,0.04)) = 0.018
         _IsPath ("Path overlay", Float) = 0
@@ -58,7 +61,7 @@ Shader "Game/Studies/Painterly Ground"
                 half4 _BaseColor;
                 float _TileMeters, _IsPath, _SrcBlend, _DstBlend, _ZWrite;
                 float _IsSurface,_IsRiverBank;float4 _SurfaceBounds;
-                half _AmbientStrength;float _StoneRelief; half _TurfWeight; float _DetailSoftness; half _DirtGain;
+                half _AmbientStrength;float _StoneRelief; half _TurfWeight; float _DetailSoftness; half _DirtGain; half4 _DirtTint; half _EarthCracks; float _CrackMeters;
             CBUFFER_END
             float4 _CampStudyArea;
             float _CampShadowDiagnostic;
@@ -69,6 +72,19 @@ Shader "Game/Studies/Painterly Ground"
             {
                 float2 i=floor(p), f=frac(p); f=f*f*(3-2*f);
                 return lerp(lerp(Hash(i),Hash(i+float2(1,0)),f.x),lerp(Hash(i+float2(0,1)),Hash(i+1),f.x),f.y);
+            }
+            // Расстояние до ближайшей границы ячеек Вороного (F2-F1) и случайное число ячейки:
+            // трещины сухой земли и чуть разная яркость «плит» между ними.
+            float2 Cracks(float2 p)
+            {
+                float2 i=floor(p), f=frac(p); float f1=8, f2=8; float id=0;
+                for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++)
+                {
+                    float2 c=float2(x,y); float2 o=float2(Hash(i+c),Hash(i+c+17.3));
+                    float d=length(c+o-f);
+                    if(d<f1){f2=f1;f1=d;id=Hash(i+c+41.7);} else if(d<f2) f2=d;
+                }
+                return float2(f2-f1,id);
             }
             Varyings Vert(Attributes v)
             {
@@ -90,7 +106,7 @@ Shader "Game/Studies/Painterly Ground"
                 float detailBias=_CampDepthControls.y*_CampDepthOn;
                 float2 uv=p/max(_TileMeters*detailScale,.1);
                 half3 grass=SAMPLE_TEXTURE2D_BIAS(_GrassTex,sampler_GrassTex,p/8,_DetailSoftness).rgb;
-                half3 dirt=SAMPLE_TEXTURE2D_BIAS(_DirtTex,sampler_DirtTex,uv,detailBias).rgb*_DirtGain;
+                half3 dirt=SAMPLE_TEXTURE2D_BIAS(_DirtTex,sampler_DirtTex,uv,detailBias).rgb*_DirtGain*_DirtTint.rgb;
                 grass=lerp(dot(grass,half3(.2126,.7152,.0722)).xxx,grass,.90)*half3(.60,.82,.68);
                 dirt=lerp(dot(dirt,half3(.2126,.7152,.0722)).xxx,dirt,.70)*half3(.92,.86,.78);
                 float macro=Noise(p*.28);
@@ -139,6 +155,15 @@ Shader "Game/Studies/Painterly Ground"
                     reliefHeight=stoneShape*_StoneRelief*layers.g*smoothstep(.25,.85,layers.r);
                     stony=lerp(dot(stony,half3(.2126,.7152,.0722)).xxx,stony,.78)*half3(.96,1,1.03);
                     half3 worn=dirt*lerp(half3(.79,.73,.63),half3(1.10,1.04,.95),smoothstep(.18,.82,Noise(p*.36+7)));
+                    // Сухая потрескавшаяся земля разлома (референсы 30 сентября): плиты чуть разной
+                    // яркости и тёмные тонкие трещины между ними. Нулевая сила — земля лагеря.
+                    if(_EarthCracks>0)
+                    {
+                        float2 crack=Cracks(p/_CrackMeters+(Noise(p*1.7)-.5)*.35);
+                        worn*=lerp(.9,1.1,crack.y);
+                        float crackLine=1-smoothstep(.015,.075,crack.x);
+                        worn*=1-_EarthCracks*crackLine*.5;
+                    }
                     worn=lerp(worn,stony,layers.g);
                     float brokenEdge=layers.r+(Noise(p*14)-.5)*.26;
                     albedo=lerp(grass,worn,smoothstep(.30,.69,brokenEdge));

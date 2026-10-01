@@ -678,7 +678,51 @@ namespace Game.LocationEditor
 
         // Шаг поляны 29 сентября целиком: из меню пункты идут по отдельности, из файла запроса
         // и пакетного запуска (-executeMethod) — вместе.
-        public static void ApplyGladeUpdate() { AddGrassAltarAndPebbles(); MatchCampPalette(); }
+        public static void ApplyGladeUpdate() { AddGrassAltarAndPebbles(); MatchCampPalette(); ApplyReferenceArenaLook(); }
+
+        // Арены по референсам владельца 30 сентября (ART/creating-arena/references-30-09): тёплый
+        // золотой день вместо вечера лагеря, сомкнутый светлый лес до края кадра, золотистая
+        // потрескавшаяся земля. В этой локации только природа: мост, изгородь, домик и фонари убраны.
+        [MenuItem("Разлом/Локации/Арена по референсам 30.09: золотой день, сомкнутый лес, сухая земля", priority = 34)]
+        public static void ApplyReferenceArenaLook()
+        {
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var style = theme.Style;
+            var variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingBridge" || v.Prefab.name == "CreatingFence"
+                || v.Prefab.name == "MeadowTreehouse" || v.Prefab.name == "MeadowLanternPost"));
+            style.DecorVariants = variants.ToArray();
+            style.PostProcessingOverride = ArenaGrade();
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.ColorAdjustments color))
+            { color.postExposure.Override(.5f); color.contrast.Override(12); color.saturation.Override(30); EditorUtility.SetDirty(color); }
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.WhiteBalance balance))
+            { balance.temperature.Override(2); EditorUtility.SetDirty(balance); }
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights tones))
+            { tones.shadows.Override(new Vector4(.92f, .97f, 1, .03f)); EditorUtility.SetDirty(tones); }
+            style.CampSunScale = 1.1f;
+            style.CampSunColorBlend = .75f;
+            style.SunColor = new Color(1, .9f, .62f);
+            style.CampFillScale = 1.8f;
+            style.EdgeCanopyDensity = 1;
+            style.ForestFill = 1;
+            style.ForestBandWidth = 38;
+            style.EarthBrightness = 2.3f;
+            style.EarthTint = new Color(1.18f, 1.05f, .72f);
+            style.EarthCracks = .8f;
+            style.CrackMeters = 1.1f;
+            TintLeaves("MeadowBroadleaf", BroadleafLeafTint);
+            // Корень и папоротник владельца (Desktop/Creating, 30 сентября). Нулевой вес: оба ставятся
+            // явно в LayoutView.Glade (PlaceRootsAndFerns) и не попадают во взвешенные пулы.
+            variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRoots" || v.Prefab.name == "CreatingFern"));
+            variants.Add(Variant(PrepareTripoProp("CreatingRoots", "arena_root", 6.2f, true, 14000, new Color(.66f, .6f, .52f)),
+                DecorKind.Rock, 0f, false, .9f, 1.15f));
+            var fern = PrepareTripoProp("CreatingFern", "arena_fern", 1.45f, false, 3000, new Color(1f, 1.04f, .92f));
+            variants.Add(Variant(AddBreeze(fern, .1f), DecorKind.Bush, 0f, false, .8f, 1.3f));
+            style.DecorVariants = variants.ToArray();
+            style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Арена по референсам 30.09: золотой день, сомкнутый лес, сухая земля, только природа.");
+        }
 
         // Новая трава, алтарь и галька из Creating (владелец, 29 сентября). Нулевой вес: ковёр травы
         // и галька рисуются инстансингом в LayoutView, алтарь ставится ориентиром на плече поляны.
@@ -738,7 +782,7 @@ namespace Game.LocationEditor
                 light.transform.SetParent(root.transform, false);
                 light.transform.position = filter.transform.TransformPoint(GlowCentre(filter.sharedMesh, glow, filter.sharedMesh.bounds.center))
                     + Vector3.up * .25f;
-                light.type = LightType.Point; light.range = 3.2f; light.intensity = .7f;
+                light.type = LightType.Point; light.range = 5.5f; light.intensity = 1.1f;
                 light.color = new Color(.45f, .9f, 1f); light.shadows = LightShadows.None;
                 Debug.Log($"[Луга] CreatingAltar: высота {AltarHeight} м, свет кристаллов на {light.transform.localPosition}");
                 PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -747,7 +791,28 @@ namespace Game.LocationEditor
             return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
-        private const float AltarHeight = 1.8f;
+        // 1,8 м рядом с героем читались табуреткой (владелец, 30 сентября): алтарь — ориентир поляны.
+        private const float AltarHeight = 3.8f;
+
+        // Цельная модель Tripo (одна запечённая текстура): свой материал, меш упрощён штатным
+        // Mesh LOD до maxTriangles. size — высота или, при footprint, радиус пятна на земле.
+        private static GameObject PrepareTripoProp(string name, string category, float size, bool footprint, int maxTriangles, Color tint)
+        {
+            AssetDatabase.Refresh();
+            var prefab = PrepareImported(name, category, size, footprint);
+            AssetDatabase.LoadAssetAtPath<Material>(Folder + "/" + name + "_Surface.mat").SetColor("_BaseColor", tint);
+            string path = AssetDatabase.GetAssetPath(prefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var filters = root.GetComponentsInChildren<MeshFilter>(true);
+                for (int i = 0; i < filters.Length; i++)
+                    filters[i].sharedMesh = LodCopy(filters[i].sharedMesh, Folder + "/" + name + (i == 0 ? "" : i.ToString()) + "_Mesh.asset", maxTriangles, name);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
 
         // Галька утоптанной земли — два маленьких камня из Creating, упрощённые примерно до двухсот
         // треугольников. У каждой модели метровый охват, размер задаёт раскладка (LayoutView.Glade).
@@ -1158,7 +1223,7 @@ namespace Game.LocationEditor
         }
 
         // Листва зеленее прежней (.9/.94/.82 и .3/.42/.24): кроны арены читались бурой массой.
-        private static readonly Color BroadleafLeafTint = new Color(.95f, 1.02f, .82f);
+        private static readonly Color BroadleafLeafTint = new Color(1.12f, 1.34f, .78f);
         private static readonly Color SpruceNeedleTint = new Color(.33f, .48f, .26f);
 
         private static GameObject PrepareNaturalTree(string name, string source, float height)

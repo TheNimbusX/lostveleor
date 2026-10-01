@@ -231,10 +231,21 @@ namespace Game.View
                 if (!visible) continue;
                 RunDrop drop = run.GetDrop(d);
                 _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), .03f, drop.Position.Y.ToFloat());
-                SetGlow(_dropMarks[d], drop.Offer.Kind == RewardKind.Ability
-                    ? new Color(.95f, .35f, .2f) : new Color(1f, .78f, .3f));
+                // Сундук зачистки (RiftRun.ChestDrop) — полный схрон, сияние по редкости вещи.
+                bool chest = d == run.ChestDrop;
+                _dropMarks[d].localScale = Vector3.one * (chest ? 1f : .6f);
+                _dropMarks[d].name = chest ? "Сундук арены" : "Добыча с элиты";
+                SetGlow(_dropMarks[d], chest ? ChestGlow(drop.Offer.Item.Rarity)
+                    : drop.Offer.Kind == RewardKind.Ability ? new Color(.95f, .35f, .2f) : new Color(1f, .78f, .3f));
             }
         }
+        // Цвета редкости — те же, что у карточек наград (RunHud.RarityLight).
+        private static Color ChestGlow(Game.Sim.ItemRarity rarity)
+        {
+            var tier = WcRarity.FromItem((int)rarity);
+            return tier == WcRarity.Tier.Common ? new Color(1f, .9f, .75f) : UiTheme.Current.Get(WcRarity.RoleFor(tier));
+        }
+
         private void SetGlow(Transform root, Color color)
         {
             var renderer = root.Find("Сияние").GetComponent<MeshRenderer>();
@@ -446,7 +457,9 @@ namespace Game.View
                     // Two spatial scales produce small copses, larger groves and persistent open gaps.
                     float grove = Mathf.PerlinNoise(x * .055f + groveX, z * .055f + groveZ) * .7f
                         + Mathf.PerlinNoise(x * .12f + groveZ, z * .12f + groveX) * .3f;
-                    if (grove < .32f || rng.NextDouble() > Mathf.Lerp(.5f, .98f, Mathf.InverseLerp(.32f, .65f, grove))) continue;
+                    // Сомкнутый лес (ForestFill) закрывает просветы рощ: за опушкой не видно голой земли.
+                    float keep = Mathf.Lerp(grove < .32f ? 0 : Mathf.Lerp(.5f, .98f, Mathf.InverseLerp(.32f, .65f, grove)), 1, _style.ForestFill);
+                    if (rng.NextDouble() > keep) continue;
                     float px=x+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     if (NearPond(px, pz, 3)) continue;
@@ -455,7 +468,7 @@ namespace Game.View
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
                         // Светлая опушка получает просветы в кронах, без дополнительных источников света.
                         float density = character == GladeCharacter.Sunny ? .68f : character == GladeCharacter.Rocky ? .85f : .98f;
-                        if (rng.NextDouble() > density) continue;
+                        if (rng.NextDouble() > Mathf.Lerp(density, 1, _style.ForestFill)) continue;
                     }
                     float pick = (float)rng.NextDouble() * treeWeight;
                     int variant = trees[trees.Count - 1];
@@ -481,12 +494,16 @@ namespace Game.View
                         if (TouchesOutlinedFloor(px, pz, _decorRadii[variant] * 1.45f)) continue;
                     }
                     if (nearest<_decorRadii[variant]*1.45f+.5f || nearest>_style.ForestBandWidth) continue;
+                    // Дальше 20 м от пола сомкнутый лес — только фон: вдвое реже и крупнее. Кроны так же
+                    // закрывают землю до края кадра, а деревьев почти не прибавляется.
+                    bool far = _style.ForestFill > 0 && nearest > 20;
+                    if (far && ((Mathf.RoundToInt((x - minX) / _style.ForestSpacing) + Mathf.RoundToInt((z - minZ) / _style.ForestSpacing)) & 1) == 1) continue;
                     SpawnDecor(variant,px,pz,rng);
-                    _decor[_decorCount-1].localScale*=1.45f;
+                    _decor[_decorCount-1].localScale*=far ? 2.05f : 1.45f;
                     var treePosition = _decor[_decorCount-1].position;
                     treePosition.y = BackgroundHeight(map, px, pz) - .08f;
                     _decor[_decorCount-1].position = treePosition;
-                    if (++created>=420) yield break;
+                    if (++created>=Mathf.RoundToInt(Mathf.Lerp(420, 900, _style.ForestFill))) yield break;
                 }
             }
         }
@@ -766,12 +783,13 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             PlaceCenterCircle(map, runes);
             PlaceAltar(map);
+            PlaceRootsAndFerns(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
                 {

@@ -12,7 +12,7 @@ namespace Game.View
     public sealed partial class LayoutView
     {
         private const string LeavesPath = "Environment/Camp/GroundDetails/";
-        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles";
+        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles", RootPrefab = "CreatingRoots", FernPrefab = "CreatingFern";
         private float[] _clearingDistance;
         private readonly List<Matrix4x4>[] _pebbleField = { new List<Matrix4x4>(), new List<Matrix4x4>() };
         private Mesh[] _pebbleMeshes;
@@ -51,12 +51,85 @@ namespace Game.View
                 float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
                 float rim = .7f + 1.3f * Mathf.PerlinNoise(px * .19f + 5, pz * .19f + 71);
                 float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + 1.3f, dist[i]));
-                earth *= 1 - .8f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.64f, .8f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
+                // Травяные островки — после сглаживания стыков (EarthGrassPatchRow), иначе оно их заливало.
                 if (earth <= .01f) continue;
                 var pixel = _campSurfacePixels[i];
                 pixel.r = (byte)Mathf.Max(pixel.r, earth * 215);
                 float bed = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.42f, .72f, Mathf.PerlinNoise(px * .21f + 17, pz * .21f + 41)));
                 pixel.g = (byte)Mathf.Lerp(pixel.g, Mathf.Lerp(.1f, stones, bed) * 255, earth);
+                _campSurfacePixels[i] = pixel;
+            }
+        }
+
+        // Стыки тропы и поляны (владелец, 30 сентября): тропа входила в поляну под углом, и между
+        // ними оставался острый клин травы. Размытая маска грунта выше порога заливает только
+        // вогнутые углы и узкие зазоры — там грунт с трёх сторон; ровный край почти не сдвигается.
+        // Тропа вливается в поляну плавным раструбом, как на референсах.
+        private void FilletEarth(float meters)
+        {
+            const int n = TrailResolution;
+            int radius = Mathf.Max(1, Mathf.RoundToInt(meters / _trailBounds.z * n));
+            var source = new float[n * n];
+            for (int i = 0; i < source.Length; i++) source[i] = _campSurfacePixels[i].r / 255f;
+            var blurred = BoxBlur(BoxBlur(source, radius), radius);
+            System.Threading.Tasks.Parallel.For(0, n, y =>
+            {
+                for (int x = 0; x < n; x++)
+                {
+                    int i = y * n + x;
+                    float fill = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.44f, .66f, blurred[i]));
+                    if (fill * 255 <= _campSurfacePixels[i].r) continue;
+                    var pixel = _campSurfacePixels[i];
+                    pixel.r = (byte)(fill * 255);
+                    _campSurfacePixels[i] = pixel;
+                }
+            });
+        }
+
+        // Два прохода скользящего среднего (строки, затем столбцы).
+        private static float[] BoxBlur(float[] source, int radius)
+        {
+            const int n = TrailResolution;
+            var rows = new float[n * n]; var result = new float[n * n];
+            float scale = 1f / (radius * 2 + 1);
+            System.Threading.Tasks.Parallel.For(0, n, y =>
+            {
+                float sum = 0;
+                for (int x = -radius; x <= radius; x++) sum += source[y * n + Mathf.Clamp(x, 0, n - 1)];
+                for (int x = 0; x < n; x++)
+                {
+                    rows[y * n + x] = sum * scale;
+                    sum += source[y * n + Mathf.Min(n - 1, x + radius + 1)] - source[y * n + Mathf.Max(0, x - radius)];
+                }
+            });
+            System.Threading.Tasks.Parallel.For(0, n, x =>
+            {
+                float sum = 0;
+                for (int y = -radius; y <= radius; y++) sum += rows[Mathf.Clamp(y, 0, n - 1) * n + x];
+                for (int y = 0; y < n; y++)
+                {
+                    result[y * n + x] = sum * scale;
+                    sum += rows[Mathf.Min(n - 1, y + radius + 1) * n + x] - rows[Mathf.Max(0, y - radius) * n + x];
+                }
+            });
+            return result;
+        }
+
+        // Редкие мягкие пятна травы на земле поляны: трава просвечивает, а не вырезана островом.
+        // Газон и смесь травы с землёй по всей поляне владелец пробовал 30 сентября и вернул землю.
+        private void EarthGrassPatchRow(int y)
+        {
+            const int n = TrailResolution;
+            for (int x = 1; x < n - 1; x++)
+            {
+                int i = y * n + x;
+                if (_clearingDistance[i] <= 2.5f) continue;
+                float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
+                float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
+                float patch = .5f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, .84f, Mathf.PerlinNoise(px * .11f + 33, pz * .11f + 9)));
+                if (patch <= 0) continue;
+                var pixel = _campSurfacePixels[i];
+                pixel.r = (byte)(pixel.r * (1 - patch));
                 _campSurfacePixels[i] = pixel;
             }
         }
@@ -132,6 +205,90 @@ namespace Game.View
                 AddLandmark(.75f, true);
                 return;
             }
+        }
+
+        // Гигантские деревья (референсы 30 сентября): огромные узловатые корни у кромки — ориентир,
+        // три-четыре на поляну по дальней половине и бокам, — и из них дуб в 2,3 раза крупнее леса.
+        // Вокруг корней и дальше по кромке — папоротники, как подлесок референсов.
+        private void PlaceRootsAndFerns(LayoutMap map)
+        {
+            int root = VariantNamed(RootPrefab), fern = VariantNamed(FernPrefab);
+            if (map.GladeCount == 0 || (root < 0 && fern < 0)) return;
+            var roots = new List<Vector2>();
+            int tree = VariantNamed("MeadowBroadleaf"), ferns = 0;
+            for (int g = 0; g < map.GladeCount && root >= 0; g++)
+            {
+                var rng = DecorRandom(g, 1087);
+                var glade = map.GetGlade(g);
+                var center = TrailPoint(glade.Center);
+                // Гиганты по всей дальней половине кромки и по бокам (референсы 30.09): три-четыре на поляну.
+                int wanted = rng.NextDouble() < .5 ? 4 : 3;
+                for (int attempt = 0; attempt < 90 && wanted > 0; attempt++)
+                {
+                    // От −15° до 195°: вся дальняя от камеры половина и бока. Ближняя дуга свободна —
+                    // крона гиганта там легла бы на бой.
+                    float angle = Mathf.PI * (-.08f + (float)rng.NextDouble() * 1.16f);
+                    float shoulder = _decorRadii[root] * .35f + (float)rng.NextDouble() * 2.5f;
+                    var point = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                        Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                    bool crowded = false;
+                    foreach (var other in roots) crowded |= Vector2.Distance(other, point) < _decorRadii[root] * 1.6f;
+                    // Плотное ядро корней — за краем пола, тонкие кончики могут подходить к самой кромке.
+                    if (crowded || !TryForestDetail(map, root, point, rng, .55f)) continue;
+                    var toward = center - point;
+                    // Корни раскинуты от ствола за краем: «открытая» сторона модели смотрит на поляну.
+                    _decor[_decorCount - 1].rotation = Quaternion.LookRotation(new Vector3(toward.x, 0, toward.y))
+                        * Quaternion.Euler(0, ((float)rng.NextDouble() - .5f) * 40, 0);
+                    // Корни уходят в землю: над травой — изгибы, а не ровный край меша.
+                    _decor[_decorCount - 1].position += Vector3.down * .3f;
+                    AddLandmark(.7f, true);
+                    // Корни — основание дерева: дуб растёт прямо из них, крона нависает над кромкой.
+                    if (tree >= 0)
+                    {
+                        // Ствол позади, со стороны леса: камера смотрит сверху, и крона над серединой
+                        // корней закрыла бы их целиком. Корни выходят из-под кроны к поляне.
+                        var back = point - toward.normalized * _decorRadii[root] * .38f;
+                        SpawnDecor(tree, back.x, back.y, rng);
+                        var trunk = _decor[_decorCount - 1];
+                        // Гигантское дерево: тот же дуб леса, но в 2,3 раза крупнее соседей.
+                        trunk.localScale *= 2.3f;
+                        trunk.position = new Vector3(back.x, BackgroundHeight(map, back.x, back.y) - .08f, back.y);
+                    }
+                    roots.Add(point);
+                    wanted--;
+                }
+            }
+            if (fern < 0) return;
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+                var rng = DecorRandom(g, 1091);
+                var glade = map.GetGlade(g);
+                var center = TrailPoint(glade.Center);
+                // Кусты папоротника у корней: 3–5 вокруг каждого.
+                foreach (var spot in roots)
+                    for (int n = rng.Next(3, 6), attempt = 0; n > 0 && attempt < 30; attempt++)
+                    {
+                        float angle = (float)rng.NextDouble() * Mathf.PI * 2;
+                        float reach = _decorRadii[root] * (.85f + (float)rng.NextDouble() * .5f);
+                        if (TryForestDetail(map, fern, spot + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach, rng, .6f, .8f)) { n--; ferns++; }
+                    }
+                // По кромке — купами по 2–4, со всех сторон, кроме ближней к камере дуги.
+                for (int clump = 0, attempt = 0; clump < 14 && attempt < 90; attempt++)
+                {
+                    float angle = Mathf.PI * (-.1f + (float)rng.NextDouble() * 1.2f);
+                    float shoulder = .5f + (float)rng.NextDouble() * 2.5f;
+                    var anchor = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
+                        Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
+                    int placed = 0;
+                    for (int n = rng.Next(3, 6), tries = 0; n > 0 && tries < 14; tries++)
+                    {
+                        var jitter = new Vector2((float)rng.NextDouble() - .5f, (float)rng.NextDouble() - .5f) * 1.8f;
+                        if (TryForestDetail(map, fern, anchor + jitter, rng, .6f, .75f)) { n--; placed++; ferns++; }
+                    }
+                    if (placed > 0) clump++;
+                }
+            }
+            if (Application.isPlaying) Debug.Log($"[Луга] корни: {roots.Count}, папоротники: {ferns}");
         }
 
         private bool FindPebbles()

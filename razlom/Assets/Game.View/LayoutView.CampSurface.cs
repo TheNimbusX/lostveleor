@@ -35,6 +35,12 @@ namespace Game.View
                 material.SetTexture("_DirtTex", _style.EarthTexture);
                 material.SetFloat("_TileMeters", _style.EarthTileMeters);
                 if (material.HasProperty("_DirtGain")) material.SetFloat("_DirtGain", _style.EarthBrightness);
+                if (material.HasProperty("_DirtTint")) material.SetColor("_DirtTint", _style.EarthTint);
+                if (material.HasProperty("_EarthCracks"))
+                {
+                    material.SetFloat("_EarthCracks", _style.EarthCracks);
+                    material.SetFloat("_CrackMeters", _style.CrackMeters);
+                }
             }
             return material;
         }
@@ -79,6 +85,8 @@ namespace Game.View
                 {
                     inside.Wait();
                     Parallel.For(1, n - 1, y => EarthClearingRow(y, stones));
+                    FilletEarth(2.4f);
+                    Parallel.For(1, n - 1, EarthGrassPatchRow);
                 }
                 FrameCost.Worker("маска земли", start);
             });
