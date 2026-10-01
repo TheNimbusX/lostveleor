@@ -50,7 +50,7 @@ namespace Game.View
             }
         }
 
-        public void StartTempoTest(int[] pool, int preset)
+        public void StartTempoTest(int[] pool, int preset, bool basicComboCandidate = false)
         {
             if (pool == null || pool.Length != 4) throw new System.ArgumentException("Выберите четыре навыка.");
             for (int i = 0; i < 4; i++)
@@ -65,6 +65,7 @@ namespace Game.View
             for (int i = 0; i < 4; i++) loadout.Put(i, pool[i]);
             Run.ApplyLoadout();
             RefreshAbilityBuild();
+            if (basicComboCandidate) Sim.EnablePelagBasicCombo();
             CombatTempoPreset.Apply(Sim, preset);
             Sim.AddTempoMeleeEnemies(4);
             if(CaptureRig.TempoPreset>=0)

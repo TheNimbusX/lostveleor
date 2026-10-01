@@ -289,6 +289,14 @@ namespace Game.View
             string[] args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, EnableFlag) < 0) return;
             Installed = true;
+            // Съёмка идёт без главного меню, а меню — единственное, что запускает время. В 30.09 в TimeManager.asset
+            // случайно записался m_TimeScale: 0, и вся съёмка стояла на первом тике (01.10). Страховка: время идёт всегда.
+            Time.timeScale = 1f;
+            // -capture-style comic|off: комикс-рисовка на этот запуск, без записи в настройки. Без ключа —
+            // выключена, даже если её включили в F8: сравнения «было → стало» не зависят от чужого выбора.
+            ComicStyle.OverrideForSession(ComicStyle.ParseCaptureValue(ReadValue(args, ComicStyle.CaptureFlag)) ?? false);
+            // -capture-mood off|auto|day|mist|dusk|boss|<ось 0…2>: свет арены по глубине так же — на запуск, без ключа выключен.
+            ArenaMood.ApplyCaptureValue(ReadValue(args, ArenaMood.CaptureFlag));
             if (int.TryParse(ReadValue(args, "-capture-hud-tooltip"), out int tooltipSlot)
                 && tooltipSlot >= 0 && tooltipSlot < Simulation.AbilitySlots)
                 HudTooltipSlot = tooltipSlot;
@@ -652,7 +660,7 @@ namespace Game.View
             TickDriver qaDriver = EnemyQa ? FindAnyObjectByType<TickDriver>() : null;
             while ((_recordVideo
                         ? _timelineFrame / (float)_videoFps
-                        : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt) < finish
+                        : (animationClock ? Time.time : Time.unscaledTime - ComicStyleCapture.FrozenSeconds) - combatStartedAt) < finish
                    || mark < _marks.Length || (_campInputCapture != null && !_campInputCapture.Finished))
             {
                 // Тестовая арена пересоздаёт привязку камеры после прогрева.
@@ -664,12 +672,14 @@ namespace Game.View
 
                 float now = _recordVideo
                     ? _timelineFrame++ / (float)_videoFps
-                    : (animationClock ? Time.time : Time.unscaledTime) - combatStartedAt;
+                    // Заморозка ради вариантов комикс-рисовки в часы -Times не идёт.
+                    : (animationClock ? Time.time : Time.unscaledTime - ComicStyleCapture.FrozenSeconds) - combatStartedAt;
                 bool videoFrame = _recordVideo && now >= _videoStart && now < _videoEnd;
                 _audioCapture?.Frame(videoFrame);
                 if (videoFrame) CaptureVideoFrame();
 
-                while (mark < _marks.Length && now >= _marks[mark])
+                // Пока снимаются варианты рисовки прошлого кадра (мир заморожен), следующий кадр ждёт.
+                while (mark < _marks.Length && now >= _marks[mark] && !ComicStyleCapture.Busy)
                 {
                     CaptureStill(mark, _marks[mark]);
                     mark++;
@@ -1073,6 +1083,8 @@ namespace Game.View
             {
                 Destroy(frame);
             }
+            // -capture-comic-variants: тот же миг ещё в нескольких вариантах рисовки (подбор ручек).
+            ComicStyleCapture.AfterStill(path);
         }
 
         private void CaptureVideoFrame()

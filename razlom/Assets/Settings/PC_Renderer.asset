@@ -43,6 +43,55 @@ MonoBehaviour:
       restoreCamera: 1
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
+--- !u!114 &-7682111809185684407
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe26e3f9ffb6460fad9ac8cc9d1b009a, type: 3}
+  m_Name: ComicStyle
+  m_EditorClassIdentifier: Game.View::Game.View.ComicStyleFeature
+  m_Active: 1
+  _styleShader: {fileID: 4800000, guid: 6f79e4ff30dc4885a5c078013451b937, type: 3}
+  _tiltShader: {fileID: 4800000, guid: a83e6b224f5a4f949057b428c68e578d, type: 3}
+  _settings:
+    InkColor: {r: 0.16470589, g: 0.105882354, b: 0.07058824, a: 1}
+    InkOpacity: 1
+    OutlineThickness: 2
+    DepthThreshold: 0.8
+    DepthSoftness: 0.4
+    SmallDepthThreshold: 0.2
+    SmallDepthSoftness: 0.1
+    NormalThreshold: 35
+    NormalSoftness: 10
+    ColourGateLow: 0.05
+    ColourGateHigh: 0.15
+    ToneStrength: 0.45
+    ToneBandStops: 1.25
+    ToneAutoPivot: 1
+    TonePivotScale: 1
+    TonePivot: 0.1
+    ToneHardness: 0.65
+    ShadowWarmth: 0.15
+    ShadowTint: {r: 1, g: 0.78, b: 0.6, a: 1}
+    ShadowSaturation: 0.2
+    Saturation: 1.1
+    Brightness: 1.3
+    HighlightKnee: 0.6
+    PainterlyRadius: 3
+    PainterlyStrength: 0.8
+    PainterlySharpness: 8
+    PainterlyHardness: 8
+    PainterlyHalfResolution: 0
+    TiltShift: 1
+    TiltSharpBand: 0.62
+    TiltStrength: 0.9
+    TiltBlur: 10
+    ApplyInSceneView: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,6 +120,7 @@ MonoBehaviour:
   - {fileID: 7833122117494664109}
   - {fileID: -7773122117494664109}
   - {fileID: 5980501815583861526}
+  - {fileID: -7682111809185684407}
   m_RendererFeatureMap: ad6b866f10d7b46c6f1cf5c5d8fd1f6d
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}

@@ -24,7 +24,10 @@ namespace Game.View
     /// <item>быстрые попадания по одной цели сливаются в одну растущую цифру: каждое новое толкает её,
     /// она крупнеет и теплеет к акценту (DamageNumberRules);</item>
     /// <item>урон по герою — красный «−38», крупнее своего: это потеря;</item>
-    /// <item>цифры одной цели встают короткой лесенкой, а не друг на друга.</item>
+    /// <item>цифры одной цели встают короткой лесенкой, а не друг на друга;</item>
+    /// <item>лечение союзника Корнехватом (событие Heal, ревью 01.10) — зелёная «+N» над вылеченным,
+    /// чуть выше полосы урона; с уроном не сливается, две волны подряд в окне — одна растущая цифра
+    /// (HealNumberRules).</item>
     /// </list>
     /// Настройка «Цифры урона» (GameUserSettings.ShowDamageNumbers) выключает всё, кроме отклика
     /// уклонения. Текст пишется через SetText с числом — без строк в куче на каждое попадание.
@@ -62,6 +65,13 @@ namespace Game.View
 
         [Tooltip("Тик урона по времени — самый мелкий: он фон, а не событие.")]
         public float BurnSize = 0.029f;
+
+        [Tooltip("Лечение союзника: зелень «Волны из корней», светлая — читается на траве и на теле")]
+        public Color HealColor = new Color32(0x9C, 0xE8, 0x6C, 0xFF);
+        [Tooltip("Цифра лечения чуть крупнее обычной: это событие, а не фон")]
+        public float HealSize = 0.04f;
+        [Tooltip("Цифра лечения встаёт выше цифр урона, метры: ближе к полоске, где растёт зелёный отрезок")]
+        public float HealLift = 0.45f;
 
         [Header("Агрегация")]
         [Tooltip("Сколько цифр разрешено видеть одновременно. Удар по площади " +
@@ -128,6 +138,9 @@ namespace Game.View
             /// <summary>Тик урона по времени: самый мелкий и тихий.</summary>
             public bool OverTime;
             public bool Evaded;
+
+            /// <summary>Лечение союзника: зелёная «+N», с уроном не сливается.</summary>
+            public bool Heal;
         }
 
         private Slot[] _slots;
@@ -214,6 +227,12 @@ namespace Game.View
                     Spawn(e);
                     continue;
                 }
+                if (e.Type == SimEventType.Heal)
+                {
+                    // Та же настройка «Цифры урона»: цифры над врагами выключаются все разом.
+                    if (GameUserSettings.ShowDamageNumbers) SpawnHeal(e);
+                    continue;
+                }
                 if (e.Type != SimEventType.Damage && e.Type != SimEventType.DamageOverTime) continue;
                 // «Цифры урона: Выкл» в настройках: урон без цифр, отклик уклонения выше остаётся.
                 if (!GameUserSettings.ShowDamageNumbers) continue;
@@ -242,6 +261,7 @@ namespace Game.View
                 && _slots[existing].Remaining > 0f
                 && _targetOfSlot[existing] == e.Target
                 && !_slots[existing].Evaded
+                && !_slots[existing].Heal
                 && DamageNumberRules.Merges(_slots[existing].SinceHit, window, crit))
             {
                 Merge(existing, in e, playerHit);
@@ -252,17 +272,7 @@ namespace Game.View
             // двадцать цифр не читает никто, а важные тонут вместе с остальными.
             if (_visible >= MaxVisible) return;
 
-            int slot = _next;
-            _next = (_next + 1) % _slots.Length;
-
-            // Слот мог принадлежать другой цели — снимаем старую привязку,
-            // иначе та цель начнёт доливать в чужую цифру.
-            int previousOwner = _targetOfSlot[slot];
-            if (previousOwner >= 0
-                && (uint)previousOwner < (uint)_slotOfTarget.Length
-                && _slotOfTarget[previousOwner] == slot)
-                _slotOfTarget[previousOwner] = -1;
-            _targetOfSlot[slot] = -1;
+            int slot = TakeSlot();
 
             // Позиция берётся из события, а не из текущей позиции цели: цель могла
             // умереть на этом же тике, и её объект уже спрятан.
@@ -297,6 +307,7 @@ namespace Game.View
             s.PlayerHit = playerHit;
             s.OverTime = overTime;
             s.Evaded = evaded;
+            s.Heal = false;
             s.BaseColor = evaded ? EvadeColor : ColorFor(in e, crit, playerHit, overTime);
             WriteValue(ref s);
 
@@ -311,6 +322,82 @@ namespace Game.View
             // Крит и уклонение в серию не встают: следующие удары льются мимо них.
             if (tracked && !crit && !evaded) _slotOfTarget[e.Target] = slot;
             _targetOfSlot[slot] = e.Target;
+            _visible++;
+        }
+
+        /// <summary>
+        /// Следующий слот кольца. Слот мог принадлежать другой цели — снимаем старую привязку,
+        /// иначе та цель начнёт доливать в чужую цифру.
+        /// </summary>
+        private int TakeSlot()
+        {
+            int slot = _next;
+            _next = (_next + 1) % _slots.Length;
+            int previousOwner = _targetOfSlot[slot];
+            if (previousOwner >= 0
+                && (uint)previousOwner < (uint)_slotOfTarget.Length
+                && _slotOfTarget[previousOwner] == slot)
+                _slotOfTarget[previousOwner] = -1;
+            _targetOfSlot[slot] = -1;
+            return slot;
+        }
+
+        /// <summary>
+        /// Зелёная «+N» над вылеченным союзником. Висящая «+N» той же цели в окне слияния
+        /// растёт и толкается (HealNumberRules), с цифрами урона не смешивается. Потолок видимых
+        /// цифр лечение не режет: волн лечения единицы за бой, и каждая — сигнал «добивай лекаря».
+        /// </summary>
+        private void SpawnHeal(in SimEvent e)
+        {
+            int target = e.Target;
+            if (e.Amount <= 0 || target == Simulation.PlayerId) return;
+
+            for (int k = 0; k < _slots.Length; k++)
+            {
+                ref Slot live = ref _slots[k];
+                if (!live.Heal || live.Remaining <= 0f || _targetOfSlot[k] != target
+                    || !HealNumberRules.Merges(live.SinceHit)) continue;
+                live.Value = HealNumberRules.Add(live.Value, e.Amount);
+                live.Hits++;
+                WriteValue(ref live);
+                live.Remaining = Lifetime * 1.3f;
+                live.SinceHit = 0f;
+                live.BumpAge = 0f;
+                live.Velocity = Vector3.up * (RiseSpeed * .45f);
+                return;
+            }
+
+            int slot = TakeSlot();
+            Vector3 at = new Vector3(e.Position.X.ToFloat(), SpawnHeight + HealLift, e.Position.Y.ToFloat());
+            at += HorizontalJitter(target, _driver.Sim.Tick) * .5f;
+            if (_camera != null && target >= 0)
+            {
+                DamageNumberRules.Stack(LiveCountFor(target), StackStep, out float sx, out float sy);
+                at += _camera.up * sy + _camera.right * sx;
+            }
+
+            ref Slot s = ref _slots[slot];
+            s.Transform.gameObject.SetActive(true);
+            s.Transform.position = at;
+            if (_camera != null) s.Transform.rotation = _camera.rotation;
+            s.Value = e.Amount;
+            s.Hits = 1;
+            s.Crit = false;
+            s.PlayerHit = false;
+            s.OverTime = false;
+            s.Evaded = false;
+            s.Heal = true;
+            s.BaseColor = HealColor;
+            WriteValue(ref s);
+            // Лечение держится чуть дольше удара: его читают вместе с ростом полоски.
+            s.Remaining = Lifetime * 1.3f;
+            s.Age = 0f;
+            s.SinceHit = 0f;
+            s.BumpAge = BumpTime;
+            s.Velocity = Vector3.up * (RiseSpeed * .8f);
+            s.Angle = 0f;
+            s.Transform.localScale = Vector3.zero;
+            _targetOfSlot[slot] = target;
             _visible++;
         }
 
@@ -354,10 +441,11 @@ namespace Game.View
             // Кадр 1a: у урона по врагам минуса нет, у урона по герою — «−38» (настоящий минус
             // U+2212 есть в Nunito). SetText с числом не создаёт строку на каждое попадание.
             if (s.Evaded) s.Text.SetText("УКЛОНЕНИЕ");
+            else if (s.Heal) s.Text.SetText(HealNumberRules.Text(s.Value));
             else if (s.PlayerHit) s.Text.SetText("−{0}", s.Value);
             else s.Text.SetText("{0}", s.Value);
 
-            s.Size = s.Evaded ? NormalSize * .8f : s.PlayerHit ? PlayerHitSize
+            s.Size = s.Evaded ? NormalSize * .8f : s.Heal ? HealSize : s.PlayerHit ? PlayerHitSize
                 : s.Crit ? CritSize
                 : s.OverTime ? BurnSize
                 : NormalSize;
@@ -390,7 +478,7 @@ namespace Game.View
         /// </summary>
         private Color DisplayColor(in Slot s)
         {
-            if (s.PlayerHit || s.Crit || s.Evaded || s.OverTime) return s.BaseColor;
+            if (s.PlayerHit || s.Crit || s.Evaded || s.OverTime || s.Heal) return s.BaseColor;
             float warmth = DamageNumberRules.MergedWarmth(s.Hits);
             return warmth > 0f ? Color.Lerp(s.BaseColor, CritColor, warmth) : s.BaseColor;
         }

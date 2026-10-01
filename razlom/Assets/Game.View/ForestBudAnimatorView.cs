@@ -22,8 +22,13 @@ namespace Game.View
         // Поверх залпа и шага реакция идёт слоем «Hit Additive» и слабее: фаза
         // атаки, сокеты плодов и поступь лап не прерываются.
         private const float HitOverAttackWeight = .55f, HitOverWalkWeight = .8f;
+        // Разворот на месте: полный цикл шага на 150° поворота корпуса (как у Шипомёта).
+        private const float TurnDegreesPerCycle = 150f;
         private Animator _animator;
         private TickDriver _driver;
+        private ArenaView _arena;
+        private Vector3 _lastBody;
+        private EnemyTurnSteps _turnSteps;
         private int _entity, _state, _hitLayer = -1;
         private bool _dead, _hasHitState, _hitAdditive;
         private float _clock, _reloadAt, _walkPhase, _hitClock, _hitWeight;
@@ -45,6 +50,8 @@ namespace Game.View
         {
             _driver = driver; _entity = entity; _dead = false; _state = Idle; _clock = _reloadAt = _walkPhase = 0f;
             _hitClock = HitSeconds; _hitAdditive = false;
+            _arena = driver != null ? driver.GetComponent<ArenaView>() : null;
+            _lastBody = Vector3.zero; _turnSteps.Reset();
             _animator.Rebind(); _animator.speed = 1f;
             // Старый контроллер без Hit не ломает моба: реакции просто нет.
             _hasHitState = _animator.HasState(0, Hit);
@@ -71,6 +78,12 @@ namespace Game.View
             if (!sim.Entities.Alive[_entity]) { PlayDeath(); return; }
             bool attacking = sim.TryGetForestBudAttack(_entity, out var attack);
             float speed = sim.Entities.Velocity[_entity].Length.ToFloat() * Simulation.TicksPerSecond;
+            // Показанное тело (ArenaView, EnemyBodyFacingRules): вбок бутон идёт телом по ходу,
+            // назад — спиной по ходу. От него и «вперёд/назад» ног, и разворот на месте.
+            Vector3 body = _arena != null ? _arena.BodyFacing(_entity) : Vector3.zero;
+            float yaw = body.sqrMagnitude > .5f && _lastBody.sqrMagnitude > .5f
+                ? Vector3.SignedAngle(_lastBody, body, Vector3.up) : 0f;
+            if (body.sqrMagnitude > .5f) _lastBody = body;
             if (_hitClock >= HitRetrigger && TookHitThisFrame())
             {
                 _hitClock = 0f;
@@ -88,22 +101,31 @@ namespace Game.View
                     / Mathf.Max(1, attack.EndTick - attack.StartTick));
                 _animator.SetFloat(AttackPhase, phase);
                 Enter(Attack, .10f);
+                _turnSteps.Reset();
                 _animator.speed = 1f;
                 SetLoadedFruits(attack.ShotsFired);
             }
             else
             {
                 if (_state == Attack) _reloadAt = _clock + .2f;
-                if (hitActive && !_hitAdditive) Enter(Hit, .04f);
+                if (hitActive && !_hitAdditive) { _turnSteps.Reset(); Enter(Hit, .04f); }
                 else
                 {
                     var velocity = sim.Entities.Velocity[_entity];
                     var facing = sim.Entities.Facing[_entity];
-                    bool backward = (velocity.X * facing.X + velocity.Y * facing.Y).Raw < 0;
+                    // «Назад» — от показанного тела, а не от взгляда Sim: тело, развёрнутое по
+                    // ходу вбок, идёт вперёд, хотя взгляд Sim смотрит на героя.
+                    bool backward = body.sqrMagnitude > .5f
+                        ? velocity.X.ToFloat() * body.x + velocity.Y.ToFloat() * body.z < 0f
+                        : (velocity.X * facing.X + velocity.Y * facing.Y).Raw < 0;
                     // При отходе назад не переворачиваем весь Animator: сохраняем фазу опоры лап.
                     _walkPhase += (backward ? -1f : 1f) * speed / .90f * Time.deltaTime / (32f / 30f);
+                    // Стоит, а корпус крутится (доворот к герою, разворот после хода) — ноги переступают.
+                    bool turning = speed <= .025f
+                                   && _turnSteps.Step(yaw, Time.deltaTime, TurnDegreesPerCycle, ref _walkPhase);
+                    if (speed > .025f) _turnSteps.Reset();
                     _animator.SetFloat(WalkPhase, _walkPhase - Mathf.Floor(_walkPhase));
-                    Enter(speed > .025f ? Walk : Idle, .14f);
+                    Enter(speed > .025f || turning ? Walk : Idle, .14f);
                 }
                 _animator.speed = 1f;
                 if (_clock >= _reloadAt) SetLoadedFruits(0);

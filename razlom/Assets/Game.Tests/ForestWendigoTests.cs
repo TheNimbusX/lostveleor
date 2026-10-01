@@ -21,9 +21,10 @@ namespace Game.Tests
             return sim;
         }
         private static void Until(Simulation sim,int tick){while(sim.Tick<tick)sim.Step(InputFrame.Empty);}
-        // Коготь 26 и прыжок 34 — таблица видов (стенд, проход 2), а не литералы.
-        [TestCase(2,WendigoAction.Claw,18,26)]
-        [TestCase(6,WendigoAction.Leap,33,34)]
+        // Коготь 60 и прыжок 64 — таблица видов (ревью владельца 01.10; до того
+        // 26 и 34 со стенда, проход 2), на первой арене — без роста глубины.
+        [TestCase(2,WendigoAction.Claw,18,60)]
+        [TestCase(6,WendigoAction.Leap,33,64)]
         public void OneContactAtAuthoredTick(int distance,WendigoAction kind,int contact,int damage)
         {
             var sim=Arena(distance);int start=sim.Tick;int health=sim.Entities.Health[0];var impacts=new List<int>();
@@ -137,8 +138,9 @@ namespace Game.Tests
         // Урон Вендиго растёт вместе с листом статов: глубина, «Сложно» и
         // ярость меняют Damage, и коготь с прыжком обязаны это увидеть.
         // Раньше здесь стояли литералы 45/60 — на восьмой арене как на первой.
-        [TestCase(100,26,34)]
-        [TestCase(172,45,59)]
+        // 172% — десятая арена: коготь 60 × 1,72 = 103,2 → 103, прыжок 103 × 64/60 = 109,9 → 110.
+        [TestCase(100,60,64)]
+        [TestCase(172,103,110)]
         public void ClawAndLeapDamageComeFromStatsAndScale(int percent,int claw,int leap)
         {
             foreach(var distance in new[]{2,6})
@@ -313,7 +315,7 @@ namespace Game.Tests
             }
             Assert.That(contacts,Is.EqualTo(hit?new[]{a.ImpactTick}:new int[0]));
             Assert.That(health-sim.Entities.Health[0],Is.EqualTo(hit?EnemyArchetypes.WendigoHowlDamage:0));
-            Assert.That(sim.WendigoHowlDamageOf(1),Is.EqualTo(30));
+            Assert.That(sim.WendigoHowlDamageOf(1),Is.EqualTo(26),"вой 30 → 26 (ревью 01.10: «аоешками меньше»)");
         }
 
         [Test]
@@ -494,6 +496,66 @@ namespace Game.Tests
                 Assert.That(a.StateHash(),Is.EqualTo(b.StateHash()),"tick "+tick);
             }
             Assert.That(a.Entities.Health[0],Is.LessThan(a.Entities.MaxHealth[0]),"вой должен был попасть");
+        }
+
+        // ---- ревью владельца 01.10: живой бой на аренах Вендиго ----
+
+        /// <summary>
+        /// Эталонный герой (270, без брони) и Вендиго арены arena — стенд вида,
+        /// та же строка таблицы и рост глубины, что в забеге. Зверь не ходит;
+        /// прыжок и вой выключены, если не сказано иное.
+        /// </summary>
+        private static Simulation ReferenceDuel(int arena, int distance, bool leapReady)
+        {
+            var sim = new Simulation(55, 64);
+            sim.ApplyHeroBaseline();
+            sim.SetupKindTestArena(EnemyKind.ForestWendigo, 1, arena: arena, distance: Fix64.FromInt(distance));
+            // База локации (MeadowGameplay → Player Health) + прибавка базы героя = 270.
+            sim.Entities.Stats[0].SetBase(StatType.MaxHealth,
+                Fix64.FromInt(Progression.ReferenceHeroHealth - Progression.HeroBaselineHealth));
+            sim.Entities.RefreshStats(0); sim.Entities.Health[0] = sim.Entities.MaxHealth[0];
+            Assert.That(sim.Entities.MaxHealth[0], Is.EqualTo(Progression.ReferenceHeroHealth));
+            Assert.That(sim.Entities.Armor[0], Is.EqualTo(Fix64.Zero));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(sim.Entities.MaxHealth[0]));
+            sim.Entities.Stats[1].SetBase(StatType.MoveSpeed, Fix64.Zero); sim.Entities.RefreshStats(1);
+            sim.SetWendigoCooldowns(1, leapReady ? 0 : 100000, 100000);
+            return sim;
+        }
+
+        /// <summary>«Он должен нас убивать размахом перед собой за 3-4 удара» — на А5–А7 четыре, на А8 три.</summary>
+        [TestCase(5, 4)]
+        [TestCase(6, 4)]
+        [TestCase(7, 4)]
+        [TestCase(8, 3)]
+        public void ClawKillsTheReferenceHeroInThreeToFourHits(int arena, int expected)
+        {
+            var sim = ReferenceDuel(arena, 2, leapReady: false);
+            var claws = new List<int>();
+            for (int t = 0; t < 600 && sim.Entities.Alive[0]; t++)
+            {
+                sim.Step(InputFrame.Empty);
+                foreach (var e in sim.Events)
+                    if (e.Type == SimEventType.Damage && e.Source == 1 && e.Target == 0) claws.Add(e.Amount);
+            }
+            TestContext.WriteLine("А" + arena + ": когти " + string.Join(", ", claws));
+            Assert.That(sim.Entities.Alive[0], Is.False, "герой пережил " + claws.Count + " когтей");
+            Assert.That(claws.Count, Is.EqualTo(expected));
+            Assert.That(claws.Count, Is.InRange(3, 4), "правило владельца: 3–4 удара");
+            foreach (int amount in claws) Assert.That(amount, Is.EqualTo(sim.WendigoClawDamageOf(1)));
+        }
+
+        /// <summary>«Прыжком если попадает — 1/3 хп должен сносить»: на А6 — ровно 90 из 270.</summary>
+        [Test]
+        public void LeapTakesAThirdOfTheReferenceHero_OnArenaSix()
+        {
+            var sim = ReferenceDuel(6, 5, leapReady: true);
+            sim.Step(InputFrame.Empty);
+            Assert.That(sim.TryGetWendigoAction(1, out var leap), Is.True);
+            Assert.That(leap.Kind, Is.EqualTo(WendigoAction.Leap));
+            while (sim.Tick <= leap.ImpactTick) sim.Step(InputFrame.Empty);
+            int lost = sim.Entities.MaxHealth[0] - sim.Entities.Health[0];
+            Assert.That(lost, Is.EqualTo(90));
+            Assert.That(lost * 3, Is.EqualTo(Progression.ReferenceHeroHealth), "ровно треть героя");
         }
     }
 }

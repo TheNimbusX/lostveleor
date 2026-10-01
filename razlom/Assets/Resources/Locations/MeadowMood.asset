@@ -1,0 +1,178 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b39a1b689a349edb42b0808352f8b6a, type: 3}
+  m_Name: MeadowMood
+  m_EditorClassIdentifier: Game.View::Game.View.ArenaMoodProfile
+  Day:
+    SunColor: {r: 1, g: 0.9, b: 0.68, a: 1}
+    SunIntensityScale: 1.4
+    SunPitch: 0
+    SunShadowStrength: 0.8
+    FillColor: {r: 0.55, g: 0.62, b: 0.8, a: 1}
+    FillIntensity: 0.1
+    AmbientSky: {r: 0.52, g: 0.6, b: 0.62, a: 1}
+    AmbientEquator: {r: 0.42, g: 0.45, b: 0.36, a: 1}
+    AmbientGround: {r: 0.2, g: 0.19, b: 0.12, a: 1}
+    SpotStrength: 0.15
+    DappleStrength: 0.35
+    DappleInside: 0.25
+    EdgeShade: 1
+    Exposure: 0.25
+    Contrast: 10
+    Saturation: 0
+    Temperature: 10
+    Tint: 3
+    ShadowsTone: {x: 1, y: 1, z: 1, w: 0}
+    HighlightsTone: {x: 1, y: 0.94, z: 0.82, w: 0.02}
+    BloomIntensity: 0.35
+    BloomThreshold: 1
+    VignetteColor: {r: 0.22, g: 0.14, b: 0.06, a: 1}
+    VignetteIntensity: 0.1
+    ComicAmount: 0
+    ComicInk: {r: 0.16470588, g: 0.10588235, b: 0.070588235, a: 1}
+    ComicInkOpacity: 1
+    ComicShadowTint: {r: 1, g: 0.78, b: 0.6, a: 1}
+    ComicShadowWarmth: 0.15
+    ComicTonePivotScale: 1
+    ComicTiltStrength: 0.9
+    HazeDensity: 0
+    HazeColor: {r: 0.95, g: 0.86, b: 0.62, a: 1}
+    HazeDrift: 0
+    BeamCount: 0
+    BeamIntensity: 0
+    PollenCount: 80
+    PollenColor: {r: 1, g: 0.93, b: 0.7, a: 1}
+    FireflyCount: 0
+    FireflyColor: {r: 1.6, g: 1.4, b: 0.5, a: 1}
+    LanternCount: 0
+    LanternColor: {r: 1, g: 0.78, b: 0.45, a: 1}
+    LanternIntensity: 2.5
+    LanternRange: 5.5
+    WispColor: {r: 0.5, g: 0.9, b: 1, a: 1}
+    WispAlpha: 1
+  Mist:
+    SunColor: {r: 1, g: 0.92, b: 0.74, a: 1}
+    SunIntensityScale: 1.3
+    SunPitch: 0
+    SunShadowStrength: 0.85
+    FillColor: {r: 0.45, g: 0.62, b: 0.7, a: 1}
+    FillIntensity: 0.16
+    AmbientSky: {r: 0.32, g: 0.44, b: 0.48, a: 1}
+    AmbientEquator: {r: 0.18, g: 0.27, b: 0.28, a: 1}
+    AmbientGround: {r: 0.07, g: 0.1, b: 0.1, a: 1}
+    SpotStrength: 0.75
+    DappleStrength: 0.45
+    DappleInside: 0.3
+    EdgeShade: 1.5
+    Exposure: 0.25
+    Contrast: 12
+    Saturation: 0
+    Temperature: -2
+    Tint: -4
+    ShadowsTone: {x: 0.66, y: 0.9, z: 1, w: 0}
+    HighlightsTone: {x: 1, y: 0.95, z: 0.82, w: 0.02}
+    BloomIntensity: 0.3
+    BloomThreshold: 1.02
+    VignetteColor: {r: 0.06, g: 0.16, b: 0.16, a: 1}
+    VignetteIntensity: 0.22
+    ComicAmount: 1
+    ComicInk: {r: 0.090196078, g: 0.1372549, b: 0.13333333, a: 1}
+    ComicInkOpacity: 1
+    ComicShadowTint: {r: 0.75, g: 0.9, b: 1, a: 1}
+    ComicShadowWarmth: 0.18
+    ComicTonePivotScale: 1
+    ComicTiltStrength: 0.7
+    HazeDensity: 0.85
+    HazeColor: {r: 0.55, g: 0.72, b: 0.74, a: 1}
+    HazeDrift: 0.06
+    BeamCount: 3
+    BeamIntensity: 0.1
+    PollenCount: 60
+    PollenColor: {r: 0.98, g: 0.92, b: 0.7, a: 1}
+    FireflyCount: 0
+    FireflyColor: {r: 1.6, g: 1.4, b: 0.5, a: 1}
+    LanternCount: 0
+    LanternColor: {r: 1, g: 0.78, b: 0.45, a: 1}
+    LanternIntensity: 2.5
+    LanternRange: 5.5
+    WispColor: {r: 0.6, g: 0.9, b: 0.95, a: 1}
+    WispAlpha: 0.8
+  Dusk:
+    SunColor: {r: 1, g: 0.72, b: 0.5, a: 1}
+    SunIntensityScale: 1.25
+    SunPitch: 0
+    SunShadowStrength: 0.7
+    FillColor: {r: 0.38, g: 0.52, b: 0.95, a: 1}
+    FillIntensity: 0.25
+    AmbientSky: {r: 0.2, g: 0.3, b: 0.5, a: 1}
+    AmbientEquator: {r: 0.1, g: 0.18, b: 0.3, a: 1}
+    AmbientGround: {r: 0.04, g: 0.07, b: 0.1, a: 1}
+    SpotStrength: 0.9
+    DappleStrength: 0.2
+    DappleInside: 0.2
+    EdgeShade: 1.7
+    Exposure: 0.25
+    Contrast: 8
+    Saturation: 5
+    Temperature: -8
+    Tint: -12
+    ShadowsTone: {x: 0.56, y: 0.76, z: 1, w: -0.02}
+    HighlightsTone: {x: 1, y: 0.85, z: 0.62, w: 0.03}
+    BloomIntensity: 0.45
+    BloomThreshold: 1
+    VignetteColor: {r: 0.04, g: 0.06, b: 0.14, a: 1}
+    VignetteIntensity: 0.26
+    ComicAmount: 1
+    ComicInk: {r: 0.070588235, g: 0.094117647, b: 0.14901961, a: 1}
+    ComicInkOpacity: 1
+    ComicShadowTint: {r: 0.6, g: 0.68, b: 1, a: 1}
+    ComicShadowWarmth: 0.22
+    ComicTonePivotScale: 1.15
+    ComicTiltStrength: 0.8
+    HazeDensity: 0.45
+    HazeColor: {r: 0.16, g: 0.22, b: 0.32, a: 1}
+    HazeDrift: 0.04
+    BeamCount: 0
+    BeamIntensity: 0
+    PollenCount: 0
+    PollenColor: {r: 1, g: 0.93, b: 0.7, a: 1}
+    FireflyCount: 50
+    FireflyColor: {r: 1.6, g: 1.4, b: 0.5, a: 1}
+    LanternCount: 5
+    LanternColor: {r: 1, g: 0.66, b: 0.3, a: 1}
+    LanternIntensity: 2.5
+    LanternRange: 5.5
+    WispColor: {r: 1, g: 0.85, b: 0.45, a: 1}
+    WispAlpha: 0.6
+  DepthBlend:
+  - 0
+  - 0
+  - 0.15
+  - 0.7
+  - 1
+  - 1.3
+  - 1.85
+  - 2
+  - 2
+  BossAccent:
+    SpotStrength: 0.06
+    EdgeShade: 0.1
+    VignetteIntensity: 0.03
+    HazeDensity: 0.05
+    LanternCount: 1
+  SpotInnerField: 0.45
+  SpotOuterField: 1.05
+  DappleScale: 3.2
+  CookieMargin: 30
+  EdgeRingInner: -2
+  EdgeRingOuter: 18
+  VolumePriority: 25

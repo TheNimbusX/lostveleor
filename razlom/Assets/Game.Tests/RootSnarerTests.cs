@@ -19,7 +19,8 @@ namespace Game.Tests
     /// ни удара, ни каста, ни кувырка, но отброс доезжает. После любого
     /// контроля 45 тиков иммунитета: цепочки нет.
     ///
-    /// «Волна из корней» (27.09): лечит 10% здоровья союзника (элите 5%), не
+    /// «Волна из корней» (27.09): лечит 15% здоровья союзника (элите 7,5%;
+    /// ревью владельца 01.10 — было 10% и 5%), не
     /// выше недостающего; ни себя, ни других Корнехватов; одного союзника —
     /// не чаще раза в 240 тиков, сколько бы Корнехватов ни было; оглушение
     /// или урон от 15% за 30 тиков сбора сбивают, и следующее — через 150;
@@ -984,17 +985,18 @@ namespace Game.Tests
         }
 
         [Test]
-        public void MendHealsTenPercent_FiveForElites_CappedAtTheMissingHealth()
+        public void MendHealsFifteenPercent_HalfForElites_CappedAtTheMissingHealth()
         {
             Assert.AreEqual(Fix64.FromInt(5), Simulation.RootSnarerMendRadius);
 
             // Герой далеко: удара нет, только лечение.
             var sim = Arena(20);
-            int hurt = Ally(sim, At(20, 3), 70);          // 700 → +100
+            // Ревью владельца 01.10: «хил сильнее — 15% за один хил» (было 10%, элите 5%).
+            int hurt = Ally(sim, At(20, 3), 70);          // 700 → +150
             int scratched = Ally(sim, At(22, 2), 96);     // 960 → +40: не выше недостающего
-            int elite = Ally(sim, At(18, 2), 60);         // 600 → +50
+            int elite = Ally(sim, At(18, 2), 60);         // 600 → +75: вполовину
             sim.MarkElite(elite);
-            int wendigo = Ally(sim, At(20, -3), 50, 4000, EnemyKind.ForestWendigo);  // 2000 → +200
+            int wendigo = Ally(sim, At(20, -3), 50, 4000, EnemyKind.ForestWendigo);  // 2000 → +300
             int full = Ally(sim, At(17, -1), 100);        // полному — ничего
             int far = Ally(sim, At(27, 0), 50);           // 7 м — вне волны
 
@@ -1049,14 +1051,15 @@ namespace Game.Tests
             }
             Assert.AreEqual(1, impacts);
             Assert.AreEqual(4, healed.Count);
-            Assert.AreEqual(100, healed[hurt]);
+            Assert.AreEqual(150, healed[hurt], "15% максимума за одну волну");
             Assert.AreEqual(40, healed[scratched]);
-            Assert.AreEqual(50, healed[elite]);
-            Assert.AreEqual(200, healed[wendigo]);
-            Assert.AreEqual(800, sim.Entities.Health[hurt]);
+            Assert.AreEqual(75, healed[elite], "элите — вполовину, 7,5%");
+            Assert.AreEqual(300, healed[wendigo], "Вендиго — как элите");
+            Assert.AreEqual(150, sim.Entities.MaxHealth[hurt] * Simulation.RootSnarerMendPerMille / 1000);
+            Assert.AreEqual(850, sim.Entities.Health[hurt]);
             Assert.AreEqual(1000, sim.Entities.Health[scratched]);
-            Assert.AreEqual(650, sim.Entities.Health[elite]);
-            Assert.AreEqual(2200, sim.Entities.Health[wendigo]);
+            Assert.AreEqual(675, sim.Entities.Health[elite]);
+            Assert.AreEqual(2300, sim.Entities.Health[wendigo]);
             Assert.AreEqual(1000, sim.Entities.Health[full]);
             Assert.AreEqual(500, sim.Entities.Health[far]);
             Assert.AreEqual(120, sim.LastMendTick(hurt));
@@ -1210,7 +1213,7 @@ namespace Game.Tests
                 if (HasEvent(sim, SimEventType.EnemyActionCancelled, EnemyActionKind.SnarerMend)) cutAt = sim.Tick - 1;
             }
             Assert.AreEqual(breaks, cutAt >= 0);
-            Assert.AreEqual(breaks ? 700 : 800, sim.Entities.Health[guardian]);
+            Assert.AreEqual(breaks ? 700 : 850, sim.Entities.Health[guardian]);
             if (!breaks) return;
             Assert.AreEqual(a.StartTick + (first >= 98 ? 5 : 20), cutAt);
             Assert.AreEqual(cutAt + Simulation.RootSnarerMendCancelCooldownTicks, sim.RootSnarerNextMendTick(Snarer));
@@ -1240,7 +1243,7 @@ namespace Game.Tests
                 if (sim.TryGetRootSnarerAction(Snarer, out var s))
                     Assert.AreEqual(RootSnarerAction.Mend, s.Action, "удар раньше тишины, тик " + (sim.Tick - 1));
             }
-            Assert.AreEqual(800, sim.Entities.Health[guardian]);
+            Assert.AreEqual(850, sim.Entities.Health[guardian]);
             sim.Step(InputFrame.Empty);
             Assert.IsTrue(sim.TryGetRootSnarerAction(Snarer, out var slam));
             Assert.AreEqual(RootSnarerAction.Slam, slam.Action);
@@ -1310,7 +1313,7 @@ namespace Game.Tests
             Assert.LessOrEqual((sim.Entities.Position[guardian] - at).Length.ToDouble(), 2.5 + 1e-3);
             Assert.Greater(at.Y.ToDouble() - from.Y.ToDouble(), 1.5, "шёл к союзнику, а не к герою");
             Until(sim, a.ImpactTick + 1);
-            Assert.AreEqual(800, sim.Entities.Health[guardian]);
+            Assert.AreEqual(850, sim.Entities.Health[guardian]);
         }
 
         [Test]

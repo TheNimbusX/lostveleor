@@ -13,6 +13,7 @@
     <Compile Include="../../razlom/Assets/Game.View/HudAbilityAvailability.cs" Link="HudAbilityAvailability.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorHeadDynamics.cs" Link="AnchorHeadDynamics.cs" />
     <Compile Include="../../razlom/Assets/Game.View/AnchorChainSolver.cs" Link="AnchorChainSolver.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagBasicAttackTiming.cs" Link="PelagBasicAttackTiming.cs" />
     <Compile Include="../../razlom/Assets/Game.View/EliteBarLayout.cs" Link="EliteBarLayout.cs" />
     <Compile Include="../../razlom/Assets/Game.View/MobSoundBank.cs" Link="MobSoundBank.cs" />
     <Compile Include="../../razlom/Assets/Game.View/CombatMusicDirector.cs" Link="CombatMusicDirector.cs" />
@@ -35,6 +36,8 @@
     <Compile Include="../../razlom/Assets/Game.View/SabreTalentTexts.cs" Link="SabreTalentTexts.cs" />
     <!-- Урон и отклик удара (этап 4, кадр 1a): кромка со стороны удара, виньетка, микростоп, след урона полосок, слияние и лесенка цифр. -->
     <Compile Include="../../razlom/Assets/Game.View/HeroHitFeedbackRules.cs" Link="HeroHitFeedbackRules.cs" />
+    <!-- Лечение Корнехвата (ревью 01.10): зелёный отрезок на полоске врага, вспышка, «+N». -->
+    <Compile Include="../../razlom/Assets/Game.View/HealFeedbackRules.cs" Link="HealFeedbackRules.cs" />
     <!-- Экраны забега (этап 4, кадры 1a/3a/4): засечки босса, монеты в строку добычи, блок ввода, сравнение «было → станет», итоги. -->
     <Compile Include="../../razlom/Assets/Game.View/RunHudBossMarks.cs" Link="RunHudBossMarks.cs" />
     <Compile Include="../../razlom/Assets/Game.View/RunHudCoins.cs" Link="RunHudCoins.cs" />
@@ -46,6 +49,14 @@
     <!-- Тлеющие метки у края экрана и пунктир дуги превью (этап 4, кадр 2a): проекция на край, панели HUD, слияние, подпись. -->
     <Compile Include="../../razlom/Assets/Game.View/WorldEdgeMarksLayout.cs" Link="WorldEdgeMarksLayout.cs" />
     <Compile Include="../../razlom/Assets/Game.View/HudRangePreviewArc.cs" Link="HudRangePreviewArc.cs" />
+    <!-- Комикс-рисовка мира (проба 01.10): пределы настроек, ступени тона, толщина туши, вес диорамы. -->
+    <Compile Include="../../razlom/Assets/Game.View/ComicStyleRules.cs" Link="ComicStyleRules.cs" />
+    <!-- Свет арены по глубине (световая арка акта I, 01.10): ось по аренам, веса пресетов, ключ съёмки, пятно поляны. -->
+    <Compile Include="../../razlom/Assets/Game.View/ArenaMoodRules.cs" Link="ArenaMoodRules.cs" />
+    <!-- Жизнь в кадре света арены (01.10): кольца дымки, лучи в верхней трети, пыльца и светлячки у кромки, фонари. -->
+    <Compile Include="../../razlom/Assets/Game.View/ArenaMoodFxRules.cs" Link="ArenaMoodFxRules.cs" />
+    <!-- «Лунная походка» мобов (ревью 01.10): тело по ходу, в действии — по взгляду Sim; сцена толпы CrowdStepHashPinTests. -->
+    <Compile Include="../../razlom/Assets/Game.View/EnemyBodyFacingRules.cs" Link="EnemyBodyFacingRules.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

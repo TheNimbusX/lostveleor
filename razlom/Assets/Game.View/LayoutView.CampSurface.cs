@@ -169,7 +169,7 @@ namespace Game.View
                 if (shade <= 0) continue;
                 var pixel = _campSurfacePixels[i];
                 pixel.r = (byte)Mathf.Max(pixel.r, litter * 118);
-                pixel.b = (byte)Mathf.Min(pixel.b, (1 - shade * .45f) * 255);
+                pixel.b = (byte)Mathf.Min(pixel.b, Mathf.Max(0f, 1 - shade * .45f * ArenaMood.EdgeShade) * 255); // свет арены: 1 — как было
                 pixel.a = (byte)(pixel.a * (1 - shade * .6f));
                 float rim = Mathf.Min(Mathf.Min(x, n - 1 - x), Mathf.Min(y, n - 1 - y)) / (float)n;
                 float toDeep = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(blend, 0, rim)) * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(3, 8, dist[i]));

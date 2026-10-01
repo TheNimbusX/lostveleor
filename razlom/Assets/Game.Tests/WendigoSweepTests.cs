@@ -7,9 +7,15 @@ namespace Game.Tests
     /// <summary>
     /// Решения владельца от 29.09 по Вендиго и Шипомёту:
     /// • обоих нельзя толкать — вес 0: расталкивание их не сдвигает, волок не берёт;
-    /// • «круг когтей» Вендиго — ответ на кружение: герой ≥30 из последних 45
+    /// • «круг когтей» Вендиго — ответ на кружение: герой ≥14 из последних 18
     ///   тиков в 3 м, но вне конуса когтя (±70°) — замах 21 тик, круг 3,2 м на
-    ///   земле (общая метка), урон когтя, отброс на 2 м, перезарядка 180 тиков.
+    ///   земле (общая метка), своя доля когтя, отброс на 2 м, перезарядка 180 тиков.
+    ///
+    /// Ревью владельца 01.10 («поздно срабатывает АОЕ вокруг себя, когда мы его
+    /// начинаем закручивать»): было 30 из 45 тиков, и круг ждал паузы после
+    /// когтя. Теперь окно 14 из 18 (0,47 с), паузу когтя круг не ждёт, а стойку
+    /// когтя после контакта перебивает; замах когтя — нет. Один кувырок мимо
+    /// окна не набирает. Урон круга — 22/60 когтя («аоешками меньше урона»).
     /// </summary>
     public sealed class WendigoSweepTests
     {
@@ -149,7 +155,9 @@ namespace Game.Tests
             }
             Assert.That(clawed, Is.True, "сначала зверь бьёт когтем — герой уходит за спину");
             Assert.That(started, Is.True, "кружащий герой не дождался круга");
-            Assert.That(sweep.StartTick, Is.LessThanOrEqualTo(2 * Simulation.WendigoClawCycleTicks));
+            // Коготь начат на тике 0 и бьёт на 18-м; круг перебивает его стойку
+            // на следующем тике после контакта — а не через цикл когтя (45), как до 01.10.
+            Assert.That(sweep.StartTick, Is.EqualTo(Simulation.WendigoClawWindupTicks + 1));
 
             // Замах 21 тик, круг 3,2 м под самим зверем — общая метка на земле.
             Assert.That(sweep.ImpactTick - sweep.StartTick, Is.EqualTo(21));
@@ -185,7 +193,9 @@ namespace Game.Tests
             }
             Assert.That(impacts, Is.EqualTo(1));
             Assert.That(health - sim.Entities.Health[0], Is.EqualTo(sim.WendigoSweepDamageOf(W)));
-            Assert.That(sim.WendigoSweepDamageOf(W), Is.EqualTo(sim.WendigoClawDamageOf(W)), "урон круга — урон когтя");
+            Assert.That(sim.WendigoSweepDamageOf(W), Is.EqualTo(EnemyArchetypes.WendigoShare(
+                sim.WendigoClawDamageOf(W), EnemyArchetypes.WendigoSweepDamage)), "урон круга — доля когтя 22/60");
+            Assert.That(sim.WendigoSweepDamageOf(W) * 2, Is.LessThan(sim.WendigoClawDamageOf(W)), "аоешка меньше половины когтя");
             Assert.That(sim.Entities.ForcedKind[0], Is.EqualTo((byte)ForcedMotionKind.Knockback));
         }
 
@@ -247,20 +257,23 @@ namespace Game.Tests
         }
 
         [Test]
-        public void SweepNeedsThirtyOfTheLast45Ticks()
+        public void SweepNeedsFourteenOfTheLast18Ticks()
         {
-            // 29 тиков за спиной — мало, 30-й — круг.
-            Assert.That(FirstSweepTick(new[] { 29 }, out _), Is.EqualTo(-1));
-            Assert.That(FirstSweepTick(new[] { 30 }, out int flank), Is.EqualTo(29));
+            // 13 тиков за спиной — мало, 14-й (0,47 с) — круг.
+            Assert.That(FirstSweepTick(new[] { 13 }, out _), Is.EqualTo(-1));
+            Assert.That(FirstSweepTick(new[] { 14 }, out int flank), Is.EqualTo(13));
             Assert.That(flank, Is.EqualTo(Simulation.WendigoSweepFlankTicks));
-            // Не подряд: 20 сзади, 10 спереди, ещё 10 сзади — 30 из 40, круг на 40-м тике.
-            Assert.That(FirstSweepTick(new[] { 20, 10, 10 }, out _), Is.EqualTo(39));
-            // Старое кружение забывается: 20 сзади, 25 спереди — окно полно, и
-            // каждый новый тик сзади вытесняет старый. Круг — только на 30-м
-            // тике нового захода, когда в 45 тиках снова 30 «сзади».
-            Assert.That(FirstSweepTick(new[] { 20, 25, 29 }, out _), Is.EqualTo(-1));
-            Assert.That(FirstSweepTick(new[] { 20, 25, 30 }, out _), Is.EqualTo(20 + 25 + 29));
-            Assert.That(Simulation.WendigoSweepWindowTicks, Is.EqualTo(45));
+            Assert.That(Simulation.WendigoSweepFlankTicks, Is.EqualTo(14));
+            Assert.That(Simulation.WendigoSweepFlankTicks * 1000 / Simulation.TicksPerSecond, Is.LessThanOrEqualTo(500),
+                "правило ревью 01.10: круг — в пределах 0,5 с кружения");
+            // Не подряд: 8 сзади, 4 спереди, ещё 6 сзади — 14 из 18, круг на 18-м тике.
+            Assert.That(FirstSweepTick(new[] { 8, 4, 6 }, out _), Is.EqualTo(17));
+            // Старое кружение забывается: 8 сзади, 10 спереди — окно полно, и
+            // каждый новый тик сзади вытесняет старый. Круг — только на 14-м
+            // тике нового захода, когда в 18 тиках снова 14 «сзади».
+            Assert.That(FirstSweepTick(new[] { 8, 10, 13 }, out _), Is.EqualTo(-1));
+            Assert.That(FirstSweepTick(new[] { 8, 10, 14 }, out _), Is.EqualTo(8 + 10 + 13));
+            Assert.That(Simulation.WendigoSweepWindowTicks, Is.EqualTo(18));
         }
 
         [Test]
@@ -269,7 +282,7 @@ namespace Game.Tests
             // Неуязвимый герой всё время за спиной: круги идут ровно раз в 180 тиков от начала.
             var sim = Arena(2.85); sim.PlayerInvulnerable = true;
             var starts = new List<int>(); int serial = 0;
-            while (sim.Tick < 29 + 2 * Simulation.WendigoSweepCooldownTicks + 1)
+            while (sim.Tick < 13 + 2 * Simulation.WendigoSweepCooldownTicks + 1)
             {
                 PlaceHero(sim, 2.85, 180);
                 sim.Step(InputFrame.Empty);
@@ -279,7 +292,7 @@ namespace Game.Tests
                 starts.Add(a.StartTick);
             }
             Assert.That(Simulation.WendigoSweepCooldownTicks, Is.EqualTo(180));
-            Assert.That(starts, Is.EqualTo(new[] { 29, 29 + 180, 29 + 360 }));
+            Assert.That(starts, Is.EqualTo(new[] { 13, 13 + 180, 13 + 360 }));
 
             // Перезарядку и окно слежки видит хеш: стенд, сдвинувший перезарядку, — другое состояние.
             ulong hash = sim.StateHash();
@@ -316,7 +329,7 @@ namespace Game.Tests
                 Assert.That(TelegraphOf(sim, W, out var circle), Is.True);
                 Assert.That(circle.State, Is.EqualTo(TelegraphState.Resolved));
             }
-            Assert.That(health - sim.Entities.Health[0], Is.EqualTo(hit ? sim.WendigoClawDamageOf(W) : 0));
+            Assert.That(health - sim.Entities.Health[0], Is.EqualTo(hit ? sim.WendigoSweepDamageOf(W) : 0));
             Assert.That(ForcedMotion.IsActive(sim.Entities, 0), Is.EqualTo(hit));
             if (hit) Assert.That(sim.Entities.ForcedKind[0], Is.EqualTo((byte)ForcedMotionKind.Knockback));
 
@@ -352,7 +365,7 @@ namespace Game.Tests
         public void SweepWaitsForTheBigTokenAndWeighsOneMark()
         {
             // Второй Вендиго прыгает и держит крупный жетон до приземления; первый
-            // уже накружен (30 из 45), но круг ставит только после посадки.
+            // уже накружен (14 из 18), но круг ставит только после посадки.
             var sim = Arena(2.85);
             int other = sim.SpawnEnemy(new FixVec2(-Fix64.Ratio(285, 100), Fix64.FromInt(5)), 2000, EnemyKind.ForestWendigo);
             sim.Entities.Stats[other].SetBase(StatType.MoveSpeed, Fix64.Zero); sim.Entities.RefreshStats(other);
@@ -379,6 +392,162 @@ namespace Game.Tests
             Assert.That(lastStart, Is.EqualTo(sweep.StartTick));
             Until(sim, sweep.ImpactTick + 1);
             Assert.That(sim.BigMarkLoad(out _), Is.Zero, "после удара жетон свободен");
+        }
+
+        // ---- ревью 01.10: круг раньше, но не от одного кувырка ----
+
+        /// <summary>Шаг кувырка: 3 м за 10 тиков (AbilityDefinition.Dash).</summary>
+        private const double DodgeStep = 0.3;
+
+        /// <summary>Шаг бега героя за тик: 4,5 м/с.</summary>
+        private static double RunStep => Simulation.PlayerBaseMoveSpeed.ToDouble() / Simulation.TicksPerSecond;
+
+        /// <summary>
+        /// Ставит героя в точку (along, aside) рамки, где ось along — axis, а
+        /// aside — влево от неё; начало — Вендиго.
+        /// </summary>
+        private static void PlaceHeroInFrame(Simulation sim, FixVec2 axis, double along, double aside)
+        {
+            var side = new FixVec2(-axis.Y, axis.X);
+            sim.Entities.Position[0] = sim.Entities.Position[W]
+                + axis * Fix64.FromDouble(along) + side * Fix64.FromDouble(aside);
+        }
+
+        /// <summary>Коготь по герою спереди на 2,2 м, начатый на тике 0. Его взгляд — рамка тестов ниже.</summary>
+        private static WendigoActionState ClawAtTheHeroInFront(Simulation sim)
+        {
+            PlaceHero(sim, 2.2, 0);
+            sim.Step(InputFrame.Empty);
+            Assert.That(sim.TryGetWendigoAction(W, out var claw), Is.True);
+            Assert.That(claw.Kind, Is.EqualTo(WendigoAction.Claw));
+            Assert.That(claw.StartTick, Is.Zero);
+            return claw;
+        }
+
+        [Test]
+        public void SweepAnswersCirclingWithinHalfASecond()
+        {
+            // Живое кружение: коготь начат по герою спереди (2,2 м), герой уходит
+            // кувырком вокруг зверя (3 м за 10 тиков — 7,8° за тик на 2,2 м), потом
+            // бежит дальше по кругу (4,5 м/с — 3,9° за тик). Зверь заперт в когте и
+            // не доворачивает. До ревью круг вставал не раньше 45-го тика (пауза
+            // когтя) и после 30 тиков за спиной — через 1,2 с после выхода героя
+            // из конуса; правило владельца 01.10 — не позже 0,5 с.
+            var sim = Arena(2.2); int health = sim.Entities.Health[0];
+            var claw = ClawAtTheHeroInFront(sim);
+            double angle = 0, radius = 2.2;
+            int firstFlank = -1; WendigoActionState sweep = default;
+            for (int k = 1; k <= 90; k++)
+            {
+                angle += (k <= 10 ? DodgeStep : RunStep) / radius;
+                PlaceHeroInFrame(sim, claw.Direction, radius * System.Math.Cos(angle), radius * System.Math.Sin(angle));
+                sim.Step(InputFrame.Empty);
+                if (firstFlank < 0 && sim.WendigoFlankTicks(W) > 0) firstFlank = sim.Tick - 1;
+                if (Sweeping(sim, out sweep)) break;
+            }
+            TestContext.WriteLine("за спиной с тика " + firstFlank + ", круг с тика " + sweep.StartTick);
+            Assert.That(firstFlank, Is.EqualTo(9), "кувырок выводит из конуса ±70° на 9-м тике");
+            Assert.That(sweep.Serial, Is.Not.Zero, "кружащий не дождался круга");
+            Assert.That(sweep.StartTick - firstFlank, Is.LessThanOrEqualTo(15), "круг — в пределах 0,5 с кружения");
+            Assert.That(sweep.StartTick, Is.EqualTo(firstFlank + Simulation.WendigoSweepFlankTicks - 1));
+            Assert.That(sweep.StartTick, Is.LessThan(claw.EndTick), "перебил стойку когтя");
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(health), "коготь кружащего не задел");
+
+            // Герой кружит и дальше — круг его достаёт.
+            while (sim.Tick <= sweep.ImpactTick)
+            {
+                angle += RunStep / radius;
+                PlaceHeroInFrame(sim, claw.Direction, radius * System.Math.Cos(angle), radius * System.Math.Sin(angle));
+                sim.Step(InputFrame.Empty);
+            }
+            Assert.That(health - sim.Entities.Health[0], Is.EqualTo(sim.WendigoSweepDamageOf(W)));
+        }
+
+        [Test]
+        public void ClawWindupIsNotCut_TheSweepTakesOverItsRecovery()
+        {
+            // Герой за спиной со второго тика замаха: окно набрано уже к 14-му
+            // тику, посреди замаха, но коготь доигрывается — метка на земле.
+            // Круг встаёт на тике сразу после контакта и сменяет стойку когтя.
+            var sim = Arena(2.2);
+            var claw = ClawAtTheHeroInFront(sim);
+            bool clawImpact = false;
+            while (sim.Tick <= claw.ImpactTick + 1)
+            {
+                int tick = sim.Tick;
+                PlaceHero(sim, 2.2, 150);
+                sim.Step(InputFrame.Empty);
+                foreach (var e in sim.Events)
+                    if (e.Type == SimEventType.WendigoImpact && e.Source == W && e.ActionVariant == (int)WendigoAction.Claw)
+                        clawImpact = true;
+                if (tick > claw.ImpactTick) continue;
+                Assert.That(sim.TryGetWendigoAction(W, out var a), Is.True);
+                Assert.That(a.Serial, Is.EqualTo(claw.Serial), "замах когтя перебит, тик " + tick);
+                if (tick == claw.ImpactTick - 1)
+                    Assert.That(sim.WendigoFlankTicks(W), Is.GreaterThanOrEqualTo(Simulation.WendigoSweepFlankTicks),
+                        "окно набрано ещё в замахе");
+            }
+            Assert.That(clawImpact, Is.True, "коготь доиграл до контакта");
+            Assert.That(Sweeping(sim, out var sweep), Is.True, "круг сменил стойку когтя");
+            Assert.That(sweep.StartTick, Is.EqualTo(claw.ImpactTick + 1));
+        }
+
+        [Test]
+        public void SweepDoesNotWaitForTheClawRest()
+        {
+            // Коготь бьёт героя спереди и кончается на 30-м тике; до следующего
+            // удара — пауза 15 тиков (NextAttackTick 45). С 31-го тика герой за
+            // спиной у свободного зверя — круг на 14-м таком тике, в паузе.
+            var sim = Arena(2.2);
+            var claw = ClawAtTheHeroInFront(sim);
+            while (sim.Tick <= claw.EndTick) { PlaceHero(sim, 2.2, 0); sim.Step(InputFrame.Empty); }
+            Assert.That(sim.TryGetWendigoAction(W, out _), Is.False, "коготь кончился");
+            Assert.That(sim.Entities.NextAttackTick[W], Is.EqualTo(claw.EndTick + Simulation.WendigoClawRestTicks));
+            int from = sim.Tick; WendigoActionState sweep = default;
+            while (sim.Tick < from + 20 && !Sweeping(sim, out sweep)) { PlaceHero(sim, 2.2, 130); sim.Step(InputFrame.Empty); }
+            Assert.That(sweep.Serial, Is.Not.Zero);
+            Assert.That(sweep.StartTick, Is.EqualTo(from + Simulation.WendigoSweepFlankTicks - 1));
+            Assert.That(sweep.StartTick, Is.LessThan(claw.EndTick + Simulation.WendigoClawRestTicks), "в паузе когтя");
+        }
+
+        /// <summary>
+        /// Один кувырок мимо: зверь заперт в когте (взгляд не меняется), герой
+        /// на боковом отступе aside кувыркается вдоль спины (3 м за 10 тиков) и
+        /// бежит дальше прочь, пока не выйдет из 3 м. lead — насколько первая
+        /// позиция кувырка зашла за край конуса ±70°: 0,01 — самая неудачная
+        /// фаза (все 10 позиций кувырка за спиной). Это не кружение: окно не
+        /// набирает 14 ни при каком отступе — от касания тела (1,4 м между
+        /// центрами) до края зоны.
+        /// </summary>
+        [TestCase(1.42, 0.01)]
+        [TestCase(1.45, 0.29)]
+        [TestCase(2.0, 0.01)]
+        [TestCase(2.5, 0.01)]
+        public void SingleDashPast_NeverSweeps(double aside, double lead)
+        {
+            var sim = Arena(2.2);
+            var claw = ClawAtTheHeroInFront(sim);
+            double edge = aside / System.Math.Tan(70 * System.Math.PI / 180);
+            double along = edge - lead + DodgeStep;
+            // Тик 1 — ещё в конусе, за шаг кувырка до края.
+            PlaceHeroInFrame(sim, claw.Direction, along, -aside);
+            sim.Step(InputFrame.Empty);
+            Assert.That(sim.WendigoFlankTicks(W), Is.Zero);
+            int maxFlank = 0, dodged = 0;
+            while (sim.Tick < 90)
+            {
+                along -= dodged < 10 ? DodgeStep : RunStep; dodged++;
+                PlaceHeroInFrame(sim, claw.Direction, along, -aside);
+                sim.Step(InputFrame.Empty);
+                maxFlank = System.Math.Max(maxFlank, sim.WendigoFlankTicks(W));
+                Assert.That(Sweeping(sim, out _), Is.False, "круг от одного кувырка, тик " + (sim.Tick - 1));
+                if (along * along + aside * aside > 3.5 * 3.5) break;
+            }
+            TestContext.WriteLine("отступ " + aside + " м, фаза " + lead + ": за спиной в 3 м " + maxFlank + " тиков из 18");
+            Assert.That(maxFlank, Is.GreaterThanOrEqualTo(8), "проход и правда шёл за спиной");
+            Assert.That(maxFlank, Is.LessThan(Simulation.WendigoSweepFlankTicks));
+            // Ушёл — и окно опустело: круга не будет и позже.
+            for (int t = 0; t < 30; t++) { sim.Step(InputFrame.Empty); Assert.That(Sweeping(sim, out _), Is.False); }
         }
 
         private static void Until(Simulation sim, int tick) { while (sim.Tick < tick) sim.Step(InputFrame.Empty); }

@@ -177,8 +177,8 @@ namespace Game.Tests
             var offer = run.GetRoute(2);
             run.Step(Command(RunCommand.ChooseRoute3));
             Assert.That(run.CurrentRoute.Hard, Is.True);
-            // Хранитель 500 (подгонка 29.09, было 550) × 100% уровня × 125% «Сложно».
-            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(EnemyArchetypes.ScaleHealth(500, 100, 125)));
+            // Хранитель 270 (ревью владельца 01.10, было 500) × 100% уровня × 125% «Сложно».
+            Assert.That(run.Sim.Entities.MaxHealth[1], Is.EqualTo(EnemyArchetypes.ScaleHealth(270, 100, 125)));
             int before = run.Gold;
             KillAllEnemies(run);
             run.Step(Idle);

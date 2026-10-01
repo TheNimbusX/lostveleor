@@ -29,7 +29,8 @@ namespace Game.View
             }
             if(CampServicesProbe.IsRunning)x=y=0;
             frame.MoveDirection = CameraMovement(x,y,_camera!=null?_camera.transform.rotation:Quaternion.identity);
-            frame.Flags = (byte)((frame.Flags & (byte)InputFlags.Attack) | (byte)InputFlags.DirectMovement);
+            frame.Flags = (byte)((frame.Flags & ((byte)InputFlags.Attack | (byte)InputFlags.AttackPressed))
+                | (byte)InputFlags.DirectMovement);
             frame.AttackTarget = -1;
             MoveOrderHeld = frame.MoveDirection.LengthSq > Fix64.Zero;
         }

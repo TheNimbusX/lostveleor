@@ -61,6 +61,14 @@ namespace Game.Sim
             return ticks > MaxAttackCooldown ? MaxAttackCooldown : ticks;
         }
 
+        /// <summary>Фаза трёхударной серии при базовых трёх ударах в секунду.</summary>
+        public static int PelagBasicPhaseTicks(int baseTicks, Fix64 attacksPerSecond, int minimum)
+        {
+            if (attacksPerSecond.Raw <= 0) return MaxAttackCooldown - 2;
+            int ticks = RoundToInt(Fix64.FromInt(baseTicks) * Fix64.FromInt(3) / attacksPerSecond);
+            return System.Math.Min(MaxAttackCooldown - 2, System.Math.Max(minimum, ticks));
+        }
+
         /// <summary>Шаг за тик из скорости в метрах в секунду.</summary>
         public static Fix64 MoveStepPerTick(Fix64 metersPerSecond)
             => metersPerSecond / Simulation.TicksPerSecond;

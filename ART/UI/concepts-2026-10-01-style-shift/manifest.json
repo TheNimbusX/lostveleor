@@ -1,0 +1,32 @@
+{
+ "date": "2026-10-01",
+ "what": "Смена рисовки без смены моделей — 4 стиля на 2 листах 2×2",
+ "model": "gpt_image_2_5 high 2k",
+ "credits": 5.5,
+ "items": [
+  {
+   "file": "1-fight-4-styles.png",
+   "job": "9ef6ac9f-39fc-44a2-a681-fbfb7ec02225",
+   "refs": [
+    "refs/ref-fight-nohud.jpg (кадр боя, HUD срезан)"
+   ]
+  },
+  {
+   "file": "2-characters-4-styles.png",
+   "job": "ab9a7eb2-e1a8-4ff0-aa69-8ee8e19b2aef",
+   "refs": [
+    "refs/ref-pelag-model.jpg",
+    "refs/ref-mob-family.jpg",
+    "ART/characters/pelag/demo-polish-2026-09-30/references/anchor_identity.jpg",
+    "refs/ref-fight-nohud.jpg"
+   ],
+   "note": "мобы нарисованы по концепт-артам, а не по игровым моделям — лист показывает фактуру стиля, не точный вид моделей"
+  }
+ ],
+ "styles": [
+  "1 Перерисовка текстур",
+  "2 Живопись маслом",
+  "3 Акварель и тушь",
+  "4 Жёсткий комикс"
+ ]
+}

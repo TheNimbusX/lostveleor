@@ -62,7 +62,9 @@ namespace Game.Tests
             Assert.That(Simulation.ThornLineLastImpactTicks, Is.EqualTo(45));
             Assert.That(thorn.WindupTicks + thorn.RecoveryTicks, Is.EqualTo(45 + 30));
             Assert.That(thorn.CycleTicks, Is.EqualTo(150));
-            Assert.That(thorn.BodyRadius, Is.EqualTo(Fix64.Ratio(80, 100)));
+            // Ревью 01.10: модель +10% — и тело попаданий +10%: 0,8 → 0,88.
+            Assert.That(thorn.BodyRadius, Is.EqualTo(Fix64.Ratio(88, 100)));
+            Assert.That(thorn.BodyRadius.ToDouble(), Is.EqualTo(0.8 * 1.1).Within(1e-6));
             // Корнехват: 15 тиков позы, контакт через 21 после удара корнями, 36 стоит.
             var snarer = EnemyArchetypes.Get(EnemyKind.ForestRootSnarer);
             Assert.That(snarer.WindupTicks, Is.EqualTo(36));
@@ -213,14 +215,23 @@ namespace Game.Tests
             var sim = new Simulation(3, 16);
             sim.SetupTestArena(0);
             int thorn = sim.SpawnEnemy(new FixVec2(Fix64.FromInt(5), Fix64.Zero), 100, EnemyKind.ForestThorncaster);
-            Assert.That(sim.ThornSpikeDamageOf(thorn), Is.EqualTo(30));
+            Assert.That(sim.ThornSpikeDamageOf(thorn), Is.EqualTo(60));
             Assert.That(sim.ThornBurstDamageOf(thorn), Is.EqualTo(22));
+            Assert.That(sim.ThornShotDamageOf(thorn), Is.EqualTo(14));
+            int wendigo = sim.SpawnEnemy(new FixVec2(Fix64.FromInt(-5), Fix64.Zero), 100, EnemyKind.ForestWendigo);
+            Assert.That(sim.WendigoClawDamageOf(wendigo), Is.EqualTo(60));
+            Assert.That(sim.WendigoLeapDamageOf(wendigo), Is.EqualTo(64));
+            Assert.That(sim.WendigoHowlDamageOf(wendigo), Is.EqualTo(26));
+            Assert.That(sim.WendigoSweepDamageOf(wendigo), Is.EqualTo(22));
         }
 
         [Test]
         public void HitSizes_AgainstTheReferenceHero()
         {
-            // Обычный удар — до 8% от 270, крупная фигура — 8–16%.
+            // Обычный удар — до 8% от 270, крупная фигура — 8–16%. Коготь и
+            // прыжок Вендиго и линия Шипомёта — исключения по ревью владельца
+            // 01.10: их мерило — удары до смерти героя на аренах элит
+            // (EliteHeavyHits_*), а не доля на первой арене.
             foreach (var kind in new[] { EnemyKind.ForestRootSwarm, EnemyKind.ForestGuardian, EnemyKind.ForestBud,
                 EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter, EnemyKind.ForestSplitling })
                 Assert.That(EnemyArchetypes.Get(kind).BaseDamage * 100, Is.LessThanOrEqualTo(8 * ReferenceHealth), kind.ToString());
@@ -229,8 +240,8 @@ namespace Game.Tests
             int[] big =
             {
                 EnemyArchetypes.Get(EnemyKind.ForestStonehoof).BaseDamage,
-                EnemyArchetypes.WendigoClawDamage, EnemyArchetypes.WendigoLeapDamage, EnemyArchetypes.WendigoHowlDamage,
-                EnemyArchetypes.ThorncasterSpikeDamage, EnemyArchetypes.ThorncasterBurstDamage,
+                EnemyArchetypes.WendigoHowlDamage, EnemyArchetypes.WendigoSweepDamage,
+                EnemyArchetypes.ThorncasterBurstDamage,
             };
             foreach (int damage in big)
             {
@@ -240,6 +251,118 @@ namespace Game.Tests
             Assert.That(EnemyArchetypes.WendigoShare(EnemyArchetypes.WendigoClawDamage, EnemyArchetypes.WendigoLeapDamage),
                 Is.EqualTo(EnemyArchetypes.WendigoLeapDamage));
             Assert.That(EnemyArchetypes.WendigoShare(0, EnemyArchetypes.WendigoLeapDamage), Is.Zero);
+        }
+
+        // ---- ревью владельца 01.10: Вендиго и Шипомёт на своих аренах ----
+        //
+        // Обе элиты стоят на А5–А7 (первая элита забега, ArenaRunPlan) и на
+        // А7–А8 (вторая). Числа берутся из живой расстановки стенда вида — та
+        // же строка таблицы × рост глубины, что в забеге, — против героя 270.
+
+        /// <summary>Сколько попаданий damage уходит на героя 270 с полного здоровья.</summary>
+        private static int HeroHitsToDie(int damage) => (ReferenceHealth + damage - 1) / damage;
+
+        /// <summary>Сколько ударов обычной атаки героя (54 и тяжёлый 68 по очереди) уходит на health.</summary>
+        private static int BasicHitsToKill(int health, bool heavyFirst)
+        {
+            int light = Progression.ReferenceHeroDamage;
+            int heavy = CombatStats.RoundToInt(Fix64.FromInt(light) * Fix64.Ratio(5, 4));
+            int dealt = 0, hits = 0;
+            bool nextHeavy = heavyFirst;
+            while (dealt < health) { dealt += nextHeavy ? heavy : light; nextHeavy = !nextHeavy; hits++; }
+            return hits;
+        }
+
+        private static Simulation EliteAt(EnemyKind kind, int arena)
+        {
+            var sim = new Simulation(5, 32);
+            sim.SetupKindTestArena(kind, 1, arena: arena);
+            Assert.That(sim.Entities.Kind[1], Is.EqualTo(kind));
+            return sim;
+        }
+
+        /// <summary>
+        /// «Он должен нас убивать размахом перед собой за 3-4 удара; прыжком
+        /// если попадает — 1/3 хп должен сносить; аоешками меньше урона».
+        /// Прежние числа (до ревью) — для сравнения: вой и круг стали меньше.
+        /// </summary>
+        [TestCase(5, 79, 84, 34, 29, 39, 34)]
+        [TestCase(6, 84, 90, 36, 31, 42, 36)]
+        [TestCase(7, 89, 95, 39, 33, 44, 38)]
+        public void Wendigo_AtItsArenas_ClawKillsInThreeToFourHits_LeapTakesAThird_AoeWeaker(int arena,
+            int claw, int leap, int howl, int sweep, int howlBefore, int sweepBefore)
+        {
+            var sim = EliteAt(EnemyKind.ForestWendigo, arena);
+            Assert.That(sim.WendigoClawDamageOf(1), Is.EqualTo(claw), "коготь");
+            Assert.That(sim.WendigoLeapDamageOf(1), Is.EqualTo(leap), "прыжок");
+            Assert.That(sim.WendigoHowlDamageOf(1), Is.EqualTo(howl), "вой");
+            Assert.That(sim.WendigoSweepDamageOf(1), Is.EqualTo(sweep), "круг когтей");
+
+            Assert.That(HeroHitsToDie(claw), Is.InRange(3, 4), "коготь: 3–4 удара до смерти героя 270");
+            // Треть героя — 90 ± 2 п. п. на А5–А7, ровно 90 на средней арене окна.
+            Assert.That(leap * 3, Is.InRange(ReferenceHealth - 18, ReferenceHealth + 18), "прыжок — треть героя");
+            if (arena == 6) Assert.That(leap, Is.EqualTo(ReferenceHealth / 3));
+            Assert.That(leap, Is.GreaterThan(claw), "прыжок — самый крупный удар");
+            Assert.That(howl * 2, Is.LessThan(claw), "вой меньше половины когтя");
+            Assert.That(sweep * 2, Is.LessThan(claw), "круг меньше половины когтя");
+            Assert.That(howl, Is.LessThan(howlBefore), "вой слабее, чем до ревью");
+            Assert.That(sweep, Is.LessThan(sweepBefore), "круг слабее, чем до ревью");
+        }
+
+        /// <summary>Вторая элита (А7–А8) и «Сложно»: коготь не перестаёт быть «3–4 удара» и не становится ваншотом.</summary>
+        [TestCase(8, 100, 94)]
+        [TestCase(5, EnemyArchetypes.HardRoutePercent, 99)]
+        [TestCase(7, EnemyArchetypes.HardRoutePercent, 111)]
+        public void Wendigo_ClawStaysThreeToFourHits_OnTheSecondEliteArenaAndHardRoute(int arena, int hard, int claw)
+        {
+            var sim = new Simulation(5, 32);
+            sim.SetupKindTestArena(EnemyKind.ForestWendigo, 1, arena: arena, hardPercent: hard);
+            Assert.That(sim.WendigoClawDamageOf(1), Is.EqualTo(claw));
+            Assert.That(HeroHitsToDie(claw), Is.InRange(3, 4));
+        }
+
+        /// <summary>
+        /// «По балансу так же как вендиго — чтоб мы его убивали быстрее, да и
+        /// он нас тоже»: линия шипов убивает за 3–4 попадания, всплеск и
+        /// выстрел — меньше половины линии.
+        /// </summary>
+        [TestCase(5, 79, 29, 18)]
+        [TestCase(6, 84, 31, 20)]
+        [TestCase(7, 89, 33, 21)]
+        [TestCase(8, 94, 34, 22)]
+        public void Thorncaster_AtItsArenas_LineKillsInThreeToFourHits_BurstAndShotWeaker(int arena,
+            int spike, int burst, int shot)
+        {
+            var sim = EliteAt(EnemyKind.ForestThorncaster, arena);
+            Assert.That(sim.ThornSpikeDamageOf(1), Is.EqualTo(spike), "шип линии");
+            Assert.That(sim.ThornBurstDamageOf(1), Is.EqualTo(burst), "всплеск");
+            Assert.That(sim.ThornShotDamageOf(1), Is.EqualTo(shot), "выстрел");
+            Assert.That(HeroHitsToDie(spike), Is.InRange(3, 4), "линия: 3–4 попадания до смерти героя 270");
+            Assert.That(burst * 2, Is.LessThan(spike), "всплеск меньше половины линии");
+            Assert.That(shot * 2, Is.LessThan(spike), "выстрел меньше половины линии");
+        }
+
+        /// <summary>
+        /// «Урон поднять, хп снизить» / «чтоб мы его убивали быстрее»: обе
+        /// элиты — 900 на первой арене, на своих аренах ≈20 обычных ударов
+        /// героя (19 / 20 / 21–22 на А5 / А6 / А7) с любой фазы серии.
+        /// </summary>
+        [TestCase(EnemyKind.ForestWendigo)]
+        [TestCase(EnemyKind.ForestThorncaster)]
+        public void EliteHealth_AboutTwentyBasicHitsAtArenasFiveToSeven(EnemyKind kind)
+        {
+            Assert.That(EnemyArchetypes.Get(kind).BaseHealth, Is.EqualTo(900), "2000 → 900 (01.10)");
+            int[] expected = { 1152, 1215, 1278 };
+            for (int arena = 5; arena <= 7; arena++)
+            {
+                var sim = EliteAt(kind, arena);
+                int health = sim.Entities.MaxHealth[1];
+                Assert.That(health, Is.EqualTo(expected[arena - 5]), kind + " на А" + arena);
+                int light = BasicHitsToKill(health, false), heavy = BasicHitsToKill(health, true);
+                TestContext.WriteLine(kind + " А" + arena + ": " + health + " HP, " + light + "/" + heavy + " ударов");
+                Assert.That(System.Math.Min(light, heavy), Is.GreaterThanOrEqualTo(18), "А" + arena);
+                Assert.That(System.Math.Max(light, heavy), Is.LessThanOrEqualTo(22), "А" + arena);
+            }
         }
 
         private static EncounterSettings AllKinds(int arena)
@@ -272,13 +395,19 @@ namespace Game.Tests
             switch (kind)
             {
                 case EnemyKind.ForestRootSwarm: min = 1; max = 3; break;
-                // 550 здоровья: 11 ударов на первой арене, 16 (10,7 с) на восьмой.
-                case EnemyKind.ForestGuardian: min = 4; max = 12; break;
+                // 270 здоровья (ревью владельца 01.10: «убивать за 5–6 обычных
+                // ударов», было 500): здесь удары считаются по 54 без тяжёлых —
+                // 5 на первой арене (3,3 с), 8 (5,3 с) на восьмой. С тяжёлыми 68
+                // через раз — 5 и 7 (GuardianTempoTests).
+                case EnemyKind.ForestGuardian: min = 3; max = 6; break;
                 case EnemyKind.ForestBud: min = 3; max = 7; break;
                 case EnemyKind.ForestStonehoof: min = 6; max = 13; break;
-                case EnemyKind.ForestWendigo: min = 20; max = 40; break;
-                // 2000 здоровья, как у Вендиго: 38 ударов на первой арене (25 с), 56 на восьмой.
-                case EnemyKind.ForestThorncaster: min = 20; max = 40; break;
+                // 900 здоровья (ревью владельца 01.10, было 2000): по 54 без
+                // тяжёлых — 17 ударов на первой арене (11,3 с), 25 на восьмой
+                // (16,7 с). С тяжёлыми через раз на А5–А7 — 19–22 (EliteHealth_*).
+                case EnemyKind.ForestWendigo: min = 10; max = 20; break;
+                // 900 здоровья, как у Вендиго (ревью 01.10, было 2000).
+                case EnemyKind.ForestThorncaster: min = 10; max = 20; break;
                 case EnemyKind.ForestRootSnarer: min = 4; max = 12; break;
                 // 560 здоровья: 11 ударов на первой арене, 16 (10,7 с) на восьмой.
                 case EnemyKind.ForestSplitter: min = 3; max = 12; break;

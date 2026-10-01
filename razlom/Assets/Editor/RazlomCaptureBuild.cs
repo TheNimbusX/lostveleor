@@ -134,6 +134,9 @@ namespace Game.EditorTools
             global::PelagOrdnanceVfxSetup.Install();
             global::PelagOrdnanceVfxSetup.ValidateProductionAssets();
             global::CampFlameProSetup.Install();
+            // Комикс-рисовка (проба 01.10): фича в PC_Renderer, чтобы -capture-style comic было чем рисовать.
+            // Без ключа она выключена и кадр съёмки не меняется.
+            ComicStyleSetup.ConfigureNow();
 
             string[] scenes = EditorBuildSettings.scenes
                 .Where(scene => scene.enabled)

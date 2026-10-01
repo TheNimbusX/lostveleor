@@ -119,7 +119,9 @@ namespace Game.View
         ///   таз проезжает за цикл 1.04 единицы исходника
         ///   в игре это ×2.4 (OrvillScale) = 2.49 м
         ///   значит клип «едет» 2.49 / 0.867 = 2.87 м/с
-        /// Моб движется 3.5 м/с (EnemyBaseMoveSpeed), отсюда 3.5 / 2.87 = 1.22.
+        /// Хранитель ходит 2.8 м/с (Simulation.GuardianMoveSpeed, ревью
+        /// владельца 01.10; до того 3.1), отсюда 2.8 / 2.87 = 0.98. Прочие
+        /// тела этого пути — по-прежнему EnemyBaseMoveSpeed (3.1 → 1.08).
         ///
         /// ЗАВИСИТ ОТ МАСШТАБА. Меняешь OrvillScale или клип бега — пересчитай
         /// по этим же четырём строкам, а не крути на глаз.
@@ -129,10 +131,18 @@ namespace Game.View
         /// попросил замедлить мобов, ноги остались бы крутиться под старую
         /// скорость — то есть вернулось бы скольжение стопы, ради устранения
         /// которого число и считали. Делитель — замер клипа, он от скорости
-        /// тела не зависит; делимое берётся у симуляции.
+        /// тела не зависит; делимое берётся у симуляции — у того числа, которым
+        /// ходит именно этот вид.
         private const float OrvillRunClipGroundSpeed = 2.87f;
-        private static readonly float OrvillLocomotionBasePlaybackSpeed =
+        private static readonly float GuardianLocomotionBasePlaybackSpeed =
+            Simulation.GuardianMoveSpeed.ToFloat() / OrvillRunClipGroundSpeed;
+        private static readonly float EnemyLocomotionBasePlaybackSpeed =
             Simulation.EnemyBaseMoveSpeed.ToFloat() / OrvillRunClipGroundSpeed;
+
+        /// <summary>Хранитель и моб без вида (живёт по правилам Хранителя) — свой ход, прочие — общий.</summary>
+        private float OrvillLocomotionBasePlaybackSpeed
+            => _enemyKind == EnemyKind.ForestGuardian || _enemyKind == EnemyKind.None
+                ? GuardianLocomotionBasePlaybackSpeed : EnemyLocomotionBasePlaybackSpeed;
         private const float OrvillLocomotionMinPlaybackSpeed = 0.42f;
 
         /// <summary>
@@ -295,6 +305,7 @@ namespace Game.View
         public void ResetForSpawn(int presentationId)
         {
             IsDead = false;
+            _basicComboActive = false;
             _contactPose?.Clear();
             _attackVariant = 0;
             _orvillAttackCount = 0;
@@ -453,6 +464,7 @@ namespace Game.View
         private void Update()
         {
             UpdatePoseHold();
+            UpdateBasicComboAnimation();
             UpdateEnemySwingAnimation();
             UpdateTempoAnimation();
             UpdateBlazeAnimation();
@@ -704,6 +716,7 @@ namespace Game.View
 
         public void PlayAttack(int authoritativeVariant = -1, float elapsed = 0f)
         {
+            _basicComboActive = false;
             int variant = authoritativeVariant >= 0 ? authoritativeVariant : _attackVariant;
             _attackVariant = variant + 1;
             if (_faction == Faction.Wole && !IsDead) SetCombatReady(true);
@@ -826,14 +839,20 @@ namespace Game.View
 
         // Mutant Swiping / SwipingMirrored (зеркало с теми же кадрами), 0…54:
         // лапа занесена на 18, удар с 22, контакт 26, вынос до 30, покой к 48.
-        // Замах 21: подъём 3→18 за 11 тиков (×1.36), стойка 18→22 за 6 (×0.67),
-        // удар 22→26 за 4 — родной темп. Восстановление 15: вынос 26→30 родным
-        // темпом, дальше почти родным до 42; хвост до 54 уже под уход в бег.
+        // Ключи под окно Sim 28/21 (ревью владельца 01.10, удар медленнее; до
+        // того 21/15 и 23/17). Замах 28: подъём 3→18 за 14 тиков (×1.07),
+        // стойка 18→22 за 10 (×0.4) — лапа дольше висит занесённой, — удар
+        // 22→26 за 4 — родной темп, контакт ровно на ImpactTick. Восстановление
+        // 21: вынос 26→30 родным темпом, дальше ×0.71 до 42; хвост до 54 уже
+        // под уход в бег. Таз в клипе шагает в удар (+0,36 ед. исходника к 29
+        // кадру) и к 48 возвращается на место — это шаг удара в позе, а не
+        // отход тела: Sim держит Хранителя на месте (Simulation.EnemySurround,
+        // HoldsGroundBetweenSwings). Замер — swing_measure.json, hips_forward.
         private static readonly SwingClip GuardianSwing = new SwingClip
         {
             FirstFrame = 0f, Frames = 54f,
-            WindupTicks = new[] { 0f, 11f, 17f, 21f }, WindupFrames = new[] { 3f, 18f, 22f, 26f },
-            RecoveryTicks = new[] { 0f, 4f, 15f }, RecoveryFrames = new[] { 26f, 30f, 42f },
+            WindupTicks = new[] { 0f, 14f, 24f, 28f }, WindupFrames = new[] { 3f, 18f, 22f, 26f },
+            RecoveryTicks = new[] { 0f, 4f, 21f }, RecoveryFrames = new[] { 26f, 30f, 42f },
             TailFrames = 12f, ReleaseSeconds = .30f,
         };
 
@@ -1613,6 +1632,7 @@ namespace Game.View
 
         private void CancelUpperBodyAttack(float blend)
         {
+            _basicComboActive = false;
             if (_animator == null) return;
             _cleaveHitTick = -1f;
             _cleaveContactConfirmed = false;

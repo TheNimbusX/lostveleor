@@ -64,6 +64,7 @@ namespace Game.Sim
             result.AbilityMask = 0;
             if (!Entities.Alive[PlayerId] || Statuses.IsStunned(PlayerId, Tick))
             {
+                if (_pelagBasicComboEnabled) ResetPelagBasicCombo(preserveSerial: true);
                 // Оглушение снимает только собственное действие героя: отброс,
                 // с которым оно пришло (разбег Камнекопыта), доезжает до конца.
                 CancelPlayerAction(keepKnockback: Entities.Alive[PlayerId]);
@@ -126,6 +127,7 @@ namespace Game.Sim
             else if (id == AbilityDefinition.SkewerId) { contact = _mobilityEndTick; end = contact; }
             else if (id == AbilityDefinition.BackblastId) { contact = _backblastTick; end = _mobilityEndTick; }
             SetActionClock(slot, id, contact, end);
+            ExtendPelagBasicContinuation(_playerAction.EndTick);
             if (id == AbilityDefinition.DashId) PreparedGiftRollStarted(contact);
         }
         /// <param name="keepKnockback">
@@ -134,6 +136,7 @@ namespace Game.Sim
         /// </param>
         private void CancelPlayerAction(bool keepKnockback = false)
         {
+            InterruptPelagBasicAttack();
             PreparedGiftActionCancelled();
             StopAnchorSlam(); StopWreck(); StopCleave(); StopFlask();
             CancelBlazeGesture(); StopWhirlwindChannel();

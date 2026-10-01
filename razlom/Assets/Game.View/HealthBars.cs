@@ -47,6 +47,12 @@ namespace Game.View
     /// светлый отрезок держит здоровье до удара ~0,35 с и стекает к новому; лечение следа не даёт.
     /// Здоровье каждой живой сущности отслеживается и без полоски: первый же удар, который её показал,
     /// уже со следом. Логика шага — HealthBarTrail (тесты вне Unity).
+    ///
+    /// ЛЕЧЕНИЕ (ревью 01.10, Корнехват: «нет эффекта, показывающего, что полоска чуть
+    /// восстановилась»). По событию Heal полоска появляется, заливка не прыгает: от прежнего конца
+    /// вырастает зелёный отрезок, на приходе — короткая светлая вспышка с мягким ореолом на фронте,
+    /// потом отрезок тает в цвет полоски. Логика — HealBarFeedback (тесты вне Unity); зелёная «+N» —
+    /// DamageNumbers, мягкий зелёный отклик на теле — EnemyHealPulseView (ставится отсюда).
     /// </summary>
     [RequireComponent(typeof(TickDriver))]
     [DefaultExecutionOrder(950)]
@@ -97,7 +103,7 @@ namespace Game.View
         public float BudHeight3D = 1.9f;
         public float WendigoHeight3D = 3.9f;
         public float StonehoofHeight3D = 2.05f;
-        public float ThorncasterHeight3D = 3.25f;
+        public float ThorncasterHeight3D = 3.55f;
         public float RootSnarerHeight3D = 2.1f;
         public float SplitterHeight3D = 2f;
         public float SplitlingHeight3D = 1.35f;
@@ -125,6 +131,16 @@ namespace Game.View
         public float TrailSpeed = 1.2f;
         [Tooltip("След: тёплый светлый, как след полосы героя; прозрачность — его сила")]
         public Color TrailColor = new Color(1f, .9f, .76f, .82f);
+
+        [Header("Лечение")]
+        [Tooltip("Отрезок лечения: зелень «Волны из корней» Корнехвата, светлее — читается на тёмной дорожке")]
+        public Color HealColor = new Color(.52f, .86f, .36f, .96f);
+        [Tooltip("Цвет отрезка на пике вспышки: светлая зелень с золотом, не белый")]
+        public Color HealFlashColor = new Color(.86f, 1f, .62f, 1f);
+        [Tooltip("Ореол на фронте отрезка в миг прихода; альфа — сила")]
+        public Color HealGlowColor = new Color(.62f, .95f, .4f, .8f);
+        [Tooltip("Ореол на фронте: размер в высотах полоски")]
+        public float HealGlowSize = 3.2f;
 
         [Header("Время")]
         [Tooltip("Сколько секунд полоска висит после последнего попадания.")]
@@ -154,12 +170,13 @@ namespace Game.View
         private const float AntlerBelow = .153f;
 
         // Порядок частей внутри полоски. След урона — между дорожкой и мазком: начинается у конца
-        // заливки. Рога — над мазком (их срез закрывает начало заливки), но под
+        // заливки. Отрезок лечения — поверх мазка (он и есть выросшая часть заливки), ореол его
+        // фронта — над ним. Рога — над мазком (их срез закрывает начало заливки), но под
         // огоньком: при почти пустой полосе огонёк у левого рога виден. Части элиты сдвинуты на
         // EliteOrder: её полоса ложится поверх обычных, если они пересеклись на экране. Цифры урона
         // (6100) — поверх всех полосок.
-        private const int OrderTrack = 4000, OrderTrail = 4001, OrderFill = 4002, OrderFrame = 4003, OrderAntler = 4004;
-        private const int OrderGlow = 4005, OrderOrb = 4006, OrderNumbers = 4007;
+        private const int OrderTrack = 4000, OrderTrail = 4001, OrderFill = 4002, OrderHeal = 4003, OrderHealGlow = 4004;
+        private const int OrderFrame = 4005, OrderAntler = 4006, OrderGlow = 4007, OrderOrb = 4008, OrderNumbers = 4009;
         // Отрезок следа — кусок середины мазка заливки (доли ширины холста), растянутый от конца
         // заливки до конца следа; чуть заходит под заливку, чтобы на срезе мазка не было щели.
         private const float TrailSliceFrom = .45f, TrailSliceWidth = .1f, TrailTuck = .012f;
@@ -182,6 +199,9 @@ namespace Game.View
             public SpriteRenderer FillRenderer;
             // След урона: отрезок от конца заливки до конца следа.
             public SpriteRenderer TrailRenderer;
+            // Лечение: зелёный отрезок поверх заливки и ореол на его фронте (ореол — только «Дым и свет»).
+            public SpriteRenderer HealRenderer;
+            public SpriteRenderer HealGlow;
             public SpriteRenderer FrameRenderer;
             public Transform Gem;
             public SpriteRenderer GemFill;
@@ -209,6 +229,9 @@ namespace Game.View
         // След урона по сущностям; сбрасывается, когда меняется симуляция (новая арена, забег).
         private BarTrailState[] _trail;
         private Simulation _trailSim;
+        // Лечение по сущностям: зелёный отрезок и сколько лечения пришло событиями этого кадра.
+        private BarHealState[] _heal;
+        private int[] _healPending;
 
         // Когда по кому в последний раз попали. Индекс — сущность.
         private float[] _hitAt;
@@ -286,6 +309,10 @@ namespace Game.View
             _nameAnchor = new Vector3[capacity];
             _nameFrame = new int[capacity];
             _trail = new BarTrailState[capacity];
+            _heal = new BarHealState[capacity];
+            _healPending = new int[capacity];
+            // Мягкий зелёный отклик на теле вылеченного — свой вид на том же объекте арены.
+            EnemyHealPulseView.EnsureOn(gameObject);
             // Кадров «никогда»: -1 совпал бы с «прошлым кадром» на кадре 0.
             for (int i = 0; i < capacity; i++) _anchorFrame[i] = _nameFrame[i] = NeverFrame;
 
@@ -314,6 +341,16 @@ namespace Game.View
                 return;
             }
 
+            // Другая симуляция — индексы сущностей принадлежат другим телам: следы и лечение с нуля.
+            // До событий кадра: лечение новой арены не должно стереться вместе со старым.
+            if (_trailSim != sim)
+            {
+                _trailSim = sim;
+                System.Array.Clear(_trail, 0, _trail.Length);
+                System.Array.Clear(_heal, 0, _heal.Length);
+                System.Array.Clear(_healPending, 0, _healPending.Length);
+            }
+
             TrackHits();
             Draw(sim);
         }
@@ -329,6 +366,16 @@ namespace Game.View
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
+
+                // Лечение союзника (волна Корнехвата): полоска показывается, как от удара, —
+                // зелёный прирост виден, даже если по этому врагу давно не били.
+                if (e.Type == SimEventType.Heal)
+                {
+                    if (e.Target == Simulation.PlayerId || (uint)e.Target >= (uint)_hitAt.Length || e.Amount <= 0) continue;
+                    _healPending[e.Target] = HealNumberRules.Add(_healPending[e.Target], e.Amount);
+                    _hitAt[e.Target] = Time.unscaledTime;
+                    continue;
+                }
 
                 bool isDamage = e.Type == SimEventType.Damage
                                 || e.Type == SimEventType.DamageOverTime;
@@ -358,26 +405,27 @@ namespace Game.View
             Vector3 up = _camera != null ? _camera.up : Vector3.up;
             Vector3 eliteScale = EliteScale;
 
-            // Другая симуляция — индексы сущностей принадлежат другим телам: следы с нуля.
-            if (_trailSim != sim)
-            {
-                _trailSim = sim;
-                System.Array.Clear(_trail, 0, _trail.Length);
-            }
-
             // Цикл идёт по всем: даже при полном пуле табличке элиты нужно место над её макушкой.
             for (int i = 0; i < entities.Count; i++)
             {
                 if (i == Simulation.PlayerId) continue;
                 if ((uint)i >= (uint)_hitAt.Length) continue;
-                // Мёртвый — след забывается: место в пуле сущностей займёт новое тело.
-                if (!entities.Alive[i]) { _trail[i].Ready = false; continue; }
+                // Мёртвый — след и лечение забываются: место в пуле сущностей займёт новое тело.
+                if (!entities.Alive[i]) { _trail[i].Ready = false; _heal[i].Active = false; _healPending[i] = 0; continue; }
 
                 int max = entities.MaxHealth[i];
                 if (max <= 0) continue;
 
                 // След урона ведётся и без полоски: удар, который её покажет, уже со следом.
-                HealthBarTrail.Step(ref _trail[i], entities.Health[i] / (float)max, dt, TrailDelay, TrailSpeed);
+                float actual = Mathf.Clamp01(entities.Health[i] / (float)max);
+                HealthBarTrail.Step(ref _trail[i], actual, dt, TrailDelay, TrailSpeed);
+                // Лечение — так же без полоски: новое начинается с нулевого возраста в кадре события.
+                HealBarFeedback.Step(ref _heal[i], dt);
+                if (_healPending[i] > 0)
+                {
+                    HealBarFeedback.Begin(ref _heal[i], actual - _healPending[i] / (float)max, actual);
+                    _healPending[i] = 0;
+                }
 
                 float age = now - _hitAt[i];
                 var dummy = CampTrainingView.Find(i);
@@ -402,7 +450,8 @@ namespace Game.View
                 }
                 if (!shown) continue;
 
-                float fill = Mathf.Clamp01(entities.Health[i] / (float)max);
+                // Пока растёт зелёный отрезок лечения, заливка идёт вместе с ним, а не прыгает.
+                float fill = HealBarFeedback.ShownFill(in _heal[i], actual);
 
                 // Полная полоска не показывается: если по врагу попали, но он
                 // ещё цел, полоска всё равно нужна — она и говорит, что цел.
@@ -444,6 +493,7 @@ namespace Game.View
                     end = -inner * .5f + w;
                 }
                 DrawTrail(ref bar, in _trail[i], fill, end, inner, alpha);
+                DrawHeal(ref bar, in _heal[i], actual, inner, alpha, elite ? eliteScale : Vector3.one, elite ? EliteHeight : Height);
 
                 bar.Gem.gameObject.SetActive(elite && fill > .001f);
                 if (elite)
@@ -532,6 +582,62 @@ namespace Game.View
                 t.localPosition = new Vector3(start + w * .5f, 0f, -.0005f);
             }
             renderer.color = Faded(TrailColor, alpha);
+        }
+
+        /// <summary>
+        /// Зелёный отрезок лечения поверх заливки: от доли до лечения до фронта (HealBarFeedback). «Дым и
+        /// свет» — тот же кусок мазка, что у следа, растянутый по длине; прежний вид — капсула пака.
+        /// На приходе фронта отрезок светлеет, а на его конце вспыхивает мягкий ореол. Размер ореола —
+        /// в метрах (barHeight × HealGlowSize), корень элиты растянут неровно — масштаб делится обратно.
+        /// </summary>
+        private void DrawHeal(ref Bar bar, in BarHealState heal, float actual, float inner, float alpha,
+            Vector3 rootScale, float barHeight)
+        {
+            SpriteRenderer renderer = bar.HealRenderer;
+            if (renderer == null) return;
+            bool on = HealBarFeedback.Segment(in heal, actual, out float from, out float to);
+            float start = FillEnd(from, inner), stop = FillEnd(to, inner);
+            on &= stop - start > .004f;
+            if (renderer.gameObject.activeSelf != on) renderer.gameObject.SetActive(on);
+            float flash = on ? HealBarFeedback.Flash(in heal) : 0f;
+            if (bar.HealGlow != null && bar.HealGlow.gameObject.activeSelf != flash > .01f)
+                bar.HealGlow.gameObject.SetActive(flash > .01f);
+            if (!on) return;
+
+            float length = stop - start;
+            Transform t = renderer.transform;
+            if (_ink)
+            {
+                Vector2 size = _trailSlice.bounds.size;
+                t.localScale = new Vector3(length / Mathf.Max(.0001f, size.x), Height / Mathf.Max(.0001f, size.y), 1f);
+                t.localPosition = new Vector3(start, 0f, -.0015f);
+            }
+            else
+            {
+                float h = Height - Inset * 2f;
+                float w = Mathf.Max(h, length);
+                renderer.size = new Vector2(w, h);
+                t.localPosition = new Vector3(stop - w * .5f, 0f, -.0015f);
+            }
+            Color color = Color.Lerp(HealColor, HealFlashColor, flash);
+            color.a *= HealBarFeedback.Alpha(in heal) * alpha;
+            renderer.color = color;
+
+            if (bar.HealGlow == null || flash <= .01f) return;
+            float metres = barHeight * HealGlowSize;
+            Vector2 native = bar.HealGlow.sprite.bounds.size;
+            bar.HealGlow.transform.localScale = new Vector3(metres / Mathf.Max(.0001f, native.x) / Mathf.Max(.001f, rootScale.x),
+                metres / Mathf.Max(.0001f, native.y) / Mathf.Max(.001f, rootScale.y), 1f);
+            bar.HealGlow.transform.localPosition = new Vector3(stop, 0f, -.0025f);
+            bar.HealGlow.color = Faded(HealGlowColor, flash * alpha);
+        }
+
+        /// <summary>Где на полоске кончается заливка доли f (локально): у «Дыма и света» — по ступеням мазка.</summary>
+        private float FillEnd(float f, float inner)
+        {
+            if (_ink) return -inner * .5f + inner * Mathf.Clamp(Mathf.CeilToInt(f * FillSteps), 0, FillSteps) / FillSteps;
+            float h = Height - Inset * 2f;
+            return -inner * .5f + (f > 0f ? Mathf.Max(h, inner * f) : 0f);
         }
 
         /// <summary>
@@ -783,7 +889,10 @@ namespace Game.View
                 // Вендиго: кость головы на 2,2 м, рога — до 3,1 м.
                 case EnemyKind.ForestWendigo: crown = 1.24f; limb = .58f; crownBones = WendigoCrown; return true;
                 case EnemyKind.ForestStonehoof: crown = .46f; limb = .16f; crownBones = StonehoofCrown; return true;
-                case EnemyKind.ForestThorncaster: crown = .68f; limb = .44f; crownBones = ThorncasterCrown; return true;
+                // Шипомёт замерен на росте 2,7 м; модель с ревью 01.10 на 10% крупнее — запасы тоже.
+                case EnemyKind.ForestThorncaster:
+                    crown = .68f * ThorncasterAnimatorView.BodyGrowth; limb = .44f * ThorncasterAnimatorView.BodyGrowth;
+                    crownBones = ThorncasterCrown; return true;
                 // Корнехват сгорблен: выше всего спина и плечи, голова ниже ключиц.
                 case EnemyKind.ForestRootSnarer: crown = .5f; limb = .42f; crownBones = RootSnarerCrown; return true;
                 // Расщепень: панцирь на 0,66 м выше хребта; детёныш — то же тело ×0,6.
@@ -802,6 +911,8 @@ namespace Game.View
             Shift(bar.BackRenderer, shift);
             Shift(bar.TrailRenderer, shift);
             Shift(bar.FillRenderer, shift);
+            Shift(bar.HealRenderer, shift);
+            Shift(bar.HealGlow, shift);
             Shift(bar.FrameRenderer, shift);
             Shift(bar.GemFill, shift);
             Shift(bar.GemRim, shift);
@@ -1039,6 +1150,12 @@ namespace Game.View
             Fit(fill, inner, Height);
             fill.transform.localPosition = new Vector3(-inner * .5f, 0f, -.001f);
 
+            // Лечение: зелёный кусок мазка поверх заливки и ореол на его фронте; ставит DrawHeal.
+            SpriteRenderer heal = Part(root, "Лечение", _trailSlice, OrderHeal, false);
+            heal.gameObject.SetActive(false);
+            SpriteRenderer healGlow = Part(root, "Лечение: вспышка", _glow, OrderHealGlow, false);
+            healGlow.gameObject.SetActive(false);
+
             // Огонёк вписан в 1 м: размер (EliteGem) и обратное сжатие неровного корня элиты
             // даёт масштаб узла, выставляемый каждый кадр.
             var gem = new GameObject("Элита").transform;
@@ -1056,6 +1173,8 @@ namespace Game.View
                 BackRenderer = back,
                 FillRenderer = fill,
                 TrailRenderer = trail,
+                HealRenderer = heal,
+                HealGlow = healGlow,
                 Gem = gem,
                 GemFill = orb,
                 GemRim = glow,
@@ -1077,6 +1196,9 @@ namespace Game.View
             SpriteRenderer trail = Part(root, "След урона", theme.BarFill, OrderTrail, true);
             trail.gameObject.SetActive(false);
             SpriteRenderer fill = Part(root, "Заливка", theme.BarFill, OrderFill, true);
+            // Лечение — капсула пака поверх заливки; ореола в прежнем виде нет.
+            SpriteRenderer heal = Part(root, "Лечение", theme.BarFill, OrderHeal, true);
+            heal.gameObject.SetActive(false);
             SpriteRenderer frame = Part(root, "Контур", theme.BarFrame, OrderFrame, true);
             if (frame.drawMode == SpriteDrawMode.Sliced) frame.size = new Vector2(Width, Height);
             else frame.gameObject.SetActive(false);
@@ -1102,6 +1224,7 @@ namespace Game.View
                 BackRenderer = back,
                 FillRenderer = fill,
                 TrailRenderer = trail,
+                HealRenderer = heal,
                 FrameRenderer = frame,
                 Gem = gem,
                 GemFill = gemFill,

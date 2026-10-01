@@ -9,6 +9,7 @@ namespace Game.View
     public sealed partial class TickDriver
     {
         private bool _usingGamepad;
+        private bool _pointerPressIsGamepad;
         private FixVec2 _gamepadAimDirection = new FixVec2(Fix64.One, Fix64.Zero);
         private readonly bool[] _gamepadSlots = new bool[5];
 
@@ -61,13 +62,17 @@ namespace Game.View
             RefreshLastInputDevice();
             var pad = Gamepad.current;
             if (pad == null) return;
-            if (!_usingGamepad) return;
+            if (!_usingGamepad)
+            {
+                if (_pointerPressIsGamepad) _pointerPressLatched = false;
+                return;
+            }
             Vector2 move = GamepadMovement();
             Vector2 look = pad.rightStick.ReadValue();
 
             // Ни старое положение мыши, ни её незавершённый клик не могут
             // подменить прицел или атаку контроллера на следующем тике.
-            _pointerPressLatched = false;
+            if (choosing || !_pointerPressIsGamepad) _pointerPressLatched = false;
             FixVec2 origin = Sim != null ? Sim.Entities.Position[Simulation.PlayerId] : FixVec2.Zero;
             // При выборе цели левый стик не должен уводить прицел вслед за
             // движением: до нового отклонения правого сохраняем направление.
@@ -91,7 +96,9 @@ namespace Game.View
             if (pad.rightTrigger.wasPressedThisFrame && !choosing)
             {
                 _pointerPressFrame = _pending;
+                _pointerPressFrame.Flags |= (byte)InputFlags.AttackPressed;
                 _pointerPressLatched = true;
+                _pointerPressIsGamepad = true;
             }
 
             System.Array.Clear(_gamepadSlots, 0, _gamepadSlots.Length);

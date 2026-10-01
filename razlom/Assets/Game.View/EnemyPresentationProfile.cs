@@ -53,19 +53,29 @@ namespace Game.View
         public readonly float Scale;
         /// <summary>Размер куска, на которые трескается тело, м.</summary>
         public readonly float ChunkMetres;
-        /// <summary>Тело оседает и сжимается. Расщепень — нет: он раскалывается сам (SplitterCombatView).</summary>
+        /// <summary>
+        /// Тело оседает и сжимается. Расщепень — нет: он раскалывается сам (SplitterCombatView).
+        /// Корнехват — нет: тело URP Lit не трескается, он падает клипом и уходит в землю сам
+        /// (RootSnarerAnimatorView).
+        /// </summary>
         public readonly bool Crumbles;
         public readonly float ShakeTrauma, ShakeZoom;
 
+        /// <summary>
+        /// Тело ложится на землю в этот миг (с от смерти) — второй, низкий залп материала у груди
+        /// (EnemyDeathFxView). 0 — тело не падает, а рассыпается стоя (все, кроме Корнехвата).
+        /// </summary>
+        public readonly float LandsAt;
+
         public EnemyKillBeat(EnemyKind kind, DeathMaterial material, bool heavy, bool lastOfWave, float hitStop,
             float burstAt, float crumbleSeconds, int motes, float scale, float chunkMetres,
-            bool crumbles, float shakeTrauma, float shakeZoom)
+            bool crumbles, float shakeTrauma, float shakeZoom, float landsAt = 0f)
         {
             Kind = kind; Material = material; Heavy = heavy; LastOfWave = lastOfWave;
             HitStopSeconds = hitStop; BurstAt = burstAt; CrumbleSeconds = crumbleSeconds;
             MotesAt = burstAt + EnemyPresentationProfile.MoteDelaySeconds; MoteCount = motes;
             Scale = scale; ChunkMetres = chunkMetres; Crumbles = crumbles;
-            ShakeTrauma = shakeTrauma; ShakeZoom = shakeZoom;
+            ShakeTrauma = shakeTrauma; ShakeZoom = shakeZoom; LandsAt = landsAt;
         }
 
         /// <summary>Центр залпа над землёй, м: префабы Resources/VFX/Death собраны с центром на 0,8 при масштабе 1.</summary>
@@ -154,12 +164,17 @@ namespace Game.View
             DissolveSeconds = .5f, RecoilMeters = .04f, EdgeGlow = .03f,
             EdgeColor = new Color(.36f, .30f, .17f, 1f)
         };
-        // Корнехват (Death, 45 кадров): брюхом в землю на 25-м. Тело под URP Lit без
-        // растворения — к концу показа RootSnarerAnimatorView уводит его в землю.
+        // Корнехват (Death, 45 кадров): брюхом в землю на 25-м, с 32-го лежит. Тело под URP Lit
+        // без растворения и без трещин — ревью 01.10 «анимации и VFX смерти никакой»: раньше
+        // распад за 0,4 с сжимал и топил тело, клип доходил до 15-го кадра. Теперь он падает
+        // целиком: кадры 0–25 — до FallSeconds (0,62 с от смерти, после стоп-кадра), 25–45 — за
+        // RestSeconds, потом RootSnarerAnimatorView уводит лежащее тело в землю до конца показа
+        // (BurstAt + DissolveSeconds ≈ 1,1 с). Выплата убийства (вспышка, залп, огоньки, звук) —
+        // по-прежнему на залпе, сразу.
         public EnemyDeathPresentation ForestRootSnarer = new EnemyDeathPresentation {
             ClipSeconds = 45f / 30f, StartNormalized = 0f, RestNormalized = 25f / 45f,
-            StateSpeed = 1f, BlendSeconds = .08f, RestSeconds = .5f,
-            DissolveSeconds = .4f, RecoilMeters = .04f, EdgeGlow = .03f,
+            StateSpeed = 1.35f, BlendSeconds = .08f, RestSeconds = .42f,
+            DissolveSeconds = 1f, RecoilMeters = .04f, EdgeGlow = .03f,
             EdgeColor = new Color(.30f, .26f, .16f, 1f)
         };
         /// <summary>
@@ -231,7 +246,8 @@ namespace Game.View
         public static EnemyKillBeat Kill(EnemyKind kind, bool elite, bool lastOfWave)
         {
             DeathMaterial material;
-            bool big, crumbles = true;
+            // ownBreak — тело раскалывается своим видом (Расщепень): залп ждёт его раскола.
+            bool big, crumbles = true, ownBreak = false;
             int motes;
             float scale, chunk;
             switch (kind)
@@ -246,25 +262,28 @@ namespace Game.View
                     material = DeathMaterial.Bark; big = true; motes = 8; scale = 1.15f; chunk = .18f; break;
                 case EnemyKind.ForestThorncaster:
                     material = DeathMaterial.Thorn; big = true; motes = 7; scale = 1f; chunk = .15f; break;
+                // Корнехват не трескается (URP Lit): падает клипом и уходит в землю — см. профиль.
                 case EnemyKind.ForestRootSnarer:
-                    material = DeathMaterial.Rot; big = true; motes = 7; scale = .95f; chunk = .15f; break;
+                    material = DeathMaterial.Rot; big = true; motes = 7; scale = .95f; chunk = .15f; crumbles = false; break;
                 case EnemyKind.ForestSplitter:
-                    material = DeathMaterial.Shell; big = true; motes = 6; scale = 1f; chunk = .15f; crumbles = false; break;
+                    material = DeathMaterial.Shell; big = true; motes = 6; scale = 1f; chunk = .15f; crumbles = false; ownBreak = true; break;
                 case EnemyKind.ForestSplitling:
-                    material = DeathMaterial.Shell; big = false; motes = 3; scale = .6f; chunk = .09f; crumbles = false; break;
+                    material = DeathMaterial.Shell; big = false; motes = 3; scale = .6f; chunk = .09f; crumbles = false; ownBreak = true; break;
                 default:
                     material = DeathMaterial.Bark; big = false; motes = 6; scale = 1f; chunk = .16f; break;
             }
             bool heavy = big || elite || lastOfWave;
             float stop = heavy ? KillHitStopSeconds : 0f;
             // Расщепень раскалывается по своей трещине (SplitterCombatView): сколы — в тот же тик.
-            float burst = crumbles ? KillBreakSeconds + stop
+            float burst = !ownBreak ? KillBreakSeconds + stop
                 : Mathf.Max(SplitterCombatView.BreakDelaySeconds, KillBreakSeconds + stop);
             if (elite) motes = motes * 3 / 2;
             float trauma = !heavy ? 0f : lastOfWave ? .6f : .5f;
             float zoom = !heavy ? 0f : lastOfWave ? .75f : .55f;
+            // Падающее тело ложится к концу падения профиля (тот же миг, что «упал» в CombatAudio).
+            float lands = kind == EnemyKind.ForestRootSnarer ? Mathf.Max(stop + .05f, Death(kind).FallSeconds) : 0f;
             return new EnemyKillBeat(kind, material, heavy, lastOfWave, stop, burst,
-                Death(kind).DissolveSeconds, motes, scale, chunk, crumbles, trauma, zoom);
+                Death(kind).DissolveSeconds, motes, scale, chunk, crumbles, trauma, zoom, lands);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

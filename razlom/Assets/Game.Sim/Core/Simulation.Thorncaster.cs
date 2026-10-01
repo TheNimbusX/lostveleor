@@ -242,12 +242,12 @@ namespace Game.Sim
         /// <summary>Урон шипа — урон листа: глубина и «Сложно» приходят в него сами.</summary>
         public int ThornSpikeDamageOf(int id) => Entities.Damage[id];
 
-        /// <summary>Всплеск — шип × 22/30, доля из таблицы видов.</summary>
+        /// <summary>Всплеск — шип × 22/60, доля из таблицы видов.</summary>
         public int ThornBurstDamageOf(int id)
             => EnemyArchetypes.Share(Entities.Damage[id], EnemyArchetypes.ThorncasterBurstDamage,
                 EnemyArchetypes.ThorncasterSpikeDamage);
 
-        /// <summary>Выстрел — шип × 14/30: глубина и «Сложно» растят его вместе с шипом.</summary>
+        /// <summary>Выстрел — шип × 14/60: глубина и «Сложно» растят его вместе с шипом.</summary>
         public int ThornShotDamageOf(int id)
             => EnemyArchetypes.Share(Entities.Damage[id], EnemyArchetypes.ThorncasterShotDamage,
                 EnemyArchetypes.ThorncasterSpikeDamage);

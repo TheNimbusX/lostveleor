@@ -12,7 +12,9 @@ namespace Game.View
         /// изолированной съёмки. dodge — уходит из замаха, tank — стоит и принимает удары,
         /// stun — глушит якорем посреди замаха, turn — обходит врага по кругу, чтобы тот
         /// разворачивался на месте, hug — стоит вплотную и не бьёт (всплеск Шипомёта),
-        /// death — добивает. Любой другой (wall) — стоит.
+        /// death — добивает, orbit — бегает по кругу 5 м вокруг своей стартовой точки (круг за
+        /// 8 с), pass — бегает по 12 м туда-обратно поперёк пачки в ~3 м от передних мобов
+        /// («лунная походка», ревью 01.10). Любой другой (wall) — стоит.
         /// </summary>
         public static string EnemyReviewCase => StonehoofReviewCase ?? CaptureRig.EnemyCase;
 #else
@@ -24,6 +26,16 @@ namespace Game.View
         private int _enemyCaseSeenImpact, _enemyCaseWindup, _enemyCaseSlamLead, _enemyCaseThreatSerial;
         private int _enemyCaseShotSerial, _enemyCaseVictim, _enemyCaseNextKillTick;
         private FixVec2 _enemyCaseAnchor, _enemyCaseDodgeTarget, _enemyCaseShotTarget;
+
+        // Круг и проходы мимо пачки (orbit, pass): проверка «лунной походки» — мобы идут к своим
+        // местам вокруг бегущего героя по дуге. Круг — как в CrowdStepHashPinTests: точка на 40°
+        // впереди по окружности 5 м, круг за 8 с. Проходы — 12 м, линия ставится один раз, когда
+        // пачка уже на поле: поперёк оси «герой → середина пачки», в 3 м от ближнего моба.
+        private const int OrbitLapTicks = 240;
+        private static readonly Fix64 OrbitRadius = Fix64.FromInt(5), OrbitLead = Fix64.Ratio(7, 10);
+        private static readonly Fix64 PassHalfLength = Fix64.FromInt(6), PassStandOff = Fix64.FromInt(3);
+        private bool _enemyCasePassReady, _enemyCasePassToB;
+        private FixVec2 _enemyCasePassA, _enemyCasePassB;
 
         // Уход от выстрела Шипомёта (dodge): метки у шипа нет, герой читает замах — шаг
         // вбок через 8 тиков после его начала (реакция игрока), на 1,5 м от линии полёта:
@@ -57,6 +69,7 @@ namespace Game.View
                 _enemyCaseDodgeKey = _enemyCaseCastTick = _enemyCaseSeenImpact = _enemyCaseThreatSerial = -1;
                 _enemyCaseShotSerial = _enemyCaseVictim = -1; _enemyCaseNextKillTick = 0;
                 _enemyCaseWindup = 0; _enemyCaseSlamLead = 16;
+                _enemyCasePassReady = false; _enemyCasePassToB = true;
             }
             int enemy = -1;
             for (int i = 1; i < entities.Count && enemy < 0; i++)
@@ -69,6 +82,8 @@ namespace Game.View
                 case "stun": CaptureEnemyStun(enemy, tick, hero); break;
                 case "turn": CaptureEnemyTurn(enemy, hero); break;
                 case "hug": CaptureEnemyHug(enemy, hero); break;
+                case "orbit": CaptureEnemyOrbit(tick); break;
+                case "pass": CaptureEnemyPass(hero); break;
                 case "death":
                     if (tick - _enemyCaseStart <= 100) break;
                     if (enemy != _enemyCaseVictim)
@@ -332,6 +347,50 @@ namespace Game.View
             var toEnemy = center - hero;
             Fix64 hold = Fix64.Ratio(7, 5), slack = hold + Fix64.Ratio(3, 10);
             if (toEnemy.LengthSq > slack * slack) MoveCaptured(center - toEnemy.Normalized() * hold);
+        }
+
+        /// <summary>Бег по кругу 5 м вокруг стартовой точки героя: точка на 40° впереди, круг за 8 с.</summary>
+        private void CaptureEnemyOrbit(int tick)
+        {
+            Fix64 lead = Fix64.TwoPi * Fix64.Ratio((tick - _enemyCaseStart) % OrbitLapTicks, OrbitLapTicks) + OrbitLead;
+            MoveCaptured(Walkable(_enemyCaseAnchor + FixVec2.FromAngle(lead) * OrbitRadius));
+        }
+
+        /// <summary>
+        /// Проходы 12 м туда-обратно поперёк пачки: «бежим вдоль них». Линия — один раз, по
+        /// середине живых врагов и ближнему из них; конец пути — разворот к другому концу.
+        /// </summary>
+        private void CaptureEnemyPass(FixVec2 hero)
+        {
+            var entities = Sim.Entities;
+            if (!_enemyCasePassReady)
+            {
+                FixVec2 sum = FixVec2.Zero; int count = 0; Fix64 nearest = Fix64.MaxValue;
+                for (int i = 1; i < entities.Count; i++)
+                {
+                    if (!entities.Alive[i] || entities.Side[i] == Faction.Wole) continue;
+                    sum += entities.Position[i]; count++;
+                    nearest = Fix64.Min(nearest, FixVec2.Distance(hero, entities.Position[i]));
+                }
+                if (count == 0) return;
+                FixVec2 toPack = sum * Fix64.Ratio(1, count) - hero;
+                FixVec2 axis = toPack.LengthSq < Fix64.Ratio(1, 100) ? new FixVec2(Fix64.Zero, Fix64.One) : toPack.Normalized();
+                FixVec2 side = new FixVec2(-axis.Y, axis.X);
+                FixVec2 middle = hero + axis * Fix64.Max(Fix64.Zero, nearest - PassStandOff);
+                _enemyCasePassA = Walkable(middle - side * PassHalfLength);
+                _enemyCasePassB = Walkable(middle + side * PassHalfLength);
+                _enemyCasePassReady = true;
+            }
+            if (FixVec2.DistanceSq(hero, _enemyCasePassToB ? _enemyCasePassB : _enemyCasePassA) < Fix64.Ratio(1, 4))
+                _enemyCasePassToB = !_enemyCasePassToB;
+            MoveCaptured(_enemyCasePassToB ? _enemyCasePassB : _enemyCasePassA);
+        }
+
+        /// <summary>Точка на полу стенда: карта (Run.Map) сдвигает её из стены; без карты — как есть.</summary>
+        private FixVec2 Walkable(FixVec2 point)
+        {
+            LayoutMap map = Run != null ? Run.Map : null;
+            return map != null ? map.ClampToWalkable(point, Sim.Entities.BodyRadius[Simulation.PlayerId]) : point;
         }
 
         private void MoveCaptured(FixVec2 point)

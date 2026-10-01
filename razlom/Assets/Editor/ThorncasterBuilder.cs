@@ -47,8 +47,8 @@ public static class ThorncasterBuilder
     private const string ControllerPath = Root + "ForestThorncaster.controller";
     public const string PrefabPath = Root + "ForestThorncaster_Runtime.prefab";
 
-    /// <summary>Рост тела в игре, м.</summary>
-    public const float Height = 2.7f;
+    /// <summary>Рост тела в игре, м: 2,7 × 1,1 — ревью 01.10 «модельку увеличить на 10%» (ThorncasterAnimatorView.BodyGrowth).</summary>
+    public const float Height = Game.View.ThorncasterAnimatorView.BodyHeight;
 
     /// <summary>Роли — имена состояний контроллера и дублей FBX (ForestThorncaster_&lt;Роль&gt;).</summary>
     public static readonly string[] Roles = { "Idle", "Walk", "LineCast", "Burst", "Shot", "Hit", "Death" };

@@ -292,7 +292,11 @@ public static class RootSnarerBuilder
         material.SetFloat("_SmoothnessTextureChannel", 0f);
         material.DisableKeyword("_SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A");
         material.SetFloat("_Metallic", 0f);
-        material.DisableKeyword("_EMISSION");
+        // Эмиссия включена, но чёрная: тело не светится. Ею RootSnarerAnimatorView даёт вспышку
+        // добивания (2–3 кадра, блок свойств) — у URP Lit нет _HitFlash тун-шейдера (ревью 01.10).
+        material.EnableKeyword("_EMISSION");
+        material.SetColor("_EmissionColor", Color.black);
+        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
         return material;
     }
 

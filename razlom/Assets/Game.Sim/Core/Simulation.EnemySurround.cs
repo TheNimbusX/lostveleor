@@ -54,6 +54,12 @@ namespace Game.Sim
         private readonly int[] _meleeSlotHolders = new int[MeleeSurroundSlots];
         private readonly int[] _swarmSlotHolders = new int[SwarmSurroundSlots];
 
+        // Ждёт ли ближнего жетона кто-то готовый (Хранитель, Расщепень): готов
+        // бить, но оба жетона заняты. Считается в конце AssignSurroundSlots из
+        // состояния этого же тика и читается только в SurroundWanted того же
+        // тика — не состояние, в хеш не идёт. См. HoldsGroundBetweenSwings.
+        private bool _meleeTokenQueued;
+
         // Направление от героя на моба j, нормированное, и вектор, из которого
         // оно посчитано. Чистая функция вектора: совпал вектор — совпал ответ,
         // поэтому это не состояние и в хеш не идёт. Девять оценок огневых
@@ -154,6 +160,11 @@ namespace Game.Sim
                 }
                 _surroundSlot[i] = best;
             }
+            _meleeTokenQueued = false;
+            for (int i = 1; i < Entities.Count && !_meleeTokenQueued; i++)
+                _meleeTokenQueued = !_engaged[i] && CanHoldSurroundSlot(i) && !IsSwarmLike(Entities.Kind[i])
+                    && Tick >= Entities.NextAttackTick[i] - EngageLeadTicks
+                    && !EnemySwingHoldsBody(i) && !SplitterOwnsPosition(i);
         }
 
         /// <summary>
@@ -185,6 +196,38 @@ namespace Game.Sim
             _surroundSlot[id] = -1;
             _surroundWaitSince[id] = Tick;
         }
+
+        /// <summary>
+        /// Хранитель (и моб без вида — он живёт по правилам Хранителя) между
+        /// СВОИМИ ударами не пятится. Ревью владельца 01.10: «после атаки
+        /// зачем-то отходит назад, а потом опять бьёт».
+        ///
+        /// ПРИЧИНА БЫЛА ЗДЕСЬ, А НЕ В КЛИПЕ И НЕ В РАСТАЛКИВАНИИ. Стойка после
+        /// удара кончается раньше перезарядки (цикл длиннее замаха со стойкой),
+        /// и в свободные тики цикла моб ещё не «готов» (_engaged = false) —
+        /// а неготовому SlotRadius отдаёт кольцо ожидания 3 м. Радиальная
+        /// поправка тянула стоящего на 2,2 м Хранителя назад полным ходом:
+        /// трасса 01.10 — 0,42 м задом за 7 тиков, потом 0,4 м вперёд и
+        /// новый замах. И так после каждого удара.
+        ///
+        /// Теперь внутри кольца ожидания такой Хранитель держит место: наружу
+        /// поправка не тянет, дуга к своему месту остаётся. Герой ушёл дальше
+        /// кольца — догоняет до кольца, за 6 тиков до готовности подходит на
+        /// дистанцию удара, как раньше. Правило только для своей перезарядки
+        /// (и паузы после помехи): ждущий ЖЕТОНА, уже готовый бить, по-прежнему
+        /// отходит на кольцо ожидания, а уступивший место толпе (YieldSurroundSlot,
+        /// места нет) — на метр дальше; Расщепень и рой ходят как раньше.
+        ///
+        /// И ЕСЛИ ЖЕТОНА ЖДЁТ КТО-ТО ДРУГОЙ (_meleeTokenQueued) — тоже отходит,
+        /// как раньше: в толпе ближников (три и больше на два жетона) ударивший
+        /// освобождает подход ждущему. Иначе он стоял бы на дистанции удара и
+        /// брал освободившийся жетон раньше, чем ждущий подойдёт с кольца:
+        /// между Хранителями очередь держит LongerWaitingGuardianCanStart, но
+        /// Расщепень в ней не участвует. В лесу в волне не больше двух
+        /// Хранителей, и обычно жетона никто не ждёт.
+        /// </summary>
+        internal static bool HoldsGroundBetweenSwings(EnemyKind kind)
+            => kind == EnemyKind.None || kind == EnemyKind.ForestGuardian;
 
         private bool SurroundPointUsable(int id, FixVec2 point)
             => _layout == null || _layout.IsWalkable(point, Entities.BodyRadius[id]);
@@ -241,6 +284,9 @@ namespace Game.Sim
 
             // У кольца: радиальная поправка плюс дуга к месту.
             Fix64 radial = Fix64.Clamp(distance - ring, -Fix64.One, Fix64.One);
+            if (radial.Raw < 0 && !engaged && slot >= 0 && !_meleeTokenQueued && HoldsGroundBetweenSwings(kind)
+                && Tick < Entities.NextAttackTick[i] - EngageLeadTicks)
+                radial = Fix64.Zero;
             FixVec2 onRing = hero + bearing * ring;
             Fix64 cross = bearing.X * slotDirection.Y - bearing.Y * slotDirection.X;
             var tangent = new FixVec2(-bearing.Y, bearing.X);

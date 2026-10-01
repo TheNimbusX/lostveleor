@@ -19,6 +19,9 @@ namespace Game.View
     ///   кончика правой руки (сокет Muzzle_RightSpike), 21–33 за стойку 12.
     /// • Ходьба: клип снят на 2,2 м/с, цикл 1,76 м — фаза идёт от скорости Sim.
     ///   Разворот на месте переступает той же фазой.
+    /// • Рост: ревью 01.10 «модельку увеличить на 10%» — тело 2,7 → 2,97 м
+    ///   (<see cref="BodyGrowth"/>; ThorncasterBuilder.Height и масштаб модели в префабе).
+    ///   Шаг ног растёт вместе с телом — цикл ходьбы тоже ×1,1, иначе ноги скользят.
     /// • Попадание вне действия — Hit (0,4 с). Смерть — Death по профилю вида
     ///   (EnemyPresentationProfile): тело ложится к концу падения и лежит до
     ///   растворения.
@@ -43,8 +46,14 @@ namespace Game.View
         /// <summary>Руки держатся в земле хотя бы столько тиков: у линии из одного шипа кадры 24–60 не проскакивают разом.</summary>
         private const float MinLineHoldTicks = 6f;
 
-        /// <summary>Клип ходьбы: 1,76 м за цикл (24 кадра на 2,2 м/с).</summary>
-        private const float WalkCycleMetres = 1.76f, WalkSpeedThreshold = .06f;
+        /// <summary>Модель крупнее замера пакета (2,7 м) — ревью 01.10: «модельку увеличить на 10%».</summary>
+        public const float BodyGrowth = 1.1f;
+
+        /// <summary>Рост тела в игре, м: по нему ThorncasterBuilder масштабирует модель.</summary>
+        public const float BodyHeight = 2.7f * BodyGrowth;
+
+        /// <summary>Клип ходьбы: 1,76 м за цикл (24 кадра на 2,2 м/с) при росте 2,7 м — шаг растёт с телом.</summary>
+        private const float WalkCycleMetres = 1.76f * BodyGrowth, WalkSpeedThreshold = .06f;
 
         /// <summary>Разворот на месте: быстрее 30°/с — переступает фазой Walk, цикл на 150°.</summary>
         private const float TurnRateThreshold = 30f, TurnDegreesPerCycle = 150f, TurnHoldSeconds = .2f;
@@ -54,7 +63,7 @@ namespace Game.View
         public const string MuzzleName = "Muzzle_RightSpike";
 
         /// <summary>Выпуск шипа по замеру export.json, если сокета нет: в осях корня тела, взгляд +Z.</summary>
-        public static readonly Vector3 MuzzleFallback = new Vector3(.12f, 1.9f, 1.42f);
+        public static readonly Vector3 MuzzleFallback = new Vector3(.12f, 1.9f, 1.42f) * BodyGrowth;
 
         private Animator _animator;
         private TickDriver _driver;

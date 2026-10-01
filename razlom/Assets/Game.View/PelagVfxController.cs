@@ -447,7 +447,13 @@ namespace Game.View
                     _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                     // Animator уже запускает ArenaView. Здесь начинается только
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
-                    BeginGameplayAttackMotion(e.Target);
+                    if (e.BasicAttackState.Serial > 0)
+                    {
+                        // Candidate attacks have no presentation-only forward lunge.
+                        _attackMotionTime = -1f;
+                        _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
+                    }
+                    else BeginGameplayAttackMotion(e.Target);
                 }
                 else if (e.Type == SimEventType.ChainStepHop)
                 {

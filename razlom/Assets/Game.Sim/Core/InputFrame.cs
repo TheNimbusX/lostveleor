@@ -36,6 +36,8 @@ namespace Game.Sim
         DirectMovement = 1 << 4,
         /// <summary>Включить артефакт забега — клавиша F (24 сентября). У Лика Пустоты — и выйти из фазы.</summary>
         UseArtifact = 1 << 5,
+        /// <summary>Свежий клик обычной атаки. Удержание остаётся в Attack.</summary>
+        AttackPressed = 1 << 6,
     }
 
     /// <summary>

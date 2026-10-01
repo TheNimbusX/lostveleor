@@ -176,7 +176,7 @@ namespace Game.Tests
             Assert.That(hits.Count, Is.EqualTo(4));
             for (int k = 0; k < 4; k++) Assert.That(hits[k], Is.EqualTo(k == segment), "шип " + k);
             Assert.That(damage, Is.EqualTo(new[] { 27 + 6 * segment }));
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 30));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - EnemyArchetypes.ThorncasterSpikeDamage));
         }
 
         [TestCase(true)] [TestCase(false)]
@@ -206,7 +206,7 @@ namespace Game.Tests
             Assert.That(stages, Is.EqualTo(new[] { 0, 1, 2, 3 }));
             Assert.That(hits, Is.EqualTo(new[] { false, true, false, false }), "третий шип героя не бьёт повторно");
             Assert.That(damage, Is.EqualTo(new[] { 33 }));
-            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - 30));
+            Assert.That(sim.Entities.Health[0], Is.EqualTo(10000 - EnemyArchetypes.ThorncasterSpikeDamage));
         }
 
         [Test]

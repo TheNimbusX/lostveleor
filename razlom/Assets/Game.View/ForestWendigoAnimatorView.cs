@@ -35,6 +35,15 @@ namespace Game.View
 
         private Animator _animator;
         private TickDriver _driver;
+        private ArenaView _arena;
+
+        // РАЗВОРОТ НА МЕСТЕ (ревью владельца 01.10: «проворот на месте у него без анимации,
+        // когда мы его крутим»). Стоит и крутится за героем — лапы переступают фазой Walk в
+        // темпе поворота корпуса: полный цикл шага на 240° (разворот Sim 360°/с даёт полтора
+        // цикла в секунду — чуть быстрее ходьбы, лапы не семенят).
+        private const float TurnDegreesPerCycle = 240f;
+        private EnemyTurnSteps _turnSteps;
+        private Vector3 _lastBody;
         private int _entity, _state, _health;
         private bool _dead, _hasHowl, _hasSweep;
         private float _deathClock, _idleClock, _walkPhase, _hitClock, _rise, _spin;
@@ -52,6 +61,7 @@ namespace Game.View
         {
             _driver = driver; _entity = entity; _state = Idle; _dead = false;
             _deathClock = _idleClock = _walkPhase = 0; _hitClock = 1f; _health = driver.Sim.Entities.Health[entity];
+            _arena = driver.GetComponent<ArenaView>(); _lastBody = Vector3.zero; _turnSteps.Reset();
             _rise = 0; _spin = 0; ApplyRise();
             _animator.Rebind(); _animator.SetFloat("IdlePhase", 0); _animator.Play(Idle, 0, 0); _animator.Update(0);
             _hasHowl = _animator.HasState(0, Howl);
@@ -63,6 +73,11 @@ namespace Game.View
             if (_driver.GameplayPaused) { _animator.speed = 0; return; }
             _animator.speed = 1; var sim = _driver.Sim; float dt = Time.deltaTime;
             float rise = 0f, spin = 0f;
+            // Поворот показанного тела за кадр (ArenaView.BodyFacing — прошлый LateUpdate).
+            Vector3 body = _arena != null ? _arena.BodyFacing(_entity) : Vector3.zero;
+            float yaw = body.sqrMagnitude > .5f && _lastBody.sqrMagnitude > .5f
+                ? Vector3.SignedAngle(_lastBody, body, Vector3.up) : 0f;
+            if (body.sqrMagnitude > .5f) _lastBody = body;
             if (!sim.Entities.Alive[_entity]) PlayDeath();
             if (_dead)
             {
@@ -76,6 +91,7 @@ namespace Game.View
                 _health = sim.Entities.Health[_entity]; _hitClock += dt;
                 if (sim.TryGetWendigoAction(_entity, out var a))
                 {
+                    _turnSteps.Reset();
                     float time = Mathf.Max(0, sim.Tick - 1 + _driver.Alpha - a.StartTick);
                     if (a.Kind == WendigoAction.Howl) rise = SampleHowl(a, time);
                     else if (a.Kind == WendigoAction.Sweep) spin = SampleSweep(a, time);
@@ -90,13 +106,17 @@ namespace Game.View
                         Sample(a.Kind == WendigoAction.Claw ? Claw : Leap, frame/96, .045f);
                     }
                 }
-                else if (_hitClock < .5f) Sample(Hit, _hitClock/.5f, .04f);
+                else if (_hitClock < .5f) { _turnSteps.Reset(); Sample(Hit, _hitClock/.5f, .04f); }
                 else
                 {
                     float speed = sim.Entities.Velocity[_entity].Length.ToFloat() * Simulation.TicksPerSecond;
                     // Walk r04 is authored for 2.4 m per complete left/right cycle.
                     _idleClock += dt; _walkPhase += speed*dt/2.4f;
-                    Sample(speed > .06f ? Walk : Idle, speed > .06f ? Mathf.Repeat(_walkPhase,1) : Mathf.Repeat(_idleClock/2.5f,1), .13f);
+                    // Стоит, а корпус крутится за героем — лапы переступают, а не едут под Idle.
+                    bool turning = speed <= .06f && _turnSteps.Step(yaw, dt, TurnDegreesPerCycle, ref _walkPhase);
+                    if (speed > .06f) _turnSteps.Reset();
+                    bool walk = speed > .06f || turning;
+                    Sample(walk ? Walk : Idle, walk ? Mathf.Repeat(_walkPhase,1) : Mathf.Repeat(_idleClock/2.5f,1), .13f);
                 }
             }
             // Сглаживание: отменённый оглушением вой опадает, а не выпрыгивает из позы.

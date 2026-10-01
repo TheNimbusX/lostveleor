@@ -240,6 +240,14 @@ namespace Game.View
             GUILayout.Label("Четыре навыка выше, лесной бутон и четыре ближника. Настоящие расходы и КД; прогресс лагеря не меняется.", _wrapped);
             }
             GUILayout.Space(8);
+            // Проба 01.10: другая рисовка мира на тех же моделях. HUD не меняется; выбор запоминается.
+            GUILayout.Label("Визуал · проба рисовки");
+            bool comic = ComicStyle.Enabled;
+            if (GUILayout.Toggle(comic, "Комикс-рисовка мира: тушь, кисть, диорама", "Button", GUILayout.Height(36)) != comic)
+                ComicStyle.SetEnabled(!comic);
+            GUILayout.Label("Модели, материалы и HUD не меняются. Выключено — игра выглядит как раньше.", _wrapped);
+            DrawArenaMood();
+            GUILayout.Space(8);
             DrawTalentToggles();
             if (_driver.Session?.IsDeveloperRun == true)
                 GUILayout.Label("Загружен тест: уровень " + _driver.Run.Depth + ". Закрой меню, чтобы начать бой.");
@@ -296,6 +304,35 @@ namespace Game.View
                     return;
                 }
             }
+        }
+
+        private static readonly string[] ArenaMoodLabels = { "Авто", "День", "Туман", "Сумерки", "Босс" };
+        private static readonly ArenaMoodMode[] ArenaMoodModes =
+            { ArenaMoodMode.Auto, ArenaMoodMode.Day, ArenaMoodMode.Mist, ArenaMoodMode.Dusk, ArenaMoodMode.Boss };
+
+        /// <summary>
+        /// Световая арка акта I (проба 01.10): день → туман → сумерки по номеру арены. Переключатель
+        /// запоминается; принудительный свет — только до выхода. Смотреть: «Перейти на выбранный уровень» 1, 5, 8.
+        /// </summary>
+        private void DrawArenaMood()
+        {
+            bool mood = ArenaMood.Enabled;
+            if (GUILayout.Toggle(mood, "Свет арены по глубине: день → туман → сумерки", "Button", GUILayout.Height(36)) != mood)
+                ArenaMood.SetEnabled(!mood);
+            if (mood)
+            {
+                // Своё число оси (ключ съёмки) в сетке не показано: сетка рисуется на «Авто», но выбор не меняется,
+                // пока не нажмут кнопку, — иначе первое же открытие F8 сбрасывало бы ось на авто.
+                int shown = Mathf.Max(0, Array.IndexOf(ArenaMoodModes, ArenaMood.Mode));
+                int chosen = GUILayout.SelectionGrid(shown, ArenaMoodLabels, ArenaMoodLabels.Length);
+                if (chosen != shown && chosen >= 0) ArenaMood.SetMode(ArenaMoodModes[chosen]);
+                var state = ArenaMood.Current;
+                GUILayout.Label(ArenaMood.Active
+                    ? "Сейчас: арена " + state.Depth + (state.Boss ? " (босс)" : "") + " · " + ArenaMoodRules.AxisName(state.Axis)
+                    : ArenaMood.Prepared ? "Свет ждёт конца сборки арены." : "Свет только на аренах — в лагере как всегда.", _wrapped);
+            }
+            GUILayout.Label("Арены 1–3 — золотой день, 4–6 — туман, 7–8 и босс — сумерки. Лагерь и герои не меняются. " +
+                            "Выключено — свет как раньше.", _wrapped);
         }
 
         private GUIStyle _talentButton;

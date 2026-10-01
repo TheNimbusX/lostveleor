@@ -53,19 +53,30 @@ namespace Game.Tests
         // досягаемости — четыре кабана толпы теперь бьют клыками по-настоящему.
         // И ещё раз 29.09 (слияние ветки Kostya): поляна арены меньше, река с бродом
         // и рунный круг меняют карту лесной арены 6 — бой расходится с первого тика.
+        // И ещё раз 01.10 (ревью владельца, Лесной хранитель): ход 3,1 → 2,8 м/с,
+        // удар 23/17/53 → 28/21/65, здоровье 500 → 270, между своими ударами не
+        // пятится (если жетона никто не ждёт), а жетон при равном праве берёт тот,
+        // кто дольше ждёт удара. Бой расходится с первого тика; два отдельных
+        // прогона дали одни и те же свёртки бит в бит.
+        // И ещё раз 01.10 (ревью владельца, Вендиго, Шипомёт, Корнехват): Вендиго
+        // 900 HP, коготь 60 / прыжок 64 / вой 26 / круг 22; круг когтей — 14 из
+        // 18 тиков за спиной, без паузы когтя и поверх стойки когтя; Шипомёт 900
+        // HP, шип 60, тело 0,88; волна Корнехвата — 15% (элите 7,5%). В толпе
+        // два Шипомёта, два Вендиго и четыре Корнехвата — бой расходится с
+        // первого тика. Три отдельных прогона дали одни и те же свёртки бит в бит.
         private static readonly ulong[] CircleFolds =
         {
-            0x1EB1A4FC110E528EUL, 0xD09CF9D637FB91D5UL, 0x04FB31D2470F61D6UL,
-            0xD1C69B04F0CA2A9EUL, 0x71E5959BD56EF3ACUL, 0x5438A42AA2891B16UL,
+            0x15E98F374E12551AUL, 0x0FBEDC195239A00DUL, 0x6762729A352BE93AUL,
+            0xADDA2EC01790D2D4UL, 0x7B2BFBFADCE03EEDUL, 0xD112A7FACF011EBEUL,
         };
-        private const ulong CircleEnd = 0xCA478DBF74A14B29UL;
+        private const ulong CircleEnd = 0x5ECC3E4A823CD265UL;
 
         private static readonly ulong[] FightFolds =
         {
-            0x4D6CE33E59317CE0UL, 0x55AD2F4195879810UL, 0x492F721034BFAB67UL,
-            0xC1FA44CADFCC48E6UL, 0xB243CAC45D93EE98UL, 0xE398B999859029DDUL,
+            0x1DC634F2B8CDFAEAUL, 0x0496CE67F60152A6UL, 0xFB31150BA4546257UL,
+            0x2C54666343E23781UL, 0xEFC97302B2FF77DBUL, 0xA508B49277C67754UL,
         };
-        private const ulong FightEnd = 0x9871EE0F75914A60UL;
+        private const ulong FightEnd = 0x470307E2335E531EUL;
 
         [Test]
         public void CircleCrowd48_HashSequencePinned() => Check(false, CircleFolds, CircleEnd);

@@ -104,8 +104,10 @@ namespace Game.Sim
     /// собирает силу. Оглушение, волок, смерть или урон от 15% здоровья с
     /// начала сбивают (EnemyActionCancelled SnarerMend), следующее лечение —
     /// через 150 тиков. На 30-м волна: каждый союзник в круге, кроме уже
-    /// леченных за 240 тиков, получает 10% своего здоровья (элита, Вендиго,
-    /// Шипомёт и босс — 5%), не выше недостающего; полному — ничего. Событие
+    /// леченных за 240 тиков, получает 15% своего здоровья (элита, Вендиго,
+    /// Шипомёт и босс — вполовину, 7,5%), не выше недостающего; полному —
+    /// ничего (ревью владельца 01.10: «хил сильнее — 15% за один хил», было
+    /// 10% и 5%). Событие
     /// Heal на каждого и затем EnemyActionImpact SnarerMend (Amount — скольких,
     /// Flag — кого-то вылечила, Position — центр волны). Потом 20 тиков стоит.
     ///
@@ -175,8 +177,13 @@ namespace Game.Sim
         /// <summary>Одного союзника любой Корнехват лечит не чаще раза в столько тиков.</summary>
         public const int RootSnarerMendAllyCooldownTicks = 240;
 
-        /// <summary>Волна даёт 10% здоровья союзника, элите и боссу — 5%; не выше недостающего.</summary>
-        public const int RootSnarerMendPercent = 10, RootSnarerMendElitePercent = 5;
+        /// <summary>
+        /// Волна даёт 15% здоровья союзника, элите и боссу — вполовину, 7,5%;
+        /// не выше недостающего. В тысячных долях: половина 15% — не целый
+        /// процент. Ревью владельца 01.10: «хил сильнее — 15% за один хил»
+        /// (было 10% и 5%).
+        /// </summary>
+        public const int RootSnarerMendPerMille = 150, RootSnarerMendElitePerMille = 75;
 
         /// <summary>Повод лечить: один союзник на ≤ 75% здоровья или двое на ≤ 90%.</summary>
         public const int RootSnarerMendBadlyHurtPercent = 75, RootSnarerMendHurtPercent = 90;
@@ -542,8 +549,8 @@ namespace Game.Sim
                 if (!RootSnarerMendReaches(id, ally)) continue;
                 int missing = Entities.MaxHealth[ally] - Entities.Health[ally];
                 if (missing <= 0) continue;
-                int percent = RootSnarerMendHalved(ally) ? RootSnarerMendElitePercent : RootSnarerMendPercent;
-                int amount = (int)Math.Min(missing, (long)Entities.MaxHealth[ally] * percent / 100);
+                int perMille = RootSnarerMendHalved(ally) ? RootSnarerMendElitePerMille : RootSnarerMendPerMille;
+                int amount = (int)Math.Min(missing, (long)Entities.MaxHealth[ally] * perMille / 1000);
                 if (amount <= 0) continue;
                 Entities.Health[ally] += amount;
                 RootSnarerMend[ally].HealFreeTick = Tick + RootSnarerMendAllyCooldownTicks;

@@ -1,6 +1,7 @@
 using Game.Sim;
 using Game.View;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ public sealed class PelagTempoTestWindow : EditorWindow
         "Удар якорем", "Крушение", "Абордаж", "Взрывная смесь", "На вылет", "Отбой" };
     [SerializeField] int[] _skills = { 0, 1, 8, 9 };
     [SerializeField] int _preset;
+    [SerializeField] bool _basicComboCandidate;
 
     [MenuItem("Разлом/Пелаг/Темп боя", priority = 11)]
     public static void Open() => GetWindow<PelagTempoTestWindow>("Темп боя");
@@ -35,6 +37,11 @@ public sealed class PelagTempoTestWindow : EditorWindow
         GUILayout.Label("Пелаг · темп боя", EditorStyles.boldLabel);
         for (int i = 0; i < 4; i++) _skills[i] = EditorGUILayout.Popup("Навык " + (i + 1), _skills[i], Names);
         _preset = EditorGUILayout.Popup("Сборка", _preset, new[] { "Базовая", "Средняя", "Быстрая" });
+        bool comboReady = BasicComboAssetsReady();
+        using (new EditorGUI.DisabledScope(!comboReady))
+            _basicComboCandidate = EditorGUILayout.Toggle("Новая обычная серия · 3 удара", _basicComboCandidate && comboReady);
+        if (!comboReady)
+            EditorGUILayout.HelpBox("Кандидат комбо ждёт трёх принятых клипов. Сейчас используется прежняя обычная атака.", MessageType.None);
         EditorGUILayout.HelpBox(_preset == 0 ? "Начальные статы, настоящий расход лавидия и перезарядки."
             : _preset == 1 ? "+40% исполнение · +50% восстановление · +3 лавидия/с · +35% атака · +10% ходьба"
             : "+100% исполнение и восстановление · +6 лавидия/с · +80% атака · +20% ходьба", MessageType.None);
@@ -57,6 +64,7 @@ public sealed class PelagTempoTestWindow : EditorWindow
         }
         for (int i = 0; i < 4; i++) SessionState.SetInt("PelagTempo.Skill" + i, _skills[i]);
         SessionState.SetInt("PelagTempo.Preset", _preset);
+        SessionState.SetBool("PelagTempo.BasicCombo", _basicComboCandidate && BasicComboAssetsReady());
         SessionState.SetBool(Pending, true);
         EditorApplication.isPlaying = true;
     }
@@ -72,7 +80,39 @@ public sealed class PelagTempoTestWindow : EditorWindow
         Time.timeScale = 1f;
         var skills = new int[4];
         for (int i = 0; i < 4; i++) skills[i] = SessionState.GetInt("PelagTempo.Skill" + i, i);
-        driver.StartTempoTest(skills, SessionState.GetInt("PelagTempo.Preset", 0));
+        driver.StartTempoTest(skills, SessionState.GetInt("PelagTempo.Preset", 0),
+            SessionState.GetBool("PelagTempo.BasicCombo", false) && BasicComboAssetsReady());
         EditorApplication.ExecuteMenuItem("Window/General/Game");
+    }
+
+    // Read the real controller. No placeholder motions, A/B fallback, or asset writes.
+    static bool BasicComboAssetsReady()
+    {
+        var arena = Object.FindAnyObjectByType<ArenaView>();
+        string path = arena != null ? arena.WoleController : "Characters/Pelag_v5/Pelag_v5_FullCombat";
+        var controller = Resources.Load<AnimatorController>(path);
+        if (controller == null) return false;
+        bool phase = false;
+        foreach (var parameter in controller.parameters)
+            if (parameter.name == "BasicComboPhase" && parameter.type == AnimatorControllerParameterType.Float) phase = true;
+        if (!phase) return false;
+        var clips = new AnimationClip[3];
+        foreach (string layerName in new[] { "UpperBody Combat", "LowerBody Combat" })
+        {
+            AnimatorStateMachine machine = null;
+            foreach (var layer in controller.layers) if (layer.name == layerName) machine = layer.stateMachine;
+            if (machine == null) return false;
+            for (int stage = 0; stage < 3; stage++)
+            {
+                string name = (layerName == "UpperBody Combat" ? "ComboAttack" : "LowerComboAttack") + (char)('A' + stage);
+                AnimatorState state = null;
+                foreach (var child in machine.states) if (child.state.name == name) state = child.state;
+                var clip = state != null ? state.motion as AnimationClip : null;
+                if (clip == null || !state.timeParameterActive || state.timeParameter != "BasicComboPhase") return false;
+                if (layerName == "UpperBody Combat") clips[stage] = clip;
+                else if (clips[stage] != clip) return false;
+            }
+        }
+        return clips[0] != clips[1] && clips[0] != clips[2] && clips[1] != clips[2];
     }
 }

@@ -19,6 +19,8 @@ namespace Game.View
     /// вспышка 2–3 кадра, стоп-кадр, распад кусками) и огоньками
     /// (EssenceMotesView). Здесь — залп обломков, лёгкая тряска камеры у
     /// тяжёлых (крупный вид, элита, последний в волне) и запуск огоньков.
+    /// Тело, которое не трескается, а падает (Корнехват, URP Lit; ревью 01.10),
+    /// получает второй, низкий залп в миг касания земли (EnemyKillBeat.LandsAt).
     ///
     /// Всё — от СОБЫТИЯ Death с тиком события; возраст залпа считается от тика
     /// Sim с долей кадра: пауза держит кадр, съёмка повторяется. Пулы — до боя,
@@ -47,6 +49,9 @@ namespace Game.View
         private static readonly float[] BurstLife = { 2.4f, 2.7f, 2.8f, 2.0f, 2.4f, 3.4f };
 
         private const float SimulateStep = 1f / 30f;
+
+        /// <summary>Залп касания земли: на сколько впереди корня ложится грудь (при масштабе 1), м, и во сколько он меньше главного.</summary>
+        private const float LandingReach = .5f, LandingScale = .7f;
 
         public static EnemyDeathFxView EnsureOn(GameObject host)
         {
@@ -195,6 +200,19 @@ namespace Game.View
             int seed = id * 7919 + tick * 104729;
 
             Take(_pools[(int)beat.Material], tick + beat.BurstAt * perSecond, ground, yaw, beat.Scale, seed);
+            // Падающее тело (Корнехват, ревью 01.10): на касании земли брюхом — второй, низкий
+            // залп того же материала у груди, впереди корня по взгляду, на котором он падает.
+            if (beat.LandsAt > beat.BurstAt)
+            {
+                FixVec2 f = sim.Entities.Facing[id];
+                var facing = new Vector3(f.X.ToFloat(), 0f, f.Y.ToFloat());
+                if (facing.sqrMagnitude < 1e-6f) facing = yaw * Vector3.forward;
+                Vector3 chest = Ground(e.Position) + facing.normalized * (LandingReach * beat.Scale);
+                chest.y = _layout != null ? _layout.WeaponGroundHeight(chest.x, chest.z) : ground.y;
+                // +Z залпа — по ходу падения: труха брызжет из-под груди вперёд.
+                Take(_pools[(int)beat.Material], tick + beat.LandsAt * perSecond, chest,
+                    Quaternion.LookRotation(facing.normalized, Vector3.up), beat.Scale * LandingScale, seed + 7);
+            }
             if (_motes != null && beat.MoteCount > 0)
                 _motes.Launch(tick + beat.MotesAt * perSecond, ground + Vector3.up * beat.CentreHeight, beat.MoteCount, seed);
         }

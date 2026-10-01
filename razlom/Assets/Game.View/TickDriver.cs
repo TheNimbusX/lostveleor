@@ -1181,6 +1181,13 @@ namespace Game.View
         internal void CaptureAim(Vector2 screenPosition, bool moveHeld, bool movePressed,
             bool attackHeld, bool attackPressed = false)
         {
+            if (Sim != null && Sim.PelagBasicComboEnabled)
+            {
+                // A stale mouse over HUD must not consume a controller tap between simulation ticks.
+                // Refresh first so a real mouse/keyboard action switches devices in this same frame.
+                RefreshLastInputDevice();
+                if (_usingGamepad) return;
+            }
             if (GameUserSettings.WasdMovement) moveHeld = movePressed = false;
             // Лагерь вне полигона (владелец, 29 сентября): бить можно только у манекенов, а ЛКМ
             // здесь — просто ходьба, как ПКМ. Граница та же, по которой Sim снимает удар
@@ -1261,7 +1268,9 @@ namespace Game.View
                 if (attackPressed)
                 {
                     _pointerPressFrame = _pending;
+                    _pointerPressFrame.Flags |= (byte)InputFlags.AttackPressed;
                     _pointerPressLatched = true;
+                    _pointerPressIsGamepad = false;
                 }
                 return;
             }
@@ -1329,7 +1338,8 @@ namespace Game.View
             if (attackHeld) flags |= (byte)InputFlags.Attack;
 
             _pending.Flags = flags;
-            _pending.AttackTarget = attackHeld && HoveredEntity >= 0 ? HoveredEntity : -1;
+            _pending.AttackTarget = Sim != null && Sim.PelagBasicComboEnabled ? -1
+                : attackHeld && HoveredEntity >= 0 ? HoveredEntity : -1;
 
             if (movePressed || attackPressed)
             {
@@ -1338,8 +1348,10 @@ namespace Game.View
                 _pointerPressFrame = InputFrame.Empty;
                 _pointerPressFrame.Aim = _pending.Aim;
                 _pointerPressFrame.Flags = flags;
+                if (attackPressed) _pointerPressFrame.Flags |= (byte)InputFlags.AttackPressed;
                 _pointerPressFrame.AttackTarget = _pending.AttackTarget;
                 _pointerPressLatched = true;
+                _pointerPressIsGamepad = false;
             }
         }
 

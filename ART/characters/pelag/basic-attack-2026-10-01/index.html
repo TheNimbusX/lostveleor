@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Пелаг — базовая атака</title>
+<style>
+  :root { --bg: #17181b; --panel: #202226; --text: #e9e6df; --muted: #9b9890; --line: #2e3035; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 1400px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  figure { margin: 0 0 36px; background: var(--panel); border: 1px solid var(--line);
+           border-radius: 8px; overflow: hidden; }
+  figure a { display: block; }
+  figure img, figure video { display: block; width: 100%; height: auto; }
+  figure video { background: #000; border-bottom: 1px solid var(--line); }
+  figcaption { padding: 14px 18px 16px; }
+  figcaption b { display: block; font-size: 16px; margin-bottom: 4px; }
+  figcaption span { color: var(--muted); }
+  code { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Пелаг — базовая атака, комбо из трёх ударов</h1>
+  <p class="sub">Higgsfield, 01.10.2026. Клик по картинке открывает исходный PNG.</p>
+
+  <figure>
+    <a href="1-combo-target-frames.png"><img src="1-combo-target-frames.jpg" alt="Целевые кадры комбо, сетка 3×2"></a>
+    <figcaption>
+      <b>1 · Целевые кадры контакта</b>
+      <span>Колонки — удар 1, удар 2, удар 3 (добивающий). Ряд А — «угольный росчерк», ряд Б — «морская пена». Одна и та же сцена арены, меняется только след удара.</span><br>
+      <code>job 18cf2023-14eb-46a6-bfac-509852ea960d</code>
+    </figcaption>
+  </figure>
+
+  <figure>
+    <a href="2-combo-key-poses.png"><img src="2-combo-key-poses.jpg" alt="Ключевые позы комбо"></a>
+    <figcaption>
+      <b>2 · Ключевые позы комбо</b>
+      <span>Шесть поз: стойка, удар 1, удар 2, замах добивающего, добивающий удар вниз, возврат в стойку.</span><br>
+      <code>job 053248ad-c3ea-4053-a58c-789aa70a17a7</code>
+    </figcaption>
+  </figure>
+
+  <figure>
+    <video controls loop playsinline preload="metadata" src="3-combo-video-B.mp4" poster="3-combo-video-B-sheet.jpg"></video>
+    <a href="3-combo-video-B-sheet.jpg"><img src="3-combo-video-B-sheet.jpg" alt="Лист из 12 кадров видео, вариант Б"></a>
+    <figcaption>
+      <b>3 · Вариант Б · видео-реф серии</b>
+      <span>Kling 3.0 Turbo, 5 с, 720p, старт с игрового кадра. Задача: комбо из трёх ударов дважды, след — морская вода с пеной. Ниже — 12 кадров равномерно по ролику, на каждом номер и время.</span><br>
+      <code>job acb60fff-375c-476d-886a-8e4a6fd45c3e</code>
+    </figcaption>
+  </figure>
+</main>
+</body>
+</html>

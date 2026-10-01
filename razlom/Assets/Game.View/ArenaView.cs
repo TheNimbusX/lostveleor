@@ -139,7 +139,11 @@ namespace Game.View
                  "материала нет, он собирается прямо в игре из этой картинки.")]
         public string WoleTexture = "Characters/Pelag_v6/Pelag_v6_BaseColor";
 
-        public string OrvillTexture = "Characters/Forest_Guardian/Forest_Guardian_BaseColor";
+        // Хранитель всегда собирает материал в игре из ЭТОЙ картинки (см. BodyFactory:
+        // для Orvill .mat не используется), поэтому перекраска живёт здесь.
+        // _v2 — палитра семьи леса по Корнехвату (01.10.2026, tools/mob-recolour);
+        // исходный атлас Forest_Guardian_BaseColor.jpg лежит рядом нетронутым.
+        public string OrvillTexture = "Characters/Forest_Guardian/Forest_Guardian_BaseColor_v2";
 
         [Header("Модульное снаряжение героя")]
         [Tooltip("Отдельный prefab оружия. Он не связан с мешем тела и меняется через сокет.")]
@@ -307,6 +311,11 @@ namespace Game.View
         private bool[] _hasLastRenderPosition;
         private float[] _turnVisualUntil;
         private float[] _turnVisualDirection;
+
+        // Тело моба «по ходу» (EnemyBodyFacingRules, ревью 01.10 — «лунная походка»): защёлки
+        // гистерезиса хода и что вело тело в этом кадре (для записи -capture-body-yaw).
+        private EnemyBodyLatch[] _bodyLatch;
+        private EnemyBodyMode[] _bodyMode;
         private const float CombatThreatDistance = 6.5f;
         private const float CombatGraceSeconds = 3f;
         private const float AnchorFallbackSeconds = 2.4f;
@@ -416,7 +425,8 @@ namespace Game.View
         public static float DeathDissolveStartDelay(EnemyKind kind)
             => EnemyPresentationProfile.Death(kind).DissolveAt;
 
-        private const float OrvillTurnSharpness = 20f;
+        // Резкость догона взгляда Sim телом моба (бывшая OrvillTurnSharpness = 20) живёт в
+        // EnemyBodyFacingRules.FollowSharpness — рядом с правилом «тело по ходу».
         private int _hoveredEntity = -1;
 
         [Header("Реакция на попадание")]
@@ -488,6 +498,8 @@ namespace Game.View
             _hasLastRenderPosition = new bool[capacity];
             _turnVisualUntil = new float[capacity];
             _turnVisualDirection = new float[capacity];
+            _bodyLatch = new EnemyBodyLatch[capacity];
+            _bodyMode = new EnemyBodyMode[capacity];
             _emergeSink = new float[capacity];
             _burrowing = new bool[capacity];
             _burrowTick = new float[capacity];
@@ -1033,6 +1045,9 @@ namespace Game.View
             && _equipmentViews[Simulation.PlayerId] != null ? _equipmentViews[Simulation.PlayerId].AnchorHeadPosition
             : PlayerChainHandPosition;
 
+        public bool PlayerSupportsBasicComboClips => _initialized && _boundCount > Simulation.PlayerId
+            && _animationViews[Simulation.PlayerId] != null && _animationViews[Simulation.PlayerId].SupportsBasicComboClips;
+
         public void PlayPlayerAttackPresentation()
         {
             if (!_initialized || _boundCount <= Simulation.PlayerId) return;
@@ -1241,6 +1256,8 @@ namespace Game.View
             _visualFacingWorld[entityId] = Vector3.zero;
             _turnVisualUntil[entityId] = 0f;
             _turnVisualDirection[entityId] = 0f;
+            _bodyLatch[entityId] = EnemyBodyLatch.None;
+            _bodyMode[entityId] = EnemyBodyMode.Sim;
             _presentationOffset[entityId] = Vector3.zero;
             _groundOffset[entityId] = 0f;
             // Ушедший в землю вернётся в пул с выключенным видом моба — включаем обратно.
@@ -1372,6 +1389,8 @@ namespace Game.View
                 _visualFacingWorld[i] = _lastFacingWorld[i];
                 _turnVisualUntil[i] = 0f;
                 _turnVisualDirection[i] = 0f;
+                _bodyLatch[i] = EnemyBodyLatch.None;
+                _bodyMode[i] = EnemyBodyMode.Sim;
                 _burrowing[i] = false;
                 _burrowTick[i] = 0f;
                 // Встающий из земли в первый же кадр стоит на полной глубине — без мигания на поверхности.
@@ -1632,9 +1651,36 @@ namespace Game.View
             }
         }
 
+        /// <summary>
+        /// Показанное тело врага в мире (XZ, единичное); ноль — тела нет. Ноги и разворот на
+        /// месте у видов мобов считаются от него: у мобов «по ходу» (EnemyBodyFacingRules) оно
+        /// расходится с боевым взглядом Sim, пока моб идёт. Значение прошлого LateUpdate.
+        /// </summary>
+        public Vector3 BodyFacing(int entity)
+            => _initialized && (uint)entity < (uint)_boundCount ? _visualFacingWorld[entity] : Vector3.zero;
+
+        /// <summary>
+        /// Шаг тела моба за кадр (ревью 01.10, «лунная походка»; ART/characters/act-1-enemies/
+        /// review/sidestep-fix-plan.md, вариант а). Только вид: Sim не читается иначе как для
+        /// флага «в действии», боевой взгляд Entities.Facing не меняется. Вендиго, Камнекопыт,
+        /// Шипомёт и Корнехват — «как Sim», ровно прежний догон с резкостью 20.
+        /// </summary>
+        private Vector3 StepEnemyBody(int i, EntityStore entities, Vector3 facingWorld, FixVec2 velocity, Vector3 previousVisual)
+        {
+            EnemyBodyPolicy policy = EnemyBodyFacingRules.PolicyOf(entities.Kind[i]);
+            bool committed = policy != EnemyBodyPolicy.SimFacing && EnemyBodyFacingRules.IsCommitted(_driver.Sim, i);
+            EnemyBodyTarget target = EnemyBodyFacingRules.Target(policy, facingWorld.x, facingWorld.z,
+                velocity.X.ToFloat(), velocity.Y.ToFloat(), entities.MoveStep[i].ToFloat(), committed, ref _bodyLatch[i]);
+            _bodyMode[i] = target.Mode;
+            float x = previousVisual.x, z = previousVisual.z;
+            EnemyBodyFacingRules.Step(ref x, ref z, target, Time.deltaTime);
+            return new Vector3(x, 0f, z);
+        }
+
         private void SyncTransforms()
         {
             EntityStore entities = _driver.Sim.Entities;
+            EnemyBodyYawRecorder.BeginFrame(_driver);
 
             for (int i = 0; i < _boundCount; i++)
             {
@@ -1864,11 +1910,31 @@ namespace Game.View
                     else
                     {
                         Vector3 previousFacing = _lastFacingWorld[i];
-                        if (previousFacing.sqrMagnitude > 0.5f)
-                            turnDelta = Vector3.SignedAngle(previousFacing, facingWorld, Vector3.up);
-                        if (!moving && previousFacing.sqrMagnitude > 0.5f)
+                        Vector3 visualFacing = facingWorld;
+                        // Поворот для ног: у героя — взгляд Sim, у моба — ПОКАЗАННОЕ тело. Тело
+                        // «по ходу» после остановки доворачивается к взгляду Sim само, и это
+                        // должно переступать ногами (TurnShuffle), а не крутить модель.
+                        Vector3 turnFrom = previousFacing, turnTo = facingWorld;
+                        if (orvill)
                         {
-                            float delta = Vector3.SignedAngle(previousFacing, facingWorld, Vector3.up);
+                            Vector3 previousVisual = _visualFacingWorld[i];
+                            if (!alive && previousVisual.sqrMagnitude > 0.5f)
+                            {
+                                // Смерть фиксирует ориентацию кадра контакта:
+                                // труп не доворачивается к уже сменившейся цели.
+                                visualFacing = previousVisual;
+                            }
+                            else if (previousVisual.sqrMagnitude > 0.5f)
+                                visualFacing = StepEnemyBody(i, entities, facingWorld, velocity, previousVisual);
+                            _visualFacingWorld[i] = visualFacing;
+                            if (previousVisual.sqrMagnitude > 0.5f) { turnFrom = previousVisual; turnTo = visualFacing; }
+                        }
+
+                        if (turnFrom.sqrMagnitude > 0.5f)
+                            turnDelta = Vector3.SignedAngle(turnFrom, turnTo, Vector3.up);
+                        if (!moving && turnFrom.sqrMagnitude > 0.5f)
+                        {
+                            float delta = turnDelta;
                             if (Mathf.Abs(delta) > 0.1f)
                             {
                                 _turnVisualDirection[i] = Mathf.Sign(delta);
@@ -1883,23 +1949,19 @@ namespace Game.View
                             turnDirection = _turnVisualDirection[i];
                         _lastFacingWorld[i] = facingWorld;
 
-                        Vector3 visualFacing = facingWorld;
                         if (orvill)
                         {
-                            Vector3 previousVisual = _visualFacingWorld[i];
-                            if (!alive && previousVisual.sqrMagnitude > 0.5f)
+                            // Ход относительно показанного тела: у моба «по ходу» оно и есть
+                            // направление ног, а не взгляд Sim.
+                            if (moving && velocityMagnitude > 0.0001f)
                             {
-                                // Смерть фиксирует ориентацию кадра контакта:
-                                // труп не доворачивается к уже сменившейся цели.
-                                visualFacing = previousVisual;
+                                Vector3 travel = new Vector3(velocity.X.ToFloat(), 0f, velocity.Y.ToFloat()) / velocityMagnitude;
+                                localMoveX = Vector3.Dot(travel, Vector3.Cross(Vector3.up, visualFacing));
+                                localMoveY = Vector3.Dot(travel, visualFacing);
                             }
-                            else if (previousVisual.sqrMagnitude > 0.5f)
-                            {
-                                float turnBlend = 1f - Mathf.Exp(-OrvillTurnSharpness * Time.deltaTime);
-                                visualFacing = Vector3.Slerp(
-                                    previousVisual, facingWorld, turnBlend).normalized;
-                            }
-                            _visualFacingWorld[i] = visualFacing;
+                            if (alive)
+                                EnemyBodyYawRecorder.Mob(_driver, i, entities.Kind[i], visualFacing, facingWorld,
+                                    velocity, entities.MoveStep[i], _bodyMode[i], view.position);
                         }
                         else
                         {
@@ -1977,6 +2039,7 @@ namespace Game.View
                 _animationViews[i]?.SetLocomotion(
                     moving, turnDirection, normalizedMoveSpeed, localMoveX, localMoveY, worldSpeed, turnDelta);
             }
+            EnemyBodyYawRecorder.EndFrame();
         }
 
         private void SyncAnimationEvents()
@@ -2004,7 +2067,10 @@ namespace Game.View
                     case SimEventType.Attack:
                         if (e.Source == Simulation.PlayerId)
                         { _anchorSaberSuppressed = false; MarkPlayerCombatActivity(); }
-                        AnimationOf(e.Source)?.PlayAttack(e.Amount);
+                        if (e.Source == Simulation.PlayerId && e.BasicAttackState.Serial > 0)
+                            AnimationOf(e.Source)?.PlayBasicComboAttack(e.BasicAttackState);
+                        else
+                            AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
                     case SimEventType.AbilityCast:
                     case SimEventType.ActionStageStarted:
@@ -2037,8 +2103,12 @@ namespace Game.View
                         // This keeps the authored blade pose and the actual
                         // health change on one presentation boundary.
                         if (e.Source == Simulation.PlayerId
-                            && e.DamageOrigin == DamageOrigin.BasicAttack)
+                            && e.DamageOrigin == DamageOrigin.BasicAttack
+                            && !_driver.Sim.PelagBasicComboEnabled)
                             AnimationOf(e.Source)?.PlayAttackContact(e.ActionVariant);
+                        else if (e.Source == Simulation.PlayerId && e.BasicAttackState.Serial > 0
+                            && e.DamageOrigin == DamageOrigin.BasicAttack)
+                            AnimationOf(e.Source)?.ConfirmBasicComboContact(e.BasicAttackState);
                         break;
                     case SimEventType.Death:
                         if (e.Target == Simulation.PlayerId)
@@ -2124,7 +2194,7 @@ namespace Game.View
             return build != null && build.DefinitionId == definitionId;
         }
 
-        private static int HitVariantFor(in SimEvent hit, EntityStore entities)
+        private int HitVariantFor(in SimEvent hit, EntityStore entities)
         {
             int fallback = hit.Source ^ hit.Target;
             if ((uint)hit.Source >= (uint)entities.Count
@@ -2138,6 +2208,14 @@ namespace Game.View
             float toSourceY = source.Y.ToFloat() - target.Y.ToFloat();
             float facingX = facing.X.ToFloat();
             float facingY = facing.Y.ToFloat();
+            // Влево/вправо у моба — от ПОКАЗАННОГО тела: у мобов «по ходу» оно на бегу
+            // расходится с боевым взглядом Sim, а отшатнуться тело должно от того удара,
+            // который видно. Герой — по-прежнему от взгляда Sim.
+            if (entities.Side[hit.Target] == Faction.Orvill)
+            {
+                Vector3 shown = BodyFacing(hit.Target);
+                if (shown.sqrMagnitude > 0.5f) { facingX = shown.x; facingY = shown.z; }
+            }
             if (facingX * facingX + facingY * facingY < 0.0001f
                 || toSourceX * toSourceX + toSourceY * toSourceY < 0.0001f)
                 return fallback;

@@ -77,8 +77,10 @@ param(
                  'forest-thorncaster', 'forest-snarer', 'forest-splitter')] [string] $Encounter = '',
     # Что делает герой против врага лесного стенда: уходит из замаха, стоит под ударами,
     # глушит якорем посреди замаха, обходит по кругу (разворот на месте), стоит вплотную
-    # и не бьёт (hug — всплеск Шипомёта), добивает (death — следующий враг через 1,5 с).
-    [ValidateSet('', 'dodge', 'tank', 'stun', 'turn', 'hug', 'death')] [string] $EnemyCase = '',
+    # и не бьёт (hug — всплеск Шипомёта), добивает (death — следующий враг через 1,5 с),
+    # бегает по кругу 5 м (orbit) или по 12 м туда-обратно поперёк пачки (pass) — «лунная походка» мобов.
+    # Поворот тел по кадрам: -ExtraArgs '-capture-body-yaw','<путь.jsonl>' (разбор — tools/body_yaw_report.py).
+    [ValidateSet('', 'dodge', 'tank', 'stun', 'turn', 'hug', 'death', 'orbit', 'pass')] [string] $EnemyCase = '',
     [ValidateSet('', 'dodge', 'approach', 'kill', 'pause', 'repeat', 'impact-pause', 'impact-repeat', 'puddle')] [string] $ForestBudCase = '',
     [switch] $AimSweep,
     [switch] $DeathDuringSkill,

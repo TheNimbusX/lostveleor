@@ -36,15 +36,19 @@ namespace Game.Tests
             switch (kind)
             {
                 case EnemyKind.ForestRootSwarm: min = 1; max = 3; break;
-                // 500 здоровья (подгонка 29.09, было 550): 10 ударов на первой арене, 14 на восьмой.
-                case EnemyKind.ForestGuardian: min = 4; max = 12; break;
+                // 270 здоровья (ревью владельца 01.10: «убивать за 5–6 обычных ударов»,
+                // было 500): по 54 без тяжёлых — 5 ударов на первой арене (3,3 с),
+                // 7 на четвёртой, 8 (5,3 с) на восьмой.
+                case EnemyKind.ForestGuardian: min = 3; max = 6; break;
                 case EnemyKind.ForestBud: min = 3; max = 7; break;
                 case EnemyKind.ForestStonehoof: min = 6; max = 13; break;
-                case EnemyKind.ForestWendigo: min = 20; max = 40; break;
+                // 900 здоровья (ревью владельца 01.10, было 2000): по 54 без тяжёлых —
+                // 20 ударов на четвёртой арене (13,3 с), 25 на восьмой (16,7 с).
+                case EnemyKind.ForestWendigo: min = 10; max = 20; break;
                 // Новые мобы леса (27.09, в потоке арен): Шипомёт — элита со здоровьем
-                // Вендиго (2000), Корнехват — угроза Камнекопыта (650), Расщепень 560,
-                // его детёныш 160 — 3–5 ударов, как крупный корнеполз.
-                case EnemyKind.ForestThorncaster: min = 20; max = 40; break;
+                // Вендиго (900 с ревью 01.10), Корнехват — угроза Камнекопыта (650),
+                // Расщепень 560, его детёныш 160 — 3–5 ударов, как крупный корнеполз.
+                case EnemyKind.ForestThorncaster: min = 10; max = 20; break;
                 case EnemyKind.ForestRootSnarer: min = 6; max = 13; break;
                 case EnemyKind.ForestSplitter: min = 5; max = 12; break;
                 case EnemyKind.ForestSplitling: min = 1; max = 4; break;
@@ -155,12 +159,17 @@ namespace Game.Tests
                     Assert.That(KillSeconds(sim, i), Is.InRange(min, max),
                         kind + (plan.IsElite(i) ? " (elite)" : "") + " at level " + level + ", seed " + seed);
                     int hit = sim.Entities.Damage[i];
-                    if (kind == EnemyKind.ForestStonehoof || kind == EnemyKind.ForestWendigo
-                        || kind == EnemyKind.ForestThorncaster || kind == EnemyKind.ForestRootSnarer)
+                    if (kind == EnemyKind.ForestWendigo || kind == EnemyKind.ForestThorncaster)
                     {
-                        // Крупные фигуры (таран, коготь, линия шипов, корни) — по правилу окон
-                        // 10–16% на первых аренах; к А8 рост урона выводит коготь Вендиго к 15%,
-                        // шип линии Шипомёта — к 17%.
+                        // Коготь Вендиго и шип линии Шипомёта — правило владельца 01.10:
+                        // убивают эталонного героя за 3–4 попадания на аренах элит.
+                        Assert.That((heroHealth + hit - 1) / hit, Is.InRange(3, 4), kind + " hits to kill at level " + level);
+                        continue;
+                    }
+                    if (kind == EnemyKind.ForestStonehoof || kind == EnemyKind.ForestRootSnarer)
+                    {
+                        // Крупные фигуры (таран, корни) — по правилу окон 10–16% на первых
+                        // аренах; к А8 рост урона выводит их к 12–13%.
                         Assert.That(hit * 100, Is.LessThanOrEqualTo(20 * heroHealth), kind + " hit at level " + level);
                         continue;
                     }
@@ -213,7 +222,12 @@ namespace Game.Tests
                     wave += hits * group.Min; waveMax += hits * group.Max;
                 }
                 const int waves = 2;   // подмога на 66% и на 33% — по разу
-                Assert.That(HitSeconds(bossHits + waves * wave), Is.InRange(150.0, 195.0), "весь бой, меньше подмоги");
+                // Нижняя кромка 150 → 145 ВРЕМЕННО (01.10): Хранитель подмоги стал
+                // 270 здоровья (владелец: «за 5–6 обычных ударов»), на А9 — 8 ударов
+                // вместо 15, и бой с меньшей подмогой на бумаге — 222 удара, 148 с.
+                // Баланс босса владелец отложил до общего прохода в конце переделки
+                // мобов и Пелага — тогда вернуть 150 (например, босс 6000 → 6200).
+                Assert.That(HitSeconds(bossHits + waves * wave), Is.InRange(145.0, 195.0), "весь бой, меньше подмоги");
                 Assert.That(HitSeconds(bossHits + waves * waveMax), Is.InRange(150.0, 195.0), "весь бой, больше подмоги");
                 Assert.That(bossHits * 2, Is.GreaterThan(bossHits + waves * waveMax), "босс — меньше половины боя");
             }

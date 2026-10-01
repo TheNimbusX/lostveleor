@@ -27,8 +27,14 @@ namespace Game.View
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (_pass != null && renderingData.cameraData.cameraType != CameraType.Preview)
-                renderer.EnqueuePass(_pass);
+            if (_pass == null || renderingData.cameraData.cameraType == CameraType.Preview) return;
+            // Комикс-рисовка (проба 01.10) сглаживает кадр кистью и стёрла бы тонкий контур юнитов —
+            // при ней контур ложится сразу после рисовки, всё ещё до прозрачных. Выключена — как было.
+            var cameraData = renderingData.cameraData;
+            _pass.renderPassEvent = ComicStyleFeature.Stylizes(cameraData.camera, cameraData.cameraType, cameraData.renderType)
+                ? ComicStyleFeature.AfterStylize
+                : RenderPassEvent.AfterRenderingOpaques;
+            renderer.EnqueuePass(_pass);
         }
 
         protected override void Dispose(bool disposing) => CoreUtils.Destroy(_material);

@@ -250,10 +250,13 @@ namespace Game.Sim
         public readonly DamageType DamageKind;
         public readonly DamageOrigin DamageOrigin;
         public readonly int ActionVariant;
+        /// <summary>Снимок начала новой обычной серии; Serial=0 у прежних событий.</summary>
+        public readonly PelagBasicAttackState BasicAttackState;
 
         public SimEvent(SimEventType type, int source, int target, int amount, bool flag,
             FixVec2 position, DamageType damageKind = DamageType.Physical,
-            DamageOrigin damageOrigin = DamageOrigin.BasicAttack, int actionVariant = 0)
+            DamageOrigin damageOrigin = DamageOrigin.BasicAttack, int actionVariant = 0,
+            PelagBasicAttackState basicAttackState = default)
         {
             Type = type;
             Source = source;
@@ -264,12 +267,14 @@ namespace Game.Sim
             DamageKind = damageKind;
             DamageOrigin = damageOrigin;
             ActionVariant = actionVariant;
+            BasicAttackState = basicAttackState;
         }
 
         public static SimEvent Damage(int source, int target, int amount, bool crit, FixVec2 at,
-            DamageType kind, DamageOrigin origin = DamageOrigin.BasicAttack, int actionVariant = 0)
+            DamageType kind, DamageOrigin origin = DamageOrigin.BasicAttack, int actionVariant = 0,
+            PelagBasicAttackState basicAttackState = default)
             => new SimEvent(SimEventType.Damage, source, target, amount, crit, at, kind,
-                origin, actionVariant);
+                origin, actionVariant, basicAttackState);
 
         /// <summary>Тик урона по времени. Не удар: ни стопа, ни тряски, ни звука попадания.</summary>
         public static SimEvent DamageOverTime(int source, int target, int amount, FixVec2 at,
@@ -300,9 +305,10 @@ namespace Game.Sim
         public static SimEvent Burrow(int target, FixVec2 at)
             => new SimEvent(SimEventType.Burrowed, -1, target, 0, false, at);
 
-        public static SimEvent Attack(int source, int target, FixVec2 at, int variant = 0)
+        public static SimEvent Attack(int source, int target, FixVec2 at, int variant = 0,
+            PelagBasicAttackState basicAttackState = default)
             => new SimEvent(SimEventType.Attack, source, target, variant, false, at,
-                DamageType.Physical, DamageOrigin.BasicAttack, variant);
+                DamageType.Physical, DamageOrigin.BasicAttack, variant, basicAttackState);
 
         /// <summary>
         /// Событие действия моба: type — EnemyActionStarted, EnemyActionImpact

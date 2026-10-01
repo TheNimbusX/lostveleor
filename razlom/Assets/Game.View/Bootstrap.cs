@@ -95,6 +95,8 @@ namespace Game.View
             var layout = sim.AddComponent<LayoutView>();
             layout.Profile = location;
             if (EnemySandbox != null) layout.enabled = false;
+            // Свет арены по глубине (проба 01.10): по умолчанию выключен, F8 → «Свет арены по глубине».
+            else sim.AddComponent<ArenaMoodView>();
             if (!CaptureRig.IsVfxShowcase)
             {
                 sim.AddComponent<CombatIndicators>();

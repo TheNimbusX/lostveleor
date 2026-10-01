@@ -34,7 +34,8 @@ namespace Game.View
         public float WendigoDepth = 3.3f;
         // Новые мобы леса: по росту заглушек (ForestMobPlaceholderView); придут
         // модели — поправить под их рост. Детёныш из земли не встаёт, он из распада.
-        public float ThorncasterDepth = 2.7f;
+        // Шипомёт с ревью 01.10 на 10% выше (2,97 м, ThorncasterAnimatorView.BodyHeight).
+        public float ThorncasterDepth = 3f;
         public float RootSnarerDepth = 2.4f;
         public float SplitterDepth = 2f;
         public float SplitlingDepth = 1.2f;

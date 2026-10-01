@@ -32,7 +32,7 @@ namespace Game.Sim
         public const int PlayerBaseAttackCycleTicks = 20;
 
         /// <summary>
-        /// От начала замаха до контакта у Лесного хранителя: 23 тика ≈ 0,77 с.
+        /// От начала замаха до контакта у Лесного хранителя: 28 тиков ≈ 0,93 с.
         /// Число живёт в GuardianSwingWindupTicks (Simulation.EnemyMelee).
         /// </summary>
         // Не трогать заодно с геройской цифрой. Это единственное окно, в
@@ -59,7 +59,7 @@ namespace Game.Sim
         private static readonly Fix64 RootSwarmAttackRange = Fix64.Ratio(14, 10);
 
         // У моба окно и дистанция подхода — из профиля его замаха
-        // (Simulation.EnemyMelee): Хранитель 23 тика и 2 м, Корнеполз 12 и 1,4.
+        // (Simulation.EnemyMelee): Хранитель 28 тиков и 2 м, Корнеполз 12 и 1,4.
         private int WindupTicksFor(int entityId)
             => entityId == PlayerId ? PlayerAttackWindupTicks
                 : MeleeProfileOf(Entities.Kind[entityId]).WindupTicks;
@@ -207,7 +207,7 @@ namespace Game.Sim
         // Скорость атаки — В АТАКАХ В СЕКУНДУ: только в этих единицах «+20%»
         // на предмете значит то, что игрок прочитает. В тики её переводит
         // CombatStats.AttackCooldownTicks, и делает это в единственном месте.
-        // Базовый цикл героя — 20 тиков, Хранителя — 53: замах, окно для
+        // Базовый цикл героя — 20 тиков, Хранителя — 65: замах, окно для
         // наказания и свободная пауза (см. Simulation.EnemyMelee).
         private static readonly Fix64 PlayerBaseAttackSpeed = Fix64.Ratio(TicksPerSecond, PlayerBaseAttackCycleTicks);
         private static readonly Fix64 EnemyBaseAttackSpeed  = Fix64.Ratio(TicksPerSecond, GuardianSwingCycleTicks);
@@ -230,6 +230,18 @@ namespace Game.Sim
         /// разъехалась с оригиналом ровно тогда, когда оригинал поменяли.
         /// </summary>
         public static readonly Fix64 EnemyBaseMoveSpeed = Fix64.Ratio(31, 10);
+
+        /// <summary>
+        /// Ход Лесного хранителя (и моба без вида — он живёт по правилам
+        /// Хранителя; временный босс — тоже Хранитель): 3,1 → 2,8 м/с, на 10%
+        /// медленнее общей скорости врага (ревью владельца 01.10: «скорость
+        /// передвижения немного замедлить»). Остальные виды ходят своими
+        /// числами и не задеты.
+        ///
+        /// ПУБЛИЧНАЯ ПО ТОЙ ЖЕ ПРИЧИНЕ, что и EnemyBaseMoveSpeed: темп ног
+        /// Хранителя в CharacterAnimatorView делится из этого числа.
+        /// </summary>
+        public static readonly Fix64 GuardianMoveSpeed = Fix64.Ratio(28, 10);
 
         /// <summary>
         /// Насколько далеко тело может быть отодвинуто чужими телами за один тик.
@@ -852,7 +864,7 @@ namespace Game.Sim
 
             StatSheet sheet = Entities.Stats[id];
             sheet.SetBase(StatType.Damage, PlayerBaseDamage);
-            sheet.SetBase(StatType.AttackSpeed, PlayerBaseAttackSpeed);
+            sheet.SetBase(StatType.AttackSpeed, _pelagBasicComboEnabled ? Fix64.FromInt(3) : PlayerBaseAttackSpeed);
             sheet.SetBase(StatType.MoveSpeed, PlayerBaseMoveSpeed);
             sheet.SetBase(StatType.CritChance, BaseCritChance);
             sheet.SetBase(StatType.CritMultiplier, BaseCritMultiplier);
@@ -911,7 +923,9 @@ namespace Game.Sim
             sheet.SetBase(StatType.Damage, Fix64.FromInt(archetype.BaseDamage));
             sheet.SetBase(StatType.AttackSpeed, swarm
                 ? Fix64.Ratio(TicksPerSecond, RootSwarmAttackCooldownTicks) : EnemyBaseAttackSpeed);
-            sheet.SetBase(StatType.MoveSpeed, swarm ? RootSwarmMoveSpeed : EnemyBaseMoveSpeed);
+            // Сюда доходят только Корнеполз, Хранитель и моб без вида (прочие
+            // виды настроены выше своими Configure*): не рой — значит Хранитель.
+            sheet.SetBase(StatType.MoveSpeed, swarm ? RootSwarmMoveSpeed : GuardianMoveSpeed);
             sheet.SetBase(StatType.CritChance, Fix64.Zero);
             sheet.SetBase(StatType.CritMultiplier, Fix64.One);
 
@@ -1245,13 +1259,14 @@ namespace Game.Sim
             ResetForestPuddles();
         }
 
-        private void ResetAbilityState()
+        private void ResetAbilityState(bool preserveBasicSerial = false)
         {
             ResetPotionEffects();
             ResetPreparedGiftTiming();
             ResetUpgrades();
             EndArtifactEffects();
             ResetTempo();
+            ResetPelagBasicCombo(preserveBasicSerial);
             CancelBlazeGesture();
             _blazeUntilTick = 0;
             _blazeSlot = -1;
@@ -1294,6 +1309,8 @@ namespace Game.Sim
         /// </summary>
         private void ReadOrders(in InputFrame input)
         {
+            // У новой серии курсор задаёт направление, а не приказ погони.
+            if (_pelagBasicComboEnabled) { _attackTarget = -1; return; }
             // ПРИКАЗ ИДТИ ЧИТАЕТСЯ ПЕРВЫМ И СИЛЬНЕЕ АВТОЦЕЛИ. Защёлкнутая цель
             // ниже по коду подменяет точку движения собой (герой идёт к телу,
             // а не к курсору), поэтому оставить её живой значит проигнорировать
@@ -1372,6 +1389,7 @@ namespace Game.Sim
             // на которую ресурса хватило ровно к этому тику, обязана сработать
             // на нём, а не на следующем.
             RegenerateLavidium();
+            UpdatePelagBasicContinuation();
             InputFrame input = PrepareCombatInput(rawInput);
 
             // Приказы разбираются до движения: цель могла умереть на прошлом
@@ -1381,6 +1399,7 @@ namespace Game.Sim
             // Штраф движения начинается в кадр нажатия способности, хотя
             // gameplay-каст разрешается ниже по фиксированному порядку стадий.
             PrimeAbilityMovePenalty(in input);
+            PrimePelagBasicAttack(in input);
 
             // Принудительное перемещение решается ДО собственного движения:
             // тело, которое тащат, своим шагом не идёт, и порядок здесь — это
@@ -1594,7 +1613,7 @@ namespace Game.Sim
                 Entities.PendingAttackTarget[PlayerId] = -1;
                 Entities.AttackImpactTick[PlayerId] = 0;
                 Entities.PendingAttackVariant[PlayerId] = 0;
-                _nextPlayerAttackVariant = 0;
+                if (!_pelagBasicComboEnabled) _nextPlayerAttackVariant = 0;
                 return;
             }
         }
@@ -1822,7 +1841,7 @@ namespace Game.Sim
             bool killedOrderedTarget = killer == PlayerId && target == _attackTarget;
             Entities.Health[target] = 0;
             Entities.Alive[target] = false;
-            if (target == PlayerId) ResetAbilityState();
+            if (target == PlayerId) ResetAbilityState(preserveBasicSerial: true);
             _events.Add(SimEvent.Death(killer, target, Entities.Position[target]));
             // Метка мёртвого гаснет в тик смерти, а не тиком позже, когда до
             // него дойдёт очередь: иначе над трупом кадр висел бы живой сектор.
@@ -1981,7 +2000,7 @@ namespace Game.Sim
             // начинается только в лобовом секторе и проверяется на контакте.
             // Здесь герой лишь поворачивается к тому, кто рядом, — 20° за тик,
             // то есть полный разворот занимает девять тиков, ровно один замах.
-            int swingTarget = attacking && !committedTargetValid && !AttackTargetValid
+            int swingTarget = !_pelagBasicComboEnabled && attacking && !committedTargetValid && !AttackTargetValid
                 ? input.Has(InputFlags.DirectMovement)
                     ? FindTurnTargetInAim(input.Aim - pos)
                     : FindTurnTarget()
@@ -2026,7 +2045,7 @@ namespace Game.Sim
             // такой же стат, как урон, и предмет вправе её менять. Активное
             // действие меняет только текущий cap, но не сам стат.
             Fix64 fullSpeed = Entities.MoveStep[PlayerId];
-            Fix64 speed = committedTargetValid
+            Fix64 speed = committedTargetValid || PelagBasicWindup
                 ? fullSpeed * Fix64.Ratio(3, 4)
                 : Tick < _abilityMovePenaltyUntilTick
                     ? fullSpeed * AbilityMoveScale
@@ -2093,6 +2112,14 @@ namespace Game.Sim
                 step = input.MoveDirection.ClampLength(Fix64.One) * speed;
                 desiredFacing = input.Aim - pos;
                 finishingTurnInPlace = false;
+            }
+
+            if (PelagBasicDirectionLocked)
+                desiredFacing = _pelagBasicAttack.Direction;
+            else if (_pelagBasicComboEnabled && (attacking || input.Has(InputFlags.AttackPressed)))
+            {
+                FixVec2 aim = input.Aim - pos;
+                if (aim.LengthSq.Raw != 0) desiredFacing = aim;
             }
 
             // Желаемая скорость достигается не сразу: разгон и торможение
@@ -2552,6 +2579,7 @@ namespace Game.Sim
                 // времени Sim: низкий id не забирает свободный жетон вечно.
                 int i = order == 0 ? PlayerId : 1 + (order - 1 + Tick / SurroundAssignTicks) % (Entities.Count - 1);
                 if (i != PlayerId) { UpdateEnemySwing(i); continue; }
+                if (_pelagBasicComboEnabled) { ResolvePelagBasicContact(); continue; }
                 if (Statuses.IsStunned(i, Tick)) continue;
                 int pendingTarget = Entities.PendingAttackTarget[i];
                 if (pendingTarget >= 0)
@@ -2770,15 +2798,15 @@ namespace Game.Sim
         /// Автоатака. Все числа приходят из плоских массивов EntityStore, а те —
         /// из листа статов: другого источника боевых чисел в симуляции нет.
         /// </summary>
-        private void ApplyAttack(int source, int target, int variant, Fix64 damageScale)
+        private int ApplyAttack(int source, int target, int variant, Fix64 damageScale)
         {
             // Бросок на крит делается ВСЕГДА, даже при нулевом шансе: иначе
             // расход боевого потока случайности зависел бы от снаряжения,
             // и один и тот же сид перестал бы давать один и тот же забег.
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
             // Keep the normal critical roll even when developer immunity absorbs the hit.
-            if (target == PlayerId && PlayerImmune) return;
-            if (BlazeEvades(target, overTime: false)) return;
+            if (target == PlayerId && PlayerImmune) return 0;
+            if (BlazeEvades(target, overTime: false)) return 0;
             // «Верный удар»: бросок уже сделан (поток не сдвигается), усиление подменяет результат.
             crit = SureCrit(source, crit);
 
@@ -2799,12 +2827,13 @@ namespace Game.Sim
             damage = ApplyResinReduction(target, damage);
             damage = ApplyUpgradeReduction(target, damage);
             damage = MirrorIncoming(source, target, damage);
-            if (HoldDamage(source, target, damage)) return;
+            if (HoldDamage(source, target, damage)) return 0;
 
             Entities.Health[target] -= damage;
             CrimsonTookDamage(target, damage);
             _events.Add(SimEvent.Damage(source, target, damage, crit, Entities.Position[target],
-                DamageType.Physical, DamageOrigin.BasicAttack, variant));
+                DamageType.Physical, DamageOrigin.BasicAttack, variant,
+                source == PlayerId && _pelagBasicComboEnabled ? _pelagBasicAttack : default));
 
             // Горящая сабля добавляет огонь ТОЛЬКО к обычным атакам — решение
             // владельца от 12 сентября. Доля берётся от силы удара до брони:
@@ -2817,6 +2846,7 @@ namespace Game.Sim
             // добили. «Перекидывается» иначе не сработал бы на добитом мечом.
             if (Entities.Health[target] <= 0 && !VowSaves(target))
                 Kill(target, source, BurnSlotOf(target), basicAttackKill: true);
+            return damage;
         }
 
         /// <summary>
@@ -2839,6 +2869,7 @@ namespace Game.Sim
             if (PlayerInvulnerable) Hashing.Mix(ref hash, 0x474F44);
             Hashing.Mix(ref hash, Tick);
             HashTempo(ref hash);
+            HashPelagBasicCombo(ref hash);
             HashPotionEffects(ref hash);
             HashPreparedGift(ref hash);
             HashArtifact(ref hash);

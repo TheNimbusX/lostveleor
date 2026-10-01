@@ -68,19 +68,27 @@ namespace Game.Sim
         // Урон 11–25, фигура на земле. Направление фиксируется в первый тик
         // замаха, и моб не доворачивается и не идёт до конца восстановления.
         // После удара стоит — окно, в которое его наказывают; остаток цикла
-        // свободен.
+        // свободен, и в нём он тоже не пятится (Simulation.EnemySurround,
+        // HoldsGroundBetweenSwings).
         //
         // ВЕСЬ ВЗМАХ НА 10% МЕДЛЕННЕЕ (решение владельца, 29.09): замах
         // 21 → 23 тика (0,77 с), стойка 15 → 17, цикл 48 → 53 — свободных
-        // 13. Замах вышел за полосу бестиария 18–21 сознательно. Числа только
-        // Хранителя (и моба без вида на стендах): EnemyAttackWindupTicks —
-        // лишь прежнее имя этого замаха, у остальных видов окна свои. Скорость
-        // атаки со стата (EnemyBaseAttackSpeed) считается из цикла. Ключи клипа
-        // (CharacterAnimatorView.GuardianSwing) поставлены под 21/15 и
-        // растягиваются под окно Sim сами — контакт ложится на ImpactTick.
-        public const int GuardianSwingWindupTicks = 23;
-        public const int GuardianSwingRecoveryTicks = 17;
-        public const int GuardianSwingCycleTicks = 53;
+        // 13. Замах вышел за полосу бестиария 18–21 сознательно.
+        //
+        // И ЕЩЁ МЕДЛЕННЕЕ (ревью владельца 01.10: «скорость атаки замедлить»):
+        // замах 23 → 28 тиков (0,93 с, +22%), стойка 17 → 21 (0,7 с, +24%),
+        // цикл 53 → 65 (2,17 с, +23%) — свободных 16. Сектор на земле и знак
+        // на теле заполняются по тикам замаха и растягиваются сами.
+        //
+        // Числа только Хранителя (и моба без вида на стендах; временный босс —
+        // тоже Хранитель): EnemyAttackWindupTicks — лишь прежнее имя этого
+        // замаха, у остальных видов окна свои. Скорость атаки со стата
+        // (EnemyBaseAttackSpeed) считается из цикла. Ключи клипа
+        // (CharacterAnimatorView.GuardianSwing) поставлены под 28/21; другое
+        // окно Sim они растягивают сами — контакт ложится на ImpactTick.
+        public const int GuardianSwingWindupTicks = 28;
+        public const int GuardianSwingRecoveryTicks = 21;
+        public const int GuardianSwingCycleTicks = 65;
         //
         // Радиус 2,4 → 2,2 (стенд баланса, 26.09): попадание считается до края
         // тела героя, и сектор 2,4 м доставал на 2,85 м, когда герой бьёт с
@@ -280,7 +288,55 @@ namespace Game.Sim
             // Такт ударов по герою (Simulation.AttackRhythm): окно ответа после
             // прошлого удара, контакт не внахлёст с чужим и не по связанному.
             if (target == PlayerId && !MeleeRhythmAllows(id, WindupTicksFor(id))) return;
+            if (HoldsGroundBetweenSwings(kind) && LongerWaitingGuardianCanStart(id)) return;
             StartEnemySwing(id, target);
+        }
+
+        /// <summary>
+        /// Может ли другой Хранитель, который ждёт удара дольше id (раньше стал
+        /// готов — меньше NextAttackTick; при равенстве — младший номер), начать
+        /// замах в этот же тик. Тогда id уступает ему жетон.
+        ///
+        /// ЗАЧЕМ (01.10). Очередь обхода в ResolveAttacks сдвигается раз в
+        /// SurroundAssignTicks, и цикл 65 тиков с тактом ударов попал с ней в
+        /// резонанс: шестеро у героя били парами раз в 92 тика, жетон
+        /// освобождался всегда при одном и том же начале очереди, и двое
+        /// готовых ни разу за 20 с не ударили (EnemyBrainTests,
+        /// EveryReadyGuardianGetsAnAttackOpportunity). Уступают только тому,
+        /// кто прямо сейчас сам может бить, — по тем же условиям, что ниже,
+        /// поэтому старт не теряется: самый давний из готовых не уступает никому.
+        /// </summary>
+        private bool LongerWaitingGuardianCanStart(int id)
+        {
+            int mine = Entities.NextAttackTick[id];
+            for (int j = 1; j < Entities.Count; j++)
+            {
+                if (j == id || !HoldsGroundBetweenSwings(Entities.Kind[j])) continue;
+                int theirs = Entities.NextAttackTick[j];
+                if (theirs > mine || (theirs == mine && j > id)) continue;
+                if (EnemySwingCouldStart(j)) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Начал бы ближник j замах в этот тик, дойди до него очередь: те же
+        /// проверки, что в UpdateEnemySwing, без побочных действий. Замах j,
+        /// чья стойка уже кончилась, но ещё не снят (до j очередь не дошла),
+        /// считается снятым — так он и будет снят.
+        /// </summary>
+        private bool EnemySwingCouldStart(int j)
+        {
+            if (!Entities.Alive[j] || SplitterBusy(j)) return false;
+            var swing = _enemySwings[j];
+            if (swing.Serial != 0 && !(swing.HitResolved && Tick >= swing.RecoverUntil)) return false;
+            if (Statuses.IsStunned(j, Tick) || ForcedMotion.IsInterrupting(Entities, j)) return false;
+            if (Entities.NextAttackTick[j] == int.MaxValue || Tick < Entities.NextAttackTick[j]) return false;
+            if (_surroundSlot[j] < 0 && _surroundWaitSince[j] >= 0) return false;
+            int target = FindNearestEnemy(j);
+            if (target < 0) return false;
+            if (CountMeleeAttackTokens(j) >= MeleeAttackTokenLimit) return false;
+            return target != PlayerId || MeleeRhythmAllows(j, WindupTicksFor(j));
         }
 
         private void StartEnemySwing(int id, int target)

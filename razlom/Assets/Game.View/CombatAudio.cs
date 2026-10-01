@@ -98,6 +98,12 @@ namespace Game.View
         private uint _random = 0x2545F491u;
         private float _whooshDelay = -1f;
         private int _whooshAttackVariant;
+        private struct BasicWhooshCue
+        {
+            public PelagBasicAttackState Action;
+            public CauseInfo Cause;
+        }
+        private readonly List<BasicWhooshCue> _basicWhooshes = new List<BasicWhooshCue>(4);
         private float[] _voiceGains, _fadeLeft;
         private bool _paused, _blazePreparing, _blazeBurning;
         private double _pausedAt;
@@ -224,6 +230,7 @@ namespace Game.View
             else if (CaptureRig.AudioLog && _driver.FrameEvents.Count > 0)
                 LogLine("dropped " + _driver.FrameEvents.Count + " events of the simulation swap frame");
             FlushKillImpact();
+            UpdateBasicWhooshes();
             UpdateMobCues();
             UpdateSwarmScuttle();
             UpdateCleaveSound();
@@ -305,6 +312,7 @@ namespace Game.View
         /// <summary>Смена режима или симуляции обрывает бой на середине.</summary>
         private void ResetFight()
         {
+            _basicWhooshes.Clear();
             // Осыпание, поставленное в очередь за долю секунды до выхода из Разлома,
             // прозвучало бы уже в лагере — над пустой поляной, без тела.
             _deathCueCount = 0;
@@ -331,6 +339,7 @@ namespace Game.View
         /// </summary>
         private void ResetArena()
         {
+            _basicWhooshes.Clear();
             _deathCueCount = 0;
             _whooshDelay = -1f;
             _anchorImpactAt = _anchorLandAt = -1f;
@@ -365,11 +374,21 @@ namespace Game.View
                     Kind = Cause.Event, Event = e, QueuedAt = -1f,
                     Tick = i < contexts.Count ? contexts[i].SimulationTick : _driver.Sim.Tick,
                 };
+                // Flush elapsed frozen windups before a later event can cancel the action.
+                // Reading only final Sim here would lose a hit+cancel inside one rendered frame.
+                // FrameEventContext is captured after Step increments Tick; action/event clocks use the completed tick.
+                FlushBasicWhooshes(_cause.Tick - 1, false);
                 switch (e.Type)
                 {
                     case SimEventType.Attack:
                         if (e.Source == Simulation.PlayerId)
                         {
+                            if (e.BasicAttackState.Serial > 0)
+                            {
+                                _whooshDelay = -1f;
+                                _basicWhooshes.Add(new BasicWhooshCue { Action = e.BasicAttackState, Cause = _cause });
+                                break;
+                            }
                             // Whoosh leads the shared contact tick; keeping the
                             // lead relative to Simulation avoids drift when the
                             // attack windup is tuned.
@@ -410,6 +429,7 @@ namespace Game.View
                         break;
                     // Контроль героя: корни (Flag) или оглушение.
                     case SimEventType.HeroControl:
+                        if (e.Target == Simulation.PlayerId && !e.Flag) _basicWhooshes.Clear();
                         Cue(e.Flag ? Sound.HeroRooted : Sound.HeroStunned, HeroControlVolume, 1f, .02f);
                         break;
                     // Кислая лужа легла — шипит, пока не уйдёт (вытесненная гаснет раньше).
@@ -489,8 +509,20 @@ namespace Game.View
                         PlayDamage(in e);
                         break;
 
+                    case SimEventType.Evaded:
+                        if (e.Source == Simulation.PlayerId) _basicWhooshes.Clear();
+                        break;
+                    case SimEventType.Stun:
+                        if (e.Target == Simulation.PlayerId) _basicWhooshes.Clear();
+                        break;
+                    case SimEventType.ArtifactUsed:
+                        if (e.Source == Simulation.PlayerId && e.ActionVariant == (int)RunArtifact.VoidVisage)
+                            _basicWhooshes.Clear();
+                        break;
+
                     case SimEventType.Death:
-                        if (e.Target == Simulation.PlayerId) _anchorImpactAt = _anchorLandAt = -1f;
+                        if (e.Target == Simulation.PlayerId)
+                        { _anchorImpactAt = _anchorLandAt = -1f; _basicWhooshes.Clear(); }
                         if (e.Target != Simulation.PlayerId)
                         {
                             var kind = _driver.Sim.Entities.Kind[e.Target];
@@ -512,6 +544,7 @@ namespace Game.View
                     case SimEventType.ActionStageStarted:
                         if (e.Source == Simulation.PlayerId)
                         {
+                            _basicWhooshes.Clear();
                             _anchorImpactAt = _anchorLandAt = -1f;
                             _whirlwindEndAt = -1f;
                             StopKind(Sound.Whirlwind);
@@ -646,6 +679,36 @@ namespace Game.View
                 heavy ? .96f : 1.03f, .025f);
         }
 
+        private void UpdateBasicWhooshes()
+        {
+            var sim = _driver.Sim;
+            if (sim == null || !sim.Entities.Alive[Simulation.PlayerId])
+            { _basicWhooshes.Clear(); return; }
+            FlushBasicWhooshes(sim.Tick - 1 + _driver.Alpha, true);
+        }
+
+        private void FlushBasicWhooshes(float tick, bool checkInterruption)
+        {
+            var sim = _driver.Sim;
+            CauseInfo eventCause = _cause;
+            for (int i = 0; i < _basicWhooshes.Count;)
+            {
+                BasicWhooshCue cue = _basicWhooshes[i];
+                if (checkInterruption && sim != null && sim.PelagBasicAttack.Serial == cue.Action.Serial
+                    && sim.PelagBasicAttack.Interrupted)
+                { _basicWhooshes.RemoveAt(i); continue; }
+                if (tick < PelagBasicAttackTiming.WhooshTick(cue.Action)) { i++; continue; }
+                // A long rendered frame can cross both windup and contact: the frozen cue still plays once.
+                _cause = cue.Cause;
+                bool heavy = cue.Action.Stage == 2;
+                // Five caught-up ticks can cross two minimum-length attacks. Keep this allowance local to the candidate.
+                Play(Sound.PelagAttack, WhooshVolume * (heavy ? 1.10f : 1f), heavy ? .96f : 1.03f, .025f,
+                    maxPerFrameOverride: 2);
+                _basicWhooshes.RemoveAt(i);
+            }
+            _cause = eventCause;
+        }
+
         /// <summary>
         /// Короткий сигнал в начале крупного телеграфа. Одновременные телеграфы
         /// (три бутона в одном кадре, таран под прыжок) звучат одним сигналом.
@@ -690,7 +753,8 @@ namespace Game.View
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId
                 && e.DamageKind != DamageType.Physical) return;
             bool whirlwind = ability && IsWhirlwindSlot(e.ActionVariant);
-            bool heavy = e.Flag || e.ActionVariant == 1 || ability;
+            bool heavy = e.Flag || ability || PelagBasicAttackTiming.Heavy(e.ActionVariant,
+                _driver.Sim.PelagBasicComboEnabled && e.DamageOrigin == DamageOrigin.BasicAttack);
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.ChainStepId)
                 Play(Sound.ChainStepHop, AbilityVolume * .65f, 1f, .025f);
 
@@ -1246,13 +1310,15 @@ namespace Game.View
         }
 
         private int Play(Sound sound, float volume, float pitchCenter, float pitchSpread,
-            float delay = 0f, int fixedVariant = -1)
+            float delay = 0f, int fixedVariant = -1, int maxPerFrameOverride = 0)
         {
             int index = (int)sound;
             AudioClip[] clips = _variants[index];
             if (clips == null || clips.Length == 0) return -1;
             var entry = _entries[index];
-            if (_playedThisFrame[index] >= (entry != null ? entry.MaxPerFrame : MaxPerKindPerFrame)) return -1;
+            int frameLimit = maxPerFrameOverride > 0 ? maxPerFrameOverride
+                : entry != null ? entry.MaxPerFrame : MaxPerKindPerFrame;
+            if (_playedThisFrame[index] >= frameLimit) return -1;
             int variant = fixedVariant >= 0 ? fixedVariant % clips.Length : PickVariant(index, clips.Length);
             AudioClip clip = clips[variant];
             if (clip == null) return -1;
@@ -1449,6 +1515,7 @@ namespace Game.View
 
         private void OnDisable()
         {
+            _basicWhooshes.Clear();
             _deathCueCount = 0;
             _whooshDelay = _whirlwindEndAt = _anchorImpactAt = _anchorLandAt = -1f;
             _warningReadyAt = _earthReadyAt = 0f;

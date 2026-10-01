@@ -375,6 +375,10 @@ namespace Game.View
         }
 
         private ParticleSystem _wisps;
+        // Свет арены по глубине (ArenaMoodFx, проба 01.10): огоньки перекрашиваются по настроению, фонари сумерек
+        // ставятся по тем же проверкам, что фонари порталов. По умолчанию свет выключен — не вызывается.
+        public ParticleSystem GladeWisps => _wisps;
+        public bool FreeForProp(float x, float z, float radius) => _shownMap?.Outline != null && !TouchesOutlinedFloor(x, z, radius) && !NearPond(x, z, radius) && !InsideSolidDecor(x, z) && !NearLandmark(x, z, radius);
 
         // Голубые огоньки над кромкой поляны, как в референсе: нативные частицы с мягким свечением
         // шейдера светлячков лагеря. Рождаются в полосе у края, над серединой боя их почти нет.

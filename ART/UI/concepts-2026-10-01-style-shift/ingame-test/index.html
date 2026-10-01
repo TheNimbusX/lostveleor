@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Комикс-рисовка в игре</title>
+<style>
+:root { --bg:#efe9df; --card:#fffaf2; --ink:#2a1b12; --muted:#6f6458; --line:#dccfbe; --accent:#a4502e; --good:#2f6b3a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#1d1916; --card:#27221e; --ink:#efe6da; --muted:#b3a696; --line:#3d352e; --accent:#e08a5c; --good:#8cc79a; } }
+:root[data-theme="dark"] { --bg:#1d1916; --card:#27221e; --ink:#efe6da; --muted:#b3a696; --line:#3d352e; --accent:#e08a5c; --good:#8cc79a; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,"Segoe UI",sans-serif }
+main { max-width:1500px; margin:auto; padding:24px 16px 64px }
+h1 { font-size:30px; margin:6px 0 8px } h2 { font-size:22px; margin:0 0 10px } h3 { font-size:18px; margin:0 0 4px }
+section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin:18px 0 }
+.ab { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0 }
+.three { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px }
+figure { margin:0 } img { width:100%; height:auto; display:block; border-radius:6px; background:#000 }
+figcaption { font-size:14px; color:var(--muted); margin-top:6px }
+.note, .small, .src { color:var(--muted) } .src { font-size:12px; margin:4px 0 0 }
+.lead { font-size:17px; max-width:980px }
+table { border-collapse:collapse; width:100%; font-size:15px; font-variant-numeric:tabular-nums }
+th, td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top }
+th { color:var(--muted); font-weight:600 } td.num { text-align:right }
+.changed { color:var(--accent); font-weight:600 }
+ul { margin:6px 0; padding-left:20px } li { margin:4px 0 }
+code { font-size:14px; background:rgba(127,110,90,.14); padding:1px 5px; border-radius:4px }
+.scroll { overflow-x:auto }
+@media (max-width:760px) { .ab, .three { grid-template-columns:1fr } h1 { font-size:24px } }
+</style>
+</head>
+<body><main>
+<p class="small">1 октября 2026 · изолированный плеер (capture.ps1 -WorkspaceName mobsv2), арена 1, 1920×1080 · Пары — один и тот же миг: мир замирает, кадр снимается с выключенной и с включённой рисовкой.</p>
+<h1>Комикс-рисовка в игре — первая проба</h1>
+<p class="small">Свет арены по глубине (день → туман → сумерки), с рисовкой и без: <a href="light.html">отдельная доска</a>.</p>
+<p class="lead">Модели, текстуры и материалы не менялись — рисует только камера: после непрозрачных и неба кисть (фильтр Кувахары радиусом 3 px), 2–3 тона и тёплая тушь; потом, как и раньше, эффекты паков, метки на полу, полоски и цифры урона; в самом конце — лёгкое размытие диорамы у верхнего и нижнего края. HUD не тронут: он рисуется поверх после всего. <b>По умолчанию рисовка выключена</b> — обычная игра выглядит как сегодня.</p>
+
+<section><h2>Цель и что вышло</h2>
+<div class="three"><figure><a href="../6-mix-with-our-hud.jpg"><img loading="lazy" src="../6-mix-with-our-hud.jpg" alt="Цель: концепт 6-mix-with-our-hud"></a><figcaption>Цель: концепт 6-mix-with-our-hud</figcaption></figure><figure><a href="img/ours-vs-target.jpg"><img loading="lazy" src="img/ours-vs-target.jpg" alt="Вышло: тот же тип сцены в игре, рисовка включена"></a><figcaption>Вышло: тот же тип сцены в игре, рисовка включена</figcaption></figure><figure><a href="../refs/ref-fight-with-hud.jpg"><img loading="lazy" src="../refs/ref-fight-with-hud.jpg" alt="Было: кадр игры, с которого рисовали концепт"></a><figcaption>Было: кадр игры, с которого рисовали концепт</figcaption></figure></div>
+</section>
+
+<section><h2>Тот же миг: сейчас → комикс</h2>
+<section class="pair"><h3>Вендиго: корни из земли и кольцо удара</h3><p class="note">Та же сцена, что в концепте: корни вокруг, жёлтое кольцо, полоска «Лесной вендиго», цифра урона у героя.</p><div class="ab"><figure><a href="img/roots-off.jpg"><img loading="lazy" src="img/roots-off.jpg" alt="Сейчас (рисовка выключена)"></a><figcaption>Сейчас (рисовка выключена)</figcaption></figure><figure><a href="img/roots-comic.jpg"><img loading="lazy" src="img/roots-comic.jpg" alt="Комикс-рисовка (итоговые настройки)"></a><figcaption>Комикс-рисовка (итоговые настройки)</figcaption></figure></div><p class="src">artifacts/capture/comic-final-roots2/shot_03_t7.00s.png и …__off.png</p></section>
+<section class="pair"><h3>Вендиго: вой, метка на земле</h3><p class="note">Метка воя (пунктир и шевроны) рисуется после рисовки — края и шевроны такие же резкие.</p><div class="ab"><figure><a href="img/howl-off.jpg"><img loading="lazy" src="img/howl-off.jpg" alt="Сейчас (рисовка выключена)"></a><figcaption>Сейчас (рисовка выключена)</figcaption></figure><figure><a href="img/howl-comic.jpg"><img loading="lazy" src="img/howl-comic.jpg" alt="Комикс-рисовка (итоговые настройки)"></a><figcaption>Комикс-рисовка (итоговые настройки)</figcaption></figure></div><p class="src">artifacts/capture/comic-final-roots2/shot_02_t6.00s.png и …__off.png</p></section>
+<section class="pair"><h3>Вендиго: взмах на 360°</h3><p class="note">Лента взмаха (эффект пака) — поверх рисовки, не сглажена кистью.</p><div class="ab"><figure><a href="img/sweep-off.jpg"><img loading="lazy" src="img/sweep-off.jpg" alt="Сейчас (рисовка выключена)"></a><figcaption>Сейчас (рисовка выключена)</figcaption></figure><figure><a href="img/sweep-comic.jpg"><img loading="lazy" src="img/sweep-comic.jpg" alt="Комикс-рисовка (итоговые настройки)"></a><figcaption>Комикс-рисовка (итоговые настройки)</figcaption></figure></div><p class="src">artifacts/capture/comic-final-roots2/shot_04_t8.00s.png и …__off.png</p></section>
+<section class="pair"><h3>Толпа: шесть Хранителей, цифры урона, мало здоровья</h3><p class="note">Герою оставлено 20 % здоровья: красная кромка экрана, полоска и «−34» — чёткие.</p><div class="ab"><figure><a href="img/crowd-off.jpg"><img loading="lazy" src="img/crowd-off.jpg" alt="Сейчас (рисовка выключена)"></a><figcaption>Сейчас (рисовка выключена)</figcaption></figure><figure><a href="img/crowd-comic.jpg"><img loading="lazy" src="img/crowd-comic.jpg" alt="Комикс-рисовка (итоговые настройки)"></a><figcaption>Комикс-рисовка (итоговые настройки)</figcaption></figure></div><p class="src">artifacts/capture/comic-final-crowd2/shot_01_t6.00s.png и …__off.png</p></section>
+<section class="pair"><h3>Шипомёт: метка-дорожка на земле</h3><p class="note">Метка на полу и сам моб: метка не тронута, моб обведён.</p><div class="ab"><figure><a href="img/thorn-off.jpg"><img loading="lazy" src="img/thorn-off.jpg" alt="Сейчас (рисовка выключена)"></a><figcaption>Сейчас (рисовка выключена)</figcaption></figure><figure><a href="img/thorn-comic.jpg"><img loading="lazy" src="img/thorn-comic.jpg" alt="Комикс-рисовка (итоговые настройки)"></a><figcaption>Комикс-рисовка (итоговые настройки)</figcaption></figure></div><p class="src">artifacts/capture/comic-final-thorn/shot_01_t3.00s.png и …__off.png</p></section>
+</section>
+
+<section><h2>Крупно: тушь, кисть, цифры и полоски</h2>
+<p class="note">Увеличено вдвое. Рыжий контур врагов (UnitOutline) остаётся: при включённой рисовке он рисуется сразу после неё. Цифры урона, полоски, метки и эффекты — поверх, без кисти и туши.</p>
+<div class="ab"><figure><a href="img/z-wendigo-off.jpg"><img loading="lazy" src="img/z-wendigo-off.jpg" alt="Вендиго и герой — сейчас"></a><figcaption>Вендиго и герой — сейчас</figcaption></figure><figure><a href="img/z-wendigo-comic.jpg"><img loading="lazy" src="img/z-wendigo-comic.jpg" alt="Вендиго и герой — комикс"></a><figcaption>Вендиго и герой — комикс</figcaption></figure></div>
+<div class="ab"><figure><a href="img/z-crowd-off.jpg"><img loading="lazy" src="img/z-crowd-off.jpg" alt="Хранители, «−34», герой — сейчас"></a><figcaption>Хранители, «−34», герой — сейчас</figcaption></figure><figure><a href="img/z-crowd-comic.jpg"><img loading="lazy" src="img/z-crowd-comic.jpg" alt="Хранители, «−34», герой — комикс"></a><figcaption>Хранители, «−34», герой — комикс</figcaption></figure></div>
+<div class="ab"><figure><a href="img/z-thorn-off.jpg"><img loading="lazy" src="img/z-thorn-off.jpg" alt="Шипомёт и метка — сейчас"></a><figcaption>Шипомёт и метка — сейчас</figcaption></figure><figure><a href="img/z-thorn-comic.jpg"><img loading="lazy" src="img/z-thorn-comic.jpg" alt="Шипомёт и метка — комикс"></a><figcaption>Шипомёт и метка — комикс</figcaption></figure></div>
+<h3>Сейчас → первая сборка → итог</h3>
+<div class="three"><figure><a href="img/z-wendigo-off.jpg"><img loading="lazy" src="img/z-wendigo-off.jpg" alt="Сейчас"></a><figcaption>Сейчас</figcaption></figure><figure><a href="img/z-wendigo-builder.jpg"><img loading="lazy" src="img/z-wendigo-builder.jpg" alt="Первая сборка (умолчания строителя)"></a><figcaption>Первая сборка (умолчания строителя)</figcaption></figure><figure><a href="img/z-wendigo-comic.jpg"><img loading="lazy" src="img/z-wendigo-comic.jpg" alt="Итог"></a><figcaption>Итог</figcaption></figure></div>
+</section>
+
+<section><h2>Подбор: три раунда</h2>
+<h3>Раунд 1 — умолчания строителя</h3>
+<p>Тушь занимала ~0,2 % кадра и читалась как случайная тень; кисть с тушью стирали рыжий контур врагов. Исправлено: контур юнитов при рисовке переезжает сразу за неё (всё ещё до прозрачных).</p>
+<div class="ab"><figure><a href="img/r1-outline-lost.jpg"><img loading="lazy" src="img/r1-outline-lost.jpg" alt="Раунд 1: слева — сейчас (рыжий контур), справа — рисовка его стёрла"></a><figcaption>Раунд 1: слева — сейчас (рыжий контур), справа — рисовка его стёрла</figcaption></figure><figure><a href="img/roots-builder.jpg"><img loading="lazy" src="img/roots-builder.jpg" alt="Умолчания строителя в итоговом кадре: темнее, рыжее, тушь едва видна"></a><figcaption>Умолчания строителя в итоговом кадре: темнее, рыжее, тушь едва видна</figcaption></figure></div>
+<h3>Раунд 2 — яркость и малые предметы</h3>
+<p>Яркость 1,6–2,0 делает из бурой земли арены рыжий фильтр (синий падает на четверть) — до светлой поляны концепта постобработкой не дотянуться. Добавлена тушь для малых разрывов глубины (гриб, куст, камешек) — только там, где рядом меняется цвет.</p>
+<div class="ab"><figure><a href="img/r2-brightness.jpg"><img loading="lazy" src="img/r2-brightness.jpg" alt="Раунд 2: сейчас, база, яркость 1,6 и 2,0, кисть 2 px, без ступеней тона"></a><figcaption>Раунд 2: сейчас, база, яркость 1,6 и 2,0, кисть 2 px, без ступеней тона</figcaption></figure><figure><a href="img/r3-ink-weight.jpg"><img loading="lazy" src="img/r3-ink-weight.jpg" alt="Раунд 3: Вендиго — сейчас, база, мягче ворота цвета, жирнее"></a><figcaption>Раунд 3: Вендиго — сейчас, база, мягче ворота цвета, жирнее</figcaption></figure></div>
+<h3>Раунд 3 — ворота цвета</h3>
+<p>Без ворот цвета тушь ложится на камешки, края алтаря и пучки травы (2,1 % кадра — «грязь»). Ворота .05–.15: трава на траве чистая, мобы получают и внутренние линии.</p>
+<div class="ab"><figure><a href="img/r3-colour-gate.jpg"><img loading="lazy" src="img/r3-colour-gate.jpg" alt="Раунд 3: diag-nogate — без ворот; bold — 2,5 px; crease25 — излом от 25°"></a><figcaption>Раунд 3: diag-nogate — без ворот; bold — 2,5 px; crease25 — излом от 25°</figcaption></figure><figure><div class="ab" style="margin:0"><figure><a href="img/z-brush-full.jpg"><img loading="lazy" src="img/z-brush-full.jpg" alt="Кисть в полном разрешении (итог)"></a><figcaption>Кисть в полном разрешении (итог)</figcaption></figure><figure><a href="img/z-brush-half.jpg"><img loading="lazy" src="img/z-brush-half.jpg" alt="Кисть в половинном — +0,8 мс вместо +2,3, мягче"></a><figcaption>Кисть в половинном — +0,8 мс вместо +2,3, мягче</figcaption></figure></div></figure></div>
+</section>
+
+<section><h2>Цена кадра</h2>
+<p class="note">RTX 3060, 1920×1080, Development-плеер, HUD включён, шесть Хранителей, без ограничения кадров (capture -Perf 20 с после 240 кадров прогрева). Время GPU — FrameTimingManager и семплеры Render Graph. Два прогона на вариант, чередуя.</p>
+<div class="scroll"><table>
+<tr><th>Вариант</th><th class="num">Кадр, среднее</th><th class="num">Кадр, 95-й процентиль</th><th class="num">GPU кадра</th><th class="num">Добавка GPU</th><th class="num">FPS без ограничения</th></tr>
+<tr><td>Рисовка выключена</td><td class="num">4,97 мс</td><td class="num">8,43 мс</td><td class="num">4,11 мс</td><td class="num">—</td><td class="num">≈200</td></tr>
+<tr><td>Комикс, первая сборка</td><td class="num">8,53 мс</td><td class="num">14,00 мс</td><td class="num">7,63 мс</td><td class="num">+3,52 мс</td><td class="num">≈117</td></tr>
+<tr><td><b>Комикс, итог</b> (веса кисти из C#, средняя яркость в два прохода)</td><td class="num"><b>7,24 мс</b></td><td class="num"><b>12,45 мс</b></td><td class="num"><b>6,36 мс</b></td><td class="num"><b>+2,25 мс</b></td><td class="num">≈138</td></tr>
+<tr><td>Комикс, кисть в половинном разрешении (не включено)</td><td class="num">5,80 мс</td><td class="num">9,97 мс</td><td class="num">4,88 мс</td><td class="num">+0,77 мс</td><td class="num">≈172</td></tr>
+</table></div>
+<div class="scroll"><table style="margin-top:14px">
+<tr><th>Проход (итог)</th><th class="num">GPU, среднее</th><th>Что делает</th></tr>
+<tr><td>Кисть (Кувахара, 49 выборок × 8 секторов)</td><td class="num">1,71 мс</td><td>было 2,51 мс: веса секторов зависят только от смещения — теперь их считает C# один раз</td></tr>
+<tr><td>Тон и тушь</td><td class="num">0,23 мс</td><td>2–3 ступени, тёплые тени, тушь по глубине, излому и цвету</td></tr>
+<tr><td>Нормали из глубины</td><td class="num">0,05 мс</td><td>DepthNormals у героев и земли нет — восстанавливаются из глубины</td></tr>
+<tr><td>Средняя яркость (сетка 40×24 + сводка)</td><td class="num">0,02 мс</td><td>было 0,59 мс: 960 выборок делал один поток</td></tr>
+<tr><td>Диорама (4 прохода в четверти разрешения)</td><td class="num">0,07 мс</td><td>размытие только у верхнего и нижнего края</td></tr>
+</table></div>
+<p class="note">Итог: картинка от оптимизации не изменилась (средняя разница пикселя 0,05 из 255). С включённой вертикальной синхронизацией на 60 Гц запас остаётся: 95-й процентиль 12,5 мс при бюджете 16,7 мс.</p>
+</section>
+
+<section><h2>Чем ещё отличается от концепта и почему</h2>
+<ul>
+<li><b>Свет и палитра.</b> Концепт — светлая жёлто-зелёная поляна под сильным солнцем: средняя яркость кадра 0,58, у игры 0,22. Арена 1 сейчас — бурая земля вокруг алтаря. Рисовка поднимает мир на ~16 % и насыщенность с 0,60 до 0,68, не уводя цвет в рыжий; дальше — это свет и земля уровня (профиль CombatLook, освещение), а не рисовка.</li>
+<li><b>Трава.</b> На этой арене нет густой травы, где могла бы появиться «каша» из линий. Пятна травы на земле остаются чистыми, отдельные пучки на земле получают лёгкую тушь (как в концепте). Густой луг ещё не проверен.</li>
+<li><b>Тушь.</b> 2 px при 1080p (верх диапазона 1,5–2). Обводятся силуэты героя, мобов, корней, камней и крупные внутренние формы. Плоские камни алтаря, вросшие в землю, линий не получают: у них нет ни разрыва глубины, ни излома.</li>
+<li><b>Кисть.</b> Кувахара малым радиусом даёт «масляные» пятна (булыжник становится рыжими плашками), а не направленные мазки концепта. Анизотропный Кувахара ближе к мазку, но дороже.</li>
+<li><b>Пыль и эффекты.</b> Пыль, дым и ленты паков рисуются после рисовки (так задумано: эффекты и метки должны оставаться чёткими), поэтому корни под пылью Вендиго выглядят приглушённее, чем в концепте.</li>
+<li><b>Различия внутри пар, не связанные с рисовкой.</b> Вспышка попадания на герое, мигание портрета и кромки HUD идут по реальному времени — пока мир заморожен, они меняются от кадра к кадру.</li>
+</ul>
+</section>
+
+<section><h2>Итоговые настройки</h2>
+<p class="note">Фича ComicStyle в PC_Renderer (инспектор), умолчания — ComicStyleRules. Оранжевым — изменено против первой сборки.</p>
+<div class="scroll"><table>
+<tr><th>Группа</th><th>Ручка</th><th>Было</th><th>Стало</th></tr>
+<tr><td>Тушь</td><td>Цвет</td><td>#2A1B12</td><td>#2A1B12</td></tr>
+<tr><td></td><td>Непрозрачность</td><td>0,9</td><td class="changed">1,0</td></tr>
+<tr><td></td><td>Толщина при 1080p</td><td>1,75 px</td><td class="changed">2 px</td></tr>
+<tr><td></td><td>Крупный разрыв глубины</td><td>0,8 м (мягкость 0,4)</td><td>0,8 м (мягкость 0,4)</td></tr>
+<tr><td></td><td>Малый разрыв, только со сменой цвета</td><td>—</td><td class="changed">0,2 м (мягкость 0,1)</td></tr>
+<tr><td></td><td>Излом поверхности</td><td>50° (мягкость 15°)</td><td class="changed">35° (мягкость 10°)</td></tr>
+<tr><td></td><td>Ворота цвета</td><td>0,08–0,22</td><td class="changed">0,05–0,15</td></tr>
+<tr><td>Тон</td><td>Сила / ширина ступени / жёсткость</td><td>0,45 / 1,25 стопа / 0,65</td><td>0,45 / 1,25 стопа / 0,65</td></tr>
+<tr><td></td><td>Середина ступени</td><td>по кадру × 1,0</td><td>по кадру × 1,0</td></tr>
+<tr><td></td><td>Тёплые тени / насыщенность теней</td><td>0,35 / 0,15</td><td class="changed">0,15 / 0,2</td></tr>
+<tr><td></td><td>Насыщенность</td><td>1,15</td><td class="changed">1,1</td></tr>
+<tr><td></td><td>Яркость (с плечом у 0,6, ниже порога Bloom)</td><td>1,0</td><td class="changed">1,3</td></tr>
+<tr><td>Кисть</td><td>Радиус / сила / резкость / жёсткость</td><td>3 px / 0,8 / 8 / 8</td><td>3 px / 0,8 / 8 / 8</td></tr>
+<tr><td>Диорама</td><td>Резкая полоса / сила / размытие</td><td>62 % / 0,9 / 8 px</td><td>62 % / 0,9 / <span class="changed">10 px</span></td></tr>
+</table></div>
+</section>
+
+<section><h2>Как включить</h2>
+<ul>
+<li>В игре: F8 → «Визуал · проба рисовки» → «Комикс-рисовка мира…» (запоминается).</li>
+<li>В редакторе: «Разлом → Комикс-рисовка → Включена (редактор и Play)».</li>
+<li>Съёмка: <code>capture.ps1 -ExtraArgs '-capture-style','comic'</code>; ручки на один запуск — <code>'-capture-comic-set','Brightness=1.2;OutlineThickness=2.5'</code> (без пробелов); тот же миг в нескольких вариантах — <code>'-capture-comic-variants','&lt;файл&gt;'</code>; цена проходов — <code>'-capture-comic-gpu'</code>.</li>
+</ul>
+</section>
+</main></body></html>

@@ -20,12 +20,19 @@ namespace Game.View
     ///   фаза от поворота корпуса: Idle под крутящимся корнем читался прокруткой.
     /// • Попадание (Hit, 12 кадров) — только вне удара: удар корнями не рвётся.
     /// • Смерть (Death, 45 кадров): на 25-м — брюхом в землю, с 32-го лежит.
+    ///   Ревью 01.10 «анимации и VFX смерти никакой у него нет»: клип был, но распад
+    ///   за 0,4 с сжимал и топил тело, и игрок видел только первые 15 кадров. Теперь
+    ///   такт семьи (EnemyKillBeat): вспышка 2–3 кадра, стоп-кадр держит первый кадр,
+    ///   потом падение 0–25 к FallSeconds профиля (там же второй залп трухи у груди —
+    ///   EnemyDeathFxView), 25–45 за RestSeconds, и лежащее тело уходит в землю.
     ///
     /// Материал тела — URP Lit (цвет, нормали, ORM), без тун-шейдера: у него нет
-    /// _DeathFade, и растворения при смерти нет. Чтобы тело не пропадало разом в
-    /// конце смерти, оно за последние доли секунды уходит в землю
-    /// (<see cref="DeathSinkMetres"/>). Если на теле тун-материал с растворением —
-    /// не уходит.
+    /// _DeathFade и _HitFlash — растворения и вспышки шейдером нет. Поэтому:
+    /// вспышка добивания — эмиссией URP Lit через блок свойств (тёплый цвет вспышки
+    /// тун-шейдера, те же KillFlashPeak/KillFlashSeconds, гаснет за 1–2 кадра; эмиссия
+    /// включена в материале чёрной — в остальное время тело не светится), а в конце
+    /// показа тело уходит в землю (<see cref="DeathSinkMetres"/>). Если на теле
+    /// тун-материал с растворением — ни того, ни другого: всё делает ArenaView.
     ///
     /// Привязка — <see cref="Bind"/> из ArenaView, как у Вендиго. Без неё вид
     /// привязывается сам: находит свою сущность через ArenaView.TryGetEntityView
@@ -36,6 +43,8 @@ namespace Game.View
     {
         // Кадры клипов пакета (export.json, animation_r01).
         public const int IdleFrames = 60, WalkFrames = 16, SlamFrames = 72, HitFrames = 12, DeathFrames = 45;
+        /// <summary>Смерть: брюхом в землю (25) и лежит (32) — export.json, ForestRootSnarer_Death.</summary>
+        public const int DeathGroundFrame = 25, DeathStillFrame = 32;
         public const int SlamContactFrame = 15, SlamRootsFrame = 36, SlamReleaseFrame = 60;
         public const float ClipFramesPerSecond = 30f;
 
@@ -51,11 +60,17 @@ namespace Game.View
         /// <summary>Выдёргивание плит — последние 12 тиков стойки (кадры 60–72).</summary>
         private const int ReleaseTicks = SlamFrames - SlamReleaseFrame;
 
-        /// <summary>Тело уходит в землю под конец смерти, м (URP Lit без растворения).</summary>
-        public const float DeathSinkMetres = .6f;
+        /// <summary>
+        /// Лежащее тело уходит в землю под конец смерти, м (URP Lit без растворения). Лёжа
+        /// Корнехват ниже метра — уходит целиком; распад его больше не сжимает.
+        /// </summary>
+        public const float DeathSinkMetres = 1f;
 
-        /// <summary>Не раньше, чем тело легло (кадр 32 клипа Death).</summary>
-        private const float DeathStillSeconds = 32f / ClipFramesPerSecond;
+        /// <summary>Цвет вспышки добивания — тот же, что у тун-шейдера (_HitFlash → 1, 0,88, 0,58).</summary>
+        private static readonly Color KillFlashColor = new Color(1f, .88f, .58f, 1f);
+
+        /// <summary>Как быстро гаснет вспышка добивания после пика, 1/с (как KillFlashDecay в ArenaView).</summary>
+        private const float KillFlashDecay = 60f;
 
         private static readonly int IdleState = Animator.StringToHash("Base Layer.Idle"),
             WalkState = Animator.StringToHash("Base Layer.Walk"), SlamState = Animator.StringToHash("Base Layer.Slam"),
@@ -73,6 +88,7 @@ namespace Game.View
         /// </summary>
         private const float MendFrames = 50f;
         private static readonly int DeathFadeId = Shader.PropertyToID("_DeathFade");
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         private Animator _animator;
         private Transform _body;
@@ -84,6 +100,11 @@ namespace Game.View
         private float _deathClock, _idleClock, _walkPhase, _hitClock = 1f, _turnUntil, _sink;
         private Vector3 _lastFacing;
 
+        // Вспышка добивания эмиссией: кожа тела и блок свойств (без выделений в кадре).
+        private Renderer[] _skins = new Renderer[0];
+        private MaterialPropertyBlock _flashBlock;
+        private bool _flashWritten;
+
         private void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
@@ -92,13 +113,14 @@ namespace Game.View
             if (_body != null) _bodyPosition = _body.localPosition;
             foreach (var renderer in GetComponentsInChildren<Renderer>(true))
                 if (renderer.sharedMaterial != null && renderer.sharedMaterial.HasProperty(DeathFadeId)) { _hasDissolve = true; break; }
+            _skins = GetComponentsInChildren<SkinnedMeshRenderer>(true);
         }
 
         /// <summary>Привязка к сущности. ArenaView зовёт при выдаче тела из пула и при уходе в землю.</summary>
         public void Bind(TickDriver driver, int entity)
         {
             _driver = driver; _entity = entity; _generation = driver != null ? driver.Generation : -1;
-            _dead = false; _state = IdleState; _slamSerial = 0; _slamDone = false;
+            _dead = false; _state = IdleState; _slamSerial = 0; _slamDone = false; _flashWritten = false;
             _deathClock = _idleClock = _walkPhase = 0f; _hitClock = 1f; _turnUntil = -1f;
             _lastFacing = Vector3.zero;
             var sim = driver != null ? driver.Sim : null;
@@ -138,8 +160,8 @@ namespace Game.View
             if (_dead)
             {
                 _deathClock += dt;
-                Sample(DeathState, DeathPhase, Mathf.Clamp01(_deathClock * ClipFramesPerSecond / DeathFrames), .08f);
-                UpdateDeathSink(sim);
+                Sample(DeathState, DeathPhase, DeathFrame(_deathClock) / DeathFrames, .08f);
+                UpdateDeathSink();
                 return;
             }
 
@@ -231,21 +253,79 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Без растворения тело уходит в землю между «лёг» и концом показа смерти
-        /// (EnemyPresentationProfile: после него ArenaView возвращает тело в пул).
+        /// Кадр клипа Death на time секунд от смерти. Стоп-кадр тяжёлого убийства держит
+        /// первый кадр (тело стоит на пике отдачи, как у всей семьи); дальше кадры 0–25 —
+        /// к FallSeconds профиля (брюхом в землю в тот же миг, что «упал» в звуке и залп
+        /// касания земли), 25–45 — за RestSeconds, последний держится.
         /// </summary>
-        private void UpdateDeathSink(Simulation sim)
+        public static float DeathFrame(float time)
+        {
+            var profile = EnemyPresentationProfile.Death(EnemyKind.ForestRootSnarer);
+            float hold = EnemyPresentationProfile.Kill(EnemyKind.ForestRootSnarer, false, false).HitStopSeconds;
+            float fall = Mathf.Max(hold + .05f, profile.FallSeconds), rest = Mathf.Max(.05f, profile.RestSeconds);
+            if (time <= hold) return 0f;
+            if (time < fall) return Mathf.Lerp(0f, DeathGroundFrame, (time - hold) / (fall - hold));
+            return Mathf.Lerp(DeathGroundFrame, DeathFrames, Mathf.Clamp01((time - fall) / rest));
+        }
+
+        /// <summary>
+        /// Без растворения лежащее тело уходит в землю: с кадра «лежит» (32) до конца показа
+        /// смерти (такт убийства; после него ArenaView возвращает тело в пул), с ускорением.
+        /// </summary>
+        private void UpdateDeathSink()
         {
             if (_hasDissolve || _body == null) return;
-            // Такт убийства (поток I, 29.09): тело уходит через ~0,44 с, а клип
-            // ложится к 1,07 с — оседание от «лёг» сжималось в 50 мс перед исчезновением.
-            // Теперь оно идёт вместе с распадом: от залпа до ухода тела.
-            float total = EnemyPresentationProfile.Death(EnemyKind.ForestRootSnarer).TotalSeconds;
+            var profile = EnemyPresentationProfile.Death(EnemyKind.ForestRootSnarer);
             var beat = EnemyPresentationProfile.Kill(EnemyKind.ForestRootSnarer, false, false);
-            float to = Mathf.Max(.1f, Mathf.Min(total, beat.BodyGoneAt) - .03f);
-            float from = Mathf.Min(beat.BurstAt, to - .05f);
+            float fall = Mathf.Max(beat.HitStopSeconds + .05f, profile.FallSeconds);
+            float still = fall + profile.RestSeconds * (DeathStillFrame - DeathGroundFrame) / (float)(DeathFrames - DeathGroundFrame);
+            float to = Mathf.Max(.1f, beat.BodyGoneAt - .03f);
+            float from = Mathf.Min(still, to - .1f);
             float k = Mathf.Clamp01((_deathClock - from) / Mathf.Max(.05f, to - from));
             SetSink(k * k * DeathSinkMetres);
+        }
+
+        /// <summary>
+        /// Вспышка добивания эмиссией URP Lit (у тун-тела её даёт _HitFlash в ArenaView). Пик
+        /// KillFlashPeak держится KillFlashSeconds и гаснет за 1–2 кадра; «Вспышки: мягче» в
+        /// настройках приглушает её, как и у остальных. Блок пишется ПОСЛЕ ArenaView (её
+        /// LateUpdate раньше по порядку) поверх её блока: читаем его, добавляем эмиссию,
+        /// кладём обратно в каждый слот материала с эмиссией. Погасла — один раз пишем чёрную
+        /// и больше не трогаем: дальше блок снова целиком её.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (_hasDissolve || !_dead || _burrowed || _skins.Length == 0) return;
+            if (_driver != null && _driver.GameplayPaused && !_flashWritten) return;
+            float hold = EnemyPresentationProfile.KillFlashSeconds;
+            float flash = _deathClock <= hold ? EnemyPresentationProfile.KillFlashPeak
+                : EnemyPresentationProfile.KillFlashPeak * Mathf.Exp(-KillFlashDecay * (_deathClock - hold));
+            flash *= GameUserSettings.FlashScale;
+            if (flash < .02f)
+            {
+                if (_flashWritten) { WriteFlash(Color.black); _flashWritten = false; }
+                return;
+            }
+            WriteFlash(KillFlashColor * flash);
+            _flashWritten = true;
+        }
+
+        private void WriteFlash(Color emission)
+        {
+            if (_flashBlock == null) _flashBlock = new MaterialPropertyBlock();
+            for (int r = 0; r < _skins.Length; r++)
+            {
+                Renderer renderer = _skins[r];
+                if (renderer == null) continue;
+                Material[] materials = renderer.sharedMaterials;
+                for (int m = 0; m < materials.Length; m++)
+                {
+                    if (materials[m] == null || !materials[m].HasProperty(EmissionColorId)) continue;
+                    renderer.GetPropertyBlock(_flashBlock, m);
+                    _flashBlock.SetColor(EmissionColorId, emission);
+                    renderer.SetPropertyBlock(_flashBlock, m);
+                }
+            }
         }
 
         private void SetSink(float metres)

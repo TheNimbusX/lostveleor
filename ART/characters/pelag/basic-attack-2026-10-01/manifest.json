@@ -1,0 +1,52 @@
+{
+  "game": "THE WAR REMAINS",
+  "character": "Pelag",
+  "topic": "Базовая атака — комбо из трёх ударов, целевые кадры и ключевые позы",
+  "date": "2026-10-01",
+  "source": "Higgsfield",
+  "model": "gpt_image_2_5",
+  "refs_in_folder": ["refs/ref-crowd-nohud.jpg", "refs/b-hit1-start.jpg"],
+  "images": [
+    {
+      "index": 0,
+      "job_id": "18cf2023-14eb-46a6-bfac-509852ea960d",
+      "file": "1-combo-target-frames.png",
+      "preview": "1-combo-target-frames.jpg",
+      "size": [2688, 1520],
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261001_141151_18cf2023-14eb-46a6-bfac-509852ea960d.png",
+      "what": "Целевые кадры контакта, сетка 3x2 поверх игровой сцены (вид сверху, лесная арена с рунным кругом). Колонки: удар 1 / удар 2 / удар 3 добивающий. Ряды: А — «угольный росчерк» (огненно-угольный след), Б — «морская пена» (бирюзовая волна с брызгами).",
+      "grid": {
+        "columns": ["Удар 1", "Удар 2", "Удар 3 · добивающий"],
+        "rows": ["А · угольный росчерк", "Б · морская пена"],
+        "separators_px": {"x": [[885, 905], [1785, 1801]], "y": [[750, 765]]}
+      },
+      "preview_note": "В jpg-превью добавлены подписи колонок и рядов; png — без подписей."
+    },
+    {
+      "index": 1,
+      "job_id": "053248ad-c3ea-4053-a58c-789aa70a17a7",
+      "file": "2-combo-key-poses.png",
+      "preview": "2-combo-key-poses.jpg",
+      "size": [2688, 1520],
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261001_141150_053248ad-c3ea-4053-a58c-789aa70a17a7.png",
+      "what": "Лист ключевых поз комбо, 6 поз на сером фоне, вид 3/4 спереди, номера 1–6 вшиты в картинку: 1 стойка, 2 удар 1, 3 удар 2, 4 замах добивающего над головой, 5 рубящий добивающий вниз, 6 возврат в стойку."
+    }
+  ],
+  "videos": [
+    {
+      "index": 2,
+      "job_id": "acb60fff-375c-476d-886a-8e4a6fd45c3e",
+      "model": "kling3_0_turbo",
+      "variant": "Б · морская пена",
+      "file": "3-combo-video-B.mp4",
+      "sheet": "3-combo-video-B-sheet.jpg",
+      "size": [1280, 720],
+      "duration_s": 5.04,
+      "fps": 24,
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261001_145531_acb60fff-375c-476d-886a-8e4a6fd45c3e.mp4",
+      "start_frame_matches": "refs/ref-crowd-nohud.jpg",
+      "what": "Видео-реф серии, задача: Пелаг дважды проводит быстрое комбо из трёх ударов саблей, следы — бирюзовая морская вода с белой пеной (вариант Б).",
+      "sheet_note": "12 кадров равномерно по 5 с (0,21 … 4,83 с), сетка 4×3, на каждом номер и время."
+    }
+  ]
+}

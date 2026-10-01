@@ -95,6 +95,11 @@ namespace Game.View
         private bool[] _lastDamageWasSlash;
         private int _pendingBasicTarget = -1;
         private bool _pendingBasicHeavy;
+        private PelagBasicAttackState _pendingBasicAction;
+        private int _basicFeedbackSerial;
+        private int _basicFeedbackStartTick = -1;
+        private Simulation _basicFeedbackSimulation;
+        private bool _trailBasicCombo;
 
         private Sprite _sparkSprite;
         private Sprite _contactSprite;
@@ -196,6 +201,13 @@ namespace Game.View
 
         private void ConsumeEvents()
         {
+            if (!ReferenceEquals(_basicFeedbackSimulation, _driver.Sim))
+            {
+                _basicFeedbackSimulation = _driver.Sim;
+                _basicFeedbackSerial = 0;
+                _basicFeedbackStartTick = -1;
+                if (_trailBasicCombo) StopSwordTrail();
+            }
             _burstBudget = MaxBurstsPerFrame;
             _frameTrauma = 0f;
             _frameZoom = 0f;
@@ -279,8 +291,14 @@ namespace Game.View
             if (!playerAttack) return;
 
             _pendingBasicTarget = e.Target;
-            _pendingBasicHeavy = e.Amount == 1;
+            _pendingBasicAction = e.BasicAttackState;
+            if (e.BasicAttackState.Serial > 0)
+            { _basicFeedbackSerial = 0; _basicFeedbackStartTick = -1; }
+            _pendingBasicHeavy = PelagBasicAttackTiming.Heavy(e.Amount, e.BasicAttackState.Serial > 0);
+            if (e.BasicAttackState.Serial > 0 && (_arena == null || !_arena.PlayerSupportsBasicComboClips))
+            { StopSwordTrail(); return; }
             StartBasicAttackTrail();
+            _trailBasicCombo = e.BasicAttackState.Serial > 0;
         }
 
         private void SpawnHit(in SimEvent e)
@@ -370,14 +388,15 @@ namespace Game.View
                 return;
             }
 
-            bool basicContact = fromPlayer
-                                && e.DamageOrigin == DamageOrigin.BasicAttack
-                                && e.Target == _pendingBasicTarget;
-            bool heavyBasicContact = basicContact && _pendingBasicHeavy;
+            bool candidateBasic = fromPlayer && e.DamageOrigin == DamageOrigin.BasicAttack
+                && _driver.Sim.PelagBasicComboEnabled;
+            bool basicContact = fromPlayer && e.DamageOrigin == DamageOrigin.BasicAttack
+                && (candidateBasic || e.Target == _pendingBasicTarget);
+            bool heavyBasicContact = basicContact && (candidateBasic ? e.ActionVariant == 2 : _pendingBasicHeavy);
             bool whirlwindContact = fromPlayer && e.DamageOrigin == DamageOrigin.Ability
                 && (uint)e.ActionVariant < Simulation.AbilitySlots
                 && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.WhirlwindId;
-            if (basicContact) _pendingBasicTarget = -1;
+            if (basicContact && !candidateBasic) _pendingBasicTarget = -1;
 
             // SpriteRenderer depth is evaluated against the 3D character
             // meshes. Nudge the contact toward the camera so the authored
@@ -446,6 +465,14 @@ namespace Game.View
             // оглушение: микростоп 60 мс в HeroHitFeedback, не чаще раза в 0,6 с,
             // и тоже без времени — бьющий держит позу, камера держит толчок.
             bool stopsTime = (!playerHit || e.Flag) && !IsSlashContact(in e);
+            if (candidateBasic)
+            {
+                int serial = e.BasicAttackState.Serial > 0 ? e.BasicAttackState.Serial : _pendingBasicAction.Serial;
+                int started = e.BasicAttackState.Serial > 0 ? e.BasicAttackState.StartTick : _pendingBasicAction.StartTick;
+                if (serial == _basicFeedbackSerial && started == _basicFeedbackStartTick) return;
+                _basicFeedbackSerial = serial;
+                _basicFeedbackStartTick = started;
+            }
             Accumulate(
                 trauma: e.Flag ? 0.52f : whirlwindContact ? 0.55f : playerHit ? 0.33f
                     : heavyBasicContact ? 0.36f : basicContact ? 0.29f : 0.25f,
@@ -659,6 +686,7 @@ namespace Game.View
 
         private void StopSwordTrail()
         {
+            _trailBasicCombo = false;
             _trailCleave = false;
             _cleaveTrailCast = -1;
             _trailDelay = _trailActive = _trailFade = 0f;
@@ -690,6 +718,7 @@ namespace Game.View
 
         private void StartWhirlwindTrail()
         {
+            _trailBasicCombo = false;
             _trailCleave = false;
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
             {
@@ -709,6 +738,7 @@ namespace Game.View
 
         private void StartBasicAttackTrail()
         {
+            _trailBasicCombo = false;
             _trailCleave = false;
             if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip))
                 return;
@@ -803,6 +833,25 @@ namespace Game.View
 
         private void AnimateSwordTrail()
         {
+            if (_trailBasicCombo)
+            {
+                var sim = _driver.Sim;
+                bool interrupted = sim == null || !sim.Entities.Alive[Simulation.PlayerId]
+                    || sim.PelagBasicAttack.Serial == _pendingBasicAction.Serial && sim.PelagBasicAttack.Interrupted;
+                if (interrupted || _bladeRoot == null || !_bladeRoot.gameObject.activeInHierarchy)
+                { StopSwordTrail(); return; }
+                float tick = sim.Tick - 1 + _driver.Alpha;
+                float onset = Mathf.Lerp(_pendingBasicAction.StartTick, _pendingBasicAction.ContactTick, .45f);
+                float finish = Mathf.Lerp(_pendingBasicAction.ContactTick, _pendingBasicAction.EndTick, .30f);
+                bool sampling = tick >= onset && tick < finish;
+                _trailActive = sampling ? 1f : 0f;
+                _trailFade = tick <= finish ? .065f : Mathf.Max(0f, .065f - (tick - finish) / Simulation.TicksPerSecond);
+                if (tick >= _pendingBasicAction.EndTick || _trailFade <= 0f)
+                { StopSwordTrail(); return; }
+                if (sampling && _bladeTip != null) AddTrailSample(_bladeRoot.position, _bladeTip.position);
+                if (_trailCount >= 2) RebuildSwordTrail();
+                return;
+            }
             if (_trailCleave)
             {
                 var sim = _driver.Sim;
@@ -954,6 +1003,12 @@ namespace Game.View
                 _trailColors[vertex] = new Color(0.60f, 0.035f, 0.12f, alpha * 0.03f);
                 _trailColors[vertex + 1] = new Color(0.957f, 0.282f, 0.341f, alpha * 0.48f);
                 _trailColors[vertex + 2] = new Color(1.30f, 0.54f, 0.52f, alpha * 0.78f);
+                if (_trailBasicCombo)
+                {
+                    _trailColors[vertex] = new Color(.48f, .56f, .69f, alpha * .08f);
+                    _trailColors[vertex + 1] = new Color(1.45f, 1.53f, 1.66f, alpha * .65f);
+                    _trailColors[vertex + 2] = new Color(.84f, .93f, 1.08f, alpha * .32f);
+                }
                 if (_trailWhirlwind)
                 {
                     // Лента Вихря в палитре серпа: белое ядро, красная кромка.

@@ -82,6 +82,15 @@ namespace Game.View
         private int _spinSerial;
         private float _spinAtStop;
 
+        // Разворот на месте (ревью 01.10): стоит, а корпус крутится — к герою или обратно к
+        // взгляду Sim после хода «телом по ходу» (EnemyBodyFacingRules). Ноги переступают
+        // фазой Walk: полный цикл шага на 180° поворота.
+        private const float TurnDegreesPerCycle = 180f;
+        private ArenaView _arena;
+        private EnemyTurnSteps _turnSteps;
+        private Vector3 _lastBody;
+        private float _frameYaw;
+
         /// <summary>Сущность, к которой привязано тело; −1 — не привязано.</summary>
         public int Entity => _entity;
 
@@ -119,6 +128,8 @@ namespace Game.View
             _deathTick = _popTick = None;
             _idleClock = _walkPhase = 0f;
             _hitClock = 1f;
+            _arena = driver != null ? driver.GetComponent<ArenaView>() : null;
+            _turnSteps.Reset(); _lastBody = Vector3.zero; _frameYaw = 0f;
             SetHidden(false);
             StopSpin();
             if (_sim == null || (uint)entity >= (uint)_sim.Entities.Count || _animator == null) return;
@@ -178,7 +189,13 @@ namespace Game.View
             if (!Valid()) return;
             if (_driver.GameplayPaused) { _animator.speed = 0f; return; }
             _animator.speed = 1f;
+            // Поворот показанного тела за кадр (ArenaView.BodyFacing — прошлый LateUpdate).
+            Vector3 body = _arena != null ? _arena.BodyFacing(_entity) : Vector3.zero;
+            _frameYaw = body.sqrMagnitude > .5f && _lastBody.sqrMagnitude > .5f
+                ? Vector3.SignedAngle(_lastBody, body, Vector3.up) : 0f;
+            if (body.sqrMagnitude > .5f) _lastBody = body;
             Evaluate(Time.deltaTime);
+            _frameYaw = 0f;
         }
 
         private void Evaluate(float dt)
@@ -261,8 +278,11 @@ namespace Game.View
                 // 2,26× темп клипа — ступни не скользят (export.json, child.playback_speed).
                 float scale = Mathf.Max(.1f, transform.lossyScale.x);
                 _walkPhase += speed * dt / (WalkStride * scale);
+                _turnSteps.Reset();
                 Sample(Walk, WalkPhase, Mathf.Repeat(_walkPhase, 1f), .12f);
             }
+            else if (_turnSteps.Step(_frameYaw, dt, TurnDegreesPerCycle, ref _walkPhase))
+                Sample(Walk, WalkPhase, Mathf.Repeat(_walkPhase, 1f), .12f);
             else Sample(Idle, IdlePhase, Mathf.Repeat(_idleClock / IdleSeconds, 1f), .15f);
         }
 
