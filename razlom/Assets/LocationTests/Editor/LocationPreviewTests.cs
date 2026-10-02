@@ -145,7 +145,7 @@ namespace Game.LocationTests
                     // Встреча по шаблону выходит волнами: зачищаем, пока арена не отпустит.
                     for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
                     {
-                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
                         run.Step(InputFrame.Empty);
                     }
                     run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
@@ -350,7 +350,8 @@ namespace Game.LocationTests
             var mapHash = _preview.Map.Hash();
             var simHash = _preview.Sim.StateHash();
             var trees = _preview.Root.GetComponentsInChildren<Renderer>().Where(r => r.name == "Декор: дерево").ToArray();
-            Assert.That(trees.Length, Is.InRange(2, 420));
+            // Бюджет леса: 420 рощ и до 900 у сомкнутого (ForestFill), плюс 96 ближних групп у кромки.
+            Assert.That(trees.Length, Is.InRange(2, 1000));
             foreach (var tree in trees)
             {
                 var bounds = tree.bounds;

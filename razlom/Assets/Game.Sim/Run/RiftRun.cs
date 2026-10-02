@@ -597,7 +597,8 @@ namespace Game.Sim
         {
             FixVec2 player = _sim.Entities.Position[Simulation.PlayerId];
             if (_map.ExitCount == 0) return player;
-            FixVec2 center = _map.GladeCount > 0 ? _map.GetGlade(0).Center : player;
+            // У арены из сегментов — центр последнего: выход за ним.
+            FixVec2 center = _map.GladeCount > 0 ? _map.GetGlade(_map.GladeCount - 1).Center : player;
             int best = 0;
             for (int i = 1; i < _map.ExitCount; i++)
                 if (FixVec2.DistanceSq(center, _map.ExitPoint(i)) < FixVec2.DistanceSq(center, _map.ExitPoint(best))) best = i;

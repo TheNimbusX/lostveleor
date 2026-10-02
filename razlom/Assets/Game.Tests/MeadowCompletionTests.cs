@@ -29,7 +29,7 @@ namespace Game.Tests
             // зачищаем, пока арена не отпустит.
             for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
             {
-                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
                 session.Step(InputFrame.Empty);
             }
             Assert.That(run.Phase, Is.EqualTo(RunPhase.SeekingExit));
@@ -202,7 +202,7 @@ namespace Game.Tests
                     level.Generate(new LayoutGenerator(), profile.Modules, map, seed);
                     level.Generate(new LayoutGenerator(), profile.Modules, other, seed);
                     Assert.That(map.Hash(), Is.EqualTo(other.Hash()));
-                    Assert.That(map.GladeCount, Is.EqualTo(1));
+                    Assert.That(map.GladeCount, Is.EqualTo(RiftLevelSettings.SegmentCount(size)), "сегменты арены");
                     Assert.That(map.ExitCount, Is.EqualTo(1));
                     Assert.That(map.RewardBranchCount, Is.Zero);
                     for (int c = 0; c < map.Routes.CellCount; c++)

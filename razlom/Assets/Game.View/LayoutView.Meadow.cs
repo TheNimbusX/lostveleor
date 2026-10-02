@@ -390,7 +390,7 @@ namespace Game.View
 
         private GladeCharacter CharacterOf(LayoutMap map, int index)
         {
-            if (map.GladeCount == 1) return ArenaCharacter(map);
+            if (map.IsArena) return ArenaCharacter(map);
             if (map.GladeCount < 3) return GladeCharacter.Rocky;
             int water = WatersideGlade(map);
             if (index == water) return GladeCharacter.Waterside;
@@ -462,7 +462,9 @@ namespace Game.View
                     if (rng.NextDouble() > keep) continue;
                     float px=x+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
-                    if (NearPond(px, pz, 3)) continue;
+                    // Лес подходит к самой воде: озеро — край арены, а не пруд на лугу (2 октября).
+                    // NearPond держит ещё 30% радиуса — у озера в 11 м это 3 м пустого луга по берегу.
+                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f)) continue;
                     if (map.GladeCount > 0)
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
@@ -563,6 +565,14 @@ namespace Game.View
             return Mathf.Sqrt(dx * dx + dz * dz) / (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
         }
 
+        // Ближе margin метров к воде (с береговой каймой 8% радиуса).
+        private bool NearWaterEdge(float x, float z, float margin)
+        {
+            foreach (var pond in _ponds)
+                if (PondRadius(pond, x, z) < 1.08f + margin / Mathf.Min(pond.z, pond.w)) return true;
+            return false;
+        }
+
         private bool NearPond(float x, float z, float margin)
         {
             if (NearRiver(x, z, margin)) return true;
@@ -589,7 +599,7 @@ namespace Game.View
                 }
             if (map.Outline == null || map.GladeCount == 0) return;
             // У арены вода уже есть — река с прудами на концах или озеро; лишние пруды её дробили бы.
-            if (map.GladeCount == 1 && (map.RiverCount > 0 || map.WaterCount > 0)) return;
+            if (map.IsArena && (map.RiverCount > 0 || map.WaterCount > 0)) return;
             int existingPonds = _ponds.Count;
             var rng = DecorRandom(0, 397);
             for (int attempt = 0; attempt < 96 && _ponds.Count < existingPonds + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
@@ -783,12 +793,13 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             PlaceCenterCircle(map, runes);
             PlaceAltar(map);
+            PlaceGiantTrees(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
@@ -866,9 +877,9 @@ namespace Game.View
             if (map.GladeCount == 0) return;
             var rng = DecorRandom(0, 983);
             bool boss = _shownEncounters != null && _shownEncounters.BossId >= 0;
-            var character = map.GladeCount == 1 ? CharacterOf(map, 0) : GladeCharacter.Rocky;
-            if (map.GladeCount == 1 && !boss && (character != GladeCharacter.Waterside || rng.NextDouble() > .5)) return;
-            int runes = map.GladeCount == 1 ? stone >= 0 ? stone : ring : ring >= 0 ? ring : stone;
+            var character = map.IsArena ? CharacterOf(map, 0) : GladeCharacter.Rocky;
+            if (map.IsArena && !boss && (character != GladeCharacter.Waterside || rng.NextDouble() > .5)) return;
+            int runes = map.IsArena ? stone >= 0 ? stone : ring : ring >= 0 ? ring : stone;
             int start = rng.Next(map.GladeCount);
             for (int offset = 0; offset < map.GladeCount; offset++)
             {

@@ -599,7 +599,7 @@ namespace Game.View
                     // Переправа проходима, но это вода: кусты и трава на броде не растут.
                     if (NearRiver(x, z, .6f)) continue;
                     // Середина арены — утоптанная земля (LayoutView.Glade): растения пола только в кайме у края.
-                    if (map.GladeCount == 1 && map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.FromInt(3))) continue;
+                    if (map.IsArena && map.IsWalkable(new FixVec2(Fix64.FromDouble(x), Fix64.FromDouble(z)), Fix64.FromInt(3))) continue;
 
                     int variant = PickVariantIndex(rng, totalWeight);
                     // Large props inside the playable area must have a Sim footprint.

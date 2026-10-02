@@ -82,7 +82,7 @@ namespace Game.View
                     }
                 }
                 // У арены вместо дощатого моста — импровизированный брод из камней.
-                if (map.GladeCount == 1) { PlaceStoneFord(river, r); continue; }
+                if (map.IsArena) { PlaceStoneFord(river, r); continue; }
                 var bridge = _bridgePool.Acquire();
                 bridge.transform.position = new Vector3(river.Center.X.ToFloat(), 0, river.Center.Y.ToFloat());
                 bridge.transform.rotation = Quaternion.LookRotation(along);

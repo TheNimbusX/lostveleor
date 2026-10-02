@@ -35,7 +35,7 @@ namespace Game.View
             // На арене ствол-препятствие рисуется стоячим камнем, как в референсе владельца (29 сентября):
             // крона дерева посреди поляны закрывала бой. Высокий камень пака вытянут вверх,
             // отпечаток в симуляции прежний.
-            bool menhirs = map.GladeCount == 1 && rocks > 3;
+            bool menhirs = map.IsArena && rocks > 3;
             for (int i = 0; i < map.ObstacleCount; i++)
             {
                 var obstacle = map.GetObstacle(i);

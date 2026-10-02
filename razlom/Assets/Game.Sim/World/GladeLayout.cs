@@ -60,7 +60,10 @@ namespace Game.Sim
         public static int ClearingCount(int targetModules) => targetModules >= 18 ? 5 : targetModules >= 14 ? 4 : 3;
         public static int RequiredModules(int targetModules, bool boss) => boss ? 12 : ClearingCount(targetModules) * 5 + 7;
 
-        public static void Generate(ModuleSet modules, LayoutMap map, ulong seed, int targetModules, bool boss = false, int arenaSize = 0)
+        /// <summary>segments — сколько полян-сегментов у обычной арены (владелец, 2 октября): 2–3 поляны по
+        /// arenaSize модулей в поперечнике, цепочкой от входа к выходу. У босса и старого уровня не учитывается.</summary>
+        public static void Generate(ModuleSet modules, LayoutMap map, ulong seed, int targetModules, bool boss = false, int arenaSize = 0,
+            int segments = 1)
         {
             int Find(string key)
             {
@@ -71,7 +74,7 @@ namespace Game.Sim
             if (entrance < 0) throw new ArgumentException("Glade layout requires an entrance.");
             var rng = new Pcg32(seed, 0x474C414445UL);
             bool singleArena = boss || arenaSize > 0;
-            int turn = rng.NextInt(0, 4), count = singleArena ? 1 : ClearingCount(targetModules),
+            int turn = rng.NextInt(0, 4), count = singleArena ? boss ? 1 : Math.Max(1, segments) : ClearingCount(targetModules),
                 across = arenaSize > 0 ? arenaSize : boss ? 3 : 2;
             var shapeRng = new Pcg32(seed, 0x534841504553UL);
             int firstShape = shapeRng.NextInt(0, 6);
@@ -158,7 +161,8 @@ namespace Game.Sim
             var rivers = new List<LayoutRiver>();
             var riverRng = new Pcg32(seed, 0x5249564552UL);
             var acrossRiver = Rotate(new FixVec2(Fix64.One, Fix64.Zero), turn);
-            for (int g = 1; g < count; g += 2)
+            // Река между полянами — только у старого уровня: сегменты арены связаны сухим проходом.
+            for (int g = 1; g < count && !singleArena; g += 2)
                 rivers.Add(new LayoutRiver((regions[g - 1].Center + regions[g].Center) / Fix64.FromInt(2),
                     acrossRiver, riverRng.NextFix(Fix64.One, Fix64.FromInt(3))));
             // Река арены пересекает коридор выхода: брод шириной 6 м лежит ровно на пути к порталу.
@@ -168,29 +172,42 @@ namespace Game.Sim
             map.SetRivers(rivers.ToArray());
             var water = new List<LayoutObstacle>();
             var waterRng = new Pcg32(seed, 0x5741544552UL);
-            foreach (var region in regions)
+            // Озеро у сегментированной арены одно — у случайного сегмента, а не у каждого.
+            int lakeSegment = count == 1 ? 0 : new Pcg32(seed, 0x4C414B4553454755UL).NextInt(0, count);
+            for (int segment = 0; segment < count; segment++)
             {
-                // У речной арены луж нет, у обычной — одно озеро, врезанное в край поляны,
-                // у босса — одно озеро посреди поляны с сухим кольцом вокруг, вместо трёх луж.
-                bool lake = singleArena && !riverArena && !boss;
-                int wanted = boss ? 1 : singleArena ? (lake ? 1 : 0) : 2;
+                var region = regions[segment];
+                // У каждой обычной арены, и речной тоже, — одно озеро, врезанное в край поляны (владелец,
+                // 2 октября: «используй озеро как край арены»); у босса — одно озеро посреди поляны
+                // с сухим кольцом вокруг.
+                bool lake = singleArena && !boss;
+                int wanted = boss ? 1 : singleArena ? (lake && segment == lakeSegment ? 1 : 0) : 2;
                 for (int attempt = 0, placed = 0; attempt < 200 && placed < wanted; attempt++)
                 {
                     Fix64 radius; FixVec2 point; bool clear;
                     if (lake)
                     {
                         // Озеро — край арены (владелец, 29 сентября): крупное, по размеру поляны. Центр за
-                        // настоящей кромкой пола (форма поляны уже её радиусов), вода заходит на пол на
-                        // 45–70% своего радиуса — берег забирает у поляны длинную дугу, остальное в лесу.
-                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(55, 100), Fix64.Ratio(70, 100));
+                        // настоящей кромкой пола (форма поляны уже её радиусов), вода заходит на пол на 60–85%
+                        // своего радиуса — берег забирает у поляны длинную дугу, остальное в лесу (2 октября: крупнее).
+                        radius = Fix64.Min(region.Radii.X, region.Radii.Y) * waterRng.NextFix(Fix64.Ratio(62, 100), Fix64.Ratio(78, 100));
                         var angle = waterRng.NextFix(Fix64.Zero, Fix64.TwoPi);
-                        var outside = waterRng.NextFix(Fix64.Ratio(30, 100), Fix64.Ratio(55, 100));
+                        var outside = waterRng.NextFix(Fix64.Ratio(15, 100), Fix64.Ratio(40, 100));
                         var direction = new FixVec2(Fix64.Cos(angle), Fix64.Sin(angle));
                         var edge = Fix64.Zero;
                         while (edge < region.Radii.X + region.Radii.Y && region.Field(region.Center + direction * edge) <= Fix64.One)
                             edge += Fix64.Ratio(1, 4);
                         point = region.Center + direction * (edge + radius * outside);
-                        clear = true;
+                        // Озеро — край арены, а не пруд в лесной траве рядом (владелец, 2 октября): не меньше
+                        // 30% берега лежит на полу поляны. Во впадине полумесяца или между половинами
+                        // «близнецов» луч выходил из пола рано, и вода касалась пола коротким отрезком.
+                        int onFloor = 0;
+                        for (int s = 0; s < 24; s++)
+                        {
+                            var around = Fix64.TwoPi * Fix64.Ratio(s, 24);
+                            if (region.Field(point + new FixVec2(Fix64.Cos(around), Fix64.Sin(around)) * radius) <= Fix64.One) onFloor++;
+                        }
+                        clear = onFloor >= 7;
                     }
                     else
                     {
@@ -233,6 +250,7 @@ namespace Game.Sim
                 return false;
             };
             map.SetGlades(regions);
+            map.IsArena = singleArena;
             while (map.OpenCount > 0) map.CloseOpen(map.OpenCount - 1);
             map.AddExit(exit);
             foreach (int p in pockets) map.AddRewardBranch(p);

@@ -44,7 +44,7 @@ namespace Game.View
             const float margin = 14, step = 1.3f;
             var rng = DecorRandom(0, 991);
             float patchX = (float)rng.NextDouble() * 1000, patchZ = (float)rng.NextDouble() * 1000;
-            float lushness = map.GladeCount == 1 ? CharacterOf(map, 0) == GladeCharacter.Sunny ? 1.15f
+            float lushness = map.IsArena ? CharacterOf(map, 0) == GladeCharacter.Sunny ? 1.15f
                 : CharacterOf(map, 0) == GladeCharacter.Rocky ? .75f : 1 : 1;
             var portals = new List<Vector2> { TrailPoint(map.EntryPoint) };
             for (int e = 0; e < map.ExitCount; e++) portals.Add(TrailPoint(map.ExitPoint(e)));

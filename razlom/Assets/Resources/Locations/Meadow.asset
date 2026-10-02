@@ -36,11 +36,9 @@ MonoBehaviour:
     CachePrefab: {fileID: 919132149155446097, guid: fa5e5d5bcd87bf94b8e40a39307c162a, type: 3}
     ObstacleRocks:
     - {fileID: 8185754515995656638, guid: e33a3fdde14e68e469eb2f910c3eaf07, type: 3}
-    - {fileID: 364524707233572452, guid: 3a69d808eddb86841b8dedbe307e6617, type: 3}
-    - {fileID: 7888119987887787530, guid: ee733cae68be627448ad0a8a279b33e7, type: 3}
-    - {fileID: 368974323021591884, guid: 119f78f4bcf14714bada91454ec72cdc, type: 3}
-    - {fileID: 6119621999588281189, guid: 21afede453649224b81533ed33fc6c93, type: 3}
-    - {fileID: 7211320218792841495, guid: 575b3258f2d357240b8893773676ab9c, type: 3}
+    - {fileID: 6824127429085797097, guid: 67c78ee25f36e694aa61912dc0ffdd89, type: 3}
+    - {fileID: 5108353442441782814, guid: e1db5d40e6b8b4e459159d34bdb1d0b4, type: 3}
+    - {fileID: 8185754515995656638, guid: e33a3fdde14e68e469eb2f910c3eaf07, type: 3}
     ObstacleTree: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
     ForestBandWidth: 38
     ForestSpacing: 4.5
@@ -68,36 +66,6 @@ MonoBehaviour:
     FloorTextureTiling: 0.22
     FloorTextureStrength: 2
     DecorVariants:
-    - Kind: 1
-      Prefab: {fileID: 364524707233572452, guid: 3a69d808eddb86841b8dedbe307e6617, type: 3}
-      ResourcePath: 
-      Weight: 0.5
-      ScaleRange: {x: 0.9, y: 1.5}
-      UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 7888119987887787530, guid: ee733cae68be627448ad0a8a279b33e7, type: 3}
-      ResourcePath: 
-      Weight: 0.5
-      ScaleRange: {x: 0.9, y: 1.5}
-      UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 368974323021591884, guid: 119f78f4bcf14714bada91454ec72cdc, type: 3}
-      ResourcePath: 
-      Weight: 0.5
-      ScaleRange: {x: 0.9, y: 1.5}
-      UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 6119621999588281189, guid: 21afede453649224b81533ed33fc6c93, type: 3}
-      ResourcePath: 
-      Weight: 0.5
-      ScaleRange: {x: 0.9, y: 1.5}
-      UseAsBoundary: 1
-    - Kind: 1
-      Prefab: {fileID: 7211320218792841495, guid: 575b3258f2d357240b8893773676ab9c, type: 3}
-      ResourcePath: 
-      Weight: 0.5
-      ScaleRange: {x: 0.9, y: 1.5}
-      UseAsBoundary: 1
     - Kind: 3
       Prefab: {fileID: 878376583897498928, guid: 72e3aef919f368b4da23bfa2be683b6f, type: 3}
       ResourcePath: 
@@ -249,7 +217,7 @@ MonoBehaviour:
       ScaleRange: {x: 1, y: 1}
       UseAsBoundary: 0
     - Kind: 1
-      Prefab: {fileID: 9055115851127504259, guid: d5710d5f30f14334ca7046d732fd9578, type: 3}
+      Prefab: {fileID: 8353262044873952192, guid: d5618cb905b422441bff95ee76746551, type: 3}
       ResourcePath: 
       Weight: 0
       ScaleRange: {x: 0.9, y: 1.15}

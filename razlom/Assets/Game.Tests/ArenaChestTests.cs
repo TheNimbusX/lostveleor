@@ -14,8 +14,13 @@ namespace Game.Tests
             var session = new GameSession(seed, new Camp(PrototypeContent.Items()), PrototypeContent.Modules(), PrototypeContent.ItemBaseIds());
             session.EnterRift();
             Assert.That(session.Run.ChestDrop, Is.EqualTo(-1), "До зачистки сундука нет");
-            for (int i = 1; i < session.Run.Sim.Entities.Count; i++) session.Run.Sim.Entities.Alive[i] = false;
-            session.Step(InputFrame.Empty);
+            // Волны выходят по сегментам арены: зачищаем, пока арена не отпустит.
+            for (int guard = 0; guard < 4000 && session.Run.Phase == RunPhase.Clearing; guard++)
+            {
+                for (int i = 1; i < session.Run.Sim.Entities.Count; i++) session.Run.Sim.Entities.Alive[i] = false;
+                session.Run.Sim.StepHeroIntoPendingSegment();
+                session.Step(InputFrame.Empty);
+            }
             Assert.That(session.Run.Phase, Is.EqualTo(RunPhase.SeekingExit));
             return session;
         }

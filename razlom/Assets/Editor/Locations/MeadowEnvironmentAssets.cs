@@ -711,15 +711,19 @@ namespace Game.LocationEditor
             style.EarthCracks = .8f;
             style.CrackMeters = 1.1f;
             TintLeaves("MeadowBroadleaf", BroadleafLeafTint);
-            // Корень и папоротник владельца (Desktop/Creating, 30 сентября). Нулевой вес: оба ставятся
-            // явно в LayoutView.Glade (PlaceRootsAndFerns) и не попадают во взвешенные пулы.
+            // Папоротник владельца (Desktop/Creating, 30 сентября). Нулевой вес: ставится явно в
+            // LayoutView.Glade (PlaceRootsAndFerns) и кромке (CloseOutlineGaps). Корень с дубом сверху
+            // владелец снял 2 октября («вообще не смотрится») — до модели гигантского дерева.
             variants = new List<DecorVariant>(style.DecorVariants);
             variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRoots" || v.Prefab.name == "CreatingFern"));
-            variants.Add(Variant(PrepareTripoProp("CreatingRoots", "arena_root", 6.2f, true, 14000, new Color(.66f, .6f, .52f)),
+            // Гигантское дерево владельца (2 октября): фон за поляной, ставится явно (PlaceGiantTrees).
+            variants.RemoveAll(v => v.Prefab != null && v.Prefab.name == "CreatingGiantTree");
+            variants.Add(Variant(PrepareTripoProp("CreatingGiantTree", "arena_giant_tree", 30f, false, 24000, new Color(.95f, 1f, .9f)),
                 DecorKind.Rock, 0f, false, .9f, 1.15f));
             var fern = PrepareTripoProp("CreatingFern", "arena_fern", 1.45f, false, 3000, new Color(1f, 1.04f, .92f));
             variants.Add(Variant(AddBreeze(fern, .1f), DecorKind.Bush, 0f, false, .8f, 1.3f));
             style.DecorVariants = variants.ToArray();
+            NaturalizeDressing(style);
             style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
             Debug.Log("[Луга] Арена по референсам 30.09: золотой день, сомкнутый лес, сухая земля, только природа.");
         }
@@ -793,6 +797,93 @@ namespace Game.LocationEditor
 
         // 1,8 м рядом с героем читались табуреткой (владелец, 30 сентября): алтарь — ориентир поляны.
         private const float AltarHeight = 3.8f;
+
+        // Органичная расстановка (владелец, 2 октября). Белые низкополигональные камни пака Ultimate
+        // Nature с зелёными треугольниками не похожи ни на что в лесу: из декора они уходят, а
+        // препятствия и стоячие камни рисуются серыми камнями из Creating (индекс 3 — стоячий камень,
+        // LayoutView.Obstacles). Грибы приглушены своим материалом (общая палитра пака не меняется),
+        // светлый срез пня притушен в его текстуре.
+        private static void NaturalizeDressing(LayoutStyle style)
+        {
+            var variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && System.Text.RegularExpressions.Regex.IsMatch(v.Prefab.name, @"^Rock\d$"));
+            style.DecorVariants = variants.ToArray();
+            GameObject Load(string name) => AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/" + name + ".prefab")
+                ?? throw new InvalidOperationException("Нет префаба " + name);
+            var rock = Load("CreatingRock");
+            style.ObstacleRocks = new[] { rock, Load("ArenaCreatingRockA"), Load("ArenaCreatingRockB"), rock };
+            MuteMushrooms();
+            MuteStumpCut();
+        }
+
+        private static void MuteMushrooms()
+        {
+            string path = Folder + "/MeadowMushrooms.prefab";
+            string materialPath = Folder + "/MeadowMushrooms_Surface.mat";
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    var materials = renderer.sharedMaterials;
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        if (materials[i] == null) continue;
+                        if (material == null)
+                        {
+                            material = new Material(materials[i]) { name = "MeadowMushrooms_Surface" };
+                            AssetDatabase.CreateAsset(material, materialPath);
+                        }
+                        materials[i] = material;
+                    }
+                    renderer.sharedMaterials = materials;
+                }
+                // Красный пака кричал ярче всего в кадре: чуть темнее и землистее.
+                material.SetColor("_BaseColor", new Color(.66f, .56f, .52f));
+                material.enableInstancing = true;
+                EditorUtility.SetDirty(material);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+
+        private static void MuteStumpCut()
+        {
+            string source = null;
+            foreach (string file in Directory.GetFiles("Assets/Art/Meadow/Creating/tree_stump", "*_0_0.jpg", SearchOption.AllDirectories))
+                source = file.Replace('\\', '/');
+            if (source == null) throw new InvalidOperationException("Нет текстуры пня");
+            const string output = Folder + "/CreatingStump_Muted.png";
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                texture.LoadImage(File.ReadAllBytes(source));
+                var pixels = texture.GetPixels32();
+                int muted = 0;
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    var p = pixels[i];
+                    // Срез — светлое тёплое дерево (яркость выше коры, красный над синим).
+                    float light = (p.r * .3f + p.g * .59f + p.b * .11f) / 255f;
+                    float cut = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.42f, .62f, light)) * (p.r > p.b + 40 ? 1 : 0);
+                    if (cut <= 0) continue;
+                    muted++;
+                    float grey = light * 255;
+                    float k = Mathf.Lerp(1, .62f, cut);
+                    pixels[i] = new Color32((byte)(Mathf.Lerp(p.r, grey, cut * .35f) * k), (byte)(Mathf.Lerp(p.g, grey, cut * .35f) * k),
+                        (byte)(Mathf.Lerp(p.b, grey, cut * .35f) * k), p.a);
+                }
+                texture.SetPixels32(pixels);
+                File.WriteAllBytes(output, texture.EncodeToPNG());
+                Debug.Log($"[Луга] CreatingStump: притушено {muted * 100f / pixels.Length:0.0}% текстуры (срез)");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(output);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingStump_Surface.mat");
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(output));
+            EditorUtility.SetDirty(material);
+        }
 
         // Цельная модель Tripo (одна запечённая текстура): свой материал, меш упрощён штатным
         // Mesh LOD до maxTriangles. size — высота или, при footprint, радиус пятна на земле.

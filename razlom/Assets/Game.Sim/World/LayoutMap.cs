@@ -88,6 +88,20 @@ namespace Game.Sim
         public int GladeCount => _glades.Length;
         public GladeRegion GetGlade(int index) => _glades[index];
         internal void SetGlades(GladeRegion[] regions) => _glades = regions;
+
+        /// <summary>
+        /// Арена (поток арен): поляны карты — её сегменты, пройденные по порядку от входа к выходу
+        /// (владелец, 2 октября). false — старый уровень из многих полян или карта из модулей.
+        /// </summary>
+        public bool IsArena { get; internal set; }
+
+        /// <summary>Сегмент арены (поляна), внутри которого точка; −1 — проход между сегментами или лес.</summary>
+        public int SegmentAt(FixVec2 point)
+        {
+            for (int g = 0; g < _glades.Length; g++)
+                if (_glades[g].Field(point) <= Fix64.One) return g;
+            return -1;
+        }
         private LayoutObstacle[] _water = System.Array.Empty<LayoutObstacle>();
         private LayoutRiver[] _rivers = System.Array.Empty<LayoutRiver>();
         public int RiverCount => _rivers.Length;
@@ -128,6 +142,7 @@ namespace Game.Sim
         public void Clear()
         {
             Outline = null;
+            IsArena = false;
             _rivers = System.Array.Empty<LayoutRiver>();
             _glades = System.Array.Empty<GladeRegion>();
             _water = System.Array.Empty<LayoutObstacle>();

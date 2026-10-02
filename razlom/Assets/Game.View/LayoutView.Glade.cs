@@ -12,7 +12,8 @@ namespace Game.View
     public sealed partial class LayoutView
     {
         private const string LeavesPath = "Environment/Camp/GroundDetails/";
-        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles", RootPrefab = "CreatingRoots", FernPrefab = "CreatingFern";
+        private const float AltarMass = 2f;
+        private const string AltarPrefab = "CreatingAltar", PebblesPrefab = "MeadowPebbles", RootPrefab = "CreatingRoots", FernPrefab = "CreatingFern", GiantTreePrefab = "CreatingGiantTree";
         private float[] _clearingDistance;
         private readonly List<Matrix4x4>[] _pebbleField = { new List<Matrix4x4>(), new List<Matrix4x4>() };
         private Mesh[] _pebbleMeshes;
@@ -39,7 +40,9 @@ namespace Game.View
         // редкие по всей земле и россыпями, гуще у каменистой арены (владелец, 29 сентября).
         // Одна строка y ∈ [1, n − 2] после лесной подстилки; поле _clearingDistance уже посчитано
         // (FloorDistance внутри пола), stones — по характеру арены (LayoutView.CampSurface).
-        private void EarthClearingRow(int y, float stones)
+        // lakes — озёра карты (x, z, радиус): у берега кайма травы не нужна, земля поляны доходит
+        // до воды, и озеро читается краем арены (владелец, 2 октября).
+        private void EarthClearingRow(int y, float stones, Vector3[] lakes)
         {
             const int n = TrailResolution;
             var dist = _clearingDistance;
@@ -50,7 +53,12 @@ namespace Game.View
                 float px = _trailBounds.x + (x + .5f) / n * _trailBounds.z;
                 float pz = _trailBounds.y + (y + .5f) / n * _trailBounds.w;
                 float rim = .7f + 1.3f * Mathf.PerlinNoise(px * .19f + 5, pz * .19f + 71);
-                float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + 1.3f, dist[i]));
+                float shore = float.MaxValue;
+                foreach (var lake in lakes) shore = Mathf.Min(shore, Mathf.Sqrt((px - lake.x) * (px - lake.x) + (pz - lake.y) * (pz - lake.y)) - lake.z);
+                float atWater = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(4, 1.5f, shore));
+                float width = Mathf.Lerp(1.3f, .4f, atWater);
+                rim = Mathf.Lerp(rim, .05f, atWater);
+                float earth = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(rim, rim + width, dist[i]));
                 // Травяные островки — после сглаживания стыков (EarthGrassPatchRow), иначе оно их заливало.
                 if (earth <= .01f) continue;
                 var pixel = _campSurfacePixels[i];
@@ -148,8 +156,9 @@ namespace Game.View
         // по нему ходят. Растения пола из середины убираются, трава и листья его обходят.
         private void PlaceCenterCircle(LayoutMap map, int ring)
         {
-            if (ring < 0 || map.GladeCount != 1 || (_shownEncounters != null && _shownEncounters.BossId >= 0)) return;
-            var center = TrailPoint(map.GetGlade(0).Center);
+            if (ring < 0 || !map.IsArena || (_shownEncounters != null && _shownEncounters.BossId >= 0)) return;
+            // У арены из сегментов — в последнем: ориентир у сундука и выхода.
+            var center = TrailPoint(map.GetGlade(map.GladeCount - 1).Center);
             const float scale = 1.05f;
             float radius = _decorRadii[ring] / Mathf.Max(.01f, _style.DecorVariants[ring].ScaleRange.y) * .72f * scale;
             for (int a = 0; a < 16; a++)
@@ -196,12 +205,19 @@ namespace Game.View
                 // Сначала узкая дуга напротив камеры, потом — вся верхняя половина края.
                 float spread = attempt < 24 ? .55f : 1.3f;
                 float angle = Mathf.PI * (.5f + ((float)rng.NextDouble() - .5f) * spread);
-                float shoulder = _decorRadii[altar] * .6f + .4f + (float)rng.NextDouble() * 1.8f;
-                var point = center + new Vector2(Mathf.Cos(angle) * (glade.Radii.X.ToFloat() + shoulder),
-                    Mathf.Sin(angle) * (glade.Radii.Y.ToFloat() + shoulder));
-                if (!TryForestDetail(map, altar, point, rng)) continue;
+                // Вплотную к кромке, а не в траве поодаль (владелец, 2 октября): ищем по лучу наружу первую
+                // точку, где массивное основание уже не задевает пол.
+                var direction = new Vector2(Mathf.Cos(angle) * glade.Radii.X.ToFloat(), Mathf.Sin(angle) * glade.Radii.Y.ToFloat()).normalized;
+                var point = center;
+                float core = _decorRadii[altar] * AltarMass * .55f;
+                for (float step = 0; step < 30 && TouchesOutlinedFloor(point.x, point.y, core + .25f); step += .25f) point = center + direction * step;
+                if (!TryForestDetail(map, altar, point, rng, AltarMass * .55f)) continue;
                 var toward = center - point;
-                _decor[_decorCount - 1].rotation = Quaternion.LookRotation(new Vector3(toward.x, 0, toward.y));
+                var placedAltar = _decor[_decorCount - 1];
+                placedAltar.rotation = Quaternion.LookRotation(new Vector3(toward.x, 0, toward.y));
+                // Массивнее: основание шире, чем выше, — не «табуретка» рядом с героем.
+                placedAltar.localScale = Vector3.Scale(placedAltar.localScale, new Vector3(AltarMass, AltarMass * .78f, AltarMass));
+                placedAltar.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .12f, point.y);
                 AddLandmark(.75f, true);
                 return;
             }
@@ -291,6 +307,46 @@ namespace Game.View
             if (Application.isPlaying) Debug.Log($"[Луга] корни: {roots.Count}, папоротники: {ferns}");
         }
 
+        // Гигантские деревья (владелец, 2 октября): одно-два на арену в лесу за дальним от камеры краем
+        // поляны. Камера смотрит с юга сверху, высокое дерево на севере уходит вверх кадра, а не на бой;
+        // крона целиком над лесом и не нависает над полом. Обычный лес не встаёт в его ствол.
+        private void PlaceGiantTrees(LayoutMap map)
+        {
+            int giant = VariantNamed(GiantTreePrefab);
+            if (giant < 0 || map.GladeCount == 0) return;
+            float crown = _decorRadii[giant] / Mathf.Max(.01f, _style.DecorVariants[giant].ScaleRange.y);
+            var placed = new List<Vector2>();
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+                var rng = DecorRandom(g, 1103);
+                var glade = map.GetGlade(g);
+                var center = TrailPoint(glade.Center);
+                int wanted = rng.NextDouble() < .45 ? 2 : 1;
+                for (int attempt = 0; attempt < 60 && wanted > 0; attempt++)
+                {
+                    // Дальняя дуга: 25–155° (север), подальше от края, чтобы крона не легла на пол.
+                    float angle = attempt < 30 ? Mathf.PI * (.14f + (float)rng.NextDouble() * .72f)
+                        : Mathf.PI * (-.15f + (float)rng.NextDouble() * 1.3f);
+                    var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                    var point = center + new Vector2(direction.x * glade.Radii.X.ToFloat(), direction.y * glade.Radii.Y.ToFloat())
+                        + direction * (crown * .6f + 1 + (float)rng.NextDouble() * 7);
+                    bool crowded = false;
+                    foreach (var other in placed) crowded |= Vector2.Distance(other, point) < crown * 1.5f;
+                    // Крона не нависает над полом (камера), ствол — не в воде и не в другом ориентире.
+                    if (crowded || TouchesOutlinedFloor(point.x, point.y, crown * .55f) || NearWaterEdge(point.x, point.y, crown * .5f)
+                        || NearLandmark(point.x, point.y, crown * .45f)) continue;
+                    SpawnDecor(giant, point.x, point.y, rng);
+                    var tree = _decor[_decorCount - 1];
+                    tree.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .3f, point.y);
+                    // Обычный лес не встаёт под крону гиганта — она читается отдельной массой над лесом.
+                    AddLandmark(.5f, false);
+                    placed.Add(point);
+                    wanted--;
+                }
+            }
+            if (Application.isPlaying) Debug.Log($"[Луга] гигантских деревьев: {placed.Count}");
+        }
+
         private bool FindPebbles()
         {
             if (_pebblesLookedUp) return _pebbleMeshes != null;
@@ -321,12 +377,16 @@ namespace Game.View
         private void ScatterPebbles(LayoutMap map)
         {
             foreach (var list in _pebbleField) list.Clear();
-            if (map.Outline == null || map.GladeCount != 1 || !FindPebbles()) return;
-            var glade = map.GetGlade(0);
-            var rng = DecorRandom(0, 1061);
+            if (map.Outline == null || !map.IsArena || !FindPebbles()) return;
+            // Каждый сегмент арены — своя россыпь (у одной поляны — g = 0, как раньше).
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+            var glade = map.GetGlade(g);
+            var rng = DecorRandom(g, 1061);
             float rx = glade.Radii.X.ToFloat() + 2, rz = glade.Radii.Y.ToFloat() + 2;
             var center = TrailPoint(glade.Center);
-            _pebbleBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            var segmentBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            if (g == 0) _pebbleBounds = segmentBounds; else _pebbleBounds.Encapsulate(segmentBounds);
             int clusters = CharacterOf(map, 0) == GladeCharacter.Rocky ? 70 : 45;
             for (int attempt = 0; attempt < 600 && clusters > 0; attempt++)
             {
@@ -349,6 +409,7 @@ namespace Game.View
                     // Камень наполовину в земле: торчит только верх, как у вросшей гальки.
                     _pebbleField[mesh].Add(Matrix4x4.TRS(new Vector3(q.x, -scale.y * .3f, q.y), rotation, scale) * _pebblePivots[mesh]);
                 }
+            }
             }
         }
 
@@ -375,7 +436,7 @@ namespace Game.View
         // Грибы и цветы — мелкая трава, как пучки на полу: сквозь них проходят, бой они не закрывают.
         private IEnumerator ScatterEdgeAccentsSteps(LayoutMap map)
         {
-            if (map.Outline == null || map.GladeCount != 1) yield break;
+            if (map.Outline == null || !map.IsArena) yield break;
             int mushrooms = VariantNamed("MeadowMushrooms"), flowers = VariantNamed("MeadowFlower"), crystals = VariantNamed("MeadowCrystals");
             if (mushrooms < 0 && flowers < 0 && crystals < 0) yield break;
             var character = CharacterOf(map, 0);
@@ -407,9 +468,11 @@ namespace Game.View
                         && PlaceOffFloor(crystals, point, normal, scale, false, rng)) crystalCount++;
                     continue;
                 }
-                int kind = mushrooms >= 0 && (flowers < 0 || rng.NextDouble() < (character == GladeCharacter.Sunny ? .4 : .6)) ? mushrooms : flowers;
-                if (kind < 0) continue;
-                int count = kind == mushrooms ? rng.Next(3, 6) : rng.Next(5, 10);
+                // Грибы растут купами у пней, корней и стволов (PlaceMushroomClusters): по кромке они
+                // вставали рядами, как забор (владелец, 2 октября). Здесь — только редкие цветы.
+                int kind = flowers;
+                if (kind < 0 || rng.NextDouble() < .45) continue;
+                int count = rng.Next(4, 9);
                 for (int item = 0; item < count; item++)
                 {
                     var point = edge - normal * (.15f + (float)rng.NextDouble() * .85f) + tangent * ((float)rng.NextDouble() - .5f) * 2.8f;
@@ -424,6 +487,60 @@ namespace Game.View
                     SpawnDecor(kind, point.x, point.y, rng);
                     _decor[_decorCount - 1].localScale *= size;
                 }
+            }
+            yield return null;
+            PlaceMushroomClusters(map, mushrooms);
+        }
+
+        // Грибы — редкие купы по 3–7 у оснований: пни, поваленные стволы, корни гигантов, стволы
+        // деревьев у кромки. В купе один-два крупных и мелочь вокруг, купы не ближе 8 м друг к другу.
+        private void PlaceMushroomClusters(LayoutMap map, int mushrooms)
+        {
+            if (mushrooms < 0) return;
+            var anchors = new List<(Vector2 Point, float Radius, int Priority)>();
+            for (int i = 0; i < _decorCount; i++)
+            {
+                var variant = _style.DecorVariants[_decorVariant[i]];
+                string name = variant.Prefab != null ? variant.Prefab.name : "";
+                int priority = name == "CreatingStump" || name == "MeadowFallenLog" || name == RootPrefab ? 0
+                    : variant.Kind == DecorKind.Tree ? 1 : -1;
+                if (priority < 0) continue;
+                var p = new Vector2(_decor[i].position.x, _decor[i].position.z);
+                // Только у кромки, где купу видно с камеры, и не на самом полу.
+                if (!TouchesOutlinedFloor(p.x, p.y, priority == 0 ? 7 : 4.5f) || TouchesOutlinedFloor(p.x, p.y, .8f)) continue;
+                float radius = priority == 0 ? VisibleRadius(i) * .8f : .55f * _decor[i].localScale.x;
+                anchors.Add((p, radius, priority));
+            }
+            var rng = DecorRandom(0, 1097);
+            // Пни и корни — первыми; внутри приоритета порядок перемешан детерминированно.
+            for (int i = anchors.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (anchors[i], anchors[j]) = (anchors[j], anchors[i]); }
+            anchors.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            var clusters = new List<Vector2>();
+            int wanted = rng.Next(4, 8);
+            foreach (var anchor in anchors)
+            {
+                if (clusters.Count >= wanted) break;
+                bool near = false;
+                foreach (var c in clusters) near |= (c - anchor.Point).sqrMagnitude < 64;
+                if (near || NearPond(anchor.Point.x, anchor.Point.y, anchor.Radius + 1)) continue;
+                int count = rng.Next(3, 8), placed = 0;
+                // Купа жмётся к основанию с одной стороны, а не обходит его кольцом.
+                float side = (float)rng.NextDouble() * Mathf.PI * 2;
+                for (int item = 0, tries = 0; item < count && tries < 24; tries++)
+                {
+                    float angle = side + ((float)rng.NextDouble() - .5f) * 2.2f;
+                    float reach = anchor.Radius + .05f + (float)rng.NextDouble() * .7f;
+                    var point = anchor.Point + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * reach;
+                    if (NearPond(point.x, point.y, .3f) || NearLandmark(point.x, point.y, .1f)) continue;
+                    SpawnDecor(mushrooms, point.x, point.y, rng);
+                    // Один-два крупных, остальные мелкие.
+                    float size = item < 2 ? 1.3f + (float)rng.NextDouble() * .6f : .55f + (float)rng.NextDouble() * .55f;
+                    var instance = _decor[_decorCount - 1];
+                    instance.localScale *= size;
+                    instance.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .02f, point.y);
+                    item++; placed++;
+                }
+                if (placed > 0) clusters.Add(anchor.Point);
             }
         }
 
@@ -482,12 +599,15 @@ namespace Game.View
         private void ScatterFallenLeaves(LayoutMap map)
         {
             foreach (var list in _leafField) list?.Clear();
-            if (map.Outline == null || map.GladeCount != 1 || !FindLeaves()) return;
-            var glade = map.GetGlade(0);
-            var rng = DecorRandom(0, 1049);
+            if (map.Outline == null || !map.IsArena || !FindLeaves()) return;
+            for (int g = 0; g < map.GladeCount; g++)
+            {
+            var glade = map.GetGlade(g);
+            var rng = DecorRandom(g, 1049);
             float rx = glade.Radii.X.ToFloat() + 3, rz = glade.Radii.Y.ToFloat() + 3;
             var center = TrailPoint(glade.Center);
-            _leafBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            var segmentBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            if (g == 0) _leafBounds = segmentBounds; else _leafBounds.Encapsulate(segmentBounds);
             for (int attempt = 0; attempt < 1600; attempt++)
             {
                 var p = center + new Vector2(((float)rng.NextDouble() * 2 - 1) * rx, ((float)rng.NextDouble() * 2 - 1) * rz);
@@ -500,6 +620,7 @@ namespace Game.View
                     : .45f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.55f, .8f, Mathf.PerlinNoise(p.x * .2f + 57, p.y * .2f + 3)));
                 if (roll > chance || NearPond(p.x, p.y, .4f) || NearLandmark(p.x, p.y, .2f) || TrailWear(p.x, p.y) > 140) continue;
                 _leafField[material].Add(Matrix4x4.TRS(new Vector3(p.x, .012f, p.y), Quaternion.Euler(0, yaw, 0), new Vector3(size, 1, size)));
+            }
             }
         }
 
@@ -537,7 +658,7 @@ namespace Game.View
         // шейдера светлячков лагеря. Рождаются в полосе у края, над серединой боя их почти нет.
         private void BuildWisps(LayoutMap map)
         {
-            if (map.Outline == null || map.GladeCount != 1) { if (_wisps != null) _wisps.gameObject.SetActive(false); return; }
+            if (map.Outline == null || !map.IsArena) { if (_wisps != null) _wisps.gameObject.SetActive(false); return; }
             if (_wisps == null)
             {
                 var shader = Resources.Load<Shader>("Shaders/CampRiftMotes");
@@ -579,7 +700,7 @@ namespace Game.View
                         new GradientAlphaKey(.9f, .7f), new GradientAlphaKey(0, 1) });
                 colour.color = gradient;
             }
-            var glade = map.GetGlade(0);
+            var glade = map.GetGlade(map.GladeCount - 1);
             float rx = glade.Radii.X.ToFloat(), rz = glade.Radii.Y.ToFloat(), radius = Mathf.Max(rx, rz);
             var wispShape = _wisps.shape;
             wispShape.radius = radius + 1.5f;

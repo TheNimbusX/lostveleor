@@ -63,11 +63,17 @@ namespace Game.View
             }
             const int n = TrailResolution;
             bool forest = map.Outline != null && _style.ForestGroundWear > 0;
-            bool earth = map.Outline != null && map.GladeCount == 1;
+            bool earth = map.Outline != null && map.IsArena;
             if (forest && _forestDistance == null) _forestDistance = new float[n * n];
             if (earth && _clearingDistance == null) _clearingDistance = new float[n * n];
             // Характер арены считается на главном потоке: он кэшируется в поле.
             float stones = earth ? CharacterOf(map, 0) == GladeCharacter.Rocky ? .7f : .45f : 0;
+            var lakes = new Vector3[map.WaterCount];
+            for (int w = 0; w < lakes.Length; w++)
+            {
+                var water = map.GetWater(w);
+                lakes[w] = new Vector3(water.Center.X.ToFloat(), water.Center.Y.ToFloat(), water.Radius.ToFloat());
+            }
             _surfaceWork = Task.Run(() =>
             {
                 long start = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -84,7 +90,7 @@ namespace Game.View
                 if (earth)
                 {
                     inside.Wait();
-                    Parallel.For(1, n - 1, y => EarthClearingRow(y, stones));
+                    Parallel.For(1, n - 1, y => EarthClearingRow(y, stones, lakes));
                     FilletEarth(2.4f);
                     Parallel.For(1, n - 1, EarthGrassPatchRow);
                 }
