@@ -49,12 +49,12 @@ Material:
     - _Streaks: 0.9
     m_Colors:
     - _Bands: {r: 0.1, g: 0.34, b: 0.6, a: 0.34}
-    - _Deep: {r: 0.03, g: 0.24, b: 0.32, a: 1}
+    - _Deep: {r: 0.16, g: 0.19, b: 0.23, a: 1}
     - _Foam: {r: 1.12, g: 1.22, b: 1.22, a: 1}
     - _FoamScale: {r: 9, g: 1.1, b: 3, a: 0.45}
     - _FoamShade: {r: 0.62, g: 0.86, b: 0.91, a: 1}
     - _Outline: {r: 0.02, g: 0.08, b: 0.11, a: 0.92}
-    - _Shallow: {r: 0.42, g: 0.9, b: 0.92, a: 1}
-    - _Water: {r: 0.06, g: 0.6, b: 0.68, a: 1}
+    - _Shallow: {r: 0.7, g: 0.75, b: 0.8, a: 1}
+    - _Water: {r: 0.42, g: 0.48, b: 0.55, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

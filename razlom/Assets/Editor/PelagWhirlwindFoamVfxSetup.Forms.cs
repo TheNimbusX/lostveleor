@@ -98,6 +98,18 @@ public static partial class PelagWhirlwindFoamVfxSetup
         return true;
     }
 
+    // Сталь / фиолет / морская зелень — те же цвета, что у иконок Icon_Whirlwind_Storm/_Maelstrom/_FoamWaves.
+    private static readonly Color StormDeep = new Color(.16f, .19f, .23f), StormWater = new Color(.42f, .48f, .55f), StormShallow = new Color(.70f, .75f, .80f);
+    private static readonly Color MaelstromDeep = new Color(.12f, .04f, .30f), MaelstromWater = new Color(.36f, .16f, .70f), MaelstromShallow = new Color(.66f, .48f, .95f);
+    private static readonly Color WavesDeep = new Color(.02f, .30f, .20f), WavesWater = new Color(.10f, .70f, .48f), WavesShallow = new Color(.50f, .95f, .76f);
+
+    private static void TintForm(Material material, Color deep, Color water, Color shallow)
+    {
+        material.SetColor("_Deep", deep);
+        material.SetColor("_Water", water);
+        material.SetColor("_Shallow", shallow);
+    }
+
     private static bool BuildForms()
     {
         Mesh thick = null;
@@ -171,6 +183,11 @@ public static partial class PelagWhirlwindFoamVfxSetup
         waveMat.SetFloat("_Glow", .2f);
         waveMat.SetFloat("_CameraPush", 0f);
 
+        // Цвета форм (владелец 02.10: «бурю более стальную, водоворот более фиолет» — как иконки форм).
+        // Пена и обвод общие; база Вихря остаётся бирюзовой.
+        foreach (Material m in new[] { bandMat, crestMat, ringMat }) TintForm(m, StormDeep, StormWater, StormShallow);
+        TintForm(armMat, MaelstromDeep, MaelstromWater, MaelstromShallow);
+        TintForm(waveMat, WavesDeep, WavesWater, WavesShallow);
         var materials = new[] { bandMat, crestMat, ringMat, armMat, waveMat };
         foreach (Material material in materials) { EditorUtility.SetDirty(material); AssetDatabase.SaveAssetIfDirty(material); }
         foreach (Mesh mesh in new[] { band, crest, arms, ring }) AssetDatabase.SaveAssetIfDirty(mesh);
