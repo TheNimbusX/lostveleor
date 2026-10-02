@@ -184,7 +184,7 @@ namespace Game.View
             SpawnDecor(ring, center.x, center.y, DecorRandom(0, 1021));
             var placed = _decor[_decorCount - 1];
             placed.localScale = new Vector3(scale, scale * .35f, scale);
-            placed.position = new Vector3(center.x, 0, center.y);
+            placed.position = new Vector3(center.x, FloorLevel(center.x, center.y), center.y);
             AddLandmark(.72f, false);
             var renderer = placed.GetComponentInChildren<MeshRenderer>();
             if (renderer != null) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
@@ -347,6 +347,45 @@ namespace Game.View
             if (Application.isPlaying) Debug.Log($"[Луга] гигантских деревьев: {placed.Count}");
         }
 
+        // Обрыв между сегментами (владелец, 2 октября): вдоль линии уступа — гряда крупных серых камней,
+        // стоящих на нижней террасе и закрывающих ступень земли. В самом проходе камней нет: там
+        // спрыгивают. Камни — ориентиры: лес и кусты их не теснят.
+        private void PlaceLedgeCliffs(LayoutMap map)
+        {
+            if (map.LedgeCount == 0) return;
+            var rocks = new List<int>();
+            foreach (string name in new[] { "CreatingRock", "ArenaCreatingRockA", "ArenaCreatingRockB" })
+            {
+                int variant = VariantNamed(name);
+                if (variant >= 0) rocks.Add(variant);
+            }
+            if (rocks.Count == 0) return;
+            for (int l = 0; l < map.LedgeCount; l++)
+            {
+                var ledge = map.GetLedge(l);
+                var point = TrailPoint(ledge.Point);
+                var down = new Vector2(ledge.Down.X.ToFloat(), ledge.Down.Y.ToFloat());
+                var along = new Vector2(-down.y, down.x);
+                float drop = ledge.Drop.ToFloat();
+                var rng = DecorRandom(l, 1109);
+                for (float t = -46; t <= 46; t += 1.6f + (float)rng.NextDouble() * 1.4f)
+                {
+                    int variant = rocks[rng.Next(rocks.Count)];
+                    float size = 2.1f + (float)rng.NextDouble() * 1.4f;
+                    float reach = _decorRadii[variant] / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * size * .55f;
+                    // Камень вдвинут в стенку: середина чуть ниже линии обрыва.
+                    var at = point + along * t + down * (reach * .35f + (float)rng.NextDouble() * .4f);
+                    if (TouchesOutlinedFloor(at.x, at.y, reach + .2f) || NearWaterEdge(at.x, at.y, reach)) continue;
+                    SpawnDecor(variant, at.x, at.y, rng);
+                    var rock = _decor[_decorCount - 1];
+                    rock.localScale *= size;
+                    rock.localScale = new Vector3(rock.localScale.x, rock.localScale.y * (drop / 2f + .6f), rock.localScale.z);
+                    rock.position = new Vector3(at.x, FloorLevel(at.x, at.y) - .2f, at.y);
+                    AddLandmark(.6f, false);
+                }
+            }
+        }
+
         private bool FindPebbles()
         {
             if (_pebblesLookedUp) return _pebbleMeshes != null;
@@ -385,7 +424,7 @@ namespace Game.View
             var rng = DecorRandom(g, 1061);
             float rx = glade.Radii.X.ToFloat() + 2, rz = glade.Radii.Y.ToFloat() + 2;
             var center = TrailPoint(glade.Center);
-            var segmentBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            var segmentBounds = new Bounds(new Vector3(center.x, FloorLevel(center.x, center.y), center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
             if (g == 0) _pebbleBounds = segmentBounds; else _pebbleBounds.Encapsulate(segmentBounds);
             int clusters = CharacterOf(map, 0) == GladeCharacter.Rocky ? 70 : 45;
             for (int attempt = 0; attempt < 600 && clusters > 0; attempt++)
@@ -407,7 +446,7 @@ namespace Game.View
                     var scale = new Vector3(size, size * (.55f + (float)rng.NextDouble() * .35f), size);
                     if (SurfaceEarth(q.x, q.y) < .3f) continue;
                     // Камень наполовину в земле: торчит только верх, как у вросшей гальки.
-                    _pebbleField[mesh].Add(Matrix4x4.TRS(new Vector3(q.x, -scale.y * .3f, q.y), rotation, scale) * _pebblePivots[mesh]);
+                    _pebbleField[mesh].Add(Matrix4x4.TRS(new Vector3(q.x, FloorLevel(q.x, q.y) - scale.y * .3f, q.y), rotation, scale) * _pebblePivots[mesh]);
                 }
             }
             }
@@ -606,7 +645,7 @@ namespace Game.View
             var rng = DecorRandom(g, 1049);
             float rx = glade.Radii.X.ToFloat() + 3, rz = glade.Radii.Y.ToFloat() + 3;
             var center = TrailPoint(glade.Center);
-            var segmentBounds = new Bounds(new Vector3(center.x, 0, center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
+            var segmentBounds = new Bounds(new Vector3(center.x, FloorLevel(center.x, center.y), center.y), new Vector3(rx * 2 + 2, 2, rz * 2 + 2));
             if (g == 0) _leafBounds = segmentBounds; else _leafBounds.Encapsulate(segmentBounds);
             for (int attempt = 0; attempt < 1600; attempt++)
             {
@@ -619,7 +658,7 @@ namespace Game.View
                 float chance = edge < 3 ? .5f
                     : .45f * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.55f, .8f, Mathf.PerlinNoise(p.x * .2f + 57, p.y * .2f + 3)));
                 if (roll > chance || NearPond(p.x, p.y, .4f) || NearLandmark(p.x, p.y, .2f) || TrailWear(p.x, p.y) > 140) continue;
-                _leafField[material].Add(Matrix4x4.TRS(new Vector3(p.x, .012f, p.y), Quaternion.Euler(0, yaw, 0), new Vector3(size, 1, size)));
+                _leafField[material].Add(Matrix4x4.TRS(new Vector3(p.x, FloorLevel(p.x, p.y) + .012f, p.y), Quaternion.Euler(0, yaw, 0), new Vector3(size, 1, size)));
             }
             }
         }
@@ -705,7 +744,7 @@ namespace Game.View
             var wispShape = _wisps.shape;
             wispShape.radius = radius + 1.5f;
             wispShape.scale = new Vector3(rx / radius, rz / radius, 1);
-            _wisps.transform.position = new Vector3(glade.Center.X.ToFloat(), .7f, glade.Center.Y.ToFloat());
+            _wisps.transform.position = new Vector3(glade.Center.X.ToFloat(), FloorLevel(glade.Center.X.ToFloat(), glade.Center.Y.ToFloat()) + .7f, glade.Center.Y.ToFloat());
             _wisps.gameObject.SetActive(true);
             _wisps.Clear(); _wisps.Play();
         }

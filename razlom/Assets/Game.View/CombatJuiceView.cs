@@ -1298,7 +1298,7 @@ namespace Game.View
         }
 
         private static Vector3 At(FixVec2 position, float height)
-            => new Vector3(position.X.ToFloat(), height, position.Y.ToFloat());
+            => new Vector3(position.X.ToFloat(), LayoutView.ShownFloorLevel(position.X.ToFloat(), position.Y.ToFloat()) + height, position.Y.ToFloat());
 
         private Vector3 ContactAt(FixVec2 position, float height)
         {

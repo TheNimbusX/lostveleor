@@ -95,6 +95,20 @@ namespace Game.Sim
         /// </summary>
         public bool IsArena { get; internal set; }
 
+        private LayoutLedge[] _ledges = System.Array.Empty<LayoutLedge>();
+        /// <summary>Уступы между сегментами арены: сверху спрыгнуть можно, снизу не забраться.</summary>
+        public int LedgeCount => _ledges.Length;
+        public LayoutLedge GetLedge(int index) => _ledges[index];
+        internal void SetLedges(LayoutLedge[] ledges) => _ledges = ledges;
+
+        /// <summary>Путь лезет на какой-нибудь уступ снизу.</summary>
+        public bool ClimbsLedge(FixVec2 from, FixVec2 to)
+        {
+            for (int i = 0; i < _ledges.Length; i++)
+                if (_ledges[i].BlocksClimb(from, to)) return true;
+            return false;
+        }
+
         /// <summary>Сегмент арены (поляна), внутри которого точка; −1 — проход между сегментами или лес.</summary>
         public int SegmentAt(FixVec2 point)
         {
@@ -144,6 +158,7 @@ namespace Game.Sim
             Outline = null;
             IsArena = false;
             _rivers = System.Array.Empty<LayoutRiver>();
+            _ledges = System.Array.Empty<LayoutLedge>();
             _glades = System.Array.Empty<GladeRegion>();
             _water = System.Array.Empty<LayoutObstacle>();
             _obstacles = System.Array.Empty<LayoutObstacle>();
@@ -432,6 +447,7 @@ namespace Game.Sim
         public bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
         {
             if (!IsWalkable(to, radius)) return false;
+            if (_ledges.Length != 0 && ClimbsLedge(from, to)) return false;
             var delta = to - from;
             Fix64 lengthSq = delta.LengthSq;
             if (Outline != null && (lengthSq.Raw < 0 || lengthSq >= SingleProbeTravelSq))
@@ -468,6 +484,7 @@ namespace Game.Sim
             ulong hash = Hashing.Offset;
             Outline?.MixHash(ref hash);
             foreach (var river in _rivers) river.MixHash(ref hash);
+            foreach (var ledge in _ledges) ledge.MixHash(ref hash);
             Hashing.Mix(ref hash, _placedCount);
 
             for (int i = 0; i < _placedCount; i++)

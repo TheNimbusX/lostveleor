@@ -57,6 +57,8 @@ namespace Game.Sim
 
     public static class GladeLayout
     {
+        /// <summary>Уступ между сегментами: полуширина линии обрыва и высота, метры.</summary>
+        public static readonly Fix64 LedgeHalfWidth = Fix64.FromInt(6), LedgeDrop = Fix64.FromInt(3);
         public static int ClearingCount(int targetModules) => targetModules >= 18 ? 5 : targetModules >= 14 ? 4 : 3;
         public static int RequiredModules(int targetModules, bool boss) => boss ? 12 : ClearingCount(targetModules) * 5 + 7;
 
@@ -89,6 +91,7 @@ namespace Game.Sim
             var regions = new GladeRegion[count];
             var links = new List<(FixVec2 A, FixVec2 B, Fix64 Radius)>();
             var pockets = new List<int>();
+            var segmentLinks = new List<int>();
             map.Clear();
             int Place(int index, int x, int y, int parent)
             {
@@ -117,7 +120,7 @@ namespace Game.Sim
                 int originY = g * (height + eh);
                 // Small alternating shifts change the approach angle without folding the whole route into a snake.
                 int originX = boss || g == 0 ? 0 : rng.NextInt(-1, 2);
-                if (g > 0) previous = Place(entrance, middle, originY - eh, previous);
+                if (g > 0) { previous = Place(entrance, middle, originY - eh, previous); segmentLinks.Add(previous); }
                 int[,] body = new int[across, across];
                 for (int y = 0; y < across; y++)
                     for (int x = 0; x < across; x++)
@@ -251,6 +254,24 @@ namespace Game.Sim
             };
             map.SetGlades(regions);
             map.IsArena = singleArena;
+            // Уступ поперёк каждого прохода между сегментами арены (владелец, 2 октября): следующий
+            // сегмент ниже, спрыгнуть можно, забраться — нет. Ставится после маршрутов: связность от
+            // входа считается вниз, туда, куда и ходят.
+            if (singleArena && !boss && segmentLinks.Count > 0)
+            {
+                var ledges = new LayoutLedge[segmentLinks.Count];
+                for (int i = 0; i < ledges.Length; i++)
+                {
+                    // Проход — прямая между центрами соседних полян; обрыв посередине между их краями.
+                    FixVec2 a = regions[i].Center, b = regions[i + 1].Center, step = (b - a) / Fix64.FromInt(200);
+                    int leave = 0, enter = 200;
+                    while (leave < 200 && regions[i].Field(a + step * Fix64.FromInt(leave)) <= Fix64.One) leave++;
+                    while (enter > 0 && regions[i + 1].Field(a + step * Fix64.FromInt(enter)) <= Fix64.One) enter--;
+                    var point = a + step * Fix64.FromInt((leave + enter) / 2);
+                    ledges[i] = new LayoutLedge(point, (b - a).Normalized(), LedgeHalfWidth, LedgeDrop);
+                }
+                map.SetLedges(ledges);
+            }
             while (map.OpenCount > 0) map.CloseOpen(map.OpenCount - 1);
             map.AddExit(exit);
             foreach (int p in pockets) map.AddRewardBranch(p);

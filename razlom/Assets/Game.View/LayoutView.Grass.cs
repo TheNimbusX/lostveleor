@@ -72,7 +72,7 @@ namespace Game.View
                     // Протоптанная тропа, вода, порталы и ориентиры остаются чистыми.
                     if (TrailWear(px, pz) > 60 || NearPond(px, pz, .5f) || NearLandmark(px, pz, .3f)) continue;
                     if (NearPortal(px, pz) || InsideSolidScratch(px, pz)) continue;
-                    float y = floor ? 0 : BackgroundHeight(map, px, pz) - .02f;
+                    float y = floor ? FloorLevel(px, pz) : BackgroundHeight(map, px, pz) - .02f;
                     _grassField.Add(Matrix4x4.TRS(new Vector3(px, y, pz), Quaternion.Euler(0, yaw, 0),
                         new Vector3(size, size * (.85f + (float)rng.NextDouble() * .3f), size)) * _grassPivot);
                 }
@@ -96,7 +96,7 @@ namespace Game.View
                 }
             }
             var center = new Vector3((minX + maxX) * .5f, 0, (minZ + maxZ) * .5f);
-            _grassParams.worldBounds = new Bounds(center, new Vector3(maxX - minX + margin * 2 + 4, 6, maxZ - minZ + margin * 2 + 4));
+            _grassParams.worldBounds = new Bounds(center, new Vector3(maxX - minX + margin * 2 + 4, 20, maxZ - minZ + margin * 2 + 4));
             _solidScratch.Clear();
         }
 

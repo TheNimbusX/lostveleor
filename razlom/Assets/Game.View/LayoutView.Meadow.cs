@@ -149,7 +149,7 @@ namespace Game.View
                 {
                     var cache = _cachePool.Acquire().transform;
                     var point = map.CenterOf(map.GetRewardBranch(b));
-                    cache.position = new Vector3(point.X.ToFloat(), .03f, point.Y.ToFloat());
+                    cache.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()) + .03f, point.Y.ToFloat());
                     cache.rotation = Quaternion.Euler(0, 25, 0); _caches.Add(cache);
                 }
             }
@@ -169,7 +169,7 @@ namespace Game.View
         {
             var portal = _portalPool.Acquire().transform;
             portal.name = exit ? "Проход дальше" : "Вход в луга";
-            portal.position = new Vector3(point.X.ToFloat(), 0, point.Y.ToFloat());
+            portal.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()), point.Y.ToFloat());
             portal.rotation = Quaternion.LookRotation(new Vector3(direction.X.ToFloat(), 0, direction.Y.ToFloat()));
             SetGlow(portal, exit ? new Color(.8f, .42f, .1f) : new Color(.18f, .65f, .52f));
             _portals.Add(portal);
@@ -230,7 +230,7 @@ namespace Game.View
                 _dropMarks[d].gameObject.SetActive(visible);
                 if (!visible) continue;
                 RunDrop drop = run.GetDrop(d);
-                _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), .03f, drop.Position.Y.ToFloat());
+                _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), FloorLevel(drop.Position.X.ToFloat(), drop.Position.Y.ToFloat()) + .03f, drop.Position.Y.ToFloat());
                 // Сундук зачистки (RiftRun.ChestDrop) — полный схрон, сияние по редкости вещи.
                 bool chest = d == run.ChestDrop;
                 _dropMarks[d].localScale = Vector3.one * (chest ? 1f : .6f);
@@ -513,10 +513,40 @@ namespace Game.View
         public float WeaponGroundHeight(float x, float z)
         {
             return _shownMap == null || !_style.NaturalGround ? 0f
-                : Mathf.Max(0f, BackgroundHeight(_shownMap, x, z));
+                : Mathf.Max(FloorLevel(x, z), BackgroundHeight(_shownMap, x, z));
         }
 
-        private float BackgroundHeight(LayoutMap map, float x, float z)
+        /// <summary>Показанная арена: тела и эффекты берут у неё высоту пола (TickDriver.GetRenderPosition).</summary>
+        public static LayoutView Shown { get; private set; }
+
+        /// <summary>Высота пола показанной арены в точке; 0 — нет арены или уступов.</summary>
+        public static float ShownFloorLevel(float x, float z) => Shown != null ? Shown.FloorLevel(x, z) : 0f;
+
+        // Ширина ступени обрыва на земле, метры: почти отвесная стенка, сетка земли шагом 2 м её сглаживает.
+        private const float LedgeFace = .5f;
+
+        /// <summary>
+        /// Террасы арены (владелец, 2 октября): за каждым уступом всё ниже на его Drop — пол сегмента,
+        /// лес по сторонам и рельеф за ним. Линия обрыва тянется через весь лес, а не только поперёк
+        /// прохода: так нижний сегмент целиком лежит в своей котловине.
+        /// </summary>
+        public float FloorLevel(float x, float z)
+        {
+            var map = _shownMap;
+            if (map == null || map.LedgeCount == 0) return 0f;
+            float level = 0;
+            for (int i = 0; i < map.LedgeCount; i++)
+            {
+                var ledge = map.GetLedge(i);
+                float side = (x - ledge.Point.X.ToFloat()) * ledge.Down.X.ToFloat() + (z - ledge.Point.Y.ToFloat()) * ledge.Down.Y.ToFloat();
+                level -= ledge.Drop.ToFloat() * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-LedgeFace, LedgeFace, side));
+            }
+            return level;
+        }
+
+        private float BackgroundHeight(LayoutMap map, float x, float z) => BackgroundRelief(map, x, z) + FloorLevel(x, z);
+
+        private float BackgroundRelief(LayoutMap map, float x, float z)
         {
             float distance = float.MaxValue;
             // Keep the entire module footprint and a shoulder around it flat, including all paths.
@@ -629,12 +659,12 @@ namespace Game.View
             foreach (var pond in _ponds)
             {
                 int start = vertices.Count;
-                vertices.Add(new Vector3(pond.x, -.12f, pond.y)); uv.Add(Vector2.zero);
+                vertices.Add(new Vector3(pond.x, FloorLevel(pond.x, pond.y) - .12f, pond.y)); uv.Add(Vector2.zero);
                 for (int i = 0; i <= 64; i++)
                 {
                     float angle = i * Mathf.PI / 32;
                     float radius = .85f * (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
-                    vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, -.12f,
+                    vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, FloorLevel(pond.x, pond.y) - .12f,
                         pond.y + Mathf.Sin(angle) * pond.w * radius));
                     uv.Add(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
                     if (i == 64) continue;
@@ -799,6 +829,7 @@ namespace Game.View
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             PlaceCenterCircle(map, runes);
             PlaceAltar(map);
+            PlaceLedgeCliffs(map);
             PlaceGiantTrees(map);
             PlaceRootsAndFerns(map);
             if (fence >= 0)
@@ -1029,7 +1060,9 @@ namespace Game.View
             float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 80);
             float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 80);
             float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
-            int columns = Mathf.CeilToInt(width / 2), rows = Mathf.CeilToInt(depth / 2);
+            // У арены с уступами — шаг 1 м: ступень обрыва иначе расплывалась в пологий скат.
+            float gridStep = map.LedgeCount > 0 ? 1f : 2f;
+            int columns = Mathf.CeilToInt(width / gridStep), rows = Mathf.CeilToInt(depth / gridStep);
             var vertices = new Vector3[(columns + 1) * (rows + 1)];
             var triangles = new int[columns * rows * 6];
             yield return Rows(rows + 1, z =>

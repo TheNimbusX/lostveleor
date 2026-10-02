@@ -334,8 +334,8 @@ namespace Game.View
                     // Узкий откос отмечает место остановки, а его нижняя часть уходит под воду.
                     var outer = new Vector2(pond.x, pond.y) + direction * (1.08f + .02f * Mathf.Sin(angle * 7));
                     var inner = new Vector2(pond.x, pond.y) + direction * (.82f * irregular);
-                    vertices.Add(new Vector3(outer.x, .012f, outer.y)); uv.Add(new Vector2(i / 64f, 0));
-                    vertices.Add(new Vector3(inner.x, -.16f, inner.y)); uv.Add(new Vector2(i / 64f, 1));
+                    vertices.Add(new Vector3(outer.x, FloorLevel(pond.x, pond.y) + .012f, outer.y)); uv.Add(new Vector2(i / 64f, 0));
+                    vertices.Add(new Vector3(inner.x, FloorLevel(pond.x, pond.y) - .16f, inner.y)); uv.Add(new Vector2(i / 64f, 1));
                     if (i == 64) continue;
                     // У соединения с рекой кольцевой берег не должен перегородить воду.
                     if (NearRiver(outer.x, outer.y, .35f)) continue;

@@ -145,6 +145,7 @@ namespace Game.View
             _initialized = false;
             _occupiedCells.Clear();
             _shownMap = null;
+            if (Shown == this) Shown = null;
             _shownEncounters = null;
             _decorRadii = null;
         }
@@ -439,6 +440,7 @@ namespace Game.View
             ClearSolids();
             ClearMeadow();
             _shownMap = map;
+            if (Application.isPlaying) Shown = this;
             _arenaCharacter = -1;
             for (int i = 0; _tiles != null && i < _tileCount; i++)
             {
@@ -696,7 +698,7 @@ namespace Game.View
 
             float yaw = (float)(rng.NextDouble() * 360.0);
             instance.rotation = Quaternion.Euler(0f, yaw, 0f);
-            instance.position = new Vector3(x, 0f, z);
+            instance.position = new Vector3(x, FloorLevel(x, z), z);
 
             _decor[_decorCount] = instance;
             _decorVariant[_decorCount] = variantIndex;
