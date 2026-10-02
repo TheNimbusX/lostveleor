@@ -513,17 +513,40 @@ namespace Game.View
         public float WeaponGroundHeight(float x, float z)
         {
             return _shownMap == null || !_style.NaturalGround ? 0f
-                : Mathf.Max(FloorLevel(x, z), BackgroundHeight(_shownMap, x, z));
+                : Mathf.Max(SurfaceLevel(x, z), BackgroundHeight(_shownMap, x, z));
         }
 
         /// <summary>Показанная арена: тела и эффекты берут у неё высоту пола (TickDriver.GetRenderPosition).</summary>
         public static LayoutView Shown { get; private set; }
 
         /// <summary>Высота пола показанной арены в точке; 0 — нет арены или уступов.</summary>
-        public static float ShownFloorLevel(float x, float z) => Shown != null ? Shown.FloorLevel(x, z) : 0f;
+        public static float ShownFloorLevel(float x, float z) => Shown != null ? Shown.SurfaceLevel(x, z) : 0f;
 
-        // Ширина ступени обрыва на земле, метры: почти отвесная стенка, сетка земли шагом 2 м её сглаживает.
-        private const float LedgeFace = .5f;
+        // Сетка земли (BuildBackgroundReliefSteps): начало x, z и шаг x, z. Пустая — земли ещё нет.
+        private Vector4 _reliefGrid;
+
+        /// <summary>
+        /// Высота настоящей поверхности земли — те же треугольники сетки, что у меша. На ступени уступа
+        /// гладкий FloorLevel и сетка шагом 1 м расходились до полуметра, и тело у края уходило под землю.
+        /// Поднятие на GroundFillDepthOffset: на ровном полу сетка ниже пола ровно на него.
+        /// </summary>
+        public float SurfaceLevel(float x, float z)
+        {
+            if (_shownMap == null || _shownMap.LedgeCount == 0 || _reliefGrid.z <= 0) return FloorLevel(x, z);
+            float gx = (x - _reliefGrid.x) / _reliefGrid.z, gz = (z - _reliefGrid.y) / _reliefGrid.w;
+            float cx = Mathf.Floor(gx), cz = Mathf.Floor(gz), u = gx - cx, w = gz - cz;
+            float x0 = _reliefGrid.x + cx * _reliefGrid.z, z0 = _reliefGrid.y + cz * _reliefGrid.w;
+            float x1 = x0 + _reliefGrid.z, z1 = z0 + _reliefGrid.w;
+            float h10 = BackgroundHeight(_shownMap, x1, z0), h01 = BackgroundHeight(_shownMap, x0, z1);
+            // Треугольники меша: (0,0)-(0,1)-(1,0) и (1,0)-(0,1)-(1,1).
+            float height = u + w <= 1
+                ? BackgroundHeight(_shownMap, x0, z0) * (1 - u - w) + h10 * u + h01 * w
+                : h10 * (1 - w) + h01 * (1 - u) + BackgroundHeight(_shownMap, x1, z1) * (u + w - 1);
+            return height + _style.GroundFillDepthOffset;
+        }
+
+        // Полудлина склона уступа, метры: проход с террасы на террасу — спуск и подъём, а не ступень.
+        private const float LedgeFace = 3f;
 
         /// <summary>
         /// Террасы арены (владелец, 2 октября): за каждым уступом всё ниже на его Drop — пол сегмента,
@@ -1080,6 +1103,7 @@ namespace Game.View
             });
             _backgroundMesh.Clear(); _backgroundMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
             _backgroundMesh.vertices = vertices; _backgroundMesh.triangles = triangles;
+            _reliefGrid = new Vector4(originX, originZ, width / columns, depth / rows);
             _backgroundMesh.RecalculateNormals(); _backgroundMesh.RecalculateBounds();
             _groundFill.transform.position = Vector3.zero; _groundFill.transform.localScale = Vector3.one;
         }

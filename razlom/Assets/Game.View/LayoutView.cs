@@ -508,6 +508,7 @@ namespace Game.View
 
                 Transform tile = _pool.Acquire().transform;
                 tile.GetComponent<MeshRenderer>().sharedMaterial = _roomMaterial;
+                tile.GetComponent<MeshRenderer>().enabled = true;
 
                 float width = placed.Width * cell - (map.Outline != null ? 0 : _style.Gap);
                 float height = placed.Height * cell - (map.Outline != null ? 0 : _style.Gap);
@@ -515,9 +516,18 @@ namespace Game.View
                 tile.localScale = new Vector3(width, _style.Thickness, height);
 
                 FixVec2 center = map.CenterOf(i);
-                tile.position = new Vector3(center.X.ToFloat(), -_style.Thickness * 0.5f, center.Y.ToFloat());
+                // Плита — на террасе своего сегмента (уступы арены, FloorLevel). Плита, через которую идёт
+                // обрыв, не ровная — её нет, пол там рисует сетка земли со ступенью; иначе плита на нуле
+                // закрывала нижний сегмент, и герой под ней пропадал (владелец, 2 октября).
+                float cx = center.X.ToFloat(), cz = center.Y.ToFloat(), hx = width * .5f, hz = height * .5f;
+                float level = FloorLevel(cx, cz);
+                bool straddles = map.LedgeCount > 0 && Mathf.Max(
+                    Mathf.Abs(FloorLevel(cx - hx, cz - hz) - level), Mathf.Abs(FloorLevel(cx + hx, cz - hz) - level),
+                    Mathf.Abs(FloorLevel(cx - hx, cz + hz) - level), Mathf.Abs(FloorLevel(cx + hx, cz + hz) - level)) > .01f;
+                tile.position = new Vector3(cx, level - _style.Thickness * 0.5f, cz);
                 tile.rotation = Quaternion.identity;
                 ApplyOutline(map, i, tile);
+                if (straddles) tile.GetComponent<MeshRenderer>().enabled = false;
 
                 _tiles[_tileCount++] = tile;
 
