@@ -58,8 +58,36 @@ namespace Game.Sim
     public static class GladeLayout
     {
         public static int ClearingCount(int targetModules) => targetModules >= 18 ? 5 : targetModules >= 14 ? 4 : 3;
-        public static int RequiredModules(int targetModules, bool boss) => boss ? 12 : ClearingCount(targetModules) * 5 + 7;
+        public static int RequiredModules(int targetModules, bool boss) => boss ? BossModules : ClearingCount(targetModules) * 5 + 7;
 
+        // ---- поляна босса (владелец, 02.10.2026) ----
+
+        /// <summary>
+        /// Полуоси пола поляны босса, метры: 20 × 15 м. X — поперёк экрана,
+        /// Y — от входа (низ экрана, −Y) к выходу.
+        /// </summary>
+        public static readonly Fix64 BossFloorHalfWidth = Fix64.FromInt(10), BossFloorHalfDepth = Fix64.Ratio(15, 2);
+
+        /// <summary>
+        /// Радиусы области поляны босса (GladeRegion.Radii). Форма Rounded
+        /// заполняет 0,86 своего прямоугольника (GladeRegion.Field), поэтому
+        /// радиусы — полуоси пола / 0,86 ≈ 11,63 × 8,72. Оформление (LayoutView)
+        /// кладёт кайму и камни на 0,86–0,96 радиуса — как раз у кромки пола.
+        /// </summary>
+        public static readonly FixVec2 BossClearingRadii = new FixVec2(
+            BossFloorHalfWidth / Fix64.Ratio(86, 100), BossFloorHalfDepth / Fix64.Ratio(86, 100));
+
+        /// <summary>Залов поперёк и вдоль поляны босса: средний зал — её центр, в нём встаёт босс.</summary>
+        public const int BossHallsAcross = 3;
+
+        /// <summary>Модулей у поляны босса: вход, 3 × 3 зала, выход.</summary>
+        public const int BossModules = BossHallsAcross * BossHallsAcross + 2;
+
+        /// <summary>
+        /// Обычная поляна — по сиду (форма, поворот, вода, ветки к тайникам).
+        /// Босс (boss) — всегда одна и та же поляна, без сида: arenaSize и seed
+        /// ему не важны (GenerateBossClearing).
+        /// </summary>
         public static void Generate(ModuleSet modules, LayoutMap map, ulong seed, int targetModules, bool boss = false, int arenaSize = 0)
         {
             int Find(string key)
@@ -69,10 +97,11 @@ namespace Game.Sim
             }
             int hall = Find("module.hall"), pocket = hall, entrance = modules.FindEntrance();
             if (entrance < 0) throw new ArgumentException("Glade layout requires an entrance.");
+            if (boss) { GenerateBossClearing(modules, map, hall, entrance); return; }
             var rng = new Pcg32(seed, 0x474C414445UL);
-            bool singleArena = boss || arenaSize > 0;
+            bool singleArena = arenaSize > 0;
             int turn = rng.NextInt(0, 4), count = singleArena ? 1 : ClearingCount(targetModules),
-                across = arenaSize > 0 ? arenaSize : boss ? 3 : 2;
+                across = arenaSize > 0 ? arenaSize : 2;
             var shapeRng = new Pcg32(seed, 0x534841504553UL);
             int firstShape = shapeRng.NextInt(0, 6);
             var branchRng = new Pcg32(seed, 0x5349444550415448UL);
@@ -104,16 +133,15 @@ namespace Game.Sim
             // упирались бы в берег, пока герой стоит за рекой на старте. Отдельный поток
             // не сдвигает остальные броски.
             var waterKind = new Pcg32(seed, 0x4C414B45UL);
-            bool riverArena = singleArena && !boss && waterKind.NextInt(0, 3) != 0;
-            Place(entrance, middle, -(boss ? 2 : 1) * eh, -1);
-            int previous = boss ? Place(entrance, middle, -eh, 0) : 0;
+            bool riverArena = singleArena && waterKind.NextInt(0, 3) != 0;
+            Place(entrance, middle, -eh, -1);
+            int previous = 0;
             FixVec2 previousCenter = map.CenterOf(0);
-            int arena = -1;
             for (int g = 0; g < count; g++)
             {
                 int originY = g * (height + eh);
                 // Small alternating shifts change the approach angle without folding the whole route into a snake.
-                int originX = boss || g == 0 ? 0 : rng.NextInt(-1, 2);
+                int originX = g == 0 ? 0 : rng.NextInt(-1, 2);
                 if (g > 0) previous = Place(entrance, middle, originY - eh, previous);
                 int[,] body = new int[across, across];
                 for (int y = 0; y < across; y++)
@@ -127,14 +155,12 @@ namespace Game.Sim
                     ? new FixVec2(Fix64.FromInt(width), Fix64.FromInt(height))
                     : new FixVec2(Fix64.FromInt(height), Fix64.FromInt(width));
                 // Арена чуть теснее блока модулей: бой собраннее, по краю больше леса.
-                // Поляна босса сохраняет прежний простор.
-                if (singleArena && !boss) worldRadii = worldRadii * Fix64.Ratio(85, 100);
+                if (singleArena) worldRadii = worldRadii * Fix64.Ratio(85, 100);
                 // Different neighbouring silhouettes, selected independently of layout and spawns.
                 regions[g] = new GladeRegion(center, worldRadii,
-                    boss ? GladeShape.Rounded : (GladeShape)((firstShape + g) % 6), shapeRng.NextInt(0, 4));
+                    (GladeShape)((firstShape + g) % 6), shapeRng.NextInt(0, 4));
                 links.Add((previousCenter, center, Fix64.Ratio(22, 10)));
                 previousCenter = center;
-                arena = body[across / 2, across / 2];
                 previous = body[across / 2, across - 1];
                 if (!singleArena && (g == firstBranch || g == secondBranch))
                 {
@@ -150,7 +176,7 @@ namespace Game.Sim
                 }
             }
             // Речной арене между поляной и выходом нужен коридор-модуль: по нему идёт река с бродом.
-            int exitParent = boss ? arena : previous, exitRow = (count - 1) * (height + eh) + height, ford = -1;
+            int exitParent = previous, exitRow = (count - 1) * (height + eh) + height, ford = -1;
             if (riverArena) { ford = Place(entrance, middle, exitRow, exitParent); exitParent = ford; exitRow += eh; }
             int exit = Place(entrance, middle, exitRow, exitParent);
             links.Add((previousCenter, map.CenterOf(exit), Fix64.Ratio(22, 10)));
@@ -170,10 +196,10 @@ namespace Game.Sim
             var waterRng = new Pcg32(seed, 0x5741544552UL);
             foreach (var region in regions)
             {
-                // У речной арены луж нет, у обычной — одно озеро, врезанное в край поляны,
-                // у босса — одно озеро посреди поляны с сухим кольцом вокруг, вместо трёх луж.
-                bool lake = singleArena && !riverArena && !boss;
-                int wanted = boss ? 1 : singleArena ? (lake ? 1 : 0) : 2;
+                // У речной арены луж нет, у обычной — одно озеро, врезанное в край поляны.
+                // У босса воды нет вовсе (GenerateBossClearing).
+                bool lake = singleArena && !riverArena;
+                int wanted = singleArena ? (lake ? 1 : 0) : 2;
                 for (int attempt = 0, placed = 0; attempt < 200 && placed < wanted; attempt++)
                 {
                     Fix64 radius; FixVec2 point; bool clear;
@@ -194,13 +220,12 @@ namespace Game.Sim
                     }
                     else
                     {
-                        // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее; у босса — одно большое.
-                        radius = boss ? waterRng.NextFix(Fix64.FromInt(5), Fix64.Ratio(65, 10))
-                            : waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
+                        // Озёра, а не лужи: было 1.6-2.6, стало заметно крупнее.
+                        radius = waterRng.NextFix(Fix64.Ratio(22, 10), Fix64.Ratio(38, 10));
                         point = region.Center + new FixVec2(
                             waterRng.NextFix(-region.Radii.X, region.Radii.X) * Fix64.Ratio(7, 10),
                             waterRng.NextFix(-region.Radii.Y, region.Radii.Y) * Fix64.Ratio(7, 10));
-                        clear = FixVec2.DistanceSq(point, region.Center) > Fix64.FromInt(boss ? 81 : 25);
+                        clear = FixVec2.DistanceSq(point, region.Center) > Fix64.FromInt(25);
                         // A dry ring wide enough for enemies must remain around the entire pond.
                         var margin = radius + Fix64.FromInt(3);
                         for (int d = 0; d < 16 && clear; d++)
@@ -247,6 +272,56 @@ namespace Game.Sim
                 water.RemoveAt(water.Count - 1);
             }
             map.SetWater(water.ToArray());
+            map.Routes.MarkMainRoutes(map); map.Routes.MarkBranchRoutes(map);
+        }
+
+        /// <summary>
+        /// Поляна Хозяина Чащи (владелец, 02.10.2026): ВСЕГДА ОДНА И ТА ЖЕ —
+        /// без сида, без поворота, без воды, без тайников. Скруглённый пол
+        /// 20 × 15 м (BossFloorHalfWidth/Depth), вход снизу экрана (−Y), выход
+        /// с порталом после победы — сверху, продолжая путь входа.
+        ///
+        /// Модули: вход, под ним 3 × 3 зала, над ними выход. Центр среднего зала
+        /// — центр поляны: босс встаёт в «комнате перед выходом»
+        /// (Simulation.SetupBossArena / SetupThicketMasterArena берут центр
+        /// родителя выхода), т. е. посреди поляны. Пол вне поляны — лес; от
+        /// входа и к выходу ведут тропы шириной 4,4 м, как у обычных арен.
+        /// Бросков случайности здесь нет — карты прочих уровней не сдвигаются.
+        /// </summary>
+        private static void GenerateBossClearing(ModuleSet modules, LayoutMap map, int hall, int entrance)
+        {
+            const int across = BossHallsAcross;
+            int w = modules.Get(hall).Width, h = modules.Get(hall).Height;
+            int width = w * across, height = h * across;
+            int ew = modules.Get(entrance).Width, eh = modules.Get(entrance).Height;
+            // Залы обязаны вместить прямоугольник формы, иначе пол поляны обрежут стены модулей.
+            if (LayoutMap.CellSize * width < BossClearingRadii.X * 2 || LayoutMap.CellSize * height < BossClearingRadii.Y * 2)
+                throw new ArgumentException("Boss clearing does not fit into " + across + "×" + across + " halls.");
+            map.Clear();
+            int Place(int index, int x, int y, int parent)
+            {
+                int placed = map.TryPlace(index, 0, x, y, parent);
+                if (placed < 0) throw new InvalidOperationException("Insufficient boss clearing capacity or overlapping authoring.");
+                return placed;
+            }
+            int middle = (width - ew) / 2;
+            int start = Place(entrance, middle, -eh, -1);
+            var body = new int[across, across];
+            for (int y = 0; y < across; y++)
+                for (int x = 0; x < across; x++)
+                    body[x, y] = Place(hall, x * w, y * h, y > 0 ? body[x, y - 1] : start);
+            int arena = body[across / 2, across / 2];
+            int exit = Place(entrance, middle, height, arena);
+            var region = new GladeRegion(map.CenterOf(arena), BossClearingRadii, GladeShape.Rounded);
+            var trailIn = (A: map.CenterOf(start), B: region.Center);
+            var trailOut = (A: region.Center, B: map.CenterOf(exit));
+            var trail = Fix64.Ratio(22, 10);
+            Func<FixVec2, bool> contour = point => region.Field(point) <= Fix64.One
+                || Corridor(point, trailIn.A, trailIn.B, trail) || Corridor(point, trailOut.A, trailOut.B, trail);
+            map.SetGlades(new[] { region });
+            while (map.OpenCount > 0) map.CloseOpen(map.OpenCount - 1);
+            map.AddExit(exit);
+            map.SetNaturalOutline(contour); map.BuildRoutes();
             map.Routes.MarkMainRoutes(map); map.Routes.MarkBranchRoutes(map);
         }
 

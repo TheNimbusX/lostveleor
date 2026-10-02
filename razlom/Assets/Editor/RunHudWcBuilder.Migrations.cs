@@ -34,8 +34,10 @@ namespace Game.EditorTools
         /// v4 (30.09, единый набор — лист 5): остальные кейкапы (слоты замены способности и прочие круглые клавиши
         /// «Дыма и света») — тёмный скруглённый квадрат, как у карточек награды; подсказки клавиш пишет вид в формате
         /// «[1] [2] [3] Выбрать   ·   [L] Уйти с добычей».
+        /// v5 (02.10, план форм — шаг 3): отметка формы навыка на карточках награды — скрытая группа: огненная нить с
+        /// камнем и отсвет за медальоном, её показывает WcRarity.MarkedOnly на экране «Выбери форму» (RunHudWcBuilder.Forms).
         /// </summary>
-        public const int LayoutVersion = 4;
+        public const int LayoutVersion = 5;
 
         static bool _waiting;
 
@@ -143,6 +145,7 @@ namespace Game.EditorTools
             if (view.LayoutVersion < 2) MigrateTo2(view);
             if (view.LayoutVersion < 3) MigrateTo3(view);
             if (view.LayoutVersion < 4) MigrateTo4(view);
+            if (view.LayoutVersion < 5) MigrateTo5(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }

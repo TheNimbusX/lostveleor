@@ -280,10 +280,11 @@ namespace Game.View
                     material = DeathMaterial.Shell; big = true; motes = 6; scale = 1f; chunk = .15f; crumbles = false; ownBreak = true; break;
                 case EnemyKind.ForestSplitling:
                     material = DeathMaterial.Shell; big = false; motes = 3; scale = .6f; chunk = .09f; crumbles = false; ownBreak = true; break;
-                // Хозяин Чащи: кора, тяжёлый (стоп-кадр и тряска), огоньков больше всех (×1,5 за элиту — 42 из 64).
+                // Хозяин Чащи: кора, тяжёлый (стоп-кадр и тряска), огоньков больше всех (×1,5 за элиту — 42 из 64);
+                // залп и сколы — под рост 4,14 м (×1,15, 02.10).
                 // Не трескается (URP Lit): играет Death и уходит в землю — см. профиль.
                 case EnemyKind.ForestThicketMaster:
-                    material = DeathMaterial.Bark; big = true; motes = 28; scale = 2.2f; chunk = .3f; crumbles = false; break;
+                    material = DeathMaterial.Bark; big = true; motes = 28; scale = 2.53f; chunk = .345f; crumbles = false; break;
                 default:
                     material = DeathMaterial.Bark; big = false; motes = 6; scale = 1f; chunk = .16f; break;
             }

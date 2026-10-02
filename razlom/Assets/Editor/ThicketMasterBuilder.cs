@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Game.Sim;
 using Game.View;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -25,13 +26,18 @@ using UnityEngine;
 ///   Mikk под карту нормалей).
 /// • Контроллер — из ThicketMasterClipRules: состояние на клип, Motion Time от
 ///   «&lt;Клип&gt;Phase». Нет клипа — состояние пропускается (вид играет Idle), нет Idle —
-///   сборка падает. Длина в кадрах сверяется с контрактом.
+///   сборка падает. Длина в кадрах сверяется с контрактом. Клипы, что идут сами за собой
+///   (PawR, PawL, Stomp — ThicketMasterClipRules.HasAlternate), получают вторую копию
+///   состояния «&lt;Клип&gt;Alt» с параметром «&lt;Клип&gt;AltPhase»: вид переходит в неё
+///   смесью, когда серия начинается той же лапой, которой кончилась прошлая.
 /// • Материал — URP Lit без подъёма яркости (белый _BaseColor): цвет, нормали, ORM
 ///   (разложен в карты URP), второй слот — Texture Toon только с проходом
 ///   UnitOutlineMask (контур врага), как у Корнехвата и Расщепеня.
 /// • Тело: FacingGuide обязателен (модель смотрит −Y в Blender, разворот только
-///   вокруг вертикали к +Z), рост 3,6 м ± 3% (иначе узел тела масштабируется),
-///   рамка скина — куб 9 м (тело 4,2 × 5,7 × 3,6 м) вместо пересчёта каждый кадр.
+///   вокруг вертикали к +Z). Модель — 3,6 м по контракту клипов, в игре 4,14 м (×1,15,
+///   решение владельца 02.10; Simulation.ThicketModelHeight): узел тела масштабируется
+///   до TargetHeight, шаг Walk — на ту же долю. Рамка скина — куб 10,4 м (тело
+///   4,8 × 6,6 × 4,14 м) вместо пересчёта каждый кадр. Контактная тень — 3,9 м.
 /// • Префаб ThicketMaster_Runtime: корень с ThicketMasterAnimatorView (шаг Walk из
 ///   отчёта клипов), тело — модель с Animator и контроллером.
 ///
@@ -53,10 +59,14 @@ public static partial class ThicketMasterBuilder
     /// <summary>Пакет относительно корня репозитория (папка над razlom/).</summary>
     public const string Package = "ART/characters/act-1-enemies/boss-forest-master/production/unity_package/";
 
-    public const float TargetHeight = 3.6f, HeightTolerance = .03f;
+    /// <summary>Рост модели по контракту клипов (сцена Blender), м.</summary>
+    public const float AuthoredHeight = 3.6f;
 
-    /// <summary>Рамка скина, м: куб вокруг середины тела.</summary>
-    public const float BoundsSize = 9f;
+    /// <summary>Рост тела в игре, м: ×1,15 к модели (решение владельца 02.10) = Simulation.ThicketModelHeight.</summary>
+    public const float TargetHeight = 4.14f, HeightTolerance = .03f;
+
+    /// <summary>Рамка скина, м: куб вокруг середины тела (9 м × 1,15).</summary>
+    public const float BoundsSize = 10.4f;
 
     /// <summary>Проезд корня в клипе по XZ больше этого, м, — нарушение контракта (root motion нет).</summary>
     private const float RootDriftLimit = .02f;
@@ -101,6 +111,8 @@ public static partial class ThicketMasterBuilder
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
             throw new InvalidOperationException("Хозяин Чащи собирается только вне Play.");
+        if (Mathf.Abs(Simulation.ThicketModelHeight.ToFloat() - TargetHeight) > .005f)
+            Debug.LogWarning($"[thicketmaster] Рост в Sim {Simulation.ThicketModelHeight.ToFloat():0.###} м, а сборщик ставит {TargetHeight} м — сверь.");
         SyncPackage();
         var importer = ImportModel();
         var textures = FindTextures(importer);
@@ -138,8 +150,12 @@ public static partial class ThicketMasterBuilder
             if (height < .01f) Debug.LogWarning("[thicketmaster] Рост модели не измерен — масштаб не проверен.");
             else if (Mathf.Abs(height - TargetHeight) > TargetHeight * HeightTolerance)
             {
-                // Тело должно совпасть с Sim: радиус 0,95, лапа 3,6 м, камера под 3,6 м.
-                Debug.LogWarning($"[thicketmaster] Рост модели {height:0.###} м вместо {TargetHeight} ± {HeightTolerance:P0} — узел тела масштабирован.");
+                // Тело должно совпасть с Sim: лапа 4,14 м, топот 5,2 м, круп 1,265 м — всё ×1,15 от модели 3,6 м.
+                string note = $"[thicketmaster] Рост модели {height:0.###} м → {TargetHeight} м: узел тела ×{TargetHeight / height:0.###}";
+                if (Mathf.Abs(height - AuthoredHeight) <= AuthoredHeight * HeightTolerance)
+                    Debug.Log(note + " (рост ×1,15, решение 02.10).");
+                else
+                    Debug.LogWarning(note + $" — модель не {AuthoredHeight} м по контракту клипов, проверь пакет.");
                 body.transform.localScale *= TargetHeight / height;
                 // Шаг Walk замерен в метрах модели, а вид делит путь на него в масштабе корня
                 // префаба: узел тела растянут — шаг тоже, иначе лапы скользят на ту же долю.
@@ -151,6 +167,7 @@ public static partial class ThicketMasterBuilder
             var view = root.AddComponent<ThicketMasterAnimatorView>();
             var serialized = new SerializedObject(view);
             serialized.FindProperty("_walkStride").floatValue = stride;
+            serialized.FindProperty("_contactShadowMetres").floatValue = ThicketMasterAnimatorView.DefaultContactShadowMetres;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             PrefabUtility.SaveAsPrefabAsset(root, Prefab);
         }
@@ -338,6 +355,17 @@ public static partial class ThicketMasterBuilder
             state.timeParameter = parameter;
             state.timeParameterActive = true;
             if (role == ThicketClip.Idle) machine.defaultState = state;
+            if (ThicketMasterClipRules.HasAlternate(role))
+            {
+                // Вторая копия того же клипа со своим параметром: смесь «отход → кадр 0» того же клипа.
+                var alternate = machine.AddState(ThicketMasterClipRules.AlternateName(role));
+                alternate.motion = clip;
+                alternate.writeDefaultValues = false;
+                string alternateParameter = ThicketMasterClipRules.AlternatePhaseParameter(role);
+                controller.AddParameter(alternateParameter, AnimatorControllerParameterType.Float);
+                alternate.timeParameter = alternateParameter;
+                alternate.timeParameterActive = true;
+            }
             clips[role] = clip;
             built++;
         }

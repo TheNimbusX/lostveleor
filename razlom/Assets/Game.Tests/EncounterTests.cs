@@ -138,10 +138,12 @@ namespace Game.Tests
 
 
         /// <summary>
-        /// Босс встаёт на пол. Центр комнаты перед выходом у края поляны бывает
-        /// за её контуром (сессия с сидом 10 ставила босса в (−30, 35), вне пола):
-        /// тогда — ближайшая клетка маршрута, до которой можно дойти от входа.
-        /// Центр на полу — босс стоит там же, где стоял.
+        /// Босс встаёт на пол. Поляна босса (02.10) неизменна, и её центр —
+        /// центр комнаты перед выходом: босс стоит ровно посреди поляны, герой —
+        /// в тропе входа под ней. Запасной путь (центр комнаты за контуром —
+        /// сессия с сидом 10 ставила босса в (−30, 35), вне пола) проверяется
+        /// той же картой с вырезанным под центром полом: тогда — ближайшая
+        /// клетка маршрута, до которой можно дойти от входа.
         /// </summary>
         [Test]
         public void BossArena_PutsTheBossOnTheFloor_EvenWhenTheRoomCentreIsOffTheGlade()
@@ -154,30 +156,87 @@ namespace Game.Tests
                 1, 0, 100, Fix64.FromInt(5));
             var level = new RiftLevelSettings(20, 1, 1, 2, 4, 8, 100, settings, boss: true, playerHealth: 150,
                 entryClearance: 14, solidEnvironment: true, naturalGlade: true).WithArenaSize(4);
-            int offFloor = 0;
             for (ulong seed = 1; seed <= 60; seed++)
             {
-                var seeds = RiftLevelSeeds.ForLevel(seed, 9);
-                var map = new LayoutMap(modules, 64);
-                level.Generate(new LayoutGenerator(), modules, map, seeds.Layout);
-                var centre = map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent);
-                var sim = new Simulation(seed, 512);
-                var plan = level.Spawn(sim, map, seeds.Spawns);
-                var boss = sim.Entities.Position[plan.BossId];
-                var radius = sim.Entities.BodyRadius[plan.BossId];
-                Assert.That(map.IsWalkable(boss, radius), Is.True, "босс вне пола, сид " + seed);
-                if (map.IsWalkable(centre, radius))
+                foreach (bool thicket in new[] { true, false })
                 {
-                    Assert.That(boss, Is.EqualTo(centre), "центр на полу — место прежнее, сид " + seed);
-                    continue;
+                    var seeds = RiftLevelSeeds.ForLevel(seed, 9);
+                    var map = new LayoutMap(modules, 64);
+                    level.Generate(new LayoutGenerator(), modules, map, seeds.Layout);
+                    var glade = map.GetGlade(0);
+                    var centre = map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent);
+                    Assert.That(centre, Is.EqualTo(glade.Center), "сид " + seed);
+                    bool hole = seed % 3 == 0;
+                    if (hole)
+                    {
+                        // Пол под центром вырезан (как озеро прежней поляны): босс уходит на ближайшую клетку.
+                        var floor = map.Outline;
+                        map.SetNaturalOutline(p => floor.Contains(p) && FixVec2.DistanceSq(p, centre) > Fix64.FromInt(4));
+                        map.BuildRoutes();
+                        map.Routes.MarkMainRoutes(map);
+                    }
+                    var sim = new Simulation(seed, 512) { ThicketMasterBossEnabled = thicket };
+                    var plan = level.Spawn(sim, map, seeds.Spawns);
+                    var boss = sim.Entities.Position[plan.BossId];
+                    var radius = sim.Entities.BodyRadius[plan.BossId];
+                    string where = "сид " + seed + (thicket ? ", Хозяин Чащи" : ", Хранитель");
+                    Assert.That(sim.Entities.Kind[plan.BossId], Is.EqualTo(thicket ? EnemyKind.ForestThicketMaster : EnemyKind.ForestGuardian));
+                    Assert.That(map.IsWalkable(boss, radius), Is.True, "босс вне пола, " + where);
+                    Assert.That(sim.Entities.Position[Simulation.PlayerId], Is.EqualTo(map.EntryPoint), where);
+                    Assert.That(map.EntryPoint.Y, Is.LessThan(glade.Center.Y - GladeLayout.BossFloorHalfDepth), "герой в тропе входа, " + where);
+                    if (!hole)
+                    {
+                        Assert.That(boss, Is.EqualTo(centre), "босс посреди поляны, " + where);
+                        continue;
+                    }
+                    Assert.That(map.IsWalkable(centre, radius), Is.False, where);
+                    int cell = map.Routes.CellAt(boss);
+                    Assert.That(cell, Is.GreaterThanOrEqualTo(0), where);
+                    Assert.That(map.Routes.DistanceFromEntry(cell), Is.GreaterThanOrEqualTo(0), "до босса не дойти, " + where);
+                    Assert.That(FixVec2.Distance(boss, centre), Is.LessThan(Fix64.FromInt(6)), where);
+                    Assert.That(glade.Field(boss), Is.LessThanOrEqualTo(Fix64.One), "запасная точка — на поляне, " + where);
                 }
-                offFloor++;
-                int cell = map.Routes.CellAt(boss);
-                Assert.That(cell, Is.GreaterThanOrEqualTo(0), "сид " + seed);
-                Assert.That(map.Routes.DistanceFromEntry(cell), Is.GreaterThanOrEqualTo(0), "до босса не дойти, сид " + seed);
-                Assert.That(FixVec2.Distance(boss, centre), Is.LessThan(Fix64.FromInt(6)), "сид " + seed);
             }
-            Assert.That(offFloor, Is.GreaterThan(0), "в выборке нет центра за контуром — тест ничего не проверяет");
+        }
+
+        /// <summary>
+        /// Малая поляна босса (20 × 15 м) вмещает всё, что ставится вокруг него:
+        /// тестовый переход «К боссу» — герой на поляне не ближе 4 м, подмога на
+        /// 66% — на полу поляны, не ближе 6 м к герою, вся волна.
+        /// </summary>
+        [Test]
+        public void BossArena_TestJumpAndAdds_FitTheSmallClearing()
+        {
+            var location = ArenaEncounterTests.ForestLocation();
+            for (ulong seed = 1; seed <= 6; seed++)
+            {
+                var run = new RiftRun(new Simulation(seed, 512), location.Modules, PrototypeContent.Items(),
+                    PrototypeContent.ItemBaseIds(), location: location);
+                run.StartTestAtLevel(9, true);
+                var sim = run.Sim;
+                var e = sim.Entities;
+                var glade = run.Map.GetGlade(0);
+                int boss = run.BossId;
+                string where = "сид " + seed;
+                Assert.That(e.Position[boss], Is.EqualTo(glade.Center), where);
+                var hero = e.Position[Simulation.PlayerId];
+                Assert.That(glade.Field(hero), Is.LessThanOrEqualTo(Fix64.One), "герой на поляне, " + where);
+                Assert.That(FixVec2.Distance(hero, e.Position[boss]), Is.GreaterThanOrEqualTo(Fix64.FromInt(4)), where);
+
+                sim.PlayerInvulnerable = true;
+                e.Health[boss] = e.MaxHealth[boss] * 66 / 100;
+                int before = e.Count;
+                run.Step(InputFrame.Empty);
+                Assert.That(sim.BossAddWavesSpawned, Is.EqualTo(1), where);
+                Assert.That(e.Count - before, Is.GreaterThanOrEqualTo(5), "волна целиком, " + where);
+                for (int i = before; i < e.Count; i++)
+                {
+                    Assert.That(glade.Field(e.Position[i]), Is.LessThanOrEqualTo(Fix64.One), "подмога на поляне, " + where);
+                    Assert.That(run.Map.IsWalkable(e.Position[i], e.BodyRadius[i]), Is.True, where);
+                    Assert.That(FixVec2.DistanceSq(e.Position[i], e.Position[Simulation.PlayerId]),
+                        Is.GreaterThanOrEqualTo(Fix64.FromInt(36)), where);
+                }
+            }
         }
 
         // Правило владельца (26.09): в одной пачке не больше двух лесных хранителей.

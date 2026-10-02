@@ -7,17 +7,19 @@ using NUnit.Framework;
 
 /// <summary>
 /// Хозяин Чащи: действие Sim → клип и кадр (razlom/Assets/Game.View/ThicketMasterClipRules.cs,
-/// контракт artifacts/tools/wf/boss-clip-spec.md). Главное — кадр контакта клипа ровно в тик
-/// удара: на синтетических действиях (замах 24 и 30, стойки фаз, двойная лапа) и на живой
-/// симуляции босса — в тик каждого EnemyActionImpact поза даёт кадр контакта контракта, тело
-/// прячется ровно на время ThicketUnderground, кадры одного шага действия не идут назад.
+/// контракт клипов artifacts/tools/wf/boss-clip-spec.md, темп artifacts/tools/wf/boss-tempo-contract.md).
+/// Главное — кадр контакта клипа ровно в тик удара тела: на синтетических действиях (серия
+/// П/Л/П, тяжёлый замах, топот с кольцом, жесты кастов) и на живой симуляции босса — в тик
+/// каждого EnemyActionImpact тела поза даёт кадр контакта, тело прячется ровно на время
+/// ThicketUnderground, кадры одного шага не идут назад, хвост после конца действия
+/// продолжает клип без скачка.
 /// </summary>
 public sealed class ThicketMasterClipRulesTests
 {
     private const int Boss = 1;
 
-    /// <summary>Сколько вторых (левых) лап двойной проверено в живой сцене.</summary>
-    private static int LeftPaws;
+    /// <summary>Сколько левых лап и третьих ударов серии проверено в живой сцене.</summary>
+    private static int LeftPaws, ThirdPaws, StompRings, Tails;
 
     // ------------------------------------------------------------ контракт
 
@@ -44,6 +46,12 @@ public sealed class ThicketMasterClipRulesTests
         var loops = ThicketMasterClipRules.All.Where(ThicketMasterClipRules.Loops).ToArray();
         Assert.That(loops, Is.EquivalentTo(new[] { ThicketClip.Idle, ThicketClip.Sleep, ThicketClip.Walk }));
         Assert.That(ThicketMasterClipRules.FramesPerSecond, Is.EqualTo(Simulation.TicksPerSecond));
+
+        // Клипы, что идут сами за собой (П серии фазы 3 → П следующей, топот → топот), — вторая копия состояния.
+        var alternates = ThicketMasterClipRules.All.Where(ThicketMasterClipRules.HasAlternate).ToArray();
+        Assert.That(alternates, Is.EquivalentTo(new[] { ThicketClip.PawR, ThicketClip.PawL, ThicketClip.Stomp }));
+        Assert.That(ThicketMasterClipRules.AlternateName(ThicketClip.PawR), Is.EqualTo("PawRAlt"));
+        Assert.That(ThicketMasterClipRules.AlternatePhaseParameter(ThicketClip.PawR), Is.EqualTo("PawRAltPhase"));
     }
 
     [Test]
@@ -55,10 +63,25 @@ public sealed class ThicketMasterClipRulesTests
         Assert.That(ThicketMasterClipRules.PhaseOf(ThicketClip.Idle, 135f), Is.EqualTo(.5f).Within(1e-6));
         Assert.That(ThicketMasterClipRules.PawIsRight(0), Is.True);
         Assert.That(ThicketMasterClipRules.PawIsRight(1), Is.False);
+        Assert.That(ThicketMasterClipRules.PawIsRight(2), Is.True, "серия П/Л/П");
         Assert.That(ThicketMasterClipRules.PawClip(1), Is.EqualTo(ThicketClip.PawL));
         Assert.That(ThicketMasterClipRules.IsThicketKind(EnemyActionKind.ThicketPaw), Is.True);
         Assert.That(ThicketMasterClipRules.IsThicketKind(EnemyActionKind.ThicketStorm), Is.True);
         Assert.That(ThicketMasterClipRules.IsThicketKind(EnemyActionKind.WendigoSweep), Is.False);
+    }
+
+    [Test]
+    public void Blends_PawChainIsExact_LeftToRightIsShort_TurnsFourToSix()
+    {
+        Assert.That(ThicketMasterClipRules.ActionBlend(ThicketClip.PawR, ThicketClip.PawL, sameAction: true), Is.EqualTo(0),
+            "PawL кадр 0 = PawR кадр 25 — без смеси");
+        int leftToRight = ThicketMasterClipRules.ActionBlend(ThicketClip.PawL, ThicketClip.PawR, sameAction: true);
+        Assert.That(leftToRight, Is.InRange(3, 4));
+        Assert.That(ThicketMasterClipRules.ActionBlend(ThicketClip.PawL, ThicketClip.PawR, sameAction: false),
+            Is.EqualTo(ThicketMasterClipRules.ActionBlendTicks));
+        Assert.That(ThicketMasterClipRules.ActionBlend(ThicketClip.Idle, ThicketClip.PawR, sameAction: false),
+            Is.EqualTo(ThicketMasterClipRules.ActionBlendTicks));
+        Assert.That(ThicketMasterClipRules.TurnBlendTicks, Is.InRange(4, 6));
     }
 
     // ------------------------------------------------------------ синтетика
@@ -71,75 +94,107 @@ public sealed class ThicketMasterClipRulesTests
             LastImpactTick = last, EndTick = end, Stage = stage, Stages = stages, HitResolved = resolved,
         };
 
+    /// <summary>Шаг stage серии лапы так, как его ставит Sim: знак в тик прошлого удара, удар через 9.</summary>
+    private static ThicketMasterState PawStage(ThicketMasterState first, int stage)
+    {
+        var a = first;
+        a.Stage = stage;
+        a.StageStartTick = first.ImpactTick + Simulation.ThicketPawSeriesGapTicks * (stage - 1);
+        a.ImpactTick = first.ImpactTick + Simulation.ThicketPawSeriesGapTicks * stage;
+        a.HitResolved = false;
+        return a;
+    }
+
     private static float Frame(in ThicketMasterState a, float tick, ThicketClip clip)
     {
         var pose = ThicketMasterClipRules.Action(a, tick);
-        Assert.That(pose.Clip, Is.EqualTo(clip), $"{a.Action} на тике {tick}");
+        Assert.That(pose.Clip, Is.EqualTo(clip), $"{a.Action} шаг {a.Stage} на тике {tick}");
         return pose.Frame;
     }
 
     [Test]
-    public void Paw_ContactOnImpact_ForNormalAndHeavyWindup_AndRecoveryOfEveryPhase()
+    public void PawSeries_RightLeftRight_ContactOnEveryImpact_RecoveryInTheTail()
     {
-        // Фаза 1: 24 / 1 / 24.
-        var paw = State(ThicketMasterAction.Paw, 100, 124, 124, 149);
-        Assert.That(Frame(paw, 100f, ThicketClip.PawR), Is.EqualTo(0f));
-        Assert.That(Frame(paw, 112f, ThicketClip.PawR), Is.EqualTo(12f).Within(1e-4));
-        Assert.That(Frame(paw, 124f, ThicketClip.PawR), Is.EqualTo(24f));
-        Assert.That(Frame(paw, 149f, ThicketClip.PawR), Is.EqualTo(49f));
-        Assert.That(Frame(paw, 160f, ThicketClip.PawR), Is.EqualTo(49f));
-        // «Сложно» и ярость: замах 30 — контакт всё равно на тике удара.
-        var heavy = State(ThicketMasterAction.Paw, 100, 130, 130, 155);
+        int windup = Simulation.ThicketPawWindupTicks, gap = Simulation.ThicketPawSeriesGapTicks;
+        Assert.That(windup, Is.EqualTo(15));
+        Assert.That(gap, Is.EqualTo(9));
+        // Серия фазы 3 с тика 100: удары 115 / 124 / 133, действие снимается на 134.
+        var first = State(ThicketMasterAction.Paw, 100, 115, 133, 134, stage: 0, stages: 3);
+        Assert.That(Frame(first, 100f, ThicketClip.PawR), Is.EqualTo(0f));
+        Assert.That(Frame(first, 107.5f, ThicketClip.PawR), Is.EqualTo(12f).Within(1e-4));
+        Assert.That(Frame(first, 115f, ThicketClip.PawR), Is.EqualTo(24f));
+
+        // Удар 0 и знак 1 — один тик: он ещё контакт правой (24→25), левая — со следующего, с кадра 0 (= PawR 25).
+        var second = PawStage(first, 1);
+        Assert.That(Frame(second, 115f, ThicketClip.PawR), Is.EqualTo(24f));
+        Assert.That(Frame(second, 115.5f, ThicketClip.PawR), Is.EqualTo(24.5f).Within(1e-4));
+        Assert.That(Frame(second, 116f, ThicketClip.PawL), Is.EqualTo(0f));
+        Assert.That(Frame(second, 120f, ThicketClip.PawL), Is.EqualTo(12f).Within(1e-4));
+        Assert.That(Frame(second, 124f, ThicketClip.PawL), Is.EqualTo(24f));
+
+        var third = PawStage(first, 2);
+        Assert.That(Frame(third, 124f, ThicketClip.PawL), Is.EqualTo(24f));
+        Assert.That(Frame(third, 125f, ThicketClip.PawR), Is.EqualTo(0f));
+        Assert.That(Frame(third, 133f, ThicketClip.PawR), Is.EqualTo(24f));
+        // Последняя лапа отходит 24→49 за PawRecoveryTicks — дальше конца действия (134), в хвосте.
+        int tail = 133 + ThicketMasterClipRules.PawRecoveryTicks;
+        Assert.That(ThicketMasterClipRules.TailEndTick(third), Is.EqualTo(tail));
+        Assert.That(Frame(third, 134f, ThicketClip.PawR), Is.GreaterThan(24f));
+        Assert.That(Frame(third, tail, ThicketClip.PawR), Is.EqualTo(49f));
+        Assert.That(Frame(third, tail + 20, ThicketClip.PawR), Is.EqualTo(49f));
+
+        // «Сложно» и ярость: первый замах 30 — контакт всё равно на тике удара.
+        var heavy = State(ThicketMasterAction.Paw, 100, 130, 139, 140, stage: 0, stages: 2);
         Assert.That(Frame(heavy, 115f, ThicketClip.PawR), Is.EqualTo(12f).Within(1e-4));
         Assert.That(Frame(heavy, 130f, ThicketClip.PawR), Is.EqualTo(24f));
-        // Фаза 3: стойка 12 тиков — отход 24–49 сжат в неё.
-        var short3 = State(ThicketMasterAction.Paw, 100, 124, 124, 137);
-        Assert.That(Frame(short3, 137f, ThicketClip.PawR), Is.EqualTo(49f));
+        Assert.That(Frame(PawStage(heavy, 1), 139f, ThicketClip.PawL), Is.EqualTo(24f));
     }
 
     [Test]
-    public void DoublePaw_RightThenLeft_FirstOnlyOneRecoveryFrame()
+    public void Stomp_SlamOnTheCircle_CrouchUntilTheRing_RiseInTheTail()
     {
-        var first = State(ThicketMasterAction.Paw, 100, 124, 149, 162, stage: 0, stages: 2, resolved: false);
-        Assert.That(Frame(first, 124f, ThicketClip.PawR), Is.EqualTo(24f));
-        Assert.That(Frame(first, 124.5f, ThicketClip.PawR), Is.EqualTo(24.5f).Within(1e-4));
-        var second = first;
-        second.Stage = 1; second.StageStartTick = 125; second.ImpactTick = 149; second.HitResolved = false;
-        Assert.That(Frame(second, 125f, ThicketClip.PawL), Is.EqualTo(0f));
-        Assert.That(Frame(second, 149f, ThicketClip.PawL), Is.EqualTo(24f));
-        Assert.That(Frame(second, 162f, ThicketClip.PawL), Is.EqualTo(49f));
+        int windup = Simulation.ThicketStompWindupTicks, ring = Simulation.ThicketStompRingDelayTicks;
+        // Топот с 0: круг на 24, кольцо на 39, действие снимается на 41.
+        var stomp = State(ThicketMasterAction.Stomp, 0, windup, windup + ring, windup + ring + 2, stage: 0, stages: 2);
+        Assert.That(Frame(stomp, 12f, ThicketClip.Stomp), Is.EqualTo(16.5f).Within(1e-4));
+        Assert.That(Frame(stomp, windup, ThicketClip.Stomp), Is.EqualTo(33f));
+        var ringStage = stomp;
+        ringStage.Stage = 1; ringStage.StageStartTick = windup; ringStage.ImpactTick = windup + ring;
+        Assert.That(Frame(ringStage, windup, ThicketClip.Stomp), Is.EqualTo(33f), "тик круга — лапы в земле");
+        Assert.That(Frame(ringStage, windup + 2, ThicketClip.Stomp), Is.EqualTo(35f));
+        Assert.That(Frame(ringStage, windup + ring, ThicketClip.Stomp), Is.EqualTo(ThicketMasterClipRules.StompRingFrame));
+        int tail = windup + ring + (71 - ThicketMasterClipRules.StompRingFrame);
+        Assert.That(ThicketMasterClipRules.TailEndTick(ringStage), Is.EqualTo(tail));
+        Assert.That(Frame(ringStage, tail, ThicketClip.Stomp), Is.EqualTo(71f));
+        Assert.That(ThicketMasterClipRules.TryContact(EnemyActionKind.ThicketStomp, 1, out var clip, out float frame), Is.True);
+        Assert.That(clip, Is.EqualTo(ThicketClip.Stomp));
+        Assert.That(frame, Is.EqualTo((float)ThicketMasterClipRules.StompRingFrame));
     }
 
     [Test]
-    public void Stomp_Roar_Pollen_Wake_KeyFrames()
+    public void Roar_Wake_Storm_KeyFrames()
     {
-        var stomp = State(ThicketMasterAction.Stomp, 0, 33, 33, 71);
-        Assert.That(Frame(stomp, 33f, ThicketClip.Stomp), Is.EqualTo(33f));
-        Assert.That(Frame(stomp, 35f, ThicketClip.Stomp), Is.EqualTo(35f));
-        Assert.That(Frame(stomp, 71f, ThicketClip.Stomp), Is.EqualTo(71f));
-        var stomp3 = State(ThicketMasterAction.Stomp, 0, 33, 33, 53); // фаза 3: стойка 36 × 50%
-        Assert.That(Frame(stomp3, 53f, ThicketClip.Stomp), Is.EqualTo(71f));
-        Assert.That(Frame(stomp3, 44f, ThicketClip.Stomp), Is.EqualTo(53f).Within(1e-4));
-
-        var roar = State(ThicketMasterAction.Roar, 10, 55, 55, 70);
-        Assert.That(Frame(roar, 25f, ThicketClip.Roar), Is.EqualTo(15f).Within(1e-4));
-        Assert.That(Frame(roar, 55f, ThicketClip.Roar), Is.EqualTo(45f));
-        Assert.That(Frame(roar, 70f, ThicketClip.Roar), Is.EqualTo(60f));
-
-        var pollen = State(ThicketMasterAction.Pollen, 0, 24, 24, 48);
-        Assert.That(Frame(pollen, 24f, ThicketClip.PollenShake), Is.EqualTo(24f));
-        Assert.That(Frame(pollen, 48f, ThicketClip.PollenShake), Is.EqualTo(48f));
+        var roar = State(ThicketMasterAction.Roar, 10, 46, 46, 61);
+        Assert.That(Frame(roar, 10f, ThicketClip.Roar), Is.EqualTo(0f));
+        Assert.That(Frame(roar, 46f, ThicketClip.Roar), Is.EqualTo(45f));
+        Assert.That(Frame(roar, 61f, ThicketClip.Roar), Is.EqualTo(60f));
 
         var wake = State(ThicketMasterAction.Wake, 90, 120, 120, 120, resolved: true);
         Assert.That(Frame(wake, 110f, ThicketClip.Wake), Is.EqualTo(20f).Within(1e-4));
         Assert.That(Frame(wake, 120f, ThicketClip.Wake), Is.EqualTo(30f));
+
+        // Буря 60 / 45, стойка 12: крона раскрывается, волны на 75 и 135, закрывается к 159.
+        var storm = State(ThicketMasterAction.Storm, 0, 60, 105, 117, stages: 2);
+        Assert.That(Frame(storm, 60f, ThicketClip.Storm), Is.EqualTo(75f));
+        Assert.That(Frame(storm, 105f, ThicketClip.Storm), Is.EqualTo(135f));
+        Assert.That(Frame(storm, 117f, ThicketClip.Storm), Is.EqualTo(159f));
     }
 
     [Test]
     public void Dive_BurrowsAfterDiveIn_AndEmergesOnTheImpactTick()
     {
         int impact = 100 + Simulation.ThicketDiveBurrowTicks + Simulation.ThicketDiveTravelTicks + Simulation.ThicketDiveLockTicks;
-        var dive = State(ThicketMasterAction.Dive, 100, impact, impact, impact + 36);
+        var dive = State(ThicketMasterAction.Dive, 100, impact, impact, impact + Simulation.ThicketDiveStandTicks);
         Assert.That(ThicketMasterClipRules.BurrowEndTick(dive), Is.EqualTo(112));
         Assert.That(Frame(dive, 106f, ThicketClip.DiveIn), Is.EqualTo(6f).Within(1e-4));
         Assert.That(ThicketMasterClipRules.Action(dive, 106f).Burrowed, Is.False);
@@ -152,33 +207,51 @@ public sealed class ThicketMasterClipRulesTests
         Assert.That(up.Clip, Is.EqualTo(ThicketClip.Emerge));
         Assert.That(up.Frame, Is.EqualTo(0f));
         Assert.That(up.Burrowed, Is.False);
-        Assert.That(Frame(dive, impact + 36, ThicketClip.Emerge), Is.EqualTo(36f));
+        // Стойка 24: Emerge целиком (36 кадров) — к связке фаз 2–3 тело уже стряхнуло землю.
+        Assert.That(Frame(dive, impact + Simulation.ThicketDiveStandTicks, ThicketClip.Emerge), Is.EqualTo(36f));
     }
 
     [Test]
-    public void Casts_KeyFramesFollowTheSimSchedule()
+    public void CastGestures_PressAndRelease_ShakeThenSettle_PumpsOnEveryVolley()
     {
-        // Ливень (фаза 3): удары залпов 30/45/60, стойка 60 × 50%.
-        var rain = State(ThicketMasterAction.Rain, 0, 30, 60, 90, stage: 3, stages: 3);
-        Assert.That(Frame(rain, 30f, ThicketClip.BerryVolley), Is.EqualTo(30f));
-        Assert.That(Frame(rain, 45f, ThicketClip.BerryVolley), Is.EqualTo(45f));
-        Assert.That(Frame(rain, 60f, ThicketClip.BerryVolley), Is.EqualTo(60f));
-        Assert.That(Frame(rain, 90f, ThicketClip.BerryVolley), Is.EqualTo(120f));
-        // Буря: волны 75 и 135, закрытие кроны в стойку 12.
-        var storm = State(ThicketMasterAction.Storm, 0, 75, 135, 147, stages: 2);
-        Assert.That(Frame(storm, 12f, ThicketClip.Storm), Is.EqualTo(12f).Within(1e-4));
-        Assert.That(Frame(storm, 75f, ThicketClip.Storm), Is.EqualTo(75f));
-        Assert.That(Frame(storm, 135f, ThicketClip.Storm), Is.EqualTo(135f));
-        Assert.That(Frame(storm, 147f, ThicketClip.Storm), Is.EqualTo(159f));
-        // Прорастание фазы 1 (стенд): 1 к 1 — лапы в земле к 8, вырывает 80–90.
-        var sprout = State(ThicketMasterAction.Sprout, 0, 30, 75, 90, stage: 6, stages: 6);
+        int gesture = Simulation.ThicketCastGestureTicks;
+        Assert.That(gesture, Is.EqualTo(18));
+        // Прорастание: нажим 0–8, короткое удержание, вырывание 80–90 за последние 8 тиков жеста.
+        var sprout = State(ThicketMasterAction.Sprout, 0, gesture, gesture, gesture, resolved: true);
+        Assert.That(Frame(sprout, 4f, ThicketClip.SproutCast), Is.EqualTo(4f).Within(1e-4));
         Assert.That(Frame(sprout, 8f, ThicketClip.SproutCast), Is.EqualTo(8f));
-        Assert.That(Frame(sprout, 80f, ThicketClip.SproutCast), Is.EqualTo(80f));
-        Assert.That(Frame(sprout, 90f, ThicketClip.SproutCast), Is.EqualTo(90f));
-        // Фаза 3: стойка после последнего круга 7 тиков — вырывание всё равно в конце.
-        var sprout3 = State(ThicketMasterAction.Sprout, 0, 30, 75, 82, stage: 6, stages: 6);
-        Assert.That(Frame(sprout3, 82f, ThicketClip.SproutCast), Is.EqualTo(90f));
-        Assert.That(Frame(sprout3, 72f, ThicketClip.SproutCast), Is.EqualTo(80f));
+        Assert.That(Frame(sprout, 9.5f, ThicketClip.SproutCast), Is.EqualTo(9.5f).Within(1e-4));
+        Assert.That(Frame(sprout, gesture - 8, ThicketClip.SproutCast), Is.EqualTo(80f));
+        Assert.That(Frame(sprout, gesture, ThicketClip.SproutCast), Is.EqualTo(90f));
+        Assert.That(ThicketMasterClipRules.TailEndTick(sprout), Is.EqualTo(gesture));
+        Assert.That(ThicketMasterClipRules.TryContact(EnemyActionKind.ThicketSprout, 0, out _, out _), Is.False,
+            "круги бьют сами — не кадр тела");
+
+        // Пыльца: тряска 0–24 в жест, оседание 24–48 — хвост 1:1.
+        var pollen = State(ThicketMasterAction.Pollen, 0, gesture, gesture, gesture, resolved: true);
+        Assert.That(Frame(pollen, 9f, ThicketClip.PollenShake), Is.EqualTo(12f).Within(1e-4));
+        Assert.That(Frame(pollen, gesture, ThicketClip.PollenShake), Is.EqualTo(24f));
+        Assert.That(Frame(pollen, gesture + 12, ThicketClip.PollenShake), Is.EqualTo(36f).Within(1e-4));
+        Assert.That(ThicketMasterClipRules.TailEndTick(pollen), Is.EqualTo(gesture + 24));
+        Assert.That(ThicketMasterClipRules.TryContact(EnemyActionKind.ThicketPollen, 0, out _, out _), Is.False);
+
+        // Ливень: 5 толчков раз в 12, пик толчка (3 / 18 / 33 клипа) — на знаке залпа.
+        int every = Simulation.ThicketRainEveryTicks;
+        Assert.That(every, Is.EqualTo(12));
+        Assert.That(Simulation.ThicketRainVolleys, Is.EqualTo(5));
+        var rain = State(ThicketMasterAction.Rain, 0, gesture, gesture, gesture, resolved: true);
+        for (int v = 0; v < Simulation.ThicketRainVolleys; v++)
+        {
+            float pop = Frame(rain, every * v, ThicketClip.BerryVolley);
+            Assert.That(pop, Is.EqualTo(v == 0 ? 3f : v == Simulation.ThicketRainVolleys - 1 ? 33f : 18f), "толчок " + v);
+        }
+        Assert.That(Frame(rain, every * 1.5f, ThicketClip.BerryVolley), Is.EqualTo(25.5f).Within(1e-4), "отдача между толчками");
+        int lastPop = ThicketMasterClipRules.VolleyLastPopTick(0);
+        Assert.That(lastPop, Is.EqualTo(48));
+        Assert.That(Frame(rain, lastPop + Simulation.ThicketRainImpactTicks, ThicketClip.BerryVolley), Is.EqualTo(60f));
+        Assert.That(ThicketMasterClipRules.TailEndTick(rain), Is.EqualTo(lastPop + 30 + ThicketMasterClipRules.VolleySettleTicks));
+        Assert.That(Frame(rain, ThicketMasterClipRules.TailEndTick(rain), ThicketClip.BerryVolley), Is.EqualTo(120f));
+        Assert.That(ThicketMasterClipRules.TryContact(EnemyActionKind.ThicketRain, 0, out _, out _), Is.False);
     }
 
     [Test]
@@ -197,13 +270,15 @@ public sealed class ThicketMasterClipRulesTests
         Assert.That(ThicketMasterClipRules.TurnPhase(-135f), Is.EqualTo(.5f).Within(1e-5));
 
         // 2,6 м/с Sim за секунду при шаге 1,7857 м (замер после правки 02.10) — 1,456 цикла:
-        // клип 30 кадров (цикл 1 с) играет ×1,456.
+        // клип 30 кадров (цикл 1 с) играет ×1,456. Рост ×1,15 — шаг тоже ×1,15 (масштаб тела).
         float speed = Simulation.ThicketMasterMoveSpeed.ToFloat();
         Assert.That(ThicketMasterClipRules.DefaultWalkStride, Is.EqualTo(1.7857f).Within(.001f));
         Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride),
             Is.EqualTo(speed / ThicketMasterClipRules.DefaultWalkStride).Within(1e-5));
         Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride) * 30f / 30f,
             Is.EqualTo(1.456f).Within(.01f), "скорость клипа Walk против Sim — как в export.json пакета");
+        Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride * 1.15f),
+            Is.EqualTo(1.456f / 1.15f).Within(.01f), "тело ×1,15 — шаг длиннее, клип медленнее");
     }
 
     // ------------------------------------------------------------ Песочные Часы
@@ -223,54 +298,65 @@ public sealed class ThicketMasterClipRulesTests
     public void HourglassTrack_RecoveryContinuesFromTheSameFrame()
     {
         const int shift = Simulation.ThicketHourglassShiftTicks;
-        // Топот фазы 1, Часы на 6-м тике стойки (прошедший контакт Sim не сдвигает).
-        var stomp = State(ThicketMasterAction.Stomp, 0, 33, 33, 71);
+        // Кольцо топота ударило на 39, Часы на 40 (прошедший контакт Sim не сдвигает).
+        var stomp = State(ThicketMasterAction.Stomp, 0, 39, 39, 41, stage: 1, stages: 2, resolved: true);
+        stomp.StageStartTick = 24;
         var track = new ThicketHourglassTrack();
-        float before = ThicketMasterClipRules.Action(track.Apply(stomp), 39f).Frame;
-        var shifted = Hourglass(stomp, 40);
-        float raw = ThicketMasterClipRules.Action(shifted, 39f + shift).Frame;
-        float after = ThicketMasterClipRules.Action(track.Apply(shifted), 39f + shift).Frame;
-        Assert.That(raw - before, Is.GreaterThan(10f), "без трекера стойка прыгает вперёд — трекер нужен");
+        float before = ThicketMasterClipRules.Action(track.Apply(stomp), 40f).Frame;
+        var shifted = Hourglass(stomp, 41);
+        float raw = ThicketMasterClipRules.Action(shifted, 40f + shift).Frame;
+        float after = ThicketMasterClipRules.Action(track.Apply(shifted), 40f + shift).Frame;
+        Assert.That(raw - before, Is.GreaterThan(10f), "без трекера подъём прыгает вперёд — трекер нужен");
         Assert.That(after, Is.EqualTo(before).Within(1e-3), "с трекером — тот же кадр");
-        Assert.That(ThicketMasterClipRules.Action(track.Apply(shifted), 71f + shift).Frame, Is.EqualTo(71f), "стойка доигрывает к концу");
 
-        // Ливень фазы 3 — стойка от последнего залпа (LastImpactTick), Часы через тик после него.
-        var rain = State(ThicketMasterAction.Rain, 0, 30, 60, 90, stage: 3, stages: 3);
+        // Последняя лапа серии: отход после удара, Часы через полтика.
+        var paw = State(ThicketMasterAction.Paw, 100, 115, 124, 125, stage: 0, stages: 2);
+        var left = PawStage(paw, 1);
+        left.HitResolved = true;
         track = new ThicketHourglassTrack();
-        before = ThicketMasterClipRules.Action(track.Apply(rain), 61f).Frame;
-        after = ThicketMasterClipRules.Action(track.Apply(Hourglass(rain, 62)), 61f + shift).Frame;
+        before = ThicketMasterClipRules.Action(track.Apply(left), 124.5f).Frame;
+        after = ThicketMasterClipRules.Action(track.Apply(Hourglass(left, 125)), 124.5f + shift).Frame;
         Assert.That(after, Is.EqualTo(before).Within(1e-3));
 
         // Посреди замаха Sim сдвигает и удар: трекеру добавлять нечего.
-        var paw = State(ThicketMasterAction.Paw, 100, 124, 124, 149);
         track = new ThicketHourglassTrack();
         before = ThicketMasterClipRules.Action(track.Apply(paw), 110f).Frame;
         var pawShifted = Hourglass(paw, 111);
-        Assert.That(track.Apply(pawShifted).ImpactTick, Is.EqualTo(124 + shift));
+        Assert.That(track.Apply(pawShifted).ImpactTick, Is.EqualTo(115 + shift));
         Assert.That(ThicketMasterClipRules.Action(track.Apply(pawShifted), 110f + shift).Frame, Is.EqualTo(before).Within(1e-3));
-        Assert.That(ThicketMasterClipRules.Action(track.Apply(pawShifted), 124f + shift).Frame, Is.EqualTo(24f), "контакт — на сдвинутом ударе");
+        Assert.That(ThicketMasterClipRules.Action(track.Apply(pawShifted), 115f + shift).Frame, Is.EqualTo(24f), "контакт — на сдвинутом ударе");
 
         // Новое действие сдвиг не наследует.
-        var next = State(ThicketMasterAction.Stomp, 300, 333, 333, 371);
+        var next = State(ThicketMasterAction.Stomp, 300, 324, 339, 341, stages: 2);
         next.Serial = 2;
-        Assert.That(track.Apply(next).ImpactTick, Is.EqualTo(333));
+        Assert.That(track.Apply(next).ImpactTick, Is.EqualTo(324));
     }
 
     [Test]
     public void HourglassTrack_NewStageKeepsOnlyTheSharedLastImpactShift()
     {
         const int shift = Simulation.ThicketHourglassShiftTicks;
-        // Двойная лапа: Часы в стойке первой — вторая лапа приходит со своим ударом, его не трогаем.
-        var first = State(ThicketMasterAction.Paw, 100, 124, 149, 162, stage: 0, stages: 2, resolved: true);
+        var first = State(ThicketMasterAction.Paw, 100, 115, 124, 125, stage: 0, stages: 2, resolved: true);
         var track = new ThicketHourglassTrack();
         track.Apply(first);
-        var shifted = Hourglass(first, 125);
-        Assert.That(track.Apply(shifted).ImpactTick, Is.EqualTo(124 + shift), "прошедший удар первой догнал Часы");
+        var shifted = Hourglass(first, 116);
+        Assert.That(track.Apply(shifted).ImpactTick, Is.EqualTo(115 + shift), "прошедший удар первой догнал Часы");
         var second = shifted;
-        second.Stage = 1; second.StageStartTick = 125 + shift; second.ImpactTick = 149 + shift; second.HitResolved = false;
+        second.Stage = 1; second.StageStartTick = 116 + shift; second.ImpactTick = 124 + shift; second.HitResolved = false;
         var shown = track.Apply(second);
-        Assert.That(shown.ImpactTick, Is.EqualTo(149 + shift), "удар второй лапы — как в Sim");
+        Assert.That(shown.ImpactTick, Is.EqualTo(124 + shift), "удар второй лапы — как в Sim");
         Assert.That(shown.LastImpactTick, Is.EqualTo(second.LastImpactTick));
+    }
+
+    [Test]
+    public void Tail_ShiftMovesTheWholeTimeline()
+    {
+        var stomp = State(ThicketMasterAction.Stomp, 0, 39, 39, 41, stage: 1, stages: 2, resolved: true);
+        stomp.StageStartTick = 24;
+        var moved = ThicketMasterClipRules.Shift(stomp, 60);
+        Assert.That(ThicketMasterClipRules.TailEndTick(moved), Is.EqualTo(ThicketMasterClipRules.TailEndTick(stomp) + 60));
+        Assert.That(ThicketMasterClipRules.Action(moved, 110f).Frame,
+            Is.EqualTo(ThicketMasterClipRules.Action(stomp, 50f).Frame).Within(1e-4));
     }
 
     [Test]
@@ -317,8 +403,9 @@ public sealed class ThicketMasterClipRulesTests
     }
 
     /// <summary>
-    /// Шагает до until и сверяет каждый тик: удар — кадр контакта, тело спрятано ровно под
-    /// землёй, кадры одного шага действия не идут назад. Возвращает виды проверенных ударов.
+    /// Шагает до until и сверяет каждый тик: удар тела — кадр контакта, тело спрятано ровно под
+    /// землёй, кадры одного шага действия не идут назад; после конца действия хвост (вид играет
+    /// его, пока босс стоит) продолжает тот же клип без скачка до TailEndTick.
     /// </summary>
     private static void Drive(Simulation sim, int until, Dictionary<EnemyActionKind, int> checkedImpacts,
         Action<Simulation> perTick = null)
@@ -326,6 +413,8 @@ public sealed class ThicketMasterClipRulesTests
         int serial = 0, stage = -1;
         ThicketClip clip = ThicketClip.Idle;
         float lastFrame = -1f;
+        ThicketMasterState last = default;
+        bool tail = false;
         while (sim.Tick < until)
         {
             perTick?.Invoke(sim);
@@ -342,7 +431,25 @@ public sealed class ThicketMasterClipRulesTests
                         $"{a.Action}: кадр назад на тике {tick} ({lastFrame} → {pose.Frame})");
                 serial = a.Serial; stage = a.Stage; clip = pose.Clip; lastFrame = pose.Frame;
                 Assert.That(pose.Frame, Is.InRange(0f, Math.Max(1, ThicketMasterClipRules.Frames(pose.Clip))));
+                last = a;
+                tail = true;
             }
+            else if (tail && tick < ThicketMasterClipRules.TailEndTick(last) && last.Action != ThicketMasterAction.Rain)
+            {
+                // Хвост: та же функция по запомненному действию — клип тот же, кадр не назад.
+                var pose = ThicketMasterClipRules.Action(last, tick);
+                Assert.That(pose.Clip, Is.EqualTo(clip), $"{last.Action}: хвост сменил клип на тике {tick}");
+                Assert.That(pose.Frame, Is.GreaterThanOrEqualTo(lastFrame - 1e-4f), $"{last.Action}: хвост назад на тике {tick}");
+                lastFrame = pose.Frame;
+                if (tick + 1 >= ThicketMasterClipRules.TailEndTick(last))
+                {
+                    float end = ThicketMasterClipRules.Action(last, ThicketMasterClipRules.TailEndTick(last)).Frame;
+                    Assert.That(end, Is.EqualTo((float)ThicketMasterClipRules.Frames(pose.Clip)).Within(1e-3),
+                        $"{last.Action}: хвост доигрывает клип");
+                    Tails++;
+                }
+            }
+            else tail = false;
             foreach (var e in sim.Events)
             {
                 if (e.Type != SimEventType.EnemyActionImpact || e.Source != Boss) continue;
@@ -355,6 +462,8 @@ public sealed class ThicketMasterClipRulesTests
                 checkedImpacts.TryGetValue(kind, out int n);
                 checkedImpacts[kind] = n + 1;
                 if (kind == EnemyActionKind.ThicketPaw && e.Amount == 1) LeftPaws++;
+                if (kind == EnemyActionKind.ThicketPaw && e.Amount == 2) ThirdPaws++;
+                if (kind == EnemyActionKind.ThicketStomp && e.Amount == 1) StompRings++;
             }
         }
     }
@@ -363,9 +472,9 @@ public sealed class ThicketMasterClipRulesTests
     public void LiveBoss_EveryImpactLandsOnTheContactFrame()
     {
         var impacts = new Dictionary<EnemyActionKind, int>();
-        LeftPaws = 0;
+        LeftPaws = ThirdPaws = StompRings = Tails = 0;
 
-        // Фаза 1: вступление (рёв), лапа и топот вплотную, нырок по дальнему герою.
+        // Фаза 1: вступление (рёв), серии лапы и топот вплотную, нырок по дальнему герою.
         var near = Arena();
         HeroInFront(near, 2.6);
         Drive(near, 900, impacts, sim =>
@@ -373,7 +482,7 @@ public sealed class ThicketMasterClipRulesTests
             if (sim.Tick == 600) HeroInFront(sim, 8.5);
         });
 
-        // Фаза 3: рёв на пороге → буря, касты, двойная лапа и связки.
+        // Фаза 3: рёв на пороге → буря, касты, серии П/Л/П и связки.
         var late = Arena();
         HeroInFront(late, 3.0);
         Drive(late, 181, impacts);
@@ -386,13 +495,15 @@ public sealed class ThicketMasterClipRulesTests
             else if (t == 180) HeroInFront(sim, 6.0);
         });
 
-        TestContext.WriteLine(string.Join(", ", impacts.Select(p => p.Key + "×" + p.Value)) + ", левых лап " + LeftPaws);
+        TestContext.WriteLine(string.Join(", ", impacts.Select(p => p.Key + "×" + p.Value))
+            + $", левых лап {LeftPaws}, третьих {ThirdPaws}, колец топота {StompRings}, хвостов {Tails}");
         foreach (var kind in new[] { EnemyActionKind.ThicketPaw, EnemyActionKind.ThicketStomp, EnemyActionKind.ThicketRoar,
                      EnemyActionKind.ThicketDive, EnemyActionKind.ThicketStorm })
             Assert.That(impacts.ContainsKey(kind), Is.True, kind + " ни разу не ударил — сцена не проверила его кадр");
-        Assert.That(impacts.Keys.Any(k => k == EnemyActionKind.ThicketRain || k == EnemyActionKind.ThicketPollen),
-            Is.True, "ни одного каста фазы 3 с кадром контакта");
-        Assert.That(LeftPaws, Is.GreaterThan(0), "вторая (левая) лапа двойной фазы 3 не проверена");
+        Assert.That(LeftPaws, Is.GreaterThan(0), "левая лапа серии не проверена");
+        Assert.That(ThirdPaws, Is.GreaterThan(0), "третий удар серии (П после Л) не проверен");
+        Assert.That(StompRings, Is.GreaterThan(0), "второе кольцо топота не проверено");
+        Assert.That(Tails, Is.GreaterThan(0), "ни один хвост не доигран");
     }
 
     /// <summary>Доля замаха угля лапы по часам босса (EnemyBodyTelegraphView.PawClock).</summary>
@@ -406,11 +517,12 @@ public sealed class ThicketMasterClipRulesTests
     /// Живой босс под Песочными Часами: в стойке после удара (прошедший контакт Sim не
     /// сдвигает) и посреди замаха. Поза вида с трекером после заморозки — тот же кадр, дальше
     /// кадры шага не идут назад, контакт — на сдвинутом ударе; доля угля лапы всю заморозку
-    /// стоит на доле до Часов и дальше растёт к удару.
+    /// стоит на доле до Часов и дальше растёт к удару (новый удар серии — свой уголь с нуля).
     /// </summary>
     [TestCase(ThicketMasterAction.Paw, 3, false)]
     [TestCase(ThicketMasterAction.Paw, -10, false)]
     [TestCase(ThicketMasterAction.Stomp, 3, false)]
+    [TestCase(ThicketMasterAction.Stomp, 16, false)]
     [TestCase(ThicketMasterAction.Storm, 3, true)]
     public void LiveBoss_Hourglass_PoseAndPawEmberContinue(ThicketMasterAction action, int fromImpact, bool phase3)
     {
@@ -456,10 +568,11 @@ public sealed class ThicketMasterClipRulesTests
         var pose = ThicketMasterClipRules.Action(track.Apply(a), sim.Tick - 1);
         TestContext.WriteLine($"{action} {fromImpact:+0;-0}: кадр до Часов {before:0.##}, после {pose.Frame:0.##}, без трекера {raw:0.##}");
         Assert.That(pose.Frame, Is.EqualTo(before).Within(.51f), "после Часов — тот же кадр");
-        if (fromImpact < 0) Assert.That(EmberShare(sim, a, sim.Tick - 1), Is.EqualTo(emberBefore).Within(1.01f / 24f));
+        if (fromImpact < 0) Assert.That(EmberShare(sim, a, sim.Tick - 1), Is.EqualTo(emberBefore).Within(1.01f / 15f));
 
         ThicketClip clip = pose.Clip;
         float last = pose.Frame, ember = emberBefore;
+        int emberStage = stage;
         bool landed = false;
         while (true)
         {
@@ -472,6 +585,8 @@ public sealed class ThicketMasterClipRulesTests
             stage = a.Stage; clip = pose.Clip; last = pose.Frame;
             if (fromImpact < 0 && !a.HitResolved)
             {
+                // Новый удар серии — свой уголь от его знака.
+                if (a.Stage != emberStage) { emberStage = a.Stage; ember = 0f; }
                 float share = EmberShare(sim, a, tick);
                 Assert.That(share, Is.GreaterThanOrEqualTo(ember - 1e-4f), $"уголь назад на тике {tick}");
                 ember = share;

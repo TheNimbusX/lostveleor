@@ -152,6 +152,8 @@ namespace Game.View
         // Нажатие прошло (способность была готова): только такое разжигает кольцо, отказ — нет.
         readonly bool[] _pressCast = new bool[Simulation.AbilitySlots];
         readonly int[] _iconIds = new int[Simulation.AbilitySlots];
+        // Форма навыка (02.10): DefinitionId у формы прежний — без неё кеш не сменил бы иконку.
+        readonly PelagForm[] _iconForms = new PelagForm[Simulation.AbilitySlots];
         readonly PlayerHud.TooltipValue[] _values = new PlayerHud.TooltipValue[8];
         Canvas _canvas;
         Image _healthImage;
@@ -161,6 +163,7 @@ namespace Game.View
         HudAbilityBlock _feedbackBlock;
         string _feedbackMessage;
         int _tooltipShown = -2, _tooltipDefinition = -1;
+        PelagForm _tooltipForm;
         string _tooltipStatusShown;
 
         /// <summary>Плитка под мышью; -1 — ни одной. PlayerHud рисует по ней радиус.</summary>
@@ -471,12 +474,13 @@ namespace Game.View
                 return;
             }
 
-            if (_iconIds[slot] != build.DefinitionId && widget.Art != null)
+            if ((_iconIds[slot] != build.DefinitionId || _iconForms[slot] != build.Form) && widget.Art != null)
             {
                 _iconIds[slot] = build.DefinitionId;
+                _iconForms[slot] = build.Form;
                 // У кувырка своя иконка (Icon_Dash, 23 сентября); силуэт — только запасной.
-                string file = PlayerHud.IconFile(build.DefinitionId);
-                Texture2D icon = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
+                // Правило иконки одно (AbilityIconRules): у формы — её арт или база с меткой формы.
+                Texture2D icon = AbilityIcons.Get(build.DefinitionId, build.Form);
                 widget.Art.texture = icon != null ? icon : Resources.Load<Texture2D>("UI/HUD/DashSilhouette");
                 widget.Art.uvRect = icon != null ? IconRect : new Rect(0f, 0f, 1f, 1f);
             }
@@ -657,28 +661,29 @@ namespace Game.View
             // Alt меняет подсказку на месте: без усилений показывать нечего, Alt ничего не делает.
             bool detailed = mask != 0 && DetailHeld;
             bool rebuilt = slot != _tooltipShown || build.DefinitionId != _tooltipDefinition || upgrades != _tooltipUpgrades
-                || mask != _tooltipMask || detailed != _tooltipDetailed;
+                || mask != _tooltipMask || detailed != _tooltipDetailed || build.Form != _tooltipForm;
             if (rebuilt)
             {
                 _tooltipShown = slot; _tooltipDefinition = build.DefinitionId; _tooltipUpgrades = upgrades;
-                _tooltipMask = mask; _tooltipDetailed = detailed;
+                _tooltipMask = mask; _tooltipDetailed = detailed; _tooltipForm = build.Form;
                 RefreshTooltipUpgrades(slot, driver, upgrades);
                 OpenTooltip();
                 if (TooltipIcon != null)
                 {
-                    string file = PlayerHud.IconFile(build.DefinitionId);
-                    TooltipIcon.texture = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
+                    TooltipIcon.texture = AbilityIcons.Get(build.DefinitionId, build.Form);
                     TooltipIcon.enabled = TooltipIcon.texture != null;
                     TooltipIcon.uvRect = IconRect;
                 }
-                if (TooltipTitle != null) TooltipTitle.text = PlayerHud.AbilityName(build.DefinitionId);
+                // Форма навыка (02.10): «ВИХРЬ · БУРЯ», описание формы — перед описанием навыка.
+                if (TooltipTitle != null) TooltipTitle.text = PelagFormTexts.TooltipTitle(PlayerHud.AbilityName(build.DefinitionId), build.Form);
                 if (TooltipKey != null)
                 {
                     TooltipKey.text = PlayerHud.SlotKey(slot);
                     FitKeycap(TooltipKey);
                 }
                 if (TooltipBody != null)
-                    TooltipBody.text = UiKeywordTip.Markup(PlayerHud.AbilityDescription(build.DefinitionId), _keywordsFound, out _tooltipKeyword);
+                    TooltipBody.text = UiKeywordTip.Markup(PelagFormTexts.WithForm(PlayerHud.AbilityDescription(build.DefinitionId), build.Form),
+                        _keywordsFound, out _tooltipKeyword);
                 UiKeywordTip.Show(KeywordTip, KeywordTipTitle, KeywordTipBody, _tooltipKeyword, ref _keywordShown);
                 int count = PlayerHud.CollectTooltipValues(build, _values, sim);
                 // Та же способность без усилений: изменённое усилениями число — цветом «хорошо».

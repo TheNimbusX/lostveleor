@@ -65,14 +65,29 @@ namespace Game.View
     /// <summary>
     /// ХОЗЯИН ЧАЩИ: ДЕЙСТВИЕ SIM → КЛИП И ЕГО КАДР. Без UnityEngine — правило
     /// проверяют тесты вне Unity (tools/Combat.Presentation.Tests/ThicketMasterClipRulesTests.cs),
-    /// в том числе на живой симуляции: в тик каждого EnemyActionImpact кадр клипа —
-    /// ровно кадр контакта контракта.
+    /// в том числе на живой симуляции: в тик каждого EnemyActionImpact самого босса
+    /// кадр клипа — ровно кадр контакта.
     ///
-    /// Кадр N клипа = тик N действия (30 кадров/с = 30 тиков/с). Время берётся
-    /// только из полей ThicketMasterState, а не из констант: «Сложно» удлиняет замах
-    /// лапы до 30, фазы 2–3 режут стойку до 75/50%, и всё равно контакт клипа
-    /// ложится на тик удара — замах до контакта и стойка после него растягиваются
-    /// или сжимаются каждый в своём отрезке.
+    /// ТЕМП 02.10 (artifacts/tools/wf/boss-tempo-contract.md). Клипы авторские (контракт
+    /// клипов, кадр N = тик N), Sim короче — вид растягивает и сжимает их по тикам
+    /// Sim, новые клипы не нужны. Время берётся только из полей ThicketMasterState:
+    /// «Сложно» удлиняет первый замах серии до 30 — контакт всё равно на тике удара.
+    /// • Серия лапы П/Л/П: замах шага — от его знака до удара (15, дальше по 9). Удар
+    ///   k и знак k+1 Sim даёт в одном тике: тик удара показывает контакт прошлой лапы
+    ///   (кадр 24→25), следующая лапа — со следующего тика. PawL кадр 0 = PawR кадр 25
+    ///   (клип собран как связка) — переход П→Л без смеси; Л→П — смесь
+    ///   <see cref="PawLeftToRightBlendTicks"/>. Отход последней лапы (24–49) идёт уже
+    ///   после конца действия — <see cref="TailEndTick"/>.
+    /// • Топот: дыбом 0–33 к первому удару, лапы в землю 33–35, присед в замедлении
+    ///   35–<see cref="StompRingFrame"/> до кольца (тело прижато, пока уходит вторая
+    ///   волна), подъём после кольца — в хвосте.
+    /// • Касты — только жест 18 тиков, круги и облака идут сами: прорастание — нажим
+    ///   и быстрое вырывание, пыльца — тряска в жест, оседание в хвосте, ливень —
+    ///   толчки груди циклом раз в 12 тиков, пик толчка — на знаке залпа (ягоды
+    ///   вылетают), пока тело свободно.
+    /// • Хвост: действие Sim кончилось, а клип ещё доигрывает (отход лапы, подъём
+    ///   после топота, оседание каста) — вид продолжает ту же функцию по запомненному
+    ///   действию до TailEndTick, если босс не пошёл и не начал новое.
     ///
     /// ПЕСОЧНЫЕ ЧАСЫ. Sim сдвигает StageStartTick, ImpactTick (впереди), LastImpactTick
     /// (впереди) и EndTick, но не StartTick. Поэтому отрезки строятся только от
@@ -96,23 +111,64 @@ namespace Game.View
 
         // ---- ключевые кадры (контракт) ----
 
-        /// <summary>Лапа: замах 0–24, контакт 24, отход 25–49.</summary>
+        /// <summary>Лапа: замах 0–24 (верх 16–19), контакт 24 (лапа легла), отход 25–49 (к Idle 0).</summary>
         public const int PawContactFrame = 24;
 
-        /// <summary>Топот: лапы в землю на 33 (контакт 33–35), присед и подъём 35–71.</summary>
+        /// <summary>
+        /// Отход последней лапы серии 24→49 — за столько тиков (×1,4): Sim снимает действие через
+        /// тик после удара, отход играет хвост, следующая серия может начаться через 14–18 тиков.
+        /// </summary>
+        public const int PawRecoveryTicks = 18;
+
+        /// <summary>Топот: лапы в землю на 33 (контакт 33–35), присед 35–39, подъём 39–71.</summary>
         public const int StompContactFrame = 33, StompPlantedFrame = 35;
+
+        /// <summary>
+        /// Кадр второго кольца топота: 35→42 (присед, хлыст кроны и куста) тянется на 13 тиков
+        /// между лапами в земле и кольцом — тело прижато, пока уходит волна; подъём 42–71 — 1:1.
+        /// </summary>
+        public const int StompRingFrame = 42;
 
         /// <summary>Рёв: вдох 0–15, рёв 15–45 (отброс на 45), оседание 45–60.</summary>
         public const int RoarContactFrame = 45;
 
-        /// <summary>Пыльца: тряска кроной 4–24, облака падают на 24.</summary>
+        /// <summary>Пыльца: тряска кроной 4–24 (сжата в жест), оседание 24–48 (хвост, 1:1).</summary>
         public const int PollenContactFrame = 24;
 
         /// <summary>Прорастание: лапы вдавлены к 8, держит 8–80, вырывает 80–90.</summary>
         public const int SproutPressedFrame = 8, SproutReleaseFrame = 80;
 
-        /// <summary>Ливень: толчки на 0/15/30, удары залпов на 30/45/60, стойка до 120.</summary>
+        /// <summary>Прорастание в жесте: вырывание 80–90 — за последние столько тиков жеста.</summary>
+        public const int SproutReleaseTicks = 8;
+
+        /// <summary>
+        /// Ливень (клип BerryVolley): пики толчков груди 3 / 18 / 33 (ягоды вылетают), отрезок
+        /// 18–33 — ровный цикл (все дорожки клипа повторяются через 15). Толчок v ставится на
+        /// знак залпа v (тик каста + 12v): 3→18 за первые 12 тиков, дальше цикл 18→33 до
+        /// последнего толчка, потом 33→60 — взгляд за ягодами до последнего шлепка, 60→120 —
+        /// тяжёлая стойка и подъём за <see cref="VolleySettleTicks"/>.
+        /// </summary>
+        public const int VolleyFirstPopFrame = 3, VolleyLoopFrom = 18, VolleyLoopTo = 33, VolleyWatchFrame = 60;
+        public const int VolleySettleTicks = 40;
+
+        /// <summary>Старые метки клипа (залпы на 0/15/30, удары 30/45/60) — для справки и сборщика.</summary>
         public const int VolleyFirstImpactFrame = 30, VolleyLastImpactFrame = 60;
+
+        // ---- смеси, тики Sim (вид переводит в секунды) ----
+
+        /// <summary>Новое действие из покоя, хода, хвоста или другого действия.</summary>
+        public const int ActionBlendTicks = 3;
+
+        /// <summary>Правая лапа после левой в серии: PawL кончается не в начале PawR — короткая смесь.</summary>
+        public const int PawLeftToRightBlendTicks = 4;
+
+        /// <summary>Покой, сон, ход между собой и из хвоста.</summary>
+        public const int LocomotionBlendTicks = 6;
+
+        /// <summary>Разворот на месте: в него и из него.</summary>
+        public const int TurnBlendTicks = 5;
+
+        public const int DeathBlendTicks = 4;
 
         /// <summary>Буря: крона раскрывается 0–12, волны на 75 и 135, закрывается 135–159.</summary>
         public const int StormFirstWaveFrame = 75, StormSecondWaveFrame = 135;
@@ -161,6 +217,33 @@ namespace Game.View
         /// <summary>Имя дубля в FBX.</summary>
         public static string Take(ThicketClip clip) => TakePrefix + Names[(int)clip];
 
+        /// <summary>
+        /// Второе состояние того же клипа (свой параметр Motion Time): клип, который идёт сам за
+        /// собой (серия фазы 3 кончается правой и начинается правой; топот за топотом), иначе
+        /// прыгнул бы с отхода на кадр 0 — со смесью Motion Time одного состояния не смешать.
+        /// Вид чередует копии; сборщик заводит копию рядом с основным состоянием.
+        /// </summary>
+        public static bool HasAlternate(ThicketClip clip)
+            => clip == ThicketClip.PawR || clip == ThicketClip.PawL || clip == ThicketClip.Stomp;
+
+        /// <summary>Имя второго состояния: «PawRAlt».</summary>
+        public static string AlternateName(ThicketClip clip) => Names[(int)clip] + "Alt";
+
+        /// <summary>Параметр Motion Time второго состояния: «PawRAltPhase».</summary>
+        public static string AlternatePhaseParameter(ThicketClip clip) => Names[(int)clip] + "AltPhase";
+
+        /// <summary>
+        /// Смесь в тиках при смене клипа действия. sameAction — тот же номер действия (шаг серии):
+        /// П→Л — 0 (PawL кадр 0 = PawR кадр 25), Л→П — <see cref="PawLeftToRightBlendTicks"/>;
+        /// всё прочее — <see cref="ActionBlendTicks"/>.
+        /// </summary>
+        public static int ActionBlend(ThicketClip from, ThicketClip to, bool sameAction)
+        {
+            if (sameAction && from == ThicketClip.PawR && to == ThicketClip.PawL) return 0;
+            if (sameAction && from == ThicketClip.PawL && to == ThicketClip.PawR) return PawLeftToRightBlendTicks;
+            return ActionBlendTicks;
+        }
+
         /// <summary>Длина клипа в кадрах по контракту; 0 — длина задаётся шагом (Walk), сборщик её не сверяет.</summary>
         public static int Frames(ThicketClip clip)
         {
@@ -202,7 +285,7 @@ namespace Game.View
             return Loops(clip) ? Repeat(phase) : Clamp01(phase);
         }
 
-        /// <summary>Лапа шага stage: первая (и одиночная) — правая, вторая двойной фазы 3 — левая, зеркальный клип.</summary>
+        /// <summary>Лапа удара stage серии: чётный — правая (PawR), нечётный — левая (PawL): П/Л/П.</summary>
         public static bool PawIsRight(int stage) => (stage & 1) == 0;
 
         public static ThicketClip PawClip(int stage) => PawIsRight(stage) ? ThicketClip.PawR : ThicketClip.PawL;
@@ -233,20 +316,29 @@ namespace Game.View
 
                 case ThicketMasterAction.Paw:
                 {
-                    // Двойная лапа фазы 3: после контакта первой Sim через тик начинает
-                    // замах второй — первая успевает лишь кадр отхода, дальше PawL с нуля.
+                    // Удар прошлой лапы и знак этой Sim даёт в одном тике (StageStartTick):
+                    // тот тик — контакт прошлой лапы (24→25), замах этой — со следующего.
+                    // PawL кадр 0 = PawR кадр 25: переход П→Л без скачка.
+                    const int strike = Simulation.ThicketPawStrikeTicks;
+                    int start = a.StageStartTick;
+                    if (a.Stage > 0)
+                    {
+                        if (tick < start + strike)
+                            return new ThicketClipPose(PawClip(a.Stage - 1),
+                                Segment(tick, start, start + strike, PawContactFrame, PawContactFrame + strike));
+                        start += strike;
+                    }
+                    if (tick < a.ImpactTick)
+                        return new ThicketClipPose(PawClip(a.Stage), Segment(tick, start, a.ImpactTick, 0f, PawContactFrame));
+                    // Последняя лапа отходит 24→49 за PawRecoveryTicks — уже в хвосте после конца действия.
                     bool last = a.Stage + 1 >= a.Stages;
-                    int recoverUntil = last ? a.EndTick : a.ImpactTick + Simulation.ThicketPawStrikeTicks;
-                    float recoverFrame = last ? PawFrames
-                        : Math.Min(PawFrames, PawContactFrame + Math.Max(0, recoverUntil - a.ImpactTick));
-                    return new ThicketClipPose(PawClip(a.Stage),
-                        Two(tick, a.StageStartTick, a.ImpactTick, recoverUntil, 0f, PawContactFrame, recoverFrame));
+                    return new ThicketClipPose(PawClip(a.Stage), last
+                        ? Segment(tick, a.ImpactTick, a.ImpactTick + PawRecoveryTicks, PawContactFrame, PawFrames)
+                        : Segment(tick, a.ImpactTick, a.ImpactTick + strike, PawContactFrame, PawContactFrame + strike));
                 }
 
                 case ThicketMasterAction.Stomp:
-                    return new ThicketClipPose(ThicketClip.Stomp, Three(tick, a.StageStartTick, a.ImpactTick,
-                        a.ImpactTick + Simulation.ThicketStompStrikeTicks, a.EndTick,
-                        0f, StompContactFrame, StompPlantedFrame, StompFrames));
+                    return new ThicketClipPose(ThicketClip.Stomp, StompFrame(a, tick));
 
                 case ThicketMasterAction.Dive:
                 {
@@ -266,27 +358,26 @@ namespace Game.View
 
                 case ThicketMasterAction.Sprout:
                 {
-                    // Начало каста — от последнего удара (Часы его сдвигают, StartTick — нет).
-                    int start = a.LastImpactTick - (Simulation.ThicketSproutImpactTicks
-                        + Simulation.ThicketSproutEveryTicks * (Simulation.ThicketSproutCircles - 1));
-                    int pressed = start + SproutPressedFrame;
-                    int release = Math.Max(pressed + 1, a.EndTick - (SproutFrames - SproutReleaseFrame));
-                    return new ThicketClipPose(ThicketClip.SproutCast, Three(tick, start, pressed, release, a.EndTick,
-                        0f, SproutPressedFrame, SproutReleaseFrame, SproutFrames));
+                    // Жест (StageStartTick … EndTick, Часы сдвигают оба): подъём и нажим 0–8 1:1,
+                    // короткое удержание 8→, вырывание 80–90 за последние SproutReleaseTicks.
+                    // Круги идут без босса (фоновая опасность) — удары их в клип не ключены.
+                    int start = a.StageStartTick;
+                    int pressed = Math.Min(start + SproutPressedFrame, a.EndTick);
+                    int release = Math.Max(pressed, a.EndTick - SproutReleaseTicks);
+                    float held = Math.Min(SproutReleaseFrame, SproutPressedFrame + (release - pressed));
+                    if (tick < pressed) return new ThicketClipPose(ThicketClip.SproutCast, Segment(tick, start, pressed, 0f, SproutPressedFrame));
+                    if (tick < release) return new ThicketClipPose(ThicketClip.SproutCast, Segment(tick, pressed, release, SproutPressedFrame, held));
+                    return new ThicketClipPose(ThicketClip.SproutCast, Segment(tick, release, a.EndTick, SproutReleaseFrame, SproutFrames));
                 }
 
                 case ThicketMasterAction.Pollen:
+                    // Тряска 0–24 — в жест (облака падают сами на 24-м тике), оседание 24–48 — хвост 1:1.
                     return new ThicketClipPose(ThicketClip.PollenShake,
-                        Two(tick, a.StageStartTick, a.ImpactTick, a.EndTick, 0f, PollenContactFrame, PollenFrames));
+                        Two(tick, a.StageStartTick, a.EndTick, a.EndTick + (PollenFrames - PollenContactFrame),
+                            0f, PollenContactFrame, PollenFrames));
 
                 case ThicketMasterAction.Rain:
-                {
-                    // Залпы раз в 15 тиков, удар через 30 после метки: удары 30/45/60 — кадр в кадр.
-                    int start = a.LastImpactTick - (Simulation.ThicketRainImpactTicks
-                        + Simulation.ThicketRainEveryTicks * (Simulation.ThicketRainVolleys - 1));
-                    return new ThicketClipPose(ThicketClip.BerryVolley,
-                        Two(tick, start, a.LastImpactTick, a.EndTick, 0f, VolleyLastImpactFrame, VolleyFrames));
-                }
+                    return new ThicketClipPose(ThicketClip.BerryVolley, VolleyFrame(tick, a.StageStartTick));
 
                 case ThicketMasterAction.Storm:
                 {
@@ -302,22 +393,22 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Кадр контакта по контракту для события EnemyActionImpact (amount — его Amount).
-        /// False — у действия нет кадра контакта (круги прорастания — метки на земле).
+        /// Кадр контакта для события EnemyActionImpact самого босса (amount — его Amount): лапа k,
+        /// круг (0) и кольцо (1) топота, рёв, выход нырка, волны бури. False — удар не тела:
+        /// круги прорастания, залпы ливня и облака пыльцы бьют сами (фоновая опасность после
+        /// жеста), босс в это время свободен — идёт, стоит или бьёт лапой.
         /// </summary>
         public static bool TryContact(EnemyActionKind kind, int amount, out ThicketClip clip, out float frame)
         {
             switch (kind)
             {
                 case EnemyActionKind.ThicketPaw: clip = PawClip(amount); frame = PawContactFrame; return true;
-                case EnemyActionKind.ThicketStomp: clip = ThicketClip.Stomp; frame = StompContactFrame; return true;
+                case EnemyActionKind.ThicketStomp:
+                    clip = ThicketClip.Stomp;
+                    frame = amount == 0 ? StompContactFrame : StompRingFrame;
+                    return true;
                 case EnemyActionKind.ThicketRoar: clip = ThicketClip.Roar; frame = RoarContactFrame; return true;
                 case EnemyActionKind.ThicketDive: clip = ThicketClip.Emerge; frame = 0f; return true;
-                case EnemyActionKind.ThicketPollen: clip = ThicketClip.PollenShake; frame = PollenContactFrame; return true;
-                case EnemyActionKind.ThicketRain:
-                    clip = ThicketClip.BerryVolley;
-                    frame = VolleyFirstImpactFrame + Simulation.ThicketRainEveryTicks * amount;
-                    return true;
                 case EnemyActionKind.ThicketStorm:
                     clip = ThicketClip.Storm;
                     frame = amount == 0 ? StormFirstWaveFrame : StormSecondWaveFrame;
@@ -325,6 +416,83 @@ namespace Game.View
                 default:
                     clip = ThicketClip.Idle; frame = 0f; return false;
             }
+        }
+
+        /// <summary>
+        /// Топот: шаг 0 — дыбом 0→33 к удару круга. Шаг 1 (кольцо; встаёт в тик удара круга,
+        /// StageStartTick — этот тик): лапы в земле 33→35 за ThicketStompStrikeTicks, присед
+        /// 35→<see cref="StompRingFrame"/> до кольца, подъём →71 — 1:1 после него (хвост).
+        /// Топот в один круг (стенд, старые данные) — присед и подъём после удара 1:1.
+        /// </summary>
+        private static float StompFrame(in ThicketMasterState a, float tick)
+        {
+            const int strike = Simulation.ThicketStompStrikeTicks;
+            if (a.Stage == 0)
+            {
+                if (tick < a.ImpactTick) return Segment(tick, a.StageStartTick, a.ImpactTick, 0f, StompContactFrame);
+                return a.Stages > 1
+                    ? Segment(tick, a.ImpactTick, a.ImpactTick + strike, StompContactFrame, StompPlantedFrame)
+                    : Two(tick, a.ImpactTick, a.ImpactTick + strike, a.ImpactTick + strike + (StompFrames - StompPlantedFrame),
+                        StompContactFrame, StompPlantedFrame, StompFrames);
+            }
+            int planted = a.StageStartTick + strike;
+            if (tick < planted) return Segment(tick, a.StageStartTick, planted, StompContactFrame, StompPlantedFrame);
+            if (tick < a.ImpactTick) return Segment(tick, planted, a.ImpactTick, StompPlantedFrame, StompRingFrame);
+            return Segment(tick, a.ImpactTick, a.ImpactTick + (StompFrames - StompRingFrame), StompRingFrame, StompFrames);
+        }
+
+        /// <summary>
+        /// Ливень от тика каста start: толчок v (пик груди, ягоды вылетают) — на знаке залпа v
+        /// (start + 12v). 3→18 за первый промежуток, цикл 18→33 до последнего толчка, 33→60 до
+        /// последнего шлепка, 60→120 за VolleySettleTicks.
+        /// </summary>
+        public static float VolleyFrame(float tick, int start)
+        {
+            int every = Simulation.ThicketRainEveryTicks;
+            int lastPop = start + every * Math.Max(1, Simulation.ThicketRainVolleys - 1);
+            if (tick < start + every)
+                return Segment(tick, start, start + every, VolleyFirstPopFrame, VolleyLoopFrom);
+            if (tick < lastPop)
+                return VolleyLoopFrom + (VolleyLoopTo - VolleyLoopFrom) * Repeat((tick - start - every) / every);
+            int land = lastPop + Simulation.ThicketRainImpactTicks;
+            if (tick < land) return Segment(tick, lastPop, land, VolleyLoopTo, VolleyWatchFrame);
+            return Segment(tick, land, land + VolleySettleTicks, VolleyWatchFrame, VolleyFrames);
+        }
+
+        /// <summary>Тик последнего толчка ливня (каст в start): после него ягоды больше не вылетают.</summary>
+        public static int VolleyLastPopTick(int start)
+            => start + Simulation.ThicketRainEveryTicks * Math.Max(1, Simulation.ThicketRainVolleys - 1);
+
+        /// <summary>
+        /// До какого тика клип действия ещё играет (дальше — последний кадр, вид уходит в покой).
+        /// После EndTick это хвост: отход последней лапы, подъём после кольца топота, оседание
+        /// пыльцы, толчки и стойка ливня. У прочих клип кончается вместе с действием.
+        /// </summary>
+        public static int TailEndTick(in ThicketMasterState a)
+        {
+            switch (a.Action)
+            {
+                case ThicketMasterAction.Paw:
+                    return a.Stage + 1 >= a.Stages ? Math.Max(a.EndTick, a.ImpactTick + PawRecoveryTicks) : a.EndTick;
+                case ThicketMasterAction.Stomp:
+                    return a.Stage + 1 >= a.Stages && a.Stages > 1
+                        ? Math.Max(a.EndTick, a.ImpactTick + (StompFrames - StompRingFrame))
+                        : Math.Max(a.EndTick, a.ImpactTick + Simulation.ThicketStompStrikeTicks + (StompFrames - StompPlantedFrame));
+                case ThicketMasterAction.Pollen:
+                    return a.EndTick + (PollenFrames - PollenContactFrame);
+                case ThicketMasterAction.Rain:
+                    return VolleyLastPopTick(a.StageStartTick) + Simulation.ThicketRainImpactTicks + VolleySettleTicks;
+                default:
+                    return a.EndTick;
+            }
+        }
+
+        /// <summary>Все сроки действия на ticks позже: хвост, пока босс стоит под Песочными Часами.</summary>
+        public static ThicketMasterState Shift(ThicketMasterState a, int ticks)
+        {
+            a.StartTick += ticks; a.StageStartTick += ticks;
+            a.ImpactTick += ticks; a.LastImpactTick += ticks; a.EndTick += ticks;
+            return a;
         }
 
         /// <summary>

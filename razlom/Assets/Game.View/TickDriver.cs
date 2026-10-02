@@ -238,7 +238,7 @@ namespace Game.View
         // Буфер узлов выделен один раз: пересборка билда не должна мусорить.
         // Пять талантов на способность плюс запас: буфер общий на слот, и узлы
         // сверх длины AppendNodes молча отбросил бы.
-        private readonly AbilityNode[] _nodeBuffer = new AbilityNode[8];
+        private readonly AbilityNode[] _nodeBuffer = new AbilityNode[RunLoadout.MaxNodesPerSlot];   // 8 молча резал отладочные и формы (план форм 02.10)
         private int _appliedTalents;
         private RunHud _runHud;
         private RunLoadout _appliedLoadout;
@@ -1428,13 +1428,15 @@ namespace Game.View
                 // Таланты — узлы СВОЕЙ способности, поэтому считаются на слот:
                 // сначала взятые в забеге, потом включённые в меню разработчика
                 // (кроме уже взятых — узел дважды удвоил бы прибавку).
-                int nodes = loadout.AppendTalentNodes(slot, _nodeBuffer, 0);
+                // Узлы слота — та же функция, что у RiftRun (таланты, форма, таланты формы).
+                int nodes = loadout.AppendSlotNodes(slot, _nodeBuffer, 0);
                 int pool = loadout.PoolIndexAt(slot);
                 if (SabreTalents.TryLineOf(pool, out SabreTalentLine line))
                     nodes = DeveloperTalents.AppendNodes(line, loadout.TalentMask(pool), _nodeBuffer, nodes);
                 sim.SetAbility(slot, loadout.DefinitionAt(slot), _nodeBuffer, nodes);
             }
             sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), _nodeBuffer, 0);
+            sim.SetBasicAttack(_nodeBuffer, loadout.AppendSabreNodes(_nodeBuffer, 0));
 
             _appliedTalents = DeveloperTalents.Version;
             _appliedLoadout = loadout;
@@ -1482,6 +1484,8 @@ namespace Game.View
                 if (!entities.Alive[i]) continue;
                 if (i == Simulation.PlayerId) continue;
                 if (entities.Side[i] == entities.Side[Simulation.PlayerId]) continue;
+                // Хозяин Чащи под землёй (нырок) — не цель: ни наведения, ни приказа атаки, ни цели способности.
+                if (sim.ThicketShielded(i)) continue;
 
                 var dummy = CampTrainingView.Find(i);
                 if (dummy != null)

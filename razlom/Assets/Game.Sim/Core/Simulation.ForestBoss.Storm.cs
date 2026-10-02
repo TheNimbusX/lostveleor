@@ -29,19 +29,19 @@ namespace Game.Sim
     /// волны. EnemyActionImpact: Amount — номер волны, Position — босс,
     /// Flag — героя задело.
     ///
-    /// СВЯЗКИ (фаза 3). Лапа→Лапа→Топот и Нырок→Топот: если герой ближе
-    /// ThicketChainReach, стойка после последнего контакта (вторая лапа, выход
-    /// из нырка) обрывается, и замах топота встаёт сразу — мимо правила
-    /// «60 из 90» и его перезарядки. Замахи не сокращаются никогда. От удара
-    /// топота связки до следующего действия — ThicketChainRestTicks (его стойка
-    /// фазы 3 + остаток). Не встал за ThicketChainWaitTicks (бюджет, такт, Часы) —
-    /// связка рвётся. Рёв связку рвёт.
+    /// СВЯЗКИ (фазы 2–3, темп 02.10). Нырок→лапа или Нырок→топот: после
+    /// стойки 24 после выхода — сразу серия лапы (герой в её досягаемости)
+    /// или топот (герой не дальше ThicketChainReach), мимо отдыха, правила
+    /// «60 из 90» и перезарядки топота. Серия лапы фазы 3 (3 удара) — сама
+    /// связка; прежней «Лапа→Лапа→Топот» нет. Окно после связки — окно её
+    /// действия (30). Не встала за ThicketChainWaitTicks (бюджет, такт, Часы,
+    /// герой ушёл от лапы) — рвётся. Рёв связку рвёт.
     /// </summary>
     public sealed partial class Simulation
     {
         // ---- буря цветения ----
 
-        public const int ThicketStormFirstWaveTicks = 75, ThicketStormSecondWaveTicks = 60;
+        public const int ThicketStormFirstWaveTicks = 60, ThicketStormSecondWaveTicks = 45;
 
         /// <summary>Стойка после второй волны, до отдыха.</summary>
         public const int ThicketStormRecoveryTicks = 12;
@@ -70,12 +70,13 @@ namespace Game.Sim
 
         private static readonly Fix64 ThicketStormProbeStep = Fix64.Pi / 6;
 
-        // ---- связки фазы 3 ----
+        // ---- связки фаз 2–3 ----
 
-        public const int ThicketChainRestTicks = 45, ThicketChainWaitTicks = 30;
+        /// <summary>Связка ждёт старта не дольше этого (бюджет, такт, Часы) — потом рвётся.</summary>
+        public const int ThicketChainWaitTicks = 30;
 
-        /// <summary>Связка — только если герой ближе 6 м (между центрами), когда первое действие кончилось.</summary>
-        public static readonly Fix64 ThicketChainReach = Fix64.FromInt(6);
+        /// <summary>Нырок→Топот — если герой не дальше внешнего края второго кольца топота (7,5 м между центрами).</summary>
+        public static readonly Fix64 ThicketChainReach = Fix64.Ratio(15, 2);
 
         private FixVec2[] _thicketStormScratch;
 
@@ -116,7 +117,9 @@ namespace Game.Sim
             ref var m = ref ThicketMemory[id];
             if (m.ChainNext != ThicketMasterAction.None)
             {
-                if (Tick - m.ChainStep <= ThicketChainWaitTicks) { choice = m.ChainNext; return; }
+                // Связка-лапа — только пока герой в досягаемости лапы: иначе рвётся.
+                bool reach = m.ChainNext != ThicketMasterAction.Paw || ThicketPawInReach(id);
+                if (reach && Tick - m.ChainStep <= ThicketChainWaitTicks) { choice = m.ChainNext; return; }
                 m.ChainNext = ThicketMasterAction.None;
                 m.ChainStep = 0;
             }
@@ -138,29 +141,25 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Начнёт ли конец действия связку: фаза 3, двойная лапа или нырок,
-        /// герой ближе ThicketChainReach, связка ещё не идёт.
+        /// Связка после нырка (фазы 2–3, темп 02.10): серия лапы, если герой в
+        /// её досягаемости, иначе топот, если герой не дальше ThicketChainReach;
+        /// иначе связки нет. Связка ещё не идёт.
         /// </summary>
-        private bool ThicketChainWanted(int id, ThicketMasterAction finished)
+        private ThicketMasterAction ThicketDiveChainOf(int id)
         {
             ref var m = ref ThicketMemory[id];
-            if (m.Phase < 3 || m.ChainNext != ThicketMasterAction.None || !Entities.Alive[PlayerId] || !Entities.Alive[id])
-                return false;
-            if (finished != ThicketMasterAction.Paw && finished != ThicketMasterAction.Dive) return false;
+            if (m.Phase < 2 || m.ChainNext != ThicketMasterAction.None || !Entities.Alive[PlayerId] || !Entities.Alive[id])
+                return ThicketMasterAction.None;
+            if (ThicketPawInReach(id)) return ThicketMasterAction.Paw;
             Fix64 reach = ThicketChainReach;
-            return FixVec2.DistanceSq(Entities.Position[PlayerId], Entities.Position[id]) <= reach * reach;
-        }
-
-        /// <summary>Связка: стойка лапы и нырка после контакта обрывается — замах топота встаёт сразу.</summary>
-        partial void ThicketChainCutExtra(int id, ref bool cut)
-        {
-            if (ThicketChainWanted(id, ThicketMasters[id].Action)) cut = true;
+            return FixVec2.DistanceSq(Entities.Position[PlayerId], Entities.Position[id]) <= reach * reach
+                ? ThicketMasterAction.Stomp : ThicketMasterAction.None;
         }
 
         /// <summary>
-        /// Конец действия. Топот связки — от его удара до следующего действия
-        /// ThicketChainRestTicks (стойка топота + остаток). В фазе 3 после
-        /// двойной лапы и нырка (герой ближе ThicketChainReach) — топот сразу.
+        /// Конец действия. Нырок в фазах 2–3 (после стойки 24) — сразу связка:
+        /// серия лапы или топот, мимо отдыха, правила «60 из 90» и перезарядки
+        /// топота. Окно после связки — окно её действия (30 тиков).
         /// </summary>
         partial void ThicketFinishedExtra(int id, ThicketMasterAction finished)
         {
@@ -169,11 +168,12 @@ namespace Game.Sim
             {
                 m.ChainNext = ThicketMasterAction.None;
                 m.ChainStep = 0;
-                m.NextActionTick = Tick + Math.Max(0, ThicketChainRestTicks - ThicketRecoveryOf(id, ThicketStompRecoveryTicks));
                 return;
             }
-            if (!ThicketChainWanted(id, finished)) return;
-            m.ChainNext = ThicketMasterAction.Stomp;
+            if (finished != ThicketMasterAction.Dive) return;
+            var next = ThicketDiveChainOf(id);
+            if (next == ThicketMasterAction.None) return;
+            m.ChainNext = next;
             m.ChainStep = Tick;
             m.NextActionTick = Tick;
         }

@@ -169,7 +169,8 @@ namespace Game.View
             if (_hasGlade)
             {
                 _glade = map.GetGlade(0);
-                StartBake(profile, run.LayoutSeed);
+                // Арена босса одна на все забеги — и свет её тоже (LayoutView.BossDecorSeed).
+                StartBake(profile, run.LevelSettings.Boss ? LayoutView.BossDecorSeed : run.LayoutSeed);
             }
             _prepared = true;
             ArenaMood.SetPrepared(_state);

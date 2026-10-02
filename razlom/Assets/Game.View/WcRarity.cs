@@ -49,9 +49,30 @@ namespace Game.View
         [Tooltip("Виден только у обычной")] public GameObject[] CommonOnly = new GameObject[0];
         [Tooltip("Виден только у редкой")] public GameObject[] RareOnly = new GameObject[0];
 
+        [Header("Отметка (форма навыка, 02.10)")]
+        [Tooltip("Отмечено единственным оранжевым акцентом, а не цветом редкости: у форм навыка редкости нет " +
+                 "(лут 02.10), но награда особая. Ставит SetMarked; Set(редкость) отметку снимает")]
+        public bool Marked;
+        [Tooltip("Виден только у отмеченного (огненные нити карточки формы)")] public GameObject[] MarkedOnly = new GameObject[0];
+
+        /// <summary>Роль краски сейчас: акцент у отмеченного, иначе цвет редкости.</summary>
+        public UiTheme.Role Role => Marked ? UiTheme.Role.Accent : RoleFor(Value);
+
+        /// <summary>Ни редкости, ни отметки — обычный элемент.</summary>
+        public bool Plain => !Marked && Value == Tier.Common;
+
         public void Set(Tier tier)
         {
             Value = tier;
+            Marked = false;
+            Apply();
+        }
+
+        /// <summary>Отметка формы навыка: кольцо, сияние и строка вида — акцентом, название — обычным текстом.</summary>
+        public void SetMarked(bool marked)
+        {
+            Value = Tier.Common;
+            Marked = marked;
             Apply();
         }
 
@@ -61,16 +82,20 @@ namespace Game.View
         public void Apply()
         {
             if (this == null) return;
-            bool rare = Value != Tier.Common;
-            UiTheme.Role role = RoleFor(Value);
+            bool rare = Value != Tier.Common || Marked;
+            UiTheme.Role role = Role;
             foreach (ThemeColor t in Tinted)
                 if (t != null) t.SetRole(role);
+            // Название отмеченного — обычным текстом: акцент один, он уже на кольце, строке вида и нитях.
             foreach (ThemeColor t in TextTinted)
-                if (t != null) t.SetRole(rare ? role : UiTheme.Role.Text);
+                if (t != null) t.SetRole(rare && !Marked ? role : UiTheme.Role.Text);
             foreach (GameObject go in CommonOnly)
                 if (go != null && go.activeSelf == rare) go.SetActive(!rare);
             foreach (GameObject go in RareOnly)
                 if (go != null && go.activeSelf != rare) go.SetActive(rare);
+            if (MarkedOnly != null)
+                foreach (GameObject go in MarkedOnly)
+                    if (go != null && go.activeSelf != Marked) go.SetActive(Marked);
             // Ячейка с одной рамкой: фон и рамку красит WcSlotState (пустую не трогаем).
             var slot = GetComponent<WcSlotState>();
             if (slot != null && slot.Rarity != WcSlotState.Empty && slot.Rarity != WcSlotState.Plain) slot.Set((int)Value, slot.Selected);

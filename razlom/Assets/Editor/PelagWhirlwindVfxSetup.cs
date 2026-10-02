@@ -34,6 +34,9 @@ public static class PelagWhirlwindVfxSetup
     private const string PaletteKey = "Razlom.Whirlwind.Palette";
     private const string PaletteEnv = "RAZLOM_WHIRLWIND_PALETTE";
     private const string HeavyPalette = "Heavy";
+    // «Морская пена» (02.10, PelagWhirlwindFoamVfxSetup) — вариант по умолчанию;
+    // серп A и остальные остаются пунктами меню для отката.
+    private const string FoamPalette = "Foam";
 
     private struct Palette
     {
@@ -92,6 +95,9 @@ public static class PelagWhirlwindVfxSetup
     [MenuItem("Разлом/Pelag VFX/Вихрь: палитра C — Чернила")]
     public static void PaletteC() => ChoosePalette("C");
 
+    [MenuItem("Разлом/Pelag VFX/Вихрь: «морская пена» (по умолчанию)")]
+    public static void PaletteFoam() => ChoosePalette(FoamPalette);
+
     [MenuItem("Разлом/Pelag VFX/Вихрь: вернуть спираль Heavy")]
     public static void RestoreHeavy() => ChoosePalette(HeavyPalette);
 
@@ -102,12 +108,12 @@ public static class PelagWhirlwindVfxSetup
         Debug.Log($"[whirlwind-setup] Вихрь: выбран вариант «{key}».");
     }
 
-    /// <summary>Вариант из окружения (batch-сборка съёмки) или из настроек редактора; по умолчанию A.</summary>
+    /// <summary>Вариант из окружения (batch-сборка съёмки) или из настроек редактора; по умолчанию «морская пена».</summary>
     private static string SelectedPalette()
     {
         string env = System.Environment.GetEnvironmentVariable(PaletteEnv);
         if (!string.IsNullOrEmpty(env)) return env.Trim();
-        return EditorPrefs.GetString(PaletteKey, "A");
+        return EditorPrefs.GetString(PaletteKey, FoamPalette);
     }
 
     public static void Install(bool force)
@@ -122,6 +128,17 @@ public static class PelagWhirlwindVfxSetup
             Bind(library, PelagVfxId.WhirlwindHit, CfxrFolder + "VFX_Pelag_Whirlwind_Hit.prefab", 16);
             AssetDatabase.SaveAssetIfDirty(library);
             return;
+        }
+        if (palette == FoamPalette)
+        {
+            if (PelagWhirlwindFoamVfxSetup.Ensure(force)
+                && Bind(library, PelagVfxId.WhirlwindRing, PelagWhirlwindFoamVfxSetup.SweepPath, 3)
+                && Bind(library, PelagVfxId.WhirlwindHit, PelagWhirlwindFoamVfxSetup.SplashPath, 16))
+            {
+                AssetDatabase.SaveAssetIfDirty(library);
+                return;
+            }
+            palette = "A";
         }
         if (Shader.Find(SweepShaderName) == null || AssetDatabase.LoadAssetAtPath<GameObject>(CfxrTrailPrefab) == null)
         {

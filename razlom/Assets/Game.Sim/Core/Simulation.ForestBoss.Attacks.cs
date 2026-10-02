@@ -3,6 +3,37 @@ using System;
 namespace Game.Sim
 {
     /// <summary>
+    /// Фоновая опасность Хозяина Чащи (наслоение, темп 02.10): прорастание или
+    /// ливень после короткого жеста идут сами, пока босс решает дальше.
+    /// Изменяемая структура: каждое поле — в хеш (ThicketHashExtra). Круги —
+    /// в местах ThicketShape* (TryGetThicketShape): прорастание 0–5, ливень
+    /// 4 × залп + круг.
+    /// </summary>
+    public struct ThicketHazardState
+    {
+        /// <summary>Номер опасности; 0 — её нет.</summary>
+        public int Serial;
+
+        /// <summary>Sprout или Rain.</summary>
+        public ThicketMasterAction Action;
+
+        /// <summary>Тик каста (жест и первая метка).</summary>
+        public int StartTick;
+
+        /// <summary>Сколько меток (кругов, залпов) уже встало и сколько всего.</summary>
+        public int Stage, Stages;
+
+        /// <summary>Когда встанет следующая метка (пока Stage &lt; Stages).</summary>
+        public int NextStageTick;
+
+        /// <summary>Ближайший ещё не случившийся удар и последний удар.</summary>
+        public int ImpactTick, LastImpactTick;
+
+        /// <summary>Где стоял герой при последней метке.</summary>
+        public FixVec2 Target;
+    }
+
+    /// <summary>
     /// ХОЗЯИН ЧАЩИ, этап 2 «Атаки» (спецификация 01.10): нырок в корни,
     /// прорастание, облака пыльцы (Simulation.ForestBoss.Pollen.cs), ягодный
     /// ливень. Ядро (Simulation.ForestBoss.cs / .Brain.cs) зовёт частичные
@@ -13,27 +44,35 @@ namespace Game.Sim
     /// НЫРОК. Замах — уход в землю (ThicketDiveBurrowTicks), потом бугор
     /// ThicketDiveTravelTicks едет к герою своим ходом босса (без оглядки на
     /// поворот, с поводком и стенами; шаг — остаток пути на оставшиеся тики,
-    /// не больше ThicketMoundMaxStep), в тик фиксации круг r3,5 встаёт под
+    /// не больше ThicketMoundMaxStep), в тик фиксации круг r4,0 встаёт под
     /// героем (не дальше поводка + круга от точки появления — Target), через
-    /// ThicketDiveLockTicks босс вылезает (контакт) в точке выхода (Origin):
+    /// ThicketDiveLockTicks (24) босс вылезает (контакт) в точке выхода (Origin):
     /// в поводке, тело целиком помещается, бугор доезжает по прямой, всегда
-    /// внутри круга (ThicketDiveLock). Потом стоит ThicketDiveStandTicks.
-    /// Неуязвимости нет: бугор живой и бьётся; под землёй тело
-    /// ThicketMoundRadius, чтобы не перегораживало проход.
+    /// внутри круга (ThicketDiveLock). Потом стоит ThicketDiveStandTicks (24);
+    /// в фазах 2–3 сразу связка — серия лапы или топот (Simulation.ForestBoss.Storm.cs).
+    /// От начала ухода до выхода — неуязвим и не цель (ThicketShielded); под
+    /// землёй тело ThicketMoundRadius и не расталкивается.
     /// Stage: 0 — уходит, 1 — бугор едет, 2 — круг лежит, 3 — вылез.
     /// EnemyActionStarted ThicketDive: Amount 0 — уход, 1 — бугор, 2 — круг;
-    /// EnemyActionImpact — выход (Position — где вылез, Flag — задел).
+    /// EnemyActionImpact — выход (Amount 3, Position — где вылез, Flag — задел).
     ///
-    /// ПРОРАСТАНИЕ. 6 кругов r1,5 там, где герой стоит, новый раз в 9 тиков,
-    /// удар каждого через 30 после его метки, одно попадание на круг, без
-    /// корней. Босс стоит ThicketSproutStandTicks. Вес каста в бюджете — 2.
-    /// EnemyActionImpact ThicketSprout: Amount — номер круга, Position — центр.
+    /// НАСЛОЕНИЕ (темп 02.10). Прорастание, пыльца и ливень — короткий жест
+    /// босса (ThicketCastGestureTicks), дальше опасность идёт сама
+    /// (ThicketHazardState, AdvanceThicketHazard), а босс решает дальше; пока
+    /// она идёт (ThicketHazardActive) — только серии лапы.
     ///
-    /// ЛИВЕНЬ. 3 залпа по 4 круга r1,4 вокруг героя по шаблону со щелями
-    /// не меньше 2 м (ThicketRainTemplate), залпы через 15 тиков, удар через
-    /// 30 после метки залпа, за залп — не больше одного попадания; после
-    /// последнего удара стоит ThicketRainStandTicks. Вес каста — 2.
-    /// EnemyActionImpact ThicketRain: Amount — номер залпа.
+    /// ПРОРАСТАНИЕ. 6 кругов r1,5 там, где герой стоит, новый раз в 9 тиков
+    /// (первый — в тик каста), удар каждого через 30 после его метки, одно
+    /// попадание на круг, без корней. Вес в бюджете — 2 до последнего удара.
+    /// EnemyActionStarted ThicketSprout: Amount 0 — жест и круг 0, k — круг k
+    /// (Position — его центр). EnemyActionImpact: Amount — номер круга.
+    ///
+    /// ЛИВЕНЬ. 5 залпов по 4 круга r1,4 вокруг героя по шаблону со щелями
+    /// не меньше 2 м (ThicketRainTemplate), залпы через 12 тиков (первый — в
+    /// тик каста), удар через 30 после метки залпа, за залп — не больше одного
+    /// попадания. Вес — 2. EnemyActionStarted ThicketRain: Amount 0 — жест и
+    /// залп 0, k — залп k (Position — герой, центр шаблона). Impact: Amount —
+    /// номер залпа.
     ///
     /// Если пул меток полон, удар всё равно решается по сохранённой фигуре —
     /// как у лапы и топота ядра.
@@ -43,8 +82,10 @@ namespace Game.Sim
         // ---- нырок в корни ----
 
         public const int ThicketDiveBurrowTicks = 12, ThicketDiveTravelTicks = 30;
-        public const int ThicketDiveLockTicks = 36, ThicketDiveStandTicks = 36;
-        public static readonly Fix64 ThicketDiveRadius = Fix64.Ratio(7, 2);
+        public const int ThicketDiveLockTicks = 24, ThicketDiveStandTicks = 24;
+
+        /// <summary>Круг выхода 4,0 м (3,5 × 1,15).</summary>
+        public static readonly Fix64 ThicketDiveRadius = Fix64.FromInt(4);
 
         /// <summary>Нырок — если герой дальше 7 м (между центрами) или раз в ~10 с.</summary>
         public static readonly Fix64 ThicketDiveFarRange = Fix64.FromInt(7);
@@ -64,16 +105,22 @@ namespace Game.Sim
         // ---- прорастание ----
 
         public const int ThicketSproutCircles = 6, ThicketSproutEveryTicks = 9, ThicketSproutImpactTicks = 30;
-        /// <summary>Перезарядка 15 с (было 11): стойка 90 тиков на одну атаку тянула темп фазы 2 к 2,9 с.</summary>
-        public const int ThicketSproutStandTicks = 90, ThicketSproutCooldownTicks = 450;
+        public const int ThicketSproutCooldownTicks = 450;
         public static readonly Fix64 ThicketSproutRadius = Fix64.Ratio(3, 2);
 
         // ---- ягодный ливень ----
 
-        public const int ThicketRainVolleys = 3, ThicketRainCircles = 4, ThicketRainEveryTicks = 15, ThicketRainImpactTicks = 30;
-        /// <summary>Перезарядка 15 с (было 10), как у прорастания: стойка 60 после залпов — темп фазы 3.</summary>
-        public const int ThicketRainStandTicks = 60, ThicketRainCooldownTicks = 450;
+        public const int ThicketRainVolleys = 5, ThicketRainCircles = 4, ThicketRainEveryTicks = 12, ThicketRainImpactTicks = 30;
+        public const int ThicketRainCooldownTicks = 450;
         public static readonly Fix64 ThicketRainRadius = Fix64.Ratio(7, 5);
+
+        // ---- наслоение ----
+
+        /// <summary>Жест каста (прорастание, пыльца, ливень): босс стоит столько, дальше опасность идёт сама.</summary>
+        public const int ThicketCastGestureTicks = 18;
+
+        /// <summary>Удар серии лапы — не ближе этого к удару своей фоновой опасности (не сливаются в один).</summary>
+        public const int ThicketOwnContactSpacingTicks = 3;
 
         /// <summary>Щель между кругами одного залпа — не меньше 2 м от края до края.</summary>
         public static readonly Fix64 ThicketRainGap = Fix64.FromInt(2);
@@ -94,8 +141,8 @@ namespace Game.Sim
         /// <summary>Веса взвешенного выбора рядом с лапой (у неё 10).</summary>
         public const int ThicketSproutWeight = 6, ThicketPollenWeight = 4, ThicketRainWeight = 6;
 
-        /// <summary>Мест под круги каста на одного босса: 6 прорастания или 3 × 4 ливня.</summary>
-        public const int ThicketShapeSlots = 12;
+        /// <summary>Мест под круги на одного босса: 6 прорастания, 5 × 4 ливня или 2 × 3 бури.</summary>
+        public const int ThicketShapeSlots = 20;
 
         private const byte ThicketShapeEmpty = 0, ThicketShapePending = 1, ThicketShapeDone = 2;
 
@@ -103,6 +150,10 @@ namespace Game.Sim
         private byte[] _thicketShapeState;
         private FixVec2[] _thicketShapeCenter;
         private FixVec2[] _thicketRainScratch;
+
+        private ThicketHazardState[] _thicketHazards;
+        private int _thicketHazardSerial;
+        private ThicketHazardState[] ThicketHazards => _thicketHazards ??= new ThicketHazardState[Entities.Capacity];
 
         private int[] ThicketShapeSerial => _thicketShapeSerial ??= new int[Entities.Capacity * ThicketShapeSlots];
         private int[] ThicketShapeImpact => _thicketShapeImpact ??= new int[Entities.Capacity * ThicketShapeSlots];
@@ -123,6 +174,22 @@ namespace Game.Sim
         /// Круг каста index (прорастание 0–5, ливень 4 × залп + круг): центр,
         /// тик удара, сработал ли. false — круга нет.
         /// </summary>
+        /// <summary>Фоновая опасность босса (прорастание или ливень после жеста); false — её нет.</summary>
+        public bool TryGetThicketHazard(int id, out ThicketHazardState hazard)
+        {
+            hazard = _thicketHazards != null && (uint)id < (uint)_thicketHazards.Length ? _thicketHazards[id] : default;
+            return hazard.Serial != 0;
+        }
+
+        /// <summary>
+        /// Идёт ли фоновая опасность босса: круги прорастания или ливня ещё
+        /// встают или не ударили, или лежит (падает) его пыльца. Пока идёт —
+        /// босс начинает только серии лапы.
+        /// </summary>
+        public bool ThicketHazardActive(int id)
+            => (_thicketHazards != null && (uint)id < (uint)_thicketHazards.Length && _thicketHazards[id].Serial != 0)
+                || ThicketPollenOf(id, fallingOnly: false);
+
         public bool TryGetThicketShape(int id, int index, out FixVec2 center, out int impactTick, out bool resolved)
         {
             center = default; impactTick = 0; resolved = false;
@@ -228,13 +295,16 @@ namespace Game.Sim
             {
                 case ThicketMasterAction.Dive: AdvanceThicketDive(id); return;
                 case ThicketMasterAction.Sprout:
-                case ThicketMasterAction.Rain: AdvanceThicketCast(id); return;
-                case ThicketMasterAction.Pollen: AdvanceThicketPollen(id); return;
+                case ThicketMasterAction.Rain:
+                case ThicketMasterAction.Pollen:
+                    // Жест каста: опасность уже идёт сама, босс стоит до EndTick.
+                    if (Tick >= ThicketMasters[id].EndTick) FinishThicketAction(id, ThicketRestTicks(id));
+                    return;
                 case ThicketMasterAction.Storm: AdvanceThicketStorm(id); return;
             }
         }
 
-        /// <summary>Снятое действие: тело из-под земли — в свой размер, круги каста и падающая пыльца — прочь.</summary>
+        /// <summary>Снятое действие: тело из-под земли — в свой размер, круги бури — прочь. Фоновую опасность снимает CancelThicketHazard.</summary>
         partial void ThicketCancelExtra(int id)
         {
             var a = ThicketMasters[id];
@@ -246,8 +316,25 @@ namespace Game.Sim
                     Entities.Position[id] = ThicketDiveSurface(id, Entities.Position[id]);
                 Entities.BodyRadius[id] = body;
             }
-            ClearThicketShapes(id);
+            if (a.Action == ThicketMasterAction.Storm) ClearThicketShapes(id);
             if (a.Action == ThicketMasterAction.Pollen) DropFallingPollen(id);
+        }
+
+        /// <summary>
+        /// Снимает фоновую опасность (смерть босса или героя): несработавшие
+        /// метки гаснут (TelegraphCancelled), круги — прочь, падающая пыльца не ложится.
+        /// </summary>
+        private void CancelThicketHazard(int id)
+        {
+            if (_thicketHazards == null || (uint)id >= (uint)_thicketHazards.Length || _thicketHazards[id].Serial == 0) return;
+            if (_thicketShapeState != null)
+            {
+                int from = id * ThicketShapeSlots;
+                for (int k = from; k < from + ThicketShapeSlots; k++)
+                    if (_thicketShapeState[k] == ThicketShapePending) CancelTelegraphSerial(_thicketShapeSerial[k]);
+            }
+            ClearThicketShapes(id);
+            _thicketHazards[id] = default;
         }
 
         private void ClearThicketShapes(int id)
@@ -262,12 +349,12 @@ namespace Game.Sim
 
         // ---------- нырок в корни ----------
 
-        /// <summary>Нырок: крупная метка весом 1 бронируется с начала ухода — круг ляжет на 42-м тике.</summary>
+        /// <summary>Нырок: крупная метка весом 1 бронируется с начала ухода — круг ляжет на 42-м тике, выход на 66-м.</summary>
         private bool StartThicketDive(int id)
         {
             int impact = Tick + ThicketDiveBurrowTicks + ThicketDiveTravelTicks + ThicketDiveLockTicks;
             if (!BigMarkAllowed(id, 1, impact)) return false;
-            BeginThicketAction(id, ThicketMasterAction.Dive, impact, impact, impact + ThicketRecoveryOf(id, ThicketDiveStandTicks), 1,
+            BeginThicketAction(id, ThicketMasterAction.Dive, impact, impact, impact + ThicketDiveStandTicks, 1,
                 Entities.Facing[id], Entities.Position[PlayerId]);
             SetThicketCooldown(id, ThicketMasterAction.Dive, ThicketDiveCooldownTicks);
             ThicketMemory[id].DiveNextTick = Tick + ThicketScaled(id, ThicketDiveEveryTicks);
@@ -342,9 +429,8 @@ namespace Game.Sim
                 ResolveThicketDive(id);
                 return;
             }
-            // Связка «Нырок→Топот» (фаза 3): стойки после выхода нет — сразу замах топота.
-            if (a.Stage == 3 && (Tick >= a.EndTick || ThicketChainCuts(id, a.ImpactTick + 1)))
-                FinishThicketAction(id, ThicketRestTicks(id));
+            // Стоит 24 после выхода; связка фаз 2–3 (лапа или топот) — в ThicketFinishedExtra.
+            if (a.Stage == 3 && Tick >= a.EndTick) FinishThicketAction(id, ThicketRestTicks(id));
         }
 
         /// <summary>Выход: тело — в свой размер, удар по кругу (подброс без контроля — только вид).</summary>
@@ -450,63 +536,90 @@ namespace Game.Sim
             return false;
         }
 
-        // ---------- прорастание и ливень: касты из нескольких кругов ----------
+        // ---------- прорастание и ливень: жест и фоновая опасность ----------
 
         /// <summary>
-        /// Прорастание: первый круг — сразу под героем, остальные 5 — раз в 9
-        /// тиков. Stages — кругов всего, Stage — сколько уже встало,
-        /// StageStartTick — когда встанет следующий, ImpactTick — ближайший удар.
+        /// Прорастание: жест ThicketCastGestureTicks, первый круг — сразу под
+        /// героем, остальные 5 — раз в 9 тиков уже без босса (AdvanceThicketHazard).
         /// </summary>
         private bool StartThicketSprout(int id)
         {
             int first = Tick + ThicketSproutImpactTicks;
             int last = first + ThicketSproutEveryTicks * (ThicketSproutCircles - 1);
             if (!BigMarkAllowed(id, ThicketCastMarkWeight, first) || !HeroContactAllowed(id, first, last)) return false;
-            ClearThicketShapes(id);
-            // Стоит ThicketSproutStandTicks от начала; в фазе 3 режется остаток после последнего удара.
-            int end = last + ThicketRecoveryOf(id, Math.Max(0, Tick + ThicketSproutStandTicks - last));
-            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Sprout, first, last, end,
-                ThicketSproutCircles, Entities.Facing[id], Entities.Position[PlayerId]);
-            OpenThicketCastStage(id, ref a);
+            BeginThicketCast(id, ThicketMasterAction.Sprout);
+            BeginThicketHazard(id, ThicketMasterAction.Sprout, ThicketSproutCircles, last);
             SetThicketCooldown(id, ThicketMasterAction.Sprout, ThicketSproutCooldownTicks);
             return true;
         }
 
-        /// <summary>Ливень: первый залп — сразу, остальные — раз в 15 тиков; Stages — залпов.</summary>
+        /// <summary>Ливень: жест, первый залп — сразу, остальные 4 — раз в 12 тиков уже без босса.</summary>
         private bool StartThicketRain(int id)
         {
             int first = Tick + ThicketRainImpactTicks;
             int last = first + ThicketRainEveryTicks * (ThicketRainVolleys - 1);
             if (!BigMarkAllowed(id, ThicketCastMarkWeight, first) || !HeroContactAllowed(id, first, last)) return false;
-            ClearThicketShapes(id);
-            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Rain, first, last, last + ThicketRecoveryOf(id, ThicketRainStandTicks),
-                ThicketRainVolleys, Entities.Facing[id], Entities.Position[PlayerId]);
-            OpenThicketCastStage(id, ref a);
+            BeginThicketCast(id, ThicketMasterAction.Rain);
+            BeginThicketHazard(id, ThicketMasterAction.Rain, ThicketRainVolleys, last);
             SetThicketCooldown(id, ThicketMasterAction.Rain, ThicketRainCooldownTicks);
             return true;
         }
 
-        /// <summary>Следующий шаг каста: круг прорастания под героем или залп ливня вокруг него.</summary>
-        private void OpenThicketCastStage(int id, ref ThicketMasterState a)
+        /// <summary>
+        /// Жест каста: действие без контакта (HitResolved сразу), StageStartTick —
+        /// начало, ImpactTick = LastImpactTick = EndTick — конец жеста. Событие
+        /// Started (Amount 0) — общее с первой меткой опасности.
+        /// </summary>
+        private ref ThicketMasterState BeginThicketCast(int id, ThicketMasterAction action)
+        {
+            int end = Tick + ThicketCastGestureTicks;
+            ref var a = ref BeginThicketAction(id, action, end, end, end, 1, Entities.Facing[id], Entities.Position[PlayerId]);
+            a.HitResolved = true;
+            return ref a;
+        }
+
+        /// <summary>Заводит фоновую опасность и ставит её первую метку в этот же тик.</summary>
+        private void BeginThicketHazard(int id, ThicketMasterAction action, int stages, int last)
+        {
+            ClearThicketShapes(id);
+            ref var h = ref ThicketHazards[id];
+            h = new ThicketHazardState
+            {
+                Serial = ++_thicketHazardSerial, Action = action, StartTick = Tick, Stages = stages,
+                NextStageTick = Tick, LastImpactTick = last,
+            };
+            PlaceThicketHazardStage(id, ref h);
+        }
+
+        /// <summary>
+        /// Следующая метка опасности: круг прорастания под героем или залп ливня
+        /// вокруг него. Метка 0 идёт под событием жеста; с 1-й — своё Started
+        /// (Amount — номер, Position — центр круга или герой).
+        /// </summary>
+        private void PlaceThicketHazardStage(int id, ref ThicketHazardState h)
         {
             FixVec2 hero = Entities.Position[PlayerId];
-            bool rain = a.Action == ThicketMasterAction.Rain;
+            bool rain = h.Action == ThicketMasterAction.Rain;
             int impact = Tick + (rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks);
-            int stage = a.Stage;
+            int stage = h.Stage;
             if (rain)
             {
                 _thicketRainScratch ??= new FixVec2[ThicketRainCircles];
                 ThicketRainTemplate(ref ThicketMemory[id].Rng, hero, _thicketRainScratch);
                 for (int k = 0; k < ThicketRainCircles; k++)
-                    OpenThicketShape(id, stage * ThicketRainCircles + k, ThicketRainCircle(_thicketRainScratch[k]), impact, ref a);
+                    OpenThicketShape(id, stage * ThicketRainCircles + k, ThicketRainCircle(_thicketRainScratch[k]), impact);
             }
-            else OpenThicketShape(id, stage, ThicketSproutCircle(hero), impact, ref a);
-            a.Stage = stage + 1;
-            a.StageStartTick = Tick + (rain ? ThicketRainEveryTicks : ThicketSproutEveryTicks);
-            a.Target = hero;
+            else OpenThicketShape(id, stage, ThicketSproutCircle(hero), impact);
+            h.Stage = stage + 1;
+            h.NextStageTick = Tick + (rain ? ThicketRainEveryTicks : ThicketSproutEveryTicks);
+            h.Target = hero;
+            if (h.ImpactTick < Tick || impact < h.ImpactTick) h.ImpactTick = impact;
+            if (stage > 0)
+                _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
+                    rain ? EnemyActionKind.ThicketRain : EnemyActionKind.ThicketSprout, hero, stage));
         }
 
-        private void OpenThicketShape(int id, int index, in EnemyTelegraph shape, int impact, ref ThicketMasterState a)
+        private int OpenThicketShape(int id, int index, in EnemyTelegraph shape, int impact)
         {
             int k = id * ThicketShapeSlots + index;
             int slot = OpenTelegraph(id, shape, impact, impact + TelegraphLingerTicks, TelegraphFlags.SharedView);
@@ -515,47 +628,43 @@ namespace Game.Sim
             ThicketShapeImpact[k] = impact;
             ThicketShapeCenter[k] = shape.Origin;
             ThicketShapeState[k] = ThicketShapePending;
-            a.TelegraphSerial = serial;
+            return serial;
         }
 
         /// <summary>
-        /// Тик каста: встаёт следующий круг (залп), срабатывают созревшие —
-        /// каждый круг прорастания бьёт сам, залп ливня — не больше одного раза
-        /// на все 4 круга. Стойка до EndTick, потом отдых.
+        /// Тик фоновой опасности (до действия босса): встаёт следующая метка,
+        /// срабатывают созревшие — каждый круг прорастания бьёт сам, залп ливня —
+        /// не больше одного раза на все 4 круга. Всё отбито — опасность снята
+        /// (круги остаются «сработавшими» для вида до следующего каста или бури).
         /// </summary>
-        private void AdvanceThicketCast(int id)
+        private void AdvanceThicketHazard(int id)
         {
-            {
-                ref var a = ref ThicketMasters[id];
-                if (a.Stage < a.Stages && Tick >= a.StageStartTick) OpenThicketCastStage(id, ref a);
-            }
-            ResolveThicketShapesDue(id);
-            var s = ThicketMasters[id];
-            if (s.Serial == 0) return;
-            int next = NextThicketShapeImpact(id, s);
-            ref var b = ref ThicketMasters[id];
-            if (next != int.MaxValue) b.ImpactTick = next;
-            else { b.ImpactTick = b.LastImpactTick; b.HitResolved = true; }
-            if (b.HitResolved && Tick >= b.EndTick) FinishThicketAction(id, ThicketRestTicks(id));
+            if (_thicketHazards == null) return;
+            ref var h = ref _thicketHazards[id];
+            if (h.Serial == 0) return;
+            if (h.Stage < h.Stages && Tick >= h.NextStageTick) PlaceThicketHazardStage(id, ref h);
+            ResolveThicketShapesDue(id, h.Action == ThicketMasterAction.Rain);
+            if (h.Serial == 0 || !Entities.Alive[id]) return;
+            int next = NextThicketHazardImpact(id, h);
+            if (next == int.MaxValue) h = default;
+            else h.ImpactTick = next;
         }
 
-        /// <summary>Ближайший ещё не случившийся удар каста (встал или встанет); MaxValue — всё отбито.</summary>
-        private int NextThicketShapeImpact(int id, in ThicketMasterState a)
+        /// <summary>Ближайший ещё не случившийся удар опасности (встал или встанет); MaxValue — всё отбито.</summary>
+        private int NextThicketHazardImpact(int id, in ThicketHazardState h)
         {
             int best = int.MaxValue;
             int from = id * ThicketShapeSlots;
             for (int k = 0; k < ThicketShapeSlots; k++)
                 if (ThicketShapeState[from + k] == ThicketShapePending && ThicketShapeImpact[from + k] < best)
                     best = ThicketShapeImpact[from + k];
-            if (best == int.MaxValue && a.Stage < a.Stages)
-                best = a.StageStartTick + (a.Action == ThicketMasterAction.Rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks);
+            if (best == int.MaxValue && h.Stage < h.Stages)
+                best = h.NextStageTick + (h.Action == ThicketMasterAction.Rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks);
             return best;
         }
 
-        private void ResolveThicketShapesDue(int id)
+        private void ResolveThicketShapesDue(int id, bool rain)
         {
-            var a = ThicketMasters[id];
-            bool rain = a.Action == ThicketMasterAction.Rain;
             int from = id * ThicketShapeSlots;
             int groups = rain ? ThicketRainVolleys : ThicketSproutCircles;
             int size = rain ? ThicketRainCircles : 1;
@@ -585,13 +694,93 @@ namespace Game.Sim
             }
         }
 
+        /// <summary>Удары опасности, которые ещё впереди (встали или встанут), — для такта и для серии лапы.</summary>
+        private int ThicketHazardImpacts(int id, int[] into)
+        {
+            if (_thicketHazards == null || _thicketHazards[id].Serial == 0) return 0;
+            var h = _thicketHazards[id];
+            bool rain = h.Action == ThicketMasterAction.Rain;
+            int size = rain ? ThicketRainCircles : 1;
+            int from = id * ThicketShapeSlots, count = 0;
+            for (int k = 0; k < h.Stage && count < into.Length; k++)
+            {
+                int slot = from + k * size;
+                if (ThicketShapeState[slot] == ThicketShapePending && ThicketShapeImpact[slot] >= Tick)
+                    into[count++] = ThicketShapeImpact[slot];
+            }
+            int every = rain ? ThicketRainEveryTicks : ThicketSproutEveryTicks;
+            int delay = rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks;
+            for (int k = h.Stage; k < h.Stages && count < into.Length; k++)
+                into[count++] = h.NextStageTick + every * (k - h.Stage) + delay;
+            return count;
+        }
+
+        private int[] _thicketImpactScratch;
+
+        /// <summary>Ляжет ли удар серии лапы (strikes ударов через gap от first) ближе ThicketOwnContactSpacingTicks к удару своей опасности.</summary>
+        private bool ThicketHazardClash(int id, int first, int strikes, int gap)
+        {
+            _thicketImpactScratch ??= new int[ThicketShapeSlots];
+            int n = ThicketHazardImpacts(id, _thicketImpactScratch);
+            for (int s = 0; s < strikes; s++)
+            {
+                int strike = first + gap * s;
+                for (int k = 0; k < n; k++)
+                    if (Math.Abs(strike - _thicketImpactScratch[k]) < ThicketOwnContactSpacingTicks) return true;
+            }
+            return false;
+        }
+
+        /// <summary>Контакты опасности в такт ударов (вставшие и будущие).</summary>
+        private void AddThicketHazardContacts(int id)
+        {
+            _thicketImpactScratch ??= new int[ThicketShapeSlots];
+            int n = ThicketHazardImpacts(id, _thicketImpactScratch);
+            for (int k = 0; k < n; k++) AddHeroContact(id, _thicketImpactScratch[k], _thicketImpactScratch[k]);
+        }
+
+        /// <summary>Держит ли опасность крупный жетон: круги ещё ударят или пыльца ещё падает.</summary>
+        private bool ThicketHazardHoldsToken(int id)
+        {
+            if (_thicketHazards != null && _thicketHazards[id].Serial != 0 && Tick <= _thicketHazards[id].LastImpactTick) return true;
+            return ThicketPollenOf(id, fallingOnly: true);
+        }
+
+        /// <summary>
+        /// Вес опасности в бюджете: прорастание и ливень — 2 до последнего удара
+        /// (начало — тик каста), падающая пыльца — 1 до падения.
+        /// </summary>
+        private int ThicketHazardMarkWeight(int id, out int start, out int impact)
+        {
+            start = int.MinValue; impact = int.MinValue;
+            int weight = 0;
+            if (_thicketHazards != null && _thicketHazards[id].Serial != 0)
+            {
+                var h = _thicketHazards[id];
+                weight += ThicketCastMarkWeight;
+                start = h.StartTick;
+                impact = h.ImpactTick;
+            }
+            bool falling = false;
+            if (_thicketPollen != null)
+                for (int k = 0; k < _thicketPollen.Length; k++)
+                {
+                    var z = _thicketPollen[k];
+                    if (z.Serial == 0 || z.Source != id || z.LandTick <= Tick) continue;
+                    falling = true;
+                    if (z.StartTick > start) start = z.StartTick;
+                    if (impact == int.MinValue || z.LandTick < impact) impact = z.LandTick;
+                }
+            return falling ? weight + 1 : weight;
+        }
+
         // ---------- бюджет, такт, Часы, сброс, хеш ----------
 
         /// <summary>
-        /// Вес в бюджете крупных меток: нырок — 1 с начала ухода до выхода
-        /// (круг ляжет на 42-м тике, место бронируется сразу), прорастание и
-        /// ливень — 2 до последнего удара, пыльца — 1 до падения, буря — весь
+        /// Вес действия в бюджете крупных меток: нырок — 1 с начала ухода до
+        /// выхода (круг ляжет на 42-м тике, место бронируется сразу), буря — весь
         /// бюджет (не меньше 4) до второй волны (Simulation.ForestBoss.Storm.cs).
+        /// Жест каста — 0: его метки считает фоновая опасность (ThicketHazardMarkWeight).
         /// </summary>
         partial void ThicketMarkWeightExtra(int id, ref int weight, ref int start, ref int impact)
         {
@@ -600,12 +789,7 @@ namespace Game.Sim
             switch (a.Action)
             {
                 case ThicketMasterAction.Dive:
-                case ThicketMasterAction.Pollen:
                     weight = 1; start = a.StartTick; impact = a.ImpactTick;
-                    return;
-                case ThicketMasterAction.Sprout:
-                case ThicketMasterAction.Rain:
-                    weight = ThicketCastMarkWeight; start = a.StartTick; impact = a.ImpactTick;
                     return;
                 case ThicketMasterAction.Storm:
                     weight = ThicketStormWeight; start = a.StartTick; impact = a.ImpactTick;
@@ -613,7 +797,7 @@ namespace Game.Sim
             }
         }
 
-        /// <summary>Контакты в такт ударов: выход из нырка, каждый круг прорастания, каждый залп ливня (вставшие и будущие).</summary>
+        /// <summary>Контакты действия в такт ударов: выход из нырка, волны бури. Удары опасности — AddThicketHazardContacts.</summary>
         partial void ThicketContactsExtra(int id)
         {
             var a = _thicketMasters[id];
@@ -622,34 +806,13 @@ namespace Game.Sim
                 case ThicketMasterAction.Dive:
                     if (!a.HitResolved && a.ImpactTick >= Tick) AddHeroContact(id, a.ImpactTick, a.ImpactTick);
                     return;
-                case ThicketMasterAction.Sprout:
-                case ThicketMasterAction.Rain:
-                {
-                    bool rain = a.Action == ThicketMasterAction.Rain;
-                    int size = rain ? ThicketRainCircles : 1;
-                    int from = id * ThicketShapeSlots;
-                    for (int k = 0; k < a.Stage; k++)
-                    {
-                        int slot = from + k * size;
-                        if (ThicketShapeState[slot] == ThicketShapePending && ThicketShapeImpact[slot] >= Tick)
-                            AddHeroContact(id, ThicketShapeImpact[slot], ThicketShapeImpact[slot]);
-                    }
-                    int every = rain ? ThicketRainEveryTicks : ThicketSproutEveryTicks;
-                    int delay = rain ? ThicketRainImpactTicks : ThicketSproutImpactTicks;
-                    for (int k = a.Stage; k < a.Stages; k++)
-                    {
-                        int impact = a.StageStartTick + every * (k - a.Stage) + delay;
-                        AddHeroContact(id, impact, impact);
-                    }
-                    return;
-                }
                 case ThicketMasterAction.Storm:
                     AddThicketStormContacts(id, a);
                     return;
             }
         }
 
-        /// <summary>Часы: ещё не сработавшие круги каста и пыльца этого босса ждут вместе с ним.</summary>
+        /// <summary>Часы: ещё не сработавшие круги, фоновая опасность, пыльца и ждущая связка этого босса ждут вместе с ним.</summary>
         partial void ThicketHourglassExtra(int id, int ticks)
         {
             if (_thicketShapeState != null)
@@ -658,6 +821,15 @@ namespace Game.Sim
                 for (int k = from; k < from + ThicketShapeSlots; k++)
                     if (_thicketShapeState[k] == ThicketShapePending && _thicketShapeImpact[k] >= Tick) _thicketShapeImpact[k] += ticks;
             }
+            if (_thicketHazards != null && _thicketHazards[id].Serial != 0)
+            {
+                ref var h = ref _thicketHazards[id];
+                if (h.Stage < h.Stages && h.NextStageTick >= Tick) h.NextStageTick += ticks;
+                if (h.ImpactTick >= Tick) h.ImpactTick += ticks;
+                if (h.LastImpactTick >= Tick) h.LastImpactTick += ticks;
+            }
+            ref var m = ref ThicketMemory[id];
+            if (m.ChainNext != ThicketMasterAction.None) m.ChainStep += ticks;
             DelayThicketPollen(id, ticks);
         }
 
@@ -670,6 +842,8 @@ namespace Game.Sim
                 Array.Clear(_thicketShapeImpact, 0, _thicketShapeImpact.Length);
                 Array.Clear(_thicketShapeCenter, 0, _thicketShapeCenter.Length);
             }
+            if (_thicketHazards != null) Array.Clear(_thicketHazards, 0, _thicketHazards.Length);
+            _thicketHazardSerial = 0;
             ResetThicketPollen();
         }
 
@@ -689,6 +863,22 @@ namespace Game.Sim
                         Hashing.Mix(ref hash, _thicketShapeSerial[k]); Hashing.Mix(ref hash, _thicketShapeImpact[k]);
                         Hashing.Mix(ref hash, _thicketShapeCenter[k].X); Hashing.Mix(ref hash, _thicketShapeCenter[k].Y);
                     }
+                }
+            }
+            if (_thicketHazards != null)
+            {
+                Hashing.Mix(ref hash, 0x5448485A); // "THHZ"
+                Hashing.Mix(ref hash, _thicketHazardSerial);
+                for (int id = 1; id < Entities.Count; id++)
+                {
+                    if (Entities.Kind[id] != EnemyKind.ForestThicketMaster) continue;
+                    var h = _thicketHazards[id];
+                    Hashing.Mix(ref hash, h.Serial);
+                    if (h.Serial == 0) continue;
+                    Hashing.Mix(ref hash, (int)h.Action); Hashing.Mix(ref hash, h.StartTick);
+                    Hashing.Mix(ref hash, h.Stage); Hashing.Mix(ref hash, h.Stages); Hashing.Mix(ref hash, h.NextStageTick);
+                    Hashing.Mix(ref hash, h.ImpactTick); Hashing.Mix(ref hash, h.LastImpactTick);
+                    Hashing.Mix(ref hash, h.Target.X); Hashing.Mix(ref hash, h.Target.Y);
                 }
             }
             HashThicketPollen(ref hash);

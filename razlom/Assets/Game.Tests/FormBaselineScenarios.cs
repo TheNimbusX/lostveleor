@@ -104,9 +104,10 @@ namespace Game.Tests
         /// ветка маршрута — от сида и глубины. Хеш всех экранов и наборов после выбора.
         /// Экран босса не входит: его ведёт своя сессия.
         /// </summary>
-        public static ulong ArenaTrail(ulong seed)
+        public static ulong ArenaTrail(ulong seed, System.Action<RiftRun> configure = null)
         {
             RiftRun run = NewArenaRun(seed);
+            configure?.Invoke(run);
             run.StartRun();
             ulong hash = Hashing.Offset;
             for (int depth = 1; depth <= ArenaCount; depth++)
@@ -126,9 +127,10 @@ namespace Game.Tests
         }
 
         /// <summary>То же на прототипном забеге: восемь Разломов подряд, без маршрутов.</summary>
-        public static ulong PrototypeTrail(ulong seed)
+        public static ulong PrototypeTrail(ulong seed, System.Action<RiftRun> configure = null)
         {
             RiftRun run = NewPrototypeRun(seed);
+            configure?.Invoke(run);
             run.StartRun();
             ulong hash = Hashing.Offset;
             for (int depth = 1; depth <= ArenaCount; depth++)

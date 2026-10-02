@@ -41,7 +41,7 @@ namespace Game.Sim
         /// <summary>Проверка цели до прерывания текущего действия и расхода кулдауна.</summary>
         public bool ValidAbilityTarget(int target, AbilityBuild build)
             => build != null && target > 0 && target < Entities.Count && Entities.Alive[target]
-                && Entities.Side[target] != Entities.Side[PlayerId]
+                && Entities.Side[target] != Entities.Side[PlayerId] && !ThicketShielded(target)
                 && (Entities.Position[target] - Entities.Position[PlayerId]).LengthSq
                     <= build.Get(AbilityStatType.Radius) * build.Get(AbilityStatType.Radius);
 

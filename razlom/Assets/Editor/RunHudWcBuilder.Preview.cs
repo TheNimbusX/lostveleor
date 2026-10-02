@@ -9,7 +9,7 @@ namespace Game.EditorTools
     /// <summary>Кадры экранов забега без запуска игры, поверх кадра игры (ART/no-ui.png), с примером данных.</summary>
     public static partial class RunHudWcBuilder
     {
-        public enum Shot { Choice, Replace, Status, Summary, Artifact, Route }
+        public enum Shot { Choice, Replace, Status, Summary, Artifact, Route, Form }
 
         public static string Capture(string outPath, Shot shot)
         {
@@ -35,7 +35,7 @@ namespace Game.EditorTools
                 back.uvRect = new Rect(.035f, 0f, .965f, .955f);
                 back.transform.SetSiblingIndex(0);
             }
-            view.Choice.gameObject.SetActive(shot == Shot.Choice || shot == Shot.Artifact || shot == Shot.Route);
+            view.Choice.gameObject.SetActive(shot == Shot.Choice || shot == Shot.Artifact || shot == Shot.Route || shot == Shot.Form);
             view.ArtifactReplace.gameObject.SetActive(shot == Shot.Artifact);
             view.Skip.gameObject.SetActive(shot == Shot.Artifact);
             view.Replace.gameObject.SetActive(shot == Shot.Replace);
@@ -101,6 +101,7 @@ namespace Game.EditorTools
                 view.Offers[2].KindIcon.texture = view.KindIcons[2];
                 PreviewRewardPolish(view);
             }
+            if (shot == Shot.Form) PreviewForm(view);
             if (shot == Shot.Artifact)
             {
                 // Награда босса: три артефакта набора акта I, у героя уже есть Обет Хранителя — открыт вопрос о замене.

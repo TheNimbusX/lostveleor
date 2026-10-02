@@ -124,6 +124,16 @@ namespace Game.Sim
         /// RiftRun.SpringOfferBelowPercent, и никогда — после босса.
         /// </summary>
         Spring = 6,
+
+        /// <summary>
+        /// Выбор формы навыка (план форм 02.10): свой экран из трёх карточек, как у
+        /// артефакта босса. Линия — в PoolIndex, форма — в TalentIndex (RewardOffer.Form).
+        /// Карточка с формой None — пустое место, вид её не показывает.
+        /// </summary>
+        Form = 7,
+
+        /// <summary>ЗАРЕЗЕРВИРОВАНО под редкую связку двух навыков (план форм 02.10). Пока не выпадает.</summary>
+        Link = 8,
     }
 
     /// <summary>
@@ -155,6 +165,15 @@ namespace Game.Sim
 
         /// <summary>Заполнено при Kind == Spring: сколько процентов максимума здоровья вернёт родник.</summary>
         public int HealPercent => Kind == RewardKind.Spring ? PoolIndex : 0;
+
+        /// <summary>Заполнено при Kind == Form: предлагаемая форма (линия — PoolIndex). None — пустое место.</summary>
+        public PelagForm Form => Kind == RewardKind.Form ? (PelagForm)TalentIndex : PelagForm.None;
+
+        /// <summary>Талант формы: карточка Talent с номером от PelagForms.FormTalentBase.</summary>
+        public bool IsFormTalent => Kind == RewardKind.Talent && TalentIndex >= PelagForms.FormTalentBase;
+
+        /// <summary>Номер таланта внутри формы (с нуля) или −1.</summary>
+        public int FormTalentIndex => IsFormTalent ? TalentIndex - PelagForms.FormTalentBase : -1;
 
         private RewardOffer(RewardKind kind, ItemInstance item,
             StatType stat, ModifierOp op, Fix64 value, int poolIndex = -1, int talentIndex = -1)
@@ -188,6 +207,10 @@ namespace Game.Sim
         public static RewardOffer OfSpring(int healPercent)
             => new RewardOffer(RewardKind.Spring, default, default, default, Fix64.Zero, healPercent);
 
+        /// <summary>Форма линии: линия в PoolIndex, номер формы в TalentIndex — карточка не растёт.</summary>
+        public static RewardOffer OfForm(int line, PelagForm form)
+            => new RewardOffer(RewardKind.Form, default, default, default, Fix64.Zero, line, (int)form);
+
         public void HashInto(ref ulong hash)
         {
             Hashing.Mix(ref hash, (int)Kind);
@@ -212,6 +235,10 @@ namespace Game.Sim
                 case RewardKind.Artifact:
                 case RewardKind.Spring:
                     Hashing.Mix(ref hash, PoolIndex);
+                    break;
+                case RewardKind.Form:
+                    Hashing.Mix(ref hash, PoolIndex);
+                    Hashing.Mix(ref hash, TalentIndex);
                     break;
             }
         }

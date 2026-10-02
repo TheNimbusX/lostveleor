@@ -64,6 +64,9 @@ namespace Game.View
         public float RingErodeSeconds = .17f;
         [Tooltip("На сколько метров ниже корня лежит кольцо. Корень стоит на высоте клинка.")]
         public float RingDrop = .86f;
+        [Tooltip("Кольцо на шейдере Whirlwind Sweep: эрозия и вспышка — блоком свойств. " +
+                 "Выключено у «морской пены»: её кольцо ведёт время само, по возрасту частицы.")]
+        public bool RingPropertyBlock = true;
 
         private static readonly int HeadId = Shader.PropertyToID("_Head");
         private static readonly int ErodeId = Shader.PropertyToID("_Erode");
@@ -107,6 +110,7 @@ namespace Game.View
                 Transform ring = Ring.transform;
                 ring.localPosition = new Vector3(0f, 0f, RingDrop / scale);
                 ring.localScale = Vector3.one * radius;
+                if (!RingPropertyBlock) return;
                 _block.Clear();
                 _block.SetFloat(HeadId, 1f);
                 _block.SetFloat(ErodeId, erode);

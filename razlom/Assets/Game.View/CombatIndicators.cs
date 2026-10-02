@@ -192,6 +192,9 @@ namespace Game.View
                 {
                     if (!entities.Alive[i]) continue;
 
+                    // Хозяин Чащи под землёй (нырок) — не цель: кольца цели и наведения над бугром нет.
+                    if (sim.ThicketShielded(i)) continue;
+
                     bool isPlayer = i == Simulation.PlayerId;
                     bool isTarget = i == ordered || (highlightAlive && i == _lastTarget);
 

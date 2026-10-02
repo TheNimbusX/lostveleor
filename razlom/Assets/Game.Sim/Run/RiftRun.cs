@@ -245,6 +245,7 @@ namespace Game.Sim
             Gold = 0;
             PendingAbility = -1;
             ResetPreparationUsage();
+            ResetForms();
             Loadout.ResetToStarter(Preparation.StarterPoolIndex);
             CurrentRoute = new ArenaRouteOffer(ArenaReward.Upgrade, 3, false, 0);
             RollPlan();
@@ -716,6 +717,7 @@ namespace Game.Sim
 
             RewardOffer offer = _offers[choice];
             if (offer.Kind == RewardKind.Artifact && !RunArtifacts.IsValid(offer.Artifact)) return;
+            if (offer.Kind == RewardKind.Form) { TakeFormOffer(in offer); return; }
             if (_takenCount < MaxTakenRewards) _taken[_takenCount++] = offer;
 
             if (offer.Kind == RewardKind.Artifact)
@@ -817,6 +819,8 @@ namespace Game.Sim
             // него, и остальные карточки сида не меняются от того, ранен ли герой.
             if (BossId < 0 && SpringWanted())
                 _offers[WeakestOffer()] = RewardOffer.OfSpring(SpringHealPercent);
+            // Экран формы — тоже ПОСЛЕ бросков и из своего потока (RiftRun.Forms).
+            if (FormScreenDue()) RollFormOffers();
         }
 
         /// <summary>Герой пришёл к выходу ниже SpringOfferBelowPercent здоровья.</summary>
@@ -960,11 +964,12 @@ namespace Game.Sim
             return count;
         }
 
+        /// <summary>Линии с доступным усилением: пул, затем сабля (PelagKit.LineAt) — без неё счёт прежний.</summary>
         private int CountTalentCandidates(int filled)
         {
             int count = 0;
-            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
-                if (IsTalentCandidate(pool, filled)) count++;
+            for (int i = 0; i < PelagKit.LineCount; i++)
+                if (IsTalentCandidate(PelagKit.LineAt(i), filled)) count++;
             return count;
         }
 
@@ -979,17 +984,22 @@ namespace Game.Sim
         /// <summary>
         /// Случайное ещё не взятое усиление случайной имеющейся способности.
         /// Порядка нет (владелец, 24 сентября): любое из оставшихся с равным шансом.
+        /// С формой у линии в «оставшихся» и таланты формы (номера от
+        /// PelagForms.FormTalentBase); у линии без формы — тот же бросок, что до форм.
         /// </summary>
         private RewardOffer RollTalentOffer(int filled)
         {
             int pick = _sim.Rng.Loot.NextInt(0, CountTalentCandidates(filled));
-            for (int pool = 0; pool < PelagKit.PoolSize; pool++)
-                if (IsTalentCandidate(pool, filled) && pick-- == 0)
+            for (int i = 0; i < PelagKit.LineCount; i++)
+            {
+                int line = PelagKit.LineAt(i);
+                if (IsTalentCandidate(line, filled) && pick-- == 0)
                 {
-                    int left = SabreTalents.TalentsPerLine - Loadout.TalentCount(pool);
-                    int index = Loadout.UntakenTalentAt(pool, _sim.Rng.Loot.NextInt(0, left));
-                    return RewardOffer.OfTalent(pool, index);
+                    int left = Loadout.TalentsLeft(line);
+                    int index = Loadout.UntakenTalentAt(line, _sim.Rng.Loot.NextInt(0, left));
+                    return RewardOffer.OfTalent(line, index);
                 }
+            }
             return RollItemOffer();
         }
 
@@ -1046,6 +1056,7 @@ namespace Game.Sim
 
             Loadout.HashInto(ref hash);
             HashRunPreparation(ref hash);
+            HashForms(ref hash);
             Hashing.Mix(ref hash, Gold);
             Hashing.Mix(ref hash, (int)Artifact);
             Hashing.Mix(ref hash, PendingAbility);

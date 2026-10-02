@@ -429,6 +429,8 @@ namespace Game.View
                 // Босса ведёт полоса сверху экрана (RunHud.Boss): мировой полосы элиты над ним нет —
                 // над Хозяином Чащи (3,6 м) она висела бы в кроне и дублировала верхнюю.
                 if (_driver.Run != null && i == _driver.Run.BossId) continue;
+                // Хозяин Чащи под землёй (стенд без забега): над бугром полосы нет — он не цель.
+                if (sim.ThicketShielded(i)) continue;
 
                 float age = now - _hitAt[i];
                 var dummy = CampTrainingView.Find(i);

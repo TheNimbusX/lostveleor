@@ -93,7 +93,7 @@ namespace Game.View
 
         public void Show(LayoutMap map, ulong layoutSeed, EncounterPlan encounters)
         {
-            _layoutSeed = layoutSeed;
+            _layoutSeed = IsBossClearing(map) ? BossDecorSeed : layoutSeed;
             _shownEncounters = encounters;
             Rebuild(map);
         }
@@ -618,6 +618,14 @@ namespace Game.View
                 }
             }
         }
+
+        // Арена босса одна на все забеги (владелец 02.10: «закрепи вид арены»): форма уже
+        // без сида (GladeLayout.GenerateBossClearing), а деревья, камни и характер поляны —
+        // с постоянным сидом вместо сида забега.
+        public const ulong BossDecorSeed = 0x484F5A4149UL;
+
+        private static bool IsBossClearing(LayoutMap map)
+            => map != null && map.GladeCount == 1 && map.GetGlade(0).Radii.Equals(GladeLayout.BossClearingRadii);
 
         // This stream belongs only to presentation. Never consumes Simulation.Rng.
         private System.Random DecorRandom(int placement, int salt = 0)

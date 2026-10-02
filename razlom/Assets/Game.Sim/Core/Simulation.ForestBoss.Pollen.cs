@@ -43,9 +43,12 @@ namespace Game.Sim
     /// (5 на арене 9), не больше 8 укусов за жизнь облака (40) и не больше
     /// одного укуса на все облака за 15 тиков. Облаков на земле не больше 3:
     /// новое вытесняет самое старое. Своё состояние, как у луж, не метки;
-    /// падение — крупная метка весом 1 в бюджете (ThicketMarkWeightExtra).
-    /// Смерть босса уносит его облака. EnemyActionImpact ThicketPollen —
-    /// на каждое облако в тик падения: Amount — слот (TryGetThicketPollenZone),
+    /// падение — крупная метка весом 1 в бюджете (ThicketHazardMarkWeight).
+    /// Наслоение (темп 02.10): жест босса — ThicketCastGestureTicks, облака
+    /// падают уже без него; пока облака босса падают или лежат, он начинает
+    /// только серии лапы (ThicketHazardActive). Смерть босса уносит его
+    /// облака. EnemyActionImpact ThicketPollen — на каждое облако в тик
+    /// падения (из ThicketZonesTick): Amount — слот (TryGetThicketPollenZone),
     /// Position — центр, Flag — герой в нём.
     /// </summary>
     public sealed partial class Simulation
@@ -53,7 +56,7 @@ namespace Game.Sim
         public const int ThicketPollenZones = 3;
         public const int ThicketPollenFallTicks = 24, ThicketPollenLifeTicks = 120, ThicketPollenPulseTicks = 15;
         public const int ThicketPollenSlowPercent = 30;
-        public const int ThicketPollenRecoveryTicks = 24, ThicketPollenCooldownTicks = 270;
+        public const int ThicketPollenCooldownTicks = 270;
         public static readonly Fix64 ThicketPollenRadius = Fix64.Ratio(9, 5);
 
         /// <summary>Два боковых облака — в 3,4 м от героя, по разные стороны (±30° от прямой).</summary>
@@ -96,14 +99,17 @@ namespace Game.Sim
             return live;
         }
 
-        /// <summary>Каст: облака встают сразу (падают), стойка до падения и ещё ThicketPollenRecoveryTicks.</summary>
+        /// <summary>
+        /// Каст (наслоение): жест ThicketCastGestureTicks, облака встают сразу и
+        /// падают через 24 — уже без босса; пока облака этого босса падают или
+        /// лежат, он начинает только серии лапы (ThicketHazardActive).
+        /// </summary>
         private bool StartThicketPollen(int id)
         {
             int land = Tick + ThicketPollenFallTicks;
             if (!BigMarkAllowed(id, 1, land)) return false;
             FixVec2 hero = Entities.Position[PlayerId];
-            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Pollen, land, land, land + ThicketRecoveryOf(id, ThicketPollenRecoveryTicks), 1,
-                Entities.Facing[id], hero);
+            ref var a = ref BeginThicketCast(id, ThicketMasterAction.Pollen);
             ref var rng = ref ThicketMemory[id].Rng;
             Fix64 angle = rng.NextFix() * Fix64.TwoPi;
             Fix64 opposite = angle + Fix64.Pi + (rng.NextFix() * 2 - Fix64.One) * ThicketPollenSideJitter;
@@ -135,24 +141,16 @@ namespace Game.Sim
             };
         }
 
-        /// <summary>Падение: события на каждое облако; потом стойка до EndTick.</summary>
-        private void AdvanceThicketPollen(int id)
+        /// <summary>Есть ли облака босса id: падающие (fallingOnly) или любые (падают или лежат).</summary>
+        private bool ThicketPollenOf(int id, bool fallingOnly)
         {
-            ref var a = ref ThicketMasters[id];
-            if (!a.HitResolved && Tick >= a.ImpactTick)
+            if (_thicketPollen == null) return false;
+            for (int k = 0; k < _thicketPollen.Length; k++)
             {
-                a.HitResolved = true;
-                FixVec2 hero = Entities.Position[PlayerId];
-                var zones = ThicketPollen;
-                for (int k = 0; k < zones.Length; k++)
-                {
-                    var z = zones[k];
-                    if (z.Serial == 0 || z.Source != id || z.LandTick != Tick) continue;
-                    _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
-                        EnemyActionKind.ThicketPollen, z.Center, k, ThicketPollenTouches(z, hero)));
-                }
+                var z = _thicketPollen[k];
+                if (z.Serial != 0 && z.Source == id && (!fallingOnly || z.LandTick > Tick)) return true;
             }
-            if (a.HitResolved && Tick >= a.EndTick) FinishThicketAction(id, ThicketRestTicks(id));
+            return false;
         }
 
         /// <summary>Снятый каст: ещё падающие облака этого босса не ложатся.</summary>
@@ -182,6 +180,14 @@ namespace Game.Sim
             }
             if (Entities.Count <= PlayerId || !Entities.Alive[PlayerId]) return;
             FixVec2 hero = Entities.Position[PlayerId];
+            // Падение (наслоение: жест босса к этому тику уже кончился) — событие на каждое облако.
+            for (int k = 0; k < zones.Length; k++)
+            {
+                var z = zones[k];
+                if (z.Serial == 0 || z.LandTick != Tick) continue;
+                _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, z.Source, PlayerId,
+                    EnemyActionKind.ThicketPollen, z.Center, k, ThicketPollenTouches(z, hero)));
+            }
             bool inside = false;
             int bite = -1;
             for (int k = 0; k < zones.Length; k++)

@@ -101,22 +101,99 @@ namespace Game.Tests
             Assert.That(ponds, Is.GreaterThan(0));
         }
 
+        /// <summary>
+        /// Поляна босса (владелец, 02.10.2026): ВСЕГДА ОДНА И ТА ЖЕ. Скруглённый
+        /// пол 20 × 15 м без воды, рек и тайников; вход снизу экрана (−Y), выход
+        /// сверху; комната перед выходом (там встаёт босс) — центр поляны. Ни сид,
+        /// ни размер арены (ArenaFlow даёт боссу 4), ни число модулей её не меняют —
+        /// и лесная локация (уровень 9, сплошной лес) собирает ту же карту.
+        /// </summary>
         [Test]
-        public void BossGlade_IsLarger_AndHasAWalkableApproach()
+        public void BossGlade_IsFixed_TwentyByFifteen_Dry_EntranceAtTheBottom()
         {
             var modules = PrototypeContent.Modules();
-            for (ulong seed = 1; seed <= 30; seed++)
+            var reference = new LayoutMap(modules, 64);
+            GladeLayout.Generate(modules, reference, 1, 20, true);
+            var glade = reference.GetGlade(0);
+            var forest = ArenaEncounterTests.ForestLocation();
+            for (ulong seed = 1; seed <= 200; seed++)
             {
-                var map = new LayoutMap(modules, 64);
-                GladeLayout.Generate(modules, map, seed, 19, true);
-                Assert.That(map.GladeCount, Is.EqualTo(1));
-                var center = map.CenterOf(map.GetPlaced(map.GetExit(0)).Parent);
-                Assert.That(center, Is.EqualTo(map.GetGlade(0).Center));
-                Assert.That(FixVec2.Distance(center, map.EntryPoint), Is.GreaterThan(Fix64.FromInt(25)));
-                Assert.That(map.GetGlade(0).Radii.X * map.GetGlade(0).Radii.Y, Is.GreaterThan(Fix64.FromInt(300)));
-                for (int c = 0; c < map.Routes.CellCount; c++) Assert.That(map.Routes.DistanceFromEntry(c), Is.GreaterThanOrEqualTo(0));
-                Assert.That(map.RewardBranchCount, Is.Zero);
+                for (int size = 0; size <= 4; size++)
+                {
+                    if (size == 1) continue;
+                    var map = new LayoutMap(modules, 64);
+                    GladeLayout.Generate(modules, map, seed * 7919 + (ulong)size, 11 + (int)(seed % 10), true, size);
+                    SameBossGlade(reference, map, "seed " + seed + ", size " + size);
+                }
+                SameBossGlade(reference, ArenaEncounterTests.ArenaMap(forest, 9, seed), "forest level 9, seed " + seed);
             }
+
+            Assert.That(reference.GladeCount, Is.EqualTo(1));
+            Assert.That(glade.Shape, Is.EqualTo(GladeShape.Rounded));
+            Assert.That(glade.Turn, Is.Zero);
+            Assert.That(reference.WaterCount, Is.Zero, "без озера");
+            Assert.That(reference.RiverCount, Is.Zero, "без реки");
+            Assert.That(reference.RewardBranchCount, Is.Zero, "без тайников");
+            Assert.That(reference.ObstacleCount, Is.Zero);
+            Assert.That(reference.PlacedCount, Is.EqualTo(GladeLayout.RequiredModules(20, true)));
+
+            // Пол: 20 м поперёк через центр; 15 м вдоль — в стороне от троп входа и выхода.
+            Assert.That(FloorSpan(reference, glade.Center, 1, 0), Is.EqualTo(20).Within(0.1));
+            foreach (int side in new[] { -5, -3, 3, 5 })
+                Assert.That(FloorSpan(reference, glade.Center + new FixVec2(Fix64.FromInt(side), Fix64.Zero), 0, 1),
+                    Is.EqualTo(15).Within(0.6), "вдоль поляны в " + side + " м от оси");
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(98, 10), Fix64.Zero)), Is.LessThanOrEqualTo(Fix64.One));
+            Assert.That(glade.Field(glade.Center + new FixVec2(Fix64.Ratio(102, 10), Fix64.Zero)), Is.GreaterThan(Fix64.One));
+
+            // Вход снизу экрана, выход сверху: оба на оси поляны, тропа ведёт вверх.
+            var entry = reference.EntryPoint;
+            var exit = reference.ExitPoint(0);
+            Assert.That(entry.X, Is.EqualTo(glade.Center.X));
+            Assert.That(exit.X, Is.EqualTo(glade.Center.X));
+            Assert.That(entry.Y, Is.LessThan(glade.Center.Y - GladeLayout.BossFloorHalfDepth - Fix64.FromInt(8)), "старт в тропе входа");
+            Assert.That(exit.Y, Is.GreaterThan(glade.Center.Y + GladeLayout.BossFloorHalfDepth + Fix64.FromInt(8)));
+            Assert.That(reference.Routes.EntryFacing, Is.EqualTo(new FixVec2(Fix64.Zero, Fix64.One)));
+            Assert.That(reference.CenterOf(reference.GetPlaced(reference.GetExit(0)).Parent), Is.EqualTo(glade.Center),
+                "комната перед выходом — центр поляны: там встаёт босс");
+
+            // Вся поляна открыта: из центра телом Хозяина Чащи по прямой до любой точки пола.
+            var body = EnemyArchetypes.ThicketMasterBodyRadius;
+            for (int y = -7; y <= 7; y++)
+                for (int x = -10; x <= 10; x++)
+                {
+                    var point = glade.Center + new FixVec2(Fix64.FromInt(x), Fix64.FromInt(y));
+                    if (!reference.IsWalkable(point, body)) continue;
+                    Assert.That(reference.CanTravel(glade.Center, point, body), Is.True, x + ", " + y);
+                }
+            for (int c = 0; c < reference.Routes.CellCount; c++)
+                Assert.That(reference.Routes.DistanceFromEntry(c), Is.GreaterThanOrEqualTo(0), "cell " + c);
+            Assert.That(reference.CanTravel(entry, glade.Center, Fix64.Ratio(85, 100)), Is.True, "тропа входа прямая");
+            Assert.That(reference.CanTravel(glade.Center, exit, Fix64.Ratio(85, 100)), Is.True, "тропа выхода прямая");
+        }
+
+        private static void SameBossGlade(LayoutMap reference, LayoutMap map, string where)
+        {
+            Assert.That(map.Hash(), Is.EqualTo(reference.Hash()), where);
+            Assert.That(map.GladeCount, Is.EqualTo(1), where);
+            var a = reference.GetGlade(0); var b = map.GetGlade(0);
+            Assert.That(b.Center, Is.EqualTo(a.Center), where);
+            Assert.That(b.Radii, Is.EqualTo(a.Radii), where);
+            Assert.That(b.Shape, Is.EqualTo(a.Shape), where);
+            Assert.That(b.Turn, Is.EqualTo(a.Turn), where);
+            Assert.That(map.WaterCount, Is.Zero, where);
+            Assert.That(map.ObstacleCount, Is.Zero, where);
+            Assert.That(map.EntryPoint, Is.EqualTo(reference.EntryPoint), where);
+            Assert.That(map.ExitPoint(0), Is.EqualTo(reference.ExitPoint(0)), where);
+        }
+
+        /// <summary>Длина пола по прямой через точку, метры: шаг 5 см в обе стороны.</summary>
+        private static double FloorSpan(LayoutMap map, FixVec2 through, int dx, int dy)
+        {
+            var step = new FixVec2(Fix64.FromInt(dx), Fix64.FromInt(dy)) * Fix64.Ratio(1, 20);
+            int forward = 0, back = 0;
+            while (forward < 2000 && map.ContainsWorld(through + step * Fix64.FromInt(forward + 1))) forward++;
+            while (back < 2000 && map.ContainsWorld(through - step * Fix64.FromInt(back + 1))) back++;
+            return (forward + back + 1) / 20.0;
         }
     }
 }

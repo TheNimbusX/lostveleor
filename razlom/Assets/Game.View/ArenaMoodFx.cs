@@ -126,7 +126,7 @@ namespace Game.View
             // С этой строки откат возможен: ошибка посреди показа не оставит чужие огоньки и фонари перекрашенными.
             _shown = true;
             _state = ArenaMood.Current;
-            _seed = ArenaMoodRandom.Mix(run.LayoutSeed, _state.Depth, (int)_state.Mode);
+            _seed = ArenaMoodRandom.Mix(run.LevelSettings.Boss ? LayoutView.BossDecorSeed : run.LayoutSeed, _state.Depth, (int)_state.Mode);
             EnsureRoot();
             FindCamera();
             ReadContour();

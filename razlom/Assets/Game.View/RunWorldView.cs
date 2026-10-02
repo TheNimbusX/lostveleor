@@ -181,11 +181,8 @@ namespace Game.View
             }
         }
 
-        static Texture AbilityIcon(int definitionId)
-        {
-            string file = PlayerHud.IconFile(definitionId);
-            return file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
-        }
+        /// <summary>Иконка способности по общему правилу; у навыка в слоте — с его формой (AbilityIconRules).</summary>
+        static Texture AbilityIcon(int definitionId, PelagForm form = PelagForm.None) => AbilityIcons.Get(definitionId, form);
 
         /// <summary>Меню нужно только при полной панели: иначе способность поднимается сама.</summary>
         static int DropMenuTarget(RiftRun run)
@@ -222,7 +219,7 @@ namespace Game.View
             {
                 AbilityDefinition current = run.Loadout.DefinitionAt(slot);
                 if (DropReplaceIcons[slot] == null) continue;
-                Texture icon = current != null ? AbilityIcon(current.Id) : null;
+                Texture icon = current != null ? AbilityIcon(current.Id, run.Loadout.FormOf(run.Loadout.PoolIndexAt(slot))) : null;
                 if (DropReplaceIcons[slot].texture != icon) DropReplaceIcons[slot].texture = icon;
                 DropReplaceIcons[slot].enabled = icon != null;
             }

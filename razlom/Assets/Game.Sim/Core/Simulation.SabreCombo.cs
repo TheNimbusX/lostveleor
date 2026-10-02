@@ -358,4 +358,9 @@ namespace Game.Sim
             _sabre.HashInto(ref hash);
             Hashing.Mix(ref hash, _sabreNextHit);
             Hashing.Mix(ref hash, _sabreChainUntil);
-            Hashing.Mix(ref hash, _sabrePressUn
+            Hashing.Mix(ref hash, _sabrePressUntil);
+            Hashing.Mix(ref hash, _sabrePressAim.X);
+            Hashing.Mix(ref hash, _sabrePressAim.Y);
+        }
+    }
+}

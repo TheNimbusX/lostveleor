@@ -5,10 +5,10 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// ХОЗЯИН ЧАЩИ — ВИД БОЯ (каркас, 02.10). Только привязка и разбор событий Sim:
-    /// ни префабов, ни частиц, ни звука — эффекты атак и звук придут позже частичными
-    /// методами ниже (файл ThicketMasterCombatView.Vfx.cs и т. п.). Пустой частичный
-    /// метод компилятор выбрасывает: пока реализаций нет, каркас ничего не рисует.
+    /// ХОЗЯИН ЧАЩИ — ВИД БОЯ (каркас, 02.10). Здесь только привязка и разбор событий Sim;
+    /// эффекты атак — частичные методы ниже, их реализует ThicketMasterCombatView.Vfx.cs
+    /// (префабы собирает ThicketMasterVfxSetup). Звука нет. Пустой частичный метод
+    /// компилятор выбрасывает: без реализации хук ничего не делает.
     ///
     /// Ставится на объект арены (ArenaView.PrepareForestMob, семья босса) одной строкой
     /// <see cref="EnsureOn"/>. Привязывается к живому Хозяину Чащи сам: ищет сущность
@@ -154,16 +154,25 @@ namespace Game.View
                 case EnemyActionKind.ThicketPaw:
                     OnPawWindup(boss, tick, amount, ThicketMasterClipRules.PawIsRight(amount), a.ImpactTick);
                     break;
-                case EnemyActionKind.ThicketStomp: OnStompWindup(boss, tick, a.ImpactTick); break;
+                // Amount 0 — дыбом (круг 5,2), 1 — метка кольца 5,2–7,5 встала в тик удара круга.
+                case EnemyActionKind.ThicketStomp: if (amount == 0) OnStompWindup(boss, tick, a.ImpactTick); break;
                 case EnemyActionKind.ThicketDive:
                     // Amount 0 — уход в землю, 1 — бугор поехал, 2 — круг лёг (Position — его центр).
                     if (amount == 0) OnDiveBurrow(boss, tick);
                     else if (amount == 1) OnMoundTravel(boss, tick);
                     else OnDiveLocked(boss, tick, at, a.ImpactTick);
                     break;
-                case EnemyActionKind.ThicketSprout: OnSproutCast(boss, tick); break;
+                // Жест каста — Amount 0; круг прорастания k / залп ливня v фоновой опасности —
+                // Amount k (метка 0 встаёт под событием жеста). Центры — TryGetThicketShape.
+                case EnemyActionKind.ThicketSprout:
+                    if (amount == 0) OnSproutCast(boss, tick);
+                    OnSproutMarked(boss, tick, amount);
+                    break;
                 case EnemyActionKind.ThicketPollen: OnPollenCast(boss, tick, a.ImpactTick); break;
-                case EnemyActionKind.ThicketRain: OnRainCast(boss, tick); break;
+                case EnemyActionKind.ThicketRain:
+                    if (amount == 0) OnRainCast(boss, tick);
+                    OnRainMarked(boss, tick, amount);
+                    break;
                 case EnemyActionKind.ThicketStorm:
                     // Amount 0 — начало (круги первой волны), 1 — круги второй волны.
                     if (amount == 0) OnStormBegin(boss, tick, a.ImpactTick);
@@ -177,7 +186,7 @@ namespace Game.View
             switch (kind)
             {
                 case EnemyActionKind.ThicketPaw: OnPawImpact(boss, tick, amount, ThicketMasterClipRules.PawIsRight(amount), at, hit); break;
-                case EnemyActionKind.ThicketStomp: OnStompImpact(boss, tick, at, hit); break;
+                case EnemyActionKind.ThicketStomp: OnStompImpact(boss, tick, amount, at, hit); break;
                 case EnemyActionKind.ThicketRoar: OnRoarBlast(boss, tick, at, hit); break;
                 case EnemyActionKind.ThicketDive: OnEmerge(boss, tick, at, hit); break;
                 case EnemyActionKind.ThicketSprout: OnSproutImpact(boss, tick, amount, at, hit); break;
@@ -226,20 +235,20 @@ namespace Game.View
         /// <summary>Замах рёва: thresholds — биты ThicketRoar*Bit, которые он закрывает.</summary>
         partial void OnRoarWindup(int boss, int tick, int thresholds, int impactTick);
 
-        /// <summary>Рёв: кольцо 2–5,5 м, отброс без урона.</summary>
+        /// <summary>Рёв: кольцо 2,3–6,3 м, отброс без урона.</summary>
         partial void OnRoarBlast(int boss, int tick, Vector3 at, bool hit);
 
-        /// <summary>Замах лапы: stage — номер лапы двойной (0 правая, 1 левая). Уголь на пальцах — EnemyBodyTelegraphView.</summary>
+        /// <summary>Замах удара серии лапы: stage — номер удара (чётный — правая, нечётный — левая). Уголь на пальцах — EnemyBodyTelegraphView.</summary>
         partial void OnPawWindup(int boss, int tick, int stage, bool right, int impactTick);
 
         /// <summary>Контакт лапы: at — точка удара Sim (центр сектора). След когтей — EnemyBodyTelegraphView.</summary>
         partial void OnPawImpact(int boss, int tick, int stage, bool right, Vector3 at, bool hit);
 
-        /// <summary>Подъём на дыбы перед топотом (метка круга 4,5 м — GroundTelegraphView).</summary>
+        /// <summary>Подъём на дыбы перед топотом (метка круга 5,2 м — GroundTelegraphView).</summary>
         partial void OnStompWindup(int boss, int tick, int impactTick);
 
-        /// <summary>Топот: лапы в землю, круг 4,5 м вокруг себя.</summary>
-        partial void OnStompImpact(int boss, int tick, Vector3 at, bool hit);
+        /// <summary>Топот: ring 0 — лапы в землю, круг 5,2 м; ring 1 — второе кольцо 5,2–7,5 м через 15 тиков.</summary>
+        partial void OnStompImpact(int boss, int tick, int ring, Vector3 at, bool hit);
 
         /// <summary>Нырок: уход в землю (12 тиков DiveIn).</summary>
         partial void OnDiveBurrow(int boss, int tick);
@@ -253,8 +262,11 @@ namespace Game.View
         /// <summary>Выход из-под земли (= удар): at — где вылез.</summary>
         partial void OnEmerge(int boss, int tick, Vector3 at, bool hit);
 
-        /// <summary>Каст прорастания: лапы в землю, круги по следам героя.</summary>
+        /// <summary>Каст прорастания: лапы в землю (жест 18 тиков), круги по следам героя идут сами.</summary>
         partial void OnSproutCast(int boss, int tick);
+
+        /// <summary>Встал круг прорастания index (0–5): центр и удар — TryGetThicketShape(boss, index).</summary>
+        partial void OnSproutMarked(int boss, int tick, int index);
 
         /// <summary>Удар круга прорастания index (0–5) в at.</summary>
         partial void OnSproutImpact(int boss, int tick, int index, Vector3 at, bool hit);
@@ -265,10 +277,13 @@ namespace Game.View
         /// <summary>Облако пыльцы легло: slot — Simulation.TryGetThicketPollenZone.</summary>
         partial void OnPollenLand(int boss, int tick, int slot, Vector3 at, bool hit);
 
-        /// <summary>Каст ягодного ливня (3 залпа по 4 круга).</summary>
+        /// <summary>Каст ягодного ливня (жест 18 тиков; 5 залпов по 4 круга идут сами).</summary>
         partial void OnRainCast(int boss, int tick);
 
-        /// <summary>Удар залпа volley (0–2); at — круг, задевший героя, или первый.</summary>
+        /// <summary>Встал залп volley: круги 4·volley … 4·volley + 3 — TryGetThicketShape; ягоды вылетают из куста.</summary>
+        partial void OnRainMarked(int boss, int tick, int volley);
+
+        /// <summary>Удар залпа volley (0–4); at — круг, задевший героя, или первый.</summary>
         partial void OnRainVolley(int boss, int tick, int volley, Vector3 at, bool hit);
 
         /// <summary>Буря цветения: крона раскрывается, круги света первой волны (TryGetThicketShape 0–2).</summary>

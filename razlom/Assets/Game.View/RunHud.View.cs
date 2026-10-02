@@ -333,6 +333,9 @@ namespace Game.View
 
         private void FillChoice(RiftRun run, bool letters)
         {
+            // Выбор формы навыка (RunHud.Forms): свой экран из трёх отмеченных карточек.
+            FormCardsOff();
+            if (run.ChoosingForm) { FillFormChoice(run, letters); return; }
             if (run.ChoosingArtifact) { FillArtifactChoice(run, letters); return; }
             RunHudView.SetActive(_view.Skip, run.CanRerollReward);
             if(_view.Skip!=null && run.CanRerollReward)_view.Skip.GetComponentInChildren<TMPro.TMP_Text>().text="Резервный план · перебросить";
@@ -428,6 +431,7 @@ namespace Game.View
         /// </summary>
         private void FillRoute(RiftRun run, bool letters)
         {
+            FormCardsOff();
             PolishRoute();
             RunHudView.SetActive(_view.Skip, false);
             RunHudView.SetText(_view.ChoiceTitle, "Выбери следующую арену");
@@ -486,7 +490,7 @@ namespace Game.View
                 RunSlotTile tile = _view.Slots[slot];
                 if (tile == null) continue;
                 AbilityDefinition current = run.Loadout.DefinitionAt(slot);
-                Texture2D icon = current != null ? Icon(current.Id) : null;
+                Texture2D icon = current != null ? Icon(current.Id, run.Loadout.FormOf(run.Loadout.PoolIndexAt(slot))) : null;
                 if (tile.Icon != null) { tile.Icon.texture = icon; tile.Icon.enabled = icon != null; }
                 RunHudView.SetText(tile.Name, current != null ? Capitalized(PlayerHud.AbilityName(current.Id)) : "Пусто");
                 int rank = run.Loadout.TalentRank(run.Loadout.PoolIndexAt(slot));
@@ -525,7 +529,20 @@ namespace Game.View
                 {
                     if (!SabreTalents.TryLineOf(offer.PoolIndex, out SabreTalentLine line)) return;
                     AbilityDefinition definition = PelagKit.PoolDefinition(offer.PoolIndex);
-                    icon = definition != null ? Icon(definition.Id) : null;
+                    // Иконка навыка — с его формой, если она уже выбрана (AbilityIconRules).
+                    PelagForm form = run.Loadout.FormOf(offer.PoolIndex);
+                    icon = definition != null ? Icon(definition.Id, form) : null;
+                    if (offer.IsFormTalent)
+                    {
+                        // Таланты формы (номер от PelagForms.FormTalentBase) своих текстов ещё не имеют: таблица
+                        // талантов линии на такой номер упала бы и сорвала экран награды.
+                        title = PelagFormTexts.TalentName(form, offer.FormTalentIndex);
+                        kind = "Талант формы · " + (run.Loadout.FormTalentCount(offer.PoolIndex) + 1) + " из " + PelagForms.FormTalentCount(form);
+                        body = PelagFormTexts.TalentPending;
+                        valueLabel = PelagFormTexts.Title(form);
+                        rare = true;
+                        return;
+                    }
                     title = SabreTalentTexts.Name(line, offer.TalentIndex);
                     // Уровней у усилений нет (владелец, 24 сентября) — только «сколько уже взято у способности».
                     kind = "Усиление · " + (run.Loadout.TalentCount(offer.PoolIndex) + 1) + " из " + RunLoadout.MaxUpgrades;

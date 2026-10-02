@@ -288,11 +288,14 @@ namespace Game.View
             card.Glint.Play();
         }
 
-        /// <summary>Свет редкости: у обычной — тёплый кремовый (серый перелив читался пылью), у остальных — цвет редкости.</summary>
+        /// <summary>
+        /// Свет редкости: у обычной — тёплый кремовый (серый перелив читался пылью), у остальных — цвет редкости,
+        /// у отмеченной карточки формы — акцент (RunHud.Forms).
+        /// </summary>
         private static Color RarityLight(RunOfferCard card)
         {
-            WcRarity.Tier tier = card.Rarity != null ? card.Rarity.Value : WcRarity.Tier.Common;
-            return tier == WcRarity.Tier.Common ? new Color(1f, .9f, .75f, 1f) : UiTheme.Current.Get(WcRarity.RoleFor(tier));
+            if (card.Rarity == null || card.Rarity.Plain) return new Color(1f, .9f, .75f, 1f);
+            return UiTheme.Current.Get(card.Rarity.Role);
         }
 
         // ---------------------------------------------------------------- тексты карточек
@@ -407,8 +410,8 @@ namespace Game.View
             _tipBody[index] = string.IsNullOrEmpty(body) ? null : UiKeywords.Themed(body, _found);
             _tipTitle[index] = card.Title != null ? card.Title.text : string.Empty;
             _tipKeyword[index] = _found.Count > 0 ? _found[0] : UiKeywords.Id.None;
-            _tipColour[index] = card.Rarity != null && card.Rarity.Value != WcRarity.Tier.Common
-                ? UiTheme.Current.Get(WcRarity.RoleFor(card.Rarity.Value))
+            _tipColour[index] = card.Rarity != null && !card.Rarity.Plain
+                ? UiTheme.Current.Get(card.Rarity.Role)
                 : UiTheme.Current.Get(UiTheme.Role.Text);
             if (_tipShown == index) _tipShown = -1;
         }

@@ -1053,7 +1053,8 @@ namespace Game.Sim
             {
                 _separationPush[i] = FixVec2.Zero;
                 _separationExempt[i] = Entities.Alive[i]
-                    && (IsWendigoAirborne(i) || StonehoofOwnsPosition(i) || SplitterOwnsPosition(i));
+                    && (IsWendigoAirborne(i) || StonehoofOwnsPosition(i) || SplitterOwnsPosition(i)
+                        || ThicketShielded(i));
             }
             bool heroPhased = VoidPhased || DashInvulnerable || _mobilitySlot >= 0
                 && _abilityBuilds[_mobilitySlot].DefinitionId == AbilityDefinition.SkewerId;
@@ -1372,6 +1373,8 @@ namespace Game.Sim
                 {
                     AbilityBuild leap = (uint)_leapSlot < (uint)AbilitySlots ? _abilityBuilds[_leapSlot] : null;
                     Fix64 range = leap != null ? leap.Get(AbilityStatType.Radius) : AnchorKit.LeapRange;
+                    // Хозяин Чащи ушёл в нырок за время замаха — цепь летит в точку прицела.
+                    if (ThicketShielded(_leapTarget)) _leapTarget = -1;
                     BoardingUpgradesAtLaunch(leap);
                     int ticks = AnchorKit.CastBoarding(this, _leapAim, _leapTarget, range);
                     _leapPunchTick = Tick + ticks;
@@ -1725,6 +1728,8 @@ namespace Game.Sim
         {
             if (!Entities.Alive[target] || amount <= 0) return;
             if (target == PlayerId && PlayerImmune) return;
+            // Хозяин Чащи в нырке (от ухода до выхода) неуязвим (Simulation.ForestBoss).
+            if (ThicketShielded(target)) return;
             if (BlazeEvades(target, overTime)) return;
 
             // «Горючее»: враг в луже Взрывной смеси получает от Пелага +20%.
@@ -2511,6 +2516,8 @@ namespace Game.Sim
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
             // Keep the normal critical roll even when developer immunity absorbs the hit.
             if (target == PlayerId && PlayerImmune) return 0;
+            // Хозяин Чащи в нырке неуязвим; бросок крита выше уже сделан — поток не сдвигается.
+            if (ThicketShielded(target)) return 0;
             if (BlazeEvades(target, overTime: false)) return 0;
             // «Верный удар»: бросок уже сделан (поток не сдвигается), усиление подменяет результат.
             crit = SureCrit(source, crit);

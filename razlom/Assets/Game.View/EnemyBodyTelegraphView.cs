@@ -27,7 +27,8 @@ namespace Game.View
     ///   • Хозяин Чащи, лапа (EnemyActionKind.ThicketPaw) — уголь на когтях бьющей
     ///     лапы (leg_front_R_toe / leg_front_L_toe; Amount события — номер лапы:
     ///     0 правая, 1 левая второй двойной фазы 3), в тик удара — те же полосы
-    ///     когтей, что у Хранителя, в масштабе тела 3,6 м по сектору лапы 3,6 м.
+    ///     когтей, что у Хранителя, в масштабе тела 4,14 м по сектору лапы 4,14 м
+    ///     (серия П/Л/П темпа 02.10: Amount — номер удара, чётный — правая).
     ///
     /// Секторы Хранителя и Расщепеня в Sim остаются (попадание считается по
     /// ним), но на земле не рисуются: замах открывает их без
@@ -576,7 +577,7 @@ namespace Game.View
         {
             if (e.Slash == null) return;
             Vector3 direction = Flat(e.Direction);
-            // Лапа Хозяина Чащи — сектор 3,6 м и когти у самой земли: полосы выше и длиннее.
+            // Лапа Хозяина Чащи — сектор 4,14 м и когти у самой земли: полосы выше и длиннее (рост ×1,15).
             bool paw = e.Sign == Sign.Paw;
             float radius = (paw ? Simulation.ThicketPawRadius : Simulation.GuardianSwingRadius).ToFloat();
             Vector3 aim = World(e.Origin) + direction * (radius * .85f);
@@ -584,7 +585,7 @@ namespace Game.View
             float reach = flat.magnitude;
             Vector3 forward = reach > .3f ? flat / reach : direction;
             float scale = e.SlashScale * Mathf.Clamp((reach + .35f * e.SlashScale) / (ClawLength * e.SlashScale), .75f, 1.2f);
-            Vector3 at = paw ? Lifted(claw, .6f, 2.2f) : Lifted(claw, .45f, 1.5f);
+            Vector3 at = paw ? Lifted(claw, .69f, 2.53f) : Lifted(claw, .45f, 1.5f);
             Place(e.Slash, at, Rotation(forward), scale, e.ImpactTick);
             bool right = e.Hand == 2;
             if (e.Slash.Left != null) e.Slash.Left.enabled = !right;
@@ -841,8 +842,8 @@ namespace Game.View
                     }
                 case Sign.Tusk: ember = 1.1f; slash = 1f; return;
                 case Sign.Sweep: ember = 1.05f; slash = 1f; return;
-                // Хозяин Чащи 3,6 м — вдвое выше Хранителя, сектор лапы 3,6 м против его удара.
-                case Sign.Paw: ember = 1.8f; slash = 1.9f; return;
+                // Хозяин Чащи 4,14 м (×1,15, 02.10) — вдвое выше Хранителя, сектор лапы 4,14 м против его удара.
+                case Sign.Paw: ember = 2.07f; slash = 2.19f; return;
                 default: ember = 1f; slash = 1f; return;
             }
         }

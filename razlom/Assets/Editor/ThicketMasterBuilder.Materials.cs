@@ -7,7 +7,9 @@ using UnityEngine;
 
 /// <summary>
 /// Хозяин Чащи: текстуры пакета и материалы тела. Цвет — без подъёма яркости
-/// (белый _BaseColor), эмиссии нет: персонаж не высветляется.
+/// (белый _BaseColor). Эмиссия — только руны и глаза по маске (T_ThicketMaster_Emission_F2/F3,
+/// production/dressing/make_emission.py); в материале она чёрная, яркость по фазам
+/// пишет ThicketMasterPhaseDressing блоком свойств. Тело не высветляется.
 /// </summary>
 public static partial class ThicketMasterBuilder
 {
@@ -15,6 +17,9 @@ public static partial class ThicketMasterBuilder
     private sealed class TextureSet
     {
         public string Color, Normal, Orm;
+
+        /// <summary>Маски эмиссии: F2 — руны и глаза (Ф2, ярость), F3 — плюс смоляные прожилки (Ф3).</summary>
+        public string EmissionF2, EmissionF3;
     }
 
     /// <summary>
@@ -74,7 +79,13 @@ public static partial class ThicketMasterBuilder
         foreach (string file in files)
         {
             string name = Path.GetFileNameWithoutExtension(file).ToLowerInvariant();
-            if (name.Contains("normal")) { if (set.Normal == null) set.Normal = file; }
+            // Маски эмиссии — раньше «color»: иначе ушли бы в rest и сломали «одна картинка — цвет».
+            if (name.Contains("emission"))
+            {
+                if (name.EndsWith("f3", StringComparison.Ordinal)) { if (set.EmissionF3 == null) set.EmissionF3 = file; }
+                else if (set.EmissionF2 == null) set.EmissionF2 = file;
+            }
+            else if (name.Contains("normal")) { if (set.Normal == null) set.Normal = file; }
             else if (orm.IsMatch(name)) { if (set.Orm == null) set.Orm = file; }
             else if (name.Contains("color") || name.Contains("albedo") || name.Contains("diffuse")) { if (set.Color == null) set.Color = file; }
             else rest.Add(file);
@@ -104,6 +115,10 @@ public static partial class ThicketMasterBuilder
             ConfigureTexture(OcclusionTexture, TextureImporterType.Default, false);
             ConfigureTexture(MetalSmoothTexture, TextureImporterType.Default, false);
         }
+        // Маски эмиссии линейные: в файле — оттенок янтаря как есть (make_emission.py), яркость —
+        // множитель _EmissionColor. Через sRGB янтарь ушёл бы в красный.
+        if (set.EmissionF2 != null) ConfigureTexture(set.EmissionF2, TextureImporterType.Default, false);
+        if (set.EmissionF3 != null) ConfigureTexture(set.EmissionF3, TextureImporterType.Default, false);
     }
 
     private static void ConfigureTexture(string path, TextureImporterType type, bool srgb)
@@ -199,11 +214,60 @@ public static partial class ThicketMasterBuilder
         // С картой гладкость = A карты × _Smoothness; без карты — матовая кора и листва.
         material.SetFloat("_Smoothness", metalSmooth != null ? 1f : .12f);
         if (metalSmooth != null) material.EnableKeyword("_METALLICSPECGLOSSMAP"); else material.DisableKeyword("_METALLICSPECGLOSSMAP");
-        // Эмиссии нет: тело не светится и не высветляется.
-        material.DisableKeyword("_EMISSION");
-        material.SetColor("_EmissionColor", Color.black);
+        ApplyEmission(material, set);
         EditorUtility.SetDirty(material);
-        return material;
+        // Эмиссия терялась в памяти после сохранения (ловушка Вихря): сохранить и перечитать с диска.
+        AssetDatabase.SaveAssetIfDirty(material);
+        AssetDatabase.ImportAsset(MaterialPath, ImportAssetOptions.ForceUpdate);
+        return AssetDatabase.LoadAssetAtPath<Material>(MaterialPath) ?? material;
+    }
+
+    /// <summary>
+    /// Светятся только руны и глаза по маске F2 (Ф3 — карту F3 ставит вид). Цвет в материале
+    /// чёрный: Ф1, сон и заглушка без вида — руны тёмные; яркость по фазам пишет
+    /// ThicketMasterPhaseDressing блоком свойств. _BaseColor белый — тело не высветляется.
+    /// GI-флаги None: иначе MaterialEditor.FixupEmissiveFlag при чёрном цвете пометит
+    /// эмиссию «чёрной», URP снимет _EMISSION, и рантайм ничего не зажжёт. Нет маски —
+    /// эмиссии нет, как раньше.
+    /// </summary>
+    private static void ApplyEmission(Material material, TextureSet set)
+    {
+        var map = Load(set.EmissionF2);
+        material.SetColor("_EmissionColor", Color.black);
+        material.SetTexture("_EmissionMap", map);
+        if (map != null)
+        {
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+        }
+        else
+        {
+            material.DisableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+        }
+    }
+
+    /// <summary>
+    /// Для ThicketMasterDressingSetup: материал тела, собранный до масок эмиссии, получает
+    /// их без пересборки представления. True — материал в порядке или поправлен.
+    /// </summary>
+    internal static bool EnsurePhaseEmission()
+    {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+        if (material == null) return false;
+        var set = Classify(TexturesIn(Root));
+        if (set.EmissionF2 == null) return false;
+        var map = Load(set.EmissionF2);
+        if (map != null && material.IsKeywordEnabled("_EMISSION") && material.GetTexture("_EmissionMap") == map
+            && material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.None) return true;
+        ConfigureTexture(set.EmissionF2, TextureImporterType.Default, false);
+        if (set.EmissionF3 != null) ConfigureTexture(set.EmissionF3, TextureImporterType.Default, false);
+        ApplyEmission(material, set);
+        EditorUtility.SetDirty(material);
+        AssetDatabase.SaveAssetIfDirty(material);
+        AssetDatabase.ImportAsset(MaterialPath, ImportAssetOptions.ForceUpdate);
+        Debug.Log("[thicketmaster] Материал тела: включена эмиссия рун и глаз по маске " + set.EmissionF2 + ".");
+        return true;
     }
 
     /// <summary>

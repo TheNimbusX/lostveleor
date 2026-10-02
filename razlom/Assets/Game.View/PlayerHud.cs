@@ -67,7 +67,7 @@ namespace Game.View
         // разбор того, что каждая делает, — если понадобится перерезать,
         // источник один и он в репозитории.
         private Texture2D[] _abilityIcons;
-        private int[] _abilityIconIds;
+        private long[] _abilityIconIds;
         private bool _abilityIconsLoaded;
         private float _canvasWidth;
         private float _canvasHeight;
@@ -596,7 +596,7 @@ namespace Game.View
             _chrome.Shape(new Rect(box.x, box.y + 3f, box.width, box.height), new Color(0f, 0f, 0f, .4f), 7f);
             _chrome.Shape(box, Plate, box.width * .125f);
             Rect inner = Inset(box, 1.5f);
-            Texture2D icon = slot == DashSlot ? _dashArt : AbilityIcon(slot, build.DefinitionId);
+            Texture2D icon = slot == DashSlot ? _dashArt : AbilityIcon(slot, build.DefinitionId, build.Form);
             if (icon != null)
             {
                 Color previous = GUI.color;
@@ -970,7 +970,7 @@ namespace Game.View
         /// Загрузка ленивая и одноразовая на слот: `Resources.Load` в OnGUI
         /// звался бы шестьдесят раз в секунду на каждый слот.
         /// </summary>
-        private Texture2D AbilityIcon(int slot, int definitionId)
+        private Texture2D AbilityIcon(int slot, int definitionId, PelagForm form)
         {
             if (_abilityIcons == null || (uint)slot >= (uint)_abilityIcons.Length) return null;
 
@@ -978,33 +978,21 @@ namespace Game.View
             // слота живёт всю сессию, а содержимое слота меняется: смена ветки
             // в лагере кладёт в первую кнопку Удар якорем, и плитка продолжала
             // бы показывать Вихрь. Лишней загрузки нет — идентификатор совпадает
-            // на всех кадрах, пока набор не сменили.
-            if (_abilityIcons[slot] != null && _abilityIconIds[slot] == definitionId)
+            // на всех кадрах, пока набор не сменили. С формами (02.10) ключ —
+            // ещё и форма: у неё тот же DefinitionId, а иконка своя.
+            long key = AbilityIconRules.CacheKey(definitionId, form);
+            if (_abilityIcons[slot] != null && _abilityIconIds[slot] == key)
                 return _abilityIcons[slot];
 
-            string file = IconFile(definitionId);
-            if (file == null) return null;
+            if (IconFile(definitionId) == null) return null;
 
-            _abilityIcons[slot] = Resources.Load<Texture2D>("UI/Abilities/" + file);
-            _abilityIconIds[slot] = definitionId;
+            _abilityIcons[slot] = AbilityIcons.Get(definitionId, form);
+            _abilityIconIds[slot] = key;
             return _abilityIcons[slot];
         }
 
-        internal static string IconFile(int definitionId)
-        {
-            if (definitionId == AbilityDefinition.SkewerId) return "Icon_Skewer";
-            if (definitionId == AbilityDefinition.BackblastId) return "Icon_Backblast";
-            if (definitionId == AbilityDefinition.AnchorSlamId) return "Icon_AnchorSweep";
-            if (definitionId == AbilityDefinition.WreckId) return "Icon_Wreck";
-            if (definitionId == AbilityDefinition.FireFlaskId) return "Icon_FireFlask";
-            if (definitionId == AbilityDefinition.CleaveId) return "Icon_Cleave";
-            if (definitionId == AbilityDefinition.DashId) return "Icon_Dash";
-            if (definitionId == AbilityDefinition.WhirlwindId) return "Icon_Whirlwind";
-            if (definitionId == AbilityDefinition.AnchorLeapId) return "Icon_AnchorLeap";
-            if (definitionId == AbilityDefinition.ChainStepId) return "Icon_Squall";
-            if (definitionId == AbilityDefinition.BlazeId) return "Icon_Blaze";
-            return null;
-        }
+        /// <summary>Файл иконки способности — правило в одном месте: <see cref="AbilityIconRules.BaseFile"/>.</summary>
+        internal static string IconFile(int definitionId) => AbilityIconRules.BaseFile(definitionId);
 
         /// <summary>
         /// Имя способности во всплывающей подсказке.
@@ -1072,7 +1060,7 @@ namespace Game.View
             {
                 _abilityIconsLoaded = true;
                 _abilityIcons = new Texture2D[Simulation.AbilitySlots];
-                _abilityIconIds = new int[Simulation.AbilitySlots];
+                _abilityIconIds = new long[Simulation.AbilitySlots];
             }
             if (_label != null) return;
 

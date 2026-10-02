@@ -7,7 +7,7 @@ namespace Game.Sim
         public bool GiftRerollUsed { get; private set; }
         public bool SpareFlaskUsed { get; private set; }
         public bool CanRerollReward => Preparation.Gift == CampGift.BackupPlan && !GiftRerollUsed
-            && Phase == RunPhase.ChoosingReward && !ChoosingArtifact && BossId < 0;
+            && Phase == RunPhase.ChoosingReward && !ChoosingArtifact && !ChoosingForm && BossId < 0;
         public void SetPreparation(in RunPreparation preparation)
         {
             if (Phase != RunPhase.Idle) throw new System.InvalidOperationException("Подготовка уже закреплена за походом.");

@@ -420,17 +420,8 @@ namespace Game.View
                 + "  заменить слот     L  уйти с добычей", _subtitle);
         }
 
-        private readonly System.Collections.Generic.Dictionary<int, Texture2D> _icons =
-            new System.Collections.Generic.Dictionary<int, Texture2D>();
-
-        private Texture2D Icon(int definitionId)
-        {
-            if (_icons.TryGetValue(definitionId, out Texture2D texture)) return texture;
-            string file = PlayerHud.IconFile(definitionId);
-            texture = file != null ? Resources.Load<Texture2D>("UI/Abilities/" + file) : null;
-            _icons[definitionId] = texture;
-            return texture;
-        }
+        /// <summary>Иконка способности — общее правило и кеш по (способность, форма): AbilityIconRules, AbilityIcons.</summary>
+        private Texture2D Icon(int definitionId, PelagForm form = PelagForm.None) => AbilityIcons.Get(definitionId, form);
 
         private void DrawAbilityCard(Rect card, in RewardOffer offer, RiftRun run)
         {

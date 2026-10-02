@@ -38,6 +38,10 @@ namespace Game.Sim
                 if (a.Action == ThicketMasterAction.Wake || a.Action == ThicketMasterAction.Roar)
                     Entities.Facing[id] = TurnToward(Entities.Facing[id], Entities.Position[PlayerId] - Entities.Position[id],
                         ThicketTurnCos, ThicketTurnSin);
+                // Серия лапы: следующий удар доворачивает не больше 9 шагов поворота —
+                // корпус доходит до его сектора к контакту, без рывка.
+                else if (a.Action == ThicketMasterAction.Paw && a.Direction.LengthSq.Raw != 0)
+                    Entities.Facing[id] = TurnToward(Entities.Facing[id], a.Direction, ThicketTurnCos, ThicketTurnSin);
                 else if (a.Direction.LengthSq.Raw != 0) Entities.Facing[id] = a.Direction;
                 PushHeroFromRump(id);
                 return;
@@ -82,8 +86,8 @@ namespace Game.Sim
         private void PushHeroFromRump(int id)
         {
             if (!Entities.Alive[PlayerId] || VoidPhased) return;
-            // Под землёй (нырок) крупа нет — только бугор.
-            if (ThicketUnderground(id)) return;
+            // В нырке (от ухода до выхода) крупа нет — тело не держит проход.
+            if (ThicketShielded(id)) return;
             FixVec2 center = ThicketRumpCenter(id);
             FixVec2 hero = Entities.Position[PlayerId];
             FixVec2 offset = hero - center;
@@ -112,17 +116,22 @@ namespace Game.Sim
             for (int id = 1; id < Entities.Count; id++)
             {
                 if (Entities.Kind[id] != EnemyKind.ForestThicketMaster) continue;
-                if (!Entities.Alive[id]) { CancelThicketAction(id); continue; }
+                if (!Entities.Alive[id]) { CancelThicketAction(id); CancelThicketHazard(id); continue; }
                 // Не оглушается и не двигается чужой волей.
                 if (Statuses.StunUntilTick[id] != 0) Statuses.StunUntilTick[id] = 0;
                 if (ForcedMotion.IsActive(Entities, id)) ForcedMotion.Clear(Entities, id);
+                // Под землёй огонь гаснет: горение не доживает до выхода.
+                if (ThicketShielded(id) && Statuses.IsBurning(id)) Statuses.ClearBurn(id);
                 ref var m = ref ThicketMemory[id];
-                if (!Entities.Alive[PlayerId]) { CancelThicketAction(id); continue; }
+                if (!Entities.Alive[PlayerId]) { CancelThicketAction(id); CancelThicketHazard(id); continue; }
                 UpdateThicketPhase(id);
                 // Под Часами стоит и окно топота: тики остановки «рядом» не копятся.
                 if (Tick < m.FrozenUntil) continue;
                 if (m.Awake) RecordThicketNear(id);
                 if (!m.Awake) { TryWakeThicketMaster(id); continue; }
+                // Фоновая опасность (наслоение) идёт сама — до действия этого тика.
+                AdvanceThicketHazard(id);
+                if (!Entities.Alive[id]) continue;
                 if (ThicketMasters[id].Serial != 0)
                 {
                     AdvanceThicketAction(id);
@@ -214,6 +223,11 @@ namespace Game.Sim
         /// </summary>
         private ThicketMasterAction ChooseThicketAction(int id)
         {
+            // Наслоение: пока идёт фоновая опасность (круги прорастания и ливня,
+            // облака пыльцы этого босса) — только серии лапы: ни топота, ни
+            // нырка, ни каста, ни бури, ни связки. Поток не тратится.
+            if (ThicketHazardActive(id))
+                return ThicketPawReady(id) ? ThicketMasterAction.Paw : ThicketMasterAction.None;
             var choice = ThicketMasterAction.None;
             ThicketChooseForced(id, ref choice);
             if (choice == ThicketMasterAction.None && ThicketStompRuleHolds(id)) choice = ThicketMasterAction.Stomp;
@@ -221,7 +235,7 @@ namespace Game.Sim
             if (choice != ThicketMasterAction.None) return choice;
 
             _thicketCandidateCount = 0;
-            if (ThicketPawInReach(id)) AddThicketCandidate(ThicketMasterAction.Paw, 10);
+            if (ThicketPawReady(id)) AddThicketCandidate(ThicketMasterAction.Paw, 10);
             ThicketAddCandidates(id);
             if (_thicketCandidateCount == 0) return ThicketMasterAction.None;
             if (_thicketCandidateCount == 1) return _thicketCandidates[0];
@@ -240,7 +254,12 @@ namespace Game.Sim
         /// <summary>Топот: перезарядка готова и из последних 90 тиков герой был ближе 3,5 м не меньше 60.</summary>
         private bool ThicketStompRuleHolds(int id)
             => Tick >= ThicketReady[id * ThicketActionSlots + (int)ThicketMasterAction.Stomp]
-                && ThicketMasterNearTicks(id) >= ThicketStompNearTicks;
+                && ThicketMasterNearTicks(id) >= ThicketStompNearTicks
+                && Tick + ThicketStompWindupTicks >= ThicketMemory[id].QuietUntil;
+
+        /// <summary>Серия лапы может начаться: герой в досягаемости, и первый удар ляжет не раньше окна ответа.</summary>
+        private bool ThicketPawReady(int id)
+            => ThicketPawInReach(id) && Tick + ThicketPawWindupOf(id) >= ThicketMemory[id].QuietUntil;
 
         /// <summary>Лапа достаёт: герой ближе ThicketPawStartRange между центрами и в ±40° от взгляда.</summary>
         private bool ThicketPawInReach(int id)
@@ -295,35 +314,67 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Лапа: сектор 120° на 3,6 м вдоль взгляда (к герою не доворачивает —
-        /// заход сбоку имеет смысл). Метка — без SharedView: на земле её не
-        /// рисуют, знак — уголёк на теле (событие Started); фигура в Sim — для
-        /// попадания и бота. В фазе 3 — двойная: вторая лапа замахивается сразу
-        /// после контакта первой, тем же замахом 24 тика.
+        /// Серия лапы: первый удар — сектор 120° на 4,14 м вдоль взгляда (к
+        /// герою не доворачивает — заход сбоку имеет смысл), замах 15 (30 при
+        /// уроне больше 60); каждый следующий — через 9 тиков, доворот к герою
+        /// не больше 40,5° (NextThicketPaw). Метка — без SharedView: на земле
+        /// её не рисуют, знак — уголёк на теле (событие Started со Stage);
+        /// фигура в Sim — для попадания и бота. Ударов — по фазе (фаза 2 —
+        /// 2 или 3 своим потоком). Серия встаёт, только если все её удары
+        /// укладываются в такт с чужими и не ближе ThicketOwnContactSpacingTicks
+        /// к ударам своей фоновой опасности; не влезает 3 — пробует 2.
         /// </summary>
         private bool StartThicketPaw(int id)
         {
-            bool twin = ThicketMemory[id].Phase >= 3;
-            int windup = ThicketPawWindupOf(id);
-            int impact = Tick + windup;
-            int last = twin ? impact + ThicketPawStrikeTicks + windup : impact;
-            if (!HeroContactAllowed(id, impact, last)) return false;
+            int impact = Tick + ThicketPawWindupOf(id);
+            if (impact < ThicketMemory[id].QuietUntil) return false;
+            int fewest = ThicketPawSeriesMin(id), most = ThicketPawSeriesMax(id), strikes = 0;
+            for (int n = most; n >= fewest && strikes == 0; n--)
+                if (ThicketPawSeriesFits(id, impact, n)) strikes = n;
+            if (strikes == 0) return false;
+            // Фаза 2: 2 или 3 — бросок своего потока, только когда влезают оба.
+            if (strikes > fewest) strikes = ThicketMemory[id].Rng.NextInt(fewest, strikes + 1);
+            int last = impact + ThicketPawSeriesGapTicks * (strikes - 1);
             FixVec2 direction = Entities.Facing[id].Normalized();
             if (direction.LengthSq.Raw == 0) direction = (Entities.Position[PlayerId] - Entities.Position[id]).Normalized();
-            int end = last + ThicketPawStrikeTicks + ThicketRecoveryOf(id, ThicketPawRecoveryTicks);
-            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Paw, impact, last, end, twin ? 2 : 1, direction,
-                Entities.Position[id] + direction * (ThicketPawRadius / 2));
+            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Paw, impact, last,
+                last + ThicketPawStrikeTicks + ThicketPawRecoveryTicks, strikes,
+                direction, Entities.Position[id] + direction * (ThicketPawRadius / 2));
             OpenThicketMark(id, ref a, ThicketPawSector(a.Origin, a.Direction), TelegraphFlags.None);
             return true;
         }
 
-        /// <summary>Дыбом и топот: круг 4,5 м вокруг себя, крупная метка весом 1.</summary>
+        private bool ThicketPawSeriesFits(int id, int impact, int strikes)
+        {
+            int last = impact + ThicketPawSeriesGapTicks * (strikes - 1);
+            return HeroContactAllowed(id, impact, last) && !ThicketHazardClash(id, impact, strikes, ThicketPawSeriesGapTicks);
+        }
+
+        /// <summary>Ударов в серии по фазе: меньше и больше (фаза 2 — 2..3).</summary>
+        public int ThicketPawSeriesMin(int id)
+        {
+            int phase = ThicketMasterPhase(id);
+            return phase >= 3 ? ThicketPawSeriesPhase3 : phase == 2 ? ThicketPawSeriesPhase2Min : ThicketPawSeriesPhase1;
+        }
+
+        public int ThicketPawSeriesMax(int id)
+        {
+            int phase = ThicketMasterPhase(id);
+            return phase >= 3 ? ThicketPawSeriesPhase3 : phase == 2 ? ThicketPawSeriesPhase2Max : ThicketPawSeriesPhase1;
+        }
+
+        /// <summary>
+        /// Дыбом и топот: круг 5,2 м вокруг себя (удар через 24), потом кольцо
+        /// 5,2–7,5 м (через 15 после первого, метка встаёт в тик первого) —
+        /// крупная метка весом 1 до второго удара, окно 30 после него.
+        /// </summary>
         private bool StartThicketStomp(int id)
         {
             int impact = Tick + ThicketStompWindupTicks;
-            if (!BigMarkAllowed(id, 1, impact)) return false;
-            int end = impact + ThicketStompStrikeTicks + ThicketRecoveryOf(id, ThicketStompRecoveryTicks);
-            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Stomp, impact, impact, end, 1,
+            int ring = impact + ThicketStompRingDelayTicks;
+            if (impact < ThicketMemory[id].QuietUntil) return false;
+            if (!BigMarkAllowed(id, 1, impact) || !HeroContactAllowed(id, ring, ring)) return false;
+            ref var a = ref BeginThicketAction(id, ThicketMasterAction.Stomp, impact, ring, ring + ThicketStompStrikeTicks, 2,
                 Entities.Facing[id], Entities.Position[id]);
             OpenThicketMark(id, ref a, ThicketStompCircle(a.Origin), TelegraphFlags.SharedView);
             SetThicketCooldown(id, ThicketMasterAction.Stomp, ThicketStompCooldownTicks);
@@ -362,58 +413,60 @@ namespace Game.Sim
                     if (Tick >= a.EndTick) FinishThicketAction(id, restTicks: 0);
                     return;
                 case ThicketMasterAction.Paw:
-                    if (!a.HitResolved && Tick >= a.ImpactTick) ResolveThicketPaw(id);
-                    a = ThicketMasters[id];
-                    if (a.Serial == 0) return;
-                    if (a.HitResolved && a.Stage + 1 < a.Stages && Tick >= a.ImpactTick + ThicketPawStrikeTicks)
-                        NextThicketPaw(id);
-                    else if (a.HitResolved && a.Stage + 1 >= a.Stages
-                        && (Tick >= a.EndTick || ThicketChainCuts(id, a.LastImpactTick + ThicketPawStrikeTicks)))
-                        FinishThicketAction(id, ThicketRestTicks(id));
-                    return;
                 case ThicketMasterAction.Stomp:
-                case ThicketMasterAction.Roar:
+                    // Удар шага; следующий шаг (лапа, кольцо) встаёт в этот же тик.
                     if (!a.HitResolved && Tick >= a.ImpactTick)
                     {
-                        if (a.Action == ThicketMasterAction.Stomp) ResolveThicketStomp(id);
-                        else ResolveThicketRoar(id);
+                        if (a.Action == ThicketMasterAction.Paw) ResolveThicketPaw(id);
+                        else ResolveThicketStomp(id);
                     }
+                    a = ThicketMasters[id];
+                    // Кадр контакта последнего удара — и отдых по фазе; окно ответа — QuietUntil.
+                    if (a.Serial != 0 && a.HitResolved && a.Stage + 1 >= a.Stages && Tick >= a.EndTick)
+                        FinishThicketAction(id, ThicketRestTicks(id));
+                    return;
+                case ThicketMasterAction.Roar:
+                    if (!a.HitResolved && Tick >= a.ImpactTick) ResolveThicketRoar(id);
                     a = ThicketMasters[id];
                     if (a.Serial != 0 && a.HitResolved && Tick >= a.EndTick)
                     {
                         int thresholds = a.Tag;
-                        bool roar = a.Action == ThicketMasterAction.Roar;
-                        FinishThicketAction(id, roar ? 0 : ThicketRestTicks(id));
-                        if (roar) ThicketRoarDone(id, thresholds);
+                        FinishThicketAction(id, 0);
+                        ThicketRoarDone(id, thresholds);
                     }
                     return;
             }
             ThicketAdvanceExtra(id);
         }
 
-        /// <summary>Вторая лапа двойной: доворот к герою не больше 30°, новый замах, новая метка.</summary>
-        private void NextThicketPaw(int id)
+        /// <summary>
+        /// Следующий удар серии — в тик контакта прошлого: доворот к герою не
+        /// больше поворота за 9 тиков (40,5°), удар через 9, новая метка,
+        /// событие Started с номером удара (знак на теле за 9 тиков до удара).
+        /// </summary>
+        private void NextThicketPaw(int id, ref ThicketMasterState a)
         {
-            ref var a = ref ThicketMasters[id];
             FixVec2 toHero = Entities.Position[PlayerId] - Entities.Position[id];
             a.Direction = TurnToward(a.Direction, toHero, ThicketPawRetargetCos, ThicketPawRetargetSin);
             a.Stage++;
             a.StageStartTick = Tick;
-            a.ImpactTick = Tick + ThicketPawWindupOf(id);
+            a.ImpactTick = Tick + ThicketPawSeriesGapTicks;
             a.HitResolved = false;
             a.Origin = Entities.Position[id];
             a.Target = a.Origin + a.Direction * (ThicketPawRadius / 2);
-            Entities.Facing[id] = a.Direction;
             OpenThicketMark(id, ref a, ThicketPawSector(a.Origin, a.Direction), TelegraphFlags.None);
             _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
                 EnemyActionKind.ThicketPaw, a.Origin, a.Stage));
         }
 
-        /// <summary>Контакт лапы — ровно по нарисованному сектору (или по заготовке, если пул меток был полон).</summary>
+        /// <summary>
+        /// Контакт удара серии — ровно по нарисованному сектору (или по заготовке,
+        /// если пул меток был полон). Следующий удар встаёт в этот же тик —
+        /// до урона: отражение может убить босса внутри ApplyAbilityDamage.
+        /// </summary>
         private void ResolveThicketPaw(int id)
         {
             ref var a = ref ThicketMasters[id];
-            // Состояние — до урона: отражение может убить босса внутри ApplyAbilityDamage.
             a.HitResolved = true;
             int stage = a.Stage;
             EnemyTelegraph shape = ThicketPawSector(a.Origin, a.Direction);
@@ -426,25 +479,47 @@ namespace Game.Sim
             NoteMeleeContactOnHero();
             _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
                 EnemyActionKind.ThicketPaw, target, stage, hit));
+            if (stage + 1 < a.Stages) NextThicketPaw(id, ref a);
+            else ThicketMemory[id].QuietUntil = Tick + ThicketWindowTicks;
             if (hit) ApplyAbilityDamage(id, PlayerId, ThicketPawDamageOf(id), -1, DamageType.Physical);
         }
 
-        /// <summary>Топот: урон по кругу и отброс на 2 м от центра — только если урон прошёл.</summary>
+        /// <summary>
+        /// Топот, удар шага: Stage 0 — круг 5,2, Stage 1 — кольцо 5,2–7,5 (×0,75).
+        /// Отброс на 2 м от центра — только если урон прошёл. Кольцо встаёт в тик
+        /// первого удара (до урона); кого ранил круг, кольцо не бьёт.
+        /// </summary>
         private void ResolveThicketStomp(int id)
         {
             ref var a = ref ThicketMasters[id];
             a.HitResolved = true;
+            int stage = a.Stage;
             FixVec2 center = a.Origin;
             bool live = ResolveTelegraphSerial(a.TelegraphSerial) || a.TelegraphSerial == 0;
-            bool hit = live && Entities.Alive[PlayerId]
-                && TelegraphContains(ThicketStompCircle(center), Entities.Position[PlayerId], Entities.BodyRadius[PlayerId]);
+            bool spared = stage > 0 && (a.Tag & ThicketStompRing1HitBit) != 0;
+            EnemyTelegraph shape = stage == 0 ? ThicketStompCircle(center) : ThicketStompRing(center);
+            bool hit = live && !spared && Entities.Alive[PlayerId]
+                && TelegraphContains(in shape, Entities.Position[PlayerId], Entities.BodyRadius[PlayerId]);
             _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
-                EnemyActionKind.ThicketStomp, center, 0, hit));
+                EnemyActionKind.ThicketStomp, center, stage, hit));
+            if (stage + 1 < a.Stages)
+            {
+                a.Stage = stage + 1;
+                a.StageStartTick = Tick;
+                a.ImpactTick = a.LastImpactTick;
+                a.HitResolved = false;
+                OpenThicketMark(id, ref a, ThicketStompRing(center), TelegraphFlags.SharedView);
+                _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionStarted, id, PlayerId,
+                    EnemyActionKind.ThicketStomp, center, a.Stage));
+            }
+            else ThicketMemory[id].QuietUntil = Tick + ThicketWindowTicks;
             if (!hit) return;
             int health = Entities.Health[PlayerId];
-            ApplyAbilityDamage(id, PlayerId, ThicketStompDamageOf(id), -1, DamageType.Physical);
-            if (Entities.Alive[PlayerId] && Entities.Health[PlayerId] < health)
-                ThicketKnockback(center, Entities.Facing[id]);
+            ApplyAbilityDamage(id, PlayerId, stage == 0 ? ThicketStompDamageOf(id) : ThicketStompRingDamageOf(id), -1,
+                DamageType.Physical);
+            if (!Entities.Alive[PlayerId] || Entities.Health[PlayerId] >= health) return;
+            if (stage == 0) ThicketMasters[id].Tag |= ThicketStompRing1HitBit;
+            ThicketKnockback(center, Entities.Facing[id]);
         }
 
         /// <summary>Рёв: урона нет, отброс на 2 м от босса — всем в кольце (кроме неуязвимого).</summary>
@@ -516,31 +591,7 @@ namespace Game.Sim
             if (_thicketMemory != null) _thicketMemory[id].NextActionTick = Tick;
         }
 
-        /// <summary>
-        /// Связка фазы 3 (ThicketChainCutExtra) обрывает стойку после последнего
-        /// контакта: следующий замах — сразу с тика from. Замах не трогается.
-        /// </summary>
-        private bool ThicketChainCuts(int id, int from)
-        {
-            if (Tick < from) return false;
-            bool cut = false;
-            ThicketChainCutExtra(id, ref cut);
-            return cut;
-        }
-
-        /// <summary>
-        /// Стойка после последнего контакта по фазе: 1 — как в таблице атак, 2 и
-        /// 3 — ThicketPhase2/3RecoveryPercent. Замахов не касается.
-        /// </summary>
-        public int ThicketRecoveryOf(int id, int ticks)
-        {
-            if ((uint)id >= (uint)Entities.Count || Entities.Kind[id] != EnemyKind.ForestThicketMaster) return ticks;
-            int phase = ThicketMemory[id].Phase;
-            int percent = phase >= 3 ? ThicketPhase3RecoveryPercent : phase == 2 ? ThicketPhase2RecoveryPercent : 100;
-            return ticks * percent / 100;
-        }
-
-        /// <summary>Отдых после действия по фазе (до множителей).</summary>
+        /// <summary>Отдых после действия по фазе (до множителей): 18 / 12 / 6.</summary>
         private int ThicketRestTicks(int id)
         {
             int phase = ThicketMemory[id].Phase;

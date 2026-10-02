@@ -59,6 +59,12 @@
     <Compile Include="../../razlom/Assets/Game.View/EnemyBodyFacingRules.cs" Link="EnemyBodyFacingRules.cs" />
     <!-- Хозяин Чащи (02.10): действие Sim → клип и кадр, контакт клипа в тик удара. -->
     <Compile Include="../../razlom/Assets/Game.View/ThicketMasterClipRules.cs" Link="ThicketMasterClipRules.cs" />
+    <!-- Хозяин Чащи (02.10): внешность по фазам — смена на ударе рёва 66/33, яркость рун, рост накладок. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterPhaseRules.cs" Link="ThicketMasterPhaseRules.cs" />
+    <!-- Формы навыков (план форм 02.10, шаг 3): правило иконки (способность, форма) → файл и метка формы, тексты и экран «Выбери форму». -->
+    <Compile Include="../../razlom/Assets/Game.View/AbilityIconRules.cs" Link="AbilityIconRules.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/PelagFormTexts.cs" Link="PelagFormTexts.cs" />
+    <Compile Include="../../razlom/Assets/Game.View/RunHudFormChoice.cs" Link="RunHudFormChoice.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

@@ -124,6 +124,7 @@ namespace Game.View
                         session.MarkDeveloperRun();
                     }
                 }
+                else if (request == 15 || request == 16) FormScreenRequest(request == 15);
                 else if (request == 3) _driver.ReturnToCampFromMenu();
                 else
                 {
@@ -276,7 +277,9 @@ namespace Game.View
                 int rank = loadout.TalentRank(pool);
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("◀", GUILayout.Width(44))) { _loadoutSlot = slot; _loadoutStep = -1; _request = 9; }
-                GUILayout.Label((slot + 1) + ": " + (definition == null ? "пусто" : PlayerHud.AbilityName(definition.Id))
+                Game.Sim.PelagForm form = loadout.FormOf(pool);
+                GUILayout.Label((slot + 1) + ": " + (definition == null ? "пусто"
+                                    : PelagFormTexts.TooltipTitle(PlayerHud.AbilityName(definition.Id), form))
                     + (rank > 0 ? " · усилений " + rank : ""));
                 if (GUILayout.Button("▶", GUILayout.Width(44))) { _loadoutSlot = slot; _loadoutStep = 1; _request = 9; }
                 GUILayout.EndHorizontal();
@@ -288,6 +291,41 @@ namespace Game.View
             if (_driver.Session.Mode == Game.Sim.GameMode.Rift && _driver.Run != null
                 && GUILayout.Button("Артефакт: " + RunArtifactTexts.Name(_driver.Run.Artifact) + " · следующий", GUILayout.Height(30)))
                 _request = 14;
+            DrawForms();
+        }
+
+        /// <summary>
+        /// Формы навыков (план форм 02.10): экран «Выбери форму» прямо сейчас — из боя или по пути к выходу.
+        /// Включатель форм для обычных забегов не трогается (FormRewardRules.UseSkillForms = false): этот забег
+        /// помечается тестовым, лимиты и шанс экрана не действуют, формы без механики считаются готовыми.
+        /// </summary>
+        private void DrawForms()
+        {
+            var run = _driver.Run;
+            if (_driver.Session.Mode != Game.Sim.GameMode.Rift || run == null) return;
+            if (run.FormPreviewOpen)
+            {
+                if (GUILayout.Button("Формы · закрыть выбор без формы", GUILayout.Height(30))) _request = 16;
+                return;
+            }
+            if (GUILayout.Button("Формы · показать выбор формы", GUILayout.Height(30))) _request = 15;
+            GUILayout.Label("Нужен навык с формами без формы (пока только Вихрь — «Только Вихрь») и бой на арене. " +
+                            "Выбор ставит форму сразу, бой продолжается. Забег станет тестовым.", _wrapped);
+        }
+
+        private void FormScreenRequest(bool open)
+        {
+            var session = _driver.Session;
+            var run = _driver.Run;
+            if (session == null || session.Mode != Game.Sim.GameMode.Rift || run == null)
+                throw new ArgumentException("Выбор формы — только в забеге.");
+            if (!open) { run.DebugCloseFormScreen(); return; }
+            if (!run.DebugOpenFormScreen())
+                throw new ArgumentException("Экран формы не открылся: нужен бой на арене или путь к выходу и навык с формами без формы " +
+                                            "(пока только Вихрь — кнопка «Только Вихрь»).");
+            // Форма меняет набор забега — как правка способностей из этого меню, забег тестовый.
+            session.MarkDeveloperRun();
+            Close();
         }
 
         /// <summary>Следующая по кругу способность пула, которой нет в других слотах; «пусто» входит в круг.</summary>
