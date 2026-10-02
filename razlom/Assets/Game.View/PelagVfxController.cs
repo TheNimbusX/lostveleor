@@ -1250,17 +1250,21 @@ namespace Game.View
             {
                 bool authored = element.AuthoredRadius > 0f;
                 float radius = 2.3f;
+                PelagForm whirlForm = PelagForm.None;
                 if (_driver.Sim != null)
                     for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
                     {
                         AbilityBuild ability = _driver.Sim.GetAbility(slot);
                         if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
-                        { radius = ability.Get(AbilityStatType.Radius).ToFloat(); break; }
+                        { radius = ability.Get(AbilityStatType.Radius).ToFloat(); whirlForm = _driver.Sim.FormAt(slot); break; }
                     }
                 float scale = authored ? radius / element.AuthoredRadius : 0.9f;
                 int brush = ReserveActive();
                 element.Begin(center, Quaternion.Euler(authored ? 90f : 0f, yaw, 0f));
                 go.transform.localScale = Vector3.one * scale;
+                // Цвет формы (02.10): Буря — сталь, Водоворот — фиолет, Волны — морская зелень.
+                bool tinted = WhirlwindFormWater(whirlForm, out Color deep, out Color water, out Color shallow, out _);
+                element.Sweep?.SetFormTint(tinted, deep, water, shallow);
                 // Раскадровка серпа читает масштаб корня — запускается после него.
                 element.Sweep?.Begin();
                 _active[brush] = new ActiveFx

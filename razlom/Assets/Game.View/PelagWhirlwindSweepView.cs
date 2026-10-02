@@ -77,6 +77,25 @@ namespace Game.View
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
 
         private MaterialPropertyBlock _block;
+        // Цвет формы Вихря (02.10): пул общий — красим блоком, а не материалом. Без формы — цвет материала.
+        private bool _tinted;
+        private Color _tintDeep, _tintWater, _tintShallow;
+        private static readonly int DeepId = Shader.PropertyToID("_Deep");
+        private static readonly int WaterId = Shader.PropertyToID("_Water");
+        private static readonly int ShallowId = Shader.PropertyToID("_Shallow");
+
+        public void SetFormTint(bool on, Color deep, Color water, Color shallow)
+        {
+            _tinted = on; _tintDeep = deep; _tintWater = water; _tintShallow = shallow;
+        }
+
+        private void ApplyTint()
+        {
+            if (!_tinted) return;
+            _block.SetColor(DeepId, _tintDeep);
+            _block.SetColor(WaterId, _tintWater);
+            _block.SetColor(ShallowId, _tintShallow);
+        }
         private float _seed;
 
         public void Begin()
@@ -119,6 +138,7 @@ namespace Game.View
                 _block.SetFloat(FlashId, flash);
                 _block.SetFloat(OpacityId, 1f);
                 _block.SetFloat(SeedId, _seed + 7f);
+                ApplyTint();
                 Ring.SetPropertyBlock(_block);
             }
         }
@@ -141,6 +161,7 @@ namespace Game.View
             _block.SetFloat(FlashId, born ? flash : 0f);
             _block.SetFloat(OpacityId, born ? opacity : 0f);
             _block.SetFloat(SeedId, _seed + lagDegrees * .01f);
+            ApplyTint();
             arc.SetPropertyBlock(_block);
         }
     }

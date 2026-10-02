@@ -140,6 +140,41 @@ namespace Game.View
         private bool StillActive(int fx, GameObject go)
             => fx >= 0 && fx < _active.Length && _active[fx].Active && _active[fx].Object == go;
 
+        // ---- Цвета форм (02.10, как иконки: «бурю более стальную, водоворот более фиолет») ----
+
+        private static readonly int ShadeId = Shader.PropertyToID("_Shade");
+        private static MaterialPropertyBlock _formTintBlock;
+
+        internal static bool WhirlwindFormWater(PelagForm form, out Color deep, out Color water, out Color shallow, out Color shade)
+        {
+            switch (form)
+            {
+                case PelagForm.WhirlwindStorm:
+                    deep = new Color(.16f, .19f, .23f); water = new Color(.42f, .48f, .55f); shallow = new Color(.70f, .75f, .80f); shade = new Color(.72f, .77f, .82f); return true;
+                case PelagForm.WhirlwindMaelstrom:
+                    deep = new Color(.12f, .04f, .30f); water = new Color(.36f, .16f, .70f); shallow = new Color(.66f, .48f, .95f); shade = new Color(.70f, .58f, .95f); return true;
+                case PelagForm.WhirlwindFoamWaves:
+                    deep = new Color(.02f, .30f, .20f); water = new Color(.10f, .70f, .48f); shallow = new Color(.50f, .95f, .76f); shade = new Color(.62f, .95f, .80f); return true;
+                default:
+                    deep = water = shallow = shade = Color.white; return false;
+            }
+        }
+
+        /// <summary>Брызги и клочья префаба формы — общие материалы пены: оттенок формы блоком.</summary>
+        private static void TintFormDroplets(GameObject go, PelagForm form)
+        {
+            if (!WhirlwindFormWater(form, out _, out _, out _, out Color shade)) return;
+            if (_formTintBlock == null) _formTintBlock = new MaterialPropertyBlock();
+            foreach (ParticleSystemRenderer r in go.GetComponentsInChildren<ParticleSystemRenderer>(true))
+            {
+                Material m = r.sharedMaterial;
+                if (m == null || !m.HasProperty(ShadeId)) continue;
+                r.GetPropertyBlock(_formTintBlock);
+                _formTintBlock.SetColor(ShadeId, shade);
+                r.SetPropertyBlock(_formTintBlock);
+            }
+        }
+
         // ---- Буря ----
 
         private void BeginStormColumn()
@@ -154,6 +189,7 @@ namespace Game.View
             float scale = element.AuthoredRadius > 0f ? WhirlwindRadius() / element.AuthoredRadius : 1f;
             // Корень как у кольца Вихря: X90 — местная +Z вниз, витки крутятся вокруг неё.
             element.Begin(feet, Quaternion.Euler(90f, 0f, 0f));
+            TintFormDroplets(go, PelagForm.WhirlwindStorm);
             go.transform.localScale = Vector3.one * scale;
             _active[index] = new ActiveFx
             {
@@ -200,6 +236,7 @@ namespace Game.View
             if (!TryAcquire(PelagVfxId.WhirlwindStormSplash, out GameObject go, out PelagVfxElement element)) return;
             int index = ReserveActive();
             element.Begin(feet, Quaternion.Euler(90f, 0f, 0f));
+            TintFormDroplets(go, PelagForm.WhirlwindStorm);
             go.transform.localScale = Vector3.one * (element.AuthoredRadius > 0f ? radius / element.AuthoredRadius : 1f);
             _active[index] = new ActiveFx
             {
@@ -230,6 +267,7 @@ namespace Game.View
             int index = ReserveActive();
             Vector3 at = _maelstromCentre + Vector3.up * .03f;
             element.Begin(at, Quaternion.Euler(90f, 0f, 0f));
+            TintFormDroplets(go, PelagForm.WhirlwindMaelstrom);
             float radius = Simulation.MaelstromRadius.ToFloat() + MaelstromVisualMargin;
             go.transform.localScale = Vector3.one * (element.AuthoredRadius > 0f ? radius / element.AuthoredRadius : 1f);
             _active[index] = new ActiveFx
@@ -265,6 +303,7 @@ namespace Game.View
             int index = ReserveActive();
             Vector3 at = centre + Vector3.up * .04f;
             element.Begin(at, Quaternion.Euler(90f, Random.Range(0f, 360f), 0f));
+            TintFormDroplets(go, PelagForm.WhirlwindFoamWaves);
             float now = _driver.Sim != null ? _driver.Sim.Tick - 1 + _driver.Alpha : eventTick;
             root.localScale = Vector3.one * PelagWhirlwindFormRules.FoamRingFront(ring, eventTick, travel, now);
             _active[index] = new ActiveFx
