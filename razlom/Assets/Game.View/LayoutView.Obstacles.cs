@@ -35,7 +35,7 @@ namespace Game.View
             // На арене ствол-препятствие рисуется стоячим камнем, как в референсе владельца (29 сентября):
             // крона дерева посреди поляны закрывала бой. Высокий камень пака вытянут вверх,
             // отпечаток в симуляции прежний.
-            bool menhirs = map.GladeCount == 1 && rocks > 3;
+            bool menhirs = map.IsArena && rocks > 3;
             for (int i = 0; i < map.ObstacleCount; i++)
             {
                 var obstacle = map.GetObstacle(i);
@@ -43,7 +43,7 @@ namespace Game.View
                 int kind = menhir ? 3 : obstacle.VisualKind == 1 || rocks == 0 ? rocks : i % rocks;
                 var go = _solidPools[kind].Acquire();
                 float radius = obstacle.Radius.ToFloat();
-                go.transform.position = new Vector3(obstacle.Center.X.ToFloat(), 0, obstacle.Center.Y.ToFloat());
+                go.transform.position = new Vector3(obstacle.Center.X.ToFloat(), FloorLevel(obstacle.Center.X.ToFloat(), obstacle.Center.Y.ToFloat()), obstacle.Center.Y.ToFloat());
                 go.transform.rotation = Quaternion.Euler(0, (float)DecorRandom(i, 71).NextDouble() * 360, 0);
                 go.transform.GetChild(0).localScale = kind == rocks ? Vector3.one
                     : menhir ? new Vector3(radius * 1.3f, radius * 2.1f, radius * 1.3f) : Vector3.one * radius;

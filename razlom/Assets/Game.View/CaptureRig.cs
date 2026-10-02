@@ -518,6 +518,25 @@ namespace Game.View
                 else gameObject.AddComponent<CampWalkCapture>();
             }
             else while (!CombatViewReady()) yield return null;
+            // Съёмка уступа арены (-capture-at-ledge [номер]): герой у края обрыва, сверху, лицом вниз.
+            int ledgeFlag = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-capture-at-ledge");
+            if (ledgeFlag >= 0)
+            {
+                var driver = FindAnyObjectByType<TickDriver>();
+                var map = driver.Run?.Map;
+                var args = System.Environment.GetCommandLineArgs();
+                int index = ledgeFlag + 1 < args.Length && int.TryParse(args[ledgeFlag + 1], out int n) ? n : 0;
+                if (map != null && index < map.LedgeCount)
+                {
+                    var ledge = map.GetLedge(index);
+                    driver.Sim.Entities.Position[Simulation.PlayerId] = ledge.Point - ledge.Down * Fix64.FromInt(3);
+                    driver.Sim.Entities.Facing[Simulation.PlayerId] = ledge.Down;
+                    driver.Sim.StopPlayerMovement();
+                    Debug.Log($"[capture-ledge] уступ {index}: {ledge.Point}");
+                }
+                else Debug.Log("[capture-ledge] уступа нет");
+                yield return null;
+            }
             if (ActiveEnemies && IsCombatFeelShowcase)
             {
                 TickDriver driver = FindAnyObjectByType<TickDriver>();

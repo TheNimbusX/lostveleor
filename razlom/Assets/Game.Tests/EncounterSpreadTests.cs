@@ -60,6 +60,7 @@ namespace Game.Tests
         {
             for (int i = 1; i < sim.Entities.Count; i++)
                 if (sim.Entities.Side[i] != Faction.Wole) sim.Entities.Alive[i] = false;
+            sim.StepHeroIntoPendingSegment();
         }
 
         private static List<WaveShot> Collect()

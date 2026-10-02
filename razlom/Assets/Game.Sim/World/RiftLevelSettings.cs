@@ -62,9 +62,20 @@ namespace Game.Sim
             => new RiftLevelSettings(Math.Min(64, 10 + depth), 1, 1, 2,
                 1 + depth / 3, 3 + depth / 2, EnemyArchetypes.DepthHealthPercent(depth));
 
+        /// <summary>
+        /// Арена из сегментов (владелец, 2 октября): малая (2) — два сегмента 2×2 модуля, средняя (3) —
+        /// два 3×3, большая (4) — три 3×3. Поляна сегмента 3×3 — прежняя арена 3: шаблонам с тараном и
+        /// воем (MinArenaSize 3) места столько же, сколько раньше.
+        /// </summary>
+        public static int SegmentCount(int arenaSize) => arenaSize >= 4 ? 3 : 2;
+        public static int SegmentAcross(int arenaSize) => arenaSize <= 2 ? 2 : 3;
+        /// <summary>Модулей у самой крупной арены: 3 сегмента по 9, вход, 2 перехода, брод и выход.</summary>
+        public const int MaxArenaModules = 32;
+
         public void Generate(LayoutGenerator generator, ModuleSet modules, LayoutMap map, ulong layoutSeed)
         {
-            if (ArenaSize > 0) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss, ArenaSize);
+            if (ArenaSize > 0) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss,
+                Boss ? ArenaSize : SegmentAcross(ArenaSize), Boss ? 1 : SegmentCount(ArenaSize));
             else if (NaturalGlade) GladeLayout.Generate(modules, map, layoutSeed, TargetModules, Boss);
             else if (Boss) generator.GenerateBossArena(modules, layoutSeed, map);
             else generator.Generate(modules, layoutSeed, map, TargetModules, ExitCount, MaxLoops, RewardBranches);

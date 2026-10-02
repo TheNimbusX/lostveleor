@@ -145,7 +145,7 @@ namespace Game.LocationTests
                     // Встреча по шаблону выходит волнами: зачищаем, пока арена не отпустит.
                     for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
                     {
-                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
                         run.Step(InputFrame.Empty);
                     }
                     run.Sim.Entities.Position[Simulation.PlayerId] = run.Map.ExitPoint(0);
@@ -350,7 +350,8 @@ namespace Game.LocationTests
             var mapHash = _preview.Map.Hash();
             var simHash = _preview.Sim.StateHash();
             var trees = _preview.Root.GetComponentsInChildren<Renderer>().Where(r => r.name == "Декор: дерево").ToArray();
-            Assert.That(trees.Length, Is.InRange(2, 420));
+            // Бюджет леса: 420 рощ и до 900 у сомкнутого (ForestFill), плюс 96 ближних групп у кромки.
+            Assert.That(trees.Length, Is.InRange(2, 1000));
             foreach (var tree in trees)
             {
                 var bounds = tree.bounds;
@@ -574,8 +575,9 @@ namespace Game.LocationTests
                     Assert.That(camp.activeSelf, Is.False);
                     Assert.That(RenderSettings.fog, Is.EqualTo(evening || fog));
                     Assert.That(RenderSettings.ambientSkyColor, Is.EqualTo(sky));
-                    Assert.That(sun.color, Is.EqualTo(style == CampLookStyle.Original ? Color.white : evening ? look.EveningSunColor : look.SunColor));
-                    Assert.That(fill.intensity, Is.EqualTo(style == CampLookStyle.Original ? .3f : evening ? look.EveningFillIntensity : look.FillIntensity));
+                    var campSun = style == CampLookStyle.Original ? Color.white : evening ? look.EveningSunColor : look.SunColor;
+                    Assert.That(sun.color, Is.EqualTo(Color.Lerp(campSun, _theme.Style.SunColor, _theme.Style.CampSunColorBlend)));
+                    Assert.That(fill.intensity, Is.EqualTo((style == CampLookStyle.Original ? .3f : evening ? look.EveningFillIntensity : look.FillIntensity) * _theme.Style.CampFillScale).Within(.0001f));
                     Assert.That(fill.color, Is.EqualTo(evening ? look.EveningFillColor : Color.cyan));
                     Assert.That(sun.intensity, Is.EqualTo((evening ? 1.4f : 2) * _theme.Style.CampSunScale).Within(.0001f));
                     // Своя высота солнца у разлома (CampSunPitch) — поверх любого стиля лагеря, сторона света та же.

@@ -54,7 +54,7 @@ namespace Game.View
                     // по всему контуру давал пунктирную цепочку одинаковых кустов.
                     float thicket = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.28f, .72f,
                         Mathf.PerlinNoise(edge.x * .07f + 213, edge.y * .07f + 57)));
-                    if (thicket < .12f && rng.NextDouble() < .8) continue;
+                    if (thicket < .2f && rng.NextDouble() < .85) continue;
                     var choices = bushes.Count == 0 || rocks.Count > 0 && patch > .62f ? rocks : bushes;
                     int variant = PickDetail(choices, rng);
                     if (variant < 0) continue;
@@ -71,7 +71,7 @@ namespace Game.View
                     if (BoundaryBlocksClearance(point, radius) || NearLandmark(point.x, point.y, radius * .6f)) continue;
                     bool overlap = false;
                     // В зарослях кусты смыкаются, в просветах стоят редко.
-                    float stride = spacing * Mathf.Lerp(1.6f, .6f, thicket);
+                    float stride = spacing * Mathf.Lerp(2.4f, .6f, thicket);
                     foreach (var other in placed)
                     {
                         float gap = Mathf.Max(stride * Mathf.Lerp(.85f, 1.15f, patch), (radius + other.z) * Mathf.Lerp(.8f, .55f, thicket));
@@ -183,16 +183,31 @@ namespace Game.View
             for (int i = 0; i < _decorCount; i++)
                 if (_style.DecorVariants[_decorVariant[i]].Kind != DecorKind.GrassTuft)
                     cover.Add(new Vector3(_decor[i].position.x, _decor[i].position.z, VisibleRadius(i)));
-            var character = _shownMap.GladeCount == 1 ? CharacterOf(_shownMap, 0) : GladeCharacter.Rocky;
+            var character = _shownMap.IsArena ? CharacterOf(_shownMap, 0) : GladeCharacter.Rocky;
             float rockShare = rocks.Count == 0 ? 0 : bushes.Count == 0 ? 1 : character == GladeCharacter.Rocky ? .3f : .12f;
+            int fern = VariantNamed(FernPrefab);
             foreach (var (edge, normal) in OutlineEdges())
             {
                 yield return null;
-                bool covered = false;
+                // Кусты не встают сплошной шеренгой (владелец, 2 октября): просвет до 3–4 м между ними
+                // закрывает низкий папоротник — край читается (замер 27 сентября), а линии кустов нет.
+                // Ширина просвета гуляет по шуму.
+                float reach = Mathf.Lerp(1.1f, 2.6f, Mathf.PerlinNoise(edge.x * .09f + 17, edge.y * .09f + 83));
+                float nearest = float.MaxValue;
                 foreach (var c in cover)
-                    if ((edge - new Vector2(c.x, c.y)).sqrMagnitude < (c.z + .85f) * (c.z + .85f)) { covered = true; break; }
-                if (covered) continue;
+                    nearest = Mathf.Min(nearest, (edge - new Vector2(c.x, c.y)).magnitude - c.z);
+                if (nearest < .85f) continue;
                 var rng = DecorRandom(unchecked(Mathf.RoundToInt(edge.x * 4) * 486187739 + Mathf.RoundToInt(edge.y * 4) * 290797), 641);
+                if (nearest < reach && fern >= 0)
+                {
+                    float fernScale = .7f + (float)rng.NextDouble() * .5f;
+                    float fernVisible = _decorRadii[fern] * fernScale / Mathf.Max(.01f, _style.DecorVariants[fern].ScaleRange.y) * .7f;
+                    var fernPoint = edge + normal * (fernVisible * .6f + (float)rng.NextDouble() * .3f);
+                    if (NearPond(fernPoint.x, fernPoint.y, fernVisible) || NearLandmark(fernPoint.x, fernPoint.y, fernVisible * .5f)) continue;
+                    if (PlaceOffFloor(fern, fernPoint, normal, fernScale, false, rng))
+                        cover.Add(new Vector3(_decor[_decorCount - 1].position.x, _decor[_decorCount - 1].position.z, VisibleRadius(_decorCount - 1)));
+                    continue;
+                }
                 bool rock = rng.NextDouble() < rockShare;
                 int variant = PickDetail(rock ? rocks : bushes, rng);
                 if (variant < 0) continue;
@@ -202,7 +217,9 @@ namespace Game.View
                 float visible = _decorRadii[variant] * scale / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * .7f;
                 var tangent = new Vector2(normal.y, -normal.x);
                 // Разная глубина от края: иначе заросли выстраивались шеренгой вдоль контура.
-                var point = edge + normal * (visible + .1f + (float)rng.NextDouble() * .45f)
+                float depth = (float)rng.NextDouble();
+                // Чаще у края, но часть кустов уходит на 1–2 м глубже в лес.
+                var point = edge + normal * (visible + .1f + depth * depth * 2.2f)
                     + tangent * ((float)rng.NextDouble() - .5f) * .5f;
                 if (BoundaryBlocksClearance(point, visible * .5f) || NearPond(point.x, point.y, visible)
                     || NearLandmark(point.x, point.y, visible)) continue;
@@ -317,8 +334,8 @@ namespace Game.View
                     // Узкий откос отмечает место остановки, а его нижняя часть уходит под воду.
                     var outer = new Vector2(pond.x, pond.y) + direction * (1.08f + .02f * Mathf.Sin(angle * 7));
                     var inner = new Vector2(pond.x, pond.y) + direction * (.82f * irregular);
-                    vertices.Add(new Vector3(outer.x, .012f, outer.y)); uv.Add(new Vector2(i / 64f, 0));
-                    vertices.Add(new Vector3(inner.x, -.16f, inner.y)); uv.Add(new Vector2(i / 64f, 1));
+                    vertices.Add(new Vector3(outer.x, FloorLevel(pond.x, pond.y) + .012f, outer.y)); uv.Add(new Vector2(i / 64f, 0));
+                    vertices.Add(new Vector3(inner.x, FloorLevel(pond.x, pond.y) - .16f, inner.y)); uv.Add(new Vector2(i / 64f, 1));
                     if (i == 64) continue;
                     // У соединения с рекой кольцевой берег не должен перегородить воду.
                     if (NearRiver(outer.x, outer.y, .35f)) continue;

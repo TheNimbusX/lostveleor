@@ -62,7 +62,9 @@ namespace Game.Tests
                 playerHealth: 150, entryClearance: 14, solidEnvironment: true, naturalGlade: true, arenaSize: 3);
             var modules = PrototypeContent.Modules();
             var map = new LayoutMap(modules, 64);
-            level.Generate(new LayoutGenerator(), modules, map, seed);
+            // Одна поляна: тест про условие волны, а не про вход в сегменты арены.
+            GladeLayout.Generate(modules, map, seed, level.TargetModules, false, 3, 1);
+            map.BuildObstacles(seed);
             var sim = new Simulation(seed, 512);
             level.Spawn(sim, map, seed ^ 0x5151UL, template, arena);
             sim.PlayerInvulnerable = true;

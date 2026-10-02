@@ -678,7 +678,55 @@ namespace Game.LocationEditor
 
         // Шаг поляны 29 сентября целиком: из меню пункты идут по отдельности, из файла запроса
         // и пакетного запуска (-executeMethod) — вместе.
-        public static void ApplyGladeUpdate() { AddGrassAltarAndPebbles(); MatchCampPalette(); }
+        public static void ApplyGladeUpdate() { AddGrassAltarAndPebbles(); MatchCampPalette(); ApplyReferenceArenaLook(); }
+
+        // Арены по референсам владельца 30 сентября (ART/creating-arena/references-30-09): тёплый
+        // золотой день вместо вечера лагеря, сомкнутый светлый лес до края кадра, золотистая
+        // потрескавшаяся земля. В этой локации только природа: мост, изгородь, домик и фонари убраны.
+        [MenuItem("Разлом/Локации/Арена по референсам 30.09: золотой день, сомкнутый лес, сухая земля", priority = 34)]
+        public static void ApplyReferenceArenaLook()
+        {
+            var theme = MeadowLocationAssets.EnsureCreated();
+            var style = theme.Style;
+            var variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingBridge" || v.Prefab.name == "CreatingFence"
+                || v.Prefab.name == "MeadowTreehouse" || v.Prefab.name == "MeadowLanternPost"));
+            style.DecorVariants = variants.ToArray();
+            style.PostProcessingOverride = ArenaGrade();
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.ColorAdjustments color))
+            { color.postExposure.Override(.5f); color.contrast.Override(12); color.saturation.Override(30); EditorUtility.SetDirty(color); }
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.WhiteBalance balance))
+            { balance.temperature.Override(2); EditorUtility.SetDirty(balance); }
+            if (style.PostProcessingOverride.TryGet(out UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights tones))
+            { tones.shadows.Override(new Vector4(.92f, .97f, 1, .03f)); EditorUtility.SetDirty(tones); }
+            style.CampSunScale = 1.1f;
+            style.CampSunColorBlend = .75f;
+            style.SunColor = new Color(1, .9f, .62f);
+            style.CampFillScale = 1.8f;
+            style.EdgeCanopyDensity = 1;
+            style.ForestFill = 1;
+            style.ForestBandWidth = 38;
+            style.EarthBrightness = 2.3f;
+            style.EarthTint = new Color(1.18f, 1.05f, .72f);
+            style.EarthCracks = .8f;
+            style.CrackMeters = 1.1f;
+            TintLeaves("MeadowBroadleaf", BroadleafLeafTint);
+            // Папоротник владельца (Desktop/Creating, 30 сентября). Нулевой вес: ставится явно в
+            // LayoutView.Glade (PlaceRootsAndFerns) и кромке (CloseOutlineGaps). Корень с дубом сверху
+            // владелец снял 2 октября («вообще не смотрится») — до модели гигантского дерева.
+            variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && (v.Prefab.name == "CreatingRoots" || v.Prefab.name == "CreatingFern"));
+            // Гигантское дерево владельца (2 октября): фон за поляной, ставится явно (PlaceGiantTrees).
+            variants.RemoveAll(v => v.Prefab != null && v.Prefab.name == "CreatingGiantTree");
+            variants.Add(Variant(PrepareTripoProp("CreatingGiantTree", "arena_giant_tree", 30f, false, 24000, new Color(.95f, 1f, .9f)),
+                DecorKind.Rock, 0f, false, .9f, 1.15f));
+            var fern = PrepareTripoProp("CreatingFern", "arena_fern", 1.45f, false, 3000, new Color(1f, 1.04f, .92f));
+            variants.Add(Variant(AddBreeze(fern, .1f), DecorKind.Bush, 0f, false, .8f, 1.3f));
+            style.DecorVariants = variants.ToArray();
+            NaturalizeDressing(style);
+            style.Validate(); EditorUtility.SetDirty(theme); AssetDatabase.SaveAssets();
+            Debug.Log("[Луга] Арена по референсам 30.09: золотой день, сомкнутый лес, сухая земля, только природа.");
+        }
 
         // Новая трава, алтарь и галька из Creating (владелец, 29 сентября). Нулевой вес: ковёр травы
         // и галька рисуются инстансингом в LayoutView, алтарь ставится ориентиром на плече поляны.
@@ -738,7 +786,7 @@ namespace Game.LocationEditor
                 light.transform.SetParent(root.transform, false);
                 light.transform.position = filter.transform.TransformPoint(GlowCentre(filter.sharedMesh, glow, filter.sharedMesh.bounds.center))
                     + Vector3.up * .25f;
-                light.type = LightType.Point; light.range = 3.2f; light.intensity = .7f;
+                light.type = LightType.Point; light.range = 5.5f; light.intensity = 1.1f;
                 light.color = new Color(.45f, .9f, 1f); light.shadows = LightShadows.None;
                 Debug.Log($"[Луга] CreatingAltar: высота {AltarHeight} м, свет кристаллов на {light.transform.localPosition}");
                 PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -747,7 +795,115 @@ namespace Game.LocationEditor
             return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
-        private const float AltarHeight = 1.8f;
+        // 1,8 м рядом с героем читались табуреткой (владелец, 30 сентября): алтарь — ориентир поляны.
+        private const float AltarHeight = 3.8f;
+
+        // Органичная расстановка (владелец, 2 октября). Белые низкополигональные камни пака Ultimate
+        // Nature с зелёными треугольниками не похожи ни на что в лесу: из декора они уходят, а
+        // препятствия и стоячие камни рисуются серыми камнями из Creating (индекс 3 — стоячий камень,
+        // LayoutView.Obstacles). Грибы приглушены своим материалом (общая палитра пака не меняется),
+        // светлый срез пня притушен в его текстуре.
+        private static void NaturalizeDressing(LayoutStyle style)
+        {
+            var variants = new List<DecorVariant>(style.DecorVariants);
+            variants.RemoveAll(v => v.Prefab != null && System.Text.RegularExpressions.Regex.IsMatch(v.Prefab.name, @"^Rock\d$"));
+            style.DecorVariants = variants.ToArray();
+            GameObject Load(string name) => AssetDatabase.LoadAssetAtPath<GameObject>(Folder + "/" + name + ".prefab")
+                ?? throw new InvalidOperationException("Нет префаба " + name);
+            var rock = Load("CreatingRock");
+            style.ObstacleRocks = new[] { rock, Load("ArenaCreatingRockA"), Load("ArenaCreatingRockB"), rock };
+            MuteMushrooms();
+            MuteStumpCut();
+        }
+
+        private static void MuteMushrooms()
+        {
+            string path = Folder + "/MeadowMushrooms.prefab";
+            string materialPath = Folder + "/MeadowMushrooms_Surface.mat";
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    var materials = renderer.sharedMaterials;
+                    for (int i = 0; i < materials.Length; i++)
+                    {
+                        if (materials[i] == null) continue;
+                        if (material == null)
+                        {
+                            material = new Material(materials[i]) { name = "MeadowMushrooms_Surface" };
+                            AssetDatabase.CreateAsset(material, materialPath);
+                        }
+                        materials[i] = material;
+                    }
+                    renderer.sharedMaterials = materials;
+                }
+                // Красный пака кричал ярче всего в кадре: чуть темнее и землистее.
+                material.SetColor("_BaseColor", new Color(.66f, .56f, .52f));
+                material.enableInstancing = true;
+                EditorUtility.SetDirty(material);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+
+        private static void MuteStumpCut()
+        {
+            string source = null;
+            foreach (string file in Directory.GetFiles("Assets/Art/Meadow/Creating/tree_stump", "*_0_0.jpg", SearchOption.AllDirectories))
+                source = file.Replace('\\', '/');
+            if (source == null) throw new InvalidOperationException("Нет текстуры пня");
+            const string output = Folder + "/CreatingStump_Muted.png";
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                texture.LoadImage(File.ReadAllBytes(source));
+                var pixels = texture.GetPixels32();
+                int muted = 0;
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    var p = pixels[i];
+                    // Срез — светлое тёплое дерево (яркость выше коры, красный над синим).
+                    float light = (p.r * .3f + p.g * .59f + p.b * .11f) / 255f;
+                    float cut = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.42f, .62f, light)) * (p.r > p.b + 40 ? 1 : 0);
+                    if (cut <= 0) continue;
+                    muted++;
+                    float grey = light * 255;
+                    float k = Mathf.Lerp(1, .62f, cut);
+                    pixels[i] = new Color32((byte)(Mathf.Lerp(p.r, grey, cut * .35f) * k), (byte)(Mathf.Lerp(p.g, grey, cut * .35f) * k),
+                        (byte)(Mathf.Lerp(p.b, grey, cut * .35f) * k), p.a);
+                }
+                texture.SetPixels32(pixels);
+                File.WriteAllBytes(output, texture.EncodeToPNG());
+                Debug.Log($"[Луга] CreatingStump: притушено {muted * 100f / pixels.Length:0.0}% текстуры (срез)");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+            AssetDatabase.ImportAsset(output);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(Folder + "/CreatingStump_Surface.mat");
+            material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(output));
+            EditorUtility.SetDirty(material);
+        }
+
+        // Цельная модель Tripo (одна запечённая текстура): свой материал, меш упрощён штатным
+        // Mesh LOD до maxTriangles. size — высота или, при footprint, радиус пятна на земле.
+        private static GameObject PrepareTripoProp(string name, string category, float size, bool footprint, int maxTriangles, Color tint)
+        {
+            AssetDatabase.Refresh();
+            var prefab = PrepareImported(name, category, size, footprint);
+            AssetDatabase.LoadAssetAtPath<Material>(Folder + "/" + name + "_Surface.mat").SetColor("_BaseColor", tint);
+            string path = AssetDatabase.GetAssetPath(prefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                var filters = root.GetComponentsInChildren<MeshFilter>(true);
+                for (int i = 0; i < filters.Length; i++)
+                    filters[i].sharedMesh = LodCopy(filters[i].sharedMesh, Folder + "/" + name + (i == 0 ? "" : i.ToString()) + "_Mesh.asset", maxTriangles, name);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
 
         // Галька утоптанной земли — два маленьких камня из Creating, упрощённые примерно до двухсот
         // треугольников. У каждой модели метровый охват, размер задаёт раскладка (LayoutView.Glade).
@@ -1158,7 +1314,7 @@ namespace Game.LocationEditor
         }
 
         // Листва зеленее прежней (.9/.94/.82 и .3/.42/.24): кроны арены читались бурой массой.
-        private static readonly Color BroadleafLeafTint = new Color(.95f, 1.02f, .82f);
+        private static readonly Color BroadleafLeafTint = new Color(1.12f, 1.34f, .78f);
         private static readonly Color SpruceNeedleTint = new Color(.33f, .48f, .26f);
 
         private static GameObject PrepareNaturalTree(string name, string source, float height)

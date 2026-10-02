@@ -1313,10 +1313,25 @@ namespace Game.View
             {
                 Ray ray = _camera.ScreenPointToRay(screenPosition);
 
-                // Пол — плоскость y = 0. Симуляция плоская, высоты в ней нет.
+                // Пол — плоскость y = 0. Симуляция плоская, высоты в ней нет. У арены с уступами
+                // пол — террасы (LayoutView.FloorLevel): луч ищет свою террасу за пару итераций,
+                // начиная с той, где стоит герой, — уровень за уступом постоянный.
                 if (GroundPlane.Raycast(ray, out float distance))
                 {
                     Vector3 hit = ray.GetPoint(distance);
+                    if (LayoutView.Shown != null && Sim != null && CampPlayerView.Instance?.Active != true)
+                    {
+                        var hero = Sim.Entities.Position[Simulation.PlayerId];
+                        float level = LayoutView.ShownFloorLevel(hero.X.ToFloat(), hero.Y.ToFloat());
+                        for (int pass = 0; pass < 3; pass++)
+                        {
+                            if (!new Plane(Vector3.up, new Vector3(0, level, 0)).Raycast(ray, out float terrace)) break;
+                            hit = ray.GetPoint(terrace);
+                            float next = LayoutView.ShownFloorLevel(hit.x, hit.z);
+                            if (Mathf.Abs(next - level) < .01f) break;
+                            level = next;
+                        }
+                    }
                     _pending.Aim = new FixVec2(QuantizePosition(hit.x), QuantizePosition(hit.z));
                 }
             }
@@ -1515,7 +1530,7 @@ namespace Game.View
                 // на землю позади неё — именно поэтому прежняя проверка
                 // пропускала голову, плечи и щит.
                 FixVec2 p = entities.Position[i];
-                Vector3 origin = new Vector3(p.X.ToFloat(), 0f, p.Y.ToFloat());
+                Vector3 origin = new Vector3(p.X.ToFloat(), LayoutView.ShownFloorLevel(p.X.ToFloat(), p.Y.ToFloat()), p.Y.ToFloat());
                 Vector3 feet = _camera.WorldToScreenPoint(origin + Vector3.up * 0.08f);
                 Vector3 head = _camera.WorldToScreenPoint(origin + Vector3.up * 2.35f);
                 Vector3 chest = _camera.WorldToScreenPoint(origin + Vector3.up * 1.15f);
@@ -1733,7 +1748,8 @@ namespace Game.View
             FixVec2 curr = Sim.Entities.Position[entityId];
             float x = Mathf.Lerp(prev.X.ToFloat(), curr.X.ToFloat(), Alpha);
             float z = Mathf.Lerp(prev.Y.ToFloat(), curr.Y.ToFloat(), Alpha);
-            float height = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.SurfaceHeight(x,z) : 0f;
+            // В разломе — пол террасы арены (уступы между сегментами, LayoutView.FloorLevel).
+            float height = CampPlayerView.Instance?.Active == true ? CampPlayerView.Instance.SurfaceHeight(x,z) : LayoutView.ShownFloorLevel(x, z);
             return new Vector3(x, height, z);
         }
 

@@ -231,7 +231,7 @@ namespace Game.View
             return n;
         }
 
-        static Vector3 Ground(FixVec2 point) => new Vector3(point.X.ToFloat(), 0f, point.Y.ToFloat());
+        static Vector3 Ground(FixVec2 point) => new Vector3(point.X.ToFloat(), LayoutView.ShownFloorLevel(point.X.ToFloat(), point.Y.ToFloat()), point.Y.ToFloat());
 
         /// <summary>Кандидат метки, если цель за кадром; возвращает «за кадром» для гистерезиса.</summary>
         bool Place(ref int n, int key, int tag, int priority, bool threat, Vector3 world, bool wasOff)

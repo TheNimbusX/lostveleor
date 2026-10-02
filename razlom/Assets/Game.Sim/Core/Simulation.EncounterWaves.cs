@@ -101,6 +101,19 @@ namespace Game.Sim
         private int _encounterBoss = -1, _bossAddsSpawned;
         private FixVec2 _arenaCenter, _arenaAxis;
         private readonly List<FixVec2> _spawnPoints = new List<FixVec2>();
+        // Сегменты арены (владелец, 2 октября): сегмент каждой точки появления и каждой волны.
+        // Волна, открывающая сегмент, выходит, когда герой вступил на его поляну; волны ставятся
+        // только на точки своего сегмента. Карта из одной поляны — всё в сегменте 0, как раньше.
+        private int[] _spawnSegment = new int[0];
+        private int[] _waveSegment = new int[0];
+        private int _activeSegment;
+        private int _segmentCount = 1;
+
+        /// <summary>Сегмент арены, в котором выходят волны сейчас (0 — первый).</summary>
+        public int ActiveArenaSegment => _activeSegment;
+
+        /// <summary>Сегмент арены, к которому относится волна index шаблона.</summary>
+        public int WaveSegment(int index) => index < _waveSegment.Length ? _waveSegment[index] : 0;
         private long[] _spawnScore = new long[0];
         private bool[] _spawnTaken = new bool[0];
         private int[] _waveCounts = new int[8];
@@ -185,6 +198,7 @@ namespace Game.Sim
             PrepareArena(map, spawnSeed, arena, healthPercent, damagePercent, hardPercent);
             _encounter = template;
             _encounterStartTick = Tick;
+            AssignWaveSegments(map, template);
             _survivalEndTick = template.SurvivalTicks > 0 ? Tick + template.SurvivalTicks : 0;
             Fix64 clearance = Fix64.FromInt(entryClearance);
             SpawnWave(0, map.EntryPoint, clearance, clearance + StartWaveExtraDistance, emerge: false);
@@ -242,6 +256,25 @@ namespace Game.Sim
                 _spawnScore = new long[_spawnPoints.Count];
                 _spawnTaken = new bool[_spawnPoints.Count];
             }
+            _activeSegment = 0;
+            _segmentCount = map.IsArena ? Math.Max(1, map.GladeCount) : 1;
+            if (_spawnSegment.Length < _spawnPoints.Count) _spawnSegment = new int[_spawnPoints.Count];
+            for (int i = 0; i < _spawnPoints.Count; i++)
+                _spawnSegment[i] = _segmentCount > 1 ? Math.Max(0, map.SegmentAt(_spawnPoints[i])) : 0;
+        }
+
+        /// <summary>
+        /// Волны шаблона по сегментам арены, по порядку: волна w — в сегменте w·S/W. Каждый сегмент
+        /// получает хотя бы одну волну, если волн не меньше сегментов; бюджет угроз волн прежний —
+        /// враги встречи делятся между сегментами, а не умножаются. Выживание — бой на время,
+        /// он остаётся целиком в первом сегменте.
+        /// </summary>
+        private void AssignWaveSegments(LayoutMap map, ArenaEncounterTemplate template)
+        {
+            int waves = template.WaveCount;
+            if (_waveSegment.Length < waves) _waveSegment = new int[waves];
+            int segments = template.Type == ArenaEncounterType.Survival ? 1 : _segmentCount;
+            for (int w = 0; w < waves; w++) _waveSegment[w] = Math.Min(segments - 1, w * segments / Math.Max(1, waves));
         }
 
         /// <summary>
@@ -280,6 +313,32 @@ namespace Game.Sim
             return reached;
         }
 
+        /// <summary>
+        /// Для тестов зачистки: следующая волна ждёт входа в новый сегмент — герой ставится на его
+        /// точку появления, ближайшую к центру поляны (ходьба проверяется движковыми тестами).
+        /// </summary>
+        internal void StepHeroIntoPendingSegment()
+        {
+            if (!EncounterWavesPending || _layout == null) return;
+            int segment = _waveSegment[_wavesSpawned];
+            if (segment == _activeSegment || segment >= _layout.GladeCount) return;
+            FixVec2 center = _layout.GetGlade(segment).Center;
+            int best = -1;
+            for (int i = 0; i < _spawnPoints.Count; i++)
+                if (_spawnSegment[i] == segment
+                    && (best < 0 || FixVec2.DistanceSq(_spawnPoints[i], center) < FixVec2.DistanceSq(_spawnPoints[best], center)))
+                    best = i;
+            if (best < 0) return;
+            Entities.Position[PlayerId] = _spawnPoints[best];
+            StopPlayerMovement();
+            Grid.Rebuild(Entities);
+        }
+
+        // Центр поляны сегмента, где выходят волны; у карты из одной поляны — центр арены.
+        private FixVec2 SegmentCenter()
+            => _segmentCount > 1 && _layout != null && _activeSegment < _layout.GladeCount
+                ? _layout.GetGlade(_activeSegment).Center : _arenaCenter;
+
         private static bool InsideGlade(LayoutMap map, FixVec2 point)
         {
             for (int g = 0; g < map.GladeCount; g++)
@@ -315,6 +374,17 @@ namespace Game.Sim
             if (_wavesSpawned > 1 && Tick - _lastWaveTick < EmergeTicks) return;
 
             int alive = CountAliveEnemies() + PendingSplitCount * SplitChildren;
+            // Волна нового сегмента выходит, когда герой ступил на его поляну, — что бы ни
+            // осталось живым позади: до того сегмент пуст, и герой идёт к нему по проходу.
+            int segment = _waveSegment[_wavesSpawned];
+            if (segment != _activeSegment)
+            {
+                if (_layout == null || _layout.SegmentAt(Entities.Position[PlayerId]) != segment) return;
+                _activeSegment = segment;
+                SpawnWave(_wavesSpawned, Entities.Position[PlayerId], WaveHeroClearance, WavePreferredDistance, emerge: true);
+                Grid.Rebuild(Entities);
+                return;
+            }
             var trigger = _encounter.GetWave(_wavesSpawned).Trigger;
             bool due;
             switch (trigger.Kind)
@@ -411,12 +481,12 @@ namespace Game.Sim
             {
                 FixVec2 d = _spawnPoints[i] - hero;
                 Fix64 distanceSq = d.LengthSq;
-                if (_spawnTaken[i] || distanceSq < minSq) { _spawnScore[i] = long.MinValue; continue; }
+                if (_spawnTaken[i] || distanceSq < minSq || _spawnSegment[i] != _activeSegment) { _spawnScore[i] = long.MinValue; continue; }
                 Fix64 distance = Fix64.Sqrt(distanceSq);
                 Fix64 score = -Fix64.Abs(distance - preferred) / 4;
                 if (keepBack) score += distance / 4;
                 if (placement == WavePlacement.Center)
-                    score -= FixVec2.Distance(_spawnPoints[i], _arenaCenter) / 2;
+                    score -= FixVec2.Distance(_spawnPoints[i], SegmentCenter()) / 2;
                 else if (distance.Raw > 0)
                     score += FixVec2.Dot(d, direction) / distance * 4;
                 for (int a = 0; a < _waveAnchorCount; a++)
@@ -715,6 +785,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _survivalEndTick);
             Hashing.Mix(ref hash, _survivalEnded ? 1 : 0);
             Hashing.Mix(ref hash, _spawnPoints.Count);
+            if (_segmentCount > 1) { Hashing.Mix(ref hash, _segmentCount); Hashing.Mix(ref hash, _activeSegment); }
             for (int i = 0; i < Entities.Count; i++)
                 if (_emergeUntil[i] > Tick) { Hashing.Mix(ref hash, i); Hashing.Mix(ref hash, _emergeUntil[i]); }
         }

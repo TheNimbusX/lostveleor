@@ -209,6 +209,8 @@ namespace Game.Tests
                 bool sawPendingChildren = false;
                 for (int tick = 0; tick < 4000 && (sim.EncounterWavesPending || sim.HasPendingSplits || sim.CountAliveEnemies() > 0); tick++)
                 {
+                    // Волна следующего сегмента ждёт героя на его поляне.
+                    if (sim.CountAliveEnemies() == 0 && !sim.HasPendingSplits) sim.StepHeroIntoPendingSegment();
                     if (tick % 10 == 0)
                         for (int i = 1; i < sim.Entities.Count; i++)
                         {
@@ -464,6 +466,7 @@ namespace Game.Tests
         {
             for (int i = 1; i < sim.Entities.Count; i++)
                 if (sim.Entities.Side[i] != Faction.Wole) sim.Entities.Alive[i] = false;
+            sim.StepHeroIntoPendingSegment();
         }
 
         [Test]
@@ -708,13 +711,13 @@ namespace Game.Tests
             var template = run.CurrentEncounter;
             Assert.That(template.WaveCount, Is.GreaterThanOrEqualTo(2));
             // Первая волна мертва — но вторая ещё не вышла: арена не зачищена.
-            for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+            for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
             run.Step(InputFrame.Empty);
             Assert.That(run.Phase, Is.EqualTo(RunPhase.Clearing));
             Assert.That(run.CountRequiredEnemies(), Is.GreaterThan(0), "вторая волна встала в тот же тик");
             for (int guard = 0; guard < 400 && run.Phase == RunPhase.Clearing; guard++)
             {
-                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
                 run.Step(InputFrame.Empty);
             }
             Assert.That(run.Phase, Is.EqualTo(RunPhase.SeekingExit));
@@ -756,7 +759,7 @@ namespace Game.Tests
                 {
                     for (int guard = 0; guard < 4000 && run.Phase == RunPhase.Clearing; guard++)
                     {
-                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false;
+                        for (int i = 1; i < run.Sim.Entities.Count; i++) run.Sim.Entities.Alive[i] = false; run.Sim.StepHeroIntoPendingSegment();
                         run.Step(InputFrame.Empty);
                     }
                     run.Sim.Entities.Position[0] = run.Map.ExitPoint(0);

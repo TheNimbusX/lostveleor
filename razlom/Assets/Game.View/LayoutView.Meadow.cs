@@ -149,7 +149,7 @@ namespace Game.View
                 {
                     var cache = _cachePool.Acquire().transform;
                     var point = map.CenterOf(map.GetRewardBranch(b));
-                    cache.position = new Vector3(point.X.ToFloat(), .03f, point.Y.ToFloat());
+                    cache.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()) + .03f, point.Y.ToFloat());
                     cache.rotation = Quaternion.Euler(0, 25, 0); _caches.Add(cache);
                 }
             }
@@ -169,7 +169,7 @@ namespace Game.View
         {
             var portal = _portalPool.Acquire().transform;
             portal.name = exit ? "Проход дальше" : "Вход в луга";
-            portal.position = new Vector3(point.X.ToFloat(), 0, point.Y.ToFloat());
+            portal.position = new Vector3(point.X.ToFloat(), FloorLevel(point.X.ToFloat(), point.Y.ToFloat()), point.Y.ToFloat());
             portal.rotation = Quaternion.LookRotation(new Vector3(direction.X.ToFloat(), 0, direction.Y.ToFloat()));
             SetGlow(portal, exit ? new Color(.8f, .42f, .1f) : new Color(.18f, .65f, .52f));
             _portals.Add(portal);
@@ -230,11 +230,22 @@ namespace Game.View
                 _dropMarks[d].gameObject.SetActive(visible);
                 if (!visible) continue;
                 RunDrop drop = run.GetDrop(d);
-                _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), .03f, drop.Position.Y.ToFloat());
-                SetGlow(_dropMarks[d], drop.Offer.Kind == RewardKind.Ability
-                    ? new Color(.95f, .35f, .2f) : new Color(1f, .78f, .3f));
+                _dropMarks[d].position = new Vector3(drop.Position.X.ToFloat(), FloorLevel(drop.Position.X.ToFloat(), drop.Position.Y.ToFloat()) + .03f, drop.Position.Y.ToFloat());
+                // Сундук зачистки (RiftRun.ChestDrop) — полный схрон, сияние по редкости вещи.
+                bool chest = d == run.ChestDrop;
+                _dropMarks[d].localScale = Vector3.one * (chest ? 1f : .6f);
+                _dropMarks[d].name = chest ? "Сундук арены" : "Добыча с элиты";
+                SetGlow(_dropMarks[d], chest ? ChestGlow(drop.Offer.Item.Rarity)
+                    : drop.Offer.Kind == RewardKind.Ability ? new Color(.95f, .35f, .2f) : new Color(1f, .78f, .3f));
             }
         }
+        // Цвета редкости — те же, что у карточек наград (RunHud.RarityLight).
+        private static Color ChestGlow(Game.Sim.ItemRarity rarity)
+        {
+            var tier = WcRarity.FromItem((int)rarity);
+            return tier == WcRarity.Tier.Common ? new Color(1f, .9f, .75f) : UiTheme.Current.Get(WcRarity.RoleFor(tier));
+        }
+
         private void SetGlow(Transform root, Color color)
         {
             var renderer = root.Find("Сияние").GetComponent<MeshRenderer>();
@@ -379,7 +390,7 @@ namespace Game.View
 
         private GladeCharacter CharacterOf(LayoutMap map, int index)
         {
-            if (map.GladeCount == 1) return ArenaCharacter(map);
+            if (map.IsArena) return ArenaCharacter(map);
             if (map.GladeCount < 3) return GladeCharacter.Rocky;
             int water = WatersideGlade(map);
             if (index == water) return GladeCharacter.Waterside;
@@ -446,16 +457,20 @@ namespace Game.View
                     // Two spatial scales produce small copses, larger groves and persistent open gaps.
                     float grove = Mathf.PerlinNoise(x * .055f + groveX, z * .055f + groveZ) * .7f
                         + Mathf.PerlinNoise(x * .12f + groveZ, z * .12f + groveX) * .3f;
-                    if (grove < .32f || rng.NextDouble() > Mathf.Lerp(.5f, .98f, Mathf.InverseLerp(.32f, .65f, grove))) continue;
+                    // Сомкнутый лес (ForestFill) закрывает просветы рощ: за опушкой не видно голой земли.
+                    float keep = Mathf.Lerp(grove < .32f ? 0 : Mathf.Lerp(.5f, .98f, Mathf.InverseLerp(.32f, .65f, grove)), 1, _style.ForestFill);
+                    if (rng.NextDouble() > keep) continue;
                     float px=x+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
                     float pz=z+(float)(rng.NextDouble()-.5)*_style.ForestSpacing*.85f;
-                    if (NearPond(px, pz, 3)) continue;
+                    // Лес подходит к самой воде: озеро — край арены, а не пруд на лугу (2 октября).
+                    // NearPond держит ещё 30% радиуса — у озера в 11 м это 3 м пустого луга по берегу.
+                    if (NearRiver(px, pz, 3) || NearWaterEdge(px, pz, 1.2f)) continue;
                     if (map.GladeCount > 0)
                     {
                         var character = CharacterOf(map, NearestGlade(map, px, pz));
                         // Светлая опушка получает просветы в кронах, без дополнительных источников света.
                         float density = character == GladeCharacter.Sunny ? .68f : character == GladeCharacter.Rocky ? .85f : .98f;
-                        if (rng.NextDouble() > density) continue;
+                        if (rng.NextDouble() > Mathf.Lerp(density, 1, _style.ForestFill)) continue;
                     }
                     float pick = (float)rng.NextDouble() * treeWeight;
                     int variant = trees[trees.Count - 1];
@@ -481,12 +496,16 @@ namespace Game.View
                         if (TouchesOutlinedFloor(px, pz, _decorRadii[variant] * 1.45f)) continue;
                     }
                     if (nearest<_decorRadii[variant]*1.45f+.5f || nearest>_style.ForestBandWidth) continue;
+                    // Дальше 20 м от пола сомкнутый лес — только фон: вдвое реже и крупнее. Кроны так же
+                    // закрывают землю до края кадра, а деревьев почти не прибавляется.
+                    bool far = _style.ForestFill > 0 && nearest > 20;
+                    if (far && ((Mathf.RoundToInt((x - minX) / _style.ForestSpacing) + Mathf.RoundToInt((z - minZ) / _style.ForestSpacing)) & 1) == 1) continue;
                     SpawnDecor(variant,px,pz,rng);
-                    _decor[_decorCount-1].localScale*=1.45f;
+                    _decor[_decorCount-1].localScale*=far ? 2.05f : 1.45f;
                     var treePosition = _decor[_decorCount-1].position;
                     treePosition.y = BackgroundHeight(map, px, pz) - .08f;
                     _decor[_decorCount-1].position = treePosition;
-                    if (++created>=420) yield break;
+                    if (++created>=Mathf.RoundToInt(Mathf.Lerp(420, 900, _style.ForestFill))) yield break;
                 }
             }
         }
@@ -494,10 +513,40 @@ namespace Game.View
         public float WeaponGroundHeight(float x, float z)
         {
             return _shownMap == null || !_style.NaturalGround ? 0f
-                : Mathf.Max(0f, BackgroundHeight(_shownMap, x, z));
+                : Mathf.Max(FloorLevel(x, z), BackgroundHeight(_shownMap, x, z));
         }
 
-        private float BackgroundHeight(LayoutMap map, float x, float z)
+        /// <summary>Показанная арена: тела и эффекты берут у неё высоту пола (TickDriver.GetRenderPosition).</summary>
+        public static LayoutView Shown { get; private set; }
+
+        /// <summary>Высота пола показанной арены в точке; 0 — нет арены или уступов.</summary>
+        public static float ShownFloorLevel(float x, float z) => Shown != null ? Shown.FloorLevel(x, z) : 0f;
+
+        // Ширина ступени обрыва на земле, метры: почти отвесная стенка, сетка земли шагом 2 м её сглаживает.
+        private const float LedgeFace = .5f;
+
+        /// <summary>
+        /// Террасы арены (владелец, 2 октября): за каждым уступом всё ниже на его Drop — пол сегмента,
+        /// лес по сторонам и рельеф за ним. Линия обрыва тянется через весь лес, а не только поперёк
+        /// прохода: так нижний сегмент целиком лежит в своей котловине.
+        /// </summary>
+        public float FloorLevel(float x, float z)
+        {
+            var map = _shownMap;
+            if (map == null || map.LedgeCount == 0) return 0f;
+            float level = 0;
+            for (int i = 0; i < map.LedgeCount; i++)
+            {
+                var ledge = map.GetLedge(i);
+                float side = (x - ledge.Point.X.ToFloat()) * ledge.Down.X.ToFloat() + (z - ledge.Point.Y.ToFloat()) * ledge.Down.Y.ToFloat();
+                level -= ledge.Drop.ToFloat() * Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-LedgeFace, LedgeFace, side));
+            }
+            return level;
+        }
+
+        private float BackgroundHeight(LayoutMap map, float x, float z) => BackgroundRelief(map, x, z) + FloorLevel(x, z);
+
+        private float BackgroundRelief(LayoutMap map, float x, float z)
         {
             float distance = float.MaxValue;
             // Keep the entire module footprint and a shoulder around it flat, including all paths.
@@ -546,6 +595,14 @@ namespace Game.View
             return Mathf.Sqrt(dx * dx + dz * dz) / (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
         }
 
+        // Ближе margin метров к воде (с береговой каймой 8% радиуса).
+        private bool NearWaterEdge(float x, float z, float margin)
+        {
+            foreach (var pond in _ponds)
+                if (PondRadius(pond, x, z) < 1.08f + margin / Mathf.Min(pond.z, pond.w)) return true;
+            return false;
+        }
+
         private bool NearPond(float x, float z, float margin)
         {
             if (NearRiver(x, z, margin)) return true;
@@ -572,7 +629,7 @@ namespace Game.View
                 }
             if (map.Outline == null || map.GladeCount == 0) return;
             // У арены вода уже есть — река с прудами на концах или озеро; лишние пруды её дробили бы.
-            if (map.GladeCount == 1 && (map.RiverCount > 0 || map.WaterCount > 0)) return;
+            if (map.IsArena && (map.RiverCount > 0 || map.WaterCount > 0)) return;
             int existingPonds = _ponds.Count;
             var rng = DecorRandom(0, 397);
             for (int attempt = 0; attempt < 96 && _ponds.Count < existingPonds + Mathf.Clamp(_style.PondCount, 0, 6); attempt++)
@@ -602,12 +659,12 @@ namespace Game.View
             foreach (var pond in _ponds)
             {
                 int start = vertices.Count;
-                vertices.Add(new Vector3(pond.x, -.12f, pond.y)); uv.Add(Vector2.zero);
+                vertices.Add(new Vector3(pond.x, FloorLevel(pond.x, pond.y) - .12f, pond.y)); uv.Add(Vector2.zero);
                 for (int i = 0; i <= 64; i++)
                 {
                     float angle = i * Mathf.PI / 32;
                     float radius = .85f * (1 + .07f * Mathf.Sin(angle * 3 + pond.x));
-                    vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, -.12f,
+                    vertices.Add(new Vector3(pond.x + Mathf.Cos(angle) * pond.z * radius, FloorLevel(pond.x, pond.y) - .12f,
                         pond.y + Mathf.Sin(angle) * pond.w * radius));
                     uv.Add(new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)));
                     if (i == 64) continue;
@@ -766,12 +823,15 @@ namespace Game.View
                 else if (name == "CreatingStoneRuin") runes = i;
                 else if (name == "CreatingRuneStone") stone = i;
                 else if (name == "CreatingFence" && variant.Weight > 0) fence = i;
-                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab;
+                _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
             if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
             PlaceCenterCircle(map, runes);
             PlaceAltar(map);
+            PlaceLedgeCliffs(map);
+            PlaceGiantTrees(map);
+            PlaceRootsAndFerns(map);
             if (fence >= 0)
                 for (int g = 0; g < map.GladeCount; g++)
                 {
@@ -848,9 +908,9 @@ namespace Game.View
             if (map.GladeCount == 0) return;
             var rng = DecorRandom(0, 983);
             bool boss = _shownEncounters != null && _shownEncounters.BossId >= 0;
-            var character = map.GladeCount == 1 ? CharacterOf(map, 0) : GladeCharacter.Rocky;
-            if (map.GladeCount == 1 && !boss && (character != GladeCharacter.Waterside || rng.NextDouble() > .5)) return;
-            int runes = map.GladeCount == 1 ? stone >= 0 ? stone : ring : ring >= 0 ? ring : stone;
+            var character = map.IsArena ? CharacterOf(map, 0) : GladeCharacter.Rocky;
+            if (map.IsArena && !boss && (character != GladeCharacter.Waterside || rng.NextDouble() > .5)) return;
+            int runes = map.IsArena ? stone >= 0 ? stone : ring : ring >= 0 ? ring : stone;
             int start = rng.Next(map.GladeCount);
             for (int offset = 0; offset < map.GladeCount; offset++)
             {
@@ -1000,7 +1060,9 @@ namespace Game.View
             float width = Mathf.Max(_style.GroundFillSize, maxX - minX + 80);
             float depth = Mathf.Max(_style.GroundFillSize, maxZ - minZ + 80);
             float originX = (minX + maxX - width) * .5f, originZ = (minZ + maxZ - depth) * .5f;
-            int columns = Mathf.CeilToInt(width / 2), rows = Mathf.CeilToInt(depth / 2);
+            // У арены с уступами — шаг 1 м: ступень обрыва иначе расплывалась в пологий скат.
+            float gridStep = map.LedgeCount > 0 ? 1f : 2f;
+            int columns = Mathf.CeilToInt(width / gridStep), rows = Mathf.CeilToInt(depth / gridStep);
             var vertices = new Vector3[(columns + 1) * (rows + 1)];
             var triangles = new int[columns * rows * 6];
             yield return Rows(rows + 1, z =>

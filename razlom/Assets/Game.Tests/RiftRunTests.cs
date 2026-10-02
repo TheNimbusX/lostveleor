@@ -85,6 +85,7 @@ namespace Game.Tests
             EntityStore entities = run.Sim.Entities;
             for (int i = 0; i < entities.Count; i++)
                 if (entities.Side[i] != Faction.Wole) entities.Alive[i] = false;
+            run.Sim.StepHeroIntoPendingSegment();
         }
 
         /// <summary>

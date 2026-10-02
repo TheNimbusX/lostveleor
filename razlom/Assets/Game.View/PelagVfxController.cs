@@ -1364,7 +1364,7 @@ namespace Game.View
             if (e.ForcedTicksLeft[player] <= 0) return PlayerPosition();
 
             FixVec2 t = e.ForcedTarget[player];
-            return new Vector3(t.X.ToFloat(), 0f, t.Y.ToFloat());
+            return new Vector3(t.X.ToFloat(), LayoutView.ShownFloorLevel(t.X.ToFloat(), t.Y.ToFloat()), t.Y.ToFloat());
         }
 
         private void PlayAnchorLeap(bool showcase)

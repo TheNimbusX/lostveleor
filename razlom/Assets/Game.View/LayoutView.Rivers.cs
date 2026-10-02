@@ -67,24 +67,26 @@ namespace Game.View
             {
                 var river = map.GetRiver(r);
                 var along = new Vector3(river.Along.X.ToFloat(), 0, river.Along.Y.ToFloat());
+                // Русло лежит на террасе своего сегмента (у арены — за последним уступом).
+                var level = Vector3.up * FloorLevel(river.Center.X.ToFloat(), river.Center.Y.ToFloat());
                 float length = river.HalfLength.ToFloat(), width = river.HalfWidth.ToFloat();
                 for (int segment = 0; segment < 168; segment++)
                 {
                     float t0 = -length + segment * length / 84, t1 = -length + (segment + 1) * length / 84;
-                    var a = RiverPoint(river, t0); var b = RiverPoint(river, t1);
+                    var a = RiverPoint(river, t0) + level; var b = RiverPoint(river, t1) + level;
                     Quad(water, waterIndices, a - along * width, b - along * width, b + along * width, a + along * width);
                     for (int side = -1; side <= 1 && Mathf.Abs((t0 + t1) * .5f) < length - 6; side += 2)
                     {
                         var innerA = a + along * (width * side); var innerB = b + along * (width * side);
-                        var outerA = a + along * ((width + .8f) * side); outerA.y = -.025f;
-                        var outerB = b + along * ((width + .8f) * side); outerB.y = -.025f;
+                        var outerA = a + along * ((width + .8f) * side); outerA.y = level.y - .025f;
+                        var outerB = b + along * ((width + .8f) * side); outerB.y = level.y - .025f;
                         Quad(banks, bankIndices, innerA, innerB, outerB, outerA);
                     }
                 }
                 // У арены вместо дощатого моста — импровизированный брод из камней.
-                if (map.GladeCount == 1) { PlaceStoneFord(river, r); continue; }
+                if (map.IsArena) { PlaceStoneFord(river, r); continue; }
                 var bridge = _bridgePool.Acquire();
-                bridge.transform.position = new Vector3(river.Center.X.ToFloat(), 0, river.Center.Y.ToFloat());
+                bridge.transform.position = new Vector3(river.Center.X.ToFloat(), FloorLevel(river.Center.X.ToFloat(), river.Center.Y.ToFloat()), river.Center.Y.ToFloat());
                 bridge.transform.rotation = Quaternion.LookRotation(along);
                 _bridges.Add(bridge);
             }
@@ -141,7 +143,7 @@ namespace Game.View
             }
             if (steps.Count == 0) return;
             var rng = DecorRandom(index, 863);
-            var center = new Vector3(river.Center.X.ToFloat(), 0, river.Center.Y.ToFloat());
+            var center = new Vector3(river.Center.X.ToFloat(), FloorLevel(river.Center.X.ToFloat(), river.Center.Y.ToFloat()), river.Center.Y.ToFloat());
             var along = new Vector3(river.Along.X.ToFloat(), 0, river.Along.Y.ToFloat());
             var across = new Vector3(river.Across.X.ToFloat(), 0, river.Across.Y.ToFloat());
             float reach = river.HalfWidth.ToFloat() + .3f;

@@ -31,16 +31,25 @@ namespace Game.View
         [Range(1, 12)] public float EarthTileMeters = 3;
         [Tooltip("Яркость фактуры земли. Фото-грязь в 2,5 раза темнее нарисованного грунта лагеря и рядом с его светлыми камнями читалась тёмными дырами.")]
         [Range(.5f, 3)] public float EarthBrightness = 1;
+        [Tooltip("Тон фактуры земли: золотистая охра референсов арен вместо бурой грязи.")]
+        public Color EarthTint = Color.white;
+        [Tooltip("Сила трещин сухой земли на утоптанной середине; 0 — без трещин, как в лагере.")]
+        [Range(0, 1)] public float EarthCracks;
+        [Tooltip("Размер «плит» между трещинами, метры.")]
+        [Range(.3f, 3)] public float CrackMeters = 1.1f;
         public bool ForestClearings;
         [Range(.5f, 1.2f)] public float ClearingSize = 1f;
         public GameObject PortalPrefab;
         public GameObject CachePrefab;
         public GameObject[] ObstacleRocks = Array.Empty<GameObject>();
         public GameObject ObstacleTree;
-        [Range(0, 30)] public float ForestBandWidth = 16;
+        [Range(0, 40)] public float ForestBandWidth = 16;
         [Range(4, 12)] public float ForestSpacing = 6;
         [Tooltip("Плотность групп крон за опушкой. Ноль оставляет только дальний лес; проходы всегда свободны.")]
         [Range(0, 1)] public float EdgeCanopyDensity = .7f;
+        [Tooltip("Сомкнутость дальнего леса: 0 — рощи с просветами, 1 — сплошные кроны до края кадра, " +
+                 "как на референсах арен 30 сентября. Бюджет деревьев растёт с 420 до 700.")]
+        [Range(0, 1)] public float ForestFill;
         [InspectorName("Освещение как в лагере")]
         [Tooltip("Использовать свет сцены и выбранную постобработку CampLookController. Цвета солнца и тумана ниже применяются при выключенном переключателе.")]
         public bool UseCampLighting;
@@ -56,6 +65,11 @@ namespace Game.View
         [Tooltip("Доля яркости солнца лагеря в разломе. Солнце выше вечернего (короче тени) светит на открытую " +
                  "поляну сильнее, чем на лагерь в тени леса; меньше 1 — та же вечерняя яркость.")]
         [Range(.3f, 1.5f)] public float CampSunScale = 1;
+        [Tooltip("Доля цвета солнца SunColor поверх лагерного. Оранжевый закат лагеря красил поляну в охру; " +
+                 "золотой день референсов (30 сентября) светлее и желтее. 0 — цвет лагеря.")]
+        [Range(0, 1)] public float CampSunColorBlend;
+        [Tooltip("Множитель заполняющего света лагеря в разломе: светлее тени под кронами и у кромки.")]
+        [Range(.5f, 4)] public float CampFillScale = 1;
         public Color SunColor = new Color(1f, 0.92f, 0.8f);
         [Range(0.1f, 3)] public float SunIntensity = 1.25f;
         public Vector3 SunAngles = new Vector3(52, -35, 0);
@@ -194,14 +208,19 @@ namespace Game.View
                 throw new ArgumentException("Плитка фактуры земли должна быть от 1 до 12 метров.");
             if (float.IsNaN(EarthBrightness) || EarthBrightness < .5f || EarthBrightness > 3)
                 throw new ArgumentException("Яркость фактуры земли должна быть от 0.5 до 3.");
+            if (float.IsNaN(EarthCracks) || EarthCracks < 0 || EarthCracks > 1 || float.IsNaN(CrackMeters) || CrackMeters < .3f || CrackMeters > 3)
+                throw new ArgumentException("Трещины земли: сила 0–1, размер плит 0.3–3 м.");
             if (ClearingSize < .5f || ClearingSize > 1.2f)
                 throw new ArgumentException("Размер полян должен быть от 0.5 до 1.2.");
             if (float.IsNaN(EdgeCanopyDensity) || EdgeCanopyDensity < 0 || EdgeCanopyDensity > 1
-                || ForestBandWidth < 0 || ForestBandWidth > 30 || ForestSpacing < 4 || ForestSpacing > 12
+                || float.IsNaN(ForestFill) || ForestFill < 0 || ForestFill > 1
+                || ForestBandWidth < 0 || ForestBandWidth > 40 || ForestSpacing < 4 || ForestSpacing > 12
                 || FogStart < 20 || FogEnd <= FogStart || SunIntensity < 0.1f || SunIntensity > 3
                 || float.IsNaN(CampHazeNear) || !(CampHazeFar > CampHazeNear)
                 || float.IsNaN(CampSunPitch) || CampSunPitch < 0 || CampSunPitch > 80
-                || float.IsNaN(CampSunScale) || CampSunScale < .3f || CampSunScale > 1.5f)
+                || float.IsNaN(CampSunScale) || CampSunScale < .3f || CampSunScale > 1.5f
+                || float.IsNaN(CampSunColorBlend) || CampSunColorBlend < 0 || CampSunColorBlend > 1
+                || float.IsNaN(CampFillScale) || CampFillScale < .5f || CampFillScale > 4)
                 throw new ArgumentException("Проверьте ширину леса, шаг деревьев, свет и дальность тумана.");
             if (RouteWidth < 0.8f || RouteWidth > 2f || RouteClearance < 0 || EntryClearance < 0
                 || Thickness <= 0 || Gap < 0 || Gap >= Game.Sim.LayoutMap.CellSize.ToFloat()
