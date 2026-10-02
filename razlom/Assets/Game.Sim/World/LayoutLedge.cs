@@ -2,12 +2,10 @@ namespace Game.Sim
 {
     /// <summary>
     /// Уступ между сегментами арены (владелец, 2 октября): поперёк прохода лежит линия обрыва, за ней
-    /// следующий сегмент ниже на Drop метров. Сверху её переходят (спрыгивают), снизу — нет: путь,
-    /// пересекающий линию против Down, симуляция не пускает. Это одна и та же проверка для героя,
-    /// врагов, расталкивания и лучей стрелков (LayoutMap.CanTravel).
+    /// следующий сегмент ниже на Drop метров. В проходе — склон, по нему ходят в обе стороны
+    /// (владелец: «сделай возможность подняться обратно»); по бокам обрыв закрывают скалы.
     ///
-    /// Сама симуляция плоская: высота — только у представления (LayoutView), уступ для неё — стенка
-    /// с одной стороны.
+    /// Симуляция плоская и уступа не замечает: высота — только у представления (LayoutView).
     /// </summary>
     public readonly struct LayoutLedge
     {
@@ -28,19 +26,6 @@ namespace Game.Sim
 
         /// <summary>Расстояние вдоль линии от её середины.</summary>
         public Fix64 Along(FixVec2 point) => FixVec2.Dot(point - Point, new FixVec2(-Down.Y, Down.X));
-
-        /// <summary>
-        /// Путь from → to лезет на уступ снизу: начинается не выше линии (снизу или на ней), кончается
-        /// сверху, и пересекает линию в её ширине.
-        /// </summary>
-        public bool BlocksClimb(FixVec2 from, FixVec2 to)
-        {
-            Fix64 a = Side(from), b = Side(to);
-            if (a.Raw < 0 || b.Raw >= 0) return false;
-            // Точка пересечения линии: from + (to − from)·a/(a − b).
-            FixVec2 cross = from + (to - from) * (a / (a - b));
-            return Fix64.Abs(Along(cross)) <= HalfWidth;
-        }
 
         public void MixHash(ref ulong hash)
         {

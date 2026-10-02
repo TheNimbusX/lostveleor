@@ -4,8 +4,8 @@ using NUnit.Framework;
 namespace Game.Tests
 {
     /// <summary>
-    /// Уступ между сегментами арены (владелец, 2 октября): с верхнего сегмента на нижний спрыгнуть
-    /// можно, обратно — нет. Это одна проверка карты для любого пути (LayoutMap.CanTravel).
+    /// Уступ между сегментами арены (владелец, 2 октября): следующий сегмент ниже, проход — склон.
+    /// Уступ есть не у каждого прохода, и по склону ходят в обе стороны.
     /// </summary>
     public sealed class ArenaLedgeTests
     {
@@ -15,46 +15,40 @@ namespace Game.Tests
             return ArenaEncounterTests.ArenaMap(location, 2, seed, size);
         }
 
-        [TestCase(2, 7UL)]
-        [TestCase(4, 11UL)]
-        public void EveryPassageBetweenSegments_HasALedge_DownOnly(int size, ulong seed)
+        [Test]
+        public void SomePassagesHaveALedge_NotEvery()
         {
-            var map = Arena(size, seed);
-            Assert.That(map.GladeCount, Is.EqualTo(RiftLevelSettings.SegmentCount(size)));
-            Assert.That(map.LedgeCount, Is.EqualTo(map.GladeCount - 1));
-            for (int i = 0; i < map.LedgeCount; i++)
+            int passages = 0, ledges = 0;
+            for (ulong seed = 1; seed <= 40; seed++)
             {
-                var ledge = map.GetLedge(i);
-                FixVec2 above = ledge.Point - ledge.Down, below = ledge.Point + ledge.Down;
-                Fix64 body = Fix64.Ratio(1, 2);
-                Assert.That(map.IsWalkable(above, body) && map.IsWalkable(below, body), Is.True, "уступ лежит в проходе");
-                Assert.That(map.CanTravel(above, below, body), Is.True, "спрыгнуть можно");
-                Assert.That(map.CanTravel(below, above, body), Is.False, "забраться нельзя");
-                // Наискосок вдоль прохода край тоже не обойти.
-                var side = new FixVec2(-ledge.Down.Y, ledge.Down.X);
-                Assert.That(map.CanTravel(below + side, above - side, body), Is.False);
+                var map = Arena(4, seed);
+                Assert.That(map.LedgeCount, Is.LessThanOrEqualTo(map.GladeCount - 1));
+                passages += map.GladeCount - 1;
+                ledges += map.LedgeCount;
             }
+            Assert.That(ledges, Is.GreaterThan(passages / 4), "уступы встречаются");
+            Assert.That(ledges, Is.LessThan(passages * 3 / 4), "но не на каждом проходе");
         }
 
         [Test]
-        public void HeroDropsDown_AndCannotWalkBack()
+        public void LedgeLiesInThePassage_AndCanBeWalkedBothWays()
         {
-            var map = Arena(2, 7);
-            var ledge = map.GetLedge(0);
-            var sim = new Simulation(7, 64);
-            sim.SetupRift(map, 7, 0, 0, 1);
-            sim.PlayerInvulnerable = true;
-            sim.Entities.Position[Simulation.PlayerId] = ledge.Point - ledge.Down * Fix64.FromInt(2);
-            WalkTowards(sim, ledge.Point + ledge.Down * Fix64.FromInt(4), 90);
-            Assert.That(ledge.Side(sim.Entities.Position[Simulation.PlayerId]).Raw, Is.GreaterThan(0), "герой внизу");
-            WalkTowards(sim, ledge.Point - ledge.Down * Fix64.FromInt(4), 120);
-            Assert.That(ledge.Side(sim.Entities.Position[Simulation.PlayerId]).Raw, Is.GreaterThanOrEqualTo(0), "наверх не вернуться");
-        }
-
-        private static void WalkTowards(Simulation sim, FixVec2 target, int ticks)
-        {
-            for (int t = 0; t < ticks; t++)
-                sim.Step(new InputFrame { Aim = target, Flags = (byte)InputFlags.MoveOrder });
+            int checkedLedges = 0;
+            for (ulong seed = 1; seed <= 12; seed++)
+            {
+                var map = Arena(4, seed);
+                for (int i = 0; i < map.LedgeCount; i++)
+                {
+                    var ledge = map.GetLedge(i);
+                    FixVec2 above = ledge.Point - ledge.Down, below = ledge.Point + ledge.Down;
+                    Fix64 body = Fix64.Ratio(1, 2);
+                    Assert.That(map.IsWalkable(above, body) && map.IsWalkable(below, body), Is.True, "уступ лежит в проходе");
+                    Assert.That(map.CanTravel(above, below, body), Is.True, "спуститься можно");
+                    Assert.That(map.CanTravel(below, above, body), Is.True, "подняться обратно можно");
+                    checkedLedges++;
+                }
+            }
+            Assert.That(checkedLedges, Is.GreaterThan(0));
         }
     }
 }

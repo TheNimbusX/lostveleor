@@ -59,6 +59,8 @@ namespace Game.Sim
     {
         /// <summary>Уступ между сегментами: полуширина линии обрыва и высота, метры.</summary>
         public static readonly Fix64 LedgeHalfWidth = Fix64.FromInt(6), LedgeDrop = Fix64.FromInt(3);
+        /// <summary>Доля проходов между сегментами с уступом, %.</summary>
+        public const int LedgeChancePercent = 50;
         public static int ClearingCount(int targetModules) => targetModules >= 18 ? 5 : targetModules >= 14 ? 4 : 3;
         public static int RequiredModules(int targetModules, bool boss) => boss ? BossModules : ClearingCount(targetModules) * 5 + 7;
 
@@ -278,23 +280,25 @@ namespace Game.Sim
             };
             map.SetGlades(regions);
             map.IsArena = singleArena;
-            // Уступ поперёк каждого прохода между сегментами арены (владелец, 2 октября): следующий
-            // сегмент ниже, спрыгнуть можно, забраться — нет. Ставится после маршрутов: связность от
-            // входа считается вниз, туда, куда и ходят.
+            // Уступ — примерно на половине проходов между сегментами арены (владелец, 2 октября: «не нужно
+            // каждый переход делать таким»): следующий сегмент ниже, проход — склон, по нему ходят в обе
+            // стороны. Остальные проходы ровные. Свой поток: прочие броски карты не сдвигаются.
             if (singleArena && !boss && segmentLinks.Count > 0)
             {
-                var ledges = new LayoutLedge[segmentLinks.Count];
-                for (int i = 0; i < ledges.Length; i++)
+                var ledgeRng = new Pcg32(seed, 0x4C45444745UL);
+                var ledges = new List<LayoutLedge>();
+                for (int i = 0; i < segmentLinks.Count; i++)
                 {
+                    if (ledgeRng.NextInt(0, 100) >= LedgeChancePercent) continue;
                     // Проход — прямая между центрами соседних полян; обрыв посередине между их краями.
                     FixVec2 a = regions[i].Center, b = regions[i + 1].Center, step = (b - a) / Fix64.FromInt(200);
                     int leave = 0, enter = 200;
                     while (leave < 200 && regions[i].Field(a + step * Fix64.FromInt(leave)) <= Fix64.One) leave++;
                     while (enter > 0 && regions[i + 1].Field(a + step * Fix64.FromInt(enter)) <= Fix64.One) enter--;
                     var point = a + step * Fix64.FromInt((leave + enter) / 2);
-                    ledges[i] = new LayoutLedge(point, (b - a).Normalized(), LedgeHalfWidth, LedgeDrop);
+                    ledges.Add(new LayoutLedge(point, (b - a).Normalized(), LedgeHalfWidth, LedgeDrop));
                 }
-                map.SetLedges(ledges);
+                map.SetLedges(ledges.ToArray());
             }
             while (map.OpenCount > 0) map.CloseOpen(map.OpenCount - 1);
             map.AddExit(exit);
