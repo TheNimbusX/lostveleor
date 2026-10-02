@@ -61,10 +61,20 @@
     <Compile Include="../../razlom/Assets/Game.View/ThicketMasterClipRules.cs" Link="ThicketMasterClipRules.cs" />
     <!-- Хозяин Чащи (02.10): внешность по фазам — смена на ударе рёва 66/33, яркость рун, рост накладок. -->
     <Compile Include="../../razlom/Assets/Game.View/ThicketMasterPhaseRules.cs" Link="ThicketMasterPhaseRules.cs" />
+    <!-- Хозяин Чащи (02.10): сквозь босса видно героя — когда тело закрывает героя, появление сетки, плотность. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterSeeThroughRules.cs" Link="ThicketMasterSeeThroughRules.cs" />
+    <!-- Хозяин Чащи (02.10, п. 12): буря цветения — весь пол опасность, круги света вырезаны; время волн и пол поляны. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketStormDangerRules.cs" Link="ThicketStormDangerRules.cs" />
+    <!-- Хозяин Чащи (02.10): кат-сцена вступления — камера, полосы, HUD, титр, тряска рёва, полоса босса по тикам окна Sim. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterIntroRules.cs" Link="ThicketMasterIntroRules.cs" />
     <!-- Формы навыков (план форм 02.10, шаг 3): правило иконки (способность, форма) → файл и метка формы, тексты и экран «Выбери форму». -->
     <Compile Include="../../razlom/Assets/Game.View/AbilityIconRules.cs" Link="AbilityIconRules.cs" />
     <Compile Include="../../razlom/Assets/Game.View/PelagFormTexts.cs" Link="PelagFormTexts.cs" />
     <Compile Include="../../razlom/Assets/Game.View/RunHudFormChoice.cs" Link="RunHudFormChoice.cs" />
+    <!-- Меню разработчика (F8): масштаб, колонки, подтверждения, подписи — правила без Unity. -->
+    <Compile Include="../../razlom/Assets/Game.View/DevMenuRules.cs" Link="DevMenuRules.cs" />
+    <!-- Вид форм Вихря (02.10): фронт кольца Пенных волн по Sim, оглушение Водоворота, ритм Бури. -->
+    <Compile Include="../../razlom/Assets/Game.View/PelagWhirlwindFormRules.cs" Link="PelagWhirlwindFormRules.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

@@ -121,7 +121,7 @@ namespace Game.Sim
             else if (id == AbilityDefinition.WhirlwindId) { contact = _whirlwindImpactTick; end = contact + AbilityExecutionTicks(12, 1); }
             else if (id == AbilityDefinition.WreckId) { contact = _wreckImpactTick; end = Tick + AbilityExecutionTicks(b.Get(AbilityStatType.DurationTicks).ToInt()); }
             else if (id == AbilityDefinition.AnchorLeapId) { contact = _leapLaunchTick + AnchorKit.LeapTicks; end = contact + AbilityExecutionTicks(6, 1); }
-            else if (id == AbilityDefinition.ChainStepId) { contact = Tick + AnchorKit.ChainTicksPerHop; end = Tick + AnchorKit.ChainTicksPerHop * _chainHopsLeft; }
+            else if (id == AbilityDefinition.ChainStepId) SquallClockAtCast(out contact, out end);
             else if (id == AbilityDefinition.FireFlaskId) { contact = _flaskLandTick; end = contact + AbilityExecutionTicks(6, 1); }
             else if (id == AbilityDefinition.DashId) { contact = Tick + Entities.ForcedTicksLeft[PlayerId]; end = contact; }
             else if (id == AbilityDefinition.SkewerId) { contact = _mobilityEndTick; end = contact; }
@@ -144,7 +144,7 @@ namespace Game.Sim
             CancelBlazeGesture(); StopWhirlwindChannel();
             _leapLaunchTick = _leapPunchTick = -1;
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
-            _chainHopsLeft = _chainVisitedCount = 0;
+            StopSquall();
             _mobilitySlot = _backblastTick = -1;
             // Рывок, сорванный новым уходом, кончается здесь же: тело встаёт, неуязвимость снята.
             CancelDash();

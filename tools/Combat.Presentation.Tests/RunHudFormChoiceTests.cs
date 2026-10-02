@@ -9,7 +9,9 @@ public sealed class RunHudFormChoiceTests
 {
     static IEnumerable<PelagForm> TableForms()
     {
-        for (int f = 1; f <= PelagForms.Count; f++) yield return (PelagForm)f;
+        // Убранная форма («Вихрь на ходу», 02.10) держит номер, но формы нет.
+        for (int f = 1; f <= PelagForms.Count; f++)
+            if (!PelagForms.IsRetired((PelagForm)f)) yield return (PelagForm)f;
     }
 
     static RiftRun NewRun(ulong seed)
@@ -43,8 +45,7 @@ public sealed class RunHudFormChoiceTests
         Assert.That(PelagFormTexts.Title(PelagForm.WhirlwindStorm), Is.EqualTo("Вихрь · Буря"));
         Assert.That(PelagFormTexts.Title(PelagForm.WhirlwindMaelstrom), Is.EqualTo("Вихрь · Водоворот"));
         Assert.That(PelagFormTexts.Title(PelagForm.WhirlwindFoamWaves), Is.EqualTo("Вихрь · Пенные волны"));
-        // Утверждённое имя уже называет навык — не «Вихрь · Вихрь на ходу».
-        Assert.That(PelagFormTexts.Title(PelagForm.WhirlwindOnTheMove), Is.EqualTo("Вихрь на ходу"));
+        // «Вихрь на ходу» убран 02.10 («на ходу убираем», PelagForms.IsRetired) — экран его не показывает.
         Assert.That(PelagFormTexts.TooltipTitle("ВИХРЬ", PelagForm.WhirlwindStorm), Is.EqualTo("ВИХРЬ · БУРЯ"));
         Assert.That(PelagFormTexts.TooltipTitle("ВИХРЬ", PelagForm.None), Is.EqualTo("ВИХРЬ"), "без формы подсказка прежняя");
     }

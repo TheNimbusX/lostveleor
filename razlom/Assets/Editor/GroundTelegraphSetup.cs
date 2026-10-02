@@ -77,6 +77,8 @@ public static class GroundTelegraphSetup
         "Assets/Shaders/GroundTelegraphLane.shader",
         "Assets/Shaders/WendigoWarning.shader",
         "Assets/Shaders/ForestBudLanding.shader",
+        // Поле опасности бури цветения Хозяина Чащи (ThicketStormDangerView).
+        "Assets/Shaders/ThicketStormDanger.shader",
     };
 
     [InitializeOnLoadMethod]

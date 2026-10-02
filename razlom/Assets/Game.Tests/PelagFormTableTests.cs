@@ -50,20 +50,36 @@ namespace Game.Tests
                 Assert.AreEqual(PelagForm.None, PelagForms.FormAt(line, count, readyOnly: false));
                 seen += count;
             }
+            // Убранная форма держит номер, но ни в какой линии её нет.
+            for (int f = 1; f <= PelagForms.Count; f++)
+                if (PelagForms.IsRetired((PelagForm)f))
+                {
+                    Assert.IsFalse(PelagForms.IsValid((PelagForm)f));
+                    Assert.AreEqual(-1, PelagForms.LineOf((PelagForm)f));
+                    seen++;
+                }
             Assert.AreEqual(PelagForms.Count, seen, "форма без линии");
             Assert.AreEqual(-1, PelagForms.LineOf(PelagForm.None));
             Assert.IsFalse(PelagForms.IsValid((PelagForm)(PelagForms.Count + 1)));
         }
 
+        /// <summary>«Вихрь на ходу» убран 02.10 («на ходу убираем»): три формы, номер 4 занят навсегда.</summary>
         [Test]
-        public void WhirlwindForms_AreTheFourApproved()
+        public void WhirlwindForms_AreTheThreeApproved_OnTheMoveIsRetired()
         {
             int line = PelagKit.PoolIndexOf(AbilityDefinition.WhirlwindId);
-            Assert.AreEqual(4, PelagForms.FormCount(line, readyOnly: false));
+            Assert.AreEqual(3, PelagForms.FormCount(line, readyOnly: false));
+            Assert.AreEqual(3, PelagForms.ReadyFormCount(line), "механика всех трёх написана");
             Assert.AreEqual(PelagForm.WhirlwindStorm, PelagForms.FormAt(line, 0, false));
             Assert.AreEqual(PelagForm.WhirlwindMaelstrom, PelagForms.FormAt(line, 1, false));
             Assert.AreEqual(PelagForm.WhirlwindFoamWaves, PelagForms.FormAt(line, 2, false));
-            Assert.AreEqual(PelagForm.WhirlwindOnTheMove, PelagForms.FormAt(line, 3, false));
+            Assert.AreEqual(PelagForm.None, PelagForms.FormAt(line, 3, false));
+            Assert.IsTrue(PelagForms.IsRetired(PelagForm.WhirlwindOnTheMove));
+            Assert.IsFalse(PelagForms.IsValid(PelagForm.WhirlwindOnTheMove));
+            Assert.IsNull(PelagForms.KeyOf(PelagForm.WhirlwindOnTheMove));
+            Assert.AreEqual(0, PelagForms.FormTalentCount(PelagForm.WhirlwindOnTheMove));
+            // 7: номер 4 убранной формы не освобождается, 5–7 — формы Шквала (02.10).
+            Assert.AreEqual(7, PelagForms.Count, "номер убранной формы не освобождается");
             Assert.AreEqual(AbilityDefinition.WhirlwindId, PelagKit.PoolDefinition(PelagForms.LineOf(PelagForm.WhirlwindStorm)).Id);
             // Формы сабли и остальных навыков владелец ещё не утвердил.
             Assert.AreEqual(0, PelagForms.FormCount(PelagKit.SabreLine, readyOnly: false));
@@ -83,9 +99,12 @@ namespace Game.Tests
             string[] lines = { "whirlwind", "cleave", "blaze", "squall", "anchor_slam", "wreck", "boarding", "flask" };
             foreach (string line in lines)
                 for (int index = 1; index <= SabreTalents.TalentsPerLine; index++) Add("talent.sabre." + line + "." + index);
+            Add("form.whirlwind.on_the_move");   // ключ убранной формы — занят навсегда
+            Add(PelagForms.StormMoveKey);
             for (int f = 1; f <= PelagForms.Count; f++)
             {
                 var form = (PelagForm)f;
+                if (PelagForms.IsRetired(form)) continue;
                 Add(PelagForms.KeyOf(form));
                 for (int k = 0; k < PelagForms.FormTalentCount(form); k++) Add(PelagForms.TalentKeyOf(form, k));
                 Assert.IsNull(PelagForms.TalentKeyOf(form, PelagForms.FormTalentCount(form)));

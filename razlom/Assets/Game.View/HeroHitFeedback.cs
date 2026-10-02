@@ -74,6 +74,11 @@ namespace Game.View
         private Camera _camera;
         private CombatCameraJuice _cameraJuice;
 
+        // Имена частей холста по номеру края (EdgeLeft, EdgeRight, EdgeBottom, EdgeTop): по ним части
+        // находятся снова, если ссылки на них потерялись (ReacquireParts).
+        private static readonly string[] EdgeNames = { "Кромка слева", "Кромка справа", "Кромка снизу", "Кромка сверху" };
+        private const string VignetteName = "Виньетка низкого здоровья";
+
         private Canvas _canvas;
         private readonly RawImage[] _edges = new RawImage[HeroHitFeedbackCurves.EdgeCount];
         private RawImage _vignette;
@@ -96,12 +101,50 @@ namespace Game.View
             for (int i = 0; i < _edgeAt.Length; i++) _edgeAt[i] = -100f;
         }
 
-        private void OnDestroy()
+        private void OnDestroy() => DestroyCanvas();
+
+        private void DestroyCanvas()
         {
             if (_canvas != null) Destroy(_canvas.gameObject);
             if (_edgeAcrossX != null) Destroy(_edgeAcrossX);
             if (_edgeAcrossY != null) Destroy(_edgeAcrossY);
             if (_vignetteTexture != null) Destroy(_vignetteTexture);
+            _canvas = null;
+            _edgeAcrossX = _edgeAcrossY = _vignetteTexture = null;
+        }
+
+        private bool PartsMissing()
+        {
+            if (_vignette == null) return true;
+            for (int edge = 0; edge < _edges.Length; edge++)
+                if (_edges[edge] == null) return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Холст жив, а ссылок на его части нет. Так бывает после перезагрузки домена посреди Play (правка
+        /// скрипта при «Recompile And Continue Playing»): Unity возвращает приватные поля-ссылки (_canvas,
+        /// текстуры), но readonly-массив кромок не сериализует — он приходит пустым, и 02.10 Render ронял
+        /// NullReferenceException каждый кадр. Части берутся с холста обратно по именам; если их там
+        /// нет — холст сносится и в бою собирается заново, как в первый раз.
+        /// </summary>
+        private void ReacquireParts()
+        {
+            Transform root = _canvas.transform;
+            _vignette = Part(root, VignetteName);
+            bool whole = _vignette != null;
+            for (int edge = 0; edge < _edges.Length; edge++)
+            {
+                _edges[edge] = Part(root, EdgeNames[edge]);
+                whole &= _edges[edge] != null;
+            }
+            if (!whole) DestroyCanvas();
+        }
+
+        private static RawImage Part(Transform root, string name)
+        {
+            Transform part = root.Find(name);
+            return part != null ? part.GetComponent<RawImage>() : null;
         }
 
         private void LateUpdate()
@@ -119,6 +162,8 @@ namespace Game.View
                 for (int i = 0; i < _edgePeak.Length; i++) _edgePeak[i] = 0f;
                 _vignetteWeight = 0f;
             }
+
+            if (_canvas != null && PartsMissing()) ReacquireParts();
 
             float lowHealth = 0f;
             bool fight = sim != null && _driver.Session != null && _driver.Session.Mode != GameMode.Summary;
@@ -305,16 +350,16 @@ namespace Game.View
             _edgeAcrossX = EdgeTexture(true);
             _edgeAcrossY = EdgeTexture(false);
 
-            _vignette = Image(root.transform, "Виньетка низкого здоровья", _vignetteTexture);
+            _vignette = Image(root.transform, VignetteName, _vignetteTexture);
             RectTransform full = _vignette.rectTransform;
             full.anchorMin = Vector2.zero;
             full.anchorMax = Vector2.one;
 
-            _edges[HeroHitFeedbackCurves.EdgeLeft] = Image(root.transform, "Кромка слева", _edgeAcrossX);
-            _edges[HeroHitFeedbackCurves.EdgeRight] = Image(root.transform, "Кромка справа", _edgeAcrossX);
+            _edges[HeroHitFeedbackCurves.EdgeLeft] = Image(root.transform, EdgeNames[HeroHitFeedbackCurves.EdgeLeft], _edgeAcrossX);
+            _edges[HeroHitFeedbackCurves.EdgeRight] = Image(root.transform, EdgeNames[HeroHitFeedbackCurves.EdgeRight], _edgeAcrossX);
             _edges[HeroHitFeedbackCurves.EdgeRight].uvRect = new Rect(1f, 0f, -1f, 1f);
-            _edges[HeroHitFeedbackCurves.EdgeBottom] = Image(root.transform, "Кромка снизу", _edgeAcrossY);
-            _edges[HeroHitFeedbackCurves.EdgeTop] = Image(root.transform, "Кромка сверху", _edgeAcrossY);
+            _edges[HeroHitFeedbackCurves.EdgeBottom] = Image(root.transform, EdgeNames[HeroHitFeedbackCurves.EdgeBottom], _edgeAcrossY);
+            _edges[HeroHitFeedbackCurves.EdgeTop] = Image(root.transform, EdgeNames[HeroHitFeedbackCurves.EdgeTop], _edgeAcrossY);
             _edges[HeroHitFeedbackCurves.EdgeTop].uvRect = new Rect(0f, 1f, 1f, -1f);
         }
 

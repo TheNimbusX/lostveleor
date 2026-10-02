@@ -220,8 +220,18 @@ namespace Game.Tests
                 string where = "сид " + seed;
                 Assert.That(e.Position[boss], Is.EqualTo(glade.Center), where);
                 var hero = e.Position[Simulation.PlayerId];
+                // Вступление-кат-сцена (02.10): «К боссу» ставит героя на тропу входа в 4 м до
+                // кромки — босс проснётся, когда он ступит на поляну (Simulation.ForestBoss.Intro).
+                Assert.That(glade.Field(hero), Is.GreaterThan(Fix64.One), "герой на тропе, не на поляне, " + where);
+                Assert.That(run.Map.IsWalkable(hero, e.BodyRadius[Simulation.PlayerId]), Is.True, where);
+                Assert.That(hero.Y < e.Position[boss].Y, Is.True, "тропа входа — снизу, " + where);
+                double away = FixVec2.Distance(hero, e.Position[boss]).ToDouble();
+                Assert.That(away, Is.InRange(10.0, 13.0), "4 м до кромки, " + where);
+                // Подмога на 66% встаёт вокруг героя, а бой идёт на поляне: герой — в 4 м перед боссом.
+                hero = run.Map.ClampToWalkable(e.Position[boss] - new FixVec2(Fix64.Zero, Fix64.FromInt(4)),
+                    e.BodyRadius[Simulation.PlayerId]);
+                e.Position[Simulation.PlayerId] = hero;
                 Assert.That(glade.Field(hero), Is.LessThanOrEqualTo(Fix64.One), "герой на поляне, " + where);
-                Assert.That(FixVec2.Distance(hero, e.Position[boss]), Is.GreaterThanOrEqualTo(Fix64.FromInt(4)), where);
 
                 sim.PlayerInvulnerable = true;
                 e.Health[boss] = e.MaxHealth[boss] * 66 / 100;

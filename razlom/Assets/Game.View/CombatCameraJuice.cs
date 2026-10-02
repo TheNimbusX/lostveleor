@@ -59,6 +59,16 @@ namespace Game.View
             if (_camera != null) _camera.orthographicSize = size;
         }
 
+        /// <summary>
+        /// Базовый размер без запоминания поворота: кат-сцена (CameraFollow.SetCinematic) меняет его
+        /// каждый кадр, и посреди тряски SetBaseOrthographicSize вшил бы крен в покой камеры.
+        /// </summary>
+        public float BaseOrthographicSize
+        {
+            get => _restSize;
+            set { if (value > 0f) _restSize = value; }
+        }
+
         private void LateUpdate()
         {
             transform.position -= _appliedOffset;

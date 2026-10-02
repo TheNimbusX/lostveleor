@@ -20,7 +20,9 @@ public sealed class AbilityIconRulesTests
 
     static IEnumerable<PelagForm> TableForms()
     {
-        for (int f = 1; f <= PelagForms.Count; f++) yield return (PelagForm)f;
+        // Убранная форма («Вихрь на ходу», 02.10) держит номер, но формы нет.
+        for (int f = 1; f <= PelagForms.Count; f++)
+            if (!PelagForms.IsRetired((PelagForm)f)) yield return (PelagForm)f;
     }
 
     [Test]

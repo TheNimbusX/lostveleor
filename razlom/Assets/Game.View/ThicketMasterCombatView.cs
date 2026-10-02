@@ -55,6 +55,10 @@ namespace Game.View
         {
             _driver = GetComponent<TickDriver>();
             _arena = GetComponent<ArenaView>();
+            // Буря цветения: весь пол — опасность, круги света вырезаны (ревью 02.10, п. 12).
+            ThicketStormDangerView.EnsureOn(gameObject);
+            // Вступление-кат-сцена: камера, полосы, HUD, титр (владелец 02.10).
+            ThicketMasterIntroView.EnsureOn(gameObject);
         }
 
         private void LateUpdate()
@@ -199,15 +203,15 @@ namespace Game.View
         // ------------------------------------------------------------ crown
 
         /// <summary>
-        /// Растворение кроны, когда она закрывает героя от камеры (камера 48°, крона
-        /// выше 3 м). TODO: доля — по экранному перекрытию кроны и героя (проекция
-        /// crown_L/R и bush против точки героя), сама прозрачность — дизерингом в
-        /// материале кроны (отдельный слот или маска вершин): тело не трогать и не
-        /// высветлять. Пока доля всегда 0, и хук ничего не меняет.
+        /// Сквозь босса видно героя (владелец 02.10: «прозрачность должна быть, чтоб было
+        /// видно»): доля 0…1 — тело между героем и камерой (лучи к камере через рамку тела),
+        /// появление за 0,15 с; сама прозрачность — сетка в шейдере тела, кроны, куста и
+        /// накладок фаз, только перед героем. Тело не высветляется. Реализация —
+        /// ThicketMasterCombatView.SeeThrough.cs.
         /// </summary>
         private void UpdateCrownDither(Simulation sim)
         {
-            float amount = 0f;
+            float amount = SeeThroughFade(sim);
             ApplyCrownDither(_boss, _bossView, amount);
         }
 
@@ -238,10 +242,10 @@ namespace Game.View
         /// <summary>Рёв: кольцо 2,3–6,3 м, отброс без урона.</summary>
         partial void OnRoarBlast(int boss, int tick, Vector3 at, bool hit);
 
-        /// <summary>Замах удара серии лапы: stage — номер удара (чётный — правая, нечётный — левая). Уголь на пальцах — EnemyBodyTelegraphView.</summary>
+        /// <summary>Замах удара серии лапы: stage — номер удара (чётный — правая, нечётный — левая). Уголь на пальцах — EnemyBodyTelegraphView, дуга когтей — здесь (.Vfx).</summary>
         partial void OnPawWindup(int boss, int tick, int stage, bool right, int impactTick);
 
-        /// <summary>Контакт лапы: at — точка удара Sim (центр сектора). След когтей — EnemyBodyTelegraphView.</summary>
+        /// <summary>Контакт лапы: at — точка удара Sim (центр сектора). След когтей — дуга CFXR из OnPawWindup (полос EnemyBodyTelegraphView у лапы нет).</summary>
         partial void OnPawImpact(int boss, int tick, int stage, bool right, Vector3 at, bool hit);
 
         /// <summary>Подъём на дыбы перед топотом (метка круга 5,2 м — GroundTelegraphView).</summary>
@@ -301,7 +305,7 @@ namespace Game.View
         /// <summary>Босс убит: такт убийства — EnemyPresentationProfile.Kill, тело — ThicketMasterAnimatorView.</summary>
         partial void OnBossKilled(int boss, int tick, Vector3 at);
 
-        /// <summary>Растворение кроны: amount 0 — крона целиком, 1 — сквозь неё виден герой. TODO.</summary>
+        /// <summary>Сетка перед героем: amount 0 — тело целиком, 1 — сквозь него виден герой (SeeThrough.cs).</summary>
         partial void ApplyCrownDither(int boss, ThicketMasterAnimatorView body, float amount);
     }
 }

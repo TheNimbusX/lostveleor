@@ -42,8 +42,10 @@ namespace Game.Sim
         public bool ValidAbilityTarget(int target, AbilityBuild build)
             => build != null && target > 0 && target < Entities.Count && Entities.Alive[target]
                 && Entities.Side[target] != Entities.Side[PlayerId] && !ThicketShielded(target)
-                && (Entities.Position[target] - Entities.Position[PlayerId]).LengthSq
-                    <= build.Get(AbilityStatType.Radius) * build.Get(AbilityStatType.Radius);
+                && ((Entities.Position[target] - Entities.Position[PlayerId]).LengthSq
+                    <= build.Get(AbilityStatType.Radius) * build.Get(AbilityStatType.Radius)
+                    // Хозяин Чащи — по корпусу (Simulation.ForestBoss.Hull).
+                    || ThicketHullWithin(target, Entities.Position[PlayerId], build.Get(AbilityStatType.Radius)));
 
         /// <summary>Возврат лавидия игроку, не выше потолка.</summary>
         private void RefundLavidium(int amount)
@@ -62,6 +64,8 @@ namespace Game.Sim
         {
             EnsureUpgradeBuffers();
             EnsureArtifactBuffers();
+            EnsureWhirlwindFormBuffers();
+            EnsureSquallFoamBuffers();
             if (_igniteUntil != null) return;
             _igniteUntil = new int[Entities.Capacity];
             _ignitePulseDamage = new int[Entities.Capacity];
@@ -85,13 +89,19 @@ namespace Game.Sim
 
         public bool WhirlwindChanneling => _whirlChannelSlot >= 0;
 
-        private void StopWhirlwindChannel() => _whirlChannelSlot = -1;
+        /// <summary>Снимает удержание; у Бури — с событием конца (Simulation.WhirlwindForms).</summary>
+        private void StopWhirlwindChannel(WhirlwindStormEnd reason = WhirlwindStormEnd.Interrupted)
+        {
+            EmitStormEnded(reason);
+            _whirlChannelSlot = -1;
+        }
 
         /// <summary>
         /// Один оборот Вихря. Первый контакт возвращает лавидий, повторные
         /// обороты удержания — нет: иначе удержание кормило бы само себя.
+        /// damagePercent — доля урона оборота (обороты Бури); 100 — прежний оборот бит в бит.
         /// </summary>
-        private void WhirlwindPulse(int slot, bool firstContact)
+        private void WhirlwindPulse(int slot, bool firstContact, int damagePercent = 100)
         {
             AbilityBuild build = _abilityBuilds[slot];
             int found = QueryRadiusIntoScratch(
@@ -107,6 +117,7 @@ namespace Game.Sim
             int damage = build.Get(AbilityStatType.Damage).ToInt();
             if (build.Has(AbilityFlag.WhirlwindCrowd) && victims > 0)
                 damage = damage * (100 + 10 * System.Math.Min(victims, 5)) / 100;
+            if (damagePercent != 100) damage = damage * damagePercent / 100;
 
             for (int i = 0; i < found; i++)
             {
@@ -120,11 +131,21 @@ namespace Game.Sim
                 RefundLavidium(System.Math.Min(victims * 3, 15));
         }
 
+        /// <summary>
+        /// Удержание: талант «удержание» или форма Буря (её числа —
+        /// Simulation.WhirlwindForms; Буря работает и без таланта и главнее него).
+        /// </summary>
         private void BeginWhirlwindChannel(int slot, in InputFrame input)
         {
-            if (!BuildHas(slot, AbilityFlag.WhirlwindChannel, AbilityDefinition.WhirlwindId)) return;
+            bool storm = FormIs(slot, PelagForm.WhirlwindStorm);
+            if (!storm && !BuildHas(slot, AbilityFlag.WhirlwindChannel, AbilityDefinition.WhirlwindId)) return;
             if ((input.AbilityHoldMask & (1 << slot)) == 0) return;
             _whirlChannelSlot = slot;
+            if (storm)
+            {
+                BeginStorm();
+                return;
+            }
             _whirlChannelEndTick = Tick - WhirlwindContactDelayTicks + WhirlwindChannelTicks;
             _whirlChannelNextPulse = Tick + WhirlwindPulseTicks;
         }
@@ -133,18 +154,26 @@ namespace Game.Sim
         {
             if (_whirlChannelSlot < 0) return;
             int slot = _whirlChannelSlot;
+            // Форму спрашиваем каждый тик: мини-меню может сменить сборку посреди удержания.
+            bool storm = FormIs(slot, PelagForm.WhirlwindStorm);
+            Fix64 drain = storm ? StormDrainPerTick : WhirlwindChannelDrainPerTick;
             if (!Entities.Alive[PlayerId] || Statuses.IsStunned(PlayerId, Tick)
                 || Tick >= _whirlChannelEndTick
                 || (input.AbilityHoldMask & (1 << slot)) == 0
-                || !BuildHas(slot, AbilityFlag.WhirlwindChannel, AbilityDefinition.WhirlwindId)
-                || Entities.Lavidium[PlayerId] < WhirlwindChannelDrainPerTick)
+                || !storm && !BuildHas(slot, AbilityFlag.WhirlwindChannel, AbilityDefinition.WhirlwindId)
+                || Entities.Lavidium[PlayerId] < drain)
             {
-                StopWhirlwindChannel();
+                StopWhirlwindChannel(StormStopReason(in input, drain));
                 return;
             }
 
-            Entities.Lavidium[PlayerId] -= WhirlwindChannelDrainPerTick;
+            Entities.Lavidium[PlayerId] -= drain;
             if (Tick < _whirlChannelNextPulse) return;
+            if (storm)
+            {
+                StormPulse(slot);
+                return;
+            }
             _whirlChannelNextPulse = Tick + WhirlwindPulseTicks;
             WhirlwindPulse(slot, firstContact: false);
         }
@@ -211,9 +240,12 @@ namespace Game.Sim
             {
                 if (!Entities.Alive[target] || Entities.Side[target] == Entities.Side[PlayerId]) continue;
                 Fix64 reach = BlazeTrailRadius + Entities.BodyRadius[target];
+                // Хозяин Чащи — по корпусу от куска следа, а не по телу окна ударов героя (Simulation.ForestBoss.Hull).
+                bool hull = ThicketHullActive(target);
                 for (int s = 0; s < BlazeTrailCapacity; s++)
                 {
                     if (_trailUntil[s] <= Tick) continue;
+                    if (hull) reach = BlazeTrailRadius + ThicketBodyFrom(target, _trailAt[s]);
                     if (FixVec2.DistanceSq(_trailAt[s], Entities.Position[target]) > reach * reach) continue;
                     ApplyAbilityDamage(PlayerId, target, BlazeTrailPulseDamage, _blazeSlot,
                         DamageType.Fire, overTime: true);
@@ -307,11 +339,15 @@ namespace Game.Sim
 
         private const int SquallKillCooldownTicks = TicksPerSecond / 2;
 
-        /// <summary>Во время прыжков Шквала с талантом урон по герою не проходит.</summary>
-        public bool SquallShielded
-            => _chainHopsLeft > 0 && BuildHas(_chainSlot, AbilityFlag.SquallInvulnerable, AbilityDefinition.ChainStepId);
+        /// <summary>
+        /// В прыжках Шквала урон по герою не проходит: талант «Неуязвимость» или форма
+        /// Неуловимый — одно окно (Simulation.Squall: замах, полёты, опоры, возврат).
+        /// </summary>
+        public bool SquallShielded => SquallInvulnerableNow;
 
-        private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields || DashInvulnerable;
+        // Вступление Хозяина Чащи (кат-сцена) — герой неуязвим, пока оно идёт (Simulation.ForestBoss.Intro).
+        private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields || DashInvulnerable
+            || ThicketIntroHoldsHero;
 
         private void TalentOnKill(int target, int killer, int slot)
         {

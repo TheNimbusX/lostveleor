@@ -792,6 +792,8 @@ namespace Game.View
                     _whirlwindHoldUntilTick = Sim.Tick + Simulation.WhirlwindContactDelayTicks + CaptureRig.HoldTicks;
                 if (Sim.Tick < _whirlwindHoldUntilTick) _pending.AbilityHoldMask |= 1;
             }
+            if (CaptureRig.SkillForm != PelagForm.None && Sim != null && !choosing) UpdateCaptureSkillForm();
+            if (CaptureRig.WhirlwindRing > 0f && Sim != null && !choosing) UpdateCaptureWhirlwindRing();
             if (CaptureRig.SweepAimCapture && Sim != null) UpdateSweepAimCapture();
             else if (CaptureRig.LiveSkill && Sim != null)
             {
@@ -1495,6 +1497,19 @@ namespace Game.View
                     continue;
                 }
 
+                // Хозяин Чащи (4,14 м, тело ~4,8 × 6,6 м, голова впереди центра): общий столбик
+                // 2,35 м ловил только ноги у центра — голова, крона и бока не наводились (ревью
+                // 02.10). Луч — в коробку тела по взгляду; мелкие цели под курсором важнее него.
+                if (entities.Kind[i] == EnemyKind.ForestThicketMaster)
+                {
+                    if (ThicketBodyUnderRay(entities, i, _camera.ScreenPointToRay(screenPosition)) && ThicketHoverScore < bestScore)
+                    {
+                        best = i;
+                        bestScore = ThicketHoverScore;
+                    }
+                    continue;
+                }
+
                 // Наведение идёт по экранному объёму всей фигуры, а не по
                 // кругу на полу. Луч через торс изометрической модели попадает
                 // на землю позади неё — именно поэтому прежняя проверка
@@ -1526,6 +1541,25 @@ namespace Game.View
                 }
             }
             return best;
+        }
+
+        /// <summary>Оценка наведения на Хозяина Чащи: столбик любой другой цели под курсором (≤ 1) почти всегда ниже.</summary>
+        private const float ThicketHoverScore = .999f;
+        /// <summary>Коробка тела для наведения, м: ширина, длина, сдвиг центра вперёд по взгляду (высота — рост Sim).</summary>
+        private const float ThicketHoverWidth = 4.2f, ThicketHoverLength = 6.2f, ThicketHoverAhead = 1f;
+
+        /// <summary>Луч курсора попадает в коробку тела Хозяина Чащи, повёрнутую по Facing Sim.</summary>
+        private static bool ThicketBodyUnderRay(EntityStore entities, int id, Ray ray)
+        {
+            FixVec2 p = entities.Position[id], f = entities.Facing[id];
+            var forward = new Vector3(f.X.ToFloat(), 0f, f.Y.ToFloat());
+            if (forward.sqrMagnitude < 1e-6f) forward = Vector3.forward;
+            Quaternion toLocal = Quaternion.Inverse(Quaternion.LookRotation(forward.normalized, Vector3.up));
+            var origin = new Vector3(p.X.ToFloat(), 0f, p.Y.ToFloat());
+            var local = new Ray(toLocal * (ray.origin - origin), toLocal * ray.direction);
+            float height = Simulation.ThicketModelHeight.ToFloat();
+            var body = new Bounds(new Vector3(0f, height * .5f, ThicketHoverAhead), new Vector3(ThicketHoverWidth, height, ThicketHoverLength));
+            return body.IntersectRay(local);
         }
 
         private static float DistanceSqToSegment(Vector2 point, Vector2 a, Vector2 b)

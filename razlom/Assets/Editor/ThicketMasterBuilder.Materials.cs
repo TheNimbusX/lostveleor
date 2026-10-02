@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Game.View;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,7 +10,8 @@ using UnityEngine;
 /// Хозяин Чащи: текстуры пакета и материалы тела. Цвет — без подъёма яркости
 /// (белый _BaseColor). Эмиссия — только руны и глаза по маске (T_ThicketMaster_Emission_F2/F3,
 /// production/dressing/make_emission.py); в материале она чёрная, яркость по фазам
-/// пишет ThicketMasterPhaseDressing блоком свойств. Тело не высветляется.
+/// пишет ThicketMasterPhaseDressing блоком свойств. Тело не высветляется. Листва фаз
+/// (T_ThicketMaster_Color_F2/F3, make_phase_colors.py) — только импорт: карту ставит вид.
 /// </summary>
 public static partial class ThicketMasterBuilder
 {
@@ -20,6 +22,12 @@ public static partial class ThicketMasterBuilder
 
         /// <summary>Маски эмиссии: F2 — руны и глаза (Ф2, ярость), F3 — плюс смоляные прожилки (Ф3).</summary>
         public string EmissionF2, EmissionF3;
+
+        /// <summary>
+        /// Листва фаз (make_phase_colors.py): F2 — осень, F3 — цветение. Материал их не держит —
+        /// ставит ThicketMasterPhaseDressing блоком свойств; здесь только импорт как у цвета.
+        /// </summary>
+        public string ColorF2, ColorF3;
     }
 
     /// <summary>
@@ -87,6 +95,9 @@ public static partial class ThicketMasterBuilder
             }
             else if (name.Contains("normal")) { if (set.Normal == null) set.Normal = file; }
             else if (orm.IsMatch(name)) { if (set.Orm == null) set.Orm = file; }
+            // Листва фаз — раньше «color»: T_ThicketMaster_Color_F2 не должна стать цветом тела.
+            else if (name.EndsWith("_f2", StringComparison.Ordinal)) { if (set.ColorF2 == null) set.ColorF2 = file; }
+            else if (name.EndsWith("_f3", StringComparison.Ordinal)) { if (set.ColorF3 == null) set.ColorF3 = file; }
             else if (name.Contains("color") || name.Contains("albedo") || name.Contains("diffuse")) { if (set.Color == null) set.Color = file; }
             else rest.Add(file);
         }
@@ -119,6 +130,14 @@ public static partial class ThicketMasterBuilder
         // множитель _EmissionColor. Через sRGB янтарь ушёл бы в красный.
         if (set.EmissionF2 != null) ConfigureTexture(set.EmissionF2, TextureImporterType.Default, false);
         if (set.EmissionF3 != null) ConfigureTexture(set.EmissionF3, TextureImporterType.Default, false);
+        ConfigurePhaseColors(set);
+    }
+
+    /// <summary>Листва фаз — как карта цвета тела (sRGB, 2048, сжатие HQ).</summary>
+    private static void ConfigurePhaseColors(TextureSet set)
+    {
+        if (set.ColorF2 != null) ConfigureTexture(set.ColorF2, TextureImporterType.Default, true);
+        if (set.ColorF3 != null) ConfigureTexture(set.ColorF3, TextureImporterType.Default, true);
     }
 
     private static void ConfigureTexture(string path, TextureImporterType type, bool srgb)
@@ -181,10 +200,13 @@ public static partial class ThicketMasterBuilder
 
     // ---------------------------------------------------------- materials
 
-    /// <summary>URP Lit: цвет без подъёма яркости, нормали, затенение и металл/гладкость из ORM.</summary>
+    /// <summary>
+    /// URP Lit (копия с прозрачностью перед героем — <see cref="SeeThroughShader"/>): цвет без
+    /// подъёма яркости, нормали, затенение и металл/гладкость из ORM.
+    /// </summary>
     private static Material LitMaterial(TextureSet set)
     {
-        var shader = Shader.Find("Universal Render Pipeline/Lit");
+        var shader = SeeThroughShader(UrpLit);
         if (shader == null) throw new InvalidOperationException("Нет шейдера URP/Lit.");
         var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
         if (material == null) { material = new Material(shader) { name = "ThicketMaster" }; AssetDatabase.CreateAsset(material, MaterialPath); }
@@ -226,9 +248,11 @@ public static partial class ThicketMasterBuilder
     /// Светятся только руны и глаза по маске F2 (Ф3 — карту F3 ставит вид). Цвет в материале
     /// чёрный: Ф1, сон и заглушка без вида — руны тёмные; яркость по фазам пишет
     /// ThicketMasterPhaseDressing блоком свойств. _BaseColor белый — тело не высветляется.
-    /// GI-флаги None: иначе MaterialEditor.FixupEmissiveFlag при чёрном цвете пометит
-    /// эмиссию «чёрной», URP снимет _EMISSION, и рантайм ничего не зажжёт. Нет маски —
-    /// эмиссии нет, как раньше.
+    /// GI-флаги RealtimeEmissive: URP (LitShader.ValidateMaterial → BaseShaderGUI.SetMaterialKeywords)
+    /// при каждой загрузке материала держит _EMISSION, только пока в флагах есть AnyEmissive;
+    /// с None ключ снимался сразу после включения, и рантайм ничего не зажигал (ревью 02.10).
+    /// FixupEmissiveFlag при чёрном цвете ставит EmissiveIsBlack только вместе с BakedEmissive,
+    /// так что RealtimeEmissive переживает чёрный цвет. Нет маски — эмиссии нет, как раньше.
     /// </summary>
     private static void ApplyEmission(Material material, TextureSet set)
     {
@@ -238,7 +262,7 @@ public static partial class ThicketMasterBuilder
         if (map != null)
         {
             material.EnableKeyword("_EMISSION");
-            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
         else
         {
@@ -253,13 +277,16 @@ public static partial class ThicketMasterBuilder
     /// </summary>
     internal static bool EnsurePhaseEmission()
     {
+        // Прозрачность перед героем — тем же автоматическим проходом (загрузка редактора, выход из Play).
+        ApplySeeThrough();
         var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
         if (material == null) return false;
         var set = Classify(TexturesIn(Root));
+        ConfigurePhaseColors(set);
         if (set.EmissionF2 == null) return false;
         var map = Load(set.EmissionF2);
         if (map != null && material.IsKeywordEnabled("_EMISSION") && material.GetTexture("_EmissionMap") == map
-            && material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.None) return true;
+            && material.globalIlluminationFlags == MaterialGlobalIlluminationFlags.RealtimeEmissive) return true;
         ConfigureTexture(set.EmissionF2, TextureImporterType.Default, false);
         if (set.EmissionF3 != null) ConfigureTexture(set.EmissionF3, TextureImporterType.Default, false);
         ApplyEmission(material, set);
@@ -289,6 +316,97 @@ public static partial class ThicketMasterBuilder
         mask.SetShaderPassEnabled("UnitOutlineMask", true);
         EditorUtility.SetDirty(mask);
         return mask;
+    }
+
+    // ---------------------------------------------------------- прозрачность перед героем
+
+    private const string UrpLit = "Universal Render Pipeline/Lit", UrpSimpleLit = "Universal Render Pipeline/Simple Lit";
+
+    /// <summary>Материалы накладок фаз (ThicketMasterDressingSetup): ягоды — URP Lit, цветы — URP Simple Lit.</summary>
+    private const string PhaseMaterialFolder = "Assets/Resources/VFX/ThicketMaster/Phases/Materials";
+
+    /// <summary>
+    /// Выключатель прозрачности перед героем (владелец 02.10: «прозрачность должна быть, чтоб было
+    /// видно»). false — тело и накладки фаз вернутся на шейдеры URP при следующей загрузке редактора
+    /// или «Прозрачность: подключить»: запасной путь, если копия URP Lit не соберётся.
+    /// </summary>
+    internal static readonly bool SeeThroughEnabled = true;
+
+    private static bool _warnedSeeThroughShader;
+
+    /// <summary>
+    /// Шейдер материала босса вместо шейдера URP: его копия с сетчатой прозрачностью перед героем
+    /// (Resources/Shaders/RazlomBossSeeThroughLit/SimpleLit.shader, ThicketMasterSeeThroughRules).
+    /// Копии нет, она с ошибкой или прозрачность выключена — сам шейдер URP.
+    /// </summary>
+    internal static Shader SeeThroughShader(string urpShaderName)
+    {
+        var urp = Shader.Find(urpShaderName);
+        string name = urpShaderName == UrpLit ? ThicketMasterSeeThroughRules.LitShader
+            : urpShaderName == UrpSimpleLit ? ThicketMasterSeeThroughRules.SimpleLitShader : null;
+        if (!SeeThroughEnabled || name == null) return urp;
+        var shader = Shader.Find(name);
+        if (shader != null && !ShaderUtil.ShaderHasError(shader)) return shader;
+        if (!_warnedSeeThroughShader)
+        {
+            _warnedSeeThroughShader = true;
+            Debug.LogWarning("[thicketmaster] Шейдер «" + name + "» " + (shader == null ? "не найден" : "с ошибкой")
+                             + " — босс остаётся на «" + urpShaderName + "», сквозь него героя не видно.");
+        }
+        return urp;
+    }
+
+    [MenuItem("Разлом/Босс/Хозяин Чащи/Прозрачность: подключить")]
+    public static void ApplySeeThroughFromMenu()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        {
+            Debug.LogWarning("[thicketmaster] Прозрачность подключается только вне Play.");
+            return;
+        }
+        int changed = ApplySeeThrough();
+        Debug.Log("[thicketmaster] Прозрачность перед героем: " + (SeeThroughEnabled ? "включена" : "выключена")
+                  + ", материалов переведено: " + changed + " (тело " + MaterialPath + ", накладки " + PhaseMaterialFolder + ").");
+    }
+
+    /// <summary>
+    /// Тело (ThicketMaster.mat) и накладки фаз (ягоды, цветы) — на шейдер с прозрачностью или обратно
+    /// на URP (по <see cref="SeeThroughEnabled"/>). Свойства, ключевые слова, очередь, тип отсечки и
+    /// флаги GI сохраняются: шейдеры — копии URP с теми же свойствами. Возвращает число переведённых.
+    /// </summary>
+    internal static int ApplySeeThrough()
+    {
+        int changed = 0;
+        if (SwitchSeeThrough(AssetDatabase.LoadAssetAtPath<Material>(MaterialPath))) changed++;
+        if (AssetDatabase.IsValidFolder(PhaseMaterialFolder))
+            foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { PhaseMaterialFolder }))
+                if (SwitchSeeThrough(AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid)))) changed++;
+        if (changed > 0)
+            Debug.Log("[thicketmaster] Прозрачность перед героем: материалов на " + (SeeThroughEnabled ? "сетке" : "URP") + " — " + changed + ".");
+        return changed;
+    }
+
+    private static bool SwitchSeeThrough(Material material)
+    {
+        if (material == null || material.shader == null) return false;
+        string current = material.shader.name;
+        string urp = current == UrpLit || current == ThicketMasterSeeThroughRules.LitShader ? UrpLit
+            : current == UrpSimpleLit || current == ThicketMasterSeeThroughRules.SimpleLitShader ? UrpSimpleLit : null;
+        if (urp == null) return false;
+        var target = SeeThroughShader(urp);
+        if (target == null || target == material.shader) return false;
+        string[] keywords = material.shaderKeywords;
+        int queue = material.renderQueue;
+        string renderType = material.GetTag("RenderType", false, string.Empty);
+        var gi = material.globalIlluminationFlags;
+        material.shader = target;
+        material.shaderKeywords = keywords;
+        material.renderQueue = queue;
+        if (renderType.Length > 0) material.SetOverrideTag("RenderType", renderType);
+        material.globalIlluminationFlags = gi;
+        EditorUtility.SetDirty(material);
+        AssetDatabase.SaveAssetIfDirty(material);
+        return true;
     }
 
     private static Texture2D Load(string path) => path != null ? AssetDatabase.LoadAssetAtPath<Texture2D>(path) : null;

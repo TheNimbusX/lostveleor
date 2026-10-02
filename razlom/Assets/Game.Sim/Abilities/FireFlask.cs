@@ -77,7 +77,7 @@ namespace Game.Sim
             for (int i = 0; i < MaxFirePools; i++)
             {
                 if (!_poolFuel[i] || Tick >= _poolUntilTick[i]) continue;
-                Fix64 limit = _poolRadius[i] + Entities.BodyRadius[target];
+                Fix64 limit = _poolRadius[i] + ThicketBodyFrom(target, _poolAt[i]);
                 if ((Entities.Position[target] - _poolAt[i]).LengthSq <= limit * limit) return true;
             }
             return false;
@@ -167,7 +167,7 @@ namespace Game.Sim
                 if (!Entities.Alive[i] || Entities.Side[i] == Entities.Side[PlayerId]) continue;
 
                 Fix64 gap = (Entities.Position[i] - _flaskTarget).LengthSq;
-                Fix64 limit = radius + Entities.BodyRadius[i];
+                Fix64 limit = radius + ThicketBodyFrom(i, _flaskTarget);
                 if (gap > limit * limit) continue;
 
                 ApplyAbilityDamage(PlayerId, i, blast, slot, DamageType.Fire);
@@ -225,7 +225,7 @@ namespace Game.Sim
                     if (!Entities.Alive[e] || Entities.Side[e] == Entities.Side[PlayerId]) continue;
 
                     Fix64 gap = (Entities.Position[e] - _poolAt[i]).LengthSq;
-                    Fix64 limit = _poolRadius[i] + Entities.BodyRadius[e];
+                    Fix64 limit = _poolRadius[i] + ThicketBodyFrom(e, _poolAt[i]);
                     if (gap > limit * limit) continue;
 
                     // Урон по времени, а не удар: тик лужи не имеет права

@@ -45,6 +45,15 @@ namespace Game.View
         // старта до ног с заносом и каплями, корона брызг у передней ноги.
         DashWake,
         DashSplash,
+        // Формы Вихря (02.10, PelagWhirlwindFoamVfxSetup.Forms): Буря — водяной
+        // столб на удержание и всплеск в конце; Водоворот — шесть рукавов на
+        // земле; Пенные волны — бегущее кольцо пены; корона брызг — удар
+        // кольца по врагу и оглушение Водоворота.
+        WhirlwindStormColumn,
+        WhirlwindStormSplash,
+        WhirlwindMaelstrom,
+        WhirlwindFoamWave,
+        WhirlwindCrownSplash,
         Count
     }
 

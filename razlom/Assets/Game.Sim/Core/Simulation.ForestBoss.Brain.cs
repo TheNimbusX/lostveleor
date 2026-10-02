@@ -25,8 +25,8 @@ namespace Game.Sim
             Entities.Velocity[id] = FixVec2.Zero;
             if (!Entities.Alive[PlayerId]) return;
             ref var m = ref ThicketMemory[id];
-            // Круп — часть тела: выталкивает героя и у спящего, и под Часами.
-            if (!m.Awake || Tick < m.FrozenUntil) { PushHeroFromRump(id); return; }
+            // Корпус держит проход и у спящего, и под Часами (PushOutOfThicketHulls).
+            if (!m.Awake || Tick < m.FrozenUntil) return;
             var a = ThicketMasters[id];
             if (a.Serial != 0)
             {
@@ -43,7 +43,6 @@ namespace Game.Sim
                 else if (a.Action == ThicketMasterAction.Paw && a.Direction.LengthSq.Raw != 0)
                     Entities.Facing[id] = TurnToward(Entities.Facing[id], a.Direction, ThicketTurnCos, ThicketTurnSin);
                 else if (a.Direction.LengthSq.Raw != 0) Entities.Facing[id] = a.Direction;
-                PushHeroFromRump(id);
                 return;
             }
 
@@ -54,7 +53,9 @@ namespace Game.Sim
             FixVec2 facing = Entities.Facing[id];
             Fix64 step = Entities.MoveStep[id];
             Fix64 wanted = Fix64.Zero;
-            if (toPlayer.LengthSq > ThicketHoldDistance * ThicketHoldDistance && heading.LengthSq.Raw != 0)
+            // Стоит и у корпуса: герой вплотную к голове или лапам дальше 3,22 от центра — шаг его бы толкал.
+            if (toPlayer.LengthSq > ThicketHoldDistance * ThicketHoldDistance && heading.LengthSq.Raw != 0
+                && !ThicketHeroAgainstHull(id, ThicketHoldGap))
             {
                 var share = (FixVec2.Dot(facing, heading.Normalized()) - ThicketWalkAlignFrom)
                     / (Fix64.One - ThicketWalkAlignFrom);
@@ -75,31 +76,6 @@ namespace Game.Sim
                 Entities.Position[id] = EnemyStep(id, from, delta);
                 Entities.Velocity[id] = Entities.Position[id] - from;
             }
-            PushHeroFromRump(id);
-        }
-
-        /// <summary>
-        /// Второй круг корпуса за телом: герой, вставший под круп, выталкивается
-        /// наружу (не больше 0,3 м за тик, вдоль стен — как обычный шаг).
-        /// Главное тело расталкивает общий SeparateBodies (вес босса 0).
-        /// </summary>
-        private void PushHeroFromRump(int id)
-        {
-            if (!Entities.Alive[PlayerId] || VoidPhased) return;
-            // В нырке (от ухода до выхода) крупа нет — тело не держит проход.
-            if (ThicketShielded(id)) return;
-            FixVec2 center = ThicketRumpCenter(id);
-            FixVec2 hero = Entities.Position[PlayerId];
-            FixVec2 offset = hero - center;
-            Fix64 reach = ThicketRumpRadius + Entities.BodyRadius[PlayerId];
-            Fix64 distanceSq = offset.LengthSq;
-            if (distanceSq >= reach * reach) return;
-            FixVec2 direction;
-            Fix64 overlap;
-            if (distanceSq.Raw == 0) { direction = -Entities.Facing[id].Normalized(); overlap = reach; }
-            else { Fix64 distance = Fix64.Sqrt(distanceSq); direction = offset / distance; overlap = reach - distance; }
-            if (direction.LengthSq.Raw == 0) return;
-            Entities.Position[PlayerId] = MoveInsideLayout(PlayerId, hero, direction * Fix64.Min(overlap, ThicketRumpMaxPush));
         }
 
         // ---------- тик ----------
@@ -120,8 +96,8 @@ namespace Game.Sim
                 // Не оглушается и не двигается чужой волей.
                 if (Statuses.StunUntilTick[id] != 0) Statuses.StunUntilTick[id] = 0;
                 if (ForcedMotion.IsActive(Entities, id)) ForcedMotion.Clear(Entities, id);
-                // Под землёй огонь гаснет: горение не доживает до выхода.
-                if (ThicketShielded(id) && Statuses.IsBurning(id)) Statuses.ClearBurn(id);
+                // Под землёй огонь гаснет: горение не доживает до выхода. Во вступлении — тоже.
+                if ((ThicketShielded(id) || ThicketIntroShields(id)) && Statuses.IsBurning(id)) Statuses.ClearBurn(id);
                 ref var m = ref ThicketMemory[id];
                 if (!Entities.Alive[PlayerId]) { CancelThicketAction(id); CancelThicketHazard(id); continue; }
                 UpdateThicketPhase(id);
@@ -140,7 +116,8 @@ namespace Game.Sim
                 // Рёв на пороге — после доигранного действия и раньше отдыха.
                 if (m.RoarsPending != 0) { StartThicketRoar(id); continue; }
                 if (Tick < m.NextActionTick) continue;
-                var choice = ChooseThicketAction(id);
+                // Конец рёва вступления — сразу первая атака: лапа или нырок к герою.
+                var choice = ThicketIntroOpenerDue(id) ? ThicketIntroOpener(id) : ChooseThicketAction(id);
                 if (choice != ThicketMasterAction.None) StartThicketAction(id, choice);
             }
         }
@@ -169,17 +146,26 @@ namespace Game.Sim
         }
 
         /// <summary>
-        /// Сон: не раньше ThicketMinSleepTicks после появления и только когда
-        /// герой ближе 9 м — или уже ранил босса издали. Пробуждение — поза
+        /// Сон. На поляне — до вступления: герой ступил на её пол или ранил
+        /// босса, через подлёт камеры (ThicketIntroWakeDue). На стенде без
+        /// поляны — не раньше ThicketMinSleepTicks после появления и только
+        /// когда герой ближе 9 м — или уже ранил босса издали. Пробуждение — поза
         /// «вырывает лапы» (Wake) и сразу за ней вступительный рёв.
         /// </summary>
         private void TryWakeThicketMaster(int id)
         {
             ref var m = ref ThicketMemory[id];
-            if (Tick - m.SpawnTick < ThicketMinSleepTicks) return;
-            bool near = FixVec2.DistanceSq(Entities.Position[PlayerId], Entities.Position[id]) <= ThicketWakeRange * ThicketWakeRange;
-            bool hurt = Entities.Health[id] < Entities.MaxHealth[id];
-            if (!near && !hurt) return;
+            if (m.Clearing != 0)
+            {
+                if (!ThicketIntroWakeDue(id)) return;
+            }
+            else
+            {
+                if (Tick - m.SpawnTick < ThicketMinSleepTicks) return;
+                bool near = FixVec2.DistanceSq(Entities.Position[PlayerId], Entities.Position[id]) <= ThicketWakeRange * ThicketWakeRange;
+                bool hurt = Entities.Health[id] < Entities.MaxHealth[id];
+                if (!near && !hurt) return;
+            }
             m.Awake = true;
             m.WakeTick = Tick;
             m.Phase = 1;
@@ -251,22 +237,28 @@ namespace Game.Sim
             return _thicketCandidates[_thicketCandidateCount - 1];
         }
 
-        /// <summary>Топот: перезарядка готова и из последних 90 тиков герой был ближе 3,5 м не меньше 60.</summary>
+        /// <summary>Топот: перезарядка готова и герой последние 60 тиков ПОДРЯД ближе 4 м (мимо пробежавшего не топчет).</summary>
         private bool ThicketStompRuleHolds(int id)
             => Tick >= ThicketReady[id * ThicketActionSlots + (int)ThicketMasterAction.Stomp]
-                && ThicketMasterNearTicks(id) >= ThicketStompNearTicks
+                && ThicketMasterNearRunTicks(id) >= ThicketStompNearTicks
                 && Tick + ThicketStompWindupTicks >= ThicketMemory[id].QuietUntil;
 
         /// <summary>Серия лапы может начаться: герой в досягаемости, и первый удар ляжет не раньше окна ответа.</summary>
         private bool ThicketPawReady(int id)
             => ThicketPawInReach(id) && Tick + ThicketPawWindupOf(id) >= ThicketMemory[id].QuietUntil;
 
-        /// <summary>Лапа достаёт: герой ближе ThicketPawStartRange между центрами и в ±40° от взгляда.</summary>
+        /// <summary>
+        /// Лапа достаёт: герой в ±40° от взгляда и ближе ThicketPawStartRange между
+        /// центрами — или вплотную к корпусу (у лап он стоит до 3,75 м от центра),
+        /// но не дальше сектора лапы.
+        /// </summary>
         private bool ThicketPawInReach(int id)
         {
             FixVec2 toHero = Entities.Position[PlayerId] - Entities.Position[id];
             Fix64 distanceSq = toHero.LengthSq;
-            if (distanceSq.Raw == 0 || distanceSq > ThicketPawStartRange * ThicketPawStartRange) return false;
+            if (distanceSq.Raw == 0 || distanceSq > ThicketPawRadius * ThicketPawRadius) return false;
+            if (distanceSq > ThicketPawStartRange * ThicketPawStartRange && !ThicketHeroAgainstHull(id, ThicketPawHullSlack))
+                return false;
             return FixVec2.Dot(Entities.Facing[id].Normalized(), toHero.Normalized()) >= ThicketPawFrontCos;
         }
 
@@ -481,7 +473,8 @@ namespace Game.Sim
                 EnemyActionKind.ThicketPaw, target, stage, hit));
             if (stage + 1 < a.Stages) NextThicketPaw(id, ref a);
             else ThicketMemory[id].QuietUntil = Tick + ThicketWindowTicks;
-            if (hit) ApplyAbilityDamage(id, PlayerId, ThicketPawDamageOf(id), -1, DamageType.Physical);
+            // Второй и третий удары серии — 60% лапы (ThicketPawFollowUpDamagePercent).
+            if (hit) ApplyAbilityDamage(id, PlayerId, ThicketPawStrikeDamageOf(id, stage), -1, DamageType.Physical);
         }
 
         /// <summary>

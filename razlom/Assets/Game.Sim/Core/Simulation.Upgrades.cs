@@ -189,11 +189,10 @@ namespace Game.Sim
             if (want) sheet.Add(StatModifier.Increased(StatType.AttackSpeed, Fix64.Ratio(20, 100), ModifierSource.Buff, BlazeHasteModifierId));
         }
 
-        // ---- Шквал: «Возврат», «Двойной прыжок», «Первый удар» ----
+        // ---- Шквал: «Двойной прыжок», «Первый удар» ----
+        // «Возврат» — прыжок назад одной механикой с формой Неуловимый (Simulation.Squall.Flow).
 
-        private FixVec2 _chainOrigin;
         private bool _chainRepeatHop;
-        private const int SquallReturnTicks = 8;
 
         /// <summary>Урон прыжка с усилениями: первый по целой цели ×2, повтор в ту же цель +50%.</summary>
         private int SquallHopDamage(AbilityBuild build, int target, int damage)
@@ -202,13 +201,6 @@ namespace Game.Sim
                 && Entities.Health[target] >= Entities.MaxHealth[target]) damage *= 2;
             if (_chainRepeatHop && build.Has(AbilityFlag.SquallRepeat)) damage = damage * 150 / 100;
             return damage;
-        }
-
-        /// <summary>«Возврат»: серия кончилась — Пелаг возвращается туда, откуда начал.</summary>
-        private void SquallReturn(AbilityBuild build)
-        {
-            if (build == null || !build.Has(AbilityFlag.SquallReturn) || !Entities.Alive[PlayerId]) return;
-            ForcedMotion.Begin(Entities, PlayerId, _chainOrigin, SquallReturnTicks, ForcedMotionKind.Lunge);
         }
 
         // ---- Удар якорем: «Трещина», «Отдача» ----

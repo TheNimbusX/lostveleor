@@ -562,6 +562,12 @@ namespace Game.Sim
             for (int i = 0; i < Entities.Count; i++)
             {
                 if (!Entities.Alive[i]) continue;
+                // Хозяин Чащи — по корпусу (Simulation.ForestBoss.Hull), не по телу 0,95.
+                if (ThicketHullActive(i))
+                {
+                    if (ThicketHullGap(i, spot) < radius + Fix64.Ratio(1, 10)) return false;
+                    continue;
+                }
                 Fix64 spacing = Entities.BodyRadius[i] + radius + Fix64.Ratio(1, 10);
                 if (FixVec2.DistanceSq(spot, Entities.Position[i]) < spacing * spacing) return false;
             }

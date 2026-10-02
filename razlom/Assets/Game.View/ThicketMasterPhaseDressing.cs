@@ -12,15 +12,21 @@ namespace Game.View
     /// и карта Ф3 — из Resources.
     ///
     /// Что меняется (уровень — <see cref="ThicketMasterPhaseRules"/>, смена — на УДАРЕ рёва):
-    /// • Ф1 — руны тёмные, куст как в текстуре (зелёный, редкие ягоды);
-    /// • Ф2 (рёв 66) — руны и глаза загораются янтарём, ягоды куста краснеют и набухают,
-    ///   всплеск ягод и листьев; ярость (рёв 50) — руны ярче, искры рун и листья;
-    /// • Ф3 (рёв 33) — руны ярче со смоляными прожилками (карта F3), из куста и на кроне
-    ///   распускаются цветы, с кроны падают лепестки, всплеск лепестков.
-    /// Светятся только руны и глаза — по маске эмиссии; тело не высветляется (_BaseColor белый,
-    /// цвет без подъёма). Яркость — блоком свойств поверх блока ArenaView: тот каждый LateUpdate
-    /// перезаписывает блоки тела по слотам, поэтому вид идёт после него (порядок 670) и
-    /// сливает свои значения в его блок каждый кадр. Материал не копируется.
+    /// • Ф1 — руны тёмные, листва зелёная, куст как в текстуре (редкие ягоды);
+    /// • Ф2 (рёв 66) — ОСЕНЬ: листва багряная/рыжая/золотая (карта цвета F2), руны, глаза и
+    ///   трещины спины горят янтарём и пульсируют, ягоды куста краснеют и набухают, со спины
+    ///   и кроны всё время поднимаются угли; всплеск — листопад, угли, ягоды. Ярость (рёв 50) —
+    ///   руны ярче, углей больше, искры рун и листья;
+    /// • Ф3 (рёв 33) — ЦВЕТЕНИЕ: верх кроны розовый (карта цвета F3), руны ярче со смоляными
+    ///   прожилками (карта эмиссии F3), из куста и на кроне распускаются цветы, с кроны всё время
+    ///   падают лепестки и плывёт розовый свет; глаза — розовым золотом; всплеск лепестков.
+    /// Ревью 02.10 «внешний вид фазы 2 не особо отличается»: камера 48° видит спину и крону,
+    /// поэтому главное — цвет листвы и аура над спиной, а не руны на груди.
+    /// Светятся только руны, трещины и глаза — по маске эмиссии; тело не высветляется (_BaseColor
+    /// белый; у карт листвы яркость та же, другой оттенок). Эмиссия и карта цвета — блоком свойств
+    /// поверх блока ArenaView: тот каждый LateUpdate перезаписывает блоки тела по слотам, поэтому
+    /// вид идёт после него (порядок 670) и сливает свои значения в его блок каждый кадр.
+    /// Материал не копируется.
     ///
     /// Накладки — дети костей (bush, crown_L/R, head): едут с позой и ростом тела, прячутся
     /// в нырке вместе с телом (SetHidden вида тела), уходят в землю со смертью. Вид не трогает
@@ -43,6 +49,10 @@ namespace Game.View
         public const string CrownBloomLeftName = "VFX_ThicketPhase_CrownBloom_L";
         public const string CrownBloomRightName = "VFX_ThicketPhase_CrownBloom_R";
         public const string EyeGlowName = "VFX_ThicketPhase_EyeGlow";
+        /// <summary>Аура Ф2 на груди: угли со спины и кроны; всплеск рёва 66 — листопад и угли.</summary>
+        public const string EmbersName = "VFX_ThicketPhase_Embers";
+        /// <summary>Аура Ф3 на груди: розовый свет над кроной; всплеск рёва 33 — светящиеся лепестки.</summary>
+        public const string BloomAuraName = "VFX_ThicketPhase_BloomAura";
 
         /// <summary>Растущая часть накладки: «Bud|задержка мс|подпись» — MeshRenderer, масштаб префаба = вырос.</summary>
         public const string BudPrefix = "Bud|";
@@ -54,28 +64,45 @@ namespace Game.View
         /// <summary>Петля падающих лепестков на кроне (Ф3).</summary>
         public const string PetalLoopName = "Petal Fall";
 
+        /// <summary>Петля ауры фазы (угли Ф2, розовый свет Ф3): шагает так же, как лепестки кроны.</summary>
+        public const string AuraName = "Aura";
+
         /// <summary>Ореол глаз: система с частицей на каждый «Eye …»-якорь.</summary>
         public const string GlowName = "Glow";
         public const string EyePrefix = "Eye ";
 
-        public const string BoneBush = "bush", BoneCrownLeft = "crown_L", BoneCrownRight = "crown_R", BoneHead = "head";
+        public const string BoneBush = "bush", BoneCrownLeft = "crown_L", BoneCrownRight = "crown_R", BoneHead = "head", BoneChest = "chest";
 
         /// <summary>Карты эмиссии в Resources (копирует ThicketMasterBuilder из пакета).</summary>
         public const string EmissionF2Resource = "Characters/Forest_ThicketMaster/T_ThicketMaster_Emission_F2";
         public const string EmissionF3Resource = "Characters/Forest_ThicketMaster/T_ThicketMaster_Emission_F3";
 
+        /// <summary>
+        /// Карты цвета листвы (production/dressing/make_phase_colors.py): F2 — осень, F3 — цветение.
+        /// Нет карты — листва Ф1 (как было до 02.10).
+        /// </summary>
+        public const string ColorF2Resource = "Characters/Forest_ThicketMaster/T_ThicketMaster_Color_F2";
+        public const string ColorF3Resource = "Characters/Forest_ThicketMaster/T_ThicketMaster_Color_F3";
+
+        /// <summary>Углей в ярости (рёв 50) больше во столько раз.</summary>
+        private const float EmberRageGain = 1.6f;
+
         /// <summary>Рост: ягоды набухают за .6 с, цветы раскрываются за .5 с; всплеск живёт до 4 с.</summary>
         private const float BerrySeconds = .6f, FlowerSeconds = .5f, BurstLife = 4f;
 
-        /// <summary>Ореол глаз: альфа на Ф2 и цвет (EyeAmber без HDR — частицы 8-битные).</summary>
-        private const float EyeAlpha = .55f;
-        private static readonly Color EyeColor = new Color(1f, .62f, .15f);
+        /// <summary>
+        /// Ореол глаз: альфа на Ф2 и цвет (частицы 8-битные — свет за порог bloom даёт _HdrMultiply
+        /// материала M_ThicketPhase_Ember); в Ф3 — розовое золото цветения.
+        /// </summary>
+        private const float EyeAlpha = .85f;
+        private static readonly Color EyeColor = new Color(1f, .62f, .15f), EyeColorBloom = new Color(1f, .58f, .66f);
 
         private const int None = ThicketMasterPhaseRules.None;
         private const int ShapeSwell = 0, ShapeRise = 1;
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissionMapId = Shader.PropertyToID("_EmissionMap");
+        private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
         private static readonly int[] PhaseBitList = { Simulation.ThicketRoar66Bit, Simulation.ThicketRoar50Bit, Simulation.ThicketRoar33Bit };
         private static bool _warnedPrefab, _warnedKeyword;
 
@@ -86,11 +113,17 @@ namespace Game.View
             public Vector3[] BudScale;
             public float[] BudDelay;
             public int Shape, MinLevel, GrowBit, BurstBit;
+            /// <summary>Петли и аура — до этого уровня включительно (угли Ф2 гаснут в цветении Ф3).</summary>
+            public int MaxLevel = 3;
+            /// <summary>Множитель частоты петель в ярости (рёв 50).</summary>
+            public float RageGain = 1f;
             /// <summary>Записанное состояние роста: −1 — свёрнута, 1 — выросла целиком, 0 — растёт.</summary>
             public int Written = 2;
             public RootSnarerCombatView.Fx Burst;
             public int BurstTick = None;
-            public ParticleSystem Loop;
+            /// <summary>Петли накладки (лепестки кроны, аура) и их частота из префаба.</summary>
+            public ParticleSystem[] Loops = new ParticleSystem[0];
+            public float[] LoopRate = new float[0];
             public bool LoopStarted;
             public ParticleSystem Glow;
             public Vector3[] Eyes;
@@ -105,6 +138,8 @@ namespace Game.View
         private int[] _slotIndices = new int[0];
         private MaterialPropertyBlock _block;
         private Texture _mapF2, _mapF3;
+        /// <summary>Карта цвета тела: своя (листва Ф1) и фазовые; null — нет такой карты.</summary>
+        private Texture _colorF1, _colorF2, _colorF3;
         private Overlay[] _overlays = new Overlay[0];
         private ParticleSystem.Particle[] _eyeParticles = new ParticleSystem.Particle[4];
 
@@ -131,6 +166,13 @@ namespace Game.View
             _mapF3 = Resources.Load<Texture2D>(EmissionF3Resource);
             if (_mapF2 == null) _mapF2 = Resources.Load<Texture2D>(EmissionF2Resource);
             if (_mapF3 == null) _mapF3 = _mapF2;
+            // Листва фаз — только вместе со своей картой Ф1 (иначе нечем вернуть зелень в пул).
+            if (_colorF1 != null)
+            {
+                _colorF2 = Resources.Load<Texture2D>(ColorF2Resource);
+                _colorF3 = Resources.Load<Texture2D>(ColorF3Resource);
+                if (_colorF3 == null) _colorF3 = _colorF2;
+            }
             BuildOverlays();
             Collapse();
         }
@@ -149,10 +191,13 @@ namespace Game.View
                 for (int i = 0; i < materials.Length; i++)
                 {
                     var material = materials[i];
-                    if (material == null || material.shader == null || material.shader.name != "Universal Render Pipeline/Lit") continue;
+                    // Тело — URP Lit или его копия с прозрачностью перед героем (ThicketMasterSeeThroughRules).
+                    if (material == null || material.shader == null
+                        || (material.shader.name != "Universal Render Pipeline/Lit" && material.shader.name != ThicketMasterSeeThroughRules.LitShader)) continue;
                     slotRenderers.Add(renderer);
                     slotIndices.Add(i);
                     if (_mapF2 == null && material.HasProperty(EmissionMapId)) _mapF2 = material.GetTexture(EmissionMapId);
+                    if (_colorF1 == null && material.HasProperty(BaseMapId)) _colorF1 = material.GetTexture(BaseMapId);
                     if (!material.IsKeywordEnabled("_EMISSION") && !_warnedKeyword)
                     {
                         _warnedKeyword = true;
@@ -166,7 +211,7 @@ namespace Game.View
 
         private void BuildOverlays()
         {
-            Transform bush = null, crownLeft = null, crownRight = null, head = null;
+            Transform bush = null, crownLeft = null, crownRight = null, head = null, chest = null;
             foreach (var t in GetComponentsInChildren<Transform>(true))
             {
                 switch (t.name)
@@ -175,19 +220,24 @@ namespace Game.View
                     case BoneCrownLeft: crownLeft = t; break;
                     case BoneCrownRight: crownRight = t; break;
                     case BoneHead: head = t; break;
+                    case BoneChest: chest = t; break;
                 }
             }
-            var list = new List<Overlay>(5);
+            var list = new List<Overlay>(7);
             Add(list, BerriesName, bush, ShapeSwell, 2, Simulation.ThicketRoar66Bit, Simulation.ThicketRoar66Bit);
             Add(list, BushBloomName, bush, ShapeRise, 3, Simulation.ThicketRoar33Bit, Simulation.ThicketRoar33Bit);
             Add(list, CrownBloomLeftName, crownLeft, ShapeRise, 3, Simulation.ThicketRoar33Bit, Simulation.ThicketRoar33Bit);
             Add(list, CrownBloomRightName, crownRight, ShapeRise, 3, Simulation.ThicketRoar33Bit, Simulation.ThicketRoar33Bit);
             // Глаза загораются с рёва 66; всплеск этой накладки (искры рун, листья) — на рёве 50.
             Add(list, EyeGlowName, head, ShapeRise, 2, Simulation.ThicketRoar66Bit, Simulation.ThicketRoar50Bit);
+            // Ауры: угли — только осень Ф2 (в ярости гуще), розовый свет — цветение Ф3.
+            var embers = Add(list, EmbersName, chest, ShapeRise, 2, Simulation.ThicketRoar66Bit, Simulation.ThicketRoar66Bit);
+            if (embers != null) { embers.MaxLevel = 2; embers.RageGain = EmberRageGain; }
+            Add(list, BloomAuraName, chest, ShapeRise, 3, Simulation.ThicketRoar33Bit, Simulation.ThicketRoar33Bit);
             _overlays = list.ToArray();
         }
 
-        private void Add(List<Overlay> list, string prefabName, Transform bone, int shape, int minLevel, int growBit, int burstBit)
+        private Overlay Add(List<Overlay> list, string prefabName, Transform bone, int shape, int minLevel, int growBit, int burstBit)
         {
             var prefab = Resources.Load<GameObject>(PrefabFolder + prefabName);
             if (prefab == null || bone == null)
@@ -197,7 +247,7 @@ namespace Game.View
                     _warnedPrefab = true;
                     Debug.LogWarning($"[thicketmaster] Нет накладки фаз «{PrefabFolder}{prefabName}» или кости — собери «Разлом/Босс/Хозяин Чащи/Фазы: пересобрать». Руны светятся и без неё.");
                 }
-                return;
+                return null;
             }
             var go = Instantiate(prefab, bone, false);
             go.name = prefabName;
@@ -212,13 +262,18 @@ namespace Game.View
             var overlay = new Overlay { Root = root, Shape = shape, MinLevel = minLevel, GrowBit = growBit, BurstBit = burstBit };
             var buds = new List<Transform>();
             var eyes = new List<Vector3>();
+            var loops = new List<ParticleSystem>();
             for (int c = 0; c < root.childCount; c++)
             {
                 var child = root.GetChild(c);
                 if (child.name.StartsWith(BudPrefix, System.StringComparison.Ordinal)) buds.Add(child);
                 else if (child.name.StartsWith(EyePrefix, System.StringComparison.Ordinal)) eyes.Add(child.localPosition);
                 else if (child.name == BurstsName) overlay.Burst = RootSnarerCombatView.Prepare(child.gameObject);
-                else if (child.name == PetalLoopName) overlay.Loop = child.GetComponent<ParticleSystem>();
+                else if (child.name == PetalLoopName || child.name == AuraName)
+                {
+                    var loop = child.GetComponent<ParticleSystem>();
+                    if (loop != null) loops.Add(loop);
+                }
                 else if (child.name == GlowName) overlay.Glow = child.GetComponent<ParticleSystem>();
             }
             overlay.Buds = buds.ToArray();
@@ -237,14 +292,19 @@ namespace Game.View
                 overlay.GlowSize = overlay.Glow.main.startSizeMultiplier;
                 overlay.Glow.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
-            if (overlay.Loop != null)
+            overlay.Loops = loops.ToArray();
+            overlay.LoopRate = new float[overlay.Loops.Length];
+            for (int i = 0; i < overlay.Loops.Length; i++)
             {
-                overlay.Loop.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var loop = overlay.Loops[i];
+                loop.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                overlay.LoopRate[i] = loop.emission.rateOverTimeMultiplier;
                 // Лепестки ложатся на землю: плоскость — корень тела (ArenaView держит его на земле, только поворот вокруг Y).
-                var collision = overlay.Loop.collision;
+                var collision = loop.collision;
                 if (collision.enabled) collision.SetPlane(0, transform);
             }
             list.Add(overlay);
+            return overlay;
         }
 
         // ------------------------------------------------------------ кадр
@@ -263,7 +323,7 @@ namespace Game.View
             if (!valid)
             {
                 if (_boundSim != null) Unbind();
-                WriteEmission(0f, _mapF2);
+                WriteBody(0f, _mapF2, _colorF1);
                 return;
             }
             float tick = sim.Tick - 1 + _driver.Alpha;
@@ -279,7 +339,7 @@ namespace Game.View
             float glow = ThicketMasterPhaseRules.Glow(level, enraged, tick, change, _deathTick);
             Level = level;
             Glow = glow;
-            WriteEmission(glow, ThicketMasterPhaseRules.UsesPhase3Map(level) ? _mapF3 : _mapF2);
+            WriteBody(glow, ThicketMasterPhaseRules.UsesPhase3Map(level) ? _mapF3 : _mapF2, ColorFor(level));
 
             bool hidden = _view != null && _view.IsBurrowed;
             bool alive = _deathTick == None;
@@ -290,9 +350,17 @@ namespace Game.View
                 var overlay = _overlays[i];
                 Grow(overlay, level, tick);
                 StepBurst(overlay, tick);
-                StepLoop(overlay, level >= overlay.MinLevel && alive && !hidden, dt);
+                bool loopOn = level >= overlay.MinLevel && level <= overlay.MaxLevel && alive && !hidden;
+                StepLoops(overlay, loopOn, enraged ? overlay.RageGain : 1f, dt);
                 StepGlow(overlay, level, tick, glow);
             }
+        }
+
+        /// <summary>Карта цвета уровня: Ф2 — осень, Ф3 — цветение; нет карты — своя (Ф1).</summary>
+        private Texture ColorFor(int level)
+        {
+            Texture map = level >= 3 ? _colorF3 : level == 2 ? _colorF2 : null;
+            return map != null ? map : _colorF1;
         }
 
         /// <summary>Привязка к сущности: уровень сразу, без вспышки, роста и всплесков.</summary>
@@ -379,8 +447,12 @@ namespace Game.View
 
         // ------------------------------------------------------------ тело
 
-        /// <summary>Слияние с блоком ArenaView этого кадра: его _HitFlash/_Outline* остаются, наше — эмиссия.</summary>
-        private void WriteEmission(float k, Texture map)
+        /// <summary>
+        /// Слияние с блоком ArenaView этого кадра: его _HitFlash/_Outline* остаются, наше — эмиссия
+        /// и карта цвета листвы. Карта цвета пишется всегда (и своя в Ф1): блок без неё оставил бы
+        /// осень от прошлого владельца тела.
+        /// </summary>
+        private void WriteBody(float k, Texture map, Texture baseMap)
         {
             var color = new Vector4(k, k, k, 1f); // линейно: SetColor перевёл бы HDR-множитель из гаммы
             for (int i = 0; i < _slotRenderers.Length; i++)
@@ -390,6 +462,7 @@ namespace Game.View
                 renderer.GetPropertyBlock(_block, _slotIndices[i]);
                 _block.SetVector(EmissionColorId, color);
                 if (map != null) _block.SetTexture(EmissionMapId, map);
+                if (baseMap != null) _block.SetTexture(BaseMapId, baseMap);
                 renderer.SetPropertyBlock(_block, _slotIndices[i]);
             }
         }
@@ -464,20 +537,29 @@ namespace Game.View
             RootSnarerCombatView.StepParticles(overlay.Burst, age);
         }
 
-        /// <summary>Петля лепестков: шаг по тикам Sim (пауза держит), эмиссия — только в Ф3, живым и над землёй.</summary>
-        private static void StepLoop(Overlay overlay, bool on, float dt)
+        /// <summary>
+        /// Петли (лепестки кроны, угли, розовый свет): шаг по тикам Sim (пауза держит), эмиссия —
+        /// только на своих уровнях, живым и над землёй; rate — множитель частоты (ярость).
+        /// </summary>
+        private static void StepLoops(Overlay overlay, bool on, float rate, float dt)
         {
-            var loop = overlay.Loop;
-            if (loop == null) return;
-            var emission = loop.emission;
-            if (emission.enabled != on) emission.enabled = on;
-            if (!on && !overlay.LoopStarted) return;
-            if (!overlay.LoopStarted)
+            var loops = overlay.Loops;
+            if (loops.Length == 0) return;
+            for (int i = 0; i < loops.Length; i++)
             {
-                overlay.LoopStarted = true;
-                loop.Simulate(0f, true, true, false);
+                var emission = loops[i].emission;
+                if (emission.enabled != on) emission.enabled = on;
+                float want = overlay.LoopRate[i] * rate;
+                if (on && emission.rateOverTimeMultiplier != want) emission.rateOverTimeMultiplier = want;
             }
-            if (dt > 0f) loop.Simulate(dt, true, false, false);
+            if (!on && !overlay.LoopStarted) return;
+            bool first = !overlay.LoopStarted;
+            overlay.LoopStarted = true;
+            for (int i = 0; i < loops.Length; i++)
+            {
+                if (first) loops[i].Simulate(0f, true, true, false);
+                if (dt > 0f) loops[i].Simulate(dt, true, false, false);
+            }
         }
 
         /// <summary>Ореол глаз: частица на якорь, цвет — по яркости рун и проявлению с рёва 66.</summary>
@@ -505,7 +587,8 @@ namespace Game.View
                 ps.Pause(false);
             }
             count = ps.GetParticles(_eyeParticles);
-            var color = new Color(EyeColor.r, EyeColor.g, EyeColor.b, alpha);
+            var tint = level >= 3 ? EyeColorBloom : EyeColor;
+            var color = new Color(tint.r, tint.g, tint.b, alpha);
             for (int i = 0; i < count; i++)
             {
                 _eyeParticles[i].startColor = color;
@@ -525,19 +608,17 @@ namespace Game.View
                 for (int b = 0; b < overlay.Buds.Length; b++)
                     if (overlay.Buds[b] != null) overlay.Buds[b].localScale = Vector3.zero;
                 StopBurst(overlay);
-                if (overlay.Loop != null)
-                {
-                    overlay.Loop.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                    overlay.LoopStarted = false;
-                }
+                for (int l = 0; l < overlay.Loops.Length; l++)
+                    if (overlay.Loops[l] != null) overlay.Loops[l].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                overlay.LoopStarted = false;
                 if (overlay.Glow != null) overlay.Glow.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
         }
 
         private void OnDisable()
         {
-            // Возврат в пул: следующий владелец получает тёмные руны и голый куст.
-            WriteEmission(0f, _mapF2);
+            // Возврат в пул: следующий владелец получает тёмные руны, зелёную листву и голый куст.
+            WriteBody(0f, _mapF2, _colorF1);
             _boundSim = null;
             _boundEntity = -1;
             _boundGeneration = -1;

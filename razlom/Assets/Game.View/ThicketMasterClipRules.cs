@@ -182,7 +182,7 @@ namespace Game.View
         /// <summary>
         /// Метров на цикл Walk (два шага пар) в масштабе 1 — замер анимации 02.10
         /// после правки (production/unity_package/export.json: stride_m_per_cycle 1,7857,
-        /// цикл 30 кадров; Sim 2,6 м/с → ×1,456). Сборщик ThicketMasterBuilder читает
+        /// цикл 30 кадров; Sim 2,0 м/с → ×1,12, до 02.10 — 2,6 → ×1,456). Сборщик ThicketMasterBuilder читает
         /// свежий замер из отчёта клипов и пишет его в префаб; это число — запас без отчёта.
         /// </summary>
         public const float DefaultWalkStride = 1.7857f;

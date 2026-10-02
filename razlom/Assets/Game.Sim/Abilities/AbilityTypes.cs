@@ -42,6 +42,11 @@ namespace Game.Sim
         DurationTicks = 7,
         StartTurnsPerSecond = 8,
         EndTurnsPerSecond = 9,
+
+        /// <summary>
+        /// Вихрь · Буря: доля скорости шага, пока Бурю держат (0–1). Узел формы
+        /// кладёт PelagForms.StormMoveMultiplier, талант Бури поднимет (02.10).
+        /// </summary>
         StartMoveMultiplier = 10,
         EndMoveMultiplier = 11,
         WeaponRadius = 12,

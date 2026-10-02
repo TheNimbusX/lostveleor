@@ -10,13 +10,19 @@ using UnityEngine.Rendering;
 /// ЭФФЕКТЫ АТАК ХОЗЯИНА ЧАЩИ (план artifacts/tools/wf/boss-vfx-plan.md §3, 02.10).
 ///
 /// Собирает 26 префабов в Resources/VFX/ThicketMaster/Attacks/Prefabs из паков —
-/// CFXR (комья, щепки, пыль-облака, листья, дуга когтей, искры, лепестки, сок,
+/// CFXR (комья, щепки, пыль-облака, листья, плёнка лент когтей, искры, лепестки, сок,
 /// ветровые штрихи), Hovl (маски трещин, колец и пятен земли, горб HalfSphere2,
 /// столб CylinderFromGround, цветок Flower) — на своих копиях материалов в
 /// Attacks/Materials: без освещения CFXR (в URP бледнеет), без dissolve и мягких
 /// частиц у декалей (без depth-текстуры гаснут у земли); свои цвета и масштабы.
 /// Корни и шипы — свои трубы в коре RootBark (как у Корнехвата и Вендиго), ягода —
 /// своя икосфера на URP Particles/Lit. Наш слой — раскладка, тайминг, отклик.
+///
+/// Ревью 02.10 («плоско, по-наклеечному», «блекло»): волны рёва и топота — стоячие стены пыли,
+/// бегущие наружу (Wall/Streaks/RadialPush), комья и горбы земли — меш-частицы своих
+/// многогранников на непрозрачной M_Thicket_Earth (Chunks, LumpMesh), нырок и выход прячут
+/// тело за стеной земли по контуру корпуса, бугор тянет гребень земли, пыльца — ядовитый
+/// объём с кромкой и пульсом укуса; ленты когтей строит вид по кости лапы (PawSlash).
 ///
 /// Круги «от тела» (лапа, топот и его кольцо, рёв, нырок) и круги касты (прорастание,
 /// ливень, пыльца, свет бури) берутся из констант Simulation — ревизия включает их,
@@ -29,7 +35,7 @@ using UnityEngine.Rendering;
 /// </summary>
 public static class ThicketMasterVfxSetup
 {
-    private const string RevisionBase = "ThicketVfxV1";
+    private const string RevisionBase = "ThicketVfxV4";
     private const string VfxFolder = "Assets/Resources/VFX";
     private const string BossFolder = VfxFolder + "/ThicketMaster";
     private const string Root = BossFolder + "/Attacks";
@@ -56,8 +62,6 @@ public static class ThicketMasterVfxSetup
     private const string CfxrJuice = CfxrGraphics + "cfxr blood splash dissolve ab.mat";
     private const string CfxrJuiceTexture = CfxrGraphics + "cfxr blood splash.png";
     private const string CfxrLeafMesh = CfxrMeshes + "cfxr mesh leave.fbx";
-    private const string CfxrSlashMeshes = CfxrMeshes + "cfxr mesh sword_slashes.fbx";
-    private const string CfxrTrailPrefab = CfxrPrefabs + "Sword Trails/Plain/CFXR4 Sword Trail PLAIN (360 Spiral).prefab";
     private const string CfxrSplashPrefab = CfxrPrefabs + "Liquids/CFXR2 Blood Shape Splash.prefab";
     private const string Hovl = "Assets/Hovl Studio/HSFiles/";
     private const string HovlTextures = Hovl + "Textures/";
@@ -79,12 +83,31 @@ public static class ThicketMasterVfxSetup
     private static readonly Color Ivory = new Color(1.16f, 1.07f, .88f);
     private static readonly Color CrackTone = new Color(SoilDark.r * .7f, SoilDark.g * .7f, SoilDark.b * .7f, .95f);
 
+    // Тёмная битва (владелец 02.10: свет арены босса остаётся тёмным): на ней читается только
+    // то, что светится. Светящиеся слои — на копиях материалов с _HdrMultiply (CFXR умножает
+    // цвет частицы — сам цвет частицы в 8 битах выше 1 не поднять) и уходят за порог bloom.
+    // Янтарь — удар о землю (лапа, топот, нырок, корни), листовое золото — рёв и когти,
+    // золото — пыльца и свет бури.
+    private static readonly Color Ember = new Color(1f, .58f, .16f), EmberDeep = new Color(.95f, .36f, .08f);
+    private static readonly Color LeafGlow = new Color(.80f, 1f, .38f), PollenGlow = new Color(1f, .82f, .32f);
+    private static readonly Color SafeGlow = new Color(1f, .90f, .55f), BerryGlow = new Color(1f, .22f, .16f);
+    // Пыльца — яд (ревью 02.10: «не читается, что это урон»): болезненное золото-зелень, а не тёплое золото.
+    private static readonly Color ToxicLight = new Color(.80f, .88f, .30f), ToxicDeep = new Color(.52f, .66f, .14f), ToxicGlow = new Color(.80f, 1f, .24f);
+
     private sealed class Kit
     {
         public Material Clod, Splinter, Leaf, Haze, Soil, Crack, Star, Furrow, Ring, RingThin, RingRibbon, Slash, Spark, Drop,
             StarMote, Petal, Wind, Streak, Juice, JuiceStain, Berry, Flower, Pillar, Wood, WoodDark;
-        public Mesh LeafMesh, HalfSphere, Cylinder, FlowerMesh, BerryMesh, ArcThick, ArcEdge;
-        public Mesh[] Spikes, Curls, Tips;
+        /// <summary>Светящиеся копии (_HdrMultiply): кольца волн, трещины, вспышки, когти, столб, лепестки бури.</summary>
+        public Material GlowRing, GlowRingThin, GlowCrack, GlowStar, Glow, GlowSlash, GlowPillar, GlowPetal;
+        /// <summary>
+        /// Ревью 02.10 («плоско, наклейки»): объём. Earth — непрозрачные комья и горбы гребня
+        /// (URP Particles/Lit, цвет из частиц, свет и тень); GlowHaze — светящаяся пыль гребня
+        /// волны и кромки пыльцы; GlowClaw — ленты когтей (сетку пишет вид по кости лапы).
+        /// </summary>
+        public Material Earth, GlowHaze, GlowClaw;
+        public Mesh LeafMesh, HalfSphere, Cylinder, FlowerMesh, BerryMesh;
+        public Mesh[] Spikes, Curls, Tips, Lumps, Chunks;
     }
 
     private static readonly List<string> Missing = new List<string>();
@@ -262,11 +285,45 @@ public static class ThicketMasterVfxSetup
         kit.Wood = Wood("M_Thicket_Wood", Color.white);
         kit.WoodDark = Wood("M_Thicket_WoodDark", new Color(.80f, .76f, .72f));
 
+        // Светящиеся слои тёмной битвы.
+        kit.GlowRing = Glow(PackCopy("M_Thicket_GlowRing", CfxrTrailMaterial), HovlTextures + "Circle17.png", 3.2f) ?? kit.Ring;
+        kit.GlowRingThin = Glow(PackCopy("M_Thicket_GlowRingThin", CfxrTrailMaterial), HovlTextures + "Circle41.png", 3.4f) ?? kit.RingThin;
+        kit.GlowCrack = Glow(PackCopy("M_Thicket_GlowCrack", CfxrTrailMaterial), HovlTextures + "Crack4.png", 2.6f) ?? kit.Crack;
+        kit.GlowStar = Glow(PackCopy("M_Thicket_GlowStar", CfxrTrailMaterial), HovlTextures + "Crater19.png", 2.6f) ?? kit.Star;
+        kit.Glow = Hdr(Plain(PackCopy("M_Thicket_Glow", CfxrGlowSoft)), 3.2f) ?? kit.Spark;
+        kit.GlowSlash = Hdr(PackCopy("M_Thicket_GlowSlash", CfxrTrailMaterial), 2.4f) ?? kit.Slash;
+        kit.GlowPillar = Glow(PackCopy("M_Thicket_GlowPillar", CfxrTrailMaterial), HovlTextures + "Trail25.png", 2.2f) ?? kit.Pillar;
+        kit.GlowPetal = Hdr(Unlit(PackCopy("M_Thicket_GlowPetal", CfxrPetal)), 1.7f);
+        if (kit.GlowPetal != null && kit.GlowPetal.HasProperty("_SingleChannel")) kit.GlowPetal.SetFloat("_SingleChannel", 1f);
+        if (kit.GlowPetal == null) kit.GlowPetal = kit.Petal;
+        kit.Earth = UrpParticles("M_Thicket_Earth", "Universal Render Pipeline/Particles/Lit", null, false) ?? kit.Clod;
+        if (kit.Earth != null && kit.Earth.HasProperty("_Smoothness")) kit.Earth.SetFloat("_Smoothness", .06f);
+        kit.GlowHaze = Hdr(Textured(Plain(PackCopy("M_Thicket_GlowHaze", CfxrSmokeBlurred)), CfxrCloudBlur, true), 1.45f) ?? kit.Haze;
+        // Лента когтей: плёнка без dissolve (маска полосы по V, Cull Off в шейдере) — сетку вид разворачивает к камере.
+        kit.GlowClaw = Hdr(NoDissolve(PackCopy("M_Thicket_GlowClaw", CfxrTrailMaterial)), 2.6f) ?? kit.GlowSlash;
+
         // Декали земли — до пыли и комьев; лепестки и листья — поверх пыли; свет бури — последним.
         foreach (var decal in new[] { kit.Soil, kit.Crack, kit.Star, kit.Furrow, kit.JuiceStain }) Queue(decal, 2990);
+        foreach (var glow in new[] { kit.GlowCrack, kit.GlowStar }) Queue(glow, 2991);
         foreach (var ring in new[] { kit.Ring, kit.RingThin, kit.RingRibbon }) Queue(ring, 2995);
-        Queue(kit.Leaf, 3005); Queue(kit.Petal, 3006); Queue(kit.Pillar, 3008); Queue(kit.StarMote, 3008);
+        foreach (var ring in new[] { kit.GlowRing, kit.GlowRingThin }) Queue(ring, 2996);
+        Queue(kit.Leaf, 3005); Queue(kit.Petal, 3006); Queue(kit.GlowPetal, 3006); Queue(kit.Pillar, 3008); Queue(kit.GlowPillar, 3008);
+        Queue(kit.StarMote, 3008); Queue(kit.Glow, 3009); Queue(kit.GlowHaze, 3001); Queue(kit.GlowClaw, 3010);
         return kit;
+    }
+
+    /// <summary>Маска Hovl одним каналом на копии плёнки CFXR без dissolve, со свечением hdr.</summary>
+    private static Material Glow(Material material, string texturePath, float hdr)
+        => Hdr(Textured(NoDissolve(material), texturePath, true), hdr);
+
+    /// <summary>Свечение CFXR: цвет частицы × _HdrMultiply (больше 0 — включено), уходит за порог bloom.</summary>
+    private static Material Hdr(Material material, float hdr)
+    {
+        if (material == null) return null;
+        if (material.HasProperty("_HdrMultiply")) material.SetFloat("_HdrMultiply", hdr);
+        else Note("_HdrMultiply нет у " + material.name + " — слой не светится");
+        EditorUtility.SetDirty(material);
+        return material;
     }
 
     private static void Queue(Material material, int queue)
@@ -396,8 +453,9 @@ public static class ThicketMasterVfxSetup
     private static void Geometry(Kit kit)
     {
         kit.LeafMesh = LoadMesh(CfxrLeafMesh, null);
-        kit.ArcThick = LoadMesh(CfxrSlashMeshes, "sword_trail 180 thick");
-        kit.ArcEdge = LoadMesh(CfxrSlashMeshes, "sword_trail 180 edge") ?? kit.ArcThick;
+        // Объём земли (ревью 02.10): горбы гребня бугра — бугристые купола, комья — сколотые многогранники.
+        kit.Lumps = new[] { LumpMesh("ThicketLumpA", 51, .22f), LumpMesh("ThicketLumpB", 52, .28f), LumpMesh("ThicketLumpC", 53, .18f) };
+        kit.Chunks = new[] { ChunkMesh("ThicketChunkA", .55f, 61), ChunkMesh("ThicketChunkB", .75f, 62), ChunkMesh("ThicketChunkC", .45f, 63) };
         // Модели Hovl (замер Blender 02.10, ось +Y вверх, основание в нуле): горб r1 h1,
         // цилиндр r1 h2, цветок ~2,3 × 1,74 × 2,4 — чашкой вверх.
         kit.HalfSphere = LoadMesh(HovlModels + "HalfSphere2.fbx", null);
@@ -480,6 +538,109 @@ public static class ThicketMasterVfxSetup
         Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
         mesh.SetVertices(vertices);
         mesh.SetColors(colors);
+        mesh.SetUVs(0, uv);
+        mesh.SetTriangles(triangles, 0);
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        EditorUtility.SetDirty(mesh);
+        return mesh;
+    }
+
+    /// <summary>
+    /// Горб земли гребня бугра: бугристый купол r1 h1 (основание чуть ниже нуля — без щели
+    /// у земли), грани плоские (своя тройка вершин) с разбросом тона Color32 — комковатая
+    /// земля под светом URP; цвет — из частицы (SoilLight/SoilDark).
+    /// </summary>
+    private static Mesh LumpMesh(string name, int salt, float jitter)
+    {
+        const int rings = 3, sides = 11;
+        var grid = new Vector3[rings, sides];
+        for (int r = 0; r < rings; r++)
+        {
+            float phi = r / (float)rings * Mathf.PI * .5f;
+            for (int s = 0; s < sides; s++)
+            {
+                float a = (s + (r % 2) * .5f) / sides * Mathf.PI * 2f;
+                float k = 1f + jitter * (Hash01(r * 31 + s, salt) * 2f - 1f);
+                float y = r == 0 ? -.06f : Mathf.Sin(phi) * (1f + jitter * .7f * (Hash01(r * 31 + s, salt + 1) * 2f - 1f));
+                grid[r, s] = new Vector3(Mathf.Sin(a) * Mathf.Cos(phi) * k, y, Mathf.Cos(a) * Mathf.Cos(phi) * k);
+            }
+        }
+        var top = new Vector3(jitter * .4f * (Hash01(7, salt) - .5f), 1f + jitter * .3f * (Hash01(8, salt) - .5f), jitter * .4f * (Hash01(9, salt) - .5f));
+        var vertices = new List<Vector3>();
+        var colors = new List<Color32>();
+        var triangles = new List<int>();
+        int face = 0;
+        for (int r = 0; r < rings; r++)
+            for (int s = 0; s < sides; s++)
+            {
+                int n = (s + 1) % sides;
+                Vector3 a = grid[r, s], b = grid[r, n];
+                if (r == rings - 1)
+                {
+                    Face(vertices, colors, triangles, a, b, top, (a + b + top) / 3f - Vector3.up * .3f, Tone(face++, salt));
+                    continue;
+                }
+                Vector3 c = grid[r + 1, n], d = grid[r + 1, s];
+                Face(vertices, colors, triangles, a, b, c, (a + b + c) / 3f - Vector3.up * .3f, Tone(face++, salt));
+                Face(vertices, colors, triangles, a, c, d, (a + c + d) / 3f - Vector3.up * .3f, Tone(face++, salt));
+            }
+        return SolidMesh(name, vertices, colors, triangles);
+    }
+
+    /// <summary>Ком земли / камень: сплюснутый неровный октаэдр со сколами (код EnemyDeathVfxSetup), около 1 м, грани плоские.</summary>
+    private static Mesh ChunkMesh(string name, float flatten, int salt)
+    {
+        Vector3[] corners =
+        {
+            new Vector3(0f, 1f, 0f), new Vector3(0f, -1f, 0f), new Vector3(1f, 0f, 0f),
+            new Vector3(-1f, 0f, 0f), new Vector3(0f, 0f, 1f), new Vector3(0f, 0f, -1f),
+        };
+        for (int i = 0; i < corners.Length; i++)
+        {
+            Vector3 c = corners[i] * .5f;
+            c += new Vector3(Mathf.Lerp(-.14f, .14f, Hash01(i * 3, salt)), Mathf.Lerp(-.1f, .1f, Hash01(i * 3 + 1, salt)),
+                Mathf.Lerp(-.14f, .14f, Hash01(i * 3 + 2, salt)));
+            c.y *= flatten;
+            corners[i] = c;
+        }
+        int[,] faces = { { 0, 4, 2 }, { 0, 2, 5 }, { 0, 5, 3 }, { 0, 3, 4 }, { 1, 2, 4 }, { 1, 5, 2 }, { 1, 3, 5 }, { 1, 4, 3 } };
+        var vertices = new List<Vector3>();
+        var colors = new List<Color32>();
+        var triangles = new List<int>();
+        for (int f = 0; f < faces.GetLength(0); f++)
+        {
+            Vector3 a = corners[faces[f, 0]], b = corners[faces[f, 1]], c = corners[faces[f, 2]];
+            Vector3 mid = (b + c) * .5f + (b + c - 2f * a).normalized * Mathf.Lerp(-.04f, .06f, Hash01(100 + f, salt));
+            Face(vertices, colors, triangles, a, b, mid, a + b + mid, Tone(f * 2, salt));
+            Face(vertices, colors, triangles, a, mid, c, a + mid + c, Tone(f * 2 + 1, salt));
+        }
+        return SolidMesh(name, vertices, colors, triangles);
+    }
+
+    /// <summary>Тон грани 170…255: комья не одного цвета, но цвет задаёт частица.</summary>
+    private static byte Tone(int face, int salt) => (byte)Mathf.RoundToInt(Mathf.Lerp(170f, 255f, Hash01(face, salt + 500)));
+
+    /// <summary>Треугольник наружу (по outward), своя тройка вершин — плоская грань, тон Color32.</summary>
+    private static void Face(List<Vector3> vertices, List<Color32> colors, List<int> triangles, Vector3 a, Vector3 b, Vector3 c,
+        Vector3 outward, byte tone)
+    {
+        if (Vector3.Dot(Vector3.Cross(b - a, c - a), outward) < 0f) { var swap = b; b = c; c = swap; }
+        int at = vertices.Count;
+        vertices.Add(a); vertices.Add(b); vertices.Add(c);
+        var color = new Color32(tone, tone, tone, 255);
+        colors.Add(color); colors.Add(color); colors.Add(color);
+        triangles.Add(at); triangles.Add(at + 1); triangles.Add(at + 2);
+    }
+
+    private static Mesh SolidMesh(string name, List<Vector3> vertices, List<Color32> colors, List<int> triangles)
+    {
+        Mesh mesh = PelagWhirlwindVfxSetup.LoadOrCreateMesh(GeometryFolder + "/" + name + ".asset", name);
+        mesh.Clear();
+        mesh.SetVertices(vertices);
+        mesh.SetColors(colors);
+        var uv = new List<Vector2>(vertices.Count);
+        for (int i = 0; i < vertices.Count; i++) uv.Add(new Vector2(.5f, .5f));
         mesh.SetUVs(0, uv);
         mesh.SetTriangles(triangles, 0);
         mesh.RecalculateNormals();
@@ -1025,6 +1186,37 @@ public static class ThicketMasterVfxSetup
         return particles;
     }
 
+    /// <summary>Вспышка удара: один мягкий светящийся билборд (kit.Glow), раскрывается и гаснет за life.</summary>
+    private static ParticleSystem Flash(GameObject host, Kit kit, string name, Vector3 at, float size, float life, Color color,
+        float delay, bool flat)
+    {
+        var particles = Particles(host, name, 1, life, life, 0f, 0f, size, size, delay);
+        particles.transform.localPosition = at;
+        var main = particles.main;
+        main.startColor = color;
+        var shape = particles.shape; shape.enabled = false;
+        var grow = particles.sizeOverLifetime; grow.enabled = true;
+        grow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .45f, .25f, 1f, 1f, 1.15f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(0f, .25f);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = flat ? ParticleSystemRenderMode.HorizontalBillboard : ParticleSystemRenderMode.Billboard;
+        renderer.sharedMaterial = kit.Glow;
+        renderer.sortingFudge = -3f;
+        return particles;
+    }
+
+    /// <summary>Угольки: светящиеся искры (kit.Glow) разлетаются конусом вверх, падают и гаснут — их видно на тёмной арене.</summary>
+    private static ParticleSystem Embers(GameObject host, Kit kit, string name, int count, Vector3 at, float radius,
+        float speedMin, float speedMax, float life, Color color, float delay)
+    {
+        var particles = Motes(host, name, kit.Glow, count, at, radius, speedMin, speedMax, .06f, .13f, life * .7f, life, color, delay, false);
+        var main = particles.main; main.gravityModifier = .35f;
+        var shape = particles.shape; shape.angle = 55f;
+        var drag = particles.limitVelocityOverLifetime; drag.limit = new ParticleSystem.MinMaxCurve(3f); drag.dampen = .08f;
+        return particles;
+    }
+
     /// <summary>Разноцветие лепестков: 50 % белых, 35 % розовых, 15 % золотых — случайный цвет из ступенчатого градиента.</summary>
     private static ParticleSystem.MinMaxGradient PetalColors(float alpha)
     {
@@ -1066,6 +1258,103 @@ public static class ThicketMasterVfxSetup
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         renderer.alignment = ParticleSystemRenderSpace.Local;
         renderer.sharedMaterial = kit.Petal;
+        return particles;
+    }
+
+    /// <summary>
+    /// Стена волны (ревью 02.10: «плоско, по-наклеечному»): стоячие клубы встают на кольце from
+    /// на высоте height и бегут наружу до to за travel с — радиальная скорость по кривой гаснет
+    /// к нулю ровно на краю (путь = скорость·travel/2), клубы растут, поднимаются rise м/с и тают.
+    /// Система лежит осью +Z вверх: кольцо Circle — в плоскости земли.
+    /// </summary>
+    private static ParticleSystem Wall(GameObject host, string name, Material material, int count, float height, float from, float to,
+        float travel, float life, float sizeMin, float sizeMax, Color a, Color b, float rise, float delay)
+    {
+        var particles = Particles(host, name, count, life * .92f, life * 1.08f, 0f, 0f, sizeMin, sizeMax, delay);
+        particles.transform.localPosition = Vector3.up * height;
+        particles.transform.localRotation = Aim(Vector3.up);
+        var main = particles.main;
+        main.startColor = new ParticleSystem.MinMaxGradient(a, b);
+        var shape = particles.shape; shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = Mathf.Max(.01f, from);
+        shape.radiusThickness = 0f;
+        shape.arc = 360f;
+        float tau = Mathf.Clamp(travel / Mathf.Max(.05f, life), .05f, .9f);
+        float speed = 2f * Mathf.Max(0f, to - from) / Mathf.Max(.05f, travel);
+        var push = particles.velocityOverLifetime; push.enabled = true;
+        push.space = ParticleSystemSimulationSpace.Local;
+        push.radial = new ParticleSystem.MinMaxCurve(speed, Curve(0f, 1f, tau, 0f, 1f, 0f));
+        push.z = new ParticleSystem.MinMaxCurve(rise);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .55f, tau, 1f, 1f, 1.3f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(.05f, Mathf.Clamp(tau + .1f, .3f, .8f));
+        var spin = particles.rotationOverLifetime; spin.enabled = true;
+        spin.z = new ParticleSystem.MinMaxCurve(-.8f, .8f);
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.flip = new Vector3(.5f, .5f, 0f);
+        renderer.sharedMaterial = material;
+        renderer.sortingFudge = -1f;
+        return particles;
+    }
+
+    /// <summary>Штрихи скорости волны: та же стена, но вытянутые по скорости частицы (Stretch) — порыв наружу.</summary>
+    private static ParticleSystem Streaks(GameObject host, string name, Material material, int count, float height, float from, float to,
+        float travel, float life, float sizeMin, float sizeMax, Color color, float delay)
+    {
+        var particles = Wall(host, name, material, count, height, from, to, travel, life, sizeMin, sizeMax, color,
+            new Color(color.r * .9f, color.g * .9f, color.b * .85f, color.a * .8f), 0f, delay);
+        var size = particles.sizeOverLifetime;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 1f, 1f, .6f));
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Stretch;
+        renderer.lengthScale = 2.2f;
+        renderer.velocityScale = .09f;
+        renderer.sortingFudge = -2f;
+        return particles;
+    }
+
+    /// <summary>
+    /// Комья и камни объёмом: меш-частицы сколотых многогранников (kit.Chunks) на непрозрачной
+    /// земле kit.Earth (свет URP, тень), кувыркаются в 3D, баллистика, отскок от ground, к концу уходят.
+    /// Нет мешей — плоские спрайты Debris.
+    /// </summary>
+    private static ParticleSystem Chunks(GameObject host, Transform ground, Kit kit, string name, int count, Vector3 at, Vector3 direction,
+        float cone, float radius, float speedMin, float speedMax, float sizeMin, float sizeMax, float gravity, float delay, Color light, Color dark)
+    {
+        if (kit.Chunks == null || kit.Chunks.Length == 0 || kit.Chunks[0] == null)
+            return Debris(host, ground, name, kit.Clod, count, at, direction, cone, radius, speedMin, speedMax, sizeMin, sizeMax, gravity, delay, light, dark);
+        var particles = Particles(host, name, count, 1.4f, 2.0f, speedMin, speedMax, sizeMin, sizeMax, delay);
+        particles.transform.localPosition = at;
+        particles.transform.localRotation = Aim(direction);
+        var main = particles.main;
+        main.gravityModifier = gravity;
+        main.startColor = new ParticleSystem.MinMaxGradient(light, dark);
+        main.startRotation3D = true;
+        main.startRotationX = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        main.startRotationY = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        main.startRotationZ = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        var shape = particles.shape; shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Cone;
+        shape.angle = cone;
+        shape.radius = Mathf.Max(.01f, radius);
+        var spin = particles.rotationOverLifetime; spin.enabled = true;
+        spin.separateAxes = true;
+        spin.x = new ParticleSystem.MinMaxCurve(-7f, 7f);
+        spin.y = new ParticleSystem.MinMaxCurve(-4f, 4f);
+        spin.z = new ParticleSystem.MinMaxCurve(-7f, 7f);
+        Collide(particles, ground, .3f);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 1f, .8f, 1f, 1f, 0f));
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Mesh;
+        renderer.SetMeshes(kit.Chunks);
+        renderer.meshDistribution = ParticleSystemMeshDistribution.UniformRandom;
+        renderer.alignment = ParticleSystemRenderSpace.Local;
+        renderer.sharedMaterial = kit.Earth;
+        renderer.shadowCastingMode = ShadowCastingMode.On;
         return particles;
     }
 
@@ -1163,64 +1452,73 @@ public static class ThicketMasterVfxSetup
     private const float BS = ThicketMasterCombatView.BodyScale;
     private const float Root2 = 1.4142f;
 
-    /// <summary>Наклон дуги когтей вокруг оси удара: правый край выше — замах «сверху-сбоку вниз к земле».</summary>
-    private const float PawTiltDegrees = 20f;
-
     /// <summary>
-    /// Дуга когтей одного удара серии. Корень — в центре тела, +Z — середина сектора удара;
-    /// левая лапа — тот же префаб, вид ставит корню X = −1. Две дуги CFXR «sword_trail 180»
-    /// (thick — радиусом лапы ×0,95, edge — ×0,8 выше и на 0,02 с позже) на копии плёнки с
-    /// dissolve вдоль UV.x: голова бежит по дуге. Полумеш лежит в XY (выпуклость +X), «Swing»
-    /// кладёт его плашмя выпуклостью вперёд и наклоняет на 20°.
-    /// TODO (смотреть в игре): направление бега головы — если дуга бежит слева направо у правой
-    /// лапы, поменять знак PawSpin или startDegrees 180.
+    /// Следы когтей (ревью 02.10: «след плоский и идёт не за лапой, а после неё»): готовой дуги
+    /// CFXR больше нет. Префаб — только «Claws» (MeshFilter + MeshRenderer, kit.GlowClaw):
+    /// три светящиеся ленты строит вид каждый кадр по кости пальцев бьющей лапы
+    /// (ThicketMasterCombatView.Vfx, ClawTrail) — лента ровно за когтями, держит хит-стоп и паузу.
     /// </summary>
     private static void SavePawSlash(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.PawSlashName);
-        float reach = Simulation.ThicketPawRadius.ToFloat();
-        if (kit.ArcThick == null || AssetDatabase.LoadAssetAtPath<GameObject>(CfxrTrailPrefab) == null)
-        {
-            Note(CfxrTrailPrefab + " / меш sword_trail 180 — дуги когтей нет, остаётся только уголь EnemyBodyTelegraphView");
-            Save(root);
-            return;
-        }
-        var swing = Child(root, "Swing", new Vector3(0f, 1f * BS, 0f));
-        swing.transform.localRotation = Quaternion.Euler(0f, 0f, PawTiltDegrees) * Quaternion.Euler(0f, -90f, 0f) * Quaternion.Euler(90f, 0f, 0f);
-        const float spin = -4f;
-        Tint(PelagWhirlwindVfxSetup.AddCfxrArc(swing, "Arc", kit.ArcThick, kit.Slash, reach * .95f, .40f, 0f, 0f, spin, 0f), .85f);
-        // Местная +Z дуги после X90 смотрит вниз: −0,35 — выше.
-        Tint(PelagWhirlwindVfxSetup.AddCfxrArc(swing, "Edge", kit.ArcEdge, kit.Slash, reach * .8f, .36f, .02f, 0f, spin, -.35f), .6f);
+        var claws = Child(root, ThicketMasterCombatView.ClawsChild, Vector3.zero);
+        claws.AddComponent<MeshFilter>();
+        var renderer = claws.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = kit.GlowClaw;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.lightProbeUsage = LightProbeUsage.Off;
+        renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         Save(root);
     }
 
-    /// <summary>Цвет дуги по жизни: ядро слоновой кости → тёмная листва, альфа уходит к 0,35 с.</summary>
-    private static void Tint(ParticleSystem arc, float opacity)
-    {
-        var color = arc.colorOverLifetime;
-        color.enabled = true;
-        var gradient = new Gradient();
-        gradient.SetKeys(
-            new[] { new GradientColorKey(Ivory, 0f), new GradientColorKey(Ivory, .25f), new GradientColorKey(LeafLight, .6f), new GradientColorKey(LeafDark, 1f) },
-            new[] { new GradientAlphaKey(opacity, 0f), new GradientAlphaKey(opacity, .45f), new GradientAlphaKey(0f, .88f) });
-        color.color = gradient;
-        var main = arc.main;
-        main.startColor = Color.white;
-    }
-
-    /// <summary>Удар лапы о землю: корень — под пальцами лапы. Звезда трещин, пыль, комья, щепки, листья.</summary>
+    /// <summary>
+    /// Удар лапы о землю: корень — под пальцами лапы, +Z — взгляд тела. Тёмная звезда трещин
+    /// под пальцами (плоское — только она и пятно), веер земли там, где прошли когти: комья
+    /// объёмом и спрайтами дугой вперёд-вбок, штрихи пыли по дуге, стоячие клубы, щепки, листья.
+    /// </summary>
     private static void SavePawImpact(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.PawImpactName);
         var ground = root.transform;
         Decal(root, "Star", kit.Star, 1.8f * BS * Root2, 1.9f * BS * Root2, 1.4f, .55f, CrackTone, 0f, .04f);
         Decal(root, "Soil", kit.Soil, 1.2f * BS, 1.4f * BS, 1.4f, .6f, new Color(SoilDark.r, SoilDark.g, SoilDark.b, .7f), 0f, .03f);
-        Dust(root, kit, "Dust", 8, Vector3.zero, 60f, .3f, .8f, 1.8f, 1.0f * BS, 1.6f * BS, .9f, 1.3f, .32f, 0f, false);
-        Dust(root, kit, "DustLow", 6, Vector3.up * .03f, 85f, .3f, 1.2f, 2.4f, .9f, 1.3f, .8f, 1.1f, .28f, .01f, true);
-        Debris(root, ground, "Clods", kit.Clod, 14, Vector3.up * .08f, new Vector3(0f, 1f, .35f), 45f, .3f, 2.6f, 4.8f, .10f, .22f, 1.6f, 0f, SoilLight, SoilDark);
+        Flash(root, kit, "Flash", Vector3.up * .5f, .8f * BS, .1f, new Color(Ember.r, Ember.g, Ember.b, .5f), 0f, false);
+        Embers(root, kit, "Embers", 12, Vector3.up * .2f, .4f, 2.5f, 5f, .8f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        // Веер земли по дуге когтей: точки на дуге ±70° впереди лапы, вылет наружу-вверх.
+        var fan = ArcPoints("ThicketPawFanPoints", 18, .35f * BS, .9f * BS, 70f, 30f, 60f, 811);
+        var spray = Chunks(root, ground, kit, "Spray Chunks", 18, Vector3.up * .08f, Vector3.up, 0f, .1f, 3.2f, 5.6f, .12f, .26f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(spray, fan, false, .25f);
+        var clods = Debris(root, ground, "Clods", kit.Clod, 16, Vector3.up * .08f, Vector3.up, 0f, .1f, 2.6f, 5.0f, .10f, .22f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(clods, fan, false, .3f);
+        var puffs = Dust(root, kit, "Dust", 12, Vector3.zero, 0f, .1f, .9f, 2.0f, .9f * BS, 1.5f * BS, .8f, 1.2f, .5f, 0f, false);
+        FromPoints(puffs, ArcPoints("ThicketPawDustPoints", 12, .3f * BS, 1.1f * BS, 75f, 45f, 75f, 821), false, .2f);
+        var streaks = Particles(root, "Streaks", 10, .25f, .35f, 5f, 8f, .25f, .4f, 0f);
+        FromPoints(streaks, ArcPoints("ThicketPawStreakPoints", 10, .4f * BS, .8f * BS, 70f, 70f, 85f, 831), false, .1f);
+        var streaksMain = streaks.main; streaksMain.startColor = new Color(DustLight.r, DustLight.g, DustLight.b, .55f);
+        var streaksFade = streaks.colorOverLifetime; streaksFade.enabled = true; streaksFade.color = Alpha(0f, .3f);
+        var streaksRenderer = streaks.GetComponent<ParticleSystemRenderer>();
+        streaksRenderer.renderMode = ParticleSystemRenderMode.Stretch; streaksRenderer.lengthScale = 2f; streaksRenderer.velocityScale = .12f;
+        streaksRenderer.sharedMaterial = kit.Wind;
         Debris(root, ground, "Splinters", kit.Splinter, 4, Vector3.up * .1f, new Vector3(0f, 1f, .2f), 40f, .2f, 2.2f, 3.6f, .10f, .18f, 1.3f, .01f, BarkLight, BarkDark);
-        Leaves(root, ground, kit, "Leaves", 4, Vector3.up * .15f, Vector3.up, 50f, 1.2f, 2.6f, .02f);
+        Leaves(root, ground, kit, "Leaves", 5, Vector3.up * .15f, Vector3.up, 50f, 1.2f, 2.6f, .02f);
         Save(root);
+    }
+
+    /// <summary>count мест на дуге ±halfArc° вокруг +Z на радиусах [inner, outer], направление — наружу с подъёмом tiltMin…tiltMax от горизонта.</summary>
+    private static Mesh ArcPoints(string name, int count, float inner, float outer, float halfArc, float tiltMin, float tiltMax, int salt)
+    {
+        var positions = new List<Vector3>();
+        var directions = new List<Vector3>();
+        for (int i = 0; i < count; i++)
+        {
+            float angle = Mathf.Lerp(-halfArc, halfArc, (i + Hash01(i, salt) * .8f) / count) * Mathf.Deg2Rad;
+            var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            float lift = Mathf.Lerp(tiltMin, tiltMax, Hash01(i, salt + 3)) * Mathf.Deg2Rad;
+            positions.Add(outward * Mathf.Lerp(inner, outer, Hash01(i, salt + 1)));
+            directions.Add((outward * Mathf.Cos(lift) + Vector3.up * Mathf.Sin(lift)).normalized);
+        }
+        return Points(name, positions, directions);
     }
 
     /// <summary>Дыбом: из-под задних лап юбка пыли и комья. Корень — центр тела, +Z — взгляд.</summary>
@@ -1228,113 +1526,265 @@ public static class ThicketMasterVfxSetup
     {
         var root = new GameObject(ThicketMasterCombatView.StompRearName);
         var rear = Child(root, "Rear", new Vector3(0f, 0f, -ThicketMasterCombatView.StompRearBack * BS));
-        Dust(rear, kit, "Skirt", 12, Vector3.up * .03f, 85f, .8f * BS, 1.6f, 3.0f, 1.0f * BS, 1.6f * BS, 1.0f, 1.3f, .30f, 0f, true);
-        Dust(rear, kit, "Puff", 6, Vector3.zero, 55f, .6f, .6f, 1.4f, 1.0f, 1.5f, .9f, 1.2f, .28f, .02f, false);
+        // Юбка стоячими клубами (ревью 02.10: лёжа — «наклейка»): кольцо пыли из-под лап наружу.
+        Wall(rear, "Skirt", kit.Haze, 14, .55f, .5f * BS, 2.2f * BS, .35f, .9f, 1.0f * BS, 1.5f * BS,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .42f), new Color(DustDark.r, DustDark.g, DustDark.b, .38f), .3f, 0f);
+        Dust(rear, kit, "Puff", 6, Vector3.zero, 55f, .6f, .6f, 1.4f, 1.0f, 1.5f, .9f, 1.2f, .3f, .02f, false);
         Debris(rear, root.transform, "Clods", kit.Clod, 6, Vector3.up * .08f, new Vector3(0f, 1f, -.4f), 45f, .6f, 2.0f, 3.6f, .10f, .2f, 1.6f, 0f, SoilLight, SoilDark);
         Save(root);
     }
 
+    /// <summary>Стена топота: доля радиуса, с которой встаёт, и за сколько секунд добегает до края круга.</summary>
+    private const float StompWallFrom = .22f, StompWallTravel = .32f, StompOuterTravel = .26f;
+
     /// <summary>
-    /// Топот, круг (r из Sim): кольцо Circle17 разбегается до края за 40 % жизни, кольцо пыли,
-    /// комья радиально, сеть трещин Crack4 в центре, звёзды трещин под передними лапами, листья.
-    /// Корень — центр тела, +Z — взгляд.
+    /// Топот, круг (r из Sim). Ревью 02.10: «плоско, по-наклеечному» — объём: стоячая стена пыли
+    /// встаёт у лап и за 0,32 с добегает до края круга (низ и гребень), штрихи порыва, комья и
+    /// камни объёмом летят наружу и падают в круг, тонкая светящаяся кромка бежит со стеной.
+    /// Плоское — только тёмные звёзды трещин под передними лапами. Корень — центр тела, +Z — взгляд.
     /// </summary>
     private static void SaveStompQuake(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.StompQuakeName);
         var ground = root.transform;
         float r = Simulation.ThicketStompRadius.ToFloat();
-        Wave(root, "Ring", kit.Ring, 2f * r * Root2, 1.0f, .3f, .4f, new Color(DustLight.r * 1.1f, DustLight.g * 1.05f, DustLight.b, .75f), 0f);
-        Decal(root, "Cracks", kit.Crack, 2f * r * .7f, 2f * r * .72f, 2.2f, .65f, CrackTone, 0f, .04f);
+        float grow = StompWallTravel / .7f;
+        Wave(root, "Ring", kit.GlowRingThin, 2f * r * Root2, .7f, StompWallFrom, grow, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        Wall(root, "Wall", kit.Haze, 60, .75f, r * StompWallFrom, r * .97f, StompWallTravel, 1.0f, 1.5f, 2.3f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .62f), new Color(DustDark.r, DustDark.g, DustDark.b, .58f), .35f, 0f);
+        Wall(root, "Crest", kit.Haze, 40, 1.7f, r * StompWallFrom, r * .9f, StompWallTravel, .85f, .9f, 1.4f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .45f), new Color(SoilLight.r, SoilLight.g, SoilLight.b, .4f), .6f, .02f);
+        Wall(root, "Glow Crest", kit.GlowHaze, 24, .45f, r * StompWallFrom, r, StompWallTravel, .55f, .7f, 1.0f,
+            new Color(Ember.r, Ember.g * .9f, Ember.b, .32f), new Color(EmberDeep.r, EmberDeep.g, EmberDeep.b, .26f), .2f, 0f);
+        Streaks(root, "Streaks", kit.Wind, 30, .35f, r * StompWallFrom, r, StompWallTravel, .45f, .35f, .55f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .6f), 0f);
+        var embers = Embers(root, kit, "Embers", 28, Vector3.up * .15f, .2f, 3f, 6f, 1.0f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        FromPoints(embers, RingPoints("ThicketStompEmberPoints", 28, r * .3f, r * .9f, 40f, 70f, 171), false, .3f);
         foreach (float side in new[] { -1f, 1f })
         {
             var paw = Child(root, side < 0f ? "Paw L" : "Paw R", new Vector3(.95f * side, 0f, 2f));
             Decal(paw, "Star", kit.Star, 2.2f * Root2, 2.3f * Root2, 2.0f, .6f, CrackTone, 0f, .045f);
-            Debris(paw, ground, "Clods", kit.Clod, 6, Vector3.up * .08f, Vector3.up, 45f, .3f, 2.6f, 4.4f, .1f, .2f, 1.6f, 0f, SoilLight, SoilDark);
+            Chunks(paw, ground, kit, "Chunks", 7, Vector3.up * .08f, Vector3.up, 45f, .3f, 2.6f, 4.4f, .14f, .28f, 1.6f, 0f, SoilLight, SoilDark);
+            Dust(paw, kit, "Puff", 5, Vector3.zero, 60f, .4f, .6f, 1.4f, 1.0f, 1.5f, .8f, 1.1f, .5f, 0f, false);
         }
-        var rim = Dust(root, kit, "DustRing", 24, Vector3.up * .03f, 0f, .1f, 1.5f, 3.0f, 1.3f, 2.0f, 1.1f, 1.6f, .30f, .02f, false);
-        FromPoints(rim, RingPoints("ThicketStompRimPoints", 24, r * .6f, r, 60f, 80f, 101), false, .3f);
-        var clods = Debris(root, ground, "Clods", kit.Clod, 26, Vector3.up * .1f, Vector3.up, 0f, .1f, 4f, 7f, .12f, .26f, 1.6f, 0f, SoilLight, SoilDark);
-        FromPoints(clods, RingPoints("ThicketStompClodPoints", 26, r * .2f, r * .5f, 35f, 60f, 111), false, .25f);
-        var rocks = Debris(root, ground, "Rocks", kit.Clod, 8, Vector3.up * .1f, Vector3.up, 0f, .1f, 3f, 5f, .2f, .34f, 1.9f, .01f, RockLight, RockDark);
-        FromPoints(rocks, RingPoints("ThicketStompRockPoints", 8, r * .3f, r * .6f, 35f, 55f, 121), false, .25f);
-        var leaves = Leaves(root, ground, kit, "Leaves", 6, Vector3.up * .15f, Vector3.up, 0f, 2.5f, 4.5f, .03f);
-        FromPoints(leaves, RingPoints("ThicketStompLeafPoints", 6, r * .3f, r * .7f, 30f, 60f, 131), false, .5f);
+        var clods = Chunks(root, ground, kit, "Chunks", 34, Vector3.up * .1f, Vector3.up, 0f, .1f, 5f, 8f, .14f, .32f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(clods, RingPoints("ThicketStompClodPoints", 34, r * .2f, r * .45f, 38f, 58f, 111), false, .25f);
+        var rocks = Chunks(root, ground, kit, "Rocks", 10, Vector3.up * .1f, Vector3.up, 0f, .1f, 4f, 6.5f, .3f, .46f, 1.9f, .01f, RockLight, RockDark);
+        FromPoints(rocks, RingPoints("ThicketStompRockPoints", 10, r * .3f, r * .55f, 35f, 55f, 121), false, .25f);
+        var sprites = Debris(root, ground, "Clods", kit.Clod, 20, Vector3.up * .1f, Vector3.up, 0f, .1f, 4f, 7f, .1f, .22f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(sprites, RingPoints("ThicketStompSpritePoints", 20, r * .25f, r * .6f, 40f, 65f, 112), false, .3f);
+        var leaves = Leaves(root, ground, kit, "Leaves", 8, Vector3.up * .15f, Vector3.up, 0f, 2.5f, 4.5f, .03f);
+        FromPoints(leaves, RingPoints("ThicketStompLeafPoints", 8, r * .3f, r * .7f, 30f, 60f, 131), false, .5f);
         Save(root);
     }
 
-    /// <summary>Топот, второе кольцо (полоса r..r_out из Sim): пылевая стена, комья наружу, тонкое кольцо до внешнего края.</summary>
+    /// <summary>
+    /// Топот, второе кольцо (полоса r..r_out из Sim): своя стоячая стена пыли встаёт на краю круга
+    /// и бежит до внешнего края, гребень, штрихи, комья объёмом наружу, тонкая кромка до r_out.
+    /// </summary>
     private static void SaveStompOuter(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.StompOuterName);
         float inner = Simulation.ThicketStompRadius.ToFloat(), outer = Simulation.ThicketStompRingOuterRadius.ToFloat();
-        Wave(root, "Ring", kit.RingThin, 2f * outer * Root2, .9f, inner / outer, .35f, new Color(DustLight.r, DustLight.g, DustLight.b, .6f), 0f);
-        var wall = Dust(root, kit, "Wall", 28, Vector3.up * .03f, 0f, .1f, 1.2f, 2.4f, 1.4f, 2.2f, 1.0f, 1.4f, .30f, 0f, false);
-        FromPoints(wall, RingPoints("ThicketStompWallPoints", 28, inner, outer, 10f, 30f, 141), false, .2f);
-        var low = Dust(root, kit, "Low", 18, Vector3.up * .03f, 0f, .1f, 1.0f, 2.0f, 1.2f, 1.8f, .9f, 1.2f, .26f, .02f, true);
-        FromPoints(low, RingPoints("ThicketStompLowPoints", 18, inner, outer, 70f, 85f, 151), false, .2f);
-        var clods = Debris(root, root.transform, "Clods", kit.Clod, 16, Vector3.up * .1f, Vector3.up, 0f, .1f, 3.5f, 6f, .1f, .22f, 1.6f, 0f, SoilLight, SoilDark);
-        FromPoints(clods, RingPoints("ThicketStompOuterClodPoints", 16, inner, (inner + outer) * .5f, 40f, 65f, 161), false, .25f);
+        Wave(root, "Ring", kit.GlowRingThin, 2f * outer * Root2, .7f, inner / outer, StompOuterTravel / .7f, new Color(Ember.r, Ember.g, Ember.b, .95f), 0f);
+        Wall(root, "Wall", kit.Haze, 72, .75f, inner * .95f, outer * .97f, StompOuterTravel, .95f, 1.6f, 2.4f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .6f), new Color(DustDark.r, DustDark.g, DustDark.b, .56f), .35f, 0f);
+        Wall(root, "Crest", kit.Haze, 48, 1.7f, inner * .95f, outer * .92f, StompOuterTravel, .8f, .9f, 1.4f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .42f), new Color(SoilLight.r, SoilLight.g, SoilLight.b, .38f), .6f, .02f);
+        Wall(root, "Glow Crest", kit.GlowHaze, 30, .45f, inner * .95f, outer, StompOuterTravel, .5f, .7f, 1.0f,
+            new Color(Ember.r, Ember.g * .9f, Ember.b, .3f), new Color(EmberDeep.r, EmberDeep.g, EmberDeep.b, .24f), .2f, 0f);
+        Streaks(root, "Streaks", kit.Wind, 36, .35f, inner, outer, StompOuterTravel, .42f, .35f, .55f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .55f), 0f);
+        var sparks = Embers(root, kit, "Embers", 22, Vector3.up * .15f, .2f, 2.5f, 5f, .9f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        FromPoints(sparks, RingPoints("ThicketStompOuterEmberPoints", 22, inner, outer, 40f, 70f, 181), false, .3f);
+        var clods = Chunks(root, root.transform, kit, "Chunks", 24, Vector3.up * .1f, Vector3.up, 0f, .1f, 3.5f, 6f, .12f, .28f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(clods, RingPoints("ThicketStompOuterClodPoints", 24, inner, (inner + outer) * .5f, 40f, 65f, 161), false, .25f);
         Save(root);
     }
 
     // ------------------------------------------------------------- prefabs: dive
 
-    /// <summary>Уход в землю (нос в земле): пятно разрытой земли, комья двумя волнами, щепки, крупная пыль, листья.</summary>
+    /// <summary>
+    /// Контур тела 4,14 м сверху (корпус Sim, § 8 контракта): полуоси вбок и вдоль взгляда, сдвиг
+    /// центра вперёд, м. По нему встаёт стена земли нырка и выхода — модель уходит и выходит за ней.
+    /// </summary>
+    private const float BodyHalfWidth = 2.45f, BodyHalfLength = 2.9f, BodyShift = .35f;
+
+    /// <summary>
+    /// Уход в землю (ревью 02.10: «не было видно, как текстуры проваливаются сквозь землю»).
+    /// Корень — тело на тике начала нырка (вид ставит с T, без задержки), +Z — взгляд. Все 12
+    /// тиков ухода по контуру тела бьёт плотная стена земли до ~2 м (непрозрачные клубы, поток),
+    /// над спиной — покров пыли (виден там, где тело уже ушло), комья объёмом фонтаном по
+    /// контуру, спрайты комьев, щепки, листья; на земле — тёмное пятно и трещины (без свечения).
+    /// </summary>
     private static void SaveDiveBurst(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.DiveBurstName);
         var ground = root.transform;
-        Decal(root, "Soil", kit.Soil, 2.3f * BS * Root2, 2.4f * BS * Root2, 2.4f, .7f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .85f), 0f, .03f);
-        Decal(root, "Cracks", kit.Star, 2.6f * BS * Root2, 2.7f * BS * Root2, 2.4f, .65f, CrackTone, 0f, .04f);
-        Debris(root, ground, "Clods", kit.Clod, 30, Vector3.up * .1f, Vector3.up, 40f, .6f * BS, 4f, 8f, .12f, .30f, 1.6f, 0f, SoilLight, SoilDark);
-        Debris(root, ground, "Clods Late", kit.Clod, 12, Vector3.up * .1f, Vector3.up, 35f, .5f * BS, 3f, 6f, .10f, .24f, 1.6f, .2f, SoilLight, SoilDark);
-        Debris(root, ground, "Splinters", kit.Splinter, 10, Vector3.up * .1f, Vector3.up, 45f, .5f, 3f, 5.5f, .10f, .2f, 1.3f, .02f, BarkLight, BarkDark);
-        Dust(root, kit, "Dust", 10, Vector3.zero, 45f, .8f * BS, 1f, 2.5f, 1.6f, 2.4f, 1.2f, 1.7f, .34f, .03f, false);
-        Dust(root, kit, "DustLow", 10, Vector3.up * .03f, 85f, .8f, 2f, 3.5f, 1.2f, 1.8f, 1.0f, 1.4f, .3f, 0f, true);
-        Leaves(root, ground, kit, "Leaves", 6, Vector3.up * .2f, Vector3.up, 55f, 2.5f, 4.5f, .04f);
+        float dive = Simulation.ThicketDiveBurrowTicks / (float)Simulation.TicksPerSecond;
+        Decal(root, "Soil", kit.Soil, 2.6f * BS * Root2, 2.7f * BS * Root2, 2.6f, .7f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .9f), 0f, .03f);
+        Decal(root, "Cracks", kit.Star, 2.8f * BS * Root2, 2.9f * BS * Root2, 2.6f, .65f, CrackTone, .1f, .04f);
+        var wall = Cloud(root, kit, "Wall", 64, Vector3.zero, 0f, .1f, .3f, 1.0f, 1.8f, 2.6f, 1.0f, 1.3f, 0f, false,
+            new Color(DustDark.r, DustDark.g, DustDark.b, .82f), new Color(SoilLight.r, SoilLight.g, SoilLight.b, .78f));
+        FromPoints(wall, EllipsePoints("ThicketDiveWallPoints", 64, BodyHalfWidth, BodyHalfLength, BodyShift, false, .7f, 1.3f, 15f, 45f, 851), false, .25f);
+        wall.transform.localPosition = Vector3.zero;
+        Shuffle(wall);
+        Stream(wall, 64f / (dive + .1f), dive + .1f, 64);
+        var cover = Cloud(root, kit, "Cover", 28, Vector3.zero, 0f, .1f, .2f, .6f, 2.2f, 3.0f, 1.1f, 1.4f, 0f, false,
+            new Color(DustDark.r, DustDark.g, DustDark.b, .7f), new Color(DustLight.r, DustLight.g, DustLight.b, .62f));
+        FromPoints(cover, EllipsePoints("ThicketDiveCoverPoints", 28, BodyHalfWidth * .8f, BodyHalfLength * .8f, BodyShift, true, 1.0f, 1.8f, 70f, 90f, 861), false, .3f);
+        cover.transform.localPosition = Vector3.zero;
+        Shuffle(cover);
+        Stream(cover, 28f / dive, dive, 28);
+        var coverMain = cover.main; coverMain.startDelay = .1f;
+        var chunks = Chunks(root, ground, kit, "Chunks", 40, Vector3.up * .1f, Vector3.up, 0f, .1f, 3.5f, 6.5f, .14f, .34f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(chunks, EllipsePoints("ThicketDiveChunkPoints", 40, BodyHalfWidth * .9f, BodyHalfLength * .9f, BodyShift, false, .1f, .2f, 55f, 80f, 871), false, .25f);
+        Shuffle(chunks);
+        Stream(chunks, 40f / dive, dive, 40);
+        Embers(root, kit, "Embers", 10, Vector3.up * .2f, .6f * BS, 3f, 6.5f, 1.0f, new Color(Ember.r, Ember.g, Ember.b, 1f), .1f);
+        Debris(root, ground, "Clods", kit.Clod, 30, Vector3.up * .1f, Vector3.up, 40f, .9f * BS, 4f, 8f, .12f, .30f, 1.6f, .1f, SoilLight, SoilDark);
+        Debris(root, ground, "Clods Late", kit.Clod, 14, Vector3.up * .1f, Vector3.up, 35f, .7f * BS, 3f, 6f, .10f, .24f, 1.6f, .3f, SoilLight, SoilDark);
+        Debris(root, ground, "Splinters", kit.Splinter, 10, Vector3.up * .1f, Vector3.up, 45f, .5f, 3f, 5.5f, .10f, .2f, 1.3f, .12f, BarkLight, BarkDark);
+        Leaves(root, ground, kit, "Leaves", 8, Vector3.up * .2f, Vector3.up, 55f, 2.5f, 4.5f, .1f);
         Save(root);
     }
 
     /// <summary>
-    /// Бугор, ползущий к герою: корень едет за MoundPosition (вид), +Z — ход. «Hump» — горб Hovl
-    /// HalfSphere2 (местный, вид его потряхивает); следы — в мире: комья, низкая пыль, трава,
-    /// борозда Crack5. Эмиссия следов — потоком по времени: бугор всегда в движении, а поток
-    /// не зависит от того, видит ли Simulate смещение эмиттера.
+    /// count мест по контуру тела (эллипс ax вбок × az вдоль взгляда, центр сдвинут на shift по +Z);
+    /// filled — внутри эллипса; высота yMin…yMax; направление — наружу с подъёмом tiltMin…tiltMax.
+    /// </summary>
+    private static Mesh EllipsePoints(string name, int count, float ax, float az, float shift, bool filled, float yMin, float yMax,
+        float tiltMin, float tiltMax, int salt)
+    {
+        var positions = new List<Vector3>();
+        var directions = new List<Vector3>();
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (i + Hash01(i, salt) * .8f) / count * Mathf.PI * 2f;
+            float d = filled ? Mathf.Sqrt(Hash01(i, salt + 1)) : Mathf.Lerp(.92f, 1.08f, Hash01(i, salt + 1));
+            var outward = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+            positions.Add(new Vector3(outward.x * ax * d, Mathf.Lerp(yMin, yMax, Hash01(i, salt + 2)), outward.z * az * d + shift));
+            float lift = Mathf.Lerp(tiltMin, tiltMax, Hash01(i, salt + 3)) * Mathf.Deg2Rad;
+            directions.Add((outward * Mathf.Cos(lift) + Vector3.up * Mathf.Sin(lift)).normalized);
+        }
+        return Points(name, positions, directions);
+    }
+
+    /// <summary>Места точек — вразброс, а не по кругу подряд: поток не обходит контур «часовой стрелкой».</summary>
+    private static void Shuffle(ParticleSystem particles)
+    {
+        var shape = particles.shape;
+        shape.meshSpawnMode = ParticleSystemShapeMultiModeValue.Random;
+    }
+
+    /// <summary>Гребень бугра: горбов в секунду и сколько живёт горб (встал → осел в землю), с.</summary>
+    private const float RidgeRate = 38f, RidgeLife = 1.5f;
+
+    /// <summary>
+    /// Сколько секунд идут потоки бугра. Под землёй он 1,8 с (ход 30 + круг 24 тика), но каждые
+    /// Песочные Часы добавляют 2 с (ThicketHourglassShiftTicks), а эффект идёт по тикам Sim:
+    /// с 3 с эмиссия кончалась, пока бугор ещё под землёй. С запасом; гасит эмиссию вид, когда
+    /// босс вылез (ThicketMasterCombatView.SurfaceMound).
+    /// </summary>
+    private const float MoundStreamSeconds = 12f;
+
+    /// <summary>
+    /// Бугор, ползущий к герою (ревью 02.10: «просто какой-то круг ползущий, а надо земляная
+    /// полоса, как в Дюне»). Корень едет за MoundPosition (вид), +Z — ход. «Hump» — голова:
+    /// пять бугристых горбов земли (меш LumpMesh, непрозрачная kit.Earth, тень), нос вперёд,
+    /// вид её потряхивает. «Trail Ridge» — гребень в мире: горбы встают у головы потоком по
+    /// времени (RidgeRate/с) и за RidgeLife с оседают в землю — за бугром тянется поднятая
+    /// полоса земли. У головы — веер комьев (спрайты и объём) и пыль назад-вверх; позади —
+    /// тёмная борозда, трещины, трава, немного угольков. Системы следа — с префиксом
+    /// ThicketMasterCombatView.TrailPrefix: вид пускает их, только пока бугор едет (круг лёг,
+    /// Часы — стоит, и гребень не копится кучей). Босс вылез — эмиссия гаснет, гребень оседает сам.
     /// </summary>
     private static void SaveMound(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.MoundName);
         var ground = root.transform;
-        var hump = Particles(root, ThicketMasterCombatView.HumpChild, 1, 99f, 99f, 0f, 0f, 1f, 1f, 0f);
-        var humpMain = hump.main;
-        humpMain.startRotation = 0f;
-        humpMain.startColor = new Color(SoilDark.r * 1.1f, SoilDark.g * 1.1f, SoilDark.b * 1.1f, 1f);
-        humpMain.startSize3D = true;
-        humpMain.startSizeX = .8f * BS; humpMain.startSizeY = .55f * BS; humpMain.startSizeZ = 1f * BS;
-        var humpShape = hump.shape; humpShape.enabled = false;
-        var humpGrow = hump.sizeOverLifetime; humpGrow.enabled = true;
-        humpGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 0f, .0015f, 1.05f, .003f, 1f, 1f, 1f));
-        var humpRenderer = hump.GetComponent<ParticleSystemRenderer>();
-        if (kit.HalfSphere != null)
-        {
-            humpRenderer.renderMode = ParticleSystemRenderMode.Mesh;
-            humpRenderer.mesh = kit.HalfSphere;
-            humpRenderer.alignment = ParticleSystemRenderSpace.Local;
-        }
-        else humpRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
-        humpRenderer.sharedMaterial = kit.Soil;
+        var head = Child(root, ThicketMasterCombatView.HumpChild, Vector3.zero);
+        var lumps = Particles(head, "Lumps", 5, 99f, 99f, 0f, 0f, 1f, 1f, 0f);
+        FromPoints(lumps, Points("ThicketMoundHeadPoints",
+            new List<Vector3> { new Vector3(0f, 0f, .55f * BS), Vector3.zero, new Vector3(-.5f * BS, 0f, -.1f * BS), new Vector3(.5f * BS, 0f, -.15f * BS), new Vector3(0f, 0f, -.6f * BS) },
+            new List<Vector3> { Vector3.up, Vector3.up, Vector3.up, Vector3.up, Vector3.up }), false, 0f);
+        var lumpsMain = lumps.main;
+        lumpsMain.startColor = new ParticleSystem.MinMaxGradient(new Color(SoilLight.r * .9f, SoilLight.g * .9f, SoilLight.b * .9f), SoilDark);
+        lumpsMain.startSize3D = true;
+        lumpsMain.startSizeX = new ParticleSystem.MinMaxCurve(.7f * BS, 1.0f * BS);
+        lumpsMain.startSizeY = new ParticleSystem.MinMaxCurve(.45f * BS, .7f * BS);
+        lumpsMain.startSizeZ = new ParticleSystem.MinMaxCurve(.8f * BS, 1.1f * BS);
+        lumpsMain.startRotation3D = true;
+        lumpsMain.startRotationX = new ParticleSystem.MinMaxCurve(-.12f, .12f);
+        lumpsMain.startRotationY = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        lumpsMain.startRotationZ = new ParticleSystem.MinMaxCurve(-.12f, .12f);
+        var lumpsGrow = lumps.sizeOverLifetime; lumpsGrow.enabled = true;
+        lumpsGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 0f, .0015f, 1.05f, .003f, 1f, 1f, 1f));
+        EarthMeshes(lumps, kit, kit.Lumps, ParticleSystemRenderSpace.Local);
 
-        var clods = Debris(root, ground, "Trail Clods", kit.Clod, 60, Vector3.up * .1f, Vector3.up, 50f, .5f * BS, 1.0f, 2.4f, .08f, .18f, 1.4f, 0f, SoilLight, SoilDark);
-        Stream(clods, 18f, 3f, 60); World(clods);
-        var dust = Dust(root, kit, "Trail Dust", 30, Vector3.up * .03f, 80f, .6f * BS, .4f, 1.0f, .8f, 1.3f, .9f, 1.3f, .28f, 0f, true);
-        Stream(dust, 9f, 3f, 30); World(dust);
-        var grass = Leaves(root, ground, kit, "Trail Grass", 16, Vector3.up * .1f, Vector3.up, 55f, .8f, 1.8f, 0f);
-        Stream(grass, 4.5f, 3f, 16); World(grass);
+        int ridgeMax = Mathf.CeilToInt(RidgeRate * RidgeLife * 1.15f) + 4;
+        const string behind = ThicketMasterCombatView.TrailPrefix;
+        var ridge = Particles(root, behind + "Ridge", ridgeMax, RidgeLife * .85f, RidgeLife * 1.1f, 0f, 0f, 1f, 1f, 0f);
+        var ridgeShape = ridge.shape; ridgeShape.enabled = true;
+        ridgeShape.shapeType = ParticleSystemShapeType.Box; ridgeShape.scale = new Vector3(.35f * BS, .01f, .25f * BS);
+        var ridgeMain = ridge.main;
+        ridgeMain.startColor = new ParticleSystem.MinMaxGradient(new Color(SoilLight.r * .95f, SoilLight.g * .95f, SoilLight.b * .95f), SoilDark);
+        ridgeMain.startSize3D = true;
+        ridgeMain.startSizeX = new ParticleSystem.MinMaxCurve(.75f * BS, 1.05f * BS);
+        ridgeMain.startSizeY = new ParticleSystem.MinMaxCurve(.32f * BS, .48f * BS);
+        ridgeMain.startSizeZ = new ParticleSystem.MinMaxCurve(.8f * BS, 1.15f * BS);
+        ridgeMain.startRotation3D = true;
+        ridgeMain.startRotationX = new ParticleSystem.MinMaxCurve(-.15f, .15f);
+        ridgeMain.startRotationY = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+        ridgeMain.startRotationZ = new ParticleSystem.MinMaxCurve(-.15f, .15f);
+        var ridgeGrow = ridge.sizeOverLifetime; ridgeGrow.enabled = true; ridgeGrow.separateAxes = true;
+        var spread = Curve(0f, .7f, .06f, 1f, 1f, .85f);
+        ridgeGrow.x = new ParticleSystem.MinMaxCurve(1f, spread);
+        ridgeGrow.z = new ParticleSystem.MinMaxCurve(1f, spread);
+        // Встаёт за 0,09 с с перелётом, держится, с 40 % жизни оседает в землю до нуля.
+        ridgeGrow.y = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 0f, .06f, 1.08f, .1f, 1f, .4f, .9f, 1f, 0f));
+        EarthMeshes(ridge, kit, kit.Lumps, ParticleSystemRenderSpace.World);
+        Stream(ridge, RidgeRate, MoundStreamSeconds, ridgeMax); World(ridge);
+
+        var spray = Debris(root, ground, "Head Spray", kit.Clod, 70, Vector3.up * .3f, new Vector3(0f, 1f, -.6f), 35f, .45f * BS, 2.2f, 4.2f, .09f, .2f, 1.4f, 0f, SoilLight, SoilDark);
+        Stream(spray, 26f, MoundStreamSeconds, 70); World(spray);
+        var chunks = Chunks(root, ground, kit, "Head Chunks", 36, Vector3.up * .3f, new Vector3(0f, 1f, -.5f), 40f, .4f * BS, 2.4f, 4.4f, .12f, .26f, 1.5f, 0f, SoilLight, SoilDark);
+        Stream(chunks, 13f, MoundStreamSeconds, 36); World(chunks);
+        var dust = Dust(root, kit, "Head Dust", 30, new Vector3(0f, 0f, -.3f), 60f, .5f * BS, .3f, .9f, 1.0f, 1.5f, .8f, 1.1f, .45f, 0f, false);
+        Stream(dust, 16f, MoundStreamSeconds, 30); World(dust);
+        var trail = Dust(root, kit, behind + "Dust", 20, new Vector3(0f, 0f, -.8f), 70f, .4f * BS, .15f, .4f, .9f, 1.3f, 1.0f, 1.4f, .28f, 0f, false);
+        Stream(trail, 8f, MoundStreamSeconds, 20); World(trail);
+        var trench = Decal(root, behind + "Trench", kit.Soil, .95f * BS * Root2, 1.1f * BS * Root2, 1.8f, .55f, new Color(SoilDark.r * .8f, SoilDark.g * .8f, SoilDark.b * .8f, .85f), 0f, .03f);
+        Stream(trench, 16f, MoundStreamSeconds, 32); World(trench);
+        var furrow = Decal(root, behind + "Furrow", kit.Furrow, 1.1f * Root2, 1.3f * Root2, 1.6f, .55f, CrackTone, 0f, .035f);
+        Stream(furrow, 6f, MoundStreamSeconds, 12); World(furrow);
+        var grass = Leaves(root, ground, kit, behind + "Grass", 16, Vector3.up * .1f, Vector3.up, 55f, .8f, 1.8f, 0f);
+        Stream(grass, 4.5f, MoundStreamSeconds, 16); World(grass);
         var grassMain = grass.main; grassMain.startColor = new ParticleSystem.MinMaxGradient(new Color(.46f, .54f, .22f), new Color(.30f, .38f, .14f));
-        var furrow = Decal(root, "Trail Furrow", kit.Furrow, 1.3f * Root2, 1.5f * Root2, 1.5f, .55f, CrackTone, 0f, .035f);
-        Stream(furrow, 3f, 3f, 8); World(furrow);
+        var embers = Embers(root, kit, behind + "Embers", 20, Vector3.up * .2f, .4f * BS, 1.5f, 3f, .7f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        Stream(embers, 7f, MoundStreamSeconds, 20); World(embers);
         Save(root);
+    }
+
+    /// <summary>Меш-частицы земли: бугристые горбы/комья вразброс, непрозрачная kit.Earth, свет и тень.</summary>
+    private static void EarthMeshes(ParticleSystem particles, Kit kit, Mesh[] meshes, ParticleSystemRenderSpace alignment)
+    {
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        if (meshes != null && meshes.Length > 0 && meshes[0] != null)
+        {
+            renderer.renderMode = ParticleSystemRenderMode.Mesh;
+            renderer.SetMeshes(meshes);
+            renderer.meshDistribution = ParticleSystemMeshDistribution.UniformRandom;
+        }
+        else if (kit.HalfSphere != null)
+        {
+            renderer.renderMode = ParticleSystemRenderMode.Mesh;
+            renderer.mesh = kit.HalfSphere;
+        }
+        renderer.alignment = alignment;
+        renderer.sharedMaterial = kit.Earth;
+        renderer.shadowCastingMode = ShadowCastingMode.On;
+        renderer.receiveShadows = true;
     }
 
     /// <summary>Круг выхода лёг: дрожь — клубы внутри круга (всё чаще), подпрыгивают камешки, растёт сеть трещин.</summary>
@@ -1351,28 +1801,68 @@ public static class ThicketMasterVfxSetup
         var cracks = Decal(root, "Cracks", kit.Crack, 2f * r * .6f, 2f * r * .62f, windup + .4f, .8f, CrackTone, 0f, .04f);
         var grow = cracks.sizeOverLifetime;
         grow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .2f, .75f, 1f, 1f, 1f));
+        // Трещины разгораются к удару: под кругом уже светится то, что сейчас вылезет.
+        var glow = Decal(root, "Cracks Glow", kit.GlowCrack, 2f * r * .58f, 2f * r * .6f, windup + .3f, .85f, new Color(Ember.r, Ember.g, Ember.b, .9f), 0f, .045f);
+        var glowGrow = glow.sizeOverLifetime;
+        glowGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .15f, .8f, 1f, 1f, 1f));
+        var glowFade = glow.colorOverLifetime;
+        var ramp = new Gradient();
+        ramp.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(.35f, .4f), new GradientAlphaKey(1f, .85f), new GradientAlphaKey(0f, 1f) });
+        glowFade.color = ramp;
+        var sparks = Embers(root, kit, "Embers", 16, Vector3.up * .1f, r * .7f, 1.2f, 2.6f, .7f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        Stream(sparks, 12f, windup, 16);
         Save(root);
     }
 
+    /// <summary>Выход: сколько секунд бьёт стена земли по контуру тела (тело встаёт за ней), ревью 02.10 — ~10 тиков.</summary>
+    private const float EmergeCoverSeconds = .36f;
+
     /// <summary>
-    /// Выход из-под земли: комья вверх, щепки, столб пыли, пятно, кольцо пыли до круга нырка,
-    /// шесть корней вокруг ямы («Grow|мс|°|…»): выход 0,11 с, держатся до 1 с, уходят 0,3 с (вид).
+    /// Выход из-под земли (ревью 02.10: «больше частиц, чтоб не было видно, как он сквозь
+    /// текстуры ходит, чтоб органично»). Корень — точка выхода, +Z — взгляд. Первые
+    /// EmergeCoverSeconds по контуру тела бьёт плотная стена земли (непрозрачные клубы, поток),
+    /// столб пыли над спиной, фонтан комьев и камней объёмом — падают назад и отскакивают; за
+    /// ними — стоячая волна пыли до края круга нырка, тонкая кромка, шесть корней вокруг ямы
+    /// («Grow|мс|°|…»: выход 0,11 с, держатся до 1 с, уходят 0,3 с — вид), под конец пыль оседает.
     /// </summary>
     private static void SaveEmerge(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.EmergeName);
         var ground = root.transform;
         float r = Simulation.ThicketDiveRadius.ToFloat();
-        Decal(root, "Soil", kit.Soil, 2.6f * BS * Root2, 2.7f * BS * Root2, 3f, .75f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .85f), 0f, .03f);
+        Decal(root, "Soil", kit.Soil, 2.6f * BS * Root2, 2.7f * BS * Root2, 3f, .75f, new Color(SoilDark.r * .9f, SoilDark.g * .9f, SoilDark.b * .9f, .9f), 0f, .03f);
         Decal(root, "Cracks", kit.Star, 3.0f * BS * Root2, 3.1f * BS * Root2, 3f, .7f, CrackTone, 0f, .04f);
-        Wave(root, "Ring", kit.Ring, 2f * r * Root2, .8f, .2f, .5f, new Color(DustLight.r, DustLight.g, DustLight.b, .5f), 0f);
-        Debris(root, ground, "Clods", kit.Clod, 40, Vector3.up * .1f, Vector3.up, 30f, .8f * BS, 5f, 9f, .12f, .30f, 1.6f, 0f, SoilLight, SoilDark);
-        Debris(root, ground, "Rocks", kit.Clod, 10, Vector3.up * .1f, Vector3.up, 35f, .7f, 4f, 6.5f, .2f, .38f, 1.9f, 0f, RockLight, RockDark);
+        Wave(root, "Ring", kit.GlowRingThin, 2f * r * Root2, .7f, .3f, .4f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        Flash(root, kit, "Flash", Vector3.up * .8f, 1.2f * BS, .1f, new Color(Ember.r, Ember.g, Ember.b, .5f), 0f, false);
+        var wall = Cloud(root, kit, "Wall", 72, Vector3.zero, 0f, .1f, .5f, 1.4f, 1.9f, 2.7f, 1.1f, 1.4f, 0f, false,
+            new Color(DustDark.r, DustDark.g, DustDark.b, .84f), new Color(SoilLight.r, SoilLight.g, SoilLight.b, .8f));
+        FromPoints(wall, EllipsePoints("ThicketEmergeWallPoints", 72, BodyHalfWidth, BodyHalfLength, BodyShift, false, .7f, 1.4f, 20f, 50f, 881), false, .25f);
+        wall.transform.localPosition = Vector3.zero;
+        Shuffle(wall);
+        Stream(wall, 72f / EmergeCoverSeconds, EmergeCoverSeconds, 72);
+        var column = Cloud(root, kit, "Column", 22, Vector3.zero, 0f, .1f, 1.5f, 3.2f, 2.3f, 3.2f, 1.2f, 1.6f, 0f, false,
+            new Color(DustDark.r, DustDark.g, DustDark.b, .74f), new Color(DustLight.r, DustLight.g, DustLight.b, .66f));
+        FromPoints(column, EllipsePoints("ThicketEmergeColumnPoints", 22, BodyHalfWidth * .75f, BodyHalfLength * .75f, BodyShift, true, 1.0f, 2.0f, 75f, 90f, 891), false, .3f);
+        column.transform.localPosition = Vector3.zero;
+        Shuffle(column);
+        Stream(column, 22f / (EmergeCoverSeconds * .7f), EmergeCoverSeconds * .7f, 22);
+        var chunks = Chunks(root, ground, kit, "Chunks", 56, Vector3.up * .1f, Vector3.up, 0f, .1f, 5f, 9f, .14f, .36f, 1.6f, 0f, SoilLight, SoilDark);
+        FromPoints(chunks, EllipsePoints("ThicketEmergeChunkPoints", 56, BodyHalfWidth * .85f, BodyHalfLength * .85f, BodyShift, true, .1f, .3f, 60f, 85f, 901), false, .25f);
+        Shuffle(chunks);
+        Stream(chunks, 56f / (EmergeCoverSeconds * .8f), EmergeCoverSeconds * .8f, 56);
+        var rocks = Chunks(root, ground, kit, "Rocks", 14, Vector3.up * .1f, Vector3.up, 35f, .9f * BS, 4f, 7f, .3f, .5f, 1.9f, 0f, RockLight, RockDark);
+        var rocksShape = rocks.shape; rocksShape.radius = .9f * BS;
+        Embers(root, kit, "Embers", 24, Vector3.up * .2f, .8f * BS, 4f, 8f, 1.1f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
+        Debris(root, ground, "Clods", kit.Clod, 40, Vector3.up * .1f, Vector3.up, 30f, .9f * BS, 5f, 9f, .12f, .30f, 1.6f, 0f, SoilLight, SoilDark);
         Debris(root, ground, "Splinters", kit.Splinter, 12, Vector3.up * .1f, Vector3.up, 40f, .6f, 4f, 7f, .10f, .22f, 1.3f, .01f, BarkLight, BarkDark);
-        Dust(root, kit, "Column", 10, Vector3.zero, 20f, .9f * BS, 1.5f, 3f, 2f, 3f, 1.3f, 1.8f, .34f, 0f, false);
-        var ring = Dust(root, kit, "DustRing", 20, Vector3.up * .03f, 0f, .1f, 1.5f, 3f, 1.2f, 1.8f, 1.0f, 1.4f, .3f, .03f, true);
-        FromPoints(ring, RingPoints("ThicketEmergeRimPoints", 20, r * .6f, r, 70f, 85f, 201), false, .25f);
-        Leaves(root, ground, kit, "Leaves", 8, Vector3.up * .2f, Vector3.up, 55f, 2.5f, 5f, .03f);
+        Wall(root, "Shock", kit.Haze, 44, .7f, BodyHalfWidth, r * .97f, .3f, .9f, 1.3f, 2.0f,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .5f), new Color(DustDark.r, DustDark.g, DustDark.b, .46f), .3f, .05f);
+        var settle = Cloud(root, kit, "Settle", 16, Vector3.zero, 0f, .1f, .05f, .2f, 1.6f, 2.3f, 1.2f, 1.6f, .5f, false,
+            new Color(DustLight.r, DustLight.g, DustLight.b, .4f), new Color(DustDark.r, DustDark.g, DustDark.b, .36f));
+        FromPoints(settle, EllipsePoints("ThicketEmergeSettlePoints", 16, BodyHalfWidth * 1.1f, BodyHalfLength * 1.1f, BodyShift, false, .5f, .8f, 5f, 20f, 911), false, .4f);
+        settle.transform.localPosition = Vector3.zero;
+        Leaves(root, ground, kit, "Leaves", 10, Vector3.up * .2f, Vector3.up, 55f, 2.5f, 5f, .03f);
         for (int i = 0; i < 6; i++)
         {
             float angle = (i + (Hash01(i, 211) - .5f) * .5f) / 6f * Mathf.PI * 2f;
@@ -1417,6 +1907,14 @@ public static class ThicketMasterVfxSetup
         var cracks = Decal(root, "Cracks", kit.Crack, 2f * r * Root2 * .8f, 2f * r * Root2 * .82f, windup + .2f, .9f, CrackTone, 0f, .04f);
         var grow = cracks.sizeOverLifetime;
         grow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .2f, .8f, 1f, 1f, 1f));
+        var glow = Decal(root, "Cracks Glow", kit.GlowCrack, 2f * r * Root2 * .78f, 2f * r * Root2 * .8f, windup + .15f, .9f, new Color(Ember.r, Ember.g, Ember.b, .9f), 0f, .045f);
+        var glowGrow = glow.sizeOverLifetime;
+        glowGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .2f, .8f, 1f, 1f, 1f));
+        var glowFade = glow.colorOverLifetime;
+        var ramp = new Gradient();
+        ramp.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(.3f, .35f), new GradientAlphaKey(1f, .85f), new GradientAlphaKey(0f, 1f) });
+        glowFade.color = ramp;
         int tipsAt = Mathf.RoundToInt((Simulation.ThicketSproutImpactTicks - 6) * 1000f / Simulation.TicksPerSecond);
         for (int i = 0; i < 3; i++)
         {
@@ -1442,6 +1940,9 @@ public static class ThicketMasterVfxSetup
             Curve(0f, 0f, .01f, 0f, .05f, 1.12f, .07f, 1f, .36f, 1f, .6f, 0f, 1f, 0f),
             Curve(0f, 0f, .03f, 0f, .075f, 1.12f, .095f, 1f, .4f, 1f, .69f, 0f, 1f, 0f));
         Decal(root, "Star", kit.Star, 2f * r * Root2, 2f * r * Root2 * 1.05f, life, .6f, CrackTone, 0f, .04f);
+        Decal(root, "Star Glow", kit.GlowStar, 2f * r * Root2 * .95f, 2f * r * Root2, .8f, .2f, new Color(Ember.r, Ember.g, Ember.b, .9f), 0f, .045f);
+        Flash(root, kit, "Flash", Vector3.up * .5f, 1.3f * r, .14f, new Color(Ember.r, Ember.g, Ember.b, .5f), 0f, false);
+        Embers(root, kit, "Embers", 12, Vector3.up * .15f, r * .5f, 2.5f, 5f, .8f, new Color(Ember.r, Ember.g, Ember.b, 1f), 0f);
         Decal(root, "Soil", kit.Soil, 1.6f * r, 1.7f * r, life, .6f, new Color(SoilDark.r, SoilDark.g, SoilDark.b, .75f), 0f, .03f);
         var clods = Debris(root, ground, "Clods", kit.Clod, 14, Vector3.up * .1f, Vector3.up, 0f, .1f, 3f, 5.5f, .1f, .22f, 1.6f, 0f, SoilLight, SoilDark);
         FromPoints(clods, RingPoints("ThicketSproutClodPoints", 14, r * .2f, r * .8f, 20f, 45f, 411), false, .35f);
@@ -1464,8 +1965,8 @@ public static class ThicketMasterVfxSetup
                 new Color(PollenGold.r, PollenGold.g, PollenGold.b, .35f), new Color(PollenDeep.r, PollenDeep.g, PollenDeep.b, .30f));
             Stream(gold, 16f, shake, 10); World(gold);
             var goldMain = gold.main; goldMain.gravityModifier = .05f;
-            var sparks = Motes(crown, "Sparks", kit.Spark, 15, Vector3.zero, .6f, .4f, 1.2f, .05f, .10f, .8f, 1.2f,
-                new Color(PollenGold.r, PollenGold.g, PollenGold.b, .9f), 0f, false);
+            var sparks = Motes(crown, "Sparks", kit.Glow, 15, Vector3.zero, .6f, .4f, 1.2f, .05f, .10f, .8f, 1.2f,
+                new Color(PollenGlow.r, PollenGlow.g, PollenGlow.b, .95f), 0f, false);
             Stream(sparks, 25f, shake, 15); World(sparks);
             var sparksMain = sparks.main; sparksMain.gravityModifier = .25f;
             var leaves = Leaves(crown, root.transform, kit, "Leaves", 3, Vector3.zero, Vector3.up, 70f, .6f, 1.4f, .05f);
@@ -1480,8 +1981,8 @@ public static class ThicketMasterVfxSetup
         var root = new GameObject(ThicketMasterCombatView.PollenFallName);
         float fall = Simulation.ThicketPollenFallTicks / (float)Simulation.TicksPerSecond;
         var top = Child(root, "Column", Vector3.up * 3.5f);
-        var sparks = Motes(top, "Sparks", kit.Spark, 24, Vector3.zero, .5f, 3f, 4.5f, .06f, .12f, .7f, .9f,
-            new Color(PollenGold.r, PollenGold.g, PollenGold.b, .9f), 0f, false);
+        var sparks = Motes(top, "Sparks", kit.Glow, 24, Vector3.zero, .5f, 3f, 4.5f, .06f, .12f, .7f, .9f,
+            new Color(PollenGlow.r, PollenGlow.g, PollenGlow.b, .95f), 0f, false);
         sparks.transform.localRotation = Aim(Vector3.down);
         var sparksMain = sparks.main; sparksMain.gravityModifier = .3f;
         var sparksShape = sparks.shape; sparksShape.angle = 12f;
@@ -1498,33 +1999,102 @@ public static class ThicketMasterVfxSetup
     }
 
     /// <summary>
-    /// Облако лежит (зона Sim, 4 с): золотые клубы по диску кружат медленно, пылинки вверх, низкая
-    /// плёнка. Эмиссия до (жизнь зоны − 0,6) с, клубы живут ≤ 0,9 с — к концу гаснут сами.
+    /// Облако пыльцы лежит (зона Sim, 4 с). Ревью 02.10: «не читается, что это урон, и плоско
+    /// по-наклеечному лежит» — плёнки на земле больше нет, облако объёмное и ядовитое
+    /// (болезненное золото-зелень Toxic*): внутри клубятся стоячие клубы (кружат, ворочаются,
+    /// второй ярус выше), вверх тянутся светящиеся споры; граница — кольцо светящихся и тёмных
+    /// клубов ровно по радиусу Sim и тонкая светящаяся кромка; на каждый укус Sim (раз в
+    /// ThicketPollenPulseTicks от падения) — пульс: кромка вспыхивает и расходится, из облака
+    /// выбрасывает клубы и споры. Эмиссия до (жизнь зоны − 0,5) с — к концу гаснет сама.
     /// </summary>
     private static void SavePollenCloud(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.PollenCloudName);
         float r = Simulation.ThicketPollenRadius.ToFloat();
         float lies = Simulation.ThicketPollenLifeTicks / (float)Simulation.TicksPerSecond;
-        var clouds = Cloud(root, kit, "Clouds", 12, Vector3.zero, 0f, r * .75f, .05f, .2f, 1.4f, 2.2f, .7f, .9f, 0f, false,
-            new Color(PollenGold.r, PollenGold.g, PollenGold.b, .38f), new Color(PollenDeep.r, PollenDeep.g, PollenDeep.b, .38f));
-        clouds.transform.localPosition = Vector3.up * .45f;
-        var cloudsShape = clouds.shape; cloudsShape.shapeType = ParticleSystemShapeType.Circle; cloudsShape.radius = r * .75f;
-        clouds.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f) * Quaternion.identity;
-        var orbit = clouds.velocityOverLifetime; orbit.enabled = true;
-        orbit.space = ParticleSystemSimulationSpace.Local;
-        orbit.orbitalZ = new ParticleSystem.MinMaxCurve(.15f);
-        Stream(clouds, 12f, lies - .6f, 12);
-        var motes = Motes(root, "Motes", kit.Spark, 14, Vector3.up * .2f, r * .8f, .2f, .5f, .05f, .09f, .9f, 1.2f,
-            new Color(PollenGold.r, PollenGold.g, PollenGold.b, .85f), 0f, true);
-        Stream(motes, 12f, lies - .6f, 14);
-        foreach (int k in new[] { 0, 1 })
-        {
-            var film = Decal(root, "Film " + k, kit.Haze, 2f * r * 1.1f * Root2, 2f * r * 1.15f * Root2, lies, .85f,
-                new Color(PollenGold.r, PollenGold.g, PollenGold.b, .26f), k * .08f, .06f + k * .01f);
-            var spin = film.rotationOverLifetime; spin.enabled = true; spin.z = new ParticleSystem.MinMaxCurve(k == 0 ? .12f : -.1f);
-        }
+        float pulse = Simulation.ThicketPollenPulseTicks / (float)Simulation.TicksPerSecond;
+        int pulses = Simulation.ThicketPollenLifeTicks / Simulation.ThicketPollenPulseTicks;
+        float emit = lies - .5f;
+        Color toxic = new Color(ToxicLight.r, ToxicLight.g, ToxicLight.b, .5f), deep = new Color(ToxicDeep.r, ToxicDeep.g, ToxicDeep.b, .48f);
+
+        var churn = PollenPuffs(root, kit, kit.Haze, "Churn", 20, .75f, r * .72f, 1f, 1.3f, 1.9f, 1.0f, 1.3f, toxic, deep, .55f, .15f);
+        Stream(churn, 15f, emit, 20);
+        var high = PollenPuffs(root, kit, kit.Haze, "Churn High", 14, 1.45f, r * .6f, 1f, .8f, 1.2f, .9f, 1.2f,
+            new Color(toxic.r, toxic.g, toxic.b, .38f), new Color(deep.r, deep.g, deep.b, .34f), -.45f, .3f);
+        Stream(high, 11f, emit, 14);
+        // Граница: кольцо клубов ровно по радиусу Sim — светящиеся и тёмные вперемешку, медленно кружат.
+        var border = PollenPuffs(root, kit, kit.GlowHaze, "Border Glow", 26, .45f, r, 0f, .7f, 1.0f, .7f, .9f,
+            new Color(ToxicGlow.r, ToxicGlow.g, ToxicGlow.b, .4f), new Color(ToxicLight.r, ToxicLight.g, ToxicLight.b, .32f), .4f, .3f);
+        Stream(border, 28f, emit, 26);
+        var rimDust = PollenPuffs(root, kit, kit.Haze, "Border Dust", 16, .55f, r * .97f, 0f, .9f, 1.25f, .8f, 1.1f,
+            new Color(deep.r, deep.g, deep.b, .45f), new Color(ToxicDeep.r * .8f, ToxicDeep.g * .8f, ToxicDeep.b * .8f, .42f), -.3f, .2f);
+        Stream(rimDust, 15f, emit, 16);
+        var rim = Decal(root, "Rim", kit.GlowRingThin, 2f * r * Root2, 2f * r * Root2, lies, .95f,
+            new Color(ToxicGlow.r, ToxicGlow.g, ToxicGlow.b, .85f), 0f, .06f);
+        var rimSpin = rim.rotationOverLifetime; rimSpin.enabled = true; rimSpin.z = new ParticleSystem.MinMaxCurve(.25f);
+        var spores = Motes(root, "Spores", kit.Glow, 40, Vector3.up * .2f, r * .85f, .05f, .25f, .05f, .11f, .9f, 1.4f,
+            new Color(ToxicGlow.r, ToxicGlow.g, ToxicGlow.b, .95f), 0f, true);
+        var sporesRise = spores.velocityOverLifetime; sporesRise.enabled = true; sporesRise.space = ParticleSystemSimulationSpace.Local;
+        sporesRise.z = new ParticleSystem.MinMaxCurve(.55f);
+        Stream(spores, 30f, emit, 40);
+
+        // Пульс укуса: раз в pulse с от падения (Sim: NextPulseTick = падение + 15·k), pulses раз.
+        var ring = Particles(root, "Pulse Ring", 2, .34f, .34f, 0f, 0f, 2f * r * Root2, 2f * r * Root2, 0f);
+        ring.transform.localPosition = Vector3.up * .07f;
+        var ringMain = ring.main; ringMain.startRotation = 0f; ringMain.startColor = new Color(ToxicGlow.r, ToxicGlow.g, ToxicGlow.b, 1f);
+        var ringShape = ring.shape; ringShape.enabled = false;
+        var ringGrow = ring.sizeOverLifetime; ringGrow.enabled = true;
+        ringGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .82f, .35f, 1.04f, 1f, 1.1f));
+        var ringFade = ring.colorOverLifetime; ringFade.enabled = true; ringFade.color = Alpha(0f, .25f);
+        var ringRenderer = ring.GetComponent<ParticleSystemRenderer>();
+        ringRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard; ringRenderer.sharedMaterial = kit.GlowRingThin; ringRenderer.sortingFudge = 3f;
+        Pulses(ring, 1, pulse, pulses, lies);
+        var puffs = PollenPuffs(root, kit, kit.Haze, "Pulse Puffs", 20, .5f, r * .8f, 1f, .7f, 1.1f, .5f, .65f,
+            new Color(ToxicLight.r, ToxicLight.g, ToxicLight.b, .55f), new Color(ToxicDeep.r, ToxicDeep.g, ToxicDeep.b, .5f), 0f, 1.6f);
+        Pulses(puffs, 9, pulse, pulses, lies);
+        var bite = Motes(root, "Pulse Spores", kit.Glow, 28, Vector3.up * .3f, r * .8f, .3f, .9f, .06f, .12f, .45f, .6f,
+            new Color(ToxicGlow.r, ToxicGlow.g, ToxicGlow.b, 1f), 0f, true);
+        var biteShape = bite.shape; biteShape.radiusThickness = 1f;
+        var biteRise = bite.velocityOverLifetime; biteRise.enabled = true; biteRise.space = ParticleSystemSimulationSpace.Local; biteRise.z = new ParticleSystem.MinMaxCurve(1.8f);
+        Pulses(bite, 12, pulse, pulses, lies);
         Save(root);
+    }
+
+    /// <summary>
+    /// Клубы пыльцы: стоячие билборды на диске/кольце радиуса radius (filled 1 — по всему диску,
+    /// 0 — по кромке) на высоте height, кружат orbit рад/с вокруг вертикали, поднимаются rise м/с,
+    /// ворочаются (шум). Система лежит осью +Z вверх.
+    /// </summary>
+    private static ParticleSystem PollenPuffs(GameObject root, Kit kit, Material material, string name, int count, float height, float radius,
+        float filled, float sizeMin, float sizeMax, float lifeMin, float lifeMax, Color a, Color b, float orbit, float rise)
+    {
+        var puffs = Cloud(root, kit, name, count, Vector3.zero, 0f, radius, 0f, 0f, sizeMin, sizeMax, lifeMin, lifeMax, 0f, false, a, b);
+        puffs.transform.localPosition = Vector3.up * height;
+        puffs.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+        var shape = puffs.shape; shape.shapeType = ParticleSystemShapeType.Circle; shape.radius = Mathf.Max(.01f, radius);
+        shape.radiusThickness = filled; shape.arc = 360f;
+        var drag = puffs.limitVelocityOverLifetime; drag.enabled = false;
+        var swirl = puffs.velocityOverLifetime; swirl.enabled = true; swirl.space = ParticleSystemSimulationSpace.Local;
+        swirl.orbitalZ = new ParticleSystem.MinMaxCurve(orbit);
+        swirl.z = new ParticleSystem.MinMaxCurve(rise);
+        var noise = puffs.noise; noise.enabled = true;
+        noise.strength = .3f; noise.frequency = .6f; noise.scrollSpeed = .4f;
+        var size = puffs.sizeOverLifetime; size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .5f, .3f, 1f, 1f, 1.25f));
+        var fade = puffs.colorOverLifetime; fade.color = Alpha(.15f, .55f);
+        var spin = puffs.rotationOverLifetime; spin.z = new ParticleSystem.MinMaxCurve(-1.2f, 1.2f);
+        puffs.GetComponent<ParticleSystemRenderer>().sharedMaterial = material;
+        return puffs;
+    }
+
+    /// <summary>Залпы по count частиц: первый через interval, всего cycles раз (эмиссия потоком выключена).</summary>
+    private static void Pulses(ParticleSystem particles, int count, float interval, int cycles, float seconds)
+    {
+        var main = particles.main;
+        main.duration = seconds + .1f;
+        main.maxParticles = Mathf.Max(main.maxParticles, count * 2);
+        var emission = particles.emission;
+        emission.rateOverTime = 0f;
+        emission.SetBursts(new[] { new ParticleSystem.Burst(interval, (short)count, cycles, interval) });
     }
 
     // ------------------------------------------------------------- prefabs: rain
@@ -1581,6 +2151,14 @@ public static class ThicketMasterVfxSetup
         var juiceShape = juice.shape; juiceShape.enabled = true; juiceShape.shapeType = ParticleSystemShapeType.Sphere; juiceShape.radius = .12f;
         juice.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.Drop;
         Stream(juice, 10f, 1.4f, 14); World(juice);
+        // На тёмной арене ягоду видно по свечению: красный ореол на ягоде и светящийся след.
+        var halo = Particles(root, "Halo", 1, 4f, 4f, 0f, 0f, .9f * BS, .9f * BS, 0f);
+        var haloMain = halo.main; haloMain.startColor = new Color(BerryGlow.r, BerryGlow.g, BerryGlow.b, .55f);
+        var haloShape = halo.shape; haloShape.enabled = false;
+        var haloRenderer = halo.GetComponent<ParticleSystemRenderer>(); haloRenderer.sharedMaterial = kit.Glow; haloRenderer.sortingFudge = 2f;
+        var trail = Motes(root, "Trail", kit.Glow, 40, Vector3.zero, .08f, 0f, .2f, .10f, .18f, .25f, .35f,
+            new Color(BerryGlow.r, BerryGlow.g, BerryGlow.b, .8f), 0f, false);
+        Stream(trail, 40f, 1.4f, 40); World(trail);
         Save(root);
     }
 
@@ -1627,6 +2205,7 @@ public static class ThicketMasterVfxSetup
             drops.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.Drop;
         }
         Decal(root, "Stain", kit.JuiceStain, r * 1.2f * Root2, r * 1.3f * Root2, 1.8f, .6f, new Color(Juice.r, Juice.g, Juice.b, .8f), 0f, .035f);
+        Flash(root, kit, "Flash", Vector3.up * .4f, 2.2f * r, .18f, new Color(BerryGlow.r, BerryGlow.g, BerryGlow.b, .75f), 0f, false);
         var bits = Particles(root, "Bits", 3, 1.2f, 1.6f, 1.5f, 3f, .07f * BS, .10f * BS, 0f);
         bits.transform.localPosition = Vector3.up * .1f;
         bits.transform.localRotation = Aim(Vector3.up);
@@ -1673,12 +2252,17 @@ public static class ThicketMasterVfxSetup
         float first = Simulation.ThicketStormFirstWaveTicks / (float)Simulation.TicksPerSecond / span;
         float second = StormSeconds / span;
         var box = new Vector3(22f, 2.5f, 17f);
-        var petals = Petals(root, kit, "Petals", 380, Vector3.up * 1.6f, 2.0f, 2.8f, 0f, .3f, 0f);
+        var petals = Petals(root, kit, "Petals", 560, Vector3.up * 1.6f, 2.0f, 2.8f, 0f, .3f, 0f);
         petals.transform.localRotation = Quaternion.identity;
+        petals.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowPetal;
+        var petalSize = petals.main; petalSize.startSize = new ParticleSystem.MinMaxCurve(.18f, .34f);
         var shape = petals.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Box; shape.scale = box;
-        Stream(petals, 150f, span, 600);
+        Stream(petals, 220f, span, 900);
+        // Плоской розовой дымки под всей поляной больше нет (ревью 02.10, п. 12): она шла поверх
+        // поля опасности бури (ThicketStormDangerView, очередь Transparent−15) и заливала его
+        // чистые круги укрытий. Где урон, а где укрытие, на земле рисует только это поле.
         var rate = petals.emission;
-        rate.rateOverTime = new ParticleSystem.MinMaxCurve(150f, Curve(0f, .25f, first - .08f, .5f, first, 1f, first + .1f, .45f,
+        rate.rateOverTime = new ParticleSystem.MinMaxCurve(220f, Curve(0f, .25f, first - .08f, .5f, first, 1f, first + .1f, .45f,
             second - .08f, .55f, second, 1f, Mathf.Min(.99f, second + .06f), .35f, 1f, .15f));
         var swirl = petals.velocityOverLifetime; swirl.enabled = true; swirl.space = ParticleSystemSimulationSpace.Local;
         swirl.orbitalY = new ParticleSystem.MinMaxCurve(.35f);
@@ -1687,7 +2271,7 @@ public static class ThicketMasterVfxSetup
         var wind = Particles(root, "Wind", 40, .8f, 1.2f, 0f, 0f, .5f, .9f, 0f);
         wind.transform.localPosition = Vector3.up * 1.4f;
         var windShape = wind.shape; windShape.enabled = true; windShape.shapeType = ParticleSystemShapeType.Box; windShape.scale = box;
-        var windMain = wind.main; windMain.startColor = new Color(PetalWhite.r, PetalWhite.g, PetalWhite.b, .22f);
+        var windMain = wind.main; windMain.startColor = new Color(PetalWhite.r, PetalWhite.g, PetalWhite.b, .38f);
         var windSwirl = wind.velocityOverLifetime; windSwirl.enabled = true; windSwirl.space = ParticleSystemSimulationSpace.Local;
         windSwirl.orbitalY = new ParticleSystem.MinMaxCurve(.5f);
         var windFade = wind.colorOverLifetime; windFade.enabled = true; windFade.color = Alpha(.2f, .5f);
@@ -1702,7 +2286,8 @@ public static class ThicketMasterVfxSetup
     /// <summary>
     /// Столб света над кругом-укрытием (r из Sim): цилиндр Hovl CylinderFromGround (r1, h2) с
     /// градиентом Trail25 одним каналом, alpha-blend, ядро ≤ 1,25 по R — героя в круге не
-    /// высветляет; диск Circle17 по краю круга, звёздочки вверх («~» — пока держится). Гасит вид.
+    /// высветляет; звёздочки вверх («~» — пока держится). Гасит вид. Плоского на земле нет:
+    /// круг на полу (вырез в опасности, золотая кромка) рисует поле бури ThicketStormDangerView.
     /// </summary>
     private static void SaveLightPillar(Kit kit)
     {
@@ -1716,7 +2301,7 @@ public static class ThicketMasterVfxSetup
             main.startRotation = 0f;
             main.startSize3D = true;
             main.startSizeX = r; main.startSizeY = height / 2f; main.startSizeZ = r;
-            main.startColor = new Color(ShaftCore.r, ShaftCore.g, ShaftCore.b, .45f);
+            main.startColor = new Color(SafeGlow.r, SafeGlow.g, SafeGlow.b, .55f);
             var shape = shaft.shape; shape.enabled = false;
             var grow = shaft.sizeOverLifetime; grow.enabled = true; grow.separateAxes = true;
             grow.x = new ParticleSystem.MinMaxCurve(1f); grow.z = new ParticleSystem.MinMaxCurve(1f);
@@ -1725,11 +2310,13 @@ public static class ThicketMasterVfxSetup
             renderer.renderMode = ParticleSystemRenderMode.Mesh;
             renderer.mesh = kit.Cylinder;
             renderer.alignment = ParticleSystemRenderSpace.Local;
-            renderer.sharedMaterial = kit.Pillar;
+            renderer.sharedMaterial = kit.GlowPillar;
         }
-        Decal(root, "Disk", kit.Ring, 2f * r * Root2, 2f * r * Root2, life, .97f, new Color(ShaftEdge.r, ShaftEdge.g, ShaftEdge.b, .5f), 0f, .06f);
-        var stars = Motes(root, ThicketMasterCombatView.TimedPrefix + "Stars", kit.StarMote, 18, Vector3.up * .1f, r * .85f, .6f, 1.2f, .10f, .18f,
-            1.0f, 1.4f, new Color(ShaftEdge.r, ShaftEdge.g, ShaftEdge.b, .8f), 0f, true);
+        // Светлого диска и светящейся кромки на земле больше нет (ревью 02.10, п. 12): они лежали
+        // поверх поля опасности (очередь 2996 > 2985), возвращали «жёлтую тарелку» в середину
+        // круга и удваивали золотую кромку, которую рисует шейдер поля ровно по радиусу Sim.
+        var stars = Motes(root, ThicketMasterCombatView.TimedPrefix + "Stars", kit.Glow, 18, Vector3.up * .1f, r * .85f, .6f, 1.2f, .10f, .18f,
+            1.0f, 1.4f, new Color(SafeGlow.r, SafeGlow.g, SafeGlow.b, .9f), 0f, true);
         Stream(stars, 8f, 2f, 18);
         Save(root);
     }
@@ -1739,8 +2326,13 @@ public static class ThicketMasterVfxSetup
     {
         var root = new GameObject(ThicketMasterCombatView.StormWaveName);
         var box = new Vector3(20f, 1f, 15f);
-        var petals = Petals(root, kit, "Petals", 160, Vector3.up * .8f, 1.2f, 1.7f, 0f, 0f, 0f);
+        var petals = Petals(root, kit, "Petals", 220, Vector3.up * .8f, 1.2f, 1.7f, 0f, 0f, 0f);
         petals.transform.localRotation = Quaternion.identity;
+        petals.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowPetal;
+        var petalSize = petals.main; petalSize.startSize = new ParticleSystem.MinMaxCurve(.18f, .34f);
+        // Удар волны — розовое светящееся кольцо от центра поляны к краям.
+        Wave(root, "Gust Ring", kit.GlowRingThin, 2f * 12f * Root2, .7f, .08f, .55f, new Color(PetalPink.r, PetalPink.g, PetalPink.b, 1f), 0f);
+        Wave(root, "Gust Band", kit.GlowRing, 2f * 12f * Root2, .55f, .08f, .5f, new Color(PetalPink.r, PetalPink.g, PetalPink.b, .35f), .02f);
         var shape = petals.shape; shape.enabled = true; shape.shapeType = ParticleSystemShapeType.Box; shape.scale = box;
         var burst = petals.velocityOverLifetime; burst.enabled = true; burst.space = ParticleSystemSimulationSpace.Local;
         burst.radial = new ParticleSystem.MinMaxCurve(1f, Curve(0f, 6f, .3f, 1.5f, 1f, .3f));
@@ -1780,25 +2372,77 @@ public static class ThicketMasterVfxSetup
         Save(root);
     }
 
+    /// <summary>Рёв: за сколько секунд волна добегает от внутреннего до внешнего радиуса.</summary>
+    private const float RoarTravel = .42f;
+
     /// <summary>
-    /// Рёв: тонкое кольцо Circle41 от внутреннего до внешнего радиуса (рост 0,3 с, гаснет к 0,5 с),
-    /// витое Circle82 следом, пыль полосой кольца наружу, листья с крон вверх-наружу.
+    /// Рёв (ревью 02.10: «очень блеклый для такого большого АОЕ, не красочный и плоский»).
+    /// Корень — центр тела. Стоячая стена пыли золото-зелени встаёт на внутреннем радиусе и за
+    /// RoarTravel с добегает до внешнего (низ, светящийся гребень выше), в ней летят листья и
+    /// розовые лепестки, штрихи порыва; под стеной — тонкая светящаяся кромка листового золота;
+    /// с крон («Left»/«Right», вид ставит на кости) — столб листьев и лепестков; над полосой
+    /// кольца — светящиеся пылинки. Плоских плёнок нет.
     /// </summary>
     private static void SaveRoarBlast(Kit kit)
     {
         var root = new GameObject(ThicketMasterCombatView.RoarBlastName);
         float inner = Simulation.ThicketRoarInnerRadius.ToFloat(), outer = Simulation.ThicketRoarOuterRadius.ToFloat();
-        Wave(root, "Ring", kit.RingThin, 2f * outer * Root2, .5f, inner / outer, .6f, new Color(Ivory.r * .9f, Ivory.g * .88f, Ivory.b * .8f, .7f), 0f);
-        Wave(root, "Ribbon", kit.RingRibbon, 2f * outer * Root2, .55f, inner / outer, .6f, new Color(DustLight.r, DustLight.g, DustLight.b, .5f), .05f);
-        var dust = Dust(root, kit, "Dust", 28, Vector3.up * .03f, 0f, .1f, 1.5f, 3f, 1.2f, 1.8f, .9f, 1.3f, .28f, 0f, false);
-        FromPoints(dust, RingPoints("ThicketRoarDustPoints", 28, inner, outer, 60f, 80f, 511), false, .2f);
+        Color dustA = new Color(.80f, .76f, .42f, .58f), dustB = new Color(.60f, .68f, .28f, .52f);
+        Wave(root, "Edge", kit.GlowRingThin, 2f * outer * Root2, .75f, inner / outer, RoarTravel / .75f, new Color(.92f, 1f, .42f, 1f), 0f);
+        Wall(root, "Wall", kit.Haze, 76, .8f, inner, outer * .97f, RoarTravel, .85f, 1.7f, 2.5f, dustA, dustB, .5f, 0f);
+        Wall(root, "Crest", kit.GlowHaze, 48, 1.75f, inner, outer * .95f, RoarTravel, .7f, 1.0f, 1.5f,
+            new Color(LeafGlow.r, LeafGlow.g, LeafGlow.b, .34f), new Color(PollenGlow.r, PollenGlow.g, PollenGlow.b, .3f), .7f, .02f);
+        Streaks(root, "Streaks", kit.Wind, 52, .5f, inner, outer, RoarTravel, .5f, .4f, .6f, new Color(.96f, .95f, .72f, .55f), 0f);
+        var leaves = Leaves(root, root.transform, kit, "Wall Leaves", 44, Vector3.up * .9f, Vector3.up, 0f, 0f, 0f, 0f);
+        RadialPush(leaves, inner, outer * .95f, RoarTravel, 2.1f, .9f);
+        var petals = Petals(root, kit, "Wall Petals", 40, Vector3.up * 1.2f, 1.6f, 2.2f, 0f, 0f, .02f);
+        petals.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowPetal;
+        var petalsMain = petals.main; petalsMain.startSize = new ParticleSystem.MinMaxCurve(.16f, .3f);
+        RadialPush(petals, inner, outer, RoarTravel, 1.9f, .6f);
+        var motes = Motes(root, "Motes", kit.Glow, 40, Vector3.up * .4f, outer * .85f, .1f, .4f, .07f, .13f, 1.0f, 1.5f,
+            new Color(LeafGlow.r, LeafGlow.g, LeafGlow.b, .95f), .15f, true);
+        var motesRise = motes.velocityOverLifetime; motesRise.enabled = true; motesRise.space = ParticleSystemSimulationSpace.Local;
+        motesRise.z = new ParticleSystem.MinMaxCurve(.6f);
+        Flash(root, kit, "Flash", Vector3.up * 2.4f, 1.4f * BS, .12f, new Color(LeafGlow.r, LeafGlow.g, LeafGlow.b, .4f), 0f, false);
         foreach (string side in new[] { ThicketMasterCombatView.LeftChild, ThicketMasterCombatView.RightChild })
         {
             var crown = Child(root, side, Vector3.zero);
-            var leaves = Leaves(crown, root.transform, kit, "Leaves", 15, Vector3.zero, Vector3.up, 60f, 2.5f, 5f, 0f);
-            World(leaves);
+            var crownLeaves = Leaves(crown, root.transform, kit, "Leaves", 20, Vector3.zero, Vector3.up, 50f, 3.5f, 6.5f, 0f);
+            World(crownLeaves);
+            var crownPetals = Petals(crown, kit, "Petals", 16, Vector3.zero, 1.8f, 2.4f, 3f, 5.5f, .02f);
+            crownPetals.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowPetal;
+            var crownShape = crownPetals.shape; crownShape.enabled = true; crownShape.shapeType = ParticleSystemShapeType.Cone; crownShape.angle = 45f; crownShape.radius = .4f;
+            World(crownPetals);
+            var puff = Cloud(crown, kit, "Puff", 3, Vector3.zero, 40f, .3f, .6f, 1.4f, 1.0f, 1.4f, .6f, .8f, 0f, false,
+                new Color(LeafGlow.r, LeafGlow.g, LeafGlow.b, .3f), new Color(PollenGlow.r, PollenGlow.g, PollenGlow.b, .26f));
+            puff.transform.localPosition = Vector3.zero;
+            puff.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowHaze;
+            World(puff);
         }
         Save(root);
+    }
+
+    /// <summary>
+    /// Любую систему — в стену волны: частицы встают на кольце from (в плоскости земли) и бегут
+    /// наружу до to за travel с (радиальная скорость по кривой к нулю), поднимаются rise м/с;
+    /// life — средняя жизнь частиц системы (кривая — по доле жизни). Тормоз пака снят.
+    /// </summary>
+    private static void RadialPush(ParticleSystem particles, float from, float to, float travel, float life, float rise)
+    {
+        particles.transform.localRotation = Aim(Vector3.up);
+        var main = particles.main;
+        main.startSpeed = 0f;
+        var shape = particles.shape; shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Circle;
+        shape.radius = Mathf.Max(.01f, from);
+        shape.radiusThickness = 0f;
+        shape.arc = 360f;
+        var drag = particles.limitVelocityOverLifetime; drag.enabled = false;
+        float tau = Mathf.Clamp(travel / Mathf.Max(.05f, life), .05f, .9f);
+        var push = particles.velocityOverLifetime; push.enabled = true;
+        push.space = ParticleSystemSimulationSpace.Local;
+        push.radial = new ParticleSystem.MinMaxCurve(2f * Mathf.Max(0f, to - from) / Mathf.Max(.05f, travel), Curve(0f, 1f, tau, 0f, 1f, 0f));
+        push.z = new ParticleSystem.MinMaxCurve(rise);
     }
 
     /// <summary>Пробуждение: у передней лапы (корень на земле под пальцами) рвутся пять коротких корней и уходят, комья, пыль, мох.</summary>
@@ -1840,12 +2484,12 @@ public static class ThicketMasterVfxSetup
         float bloom = Mathf.Max(3f, Mathf.Max(settle + 2f, beat.BodyGoneAt) + 2f - settle);
 
         var bush = Child(root, ThicketMasterCombatView.BushChild, Vector3.up * 1.5f);
-        var flash = Particles(bush, "Flash", 1, .35f, .35f, 0f, 0f, 2f, 2f, 0f);
-        var flashMain = flash.main; flashMain.startColor = new Color(1.2f, .75f, .35f, .6f);
+        var flash = Particles(bush, "Flash", 1, .45f, .45f, 0f, 0f, 3.2f * BS, 3.2f * BS, 0f);
+        var flashMain = flash.main; flashMain.startColor = new Color(1f, .72f, .35f, .85f);
         var flashShape = flash.shape; flashShape.enabled = false;
         var flashGrow = flash.sizeOverLifetime; flashGrow.enabled = true; flashGrow.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .6f, .3f, 1.1f, 1f, 1.25f));
         var flashFade = flash.colorOverLifetime; flashFade.enabled = true; flashFade.color = Alpha(.08f, .3f);
-        flash.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.Spark;
+        flash.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.Glow;
         var bushPetals = Petals(bush, kit, "Petals", 40, Vector3.zero, 2.5f, 3.2f, 1.5f, 3.5f, .05f);
         World(bushPetals); Collide(bushPetals, ground, .02f);
         foreach (string side in new[] { ThicketMasterCombatView.LeftChild, ThicketMasterCombatView.RightChild })

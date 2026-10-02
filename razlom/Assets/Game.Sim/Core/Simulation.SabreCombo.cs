@@ -112,7 +112,8 @@ namespace Game.Sim
 
         // Удержание ЛКМ — не намерение оборвать Вихрь или Крушение: удар
         // начинается после них, а не вместо их хвоста.
-        private bool SabreBlockedByAbility => WhirlwindChanneling || _wreckSlot >= 0
+        // Шквал держит саблю, пока держит героя (Simulation.Squall): до хвоста выхода.
+        private bool SabreBlockedByAbility => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero
             || _playerAction.ActiveAt(Tick) && _playerAction.DefinitionId == AbilityDefinition.WhirlwindId;
 
         /// <summary>Каждый тик до разбора ввода: оглушение и смерть сбрасывают серию, старое нажатие гаснет.</summary>
@@ -226,7 +227,7 @@ namespace Game.Sim
             for (int target = 1; target < Entities.Count; target++)
             {
                 if (!Entities.Alive[target] || Entities.Side[target] == Entities.Side[PlayerId]) continue;
-                if (!TelegraphContains(in sector, Entities.Position[target], Entities.BodyRadius[target])) continue;
+                if (!ThicketHitTouches(in sector, target)) continue;
                 _sabreTargets[count++] = target;
             }
             _sabre.Hits = count;

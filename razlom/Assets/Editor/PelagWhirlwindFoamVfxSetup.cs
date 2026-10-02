@@ -26,7 +26,7 @@ using UnityEngine.Rendering;
 /// Сохраняются только свои ассеты (SaveAssetIfDirty), общего SaveAssets нет.
 /// Любая правка сборки ниже — поднять Version.
 /// </summary>
-public static class PelagWhirlwindFoamVfxSetup
+public static partial class PelagWhirlwindFoamVfxSetup
 {
     /// <summary>Версия сборки пенного Вихря. Поднимать при любой правке сборки ниже.</summary>
     private const int Version = 6;

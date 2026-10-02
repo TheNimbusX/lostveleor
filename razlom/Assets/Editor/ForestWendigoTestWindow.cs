@@ -20,7 +20,7 @@ public sealed class ForestWendigoTestWindow : EditorWindow
         using(new EditorGUI.DisabledScope(EditorApplication.isCompiling||EditorApplication.isUpdating))
             if(GUILayout.Button(EditorApplication.isPlaying?"Повторить бой":"Начать тестовый бой",GUILayout.Height(34)))Launch(_withPack);
         if(EditorApplication.isPlaying&&GUILayout.Button("Завершить тест"))EditorApplication.isPlaying=false;
-        GUILayout.Label("Обычное управление. F8 — бессмертие и настройки героя.\nПрогресс и запасы зелий не сохраняются из этого боя.",EditorStyles.wordWrappedMiniLabel);
+        GUILayout.Label("Обычное управление. F8: «Бой» — бессмертие, «Пелаг» — способности и таланты.\nПрогресс и запасы зелий не сохраняются из этого боя.",EditorStyles.wordWrappedMiniLabel);
     }
     public static void Launch(bool withPack=false)
     {

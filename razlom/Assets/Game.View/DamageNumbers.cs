@@ -184,6 +184,7 @@ namespace Game.View
             // Обычная: тёмная обводка и мягкая тень снизу. Крит: тёплое свечение вокруг.
             _normalMaterial = Styled(font, new Color(.03f, .04f, .07f, 1f), .26f, new Color(0f, 0f, 0f, .7f), .35f, .6f, -.6f);
             _critMaterial = Styled(font, new Color(.28f, .08f, .02f, 1f), .2f, new Color(1f, .42f, .1f, .6f), .55f, 1f, 0f);
+            _sparkMaterial = SparkOverlayMaterial();
 
             Transform root = new GameObject("Пул: цифры урона").transform;
             root.SetParent(transform, false);
@@ -570,7 +571,32 @@ namespace Game.View
             }
         }
 
-        private Material _normalMaterial, _critMaterial;
+        private Material _normalMaterial, _critMaterial, _sparkMaterial;
+
+        // Тест глубины шрифтов TMP и UI/Default берётся из этого свойства; материал его перекрывает (как в HealthBars).
+        private static readonly int ZTestModeId = Shader.PropertyToID("unity_GUIZTestMode");
+        private static readonly int TextureSampleAddId = Shader.PropertyToID("_TextureSampleAdd");
+
+        private void OnDestroy()
+        {
+            if (_sparkMaterial != null) Destroy(_sparkMaterial);
+        }
+
+        /// <summary>
+        /// Искра крита поверх мира, как и сама цифра: UI/Default (всегда в сборке, смешивание и цвет
+        /// вершин как у спрайта по умолчанию) с тестом глубины Always. Нет шейдера — null, искра
+        /// остаётся на материале спрайта по умолчанию.
+        /// </summary>
+        private static Material SparkOverlayMaterial()
+        {
+            Shader shader = Shader.Find("UI/Default");
+            if (shader == null) return null;
+            var material = new Material(shader) { name = "Цифры урона · искра поверх мира" };
+            material.SetFloat(ZTestModeId, (float)UnityEngine.Rendering.CompareFunction.Always);
+            // UGUI ставит его глобально для текстур-масок шрифта; искре — ноль, иначе побелеет.
+            material.SetVector(TextureSampleAddId, Vector4.zero);
+            return material;
+        }
         private bool _syntheticBold;
 
         /// <summary>Жирный (вес 700) из таблицы весов шрифта; null — его нет.</summary>
@@ -597,6 +623,10 @@ namespace Game.View
             m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, softness);
             m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, offsetY);
             ShaderUtilities.GetShaderPropertyIDs();
+            // Поверх мира (владелец 02.10: «цифр урона почти не видно» — на боссе 4,14 м цифра на 1,48 м
+            // рождалась внутри тела и тонула в нём). Шейдеры TMP берут тест глубины из unity_GUIZTestMode;
+            // шрифт, цвета, размер и обводка прежние. Порядок 6100 и так ставит цифры последними.
+            m.SetFloat(ZTestModeId, (float)UnityEngine.Rendering.CompareFunction.Always);
             ShaderUtilities.UpdateShaderRatios(m);
             return m;
         }
@@ -627,6 +657,7 @@ namespace Game.View
                 spark = sparkGo.AddComponent<SpriteRenderer>();
                 spark.sprite = sparkSprite;
                 spark.sortingOrder = 6101;
+                if (_sparkMaterial != null) spark.sharedMaterial = _sparkMaterial;
                 float native = Mathf.Max(.001f, sparkSprite.bounds.size.x);
                 sparkGo.transform.localScale = Vector3.one * (SparkSize / native);
                 sparkGo.SetActive(false);

@@ -112,6 +112,11 @@ namespace Game.EditorTools
             global::ForestWendigoBuilder.Build();
             // Хозяин Чащи: нет пакета клипов — пропуск (бой рисует заглушку), префаб свежее пакета — тоже.
             global::ThicketMasterBuilder.BuildIfPackagePresent();
+            // Его эффекты атак (ревизия — от радиусов Sim) и одежда фаз — явно, не через delayCall.
+            global::ThicketMasterVfxSetup.Install(false);
+            global::ThicketMasterDressingSetup.Install(false);
+            // Материал поля опасности бури: без него шейдер не попадёт в плеер, и поле молча пропадёт.
+            global::ThicketStormDangerSetup.Ensure();
             // Версии эффектов мобов проверяются до сериализации плеера,
             // независимо от порядка InitializeOnLoad в зеркале проекта.
             global::ThorncasterVfxSetup.Install();

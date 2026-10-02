@@ -95,7 +95,9 @@ namespace Game.View
         private float _walkPhase, _turnTravel, _turnSign, _turnUntil = -1f, _sink;
         private Vector3 _lastBody;
         private bool _isHidden, _shadowScaled, _deathSeen, _deathFromBurrow;
-        private Renderer[] _hidden;
+        /// <summary>Списки SetHidden переиспользуются: нырок раз в 5–10 с не мусорит в бою.</summary>
+        private readonly System.Collections.Generic.List<Renderer> _hidden = new System.Collections.Generic.List<Renderer>(32),
+            _scan = new System.Collections.Generic.List<Renderer>(32);
         private ThicketClipPose _pose;
         private float _tick;
         private ThicketHourglassTrack _hourglass;
@@ -457,19 +459,22 @@ namespace Game.View
             _isHidden = hidden;
             if (hidden)
             {
-                var renderers = GetComponentsInChildren<Renderer>(false);
-                int count = 0;
-                for (int i = 0; i < renderers.Length; i++)
-                    if (renderers[i].enabled) renderers[count++] = renderers[i];
-                System.Array.Resize(ref renderers, count);
-                for (int i = 0; i < renderers.Length; i++) renderers[i].enabled = false;
-                _hidden = renderers;
+                // Набор рендеров читается заново (накладки фаз, тень и контур ArenaView ставятся
+                // после Awake), но в свои списки — без выделений в бою (ревью 02.10).
+                GetComponentsInChildren(false, _scan);
+                _hidden.Clear();
+                for (int i = 0; i < _scan.Count; i++)
+                    if (_scan[i].enabled)
+                    {
+                        _scan[i].enabled = false;
+                        _hidden.Add(_scan[i]);
+                    }
+                _scan.Clear();
                 return;
             }
-            if (_hidden == null) return;
-            for (int i = 0; i < _hidden.Length; i++)
+            for (int i = 0; i < _hidden.Count; i++)
                 if (_hidden[i] != null) _hidden[i].enabled = true;
-            _hidden = null;
+            _hidden.Clear();
         }
 
         /// <summary>

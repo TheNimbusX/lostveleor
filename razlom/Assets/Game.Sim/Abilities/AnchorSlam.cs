@@ -92,6 +92,8 @@ namespace Game.Sim
         /// <summary>Пересечение тела с прямоугольником сохраняет одинаковую ширину по всей длине.</summary>
         private bool InsideSlamLane(int entity, FixVec2 direction, Fix64 length, Fix64 halfWidth)
         {
+            // Корпус Хозяина Чащи (сессия босса, 02.10): полоса задевает любой из его кругов.
+            if (ThicketHullActive(entity)) return ThicketHullInLane(entity, _slamOrigin, direction, length, halfWidth);
             FixVec2 delta = Entities.Position[entity] - _slamOrigin;
             Fix64 along = FixVec2.Dot(delta, direction);
             Fix64 across = Fix64.Abs(delta.X * direction.Y - delta.Y * direction.X);

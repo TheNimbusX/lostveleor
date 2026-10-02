@@ -1,0 +1,51 @@
+{
+  "pack": "Pelag Squall motion reference",
+  "generations": [
+    {
+      "id": "squall-ref-1",
+      "date": "2026-10-02",
+      "service": "Higgsfield",
+      "model": "seedance_2_0_mini",
+      "job_id": "a688c553-43d9-45cd-82fe-c8154872a6d6",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_110952_a688c553-43d9-45cd-82fe-c8154872a6d6.mp4",
+      "params": {
+        "duration_s": 5,
+        "resolution": "720p",
+        "aspect_ratio": "16:9",
+        "generate_audio": false,
+        "genre": "action",
+        "declined_preset_id": "24bae836-2c4a-48e0-89b6-49fcc0b21612"
+      },
+      "inputs": [
+        {"file": "S-start-frame-chatgpt.png", "role_requested": "start_image", "media_id": "6436c715-b9a7-4032-aaff-c027dc1e3b0e"},
+        {"file": "B-key-poses-chatgpt.png", "role_requested": "image_references", "media_id": "226e313a-5f39-40e0-b131-0d6a036d0a14"},
+        {"file": "1-pelag-model-4views.jpg", "role_requested": "image_references", "media_id": "3caee0a9-c6f7-4fe5-9995-f1ae6fec6aaf"}
+      ],
+      "inputs_note": "The submit response listed all three as reference_images. The stored job keeps S as start_image and the pose sheet and 4-view sheet as image. The output opens on the S frame.",
+      "prompt": "Animation reference for a fast action game, one continuous single shot from a static locked camera exactly as in the start image, real-time speed, no slow motion. The first frame is the start image: Pelag, a stylized 3D game character, stands in a low ready stance on the left of a plain light grey studio, facing three wooden training posts in a shallow zig-zag to his right. Use the four-view character sheet for his exact look and the numbered six-pose key sheet for his body poses. Within the first 0.3 seconds he dips low (pose 1), then makes three very fast low lunge-leaps, one to each wooden post, each leap about one fifth of a second, feet only a hand's height above the floor, body leaning forward in one straight line, no flips and no spins (poses 2 and 3). He arrives at post 1 with a forehand sabre swing from his right to his left at waist height, right foot planted flat in a deep lunge (pose 4); he pivots from the hips and leaps to post 2 with a backhand swing from his left to his right, left foot planted (pose 5); he leaps to post 3 with another forehand swing, right foot planted; each post jolts on contact. Then a short low hop into a balanced wide ready stance (pose 6) by about 2.5 seconds, and he holds that stance until the end. Movement is sharp and explosive like a fencer, sudden accelerations and crisp stops, no floating; each swing's follow-through is the wind-up of the next. Body solid and athletic, spine long and straight, chest and hips turning together, head following the chest, knees and elbows bending naturally, planted feet do not slide. The dark iron anchor stays strapped on his back. Exactly one character with two arms, two legs and one curved sabre in his right hand, same outfit and colours as the references the whole time. No visual effects, no motion blur smears, no speed lines, no camera cuts, no zoom, no camera movement, no text.",
+      "credits_spent": 5,
+      "balance_before": 5.3,
+      "balance_after": 0.3,
+      "outputs": {
+        "video": "video/squall-ref-1.mp4",
+        "strip": "video/squall-ref-1-strip.jpg",
+        "video_info": "1280x720, 24 fps, 5.04 s, no audio track requested",
+        "strip_info": "50 frames, one every 0.1 s (t = 0.0 to 4.9 s), 10 x 5 grid, 384x216 per cell, time label top-left"
+      },
+      "review": {
+        "good": [
+          "Static camera, no cuts or zoom; studio and posts stay in place",
+          "Identity holds: our outfit, red headband, anchor stays on the back, one sabre in the right hand",
+          "Body stays mostly solid, no melting or extra limbs",
+          "Usable beats: dip 0.3-0.6 s, push-off 0.7 s, flight 0.8-1.1 s, arrival lunge with the sabre forward 1.2-1.7 s, turn 1.8-1.9 s, crouched wind-up 2.6-2.9 s, sweep 3.7 s, ready stance 4.2-4.9 s (close to the opening pose)"
+        ],
+        "bad": [
+          "Route ignores the zig-zag: post 1 then post 3, back to post 1, post 3 again, back to the start; post 2 (the back one) is never visited",
+          "Leaps take about 0.4-0.5 s, not 0.2 s, and are knee-tucked hops rather than low lunges; at 2.2-2.4 s and 4.0 s he jumps with his back to the camera",
+          "No clean forehand/backhand alternation; the arrival strike is a thrust-like extension toward post 3",
+          "The action keeps going until about 4.2 s instead of ending by 2.5 s. The start is fine: he moves within about 0.3 s"
+        ]
+      }
+    }
+  ]
+}

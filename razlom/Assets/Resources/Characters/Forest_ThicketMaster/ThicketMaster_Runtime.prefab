@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5081867775975348452}
   - component: {fileID: 5760488205472265774}
+  - component: {fileID: 8443481242865780146}
   m_Layer: 0
   m_Name: ThicketMaster_Runtime
   m_TagString: Untagged
@@ -45,8 +46,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7c891d300368fe49b289c4603ca693e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.ThicketMasterAnimatorView
-  _walkStride: 1.8675303
-  _contactShadowMetres: 3.4
+  _walkStride: 2.1476598
+  _contactShadowMetres: 3.9
+--- !u!114 &8443481242865780146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2326717465651411048}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09b1ffdf2be82dd449f56f9983d1e064, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.View::Game.View.ThicketMasterPhaseDressing
 --- !u!1001 &1659248866937453895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -57,15 +70,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.0458254
+      value: 1.2026992
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.0458254
+      value: 1.2026992
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.0458254
+      value: 1.2026992
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_LocalPosition.x
@@ -121,15 +134,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7755420780417029975, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_AABB.m_Extent.x
-      value: 0.043028217
+      value: 0.04323608
       objectReference: {fileID: 0}
     - target: {fileID: -7755420780417029975, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_AABB.m_Extent.y
-      value: 0.043028217
+      value: 0.04323608
       objectReference: {fileID: 0}
     - target: {fileID: -7755420780417029975, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_AABB.m_Extent.z
-      value: 0.043028217
+      value: 0.04323608
       objectReference: {fileID: 0}
     - target: {fileID: -7755420780417029975, guid: e49c80cadc1ad5c4492fc1724749333f, type: 3}
       propertyPath: m_Materials.Array.size

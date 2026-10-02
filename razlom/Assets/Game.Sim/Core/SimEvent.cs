@@ -170,6 +170,101 @@ namespace Game.Sim
         /// PelagDashState.InvulnerableUntilTick.
         /// </summary>
         DashEnded = 43,
+
+        /// <summary>
+        /// Вихрь · Буря (форма, Simulation.WhirlwindForms): удержание началось — в
+        /// тик контакта, если клавишу ещё держат. Source — герой, Amount — сколько
+        /// тиков до предела удержания (3 с от нажатия), Position — где герой.
+        /// Пока крутится — Simulation.WhirlwindStorming (и прежний WhirlwindChanneling).
+        /// </summary>
+        WhirlwindStormStarted = 44,
+
+        /// <summary>
+        /// Буря: оборот удержания ударил (каждые Simulation.StormPulseTicks).
+        /// Source — герой, Amount — сколько врагов в круге, ActionVariant — сколько
+        /// тиков осталось до предела, Position — где герой (центр круга). Урон по
+        /// каждой цели — Damage с DamageOrigin.Ability сразу за ним.
+        /// </summary>
+        WhirlwindStormPulse = 45,
+
+        /// <summary>
+        /// Буря кончилась. Source — герой, Amount — сколько тиков не дотянула до
+        /// предела (0 — докрутила), Flag — кончилась Концентрация, ActionVariant —
+        /// WhirlwindStormEnd (отпустил, Концентрация, предел, прервали), Position — где герой.
+        /// </summary>
+        WhirlwindStormEnded = 46,
+
+        /// <summary>
+        /// Вихрь · Водоворот: в тик каста враги в Simulation.MaelstromRadius
+        /// потянуты к герою. Source — герой, Amount — сколько тел тянут (тяжёлых,
+        /// элит и босса не тянет — им только оглушение), ActionVariant — за сколько
+        /// тиков (тяга кончается к контакту), Position — центр. В контакт — удар
+        /// Вихря и оглушение: события Damage и Stun.
+        /// </summary>
+        WhirlwindMaelstromPull = 47,
+
+        /// <summary>
+        /// Вихрь · Пенные волны: кольцо пошло от центра. Source — герой, Amount —
+        /// номер кольца (0, 1), ActionVariant — за сколько тиков дойдёт до внешнего
+        /// радиуса, Position — центр (где был герой в контакт). Радиусы —
+        /// Simulation.FoamRingInnerRadius и FoamRingOuterRadius(кольцо), живое
+        /// кольцо — Simulation.TryGetFoamRing.
+        /// </summary>
+        WhirlwindFoamRing = 48,
+
+        /// <summary>
+        /// Пенные волны: кольцо задело врага (каждое кольцо — раз на врага). Source —
+        /// герой, Target — враг, Amount — номер кольца, Position — где враг (брызги).
+        /// Урон — Damage следом; лёгких кольцо отталкивает (ForcedMotionKind.Shoved).
+        /// </summary>
+        WhirlwindFoamRingHit = 49,
+
+        /// <summary>
+        /// Шквал (Simulation.Squall): старт прыжка к цели — после замаха и после
+        /// каждой опоры. Source — герой, Target — цель, Amount — тиков полёта до
+        /// удара (2–6, по длине), Flag — удар обратный (false — прямой, строго
+        /// чередуются), ActionVariant — номер прыжка с нуля, Position — точка
+        /// посадки. Откуда — где герой сейчас (Simulation.Squall.From); тик удара —
+        /// Simulation.Squall.ArriveTick. Рядом идёт прежний ChainStepHop.
+        /// </summary>
+        SquallJump = 50,
+
+        /// <summary>
+        /// Шквал: прибытие и удар, в тик прибытия. Source — герой, Target — цель,
+        /// Amount — сколько прыжков осталось после него (0 — последний), Flag —
+        /// удар дошёл (цель жива и рядом; Damage и Death идут сразу за событием),
+        /// ActionVariant — номер прыжка, Position — где герой. Следующая цель
+        /// (к ней поворот в опоре) — Simulation.Squall.NextTarget.
+        /// </summary>
+        SquallStrike = 51,
+
+        /// <summary>
+        /// Шквал · Охота: удар убил — лишний прыжок. Source — герой, Target — убитый,
+        /// Amount — сколько лишних прыжков дано за каст, ActionVariant — номер
+        /// прыжка, Position — где лежит убитый (всплеск и знак лишнего прыжка).
+        /// </summary>
+        SquallHuntKill = 52,
+
+        /// <summary>
+        /// Шквал: прыжок назад к точке каста (талант «Возврат» или форма
+        /// Неуловимый). Source — герой, Amount — тиков полёта, ActionVariant —
+        /// точек дуги (0 — прямо, 2 — Simulation.Squall.Via0, Via1), Position — куда.
+        /// </summary>
+        SquallReturn = 53,
+
+        /// <summary>
+        /// Шквал кончился. Source — герой, Amount — SquallEnd (доигран, сорван
+        /// ходьбой, снят, без цели), ActionVariant — номер каста
+        /// (Simulation.Squall.Serial), Position — где герой.
+        /// </summary>
+        SquallEnded = 54,
+
+        /// <summary>
+        /// Шквал · Пенный след: прыжок оставил полосу пены. Source — герой,
+        /// Amount — слот полосы (Simulation.TryGetSquallFoamStrip), ActionVariant —
+        /// сколько тиков живёт, Position — начало полосы. Урон пены — DamageOverTime.
+        /// </summary>
+        SquallFoamStrip = 55,
     }
 
     /// <summary>
@@ -270,6 +365,15 @@ namespace Game.Sim
 
         /// <summary>Хозяин Чащи, этап 3: буря цветения.</summary>
         ThicketStorm = 19,
+
+        /// <summary>
+        /// Хозяин Чащи: вступление-кат-сцена — герой ступил на пол поляны босса
+        /// (или ранил спящего). Только EnemyActionStarted, Amount 0, Position —
+        /// босс, в тик начала окна. Сроки (пробуждение, конец рёва и первая
+        /// атака) — Simulation.TryGetThicketIntro; пока окно идёт — герой не
+        /// слушается и неуязвим (Simulation.ThicketIntroHoldsHero).
+        /// </summary>
+        ThicketIntro = 20,
     }
 
     /// <summary>

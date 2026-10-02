@@ -122,10 +122,12 @@ namespace Game.Tests
             var loadout = new RunLoadout();
             loadout.ChooseForm(Whirlwind, Storm, true);
             loadout.TakeFormTalent(Whirlwind, 2);
-            Assert.IsTrue(loadout.DebugSetForm(Whirlwind, PelagForm.WhirlwindOnTheMove));
-            Assert.AreEqual(PelagForm.WhirlwindOnTheMove, loadout.FormOf(Whirlwind));
+            Assert.IsTrue(loadout.DebugSetForm(Whirlwind, PelagForm.WhirlwindMaelstrom));
+            Assert.AreEqual(PelagForm.WhirlwindMaelstrom, loadout.FormOf(Whirlwind));
             Assert.AreEqual(0, loadout.FormTalentMask(Whirlwind), "таланты прежней формы остались");
             Assert.IsFalse(loadout.DebugSetForm(Whirlwind, (PelagForm)99), "несуществующая форма");
+            Assert.IsFalse(loadout.DebugSetForm(Whirlwind, PelagForm.WhirlwindOnTheMove), "убранная форма (02.10)");
+            Assert.AreEqual(PelagForm.WhirlwindMaelstrom, loadout.FormOf(Whirlwind));
             Assert.IsFalse(loadout.DebugSetForm(3, Storm), "форма чужой линии");
             Assert.IsTrue(loadout.DebugSetForm(Whirlwind, PelagForm.None));
             Assert.AreEqual(PelagForm.None, loadout.FormOf(Whirlwind));
@@ -167,7 +169,10 @@ namespace Game.Tests
 
             var buffer = new AbilityNode[RunLoadout.MaxNodesPerSlot];
             int count = loadout.AppendSlotNodes(0, buffer, 0);
-            Assert.AreEqual(SabreTalents.TalentsPerLine + 1 + formTalents, count);
+            // Буря кладёт два своих узла: форму и стат шага в удержании (02.10).
+            int formOwn = PelagForms.AppendFormNodes(Storm, new AbilityNode[RunLoadout.MaxNodesPerSlot], 0);
+            Assert.AreEqual(2, formOwn);
+            Assert.AreEqual(SabreTalents.TalentsPerLine + formOwn + formTalents, count);
             int formNodes = 0, talentNodes = 0;
             for (int n = 0; n < count; n++)
             {
@@ -183,6 +188,7 @@ namespace Game.Tests
             AbilityBuild build = sim.GetAbility(0);
             Assert.AreEqual(Storm, build.Form);
             Assert.AreEqual(AbilityDefinition.WhirlwindId, build.DefinitionId, "форма сменила определение");
+            Assert.AreEqual(PelagForms.StormMoveMultiplier, build.Get(AbilityStatType.StartMoveMultiplier), "стат шага Бури");
             Assert.IsTrue(build.Has(AbilityFlag.WhirlwindCocoon), "восьмое усиление отрезал буфер");
             Assert.IsTrue(sim.FormIs(0, Storm));
             Assert.IsFalse(sim.FormIs(1, Storm));

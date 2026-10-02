@@ -41,7 +41,7 @@ public sealed class ForestBudTestWindow : EditorWindow
         }
         if (EditorApplication.isPlaying && GUILayout.Button("Завершить тест")) EditorApplication.isPlaying = false;
         EditorGUILayout.Space(8);
-        GUILayout.Label("Управление обычное. F8 — настройки теста и бессмертие.", EditorStyles.wordWrappedMiniLabel);
+        GUILayout.Label("Управление обычное. F8: «Бой» — повтор теста и бессмертие.", EditorStyles.wordWrappedMiniLabel);
     }
 
     private static void Launch()

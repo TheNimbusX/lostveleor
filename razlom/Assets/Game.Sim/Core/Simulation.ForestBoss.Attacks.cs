@@ -48,7 +48,7 @@ namespace Game.Sim
     /// героем (не дальше поводка + круга от точки появления — Target), через
     /// ThicketDiveLockTicks (24) босс вылезает (контакт) в точке выхода (Origin):
     /// в поводке, тело целиком помещается, бугор доезжает по прямой, всегда
-    /// внутри круга (ThicketDiveLock). Потом стоит ThicketDiveStandTicks (24);
+    /// внутри круга (ThicketDiveLock). Потом стоит ThicketDiveStandTicks (36);
     /// в фазах 2–3 сразу связка — серия лапы или топот (Simulation.ForestBoss.Storm.cs).
     /// От начала ухода до выхода — неуязвим и не цель (ThicketShielded); под
     /// землёй тело ThicketMoundRadius и не расталкивается.
@@ -82,7 +82,8 @@ namespace Game.Sim
         // ---- нырок в корни ----
 
         public const int ThicketDiveBurrowTicks = 12, ThicketDiveTravelTicks = 30;
-        public const int ThicketDiveLockTicks = 24, ThicketDiveStandTicks = 24;
+        /// <summary>Стойка после выхода 36 (владелец 02.10: «дать чуть больше окно для атаки», было 24).</summary>
+        public const int ThicketDiveLockTicks = 24, ThicketDiveStandTicks = 36;
 
         /// <summary>Круг выхода 4,0 м (3,5 × 1,15).</summary>
         public static readonly Fix64 ThicketDiveRadius = Fix64.FromInt(4);
@@ -451,6 +452,23 @@ namespace Game.Sim
             _events.Add(SimEvent.EnemyAction(SimEventType.EnemyActionImpact, id, PlayerId,
                 EnemyActionKind.ThicketDive, Entities.Position[id], 3, hit));
             if (hit) ApplyAbilityDamage(id, PlayerId, ThicketDiveDamageOf(id), -1, DamageType.Physical);
+            ReleaseThicketHeldDamage(id);
+        }
+
+        /// <summary>
+        /// Песочные Часы кончились, пока босс был в нырке: урон, накопленный под
+        /// ними до ухода, не пропадает (ReleaseHeldDamage его оставил), а
+        /// приходит в тик выхода. Часы ещё идут — ждёт их обычного конца.
+        /// </summary>
+        private void ReleaseThicketHeldDamage(int id)
+        {
+            if (_heldDamage == null || TimeStopped || !Entities.Alive[id]) return;
+            int held = _heldDamage[id];
+            if (held <= 0) return;
+            _heldDamage[id] = 0;
+            Entities.Health[id] -= held;
+            _events.Add(SimEvent.Damage(PlayerId, id, held, true, Entities.Position[id], DamageType.Physical, DamageOrigin.Ability, -1));
+            if (Entities.Health[id] <= 0) Kill(id, PlayerId, -1);
         }
 
         /// <summary>

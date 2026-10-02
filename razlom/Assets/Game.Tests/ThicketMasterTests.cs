@@ -24,9 +24,13 @@ namespace Game.Tests
     /// окно 30; топот 24 + кольцо через 15, окно 30; нырок 12/30/24/24, связка
     /// фаз 2–3; наслоение кастов (жест 18, дальше только серии лапы); отдых
     /// 18/12/6; рёв 36; буря 60/45; под землёй неуязвим и не цель; рост ×1,15.
+    /// «Мягче серии и топот» (владелец 02.10): второй и третий удары серии — 60%
+    /// лапы (16 → 10); топот — только после 60 тиков ПОДРЯД ближе 4 м.
+    /// Баланс 02.10 (artifacts/tools/boss-tune): ход 2,0 м/с, стойка после нырка 36,
+    /// перезарядка топота 150, база лапы 25 → 10 (весь урон ×0,4), здоровье 6000 → 6600.
     ///
     /// Стенд — SetupKindTestArena на арене 9: герой в (0, 0), босс в 6 м по +X
-    /// лицом к герою; лапа там 25 × 164% = 41, топот — доля 62/41.
+    /// лицом к герою; лапа там 10 × 164% = 16, топот — доля 62/41 = 24.
     /// </summary>
     public sealed class ThicketMasterTests
     {
@@ -240,7 +244,7 @@ namespace Game.Tests
         // ---------- лапа ----------
 
         [Test]
-        public void Paw_PhaseOneSeriesOfTwo_Windup15_NextNineLater_Window30_EachHitsForTheLeafDamage()
+        public void Paw_PhaseOneSeriesOfTwo_Windup15_NextNineLater_Window30_FirstForTheLeafDamage_SecondSixtyPercent()
         {
             var sim = Arena();
             Until(sim, IntroDone);
@@ -270,8 +274,8 @@ namespace Game.Tests
             }
             sim.Step(InputFrame.Empty);
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketPaw, true));
-            Assert.AreEqual(41, sim.ThicketPawDamageOf(Boss), "лапа на арене 9");
-            Assert.AreEqual(41, health - sim.Entities.Health[0]);
+            Assert.AreEqual(16, sim.ThicketPawDamageOf(Boss), "лапа на арене 9");
+            Assert.AreEqual(16, health - sim.Entities.Health[0]);
             Assert.IsFalse(ForcedMotion.IsActive(sim.Entities, 0), "лапа не отбрасывает");
             // Знак второго удара — в тик первого, за 9 до своего удара.
             int started = 0;
@@ -287,7 +291,8 @@ namespace Game.Tests
             Assert.IsTrue(sim.ThicketMasterHoldsBigToken(Boss), "серия держит жетон до последнего удара");
 
             Until(sim, paw.LastImpactTick + 1);
-            Assert.AreEqual(82, health - sim.Entities.Health[0], "оба удара по 41");
+            // «Мягче серии» (02.10): второй удар — 60% лапы, 16 → 10.
+            Assert.AreEqual(16 + 10, health - sim.Entities.Health[0], "первый 16, второй 10");
             Assert.IsFalse(sim.ThicketMasterHoldsBigToken(Boss));
 
             Until(sim, paw.EndTick + 1);
@@ -394,8 +399,9 @@ namespace Game.Tests
         [Test]
         public void Paw_HardAndEnragedOverSixty_WindupThirty_DamageKept()
         {
-            // «Сложно» 125% и ярость RiftRun ×1,3: лапа 41 → 51 → 66 на арене 9. Правило
-            // дока: больше 60 урона — замах от 30 тиков; удлиняется замах, не режется урон.
+            // «Сложно» 125% и ярость RiftRun ×1,3: лапа 16 → 20 → 26 на арене 9 (баланс 02.10) —
+            // до порога не доходит. Правило дока (больше 60 урона — замах от 30 тиков;
+            // удлиняется замах, не режется урон) проверяется на лапе, поднятой стендом до 66.
             var sim = new Simulation(77, 64);
             sim.SetupKindTestArena(EnemyKind.ForestThicketMaster, 1, arena: 9, hardPercent: 125, distance: Fix64.FromInt(6));
             var e = sim.Entities;
@@ -407,8 +413,12 @@ namespace Game.Tests
             e.Stats[Boss].SetBase(StatType.Damage, e.Damage[Boss] * Fix64.Ratio(13, 10));
             e.RefreshStats(Boss);
             MeleeOnly(sim);
+            Assert.AreEqual(26, sim.ThicketPawDamageOf(Boss), "лапа «Сложно» в ярости на арене 9");
+            Assert.AreEqual(Simulation.ThicketPawWindupTicks, sim.ThicketPawWindupOf(Boss), "до 60 не дошла — замах 15");
+            e.Stats[Boss].SetBase(StatType.Damage, Fix64.FromInt(66));
+            e.RefreshStats(Boss);
             int damage = sim.ThicketPawDamageOf(Boss);
-            Assert.That(damage, Is.GreaterThan(Simulation.ThicketPawHeavyDamage), "лапа «Сложно» в ярости");
+            Assert.That(damage, Is.GreaterThan(Simulation.ThicketPawHeavyDamage), "тяжёлая лапа стенда");
             Assert.AreEqual(Simulation.ThicketPawHeavyWindupTicks, sim.ThicketPawWindupOf(Boss));
 
             // Фаза 3 — серия из трёх: первый замах 30, дальше удары через 9.
@@ -423,10 +433,16 @@ namespace Game.Tests
             Assert.AreEqual(paw.ImpactTick + 2 * 9, paw.LastImpactTick, "дальше — через 9");
             Until(sim, paw.ImpactTick);
             Assert.AreEqual(health, e.Health[0], "до контакта урона нет");
+            Until(sim, paw.ImpactTick + 1);
+            Assert.AreEqual(damage, health - e.Health[0], "первый удар — лапа целиком: урон не срезан");
             Until(sim, paw.LastImpactTick + 1);
-            Assert.AreEqual(3 * damage, health - e.Health[0], "урон не срезан");
+            // «Мягче серии» (02.10): второй и третий — 60% лапы, и «Сложно» с яростью растят их тоже.
+            int followUp = sim.ThicketPawStrikeDamageOf(Boss, 1);
+            Assert.AreEqual((damage * 60 + 50) / 100, followUp, "доля 60% от тяжёлой лапы");
+            Assert.AreEqual(followUp, sim.ThicketPawStrikeDamageOf(Boss, 2));
+            Assert.AreEqual(damage + 2 * followUp, health - e.Health[0], "первый целиком, два следующих по 60%");
 
-            // Обычный маршрут — лапа 41, замах 15.
+            // Обычный маршрут — лапа 16, замах 15.
             Assert.AreEqual(Simulation.ThicketPawWindupTicks, Arena().ThicketPawWindupOf(Boss));
         }
 
@@ -459,8 +475,8 @@ namespace Game.Tests
             Assert.AreEqual(health, sim.Entities.Health[0]);
             sim.Step(InputFrame.Empty);
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketStomp, true));
-            Assert.AreEqual(62, sim.ThicketStompDamageOf(Boss), "доля 62/41 на арене 9");
-            Assert.AreEqual(62, health - sim.Entities.Health[0]);
+            Assert.AreEqual(24, sim.ThicketStompDamageOf(Boss), "доля 62/41 от 16 на арене 9");
+            Assert.AreEqual(24, health - sim.Entities.Health[0]);
             Assert.IsTrue(ForcedMotion.IsActive(sim.Entities, 0));
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketStomp), "кольцо встало в тик круга");
             Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out var ring));
@@ -510,8 +526,8 @@ namespace Game.Tests
             foreach (var e in sim.Events)
                 if (e.Type == SimEventType.EnemyActionImpact && e.ActionVariant == (int)EnemyActionKind.ThicketStomp)
                     Assert.AreEqual(1, e.Amount, "удар кольца — Amount 1");
-            Assert.AreEqual(46, sim.ThicketStompRingDamageOf(Boss), "62 × 0,75 на арене 9");
-            Assert.AreEqual(46, health - sim.Entities.Health[0]);
+            Assert.AreEqual(18, sim.ThicketStompRingDamageOf(Boss), "24 × 0,75 на арене 9");
+            Assert.AreEqual(18, health - sim.Entities.Health[0]);
             Assert.IsTrue(ForcedMotion.IsActive(sim.Entities, 0), "отброс — как у топота");
             for (int k = 0; k < Simulation.ThicketKnockbackTicks; k++) sim.Step(InputFrame.Empty);
             Assert.That(FixVec2.Distance(sim.Entities.Position[0], sim.Entities.Position[Boss]).ToDouble(),
@@ -531,15 +547,103 @@ namespace Game.Tests
             Assert.AreEqual(health, inner.Entities.Health[0], "внутри кольца — укрыт");
         }
 
+        // ---------- «Мягче серии и топот» (владелец 02.10) ----------
+
+        [Test]
+        public void SoftSeries_PhaseThree_StrikeByStrike_16_Then10_Then10()
+        {
+            var sim = Arena();
+            MeleeOnly(sim);
+            ToPhase(sim, 30);
+            HeroInFront(sim, 3.3);
+            int start = RunUntilStarted(sim, EnemyActionKind.ThicketPaw, 60);
+            Assert.AreNotEqual(-1, start);
+            Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out var paw));
+            Assert.AreEqual(3, paw.Stages, "фаза 3 — серия из трёх");
+            var taken = new List<int>();
+            for (int strike = 0; strike < paw.Stages; strike++)
+            {
+                int impact = paw.ImpactTick + strike * Simulation.ThicketPawSeriesGapTicks;
+                Until(sim, impact);
+                HeroInFront(sim, 3.3);
+                int before = sim.Entities.Health[0];
+                sim.Step(InputFrame.Empty);
+                Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketPaw, true), "удар " + (strike + 1) + " попал");
+                taken.Add(before - sim.Entities.Health[0]);
+            }
+            CollectionAssert.AreEqual(new[] { 16, 10, 10 }, taken, "первый — лапа целиком, второй и третий — на 40% слабее");
+            Assert.AreEqual(16, sim.ThicketPawStrikeDamageOf(Boss, 0));
+            Assert.AreEqual(10, sim.ThicketPawStrikeDamageOf(Boss, 1), "16 × 0,6 = 9,6");
+            Assert.AreEqual(10, sim.ThicketPawStrikeDamageOf(Boss, 2));
+        }
+
+        [Test]
+        public void SoftStomp_HeroWhoJustRunsPast_IsNotStomped()
+        {
+            // Пробегает за спиной босса в 3 м от центра со скоростью бега (0,15 м за тик):
+            // ближе 4 м — около 35 тиков. Топот — только после 60 тиков ПОДРЯД.
+            var sim = Arena();
+            MeleeOnly(sim);
+            Until(sim, IntroDone);
+            var boss = sim.Entities.Position[Boss];
+            int stomps = 0, longest = 0;
+            for (int k = 0; k <= 160; k++)
+            {
+                sim.Entities.Position[0] = boss + At(3, -12 + 0.15 * k);
+                sim.Entities.Health[0] = sim.Entities.MaxHealth[0];
+                sim.Step(InputFrame.Empty);
+                stomps += Count(sim, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketStomp);
+                longest = System.Math.Max(longest, sim.ThicketMasterNearRunTicks(Boss));
+            }
+            Assert.That(longest, Is.InRange(20, Simulation.ThicketStompNearTicks - 1), "был рядом, но меньше 2 с");
+            Assert.AreEqual(0, stomps, "мимо пробежавшего не топчет");
+        }
+
+        [Test]
+        public void SoftStomp_StepsOutForATickEveryFifty_NoStomp_ThenSixtyInARow_Stomps()
+        {
+            // Стоит в окне топота (3,85 м — дальше лапы), но раз в 50 тиков на тик выходит за 4 м:
+            // из любых 90 тиков рядом ≥ 88 — правило «60 из 90» топтало бы, «60 подряд» — нет.
+            var sim = Arena();
+            MeleeOnly(sim);
+            Until(sim, IntroDone);
+            int stomps = 0, oldRule = 0, lastOut = -1;
+            for (int k = 0; k < 400; k++)
+            {
+                bool outside = k % 50 == 49;
+                HeroInFront(sim, outside ? 4.6 : 3.85);
+                if (outside) lastOut = sim.Tick;
+                sim.Step(InputFrame.Empty);
+                stomps += Count(sim, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketStomp);
+                if (sim.ThicketMasterNearTicks(Boss) >= Simulation.ThicketStompNearTicks) oldRule++;
+                Assert.That(sim.ThicketMasterNearRunTicks(Boss), Is.LessThan(Simulation.ThicketStompNearTicks));
+            }
+            Assert.That(oldRule, Is.GreaterThan(0), "по старому правилу топот встал бы");
+            Assert.AreEqual(0, stomps, "тик за 4 м начинает счёт заново");
+
+            // Остался рядом: топот — ровно на 60-й тик подряд.
+            int start = -1;
+            for (int k = 0; k < 120 && start < 0; k++)
+            {
+                HeroInFront(sim, 3.85);
+                int tick = sim.Tick;
+                sim.Step(InputFrame.Empty);
+                if (Count(sim, SimEventType.EnemyActionStarted, EnemyActionKind.ThicketStomp) > 0) start = tick;
+            }
+            Assert.AreEqual(lastOut + Simulation.ThicketStompNearTicks, start, "60 тиков подряд рядом — топот");
+            Assert.AreEqual(0, sim.ThicketMasterNearRunTicks(Boss), "счёт после топота — заново");
+        }
+
         [Test]
         public void Shares_ScaleWithTheLeafDamage_AtTheFirstArena()
         {
             var sim = Arena(arena: 1);
-            Assert.AreEqual(25, sim.ThicketPawDamageOf(Boss));
-            Assert.AreEqual(38, sim.ThicketStompDamageOf(Boss), "25 × 62/41 = 37,8");
-            Assert.AreEqual(40, sim.ThicketShareOf(Boss, Simulation.ThicketDiveDamageA9), "25 × 66/41 = 40,2");
-            Assert.AreEqual(43, sim.ThicketShareOf(Boss, Simulation.ThicketStormDamageA9));
-            Assert.AreEqual(28, sim.ThicketStompRingDamageOf(Boss), "38 × 0,75");
+            Assert.AreEqual(10, sim.ThicketPawDamageOf(Boss));
+            Assert.AreEqual(6, sim.ThicketPawStrikeDamageOf(Boss, 1), "второй удар серии: 10 × 0,6");
+            Assert.AreEqual(15, sim.ThicketStompDamageOf(Boss), "10 × 62/41 = 15,1");
+            Assert.AreEqual(16, sim.ThicketShareOf(Boss, Simulation.ThicketDiveDamageA9), "10 × 66/41 = 16,1");
+            Assert.AreEqual(17, sim.ThicketShareOf(Boss, Simulation.ThicketStormDamageA9), "10 × 70/41 = 17,1");
+            Assert.AreEqual(11, sim.ThicketStompRingDamageOf(Boss), "15 × 0,75 = 11,25");
         }
 
         [Test]
@@ -555,8 +659,11 @@ namespace Game.Tests
             Assert.AreEqual(2.3, Of(Simulation.ThicketRoarInnerRadius), 1e-4, "рёв 2 → 2,3");
             Assert.AreEqual(6.3, Of(Simulation.ThicketRoarOuterRadius), 1e-4, "рёв 5,5 → 6,3");
             Assert.AreEqual(4.0, Of(Simulation.ThicketDiveRadius), 1e-4, "выход 3,5 → 4,0");
-            Assert.AreEqual(1.265, Of(Simulation.ThicketRumpOffset), 1e-4, "круп 1,1 × 1,15");
-            Assert.AreEqual(0.9775, Of(Simulation.ThicketRumpRadius), 1e-4, "круп 0,85 × 1,15");
+            // Корпус (Simulation.ForestBoss.Hull) — от модели 3,6 м ×1,15: грудь 1,65 / 0,73, край лапы 3,3 м.
+            Simulation.ThicketHullLocal(0, out var chest, out _, out var chestRadius);
+            Assert.AreEqual(1.8975, Of(chest), 1e-4, "грудь 1,65 × 1,15");
+            Assert.AreEqual(0.8395, Of(chestRadius), 1e-4, "грудь 0,73 × 1,15");
+            Assert.AreEqual(3.297, Of(Simulation.ThicketHullReach), 1e-3, "край лапы");
             // Тело в Sim — потолок расталкивания (EntityStore.MaxBodyRadius), его рост не берёт.
             Assert.AreEqual(EntityStore.MaxBodyRadius, EnemyArchetypes.ThicketMasterBodyRadius);
             // Круги не от тела — прежние.
@@ -588,7 +695,7 @@ namespace Game.Tests
             Assert.AreEqual(1, sim.ThicketMasterRoaredPhase(Boss), "внешность меняется на рёве, не раньше");
             int roarAt = RunUntilStarted(sim, EnemyActionKind.ThicketRoar, 100);
             Assert.AreEqual(paw.EndTick, roarAt, "рёв — сразу после окна серии");
-            Assert.AreEqual(82, health - sim.Entities.Health[0], "серия из двух ударила до рёва");
+            Assert.AreEqual(16 + 10, health - sim.Entities.Health[0], "серия из двух ударила до рёва (второй — 60%)");
             Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out var roar));
             Assert.AreEqual(Simulation.ThicketRoar66Bit, roar.Tag);
             Assert.AreEqual(2, sim.ThicketMasterRoaredPhase(Boss));
@@ -648,7 +755,7 @@ namespace Game.Tests
                 Assert.AreEqual(paw.ImpactTick + 9 * stage, step.ImpactTick);
             }
             Until(sim, paw.LastImpactTick + 1);
-            Assert.AreEqual(123, health - sim.Entities.Health[0], "три удара по 41");
+            Assert.AreEqual(16 + 10 + 10, health - sim.Entities.Health[0], "16, потом два по 10 (60%)");
             // Фаза 3: отдых 6 × 0,85 = 5 короче окна — следующая серия ждёт окно: замах за 15 до его конца.
             int next = RunUntilStarted(sim, EnemyActionKind.ThicketPaw, 60);
             Assert.AreEqual(paw.LastImpactTick + Simulation.ThicketWindowTicks - Simulation.ThicketPawWindupTicks, next);
@@ -674,8 +781,8 @@ namespace Game.Tests
                 {
                     Assert.AreEqual(EnemyArchetypes.ScaleHealth(EnemyArchetypes.ThicketMasterHealth,
                         EnemyArchetypes.DepthHealthPercent(9)), sim.Entities.MaxHealth[boss]);
-                    Assert.AreEqual(9360, sim.Entities.MaxHealth[boss]);
-                    Assert.AreEqual(41, sim.Entities.Damage[boss], "без надбавки ×1,5 временного босса");
+                    Assert.AreEqual(10296, sim.Entities.MaxHealth[boss], "6600 × 156% (баланс 02.10, было 6000 → 9360)");
+                    Assert.AreEqual(16, sim.Entities.Damage[boss], "без надбавки ×1,5 временного босса");
                     Assert.AreEqual(Progression.BossKillXp, sim.Entities.XpReward[boss]);
                     Assert.AreEqual(EntityStore.MaxBodyRadius, sim.Entities.BodyRadius[boss]);
                     Assert.IsTrue(plan.IsElite(boss));
@@ -763,7 +870,7 @@ namespace Game.Tests
             Assert.AreEqual(paw.Serial, still.Serial, "лапа не сорвана");
             Assert.AreEqual(0, Count(sim, SimEventType.EnemyActionCancelled, EnemyActionKind.ThicketPaw));
             Until(sim, paw.ImpactTick + 1);
-            Assert.AreEqual(41, health - sim.Entities.Health[0], "контакт в свой тик");
+            Assert.AreEqual(16, health - sim.Entities.Health[0], "контакт в свой тик");
         }
 
         [Test]
@@ -804,16 +911,16 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Walk_ReachesTwoPointSixMetresPerSecond()
+        public void Walk_ReachesTwoMetresPerSecond()
         {
             var sim = Arena(distance: 8.5, walks: true);
             Until(sim, IntroDone + 1);
             Assert.IsFalse(sim.TryGetThicketMasterAction(Boss, out _), "после вступления — ход");
             var from = sim.Entities.Position[Boss];
             for (int k = 0; k < 30; k++) sim.Step(InputFrame.Empty);
-            // Разгон за 3 тика, дальше 2,6 м/с: за 30 тиков 2,6 × 29/30 ≈ 2,51 м.
+            // Разгон за 3 тика, дальше 2,0 м/с (владелец 02.10, было 2,6): за 30 тиков 2,0 × 29/30 ≈ 1,93 м.
             double walked = FixVec2.Distance(from, sim.Entities.Position[Boss]).ToDouble();
-            Assert.That(walked, Is.InRange(2.4, 2.61), "ход ~2,6 м/с");
+            Assert.That(walked, Is.InRange(1.85, 2.01), "ход ~2,0 м/с");
         }
 
         [Test]
@@ -821,25 +928,64 @@ namespace Game.Tests
         {
             var sim = Arena();
             Until(sim, IntroDone);
-            var rump = sim.ThicketRumpCenter(Boss);
-            sim.Entities.Position[0] = rump + At(0, 0.1);
+            // Круг корпуса 4 — левое бедро (Simulation.ForestBoss.Hull).
+            sim.Entities.Position[0] = sim.ThicketHullCircleCenter(Boss, 4) + At(0, 0.1);
             for (int k = 0; k < 10; k++) sim.Step(InputFrame.Empty);
-            double reach = (Simulation.ThicketRumpRadius + sim.Entities.BodyRadius[0]).ToDouble();
-            double distance = FixVec2.Distance(sim.Entities.Position[0], sim.ThicketRumpCenter(Boss)).ToDouble();
-            Assert.That(distance, Is.GreaterThanOrEqualTo(reach - 0.01), "герой выдавлен из-под крупа");
+            double gap = (sim.ThicketHullGap(Boss, sim.Entities.Position[0]) - sim.Entities.BodyRadius[0]).ToDouble();
+            Assert.That(gap, Is.GreaterThanOrEqualTo(-0.01), "герой выдавлен из-под крупа");
         }
 
         [Test]
         public void Rump_PushesTheHeroOut_EvenWhileTheBossSleeps()
         {
             var sim = Arena();
-            var rump = sim.ThicketRumpCenter(Boss);
-            sim.Entities.Position[0] = rump + At(0, 0.1);
+            sim.Entities.Position[0] = sim.ThicketHullCircleCenter(Boss, 4) + At(0, 0.1);
             for (int k = 0; k < 10; k++) sim.Step(InputFrame.Empty);
             Assert.IsFalse(sim.ThicketMasterAwake(Boss), "ещё спит");
-            double reach = (Simulation.ThicketRumpRadius + sim.Entities.BodyRadius[0]).ToDouble();
-            double distance = FixVec2.Distance(sim.Entities.Position[0], sim.ThicketRumpCenter(Boss)).ToDouble();
-            Assert.That(distance, Is.GreaterThanOrEqualTo(reach - 0.01), "круп спящего — тоже тело");
+            double gap = (sim.ThicketHullGap(Boss, sim.Entities.Position[0]) - sim.Entities.BodyRadius[0]).ToDouble();
+            Assert.That(gap, Is.GreaterThanOrEqualTo(-0.01), "круп спящего — тоже тело");
+        }
+
+        [Test]
+        public void Body_HeroWalkingIntoTheBoss_StaysOutside_DashPassesThrough()
+        {
+            // Общий SeparateBodies держит тело 0,05 м за тик, герой идёт 0,15: без своего
+            // толчка тела герой заходил в босса (проверка 02.10 — каждое пятое начало лапы и топота).
+            var sim = Arena();
+            MeleeOnly(sim);
+            sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), new AbilityNode[0], 0);
+            Until(sim, IntroDone);
+            var e = sim.Entities;
+            // Корпус (Simulation.ForestBoss.Hull): зазор между телом героя и корпусом.
+            double Gap() => (sim.ThicketHullGap(Boss, e.Position[0]) - e.BodyRadius[0]).ToDouble();
+            double nearest = double.MaxValue;
+            for (int k = 0; k < 60; k++)
+            {
+                var walk = InputFrame.Empty;
+                walk.Flags = (byte)InputFlags.MoveOrder;
+                walk.Aim = e.Position[Boss];
+                sim.Step(walk);
+                nearest = System.Math.Min(nearest, Gap());
+            }
+            Assert.That(nearest, Is.GreaterThanOrEqualTo(-0.001), "в корпус не заходит");
+
+            // Рывок сквозь босса от груди: корпус его не держит, встаёт на полной дальности за спиной.
+            HeroInFront(sim, 3.2);
+            var from = e.Position[0];
+            var through = e.Position[Boss] - from;
+            var dash = InputFrame.Empty;
+            dash.Flags = (byte)InputFlags.MoveOrder;
+            dash.AbilityMask = (byte)(1 << PelagKit.DashSlot);
+            dash.Aim = from + through * Fix64.FromInt(3);
+            sim.Step(dash);
+            for (int k = 0; k < 6; k++) sim.Step(InputFrame.Empty);
+            Assert.IsFalse(sim.PelagDash.CutShort, "рывок не сорван телом");
+            Assert.That(FixVec2.Distance(from, sim.PelagDash.StoppedAt).ToDouble(), Is.GreaterThan(3.9), "рывок на полную дальность");
+            Assert.That(FixVec2.Dot(sim.PelagDash.StoppedAt - e.Position[Boss], through).ToDouble(), Is.GreaterThan(0), "за спиной босса");
+            for (int k = 0; k < 10; k++) sim.Step(InputFrame.Empty);
+            Assert.That(Gap(), Is.GreaterThanOrEqualTo(-0.001), "после рывка корпус выводит наружу");
+            Assert.That(FixVec2.Dot(e.Position[0] - e.Position[Boss], through).ToDouble(), Is.GreaterThan(0),
+                "насквозь — за спину, а не назад к груди");
         }
 
         // ---------- Песочные Часы ----------
@@ -872,7 +1018,7 @@ namespace Game.Tests
             Until(sim, paw.ImpactTick + 1);
             Assert.AreEqual(health, sim.Entities.Health[0], "в старый тик контакта удара нет");
             Until(sim, shifted.ImpactTick + 1);
-            Assert.AreEqual(41, health - sim.Entities.Health[0], "лапа легла на 60 тиков позже");
+            Assert.AreEqual(16, health - sim.Entities.Health[0], "лапа легла на 60 тиков позже");
         }
 
         [Test]
@@ -893,7 +1039,7 @@ namespace Game.Tests
         [Test]
         public void Hourglass_InRecovery_ShiftsTheStance_NotThePastContact()
         {
-            // Стойка после выхода из нырка (24 тика).
+            // Стойка после выхода из нырка (36 тиков).
             var sim = Arena(distance: 9);
             sim.SetArtifact(RunArtifact.Hourglass);
             StartDive(sim, out var dive);
@@ -906,6 +1052,61 @@ namespace Game.Tests
             Assert.AreEqual(dive.ImpactTick, shifted.ImpactTick, "прошедший контакт не сдвигается");
             Assert.AreEqual(dive.EndTick + Simulation.ThicketHourglassShiftTicks, shifted.EndTick, "стойка ждёт вместе с боссом");
             Assert.IsFalse(sim.ThicketMasterHoldsBigToken(Boss), "прошедший удар жетон не держит");
+        }
+
+        [Test]
+        public void Hourglass_EndsWhileBurrowed_HeldDamageLandsOnTheEmerge()
+        {
+            // Урон под Часами копится; если Часы кончились, пока босс в нырке, он не
+            // пропадает и не бьёт бугор, а приходит в тик выхода.
+            var sim = Arena(distance: 3);
+            sim.SetArtifact(RunArtifact.Hourglass);
+            Only(sim, ThicketMasterAction.Dive);
+            sim.SetThicketReadyTick(Boss, ThicketMasterAction.Stomp, int.MaxValue / 2);
+            Until(sim, IntroDone + 20);
+            var e = sim.Entities;
+            int start = e.Health[Boss];
+            var use = InputFrame.Empty;
+            use.Flags = (byte)InputFlags.UseArtifact;
+            sim.Step(use);
+            Assert.IsTrue(sim.TimeStopped);
+            int release = sim.ArtifactActiveUntil;
+            var hit = InputFrame.Empty;
+            hit.Flags = (byte)InputFlags.Attack;
+            hit.AttackTarget = Boss;
+            for (int k = 0; k < 58; k++)
+            {
+                e.Position[0] = e.Position[Boss] + At(-1.6, 0);
+                hit.Aim = e.Position[Boss];
+                sim.Step(hit);
+            }
+            Assert.AreEqual(start, e.Health[Boss], "под Часами урон копится");
+            // Герой ушёл далеко: босс ныряет, как только оттаял, Часы кончаются под землёй.
+            int diveAt = -1;
+            while (sim.Tick < release && diveAt < 0)
+            {
+                e.Position[0] = e.Position[Boss] + At(-9, 0);
+                if (sim.ThicketReadyTick(Boss, ThicketMasterAction.Dive) > sim.Tick)
+                    sim.SetThicketReadyTick(Boss, ThicketMasterAction.Dive, sim.Tick);
+                int tick = sim.Tick;
+                sim.Step(InputFrame.Empty);
+                foreach (var ev in sim.Events)
+                    if (ev.Type == SimEventType.EnemyActionStarted && ev.ActionVariant == (int)EnemyActionKind.ThicketDive && ev.Amount == 0)
+                        diveAt = tick;
+            }
+            Assert.That(diveAt, Is.GreaterThanOrEqualTo(0), "нырок начался до конца Часов");
+            Until(sim, release + 1);
+            Assert.IsFalse(sim.TimeStopped);
+            Assert.IsTrue(sim.ThicketShielded(Boss), "Часы кончились под землёй");
+            Assert.AreEqual(start, e.Health[Boss], "по бугру накопленное не бьёт");
+            Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out var dive));
+            Until(sim, dive.ImpactTick);
+            sim.Step(InputFrame.Empty);
+            int landed = 0;
+            foreach (var ev in sim.Events)
+                if (ev.Type == SimEventType.Damage && ev.Target == Boss) landed += ev.Amount;
+            Assert.That(landed, Is.GreaterThan(0), "накопленное пришло в тик выхода");
+            Assert.AreEqual(start - landed, e.Health[Boss]);
         }
 
         // ---------- нырок в корни ----------
@@ -922,13 +1123,13 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Dive_FarHero_Burrow12_MoundTravels30_CircleLocksUnderHim_Emerges24Later_For66_Stands24()
+        public void Dive_FarHero_Burrow12_MoundTravels30_CircleLocksUnderHim_Emerges24Later_For26_Stands36()
         {
             var sim = Arena(distance: 9);
             int start = StartDive(sim, out var dive);
             var home = sim.Entities.Position[Boss];
             Assert.AreEqual(start + 12 + 30 + 24, dive.ImpactTick);
-            Assert.AreEqual(dive.ImpactTick + 24, dive.EndTick);
+            Assert.AreEqual(dive.ImpactTick + 36, dive.EndTick, "стойка 36 (владелец 02.10: окно для атаки, было 24)");
             Assert.AreEqual(1, sim.BigMarkLoad(out _), "место круга — с начала ухода");
             Assert.IsTrue(sim.ThicketMasterHoldsBigToken(Boss));
             Assert.IsTrue(sim.ThicketShielded(Boss), "неуязвим с начала ухода");
@@ -960,8 +1161,8 @@ namespace Game.Tests
             Assert.IsTrue(sim.ThicketUnderground(Boss));
             sim.Step(InputFrame.Empty);
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketDive, true));
-            Assert.AreEqual(66, sim.ThicketDiveDamageOf(Boss), "нырок на арене 9");
-            Assert.AreEqual(66, health - sim.Entities.Health[0]);
+            Assert.AreEqual(26, sim.ThicketDiveDamageOf(Boss), "нырок на арене 9: 16 × 66/41");
+            Assert.AreEqual(26, health - sim.Entities.Health[0]);
             Assert.IsFalse(ForcedMotion.IsActive(sim.Entities, 0), "подброс без контроля");
             Assert.IsFalse(sim.ThicketUnderground(Boss));
             Assert.IsFalse(sim.ThicketShielded(Boss), "вылез — снова бьётся");
@@ -971,7 +1172,7 @@ namespace Game.Tests
             Assert.IsFalse(sim.ThicketMasterHoldsBigToken(Boss));
 
             Until(sim, dive.EndTick);
-            Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out _), "стоит 24 тика после выхода");
+            Assert.IsTrue(sim.TryGetThicketMasterAction(Boss, out _), "стоит 36 тиков после выхода");
             sim.Step(InputFrame.Empty);
             Assert.IsFalse(sim.TryGetThicketMasterAction(Boss, out _));
         }
@@ -1045,7 +1246,8 @@ namespace Game.Tests
             sim.Entities.Position[0] = inside;
             sim.Step(InputFrame.Empty);
             Assert.AreEqual(inside, sim.Entities.Position[0], "тело в нырке не расталкивает");
-            var rump = sim.ThicketRumpCenter(Boss);
+            // Корень хвоста (круг корпуса 6): корпус в нырке не держит.
+            var rump = sim.ThicketHullCircleCenter(Boss, 6);
             sim.Entities.Position[0] = rump;
             sim.Step(InputFrame.Empty);
             Assert.AreEqual(rump, sim.Entities.Position[0], "круп в нырке не выталкивает");
@@ -1075,7 +1277,7 @@ namespace Game.Tests
             Assert.That(Metres(exit.Target, memory.Home), Is.LessThanOrEqualTo(14.01), "круг — не дальше поводка и круга");
             Assert.That(Metres(sim.Entities.Position[Boss], exit.Target), Is.LessThanOrEqualTo(4.0), "вылез в своём круге");
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketDive, true), "достал героя");
-            Assert.AreEqual(66, health - sim.Entities.Health[0]);
+            Assert.AreEqual(26, health - sim.Entities.Health[0]);
         }
 
         [Test]
@@ -1244,8 +1446,8 @@ namespace Game.Tests
                 Assert.AreEqual(start + 9 * k + 30, impacts[k][0], "удар круга " + k);
                 Assert.AreEqual(1, impacts[k][2], "стоящего задевает каждый");
             }
-            Assert.AreEqual(34, sim.ThicketSproutDamageOf(Boss));
-            Assert.AreEqual(6 * 34, health - sim.Entities.Health[0]);
+            Assert.AreEqual(13, sim.ThicketSproutDamageOf(Boss), "16 × 34/41");
+            Assert.AreEqual(6 * 13, health - sim.Entities.Health[0]);
             Assert.AreEqual(0, sim.HeroRootTicksLeft, "без корней");
             Assert.IsFalse(sim.TryGetThicketHazard(Boss, out _), "всё отбито — опасность снята");
             Assert.IsFalse(sim.ThicketHazardActive(Boss));
@@ -1295,7 +1497,7 @@ namespace Game.Tests
         // ---------- облака пыльцы ----------
 
         [Test]
-        public void Pollen_ThreeCloudsLandAfter24_Slow30Inside_FiveEveryFifteen_FortyAtMost()
+        public void Pollen_ThreeCloudsLandAfter24_Slow30Inside_BiteEveryFifteen_EightAtMost()
         {
             var sim = Arena(distance: 6);
             Only(sim, ThicketMasterAction.Pollen);
@@ -1339,9 +1541,9 @@ namespace Game.Tests
                     }
                 if (tick <= land + 120) Assert.AreEqual(Simulation.ThicketPollenSlowPercent, sim.HeroSlowPercent, "тик " + tick);
             }
-            Assert.AreEqual(8, bites);
-            Assert.AreEqual(5, sim.ThicketPollenDamageOf(Boss));
-            Assert.AreEqual(40, damage, "не больше 40 за облако");
+            Assert.AreEqual(8, bites, "не больше 8 укусов за облако");
+            Assert.AreEqual(2, sim.ThicketPollenDamageOf(Boss), "16 × 5/41");
+            Assert.AreEqual(8 * 2, damage, "не больше 8 укусов за облако");
             Assert.AreEqual(0, sim.HeroSlowPercent, "облака ушли");
             for (int slot = 0; slot < Simulation.ThicketPollenZones; slot++)
                 Assert.IsFalse(sim.TryGetThicketPollenZone(slot, out _));
@@ -1428,8 +1630,8 @@ namespace Game.Tests
                 Assert.AreEqual(start + 12 * v + 30, impacts[v][0], "удар залпа " + v);
                 Assert.AreEqual(1, impacts[v][2]);
             }
-            Assert.AreEqual(30, sim.ThicketRainDamageOf(Boss));
-            Assert.AreEqual(5 * 30, health - sim.Entities.Health[0]);
+            Assert.AreEqual(12, sim.ThicketRainDamageOf(Boss), "16 × 30/41");
+            Assert.AreEqual(5 * 12, health - sim.Entities.Health[0]);
             Assert.IsFalse(sim.TryGetThicketHazard(Boss, out _));
         }
 
@@ -1577,7 +1779,7 @@ namespace Game.Tests
                     if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)EnemyActionKind.ThicketStorm)
                     { Assert.AreEqual(1, e.Amount); sawSecond = true; }
             }
-            Assert.AreEqual(70, health - sim.Entities.Health[0], "волна вне кругов — 70 на арене 9");
+            Assert.AreEqual(27, health - sim.Entities.Health[0], "волна вне кругов — 27 на арене 9 (16 × 70/41)");
             Assert.AreEqual(1, Count(sim, SimEventType.EnemyActionImpact, EnemyActionKind.ThicketStorm, true));
             Assert.IsTrue(sawSecond, "круги второй волны встают в тик удара первой");
             marks = SafeMarks(sim);
@@ -1633,7 +1835,7 @@ namespace Game.Tests
             sim.Entities.Position[0] = beyond;
             health = sim.Entities.Health[0];
             sim.Step(InputFrame.Empty);
-            Assert.AreEqual(70, health - sim.Entities.Health[0], "за кромкой — 70");
+            Assert.AreEqual(27, health - sim.Entities.Health[0], "за кромкой — 27");
         }
 
         [Test]
@@ -1800,7 +2002,7 @@ namespace Game.Tests
             Until(sim, storm.ImpactTick + 1);
             Assert.AreEqual(health, sim.Entities.Health[0], "в старый тик волны нет");
             Until(sim, shifted.ImpactTick + 1);
-            Assert.AreEqual(70, health - sim.Entities.Health[0], "волна легла на 60 тиков позже");
+            Assert.AreEqual(27, health - sim.Entities.Health[0], "волна легла на 60 тиков позже");
         }
         // ---------- связки фаз 2–3 ----------
 
@@ -1824,11 +2026,11 @@ namespace Game.Tests
         }
 
         [Test]
-        public void Chain_PhaseTwo_DiveThenPawSeries_RightAfterTheStand24()
+        public void Chain_PhaseTwo_DiveThenPawSeries_RightAfterTheStand36()
         {
             var sim = Arena();
             var dive = DiveAndStand(sim, 60, 2.5);
-            Assert.AreEqual(dive.ImpactTick + Simulation.ThicketDiveStandTicks, dive.EndTick, "стоит 24 после выхода");
+            Assert.AreEqual(dive.ImpactTick + 36, dive.EndTick, "стоит 36 после выхода");
             int pawAt = RunUntilStarted(sim, EnemyActionKind.ThicketPaw, 5);
             Assert.AreEqual(dive.EndTick, pawAt, "Нырок→Лапа: серия сразу, без отдыха");
             Assert.IsTrue(sim.TryGetThicketMasterMemory(Boss, out var memory));
@@ -1946,6 +2148,203 @@ namespace Game.Tests
             }
             sim.Step(InputFrame.Empty);
             Assert.IsFalse(sim.ThicketHazardActive(Boss), "облака ушли");
+        }
+
+        // ---------- честность на поляне босса 20 × 15 (проверка 02.10) ----------
+
+        /// <summary>Оси от центра поляны: по длинной (±X), по короткой (±Y, до края 7,5 м) и по диагонали.</summary>
+        private static readonly FixVec2[] ClearingAxes = { At(1, 0), At(-1, 0), At(0, 1), At(0, -1), At(0.6, 0.8) };
+
+        /// <summary>
+        /// Настоящая поляна босса (уровень 9 леса): босс в её центре стоит на месте
+        /// (ход 0 — фигуры от центра), герой 10000 HP с рывком, касты и буря закрыты.
+        /// </summary>
+        private static Simulation Clearing(out int boss, out LayoutMap map)
+        {
+            const ulong seed = 41;
+            var location = ArenaEncounterTests.ForestLocation();
+            map = ArenaEncounterTests.ArenaMap(location, 9, seed);
+            var sim = new Simulation(seed, 512) { ThicketMasterBossEnabled = true };
+            sim.ApplyHeroBaseline();
+            var plan = location.GetLevel(9).Spawn(sim, map, seed, null, 9);
+            sim.BigAttackTokenLimit = Simulation.BigAttackTokensForArena(9);
+            sim.BigMarkBudget = Simulation.BigMarkBudgetForArena(9);
+            boss = plan.BossId;
+            var e = sim.Entities;
+            e.Stats[0].SetBase(StatType.MaxHealth, Fix64.FromInt(10000));
+            e.RefreshStats(0);
+            e.Health[0] = e.MaxHealth[0];
+            e.Stats[boss].SetBase(StatType.MoveSpeed, Fix64.Zero);
+            e.RefreshStats(boss);
+            sim.SetAbility(PelagKit.DashSlot, AbilityDefinition.Dash(), new AbilityNode[0], 0);
+            foreach (var action in new[] { ThicketMasterAction.Sprout, ThicketMasterAction.Pollen, ThicketMasterAction.Rain,
+                         ThicketMasterAction.Storm })
+                sim.SetThicketReadyTick(boss, action, int.MaxValue / 2);
+            return sim;
+        }
+
+        private static InputFrame Walk(FixVec2 to)
+        {
+            var input = InputFrame.Empty;
+            input.Flags = (byte)InputFlags.MoveOrder;
+            input.Aim = to;
+            return input;
+        }
+
+        private static InputFrame DashTo(FixVec2 to)
+        {
+            var input = Walk(to);
+            input.AbilityMask = (byte)(1 << PelagKit.DashSlot);
+            return input;
+        }
+
+        /// <summary>Шагает, держа героя в spot, пока босс не начнёт kind; тик начала.</summary>
+        private static int HoldUntilStarted(Simulation sim, FixVec2 spot, EnemyActionKind kind, int limit)
+        {
+            for (int k = 0; k < limit; k++)
+            {
+                sim.Entities.Position[0] = spot;
+                int tick = sim.Tick;
+                sim.Step(Walk(spot));
+                foreach (var e in sim.Events)
+                    if (e.Type == SimEventType.EnemyActionStarted && e.ActionVariant == (int)kind && e.Amount == 0) return tick;
+            }
+            return -1;
+        }
+
+        [Test]
+        public void Stomp_SmallClearing_EveryAxis_FeetOrDashBeatTheCircleAndTheRing()
+        {
+            // Круг 5,2 через 24, кольцо 5,2–7,5 через 15. По короткой оси пол кончается в 7,5 м —
+            // за кольцо не выйти, значит путь — наружу из круга и обратно внутрь кольца.
+            string[] names = { "ноги без задержки", "рывок наружу через 8 тиков", "рывок вбок под удар круга" };
+            foreach (var axis in ClearingAxes)
+                for (int policy = -1; policy < 3; policy++)
+                {
+                    var sim = Clearing(out int boss, out var map);
+                    sim.SetThicketReadyTick(boss, ThicketMasterAction.Dive, int.MaxValue / 2);
+                    var e = sim.Entities;
+                    var center = e.Position[boss];
+                    // В окне топота (4 м), но дальше лапы (3,68): только топот.
+                    int start = HoldUntilStarted(sim, center + axis * Fix64.Ratio(39, 10), EnemyActionKind.ThicketStomp, 900);
+                    Assert.AreNotEqual(-1, start, "топот начался");
+                    Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var stomp));
+                    int health = e.Health[0];
+                    var side = new FixVec2(-axis.Y, axis.X);
+                    while (sim.Tick <= stomp.LastImpactTick + 1)
+                    {
+                        int t = sim.Tick - start;
+                        double d = Metres(e.Position[0], center);
+                        bool ringPhase = sim.Tick > stomp.ImpactTick;
+                        InputFrame input;
+                        if (ForcedMotion.IsActive(e, 0)) input = InputFrame.Empty;
+                        else if (policy == 1 && t == 8) input = DashTo(center + axis * Fix64.FromInt(20));
+                        else if (policy == 2 && t == Simulation.ThicketStompWindupTicks - 6) input = DashTo(e.Position[0] + side * Fix64.FromInt(4));
+                        else if (policy < 0) input = Walk(e.Position[0]);
+                        else if (!ringPhase && policy == 0) input = d < 5.8 ? Walk(center + axis * Fix64.FromInt(9)) : Walk(e.Position[0]);
+                        else if (!ringPhase) input = policy == 1 && d > 5.9 ? Walk(center + axis * Fix64.Ratio(16, 10)) : Walk(e.Position[0]);
+                        else input = d > 4.6 ? Walk(center + axis * Fix64.Ratio(16, 10)) : Walk(e.Position[0]);
+                        sim.Step(input);
+                    }
+                    if (policy < 0) Assert.Less(e.Health[0], health, "стоя на месте — попадание (проверка жива), ось " + axis);
+                    else Assert.AreEqual(health, e.Health[0], names[policy] + ", ось " + axis);
+                }
+        }
+
+        [Test]
+        public void Paw_PhaseThreeSeriesInMelee_DashAwayAfterReactionOrFeetAtOnce_NoStrikeLands()
+        {
+            // Серия из трёх перед мордой: первый замах 15 тиков. Из 2,5 м рывок прочь через
+            // 8 тиков (реакция) уводит из всех трёх; ногами из 2,5 м не уйти даже сразу
+            // (сектор 4,14 + тело героя), с края досягаемости сабли (3,3 м) — можно, если сразу.
+            string[] names = { "рывок прочь через 8 тиков из 2,5 м", "ногами прочь сразу из 3,3 м" };
+            for (int policy = -1; policy < 2; policy++)
+            {
+                var sim = Clearing(out int boss, out var map);
+                sim.SetThicketReadyTick(boss, ThicketMasterAction.Dive, int.MaxValue / 2);
+                sim.SetThicketReadyTick(boss, ThicketMasterAction.Stomp, int.MaxValue / 2);
+                var e = sim.Entities;
+                var center = e.Position[boss];
+                for (int k = 0; k < 200; k++) { e.Position[0] = center + At(0, -6); sim.Step(Walk(e.Position[0])); }
+                e.Health[boss] = e.MaxHealth[boss] * 30 / 100;
+                for (int k = 0; k < 120; k++) { e.Position[0] = center + At(0, -6); sim.Step(Walk(e.Position[0])); }
+                Assert.AreEqual(3, sim.ThicketPawSeriesMin(boss), "фаза 3 — серия из трёх");
+                int start = -1;
+                for (int k = 0; k < 300 && start < 0; k++)
+                {
+                    e.Position[0] = center + e.Facing[boss].Normalized() * (policy == 1 ? Fix64.Ratio(33, 10) : Fix64.Ratio(5, 2));
+                    int tick = sim.Tick;
+                    sim.Step(Walk(e.Position[0]));
+                    foreach (var ev in sim.Events)
+                        if (ev.Type == SimEventType.EnemyActionStarted && ev.ActionVariant == (int)EnemyActionKind.ThicketPaw && ev.Amount == 0)
+                            start = tick;
+                }
+                Assert.AreNotEqual(-1, start, "серия началась");
+                Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var paw));
+                Assert.AreEqual(3, paw.Stages);
+                int health = e.Health[0];
+                var away = (e.Position[0] - center).Normalized();
+                while (sim.Tick <= paw.LastImpactTick + 1)
+                {
+                    int t = sim.Tick - start;
+                    InputFrame input;
+                    if (ForcedMotion.IsActive(e, 0)) input = InputFrame.Empty;
+                    else if (policy < 0) input = Walk(e.Position[0]);
+                    else if (policy == 0 && t < 8) input = Walk(e.Position[0]);
+                    else if (policy == 0 && t == 8) input = DashTo(center + away * Fix64.FromInt(20));
+                    else input = Walk(center + away * Fix64.FromInt(20));
+                    sim.Step(input);
+                }
+                if (policy < 0) Assert.Less(e.Health[0], health, "стоя на месте — попадание (проверка жива)");
+                else Assert.AreEqual(health, e.Health[0], names[policy]);
+            }
+        }
+
+        [Test]
+        public void Dive_HeroOnTheFloorEdge_EveryAxis_DashGetsHimOut()
+        {
+            // Круг нырка r4,0 встаёт под героем за 24 тика до выхода: ногами не уйти (нужно
+            // 4,45 м, герой проходит 3,6), рывком — да, и у самого края пола.
+            string[] names = { "рывок внутрь через 8 тиков", "рывок вдоль края под выход" };
+            foreach (var axis in ClearingAxes)
+                for (int policy = -1; policy < 2; policy++)
+                {
+                    var sim = Clearing(out int boss, out var map);
+                    sim.SetThicketReadyTick(boss, ThicketMasterAction.Stomp, int.MaxValue / 2);
+                    var e = sim.Entities;
+                    var center = e.Position[boss];
+                    Fix64 radius = e.BodyRadius[0];
+                    var edge = center;
+                    for (Fix64 r = Fix64.Ratio(1, 10); r < Fix64.FromInt(12); r += Fix64.Ratio(1, 10))
+                    {
+                        if (!map.IsWalkable(center + axis * r, radius)) break;
+                        edge = center + axis * r;
+                    }
+                    Assert.That(Metres(edge, center), Is.GreaterThan(6.5), "край пола найден");
+                    // Разбудить рядом, потом встать на край (вне досягаемости лапы и окна топота).
+                    for (int k = 0; k < 200; k++) { e.Position[0] = center + axis * Fix64.FromInt(6); sim.Step(Walk(e.Position[0])); }
+                    int start = HoldUntilStarted(sim, edge, EnemyActionKind.ThicketDive, 600);
+                    Assert.AreNotEqual(-1, start, "нырок начался");
+                    Assert.IsTrue(sim.TryGetThicketMasterAction(boss, out var dive));
+                    int health = e.Health[0];
+                    int locked = dive.ImpactTick - Simulation.ThicketDiveLockTicks;
+                    var along = new FixVec2(-axis.Y, axis.X);
+                    while (sim.Tick <= dive.ImpactTick + 1)
+                    {
+                        InputFrame input;
+                        if (ForcedMotion.IsActive(e, 0)) input = InputFrame.Empty;
+                        else if (sim.Tick < locked) { e.Position[0] = edge; input = Walk(edge); }
+                        else if (policy < 0) input = Walk(e.Position[0]);
+                        else if (policy == 0 && sim.Tick == locked + 8) input = DashTo(center);
+                        else if (policy == 0 && sim.Tick > locked + 8) input = Walk(center);
+                        else if (policy == 1 && sim.Tick == dive.ImpactTick - 4) input = DashTo(e.Position[0] + along * Fix64.FromInt(4));
+                        else input = Walk(e.Position[0]);
+                        sim.Step(input);
+                    }
+                    if (policy < 0) Assert.Less(e.Health[0], health, "стоя на месте — попадание (проверка жива), ось " + axis);
+                    else Assert.AreEqual(health, e.Health[0], names[policy] + ", ось " + axis);
+                    Assert.IsTrue(map.IsWalkable(e.Position[boss], e.BodyRadius[boss]), "вылез на полу, ось " + axis);
+                }
         }
 
         // ---------- темп ----------
@@ -2120,8 +2519,14 @@ namespace Game.Tests
                     input.Aim = boss;
                 }
 
-                // Фаза 3 сценария: прорастание закрыто, чтобы ливень точно выпал (одинаково в обоих прогонах).
-                if (tick * 15 == _ticks * 9) Sim.SetThicketReadyTick(_boss, ThicketMasterAction.Sprout, int.MaxValue / 2);
+                // Фаза 3 сценария: прорастание и пыльца закрыты, чтобы ливень точно выпал (одинаково в обоих
+                // прогонах). Пыльца — с вступления-кат-сцены (02.10): бой начинается на 75 тиков раньше, и
+                // взвешенный выбор фазы 3 без этого уходил в пыльцу и лапу.
+                if (tick * 15 == _ticks * 9)
+                {
+                    Sim.SetThicketReadyTick(_boss, ThicketMasterAction.Sprout, int.MaxValue / 2);
+                    Sim.SetThicketReadyTick(_boss, ThicketMasterAction.Pollen, int.MaxValue / 2);
+                }
 
                 Sim.Step(input);
 

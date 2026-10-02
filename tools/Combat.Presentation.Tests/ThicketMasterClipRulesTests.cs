@@ -207,7 +207,7 @@ public sealed class ThicketMasterClipRulesTests
         Assert.That(up.Clip, Is.EqualTo(ThicketClip.Emerge));
         Assert.That(up.Frame, Is.EqualTo(0f));
         Assert.That(up.Burrowed, Is.False);
-        // Стойка 24: Emerge целиком (36 кадров) — к связке фаз 2–3 тело уже стряхнуло землю.
+        // Стойка 36 (было 24): Emerge целиком (36 кадров) 1:1 — к связке фаз 2–3 тело уже стряхнуло землю.
         Assert.That(Frame(dive, impact + Simulation.ThicketDiveStandTicks, ThicketClip.Emerge), Is.EqualTo(36f));
     }
 
@@ -269,16 +269,17 @@ public sealed class ThicketMasterClipRulesTests
         Assert.That(ThicketMasterClipRules.TurnPhase(90f), Is.EqualTo(1f), "ровно 90° — конец клипа");
         Assert.That(ThicketMasterClipRules.TurnPhase(-135f), Is.EqualTo(.5f).Within(1e-5));
 
-        // 2,6 м/с Sim за секунду при шаге 1,7857 м (замер после правки 02.10) — 1,456 цикла:
-        // клип 30 кадров (цикл 1 с) играет ×1,456. Рост ×1,15 — шаг тоже ×1,15 (масштаб тела).
+        // 2,0 м/с Sim (владелец 02.10, было 2,6) за секунду при шаге 1,7857 м (замер после правки
+        // 02.10) — 1,12 цикла: клип 30 кадров (цикл 1 с) играет ×1,12. Рост ×1,15 — шаг тоже ×1,15
+        // (масштаб тела): ×0,974, почти 1:1. В export.json пакета замер записан ещё при 2,6 (×1,456).
         float speed = Simulation.ThicketMasterMoveSpeed.ToFloat();
         Assert.That(ThicketMasterClipRules.DefaultWalkStride, Is.EqualTo(1.7857f).Within(.001f));
         Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride),
             Is.EqualTo(speed / ThicketMasterClipRules.DefaultWalkStride).Within(1e-5));
         Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride) * 30f / 30f,
-            Is.EqualTo(1.456f).Within(.01f), "скорость клипа Walk против Sim — как в export.json пакета");
+            Is.EqualTo(1.12f).Within(.01f), "скорость клипа Walk против Sim: 2,0 / 1,7857");
         Assert.That(ThicketMasterClipRules.WalkCycles(speed, ThicketMasterClipRules.DefaultWalkStride * 1.15f),
-            Is.EqualTo(1.456f / 1.15f).Within(.01f), "тело ×1,15 — шаг длиннее, клип медленнее");
+            Is.EqualTo(1.12f / 1.15f).Within(.01f), "тело ×1,15 — шаг длиннее, клип медленнее");
     }
 
     // ------------------------------------------------------------ Песочные Часы

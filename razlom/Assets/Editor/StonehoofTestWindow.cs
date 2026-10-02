@@ -21,7 +21,7 @@ public sealed class StonehoofTestWindow : EditorWindow
         using (new EditorGUI.DisabledScope(EditorApplication.isCompiling || EditorApplication.isUpdating))
             if (GUILayout.Button(EditorApplication.isPlaying ? "Повторить бой" : "Начать тестовый бой", GUILayout.Height(34))) Launch(_pack ? 3 : 1, _obstacle);
         if (EditorApplication.isPlaying && GUILayout.Button("Завершить тест")) EditorApplication.isPlaying = false;
-        GUILayout.Label("Обычное управление. F8 — бессмертие и способности.\nТест не меняет прогресс, экипировку или запасы зелий.", EditorStyles.wordWrappedMiniLabel);
+        GUILayout.Label("Обычное управление. F8: «Бой» — бессмертие, «Пелаг» — способности.\nТест не меняет прогресс, экипировку или запасы зелий.", EditorStyles.wordWrappedMiniLabel);
     }
     public static void Launch(int count = 1, bool obstacle = true)
     {

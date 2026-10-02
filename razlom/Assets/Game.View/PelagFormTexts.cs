@@ -6,7 +6,7 @@ namespace Game.View
     /// Тексты форм навыков Пелага (план форм 02.10). Как у талантов (SabreTalentTexts): бой знает только
     /// номера PelagForm, формулировки живут здесь. Формы и их суть — AGENTS/DESIGN.md «Пелаг — новая структура
     /// набора»: Вихрь — Буря (держать до 3 с), Водоворот (стягивает на 4 м и сбивает), Пенные волны (2 кольца
-    /// до 5 м), Вихрь на ходу. Пока только Вихрь: владелец 02.10 — «давай вихрь», остальные формы не утверждены.
+    /// до 5 м), Вихрь на ходу (убрана). Шквал (02.10) — Охота, Пенный след, Неуловимый. Остальные формы не утверждены.
     ///
     /// Описание — одна строка простым языком: на карточке экрана формы оно не переносится. Число на карточке —
     /// из утверждённого описания; когда у формы будет механика, его даст сборка.
@@ -35,6 +35,9 @@ namespace Game.View
                 case PelagForm.WhirlwindMaelstrom: return "Водоворот";
                 case PelagForm.WhirlwindFoamWaves: return "Пенные волны";
                 case PelagForm.WhirlwindOnTheMove: return "Вихрь на ходу";
+                case PelagForm.SquallHunt: return "Охота";
+                case PelagForm.SquallFoamTrail: return "Пенный след";
+                case PelagForm.SquallElusive: return "Неуловимый";
                 case PelagForm.None: return string.Empty;
                 default: return "Форма " + (int)form;
             }
@@ -49,6 +52,9 @@ namespace Game.View
                 case PelagForm.WhirlwindMaelstrom: return "Вихрь подтягивает врагов с 4 м и сбивает их с ног.";
                 case PelagForm.WhirlwindFoamWaves: return "Вихрь пускает два кольца пены до 5 м.";
                 case PelagForm.WhirlwindOnTheMove: return "Вихрь не тормозит шаг — крутишься на полном ходу.";
+                case PelagForm.SquallHunt: return "Прыжки к самым раненым; убийство даёт лишний прыжок.";
+                case PelagForm.SquallFoamTrail: return "Прыжки оставляют пену: она бьёт и замедляет врагов.";
+                case PelagForm.SquallElusive: return "Неуязвим в прыжках, последний возвращает на место.";
                 default: return string.Empty;
             }
         }
@@ -62,6 +68,9 @@ namespace Game.View
                 case PelagForm.WhirlwindMaelstrom: return "Подтягивает";
                 case PelagForm.WhirlwindFoamWaves: return "Кольца пены";
                 case PelagForm.WhirlwindOnTheMove: return "Скорость";
+                case PelagForm.SquallHunt: return "Лишние прыжки";
+                case PelagForm.SquallFoamTrail: return "Замедление";
+                case PelagForm.SquallElusive: return "Неуязвимость";
                 default: return string.Empty;
             }
         }
@@ -75,6 +84,9 @@ namespace Game.View
                 case PelagForm.WhirlwindMaelstrom: return "с 4 м";
                 case PelagForm.WhirlwindFoamWaves: return "2 · до 5 м";
                 case PelagForm.WhirlwindOnTheMove: return "полная";
+                case PelagForm.SquallHunt: return "до 4";
+                case PelagForm.SquallFoamTrail: return "−30% · 3 с";
+                case PelagForm.SquallElusive: return "все прыжки";
                 default: return string.Empty;
             }
         }

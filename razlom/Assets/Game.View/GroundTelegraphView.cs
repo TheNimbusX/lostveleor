@@ -160,6 +160,10 @@ namespace Game.View
             for (int slot = 0; slot < high; slot++)
             {
                 if (_bySlot[slot] != null || !sim.TryGetTelegraph(slot, out var t) || !t.SharedView) continue;
+                // Круг-укрытие бури Хозяина Чащи — не угроза: красный пунктир читался как удар.
+                // Его рисуют поле бури (ThicketStormDangerView: вырез в опасности, золотая кромка)
+                // и свет бури (ThicketMasterCombatView, «LightPillar»).
+                if ((t.Flags & TelegraphFlags.SafeZone) != 0) continue;
                 var m = Take(PoolFor(t.Shape));
                 if (m == null) continue;
                 Show(m, slot, in t);

@@ -269,8 +269,10 @@ namespace Game.Sim
             for (int i = 1; i < Entities.Count; i++)
             {
                 int held = _heldDamage[i];
+                // Хозяин Чащи в нырке: накопленное ждёт его выхода (ReleaseThicketHeldDamage).
+                if (held > 0 && Entities.Alive[i] && ThicketShielded(i)) continue;
                 _heldDamage[i] = 0;
-                if (held <= 0 || !Entities.Alive[i] || ThicketShielded(i)) continue;
+                if (held <= 0 || !Entities.Alive[i]) continue;
                 Entities.Health[i] -= held;
                 _events.Add(SimEvent.Damage(PlayerId, i, held, true, Entities.Position[i], DamageType.Physical, DamageOrigin.Ability, -1));
                 if (Entities.Health[i] <= 0) Kill(i, PlayerId, -1);

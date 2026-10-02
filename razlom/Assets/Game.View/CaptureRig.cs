@@ -126,6 +126,25 @@ namespace Game.View
         /// у capture-нажатий нет удержания клавиши.
         /// </summary>
         public static bool WhirlwindHold { get; private set; }
+        /// <summary>
+        /// -capture-skill-form whirlwind:storm|maelstrom|waves (вид форм Вихря 02.10): стенд
+        /// -capture-whirlwind с формой в слоте Вихря. TickDriver ставит её набору забега через
+        /// RunLoadout.DebugSetForm — как F8 «Вихрь: форма». Нажатий два (FormCastTicks), у Бури
+        /// клавиша зажата все StormHoldTicks от нажатия. Без ключа — None, стенд прежний.
+        /// </summary>
+        public static PelagForm SkillForm { get; private set; }
+        /// <summary>
+        /// -capture-whirlwind-ring &lt;м&gt;: мишени стенда Вихря на этом расстоянии от героя
+        /// (стенд ставит их на 1,7 м — тяге Водоворота там тянуть нечего). Ставятся в начале
+        /// и перед каждым нажатием, здоровье доливается каждый тик. 0 — стенд прежний.
+        /// </summary>
+        public static float WhirlwindRing { get; private set; }
+        /// <summary>
+        /// -capture-whirlwind-shift &lt;dx&gt;,&lt;dz&gt; (вместе с -capture-whirlwind-ring): весь стенд сдвигается
+        /// на открытую землю. Центр первой комнаты — колодец-препятствие: тело героя в нём, тягу
+        /// Водоворота мишени упираются в его края (замер 02.10: 3,40 → 3,40 м).
+        /// </summary>
+        public static Vector2 WhirlwindShift { get; private set; }
         public static string PoseShowcase { get; private set; }
 
         public static bool RunShowcase { get; private set; }
@@ -241,6 +260,8 @@ namespace Game.View
         public static bool IsVfxShowcase => VfxShowcase != PelagVfxShowcase.None || WhirlwindShowcase;
 
         private static readonly int[] WhirlwindCastTicks = { 18, 54, 90 };
+        /// <summary>Съёмка формы: два нажатия через 4 с — Буря (3 с) и откат Вихря (72 тика) успевают.</summary>
+        private static readonly int[] FormCastTicks = { 18, 18 + 4 * Simulation.TicksPerSecond };
         private static int _nextWhirlwindCast;
         private static int _whirlwindStartedTick = -1;
 
@@ -253,9 +274,21 @@ namespace Game.View
             if (!WhirlwindShowcase || RunShowcase || LocomotionShowcase || simTick < 0) return false;
             if (GcWarmupActive) { _whirlwindStartedTick = -1; return false; }
             if (_whirlwindStartedTick < 0) _whirlwindStartedTick = simTick;
-            if (_nextWhirlwindCast >= WhirlwindCastTicks.Length) return false;
-            if (simTick - _whirlwindStartedTick < WhirlwindCastTicks[_nextWhirlwindCast]) return false;
+            int[] schedule = SkillForm != PelagForm.None ? FormCastTicks : WhirlwindCastTicks;
+            if (_nextWhirlwindCast >= schedule.Length) return false;
+            if (simTick - _whirlwindStartedTick < schedule[_nextWhirlwindCast]) return false;
             _nextWhirlwindCast++;
+            return true;
+        }
+
+        /// <summary>Номер следующего нажатия стенда и тиков до него; false — отсчёт не начат или нажатий больше нет.</summary>
+        public static bool TryNextWhirlwindCast(int simTick, out int index, out int ticksLeft)
+        {
+            int[] schedule = SkillForm != PelagForm.None ? FormCastTicks : WhirlwindCastTicks;
+            index = _nextWhirlwindCast;
+            ticksLeft = 0;
+            if (_whirlwindStartedTick < 0 || index >= schedule.Length) return false;
+            ticksLeft = _whirlwindStartedTick + schedule[index] - simTick;
             return true;
         }
 
@@ -312,6 +345,9 @@ namespace Game.View
 
             WhirlwindShowcase = Array.IndexOf(args, WhirlwindFlag) >= 0;
             WhirlwindHold = Array.IndexOf(args, "-capture-whirlwind-hold") >= 0;
+            SkillForm = ParseSkillForm(ReadValue(args, "-capture-skill-form"));
+            WhirlwindRing = Mathf.Max(0f, ReadFloat(args, "-capture-whirlwind-ring", 0f));
+            WhirlwindShift = ParseShift(ReadValue(args, "-capture-whirlwind-shift"));
             PoseShowcase = ReadValue(args, "-capture-pose");
             RunShowcase = Array.IndexOf(args, RunFlag) >= 0;
             WatchTeleports = Array.IndexOf(args, WatchTeleportsFlag) >= 0;
@@ -989,6 +1025,26 @@ namespace Game.View
             PelagVfxController vfx = FindAnyObjectByType<PelagVfxController>();
             return arena != null && arena.TryGetPlayerBlade(out _, out _)
                    && vfx != null && vfx.PoolsReady;
+        }
+
+        private static Vector2 ParseShift(string raw)
+        {
+            string[] parts = (raw ?? "").Split(',');
+            if (parts.Length != 2) return Vector2.zero;
+            bool x = float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float dx);
+            bool z = float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float dz);
+            return x && z ? new Vector2(dx, dz) : Vector2.zero;
+        }
+
+        private static PelagForm ParseSkillForm(string raw)
+        {
+            switch ((raw ?? "").Trim().ToLowerInvariant())
+            {
+                case "whirlwind:storm": return PelagForm.WhirlwindStorm;
+                case "whirlwind:maelstrom": return PelagForm.WhirlwindMaelstrom;
+                case "whirlwind:waves": return PelagForm.WhirlwindFoamWaves;
+                default: return PelagForm.None;
+            }
         }
 
         private static PelagVfxShowcase ParseShowcase(string raw)

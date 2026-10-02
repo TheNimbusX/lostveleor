@@ -43,7 +43,8 @@ namespace Game.Sim
         }
         void HandlePotionInput(in InputFrame input)
         {
-            if (!CanDrinkNow || !ActiveSim.Entities.Alive[0]) return;
+            // Вступление Хозяина Чащи (кат-сцена): ввод героя не читается — и бутылки тоже.
+            if (!CanDrinkNow || !ActiveSim.Entities.Alive[0] || ActiveSim.ThicketIntroHoldsHero) return;
             if (Mode == GameMode.Camp)
                 for (int slot = 0; slot < 2; slot++) if ((input.PotionMask & (16 << slot)) != 0) Camp.CyclePotion(slot);
             int slots = input.PotionSlotMask & 3;

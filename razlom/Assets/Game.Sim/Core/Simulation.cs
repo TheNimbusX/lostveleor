@@ -342,8 +342,8 @@ namespace Game.Sim
         private int _chainTarget = -1;
         public int ChainTargetId => _chainHopsLeft > 0 ? _chainTarget : -1;
         private int _chainSlot = -1;
-        // +1 под талант «Пять прыжков».
-        private readonly int[] _chainVisited = new int[AnchorKit.ChainMaxHops + 1];
+        // +1 под талант «Пять прыжков», и лишние прыжки Охоты (Simulation.Squall).
+        private readonly int[] _chainVisited = new int[AnchorKit.ChainMaxHops + 1 + HuntBonusHopsMax];
         private int _chainVisitedCount;
 
         /// <summary>
@@ -547,7 +547,7 @@ namespace Game.Sim
         /// читать из HitScratch. Отдельный метод, чтобы буфер был один на всех.
         /// </summary>
         public int QueryRadiusIntoScratch(FixVec2 center, Fix64 radius, int exclude)
-            => Grid.QueryRadius(Entities, center, radius, exclude, HitScratch);
+            => AddThicketHullsToQuery(Grid.QueryRadius(Entities, center, radius, exclude, HitScratch), center, radius, exclude);
 
         /// <summary>
         /// Начальная расстановка. Использует поток Spawns, поэтому одинакова
@@ -1236,6 +1236,7 @@ namespace Game.Sim
             ResetPotionEffects();
             ResetPreparedGiftTiming();
             ResetUpgrades();
+            ResetWhirlwindForms();
             EndArtifactEffects();
             ResetTempo();
             ResetPelagBasicCombo(preserveBasicSerial);
@@ -1248,9 +1249,7 @@ namespace Game.Sim
             _leapLaunchTick = -1;
             _leapAim = FixVec2.Zero;
             _leapTarget = _leapPunchTick = _leapSlot = -1;
-            _chainHopsLeft = _chainVisitedCount = 0;
-            _chainTarget = _chainSlot = -1;
-            System.Array.Clear(_chainVisited, 0, _chainVisited.Length);
+            ResetSquall();
             _abilityMovePenaltyUntilTick = 0;
         }
 
@@ -1322,7 +1321,8 @@ namespace Game.Sim
             RegenerateLavidium();
             UpdatePelagBasicContinuation();
             UpdateSabreChain();
-            InputFrame input = PrepareCombatInput(rawInput);
+            // Вступление Хозяина Чащи (кат-сцена): ввод героя не читается (Simulation.ForestBoss.Intro).
+            InputFrame input = PrepareCombatInput(ThicketIntroHoldsHero ? InputFrame.Empty : rawInput);
 
             // Штраф движения начинается в кадр нажатия способности, хотя
             // gameplay-каст разрешается ниже по фиксированному порядку стадий.
@@ -1336,6 +1336,7 @@ namespace Game.Sim
             // тело, которое тащат, своим шагом не идёт, и порядок здесь — это
             // и есть правило приоритета, а не деталь реализации.
             CancelInvalidStonehooves();
+            MarkThicketHullStart();
             ResolveForcedMotion();
 
             MovePlayer(input);
@@ -1349,15 +1350,19 @@ namespace Game.Sim
             // пересборки: оно двигает тела, и бой обязан видеть уже разведённые
             // позиции, а не те, что были до расталкивания.
             SeparateBodies();
+            // Хозяин Чащи — твёрдое тело: корпус выдавливает вошедших (Simulation.ForestBoss.Hull).
+            PushOutOfThicketHulls();
             Grid.Rebuild(Entities);
 
             // Порядок стадий боя зафиксирован. Любой другой был бы столь же
             // корректен, но менять его нельзя: он входит в поведение и хеш.
+            BeginThicketHitBodies();
             ResolveArtifactUse(in input);
             ResolveAbilityCasts(in input);
             UpdateBlaze();
             ResolveWhirlwindImpact(in input);
             UpdateWhirlwindChannel(in input);
+            UpdateFoamWaves();
             UpdateAnchorSlam();
             UpdateWreck();
             UpdateCleave();
@@ -1383,6 +1388,7 @@ namespace Game.Sim
             ResolveBoardingPunch();
             ContinueChainStep();
             ResolveAttacks(in input);
+            EndThicketHitBodies();
             UpdateForestBud();
             UpdateForestPuddles();
             UpdateWendigo();
@@ -1469,6 +1475,7 @@ namespace Game.Sim
                     _whirlwindImpactTick = Tick + AbilityExecutionTicks(WhirlwindContactDelayTicks);
                     _whirlwindImpactSlot = slot;
                     WhirlwindUpgradesAtCast(slot);
+                    WhirlwindFormAtCast(slot);
                 }
                 else if (build.DefinitionId == AbilityDefinition.AnchorLeapId)
                 {
@@ -1555,112 +1562,6 @@ namespace Game.Sim
         /// Единственный момент нанесения урона «Вихрем». View получает обычные
         /// Damage/Death events и уже от них показывает весь impact.
         /// </summary>
-        /// <summary>
-        /// ПОДСЕЧКА. Волочит и бьёт тем же тиком.
-        ///
-        /// Урон сразу, а не по приезде: цель, которую тащат, уже поймана, и
-        /// ждать конца волока значило бы, что убитый по дороге враг не
-        /// получает урона от способности, которая его и убила.
-        /// </summary>
-        private void BeginChainStep(int slot, int target)
-        {
-            if (target < 0) return;
-
-            _chainSlot = slot;
-            _chainOrigin = Entities.Position[PlayerId];
-            _chainRepeatHop = false;
-            // Талант «Пять прыжков» добавляет один; буфер посещённых рассчитан на него.
-            _chainHopsLeft = BuildHas(slot, AbilityFlag.SquallFiveHops, AbilityDefinition.ChainStepId)
-                ? AnchorKit.ChainMaxHops + 1 : AnchorKit.ChainMaxHops;
-            _chainTarget = target;
-            _chainVisitedCount = 1;
-            _chainVisited[0] = target;
-            ForcedMotion.Begin(Entities, PlayerId,
-                AnchorKit.ChainLandingSpot(Entities, target),
-                AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
-        }
-
-        /// <summary>
-        /// Долетел — ударил — выбрал следующего.
-        ///
-        /// Цепочка НЕ считается вперёд намеренно: к третьему прыжку заранее
-        /// выбранные цели оказываются трупами, убитыми предыдущими прыжками
-        /// той же способности. Каждый следующий выбирается из живых.
-        /// </summary>
-        private void ContinueChainStep()
-        {
-            if (_chainHopsLeft <= 0) return;
-            if (ForcedMotion.IsActive(Entities, PlayerId)) return;
-
-            if (!Entities.Alive[PlayerId])
-            {
-                _chainHopsLeft = 0;
-                return;
-            }
-
-            AbilityBuild build = _chainSlot >= 0 && _chainSlot < AbilitySlots
-                ? _abilityBuilds[_chainSlot]
-                : null;
-            if (build == null)
-            {
-                _chainHopsLeft = 0;
-                return;
-            }
-
-            if (_chainTarget >= 0 && _chainTarget < Entities.Count
-                && Entities.Alive[_chainTarget]
-                && Entities.Side[_chainTarget] != Entities.Side[PlayerId]
-                && ChainContactReachable(_chainTarget))
-            {
-                int damage = build.Get(AbilityStatType.Damage).ToInt();
-                // «Добивающий прыжок»: последний прыжок серии бьёт вдвое.
-                if (_chainHopsLeft == 1 && build.Has(AbilityFlag.SquallFinisher)) damage *= 2;
-                damage = SquallHopDamage(build, _chainTarget, damage);
-                ApplyAbilityDamage(PlayerId, _chainTarget, damage, _chainSlot, DamageType.Physical);
-            }
-
-            _chainHopsLeft--;
-            if (_chainHopsLeft <= 0)
-            {
-                EmitChainHop();
-                _chainTarget = -1;
-                _chainSlot = -1;
-                SquallReturn(build);
-                return;
-            }
-
-            int next = AnchorKit.PickChainTarget(this, HitScratch, build.Get(AbilityStatType.Radius), _chainVisited, _chainVisitedCount);
-            if (next < 0)
-            {
-                // Больше некого — цепочка кончается тихо. Оставшиеся прыжки
-                // не переносятся: способность про перемещение между целями,
-                // а не про число ударов.
-                _chainHopsLeft = 0;
-                EmitChainHop();
-                _chainTarget = -1;
-                _chainSlot = -1;
-                SquallReturn(build);
-                return;
-            }
-
-            bool repeatTarget = next == _chainTarget;
-            _chainRepeatHop = repeatTarget;
-            _chainTarget = next;
-            _chainVisited[_chainVisitedCount++] = next;
-            ForcedMotion.Begin(Entities, PlayerId,
-                AnchorKit.ChainLandingSpot(Entities, next, repeatTarget),
-                AnchorKit.ChainTicksPerHop, ForcedMotionKind.Lunge);
-            EmitChainHop();
-        }
-
-        private void EmitChainHop()
-        {
-            // Старт движения существует даже при смерти цели до контакта.
-            // Анимация не должна зависеть от наличия события урона.
-            _events.Add(SimEvent.ChainHop(PlayerId, _chainTarget, _chainHopsLeft,
-                _chainVisitedCount - 1, Entities.Position[PlayerId]));
-        }
-
         private void ResolveWhirlwindImpact(in InputFrame input)
         {
             if (_whirlwindImpactTick < 0 || Tick < _whirlwindImpactTick) return;
@@ -1668,9 +1569,7 @@ namespace Game.Sim
             int slot = _whirlwindImpactSlot;
             _whirlwindImpactTick = -1;
             _whirlwindImpactSlot = -1;
-            _chainHopsLeft = 0;
-            _chainTarget = -1;
-            _chainSlot = -1;
+            StopSquall();
 
             if (!Entities.Alive[PlayerId]) return;
             AbilityBuild build = slot >= 0 && slot < AbilitySlots ? _abilityBuilds[slot] : null;
@@ -1680,6 +1579,7 @@ namespace Game.Sim
             // удержание начинается, только если кнопку ещё держат к контакту.
             WhirlwindPulse(slot, firstContact: true);
             StartWhirlwindWave(slot);
+            WhirlwindFormAtContact(slot);
             BeginWhirlwindChannel(slot, in input);
         }
 
@@ -1728,8 +1628,8 @@ namespace Game.Sim
         {
             if (!Entities.Alive[target] || amount <= 0) return;
             if (target == PlayerId && PlayerImmune) return;
-            // Хозяин Чащи в нырке (от ухода до выхода) неуязвим (Simulation.ForestBoss).
-            if (ThicketShielded(target)) return;
+            // Хозяин Чащи в нырке (от ухода до выхода) и во вступлении неуязвим (Simulation.ForestBoss*).
+            if (ThicketShielded(target) || ThicketIntroShields(target)) return;
             if (BlazeEvades(target, overTime)) return;
 
             // «Горючее»: враг в луже Взрывной смеси получает от Пелага +20%.
@@ -1850,6 +1750,14 @@ namespace Game.Sim
                 return;
             }
 
+            // Шквал держит героя и в опоре между прыжками, и в начале выхода; со
+            // второго тика выхода шаг идёт и срывает выход (Simulation.Squall).
+            if (SquallHoldsHero)
+            {
+                Entities.Velocity[PlayerId] = FixVec2.Zero;
+                return;
+            }
+
             // Новый приказ перебивает старый. При удержании кнопки он приходит
             // каждый тик и точка едет за курсором — это то же самое поведение,
             // что и раньше, просто теперь оно частный случай.
@@ -1900,6 +1808,8 @@ namespace Game.Sim
                 : Tick < _abilityMovePenaltyUntilTick
                     ? fullSpeed * AbilityMoveScale
                     : fullSpeed;
+            // Буря (форма Вихря): пока держат — доля шага из стата сборки (Simulation.WhirlwindForms).
+            if (WhirlwindStorming) speed = Fix64.Min(speed, fullSpeed * StormMoveScale);
 
             if (_hasMoveOrder)
             {
@@ -2414,20 +2324,6 @@ namespace Game.Sim
         private bool CanTravel(FixVec2 from, FixVec2 to, Fix64 radius)
             => _campWalkMap != null ? _campWalkMap.CanTravel(from, to) : _layout.CanTravel(from, to, radius);
 
-        private bool ChainContactReachable(int target)
-        {
-            FixVec2 from = Entities.Position[PlayerId];
-            FixVec2 delta = Entities.Position[target] - from;
-            Fix64 reach = AnchorKit.ChainStandoff + Entities.BodyRadius[target] + Entities.BodyRadius[PlayerId];
-            if (delta.LengthSq > reach * reach) return false;
-            if (_campWalkMap != null) return _campWalkMap.CanTravel(from, Entities.Position[target]);
-            if (_layout == null) return true;
-            int steps = System.Math.Max(1, (delta.Length / (LayoutMap.CellSize / Fix64.FromInt(8))).ToInt() + 1);
-            for (int i = 1; i <= steps; i++)
-                if (!_layout.IsWalkable(from + delta * Fix64.Ratio(i, steps), Fix64.Zero)) return false;
-            return true;
-        }
-
         /// <summary>
         /// Автоатака. Каждая живая сущность ищет ближайшую цель чужой стороны
         /// в радиусе удара. Порядок обхода строго по индексу — от него зависит,
@@ -2516,8 +2412,8 @@ namespace Game.Sim
             bool crit = Rng.Combat.Chance(Entities.CritChance[source]);
             // Keep the normal critical roll even when developer immunity absorbs the hit.
             if (target == PlayerId && PlayerImmune) return 0;
-            // Хозяин Чащи в нырке неуязвим; бросок крита выше уже сделан — поток не сдвигается.
-            if (ThicketShielded(target)) return 0;
+            // Хозяин Чащи в нырке и во вступлении неуязвим; бросок крита выше уже сделан — поток не сдвигается.
+            if (ThicketShielded(target) || ThicketIntroShields(target)) return 0;
             if (BlazeEvades(target, overTime: false)) return 0;
             // «Верный удар»: бросок уже сделан (поток не сдвигается), усиление подменяет результат.
             crit = SureCrit(source, crit);
@@ -2594,6 +2490,8 @@ namespace Game.Sim
             HashProgression(ref hash);
             HashTalents(ref hash);
             HashUpgrades(ref hash);
+            HashWhirlwindForms(ref hash);
+            HashSquall(ref hash);
             HashForestBud(ref hash);
             HashWendigo(ref hash);
             HashStonehooves(ref hash);

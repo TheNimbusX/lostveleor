@@ -55,6 +55,13 @@ namespace Game.View
         private int _tooltipValueCount;
         private Camera _rangeCamera;
         private HudRangePreview _rangePreview;
+        /// <summary>
+        /// Фигура досягаемости. Создаётся в Awake, но перезагрузка домена посреди Play (правка скрипта
+        /// при «Recompile And Continue Playing») обнуляет несериализуемое поле, а Awake не повторяется —
+        /// 02.10 это сыпало NullReferenceException каждый кадр. Тогда фигура создаётся заново здесь;
+        /// прежняя осталась дочерним объектом HUD и уходит вместе с ним.
+        /// </summary>
+        private HudRangePreview RangePreview => _rangePreview ??= new HudRangePreview(transform);
         private float _screenHudScale = 1f;
         private GUIStyle _xpLabel, _tooltipKey, _tooltipMetric, _tooltipCaption;
         private Vector2 _pointer;
@@ -202,7 +209,7 @@ namespace Game.View
         private void DrawCanvasCompanions()
         {
             if (_view == null) return;
-            _rangePreview.Hide();
+            RangePreview.Hide();
             Simulation sim = _driver.Sim;
             // Боевая часть спрятана (лагерь вне полигона): досягаемость показывать не у чего.
             if (!_hudShown || sim == null || _view.CampCombatHidden) return;
@@ -814,7 +821,7 @@ namespace Game.View
             // Камера меню или студии могла быть главной на первом кадре и потом выключиться.
             if (_rangeCamera == null || !_rangeCamera.isActiveAndEnabled) _rangeCamera = Camera.main;
             if (_rangeCamera == null) return;
-            _rangePreview.Begin(_rangeCamera,Availability(sim,_tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,build).Ready);
+            RangePreview.Begin(_rangeCamera,Availability(sim,_tooltipSlot >= 0 ? _tooltipSlot : _driver.AbilityTargetAimSlot,build).Ready);
             Vector3 center = _driver.GetRenderPosition(Simulation.PlayerId) + Vector3.up * .06f;
             var position = sim.Entities.Position[Simulation.PlayerId];
             var aim = _driver.CursorWorld - position;

@@ -296,6 +296,16 @@ namespace Game.Sim
             if (BossId < 0 || _map.Routes == null) throw new System.InvalidOperationException("Boss did not spawn.");
             var entities = _sim.Entities;
             var boss = entities.Position[BossId];
+            // Хозяин Чащи на своей поляне: герой — на тропе входа в 4 м до кромки,
+            // вступление-кат-сцена играет, когда он ступит на пол (Simulation.ForestBoss.Intro).
+            if (_sim.TryGetThicketIntroTrailPoint(BossId, out var trail))
+            {
+                entities.Position[Simulation.PlayerId] = trail;
+                entities.Facing[Simulation.PlayerId] = (boss - trail).Normalized();
+                _sim.StopPlayerMovement();
+                _sim.Grid.Rebuild(entities);
+                return;
+            }
             var best = Fix64.MaxValue;
             var point = _map.EntryPoint;
             for (int c = 0; c < _map.Routes.CellCount; c++)

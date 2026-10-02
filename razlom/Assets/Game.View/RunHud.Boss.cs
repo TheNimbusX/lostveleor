@@ -48,6 +48,8 @@ namespace Game.View
                 if (_layout == null) _layout = FindAnyObjectByType<LayoutView>();
                 boss = _layout == null || _layout.IsRevealed(at.X.ToFloat(), at.Y.ToFloat())
                     || run.Sim.Entities.Health[run.BossId] < run.Sim.Entities.MaxHealth[run.BossId];
+                // Хозяин Чащи на поляне (02.10): полоса встаёт концом кат-сцены вступления, в тик первой атаки.
+                if (boss && ThicketMasterIntroRules.HoldsBossBar(run.Sim, run.BossId)) boss = false;
                 if (boss)
                 {
                     _bossMet = run.Depth;

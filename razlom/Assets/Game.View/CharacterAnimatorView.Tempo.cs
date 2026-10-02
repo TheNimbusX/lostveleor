@@ -122,12 +122,15 @@ namespace Game.View
 
         // Один авторский оборот сабли лежит в фазах 0.15–0.65 клипа (34° → 365°).
         // При удержании этот отрезок крутится по кругу, один оборот на импульс
-        // Sim (полсекунды); перемотка приходится на кадр-вспышку импульса.
+        // Sim; перемотка приходится на кадр-вспышку импульса. Период импульса —
+        // от Sim: у таланта удержания полсекунды, у формы Буря — треть
+        // (Simulation.WhirlwindChannelPulseTicks), иначе оборот героя не попадал
+        // бы в удары Бури.
         private const float WhirlwindLoopStart = .15f;
         private const float WhirlwindLoopEnd = .65f;
-        private const float WhirlwindLoopSeconds = Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond;
-        private const float WhirlwindLoopRate = (WhirlwindLoopEnd - WhirlwindLoopStart) / WhirlwindLoopSeconds;
         private const float WhirlwindExitRecoverySeconds = .16f;
+        private float _whirlLoopSeconds = Simulation.WhirlwindPulseTicks / (float)Simulation.TicksPerSecond;
+        private float WhirlwindLoopRate => (WhirlwindLoopEnd - WhirlwindLoopStart) / _whirlLoopSeconds;
         /// <summary>После конца Вихря взгляд героя догоняет Sim плавно, а не рывком в один кадр.</summary>
         public const float WhirlwindFacingRecoverySeconds = .28f;
 
@@ -148,12 +151,17 @@ namespace Game.View
             bool channeling = sim.WhirlwindChanneling && !IsDead && tick >= action.ContactTick;
             if (channeling)
             {
-                if (!_whirlLooping) { _whirlLooping = true; _whirlExiting = false; _whirlLoopTime = 0f; _whirlLoopHoldUntil = 0f; }
+                if (!_whirlLooping)
+                {
+                    _whirlLooping = true; _whirlExiting = false; _whirlLoopTime = 0f; _whirlLoopHoldUntil = 0f;
+                    // Период берётся на входе в цикл и держится до выхода: на выходе Sim уже не крутит.
+                    _whirlLoopSeconds = PelagWhirlwindFormRules.ChannelPulseTicks(sim) / (float)Simulation.TicksPerSecond;
+                }
                 else if (Time.time >= _whirlLoopHoldUntil) _whirlLoopTime += Time.deltaTime;
                 // Слои и опора ног считают, что оборот в разгаре: часы держатся до начала возврата.
                 _abilityPresentationUntil = Time.time + WhirlwindClipDuration * (1f - WhirlwindLoopEnd);
                 _actionProtectedUntil = Time.time;
-                return Mathf.Lerp(WhirlwindLoopStart, WhirlwindLoopEnd, Mathf.Repeat(_whirlLoopTime / WhirlwindLoopSeconds, 1f));
+                return Mathf.Lerp(WhirlwindLoopStart, WhirlwindLoopEnd, Mathf.Repeat(_whirlLoopTime / _whirlLoopSeconds, 1f));
             }
             if (_whirlLooping)
             {

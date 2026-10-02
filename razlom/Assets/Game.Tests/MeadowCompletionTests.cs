@@ -237,7 +237,10 @@ namespace Game.Tests
                 var player = run.Sim.Entities.Position[0];
                 Assert.That(run.Map.IsWalkable(player, run.Sim.Entities.BodyRadius[0]), Is.True);
                 var distance = FixVec2.DistanceSq(player, run.Sim.Entities.Position[run.BossId]);
-                Assert.That(distance >= Fix64.FromInt(16) && distance <= Fix64.FromInt(100), Is.True, "seed " + seed);
+                // Хозяин Чащи на своей поляне (02.10): герой — на тропе входа в 4 м до кромки
+                // (~11,5 м от босса), вступление играет, когда он ступит на пол.
+                var farthest = run.Sim.ThicketWakesOnClearing(run.BossId) ? Fix64.FromInt(169) : Fix64.FromInt(100);
+                Assert.That(distance >= Fix64.FromInt(16) && distance <= farthest, Is.True, "seed " + seed);
                 for (int i = 1; i < run.Sim.Entities.Count; i++)
                 {
                     var spacing = run.Sim.Entities.BodyRadius[i] + run.Sim.Entities.BodyRadius[0];

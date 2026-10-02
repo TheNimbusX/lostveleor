@@ -165,6 +165,9 @@ public static partial class ThicketMasterBuilder
             SetBounds(root.transform, renderers);
             CheckRootDrift(body, clips);
             var view = root.AddComponent<ThicketMasterAnimatorView>();
+            // Одежда фаз (руны, ягоды, цветы) — сразу в префаб: в пакетной сборке delayCall
+            // постпроцессора ThicketMasterDressingSetup не надёжен (ревью 02.10).
+            root.AddComponent<ThicketMasterPhaseDressing>();
             var serialized = new SerializedObject(view);
             serialized.FindProperty("_walkStride").floatValue = stride;
             serialized.FindProperty("_contactShadowMetres").floatValue = ThicketMasterAnimatorView.DefaultContactShadowMetres;

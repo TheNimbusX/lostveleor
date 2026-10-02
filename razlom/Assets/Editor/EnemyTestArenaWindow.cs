@@ -137,7 +137,7 @@ public sealed class EnemyTestArenaWindow : EditorWindow
         }
         _scroll = EditorGUILayout.BeginScrollView(_scroll);
         EditorGUILayout.LabelField("Все мобы · отдельная сцена", EditorStyles.boldLabel);
-        EditorGUILayout.HelpBox("До Play меняй точки и препятствия в Hierarchy и Scene. Ctrl+D — копия точки. Сохрани сцену. В Play команды выполняются на ближайшем тике, изменения препятствий — при сбросе. F8 — способности и бессмертие.", MessageType.None);
+        EditorGUILayout.HelpBox("До Play меняй точки и препятствия в Hierarchy и Scene. Ctrl+D — копия точки. Сохрани сцену. В Play команды выполняются на ближайшем тике, изменения препятствий — при сбросе. F8: «Пелаг» — способности, «Бой» — бессмертие.", MessageType.None);
         if (!EditorApplication.isPlaying)
         {
             var arenaObject = new SerializedObject(_arena);

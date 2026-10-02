@@ -55,6 +55,55 @@ namespace Game.View
         /// <summary>Сдвиг кадра в лагере к точке интереса, метры (CampTransition подаёт камеру к арке).</summary>
         public static Vector3 CampFocus;
 
+        // Кат-сцена (вступление босса — ThicketMasterIntroView). Без неё всё ниже стоит в покое:
+        // blend 0, zoom 1, размер до кат-сцены не запомнен — слежение то же, что было.
+        private Vector3 _cinematicFocus;
+        private float _cinematicBlend, _cinematicZoom = 1f, _cinematicRestSize;
+
+        /// <summary>
+        /// Кат-сцена ведёт кадр (каждый кадр до LateUpdate камеры): focus — точка мира, которую кадр
+        /// ставит на место героя; blend 0…1 — доля пути от обычного кадра к ней (сглаживание то же);
+        /// zoom — множитель размера ортокамеры к её размеру до кат-сцены, наклон не меняется.
+        /// Отпускает <see cref="ReleaseCinematic"/>. Только бой: в лагере не действует.
+        /// </summary>
+        public void SetCinematic(Vector3 focus, float blend, float zoom)
+        {
+            _cinematicFocus = focus;
+            _cinematicBlend = Mathf.Clamp01(blend);
+            _cinematicZoom = zoom > 0f ? zoom : 1f;
+        }
+
+        /// <summary>Кат-сцена кончилась или прервана: кадр снова только за героем, размер камеры — прежний.</summary>
+        public void ReleaseCinematic()
+        {
+            _cinematicBlend = 0f;
+            _cinematicZoom = 1f;
+            if (_cinematicRestSize > 0f) SetRestSize(_cinematicRestSize);
+            _cinematicRestSize = 0f;
+        }
+
+        private Vector3 Cinematic(Vector3 wanted, Vector3 framing)
+        {
+            if (_cinematicRestSize <= 0f) _cinematicRestSize = RestSize();
+            SetRestSize(_cinematicRestSize * _cinematicZoom);
+            return Vector3.Lerp(wanted, _offset + _cinematicFocus + framing, _cinematicBlend);
+        }
+
+        /// <summary>Размер без толчка зумом: его держит CombatCameraJuice, а без неё — сама камера.</summary>
+        private float RestSize()
+        {
+            if (_juice != null && _juice.isActiveAndEnabled) return _juice.BaseOrthographicSize;
+            Camera camera = GetComponent<Camera>();
+            return camera != null ? camera.orthographicSize : CombatSize;
+        }
+
+        private void SetRestSize(float size)
+        {
+            if (_juice != null && _juice.isActiveAndEnabled) { _juice.BaseOrthographicSize = size; return; }
+            Camera camera = GetComponent<Camera>();
+            if (camera != null) camera.orthographicSize = size;
+        }
+
         /// <summary>Явно связывает авторскую камеру с runtime-драйвером.</summary>
         public void Initialize(TickDriver driver, Transform target)
         {
@@ -194,6 +243,7 @@ namespace Game.View
             _previousPlayer = player;
 
             Vector3 wanted = _offset + player + framing + _leadVelocity / Mathf.Max(0.01f, Smoothing) + (camp ? CampFocus : Vector3.zero);
+            if (!camp && (_cinematicBlend > 0f || _cinematicZoom != 1f)) wanted = Cinematic(wanted, framing);
             Target.position = Vector3.Lerp(Target.position, wanted,
                 1f - Mathf.Exp(-Smoothing * dt));
         }

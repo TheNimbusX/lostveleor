@@ -38,7 +38,7 @@ namespace Game.Sim
             && !_pelagBasicAttack.ContactProcessed && Tick <= _pelagBasicAttack.ContactTick;
 
         // Удержание ЛКМ не считается намерением оборвать Вихрь или Крушение.
-        bool PelagBasicAbilityBlocking => WhirlwindChanneling || _wreckSlot >= 0
+        bool PelagBasicAbilityBlocking => WhirlwindChanneling || _wreckSlot >= 0 || SquallHoldsHero
             || _playerAction.ActiveAt(Tick) && _playerAction.DefinitionId == AbilityDefinition.WhirlwindId;
 
         void UpdatePelagBasicContinuation()
@@ -117,7 +117,7 @@ namespace Game.Sim
             for (int target = 1; target < Entities.Count; target++)
             {
                 if (!Entities.Alive[target] || Entities.Side[target] == Entities.Side[PlayerId]) continue;
-                if (!TelegraphContains(sector, Entities.Position[target], Entities.BodyRadius[target])) continue;
+                if (!ThicketHitTouches(in sector, target)) continue;
                 if (ApplyAttack(PlayerId, target, _pelagBasicAttack.Stage, scale) > 0) positiveHit = true;
             }
             if (_pelagBasicAttack.Stage == 2 && positiveHit) RefundLavidium(10);

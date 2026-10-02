@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -8,6 +9,15 @@ namespace Game.View
     // Это часть HUD при запуске игры, не редакторская съёмка или проверка.
     internal sealed class HudMapBackdrop
     {
+        /// <summary>Имя корня камеры: по нему находятся камеры, оставшиеся без владельца.</summary>
+        public const string RootName = "HUD map backdrop";
+
+        // Камеры живых владельцев. Перезагрузка домена посреди Play (правка скрипта при «Recompile And
+        // Continue Playing») теряет C#-владельца, а камера с HideAndDontSave её переживает — и выход из
+        // Play тоже (02.10 в редакторе нашлось три таких). Статика при перезагрузке обнуляется, так что
+        // всё, чего здесь нет, — сироты.
+        static readonly List<GameObject> Live = new List<GameObject>();
+
         Camera _camera;
         RenderTexture _texture;
         bool _ready;
@@ -20,7 +30,9 @@ namespace Game.View
         {
             if (_camera == null)
             {
-                var root = new GameObject("HUD map backdrop") { hideFlags = HideFlags.HideAndDontSave };
+                DestroyLeftovers();
+                var root = new GameObject(RootName) { hideFlags = HideFlags.HideAndDontSave };
+                Live.Add(root);
                 _camera = root.AddComponent<Camera>();
                 _camera.enabled = false;
                 _camera.orthographic = true;
@@ -94,8 +106,49 @@ namespace Game.View
             Invalidate();
             RenderPipelineManager.beginCameraRendering -= BeforeCamera;
             RenderPipelineManager.endCameraRendering -= AfterCamera;
-            if (_camera != null) Object.Destroy(_camera.gameObject);
+            if (_camera != null) { Live.Remove(_camera.gameObject); Object.Destroy(_camera.gameObject); }
             if (_texture != null) { _texture.Release(); Object.Destroy(_texture); }
         }
+
+        /// <summary>Снести камеры фона без живого владельца (вместе с их картинкой), как MainMenuScene.DestroyLeftovers.</summary>
+        internal static void DestroyLeftovers()
+        {
+            foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go == null || go.name != RootName || go.transform.parent != null
+                    || (go.hideFlags & HideFlags.DontSaveInEditor) == 0 || Live.Contains(go)) continue;
+                Camera camera = go.GetComponent<Camera>();
+                RenderTexture texture = camera != null ? camera.targetTexture : null;
+                if (texture != null)
+                {
+                    camera.targetTexture = null;
+                    texture.Release();
+                    Remove(texture);
+                }
+                Remove(go);
+            }
+        }
+
+        static void Remove(Object target)
+        {
+            if (Application.isPlaying) Object.Destroy(target);
+            else Object.DestroyImmediate(target);
+        }
+
+#if UNITY_EDITOR
+        // После выхода из Play камер фона в редакторе быть не должно: сносятся все, с владельцем и без
+        // (свою владелец обычно уже убрал в OnDestroy PlayerHud). Подписка — заново после каждой
+        // перезагрузки домена, поэтому ровно одна.
+        [UnityEditor.InitializeOnLoadMethod]
+        static void DestroyLeftoversOnPlayExit()
+        {
+            UnityEditor.EditorApplication.playModeStateChanged += state =>
+            {
+                if (state != UnityEditor.PlayModeStateChange.EnteredEditMode) return;
+                Live.Clear();
+                DestroyLeftovers();
+            };
+        }
+#endif
     }
 }

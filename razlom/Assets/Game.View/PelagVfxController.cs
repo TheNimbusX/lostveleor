@@ -177,6 +177,7 @@ namespace Game.View
             UpdateShowcase();
             UpdateAutoattackPresentation();
             UpdateWhirlwindContact();
+            UpdateWhirlwindForms();
             UpdateCleaveSlash();
 
             UpdateAbilityMotion();
@@ -398,15 +399,22 @@ namespace Game.View
             // Стоп-кадр считается по толпе, а не по первому попаданию: длина
             // задержки известна до того, как разобран первый Damage.
             _whirlwindHitsThisFrame = 0;
+            // Удар кольца Пенных волн — не клинок: он не держит позу героя (PelagVfxController.WhirlwindForms).
+            int ringTarget = -1;
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
-                if (e.Type == SimEventType.Damage && e.Source == Simulation.PlayerId
+                if (e.Type == SimEventType.WhirlwindFoamRingHit && e.Source == Simulation.PlayerId) ringTarget = e.Target;
+                else if (e.Type == SimEventType.Damage && e.Source == Simulation.PlayerId
                     && e.DamageOrigin == DamageOrigin.Ability && IsWhirlwindSlot(e.ActionVariant))
+                {
+                    if (e.Target == ringTarget) { ringTarget = -1; continue; }
                     _whirlwindHitsThisFrame++;
+                }
             }
             if (_whirlwindHitsThisFrame > 0 && !CaptureRig.NoVfx)
                 _arena.HoldPlayerWhirlwindPose(WhirlwindHoldFor(_whirlwindHitsThisFrame));
+            _foamRingDamageTarget = -1;
             for (int i = 0; i < events.Count; i++)
             {
                 SimEvent e = events[i];
@@ -416,9 +424,11 @@ namespace Game.View
                     CancelActiveAnchorMotionForReplacement();
                     _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                     for (int effect = 0; effect < _active.Length; effect++) Release(effect);
+                    StopWhirlwindForms();
                     continue;
                 }
                 if (e.Source != Simulation.PlayerId) continue;
+                if (ConsumeWhirlwindFormEvent(e, EventTick(i))) continue;
                 if (e.Type == SimEventType.AbilityCast) StopCleaveSlash();
 
                 if (e.Type == SimEventType.Evaded)
@@ -524,6 +534,8 @@ namespace Game.View
                         PlayWhirlwindContact();
                     AbilityBuild ability = (uint)e.ActionVariant < Simulation.AbilitySlots
                         ? _driver.Sim.GetAbility(e.ActionVariant) : null;
+                    // Кольцо Пенных волн: его брызги уже на враге (корона), всплеска клинка и света героя нет.
+                    if (TakeFoamRingDamage(e)) continue;
                     if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId)
                     {
                         PlayWhirlwindImpact(e.Target, e.Position);
@@ -1205,8 +1217,12 @@ namespace Game.View
                 if (!CaptureRig.NoVfx) _audio?.PlayWhirlwindPulse();
             }
             if (now < _whirlwindNextPulseTick) return;
-            _whirlwindNextPulseTick += Simulation.WhirlwindPulseTicks;
+            // Ритм — от Sim: у Бури обороты чаще (StormPulseTicks), чем у таланта удержания.
+            _whirlwindNextPulseTick += PelagWhirlwindFormRules.ChannelPulseTicks(_driver.Sim);
             _whirlwindPulseSoundPlayed = false;
+            // Буря крутит свой водяной столб (WhirlwindForms): серп на каждый оборот не повторяется,
+            // оборот отмечают брызги столба по событию WhirlwindStormPulse.
+            if (_driver.Sim.WhirlwindStorming && _stormFx >= 0) return;
             _whirlwindContactPending = true;
             PlayWhirlwindContact();
         }
@@ -1217,7 +1233,7 @@ namespace Game.View
             _whirlwindContactPending = false; _whirlwindGlintPending = false;
             if (_whirlwindContactTick >= 0f && _whirlwindNextPulseTick < 0f)
             {
-                _whirlwindNextPulseTick = _whirlwindContactTick + Simulation.WhirlwindPulseTicks;
+                _whirlwindNextPulseTick = _whirlwindContactTick + PelagWhirlwindFormRules.ChannelPulseTicks(_driver.Sim);
                 _whirlwindPulseSoundPlayed = false;
             }
 

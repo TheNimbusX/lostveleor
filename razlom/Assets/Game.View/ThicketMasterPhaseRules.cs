@@ -15,25 +15,34 @@ namespace Game.View
     /// • Смена — в тик УДАРА рёва, а не по HP: Sim ставит биты в RoarsDone в начале рёва
     ///   (Brain.StartThicketRoar), поэтому до удара биты текущего рёва (a.Tag) вычитаются.
     /// • Яркость рун k (множитель _EmissionColor, цвет — в карте эмиссии): вспышка ×1,45
-    ///   на 4 тика с тика удара, к цели за 12 тиков, дыхание ±8 % с периодом 2 с от тика
+    ///   на 4 тика с тика удара, к цели за 12 тиков, дыхание ±16 % с периодом 1,6 с от тика
     ///   Sim (пауза и съёмка держат кадр), после смерти — к нулю за 1,5 с.
-    /// Тело не высветляется: светятся только руны и глаза по маске, k — только их яркость.
+    /// • Листва (ревью 02.10): Ф2 — осенняя карта цвета, Ф3 — цветущая (ThicketMasterPhaseDressing
+    ///   ставит _BaseMap по уровню; яркость листвы та же, меняется оттенок).
+    /// Тело не высветляется: светятся только руны, трещины спины и глаза по маске, k — только их яркость.
     /// </summary>
     public static class ThicketMasterPhaseRules
     {
         /// <summary>Биты порогов, которые меняют внешность (вступительный рёв — нет).</summary>
         public const int PhaseBits = Simulation.ThicketRoar66Bit | Simulation.ThicketRoar50Bit | Simulation.ThicketRoar33Bit;
 
-        /// <summary>Яркость рун по уровням (сон и Ф1 — 0: руны тёмные).</summary>
-        public const float Phase2Glow = 1.6f, EnragedGlow = 2.0f, Phase3Glow = 2.4f;
+        /// <summary>
+        /// Яркость рун по уровням (сон и Ф1 — 0: руны тёмные). Ревью 02.10 «фаза 2 не отличается»:
+        /// руны на передних пластинах, камера 48° видит их мельком — свет сильнее, ореол блума шире
+        /// (порог 1,05; руна Ф2 в карте — янтарь 1 / .43 / .08, трещины спины — .85 / .34 / .06).
+        /// </summary>
+        public const float Phase2Glow = 2.6f, EnragedGlow = 3.0f, Phase3Glow = 3.4f;
 
         /// <summary>Вспышка на рёве: k × FlashGain с тика удара FlashTicks тиков, потом к цели за SettleTicks.</summary>
         public const float FlashGain = 1.45f;
         public const int FlashTicks = 4, SettleTicks = 12;
 
-        /// <summary>Дыхание рун в Ф2–Ф3: ±BreathDepth с периодом BreathPeriodTicks тиков Sim.</summary>
-        public const float BreathDepth = .08f;
-        public const int BreathPeriodTicks = 60;
+        /// <summary>
+        /// Дыхание рун и трещин спины в Ф2–Ф3: ±BreathDepth с периодом BreathPeriodTicks тиков Sim —
+        /// заметная пульсация «жара под корой», а не мерцание.
+        /// </summary>
+        public const float BreathDepth = .16f;
+        public const int BreathPeriodTicks = 48;
 
         /// <summary>После смерти руны гаснут за столько тиков (1,5 с), пока тело валится.</summary>
         public const int DeathFadeTicks = 45;

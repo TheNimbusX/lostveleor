@@ -11,12 +11,14 @@ namespace Game.View
     ///
     /// Всё — от событий кадра (хуки каркаса) и состояния Sim, не опросом кругов:
     /// • пробуждение — корни рвутся у передних лап; рёв — вдох (листья, пыль стягивается),
-    ///   волна (кольца, пыль, листья с кроны);
-    /// • лапа — на каждый удар серии дуга когтей CFXR (П/Л, зеркало), пыль и комья у лапы;
-    /// • топот — юбка пыли на дыбах, кольцо и трещины круга 5,2, пылевая стена второго кольца;
-    /// • нырок — взрыв земли, ползущий бугор со следом, дрожь круга, извержение с корнями;
+    ///   волна (стоячая стена пыли, листьев и лепестков до внешнего радиуса, кромка, столб с крон);
+    /// • лапа — на каждый удар серии три ленты когтей по кости пальцев бьющей лапы (ClawTrail),
+    ///   веер земли и пыль там, где прошли когти;
+    /// • топот — юбка пыли на дыбах, стоячая стена пыли и комья до края круга 5,2, своя стена второго кольца;
+    /// • нырок — стена земли по контуру тела все 12 тиков ухода, гребень земли за бугром («Дюна»),
+    ///   дрожь круга, выход за стеной земли с фонтаном комьев и корнями;
     /// • прорастание — лапы в землю, дрожь под каждым кругом, шипы-корни на ударе;
-    /// • пыльца — золото с кроны, столб над облаком, облако лежит, пока лежит зона Sim;
+    /// • пыльца — золото с кроны, столб над облаком, ядовитое облако с кромкой и пульсом укуса лежит, пока лежит зона Sim;
     /// • ливень — пуф куста на залп, ягоды летят дугой к своим кругам, шлепки сока;
     /// • буря — лепестки с кроны, вихрь по арене, столбы света над кругами, порыв волны;
     /// • смерть — «цветущий холм»: вспышка в кусте, лепестки, цветы там, где легло тело.
@@ -78,11 +80,32 @@ namespace Game.View
         /// </summary>
         public const string LeftChild = "Left", RightChild = "Right", BushChild = "Bush", HumpChild = "Hump";
         public const string LatePrefix = "Late ", TimedPrefix = "~";
+        /// <summary>
+        /// Системы следа бугра («Trail Ridge», «Trail Trench», …): вид пускает их эмиссию, только пока
+        /// бугор едет — стоит (круг лёг, Песочные Часы) — гребень не копится кучей в одной точке.
+        /// </summary>
+        public const string TrailPrefix = "Trail ";
+        /// <summary>
+        /// Бугор после выхода босса (ревью 02.10, п. 8: «органично»): эмиссия гаснет, горб уходит в
+        /// землю на MoundSinkDepth м за MoundSinkSeconds с, гребень и комья доживают свою жизнь —
+        /// не пропадают одним кадром под ещё редкой стеной выхода.
+        /// </summary>
+        public const float MoundSinkSeconds = .3f, MoundSinkDepth = 1f;
+        /// <summary>Ребёнок префаба PawSlash с MeshFilter + MeshRenderer: сетку лент когтей пишет вид.</summary>
+        public const string ClawsChild = "Claws";
 
-        /// <summary>Голова дуги когтей идёт на 2 тика впереди контакта (как ленты Вендиго).</summary>
-        public const int PawSlashLeadTicks = 2;
-        /// <summary>Задержки от события: юбка дыбом, нос в земле, лапы в землю, лапы из земли.</summary>
-        public const int StompRearDelayTicks = 4, DiveBurstDelayTicks = 4, SproutPressDelayTicks = 4, WakeTearDelayTicks = 14;
+        /// <summary>
+        /// Ленты когтей (ревью 02.10: «след идёт не за лапой, а после неё»): кость пальцев бьющей
+        /// лапы пишет ленту с ClawLeadTicks до удара по ClawTailTicks после (часы босса); хвост —
+        /// последние ClawTrailSeconds пути. Ширина одной ленты и шаг между тремя когтями, м.
+        /// </summary>
+        public const int ClawLeadTicks = 6, ClawTailTicks = 2;
+        public const float ClawTrailSeconds = .16f, ClawWidth = .26f, ClawSpacing = .32f;
+        /// <summary>
+        /// Задержки от события: юбка дыбом, нос в земле, лапы в землю, лапы из земли. Нырок — с
+        /// первого тика ухода (ревью 02.10): стена земли закрывает все 12 тиков, пока тело уходит.
+        /// </summary>
+        public const int StompRearDelayTicks = 4, DiveBurstDelayTicks = 0, SproutPressDelayTicks = 4, WakeTearDelayTicks = 14;
         /// <summary>Юбка пыли дыбом — из-под задних лап: столько метров назад от центра тела (×BodyScale в префабе).</summary>
         public const float StompRearBack = 1.3f;
         /// <summary>Дуга ягоды: высота над прямой, м — 3,6 + 0,4·номер круга залпа.</summary>
@@ -92,15 +115,19 @@ namespace Game.View
 
         private enum VfxAnchor : byte { None, Impact, LastImpact, Shape, PollenLand, PollenWatch }
 
-        private enum VfxFollow : byte { None, Mound, Bush, Crowns, Toes, ToeLeft, ToeRight, Body, Flight }
+        private enum VfxFollow : byte { None, Mound, Bush, Crowns, Toes, ToeLeft, ToeRight, Body, Flight, Claws }
 
         /// <summary>Экземпляр префаба в пуле: разбор RootSnarerCombatView.Fx и состояние запуска.</summary>
         private sealed class Vfx
         {
             public RootSnarerCombatView.Fx Fx;
             public Transform Left, Right, Bush, Hump;
+            /// <summary>Ленты когтей (только PawSlash); Index — 1 правая лапа, 0 левая.</summary>
+            public ClawTrail Claws;
             public Vector3 BaseScale = Vector3.one;
-            public int[] Late = new int[0], Timed = new int[0];
+            public int[] Late = new int[0], Timed = new int[0], Trail = new int[0];
+            /// <summary>Бугор: возраст, на котором босс вылез (дальше бугор доживает на месте); MaxValue — ещё едет.</summary>
+            public float Surfaced = float.MaxValue;
 
             public int Owner = -1, Serial, Stage, Index, Lead, FlyTicks;
             public VfxAnchor Anchor;
@@ -109,6 +136,8 @@ namespace Game.View
             public bool Clock;
             /// <summary>Следовать за костью только до старта, потом стоять.</summary>
             public bool Pin;
+            /// <summary>Облако пыльцы: сколько тиков лежит зона Sim (от падения до конца) — начало облака считается от конца зоны.</summary>
+            public int LieTicks;
             public float FadeAge = float.MaxValue, FadeSeconds = .3f, Height;
             public Vector3 From, To, Center, Last;
         }
@@ -117,6 +146,8 @@ namespace Game.View
         {
             public Vfx[] Items = new Vfx[0];
             public int Cursor;
+            /// <summary>Сколько секунд частицы префаба живут сами (NaturalSeconds): жизнь экземпляра не короче.</summary>
+            public float Natural;
         }
 
         private VfxPool _pawSlash, _pawImpact, _stompRear, _stompQuake, _stompOuter, _diveBurst, _mound, _diveTremor,
@@ -126,6 +157,8 @@ namespace Game.View
         private VfxPool[] _vfxPools;
         private LayoutView _vfxLayout;
         private int _vfxGeneration = -1;
+        /// <summary>Сколько бугор доживает после выхода: самая долгая жизнь его частиц вне горба.</summary>
+        private float _moundLinger;
 
         // ------------------------------------------------------------ pools
 
@@ -135,12 +168,14 @@ namespace Game.View
             _vfxLayout = GetComponent<LayoutView>();
             int missing = 0;
             _pawSlash = MakeVfxPool(PawSlashName, 4, ref missing);
-            _pawImpact = MakeVfxPool(PawImpactName, 4, ref missing);
+            // Удар лапы живёт ~2,4 с (листья), серия бьёт раз в 0,3 с: 6 — чтобы не перезапускать летящие.
+            _pawImpact = MakeVfxPool(PawImpactName, 6, ref missing);
             _stompRear = MakeVfxPool(StompRearName, 2, ref missing);
             _stompQuake = MakeVfxPool(StompQuakeName, 2, ref missing);
             _stompOuter = MakeVfxPool(StompOuterName, 2, ref missing);
             _diveBurst = MakeVfxPool(DiveBurstName, 2, ref missing);
             _mound = MakeVfxPool(MoundName, 1, ref missing);
+            _moundLinger = MoundLinger(_mound);
             _diveTremor = MakeVfxPool(DiveTremorName, 1, ref missing);
             _emerge = MakeVfxPool(EmergeName, 2, ref missing);
             _sproutPress = MakeVfxPool(SproutPressName, 1, ref missing);
@@ -186,13 +221,67 @@ namespace Game.View
                 var root = go.transform;
                 v.Left = root.Find(LeftChild); v.Right = root.Find(RightChild);
                 v.Bush = root.Find(BushChild); v.Hump = root.Find(HumpChild);
+                var claws = root.Find(ClawsChild);
+                if (claws != null && claws.TryGetComponent(out MeshFilter clawFilter)) v.Claws = new ClawTrail(clawFilter);
                 v.Late = SystemsNamed(v.Fx, LatePrefix);
                 v.Timed = SystemsNamed(v.Fx, TimedPrefix);
+                v.Trail = SystemsNamed(v.Fx, TrailPrefix);
                 go.SetActive(false);
                 pool.Items[i] = v;
+                if (i == 0) pool.Natural = NaturalSeconds(v.Fx.Particles);
             }
             return pool;
         }
+
+        /// <summary>
+        /// Сколько живут частицы префаба сами: задержка + эмиссия (поток — вся длительность,
+        /// залпы — последний залп) + самая долгая жизнь частицы. Жизнь экземпляра короче этого
+        /// гасила корень посреди полёта — листья и лепестки пропадали в воздухе (ревью 02.10).
+        /// Петли не в счёт: их гасит вид (FadeAge, снятие якоря).
+        /// </summary>
+        private static float NaturalSeconds(ParticleSystem[] systems)
+        {
+            float end = 0f;
+            for (int k = 0; k < systems.Length; k++)
+            {
+                var main = systems[k].main;
+                if (main.loop) continue;
+                var emission = systems[k].emission;
+                float emit = 0f;
+                if (emission.enabled)
+                {
+                    if (CurveMax(emission.rateOverTime) > 0f) emit = main.duration;
+                    for (int b = 0; b < emission.burstCount; b++)
+                    {
+                        var burst = emission.GetBurst(b);
+                        float last = burst.cycleCount == 0 ? main.duration
+                            : burst.time + Mathf.Max(0, burst.cycleCount - 1) * burst.repeatInterval;
+                        emit = Mathf.Max(emit, Mathf.Min(last, main.duration));
+                    }
+                }
+                end = Mathf.Max(end, CurveMax(main.startDelay) + emit + CurveMax(main.startLifetime));
+            }
+            return end;
+        }
+
+        /// <summary>Самая долгая жизнь частицы бугра вне горба «Hump» (горб уходит в землю сам): столько он доживает после выхода.</summary>
+        private static float MoundLinger(VfxPool pool)
+        {
+            if (pool.Items.Length == 0) return MoundSinkSeconds;
+            var v = pool.Items[0];
+            float longest = MoundSinkSeconds;
+            for (int k = 0; k < v.Fx.Particles.Length; k++)
+            {
+                var ps = v.Fx.Particles[k];
+                if (v.Hump != null && ps.transform.IsChildOf(v.Hump)) continue;
+                longest = Mathf.Max(longest, CurveMax(ps.main.startLifetime));
+            }
+            return longest;
+        }
+
+        private static float CurveMax(ParticleSystem.MinMaxCurve curve)
+            => curve.mode == ParticleSystemCurveMode.Constant || curve.mode == ParticleSystemCurveMode.TwoConstants
+                ? curve.constantMax : curve.curveMultiplier;
 
         private static int[] SystemsNamed(RootSnarerCombatView.Fx fx, string prefix)
         {
@@ -206,18 +295,53 @@ namespace Game.View
             return found;
         }
 
-        /// <summary>Следующий экземпляр пула: место, поворот, тик старта, зерно от serial, жизнь.</summary>
+        /// <summary>
+        /// Следующий экземпляр пула: место, поворот, тик старта, зерно от serial, жизнь — не короче
+        /// жизни частиц префаба (pool.Natural). Раньше гасить — только FadeAge или снятием якоря.
+        /// </summary>
         private Vfx TakeVfx(VfxPool pool, int boss, int tick, Vector3 position, Quaternion rotation, int serial, float life)
         {
             if (pool == null || pool.Items.Length == 0) return null;
             var v = pool.Items[pool.Cursor++ % pool.Items.Length];
-            RootSnarerCombatView.Restart(v.Fx, tick, position, rotation, serial, life);
+            RootSnarerCombatView.Restart(v.Fx, tick, position, rotation, serial, Mathf.Max(life, pool.Natural));
             v.Fx.Root.transform.localScale = v.BaseScale;
-            v.Owner = boss; v.Serial = serial; v.Stage = 0; v.Index = -1; v.Lead = 0; v.FlyTicks = 0;
+            v.Owner = boss; v.Serial = serial; v.Stage = 0; v.Index = -1; v.Lead = 0; v.FlyTicks = 0; v.LieTicks = 0;
             v.Anchor = VfxAnchor.None; v.Follow = VfxFollow.None; v.Clock = false; v.Pin = false;
-            v.FadeAge = float.MaxValue; v.FadeSeconds = .3f; v.Height = 0f;
+            v.FadeAge = float.MaxValue; v.FadeSeconds = .3f; v.Height = 0f; v.Surfaced = float.MaxValue;
             v.From = v.To = v.Center = v.Last = position;
             return v;
+        }
+
+        /// <summary>Эмиссия систем indices экземпляра (модуль Emission): без аллокаций, частицы в полёте доживают.</summary>
+        private static void SetEmission(Vfx v, int[] indices, bool on)
+        {
+            for (int i = 0; i < indices.Length; i++)
+            {
+                var emission = v.Fx.Particles[indices[i]].emission;
+                if (emission.enabled != on) emission.enabled = on;
+            }
+        }
+
+        /// <summary>Эмиссия всех систем экземпляра.</summary>
+        private static void SetEmission(Vfx v, bool on)
+        {
+            for (int k = 0; k < v.Fx.Particles.Length; k++)
+            {
+                var emission = v.Fx.Particles[k].emission;
+                if (emission.enabled != on) emission.enabled = on;
+            }
+        }
+
+        /// <summary>
+        /// Босс вылез (или ушёл из-под земли иначе): бугор встаёт на месте, эмиссия гаснет, горб
+        /// уходит в землю (PlaceVfx), гребень, борозда и комья доживают свою жизнь — _moundLinger.
+        /// </summary>
+        private void SurfaceMound(Vfx v, float age)
+        {
+            if (v.Surfaced != float.MaxValue) return;
+            v.Surfaced = Mathf.Max(0f, age);
+            SetEmission(v, false);
+            v.Fx.Life = Mathf.Min(v.Fx.Life, v.Surfaced + _moundLinger);
         }
 
         /// <summary>Эмиссия «~»-систем идёт seconds (система остановлена Restart — длительность менять можно).</summary>
@@ -256,6 +380,14 @@ namespace Game.View
         }
 
         private void OnDisable() => RetireAllVfx();
+
+        /// <summary>Сетки лент когтей создаёт вид (ClawTrail) — и удаляет вместе с собой.</summary>
+        private void OnDestroy()
+        {
+            if (_pawSlash == null) return;
+            for (int i = 0; i < _pawSlash.Items.Length; i++)
+                if (_pawSlash.Items[i].Claws != null) _pawSlash.Items[i].Claws.Dispose();
+        }
 
         // ------------------------------------------------------------ frame
 
@@ -346,9 +478,22 @@ namespace Game.View
                     if (z.LandTick > sim.Tick - 1) { fx.Tick = z.LandTick + v.Lead; return true; }
                     break;
                 case VfxAnchor.PollenWatch:
-                    if (sim.TryGetThicketPollenZone(v.Index, out ThicketPollenZone w) && w.Serial == v.Serial) return true;
-                    // Облако вытеснено новым или босс умер — зона Sim ушла: облако тает.
+                    if (sim.TryGetThicketPollenZone(v.Index, out ThicketPollenZone w) && w.Serial == v.Serial)
+                    {
+                        // Песочные Часы двигают конец лежащей зоны (DelayThicketPollen) на всю заморозку
+                        // босса: облако идёт по часам босса от сдвинутого начала — стоит под Часами
+                        // (эмиссия и FadeAge те же) и гаснет ровно с зоной, а не за 2 с до неё.
+                        fx.Tick = w.EndTick + 1 - v.LieTicks;
+                        return true;
+                    }
+                    // Облако вытеснено новым или босс умер — зона Sim ушла: облако тает с этого кадра
+                    // (сначала часы облака — на обычные, без скачка возраста).
                     v.Anchor = VfxAnchor.None;
+                    if (v.Clock)
+                    {
+                        fx.Tick += Mathf.RoundToInt(tick - clock);
+                        v.Clock = false;
+                    }
                     v.FadeAge = Mathf.Min(v.FadeAge, Mathf.Max(0f, (tick - fx.Tick) / Simulation.TicksPerSecond));
                     v.FadeSeconds = .45f;
                     return true;
@@ -372,9 +517,23 @@ namespace Game.View
             {
                 case VfxFollow.Mound:
                 {
-                    if (age > .2f && !sim.ThicketUnderground(v.Owner)) { RetireVfx(v); return false; }
+                    if (v.Surfaced == float.MaxValue && age > .2f && !sim.ThicketUnderground(v.Owner)) SurfaceMound(v, age);
+                    if (v.Surfaced != float.MaxValue)
+                    {
+                        // Вылез: бугор стоит, горб уходит в землю (за стеной выхода), остальное доживает само.
+                        if (v.Hump != null)
+                        {
+                            float s = Mathf.Clamp01((age - v.Surfaced) / MoundSinkSeconds);
+                            s = s * s * (3f - 2f * s);
+                            v.Hump.localPosition = new Vector3(0f, -MoundSinkDepth * s, 0f);
+                            v.Hump.localScale = Vector3.one * (1f - .35f * s);
+                        }
+                        break;
+                    }
                     Vector3 p = GroundAt(MoundPosition);
                     Vector3 step = p - v.Last; step.y = 0f;
+                    // След — только на ходу: стоит (круг лёг, Часы) — гребень и борозда не копятся в одной точке.
+                    SetEmission(v, v.Trail, step.sqrMagnitude > 1e-8f);
                     if (step.sqrMagnitude > 1e-4f) root.rotation = Quaternion.LookRotation(step.normalized, Vector3.up);
                     root.position = p;
                     v.Last = p;
@@ -422,8 +581,27 @@ namespace Game.View
                     v.Last = p;
                     break;
                 }
+                case VfxFollow.Claws:
+                    if (v.Claws != null) UpdateClaws(v, age);
+                    break;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Ленты когтей за кадр: точка — кость пальцев бьющей лапы сейчас (голова ленты ровно на
+        /// когтях), пишется только в окне удара; возраст — часы босса (стоят в хит-стопе, паузе, Часах).
+        /// </summary>
+        private void UpdateClaws(Vfx v, float age)
+        {
+            bool right = v.Index == 1;
+            Transform toe = _bossView == null ? null : right ? _bossView.PawToeRight : _bossView.PawToeLeft;
+            Vector3 paw = BonePoint(toe, right ? FallbackToeRight : FallbackToeLeft);
+            float window = (ClawLeadTicks + ClawTailTicks) / (float)Simulation.TicksPerSecond;
+            v.Claws.Step(age, paw, age >= 0f && age <= window, ClawTrailSeconds);
+            var camera = Camera.main;
+            Vector3 view = camera != null ? camera.transform.forward : new Vector3(0f, -.743f, .669f);
+            v.Claws.Build(age, view, ClawTrailSeconds, ClawWidth, ClawSpacing);
         }
 
         // ------------------------------------------------------------ hooks: wake, roar, paw, stomp
@@ -466,19 +644,21 @@ namespace Game.View
         }
 
         /// <summary>
-        /// Удар серии: дуга когтей встаёт за PawSlashLeadTicks до контакта — в центре тела, +Z —
-        /// сектор этого удара (Sim доворачивает каждый удар), левая лапа — зеркало по X.
+        /// Удар серии: ленты когтей бьющей лапы (правая — чётный удар) пишутся с ClawLeadTicks до
+        /// контакта по ClawTailTicks после; срок перечитывается из Sim (Часы сдвигают его с телом).
         /// </summary>
         partial void OnPawWindup(int boss, int tick, int stage, bool right, int impactTick)
         {
             var sim = _driver.Sim;
             if (!sim.TryGetThicketMasterAction(boss, out ThicketMasterState a) || a.Action != ThicketMasterAction.Paw) return;
-            var v = TakeVfx(_pawSlash, boss, impactTick - PawSlashLeadTicks, Ground(a.Origin),
-                Quaternion.LookRotation(Flat(a.Direction), Vector3.up), a.Serial * 16 + stage, .45f);
+            float window = (ClawLeadTicks + ClawTailTicks) / (float)Simulation.TicksPerSecond;
+            var v = TakeVfx(_pawSlash, boss, impactTick - ClawLeadTicks, Ground(a.Origin), Quaternion.identity,
+                a.Serial * 16 + stage, window + ClawTrailSeconds + .05f);
             if (v == null) return;
-            if (!right) v.Fx.Root.transform.localScale = new Vector3(-v.BaseScale.x, v.BaseScale.y, v.BaseScale.z);
-            v.Serial = a.Serial; v.Stage = stage; v.Lead = -PawSlashLeadTicks;
+            v.Serial = a.Serial; v.Stage = stage; v.Lead = -ClawLeadTicks;
             v.Anchor = VfxAnchor.Impact; v.Clock = true;
+            v.Follow = VfxFollow.Claws; v.Index = right ? 1 : 0;
+            if (v.Claws != null) v.Claws.Clear();
         }
 
         partial void OnPawImpact(int boss, int tick, int stage, bool right, Vector3 at, bool hit)
@@ -525,6 +705,8 @@ namespace Game.View
             RetirePool(_mound, false, 0f);
             var v = TakeVfx(_mound, boss, tick, GroundAt(MoundPosition), Quaternion.LookRotation(FacingOf(sim, boss), Vector3.up), tick, 60f);
             if (v == null) return;
+            // Прошлый выход погасил эмиссию экземпляра (SurfaceMound) — снова пускаем.
+            SetEmission(v, true);
             v.Follow = VfxFollow.Mound;
         }
 
@@ -542,7 +724,14 @@ namespace Game.View
         partial void OnEmerge(int boss, int tick, Vector3 at, bool hit)
         {
             var sim = _driver.Sim;
-            RetirePool(_mound, false, 0f);
+            // Бугор не пропадает одним кадром (ревью 02.10, п. 8): гаснет эмиссия, горб уходит в
+            // землю, гребень и комья доживают за стеной выхода.
+            if (_mound != null)
+                for (int i = 0; i < _mound.Items.Length; i++)
+                {
+                    var m = _mound.Items[i];
+                    if (m.Fx.Root.activeSelf && m.Follow == VfxFollow.Mound) SurfaceMound(m, (tick - m.Fx.Tick) / (float)Simulation.TicksPerSecond);
+                }
             RetirePool(_diveTremor, false, 0f);
             var v = TakeVfx(_emerge, boss, tick, GroundAt(at), Quaternion.LookRotation(FacingOf(sim, boss), Vector3.up), tick, 3f);
             if (v == null) return;
@@ -622,11 +811,12 @@ namespace Game.View
                     if (f.Fx.Root.activeSelf && f.Index == slot) RetireVfx(f);
                 }
             if (!sim.TryGetThicketPollenZone(slot, out ThicketPollenZone z)) return;
-            float lies = (z.EndTick - z.LandTick + 1) / (float)Simulation.TicksPerSecond;
+            int lieTicks = z.EndTick - z.LandTick + 1;
+            float lies = lieTicks / (float)Simulation.TicksPerSecond;
             var v = TakeVfx(_pollenCloud, boss, tick, Ground(z.Center), Yaw(z.Serial), z.Serial, lies + .6f);
             if (v == null) return;
-            v.Index = slot; v.Serial = z.Serial;
-            v.Anchor = VfxAnchor.PollenWatch;
+            v.Index = slot; v.Serial = z.Serial; v.LieTicks = lieTicks;
+            v.Anchor = VfxAnchor.PollenWatch; v.Clock = true;
             v.FadeAge = lies; v.FadeSeconds = .5f;
         }
 
@@ -722,7 +912,8 @@ namespace Game.View
         partial void OnStormWave(int boss, int tick, int wave, Vector3 at, bool hit)
         {
             var sim = _driver.Sim;
-            TakeVfx(_stormWave, boss, tick, ArenaCenter(sim, boss), Yaw(tick), tick * 2 + wave, 1.8f);
+            // Коробки порыва 20 × 15 м — по осям поляны (GladeLayout: поворот 0, 20 м по X, 15 по Z), как вихрь.
+            TakeVfx(_stormWave, boss, tick, ArenaCenter(sim, boss), Quaternion.identity, tick * 2 + wave, 1.8f);
         }
 
         // ------------------------------------------------------------ cancel, death
@@ -821,12 +1012,6 @@ namespace Game.View
             return forward.sqrMagnitude > 1e-6f ? forward.normalized : Vector3.forward;
         }
 
-        private static Vector3 Flat(FixVec2 d)
-        {
-            var v = new Vector3(d.X.ToFloat(), 0f, d.Y.ToFloat());
-            return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.forward;
-        }
-
         /// <summary>Центр арены босса (бури): точка поводка — середина поляны 20 × 15; нет памяти — тело.</summary>
         private Vector3 ArenaCenter(Simulation sim, int boss)
         {
@@ -840,6 +1025,180 @@ namespace Game.View
             uint h = (uint)serial * 2654435761u;
             h ^= h >> 15;
             return Quaternion.Euler(0f, (h % 3600u) * .1f, 0f);
+        }
+
+        // ------------------------------------------------------------ claw trails
+
+        /// <summary>
+        /// Три светящиеся ленты когтей одного удара (ревью 02.10: «след плоский и идёт не за лапой,
+        /// а после неё»). Точки — путь кости пальцев (Step), их возраст — часы босса: хит-стоп,
+        /// пауза и Часы держат ленту вместе с лапой, перемотка съёмки снимает точки «из будущего».
+        /// Лента — сглаженный Catmull-Rom путь последних keep секунд, повёрнутая к камере, по
+        /// поперёк три полосы вершин (тёмный край — ядро — тёмный край), когти — со сдвигом вбок;
+        /// к хвосту сужается и гаснет: ядро золото → листовое золото → тёмная листва. Сетка, массивы
+        /// и треугольники — при создании пула: в кадре ни одной аллокации.
+        /// </summary>
+        private sealed class ClawTrail
+        {
+            private const int MaxSamples = 24, Subdivisions = 3, MaxPoints = (MaxSamples - 1) * Subdivisions + 1;
+            private const int Claws = 3, Lanes = 3, ClawVertices = MaxPoints * Lanes;
+            /// <summary>Не чаще одной точки за столько секунд часов: голова между ними едет за костью.</summary>
+            private const float MinStep = 1f / 90f;
+
+            private readonly Transform _space;
+            private readonly Mesh _mesh;
+            private readonly Vector3[] _samples = new Vector3[MaxSamples];
+            private readonly float[] _times = new float[MaxSamples];
+            private readonly Vector3[] _points = new Vector3[MaxPoints];
+            private readonly float[] _pointTimes = new float[MaxPoints];
+            private readonly Vector3[] _vertices = new Vector3[Claws * ClawVertices];
+            private readonly Color32[] _colors = new Color32[Claws * ClawVertices];
+            private readonly Vector2[] _uvs = new Vector2[Claws * ClawVertices];
+            private int _count;
+
+            public ClawTrail(MeshFilter filter)
+            {
+                _space = filter.transform;
+                _mesh = new Mesh { name = "ThicketClawTrail" };
+                _mesh.MarkDynamic();
+                _mesh.vertices = _vertices;
+                _mesh.colors32 = _colors;
+                _mesh.uv = _uvs;
+                var triangles = new int[Claws * (MaxPoints - 1) * 12];
+                int t = 0;
+                for (int c = 0; c < Claws; c++)
+                    for (int k = 0; k < MaxPoints - 1; k++)
+                    {
+                        int a = c * ClawVertices + k * Lanes, b = a + Lanes;
+                        triangles[t++] = a; triangles[t++] = a + 1; triangles[t++] = b;
+                        triangles[t++] = a + 1; triangles[t++] = b + 1; triangles[t++] = b;
+                        triangles[t++] = a + 1; triangles[t++] = a + 2; triangles[t++] = b + 1;
+                        triangles[t++] = a + 2; triangles[t++] = b + 2; triangles[t++] = b + 1;
+                    }
+                _mesh.triangles = triangles;
+                filter.sharedMesh = _mesh;
+            }
+
+            public void Clear() => _count = 0;
+
+            /// <summary>Сетка создана в рантайме — Unity её сама не удалит (нет ссылок из сцены).</summary>
+            public void Dispose()
+            {
+                if (_mesh != null) UnityEngine.Object.Destroy(_mesh);
+            }
+
+            /// <summary>Точка кости на возрасте age (с); emit — окно удара идёт; keep — длина хвоста, с.</summary>
+            public void Step(float age, Vector3 point, bool emit, float keep)
+            {
+                while (_count > 0 && _times[_count - 1] > age + 1e-4f) _count--;
+                int drop = 0;
+                while (_count - drop >= 2 && age - _times[drop + 1] > keep) drop++;
+                if (drop > 0)
+                {
+                    System.Array.Copy(_samples, drop, _samples, 0, _count - drop);
+                    System.Array.Copy(_times, drop, _times, 0, _count - drop);
+                    _count -= drop;
+                }
+                if (!emit) return;
+                // Голова ближе MinStep к прошлой точке — голова едет за костью; дальше — новая точка.
+                bool replace = _count > 0 && (age - _times[_count - 1] < 1e-5f || (_count >= 2 && _times[_count - 1] - _times[_count - 2] < MinStep));
+                if (replace)
+                {
+                    _samples[_count - 1] = point;
+                    _times[_count - 1] = age;
+                    return;
+                }
+                if (_count == MaxSamples)
+                {
+                    System.Array.Copy(_samples, 1, _samples, 0, MaxSamples - 1);
+                    System.Array.Copy(_times, 1, _times, 0, MaxSamples - 1);
+                    _count--;
+                }
+                _samples[_count] = point;
+                _times[_count] = age;
+                _count++;
+            }
+
+            /// <summary>Сетка на возраст age: view — взгляд камеры, keep — хвост, с; width — лента, spacing — шаг когтей, м.</summary>
+            public void Build(float age, Vector3 view, float keep, float width, float spacing)
+            {
+                int n = Subdivide();
+                Matrix4x4 toLocal = _space.worldToLocalMatrix;
+                for (int c = 0; c < Claws; c++)
+                {
+                    // Средний коготь длиннее и толще, крайние — короче: след не одной полосой.
+                    float lane = (c - 1) * spacing, reach = c == 1 ? 1f : .78f, thick = c == 1 ? 1f : .85f;
+                    Vector3 side = Vector3.right;
+                    int start = c * ClawVertices;
+                    for (int k = 0; k < MaxPoints; k++)
+                    {
+                        int at = start + k * Lanes;
+                        if (k >= n)
+                        {
+                            Vector3 rest = k == 0 ? Vector3.zero : _vertices[at - Lanes + 1];
+                            for (int l = 0; l < Lanes; l++)
+                            {
+                                _vertices[at + l] = rest;
+                                _colors[at + l] = new Color32(0, 0, 0, 0);
+                                _uvs[at + l] = new Vector2(.5f, .5f);
+                            }
+                            continue;
+                        }
+                        Vector3 tangent = _points[Mathf.Min(k + 1, n - 1)] - _points[Mathf.Max(k - 1, 0)];
+                        Vector3 across = Vector3.Cross(tangent, view);
+                        if (across.sqrMagnitude > 1e-8f) side = across.normalized;
+                        float f = Mathf.Clamp01((age - _pointTimes[k]) / Mathf.Max(.01f, keep * reach));
+                        float half = width * thick * .5f * Mathf.Pow(1f - f, .6f);
+                        Vector3 center = _points[k] + side * lane;
+                        _vertices[at] = toLocal.MultiplyPoint3x4(center - side * half);
+                        _vertices[at + 1] = toLocal.MultiplyPoint3x4(center);
+                        _vertices[at + 2] = toLocal.MultiplyPoint3x4(center + side * half);
+                        float alpha = Mathf.Pow(1f - f, 1.4f);
+                        _colors[at + 1] = Core(f, alpha);
+                        _colors[at] = _colors[at + 2] = new Color32(22, 32, 10, (byte)(alpha * 230f));
+                        float u = .1f + .8f * f;
+                        _uvs[at] = new Vector2(u, .22f);
+                        _uvs[at + 1] = new Vector2(u, .5f);
+                        _uvs[at + 2] = new Vector2(u, .78f);
+                    }
+                }
+                _mesh.vertices = _vertices;
+                _mesh.colors32 = _colors;
+                _mesh.uv = _uvs;
+                _mesh.RecalculateBounds();
+            }
+
+            /// <summary>Сглаженный путь (Catmull-Rom по Subdivisions на отрезок): точки от хвоста к голове.</summary>
+            private int Subdivide()
+            {
+                if (_count == 0) return 0;
+                int n = 0;
+                for (int i = 0; i < _count - 1; i++)
+                {
+                    Vector3 p0 = _samples[Mathf.Max(i - 1, 0)], p1 = _samples[i], p2 = _samples[i + 1], p3 = _samples[Mathf.Min(i + 2, _count - 1)];
+                    for (int s = 0; s < Subdivisions; s++)
+                    {
+                        float t = s / (float)Subdivisions, t2 = t * t, t3 = t2 * t;
+                        _points[n] = .5f * (2f * p1 + (p2 - p0) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (3f * p1 - p0 - 3f * p2 + p3) * t3);
+                        _pointTimes[n] = Mathf.Lerp(_times[i], _times[i + 1], t);
+                        n++;
+                    }
+                }
+                _points[n] = _samples[_count - 1];
+                _pointTimes[n] = _times[_count - 1];
+                return n + 1;
+            }
+
+            /// <summary>Ядро по доле хвоста f: золото → листовое золото → листва → тёмная листва (свечение — _HdrMultiply материала).</summary>
+            private static Color32 Core(float f, float alpha)
+            {
+                Color gold = new Color(1f, .89f, .47f), leafGold = new Color(.84f, 1f, .43f), leaf = new Color(.47f, .67f, .2f), dark = new Color(.16f, .24f, .07f);
+                Color c = f < .35f ? Color.Lerp(gold, leafGold, f / .35f)
+                    : f < .75f ? Color.Lerp(leafGold, leaf, (f - .35f) / .4f)
+                    : Color.Lerp(leaf, dark, (f - .75f) / .25f);
+                c.a = alpha;
+                return c;
+            }
         }
     }
 }

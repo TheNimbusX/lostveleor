@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 ///
 /// Префабы — Resources/VFX/ThicketMaster/Phases/Prefabs (их грузит и вешает на кости
 /// ThicketMasterPhaseDressing в Awake тела):
-/// • VFX_ThicketPhase_Berries (bush) — 18 набухающих ягод: сначала поверх нарисованных красных
+/// • VFX_ThicketPhase_Berries (bush) — 24 набухающие ягоды: сначала поверх нарисованных красных
 ///   (UV вершины красный в T_ThicketMaster_Color), добор — «самая дальняя точка» по кусту;
 ///   всплеск рёва 66 — ягоды-капли, листья, зелёная пыльца.
 /// • VFX_ThicketPhase_BushBloom (bush) — 10 цветков Hovl Flower из куста (6 красных, 4 белых);
@@ -23,6 +23,13 @@ using Object = UnityEngine.Object;
 ///   (60 % белые, 40 % розовые) и 6 плодов; петля падающих лепестков (Ф3); всплеск рёва 33.
 /// • VFX_ThicketPhase_EyeGlow (head) — ореол на каждом глазу (UV-семена глаз из
 ///   production/dressing/work/eyes.json); всплеск рёва 50 — янтарные искры рун и листья.
+/// • VFX_ThicketPhase_Embers (chest) — аура Ф2 (ревью 02.10 «фаза 2 не отличается»): угли
+///   поднимаются со спины и кроны (то, что видит камера 48°); всплеск рёва 66 — листопад
+///   осенних листьев и сноп углей.
+/// • VFX_ThicketPhase_BloomAura (chest) — аура Ф3: розовый свет плывёт над кроной; всплеск рёва 33 —
+///   светящиеся лепестки и розовые искры.
+/// Ягоды крупнее (с камеры игры ≈ 120 пикс. на метр при 1080p — ягода в 13 см была точкой) и тлеют красным (эмиссия ягоды,
+/// не тела). Свечение углей, глаз и искр — копии мягкого свечения CFXR с _HdrMultiply.
 /// Ягоды и цветы — MeshRenderer-дети «Bud|задержка мс|подпись»: вид растит их масштабом от 0.
 /// Всё авторится в метрах модели в осях кости (точки — из вершин тела в позе привязки,
 /// ручной скиннинг по bindposes), рост узла тела (TargetHeight сборщика) вид добавит сам.
@@ -34,13 +41,14 @@ using Object = UnityEngine.Object;
 ///
 /// Компонент ThicketMasterPhaseDressing ставится на ThicketMaster_Runtime.prefab здесь же —
 /// после каждой пересборки представления (постпроцессор префаба). Маски эмиссии
-/// (T_ThicketMaster_Emission_F2/F3 — make_emission.py) копируются из пакета в Resources, и
-/// материал тела получает эмиссию без пересборки представления.
+/// (T_ThicketMaster_Emission_F2/F3 — make_emission.py) и листва фаз (T_ThicketMaster_Color_F2/F3 —
+/// make_phase_colors.py) копируются из пакета в Resources, и материал тела получает эмиссию без
+/// пересборки представления.
 /// В Play не собирается. Звука нет.
 /// </summary>
 public static class ThicketMasterDressingSetup
 {
-    private const string Revision = "ThicketPhaseV1";
+    private const string Revision = "ThicketPhaseV2";
     private const string Root = "Assets/Resources/VFX/ThicketMaster/Phases";
     private const string PrefabFolder = Root + "/Prefabs";
     private const string MaterialFolder = Root + "/Materials";
@@ -59,7 +67,11 @@ public static class ThicketMasterDressingSetup
 
     /// <summary>Работа маски эмиссии (eyes.json) — рядом с пакетом, от корня репозитория.</summary>
     private const string DressingWork = "ART/characters/act-1-enemies/boss-forest-master/production/dressing/work/";
-    private static readonly string[] EmissionMaps = { "T_ThicketMaster_Emission_F2.png", "T_ThicketMaster_Emission_F3.png" };
+    private static readonly string[] EmissionMaps =
+    {
+        "T_ThicketMaster_Emission_F2.png", "T_ThicketMaster_Emission_F3.png",
+        "T_ThicketMaster_Color_F2.jpg", "T_ThicketMaster_Color_F3.jpg",
+    };
 
     // Палитра (план §1.2, как у Вендиго и Корнехвата; цвета — «на глаз», без подъёма яркости).
     private static readonly Color LeafLight = new Color(.62f, .70f, .30f), LeafDark = new Color(.42f, .52f, .20f);
@@ -67,16 +79,32 @@ public static class ThicketMasterDressingSetup
     private static readonly Color PetalWhite = new Color(1f, .96f, .92f), PetalPink = new Color(1f, .70f, .80f), PetalGold = new Color(1f, .86f, .45f);
     private static readonly Color RuneSpark = new Color(1f, .55f, .12f);
     private static readonly Color PollenGreen = new Color(.70f, .80f, .36f);
+    // Аура Ф2: угли (как Ember атак) и осенние листья (как листва карты F2); Ф3 — розовый свет.
+    private static readonly Color Ember = new Color(1f, .58f, .16f), EmberDeep = new Color(.95f, .36f, .08f);
+    private static readonly Color AutumnRed = new Color(.82f, .20f, .08f), AutumnOrange = new Color(.93f, .46f, .10f), AutumnGold = new Color(.90f, .70f, .20f);
+    private static readonly Color BloomLight = new Color(1f, .62f, .80f), BloomLightPale = new Color(1f, .84f, .90f);
 
     /// <summary>Сколько накладок и какого размера (метры модели в позе привязки, рост 3,57 м).</summary>
-    private const int BerryCount = 18, BushFlowerCount = 10, CrownFlowerCount = 22, CrownFruitCount = 6, RuneSparkPoints = 24;
-    private const float BerryMin = .10f, BerryMax = .16f, BushFlowerMin = .22f, BushFlowerMax = .34f;
-    private const float CrownFlowerMin = .16f, CrownFlowerMax = .28f, FruitSize = .09f, EyeGlowSize = .22f;
+    private const int BerryCount = 24, BushFlowerCount = 10, CrownFlowerCount = 22, CrownFruitCount = 6, RuneSparkPoints = 24;
+    private const float BerryMin = .14f, BerryMax = .22f, BushFlowerMin = .22f, BushFlowerMax = .34f;
+    private const float CrownFlowerMin = .16f, CrownFlowerMax = .28f, FruitSize = .11f, EyeGlowSize = .30f;
     private const float BerryMerge = .06f, EyeLift = .08f;
+
+    /// <summary>Аура — точки верха спины и кроны (нормаль вверх), с них поднимаются угли и свет.</summary>
+    private static readonly string[] AuraBones = { "hips", "spine_01", "spine_02", "spine_03", "chest", "neck_01", "neck_02", "crown_L", "crown_R" };
+    private const int AuraPoints = 48;
+
+    /// <summary>Свечение (_HdrMultiply CFXR): угли, глаза и искры — за порог bloom 1,05; розовый свет мягче.</summary>
+    private const float EmberHdr = 2.6f, BloomLightHdr = 1.5f, GlowPetalHdr = 1.6f;
+
+    /// <summary>Ягоды тлеют красным: эмиссия ягоды = её цвет × это (тело не трогается).</summary>
+    private const float BerryEmission = .75f;
 
     private sealed class Kit
     {
         public Material Berry, BerryDeep, BerryDrop, FlowerWhite, FlowerPink, FlowerRed, Petal, Leaf, Glow, Haze;
+        /// <summary>Светящиеся копии (_HdrMultiply): угли/глаза/искры, розовый свет, лепестки всплеска Ф3.</summary>
+        public Material Ember, BloomLight, GlowPetal;
         public Mesh Sphere, Flower, LeafMesh;
         public float FlowerSpan = 1f;
         public Quaternion FlowerBase = Quaternion.identity;
@@ -144,7 +172,8 @@ public static class ThicketMasterDressingSetup
         var importer = AssetImporter.GetAtPath(PrefabPath(ThicketMasterPhaseDressing.BerriesName));
         if (importer == null || importer.userData != Stamp()) return false;
         foreach (string name in new[] { ThicketMasterPhaseDressing.BushBloomName, ThicketMasterPhaseDressing.CrownBloomLeftName,
-                     ThicketMasterPhaseDressing.CrownBloomRightName, ThicketMasterPhaseDressing.EyeGlowName })
+                     ThicketMasterPhaseDressing.CrownBloomRightName, ThicketMasterPhaseDressing.EyeGlowName,
+                     ThicketMasterPhaseDressing.EmbersName, ThicketMasterPhaseDressing.BloomAuraName })
             if (AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath(name)) == null) return false;
         return true;
     }
@@ -202,6 +231,9 @@ public static class ThicketMasterDressingSetup
             SaveCrownBloom(kit, body, ThicketMasterPhaseDressing.BoneCrownLeft, ThicketMasterPhaseDressing.CrownBloomLeftName, 31);
             SaveCrownBloom(kit, body, ThicketMasterPhaseDressing.BoneCrownRight, ThicketMasterPhaseDressing.CrownBloomRightName, 47);
             SaveEyeGlow(kit, body);
+            var aura = TopPoints(body, "ThicketPhaseAuraPoints");
+            SaveEmbers(kit, aura);
+            SaveBloomAura(kit, aura);
         }
         finally { PrefabUtility.UnloadPrefabContents(contents); }
         AssetDatabase.SaveAssets();
@@ -211,7 +243,7 @@ public static class ThicketMasterDressingSetup
             importer.userData = Stamp();
             importer.SaveAndReimport();
         }
-        Debug.Log("[thicket-phase] Одежда фаз собрана: ягоды, цветы куста и кроны, лепестки, глаза, всплески рёвов; ревизия " + Revision + ".");
+        Debug.Log("[thicket-phase] Одежда фаз собрана: ягоды, цветы куста и кроны, лепестки, глаза, угли Ф2, розовый свет Ф3, всплески рёвов; ревизия " + Revision + ".");
     }
 
     // ------------------------------------------------------------ тело в позе привязки
@@ -389,12 +421,13 @@ public static class ThicketMasterDressingSetup
     private static Kit Materials()
     {
         var kit = new Kit();
-        var lit = Shader.Find("Universal Render Pipeline/Lit");
-        kit.Berry = BerryMaterial("M_ThicketPhase_Berry", lit, BerryRed);
-        kit.BerryDeep = BerryMaterial("M_ThicketPhase_BerryDeep", lit, BerryDeep);
+        // Ягоды и цветы — копии URP с прозрачностью перед героем, как тело (ThicketMasterBuilder.SeeThroughShader).
+        var lit = ThicketMasterBuilder.SeeThroughShader("Universal Render Pipeline/Lit");
+        kit.Berry = BerryMaterial("M_ThicketPhase_Berry", lit, BerryRed, BerryEmission);
+        kit.BerryDeep = BerryMaterial("M_ThicketPhase_BerryDeep", lit, BerryDeep, BerryEmission);
         // Ягоды-капли всплеска: цвет из частиц, блеск без бледности lit-материалов CFXR.
-        kit.BerryDrop = BerryMaterial("M_ThicketPhase_BerryDrop", Shader.Find("Universal Render Pipeline/Particles/Lit"), Color.white);
-        var simpleLit = Shader.Find("Universal Render Pipeline/Simple Lit");
+        kit.BerryDrop = BerryMaterial("M_ThicketPhase_BerryDrop", Shader.Find("Universal Render Pipeline/Particles/Lit"), Color.white, 0f);
+        var simpleLit = ThicketMasterBuilder.SeeThroughShader("Universal Render Pipeline/Simple Lit");
         kit.FlowerWhite = FlowerMaterial("M_ThicketPhase_FlowerWhite", simpleLit, PetalWhite);
         kit.FlowerPink = FlowerMaterial("M_ThicketPhase_FlowerPink", simpleLit, PetalPink);
         kit.FlowerRed = FlowerMaterial("M_ThicketPhase_FlowerRed", simpleLit, BerryRed);
@@ -407,8 +440,14 @@ public static class ThicketMasterDressingSetup
         var blur = AssetDatabase.LoadAssetAtPath<Texture2D>(CfxrCloudBlur);
         if (blur != null) kit.Haze.SetTexture("_MainTex", blur);
         if (kit.Haze.HasProperty("_SingleChannel")) kit.Haze.SetFloat("_SingleChannel", 1f);
+        // Свечение за порог bloom: цвет частицы 8-битный, яркость даёт _HdrMultiply копии (урок 02.10).
+        kit.Ember = Hdr(Plain(PackCopy("M_ThicketPhase_Ember", CfxrGlowSoft)), EmberHdr);
+        kit.BloomLight = Hdr(Plain(PackCopy("M_ThicketPhase_BloomLight", CfxrGlowSoft)), BloomLightHdr);
+        kit.GlowPetal = Hdr(Unlit(PackCopy("M_ThicketPhase_GlowPetal", CfxrPetal)), GlowPetalHdr);
+        if (kit.GlowPetal.HasProperty("_SingleChannel")) kit.GlowPetal.SetFloat("_SingleChannel", 1f);
         kit.Haze.renderQueue = 3000; kit.Petal.renderQueue = 3006; kit.Leaf.renderQueue = 3006; kit.Glow.renderQueue = 3008;
-        foreach (var m in new[] { kit.Petal, kit.Leaf, kit.Glow, kit.Haze }) EditorUtility.SetDirty(m);
+        kit.GlowPetal.renderQueue = 3006; kit.Ember.renderQueue = 3009; kit.BloomLight.renderQueue = 3009;
+        foreach (var m in new[] { kit.Petal, kit.Leaf, kit.Glow, kit.Haze, kit.Ember, kit.BloomLight, kit.GlowPetal }) EditorUtility.SetDirty(m);
         kit.Sphere = Icosphere();
         kit.Flower = LoadMesh(HovlFlower);
         kit.LeafMesh = LoadMesh(CfxrLeafMesh);
@@ -428,15 +467,38 @@ public static class ThicketMasterDressingSetup
         return kit;
     }
 
-    /// <summary>Ягода: URP Lit, гладкая (блик), без эмиссии.</summary>
-    private static Material BerryMaterial(string name, Shader shader, Color color)
+    /// <summary>
+    /// Ягода: URP Lit, гладкая (блик). emission &gt; 0 — тлеет своим цветом (в тёмной арене красная
+    /// ягода иначе уходит в чёрное — ревью 02.10, ягод Ф2 с камеры не видно). GI-флаги RealtimeEmissive держат
+    /// _EMISSION при валидации материала URP (ловушка тела, ThicketMasterBuilder.ApplyEmission).
+    /// </summary>
+    private static Material BerryMaterial(string name, Shader shader, Color color, float emission)
     {
         var material = PelagWhirlwindVfxSetup.LoadOrCreateMaterial(MaterialFolder + "/" + name + ".mat", shader);
         material.SetColor("_BaseColor", color);
         if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", .65f);
         if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", 0f);
-        material.DisableKeyword("_EMISSION");
+        if (emission > 0f && material.HasProperty("_EmissionColor"))
+        {
+            material.SetColor("_EmissionColor", new Color(color.r * emission, color.g * emission, color.b * emission, 1f));
+            material.EnableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        }
+        else
+        {
+            material.DisableKeyword("_EMISSION");
+            material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+        }
         material.enableInstancing = true;
+        EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    /// <summary>Свечение CFXR: цвет частицы × _HdrMultiply (больше 0 — включено) уходит за порог bloom.</summary>
+    private static Material Hdr(Material material, float hdr)
+    {
+        if (material.HasProperty("_HdrMultiply")) material.SetFloat("_HdrMultiply", hdr);
+        else Debug.LogWarning("[thicket-phase] У " + material.name + " нет _HdrMultiply — слой не светится.");
         EditorUtility.SetDirty(material);
         return material;
     }
@@ -755,7 +817,7 @@ public static class ThicketMasterDressingSetup
         return particles;
     }
 
-    /// <summary>Янтарные искры рун: мягкое свечение CFXR (альфа, без аддитива), всплывают и гаснут.</summary>
+    /// <summary>Янтарные искры рун: мягкое свечение CFXR со свечением (альфа, без аддитива), всплывают и гаснут.</summary>
     private static ParticleSystem Sparks(GameObject host, Kit kit, string name, int count, Mesh points)
     {
         var particles = Particles(host, name, count, .8f, 1.3f, 1.0f, 2.5f, .06f, .12f, 0f);
@@ -771,7 +833,7 @@ public static class ThicketMasterDressingSetup
         fade.color = Alpha(.05f, .5f);
         var renderer = particles.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
-        renderer.sharedMaterial = kit.Glow;
+        renderer.sharedMaterial = kit.Ember;
         renderer.sortingFudge = -2f;
         return particles;
     }
@@ -810,7 +872,7 @@ public static class ThicketMasterDressingSetup
 
     /// <summary>
     /// Ягоды куста (Ф2): сначала поверх нарисованных красных ягод (кучки красных вершин
-    /// ближе 6 см — одна ягода), добор до 18 — «самая дальняя точка» по наружной стороне куста.
+    /// ближе 6 см — одна ягода), добор до 24 — «самая дальняя точка» по наружной стороне куста.
     /// Возвращает места ягод в мире префаба (цветы куста держатся от них).
     /// </summary>
     private static List<Vector3> SaveBerries(Kit kit, Body body)
@@ -850,7 +912,7 @@ public static class ThicketMasterDressingSetup
             directions.Add(normals[k].sqrMagnitude > 1e-8f ? normals[k].normalized : Outward(body, 0));
             painted.Add(true);
         }
-        foreach (int i in Farthest(body, outward, BerryCount - places.Count, places, .07f))
+        foreach (int i in Farthest(body, outward, BerryCount - places.Count, places, .10f))
         {
             places.Add(body.P[i]);
             directions.Add(body.N[i]);
@@ -863,7 +925,7 @@ public static class ThicketMasterDressingSetup
         for (int k = 0; k < places.Count; k++)
         {
             // Нарисованная ягода получает свою набухшую поверх (крупнее), новые — мельче.
-            float size = painted[k] ? Mathf.Lerp(.13f, BerryMax, Hash01(k, 11)) : Mathf.Lerp(BerryMin, .14f, Hash01(k, 12));
+            float size = painted[k] ? Mathf.Lerp(.18f, BerryMax, Hash01(k, 11)) : Mathf.Lerp(BerryMin, .19f, Hash01(k, 12));
             Vector3 world = places[k] + directions[k] * (size * .35f * body.ModelScale);
             var local = Local(body, bush, world);
             var rotation = Quaternion.Euler(Hash01(k, 13) * 360f, Hash01(k, 14) * 360f, Hash01(k, 15) * 360f);
@@ -908,7 +970,7 @@ public static class ThicketMasterDressingSetup
 
     /// <summary>
     /// Цветущая крона (Ф3): 22 цветка на верхней стороне кроны (нормаль вверх), 6 плодов-ягод,
-    /// петля падающих лепестков (5/с, ложатся на землю) и всплеск лепестков на рёве 33.
+    /// петля падающих лепестков (8/с, ложатся на землю) и всплеск лепестков на рёве 33.
     /// </summary>
     private static void SaveCrownBloom(Kit kit, Body body, string boneName, string prefabName, int salt)
     {
@@ -942,15 +1004,16 @@ public static class ThicketMasterDressingSetup
         var points = Points("ThicketPhaseBloomPoints_" + boneName, localPoints, localDirections);
 
         // Петля: лепестки с кроны всё время Ф3 (вид включает эмиссию и шагает её по тикам Sim).
-        var loop = Petals(root, kit, ThicketMasterPhaseDressing.PetalLoopName, 40, points, .05f, .25f, 2.6f, 3.2f, 0f);
+        // 8/с с каждой половины кроны (было 5): аура цветения должна читаться с камеры (ревью 02.10).
+        var loop = Petals(root, kit, ThicketMasterPhaseDressing.PetalLoopName, 60, points, .05f, .25f, 2.6f, 3.2f, 0f);
         var main = loop.main;
         main.loop = true;
         main.duration = 5f;
-        main.maxParticles = 40;
+        main.maxParticles = 60;
         main.gravityModifier = .08f;
         var emission = loop.emission;
         emission.SetBursts(new ParticleSystem.Burst[0]);
-        emission.rateOverTime = 5f;
+        emission.rateOverTime = 8f;
         var collision = loop.collision; collision.enabled = true;
         collision.type = ParticleSystemCollisionType.Planes;
         collision.mode = ParticleSystemCollisionMode.Collision3D;
@@ -1017,7 +1080,7 @@ public static class ThicketMasterDressingSetup
         var shape = glow.shape; shape.enabled = false;
         var renderer = glow.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
-        renderer.sharedMaterial = kit.Glow;
+        renderer.sharedMaterial = kit.Ember; // ореол глаз за порогом bloom (ревью 02.10: глаз не видно)
         renderer.sortingFudge = -3f;
 
         // Искры — с рун гребня: вершины головы, чей UV светится в маске F2.
@@ -1038,6 +1101,158 @@ public static class ThicketMasterDressingSetup
         Sparks(bursts, kit, "Burst Sparks", 24, points);
         Leaves(bursts, kit, "Burst Leaves", 14, points, 1.5f, 3f, .05f);
         Save(root);
+    }
+
+    // ------------------------------------------------------------ ауры фаз (ревью 02.10)
+
+    /// <summary>
+    /// Точки ауры в осях кости chest: вершины верха спины и кроны (нормаль вверх) «самой дальней
+    /// точкой», чуть наружу по нормали; направление — между нормалью и вверх. Спина в анимации
+    /// гнётся — точки отходят от коры на сантиметры, для углей и света это не видно.
+    /// </summary>
+    private static Mesh TopPoints(Body body, string name)
+    {
+        var chest = BoneOf(body, ThicketMasterPhaseDressing.BoneChest);
+        var top = new List<int>();
+        for (int i = 0; i < body.P.Length; i++)
+            if (body.N[i].y > .45f && Array.IndexOf(AuraBones, body.Bone[i]) >= 0) top.Add(i);
+        if (top.Count == 0)
+            for (int i = 0; i < body.P.Length; i++)
+                if (Array.IndexOf(AuraBones, body.Bone[i]) >= 0) top.Add(i);
+        if (top.Count == 0) throw new InvalidOperationException("Нет вершин спины и кроны — аура фаз не собрана.");
+        var positions = new List<Vector3>();
+        var directions = new List<Vector3>();
+        foreach (int i in Farthest(body, top, AuraPoints, new List<Vector3>(), .08f))
+        {
+            positions.Add(Local(body, chest, body.P[i] + body.N[i] * (.05f * body.ModelScale)));
+            directions.Add(LocalDir(chest, (body.N[i] + Vector3.up).normalized));
+        }
+        return Points(name, positions, directions);
+    }
+
+    /// <summary>Осенние листья всплеска: багрянец, рыжий, золото (как листва карты F2) — случайный цвет.</summary>
+    private static ParticleSystem.MinMaxGradient AutumnColors()
+    {
+        var gradient = new Gradient();
+        gradient.mode = GradientMode.Fixed;
+        gradient.SetKeys(
+            new[] { new GradientColorKey(AutumnRed, .35f), new GradientColorKey(AutumnOrange, .80f), new GradientColorKey(AutumnGold, 1f) },
+            new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) });
+        return new ParticleSystem.MinMaxGradient(gradient) { mode = ParticleSystemGradientMode.RandomColor };
+    }
+
+    /// <summary>Движение углей: дрожь шума, тормоз, вспыхивают, остывают к красному и гаснут.</summary>
+    private static void EmberMotion(ParticleSystem particles, float dragLimit)
+    {
+        var noise = particles.noise; noise.enabled = true;
+        noise.strength = .45f; noise.frequency = .9f; noise.scrollSpeed = .5f;
+        noise.quality = ParticleSystemNoiseQuality.Medium;
+        Drag(particles, dragLimit, .10f);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .4f, .12f, 1f, .7f, .75f, 1f, 0f));
+        var cool = new Gradient();
+        cool.SetKeys(
+            new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, .45f), new GradientColorKey(new Color(1f, .62f, .50f), 1f) },
+            new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, .08f), new GradientAlphaKey(1f, .55f), new GradientAlphaKey(0f, 1f) });
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = cool;
+    }
+
+    private static void Glowing(ParticleSystem particles, Material material)
+    {
+        var renderer = particles.GetComponent<ParticleSystemRenderer>();
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.sharedMaterial = material;
+        renderer.sortingFudge = -2f;
+    }
+
+    /// <summary>
+    /// Аура Ф2 — угли (ревью 02.10 «фаза 2 не отличается»: руны на груди камера видит мельком,
+    /// а спину и крону — всегда). Петля «Aura»: 14/с (ярость ×1,6 — вид), поднимаются на 2–3 м,
+    /// мир — тянутся следом за идущим боссом. Всплеск рёва 66 — листопад осенних листьев и сноп
+    /// углей вверх (вместе с ягодами куста — смена фазы видна разом).
+    /// </summary>
+    private static void SaveEmbers(Kit kit, Mesh points)
+    {
+        var root = new GameObject(ThicketMasterPhaseDressing.EmbersName);
+        var loop = Particles(root, ThicketMasterPhaseDressing.AuraName, 70, 1.2f, 2.0f, .35f, .90f, .09f, .16f, 0f);
+        FromPoints(loop, points, .35f, false);
+        var main = loop.main;
+        main.loop = true;
+        main.duration = 5f;
+        main.maxParticles = 70;
+        main.gravityModifier = -.10f;
+        main.startColor = new ParticleSystem.MinMaxGradient(Ember, EmberDeep);
+        var emission = loop.emission;
+        emission.SetBursts(new ParticleSystem.Burst[0]);
+        emission.rateOverTime = 14f;
+        EmberMotion(loop, 1.3f);
+        Glowing(loop, kit.Ember);
+
+        var bursts = Container(root, ThicketMasterPhaseDressing.BurstsName);
+        var sparks = Particles(bursts, "Burst Embers", 60, .9f, 1.7f, 2.5f, 5.5f, .10f, .18f, 0f);
+        FromPoints(sparks, points, .45f, false);
+        var sparkMain = sparks.main;
+        sparkMain.gravityModifier = -.18f;
+        sparkMain.startColor = new ParticleSystem.MinMaxGradient(Ember, EmberDeep);
+        EmberMotion(sparks, 2.2f);
+        Glowing(sparks, kit.Ember);
+
+        var leaves = Leaves(bursts, kit, "Burst Autumn Leaves", 70, points, 2.5f, 5f, 0f);
+        var leafMain = leaves.main;
+        leafMain.startColor = AutumnColors();
+        leafMain.startSize = new ParticleSystem.MinMaxCurve(.18f, .30f);
+        leafMain.startLifetime = new ParticleSystem.MinMaxCurve(1.9f, 2.8f);
+        leafMain.gravityModifier = .35f;
+        Save(root);
+    }
+
+    /// <summary>
+    /// Аура Ф3 — розовый свет цветения: мягкие розовые огни плывут над кроной (петля «Aura» 9/с,
+    /// вместе с лепестками кроны). Всплеск рёва 33 — светящиеся лепестки и сноп розового света.
+    /// </summary>
+    private static void SaveBloomAura(Kit kit, Mesh points)
+    {
+        var root = new GameObject(ThicketMasterPhaseDressing.BloomAuraName);
+        var light = new Color(BloomLight.r, BloomLight.g, BloomLight.b, .85f);
+        var pale = new Color(BloomLightPale.r, BloomLightPale.g, BloomLightPale.b, .75f);
+        var loop = Particles(root, ThicketMasterPhaseDressing.AuraName, 40, 2.0f, 3.0f, .10f, .35f, .10f, .18f, 0f);
+        FromPoints(loop, points, .6f, false);
+        var main = loop.main;
+        main.loop = true;
+        main.duration = 5f;
+        main.maxParticles = 40;
+        main.gravityModifier = -.02f;
+        main.startColor = new ParticleSystem.MinMaxGradient(light, pale);
+        var emission = loop.emission;
+        emission.SetBursts(new ParticleSystem.Burst[0]);
+        emission.rateOverTime = 9f;
+        BloomMotion(loop, .6f);
+        Glowing(loop, kit.BloomLight);
+
+        var bursts = Container(root, ThicketMasterPhaseDressing.BurstsName);
+        var petals = Petals(bursts, kit, "Burst Glow Petals", 70, points, 2.5f, 5f, 2.2f, 3.2f, 0f);
+        petals.GetComponent<ParticleSystemRenderer>().sharedMaterial = kit.GlowPetal;
+        var motes = Particles(bursts, "Burst Bloom Light", 40, 1.4f, 2.4f, 1.2f, 3.0f, .12f, .22f, 0f);
+        FromPoints(motes, points, .6f, false);
+        var moteMain = motes.main;
+        moteMain.gravityModifier = -.04f;
+        moteMain.startColor = new ParticleSystem.MinMaxGradient(light, pale);
+        BloomMotion(motes, 1.4f);
+        Glowing(motes, kit.BloomLight);
+        Save(root);
+    }
+
+    private static void BloomMotion(ParticleSystem particles, float dragLimit)
+    {
+        var noise = particles.noise; noise.enabled = true;
+        noise.strength = .5f; noise.frequency = .5f; noise.scrollSpeed = .25f;
+        noise.quality = ParticleSystemNoiseQuality.Medium;
+        Drag(particles, dragLimit, .12f);
+        var size = particles.sizeOverLifetime; size.enabled = true;
+        size.size = new ParticleSystem.MinMaxCurve(1f, Curve(0f, .3f, .2f, 1f, .8f, .9f, 1f, 0f));
+        var fade = particles.colorOverLifetime; fade.enabled = true;
+        fade.color = Alpha(.15f, .6f);
     }
 }
 

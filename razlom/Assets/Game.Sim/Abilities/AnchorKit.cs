@@ -54,9 +54,18 @@ namespace Game.Sim
 
         public static readonly Fix64 ChainRange = Fix64.Ratio(55, 10);
         public const int ChainMaxHops = 4;
+
+        /// <summary>
+        /// Прежний прыжок Шквала фиксированной длины. С 02.10 Sim его не читает:
+        /// полёт по длине, опора и замах — Simulation.Squall. Число держит только
+        /// прежний вид (PelagAbilityTiming) до переделки показа.
+        /// </summary>
         public const int ChainTicksPerHop = 5;
 
-        /// <summary>Куда встать относительно цели прыжка: не в неё, а рядом.</summary>
+        /// <summary>
+        /// Отступ от цели Абордажа (и прежнего Шквала): не в неё, а рядом. Шквал
+        /// садится по радиусам тел — Simulation.SquallLandingDistance.
+        /// </summary>
         public static readonly Fix64 ChainStandoff = Fix64.Ratio(9, 10);
 
         /// <summary>
@@ -103,59 +112,7 @@ namespace Game.Sim
             return LeapTicks;
         }
 
-        /// <summary>
-        /// ПОДСЕЧКА. Якорь уходит за спины врагов дугой, рывок цепи волочит их
-        /// к игроку.
-        ///
-        /// Тяжёлые не поддаются — это решает <see cref="ForcedMotion"/> по
-        /// весу тела, и решает ОДИНАКОВО для крюка и для толпы: враг, которого
-        /// не сдвинуть плечом, не сдвигается и цепью.
-        ///
-        /// Возвращает, скольких утащило. Ноль — законный результат: вокруг
-        /// были только тяжёлые, и это игрок обязан увидеть.
-        /// </summary>
-        public static int PickChainTarget(Simulation sim, int[] scratch, Fix64 radius,
-            int[] visited = null, int visitedCount = 0)
-        {
-            EntityStore e = sim.Entities;
-            int player = Simulation.PlayerId;
-            FixVec2 from = e.Position[player];
-
-            int count = 0;
-            for (int pass = 0; pass < 2; pass++)
-            {
-                count = 0;
-                for (int id = 1; id < e.Count; id++)
-                {
-                    if (!e.Alive[id] || e.Side[id] == e.Side[player]) continue;
-                    if ((e.Position[id] - from).LengthSq > radius * radius) continue;
-                    bool seen = false;
-                    for (int v = 0; v < visitedCount; v++) if (visited[v] == id) seen = true;
-                    if (pass == 0 && seen) continue;
-                    scratch[count++] = id;
-                }
-                if (count > 0) return scratch[sim.Rng.AbilityTargets.NextInt(0, count)];
-            }
-            return -1;
-        }
-
-        /// <summary>Точка, куда встать при прыжке к цели: рядом, а не внутрь.</summary>
-        public static FixVec2 ChainLandingSpot(EntityStore e, int target, bool crossTarget = false)
-        {
-            FixVec2 from = e.Position[Simulation.PlayerId];
-            FixVec2 to = e.Position[target];
-            FixVec2 delta = to - from;
-            Fix64 distance = delta.Length;
-            if (distance.Raw == 0)
-            {
-                FixVec2 facing = e.Facing[Simulation.PlayerId];
-                if (facing.LengthSq.Raw == 0) facing = new FixVec2(Fix64.One, Fix64.Zero);
-                return to + facing * ChainStandoff;
-            }
-
-            FixVec2 direction = delta / distance;
-            Fix64 stop = distance > ChainStandoff ? distance - ChainStandoff : Fix64.Zero;
-            return crossTarget ? to + direction * ChainStandoff : from + direction * stop;
-        }
+        // Выбор цели и посадка Шквала (прежние PickChainTarget, ChainLandingSpot со
+        // случайной целью и пролётом сквозь одинокую) — Simulation.Squall.Targets, 02.10.
     }
 }
