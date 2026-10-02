@@ -175,6 +175,48 @@ namespace Game.View
             }
         }
 
+        private static readonly int DeepId = Shader.PropertyToID("_Deep");
+        private static readonly int WaterId = Shader.PropertyToID("_Water");
+        private static readonly int ShallowId = Shader.PropertyToID("_Shallow");
+
+        /// <summary>Форма Вихря в слоте (None — Вихря нет или он без формы).</summary>
+        private PelagForm CurrentWhirlwindForm()
+        {
+            if (_driver.Sim == null) return PelagForm.None;
+            for (int slot = 0; slot < Simulation.AbilitySlots; slot++)
+            {
+                AbilityBuild ability = _driver.Sim.GetAbility(slot);
+                if (ability != null && ability.DefinitionId == AbilityDefinition.WhirlwindId) return _driver.Sim.FormAt(slot);
+            }
+            return PelagForm.None;
+        }
+
+        /// <summary>
+        /// Общие эффекты Вихря (кольцо, всплески на целях) из пула: в форме — её вода и брызги,
+        /// без формы — цвета самих материалов (объект мог прийти из пула окрашенным).
+        /// </summary>
+        private static void TintWhirlwindShared(GameObject go, PelagForm form)
+        {
+            bool tinted = WhirlwindFormWater(form, out Color deep, out Color water, out Color shallow, out Color shade);
+            if (_formTintBlock == null) _formTintBlock = new MaterialPropertyBlock();
+            foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                Material m = r.sharedMaterial;
+                if (m == null) continue;
+                bool wave = m.HasProperty(WaterId), blob = m.HasProperty(ShadeId);
+                if (!wave && !blob) continue;
+                r.GetPropertyBlock(_formTintBlock);
+                if (wave)
+                {
+                    _formTintBlock.SetColor(DeepId, tinted ? deep : m.GetColor(DeepId));
+                    _formTintBlock.SetColor(WaterId, tinted ? water : m.GetColor(WaterId));
+                    _formTintBlock.SetColor(ShallowId, tinted ? shallow : m.GetColor(ShallowId));
+                }
+                if (blob) _formTintBlock.SetColor(ShadeId, tinted ? shade : m.GetColor(ShadeId));
+                r.SetPropertyBlock(_formTintBlock);
+            }
+        }
+
         // ---- Буря ----
 
         private void BeginStormColumn()

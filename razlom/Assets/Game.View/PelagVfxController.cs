@@ -857,6 +857,7 @@ namespace Game.View
             Vector3 tangent = Vector3.Cross(Vector3.up, radial);
             Quaternion facing = tangent.sqrMagnitude > .0001f
                 ? Quaternion.LookRotation(tangent.normalized + Vector3.up * .35f) : Quaternion.identity;
+            TintWhirlwindShared(go, CurrentWhirlwindForm());
             int index = ReserveActive();
             // Begin возвращает авторский масштаб префаба: крест пака вписан в метр им.
             element.Begin(position, facing);
@@ -882,6 +883,7 @@ namespace Game.View
             if (camera != null) position += (camera.transform.position - position).normalized * 0.25f;
             int index = ReserveActive();
             element.Begin(position, Quaternion.identity);
+            TintWhirlwindShared(go, CurrentWhirlwindForm());
             go.transform.localScale = go.transform.localScale * .42f;
             _active[index] = new ActiveFx
             {
@@ -1265,6 +1267,7 @@ namespace Game.View
                 // Цвет формы (02.10): Буря — сталь, Водоворот — фиолет, Волны — морская зелень.
                 bool tinted = WhirlwindFormWater(whirlForm, out Color deep, out Color water, out Color shallow, out _);
                 element.Sweep?.SetFormTint(tinted, deep, water, shallow);
+                TintWhirlwindShared(go, whirlForm);
                 // Раскадровка серпа читает масштаб корня — запускается после него.
                 element.Sweep?.Begin();
                 _active[brush] = new ActiveFx
