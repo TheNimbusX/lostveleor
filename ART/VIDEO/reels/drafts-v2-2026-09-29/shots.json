@@ -1,0 +1,3711 @@
+{
+ "made": "2026-09-29",
+ "capture": "capture.ps1 -Reels -NoBars -Video -SilentVideo -WorkspaceName mobsv2 (no HP bars / elite bar / name plates; damage numbers kept); script _src/run-captures-v2.ps1",
+ "time_base": "all times are seconds in the mp4 (0 = first frame); events_from_log: tick/30 - VideoStart - 0.1",
+ "audio": "captures are silent; add our own SFX from razlom/Assets/Resources/Audio/Combat/** in post",
+ "shots": [
+  {
+   "shot": "kill-guardian-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-guardian-z07\\kill-guardian-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-guardian-z07\\kill-guardian-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 4.5,
+   "reels_zoom": 0.7,
+   "what": "Guardian (antlered forest beast) winds up, hero cuts it down with one swing; bark/leaf burst, essence wisps fly to the hero.",
+   "key_times": {
+    "guardian_windup_claw_sign": 1.2,
+    "hero_swing": 1.3,
+    "kill_flash": 1.6,
+    "burst_and_wisps": "1.75-2.6",
+    "empty_after": "2.75-4.5"
+   },
+   "events_from_log": [
+    {
+     "t": 0.1,
+     "tick": 66,
+     "event": "HERO HIT by enemy 1 (17)"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "enemy 1 attack starts"
+    },
+    {
+     "t": 1.3,
+     "tick": 102,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "TelegraphCancelled src=1 dst=-1"
+    }
+   ],
+   "quality": "Good, clean single kill on the rune circle; hero on the left third. The 0.0 red flash is the Guardian's previous hit on the hero.",
+   "use": "kills reel"
+  },
+  {
+   "shot": "kill-guardian-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-guardian-z09\\kill-guardian-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-guardian-z09\\kill-guardian-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 4.5,
+   "reels_zoom": 0.9,
+   "what": "Same Guardian kill, wider framing.",
+   "key_times": {
+    "guardian_windup": 1.2,
+    "kill_flash": 1.6,
+    "burst": "1.75-2.6"
+   },
+   "events_from_log": [
+    {
+     "t": 0.1,
+     "tick": 66,
+     "event": "HERO HIT by enemy 1 (17)"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "enemy 1 attack starts"
+    },
+    {
+     "t": 1.3,
+     "tick": 102,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "TelegraphCancelled src=1 dst=-1"
+    }
+   ],
+   "quality": "Good, wider; the kill is smaller in frame.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-bud-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-bud-z07\\kill-bud-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-bud-z07\\kill-bud-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.7,
+   "what": "Spit-fruit Bud killed by the hero.",
+   "key_times": {
+    "puddle_mark_under_hero": "0.0-1.25",
+    "fruit_volley": "0.5-1.5",
+    "hero_walks_out": "1.25-1.75",
+    "hero_swing": 2.1,
+    "kill_flash": 2.4,
+    "petal_burst": "2.5-3.5"
+   },
+   "events_from_log": [
+    {
+     "t": 1.23,
+     "tick": 100,
+     "event": "HERO HIT by enemy 1 (11)"
+    },
+    {
+     "t": 1.43,
+     "tick": 106,
+     "event": "HERO HIT by enemy 1 (11)"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Good; the B puddle circle + fruit volley opening is a nice bonus beat; Bud is small.",
+   "use": "kills reel"
+  },
+  {
+   "shot": "kill-bud-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-bud-z09\\kill-bud-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-bud-z09\\kill-bud-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.9,
+   "what": "Same Bud kill, wider framing.",
+   "key_times": {
+    "puddle_mark_under_hero": "0.0-1.25",
+    "kill_flash": 2.4
+   },
+   "events_from_log": [
+    {
+     "t": 1.23,
+     "tick": 100,
+     "event": "HERO HIT by enemy 1 (11)"
+    },
+    {
+     "t": 1.43,
+     "tick": 106,
+     "event": "HERO HIT by enemy 1 (11)"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "OK, wider.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-stonehoof-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-stonehoof-z07\\kill-stonehoof-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-stonehoof-z07\\kill-stonehoof-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.7,
+   "what": "Stonehoof (boar/bull) killed in melee.",
+   "key_times": {
+    "hero_swing": 1.7,
+    "stonehoof_tusk_start": 1.8,
+    "kill_flash": 2.0,
+    "burst": "2.0-2.9"
+   },
+   "events_from_log": [
+    {
+     "t": 1.7,
+     "tick": 114,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.8,
+     "tick": 117,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.0,
+     "tick": 123,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.0,
+     "tick": 123,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Good; bull walks in from the top, dies near the top third.",
+   "use": "kills reel"
+  },
+  {
+   "shot": "kill-stonehoof-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-stonehoof-z09\\kill-stonehoof-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-stonehoof-z09\\kill-stonehoof-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.9,
+   "what": "Same Stonehoof kill, wider framing.",
+   "key_times": {
+    "kill_flash": 2.0,
+    "burst": "2.0-2.9"
+   },
+   "events_from_log": [
+    {
+     "t": 1.7,
+     "tick": 114,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.8,
+     "tick": 117,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.0,
+     "tick": 123,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.0,
+     "tick": 123,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "OK but the kill sits high and small in frame.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-thorncaster-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-thorncaster-z07\\kill-thorncaster-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-thorncaster-z07\\kill-thorncaster-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.7,
+   "what": "Thorncaster (spike shooter) killed; hero walks in from ~6 m.",
+   "key_times": {
+    "thorn_shot_hits_hero": 1.37,
+    "spike_burst_mark": 2.07,
+    "hero_swing": 2.1,
+    "kill_flash": 2.4,
+    "burst": "2.4-3.2"
+   },
+   "events_from_log": [
+    {
+     "t": 0.43,
+     "tick": 76,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 1.13,
+     "tick": 97,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 1.37,
+     "tick": 104,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.37,
+     "tick": 104,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 2.07,
+     "tick": 125,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.07,
+     "tick": 125,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "TelegraphCancelled src=1 dst=-1"
+    }
+   ],
+   "quality": "Thorncaster is off-frame right until ~1.7 s (hero walks in); kill itself readable.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-thorncaster-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-thorncaster-z09\\kill-thorncaster-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-thorncaster-z09\\kill-thorncaster-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.9,
+   "what": "Same Thorncaster kill, wider framing.",
+   "key_times": {
+    "thorn_shot_hits_hero": 1.37,
+    "spike_burst_mark": 2.07,
+    "kill_flash": 2.4
+   },
+   "events_from_log": [
+    {
+     "t": 0.43,
+     "tick": 76,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 1.13,
+     "tick": 97,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 1.37,
+     "tick": 104,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.37,
+     "tick": 104,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 2.07,
+     "tick": 125,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.07,
+     "tick": 125,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 2.4,
+     "tick": 135,
+     "event": "TelegraphCancelled src=1 dst=-1"
+    }
+   ],
+   "quality": "Better than z07: the caster is in frame earlier.",
+   "use": "kills reel"
+  },
+  {
+   "shot": "kill-snarer-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-snarer-z07\\kill-snarer-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-snarer-z07\\kill-snarer-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.7,
+   "what": "Root Snarer killed; hero walks in from ~6 m.",
+   "key_times": {
+    "old_roots_under_hero": "0.0-0.3",
+    "hero_swing": 1.83,
+    "kill_flash": 2.13,
+    "burst": "2.13-2.9"
+   },
+   "events_from_log": [
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.13,
+     "tick": 127,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.13,
+     "tick": 127,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Snarer off-frame right until ~1.7 s; small body.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-snarer-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-snarer-z09\\kill-snarer-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-snarer-z09\\kill-snarer-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.9,
+   "what": "Same Root Snarer kill, wider framing.",
+   "key_times": {
+    "hero_swing": 1.83,
+    "kill_flash": 2.13,
+    "burst": "2.13-2.9"
+   },
+   "events_from_log": [
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 2.13,
+     "tick": 127,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 2.13,
+     "tick": 127,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Better framing than z07.",
+   "use": "kills reel"
+  },
+  {
+   "shot": "kill-splitter-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-splitter-z07\\kill-splitter-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-splitter-z07\\kill-splitter-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.5,
+   "reels_zoom": 0.7,
+   "what": "Splitter killed -> splits into two splitlings that leap out; hero finishes them after a 1.5 s pause.",
+   "key_times": {
+    "rolling_charge_with_smoke_trail": "0.0-1.5",
+    "splitter_hits_hero": 1.27,
+    "kill_flash": 1.83,
+    "SPLIT_into_two": 2.23,
+    "halves_leap_out": "2.3-3.0",
+    "kill_half_1": 4.07,
+    "kill_half_2": 5.4,
+    "empty_after": "5.8-7.5"
+   },
+   "events_from_log": [
+    {
+     "t": 0.0,
+     "tick": 63,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 0.4,
+     "tick": 75,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.0,
+     "tick": 93,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.27,
+     "tick": 101,
+     "event": "HERO HIT by enemy 1 (18)"
+    },
+    {
+     "t": 1.5,
+     "tick": 108,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.53,
+     "tick": 109,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 2.23,
+     "tick": 130,
+     "event": "SplitterSplit src=1 dst=2"
+    },
+    {
+     "t": 2.73,
+     "tick": 145,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 3.07,
+     "tick": 155,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 3.13,
+     "tick": 157,
+     "event": "HERO HIT by enemy 2 (4)"
+    },
+    {
+     "t": 3.47,
+     "tick": 167,
+     "event": "HERO HIT by enemy 3 (4)"
+    },
+    {
+     "t": 3.77,
+     "tick": 176,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 3.8,
+     "tick": 177,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "KILL enemy 2"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 4.13,
+     "tick": 187,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 4.43,
+     "tick": 196,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 4.53,
+     "tick": 199,
+     "event": "HERO HIT by enemy 3 (4)"
+    },
+    {
+     "t": 4.73,
+     "tick": 205,
+     "event": "hero hits enemy 3 (54)"
+    },
+    {
+     "t": 5.1,
+     "tick": 216,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 5.2,
+     "tick": 219,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 5.4,
+     "tick": 225,
+     "event": "hero hits enemy 3 (136)"
+    },
+    {
+     "t": 5.4,
+     "tick": 225,
+     "event": "KILL enemy 3"
+    }
+   ],
+   "quality": "Very good: the split reads clearly (two bark halves), three kills in one clip.",
+   "use": "kills reel (split) — cut 1.5-5.6"
+  },
+  {
+   "shot": "kill-splitter-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-splitter-z09\\kill-splitter-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-splitter-z09\\kill-splitter-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.5,
+   "reels_zoom": 0.9,
+   "what": "Same Splitter split, wider framing.",
+   "key_times": {
+    "kill_flash": 1.83,
+    "SPLIT_into_two": 2.23,
+    "kill_half_1": 4.07,
+    "kill_half_2": 5.4
+   },
+   "events_from_log": [
+    {
+     "t": 0.0,
+     "tick": 63,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 0.4,
+     "tick": 75,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.0,
+     "tick": 93,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.27,
+     "tick": 101,
+     "event": "HERO HIT by enemy 1 (18)"
+    },
+    {
+     "t": 1.5,
+     "tick": 108,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.53,
+     "tick": 109,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.83,
+     "tick": 118,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 2.23,
+     "tick": 130,
+     "event": "SplitterSplit src=1 dst=2"
+    },
+    {
+     "t": 2.73,
+     "tick": 145,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 3.07,
+     "tick": 155,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 3.13,
+     "tick": 157,
+     "event": "HERO HIT by enemy 2 (4)"
+    },
+    {
+     "t": 3.47,
+     "tick": 167,
+     "event": "HERO HIT by enemy 3 (4)"
+    },
+    {
+     "t": 3.77,
+     "tick": 176,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 3.8,
+     "tick": 177,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "KILL enemy 2"
+    },
+    {
+     "t": 4.07,
+     "tick": 185,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 4.13,
+     "tick": 187,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 4.43,
+     "tick": 196,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 4.53,
+     "tick": 199,
+     "event": "HERO HIT by enemy 3 (4)"
+    },
+    {
+     "t": 4.73,
+     "tick": 205,
+     "event": "hero hits enemy 3 (54)"
+    },
+    {
+     "t": 5.1,
+     "tick": 216,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 5.2,
+     "tick": 219,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 5.4,
+     "tick": 225,
+     "event": "hero hits enemy 3 (136)"
+    },
+    {
+     "t": 5.4,
+     "tick": 225,
+     "event": "KILL enemy 3"
+    }
+   ],
+   "quality": "Good, wider.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-wendigo-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-wendigo-z07\\kill-wendigo-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-wendigo-z07\\kill-wendigo-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 4.5,
+   "reels_zoom": 0.7,
+   "what": "Wendigo killed in melee.",
+   "key_times": {
+    "leap_cone_mark_B": 0.57,
+    "leap_impact_hits_hero": 1.17,
+    "hero_swing": 1.33,
+    "kill_flash": 1.63,
+    "smoke_and_leaves": "1.8-3.5"
+   },
+   "events_from_log": [
+    {
+     "t": 0.57,
+     "tick": 80,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.57,
+     "tick": 80,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.17,
+     "tick": 98,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.17,
+     "tick": 98,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 1.33,
+     "tick": 103,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.63,
+     "tick": 112,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.63,
+     "tick": 112,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Very good: B cone with chevrons, then the kill and a big smoke/leaf burst.",
+   "use": "kills reel / hook"
+  },
+  {
+   "shot": "kill-wendigo-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-wendigo-z09\\kill-wendigo-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-wendigo-z09\\kill-wendigo-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 4.5,
+   "reels_zoom": 0.9,
+   "what": "Same Wendigo kill, wider framing.",
+   "key_times": {
+    "leap_cone_mark_B": 0.57,
+    "leap_impact": 1.17,
+    "kill_flash": 1.63
+   },
+   "events_from_log": [
+    {
+     "t": 0.57,
+     "tick": 80,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.57,
+     "tick": 80,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.17,
+     "tick": 98,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.17,
+     "tick": 98,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 1.33,
+     "tick": 103,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.63,
+     "tick": 112,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.63,
+     "tick": 112,
+     "event": "KILL enemy 1"
+    }
+   ],
+   "quality": "Good, wider.",
+   "use": "alt"
+  },
+  {
+   "shot": "kill-swarm-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-z07\\kill-swarm-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-z07\\kill-swarm-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.7,
+   "what": "Root swarm (1 HP each) around the hero, cut down swing after swing.",
+   "key_times": {
+    "cleave_kills": "0.2-1.0"
+   },
+   "events_from_log": [
+    {
+     "t": 2.35,
+     "tick": 70,
+     "event": "KILL x1 (total 1)"
+    },
+    {
+     "t": 3.02,
+     "tick": 90,
+     "event": "KILL x1 (total 2)"
+    }
+   ],
+   "quality": "UNREADABLE: hero and swarm on the entry portal stone ring with water (same on every seed). Do not use.",
+   "use": "no"
+  },
+  {
+   "shot": "kill-swarm-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-z09\\kill-swarm-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-z09\\kill-swarm-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 5.0,
+   "reels_zoom": 0.9,
+   "what": "Same root swarm, wider framing.",
+   "key_times": {
+    "cleave_kills": "0.2-1.0"
+   },
+   "events_from_log": [
+    {
+     "t": 2.35,
+     "tick": 70,
+     "event": "KILL x1 (total 1)"
+    },
+    {
+     "t": 3.02,
+     "tick": 90,
+     "event": "KILL x1 (total 2)"
+    }
+   ],
+   "quality": "UNREADABLE (portal ring). Do not use.",
+   "use": "no"
+  },
+  {
+   "shot": "kill-swarm-pack-z07",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-pack-z07\\kill-swarm-pack-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-pack-z07\\kill-swarm-pack-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 9.0,
+   "reels_zoom": 0.7,
+   "what": "Root swarm kill on a clean glade: Wendigo stand with its 2-swarm pack; Wendigo dies first, then the two root crawlers.",
+   "key_times": {
+    "wendigo_leap_mark": 0.6,
+    "wendigo_leap_impact": 1.2,
+    "wendigo_kill": 1.6,
+    "crawler_kill_1": 3.6,
+    "crawler_kill_2": 4.27,
+    "empty_after": "4.8-9.0"
+   },
+   "events_from_log": [
+    {
+     "t": 0.07,
+     "tick": 65,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 0.33,
+     "tick": 73,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 0.6,
+     "tick": 81,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 81,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.07,
+     "tick": 95,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 1.3,
+     "tick": 102,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.33,
+     "tick": 103,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 1.47,
+     "tick": 107,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 1.73,
+     "tick": 115,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 1.97,
+     "tick": 122,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 2.27,
+     "tick": 131,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 2.27,
+     "tick": 131,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 2.37,
+     "tick": 134,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 2.5,
+     "tick": 138,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 2.63,
+     "tick": 142,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 2.77,
+     "tick": 146,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 2.93,
+     "tick": 151,
+     "event": "hero hits enemy 2 (54)"
+    },
+    {
+     "t": 3.17,
+     "tick": 158,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 3.3,
+     "tick": 162,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 3.43,
+     "tick": 166,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 3.57,
+     "tick": 170,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "KILL enemy 2"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 3.83,
+     "tick": 178,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 3.97,
+     "tick": 182,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 4.27,
+     "tick": 191,
+     "event": "hero hits enemy 3 (54)"
+    },
+    {
+     "t": 4.27,
+     "tick": 191,
+     "event": "KILL enemy 3"
+    }
+   ],
+   "quality": "Readable root-crawler kills on clean ground (retake of the swarm shot); crawlers are small. Trim after 5 s.",
+   "use": "kills reel (swarm slot) — cut 3.0-4.9"
+  },
+  {
+   "shot": "kill-swarm-pack-z09",
+   "group": "kills",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-pack-z09\\kill-swarm-pack-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\kill-swarm-pack-z09\\kill-swarm-pack-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 9.0,
+   "reels_zoom": 0.9,
+   "what": "Same Wendigo + 2 root swarm kills, wider.",
+   "key_times": {
+    "wendigo_kill": 1.6,
+    "crawler_kill_1": 3.6,
+    "crawler_kill_2": 4.27
+   },
+   "events_from_log": [
+    {
+     "t": 0.07,
+     "tick": 65,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 0.33,
+     "tick": 73,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 0.6,
+     "tick": 81,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 81,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.07,
+     "tick": 95,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.2,
+     "tick": 99,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 1.3,
+     "tick": 102,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 1.33,
+     "tick": 103,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 1.47,
+     "tick": 107,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 1.6,
+     "tick": 111,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 1.73,
+     "tick": 115,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 1.97,
+     "tick": 122,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 2.1,
+     "tick": 126,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 2.27,
+     "tick": 131,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 2.27,
+     "tick": 131,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 2.37,
+     "tick": 134,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 2.5,
+     "tick": 138,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 2.63,
+     "tick": 142,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 2.77,
+     "tick": 146,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 2.93,
+     "tick": 151,
+     "event": "hero hits enemy 2 (54)"
+    },
+    {
+     "t": 3.17,
+     "tick": 158,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 3.3,
+     "tick": 162,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 3.43,
+     "tick": 166,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 3.57,
+     "tick": 170,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "hero hits enemy 2 (68)"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "KILL enemy 2"
+    },
+    {
+     "t": 3.6,
+     "tick": 171,
+     "event": "hero hits enemy 3 (43)"
+    },
+    {
+     "t": 3.83,
+     "tick": 178,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 3.97,
+     "tick": 182,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 4.27,
+     "tick": 191,
+     "event": "hero hits enemy 3 (54)"
+    },
+    {
+     "t": 4.27,
+     "tick": 191,
+     "event": "KILL enemy 3"
+    }
+   ],
+   "quality": "Same, wider.",
+   "use": "alt"
+  },
+  {
+   "shot": "after-crowd-fight",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-crowd-fight\\after-crowd-fight_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-crowd-fight\\after-crowd-fight_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 11.5,
+   "reels_zoom": 0.9,
+   "what": "All nine forest kinds around the hero; hero kills them one by one (1.5 s pause between) — B telegraphs and body strike signs everywhere.",
+   "key_times": {
+    "wendigo_leap_cone": "0.6->1.2",
+    "bud_puddle_burst": "1.8-2.3",
+    "stonehoof_charge_lane": "2.53->4.47 (hits hero, stun stars 4.5-5.0)",
+    "kill_thorncaster": 3.67,
+    "kill_2": 5.83,
+    "roots_mark_then_erupt": "5.43->6.13",
+    "wendigo_leap": "6.23->6.83",
+    "kill_3": 7.83,
+    "kill_4": 8.5,
+    "charge_lane_again": "9.27",
+    "last_kill": 11.13
+   },
+   "events_from_log": [
+    {
+     "t": 0.13,
+     "tick": 22,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 0.37,
+     "tick": 29,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.37,
+     "tick": 29,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 0.43,
+     "tick": 31,
+     "event": "EnemyActionStarted src=8 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 36,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 36,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 0.83,
+     "tick": 43,
+     "event": "TelegraphOpened src=8 dst=-1"
+    },
+    {
+     "t": 1.2,
+     "tick": 54,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 1.2,
+     "tick": 54,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 1.23,
+     "tick": 55,
+     "event": "TelegraphOpened src=2 dst=-1"
+    },
+    {
+     "t": 1.23,
+     "tick": 55,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 1.73,
+     "tick": 70,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 1.73,
+     "tick": 70,
+     "event": "HERO HIT by enemy 8 (18)"
+    },
+    {
+     "t": 1.87,
+     "tick": 74,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 1.93,
+     "tick": 76,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 1.93,
+     "tick": 76,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 2.0,
+     "tick": 78,
+     "event": "HERO HIT by enemy 2 (17)"
+    },
+    {
+     "t": 2.13,
+     "tick": 82,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.13,
+     "tick": 82,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 2.27,
+     "tick": 86,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "StonehoofStarted src=6 dst=0"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "TelegraphOpened src=6 dst=-1"
+    },
+    {
+     "t": 2.6,
+     "tick": 96,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 2.87,
+     "tick": 104,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 3.0,
+     "tick": 108,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 3.33,
+     "tick": 118,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 3.33,
+     "tick": 118,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 3.37,
+     "tick": 119,
+     "event": "hero swing at 1"
+    },
+    {
+     "t": 3.67,
+     "tick": 128,
+     "event": "hero hits enemy 1 (54)"
+    },
+    {
+     "t": 3.67,
+     "tick": 128,
+     "event": "KILL enemy 1"
+    },
+    {
+     "t": 3.67,
+     "tick": 128,
+     "event": "TelegraphCancelled src=1 dst=-1"
+    },
+    {
+     "t": 4.47,
+     "tick": 152,
+     "event": "HERO HIT by enemy 6 (22)"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "StonehoofStopped src=6 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "EnemyActionStarted src=7 dst=0"
+    },
+    {
+     "t": 5.3,
+     "tick": 177,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 5.43,
+     "tick": 181,
+     "event": "TelegraphOpened src=7 dst=-1"
+    },
+    {
+     "t": 5.53,
+     "tick": 184,
+     "event": "hero swing at 2"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "TelegraphOpened src=2 dst=-1"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 5.7,
+     "tick": 189,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 5.83,
+     "tick": 193,
+     "event": "hero hits enemy 2 (54)"
+    },
+    {
+     "t": 5.83,
+     "tick": 193,
+     "event": "KILL enemy 2"
+    },
+    {
+     "t": 5.83,
+     "tick": 193,
+     "event": "TelegraphCancelled src=2 dst=-1"
+    },
+    {
+     "t": 6.03,
+     "tick": 199,
+     "event": "TelegraphOpened src=8 dst=-1"
+    },
+    {
+     "t": 6.03,
+     "tick": 199,
+     "event": "enemy 8 attack starts"
+    },
+    {
+     "t": 6.13,
+     "tick": 202,
+     "event": "EnemyActionImpact src=7 dst=0"
+    },
+    {
+     "t": 6.13,
+     "tick": 202,
+     "event": "HERO HIT by enemy 7 (20)"
+    },
+    {
+     "t": 6.2,
+     "tick": 204,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 6.23,
+     "tick": 205,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 6.23,
+     "tick": 205,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 6.5,
+     "tick": 213,
+     "event": "hero hits enemy 3 (68)"
+    },
+    {
+     "t": 6.5,
+     "tick": 213,
+     "event": "hero hits enemy 9 (86)"
+    },
+    {
+     "t": 6.5,
+     "tick": 213,
+     "event": "hero hits enemy 8 (43)"
+    },
+    {
+     "t": 6.63,
+     "tick": 217,
+     "event": "HERO HIT by enemy 8 (12)"
+    },
+    {
+     "t": 6.83,
+     "tick": 223,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 6.83,
+     "tick": 223,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 6.87,
+     "tick": 224,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 6.97,
+     "tick": 227,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 7.17,
+     "tick": 233,
+     "event": "hero hits enemy 3 (54)"
+    },
+    {
+     "t": 7.23,
+     "tick": 235,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 7.37,
+     "tick": 239,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 7.53,
+     "tick": 244,
+     "event": "hero swing at 3"
+    },
+    {
+     "t": 7.63,
+     "tick": 247,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 7.73,
+     "tick": 250,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 7.73,
+     "tick": 250,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "hero hits enemy 3 (68)"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "KILL enemy 3"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "hero hits enemy 5 (43)"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "hero hits enemy 9 (43)"
+    },
+    {
+     "t": 8.2,
+     "tick": 264,
+     "event": "hero swing at 9"
+    },
+    {
+     "t": 8.27,
+     "tick": 266,
+     "event": "EnemyActionStarted src=8 dst=0"
+    },
+    {
+     "t": 8.33,
+     "tick": 268,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 8.33,
+     "tick": 268,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 8.33,
+     "tick": 268,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 8.47,
+     "tick": 272,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 8.5,
+     "tick": 273,
+     "event": "hero hits enemy 9 (54)"
+    },
+    {
+     "t": 8.5,
+     "tick": 273,
+     "event": "KILL enemy 9"
+    },
+    {
+     "t": 8.67,
+     "tick": 278,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 8.67,
+     "tick": 278,
+     "event": "TelegraphOpened src=8 dst=-1"
+    },
+    {
+     "t": 8.87,
+     "tick": 284,
+     "event": "hero swing at 5"
+    },
+    {
+     "t": 8.87,
+     "tick": 284,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 9.07,
+     "tick": 290,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 9.17,
+     "tick": 293,
+     "event": "hero hits enemy 5 (68)"
+    },
+    {
+     "t": 9.23,
+     "tick": 295,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 9.23,
+     "tick": 295,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 9.27,
+     "tick": 296,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 9.27,
+     "tick": 296,
+     "event": "StonehoofStarted src=6 dst=0"
+    },
+    {
+     "t": 9.27,
+     "tick": 296,
+     "event": "TelegraphOpened src=6 dst=-1"
+    },
+    {
+     "t": 9.27,
+     "tick": 296,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 9.47,
+     "tick": 302,
+     "event": "HERO HIT by enemy 8 (18)"
+    },
+    {
+     "t": 9.77,
+     "tick": 311,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 9.83,
+     "tick": 313,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 10.83,
+     "tick": 343,
+     "event": "hero swing at 4"
+    },
+    {
+     "t": 11.13,
+     "tick": 352,
+     "event": "hero hits enemy 4 (54)"
+    },
+    {
+     "t": 11.13,
+     "tick": 352,
+     "event": "KILL enemy 4"
+    }
+   ],
+   "quality": "Best AFTER footage: all nine kinds, overlapping B marks with chevrons, body signs, roots, smoke. Busy but readable at 0.9.",
+   "use": "before/after AFTER: 0.5-4.5 and 5.4-8.6"
+  },
+  {
+   "shot": "after-crowd-tank",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-crowd-tank\\after-crowd-tank_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-crowd-tank\\after-crowd-tank_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 9.0,
+   "reels_zoom": 1.0,
+   "what": "All nine forest kinds attacking a standing hero: overlapping B telegraphs, body signs, roots, spikes.",
+   "key_times": {
+    "wendigo_leaps": "0.6, 2.93, 5.2, 6.7, 8.2 (+0.6 impact)",
+    "charge_lane": "2.53->4.13 hit",
+    "roots": "5.43->6.13"
+   },
+   "events_from_log": [
+    {
+     "t": 0.13,
+     "tick": 22,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 0.37,
+     "tick": 29,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.37,
+     "tick": 29,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 0.43,
+     "tick": 31,
+     "event": "EnemyActionStarted src=8 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 36,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 0.6,
+     "tick": 36,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 0.83,
+     "tick": 43,
+     "event": "TelegraphOpened src=8 dst=-1"
+    },
+    {
+     "t": 1.2,
+     "tick": 54,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 1.2,
+     "tick": 54,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 1.23,
+     "tick": 55,
+     "event": "TelegraphOpened src=2 dst=-1"
+    },
+    {
+     "t": 1.23,
+     "tick": 55,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 1.73,
+     "tick": 70,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 1.73,
+     "tick": 70,
+     "event": "HERO HIT by enemy 8 (18)"
+    },
+    {
+     "t": 1.87,
+     "tick": 74,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 1.93,
+     "tick": 76,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 1.93,
+     "tick": 76,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 2.0,
+     "tick": 78,
+     "event": "HERO HIT by enemy 2 (17)"
+    },
+    {
+     "t": 2.13,
+     "tick": 82,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.13,
+     "tick": 82,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 2.27,
+     "tick": 86,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 2.33,
+     "tick": 88,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "StonehoofStarted src=6 dst=0"
+    },
+    {
+     "t": 2.53,
+     "tick": 94,
+     "event": "TelegraphOpened src=6 dst=-1"
+    },
+    {
+     "t": 2.6,
+     "tick": 96,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 2.87,
+     "tick": 104,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 3.0,
+     "tick": 108,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 3.27,
+     "tick": 116,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 3.43,
+     "tick": 121,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 3.53,
+     "tick": 124,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 3.53,
+     "tick": 124,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 3.6,
+     "tick": 126,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 4.0,
+     "tick": 138,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 4.13,
+     "tick": 142,
+     "event": "HERO HIT by enemy 6 (22)"
+    },
+    {
+     "t": 4.13,
+     "tick": 142,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 4.67,
+     "tick": 158,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "StonehoofStopped src=6 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "EnemyActionStarted src=7 dst=0"
+    },
+    {
+     "t": 4.97,
+     "tick": 167,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 5.13,
+     "tick": 172,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 5.2,
+     "tick": 174,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 5.2,
+     "tick": 174,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 5.3,
+     "tick": 177,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 5.3,
+     "tick": 177,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 5.37,
+     "tick": 179,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 5.43,
+     "tick": 181,
+     "event": "TelegraphOpened src=7 dst=-1"
+    },
+    {
+     "t": 5.53,
+     "tick": 184,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 5.8,
+     "tick": 192,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 5.8,
+     "tick": 192,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 6.13,
+     "tick": 202,
+     "event": "EnemyActionImpact src=7 dst=0"
+    },
+    {
+     "t": 6.13,
+     "tick": 202,
+     "event": "HERO HIT by enemy 7 (20)"
+    },
+    {
+     "t": 6.23,
+     "tick": 205,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 6.37,
+     "tick": 209,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 6.4,
+     "tick": 210,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.4,
+     "tick": 210,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 6.6,
+     "tick": 216,
+     "event": "TelegraphOpened src=2 dst=-1"
+    },
+    {
+     "t": 6.6,
+     "tick": 216,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 6.63,
+     "tick": 217,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 6.7,
+     "tick": 219,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 6.7,
+     "tick": 219,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 6.77,
+     "tick": 221,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 7.03,
+     "tick": 229,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 7.3,
+     "tick": 237,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 7.3,
+     "tick": 237,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 7.37,
+     "tick": 239,
+     "event": "HERO HIT by enemy 2 (17)"
+    },
+    {
+     "t": 7.53,
+     "tick": 244,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 7.7,
+     "tick": 249,
+     "event": "enemy 9 attack starts"
+    },
+    {
+     "t": 7.73,
+     "tick": 250,
+     "event": "EnemyActionStarted src=8 dst=0"
+    },
+    {
+     "t": 8.1,
+     "tick": 261,
+     "event": "HERO HIT by enemy 9 (4)"
+    },
+    {
+     "t": 8.13,
+     "tick": 262,
+     "event": "TelegraphOpened src=8 dst=-1"
+    },
+    {
+     "t": 8.2,
+     "tick": 264,
+     "event": "WendigoStarted src=5 dst=0"
+    },
+    {
+     "t": 8.2,
+     "tick": 264,
+     "event": "TelegraphOpened src=5 dst=-1"
+    },
+    {
+     "t": 8.23,
+     "tick": 265,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 8.4,
+     "tick": 270,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 8.4,
+     "tick": 270,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 8.47,
+     "tick": 272,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 8.67,
+     "tick": 278,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 8.73,
+     "tick": 280,
+     "event": "EnemyActionImpact src=8 dst=0"
+    },
+    {
+     "t": 8.8,
+     "tick": 282,
+     "event": "WendigoImpact src=5 dst=0"
+    },
+    {
+     "t": 8.8,
+     "tick": 282,
+     "event": "HERO HIT by enemy 5 (26)"
+    },
+    {
+     "t": 8.87,
+     "tick": 284,
+     "event": "HERO HIT by enemy 4 (11)"
+    },
+    {
+     "t": 8.97,
+     "tick": 287,
+     "event": "enemy 9 attack starts"
+    }
+   ],
+   "quality": "Same crowd, hero just stands and takes it — more marks on screen at once, no kills.",
+   "use": "alt AFTER / dodge-challenge intro"
+  },
+  {
+   "shot": "after-wendigo-howl",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-wendigo-howl\\after-wendigo-howl_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-wendigo-howl\\after-wendigo-howl_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.8,
+   "what": "Wendigo howl (crisp ring, chevrons outward).",
+   "key_times": {
+    "howl_ring_grows_chevrons_out": "0.3-1.4",
+    "howl_burst": 1.5,
+    "dark_spikes_linger": "1.6-2.8",
+    "claw_sectors": "2.8, 4.0, 5.6"
+   },
+   "events_from_log": [],
+   "quality": "Very strong: huge B ring, then the burst.",
+   "use": "AFTER / hook"
+  },
+  {
+   "shot": "after-wendigo-leap",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-wendigo-leap\\after-wendigo-leap_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-wendigo-leap\\after-wendigo-leap_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.9,
+   "what": "Wendigo opening leap onto a standing hero, then claws.",
+   "key_times": {
+    "leap_marks": "0.77, 2.27, 3.77, 5.27",
+    "impacts_hit_hero": "1.37, 2.87, 4.37, 5.87"
+   },
+   "events_from_log": [
+    {
+     "t": 0.77,
+     "tick": 35,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.77,
+     "tick": 35,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.37,
+     "tick": 53,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.37,
+     "tick": 53,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 2.27,
+     "tick": 80,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 2.27,
+     "tick": 80,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.87,
+     "tick": 98,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 2.87,
+     "tick": 98,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 3.77,
+     "tick": 125,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 3.77,
+     "tick": 125,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.37,
+     "tick": 143,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 4.37,
+     "tick": 143,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 5.27,
+     "tick": 170,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 5.27,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.87,
+     "tick": 188,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 5.87,
+     "tick": 188,
+     "event": "HERO HIT by enemy 1 (26)"
+    }
+   ],
+   "quality": "Good, repetitive; one leap is enough (0.6-1.8).",
+   "use": "alt"
+  },
+  {
+   "shot": "after-stonehoof-charge",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-stonehoof-charge\\after-stonehoof-charge_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-stonehoof-charge\\after-stonehoof-charge_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.0,
+   "reels_zoom": 0.9,
+   "what": "Stonehoof charge lane telegraph, charge hits the standing hero (1 s stun).",
+   "key_times": {
+    "bull_walks_off": "1.2-3.2",
+    "charge_lane_B": 3.3,
+    "charge_hits_hero": 4.67,
+    "stun": "4.8-5.3",
+    "bull_stops": 5.47
+   },
+   "events_from_log": [
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "StonehoofStarted src=1 dst=0"
+    },
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.67,
+     "tick": 158,
+     "event": "HERO HIT by enemy 1 (22)"
+    },
+    {
+     "t": 5.47,
+     "tick": 182,
+     "event": "StonehoofStopped src=1 dst=0"
+    }
+   ],
+   "quality": "Very good lane with chevrons; the bull runs through the hero.",
+   "use": "AFTER: 3.0-5.5"
+  },
+  {
+   "shot": "after-multikill",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-multikill\\after-multikill_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-multikill\\after-multikill_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.8,
+   "what": "Root swarm multi-kill (1 HP each).",
+   "key_times": {
+    "cleave_kills": "0.0-1.0"
+   },
+   "events_from_log": [
+    {
+     "t": 2.35,
+     "tick": 70,
+     "event": "KILL x1 (total 1)"
+    },
+    {
+     "t": 3.02,
+     "tick": 90,
+     "event": "KILL x2 (total 3)"
+    }
+   ],
+   "quality": "UNREADABLE (portal ring).",
+   "use": "no"
+  },
+  {
+   "shot": "after-multikill-z05",
+   "group": "after",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-multikill-z05\\after-multikill-z05_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\after-multikill-z05\\after-multikill-z05_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 4.0,
+   "reels_zoom": 0.5,
+   "what": "Root swarm multi-kill retake, tight zoom.",
+   "key_times": {
+    "cleave_kills": "0.25-1.0",
+    "late_kills": "2.4-2.8"
+   },
+   "events_from_log": [
+    {
+     "t": 2.35,
+     "tick": 70,
+     "event": "KILL x1 (total 1)"
+    },
+    {
+     "t": 3.02,
+     "tick": 90,
+     "event": "KILL x2 (total 3)"
+    }
+   ],
+   "quality": "Retake, tighter; still on the portal ring, marginal. Use only as a 0.5 s flash if at all.",
+   "use": "marginal"
+  },
+  {
+   "shot": "boss-calm-afterclear",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-calm-afterclear\\boss-calm-afterclear_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-calm-afterclear\\boss-calm-afterclear_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 1.2,
+   "what": "Calm glade after the Guardian dies: empty arena, hero idle, ambient wisps.",
+   "key_times": {
+    "calm_whole_clip": "0.0-8.0"
+   },
+   "events_from_log": [],
+   "quality": "Calm and empty: hero idle at the left edge of the rune circle, nothing moves but ambient. Static camera, strongly orange.",
+   "use": "BOSS v2 atmosphere (arena centre + rune circle)"
+  },
+  {
+   "shot": "boss-calm-empty",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-calm-empty\\boss-calm-empty_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-calm-empty\\boss-calm-empty_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 1.3,
+   "what": "Normal rift arena with no enemies: hero idle at the entry, calm glade.",
+   "key_times": {
+    "calm_whole_clip": "0.0-8.0"
+   },
+   "events_from_log": [],
+   "quality": "Calm, greener and more atmospheric (forest edge, bushes, trail), but it is the entry portal ring with water, not the rune circle.",
+   "use": "BOSS v2 atmosphere alt"
+  },
+  {
+   "shot": "boss-hero-howl",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-howl\\boss-hero-howl_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-howl\\boss-hero-howl_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.65,
+   "what": "Mob hero shot: Wendigo howl, tight.",
+   "key_times": {
+    "howl_ring": "0.3-1.3",
+    "howl_burst": 1.5,
+    "claws": "2.5-5.5"
+   },
+   "events_from_log": [],
+   "quality": "Very good, tight.",
+   "use": "BOSS mob hero shot"
+  },
+  {
+   "shot": "boss-hero-charge",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-charge\\boss-hero-charge_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-charge\\boss-hero-charge_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.0,
+   "reels_zoom": 0.7,
+   "what": "Mob hero shot: Stonehoof charge, tight.",
+   "key_times": {
+    "charge_lane_B": 3.3,
+    "hit": 4.67,
+    "stun": "4.8-5.3",
+    "bull_passes": "4.8-5.5"
+   },
+   "events_from_log": [
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "StonehoofStarted src=1 dst=0"
+    },
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.67,
+     "tick": 158,
+     "event": "HERO HIT by enemy 1 (22)"
+    },
+    {
+     "t": 5.47,
+     "tick": 182,
+     "event": "StonehoofStopped src=1 dst=0"
+    }
+   ],
+   "quality": "Very good.",
+   "use": "BOSS mob hero shot: 3.0-5.6"
+  },
+  {
+   "shot": "boss-hero-roots",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-roots\\boss-hero-roots_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-roots\\boss-hero-roots_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.0,
+   "reels_zoom": 0.7,
+   "what": "Mob hero shot: Root Snarer roots erupt from the ground under the hero (hero stands, gets rooted).",
+   "key_times": {
+    "roots_circle_under_hero": 0.0,
+    "roots_erupt_hit": 0.63,
+    "second_circle_B": 4.93,
+    "second_roots_erupt_hit": 5.63,
+    "roots_linger": "5.7-6.6"
+   },
+   "events_from_log": [
+    {
+     "t": 0.63,
+     "tick": 37,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.63,
+     "tick": 37,
+     "event": "HERO HIT by enemy 1 (20)"
+    },
+    {
+     "t": 4.43,
+     "tick": 151,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "HERO HIT by enemy 1 (20)"
+    }
+   ],
+   "quality": "Very good: roots burst out of the ground around the rooted hero.",
+   "use": "BOSS mob hero shot: 4.7-6.6"
+  },
+  {
+   "shot": "boss-hero-swarm",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-swarm\\boss-hero-swarm_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-swarm\\boss-hero-swarm_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.9,
+   "what": "Mob hero shot: root swarm pouring over the hero (16 requested).",
+   "key_times": {},
+   "events_from_log": [],
+   "quality": "UNREADABLE (portal ring).",
+   "use": "no"
+  },
+  {
+   "shot": "boss-hero-swarm-z06",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-swarm-z06\\boss-hero-swarm-z06_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-swarm-z06\\boss-hero-swarm-z06_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 6.0,
+   "reels_zoom": 0.6,
+   "what": "Root swarm on the hero, retake at tight zoom.",
+   "key_times": {
+    "swarm_on_hero": "0.0-6.0"
+   },
+   "events_from_log": [],
+   "quality": "Retake, tighter; still on the portal ring, marginal.",
+   "use": "marginal"
+  },
+  {
+   "shot": "boss-hero-wendigo-pack",
+   "group": "boss",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-wendigo-pack\\boss-hero-wendigo-pack_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\boss-hero-wendigo-pack\\boss-hero-wendigo-pack_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 7.0,
+   "reels_zoom": 0.8,
+   "what": "Mob hero shot: Wendigo with two root crawlers pressing a standing hero (repeated leaps + bites).",
+   "key_times": {
+    "leap_marks": "0.8, 2.3, 3.8, 5.3",
+    "impacts": "1.4, 2.9, 4.4, 5.9",
+    "crawler_bites": "1.77, 2.03, 3.17, 3.43"
+   },
+   "events_from_log": [
+    {
+     "t": 0.8,
+     "tick": 36,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.8,
+     "tick": 36,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.37,
+     "tick": 53,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 1.4,
+     "tick": 54,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.4,
+     "tick": 54,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 1.63,
+     "tick": 61,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 1.77,
+     "tick": 65,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 2.03,
+     "tick": 73,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 2.3,
+     "tick": 81,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 2.3,
+     "tick": 81,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.77,
+     "tick": 95,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 2.9,
+     "tick": 99,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 2.9,
+     "tick": 99,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 3.03,
+     "tick": 103,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 3.17,
+     "tick": 107,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 3.43,
+     "tick": 115,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 3.8,
+     "tick": 126,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 3.8,
+     "tick": 126,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.27,
+     "tick": 140,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 4.4,
+     "tick": 144,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 4.4,
+     "tick": 144,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 4.67,
+     "tick": 152,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 5.3,
+     "tick": 171,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 5.3,
+     "tick": 171,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.77,
+     "tick": 185,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 5.9,
+     "tick": 189,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 5.9,
+     "tick": 189,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 6.03,
+     "tick": 193,
+     "event": "enemy 3 attack starts"
+    },
+    {
+     "t": 6.17,
+     "tick": 197,
+     "event": "HERO HIT by enemy 2 (3)"
+    },
+    {
+     "t": 6.43,
+     "tick": 205,
+     "event": "HERO HIT by enemy 3 (3)"
+    },
+    {
+     "t": 6.77,
+     "tick": 215,
+     "event": "enemy 2 attack starts"
+    },
+    {
+     "t": 6.8,
+     "tick": 216,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 6.8,
+     "tick": 216,
+     "event": "TelegraphOpened src=1 dst=-1"
+    }
+   ],
+   "quality": "Good: Wendigo + two crawlers pressing the hero; replaces 'swarm pour'.",
+   "use": "BOSS mob hero shot"
+  },
+  {
+   "shot": "dodge-stonehoof-z08",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-stonehoof-z08\\dodge-stonehoof-z08_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-stonehoof-z08\\dodge-stonehoof-z08_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 0.8,
+   "what": "Stonehoof charge lane appears, hero steps out of the lane before the charge.",
+   "key_times": {
+    "telegraph_lane_appears": 3.3,
+    "hero_steps_out": "3.8-4.0",
+    "impact_bull_passes_hero_spot": 4.4,
+    "bull_stops": 5.47
+   },
+   "events_from_log": [
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "StonehoofStarted src=1 dst=0"
+    },
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.47,
+     "tick": 182,
+     "event": "StonehoofStopped src=1 dst=0"
+    }
+   ],
+   "quality": "Dodged (no hit). Camera follows the hero so the lane slides left.",
+   "use": "alt"
+  },
+  {
+   "shot": "dodge-stonehoof-z10",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-stonehoof-z10\\dodge-stonehoof-z10_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-stonehoof-z10\\dodge-stonehoof-z10_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 1.0,
+   "what": "Same Stonehoof dodge, wider (whole lane in frame).",
+   "key_times": {
+    "telegraph_lane_appears": 3.3,
+    "hero_steps_out": "3.8-4.0",
+    "impact_bull_passes_hero_spot": 4.4,
+    "bull_stops": 5.47
+   },
+   "events_from_log": [
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "StonehoofStarted src=1 dst=0"
+    },
+    {
+     "t": 3.3,
+     "tick": 117,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.47,
+     "tick": 182,
+     "event": "StonehoofStopped src=1 dst=0"
+    }
+   ],
+   "quality": "Dodged; whole lane in frame.",
+   "use": "DODGE beat 1: 3.2-4.9"
+  },
+  {
+   "shot": "dodge-snarer-z07",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-snarer-z07\\dodge-snarer-z07_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-snarer-z07\\dodge-snarer-z07_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 0.7,
+   "what": "Root Snarer circle under the hero, hero walks out before the roots erupt.",
+   "key_times": {
+    "take_A_circle_already_open": 0.0,
+    "take_A_roots_miss": 0.63,
+    "telegraph_circle_B": 4.93,
+    "hero_walks_out": "5.0-5.5",
+    "impact_roots_miss": 5.63
+   },
+   "events_from_log": [
+    {
+     "t": 0.63,
+     "tick": 37,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 4.43,
+     "tick": 151,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "EnemyActionImpact src=1 dst=0"
+    }
+   ],
+   "quality": "Dodged both; take B is complete (appearance -> impact).",
+   "use": "alt"
+  },
+  {
+   "shot": "dodge-snarer-z09",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-snarer-z09\\dodge-snarer-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-snarer-z09\\dodge-snarer-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 0.9,
+   "what": "Same Root Snarer dodge, wider.",
+   "key_times": {
+    "telegraph_circle_B": 4.93,
+    "hero_walks_out": "5.0-5.5",
+    "impact_roots_miss": 5.63
+   },
+   "events_from_log": [
+    {
+     "t": 0.63,
+     "tick": 37,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 4.43,
+     "tick": 151,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 4.93,
+     "tick": 166,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.63,
+     "tick": 187,
+     "event": "EnemyActionImpact src=1 dst=0"
+    }
+   ],
+   "quality": "Dodged; roots erupt right behind the hero.",
+   "use": "DODGE beat 2: 4.8-6.2"
+  },
+  {
+   "shot": "dodge-thorncaster-z08",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-thorncaster-z08\\dodge-thorncaster-z08_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-thorncaster-z08\\dodge-thorncaster-z08_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 0.8,
+   "what": "Thorncaster spike line/burst, hero sidesteps out.",
+   "key_times": {
+    "line_A_already_open": 0.0,
+    "line_A_spikes_miss": "0.33-0.93",
+    "thorn_shot_HITS_hero": 4.87,
+    "line_B_appears": 5.07,
+    "hero_steps_out": "5.6-5.9",
+    "line_B_spikes_miss": "5.97-6.57"
+   },
+   "events_from_log": [
+    {
+     "t": 0.33,
+     "tick": 28,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.53,
+     "tick": 34,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.73,
+     "tick": 40,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.93,
+     "tick": 46,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.97,
+     "tick": 77,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.67,
+     "tick": 98,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 3.2,
+     "tick": 114,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 3.97,
+     "tick": 137,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 4.67,
+     "tick": 158,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 4.87,
+     "tick": 164,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 4.87,
+     "tick": 164,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 5.97,
+     "tick": 197,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.17,
+     "tick": 203,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.37,
+     "tick": 209,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.57,
+     "tick": 215,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 7.6,
+     "tick": 246,
+     "event": "EnemyActionStarted src=1 dst=0"
+    }
+   ],
+   "quality": "Line B dodged cleanly; note the direct thorn shot at 4.87 does hit. Thorncaster itself is off-frame right.",
+   "use": "alt"
+  },
+  {
+   "shot": "dodge-thorncaster-z10",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-thorncaster-z10\\dodge-thorncaster-z10_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-thorncaster-z10\\dodge-thorncaster-z10_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 1.0,
+   "what": "Same Thorncaster dodge, wider.",
+   "key_times": {
+    "line_B_appears": 5.07,
+    "hero_steps_out": "5.6-5.9",
+    "line_B_spikes_miss": "5.97-6.57"
+   },
+   "events_from_log": [
+    {
+     "t": 0.33,
+     "tick": 28,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.53,
+     "tick": 34,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.73,
+     "tick": 40,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 0.93,
+     "tick": 46,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 1.97,
+     "tick": 77,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.67,
+     "tick": 98,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 3.2,
+     "tick": 114,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 3.97,
+     "tick": 137,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 4.67,
+     "tick": 158,
+     "event": "EnemyProjectileLaunched src=1 dst=0"
+    },
+    {
+     "t": 4.87,
+     "tick": 164,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 4.87,
+     "tick": 164,
+     "event": "HERO HIT by enemy 1 (14)"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 5.07,
+     "tick": 170,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 5.97,
+     "tick": 197,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.17,
+     "tick": 203,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.37,
+     "tick": 209,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 6.57,
+     "tick": 215,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 7.6,
+     "tick": 246,
+     "event": "EnemyActionStarted src=1 dst=0"
+    }
+   ],
+   "quality": "Dodged, spikes erupt along the line behind the hero.",
+   "use": "DODGE beat 3: 5.0-6.7"
+  },
+  {
+   "shot": "dodge-wendigo-turn-z08",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-turn-z08\\dodge-wendigo-turn-z08_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-turn-z08\\dodge-wendigo-turn-z08_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 9.0,
+   "reels_zoom": 0.8,
+   "what": "Hero circles the Wendigo -> 360 sweep with knockback HITS the hero (4th beat: the fail).",
+   "key_times": {
+    "leap_miss": "1.43->2.03",
+    "sweep_360_ring": 2.93,
+    "sweep_impact_HITS_hero": 3.63,
+    "knockback": "3.63-4.0",
+    "later_leaps_miss": "4.23, 5.73, 7.23 (+0.6)"
+   },
+   "events_from_log": [
+    {
+     "t": 0.53,
+     "tick": 34,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.03,
+     "tick": 79,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 3.63,
+     "tick": 127,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 3.63,
+     "tick": 127,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 4.23,
+     "tick": 145,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 4.23,
+     "tick": 145,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.83,
+     "tick": 163,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 5.73,
+     "tick": 190,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 5.73,
+     "tick": 190,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 6.33,
+     "tick": 208,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 7.23,
+     "tick": 235,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 7.23,
+     "tick": 235,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 8.73,
+     "tick": 280,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 8.73,
+     "tick": 280,
+     "event": "TelegraphOpened src=1 dst=-1"
+    }
+   ],
+   "quality": "The 360 sweep hits the circling hero with knockback — the 'fail' beat.",
+   "use": "alt"
+  },
+  {
+   "shot": "dodge-wendigo-turn-z10",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-turn-z10\\dodge-wendigo-turn-z10_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-turn-z10\\dodge-wendigo-turn-z10_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 9.0,
+   "reels_zoom": 1.0,
+   "what": "Same Wendigo 360 sweep hit, wider.",
+   "key_times": {
+    "sweep_360_ring": 2.93,
+    "sweep_impact_HITS_hero": 3.63,
+    "knockback": "3.63-4.0"
+   },
+   "events_from_log": [
+    {
+     "t": 0.53,
+     "tick": 34,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 1.43,
+     "tick": 61,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 2.03,
+     "tick": 79,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "EnemyActionStarted src=1 dst=0"
+    },
+    {
+     "t": 2.93,
+     "tick": 106,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 3.63,
+     "tick": 127,
+     "event": "EnemyActionImpact src=1 dst=0"
+    },
+    {
+     "t": 3.63,
+     "tick": 127,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 4.23,
+     "tick": 145,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 4.23,
+     "tick": 145,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.83,
+     "tick": 163,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 5.73,
+     "tick": 190,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 5.73,
+     "tick": 190,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 6.33,
+     "tick": 208,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 7.23,
+     "tick": 235,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 7.23,
+     "tick": 235,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 7.83,
+     "tick": 253,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 8.73,
+     "tick": 280,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 8.73,
+     "tick": 280,
+     "event": "TelegraphOpened src=1 dst=-1"
+    }
+   ],
+   "quality": "Same hit, wider — ring fully in frame.",
+   "use": "DODGE beat 4 (HIT): 2.8-4.2"
+  },
+  {
+   "shot": "dodge-wendigo-dodge-z09",
+   "group": "dodge",
+   "file": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-dodge-z09\\dodge-wendigo-dodge-z09_1080x1920_60fps.mp4",
+   "sheet": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\reels-v2\\dodge-wendigo-dodge-z09\\dodge-wendigo-dodge-z09_1080x1920_60fps_sheet.jpg",
+   "size": "1080x1920",
+   "fps": 60,
+   "duration_s": 8.0,
+   "reels_zoom": 0.9,
+   "what": "Wendigo leap telegraph, hero steps aside before the landing.",
+   "key_times": {
+    "leap_1_miss": "0.77->1.37",
+    "leap_2_miss": "2.47->3.07",
+    "leap_3_HIT": "4.23->4.83",
+    "leap_4_HIT": "5.73->6.33",
+    "leap_5_miss": "7.23->7.83"
+   },
+   "events_from_log": [
+    {
+     "t": 0.77,
+     "tick": 35,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 0.77,
+     "tick": 35,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 1.37,
+     "tick": 53,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 2.47,
+     "tick": 86,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 2.47,
+     "tick": 86,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 3.07,
+     "tick": 104,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 4.23,
+     "tick": 139,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 4.23,
+     "tick": 139,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 4.83,
+     "tick": 157,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 4.83,
+     "tick": 157,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 5.73,
+     "tick": 184,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 5.73,
+     "tick": 184,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 6.33,
+     "tick": 202,
+     "event": "WendigoImpact src=1 dst=0"
+    },
+    {
+     "t": 6.33,
+     "tick": 202,
+     "event": "HERO HIT by enemy 1 (26)"
+    },
+    {
+     "t": 7.23,
+     "tick": 229,
+     "event": "WendigoStarted src=1 dst=0"
+    },
+    {
+     "t": 7.23,
+     "tick": 229,
+     "event": "TelegraphOpened src=1 dst=-1"
+    },
+    {
+     "t": 7.83,
+     "tick": 247,
+     "event": "WendigoImpact src=1 dst=0"
+    }
+   ],
+   "quality": "Leap dodges; spare beat if a Wendigo dodge-success is wanted.",
+   "use": "spare"
+  }
+ ],
+ "look_notes": [
+  "No enemy HP bars, no elite bar with numbers, no elite name plate in any frame (the elite Guardian at 1 HP used to show «1 / 2000»). Floating damage numbers (-54, -68, -136) stay.",
+  "All stand shots (every kill / dodge / Wendigo / Stonehoof shot) now play in the centre of Kostya's glade: the flush rune circle is right under the fight. The new arena floor grade is strong ochre/orange — whole frame reads orange; editors may want to pull saturation a little.",
+  "The combat-feel root swarm (-Encounter root-swarm) ALWAYS spawns on the entry portal stone ring with water, on every seed tried (20260829, 1, 7, 42, 1337, 20260930): hero and swarm sit on the portal and read badly. Readable swarm kills come from the Wendigo stand with its 2-crawler pack (kill-swarm-pack-*). A proper fix needs a capture code change (place the swarm on the glade centre) — not done here (no second rebuild).",
+  "The big rune stone (boss arenas only) is not reachable by any capture flag without code; the calm boss-atmosphere shot uses the rune circle of the glade centre instead.",
+  "Hero dodges in the dodge cases by WALKING out of the mark (capture bot), not by rolling."
+ ],
+ "best_picks": {
+  "kills_reel": [
+   "kill-guardian-z07",
+   "kill-bud-z07",
+   "kill-stonehoof-z07",
+   "kill-thorncaster-z09",
+   "kill-snarer-z09",
+   "kill-splitter-z07",
+   "kill-wendigo-z07",
+   "kill-swarm-pack-z07"
+  ],
+  "before_after_AFTER": [
+   "after-crowd-fight 0.5-4.5",
+   "after-wendigo-howl 0.2-2.6",
+   "after-stonehoof-charge 3.0-5.5",
+   "after-crowd-fight 5.4-8.6"
+  ],
+  "boss_v2": [
+   "boss-calm-afterclear",
+   "boss-calm-empty",
+   "boss-hero-howl 0.2-2.6",
+   "boss-hero-charge 3.0-5.6",
+   "boss-hero-roots 4.7-6.6",
+   "boss-hero-wendigo-pack"
+  ],
+  "dodge_challenge": [
+   "dodge-stonehoof-z10 3.2-4.9",
+   "dodge-snarer-z09 4.8-6.2",
+   "dodge-thorncaster-z10 5.0-6.7",
+   "dodge-wendigo-turn-z10 2.8-4.2 (HIT)"
+  ]
+ }
+}

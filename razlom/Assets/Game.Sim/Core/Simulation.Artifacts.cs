@@ -246,6 +246,8 @@ namespace Game.Sim
             if (_heldDamage != null) System.Array.Clear(_heldDamage, 0, _heldDamage.Length);
             for (int i = 1; i < Entities.Count; i++)
                 if (Entities.Alive[i] && Entities.Side[i] != Entities.Side[PlayerId]) StunByTalent(i, HourglassTicks);
+            // Хозяина Чащи Часы не оглушают: снимают оглушение и сдвигают его таймеры.
+            ShiftThicketMastersForHourglass();
             DelayForestFruit(HourglassTicks);
             // Выпущенный шип Шипомёта оглушение не отзывает — он стоит в воздухе сам.
             DelayThornShots(HourglassTicks);

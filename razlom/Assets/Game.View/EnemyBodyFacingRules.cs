@@ -156,6 +156,10 @@ namespace Game.View
                     return EnemyBodyPolicy.Travel;
                 case EnemyKind.ForestBud:
                     return EnemyBodyPolicy.TravelKeepBackpedal;
+                // Хозяин Чащи идёт только вдоль взгляда (Sim, 4,5°/тик), а в действии смотрит,
+                // куда бьёт: тело — всегда взгляд Sim, лунной походки у него нет.
+                case EnemyKind.ForestThicketMaster:
+                    return EnemyBodyPolicy.SimFacing;
                 default:
                     return EnemyBodyPolicy.SimFacing;
             }
@@ -174,6 +178,8 @@ namespace Game.View
             if (sim.TryGetEnemySwing(id, out var swing) && tick < swing.RecoverUntil) return true;
             if (sim.TryGetSplitterRoll(id, out _)) return true;
             if (sim.TryGetForestBudAttack(id, out _)) return true;
+            // Любое действие Хозяина Чащи (пробуждение, рёв, лапа, топот, нырок, касты, буря).
+            if (sim.TryGetThicketMasterAction(id, out _)) return true;
             if (sim.Statuses.IsStunned(id, tick)) return true;
             if (entities.ForcedTicksLeft[id] > 0) return true;
             return sim.IsEmerging(id);

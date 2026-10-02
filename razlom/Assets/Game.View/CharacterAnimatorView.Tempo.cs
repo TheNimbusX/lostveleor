@@ -56,6 +56,8 @@ namespace Game.View
         private void UpdateRecoveryFootwork()
         {
             if (_animator == null || _recoveryFootworkLayer < 0) return;
+            // Ноги в восстановлении рывка — CharacterAnimatorView.Dash.
+            if (UpdateDashFootwork()) return;
             var sim = TempoSim;
             bool supported = _abilityDefinitionId == AbilityDefinition.AnchorSlamId || _abilityDefinitionId == AbilityDefinition.WreckId
                 || _abilityDefinitionId == AbilityDefinition.FireFlaskId || _abilityDefinitionId == AbilityDefinition.AnchorLeapId;

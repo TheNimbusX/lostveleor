@@ -141,7 +141,8 @@ namespace Game.View
                 case AbilityStatType.Width: return line == SabreTalentLine.Flask ? "Лужа" : "Ширина";
                 case AbilityStatType.CooldownTicks: return "Перезарядка";
                 case AbilityStatType.DurationTicks: return line == SabreTalentLine.Flask ? "Лужа горит" : "Горит";
-                case AbilityStatType.LavidiumCost: return "Лавидий";
+                // Цена — ресурс способностей, игроку «Концентрация» (владелец 01.10); стат в коде прежний.
+                case AbilityStatType.LavidiumCost: return "Концентрация";
                 case AbilityStatType.WindupTicks: return "Замах";
                 case AbilityStatType.StunTicks: return "Оглушение";
                 case AbilityStatType.ComboWindowTicks: return "Окно серии";

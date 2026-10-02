@@ -467,7 +467,7 @@ namespace Game.EditorTools
             valueRow.offsetMax = new Vector2(0f, 28f);
             offer.ValueLabel = UiInkKit.Label(valueRow, "Подпись", "Урон", FontRole.Body, 20f, Role.TextMuted, delay: .18f);
             offer.ValueLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            // Число правее длинной подписи («Лавидий»).
+            // Число правее длинной подписи («Концентрация» — 136 px при 20 pt).
             offer.Value = UiInkKit.Label(valueRow, "Число", "+15", FontRole.Body, 22f, Role.Accent, delay: .2f);
             offer.Value.textWrappingMode = TextWrappingModes.NoWrap;
             offer.Value.rectTransform.offsetMin = new Vector2(150f, 0f);

@@ -23,7 +23,6 @@ namespace Game.Sim
             _pelagBasicComboEnabled = true;
             ResetPelagBasicCombo();
             if (Entities.Count <= PlayerId) return;
-            _attackTarget = -1;
             if (!_explicitMoveOrder) _hasMoveOrder = false;
             Entities.PendingAttackTarget[PlayerId] = -1;
             Entities.AttackImpactTick[PlayerId] = 0;

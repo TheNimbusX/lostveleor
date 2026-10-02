@@ -516,7 +516,8 @@ namespace Game.View
                     kind = "Способность";
                     body = PlayerHud.AbilityDescription(definition.Id);
                     if (run.Loadout.IsFull) body += " Панель полна: придётся заменить способность или разобрать эту на " + run.SalvageGold + " золота.";
-                    valueLabel = "Лавидий";
+                    // Цена способности — ресурс, игроку «Концентрация» (владелец 01.10); 136 px при 20 pt — до числа на 150 px.
+                    valueLabel = "Концентрация";
                     value = definition.GetBase(AbilityStatType.LavidiumCost).ToInt().ToString();
                     return;
                 }

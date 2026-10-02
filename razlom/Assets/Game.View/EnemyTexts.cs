@@ -23,13 +23,16 @@ namespace Game.View
                 case EnemyKind.ForestRootSnarer: return "Корнехват";
                 case EnemyKind.ForestSplitter: return "Расщепень";
                 case EnemyKind.ForestSplitling: return "Детёныш Расщепеня";
+                // Босс леса (план 01.10).
+                case EnemyKind.ForestThicketMaster: return "Хозяин Чащи";
                 default: return "Враг";
             }
         }
 
         /// <summary>
-        /// Босс лугов — пока усиленный лесной хранитель, место настоящего Хозяина Чащи
-        /// (DESIGN, «Бой рогалика»); появится он — имя придёт отсюда же.
+        /// Имя на полосе босса. Временный босс лугов — усиленный лесной хранитель
+        /// («Хранитель лугов», пока переключатель Simulation.UseThicketMasterBoss выключен);
+        /// настоящий босс леса — «Хозяин Чащи».
         /// </summary>
         public static string BossName(EnemyKind kind) => kind == EnemyKind.ForestGuardian ? "Хранитель лугов" : Name(kind);
     }

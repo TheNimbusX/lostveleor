@@ -1,0 +1,69 @@
+{
+  "source": "C:/Users/d.grab/Desktop/the-game/ART/UI/logo-final/TWR-logo-painted-stone.png",
+  "workspace_id": "5c395cd9-3c01-4f6c-abaf-2c5bc7a46c6f",
+  "project_id": "73fe1192-21c9-491d-b65a-f97c027f4cb2",
+  "attempts": [
+    {
+      "job_id": "9975c83f-87fa-4e83-aa68-336da64a6d93",
+      "status": "rejected_after_frame_review",
+      "reason": "Altered stone texture and yellow fringe",
+      "params": {
+        "model": "seedance_2_0",
+        "folder_id": "73fe1192-21c9-491d-b65a-f97c027f4cb2",
+        "mode": "fast",
+        "duration": 5,
+        "aspect_ratio": "16:9",
+        "resolution": "720p",
+        "generate_audio": false,
+        "bitrate_mode": "high",
+        "count": 1,
+        "medias": [
+          {
+            "role": "image",
+            "value": "515b771e-fa5b-4c3e-9579-2793f46f277b"
+          }
+        ],
+        "prompt": "Create a restrained 5-second presentation logo intro, a single locked-off 16:9 shot on a nearly black neutral background. The uploaded image IS the final logo artwork, not a stylistic inspiration. Reproduce its exact hand-painted ivory stone lettering, bevels, proportions, spelling and two-line layout: THE WAR on the top line, REMAINS below. Preserve every letter silhouette, the existing diagonal fracture and its exact location. Fit the entire logo centered with comfortable black margins, occupying 84% of frame width and approximately 29% of frame height. Never crop any letter. Animation is confined to illumination and the existing fracture; letters stay completely rigid and still. 0.0-0.7s: the exact stone logo emerges gently from dark, smooth opacity reveal, no objects flying in. 0.7-2.5s: a thin restrained warm amber light travels once along the existing diagonal fracture from left to right, as if light is quietly entering a very narrow crack inside the stone. It is an internal slit of light, not flames, not a stroke painted over letters. Maintain the original crack shape; do not add cracks. Local light reflects only within a few pixels of that slit, no luminous letter outlines. The fracture opens imperceptibly, no pieces separating. 2.5-3.2s: that internal light gently subsides to a faint warm trace. 3.2-5.0s: clean steady readable hold of the exact full logo, no drifting. Preserve the painted matte stone material and original subdued shading throughout; no polished gold or chrome. Minimal elegant game-title motion design with smooth ease-in/ease-out. No fire borders, no flames, no additional sparks or embers, no particle showers, no explosion, no smoke, no floating debris, no lens flare, no sweeping gold shine, no extra ornament, no new graphic elements, no extra text, no subtitle, no camera movement, no zoom, no rotation, no shaking, no letter wobble, no morphing, no stretching, no rearranged typography, no character, no scenery. Silent video."
+      }
+    },
+    {
+      "job_id": "f2784a2e-9304-4cd1-986f-7ffaf6ae7e00",
+      "status": "completed_reviewed",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20260928_110901_f2784a2e-9304-4cd1-986f-7ffaf6ae7e00.mp4",
+      "params": {
+        "model": "seedance_2_0",
+        "folder_id": "73fe1192-21c9-491d-b65a-f97c027f4cb2",
+        "mode": "fast",
+        "duration": 5,
+        "aspect_ratio": "16:9",
+        "resolution": "720p",
+        "generate_audio": false,
+        "bitrate_mode": "high",
+        "count": 1,
+        "medias": [
+          {
+            "role": "start_image",
+            "value": "355a38cd-e48d-43aa-85cf-0adf634e4c51"
+          },
+          {
+            "role": "end_image",
+            "value": "355a38cd-e48d-43aa-85cf-0adf634e4c51"
+          }
+        ],
+        "prompt": "Animate the supplied identical start and end frame into a restrained five-second game-title logo ident. The frame is the exact finished artwork: THE WAR above REMAINS, hand-painted ivory stone letters, existing fine diagonal amber fracture, centered on pure black with margins. LOCK the composition and artwork. Keep the exact letter silhouettes, letter spacing, spelling, scale, painted textures and background. Do NOT regenerate, redesign, simplify or retype this logo. Keep all letters and every stone fragment absolutely motionless. The only movement: the light already inside the existing diagonal fracture gently dims during the first half-second; then a small warm highlight travels smoothly along that SAME fracture from left to right between 0.8s and 2.7s. It must stay inside the slit and have the same narrow width as the original fissure, with no extra halo around letters. From 2.7s the fracture light eases back to the original image, and the last 1.5 seconds is a perfectly stable clean hold. Smooth restrained brightness animation, subtle local light, elegant quiet stone logo. Use the uploaded end frame exactly as the final composition. No new visual elements whatsoever. No yellow fringes, no yellow speckles, no chromatic borders. No flame outline, no fire, no blazing letter edges, no explosion, no smoke, no particle emission, no flying shards, no lens flare, no wipe line across the whole logo, no gold shine, no metallic material, no camera movement, no zoom, no rotation, no shaking, no distortion, no additional text. Treat it as animating an existing layered graphic, never as generating a new logo. Silent."
+      }
+    }
+  ],
+  "final": {
+    "file": "TWR-YouTube-intro-1080p.mp4",
+    "duration_seconds": 5,
+    "native_generation_resolution": "1280x720",
+    "export_resolution": "1920x1080",
+    "audio": false,
+    "postprocess": "Trim first 0.5 seconds, extend final hold by 0.5 seconds, fade in 0.45 seconds, fade out final 0.25 seconds, Lanczos resize; no generated detail added."
+  },
+  "notes": [
+    "Seedance 2.5 and Seedance 2.0 std/1080p unavailable on the current Starter plan; rejected requests did not submit jobs.",
+    "Second reference mechanically composited from original transparent PNG onto a black 1920x1080 video canvas; no generated replacement artwork."
+  ]
+}

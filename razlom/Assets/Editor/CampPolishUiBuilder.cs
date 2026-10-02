@@ -10,15 +10,42 @@ using Role=Game.View.UiTheme.Role;
 namespace Game.EditorTools
 {
     // Новые окна используют принятый материал UI; существующие ручные префабы не пересобираются.
+    //
+    // МИГРАЦИЯ ПО ВЕРСИИ (02.10). На загрузке редактора проход идёт, только если нет одного из своих
+    // префабов или поднята Version (применённая версия — в Library/, вне git: у каждой копии проекта своя).
+    // Раньше BuildAll шёл на каждой перезагрузке домена: пересохранял CampForge/CampPreparation/
+    // CampTraderProgression и общим SaveAssets сбрасывал на диск чужие грязные ассеты (M_FlamePro,
+    // M_Arcadia*, ProjectAuditorSettings…). Префабы пишет SaveAsPrefabAsset, общего SaveAssets нет.
+    // Любая правка сборки ниже, CampForgeUiBuilder, CampTraderProgressionUiBuilder, CampChoiceUiAuthoring
+    // или ExpandAlchemy — поднять Version.
     public static class CampPolishUiBuilder
     {
+        /// <summary>Версия прохода по окнам развития и похода. Поднимать при любой правке их сборки.</summary>
+        public const int Version=1;
         const string Folder="Assets/Resources/UI/Prefabs/";
+        const string StampPath="Library/RazlomCampPolishUi.version";
+        static readonly string[] Owned={"CampPreparation","CampResidentProgress","CampResidentButton","CampForge","CampTraderProgression"};
         [InitializeOnLoadMethod]
         static void ScheduleInstall(){if(!Application.isBatchMode)EditorApplication.update+=InstallWhenReady;}
         static void InstallWhenReady()
         {
             if(EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode)return;
-            EditorApplication.update-=InstallWhenReady;BuildAll();
+            EditorApplication.update-=InstallWhenReady;EnsureMigrated();
+        }
+        /// <summary>Нет своего префаба или применённая версия не равна <see cref="Version"/>.</summary>
+        public static bool NeedsMigration()
+        {
+            if(AppliedVersion()!=Version)return true;
+            foreach(var name in Owned)if(AssetDatabase.LoadAssetAtPath<GameObject>(Folder+name+".prefab")==null)return true;
+            return false;
+        }
+        /// <summary>Путь загрузки редактора: проход только при <see cref="NeedsMigration"/>. true — проход был.</summary>
+        public static bool EnsureMigrated()
+        {
+            if(!NeedsMigration())return false;
+            int from=AppliedVersion();BuildAll();
+            Debug.Log("[ui-kit] Окна развития и похода: проход v"+from+" → v"+Version+".");
+            return true;
         }
         [MenuItem("Разлом/Лагерь/Подготовить окна развития и похода")]
         public static void BuildAll()
@@ -27,10 +54,23 @@ namespace Game.EditorTools
             Save("CampPreparation",Preparation);
             Save("CampResidentProgress",Resident);
             Save("CampResidentButton",ResidentButton);
-            CampForgeUiBuilder.Build();
+            // Окно Вена — до кузницы: CampChoiceUiAuthoring в конце CampForgeUiBuilder.Build ставит отклик выбора
+            // и ему, в тот же проход (раньше новое окно получало отклик лишь на следующей перезагрузке).
             CampTraderProgressionUiBuilder.Build();
+            CampForgeUiBuilder.Build();
             ExpandAlchemy();
-            AssetDatabase.SaveAssets();
+            // Общего AssetDatabase.SaveAssets нет: свои префабы уже записаны SaveAsPrefabAsset.
+            WriteAppliedVersion();
+        }
+        static int AppliedVersion()
+        {
+            try{return File.Exists(StampPath)&&int.TryParse(File.ReadAllText(StampPath).Trim(),out int v)?v:0;}
+            catch(IOException){return 0;}
+        }
+        static void WriteAppliedVersion()
+        {
+            try{File.WriteAllText(StampPath,Version.ToString());}
+            catch(IOException e){Debug.LogWarning("[ui-kit] Окна развития и похода: версия не записана в "+StampPath+": "+e.Message);}
         }
         static void Save(string name,System.Func<GameObject> create)
         {

@@ -55,7 +55,10 @@ namespace Game.View
                 }
                 var state = animator.GetCurrentAnimatorStateInfo(upper);
                 string name = state.IsName("UpperBody Combat.Whirlwind_v5") ? "Whirlwind" : state.IsName("UpperBody Combat.Saber_A_v5") ? "A"
-                    : state.IsName("UpperBody Combat.Saber_B_v5") ? "B" : "other";
+                    : state.IsName("UpperBody Combat.Saber_B_v5") ? "B"
+                    // Серия сабли (01.10): удары 1–3.
+                    : state.IsName("UpperBody Combat.Sabre1_v5") ? "S1" : state.IsName("UpperBody Combat.Sabre2_v5") ? "S2"
+                    : state.IsName("UpperBody Combat.Sabre3_v5") ? "S3" : "other";
                 Vector3 point = body.InverseTransformPoint(tip.position) * body.lossyScale.y;
                 Vector3 hand = equipment != null && equipment.ChainHand != null
                     ? body.InverseTransformPoint(equipment.ChainHand.position) * body.lossyScale.y : Vector3.zero;
@@ -87,7 +90,8 @@ namespace Game.View
                         .Where(c => !c.name.StartsWith("__preview__")).ToList();
                     clips.AddRange(Resources.LoadAll<AnimationClip>("Characters/Pelag_v5/Mixamo/Pelag_MX_Whirlwind")
                         .Where(c => !c.name.StartsWith("__preview__")));
-                    foreach (string name in new[] { "Pelag_Saber_A_Timed", "Pelag_Saber_B_Timed", "Pelag_Whirlwind_Timed" })
+                    foreach (string name in new[] { "Pelag_Saber_A_Timed", "Pelag_Saber_B_Timed", "Pelag_Whirlwind_Timed",
+                        "Pelag_AN_Sabre1", "Pelag_AN_Sabre2", "Pelag_AN_Sabre3" })
                     {
                         var clip = Resources.Load<AnimationClip>("Characters/Pelag_v5/" + name);
                         if (clip != null) clips.Add(clip);

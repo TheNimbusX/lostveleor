@@ -1,7 +1,7 @@
 namespace Game.Sim
 {
     /// <summary>
-    /// Узел дерева способности. Один тип структуры на все три вида узлов:
+    /// Узел дерева способности. Один тип структуры на все виды узлов (с 02.10 их пять):
     /// поля, не относящиеся к виду, просто не читаются.
     ///
     /// ЗАЧЕМ ОДНА СТРУКТУРА, А НЕ ТРИ КЛАССА. Узлы применяются пачкой, в строгом
@@ -34,8 +34,13 @@ namespace Game.Sim
         public readonly AbilityEffect Effect;
         public readonly AbilityStage Stage;
 
+        // ---- Form / Trait (план форм 02.10) ----
+        public readonly PelagForm FormId;
+        public readonly AbilityTrait EnabledTrait;
+
         private AbilityNode(int id, NodeKind kind, AbilityStatType stat, ModifierOp op, Fix64 value,
-            AbilityFlag flag, AbilityEffect effect, AbilityStage stage)
+            AbilityFlag flag, AbilityEffect effect, AbilityStage stage,
+            PelagForm form = PelagForm.None, AbilityTrait trait = AbilityTrait.None)
         {
             Id = id;
             Kind = kind;
@@ -45,6 +50,8 @@ namespace Game.Sim
             EnabledFlag = flag;
             Effect = effect;
             Stage = stage;
+            FormId = form;
+            EnabledTrait = trait;
         }
 
         public static AbilityNode StatMod(string key, AbilityStatType stat, ModifierOp op, Fix64 value)
@@ -58,5 +65,15 @@ namespace Game.Sim
         public static AbilityNode EffectInsert(string key, AbilityEffect effect, AbilityStage stage)
             => new AbilityNode(StableId.Of(key), NodeKind.EffectInsert, default, default, Fix64.Zero,
                 AbilityFlag.None, effect, stage);
+
+        /// <summary>Узел формы навыка: сборка получает Form, определение и его Id прежние.</summary>
+        public static AbilityNode Form(string key, PelagForm form)
+            => new AbilityNode(StableId.Of(key), NodeKind.Form, default, default, Fix64.Zero,
+                AbilityFlag.None, AbilityEffect.None, AbilityStage.Cast, form);
+
+        /// <summary>Узел черты: включает биты AbilityTrait (механика форм и их талантов).</summary>
+        public static AbilityNode Trait(string key, AbilityTrait trait)
+            => new AbilityNode(StableId.Of(key), NodeKind.Trait, default, default, Fix64.Zero,
+                AbilityFlag.None, AbilityEffect.None, AbilityStage.Cast, PelagForm.None, trait);
     }
 }

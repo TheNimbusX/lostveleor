@@ -1,0 +1,47 @@
+PELAG_DEMO_MCP_READY localhost:9876 (isolated background worker)
+FBX version: 7400
+Info: Saved as "Pelag_v6_Baseline.blend"
+{"source": "C:\\Users\\d.grab\\Desktop\\the-game\\razlom\\Assets\\Resources\\Characters\\Pelag_v6\\Runtime\\Pelag_v6_MixamoRig.fbx", "source_sha256": "cffa80a0d3aca6a601047dfead1eba7b1430b53460f1b143da14423f765a51b6", "meshes": [{"name": "Pelag_v6", "vertices": 12141, "triangles": 24316, "uv_layers": ["Pelag_v6DiffuseUVLayer"], "max_source_influences": 7, "unweighted_vertices": 0, "local_scale": [1.0, 1.0, 1.0]}]}
+Armature bones: 65
+Error: Cannot open file C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\model\Pelag_ColorAnchor_Work.blend@ for writing: No such file or directory
+FBX version: 7400
+Info: Saved as "Pelag_ColorAnchor_Work.blend"
+53:06.110  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\model\anchor_front.png'
+53:13.828  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\model\anchor_three-quarter.png'
+Info: Baking map saved to internal image, save it externally or pack it
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\model\\export\\Pelag_AnchorHead_Demo.fbx'
+export finished in 0.0327 sec.
+Info: Saved as "Pelag_ColorAnchor_Work.blend"
+55:23.422  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\model\anchor_front.png'
+55:30.344  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\model\anchor_three-quarter.png'
+Info: Baking map saved to internal image, save it externally or pack it
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\model\\export\\Pelag_AnchorHead_Demo.fbx'
+export finished in 0.0108 sec.
+Info: Saved as "Pelag_ColorAnchor_Work.blend"
+01:54:30 | INFO: Data are loaded, start creating Blender stuff
+01:54:30 | INFO: Blender create Mesh node tripo_mesh_313b5f0a-278d-4bcb-bacd-6c7ef17454d6
+01:54:30 | INFO: glTF import finished in 0.08s
+01:09:19.203  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-front.png'
+01:09:25.172  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-back.png'
+01:09:31.703  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-three-quarter.png'
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\anchor-imagegen-tripo\\export\\Pelag_AnchorHead_Tripo.fbx'
+export finished in 0.0659 sec.
+Info: Saved as "Pelag_Anchor_Tripo_Work.blend"
+01:12:26.938  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-front.png'
+01:12:34.422  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-back.png'
+01:12:41.625  render           | Saved: 'C:\Users\d.grab\Desktop\the-game\ART\characters\pelag\demo-polish-2026-09-30\anchor-imagegen-tripo\anchor-three-quarter.png'
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\anchor-imagegen-tripo\\export\\Pelag_AnchorHead_Tripo.fbx'
+export finished in 0.0996 sec.
+Info: Saved as "Pelag_Anchor_Tripo_Work.blend"
+Info: Saved as "Pelag_Anchor_Tripo_Work.blend"
+
+FBX export starting... 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\demo-polish-2026-09-30\\anchor-imagegen-tripo\\export\\Pelag_AnchorHead_Tripo.fbx'
+export finished in 0.0676 sec.
+Info: Saved as "Pelag_Anchor_Tripo_Work.blend"
+{'Hips': [-0.1535903513431549, 0.7604551911354065, -0.057253673672676086], 'Spine2': [-0.18862788379192352, 1.1570751667022705, -0.0758528783917427], 'LeftArm': [-0.26738831400871277, 1.2628148794174194, 0.07419861108064651], 'LeftForeArm': [-0.31393179297447205, 1.1421364545822144, 0.2807998061180115], 'LeftHand': [-0.19234910607337952, 1.0367178916931152, 0.4784194827079773], 'RightArm': [-0.09631379693746567, 1.2656240463256836, -0.19532835483551025], 'RightHand': [0.21654105186462402, 1.084928274154663, -0.01570342667400837], 'Head': [-0.15968307852745056, 1.3957045078277588, -0.03810323029756546], 'LeftFoot': [-0.21613962948322296, 0.14627528190612793, 0.21126742660999298], 'RightFoot': [0.032554466277360916, 0.1433480679988861, -0.23470787703990936]}
+[{'frame': 0, 'chestDeltaDegrees': 0.0, 'chest': [-0.18862788379192352, 1.1570751667022705, -0.0758528783917427], 'leftHand': [-0.19234910607337952, 1.0367180109024048, 0.4784194529056549], 'head': [-0.15968307852745056, 1.3957045078277588, -0.03810323029756546]}, {'frame': 16, 'chestDeltaDegrees': 83.9105363722086, 'chest': [-0.060260821133852005, 1.1199114322662354, 0.002117524156346917], 'leftHand': [-0.466765820980072, 1.1084718704223633, 0.03154471516609192], 'head': [-0.034287307411432266, 1.3443458080291748, 0.09245798736810684]}, {'frame': 52, 'chestDeltaDegrees': 40.50219956213236, 'chest': [-0.10131397098302841, 1.182365894317627, 0.04831299930810928], 'leftHand': [-0.40956851840019226, 1.1097501516342163, 0.39700713753700256], 'head': [-0.040533725172281265, 1.4063687324523926, 0.12135618925094604]}, {'frame': 96, 'chestDeltaDegrees': 84.40071873364448, 'chest': [-0.24757955968379974, 1.1098027229309082, 0.020052006468176842], 'leftHand': [-0.6401959657669067, 0.9157333970069885, 0.019214916974306107], 'head': [-0.323597252368927, 1.3072903156280518, 0.1401636153459549]}, {'frame': 120, 'chestDeltaDegrees': 0.0, 'chest': [-0.18862788379192352, 1.1570751667022705, -0.0758528783917427], 'leftHand': [-0.19234910607337952, 1.0367180109024048, 0.4784194529056549], 'head': [-0.15968307852745056, 1.3957045078277588, -0.03810323029756546]}]
+{'frames': 121, 'contacts': [0.13333333333333333, 0.43333333333333335, 0.8], 'output': 'C:\\Users\\d.grab\\Desktop\\the-game\\ART\\characters\\pelag\\basic-combo-2026-09-30\\animation\\combo-reference-r07'}

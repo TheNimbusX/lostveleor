@@ -74,11 +74,12 @@ namespace Game.EditorTools
             VitalRow(vitals, "lavidium", Role.Lavidium, .40f, 0f, "40 / 100", 82f);
             TopLeft(Place("DividerPlain", vitals, "Разделитель"), 20f, 126f, 340f, 16f);
             VitalRow(vitals, "heart", Role.Health, .28f, 0f, "28 / 100", 166f);
-            CaptionUnder(root, "Полосы здоровья и лавидия,\nнизкое здоровье", 535f, 340f, 380f);
+            // Ресурс способностей — «концентрация» (владелец 01.10); State.NoLavidium и роль в коде прежние.
+            CaptionUnder(root, "Полосы здоровья и концентрации,\nнизкое здоровье", 535f, 340f, 380f);
 
             RectTransform slots = Box(root, "Умения", 765f, 110f, 560f, 262f);
             string[] icons = { "Cleave", "Whirlwind", "Skewer", "Blaze" };
-            string[] names = { "Готово", "Нажата", "Перезарядка", "Нет лавидия" };
+            string[] names = { "Готово", "Нажата", "Перезарядка", "Нет концентрации" };
             var states = new[] { WcAbilitySlot.State.Ready, WcAbilitySlot.State.Pressed, WcAbilitySlot.State.Cooldown, WcAbilitySlot.State.NoLavidium };
             for (int i = 0; i < 4; i++)
             {

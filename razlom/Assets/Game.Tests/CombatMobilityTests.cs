@@ -28,8 +28,13 @@ namespace Game.Tests
             return sim;
         }
 
+        /// <summary>
+        /// Серия сабли (01.10) к цели сама не ходит: клик по врагу в четырёх
+        /// метрах — удар в его сторону с места, без подхода. Подходит игрок
+        /// сам, и на ходу замах режет скорость до 75%.
+        /// </summary>
         [Test]
-        public void AttackOrder_ApproachesThenKeepsCommittedMotionBelowThreeQuarterSpeed()
+        public void AttackOnFarEnemy_DoesNotChase_AndWindupWalksAtThreeQuarterSpeed()
         {
             Simulation sim = ArenaWithStationaryEnemy(
                 new FixVec2(Fix64.FromInt(4), Fix64.Zero), out int enemy);
@@ -37,53 +42,48 @@ namespace Game.Tests
             {
                 Flags = (byte)InputFlags.Attack,
                 AttackTarget = enemy,
+                Aim = sim.Entities.Position[enemy],
             };
+            for (int i = 0; i < 30; i++) sim.Step(in attack);
+            Assert.AreEqual(Simulation.SabreLungeDistance.ToDouble(),
+                sim.Entities.Position[Simulation.PlayerId].X.ToDouble(), .002,
+                "погони за целью нет — за всю серию герой сместился только выпадом добивающего");
+            Assert.AreEqual(5000, sim.Entities.Health[enemy], "четыре метра — вне сектора");
 
-            sim.Step(in attack);
-            InputFrame released = InputFrame.Empty;
-            for (int i = 0;
-                 i < 90 && sim.Entities.PendingAttackTarget[Simulation.PlayerId] < 0;
-                 i++)
+            // Отпустил, разогнался к врагу и на бегу снова зажал атаку.
+            var walk = new InputFrame { Flags = (byte)InputFlags.MoveOrder, Aim = new FixVec2(Fix64.FromInt(9), Fix64.Zero) };
+            for (int i = 0; i < 20; i++) sim.Step(in walk);
+            var walkAndSwing = walk;
+            walkAndSwing.Flags = (byte)(InputFlags.MoveOrder | InputFlags.Attack);
+            sim.Step(in walkAndSwing);
+            Assert.AreEqual(sim.Tick - 1, sim.SabreSwing.StartTick, "удар начат на бегу");
+            for (int i = 0; i < Simulation.SabreBaseContactTicks(0) - 1; i++)
             {
-                sim.Step(in released);
-            }
-
-            Assert.AreEqual(enemy,
-                sim.Entities.PendingAttackTarget[Simulation.PlayerId],
-                "приказ по врагу должен сначала подвести героя на дистанцию удара");
-            Assert.Greater(sim.Entities.Position[Simulation.PlayerId].X.ToFloat(), 0f,
-                "назначенная цель и locomotion должны сосуществовать во время подхода");
-
-            int healthBefore = sim.Entities.Health[enemy];
-            for (int i = 1; i < Simulation.AttackWindupTicks; i++)
-            {
-                sim.Step(in released);
+                sim.Step(in walkAndSwing);
                 Assert.LessOrEqual(
                     sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
                     (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
-                    "committed-замах сохраняет управление, но не разгоняется выше 75%");
+                    "замах серии не разгоняется выше 75%");
             }
-
-            sim.Step(in released);
-            Assert.Less(sim.Entities.Health[enemy], healthBefore,
-                "неподвижный windup всё равно заканчивается детерминированным контактом");
         }
 
+        /// <summary>
+        /// Приказ идти во время замаха двигает героя с первого тика, а
+        /// направление удара остаётся тем, что задано на старте: сектор
+        /// проверяется на контакте из новой точки по прежнему направлению.
+        /// </summary>
         [Test]
-        public void GroundMoveOrder_DuringWindupMovesAndCanEscapeTheContact()
+        public void GroundMoveOrder_DuringWindupMovesWithoutTurningTheSwing()
         {
             Simulation sim = ArenaWithStationaryEnemy(
-                new FixVec2(Fix64.One, Fix64.Zero), out int enemy);
+                new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
             var attack = new InputFrame
             {
-                Flags = (byte)InputFlags.Attack,
-                AttackTarget = enemy,
+                Flags = (byte)InputFlags.AttackPressed,
+                Aim = sim.Entities.Position[enemy],
             };
-
             sim.Step(in attack);
-            Assert.AreEqual(enemy,
-                sim.Entities.PendingAttackTarget[Simulation.PlayerId],
-                "контрольная атака должна войти в windup");
+            Assert.AreEqual(1, sim.SabreSwing.Serial, "клик начал удар");
 
             int healthBefore = sim.Entities.Health[enemy];
             FixVec2 beforeMove = sim.Entities.Position[Simulation.PlayerId];
@@ -94,26 +94,15 @@ namespace Game.Tests
                 AttackTarget = -1,
             };
             sim.Step(in move);
-
-            Assert.AreEqual(-1, sim.AttackTarget,
-                "приказ по земле сохраняет приоритет и снимает назначенную цель");
-            Assert.AreEqual(enemy,
-                sim.Entities.PendingAttackTarget[Simulation.PlayerId],
-                "уже начатый взмах продолжается поверх locomotion");
-            Assert.Greater(sim.Entities.Position[Simulation.PlayerId].Y.Raw,
-                beforeMove.Y.Raw,
-                "windup не должен съедать первый тик нового движения");
-            Assert.LessOrEqual(
-                sim.Entities.Velocity[Simulation.PlayerId].Length.ToFloat(),
-                (sim.Entities.MoveStep[Simulation.PlayerId] * Fix64.Ratio(3, 4)).ToFloat() + 0.0001f,
-                "во время замаха движение ограничено половиной скорости");
+            Assert.Greater(sim.Entities.Position[Simulation.PlayerId].Y.Raw, beforeMove.Y.Raw,
+                "замах не съедает первый тик нового движения");
+            Assert.AreEqual(new FixVec2(Fix64.One, Fix64.Zero), sim.Entities.Facing[Simulation.PlayerId],
+                "корпус держит направление удара, пока удар идёт");
 
             InputFrame released = InputFrame.Empty;
-            for (int i = 0; i <= Simulation.AttackWindupTicks; i++)
-                sim.Step(in released);
-
-            Assert.AreEqual(healthBefore, sim.Entities.Health[enemy],
-                "ушедший в сторону герой честно промахивается на тике контакта");
+            while (sim.Tick <= sim.SabreSwing.ContactTick) sim.Step(in released);
+            Assert.Less(sim.Entities.Health[enemy], healthBefore,
+                "враг остался в секторе — удар лёг");
         }
 
         [Test]

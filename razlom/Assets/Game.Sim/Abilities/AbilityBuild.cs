@@ -25,6 +25,15 @@ namespace Game.Sim
 
         public AbilityFlag Flags { get; private set; }
 
+        /// <summary>
+        /// Форма навыка из узла NodeKind.Form (план форм 02.10). DefinitionId при этом
+        /// прежний: проверки «DefinitionId == WhirlwindId», иконки, звук и VFX живут дальше.
+        /// </summary>
+        public PelagForm Form { get; private set; }
+
+        /// <summary>Черты из узлов NodeKind.Trait — механика форм и их талантов.</summary>
+        public AbilityTrait Traits { get; private set; }
+
         /// <summary>Stable Id исходного определения способности.</summary>
         public int DefinitionId { get; private set; }
 
@@ -44,6 +53,8 @@ namespace Game.Sim
         }
 
         public bool Has(AbilityFlag flag) => (Flags & flag) != 0;
+
+        public bool Has(AbilityTrait trait) => (Traits & trait) != 0;
 
         public int EffectCount(AbilityStage stage) => _effectCount[(int)stage];
 
@@ -78,6 +89,8 @@ namespace Game.Sim
             }
 
             Flags = definition.BaseFlags;
+            Form = PelagForm.None;
+            Traits = AbilityTrait.None;
             for (int i = 0; i < StageCount; i++) _effectCount[i] = 0;
 
             for (int n = 0; n < nodeCount; n++)
@@ -98,6 +111,14 @@ namespace Game.Sim
 
                     case NodeKind.EffectInsert:
                         InsertEffect(node.Stage, node.Effect);
+                        break;
+
+                    case NodeKind.Form:
+                        Form = node.FormId;
+                        break;
+
+                    case NodeKind.Trait:
+                        Traits |= node.EnabledTrait;
                         break;
                 }
             }
@@ -131,6 +152,18 @@ namespace Game.Sim
                 Hashing.Mix(ref hash, _effectCount[s]);
                 for (int e = 0; e < _effectCount[s]; e++)
                     Hashing.Mix(ref hash, (int)_effects[s * MaxEffectsPerStage + e]);
+            }
+
+            // Форма и черты — только непустые: сборка без формы хешируется как до форм.
+            if (Form != PelagForm.None)
+            {
+                Hashing.Mix(ref hash, 0x464F524D);   // "FORM"
+                Hashing.Mix(ref hash, (int)Form);
+            }
+            if (Traits != AbilityTrait.None)
+            {
+                Hashing.Mix(ref hash, 0x54524954);   // "TRIT"
+                Hashing.Mix(ref hash, (ulong)Traits);
             }
         }
 

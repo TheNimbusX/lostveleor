@@ -40,14 +40,23 @@ namespace Game.Sim
         /// <summary>Индекс способности направления в пуле Пелага.</summary>
         public static int PoolIndexOf(SabreTalentLine line) => (int)line;
 
+        // Пул → линия талантов, −1 — линии нет. ЯВНАЯ ТАБЛИЦА, а не тождество (план
+        // форм 02.10): с тождеством девятая линия молча досталась бы пулу 8 («На вылет»).
+        private static readonly sbyte[] PoolLines = { 0, 1, 2, 3, 4, 5, 6, 7, -1, -1 };
+
         /// <summary>
         /// Направление талантов способности пула. False — у способности
-        /// талантов пока нет: так у бывшей якорной четвёрки до их дизайна.
+        /// талантов пока нет (пул 8–9, сабля PelagKit.SabreLine).
         /// </summary>
         public static bool TryLineOf(int poolIndex, out SabreTalentLine line)
         {
-            line = (SabreTalentLine)((uint)poolIndex < LineCount ? poolIndex : 0);
-            return (uint)poolIndex < LineCount;
+            if ((uint)poolIndex < (uint)PoolLines.Length && PoolLines[poolIndex] >= 0)
+            {
+                line = (SabreTalentLine)PoolLines[poolIndex];
+                return true;
+            }
+            line = SabreTalentLine.Whirlwind;
+            return false;
         }
 
         /// <summary>

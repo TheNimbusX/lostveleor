@@ -1,0 +1,58 @@
+PASS clip assigned: Forest
+PASS clip assigned: Fire
+PASS clip assigned: River
+PASS clip assigned: Cauldron
+PASS clip assigned: Smith
+PASS clip assigned: Music
+PASS alchemist sound stop exists
+MIX 01-fire time=3,10
+Forest distance=2,35 gain=0,225 playing=True
+Fire distance=2,06 gain=0,820 playing=True
+River distance=17,26 gain=0,134 playing=True
+Cauldron distance=25,32 gain=0,000 playing=True
+Smith distance=11,22 gain=0,041 playing=True
+Music distance=2,35 gain=0,225 playing=True
+MIX 02-smith time=9,10
+Forest distance=8,19 gain=0,225 playing=True
+Fire distance=8,52 gain=0,263 playing=True
+River distance=27,33 gain=0,000 playing=True
+Cauldron distance=34,67 gain=0,000 playing=True
+Smith distance=1,13 gain=0,238 playing=True
+Music distance=8,19 gain=0,225 playing=True
+PASS smith animation-contact receiver installed
+PASS explicit hammer contact is audible beside forge
+PASS fire becomes quieter at forge
+MIX 03-cauldron time=27,10
+Forest distance=28,24 gain=0,225 playing=True
+Fire distance=27,93 gain=0,000 playing=True
+River distance=7,22 gain=0,579 playing=True
+Cauldron distance=1,30 gain=0,760 playing=True
+Smith distance=36,31 gain=0,000 playing=True
+Music distance=28,24 gain=0,225 playing=True
+PASS cauldron audible by alchemist
+PASS bridge river sound stop exists
+MIX 04-river-side time=34,10
+Forest distance=17,08 gain=0,225 playing=True
+Fire distance=16,84 gain=0,000 playing=True
+River distance=4,41 gain=0,636 playing=True
+Cauldron distance=13,12 gain=0,000 playing=True
+Smith distance=23,69 gain=0,000 playing=True
+Music distance=17,08 gain=0,225 playing=True
+PASS river audible at camp edge
+PASS arch hum assigned
+MIX 05-arch time=40,10
+Forest distance=12,50 gain=0,225 playing=True
+Fire distance=12,83 gain=0,000 playing=True
+River distance=31,29 gain=0,000 playing=True
+Cauldron distance=39,38 gain=0,000 playing=True
+Smith distance=5,11 gain=0,223 playing=True
+Music distance=12,50 gain=0,225 playing=True
+PASS arch hum audible near arch
+PASS preparation window softens arch hum
+MIX 06-home time=45,10
+Forest distance=2,35 gain=0,225 playing=True
+Fire distance=2,06 gain=0,820 playing=True
+River distance=17,26 gain=0,134 playing=True
+Cauldron distance=25,32 gain=0,000 playing=True
+Smith distance=11,22 gain=0,041 playing=True
+Music distance=2,35 gain=0,225 playing=True

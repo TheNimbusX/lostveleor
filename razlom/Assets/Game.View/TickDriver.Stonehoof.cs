@@ -97,6 +97,15 @@ namespace Game.View
                     _pending.Flags = (byte)InputFlags.Attack; _pending.AttackTarget = enemy;
                     _pending.Aim = entities.Position[enemy]; AttackHeld = true;
                     break;
+                // Серия сабли (01.10): атака зажата по ближайшему врагу, дальнего герой
+                // догоняет приказом по земле; здоровье врагов штатное — видно, сколько
+                // ударов уходит на Хранителя (-ExtraArgs '-capture-enemy-case','combo').
+                case "combo":
+                    _pending.Flags = (byte)InputFlags.Attack; AttackHeld = true;
+                    AimCaptureSabre();
+                    break;
+                // Обход рывка (02.10, только съёмка): TickDriver.DashCapture.cs.
+                case "dash": CaptureDashTour(tick); break;
                 // tank и wall: герой стоит, удары доходят как есть.
             }
         }
@@ -164,6 +173,7 @@ namespace Game.View
             for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
             {
                 if (!sim.TryGetTelegraph(slot, out var t) || !t.IsActive) continue;
+                if ((t.Flags & TelegraphFlags.SafeZone) != 0) continue;   // круг-укрытие бури — не угроза
                 int left = t.ImpactTick - tick;
                 if (left < 0 || left > DodgeWatchTicks || !Simulation.TelegraphContains(t, hero, body)) continue;
                 if (left < soonest) { soonest = left; serial = t.Serial; }
@@ -215,6 +225,7 @@ namespace Game.View
             var sim = Sim;
             for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
                 if (sim.TryGetTelegraph(slot, out var t) && t.IsActive && t.ImpactTick >= tick
+                    && (t.Flags & TelegraphFlags.SafeZone) == 0
                     && Simulation.TelegraphContains(t, point, body)) return true;
             return false;
         }

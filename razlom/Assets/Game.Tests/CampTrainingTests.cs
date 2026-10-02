@@ -21,17 +21,20 @@ namespace Game.Tests
             var session = Create();
             var sim = session.CampSim;
             var position = sim.Entities.Position[1];
-            int dummyAttacks = 0;
+            int dummyAttacks = 0, lowest = sim.Entities.Health[1];
             for (int i=0;i<180;i++)
             {
                 session.Step(Attack);
                 foreach (var e in sim.Events)
                     if (e.Type == SimEventType.Attack && (e.Source == 1 || e.Source == 2)) dummyAttacks++;
+                if (sim.Entities.Health[1] < lowest) lowest = sim.Entities.Health[1];
             }
             Assert.That(session.Mode, Is.EqualTo(GameMode.Camp));
             Assert.That(session.OnProvingGround, Is.False);
             Assert.That(sim.Entities.Count, Is.EqualTo(3));
-            Assert.That(sim.Entities.Health[1], Is.LessThan(1000));
+            // Серия сабли бьёт ~180 в секунду: за 6 с манекен успевает «умереть» и
+            // встать заново, поэтому смотрим на самое низкое здоровье по ходу.
+            Assert.That(lowest, Is.LessThan(1000));
             Assert.That(session.Training.DamageTotal, Is.GreaterThan(0));
             Assert.That(session.Training.Hits, Is.GreaterThan(0));
             Assert.That(session.Training.DamagePerSecond, Is.GreaterThan(0));

@@ -97,6 +97,20 @@ namespace Game.View
         private readonly int[] _playedThisFrame = new int[(int)Sound.Count];
         private uint _random = 0x2545F491u;
         private float _whooshDelay = -1f;
+
+        // ---- рывок (02.10) ----
+        //
+        // Взмах — запись сабли владельца (Attack_01/03/05, воздушные), ниже тоном:
+        // тело, а не клинок. Ставится после всех событий кадра: каст рывка
+        // приходит событием AbilityCast уже после DashStarted и гасит взмахи
+        // сабли (FadeKind PelagAttack) — иначе он погасил бы и этот.
+        // Постановка ноги — наш шаг (step_pt2) и тихий мокрый шлепок (splat)
+        // выше тоном: лёгкие брызги, а не плод Плюй-плода. Звучит в миг, когда
+        // тело встаёт на экране и клип ставит ногу (CharacterAnimatorView.Dash).
+        private static readonly int[] DashWhooshVariants = { 0, 2, 4 };
+        private bool _dashWhooshPending;
+        private CauseInfo _dashWhooshCause;
+        private int _dashWhooshCount;
         private int _whooshAttackVariant;
         private struct BasicWhooshCue
         {
@@ -230,6 +244,7 @@ namespace Game.View
             else if (CaptureRig.AudioLog && _driver.FrameEvents.Count > 0)
                 LogLine("dropped " + _driver.FrameEvents.Count + " events of the simulation swap frame");
             FlushKillImpact();
+            FlushDashWhoosh();
             UpdateBasicWhooshes();
             UpdateMobCues();
             UpdateSwarmScuttle();
@@ -319,6 +334,7 @@ namespace Game.View
             _whirlwindEndAt = -1f;
             _chainSoundActive = false;
             _whooshDelay = -1f;
+            _dashWhooshPending = false;
             _stepAnchorSet = false;
             _blazePreparing = _blazeBurning = false;
             _finisherReadyAt = _warningReadyAt = _earthReadyAt = 0f;
@@ -342,6 +358,7 @@ namespace Game.View
             _basicWhooshes.Clear();
             _deathCueCount = 0;
             _whooshDelay = -1f;
+            _dashWhooshPending = false;
             _anchorImpactAt = _anchorLandAt = -1f;
             _stepAnchorSet = false;
             ResetMobState();
@@ -389,12 +406,13 @@ namespace Game.View
                                 _basicWhooshes.Add(new BasicWhooshCue { Action = e.BasicAttackState, Cause = _cause });
                                 break;
                             }
-                            // Whoosh leads the shared contact tick; keeping the
-                            // lead relative to Simulation avoids drift when the
-                            // attack windup is tuned.
-                            _whooshDelay = (_driver.Sim.PlayerAttackWindupTicks / (float)Simulation.TicksPerSecond) *
-                                (e.ActionVariant == 1 ? 0.50f : 0.55f);
-                            _whooshAttackVariant = e.ActionVariant;
+                            // Взмах опережает контакт удара серии сабли: доля его
+                            // собственного замаха, у добивающего — раньше и тяжелее.
+                            SabreSwingState swing = _driver.Sim.SabreSwing;
+                            bool finisher = swing.IsFinisher;
+                            _whooshDelay = (swing.ContactTick - swing.StartTick) / (float)Simulation.TicksPerSecond
+                                * (finisher ? 0.50f : 0.55f);
+                            _whooshAttackVariant = finisher ? 1 : 0;
                         }
                         // Обычный замах — не крупный телеграф: общий сигнал на каждый удар
                         // приучил бы его не слушать. Свой звук замаха — PlayEnemySwingStart.
@@ -512,6 +530,13 @@ namespace Game.View
                     case SimEventType.Evaded:
                         if (e.Source == Simulation.PlayerId) _basicWhooshes.Clear();
                         break;
+                    case SimEventType.DashStarted:
+                        if (e.Source == Simulation.PlayerId)
+                        { _dashWhooshPending = true; _dashWhooshCause = _cause; }
+                        break;
+                    case SimEventType.DashEnded:
+                        if (e.Source == Simulation.PlayerId) PlayDashPlant();
+                        break;
                     case SimEventType.Stun:
                         if (e.Target == Simulation.PlayerId) _basicWhooshes.Clear();
                         break;
@@ -554,6 +579,8 @@ namespace Game.View
                             FadeKind(Sound.BlazePrepare);
                             _cleaveSoundCast = -1;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.CleaveId) break;
+                            // Рывок звучит своими событиями: взмах — DashStarted, постановка — DashEnded.
+                            if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.DashId) break;
                             if (_driver.Sim.GetAbility(e.Amount)?.DefinitionId == AbilityDefinition.AnchorLeapId)
                             {
                                 // Даже промах имеет контакт с землёй; попадания во врагов звучат по Damage.
@@ -662,6 +689,30 @@ namespace Game.View
             Play(Sound.Footstep, FootstepVolume, 1f, 0.02f, fixedVariant: (_stepPart - 1) % parts.Length);
         }
 
+        /// <summary>Взмах рывка — после всех событий кадра (см. поля «рывок»).</summary>
+        private void FlushDashWhoosh()
+        {
+            if (!_dashWhooshPending) return;
+            _dashWhooshPending = false;
+            _cause = _dashWhooshCause;
+            int variant = DashWhooshVariants[_dashWhooshCount++ % DashWhooshVariants.Length];
+            Play(Sound.PelagAttack, WhooshVolume * .8f, .86f, .02f, fixedVariant: variant);
+        }
+
+        /// <summary>
+        /// Нога встала в конце рывка: шаг тяжелее обычного и тихий мокрый
+        /// шлепок. Тело рисуется с отставанием на тик, поэтому звук ждёт, пока
+        /// тик показа дойдёт до тика остановки (событие — тик Tick − 1).
+        /// </summary>
+        private void PlayDashPlant()
+        {
+            Simulation sim = _driver.Sim;
+            float shown = sim.Tick - 2 + _driver.Alpha;
+            float delay = Mathf.Max(0f, (_cause.Tick - 1 - shown) / Simulation.TicksPerSecond);
+            Play(Sound.Footstep, FootstepVolume * 1.3f, .92f, .02f, delay, fixedVariant: 1);
+            Play(Sound.BudFruitImpact, BudVolume * .35f, 1.35f, .03f, delay);
+        }
+
         private void UpdateWhoosh()
         {
             if (_whooshDelay < 0f) return;
@@ -753,8 +804,9 @@ namespace Game.View
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.CleaveId
                 && e.DamageKind != DamageType.Physical) return;
             bool whirlwind = ability && IsWhirlwindSlot(e.ActionVariant);
-            bool heavy = e.Flag || ability || PelagBasicAttackTiming.Heavy(e.ActionVariant,
-                _driver.Sim.PelagBasicComboEnabled && e.DamageOrigin == DamageOrigin.BasicAttack);
+            bool basic = e.DamageOrigin == DamageOrigin.BasicAttack;
+            bool heavy = e.Flag || ability || (basic && (_driver.Sim.PelagBasicComboEnabled
+                ? PelagBasicAttackTiming.Heavy(e.ActionVariant, true) : e.ActionVariant == 2));
             if (ability && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.ChainStepId)
                 Play(Sound.ChainStepHop, AbilityVolume * .65f, 1f, .025f);
 
@@ -818,7 +870,7 @@ namespace Game.View
             if (build == null) return Sound.Cast;
 
             if (build.DefinitionId == AbilityDefinition.ChainStepId) return Sound.ChainStep;
-            if (build.DefinitionId == AbilityDefinition.DashId || build.DefinitionId == AbilityDefinition.SkewerId
+            if (build.DefinitionId == AbilityDefinition.SkewerId
                 || build.DefinitionId == AbilityDefinition.BackblastId) return Sound.Dash;
             if (build.DefinitionId == AbilityDefinition.BlazeId)
             { _blazePreparing = true; return Sound.BlazePrepare; }

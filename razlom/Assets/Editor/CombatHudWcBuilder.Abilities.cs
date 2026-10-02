@@ -13,6 +13,8 @@ namespace Game.EditorTools
     {
         static void BuildAbilities(RectTransform root, CombatHudView view)
         {
+            // ЛКМ — серия саблей (02.10): первая плитка слева от способности 1 (CombatHudWcBuilder.Attack).
+            BuildAttack(root, view, new Vector2(AttackX, RowBottom));
             RectTransform panel = Box(Node("Способности", root), BottomCenter, Vector2.zero, new Vector2(AbilitiesX, RowBottom),
                 new Vector2(RowWidth, Slot));
             view.AbilityPanel = panel;
@@ -124,6 +126,8 @@ namespace Game.EditorTools
             widget.CooldownText.gameObject.SetActive(false);
 
             // Нехватка лавидия: недостача капсулой на нижней кромке — клуб дыма и тонкое кольцо цвета лавидия.
+            // Игроку ресурс — «концентрация» (01.10), но имя узла «Нет лавидия» — идентификатор: его ищет
+            // Consistency (RestyleKeycaps) в готовом префабе, на экран оно не попадает. Не переименовывать.
             RectTransform lacking = Stretch(Node("Нет лавидия", body));
             RectTransform pill = UiInkKit.Keycap(lacking, "Плашка", "−00", 20f, capsule: true);
             pill.anchorMin = pill.anchorMax = new Vector2(.5f, 0f);

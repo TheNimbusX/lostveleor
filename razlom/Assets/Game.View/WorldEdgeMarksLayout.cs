@@ -318,6 +318,7 @@ namespace Game.View
                 case EnemyKind.ForestRootSnarer: return "Корнехват";
                 case EnemyKind.ForestSplitter: return "Расщепень";
                 case EnemyKind.ForestSplitling: return "Детёныш";
+                case EnemyKind.ForestThicketMaster: return "Хозяин Чащи";
                 default: return "Враг";
             }
         }

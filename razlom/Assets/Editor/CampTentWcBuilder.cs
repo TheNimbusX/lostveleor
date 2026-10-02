@@ -32,7 +32,9 @@ namespace Game.EditorTools
         static readonly string[] StatNames =
         {
             "Здоровье", "Урон", "Броня", "Скор. атаки", "Шанс крита", "Сила крита",
-            "Лавидий", "Лавидий/с", "Скор. бега", "Скор. приёмов", "Перезарядка", "Сопр. огню",
+            // Ресурс способностей игроку — «Концентрация» (владелец 01.10); подписи в игре ставит CampInventoryView
+            // из CampServiceText (stat.*.short), здесь — заготовка сборки. «Концентрация/с» — 129 px при 17 pt из 150.
+            "Концентрация", "Концентрация/с", "Скор. бега", "Скор. приёмов", "Перезарядка", "Сопр. огню",
         };
         /// <summary>Свой значок у каждого стата (владелец 23 сентября); недостающие дорисованы в том же стиле.</summary>
         static readonly string[] StatIcons =
@@ -204,7 +206,7 @@ namespace Game.EditorTools
                 view.Worn[i] = WornSlot(content, slots[i], 30f + i * 138f, 204f);
 
             // Статы группами (концепт tent-stats, владелец 23 сентября: «все 12, но понятно»):
-            // слева «Нападение» и «Лавидий», справа «Защита» и «Темп» — по шесть строк в колонке.
+            // слева «Нападение» и «Концентрация», справа «Защита» и «Темп» — по шесть строк в колонке.
             for (int i = 0; i < StatIcons.Length; i++) view.StatIcons[i] = KitIcon(StatIcons[i]);
             for (int g = 0; g < StatGroups.Length; g++)
             {
@@ -302,7 +304,8 @@ namespace Game.EditorTools
         }
 
         const float StatPitch = 32f;
-        static readonly string[] StatGroupNames = { "Нападение", "Защита", "Лавидий", "Темп" };
+        // «Концентрация» — ресурс способностей (владелец 01.10, было «Лавидий»); готовый префаб — миграция v102.
+        static readonly string[] StatGroupNames = { "Нападение", "Защита", "Концентрация", "Темп" };
         /// <summary>Номера строк StatNames в каждой группе.</summary>
         static readonly int[][] StatGroups =
         {

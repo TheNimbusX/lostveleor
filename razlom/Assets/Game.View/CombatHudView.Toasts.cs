@@ -85,7 +85,8 @@ namespace Game.View
                     GameSound.Play("toast_rare", .7f, .02f, .3f);
                     Toasts.Push(i < OrderIcons.Length ? OrderIcons[i] : null, UiTheme.Role.Epic,
                         "Заказ " + CampServiceText.Get("npc.alchemist") + " выполнен",
-                        order == AlchemistOrder.Resin ? "Живица" : "Лавидиевый порыв", UiTheme.Role.TextMuted);
+                        // Имя зелья — как в CampServiceText (01.10: «Лавидиевый порыв» → «Порыв»).
+                        CampServiceText.Get(order == AlchemistOrder.Resin ? "potion.LivingResin" : "potion.LavidiumSurge"), UiTheme.Role.TextMuted);
                 }
                 _orders[i] = status;
             }

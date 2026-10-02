@@ -23,7 +23,11 @@ namespace Game.View
     ///   • Камнекопыт, взмах клыками (EnemyActionKind.StonehoofTusk) — уголь
     ///     на клыках, одна дуга перед мордой, проходящая сбоку на бок;
     ///   • Вендиго, круг когтей (EnemyActionKind.WendigoSweep) — угли на обеих
-    ///     лапах за замах; сам круг рисует вид Вендиго (поток G).
+    ///     лапах за замах; сам круг рисует вид Вендиго (поток G);
+    ///   • Хозяин Чащи, лапа (EnemyActionKind.ThicketPaw) — уголь на когтях бьющей
+    ///     лапы (leg_front_R_toe / leg_front_L_toe; Amount события — номер лапы:
+    ///     0 правая, 1 левая второй двойной фазы 3), в тик удара — те же полосы
+    ///     когтей, что у Хранителя, в масштабе тела 3,6 м по сектору лапы 3,6 м.
     ///
     /// Секторы Хранителя и Расщепеня в Sim остаются (попадание считается по
     /// ним), но на земле не рисуются: замах открывает их без
@@ -104,7 +108,7 @@ namespace Game.View
         private static readonly int AttackAState = Animator.StringToHash("Base Layer.AttackA");
         private static readonly int AttackBState = Animator.StringToHash("Base Layer.AttackB");
 
-        private enum Sign : byte { Claw, Bite, Tusk, Sweep }
+        private enum Sign : byte { Claw, Bite, Tusk, Sweep, Paw }
 
         /// <summary>Экземпляр префаба: возраст задаёт вид, системы догоняются приращениями.</summary>
         private sealed class Burst
@@ -131,6 +135,8 @@ namespace Game.View
             public int Entity = -1, Serial, StartTick, ImpactTick, SpawnFrame;
             /// <summary>0 — лапа не решена, 1 — левая, 2 — правая (у круга Вендиго — какая из двух).</summary>
             public int Hand;
+            /// <summary>Лапа Хозяина Чащи: номер лапы в действии (двойная фазы 3 — 0 и 1).</summary>
+            public int Stage;
             public Sign Sign;
             public EnemyKind Kind;
             public FixVec2 Origin, Direction;
@@ -143,6 +149,8 @@ namespace Game.View
         private sealed class Rig
         {
             public Transform LeftClaw, RightClaw, Head, Snout, Mouth;
+            /// <summary>Когти передних лап Хозяина Чащи (leg_front_*_toe, без них — leg_front_*_paw).</summary>
+            public Transform PawLeft, PawRight;
             public Animator Animator;
         }
 
@@ -255,16 +263,20 @@ namespace Game.View
                     case SimEventType.EnemyActionStarted:
                         if (e.ActionVariant == (int)EnemyActionKind.StonehoofTusk) TuskStarted(sim, e.Source);
                         else if (e.ActionVariant == (int)EnemyActionKind.WendigoSweep) SweepStarted(sim, e.Source);
+                        else if (e.ActionVariant == (int)EnemyActionKind.ThicketPaw) PawStarted(sim, e.Source, e.Amount);
                         break;
                     case SimEventType.EnemyActionImpact:
                         if (e.ActionVariant == (int)EnemyActionKind.StonehoofTusk)
                             TuskLanded(sim, e.Source, events[i].SimulationTick - 1);
                         else if (e.ActionVariant == (int)EnemyActionKind.WendigoSweep)
                             LandAll(sim, e.Source, Sign.Sweep);
+                        else if (e.ActionVariant == (int)EnemyActionKind.ThicketPaw)
+                            LandPaw(sim, e.Source, e.Amount);
                         break;
                     case SimEventType.EnemyActionCancelled:
                         if (e.ActionVariant == (int)EnemyActionKind.StonehoofTusk) DropAll(e.Source, Sign.Tusk);
                         else if (e.ActionVariant == (int)EnemyActionKind.WendigoSweep) DropAll(e.Source, Sign.Sweep);
+                        else if (e.ActionVariant == (int)EnemyActionKind.ThicketPaw) DropAll(e.Source, Sign.Paw);
                         break;
                 }
             }
@@ -316,6 +328,29 @@ namespace Game.View
         }
 
         /// <summary>
+        /// Замах лапы Хозяина Чащи: уголь на когтях бьющей лапы. Номер лапы — Amount
+        /// события (0 — правая, 1 — левая второй двойной); замах — от начала шага.
+        /// </summary>
+        private void PawStarted(Simulation sim, int id, int stage)
+        {
+            if (!IsEnemy(sim, id) || !sim.TryGetThicketMasterAction(id, out ThicketMasterState paw)
+                || paw.Action != ThicketMasterAction.Paw || paw.Stage != stage || paw.HitResolved) return;
+            int hand = ThicketMasterClipRules.PawIsRight(stage) ? 2 : 1;
+            Begin(id, EnemyKind.ForestThicketMaster, Sign.Paw, paw.Serial, paw.StageStartTick, paw.ImpactTick,
+                paw.Origin, paw.Direction, hand, stage);
+        }
+
+        /// <summary>Контакт лапы пришёл событием: уголь этой лапы вспыхивает, полосы когтей встают.</summary>
+        private void LandPaw(Simulation sim, int id, int stage)
+        {
+            for (int i = 0; i < _signs.Length; i++)
+            {
+                Ember e = _signs[i];
+                if (e.Entity == id && e.Sign == Sign.Paw && e.Stage == stage && !e.Landed) Land(sim, e);
+            }
+        }
+
+        /// <summary>
         /// Удар клыками пришёл событием: вспышка угля и дуга. Угля может не
         /// быть (слот вытеснен) — дуга встаёт по состоянию Sim.
         /// </summary>
@@ -356,23 +391,25 @@ namespace Game.View
         // ------------------------------------------------------------ signs
 
         private void Begin(int id, EnemyKind kind, Sign sign, int serial, int start, int impact,
-            FixVec2 origin, FixVec2 direction, int hand)
+            FixVec2 origin, FixVec2 direction, int hand, int stage = 0)
         {
             for (int i = 0; i < _signs.Length; i++)
             {
                 Ember known = _signs[i];
                 if (known.Entity == id && known.Sign == sign && known.Serial == serial
-                    && (sign != Sign.Sweep || known.Hand == hand)) return;
+                    && ((sign != Sign.Sweep && sign != Sign.Paw) || known.Hand == hand)) return;
             }
             Ember e = FreeSign();
             e.Entity = id; e.Kind = kind; e.Sign = sign; e.Serial = serial;
             e.StartTick = start; e.ImpactTick = Mathf.Max(start + 1, impact);
-            e.Origin = origin; e.Direction = direction; e.Hand = hand;
+            e.Origin = origin; e.Direction = direction; e.Hand = hand; e.Stage = stage;
             e.SpawnFrame = Time.frameCount; e.Landed = false;
             Scales(kind, sign, out e.EmberScale, out e.SlashScale);
             e.Fx = Take(_embers, serial * 4 + hand, false);
             // След резервируется сразу, из события начала: в тик удара он только встаёт на место.
+            // Две лапы двойной — один номер действия: зерно по лапе, чтобы полосы не повторялись.
             e.Slash = sign == Sign.Claw ? Take(_claws, serial, true)
+                : sign == Sign.Paw ? Take(_claws, serial * 4 + hand, true)
                 : sign == Sign.Bite ? Take(_bites, serial, true) : null;
         }
 
@@ -397,6 +434,7 @@ namespace Game.View
             {
                 // Замах снят (оглушение, волок, смерть, сбитый замах) — знак гаснет сразу.
                 if (!Winding(sim, e)) { Drop(e); return; }
+                if (e.Sign == Sign.Paw) tick = PawClock(sim, e, tick);
                 if (tick >= e.ImpactTick && Resolved(sim, e)) Land(sim, e);
             }
 
@@ -421,6 +459,23 @@ namespace Game.View
             Simulate(e.Fx, age);
         }
 
+        /// <summary>
+        /// Песочные Часы не оглушают Хозяина Чащи, а сдвигают его сроки на 60 тиков и держат его
+        /// столько же. Уголь лапы до удара перечитывает начало и удар шага из Sim (иначе дотлел бы
+        /// к старому удару, а след когтей встал бы двухсекундной давности), а пока босс стоит —
+        /// часы угля стоят (ThicketMasterClipRules.BossClock).
+        /// </summary>
+        private static float PawClock(Simulation sim, Ember e, float tick)
+        {
+            if (sim.TryGetThicketMasterAction(e.Entity, out ThicketMasterState paw) && paw.Serial == e.Serial
+                && paw.Action == ThicketMasterAction.Paw && paw.Stage == e.Stage && !paw.HitResolved)
+            {
+                e.StartTick = paw.StageStartTick;
+                e.ImpactTick = Mathf.Max(paw.StageStartTick + 1, paw.ImpactTick);
+            }
+            return ThicketMasterClipRules.BossClock(sim, e.Entity, tick);
+        }
+
         /// <summary>Замах с этим серийником всё ещё в Sim (до удара или в стойке после него).</summary>
         private static bool Winding(Simulation sim, Ember e)
         {
@@ -432,6 +487,9 @@ namespace Game.View
                     return sim.TryGetEnemySwing(e.Entity, out EnemySwingState swing) && swing.Serial == e.Serial;
                 case Sign.Tusk:
                     return sim.TryGetStonehoofTusk(e.Entity, out StonehoofTuskState tusk) && tusk.Serial == e.Serial;
+                case Sign.Paw:
+                    return sim.TryGetThicketMasterAction(e.Entity, out ThicketMasterState paw)
+                           && paw.Serial == e.Serial && paw.Action == ThicketMasterAction.Paw && paw.Stage >= e.Stage;
                 default:
                     return sim.TryGetWendigoAction(e.Entity, out WendigoActionState action)
                            && action.Serial == e.Serial && action.Kind == WendigoAction.Sweep;
@@ -450,6 +508,9 @@ namespace Game.View
                 case Sign.Tusk:
                     return sim.TryGetStonehoofTusk(e.Entity, out StonehoofTuskState tusk)
                            && tusk.Serial == e.Serial && tusk.HitResolved;
+                case Sign.Paw:
+                    return sim.TryGetThicketMasterAction(e.Entity, out ThicketMasterState paw)
+                           && paw.Serial == e.Serial && (paw.Stage > e.Stage || paw.HitResolved);
                 default:
                     return sim.TryGetWendigoAction(e.Entity, out WendigoActionState action)
                            && action.Serial == e.Serial && action.HitResolved;
@@ -472,6 +533,7 @@ namespace Game.View
             switch (e.Sign)
             {
                 case Sign.Claw:
+                case Sign.Paw:
                     PlaceClaw(e, point);
                     break;
                 case Sign.Bite:
@@ -500,7 +562,7 @@ namespace Game.View
 
         private static void Clear(Ember e)
         {
-            e.Entity = -1; e.Serial = 0; e.Fx = null; e.Slash = null; e.Landed = false; e.Hand = 0;
+            e.Entity = -1; e.Serial = 0; e.Fx = null; e.Slash = null; e.Landed = false; e.Hand = 0; e.Stage = 0;
         }
 
         // ------------------------------------------------------------ slashes
@@ -514,13 +576,15 @@ namespace Game.View
         {
             if (e.Slash == null) return;
             Vector3 direction = Flat(e.Direction);
-            float radius = Simulation.GuardianSwingRadius.ToFloat();
+            // Лапа Хозяина Чащи — сектор 3,6 м и когти у самой земли: полосы выше и длиннее.
+            bool paw = e.Sign == Sign.Paw;
+            float radius = (paw ? Simulation.ThicketPawRadius : Simulation.GuardianSwingRadius).ToFloat();
             Vector3 aim = World(e.Origin) + direction * (radius * .85f);
             Vector3 flat = aim - claw; flat.y = 0f;
             float reach = flat.magnitude;
             Vector3 forward = reach > .3f ? flat / reach : direction;
-            float scale = e.SlashScale * Mathf.Clamp((reach + .35f) / ClawLength, .75f, 1.2f);
-            Vector3 at = Lifted(claw, .45f, 1.5f);
+            float scale = e.SlashScale * Mathf.Clamp((reach + .35f * e.SlashScale) / (ClawLength * e.SlashScale), .75f, 1.2f);
+            Vector3 at = paw ? Lifted(claw, .6f, 2.2f) : Lifted(claw, .45f, 1.5f);
             Place(e.Slash, at, Rotation(forward), scale, e.ImpactTick);
             bool right = e.Hand == 2;
             if (e.Slash.Left != null) e.Slash.Left.enabled = !right;
@@ -656,7 +720,7 @@ namespace Game.View
             if (_arena == null || !_arena.TryGetEntityView(entity, out Transform view) || view == null) return null;
             if (_rigs.TryGetValue(view, out Rig rig)) return rig;
             rig = new Rig { Animator = view.GetComponentInChildren<Animator>(true) };
-            Transform leftHand = null, rightHand = null, head0 = null;
+            Transform leftHand = null, rightHand = null, head0 = null, leftPaw = null, rightPaw = null;
             foreach (var t in view.GetComponentsInChildren<Transform>(true))
             {
                 // Mixamo пишет «mixamorig:Имя»: сравнивается хвост после двоеточия.
@@ -679,8 +743,15 @@ namespace Game.View
                     // Камнекопыт: голова и её конец — морда с клыками.
                     case "head0": head0 = t; break;
                     case "head0_end": rig.Snout = t; break;
+                    // Хозяин Чащи: когти передних лап (100% веса пальцев), запасные — запястья.
+                    case "leg_front_L_toe": rig.PawLeft = t; break;
+                    case "leg_front_R_toe": rig.PawRight = t; break;
+                    case "leg_front_L_paw": leftPaw = t; break;
+                    case "leg_front_R_paw": rightPaw = t; break;
                 }
             }
+            if (rig.PawLeft == null) rig.PawLeft = leftPaw;
+            if (rig.PawRight == null) rig.PawRight = rightPaw;
             if (rig.LeftClaw == null) rig.LeftClaw = leftHand;
             if (rig.RightClaw == null) rig.RightClaw = rightHand;
             if (rig.Head == null) rig.Head = head0;
@@ -733,6 +804,14 @@ namespace Game.View
                 case Sign.Tusk:
                     if (rig != null && rig.Snout != null) return rig.Snout.position;
                     break;
+                case Sign.Paw:
+                {
+                    Transform toe = rig == null ? null : e.Hand == 2 ? rig.PawRight : rig.PawLeft;
+                    if (toe != null) return toe.position;
+                    // Заглушка (капсула без костей): лапа впереди тела у земли, сбоку по стороне.
+                    Vector3 lateral = Vector3.Cross(Vector3.up, forward) * (e.Hand == 2 ? 1.2f : -1.2f);
+                    return _driver.GetRenderPosition(e.Entity) + Vector3.up * .5f + forward * 1.9f + lateral;
+                }
             }
             // Запасная точка: тело Sim, высота и вынос по виду знака.
             Vector3 body = _driver.GetRenderPosition(e.Entity);
@@ -762,6 +841,8 @@ namespace Game.View
                     }
                 case Sign.Tusk: ember = 1.1f; slash = 1f; return;
                 case Sign.Sweep: ember = 1.05f; slash = 1f; return;
+                // Хозяин Чащи 3,6 м — вдвое выше Хранителя, сектор лапы 3,6 м против его удара.
+                case Sign.Paw: ember = 1.8f; slash = 1.9f; return;
                 default: ember = 1f; slash = 1f; return;
             }
         }

@@ -88,6 +88,8 @@ namespace Game.Sim
                 }
                 case EnemyKind.ForestSplitter:
                     return SplitterRollMarkWeight(id, out start, out impact);
+                case EnemyKind.ForestThicketMaster:
+                    return ThicketMasterMarkWeight(id, out start, out impact);
             }
             return 0;
         }

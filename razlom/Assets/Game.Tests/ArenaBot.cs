@@ -6,7 +6,7 @@ namespace Game.Tests
 {
     /// <summary>
     /// Игрок «средней руки». Ввод — тот же InputFrame, что собирает вид:
-    /// ЛКМ по врагу (Attack + AttackTarget), ПКМ по земле (MoveOrder),
+    /// ЛКМ с курсором на враге (Attack + Aim), ПКМ по земле (MoveOrder),
     /// кнопки способностей с точкой прицела. Решения только по тому, что
     /// видно на экране: позиции, метки на земле, плоды, кулдауны, лавидий.
     ///
@@ -42,6 +42,12 @@ namespace Game.Tests
 
         /// <summary>Докуда герой подходит к цели сам: чуть ближе его AttackReach (1,875 м).</summary>
         private static readonly Fix64 StopDistance = Fix64.Ratio(3, 2);
+
+        /// <summary>
+        /// Насколько глубже края сектора серии бот встаёт, прежде чем бить:
+        /// цель на самой кромке уходит из неё от любого толчка.
+        /// </summary>
+        private static readonly Fix64 StrikeMargin = Fix64.Ratio(3, 10);
         private static readonly Fix64 SteerStep = Fix64.Ratio(6, 5);
         private static readonly FixVec2[] Directions = BuildDirections(16);
 
@@ -142,8 +148,11 @@ namespace Game.Tests
             HoldWhirlwind(sim, pos, ref input);
             if (!Stuck(sim, pos, at) && Reachable(run, pos, target))
             {
-                input.Flags = (byte)InputFlags.Attack;
-                input.AttackTarget = target;
+                // Серия сабли (01.10) к цели сама не ходит: вне сектора бот
+                // подходит, в секторе бьёт с места туда, где цель.
+                Fix64 strike = Simulation.SabreReach + e.BodyRadius[target] - StrikeMargin;
+                input.Flags = FixVec2.DistanceSq(pos, at) > strike * strike
+                    ? (byte)InputFlags.MoveOrder : (byte)InputFlags.Attack;
                 input.Aim = at;
                 TryCast(sim, pos, target, ref input);
             }
@@ -213,6 +222,8 @@ namespace Game.Tests
             for (int slot = 0; slot < sim.TelegraphHighWater; slot++)
             {
                 if (!sim.TryGetTelegraph(slot, out EnemyTelegraph t) || !t.IsActive) continue;
+                // Круг-укрытие бури — не угроза: от него не уходят.
+                if ((t.Flags & TelegraphFlags.SafeZone) != 0) continue;
                 AddThreat(t, t.ImpactTick - sim.Tick);
             }
             CollectThornShots(sim);

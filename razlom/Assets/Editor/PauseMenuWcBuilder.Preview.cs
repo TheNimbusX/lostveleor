@@ -85,9 +85,9 @@ namespace Game.EditorTools
                 Choose(view.AbilityLayout, new[] { "Мышь", "WASD" }, 0);
                 Choose(view.AbilityRow, new[] { "Q W E R", "1 2 3 4" }, 0);
                 view.ControlsHint.text = "Нажми на клавишу, чтобы переназначить." + UiKeyHint.Separator + UiKeyHint.EscCancel;
-                string[] combat = { "Способность 1", "Способность 2", "Способность 3", "Способность 4", "Кувырок" };
+                string[] combat = { "Способность 1", "Способность 2", "Способность 3", "Способность 4", "Рывок" };
                 string[] combatKeys = { "Q", "W", "E", "R", "Space" };
-                string[] world = { "Взаимодействие · сумка", "Войти в Разлом", "Уйти из Разлома с добычей", "Повторить забег", "Вернуться в лагерь", "Зелье здоровья", "Зелье лавидия", "Артефакт забега" };
+                string[] world = { "Взаимодействие · сумка", "Войти в Разлом", "Уйти из Разлома с добычей", "Повторить забег", "Вернуться в лагерь", "Зелье здоровья", "Зелье концентрации", "Артефакт забега" };
                 string[] worldKeys = { "I", "E", "L", "R", "C", "5", "6", "F" };
                 for (int i = 0; i < combat.Length; i++) Row(view, view.BindingsCombat, combat[i], combatKeys[i], i == 3);
                 for (int i = 0; i < world.Length; i++) Row(view, view.BindingsWorld, world[i], worldKeys[i], false);

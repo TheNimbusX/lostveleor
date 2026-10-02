@@ -46,7 +46,8 @@ namespace Game.View
             get
             {
                 if (Block == HudAbilityBlock.Cooldown) return "Перезарядка · " + (RemainingTicks/(float)Simulation.TicksPerSecond).ToString("0.0") + " с";
-                if (Block == HudAbilityBlock.Resource) return "Не хватает лавидия: " + MissingResource;
+                // Ресурс способностей игроку — «концентрация» (владелец 01.10); поля Lavidium* в Sim прежние.
+                if (Block == HudAbilityBlock.Resource) return "Не хватает концентрации: " + MissingResource;
                 if (Block == HudAbilityBlock.Dead) return "Герой без сознания";
                 if (Block == HudAbilityBlock.Rooted) return "Корни держат";
                 return string.Empty;

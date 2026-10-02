@@ -34,6 +34,17 @@ namespace Game.View
         BlazeBlade,
         BlazeHit,
         AnchorSlamContact,
+        // Серия сабли «морская пена» (01.10, PelagSabreComboVfxSetup): волна
+        // лёгкого удара, стоячая волна добивающего, пенный накат по земле
+        // добивающего и всплеск на теле цели.
+        SabreWave,
+        SabreCrash,
+        SabreWash,
+        SabreSplash,
+        // Рывок «Пенный след» (02.10, PelagDashVfxSetup): след на земле от
+        // старта до ног с заносом и каплями, корона брызг у передней ноги.
+        DashWake,
+        DashSplash,
         Count
     }
 

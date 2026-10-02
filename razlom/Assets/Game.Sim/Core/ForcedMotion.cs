@@ -31,6 +31,13 @@ namespace Game.Sim
         /// EnemyLunge: упирается в стену и не сбивает замах — это не помеха.
         /// </summary>
         SplitPop = 8,
+
+        /// <summary>
+        /// Толчок добивающего удара серии сабли (Simulation.SabreCombo): тело
+        /// отходит от героя на полшага. Упирается в стену и замах не сбивает —
+        /// это толчок, а не оглушение.
+        /// </summary>
+        Shoved = 9,
     }
 
     /// <summary>
@@ -121,10 +128,12 @@ namespace Game.Sim
         /// <summary>
         /// Тащат ли тело ЧУЖОЙ волей: волок, отброс, рывок. Собственный бросок
         /// моба — выпад укуса, выброс детёныша — помехой его замаху не считается.
+        /// Толчок добивающего сабли — тоже: иначе серия срывала бы каждый замах.
         /// </summary>
         public static bool IsInterrupting(EntityStore entities, int id)
             => IsActive(entities, id)
                 && entities.ForcedKind[id] != (byte)ForcedMotionKind.EnemyLunge
-                && entities.ForcedKind[id] != (byte)ForcedMotionKind.SplitPop;
+                && entities.ForcedKind[id] != (byte)ForcedMotionKind.SplitPop
+                && entities.ForcedKind[id] != (byte)ForcedMotionKind.Shoved;
     }
 }

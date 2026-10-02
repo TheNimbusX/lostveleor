@@ -131,7 +131,8 @@ namespace Game.EditorTools
             if (created || filled > 0)
             {
                 EditorUtility.SetDirty(theme);
-                AssetDatabase.SaveAssets();
+                // Только свой ассет: общий SaveAssets сбрасывал на диск чужие грязные материалы и префабы.
+                AssetDatabase.SaveAssetIfDirty(theme);
                 Debug.Log("[ui-kit] Тема «Ночная акварель»: " + (created ? "создана" : "дополнена") + ", заполнено полей: " + filled);
             }
             else if (log) Debug.Log("[ui-kit] Тема «Ночная акварель»: пустых полей нет, правки не тронуты.");

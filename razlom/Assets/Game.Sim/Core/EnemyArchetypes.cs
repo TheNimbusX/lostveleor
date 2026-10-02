@@ -155,6 +155,13 @@ namespace Game.Sim
         public const int InterimBossHealth = 6000;
         public const int InterimBossDamagePercent = 150;
 
+        // ---- Хозяин Чащи (босс леса, план 01.10) ----
+        //
+        // Своё здоровье, не InterimBossHealth: 6000 → 9360 на арене 9. Лапа —
+        // урон вида: 25 × 164% = 41 на арене 9; остальные атаки — её доли
+        // (Simulation.ThicketShareOf). Тело 0,95 — предел MaxBodyRadius.
+        public const int ThicketMasterHealth = 6000, ThicketMasterPawDamage = 25;
+
         // ---- Плюй-плод ----
         //
         // Константами, а не только строкой таблицы: ими же заданы значения по
@@ -223,6 +230,7 @@ namespace Game.Sim
         public static readonly Fix64 RootSnarerBodyRadius = Fix64.Ratio(75, 100);
         public static readonly Fix64 SplitterBodyRadius = Fix64.Ratio(70, 100);
         public static readonly Fix64 SplitlingBodyRadius = Fix64.Ratio(42, 100);
+        public static readonly Fix64 ThicketMasterBodyRadius = Fix64.Ratio(95, 100);
 
         // Порядок строк — порядок EnemyKind, начиная с Хранителя. Значения
         // EnemyKind сериализованы и новые идут только в конец, поэтому и
@@ -248,6 +256,10 @@ namespace Game.Sim
             // 68+54+68+54+68 = 312), до шестой арены (365 HP) — 5–6, на А7–А8
             // (383 и 402) — 7. Урон 17 и угроза 2 не менялись; баланс арен —
             // общим проходом в конце переделки мобов и Пелага (владелец, 01.10).
+            //
+            // Серия сабли (Simulation.SabreCombo, 01.10 вечер) заменила 54/68:
+            // удары 45 / 45 / 90, и на первой арене Хранитель умирает ровно
+            // пятым ударом без критов (45+45+90+45+45 = 270). HP не менялось.
             new EnemyArchetype(EnemyKind.ForestGuardian,    270,  17, 2, GuardianBodyRadius,
                 Simulation.EnemyAttackWindupTicks, Simulation.GuardianSwingRecoveryTicks,
                 Simulation.GuardianSwingCycleTicks),
@@ -293,6 +305,12 @@ namespace Game.Sim
             new EnemyArchetype(EnemyKind.ForestSplitling, SplitlingHealth, SplitlingDamage, 1, SplitlingBodyRadius,
                 Simulation.SplitlingBiteWindupTicks, Simulation.SplitlingBiteRecoveryTicks,
                 Simulation.SplitlingBiteCycleTicks),
+            // Хозяин Чащи: окна — лапы (замах 24, удар 1 + стойка 24), цикл —
+            // средний темп фазы 1 (~2,6 с). Угроза 20 — бюджету волн не нужна:
+            // босса расстановка не ставит (IsPlaceable).
+            new EnemyArchetype(EnemyKind.ForestThicketMaster, ThicketMasterHealth, ThicketMasterPawDamage, 20,
+                ThicketMasterBodyRadius, Simulation.ThicketPawWindupTicks,
+                Simulation.ThicketPawStrikeTicks + Simulation.ThicketPawRecoveryTicks, 78),
         };
 
         public static int Count => Table.Length;
@@ -306,7 +324,7 @@ namespace Game.Sim
         /// появляется только из распада родителя (будущий босс — тоже не сюда).
         /// </summary>
         public static bool IsPlaceable(EnemyKind kind)
-            => IsDefined(kind) && kind != EnemyKind.ForestSplitling;
+            => IsDefined(kind) && kind != EnemyKind.ForestSplitling && kind != EnemyKind.ForestThicketMaster;
 
         /// <summary>
         /// Сколько мест в пуле сущностей занимает одна поставленная особь:

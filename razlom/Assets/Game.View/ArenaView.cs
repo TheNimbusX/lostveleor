@@ -79,6 +79,8 @@ namespace Game.View
         public string SplitterPrefab = "Characters/Forest_Splitter/ForestSplitter_Runtime";
         [Tooltip("Детёныш Расщепеня — тело Расщепеня в этом масштабе (радиус тела в Sim 0.42 против 0.70).")]
         public float SplitlingScale = 0.6f;
+        [Tooltip("Префаб Хозяина Чащи (босс леса, ThicketMasterBuilder). Нет файла — заглушка (только редактор и dev-сборка).")]
+        public string ThicketMasterPrefab = "Characters/Forest_ThicketMaster/ThicketMaster_Runtime";
 
         [Header("Модели персонажей")]
         [Tooltip("Путь модели в Resources. Пусто — рисованные спрайты, как было.")]
@@ -228,9 +230,9 @@ namespace Game.View
         private ForestBudAnimatorView[] _forestBudViews;
 
         // Новые мобы леса по семьям тела: 0 — Шипомёт, 1 — Корнехват, 2 — Расщепень
-        // вместе с детёнышем. Пул собирается при первом теле семьи; пустой после
+        // вместе с детёнышем, 3 — Хозяин Чащи (босс). Пул собирается при первом теле семьи; пустой после
         // попытки — тела нет (релизная сборка без префаба).
-        private const int ForestMobFamilies = 3;
+        private const int ForestMobFamilies = 4;
         private readonly ViewPool[] _forestMobPools = new ViewPool[ForestMobFamilies];
         private readonly bool[] _forestMobPrepared = new bool[ForestMobFamilies];
         private ForestMobPlaceholderView[] _placeholderViews;
@@ -698,6 +700,8 @@ namespace Game.View
             EnemyKind.ForestGuardian, EnemyKind.ForestRootSwarm, EnemyKind.ForestBud,
             EnemyKind.ForestWendigo, EnemyKind.ForestStonehoof,
             EnemyKind.ForestThorncaster, EnemyKind.ForestRootSnarer, EnemyKind.ForestSplitter,
+            // Босс леса: тело одно, греется только на его арене (CountBodies), иначе пул не трогается.
+            EnemyKind.ForestThicketMaster,
         };
 
         /// <summary>Сколько тел вида бросает встреча в худшем случае: сумма верхних границ групп всех волн.</summary>
@@ -811,6 +815,10 @@ namespace Game.View
         /// </summary>
         public void ConfirmCleaveContact() => AnimationOf(Simulation.PlayerId)?.ConfirmCleaveContact();
 
+        /// <summary>Стоп-кадр героя на контакте удара серии сабли (номер удара — SabreSwingState.Serial).</summary>
+        public void ConfirmSabreContact(int serial, float seconds)
+            => AnimationOf(Simulation.PlayerId)?.ConfirmSabreContact(serial, seconds);
+
         /// <summary>
         /// Стоп-кадр задетого тела: аниматор, отдача, наклон и вспышка
         /// держатся, пока Sim идёт своим чередом. Вызывается после ReactToHit
@@ -863,7 +871,9 @@ namespace Game.View
             // Летальный Damage уже относится к DeathBack: труп не должен перед
             // падением получать ещё один процедурный толчок. Вспышка контакта
             // остаётся, чтобы последний удар не потерял визуальное подтверждение.
-            if (alive && entityId != Simulation.PlayerId && _driver.Sim.Entities.Kind[entityId] != EnemyKind.ForestStonehoof)
+            // Босс леса (3,6 м, не двигается чужой волей) от удара не отшатывается — как Камнекопыт.
+            if (alive && entityId != Simulation.PlayerId && _driver.Sim.Entities.Kind[entityId] != EnemyKind.ForestStonehoof
+                && _driver.Sim.Entities.Kind[entityId] != EnemyKind.ForestThicketMaster)
             {
                 AnimationOf(entityId)?.PlayContactPose(direction, strength, heavy);
                 Vector3 recoil = direction * (RecoilDistance * strength * Mathf.Max(0f, recoilScale));
@@ -1355,6 +1365,7 @@ namespace Game.View
                 _rootSnarerViews[i]?.Bind(_driver, i);
                 _splitterViews[i] = go.GetComponent<SplitterAnimatorView>();
                 _splitterViews[i]?.Bind(_driver, i);
+                ThicketMasterAnimatorView.BindOn(go, _driver, i);
                 // Привязка заглушки — ниже, после базового масштаба: её размеры делятся на него.
                 _placeholderViews[i] = go.GetComponent<ForestMobPlaceholderView>();
                 _animationViews[i]?.SetEnemyKind(entities.Kind[i]);
@@ -1776,6 +1787,9 @@ namespace Game.View
                 // The hero now blends directly out of the current run pose.
                 // Keep that pose advancing until the rendered body stops.
                 if (i == Simulation.PlayerId) moving = worldSpeed > 0.02f;
+                // Выпад добивающего серии двигает тело, но это не шаг: ноги ведёт клип.
+                if (i == Simulation.PlayerId && _animationViews[i] != null && _animationViews[i].SabreLungeLegs)
+                    moving = false;
                 _locomotionMoving[i] = moving;
                 float normalizedMoveSpeed = fullStep > 0.0001f
                     ? Mathf.Clamp(velocityMagnitude / fullStep, 0f,
@@ -2069,6 +2083,9 @@ namespace Game.View
                         { _anchorSaberSuppressed = false; MarkPlayerCombatActivity(); }
                         if (e.Source == Simulation.PlayerId && e.BasicAttackState.Serial > 0)
                             AnimationOf(e.Source)?.PlayBasicComboAttack(e.BasicAttackState);
+                        // Удар серии сабли: клип ведётся тиками удара, а не событием.
+                        else if (e.Source == Simulation.PlayerId && !_driver.Sim.PelagBasicComboEnabled)
+                            AnimationOf(e.Source)?.PlaySabreSwing(_driver.Sim.SabreSwing);
                         else
                             AnimationOf(e.Source)?.PlayAttack(e.Amount);
                         break;
@@ -2102,11 +2119,8 @@ namespace Game.View
                         // same Damage event that drives hit VFX and hit-stop.
                         // This keeps the authored blade pose and the actual
                         // health change on one presentation boundary.
-                        if (e.Source == Simulation.PlayerId
-                            && e.DamageOrigin == DamageOrigin.BasicAttack
-                            && !_driver.Sim.PelagBasicComboEnabled)
-                            AnimationOf(e.Source)?.PlayAttackContact(e.ActionVariant);
-                        else if (e.Source == Simulation.PlayerId && e.BasicAttackState.Serial > 0
+                        // Контакт серии сабли подтверждает SabreContact (PelagSabreComboView).
+                        if (e.Source == Simulation.PlayerId && e.BasicAttackState.Serial > 0
                             && e.DamageOrigin == DamageOrigin.BasicAttack)
                             AnimationOf(e.Source)?.ConfirmBasicComboContact(e.BasicAttackState);
                         break;
@@ -2134,6 +2148,9 @@ namespace Game.View
                         // Расщепень не падает, а раскалывается: трещина с тика смерти,
                         // сам раскол и обломки — SplitterCombatView.
                         _splitterViews[e.Target]?.PlayDeath(FrameEventTick(i));
+                        // Босс леса: Death с тика смерти, последний кадр держится до конца показа.
+                        if (entities.Kind[e.Target] == EnemyKind.ForestThicketMaster)
+                            ThicketMasterAnimatorView.PlayDeathOn(_views[e.Target], FrameEventTick(i));
                         _deathStarted[e.Target] = true;
                         _deathStartedAt[e.Target] = Time.time;
                         float presentationDuration = entities.Side[e.Target] == Faction.Orvill
@@ -2276,7 +2293,7 @@ namespace Game.View
 
         /// <summary>
         /// Семья тела нового моба леса: 0 — Шипомёт, 1 — Корнехват, 2 — Расщепень и
-        /// его детёныш (то же тело мельче). −1 — вид не из новых, у него свой путь.
+        /// его детёныш (то же тело мельче), 3 — Хозяин Чащи. −1 — вид не из новых, у него свой путь.
         /// </summary>
         internal static int ForestMobFamily(EnemyKind kind)
         {
@@ -2286,6 +2303,7 @@ namespace Game.View
                 case EnemyKind.ForestRootSnarer: return 1;
                 case EnemyKind.ForestSplitter:
                 case EnemyKind.ForestSplitling: return 2;
+                case EnemyKind.ForestThicketMaster: return 3;
                 default: return -1;
             }
         }
@@ -2315,10 +2333,12 @@ namespace Game.View
             // раскол Расщепеня с половинами коры и прыжком детёнышей.
             if (family == 0) ThorncasterViewInstaller.Prepare(gameObject);
             else if (family == 1) RootSnarerCombatView.EnsureOn(gameObject);
-            else SplitterCombatView.Install(this);
+            else if (family == 2) SplitterCombatView.Install(this);
+            else ThicketMasterCombatView.EnsureOn(gameObject);
             EnemyKind kind = family == 0 ? EnemyKind.ForestThorncaster
-                : family == 1 ? EnemyKind.ForestRootSnarer : EnemyKind.ForestSplitter;
-            string path = family == 0 ? ThorncasterPrefab : family == 1 ? RootSnarerPrefab : SplitterPrefab;
+                : family == 1 ? EnemyKind.ForestRootSnarer : family == 2 ? EnemyKind.ForestSplitter : EnemyKind.ForestThicketMaster;
+            string path = family == 0 ? ThorncasterPrefab : family == 1 ? RootSnarerPrefab
+                : family == 2 ? SplitterPrefab : ThicketMasterPrefab;
             string title = EnemyTexts.Name(kind);
             GameObject prefab = string.IsNullOrEmpty(path) ? null : Resources.Load<GameObject>(path);
             int layer = LayerMask.NameToLayer("EnemyOutline");
@@ -2351,7 +2371,7 @@ namespace Game.View
             }
             var root = new GameObject("Пул: " + title).transform;
             root.SetParent(transform, false);
-            var pool = new ViewPool(root, factory, 4);
+            var pool = new ViewPool(root, factory, family == 3 ? 1 : 4); // босс на арене один
             QueueWarm(pool, pool.PrewarmTarget);
             _forestMobPools[family] = pool;
         }

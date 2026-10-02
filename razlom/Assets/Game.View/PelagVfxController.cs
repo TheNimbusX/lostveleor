@@ -181,6 +181,7 @@ namespace Game.View
 
             UpdateAbilityMotion();
             UpdateSkewerWake();
+            UpdateDashFoam();
             UpdateFootstepDust();
             UpdateActive(Time.deltaTime);
             UpdateCombatLighting(Time.unscaledDeltaTime);
@@ -257,7 +258,12 @@ namespace Game.View
                     || entry.Id == PelagVfxId.CleaveHit || entry.Id == PelagVfxId.CleaveSlash
                     || entry.Id == PelagVfxId.CleaveGround || entry.Id == PelagVfxId.AnchorSlamContact
                     // Искры автоатаки: без прогрева первые удары в бою создавали объекты (лог переходов 29.09).
-                    || entry.Id == PelagVfxId.AutoAttackImpact || entry.Id == PelagVfxId.AutoAttackCriticalImpact)
+                    || entry.Id == PelagVfxId.AutoAttackImpact || entry.Id == PelagVfxId.AutoAttackCriticalImpact
+                    // Серия сабли бьёт трижды в секунду: волны и всплески греются заранее.
+                    || entry.Id == PelagVfxId.SabreWave || entry.Id == PelagVfxId.SabreCrash
+                    || entry.Id == PelagVfxId.SabreWash || entry.Id == PelagVfxId.SabreSplash
+                    // Рывок: след и корона брызг — без создания объектов на первом рывке.
+                    || entry.Id == PelagVfxId.DashWake || entry.Id == PelagVfxId.DashSplash)
                     _pools[id].Pool.PrewarmStep(Mathf.Max(3,entry.Prewarm));
             }
 
@@ -419,6 +425,15 @@ namespace Game.View
                 {
                     PlayEvade();
                 }
+                else if (e.Type == SimEventType.DashStarted)
+                {
+                    // Рывок 02.10: пенный след от старта (PelagVfxController.Dash).
+                    PlayDashStarted(e);
+                }
+                else if (e.Type == SimEventType.DashEnded)
+                {
+                    PlayDashEnded(e);
+                }
                 else if (e.Type == SimEventType.BlazeBegin)
                 {
                     // Amount — сколько тиков гореть. Огонь заводится от события
@@ -447,13 +462,18 @@ namespace Game.View
                     _whirlwindContactPending = false; _whirlwindGlintPending = false; _whirlwindNextPulseTick = -1f; _whirlwindPulseSoundPlayed = false;
                     // Animator уже запускает ArenaView. Здесь начинается только
                     // additive-выпад корпуса, поэтому A/B не дёргается дважды.
-                    if (e.BasicAttackState.Serial > 0)
+                    // Серия сабли и кандидат 30.09 шагают сами (выпад добивающего —
+                    // в Sim), видимого «подшага» прежней автоатаки у них нет.
+                    if (e.BasicAttackState.Serial > 0 || !_driver.Sim.PelagBasicComboEnabled)
                     {
-                        // Candidate attacks have no presentation-only forward lunge.
                         _attackMotionTime = -1f;
                         _arena.SetPresentationOffset(Simulation.PlayerId, Vector3.zero);
                     }
                     else BeginGameplayAttackMotion(e.Target);
+                }
+                else if (e.Type == SimEventType.SabreContact)
+                {
+                    PlaySabreContact(e);
                 }
                 else if (e.Type == SimEventType.ChainStepHop)
                 {
@@ -479,8 +499,17 @@ namespace Game.View
                 else if (e.Type == SimEventType.Damage
                          && e.DamageOrigin == DamageOrigin.BasicAttack)
                 {
-                    PlayBasicAttackImpact(e.Target, e.Position, e.Flag);
-                    PulseCombatLight(0.62f);
+                    if (_driver.Sim.PelagBasicComboEnabled)
+                    {
+                        PlayBasicAttackImpact(e.Target, e.Position, e.Flag);
+                        PulseCombatLight(e.ActionVariant == 2 ? 0.62f : 0.45f);
+                    }
+                    else
+                    {
+                        // Серия сабли: всплеск пены и стоп-кадр цели (PelagVfxController.SabreCombo).
+                        PlaySabreSplash(e);
+                        PulseCombatLight((e.ActionVariant == 2 ? 0.55f : 0.35f) * GameUserSettings.FlashScale);
+                    }
                 }
                 else if (e.Type == SimEventType.Damage
                           && e.DamageOrigin == DamageOrigin.Ability)
@@ -1271,6 +1300,8 @@ namespace Game.View
             if (id == AbilityDefinition.DashId)
             {
                 CancelActiveAnchorMotionForReplacement();
+                // Рывок рисует «Пенный след» от DashStarted/DashEnded; прежний росчерк кувырка — только без него.
+                if (DashFoamReady) return;
                 Vector3 from = PlayerPosition() + Vector3.up * .35f;
                 Vector3 to = ForcedTargetWorld(sim) + Vector3.up * .35f;
                 float duration = build.Get(AbilityStatType.DurationTicks).ToInt() / (float)Simulation.TicksPerSecond;

@@ -335,11 +335,12 @@ namespace Game.View
         void ShowPotionTooltip(int potion)
         {
             var camp=_driver.Session.Camp;var kind=(PotionKind)potion;
-            string title=(potion%2==0?"Малое":"Большое")+" зелье "+(potion<2?"здоровья":"лавидия");
+            // Ресурс способностей игроку — «концентрация» (владелец 01.10).
+            string title=(potion%2==0?"Малое":"Большое")+" зелье "+(potion<2?"здоровья":"концентрации");
             string body="Запас: "+camp.PotionCount(kind)+"\nВыбор двух видов — у походного стола"
                 +"\n<color=#9DB6CB>Купить — у алхимика</color>";
             _hoverIndex=-1;
-            FillTooltip(title,"",Color.white,"Восстанавливает "+Camp.PotionPercent(kind)+"% "+(potion<2?"здоровья":"лавидия"),body,-1,_potionSprites[potion]);
+            FillTooltip(title,"",Color.white,"Восстанавливает "+Camp.PotionPercent(kind)+"% "+(potion<2?"здоровья":"концентрации"),body,-1,_potionSprites[potion]);
             if(_tent.Potions[potion]!=null)_tent.PlaceTooltip((RectTransform)_tent.Potions[potion].transform);
             _tent.ShowTooltip(true);
         }

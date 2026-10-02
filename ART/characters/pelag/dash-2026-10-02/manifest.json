@@ -1,0 +1,341 @@
+{
+  "game": "THE WAR REMAINS",
+  "character": "Pelag",
+  "topic": "Дэш (пробел вместо кувырка) — целевые кадры ключевого момента, 4 направления в языке «морской пены»",
+  "date": "2026-10-02",
+  "source": "Higgsfield",
+  "model": "gpt_image_2_5",
+  "params": {
+    "variant": "flare (default)",
+    "quality": "medium",
+    "resolution": "2k",
+    "aspect_ratio": "16:9",
+    "output_size": [
+      2688,
+      1520
+    ]
+  },
+  "refs": [
+    {
+      "order": "Image 1",
+      "file": "refs/ref1-arena-pelag-run-f010.jpg",
+      "media_id": "2f426960-ffff-4851-8e53-b32fa65183a0",
+      "from": "artifacts/capture/pelag-combo-v6-guardians/sabre_combo_guardians_1080p60.mp4, кадр n=9 (0,15 с), 1920x1080, без HUD и цифр, Пелаг бежит к Хранителям"
+    },
+    {
+      "order": "Image 2",
+      "file": "refs/ref2-seafoam-slash-look.jpg",
+      "media_id": "a2d85c1a-ada2-400a-bf80-1ff947fc1882",
+      "from": "тот же ролик, кадр n=24 (0,40 с), вырез 620..1380 x 365..790 — принятая дуга «морской пены» (удар 1)"
+    },
+    {
+      "order": "Image 3",
+      "file": "refs/ref3-pelag-model-4views.jpg",
+      "media_id": "deaefbd4-c8dc-4ee7-858c-1b665b007f9a",
+      "from": "ART/characters/pelag/demo-polish-2026-09-30/colour/after-front|side|back|game.png — рендеры 3D-модели, 4 ракурса"
+    }
+  ],
+  "prompt_common_prefix": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag, exactly on-model as in Image 3 (tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, dark iron ship anchor on a chain on his back, curved sabre in his hand), at the same small in-game size as in Image 1. Key moment: Pelag mid-dash, a very short and very fast burst forward of about two body lengths (about 4 meters) from a clear start point at the outer left edge of the stone circle toward the Guardians; he is now inside the circle near the central tile, body low and leaning hard forward, sabre held back behind him, the Guardians one step away for scale. The dash effect must belong to the sea-foam VFX family shown in Image 2: flat graphic turquoise water with white foam crests, a thin dark outline, cream-white foam bubbles and small cut-out droplet blobs, bright and clean, no soft glow, no smoke, no bloom. ",
+  "prompt_common_suffix": "Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems, no motion blur on the ground.",
+  "frames": [
+    {
+      "key": "A",
+      "caption": "А — Пенный след",
+      "file": "1-A-foam-wake.png",
+      "preview": "1-A-foam-wake.jpg",
+      "job_id": "f9cfa658-f336-4977-af7d-5d18f1045742",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_002232_f9cfa658-f336-4977-af7d-5d18f1045742.png",
+      "credits": 1,
+      "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag, exactly on-model as in Image 3 (tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, dark iron ship anchor on a chain on his back, curved sabre in his hand), at the same small in-game size as in Image 1. Key moment: Pelag mid-dash, a very short and very fast burst forward of about two body lengths (about 4 meters) from a clear start point at the outer left edge of the stone circle toward the Guardians; he is now inside the circle near the central tile, body low and leaning hard forward, sabre held back behind him, the Guardians one step away for scale. The dash effect must belong to the sea-foam VFX family shown in Image 2: flat graphic turquoise water with white foam crests, a thin dark outline, cream-white foam bubbles and small cut-out droplet blobs, bright and clean, no soft glow, no smoke, no bloom. Effect for this frame, FOAM WAKE: a low flat turquoise water wake lies on the ground along the whole dash path behind him like the wake of a fast boat, narrow at the start point and widening toward his feet, with white foam edges and a thin dark outline, small splash puffs of foam and droplets at the start point and right at his feet. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems, no motion blur on the ground.",
+      "honest_note": "Пелаг в модели (рубаха, кушак, повязка, сандалии), но якорь нарисован чужим — серая «кошка» с крючьями, сабли не видно. След — плоский бирюзовый клин с белой пеной и тёмным обводом, в языке пены; читается сильнее всех, но длина ~8 м (вдвое длиннее 4 м) и похоже больше на копьё/луч, чем на кильватер."
+    },
+    {
+      "key": "B",
+      "caption": "Б — Рывок сквозь брызги",
+      "file": "2-B-spray-burst.png",
+      "preview": "2-B-spray-burst.jpg",
+      "job_id": "186eebc9-2906-4783-9a7f-e3f66067492c",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_002232_186eebc9-2906-4783-9a7f-e3f66067492c.png",
+      "credits": 1,
+      "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag, exactly on-model as in Image 3 (tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, dark iron ship anchor on a chain on his back, curved sabre in his hand), at the same small in-game size as in Image 1. Key moment: Pelag mid-dash, a very short and very fast burst forward of about two body lengths (about 4 meters) from a clear start point at the outer left edge of the stone circle toward the Guardians; he is now inside the circle near the central tile, body low and leaning hard forward, sabre held back behind him, the Guardians one step away for scale. The dash effect must belong to the sea-foam VFX family shown in Image 2: flat graphic turquoise water with white foam crests, a thin dark outline, cream-white foam bubbles and small cut-out droplet blobs, bright and clean, no soft glow, no smoke, no bloom. Effect for this frame, SPRAY BURST: he bursts forward through a short curved sheet of turquoise water spray that wraps around the front and sides of his body like the bow wave of a ship, foam blobs and droplets flung backwards along the path toward the start point, and one or two faint semi-transparent turquoise afterimages of his silhouette left behind on the path, a small foam puff marks the start point. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems, no motion blur on the ground.",
+      "honest_note": "Водяной «бурун» вокруг тела в языке пены, но Пелаг под ним плохо читается, якоря нет; послеобразы — мутные бирюзовые пятна, не наш чистый графичный стиль. Самый шумный кадр, на игровом масштабе силуэт героя теряется."
+    },
+    {
+      "key": "C",
+      "caption": "В — Морской порыв",
+      "file": "3-C-sea-gust.png",
+      "preview": "3-C-sea-gust.jpg",
+      "job_id": "9319185c-d421-4043-a76c-139eef689c51",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_002232_9319185c-d421-4043-a76c-139eef689c51.png",
+      "credits": 1,
+      "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag, exactly on-model as in Image 3 (tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, dark iron ship anchor on a chain on his back, curved sabre in his hand), at the same small in-game size as in Image 1. Key moment: Pelag mid-dash, a very short and very fast burst forward of about two body lengths (about 4 meters) from a clear start point at the outer left edge of the stone circle toward the Guardians; he is now inside the circle near the central tile, body low and leaning hard forward, sabre held back behind him, the Guardians one step away for scale. The dash effect must belong to the sea-foam VFX family shown in Image 2: flat graphic turquoise water with white foam crests, a thin dark outline, cream-white foam bubbles and small cut-out droplet blobs, bright and clean, no soft glow, no smoke, no bloom. Effect for this frame, SEA GUST: very light and minimal, the fastest and cleanest read: three to five long thin graphic speed streaks in white and turquoise, like wind gusts and sea-spray lines with a thin dark outline, run parallel along the dash path from the start point to his body and taper to points, a tiny kick of foam blobs under his back foot and a small foam puff at the start point; most of the ground stays clean. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems, no motion blur on the ground.",
+      "honest_note": "Самый «в модели»: правильный чёрный якорь на спине, сабля отведена назад, цвета и яркость как в кадре. Три полосы белый/бирюза с тёмным обводом + маленький всплеск у старта, длина ~4 м. Читается чище и быстрее всех, но тонко — пены мало, на арене с толпой может потеряться."
+    },
+    {
+      "key": "D",
+      "caption": "Г — Капля",
+      "file": "4-D-droplet-blink.png",
+      "preview": "4-D-droplet-blink.jpg",
+      "job_id": "c0dbccb8-202d-4ff0-92d6-35ec0aa3b1ed",
+      "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_002232_c0dbccb8-202d-4ff0-92d6-35ec0aa3b1ed.png",
+      "credits": 1,
+      "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag, exactly on-model as in Image 3 (tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, dark iron ship anchor on a chain on his back, curved sabre in his hand), at the same small in-game size as in Image 1. Key moment: Pelag mid-dash, a very short and very fast burst forward of about two body lengths (about 4 meters) from a clear start point at the outer left edge of the stone circle toward the Guardians; he is now inside the circle near the central tile, body low and leaning hard forward, sabre held back behind him, the Guardians one step away for scale. The dash effect must belong to the sea-foam VFX family shown in Image 2: flat graphic turquoise water with white foam crests, a thin dark outline, cream-white foam bubbles and small cut-out droplet blobs, bright and clean, no soft glow, no smoke, no bloom. Effect for this frame, DROPLET BLINK: a blink-like water dash; at the start point a turquoise water splash with a white foam crown and flying droplet blobs where he burst into water and vanished, at the end point he re-forms out of a splash of turquoise water and foam, his trailing leg and sabre arm still dissolving into splashing water blobs, and a single thin white foam line with a dark outline connects the two splashes on the ground. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems, no motion blur on the ground.",
+      "honest_note": "Два всплеска (старт и финиш) и тонкая пенная нить, длина ~5 м — понятная механика «телепорта». Всплески в языке пены. Пелаг частично в воде: кушак превратился в перевязь через грудь, якоря нет — модель тут уплыла сильнее всего."
+    }
+  ],
+  "board": "0-board.jpg",
+  "zoom": "0-zoom.jpg",
+  "credits": {
+    "balance_before": 18.3,
+    "spent": 4,
+    "balance_after": 14.3,
+    "budget": 15,
+    "log": [
+      "4 x GPT Image 2.5 Flare medium 2k = 4 x 1 credit, 2026-10-02T00:22Z",
+      "high не запускался — выбор за владельцем"
+    ]
+  },
+  "round2": {
+    "date": "2026-10-02",
+    "why": "Владелец выбрал А «Пенный след» («этот лучше всех») и попросил ещё варианты. Задача: след ~4 м с круглым пенным началом вместо иглы, герой в модели (наш якорь, сабля), ниже наклон.",
+    "model": "gpt_image_2_5",
+    "params": {
+      "variant": "flare",
+      "quality": "medium",
+      "resolution": "2k",
+      "aspect_ratio": "16:9",
+      "output_size": [
+        2688,
+        1520
+      ]
+    },
+    "uploads_fresh": "все рефы загружены заново 2026-10-02T00:34Z (curl PUT + If-None-Match), старые media_id/job_id не использовались",
+    "length_scale": "рост героя на экране ≈ 150 px в кадре 1920; 4 м ≈ 2,5 роста ≈ 375 px; замер — от начала пены до задней ноги",
+    "frames": [
+      {
+        "key": "A2",
+        "caption": "А2 — след на герое В",
+        "file": "5-A2-wake-on-C.png",
+        "preview": "5-A2-wake-on-C.jpg",
+        "job_id": "8e105e1b-2805-4aa8-b2dd-eab643757f8b",
+        "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_003648_8e105e1b-2805-4aa8-b2dd-eab643757f8b.png",
+        "credits": 1,
+        "refs": [
+          {
+            "order": "Image 1",
+            "file": "3-C-sea-gust.png",
+            "media_id": "8662e40e-fec4-4537-8619-1e4651331266",
+            "role": "основа: кадр В (герой, арена, Хранители)"
+          },
+          {
+            "order": "Image 2",
+            "file": "1-A-foam-wake.png",
+            "media_id": "08206e0f-98ea-4ba6-af2c-e6e2342f3f7d",
+            "role": "только вид следа А"
+          },
+          {
+            "order": "Image 3",
+            "file": "refs/ref3-pelag-model-4views.jpg",
+            "media_id": "b84c36d1-9f85-4ec0-99f0-5d5f9fdfb2b4",
+            "role": "модель Пелага"
+          }
+        ],
+        "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep everything in Image 1 unchanged: the same top-down game camera, framing, scale and lighting, the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, the moss-covered Guardian tree-golem enemies on the right, and the hero Pelag himself exactly as he is in Image 1, on-model as in Image 3: tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, the single dark iron ship anchor worn diagonally on his back, the curved sabre held back behind his hip, same small in-game size, same colors and brightness. Change only the dash effect: remove the three thin white and turquoise speed streaks and the small foam puff, and replace them with the flat turquoise water wake from Image 2, using Image 2 only as the look of the wake: flat graphic turquoise water lying on the ground, white foam crests along both edges, a thin dark outline, small cut-out cream-white foam droplets. The wake lies flat on the ground straight behind him along the dash path, from his back foot back toward the left, and it is SHORT: its total length is only about two and a half times the hero's own on-screen height, about 4 meters, roughly half as long as the wake in Image 2. The far start end of the wake is a rounded soft puff of white foam bubbles with a few droplets, NOT a sharp point, NOT a needle, NOT a spear; the wake widens slightly toward his feet, and a small skid of white foam spray kicks up under his back foot. If possible make Pelag lean a little lower and harder forward in the same direction, a low dash pose, still exactly the same character with the same dark anchor and sabre. Keep Pelag's colors and brightness exactly as in Image 1, do not whiten him, no rim light, no glow, no bloom, no motion blur smears. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems.",
+        "wake_length": "≈ 290 px ≈ 1,9 роста (~3 м)",
+        "honest_note": "Герой и сцена из В сохранились: тёмный якорь с лапами и цепью к плечу на месте, но мягче/мутнее, чем в В; сабля почти потерялась; на белых штанах появились розовые разводы. Наклон почти как в В. След короткий, начало — круглый пенный клуб, у задней ноги пенный срыв; длина даже короче цели (≈1,9 роста вместо 2,5)."
+      },
+      {
+        "key": "A3",
+        "caption": "А3 — длинный след",
+        "file": "6-A3-long-wake-on-C.png",
+        "preview": "6-A3-long-wake-on-C.jpg",
+        "job_id": "082e80d8-c162-40f3-93c7-0038706937a2",
+        "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_003648_082e80d8-c162-40f3-93c7-0038706937a2.png",
+        "credits": 1,
+        "refs": [
+          {
+            "order": "Image 1",
+            "file": "3-C-sea-gust.png",
+            "media_id": "8662e40e-fec4-4537-8619-1e4651331266",
+            "role": "основа: кадр В (герой, арена, Хранители)"
+          },
+          {
+            "order": "Image 2",
+            "file": "1-A-foam-wake.png",
+            "media_id": "08206e0f-98ea-4ba6-af2c-e6e2342f3f7d",
+            "role": "только вид следа А"
+          },
+          {
+            "order": "Image 3",
+            "file": "refs/ref3-pelag-model-4views.jpg",
+            "media_id": "b84c36d1-9f85-4ec0-99f0-5d5f9fdfb2b4",
+            "role": "модель Пелага"
+          }
+        ],
+        "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep everything in Image 1 unchanged: the same top-down game camera, framing, scale and lighting, the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, the moss-covered Guardian tree-golem enemies on the right, and the hero Pelag himself exactly as he is in Image 1, on-model as in Image 3: tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals, the single dark iron ship anchor worn diagonally on his back, the curved sabre held back behind his hip, same small in-game size, same colors and brightness. Change only the dash effect: remove the three thin white and turquoise speed streaks and the small foam puff, and replace them with the flat turquoise water wake from Image 2, copying its look, its length and its shape: flat graphic turquoise water lying on the ground, white foam crests along both edges, a thin dark outline, small cut-out cream-white foam droplets. The wake lies flat on the ground straight behind him along the dash path, from his back foot far back toward the left, LONG, the same length as the wake in Image 2, starting at the same point on the ground as in Image 2 near the left part of the frame, and tapering to the same thin sharp point at its far start end exactly like Image 2; it widens toward his feet, and a small skid of white foam spray kicks up under his back foot. If possible make Pelag lean a little lower and harder forward in the same direction, a low dash pose, still exactly the same character with the same dark anchor and sabre. Keep Pelag's colors and brightness exactly as in Image 1, do not whiten him, no rim light, no glow, no bloom, no motion blur smears. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems.",
+        "wake_length": "≈ 820 px ≈ 5,5 роста (~9 м), длиннее исходного А (~690 px)",
+        "honest_note": "Лучший герой из четырёх: тёмный якорь с двумя лапами и цепью к плечу, сабля тёмным изгибом у бедра, цвета как в В. Наклон чуть ниже, чем в В. След длиннее даже А, с той же иглой на конце — для сравнения длины, читается как копьё/луч ещё сильнее."
+      },
+      {
+        "key": "A4",
+        "caption": "А4 — исправленный герой",
+        "file": "7-A4-fixed-hero.png",
+        "preview": "7-A4-fixed-hero.jpg",
+        "job_id": "085daf1c-d239-42cd-afaf-c8190f222186",
+        "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_003648_085daf1c-d239-42cd-afaf-c8190f222186.png",
+        "credits": 1,
+        "refs": [
+          {
+            "order": "Image 1",
+            "file": "refs/ref1-arena-pelag-run-f010.jpg",
+            "media_id": "0a261e73-5d91-4eb7-9cb9-6da95024a014",
+            "role": "основа: наш кадр арены"
+          },
+          {
+            "order": "Image 2",
+            "file": "1-A-foam-wake.png",
+            "media_id": "08206e0f-98ea-4ba6-af2c-e6e2342f3f7d",
+            "role": "только вид следа А"
+          },
+          {
+            "order": "Image 3",
+            "file": "refs/ref3-pelag-model-4views.jpg",
+            "media_id": "b84c36d1-9f85-4ec0-99f0-5d5f9fdfb2b4",
+            "role": "модель Пелага"
+          }
+        ],
+        "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag at the same small in-game size and roughly the same spot inside the stone circle, exactly on-model as in Image 3: tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals. Pose: mid-dash toward the Guardians on the right, a LOW HARD forward lean, torso tilted far forward, knees bent, front foot planted ahead, back leg stretched out behind, the curved dark sabre held back low behind his hip in his hand and clearly visible. On his back: a single dark iron ship anchor with two curved flukes worn diagonally across the back, chain to the shoulder, exactly like Image 3; no claw, no grappling hook, no mechanical device, not transparent. Dash effect: the flat turquoise water wake from Image 2, using Image 2 only as the look of the wake: flat graphic turquoise water lying on the ground, white foam crests along both edges, a thin dark outline, small cut-out cream-white foam droplets. The wake lies flat on the ground straight behind him along the dash path toward the left, and it is SHORT: its total length is only about two and a half times the hero's own on-screen height, about 4 meters, roughly half as long as the wake in Image 2. The far start end of the wake is a rounded soft puff of white foam bubbles with a few droplets, NOT a sharp point, NOT a needle, NOT a spear; the wake widens slightly toward his feet, and a small skid of white foam spray kicks up under his back foot. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light, no glow, no bloom, no motion blur smears. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems.",
+        "wake_length": "≈ 345 px ≈ 2,3 роста (~3,7 м) — ближе всех к цели",
+        "honest_note": "Не исправлен: на спине снова серая многозубая «кошка», не наш якорь, хотя промпт прямо это запрещал. Сабля видна — тёмный изгиб низко позади. Поза — широкий выпад, наклон умеренный, не «низкий жёсткий». След по длине почти в цель, начало — круглый клуб пены с каплями, срыв пены под задней ногой."
+      },
+      {
+        "key": "A5",
+        "caption": "А5 — след + всплеск",
+        "file": "8-A5-wake-arrival-splash.png",
+        "preview": "8-A5-wake-arrival-splash.jpg",
+        "job_id": "9a56ae15-8541-4f6c-bf56-ba27fbf6cc3c",
+        "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_003648_9a56ae15-8541-4f6c-bf56-ba27fbf6cc3c.png",
+        "credits": 1,
+        "refs": [
+          {
+            "order": "Image 1",
+            "file": "refs/ref1-arena-pelag-run-f010.jpg",
+            "media_id": "0a261e73-5d91-4eb7-9cb9-6da95024a014",
+            "role": "основа: наш кадр арены"
+          },
+          {
+            "order": "Image 2",
+            "file": "1-A-foam-wake.png",
+            "media_id": "08206e0f-98ea-4ba6-af2c-e6e2342f3f7d",
+            "role": "только вид следа А"
+          },
+          {
+            "order": "Image 3",
+            "file": "refs/ref3-pelag-model-4views.jpg",
+            "media_id": "b84c36d1-9f85-4ec0-99f0-5d5f9fdfb2b4",
+            "role": "модель Пелага"
+          }
+        ],
+        "prompt": "Edit Image 1, a real gameplay screenshot of our bright stylized isometric action roguelike The War Remains. Keep the exact same top-down game camera, framing, scale, lighting and everything in the scene unchanged: the brown forest arena ground with flat stones, the stone rune circle with glowing yellow runes and the central square tile, rocks, orange flowers, and the moss-covered Guardian tree-golem enemies on the right. Redraw only the hero Pelag at the same small in-game size and roughly the same spot inside the stone circle, exactly on-model as in Image 3: tanned islander, dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, white knee-length pants, brown sandals. Pose: mid-dash toward the Guardians on the right, a LOW HARD forward lean, torso tilted far forward, knees bent, front foot planted ahead, back leg stretched out behind, the curved dark sabre held back low behind his hip in his hand and clearly visible. On his back: a single dark iron ship anchor with two curved flukes worn diagonally across the back, chain to the shoulder, exactly like Image 3; no claw, no grappling hook, no mechanical device, not transparent. Dash effect, two parts in the sea-foam style of Image 2, using Image 2 only as the look: flat graphic turquoise water, white foam crests, a thin dark outline, small cut-out cream-white foam droplets. Part one, the wake behind: a flat turquoise water wake lies on the ground straight behind him along the dash path toward the left, SHORT, its total length only about two and a half times the hero's own on-screen height, about 4 meters, roughly half as long as the wake in Image 2; its far start end is a rounded soft puff of white foam bubbles, NOT a sharp point, NOT a needle, NOT a spear, and it widens slightly toward his feet. Part two, the arrival splash ahead: a small splash crown of turquoise water and white foam droplets bursts up around his planted front foot, low and small, about a third of his height, in front of him, not covering his body or face. Keep Pelag's colors and brightness exactly as in Image 1 and Image 3, do not whiten him, no rim light, no glow, no bloom, no motion blur smears. Game screenshot look, not an illustration. No text, no numbers, no health bars, no UI, no logos, no emblems.",
+        "wake_length": "≈ 230 px до задней ноги (~1,5 роста) + ~170 px под ногами до всплеска; всего ≈ 2,7 роста",
+        "honest_note": "Идея «след позади, всплеск впереди» читается: маленькая корона брызг у передней ноги, не закрывает тело. Но якорь опять чужой — серая клешня/кошка, сабля едва угадывается позади, поза — обычный бег почти прямо, без низкого наклона. След короткий с круглым пенным началом."
+      }
+    ],
+    "board": "0-board-v2.jpg",
+    "zoom": "0-zoom-v2.jpg",
+    "credits": {
+      "balance_before": 14.3,
+      "spent": 4,
+      "balance_after": 10.3,
+      "budget": 5,
+      "log": [
+        "4 x GPT Image 2.5 Flare medium 2k = 4 x 1 credit, 2026-10-02T00:36Z",
+        "перегенераций не было: по одной на кадр"
+      ]
+    },
+    "lesson": "Когда герой перерисовывается поверх нашего кадра ref1 (А4, А5, как и А/Б/Г в первом круге), модель рисует якорь «кошкой» даже при прямом запрете; если оставить героя из В и менять только эффект (А2, А3), якорь держится."
+  },
+  "motion_ref": {
+    "date": "2026-10-02",
+    "why": "Анимацию дэша делаем только по одобренному владельцем рефу движения (память razlom-motion-refs-required). Один короткий видео-реф Пелага, делающего дэш.",
+    "model": "seedance_2_0_mini",
+    "model_choice": "Seedance 2.0 Mini 5 с 720p без звука = 5 кредитов: дешевле Kling 3.0 Turbo (7,5) и, в отличие от него, принимает референсы личности (Kling Turbo — только start_image). В ответе сервиса оба файла ушли как reference_images; первый кадр ролика всё равно совпал со стартовой картинкой.",
+    "params": {
+      "duration": 5,
+      "resolution": "720p",
+      "aspect_ratio": "16:9",
+      "generate_audio": false,
+      "genre": "auto",
+      "declined_preset": "IN THE DARK (24bae836-2c4a-48e0-89b6-49fcc0b21612) — сервис предложил пресет, сгенерировано буквально"
+    },
+    "inputs": [
+      {
+        "role": "start_image",
+        "file": "motion-ref/dash-ref-1-start.png",
+        "media_id": "0c75272e-7430-4fa6-b66e-f75ab6c80eb1",
+        "from": "ART/characters/pelag/demo-polish-2026-09-30/colour/after-game.png (3/4 спереди, камера игры ~40°), фон 31,38,36 заменён на светло-серый с сохранённой тенью, 1920x1080, герой справа ~60% высоты кадра"
+      },
+      {
+        "role": "image_references",
+        "file": "motion-ref/dash-ref-1-identity.jpg",
+        "media_id": "95a9506d-aea3-426a-b3b6-c1cf7f3e090a",
+        "from": "те же after-front|side|back|game.png, что и refs/ref3-pelag-model-4views.jpg, на светло-сером фоне (2164x1080)"
+      }
+    ],
+    "prompt": "Use the start image as the first frame and keep the same character exactly as in the reference turnaround sheet: a young tanned islander with dark messy hair, red headband, white short-sleeve wrap shirt with small turquoise trim, red sash, light knee-length pants, brown sandals, a dark iron ship anchor on a chain strapped diagonally on his back, a curved sabre held low in his hand with the blade pointing back and down. Stylized 3D game character render, plain light grey studio background, static locked-off camera, same high three-quarter angle, full body always in frame. Action: he stands in a ready stance for half a second, bends his knees slightly, then bursts into one very fast low forward dash toward the left side of the frame, covering about two body lengths in a fraction of a second, torso leaning hard forward, head low, free arm swept back, sabre kept low and pointing back, the anchor stays fixed on his back; he plants the front foot, catches his balance and recovers smoothly into a light jog for two steps toward the left. One continuous shot, no camera cuts, no camera movement, no zoom, no extra props, no added parts, same outfit, no visual effects, no text.",
+    "job_id": "f2cb0570-7f05-4a4b-90ed-5136cdf0fe27",
+    "result_url": "https://d8j0ntlcm91z4.cloudfront.net/user_3IsUahGee1spNPKDYrDb9Dy1y2x/hf_20261002_005542_f2cb0570-7f05-4a4b-90ed-5136cdf0fe27.mp4",
+    "file": "motion-ref/dash-ref-1.mp4",
+    "strip": "motion-ref/dash-ref-1-strip.jpg",
+    "strip_note": "50 кадров через 0,1 с (середины интервалов 0,05…4,95 с), сетка 10x5, на каждом номер и время.",
+    "video": {
+      "size": [
+        1280,
+        720
+      ],
+      "fps": 24,
+      "duration_s": 5.04,
+      "frames": 121
+    },
+    "timing_measured": {
+      "idle_s": [
+        0.0,
+        1.875
+      ],
+      "anticipation_crouch_s": [
+        1.875,
+        2.04
+      ],
+      "burst_s": [
+        2.04,
+        2.25
+      ],
+      "burst_note": "≈5 кадров при 24 fps (~0,2 с, как 6 тиков дэша); кадры 50–51 смазаны",
+      "decel_strides_s": [
+        2.25,
+        2.75
+      ],
+      "tail_s": [
+        2.75,
+        5.04
+      ],
+      "tail_note": "согнутая медленная трусца почти на месте — для рефа не нужна",
+      "travel_body_heights": 1.1,
+      "travel_note": "центр героя 929→508 px по X и ~75 px вниз (камера ~40° сверху) за 2,04–2,75 с при росте 385 px ≈ 1,1 роста ≈ 2 м, а не 4 м; длину задаёт сим, клип всё равно масштабируется по времени"
+    },
+    "review": {
+      "our_character": "Да: повязка с ромбом, белая запашная рубаха с бирюзовой каймой, красный пояс с ромбами, нарукавники, сандалии, тёмный якорь на цепи с красной кистью, кривая сабля у бедра лезвием назад. В разгоне (кадры ~50–64) якорь местами плющится в плоскую лопасть, на кадрах 50–51 смаз.",
+      "motion": "Наклон корпуса ~35–45°, голова низко, присед-замах 0,17 с и рывок ~0,2 с — годятся. Но середина читается как спринтерский старт со сменой ног и работой рук, а не одно низкое скольжение; дистанция ~1,1 роста. Восстановления «упёрся передней ногой — поймал равновесие — побежал» нет: после 2,75 с — согнутая трусца-подкрадывание. Полезный кусок 1,88–2,75 с."
+    },
+    "credits": {
+      "balance_before": 10.3,
+      "spent": 5,
+      "balance_after": 5.3,
+      "budget": 7.5,
+      "log": [
+        "get_cost: kling3_0_turbo 5s 720p = 7.5; seedance_2_0_mini 5s 720p no audio = 5; grok_video_v15 = 22.5; seedance_2_0 fast = 12.5; minimax_h3_max = 12.5; grok_video_v15_lite = 5",
+        "1 x Seedance 2.0 Mini 5s 720p = 5 credits, 2026-10-02T00:55Z"
+      ]
+    }
+  }
+}

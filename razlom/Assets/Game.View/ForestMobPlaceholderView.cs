@@ -321,6 +321,8 @@ namespace Game.View
         {
             EnemyKind.ForestThorncaster => ThorncasterHeightPerRadius,
             EnemyKind.ForestRootSnarer => RootSnarerHeightPerRadius,
+            // Хозяин Чащи до префаба: капсула ростом 3,6 м при радиусе тела Sim 0,95.
+            EnemyKind.ForestThicketMaster => 3.6f / .95f,
             _ => SplitterHeightPerRadius,
         };
 

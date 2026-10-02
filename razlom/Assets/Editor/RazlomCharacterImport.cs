@@ -38,12 +38,13 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
         NormalPath.Contains("/Resources/Characters/Forest_Thorncaster/") || HasLitNormalMap;
 
     /// <summary>
-    /// Тела под URP Lit с картой нормалей (Корнехват, Расщепень): им нужны
+    /// Тела под URP Lit с картой нормалей (Корнехват, Расщепень, Хозяин Чащи): им нужны
     /// настоящие тангенсы, а не сглаженная нормаль для обводки тун-шейдера.
     /// </summary>
     private bool HasLitNormalMap =>
         NormalPath.Contains("/Resources/Characters/Forest_RootSnarer/")
-        || NormalPath.Contains("/Resources/Characters/Forest_Splitter/");
+        || NormalPath.Contains("/Resources/Characters/Forest_Splitter/")
+        || NormalPath.Contains("/Resources/Characters/Forest_ThicketMaster/");
 
     private bool IsPelagMixamoRuntime =>
         NormalPath.Contains("/Runtime/") && NormalPath.EndsWith("MixamoRig.fbx");
@@ -401,7 +402,9 @@ public sealed class RazlomCharacterImport : AssetPostprocessor
             importer.globalScale = 1f; importer.useFileScale = true;
             importer.importNormals = ModelImporterNormals.Import;
             importer.importTangents = ModelImporterTangents.CalculateMikk;
-            importer.materialImportMode = ModelImporterMaterialImportMode.None;
+            // Выгрузка вшитых текстур Хозяина Чащи (ThicketMasterBuilder) — один переимпорт с материалами.
+            if (!ThicketMasterBuilder.ExtractingEmbeddedTextures)
+                importer.materialImportMode = ModelImporterMaterialImportMode.None;
             importer.importBlendShapes = false; importer.importCameras = false; importer.importLights = false;
             return;
         }

@@ -258,6 +258,8 @@ namespace Game.View
             bool hasDash = sim.GetAbility(DashSlot) != null;
             if (DashPanel != null) DashPanel.gameObject.SetActive(hasDash);
             if (hasDash) RefreshSlot(sim, DashSlot, Dash, pointer);
+            // Плитка ЛКМ — серия саблей (02.10): без слота симуляции, только готовность.
+            RefreshAttack(sim);
             RefreshTooltip(sim, driver);
             RefreshFeedback();
             RefreshPotions(camp,driver);

@@ -538,6 +538,10 @@ namespace Game.Sim
                     case EnemyKind.ForestRootSnarer:
                         if (RootSnarerHoldsBigToken(id)) held++;
                         break;
+                    case EnemyKind.ForestThicketMaster:
+                        // Свой жетон босса: пока он замахивается, подмога крупного не начинает.
+                        if (ThicketMasterHoldsBigToken(id)) held += _bigAttackTokenLimit;
+                        break;
                 }
             }
             return held < _bigAttackTokenLimit;

@@ -248,7 +248,9 @@ namespace Game.View
         private float WhirlwindWeight => 1f - Mathf.SmoothStep(0f, 1f,
             Mathf.InverseLerp(WhirlwindRecoveryStart, WhirlwindClipDuration, WhirlwindElapsed));
         public bool LocomotionMoving => _locomotionMoving;
-        public bool RollActive => _abilityPresentationActive && _abilityDefinitionId == AbilityDefinition.DashId && !IsDead;
+        /// <summary>Рывок (или старый кувырок) ещё несёт тело: взгляд держит направление рывка. Восстановление рывка — уже нет.</summary>
+        public bool RollActive => _abilityPresentationActive && _abilityDefinitionId == AbilityDefinition.DashId && !IsDead
+            && (!_dashDriven || DashFlying);
         public bool HasCommittedAction => IsDead || _attackPresentationActive || _abilityPresentationActive;
         public float TurnAngularSpeed { get; private set; }
         private float _turnTravel;
@@ -306,6 +308,8 @@ namespace Game.View
         {
             IsDead = false;
             _basicComboActive = false;
+            ResetSabre();
+            ResetDash();
             _contactPose?.Clear();
             _attackVariant = 0;
             _orvillAttackCount = 0;
@@ -465,13 +469,16 @@ namespace Game.View
         {
             UpdatePoseHold();
             UpdateBasicComboAnimation();
+            UpdateSabreAnimation();
             UpdateEnemySwingAnimation();
             UpdateTempoAnimation();
             UpdateBlazeAnimation();
             UpdateCleaveAnimation();
             UpdateAnchorSlamAnimation();
+            UpdateDashAnimation();
             if (_cycloneDriver == null) _cycloneDriver = FindAnyObjectByType<TickDriver>();
-            if (RollActive && _cycloneDriver != null && _cycloneDriver.Sim != null
+            // Старый кувырок (контроллер без Dash_v5): показ кончается вместе с толчком Sim.
+            if (RollActive && !_dashDriven && _cycloneDriver != null && _cycloneDriver.Sim != null
                 && _cycloneDriver.Sim.Entities.ForcedKind[Simulation.PlayerId] != (byte)ForcedMotionKind.Roll)
             {
                 _abilityPresentationActive = false;
@@ -1165,11 +1172,14 @@ namespace Game.View
                     / (float)Simulation.TicksPerSecond : 10f / Simulation.TicksPerSecond;
                 _abilityPresentationUntil = Time.time + duration;
                 _actionProtectedUntil = _abilityPresentationUntil;
-                // Кувырок пишет всё тело: оставшийся слой удара иначе удерживает руки и ноги.
+                // Рывок пишет всё тело: оставшийся слой удара иначе удерживает руки и ноги.
                 if (_upperBodyLayer >= 0) _animator.SetLayerWeight(_upperBodyLayer, 0f);
                 if (_lowerBodyLayer >= 0) _animator.SetLayerWeight(_lowerBodyLayer, 0f);
                 if (_saberStanceLayer >= 0) _animator.SetLayerWeight(_saberStanceLayer, 0f);
                 if (_saberFootworkLayer >= 0) _animator.SetLayerWeight(_saberFootworkLayer, 0f);
+                // Клип рывка, время — тики Sim (CharacterAnimatorView.Dash). Ниже — старый
+                // кувырок для контроллера, ещё не пересобранного с Dash_v5.
+                if (BeginDash(sim)) return;
                 SetAbilityPlaybackSpeed(.6f / duration);
                 EnterCommittedAbilityState(Animator.StringToHash("Base Layer.Roll_v5"), .035f);
                 return;
@@ -1633,6 +1643,7 @@ namespace Game.View
         private void CancelUpperBodyAttack(float blend)
         {
             _basicComboActive = false;
+            _sabreActive = false;
             if (_animator == null) return;
             _cleaveHitTick = -1f;
             _cleaveContactConfirmed = false;
@@ -1700,6 +1711,8 @@ namespace Game.View
             _orvillHitPresentationUntil = 0f;
             _swingDriven = false;
             _swingReleasing = false;
+            _dashDriven = false;
+            _dashLegsHoldUntil = 0f;
             if (_animator != null && _lowerBodyLayer >= 0)
                 _animator.SetLayerWeight(_lowerBodyLayer, 0f);
             if (_animator != null && _upperBodyLayer >= 0)

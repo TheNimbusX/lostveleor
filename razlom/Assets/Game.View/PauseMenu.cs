@@ -1136,7 +1136,7 @@ namespace Game.View
             PauseMenuView.SetText(v.ControlsHint, _waitingBinding >= 0
                 ? "Нажми клавишу для «" + GameKeyBindings.ActionName((GameAction)_waitingBinding) + "»" + UiKeyHint.Separator + UiKeyHint.EscCancel
                 : UiHint.Current ?? (!string.IsNullOrEmpty(_bindingStatus) ? _bindingStatus
-                : (GameUserSettings.WasdMovement ? WasdControlsHint + UiKeyHint.Separator + UiKeyHint.Hint("кувырок", GameKeyBindings.Label(GameAction.Dash)) + ". Нажми на клавишу, чтобы переназначить." : MouseControlsHint)));
+                : (GameUserSettings.WasdMovement ? WasdControlsHint + UiKeyHint.Separator + UiKeyHint.Hint("рывок", GameKeyBindings.Label(GameAction.Dash)) + ". Нажми на клавишу, чтобы переназначить." : MouseControlsHint)));
             for (int i = 0; i < _bindingRows.Length; i++)
             {
                 var action = (GameAction)i;

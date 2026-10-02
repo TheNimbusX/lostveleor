@@ -28,9 +28,9 @@ namespace Game.Tests
             Assert.AreEqual(healthBefore, sim.Entities.Health[victim],
                 "замах не должен наносить урон в своём первом кадре");
             Assert.That(sim.Events, Has.Some.Matches<SimEvent>(e =>
-                e.Type == SimEventType.Attack && e.Target == victim));
+                e.Type == SimEventType.Attack && e.Source == Simulation.PlayerId));
 
-            for (int i = 1; i < Simulation.AttackWindupTicks; i++)
+            for (int i = 1; i < Simulation.SabreBaseContactTicks(0); i++)
                 sim.Step(in attack);
 
             Assert.AreEqual(healthBefore, sim.Entities.Health[victim],
@@ -42,8 +42,13 @@ namespace Game.Tests
                 e.Type == SimEventType.Damage && e.Target == victim));
         }
 
+        /// <summary>
+        /// Сектор серии (110°, 2,5 м) задевает соседей по бокам на первых же
+        /// двух ударах и не бьёт за спину — прежний «тяжёлый B» с двумя
+        /// соседями стал правилом каждого удара (01.10).
+        /// </summary>
         [Test]
-        public void HeavyB_CleavesTwoNearbyEnemiesButNotTheRearTarget()
+        public void Sector_CutsBothNeighboursButNotTheRearTarget()
         {
             var sim = new Simulation(7011UL, 16);
             sim.SetupTestArena(0);
@@ -64,16 +69,14 @@ namespace Game.Tests
             int lowerBefore = sim.Entities.Health[lower];
             int rearBefore = sim.Entities.Health[rear];
             var held = new InputFrame { Flags = (byte)InputFlags.Attack };
-            int throughSecondContact = sim.Entities.AttackCooldown[Simulation.PlayerId]
-                                       + Simulation.AttackWindupTicks;
-            for (int tick = 0; tick <= throughSecondContact; tick++) sim.Step(in held);
+            for (int tick = 0; tick <= Simulation.SabreBaseContactTicks(0); tick++) sim.Step(in held);
 
             Assert.Less(sim.Entities.Health[upper], upperBefore,
-                "тяжёлый B должен прорубать соседа сверху");
+                "первый же удар прорубает соседа сверху");
             Assert.Less(sim.Entities.Health[lower], lowerBefore,
-                "тяжёлый B должен прорубать соседа снизу");
+                "и соседа снизу");
             Assert.AreEqual(rearBefore, sim.Entities.Health[rear],
-                "cleave не имеет права бить за спину");
+                "за спину сектор не бьёт");
         }
 
         [Test]

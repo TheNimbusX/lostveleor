@@ -396,8 +396,15 @@ namespace Game.Tests
 
         // ---- ревью 01.10: круг раньше, но не от одного кувырка ----
 
-        /// <summary>Шаг кувырка: 3 м за 10 тиков (AbilityDefinition.Dash).</summary>
+        /// <summary>
+        /// Шаг прежнего кувырка: 3 м за 10 тиков. Теперь это только темп
+        /// сценария кружения; настоящий рывок с 02.10 — DashStep.
+        /// </summary>
         private const double DodgeStep = 0.3;
+
+        /// <summary>Шаг рывка за тик и его длительность — из AbilityDefinition.Dash (4 м за 6 тиков с 02.10).</summary>
+        private static double DashStep => AbilityDefinition.Dash().GetBase(AbilityStatType.Radius).ToDouble() / DashTicks;
+        private static int DashTicks => AbilityDefinition.Dash().GetBase(AbilityStatType.DurationTicks).ToInt();
 
         /// <summary>Шаг бега героя за тик: 4,5 м/с.</summary>
         private static double RunStep => Simulation.PlayerBaseMoveSpeed.ToDouble() / Simulation.TicksPerSecond;
@@ -511,11 +518,11 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// Один кувырок мимо: зверь заперт в когте (взгляд не меняется), герой
-        /// на боковом отступе aside кувыркается вдоль спины (3 м за 10 тиков) и
-        /// бежит дальше прочь, пока не выйдет из 3 м. lead — насколько первая
-        /// позиция кувырка зашла за край конуса ±70°: 0,01 — самая неудачная
-        /// фаза (все 10 позиций кувырка за спиной). Это не кружение: окно не
+        /// Один рывок мимо: зверь заперт в когте (взгляд не меняется), герой
+        /// на боковом отступе aside рвётся вдоль спины (DashStep × DashTicks, с
+        /// 02.10 — 4 м за 6 тиков) и бежит дальше прочь, пока не выйдет из 3 м.
+        /// lead — насколько первая позиция рывка зашла за край конуса ±70°:
+        /// 0,01 — самая неудачная фаза (все позиции рывка за спиной). Это не кружение: окно не
         /// набирает 14 ни при каком отступе — от касания тела (1,4 м между
         /// центрами) до края зоны.
         /// </summary>
@@ -528,23 +535,25 @@ namespace Game.Tests
             var sim = Arena(2.2);
             var claw = ClawAtTheHeroInFront(sim);
             double edge = aside / System.Math.Tan(70 * System.Math.PI / 180);
-            double along = edge - lead + DodgeStep;
-            // Тик 1 — ещё в конусе, за шаг кувырка до края.
+            double along = edge - lead + DashStep;
+            // Тик 1 — ещё в конусе, за шаг рывка до края.
             PlaceHeroInFrame(sim, claw.Direction, along, -aside);
             sim.Step(InputFrame.Empty);
             Assert.That(sim.WendigoFlankTicks(W), Is.Zero);
             int maxFlank = 0, dodged = 0;
             while (sim.Tick < 90)
             {
-                along -= dodged < 10 ? DodgeStep : RunStep; dodged++;
+                along -= dodged < DashTicks ? DashStep : RunStep; dodged++;
                 PlaceHeroInFrame(sim, claw.Direction, along, -aside);
                 sim.Step(InputFrame.Empty);
                 maxFlank = System.Math.Max(maxFlank, sim.WendigoFlankTicks(W));
-                Assert.That(Sweeping(sim, out _), Is.False, "круг от одного кувырка, тик " + (sim.Tick - 1));
+                Assert.That(Sweeping(sim, out _), Is.False, "круг от одного рывка, тик " + (sim.Tick - 1));
                 if (along * along + aside * aside > 3.5 * 3.5) break;
             }
             TestContext.WriteLine("отступ " + aside + " м, фаза " + lead + ": за спиной в 3 м " + maxFlank + " тиков из 18");
-            Assert.That(maxFlank, Is.GreaterThanOrEqualTo(8), "проход и правда шёл за спиной");
+            // Рывок 02.10 вдвое быстрее кувырка: за спиной в 3 м герой 4–5 тиков
+            // (у кувырка 3 м за 10 тиков было 8–10), но проход настоящий.
+            Assert.That(maxFlank, Is.GreaterThanOrEqualTo(DashTicks - 2), "проход и правда шёл за спиной");
             Assert.That(maxFlank, Is.LessThan(Simulation.WendigoSweepFlankTicks));
             // Ушёл — и окно опустело: круга не будет и позже.
             for (int t = 0; t < 30; t++) { sim.Step(InputFrame.Empty); Assert.That(Sweeping(sim, out _), Is.False); }

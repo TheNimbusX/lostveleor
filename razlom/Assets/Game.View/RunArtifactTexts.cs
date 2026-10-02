@@ -32,7 +32,7 @@ namespace Game.View
             switch (artifact)
             {
                 case RunArtifact.SunSeal: return "4 секунды полной неуязвимости. Атаковать можно.";
-                case RunArtifact.ReturnDial: return "Все способности и кувырок сразу готовы снова.";
+                case RunArtifact.ReturnDial: return "Все способности и рывок сразу готовы снова.";
                 case RunArtifact.VengeanceMirror: return "6 секунд весь урон по Пелагу возвращается атакующему, а сам Пелаг получает на 25% меньше.";
                 case RunArtifact.WinterHeart: return "Враги в 8 м замерзают на 5 секунд; удар способностью по замёрзшему раскалывает лёд: +" + Simulation.WinterShatterDamage + " урона. Босс и элита — замедление на 40%.";
                 case RunArtifact.Hourglass: return "4 секунды враги и их снаряды стоят. Весь урон по ним копится и приходит разом, когда время пойдёт.";

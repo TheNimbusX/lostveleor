@@ -26,7 +26,9 @@ public static class RazlomPelagV5AnimatorBuilder
     private const string AbilityPlaybackSpeed = "AbilityPlaybackSpeed";
     private const string MoveX = "MoveX";
     private const string MoveY = "MoveY";
-    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v33.SourceSlam";
+    private const string AutoBuildSessionKey = "Razlom.PelagV5Animator.AutoBuild.v35.Dash";
+    /// <summary>Время клипа рывка (Dash_v5): ведёт CharacterAnimatorView от тиков Sim.</summary>
+    internal const string DashPhase = "DashPhase";
     private static AnimationClip _blazeClip;
     private const float RelaxedIdleStateSpeed = 0.92f;
     private const float CombatIdleStateSpeed = 1.08f;
@@ -89,7 +91,13 @@ public static class RazlomPelagV5AnimatorBuilder
             "Pelag_MX_RunStop.fbx",
             "Pelag_MX_StrafeLeft.fbx",
             "Pelag_MX_StrafeRight.fbx",
-            "Pelag_MX_StrafeBack.fbx");
+            "Pelag_MX_StrafeBack.fbx",
+            "Pelag_AN_Sabre1.fbx",
+            "Pelag_AN_Sabre2.fbx",
+            "Pelag_AN_Sabre3.fbx",
+            "Pelag_AN_SabreBind.fbx",
+            "Pelag_AN_Dash.fbx",
+            "Pelag_AN_DashBind.fbx");
 
         AnimationClip idle = Load("Pelag_MX_Idle.fbx", "Pelag_MX_Idle");
         AnimationClip run = Load("Pelag_MX_Run.fbx", "Pelag_MX_Run");
@@ -120,6 +128,10 @@ public static class RazlomPelagV5AnimatorBuilder
         AnimationClip chainRecoverB = SquallClip("RecoverB");
         AnimationClip hit = Load("Pelag_MX_Hit.fbx", "Pelag_MX_Hit");
         AnimationClip death = Load("Pelag_MX_Death.fbx", "Pelag_MX_Death");
+        // Серия сабли (01.10): три удара из тейка SaberCombo, перевременённые
+        // в Blender под тики Sim (ART/characters/pelag/basic-attack-2026-10-01/animation).
+        for (int hitIndex = 1; hitIndex <= 3; hitIndex++)
+            RazlomPelagAuthoredClips.Build(SabreClip(hitIndex), false, "Pelag_AN_SabreBind", .95f);
 
         AnimationClip[] required =
         {
@@ -159,6 +171,11 @@ public static class RazlomPelagV5AnimatorBuilder
         AddParameter(controller, "CleavePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "BlazePhase", AnimatorControllerParameterType.Float);
         AddParameter(controller, "AnchorSlamPhase", AnimatorControllerParameterType.Float);
+        AddParameter(controller, DashPhase, AnimatorControllerParameterType.Float);
+        // Своё время у каждого удара серии: общий параметр при переходе удар→удар
+        // двигал бы и уходящий клип (AGENTS, «раздельный параметр времени»).
+        for (int hitIndex = 1; hitIndex <= 3; hitIndex++)
+            AddParameter(controller, SabrePhase(hitIndex), AnimatorControllerParameterType.Float);
         AddParameter(controller, "Relaxed", AnimatorControllerParameterType.Bool, defaultBool: true);
         AddParameter(controller, "Stunned", AnimatorControllerParameterType.Bool);
         AddParameter(controller, LocomotionPlaybackSpeed, AnimatorControllerParameterType.Float);
@@ -298,6 +315,23 @@ public static class RazlomPelagV5AnimatorBuilder
         Combat(machine, relaxedIdleState, combatIdleState, runState, "Roll_v5",
             RazlomPelagAuthoredClips.Build("Pelag_AN_Roll", false, "Pelag_AN_RollBind", 1.8f),
             "Roll", 1f, .04f, .98f, .12f);
+        // Рывок (02.10) вместо кувырка: 13 кадров = тики 0–12 рывка
+        // (ART/characters/pelag/dash-2026-10-02/animation, timing.json). Всё
+        // тело, как кувырок; время — DashPhase от тиков Sim, переходов в графе
+        // нет: вход и выход задаёт CharacterAnimatorView.Dash. Кувырок остаётся
+        // в контроллере, но рантайм в него больше не входит.
+        //
+        // Предел таза 0,5: замер клипа в Unity — пик 0,374 длины корпуса на
+        // кадре 7 (присед на постановке ноги), в стойке 0,25–0,27. Общие 0,4
+        // оставляли запас 7 %, и чуть глубже присед при перевыгрузке ронял бы
+        // сборку всего контроллера; 0,95 у Подсечки — слишком широко для клипа
+        // без перемещения таза. 0,5 втрое ниже ошибки лежачей привязки (~1,65).
+        var dashClip = RazlomPelagAuthoredClips.Build("Pelag_AN_Dash", false, "Pelag_AN_DashBind", .5f);
+        GroundDashClip(dashClip);
+        var dash = State(machine, "Dash_v5", dashClip, 1f);
+        dash.writeDefaultValues = false;
+        dash.timeParameterActive = true;
+        dash.timeParameter = DashPhase;
         RazlomPelagAuthoredClips.Build("Pelag_AN_Cleave", false, "Pelag_AN_CleaveBind");
         Combat(machine, relaxedIdleState, combatIdleState, runState, "CycloneEnd",
             RazlomPelagAuthoredClips.Build("Pelag_AN_CycloneEnd", false, "Pelag_AN_CycloneBind"), "AnchorSweep", 1f, 0.04f, 0.78f, 0.10f);
@@ -364,7 +398,7 @@ public static class RazlomPelagV5AnimatorBuilder
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
-        Debug.Log("[Разлом] Pelag v5 controller: locomotion/turn + честная A/B серия: " + Output);
+        Debug.Log("[Разлом] Pelag v5 controller: locomotion/turn + серия сабли из трёх ударов + рывок: " + Output);
     }
 
     private static void AddParameter(AnimatorController controller, string name,
@@ -575,6 +609,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddCycloneStates(upper);
         AddCleaveState(upper);
         AddBlazeState(upper);
+        AddSabreStates(upper, "");
         empty.writeDefaultValues = false;
         upper.defaultState = empty;
 
@@ -611,6 +646,7 @@ public static class RazlomPelagV5AnimatorBuilder
         AddCycloneStates(lower);
         AddCleaveState(lower);
         AddBlazeState(lower);
+        AddSabreStates(lower, "Lower_");
         empty.writeDefaultValues = false;
         lower.defaultState = empty;
 
@@ -620,6 +656,104 @@ public static class RazlomPelagV5AnimatorBuilder
             SaberBStateSpeed, 0.11f, 0.76f, 0.22f, true, addExitTransition: false);
         UpperCombat(lower, empty, "Lower_Whirlwind_v5", whirlwind, "LowerHeavyAttack",
             1f, 0.08f, 1f, 0.18f, true, addExitTransition: false);
+    }
+
+    /// <summary>
+    /// Опоры рывка — на землю. Только для клипа рывка: остальные авторские
+    /// клипы не трогаются.
+    ///
+    /// Перенос с рига Blender на Pelag_v6 (RazlomPelagAuthoredClips) поднимает
+    /// стопы рывка над землёй: проба аниматором в редакторе 02.10 на игровом
+    /// теле (×1,82) — нижняя точка опорной стопы 0,09–0,10 м на всех кадрах
+    /// опоры (timing.json: левая 0 и 6–12, правая 0, 6, 11, 12), при стойке
+    /// Pelag_MX_Idle 0,01 м. Висящий на 9 см герой и подскок/проседание на 9 см
+    /// при входе из бега и выходе в стойку читались бы сильнее самого рывка.
+    /// Таз опускается на среднюю высоту опор над стопами стойки (0,051 ед.
+    /// рига = 0,093 м в игре) — ровно, на всех кадрах, поза не меняется. После: опоры 0,00–0,02 м,
+    /// в полёте (кадры 1–5) стопы над землёй (не ниже 0,02 м).
+    /// </summary>
+    private static void GroundDashClip(AnimationClip clip)
+    {
+        if (clip == null) return;
+        var model = AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Resources/Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig.fbx");
+        if (model == null) return;
+        var body = UnityEngine.Object.Instantiate(model);
+        body.hideFlags = HideFlags.HideAndDontSave;
+        try
+        {
+            foreach (var animator in body.GetComponentsInChildren<Animator>()) animator.enabled = false;
+            var bones = body.GetComponentsInChildren<Transform>().GroupBy(t => t.name)
+                .ToDictionary(g => g.Key, g => g.First());
+            Transform hips = bones["mixamorig:Hips"];
+            string[][] feet =
+            {
+                new[] { "mixamorig:LeftFoot", "mixamorig:LeftToeBase", "mixamorig:LeftToe_End" },
+                new[] { "mixamorig:RightFoot", "mixamorig:RightToeBase", "mixamorig:RightToe_End" },
+            };
+            float Low(int side)
+            {
+                float low = float.MaxValue;
+                foreach (string bone in feet[side])
+                    if (bones.TryGetValue(bone, out var t)) low = Mathf.Min(low, t.position.y - body.transform.position.y);
+                return low;
+            }
+            // Armature в FBX стоит с масштабом 0,01; в игре его ставят клипы
+            // Mixamo (масштаб 1). Сначала поза стойки из того же клипа, что и в
+            // игре, — заодно её стопы и есть «земля».
+            AnimationClip idle = Load("Pelag_MX_Idle.fbx", "Pelag_MX_Idle");
+            if (idle == null) return;
+            idle.SampleAnimation(body, 0f);
+            float ground = Mathf.Min(Low(0), Low(1));
+            int[][] contacts = { new[] { 0, 6, 7, 8, 9, 10, 11, 12 }, new[] { 0, 6, 11, 12 } };
+            float sum = 0f;
+            int count = 0;
+            for (int side = 0; side < 2; side++)
+                foreach (int frame in contacts[side])
+                {
+                    clip.SampleAnimation(body, frame / 30f);
+                    sum += Low(side) - ground;
+                    count++;
+                }
+            float lift = sum / Mathf.Max(1, count);
+            Vector3 shift = hips.parent.InverseTransformVector(Vector3.down * lift);
+            string path = AnimationUtility.CalculateTransformPath(hips, body.transform);
+            for (int c = 0; c < 3; c++)
+            {
+                var binding = EditorCurveBinding.FloatCurve(path, typeof(Transform), "m_LocalPosition." + "xyz"[c]);
+                AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                if (curve == null) continue;
+                Keyframe[] keys = curve.keys;
+                for (int k = 0; k < keys.Length; k++) keys[k].value += shift[c];
+                curve.keys = keys;
+                AnimationUtility.SetEditorCurve(clip, binding, curve);
+            }
+            EditorUtility.SetDirty(clip);
+            Debug.Log($"[Pelag dash] опоры на землю: таз ниже на {lift:F4} ед. рига ({lift * 1.82f:F3} м в игре)");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(body); }
+    }
+
+    internal static string SabreClip(int hit) => "Pelag_AN_Sabre" + hit;
+    internal static string SabrePhase(int hit) => "SabrePhase" + hit;
+
+    /// <summary>
+    /// Три удара серии сабли на слое: время ведёт CharacterAnimatorView от
+    /// тиков Sim (SabrePhase1–3), переходов в графе нет — вход и выход задаёт
+    /// рантайм, как у Рассекающего.
+    /// </summary>
+    private static void AddSabreStates(AnimatorStateMachine machine, string prefix)
+    {
+        for (int hit = 1; hit <= 3; hit++)
+        {
+            var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(
+                "Assets/Resources/Characters/Pelag_v5/" + SabreClip(hit) + ".anim");
+            if (clip == null) { Debug.LogError("[Разлом] Нет клипа серии сабли " + SabreClip(hit)); continue; }
+            var state = State(machine, prefix + "Sabre" + hit + "_v5", clip, 1f);
+            state.writeDefaultValues = false;
+            state.timeParameterActive = true;
+            state.timeParameter = SabrePhase(hit);
+        }
     }
 
     private static void AddCleaveState(AnimatorStateMachine machine)

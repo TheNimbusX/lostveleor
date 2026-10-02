@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Хозяин Чащи · клипы</title>
+<style>
+:root{color-scheme:dark;--bg:#151b19;--panel:#1f2724;--line:#36423b;--ink:#ecebe1;--muted:#b4bfb2;--accent:#e2a15a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Arial,sans-serif}
+main{max-width:1240px;margin:auto;padding:28px 16px 64px}h1{font-size:30px;margin:4px 0 8px;font-weight:650}
+p,li{color:var(--muted);max-width:90ch}ul{margin:6px 0 0;padding-left:20px}
+.bar{position:sticky;top:0;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--line);z-index:2;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font:inherit;cursor:pointer}
+.bar button.on{border-color:var(--accent);color:var(--accent)}
+section{border-top:1px solid var(--line);padding:18px 0 8px}h2{font-size:22px;margin:0 0 2px}
+.t{color:var(--ink);margin:2px 0}.r{font-size:14px;margin:2px 0 8px}
+video{width:100%;height:auto;display:block;background:#000;border-radius:6px}
+details{margin-top:6px;font-size:14px;color:var(--muted)}details video{max-width:360px}
+</style>
+<main>
+<p>Босс леса · 2 октября 2026 · пакет для Unity готов</p>
+<h1>Хозяин Чащи: 17 клипов</h1>
+<p>Каждый ролик: слева вид 3/4, в центре игровая камера (48°), справа реф, подогнанный по фазам клипа (та же фаза в тот же миг). 30 кадров/с, кадр = тик Sim; оранжевая полоса — кадр контакта (удар в Sim). Тело на месте: двигает и поворачивает его Sim. Рендер упрощённый (темнее игры) — это приёмка движения, не света. Под роликом можно открыть реф целиком в его собственной скорости.</p>
+<p>Что решить:</p><ul><li>Ходьба: родная скорость клипа 1,8 м/с, Sim ходит 2,6 м/с — в игре цикл ускорится в 1,46 раза. При скорости Sim около 1,8 м/с шаг будет 1:1.</li><li>Буря: по контракту 159 кадров, Sim заканчивает на 147 — закрытие кроны в игре идёт вдвое быстрее.</li><li>Удары лапой и топот: лапа поднимается не выше плеча (ограничение рига); удар над головой — только с костями плеч.</li></ul>
+<div class="bar">Скорость: <button data-r="0.25">×0,25</button><button data-r="0.5">×0,5</button><button data-r="1" class="on">×1</button></div>
+<section id="Idle"><h2>Покой <span style="color:var(--muted);font-size:15px;font-weight:400">Idle</span></h2>
+<p class="t">цикл 90 кадров (3 с): дыхание, взгляд по сторонам, крона и хвост качаются</p><p class="r">реф: idle_walk_id6.mp4, 0,00–3,00 с, вид спереди 3/4</p>
+<video src="clips/01_Idle.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Idle_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Sleep"><h2>Сон (вступление) <span style="color:var(--muted);font-size:15px;font-weight:400">Sleep</span></h2>
+<p class="t">цикл 90 кадров: лежит, голова опущена, почти неподвижен; дальше пробуждение</p><p class="r">реф: idle_walk_id6.mp4, 0,00–3,00 с, вид спереди 3/4</p>
+<video src="clips/02_Sleep.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Sleep_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Wake"><h2>Пробуждение <span style="color:var(--muted);font-size:15px;font-weight:400">Wake</span></h2>
+<p class="t">30 кадров: лапы вырываются к 20, голова поднята к 30, дальше рёв</p><p class="r">реф: sprout_cast.mp4, 3,90–4,80 с, вид спереди</p>
+<video src="clips/03_Wake.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Wake_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Walk"><h2>Ходьба (цикл на месте) <span style="color:var(--muted);font-size:15px;font-weight:400">Walk</span></h2>
+<p class="t">цикл 30 кадров = 1,79 м на месте; при скорости Sim 2,6 м/с играется ×1,46</p><p class="r">реф: walk_side.mp4, 0,33–1,88 с, вид справа</p>
+<video src="clips/04_Walk.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Walk_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="TurnL"><h2>Поворот налево <span style="color:var(--muted);font-size:15px;font-weight:400">TurnL</span></h2>
+<p class="t">30 кадров = 90°: плечи ведут, лапы переступают; в игре по углу поворота (×1,5)</p><p class="r">реф: turn.mp4, 1,07–1,85 с, вид спереди 3/4</p>
+<video src="clips/05_TurnL.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/TurnL_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="TurnR"><h2>Поворот направо <span style="color:var(--muted);font-size:15px;font-weight:400">TurnR</span></h2>
+<p class="t">30 кадров = 90°: плечи ведут, лапы переступают; в игре по углу поворота (×1,5)</p><p class="r">реф: turn.mp4, 1,07–1,85 с, вид спереди 3/4</p>
+<video src="clips/06_TurnR.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/TurnR_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="PawR"><h2>Удар правой лапой <span style="color:var(--muted);font-size:15px;font-weight:400">PawR</span></h2>
+<p class="t">49 кадров: замах 0–24, контакт 24, отход 25–49</p><p class="r">реф: paw_r2.mp4, 0,30–1,75 с, вид спереди</p>
+<video src="clips/07_PawR.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/PawR_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="PawL"><h2>Удар левой лапой (второй удар фазы 3) <span style="color:var(--muted);font-size:15px;font-weight:400">PawL</span></h2>
+<p class="t">49 кадров, только сразу после правой (с её кадра 25): замах, контакт 24, отход</p><p class="r">реф: paw_r2.mp4, 2,33–3,95 с, вид спереди</p>
+<video src="clips/08_PawL.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/PawL_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Stomp"><h2>Дыбы и топот <span style="color:var(--muted);font-size:15px;font-weight:400">Stomp</span></h2>
+<p class="t">71 кадр: дыбы 0–24, верх 24–30, лапы в землю на 33 (контакт 33–35), подъём 35–71</p><p class="r">реф: rear_stomp_id6.mp4, 0,50–4,30 с, вид спереди</p>
+<video src="clips/09_Stomp.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Stomp_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Roar"><h2>Рёв <span style="color:var(--muted);font-size:15px;font-weight:400">Roar</span></h2>
+<p class="t">60 кадров: вдох 0–15, рёв с раскрытой кроной 15–45 (контакт 45), оседание 45–60</p><p class="r">реф: roar.mp4, 0,30–3,00 с, вид слева</p>
+<video src="clips/10_Roar.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Roar_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="DiveIn"><h2>Нырок под землю <span style="color:var(--muted);font-size:15px;font-weight:400">DiveIn</span></h2>
+<p class="t">12 кадров: нырок носом вперёд, к 12 тело под землёй (дальше бугор)</p><p class="r">реф: burrow_emerge_r3.mp4, 0,30–1,10 с, вид сверху, как в игре</p>
+<video src="clips/11_DiveIn.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/DiveIn_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Emerge"><h2>Выход из-под земли <span style="color:var(--muted);font-size:15px;font-weight:400">Emerge</span></h2>
+<p class="t">36 кадров: кадр 0 = удар, выползает, к 20 на четырёх лапах, 20–36 стряхивает землю</p><p class="r">реф: burrow_emerge_r3.mp4, 3,33–5,45 с, вид спереди 3/4</p>
+<video src="clips/12_Emerge.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Emerge_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="SproutCast"><h2>Прорастание <span style="color:var(--muted);font-size:15px;font-weight:400">SproutCast</span></h2>
+<p class="t">90 кадров: подъём 0–6, лапы вдавлены к 8 (метка), держит 8–80, вырывает 80–90</p><p class="r">реф: sprout_cast.mp4, 0,40–4,95 с, вид спереди</p>
+<video src="clips/13_SproutCast.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/SproutCast_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="PollenShake"><h2>Облака пыльцы <span style="color:var(--muted);font-size:15px;font-weight:400">PollenShake</span></h2>
+<p class="t">48 кадров: упор 0–4, тряска кроной 4–24, облака падают на 24, оседание 24–48</p><p class="r">реф: pollen_shake_r2.mp4, 0,00–3,50 с, вид спереди 3/4</p>
+<video src="clips/14_PollenShake.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/PollenShake_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="BerryVolley"><h2>Ягодный ливень <span style="color:var(--muted);font-size:15px;font-weight:400">BerryVolley</span></h2>
+<p class="t">120 кадров: залпы на 0/15/30, удары 30/45/60, стойка до 120</p><p class="r">реф: berry_volley_r3.mp4, 1,04–5,00 с, вид спереди 3/4</p>
+<video src="clips/15_BerryVolley.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/BerryVolley_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Storm"><h2>Буря цветения <span style="color:var(--muted);font-size:15px;font-weight:400">Storm</span></h2>
+<p class="t">159 кадров: крона раскрывается 0–12, волны на 75 и 135, закрывается 135–159</p><p class="r">реф: storm_bloom_r2.mp4, 0,60–5,45 с, вид спереди</p>
+<video src="clips/16_Storm.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Storm_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<section id="Death"><h2>Смерть <span style="color:var(--muted);font-size:15px;font-weight:400">Death</span></h2>
+<p class="t">90 кадров: шатается 0–20, грудь на земле 20–45, на бок 45–70, лежит 70–90</p><p class="r">реф: defeat.mp4, 0,25–4,60 с, вид слева</p>
+<video src="clips/17_Death.mp4" muted loop playsinline controls preload="metadata"></video>
+<details><summary>реф целиком, своя скорость</summary><video src="refs/Death_ref.mp4" muted loop playsinline controls preload="metadata"></video></details>
+</section>
+<script>
+const vids=[...document.querySelectorAll('video')];let rate=1;
+const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting){v.playbackRate=rate;v.play().catch(()=>{});}else v.pause();}),{threshold:.25});
+document.querySelectorAll('section > video').forEach(v=>io.observe(v));
+document.querySelectorAll('.bar button').forEach(b=>b.onclick=()=>{rate=+b.dataset.r;vids.forEach(v=>v.playbackRate=rate);
+document.querySelectorAll('.bar button').forEach(x=>x.classList.toggle('on',x===b));});
+document.querySelectorAll('details video').forEach(v=>v.addEventListener('play',()=>v.playbackRate=rate));
+</script>
+</main></html>

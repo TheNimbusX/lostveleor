@@ -369,6 +369,10 @@ namespace Game.Tests
             return sim;
         }
 
+        /// <summary>Удар серии сабли начат и ещё не дошёл до контакта.</summary>
+        private static bool SwingWindup(Simulation sim)
+            => sim.SabreSwing.ActiveAt(sim.Tick) && !sim.SabreSwing.ContactDone;
+
         private static int Count(Simulation sim, SimEventType type)
         {
             int n = 0;
@@ -461,14 +465,14 @@ namespace Game.Tests
             attack.Flags = (byte)InputFlags.Attack;
             attack.AttackTarget = dummy;
             attack.Aim = At(1, 0);
-            for (int k = 0; k < 10 && sim.Entities.PendingAttackTarget[0] != dummy; k++) sim.Step(attack);
-            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "замах начался");
-            int impact = sim.Entities.AttackImpactTick[0];
+            sim.Step(attack);
+            Assert.IsTrue(SwingWindup(sim), "замах серии начался");
+            int impact = sim.SabreSwing.ContactTick;
             Assert.Greater(impact, sim.Tick);
             sim.Step(press);
             Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "каст в корнях");
-            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "нажатие в корнях сбило замах");
-            Assert.AreEqual(impact, sim.Entities.AttackImpactTick[0]);
+            Assert.IsTrue(SwingWindup(sim), "нажатие в корнях сбило замах");
+            Assert.AreEqual(impact, sim.SabreSwing.ContactTick);
 
             // Жмёт без остановки дольше замаха Абордажа — ни каста, ни шага.
             FillLavidium(sim);
@@ -555,7 +559,7 @@ namespace Game.Tests
             attack.AttackTarget = dummy;
             attack.Aim = At(1, 0);
             sim.Step(attack);
-            Assert.AreEqual(dummy, sim.Entities.PendingAttackTarget[0], "замах начался");
+            Assert.IsTrue(SwingWindup(sim), "замах серии начался");
             int health = sim.Entities.Health[dummy];
 
             Assert.IsTrue(sim.ApplyHeroStun(30));
@@ -585,7 +589,7 @@ namespace Game.Tests
                 sim.Step(k % 2 == 0 ? everything : Walk(At(-5, 0)));
                 Assert.AreEqual(FixVec2.Zero, sim.Entities.Position[0], "шаг в оглушении, шаг " + k);
                 Assert.AreEqual(0, Count(sim, SimEventType.AbilityCast), "каст в оглушении, шаг " + k);
-                Assert.AreEqual(-1, sim.Entities.PendingAttackTarget[0], "замах в оглушении, шаг " + k);
+                Assert.IsFalse(sim.SabreSwing.ActiveAt(sim.Tick), "замах в оглушении, шаг " + k);
             }
             Assert.AreEqual(health, sim.Entities.Health[dummy], "в оглушении герой не бьёт, начатый замах снят");
             Assert.IsFalse(sim.HeroStunned);
@@ -597,7 +601,7 @@ namespace Game.Tests
         }
 
         [Test]
-        public void StunKeepsTheKnockbackItCameWith_ButCutsTheHerosOwnRoll()
+        public void StunKeepsTheKnockbackItCameWith_ButBouncesOffTheDash()
         {
             // Разбег Камнекопыта: отброс и оглушение в один тик — отброс доезжает.
             var sim = HeroArena(out _);
@@ -608,15 +612,21 @@ namespace Game.Tests
             Assert.AreEqual(to, sim.Entities.Position[0], "отброс доехал");
             Assert.IsTrue(sim.HeroStunned);
 
-            // Свой кувырок оглушение обрывает, как и любое своё действие.
-            var rolled = HeroArena(out _);
-            rolled.Step(Press(PelagKit.DashSlot, At(-5, 0)));
-            Assert.AreEqual((byte)ForcedMotionKind.Roll, rolled.Entities.ForcedKind[0]);
-            Assert.IsTrue(rolled.ApplyHeroStun(30));
-            var at = rolled.Entities.Position[0];
-            for (int k = 0; k < 10; k++) rolled.Step(InputFrame.Empty);
-            Assert.AreEqual(at, rolled.Entities.Position[0], "кувырок в оглушении");
-            Assert.AreEqual(0, rolled.Entities.ForcedTicksLeft[0]);
+            // Рывок неуязвим и к контролю (владелец 02.10, Simulation.Dash):
+            // оглушение посреди рывка не ложится — ни события, ни иммунитета
+            // после, — и рывок доезжает. Сразу после рывка оглушение ложится.
+            var dashed = HeroArena(out _);
+            dashed.Step(Press(PelagKit.DashSlot, At(-5, 0)));
+            Assert.AreEqual((byte)ForcedMotionKind.Roll, dashed.Entities.ForcedKind[0]);
+            Assert.IsFalse(dashed.ApplyHeroStun(30), "оглушение в рывке");
+            Assert.IsFalse(dashed.HeroStunned);
+            Assert.AreEqual(0, dashed.HeroControlImmuneTicksLeft, "отбитое рывком не даёт иммунитета");
+            Assert.AreEqual(0, Count(dashed, SimEventType.HeroControl));
+            while (dashed.Entities.ForcedTicksLeft[0] > 0) dashed.Step(InputFrame.Empty);
+            Assert.That(FixVec2.Distance(At(-4, 0), dashed.Entities.Position[0]).ToDouble(), Is.LessThan(1e-4),
+                "рывок доехал на полные 4 м");
+            Assert.IsFalse(dashed.DashInvulnerable);
+            Assert.IsTrue(dashed.ApplyHeroStun(30), "после рывка оглушение ложится");
         }
 
         [Test]

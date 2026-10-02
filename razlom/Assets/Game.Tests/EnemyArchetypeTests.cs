@@ -22,7 +22,7 @@ namespace Game.Tests
         [Test]
         public void Table_MirrorsSimulationWindowsAndBodies_InEnemyKindOrder()
         {
-            Assert.That(EnemyArchetypes.Count, Is.EqualTo(9));
+            Assert.That(EnemyArchetypes.Count, Is.EqualTo(10));
             for (int i = 0; i < EnemyArchetypes.Count; i++)
             {
                 var row = EnemyArchetypes.At(i);
@@ -38,6 +38,14 @@ namespace Game.Tests
             Assert.That((int)EnemyKind.ForestRootSnarer, Is.EqualTo(7));
             Assert.That((int)EnemyKind.ForestSplitter, Is.EqualTo(8));
             Assert.That((int)EnemyKind.ForestSplitling, Is.EqualTo(9));
+            Assert.That((int)EnemyKind.ForestThicketMaster, Is.EqualTo(10));
+            // Хозяин Чащи (01.10): своё здоровье 6000, лапа 25 (41 на арене 9), окна лапы 24 / 1 + 24, тело 0,95.
+            var master = EnemyArchetypes.Get(EnemyKind.ForestThicketMaster);
+            Assert.That(master.BaseHealth, Is.EqualTo(6000));
+            Assert.That(master.BaseDamage, Is.EqualTo(25));
+            Assert.That(master.WindupTicks, Is.EqualTo(Simulation.ThicketPawWindupTicks));
+            Assert.That(master.RecoveryTicks, Is.EqualTo(Simulation.ThicketPawStrikeTicks + Simulation.ThicketPawRecoveryTicks));
+            Assert.That(master.BodyRadius, Is.EqualTo(EntityStore.MaxBodyRadius));
 
             var guardian = EnemyArchetypes.Get(EnemyKind.ForestGuardian);
             Assert.That(guardian.WindupTicks, Is.EqualTo(Simulation.EnemyAttackWindupTicks));
@@ -130,7 +138,8 @@ namespace Game.Tests
                 // Опыт: Шипомёт — элита сам по себе, как Вендиго; детёныш — пять.
                 int xp = a.Kind == EnemyKind.ForestWendigo || a.Kind == EnemyKind.ForestThorncaster
                     ? Progression.EliteKillXp
-                    : a.Kind == EnemyKind.ForestSplitling ? Simulation.SplitlingKillXp : Progression.NormalKillXp;
+                    : a.Kind == EnemyKind.ForestSplitling ? Simulation.SplitlingKillXp
+                    : a.Kind == EnemyKind.ForestThicketMaster ? Progression.BossKillXp : Progression.NormalKillXp;
                 Assert.That(sim.Entities.XpReward[id], Is.EqualTo(xp), a.Kind.ToString());
             }
         }
@@ -141,7 +150,9 @@ namespace Game.Tests
             for (int i = 0; i < EnemyArchetypes.Count; i++)
             {
                 var kind = EnemyArchetypes.At(i).Kind;
-                Assert.That(EnemyArchetypes.IsPlaceable(kind), Is.EqualTo(kind != EnemyKind.ForestSplitling), kind.ToString());
+                // Босс леса — тоже не расстановки: его ставит арена босса.
+                Assert.That(EnemyArchetypes.IsPlaceable(kind),
+                    Is.EqualTo(kind != EnemyKind.ForestSplitling && kind != EnemyKind.ForestThicketMaster), kind.ToString());
                 Assert.That(EnemyArchetypes.BodiesPerSpawn(kind), Is.EqualTo(kind == EnemyKind.ForestSplitter ? 3 : 1),
                     kind.ToString());
             }
@@ -466,7 +477,7 @@ namespace Game.Tests
                 AllKinds(10), boss: true, playerHealth: LocationPlayerHealth);
             var map = new LayoutMap(modules, 64);
             level.Generate(new LayoutGenerator(), modules, map, 42);
-            var sim = new Simulation(42, 512);
+            var sim = new Simulation(42, 512) { ThicketMasterBossEnabled = false }; // временный босс-Хранитель: проверяется запасной путь
             sim.ApplyHeroBaseline();
             var plan = level.Spawn(sim, map, 43);
             int boss = plan.BossId;

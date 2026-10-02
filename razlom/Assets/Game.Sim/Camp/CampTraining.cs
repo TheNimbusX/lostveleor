@@ -112,6 +112,9 @@ namespace Game.Sim
                 input.Flags = (byte)(input.Flags & ~(int)InputFlags.Attack);
                 if (!input.Has(InputFlags.DirectMovement)) input.Flags |= (byte)InputFlags.MoveOrder;
             }
+            // Свежий клик серия сабли запоминает сама (Simulation.SabreCombo):
+            // вне полигона он не должен дожить до удара.
+            input.Flags = (byte)(input.Flags & ~(int)InputFlags.AttackPressed);
             input.AttackTarget = -1;
             return true;
         }

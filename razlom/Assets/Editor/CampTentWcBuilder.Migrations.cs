@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Game.View;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -28,8 +29,10 @@ namespace Game.EditorTools
         /// v100 (26.09) — палатка в материале «Дым и свет», собрана сборщиком.
         /// v101 (30.09, владелец: шрифт кнопок и вкладок «как в главном меню»): подписи вкладок «Сумка / Атлас» и
         /// фильтров сумки — Philosopher, как у кнопок. Только шрифт: размер и раскладка те же.
+        /// v102 (01.10, владелец: ресурс Пелага — «Концентрация», «лавидий у Пелага звучит глупо»): заголовок группы
+        /// листа героя «ЛАВИДИЙ» → «КОНЦЕНТРАЦИЯ» с нитью за новой шириной подписи; заготовки подписей строк.
         /// </summary>
-        public const int LayoutVersion = 101;
+        public const int LayoutVersion = 102;
 
         static bool _waiting;
 
@@ -134,6 +137,7 @@ namespace Game.EditorTools
         static void Migrate(CampTentView view)
         {
             if (view.LayoutVersion < 101) MigrateTo101(view);
+            if (view.LayoutVersion < 102) MigrateTo102(view);
             view.LayoutVersion = LayoutVersion;
             EditorUtility.SetDirty(view);
         }
@@ -149,6 +153,64 @@ namespace Game.EditorTools
             if (view.Filters != null) tabs.AddRange(view.Filters);
             tabs.RemoveAll(tab => tab == null);
             Debug.Log("[ui-kit] Палатка: подписей вкладок и фильтров на Philosopher — " + UiInkKit.HeadingLabels(tabs) + " из " + tabs.Count + ".");
+        }
+
+        /// <summary>Строки листа героя с ресурсом способностей: StatNames[6] — запас, [7] — восстановление.</summary>
+        static readonly int[] ResourceStatRows = { 6, 7 };
+
+        /// <summary>
+        /// v102 — ресурс способностей игроку «Концентрация». Заголовок группы ищется по старому имени узла
+        /// («Группа Лавидий», так называла его сборка 26.09): нет такого — свежая сборка или ручная правка, не трогаем.
+        /// Текст — прописными, как в Header; нить «Линия» начинается за новой подписью (та же формула, что в Header,
+        /// но от фактического левого края подписи). Подписи строк в игре ставит CampInventoryView из CampServiceText,
+        /// здесь меняются только старые заготовки — чтобы префаб в редакторе не показывал прежнее слово. Узлы
+        /// переименовываются как у свежей сборки; идентификаторы в коде (StatType.MaxLavidium…) прежние.
+        /// </summary>
+        static void MigrateTo102(CampTentView view)
+        {
+            int changed = 0;
+            Transform group = FindDeep(view.transform, "Группа Лавидий");
+            if (group != null)
+            {
+                group.name = "Группа " + StatGroupNames[2];
+                Transform caption = group.Find("Надпись");
+                TMP_Text label = caption != null ? caption.GetComponent<TMP_Text>() : null;
+                if (label != null)
+                {
+                    label.text = StatGroupNames[2].ToUpperInvariant();
+                    EditorUtility.SetDirty(label);
+                    var line = group.Find("Линия") as RectTransform;
+                    if (line != null)
+                        line.offsetMin = new Vector2(label.rectTransform.offsetMin.x + label.GetPreferredValues(label.text).x + 14f, line.offsetMin.y);
+                    else Debug.LogWarning("[ui-kit] Палатка: у заголовка «" + group.name + "» нет «Линия» — нить не сдвинута, проверить руками");
+                    changed++;
+                }
+                else Debug.LogWarning("[ui-kit] Палатка: у заголовка «" + group.name + "» нет «Надпись» — текст не тронут, проверить руками");
+            }
+
+            string[] old = { "Лавидий", "Лавидий/с" };
+            for (int k = 0; k < ResourceStatRows.Length; k++)
+            {
+                int i = ResourceStatRows[k];
+                if (view.StatRows != null && i < view.StatRows.Length && view.StatRows[i] != null && view.StatRows[i].name == "Стат " + old[k])
+                    view.StatRows[i].name = "Стат " + StatNames[i];
+                if (view.StatLabels == null || i >= view.StatLabels.Length || view.StatLabels[i] == null || view.StatLabels[i].text != old[k]) continue;
+                view.StatLabels[i].text = StatNames[i];
+                EditorUtility.SetDirty(view.StatLabels[i]);
+                changed++;
+            }
+            Debug.Log("[ui-kit] Палатка: «лавидий» → «концентрация» в листе героя — подписей " + changed + " из 3.");
+        }
+
+        static Transform FindDeep(Transform root, string name)
+        {
+            if (root.name == name) return root;
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindDeep(root.GetChild(i), name);
+                if (found != null) return found;
+            }
+            return null;
         }
     }
 }

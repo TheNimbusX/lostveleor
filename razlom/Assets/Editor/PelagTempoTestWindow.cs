@@ -42,9 +42,10 @@ public sealed class PelagTempoTestWindow : EditorWindow
             _basicComboCandidate = EditorGUILayout.Toggle("Новая обычная серия · 3 удара", _basicComboCandidate && comboReady);
         if (!comboReady)
             EditorGUILayout.HelpBox("Кандидат комбо ждёт трёх принятых клипов. Сейчас используется прежняя обычная атака.", MessageType.None);
-        EditorGUILayout.HelpBox(_preset == 0 ? "Начальные статы, настоящий расход лавидия и перезарядки."
-            : _preset == 1 ? "+40% исполнение · +50% восстановление · +3 лавидия/с · +35% атака · +10% ходьба"
-            : "+100% исполнение и восстановление · +6 лавидия/с · +80% атака · +20% ходьба", MessageType.None);
+        // Ресурс способностей — «концентрация» (владелец 01.10), как в игре.
+        EditorGUILayout.HelpBox(_preset == 0 ? "Начальные статы, настоящий расход концентрации и перезарядки."
+            : _preset == 1 ? "+40% исполнение · +50% восстановление · +3 концентрации/с · +35% атака · +10% ходьба"
+            : "+100% исполнение и восстановление · +6 концентрации/с · +80% атака · +20% ходьба", MessageType.None);
         bool distinct = true;
         for (int i = 0; i < 4; i++) for (int j = 0; j < i; j++) if (_skills[i] == _skills[j]) distinct = false;
         if (!distinct) EditorGUILayout.HelpBox("Выберите четыре разных навыка.", MessageType.Info);

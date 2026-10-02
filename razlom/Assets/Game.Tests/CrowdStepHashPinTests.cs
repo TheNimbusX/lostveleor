@@ -64,19 +64,24 @@ namespace Game.Tests
         // HP, шип 60, тело 0,88; волна Корнехвата — 15% (элите 7,5%). В толпе
         // два Шипомёта, два Вендиго и четыре Корнехвата — бой расходится с
         // первого тика. Три отдельных прогона дали одни и те же свёртки бит в бит.
+        // И ещё раз 01.10 вечером (серия сабли, Simulation.SabreCombo): обычная
+        // атака героя — три удара сектором 45/45/90 без погони за целью, база
+        // скорости атаки 3, в хеше состояние серии. «Круг» расходится от хеша
+        // (герой не бьёт), «бой» — от первого удара. Два отдельных процесса
+        // дали одни и те же свёртки бит в бит; в «бою» к концу живы 11 из 48.
         private static readonly ulong[] CircleFolds =
         {
-            0x15E98F374E12551AUL, 0x0FBEDC195239A00DUL, 0x6762729A352BE93AUL,
-            0xADDA2EC01790D2D4UL, 0x7B2BFBFADCE03EEDUL, 0xD112A7FACF011EBEUL,
+            0x64557D919CA5F712UL, 0x331D911AD462C374UL, 0x8316CD37CD08E60EUL,
+            0xAAE4252819AFF06CUL, 0xF52B2F0DB787C1B1UL, 0x89E41F4C352C64D3UL,
         };
-        private const ulong CircleEnd = 0x5ECC3E4A823CD265UL;
+        private const ulong CircleEnd = 0x5973ED8BB0A0FEC3UL;
 
         private static readonly ulong[] FightFolds =
         {
-            0x1DC634F2B8CDFAEAUL, 0x0496CE67F60152A6UL, 0xFB31150BA4546257UL,
-            0x2C54666343E23781UL, 0xEFC97302B2FF77DBUL, 0xA508B49277C67754UL,
+            0x90E0259A0B1168FBUL, 0xE235185A70D36503UL, 0x957EA480FE0E6AA9UL,
+            0x58932AEEFFDD3BD9UL, 0xED3BE820F0E70BFBUL, 0x85319524528AA0B8UL,
         };
-        private const ulong FightEnd = 0x470307E2335E531EUL;
+        private const ulong FightEnd = 0xE7134F99DFFF0062UL;
 
         [Test]
         public void CircleCrowd48_HashSequencePinned() => Check(false, CircleFolds, CircleEnd);

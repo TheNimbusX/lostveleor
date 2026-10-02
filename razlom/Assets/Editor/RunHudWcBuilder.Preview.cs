@@ -93,7 +93,7 @@ namespace Game.EditorTools
             if (shot == Shot.Choice)
             {
                 view.ChoiceSubtitle.text = "Арена зачищена · дальше арена 3";
-                Offer(view.Offers[0], "Рассекающий удар", "Способность", "Сильный удар саблей сверху перед собой. Бьёт одну цель и не двигает героя.", "Лавидий", "30", "Cleave", false, "1");
+                Offer(view.Offers[0], "Рассекающий удар", "Способность", "Сильный удар саблей сверху перед собой. Бьёт одну цель и не двигает героя.", "Концентрация", "30", "Cleave", false, "1");
                 view.Offers[0].KindIcon.texture = view.KindIcons[0];
                 Offer(view.Offers[1], "Длинный клинок", "Усиление · 3 из 8", "Дальность Рассекающего удара +50%. Удар достаёт врагов за спиной первого.", "Рассекающий удар", "", "Cleave", true, "2");
                 view.Offers[1].KindIcon.texture = view.KindIcons[1];

@@ -93,7 +93,7 @@ namespace Game.View
                 if (!camp.HasMetAlchemist && GUILayout.Button("Поговорить с Лео", GUILayout.Height(30)))
                 { camp.MeetAlchemist(); _message = CampServiceText.Get("dialogue.alchemist.open"); }
                 DrawOrder(camp, AlchemistOrder.Resin, "Живица", "Убить Лесного бутона или отдать редкую вещь");
-                DrawOrder(camp, AlchemistOrder.Surge, "Лавидиевый порыв", "Весь уровень без зелий или 12 осколков");
+                DrawOrder(camp, AlchemistOrder.Surge, "Порыв", "Весь уровень без зелий или 12 осколков");
                 GUILayout.Space(8);
                 GUILayout.Label("ЛАВКА · купи и выбери зелье для двух прежних слотов");
                 for (int i = 0; i < Camp.PotionKindCount; i++) DrawPotion(camp, (PotionKind)i);
@@ -218,10 +218,11 @@ namespace Game.View
             {
                 case PotionKind.SmallHealth: return "Малое здоровье";
                 case PotionKind.LargeHealth: return "Большое здоровье";
-                case PotionKind.SmallLavidium: return "Малый лавидий";
-                case PotionKind.LargeLavidium: return "Большой лавидий";
+                // Ресурс способностей игроку — «концентрация» (владелец 01.10), имена PotionKind прежние.
+                case PotionKind.SmallLavidium: return "Малая концентрация";
+                case PotionKind.LargeLavidium: return "Большая концентрация";
                 case PotionKind.LivingResin: return "Живица";
-                default: return "Лавидиевый порыв";
+                default: return "Порыв";
             }
         }
     }

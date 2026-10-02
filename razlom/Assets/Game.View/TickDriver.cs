@@ -716,6 +716,7 @@ namespace Game.View
                 _pending.Flags = attack ? (byte)InputFlags.Attack : (byte)0;
                 _pending.AttackTarget = -1;
                 AttackHeld = attack;
+                if (attack) AimCaptureSabre();
             }
 
             if (CaptureRig.MovingCombatShowcase && Sim != null)
@@ -1003,6 +1004,37 @@ namespace Game.View
         {
             int? id = Sim?.GetAbility(slot)?.DefinitionId;
             return id == AbilityDefinition.ChainStepId || id == AbilityDefinition.AnchorLeapId;
+        }
+
+        /// <summary>
+        /// Съёмка серии сабли (01.10): удар идёт туда, где курсор, и к цели
+        /// сам не ходит. «Курсор» съёмки — ближайший живой враг; вне сектора
+        /// герой подходит приказом по земле, в секторе бьёт с места — как
+        /// ArenaBot в тестах.
+        /// </summary>
+        private void AimCaptureSabre()
+        {
+            if (Sim.PelagBasicComboEnabled) return;
+            var entities = Sim.Entities;
+            FixVec2 player = entities.Position[Simulation.PlayerId];
+            int best = -1;
+            Fix64 bestSq = Fix64.Zero;
+            for (int i = 1; i < entities.Count; i++)
+            {
+                if (!entities.Alive[i] || entities.Side[i] == entities.Side[Simulation.PlayerId]) continue;
+                Fix64 distanceSq = FixVec2.DistanceSq(player, entities.Position[i]);
+                if (best >= 0 && distanceSq >= bestSq) continue;
+                best = i;
+                bestSq = distanceSq;
+            }
+            if (best < 0) return;
+            _pending.Aim = entities.Position[best];
+            Fix64 strike = Simulation.SabreReach + entities.BodyRadius[best] - Fix64.Ratio(3, 10);
+            if (bestSq > strike * strike)
+            {
+                _pending.Flags = (byte)InputFlags.MoveOrder;
+                AttackHeld = false;
+            }
         }
 
         private void UpdateSweepAimCapture()

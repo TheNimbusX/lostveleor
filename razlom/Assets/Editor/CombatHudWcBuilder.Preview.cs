@@ -111,6 +111,8 @@ namespace Game.EditorTools
             for (int slot = 0; slot < view.Slots.Length && slot < upgrades.Length; slot++)
                 view.Slots[slot].ReadyGem.Preview(upgrades[slot], slot < 2, slot == 1, slot == 0 ? .6f : 0f);
             view.Dash.ReadyGem.Preview(0, true);
+            // Плитка ЛКМ (02.10): серия саблей всегда готова — кольцо горит, как у готовой способности.
+            if (view.Attack != null && view.Attack.ReadyGem != null) view.Attack.ReadyGem.Preview(0, true);
             // Строка эффектов над портретом (этап 4): корни, Живица, Порыв, артефакт и Blaze «×2».
             PreviewEffects(view);
             // Артефакт забега: медальон у портрета.

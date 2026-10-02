@@ -133,7 +133,7 @@ public sealed class UiKeywordsTests
         foreach (int id in new[] { AbilityDefinition.DashId, AbilityDefinition.SkewerId, AbilityDefinition.BackblastId,
                      AbilityDefinition.AnchorLeapId, AbilityDefinition.ChainStepId })
             Assert.That(Simulation.MovesHero(id), Is.True);
-        foreach (string name in new[] { "кувырок", "«На вылет»", "«Отбой»", "«Абордаж»", "«Шквал»" })
+        foreach (string name in new[] { "рывок", "«На вылет»", "«Отбой»", "«Абордаж»", "«Шквал»" })
             Assert.That(definition, Does.Contain(name));
         foreach (int id in new[] { AbilityDefinition.WhirlwindId, AbilityDefinition.CleaveId, AbilityDefinition.BlazeId,
                      AbilityDefinition.AnchorSlamId, AbilityDefinition.WreckId, AbilityDefinition.FireFlaskId })
@@ -156,7 +156,7 @@ public sealed class UiKeywordsTests
     {
         string tagged = UiKeywords.Markup("Оглушение длится 1 секунду вместо 0,5.");
         Assert.That(tagged, Does.StartWith(Link("stun", "Оглушение")));
-        Assert.That(UiKeywords.Markup("ЛАВИДИЯ НЕ ХВАТАЕТ"), Does.StartWith(Link("lavidium", "ЛАВИДИЯ", "#FA883C")));
+        Assert.That(UiKeywords.Markup("КОНЦЕНТРАЦИИ НЕ ХВАТАЕТ"), Does.StartWith(Link("lavidium", "КОНЦЕНТРАЦИИ", "#FA883C")));
     }
 
     [Test]
@@ -173,15 +173,16 @@ public sealed class UiKeywordsTests
         Assert.That(Found("Корнехват бьёт корнями."), Is.EqualTo(new[] { Id.Roots }));
         Assert.That(UiKeywords.Markup("Корнехват бьёт корнями."), Does.StartWith("Корнехват бьёт <link"));
         Assert.That(Found("Раскритиковал критерий кританского стана."), Is.Empty);
-        Assert.That(Found("Кольцо с лавидием"), Is.EqualTo(new[] { Id.Lavidium }));
+        Assert.That(Found("Не хватает концентрации: 15"), Is.EqualTo(new[] { Id.Lavidium }));
         Assert.That(Found("Отбой: Пелаг отскакивает."), Is.Empty, "«Отбой» — способность, не отброс");
     }
 
     [Test]
     public void LongestFormWins()
     {
-        string surge = UiKeywords.Markup("Выпей Лавидиевый порыв.");
-        Assert.That(surge, Is.EqualTo("Выпей " + Link("surge", "Лавидиевый порыв", "#A765FF") + "."));
+        // Зелье «Порыв» (с 01.10 без «Лавидиевого»): имя зелья — слово словаря целиком.
+        string surge = UiKeywords.Markup("Выпей Порыв.");
+        Assert.That(surge, Is.EqualTo("Выпей " + Link("surge", "Порыв", "#A765FF") + "."));
         Assert.That(Found("Удар под горящей саблей."), Is.EqualTo(new[] { Id.Blaze }));
         Assert.That(Found("Бутылка, упавшая в горящую лужу, взрывается."), Is.EqualTo(new[] { Id.Burn }));
         Assert.That(Found("Под защитой от контроля."), Is.EqualTo(new[] { Id.ControlImmunity }));
@@ -341,7 +342,7 @@ public sealed class UiKeywordsTests
         Assert.That(DefinitionFound(Id.Stun), Does.Contain(Id.Interrupt));
         Assert.That(DefinitionFound(Id.Freeze), Is.EquivalentTo(new[] { Id.Stun, Id.Boss, Id.Elite, Id.Slow }));
         Assert.That(DefinitionFound(Id.Evasion), Does.Contain(Id.Blaze));
-        Assert.That(DefinitionFound(Id.Surge), Does.Not.Contain(Id.Lavidium), "своё имя целиком, не «лавидиевый»");
+        Assert.That(DefinitionFound(Id.Surge), Is.Empty, "своё имя «Порыв» себя не метит");
         Assert.That(UiKeywords.DefinitionMarkup(Id.None), Is.Empty);
     }
 
@@ -405,11 +406,46 @@ public sealed class UiKeywordsTests
             + "враги рядом отброшены. Один раз за забег."), Is.EqualTo(new[] { Id.Invulnerability, Id.Knockback }));
         Assert.That(Found("Шанс крита"), Is.EqualTo(new[] { Id.Crit }));
         Assert.That(Found("Во сколько раз критический удар сильнее обычного: 150% — в полтора раза."), Is.EqualTo(new[] { Id.Crit }));
-        Assert.That(Found("Запас лавидия — ресурса способностей. Растёт с уровнем."), Is.EqualTo(new[] { Id.Lavidium }));
+        Assert.That(Found("Запас концентрации — ресурса способностей. Растёт с уровнем."), Is.EqualTo(new[] { Id.Lavidium }));
         Assert.That(Found("Сопротивление огню"), Is.EqualTo(new[] { Id.FireResist }));
         Assert.That(Found("Снижает физический урон. Чем сильнее удар, тем меньше броня от него спасает."), Is.EqualTo(new[] { Id.Armor }));
         Assert.That(Found("Живица"), Is.EqualTo(new[] { Id.Resin }));
-        Assert.That(Found("20% лавидия и +20% скорости на 6 с"), Is.EqualTo(new[] { Id.Lavidium }));
+        Assert.That(Found("20% концентрации и +20% скорости на 6 с"), Is.EqualTo(new[] { Id.Lavidium }));
+    }
+
+    // ---- ресурс способностей: «Концентрация» ----
+
+    [Test]
+    public void ResourceWordIsConcentration()
+    {
+        // Владелец 01.10: «лавидий у Пелага звучит глупо» — ресурс способностей игроку «Концентрация».
+        // Id.Lavidium и ключ разметки «lavidium» — стабильные id, их не меняем.
+        UiKeywords.Entry entry = UiKeywords.Get(Id.Lavidium);
+        Assert.That(entry.Title, Is.EqualTo("Концентрация"));
+        Assert.That(entry.Key, Is.EqualTo("lavidium"));
+        Assert.That(entry.Definition, Does.Contain("концентрацию"));
+        foreach (string form in new[] { "Концентрация", "концентрации", "концентрацию", "концентрацией" })
+            Assert.That(Found(form), Is.EqualTo(new[] { Id.Lavidium }), form);
+    }
+
+    [Test]
+    public void LavidiumIsNoLongerTheResource()
+    {
+        // Лавидий остаётся металлом и валютой мира («Кольцо с лавидием»): подсказку ресурса он не открывает,
+        // и ни одно определение, усиление или отказ слота его больше не называют.
+        Assert.That(Found("Кольцо с лавидием"), Is.Empty);
+        Assert.That(Found("Лавидий, лавидия, лавидию, лавидием"), Is.Empty);
+        foreach (UiKeywords.Entry entry in UiKeywords.All)
+            Assert.That(entry.Definition.ToLowerInvariant(), Does.Not.Contain("лавиди"), entry.Key);
+        foreach (SabreTalentLine line in Enum.GetValues(typeof(SabreTalentLine)))
+            for (int i = 0; i < SabreTalents.TalentsPerLine; i++)
+            {
+                Assert.That(SabreTalentTexts.Name(line, i).ToLowerInvariant(), Does.Not.Contain("лавиди"), line + " " + i);
+                Assert.That(SabreTalentTexts.Description(line, i).ToLowerInvariant(), Does.Not.Contain("лавиди"), line + " " + i);
+            }
+        Assert.That(SabreTalentTexts.Name(SabreTalentLine.Whirlwind, 3), Is.EqualTo("Возврат концентрации"));
+        Assert.That(HudAbilityAvailability.Evaluate(true, false, 0, 10, 25, false).Text, Is.EqualTo("Не хватает концентрации: 15"));
+        Assert.That(RunHudCompare.AbilityStatName(SabreTalentLine.Whirlwind, AbilityStatType.LavidiumCost), Is.EqualTo("Концентрация"));
     }
 
     static readonly string[] Samples =
@@ -420,7 +456,7 @@ public sealed class UiKeywordsTests
         "Враги в 8 м замерзают на 5 секунд; удар способностью по замёрзшему раскалывает лёд: +60 урона. Босс и элита — замедление на 40%.",
         "<b>Долгий стан</b>  <color=#93A2BC>Оглушение длится 1 секунду вместо 0,5.</color>",
         "Пелаг скован {kw:roots|корнями}, а {kw:control_immunity} потом держит 1,5 с.",
-        "Выпей Лавидиевый порыв под защитой от контроля.",
+        "Выпей Порыв под защитой от контроля.",
         "Усиление «Неуязвимость»: 3 секунды неуязвим.",
         "урон < 5 и оглушение",
     };

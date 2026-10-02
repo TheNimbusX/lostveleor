@@ -1,0 +1,10 @@
+style=GoldenEvening
+restored=True
+sunDirectionPreserved=True
+profile=CampGoldenEvening
+sun=RGBA(1.000, 0.700, 0.400, 1.000)
+shadow=0,797
+fill=0,14
+sunPitch=21,4
+sunIntensity=1,65
+fog=False mode=ExponentialSquared band=0,0..300,0 colour=RGBA(0.500, 0.500, 0.500, 1.000)

@@ -1,0 +1,411 @@
+{
+ "made": "2026-10-01",
+ "purpose": "Reel 'было -> стало' (old combat -> new 3-hit sabre combo): the OLD part. Clean clips, no text, no music, 9:16.",
+ "format": "1080x1920, H.264 High yuv420p bt709, 60 fps CFR, CRF 14; audio AAC 48 kHz stereo 192k as a separate stream",
+ "time_base": "source_*_s are seconds from the start of the source mp4; each clip = [moment_in - 0.3 s, moment_out + 0.3 s]",
+ "source_rules": "Only the owner's Xbox Game Bar recordings named 'razlom - SampleScene - ... Unity ...' from Videos\\Captures; nothing else from that folder was used.",
+ "processing": [
+  "Game view cropped out of the Unity editor window (2 px inside the Game view border, no editor or Windows UI).",
+  "9:16 window follows the hero (path smoothed), never letterboxed; kept above the old bottom HUD (ability bar, HP).",
+  "Game Bar records ~30 fps VFR; normalised to 60 fps CFR by frame duplication (no interpolation, no ghosting).",
+  "Windows mouse pointer (and the game's own beige pointer in 26.09) removed frame by frame: patched from the nearest frame where that spot is free, aligned for camera motion; light unsharp mask after the upscale."
+ ],
+ "order_suggestion": [
+  "old-01",
+  "old-02",
+  "old-04",
+  "old-05",
+  "old-06",
+  "old-07"
+ ],
+ "spare": [
+  "old-03"
+ ],
+ "clips": [
+  {
+   "file": "old-01.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-08-30 11-23-01.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-08-30 11:23:01",
+   "source_in_s": 4.17,
+   "source_out_s": 6.05,
+   "moment_in_s": 4.47,
+   "moment_out_s": 5.75,
+   "moment_in_clip_s": [
+    0.3,
+    1.58
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.88,
+   "what": "Самая ранняя запись (30.08): плоский пол-заглушка из ромбов, Пелаг-«спрайт» в малиновом. Рывок к щитоносцам-болванкам и серия старых базовых ударов меча: оранжевый мазок, жёлтая вспышка попадания, цифры урона 68/120.",
+   "game_view_in_source_px": {
+    "x": 320,
+    "y": 104,
+    "w": 1208,
+    "h": 678
+   },
+   "crop_window_in_source_px": {
+    "w": 315.0,
+    "h": 560,
+    "x_range": [
+     777.5,
+     1005.5
+    ],
+    "y_range": [
+     104.0,
+     104.0
+    ]
+   },
+   "upscale": "crop 315 x 560 source px -> 1080x1920 (x3.43)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 65,
+    "patched_from_neighbour_frame": 28,
+    "filled_smoothly": 5
+   },
+   "audio": "recording has no game sound - silent AAC stream kept for a uniform stream layout",
+   "probe": {
+    "duration_s": 1.88,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -91.0
+    }
+   }
+  },
+  {
+   "file": "old-02.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-08-31 11-17-03.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-08-31 11:17:03",
+   "source_in_s": 8.95,
+   "source_out_s": 10.35,
+   "moment_in_s": 9.25,
+   "moment_out_s": 10.05,
+   "moment_in_clip_s": [
+    0.3,
+    1.1
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.4,
+   "what": "31.08: тёмные рыцари со щитами, цель в жёлтом контуре и красном прицеле. Пелаг замахивается саблей, белая вспышка попадания, «68», белое кольцо.",
+   "game_view_in_source_px": {
+    "x": 286,
+    "y": 104,
+    "w": 1196,
+    "h": 670
+   },
+   "crop_window_in_source_px": {
+    "w": 303.8,
+    "h": 540,
+    "x_range": [
+     670.9,
+     692.4
+    ],
+    "y_range": [
+     104.0,
+     104.0
+    ]
+   },
+   "upscale": "crop 304 x 540 source px -> 1080x1920 (x3.56)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 18,
+    "patched_from_neighbour_frame": 9,
+    "filled_smoothly": 0
+   },
+   "audio": "recording has no game sound - silent AAC stream kept for a uniform stream layout",
+   "probe": {
+    "duration_s": 1.4,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -91.0
+    }
+   }
+  },
+  {
+   "file": "old-03.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-08-31 11-17-03.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-08-31 11:17:03",
+   "source_in_s": 13.45,
+   "source_out_s": 14.7,
+   "moment_in_s": 13.75,
+   "moment_out_s": 14.4,
+   "moment_in_clip_s": [
+    0.3,
+    0.95
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.25,
+   "what": "31.08: два удара по двум рыцарям подряд — белая вспышка правого, «120», разворот к левому.",
+   "game_view_in_source_px": {
+    "x": 286,
+    "y": 104,
+    "w": 1196,
+    "h": 670
+   },
+   "crop_window_in_source_px": {
+    "w": 315.0,
+    "h": 560,
+    "x_range": [
+     717.6,
+     755.3
+    ],
+    "y_range": [
+     104.0,
+     104.0
+    ]
+   },
+   "upscale": "crop 315 x 560 source px -> 1080x1920 (x3.43)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 40,
+    "patched_from_neighbour_frame": 20,
+    "filled_smoothly": 0
+   },
+   "audio": "recording has no game sound - silent AAC stream kept for a uniform stream layout",
+   "probe": {
+    "duration_s": 1.25,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -91.0
+    }
+   }
+  },
+  {
+   "file": "old-04.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-09-03 14-25-19.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-09-03 14:25:19",
+   "source_in_s": 5.75,
+   "source_out_s": 7.25,
+   "moment_in_s": 6.05,
+   "moment_out_s": 6.95,
+   "moment_in_clip_s": [
+    0.3,
+    1.2
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.5,
+   "what": "03.09: первые 3D-Стражи леса на клетчатом полу. Страж замахивается, Пелаг рубит, белая вспышка попадания и «68». Со звуком игры (удар и вскрик).",
+   "game_view_in_source_px": {
+    "x": 236,
+    "y": 104,
+    "w": 1178,
+    "h": 630
+   },
+   "crop_window_in_source_px": {
+    "w": 292.5,
+    "h": 520,
+    "x_range": [
+     607.7,
+     620.2
+    ],
+    "y_range": [
+     104.0,
+     104.0
+    ]
+   },
+   "upscale": "crop 292 x 520 source px -> 1080x1920 (x3.69)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 66,
+    "patched_from_neighbour_frame": 17,
+    "filled_smoothly": 16
+   },
+   "audio": "game sound from the recording (separate AAC stream)",
+   "probe": {
+    "duration_s": 1.5,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -3.6
+    }
+   }
+  },
+  {
+   "file": "old-05.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-09-06 03-11-44.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-09-06 03:11:44",
+   "source_in_s": 9.65,
+   "source_out_s": 11.1,
+   "moment_in_s": 9.95,
+   "moment_out_s": 10.8,
+   "moment_in_clip_s": [
+    0.3,
+    1.15
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.45,
+   "what": "06.09: стая Стражей у тёмной стены. Широкий белый замах, затем огненно-жёлтые полумесяцы попаданий по нескольким Стражам, «85».",
+   "game_view_in_source_px": {
+    "x": 242,
+    "y": 104,
+    "w": 1228,
+    "h": 760
+   },
+   "crop_window_in_source_px": {
+    "w": 303.8,
+    "h": 540,
+    "x_range": [
+     711.0,
+     743.3
+    ],
+    "y_range": [
+     218.2,
+     220.0
+    ]
+   },
+   "upscale": "crop 304 x 540 source px -> 1080x1920 (x3.56)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 4,
+    "patched_from_neighbour_frame": 1,
+    "filled_smoothly": 1
+   },
+   "audio": "recording has no game sound - silent AAC stream kept for a uniform stream layout",
+   "probe": {
+    "duration_s": 1.45,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -91.0
+    }
+   }
+  },
+  {
+   "file": "old-06.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-09-06 03-11-44.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-09-06 03:11:44",
+   "source_in_s": 16.58,
+   "source_out_s": 17.92,
+   "moment_in_s": 16.88,
+   "moment_out_s": 17.62,
+   "moment_in_clip_s": [
+    0.3,
+    1.04
+   ],
+   "handles_s": 0.3,
+   "duration_s": 1.33,
+   "what": "06.09: Пелаг врубается в стаю Стражей — частые старые удары, оранжево-огненные взрывы попаданий, «85».",
+   "game_view_in_source_px": {
+    "x": 242,
+    "y": 104,
+    "w": 1228,
+    "h": 760
+   },
+   "crop_window_in_source_px": {
+    "w": 303.8,
+    "h": 540,
+    "x_range": [
+     745.5,
+     752.4
+    ],
+    "y_range": [
+     220.0,
+     220.0
+    ]
+   },
+   "upscale": "crop 304 x 540 source px -> 1080x1920 (x3.56)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 28,
+    "patched_from_neighbour_frame": 14,
+    "filled_smoothly": 0
+   },
+   "audio": "recording has no game sound - silent AAC stream kept for a uniform stream layout",
+   "probe": {
+    "duration_s": 1.33,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -91.0
+    }
+   }
+  },
+  {
+   "file": "old-07.mp4",
+   "source_file": "razlom - SampleScene - Windows, Mac, Linux - Unity 6.5 (6000.5.10f1) _DX12_ 2026-09-26 19-14-14.mp4",
+   "source_dir": "C:\\Users\\d.grab\\Videos\\Captures",
+   "recorded": "2026-09-26 19:14:14",
+   "source_in_s": 144.5,
+   "source_out_s": 147.05,
+   "moment_in_s": 144.8,
+   "moment_out_s": 146.75,
+   "moment_in_clip_s": [
+    0.3,
+    2.25
+   ],
+   "handles_s": 0.3,
+   "duration_s": 2.55,
+   "what": "26.09: уже нынешний лес и Лесной вендиго. Старая базовая атака — тонкая дуга сабли и белая вспышка на враге (три удара), между ними когти вендиго по Пелагу. Со звуком игры.",
+   "game_view_in_source_px": {
+    "x": 168,
+    "y": 104,
+    "w": 1588,
+    "h": 890
+   },
+   "crop_window_in_source_px": {
+    "w": 348.8,
+    "h": 620,
+    "x_range": [
+     785.8,
+     811.4
+    ],
+    "y_range": [
+     170.6,
+     208.3
+    ]
+   },
+   "upscale": "crop 349 x 620 source px -> 1080x1920 (x3.10)",
+   "cursor": {
+    "frames_with_cursor_cleaned": 94,
+    "patched_from_neighbour_frame": 45,
+    "filled_smoothly": 2
+   },
+   "audio": "game sound from the recording (separate AAC stream)",
+   "probe": {
+    "duration_s": 2.55,
+    "video": {
+     "codec": "h264",
+     "size": "1080x1920",
+     "fps": 60.0
+    },
+    "audio": {
+     "codec": "aac",
+     "rate": 48000,
+     "max_volume_db": -23.6
+    }
+   }
+  }
+ ]
+}

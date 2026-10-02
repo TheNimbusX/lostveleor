@@ -1,0 +1,34 @@
+var model = UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>("Assets/Resources/Characters/Pelag_v6/Runtime/Pelag_v6_MixamoRig.fbx");
+var saberPrefab = UnityEngine.Resources.Load<UnityEngine.GameObject>("Weapons/Pelag/FantasySaber/Pelag_FantasySaber");
+var go = UnityEngine.Object.Instantiate(model);
+go.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+string result = "";
+try
+{
+    foreach (var a in go.GetComponentsInChildren<UnityEngine.Animator>()) a.enabled = false;
+    System.Func<string, UnityEngine.Transform> find = n => System.Linq.Enumerable.First(go.GetComponentsInChildren<UnityEngine.Transform>(), t => t.name == n);
+    var hand = find("mixamorig:RightHand");
+    var saber = UnityEngine.Object.Instantiate(saberPrefab, go.transform, false);
+    saber.hideFlags = UnityEngine.HideFlags.HideAndDontSave;
+    saber.transform.SetParent(hand, false);
+    saber.transform.localPosition = new UnityEngine.Vector3(-0.019f, 0.08f, 0.019f);
+    saber.transform.localRotation = UnityEngine.Quaternion.Euler(4.778f, -0.701f, 77.315f);
+    saber.transform.localScale = new UnityEngine.Vector3(0.5722176f, 0.4797959f, 0.4378099f);
+    var mf = saber.GetComponentInChildren<UnityEngine.MeshFilter>(true);
+    var b = mf.sharedMesh.bounds;
+    var root = mf.transform.TransformPoint(new UnityEngine.Vector3(0, b.min.y, 0));
+    var tip = mf.transform.TransformPoint(new UnityEngine.Vector3(0, b.min.y + b.size.y, 0));
+    var mid = find("mixamorig:RightHandMiddle1").position;
+    var index = find("mixamorig:RightHandIndex1").position;
+    var pinky = find("mixamorig:RightHandPinky1").position;
+    var fore = find("mixamorig:RightForeArm").position;
+    var h = hand.position;
+    var ax = (mid - h).normalized;
+    var bx = (index - pinky); bx = (bx - UnityEngine.Vector3.Dot(bx, ax) * ax).normalized;
+    var cx = UnityEngine.Vector3.Cross(ax, bx);
+    float arm = (h - fore).magnitude;
+    System.Func<UnityEngine.Vector3, string> f = v => string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0:F4},{1:F4},{2:F4}", UnityEngine.Vector3.Dot(v, ax), UnityEngine.Vector3.Dot(v, bx), UnityEngine.Vector3.Dot(v, cx));
+    result = "bladeDir=" + f((tip - root).normalized) + " root=" + f((root - h) / arm) + " tip=" + f((tip - h) / arm) + " len/arm=" + ((tip - root).magnitude / arm).ToString("F4", System.Globalization.CultureInfo.InvariantCulture) + " arm=" + arm.ToString("F4");
+}
+finally { UnityEngine.Object.DestroyImmediate(go); }
+return result;

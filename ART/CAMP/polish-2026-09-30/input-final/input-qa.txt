@@ -1,0 +1,37 @@
+PASS
+PASS real camp and walk map ready
+PASS Eni available on fresh profile
+PASS safe bidirectional movement patch
+PASS real W advances player
+PASS real S returns player
+PASS real left stick advances player
+PASS real left stick returns player
+PASS world click projection outside HUD
+PASS short real right click follows route distance=0,30
+PASS world click projection outside HUD
+PASS real left click outside training returns along route distance=0,30
+PASS world click projection outside HUD
+PASS stick cancels mouse route without resuming after release
+PASS reachable distant service test setup
+PASS service projection outside HUD
+PASS real service right click starts approach in WASD mode
+PASS W cancels service approach without opening shop
+PASS W cancellation does not resume service route
+PASS service projection outside HUD
+PASS real service right click starts approach in mouse mode
+PASS stick cancels service approach without opening shop
+PASS near Eni setup reachable
+PASS real E opens correct shop and stays in camp
+PASS mouse activity recognized inside open shop
+PASS mouse to pad inside open shop restores active focus
+PASS device switch inside shop does not spend gold
+PASS real Escape closes shop and restores movement
+PASS mouse is last device before first pad confirm
+PASS first real pad A after mouse opens correct shop
+PASS pad opening sets valid active shop focus
+PASS opening pad A does not spend gold
+PASS real pad B closes shop and restores movement
+PASS visible body finishes at simulation position
+PASS input QA leaves camp profile unchanged
+SCOPE: virtual input queue, camp movement, route cancellation, E/A shop opening, Escape/B closing and opening focus. Physical controllers and every UI navigation direction remain owner playtest.
+PASS original movement setting restored

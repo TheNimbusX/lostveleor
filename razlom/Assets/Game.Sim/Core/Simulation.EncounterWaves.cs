@@ -652,7 +652,6 @@ namespace Game.Sim
                 Statuses.ClearBurn(i);
                 Statuses.StunUntilTick[i] = 0;
                 if (_eliteMask != null && i < _eliteMask.Length) _eliteMask[i] = false;
-                if (_attackTarget == i) _attackTarget = -1;
                 _events.Add(SimEvent.Burrow(i, Entities.Position[i]));
             }
         }
@@ -671,6 +670,8 @@ namespace Game.Sim
         private void UpdateBossAdds()
         {
             int boss = _encounterBoss;
+            // У Хозяина Чащи подмога одна — на 66%; на 33% только рёв.
+            if (_bossAddsSpawned >= 1 && Entities.Kind[boss] == EnemyKind.ForestThicketMaster) return;
             if (_bossAddsSpawned >= 2 || !Entities.Alive[boss] || !Entities.Alive[PlayerId]) return;
             int percent = _bossAddsSpawned == 0 ? BossAddFirstPercent : BossAddSecondPercent;
             if ((long)Entities.Health[boss] * 100 > (long)Entities.MaxHealth[boss] * percent) return;

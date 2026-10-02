@@ -357,7 +357,7 @@ namespace Game.View
         /// </summary>
         private struct BottomBar
         {
-            public float GroupX, ColumnX, RowX, RowWidth, DashX, DashSize, Y, Bottom;
+            public float GroupX, ColumnX, AttackX, RowX, RowWidth, DashX, DashSize, Y, Bottom;
             public int RowCount;
             public bool HasDash;
         }
@@ -376,15 +376,18 @@ namespace Game.View
                 ? bar.RowCount * SlotSize + (bar.RowCount - 1) * SlotGap
                 : 0f;
             float dash = bar.HasDash ? DashGap + bar.DashSize : 0f;
-            float abilities = row + dash;
+            // Плитка ЛКМ (02.10) — первой слева от ряда, с тем же зазором; ряд остаётся по центру, герой левее на неё.
+            float attack = SlotSize + SlotGap;
+            float abilities = attack + row + dash;
             float groupWidth = HeroWidth + (abilities > 0f ? BarToRowGap + abilities : 0f) + 46f;
 
             float groupMaxX = Mathf.Max(_safeLeft + Margin,
                 _canvasWidth - _safeRight - Margin - groupWidth);
-            bar.GroupX = Mathf.Clamp(_canvasWidth * 0.5f - row * 0.5f - HeroWidth - BarToRowGap,
+            bar.GroupX = Mathf.Clamp(_canvasWidth * 0.5f - row * 0.5f - attack - HeroWidth - BarToRowGap,
                 _safeLeft + Margin, groupMaxX);
             bar.ColumnX = bar.GroupX + PortraitSize + PortraitGap;
-            bar.RowX = bar.GroupX + HeroWidth + BarToRowGap;
+            bar.AttackX = bar.GroupX + HeroWidth + BarToRowGap;
+            bar.RowX = bar.AttackX + attack;
             bar.RowWidth = row;
             bar.DashX = bar.RowX + row + DashGap;
             // Опыт отделён от иконок небольшим зазором и не касается края экрана.
@@ -511,6 +514,7 @@ namespace Game.View
             BottomBar bar = MeasureBottomBar(sim);
             if (bar.RowCount == 0 && !bar.HasDash) return;
 
+            DrawAttackSlot(sim, new Rect(bar.AttackX, bar.Y, SlotSize, SlotSize));
             for (int slot = 0; slot < DashSlot; slot++)
             {
                 Rect box = new Rect(bar.RowX + slot * (SlotSize + SlotGap), bar.Y, SlotSize, SlotSize);
@@ -528,6 +532,39 @@ namespace Game.View
                     bar.DashSize, bar.DashSize);
                 DrawSlot(sim, DashSlot, sim.GetAbility(DashSlot), box);
             }
+        }
+
+        private Texture2D _attackArt;
+
+        /// <summary>
+        /// Плитка ЛКМ — серия саблей (владелец 02.10: «ЛКМ показывается в HUD слотом, как навык»), запасной вид плитки
+        /// HUD на Canvas: рамка и иконка, как у способностей, без перезарядки и цены; на клавише — мышь из набора.
+        /// </summary>
+        private void DrawAttackSlot(Simulation sim, Rect box)
+        {
+            if (_attackArt == null) _attackArt = Resources.Load<Texture2D>("UI/Abilities/Icon_Cleave");
+            bool ready = sim.Entities.Alive[Simulation.PlayerId];
+            _chrome.Shape(new Rect(box.x, box.y + 3f, box.width, box.height), new Color(0f, 0f, 0f, .4f), 7f);
+            _chrome.Shape(box, Plate, box.width * .125f);
+            if (_attackArt != null)
+            {
+                Color previous = GUI.color;
+                GUI.color = ready ? Color.white : new Color(.82f, .80f, .75f, 1f);
+                _chrome.Art(Inset(box, 1.5f), _attackArt, new Rect(.12f, .12f, .76f, .76f));
+                GUI.color = previous;
+            }
+            _chrome.Shape(box, Contour, box.width * .125f, 1.25f);
+            Rect keyTab = new Rect(box.center.x - 12f, box.yMax - 4f, 24f, 18f);
+            _chrome.Shape(keyTab, new Color(.47f, .21f, .15f, .96f), 5f);
+            _chrome.Shape(keyTab, Contour, 4f, 1f);
+            Sprite mouse = UiTheme.Current.Mouse;
+            // У плотно упакованного в атлас спрайта прямоугольника в текстуре нет — тогда подпись.
+            if (mouse == null || mouse.packed && mouse.packingMode == SpritePackingMode.Tight) { GUI.Label(keyTab, "ЛКМ", _slotKey); return; }
+            Rect glyph = new Rect(keyTab.center.x - 5f, keyTab.y + 2f, 10f, keyTab.height - 4f);
+            Rect uv = mouse.textureRect;
+            Texture2D sheet = mouse.texture;
+            GUI.DrawTextureWithTexCoords(glyph, sheet,
+                new Rect(uv.x / sheet.width, uv.y / sheet.height, uv.width / sheet.width, uv.height / sheet.height));
         }
 
         /// <summary>Пустой слот забега: тёмная рамка без иконки и клавиши.</summary>
@@ -672,7 +709,8 @@ namespace Game.View
             {
                 if (count < into.Length) into[count++] = new TooltipValue { Icon = icon, Caption = caption, Value = value };
             }
-            AddTooltipValue(1, "Лавидий", Simulation.LavidiumCostOf(build).ToString());
+            // Цена — ресурс способностей, игроку «Концентрация» (владелец 01.10); видна в строке изменений «Подробнее».
+            AddTooltipValue(1, "Концентрация", Simulation.LavidiumCostOf(build).ToString());
             AddTooltipValue(2, "Перезарядка", ((sim != null ? sim.AbilityCooldownTicks(build) : build.CooldownTicks) / (float)Simulation.TicksPerSecond).ToString("0.#") + " с");
             int id = build.DefinitionId;
             int damage = build.Get(AbilityStatType.Damage).ToInt();
@@ -900,7 +938,7 @@ namespace Game.View
             if (id == AbilityDefinition.CleaveId) return "Мощный удар саблей перед собой.";
             if (id == AbilityDefinition.BlazeId) return "Поджигает саблю и повышает уклонение. Можно применять на бегу.";
             if (id == AbilityDefinition.ChainStepId) return "Удары с переходами между врагами. Выбери первую цель.";
-            if (id == AbilityDefinition.DashId) return "Кувырок в выбранном направлении.";
+            if (id == AbilityDefinition.DashId) return "Рывок в выбранном направлении.";
             if (id == AbilityDefinition.AnchorLeapId) return "Рывок к врагу на цепи с ударом кулака.";
             if (id == AbilityDefinition.AnchorSlamId) return "Удар якорем перед собой с коротким оглушением.";
             if (id == AbilityDefinition.WreckId) return "Три удара якорем: нажимай повторно. Последний оглушает.";
@@ -979,7 +1017,7 @@ namespace Game.View
             if (definitionId == AbilityDefinition.SkewerId) return "НА ВЫЛЕТ";
             if (definitionId == AbilityDefinition.BackblastId) return "ОТБОЙ";
             if (definitionId == AbilityDefinition.CleaveId) return "РАССЕКАЮЩИЙ УДАР";
-            if (definitionId == AbilityDefinition.DashId) return "КУВЫРОК";
+            if (definitionId == AbilityDefinition.DashId) return "РЫВОК";
             if (definitionId == AbilityDefinition.WhirlwindId) return "ВИХРЬ";
             if (definitionId == AbilityDefinition.AnchorLeapId) return "АБОРДАЖ";
             if (definitionId == AbilityDefinition.AnchorSlamId) return "УДАР ЯКОРЕМ";

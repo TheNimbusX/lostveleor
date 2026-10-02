@@ -381,7 +381,8 @@ namespace Game.EditorTools
             // Одна строка прибавок: остальные строки склеивает HudLevelBanner через « · ». Своего
             // проявления по буквам у неё нет — выезд и прозрачность ведёт баннер, второе легло бы поверх.
             RectTransform gainBox = Box(Node("Прибавки", plate), left, left, new Vector2(BannerTextX, -14f), new Vector2(500f, 30f));
-            TMP_Text gain = LabelOn(gainBox, "<color=#FFD27A>+30</color> здоровья · <color=#FFD27A>+5</color> урона · <color=#FFD27A>+10</color> лавидия",
+            // Заготовка: строки ставит HudLevelBanner при показе. Ресурс — «концентрация» (владелец 01.10).
+            TMP_Text gain = LabelOn(gainBox, "<color=#FFD27A>+30</color> здоровья · <color=#FFD27A>+5</color> урона · <color=#FFD27A>+10</color> концентрации",
                 FontRole.Body, T.Size(UiTheme.TextStep.Body), Role.Text, TextAlignmentOptions.MidlineLeft);
             gain.textWrappingMode = TextWrappingModes.NoWrap;
             gain.richText = true;

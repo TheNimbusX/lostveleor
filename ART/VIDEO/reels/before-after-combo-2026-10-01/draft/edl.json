@@ -1,0 +1,546 @@
+{
+ "made": "2026-10-02",
+ "version": "v2 (after the independent check)",
+ "output": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\reel-draft-before-after.mp4",
+ "fps": 60,
+ "size": "1080x1920",
+ "total_s": 10.6,
+ "era_cut_s": 2.683,
+ "audio": "Game sounds only, no music: the new-combo captures recorded no audio, so every hit is laid from the game's own sabre family (razlom/Assets/Resources/Audio/Combat: Pelag/Attack_01-05 swing, HitMetal + HitBody on contact, heavier and lower on finishers, Pelag/Finisher + Kill on the kill), with the volumes and pitches CombatAudio.cs uses. Old part: old-04 keeps its own recorded game sound; old-01/02/05 recordings are silent, so they get a thinner generic Whoosh + HitMetal. Peak -1 dBFS.",
+ "sound_events": [
+  {
+   "t": 0.167,
+   "kind": "o"
+  },
+  {
+   "t": 0.4,
+   "kind": "o"
+  },
+  {
+   "t": 0.533,
+   "kind": "o"
+  },
+  {
+   "t": 0.667,
+   "kind": "o"
+  },
+  {
+   "t": 1.067,
+   "kind": "o"
+  },
+  {
+   "t": 1.267,
+   "kind": "o"
+  },
+  {
+   "t": 2.317,
+   "kind": "o"
+  },
+  {
+   "t": 2.483,
+   "kind": "o"
+  },
+  {
+   "t": 2.683,
+   "kind": "h"
+  },
+  {
+   "t": 2.917,
+   "kind": "h"
+  },
+  {
+   "t": 3.2,
+   "kind": "h"
+  },
+  {
+   "t": 3.467,
+   "kind": "h"
+  },
+  {
+   "t": 3.833,
+   "kind": "f"
+  },
+  {
+   "t": 4.533,
+   "kind": "s"
+  },
+  {
+   "t": 5.067,
+   "kind": "h"
+  },
+  {
+   "t": 5.45,
+   "kind": "f"
+  },
+  {
+   "t": 5.817,
+   "kind": "h"
+  },
+  {
+   "t": 6.084,
+   "kind": "h"
+  },
+  {
+   "t": 6.45,
+   "kind": "f"
+  },
+  {
+   "t": 6.683,
+   "kind": "h"
+  },
+  {
+   "t": 6.966,
+   "kind": "h"
+  },
+  {
+   "t": 7.283,
+   "kind": "f"
+  },
+  {
+   "t": 7.667,
+   "kind": "h"
+  },
+  {
+   "t": 7.934,
+   "kind": "h"
+  },
+  {
+   "t": 8.3,
+   "kind": "f"
+  },
+  {
+   "t": 8.65,
+   "kind": "h"
+  },
+  {
+   "t": 8.934,
+   "kind": "h"
+  },
+  {
+   "t": 9.3,
+   "kind": "f"
+  },
+  {
+   "t": 9.667,
+   "kind": "h"
+  },
+  {
+   "t": 9.933,
+   "kind": "hk"
+  }
+ ],
+ "shots": [
+  {
+   "part": "было",
+   "shot": "old-01",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\old\\old-01.mp4",
+   "in_s": 0.2,
+   "out_s": 0.933,
+   "in_frame": 12,
+   "out_frame_excl": 56,
+   "speed": 1.0,
+   "duration_s": 0.733,
+   "record_in_s": 0.0,
+   "framing": "as delivered (already 9:16)",
+   "sound": "game sounds added: generic sword whoosh + light clang on each swing (the recording itself is silent)",
+   "what": "30.08 sprite-era Pelag: four quick swings, no idle lull"
+  },
+  {
+   "part": "было",
+   "shot": "old-02",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\old\\old-02.mp4",
+   "in_s": 0.367,
+   "out_s": 0.933,
+   "in_frame": 22,
+   "out_frame_excl": 56,
+   "speed": 1.0,
+   "duration_s": 0.567,
+   "record_in_s": 0.733,
+   "framing": "as delivered (already 9:16)",
+   "sound": "game sounds added: generic sword whoosh + light clang on each swing (the recording itself is silent)",
+   "what": "31.08 shield knight: windup, swing, white hit flash"
+  },
+  {
+   "part": "было",
+   "shot": "old-04",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\old\\old-04.mp4",
+   "in_s": 0.2,
+   "out_s": 1.0,
+   "in_frame": 12,
+   "out_frame_excl": 60,
+   "speed": 1.0,
+   "duration_s": 0.8,
+   "record_in_s": 1.3,
+   "framing": "as delivered (already 9:16)",
+   "sound": "its own recorded game sound, 6 ms fades at the cuts",
+   "what": "03.09 first 3D guardians: lunge + hit (its own recorded game sound)"
+  },
+  {
+   "part": "было",
+   "shot": "old-05",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\old\\old-05.mp4",
+   "in_s": 0.183,
+   "out_s": 0.767,
+   "in_frame": 11,
+   "out_frame_excl": 46,
+   "speed": 1.0,
+   "duration_s": 0.583,
+   "record_in_s": 2.1,
+   "framing": "as delivered (already 9:16)",
+   "sound": "game sounds added: generic sword whoosh + light clang on each swing (the recording itself is silent)",
+   "what": "06.09 guardians by the wall: wide swings, ends on the white hit flash (hard cut)"
+  },
+  {
+   "part": "стало",
+   "shot": "new-01",
+   "in_frame": 23,
+   "out_frame_excl": 53,
+   "in_s": 0.383,
+   "out_s": 0.883,
+   "duration_s": 0.5,
+   "record_in_s": 2.683,
+   "crop_src_px": {
+    "x": 776,
+    "y": 0,
+    "w": 608,
+    "h": 1080,
+    "upscale": 1.78
+   },
+   "what": "close cam: hit 1 lands on the cut, hit 2; cut before the finisher windup (fold)",
+   "transition_in": "hard cut on the old white hit flash into hit 1 + 2 brightened frames; the hit sound bridges the cut",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-close\\sabre_combo_close_1080p60.mp4",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-01-close.mp4",
+    "clip_in_frame": 5,
+    "clip_out_frame_excl": 54,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-02",
+   "in_frame": 758,
+   "out_frame_excl": 818,
+   "in_s": 12.633,
+   "out_s": 13.633,
+   "duration_s": 1.0,
+   "record_in_s": 3.183,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "turning while attacking: full 3-hit combo (pass without the '-17' on the hero)",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-02-spin.mp4",
+    "clip_in_frame": 740,
+    "clip_out_frame_excl": 836,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-03",
+   "in_frame": 52,
+   "out_frame_excl": 105,
+   "in_s": 0.867,
+   "out_s": 1.75,
+   "duration_s": 0.883,
+   "record_in_s": 4.183,
+   "crop_src_px": {
+    "x": 817,
+    "y": 70,
+    "w": 506,
+    "h": 900,
+    "upscale": 2.13
+   },
+   "what": "SLOW MOTION x4: first foam slash into three guardians (unique frames + motion interpolation, 4-frame hit-stop on contact)",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-guardians\\sabre_combo_guardians_x0.25.mp4",
+   "speed": 0.25,
+   "speed_note": "x0.25 capture = every 60 fps frame repeated 4x; kept every 4th frame (15 unique fps), motion-interpolated to 60 fps (minterpolate mci/aobmc/bidir); interpolated frames 73-75 at the hit flash smeared, replaced by the contact frame 76 (a 4-frame hit-stop). in/out frames are in that 60 fps interpolated timeline (= x0.25 file time).",
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-03-guardians-slowmo.mp4",
+    "clip_in_frame": 34,
+    "clip_out_frame_excl": 105,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-04",
+   "in_frame": 35,
+   "out_frame_excl": 57,
+   "in_s": 0.583,
+   "out_s": 0.95,
+   "duration_s": 0.367,
+   "record_in_s": 5.067,
+   "crop_src_px": {
+    "x": 817,
+    "y": 70,
+    "w": 506,
+    "h": 900,
+    "upscale": 2.13
+   },
+   "what": "real speed: hit 2 on three guardians",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-guardians\\sabre_combo_guardians_1080p60.mp4",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-04-guardians.mp4",
+    "clip_in_frame": 17,
+    "clip_out_frame_excl": 75,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-05",
+   "in_frame": 256,
+   "out_frame_excl": 279,
+   "in_s": 4.267,
+   "out_s": 4.65,
+   "duration_s": 0.383,
+   "record_in_s": 5.433,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "heavy finisher, single foam arc (replaces the guardians finisher with doubled foam)",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-05-spin.mp4",
+    "clip_in_frame": 238,
+    "clip_out_frame_excl": 297,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-06",
+   "in_frame": 99,
+   "out_frame_excl": 145,
+   "in_s": 1.65,
+   "out_s": 2.417,
+   "duration_s": 0.767,
+   "record_in_s": 5.817,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "turning combo: hit 1, hit 2, finisher sweep (ends before the '-17')",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-06-spin.mp4",
+    "clip_in_frame": 81,
+    "clip_out_frame_excl": 163,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-07",
+   "in_frame": 75,
+   "out_frame_excl": 111,
+   "in_s": 1.25,
+   "out_s": 1.85,
+   "duration_s": 0.6,
+   "record_in_s": 6.583,
+   "crop_src_px": {
+    "x": 785,
+    "y": 60,
+    "w": 462,
+    "h": 820,
+    "upscale": 2.34
+   },
+   "what": "close punch-in: hit 1, hit 2; cut before the finisher fold",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-close\\sabre_combo_close_1080p60.mp4",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-07-close.mp4",
+    "clip_in_frame": 68,
+    "clip_out_frame_excl": 112,
+    "shot_in_clip_s": 0.117
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-08",
+   "in_frame": 191,
+   "out_frame_excl": 219,
+   "in_s": 3.183,
+   "out_s": 3.65,
+   "duration_s": 0.467,
+   "record_in_s": 7.183,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "finisher windup + sweep",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-08-spin.mp4",
+    "clip_in_frame": 173,
+    "clip_out_frame_excl": 237,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-09",
+   "in_frame": 698,
+   "out_frame_excl": 758,
+   "in_s": 11.633,
+   "out_s": 12.633,
+   "duration_s": 1.0,
+   "record_in_s": 7.65,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "full combo, other facing",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-09-spin.mp4",
+    "clip_in_frame": 680,
+    "clip_out_frame_excl": 776,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-10",
+   "in_frame": 279,
+   "out_frame_excl": 295,
+   "in_s": 4.65,
+   "out_s": 4.917,
+   "duration_s": 0.267,
+   "record_in_s": 8.65,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "hit 1",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-10-spin.mp4",
+    "clip_in_frame": 261,
+    "clip_out_frame_excl": 313,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-11",
+   "in_frame": 894,
+   "out_frame_excl": 939,
+   "in_s": 14.9,
+   "out_s": 15.65,
+   "duration_s": 0.75,
+   "record_in_s": 8.917,
+   "crop_src_px": {
+    "x": 463,
+    "y": 0,
+    "w": 404,
+    "h": 720,
+    "upscale": 2.67
+   },
+   "what": "hit 2 + finisher, single foam arc (replaces the close-cam finisher with the fold)",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelaganim-v3-spin\\video_frames\\frame_%04d.jpg (60 fps image sequence)",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-11-spin.mp4",
+    "clip_in_frame": 876,
+    "clip_out_frame_excl": 957,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-12",
+   "in_frame": 79,
+   "out_frame_excl": 95,
+   "in_s": 1.317,
+   "out_s": 1.583,
+   "duration_s": 0.267,
+   "record_in_s": 9.667,
+   "crop_src_px": {
+    "x": 817,
+    "y": 70,
+    "w": 506,
+    "h": 900,
+    "upscale": 2.13
+   },
+   "what": "hit 1 on the last two guardians",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-guardians\\sabre_combo_guardians_1080p60.mp4",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-12-guardians.mp4",
+    "clip_in_frame": 61,
+    "clip_out_frame_excl": 113,
+    "shot_in_clip_s": 0.3
+   }
+  },
+  {
+   "part": "стало",
+   "shot": "new-13",
+   "in_frame": 95,
+   "out_frame_excl": 135,
+   "in_s": 1.583,
+   "out_s": 2.25,
+   "duration_s": 0.667,
+   "record_in_s": 9.933,
+   "crop_src_px": {
+    "x": 817,
+    "y": 70,
+    "w": 506,
+    "h": 900,
+    "upscale": 2.13
+   },
+   "what": "hit 2 kills both, burst, short hold",
+   "transition_in": "hard cut on contact",
+   "source": "C:\\Users\\d.grab\\Desktop\\the-game\\artifacts\\capture\\pelag-combo-v6-guardians\\sabre_combo_guardians_1080p60.mp4",
+   "speed": 1.0,
+   "capcut_clip": {
+    "file": "C:\\Users\\d.grab\\Desktop\\the-game\\ART\\VIDEO\\reels\\before-after-combo-2026-10-01\\draft\\new\\new-13-guardians.mp4",
+    "clip_in_frame": 77,
+    "clip_out_frame_excl": 153,
+    "shot_in_clip_s": 0.3
+   }
+  }
+ ]
+}

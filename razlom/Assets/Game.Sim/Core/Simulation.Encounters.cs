@@ -30,6 +30,8 @@ namespace Game.Sim
         public EncounterPlan SetupBossArena(LayoutMap map, ulong spawnSeed, int healthPercent, EncounterSettings settings,
             int hardPercent = 100, int arena = ForestEncounterTemplates.ArenaCount + 1)
         {
+            // Переключатель Хозяина Чащи (Simulation.ForestBoss): выключен, пока нет вида.
+            if (ThicketMasterBossEnabled) return SetupThicketMasterArena(map, spawnSeed, healthPercent, settings, hardPercent, arena);
             SetupRift(map, spawnSeed, 0, 0, 1);
             int module = map.GetPlaced(map.GetExit(0)).Parent;
             var center = BossFloorPoint(map, map.CenterOf(module), EnemyArchetypes.GuardianBodyRadius);

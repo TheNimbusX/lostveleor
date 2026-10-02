@@ -41,7 +41,9 @@ namespace Game.EditorTools
         // 26 сентября — всё на 10 выше (было 14 и 36): уровень и медальон артефакта обрезались низом экрана.
         const float Bottom = 24f;        // низ полосы
         const float StripHeight = 112f;
-        const float StripLeft = -524f, StripRight = 524f;
+        // 02.10 (плитка ЛКМ, CombatHudWcBuilder.Attack): полоса шире на плитку с зазором — было ±524; герой ушёл на
+        // половину влево, ряд, кувырок и зелья — на половину вправо, середина HUD на месте.
+        const float StripLeft = -569f, StripRight = 569f;
         const float Slot = 76f, SlotGap = 14f;
         const float RowBottom = 46f;     // низ плиток: под ними клавиши на кромке
         const float RowCenter = RowBottom + Slot * .5f;
@@ -49,7 +51,8 @@ namespace Game.EditorTools
         const float Portrait = 132f;
         const float BarWidth = 236f;
         const float HeroX = StripLeft + 116f;             // начало полос героя
-        const float AbilitiesX = StripLeft + 382f;
+        const float AttackX = StripLeft + 382f;           // плитка ЛКМ — первая в ряду (02.10)
+        const float AbilitiesX = AttackX + Slot + SlotGap;
         const float DashX = AbilitiesX + RowWidth + 18f;
         const float DividerX = DashX + Slot + 26f;
         const float PotionsX = DividerX + 26f;
@@ -247,9 +250,10 @@ namespace Game.EditorTools
             view.Strip = strip;
             UiInkKit.SmokeAt(strip, "Дым под героем", "smoke_band_1", new Vector2(0f, .5f), new Vector2(150f, 8f), new Vector2(640f, 230f),
                 origin: new Vector2(.2f, .5f));
-            UiInkKit.SmokeAt(strip, "Дым под способностями", "smoke_band_2", new Vector2(.5f, .5f), new Vector2(70f, 4f), new Vector2(760f, 230f));
+            // Дым под способностями и нить света — шире на плитку ЛКМ (02.10), как у готового префаба (миграция v4).
+            UiInkKit.SmokeAt(strip, "Дым под способностями", "smoke_band_2", new Vector2(.5f, .5f), new Vector2(70f, 4f), new Vector2(760f + AttackRoom, 230f));
             UiInkKit.SmokeAt(strip, "Дым под зельями", "smoke_plate", new Vector2(1f, .5f), new Vector2(-96f, 4f), new Vector2(420f, 170f), .96f);
-            UiInkKit.LightAt(strip, "Нить света", "light_thread", new Vector2(.5f, 1f), new Vector2(60f, 2f), new Vector2(980f, 44f), .3f,
+            UiInkKit.LightAt(strip, "Нить света", "light_thread", new Vector2(.5f, 1f), new Vector2(60f, 2f), new Vector2(980f + AttackRoom, 44f), .3f,
                 origin: new Vector2(0f, .5f), delay: .3f);
             // Между кувырком и зельями — огненный ромб вместо серебряной черты.
             UiInkKit.LightAt(strip, "Разделитель", "light_gem", Vector2.zero, new Vector2(DividerX - StripLeft, RowCenter - Bottom), new Vector2(22f, 24f), .85f,
@@ -263,7 +267,7 @@ namespace Game.EditorTools
         {
             float left = StripLeft - 44f, bottom = Bottom - 6f;
             RectTransform hero = Box(Node("Герой", root), BottomCenter, Vector2.zero, new Vector2(left, bottom),
-                new Vector2(AbilitiesX - 16f - left, StripHeight + 26f));
+                new Vector2(AttackX - 16f - left, StripHeight + 26f));
             view.HeroPanel = hero;
             // Числа здоровья и лавидия внутри полос видны всегда (владелец 29.09; с 23 сентября были
             // только под мышью над героем), опыт — подписью под полосой.
@@ -344,6 +348,7 @@ namespace Game.EditorTools
             hit.type = Image.Type.Simple;
             hit.enabled = false;
             view.HealthFlash = hit;
+            // «Лавидий» — только имя узла (подписи у полосы нет); игроку ресурс — «концентрация» (01.10).
             view.LavidiumFill = Vital(hero, "Лавидий", Role.Lavidium, x, Bottom + 42f - bottom, 16f, 12f, out view.LavidiumText, out GameObject row);
             view.LavidiumRow = row;
             // Полный лавидий — редкий проблеск по полосе.

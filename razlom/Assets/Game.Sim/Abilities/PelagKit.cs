@@ -31,6 +31,26 @@ namespace Game.Sim
         /// <summary>Вихрь — с него начинается каждый забег.</summary>
         public const int StarterPoolIndex = 0;
 
+        /// <summary>
+        /// Псевдолиния сабли (ЛКМ) в наборе забега: свои формы и таланты, как у
+        /// навыков (DESIGN 01.10), но это НЕ индекс пула и НЕ слот — в слоты, броски
+        /// способностей, дропы и меню пула не попадает никогда. Пул обязан
+        /// оставаться меньше этого числа. План форм 02.10.
+        /// </summary>
+        public const int SabreLine = 100;
+
+        /// <summary>Таланты сабли ещё не утверждены («Выпад из рывка» — будущий): пока ноль.</summary>
+        public const int SabreTalentCount = 0;
+
+        /// <summary>
+        /// Линии набора для бросков талантов и форм: весь пул, затем сабля. Сабля
+        /// ПОСЛЕДНЯЯ: пока у неё нет ни талантов, ни форм, число кандидатов и ход
+        /// бросков те же, что до неё.
+        /// </summary>
+        public const int LineCount = PoolSize + 1;
+
+        public static int LineAt(int i) => i < PoolSize ? i : SabreLine;
+
         /// <summary>Способность пула по индексу. null — индекс вне пула.</summary>
         public static AbilityDefinition PoolDefinition(int index)
         {

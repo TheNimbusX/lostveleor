@@ -1,0 +1,31 @@
+Active camp renderers=2222 shadow casters=1238 source triangles=5453312
+45330 Grass 0 / Grouped foliage 9
+42772 Grass 1 (13) / Grouped foliage 10
+42772 Grass 1 (7) / Grouped foliage 10
+42772 Grass 1 (10) / Grouped foliage 10
+42772 Grass 1 (4) / Grouped foliage 10
+42772 Grass 1 (3) / Grouped foliage 10
+42772 Grass 1 (2) / Grouped foliage 10
+42772 Grass 1 (1) / Grouped foliage 10
+42772 Grass 1 (5) / Grouped foliage 10
+42772 Grass 1 (15) / Grouped foliage 10
+42772 Grass 1 (14) / Grouped foliage 10
+42772 Grass 1 (12) / Grouped foliage 10
+42772 Grass 1 (11) / Grouped foliage 10
+42772 Grass 1 (18) / Grouped foliage 10
+42772 Grass 1 / Grouped foliage 10
+42772 Grass 1 (8) / Grouped foliage 10
+42772 Grass 1 (9) / Grouped foliage 10
+30582 Continuous ground / Camp surface — речной вырез
+27585 tripo_node_f95d9490 / tripo_node_f95d9490
+25185 tripo_node_9961f7d1 / tripo_node_9961f7d1
+25126 Grass 2 (2) / Grouped foliage 13
+22266 Grass 2 (1) / Grouped foliage 12
+21112 Grass 2 / Grouped foliage 11
+18000 fonar / Camp lantern — 18k
+18000 fonar (3) / Camp lantern — 18k
+18000 fonar (1) / Camp lantern — 18k
+18000 fonar (3) / Camp lantern — 18k
+18000 fonar (2) / Camp lantern — 18k
+15372 steampunk+alchemy+apparatus+3d+model / tripo_15680dea_ac10_46ad_96e6_c51332b674fb
+13629 medieval+market+stall+3d+model / tripo_node_a8fdadfd-e071-403f-bf89-8b747439fcd1

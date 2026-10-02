@@ -311,7 +311,7 @@ namespace Game.Sim
         public bool SquallShielded
             => _chainHopsLeft > 0 && BuildHas(_chainSlot, AbilityFlag.SquallInvulnerable, AbilityDefinition.ChainStepId);
 
-        private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields;
+        private bool PlayerImmune => PlayerInvulnerable || SquallShielded || ArtifactShields || DashInvulnerable;
 
         private void TalentOnKill(int target, int killer, int slot)
         {
@@ -352,6 +352,8 @@ namespace Game.Sim
 
         private void StunByTalent(int target, int ticks)
         {
+            // Хозяин Чащи не оглушается (Simulation.ForestBoss): ни статуса, ни события.
+            if (Entities.Kind[target] == EnemyKind.ForestThicketMaster) return;
             Statuses.ApplyStun(target, Tick + ticks);
             Entities.Velocity[target] = FixVec2.Zero;
             Entities.PendingAttackTarget[target] = -1;

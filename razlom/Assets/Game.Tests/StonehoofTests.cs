@@ -435,11 +435,19 @@ namespace Game.Tests
             return input;
         }
 
-        /// <summary>Рубить кабана автоатакой: герой сам подходит на дистанцию удара.</summary>
+        /// <summary>
+        /// Рубить кабана серией сабли. Сама серия к цели не ходит (01.10), поэтому
+        /// «игрок» идёт на кабана с зажатой атакой, пока не окажется ближе 1,875 м
+        /// от центра — там, где вставала прежняя автоатака, — и дальше рубит с места.
+        /// </summary>
         private static InputFrame Chop(Simulation s)
         {
             var input = InputFrame.Empty;
-            input.Flags = (byte)InputFlags.Attack; input.AttackTarget = 1; input.Aim = s.Entities.Position[1];
+            var center = s.Entities.Position[1]; var to = center - s.Entities.Position[0];
+            Fix64 stand = Fix64.Ratio(15, 8);
+            input.Flags = to.LengthSq > stand * stand
+                ? (byte)(InputFlags.MoveOrder | InputFlags.Attack) : (byte)InputFlags.Attack;
+            input.Aim = center;
             return input;
         }
 
@@ -500,6 +508,10 @@ namespace Game.Tests
         {
             Assume.That(Simulation.StonehoofTuskEnabled, Is.True);
             var s = RestingEncounter();
+            // Серия сабли (01.10) рубит кабана вдвое быстрее прежней автоатаки:
+            // с родными 650 он падал раньше третьего взмаха клыков, а тест о клыках.
+            s.Entities.Stats[1].SetBase(StatType.MaxHealth, Fix64.FromInt(3000));
+            s.Entities.RefreshStats(1); s.Entities.Health[1] = 3000;
             int boarHealth = s.Entities.Health[1];
             int first = RunTusks(s, Chop, 300, out double at, out int starts, out int misses, out int close);
             Assert.That(s.Entities.Health[1], Is.LessThan(boarHealth), "герой так и не рубанул");

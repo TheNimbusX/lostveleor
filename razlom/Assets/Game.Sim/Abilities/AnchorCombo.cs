@@ -112,35 +112,7 @@ namespace Game.Sim
             if (landed) BoardingSureCrit(build);
         }
 
-        /// <summary>
-        /// БАЗОВЫЙ РЫВОК. Короткий уход в сторону курсора.
-        ///
-        /// Состояния не держит вовсе: рывок — это одно назначение
-        /// принудительного перемещения, всё остальное доделывает ForcedMotion.
-        /// Ни попадания, ни этапов, ни окна — поэтому нет ни Update, ни хеша.
-        ///
-        /// ИДЁТ НА ПОЛНУЮ ДАЛЬНОСТЬ, а не до точки клика. Рывок отвечает на
-        /// «уйти отсюда», а не «попасть туда»: короткий рывок из-за того, что
-        /// курсор оказался близко к телу, — это не решение игрока, а его
-        /// случайность.
-        /// </summary>
-        private void CastDash(int slot, FixVec2 aim)
-        {
-            AbilityBuild build = _abilityBuilds[slot];
-            FixVec2 from = Entities.Position[PlayerId];
-
-            FixVec2 direction = aim - from;
-            if (direction.LengthSq.Raw == 0) direction = Entities.Facing[PlayerId];
-            if (direction.LengthSq.Raw == 0) direction = new FixVec2(Fix64.One, Fix64.Zero);
-            direction = direction.Normalized();
-
-            Entities.Facing[PlayerId] = direction;
-
-            int ticks = build.Get(AbilityStatType.DurationTicks).ToInt();
-            ForcedMotion.Begin(Entities, PlayerId,
-                from + direction * build.Get(AbilityStatType.Radius),
-                ticks, ForcedMotionKind.Roll);
-        }
+        // Рывок героя (CastDash) — Simulation.Dash.
 
         // ---- Крушение ----
 

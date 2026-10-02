@@ -102,31 +102,34 @@ namespace Game.Tests
 
         // ---- приказ атаковать ----
 
+        /// <summary>
+        /// Серия сабли (01.10): один клик — один удар, без «приказа бить, пока
+        /// цель жива». Бьёт тот, кто держит кнопку или нажимает снова.
+        /// </summary>
         [Test]
-        public void AttackOrder_KeepsHittingAfterTheClick()
+        public void OneClick_IsOneHit_NoStandingOrder()
         {
             Simulation sim = Arena(51UL, 0);
 
             // Враг прямо перед игроком: взгляд по умолчанию по оси X.
             int victim = sim.Entities.Spawn(new FixVec2(Fix64.One, Fix64.Zero), 5000, Faction.Orvill);
 
-            // ОДИН кадр с приказом — дальше игрок кнопку не трогает.
-            var order = new InputFrame
+            var click = new InputFrame
             {
-                Flags = (byte)InputFlags.Attack,
+                Flags = (byte)InputFlags.AttackPressed,
                 AttackTarget = victim,
+                Aim = new FixVec2(Fix64.FromInt(3), Fix64.Zero),
             };
-            sim.Step(in order);
-
+            sim.Step(in click);
             for (int t = 0; t < 200; t++)
             {
                 InputFrame idle = InputFrame.Empty;
                 sim.Step(in idle);
             }
 
-            Assert.Less(sim.Entities.Health[victim], 5000,
-                "щёлкнул по врагу — персонаж бьёт сам, без удержания кнопки");
-            Assert.AreEqual(victim, sim.AttackTarget, "и цель всё ещё назначена");
+            Assert.AreEqual(1, sim.SabreSwing.Serial, "один клик — один удар");
+            Assert.Less(sim.Entities.Health[victim], 5000, "и он попал");
+            Assert.AreEqual(-1, sim.AttackTarget, "приказа «бей, пока жив» больше нет");
         }
 
         // ---- расталкивание тел ----

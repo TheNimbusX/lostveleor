@@ -21,5 +21,8 @@ namespace Game.Sim
 
         /// <summary>Детёныш Расщепеня. Только из распада — в пачки и волны не ставится.</summary>
         ForestSplitling = 9,
+
+        /// <summary>Хозяин Чащи — босс леса (Simulation.ForestBoss). В пачки и волны не ставится.</summary>
+        ForestThicketMaster = 10,
     }
 }

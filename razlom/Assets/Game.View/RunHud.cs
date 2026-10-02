@@ -223,7 +223,7 @@ namespace Game.View
                 var bar = new Rect(panel.x, panel.yMax + 8, 360, 50);
                 Fill(bar, Panel);
                 GUI.Label(new Rect(bar.x + 8, bar.y + 3, 344, 24),
-                    run.BossEnraged ? "ХРАНИТЕЛЬ ЛУГОВ · ЯРОСТЬ" : "ХРАНИТЕЛЬ ЛУГОВ · БОСС", _subtitle);
+                    EnemyTexts.BossName(run.Sim.Entities.Kind[id]).ToUpperInvariant() + (run.BossEnraged ? " · ЯРОСТЬ" : " · БОСС"), _subtitle);
                 Fill(new Rect(bar.x + 8, bar.y + 30, 344, 10), Ink);
                 Fill(new Rect(bar.x + 8, bar.y + 30,
                     344f * run.Sim.Entities.Health[id] / run.Sim.Entities.MaxHealth[id], 10), Coral);
@@ -249,7 +249,7 @@ namespace Game.View
             if (run.Encounters != null)
                 for (int i = 1; i < run.Sim.Entities.Count; i++)
                     if (run.Encounters.IsElite(i) && run.Sim.Entities.Alive[i])
-                        DrawLandmark(run.Sim.Entities.Position[i], i == run.BossId ? "ХРАНИТЕЛЬ ЛУГОВ" : EnemyTexts.Name(run.Sim.Entities.Kind[i]).ToUpperInvariant(), camera, scale, 3.2f);
+                        DrawLandmark(run.Sim.Entities.Position[i], (i == run.BossId ? EnemyTexts.BossName(run.Sim.Entities.Kind[i]) : EnemyTexts.Name(run.Sim.Entities.Kind[i])).ToUpperInvariant(), camera, scale, 3.2f);
             for (int e = 0; e < run.Map.ExitCount; e++)
                 DrawLandmark(run.Map.ExitPoint(e), run.Phase == RunPhase.SeekingExit
                     ? "ВЫХОД · подойди" : "ВЫХОД · победи цели", camera, scale);
@@ -440,7 +440,8 @@ namespace Game.View
             if (icon != null) GUI.DrawTexture(new Rect(card.x + 16f, card.y + 60f, 64f, 64f), icon, ScaleMode.ScaleToFit);
             GUI.Label(new Rect(card.x + 92f, card.y + 64f, card.width - 108f, 56f), PlayerHud.AbilityName(definition.Id), _title);
             GUI.Label(new Rect(card.x + 16f, card.y + 134f, card.width - 32f, 20f),
-                "ЛАВИДИЙ " + definition.GetBase(AbilityStatType.LavidiumCost).ToInt(), _eyebrow);
+                // Ресурс способностей игроку — «концентрация» (владелец 01.10).
+                "КОНЦЕНТРАЦИЯ " + definition.GetBase(AbilityStatType.LavidiumCost).ToInt(), _eyebrow);
             string text = PlayerHud.AbilityDescription(definition.Id);
             if (run.Loadout.IsFull)
                 text += "\n\nПанель полна: придётся заменить способность или разобрать эту на " + run.SalvageGold + " золота.";
@@ -555,7 +556,7 @@ namespace Game.View
                 case StatType.AttackSpeed: return "СКОРОСТЬ АТАКИ";
                 case StatType.AbilitySpeed: return "СКОРОСТЬ ИСПОЛНЕНИЯ";
                 case StatType.CooldownRecovery: return "ВОССТАНОВЛЕНИЕ НАВЫКОВ";
-                case StatType.LavidiumRegen: return "ЛАВИДИЙ В СЕКУНДУ";
+                case StatType.LavidiumRegen: return "КОНЦЕНТРАЦИЯ В СЕКУНДУ";
                 case StatType.MoveSpeed: return "СКОРОСТЬ ДВИЖЕНИЯ";
                 case StatType.CritChance: return "ШАНС КРИТА";
                 case StatType.CritMultiplier: return "МНОЖИТЕЛЬ КРИТА";

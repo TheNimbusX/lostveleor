@@ -261,7 +261,7 @@ namespace Game.Tests
             int previousSerial = sim.PlayerAction.Serial;
             sim.Step(in input);
             Assert.AreEqual(previousSerial + 1, sim.PlayerAction.Serial, "Обычная атака должна действительно начаться");
-            for (int tick = 0; tick < Simulation.AttackWindupTicks + 3; tick++)
+            for (int tick = 0; tick < Simulation.SabreBaseContactTicks(0) + 3; tick++)
             {
                 foreach (var e in sim.Events) if (e.Type == SimEventType.Damage && e.Source == 0 && e.Target < 3) damage[e.Target] += e.Amount;
                 sim.Step(InputFrame.Empty);
@@ -271,12 +271,7 @@ namespace Game.Tests
         [Test] public void SeaKnotBoostsEveryTargetOfNextAttackStartedAfterCompletedRoll()
         {
             var plain = RollArena(CampGift.None); var knot = RollArena(CampGift.SeaKnot);
-            // Перекат сбрасывает обычное комбо на лёгкий удар. Здесь принудительно
-            // готовим тяжёлый вариант, чтобы проверить дар для всех его целей,
-            // не меняя правило комбо в игре и не подменяя начало/контакт атаки.
-            var variant = typeof(Simulation).GetField("_nextPlayerAttackVariant",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            Assert.IsNotNull(variant); variant.SetValue(plain, 1); variant.SetValue(knot, 1);
+            // Удар серии сабли бьёт всех в секторе — дар должен лечь на каждую цель.
             var baseline = AttackPair(plain); var gifted = AttackPair(knot);
             Assert.Greater(baseline[1], 0); Assert.Greater(baseline[2], 0);
             for (int target = 1; target < 3; target++)

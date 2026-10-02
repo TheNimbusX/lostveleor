@@ -177,6 +177,16 @@ namespace Game.View
             DissolveSeconds = 1f, RecoilMeters = .04f, EdgeGlow = .03f,
             EdgeColor = new Color(.30f, .26f, .16f, 1f)
         };
+        // Хозяин Чащи (Death, 90 кадров по контракту клипов): шатается 0–20, лапы подламываются
+        // 20–45, заваливается на бок 45–70 — касание боком на 65-м к FallSeconds (там же второй
+        // залп коры у груди), лежит до 90 — последний кадр держится (ThicketMasterAnimatorView).
+        // Тело URP Lit без растворения: показ длинный, под конец лежащее тело уходит в землю.
+        public EnemyDeathPresentation ForestThicketMaster = new EnemyDeathPresentation {
+            ClipSeconds = 90f / 30f, StartNormalized = 0f, RestNormalized = 65f / 90f,
+            StateSpeed = 1f, BlendSeconds = .12f, RestSeconds = 25f / 30f,
+            DissolveSeconds = 5.4f, RecoilMeters = 0f, EdgeGlow = .025f,
+            EdgeColor = new Color(.34f, .29f, .17f, 1f)
+        };
         /// <summary>
         /// Смерть вида. Расщепень не падает, а раскалывается (SplitterCombatView): тело
         /// прячется через 0,2 с, профиль Хранителя лишь держит слот до конца распада;
@@ -194,6 +204,7 @@ namespace Game.View
                 case EnemyKind.ForestBud: return _current.ForestBud;
                 case EnemyKind.ForestThorncaster: return _current.ForestThorncaster;
                 case EnemyKind.ForestRootSnarer: return _current.ForestRootSnarer;
+                case EnemyKind.ForestThicketMaster: return _current.ForestThicketMaster;
                 case EnemyKind.ForestRootSwarm:
                 case EnemyKind.ForestSplitling: return _current.RootSwarm;
                 default: return _current.Guardian;
@@ -269,6 +280,10 @@ namespace Game.View
                     material = DeathMaterial.Shell; big = true; motes = 6; scale = 1f; chunk = .15f; crumbles = false; ownBreak = true; break;
                 case EnemyKind.ForestSplitling:
                     material = DeathMaterial.Shell; big = false; motes = 3; scale = .6f; chunk = .09f; crumbles = false; ownBreak = true; break;
+                // Хозяин Чащи: кора, тяжёлый (стоп-кадр и тряска), огоньков больше всех (×1,5 за элиту — 42 из 64).
+                // Не трескается (URP Lit): играет Death и уходит в землю — см. профиль.
+                case EnemyKind.ForestThicketMaster:
+                    material = DeathMaterial.Bark; big = true; motes = 28; scale = 2.2f; chunk = .3f; crumbles = false; break;
                 default:
                     material = DeathMaterial.Bark; big = false; motes = 6; scale = 1f; chunk = .16f; break;
             }
@@ -281,7 +296,8 @@ namespace Game.View
             float trauma = !heavy ? 0f : lastOfWave ? .6f : .5f;
             float zoom = !heavy ? 0f : lastOfWave ? .75f : .55f;
             // Падающее тело ложится к концу падения профиля (тот же миг, что «упал» в CombatAudio).
-            float lands = kind == EnemyKind.ForestRootSnarer ? Mathf.Max(stop + .05f, Death(kind).FallSeconds) : 0f;
+            float lands = kind == EnemyKind.ForestRootSnarer || kind == EnemyKind.ForestThicketMaster
+                ? Mathf.Max(stop + .05f, Death(kind).FallSeconds) : 0f;
             return new EnemyKillBeat(kind, material, heavy, lastOfWave, stop, burst,
                 Death(kind).DissolveSeconds, motes, scale, chunk, crumbles, trauma, zoom, lands);
         }

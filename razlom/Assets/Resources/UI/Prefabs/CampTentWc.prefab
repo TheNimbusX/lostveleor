@@ -590,7 +590,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041B\u0430\u0432\u0438\u0434\u0438\u0439/\u0441"
+  m_text: "\u041A\u043E\u043D\u0446\u0435\u043D\u0442\u0440\u0430\u0446\u0438\u044F/\u0441"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
   m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
@@ -10872,7 +10872,7 @@ GameObject:
   - component: {fileID: 6615314879634046671}
   - component: {fileID: 1507448159850934307}
   m_Layer: 5
-  m_Name: "\u0421\u0442\u0430\u0442 \u041B\u0430\u0432\u0438\u0434\u0438\u0439/\u0441"
+  m_Name: "\u0421\u0442\u0430\u0442 \u041A\u043E\u043D\u0446\u0435\u043D\u0442\u0440\u0430\u0446\u0438\u044F/\u0441"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -13522,7 +13522,7 @@ GameObject:
   - component: {fileID: 656400257306464497}
   - component: {fileID: 8447483006723629440}
   m_Layer: 5
-  m_Name: "\u0421\u0442\u0430\u0442 \u041B\u0430\u0432\u0438\u0434\u0438\u0439"
+  m_Name: "\u0421\u0442\u0430\u0442 \u041A\u043E\u043D\u0446\u0435\u043D\u0442\u0440\u0430\u0446\u0438\u044F"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14889,7 +14889,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d1c241925be0c14dba1e7e5129925bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.View::Game.View.CampTentView
-  LayoutVersion: 101
+  LayoutVersion: 102
   Backdrop: {fileID: 3419889581482678240}
   Close: {fileID: 2934762404618014678}
   Feedback: {fileID: 2296996789166782298}
@@ -20853,7 +20853,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041B\u0430\u0432\u0438\u0434\u0438\u0439"
+  m_text: "\u041A\u043E\u043D\u0446\u0435\u043D\u0442\u0440\u0430\u0446\u0438\u044F"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 31e090218f32aa3429e394010d43142c, type: 2}
   m_sharedMaterial: {fileID: 4994757242491218415, guid: 31e090218f32aa3429e394010d43142c, type: 2}
@@ -21275,7 +21275,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041B\u0410\u0412\u0418\u0414\u0418\u0419"
+  m_text: "\u041A\u041E\u041D\u0426\u0415\u041D\u0422\u0420\u0410\u0426\u0418\u042F"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
   m_sharedMaterial: {fileID: 814094077842075439, guid: 5313ef4f9db48b7448b4b1007d9739b4, type: 2}
@@ -27672,8 +27672,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 114.62, y: 0}
-  m_SizeDelta: {x: -118.62, y: 16}
+  m_AnchoredPosition: {x: 165.96, y: 0}
+  m_SizeDelta: {x: -169.96, y: 16}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!1 &6653477637076181965
 GameObject:
@@ -31534,7 +31534,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5505841991218446818}
   m_Layer: 5
-  m_Name: "\u0413\u0440\u0443\u043F\u043F\u0430 \u041B\u0430\u0432\u0438\u0434\u0438\u0439"
+  m_Name: "\u0413\u0440\u0443\u043F\u043F\u0430 \u041A\u043E\u043D\u0446\u0435\u043D\u0442\u0440\u0430\u0446\u0438\u044F"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

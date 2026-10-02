@@ -60,9 +60,10 @@ namespace Game.View
                 case GameAction.Ability2: return "Способность 2";
                 case GameAction.Ability3: return "Способность 3";
                 case GameAction.Ability4: return "Способность 4";
-                case GameAction.Dash: return "Кувырок";
+                case GameAction.Dash: return "Рывок";
                 case GameAction.HealthPotion: return "Зелье здоровья";
-                case GameAction.LavidiumPotion: return "Зелье лавидия";
+                // Ресурс способностей игроку — «концентрация» (владелец 01.10); действие в коде прежнее.
+                case GameAction.LavidiumPotion: return "Зелье концентрации";
                 case GameAction.UseArtifact: return "Артефакт забега";
                 case GameAction.Interact: return "Взаимодействие · сумка";
                 case GameAction.EnterRift: return "Войти в Разлом";

@@ -253,26 +253,32 @@ namespace Game.Tests
 
         // ---- здоровье: «убивать за 5–6 обычных ударов» ----
 
-        /// <summary>Сколько ударов обычной атаки (54 и тяжёлый 68 по очереди) уходит на health.</summary>
-        private static int BasicHitsToKill(int health, bool heavyFirst)
+        /// <summary>
+        /// Сколько ударов серии сабли уходит на health, если серия начинается с
+        /// удара first (0 — справа налево, 2 — добивающий): 45 / 45 / 90 от 54.
+        /// </summary>
+        private static int BasicHitsToKill(int health, int first)
         {
-            int light = Progression.ReferenceHeroDamage;
-            int heavy = CombatStats.RoundToInt(Fix64.FromInt(light) * Fix64.Ratio(5, 4));
             int dealt = 0, hits = 0;
-            bool nextHeavy = heavyFirst;
-            while (dealt < health) { dealt += nextHeavy ? heavy : light; nextHeavy = !nextHeavy; hits++; }
+            for (int hit = first; dealt < health; hit = (hit + 1) % 3, hits++)
+                dealt += SeriesHit(hit);
             return hits;
         }
 
+        private static int SeriesHit(int hit)
+            => CombatStats.RoundToInt(Fix64.FromInt(Progression.ReferenceHeroDamage)
+                * (hit == 2 ? Fix64.Ratio(5, 3) : Fix64.Ratio(5, 6)));
+
         /// <summary>
         /// Живой бой: эталонный герой (270/54) без критов бьёт Хранителя первой
-        /// арены обычной атакой. Удары чередуются — 54 и тяжёлый 68 (×1,25), и
-        /// с какого из двух начнёт серия, зависит от прошлых взмахов, поэтому
-        /// проверены обе фазы: 5 ударов (298 и 312 против 270).
+        /// арены серией сабли (01.10): 45, 45, 90, 45, 45 — ровно 270, пятый
+        /// удар убивает. Серия, начатая по другому врагу, может встретить
+        /// свежего Хранителя вторым ударом (тоже пять) или добивающим (четыре).
         /// </summary>
-        [TestCase(false, 5)]
-        [TestCase(true, 5)]
-        public void ArenaOneGuardian_DiesToFiveOrSixBasicHits(bool heavyFirst, int expectedHits)
+        [TestCase(0, 5)]
+        [TestCase(1, 5)]
+        [TestCase(2, 4)]
+        public void ArenaOneGuardian_DiesToFiveSeriesHits(int first, int expectedHits)
         {
             var sim = new Simulation(101UL, 32);
             sim.ApplyHeroBaseline();
@@ -282,6 +288,17 @@ namespace Game.Tests
             Assert.AreEqual(Progression.ReferenceHeroDamage, e.Damage[Simulation.PlayerId], "эталонный удар 54");
             e.Stats[Simulation.PlayerId].SetBase(StatType.CritChance, Fix64.Zero);
             e.RefreshStats(Simulation.PlayerId);
+            Assert.AreEqual(45, SeriesHit(0));
+            Assert.AreEqual(90, SeriesHit(2));
+
+            // Серию сдвигают удары в пустоту в другую сторону.
+            var air = new InputFrame { Flags = (byte)InputFlags.AttackPressed, Aim = At(-5, 0), AbilityTarget = -1 };
+            for (int hit = 0; hit < first; hit++)
+            {
+                sim.Step(air);
+                while (sim.SabreSwing.ActiveAt(sim.Tick)) sim.Step(InputFrame.Empty);
+            }
+            Assert.AreEqual(first, sim.SabreNextHit, "серия подведена к нужному удару");
 
             int guardian = sim.AddKindTestEnemy(EnemyKind.ForestGuardian, At(2, 0), 100);
             e.Stats[guardian].SetBase(StatType.MoveSpeed, Fix64.Zero);
@@ -290,29 +307,10 @@ namespace Game.Tests
                 EnemyArchetypes.DepthHealthPercent(1)), e.MaxHealth[guardian], "здоровье Хранителя первой арены");
             Assert.AreEqual(e.MaxHealth[guardian], e.Health[guardian]);
 
-            // Тяжёлый первым — один обычный удар по манекену сзади сдвигает очередь.
-            if (heavyFirst)
-            {
-                int decoy = sim.SpawnEnemy(At(-2, 0), 1000, EnemyKind.ForestGuardian);
-                e.Stats[decoy].SetBase(StatType.MoveSpeed, Fix64.Zero);
-                e.RefreshStats(decoy);
-                for (int t = 0; t < 120; t++)
-                {
-                    sim.Step(new InputFrame { Flags = (byte)InputFlags.Attack, AttackTarget = decoy,
-                        Aim = e.Position[decoy], AbilityTarget = -1 });
-                    bool landed = false;
-                    foreach (var ev in sim.Events)
-                        if (ev.Type == SimEventType.Damage && ev.Source == Simulation.PlayerId && ev.Target == decoy) landed = true;
-                    if (landed) break;
-                }
-                Assert.AreEqual(1000 - Progression.ReferenceHeroDamage, e.Health[decoy], "по манекену ушёл один обычный удар");
-            }
-
             var dealt = new List<int>();
             for (int t = 0; t < 600 && e.Alive[guardian]; t++)
             {
-                sim.Step(new InputFrame { Flags = (byte)InputFlags.Attack, AttackTarget = guardian,
-                    Aim = e.Position[guardian], AbilityTarget = -1 });
+                sim.Step(new InputFrame { Flags = (byte)InputFlags.Attack, Aim = e.Position[guardian], AbilityTarget = -1 });
                 foreach (var ev in sim.Events)
                     if (ev.Type == SimEventType.Damage && ev.Source == Simulation.PlayerId && ev.Target == guardian)
                     {
@@ -321,29 +319,29 @@ namespace Game.Tests
                     }
             }
             Assert.IsFalse(e.Alive[guardian], "Хранитель жив после " + dealt.Count + " ударов");
-            Assert.AreEqual(heavyFirst ? 68 : 54, dealt[0], "первый удар серии");
+            Assert.AreEqual(SeriesHit(first), dealt[0], "первый удар серии");
             Assert.AreEqual(expectedHits, dealt.Count, "ударов до смерти: " + string.Join(", ", dealt));
-            Assert.AreEqual(BasicHitsToKill(e.MaxHealth[guardian], heavyFirst), dealt.Count, "счёт по формуле совпал с боем");
-            Assert.That(dealt.Count, Is.InRange(5, 6), "правило владельца: 5–6 обычных ударов");
+            Assert.AreEqual(BasicHitsToKill(e.MaxHealth[guardian], first), dealt.Count, "счёт по формуле совпал с боем");
         }
 
         /// <summary>
-        /// С глубиной здоровье растёт на 7% за арену: до шестой арены — всё ещё
-        /// 5–6 обычных ударов с любой фазы серии, на седьмой и восьмой — 7.
+        /// С глубиной здоровье растёт на 7% за арену. Серия сабли со свежего
+        /// начала: арена 1 — пять ударов, 2–5 — шесть, 6–8 — семь (с критами
+        /// меньше). Общая подгонка ботом — в конце переделки (владелец, 01.10);
+        /// тест фиксирует числа, чтобы их сдвиг был виден.
         /// </summary>
         [Test]
-        public void DepthScaling_KeepsFiveToSixHitsThroughArenaSix()
+        public void DepthScaling_SeriesHitsByArena()
         {
             int baseHealth = EnemyArchetypes.Get(EnemyKind.ForestGuardian).BaseHealth;
             Assert.AreEqual(270, baseHealth, "здоровье 500 → 270 (01.10)");
+            int[] expected = { 5, 6, 6, 6, 6, 7, 7, 7 };
             for (int arena = 1; arena <= 8; arena++)
             {
                 int health = EnemyArchetypes.ScaleHealth(baseHealth, EnemyArchetypes.DepthHealthPercent(arena));
-                int min = System.Math.Min(BasicHitsToKill(health, false), BasicHitsToKill(health, true));
-                int max = System.Math.Max(BasicHitsToKill(health, false), BasicHitsToKill(health, true));
-                TestContext.WriteLine("арена " + arena + ": " + health + " HP, " + min + "–" + max + " ударов");
-                if (arena <= 6) Assert.That(min >= 5 && max <= 6, Is.True, "арена " + arena + ": " + min + "–" + max);
-                else Assert.AreEqual(7, max, "арена " + arena);
+                int fresh = BasicHitsToKill(health, 0);
+                TestContext.WriteLine("арена " + arena + ": " + health + " HP, " + fresh + " ударов серии");
+                Assert.AreEqual(expected[arena - 1], fresh, "арена " + arena);
             }
             Assert.AreEqual(327, EnemyArchetypes.ScaleHealth(baseHealth, EnemyArchetypes.DepthHealthPercent(4)));
             Assert.AreEqual(402, EnemyArchetypes.ScaleHealth(baseHealth, EnemyArchetypes.DepthHealthPercent(8)));

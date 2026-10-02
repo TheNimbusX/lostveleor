@@ -232,5 +232,11 @@ namespace Game.Sim
 
         /// <summary>Вставляет новый эффект в стадию. Настоящий код, около 23%.</summary>
         EffectInsert = 2,
+
+        /// <summary>Ставит форму навыка (AbilityBuild.Form). DefinitionId не меняется — план форм 02.10.</summary>
+        Form = 3,
+
+        /// <summary>Включает биты AbilityTrait — механика форм и их талантов.</summary>
+        Trait = 4,
     }
 }

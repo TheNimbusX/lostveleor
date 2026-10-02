@@ -1,0 +1,22 @@
+PASS clean onboarding services
+PASS initial small potion stock
+PASS first return: four goods
+PASS second return: preparation before Leo
+PASS third return: Leo
+PASS rank 1 resident 0
+PASS rank 1 resident 1
+PASS rank 1 resident 2
+PASS rank 2 resident 0
+PASS rank 2 resident 1
+PASS rank 2 resident 2
+PASS rank 3 resident 0
+PASS rank 3 resident 1
+PASS rank 3 resident 2
+PASS all nine upgrades at level ten
+PASS real Eni shop opens before forge
+PASS forge panel open Refine
+PASS forge hides every old shop graphic including Eni portrait
+PASS save v9 roundtrip exact camp state
+PASS double forge submit charges only the reviewed operation
+PASS forge commit refresh keeps old shop hidden
+PASS back restores updated item icons and Eni portrait

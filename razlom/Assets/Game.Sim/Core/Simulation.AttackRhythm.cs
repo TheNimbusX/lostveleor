@@ -236,6 +236,9 @@ namespace Game.Sim
                         if (BigMarkWeightOf(id, out _, out int impact) > 0 && impact >= Tick) AddHeroContact(id, impact, impact);
                         break;
                     }
+                    case EnemyKind.ForestThicketMaster:
+                        AddThicketMasterContacts(id);
+                        break;
                 }
             }
         }

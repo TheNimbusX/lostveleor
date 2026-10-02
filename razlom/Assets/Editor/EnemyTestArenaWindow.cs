@@ -119,6 +119,8 @@ public sealed class EnemyTestArenaWindow : EditorWindow
         var list = new List<EnemyKind>();
         foreach (EnemyKind kind in Enum.GetValues(typeof(EnemyKind)))
             if (EnemyArchetypes.IsDefined(kind)) list.Add(kind);
+        // Хозяин Чащи без вида не показывается: включится вместе с переключателем босса.
+        if (!Simulation.UseThicketMasterBoss) list.Remove(EnemyKind.ForestThicketMaster);
         return list.ToArray();
     }
 

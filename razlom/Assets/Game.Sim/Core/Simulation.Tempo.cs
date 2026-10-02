@@ -128,6 +128,7 @@ namespace Game.Sim
             else if (id == AbilityDefinition.BackblastId) { contact = _backblastTick; end = _mobilityEndTick; }
             SetActionClock(slot, id, contact, end);
             ExtendPelagBasicContinuation(_playerAction.EndTick);
+            ExtendSabreChain(_playerAction.EndTick);
             if (id == AbilityDefinition.DashId) PreparedGiftRollStarted(contact);
         }
         /// <param name="keepKnockback">
@@ -137,6 +138,7 @@ namespace Game.Sim
         private void CancelPlayerAction(bool keepKnockback = false)
         {
             InterruptPelagBasicAttack();
+            InterruptSabreSwing();
             PreparedGiftActionCancelled();
             StopAnchorSlam(); StopWreck(); StopCleave(); StopFlask();
             CancelBlazeGesture(); StopWhirlwindChannel();
@@ -144,6 +146,8 @@ namespace Game.Sim
             _whirlwindImpactTick = _whirlwindImpactSlot = -1;
             _chainHopsLeft = _chainVisitedCount = 0;
             _mobilitySlot = _backblastTick = -1;
+            // Рывок, сорванный новым уходом, кончается здесь же: тело встаёт, неуязвимость снята.
+            CancelDash();
             var pushed = (ForcedMotionKind)Entities.ForcedKind[PlayerId];
             if (!keepKnockback || (pushed != ForcedMotionKind.Knockback && pushed != ForcedMotionKind.Dragged))
                 ForcedMotion.Clear(Entities, PlayerId);
@@ -162,6 +166,7 @@ namespace Game.Sim
             _mobilityEndTick = 0;
             _mobilityOrigin = _mobilityPrevious = FixVec2.Zero;
             if (_mobilityHits != null) System.Array.Clear(_mobilityHits, 0, _mobilityHits.Length);
+            ResetDash();
         }
         private void HashTempo(ref ulong hash)
         {
@@ -172,6 +177,7 @@ namespace Game.Sim
             Hashing.Mix(ref hash, _mobilityOrigin.X); Hashing.Mix(ref hash, _mobilityOrigin.Y);
             Hashing.Mix(ref hash, _mobilityPrevious.X); Hashing.Mix(ref hash, _mobilityPrevious.Y);
             if (_mobilityHits != null) for (int i = 0; i < Entities.Count; i++) Hashing.Mix(ref hash, _mobilityHits[i] ? 1 : 0);
+            HashDash(ref hash);
         }
     }
 }

@@ -390,6 +390,10 @@ namespace Game.Tests
             Assert.That(fire, Is.EqualTo(expectedFire));
         }
 
+        // «Прежней» атаки 54/68, с которой кандидат сравнивал урон, больше нет:
+        // 01.10 обычной атакой стала серия сабли (Simulation.SabreCombo, урон
+        // 45/45/90 по решению владельца). Сравнение потеряло смысл.
+        [Ignore("Прежняя атака заменена серией сабли 01.10 — сравнивать кандидата не с чем.")]
         [TestCase(0)] [TestCase(80)]
         public void FrozenLegacyAndComboDpsAreMeasuredOnTheSameEquipmentAndSeed(int armor)
         {

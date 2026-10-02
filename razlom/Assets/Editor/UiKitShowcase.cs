@@ -164,7 +164,8 @@ namespace Game.EditorTools
             SetCard(card2, "Абордажный крюк", "Выстрелите крюком, чтобы притянуться\nк ближайшему врагу.", "Урон", "+25", Ability("AnchorLeap"), WcRarity.Tier.Rare);
 
             BarRow(root, "Здоровье", "heart", Role.Health, 120f / 144f, "120 / 144", 575f);
-            BarRow(root, "Лавидий", "lavidium", Role.Lavidium, 36f / 60f, "36 / 60", 675f);
+            // Ресурс способностей — «Концентрация» (владелец 01.10); роль и значок в коде прежние.
+            BarRow(root, "Концентрация", "lavidium", Role.Lavidium, 36f / 60f, "36 / 60", 675f);
             BarRow(root, "Опыт", "menu_level_up", Role.Experience, 243f / 500f, "243 / 500", 775f);
 
             // Подсказка предмета.

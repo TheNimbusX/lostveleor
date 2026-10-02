@@ -426,6 +426,9 @@ namespace Game.View
                     HealBarFeedback.Begin(ref _heal[i], actual - _healPending[i] / (float)max, actual);
                     _healPending[i] = 0;
                 }
+                // Босса ведёт полоса сверху экрана (RunHud.Boss): мировой полосы элиты над ним нет —
+                // над Хозяином Чащи (3,6 м) она висела бы в кроне и дублировала верхнюю.
+                if (_driver.Run != null && i == _driver.Run.BossId) continue;
 
                 float age = now - _hitAt[i];
                 var dummy = CampTrainingView.Find(i);

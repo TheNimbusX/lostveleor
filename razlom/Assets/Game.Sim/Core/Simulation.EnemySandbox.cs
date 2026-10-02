@@ -121,7 +121,6 @@ namespace Game.Sim
             Statuses.ClearBurn(id);
             Statuses.StunUntilTick[id] = 0;
             if (_eliteMask != null) _eliteMask[id] = false;
-            if (_attackTarget == id) _attackTarget = -1;
             // Explicit removal also removes this enemy's lingering fruit/puddles.
             // A real kill deliberately leaves them alive under the ordinary rules.
             for (int slot = 0; slot < _forestFruitHighWater; slot++)

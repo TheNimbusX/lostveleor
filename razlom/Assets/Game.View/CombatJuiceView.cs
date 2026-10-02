@@ -100,6 +100,10 @@ namespace Game.View
         private int _basicFeedbackStartTick = -1;
         private Simulation _basicFeedbackSimulation;
         private bool _trailBasicCombo;
+        // Лента удара серии сабли (Simulation.SabreCombo): номер удара, по
+        // которому она идёт; −1 — ленты серии нет.
+        private int _trailSabreSerial = -1;
+        private SabreSwingState _trailSabre;
 
         private Sprite _sparkSprite;
         private Sprite _contactSprite;
@@ -289,6 +293,11 @@ namespace Game.View
         {
             bool playerAttack = e.Source == Simulation.PlayerId;
             if (!playerAttack) return;
+            if (e.BasicAttackState.Serial == 0 && _driver.Sim != null && !_driver.Sim.PelagBasicComboEnabled)
+            {
+                StartSabreTrail(_driver.Sim.SabreSwing);
+                return;
+            }
 
             _pendingBasicTarget = e.Target;
             _pendingBasicAction = e.BasicAttackState;
@@ -390,9 +399,12 @@ namespace Game.View
 
             bool candidateBasic = fromPlayer && e.DamageOrigin == DamageOrigin.BasicAttack
                 && _driver.Sim.PelagBasicComboEnabled;
+            // Серия сабли бьёт сектором: контакт — любой урон обычной атакой,
+            // тяжёлый — добивающий (место 2 в серии).
+            bool sabreBasic = fromPlayer && e.DamageOrigin == DamageOrigin.BasicAttack && !candidateBasic;
             bool basicContact = fromPlayer && e.DamageOrigin == DamageOrigin.BasicAttack
-                && (candidateBasic || e.Target == _pendingBasicTarget);
-            bool heavyBasicContact = basicContact && (candidateBasic ? e.ActionVariant == 2 : _pendingBasicHeavy);
+                && (candidateBasic || sabreBasic || e.Target == _pendingBasicTarget);
+            bool heavyBasicContact = basicContact && (candidateBasic || sabreBasic ? e.ActionVariant == 2 : _pendingBasicHeavy);
             bool whirlwindContact = fromPlayer && e.DamageOrigin == DamageOrigin.Ability
                 && (uint)e.ActionVariant < Simulation.AbilitySlots
                 && _driver.Sim.GetAbility(e.ActionVariant)?.DefinitionId == AbilityDefinition.WhirlwindId;
@@ -474,10 +486,12 @@ namespace Game.View
                 _basicFeedbackStartTick = started;
             }
             Accumulate(
-                trauma: e.Flag ? 0.52f : whirlwindContact ? 0.55f : playerHit ? 0.33f
-                    : heavyBasicContact ? 0.36f : basicContact ? 0.29f : 0.25f,
+                trauma: e.Flag ? (sabreBasic && heavyBasicContact ? 0.58f : 0.52f) : whirlwindContact ? 0.55f : playerHit ? 0.33f
+                    : sabreBasic && heavyBasicContact ? 0.46f : heavyBasicContact ? 0.36f
+                    : sabreBasic ? 0.24f : basicContact ? 0.29f : 0.25f,
                 zoom: e.Flag ? 0.75f : whirlwindContact ? 0.70f
-                    : heavyBasicContact ? 0.48f : basicContact ? 0.40f : 0.35f,
+                    : sabreBasic && heavyBasicContact ? 0.62f : heavyBasicContact ? 0.48f
+                    : sabreBasic ? 0.34f : basicContact ? 0.40f : 0.35f,
                 stopDuration: !stopsTime ? 0f
                     : e.Flag ? 0.070f
                     : whirlwindContact ? 0.060f
@@ -687,6 +701,7 @@ namespace Game.View
         private void StopSwordTrail()
         {
             _trailBasicCombo = false;
+            _trailSabreSerial = -1;
             _trailCleave = false;
             _cleaveTrailCast = -1;
             _trailDelay = _trailActive = _trailFade = 0f;
@@ -734,6 +749,46 @@ namespace Game.View
             if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.05f);
             if (_trailRenderer != null) _trailRenderer.sharedMaterial.SetFloat("_Hard", 1f);
             if (_trailRenderer != null) _trailRenderer.enabled = false;
+        }
+
+        /// <summary>
+        /// Лента удара серии сабли: пишется от середины замаха до трети
+        /// восстановления по часам удара в Sim — у добивающего длиннее.
+        /// </summary>
+        private void StartSabreTrail(in SabreSwingState swing)
+        {
+            StopSwordTrail();
+            if (_arena == null || !_arena.TryGetPlayerBlade(out _bladeRoot, out _bladeTip)) return;
+            _trailSabre = swing;
+            _trailSabreSerial = swing.Serial;
+            _trailCount = 0;
+            _trailWhirlwind = false;
+            if (_trailRenderer != null)
+            {
+                _trailRenderer.sharedMaterial.SetFloat("_Brush", 0f);
+                _trailRenderer.sharedMaterial.SetFloat("_Glow", 1.1f);
+                _trailRenderer.sharedMaterial.SetFloat("_Hard", 0f);
+                _trailRenderer.enabled = false;
+            }
+        }
+
+        private void AnimateSabreTrail()
+        {
+            var sim = _driver.Sim;
+            bool interrupted = sim == null || !sim.Entities.Alive[Simulation.PlayerId]
+                || sim.SabreSwing.Serial == _trailSabreSerial && sim.SabreSwing.Interrupted;
+            if (interrupted || _bladeRoot == null || !_bladeRoot.gameObject.activeInHierarchy)
+            { StopSwordTrail(); return; }
+            float tick = sim.Tick - 1 + _driver.Alpha;
+            float onset = Mathf.Lerp(_trailSabre.StartTick, _trailSabre.ContactTick, .40f);
+            float finish = Mathf.Lerp(_trailSabre.ContactTick, _trailSabre.EndTick, _trailSabre.IsFinisher ? .30f : .45f);
+            bool sampling = tick >= onset && tick < finish;
+            _trailActive = sampling ? 1f : 0f;
+            _trailFade = tick <= finish ? .08f : Mathf.Max(0f, .08f - (tick - finish) / Simulation.TicksPerSecond);
+            if (tick >= _trailSabre.EndTick + 2 || (!sampling && _trailFade <= 0f && tick > finish))
+            { StopSwordTrail(); return; }
+            if (sampling && _bladeTip != null) AddTrailSample(_bladeRoot.position, _bladeTip.position);
+            if (_trailCount >= 2) RebuildSwordTrail();
         }
 
         private void StartBasicAttackTrail()
@@ -833,6 +888,7 @@ namespace Game.View
 
         private void AnimateSwordTrail()
         {
+            if (_trailSabreSerial >= 0) { AnimateSabreTrail(); return; }
             if (_trailBasicCombo)
             {
                 var sim = _driver.Sim;
@@ -1003,7 +1059,13 @@ namespace Game.View
                 _trailColors[vertex] = new Color(0.60f, 0.035f, 0.12f, alpha * 0.03f);
                 _trailColors[vertex + 1] = new Color(0.957f, 0.282f, 0.341f, alpha * 0.48f);
                 _trailColors[vertex + 2] = new Color(1.30f, 0.54f, 0.52f, alpha * 0.78f);
-                if (_trailBasicCombo)
+                if (_trailSabreSerial >= 0)
+                {
+                    _trailColors[vertex] = new Color(.05f, .45f, .52f, alpha * .22f);
+                    _trailColors[vertex + 1] = new Color(1.25f, 1.45f, 1.45f, alpha * .72f);
+                    _trailColors[vertex + 2] = new Color(.35f, 1.05f, 1.05f, alpha * .45f);
+                }
+                else if (_trailBasicCombo)
                 {
                     _trailColors[vertex] = new Color(.48f, .56f, .69f, alpha * .08f);
                     _trailColors[vertex + 1] = new Color(1.45f, 1.53f, 1.66f, alpha * .65f);

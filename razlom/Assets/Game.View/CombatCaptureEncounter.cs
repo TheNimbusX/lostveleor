@@ -164,11 +164,23 @@ namespace Game.View
             entities.Stats[Simulation.PlayerId].SetBase(StatType.MaxHealth, Fix64.FromInt(10000));
             entities.RefreshStats(Simulation.PlayerId);
             entities.Health[Simulation.PlayerId] = entities.MaxHealth[Simulation.PlayerId];
-            if (enemyCase != "death")
+            // «death» добивает с одного удара, «combo» показывает штатное число ударов серии.
+            if (enemyCase != "death" && enemyCase != "combo")
                 for (int i = 1; i < entities.Count; i++)
                 {
                     if (!entities.Alive[i] || entities.Side[i] == Faction.Wole) continue;
                     entities.Stats[i].SetBase(StatType.MaxHealth, Fix64.FromInt(5000));
+                    entities.RefreshStats(i); entities.Health[i] = entities.MaxHealth[i];
+                }
+            // «combo»: здоровье врагов — как на первой арене (Хранитель 270), а не
+            // запас стенда: видно, на каком ударе серии враг падает.
+            if (enemyCase == "combo")
+                for (int i = 1; i < entities.Count; i++)
+                {
+                    if (!entities.Alive[i] || entities.Side[i] == Faction.Wole) continue;
+                    int health = EnemyArchetypes.ScaleHealth(EnemyArchetypes.Get(entities.Kind[i]).BaseHealth,
+                        EnemyArchetypes.DepthHealthPercent(1));
+                    entities.Stats[i].SetBase(StatType.MaxHealth, Fix64.FromInt(health));
                     entities.RefreshStats(i); entities.Health[i] = entities.MaxHealth[i];
                 }
             // -capture-mend: союзники Корнехвата ранены уже после запаса здоровья — иначе лечить некого.

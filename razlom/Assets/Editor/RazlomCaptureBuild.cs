@@ -110,6 +110,8 @@ namespace Game.EditorTools
             global::RazlomMobAnimatorBuilder.Build();
             global::ForestBudCombatBuilder.Build();
             global::ForestWendigoBuilder.Build();
+            // Хозяин Чащи: нет пакета клипов — пропуск (бой рисует заглушку), префаб свежее пакета — тоже.
+            global::ThicketMasterBuilder.BuildIfPackagePresent();
             // Версии эффектов мобов проверяются до сериализации плеера,
             // независимо от порядка InitializeOnLoad в зеркале проекта.
             global::ThorncasterVfxSetup.Install();
@@ -130,6 +132,7 @@ namespace Game.EditorTools
             global::PelagRollVfxSetup.Install();
             global::PelagEvadeVfxSetup.Install();
             global::PelagCleaveVfxSetup.Install();
+            global::PelagSabreComboVfxSetup.Install();
             global::PelagBlazeVfxSetup.Install();
             global::PelagOrdnanceVfxSetup.Install();
             global::PelagOrdnanceVfxSetup.ValidateProductionAssets();

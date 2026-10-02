@@ -142,6 +142,34 @@ namespace Game.Sim
         /// события не даёт. Фабрика — SimEvent.HeroControl.
         /// </summary>
         HeroControl = 40,
+
+        /// <summary>
+        /// Контакт удара серии сабли (Simulation.SabreCombo) — и при промахе.
+        /// Source — герой, Amount — сколько целей в секторе, Flag — добивающий,
+        /// ActionVariant — место в серии 0..2, Position — где стоит герой.
+        /// Направление и сроки удара — Simulation.SabreSwing. Урон по каждой
+        /// цели — отдельные Damage с DamageOrigin.BasicAttack сразу за ним.
+        /// </summary>
+        SabreContact = 41,
+
+        /// <summary>
+        /// Рывок героя начат (Simulation.Dash), в тик нажатия. Source — герой,
+        /// Amount — длительность рывка в тиках, ActionVariant — номер рывка
+        /// (PelagDashState.Serial), Position — откуда. Куда (полная дальность,
+        /// до стены), направление и окно неуязвимости — Simulation.PelagDash.
+        /// Идёт рядом с обычным AbilityCast того же тика.
+        /// </summary>
+        DashStarted = 42,
+
+        /// <summary>
+        /// Рывок героя кончился — тело встало: доехало, упёрлось в стену или
+        /// рывок снят другим уходом. Source — герой, Amount — пройденный путь в
+        /// сантиметрах (длина следа), Flag — встал раньше полной дальности
+        /// (стена или снятие), ActionVariant — номер рывка, Position — где встал.
+        /// Неуязвимость у стены не кончается: она держится до
+        /// PelagDashState.InvulnerableUntilTick.
+        /// </summary>
+        DashEnded = 43,
     }
 
     /// <summary>
@@ -211,6 +239,37 @@ namespace Game.Sim
         /// (Flag — задел героя), Cancelled — снят.
         /// </summary>
         WendigoSweep = 10,
+
+        /// <summary>
+        /// Хозяин Чащи: лапа, сектор 120° на 3,6 м. Started — замах (знак на
+        /// теле; Amount — номер лапы 0/1 в двойной фазы 3), Impact — контакт
+        /// (Flag — задел героя), Cancelled — снята.
+        /// </summary>
+        ThicketPaw = 11,
+
+        /// <summary>Хозяин Чащи: дыбом и топот, круг 4,5 м вокруг себя с отбросом.</summary>
+        ThicketStomp = 12,
+
+        /// <summary>Хозяин Чащи: рёв (вступление и пороги 66/50/33), кольцо 2–5,5 м, отброс без урона.</summary>
+        ThicketRoar = 13,
+
+        /// <summary>Хозяин Чащи: пробуждение — вырывает лапы из земли (только Started); за ним рёв.</summary>
+        ThicketWake = 14,
+
+        /// <summary>Хозяин Чащи, этап 2: нырок в корни.</summary>
+        ThicketDive = 15,
+
+        /// <summary>Хозяин Чащи, этап 2: прорастание.</summary>
+        ThicketSprout = 16,
+
+        /// <summary>Хозяин Чащи, этап 2: облака пыльцы.</summary>
+        ThicketPollen = 17,
+
+        /// <summary>Хозяин Чащи, этап 3: ягодный ливень.</summary>
+        ThicketRain = 18,
+
+        /// <summary>Хозяин Чащи, этап 3: буря цветения.</summary>
+        ThicketStorm = 19,
     }
 
     /// <summary>

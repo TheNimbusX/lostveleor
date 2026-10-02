@@ -1,0 +1,220 @@
+{
+ "Sabre1": [
+  {
+   "tick": 0,
+   "source": 2.0
+  },
+  {
+   "tick": 1,
+   "source": 3.4
+  },
+  {
+   "tick": 2,
+   "source": 5.698
+  },
+  {
+   "tick": 3,
+   "source": 8.319
+  },
+  {
+   "tick": 4,
+   "source": 11.0
+  },
+  {
+   "tick": 5,
+   "source": 13.4
+  },
+  {
+   "tick": 6,
+   "source": 15.2
+  },
+  {
+   "tick": 7,
+   "source": 17.472
+  },
+  {
+   "tick": 8,
+   "source": 19.0
+  },
+  {
+   "tick": 9,
+   "source": 19.298
+  },
+  {
+   "tick": 10,
+   "source": 19.502
+  },
+  {
+   "tick": 11,
+   "source": 19.642
+  },
+  {
+   "tick": 12,
+   "source": 19.751
+  },
+  {
+   "tick": 13,
+   "source": 19.86
+  },
+  {
+   "tick": 14,
+   "source": 20.0
+  }
+ ],
+ "Sabre2": [
+  {
+   "tick": 0,
+   "source": 20.0
+  },
+  {
+   "tick": 1,
+   "source": 22.0
+  },
+  {
+   "tick": 2,
+   "source": 25.0
+  },
+  {
+   "tick": 3,
+   "source": 26.7
+  },
+  {
+   "tick": 4,
+   "source": 28.2
+  },
+  {
+   "tick": 5,
+   "source": 29.2
+  },
+  {
+   "tick": 6,
+   "source": 30.0
+  },
+  {
+   "tick": 7,
+   "source": 30.789
+  },
+  {
+   "tick": 8,
+   "source": 31.3
+  },
+  {
+   "tick": 9,
+   "source": 31.443
+  },
+  {
+   "tick": 10,
+   "source": 31.543
+  },
+  {
+   "tick": 11,
+   "source": 31.615
+  },
+  {
+   "tick": 12,
+   "source": 31.672
+  },
+  {
+   "tick": 13,
+   "source": 31.729
+  },
+  {
+   "tick": 14,
+   "source": 31.8
+  }
+ ],
+ "Sabre3": [
+  {
+   "tick": 0,
+   "source": 31.5
+  },
+  {
+   "tick": 1,
+   "source": 33.411
+  },
+  {
+   "tick": 2,
+   "source": 35.974
+  },
+  {
+   "tick": 3,
+   "source": 39.0
+  },
+  {
+   "tick": 4,
+   "source": 40.715
+  },
+  {
+   "tick": 5,
+   "source": 42.0
+  },
+  {
+   "tick": 6,
+   "source": 43.0
+  },
+  {
+   "tick": 7,
+   "source": 44.0
+  },
+  {
+   "tick": 8,
+   "source": 45.2
+  },
+  {
+   "tick": 9,
+   "source": 47.001
+  },
+  {
+   "tick": 10,
+   "source": 49.0
+  },
+  {
+   "tick": 11,
+   "source": 50.773
+  },
+  {
+   "tick": 12,
+   "source": 52.482
+  },
+  {
+   "tick": 13,
+   "source": 54.199
+  },
+  {
+   "tick": 14,
+   "source": 56.0
+  },
+  {
+   "tick": 15,
+   "source": 57.925
+  },
+  {
+   "tick": 16,
+   "source": 59.933
+  },
+  {
+   "tick": 17,
+   "source": 61.975
+  },
+  {
+   "tick": 18,
+   "source": 64.0
+  },
+  {
+   "tick": 19,
+   "source": 66.0
+  },
+  {
+   "tick": 20,
+   "source": 68.0
+  },
+  {
+   "tick": 21,
+   "source": 70.0
+  },
+  {
+   "tick": 22,
+   "source": 72.0
+  }
+ ]
+}

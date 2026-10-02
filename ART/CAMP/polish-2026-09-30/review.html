@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Лагерь — утренний обзор · Разлом</title>
+  <style>
+    :root { --paper:#f1eee6; --card:#fcfaf5; --ink:#23352e; --muted:#637067; --line:#d9ddd3; --forest:#1c332a; --amber:#d69b51; --soft:#e8ede4; --accent:#80501f; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:88px; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.65 "Segoe UI",Arial,sans-serif; }
+    a { color:var(--accent); text-underline-offset:3px; }
+    a:hover { color:var(--ink); }
+    a:focus-visible, summary:focus-visible { outline:3px solid var(--amber); outline-offset:4px; }
+    .skip { position:absolute; left:20px; top:-80px; padding:10px; background:var(--card); z-index:5; }
+    .skip:focus { top:12px; }
+    .wrap { max-width:1180px; margin:auto; padding:0 28px; }
+    header { background:var(--forest); color:#f6f2e8; padding:54px 0 44px; border-bottom:4px solid var(--amber); }
+    .eyebrow { margin:0 0 10px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:#dfbc89; }
+    h1 { margin:0 0 14px; font-size:clamp(34px,4vw,54px); line-height:1.15; font-weight:650; letter-spacing:-.025em; }
+    header .intro { max-width:820px; margin:0; color:#e2e8dd; font-size:19px; }
+    .review-state { display:inline-block; margin-top:22px; border:1px solid #758777; border-radius:5px; padding:6px 12px; color:#e5eade; font-size:13px; }
+    nav { position:sticky; top:0; z-index:2; background:rgba(241,238,230,.97); border-bottom:1px solid var(--line); }
+    nav .wrap { display:flex; flex-wrap:wrap; gap:4px 22px; padding-top:13px; padding-bottom:13px; }
+    nav a { text-decoration:none; color:var(--ink); font-size:14px; }
+    main.wrap { padding-top:30px; padding-bottom:54px; }
+    section { margin:0 0 34px; }
+    h2 { margin:0 0 16px; font-size:28px; line-height:1.25; font-weight:650; letter-spacing:-.02em; }
+    h3 { margin:0 0 10px; font-size:19px; line-height:1.35; }
+    p { margin:0 0 14px; }
+    p:last-child { margin-bottom:0; }
+    .muted { color:var(--muted); }
+    .lead { max-width:880px; }
+    .grid { display:grid; gap:16px; }
+    .two { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .four { grid-template-columns:repeat(4,minmax(0,1fr)); }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:9px; padding:23px; }
+    .stat { padding:20px; }
+    .stat strong { display:block; font-size:29px; line-height:1.2; color:var(--forest); margin-bottom:7px; }
+    .stat span { display:block; font-size:14px; line-height:1.5; color:var(--muted); }
+    .note { margin-top:16px; padding:17px 20px; background:var(--soft); border-left:3px solid #789178; border-radius:0 6px 6px 0; }
+    .timeline { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; background:var(--card); border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+    .step { padding:20px; border-right:1px solid var(--line); }
+    .step:last-child { border:0; }
+    .step small { color:var(--accent); display:block; margin-bottom:8px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
+    .step strong { display:block; font-size:19px; margin-bottom:7px; }
+    .step p { font-size:14px; line-height:1.55; }
+    .table-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:9px; background:var(--card); }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th, td { padding:13px 17px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+    th { background:#e7ebe2; color:var(--forest); font-weight:650; }
+    tbody tr:last-child td { border-bottom:0; }
+    td strong { color:var(--forest); }
+    .price { min-width:185px; font-variant-numeric:tabular-nums; }
+    ul, ol { padding-left:22px; margin:12px 0 0; }
+    li { padding-left:3px; margin-bottom:8px; }
+    li:last-child { margin-bottom:0; }
+    .compact { font-size:14px; }
+    details { margin-top:17px; border-top:1px solid var(--line); padding-top:14px; }
+    summary { cursor:pointer; font-weight:600; color:var(--forest); }
+    .tag { display:inline-block; font-size:12px; line-height:1.4; padding:3px 8px; border-radius:4px; background:#e5ece1; color:#345238; white-space:nowrap; }
+    .tag.pending { background:#ece4d3; color:#725229; }
+    .gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+    .gallery figure:only-child { grid-column:1/-1; }
+    figure { margin:0; background:var(--card); border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+    figure a { display:block; }
+    figure img { display:block; width:100%; height:auto; background:#23352e; }
+    figcaption { padding:14px 18px; font-size:14px; }
+    figcaption strong { display:block; color:var(--forest); margin-bottom:3px; }
+    .gallery-empty { grid-column:1/-1; min-height:130px; display:flex; flex-direction:column; justify-content:center; }
+    .compare { position:relative; aspect-ratio:16/9; overflow:hidden; background:var(--forest); border-radius:9px; }
+    .compare img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    .compare .after { clip-path:inset(0 0 0 var(--split,50%)); }
+    .compare::after { content:""; position:absolute; left:var(--split,50%); top:0; height:100%; width:2px; background:#f8eed7; }
+    .compare-label { position:absolute; top:12px; padding:4px 11px; background:rgba(20,35,27,.85); color:white; border-radius:4px; font-size:13px; }
+    .compare-label.before { left:12px; } .compare-label.after-label { right:12px; }
+    .compare-control { display:flex; align-items:center; gap:15px; padding:15px 0; }
+    .compare-control input { flex:1; accent-color:var(--accent); }
+    video { display:block; width:100%; background:var(--forest); border-radius:9px; }
+    footer { border-top:1px solid var(--line); padding:25px 0 38px; color:var(--muted); font-size:13px; }
+    @media(max-width:850px) { .four,.timeline { grid-template-columns:repeat(2,minmax(0,1fr)); } .step:nth-child(2) { border-right:0; } .step:nth-child(-n+2) { border-bottom:1px solid var(--line); } }
+    @media(max-width:620px) { .wrap { padding-left:18px; padding-right:18px; } header { padding-top:35px; } header .intro { font-size:17px; } .two,.four,.timeline,.gallery { grid-template-columns:1fr; } .step { border-right:0; border-bottom:1px solid var(--line); } .card { padding:19px; } nav { position:static; } h2 { font-size:25px; } th,td { padding:11px 13px; } }
+    @media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print { body { background:white; color:#111; font-size:11px; } .wrap { max-width:none; padding:0; } header { background:white; color:#111; padding:0 0 18px; } header .intro,.eyebrow,.review-state { color:#333; } nav,.skip { display:none; } h1 { font-size:29px; } h2 { font-size:20px; } section { break-inside:avoid; margin-bottom:22px; } .card { padding:13px; background:white; } .tag { background:none; } footer { padding-bottom:0; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#overview">К обзору</a>
+  <header>
+    <div class="wrap">
+      <p class="eyebrow">Разлом · лагерь · 30 сентября 2026</p>
+      <h1>Лагерь растёт вместе с походами</h1>
+      <p class="intro">Жители прибывают постепенно. Уровни открывают новые решения: подготовку перед походом, работу с найденными вещами, прилавок Вена и рецепты Лео.</p>
+      <span class="review-state">Проверочная сборка · реальные игровые кадры и результаты прогонов</span>
+    </div>
+  </header>
+  <nav aria-label="Разделы обзора">
+    <div class="wrap">
+      <a href="#overview">Что изменилось</a><a href="#progression">Развитие</a><a href="#preparation">Перед походом</a><a href="#forge">Кузница</a><a href="#potions">Зелья и торговец</a><a href="#environment">Земля до/после</a><a href="#gallery">Окна</a><a href="#sound">Звук</a><a href="#checks">Проверки</a><a href="#remaining">Модели</a>
+    </div>
+  </nav>
+  <main class="wrap">
+    <section id="overview" aria-labelledby="overview-title">
+      <h2 id="overview-title">Что уже реализовано</h2>
+      <div class="grid four">
+        <div class="card stat"><strong>3 ранга</strong><span>У каждого рабочего места. Все девять улучшений можно открыть к уровню 10.</span></div>
+        <div class="card stat"><strong>4 действия</strong><span>Усиление, замена, добавление и перенос свойства в кузнице.</span></div>
+        <div class="card stat"><strong>2 вида зелий</strong><span>Заранее выбранные позиции на поход из восьми открываемых рецептов.</span></div>
+        <div class="card stat"><strong>1 из 3 даров</strong><span>Выбор перед походом. Повторное открытие стола сохраняет предложения.</span></div>
+      </div>
+      <p class="note">Новый уровень даёт одно очко лагеря после первого уровня. Это открывает услуги и варианты сборки; автоматического прироста базовых характеристик за уровень нет.</p>
+    </section>
+
+    <section id="progression" aria-labelledby="progression-title">
+      <h2 id="progression-title">Появление жителей и развитие</h2>
+      <div class="timeline">
+        <div class="step"><small>Новый лагерь</small><strong>Пелаг и Эни</strong><p>Кузница доступна с начала. В запасе — по три малых лечебных и лавидиевых зелья.</p></div>
+        <div class="step"><small>После первого похода</small><strong>Вен</strong><p>Открывается торговец с четырьмя товарами.</p></div>
+        <div class="step"><small>После второго похода</small><strong>Походный стол</strong><p>Выбор стартового навыка, дара и двух видов зелий.</p></div>
+        <div class="step"><small>После третьего похода</small><strong>Лео</strong><p>Покупка зелий и развитие алхимического места.</p></div>
+      </div>
+      <p class="muted compact" style="margin-top:12px">Считается завершение настоящей попытки, включая поражение. Разработческие и постановочные забеги не продвигают приезд жителей.</p>
+      <div class="table-scroll" style="margin-top:18px">
+        <table>
+          <thead><tr><th scope="col">Ранг · условие</th><th scope="col">Эни</th><th scope="col">Вен</th><th scope="col">Лео</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1 · уровень 2</strong><br>1 очко лагеря</td><td>Замена свойства<br>Старт с «Рассекающим»</td><td>Шесть товаров<br>Дар «Резервный план»</td><td>Большие зелья<br>Дар «Запасная фляга»</td></tr>
+            <tr><td><strong>2 · уровень 5</strong><br>1 очко лагеря</td><td>Добавление свойства<br>Старт со «Шквалом»</td><td>Резерв одного товара</td><td>Живица и Лавидиевый порыв</td></tr>
+            <tr><td><strong>3 · уровень 8</strong><br>1 очко лагеря</td><td>Перенос с вещи-донора<br>Старт с «Ладно смазал»</td><td>Категория одного нового товара</td><td>Смешанный отвар и Ясный настой</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <details>
+        <summary>Глава «Наладить жизнь» — отдельно от рангов</summary>
+        <p style="margin-top:12px">Три последовательных разговора дают небольшие награды. Ранее выполненные условия запоминаются; сдача происходит у жителя и не блокирует каждое улучшение.</p>
+        <ol>
+          <li><strong>Эни:</strong> вернуться с найденной вещью и обсудить её в кузнице. Награда — 1 закалочная сталь.</li>
+          <li><strong>Вен:</strong> добраться до третьей арены; последующее поражение учитывается. Награда — 1 сталь и 50 золота.</li>
+          <li><strong>Лео:</strong> применить два разных вида зелий в настоящих походах. Награда — по 2 бутылки двух выбранных открытых видов.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section id="preparation" aria-labelledby="preparation-title">
+      <h2 id="preparation-title">Решения перед походом</h2>
+      <div class="grid two">
+        <div class="card">
+          <h3>Навык и дар</h3>
+          <p>Поход начинается с одного выбранного навыка без талантов. Вихрь доступен сразу; остальные варианты открывают ранги Эни.</p>
+          <p>Стол предлагает три дара, из которых выбирается один. Предложения закреплены на текущую попытку: закрытие окна или загрузка сохранения не дают бесплатного переброса.</p>
+        </div>
+        <div class="card">
+          <h3>Две позиции зелий</h3>
+          <p>В бой допускаются только два разных заранее выбранных вида. Они используют общий интервал 8 секунд; запас остальных рецептов остаётся в лагере.</p>
+          <p>В окне видны эффект и запас. У манекенов выбранные зелья можно попробовать бесплатно, без продвижения заданий настоящего похода.</p>
+        </div>
+      </div>
+      <details>
+        <summary>Дары и их компромиссы</summary>
+        <ul>
+          <li><strong>Сухой паёк:</strong> +12% максимального здоровья, −6% движения на поход.</li>
+          <li><strong>Точило Эни:</strong> +12% урона на первых трёх аренах.</li>
+          <li><strong>Лёгкая поклажа Вена:</strong> +10% движения, −8% урона.</li>
+          <li><strong>Морской узел:</strong> +25% урона следующей обычной атаке, начатой в течение двух секунд после кувырка. Открывает первый ранг Эни.</li>
+          <li><strong>Резервный план:</strong> один бесплатный переброс обычной награды за поход. Открывает первый ранг Вена.</li>
+          <li><strong>Запасная фляга Лео:</strong> первое применение выбранного зелья не уменьшает запас. Открывает первый ранг Лео.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section id="forge" aria-labelledby="forge-title">
+      <h2 id="forge-title">Кузница: менять вещь осознанно</h2>
+      <p class="lead">Сначала выбираются вещь, действие и свойство. До подтверждения видны результат, изменение характеристик и полная цена. Закрытие окна сохраняет ресурсы; выбранная вещь не повреждается.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Действие</th><th scope="col">Результат и границы</th><th scope="col">Цена</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Усилить</strong><br>Доступно с начала</td><td>Улучшить выбранное свойство и поднять уровень вещи. До трёх усилений; прежние усиления из старого сохранения учитываются.</td><td class="price">30 / 60 / 90 золота<br>3 / 6 / 9 осколков</td></tr>
+            <tr><td><strong>Перенастроить</strong><br>Эни · ранг 1</td><td>Заменить одно свойство выбранным совместимым вариантом. Обычно три предложения; текущая база свойств в некоторых случаях даёт только один или два разных варианта.</td><td class="price">60 золота · 8 осколков<br>1 сталь</td></tr>
+            <tr><td><strong>Дополнить</strong><br>Эни · ранг 2</td><td>Добавить свойство: до двух у редкой вещи и до четырёх у эпической. Для обычной вещи добавление недоступно.</td><td class="price">120 золота · 15 осколков<br>2 стали</td></tr>
+            <tr><td><strong>Перенести</strong><br>Эни · ранг 3</td><td>Перенести совместимое свойство с донора вместо свойства цели. Донор исчезает после подтверждения; надетую или защищённую вещь нельзя использовать как донор.</td><td class="price">180 золота · 20 осколков<br>1 сердечник + вещь-донор</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid two" style="margin-top:16px">
+        <div class="card compact"><h3>Что сохраняет ценность находок</h3><p>Свойства учитывают категорию, уровень и совместимость групп. Уникальные вещи и артефакты похода исключены из этих операций. Цель может быть надета; нет бесплатного переброса через повторное открытие окна.</p></div>
+        <div class="card compact"><h3>Откуда берутся материалы</h3><p>Закалочная сталь — за завершённую элитную арену; сердечник — за босса. Походные материалы доставляются в лагерь при успешном возвращении. Награды главы выдаются непосредственно в лагере.</p></div>
+      </div>
+      <p class="note" style="margin-top:16px">Для гарантированных трёх разных предложений ещё нужен расширенный каталог свойств кузницы. У украшений низкого уровня совместимых групп мало; если все заняты, замена недоступна. Простое расширение общего выпадения меняет старые вещи из сохранённых сидов, поэтому будущие кузнечные свойства должны храниться отдельно от исходного пула добычи.</p>
+    </section>
+
+    <section id="potions" aria-labelledby="potions-title">
+      <h2 id="potions-title">Зелья и прилавок</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Рецепт</th><th scope="col">Эффект</th><th scope="col">Открытие · золото</th></tr></thead>
+          <tbody>
+            <tr><td>Малое лечебное / лавидиевое</td><td>Восстановление 10% здоровья / лавидия</td><td>Базовые · 15 за бутылку</td></tr>
+            <tr><td>Большое лечебное / лавидиевое</td><td>Восстановление 30% здоровья / лавидия</td><td>Лео 1 · 40</td></tr>
+            <tr><td>Живица</td><td>20% здоровья и −25% входящего урона на 6 секунд</td><td>Лео 2 · 70</td></tr>
+            <tr><td>Лавидиевый порыв</td><td>20% лавидия, +20% скорости движения и навыков на 6 секунд</td><td>Лео 2 · 70</td></tr>
+            <tr><td>Смешанный отвар</td><td>18% здоровья и 18% лавидия</td><td>Лео 3 · 55</td></tr>
+            <tr><td>Ясный настой</td><td>Снять корни и замедление; защита от них на 2 секунды</td><td>Лео 3 · 55</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Вен: сохранить интересное, направить следующий товар</h3>
+        <p>Платное обновление стоит <strong>50 золота</strong>. Второй ранг позволяет оставить одну вещь при обновлении, включая обновление после босса. Покупка снимает её резерв.</p>
+        <p>На третьем ранге выбирается оружие, доспехи, украшения или талисманы: при каждом обновлении одна новая вещь будет этой категории. Выбор бесплатный и сохраняется до изменения; остальные товары появляются как обычно.</p>
+        <p class="muted compact">У старого сохранения сохраняются прежний ассортимент, купленные пустые позиции, ранее открытые услуги и алхимические рецепты. Новые возможности развиваются через ранги.</p>
+      </div>
+    </section>
+
+    <section id="environment" aria-labelledby="environment-title">
+      <h2 id="environment-title">Глубина без изменения расстановки</h2>
+      <p class="lead">Сухие рабочие пятна, зола у огня, влажная земля вдоль воды и контактные тени связывают предметы с поверхностью. На дорожках меньше мелкого шума; центр остаётся тёплым, дальний лес становится прохладнее. Геометрия земли и позиции объектов сохранены.</p>
+      <div class="compare" id="camp-comparison">
+        <img src="environment-before/shot_00_t1.50s.png" alt="Лагерь с выключенным новым художественным проходом: прежняя земля и растительность." width="1920" height="1080">
+        <img class="after" src="environment-after/shot_00_t1.50s.png" alt="Та же камера после художественного прохода: спокойнее дорожки, более влажный берег и прохладный дальний лес." width="1920" height="1080">
+        <span class="compare-label before">До</span><span class="compare-label after-label">После</span>
+      </div>
+      <div class="compare-control"><label for="camp-split">Граница сравнения</label><input id="camp-split" type="range" min="0" max="100" value="50" aria-label="Перемещать границу между кадрами до и после"><output for="camp-split" id="camp-split-value">50%</output></div>
+      <p class="muted compact">Одинаковые камера, расстановка и янтарный вечерний свет. Исходные кадры: <a href="environment-before/shot_00_t1.50s.png">до</a> и <a href="environment-after/shot_00_t1.50s.png">после</a>. Это сравнение представления, а не новая 3D-модель лагеря.</p>
+      <div class="gallery" style="margin-top:18px">
+        <figure><a href="environment-before/shot_01_t4.00s.png"><img src="environment-before/shot_01_t4.00s.png" alt="Прежний вид земли вокруг костра." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Очаг · до</strong>Прежняя земля и частая мелкая растительность.</figcaption></figure>
+        <figure><a href="environment-after/shot_01_t4.00s.png"><img src="environment-after/shot_01_t4.00s.png" alt="Новый вид земли вокруг костра с золой и спокойными рабочими пятнами." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Очаг · после</strong>Сухая рабочая зона, зола и более собранные цветовые группы.</figcaption></figure>
+        <figure><a href="environment-after/shot_03_t8.00s.png"><img src="environment-after/shot_03_t8.00s.png" alt="Берег у Лео после правки: влажная земля, прохладная лесная глубина и спокойная кромка воды." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Берег Лео</strong>Влажная земля и менее непрерывная белая кромка воды.</figcaption></figure>
+        <figure><a href="routes-final/09-bridge-return.png"><img src="routes-final/09-bridge-return.png" alt="Герой возвращается через мост в реальном маршрутном прогоне." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Мост и подходы</strong>Настил проходим в обе стороны. <a href="routes-final/walk-review.txt">Отчёт игрового прохода</a>.</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="gallery" aria-labelledby="gallery-title">
+      <h2 id="gallery-title">Кадры из игры</h2>
+      <p class="muted">Окна сняты в собранной игре. Проверочный профиль: уровень 10, все девять рангов открыты. Полный кадр открывается нажатием.</p>
+      <div class="gallery" id="screenshot-gallery">
+        <figure>
+          <a href="preparation-final/shot_00_t8.00s.png" aria-label="Открыть полный кадр подготовки перед походом">
+            <img src="preparation-final/shot_00_t8.00s.png" alt="Окно подготовки: навыки слева, три дара по центру, две позиции и восемь видов зелий справа." loading="lazy" width="1920" height="1080">
+          </a>
+          <figcaption><strong>Перед походом</strong>Новый игровой кадр после правки раскладки. Проверочный профиль: уровень 10, все ранги открыты.</figcaption>
+        </figure>
+        <figure><a href="resident/shot_00_t8.00s.png"><img src="resident/shot_00_t8.00s.png" alt="Окно развития рабочего места и общей главы лагеря." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Развитие жителя</strong>Три последовательных ранга и отдельная часть общей главы.</figcaption></figure>
+        <figure><a href="forge-refine/shot_00_t8.00s.png"><img src="forge-refine/shot_00_t8.00s.png" alt="Предпросмотр усиления: исходная сабля, операция, новые свойства и цена." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Усилить</strong>Видны изменения свойства, характеристики героя и цена.</figcaption></figure>
+        <figure><a href="forge-replace/shot_00_t8.00s.png"><img src="forge-replace/shot_00_t8.00s.png" alt="Перенастройка выбранного свойства с закреплёнными совместимыми предложениями." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Перенастроить</strong>Предложения привязаны к состоянию вещи.</figcaption></figure>
+        <figure><a href="forge-add/shot_00_t8.00s.png"><img src="forge-add/shot_00_t8.00s.png" alt="Дополнение свободной позиции свойства эпической сабли." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Дополнить</strong>Остальные свойства сохраняются; предел зависит от редкости.</figcaption></figure>
+        <figure><a href="forge-transfer/shot_00_t8.00s.png"><img src="forge-transfer/shot_00_t8.00s.png" alt="Перенос свойства с найденного донора, его изображение и предупреждение о расходовании." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Перенести</strong>Донор расходуется после подтверждения. Красным — потеря, зелёным — новое свойство.</figcaption></figure>
+        <figure><a href="trader-config/shot_00_t8.00s.png"><img src="trader-config/shot_00_t8.00s.png" alt="Резерв товара Вена и выбор категории следующего обновления." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Прилавок Вена</strong>Одна сохранённая вещь и категория одного нового товара.</figcaption></figure>
+        <figure><a href="alchemist-recipes/shot_00_t8.00s.png"><img src="alchemist-recipes/shot_00_t8.00s.png" alt="Пролистанный прилавок Лео с новыми рецептами Смешанного отвара и Ясного настоя." loading="lazy" width="1920" height="1080"></a><figcaption><strong>Рецепты Лео</strong>Восемь видов; новые рецепты видны в прокручиваемом прилавке.</figcaption></figure>
+      </div>
+      <details>
+        <summary>Что меняется в среде</summary>
+        <p style="margin-top:12px">Добавлены локальные сухие и влажные пятна земли, зола возле кузницы и костра, более спокойное чтение дорожек, группировка низкой растительности, контактное затемнение и менее непрерывная белая береговая линия. Центр сохраняет янтарное тепло, дальний лес получает прохладный тон.</p>
+        <p class="muted compact">Работа обратима и сохраняет нарисованные дорожки, геометрию и позиции функциональных мест. Итог по цвету и глубине оценивается по паре кадров с одинаковой камерой.</p>
+      </details>
+    </section>
+
+    <section id="sound" aria-labelledby="sound-title">
+      <h2 id="sound-title">Прогон звукового окружения</h2>
+      <p class="lead">Огонь, кузница, котёл, берег и арка проверены в игре. Гул арки затихает вдали и при открытии окна; пауза смягчает окружение. После выхода в поход лагерные источники выключаются и возвращаются плавно.</p>
+      <video controls preload="metadata" poster="camp-sound-final/01-fire.png" aria-label="Игровая запись звукового прохода лагеря"><source src="camp-sound-final/camp-sound-walkthrough.mp4" type="video/mp4">Открыть <a href="camp-sound-final/camp-sound-walkthrough.mp4">запись прохода</a>.</video>
+      <p class="muted compact" style="margin-top:12px">70 секунд, 960×540, 30 кадров/с. <a href="camp-sound-final/game-audio.wav">Исходная звуковая дорожка</a> · <a href="camp-sound-final/sound-qa.txt">Результат проверок</a>. Пик записи −10,5 dBFS, обрезания сигнала нет. Художественное прослушивание владельцем ещё предстоит.</p>
+    </section>
+
+    <section id="checks" aria-labelledby="checks-title">
+      <h2 id="checks-title">Что проверено, что ещё предстоит</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Проверка</th><th scope="col">Текущий результат</th></tr></thead>
+          <tbody>
+            <tr><td>Автоматические тесты симуляции</td><td><span class="tag">Пройдено</span> <span id="sim-test-result">688 / 688</span></td></tr>
+            <tr><td>Автоматические тесты представления боя</td><td><span class="tag">Пройдено</span> <span id="presentation-test-result">379 / 379</span></td></tr>
+            <tr><td>Проверка компиляции представления и редакторных инструментов</td><td><span class="tag">Пройдено</span> <span id="view-compile-result">0 ошибок</span></td></tr>
+            <tr><td>Сохранение версии 9 и перенос старых сохранений</td><td>Проверены сохранность вещей, прежних усилений, ассортимента и открытых услуг; повторное подтверждение одной ковки не списывает ресурсы снова.</td></tr>
+            <tr><td>Автоматический игровой прогон</td><td id="capture-check-result">Проверены приезд жителей, начальный запас, девять улучшений к уровню 10 и сохранение. Все четыре операции ковки прошли через настоящее окно Эни: двойное подтверждение не списывает цену повторно, возврат восстанавливает обновлённую сумку. Финальные кадры подготовки, развития, прилавка и алхимии проверены после устранения наложений. <a href="forge-transfer/shot_02_t18.00s.png">Кузница после переноса</a>.</td></tr>
+            <tr><td>Маршруты и замена визуала</td><td><span class="tag">Пройдено</span> Настоящий герой дошёл до всех пяти услуг и открыл окна, вернулся через мост, отменил подход без открытия окна. Скрытие и увеличение визуального меша не меняет ни один источник карты проходов.</td></tr>
+            <tr><td>Слои звука, окна, пауза и поход</td><td><span class="tag">Пройдено</span> Источники, громкость и переходы проверены в записи игры. Рабочий удар кузницы привязан к событию контакта; настоящие рабочие клипы ещё нужны.</td></tr>
+            <tr><td>Настоящие пути ввода мыши, клавиатуры и геймпада</td><td><span class="tag">Пройдено</span> Через виртуальные устройства проверены W/S, левый стик туда/обратно, клики мышью, отмена подхода, E/A и Esc/B. Переход мышь → геймпад восстанавливает фокус; открытие окна не тратит золото. <a href="input-final/input-qa.txt">Отчёт</a>.</td></tr>
+            <tr><td>Ручной проход на физических устройствах</td><td><span class="tag pending">Предстоит</span> Игровое ощущение, все направления навигации по окнам и конкретный геймпад проверяются владельцем.</td></tr>
+            <tr><td>Слабый ПК и качество звукового окружения</td><td><span class="tag pending">Предстоит</span> Нужны отдельный замер на целевой машине и прослушивание в игре.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="remaining" aria-labelledby="remaining-title">
+      <h2 id="remaining-title">Следующий этап: модели и жизнь лагеря</h2>
+      <p class="lead">Новые 3D-модели создаёт и добавляет владелец проекта. Рабочие анимации жителей и персонажные голоса остаются отдельным этапом. Их наличие не подразумевается готовностью игровых правил.</p>
+      <div class="grid two">
+        <div class="card">
+          <h3>Приоритеты для будущих моделей</h3>
+          <ol>
+            <li><strong>Лавка Вена:</strong> крупный читаемый корпус, тёплая ткань без флагов, группы товара разной высоты. Для развития — ящик резерва и компактная доска категорий.</li>
+            <li><strong>Фонарь:</strong> простой тёмный столб и один тёплый источник. Свет поддерживает рабочее место, не соперничает с аркой и костром.</li>
+            <li><strong>Кострище:</strong> низкий неровный очаг, угли и крупные обожжённые поленья; свободные подходы к центральному маршруту.</li>
+            <li><strong>Походный стол:</strong> низкий тёмный стол, крупная светлая карта, компас и свёрток. Функциональный контейнер уже стоит слева от арки, модель ещё отсутствует.</li>
+            <li><strong>Палатка Пелага:</strong> канат, походный сундук, снасти и свёрнутая карта. Три-четыре крупные морские детали вместо множества мелких украшений.</li>
+            <li><strong>Деревья и инструменты:</strong> три-четыре варианта силуэта крон, нерегулярные группы кустов и редкие цветы. Отдельные наборы инструментов кузницы и алхимии для рангов.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Как принимать следующий набор</h3>
+          <ul>
+            <li>Сохранить позиции рабочих мест, входов и маршруты между ними.</li>
+            <li>Проверять модели с текущей игровой камеры: герой и действие жителя должны оставаться различимы.</li>
+            <li>Удержать тёплый центр и более тёмный прохладный лес; не превращать все предметы в яркие световые акценты.</li>
+            <li>Добавлять детали группами вокруг полезных мест, оставляя дорожки спокойными и свободными.</li>
+            <li>Визуальную модель заменять внутри текущего функционального контейнера. Явные препятствия оставлять отдельно: ствол, столб, корпус, очаг.</li>
+            <li>Рабочие циклы анимаций и голоса проверять в игре вместе с подходом и открытием окна жителя.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="note">Флаги лавки и кузницы входят в единый меш и атлас их старых моделей. Отдельного объекта флага нет; убрать их чисто нужно при правке или замене этих моделей. Заброшенная палатка Цицеллы сохраняется.</p>
+      <p class="muted compact" style="margin-top:15px">Геометрический аудит существующего лагеря: 2 222 активных рендерера, 1 238 источников теней, 5,45 млн треугольников исходных мешей. Это не число видимых треугольников кадра и не замер FPS. Производительность и художественное принятие проверяются отдельно на целевом слабом ПК.</p>
+    </section>
+  </main>
+  <footer><div class="wrap">Разлом · обзор лагеря. Для обычного игрового прохода — Play_Camp.cmd в корне проекта. Цены и проценты остаются стартовым балансом; итоговое художественное принятие — после игрового прохода владельца.</div></footer>
+  <script>
+    const split = document.getElementById('camp-split');
+    split.addEventListener('input', () => {
+      document.getElementById('camp-comparison').style.setProperty('--split', split.value + '%');
+      document.getElementById('camp-split-value').value = split.value + '%';
+    });
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Game.View
 {
     /// <summary>
-    /// HUD в лагере (владелец, 29 сентября). Вне полигона боевая часть — способности, кувырок,
+    /// HUD в лагере (владелец, 29 сентября). Вне полигона боевая часть — плитка ЛКМ, способности, кувырок,
     /// значки эффектов зелий и дым под способностями — уходит; остаются портрет с полосами,
     /// миникарта, кошелёк лагеря и зелья. В зоне полигона (та же граница, по которой Sim
     /// запрещает бой, — <see cref="GameSession.CampCombatAllowed"/>) боевая часть возвращается
@@ -73,6 +73,8 @@ namespace Game.View
         {
             var parts = new System.Collections.Generic.List<CampPart>(5);
             UiInkGroup root = GetComponent<UiInkGroup>();
+            // Плитка ЛКМ (02.10) — по тому же правилу, что ряд способностей: бить можно только у манекенов.
+            AddCampPart(parts, AttackPanel, root, AttackPanel != null ? AttackPanel.gameObject : null, true);
             AddCampPart(parts, AbilityPanel, root, AbilityPanel != null ? AbilityPanel.gameObject : null, true);
             AddCampPart(parts, DashPanel, root, Dash != null && Dash.Hit != null && Dash.Hit != DashPanel ? Dash.Hit.gameObject : null, true);
             // Строка эффектов над портретом (с 30.09; раньше — ряд значков зелий) гаснет целиком: у каждого

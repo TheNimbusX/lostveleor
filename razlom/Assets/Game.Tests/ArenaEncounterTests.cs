@@ -783,7 +783,7 @@ namespace Game.Tests
             for (ulong seed = 1; seed <= 3; seed++)
             {
                 var map = ArenaMap(location, 9, seed);
-                var sim = new Simulation(seed, 512);
+                var sim = new Simulation(seed, 512) { ThicketMasterBossEnabled = false }; // временный босс-Хранитель: проверяется запасной путь
                 var plan = location.GetLevel(9).Spawn(sim, map, seed, null, 9);
                 sim.PlayerInvulnerable = true;
                 int boss = plan.BossId;
@@ -837,7 +837,7 @@ namespace Game.Tests
         {
             var location = ForestLocation();
             var map = ArenaMap(location, 9, 4);
-            var sim = new Simulation(4, 512);
+            var sim = new Simulation(4, 512) { ThicketMasterBossEnabled = false }; // временный босс-Хранитель: проверяется запасной путь
             var plan = location.GetLevel(9).Spawn(sim, map, 4, null, 9);
             sim.PlayerInvulnerable = true;
             sim.Entities.Health[plan.BossId] = sim.Entities.MaxHealth[plan.BossId] / 10;

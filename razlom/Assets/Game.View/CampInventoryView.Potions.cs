@@ -25,7 +25,8 @@ namespace Game.View
                     var text=label.GetComponent<Text>();text.font=GameTypography.Regular;text.fontSize=15;text.alignment=TextAnchor.MiddleCenter;text.raycastTarget=false;_stockLabels[i]=text;
                 }
                 bool selected=camp.SelectedPotion(i/2)==kind;
-                _stockLabels[i].text=(i<2?"Здоровье ":"Лавидий ")+Camp.PotionPercent(kind)+"% · "+camp.PotionCount(kind)+(selected?" ✓":"");
+                // Ресурс способностей игроку — «Концентрация» (владелец 01.10).
+                _stockLabels[i].text=(i<2?"Здоровье ":"Концентрация ")+Camp.PotionPercent(kind)+"% · "+camp.PotionCount(kind)+(selected?" ✓":"");
                 _stockLabels[i].color=selected?new Color(1f,.87f,.55f):new Color(.86f,.87f,.8f);
             }
         }

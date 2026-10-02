@@ -93,10 +93,14 @@ namespace Game.Tests
         [Test]
         public void AttackSpeedScalesBothWindupAndCycle()
         {
-            var s = Arena(); int cycle = s.Entities.AttackCooldown[0];
-            s.Entities.Stats[0].SetBase(StatType.AttackSpeed, Fix64.FromInt(3)); s.RefreshPlayerStats(false);
-            Assert.That(s.PlayerAttackWindupTicks, Is.EqualTo(4));
-            Assert.That(s.Entities.AttackCooldown[0], Is.EqualTo(cycle / 2));
+            var s = Arena();
+            Assert.That(s.Entities.Stats[0].Get(StatType.AttackSpeed).ToInt(), Is.EqualTo(Simulation.SabreHitsPerSecond),
+                "база — три удара серии в секунду");
+            s.Entities.Stats[0].SetBase(StatType.AttackSpeed, Fix64.FromInt(6)); s.RefreshPlayerStats(false);
+            var tap = InputFrame.Empty; tap.Flags = (byte)InputFlags.AttackPressed; tap.Aim = new FixVec2(Fix64.FromInt(3), Fix64.Zero);
+            s.Step(tap);
+            Assert.That(s.SabreSwing.ContactTick - s.SabreSwing.StartTick, Is.EqualTo(Simulation.SabreBaseContactTicks(0) / 2));
+            Assert.That(s.SabreSwing.EndTick - s.SabreSwing.StartTick, Is.EqualTo(Simulation.SabreBaseCycleTicks(0) / 2));
         }
         [Test]
         public void SkewerPassesBodiesHitsEachOnceAndPreservesSixMeterRangeAtHighSpeed()

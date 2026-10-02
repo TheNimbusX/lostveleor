@@ -57,6 +57,8 @@
     <Compile Include="../../razlom/Assets/Game.View/ArenaMoodFxRules.cs" Link="ArenaMoodFxRules.cs" />
     <!-- «Лунная походка» мобов (ревью 01.10): тело по ходу, в действии — по взгляду Sim; сцена толпы CrowdStepHashPinTests. -->
     <Compile Include="../../razlom/Assets/Game.View/EnemyBodyFacingRules.cs" Link="EnemyBodyFacingRules.cs" />
+    <!-- Хозяин Чащи (02.10): действие Sim → клип и кадр, контакт клипа в тик удара. -->
+    <Compile Include="../../razlom/Assets/Game.View/ThicketMasterClipRules.cs" Link="ThicketMasterClipRules.cs" />
     <!-- Топот роя (SwarmScuttleClock в MobSoundBank.cs) считает бегущих по EntityStore. -->
     <Compile Include="../../razlom/Assets/Game.Sim/**/*.cs" Link="Game.Sim/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>

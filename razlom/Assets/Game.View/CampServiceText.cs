@@ -45,7 +45,10 @@ namespace Game.View
                 case "approach.hint":return "[ПКМ] Подойти";
                 case "service.smith":return "Перековка и разбор снаряжения";
                 case "service.trader":return "Покупка и продажа снаряжения";
-                case "service.alchemist":return "Зелья здоровья и лавидия";
+                // Ресурс способностей Пелага игроку — «Концентрация» (владелец 01.10: «лавидий у Пелага звучит глупо»).
+                // Ключи (stat.MaxLavidium, potion.SmallLavidium…) и имена в коде прежние: это стабильные id.
+                // Лавидий остаётся металлом и валютой мира (CurrencyType.Lavidium, «Кольцо с лавидием»).
+                case "service.alchemist":return "Зелья здоровья и концентрации";
                 case "interact":return "Поговорить";
                 case "approach":return "Подойти";
                 case "unreachable":return "Нет прохода к собеседнику";
@@ -80,8 +83,8 @@ namespace Game.View
                 case "stat.CritMultiplier":return "Сила крита";
                 case "stat.Armor":return "Броня";
                 case "stat.FireResist":return "Сопротивление огню";
-                case "stat.MaxLavidium":return "Запас лавидия";
-                case "stat.LavidiumRegen":return "Восстановление лавидия";
+                case "stat.MaxLavidium":return "Запас концентрации";
+                case "stat.LavidiumRegen":return "Восстановление концентрации";
                 case "stat.AbilitySpeed":return "Скорость приёмов";
                 case "stat.CooldownRecovery":return "Ускорение перезарядки";
                 case "stat.MaxHealth.short":return "Здоровье";
@@ -92,8 +95,8 @@ namespace Game.View
                 case "stat.CritMultiplier.short":return "Сила крита";
                 case "stat.Armor.short":return "Броня";
                 case "stat.FireResist.short":return "Сопр. огню";
-                case "stat.MaxLavidium.short":return "Лавидий";
-                case "stat.LavidiumRegen.short":return "Лавидий/с";
+                case "stat.MaxLavidium.short":return "Концентрация";
+                case "stat.LavidiumRegen.short":return "Концентрация/с";
                 case "stat.AbilitySpeed.short":return "Скор. приёмов";
                 case "stat.CooldownRecovery.short":return "Перезарядка";
                 case "stat.MaxHealth.hint":return "Сколько урона Пелаг выдержит. Растёт с уровнем и от брони и талисманов.";
@@ -104,8 +107,8 @@ namespace Game.View
                 case "stat.CritMultiplier.hint":return "Во сколько раз критический удар сильнее обычного: 150% — в полтора раза.";
                 case "stat.Armor.hint":return "Снижает физический урон. Чем сильнее удар, тем меньше броня от него спасает.";
                 case "stat.FireResist.hint":return "Снижает урон от огня. Предел — 75%.";
-                case "stat.MaxLavidium.hint":return "Запас лавидия — ресурса способностей. Растёт с уровнем.";
-                case "stat.LavidiumRegen.hint":return "Сколько лавидия возвращается каждую секунду.";
+                case "stat.MaxLavidium.hint":return "Запас концентрации — ресурса способностей. Растёт с уровнем.";
+                case "stat.LavidiumRegen.hint":return "Сколько концентрации возвращается каждую секунду.";
                 case "stat.AbilitySpeed.hint":return "Способности исполняются быстрее: замах, удар и завершение. Перезарядку не меняет. Предел — вдвое быстрее.";
                 case "stat.CooldownRecovery.hint":return "Способности перезаряжаются быстрее.";
                 case "stat.sources":return "Из чего складывается";
@@ -137,8 +140,8 @@ namespace Game.View
                 case "trader.refreshed":return "Посмотри ещё раз. Кое-что нашлось.";
                 case "potion.SmallHealth":return "Малое зелье здоровья";
                 case "potion.LargeHealth":return "Большое зелье здоровья";
-                case "potion.SmallLavidium":return "Малое зелье лавидия";
-                case "potion.LargeLavidium":return "Большое зелье лавидия";
+                case "potion.SmallLavidium":return "Малое зелье концентрации";
+                case "potion.LargeLavidium":return "Большое зелье концентрации";
                 case "potion.restore":return "Восстановит";
                 case "potion.buy":return "Купить";
                 case "potion.stock":return "В запасе";
@@ -160,11 +163,12 @@ namespace Game.View
                 case "trader.bag.caption":return "Сумка";
                 case "trader.price":return "Цена";
                 case "potion.LivingResin":return "Живица";
-                case "potion.LavidiumSurge":return "Лавидиевый порыв";
+                // Было «Лавидиевый порыв»: с переименованием ресурса — просто «Порыв», как в DESIGN 30.09.
+                case "potion.LavidiumSurge":return "Порыв";
                 case "potion.LivingResin.effect":return "20% здоровья и −25% входящего урона на 6 с";
-                case "potion.LavidiumSurge.effect":return "20% лавидия и +20% скорости на 6 с";
+                case "potion.LavidiumSurge.effect":return "20% концентрации и +20% скорости на 6 с";
                 case "potion.health":return "здоровья";
-                case "potion.lavidium":return "лавидия";
+                case "potion.lavidium":return "концентрации";
                 case "potion.locked":return "Откроется заказом алхимика";
                 case "close.action":return "Закрыть";
                 case "role.smith":return "Кузнец";

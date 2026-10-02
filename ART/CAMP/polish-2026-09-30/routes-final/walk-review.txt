@@ -1,0 +1,88 @@
+PASS initial spawn lies on walk map
+PASS camp control available
+PASS frozen authoring proxy is available for visual swap audit
+PASS visual replacement bounds and disabled renderers preserve every navigation source
+PASS temporary visual swap is fully restored
+PASS cancellation resident available
+PASS ordinary Begin starts distant approach
+PASS cancelled approach does not open a window
+PASS cancelled route stops simulation movement
+PASS 02-smith service is active
+PASS camp control available
+PASS 02-smith ordinary Begin accepted
+PASS 02-smith walking opens the matching window
+PASS 02-smith actual simulation stop is inside NPC.Near
+PASS 02-smith simulation stayed on walk map: 0
+SERVICE 02-smith position=(5.00, 0.05, 6.50) resident=(5.61, 0.10, 8.18) distance=1,785
+PASS camp control available
+PASS camp control available
+PASS 03-fire target remains local: snap=0,050
+PASS 03-fire real player route exists
+PASS 03-fire arrived distance=0,350 position=(-1.83, 0.05, -0.98)
+PASS 03-fire simulation stayed on walk map: 0
+INTERPOLATION 03-fire visual boundary frames=0
+PASS 04-trader service is active
+PASS camp control available
+PASS 04-trader ordinary Begin accepted
+PASS 04-trader walking opens the matching window
+PASS 04-trader actual simulation stop is inside NPC.Near
+PASS 04-trader simulation stayed on walk map: 0
+SERVICE 04-trader position=(2.26, 0.05, -3.62) resident=(3.96, 0.02, -3.28) distance=1,740
+PASS camp control available
+PASS camp control available
+PASS 05-trader-fire-return target remains local: snap=0,050
+PASS 05-trader-fire-return real player route exists
+PASS 05-trader-fire-return arrived distance=0,290 position=(-1.68, 0.05, -1.45)
+PASS 05-trader-fire-return simulation stayed on walk map: 0
+INTERPOLATION 05-trader-fire-return visual boundary frames=0
+PASS bridge installed
+PASS camp control available
+PASS 06-near-bank target remains local: snap=0,037
+PASS 06-near-bank real player route exists
+PASS 06-near-bank arrived distance=0,411 position=(2.73, 0.05, -16.41)
+PASS 06-near-bank simulation stayed on walk map: 0
+INTERPOLATION 06-near-bank visual boundary frames=0
+PASS camp control available
+PASS 07-across-bridge target remains local: snap=0,025
+PASS 07-across-bridge real player route exists
+PASS 07-across-bridge arrived distance=0,375 position=(2.81, 0.05, -25.81)
+PASS 07-across-bridge simulation stayed on walk map: 0
+INTERPOLATION 07-across-bridge visual boundary frames=0
+PASS 08-leo service is active
+PASS camp control available
+PASS 08-leo ordinary Begin accepted
+PASS 08-leo walking opens the matching window
+PASS 08-leo actual simulation stop is inside NPC.Near
+PASS 08-leo simulation stayed on walk map: 0
+SERVICE 08-leo position=(-5.05, 0.05, -27.30) resident=(-6.38, 0.58, -26.21) distance=1,720
+PASS camp control available
+PASS camp control available
+PASS 09-bridge-return target remains local: snap=0,037
+PASS 09-bridge-return real player route exists
+PASS 09-bridge-return arrived distance=0,317 position=(2.79, 0.05, -17.13)
+PASS 09-bridge-return simulation stayed on walk map: 0
+INTERPOLATION 09-bridge-return visual boundary frames=0
+PASS river centre remains blocked outside bridge: 0
+PASS 10-table service is active
+PASS camp control available
+PASS 10-table ordinary Begin accepted
+PASS 10-table walking opens the matching window
+PASS 10-table actual simulation stop is inside NPC.Near
+PASS 10-table simulation stayed on walk map: 0
+SERVICE 10-table position=(2.09, 0.05, 10.68) resident=(2.06, 0.05, 12.56) distance=1,885
+PASS camp control available
+PASS camp control available
+PASS 11-return target remains local: snap=0,085
+PASS 11-return real player route exists
+PASS 11-return arrived distance=0,413 position=(0.21, 0.05, -2.55)
+PASS 11-return simulation stayed on walk map: 0
+INTERPOLATION 11-return visual boundary frames=1
+PASS 12-inventory service is active
+PASS camp control available
+PASS 12-inventory ordinary Begin accepted
+PASS 12-inventory walking opens the matching window
+PASS 12-inventory actual simulation stop is inside NPC.Near
+PASS 12-inventory simulation stayed on walk map: 0
+SERVICE 12-inventory position=(-5.93, 0.05, 4.75) resident=(-7.11, 0.00, 8.05) distance=1,217
+PASS camp control available
+ALL CAMP REVIEW CHECKS PASSED

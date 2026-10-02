@@ -87,71 +87,63 @@ namespace Game.Tests
         }
 
         /// <summary>
-        /// «Отошёл — ударил»: враг за спиной в радиусе удара, кнопка зажата.
-        ///
-        /// После шага назад корпус смотрит по направлению отхода, и курсор
-        /// часто там же. Поиск цели только в лобовом секторе никогда не
-        /// находил врага позади, и зажатая ЛКМ молчала, хотя стоя на той же
-        /// точке лицом к врагу герой бил. Доворот обязан найти его с любой
-        /// стороны.
+        /// «Отошёл — ударил» (серия сабли, 01.10): удар уходит туда, куда
+        /// показывает курсор, а не на ближайшего. Враг за спиной, курсор от
+        /// него — зажатая атака бьёт пустоту и его не задевает; курсор на нём —
+        /// корпус встаёт к нему сразу, без доворота по 20° за тик.
         /// </summary>
         [Test]
-        public void HeldAttackTurnsToEnemyBehind()
+        public void HeldAttackSwingsWhereTheCursorPoints_NotAtTheNearestBehind()
         {
             Simulation sim = ArenaWithDummy(
                 new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
 
-            // Корпус и курсор смотрят ОТ врага — ровно поза после отхода.
             sim.Entities.Facing[Simulation.PlayerId] = new FixVec2(Fix64.FromInt(-1), Fix64.Zero);
-            var attack = new InputFrame
+            var away = new InputFrame
             {
                 Flags = (byte)InputFlags.Attack,
-                AttackTarget = -1,
+                AttackTarget = enemy,
                 Aim = new FixVec2(Fix64.FromInt(-5), Fix64.Zero),
             };
 
             int before = sim.Entities.Health[enemy];
-            for (int i = 0; i < 60; i++) sim.Step(in attack);
+            for (int i = 0; i < 60; i++) sim.Step(in away);
 
-            Assert.Less(sim.Entities.Health[enemy], before,
-                "враг в двух метрах за спиной: зажатая атака обязана развернуть героя и достать");
+            Assert.AreEqual(before, sim.Entities.Health[enemy],
+                "курсор от врага: серия бьёт туда, куда показали, и цель под курсором не подменяет направление");
         }
 
         /// <summary>
-        /// Бить некого — взмах всё равно есть.
-        ///
-        /// Пустой взмах отвечает на нажатие и тратит такт атаки, но никого не
-        /// назначает целью: молчащая кнопка читается как залипший ввод.
+        /// Первый удар после отхода: корпус смотрит от врага, курсор — на него.
+        /// Удар встаёт по курсору сразу и ложится в свой тик контакта (4).
         /// </summary>
         [TestCase(false)]
         [TestCase(true)]
-        public void FirstSwingAfterRetreat_HitsWithoutWastingACooldown(bool explicitTarget)
+        public void FirstSwingAfterRetreat_LandsOnItsContactTick(bool tap)
         {
             Simulation sim = ArenaWithDummy(
                 new FixVec2(Fix64.FromInt(2), Fix64.Zero), out int enemy);
             sim.Entities.Facing[Simulation.PlayerId] = new FixVec2(-Fix64.One, Fix64.Zero);
             var attack = InputFrame.Empty;
-            attack.Flags = (byte)InputFlags.Attack;
-            attack.AttackTarget = explicitTarget ? enemy : -1;
-            attack.Aim = new FixVec2(Fix64.FromInt(-5), Fix64.Zero);
+            attack.Flags = (byte)(tap ? InputFlags.AttackPressed : InputFlags.Attack);
+            attack.Aim = sim.Entities.Position[enemy];
             int health = sim.Entities.Health[enemy];
-            int swings = 0;
-            int deadline = sim.Entities.AttackCooldown[Simulation.PlayerId];
-            while (sim.Tick < deadline && sim.Entities.Health[enemy] == health)
+            int swings = 0, landed = -1;
+            for (int t = 0; t < 8; t++)
             {
-                // Клик по силуэту отпускаем сразу: цель должна пережить доворот.
-                InputFrame frame = explicitTarget && sim.Tick > 0 ? InputFrame.Empty : attack;
+                int tick = sim.Tick;
+                InputFrame frame = tap && t > 0 ? InputFrame.Empty : attack;
                 sim.Step(in frame);
                 foreach (SimEvent ev in sim.Events)
                 {
-                    if (ev.Type != SimEventType.Attack || ev.Source != Simulation.PlayerId) continue;
-                    Assert.AreEqual(enemy, ev.Target, "первый взмах не должен записываться в пустоту при довороте");
-                    swings++;
+                    if (ev.Source != Simulation.PlayerId) continue;
+                    if (ev.Type == SimEventType.Attack) swings++;
+                    if (ev.Type == SimEventType.Damage && ev.Target == enemy && landed < 0) landed = tick;
                 }
             }
             Assert.AreEqual(1, swings);
-            Assert.Less(sim.Entities.Health[enemy], health,
-                "первая тычка должна попасть раньше, чем истёк бы кулдаун пустого взмаха");
+            Assert.AreEqual(Simulation.SabreBaseContactTicks(0), landed, "контакт первого удара");
+            Assert.Less(sim.Entities.Health[enemy], health);
         }
 
         /// <summary>
