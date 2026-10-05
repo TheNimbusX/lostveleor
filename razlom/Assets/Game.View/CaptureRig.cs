@@ -526,7 +526,17 @@ namespace Game.View
                 var map = driver.Run?.Map;
                 var args = System.Environment.GetCommandLineArgs();
                 int index = ledgeFlag + 1 < args.Length && int.TryParse(args[ledgeFlag + 1], out int n) ? n : 0;
-                if (map != null && index < map.LedgeCount)
+                if (map != null && System.Array.IndexOf(args, "-capture-at-river") >= 0 && map.RiverCount > 0)
+                {
+                    // Брод реки: герой на берегу у края брода, со стороны входа.
+                    var river = map.GetRiver(0);
+                    var toEntry = (map.EntryPoint - river.Center).Normalized();
+                    driver.Sim.Entities.Position[Simulation.PlayerId] = river.Center + toEntry * Fix64.FromInt(5);
+                    driver.Sim.Entities.Facing[Simulation.PlayerId] = -toEntry;
+                    driver.Sim.StopPlayerMovement();
+                    Debug.Log($"[capture-ledge] брод реки: {river.Center}");
+                }
+                else if (map != null && index < map.LedgeCount)
                 {
                     var ledge = map.GetLedge(index);
                     driver.Sim.Entities.Position[Simulation.PlayerId] = ledge.Point - ledge.Down * Fix64.FromInt(3);

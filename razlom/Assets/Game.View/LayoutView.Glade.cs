@@ -154,9 +154,9 @@ namespace Game.View
 
         // Рунный круг в центре поляны: кольцо-руина сплюснуто по высоте и лежит вровень с землёй,
         // по нему ходят. Растения пола из середины убираются, трава и листья его обходят.
-        private void PlaceCenterCircle(LayoutMap map, int ring)
+        private bool PlaceCenterCircle(LayoutMap map, int ring)
         {
-            if (ring < 0 || !map.IsArena || (_shownEncounters != null && _shownEncounters.BossId >= 0)) return;
+            if (ring < 0 || !map.IsArena || (_shownEncounters != null && _shownEncounters.BossId >= 0)) return false;
             // У арены из сегментов — в последнем: ориентир у сундука и выхода.
             var center = TrailPoint(map.GetGlade(map.GladeCount - 1).Center);
             const float scale = 1.05f;
@@ -165,12 +165,12 @@ namespace Game.View
             {
                 float angle = a * Mathf.PI / 8;
                 var edge = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (radius + .6f);
-                if (!map.Outline.Contains(new FixVec2(Fix64.FromDouble(edge.x), Fix64.FromDouble(edge.y)))) return;
+                if (!map.Outline.Contains(new FixVec2(Fix64.FromDouble(edge.x), Fix64.FromDouble(edge.y)))) return false;
             }
             for (int o = 0; o < map.ObstacleCount; o++)
             {
                 var obstacle = map.GetObstacle(o);
-                if (Vector2.Distance(center, TrailPoint(obstacle.Center)) < radius + obstacle.Radius.ToFloat() + .5f) return;
+                if (Vector2.Distance(center, TrailPoint(obstacle.Center)) < radius + obstacle.Radius.ToFloat() + .5f) return false;
             }
             for (int i = _decorCount - 1; i >= 0; i--)
             {
@@ -188,6 +188,7 @@ namespace Game.View
             AddLandmark(.72f, false);
             var renderer = placed.GetComponentInChildren<MeshRenderer>();
             if (renderer != null) _runes.Add((renderer, renderer.sharedMaterial.GetColor("_EmissionColor")));
+            return true;
         }
 
         // Каменный алтарь из Creating (владелец, 29 сентября) — разовый ориентир на плече поляны,
@@ -555,14 +556,14 @@ namespace Game.View
             for (int i = anchors.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (anchors[i], anchors[j]) = (anchors[j], anchors[i]); }
             anchors.Sort((a, b) => a.Priority.CompareTo(b.Priority));
             var clusters = new List<Vector2>();
-            int wanted = rng.Next(4, 8);
+            int wanted = rng.Next(3, 6);
             foreach (var anchor in anchors)
             {
                 if (clusters.Count >= wanted) break;
                 bool near = false;
                 foreach (var c in clusters) near |= (c - anchor.Point).sqrMagnitude < 64;
                 if (near || NearPond(anchor.Point.x, anchor.Point.y, anchor.Radius + 1)) continue;
-                int count = rng.Next(3, 8), placed = 0;
+                int count = rng.Next(3, 6), placed = 0;
                 // Купа жмётся к основанию с одной стороны, а не обходит его кольцом.
                 float side = (float)rng.NextDouble() * Mathf.PI * 2;
                 for (int item = 0, tries = 0; item < count && tries < 24; tries++)
@@ -573,7 +574,7 @@ namespace Game.View
                     if (NearPond(point.x, point.y, .3f) || NearLandmark(point.x, point.y, .1f)) continue;
                     SpawnDecor(mushrooms, point.x, point.y, rng);
                     // Один-два крупных, остальные мелкие.
-                    float size = item < 2 ? 1.3f + (float)rng.NextDouble() * .6f : .55f + (float)rng.NextDouble() * .55f;
+                    float size = item < 2 ? 1f + (float)rng.NextDouble() * .35f : .45f + (float)rng.NextDouble() * .35f;
                     var instance = _decor[_decorCount - 1];
                     instance.localScale *= size;
                     instance.position = new Vector3(point.x, BackgroundHeight(map, point.x, point.y) - .02f, point.y);

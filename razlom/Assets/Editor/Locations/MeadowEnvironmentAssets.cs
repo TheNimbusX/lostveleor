@@ -840,7 +840,7 @@ namespace Game.LocationEditor
                     renderer.sharedMaterials = materials;
                 }
                 // Красный пака кричал ярче всего в кадре: чуть темнее и землистее.
-                material.SetColor("_BaseColor", new Color(.66f, .56f, .52f));
+                material.SetColor("_BaseColor", new Color(.5f, .43f, .4f));
                 material.enableInstancing = true;
                 EditorUtility.SetDirty(material);
                 PrefabUtility.SaveAsPrefabAsset(root, path);
