@@ -126,7 +126,56 @@ namespace Game.View
                         if (TryForestDetail(map, variant, center, rng))
                             DressDetail(map, center, _decorRadii[variant], bushes, grass, rng);
                     }
+                DressWaterline(map, river, r);
             }
+        }
+
+        // Кромка воды (владелец, 5 октября: «улучшить качество и логику объектов»): у самого берега —
+        // папоротники, мелкие камни и пучки травы куртинами с просветами; ряд выше (ScatterRiverBanks)
+        // стоял в полутора метрах от воды, и русло читалось голой полосой. У брода — свободно: там тропа.
+        private void DressWaterline(LayoutMap map, LayoutRiver river, int index)
+        {
+            int fern = VariantNamed(FernPrefab);
+            var stones = new List<int>(); var tufts = new List<int>();
+            for (int i = 0; i < _style.DecorVariants.Length; i++)
+            {
+                var variant = _style.DecorVariants[i];
+                if (variant.Prefab == null) continue;
+                if (variant.Prefab.name.StartsWith("ArenaCreatingRock")) stones.Add(i);
+                else if (variant.Kind == DecorKind.GrassTuft && variant.Weight > 0) tufts.Add(i);
+            }
+            var rng = DecorRandom(index, 877);
+            float length = river.HalfLength.ToFloat() - 4, width = river.HalfWidth.ToFloat();
+            for (float t = -length; t <= length; t += .7f + (float)rng.NextDouble() * .6f)
+                for (int side = -1; side <= 1; side += 2)
+                for (int row = 0; row < 2; row++)
+                {
+                    // Брод и тропа к нему — без растений.
+                    if (Mathf.Abs(t) < river.BridgeHalfWidth.ToFloat() + 3) continue;
+                    var at = TrailPoint(river.Point(Fix64.FromDouble(t)));
+                    float clump = Mathf.PerlinNoise(at.x * .23f + side * 17, at.y * .23f + 41);
+                    // Куртины: в густых местах оба ряда, в просветах — редкие кусты; второй ряд — только в куртинах.
+                    float dense = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.3f, .65f, clump));
+                    if (rng.NextDouble() > (row == 0 ? Mathf.Lerp(.35f, 1f, dense) : dense * .8f)) continue;
+                    double roll = rng.NextDouble();
+                    int variant = row == 0 && roll < .18 && stones.Count > 0 ? stones[rng.Next(stones.Count)] : roll < .78 && fern >= 0 ? fern
+                        : tufts.Count > 0 ? tufts[rng.Next(tufts.Count)] : -1;
+                    if (variant < 0) continue;
+                    bool stone = stones.Contains(variant);
+                    float size = stone ? .7f + (float)rng.NextDouble() * .6f : variant == fern ? .95f + (float)rng.NextDouble() * .5f
+                        : 1.2f + (float)rng.NextDouble() * .6f;
+                    float reach = _decorRadii[variant] / Mathf.Max(.01f, _style.DecorVariants[variant].ScaleRange.y) * size * .5f;
+                    var normal = TrailPoint(river.Along);
+                    // Камни — у самой воды и чуть в ней, растения — на сухом краю берега.
+                    var point = at + normal * side * (width + (stone ? -.1f : .2f) + reach + row * 1.4f + (float)rng.NextDouble() * .6f)
+                        + new Vector2(normal.y, -normal.x) * (((float)rng.NextDouble() - .5f) * .6f);
+                    if (TouchesOutlinedFloor(point.x, point.y, reach + .2f) || NearLandmark(point.x, point.y, reach)) continue;
+                    SpawnDecor(variant, point.x, point.y, rng);
+                    var placed = _decor[_decorCount - 1];
+                    placed.localScale *= size;
+                    // Уровень береговой полосы, а не впадины русла: под ней растения пропадали.
+                    placed.position = new Vector3(point.x, Mathf.Max(BackgroundHeight(map, point.x, point.y), FloorLevel(point.x, point.y)) - (stone ? .12f : .03f), point.y);
+                }
         }
 
         // Два неровных ряда плоских камней поперёк русла по ширине переправы и валуны у берегов.

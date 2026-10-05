@@ -135,9 +135,9 @@ namespace Game.Sim
                 return placed;
             }
             int middle = (width - ew) / 2;
-            // Вода обычной арены: река с каменным бродом перед выходом либо одно озеро у края
-            // поляны вместо россыпи луж. Река у выхода, а не у входа: враги не ищут путь и
-            // упирались бы в берег, пока герой стоит за рекой на старте. Отдельный поток
+            // Вода обычной арены: река с каменным бродом (у арены из сегментов — поперёк прохода между
+            // ними, у одной поляны — перед выходом) и одно озеро у края. Река не у входа: враги не ищут
+            // путь и упирались бы в берег, пока герой стоит за рекой на старте. Отдельный поток
             // не сдвигает остальные броски.
             var waterKind = new Pcg32(seed, 0x4C414B45UL);
             bool riverArena = singleArena && waterKind.NextInt(0, 3) != 0;
@@ -182,9 +182,12 @@ namespace Game.Sim
                     pockets.Add(p); links.Add((map.CenterOf(p), center, Fix64.Ratio(19, 10)));
                 }
             }
-            // Речной арене между поляной и выходом нужен коридор-модуль: по нему идёт река с бродом.
+            // Речной арене из одной поляны между ней и выходом нужен коридор-модуль: по нему идёт река с
+            // бродом. У арены из сегментов река пересекает проход между ними — посередине локации
+            // (владелец, 5 октября), а коридора у выхода нет.
+            int riverLink = riverArena && segmentLinks.Count > 0 ? new Pcg32(seed, 0x524956454C4E4BUL).NextInt(0, segmentLinks.Count) : -1;
             int exitParent = previous, exitRow = (count - 1) * (height + eh) + height, ford = -1;
-            if (riverArena) { ford = Place(entrance, middle, exitRow, exitParent); exitParent = ford; exitRow += eh; }
+            if (riverArena && riverLink < 0) { ford = Place(entrance, middle, exitRow, exitParent); exitParent = ford; exitRow += eh; }
             int exit = Place(entrance, middle, exitRow, exitParent);
             links.Add((previousCenter, map.CenterOf(exit), Fix64.Ratio(22, 10)));
             // Water is a hole in the actual floor, so movement, navigation and rendering agree.
@@ -195,9 +198,10 @@ namespace Game.Sim
             for (int g = 1; g < count && !singleArena; g += 2)
                 rivers.Add(new LayoutRiver((regions[g - 1].Center + regions[g].Center) / Fix64.FromInt(2),
                     acrossRiver, riverRng.NextFix(Fix64.One, Fix64.FromInt(3))));
-            // Река арены пересекает коридор выхода: брод шириной 6 м лежит ровно на пути к порталу.
+            // Река арены пересекает проход между сегментами или коридор выхода: брод шириной 6 м лежит
+            // ровно на тропе.
             if (riverArena)
-                rivers.Add(new LayoutRiver(map.CenterOf(ford), acrossRiver,
+                rivers.Add(new LayoutRiver(riverLink >= 0 ? PassagePoint(regions, riverLink) : map.CenterOf(ford), acrossRiver,
                     riverRng.NextFix(Fix64.One, Fix64.FromInt(2)), Fix64.FromInt(3)));
             map.SetRivers(rivers.ToArray());
             var water = new List<LayoutObstacle>();
@@ -289,14 +293,10 @@ namespace Game.Sim
                 var ledges = new List<LayoutLedge>();
                 for (int i = 0; i < segmentLinks.Count; i++)
                 {
-                    if (ledgeRng.NextInt(0, 100) >= LedgeChancePercent) continue;
-                    // Проход — прямая между центрами соседних полян; обрыв посередине между их краями.
-                    FixVec2 a = regions[i].Center, b = regions[i + 1].Center, step = (b - a) / Fix64.FromInt(200);
-                    int leave = 0, enter = 200;
-                    while (leave < 200 && regions[i].Field(a + step * Fix64.FromInt(leave)) <= Fix64.One) leave++;
-                    while (enter > 0 && regions[i + 1].Field(a + step * Fix64.FromInt(enter)) <= Fix64.One) enter--;
-                    var point = a + step * Fix64.FromInt((leave + enter) / 2);
-                    ledges.Add(new LayoutLedge(point, (b - a).Normalized(), LedgeHalfWidth, LedgeDrop));
+                    // Бросок — до проверки реки: у карт без реки уступы те же, что раньше.
+                    if (ledgeRng.NextInt(0, 100) >= LedgeChancePercent || i == riverLink) continue;
+                    ledges.Add(new LayoutLedge(PassagePoint(regions, i),
+                        (regions[i + 1].Center - regions[i].Center).Normalized(), LedgeHalfWidth, LedgeDrop));
                 }
                 map.SetLedges(ledges.ToArray());
             }
@@ -365,6 +365,16 @@ namespace Game.Sim
             map.AddExit(exit);
             map.SetNaturalOutline(contour); map.BuildRoutes();
             map.Routes.MarkMainRoutes(map); map.Routes.MarkBranchRoutes(map);
+        }
+
+        /// <summary>Проход между сегментами i и i + 1 — прямая между центрами полян; его середина между их краями.</summary>
+        private static FixVec2 PassagePoint(GladeRegion[] regions, int i)
+        {
+            FixVec2 a = regions[i].Center, b = regions[i + 1].Center, step = (b - a) / Fix64.FromInt(200);
+            int leave = 0, enter = 200;
+            while (leave < 200 && regions[i].Field(a + step * Fix64.FromInt(leave)) <= Fix64.One) leave++;
+            while (enter > 0 && regions[i + 1].Field(a + step * Fix64.FromInt(enter)) <= Fix64.One) enter--;
+            return a + step * Fix64.FromInt((leave + enter) / 2);
         }
 
         private static FixVec2 Rotate(FixVec2 p, int q)

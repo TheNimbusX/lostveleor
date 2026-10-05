@@ -849,8 +849,9 @@ namespace Game.View
                 _landmarkVariants[i] = i == treehouse || i == runes || i == stone || i == fence || name == AltarPrefab || name == RootPrefab || name == GiantTreePrefab;
             }
             if (map.Outline == null || _style.ForestBandWidth <= 0 || map.GladeCount == 0) return;
-            if (runes >= 0 || stone >= 0) PlaceRuneCircle(map, runes, stone);
-            PlaceCenterCircle(map, runes);
+            // Рунный круг — один на арену: в центре сегмента, а если там не встал — ориентиром у края.
+            // Оба сразу читались двумя одинаковыми кругами рядом (владелец, 5 октября).
+            if (!PlaceCenterCircle(map, runes) && (runes >= 0 || stone >= 0)) PlaceRuneCircle(map, runes, stone);
             PlaceAltar(map);
             PlaceLedgeCliffs(map);
             PlaceGiantTrees(map);
